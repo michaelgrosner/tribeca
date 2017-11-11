@@ -2,15 +2,10 @@
 #define K_GW_H_
 
 namespace K {
-  static mConnectivity gwAutoStart = mConnectivity::Disconnected,
-                       gwQuotingState = mConnectivity::Disconnected,
-                       gwConnectOrder = mConnectivity::Disconnected,
-                       gwConnectMarket = mConnectivity::Disconnected,
-                       gwConnectExchange = mConnectivity::Disconnected;
   class GW: public Klass {
     protected:
       void load() {
-        evExit = happyEnding;
+        evExit = &happyEnding;
         if (argAutobot) gwAutoStart = mConnectivity::Connected;
         gw->hub = &hub;
         gw->gwGroup = hub.createGroup<uWS::CLIENT>();
@@ -31,13 +26,13 @@ namespace K {
         }, 0, 3e+5);
       };
       void waitData() {
-        ev_gwConnectOrder = [](mConnectivity k) {
+        gw->evConnectOrder = [&](mConnectivity k) {
           gwConnUp(mGatewayType::OrderEntry, k);
         };
-        ev_gwConnectMarket = [](mConnectivity k) {
+        gw->evConnectMarket = [&](mConnectivity k) {
           gwConnUp(mGatewayType::MarketData, k);
           if (k == mConnectivity::Disconnected)
-            ev_gwDataLevels(mLevels());
+            gw->evDataLevels(mLevels());
         };
         gw->levels();
       };
@@ -51,28 +46,33 @@ namespace K {
         hub.run();
         EV::end(eCode);
       };
-    public:
-      static void gwBookUp(mConnectivity k) {
-        ev_gwConnectMarket(k);
-      };
-      static void gwOrderUp(mConnectivity k) {
-        ev_gwConnectOrder(k);
-      };
-      static void gwPosUp(mWallet k) {
-        ev_gwDataWallet(k);
-      };
-      static void gwOrderUp(mOrder k) {
-        ev_gwDataOrder(k);
-      };
-      static void gwTradeUp(mTrade k) {
-        ev_gwDataTrade(k);
-      };
-      static void gwLevelUp(mLevels k) {
-        ev_gwDataLevels(k);
-      };
     private:
-      static json onSnapProduct() {
-        return {{
+      function<void(int)> happyEnding = [](int code) {
+        eCode = code;
+        if (uv_loop_alive(hub.getLoop())) {
+          uv_timer_stop(&tCancel);
+          uv_timer_stop(&tWallet);
+          uv_timer_stop(&tCalcs);
+          uv_timer_stop(&tStart);
+          uv_timer_stop(&tDelay);
+          gw->close();
+          gw->gwGroup->close();
+          FN::log(string("GW ") + argExchange, "Attempting to cancel all open orders, please wait.");
+          gW->cancelAll();
+          FN::log(string("GW ") + argExchange, "cancell all open orders OK");
+          uiGroup->close();
+          FN::close(hub.getLoop());
+          hub.getLoop()->destroy();
+        }
+        EV::end(code);
+      };
+      mConnectivity gwAutoStart = mConnectivity::Disconnected,
+                    gwQuotingState = mConnectivity::Disconnected,
+                    gwConnectOrder = mConnectivity::Disconnected,
+                    gwConnectMarket = mConnectivity::Disconnected,
+                    gwConnectExchange = mConnectivity::Disconnected;
+      function<json()> onSnapProduct = []() {
+        return (json){{
           {"exchange", (int)gw->exchange},
           {"pair", {{"base", gw->base}, {"quote", gw->quote}}},
           {"minTick", gw->minTick},
@@ -81,13 +81,13 @@ namespace K {
           {"homepage", "https://github.com/ctubio/Krypto-trading-bot"}
         }};
       };
-      static json onSnapStatus() {
-        return {{{"status", (int)gwConnectExchange}}};
+      function<json()> onSnapStatus = [&]() {
+        return (json){{{"status", (int)gwConnectExchange}}};
       };
-      static json onSnapState() {
-        return {{{"state",  (int)gwQuotingState}}};
+      function<json()> onSnapState = [&]() {
+        return (json){{{"state",  (int)gwQuotingState}}};
       };
-      static void onHandState(json k) {
+      function<void(json)> onHandState = [&](json k) {
         if (!k.is_object() or !k["state"].is_number()) {
           FN::logWar("JSON", "Missing state at onHandState, ignored");
           return;
@@ -98,7 +98,7 @@ namespace K {
           gwStateUp();
         }
       };
-      static void gwConnUp(mGatewayType gwT, mConnectivity gwS) {
+      void gwConnUp(mGatewayType gwT, mConnectivity gwS) {
         if (gwT == mGatewayType::MarketData) {
           if (gwConnectMarket == gwS) return;
           gwConnectMarket = gwS;
@@ -111,7 +111,7 @@ namespace K {
         gwStateUp();
         UI::uiSend(uiTXT::ExchangeConnectivity, {{"status", (int)gwConnectExchange}});
       };
-      static void gwStateUp() {
+      void gwStateUp() {
         mConnectivity quotingState = gwConnectExchange;
         if (quotingState == mConnectivity::Connected) quotingState = gwAutoStart;
         if (quotingState != gwQuotingState) {
@@ -122,7 +122,7 @@ namespace K {
         ev_gwConnectButton(gwQuotingState);
         ev_gwConnectExchange(gwConnectExchange);
       };
-      static void gwLoad(mExchange e) {
+      void gwLoad(mExchange e) {
         if (e == mExchange::Coinbase) {
           FN::stunnel();
           gw->randId = FN::uuidId;
@@ -199,25 +199,6 @@ namespace K {
             << "- takeFee: " << gw->takeFee;
           FN::log(string("GW ") + argExchange + ":", ss.str());
         } else FN::logExit("CF", "Unable to fetch data from " + argExchange + " symbol \"" + gw->symbol + "\"", EXIT_FAILURE, false);
-      };
-      static void happyEnding(int code) {
-        eCode = code;
-        if (uv_loop_alive(hub.getLoop())) {
-          uv_timer_stop(&tCancel);
-          uv_timer_stop(&tWallet);
-          uv_timer_stop(&tCalcs);
-          uv_timer_stop(&tStart);
-          uv_timer_stop(&tDelay);
-          gw->close();
-          gw->gwGroup->close();
-          FN::log(string("GW ") + argExchange, "Attempting to cancel all open orders, please wait.");
-          gW->cancelAll();
-          FN::log(string("GW ") + argExchange, "cancell all open orders OK");
-          uiGroup->close();
-          FN::close(hub.getLoop());
-          hub.getLoop()->destroy();
-        }
-        EV::end(code);
       };
   };
 }

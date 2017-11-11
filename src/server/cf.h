@@ -2,8 +2,8 @@
 #define K_CF_H_
 
 namespace K {
-  static Gw *gw,
-            *gW;
+  Gw *gw,
+     *gW;
   class CF: public Klass {
     protected:
       void load(int argc, char** argv) {

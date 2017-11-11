@@ -33,8 +33,8 @@ namespace K {
         }
       };
       void waitData() {
-        ev_gwDataWallet = [](mWallet k) {
-          if (argDebugEvents) FN::log("DEBUG", string("EV PG ev_gwDataWallet mWallet ") + ((json)k).dump());
+        gw->evDataWallet = [](mWallet k) {
+          if (argDebugEvents) FN::log("DEBUG", string("EV PG evDataWallet mWallet ") + ((json)k).dump());
           calcWallet(k);
         };
         ev_ogOrder = [](mOrder k) {
@@ -99,16 +99,16 @@ namespace K {
         return !pgPos.value;
       };
     private:
-      static json onSnapPos() {
+      function<json()> onSnapPos = []() {
         lock_guard<mutex> lock(pgMutex);
-        return { pgPos };
+        return (json){ pgPos };
       };
-      static json onSnapSafety() {
+      function<json()> onSnapSafety = []() {
         lock_guard<mutex> lock(pgMutex);
-        return { pgSafety };
+        return (json){ pgSafety };
       };
-      static json onSnapTargetBasePos() {
-        return {{{"tbp", pgTargetBasePos}, {"sideAPR", pgSideAPR}}};
+      function<json()> onSnapTargetBasePos = []() {
+        return (json){{{"tbp", pgTargetBasePos}, {"sideAPR", pgSideAPR}}};
       };
       static mSafety nextSafety() {
         pgMutex.lock();

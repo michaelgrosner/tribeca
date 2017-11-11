@@ -3,16 +3,16 @@
 
 namespace K {
   string A();
-  static uWS::Hub hub(0, true);
-  static uWS::Group<uWS::SERVER> *uiGroup = hub.createGroup<uWS::SERVER>(uWS::PERMESSAGE_DEFLATE);
-  static bool uiVisibleOpt = true;
-  static unsigned int uiOSR_1m = 0;
-  static double delayUI = 0;
-  static string uiNOTE = "";
-  static string uiNK64 = "";
+  uWS::Hub hub(0, true);
+  uWS::Group<uWS::SERVER> *uiGroup = hub.createGroup<uWS::SERVER>(uWS::PERMESSAGE_DEFLATE);
+  bool uiVisibleOpt = true;
+  unsigned int uiOSR_1m = 0;
+  double delayUI = 0;
+  string uiNOTE = "";
+  string uiNK64 = "";
   struct uiSess {
-    map<char, json(*)()> cbSnap;
-    map<char, void(*)(json)> cbMsg;
+    map<char, function<json()>*> cbSnap;
+    map<char, function<void(json)>*> cbMsg;
     map<uiTXT, vector<json>> D;
     int u = 0;
   };
@@ -106,11 +106,11 @@ namespace K {
           if ((argWhitelist != "" and argWhitelist.find(addr) == string::npos) or length < 2)
             return;
           if (uiBIT::SNAP == (uiBIT)message[0] and sess->cbSnap.find(message[1]) != sess->cbSnap.end()) {
-            json reply = sess->cbSnap[message[1]]();
+            json reply = (*sess->cbSnap[message[1]])();
             lock_guard<mutex> lock(wsMutex);
             if (!reply.is_null()) webSocket->send(string(message, 2).append(reply.dump()).data(), uWS::OpCode::TEXT);
           } else if (uiBIT::MSG == (uiBIT)message[0] and sess->cbMsg.find(message[1]) != sess->cbMsg.end())
-            sess->cbMsg[message[1]](json::parse((length > 2 and (message[2] == '[' or message[2] == '{'))
+            (*sess->cbMsg[message[1]])(json::parse((length > 2 and (message[2] == '[' or message[2] == '{'))
               ? string(message, length).substr(2, length-2) : "{}"
             ));
         });
@@ -144,14 +144,14 @@ namespace K {
         FN::logUI(uiPrtcl, argPort);
       };
     public:
-      static void uiSnap(uiTXT k, json(*cb)()) {
+      static void uiSnap(uiTXT k, function<json()> *cb) {
         if (argHeadless) return;
         uiSess *sess = (uiSess *) uiGroup->getUserData();
         if (sess->cbSnap.find((char)k) == sess->cbSnap.end())
           sess->cbSnap[(char)k] = cb;
         else FN::logExit("UI", string("Use only a single unique message handler for each \"") + (char)k + "\" event", EXIT_SUCCESS);
       };
-      static void uiHand(uiTXT k, void(*cb)(json)) {
+      static void uiHand(uiTXT k, function<void(json)> *cb) {
         if (argHeadless) return;
         uiSess *sess = (uiSess *) uiGroup->getUserData();
         if (sess->cbMsg.find((char)k) == sess->cbMsg.end())
@@ -175,20 +175,20 @@ namespace K {
         uv_timer_set_repeat(&tDelay, delayUI ? (int)(delayUI*1e+3) : 6e+4);
       };
     private:
-      static json onSnapApp() {
-        return { serverState() };
+      function<json()> onSnapApp = []() {
+        return (json){ serverState() };
       };
-      static json onSnapNote() {
-        return { uiNOTE };
+      function<json()> onSnapNote = []() {
+        return (json){ uiNOTE };
       };
-      static void onHandNote(json k) {
+      function<void(json)> onHandNote = [](json k) {
         if (!k.is_null() and k.size())
           uiNOTE = k.at(0);
       };
-      static json onSnapOpt() {
-        return { uiVisibleOpt };
+      function<json()> onSnapOpt = []() {
+        return (json){ uiVisibleOpt };
       };
-      static void onHandOpt(json k) {
+      function<void(json)> onHandOpt = [](json k) {
         if (!k.is_null() and k.size())
           uiVisibleOpt = k.at(0);
       };

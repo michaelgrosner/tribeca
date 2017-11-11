@@ -65,59 +65,6 @@ namespace K {
               RBLUE[]  = "\033[0;34m", RPURPLE[] = "\033[0;35m", RCYAN[]  = "\033[0;36m", RWHITE[]  = "\033[0;37m",
               BBLACK[] = "\033[1;30m", BRED[]    = "\033[1;31m", BGREEN[] = "\033[1;32m", BYELLOW[] = "\033[1;33m",
               BBLUE[]  = "\033[1;34m", BPURPLE[] = "\033[1;35m", BCYAN[]  = "\033[1;36m", BWHITE[]  = "\033[1;37m";
-  static void (*evExit)(int code);
-  extern bool wInit;
-  extern WINDOW *wBorder,
-                *wLog;
-  extern mutex wsMutex;
-  static mutex wMutex,
-               ogMutex,
-               pgMutex;
-  static string uiPrtcl = "?";
-  class Klass {
-    protected:
-      virtual void load(int argc, char** argv) {};
-      virtual void load() {};
-      virtual void waitTime() {};
-      virtual void waitData() {};
-      virtual void waitUser() {};
-      virtual void run() {};
-    public:
-      void main(int argc, char** argv) {
-        load(argc, argv);
-        run();
-      };
-      void wait() {
-        load();
-        waitTime();
-        waitData();
-        waitUser();
-        run();
-      };
-  };
-  class Gw {
-    public:
-      static Gw *E(mExchange e);
-      string (*randId)() = 0;
-      mExchange exchange = mExchange::Null;
-       double makeFee = 0,  minTick = 0,
-              takeFee = 0,  minSize = 0;
-       string base    = "", quote   = "",
-              name    = "", symbol  = "",
-              apikey  = "", secret  = "",
-              user    = "", pass    = "",
-              ws      = "", http    = "";
-         bool cancelByLocalIds = 0,
-              supportCancelAll = 0;
-      uWS::Hub                *hub = nullptr;
-      uWS::Group<uWS::CLIENT> *gwGroup = nullptr;
-      virtual void wallet() = 0,
-                   levels() = 0,
-                   send(string oI, mSide oS, double oP, double oQ, mOrderType oLM, mTimeInForce oTIF, bool oPO, unsigned long oT) = 0,
-                   cancel(string oI, string oE, mSide oS, unsigned long oT) = 0,
-                   cancelAll() = 0,
-                   close() = 0;
-  };
   struct mPair {
     string base,
            quote;
@@ -389,7 +336,64 @@ namespace K {
       {"quotesInMemoryDone", k.quotesInMemoryDone}
     };
   };
+  static function<void(int)> *evExit;
+  extern bool wInit;
+  extern WINDOW *wBorder,
+                *wLog;
+  extern mutex wsMutex;
+  static mutex wMutex,
+               ogMutex,
+               pgMutex;
+  static string uiPrtcl = "?";
   static map<string, mOrder> allOrders;
+  class Gw {
+    public:
+      static Gw *E(mExchange e);
+      string (*randId)() = 0;
+      function<void(mOrder)>        evDataOrder;
+      function<void(mTrade)>        evDataTrade;
+      function<void(mWallet)>       evDataWallet;
+      function<void(mLevels)>       evDataLevels;
+      function<void(mConnectivity)> evConnectOrder,
+                                    evConnectMarket;
+      uWS::Hub                *hub = nullptr;
+      uWS::Group<uWS::CLIENT> *gwGroup = nullptr;
+      mExchange exchange = mExchange::Null;
+       double makeFee = 0,  minTick = 0,
+              takeFee = 0,  minSize = 0;
+       string base    = "", quote   = "",
+              name    = "", symbol  = "",
+              apikey  = "", secret  = "",
+              user    = "", pass    = "",
+              ws      = "", http    = "";
+      virtual void wallet() = 0,
+                   levels() = 0,
+                   send(string oI, mSide oS, double oP, double oQ, mOrderType oLM, mTimeInForce oTIF, bool oPO, unsigned long oT) = 0,
+                   cancel(string oI, string oE, mSide oS, unsigned long oT) = 0,
+                   cancelAll() = 0,
+                   close() = 0;
+  };
+  class Klass {
+    protected:
+      virtual void load(int argc, char** argv) {};
+      virtual void load() {};
+      virtual void waitTime() {};
+      virtual void waitData() {};
+      virtual void waitUser() {};
+      virtual void run() {};
+    public:
+      void main(int argc, char** argv) {
+        load(argc, argv);
+        run();
+      };
+      void wait() {
+        load();
+        waitTime();
+        waitData();
+        waitUser();
+        run();
+      };
+  };
 }
 
 #endif
