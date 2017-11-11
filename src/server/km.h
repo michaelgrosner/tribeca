@@ -65,7 +65,7 @@ namespace K {
               RBLUE[]  = "\033[0;34m", RPURPLE[] = "\033[0;35m", RCYAN[]  = "\033[0;36m", RWHITE[]  = "\033[0;37m",
               BBLACK[] = "\033[1;30m", BRED[]    = "\033[1;31m", BGREEN[] = "\033[1;32m", BYELLOW[] = "\033[1;33m",
               BBLUE[]  = "\033[1;34m", BPURPLE[] = "\033[1;35m", BCYAN[]  = "\033[1;36m", BWHITE[]  = "\033[1;37m";
-  static void (*evExit)(int code);
+  static function<void(int)> *evExit;
   extern bool wInit;
   extern WINDOW *wBorder,
                 *wLog;
@@ -371,12 +371,12 @@ namespace K {
     public:
       static Gw *E(mExchange e);
       string (*randId)() = 0;
-      function<void(mOrder)>        ev_gwDataOrder;
-      function<void(mTrade)>        ev_gwDataTrade;
-      function<void(mWallet)>       ev_gwDataWallet;
-      function<void(mLevels)>       ev_gwDataLevels;
-      function<void(mConnectivity)> ev_gwConnectOrder,
-                                    ev_gwConnectMarket;
+      function<void(mOrder)>        evDataOrder;
+      function<void(mTrade)>        evDataTrade;
+      function<void(mWallet)>       evDataWallet;
+      function<void(mLevels)>       evDataLevels;
+      function<void(mConnectivity)> evConnectOrder,
+                                    evConnectMarket;
       uWS::Hub                *hub = nullptr;
       uWS::Group<uWS::CLIENT> *gwGroup = nullptr;
       mExchange exchange = mExchange::Null;

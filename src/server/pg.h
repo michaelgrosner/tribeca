@@ -33,8 +33,8 @@ namespace K {
         }
       };
       void waitData() {
-        gw->ev_gwDataWallet = [](mWallet k) {
-          if (argDebugEvents) FN::log("DEBUG", string("EV PG ev_gwDataWallet mWallet ") + ((json)k).dump());
+        gw->evDataWallet = [](mWallet k) {
+          if (argDebugEvents) FN::log("DEBUG", string("EV PG evDataWallet mWallet ") + ((json)k).dump());
           calcWallet(k);
         };
         ev_ogOrder = [](mOrder k) {

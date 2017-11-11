@@ -30,8 +30,8 @@ namespace K {
         FN::log("DB", string("loaded ") + to_string(tradesMemory.size()) + " historical Trades");
       };
       void waitData() {
-        gw->ev_gwDataOrder = [](mOrder k) {
-          if (argDebugEvents) FN::log("DEBUG", "EV OG ev_gwDataOrder");
+        gw->evDataOrder = [](mOrder k) {
+          if (argDebugEvents) FN::log("DEBUG", "EV OG evDataOrder");
           if (argDebugOrders) FN::log("DEBUG", string("OG reply  ") + k.orderId + "::" + k.exchangeId + " [" + to_string((int)k.orderStatus) + "]: " + to_string(k.quantity) + "/" + to_string(k.lastQuantity) + " at price " + to_string(k.price));
           updateOrderState(k);
         };

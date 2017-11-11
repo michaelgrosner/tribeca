@@ -2,15 +2,10 @@
 #define K_GW_H_
 
 namespace K {
-  static mConnectivity gwAutoStart = mConnectivity::Disconnected,
-                       gwQuotingState = mConnectivity::Disconnected,
-                       gwConnectOrder = mConnectivity::Disconnected,
-                       gwConnectMarket = mConnectivity::Disconnected,
-                       gwConnectExchange = mConnectivity::Disconnected;
   class GW: public Klass {
     protected:
       void load() {
-        evExit = happyEnding;
+        evExit = &happyEnding;
         if (argAutobot) gwAutoStart = mConnectivity::Connected;
         gw->hub = &hub;
         gw->gwGroup = hub.createGroup<uWS::CLIENT>();
@@ -31,13 +26,13 @@ namespace K {
         }, 0, 3e+5);
       };
       void waitData() {
-        gw->ev_gwConnectOrder = [](mConnectivity k) {
+        gw->evConnectOrder = [&](mConnectivity k) {
           gwConnUp(mGatewayType::OrderEntry, k);
         };
-        gw->ev_gwConnectMarket = [](mConnectivity k) {
+        gw->evConnectMarket = [&](mConnectivity k) {
           gwConnUp(mGatewayType::MarketData, k);
           if (k == mConnectivity::Disconnected)
-            gw->ev_gwDataLevels(mLevels());
+            gw->evDataLevels(mLevels());
         };
         gw->levels();
       };
@@ -52,6 +47,11 @@ namespace K {
         EV::end(eCode);
       };
     private:
+      mConnectivity gwAutoStart = mConnectivity::Disconnected,
+                    gwQuotingState = mConnectivity::Disconnected,
+                    gwConnectOrder = mConnectivity::Disconnected,
+                    gwConnectMarket = mConnectivity::Disconnected,
+                    gwConnectExchange = mConnectivity::Disconnected;
       function<json()> onSnapProduct = []() {
         return (json){{
           {"exchange", (int)gw->exchange},
@@ -62,13 +62,13 @@ namespace K {
           {"homepage", "https://github.com/ctubio/Krypto-trading-bot"}
         }};
       };
-      function<json()> onSnapStatus = []() {
+      function<json()> onSnapStatus = [&]() {
         return (json){{{"status", (int)gwConnectExchange}}};
       };
-      function<json()> onSnapState = []() {
+      function<json()> onSnapState = [&]() {
         return (json){{{"state",  (int)gwQuotingState}}};
       };
-      function<void(json)> onHandState = [](json k) {
+      function<void(json)> onHandState = [&](json k) {
         if (!k.is_object() or !k["state"].is_number()) {
           FN::logWar("JSON", "Missing state at onHandState, ignored");
           return;
@@ -79,7 +79,7 @@ namespace K {
           gwStateUp();
         }
       };
-      static void gwConnUp(mGatewayType gwT, mConnectivity gwS) {
+      void gwConnUp(mGatewayType gwT, mConnectivity gwS) {
         if (gwT == mGatewayType::MarketData) {
           if (gwConnectMarket == gwS) return;
           gwConnectMarket = gwS;
@@ -92,7 +92,7 @@ namespace K {
         gwStateUp();
         UI::uiSend(uiTXT::ExchangeConnectivity, {{"status", (int)gwConnectExchange}});
       };
-      static void gwStateUp() {
+      void gwStateUp() {
         mConnectivity quotingState = gwConnectExchange;
         if (quotingState == mConnectivity::Connected) quotingState = gwAutoStart;
         if (quotingState != gwQuotingState) {
@@ -103,7 +103,7 @@ namespace K {
         ev_gwConnectButton(gwQuotingState);
         ev_gwConnectExchange(gwConnectExchange);
       };
-      static void gwLoad(mExchange e) {
+      void gwLoad(mExchange e) {
         if (e == mExchange::Coinbase) {
           FN::stunnel();
           gw->randId = FN::uuidId;
@@ -181,7 +181,7 @@ namespace K {
           FN::log(string("GW ") + argExchange + ":", ss.str());
         } else FN::logExit("CF", "Unable to fetch data from " + argExchange + " symbol \"" + gw->symbol + "\"", EXIT_FAILURE, false);
       };
-      static void happyEnding(int code) {
+      function<void(int)> happyEnding = [](int code) {
         eCode = code;
         if (uv_loop_alive(hub.getLoop())) {
           uv_timer_stop(&tCancel);

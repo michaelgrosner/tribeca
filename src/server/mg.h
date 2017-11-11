@@ -60,12 +60,12 @@ namespace K {
         FN::log(argEwmaShort ? "ARG" : "DB", string("loaded EWMA Short = ") + to_string(mgEwmaS));
       };
       void waitData() {
-        gw->ev_gwDataTrade = [](mTrade k) {
-          if (argDebugEvents) FN::log("DEBUG", "EV MG ev_gwDataTrade");
+        gw->evDataTrade = [](mTrade k) {
+          if (argDebugEvents) FN::log("DEBUG", "EV MG evDataTrade");
           tradeUp(k);
         };
-        gw->ev_gwDataLevels = [](mLevels k) {
-          if (argDebugEvents) FN::log("DEBUG", "EV MG ev_gwDataLevels");
+        gw->evDataLevels = [](mLevels k) {
+          if (argDebugEvents) FN::log("DEBUG", "EV MG evDataLevels");
           levelUp(k);
         };
       };
@@ -103,7 +103,7 @@ namespace K {
           gw->minTick
         );
         if (!mgFairValue or (mgFairValue_ and abs(mgFairValue - mgFairValue_) < gw->minTick)) return;
-        gw->ev_gwDataWallet(mWallet());
+        gw->evDataWallet(mWallet());
         UI::uiSend(uiTXT::FairValue, {{"price", mgFairValue}}, true);
       };
     private:

@@ -3,15 +3,15 @@
 
 namespace K  {
   function<void(mConnectivity)> ev_gwConnectButton,
-                                       ev_gwConnectExchange;
+                                ev_gwConnectExchange;
   function<void(mOrder)>        ev_ogOrder;
   function<void(mTrade)>        ev_ogTrade;
   function<void()>              ev_mgLevels,
-                                       ev_mgEwmaSMUProtection,
-                                       ev_mgEwmaQuoteProtection,
-                                       ev_mgTargetPosition,
-                                       ev_pgTargetBasePosition,
-                                       ev_uiQuotingParameters;
+                                ev_mgEwmaSMUProtection,
+                                ev_mgEwmaQuoteProtection,
+                                ev_mgTargetPosition,
+                                ev_pgTargetBasePosition,
+                                ev_uiQuotingParameters;
   uv_timer_t tCalcs,
              tStart,
              tDelay,
@@ -21,7 +21,7 @@ namespace K  {
   class EV: public Klass {
     protected:
       void load() {
-        evExit = happyEnding;
+        evExit = &happyEnding;
         signal(SIGINT, quit);
         signal(SIGUSR1, wtf);
         signal(SIGABRT, wtf);
@@ -50,7 +50,7 @@ namespace K  {
           << ((k.is_null() || !k["/value/joke"_json_pointer].is_string())
             ? "let's plant a tree instead.." : k["/value/joke"_json_pointer].get<string>()
           ) << '\n';
-        evExit(EXIT_SUCCESS);
+        (*evExit)(EXIT_SUCCESS);
       };
       static void wtf(int sig) {
         FN::screen_quit();
@@ -64,7 +64,7 @@ namespace K  {
           upgrade();
           this_thread::sleep_for(chrono::seconds(21));
         }
-        evExit(EXIT_FAILURE);
+        (*evExit)(EXIT_FAILURE);
       };
       static bool latest() {
         return FN::output("test -d .git && git rev-parse @") == FN::output("test -d .git && git rev-parse @{u}");
@@ -87,7 +87,7 @@ namespace K  {
           << '\n' << "If you agree, go to https://github.com/ctubio/Krypto-trading-bot/issues/new"
           << '\n' << '\n';
       };
-      static void happyEnding(int code) {
+      function<void(int)> happyEnding = [](int code) {
         cout << FN::uiT();
         for(unsigned int i = 0; i < 21; ++i)
           cout << "THE END IS NEVER ";
