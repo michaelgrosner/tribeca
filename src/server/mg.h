@@ -29,7 +29,7 @@ namespace K {
   class MG: public Klass {
     protected:
       void load() {
-        json k = ((DB*)evDB)->load(uiTXT::MarketData);
+        json k = ((DB*)memory)->load(uiTXT::MarketData);
         if (k.size()) {
           for (json::reverse_iterator it = k.rbegin(); it != k.rend(); ++it) {
             if (it->value("time", (unsigned long)0)+qp.quotingStdevProtectionPeriods*1e+3<FN::T()) continue;
@@ -45,7 +45,7 @@ namespace K {
         if (argEwmaLong) mgEwmaL = argEwmaLong;
         if (argEwmaMedium) mgEwmaM = argEwmaMedium;
         if (argEwmaShort) mgEwmaS = argEwmaShort;
-        k = ((DB*)evDB)->load(uiTXT::EWMAChart);
+        k = ((DB*)memory)->load(uiTXT::EWMAChart);
         if (k.size()) {
           k = k.at(0);
           if (!mgEwmaL and k.value("time", (unsigned long)0)+qp.longEwmaPeriods*6e+4>FN::T())
@@ -70,9 +70,9 @@ namespace K {
         };
       };
       void waitUser() {
-        ((UI*)evUI)->welcome(uiTXT::MarketTrade, &helloTrade);
-        ((UI*)evUI)->welcome(uiTXT::FairValue, &helloFair);
-        ((UI*)evUI)->welcome(uiTXT::EWMAChart, &helloEwma);
+        ((UI*)client)->welcome(uiTXT::MarketTrade, &helloTrade);
+        ((UI*)client)->welcome(uiTXT::FairValue, &helloFair);
+        ((UI*)client)->welcome(uiTXT::EWMAChart, &helloEwma);
       };
     public:
       bool empty() {
@@ -104,7 +104,7 @@ namespace K {
         );
         if (!mgFairValue or (mgFairValue_ and abs(mgFairValue - mgFairValue_) < gw->minTick)) return;
         gw->evDataWallet(mWallet());
-        ((UI*)evUI)->send(uiTXT::FairValue, {{"price", mgFairValue}}, true);
+        ((UI*)client)->send(uiTXT::FairValue, {{"price", mgFairValue}}, true);
       };
     private:
       function<json()> helloTrade = []() {
@@ -147,7 +147,7 @@ namespace K {
         mgStatTop.push_back(topBid);
         mgStatTop.push_back(topAsk);
         calcStdev();
-        ((DB*)evDB)->insert(uiTXT::MarketData, {
+        ((DB*)memory)->insert(uiTXT::MarketData, {
           {"fv", mgFairValue},
           {"bid", topBid},
           {"ask", topAsk},
@@ -160,13 +160,13 @@ namespace K {
         k.time = FN::T();
         mgTrades.push_back(k);
         if (mgTrades.size()>69) mgTrades.erase(mgTrades.begin());
-        ((UI*)evUI)->send(uiTXT::MarketTrade, k);
+        ((UI*)client)->send(uiTXT::MarketTrade, k);
       };
       void levelUp(mLevels k) {
         static unsigned long lastUp = 0;
         filter(k);
         if (lastUp+369 > FN::T()) return;
-        ((UI*)evUI)->send(uiTXT::MarketData, k, true);
+        ((UI*)client)->send(uiTXT::MarketData, k, true);
         lastUp = FN::T();
       };
       void ewmaUp() {
@@ -174,8 +174,8 @@ namespace K {
         calcEwma(&mgEwmaM, qp.mediumEwmaPeriods);
         calcEwma(&mgEwmaS, qp.shortEwmaPeriods);
         calcTargetPos();
-        ((EV*)evEV)->mgTargetPosition();
-        ((UI*)evUI)->send(uiTXT::EWMAChart, {
+        ((EV*)events)->mgTargetPosition();
+        ((UI*)client)->send(uiTXT::EWMAChart, {
           {"stdevWidth", {
             {"fv", mgStdevFV},
             {"fvMean", mgStdevFVMean},
@@ -193,7 +193,7 @@ namespace K {
           {"ewmaLong", mgEwmaL},
           {"fairValue", mgFairValue}
         }, true);
-        ((DB*)evDB)->insert(uiTXT::EWMAChart, {
+        ((DB*)memory)->insert(uiTXT::EWMAChart, {
           {"ewmaLong", mgEwmaL},
           {"ewmaMedium", mgEwmaM},
           {"ewmaShort", mgEwmaS},
@@ -202,14 +202,14 @@ namespace K {
       };
       void ewmaPUp() {
         calcEwma(&mgEwmaP, qp.quotingEwmaProtectionPeriods);
-        ((EV*)evEV)->mgEwmaQuoteProtection();
+        ((EV*)events)->mgEwmaQuoteProtection();
       };
       void ewmaSMUUp() {
         calcEwma(&mgEwmaSM, qp.quotingEwmaSMPeriods);
         calcEwma(&mgEwmaSU, qp.quotingEwmaSUPeriods);
         if(mgEwmaSM && mgEwmaSU)
 		      mgEwmaSMUDiff = ((mgEwmaSU * 100) / mgEwmaSM) - 100;
-        ((EV*)evEV)->mgEwmaSMUProtection();
+        ((EV*)events)->mgEwmaSMUProtection();
       };
       void filter(mLevels k) {
         mgLevelsFilter = k;
@@ -220,7 +220,7 @@ namespace K {
         ogMutex.unlock();
         if (!empty()) {
           calcFairValue();
-          ((EV*)evEV)->mgLevels();
+          ((EV*)events)->mgLevels();
         }
       };
       void filter(vector<mLevel>* k, mOrder o) {

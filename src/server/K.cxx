@@ -66,15 +66,15 @@ using namespace nlohmann;
     ;;;;K::GW gw;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;cf.main(argc, argv);;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; // youtu.be/y0fTof1L-ag
 ;;  ;;  cf.link(&ev,&db,&ui,&qp,&og,&mg,&pg,&qe,&gw);;
-;   ;;  ev.wait(/*     Wherever you go..         */);;
+;   ;;  ev.wait(/*     Wherever you go..         */);;;;;; // youtu.be/DKSO5YlYbOg
     ;;  db.wait(/*     Whatever you do..         */);;
-    ;;  ui.wait(/*     I will be right here      */);;
+    ;;  ui.wait(/*     I will be right here      */);;;;;; // youtu.be/FornpYhezt4
     ;;  qp.wait(/*      waiting for coins.       */);;
-    ;;  og.wait(/*     Whatever it takes..       */);;
+    ;;  og.wait(/*     Whatever it takes..       */);;;;;; // youtu.be/caZLDPVvEmw
     ;;  mg.wait(/*     Or how my OS breaks,      */);;
-    ;;  pg.wait(/*     I will be right here      */);;
+    ;;  pg.wait(/*     I will be right here      */);;;;;; // youtu.be/02OHHWG1EQY
     ;;  qe.wait(/*      waiting for coins.       */);;
-;   ;;  gw.wait(/*     Day after day.         :wq*/);;
+;   ;;  gw.wait(/*     Day after day.         :wq*/);;;;;; // youtu.be/AMCeEoOgSvc
 ;;  ;;;;return EXIT_FAILURE;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;};;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; ;;;;;;; // youtu.be/dp5hsDgENLk
 ;;  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;  ;;

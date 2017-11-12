@@ -21,45 +21,45 @@ namespace K {
         uv_timer_start(&tCalcs, [](uv_timer_t *handle) {
           if (argDebugEvents) FN::log("DEBUG", "EV GW tCalcs timer");
           if (mgFairValue) {
-            ((MG*)((QE*)handle->data)->evMG)->calcStats();
-            ((PG*)((QE*)handle->data)->evPG)->calcSafety();
+            ((MG*)((QE*)handle->data)->market)->calcStats();
+            ((PG*)((QE*)handle->data)->wallet)->calcSafety();
             ((QE*)handle->data)->calcQuote();
           } else FN::logWar("QE", "Unable to calculate quote, missing fair value");
         }, 1e+3, 1e+3);
       };
       void waitData() {
-        ((EV*)evEV)->uiQuotingParameters = [&]() {
+        ((EV*)events)->uiQuotingParameters = [&]() {
           if (argDebugEvents) FN::log("DEBUG", "EV QE uiQuotingParameters");
-          ((MG*)evMG)->calcFairValue();
-          ((PG*)evPG)->calcTargetBasePos();
-          ((PG*)evPG)->calcSafety();
+          ((MG*)market)->calcFairValue();
+          ((PG*)wallet)->calcTargetBasePos();
+          ((PG*)wallet)->calcSafety();
           calcQuote();
         };
-        ((EV*)evEV)->ogTrade = [&](mTrade k) {
+        ((EV*)events)->ogTrade = [&](mTrade k) {
           if (argDebugEvents) FN::log("DEBUG", "EV QE ogTrade");
-          ((PG*)evPG)->addTrade(k);
-          ((PG*)evPG)->calcSafety();
+          ((PG*)wallet)->addTrade(k);
+          ((PG*)wallet)->calcSafety();
           calcQuote();
         };
-        ((EV*)evEV)->mgEwmaQuoteProtection = [&]() {
+        ((EV*)events)->mgEwmaQuoteProtection = [&]() {
           if (argDebugEvents) FN::log("DEBUG", "EV QE mgEwmaQuoteProtection");
           calcQuote();
         };
-        ((EV*)evEV)->mgEwmaSMUProtection = [&]() {
+        ((EV*)events)->mgEwmaSMUProtection = [&]() {
           if (argDebugEvents) FN::log("DEBUG", "EV QE mgEwmaSMUProtection");
           calcQuote();
         };
-        ((EV*)evEV)->mgLevels = [&]() {
+        ((EV*)events)->mgLevels = [&]() {
           if (argDebugEvents) FN::log("DEBUG", "EV QE mgLevels");
           calcQuote();
         };
-        ((EV*)evEV)->pgTargetBasePosition = [&]() {
+        ((EV*)events)->pgTargetBasePosition = [&]() {
           if (argDebugEvents) FN::log("DEBUG", "EV QE pgTargetBasePosition");
           calcQuote();
         };
       };
       void waitUser() {
-        ((UI*)evUI)->welcome(uiTXT::QuoteStatus, &hello);
+        ((UI*)client)->welcome(uiTXT::QuoteStatus, &hello);
       };
     public:
       mConnectivity gwConnectButton = mConnectivity::Disconnected,
@@ -80,7 +80,7 @@ namespace K {
         if (gwConnectExchange == mConnectivity::Disconnected) {
           qeAskStatus = mQuoteState::Disconnected;
           qeBidStatus = mQuoteState::Disconnected;
-        } else if (mgFairValue and !((MG*)evMG)->empty()) {
+        } else if (mgFairValue and !((MG*)market)->empty()) {
           if (gwConnectButton == mConnectivity::Disconnected) {
             qeAskStatus = mQuoteState::DisabledQuotes;
             qeBidStatus = mQuoteState::DisabledQuotes;
@@ -111,7 +111,7 @@ namespace K {
         bool k = diffCounts(&quotesInMemoryNew, &quotesInMemoryWorking, &quotesInMemoryDone);
         if (!diffStatus() and !k) return;
         qeStatus = mQuoteStatus(qeBidStatus, qeAskStatus, quotesInMemoryNew, quotesInMemoryWorking, quotesInMemoryDone);
-        ((UI*)evUI)->send(uiTXT::QuoteStatus, qeStatus, true);
+        ((UI*)client)->send(uiTXT::QuoteStatus, qeStatus, true);
       };
       bool diffCounts(unsigned int *qNew, unsigned int *qWorking, unsigned int *qDone) {
         ogMutex.lock();
@@ -134,7 +134,7 @@ namespace K {
           or qeAskStatus != qeStatus.askStatus;
       };
       mQuote nextQuote() {
-        if (((MG*)evMG)->empty() or ((PG*)evPG)->empty()) return mQuote();
+        if (((MG*)market)->empty() or ((PG*)wallet)->empty()) return mQuote();
         pgMutex.lock();
         double value           = pgPos.value,
                baseAmount      = pgPos.baseAmount,
@@ -224,7 +224,7 @@ namespace K {
         } else rawQuote->isBidPong = false;
       };
       void applyWaitingPing(mQuote *rawQuote, double buySize, double sellSize, double totalQuotePosition, double totalBasePosition, double safetyBuyPing, double safetySellPong) {
-        if ((qp.safety == mQuotingSafety::PingPong or ((QP*)evQP)->matchPings())
+        if ((qp.safety == mQuotingSafety::PingPong or ((QP*)params)->matchPings())
           and !safetyBuyPing and (qp.pingAt == mPingAt::StopPings or qp.pingAt == mPingAt::BidSide or qp.pingAt == mPingAt::DepletedAskSide
             or (totalQuotePosition>buySize and (qp.pingAt == mPingAt::DepletedSide or qp.pingAt == mPingAt::DepletedBidSide))
         )) {
@@ -234,7 +234,7 @@ namespace K {
           rawQuote->ask.price = 0;
           rawQuote->ask.size = 0;
         }
-        if ((qp.safety == mQuotingSafety::PingPong or ((QP*)evQP)->matchPings())
+        if ((qp.safety == mQuotingSafety::PingPong or ((QP*)params)->matchPings())
           and !safetySellPong and (qp.pingAt == mPingAt::StopPings or qp.pingAt == mPingAt::AskSide or qp.pingAt == mPingAt::DepletedBidSide
             or (totalBasePosition>sellSize and (qp.pingAt == mPingAt::DepletedSide or qp.pingAt == mPingAt::DepletedAskSide))
         )) {
@@ -314,7 +314,7 @@ namespace K {
         }
       };
       void applyAggressivePositionRebalancing(mQuote *rawQuote, double widthPong, double safetyBuyPing, double safetySellPong) {
-        if (qp.safety == mQuotingSafety::Boomerang or qp.safety == mQuotingSafety::AK47 or ((QP*)evQP)->matchPings()) {
+        if (qp.safety == mQuotingSafety::Boomerang or qp.safety == mQuotingSafety::AK47 or ((QP*)params)->matchPings()) {
           if (rawQuote->ask.size and safetyBuyPing and (
             (qp.aggressivePositionRebalancing == mAPR::SizeWidth and pgSideAPR == "Sell")
             or qp.pongAt == mPongAt::ShortPingAggressive
@@ -528,26 +528,26 @@ namespace K {
         } else return mQuoteState::Live;
       };
       void updateQuote(mLevel q, mSide side, bool isPong) {
-        multimap<double, mOrder> orders = ordersAtSide(side);
-        int k = orders.size();
+        multimap<double, mOrder> ordersSide = ordersAtSide(side);
+        int k = ordersSide.size();
         if (!k) return start(side, q, isPong);
         unsigned long T = FN::T();
-        for (multimap<double, mOrder>::iterator it = orders.begin(); it != orders.end(); ++it)
+        for (multimap<double, mOrder>::iterator it = ordersSide.begin(); it != ordersSide.end(); ++it)
           if (it->first == q.price) { return; }
           else if (it->second.orderStatus == mORS::New) {
-            if (T-10e+3>it->second.time) ((OG*)evOG)->cleanOrder(it->second.orderId, it->second.exchangeId);
+            if (T-10e+3>it->second.time) ((OG*)orders)->cleanOrder(it->second.orderId, it->second.exchangeId);
             if (qp.safety != mQuotingSafety::AK47 or (int)k >= qp.bullets) return;
           }
         modify(side, q, isPong);
       };
       multimap<double, mOrder> ordersAtSide(mSide side) {
-        multimap<double, mOrder> orders;
+        multimap<double, mOrder> ordersSide;
         ogMutex.lock();
         for (map<string, mOrder>::iterator it = allOrders.begin(); it != allOrders.end(); ++it)
           if ((mSide)it->second.side == side)
-            orders.insert(pair<double, mOrder>(it->second.price, it->second));
+            ordersSide.insert(pair<double, mOrder>(it->second.price, it->second));
         ogMutex.unlock();
-        return orders;
+        return ordersSide;
       };
       void modify(mSide side, mLevel q, bool isPong) {
         if (qp.safety == mQuotingSafety::AK47)
@@ -579,28 +579,28 @@ namespace K {
           tStart_ = 0;
           qeNextT = FN::T();
         }
-        ((OG*)evOG)->sendOrder(side, q.price, q.size, mOrderType::Limit, mTimeInForce::GTC, isPong, true);
+        ((OG*)orders)->sendOrder(side, q.price, q.size, mOrderType::Limit, mTimeInForce::GTC, isPong, true);
       };
       void stopWorstsQuotes(mSide side, double price) {
-        multimap<double, mOrder> orders = ordersAtSide(side);
-        for (multimap<double, mOrder>::iterator it = orders.begin(); it != orders.end(); ++it)
+        multimap<double, mOrder> ordersSide = ordersAtSide(side);
+        for (multimap<double, mOrder>::iterator it = ordersSide.begin(); it != ordersSide.end(); ++it)
           if (side == mSide::Bid
             ? price < it->second.price
             : price > it->second.price
-          ) ((OG*)evOG)->cancelOrder(it->second.orderId);
+          ) ((OG*)orders)->cancelOrder(it->second.orderId);
       };
       void stopWorstQuote(mSide side) {
-        multimap<double, mOrder> orders = ordersAtSide(side);
-        if (orders.size())
-          ((OG*)evOG)->cancelOrder(side == mSide::Bid
-            ? orders.begin()->second.orderId
-            : orders.rbegin()->second.orderId
+        multimap<double, mOrder> ordersSide = ordersAtSide(side);
+        if (ordersSide.size())
+          ((OG*)orders)->cancelOrder(side == mSide::Bid
+            ? ordersSide.begin()->second.orderId
+            : ordersSide.rbegin()->second.orderId
           );
       };
       void stopAllQuotes(mSide side) {
-        multimap<double, mOrder> orders = ordersAtSide(side);
-        for (multimap<double, mOrder>::iterator it = orders.begin(); it != orders.end(); ++it)
-          ((OG*)evOG)->cancelOrder(it->second.orderId);
+        multimap<double, mOrder> ordersSide = ordersAtSide(side);
+        for (multimap<double, mOrder>::iterator it = ordersSide.begin(); it != ordersSide.end(); ++it)
+          ((OG*)orders)->cancelOrder(it->second.orderId);
       };
       void stopAllQuotes() {
         stopAllQuotes(mSide::Bid);

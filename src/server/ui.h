@@ -252,7 +252,7 @@ namespace K {
           {"memory", FN::memory()},
           {"hour", localtime(&rawtime)->tm_hour},
           {"freq", uiOSR_1m},
-          {"dbsize", ((DB*)evDB)->size()},
+          {"dbsize", ((DB*)memory)->size()},
           {"a", A()}
         };
       };

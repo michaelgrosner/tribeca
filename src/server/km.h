@@ -374,14 +374,15 @@ namespace K {
   };
   class Klass {
     protected:
-      Klass *evEV = nullptr,
-            *evDB = nullptr,
-            *evUI = nullptr,
-            *evQP = nullptr,
-            *evOG = nullptr,
-            *evMG = nullptr,
-            *evPG = nullptr,
-            *evQE = nullptr;
+      Klass *config = nullptr,
+            *events = nullptr,
+            *memory = nullptr,
+            *client = nullptr,
+            *params = nullptr,
+            *orders = nullptr,
+            *market = nullptr,
+            *wallet = nullptr,
+            *engine = nullptr;
       virtual void load(int argc, char** argv) {};
       virtual void load() {};
       virtual void waitTime() {};
@@ -389,14 +390,15 @@ namespace K {
       virtual void waitUser() {};
       virtual void run() {};
     public:
-      void evLink(Klass *k) { evEV = k; };
-      void dbLink(Klass *k) { evDB = k; };
-      void uiLink(Klass *k) { evUI = k; };
-      void qpLink(Klass *k) { evQP = k; };
-      void ogLink(Klass *k) { evOG = k; };
-      void mgLink(Klass *k) { evMG = k; };
-      void pgLink(Klass *k) { evPG = k; };
-      void qeLink(Klass *k) { evQE = k; };
+      void cfLink(Klass *k) { config = k; };
+      void evLink(Klass *k) { events = k; };
+      void dbLink(Klass *k) { memory = k; };
+      void uiLink(Klass *k) { client = k; };
+      void qpLink(Klass *k) { params = k; };
+      void ogLink(Klass *k) { orders = k; };
+      void mgLink(Klass *k) { market = k; };
+      void pgLink(Klass *k) { wallet = k; };
+      void qeLink(Klass *k) { engine = k; };
       void main(int argc, char** argv) {
         load(argc, argv);
         run();

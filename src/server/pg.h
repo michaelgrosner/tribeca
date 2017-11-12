@@ -12,7 +12,7 @@ namespace K {
   class PG: public Klass {
     protected:
       void load() {
-        json k = ((DB*)evDB)->load(uiTXT::TargetBasePosition);
+        json k = ((DB*)memory)->load(uiTXT::TargetBasePosition);
         if (k.size()) {
           k = k.at(0);
           pgTargetBasePos = k.value("tbp", 0.0);
@@ -21,7 +21,7 @@ namespace K {
         stringstream ss;
         ss << setprecision(8) << fixed << pgTargetBasePos;
         FN::log("DB", string("loaded TBP = ") + ss.str() + " " + gw->base);
-        k = ((DB*)evDB)->load(uiTXT::Position);
+        k = ((DB*)memory)->load(uiTXT::Position);
         if (k.size()) {
           for (json::reverse_iterator it = k.rbegin(); it != k.rend(); ++it)
             pgProfit.push_back(mProfit(
@@ -37,20 +37,20 @@ namespace K {
           if (argDebugEvents) FN::log("DEBUG", string("EV PG evDataWallet mWallet ") + ((json)k).dump());
           calcWallet(k);
         };
-        ((EV*)evEV)->ogOrder = [&](mOrder k) {
+        ((EV*)events)->ogOrder = [&](mOrder k) {
           if (argDebugEvents) FN::log("DEBUG", string("EV PG ogOrder mOrder ") + ((json)k).dump());
           calcWalletAfterOrder(k);
           FN::screen_refresh();
         };
-        ((EV*)evEV)->mgTargetPosition = [&]() {
+        ((EV*)events)->mgTargetPosition = [&]() {
           if (argDebugEvents) FN::log("DEBUG", "EV PG mgTargetPosition");
           calcTargetBasePos();
         };
       };
       void waitUser() {
-        ((UI*)evUI)->welcome(uiTXT::Position, &helloPosition);
-        ((UI*)evUI)->welcome(uiTXT::TradeSafetyValue, &helloSafety);
-        ((UI*)evUI)->welcome(uiTXT::TargetBasePosition, &helloTargetBasePos);
+        ((UI*)client)->welcome(uiTXT::Position, &helloPosition);
+        ((UI*)client)->welcome(uiTXT::TradeSafetyValue, &helloSafety);
+        ((UI*)client)->welcome(uiTXT::TargetBasePosition, &helloTargetBasePos);
       };
     public:
       void calcSafety() {
@@ -64,7 +64,7 @@ namespace K {
         ) {
           pgSafety = safety;
           pgMutex.unlock();
-          ((UI*)evUI)->send(uiTXT::TradeSafetyValue, safety);
+          ((UI*)client)->send(uiTXT::TradeSafetyValue, safety);
         } else pgMutex.unlock();
       };
       void calcTargetBasePos() {
@@ -81,10 +81,10 @@ namespace K {
         if (pgTargetBasePos and abs(pgTargetBasePos - targetBasePosition) < 1e-4 and pgSideAPR_ == pgSideAPR) return;
         pgTargetBasePos = targetBasePosition;
         pgSideAPR_ = pgSideAPR;
-        ((EV*)evEV)->pgTargetBasePosition();
+        ((EV*)events)->pgTargetBasePosition();
         json k = {{"tbp", pgTargetBasePos}, {"sideAPR", pgSideAPR}};
-        ((UI*)evUI)->send(uiTXT::TargetBasePosition, k, true);
-        ((DB*)evDB)->insert(uiTXT::TargetBasePosition, k);
+        ((UI*)client)->send(uiTXT::TargetBasePosition, k, true);
+        ((DB*)memory)->insert(uiTXT::TargetBasePosition, k);
         stringstream ss;
         ss << (int)(pgTargetBasePos / value * 1e+2) << "% = " << setprecision(8) << fixed << pgTargetBasePos;
         FN::log("TBP", ss.str() + " " + gw->base);
@@ -167,13 +167,13 @@ namespace K {
         );
       };
       void matchFirstPing(map<double, mTrade>* trades, double* ping, double* qty, double qtyMax, double width, bool reverse = false) {
-        matchPing(((QP*)evQP)->matchPings(), true, true, trades, ping, qty, qtyMax, width, reverse);
+        matchPing(((QP*)params)->matchPings(), true, true, trades, ping, qty, qtyMax, width, reverse);
       };
       void matchBestPing(map<double, mTrade>* trades, double* ping, double* qty, double qtyMax, double width, bool reverse = false) {
-        matchPing(((QP*)evQP)->matchPings(), true, false, trades, ping, qty, qtyMax, width, reverse);
+        matchPing(((QP*)params)->matchPings(), true, false, trades, ping, qty, qtyMax, width, reverse);
       };
       void matchLastPing(map<double, mTrade>* trades, double* ping, double* qty, double qtyMax, double width, bool reverse = false) {
-        matchPing(((QP*)evQP)->matchPings(), false, true, trades, ping, qty, qtyMax, width, reverse);
+        matchPing(((QP*)params)->matchPings(), false, true, trades, ping, qty, qtyMax, width, reverse);
       };
       void matchPing(bool matchPings, bool near, bool far, map<double, mTrade>* trades, double* ping, double* qty, double qtyMax, double width, bool reverse = false) {
         int dir = width > 0 ? 1 : -1;
@@ -249,7 +249,7 @@ namespace K {
         mProfit profit(baseValue, quoteValue, now);
         if (profitT_21s+21e+3 < FN::T()) {
           profitT_21s = FN::T();
-          ((DB*)evDB)->insert(uiTXT::Position, profit, false, "NULL", now - qp.profitHourInterval * 36e+5);
+          ((DB*)memory)->insert(uiTXT::Position, profit, false, "NULL", now - qp.profitHourInterval * 36e+5);
         }
         profitMutex.lock();
         pgProfit.push_back(profit);
@@ -286,7 +286,7 @@ namespace K {
         pgPos = pos;
         pgMutex.unlock();
         if (!eq) calcTargetBasePos();
-        ((UI*)evUI)->send(uiTXT::Position, pos, true);
+        ((UI*)client)->send(uiTXT::Position, pos, true);
       };
       void calcWalletAfterOrder(mOrder k) {
         if (empty()) return;

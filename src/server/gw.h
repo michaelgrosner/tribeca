@@ -36,14 +36,14 @@ namespace K {
         gw->levels();
       };
       void waitUser() {
-        ((UI*)evUI)->welcome(uiTXT::ProductAdvertisement, &helloProduct);
-        ((UI*)evUI)->welcome(uiTXT::ExchangeConnectivity, &helloStatus);
-        ((UI*)evUI)->welcome(uiTXT::ActiveState, &helloState);
-        ((UI*)evUI)->clickme(uiTXT::ActiveState, &kissState);
+        ((UI*)client)->welcome(uiTXT::ProductAdvertisement, &helloProduct);
+        ((UI*)client)->welcome(uiTXT::ExchangeConnectivity, &helloStatus);
+        ((UI*)client)->welcome(uiTXT::ActiveState, &helloState);
+        ((UI*)client)->clickme(uiTXT::ActiveState, &kissState);
       };
       void run() {
         hub.run();
-        ((EV*)evEV)->end(eCode);
+        ((EV*)events)->end(eCode);
       };
     private:
       function<void(int)> happyEnding = [&](int code) {
@@ -63,7 +63,7 @@ namespace K {
           FN::close(hub.getLoop());
           hub.getLoop()->destroy();
         }
-        ((EV*)evEV)->end(code);
+        ((EV*)events)->end(code);
       };
       mConnectivity gwAutoStart = mConnectivity::Disconnected,
                     gwQuotingState = mConnectivity::Disconnected,
@@ -108,7 +108,7 @@ namespace K {
         gwConnectExchange = gwConnectMarket == mConnectivity::Connected and gwConnectOrder == mConnectivity::Connected
           ? mConnectivity::Connected : mConnectivity::Disconnected;
         clientSemaphore();
-        ((UI*)evUI)->send(uiTXT::ExchangeConnectivity, {{"status", (int)gwConnectExchange}});
+        ((UI*)client)->send(uiTXT::ExchangeConnectivity, {{"status", (int)gwConnectExchange}});
       };
       void clientSemaphore() {
         mConnectivity quotingState = gwConnectExchange;
@@ -116,10 +116,10 @@ namespace K {
         if (quotingState != gwQuotingState) {
           gwQuotingState = quotingState;
           FN::log(string("GW ") + argExchange, "Quoting state changed to", gwQuotingState == mConnectivity::Connected ? "CONNECTED" : "DISCONNECTED");
-          ((UI*)evUI)->send(uiTXT::ActiveState, {{"state", (int)gwQuotingState}});
+          ((UI*)client)->send(uiTXT::ActiveState, {{"state", (int)gwQuotingState}});
         }
-        ((QE*)evQE)->gwConnectButton = gwQuotingState;
-        ((QE*)evQE)->gwConnectExchange = gwConnectExchange;
+        ((QE*)engine)->gwConnectButton = gwQuotingState;
+        ((QE*)engine)->gwConnectExchange = gwConnectExchange;
       };
       void handshake(mExchange e) {
         if (e == mExchange::Coinbase) {

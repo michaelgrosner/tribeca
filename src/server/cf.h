@@ -172,19 +172,19 @@ namespace K {
         gw->ws = argWss;
       };
     private:
-      static string base() {
+      string base() {
         string k_ = argCurrency;
         string k = k_.substr(0, k_.find("/"));
         if (k == k_) FN::logExit("CF", "Invalid currency pair! Must be in the format of BASE/QUOTE, eg BTC/EUR.", EXIT_SUCCESS);
         return FN::S2u(k);
       };
-      static string quote() {
+      string quote() {
         string k_ = argCurrency;
         string k = k_.substr(k_.find("/")+1);
         if (k == k_) FN::logExit("CF", "Invalid currency pair! Must be in the format of BASE/QUOTE, eg BTC/EUR", EXIT_SUCCESS);
         return FN::S2u(k);
       };
-      static mExchange exchange() {
+      mExchange exchange() {
         string k = FN::S2l(argExchange);
         if (k == "coinbase") return mExchange::Coinbase;
         else if (k == "okcoin") return mExchange::OkCoin;

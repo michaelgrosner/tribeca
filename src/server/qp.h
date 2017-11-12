@@ -177,18 +177,18 @@ namespace K {
   class QP: public Klass {
     protected:
       void load() {
-        json k = ((DB*)evDB)->load(uiTXT::QuotingParametersChange);
+        json k = ((DB*)memory)->load(uiTXT::QuotingParametersChange);
         if (k.size()) {
           qp = k.at(0);
           FN::log("DB", "loaded Quoting Parameters OK");
         } else FN::logWar("QP", "using default values for Quoting Parameters");
       };
       void waitUser() {
-        ((UI*)evUI)->welcome(uiTXT::QuotingParametersChange, &hello);
-        ((UI*)evUI)->clickme(uiTXT::QuotingParametersChange, &kiss);
+        ((UI*)client)->welcome(uiTXT::QuotingParametersChange, &hello);
+        ((UI*)client)->clickme(uiTXT::QuotingParametersChange, &kiss);
       };
       void run() {
-        ((UI*)evUI)->delay(qp.delayUI);
+        ((UI*)client)->delay(qp.delayUI);
       };
     public:
       bool matchPings() {
@@ -210,11 +210,11 @@ namespace K {
           and k.value("widthPongPercentage", 0.0) > 0
         ) {
           qp = k;
-          ((DB*)evDB)->insert(uiTXT::QuotingParametersChange, qp);
-          ((EV*)evEV)->uiQuotingParameters();
-          ((UI*)evUI)->delay(qp.delayUI);
+          ((DB*)memory)->insert(uiTXT::QuotingParametersChange, qp);
+          ((EV*)events)->uiQuotingParameters();
+          ((UI*)client)->delay(qp.delayUI);
         }
-        ((UI*)evUI)->send(uiTXT::QuotingParametersChange, qp);
+        ((UI*)client)->send(uiTXT::QuotingParametersChange, qp);
       };
   };
 }

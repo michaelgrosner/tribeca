@@ -7,7 +7,7 @@ namespace K {
   class OG: public Klass {
     protected:
       void load() {
-        json k = ((DB*)evDB)->load(uiTXT::Trades);
+        json k = ((DB*)memory)->load(uiTXT::Trades);
         if (k.size())
           for (json::reverse_iterator it = k.rbegin(); it != k.rend(); ++it)
             tradesMemory.push_back(mTrade(
@@ -37,14 +37,14 @@ namespace K {
         };
       };
       void waitUser() {
-        ((UI*)evUI)->welcome(uiTXT::Trades, &helloTrades);
-        ((UI*)evUI)->welcome(uiTXT::OrderStatusReports, &helloOrders);
-        ((UI*)evUI)->clickme(uiTXT::SubmitNewOrder, &kissSubmitNewOrder);
-        ((UI*)evUI)->clickme(uiTXT::CancelOrder, &kissCancelOrder);
-        ((UI*)evUI)->clickme(uiTXT::CancelAllOrders, &kissCancelAllOrders);
-        ((UI*)evUI)->clickme(uiTXT::CleanAllClosedTrades, &kissCleanAllClosedTrades);
-        ((UI*)evUI)->clickme(uiTXT::CleanAllTrades, &kissCleanAllTrades);
-        ((UI*)evUI)->clickme(uiTXT::CleanTrade, &kissCleanTrade);
+        ((UI*)client)->welcome(uiTXT::Trades, &helloTrades);
+        ((UI*)client)->welcome(uiTXT::OrderStatusReports, &helloOrders);
+        ((UI*)client)->clickme(uiTXT::SubmitNewOrder, &kissSubmitNewOrder);
+        ((UI*)client)->clickme(uiTXT::CancelOrder, &kissCancelOrder);
+        ((UI*)client)->clickme(uiTXT::CancelAllOrders, &kissCancelAllOrders);
+        ((UI*)client)->clickme(uiTXT::CleanAllClosedTrades, &kissCleanAllClosedTrades);
+        ((UI*)client)->clickme(uiTXT::CleanAllTrades, &kissCleanAllTrades);
+        ((UI*)client)->clickme(uiTXT::CleanTrade, &kissCleanTrade);
       };
     public:
       void sendOrder(mSide oS, double oP, double oQ, mOrderType oLM, mTimeInForce oTIF, bool oIP, bool oPO) {
@@ -162,9 +162,9 @@ namespace K {
           o.computationalLatency = FN::T() - o.time;
         if (o.computationalLatency) o.time = FN::T();
         toMemory(o);
-        ((EV*)evEV)->ogOrder(o);
+        ((EV*)events)->ogOrder(o);
         if (o.orderStatus != mORS::New)
-          ((UI*)evUI)->send(uiTXT::OrderStatusReports, o, true);
+          ((UI*)client)->send(uiTXT::OrderStatusReports, o, true);
         if (k.lastQuantity > 0)
           toHistory(o);
         return o;
@@ -184,8 +184,8 @@ namespace K {
           if (it->Kqty+0.0001 < it->quantity) ++it;
           else {
             it->Kqty = -1;
-            ((UI*)evUI)->send(uiTXT::Trades, *it);
-            ((DB*)evDB)->insert(uiTXT::Trades, {}, false, it->tradeId);
+            ((UI*)client)->send(uiTXT::Trades, *it);
+            ((DB*)memory)->insert(uiTXT::Trades, {}, false, it->tradeId);
             it = tradesMemory.erase(it);
           }
         }
@@ -193,8 +193,8 @@ namespace K {
       void cleanTrades() {
         for (vector<mTrade>::iterator it = tradesMemory.begin(); it != tradesMemory.end();) {
           it->Kqty = -1;
-          ((UI*)evUI)->send(uiTXT::Trades, *it);
-          ((DB*)evDB)->insert(uiTXT::Trades, {}, false, it->tradeId);
+          ((UI*)client)->send(uiTXT::Trades, *it);
+          ((DB*)memory)->insert(uiTXT::Trades, {}, false, it->tradeId);
           it = tradesMemory.erase(it);
         }
       };
@@ -203,8 +203,8 @@ namespace K {
           if (it->tradeId != k) ++it;
           else {
             it->Kqty = -1;
-            ((UI*)evUI)->send(uiTXT::Trades, *it);
-            ((DB*)evDB)->insert(uiTXT::Trades, {}, false, it->tradeId);
+            ((UI*)client)->send(uiTXT::Trades, *it);
+            ((DB*)memory)->insert(uiTXT::Trades, {}, false, it->tradeId);
             it = tradesMemory.erase(it);
             break;
           }
@@ -224,8 +224,8 @@ namespace K {
           val, 0, 0, 0, 0, 0, fee, false
         );
         FN::log(trade, argExchange);
-        ((EV*)evEV)->ogTrade(trade);
-        if (((QP*)evQP)->matchPings()) {
+        ((EV*)events)->ogTrade(trade);
+        if (((QP*)params)->matchPings()) {
           double widthPong = qp.widthPercentage
             ? qp.widthPongPercentage * trade.price / 100
             : qp.widthPong;
@@ -237,11 +237,11 @@ namespace K {
             ) matches[it->price] = it->tradeId;
           matchPong(matches, (qp.pongAt == mPongAt::LongPingFair or qp.pongAt == mPongAt::LongPingAggressive) ? trade.side == mSide::Ask : trade.side == mSide::Bid, trade);
         } else {
-          ((UI*)evUI)->send(uiTXT::Trades, trade);
-          ((DB*)evDB)->insert(uiTXT::Trades, trade, false, trade.tradeId);
+          ((UI*)client)->send(uiTXT::Trades, trade);
+          ((DB*)memory)->insert(uiTXT::Trades, trade, false, trade.tradeId);
           tradesMemory.push_back(trade);
         }
-        ((UI*)evUI)->send(uiTXT::TradesChart, {
+        ((UI*)client)->send(uiTXT::TradesChart, {
           {"price", trade.price},
           {"side", (int)trade.side},
           {"quantity", trade.quantity},
@@ -264,13 +264,13 @@ namespace K {
             it->quantity = it->quantity + pong.quantity;
             it->value = it->value + pong.value;
             it->loadedFromDB = false;
-            ((UI*)evUI)->send(uiTXT::Trades, *it);
-            ((DB*)evDB)->insert(uiTXT::Trades, *it, false, it->tradeId);
+            ((UI*)client)->send(uiTXT::Trades, *it);
+            ((DB*)memory)->insert(uiTXT::Trades, *it, false, it->tradeId);
             break;
           }
           if (!eq) {
-            ((UI*)evUI)->send(uiTXT::Trades, pong);
-            ((DB*)evDB)->insert(uiTXT::Trades, pong, false, pong.tradeId);
+            ((UI*)client)->send(uiTXT::Trades, pong);
+            ((DB*)memory)->insert(uiTXT::Trades, pong, false, pong.tradeId);
             tradesMemory.push_back(pong);
           }
         }
@@ -288,8 +288,8 @@ namespace K {
           if (it->quantity<=it->Kqty)
             it->Kdiff = abs((it->quantity*it->price)-(it->Kqty*it->Kprice));
           it->loadedFromDB = false;
-          ((UI*)evUI)->send(uiTXT::Trades, *it);
-          ((DB*)evDB)->insert(uiTXT::Trades, *it, false, it->tradeId);
+          ((UI*)client)->send(uiTXT::Trades, *it);
+          ((DB*)memory)->insert(uiTXT::Trades, *it, false, it->tradeId);
           break;
         }
         return pong->quantity > 0;
@@ -300,8 +300,8 @@ namespace K {
         for (vector<mTrade>::iterator it = tradesMemory.begin(); it != tradesMemory.end();) {
           if (it->time < pT_ and (pT < 0 or it->Kqty >= it->quantity)) {
             it->Kqty = -1;
-            ((UI*)evUI)->send(uiTXT::Trades, *it);
-            ((DB*)evDB)->insert(uiTXT::Trades, {}, false, it->tradeId);
+            ((UI*)client)->send(uiTXT::Trades, *it);
+            ((DB*)memory)->insert(uiTXT::Trades, {}, false, it->tradeId);
             it = tradesMemory.erase(it);
           } else ++it;
         }
