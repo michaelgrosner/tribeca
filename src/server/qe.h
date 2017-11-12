@@ -59,7 +59,7 @@ namespace K {
         };
       };
       void waitUser() {
-        ((UI*)evUI)->evSnap(uiTXT::QuoteStatus, &onSnap);
+        ((UI*)evUI)->welcome(uiTXT::QuoteStatus, &hello);
       };
     public:
       mConnectivity gwConnectButton = mConnectivity::Disconnected,
@@ -71,7 +71,7 @@ namespace K {
       mQuoteStatus qeStatus;
       map<mSide, mLevel> qeNextQuote;
       bool qeNextIsPong = false;
-      function<json()> onSnap = [&]() {
+      function<json()> hello = [&]() {
         return (json){ qeStatus };
       };
       void calcQuote() {
@@ -111,7 +111,7 @@ namespace K {
         bool k = diffCounts(&quotesInMemoryNew, &quotesInMemoryWorking, &quotesInMemoryDone);
         if (!diffStatus() and !k) return;
         qeStatus = mQuoteStatus(qeBidStatus, qeAskStatus, quotesInMemoryNew, quotesInMemoryWorking, quotesInMemoryDone);
-        ((UI*)evUI)->evSend(uiTXT::QuoteStatus, qeStatus, true);
+        ((UI*)evUI)->send(uiTXT::QuoteStatus, qeStatus, true);
       };
       bool diffCounts(unsigned int *qNew, unsigned int *qWorking, unsigned int *qDone) {
         ogMutex.lock();
@@ -177,24 +177,24 @@ namespace K {
         const double rawBidSz = rawQuote.bid.size;
         const double rawAskSz = rawQuote.ask.size;
         bool superTradesActive = false;
-        dQ("?", rawQuote); applySuperTrades(&rawQuote, &superTradesActive, widthPing, buySize, sellSize, quoteAmount, baseAmount);
-        dQ("A", rawQuote); applyEwmaProtection(&rawQuote);
-        dQ("B", rawQuote); applyEwmaSMUProtection(&rawQuote);
-        dQ("C", rawQuote); applyTotalBasePosition(&rawQuote, totalBasePosition, pDiv, buySize, sellSize, quoteAmount, baseAmount);
-        dQ("D", rawQuote); applyStdevProtection(&rawQuote);
-        dQ("E", rawQuote); applyAggressivePositionRebalancing(&rawQuote, widthPong, safetyBuyPing, safetySellPong);
-        dQ("F", rawQuote); applyAK47Increment(&rawQuote, value);
-        dQ("G", rawQuote); applyBestWidth(&rawQuote);
-        dQ("H", rawQuote); applyTradesPerMinute(&rawQuote, superTradesActive, safetyBuy, safetySell);
-        dQ("I", rawQuote); applyWaitingPing(&rawQuote, buySize, sellSize, totalQuotePosition, totalBasePosition, safetyBuyPing, safetySellPong);
-        dQ("J", rawQuote); applyRoundSide(&rawQuote);
-        dQ("K", rawQuote); applyRoundDown(&rawQuote, rawBidSz, rawAskSz, widthPong, safetyBuyPing, safetySellPong, totalQuotePosition, totalBasePosition);
-        dQ("L", rawQuote); applyDepleted(&rawQuote, totalQuotePosition, totalBasePosition);
-        dQ("!", rawQuote);
+        debug("?", rawQuote); applySuperTrades(&rawQuote, &superTradesActive, widthPing, buySize, sellSize, quoteAmount, baseAmount);
+        debug("A", rawQuote); applyEwmaProtection(&rawQuote);
+        debug("B", rawQuote); applyEwmaSMUProtection(&rawQuote);
+        debug("C", rawQuote); applyTotalBasePosition(&rawQuote, totalBasePosition, pDiv, buySize, sellSize, quoteAmount, baseAmount);
+        debug("D", rawQuote); applyStdevProtection(&rawQuote);
+        debug("E", rawQuote); applyAggressivePositionRebalancing(&rawQuote, widthPong, safetyBuyPing, safetySellPong);
+        debug("F", rawQuote); applyAK47Increment(&rawQuote, value);
+        debug("G", rawQuote); applyBestWidth(&rawQuote);
+        debug("H", rawQuote); applyTradesPerMinute(&rawQuote, superTradesActive, safetyBuy, safetySell);
+        debug("I", rawQuote); applyWaitingPing(&rawQuote, buySize, sellSize, totalQuotePosition, totalBasePosition, safetyBuyPing, safetySellPong);
+        debug("J", rawQuote); applyRoundSide(&rawQuote);
+        debug("K", rawQuote); applyRoundDown(&rawQuote, rawBidSz, rawAskSz, widthPong, safetyBuyPing, safetySellPong, totalQuotePosition, totalBasePosition);
+        debug("L", rawQuote); applyDepleted(&rawQuote, totalQuotePosition, totalBasePosition);
+        debug("!", rawQuote);
         if (argDebugQuotes) FN::log("DEBUG", string("QE totals ") + "toAsk:" + to_string(totalBasePosition) + " toBid:" + to_string(totalQuotePosition) + " min:" + to_string(gw->minSize));
         return rawQuote;
       };
-      void dQ(string k, mQuote rawQuote) {
+      void debug(string k, mQuote rawQuote) {
         if (argDebugQuotes) FN::log("DEBUG", string("QE quote") + k + " " + to_string((int)qeBidStatus) + " " + to_string((int)qeAskStatus) + " " + ((json)rawQuote).dump());
       };
       void applyRoundSide(mQuote *rawQuote) {
@@ -528,26 +528,26 @@ namespace K {
         } else return mQuoteState::Live;
       };
       void updateQuote(mLevel q, mSide side, bool isPong) {
-        multimap<double, mOrder> orderSide = orderCacheSide(side);
-        int k = orderSide.size();
+        multimap<double, mOrder> orders = ordersAtSide(side);
+        int k = orders.size();
         if (!k) return start(side, q, isPong);
         unsigned long T = FN::T();
-        for (multimap<double, mOrder>::iterator it = orderSide.begin(); it != orderSide.end(); ++it)
+        for (multimap<double, mOrder>::iterator it = orders.begin(); it != orders.end(); ++it)
           if (it->first == q.price) { return; }
           else if (it->second.orderStatus == mORS::New) {
-            if (T-10e+3>it->second.time) ((OG*)evOG)->allOrdersDelete(it->second.orderId, it->second.exchangeId);
+            if (T-10e+3>it->second.time) ((OG*)evOG)->cleanOrder(it->second.orderId, it->second.exchangeId);
             if (qp.safety != mQuotingSafety::AK47 or (int)k >= qp.bullets) return;
           }
         modify(side, q, isPong);
       };
-      multimap<double, mOrder> orderCacheSide(mSide side) {
-        multimap<double, mOrder> orderSide;
+      multimap<double, mOrder> ordersAtSide(mSide side) {
+        multimap<double, mOrder> orders;
         ogMutex.lock();
         for (map<string, mOrder>::iterator it = allOrders.begin(); it != allOrders.end(); ++it)
           if ((mSide)it->second.side == side)
-            orderSide.insert(pair<double, mOrder>(it->second.price, it->second));
+            orders.insert(pair<double, mOrder>(it->second.price, it->second));
         ogMutex.unlock();
-        return orderSide;
+        return orders;
       };
       void modify(mSide side, mLevel q, bool isPong) {
         if (qp.safety == mQuotingSafety::AK47)
@@ -582,24 +582,24 @@ namespace K {
         ((OG*)evOG)->sendOrder(side, q.price, q.size, mOrderType::Limit, mTimeInForce::GTC, isPong, true);
       };
       void stopWorstsQuotes(mSide side, double price) {
-        multimap<double, mOrder> orderSide = orderCacheSide(side);
-        for (multimap<double, mOrder>::iterator it = orderSide.begin(); it != orderSide.end(); ++it)
+        multimap<double, mOrder> orders = ordersAtSide(side);
+        for (multimap<double, mOrder>::iterator it = orders.begin(); it != orders.end(); ++it)
           if (side == mSide::Bid
             ? price < it->second.price
             : price > it->second.price
           ) ((OG*)evOG)->cancelOrder(it->second.orderId);
       };
       void stopWorstQuote(mSide side) {
-        multimap<double, mOrder> orderSide = orderCacheSide(side);
-        if (orderSide.size())
+        multimap<double, mOrder> orders = ordersAtSide(side);
+        if (orders.size())
           ((OG*)evOG)->cancelOrder(side == mSide::Bid
-            ? orderSide.begin()->second.orderId
-            : orderSide.rbegin()->second.orderId
+            ? orders.begin()->second.orderId
+            : orders.rbegin()->second.orderId
           );
       };
       void stopAllQuotes(mSide side) {
-        multimap<double, mOrder> orderSide = orderCacheSide(side);
-        for (multimap<double, mOrder>::iterator it = orderSide.begin(); it != orderSide.end(); ++it)
+        multimap<double, mOrder> orders = ordersAtSide(side);
+        for (multimap<double, mOrder>::iterator it = orders.begin(); it != orders.end(); ++it)
           ((OG*)evOG)->cancelOrder(it->second.orderId);
       };
       void stopAllQuotes() {

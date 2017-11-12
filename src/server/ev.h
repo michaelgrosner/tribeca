@@ -35,7 +35,7 @@ namespace K  {
                                     mgTargetPosition,
                                     pgTargetBasePosition,
                                     uiQuotingParameters;
-      void evEnd(int code) {
+      void end(int code) {
         cout << FN::uiT() << "K exit code " << to_string(code) << "." << '\n';
         exit(code);
       };
@@ -45,7 +45,7 @@ namespace K  {
         for(unsigned int i = 0; i < 21; ++i)
           cout << "THE END IS NEVER ";
         cout << "THE END" << '\n';
-        evEnd(code);
+        end(code);
       };
       static void quit(int sig) {
         FN::screen_quit();

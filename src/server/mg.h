@@ -70,9 +70,9 @@ namespace K {
         };
       };
       void waitUser() {
-        ((UI*)evUI)->evSnap(uiTXT::MarketTrade, &onSnapTrade);
-        ((UI*)evUI)->evSnap(uiTXT::FairValue, &onSnapFair);
-        ((UI*)evUI)->evSnap(uiTXT::EWMAChart, &onSnapEwma);
+        ((UI*)evUI)->welcome(uiTXT::MarketTrade, &helloTrade);
+        ((UI*)evUI)->welcome(uiTXT::FairValue, &helloFair);
+        ((UI*)evUI)->welcome(uiTXT::EWMAChart, &helloEwma);
       };
     public:
       bool empty() {
@@ -104,19 +104,19 @@ namespace K {
         );
         if (!mgFairValue or (mgFairValue_ and abs(mgFairValue - mgFairValue_) < gw->minTick)) return;
         gw->evDataWallet(mWallet());
-        ((UI*)evUI)->evSend(uiTXT::FairValue, {{"price", mgFairValue}}, true);
+        ((UI*)evUI)->send(uiTXT::FairValue, {{"price", mgFairValue}}, true);
       };
     private:
-      function<json()> onSnapTrade = []() {
+      function<json()> helloTrade = []() {
         json k;
         for (unsigned i=0; i<mgTrades.size(); ++i)
           k.push_back(mgTrades[i]);
         return k;
       };
-      function<json()> onSnapFair = []() {
+      function<json()> helloFair = []() {
         return (json){{{"price", mgFairValue}}};
       };
-      function<json()> onSnapEwma = []() {
+      function<json()> helloEwma = []() {
         return (json){{
           {"stdevWidth", {
             {"fv", mgStdevFV},
@@ -160,13 +160,13 @@ namespace K {
         k.time = FN::T();
         mgTrades.push_back(k);
         if (mgTrades.size()>69) mgTrades.erase(mgTrades.begin());
-        ((UI*)evUI)->evSend(uiTXT::MarketTrade, k, false);
+        ((UI*)evUI)->send(uiTXT::MarketTrade, k);
       };
       void levelUp(mLevels k) {
         static unsigned long lastUp = 0;
         filter(k);
         if (lastUp+369 > FN::T()) return;
-        ((UI*)evUI)->evSend(uiTXT::MarketData, k, true);
+        ((UI*)evUI)->send(uiTXT::MarketData, k, true);
         lastUp = FN::T();
       };
       void ewmaUp() {
@@ -175,7 +175,7 @@ namespace K {
         calcEwma(&mgEwmaS, qp.shortEwmaPeriods);
         calcTargetPos();
         ((EV*)evEV)->mgTargetPosition();
-        ((UI*)evUI)->evSend(uiTXT::EWMAChart, {
+        ((UI*)evUI)->send(uiTXT::EWMAChart, {
           {"stdevWidth", {
             {"fv", mgStdevFV},
             {"fvMean", mgStdevFVMean},

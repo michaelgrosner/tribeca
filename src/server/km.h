@@ -53,11 +53,11 @@ namespace K {
   enum class uiTXT: unsigned char {
     FairValue = 'a', Quote = 'b', ActiveSubscription = 'c', ActiveState = 'd', MarketData = 'e',
     QuotingParametersChange = 'f', SafetySettings = 'g', Product = 'h', OrderStatusReports = 'i',
-    ProductAdvertisement = 'j', ApplicationState = 'k', Notepad = 'l', ToggleConfigs = 'm',
+    ProductAdvertisement = 'j', ApplicationState = 'k', Notepad = 'l', ToggleSettings = 'm',
     Position = 'n', ExchangeConnectivity = 'o', SubmitNewOrder = 'p', CancelOrder = 'q',
     MarketTrade = 'r', Trades = 's', ExternalValuation = 't', QuoteStatus = 'u',
     TargetBasePosition = 'v', TradeSafetyValue = 'w', CancelAllOrders = 'x',
-    CleanAllClosedOrders = 'y', CleanAllOrders = 'z', CleanTrade = 'A', TradesChart = 'B',
+    CleanAllClosedTrades = 'y', CleanAllTrades = 'z', CleanTrade = 'A', TradesChart = 'B',
     WalletChart = 'C', EWMAChart = 'D'
   };
   static char RBLACK[] = "\033[0;30m", RRED[]    = "\033[0;31m", RGREEN[] = "\033[0;32m", RYELLOW[] = "\033[0;33m",

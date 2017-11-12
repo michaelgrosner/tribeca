@@ -48,9 +48,9 @@ namespace K {
         };
       };
       void waitUser() {
-        ((UI*)evUI)->evSnap(uiTXT::Position, &onSnapPos);
-        ((UI*)evUI)->evSnap(uiTXT::TradeSafetyValue, &onSnapSafety);
-        ((UI*)evUI)->evSnap(uiTXT::TargetBasePosition, &onSnapTargetBasePos);
+        ((UI*)evUI)->welcome(uiTXT::Position, &helloPosition);
+        ((UI*)evUI)->welcome(uiTXT::TradeSafetyValue, &helloSafety);
+        ((UI*)evUI)->welcome(uiTXT::TargetBasePosition, &helloTargetBasePos);
       };
     public:
       void calcSafety() {
@@ -64,7 +64,7 @@ namespace K {
         ) {
           pgSafety = safety;
           pgMutex.unlock();
-          ((UI*)evUI)->evSend(uiTXT::TradeSafetyValue, safety, false);
+          ((UI*)evUI)->send(uiTXT::TradeSafetyValue, safety);
         } else pgMutex.unlock();
       };
       void calcTargetBasePos() {
@@ -83,7 +83,7 @@ namespace K {
         pgSideAPR_ = pgSideAPR;
         ((EV*)evEV)->pgTargetBasePosition();
         json k = {{"tbp", pgTargetBasePos}, {"sideAPR", pgSideAPR}};
-        ((UI*)evUI)->evSend(uiTXT::TargetBasePosition, k, true);
+        ((UI*)evUI)->send(uiTXT::TargetBasePosition, k, true);
         ((DB*)evDB)->insert(uiTXT::TargetBasePosition, k);
         stringstream ss;
         ss << (int)(pgTargetBasePos / value * 1e+2) << "% = " << setprecision(8) << fixed << pgTargetBasePos;
@@ -99,15 +99,15 @@ namespace K {
         return !pgPos.value;
       };
     private:
-      function<json()> onSnapPos = []() {
+      function<json()> helloPosition = []() {
         lock_guard<mutex> lock(pgMutex);
         return (json){ pgPos };
       };
-      function<json()> onSnapSafety = []() {
+      function<json()> helloSafety = []() {
         lock_guard<mutex> lock(pgMutex);
         return (json){ pgSafety };
       };
-      function<json()> onSnapTargetBasePos = []() {
+      function<json()> helloTargetBasePos = []() {
         return (json){{{"tbp", pgTargetBasePos}, {"sideAPR", pgSideAPR}}};
       };
       mSafety nextSafety() {
@@ -286,7 +286,7 @@ namespace K {
         pgPos = pos;
         pgMutex.unlock();
         if (!eq) calcTargetBasePos();
-        ((UI*)evUI)->evSend(uiTXT::Position, pos, true);
+        ((UI*)evUI)->send(uiTXT::Position, pos, true);
       };
       void calcWalletAfterOrder(mOrder k) {
         if (empty()) return;

@@ -184,11 +184,11 @@ namespace K {
         } else FN::logWar("QP", "using default values for Quoting Parameters");
       };
       void waitUser() {
-        ((UI*)evUI)->evSnap(uiTXT::QuotingParametersChange, &onSnap);
-        ((UI*)evUI)->evHand(uiTXT::QuotingParametersChange, &onHand);
+        ((UI*)evUI)->welcome(uiTXT::QuotingParametersChange, &hello);
+        ((UI*)evUI)->clickme(uiTXT::QuotingParametersChange, &kiss);
       };
       void run() {
-        ((UI*)evUI)->evDelay(qp.delayUI);
+        ((UI*)evUI)->delay(qp.delayUI);
       };
     public:
       bool matchPings() {
@@ -196,10 +196,10 @@ namespace K {
             or qp.safety == mQuotingSafety::AK47;
       };
     private:
-      function<json()> onSnap = []() {
+      function<json()> hello = []() {
         return (json){ qp };
       };
-      function<void(json)> onHand = [&](json k) {
+      function<void(json)> kiss = [&](json k) {
         if (k.value("buySize", 0.0) > 0
           and k.value("sellSize", 0.0) > 0
           and k.value("buySizePercentage", 0.0) > 0
@@ -212,9 +212,9 @@ namespace K {
           qp = k;
           ((DB*)evDB)->insert(uiTXT::QuotingParametersChange, qp);
           ((EV*)evEV)->uiQuotingParameters();
-          ((UI*)evUI)->evDelay(qp.delayUI);
+          ((UI*)evUI)->delay(qp.delayUI);
         }
-        ((UI*)evUI)->evSend(uiTXT::QuotingParametersChange, qp, false);
+        ((UI*)evUI)->send(uiTXT::QuotingParametersChange, qp);
       };
   };
 }

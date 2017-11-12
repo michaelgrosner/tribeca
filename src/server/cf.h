@@ -152,18 +152,18 @@ namespace K {
         }
         if (argDatabase == "")
           argDatabase = string("/data/db/K.")
-            + to_string((int)cfExchange())
-            + '.' + cfBase()
-            + '.' + cfQuote() + ".db";
+            + to_string((int)exchange())
+            + '.' + base()
+            + '.' + quote() + ".db";
       };
       void run() {
         if (!argNaked) FN::screen();
-        mExchange e = cfExchange();
+        mExchange e = exchange();
         gw = Gw::E(e);
         gw->exchange = e;
         gw->name = argExchange;
-        gw->base = cfBase();
-        gw->quote = cfQuote();
+        gw->base = base();
+        gw->quote = quote();
         gw->apikey = argApikey;
         gw->secret = argSecret;
         gw->user = argUsername;
@@ -172,19 +172,19 @@ namespace K {
         gw->ws = argWss;
       };
     private:
-      static string cfBase() {
+      static string base() {
         string k_ = argCurrency;
         string k = k_.substr(0, k_.find("/"));
         if (k == k_) FN::logExit("CF", "Invalid currency pair! Must be in the format of BASE/QUOTE, eg BTC/EUR.", EXIT_SUCCESS);
         return FN::S2u(k);
       };
-      static string cfQuote() {
+      static string quote() {
         string k_ = argCurrency;
         string k = k_.substr(k_.find("/")+1);
         if (k == k_) FN::logExit("CF", "Invalid currency pair! Must be in the format of BASE/QUOTE, eg BTC/EUR", EXIT_SUCCESS);
         return FN::S2u(k);
       };
-      static mExchange cfExchange() {
+      static mExchange exchange() {
         string k = FN::S2l(argExchange);
         if (k == "coinbase") return mExchange::Coinbase;
         else if (k == "okcoin") return mExchange::OkCoin;

@@ -9,7 +9,7 @@ namespace K {
         if (argAutobot) gwAutoStart = mConnectivity::Connected;
         gw->hub = &hub;
         gw->gwGroup = hub.createGroup<uWS::CLIENT>();
-        gwLoad(gw->exchange);
+        handshake(gw->exchange);
       };
       void waitTime() {
         uv_timer_init(hub.getLoop(), &tWallet);
@@ -26,24 +26,24 @@ namespace K {
       };
       void waitData() {
         gw->evConnectOrder = [&](mConnectivity k) {
-          gwConnUp(mGatewayType::OrderEntry, k);
+          serverSemaphore(mGatewayType::OrderEntry, k);
         };
         gw->evConnectMarket = [&](mConnectivity k) {
-          gwConnUp(mGatewayType::MarketData, k);
+          serverSemaphore(mGatewayType::MarketData, k);
           if (k == mConnectivity::Disconnected)
             gw->evDataLevels(mLevels());
         };
         gw->levels();
       };
       void waitUser() {
-        ((UI*)evUI)->evSnap(uiTXT::ProductAdvertisement, &onSnapProduct);
-        ((UI*)evUI)->evSnap(uiTXT::ExchangeConnectivity, &onSnapStatus);
-        ((UI*)evUI)->evSnap(uiTXT::ActiveState, &onSnapState);
-        ((UI*)evUI)->evHand(uiTXT::ActiveState, &onHandState);
+        ((UI*)evUI)->welcome(uiTXT::ProductAdvertisement, &helloProduct);
+        ((UI*)evUI)->welcome(uiTXT::ExchangeConnectivity, &helloStatus);
+        ((UI*)evUI)->welcome(uiTXT::ActiveState, &helloState);
+        ((UI*)evUI)->clickme(uiTXT::ActiveState, &kissState);
       };
       void run() {
         hub.run();
-        ((EV*)evEV)->evEnd(eCode);
+        ((EV*)evEV)->end(eCode);
       };
     private:
       function<void(int)> happyEnding = [&](int code) {
@@ -63,14 +63,14 @@ namespace K {
           FN::close(hub.getLoop());
           hub.getLoop()->destroy();
         }
-        ((EV*)evEV)->evEnd(code);
+        ((EV*)evEV)->end(code);
       };
       mConnectivity gwAutoStart = mConnectivity::Disconnected,
                     gwQuotingState = mConnectivity::Disconnected,
                     gwConnectOrder = mConnectivity::Disconnected,
                     gwConnectMarket = mConnectivity::Disconnected,
                     gwConnectExchange = mConnectivity::Disconnected;
-      function<json()> onSnapProduct = []() {
+      function<json()> helloProduct = []() {
         return (json){{
           {"exchange", (int)gw->exchange},
           {"pair", {{"base", gw->base}, {"quote", gw->quote}}},
@@ -80,24 +80,24 @@ namespace K {
           {"homepage", "https://github.com/ctubio/Krypto-trading-bot"}
         }};
       };
-      function<json()> onSnapStatus = [&]() {
+      function<json()> helloStatus = [&]() {
         return (json){{{"status", (int)gwConnectExchange}}};
       };
-      function<json()> onSnapState = [&]() {
+      function<json()> helloState = [&]() {
         return (json){{{"state",  (int)gwQuotingState}}};
       };
-      function<void(json)> onHandState = [&](json k) {
+      function<void(json)> kissState = [&](json k) {
         if (!k.is_object() or !k["state"].is_number()) {
-          FN::logWar("JSON", "Missing state at onHandState, ignored");
+          FN::logWar("JSON", "Missing state at kissState, ignored");
           return;
         }
         mConnectivity autoStart = (mConnectivity)k["state"].get<int>();
         if (autoStart != gwAutoStart) {
           gwAutoStart = autoStart;
-          gwStateUp();
+          clientSemaphore();
         }
       };
-      void gwConnUp(mGatewayType gwT, mConnectivity gwS) {
+      void serverSemaphore(mGatewayType gwT, mConnectivity gwS) {
         if (gwT == mGatewayType::MarketData) {
           if (gwConnectMarket == gwS) return;
           gwConnectMarket = gwS;
@@ -107,21 +107,21 @@ namespace K {
         }
         gwConnectExchange = gwConnectMarket == mConnectivity::Connected and gwConnectOrder == mConnectivity::Connected
           ? mConnectivity::Connected : mConnectivity::Disconnected;
-        gwStateUp();
-        ((UI*)evUI)->evSend(uiTXT::ExchangeConnectivity, {{"status", (int)gwConnectExchange}}, false);
+        clientSemaphore();
+        ((UI*)evUI)->send(uiTXT::ExchangeConnectivity, {{"status", (int)gwConnectExchange}});
       };
-      void gwStateUp() {
+      void clientSemaphore() {
         mConnectivity quotingState = gwConnectExchange;
         if (quotingState == mConnectivity::Connected) quotingState = gwAutoStart;
         if (quotingState != gwQuotingState) {
           gwQuotingState = quotingState;
           FN::log(string("GW ") + argExchange, "Quoting state changed to", gwQuotingState == mConnectivity::Connected ? "CONNECTED" : "DISCONNECTED");
-          ((UI*)evUI)->evSend(uiTXT::ActiveState, {{"state", (int)gwQuotingState}}, false);
+          ((UI*)evUI)->send(uiTXT::ActiveState, {{"state", (int)gwQuotingState}});
         }
         ((QE*)evQE)->gwConnectButton = gwQuotingState;
         ((QE*)evQE)->gwConnectExchange = gwConnectExchange;
       };
-      void gwLoad(mExchange e) {
+      void handshake(mExchange e) {
         if (e == mExchange::Coinbase) {
           FN::stunnel();
           gw->randId = FN::uuidId;
