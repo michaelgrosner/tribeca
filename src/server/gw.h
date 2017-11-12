@@ -10,7 +10,6 @@ namespace K {
         gw->hub = &hub;
         gw->gwGroup = hub.createGroup<uWS::CLIENT>();
         gwLoad(gw->exchange);
-        gW = (argTarget == "NULL") ? Gw::E(mExchange::Null) : gw;
       };
       void waitTime() {
         uv_timer_init(hub.getLoop(), &tWallet);
@@ -22,7 +21,7 @@ namespace K {
         uv_timer_start(&tCancel, [](uv_timer_t *handle) {
           if (argDebugEvents) FN::log("DEBUG", "EV GW tCancel timer");
           if (qp.cancelOrdersAuto)
-            gW->cancelAll();
+            gw->cancelAll();
         }, 0, 3e+5);
       };
       void waitData() {
@@ -37,17 +36,17 @@ namespace K {
         gw->levels();
       };
       void waitUser() {
-        UI::uiSnap(uiTXT::ProductAdvertisement, &onSnapProduct);
-        UI::uiSnap(uiTXT::ExchangeConnectivity, &onSnapStatus);
-        UI::uiSnap(uiTXT::ActiveState, &onSnapState);
-        UI::uiHand(uiTXT::ActiveState, &onHandState);
+        ((UI*)evUI)->evSnap(uiTXT::ProductAdvertisement, &onSnapProduct);
+        ((UI*)evUI)->evSnap(uiTXT::ExchangeConnectivity, &onSnapStatus);
+        ((UI*)evUI)->evSnap(uiTXT::ActiveState, &onSnapState);
+        ((UI*)evUI)->evHand(uiTXT::ActiveState, &onHandState);
       };
       void run() {
         hub.run();
-        EV::end(eCode);
+        ((EV*)evEV)->evEnd(eCode);
       };
     private:
-      function<void(int)> happyEnding = [](int code) {
+      function<void(int)> happyEnding = [&](int code) {
         eCode = code;
         if (uv_loop_alive(hub.getLoop())) {
           uv_timer_stop(&tCancel);
@@ -58,13 +57,13 @@ namespace K {
           gw->close();
           gw->gwGroup->close();
           FN::log(string("GW ") + argExchange, "Attempting to cancel all open orders, please wait.");
-          gW->cancelAll();
+          gw->cancelAll();
           FN::log(string("GW ") + argExchange, "cancell all open orders OK");
           uiGroup->close();
           FN::close(hub.getLoop());
           hub.getLoop()->destroy();
         }
-        EV::end(code);
+        ((EV*)evEV)->evEnd(code);
       };
       mConnectivity gwAutoStart = mConnectivity::Disconnected,
                     gwQuotingState = mConnectivity::Disconnected,
@@ -109,7 +108,7 @@ namespace K {
         gwConnectExchange = gwConnectMarket == mConnectivity::Connected and gwConnectOrder == mConnectivity::Connected
           ? mConnectivity::Connected : mConnectivity::Disconnected;
         gwStateUp();
-        UI::uiSend(uiTXT::ExchangeConnectivity, {{"status", (int)gwConnectExchange}});
+        ((UI*)evUI)->evSend(uiTXT::ExchangeConnectivity, {{"status", (int)gwConnectExchange}}, false);
       };
       void gwStateUp() {
         mConnectivity quotingState = gwConnectExchange;
@@ -117,10 +116,10 @@ namespace K {
         if (quotingState != gwQuotingState) {
           gwQuotingState = quotingState;
           FN::log(string("GW ") + argExchange, "Quoting state changed to", gwQuotingState == mConnectivity::Connected ? "CONNECTED" : "DISCONNECTED");
-          UI::uiSend(uiTXT::ActiveState, {{"state", (int)gwQuotingState}});
+          ((UI*)evUI)->evSend(uiTXT::ActiveState, {{"state", (int)gwQuotingState}}, false);
         }
-        ev_gwConnectButton(gwQuotingState);
-        ev_gwConnectExchange(gwConnectExchange);
+        ((QE*)evQE)->gwConnectButton = gwQuotingState;
+        ((QE*)evQE)->gwConnectExchange = gwConnectExchange;
       };
       void gwLoad(mExchange e) {
         if (e == mExchange::Coinbase) {

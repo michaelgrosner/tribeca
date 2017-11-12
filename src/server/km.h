@@ -21,7 +21,6 @@ namespace K {
                 argPass = "NULL",
                 argMatryoshka = "https://www.example.com/",
                 argCurrency = "NULL",
-                argTarget = "NULL",
                 argApikey = "NULL",
                 argSecret = "NULL",
                 argUsername = "NULL",
@@ -375,6 +374,14 @@ namespace K {
   };
   class Klass {
     protected:
+      Klass *evEV = nullptr,
+            *evDB = nullptr,
+            *evUI = nullptr,
+            *evQP = nullptr,
+            *evOG = nullptr,
+            *evMG = nullptr,
+            *evPG = nullptr,
+            *evQE = nullptr;
       virtual void load(int argc, char** argv) {};
       virtual void load() {};
       virtual void waitTime() {};
@@ -382,6 +389,14 @@ namespace K {
       virtual void waitUser() {};
       virtual void run() {};
     public:
+      void evLink(Klass *k) { evEV = k; };
+      void dbLink(Klass *k) { evDB = k; };
+      void uiLink(Klass *k) { evUI = k; };
+      void qpLink(Klass *k) { evQP = k; };
+      void ogLink(Klass *k) { evOG = k; };
+      void mgLink(Klass *k) { evMG = k; };
+      void pgLink(Klass *k) { evPG = k; };
+      void qeLink(Klass *k) { evQE = k; };
       void main(int argc, char** argv) {
         load(argc, argv);
         run();
@@ -392,6 +407,19 @@ namespace K {
         waitData();
         waitUser();
         run();
+      };
+  };
+  class kLass: public Klass {
+    public:
+      void link(Klass *EV, Klass *DB, Klass *UI, Klass *QP, Klass *OG, Klass *MG, Klass *PG, Klass *QE, Klass *GW) {
+                        QP->evLink(EV); OG->evLink(EV); MG->evLink(EV); PG->evLink(EV); QE->evLink(EV); GW->evLink(EV);
+        UI->dbLink(DB); QP->dbLink(DB); OG->dbLink(DB); MG->dbLink(DB); PG->dbLink(DB);
+                        QP->uiLink(UI); OG->uiLink(UI); MG->uiLink(UI); PG->uiLink(UI); QE->uiLink(UI); GW->uiLink(UI);
+                                        OG->qpLink(QP);                 PG->qpLink(QP); QE->qpLink(QP);
+                                                                                        QE->ogLink(OG);
+                                                                                        QE->mgLink(MG);
+                                                                                        QE->pgLink(PG);
+                                                                                                        GW->qeLink(QE);
       };
   };
 }

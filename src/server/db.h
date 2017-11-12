@@ -2,7 +2,6 @@
 #define K_DB_H_
 
 namespace K {
-  sqlite3* db;
   class DB: public Klass {
     protected:
       void load() {
@@ -11,7 +10,7 @@ namespace K {
         FN::logDB(argDatabase);
       };
     public:
-      static json load(uiTXT k) {
+      json load(uiTXT k) {
         char* zErrMsg = 0;
         sqlite3_exec(db,
           string("CREATE TABLE ").append(string(1, (char)k)).append("("                                   \
@@ -30,7 +29,7 @@ namespace K {
         if (j[strlen(j.data()) - 1] == ',') j.pop_back();
         return json::parse(j.append("]"));
       };
-      static void insert(uiTXT k, json o, bool rm = true, string id = "NULL", long time = 0) {
+      void insert(uiTXT k, json o, bool rm = true, string id = "NULL", long time = 0) {
         char* zErrMsg = 0;
         sqlite3_exec(db,
           string((rm or id != "NULL" or time) ? string("DELETE FROM ").append(string(1, (char)k))
@@ -44,12 +43,13 @@ namespace K {
         if (zErrMsg) FN::logWar("DB", string("Sqlite error: ") + zErrMsg);
         sqlite3_free(zErrMsg);
       };
-      static int size() {
+      int size() {
         if (argDatabase==":memory:") return 0;
         struct stat st;
         return stat(argDatabase.data(), &st) != 0 ? 0 : st.st_size;
       };
     private:
+      sqlite3* db;
       static int cb(void *param, int argc, char **argv, char **azColName) {
         string* j = reinterpret_cast<string*>(param);
         for (int i=0; i<argc; i++) j->append(argv[i]).append(",");

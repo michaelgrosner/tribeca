@@ -2,16 +2,6 @@
 #define K_EV_H_
 
 namespace K  {
-  function<void(mConnectivity)> ev_gwConnectButton,
-                                ev_gwConnectExchange;
-  function<void(mOrder)>        ev_ogOrder;
-  function<void(mTrade)>        ev_ogTrade;
-  function<void()>              ev_mgLevels,
-                                ev_mgEwmaSMUProtection,
-                                ev_mgEwmaQuoteProtection,
-                                ev_mgTargetPosition,
-                                ev_pgTargetBasePosition,
-                                ev_uiQuotingParameters;
   uv_timer_t tCalcs,
              tStart,
              tDelay,
@@ -37,17 +27,25 @@ namespace K  {
         }
       };
     public:
-      static void end(int code) {
+      function<void(mOrder)>        ogOrder;
+      function<void(mTrade)>        ogTrade;
+      function<void()>              mgLevels,
+                                    mgEwmaSMUProtection,
+                                    mgEwmaQuoteProtection,
+                                    mgTargetPosition,
+                                    pgTargetBasePosition,
+                                    uiQuotingParameters;
+      void evEnd(int code) {
         cout << FN::uiT() << "K exit code " << to_string(code) << "." << '\n';
         exit(code);
       };
     private:
-      function<void(int)> happyEnding = [](int code) {
+      function<void(int)> happyEnding = [&](int code) {
         cout << FN::uiT();
         for(unsigned int i = 0; i < 21; ++i)
           cout << "THE END IS NEVER ";
         cout << "THE END" << '\n';
-        end(code);
+        evEnd(code);
       };
       static void quit(int sig) {
         FN::screen_quit();

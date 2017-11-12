@@ -58,11 +58,6 @@ API_EXCHANGE=NULL
 #API_CURRENCY=BTC/EUR
 API_CURRENCY=BTC/USD
 #  ▌____________________________________________________.
-#  █ API_ORDERS_DESTINATION                             .
-#  ██ - Allows NULL to send fake orders, otherwise if is not NULL orders will be send to the real exchange API.
-#API_ORDERS_DESTINATION=REAL
-API_ORDERS_DESTINATION=NULL
-#  ▌____________________________________________________.
 #  █ API_KEY                                            .
 #  ██ - Allows any valid API KEY (see the website of the exchange).
 #  ██ - All exchanges must have API KEY.
@@ -111,14 +106,13 @@ API_WSS_ENDPOINT=NULL
 #  ▌____                                                .
 #  ▌ IV ▐______________________________________________ .
 #  ▌¯¯¯¯                                                .
-until ./app/server/K                                    \
+until `#valgrind` `#gdb --args` ./app/server/K          \
     --title      ${0##*/}                               \
     --port       $UI_OPENPORT                           \
     --user       $UI_USERNAME                           \
     --pass       $UI_PASSWORD                           \
     --exchange   $API_EXCHANGE                          \
     --currency   $API_CURRENCY                          \
-    --target     $API_ORDERS_DESTINATION                \
     --apikey     $API_KEY                               \
     --secret     $API_SECRET                            \
     --passphrase $API_PASSPHRASE                        \

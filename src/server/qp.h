@@ -177,21 +177,21 @@ namespace K {
   class QP: public Klass {
     protected:
       void load() {
-        json k = DB::load(uiTXT::QuotingParametersChange);
+        json k = ((DB*)evDB)->load(uiTXT::QuotingParametersChange);
         if (k.size()) {
           qp = k.at(0);
           FN::log("DB", "loaded Quoting Parameters OK");
         } else FN::logWar("QP", "using default values for Quoting Parameters");
       };
       void waitUser() {
-        UI::uiSnap(uiTXT::QuotingParametersChange, &onSnap);
-        UI::uiHand(uiTXT::QuotingParametersChange, &onHand);
+        ((UI*)evUI)->evSnap(uiTXT::QuotingParametersChange, &onSnap);
+        ((UI*)evUI)->evHand(uiTXT::QuotingParametersChange, &onHand);
       };
       void run() {
-        UI::delay(qp.delayUI);
+        ((UI*)evUI)->evDelay(qp.delayUI);
       };
     public:
-      static bool matchPings() {
+      bool matchPings() {
         return qp.safety == mQuotingSafety::Boomerang
             or qp.safety == mQuotingSafety::AK47;
       };
@@ -199,7 +199,7 @@ namespace K {
       function<json()> onSnap = []() {
         return (json){ qp };
       };
-      function<void(json)> onHand = [](json k) {
+      function<void(json)> onHand = [&](json k) {
         if (k.value("buySize", 0.0) > 0
           and k.value("sellSize", 0.0) > 0
           and k.value("buySizePercentage", 0.0) > 0
@@ -210,11 +210,11 @@ namespace K {
           and k.value("widthPongPercentage", 0.0) > 0
         ) {
           qp = k;
-          DB::insert(uiTXT::QuotingParametersChange, qp);
-          ev_uiQuotingParameters();
-          UI::delay(qp.delayUI);
+          ((DB*)evDB)->insert(uiTXT::QuotingParametersChange, qp);
+          ((EV*)evEV)->uiQuotingParameters();
+          ((UI*)evUI)->evDelay(qp.delayUI);
         }
-        UI::uiSend(uiTXT::QuotingParametersChange, qp);
+        ((UI*)evUI)->evSend(uiTXT::QuotingParametersChange, qp, false);
       };
   };
 }
