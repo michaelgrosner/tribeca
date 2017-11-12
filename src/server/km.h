@@ -21,7 +21,6 @@ namespace K {
                 argPass = "NULL",
                 argMatryoshka = "https://www.example.com/",
                 argCurrency = "NULL",
-                argTarget = "NULL",
                 argApikey = "NULL",
                 argSecret = "NULL",
                 argUsername = "NULL",
@@ -54,11 +53,11 @@ namespace K {
   enum class uiTXT: unsigned char {
     FairValue = 'a', Quote = 'b', ActiveSubscription = 'c', ActiveState = 'd', MarketData = 'e',
     QuotingParametersChange = 'f', SafetySettings = 'g', Product = 'h', OrderStatusReports = 'i',
-    ProductAdvertisement = 'j', ApplicationState = 'k', Notepad = 'l', ToggleConfigs = 'm',
+    ProductAdvertisement = 'j', ApplicationState = 'k', Notepad = 'l', ToggleSettings = 'm',
     Position = 'n', ExchangeConnectivity = 'o', SubmitNewOrder = 'p', CancelOrder = 'q',
     MarketTrade = 'r', Trades = 's', ExternalValuation = 't', QuoteStatus = 'u',
     TargetBasePosition = 'v', TradeSafetyValue = 'w', CancelAllOrders = 'x',
-    CleanAllClosedOrders = 'y', CleanAllOrders = 'z', CleanTrade = 'A', TradesChart = 'B',
+    CleanAllClosedTrades = 'y', CleanAllTrades = 'z', CleanTrade = 'A', TradesChart = 'B',
     WalletChart = 'C', EWMAChart = 'D'
   };
   static char RBLACK[] = "\033[0;30m", RRED[]    = "\033[0;31m", RGREEN[] = "\033[0;32m", RYELLOW[] = "\033[0;33m",
@@ -375,6 +374,15 @@ namespace K {
   };
   class Klass {
     protected:
+      Klass *config = nullptr,
+            *events = nullptr,
+            *memory = nullptr,
+            *client = nullptr,
+            *params = nullptr,
+            *orders = nullptr,
+            *market = nullptr,
+            *wallet = nullptr,
+            *engine = nullptr;
       virtual void load(int argc, char** argv) {};
       virtual void load() {};
       virtual void waitTime() {};
@@ -382,6 +390,15 @@ namespace K {
       virtual void waitUser() {};
       virtual void run() {};
     public:
+      void cfLink(Klass *k) { config = k; };
+      void evLink(Klass *k) { events = k; };
+      void dbLink(Klass *k) { memory = k; };
+      void uiLink(Klass *k) { client = k; };
+      void qpLink(Klass *k) { params = k; };
+      void ogLink(Klass *k) { orders = k; };
+      void mgLink(Klass *k) { market = k; };
+      void pgLink(Klass *k) { wallet = k; };
+      void qeLink(Klass *k) { engine = k; };
       void main(int argc, char** argv) {
         load(argc, argv);
         run();
@@ -392,6 +409,19 @@ namespace K {
         waitData();
         waitUser();
         run();
+      };
+  };
+  class kLass: public Klass {
+    public:
+      void link(Klass *EV, Klass *DB, Klass *UI, Klass *QP, Klass *OG, Klass *MG, Klass *PG, Klass *QE, Klass *GW) {
+                        QP->evLink(EV); OG->evLink(EV); MG->evLink(EV); PG->evLink(EV); QE->evLink(EV); GW->evLink(EV);
+        UI->dbLink(DB); QP->dbLink(DB); OG->dbLink(DB); MG->dbLink(DB); PG->dbLink(DB);
+                        QP->uiLink(UI); OG->uiLink(UI); MG->uiLink(UI); PG->uiLink(UI); QE->uiLink(UI); GW->uiLink(UI);
+                                        OG->qpLink(QP);                 PG->qpLink(QP); QE->qpLink(QP);
+                                                                                        QE->ogLink(OG);
+                                                                                        QE->mgLink(MG);
+                                                                                        QE->pgLink(PG);
+                                                                                                        GW->qeLink(QE);
       };
   };
 }

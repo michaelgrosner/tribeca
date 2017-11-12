@@ -12,7 +12,7 @@ namespace K {
   class PG: public Klass {
     protected:
       void load() {
-        json k = DB::load(uiTXT::TargetBasePosition);
+        json k = ((DB*)memory)->load(uiTXT::TargetBasePosition);
         if (k.size()) {
           k = k.at(0);
           pgTargetBasePos = k.value("tbp", 0.0);
@@ -21,7 +21,7 @@ namespace K {
         stringstream ss;
         ss << setprecision(8) << fixed << pgTargetBasePos;
         FN::log("DB", string("loaded TBP = ") + ss.str() + " " + gw->base);
-        k = DB::load(uiTXT::Position);
+        k = ((DB*)memory)->load(uiTXT::Position);
         if (k.size()) {
           for (json::reverse_iterator it = k.rbegin(); it != k.rend(); ++it)
             pgProfit.push_back(mProfit(
@@ -33,27 +33,27 @@ namespace K {
         }
       };
       void waitData() {
-        gw->evDataWallet = [](mWallet k) {
+        gw->evDataWallet = [&](mWallet k) {
           if (argDebugEvents) FN::log("DEBUG", string("EV PG evDataWallet mWallet ") + ((json)k).dump());
           calcWallet(k);
         };
-        ev_ogOrder = [](mOrder k) {
-          if (argDebugEvents) FN::log("DEBUG", string("EV PG ev_ogOrder mOrder ") + ((json)k).dump());
+        ((EV*)events)->ogOrder = [&](mOrder k) {
+          if (argDebugEvents) FN::log("DEBUG", string("EV PG ogOrder mOrder ") + ((json)k).dump());
           calcWalletAfterOrder(k);
           FN::screen_refresh();
         };
-        ev_mgTargetPosition = []() {
-          if (argDebugEvents) FN::log("DEBUG", "EV PG ev_mgTargetPosition");
+        ((EV*)events)->mgTargetPosition = [&]() {
+          if (argDebugEvents) FN::log("DEBUG", "EV PG mgTargetPosition");
           calcTargetBasePos();
         };
       };
       void waitUser() {
-        UI::uiSnap(uiTXT::Position, &onSnapPos);
-        UI::uiSnap(uiTXT::TradeSafetyValue, &onSnapSafety);
-        UI::uiSnap(uiTXT::TargetBasePosition, &onSnapTargetBasePos);
+        ((UI*)client)->welcome(uiTXT::Position, &helloPosition);
+        ((UI*)client)->welcome(uiTXT::TradeSafetyValue, &helloSafety);
+        ((UI*)client)->welcome(uiTXT::TargetBasePosition, &helloTargetBasePos);
       };
     public:
-      static void calcSafety() {
+      void calcSafety() {
         if (empty() or !mgFairValue) return;
         mSafety safety = nextSafety();
         pgMutex.lock();
@@ -64,10 +64,10 @@ namespace K {
         ) {
           pgSafety = safety;
           pgMutex.unlock();
-          UI::uiSend(uiTXT::TradeSafetyValue, safety);
+          ((UI*)client)->send(uiTXT::TradeSafetyValue, safety);
         } else pgMutex.unlock();
       };
-      static void calcTargetBasePos() {
+      void calcTargetBasePos() {
         static string pgSideAPR_ = "!=";
         if (empty()) { FN::logWar("QE", "Unable to calculate TBP, missing market data."); return; }
         pgMutex.lock();
@@ -81,36 +81,36 @@ namespace K {
         if (pgTargetBasePos and abs(pgTargetBasePos - targetBasePosition) < 1e-4 and pgSideAPR_ == pgSideAPR) return;
         pgTargetBasePos = targetBasePosition;
         pgSideAPR_ = pgSideAPR;
-        ev_pgTargetBasePosition();
+        ((EV*)events)->pgTargetBasePosition();
         json k = {{"tbp", pgTargetBasePos}, {"sideAPR", pgSideAPR}};
-        UI::uiSend(uiTXT::TargetBasePosition, k, true);
-        DB::insert(uiTXT::TargetBasePosition, k);
+        ((UI*)client)->send(uiTXT::TargetBasePosition, k, true);
+        ((DB*)memory)->insert(uiTXT::TargetBasePosition, k);
         stringstream ss;
         ss << (int)(pgTargetBasePos / value * 1e+2) << "% = " << setprecision(8) << fixed << pgTargetBasePos;
         FN::log("TBP", ss.str() + " " + gw->base);
       };
-      static void addTrade(mTrade k) {
+      void addTrade(mTrade k) {
         mTrade k_(k.price, k.quantity, k.time);
         if (k.side == mSide::Bid) pgBuys[k.price] = k_;
         else pgSells[k.price] = k_;
       };
-      static bool empty() {
+      bool empty() {
         lock_guard<mutex> lock(pgMutex);
         return !pgPos.value;
       };
     private:
-      function<json()> onSnapPos = []() {
+      function<json()> helloPosition = []() {
         lock_guard<mutex> lock(pgMutex);
         return (json){ pgPos };
       };
-      function<json()> onSnapSafety = []() {
+      function<json()> helloSafety = []() {
         lock_guard<mutex> lock(pgMutex);
         return (json){ pgSafety };
       };
-      function<json()> onSnapTargetBasePos = []() {
+      function<json()> helloTargetBasePos = []() {
         return (json){{{"tbp", pgTargetBasePos}, {"sideAPR", pgSideAPR}}};
       };
-      static mSafety nextSafety() {
+      mSafety nextSafety() {
         pgMutex.lock();
         double value          = pgPos.value,
                baseAmount     = pgPos.baseAmount,
@@ -166,16 +166,16 @@ namespace K {
           sellPong
         );
       };
-      static void matchFirstPing(map<double, mTrade>* trades, double* ping, double* qty, double qtyMax, double width, bool reverse = false) {
-        matchPing(QP::matchPings(), true, true, trades, ping, qty, qtyMax, width, reverse);
+      void matchFirstPing(map<double, mTrade>* trades, double* ping, double* qty, double qtyMax, double width, bool reverse = false) {
+        matchPing(((QP*)params)->matchPings(), true, true, trades, ping, qty, qtyMax, width, reverse);
       };
-      static void matchBestPing(map<double, mTrade>* trades, double* ping, double* qty, double qtyMax, double width, bool reverse = false) {
-        matchPing(QP::matchPings(), true, false, trades, ping, qty, qtyMax, width, reverse);
+      void matchBestPing(map<double, mTrade>* trades, double* ping, double* qty, double qtyMax, double width, bool reverse = false) {
+        matchPing(((QP*)params)->matchPings(), true, false, trades, ping, qty, qtyMax, width, reverse);
       };
-      static void matchLastPing(map<double, mTrade>* trades, double* ping, double* qty, double qtyMax, double width, bool reverse = false) {
-        matchPing(QP::matchPings(), false, true, trades, ping, qty, qtyMax, width, reverse);
+      void matchLastPing(map<double, mTrade>* trades, double* ping, double* qty, double qtyMax, double width, bool reverse = false) {
+        matchPing(((QP*)params)->matchPings(), false, true, trades, ping, qty, qtyMax, width, reverse);
       };
-      static void matchPing(bool matchPings, bool near, bool far, map<double, mTrade>* trades, double* ping, double* qty, double qtyMax, double width, bool reverse = false) {
+      void matchPing(bool matchPings, bool near, bool far, map<double, mTrade>* trades, double* ping, double* qty, double qtyMax, double width, bool reverse = false) {
         int dir = width > 0 ? 1 : -1;
         if (reverse) for (map<double, mTrade>::reverse_iterator it = trades->rbegin(); it != trades->rend(); ++it) {
           if (matchPing(matchPings, near, far, ping, width, qty, qtyMax, dir * mgFairValue, dir * it->second.price, it->second.quantity, it->second.price, it->second.Kqty, reverse))
@@ -184,7 +184,7 @@ namespace K {
           if (matchPing(matchPings, near, far, ping, width, qty, qtyMax, dir * mgFairValue, dir * it->second.price, it->second.quantity, it->second.price, it->second.Kqty, reverse))
             break;
       };
-      static bool matchPing(bool matchPings, bool near, bool far, double *ping, double width, double* qty, double qtyMax, double fv, double price, double qtyTrade, double priceTrade, double KqtyTrade, bool reverse) {
+      bool matchPing(bool matchPings, bool near, bool far, double *ping, double width, double* qty, double qtyMax, double fv, double price, double qtyTrade, double priceTrade, double KqtyTrade, bool reverse) {
         if (reverse) { fv *= -1; price *= -1; width *= -1; }
         if (*qty < qtyMax
           and (far ? fv > price : true)
@@ -193,23 +193,23 @@ namespace K {
         ) matchPing(ping, qty, qtyMax, qtyTrade, priceTrade);
         return *qty >= qtyMax;
       };
-      static void matchPing(double* ping, double* qty, double qtyMax, double qtyTrade, double priceTrade) {
+      void matchPing(double* ping, double* qty, double qtyMax, double qtyTrade, double priceTrade) {
         double qty_ = fmin(qtyMax - *qty, qtyTrade);
         *ping += priceTrade * qty_;
         *qty += qty_;
       };
-      static void clean() {
+      void clean() {
         if (pgBuys.size()) expire(&pgBuys);
         if (pgSells.size()) expire(&pgSells);
         skip();
       };
-      static void expire(map<double, mTrade>* k) {
+      void expire(map<double, mTrade>* k) {
         unsigned long now = FN::T();
         for (map<double, mTrade>::iterator it = k->begin(); it != k->end();)
           if (it->second.time + qp.tradeRateSeconds * 1e+3 > now) ++it;
           else it = k->erase(it);
       };
-      static void skip() {
+      void skip() {
         while (pgBuys.size() and pgSells.size()) {
           mTrade buy = pgBuys.rbegin()->second;
           mTrade sell = pgSells.begin()->second;
@@ -223,13 +223,13 @@ namespace K {
             pgSells.erase(pgSells.begin());
         }
       };
-      static double sum(map<double, mTrade>* k) {
+      double sum(map<double, mTrade>* k) {
         double sum = 0;
         for (map<double, mTrade>::iterator it = k->begin(); it != k->end(); ++it)
           sum += it->second.quantity;
         return sum;
       };
-      static void calcWallet(mWallet k) {
+      void calcWallet(mWallet k) {
         static unsigned long profitT_21s = 0;
         static mutex walletMutex,
                      profitMutex;
@@ -249,7 +249,7 @@ namespace K {
         mProfit profit(baseValue, quoteValue, now);
         if (profitT_21s+21e+3 < FN::T()) {
           profitT_21s = FN::T();
-          DB::insert(uiTXT::Position, profit, false, "NULL", now - qp.profitHourInterval * 36e+5);
+          ((DB*)memory)->insert(uiTXT::Position, profit, false, "NULL", now - qp.profitHourInterval * 36e+5);
         }
         profitMutex.lock();
         pgProfit.push_back(profit);
@@ -286,9 +286,9 @@ namespace K {
         pgPos = pos;
         pgMutex.unlock();
         if (!eq) calcTargetBasePos();
-        UI::uiSend(uiTXT::Position, pos, true);
+        ((UI*)client)->send(uiTXT::Position, pos, true);
       };
-      static void calcWalletAfterOrder(mOrder k) {
+      void calcWalletAfterOrder(mOrder k) {
         if (empty()) return;
         double heldAmount = 0;
         pgMutex.lock();

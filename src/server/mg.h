@@ -29,7 +29,7 @@ namespace K {
   class MG: public Klass {
     protected:
       void load() {
-        json k = DB::load(uiTXT::MarketData);
+        json k = ((DB*)memory)->load(uiTXT::MarketData);
         if (k.size()) {
           for (json::reverse_iterator it = k.rbegin(); it != k.rend(); ++it) {
             if (it->value("time", (unsigned long)0)+qp.quotingStdevProtectionPeriods*1e+3<FN::T()) continue;
@@ -45,7 +45,7 @@ namespace K {
         if (argEwmaLong) mgEwmaL = argEwmaLong;
         if (argEwmaMedium) mgEwmaM = argEwmaMedium;
         if (argEwmaShort) mgEwmaS = argEwmaShort;
-        k = DB::load(uiTXT::EWMAChart);
+        k = ((DB*)memory)->load(uiTXT::EWMAChart);
         if (k.size()) {
           k = k.at(0);
           if (!mgEwmaL and k.value("time", (unsigned long)0)+qp.longEwmaPeriods*6e+4>FN::T())
@@ -60,25 +60,25 @@ namespace K {
         FN::log(argEwmaShort ? "ARG" : "DB", string("loaded EWMA Short = ") + to_string(mgEwmaS));
       };
       void waitData() {
-        gw->evDataTrade = [](mTrade k) {
+        gw->evDataTrade = [&](mTrade k) {
           if (argDebugEvents) FN::log("DEBUG", "EV MG evDataTrade");
           tradeUp(k);
         };
-        gw->evDataLevels = [](mLevels k) {
+        gw->evDataLevels = [&](mLevels k) {
           if (argDebugEvents) FN::log("DEBUG", "EV MG evDataLevels");
           levelUp(k);
         };
       };
       void waitUser() {
-        UI::uiSnap(uiTXT::MarketTrade, &onSnapTrade);
-        UI::uiSnap(uiTXT::FairValue, &onSnapFair);
-        UI::uiSnap(uiTXT::EWMAChart, &onSnapEwma);
+        ((UI*)client)->welcome(uiTXT::MarketTrade, &helloTrade);
+        ((UI*)client)->welcome(uiTXT::FairValue, &helloFair);
+        ((UI*)client)->welcome(uiTXT::EWMAChart, &helloEwma);
       };
     public:
-      static bool empty() {
+      bool empty() {
         return (!mgLevelsFilter.bids.size() or !mgLevelsFilter.asks.size());
       };
-      static void calcStats() {
+      void calcStats() {
         static int mgT = 0;
         if (++mgT == 60) {
           mgT = 0;
@@ -88,7 +88,7 @@ namespace K {
         }
         stdevPUp();
       };
-      static void calcFairValue() {
+      void calcFairValue() {
         if (empty()) return;
         double mgFairValue_ = mgFairValue;
         double topAskPrice = mgLevelsFilter.asks.begin()->price;
@@ -104,19 +104,19 @@ namespace K {
         );
         if (!mgFairValue or (mgFairValue_ and abs(mgFairValue - mgFairValue_) < gw->minTick)) return;
         gw->evDataWallet(mWallet());
-        UI::uiSend(uiTXT::FairValue, {{"price", mgFairValue}}, true);
+        ((UI*)client)->send(uiTXT::FairValue, {{"price", mgFairValue}}, true);
       };
     private:
-      function<json()> onSnapTrade = []() {
+      function<json()> helloTrade = []() {
         json k;
         for (unsigned i=0; i<mgTrades.size(); ++i)
           k.push_back(mgTrades[i]);
         return k;
       };
-      function<json()> onSnapFair = []() {
+      function<json()> helloFair = []() {
         return (json){{{"price", mgFairValue}}};
       };
-      function<json()> onSnapEwma = []() {
+      function<json()> helloEwma = []() {
         return (json){{
           {"stdevWidth", {
             {"fv", mgStdevFV},
@@ -136,7 +136,7 @@ namespace K {
           {"fairValue", mgFairValue}
         }};
       };
-      static void stdevPUp() {
+      void stdevPUp() {
         if (empty()) return;
         double topBid = mgLevelsFilter.bids.begin()->price;
         double topAsk = mgLevelsFilter.bids.begin()->price;
@@ -147,35 +147,35 @@ namespace K {
         mgStatTop.push_back(topBid);
         mgStatTop.push_back(topAsk);
         calcStdev();
-        DB::insert(uiTXT::MarketData, {
+        ((DB*)memory)->insert(uiTXT::MarketData, {
           {"fv", mgFairValue},
           {"bid", topBid},
           {"ask", topAsk},
           {"time", FN::T()},
         }, false, "NULL", FN::T() - 1e+3 * qp.quotingStdevProtectionPeriods);
       };
-      static void tradeUp(mTrade k) {
+      void tradeUp(mTrade k) {
         k.exchange = gw->exchange;
         k.pair = mPair(gw->base, gw->quote);
         k.time = FN::T();
         mgTrades.push_back(k);
         if (mgTrades.size()>69) mgTrades.erase(mgTrades.begin());
-        UI::uiSend(uiTXT::MarketTrade, k);
+        ((UI*)client)->send(uiTXT::MarketTrade, k);
       };
-      static void levelUp(mLevels k) {
+      void levelUp(mLevels k) {
         static unsigned long lastUp = 0;
         filter(k);
         if (lastUp+369 > FN::T()) return;
-        UI::uiSend(uiTXT::MarketData, k, true);
+        ((UI*)client)->send(uiTXT::MarketData, k, true);
         lastUp = FN::T();
       };
-      static void ewmaUp() {
+      void ewmaUp() {
         calcEwma(&mgEwmaL, qp.longEwmaPeriods);
         calcEwma(&mgEwmaM, qp.mediumEwmaPeriods);
         calcEwma(&mgEwmaS, qp.shortEwmaPeriods);
         calcTargetPos();
-        ev_mgTargetPosition();
-        UI::uiSend(uiTXT::EWMAChart, {
+        ((EV*)events)->mgTargetPosition();
+        ((UI*)client)->send(uiTXT::EWMAChart, {
           {"stdevWidth", {
             {"fv", mgStdevFV},
             {"fvMean", mgStdevFVMean},
@@ -193,25 +193,25 @@ namespace K {
           {"ewmaLong", mgEwmaL},
           {"fairValue", mgFairValue}
         }, true);
-        DB::insert(uiTXT::EWMAChart, {
+        ((DB*)memory)->insert(uiTXT::EWMAChart, {
           {"ewmaLong", mgEwmaL},
           {"ewmaMedium", mgEwmaM},
           {"ewmaShort", mgEwmaS},
           {"time", FN::T()}
         });
       };
-      static void ewmaPUp() {
+      void ewmaPUp() {
         calcEwma(&mgEwmaP, qp.quotingEwmaProtectionPeriods);
-        ev_mgEwmaQuoteProtection();
+        ((EV*)events)->mgEwmaQuoteProtection();
       };
-      static void ewmaSMUUp() {
+      void ewmaSMUUp() {
         calcEwma(&mgEwmaSM, qp.quotingEwmaSMPeriods);
         calcEwma(&mgEwmaSU, qp.quotingEwmaSUPeriods);
         if(mgEwmaSM && mgEwmaSU)
 		      mgEwmaSMUDiff = ((mgEwmaSU * 100) / mgEwmaSM) - 100;
-        ev_mgEwmaSMUProtection();
+        ((EV*)events)->mgEwmaSMUProtection();
       };
-      static void filter(mLevels k) {
+      void filter(mLevels k) {
         mgLevelsFilter = k;
         if (empty()) return;
         ogMutex.lock();
@@ -220,10 +220,10 @@ namespace K {
         ogMutex.unlock();
         if (!empty()) {
           calcFairValue();
-          ev_mgLevels();
+          ((EV*)events)->mgLevels();
         }
       };
-      static void filter(vector<mLevel>* k, mOrder o) {
+      void filter(vector<mLevel>* k, mOrder o) {
         for (vector<mLevel>::iterator it = k->begin(); it != k->end();)
           if (abs(it->price - o.price) < gw->minTick) {
             it->size = it->size - o.quantity;
@@ -231,14 +231,14 @@ namespace K {
             break;
           } else ++it;
       };
-      static void cleanStdev() {
+      void cleanStdev() {
         size_t periods = (size_t)qp.quotingStdevProtectionPeriods;
         if (mgStatFV.size()>periods) mgStatFV.erase(mgStatFV.begin(), mgStatFV.end()-periods);
         if (mgStatBid.size()>periods) mgStatBid.erase(mgStatBid.begin(), mgStatBid.end()-periods);
         if (mgStatAsk.size()>periods) mgStatAsk.erase(mgStatAsk.begin(), mgStatAsk.end()-periods);
         if (mgStatTop.size()>periods*2) mgStatTop.erase(mgStatTop.begin(), mgStatTop.end()-(periods*2));
       };
-      static void calcStdev() {
+      void calcStdev() {
         cleanStdev();
         if (mgStatFV.size() < 2 or mgStatBid.size() < 2 or mgStatAsk.size() < 2 or mgStatTop.size() < 4) return;
         double k = qp.quotingStdevProtectionFactor;
@@ -247,7 +247,7 @@ namespace K {
         mgStdevAsk = calcStdev(mgStatAsk, k, &mgStdevAskMean);
         mgStdevTop = calcStdev(mgStatTop, k, &mgStdevTopMean);
       };
-      static double calcStdev(vector<double> a, double f, double *mean) {
+      double calcStdev(vector<double> a, double f, double *mean) {
         int n = a.size();
         if (n == 0) return 0.0;
         double sum = 0;
@@ -261,13 +261,13 @@ namespace K {
         double variance = sq_diff_sum / n;
         return sqrt(variance) * f;
       };
-      static void calcEwma(double *k, int periods) {
+      void calcEwma(double *k, int periods) {
         if (*k) {
           double alpha = (double)2 / (periods + 1);
           *k = alpha * mgFairValue + (1 - alpha) * *k;
         } else *k = mgFairValue;
       };
-      static void calcTargetPos() {
+      void calcTargetPos() {
         mgSMA3.push_back(mgFairValue);
         if (mgSMA3.size()>3) mgSMA3.erase(mgSMA3.begin(), mgSMA3.end()-3);
         double SMA3 = 0;

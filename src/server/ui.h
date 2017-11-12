@@ -5,7 +5,7 @@ namespace K {
   string A();
   uWS::Hub hub(0, true);
   uWS::Group<uWS::SERVER> *uiGroup = hub.createGroup<uWS::SERVER>(uWS::PERMESSAGE_DEFLATE);
-  bool uiVisibleOpt = true;
+  bool uiToggleSettings = true;
   unsigned int uiOSR_1m = 0;
   double delayUI = 0;
   string uiNOTE = "";
@@ -118,17 +118,18 @@ namespace K {
       void waitTime() {
         if (argHeadless) return;
         uv_timer_init(hub.getLoop(), &tDelay);
+        tDelay.data = (void*)this;
         uv_timer_start(&tDelay, [](uv_timer_t *handle) {
           if (argDebugEvents) FN::log("DEBUG", "EV GW tDelay timer");
-          uiSend(delayUI > 0);
+          ((UI*)handle->data)->send(delayUI > 0);
         }, 0, 0);
       };
       void waitUser() {
-        UI::uiSnap(uiTXT::ApplicationState, &onSnapApp);
-        UI::uiSnap(uiTXT::Notepad, &onSnapNote);
-        UI::uiHand(uiTXT::Notepad, &onHandNote);
-        UI::uiSnap(uiTXT::ToggleConfigs, &onSnapOpt);
-        UI::uiHand(uiTXT::ToggleConfigs, &onHandOpt);
+        welcome(uiTXT::ApplicationState, &helloServer);
+        welcome(uiTXT::Notepad, &helloNotes);
+        clickme(uiTXT::Notepad, &kissNotes);
+        welcome(uiTXT::ToggleSettings, &helloSettings);
+        clickme(uiTXT::ToggleSettings, &kissSettings);
       };
       void run() {
         if ((access("etc/sslcert/server.crt", F_OK) != -1)
@@ -144,28 +145,28 @@ namespace K {
         FN::logUI(uiPrtcl, argPort);
       };
     public:
-      static void uiSnap(uiTXT k, function<json()> *cb) {
+      void welcome(uiTXT k, function<json()> *cb) {
         if (argHeadless) return;
         uiSess *sess = (uiSess *) uiGroup->getUserData();
         if (sess->cbSnap.find((char)k) == sess->cbSnap.end())
           sess->cbSnap[(char)k] = cb;
         else FN::logExit("UI", string("Use only a single unique message handler for each \"") + (char)k + "\" event", EXIT_SUCCESS);
       };
-      static void uiHand(uiTXT k, function<void(json)> *cb) {
+      void clickme(uiTXT k, function<void(json)> *cb) {
         if (argHeadless) return;
         uiSess *sess = (uiSess *) uiGroup->getUserData();
         if (sess->cbMsg.find((char)k) == sess->cbMsg.end())
           sess->cbMsg[(char)k] = cb;
         else FN::logExit("UI", string("Use only a single unique message handler for each \"") + (char)k + "\" event", EXIT_SUCCESS);
       };
-      static void uiSend(uiTXT k, json o, bool hold = false) {
+      void send(uiTXT k, json o, bool hold = false) {
         if (argHeadless) return;
         uiSess *sess = (uiSess *) uiGroup->getUserData();
         if (sess->u == 0) return;
         if (delayUI and hold) uiHold(k, o);
         else uiUp(k, o);
       };
-      static void delay(double delayUI_) {
+      void delay(double delayUI_) {
         if (argHeadless) return;
         delayUI = delayUI_;
         wsMutex.lock();
@@ -175,31 +176,31 @@ namespace K {
         uv_timer_set_repeat(&tDelay, delayUI ? (int)(delayUI*1e+3) : 6e+4);
       };
     private:
-      function<json()> onSnapApp = []() {
+      function<json()> helloServer = [&]() {
         return (json){ serverState() };
       };
-      function<json()> onSnapNote = []() {
+      function<json()> helloNotes = []() {
         return (json){ uiNOTE };
       };
-      function<void(json)> onHandNote = [](json k) {
+      function<void(json)> kissNotes = [](json k) {
         if (!k.is_null() and k.size())
           uiNOTE = k.at(0);
       };
-      function<json()> onSnapOpt = []() {
-        return (json){ uiVisibleOpt };
+      function<json()> helloSettings = []() {
+        return (json){ uiToggleSettings };
       };
-      function<void(json)> onHandOpt = [](json k) {
+      function<void(json)> kissSettings = [](json k) {
         if (!k.is_null() and k.size())
-          uiVisibleOpt = k.at(0);
+          uiToggleSettings = k.at(0);
       };
-      static void uiUp(uiTXT k, json o) {
+      void uiUp(uiTXT k, json o) {
         string m(1, (char)uiBIT::MSG);
         m += string(1, (char)k);
         m += o.is_null() ? "" : o.dump();
         lock_guard<mutex> lock(wsMutex);
         uiGroup->broadcast(m.data(), m.length(), uWS::OpCode::TEXT);
       };
-      static void uiHold(uiTXT k, json o) {
+      void uiHold(uiTXT k, json o) {
         lock_guard<mutex> lock(wsMutex);
         uiSess *sess = (uiSess *) uiGroup->getUserData();
         if (sess->D.find(k) != sess->D.end() and sess->D[k].size() > 0) {
@@ -211,7 +212,7 @@ namespace K {
         }
         sess->D[k].push_back(o);
       };
-      static bool uiSend() {
+      bool send() {
         static unsigned long uiT_1m = 0;
         wsMutex.lock();
         map<uiTXT, vector<json>> msgs;
@@ -237,21 +238,21 @@ namespace K {
         uiT_1m = FN::T();
         return true;
       };
-      static void uiSend(bool delayed) {
+      void send(bool delayed) {
         bool sec60 = true;
-        if (delayed) sec60 = uiSend();
+        if (delayed) sec60 = send();
         if (!sec60) return;
-        uiSend(uiTXT::ApplicationState, serverState());
+        send(uiTXT::ApplicationState, serverState());
         uiOSR_1m = 0;
       };
-      static json serverState() {
+      json serverState() {
         time_t rawtime;
         time(&rawtime);
         return {
           {"memory", FN::memory()},
           {"hour", localtime(&rawtime)->tm_hour},
           {"freq", uiOSR_1m},
-          {"dbsize", DB::size()},
+          {"dbsize", ((DB*)memory)->size()},
           {"a", A()}
         };
       };

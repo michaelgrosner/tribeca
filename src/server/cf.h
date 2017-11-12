@@ -2,9 +2,8 @@
 #define K_CF_H_
 
 namespace K {
-  Gw *gw,
-     *gW;
-  class CF: public Klass {
+  Gw *gw;
+  class CF: public kLass {
     protected:
       void load(int argc, char** argv) {
         cout << BGREEN << "K" << RGREEN << " build " << K_BUILD << " " << K_STAMP << "." << BRED << '\n';
@@ -25,7 +24,6 @@ namespace K {
             {"matryoshka",   required_argument, 0,               'k'},
             {"exchange",     required_argument, 0,               'e'},
             {"currency",     required_argument, 0,               'c'},
-            {"target",       required_argument, 0,               'T'},
             {"apikey",       required_argument, 0,               'A'},
             {"secret",       required_argument, 0,               'S'},
             {"passphrase",   required_argument, 0,               'X'},
@@ -44,12 +42,11 @@ namespace K {
             {"version",      no_argument,       0,               'v'},
             {0,              0,                 0,                 0}
           };
-          k = getopt_long(argc, argv, "hvd:l:m:s:p:u:v:c:e:k:P:K:w:W:H:U:X:S:A:T:", args, &i);
+          k = getopt_long(argc, argv, "hvd:l:m:s:p:u:v:c:e:k:P:K:W:H:U:X:S:A:", args, &i);
           if (k == -1) break;
           switch (k) {
             case 0: break;
             case 'P': argPort = stoi(optarg); break;
-            case 'T': argTarget = string(optarg); break;
             case 'A': argApikey = string(optarg); break;
             case 'S': argSecret = string(optarg); break;
             case 'U': argUsername = string(optarg); break;
@@ -92,8 +89,6 @@ namespace K {
               << FN::uiT() << RWHITE << "                           'KORBIT', 'POLONIEX' or 'NULL'." << '\n'
               << FN::uiT() << RWHITE << "-c, --currency=PAIRS     - set currency pairs for trading (use format" << '\n'
               << FN::uiT() << RWHITE << "                           with '/' separator, like 'BTC/EUR')." << '\n'
-              << FN::uiT() << RWHITE << "-T, --target=NAME        - set orders destination (see '--exchange')," << '\n'
-              << FN::uiT() << RWHITE << "                           a value of NULL generates fake orders only." << '\n'
               << FN::uiT() << RWHITE << "-A, --apikey=WORD        - set (never share!) WORD as api key for trading," << '\n'
               << FN::uiT() << RWHITE << "                           mandatory." << '\n'
               << FN::uiT() << RWHITE << "-S, --secret=WORD        - set (never share!) WORD as api secret for trading," << '\n'
@@ -157,18 +152,18 @@ namespace K {
         }
         if (argDatabase == "")
           argDatabase = string("/data/db/K.")
-            + to_string((int)cfExchange())
-            + '.' + cfBase()
-            + '.' + cfQuote() + ".db";
+            + to_string((int)exchange())
+            + '.' + base()
+            + '.' + quote() + ".db";
       };
       void run() {
         if (!argNaked) FN::screen();
-        mExchange e = cfExchange();
+        mExchange e = exchange();
         gw = Gw::E(e);
         gw->exchange = e;
         gw->name = argExchange;
-        gw->base = cfBase();
-        gw->quote = cfQuote();
+        gw->base = base();
+        gw->quote = quote();
         gw->apikey = argApikey;
         gw->secret = argSecret;
         gw->user = argUsername;
@@ -177,19 +172,19 @@ namespace K {
         gw->ws = argWss;
       };
     private:
-      static string cfBase() {
+      string base() {
         string k_ = argCurrency;
         string k = k_.substr(0, k_.find("/"));
         if (k == k_) FN::logExit("CF", "Invalid currency pair! Must be in the format of BASE/QUOTE, eg BTC/EUR.", EXIT_SUCCESS);
         return FN::S2u(k);
       };
-      static string cfQuote() {
+      string quote() {
         string k_ = argCurrency;
         string k = k_.substr(k_.find("/")+1);
         if (k == k_) FN::logExit("CF", "Invalid currency pair! Must be in the format of BASE/QUOTE, eg BTC/EUR", EXIT_SUCCESS);
         return FN::S2u(k);
       };
-      static mExchange cfExchange() {
+      mExchange exchange() {
         string k = FN::S2l(argExchange);
         if (k == "coinbase") return mExchange::Coinbase;
         else if (k == "okcoin") return mExchange::OkCoin;

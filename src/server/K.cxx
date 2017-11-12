@@ -60,24 +60,25 @@ using namespace nlohmann;
     ;;;;K::UI ui;;;;;;;        ;;;;;;;;;;
     ;;;;K::QP qp;;;;;;;        ;;;;;;;;;;
     ;;;;K::OG og;;;;;;;    ;;    ;;;;;;;;
-;   ;;;;K::MG mg;;;;;;;    ;;;;    ;;;;;;   ;
-;;  ;;;;K::PG pg;;;;;;;    ;;;;    ;;;;;;  ;;
-;;;;;;;;K::QE qe;;;;;;;;;;;;;;;    ;;;;;; ;;;;;;; // youtu.be/nwyDU3SGgQQ
-    ;;;;K::GW gw;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;cf.main(argc, argv);;;;;;;;;;;;;;;;;;;;;; // youtu.be/y0fTof1L-ag
-;;  ;;  ev.wait(/* Wherever you go..    */);;
-;   ;;  db.wait(/* Whatever you do..    */);;
-    ;;  ui.wait(/* I will be right here */);;
-    ;;  qp.wait(/*  waiting for coins.  */);;
-    ;;  og.wait(/* Whatever it takes..  */);;
-    ;;  mg.wait(/* Or how my OS breaks, */);;
-    ;;  pg.wait(/* I will be right here */);;
-    ;;  qe.wait(/*  waiting for coins.  */);;
-;   ;;  gw.wait(/* Day after day.    :wq*/);;
-;;  ;;;;return EXIT_FAILURE;;;;;;;;;;;;;;;;;;
-;;;;;;};;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; ;;;;;;; // youtu.be/dp5hsDgENLk
-;;  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;  ;;
-;                        /*K\*/             ;
+;   ;;;;K::MG mg;;;;;;;    ;;;;    ;;;;;;            ;
+;;  ;;;;K::PG pg;;;;;;;    ;;;;    ;;;;;;           ;;
+;;;;;;;;K::QE qe;;;;;;;;;;;;;;;    ;;;;;;         ;;;;;;;; // youtu.be/nwyDU3SGgQQ
+    ;;;;K::GW gw;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;cf.main(argc, argv);;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; // youtu.be/y0fTof1L-ag
+;;  ;;  cf.link(&ev,&db,&ui,&qp,&og,&mg,&pg,&qe,&gw);;
+;   ;;  ev.wait(/*     Wherever you go..         */);;;;;; // youtu.be/DKSO5YlYbOg
+    ;;  db.wait(/*     Whatever you do..         */);;
+    ;;  ui.wait(/*     I will be right here      */);;;;;; // youtu.be/FornpYhezt4
+    ;;  qp.wait(/*      waiting for coins.       */);;
+    ;;  og.wait(/*     Whatever it takes..       */);;;;;; // youtu.be/caZLDPVvEmw
+    ;;  mg.wait(/*     Or how my OS breaks,      */);;
+    ;;  pg.wait(/*     I will be right here      */);;;;;; // youtu.be/02OHHWG1EQY
+    ;;  qe.wait(/*      waiting for coins.       */);;
+;   ;;  gw.wait(/*     Day after day.         :wq*/);;;;;; // youtu.be/AMCeEoOgSvc
+;;  ;;;;return EXIT_FAILURE;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;};;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; ;;;;;;; // youtu.be/dp5hsDgENLk
+;;  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;  ;;
+;                        /*K\*/                      ;
          /*    .        kKKKKK,       .          *
                        kKKKK  KK,
      .         ,kFIREKKKKLET  `KK,_          *

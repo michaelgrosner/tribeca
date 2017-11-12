@@ -7,7 +7,7 @@ namespace K {
   class OG: public Klass {
     protected:
       void load() {
-        json k = DB::load(uiTXT::Trades);
+        json k = ((DB*)memory)->load(uiTXT::Trades);
         if (k.size())
           for (json::reverse_iterator it = k.rbegin(); it != k.rend(); ++it)
             tradesMemory.push_back(mTrade(
@@ -30,30 +30,30 @@ namespace K {
         FN::log("DB", string("loaded ") + to_string(tradesMemory.size()) + " historical Trades");
       };
       void waitData() {
-        gw->evDataOrder = [](mOrder k) {
+        gw->evDataOrder = [&](mOrder k) {
           if (argDebugEvents) FN::log("DEBUG", "EV OG evDataOrder");
           if (argDebugOrders) FN::log("DEBUG", string("OG reply  ") + k.orderId + "::" + k.exchangeId + " [" + to_string((int)k.orderStatus) + "]: " + to_string(k.quantity) + "/" + to_string(k.lastQuantity) + " at price " + to_string(k.price));
           updateOrderState(k);
         };
       };
       void waitUser() {
-        UI::uiSnap(uiTXT::Trades, &onSnapTrades);
-        UI::uiSnap(uiTXT::OrderStatusReports, &onSnapOrders);
-        UI::uiHand(uiTXT::SubmitNewOrder, &onHandSubmitNewOrder);
-        UI::uiHand(uiTXT::CancelOrder, &onHandCancelOrder);
-        UI::uiHand(uiTXT::CancelAllOrders, &onHandCancelAllOrders);
-        UI::uiHand(uiTXT::CleanAllClosedOrders, &onHandCleanAllClosedOrders);
-        UI::uiHand(uiTXT::CleanAllOrders, &onHandCleanAllOrders);
-        UI::uiHand(uiTXT::CleanTrade, &onHandCleanTrade);
+        ((UI*)client)->welcome(uiTXT::Trades, &helloTrades);
+        ((UI*)client)->welcome(uiTXT::OrderStatusReports, &helloOrders);
+        ((UI*)client)->clickme(uiTXT::SubmitNewOrder, &kissSubmitNewOrder);
+        ((UI*)client)->clickme(uiTXT::CancelOrder, &kissCancelOrder);
+        ((UI*)client)->clickme(uiTXT::CancelAllOrders, &kissCancelAllOrders);
+        ((UI*)client)->clickme(uiTXT::CleanAllClosedTrades, &kissCleanAllClosedTrades);
+        ((UI*)client)->clickme(uiTXT::CleanAllTrades, &kissCleanAllTrades);
+        ((UI*)client)->clickme(uiTXT::CleanTrade, &kissCleanTrade);
       };
     public:
-      static void sendOrder(mSide oS, double oP, double oQ, mOrderType oLM, mTimeInForce oTIF, bool oIP, bool oPO) {
-        mOrder o = updateOrderState(mOrder(gW->randId(), gw->exchange, mPair(gw->base, gw->quote), oS, oQ, oLM, oIP, FN::roundSide(oP, gw->minTick, oS), oTIF, mORS::New, oPO));
+      void sendOrder(mSide oS, double oP, double oQ, mOrderType oLM, mTimeInForce oTIF, bool oIP, bool oPO) {
+        mOrder o = updateOrderState(mOrder(gw->randId(), gw->exchange, mPair(gw->base, gw->quote), oS, oQ, oLM, oIP, FN::roundSide(oP, gw->minTick, oS), oTIF, mORS::New, oPO));
         if (argDebugOrders) FN::log("DEBUG", string("OG  send  ") + (o.side == mSide::Bid ? "BID id " : "ASK id ") + o.orderId + ": " + to_string(o.quantity) + " " + o.pair.base + " at price " + to_string(o.price) + " " + o.pair.quote);
-        gW->send(o.orderId, o.side, o.price, o.quantity, o.type, o.timeInForce, o.preferPostOnly, o.time);
+        gw->send(o.orderId, o.side, o.price, o.quantity, o.type, o.timeInForce, o.preferPostOnly, o.time);
         ++uiOSR_1m;
       };
-      static void cancelOrder(string k) {
+      void cancelOrder(string k) {
         ogMutex.lock();
         if (allOrders.find(k) == allOrders.end() or (allOrders[k].exchangeId == "")) {
           ogMutex.unlock();
@@ -62,9 +62,9 @@ namespace K {
         mOrder o = allOrders[k];
         ogMutex.unlock();
         if (argDebugOrders) FN::log("DEBUG", string("OG cancel ") + (o.side == mSide::Bid ? "BID id " : "ASK id ") + o.orderId + "::" + o.exchangeId);
-        gW->cancel(o.orderId, o.exchangeId, o.side, o.time);
+        gw->cancel(o.orderId, o.exchangeId, o.side, o.time);
       };
-      static void allOrdersDelete(string oI, string oE) {
+      void cleanOrder(string oI, string oE) {
         ogMutex.lock();
         map<string, mOrder>::iterator it = allOrders.find(oI);
         if (it != allOrders.end()) allOrders.erase(it);
@@ -79,7 +79,7 @@ namespace K {
         if (argDebugOrders) FN::log("DEBUG", string("OG remove ") + oI + "::" + oE);
       };
     private:
-      function<json()> onSnapTrades = []() {
+      function<json()> helloTrades = []() {
         json k;
         for (vector<mTrade>::iterator it = tradesMemory.begin(); it != tradesMemory.end(); ++it) {
           it->loadedFromDB = true;
@@ -87,7 +87,7 @@ namespace K {
         }
         return k;
       };
-      function<json()> onSnapOrders = []() {
+      function<json()> helloOrders = []() {
         json k;
         ogMutex.lock();
         for (map<string, mOrder>::iterator it = allOrders.begin(); it != allOrders.end(); ++it) {
@@ -97,26 +97,26 @@ namespace K {
         ogMutex.unlock();
         return k;
       };
-      function<void(json)> onHandCancelAllOrders = [](json k) {
+      function<void(json)> kissCancelAllOrders = [&](json k) {
         cancelOpenOrders();
       };
-      function<void(json)> onHandCleanAllClosedOrders = [](json k) {
-        cleanClosedOrders();
+      function<void(json)> kissCleanAllClosedTrades = [&](json k) {
+        cleanClosedTrades();
       };
-      function<void(json)> onHandCleanAllOrders = [](json k) {
-        cleanOrders();
+      function<void(json)> kissCleanAllTrades = [&](json k) {
+        cleanTrades();
       };
-      function<void(json)> onHandCancelOrder = [](json k) {
+      function<void(json)> kissCancelOrder = [&](json k) {
         if (k.is_object() and k["orderId"].is_string())
           cancelOrder(k["orderId"].get<string>());
-        else FN::logWar("JSON", "Missing orderId at onHandCancelOrder, ignored");
+        else FN::logWar("JSON", "Missing orderId at kissCancelOrder, ignored");
       };
-      function<void(json)> onHandCleanTrade = [](json k) {
+      function<void(json)> kissCleanTrade = [&](json k) {
         if (k.is_object() and k["tradeId"].is_string())
           cleanTrade(k["tradeId"].get<string>());
-        else FN::logWar("JSON", "Missing tradeId at onHandCleanTrade, ignored");
+        else FN::logWar("JSON", "Missing tradeId at kissCleanTrade, ignored");
       };
-      function<void(json)> onHandSubmitNewOrder = [](json k) {
+      function<void(json)> kissSubmitNewOrder = [&](json k) {
         sendOrder(
           k.value("side", "") == "Bid" ? mSide::Bid : mSide::Ask,
           k.value("price", 0.0),
@@ -127,7 +127,7 @@ namespace K {
           false
         );
       };
-      static mOrder updateOrderState(mOrder k) {
+      mOrder updateOrderState(mOrder k) {
         mOrder o;
         ogMutex.lock();
         if (k.orderStatus == mORS::New) o = k;
@@ -162,14 +162,14 @@ namespace K {
           o.computationalLatency = FN::T() - o.time;
         if (o.computationalLatency) o.time = FN::T();
         toMemory(o);
-        ev_ogOrder(o);
+        ((EV*)events)->ogOrder(o);
         if (o.orderStatus != mORS::New)
-          UI::uiSend(uiTXT::OrderStatusReports, o, true);
+          ((UI*)client)->send(uiTXT::OrderStatusReports, o, true);
         if (k.lastQuantity > 0)
           toHistory(o);
         return o;
       };
-      static void cancelOpenOrders() {
+      void cancelOpenOrders() {
         vector<string> k;
         ogMutex.lock();
         for (map<string, mOrder>::iterator it = allOrders.begin(); it != allOrders.end(); ++it)
@@ -179,38 +179,38 @@ namespace K {
         for (vector<string>::iterator it = k.begin(); it != k.end(); ++it)
           cancelOrder(*it);
       };
-      static void cleanClosedOrders() {
+      void cleanClosedTrades() {
         for (vector<mTrade>::iterator it = tradesMemory.begin(); it != tradesMemory.end();) {
           if (it->Kqty+0.0001 < it->quantity) ++it;
           else {
             it->Kqty = -1;
-            UI::uiSend(uiTXT::Trades, *it);
-            DB::insert(uiTXT::Trades, {}, false, it->tradeId);
+            ((UI*)client)->send(uiTXT::Trades, *it);
+            ((DB*)memory)->insert(uiTXT::Trades, {}, false, it->tradeId);
             it = tradesMemory.erase(it);
           }
         }
       };
-      static void cleanOrders() {
+      void cleanTrades() {
         for (vector<mTrade>::iterator it = tradesMemory.begin(); it != tradesMemory.end();) {
           it->Kqty = -1;
-          UI::uiSend(uiTXT::Trades, *it);
-          DB::insert(uiTXT::Trades, {}, false, it->tradeId);
+          ((UI*)client)->send(uiTXT::Trades, *it);
+          ((DB*)memory)->insert(uiTXT::Trades, {}, false, it->tradeId);
           it = tradesMemory.erase(it);
         }
       };
-      static void cleanTrade(string k) {
+      void cleanTrade(string k) {
         for (vector<mTrade>::iterator it = tradesMemory.begin(); it != tradesMemory.end();) {
           if (it->tradeId != k) ++it;
           else {
             it->Kqty = -1;
-            UI::uiSend(uiTXT::Trades, *it);
-            DB::insert(uiTXT::Trades, {}, false, it->tradeId);
+            ((UI*)client)->send(uiTXT::Trades, *it);
+            ((DB*)memory)->insert(uiTXT::Trades, {}, false, it->tradeId);
             it = tradesMemory.erase(it);
             break;
           }
         }
       };
-      static void toHistory(mOrder o) {
+      void toHistory(mOrder o) {
         double fee = 0;
         double val = abs(o.price * o.lastQuantity);
         mTrade trade(
@@ -224,8 +224,8 @@ namespace K {
           val, 0, 0, 0, 0, 0, fee, false
         );
         FN::log(trade, argExchange);
-        ev_ogTrade(trade);
-        if (QP::matchPings()) {
+        ((EV*)events)->ogTrade(trade);
+        if (((QP*)params)->matchPings()) {
           double widthPong = qp.widthPercentage
             ? qp.widthPongPercentage * trade.price / 100
             : qp.widthPong;
@@ -237,11 +237,11 @@ namespace K {
             ) matches[it->price] = it->tradeId;
           matchPong(matches, (qp.pongAt == mPongAt::LongPingFair or qp.pongAt == mPongAt::LongPingAggressive) ? trade.side == mSide::Ask : trade.side == mSide::Bid, trade);
         } else {
-          UI::uiSend(uiTXT::Trades, trade);
-          DB::insert(uiTXT::Trades, trade, false, trade.tradeId);
+          ((UI*)client)->send(uiTXT::Trades, trade);
+          ((DB*)memory)->insert(uiTXT::Trades, trade, false, trade.tradeId);
           tradesMemory.push_back(trade);
         }
-        UI::uiSend(uiTXT::TradesChart, {
+        ((UI*)client)->send(uiTXT::TradesChart, {
           {"price", trade.price},
           {"side", (int)trade.side},
           {"quantity", trade.quantity},
@@ -250,7 +250,7 @@ namespace K {
         });
         cleanAuto(trade.time, qp.cleanPongsAuto);
       };
-      static void matchPong(map<double, string> matches, bool reverse, mTrade pong) {
+      void matchPong(map<double, string> matches, bool reverse, mTrade pong) {
         if (reverse) for (map<double, string>::reverse_iterator it = matches.rbegin(); it != matches.rend(); ++it) {
           if (!matchPong(it->second, &pong)) break;
         } else for (map<double, string>::iterator it = matches.begin(); it != matches.end(); ++it)
@@ -264,18 +264,18 @@ namespace K {
             it->quantity = it->quantity + pong.quantity;
             it->value = it->value + pong.value;
             it->loadedFromDB = false;
-            UI::uiSend(uiTXT::Trades, *it);
-            DB::insert(uiTXT::Trades, *it, false, it->tradeId);
+            ((UI*)client)->send(uiTXT::Trades, *it);
+            ((DB*)memory)->insert(uiTXT::Trades, *it, false, it->tradeId);
             break;
           }
           if (!eq) {
-            UI::uiSend(uiTXT::Trades, pong);
-            DB::insert(uiTXT::Trades, pong, false, pong.tradeId);
+            ((UI*)client)->send(uiTXT::Trades, pong);
+            ((DB*)memory)->insert(uiTXT::Trades, pong, false, pong.tradeId);
             tradesMemory.push_back(pong);
           }
         }
       };
-      static bool matchPong(string match, mTrade* pong) {
+      bool matchPong(string match, mTrade* pong) {
         for (vector<mTrade>::iterator it = tradesMemory.begin(); it != tradesMemory.end(); ++it) {
           if (it->tradeId != match) continue;
           double Kqty = fmin(pong->quantity, it->quantity - it->Kqty);
@@ -288,25 +288,25 @@ namespace K {
           if (it->quantity<=it->Kqty)
             it->Kdiff = abs((it->quantity*it->price)-(it->Kqty*it->Kprice));
           it->loadedFromDB = false;
-          UI::uiSend(uiTXT::Trades, *it);
-          DB::insert(uiTXT::Trades, *it, false, it->tradeId);
+          ((UI*)client)->send(uiTXT::Trades, *it);
+          ((DB*)memory)->insert(uiTXT::Trades, *it, false, it->tradeId);
           break;
         }
         return pong->quantity > 0;
       };
-      static void cleanAuto(unsigned long k, double pT) {
+      void cleanAuto(unsigned long k, double pT) {
         if (pT == 0) return;
         unsigned long pT_ = k - (abs(pT) * 864e5);
         for (vector<mTrade>::iterator it = tradesMemory.begin(); it != tradesMemory.end();) {
           if (it->time < pT_ and (pT < 0 or it->Kqty >= it->quantity)) {
             it->Kqty = -1;
-            UI::uiSend(uiTXT::Trades, *it);
-            DB::insert(uiTXT::Trades, {}, false, it->tradeId);
+            ((UI*)client)->send(uiTXT::Trades, *it);
+            ((DB*)memory)->insert(uiTXT::Trades, {}, false, it->tradeId);
             it = tradesMemory.erase(it);
           } else ++it;
         }
       };
-      static void toMemory(mOrder k) {
+      void toMemory(mOrder k) {
         if (k.orderStatus != mORS::Cancelled and k.orderStatus != mORS::Complete) {
           ogMutex.lock();
           if (k.exchangeId != "")
@@ -314,7 +314,7 @@ namespace K {
           allOrders[k.orderId] = k;
           ogMutex.unlock();
           if (argDebugOrders) FN::log("DEBUG", string("OG  save  ") + (k.side == mSide::Bid ? "BID id " : "ASK id ") + k.orderId + "::" + k.exchangeId + " [" + to_string((int)k.orderStatus) + "]: " + to_string(k.quantity) + " " + k.pair.base + " at price " + to_string(k.price) + " " + k.pair.quote);
-        } else allOrdersDelete(k.orderId, k.exchangeId);
+        } else cleanOrder(k.orderId, k.exchangeId);
         if (argDebugOrders) FN::log("DEBUG", string("OG memory ") + to_string(allOrders.size()) + "/" + to_string(allOrdersIds.size()));
       };
   };
