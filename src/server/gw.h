@@ -7,18 +7,14 @@ namespace K {
       void load() {
         evExit = &happyEnding;
         if (argAutobot) gwAutoStart = mConnectivity::Connected;
-        gw->hub = &hub;
-        gw->gwGroup = hub.createGroup<uWS::CLIENT>();
         handshake(gw->exchange);
       };
       void waitTime() {
-        uv_timer_init(hub.getLoop(), &tWallet);
-        uv_timer_start(&tWallet, [](uv_timer_t *handle) {
+        uv_timer_start(&((EV*)events)->tWallet, [](uv_timer_t *handle) {
           if (argDebugEvents) FN::log("DEBUG", "EV GW tWallet timer");
           gw->wallet();
         }, 0, 15e+3);
-        uv_timer_init(hub.getLoop(), &tCancel);
-        uv_timer_start(&tCancel, [](uv_timer_t *handle) {
+        uv_timer_start(&((EV*)events)->tCancel, [](uv_timer_t *handle) {
           if (argDebugEvents) FN::log("DEBUG", "EV GW tCancel timer");
           if (qp.cancelOrdersAuto)
             gw->cancelAll();
@@ -42,28 +38,11 @@ namespace K {
         ((UI*)client)->clickme(uiTXT::ActiveState, &kissState);
       };
       void run() {
-        hub.run();
-        ((EV*)events)->end(eCode);
+        ((EV*)events)->start();
       };
     private:
       function<void(int)> happyEnding = [&](int code) {
-        eCode = code;
-        if (uv_loop_alive(hub.getLoop())) {
-          uv_timer_stop(&tCancel);
-          uv_timer_stop(&tWallet);
-          uv_timer_stop(&tCalcs);
-          uv_timer_stop(&tStart);
-          uv_timer_stop(&tDelay);
-          gw->close();
-          gw->gwGroup->close();
-          FN::log(string("GW ") + argExchange, "Attempting to cancel all open orders, please wait.");
-          gw->cancelAll();
-          FN::log(string("GW ") + argExchange, "cancell all open orders OK");
-          uiGroup->close();
-          FN::close(hub.getLoop());
-          hub.getLoop()->destroy();
-        }
-        ((EV*)events)->end(code);
+        ((EV*)events)->stop(code);
       };
       mConnectivity gwAutoStart = mConnectivity::Disconnected,
                     gwQuotingState = mConnectivity::Disconnected,

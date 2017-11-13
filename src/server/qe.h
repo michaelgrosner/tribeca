@@ -14,11 +14,9 @@ namespace K {
         qeQuotingMode[mQuotingMode::Depth] = &calcDepthOfMarket;
       };
       void waitTime() {
-        uv_timer_init(hub.getLoop(), &tStart);
-        tStart.data = (void*)this;
-        uv_timer_init(hub.getLoop(), &tCalcs);
-        tCalcs.data = (void*)this;
-        uv_timer_start(&tCalcs, [](uv_timer_t *handle) {
+        ((EV*)events)->tStart.data = (void*)this;
+        ((EV*)events)->tCalcs.data = (void*)this;
+        uv_timer_start(&((EV*)events)->tCalcs, [](uv_timer_t *handle) {
           if (argDebugEvents) FN::log("DEBUG", "EV GW tCalcs timer");
           if (mgFairValue) {
             ((MG*)((QE*)handle->data)->market)->calcStats();
@@ -557,26 +555,26 @@ namespace K {
       };
       void start(mSide side, mLevel q, bool isPong) {
         if (qp.delayAPI) {
-          static unsigned int tStart_ = 0;
+          static unsigned int tStarted = 0;
           static unsigned long qeNextT = 0;
           long nextDiff = (qeNextT + (6e+4 / qp.delayAPI)) - FN::T();
           if (nextDiff > 0) {
             qeNextQuote.clear();
             qeNextQuote[side] = q;
             qeNextIsPong = isPong;
-            if (tStart_) {
-              uv_timer_stop(&tStart);
-              tStart_ = 0;
+            if (tStarted) {
+              uv_timer_stop(&((EV*)events)->tStart);
+              tStarted = 0;
             }
-            uv_timer_start(&tStart, [](uv_timer_t *handle) {
+            uv_timer_start(&((EV*)events)->tStart, [](uv_timer_t *handle) {
               if (argDebugEvents) FN::log("DEBUG", "EV GW tStart timer");
               QE *Qe = (QE *)handle->data;
               Qe->start(Qe->qeNextQuote.begin()->first, Qe->qeNextQuote.begin()->second, Qe->qeNextIsPong);
             }, (nextDiff * 1e+3) + 1e+2, 0);
-            tStart_ = 1;
+            tStarted = 1;
             return;
           }
-          tStart_ = 0;
+          tStarted = 0;
           qeNextT = FN::T();
         }
         ((OG*)orders)->sendOrder(side, q.price, q.size, mOrderType::Limit, mTimeInForce::GTC, isPong, true);

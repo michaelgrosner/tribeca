@@ -4,9 +4,6 @@
 namespace K {
   mPosition pgPos;
   mSafety pgSafety;
-  vector<mProfit> pgProfit;
-  map<double, mTrade> pgBuys;
-  map<double, mTrade> pgSells;
   double pgTargetBasePos = 0;
   string pgSideAPR = "";
   class PG: public Klass {
@@ -99,6 +96,9 @@ namespace K {
         return !pgPos.value;
       };
     private:
+      vector<mProfit> pgProfit;
+      map<double, mTrade> pgBuys;
+      map<double, mTrade> pgSells;
       function<json()> helloPosition = []() {
         lock_guard<mutex> lock(pgMutex);
         return (json){ pgPos };
@@ -132,7 +132,7 @@ namespace K {
           : qp.widthPong;
         map<double, mTrade> tradesBuy;
         map<double, mTrade> tradesSell;
-        for (vector<mTrade>::iterator it = tradesMemory.begin(); it != tradesMemory.end(); ++it)
+        for (vector<mTrade>::iterator it = ((OG*)orders)->tradesHistory.begin(); it != ((OG*)orders)->tradesHistory.end(); ++it)
           if (it->side == mSide::Bid)
             tradesBuy[it->price] = *it;
           else tradesSell[it->price] = *it;

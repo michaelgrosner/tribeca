@@ -414,11 +414,11 @@ namespace K {
   class kLass: public Klass {
     public:
       void link(Klass *EV, Klass *DB, Klass *UI, Klass *QP, Klass *OG, Klass *MG, Klass *PG, Klass *QE, Klass *GW) {
-                        QP->evLink(EV); OG->evLink(EV); MG->evLink(EV); PG->evLink(EV); QE->evLink(EV); GW->evLink(EV);
+        UI->evLink(EV); QP->evLink(EV); OG->evLink(EV); MG->evLink(EV); PG->evLink(EV); QE->evLink(EV); GW->evLink(EV);
         UI->dbLink(DB); QP->dbLink(DB); OG->dbLink(DB); MG->dbLink(DB); PG->dbLink(DB);
                         QP->uiLink(UI); OG->uiLink(UI); MG->uiLink(UI); PG->uiLink(UI); QE->uiLink(UI); GW->uiLink(UI);
                                         OG->qpLink(QP);                 PG->qpLink(QP); QE->qpLink(QP);
-                                                                                        QE->ogLink(OG);
+                                                                        PG->ogLink(OG); QE->ogLink(OG);
                                                                                         QE->mgLink(MG);
                                                                                         QE->pgLink(PG);
                                                                                                         GW->qeLink(QE);
