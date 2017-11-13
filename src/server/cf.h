@@ -170,6 +170,7 @@ namespace K {
         gw->pass = argPassphrase;
         gw->http = argHttp;
         gw->ws = argWss;
+        gw->free = argFree;
       };
     private:
       string base() {

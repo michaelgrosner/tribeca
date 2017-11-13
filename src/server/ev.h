@@ -2,33 +2,10 @@
 #define K_EV_H_
 
 namespace K  {
-  uWS::Hub hub(0, true);
   class EV: public Klass {
-    protected:
-      void load() {
-        evExit = &happyEnding;
-        signal(SIGINT, quit);
-        signal(SIGUSR1, wtf);
-        signal(SIGABRT, wtf);
-        signal(SIGSEGV, wtf);
-        uv_timer_init(hub.getLoop(), &tWallet);
-        uv_timer_init(hub.getLoop(), &tCancel);
-        uv_timer_init(hub.getLoop(), &tStart);
-        uv_timer_init(hub.getLoop(), &tCalcs);
-        uv_timer_init(hub.getLoop(), &tDelay);
-        gw->hub = &hub;
-        gw->gwGroup = hub.createGroup<uWS::CLIENT>();
-        uiGroup = hub.createGroup<uWS::SERVER>(uWS::PERMESSAGE_DEFLATE);
-      };
-      void run() {
-        if (FN::output("test -d .git || echo -n zip") == "zip")
-          FN::logVer("", -1);
-        else {
-          FN::output("git fetch");
-          string k = changelog();
-          FN::logVer(k, count(k.begin(), k.end(), '\n'));
-        }
-      };
+    private:
+      uWS::Hub *hub;
+      int eCode = EXIT_FAILURE;
     public:
       uWS::Group<uWS::SERVER> *uiGroup = nullptr;
       uv_timer_t tCalcs,
@@ -44,13 +21,45 @@ namespace K  {
                              mgTargetPosition,
                              pgTargetBasePosition,
                              uiQuotingParameters;
+    protected:
+      void load() {
+        evExit = &happyEnding;
+        signal(SIGINT, quit);
+        signal(SIGUSR1, wtf);
+        signal(SIGABRT, wtf);
+        signal(SIGSEGV, wtf);
+        gw->hub = hub = new uWS::Hub(0, true);
+      };
+      void waitTime() {
+        uv_timer_init(hub->getLoop(), &tWallet);
+        uv_timer_init(hub->getLoop(), &tCancel);
+        uv_timer_init(hub->getLoop(), &tStart);
+        uv_timer_init(hub->getLoop(), &tCalcs);
+        uv_timer_init(hub->getLoop(), &tDelay);
+      };
+      void waitData() {
+        gw->gwGroup = hub->createGroup<uWS::CLIENT>();
+      };
+      void waitUser() {
+        uiGroup = hub->createGroup<uWS::SERVER>(uWS::PERMESSAGE_DEFLATE);
+      };
+      void run() {
+        if (FN::output("test -d .git || echo -n zip") == "zip")
+          FN::logVer("", -1);
+        else {
+          FN::output("git fetch");
+          string k = changelog();
+          FN::logVer(k, count(k.begin(), k.end(), '\n'));
+        }
+      };
+    public:
       void start() {
-        hub.run();
+        hub->run();
         halt(eCode);
       };
       void stop(int code) {
         eCode = code;
-        if (uv_loop_alive(hub.getLoop())) {
+        if (uv_loop_alive(hub->getLoop())) {
           uv_timer_stop(&tCancel);
           uv_timer_stop(&tWallet);
           uv_timer_stop(&tCalcs);
@@ -62,16 +71,18 @@ namespace K  {
           gw->cancelAll();
           FN::log(string("GW ") + argExchange, "cancell all open orders OK");
           uiGroup->close();
-          FN::close(hub.getLoop());
-          hub.getLoop()->destroy();
+          FN::close(hub->getLoop());
+          hub->getLoop()->destroy();
         }
         halt(code);
       };
-      void listen() {
+      void listen(mutex *k) {
+        gw->wsMutex = k;
+        if (argHeadless) return;
         if ((access("etc/sslcert/server.crt", F_OK) != -1) and (access("etc/sslcert/server.key", F_OK) != -1)
-          and hub.listen(argPort, uS::TLS::createContext("etc/sslcert/server.crt", "etc/sslcert/server.key", ""), 0, uiGroup)
+          and hub->listen(argPort, uS::TLS::createContext("etc/sslcert/server.crt", "etc/sslcert/server.key", ""), 0, uiGroup)
         ) uiPrtcl = "HTTPS";
-        else if (hub.listen(argPort, nullptr, 0, uiGroup))
+        else if (hub->listen(argPort, nullptr, 0, uiGroup))
           uiPrtcl = "HTTP";
         else FN::logExit("IU", string("Use another UI port number, ")
           + to_string(argPort) + " seems already in use by:\n"
@@ -80,7 +91,6 @@ namespace K  {
         FN::logUI(uiPrtcl, argPort);
       }
     private:
-      int eCode = EXIT_FAILURE;
       void halt(int code) {
         cout << FN::uiT() << "K exit code " << to_string(code) << "." << '\n';
         exit(code);

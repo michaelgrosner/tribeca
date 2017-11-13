@@ -3,6 +3,8 @@
 
 namespace K {
   class DB: public Klass {
+    private:
+      sqlite3* db;
     protected:
       void load() {
         if (sqlite3_open(argDatabase.data(), &db))
@@ -49,7 +51,6 @@ namespace K {
         return stat(argDatabase.data(), &st) != 0 ? 0 : st.st_size;
       };
     private:
-      sqlite3* db;
       static int cb(void *param, int argc, char **argv, char **azColName) {
         string* j = reinterpret_cast<string*>(param);
         for (int i=0; i<argc; i++) j->append(argv[i]).append(",");

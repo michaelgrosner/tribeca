@@ -2,8 +2,19 @@
 #define K_UI_H_
 
 namespace K {
-  string A();
   class UI: public Klass {
+    private:
+      int connections = 0;
+      map<uiTXT, vector<json>> queue;
+      map<char, function<json()>*> cbSnap;
+      map<char, function<void(json)>*> cbMsg;
+      string uiNK64 = "";
+      string uiNOTE = "";
+      double delayUI = 0;
+      bool toggleSettings = true;
+      mutex wsMutex;
+    public:
+      unsigned int orders60sec = 0;
     protected:
       void load() {
         if (argHeadless) return;
@@ -105,7 +116,7 @@ namespace K {
         ((EV*)events)->tDelay.data = (void*)this;
         uv_timer_start(&((EV*)events)->tDelay, [](uv_timer_t *handle) {
           if (argDebugEvents) FN::log("DEBUG", "EV GW tDelay timer");
-          ((UI*)handle->data)->send(((UI*)handle->data)->delayUI > 0);
+          ((UI*)handle->data)->sendQueue(((UI*)handle->data)->delayUI > 0);
         }, 0, 0);
       };
       void waitUser() {
@@ -116,8 +127,7 @@ namespace K {
         clickme(uiTXT::ToggleSettings, &kissSettings);
       };
       void run() {
-        if (argHeadless) return;
-        ((EV*)events)->listen();
+        ((EV*)events)->listen(&wsMutex);
       };
     public:
       void welcome(uiTXT k, function<json()> *cb) {
@@ -133,10 +143,9 @@ namespace K {
         else FN::logExit("UI", string("Use only a single unique message handler for each \"") + (char)k + "\" event", EXIT_SUCCESS);
       };
       void send(uiTXT k, json o, bool hold = false) {
-        if (argHeadless) return;
-        if (connections == 0) return;
-        if (delayUI and hold) uiHold(k, o);
-        else uiUp(k, o);
+        if (argHeadless or connections == 0) return;
+        if (delayUI and hold) msg2Queue(k, o);
+        else msg2Client(k, o);
       };
       void delay(double delayUI_) {
         if (argHeadless) return;
@@ -146,16 +155,7 @@ namespace K {
         wsMutex.unlock();
         uv_timer_set_repeat(&((EV*)events)->tDelay, delayUI ? (int)(delayUI*1e+3) : 6e+4);
       };
-      unsigned int orders60sec = 0;
     private:
-      int connections = 0;
-      map<uiTXT, vector<json>> queue;
-      map<char, function<json()>*> cbSnap;
-      map<char, function<void(json)>*> cbMsg;
-      string uiNK64 = "";
-      string uiNOTE = "";
-      double delayUI = 0;
-      bool toggleSettings = true;
       function<json()> helloServer = [&]() {
         return (json){ serverState() };
       };
@@ -173,14 +173,14 @@ namespace K {
         if (!k.is_null() and k.size())
           toggleSettings = k.at(0);
       };
-      void uiUp(uiTXT k, json o) {
+      void msg2Client(uiTXT k, json o) {
         string m(1, (char)uiBIT::MSG);
         m += string(1, (char)k);
         m += o.is_null() ? "" : o.dump();
         lock_guard<mutex> lock(wsMutex);
         ((EV*)events)->uiGroup->broadcast(m.data(), m.length(), uWS::OpCode::TEXT);
       };
-      void uiHold(uiTXT k, json o) {
+      void msg2Queue(uiTXT k, json o) {
         lock_guard<mutex> lock(wsMutex);
         if (queue.find(k) != queue.end() and queue[k].size() > 0) {
           if (k != uiTXT::OrderStatusReports) queue[k].clear();
@@ -191,7 +191,7 @@ namespace K {
         }
         queue[k].push_back(o);
       };
-      bool send() {
+      bool sendQueue() {
         static unsigned long uiT_1m = 0;
         wsMutex.lock();
         map<uiTXT, vector<json>> msgs;
@@ -211,14 +211,14 @@ namespace K {
         wsMutex.unlock();
         for (map<uiTXT, vector<json>>::iterator it_ = msgs.begin(); it_ != msgs.end(); ++it_)
           for (vector<json>::iterator it = it_->second.begin(); it != it_->second.end(); ++it)
-            uiUp(it_->first, *it);
+            msg2Client(it_->first, *it);
         if (uiT_1m+6e+4 > FN::T()) return false;
         uiT_1m = FN::T();
         return true;
       };
-      void send(bool delayed) {
+      void sendQueue(bool delayed) {
         bool sec60 = true;
-        if (delayed) sec60 = send();
+        if (delayed) sec60 = sendQueue();
         if (!sec60) return;
         send(uiTXT::ApplicationState, serverState());
         orders60sec = 0;
@@ -231,7 +231,7 @@ namespace K {
           {"hour", localtime(&rawtime)->tm_hour},
           {"freq", orders60sec},
           {"dbsize", ((DB*)memory)->size()},
-          {"a", A()}
+          {"a", gw->A()}
         };
       };
   };

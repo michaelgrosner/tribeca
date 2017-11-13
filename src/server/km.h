@@ -2,36 +2,6 @@
 #define K_KM_H_
 
 namespace K {
-  static const char kB64Alphabet[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-                                     "abcdefghijklmnopqrstuvwxyz"
-                                     "0123456789+/";
-  static int argPort = 3000,
-             argColors = 0,
-             argDebug = 0,
-             argDebugEvents = 0,
-             argDebugOrders = 0,
-             argDebugQuotes = 0,
-             argHeadless = 0,
-             argNaked = 0,
-             argAutobot = 0;
-  extern int argFree;
-  static string argTitle = "K.sh",
-                argExchange = "NULL",
-                argUser = "NULL",
-                argPass = "NULL",
-                argMatryoshka = "https://www.example.com/",
-                argCurrency = "NULL",
-                argApikey = "NULL",
-                argSecret = "NULL",
-                argUsername = "NULL",
-                argPassphrase = "NULL",
-                argHttp = "NULL",
-                argWss = "NULL",
-                argDatabase = "",
-                argWhitelist = "";
-  static double argEwmaShort = 0,
-                argEwmaMedium = 0,
-                argEwmaLong = 0;
   enum class mExchange: unsigned int { Null, HitBtc, OkCoin, Coinbase, Bitfinex, Korbit, Poloniex };
   enum class mGatewayType: unsigned int { MarketData, OrderEntry };
   enum class mTimeInForce: unsigned int { IOC, FOK, GTC };
@@ -60,10 +30,6 @@ namespace K {
     CleanAllClosedTrades = 'y', CleanAllTrades = 'z', CleanTrade = 'A', TradesChart = 'B',
     WalletChart = 'C', EWMAChart = 'D'
   };
-  static char RBLACK[] = "\033[0;30m", RRED[]    = "\033[0;31m", RGREEN[] = "\033[0;32m", RYELLOW[] = "\033[0;33m",
-              RBLUE[]  = "\033[0;34m", RPURPLE[] = "\033[0;35m", RCYAN[]  = "\033[0;36m", RWHITE[]  = "\033[0;37m",
-              BBLACK[] = "\033[1;30m", BRED[]    = "\033[1;31m", BGREEN[] = "\033[1;32m", BYELLOW[] = "\033[1;33m",
-              BBLUE[]  = "\033[1;34m", BPURPLE[] = "\033[1;35m", BCYAN[]  = "\033[1;36m", BWHITE[]  = "\033[1;37m";
   struct mPair {
     string base,
            quote;
@@ -336,10 +302,43 @@ namespace K {
     };
   };
   static function<void(int)> *evExit;
-  extern bool wInit;
-  extern WINDOW *wBorder,
+  static const char kB64Alphabet[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                                     "abcdefghijklmnopqrstuvwxyz"
+                                     "0123456789+/";
+  static int argPort = 3000,
+             argColors = 0,
+             argDebug = 0,
+             argDebugEvents = 0,
+             argDebugOrders = 0,
+             argDebugQuotes = 0,
+             argHeadless = 0,
+             argNaked = 0,
+             argAutobot = 0,
+             argFree = 0;
+  static string argTitle = "K.sh",
+                argExchange = "NULL",
+                argUser = "NULL",
+                argPass = "NULL",
+                argMatryoshka = "https://www.example.com/",
+                argCurrency = "NULL",
+                argApikey = "NULL",
+                argSecret = "NULL",
+                argUsername = "NULL",
+                argPassphrase = "NULL",
+                argHttp = "NULL",
+                argWss = "NULL",
+                argDatabase = "",
+                argWhitelist = "";
+  static double argEwmaShort = 0,
+                argEwmaMedium = 0,
+                argEwmaLong = 0;
+  static char RBLACK[] = "\033[0;30m", RRED[]    = "\033[0;31m", RGREEN[] = "\033[0;32m", RYELLOW[] = "\033[0;33m",
+              RBLUE[]  = "\033[0;34m", RPURPLE[] = "\033[0;35m", RCYAN[]  = "\033[0;36m", RWHITE[]  = "\033[0;37m",
+              BBLACK[] = "\033[1;30m", BRED[]    = "\033[1;31m", BGREEN[] = "\033[1;32m", BYELLOW[] = "\033[1;33m",
+              BBLUE[]  = "\033[1;34m", BPURPLE[] = "\033[1;35m", BCYAN[]  = "\033[1;36m", BWHITE[]  = "\033[1;37m";
+  static bool wInit;
+  static WINDOW *wBorder,
                 *wLog;
-  extern mutex wsMutex;
   static mutex wMutex,
                ogMutex,
                pgMutex;
@@ -355,9 +354,11 @@ namespace K {
       function<void(mLevels)>       evDataLevels;
       function<void(mConnectivity)> evConnectOrder,
                                     evConnectMarket;
-      uWS::Hub                *hub = nullptr;
+      mutex                   *wsMutex = nullptr;
+      uWS::Hub                *hub     = nullptr;
       uWS::Group<uWS::CLIENT> *gwGroup = nullptr;
       mExchange exchange = mExchange::Null;
+          int free    = 0;
        double makeFee = 0,  minTick = 0,
               takeFee = 0,  minSize = 0;
        string base    = "", quote   = "",
@@ -365,12 +366,13 @@ namespace K {
               apikey  = "", secret  = "",
               user    = "", pass    = "",
               ws      = "", http    = "";
-      virtual void wallet() = 0,
-                   levels() = 0,
-                   send(string oI, mSide oS, double oP, double oQ, mOrderType oLM, mTimeInForce oTIF, bool oPO, unsigned long oT) = 0,
-                   cancel(string oI, string oE, mSide oS, unsigned long oT) = 0,
-                   cancelAll() = 0,
-                   close() = 0;
+      virtual string A() {};
+      virtual   void wallet() = 0,
+                     levels() = 0,
+                     send(string oI, mSide oS, double oP, double oQ, mOrderType oLM, mTimeInForce oTIF, bool oPO, unsigned long oT) = 0,
+                     cancel(string oI, string oE, mSide oS, unsigned long oT) = 0,
+                     cancelAll() = 0,
+                     close() = 0;
   };
   class Klass {
     protected:
