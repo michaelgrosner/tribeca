@@ -4,15 +4,15 @@
 namespace K  {
   class EV: public Klass {
     private:
-      uWS::Hub *hub;
+      uWS::Hub *hub = nullptr;
       int eCode = EXIT_FAILURE;
     public:
       uWS::Group<uWS::SERVER> *uiGroup = nullptr;
-      uv_timer_t tCalcs,
-                 tStart,
-                 tDelay,
-                 tWallet,
-                 tCancel;
+      uv_timer_t *tCalcs = nullptr,
+                 *tStart = nullptr,
+                 *tDelay = nullptr,
+                 *tWallet = nullptr,
+                 *tCancel = nullptr;
       function<void(mOrder)> ogOrder;
       function<void(mTrade)> ogTrade;
       function<void()>       mgLevels,
@@ -31,11 +31,11 @@ namespace K  {
         gw->hub = hub = new uWS::Hub(0, true);
       };
       void waitTime() {
-        uv_timer_init(hub->getLoop(), &tWallet);
-        uv_timer_init(hub->getLoop(), &tCancel);
-        uv_timer_init(hub->getLoop(), &tStart);
-        uv_timer_init(hub->getLoop(), &tCalcs);
-        uv_timer_init(hub->getLoop(), &tDelay);
+        uv_timer_init(hub->getLoop(), tCalcs = new uv_timer_t());
+        uv_timer_init(hub->getLoop(), tStart = new uv_timer_t());
+        uv_timer_init(hub->getLoop(), tDelay = new uv_timer_t());
+        uv_timer_init(hub->getLoop(), tWallet = new uv_timer_t());
+        uv_timer_init(hub->getLoop(), tCancel = new uv_timer_t());
       };
       void waitData() {
         gw->gwGroup = hub->createGroup<uWS::CLIENT>();
@@ -60,11 +60,11 @@ namespace K  {
       void stop(int code, function<void()> gwExit) {
         eCode = code;
         if (uv_loop_alive(hub->getLoop())) {
-          uv_timer_stop(&tCancel);
-          uv_timer_stop(&tWallet);
-          uv_timer_stop(&tCalcs);
-          uv_timer_stop(&tStart);
-          uv_timer_stop(&tDelay);
+          uv_timer_stop(tCancel);
+          uv_timer_stop(tWallet);
+          uv_timer_stop(tCalcs);
+          uv_timer_stop(tStart);
+          uv_timer_stop(tDelay);
           gw->close();
           gw->gwGroup->close();
           gwExit();
@@ -74,7 +74,7 @@ namespace K  {
         }
         halt(code);
       };
-      void listen(mutex *k, int headless, int port, string exchange, string currency) {
+      void listen(mutex *k, int headless, int port) {
         gw->wsMutex = k;
         if (headless) return;
         string protocol("HTTP");

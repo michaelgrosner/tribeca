@@ -3,6 +3,10 @@
 
 namespace K {
   class OG: public Klass {
+    private:
+      map<string, string> allOrdersIds;
+    public:
+      vector<mTrade> tradesHistory;
     protected:
       void load() {
         json k = ((DB*)memory)->load(uiTXT::Trades);
@@ -45,7 +49,6 @@ namespace K {
         ((UI*)client)->clickme(uiTXT::CleanTrade, &kissCleanTrade);
       };
     public:
-      vector<mTrade> tradesHistory;
       void sendOrder(mSide oS, double oP, double oQ, mOrderType oLM, mTimeInForce oTIF, bool oIP, bool oPO) {
         mOrder o = updateOrderState(mOrder(gw->randId(), gw->exchange, mPair(gw->base, gw->quote), oS, oQ, oLM, oIP, FN::roundSide(oP, gw->minTick, oS), oTIF, mORS::New, oPO));
         if (((CF*)config)->argDebugOrders) FN::log("DEBUG", string("OG  send  ") + (o.side == mSide::Bid ? "BID id " : "ASK id ") + o.orderId + ": " + to_string(o.quantity) + " " + o.pair.base + " at price " + to_string(o.price) + " " + o.pair.quote);
@@ -78,7 +81,6 @@ namespace K {
         if (((CF*)config)->argDebugOrders) FN::log("DEBUG", string("OG remove ") + oI + "::" + oE);
       };
     private:
-      map<string, string> allOrdersIds;
       function<json()> helloTrades = [&]() {
         json k;
         for (vector<mTrade>::iterator it = tradesHistory.begin(); it != tradesHistory.end(); ++it) {

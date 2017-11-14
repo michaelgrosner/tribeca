@@ -3,20 +3,9 @@
 
 namespace K {
   mLevels mgLevelsFilter;
-  vector<mTrade> mgTrades;
   double mgFairValue = 0;
-  double mgEwmaL = 0;
-  double mgEwmaM = 0;
-  double mgEwmaS = 0;
   double mgEwmaP = 0;
   double mgEwmaSMUDiff = 0;
-  double mgEwmaSM = 0;
-  double mgEwmaSU = 0;
-  vector<double> mgSMA3;
-  vector<double> mgStatFV;
-  vector<double> mgStatBid;
-  vector<double> mgStatAsk;
-  vector<double> mgStatTop;
   double mgStdevFV = 0;
   double mgStdevFVMean = 0;
   double mgStdevBid = 0;
@@ -25,8 +14,21 @@ namespace K {
   double mgStdevAskMean = 0;
   double mgStdevTop = 0;
   double mgStdevTopMean = 0;
-  double mgTargetPos = 0;
   class MG: public Klass {
+    private:
+      vector<mTrade> mgTrades;
+      double mgEwmaL = 0;
+      double mgEwmaM = 0;
+      double mgEwmaS = 0;
+      double mgEwmaSM = 0;
+      double mgEwmaSU = 0;
+      vector<double> mgSMA3;
+      vector<double> mgStatFV;
+      vector<double> mgStatBid;
+      vector<double> mgStatAsk;
+      vector<double> mgStatTop;
+    public:
+      double mgTargetPos = 0;
     protected:
       void load() {
         json k = ((DB*)memory)->load(uiTXT::MarketData);
@@ -107,7 +109,7 @@ namespace K {
         ((UI*)client)->send(uiTXT::FairValue, {{"price", mgFairValue}}, true);
       };
     private:
-      function<json()> helloTrade = []() {
+      function<json()> helloTrade = [&]() {
         json k;
         for (unsigned i=0; i<mgTrades.size(); ++i)
           k.push_back(mgTrades[i]);
@@ -116,7 +118,7 @@ namespace K {
       function<json()> helloFair = []() {
         return (json){{{"price", mgFairValue}}};
       };
-      function<json()> helloEwma = []() {
+      function<json()> helloEwma = [&]() {
         return (json){{
           {"stdevWidth", {
             {"fv", mgStdevFV},

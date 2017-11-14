@@ -313,8 +313,7 @@ namespace K {
   static WINDOW *wBorder,
                 *wLog;
   static mutex wMutex,
-               ogMutex,
-               pgMutex;
+               ogMutex;
   static map<string, mOrder> allOrders;
   class Gw {
     public:
@@ -338,7 +337,7 @@ namespace K {
               apikey  = "", secret  = "",
               user    = "", pass    = "",
               ws      = "", http    = "";
-      virtual string A() {};
+      virtual string A() = 0;
       virtual   void wallet() = 0,
                      levels() = 0,
                      send(string oI, mSide oS, double oP, double oQ, mOrderType oLM, mTimeInForce oTIF, bool oPO, unsigned long oT) = 0,
@@ -364,15 +363,6 @@ namespace K {
       virtual void waitUser() {};
       virtual void run() {};
     public:
-      void cfLink(Klass *k) { config = k; };
-      void evLink(Klass *k) { events = k; };
-      void dbLink(Klass *k) { memory = k; };
-      void uiLink(Klass *k) { client = k; };
-      void qpLink(Klass *k) { params = k; };
-      void ogLink(Klass *k) { orders = k; };
-      void mgLink(Klass *k) { market = k; };
-      void pgLink(Klass *k) { wallet = k; };
-      void qeLink(Klass *k) { engine = k; };
       void main(int argc, char** argv) {
         load(argc, argv);
         run();
@@ -384,6 +374,15 @@ namespace K {
         waitUser();
         run();
       };
+      void cfLink(Klass *k) { config = k; };
+      void evLink(Klass *k) { events = k; };
+      void dbLink(Klass *k) { memory = k; };
+      void uiLink(Klass *k) { client = k; };
+      void qpLink(Klass *k) { params = k; };
+      void ogLink(Klass *k) { orders = k; };
+      void mgLink(Klass *k) { market = k; };
+      void pgLink(Klass *k) { wallet = k; };
+      void qeLink(Klass *k) { engine = k; };
   };
   class kLass: public Klass {
     public:
@@ -395,7 +394,7 @@ namespace K {
                                         QP->uiLink(UI); OG->uiLink(UI); MG->uiLink(UI); PG->uiLink(UI); QE->uiLink(UI); GW->uiLink(UI);
                                                         OG->qpLink(QP);                 PG->qpLink(QP); QE->qpLink(QP);
                                                                                         PG->ogLink(OG); QE->ogLink(OG);
-                                                                                                        QE->mgLink(MG);
+                                                                                        PG->mgLink(MG); QE->mgLink(MG);
                                                                                                         QE->pgLink(PG);
                                                                                                                         GW->qeLink(QE);
       };

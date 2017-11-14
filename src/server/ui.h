@@ -115,8 +115,8 @@ namespace K {
       };
       void waitTime() {
         if (((CF*)config)->argHeadless) return;
-        ((EV*)events)->tDelay.data = (void*)this;
-        uv_timer_start(&((EV*)events)->tDelay, [](uv_timer_t *handle) {
+        ((EV*)events)->tDelay->data = (void*)this;
+        uv_timer_start(((EV*)events)->tDelay, [](uv_timer_t *handle) {
           if (((CF*)((UI*)handle->data)->config)->argDebugEvents) FN::log("DEBUG", "EV GW tDelay timer");
           ((UI*)handle->data)->sendQueue(((UI*)handle->data)->delayUI > 0);
         }, 0, 0);
@@ -129,7 +129,7 @@ namespace K {
         clickme(uiTXT::ToggleSettings, &kissSettings);
       };
       void run() {
-        ((EV*)events)->listen(&wsMutex, ((CF*)config)->argHeadless, ((CF*)config)->argPort, ((CF*)config)->argExchange, ((CF*)config)->argCurrency);
+        ((EV*)events)->listen(&wsMutex, ((CF*)config)->argHeadless, ((CF*)config)->argPort);
       };
     public:
       void welcome(uiTXT k, function<json()> *cb) {
@@ -155,7 +155,7 @@ namespace K {
         wsMutex.lock();
         queue.clear();
         wsMutex.unlock();
-        uv_timer_set_repeat(&((EV*)events)->tDelay, delayUI ? (int)(delayUI*1e+3) : 6e+4);
+        uv_timer_set_repeat(((EV*)events)->tDelay, delayUI ? (int)(delayUI*1e+3) : 6e+4);
       };
     private:
       function<json()> helloServer = [&]() {
