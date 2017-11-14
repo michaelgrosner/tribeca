@@ -12,6 +12,7 @@ namespace K {
     protected:
       void load() {
         evExit = &happyEnding;
+        qp = &((CF*)config)->qp;
         if (((CF*)config)->argAutobot) gwAutoStart = mConnectivity::Connected;
         handshake(gw->exchange);
       };
@@ -24,7 +25,7 @@ namespace K {
         ((EV*)events)->tCancel->data = (void*)this;
         uv_timer_start(((EV*)events)->tCancel, [](uv_timer_t *handle) {
           if (((CF*)((GW*)handle->data)->config)->argDebugEvents) FN::log("DEBUG", "EV GW tCancel timer");
-          if (qp.cancelOrdersAuto)
+          if (((GW*)handle->data)->qp->cancelOrdersAuto)
             gw->cancelAll();
         }, 0, 3e+5);
       };

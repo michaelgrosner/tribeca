@@ -9,6 +9,7 @@ namespace K {
       vector<mTrade> tradesHistory;
     protected:
       void load() {
+        qp = &((CF*)config)->qp;
         json k = ((DB*)memory)->load(uiTXT::Trades);
         if (k.size())
           for (json::reverse_iterator it = k.rbegin(); it != k.rend(); ++it)
@@ -227,17 +228,17 @@ namespace K {
         );
         FN::log(trade, ((CF*)config)->argExchange);
         ((EV*)events)->ogTrade(trade);
-        if (((QP*)params)->matchPings()) {
-          double widthPong = qp.widthPercentage
-            ? qp.widthPongPercentage * trade.price / 100
-            : qp.widthPong;
+        if (qp->_matchPings) {
+          double widthPong = qp->widthPercentage
+            ? qp->widthPongPercentage * trade.price / 100
+            : qp->widthPong;
           map<double, string> matches;
           for (vector<mTrade>::iterator it = tradesHistory.begin(); it != tradesHistory.end(); ++it)
             if (it->quantity - it->Kqty > 0
               and it->side == (trade.side == mSide::Bid ? mSide::Ask : mSide::Bid)
               and (trade.side == mSide::Bid ? (it->price > trade.price + widthPong) : (it->price < trade.price - widthPong))
             ) matches[it->price] = it->tradeId;
-          matchPong(matches, (qp.pongAt == mPongAt::LongPingFair or qp.pongAt == mPongAt::LongPingAggressive) ? trade.side == mSide::Ask : trade.side == mSide::Bid, trade);
+          matchPong(matches, (qp->pongAt == mPongAt::LongPingFair or qp->pongAt == mPongAt::LongPingAggressive) ? trade.side == mSide::Ask : trade.side == mSide::Bid, trade);
         } else {
           ((UI*)client)->send(uiTXT::Trades, trade);
           ((DB*)memory)->insert(uiTXT::Trades, trade, false, trade.tradeId);
@@ -250,7 +251,7 @@ namespace K {
           {"value", trade.value},
           {"pong", o.isPong}
         });
-        cleanAuto(trade.time, qp.cleanPongsAuto);
+        cleanAuto(trade.time, qp->cleanPongsAuto);
       };
       void matchPong(map<double, string> matches, bool reverse, mTrade pong) {
         if (reverse) for (map<double, string>::reverse_iterator it = matches.rbegin(); it != matches.rend(); ++it) {

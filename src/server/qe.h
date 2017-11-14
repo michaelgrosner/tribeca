@@ -15,6 +15,7 @@ namespace K {
                     gwConnectExchange = mConnectivity::Disconnected;
     protected:
       void load() {
+        qp = &((CF*)config)->qp;
         qeQuotingMode[mQuotingMode::Top] = &calcTopOfMarket;
         qeQuotingMode[mQuotingMode::Mid] = &calcMidOfMarket;
         qeQuotingMode[mQuotingMode::Join] = &calcJoinMarket;
@@ -146,24 +147,24 @@ namespace K {
         if (safetyBuyPing == -1) return mQuote();
         double totalBasePosition = baseAmount + baseHeldAmount;
         double totalQuotePosition = (quoteAmount + quoteHeldAmount) / mgFairValue;
-        double pDiv = qp.percentageValues
-          ? qp.positionDivergencePercentage * value / 100
-          : qp.positionDivergence;
-        double widthPing = qp.widthPercentage
-          ? qp.widthPingPercentage * mgFairValue / 100
-          : qp.widthPing;
-        double widthPong = qp.widthPercentage
-          ? qp.widthPongPercentage * mgFairValue / 100
-          : qp.widthPong;
-        double buySize = qp.percentageValues
-          ? qp.buySizePercentage * value / 100
-          : qp.buySize;
-        double sellSize = qp.percentageValues
-          ? qp.sellSizePercentage * value / 100
-          : qp.sellSize;
-        if (buySize and qp.aggressivePositionRebalancing != mAPR::Off and qp.buySizeMax)
+        double pDiv = qp->percentageValues
+          ? qp->positionDivergencePercentage * value / 100
+          : qp->positionDivergence;
+        double widthPing = qp->widthPercentage
+          ? qp->widthPingPercentage * mgFairValue / 100
+          : qp->widthPing;
+        double widthPong = qp->widthPercentage
+          ? qp->widthPongPercentage * mgFairValue / 100
+          : qp->widthPong;
+        double buySize = qp->percentageValues
+          ? qp->buySizePercentage * value / 100
+          : qp->buySize;
+        double sellSize = qp->percentageValues
+          ? qp->sellSizePercentage * value / 100
+          : qp->sellSize;
+        if (buySize and qp->aggressivePositionRebalancing != mAPR::Off and qp->buySizeMax)
           buySize = fmax(buySize, ((PG*)wallet)->pgTargetBasePos - totalBasePosition);
-        if (sellSize and qp.aggressivePositionRebalancing != mAPR::Off and qp.sellSizeMax)
+        if (sellSize and qp->aggressivePositionRebalancing != mAPR::Off and qp->sellSizeMax)
           sellSize = fmax(sellSize, totalBasePosition - ((PG*)wallet)->pgTargetBasePos);
         mQuote rawQuote = quote(widthPing, buySize, sellSize);
         if (!rawQuote.bid.price and !rawQuote.ask.price) return mQuote();
@@ -221,9 +222,9 @@ namespace K {
         } else rawQuote->isBidPong = false;
       };
       void applyWaitingPing(mQuote *rawQuote, double buySize, double sellSize, double totalQuotePosition, double totalBasePosition, double safetyBuyPing, double safetySellPong) {
-        if ((qp.safety == mQuotingSafety::PingPong or ((QP*)params)->matchPings())
-          and !safetyBuyPing and (qp.pingAt == mPingAt::StopPings or qp.pingAt == mPingAt::BidSide or qp.pingAt == mPingAt::DepletedAskSide
-            or (totalQuotePosition>buySize and (qp.pingAt == mPingAt::DepletedSide or qp.pingAt == mPingAt::DepletedBidSide))
+        if ((qp->safety == mQuotingSafety::PingPong or qp->_matchPings)
+          and !safetyBuyPing and (qp->pingAt == mPingAt::StopPings or qp->pingAt == mPingAt::BidSide or qp->pingAt == mPingAt::DepletedAskSide
+            or (totalQuotePosition>buySize and (qp->pingAt == mPingAt::DepletedSide or qp->pingAt == mPingAt::DepletedBidSide))
         )) {
           qeAskStatus = !safetyBuyPing
             ? mQuoteState::WaitingPing
@@ -231,9 +232,9 @@ namespace K {
           rawQuote->ask.price = 0;
           rawQuote->ask.size = 0;
         }
-        if ((qp.safety == mQuotingSafety::PingPong or ((QP*)params)->matchPings())
-          and !safetySellPong and (qp.pingAt == mPingAt::StopPings or qp.pingAt == mPingAt::AskSide or qp.pingAt == mPingAt::DepletedBidSide
-            or (totalBasePosition>sellSize and (qp.pingAt == mPingAt::DepletedSide or qp.pingAt == mPingAt::DepletedAskSide))
+        if ((qp->safety == mQuotingSafety::PingPong or qp->_matchPings)
+          and !safetySellPong and (qp->pingAt == mPingAt::StopPings or qp->pingAt == mPingAt::AskSide or qp->pingAt == mPingAt::DepletedBidSide
+            or (totalBasePosition>sellSize and (qp->pingAt == mPingAt::DepletedSide or qp->pingAt == mPingAt::DepletedAskSide))
         )) {
           qeBidStatus = !safetySellPong
             ? mQuoteState::WaitingPing
@@ -255,7 +256,7 @@ namespace K {
         }
       };
       void applyBestWidth(mQuote *rawQuote) {
-        if (!qp.bestWidth) return;
+        if (!qp->bestWidth) return;
         if (rawQuote->ask.price)
           for (vector<mLevel>::iterator it = mgLevelsFilter.asks.begin(); it != mgLevelsFilter.asks.end(); ++it)
             if (it->price > rawQuote->ask.price) {
@@ -281,9 +282,9 @@ namespace K {
             qeAskStatus = mQuoteState::TBPHeld;
           rawQuote->ask.price = 0;
           rawQuote->ask.size = 0;
-          if (qp.aggressivePositionRebalancing != mAPR::Off) {
+          if (qp->aggressivePositionRebalancing != mAPR::Off) {
             ((PG*)wallet)->pgSideAPR = "Buy";
-            if (!qp.buySizeMax) rawQuote->bid.size = fmin(qp.aprMultiplier*buySize, fmin(((PG*)wallet)->pgTargetBasePos - totalBasePosition, (quoteAmount / mgFairValue) / 2));
+            if (!qp->buySizeMax) rawQuote->bid.size = fmin(qp->aprMultiplier*buySize, fmin(((PG*)wallet)->pgTargetBasePos - totalBasePosition, (quoteAmount / mgFairValue) / 2));
           }
         }
         else if (totalBasePosition >= ((PG*)wallet)->pgTargetBasePos + pDiv) {
@@ -291,103 +292,103 @@ namespace K {
             qeBidStatus = mQuoteState::TBPHeld;
           rawQuote->bid.price = 0;
           rawQuote->bid.size = 0;
-          if (qp.aggressivePositionRebalancing != mAPR::Off) {
+          if (qp->aggressivePositionRebalancing != mAPR::Off) {
             ((PG*)wallet)->pgSideAPR = "Sell";
-            if (!qp.sellSizeMax) rawQuote->ask.size = fmin(qp.aprMultiplier*sellSize, fmin(totalBasePosition - ((PG*)wallet)->pgTargetBasePos, baseAmount / 2));
+            if (!qp->sellSizeMax) rawQuote->ask.size = fmin(qp->aprMultiplier*sellSize, fmin(totalBasePosition - ((PG*)wallet)->pgTargetBasePos, baseAmount / 2));
           }
         }
         else ((PG*)wallet)->pgSideAPR = "Off";
       };
       void applyTradesPerMinute(mQuote *rawQuote, bool superTradesActive, double safetyBuy, double safetySell) {
-        if (safetySell > (qp.tradesPerMinute * (superTradesActive ? qp.sopWidthMultiplier : 1))) {
+        if (safetySell > (qp->tradesPerMinute * (superTradesActive ? qp->sopWidthMultiplier : 1))) {
           qeAskStatus = mQuoteState::MaxTradesSeconds;
           rawQuote->ask.price = 0;
           rawQuote->ask.size = 0;
         }
-        if (safetyBuy > (qp.tradesPerMinute * (superTradesActive ? qp.sopWidthMultiplier : 1))) {
+        if (safetyBuy > (qp->tradesPerMinute * (superTradesActive ? qp->sopWidthMultiplier : 1))) {
           qeBidStatus = mQuoteState::MaxTradesSeconds;
           rawQuote->bid.price = 0;
           rawQuote->bid.size = 0;
         }
       };
       void applyAggressivePositionRebalancing(mQuote *rawQuote, double widthPong, double safetyBuyPing, double safetySellPong) {
-        if (qp.safety == mQuotingSafety::Boomerang or qp.safety == mQuotingSafety::AK47 or ((QP*)params)->matchPings()) {
+        if (qp->safety == mQuotingSafety::Boomerang or qp->safety == mQuotingSafety::AK47 or qp->_matchPings) {
           if (rawQuote->ask.size and safetyBuyPing and (
-            (qp.aggressivePositionRebalancing == mAPR::SizeWidth and ((PG*)wallet)->pgSideAPR == "Sell")
-            or qp.pongAt == mPongAt::ShortPingAggressive
-            or qp.pongAt == mPongAt::LongPingAggressive
+            (qp->aggressivePositionRebalancing == mAPR::SizeWidth and ((PG*)wallet)->pgSideAPR == "Sell")
+            or qp->pongAt == mPongAt::ShortPingAggressive
+            or qp->pongAt == mPongAt::LongPingAggressive
             or rawQuote->ask.price < safetyBuyPing + widthPong
           )) rawQuote->ask.price = safetyBuyPing + widthPong;
           if (rawQuote->bid.size and safetySellPong and (
-            (qp.aggressivePositionRebalancing == mAPR::SizeWidth and ((PG*)wallet)->pgSideAPR == "Buy")
-            or qp.pongAt == mPongAt::ShortPingAggressive
-            or qp.pongAt == mPongAt::LongPingAggressive
+            (qp->aggressivePositionRebalancing == mAPR::SizeWidth and ((PG*)wallet)->pgSideAPR == "Buy")
+            or qp->pongAt == mPongAt::ShortPingAggressive
+            or qp->pongAt == mPongAt::LongPingAggressive
             or rawQuote->bid.price > safetySellPong - widthPong
           )) rawQuote->bid.price = safetySellPong - widthPong;
         }
       };
       void applySuperTrades(mQuote *rawQuote, bool *superTradesActive, double widthPing, double buySize, double sellSize, double quoteAmount, double baseAmount) {
-        if (qp.superTrades != mSOP::Off
-          and widthPing * qp.sopWidthMultiplier < mgLevelsFilter.asks.begin()->price - mgLevelsFilter.bids.begin()->price
+        if (qp->superTrades != mSOP::Off
+          and widthPing * qp->sopWidthMultiplier < mgLevelsFilter.asks.begin()->price - mgLevelsFilter.bids.begin()->price
         ) {
-          *superTradesActive = (qp.superTrades == mSOP::Trades or qp.superTrades == mSOP::TradesSize);
-          if (qp.superTrades == mSOP::Size or qp.superTrades == mSOP::TradesSize) {
-            if (!qp.buySizeMax) rawQuote->bid.size = fmin(qp.sopSizeMultiplier * buySize, (quoteAmount / mgFairValue) / 2);
-            if (!qp.sellSizeMax) rawQuote->ask.size = fmin(qp.sopSizeMultiplier * sellSize, baseAmount / 2);
+          *superTradesActive = (qp->superTrades == mSOP::Trades or qp->superTrades == mSOP::TradesSize);
+          if (qp->superTrades == mSOP::Size or qp->superTrades == mSOP::TradesSize) {
+            if (!qp->buySizeMax) rawQuote->bid.size = fmin(qp->sopSizeMultiplier * buySize, (quoteAmount / mgFairValue) / 2);
+            if (!qp->sellSizeMax) rawQuote->ask.size = fmin(qp->sopSizeMultiplier * sellSize, baseAmount / 2);
           }
         }
       };
       void applyAK47Increment(mQuote *rawQuote, double value) {
-        if (qp.safety == mQuotingSafety::AK47) {
+        if (qp->safety == mQuotingSafety::AK47) {
           static int inc = 1;
-          double range = qp.percentageValues
-            ? qp.rangePercentage * value / 100
-            : qp.range;
+          double range = qp->percentageValues
+            ? qp->rangePercentage * value / 100
+            : qp->range;
           rawQuote->bid.size -= inc * range;
           rawQuote->ask.size += inc * range;
-          if (++inc > qp.bullets) inc = 1;
+          if (++inc > qp->bullets) inc = 1;
         }
       };
       void applyStdevProtection(mQuote *rawQuote) {
-        if (qp.quotingStdevProtection == mSTDEV::Off or !mgStdevFV) return;
-        if (rawQuote->ask.price and (qp.quotingStdevProtection == mSTDEV::OnFV or qp.quotingStdevProtection == mSTDEV::OnTops or qp.quotingStdevProtection == mSTDEV::OnTop or ((PG*)wallet)->pgSideAPR != "Sell"))
+        if (qp->quotingStdevProtection == mSTDEV::Off or !mgStdevFV) return;
+        if (rawQuote->ask.price and (qp->quotingStdevProtection == mSTDEV::OnFV or qp->quotingStdevProtection == mSTDEV::OnTops or qp->quotingStdevProtection == mSTDEV::OnTop or ((PG*)wallet)->pgSideAPR != "Sell"))
           rawQuote->ask.price = fmax(
-            (qp.quotingStdevBollingerBands
-              ? (qp.quotingStdevProtection == mSTDEV::OnFV or qp.quotingStdevProtection == mSTDEV::OnFVAPROff)
-                ? mgStdevFVMean : ((qp.quotingStdevProtection == mSTDEV::OnTops or qp.quotingStdevProtection == mSTDEV::OnTopsAPROff)
+            (qp->quotingStdevBollingerBands
+              ? (qp->quotingStdevProtection == mSTDEV::OnFV or qp->quotingStdevProtection == mSTDEV::OnFVAPROff)
+                ? mgStdevFVMean : ((qp->quotingStdevProtection == mSTDEV::OnTops or qp->quotingStdevProtection == mSTDEV::OnTopsAPROff)
                   ? mgStdevTopMean : mgStdevAskMean )
-              : mgFairValue) + ((qp.quotingStdevProtection == mSTDEV::OnFV or qp.quotingStdevProtection == mSTDEV::OnFVAPROff)
-                ? mgStdevFV : ((qp.quotingStdevProtection == mSTDEV::OnTops or qp.quotingStdevProtection == mSTDEV::OnTopsAPROff)
+              : mgFairValue) + ((qp->quotingStdevProtection == mSTDEV::OnFV or qp->quotingStdevProtection == mSTDEV::OnFVAPROff)
+                ? mgStdevFV : ((qp->quotingStdevProtection == mSTDEV::OnTops or qp->quotingStdevProtection == mSTDEV::OnTopsAPROff)
                   ? mgStdevTop : mgStdevAsk )),
             rawQuote->ask.price
           );
-        if (rawQuote->bid.price and (qp.quotingStdevProtection == mSTDEV::OnFV or qp.quotingStdevProtection == mSTDEV::OnTops or qp.quotingStdevProtection == mSTDEV::OnTop or ((PG*)wallet)->pgSideAPR != "Buy")) {
+        if (rawQuote->bid.price and (qp->quotingStdevProtection == mSTDEV::OnFV or qp->quotingStdevProtection == mSTDEV::OnTops or qp->quotingStdevProtection == mSTDEV::OnTop or ((PG*)wallet)->pgSideAPR != "Buy")) {
           rawQuote->bid.price = fmin(
-            (qp.quotingStdevBollingerBands
-              ? (qp.quotingStdevProtection == mSTDEV::OnFV or qp.quotingStdevProtection == mSTDEV::OnFVAPROff)
-                ? mgStdevFVMean : ((qp.quotingStdevProtection == mSTDEV::OnTops or qp.quotingStdevProtection == mSTDEV::OnTopsAPROff)
+            (qp->quotingStdevBollingerBands
+              ? (qp->quotingStdevProtection == mSTDEV::OnFV or qp->quotingStdevProtection == mSTDEV::OnFVAPROff)
+                ? mgStdevFVMean : ((qp->quotingStdevProtection == mSTDEV::OnTops or qp->quotingStdevProtection == mSTDEV::OnTopsAPROff)
                   ? mgStdevTopMean : mgStdevBidMean )
-              : mgFairValue) - ((qp.quotingStdevProtection == mSTDEV::OnFV or qp.quotingStdevProtection == mSTDEV::OnFVAPROff)
-                ? mgStdevFV : ((qp.quotingStdevProtection == mSTDEV::OnTops or qp.quotingStdevProtection == mSTDEV::OnTopsAPROff)
+              : mgFairValue) - ((qp->quotingStdevProtection == mSTDEV::OnFV or qp->quotingStdevProtection == mSTDEV::OnFVAPROff)
+                ? mgStdevFV : ((qp->quotingStdevProtection == mSTDEV::OnTops or qp->quotingStdevProtection == mSTDEV::OnTopsAPROff)
                   ? mgStdevTop : mgStdevBid )),
             rawQuote->bid.price
           );
         }
       };
       void applyEwmaProtection(mQuote *rawQuote) {
-        if (!qp.quotingEwmaProtection or !mgEwmaP) return;
+        if (!qp->quotingEwmaProtection or !mgEwmaP) return;
         rawQuote->ask.price = fmax(mgEwmaP, rawQuote->ask.price);
         rawQuote->bid.price = fmin(mgEwmaP, rawQuote->bid.price);
       };
       void applyEwmaSMUProtection(mQuote *rawQuote) {
-        if (!qp.quotingEwmaSMUProtection or !mgEwmaSMUDiff) return;
-        if(mgEwmaSMUDiff > qp.quotingEwmaSMUThreshold){
+        if (!qp->quotingEwmaSMUProtection or !mgEwmaSMUDiff) return;
+        if(mgEwmaSMUDiff > qp->quotingEwmaSMUThreshold){
           qeAskStatus = mQuoteState::UpTrendHeld;
           rawQuote->ask.price = 0;
           rawQuote->ask.size = 0;
           if (((CF*)config)->argDebugQuotes) FN::log("DEBUG", string("QE quote: SMU Protection uptrend ON"));
         }
-        else if(mgEwmaSMUDiff < -qp.quotingEwmaSMUThreshold){
+        else if(mgEwmaSMUDiff < -qp->quotingEwmaSMUThreshold){
           qeBidStatus = mQuoteState::DownTrendHeld;
           rawQuote->bid.price = 0;
           rawQuote->bid.size = 0;
@@ -395,8 +396,8 @@ namespace K {
         }
       };
       mQuote quote(double widthPing, double buySize, double sellSize) {
-        if (qeQuotingMode.find(qp.mode) == qeQuotingMode.end()) FN::logExit("QE", "Invalid quoting mode", EXIT_SUCCESS);
-        return (*qeQuotingMode[qp.mode])(widthPing, buySize, sellSize);
+        if (qeQuotingMode.find(qp->mode) == qeQuotingMode.end()) FN::logExit("QE", "Invalid quoting mode", EXIT_SUCCESS);
+        return (*qeQuotingMode[qp->mode])(widthPing, buySize, sellSize);
       };
       mQuote quoteAtTopOfMarket() {
         mLevel topBid = mgLevelsFilter.bids.begin()->size > gw->minTick
@@ -533,7 +534,7 @@ namespace K {
           if (it->first == q.price) { return; }
           else if (it->second.orderStatus == mORS::New) {
             if (T-10e+3>it->second.time) ((OG*)orders)->cleanOrder(it->second.orderId, it->second.exchangeId);
-            if (qp.safety != mQuotingSafety::AK47 or (int)k >= qp.bullets) return;
+            if (qp->safety != mQuotingSafety::AK47 or (int)k >= qp->bullets) return;
           }
         modify(side, q, isPong);
       };
@@ -547,16 +548,16 @@ namespace K {
         return ordersSide;
       };
       void modify(mSide side, mLevel q, bool isPong) {
-        if (qp.safety == mQuotingSafety::AK47)
+        if (qp->safety == mQuotingSafety::AK47)
           stopWorstQuote(side);
         else stopAllQuotes(side);
         start(side, q, isPong);
       };
       void start(mSide side, mLevel q, bool isPong) {
-        if (qp.delayAPI) {
+        if (qp->delayAPI) {
           static unsigned int tStarted = 0;
           static unsigned long qeNextT = 0;
-          long nextDiff = (qeNextT + (6e+4 / qp.delayAPI)) - FN::T();
+          long nextDiff = (qeNextT + (6e+4 / qp->delayAPI)) - FN::T();
           if (nextDiff > 0) {
             qeNextQuote.clear();
             qeNextQuote[side] = q;
