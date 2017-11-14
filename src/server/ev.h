@@ -57,7 +57,7 @@ namespace K  {
         hub->run();
         halt(eCode);
       };
-      void stop(int code, function<void()> gwExit) {
+      void stop(int code, function<void()> gwCancelAll) {
         eCode = code;
         if (uv_loop_alive(hub->getLoop())) {
           uv_timer_stop(tCancel);
@@ -67,7 +67,7 @@ namespace K  {
           uv_timer_stop(tDelay);
           gw->close();
           gw->gwGroup->close();
-          gwExit();
+          gwCancelAll();
           uiGroup->close();
           FN::close(hub->getLoop());
           hub->getLoop()->destroy();
