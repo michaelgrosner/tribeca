@@ -31,16 +31,16 @@ namespace K {
       };
       void waitData() {
         gw->evDataWallet = [&](mWallet k) {
-          if (argDebugEvents) FN::log("DEBUG", string("EV PG evDataWallet mWallet ") + ((json)k).dump());
+          if (((CF*)config)->argDebugEvents) FN::log("DEBUG", string("EV PG evDataWallet mWallet ") + ((json)k).dump());
           calcWallet(k);
         };
         ((EV*)events)->ogOrder = [&](mOrder k) {
-          if (argDebugEvents) FN::log("DEBUG", string("EV PG ogOrder mOrder ") + ((json)k).dump());
+          if (((CF*)config)->argDebugEvents) FN::log("DEBUG", string("EV PG ogOrder mOrder ") + ((json)k).dump());
           calcWalletAfterOrder(k);
           FN::screen_refresh();
         };
         ((EV*)events)->mgTargetPosition = [&]() {
-          if (argDebugEvents) FN::log("DEBUG", "EV PG mgTargetPosition");
+          if (((CF*)config)->argDebugEvents) FN::log("DEBUG", "EV PG mgTargetPosition");
           calcTargetBasePos();
         };
       };

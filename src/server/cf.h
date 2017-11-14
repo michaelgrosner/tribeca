@@ -4,6 +4,34 @@
 namespace K {
   Gw *gw;
   class CF: public kLass {
+    public:
+      int argPort = 3000,
+          argColors = 0,
+          argDebug = 0,
+          argDebugEvents = 0,
+          argDebugOrders = 0,
+          argDebugQuotes = 0,
+          argHeadless = 0,
+          argNaked = 0,
+          argAutobot = 0,
+          argFree = 0;
+      string argTitle = "K.sh",
+             argUser = "NULL",
+             argPass = "NULL",
+             argMatryoshka = "https://www.example.com/",
+             argExchange = "NULL",
+             argCurrency = "NULL",
+             argApikey = "NULL",
+             argSecret = "NULL",
+             argUsername = "NULL",
+             argPassphrase = "NULL",
+             argHttp = "NULL",
+             argWss = "NULL",
+             argDatabase = "",
+             argWhitelist = "";
+      double argEwmaShort = 0,
+             argEwmaMedium = 0,
+             argEwmaLong = 0;
     protected:
       void load(int argc, char** argv) {
         cout << BGREEN << "K" << RGREEN << " build " << K_BUILD << " " << K_STAMP << "." << BRED << '\n';
@@ -157,7 +185,7 @@ namespace K {
             + '.' + quote() + ".db";
       };
       void run() {
-        if (!argNaked) FN::screen();
+        if (!argNaked) FN::screen(argColors, argExchange, argCurrency);
         mExchange e = exchange();
         gw = Gw::E(e);
         gw->exchange = e;

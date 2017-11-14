@@ -305,33 +305,6 @@ namespace K {
   static const char kB64Alphabet[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
                                      "abcdefghijklmnopqrstuvwxyz"
                                      "0123456789+/";
-  static int argPort = 3000,
-             argColors = 0,
-             argDebug = 0,
-             argDebugEvents = 0,
-             argDebugOrders = 0,
-             argDebugQuotes = 0,
-             argHeadless = 0,
-             argNaked = 0,
-             argAutobot = 0,
-             argFree = 0;
-  static string argTitle = "K.sh",
-                argExchange = "NULL",
-                argUser = "NULL",
-                argPass = "NULL",
-                argMatryoshka = "https://www.example.com/",
-                argCurrency = "NULL",
-                argApikey = "NULL",
-                argSecret = "NULL",
-                argUsername = "NULL",
-                argPassphrase = "NULL",
-                argHttp = "NULL",
-                argWss = "NULL",
-                argDatabase = "",
-                argWhitelist = "";
-  static double argEwmaShort = 0,
-                argEwmaMedium = 0,
-                argEwmaLong = 0;
   static char RBLACK[] = "\033[0;30m", RRED[]    = "\033[0;31m", RGREEN[] = "\033[0;32m", RYELLOW[] = "\033[0;33m",
               RBLUE[]  = "\033[0;34m", RPURPLE[] = "\033[0;35m", RCYAN[]  = "\033[0;36m", RWHITE[]  = "\033[0;37m",
               BBLACK[] = "\033[1;30m", BRED[]    = "\033[1;31m", BGREEN[] = "\033[1;32m", BYELLOW[] = "\033[1;33m",
@@ -342,7 +315,6 @@ namespace K {
   static mutex wMutex,
                ogMutex,
                pgMutex;
-  static string uiPrtcl = "?";
   static map<string, mOrder> allOrders;
   class Gw {
     public:
@@ -416,14 +388,16 @@ namespace K {
   class kLass: public Klass {
     public:
       void link(Klass *EV, Klass *DB, Klass *UI, Klass *QP, Klass *OG, Klass *MG, Klass *PG, Klass *QE, Klass *GW) {
-        UI->evLink(EV); QP->evLink(EV); OG->evLink(EV); MG->evLink(EV); PG->evLink(EV); QE->evLink(EV); GW->evLink(EV);
-        UI->dbLink(DB); QP->dbLink(DB); OG->dbLink(DB); MG->dbLink(DB); PG->dbLink(DB);
-                        QP->uiLink(UI); OG->uiLink(UI); MG->uiLink(UI); PG->uiLink(UI); QE->uiLink(UI); GW->uiLink(UI);
-                                        OG->qpLink(QP);                 PG->qpLink(QP); QE->qpLink(QP);
-                                                                        PG->ogLink(OG); QE->ogLink(OG);
-                                                                                        QE->mgLink(MG);
-                                                                                        QE->pgLink(PG);
-                                                                                                        GW->qeLink(QE);
+        Klass *CF = (Klass*)this;
+        DB->cfLink(CF); UI->cfLink(CF);                 OG->cfLink(CF); MG->cfLink(CF); PG->cfLink(CF); QE->cfLink(CF); GW->cfLink(CF);
+                        UI->evLink(EV); QP->evLink(EV); OG->evLink(EV); MG->evLink(EV); PG->evLink(EV); QE->evLink(EV); GW->evLink(EV);
+                        UI->dbLink(DB); QP->dbLink(DB); OG->dbLink(DB); MG->dbLink(DB); PG->dbLink(DB);
+                                        QP->uiLink(UI); OG->uiLink(UI); MG->uiLink(UI); PG->uiLink(UI); QE->uiLink(UI); GW->uiLink(UI);
+                                                        OG->qpLink(QP);                 PG->qpLink(QP); QE->qpLink(QP);
+                                                                                        PG->ogLink(OG); QE->ogLink(OG);
+                                                                                                        QE->mgLink(MG);
+                                                                                                        QE->pgLink(PG);
+                                                                                                                        GW->qeLink(QE);
       };
   };
 }

@@ -500,7 +500,7 @@ namespace K {
         wprintw(wLog, ".\n");
         wattroff(wLog, COLOR_PAIR(COLOR_WHITE));
         wMutex.unlock();
-        FN::screen_refresh();
+        FN::screen_refresh(k, p);
       };
       static void logUIsess(int k, string s) {
         if (!wInit) {
@@ -549,7 +549,7 @@ namespace K {
       };
       static void log(mTrade k, string e) {
         if (!wInit) {
-          cout << FN::uiT() << "GW " << (k.side == mSide::Bid ? RCYAN : RPURPLE) << argExchange << " TRADE " << (k.side == mSide::Bid ? BCYAN : BPURPLE) << (k.side == mSide::Bid ? "BUY " : "SELL ") << k.quantity << " " << k.pair.base << " at price " << k.price << " " << k.pair.quote << " (value " << k.value << " " << k.pair.quote << ").\n";
+          cout << FN::uiT() << "GW " << (k.side == mSide::Bid ? RCYAN : RPURPLE) << e << " TRADE " << (k.side == mSide::Bid ? BCYAN : BPURPLE) << (k.side == mSide::Bid ? "BUY " : "SELL ") << k.quantity << " " << k.pair.base << " at price " << k.price << " " << k.pair.quote << " (value " << k.value << " " << k.pair.quote << ").\n";
           return;
         }
         lock_guard<mutex> lock(wMutex);
@@ -628,7 +628,7 @@ namespace K {
         beep();
         endwin();
       };
-      static void screen() {
+      static void screen(int argColors, string argExchange, string argCurrency) {
         if ((wBorder = initscr()) == NULL) {
           cout << "NCURSES" << RRED << " Errrror:" << BRED << " Unable to initialize ncurses, try to run in your terminal \"export TERM=xterm\", or use --naked argument." << '\n';
           exit(EXIT_SUCCESS);
@@ -665,11 +665,16 @@ namespace K {
           (*evExit)(EXIT_SUCCESS);
         }).detach();
         wInit = true;
-        screen_refresh();
+        screen_refresh("", 0, argExchange, argCurrency);
       };
-      static void screen_refresh() {
+      static void screen_refresh(string protocol = "", int argPort = 0, string argExchange = "", string argCurrency = "") {
         if (!wInit) return;
-        static int p = 0, spin = 0;
+        static int p = 0, spin = 0, port = 0;
+        static string prtcl = "?", exchange = "?", currency = "?";
+        if (argPort) port = argPort;
+        if (protocol.length()) prtcl = protocol;
+        if (argExchange.length()) exchange = argExchange;
+        if (argCurrency.length()) currency = argCurrency;
         multimap<double, mOrder> orderLines;
         ogMutex.lock();
         for (map<string, mOrder>::iterator it = allOrders.begin(); it != allOrders.end(); ++it) {
@@ -720,9 +725,9 @@ namespace K {
         mvwaddch(wBorder, 1, 12, ACS_RTEE);
         wattron(wBorder, COLOR_PAIR(COLOR_GREEN));
         wattron(wBorder, A_BOLD);
-        mvwaddstr(wBorder, 1, 14, (argExchange + " " + argCurrency).data());
+        mvwaddstr(wBorder, 1, 14, (exchange + " " + currency).data());
         wattroff(wBorder, A_BOLD);
-        waddstr(wBorder, (argHeadless ? " headless" : " UI on " + uiPrtcl + " port " + to_string(argPort)).data());
+        waddstr(wBorder, (port ? " UI on " + prtcl + " port " + to_string(port) : " headless").data());
         wattroff(wBorder, COLOR_PAIR(COLOR_GREEN));
         mvwaddch(wBorder, k, 0, ACS_LTEE);
         mvwhline(wBorder, k, 1, ACS_HLINE, 3);

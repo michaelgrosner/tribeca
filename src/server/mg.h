@@ -42,9 +42,9 @@ namespace K {
           calcStdev();
         }
         FN::log("DB", string("loaded ") + to_string(mgStatFV.size()) + " STDEV Periods");
-        if (argEwmaLong) mgEwmaL = argEwmaLong;
-        if (argEwmaMedium) mgEwmaM = argEwmaMedium;
-        if (argEwmaShort) mgEwmaS = argEwmaShort;
+        if (((CF*)config)->argEwmaLong) mgEwmaL = ((CF*)config)->argEwmaLong;
+        if (((CF*)config)->argEwmaMedium) mgEwmaM = ((CF*)config)->argEwmaMedium;
+        if (((CF*)config)->argEwmaShort) mgEwmaS = ((CF*)config)->argEwmaShort;
         k = ((DB*)memory)->load(uiTXT::EWMAChart);
         if (k.size()) {
           k = k.at(0);
@@ -55,17 +55,17 @@ namespace K {
           if (!mgEwmaS and k.value("time", (unsigned long)0)+qp.shortEwmaPeriods*6e+4>FN::T())
             mgEwmaS = k.value("ewmaShort", 0.0);
         }
-        FN::log(argEwmaLong ? "ARG" : "DB", string("loaded EWMA Long = ") + to_string(mgEwmaL));
-        FN::log(argEwmaMedium ? "ARG" : "DB", string("loaded EWMA Medium = ") + to_string(mgEwmaM));
-        FN::log(argEwmaShort ? "ARG" : "DB", string("loaded EWMA Short = ") + to_string(mgEwmaS));
+        FN::log(((CF*)config)->argEwmaLong ? "ARG" : "DB", string("loaded EWMA Long = ") + to_string(mgEwmaL));
+        FN::log(((CF*)config)->argEwmaMedium ? "ARG" : "DB", string("loaded EWMA Medium = ") + to_string(mgEwmaM));
+        FN::log(((CF*)config)->argEwmaShort ? "ARG" : "DB", string("loaded EWMA Short = ") + to_string(mgEwmaS));
       };
       void waitData() {
         gw->evDataTrade = [&](mTrade k) {
-          if (argDebugEvents) FN::log("DEBUG", "EV MG evDataTrade");
+          if (((CF*)config)->argDebugEvents) FN::log("DEBUG", "EV MG evDataTrade");
           tradeUp(k);
         };
         gw->evDataLevels = [&](mLevels k) {
-          if (argDebugEvents) FN::log("DEBUG", "EV MG evDataLevels");
+          if (((CF*)config)->argDebugEvents) FN::log("DEBUG", "EV MG evDataLevels");
           levelUp(k);
         };
       };

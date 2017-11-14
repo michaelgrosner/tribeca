@@ -29,8 +29,8 @@ namespace K {
       };
       void waitData() {
         gw->evDataOrder = [&](mOrder k) {
-          if (argDebugEvents) FN::log("DEBUG", "EV OG evDataOrder");
-          if (argDebugOrders) FN::log("DEBUG", string("OG reply  ") + k.orderId + "::" + k.exchangeId + " [" + to_string((int)k.orderStatus) + "]: " + to_string(k.quantity) + "/" + to_string(k.lastQuantity) + " at price " + to_string(k.price));
+          if (((CF*)config)->argDebugEvents) FN::log("DEBUG", "EV OG evDataOrder");
+          if (((CF*)config)->argDebugOrders) FN::log("DEBUG", string("OG reply  ") + k.orderId + "::" + k.exchangeId + " [" + to_string((int)k.orderStatus) + "]: " + to_string(k.quantity) + "/" + to_string(k.lastQuantity) + " at price " + to_string(k.price));
           updateOrderState(k);
         };
       };
@@ -48,7 +48,7 @@ namespace K {
       vector<mTrade> tradesHistory;
       void sendOrder(mSide oS, double oP, double oQ, mOrderType oLM, mTimeInForce oTIF, bool oIP, bool oPO) {
         mOrder o = updateOrderState(mOrder(gw->randId(), gw->exchange, mPair(gw->base, gw->quote), oS, oQ, oLM, oIP, FN::roundSide(oP, gw->minTick, oS), oTIF, mORS::New, oPO));
-        if (argDebugOrders) FN::log("DEBUG", string("OG  send  ") + (o.side == mSide::Bid ? "BID id " : "ASK id ") + o.orderId + ": " + to_string(o.quantity) + " " + o.pair.base + " at price " + to_string(o.price) + " " + o.pair.quote);
+        if (((CF*)config)->argDebugOrders) FN::log("DEBUG", string("OG  send  ") + (o.side == mSide::Bid ? "BID id " : "ASK id ") + o.orderId + ": " + to_string(o.quantity) + " " + o.pair.base + " at price " + to_string(o.price) + " " + o.pair.quote);
         gw->send(o.orderId, o.side, o.price, o.quantity, o.type, o.timeInForce, o.preferPostOnly, o.time);
         ++((UI*)client)->orders60sec;
       };
@@ -60,7 +60,7 @@ namespace K {
         }
         mOrder o = allOrders[k];
         ogMutex.unlock();
-        if (argDebugOrders) FN::log("DEBUG", string("OG cancel ") + (o.side == mSide::Bid ? "BID id " : "ASK id ") + o.orderId + "::" + o.exchangeId);
+        if (((CF*)config)->argDebugOrders) FN::log("DEBUG", string("OG cancel ") + (o.side == mSide::Bid ? "BID id " : "ASK id ") + o.orderId + "::" + o.exchangeId);
         gw->cancel(o.orderId, o.exchangeId, o.side, o.time);
       };
       void cleanOrder(string oI, string oE) {
@@ -75,7 +75,7 @@ namespace K {
             if (it_->second == oI) it_ = allOrdersIds.erase(it_); else ++it_;
         }
         ogMutex.unlock();
-        if (argDebugOrders) FN::log("DEBUG", string("OG remove ") + oI + "::" + oE);
+        if (((CF*)config)->argDebugOrders) FN::log("DEBUG", string("OG remove ") + oI + "::" + oE);
       };
     private:
       map<string, string> allOrdersIds;
@@ -223,7 +223,7 @@ namespace K {
           o.time,
           val, 0, 0, 0, 0, 0, fee, false
         );
-        FN::log(trade, argExchange);
+        FN::log(trade, ((CF*)config)->argExchange);
         ((EV*)events)->ogTrade(trade);
         if (((QP*)params)->matchPings()) {
           double widthPong = qp.widthPercentage
@@ -313,9 +313,9 @@ namespace K {
             allOrdersIds[k.exchangeId] = k.orderId;
           allOrders[k.orderId] = k;
           ogMutex.unlock();
-          if (argDebugOrders) FN::log("DEBUG", string("OG  save  ") + (k.side == mSide::Bid ? "BID id " : "ASK id ") + k.orderId + "::" + k.exchangeId + " [" + to_string((int)k.orderStatus) + "]: " + to_string(k.quantity) + " " + k.pair.base + " at price " + to_string(k.price) + " " + k.pair.quote);
+          if (((CF*)config)->argDebugOrders) FN::log("DEBUG", string("OG  save  ") + (k.side == mSide::Bid ? "BID id " : "ASK id ") + k.orderId + "::" + k.exchangeId + " [" + to_string((int)k.orderStatus) + "]: " + to_string(k.quantity) + " " + k.pair.base + " at price " + to_string(k.price) + " " + k.pair.quote);
         } else cleanOrder(k.orderId, k.exchangeId);
-        if (argDebugOrders) FN::log("DEBUG", string("OG memory ") + to_string(allOrders.size()) + "/" + to_string(allOrdersIds.size()));
+        if (((CF*)config)->argDebugOrders) FN::log("DEBUG", string("OG memory ") + to_string(allOrders.size()) + "/" + to_string(allOrdersIds.size()));
       };
   };
 }

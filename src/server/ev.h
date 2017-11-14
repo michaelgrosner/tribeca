@@ -57,7 +57,7 @@ namespace K  {
         hub->run();
         halt(eCode);
       };
-      void stop(int code) {
+      void stop(int code, function<void()> gwExit) {
         eCode = code;
         if (uv_loop_alive(hub->getLoop())) {
           uv_timer_stop(&tCancel);
@@ -67,28 +67,26 @@ namespace K  {
           uv_timer_stop(&tDelay);
           gw->close();
           gw->gwGroup->close();
-          FN::log(string("GW ") + argExchange, "Attempting to cancel all open orders, please wait.");
-          gw->cancelAll();
-          FN::log(string("GW ") + argExchange, "cancell all open orders OK");
+          gwExit();
           uiGroup->close();
           FN::close(hub->getLoop());
           hub->getLoop()->destroy();
         }
         halt(code);
       };
-      void listen(mutex *k) {
+      void listen(mutex *k, int headless, int port, string exchange, string currency) {
         gw->wsMutex = k;
-        if (argHeadless) return;
+        if (headless) return;
+        string protocol("HTTP");
         if ((access("etc/sslcert/server.crt", F_OK) != -1) and (access("etc/sslcert/server.key", F_OK) != -1)
-          and hub->listen(argPort, uS::TLS::createContext("etc/sslcert/server.crt", "etc/sslcert/server.key", ""), 0, uiGroup)
-        ) uiPrtcl = "HTTPS";
-        else if (hub->listen(argPort, nullptr, 0, uiGroup))
-          uiPrtcl = "HTTP";
-        else FN::logExit("IU", string("Use another UI port number, ")
-          + to_string(argPort) + " seems already in use by:\n"
-          + FN::output(string("netstat -anp 2>/dev/null | grep ") + to_string(argPort)),
-          EXIT_SUCCESS);
-        FN::logUI(uiPrtcl, argPort);
+          and hub->listen(port, uS::TLS::createContext("etc/sslcert/server.crt", "etc/sslcert/server.key", ""), 0, uiGroup)
+        ) protocol += "S";
+        else if (!hub->listen(port, nullptr, 0, uiGroup))
+          FN::logExit("IU", string("Use another UI port number, ")
+            + to_string(port) + " seems already in use by:\n"
+            + FN::output(string("netstat -anp 2>/dev/null | grep ") + to_string(port)),
+            EXIT_SUCCESS);
+        FN::logUI(protocol, port);
       }
     private:
       void halt(int code) {

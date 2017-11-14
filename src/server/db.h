@@ -7,9 +7,9 @@ namespace K {
       sqlite3* db;
     protected:
       void load() {
-        if (sqlite3_open(argDatabase.data(), &db))
+        if (sqlite3_open(((CF*)config)->argDatabase.data(), &db))
           FN::logExit("DB", sqlite3_errmsg(db), EXIT_SUCCESS);
-        FN::logDB(argDatabase);
+        FN::logDB(((CF*)config)->argDatabase);
       };
     public:
       json load(uiTXT k) {
@@ -46,9 +46,9 @@ namespace K {
         sqlite3_free(zErrMsg);
       };
       int size() {
-        if (argDatabase==":memory:") return 0;
+        if (((CF*)config)->argDatabase==":memory:") return 0;
         struct stat st;
-        return stat(argDatabase.data(), &st) != 0 ? 0 : st.st_size;
+        return stat(((CF*)config)->argDatabase.data(), &st) != 0 ? 0 : st.st_size;
       };
     private:
       static int cb(void *param, int argc, char **argv, char **azColName) {

@@ -17,9 +17,11 @@ namespace K {
       unsigned int orders60sec = 0;
     protected:
       void load() {
-        if (argHeadless) return;
-        if (argUser != "NULL" && argPass != "NULL" && argUser.length() > 0 && argPass.length() > 0) {
-          B64::Encode(argUser + ':' + argPass, &uiNK64);
+        if (((CF*)config)->argHeadless) return;
+        if (((CF*)config)->argUser != "NULL" and ((CF*)config)->argPass != "NULL"
+          and ((CF*)config)->argUser.length() > 0 and ((CF*)config)->argPass.length() > 0
+        ) {
+          B64::Encode(((CF*)config)->argUser + ':' + ((CF*)config)->argPass, &uiNK64);
           uiNK64 = string("Basic ") + uiNK64;
         }
         ((EV*)events)->uiGroup->onConnection([&](uWS::WebSocket<uWS::SERVER> *webSocket, uWS::HttpRequest req) {
@@ -41,7 +43,7 @@ namespace K {
           string addr = res->getHttpSocket()->getAddress().address;
           if (addr.length() > 7 and addr.substr(0, 7) == "::ffff:") addr = addr.substr(7);
           lock_guard<mutex> lock(wsMutex);
-          if (argWhitelist != "" and argWhitelist.find(addr) == string::npos) {
+          if (((CF*)config)->argWhitelist != "" and ((CF*)config)->argWhitelist.find(addr) == string::npos) {
             FN::log("UI", "dropping gzip bomb on", addr);
             content << ifstream("etc/K-bomb.gzip").rdbuf();
             document = "HTTP/1.1 200 OK\r\nConnection: keep-alive\r\nAccept-Ranges: bytes\r\nVary: Accept-Encoding\r\nCache-Control: public, max-age=0\r\n";
@@ -99,7 +101,7 @@ namespace K {
         ((EV*)events)->uiGroup->onMessage([&](uWS::WebSocket<uWS::SERVER> *webSocket, const char *message, size_t length, uWS::OpCode opCode) {
           string addr = webSocket->getAddress().address;
           if (addr.length() > 7 and addr.substr(0, 7) == "::ffff:") addr = addr.substr(7);
-          if ((argWhitelist != "" and argWhitelist.find(addr) == string::npos) or length < 2)
+          if ((((CF*)config)->argWhitelist != "" and ((CF*)config)->argWhitelist.find(addr) == string::npos) or length < 2)
             return;
           if (uiBIT::SNAP == (uiBIT)message[0] and cbSnap.find(message[1]) != cbSnap.end()) {
             json reply = (*cbSnap[message[1]])();
@@ -112,10 +114,10 @@ namespace K {
         });
       };
       void waitTime() {
-        if (argHeadless) return;
+        if (((CF*)config)->argHeadless) return;
         ((EV*)events)->tDelay.data = (void*)this;
         uv_timer_start(&((EV*)events)->tDelay, [](uv_timer_t *handle) {
-          if (argDebugEvents) FN::log("DEBUG", "EV GW tDelay timer");
+          if (((CF*)((UI*)handle->data)->config)->argDebugEvents) FN::log("DEBUG", "EV GW tDelay timer");
           ((UI*)handle->data)->sendQueue(((UI*)handle->data)->delayUI > 0);
         }, 0, 0);
       };
@@ -127,28 +129,28 @@ namespace K {
         clickme(uiTXT::ToggleSettings, &kissSettings);
       };
       void run() {
-        ((EV*)events)->listen(&wsMutex);
+        ((EV*)events)->listen(&wsMutex, ((CF*)config)->argHeadless, ((CF*)config)->argPort, ((CF*)config)->argExchange, ((CF*)config)->argCurrency);
       };
     public:
       void welcome(uiTXT k, function<json()> *cb) {
-        if (argHeadless) return;
+        if (((CF*)config)->argHeadless) return;
         if (cbSnap.find((char)k) == cbSnap.end())
           cbSnap[(char)k] = cb;
         else FN::logExit("UI", string("Use only a single unique message handler for each \"") + (char)k + "\" event", EXIT_SUCCESS);
       };
       void clickme(uiTXT k, function<void(json)> *cb) {
-        if (argHeadless) return;
+        if (((CF*)config)->argHeadless) return;
         if (cbMsg.find((char)k) == cbMsg.end())
           cbMsg[(char)k] = cb;
         else FN::logExit("UI", string("Use only a single unique message handler for each \"") + (char)k + "\" event", EXIT_SUCCESS);
       };
       void send(uiTXT k, json o, bool hold = false) {
-        if (argHeadless or connections == 0) return;
+        if (((CF*)config)->argHeadless or connections == 0) return;
         if (delayUI and hold) msg2Queue(k, o);
         else msg2Client(k, o);
       };
       void delay(double delayUI_) {
-        if (argHeadless) return;
+        if (((CF*)config)->argHeadless) return;
         delayUI = delayUI_;
         wsMutex.lock();
         queue.clear();
