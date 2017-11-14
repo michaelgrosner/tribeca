@@ -2,50 +2,48 @@
 #define K_UI_H_
 
 namespace K {
-  string A();
-  uWS::Hub hub(0, true);
-  uWS::Group<uWS::SERVER> *uiGroup = hub.createGroup<uWS::SERVER>(uWS::PERMESSAGE_DEFLATE);
-  bool uiToggleSettings = true;
-  unsigned int uiOSR_1m = 0;
-  double delayUI = 0;
-  string uiNOTE = "";
-  string uiNK64 = "";
-  struct uiSess {
-    map<char, function<json()>*> cbSnap;
-    map<char, function<void(json)>*> cbMsg;
-    map<uiTXT, vector<json>> D;
-    int u = 0;
-  };
   class UI: public Klass {
+    private:
+      int connections = 0;
+      map<uiTXT, vector<json>> queue;
+      map<char, function<json()>*> cbSnap;
+      map<char, function<void(json)>*> cbMsg;
+      string uiNK64 = "";
+      string uiNOTE = "";
+      double delayUI = 0;
+      bool toggleSettings = true;
+      mutex wsMutex;
+    public:
+      unsigned int orders60sec = 0;
     protected:
       void load() {
-        if (argHeadless) return;
-        uiGroup->setUserData(new uiSess);
-        uiSess *sess = (uiSess *) uiGroup->getUserData();
-        if (argUser != "NULL" && argPass != "NULL" && argUser.length() > 0 && argPass.length() > 0) {
-          B64::Encode(argUser + ':' + argPass, &uiNK64);
+        if (((CF*)config)->argHeadless) return;
+        if (((CF*)config)->argUser != "NULL" and ((CF*)config)->argPass != "NULL"
+          and ((CF*)config)->argUser.length() > 0 and ((CF*)config)->argPass.length() > 0
+        ) {
+          B64::Encode(((CF*)config)->argUser + ':' + ((CF*)config)->argPass, &uiNK64);
           uiNK64 = string("Basic ") + uiNK64;
         }
-        uiGroup->onConnection([sess](uWS::WebSocket<uWS::SERVER> *webSocket, uWS::HttpRequest req) {
-          sess->u++;
+        ((EV*)events)->uiGroup->onConnection([&](uWS::WebSocket<uWS::SERVER> *webSocket, uWS::HttpRequest req) {
+          connections++;
           string addr = webSocket->getAddress().address;
           if (addr.length() > 7 and addr.substr(0, 7) == "::ffff:") addr = addr.substr(7);
-          FN::logUIsess(sess->u, addr);
+          FN::logUIsess(connections, addr);
         });
-        uiGroup->onDisconnection([sess](uWS::WebSocket<uWS::SERVER> *webSocket, int code, char *message, size_t length) {
-          sess->u--;
+        ((EV*)events)->uiGroup->onDisconnection([&](uWS::WebSocket<uWS::SERVER> *webSocket, int code, char *message, size_t length) {
+          connections--;
           string addr = webSocket->getAddress().address;
           if (addr.length() > 7 and addr.substr(0, 7) == "::ffff:") addr = addr.substr(7);
-          FN::logUIsess(sess->u, addr);
+          FN::logUIsess(connections, addr);
         });
-        uiGroup->onHttpRequest([&](uWS::HttpResponse *res, uWS::HttpRequest req, char *data, size_t length, size_t remainingBytes) {
+        ((EV*)events)->uiGroup->onHttpRequest([&](uWS::HttpResponse *res, uWS::HttpRequest req, char *data, size_t length, size_t remainingBytes) {
           string document;
           stringstream content;
           string auth = req.getHeader("authorization").toString();
           string addr = res->getHttpSocket()->getAddress().address;
           if (addr.length() > 7 and addr.substr(0, 7) == "::ffff:") addr = addr.substr(7);
           lock_guard<mutex> lock(wsMutex);
-          if (argWhitelist != "" and argWhitelist.find(addr) == string::npos) {
+          if (((CF*)config)->argWhitelist != "" and ((CF*)config)->argWhitelist.find(addr) == string::npos) {
             FN::log("UI", "dropping gzip bomb on", addr);
             content << ifstream("etc/K-bomb.gzip").rdbuf();
             document = "HTTP/1.1 200 OK\r\nConnection: keep-alive\r\nAccept-Ranges: bytes\r\nVary: Accept-Encoding\r\nCache-Control: public, max-age=0\r\n";
@@ -100,28 +98,27 @@ namespace K {
             res->write(document.data(), document.length());
           }
         });
-        uiGroup->onMessage([sess](uWS::WebSocket<uWS::SERVER> *webSocket, const char *message, size_t length, uWS::OpCode opCode) {
+        ((EV*)events)->uiGroup->onMessage([&](uWS::WebSocket<uWS::SERVER> *webSocket, const char *message, size_t length, uWS::OpCode opCode) {
           string addr = webSocket->getAddress().address;
           if (addr.length() > 7 and addr.substr(0, 7) == "::ffff:") addr = addr.substr(7);
-          if ((argWhitelist != "" and argWhitelist.find(addr) == string::npos) or length < 2)
+          if ((((CF*)config)->argWhitelist != "" and ((CF*)config)->argWhitelist.find(addr) == string::npos) or length < 2)
             return;
-          if (uiBIT::SNAP == (uiBIT)message[0] and sess->cbSnap.find(message[1]) != sess->cbSnap.end()) {
-            json reply = (*sess->cbSnap[message[1]])();
+          if (uiBIT::SNAP == (uiBIT)message[0] and cbSnap.find(message[1]) != cbSnap.end()) {
+            json reply = (*cbSnap[message[1]])();
             lock_guard<mutex> lock(wsMutex);
             if (!reply.is_null()) webSocket->send(string(message, 2).append(reply.dump()).data(), uWS::OpCode::TEXT);
-          } else if (uiBIT::MSG == (uiBIT)message[0] and sess->cbMsg.find(message[1]) != sess->cbMsg.end())
-            (*sess->cbMsg[message[1]])(json::parse((length > 2 and (message[2] == '[' or message[2] == '{'))
+          } else if (uiBIT::MSG == (uiBIT)message[0] and cbMsg.find(message[1]) != cbMsg.end())
+            (*cbMsg[message[1]])(json::parse((length > 2 and (message[2] == '[' or message[2] == '{'))
               ? string(message, length).substr(2, length-2) : "{}"
             ));
         });
       };
       void waitTime() {
-        if (argHeadless) return;
-        uv_timer_init(hub.getLoop(), &tDelay);
-        tDelay.data = (void*)this;
-        uv_timer_start(&tDelay, [](uv_timer_t *handle) {
-          if (argDebugEvents) FN::log("DEBUG", "EV GW tDelay timer");
-          ((UI*)handle->data)->send(delayUI > 0);
+        if (((CF*)config)->argHeadless) return;
+        ((EV*)events)->tDelay->data = (void*)this;
+        uv_timer_start(((EV*)events)->tDelay, [](uv_timer_t *handle) {
+          if (((CF*)((UI*)handle->data)->config)->argDebugEvents) FN::log("DEBUG", "EV GW tDelay timer");
+          ((UI*)handle->data)->sendQueue(((UI*)handle->data)->delayUI > 0);
         }, 0, 0);
       };
       void waitUser() {
@@ -132,118 +129,101 @@ namespace K {
         clickme(uiTXT::ToggleSettings, &kissSettings);
       };
       void run() {
-        if ((access("etc/sslcert/server.crt", F_OK) != -1)
-          and (access("etc/sslcert/server.key", F_OK) != -1)
-          and hub.listen(argPort, uS::TLS::createContext("etc/sslcert/server.crt", "etc/sslcert/server.key", ""), 0, uiGroup)
-        ) uiPrtcl = "HTTPS";
-        else if (hub.listen(argPort, nullptr, 0, uiGroup))
-          uiPrtcl = "HTTP";
-        else FN::logExit("IU", string("Use another UI port number, ")
-          + to_string(argPort) + " seems already in use by:\n"
-          + FN::output(string("netstat -anp 2>/dev/null | grep ") + to_string(argPort)),
-          EXIT_SUCCESS);
-        FN::logUI(uiPrtcl, argPort);
+        ((EV*)events)->listen(&wsMutex, ((CF*)config)->argHeadless, ((CF*)config)->argPort);
       };
     public:
       void welcome(uiTXT k, function<json()> *cb) {
-        if (argHeadless) return;
-        uiSess *sess = (uiSess *) uiGroup->getUserData();
-        if (sess->cbSnap.find((char)k) == sess->cbSnap.end())
-          sess->cbSnap[(char)k] = cb;
+        if (((CF*)config)->argHeadless) return;
+        if (cbSnap.find((char)k) == cbSnap.end())
+          cbSnap[(char)k] = cb;
         else FN::logExit("UI", string("Use only a single unique message handler for each \"") + (char)k + "\" event", EXIT_SUCCESS);
       };
       void clickme(uiTXT k, function<void(json)> *cb) {
-        if (argHeadless) return;
-        uiSess *sess = (uiSess *) uiGroup->getUserData();
-        if (sess->cbMsg.find((char)k) == sess->cbMsg.end())
-          sess->cbMsg[(char)k] = cb;
+        if (((CF*)config)->argHeadless) return;
+        if (cbMsg.find((char)k) == cbMsg.end())
+          cbMsg[(char)k] = cb;
         else FN::logExit("UI", string("Use only a single unique message handler for each \"") + (char)k + "\" event", EXIT_SUCCESS);
       };
       void send(uiTXT k, json o, bool hold = false) {
-        if (argHeadless) return;
-        uiSess *sess = (uiSess *) uiGroup->getUserData();
-        if (sess->u == 0) return;
-        if (delayUI and hold) uiHold(k, o);
-        else uiUp(k, o);
+        if (((CF*)config)->argHeadless or connections == 0) return;
+        if (delayUI and hold) msg2Queue(k, o);
+        else msg2Client(k, o);
       };
       void delay(double delayUI_) {
-        if (argHeadless) return;
+        if (((CF*)config)->argHeadless) return;
         delayUI = delayUI_;
         wsMutex.lock();
-        uiSess *sess = (uiSess *) uiGroup->getUserData();
-        sess->D.clear();
+        queue.clear();
         wsMutex.unlock();
-        uv_timer_set_repeat(&tDelay, delayUI ? (int)(delayUI*1e+3) : 6e+4);
+        uv_timer_set_repeat(((EV*)events)->tDelay, delayUI ? (int)(delayUI*1e+3) : 6e+4);
       };
     private:
       function<json()> helloServer = [&]() {
         return (json){ serverState() };
       };
-      function<json()> helloNotes = []() {
+      function<json()> helloNotes = [&]() {
         return (json){ uiNOTE };
       };
-      function<void(json)> kissNotes = [](json k) {
+      function<void(json)> kissNotes = [&](json k) {
         if (!k.is_null() and k.size())
           uiNOTE = k.at(0);
       };
-      function<json()> helloSettings = []() {
-        return (json){ uiToggleSettings };
+      function<json()> helloSettings = [&]() {
+        return (json){ toggleSettings };
       };
-      function<void(json)> kissSettings = [](json k) {
+      function<void(json)> kissSettings = [&](json k) {
         if (!k.is_null() and k.size())
-          uiToggleSettings = k.at(0);
+          toggleSettings = k.at(0);
       };
-      void uiUp(uiTXT k, json o) {
+      void msg2Client(uiTXT k, json o) {
         string m(1, (char)uiBIT::MSG);
         m += string(1, (char)k);
         m += o.is_null() ? "" : o.dump();
         lock_guard<mutex> lock(wsMutex);
-        uiGroup->broadcast(m.data(), m.length(), uWS::OpCode::TEXT);
+        ((EV*)events)->uiGroup->broadcast(m.data(), m.length(), uWS::OpCode::TEXT);
       };
-      void uiHold(uiTXT k, json o) {
+      void msg2Queue(uiTXT k, json o) {
         lock_guard<mutex> lock(wsMutex);
-        uiSess *sess = (uiSess *) uiGroup->getUserData();
-        if (sess->D.find(k) != sess->D.end() and sess->D[k].size() > 0) {
-          if (k != uiTXT::OrderStatusReports) sess->D[k].clear();
-          else for (vector<json>::iterator it = sess->D[k].begin(); it != sess->D[k].end();)
+        if (queue.find(k) != queue.end() and queue[k].size() > 0) {
+          if (k != uiTXT::OrderStatusReports) queue[k].clear();
+          else for (vector<json>::iterator it = queue[k].begin(); it != queue[k].end();)
             if (it->value("orderId", "") == o.value("orderId", ""))
-              it = sess->D[k].erase(it);
+              it = queue[k].erase(it);
             else ++it;
         }
-        sess->D[k].push_back(o);
+        queue[k].push_back(o);
       };
-      bool send() {
+      bool sendQueue() {
         static unsigned long uiT_1m = 0;
         wsMutex.lock();
         map<uiTXT, vector<json>> msgs;
-        uiSess *sess = (uiSess *) uiGroup->getUserData();
-        for (map<uiTXT, vector<json>>::iterator it_ = sess->D.begin(); it_ != sess->D.end();) {
+        for (map<uiTXT, vector<json>>::iterator it_ = queue.begin(); it_ != queue.end();) {
           if (it_->first != uiTXT::OrderStatusReports) {
             msgs[it_->first] = it_->second;
-            it_ = sess->D.erase(it_);
+            it_ = queue.erase(it_);
           } else ++it_;
         }
-        for (vector<json>::iterator it = sess->D[uiTXT::OrderStatusReports].begin(); it != sess->D[uiTXT::OrderStatusReports].end();) {
+        for (vector<json>::iterator it = queue[uiTXT::OrderStatusReports].begin(); it != queue[uiTXT::OrderStatusReports].end();) {
           msgs[uiTXT::OrderStatusReports].push_back(*it);
           if (mORS::Working != (mORS)it->value("orderStatus", 0))
-            it = sess->D[uiTXT::OrderStatusReports].erase(it);
+            it = queue[uiTXT::OrderStatusReports].erase(it);
           else ++it;
         }
-        sess->D.erase(uiTXT::OrderStatusReports);
+        queue.erase(uiTXT::OrderStatusReports);
         wsMutex.unlock();
         for (map<uiTXT, vector<json>>::iterator it_ = msgs.begin(); it_ != msgs.end(); ++it_)
           for (vector<json>::iterator it = it_->second.begin(); it != it_->second.end(); ++it)
-            uiUp(it_->first, *it);
+            msg2Client(it_->first, *it);
         if (uiT_1m+6e+4 > FN::T()) return false;
         uiT_1m = FN::T();
         return true;
       };
-      void send(bool delayed) {
+      void sendQueue(bool delayed) {
         bool sec60 = true;
-        if (delayed) sec60 = send();
+        if (delayed) sec60 = sendQueue();
         if (!sec60) return;
         send(uiTXT::ApplicationState, serverState());
-        uiOSR_1m = 0;
+        orders60sec = 0;
       };
       json serverState() {
         time_t rawtime;
@@ -251,9 +231,9 @@ namespace K {
         return {
           {"memory", FN::memory()},
           {"hour", localtime(&rawtime)->tm_hour},
-          {"freq", uiOSR_1m},
+          {"freq", orders60sec},
           {"dbsize", ((DB*)memory)->size()},
-          {"a", A()}
+          {"a", gw->A()}
         };
       };
   };

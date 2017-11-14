@@ -1,4 +1,4 @@
-<!--```c++
+```c++
 #include <iostream>
 
 int main()
@@ -16,11 +16,12 @@ I am from a country where fear is called sanity,<br />
 that walks one step forward and two backwards.<br />
 <br />
 I am from a country that slowly breaks down,<br />
-and between illusions and frustrations goes forth.</p>
+and between illusions and frustrations goes forth.<br /><br />
+<img src="https://user-images.githubusercontent.com/1634027/32696081-78efb9dc-c76e-11e7-87df-f67db7cbfda8.jpg" /><br />Our battle? freedom, democracy and peace.<br />We will never surrender.</p>
 <br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br />
 <p align="center"><img src="https://user-images.githubusercontent.com/1634027/31734164-1ab05c66-b43e-11e7-9e52-3fd874045876.jpg" /></p>
 <br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br />
-<br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br />-->
+<br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br />
 
 [***REFUGEES WELCOME!***](http://www.refugeesaid.eu/rab-campaign/)
 
@@ -159,6 +160,8 @@ It just contains a few variables with examples ready to be reused (the suggested
 
 ### Upgrade to the latest commit
 
+After each reinstall, `make restartall` will be executed automatically.
+
 To upgrade under Manual ZIP Installation, please run `make reinstall`.
 
 To upgrade under Manual GIT Installation:
@@ -166,8 +169,6 @@ To upgrade under Manual GIT Installation:
 Feel free anytime to check if there are new modifications with `make diff`.
 
 Once you decide that is time to upgrade, execute `make latest` to download and install the latest modifications in your remote branch (or directly `make reinstall` to skip the validation of the new commit messages).
-
-After upgrade to latest version, all running instances will be restarted.
 
 `git` commands do not upgrade nothing because do not compile nothing (if you update the source with git, then later consider to recompile the source or run `make reinstall`).
 
@@ -420,7 +421,10 @@ What exchange you don't want to be deleted from the bot?
  - https://www.youtube.com/watch?v=_wGDcWD1E1A
  - https://www.youtube.com/watch?v=DVg2EJvvlF8
  - add your song here (please open a [new issue](https://github.com/ctubio/Krypto-trading-bot/issues/new?title=Today,%20I%20sing) to share your link)
-<br /><br /><br />
-<p align="center"><img src="https://user-images.githubusercontent.com/1634027/29746351-7478d556-8ad7-11e7-8b27-445eefa8f960.jpg" /></p>
-<br /><br /><br />
-<p align="center"><img width="300" src="http://hits.dwyl.io/ctubio/Krypto-trading-bot.svg" /></p>
+<p align="center"><img src="https://user-images.githubusercontent.com/1634027/32134633-642bb47a-bbf1-11e7-809c-f2d4d57678e0.jpg" />
+<br /><br /><br /><br /><br /><br /><br />
+<img src="https://user-images.githubusercontent.com/1634027/32695988-22681724-c76b-11e7-8557-7f2b15b2686b.jpg" />
+<br /><br /><br /><br /><br /><br /><br /><br /><br />
+<img src="https://user-images.githubusercontent.com/1634027/29746351-7478d556-8ad7-11e7-8b27-445eefa8f960.jpg" />
+<br /><br /><br /><br /><br /><br /><br /><br /><br />
+<img width="300" src="http://hits.dwyl.io/ctubio/Krypto-trading-bot.svg" /></p>

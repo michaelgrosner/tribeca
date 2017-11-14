@@ -3,23 +3,27 @@
 
 namespace K {
   class GW: public Klass {
+    private:
+      mConnectivity gwAutoStart = mConnectivity::Disconnected,
+                    gwQuotingState = mConnectivity::Disconnected,
+                    gwConnectOrder = mConnectivity::Disconnected,
+                    gwConnectMarket = mConnectivity::Disconnected,
+                    gwConnectExchange = mConnectivity::Disconnected;
     protected:
       void load() {
         evExit = &happyEnding;
-        if (argAutobot) gwAutoStart = mConnectivity::Connected;
-        gw->hub = &hub;
-        gw->gwGroup = hub.createGroup<uWS::CLIENT>();
+        if (((CF*)config)->argAutobot) gwAutoStart = mConnectivity::Connected;
         handshake(gw->exchange);
       };
       void waitTime() {
-        uv_timer_init(hub.getLoop(), &tWallet);
-        uv_timer_start(&tWallet, [](uv_timer_t *handle) {
-          if (argDebugEvents) FN::log("DEBUG", "EV GW tWallet timer");
+        ((EV*)events)->tWallet->data = (void*)this;
+        uv_timer_start(((EV*)events)->tWallet, [](uv_timer_t *handle) {
+          if (((CF*)((GW*)handle->data)->config)->argDebugEvents) FN::log("DEBUG", "EV GW tWallet timer");
           gw->wallet();
         }, 0, 15e+3);
-        uv_timer_init(hub.getLoop(), &tCancel);
-        uv_timer_start(&tCancel, [](uv_timer_t *handle) {
-          if (argDebugEvents) FN::log("DEBUG", "EV GW tCancel timer");
+        ((EV*)events)->tCancel->data = (void*)this;
+        uv_timer_start(((EV*)events)->tCancel, [](uv_timer_t *handle) {
+          if (((CF*)((GW*)handle->data)->config)->argDebugEvents) FN::log("DEBUG", "EV GW tCancel timer");
           if (qp.cancelOrdersAuto)
             gw->cancelAll();
         }, 0, 3e+5);
@@ -42,41 +46,23 @@ namespace K {
         ((UI*)client)->clickme(uiTXT::ActiveState, &kissState);
       };
       void run() {
-        hub.run();
-        ((EV*)events)->end(eCode);
+        ((EV*)events)->start();
       };
     private:
       function<void(int)> happyEnding = [&](int code) {
-        eCode = code;
-        if (uv_loop_alive(hub.getLoop())) {
-          uv_timer_stop(&tCancel);
-          uv_timer_stop(&tWallet);
-          uv_timer_stop(&tCalcs);
-          uv_timer_stop(&tStart);
-          uv_timer_stop(&tDelay);
-          gw->close();
-          gw->gwGroup->close();
-          FN::log(string("GW ") + argExchange, "Attempting to cancel all open orders, please wait.");
+        ((EV*)events)->stop(code, [&](){
+          FN::log(string("GW ") + ((CF*)config)->argExchange, "Attempting to cancel all open orders, please wait.");
           gw->cancelAll();
-          FN::log(string("GW ") + argExchange, "cancell all open orders OK");
-          uiGroup->close();
-          FN::close(hub.getLoop());
-          hub.getLoop()->destroy();
-        }
-        ((EV*)events)->end(code);
+          FN::log(string("GW ") + ((CF*)config)->argExchange, "cancell all open orders OK");
+        });
       };
-      mConnectivity gwAutoStart = mConnectivity::Disconnected,
-                    gwQuotingState = mConnectivity::Disconnected,
-                    gwConnectOrder = mConnectivity::Disconnected,
-                    gwConnectMarket = mConnectivity::Disconnected,
-                    gwConnectExchange = mConnectivity::Disconnected;
-      function<json()> helloProduct = []() {
+      function<json()> helloProduct = [&]() {
         return (json){{
           {"exchange", (int)gw->exchange},
           {"pair", {{"base", gw->base}, {"quote", gw->quote}}},
           {"minTick", gw->minTick},
-          {"environment", argTitle},
-          {"matryoshka", argMatryoshka},
+          {"environment", ((CF*)config)->argTitle},
+          {"matryoshka", ((CF*)config)->argMatryoshka},
           {"homepage", "https://github.com/ctubio/Krypto-trading-bot"}
         }};
       };
@@ -115,7 +101,7 @@ namespace K {
         if (quotingState == mConnectivity::Connected) quotingState = gwAutoStart;
         if (quotingState != gwQuotingState) {
           gwQuotingState = quotingState;
-          FN::log(string("GW ") + argExchange, "Quoting state changed to", gwQuotingState == mConnectivity::Connected ? "CONNECTED" : "DISCONNECTED");
+          FN::log(string("GW ") + ((CF*)config)->argExchange, "Quoting state changed to", gwQuotingState == mConnectivity::Connected ? "CONNECTED" : "DISCONNECTED");
           ((UI*)client)->send(uiTXT::ActiveState, {{"state", (int)gwQuotingState}});
         }
         ((QE*)engine)->gwConnectButton = gwQuotingState;
@@ -187,17 +173,17 @@ namespace K {
           gw->minSize = 0.01;
         }
         if (gw->minTick and gw->minSize) {
-          FN::log(string("GW ") + argExchange, "allows client IP");
+          FN::log(string("GW ") + ((CF*)config)->argExchange, "allows client IP");
           stringstream ss;
           ss << setprecision(8) << fixed << '\n'
-            << "- autoBot: " << (argAutobot ? "yes" : "no") << '\n'
+            << "- autoBot: " << (((CF*)config)->argAutobot ? "yes" : "no") << '\n'
             << "- symbols: " << gw->symbol << '\n'
             << "- minTick: " << gw->minTick << '\n'
             << "- minSize: " << gw->minSize << '\n'
             << "- makeFee: " << gw->makeFee << '\n'
             << "- takeFee: " << gw->takeFee;
-          FN::log(string("GW ") + argExchange + ":", ss.str());
-        } else FN::logExit("CF", "Unable to fetch data from " + argExchange + " symbol \"" + gw->symbol + "\"", EXIT_FAILURE, false);
+          FN::log(string("GW ") + ((CF*)config)->argExchange + ":", ss.str());
+        } else FN::logExit("CF", "Unable to fetch data from " + ((CF*)config)->argExchange + " symbol \"" + gw->symbol + "\"", EXIT_FAILURE, false);
       };
   };
 }

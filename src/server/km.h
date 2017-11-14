@@ -2,36 +2,6 @@
 #define K_KM_H_
 
 namespace K {
-  static const char kB64Alphabet[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-                                     "abcdefghijklmnopqrstuvwxyz"
-                                     "0123456789+/";
-  static int argPort = 3000,
-             argColors = 0,
-             argDebug = 0,
-             argDebugEvents = 0,
-             argDebugOrders = 0,
-             argDebugQuotes = 0,
-             argHeadless = 0,
-             argNaked = 0,
-             argAutobot = 0;
-  extern int argFree;
-  static string argTitle = "K.sh",
-                argExchange = "NULL",
-                argUser = "NULL",
-                argPass = "NULL",
-                argMatryoshka = "https://www.example.com/",
-                argCurrency = "NULL",
-                argApikey = "NULL",
-                argSecret = "NULL",
-                argUsername = "NULL",
-                argPassphrase = "NULL",
-                argHttp = "NULL",
-                argWss = "NULL",
-                argDatabase = "",
-                argWhitelist = "";
-  static double argEwmaShort = 0,
-                argEwmaMedium = 0,
-                argEwmaLong = 0;
   enum class mExchange: unsigned int { Null, HitBtc, OkCoin, Coinbase, Bitfinex, Korbit, Poloniex };
   enum class mGatewayType: unsigned int { MarketData, OrderEntry };
   enum class mTimeInForce: unsigned int { IOC, FOK, GTC };
@@ -60,10 +30,6 @@ namespace K {
     CleanAllClosedTrades = 'y', CleanAllTrades = 'z', CleanTrade = 'A', TradesChart = 'B',
     WalletChart = 'C', EWMAChart = 'D'
   };
-  static char RBLACK[] = "\033[0;30m", RRED[]    = "\033[0;31m", RGREEN[] = "\033[0;32m", RYELLOW[] = "\033[0;33m",
-              RBLUE[]  = "\033[0;34m", RPURPLE[] = "\033[0;35m", RCYAN[]  = "\033[0;36m", RWHITE[]  = "\033[0;37m",
-              BBLACK[] = "\033[1;30m", BRED[]    = "\033[1;31m", BGREEN[] = "\033[1;32m", BYELLOW[] = "\033[1;33m",
-              BBLUE[]  = "\033[1;34m", BPURPLE[] = "\033[1;35m", BCYAN[]  = "\033[1;36m", BWHITE[]  = "\033[1;37m";
   struct mPair {
     string base,
            quote;
@@ -336,14 +302,18 @@ namespace K {
     };
   };
   static function<void(int)> *evExit;
-  extern bool wInit;
-  extern WINDOW *wBorder,
+  static const char kB64Alphabet[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                                     "abcdefghijklmnopqrstuvwxyz"
+                                     "0123456789+/";
+  static char RBLACK[] = "\033[0;30m", RRED[]    = "\033[0;31m", RGREEN[] = "\033[0;32m", RYELLOW[] = "\033[0;33m",
+              RBLUE[]  = "\033[0;34m", RPURPLE[] = "\033[0;35m", RCYAN[]  = "\033[0;36m", RWHITE[]  = "\033[0;37m",
+              BBLACK[] = "\033[1;30m", BRED[]    = "\033[1;31m", BGREEN[] = "\033[1;32m", BYELLOW[] = "\033[1;33m",
+              BBLUE[]  = "\033[1;34m", BPURPLE[] = "\033[1;35m", BCYAN[]  = "\033[1;36m", BWHITE[]  = "\033[1;37m";
+  static bool wInit;
+  static WINDOW *wBorder,
                 *wLog;
-  extern mutex wsMutex;
   static mutex wMutex,
-               ogMutex,
-               pgMutex;
-  static string uiPrtcl = "?";
+               ogMutex;
   static map<string, mOrder> allOrders;
   class Gw {
     public:
@@ -355,9 +325,11 @@ namespace K {
       function<void(mLevels)>       evDataLevels;
       function<void(mConnectivity)> evConnectOrder,
                                     evConnectMarket;
-      uWS::Hub                *hub = nullptr;
+      mutex                   *wsMutex = nullptr;
+      uWS::Hub                *hub     = nullptr;
       uWS::Group<uWS::CLIENT> *gwGroup = nullptr;
       mExchange exchange = mExchange::Null;
+          int free    = 0;
        double makeFee = 0,  minTick = 0,
               takeFee = 0,  minSize = 0;
        string base    = "", quote   = "",
@@ -365,12 +337,13 @@ namespace K {
               apikey  = "", secret  = "",
               user    = "", pass    = "",
               ws      = "", http    = "";
-      virtual void wallet() = 0,
-                   levels() = 0,
-                   send(string oI, mSide oS, double oP, double oQ, mOrderType oLM, mTimeInForce oTIF, bool oPO, unsigned long oT) = 0,
-                   cancel(string oI, string oE, mSide oS, unsigned long oT) = 0,
-                   cancelAll() = 0,
-                   close() = 0;
+      virtual string A() = 0;
+      virtual   void wallet() = 0,
+                     levels() = 0,
+                     send(string oI, mSide oS, double oP, double oQ, mOrderType oLM, mTimeInForce oTIF, bool oPO, unsigned long oT) = 0,
+                     cancel(string oI, string oE, mSide oS, unsigned long oT) = 0,
+                     cancelAll() = 0,
+                     close() = 0;
   };
   class Klass {
     protected:
@@ -390,15 +363,6 @@ namespace K {
       virtual void waitUser() {};
       virtual void run() {};
     public:
-      void cfLink(Klass *k) { config = k; };
-      void evLink(Klass *k) { events = k; };
-      void dbLink(Klass *k) { memory = k; };
-      void uiLink(Klass *k) { client = k; };
-      void qpLink(Klass *k) { params = k; };
-      void ogLink(Klass *k) { orders = k; };
-      void mgLink(Klass *k) { market = k; };
-      void pgLink(Klass *k) { wallet = k; };
-      void qeLink(Klass *k) { engine = k; };
       void main(int argc, char** argv) {
         load(argc, argv);
         run();
@@ -410,18 +374,29 @@ namespace K {
         waitUser();
         run();
       };
+      void cfLink(Klass *k) { config = k; };
+      void evLink(Klass *k) { events = k; };
+      void dbLink(Klass *k) { memory = k; };
+      void uiLink(Klass *k) { client = k; };
+      void qpLink(Klass *k) { params = k; };
+      void ogLink(Klass *k) { orders = k; };
+      void mgLink(Klass *k) { market = k; };
+      void pgLink(Klass *k) { wallet = k; };
+      void qeLink(Klass *k) { engine = k; };
   };
   class kLass: public Klass {
     public:
       void link(Klass *EV, Klass *DB, Klass *UI, Klass *QP, Klass *OG, Klass *MG, Klass *PG, Klass *QE, Klass *GW) {
-                        QP->evLink(EV); OG->evLink(EV); MG->evLink(EV); PG->evLink(EV); QE->evLink(EV); GW->evLink(EV);
-        UI->dbLink(DB); QP->dbLink(DB); OG->dbLink(DB); MG->dbLink(DB); PG->dbLink(DB);
-                        QP->uiLink(UI); OG->uiLink(UI); MG->uiLink(UI); PG->uiLink(UI); QE->uiLink(UI); GW->uiLink(UI);
-                                        OG->qpLink(QP);                 PG->qpLink(QP); QE->qpLink(QP);
-                                                                                        QE->ogLink(OG);
-                                                                                        QE->mgLink(MG);
-                                                                                        QE->pgLink(PG);
-                                                                                                        GW->qeLink(QE);
+        Klass *CF = (Klass*)this;
+        DB->cfLink(CF); UI->cfLink(CF);                 OG->cfLink(CF); MG->cfLink(CF); PG->cfLink(CF); QE->cfLink(CF); GW->cfLink(CF);
+                        UI->evLink(EV); QP->evLink(EV); OG->evLink(EV); MG->evLink(EV); PG->evLink(EV); QE->evLink(EV); GW->evLink(EV);
+                        UI->dbLink(DB); QP->dbLink(DB); OG->dbLink(DB); MG->dbLink(DB); PG->dbLink(DB);
+                                        QP->uiLink(UI); OG->uiLink(UI); MG->uiLink(UI); PG->uiLink(UI); QE->uiLink(UI); GW->uiLink(UI);
+                                                        OG->qpLink(QP);                 PG->qpLink(QP); QE->qpLink(QP);
+                                                                                        PG->ogLink(OG); QE->ogLink(OG);
+                                                                                        PG->mgLink(MG); QE->mgLink(MG);
+                                                                                                        QE->pgLink(PG);
+                                                                                                                        GW->qeLink(QE);
       };
   };
 }

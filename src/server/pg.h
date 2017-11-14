@@ -2,14 +2,17 @@
 #define K_PG_H_
 
 namespace K {
-  mPosition pgPos;
-  mSafety pgSafety;
-  vector<mProfit> pgProfit;
-  map<double, mTrade> pgBuys;
-  map<double, mTrade> pgSells;
-  double pgTargetBasePos = 0;
-  string pgSideAPR = "";
   class PG: public Klass {
+    private:
+      vector<mProfit> pgProfit;
+      map<double, mTrade> pgBuys;
+      map<double, mTrade> pgSells;
+    public:
+      mPosition pgPos;
+      mSafety pgSafety;
+      double pgTargetBasePos = 0;
+      string pgSideAPR = "";
+      mutex pgMutex;
     protected:
       void load() {
         json k = ((DB*)memory)->load(uiTXT::TargetBasePosition);
@@ -34,16 +37,16 @@ namespace K {
       };
       void waitData() {
         gw->evDataWallet = [&](mWallet k) {
-          if (argDebugEvents) FN::log("DEBUG", string("EV PG evDataWallet mWallet ") + ((json)k).dump());
+          if (((CF*)config)->argDebugEvents) FN::log("DEBUG", string("EV PG evDataWallet mWallet ") + ((json)k).dump());
           calcWallet(k);
         };
         ((EV*)events)->ogOrder = [&](mOrder k) {
-          if (argDebugEvents) FN::log("DEBUG", string("EV PG ogOrder mOrder ") + ((json)k).dump());
+          if (((CF*)config)->argDebugEvents) FN::log("DEBUG", string("EV PG ogOrder mOrder ") + ((json)k).dump());
           calcWalletAfterOrder(k);
           FN::screen_refresh();
         };
         ((EV*)events)->mgTargetPosition = [&]() {
-          if (argDebugEvents) FN::log("DEBUG", "EV PG mgTargetPosition");
+          if (((CF*)config)->argDebugEvents) FN::log("DEBUG", "EV PG mgTargetPosition");
           calcTargetBasePos();
         };
       };
@@ -77,7 +80,7 @@ namespace K {
           ? (qp.percentageValues
             ? qp.targetBasePositionPercentage * value / 1e+2
             : qp.targetBasePosition)
-          : ((1 + mgTargetPos) / 2) * value;
+          : ((1 + ((MG*)market)->mgTargetPos) / 2) * value;
         if (pgTargetBasePos and abs(pgTargetBasePos - targetBasePosition) < 1e-4 and pgSideAPR_ == pgSideAPR) return;
         pgTargetBasePos = targetBasePosition;
         pgSideAPR_ = pgSideAPR;
@@ -99,15 +102,15 @@ namespace K {
         return !pgPos.value;
       };
     private:
-      function<json()> helloPosition = []() {
+      function<json()> helloPosition = [&]() {
         lock_guard<mutex> lock(pgMutex);
         return (json){ pgPos };
       };
-      function<json()> helloSafety = []() {
+      function<json()> helloSafety = [&]() {
         lock_guard<mutex> lock(pgMutex);
         return (json){ pgSafety };
       };
-      function<json()> helloTargetBasePos = []() {
+      function<json()> helloTargetBasePos = [&]() {
         return (json){{{"tbp", pgTargetBasePos}, {"sideAPR", pgSideAPR}}};
       };
       mSafety nextSafety() {
@@ -132,7 +135,7 @@ namespace K {
           : qp.widthPong;
         map<double, mTrade> tradesBuy;
         map<double, mTrade> tradesSell;
-        for (vector<mTrade>::iterator it = tradesMemory.begin(); it != tradesMemory.end(); ++it)
+        for (vector<mTrade>::iterator it = ((OG*)orders)->tradesHistory.begin(); it != ((OG*)orders)->tradesHistory.end(); ++it)
           if (it->side == mSide::Bid)
             tradesBuy[it->price] = *it;
           else tradesSell[it->price] = *it;

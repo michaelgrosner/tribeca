@@ -3,20 +3,9 @@
 
 namespace K {
   mLevels mgLevelsFilter;
-  vector<mTrade> mgTrades;
   double mgFairValue = 0;
-  double mgEwmaL = 0;
-  double mgEwmaM = 0;
-  double mgEwmaS = 0;
   double mgEwmaP = 0;
   double mgEwmaSMUDiff = 0;
-  double mgEwmaSM = 0;
-  double mgEwmaSU = 0;
-  vector<double> mgSMA3;
-  vector<double> mgStatFV;
-  vector<double> mgStatBid;
-  vector<double> mgStatAsk;
-  vector<double> mgStatTop;
   double mgStdevFV = 0;
   double mgStdevFVMean = 0;
   double mgStdevBid = 0;
@@ -25,8 +14,21 @@ namespace K {
   double mgStdevAskMean = 0;
   double mgStdevTop = 0;
   double mgStdevTopMean = 0;
-  double mgTargetPos = 0;
   class MG: public Klass {
+    private:
+      vector<mTrade> mgTrades;
+      double mgEwmaL = 0;
+      double mgEwmaM = 0;
+      double mgEwmaS = 0;
+      double mgEwmaSM = 0;
+      double mgEwmaSU = 0;
+      vector<double> mgSMA3;
+      vector<double> mgStatFV;
+      vector<double> mgStatBid;
+      vector<double> mgStatAsk;
+      vector<double> mgStatTop;
+    public:
+      double mgTargetPos = 0;
     protected:
       void load() {
         json k = ((DB*)memory)->load(uiTXT::MarketData);
@@ -42,9 +44,9 @@ namespace K {
           calcStdev();
         }
         FN::log("DB", string("loaded ") + to_string(mgStatFV.size()) + " STDEV Periods");
-        if (argEwmaLong) mgEwmaL = argEwmaLong;
-        if (argEwmaMedium) mgEwmaM = argEwmaMedium;
-        if (argEwmaShort) mgEwmaS = argEwmaShort;
+        if (((CF*)config)->argEwmaLong) mgEwmaL = ((CF*)config)->argEwmaLong;
+        if (((CF*)config)->argEwmaMedium) mgEwmaM = ((CF*)config)->argEwmaMedium;
+        if (((CF*)config)->argEwmaShort) mgEwmaS = ((CF*)config)->argEwmaShort;
         k = ((DB*)memory)->load(uiTXT::EWMAChart);
         if (k.size()) {
           k = k.at(0);
@@ -55,17 +57,17 @@ namespace K {
           if (!mgEwmaS and k.value("time", (unsigned long)0)+qp.shortEwmaPeriods*6e+4>FN::T())
             mgEwmaS = k.value("ewmaShort", 0.0);
         }
-        FN::log(argEwmaLong ? "ARG" : "DB", string("loaded EWMA Long = ") + to_string(mgEwmaL));
-        FN::log(argEwmaMedium ? "ARG" : "DB", string("loaded EWMA Medium = ") + to_string(mgEwmaM));
-        FN::log(argEwmaShort ? "ARG" : "DB", string("loaded EWMA Short = ") + to_string(mgEwmaS));
+        FN::log(((CF*)config)->argEwmaLong ? "ARG" : "DB", string("loaded EWMA Long = ") + to_string(mgEwmaL));
+        FN::log(((CF*)config)->argEwmaMedium ? "ARG" : "DB", string("loaded EWMA Medium = ") + to_string(mgEwmaM));
+        FN::log(((CF*)config)->argEwmaShort ? "ARG" : "DB", string("loaded EWMA Short = ") + to_string(mgEwmaS));
       };
       void waitData() {
         gw->evDataTrade = [&](mTrade k) {
-          if (argDebugEvents) FN::log("DEBUG", "EV MG evDataTrade");
+          if (((CF*)config)->argDebugEvents) FN::log("DEBUG", "EV MG evDataTrade");
           tradeUp(k);
         };
         gw->evDataLevels = [&](mLevels k) {
-          if (argDebugEvents) FN::log("DEBUG", "EV MG evDataLevels");
+          if (((CF*)config)->argDebugEvents) FN::log("DEBUG", "EV MG evDataLevels");
           levelUp(k);
         };
       };
@@ -107,7 +109,7 @@ namespace K {
         ((UI*)client)->send(uiTXT::FairValue, {{"price", mgFairValue}}, true);
       };
     private:
-      function<json()> helloTrade = []() {
+      function<json()> helloTrade = [&]() {
         json k;
         for (unsigned i=0; i<mgTrades.size(); ++i)
           k.push_back(mgTrades[i]);
@@ -116,7 +118,7 @@ namespace K {
       function<json()> helloFair = []() {
         return (json){{{"price", mgFairValue}}};
       };
-      function<json()> helloEwma = []() {
+      function<json()> helloEwma = [&]() {
         return (json){{
           {"stdevWidth", {
             {"fv", mgStdevFV},

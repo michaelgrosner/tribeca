@@ -2,13 +2,25 @@
 #define K_EV_H_
 
 namespace K  {
-  uv_timer_t tCalcs,
-             tStart,
-             tDelay,
-             tWallet,
-             tCancel;
-  int eCode = EXIT_FAILURE;
   class EV: public Klass {
+    private:
+      uWS::Hub *hub = nullptr;
+      int eCode = EXIT_FAILURE;
+    public:
+      uWS::Group<uWS::SERVER> *uiGroup = nullptr;
+      uv_timer_t *tCalcs = nullptr,
+                 *tStart = nullptr,
+                 *tDelay = nullptr,
+                 *tWallet = nullptr,
+                 *tCancel = nullptr;
+      function<void(mOrder)> ogOrder;
+      function<void(mTrade)> ogTrade;
+      function<void()>       mgLevels,
+                             mgEwmaSMUProtection,
+                             mgEwmaQuoteProtection,
+                             mgTargetPosition,
+                             pgTargetBasePosition,
+                             uiQuotingParameters;
     protected:
       void load() {
         evExit = &happyEnding;
@@ -16,6 +28,20 @@ namespace K  {
         signal(SIGUSR1, wtf);
         signal(SIGABRT, wtf);
         signal(SIGSEGV, wtf);
+        gw->hub = hub = new uWS::Hub(0, true);
+      };
+      void waitTime() {
+        uv_timer_init(hub->getLoop(), tCalcs = new uv_timer_t());
+        uv_timer_init(hub->getLoop(), tStart = new uv_timer_t());
+        uv_timer_init(hub->getLoop(), tDelay = new uv_timer_t());
+        uv_timer_init(hub->getLoop(), tWallet = new uv_timer_t());
+        uv_timer_init(hub->getLoop(), tCancel = new uv_timer_t());
+      };
+      void waitData() {
+        gw->gwGroup = hub->createGroup<uWS::CLIENT>();
+      };
+      void waitUser() {
+        uiGroup = hub->createGroup<uWS::SERVER>(uWS::PERMESSAGE_DEFLATE);
       };
       void run() {
         if (FN::output("test -d .git || echo -n zip") == "zip")
@@ -27,25 +53,52 @@ namespace K  {
         }
       };
     public:
-      function<void(mOrder)>        ogOrder;
-      function<void(mTrade)>        ogTrade;
-      function<void()>              mgLevels,
-                                    mgEwmaSMUProtection,
-                                    mgEwmaQuoteProtection,
-                                    mgTargetPosition,
-                                    pgTargetBasePosition,
-                                    uiQuotingParameters;
-      void end(int code) {
+      void start() {
+        hub->run();
+        halt(eCode);
+      };
+      void stop(int code, function<void()> gwCancelAll) {
+        eCode = code;
+        if (uv_loop_alive(hub->getLoop())) {
+          uv_timer_stop(tCancel);
+          uv_timer_stop(tWallet);
+          uv_timer_stop(tCalcs);
+          uv_timer_stop(tStart);
+          uv_timer_stop(tDelay);
+          gw->close();
+          gw->gwGroup->close();
+          gwCancelAll();
+          uiGroup->close();
+          FN::close(hub->getLoop());
+          hub->getLoop()->destroy();
+        }
+        halt(code);
+      };
+      void listen(mutex *k, int headless, int port) {
+        gw->wsMutex = k;
+        if (headless) return;
+        string protocol("HTTP");
+        if ((access("etc/sslcert/server.crt", F_OK) != -1) and (access("etc/sslcert/server.key", F_OK) != -1)
+          and hub->listen(port, uS::TLS::createContext("etc/sslcert/server.crt", "etc/sslcert/server.key", ""), 0, uiGroup)
+        ) protocol += "S";
+        else if (!hub->listen(port, nullptr, 0, uiGroup))
+          FN::logExit("IU", string("Use another UI port number, ")
+            + to_string(port) + " seems already in use by:\n"
+            + FN::output(string("netstat -anp 2>/dev/null | grep ") + to_string(port)),
+            EXIT_SUCCESS);
+        FN::logUI(protocol, port);
+      }
+    private:
+      void halt(int code) {
         cout << FN::uiT() << "K exit code " << to_string(code) << "." << '\n';
         exit(code);
       };
-    private:
       function<void(int)> happyEnding = [&](int code) {
         cout << FN::uiT();
         for(unsigned int i = 0; i < 21; ++i)
           cout << "THE END IS NEVER ";
         cout << "THE END" << '\n';
-        end(code);
+        halt(code);
       };
       static void quit(int sig) {
         FN::screen_quit();
