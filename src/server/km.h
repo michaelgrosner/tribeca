@@ -85,7 +85,7 @@ namespace K {
     double            profitHourInterval            = 0.5;
     bool              audio                         = false;
     int               delayUI                       = 7;
-    int               _matchPings                   = true;
+    bool              _matchPings                   = true;
   };
   static void to_json(json& j, const mQuotingParams& k) {
     j = {
