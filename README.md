@@ -159,6 +159,8 @@ It just contains a few variables with examples ready to be reused (the suggested
 
 ### Upgrade to the latest commit
 
+After each reinstall, `make restartall` will be executed automatically.
+
 To upgrade under Manual ZIP Installation, please run `make reinstall`.
 
 To upgrade under Manual GIT Installation:
@@ -166,8 +168,6 @@ To upgrade under Manual GIT Installation:
 Feel free anytime to check if there are new modifications with `make diff`.
 
 Once you decide that is time to upgrade, execute `make latest` to download and install the latest modifications in your remote branch (or directly `make reinstall` to skip the validation of the new commit messages).
-
-After upgrade to latest version, all running instances will be restarted.
 
 `git` commands do not upgrade nothing because do not compile nothing (if you update the source with git, then later consider to recompile the source or run `make reinstall`).
 
