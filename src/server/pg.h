@@ -4,11 +4,11 @@
 namespace K {
   class PG: public Klass {
     private:
-      vector<mProfit> pgProfit;
-      map<double, mTrade> pgBuys;
-      map<double, mTrade> pgSells;
+      vector<mProfit> profits;
+      map<double, mTrade> buys;
+      map<double, mTrade> sells;
     public:
-      mPosition pgPos;
+      mPosition position;
       mSafety pgSafety;
       double pgTargetBasePos = 0;
       string pgSideAPR = "";
@@ -27,12 +27,12 @@ namespace K {
         k = ((DB*)memory)->load(uiTXT::Position);
         if (k.size()) {
           for (json::reverse_iterator it = k.rbegin(); it != k.rend(); ++it)
-            pgProfit.push_back(mProfit(
+            profits.push_back(mProfit(
               (*it)["baseValue"].get<double>(),
               (*it)["quoteValue"].get<double>(),
               (*it)["time"].get<unsigned long>()
             ));
-          FN::log("DB", string("loaded ") + to_string(pgProfit.size()) + " historical Profits");
+          FN::log("DB", string("loaded ") + to_string(profits.size()) + " historical Profits");
         }
       };
       void waitData() {
@@ -57,7 +57,7 @@ namespace K {
       };
     public:
       void calcSafety() {
-        if (empty() or !mgFairValue) return;
+        if (empty() or !((MG*)market)->fairValue) return;
         mSafety safety = nextSafety();
         pgMutex.lock();
         if (pgSafety.buyPing == -1
@@ -74,13 +74,13 @@ namespace K {
         static string pgSideAPR_ = "!=";
         if (empty()) { FN::logWar("QE", "Unable to calculate TBP, missing market data."); return; }
         pgMutex.lock();
-        double value = pgPos.value;
+        double value = position.value;
         pgMutex.unlock();
         double targetBasePosition = qp->autoPositionMode == mAutoPositionMode::Manual
           ? (qp->percentageValues
             ? qp->targetBasePositionPercentage * value / 1e+2
             : qp->targetBasePosition)
-          : ((1 + ((MG*)market)->mgTargetPos) / 2) * value;
+          : ((1 + ((MG*)market)->targetPosition) / 2) * value;
         if (pgTargetBasePos and abs(pgTargetBasePos - targetBasePosition) < 1e-4 and pgSideAPR_ == pgSideAPR) return;
         pgTargetBasePos = targetBasePosition;
         pgSideAPR_ = pgSideAPR;
@@ -94,17 +94,17 @@ namespace K {
       };
       void addTrade(mTrade k) {
         mTrade k_(k.price, k.quantity, k.time);
-        if (k.side == mSide::Bid) pgBuys[k.price] = k_;
-        else pgSells[k.price] = k_;
+        if (k.side == mSide::Bid) buys[k.price] = k_;
+        else sells[k.price] = k_;
       };
       bool empty() {
         lock_guard<mutex> lock(pgMutex);
-        return !pgPos.value;
+        return !position.value;
       };
     private:
       function<json()> helloPosition = [&]() {
         lock_guard<mutex> lock(pgMutex);
-        return (json){ pgPos };
+        return (json){ position };
       };
       function<json()> helloSafety = [&]() {
         lock_guard<mutex> lock(pgMutex);
@@ -115,9 +115,9 @@ namespace K {
       };
       mSafety nextSafety() {
         pgMutex.lock();
-        double value          = pgPos.value,
-               baseAmount     = pgPos.baseAmount,
-               baseHeldAmount = pgPos.baseHeldAmount;
+        double value          = position.value,
+               baseAmount     = position.baseAmount,
+               baseHeldAmount = position.baseHeldAmount;
         pgMutex.unlock();
         double buySize = qp->percentageValues
           ? qp->buySizePercentage * value / 100
@@ -131,7 +131,7 @@ namespace K {
         if (qp->sellSizeMax and qp->aggressivePositionRebalancing != mAPR::Off)
           sellSize = fmax(sellSize, totalBasePosition - pgTargetBasePos);
         double widthPong = qp->widthPercentage
-          ? qp->widthPongPercentage * mgFairValue / 100
+          ? qp->widthPongPercentage * ((MG*)market)->fairValue / 100
           : qp->widthPong;
         map<double, mTrade> tradesBuy;
         map<double, mTrade> tradesSell;
@@ -159,8 +159,8 @@ namespace K {
         if (buyQty) buyPing /= buyQty;
         if (sellQty) sellPong /= sellQty;
         clean();
-        double sumBuys = sum(&pgBuys);
-        double sumSells = sum(&pgSells);
+        double sumBuys = sum(&buys);
+        double sumSells = sum(&sells);
         return mSafety(
           sumBuys / buySize,
           sumSells / sellSize,
@@ -181,10 +181,10 @@ namespace K {
       void matchPing(bool matchPings, bool near, bool far, map<double, mTrade>* trades, double* ping, double* qty, double qtyMax, double width, bool reverse = false) {
         int dir = width > 0 ? 1 : -1;
         if (reverse) for (map<double, mTrade>::reverse_iterator it = trades->rbegin(); it != trades->rend(); ++it) {
-          if (matchPing(matchPings, near, far, ping, width, qty, qtyMax, dir * mgFairValue, dir * it->second.price, it->second.quantity, it->second.price, it->second.Kqty, reverse))
+          if (matchPing(matchPings, near, far, ping, width, qty, qtyMax, dir * ((MG*)market)->fairValue, dir * it->second.price, it->second.quantity, it->second.price, it->second.Kqty, reverse))
             break;
         } else for (map<double, mTrade>::iterator it = trades->begin(); it != trades->end(); ++it)
-          if (matchPing(matchPings, near, far, ping, width, qty, qtyMax, dir * mgFairValue, dir * it->second.price, it->second.quantity, it->second.price, it->second.Kqty, reverse))
+          if (matchPing(matchPings, near, far, ping, width, qty, qtyMax, dir * ((MG*)market)->fairValue, dir * it->second.price, it->second.quantity, it->second.price, it->second.Kqty, reverse))
             break;
       };
       bool matchPing(bool matchPings, bool near, bool far, double *ping, double width, double* qty, double qtyMax, double fv, double price, double qtyTrade, double priceTrade, double KqtyTrade, bool reverse) {
@@ -202,8 +202,8 @@ namespace K {
         *qty += qty_;
       };
       void clean() {
-        if (pgBuys.size()) expire(&pgBuys);
-        if (pgSells.size()) expire(&pgSells);
+        if (buys.size()) expire(&buys);
+        if (sells.size()) expire(&sells);
         skip();
       };
       void expire(map<double, mTrade>* k) {
@@ -213,17 +213,17 @@ namespace K {
           else it = k->erase(it);
       };
       void skip() {
-        while (pgBuys.size() and pgSells.size()) {
-          mTrade buy = pgBuys.rbegin()->second;
-          mTrade sell = pgSells.begin()->second;
+        while (buys.size() and sells.size()) {
+          mTrade buy = buys.rbegin()->second;
+          mTrade sell = sells.begin()->second;
           if (sell.price < buy.price) break;
           double buyQty = buy.quantity;
           buy.quantity = buyQty - sell.quantity;
           sell.quantity = sell.quantity - buyQty;
           if (buy.quantity < gw->minSize)
-            pgBuys.erase(--pgBuys.rbegin().base());
+            buys.erase(--buys.rbegin().base());
           if (sell.quantity < gw->minSize)
-            pgSells.erase(pgSells.begin());
+            sells.erase(sells.begin());
         }
       };
       double sum(map<double, mTrade>* k) {
@@ -239,15 +239,15 @@ namespace K {
         static map<string, mWallet> pgWallet;
         walletMutex.lock();
         if (k.currency!="") pgWallet[k.currency] = k;
-        if (!mgFairValue or pgWallet.find(gw->base) == pgWallet.end() or pgWallet.find(gw->quote) == pgWallet.end()) {
+        if (!((MG*)market)->fairValue or pgWallet.find(gw->base) == pgWallet.end() or pgWallet.find(gw->quote) == pgWallet.end()) {
           walletMutex.unlock();
           return;
         }
         mWallet baseWallet = pgWallet[gw->base];
         mWallet quoteWallet = pgWallet[gw->quote];
         walletMutex.unlock();
-        double baseValue = baseWallet.amount + quoteWallet.amount / mgFairValue + baseWallet.held + quoteWallet.held / mgFairValue;
-        double quoteValue = baseWallet.amount * mgFairValue + quoteWallet.amount + baseWallet.held * mgFairValue + quoteWallet.held;
+        double baseValue = baseWallet.amount + quoteWallet.amount / ((MG*)market)->fairValue + baseWallet.held + quoteWallet.held / ((MG*)market)->fairValue;
+        double quoteValue = baseWallet.amount * ((MG*)market)->fairValue + quoteWallet.amount + baseWallet.held * ((MG*)market)->fairValue + quoteWallet.held;
         unsigned long now = FN::T();
         mProfit profit(baseValue, quoteValue, now);
         if (profitT_21s+21e+3 < FN::T()) {
@@ -255,10 +255,10 @@ namespace K {
           ((DB*)memory)->insert(uiTXT::Position, profit, false, "NULL", now - qp->profitHourInterval * 36e+5);
         }
         profitMutex.lock();
-        pgProfit.push_back(profit);
-        for (vector<mProfit>::iterator it = pgProfit.begin(); it != pgProfit.end();)
+        profits.push_back(profit);
+        for (vector<mProfit>::iterator it = profits.begin(); it != profits.end();)
           if (it->time + (qp->profitHourInterval * 36e+5) > now) ++it;
-          else it = pgProfit.erase(it);
+          else it = profits.erase(it);
         mPosition pos(
           baseWallet.amount,
           quoteWallet.amount,
@@ -266,8 +266,8 @@ namespace K {
           quoteWallet.held,
           baseValue,
           quoteValue,
-          ((baseValue - pgProfit.begin()->baseValue) / baseValue) * 1e+2,
-          ((quoteValue - pgProfit.begin()->quoteValue) / quoteValue) * 1e+2,
+          ((baseValue - profits.begin()->baseValue) / baseValue) * 1e+2,
+          ((quoteValue - profits.begin()->quoteValue) / quoteValue) * 1e+2,
           mPair(gw->base, gw->quote),
           gw->exchange
         );
@@ -275,18 +275,18 @@ namespace K {
         bool eq = true;
         if (!empty()) {
           pgMutex.lock();
-          eq = abs(pos.value - pgPos.value) < 2e-6;
+          eq = abs(pos.value - position.value) < 2e-6;
           if(eq
-            and abs(pos.quoteValue - pgPos.quoteValue) < 2e-2
-            and abs(pos.baseAmount - pgPos.baseAmount) < 2e-6
-            and abs(pos.quoteAmount - pgPos.quoteAmount) < 2e-2
-            and abs(pos.baseHeldAmount - pgPos.baseHeldAmount) < 2e-6
-            and abs(pos.quoteHeldAmount - pgPos.quoteHeldAmount) < 2e-2
-            and abs(pos.profitBase - pgPos.profitBase) < 2e-2
-            and abs(pos.profitQuote - pgPos.profitQuote) < 2e-2
+            and abs(pos.quoteValue - position.quoteValue) < 2e-2
+            and abs(pos.baseAmount - position.baseAmount) < 2e-6
+            and abs(pos.quoteAmount - position.quoteAmount) < 2e-2
+            and abs(pos.baseHeldAmount - position.baseHeldAmount) < 2e-6
+            and abs(pos.quoteHeldAmount - position.quoteHeldAmount) < 2e-2
+            and abs(pos.profitBase - position.profitBase) < 2e-2
+            and abs(pos.profitQuote - position.profitQuote) < 2e-2
           ) { pgMutex.unlock(); return; }
         } else pgMutex.lock();
-        pgPos = pos;
+        position = pos;
         pgMutex.unlock();
         if (!eq) calcTargetBasePos();
         ((UI*)client)->send(uiTXT::Position, pos, true);
@@ -296,8 +296,8 @@ namespace K {
         double heldAmount = 0;
         pgMutex.lock();
         double amount = k.side == mSide::Ask
-          ? pgPos.baseAmount + pgPos.baseHeldAmount
-          : pgPos.quoteAmount + pgPos.quoteHeldAmount;
+          ? position.baseAmount + position.baseHeldAmount
+          : position.quoteAmount + position.quoteHeldAmount;
         pgMutex.unlock();
         ogMutex.lock();
         for (map<string, mOrder>::iterator it = allOrders.begin(); it != allOrders.end(); ++it) {

@@ -2,21 +2,9 @@
 #define K_MG_H_
 
 namespace K {
-  mLevels mgLevelsFilter;
-  double mgFairValue = 0;
-  double mgEwmaP = 0;
-  double mgEwmaSMUDiff = 0;
-  double mgStdevFV = 0;
-  double mgStdevFVMean = 0;
-  double mgStdevBid = 0;
-  double mgStdevBidMean = 0;
-  double mgStdevAsk = 0;
-  double mgStdevAskMean = 0;
-  double mgStdevTop = 0;
-  double mgStdevTopMean = 0;
   class MG: public Klass {
     private:
-      vector<mTrade> mgTrades;
+      vector<mTrade> trades;
       double mgEwmaL = 0;
       double mgEwmaM = 0;
       double mgEwmaS = 0;
@@ -28,7 +16,19 @@ namespace K {
       vector<double> mgStatAsk;
       vector<double> mgStatTop;
     public:
-      double mgTargetPos = 0;
+      mLevels levels;
+      double fairValue = 0;
+      double targetPosition = 0;
+      double mgStdevTop = 0;
+      double mgStdevTopMean = 0;
+      double mgEwmaP = 0;
+      double mgEwmaSMUDiff = 0;
+      double mgStdevFV = 0;
+      double mgStdevFVMean = 0;
+      double mgStdevBid = 0;
+      double mgStdevBidMean = 0;
+      double mgStdevAsk = 0;
+      double mgStdevAskMean = 0;
     protected:
       void load() {
         json k = ((DB*)memory)->load(uiTXT::MarketData);
@@ -78,7 +78,7 @@ namespace K {
       };
     public:
       bool empty() {
-        return !mgLevelsFilter.bids.size() or !mgLevelsFilter.asks.size();
+        return !levels.bids.size() or !levels.asks.size();
       };
       void calcStats() {
         static int mgT = 0;
@@ -92,31 +92,31 @@ namespace K {
       };
       void calcFairValue() {
         if (empty()) return;
-        double mgFairValue_ = mgFairValue;
-        double topAskPrice = mgLevelsFilter.asks.begin()->price;
-        double topBidPrice = mgLevelsFilter.bids.begin()->price;
-        double topAskSize = mgLevelsFilter.asks.begin()->size;
-        double topBidSize = mgLevelsFilter.bids.begin()->size;
+        double fairValue_ = fairValue;
+        double topAskPrice = levels.asks.begin()->price;
+        double topBidPrice = levels.bids.begin()->price;
+        double topAskSize = levels.asks.begin()->size;
+        double topBidSize = levels.bids.begin()->size;
         if (!topAskPrice or !topBidPrice or !topAskSize or !topBidSize) return;
-        mgFairValue = FN::roundNearest(
+        fairValue = FN::roundNearest(
           qp->fvModel == mFairValueModel::BBO
             ? (topAskPrice + topBidPrice) / 2
             : (topAskPrice * topAskSize + topBidPrice * topBidSize) / (topAskSize + topBidSize),
           gw->minTick
         );
-        if (!mgFairValue or (mgFairValue_ and abs(mgFairValue - mgFairValue_) < gw->minTick)) return;
+        if (!fairValue or (fairValue_ and abs(fairValue - fairValue_) < gw->minTick)) return;
         gw->evDataWallet(mWallet());
-        ((UI*)client)->send(uiTXT::FairValue, {{"price", mgFairValue}}, true);
+        ((UI*)client)->send(uiTXT::FairValue, {{"price", fairValue}}, true);
       };
     private:
       function<json()> helloTrade = [&]() {
         json k;
-        for (unsigned i=0; i<mgTrades.size(); ++i)
-          k.push_back(mgTrades[i]);
+        for (unsigned i=0; i<trades.size(); ++i)
+          k.push_back(trades[i]);
         return k;
       };
-      function<json()> helloFair = []() {
-        return (json){{{"price", mgFairValue}}};
+      function<json()> helloFair = [&]() {
+        return (json){{{"price", fairValue}}};
       };
       function<json()> helloEwma = [&]() {
         return (json){{
@@ -135,22 +135,22 @@ namespace K {
           {"ewmaShort", mgEwmaS},
           {"ewmaMedium", mgEwmaM},
           {"ewmaLong", mgEwmaL},
-          {"fairValue", mgFairValue}
+          {"fairValue", fairValue}
         }};
       };
       void stdevPUp() {
         if (empty()) return;
-        double topBid = mgLevelsFilter.bids.begin()->price;
-        double topAsk = mgLevelsFilter.bids.begin()->price;
+        double topBid = levels.bids.begin()->price;
+        double topAsk = levels.bids.begin()->price;
         if (!topBid or !topAsk) return;
-        mgStatFV.push_back(mgFairValue);
+        mgStatFV.push_back(fairValue);
         mgStatBid.push_back(topBid);
         mgStatAsk.push_back(topAsk);
         mgStatTop.push_back(topBid);
         mgStatTop.push_back(topAsk);
         calcStdev();
         ((DB*)memory)->insert(uiTXT::MarketData, {
-          {"fv", mgFairValue},
+          {"fv", fairValue},
           {"bid", topBid},
           {"ask", topAsk},
           {"time", FN::T()},
@@ -160,8 +160,8 @@ namespace K {
         k.exchange = gw->exchange;
         k.pair = mPair(gw->base, gw->quote);
         k.time = FN::T();
-        mgTrades.push_back(k);
-        if (mgTrades.size()>69) mgTrades.erase(mgTrades.begin());
+        trades.push_back(k);
+        if (trades.size()>69) trades.erase(trades.begin());
         ((UI*)client)->send(uiTXT::MarketTrade, k);
       };
       void levelUp(mLevels k) {
@@ -193,7 +193,7 @@ namespace K {
           {"ewmaShort", mgEwmaS},
           {"ewmaMedium", mgEwmaM},
           {"ewmaLong", mgEwmaL},
-          {"fairValue", mgFairValue}
+          {"fairValue", fairValue}
         }, true);
         ((DB*)memory)->insert(uiTXT::EWMAChart, {
           {"ewmaLong", mgEwmaL},
@@ -214,11 +214,11 @@ namespace K {
         ((EV*)events)->mgEwmaSMUProtection();
       };
       void filter(mLevels k) {
-        mgLevelsFilter = k;
+        levels = k;
         if (empty()) return;
         ogMutex.lock();
         for (map<string, mOrder>::iterator it = allOrders.begin(); it != allOrders.end(); ++it)
-          filter(mSide::Bid == it->second.side ? &mgLevelsFilter.bids : &mgLevelsFilter.asks, it->second);
+          filter(mSide::Bid == it->second.side ? &levels.bids : &levels.asks, it->second);
         ogMutex.unlock();
         if (!empty()) {
           calcFairValue();
@@ -266,11 +266,11 @@ namespace K {
       void calcEwma(double *k, int periods) {
         if (*k) {
           double alpha = (double)2 / (periods + 1);
-          *k = alpha * mgFairValue + (1 - alpha) * *k;
-        } else *k = mgFairValue;
+          *k = alpha * fairValue + (1 - alpha) * *k;
+        } else *k = fairValue;
       };
       void calcTargetPos() {
-        mgSMA3.push_back(mgFairValue);
+        mgSMA3.push_back(fairValue);
         if (mgSMA3.size()>3) mgSMA3.erase(mgSMA3.begin(), mgSMA3.end()-3);
         double SMA3 = 0;
         for (vector<double>::iterator it = mgSMA3.begin(); it != mgSMA3.end(); ++it)
@@ -285,7 +285,7 @@ namespace K {
           newTargetPosition = ((mgEwmaS * 100/ mgEwmaL) - 100) * (1 / qp->ewmaSensiblityPercentage);
         if (newTargetPosition > 1) newTargetPosition = 1;
         else if (newTargetPosition < -1) newTargetPosition = -1;
-        mgTargetPos = newTargetPosition;
+        targetPosition = newTargetPosition;
       };
   };
 }

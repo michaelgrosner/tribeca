@@ -522,7 +522,8 @@ namespace K {
   };
   class Klass {
     protected:
-      Gw *gw;
+      Gw *gw = nullptr;
+      mQuotingParams *qp = nullptr;
       Klass *config = nullptr,
             *events = nullptr,
             *memory = nullptr,
@@ -531,7 +532,6 @@ namespace K {
             *market = nullptr,
             *wallet = nullptr,
             *engine = nullptr;
-      mQuotingParams *qp = nullptr;
       virtual void load(int argc, char** argv) {};
       virtual void load() {};
       virtual void waitTime() {};
@@ -550,6 +550,8 @@ namespace K {
         waitUser();
         run();
       };
+      void gwLink(Gw *k) { gw = k; };
+      void qpLink(mQuotingParams *k) { qp = k; };
       void cfLink(Klass *k) { config = k; };
       void evLink(Klass *k) { events = k; };
       void dbLink(Klass *k) { memory = k; };
@@ -558,8 +560,6 @@ namespace K {
       void mgLink(Klass *k) { market = k; };
       void pgLink(Klass *k) { wallet = k; };
       void qeLink(Klass *k) { engine = k; };
-      void gwLink(Gw *k) { gw = k; };
-      void qpLink(mQuotingParams *k) { qp = k; };
   };
   class kLass: public Klass {
     private:
