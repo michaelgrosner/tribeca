@@ -15,7 +15,6 @@ namespace K {
                     gwConnectExchange = mConnectivity::Disconnected;
     protected:
       void load() {
-        qp = &((CF*)config)->qp;
         qeQuotingMode[mQuotingMode::Top] = &calcTopOfMarket;
         qeQuotingMode[mQuotingMode::Mid] = &calcMidOfMarket;
         qeQuotingMode[mQuotingMode::Join] = &calcJoinMarket;
@@ -150,18 +149,18 @@ namespace K {
         double pDiv = qp->percentageValues
           ? qp->positionDivergencePercentage * value / 100
           : qp->positionDivergence;
-        double widthPing = qp->widthPercentage
-          ? qp->widthPingPercentage * mgFairValue / 100
-          : qp->widthPing;
-        double widthPong = qp->widthPercentage
-          ? qp->widthPongPercentage * mgFairValue / 100
-          : qp->widthPong;
         double buySize = qp->percentageValues
           ? qp->buySizePercentage * value / 100
           : qp->buySize;
         double sellSize = qp->percentageValues
           ? qp->sellSizePercentage * value / 100
           : qp->sellSize;
+        double widthPing = qp->widthPercentage
+          ? qp->widthPingPercentage * mgFairValue / 100
+          : qp->widthPing;
+        double widthPong = qp->widthPercentage
+          ? qp->widthPongPercentage * mgFairValue / 100
+          : qp->widthPong;
         if (buySize and qp->aggressivePositionRebalancing != mAPR::Off and qp->buySizeMax)
           buySize = fmax(buySize, ((PG*)wallet)->pgTargetBasePos - totalBasePosition);
         if (sellSize and qp->aggressivePositionRebalancing != mAPR::Off and qp->sellSizeMax)
@@ -462,7 +461,7 @@ namespace K {
           mLevel(mgFairValue + widthPing, sellSize)
         );
       };
-      function<mQuote(double, double, double)> calcColossusOfMarket = [](double widthPing, double buySize, double sellSize) {
+      function<mQuote(double, double, double)> calcColossusOfMarket = [&](double widthPing, double buySize, double sellSize) {
         double bidSz = 0,
                bidPx = 0,
                askSz = 0,
@@ -567,9 +566,9 @@ namespace K {
               tStarted = 0;
             }
             uv_timer_start(((EV*)events)->tStart, [](uv_timer_t *handle) {
-              QE *Qe = (QE*)handle->data;
-              if (((CF*)Qe->config)->argDebugEvents) FN::log("DEBUG", "EV GW tStart timer");
-              Qe->start(Qe->qeNextQuote.begin()->first, Qe->qeNextQuote.begin()->second, Qe->qeNextIsPong);
+              QE *k = (QE*)handle->data;
+              if (((CF*)k->config)->argDebugEvents) FN::log("DEBUG", "EV GW tStart timer");
+              k->start(k->qeNextQuote.begin()->first, k->qeNextQuote.begin()->second, k->qeNextIsPong);
             }, (nextDiff * 1e+3) + 1e+2, 0);
             tStarted = 1;
             return;

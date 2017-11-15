@@ -2,7 +2,6 @@
 #define K_CF_H_
 
 namespace K {
-  Gw *gw;
   class CF: public kLass {
     public:
       int argPort = 3000,
@@ -32,7 +31,6 @@ namespace K {
       double argEwmaShort = 0,
              argEwmaMedium = 0,
              argEwmaLong = 0;
-      mQuotingParams qp;
     protected:
       void load(int argc, char** argv) {
         cout << BGREEN << "K" << RGREEN << " build " << K_BUILD << " " << K_STAMP << "." << BRED << '\n';

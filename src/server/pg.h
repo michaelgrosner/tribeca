@@ -15,7 +15,6 @@ namespace K {
       mutex pgMutex;
     protected:
       void load() {
-        qp = &((CF*)config)->qp;
         json k = ((DB*)memory)->load(uiTXT::TargetBasePosition);
         if (k.size()) {
           k = k.at(0);

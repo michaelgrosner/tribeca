@@ -31,7 +31,6 @@ namespace K {
       double mgTargetPos = 0;
     protected:
       void load() {
-        qp = &((CF*)config)->qp;
         json k = ((DB*)memory)->load(uiTXT::MarketData);
         if (k.size()) {
           for (json::reverse_iterator it = k.rbegin(); it != k.rend(); ++it) {

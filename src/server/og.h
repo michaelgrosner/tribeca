@@ -9,7 +9,6 @@ namespace K {
       vector<mTrade> tradesHistory;
     protected:
       void load() {
-        qp = &((CF*)config)->qp;
         json k = ((DB*)memory)->load(uiTXT::Trades);
         if (k.size())
           for (json::reverse_iterator it = k.rbegin(); it != k.rend(); ++it)

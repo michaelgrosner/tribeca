@@ -522,6 +522,7 @@ namespace K {
   };
   class Klass {
     protected:
+      Gw *gw;
       Klass *config = nullptr,
             *events = nullptr,
             *memory = nullptr,
@@ -557,19 +558,25 @@ namespace K {
       void mgLink(Klass *k) { market = k; };
       void pgLink(Klass *k) { wallet = k; };
       void qeLink(Klass *k) { engine = k; };
+      void gwLink(Gw *k) { gw = k; };
+      void qpLink(mQuotingParams *k) { qp = k; };
   };
   class kLass: public Klass {
+    private:
+      mQuotingParams p;
     public:
       void link(Klass *EV, Klass *DB, Klass *UI, Klass *QP, Klass *OG, Klass *MG, Klass *PG, Klass *QE, Klass *GW) {
         Klass *CF = (Klass*)this;
-        DB->cfLink(CF); UI->cfLink(CF); QP->cfLink(CF); OG->cfLink(CF); MG->cfLink(CF); PG->cfLink(CF); QE->cfLink(CF); GW->cfLink(CF);
-                        UI->evLink(EV); QP->evLink(EV); OG->evLink(EV); MG->evLink(EV); PG->evLink(EV); QE->evLink(EV); GW->evLink(EV);
-                        UI->dbLink(DB); QP->dbLink(DB); OG->dbLink(DB); MG->dbLink(DB); PG->dbLink(DB);
-                                        QP->uiLink(UI); OG->uiLink(UI); MG->uiLink(UI); PG->uiLink(UI); QE->uiLink(UI); GW->uiLink(UI);
-                                                                                        PG->ogLink(OG); QE->ogLink(OG);
-                                                                                        PG->mgLink(MG); QE->mgLink(MG);
-                                                                                                        QE->pgLink(PG);
-                                                                                                                        GW->qeLink(QE);
+        EV->gwLink(gw);                 UI->gwLink(gw);                 OG->gwLink(gw); MG->gwLink(gw); PG->gwLink(gw); QE->gwLink(gw); GW->gwLink(gw);
+                        DB->cfLink(CF); UI->cfLink(CF);                 OG->cfLink(CF); MG->cfLink(CF); PG->cfLink(CF); QE->cfLink(CF); GW->cfLink(CF);
+                                        UI->evLink(EV); QP->evLink(EV); OG->evLink(EV); MG->evLink(EV); PG->evLink(EV); QE->evLink(EV); GW->evLink(EV);
+                                        UI->dbLink(DB); QP->dbLink(DB); OG->dbLink(DB); MG->dbLink(DB); PG->dbLink(DB);
+                                                        QP->uiLink(UI); OG->uiLink(UI); MG->uiLink(UI); PG->uiLink(UI); QE->uiLink(UI); GW->uiLink(UI);
+                                                        QP->qpLink(&p); OG->qpLink(&p); MG->qpLink(&p); PG->qpLink(&p); QE->qpLink(&p); GW->qpLink(&p);
+                                                                                                        PG->ogLink(OG); QE->ogLink(OG);
+                                                                                                        PG->mgLink(MG); QE->mgLink(MG);
+                                                                                                                        QE->pgLink(PG);
+                                                                                                                                        GW->qeLink(QE);
       };
   };
 }

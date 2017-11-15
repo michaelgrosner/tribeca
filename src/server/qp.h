@@ -5,7 +5,6 @@ namespace K {
   class QP: public Klass {
     protected:
       void load() {
-        qp = &((CF*)config)->qp;
         json k = ((DB*)memory)->load(uiTXT::QuotingParametersChange);
         if (k.size()) {
           *qp = k.at(0);
