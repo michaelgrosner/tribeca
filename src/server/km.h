@@ -19,7 +19,7 @@ namespace K {
   enum class mAPR: unsigned int { Off, Size, SizeWidth };
   enum class mSOP: unsigned int { Off, Trades, Size, TradesSize };
   enum class mSTDEV: unsigned int { Off, OnFV, OnFVAPROff, OnTops, OnTopsAPROff, OnTop, OnTopAPROff };
-  enum class uiBIT: unsigned char { MSG = '-', SNAP = '=' };
+  enum class uiBIT: unsigned char { Hello = '=', Kiss = '-' };
   enum class uiTXT: unsigned char {
     FairValue = 'a', Quote = 'b', ActiveSubscription = 'c', ActiveState = 'd', MarketData = 'e',
     QuotingParametersChange = 'f', SafetySettings = 'g', Product = 'h', OrderStatusReports = 'i',
@@ -522,16 +522,16 @@ namespace K {
   };
   class Klass {
     protected:
-      Gw *gw = nullptr;
+      Gw             *gw = nullptr;
       mQuotingParams *qp = nullptr;
-      Klass *config = nullptr,
-            *events = nullptr,
-            *memory = nullptr,
-            *client = nullptr,
-            *orders = nullptr,
-            *market = nullptr,
-            *wallet = nullptr,
-            *engine = nullptr;
+      Klass          *config = nullptr,
+                     *events = nullptr,
+                     *memory = nullptr,
+                     *client = nullptr,
+                     *orders = nullptr,
+                     *market = nullptr,
+                     *wallet = nullptr,
+                     *engine = nullptr;
       virtual void load(int argc, char** argv) {};
       virtual void load() {};
       virtual void waitTime() {};

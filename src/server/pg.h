@@ -9,20 +9,20 @@ namespace K {
       map<double, mTrade> sells;
     public:
       mPosition position;
-      mSafety pgSafety;
-      double pgTargetBasePos = 0;
-      string pgSideAPR = "";
+      mSafety safety;
+      double targetBasePosition = 0;
+      string sideAPR = "";
       mutex pgMutex;
     protected:
       void load() {
         json k = ((DB*)memory)->load(uiTXT::TargetBasePosition);
         if (k.size()) {
           k = k.at(0);
-          pgTargetBasePos = k.value("tbp", 0.0);
-          pgSideAPR = k.value("sideAPR", "");
+          targetBasePosition = k.value("tbp", 0.0);
+          sideAPR = k.value("sideAPR", "");
         }
         stringstream ss;
-        ss << setprecision(8) << fixed << pgTargetBasePos;
+        ss << setprecision(8) << fixed << targetBasePosition;
         FN::log("DB", string("loaded TBP = ") + ss.str() + " " + gw->base);
         k = ((DB*)memory)->load(uiTXT::Position);
         if (k.size()) {
@@ -58,38 +58,38 @@ namespace K {
     public:
       void calcSafety() {
         if (empty() or !((MG*)market)->fairValue) return;
-        mSafety safety = nextSafety();
+        mSafety next = nextSafety();
         pgMutex.lock();
-        if (pgSafety.buyPing == -1
-          or safety.combined != pgSafety.combined
-          or safety.buyPing != pgSafety.buyPing
-          or safety.sellPong != pgSafety.sellPong
+        if (safety.buyPing == -1
+          or next.combined != safety.combined
+          or next.buyPing != safety.buyPing
+          or next.sellPong != safety.sellPong
         ) {
-          pgSafety = safety;
+          safety = next;
           pgMutex.unlock();
-          ((UI*)client)->send(uiTXT::TradeSafetyValue, safety);
+          ((UI*)client)->send(uiTXT::TradeSafetyValue, next);
         } else pgMutex.unlock();
       };
       void calcTargetBasePos() {
-        static string pgSideAPR_ = "!=";
+        static string sideAPR_ = "!=";
         if (empty()) { FN::logWar("QE", "Unable to calculate TBP, missing market data."); return; }
         pgMutex.lock();
         double value = position.value;
         pgMutex.unlock();
-        double targetBasePosition = qp->autoPositionMode == mAutoPositionMode::Manual
+        double next = qp->autoPositionMode == mAutoPositionMode::Manual
           ? (qp->percentageValues
             ? qp->targetBasePositionPercentage * value / 1e+2
             : qp->targetBasePosition)
           : ((1 + ((MG*)market)->targetPosition) / 2) * value;
-        if (pgTargetBasePos and abs(pgTargetBasePos - targetBasePosition) < 1e-4 and pgSideAPR_ == pgSideAPR) return;
-        pgTargetBasePos = targetBasePosition;
-        pgSideAPR_ = pgSideAPR;
+        if (targetBasePosition and abs(targetBasePosition - next) < 1e-4 and sideAPR_ == sideAPR) return;
+        targetBasePosition = next;
+        sideAPR_ = sideAPR;
         ((EV*)events)->pgTargetBasePosition();
-        json k = {{"tbp", pgTargetBasePos}, {"sideAPR", pgSideAPR}};
+        json k = {{"tbp", targetBasePosition}, {"sideAPR", sideAPR}};
         ((UI*)client)->send(uiTXT::TargetBasePosition, k, true);
         ((DB*)memory)->insert(uiTXT::TargetBasePosition, k);
         stringstream ss;
-        ss << (int)(pgTargetBasePos / value * 1e+2) << "% = " << setprecision(8) << fixed << pgTargetBasePos;
+        ss << (int)(targetBasePosition / value * 1e+2) << "% = " << setprecision(8) << fixed << targetBasePosition;
         FN::log("TBP", ss.str() + " " + gw->base);
       };
       void addTrade(mTrade k) {
@@ -108,10 +108,10 @@ namespace K {
       };
       function<json()> helloSafety = [&]() {
         lock_guard<mutex> lock(pgMutex);
-        return (json){ pgSafety };
+        return (json){ safety };
       };
       function<json()> helloTargetBasePos = [&]() {
-        return (json){{{"tbp", pgTargetBasePos}, {"sideAPR", pgSideAPR}}};
+        return (json){{{"tbp", targetBasePosition}, {"sideAPR", sideAPR}}};
       };
       mSafety nextSafety() {
         pgMutex.lock();
@@ -127,9 +127,9 @@ namespace K {
           : qp->sellSize;
         double totalBasePosition = baseAmount + baseHeldAmount;
         if (qp->buySizeMax and qp->aggressivePositionRebalancing != mAPR::Off)
-          buySize = fmax(buySize, pgTargetBasePos - totalBasePosition);
+          buySize = fmax(buySize, targetBasePosition - totalBasePosition);
         if (qp->sellSizeMax and qp->aggressivePositionRebalancing != mAPR::Off)
-          sellSize = fmax(sellSize, totalBasePosition - pgTargetBasePos);
+          sellSize = fmax(sellSize, totalBasePosition - targetBasePosition);
         double widthPong = qp->widthPercentage
           ? qp->widthPongPercentage * ((MG*)market)->fairValue / 100
           : qp->widthPong;

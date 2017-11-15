@@ -70,7 +70,7 @@ using namespace nlohmann;
     ;;  db.wait(/*     Whatever you do..         */);;
     ;;  ui.wait(/*     I will be right here      */);;;;;; // youtu.be/FornpYhezt4
     ;;  qp.wait(/*      waiting for coins.       */);;
-    ;;  og.wait(/*     Whatever it takes..       */);;;;;; // youtu.be/caZLDPVvEmw
+    ;;  og.wait(/*     Whatever it takes..       */);;;;;; // youtu.be/Wd2fSSt4MDg
     ;;  mg.wait(/*     Or how my OS breaks,      */);;
     ;;  pg.wait(/*     I will be right here      */);;;;;; // youtu.be/02OHHWG1EQY
     ;;  qe.wait(/*      waiting for coins.       */);;

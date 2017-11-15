@@ -16,7 +16,7 @@ namespace K {
         ((UI*)client)->clickme(uiTXT::QuotingParametersChange, &kiss);
       };
       void run() {
-        ((UI*)client)->delay(qp->delayUI);
+        ((UI*)client)->delayme(qp->delayUI);
       };
     private:
       function<json()> hello = [&]() {
@@ -35,7 +35,7 @@ namespace K {
           *qp = k;
           ((DB*)memory)->insert(uiTXT::QuotingParametersChange, *qp);
           ((EV*)events)->uiQuotingParameters();
-          ((UI*)client)->delay(qp->delayUI);
+          ((UI*)client)->delayme(qp->delayUI);
         }
         ((UI*)client)->send(uiTXT::QuotingParametersChange, *qp);
       };
