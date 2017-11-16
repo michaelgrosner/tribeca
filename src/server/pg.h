@@ -43,7 +43,7 @@ namespace K {
         ((EV*)events)->ogOrder = [&](mOrder k) {
           if (((CF*)config)->argDebugEvents) FN::log("DEBUG", string("EV PG ogOrder mOrder ") + ((json)k).dump());
           calcWalletAfterOrder(k);
-          FN::screen_refresh();
+          FN::screen_refresh(((OG*)orders)->ordersBothSides());
         };
         ((EV*)events)->mgTargetPosition = [&]() {
           if (((CF*)config)->argDebugEvents) FN::log("DEBUG", "EV PG mgTargetPosition");

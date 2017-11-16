@@ -4,6 +4,7 @@
 namespace K {
   class OG: public Klass {
     private:
+      map<string, mOrder> allOrders;
       map<string, string> allOrdersIds;
     public:
       vector<mTrade> tradesHistory;
@@ -113,7 +114,7 @@ namespace K {
         }
         return k;
       };
-      function<json()> helloOrders = []() {
+      function<json()> helloOrders = [&]() {
         json k;
         ogMutex.lock();
         for (map<string, mOrder>::iterator it = allOrders.begin(); it != allOrders.end(); ++it) {

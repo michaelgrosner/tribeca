@@ -489,7 +489,6 @@ namespace K {
                 *wLog;
   static mutex wMutex,
                ogMutex;
-  static map<string, mOrder> allOrders;
   class Gw {
     public:
       static Gw *E(mExchange e);

@@ -668,26 +668,31 @@ namespace K {
         wInit = true;
         screen_refresh("", 0, argExchange, argCurrency);
       };
-      static void screen_refresh(string protocol = "", int argPort = 0, string argExchange = "", string argCurrency = "") {
+      static void screen_refresh(map<string, mOrder> k) {
+        screen_refresh("", 0, "", "", k);
+      };
+      static void screen_refresh(string protocol = "", int argPort = 0, string argExchange = "", string argCurrency = "", map<string, mOrder> allOrders = map<string, mOrder>()) {
         if (!wInit) return;
         static int p = 0, spin = 0, port = 0;
         static string prtcl = "?", exchange = "?", currency = "?";
+        static map<string, mOrder> orders = map<string, mOrder>();
         if (argPort) port = argPort;
         if (protocol.length()) prtcl = protocol;
         if (argExchange.length()) exchange = argExchange;
         if (argCurrency.length()) currency = argCurrency;
-        multimap<double, mOrder> orderLines;
+        if (allOrders.size()) orders = allOrders;
+        multimap<double, mOrder> ordersOpen;
         ogMutex.lock();
-        for (map<string, mOrder>::iterator it = allOrders.begin(); it != allOrders.end(); ++it) {
+        for (map<string, mOrder>::iterator it = orders.begin(); it != orders.end(); ++it) {
           if (mORS::Working != it->second.orderStatus) continue;
-          orderLines.insert(pair<double, mOrder>(it->second.price, it->second));
+          ordersOpen.insert(pair<double, mOrder>(it->second.price, it->second));
         }
         ogMutex.unlock();
         lock_guard<mutex> lock(wMutex);
         int l = p,
             y = getmaxy(wBorder),
             x = getmaxx(wBorder),
-            k = y - orderLines.size() - 1,
+            k = y - ordersOpen.size() - 1,
             P = k;
         while (l<y) mvwhline(wBorder, l++, 1, ' ', x-1);
         if (k!=p) {
@@ -699,7 +704,7 @@ namespace K {
         }
         mvwvline(wBorder, 1, 1, ' ', y-1);
         mvwvline(wBorder, k-1, 1, ' ', y-1);
-        for (map<double, mOrder>::reverse_iterator it = orderLines.rbegin(); it != orderLines.rend(); ++it) {
+        for (map<double, mOrder>::reverse_iterator it = ordersOpen.rbegin(); it != ordersOpen.rend(); ++it) {
           wattron(wBorder, COLOR_PAIR(it->second.side == mSide::Bid ? COLOR_CYAN : COLOR_MAGENTA));
           stringstream ss;
           ss << setprecision(8) << fixed << (it->second.side == mSide::Bid ? "BID" : "ASK") << " > " << it->second.orderId << ": " << it->second.quantity << " " << it->second.pair.base << " at price " << it->second.price << " " << it->second.pair.quote;
@@ -735,7 +740,7 @@ namespace K {
         mvwaddch(wBorder, k, 4, ACS_RTEE);
         mvwaddstr(wBorder, k, 5, "< (");
         wattron(wBorder, COLOR_PAIR(COLOR_YELLOW));
-        waddstr(wBorder, to_string(orderLines.size()).data());
+        waddstr(wBorder, to_string(ordersOpen.size()).data());
         wattroff(wBorder, COLOR_PAIR(COLOR_YELLOW));
         waddstr(wBorder, ") Open Orders..");
         mvwaddch(wBorder, y-1, 0, ACS_LLCORNER);
