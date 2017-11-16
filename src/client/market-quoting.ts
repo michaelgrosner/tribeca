@@ -191,7 +191,10 @@ export class MarketQuotingComponent implements OnInit {
   }
 
   private updateQuote = (o) => {
-    if (typeof o[0] == 'object') {
+    if (!o) {
+      this.clearQuote();
+      return;
+    } else if (typeof o[0] == 'object') {
       this.clearQuote();
       return o.forEach(x => setTimeout(this.updateQuote(x), 0));
     }
