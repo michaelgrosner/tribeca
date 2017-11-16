@@ -7,13 +7,12 @@ namespace K {
       int connections = 0;
       string B64auth = "",
              notes = "";
-      map<uiTXT, vector<json>> queue;
+      map<uiTXT, string> queue;
       map<char, function<json()>*> hello;
       map<char, function<void(json)>*> kiss;
       double delayUI = 0;
       bool toggleSettings = true;
-      mutex wsMutex,
-            uiMutex;
+      mutex wsMutex;
     public:
       unsigned int orders60sec = 0;
     protected:
@@ -155,8 +154,8 @@ namespace K {
       };
       void send(uiTXT k, json o, bool delayed = false) {
         if (((CF*)config)->argHeadless or connections == 0) return;
-        if (delayUI > 0 and delayed) msg2Queue(k, o);
-        else msg2Client(k, o);
+        if (delayUI > 0 and delayed) msg2Queue(k, o.dump());
+        else msg2Client(k, o.dump());
       };
     private:
       function<json()> helloServer = [&]() {
@@ -176,27 +175,20 @@ namespace K {
         if (!k.is_null() and k.size())
           toggleSettings = k.at(0);
       };
-      void msg2Client(uiTXT k, json o) {
+      void msg2Client(uiTXT k, string j) {
         string m(1, (char)uiBIT::Kiss);
-        m += string(1, (char)k);
-        m += o.is_null() ? "" : o.dump();
+        m += string(1, (char)k) + j;
         lock_guard<mutex> lock(wsMutex);
         ((EV*)events)->uiGroup->broadcast(m.data(), m.length(), uWS::OpCode::TEXT);
       };
-      void msg2Queue(uiTXT k, json o) {
-        lock_guard<mutex> lock(uiMutex);
-        if (queue.find(k) != queue.end() and queue[k].size() > 0)
-          queue[k].clear();
-        queue[k].push_back(o);
+      void msg2Queue(uiTXT k, string j) {
+        queue[k] = j;
       };
       void sendQueue(bool *sec60) {
         static unsigned long uiT_1m = 0;
-        uiMutex.lock();
-        for (map<uiTXT, vector<json>>::iterator it_ = queue.begin(); it_ != queue.end(); ++it_)
-          for (vector<json>::iterator it = it_->second.begin(); it != it_->second.end(); ++it)
-            msg2Client(it_->first, *it);
+        for (map<uiTXT, string>::iterator it = queue.begin(); it != queue.end(); ++it)
+          msg2Client(it->first, it->second);
         queue.clear();
-        uiMutex.unlock();
         if (uiT_1m+6e+4 > FN::T())
           *sec60 = false;
         else uiT_1m = FN::T();
