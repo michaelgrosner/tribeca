@@ -6,32 +6,29 @@ namespace K {
     private:
       int connections = 0;
       string B64auth = "",
-             notes = "";
+             notepad = "";
+      bool toggleSettings = true;
       map<uiTXT, string> queue;
       map<char, function<json()>*> hello;
       map<char, function<void(json)>*> kiss;
-      double delayUI = 0;
-      bool toggleSettings = true;
       mutex wsMutex;
     public:
       unsigned int orders60sec = 0;
     protected:
       void load() {
-        if (((CF*)config)->argHeadless) return;
-        if (((CF*)config)->argUser != "NULL" and ((CF*)config)->argPass != "NULL"
-          and ((CF*)config)->argUser.length() > 0 and ((CF*)config)->argPass.length() > 0
-        ) {
-          B64::Encode(((CF*)config)->argUser + ':' + ((CF*)config)->argPass, &B64auth);
-          B64auth = string("Basic ") + B64auth;
-        }
+        if (((CF*)config)->argHeadless
+          or ((CF*)config)->argUser == "NULL"
+          or ((CF*)config)->argUser == ""
+          or ((CF*)config)->argPass == "NULL"
+          or ((CF*)config)->argPass == ""
+        ) return;
+        B64::Encode(((CF*)config)->argUser + ':' + ((CF*)config)->argPass, &B64auth);
+        B64auth = string("Basic ") + B64auth;
       };
       void waitTime() {
         if (((CF*)config)->argHeadless) return;
         ((EV*)events)->tDelay->data = (void*)this;
-        uv_timer_start(((EV*)events)->tDelay, [](uv_timer_t *handle) {
-          if (((CF*)((UI*)handle->data)->config)->argDebugEvents) FN::log("DEBUG", "EV GW tDelay timer");
-          ((UI*)handle->data)->sendQueue();
-        }, 0, 0);
+        uv_timer_start(((EV*)events)->tDelay, sendState, 0, 0);
       };
       void waitData() {
         if (((CF*)config)->argHeadless) return;
@@ -146,27 +143,26 @@ namespace K {
           kiss[(char)k] = cb;
         else FN::logExit("UI", string("Use only a single unique message handler for each \"") + (char)k + "\" event", EXIT_SUCCESS);
       };
-      void delayme(double next) {
+      void delayme(double delayUI) {
         if (((CF*)config)->argHeadless) return;
-        delayUI = next;
-        uv_timer_set_repeat(((EV*)events)->tDelay, delayUI > 0 ? (int)(delayUI*1e+3) : 6e+4);
+        uv_timer_set_repeat(((EV*)events)->tDelay, delayUI > 0 ? (int)(delayUI*1e+3) : 6e+4 + 1);
         uv_timer_again(((EV*)events)->tDelay);
       };
       void send(uiTXT k, json o, bool delayed = false) {
         if (((CF*)config)->argHeadless or connections == 0) return;
-        if (delayUI > 0 and delayed) queue[k] = o.dump();
-        else send(k, o.dump());
+        if (realtimeClient() or !delayed) send(k, o.dump());
+        else queue[k] = o.dump();
       };
     private:
       function<json()> helloServer = [&]() {
         return (json){ serverState() };
       };
       function<json()> helloNotes = [&]() {
-        return (json){ notes };
+        return (json){ notepad };
       };
       function<void(json)> kissNotes = [&](json k) {
         if (!k.is_null() and k.size())
-          notes = k.at(0);
+          notepad = k.at(0);
       };
       function<json()> helloSettings = [&]() {
         return (json){ toggleSettings };
@@ -181,21 +177,22 @@ namespace K {
         lock_guard<mutex> lock(wsMutex);
         ((EV*)events)->uiGroup->broadcast(m.data(), m.length(), uWS::OpCode::TEXT);
       };
-      void sendQueue(bool *sec60) {
-        static unsigned long uiT_1m = 0;
+      void sendQueue() {
         for (map<uiTXT, string>::iterator it = queue.begin(); it != queue.end(); ++it)
           send(it->first, it->second);
         queue.clear();
-        if (uiT_1m+6e+4 > FN::T())
-          *sec60 = false;
-        else uiT_1m = FN::T();
       };
-      void sendQueue() {
-        bool sec60 = true;
-        if (delayUI > 0) sendQueue(&sec60);
-        if (!sec60) return;
-        send(uiTXT::ApplicationState, serverState());
-        orders60sec = 0;
+      void (*sendState)(uv_timer_t*) = [](uv_timer_t *handle) {
+        UI *k = (UI*)handle->data;
+        if (((CF*)k->config)->argDebugEvents) FN::log("DEBUG", "EV UI tDelay timer");
+        if (!k->realtimeClient()) {
+          k->sendQueue();
+          static unsigned long uiT_1m = 0;
+          if (uiT_1m+6e+4 > FN::T()) return;
+          else uiT_1m = FN::T();
+        }
+        k->send(uiTXT::ApplicationState, k->serverState());
+        k->orders60sec = 0;
       };
       json serverState() {
         time_t rawtime;
@@ -207,6 +204,9 @@ namespace K {
           {"dbsize", ((DB*)memory)->size()},
           {"a", gw->A()}
         };
+      };
+      bool realtimeClient() {
+        return (int)uv_timer_get_repeat(((EV*)events)->tDelay) == 6e+4 + 1;
       };
   };
 }

@@ -27,7 +27,7 @@ namespace K {
         ((EV*)events)->tStart->data = (void*)this;
         ((EV*)events)->tCalcs->data = (void*)this;
         uv_timer_start(((EV*)events)->tCalcs, [](uv_timer_t *handle) {
-          QE *k = ((QE*)handle->data);
+          QE *k = (QE*)handle->data;
           if (((CF*)k->config)->argDebugEvents) FN::log("DEBUG", "EV GW tCalcs timer");
           if (((MG*)k->market)->fairValue) {
             ((MG*)k->market)->calcStats();
