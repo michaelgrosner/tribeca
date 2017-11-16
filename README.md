@@ -408,6 +408,7 @@ What exchange you don't want to be deleted from the bot?
 ### every new day we sing:
 
  - https://www.youtube.com/watch?v=g--fsK6aLf8
+ - https://www.youtube.com/watch?v=SS9DJX8gTKk
  - https://www.youtube.com/watch?v=Rom4qWtEkMA
  - https://www.youtube.com/watch?v=wXHm9Yl5tRM
  - https://www.youtube.com/watch?v=xPg_e_3cK-E
