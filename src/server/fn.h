@@ -503,6 +503,7 @@ namespace K {
         FN::screen_refresh(k, p);
       };
       static void logUIsess(int k, string s) {
+        if (s.length() > 7 and s.substr(0, 7) == "::ffff:") s = s.substr(7);
         if (!wInit) {
           cout << uiT() << "UI " << RYELLOW << to_string(k) << RWHITE << " currently connected, last connection was from " << RYELLOW << s << RWHITE << ".\n";
           return;

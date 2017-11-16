@@ -24,17 +24,22 @@ namespace K {
           B64::Encode(((CF*)config)->argUser + ':' + ((CF*)config)->argPass, &B64auth);
           B64auth = string("Basic ") + B64auth;
         }
+      };
+      void waitTime() {
+        if (((CF*)config)->argHeadless) return;
+        ((EV*)events)->tDelay->data = (void*)this;
+        uv_timer_start(((EV*)events)->tDelay, [](uv_timer_t *handle) {
+          if (((CF*)((UI*)handle->data)->config)->argDebugEvents) FN::log("DEBUG", "EV GW tDelay timer");
+          ((UI*)handle->data)->sendQueue();
+        }, 0, 0);
+      };
+      void waitData() {
+        if (((CF*)config)->argHeadless) return;
         ((EV*)events)->uiGroup->onConnection([&](uWS::WebSocket<uWS::SERVER> *webSocket, uWS::HttpRequest req) {
-          connections++;
-          string addr = webSocket->getAddress().address;
-          if (addr.length() > 7 and addr.substr(0, 7) == "::ffff:") addr = addr.substr(7);
-          FN::logUIsess(connections, addr);
+          FN::logUIsess(++connections, webSocket->getAddress().address);
         });
         ((EV*)events)->uiGroup->onDisconnection([&](uWS::WebSocket<uWS::SERVER> *webSocket, int code, char *message, size_t length) {
-          connections--;
-          string addr = webSocket->getAddress().address;
-          if (addr.length() > 7 and addr.substr(0, 7) == "::ffff:") addr = addr.substr(7);
-          FN::logUIsess(connections, addr);
+          FN::logUIsess(--connections, webSocket->getAddress().address);
         });
         ((EV*)events)->uiGroup->onHttpRequest([&](uWS::HttpResponse *res, uWS::HttpRequest req, char *data, size_t length, size_t remainingBytes) {
           string document;
@@ -99,10 +104,13 @@ namespace K {
           }
         });
         ((EV*)events)->uiGroup->onMessage([&](uWS::WebSocket<uWS::SERVER> *webSocket, const char *message, size_t length, uWS::OpCode opCode) {
-          string addr = webSocket->getAddress().address;
-          if (addr.length() > 7 and addr.substr(0, 7) == "::ffff:") addr = addr.substr(7);
-          if ((((CF*)config)->argWhitelist != "" and ((CF*)config)->argWhitelist.find(addr) == string::npos) or length < 2)
-            return;
+          if (length < 2) return;
+          if (((CF*)config)->argWhitelist != "") {
+            string addr = webSocket->getAddress().address;
+            if (addr.length() > 7 and addr.substr(0, 7) == "::ffff:") addr = addr.substr(7);
+            if (((CF*)config)->argWhitelist.find(addr) == string::npos)
+              return;
+          }
           if (uiBIT::Hello == (uiBIT)message[0] and hello.find(message[1]) != hello.end()) {
             json reply = (*hello[message[1]])();
             if (!reply.is_null()) {
@@ -114,14 +122,6 @@ namespace K {
               ? string(message, length).substr(2, length-2) : "{}"
             ));
         });
-      };
-      void waitTime() {
-        if (((CF*)config)->argHeadless) return;
-        ((EV*)events)->tDelay->data = (void*)this;
-        uv_timer_start(((EV*)events)->tDelay, [](uv_timer_t *handle) {
-          if (((CF*)((UI*)handle->data)->config)->argDebugEvents) FN::log("DEBUG", "EV GW tDelay timer");
-          ((UI*)handle->data)->sendQueue();
-        }, 0, 0);
       };
       void waitUser() {
         welcome(uiTXT::ApplicationState, &helloServer);
