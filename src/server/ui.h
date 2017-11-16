@@ -11,7 +11,6 @@ namespace K {
       map<uiTXT, string> queue;
       map<char, function<json()>*> hello;
       map<char, function<void(json)>*> kiss;
-      mutex wsMutex;
     public:
       unsigned int orders60sec = 0;
     protected:
@@ -44,7 +43,7 @@ namespace K {
           string auth = req.getHeader("authorization").toString();
           string addr = res->getHttpSocket()->getAddress().address;
           if (addr.length() > 7 and addr.substr(0, 7) == "::ffff:") addr = addr.substr(7);
-          lock_guard<mutex> lock(wsMutex);
+          lock_guard<mutex> lock(((EV*)events)->hubMutex);
           if (((CF*)config)->argWhitelist != "" and ((CF*)config)->argWhitelist.find(addr) == string::npos) {
             FN::log("UI", "dropping gzip bomb on", addr);
             content << ifstream("etc/K-bomb.gzip").rdbuf();
@@ -111,7 +110,7 @@ namespace K {
           if (uiBIT::Hello == (uiBIT)message[0] and hello.find(message[1]) != hello.end()) {
             json reply = (*hello[message[1]])();
             if (!reply.is_null()) {
-              lock_guard<mutex> lock(wsMutex);
+              lock_guard<mutex> lock(((EV*)events)->hubMutex);
               webSocket->send(string(message, 2).append(reply.dump()).data(), uWS::OpCode::TEXT);
             }
           } else if (uiBIT::Kiss == (uiBIT)message[0] and kiss.find(message[1]) != kiss.end())
@@ -128,7 +127,8 @@ namespace K {
         clickme(uiTXT::ToggleSettings, &kissSettings);
       };
       void run() {
-        ((EV*)events)->listen(&wsMutex, ((CF*)config)->argHeadless, ((CF*)config)->argPort);
+        if (((CF*)config)->argHeadless) return;
+        ((EV*)events)->listen(((CF*)config)->argPort);
       };
     public:
       void welcome(uiTXT k, function<json()> *cb) {
@@ -174,7 +174,7 @@ namespace K {
       void send(uiTXT k, string j) {
         string m(1, (char)uiBIT::Kiss);
         m += string(1, (char)k) + j;
-        lock_guard<mutex> lock(wsMutex);
+        lock_guard<mutex> lock(((EV*)events)->hubMutex);
         ((EV*)events)->uiGroup->broadcast(m.data(), m.length(), uWS::OpCode::TEXT);
       };
       void sendQueue() {
@@ -206,7 +206,7 @@ namespace K {
         };
       };
       bool realtimeClient() {
-        return (int)uv_timer_get_repeat(((EV*)events)->tDelay) == 6e+4 + 1;
+        return uv_timer_get_repeat(((EV*)events)->tDelay) == 6e+4 + 1;
       };
   };
 }

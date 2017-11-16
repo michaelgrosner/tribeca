@@ -112,20 +112,10 @@ namespace K {
         ((UI*)client)->send(uiTXT::QuoteStatus, status, true);
       };
       bool diffCounts(unsigned int *qNew, unsigned int *qWorking, unsigned int *qDone) {
-        ogMutex.lock();
-        for (map<string, mOrder>::iterator it = allOrders.begin(); it != allOrders.end(); ++it) {
-          mORS k = (mORS)it->second.orderStatus;
-          if (k == mORS::New) ++(*qNew);
-          else if (k == mORS::Working) ++(*qWorking);
-          else ++(*qDone);
-        }
-        ogMutex.unlock();
-        return diffCounts(*qNew, *qWorking, *qDone);
-      };
-      bool diffCounts(unsigned int qNew, unsigned int qWorking, unsigned int qDone) {
-        return qNew != status.quotesInMemoryNew
-          or qWorking != status.quotesInMemoryWorking
-          or qDone != status.quotesInMemoryDone;
+        ((OG*)orders)->countOrders(qNew, qWorking, qDone);
+        return *qNew != status.quotesInMemoryNew
+          or *qWorking != status.quotesInMemoryWorking
+          or *qDone != status.quotesInMemoryDone;
       };
       bool diffStatus() {
         return bidStatus != status.bidStatus
@@ -526,7 +516,7 @@ namespace K {
         } else return mQuoteState::Live;
       };
       void updateQuote(mLevel q, mSide side, bool isPong) {
-        multimap<double, mOrder> ordersSide = ordersAtSide(side);
+        multimap<double, mOrder> ordersSide = ((OG*)orders)->ordersAtSide(side);
         int k = ordersSide.size();
         if (!k) return start(side, q, isPong);
         unsigned long T = FN::T();
@@ -537,15 +527,6 @@ namespace K {
             if (qp->safety != mQuotingSafety::AK47 or (int)k >= qp->bullets) return;
           }
         modify(side, q, isPong);
-      };
-      multimap<double, mOrder> ordersAtSide(mSide side) {
-        multimap<double, mOrder> ordersSide;
-        ogMutex.lock();
-        for (map<string, mOrder>::iterator it = allOrders.begin(); it != allOrders.end(); ++it)
-          if ((mSide)it->second.side == side)
-            ordersSide.insert(pair<double, mOrder>(it->second.price, it->second));
-        ogMutex.unlock();
-        return ordersSide;
       };
       void modify(mSide side, mLevel q, bool isPong) {
         if (qp->safety == mQuotingSafety::AK47)
@@ -580,7 +561,7 @@ namespace K {
         ((OG*)orders)->sendOrder(side, q.price, q.size, mOrderType::Limit, mTimeInForce::GTC, isPong, true);
       };
       void stopWorstsQuotes(mSide side, double price) {
-        multimap<double, mOrder> ordersSide = ordersAtSide(side);
+        multimap<double, mOrder> ordersSide = ((OG*)orders)->ordersAtSide(side);
         for (multimap<double, mOrder>::iterator it = ordersSide.begin(); it != ordersSide.end(); ++it)
           if (side == mSide::Bid
             ? price < it->second.price
@@ -588,7 +569,7 @@ namespace K {
           ) ((OG*)orders)->cancelOrder(it->second.orderId);
       };
       void stopWorstQuote(mSide side) {
-        multimap<double, mOrder> ordersSide = ordersAtSide(side);
+        multimap<double, mOrder> ordersSide = ((OG*)orders)->ordersAtSide(side);
         if (ordersSide.size())
           ((OG*)orders)->cancelOrder(side == mSide::Bid
             ? ordersSide.begin()->second.orderId
@@ -596,7 +577,7 @@ namespace K {
           );
       };
       void stopAllQuotes(mSide side) {
-        multimap<double, mOrder> ordersSide = ordersAtSide(side);
+        multimap<double, mOrder> ordersSide = ((OG*)orders)->ordersAtSide(side);
         for (multimap<double, mOrder>::iterator it = ordersSide.begin(); it != ordersSide.end(); ++it)
           ((OG*)orders)->cancelOrder(it->second.orderId);
       };

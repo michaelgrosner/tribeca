@@ -299,19 +299,15 @@ namespace K {
           ? position.baseAmount + position.baseHeldAmount
           : position.quoteAmount + position.quoteHeldAmount;
         pgMutex.unlock();
-        ogMutex.lock();
-        for (map<string, mOrder>::iterator it = allOrders.begin(); it != allOrders.end(); ++it) {
-          if (it->second.side != k.side) continue;
+        multimap<double, mOrder> ordersSide = ((OG*)orders)->ordersAtSide(k.side);
+        for (multimap<double, mOrder>::iterator it = ordersSide.begin(); it != ordersSide.end(); ++it) {
           double held = it->second.quantity * (it->second.side == mSide::Bid ? it->second.price : 1);
           if (amount >= held) {
             amount -= held;
             heldAmount += held;
           }
         }
-        ogMutex.unlock();
-        calcWallet(mWallet(amount, heldAmount, k.side == mSide::Ask
-          ? k.pair.base : k.pair.quote
-        ));
+        calcWallet(mWallet(amount, heldAmount, k.side == mSide::Ask ? k.pair.base : k.pair.quote));
       };
   };
 }

@@ -216,14 +216,12 @@ namespace K {
       void filter(mLevels k) {
         levels = k;
         if (empty()) return;
-        ogMutex.lock();
-        for (map<string, mOrder>::iterator it = allOrders.begin(); it != allOrders.end(); ++it)
+        map<string, mOrder> ordersSides = ((OG*)orders)->ordersBothSides();
+        for (map<string, mOrder>::iterator it = ordersSides.begin(); it != ordersSides.end(); ++it)
           filter(mSide::Bid == it->second.side ? &levels.bids : &levels.asks, it->second);
-        ogMutex.unlock();
-        if (!empty()) {
-          calcFairValue();
-          ((EV*)events)->mgLevels();
-        }
+        if (empty()) return;
+        calcFairValue();
+        ((EV*)events)->mgLevels();
       };
       void filter(vector<mLevel>* k, mOrder o) {
         for (vector<mLevel>::iterator it = k->begin(); it != k->end();)

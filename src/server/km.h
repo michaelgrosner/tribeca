@@ -500,9 +500,9 @@ namespace K {
       function<void(mLevels)>       evDataLevels;
       function<void(mConnectivity)> evConnectOrder,
                                     evConnectMarket;
-      mutex                   *wsMutex = nullptr;
-      uWS::Hub                *hub     = nullptr;
-      uWS::Group<uWS::CLIENT> *gwGroup = nullptr;
+      mutex                   *hubMutex = nullptr;
+      uWS::Hub                *hub      = nullptr;
+      uWS::Group<uWS::CLIENT> *gwGroup  = nullptr;
       mExchange exchange = mExchange::Null;
           int free    = 0;
        double makeFee = 0,  minTick = 0,
@@ -573,7 +573,7 @@ namespace K {
                                         UI->dbLink(DB); QP->dbLink(DB); OG->dbLink(DB); MG->dbLink(DB); PG->dbLink(DB);
                                                         QP->uiLink(UI); OG->uiLink(UI); MG->uiLink(UI); PG->uiLink(UI); QE->uiLink(UI); GW->uiLink(UI);
                                                         QP->qpLink(&p); OG->qpLink(&p); MG->qpLink(&p); PG->qpLink(&p); QE->qpLink(&p); GW->qpLink(&p);
-                                                                                                        PG->ogLink(OG); QE->ogLink(OG);
+                                                                                        MG->ogLink(OG); PG->ogLink(OG); QE->ogLink(OG);
                                                                                                         PG->mgLink(MG); QE->mgLink(MG);
                                                                                                                         QE->pgLink(PG);
                                                                                                                                         GW->qeLink(QE);

@@ -80,6 +80,30 @@ namespace K {
         ogMutex.unlock();
         if (((CF*)config)->argDebugOrders) FN::log("DEBUG", string("OG remove ") + oI + "::" + oE);
       };
+      void countOrders(unsigned int *qNew, unsigned int *qWorking, unsigned int *qDone) {
+        ogMutex.lock();
+        for (map<string, mOrder>::iterator it = allOrders.begin(); it != allOrders.end(); ++it)
+          if ((mORS)it->second.orderStatus == mORS::New) ++(*qNew);
+          else if ((mORS)it->second.orderStatus == mORS::Working) ++(*qWorking);
+          else ++(*qDone);
+        ogMutex.unlock();
+      };
+      map<string, mOrder> ordersBothSides() {
+        map<string, mOrder> ordersSides;
+        ogMutex.lock();
+        ordersSides = allOrders;
+        ogMutex.unlock();
+        return ordersSides;
+      };
+      multimap<double, mOrder> ordersAtSide(mSide side) {
+        multimap<double, mOrder> ordersSide;
+        ogMutex.lock();
+        for (map<string, mOrder>::iterator it = allOrders.begin(); it != allOrders.end(); ++it)
+          if ((mSide)it->second.side == side)
+            ordersSide.insert(pair<double, mOrder>(it->second.price, it->second));
+        ogMutex.unlock();
+        return ordersSide;
+      };
     private:
       function<json()> helloTrades = [&]() {
         json k;
