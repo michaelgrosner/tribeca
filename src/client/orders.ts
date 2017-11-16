@@ -100,7 +100,7 @@ export class OrdersComponent implements OnInit {
   private addRowData = (o) => {
     if (!this.gridOptions.api) return;
     if (typeof o[0] == 'object') {
-      // this.gridOptions.api.setRowData([]);
+      this.gridOptions.api.setRowData([]);
       return o.forEach(x => setTimeout(this.addRowData(x), 0));
     }
     let exists: boolean = false;

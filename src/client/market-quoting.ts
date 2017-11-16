@@ -192,7 +192,7 @@ export class MarketQuotingComponent implements OnInit {
 
   private updateQuote = (o) => {
     if (typeof o[0] == 'object') {
-      // this.clearQuote();
+      this.clearQuote();
       return o.forEach(x => setTimeout(this.updateQuote(x), 0));
     }
     const orderSide = o.side === Models.Side.Bid ? 'orderBids' : 'orderAsks';

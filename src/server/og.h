@@ -165,10 +165,8 @@ namespace K {
         if (o.computationalLatency) o.time = FN::T();
         toMemory(o);
         ((EV*)events)->ogOrder(o);
-        if (o.orderStatus != mORS::New)
-          ((UI*)client)->send(uiTXT::OrderStatusReports, o, true);
-        if (k.lastQuantity > 0)
-          toHistory(o);
+        if (o.orderStatus != mORS::New) toClient();
+        if (k.lastQuantity > 0) toHistory(o);
         return o;
       };
       void cancelOpenOrders() {
@@ -211,6 +209,15 @@ namespace K {
             break;
           }
         }
+      };
+      void toClient() {
+        json k;
+        ogMutex.lock();
+        for (map<string, mOrder>::iterator it = allOrders.begin(); it != allOrders.end(); ++it)
+          if ((mORS)it->second.orderStatus == mORS::Working)
+            k.push_back(it->second);
+        ogMutex.unlock();
+        ((UI*)client)->send(uiTXT::OrderStatusReports, k, true);
       };
       void toHistory(mOrder o) {
         double fee = 0;

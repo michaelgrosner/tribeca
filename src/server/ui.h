@@ -12,7 +12,8 @@ namespace K {
       map<char, function<void(json)>*> kiss;
       double delayUI = 0;
       bool toggleSettings = true;
-      mutex wsMutex;
+      mutex wsMutex,
+            uiMutex;
     public:
       unsigned int orders60sec = 0;
     protected:
@@ -105,8 +106,10 @@ namespace K {
             return;
           if (uiBIT::Hello == (uiBIT)message[0] and hello.find(message[1]) != hello.end()) {
             json reply = (*hello[message[1]])();
-            lock_guard<mutex> lock(wsMutex);
-            if (!reply.is_null()) webSocket->send(string(message, 2).append(reply.dump()).data(), uWS::OpCode::TEXT);
+            if (!reply.is_null()) {
+              lock_guard<mutex> lock(wsMutex);
+              webSocket->send(string(message, 2).append(reply.dump()).data(), uWS::OpCode::TEXT);
+            }
           } else if (uiBIT::Kiss == (uiBIT)message[0] and kiss.find(message[1]) != kiss.end())
             (*kiss[message[1]])(json::parse((length > 2 and (message[2] == '[' or message[2] == '{'))
               ? string(message, length).substr(2, length-2) : "{}"
@@ -144,13 +147,11 @@ namespace K {
           kiss[(char)k] = cb;
         else FN::logExit("UI", string("Use only a single unique message handler for each \"") + (char)k + "\" event", EXIT_SUCCESS);
       };
-      void delayme(double delayUI_) {
+      void delayme(double next) {
         if (((CF*)config)->argHeadless) return;
-        delayUI = delayUI_;
-        wsMutex.lock();
-        queue.clear();
-        wsMutex.unlock();
-        uv_timer_set_repeat(((EV*)events)->tDelay, delayUI ? (int)(delayUI*1e+3) : 6e+4);
+        delayUI = next;
+        uv_timer_set_repeat(((EV*)events)->tDelay, delayUI > 0 ? (int)(delayUI*1e+3) : 6e+4);
+        uv_timer_again(((EV*)events)->tDelay);
       };
       void send(uiTXT k, json o, bool delayed = false) {
         if (((CF*)config)->argHeadless or connections == 0) return;
@@ -183,37 +184,19 @@ namespace K {
         ((EV*)events)->uiGroup->broadcast(m.data(), m.length(), uWS::OpCode::TEXT);
       };
       void msg2Queue(uiTXT k, json o) {
-        lock_guard<mutex> lock(wsMutex);
-        if (queue.find(k) != queue.end() and queue[k].size() > 0) {
-          if (k != uiTXT::OrderStatusReports) queue[k].clear();
-          else for (vector<json>::iterator it = queue[k].begin(); it != queue[k].end();)
-            if (it->value("orderId", "") == o.value("orderId", ""))
-              it = queue[k].erase(it);
-            else ++it;
-        }
+        lock_guard<mutex> lock(uiMutex);
+        if (queue.find(k) != queue.end() and queue[k].size() > 0)
+          queue[k].clear();
         queue[k].push_back(o);
       };
       void sendQueue(bool *sec60) {
         static unsigned long uiT_1m = 0;
-        wsMutex.lock();
-        map<uiTXT, vector<json>> msgs;
-        for (map<uiTXT, vector<json>>::iterator it_ = queue.begin(); it_ != queue.end();) {
-          if (it_->first != uiTXT::OrderStatusReports) {
-            msgs[it_->first] = it_->second;
-            it_ = queue.erase(it_);
-          } else ++it_;
-        }
-        for (vector<json>::iterator it = queue[uiTXT::OrderStatusReports].begin(); it != queue[uiTXT::OrderStatusReports].end();) {
-          msgs[uiTXT::OrderStatusReports].push_back(*it);
-          if (mORS::Working != (mORS)it->value("orderStatus", 0))
-            it = queue[uiTXT::OrderStatusReports].erase(it);
-          else ++it;
-        }
-        queue.erase(uiTXT::OrderStatusReports);
-        wsMutex.unlock();
-        for (map<uiTXT, vector<json>>::iterator it_ = msgs.begin(); it_ != msgs.end(); ++it_)
+        uiMutex.lock();
+        for (map<uiTXT, vector<json>>::iterator it_ = queue.begin(); it_ != queue.end(); ++it_)
           for (vector<json>::iterator it = it_->second.begin(); it != it_->second.end(); ++it)
             msg2Client(it_->first, *it);
+        queue.clear();
+        uiMutex.unlock();
         if (uiT_1m+6e+4 > FN::T())
           *sec60 = false;
         else uiT_1m = FN::T();
