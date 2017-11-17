@@ -278,6 +278,8 @@ Updated HitBTC API v2.
 
 Added ZIP installation steps for non-git-lovers.
 
+Added HamelinRat quoting mode and Trend safety thanks to b-seite and serzhiio contributions.
+
 Added XMR network ecosystem optional support.
 
 Added command-line arguments.
