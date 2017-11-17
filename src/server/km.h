@@ -2,37 +2,6 @@
 #define K_KM_H_
 
 namespace K {
-  static const char kB64Alphabet[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-                                     "abcdefghijklmnopqrstuvwxyz"
-                                     "0123456789+/";
-  static int argPort = 3000,
-             argColors = 0,
-             argDebug = 0,
-             argDebugEvents = 0,
-             argDebugOrders = 0,
-             argDebugQuotes = 0,
-             argHeadless = 0,
-             argNaked = 0,
-             argAutobot = 0;
-  extern int argFree;
-  static string argTitle = "K.sh",
-                argExchange = "NULL",
-                argUser = "NULL",
-                argPass = "NULL",
-                argMatryoshka = "https://www.example.com/",
-                argCurrency = "NULL",
-                argTarget = "NULL",
-                argApikey = "NULL",
-                argSecret = "NULL",
-                argUsername = "NULL",
-                argPassphrase = "NULL",
-                argHttp = "NULL",
-                argWss = "NULL",
-                argDatabase = "",
-                argWhitelist = "";
-  static double argEwmaShort = 0,
-                argEwmaMedium = 0,
-                argEwmaLong = 0;
   enum class mExchange: unsigned int { Null, HitBtc, OkCoin, Coinbase, Bitfinex, Korbit, Poloniex };
   enum class mGatewayType: unsigned int { MarketData, OrderEntry };
   enum class mTimeInForce: unsigned int { IOC, FOK, GTC };
@@ -51,73 +20,191 @@ namespace K {
   enum class mAPR: unsigned int { Off, Size, SizeWidth };
   enum class mSOP: unsigned int { Off, Trades, Size, TradesSize };
   enum class mSTDEV: unsigned int { Off, OnFV, OnFVAPROff, OnTops, OnTopsAPROff, OnTop, OnTopAPROff };
-  enum class uiBIT: unsigned char { MSG = '-', SNAP = '=' };
+  enum class uiBIT: unsigned char { Hello = '=', Kiss = '-' };
   enum class uiTXT: unsigned char {
     FairValue = 'a', Quote = 'b', ActiveSubscription = 'c', ActiveState = 'd', MarketData = 'e',
     QuotingParametersChange = 'f', SafetySettings = 'g', Product = 'h', OrderStatusReports = 'i',
-    ProductAdvertisement = 'j', ApplicationState = 'k', Notepad = 'l', ToggleConfigs = 'm',
+    ProductAdvertisement = 'j', ApplicationState = 'k', Notepad = 'l', ToggleSettings = 'm',
     Position = 'n', ExchangeConnectivity = 'o', SubmitNewOrder = 'p', CancelOrder = 'q',
     MarketTrade = 'r', Trades = 's', ExternalValuation = 't', QuoteStatus = 'u',
     TargetBasePosition = 'v', TradeSafetyValue = 'w', CancelAllOrders = 'x',
-    CleanAllClosedOrders = 'y', CleanAllOrders = 'z', CleanTrade = 'A', TradesChart = 'B',
+    CleanAllClosedTrades = 'y', CleanAllTrades = 'z', CleanTrade = 'A', TradesChart = 'B',
     WalletChart = 'C', EWMAChart = 'D'
   };
-  static char RBLACK[] = "\033[0;30m", RRED[]    = "\033[0;31m", RGREEN[] = "\033[0;32m", RYELLOW[] = "\033[0;33m",
-              RBLUE[]  = "\033[0;34m", RPURPLE[] = "\033[0;35m", RCYAN[]  = "\033[0;36m", RWHITE[]  = "\033[0;37m",
-              BBLACK[] = "\033[1;30m", BRED[]    = "\033[1;31m", BGREEN[] = "\033[1;32m", BYELLOW[] = "\033[1;33m",
-              BBLUE[]  = "\033[1;34m", BPURPLE[] = "\033[1;35m", BCYAN[]  = "\033[1;36m", BWHITE[]  = "\033[1;37m";
-  static void (*evExit)(int code);
-  extern bool wInit;
-  extern WINDOW *wBorder,
-                *wLog;
-  extern mutex wsMutex;
-  static mutex wMutex,
-               ogMutex,
-               pgMutex;
-  static string uiPrtcl = "?";
-  class Klass {
-    protected:
-      virtual void load(int argc, char** argv) {};
-      virtual void load() {};
-      virtual void waitTime() {};
-      virtual void waitData() {};
-      virtual void waitUser() {};
-      virtual void run() {};
-    public:
-      void main(int argc, char** argv) {
-        load(argc, argv);
-        run();
-      };
-      void wait() {
-        load();
-        waitTime();
-        waitData();
-        waitUser();
-        run();
-      };
+  struct mQuotingParams {
+    double            widthPing                     = 2.0;
+    double            widthPingPercentage           = 0.25;
+    double            widthPong                     = 2.0;
+    double            widthPongPercentage           = 0.25;
+    bool              widthPercentage               = false;
+    bool              bestWidth                     = true;
+    double            buySize                       = 0.02;
+    int               buySizePercentage             = 7;
+    bool              buySizeMax                    = false;
+    double            sellSize                      = 0.01;
+    int               sellSizePercentage            = 7;
+    bool              sellSizeMax                   = false;
+    mPingAt           pingAt                        = mPingAt::BothSides;
+    mPongAt           pongAt                        = mPongAt::ShortPingFair;
+    mQuotingMode      mode                          = mQuotingMode::Top;
+    mQuotingSafety    safety                        = mQuotingSafety::Boomerang;
+    int               bullets                       = 2;
+    double            range                         = 0.5;
+    double            rangePercentage               = 1.0;
+    mFairValueModel   fvModel                       = mFairValueModel::BBO;
+    double            targetBasePosition            = 1.0;
+    int               targetBasePositionPercentage  = 50;
+    double            positionDivergence            = 0.9;
+    int               positionDivergencePercentage  = 21;
+    bool              percentageValues              = false;
+    mAutoPositionMode autoPositionMode              = mAutoPositionMode::EWMA_LS;
+    mAPR              aggressivePositionRebalancing = mAPR::Off;
+    mSOP              superTrades                   = mSOP::Off;
+    double            tradesPerMinute               = 0.9;
+    int               tradeRateSeconds              = 3;
+    bool              quotingEwmaProtection         = true;
+    int               quotingEwmaProtectionPeriods  = 200;
+    bool              quotingEwmaSMUProtection      = false;
+    double            quotingEwmaSMUThreshold       = 2.0;
+    int               quotingEwmaSMPeriods          = 12;
+    int               quotingEwmaSUPeriods          = 3;
+    mSTDEV            quotingStdevProtection        = mSTDEV::Off;
+    bool              quotingStdevBollingerBands    = false;
+    double            quotingStdevProtectionFactor  = 1.0;
+    int               quotingStdevProtectionPeriods = 1200;
+    double            ewmaSensiblityPercentage      = 0.5;
+    int               longEwmaPeriods               = 200;
+    int               mediumEwmaPeriods             = 100;
+    int               shortEwmaPeriods              = 50;
+    double            aprMultiplier                 = 2;
+    double            sopWidthMultiplier            = 2;
+    double            sopSizeMultiplier             = 2;
+    double            sopTradesMultiplier           = 2;
+    int               delayAPI                      = 0;
+    bool              cancelOrdersAuto              = false;
+    double            cleanPongsAuto                = 0.0;
+    double            profitHourInterval            = 0.5;
+    bool              audio                         = false;
+    int               delayUI                       = 7;
+    bool              _matchPings                   = true;
   };
-  class Gw {
-    public:
-      static Gw *E(mExchange e);
-      string (*randId)() = 0;
-      mExchange exchange = mExchange::Null;
-       double makeFee = 0,  minTick = 0,
-              takeFee = 0,  minSize = 0;
-       string base    = "", quote   = "",
-              name    = "", symbol  = "",
-              apikey  = "", secret  = "",
-              user    = "", pass    = "",
-              ws      = "", http    = "";
-         bool cancelByLocalIds = 0,
-              supportCancelAll = 0;
-      uWS::Hub                *hub = nullptr;
-      uWS::Group<uWS::CLIENT> *gwGroup = nullptr;
-      virtual void wallet() = 0,
-                   levels() = 0,
-                   send(string oI, mSide oS, double oP, double oQ, mOrderType oLM, mTimeInForce oTIF, bool oPO, unsigned long oT) = 0,
-                   cancel(string oI, string oE, mSide oS, unsigned long oT) = 0,
-                   cancelAll() = 0,
-                   close() = 0;
+  static void to_json(json& j, const mQuotingParams& k) {
+    j = {
+      {"widthPing", k.widthPing},
+      {"widthPingPercentage", k.widthPingPercentage},
+      {"widthPong", k.widthPong},
+      {"widthPongPercentage", k.widthPongPercentage},
+      {"widthPercentage", k.widthPercentage},
+      {"bestWidth", k.bestWidth},
+      {"buySize", k.buySize},
+      {"buySizePercentage", k.buySizePercentage},
+      {"buySizeMax", k.buySizeMax},
+      {"sellSize", k.sellSize},
+      {"sellSizePercentage", k.sellSizePercentage},
+      {"sellSizeMax", k.sellSizeMax},
+      {"pingAt", (int)k.pingAt},
+      {"pongAt", (int)k.pongAt},
+      {"mode", (int)k.mode},
+      {"safety", (int)k.safety},
+      {"bullets", k.bullets},
+      {"range", k.range},
+      {"rangePercentage", k.rangePercentage},
+      {"fvModel", (int)k.fvModel},
+      {"targetBasePosition", k.targetBasePosition},
+      {"targetBasePositionPercentage", k.targetBasePositionPercentage},
+      {"positionDivergence", k.positionDivergence},
+      {"positionDivergencePercentage", k.positionDivergencePercentage},
+      {"percentageValues", k.percentageValues},
+      {"autoPositionMode", (int)k.autoPositionMode},
+      {"aggressivePositionRebalancing", (int)k.aggressivePositionRebalancing},
+      {"superTrades", (int)k.superTrades},
+      {"tradesPerMinute", k.tradesPerMinute},
+      {"tradeRateSeconds", k.tradeRateSeconds},
+      {"quotingEwmaProtection", k.quotingEwmaProtection},
+      {"quotingEwmaProtectionPeriods", k.quotingEwmaProtectionPeriods},
+      {"quotingEwmaSMUProtection", k.quotingEwmaSMUProtection},
+      {"quotingEwmaSMUThreshold", k.quotingEwmaSMUThreshold},
+      {"quotingEwmaSMPeriods", k.quotingEwmaSMPeriods},
+      {"quotingEwmaSUPeriods", k.quotingEwmaSUPeriods},
+      {"quotingStdevProtection", (int)k.quotingStdevProtection},
+      {"quotingStdevBollingerBands", k.quotingStdevBollingerBands},
+      {"quotingStdevProtectionFactor", k.quotingStdevProtectionFactor},
+      {"quotingStdevProtectionPeriods", k.quotingStdevProtectionPeriods},
+      {"ewmaSensiblityPercentage", k.ewmaSensiblityPercentage},
+      {"longEwmaPeriods", k.longEwmaPeriods},
+      {"mediumEwmaPeriods", k.mediumEwmaPeriods},
+      {"shortEwmaPeriods", k.shortEwmaPeriods},
+      {"aprMultiplier", k.aprMultiplier},
+      {"sopWidthMultiplier", k.sopWidthMultiplier},
+      {"sopSizeMultiplier", k.sopSizeMultiplier},
+      {"sopTradesMultiplier", k.sopTradesMultiplier},
+      {"delayAPI", k.delayAPI},
+      {"cancelOrdersAuto", k.cancelOrdersAuto},
+      {"cleanPongsAuto", k.cleanPongsAuto},
+      {"profitHourInterval", k.profitHourInterval},
+      {"audio", k.audio},
+      {"delayUI", k.delayUI},
+      {"_matchPings", k._matchPings}
+    };
+  };
+  static void from_json(const json& j, mQuotingParams& k) {
+    if (j.end() != j.find("widthPing")) k.widthPing = j.at("widthPing").get<double>();
+    if (j.end() != j.find("widthPingPercentage")) k.widthPingPercentage = j.at("widthPingPercentage").get<double>();
+    if (j.end() != j.find("widthPong")) k.widthPong = j.at("widthPong").get<double>();
+    if (j.end() != j.find("widthPongPercentage")) k.widthPongPercentage = j.at("widthPongPercentage").get<double>();
+    if (j.end() != j.find("widthPercentage")) k.widthPercentage = j.at("widthPercentage").get<bool>();
+    if (j.end() != j.find("bestWidth")) k.bestWidth = j.at("bestWidth").get<bool>();
+    if (j.end() != j.find("buySize")) k.buySize = j.at("buySize").get<double>();
+    if (j.end() != j.find("buySizePercentage")) k.buySizePercentage = j.at("buySizePercentage").get<int>();
+    if (j.end() != j.find("buySizeMax")) k.buySizeMax = j.at("buySizeMax").get<bool>();
+    if (j.end() != j.find("sellSize")) k.sellSize = j.at("sellSize").get<double>();
+    if (j.end() != j.find("sellSizePercentage")) k.sellSizePercentage = j.at("sellSizePercentage").get<int>();
+    if (j.end() != j.find("sellSizeMax")) k.sellSizeMax = j.at("sellSizeMax").get<bool>();
+    if (j.end() != j.find("pingAt")) k.pingAt = (mPingAt)j.at("pingAt").get<int>();
+    if (j.end() != j.find("pongAt")) k.pongAt = (mPongAt)j.at("pongAt").get<int>();
+    if (j.end() != j.find("mode")) k.mode = (mQuotingMode)j.at("mode").get<int>();
+    if (j.end() != j.find("safety")) k.safety = (mQuotingSafety)j.at("safety").get<int>();
+    if (j.end() != j.find("bullets")) k.bullets = j.at("bullets").get<int>();
+    if (j.end() != j.find("range")) k.range = j.at("range").get<double>();
+    if (j.end() != j.find("rangePercentage")) k.rangePercentage = j.at("rangePercentage").get<double>();
+    if (j.end() != j.find("fvModel")) k.fvModel = (mFairValueModel)j.at("fvModel").get<int>();
+    if (j.end() != j.find("targetBasePosition")) k.targetBasePosition = j.at("targetBasePosition").get<double>();
+    if (j.end() != j.find("targetBasePositionPercentage")) k.targetBasePositionPercentage = j.at("targetBasePositionPercentage").get<int>();
+    if (j.end() != j.find("positionDivergence")) k.positionDivergence = j.at("positionDivergence").get<double>();
+    if (j.end() != j.find("positionDivergencePercentage")) k.positionDivergencePercentage = j.at("positionDivergencePercentage").get<int>();
+    if (j.end() != j.find("percentageValues")) k.percentageValues = j.at("percentageValues").get<bool>();
+    if (j.end() != j.find("autoPositionMode")) k.autoPositionMode = (mAutoPositionMode)j.at("autoPositionMode").get<int>();
+    if (j.end() != j.find("aggressivePositionRebalancing")) k.aggressivePositionRebalancing = (mAPR)j.at("aggressivePositionRebalancing").get<int>();
+    if (j.end() != j.find("superTrades")) k.superTrades = (mSOP)j.at("superTrades").get<int>();
+    if (j.end() != j.find("tradesPerMinute")) k.tradesPerMinute = j.at("tradesPerMinute").get<double>();
+    if (j.end() != j.find("tradeRateSeconds")) k.tradeRateSeconds = j.at("tradeRateSeconds").get<int>();
+    if (j.end() != j.find("quotingEwmaProtection")) k.quotingEwmaProtection = j.at("quotingEwmaProtection").get<bool>();
+    if (j.end() != j.find("quotingEwmaProtectionPeriods")) k.quotingEwmaProtectionPeriods = j.at("quotingEwmaProtectionPeriods").get<int>();
+    if (j.end() != j.find("quotingEwmaSMUProtection")) k.quotingEwmaSMUProtection = j.at("quotingEwmaSMUProtection").get<bool>();
+    if (j.end() != j.find("quotingEwmaSMUThreshold")) k.quotingEwmaSMUThreshold = j.at("quotingEwmaSMUThreshold").get<double>();
+    if (j.end() != j.find("quotingEwmaSMPeriods")) k.quotingEwmaSMPeriods = j.at("quotingEwmaSMPeriods").get<int>();
+    if (j.end() != j.find("quotingEwmaSUPeriods")) k.quotingEwmaSUPeriods = j.at("quotingEwmaSUPeriods").get<int>();
+    if (j.end() != j.find("quotingStdevProtection")) k.quotingStdevProtection = (mSTDEV)j.at("quotingStdevProtection").get<int>();
+    if (j.end() != j.find("quotingStdevBollingerBands")) k.quotingStdevBollingerBands = j.at("quotingStdevBollingerBands").get<bool>();
+    if (j.end() != j.find("quotingStdevProtectionFactor")) k.quotingStdevProtectionFactor = j.at("quotingStdevProtectionFactor").get<double>();
+    if (j.end() != j.find("quotingStdevProtectionPeriods")) k.quotingStdevProtectionPeriods = j.at("quotingStdevProtectionPeriods").get<int>();
+    if (j.end() != j.find("ewmaSensiblityPercentage")) k.ewmaSensiblityPercentage = j.at("ewmaSensiblityPercentage").get<double>();
+    if (j.end() != j.find("longEwmaPeriods")) k.longEwmaPeriods = j.at("longEwmaPeriods").get<int>();
+    if (j.end() != j.find("mediumEwmaPeriods")) k.mediumEwmaPeriods = j.at("mediumEwmaPeriods").get<int>();
+    if (j.end() != j.find("shortEwmaPeriods")) k.shortEwmaPeriods = j.at("shortEwmaPeriods").get<int>();
+    if (j.end() != j.find("aprMultiplier")) k.aprMultiplier = j.at("aprMultiplier").get<double>();
+    if (j.end() != j.find("sopWidthMultiplier")) k.sopWidthMultiplier = j.at("sopWidthMultiplier").get<double>();
+    if (j.end() != j.find("sopSizeMultiplier")) k.sopSizeMultiplier = j.at("sopSizeMultiplier").get<double>();
+    if (j.end() != j.find("sopTradesMultiplier")) k.sopTradesMultiplier = j.at("sopTradesMultiplier").get<double>();
+    if (j.end() != j.find("delayAPI")) k.delayAPI = j.at("delayAPI").get<int>();
+    if (j.end() != j.find("cancelOrdersAuto")) k.cancelOrdersAuto = j.at("cancelOrdersAuto").get<bool>();
+    if (j.end() != j.find("cleanPongsAuto")) k.cleanPongsAuto = j.at("cleanPongsAuto").get<double>();
+    if (j.end() != j.find("profitHourInterval")) k.profitHourInterval = j.at("profitHourInterval").get<double>();
+    if (j.end() != j.find("audio")) k.audio = j.at("audio").get<bool>();
+    if (j.end() != j.find("delayUI")) k.delayUI = j.at("delayUI").get<int>();
+    if ((int)k.mode > 6) k.mode = mQuotingMode::Top; // remove after everybody have the new mode/safety in their databases (2018)
+    if (k.mode == mQuotingMode::Depth) k.widthPercentage = false;
+    k._matchPings = k.safety == mQuotingSafety::Boomerang or k.safety == mQuotingSafety::AK47;
   };
   struct mPair {
     string base,
@@ -390,7 +477,108 @@ namespace K {
       {"quotesInMemoryDone", k.quotesInMemoryDone}
     };
   };
-  static map<string, mOrder> allOrders;
+  static function<void(int)> *evExit;
+  static const char kB64Alphabet[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                                     "abcdefghijklmnopqrstuvwxyz"
+                                     "0123456789+/";
+  static char RBLACK[] = "\033[0;30m", RRED[]    = "\033[0;31m", RGREEN[] = "\033[0;32m", RYELLOW[] = "\033[0;33m",
+              RBLUE[]  = "\033[0;34m", RPURPLE[] = "\033[0;35m", RCYAN[]  = "\033[0;36m", RWHITE[]  = "\033[0;37m",
+              BBLACK[] = "\033[1;30m", BRED[]    = "\033[1;31m", BGREEN[] = "\033[1;32m", BYELLOW[] = "\033[1;33m",
+              BBLUE[]  = "\033[1;34m", BPURPLE[] = "\033[1;35m", BCYAN[]  = "\033[1;36m", BWHITE[]  = "\033[1;37m";
+  static bool wInit;
+  static WINDOW *wBorder,
+                *wLog;
+  static mutex wMutex,
+               ogMutex;
+  class Gw {
+    public:
+      static Gw *E(mExchange e);
+      string (*randId)() = 0;
+      function<void(mOrder)>        evDataOrder;
+      function<void(mTrade)>        evDataTrade;
+      function<void(mWallet)>       evDataWallet;
+      function<void(mLevels)>       evDataLevels;
+      function<void(mConnectivity)> evConnectOrder,
+                                    evConnectMarket;
+      mutex                   *hubMutex = nullptr;
+      uWS::Hub                *hub      = nullptr;
+      uWS::Group<uWS::CLIENT> *gwGroup  = nullptr;
+      mExchange exchange = mExchange::Null;
+          int free    = 0;
+       double makeFee = 0,  minTick = 0,
+              takeFee = 0,  minSize = 0;
+       string base    = "", quote   = "",
+              name    = "", symbol  = "",
+              apikey  = "", secret  = "",
+              user    = "", pass    = "",
+              ws      = "", http    = "";
+      virtual string A() = 0;
+      virtual   void wallet() = 0,
+                     levels() = 0,
+                     send(string oI, mSide oS, double oP, double oQ, mOrderType oLM, mTimeInForce oTIF, bool oPO, unsigned long oT) = 0,
+                     cancel(string oI, string oE, mSide oS, unsigned long oT) = 0,
+                     cancelAll() = 0,
+                     close() = 0;
+  };
+  class Klass {
+    protected:
+      Gw             *gw = nullptr;
+      mQuotingParams *qp = nullptr;
+      Klass          *config = nullptr,
+                     *events = nullptr,
+                     *memory = nullptr,
+                     *client = nullptr,
+                     *orders = nullptr,
+                     *market = nullptr,
+                     *wallet = nullptr,
+                     *engine = nullptr;
+      virtual void load(int argc, char** argv) {};
+      virtual void load() {};
+      virtual void waitTime() {};
+      virtual void waitData() {};
+      virtual void waitUser() {};
+      virtual void run() {};
+    public:
+      void main(int argc, char** argv) {
+        load(argc, argv);
+        run();
+      };
+      void wait() {
+        load();
+        waitTime();
+        waitData();
+        waitUser();
+        run();
+      };
+      void gwLink(Gw *k) { gw = k; };
+      void qpLink(mQuotingParams *k) { qp = k; };
+      void cfLink(Klass *k) { config = k; };
+      void evLink(Klass *k) { events = k; };
+      void dbLink(Klass *k) { memory = k; };
+      void uiLink(Klass *k) { client = k; };
+      void ogLink(Klass *k) { orders = k; };
+      void mgLink(Klass *k) { market = k; };
+      void pgLink(Klass *k) { wallet = k; };
+      void qeLink(Klass *k) { engine = k; };
+  };
+  class kLass: public Klass {
+    private:
+      mQuotingParams p;
+    public:
+      void link(Klass *EV, Klass *DB, Klass *UI, Klass *QP, Klass *OG, Klass *MG, Klass *PG, Klass *QE, Klass *GW) {
+        Klass *CF = (Klass*)this;
+        EV->gwLink(gw);                 UI->gwLink(gw);                 OG->gwLink(gw); MG->gwLink(gw); PG->gwLink(gw); QE->gwLink(gw); GW->gwLink(gw);
+                        DB->cfLink(CF); UI->cfLink(CF);                 OG->cfLink(CF); MG->cfLink(CF); PG->cfLink(CF); QE->cfLink(CF); GW->cfLink(CF);
+                                        UI->evLink(EV); QP->evLink(EV); OG->evLink(EV); MG->evLink(EV); PG->evLink(EV); QE->evLink(EV); GW->evLink(EV);
+                                        UI->dbLink(DB); QP->dbLink(DB); OG->dbLink(DB); MG->dbLink(DB); PG->dbLink(DB);
+                                                        QP->uiLink(UI); OG->uiLink(UI); MG->uiLink(UI); PG->uiLink(UI); QE->uiLink(UI); GW->uiLink(UI);
+                                                        QP->qpLink(&p); OG->qpLink(&p); MG->qpLink(&p); PG->qpLink(&p); QE->qpLink(&p); GW->qpLink(&p);
+                                                                                        MG->ogLink(OG); PG->ogLink(OG); QE->ogLink(OG);
+                                                                                                        PG->mgLink(MG); QE->mgLink(MG);
+                                                                                                                        QE->pgLink(PG);
+                                                                                                                                        GW->qeLink(QE);
+      };
+  };
 }
 
 #endif

@@ -2,16 +2,17 @@
 #define K_DB_H_
 
 namespace K {
-  static sqlite3* db;
   class DB: public Klass {
+    private:
+      sqlite3* db;
     protected:
       void load() {
-        if (sqlite3_open(argDatabase.data(), &db))
+        if (sqlite3_open(((CF*)config)->argDatabase.data(), &db))
           FN::logExit("DB", sqlite3_errmsg(db), EXIT_SUCCESS);
-        FN::logDB(argDatabase);
+        FN::logDB(((CF*)config)->argDatabase);
       };
     public:
-      static json load(uiTXT k) {
+      json load(uiTXT k) {
         char* zErrMsg = 0;
         sqlite3_exec(db,
           string("CREATE TABLE ").append(string(1, (char)k)).append("("                                   \
@@ -30,7 +31,7 @@ namespace K {
         if (j[strlen(j.data()) - 1] == ',') j.pop_back();
         return json::parse(j.append("]"));
       };
-      static void insert(uiTXT k, json o, bool rm = true, string id = "NULL", long time = 0) {
+      void insert(uiTXT k, json o, bool rm = true, string id = "NULL", long time = 0) {
         char* zErrMsg = 0;
         sqlite3_exec(db,
           string((rm or id != "NULL" or time) ? string("DELETE FROM ").append(string(1, (char)k))
@@ -44,10 +45,10 @@ namespace K {
         if (zErrMsg) FN::logWar("DB", string("Sqlite error: ") + zErrMsg);
         sqlite3_free(zErrMsg);
       };
-      static int size() {
-        if (argDatabase==":memory:") return 0;
+      int size() {
+        if (((CF*)config)->argDatabase==":memory:") return 0;
         struct stat st;
-        return stat(argDatabase.data(), &st) != 0 ? 0 : st.st_size;
+        return stat(((CF*)config)->argDatabase.data(), &st) != 0 ? 0 : st.st_size;
       };
     private:
       static int cb(void *param, int argc, char **argv, char **azColName) {
