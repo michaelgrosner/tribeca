@@ -54,7 +54,7 @@ UI_OPENPORT=3000
 API_EXCHANGE=NULL
 #  ▌____________________________________________________.
 #  █ API_CURRENCY                                       .
-#  ██ - Allows any existent currency pair (see the website of the exchange), the format must be "AAA/BBB".
+#  ██ - Allows any existent currency pair (see the website of the exchange), the format must be "AAA/ZZZ".
 #API_CURRENCY=BTC/EUR
 API_CURRENCY=BTC/USD
 #  ▌____________________________________________________.

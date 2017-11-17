@@ -7,6 +7,7 @@ namespace K  {
       uWS::Hub *hub = nullptr;
       int eCode = EXIT_FAILURE;
     public:
+      mutex hubMutex;
       uWS::Group<uWS::SERVER> *uiGroup = nullptr;
       uv_timer_t *tCalcs = nullptr,
                  *tStart = nullptr,
@@ -38,6 +39,7 @@ namespace K  {
         uv_timer_init(hub->getLoop(), tCancel = new uv_timer_t());
       };
       void waitData() {
+        gw->hubMutex = &hubMutex;
         gw->gwGroup = hub->createGroup<uWS::CLIENT>();
       };
       void waitUser() {
@@ -74,9 +76,7 @@ namespace K  {
         }
         halt(code);
       };
-      void listen(mutex *k, int headless, int port) {
-        gw->wsMutex = k;
-        if (headless) return;
+      void listen(int port) {
         string protocol("HTTP");
         if ((access("etc/sslcert/server.crt", F_OK) != -1) and (access("etc/sslcert/server.key", F_OK) != -1)
           and hub->listen(port, uS::TLS::createContext("etc/sslcert/server.crt", "etc/sslcert/server.key", ""), 0, uiGroup)

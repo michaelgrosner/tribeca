@@ -4,6 +4,7 @@
 namespace K {
   class OG: public Klass {
     private:
+      map<string, mOrder> allOrders;
       map<string, string> allOrdersIds;
     public:
       vector<mTrade> tradesHistory;
@@ -80,6 +81,30 @@ namespace K {
         ogMutex.unlock();
         if (((CF*)config)->argDebugOrders) FN::log("DEBUG", string("OG remove ") + oI + "::" + oE);
       };
+      void countOrders(unsigned int *qNew, unsigned int *qWorking, unsigned int *qDone) {
+        ogMutex.lock();
+        for (map<string, mOrder>::iterator it = allOrders.begin(); it != allOrders.end(); ++it)
+          if ((mORS)it->second.orderStatus == mORS::New) ++(*qNew);
+          else if ((mORS)it->second.orderStatus == mORS::Working) ++(*qWorking);
+          else ++(*qDone);
+        ogMutex.unlock();
+      };
+      map<string, mOrder> ordersBothSides() {
+        map<string, mOrder> ordersSides;
+        ogMutex.lock();
+        ordersSides = allOrders;
+        ogMutex.unlock();
+        return ordersSides;
+      };
+      multimap<double, mOrder> ordersAtSide(mSide side) {
+        multimap<double, mOrder> ordersSide;
+        ogMutex.lock();
+        for (map<string, mOrder>::iterator it = allOrders.begin(); it != allOrders.end(); ++it)
+          if ((mSide)it->second.side == side)
+            ordersSide.insert(pair<double, mOrder>(it->second.price, it->second));
+        ogMutex.unlock();
+        return ordersSide;
+      };
     private:
       function<json()> helloTrades = [&]() {
         json k;
@@ -89,7 +114,7 @@ namespace K {
         }
         return k;
       };
-      function<json()> helloOrders = []() {
+      function<json()> helloOrders = [&]() {
         json k;
         ogMutex.lock();
         for (map<string, mOrder>::iterator it = allOrders.begin(); it != allOrders.end(); ++it) {
@@ -165,10 +190,8 @@ namespace K {
         if (o.computationalLatency) o.time = FN::T();
         toMemory(o);
         ((EV*)events)->ogOrder(o);
-        if (o.orderStatus != mORS::New)
-          ((UI*)client)->send(uiTXT::OrderStatusReports, o, true);
-        if (k.lastQuantity > 0)
-          toHistory(o);
+        if (o.orderStatus != mORS::New) toClient();
+        if (k.lastQuantity > 0) toHistory(o);
         return o;
       };
       void cancelOpenOrders() {
@@ -212,6 +235,15 @@ namespace K {
           }
         }
       };
+      void toClient() {
+        json k;
+        ogMutex.lock();
+        for (map<string, mOrder>::iterator it = allOrders.begin(); it != allOrders.end(); ++it)
+          if ((mORS)it->second.orderStatus == mORS::Working)
+            k.push_back(it->second);
+        ogMutex.unlock();
+        ((UI*)client)->send(uiTXT::OrderStatusReports, k, true);
+      };
       void toHistory(mOrder o) {
         double fee = 0;
         double val = abs(o.price * o.lastQuantity);
@@ -227,17 +259,17 @@ namespace K {
         );
         FN::log(trade, ((CF*)config)->argExchange);
         ((EV*)events)->ogTrade(trade);
-        if (((QP*)params)->matchPings()) {
-          double widthPong = qp.widthPercentage
-            ? qp.widthPongPercentage * trade.price / 100
-            : qp.widthPong;
+        if (qp->_matchPings) {
+          double widthPong = qp->widthPercentage
+            ? qp->widthPongPercentage * trade.price / 100
+            : qp->widthPong;
           map<double, string> matches;
           for (vector<mTrade>::iterator it = tradesHistory.begin(); it != tradesHistory.end(); ++it)
             if (it->quantity - it->Kqty > 0
               and it->side == (trade.side == mSide::Bid ? mSide::Ask : mSide::Bid)
               and (trade.side == mSide::Bid ? (it->price > trade.price + widthPong) : (it->price < trade.price - widthPong))
             ) matches[it->price] = it->tradeId;
-          matchPong(matches, (qp.pongAt == mPongAt::LongPingFair or qp.pongAt == mPongAt::LongPingAggressive) ? trade.side == mSide::Ask : trade.side == mSide::Bid, trade);
+          matchPong(matches, (qp->pongAt == mPongAt::LongPingFair or qp->pongAt == mPongAt::LongPingAggressive) ? trade.side == mSide::Ask : trade.side == mSide::Bid, trade);
         } else {
           ((UI*)client)->send(uiTXT::Trades, trade);
           ((DB*)memory)->insert(uiTXT::Trades, trade, false, trade.tradeId);
@@ -250,7 +282,7 @@ namespace K {
           {"value", trade.value},
           {"pong", o.isPong}
         });
-        cleanAuto(trade.time, qp.cleanPongsAuto);
+        cleanAuto(trade.time, qp->cleanPongsAuto);
       };
       void matchPong(map<double, string> matches, bool reverse, mTrade pong) {
         if (reverse) for (map<double, string>::reverse_iterator it = matches.rbegin(); it != matches.rend(); ++it) {

@@ -2,7 +2,6 @@
 #define K_CF_H_
 
 namespace K {
-  Gw *gw;
   class CF: public kLass {
     public:
       int argPort = 3000,
@@ -167,17 +166,15 @@ namespace K {
           cout << "ARG" << RRED << " Errrror:" << BRED << " Missing mandatory argument \"--exchange\", at least." << '\n';
           exit(EXIT_SUCCESS);
         }
-        if (argDebug) {
-          argDebugEvents = 1;
-          argDebugOrders = 1;
-          argDebugQuotes = 1;
-        }
-        if (!argColors) {
-          RBLACK[0] = 0; RRED[0]    = 0; RGREEN[0] = 0; RYELLOW[0] = 0;
-          RBLUE[0]  = 0; RPURPLE[0] = 0; RCYAN[0]  = 0; RWHITE[0]  = 0;
-          BBLACK[0] = 0; BRED[0]    = 0; BGREEN[0] = 0; BYELLOW[0] = 0;
-          BBLUE[0]  = 0; BPURPLE[0] = 0; BCYAN[0]  = 0; BWHITE[0]  = 0;
-        }
+        if (argDebug)
+          argDebugEvents =
+          argDebugOrders =
+          argDebugQuotes = argDebug;
+        if (!argColors)
+          RBLACK[0] = RRED[0]    = RGREEN[0] = RYELLOW[0] =
+          RBLUE[0]  = RPURPLE[0] = RCYAN[0]  = RWHITE[0]  =
+          BBLACK[0] = BRED[0]    = BGREEN[0] = BYELLOW[0] =
+          BBLUE[0]  = BPURPLE[0] = BCYAN[0]  = BWHITE[0]  = argColors;
         if (argDatabase == "")
           argDatabase = string("/data/db/K.")
             + to_string((int)exchange())
