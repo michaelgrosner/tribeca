@@ -209,6 +209,7 @@ namespace K {
         double pDiv = qp.percentageValues
           ? qp.positionDivergencePercentage * value / 100
           : qp.positionDivergence;
+        if (qp.positionDivergenceMode != mPDiffMode::Off && autoPositionMode != mAutoPositionMode::Manual) pDiv = pgDynamicPDiff;
         if (buySize and qp.aggressivePositionRebalancing != mAPR::Off and qp.buySizeMax)
           buySize = fmax(buySize, pgTargetBasePos - totalBasePosition);
         if (sellSize and qp.aggressivePositionRebalancing != mAPR::Off and qp.sellSizeMax)

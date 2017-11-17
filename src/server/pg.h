@@ -8,6 +8,7 @@ namespace K {
   map<double, mTrade> pgBuys;
   map<double, mTrade> pgSells;
   double pgTargetBasePos = 0;
+  double pgDynamicPDiff = 0;
   string pgSideAPR = "";
   class PG: public Klass {
     protected:
@@ -81,6 +82,7 @@ namespace K {
         if (pgTargetBasePos and abs(pgTargetBasePos - targetBasePosition) < 1e-4 and pgSideAPR_ == pgSideAPR) return;
         pgTargetBasePos = targetBasePosition;
         pgSideAPR_ = pgSideAPR;
+        calcDynamicPDiff(value);
         ev_pgTargetBasePosition();
         json k = {{"tbp", pgTargetBasePos}, {"sideAPR", pgSideAPR}};
         UI::uiSend(uiTXT::TargetBasePosition, k, true);
@@ -89,6 +91,21 @@ namespace K {
         ss << (int)(pgTargetBasePos / value * 1e+2) << "% = " << setprecision(8) << fixed << pgTargetBasePos;
         FN::log("TBP", ss.str() + " " + gw->base);
       };
+      static void calcDynamicPDiff(double value) {
+	      double divCenter = abs(pgTargetBasePos / 50 - 1);
+	      double pDiv = qp.percentageValues
+          	? qp.positionDivergencePercentage * value / 100
+		  	: qp.positionDivergence;
+          double pDivMin = qp.percentageValues
+          	? qp.positionDivergencePercentageMin * value / 100
+		  	: qp.positionDivergenceMin;
+	      switch (qp.PositionDivergenceMode) {
+		      case positionDivergenceMode::Off : pgDynamicPDiff = pDiv; break;
+		      case positionDivergenceMode::Linear : pgDynamicPDiff = pDivMin + (divCenter * (pDiv - pDivMin)); break;
+		      	
+	      }
+	      
+      }
       static void addTrade(mTrade k) {
         mTrade k_(k.price, k.quantity, k.time);
         if (k.side == mSide::Bid) pgBuys[k.price] = k_;
