@@ -15,8 +15,8 @@ V_UWS   := 0.14.4
 V_UV    := 1.15.0
 V_SQL   := 3200100
 V_QF    := v.1.14.4
-V_PVS   := 6.18.23098.1541
-KZIP     = 9a396d28839315e7f68acecf56589f6246b28363
+V_PVS   := 6.19.23789.1731
+KZIP     = 630591da1de7ae29792e265b9bd1b157041ce687
 KARGS    = -Wextra -std=c++11 -O3 -I$(KLOCAL)/include          \
   src/server/K.cxx -pthread -rdynamic -DUSE_LIBUV              \
   -DK_STAMP='"$(shell date --rfc-3339=seconds | cut -f1 -d+)"' \
@@ -212,7 +212,7 @@ docker:
 	@$(MAKE) packages
 	mkdir -p app/server
 	@$(MAKE) build link
-	sed -i "/Usage/,+110d" K.sh
+	sed -i "/Usage/,+105d" K.sh
 
 link:
 	cd app && ln -f -s ../$(KLOCAL)/var/www client

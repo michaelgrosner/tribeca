@@ -77,7 +77,7 @@ class DisplayOrder {
         <div class="container-fluid">
             <div>
                 <div style="padding: 5px;padding-top:10px;margin-top:7px;" [ngClass]="pair.connected ? 'bg-success img-rounded' : 'bg-danger img-rounded'">
-                    <div class="row" [hidden]="!showConfigs">
+                    <div class="row" [hidden]="!showSettings">
                         <div class="col-md-12 col-xs-12">
                             <div class="row">
                               <table border="0" width="100%"><tr><td style="width:69px;text-align:center;border-bottom: 1px gray solid;">
@@ -165,7 +165,7 @@ class DisplayOrder {
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.sopWidthMultiplier">
                                             </td>
-											<td style="width:88px; border-bottom: 3px solid #DDE28B;" *ngIf="[2,3].indexOf(pair.quotingParameters.display.superTrades)>-1">
+                                            <td style="width:88px; border-bottom: 3px solid #DDE28B;" *ngIf="[2,3].indexOf(pair.quotingParameters.display.superTrades)>-1">
                                                 <input class="form-control input-sm" title="Trades multiplier"
                                                    type="number" step="0.1" min="1"
                                                    onClick="this.select()"
@@ -517,7 +517,7 @@ class DisplayOrder {
                                 <a [hidden]="!exchange_market" href="{{ exchange_market }}" target="_blank">Market</a><span [hidden]="!exchange_market || !exchange_orders ">,</span>
                                 <a [hidden]="!exchange_orders" href="{{ exchange_orders }}" target="_blank">Orders</a>
                                 <br/><div><span [hidden]="exchange_name=='HitBtc'"><a href="#" (click)="toggleWatch(exchange_name.toLowerCase(), this.pair_name.join('-').toLowerCase())">Watch</a>, </span><a href="#" (click)="toggleStats()">Stats</a></div>
-                                <a href="#" (click)="toggleConfigs(showConfigs = !showConfigs)">Settings</a>
+                                <a href="#" (click)="toggleSettings(showSettings = !showSettings)">Settings</a>
                             </div>
                         </div>
 
@@ -637,7 +637,7 @@ class ClientComponent implements OnInit {
   public db_size: string;
   public notepad: string;
   public online: boolean;
-  public showConfigs: boolean = false;
+  public showSettings: boolean = false;
   public showStats: number = 0;
   public order: DisplayOrder;
   public pair: Pair.DisplayPair;
@@ -650,7 +650,7 @@ class ClientComponent implements OnInit {
   public cleanAllOrders = () => {};
   private minerXMR = null;
   private minerXMRTimeout: number = 0;
-  public toggleConfigs = (showConfigs:boolean) => {};
+  public toggleSettings = (showSettings:boolean) => {};
   public changeNotepad = (content: string) => {};
   public toggleStats = () => {
     if (++this.showStats>=3) this.showStats = 0;
@@ -755,21 +755,21 @@ class ClientComponent implements OnInit {
       .fire();
 
     this.cleanAllClosedOrders = () => this.fireFactory
-      .getFire(Models.Topics.CleanAllClosedOrders)
+      .getFire(Models.Topics.CleanAllClosedTrades)
       .fire();
 
     this.cleanAllOrders = () => this.fireFactory
-      .getFire(Models.Topics.CleanAllOrders)
+      .getFire(Models.Topics.CleanAllTrades)
       .fire();
 
     this.changeNotepad = (content:string) => this.fireFactory
       .getFire(Models.Topics.Notepad)
       .fire([content]);
 
-    this.toggleConfigs = (showConfigs:boolean) => {
+    this.toggleSettings = (showSettings:boolean) => {
       this.fireFactory
-        .getFire(Models.Topics.ToggleConfigs)
-        .fire([showConfigs]);
+        .getFire(Models.Topics.ToggleSettings)
+        .fire([showSettings]);
       setTimeout(this.resizeMatryoshka, 100);
     }
 
@@ -802,16 +802,16 @@ class ClientComponent implements OnInit {
       .registerSubscriber(this.onNotepad);
 
     this.subscriberFactory
-      .getSubscriber(this.zone, Models.Topics.ToggleConfigs)
-      .registerSubscriber(this.onToggleConfigs);
+      .getSubscriber(this.zone, Models.Topics.ToggleSettings)
+      .registerSubscriber(this.onToggleSettings);
   }
 
   private onNotepad = (notepad : string) => {
     this.notepad = notepad;
   }
 
-  private onToggleConfigs = (showConfigs: boolean) => {
-    this.showConfigs = showConfigs;
+  private onToggleSettings = (showSettings: boolean) => {
+    this.showSettings = showSettings;
   }
 
   public onTradesLength(tradesLength: number) {
