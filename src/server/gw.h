@@ -131,11 +131,11 @@ namespace K {
           json k = FN::wJet(string(gw->http).append("/pubticker/").append(gw->symbol));
           if (k.find("last_price") != k.end()) {
             stringstream price_;
-            price_ << scientific << setprecision(8) << stod(k.value("last_price", "0"));
+            price_ << scientific << stod(k.value("last_price", "0"));
             string _price_ = price_.str();
             for (string::iterator it=_price_.begin(); it!=_price_.end();)
               if (*it == '+' or *it == '-') break; else it = _price_.erase(it);
-            stringstream os(string("1e").append(to_string(stod(_price_)-4)));
+            stringstream os(string("1e").append(to_string(fmax(stod(_price_),-4)-4)));
             os >> gw->minTick;
           }
           k = FN::wJet(string(gw->http).append("/symbols_details"));
