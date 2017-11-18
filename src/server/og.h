@@ -6,6 +6,7 @@ namespace K {
     private:
       map<string, mOrder> allOrders;
       map<string, string> allOrdersIds;
+      mutex ogMutex;
     public:
       vector<mTrade> tradesHistory;
     protected:
@@ -57,13 +58,10 @@ namespace K {
         ++((UI*)client)->orders60sec;
       };
       void cancelOrder(string k) {
-        ogMutex.lock();
-        if (allOrders.find(k) == allOrders.end() or (allOrders[k].exchangeId == "")) {
-          ogMutex.unlock();
+        map<string, mOrder> orders = ordersBothSides();
+        if (orders.find(k) == orders.end() or (orders[k].exchangeId == ""))
           return;
-        }
-        mOrder o = allOrders[k];
-        ogMutex.unlock();
+        mOrder o = orders[k];
         if (((CF*)config)->argDebugOrders) FN::log("DEBUG", string("OG cancel ") + (o.side == mSide::Bid ? "BID id " : "ASK id ") + o.orderId + "::" + o.exchangeId);
         gw->cancel(o.orderId, o.exchangeId, o.side, o.time);
       };
@@ -82,27 +80,22 @@ namespace K {
         if (((CF*)config)->argDebugOrders) FN::log("DEBUG", string("OG remove ") + oI + "::" + oE);
       };
       void countOrders(unsigned int *qNew, unsigned int *qWorking, unsigned int *qDone) {
-        ogMutex.lock();
-        for (map<string, mOrder>::iterator it = allOrders.begin(); it != allOrders.end(); ++it)
+        map<string, mOrder> orders = ordersBothSides();
+        for (map<string, mOrder>::iterator it = orders.begin(); it != orders.end(); ++it)
           if ((mORS)it->second.orderStatus == mORS::New) ++(*qNew);
           else if ((mORS)it->second.orderStatus == mORS::Working) ++(*qWorking);
           else ++(*qDone);
-        ogMutex.unlock();
       };
       map<string, mOrder> ordersBothSides() {
-        map<string, mOrder> ordersSides;
-        ogMutex.lock();
-        ordersSides = allOrders;
-        ogMutex.unlock();
-        return ordersSides;
+        lock_guard<mutex> lock(ogMutex);
+        return allOrders;
       };
       multimap<double, mOrder> ordersAtSide(mSide side) {
         multimap<double, mOrder> ordersSide;
-        ogMutex.lock();
-        for (map<string, mOrder>::iterator it = allOrders.begin(); it != allOrders.end(); ++it)
+        map<string, mOrder> orders = ordersBothSides();
+        for (map<string, mOrder>::iterator it = orders.begin(); it != orders.end(); ++it)
           if ((mSide)it->second.side == side)
             ordersSide.insert(pair<double, mOrder>(it->second.price, it->second));
-        ogMutex.unlock();
         return ordersSide;
       };
     private:
@@ -116,12 +109,11 @@ namespace K {
       };
       function<json()> helloOrders = [&]() {
         json k;
-        ogMutex.lock();
-        for (map<string, mOrder>::iterator it = allOrders.begin(); it != allOrders.end(); ++it) {
+        map<string, mOrder> orders = ordersBothSides();
+        for (map<string, mOrder>::iterator it = orders.begin(); it != orders.end(); ++it) {
           if (mORS::Working != it->second.orderStatus) continue;
           k.push_back(it->second);
         }
-        ogMutex.unlock();
         return k;
       };
       function<void(json)> kissCancelAllOrders = [&](json k) {
@@ -156,18 +148,18 @@ namespace K {
       };
       mOrder updateOrderState(mOrder k) {
         mOrder o;
-        ogMutex.lock();
+        map<string, mOrder> orders = ordersBothSides();
         if (k.orderStatus == mORS::New) o = k;
-        else if (k.orderId != "" and allOrders.find(k.orderId) != allOrders.end())
-          o = allOrders[k.orderId];
-        else if (k.exchangeId != "" and allOrdersIds.find(k.exchangeId) != allOrdersIds.end()) {
-          o = allOrders[allOrdersIds[k.exchangeId]];
-          k.orderId = o.orderId;
-        } else {
+        else if (k.orderId != "" and orders.find(k.orderId) != orders.end())
+          o = orders[k.orderId];
+        else if (k.exchangeId != "") {
+          ogMutex.lock();
+          if (allOrdersIds.find(k.exchangeId) != allOrdersIds.end()) {
+            o = orders[allOrdersIds[k.exchangeId]];
+            k.orderId = o.orderId;
+          } else { ogMutex.unlock(); return o; }
           ogMutex.unlock();
-          return o;
-        }
-        ogMutex.unlock();
+        } else return o;
         if (k.orderId!="") o.orderId = k.orderId;
         if (k.exchangeId!="") o.exchangeId = k.exchangeId;
         if ((int)k.exchange!=0) o.exchange = k.exchange;
@@ -195,14 +187,10 @@ namespace K {
         return o;
       };
       void cancelOpenOrders() {
-        vector<string> k;
-        ogMutex.lock();
-        for (map<string, mOrder>::iterator it = allOrders.begin(); it != allOrders.end(); ++it)
+        map<string, mOrder> orders = ordersBothSides();
+        for (map<string, mOrder>::iterator it = orders.begin(); it != orders.end(); ++it)
           if (mORS::New == (mORS)it->second.orderStatus or mORS::Working == (mORS)it->second.orderStatus)
-            k.push_back(it->first);
-        ogMutex.unlock();
-        for (vector<string>::iterator it = k.begin(); it != k.end(); ++it)
-          cancelOrder(*it);
+            cancelOrder(it->first);
       };
       void cleanClosedTrades() {
         for (vector<mTrade>::iterator it = tradesHistory.begin(); it != tradesHistory.end();) {
@@ -237,11 +225,10 @@ namespace K {
       };
       void toClient() {
         json k;
-        ogMutex.lock();
-        for (map<string, mOrder>::iterator it = allOrders.begin(); it != allOrders.end(); ++it)
+        map<string, mOrder> orders = ordersBothSides();
+        for (map<string, mOrder>::iterator it = orders.begin(); it != orders.end(); ++it)
           if ((mORS)it->second.orderStatus == mORS::Working)
             k.push_back(it->second);
-        ogMutex.unlock();
         ((UI*)client)->send(uiTXT::OrderStatusReports, k, true);
       };
       void toHistory(mOrder o) {
