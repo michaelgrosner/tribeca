@@ -11,7 +11,7 @@ namespace K {
       mPosition position;
       mSafety safety;
       double targetBasePosition = 0;
-      double pgDynamicPDiff = 0;
+      double dynamicPDiff = 0;
       string sideAPR = "";
       mutex pgMutex;
     protected:
@@ -85,6 +85,7 @@ namespace K {
         if (targetBasePosition and abs(targetBasePosition - next) < 1e-4 and sideAPR_ == sideAPR) return;
         targetBasePosition = next;
         sideAPR_ = sideAPR;
+        if (qp->autoPositionMode != mAutoPositionMode::Manual) calcDynamicPDiff(value);
         ((EV*)events)->pgTargetBasePosition();
         json k = {{"tbp", targetBasePosition}, {"sideAPR", sideAPR}};
         ((UI*)client)->send(uiTXT::TargetBasePosition, k, true);
@@ -94,19 +95,24 @@ namespace K {
         FN::log("TBP", ss.str() + " " + gw->base);
       };
       void calcDynamicPDiff(double value) {
-	      double divCenter = abs(pgTargetBasePos / 50 - 1);
-	      double pDiv = qp.percentageValues
-          	? qp.positionDivergencePercentage * value / 100
-		  	: qp.positionDivergence;
-          double pDivMin = qp.percentageValues
-          	? qp.positionDivergencePercentageMin * value / 100
-		  	: qp.positionDivergenceMin;
-	      switch (qp.PositionDivergenceMode) {
-		      case positionDivergenceMode::Off : pgDynamicPDiff = pDiv; break;
-		      case positionDivergenceMode::Linear : pgDynamicPDiff = pDivMin + (divCenter * (pDiv - pDivMin)); break;
-		      	
+	      double divCenter = abs((targetBasePosition / value * 2) - 1);
+	      double pDiv = qp->percentageValues
+          	? qp->positionDivergencePercentage * value / 100
+		  	: qp->positionDivergence;
+          double pDivMin = qp->percentageValues
+          	? qp->positionDivergencePercentageMin * value / 100
+		  	: qp->positionDivergenceMin;
+	      switch (qp->positionDivergenceMode) {
+		      case mPDiffMode::Off : dynamicPDiff = pDiv; break;
+		      case mPDiffMode::Linear : dynamicPDiff = pDivMin + (divCenter * (pDiv - pDivMin)); break;
+		      case mPDiffMode::Sine : dynamicPDiff = pDivMin + (sin(divCenter) * (pDiv - pDivMin)); break;
+		      case mPDiffMode::SQRT : dynamicPDiff = pDivMin + (sqrt(divCenter) * (pDiv - pDivMin)); break;
+		      case mPDiffMode::Switch : dynamicPDiff = targetBasePosition < 10 or targetBasePosition > 90 ? pDivMin : pDiv; break;	
 	      }
-	      
+	     stringstream ss;
+        ss << (int)(dynamicPDiff / value * 1e+2) << "% = " << setprecision(8) << fixed << dynamicPDiff;
+        FN::log("PgDynDiff", ss.str() + " " + gw->base);
+ 
       }
       void addTrade(mTrade k) {
         mTrade k_(k.price, k.quantity, k.time);
