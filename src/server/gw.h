@@ -135,7 +135,7 @@ namespace K {
             string _price_ = price_.str();
             for (string::iterator it=_price_.begin(); it!=_price_.end();)
               if (*it == '+' or *it == '-') break; else it = _price_.erase(it);
-            stringstream os(string("1e").append(to_string(fmax(stod(_price_),-4)-4)));
+            stringstream os(string("1e").append(to_string(stod(_price_)-4)));
             os >> gw->minTick;
           }
           k = FN::wJet(string(gw->http).append("/symbols_details"));
