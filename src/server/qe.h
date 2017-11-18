@@ -112,7 +112,7 @@ namespace K {
         ((UI*)client)->send(uiTXT::QuoteStatus, status, true);
       };
       bool diffCounts(unsigned int *qNew, unsigned int *qWorking, unsigned int *qDone) {
-        ((OG*)orders)->countOrders(qNew, qWorking, qDone);
+        ((OG*)broker)->countOrders(qNew, qWorking, qDone);
         return *qNew != status.quotesInMemoryNew
           or *qWorking != status.quotesInMemoryWorking
           or *qDone != status.quotesInMemoryDone;
@@ -517,14 +517,14 @@ namespace K {
         } else return mQuoteState::Live;
       };
       void updateQuote(mLevel q, mSide side, bool isPong) {
-        multimap<double, mOrder> ordersSide = ((OG*)orders)->ordersAtSide(side);
+        multimap<double, mOrder> ordersSide = ((OG*)broker)->ordersAtSide(side);
         int k = ordersSide.size();
         if (!k) return start(side, q, isPong);
         unsigned long T = FN::T();
         for (multimap<double, mOrder>::iterator it = ordersSide.begin(); it != ordersSide.end(); ++it)
           if (it->first == q.price) { return; }
           else if (it->second.orderStatus == mORS::New) {
-            if (T-10e+3>it->second.time) ((OG*)orders)->cleanOrder(it->second.orderId, it->second.exchangeId);
+            if (T-10e+3>it->second.time) ((OG*)broker)->cleanOrder(it->second.orderId, it->second.exchangeId);
             if (qp->safety != mQuotingSafety::AK47 or (int)k >= qp->bullets) return;
           }
         modify(side, q, isPong);
@@ -559,28 +559,28 @@ namespace K {
           tStarted = 0;
           qeNextT = FN::T();
         }
-        ((OG*)orders)->sendOrder(side, q.price, q.size, mOrderType::Limit, mTimeInForce::GTC, isPong, true);
+        ((OG*)broker)->sendOrder(side, q.price, q.size, mOrderType::Limit, mTimeInForce::GTC, isPong, true);
       };
       void stopWorstsQuotes(mSide side, double price) {
-        multimap<double, mOrder> ordersSide = ((OG*)orders)->ordersAtSide(side);
+        multimap<double, mOrder> ordersSide = ((OG*)broker)->ordersAtSide(side);
         for (multimap<double, mOrder>::iterator it = ordersSide.begin(); it != ordersSide.end(); ++it)
           if (side == mSide::Bid
             ? price < it->second.price
             : price > it->second.price
-          ) ((OG*)orders)->cancelOrder(it->second.orderId);
+          ) ((OG*)broker)->cancelOrder(it->second.orderId);
       };
       void stopWorstQuote(mSide side) {
-        multimap<double, mOrder> ordersSide = ((OG*)orders)->ordersAtSide(side);
+        multimap<double, mOrder> ordersSide = ((OG*)broker)->ordersAtSide(side);
         if (ordersSide.size())
-          ((OG*)orders)->cancelOrder(side == mSide::Bid
+          ((OG*)broker)->cancelOrder(side == mSide::Bid
             ? ordersSide.begin()->second.orderId
             : ordersSide.rbegin()->second.orderId
           );
       };
       void stopAllQuotes(mSide side) {
-        multimap<double, mOrder> ordersSide = ((OG*)orders)->ordersAtSide(side);
+        multimap<double, mOrder> ordersSide = ((OG*)broker)->ordersAtSide(side);
         for (multimap<double, mOrder>::iterator it = ordersSide.begin(); it != ordersSide.end(); ++it)
-          ((OG*)orders)->cancelOrder(it->second.orderId);
+          ((OG*)broker)->cancelOrder(it->second.orderId);
       };
       void stopAllQuotes() {
         stopAllQuotes(mSide::Bid);
