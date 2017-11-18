@@ -152,7 +152,7 @@ namespace K {
         double widthPong = qp->widthPercentage
           ? qp->widthPongPercentage * ((MG*)market)->fairValue / 100
           : qp->widthPong;
-        if (qp.positionDivergenceMode != mPDiffMode::Off && autoPositionMode != mAutoPositionMode::Manual) pDiv = ((PG*)wallet)->pgDynamicPDiff;
+        if (qp->positionDivergenceMode != mPDiffMode::Off && qp->autoPositionMode != mAutoPositionMode::Manual) pDiv = ((PG*)wallet)->dynamicPDiff;
         if (buySize and qp->aggressivePositionRebalancing != mAPR::Off and qp->buySizeMax)
           buySize = fmax(buySize, ((PG*)wallet)->targetBasePosition - totalBasePosition);
         if (sellSize and qp->aggressivePositionRebalancing != mAPR::Off and qp->sellSizeMax)
