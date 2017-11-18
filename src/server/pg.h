@@ -43,7 +43,7 @@ namespace K {
         ((EV*)events)->ogOrder = [&](mOrder k) {
           if (((CF*)config)->argDebugEvents) FN::log("DEBUG", string("EV PG ogOrder mOrder ") + ((json)k).dump());
           calcWalletAfterOrder(k);
-          FN::screen_refresh(((OG*)orders)->ordersBothSides());
+          FN::screen_refresh(((OG*)broker)->ordersBothSides());
         };
         ((EV*)events)->mgTargetPosition = [&]() {
           if (((CF*)config)->argDebugEvents) FN::log("DEBUG", "EV PG mgTargetPosition");
@@ -135,7 +135,7 @@ namespace K {
           : qp->widthPong;
         map<double, mTrade> tradesBuy;
         map<double, mTrade> tradesSell;
-        for (vector<mTrade>::iterator it = ((OG*)orders)->tradesHistory.begin(); it != ((OG*)orders)->tradesHistory.end(); ++it)
+        for (vector<mTrade>::iterator it = ((OG*)broker)->tradesHistory.begin(); it != ((OG*)broker)->tradesHistory.end(); ++it)
           if (it->side == mSide::Bid)
             tradesBuy[it->price] = *it;
           else tradesSell[it->price] = *it;
@@ -299,7 +299,7 @@ namespace K {
           ? position.baseAmount + position.baseHeldAmount
           : position.quoteAmount + position.quoteHeldAmount;
         pgMutex.unlock();
-        multimap<double, mOrder> ordersSide = ((OG*)orders)->ordersAtSide(k.side);
+        multimap<double, mOrder> ordersSide = ((OG*)broker)->ordersAtSide(k.side);
         for (multimap<double, mOrder>::iterator it = ordersSide.begin(); it != ordersSide.end(); ++it) {
           double held = it->second.quantity * (it->second.side == mSide::Bid ? it->second.price : 1);
           if (amount >= held) {

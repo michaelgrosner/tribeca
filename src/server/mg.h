@@ -216,7 +216,7 @@ namespace K {
       void filter(mLevels k) {
         levels = k;
         if (empty()) return;
-        map<string, mOrder> ordersSides = ((OG*)orders)->ordersBothSides();
+        map<string, mOrder> ordersSides = ((OG*)broker)->ordersBothSides();
         for (map<string, mOrder>::iterator it = ordersSides.begin(); it != ordersSides.end(); ++it)
           filter(mSide::Bid == it->second.side ? &levels.bids : &levels.asks, it->second);
         if (empty()) return;
