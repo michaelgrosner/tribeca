@@ -497,8 +497,7 @@ namespace K {
   static bool wInit;
   static WINDOW *wBorder,
                 *wLog;
-  static mutex wMutex,
-               ogMutex;
+  static mutex wMutex;
   class Gw {
     public:
       static Gw *E(mExchange e);
@@ -537,7 +536,7 @@ namespace K {
                      *events = nullptr,
                      *memory = nullptr,
                      *client = nullptr,
-                     *orders = nullptr,
+                     *broker = nullptr,
                      *market = nullptr,
                      *wallet = nullptr,
                      *engine = nullptr;
@@ -565,7 +564,7 @@ namespace K {
       void evLink(Klass *k) { events = k; };
       void dbLink(Klass *k) { memory = k; };
       void uiLink(Klass *k) { client = k; };
-      void ogLink(Klass *k) { orders = k; };
+      void ogLink(Klass *k) { broker = k; };
       void mgLink(Klass *k) { market = k; };
       void pgLink(Klass *k) { wallet = k; };
       void qeLink(Klass *k) { engine = k; };
