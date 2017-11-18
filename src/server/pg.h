@@ -95,7 +95,7 @@ namespace K {
         FN::log("TBP", ss.str() + " " + gw->base);
       };
       void calcDynamicPDiff(double value) {
-	      double divCenter = abs((targetBasePosition / value * 2) - 1);
+	      double divCenter = 1 - abs((targetBasePosition / value * 2) - 1);
 	      double pDiv = qp->percentageValues
           	? qp->positionDivergencePercentage * value / 100
 		  	: qp->positionDivergence;
@@ -105,13 +105,13 @@ namespace K {
 	      switch (qp->positionDivergenceMode) {
 		      case mPDiffMode::Off : dynamicPDiff = pDiv; break;
 		      case mPDiffMode::Linear : dynamicPDiff = pDivMin + (divCenter * (pDiv - pDivMin)); break;
-		      case mPDiffMode::Sine : dynamicPDiff = pDivMin + (sin(divCenter) * (pDiv - pDivMin)); break;
+		      case mPDiffMode::Sine : dynamicPDiff = pDivMin + (sin(divCenter*1.5707963265) * (pDiv - pDivMin)); break;
 		      case mPDiffMode::SQRT : dynamicPDiff = pDivMin + (sqrt(divCenter) * (pDiv - pDivMin)); break;
-		      case mPDiffMode::Switch : dynamicPDiff = targetBasePosition < 10 or targetBasePosition > 90 ? pDivMin : pDiv; break;	
+		      case mPDiffMode::Switch : dynamicPDiff = divCenter < 1e-1 ? pDivMin : pDiv; break;	
 	      }
 	     stringstream ss;
         ss << (int)(dynamicPDiff / value * 1e+2) << "% = " << setprecision(8) << fixed << dynamicPDiff;
-        FN::log("PgDynDiff", ss.str() + " " + gw->base);
+        FN::log("pDiff", ss.str() + " " + gw->base);
  
       }
       void addTrade(mTrade k) {
