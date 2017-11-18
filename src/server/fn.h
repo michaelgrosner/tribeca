@@ -24,10 +24,9 @@ namespace K {
       };
       static unsigned long T() { return chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now().time_since_epoch()).count(); };
       static string uiT() {
-        typedef chrono::duration<int, ratio_multiply<chrono::hours::period, ratio<24>>::type> fnT;
         chrono::time_point<chrono::system_clock> now = chrono::system_clock::now();
         auto t = now.time_since_epoch();
-        fnT days = chrono::duration_cast<fnT>(t);
+        auto days = chrono::duration_cast<chrono::duration<int, ratio_multiply<chrono::hours::period, ratio<24>>::type>>(t);
         t -= days;
         auto hours = chrono::duration_cast<chrono::hours>(t);
         t -= hours;
@@ -60,7 +59,7 @@ namespace K {
       static string charId() {
         char s[16];
         for (int i = 0; i < 16; ++i) s[i] = kB64Alphabet[stol(int64Id()) % (sizeof(kB64Alphabet) - 3)];
-        return S2l(string(s, 16));
+        return string(s, 16);
       };
       static string uuidId() {
         static const char alphanum[] = "0123456789"
@@ -425,10 +424,11 @@ namespace K {
       static void logWar(string k, string s) {
         logErr(k, s, " Warrrrning: ");
       };
-      static void logExit(string k, string s, int code) {
+      static void logExit(string k, string s, int code, bool ev = true) {
         FN::screen_quit();
         logErr(k, s);
-        evExit(code);
+        if (ev) (*evExit)(code);
+        else exit(code);
       };
       static void logErr(string k, string s, string m = " Errrror: ") {
         if (!wInit) {
@@ -500,9 +500,10 @@ namespace K {
         wprintw(wLog, ".\n");
         wattroff(wLog, COLOR_PAIR(COLOR_WHITE));
         wMutex.unlock();
-        FN::screen_refresh();
+        FN::screen_refresh(k, p);
       };
       static void logUIsess(int k, string s) {
+        if (s.length() > 7 and s.substr(0, 7) == "::ffff:") s = s.substr(7);
         if (!wInit) {
           cout << uiT() << "UI " << RYELLOW << to_string(k) << RWHITE << " currently connected, last connection was from " << RYELLOW << s << RWHITE << ".\n";
           return;
@@ -549,7 +550,7 @@ namespace K {
       };
       static void log(mTrade k, string e) {
         if (!wInit) {
-          cout << FN::uiT() << "GW " << (k.side == mSide::Bid ? RCYAN : RPURPLE) << argExchange << " TRADE " << (k.side == mSide::Bid ? BCYAN : BPURPLE) << (k.side == mSide::Bid ? "BUY " : "SELL ") << k.quantity << " " << k.pair.base << " at price " << k.price << " " << k.pair.quote << " (value " << k.value << " " << k.pair.quote << ").\n";
+          cout << FN::uiT() << "GW " << (k.side == mSide::Bid ? RCYAN : RPURPLE) << e << " TRADE " << (k.side == mSide::Bid ? BCYAN : BPURPLE) << (k.side == mSide::Bid ? "BUY " : "SELL ") << k.quantity << " " << k.pair.base << " at price " << k.price << " " << k.pair.quote << " (value " << k.value << " " << k.pair.quote << ").\n";
           return;
         }
         lock_guard<mutex> lock(wMutex);
@@ -628,9 +629,9 @@ namespace K {
         beep();
         endwin();
       };
-      static void screen() {
+      static void screen(int argColors, string argExchange, string argCurrency) {
         if ((wBorder = initscr()) == NULL) {
-          cout << "NCURSES" << RRED << " Errrror:" << BRED << " Unable to initialize ncurses." << '\n';
+          cout << "NCURSES" << RRED << " Errrror:" << BRED << " Unable to initialize ncurses, try to run in your terminal \"export TERM=xterm\", or use --naked argument." << '\n';
           exit(EXIT_SUCCESS);
         }
         if (argColors) start_color();
@@ -662,26 +663,36 @@ namespace K {
           }
           screen_quit();
           cout << FN::uiT() << "Excellent decision!" << '\n';
-          evExit(EXIT_SUCCESS);
+          (*evExit)(EXIT_SUCCESS);
         }).detach();
         wInit = true;
-        screen_refresh();
+        screen_refresh("", 0, argExchange, argCurrency);
       };
-      static void screen_refresh() {
+      static void screen_refresh(map<string, mOrder> k) {
+        screen_refresh("", 0, "", "", k);
+      };
+      static void screen_refresh(string protocol = "", int argPort = 0, string argExchange = "", string argCurrency = "", map<string, mOrder> allOrders = map<string, mOrder>()) {
         if (!wInit) return;
-        static int p = 0, spin = 0;
-        multimap<double, mOrder> orderLines;
+        static int p = 0, spin = 0, port = 0;
+        static string prtcl = "?", exchange = "?", currency = "?";
+        static map<string, mOrder> orders = map<string, mOrder>();
+        if (argPort) port = argPort;
+        if (protocol.length()) prtcl = protocol;
+        if (argExchange.length()) exchange = argExchange;
+        if (argCurrency.length()) currency = argCurrency;
+        if (allOrders.size()) orders = allOrders;
+        multimap<double, mOrder> ordersOpen;
         ogMutex.lock();
-        for (map<string, mOrder>::iterator it = allOrders.begin(); it != allOrders.end(); ++it) {
+        for (map<string, mOrder>::iterator it = orders.begin(); it != orders.end(); ++it) {
           if (mORS::Working != it->second.orderStatus) continue;
-          orderLines.insert(pair<double, mOrder>(it->second.price, it->second));
+          ordersOpen.insert(pair<double, mOrder>(it->second.price, it->second));
         }
         ogMutex.unlock();
         lock_guard<mutex> lock(wMutex);
         int l = p,
             y = getmaxy(wBorder),
             x = getmaxx(wBorder),
-            k = y - orderLines.size() - 1,
+            k = y - ordersOpen.size() - 1,
             P = k;
         while (l<y) mvwhline(wBorder, l++, 1, ' ', x-1);
         if (k!=p) {
@@ -693,7 +704,7 @@ namespace K {
         }
         mvwvline(wBorder, 1, 1, ' ', y-1);
         mvwvline(wBorder, k-1, 1, ' ', y-1);
-        for (map<double, mOrder>::reverse_iterator it = orderLines.rbegin(); it != orderLines.rend(); ++it) {
+        for (map<double, mOrder>::reverse_iterator it = ordersOpen.rbegin(); it != ordersOpen.rend(); ++it) {
           wattron(wBorder, COLOR_PAIR(it->second.side == mSide::Bid ? COLOR_CYAN : COLOR_MAGENTA));
           stringstream ss;
           ss << setprecision(8) << fixed << (it->second.side == mSide::Bid ? "BID" : "ASK") << " > " << it->second.orderId << ": " << it->second.quantity << " " << it->second.pair.base << " at price " << it->second.price << " " << it->second.pair.quote;
@@ -720,16 +731,16 @@ namespace K {
         mvwaddch(wBorder, 1, 12, ACS_RTEE);
         wattron(wBorder, COLOR_PAIR(COLOR_GREEN));
         wattron(wBorder, A_BOLD);
-        mvwaddstr(wBorder, 1, 14, (argExchange + " " + argCurrency).data());
+        mvwaddstr(wBorder, 1, 14, (exchange + " " + currency).data());
         wattroff(wBorder, A_BOLD);
-        waddstr(wBorder, (argHeadless ? " headless" : " UI on " + uiPrtcl + " port " + to_string(argPort)).data());
+        waddstr(wBorder, (port ? " UI on " + prtcl + " port " + to_string(port) : " headless").data());
         wattroff(wBorder, COLOR_PAIR(COLOR_GREEN));
         mvwaddch(wBorder, k, 0, ACS_LTEE);
         mvwhline(wBorder, k, 1, ACS_HLINE, 3);
         mvwaddch(wBorder, k, 4, ACS_RTEE);
         mvwaddstr(wBorder, k, 5, "< (");
         wattron(wBorder, COLOR_PAIR(COLOR_YELLOW));
-        waddstr(wBorder, to_string(orderLines.size()).data());
+        waddstr(wBorder, to_string(ordersOpen.size()).data());
         wattroff(wBorder, COLOR_PAIR(COLOR_YELLOW));
         waddstr(wBorder, ") Open Orders..");
         mvwaddch(wBorder, y-1, 0, ACS_LLCORNER);
