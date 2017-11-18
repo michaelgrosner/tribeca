@@ -7,6 +7,9 @@ namespace K {
       vector<mProfit> profits;
       map<double, mTrade> buys;
       map<double, mTrade> sells;
+      map<string, mWallet> balance;
+      mutex profitMutex,
+            balanceMutex;
     public:
       mPosition position;
       mSafety safety;
@@ -34,6 +37,8 @@ namespace K {
             ));
           FN::log("DB", string("loaded ") + to_string(profits.size()) + " historical Profits");
         }
+        balance[gw->base] = mWallet(0, 0, gw->base);
+        balance[gw->quote] = mWallet(0, 0, gw->quote);
       };
       void waitData() {
         gw->evDataWallet = [&](mWallet k) {
@@ -234,18 +239,15 @@ namespace K {
       };
       void calcWallet(mWallet k) {
         static unsigned long profitT_21s = 0;
-        static mutex walletMutex,
-                     profitMutex;
-        static map<string, mWallet> pgWallet;
-        walletMutex.lock();
-        if (k.currency!="") pgWallet[k.currency] = k;
-        if (!((MG*)market)->fairValue or pgWallet.find(gw->base) == pgWallet.end() or pgWallet.find(gw->quote) == pgWallet.end()) {
-          walletMutex.unlock();
+        balanceMutex.lock();
+        if (k.currency!="") balance[k.currency] = k;
+        if (!((MG*)market)->fairValue or balance.find(gw->base) == balance.end() or balance.find(gw->quote) == balance.end()) {
+          balanceMutex.unlock();
           return;
         }
-        mWallet baseWallet = pgWallet[gw->base];
-        mWallet quoteWallet = pgWallet[gw->quote];
-        walletMutex.unlock();
+        mWallet baseWallet = balance[gw->base];
+        mWallet quoteWallet = balance[gw->quote];
+        balanceMutex.unlock();
         double baseValue = baseWallet.amount + quoteWallet.amount / ((MG*)market)->fairValue + baseWallet.held + quoteWallet.held / ((MG*)market)->fairValue;
         double quoteValue = baseWallet.amount * ((MG*)market)->fairValue + quoteWallet.amount + baseWallet.held * ((MG*)market)->fairValue + quoteWallet.held;
         unsigned long now = FN::T();
