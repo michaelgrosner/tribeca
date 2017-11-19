@@ -138,7 +138,7 @@ export class TradesComponent implements OnInit {
             if (this.sortTimeout) window.clearTimeout(this.sortTimeout);
             this.sortTimeout = window.setTimeout(() => {
               this.gridOptions.api.setSortModel([{colId: 'time', sort: 'desc'}]);
-              setTimeout(()=>this.gridOptions.api.redrawRows(),0);
+              setTimeout(()=>{try{this.gridOptions.api.redrawRows();}catch(e){}},0);
             }, 269);
             if (this.audio) {
               var audio = new Audio('/audio/'+(merged?'0':'1')+'.mp3');
