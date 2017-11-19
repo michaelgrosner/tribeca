@@ -108,7 +108,7 @@ namespace K {
           	? qp->positionDivergencePercentageMin * value / 100
 		  	: qp->positionDivergenceMin;
 	      switch (qp->positionDivergenceMode) {
-		      case mPDivMode::Off : dynamicPDiv = pDiv; break;
+		      case mPDivMode::Manual : dynamicPDiv = pDiv; break;
 		      case mPDivMode::Linear : dynamicPDiv = pDivMin + (divCenter * (pDiv - pDivMin)); break;
 		      case mPDivMode::Sine : dynamicPDiv = pDivMin + (sin(divCenter*1.5707963265) * (pDiv - pDivMin)); break;
 		      case mPDivMode::SQRT : dynamicPDiv = pDivMin + (sqrt(divCenter) * (pDiv - pDivMin)); break;
