@@ -252,15 +252,22 @@ namespace K {
         double quoteValue = baseWallet.amount * ((MG*)market)->fairValue + quoteWallet.amount + baseWallet.held * ((MG*)market)->fairValue + quoteWallet.held;
         unsigned long now = FN::T();
         mProfit profit(baseValue, quoteValue, now);
-        if (profitT_21s+21e+3 < FN::T()) {
-          profitT_21s = FN::T();
-          ((DB*)memory)->insert(uiTXT::Position, profit, false, "NULL", now - qp->profitHourInterval * 36e+5);
+        double profitBase = 0;
+        double profitQuote = 0;
+        if (baseValue and quoteValue) {
+          if (profitT_21s+21e+3 < FN::T()) {
+            profitT_21s = FN::T();
+            ((DB*)memory)->insert(uiTXT::Position, profit, false, "NULL", now - qp->profitHourInterval * 36e+5);
+          }
+          profitMutex.lock();
+          profits.push_back(profit);
+          for (vector<mProfit>::iterator it = profits.begin(); it != profits.end();)
+            if (it->time + (qp->profitHourInterval * 36e+5) > now) ++it;
+            else it = profits.erase(it);
+          profitBase = ((baseValue - profits.begin()->baseValue) / baseValue) * 1e+2;
+          profitQuote = ((quoteValue - profits.begin()->quoteValue) / quoteValue) * 1e+2;
+          profitMutex.unlock();
         }
-        profitMutex.lock();
-        profits.push_back(profit);
-        for (vector<mProfit>::iterator it = profits.begin(); it != profits.end();)
-          if (it->time + (qp->profitHourInterval * 36e+5) > now) ++it;
-          else it = profits.erase(it);
         mPosition pos(
           baseWallet.amount,
           quoteWallet.amount,
@@ -268,12 +275,11 @@ namespace K {
           quoteWallet.held,
           baseValue,
           quoteValue,
-          ((baseValue - profits.begin()->baseValue) / baseValue) * 1e+2,
-          ((quoteValue - profits.begin()->quoteValue) / quoteValue) * 1e+2,
+          profitBase,
+          profitQuote,
           mPair(gw->base, gw->quote),
           gw->exchange
         );
-        profitMutex.unlock();
         bool eq = true;
         if (!empty()) {
           pgMutex.lock();
