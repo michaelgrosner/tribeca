@@ -266,7 +266,7 @@ export class TradeSafety {
 export class TargetBasePositionValue {
     constructor(
       public tbp: number,
-      public sideAPR: string
-      public pDiff: number;
+      public sideAPR: string,
+      public pDiff: number
     ) {}
 }
