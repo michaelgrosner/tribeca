@@ -87,7 +87,7 @@ namespace K {
         sideAPR_ = sideAPR;
         if (qp->autoPositionMode != mAutoPositionMode::Manual) calcDynamicPDiff(value);
         ((EV*)events)->pgTargetBasePosition();
-        json k = {{"tbp", targetBasePosition}, {"sideAPR", sideAPR}};
+        json k = {{"tbp", targetBasePosition}, {"sideAPR", sideAPR}, {"pDiff", dynamicPDiff}};
         ((UI*)client)->send(uiTXT::TargetBasePosition, k, true);
         ((DB*)memory)->insert(uiTXT::TargetBasePosition, k);
         stringstream ss;
