@@ -22,7 +22,7 @@ export class OrdersComponent implements OnInit {
     if (online) return;
     if (!this.gridOptions.api) return;
     this.gridOptions.api.setRowData([]);
-    setTimeout(()=>this.gridOptions.api.redrawRows(),0);
+    setTimeout(()=>{try{this.gridOptions.api.redrawRows();}catch(e){}},0);
   }
 
   constructor(
@@ -125,7 +125,7 @@ export class OrdersComponent implements OnInit {
         }
       }
     });
-    setTimeout(()=>this.gridOptions.api.redrawRows(),0);
+    setTimeout(()=>{try{this.gridOptions.api.redrawRows();}catch(e){}},0);
     if (!exists && !isClosed)
       this.gridOptions.api.updateRowData({add:[{
         orderId: o.orderId,
