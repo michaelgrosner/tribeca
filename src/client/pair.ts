@@ -77,6 +77,8 @@ class DisplayQuotingParameters extends FormViewModel<Models.QuotingParameters> {
     super(<Models.QuotingParameters>{}, sub, fire, (d: any) => {
       d.widthPing = parseFloat(d.widthPing);
       d.widthPong = parseFloat(d.widthPong);
+      d.buySize = parseFloat(d.buySize);
+      d.sellSize = parseFloat(d.sellSize);
       return d;
     });
 
@@ -94,6 +96,8 @@ class DisplayQuotingParameters extends FormViewModel<Models.QuotingParameters> {
   public cleanDecimal = (d: any) => {
     d.widthPing = parseFloat(d.widthPing).toFixed(13).replace(/0+$/,'').replace(/\.$/,'');
     d.widthPong = parseFloat(d.widthPong).toFixed(13).replace(/0+$/,'').replace(/\.$/,'');
+    d.buySize = parseFloat(d.buySize).toFixed(13).replace(/0+$/,'').replace(/\.$/,'');
+    d.sellSize = parseFloat(d.sellSize).toFixed(13).replace(/0+$/,'').replace(/\.$/,'');
     return d;
   }
 

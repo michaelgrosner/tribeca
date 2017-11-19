@@ -190,10 +190,10 @@ export interface QuotingParameters {
     widthPongPercentage?: number;
     widthPercentage?: boolean;
     bestWidth?: boolean;
-    buySize?: number;
+    buySize?: any;
     buySizePercentage?: number;
     buySizeMax?: boolean;
-    sellSize?: number;
+    sellSize?: any;
     sellSizePercentage?: number;
     sellSizeMax?: boolean;
     pingAt?: PingAt;
