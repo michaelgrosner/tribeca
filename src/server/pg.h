@@ -92,7 +92,7 @@ namespace K {
         sideAPR_ = sideAPR;
         if (qp->autoPositionMode != mAutoPositionMode::Manual) calcDynamicPDiv(value);
         ((EV*)events)->pgTargetBasePosition();
-        json k = {{"tbp", targetBasePosition}, {"sideAPR", sideAPR}, {"pDiff", dynamicPDiff}};
+        json k = {{"tbp", targetBasePosition}, {"sideAPR", sideAPR}, {"pDiv", dynamicPDiv}};
         ((UI*)client)->send(uiTXT::TargetBasePosition, k, true);
         ((DB*)memory)->insert(uiTXT::TargetBasePosition, k);
         stringstream ss;
