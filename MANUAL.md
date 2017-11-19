@@ -163,7 +163,7 @@ In the web UI, there are three rows of panels with cryptic looking names and edi
 
 * `pDivMode` - Only used when `apMode` is `EWMA_LS` or `EWMA_LMS`. Sets the strategy of dynamically adjusting the `pDiv` depending on the divergence from 50% of Base Value.
 
-  * `Off` - The 
+  * `Manual` - No dynamic adjusting of `pDiv`. 
 
   * `Linear` - Linear calculation between `pDiv` and `pDivMin`.
   
@@ -175,7 +175,7 @@ In the web UI, there are three rows of panels with cryptic looking names and edi
   
 * `pDiv` - If your "Target Base Position" diverges more from this value, K.js will stop sending orders to stop too much directional trading. So if you have 10 BTC to trade, "Target Base Position" is reporting 5, and `pDiv` is set to 3, your holding of BTC will never be less than 2 or greater than 8.
 
-* `pDivMin` - Only used when `pDivMode` is not `Off`. It defines the minimal `pDiv` for the dynamic positon divergence.
+* `pDivMin` - Only used when `pDivMode` is not `Manual`. It defines the minimal `pDiv` for the dynamic positon divergence.
 
 * `apr` - If you're in a state where K.js has stopped sending orders because your position has diverged too far from Target Base Position, this setting will much more aggressively try to fix that discrepancy by placing orders much larger than `size` and at prices much more aggressive than `width` normally allows (see `pongAt` option). It's a bit risky to use this setting.
 
