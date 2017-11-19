@@ -184,9 +184,9 @@ export enum SOP { Off, Trades, Size, TradesSize }
 export enum STDEV { Off, OnFV, OnFVAPROff, OnTops, OnTopsAPROff, OnTop, OnTopAPROff }
 
 export interface QuotingParameters {
-    widthPing?: number;
+    widthPing?: any;
     widthPingPercentage?: number;
-    widthPong?: number;
+    widthPong?: any;
     widthPongPercentage?: number;
     widthPercentage?: boolean;
     bestWidth?: boolean;

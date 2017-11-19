@@ -25,11 +25,16 @@ class FormViewModel<T> {
     this.display = JSON.parse(JSON.stringify(defaultParameter));
   }
 
+  public cleanDecimal = (p: T) => {
+    return p;
+  }
+
   public reset = () => {
     this.display = JSON.parse(JSON.stringify(this.master));
   };
 
   public update = (p: T) => {
+    p = this.cleanDecimal(p);
     this.master = JSON.parse(JSON.stringify(p));
     this.display = JSON.parse(JSON.stringify(p));
     this.pending = false;
@@ -69,7 +74,11 @@ class DisplayQuotingParameters extends FormViewModel<Models.QuotingParameters> {
 
   constructor(sub: Subscribe.ISubscribe<Models.QuotingParameters>,
     fire: Subscribe.IFire<Models.QuotingParameters>) {
-    super(<Models.QuotingParameters>{}, sub, fire);
+    super(<Models.QuotingParameters>{}, sub, fire, (d: any) => {
+      d.widthPing = parseFloat(d.widthPing);
+      d.widthPong = parseFloat(d.widthPong);
+      return d;
+    });
 
     this.availableQuotingModes = DisplayQuotingParameters.getMapping(Models.QuotingMode);
     this.availableQuotingSafeties = DisplayQuotingParameters.getMapping(Models.QuotingSafety);
@@ -80,6 +89,12 @@ class DisplayQuotingParameters extends FormViewModel<Models.QuotingParameters> {
     this.availablePingAt = DisplayQuotingParameters.getMapping(Models.PingAt);
     this.availablePongAt = DisplayQuotingParameters.getMapping(Models.PongAt);
     this.availableSTDEV = DisplayQuotingParameters.getMapping(Models.STDEV);
+  }
+
+  public cleanDecimal = (d: any) => {
+    d.widthPing = parseFloat(d.widthPing).toFixed(13).replace(/0+$/,'').replace(/\.$/,'');
+    d.widthPong = parseFloat(d.widthPong).toFixed(13).replace(/0+$/,'').replace(/\.$/,'');
+    return d;
   }
 
   private static getMapping<T>(enumObject: T) {
