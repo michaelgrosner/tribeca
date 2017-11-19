@@ -177,7 +177,7 @@ export enum QuotingMode { Top, Mid, Join, InverseJoin, InverseTop, HamelinRat, D
 export enum QuotingSafety { Off, PingPong, Boomerang, AK47 }
 export enum FairValueModel { BBO, wBBO }
 export enum AutoPositionMode { Manual, EWMA_LS, EWMA_LMS }
-export enum DynamicPDiffMode { Off, Linear, Sine, SQRT, Switch }
+export enum DynamicPDivMode { Off, Linear, Sine, SQRT, Switch }
 export enum PingAt { BothSides, BidSide, AskSide, DepletedSide, DepletedBidSide, DepletedAskSide, StopPings }
 export enum PongAt { ShortPingFair, LongPingFair, ShortPingAggressive, LongPingAggressive }
 export enum APR { Off, Size, SizeWidth }

@@ -77,7 +77,7 @@ class DisplayQuotingParameters extends FormViewModel<Models.QuotingParameters> {
     this.availableFvModels = DisplayQuotingParameters.getMapping(Models.FairValueModel);
     this.availableAutoPositionModes = DisplayQuotingParameters.getMapping(Models.AutoPositionMode);
     this.availableAggressivePositionRebalancings = DisplayQuotingParameters.getMapping(Models.APR);
-    this.availablePositionDivergenceModes = DisplayQuotingParameters.getMapping(Models.DynamicPDiffMode);
+    this.availablePositionDivergenceModes = DisplayQuotingParameters.getMapping(Models.DynamicPDivMode);
     this.availableSuperTrades = DisplayQuotingParameters.getMapping(Models.SOP);
     this.availablePingAt = DisplayQuotingParameters.getMapping(Models.PingAt);
     this.availablePongAt = DisplayQuotingParameters.getMapping(Models.PongAt);

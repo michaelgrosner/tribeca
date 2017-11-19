@@ -16,7 +16,7 @@ namespace K {
   enum class mQuoteState: unsigned int { Live, Disconnected, DisabledQuotes, MissingData, UnknownHeld, TBPHeld, MaxTradesSeconds, WaitingPing, DepletedFunds, Crossed, UpTrendHeld, DownTrendHeld };
   enum class mFairValueModel: unsigned int { BBO, wBBO };
   enum class mAutoPositionMode: unsigned int { Manual, EWMA_LS, EWMA_LMS };
-  enum class mPDiffMode: unsigned int { Off, Linear, Sine, SQRT, Switch};
+  enum class mPDivMode: unsigned int { Off, Linear, Sine, SQRT, Switch};
   enum class mAPR: unsigned int { Off, Size, SizeWidth };
   enum class mSOP: unsigned int { Off, Trades, Size, TradesSize };
   enum class mSTDEV: unsigned int { Off, OnFV, OnFVAPROff, OnTops, OnTopsAPROff, OnTop, OnTopAPROff };
@@ -58,7 +58,7 @@ namespace K {
     double            positionDivergenceMin     	= 0.4;
     int               positionDivergencePercentage  = 21;
     int               positionDivergencePercentageMin = 10;
-    mPDiffMode     	  positionDivergenceMode		= mPDiffMode::Off;
+    mPDivMode     	  positionDivergenceMode		= mPDivMode::Off;
     bool              percentageValues              = false;
     mAutoPositionMode autoPositionMode              = mAutoPositionMode::EWMA_LS;
     mAPR              aggressivePositionRebalancing = mAPR::Off;
@@ -178,7 +178,7 @@ namespace K {
     if (j.end() != j.find("targetBasePositionPercentage")) k.targetBasePositionPercentage = j.at("targetBasePositionPercentage").get<int>();
     if (j.end() != j.find("positionDivergenceMin")) k.positionDivergenceMin = j.at("positionDivergenceMin").get<double>();
     if (j.end() != j.find("positionDivergencePercentageMin")) k.positionDivergencePercentageMin = j.at("positionDivergencePercentageMin").get<int>();
-    if (j.end() != j.find("positionDivergenceMode")) k.positionDivergenceMode = (mPDiffMode)j.at("positionDivergenceMode").get<int>();
+    if (j.end() != j.find("positionDivergenceMode")) k.positionDivergenceMode = (mPDivMode)j.at("positionDivergenceMode").get<int>();
     if (j.end() != j.find("positionDivergence")) k.positionDivergence = j.at("positionDivergence").get<double>();
     if (j.end() != j.find("positionDivergencePercentage")) k.positionDivergencePercentage = j.at("positionDivergencePercentage").get<int>();
     if (j.end() != j.find("percentageValues")) k.percentageValues = j.at("percentageValues").get<bool>();
