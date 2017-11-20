@@ -7,13 +7,12 @@ namespace K  {
       uWS::Hub *hub = nullptr;
       int eCode = EXIT_FAILURE;
     public:
-      mutex hubMutex;
       uWS::Group<uWS::SERVER> *uiGroup = nullptr;
-      uv_timer_t *tCalcs = nullptr,
-                 *tStart = nullptr,
-                 *tDelay = nullptr,
-                 *tWallet = nullptr,
-                 *tCancel = nullptr;
+      Timer *tCalcs = nullptr,
+            *tStart = nullptr,
+            *tDelay = nullptr,
+            *tWallet = nullptr,
+            *tCancel = nullptr;
       function<void(mOrder)> ogOrder;
       function<void(mTrade)> ogTrade;
       function<void()>       mgLevels,
@@ -32,14 +31,13 @@ namespace K  {
         gw->hub = hub = new uWS::Hub(0, true);
       };
       void waitTime() {
-        uv_timer_init(hub->getLoop(), tCalcs = new uv_timer_t());
-        uv_timer_init(hub->getLoop(), tStart = new uv_timer_t());
-        uv_timer_init(hub->getLoop(), tDelay = new uv_timer_t());
-        uv_timer_init(hub->getLoop(), tWallet = new uv_timer_t());
-        uv_timer_init(hub->getLoop(), tCancel = new uv_timer_t());
+        tCalcs = new Timer(hub->getLoop());
+        tStart = new Timer(hub->getLoop());
+        tDelay = new Timer(hub->getLoop());
+        tWallet = new Timer(hub->getLoop());
+        tCancel = new Timer(hub->getLoop());
       };
       void waitData() {
-        gw->hubMutex = &hubMutex;
         gw->gwGroup = hub->createGroup<uWS::CLIENT>();
       };
       void waitUser() {
@@ -61,19 +59,15 @@ namespace K  {
       };
       void stop(int code, function<void()> gwCancelAll) {
         eCode = code;
-        if (uv_loop_alive(hub->getLoop())) {
-          uv_timer_stop(tCancel);
-          uv_timer_stop(tWallet);
-          uv_timer_stop(tCalcs);
-          uv_timer_stop(tStart);
-          uv_timer_stop(tDelay);
-          gw->close();
-          gw->gwGroup->close();
-          gwCancelAll();
-          uiGroup->close();
-          FN::close(hub->getLoop());
-          hub->getLoop()->destroy();
-        }
+        tCancel->stop();
+        tWallet->stop();
+        tCalcs->stop();
+        tStart->stop();
+        tDelay->stop();
+        gw->close();
+        gw->gwGroup->close();
+        gwCancelAll();
+        uiGroup->close();
         halt(code);
       };
       void listen(int port) {

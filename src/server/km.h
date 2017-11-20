@@ -513,7 +513,6 @@ namespace K {
       function<void(mLevels)>       evDataLevels;
       function<void(mConnectivity)> evConnectOrder,
                                     evConnectMarket;
-      mutex                   *hubMutex = nullptr;
       uWS::Hub                *hub      = nullptr;
       uWS::Group<uWS::CLIENT> *gwGroup  = nullptr;
       mExchange exchange = mExchange::Null;

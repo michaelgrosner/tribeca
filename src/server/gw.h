@@ -16,14 +16,14 @@ namespace K {
         handshake(gw->exchange);
       };
       void waitTime() {
-        ((EV*)events)->tWallet->data = (void*)this;
-        uv_timer_start(((EV*)events)->tWallet, [](uv_timer_t *handle) {
+        ((EV*)events)->tWallet->setData(this);
+        ((EV*)events)->tWallet->start([](Timer *handle) {
           GW *k = (GW*)handle->data;
           if (((CF*)k->config)->argDebugEvents) FN::log("DEBUG", "EV GW tWallet timer");
           k->gw->wallet();
         }, 0, 15e+3);
-        ((EV*)events)->tCancel->data = (void*)this;
-        uv_timer_start(((EV*)events)->tCancel, [](uv_timer_t *handle) {
+        ((EV*)events)->tCancel->setData(this);
+        ((EV*)events)->tCancel->start([](Timer *handle) {
           GW *k = (GW*)handle->data;
           if (((CF*)k->config)->argDebugEvents) FN::log("DEBUG", "EV GW tCancel timer");
           if (k->qp->cancelOrdersAuto)
@@ -135,7 +135,7 @@ namespace K {
             string _price_ = price_.str();
             for (string::iterator it=_price_.begin(); it!=_price_.end();)
               if (*it == '+' or *it == '-') break; else it = _price_.erase(it);
-            stringstream os(string("1e").append(to_string(stod(_price_)-4)));
+            stringstream os(string("1e").append(to_string(fmax(stod(_price_),-4)-4)));
             os >> gw->minTick;
           }
           k = FN::wJet(string(gw->http).append("/symbols_details"));
