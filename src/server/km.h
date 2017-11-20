@@ -379,6 +379,21 @@ namespace K {
     mOrder(string o, mExchange e, mPair P, mSide S, double q, mOrderType t, bool i, double p, mTimeInForce F, mORS s, bool O):
       orderId(o), exchangeId(""), exchange(e), pair(P), side(S), quantity(q), type(t), isPong(i), price(p), timeInForce(F), orderStatus(s), preferPostOnly(O), lastQuantity(0), time(0), computationalLatency(0)
     {};
+    string quantity2str() {
+      stringstream ss;
+      ss << setprecision(8) << fixed << quantity;
+      return ss.str();
+    };
+    string lastQuantity2str() {
+      stringstream ss;
+      ss << setprecision(8) << fixed << lastQuantity;
+      return ss.str();
+    };
+    string price2str() {
+      stringstream ss;
+      ss << setprecision(8) << fixed << price;
+      return ss.str();
+    };
   };
   static void to_json(json& j, const mOrder& k) {
     j = {
@@ -487,8 +502,7 @@ namespace K {
   static bool wInit;
   static WINDOW *wBorder,
                 *wLog;
-  static mutex wMutex,
-               ogMutex;
+  static mutex wMutex;
   class Gw {
     public:
       static Gw *E(mExchange e);
@@ -499,7 +513,6 @@ namespace K {
       function<void(mLevels)>       evDataLevels;
       function<void(mConnectivity)> evConnectOrder,
                                     evConnectMarket;
-      mutex                   *hubMutex = nullptr;
       uWS::Hub                *hub      = nullptr;
       uWS::Group<uWS::CLIENT> *gwGroup  = nullptr;
       mExchange exchange = mExchange::Null;
@@ -514,7 +527,7 @@ namespace K {
       virtual string A() = 0;
       virtual   void wallet() = 0,
                      levels() = 0,
-                     send(string oI, mSide oS, double oP, double oQ, mOrderType oLM, mTimeInForce oTIF, bool oPO, unsigned long oT) = 0,
+                     send(string oI, mSide oS, string oP, string oQ, mOrderType oLM, mTimeInForce oTIF, bool oPO, unsigned long oT) = 0,
                      cancel(string oI, string oE, mSide oS, unsigned long oT) = 0,
                      cancelAll() = 0,
                      close() = 0;
@@ -527,7 +540,7 @@ namespace K {
                      *events = nullptr,
                      *memory = nullptr,
                      *client = nullptr,
-                     *orders = nullptr,
+                     *broker = nullptr,
                      *market = nullptr,
                      *wallet = nullptr,
                      *engine = nullptr;
@@ -555,7 +568,7 @@ namespace K {
       void evLink(Klass *k) { events = k; };
       void dbLink(Klass *k) { memory = k; };
       void uiLink(Klass *k) { client = k; };
-      void ogLink(Klass *k) { orders = k; };
+      void ogLink(Klass *k) { broker = k; };
       void mgLink(Klass *k) { market = k; };
       void pgLink(Klass *k) { wallet = k; };
       void qeLink(Klass *k) { engine = k; };

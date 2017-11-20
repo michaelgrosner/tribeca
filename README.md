@@ -278,6 +278,8 @@ Updated HitBTC API v2.
 
 Added ZIP installation steps for non-git-lovers.
 
+Added HamelinRat quoting mode and Trend safety thanks to b-seite and serzhiio contributions.
+
 Added XMR network ecosystem optional support.
 
 Added command-line arguments.
@@ -342,7 +344,7 @@ All features are unlocked for collaborators and contributors (feel free to make 
 
 While locked the amount of market levels is limited (only the first 3 price levels from the exchange are used); once unlocked the bot reads the full market levels of the exchange (up to thousands depending on the exchange).
 
-Anonymous users can also unlock all features but is required a payment of 0.12100000 BTC to the address displayed in the IU of the bot.
+Anonymous users can also unlock all features but is required a payment of 0.01210000 BTC to the address displayed in the IU of the bot.
 
 Alternatively use `--free-version` argument to anonymously avoid the payment and to unlock all features; market levels will be all visible and usable but slowdown a few milliseconds with a [XMR mining calculation](https://github.com/monero-project/monero/blob/master/src/crypto/hash.c#L42) of 1 hash (if the hash meets the current XMR network target it will be send to my XMR pool for my fun and profit).
 
@@ -372,8 +374,6 @@ or donate your time with programming or financial suggestions in the topical IRC
 - http://invisible-island.net
 - https://github.com/michaelgrosner/tribeca (https://github.com/michaelgrosner)
 - https://www.sqlite.org
-- https://github.com/michaelgrosner/tribeca (https://github.com/michaelgrosner)
-- http://libuv.org
 - https://github.com/michaelgrosner/tribeca (https://github.com/michaelgrosner)
 
 ### Help
