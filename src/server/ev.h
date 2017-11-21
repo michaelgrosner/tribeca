@@ -5,7 +5,6 @@ namespace K  {
   class EV: public Klass {
     private:
       uWS::Hub *hub = nullptr;
-      int eCode = EXIT_FAILURE;
     public:
       uWS::Group<uWS::SERVER> *uiGroup = nullptr;
       Timer *tCalcs = nullptr,
@@ -55,10 +54,8 @@ namespace K  {
     public:
       void start() {
         hub->run();
-        halt(eCode);
       };
       void stop(int code, function<void()> gwCancelAll) {
-        eCode = code;
         tCancel->stop();
         tWallet->stop();
         tCalcs->stop();

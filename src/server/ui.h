@@ -8,10 +8,10 @@ namespace K {
       string B64auth = "",
              notepad = "";
       bool toggleSettings = true;
+      bool realtimeClient = false;
       map<uiTXT, string> queue;
       map<char, function<json()>*> hello;
       map<char, function<void(json)>*> kiss;
-      bool realtimeClient = false;
     public:
       unsigned int orders60sec = 0;
     protected:
