@@ -226,7 +226,9 @@ class DisplayOrder {
                                             <th *ngIf="pair.quotingParameters.display.autoPositionMode">short</th>
                                             <th *ngIf="pair.quotingParameters.display.autoPositionMode">sensibility</th>
                                             <th *ngIf="!pair.quotingParameters.display.autoPositionMode">tbp<span *ngIf="pair.quotingParameters.display.percentageValues">%</span></th>
+                                            <th *ngIf="pair.quotingParameters.display.autoPositionMode">pDivMode</th>
                                             <th>pDiv<span *ngIf="pair.quotingParameters.display.percentageValues">%</span></th>
+                                            <th *ngIf="pair.quotingParameters.display.autoPositionMode && pair.quotingParameters.display.positionDivergenceMode">pDivMin<span *ngIf="pair.quotingParameters.display.percentageValues">%</span></th>
                                             <th>apr</th>
                                             <th *ngIf="pair.quotingParameters.display.aggressivePositionRebalancing">aprFactor</th>
                                             <th>bw?</th>
@@ -280,6 +282,12 @@ class DisplayOrder {
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.targetBasePositionPercentage">
                                             </td>
+                                            <td style="min-width:121px;border-bottom: 3px solid #D64A4A;" *ngIf="pair.quotingParameters.display.autoPositionMode">
+                                                <select class="form-control input-sm"
+                                                    [(ngModel)]="pair.quotingParameters.display.positionDivergenceMode">
+                                                   <option *ngFor="let option of pair.quotingParameters.availablePositionDivergenceModes" [ngValue]="option.val">{{option.str}}</option>
+                                                </select>
+                                            </td>
                                             <td style="width:88px;border-bottom: 3px solid #8BE296;" *ngIf="!pair.quotingParameters.display.percentageValues">
                                                 <input class="form-control input-sm" title="{{ pair_name[0] }}"
                                                    type="number" step="0.01" min="0"
@@ -291,6 +299,18 @@ class DisplayOrder {
                                                    type="number" step="1" min="0" max="100"
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.positionDivergencePercentage">
+                                            </td>
+                                            <td style="width:88px;border-bottom: 3px solid #8BE296;" *ngIf="!pair.quotingParameters.display.percentageValues && pair.quotingParameters.display.autoPositionMode && pair.quotingParameters.display.positionDivergenceMode">
+                                                <input class="form-control input-sm" title="{{ pair_name[0] }}"
+                                                   type="number" step="0.01" min="0"
+                                                   onClick="this.select()"
+                                                   [(ngModel)]="pair.quotingParameters.display.positionDivergenceMin">
+                                            </td>
+                                            <td style="width:88px;border-bottom: 3px solid #8BE296;" *ngIf="pair.quotingParameters.display.percentageValues && pair.quotingParameters.display.autoPositionMode && pair.quotingParameters.display.positionDivergenceMode">
+                                                <input class="form-control input-sm" title="{{ pair_name[0] }}"
+                                                   type="number" step="1" min="0" max="100"
+                                                   onClick="this.select()"
+                                                   [(ngModel)]="pair.quotingParameters.display.positionDivergencePercentageMin">
                                             </td>
                                             <td style="min-width:121px;border-bottom: 3px solid #D64A4A;">
                                                 <select class="form-control input-sm"
