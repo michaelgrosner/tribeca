@@ -652,7 +652,7 @@ namespace K {
         signal(SIGWINCH, screen_resize);
         thread([&]() {
           int ch;
-          while ((ch = wgetch(wBorder)) != 'q') {
+          while ((ch = wgetch(wBorder)) != 'q' and ch != 'Q') {
             switch (ch) {
               case ERR: continue;
               // case KEY_PPAGE: wscrl(wLog, -3); wrefresh(wLog); break;
@@ -767,14 +767,6 @@ namespace K {
         lock_guard<mutex> lock(wMutex);
         redrawwin(wLog);
         wrefresh(wLog);
-      };
-      static void close(uv_loop_t* loop) {
-        uv_walk(loop, close_walk_cb, NULL);
-        uv_run(loop, UV_RUN_DEFAULT);
-      };
-      static void close_walk_cb(uv_handle_t* handle, void* arg) {
-        if (!uv_is_closing(handle))
-          uv_close(handle, NULL);
       };
   };
   class B64 {

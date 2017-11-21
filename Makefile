@@ -12,20 +12,18 @@ V_CURL  := 7.55.1
 V_NCUR  := 6.0
 V_JSON  := v2.1.1
 V_UWS   := 0.14.4
-V_UV    := 1.15.0
 V_SQL   := 3200100
 V_QF    := v.1.14.4
 V_PVS   := 6.19.23789.1731
-KZIP     = 3916a5af67afc112c8c273c24c7b5842af2b40ed
+KZIP     = 0b57ac8dc50c7fe025e6a8418e6e300d2677e668
 KARGS    = -Wextra -std=c++11 -O3 -I$(KLOCAL)/include          \
-  src/server/K.cxx -pthread -rdynamic -DUSE_LIBUV              \
+  src/server/K.cxx -pthread -rdynamic -DUWS_THREADSAFE         \
   -DK_STAMP='"$(shell date --rfc-3339=seconds | cut -f1 -d+)"' \
   -DK_BUILD='"$(CHOST)"'     $(KLOCAL)/include/uWS/*.cpp       \
   $(KLOCAL)/lib/K-$(CHOST).a $(KLOCAL)/lib/libquickfix.a       \
   $(KLOCAL)/lib/libsqlite3.a $(KLOCAL)/lib/libz.a              \
   $(KLOCAL)/lib/libcurl.a    $(KLOCAL)/lib/libssl.a            \
-  $(KLOCAL)/lib/libcrypto.a  $(KLOCAL)/lib/libncurses.a        \
-  $(KLOCAL)/lib/libuv.a      -ldl
+  $(KLOCAL)/lib/libcrypto.a  $(KLOCAL)/lib/libncurses.a -ldl
 
 all: K
 
@@ -70,7 +68,6 @@ help:
 	#  make pvs          - download pvs src files      #
 	#  make zlib         - download zlib src files     #
 	#  make curl         - download curl src files     #
-	#  make libuv        - download libuv src files    #
 	#  make ncurses      - download ncurses src files  #
 	#  make sqlite       - download sqlite src files   #
 	#  make openssl      - download openssl src files  #
@@ -98,7 +95,7 @@ ifdef KALL
 	unset KALL && echo -n $(CARCH) | xargs -I % -d ' ' $(MAKE) CHOST=% $@
 else
 	mkdir -p build-$(CHOST)
-	CHOST=$(CHOST) $(MAKE) zlib openssl curl sqlite ncurses libuv json uws quickfix
+	CHOST=$(CHOST) $(MAKE) zlib openssl curl sqlite ncurses json uws quickfix
 	test -f /sbin/ldconfig && sudo ldconfig || :
 endif
 
@@ -150,12 +147,6 @@ ncurses: build-$(CHOST)
 	--prefix=$(PWD)/$(KLOCAL) --with-fallbacks=linux,screen,vt100,xterm,xterm-256color,putty-256color     \
 	&& make && make install                                                                               )
 
-libuv: build-$(CHOST)
-	test -d build-$(CHOST)/libuv-$(V_UV) || (                                                   \
-	curl -L https://github.com/libuv/libuv/archive/v$(V_UV).tar.gz | tar xz -C build-$(CHOST)   \
-	&& cd build-$(CHOST)/libuv-$(V_UV) && sh autogen.sh && CC=$(CC) ./configure --host=$(CHOST) \
-	--prefix=$(PWD)/$(KLOCAL) && make && make install                                           )
-
 json: build-$(CHOST)
 	test -f $(KLOCAL)/include/json.h || (mkdir -p $(KLOCAL)/include                  \
 	&& curl -L https://github.com/nlohmann/json/releases/download/$(V_JSON)/json.hpp \
@@ -195,7 +186,7 @@ cleandb: /data/db/K*
 packages:
 	test -n "`command -v apt-get`" && sudo apt-get -y install g++ build-essential automake autoconf libtool libxml2 libxml2-dev zlib1g-dev openssl stunnel python curl gzip imagemagick screen \
 	|| (test -n "`command -v yum`" && sudo yum -y install gcc-c++ automake autoconf libtool libxml2 libxml2-devel openssl stunnel python curl gzip ImageMagick screen) \
-	|| (test -n "`command -v brew`" && (xcode-select --install || :) && (brew install automake autoconf libxml2 sqlite openssl zlib libuv stunnel python curl gzip imagemagick || brew upgrade || :)) \
+	|| (test -n "`command -v brew`" && (xcode-select --install || :) && (brew install automake autoconf libxml2 sqlite openssl zlib stunnel python curl gzip imagemagick || brew upgrade || :)) \
  	|| (test -n "`command -v pacman`" && sudo pacman --noconfirm -S --needed base-devel libxml2 zlib sqlite curl libcurl-compat openssl stunnel python gzip imagemagick screen)
 	sudo mkdir -p /data/db/
 	sudo chown $(shell id -u) /data/db
@@ -362,4 +353,4 @@ md5: src
 asandwich:
 	@test `whoami` = 'root' && echo OK || echo make it yourself!
 
-.PHONY: K dist link Linux Darwin build zlib openssl curl ncurses libuv quickfix uws json pvs clean cleandb list screen start stop restart startall stopall restartall gdax packages install docker travis reinstall client www bundle diff latest changelog test test-cov send-cov png png-check release md5 asandwich
+.PHONY: K dist link Linux Darwin build zlib openssl curl ncurses quickfix uws json pvs clean cleandb list screen start stop restart startall stopall restartall gdax packages install docker travis reinstall client www bundle diff latest changelog test test-cov send-cov png png-check release md5 asandwich
