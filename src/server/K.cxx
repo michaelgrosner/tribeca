@@ -21,7 +21,6 @@
 
 using namespace std;
 
-#include "uv.h"
 #include "json.h"
 #include "sqlite3.h"
 #include "uWS/uWS.h"

@@ -375,8 +375,6 @@ or donate your time with programming or financial suggestions in the topical IRC
 - https://github.com/michaelgrosner/tribeca (https://github.com/michaelgrosner)
 - https://www.sqlite.org
 - https://github.com/michaelgrosner/tribeca (https://github.com/michaelgrosner)
-- http://libuv.org
-- https://github.com/michaelgrosner/tribeca (https://github.com/michaelgrosner)
 
 ### Help
 

@@ -24,9 +24,9 @@ namespace K {
         quotingMode[mQuotingMode::Depth] = &calcDepthOfMarket;
       };
       void waitTime() {
-        ((EV*)events)->tStart->data = (void*)this;
-        ((EV*)events)->tCalcs->data = (void*)this;
-        uv_timer_start(((EV*)events)->tCalcs, [](uv_timer_t *handle) {
+        ((EV*)events)->tStart->setData(this);
+        ((EV*)events)->tCalcs->setData(this);
+        ((EV*)events)->tCalcs->start([](Timer *handle) {
           QE *k = (QE*)handle->data;
           if (((CF*)k->config)->argDebugEvents) FN::log("DEBUG", "EV GW tCalcs timer");
           if (((MG*)k->market)->fairValue) {
@@ -544,10 +544,10 @@ namespace K {
             nextStart[side] = q;
             nextIsPong = isPong;
             if (tStarted) {
-              uv_timer_stop(((EV*)events)->tStart);
+              ((EV*)events)->tStart->stop();
               tStarted = 0;
             }
-            uv_timer_start(((EV*)events)->tStart, [](uv_timer_t *handle) {
+            ((EV*)events)->tStart->start([](Timer *handle) {
               QE *k = (QE*)handle->data;
               if (((CF*)k->config)->argDebugEvents) FN::log("DEBUG", "EV GW tStart timer");
               k->start(k->nextStart.begin()->first, k->nextStart.begin()->second, k->nextIsPong);

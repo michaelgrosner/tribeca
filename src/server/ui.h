@@ -8,6 +8,7 @@ namespace K {
       string B64auth = "",
              notepad = "";
       bool toggleSettings = true;
+      bool realtimeClient = false;
       map<uiTXT, string> queue;
       map<char, function<json()>*> hello;
       map<char, function<void(json)>*> kiss;
@@ -26,8 +27,8 @@ namespace K {
       };
       void waitTime() {
         if (((CF*)config)->argHeadless) return;
-        ((EV*)events)->tDelay->data = (void*)this;
-        uv_timer_start(((EV*)events)->tDelay, sendState, 0, 0);
+        ((EV*)events)->tDelay->setData(this);
+        ((EV*)events)->tDelay->start(sendState, 0, 0);
       };
       void waitData() {
         if (((CF*)config)->argHeadless) return;
@@ -43,7 +44,6 @@ namespace K {
           string auth = req.getHeader("authorization").toString();
           string addr = res->getHttpSocket()->getAddress().address;
           if (addr.length() > 7 and addr.substr(0, 7) == "::ffff:") addr = addr.substr(7);
-          lock_guard<mutex> lock(((EV*)events)->hubMutex);
           if (((CF*)config)->argWhitelist != "" and ((CF*)config)->argWhitelist.find(addr) == string::npos) {
             FN::log("UI", "dropping gzip bomb on", addr);
             content << ifstream("etc/K-bomb.gzip").rdbuf();
@@ -109,10 +109,7 @@ namespace K {
           }
           if (uiBIT::Hello == (uiBIT)message[0] and hello.find(message[1]) != hello.end()) {
             json reply = (*hello[message[1]])();
-            if (!reply.is_null()) {
-              lock_guard<mutex> lock(((EV*)events)->hubMutex);
-              webSocket->send(string(message, 2).append(reply.dump()).data(), uWS::OpCode::TEXT);
-            }
+            if (!reply.is_null()) webSocket->send(string(message, 2).append(reply.dump()).data(), uWS::OpCode::TEXT);
           } else if (uiBIT::Kiss == (uiBIT)message[0] and kiss.find(message[1]) != kiss.end())
             (*kiss[message[1]])(json::parse((length > 2 and (message[2] == '[' or message[2] == '{'))
               ? string(message, length).substr(2, length-2) : "{}"
@@ -145,12 +142,13 @@ namespace K {
       };
       void delayme(double delayUI) {
         if (((CF*)config)->argHeadless) return;
-        uv_timer_set_repeat(((EV*)events)->tDelay, delayUI > 0 ? (int)(delayUI*1e+3) : 6e+4 + 1);
-        uv_timer_again(((EV*)events)->tDelay);
+        realtimeClient = !delayUI;
+        ((EV*)events)->tDelay->stop();
+        ((EV*)events)->tDelay->start(sendState, 0, realtimeClient ? 6e+4 : (int)(delayUI*1e+3));
       };
       void send(uiTXT k, json o, bool delayed = false) {
         if (((CF*)config)->argHeadless or connections == 0) return;
-        if (realtimeClient() or !delayed) send(k, o.dump());
+        if (realtimeClient or !delayed) send(k, o.dump());
         else queue[k] = o.dump();
       };
     private:
@@ -174,7 +172,6 @@ namespace K {
       void send(uiTXT k, string j) {
         string m(1, (char)uiBIT::Kiss);
         m += string(1, (char)k) + j;
-        lock_guard<mutex> lock(((EV*)events)->hubMutex);
         ((EV*)events)->uiGroup->broadcast(m.data(), m.length(), uWS::OpCode::TEXT);
       };
       void sendQueue() {
@@ -182,10 +179,10 @@ namespace K {
           send(it->first, it->second);
         queue.clear();
       };
-      void (*sendState)(uv_timer_t*) = [](uv_timer_t *handle) {
+      void (*sendState)(Timer*) = [](Timer *handle) {
         UI *k = (UI*)handle->data;
         if (((CF*)k->config)->argDebugEvents) FN::log("DEBUG", "EV UI tDelay timer");
-        if (!k->realtimeClient()) {
+        if (!k->realtimeClient) {
           k->sendQueue();
           static unsigned long uiT_1m = 0;
           if (uiT_1m+6e+4 > FN::T()) return;
@@ -204,9 +201,6 @@ namespace K {
           {"dbsize", ((DB*)memory)->size()},
           {"a", gw->A()}
         };
-      };
-      bool realtimeClient() {
-        return uv_timer_get_repeat(((EV*)events)->tDelay) == 6e+4 + 1;
       };
   };
 }
