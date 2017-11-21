@@ -652,7 +652,7 @@ namespace K {
         signal(SIGWINCH, screen_resize);
         thread([&]() {
           int ch;
-          while ((ch = wgetch(wBorder)) != 'q') {
+          while ((ch = wgetch(wBorder)) != 'q' and ch != 'Q') {
             switch (ch) {
               case ERR: continue;
               // case KEY_PPAGE: wscrl(wLog, -3); wrefresh(wLog); break;

@@ -88,7 +88,7 @@ namespace K  {
         cout << FN::uiT();
         for(unsigned int i = 0; i < 21; ++i)
           cout << "THE END IS NEVER ";
-        cout << "THE END" << '\n';
+        cout << "THE END." << '\n';
         halt(code);
       };
       static void quit(int sig) {
@@ -96,7 +96,7 @@ namespace K  {
         cout << '\n';
         json k = FN::wJet("https://api.icndb.com/jokes/random?escape=javascript&limitTo=[nerdy]");
         cout << FN::uiT() << "Excellent decision! "
-          << ((k.is_null() || !k["/value/joke"_json_pointer].is_string())
+          << ((k.is_null() or !k["/value/joke"_json_pointer].is_string())
             ? "let's plant a tree instead.." : k["/value/joke"_json_pointer].get<string>()
           ) << '\n';
         (*evExit)(EXIT_SUCCESS);
