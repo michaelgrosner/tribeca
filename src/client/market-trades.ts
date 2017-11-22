@@ -25,6 +25,7 @@ export class MarketTradesComponent implements OnInit {
     this.gridOptions.enableSorting = true;
     this.gridOptions.overlayLoadingTemplate = `<span class="ag-overlay-no-rows-center">click to view data</span>`;
     this.gridOptions.overlayNoRowsTemplate = `<span class="ag-overlay-no-rows-center">empty history</span>`;
+    this.gridOptions.enableColResize = true;
   }
 
   private subscribed: boolean = false;
