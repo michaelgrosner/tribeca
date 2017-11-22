@@ -5,3 +5,4 @@ test/coverage
 node_modules
 etc/sslcert/fix.gdax.com.pem
 .DS_Store
+.idea
