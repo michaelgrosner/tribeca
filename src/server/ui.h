@@ -7,8 +7,8 @@ namespace K {
       int connections = 0;
       string B64auth = "",
              notepad = "";
-      bool toggleSettings = true;
-      bool realtimeClient = false;
+      bool toggleSettings = true,
+           realtimeClient = false;
       map<uiTXT, string> queue;
       map<char, function<json()>*> hello;
       map<char, function<void(json)>*> kiss;
