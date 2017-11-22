@@ -16,6 +16,7 @@ namespace K {
   enum class mQuoteState: unsigned int { Live, Disconnected, DisabledQuotes, MissingData, UnknownHeld, TBPHeld, MaxTradesSeconds, WaitingPing, DepletedFunds, Crossed, UpTrendHeld, DownTrendHeld };
   enum class mFairValueModel: unsigned int { BBO, wBBO };
   enum class mAutoPositionMode: unsigned int { Manual, EWMA_LS, EWMA_LMS };
+  enum class mPDivMode: unsigned int { Manual, Linear, Sine, SQRT, Switch};
   enum class mAPR: unsigned int { Off, Size, SizeWidth };
   enum class mSOP: unsigned int { Off, Trades, Size, TradesSize };
   enum class mSTDEV: unsigned int { Off, OnFV, OnFVAPROff, OnTops, OnTopsAPROff, OnTop, OnTopAPROff };
@@ -31,61 +32,64 @@ namespace K {
     WalletChart = 'C', EWMAChart = 'D'
   };
   struct mQuotingParams {
-    double            widthPing                     = 2.0;
-    double            widthPingPercentage           = 0.25;
-    double            widthPong                     = 2.0;
-    double            widthPongPercentage           = 0.25;
-    bool              widthPercentage               = false;
-    bool              bestWidth                     = true;
-    double            buySize                       = 0.02;
-    int               buySizePercentage             = 7;
-    bool              buySizeMax                    = false;
-    double            sellSize                      = 0.01;
-    int               sellSizePercentage            = 7;
-    bool              sellSizeMax                   = false;
-    mPingAt           pingAt                        = mPingAt::BothSides;
-    mPongAt           pongAt                        = mPongAt::ShortPingFair;
-    mQuotingMode      mode                          = mQuotingMode::Top;
-    mQuotingSafety    safety                        = mQuotingSafety::Boomerang;
-    int               bullets                       = 2;
-    double            range                         = 0.5;
-    double            rangePercentage               = 1.0;
-    mFairValueModel   fvModel                       = mFairValueModel::BBO;
-    double            targetBasePosition            = 1.0;
-    int               targetBasePositionPercentage  = 50;
-    double            positionDivergence            = 0.9;
-    int               positionDivergencePercentage  = 21;
-    bool              percentageValues              = false;
-    mAutoPositionMode autoPositionMode              = mAutoPositionMode::EWMA_LS;
-    mAPR              aggressivePositionRebalancing = mAPR::Off;
-    mSOP              superTrades                   = mSOP::Off;
-    double            tradesPerMinute               = 0.9;
-    int               tradeRateSeconds              = 3;
-    bool              quotingEwmaProtection         = true;
-    int               quotingEwmaProtectionPeriods  = 200;
-    bool              quotingEwmaSMUProtection      = false;
-    double            quotingEwmaSMUThreshold       = 2.0;
-    int               quotingEwmaSMPeriods          = 12;
-    int               quotingEwmaSUPeriods          = 3;
-    mSTDEV            quotingStdevProtection        = mSTDEV::Off;
-    bool              quotingStdevBollingerBands    = false;
-    double            quotingStdevProtectionFactor  = 1.0;
-    int               quotingStdevProtectionPeriods = 1200;
-    double            ewmaSensiblityPercentage      = 0.5;
-    int               longEwmaPeriods               = 200;
-    int               mediumEwmaPeriods             = 100;
-    int               shortEwmaPeriods              = 50;
-    double            aprMultiplier                 = 2;
-    double            sopWidthMultiplier            = 2;
-    double            sopSizeMultiplier             = 2;
-    double            sopTradesMultiplier           = 2;
-    int               delayAPI                      = 0;
-    bool              cancelOrdersAuto              = false;
-    double            cleanPongsAuto                = 0.0;
-    double            profitHourInterval            = 0.5;
-    bool              audio                         = false;
-    int               delayUI                       = 7;
-    bool              _matchPings                   = true;
+    double            widthPing                       = 2.0;
+    double            widthPingPercentage             = 0.25;
+    double            widthPong                       = 2.0;
+    double            widthPongPercentage             = 0.25;
+    bool              widthPercentage                 = false;
+    bool              bestWidth                       = true;
+    double            buySize                         = 0.02;
+    int               buySizePercentage               = 7;
+    bool              buySizeMax                      = false;
+    double            sellSize                        = 0.01;
+    int               sellSizePercentage              = 7;
+    bool              sellSizeMax                     = false;
+    mPingAt           pingAt                          = mPingAt::BothSides;
+    mPongAt           pongAt                          = mPongAt::ShortPingFair;
+    mQuotingMode      mode                            = mQuotingMode::Top;
+    mQuotingSafety    safety                          = mQuotingSafety::Boomerang;
+    int               bullets                         = 2;
+    double            range                           = 0.5;
+    double            rangePercentage                 = 1.0;
+    mFairValueModel   fvModel                         = mFairValueModel::BBO;
+    double            targetBasePosition              = 1.0;
+    int               targetBasePositionPercentage    = 50;
+    double            positionDivergence              = 0.9;
+    double            positionDivergenceMin           = 0.4;
+    int               positionDivergencePercentage    = 21;
+    int               positionDivergencePercentageMin = 10;
+    mPDivMode         positionDivergenceMode          = mPDivMode::Manual;
+    bool              percentageValues                = false;
+    mAutoPositionMode autoPositionMode                = mAutoPositionMode::EWMA_LS;
+    mAPR              aggressivePositionRebalancing   = mAPR::Off;
+    mSOP              superTrades                     = mSOP::Off;
+    double            tradesPerMinute                 = 0.9;
+    int               tradeRateSeconds                = 3;
+    bool              quotingEwmaProtection           = true;
+    int               quotingEwmaProtectionPeriods    = 200;
+    bool              quotingEwmaSMUProtection        = false;
+    double            quotingEwmaSMUThreshold         = 2.0;
+    int               quotingEwmaSMPeriods            = 12;
+    int               quotingEwmaSUPeriods            = 3;
+    mSTDEV            quotingStdevProtection          = mSTDEV::Off;
+    bool              quotingStdevBollingerBands      = false;
+    double            quotingStdevProtectionFactor    = 1.0;
+    int               quotingStdevProtectionPeriods   = 1200;
+    double            ewmaSensiblityPercentage        = 0.5;
+    int               longEwmaPeriods                 = 200;
+    int               mediumEwmaPeriods               = 100;
+    int               shortEwmaPeriods                = 50;
+    double            aprMultiplier                   = 2;
+    double            sopWidthMultiplier              = 2;
+    double            sopSizeMultiplier               = 2;
+    double            sopTradesMultiplier             = 2;
+    int               delayAPI                        = 0;
+    bool              cancelOrdersAuto                = false;
+    double            cleanPongsAuto                  = 0.0;
+    double            profitHourInterval              = 0.5;
+    bool              audio                           = false;
+    int               delayUI                         = 7;
+    bool              _matchPings                     = true;
   };
   static void to_json(json& j, const mQuotingParams& k) {
     j = {
@@ -113,6 +117,9 @@ namespace K {
       {"targetBasePositionPercentage", k.targetBasePositionPercentage},
       {"positionDivergence", k.positionDivergence},
       {"positionDivergencePercentage", k.positionDivergencePercentage},
+      {"positionDivergenceMin", k.positionDivergenceMin},
+      {"positionDivergencePercentageMin", k.positionDivergencePercentageMin},
+      {"positionDivergenceMode", (int)k.positionDivergenceMode},
       {"percentageValues", k.percentageValues},
       {"autoPositionMode", (int)k.autoPositionMode},
       {"aggressivePositionRebalancing", (int)k.aggressivePositionRebalancing},
@@ -169,6 +176,9 @@ namespace K {
     if (j.end() != j.find("fvModel")) k.fvModel = (mFairValueModel)j.at("fvModel").get<int>();
     if (j.end() != j.find("targetBasePosition")) k.targetBasePosition = j.at("targetBasePosition").get<double>();
     if (j.end() != j.find("targetBasePositionPercentage")) k.targetBasePositionPercentage = j.at("targetBasePositionPercentage").get<int>();
+    if (j.end() != j.find("positionDivergenceMin")) k.positionDivergenceMin = j.at("positionDivergenceMin").get<double>();
+    if (j.end() != j.find("positionDivergencePercentageMin")) k.positionDivergencePercentageMin = j.at("positionDivergencePercentageMin").get<int>();
+    if (j.end() != j.find("positionDivergenceMode")) k.positionDivergenceMode = (mPDivMode)j.at("positionDivergenceMode").get<int>();
     if (j.end() != j.find("positionDivergence")) k.positionDivergence = j.at("positionDivergence").get<double>();
     if (j.end() != j.find("positionDivergencePercentage")) k.positionDivergencePercentage = j.at("positionDivergencePercentage").get<int>();
     if (j.end() != j.find("percentageValues")) k.percentageValues = j.at("percentageValues").get<bool>();

@@ -161,7 +161,21 @@ In the web UI, there are three rows of panels with cryptic looking names and edi
 
 * `tbp` - Only used when `apMode` is `Manual`. Sets a static "Target Base Position" for K.js to stay near. In manual position mode, K.js will still try to respect `pDiv` and not make your position fluctuate by more than that value. So if you have 10 BTC to trade, set `tbp = 3`, set `apMode = Manual`, and `pDiv = 1`, your holding of BTC will never be less than 2 or greater than 4.
 
+* `pDivMode` - Only used when `apMode` is `EWMA_LS` or `EWMA_LMS`. Sets the strategy of dynamically adjusting the `pDiv` depending on the divergence from 50% of Base Value.
+
+  * `Manual` - No dynamic adjusting of `pDiv`. 
+
+  * `Linear` - Linear calculation between `pDiv` and `pDivMin`.
+  
+  * `Sine` - Calculation between `pDiv` and `pDivMin` on a sine curve.
+  
+  * `SQRT` - Square root calculation between `pDiv` and `pDivMin`.  
+  
+  * `Switch` - If `tbp` is more than 90% or less than 10%, `pDivMin` is taken, otherwhise `pDiv`.
+  
 * `pDiv` - If your "Target Base Position" diverges more from this value, K.js will stop sending orders to stop too much directional trading. So if you have 10 BTC to trade, "Target Base Position" is reporting 5, and `pDiv` is set to 3, your holding of BTC will never be less than 2 or greater than 8.
+
+* `pDivMin` - Only used when `pDivMode` is not `Manual`. It defines the minimal `pDiv` for the dynamic positon divergence.
 
 * `apr` - If you're in a state where K.js has stopped sending orders because your position has diverged too far from Target Base Position, this setting will much more aggressively try to fix that discrepancy by placing orders much larger than `size` and at prices much more aggressive than `width` normally allows (see `pongAt` option). It's a bit risky to use this setting.
 

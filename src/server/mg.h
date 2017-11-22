@@ -210,7 +210,7 @@ namespace K {
         calcEwma(&mgEwmaSM, qp->quotingEwmaSMPeriods);
         calcEwma(&mgEwmaSU, qp->quotingEwmaSUPeriods);
         if(mgEwmaSM && mgEwmaSU)
-		      mgEwmaSMUDiff = ((mgEwmaSU * 100) / mgEwmaSM) - 100;
+          mgEwmaSMUDiff = ((mgEwmaSU * 100) / mgEwmaSM) - 100;
         ((EV*)events)->mgEwmaSMUProtection();
       };
       void filter(mLevels k) {

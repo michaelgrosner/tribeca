@@ -14,6 +14,7 @@ namespace K {
       mPosition position;
       mSafety safety;
       double targetBasePosition = 0;
+      double positionDivergence = 0;
       string sideAPR = "";
       mutex pgMutex;
     protected:
@@ -89,14 +90,31 @@ namespace K {
         if (targetBasePosition and abs(targetBasePosition - next) < 1e-4 and sideAPR_ == sideAPR) return;
         targetBasePosition = next;
         sideAPR_ = sideAPR;
+        if (qp->autoPositionMode != mAutoPositionMode::Manual) calcDynamicPDiv(value);
         ((EV*)events)->pgTargetBasePosition();
-        json k = {{"tbp", targetBasePosition}, {"sideAPR", sideAPR}};
+        json k = {{"tbp", targetBasePosition}, {"sideAPR", sideAPR}, {"pDiv", positionDivergence }};
         ((UI*)client)->send(uiTXT::TargetBasePosition, k, true);
         ((DB*)memory)->insert(uiTXT::TargetBasePosition, k);
         stringstream ss;
         ss << (int)(targetBasePosition / value * 1e+2) << "% = " << setprecision(8) << fixed << targetBasePosition;
-        FN::log("TBP", ss.str() + " " + gw->base);
+        stringstream ss_;
+        ss_ << (int)(positionDivergence  / value * 1e+2) << "% = " << setprecision(8) << fixed << positionDivergence ;
+        FN::log("PG", string("TBP: ") + ss.str() + " " + gw->base + ", pDiv: " + ss_.str() + " " + gw->base);
       };
+      void calcDynamicPDiv(double value) {
+        double divCenter = 1 - abs((targetBasePosition / value * 2) - 1);
+        double pDiv = qp->percentageValues
+            ? qp->positionDivergencePercentage * value / 1e+2
+            : qp->positionDivergence;
+          double pDivMin = qp->percentageValues
+            ? qp->positionDivergencePercentageMin * value / 1e+2
+            : qp->positionDivergenceMin;
+        if (mPDivMode::Manual == qp->positionDivergenceMode) positionDivergence  = pDiv;
+        else if (mPDivMode::Linear == qp->positionDivergenceMode) positionDivergence  = pDivMin + (divCenter * (pDiv - pDivMin));
+        else if (mPDivMode::Sine == qp->positionDivergenceMode) positionDivergence  = pDivMin + (sin(divCenter*M_PI_2) * (pDiv - pDivMin));
+        else if (mPDivMode::SQRT == qp->positionDivergenceMode) positionDivergence  = pDivMin + (sqrt(divCenter) * (pDiv - pDivMin));
+        else if (mPDivMode::Switch == qp->positionDivergenceMode) positionDivergence  = divCenter < 1e-1 ? pDivMin : pDiv;
+      }
       void addTrade(mTrade k) {
         mTrade k_(k.price, k.quantity, k.time);
         if (k.side == mSide::Bid) buys[k.price] = k_;
