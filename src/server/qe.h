@@ -28,7 +28,7 @@ namespace K {
         ((EV*)events)->tCalcs->setData(this);
         ((EV*)events)->tCalcs->start([](Timer *handle) {
           QE *k = (QE*)handle->data;
-          if (((CF*)k->config)->argDebugEvents) FN::log("DEBUG", "EV GW tCalcs timer");
+          ((EV*)k->events)->debug("QE tCalcs timer");
           if (((MG*)k->market)->fairValue) {
             ((MG*)k->market)->calcStats();
             ((PG*)k->wallet)->calcSafety();
@@ -38,37 +38,42 @@ namespace K {
       };
       void waitData() {
         ((EV*)events)->uiQuotingParameters = [&]() {
-          if (((CF*)config)->argDebugEvents) FN::log("DEBUG", "EV QE uiQuotingParameters");
+          ((EV*)events)->debug("QE uiQuotingParameters");
           ((MG*)market)->calcFairValue();
           ((PG*)wallet)->calcTargetBasePos();
           ((PG*)wallet)->calcSafety();
           calcQuote();
         };
         ((EV*)events)->ogTrade = [&](mTrade k) {
-          if (((CF*)config)->argDebugEvents) FN::log("DEBUG", "EV QE ogTrade");
+          ((EV*)events)->debug("QE ogTrade");
           ((PG*)wallet)->addTrade(k);
           ((PG*)wallet)->calcSafety();
           calcQuote();
         };
         ((EV*)events)->mgEwmaQuoteProtection = [&]() {
-          if (((CF*)config)->argDebugEvents) FN::log("DEBUG", "EV QE mgEwmaQuoteProtection");
+          ((EV*)events)->debug("QE mgEwmaQuoteProtection");
           calcQuote();
         };
         ((EV*)events)->mgEwmaSMUProtection = [&]() {
-          if (((CF*)config)->argDebugEvents) FN::log("DEBUG", "EV QE mgEwmaSMUProtection");
+          ((EV*)events)->debug("QE mgEwmaSMUProtection");
           calcQuote();
         };
         ((EV*)events)->mgLevels = [&]() {
-          if (((CF*)config)->argDebugEvents) FN::log("DEBUG", "EV QE mgLevels");
+          ((EV*)events)->debug("QE mgLevels");
           calcQuote();
         };
         ((EV*)events)->pgTargetBasePosition = [&]() {
-          if (((CF*)config)->argDebugEvents) FN::log("DEBUG", "EV QE pgTargetBasePosition");
+          ((EV*)events)->debug("QE pgTargetBasePosition");
           calcQuote();
         };
       };
       void waitUser() {
         ((UI*)client)->welcome(uiTXT::QuoteStatus, &hello);
+      };
+      void run() {
+        if (((CF*)config)->argDebugQuotes) return;
+        debuq = [&](string k, mQuote rawQuote) {};
+        debug = [&](string k) {};
       };
     private:
       function<json()> hello = [&]() {
@@ -166,25 +171,22 @@ namespace K {
         const double rawBidSz = rawQuote.bid.size;
         const double rawAskSz = rawQuote.ask.size;
         bool superTradesActive = false;
-        debug("?", rawQuote); applySuperTrades(&rawQuote, &superTradesActive, widthPing, buySize, sellSize, quoteAmount, baseAmount);
-        debug("A", rawQuote); applyEwmaProtection(&rawQuote);
-        debug("B", rawQuote); applyEwmaSMUProtection(&rawQuote);
-        debug("C", rawQuote); applyTotalBasePosition(&rawQuote, totalBasePosition, pDiv, buySize, sellSize, quoteAmount, baseAmount);
-        debug("D", rawQuote); applyStdevProtection(&rawQuote);
-        debug("E", rawQuote); applyAggressivePositionRebalancing(&rawQuote, widthPong, safetyBuyPing, safetySellPong);
-        debug("F", rawQuote); applyAK47Increment(&rawQuote, value);
-        debug("G", rawQuote); applyBestWidth(&rawQuote);
-        debug("H", rawQuote); applyTradesPerMinute(&rawQuote, superTradesActive, safetyBuy, safetySell);
-        debug("I", rawQuote); applyWaitingPing(&rawQuote, buySize, sellSize, totalQuotePosition, totalBasePosition, safetyBuyPing, safetySellPong);
-        debug("J", rawQuote); applyRoundSide(&rawQuote);
-        debug("K", rawQuote); applyRoundDown(&rawQuote, rawBidSz, rawAskSz, widthPong, safetyBuyPing, safetySellPong, totalQuotePosition, totalBasePosition);
-        debug("L", rawQuote); applyDepleted(&rawQuote, totalQuotePosition, totalBasePosition);
-        debug("!", rawQuote);
-        if (((CF*)config)->argDebugQuotes) FN::log("DEBUG", string("QE totals ") + "toAsk:" + to_string(totalBasePosition) + " toBid:" + to_string(totalQuotePosition) + " min:" + to_string(gw->minSize));
+        debuq("?", rawQuote); applySuperTrades(&rawQuote, &superTradesActive, widthPing, buySize, sellSize, quoteAmount, baseAmount);
+        debuq("A", rawQuote); applyEwmaProtection(&rawQuote);
+        debuq("B", rawQuote); applyEwmaSMUProtection(&rawQuote);
+        debuq("C", rawQuote); applyTotalBasePosition(&rawQuote, totalBasePosition, pDiv, buySize, sellSize, quoteAmount, baseAmount);
+        debuq("D", rawQuote); applyStdevProtection(&rawQuote);
+        debuq("E", rawQuote); applyAggressivePositionRebalancing(&rawQuote, widthPong, safetyBuyPing, safetySellPong);
+        debuq("F", rawQuote); applyAK47Increment(&rawQuote, value);
+        debuq("G", rawQuote); applyBestWidth(&rawQuote);
+        debuq("H", rawQuote); applyTradesPerMinute(&rawQuote, superTradesActive, safetyBuy, safetySell);
+        debuq("I", rawQuote); applyWaitingPing(&rawQuote, buySize, sellSize, totalQuotePosition, totalBasePosition, safetyBuyPing, safetySellPong);
+        debuq("J", rawQuote); applyRoundSide(&rawQuote);
+        debuq("K", rawQuote); applyRoundDown(&rawQuote, rawBidSz, rawAskSz, widthPong, safetyBuyPing, safetySellPong, totalQuotePosition, totalBasePosition);
+        debuq("L", rawQuote); applyDepleted(&rawQuote, totalQuotePosition, totalBasePosition);
+        debuq("!", rawQuote);
+        debug(string("QE totals ") + "toAsk:" + to_string(totalBasePosition) + " toBid:" + to_string(totalQuotePosition) + " min:" + to_string(gw->minSize));
         return rawQuote;
-      };
-      void debug(string k, mQuote rawQuote) {
-        if (((CF*)config)->argDebugQuotes) FN::log("DEBUG", string("QE quote") + k + " " + to_string((int)bidStatus) + " " + to_string((int)askStatus) + " " + ((json)rawQuote).dump());
       };
       void applyRoundSide(mQuote *rawQuote) {
         if (rawQuote->bid.price) {
@@ -377,13 +379,13 @@ namespace K {
           askStatus = mQuoteState::UpTrendHeld;
           rawQuote->ask.price = 0;
           rawQuote->ask.size = 0;
-          if (((CF*)config)->argDebugQuotes) FN::log("DEBUG", string("QE quote: SMU Protection uptrend ON"));
+          debug("QE quote: SMU Protection uptrend ON");
         }
         else if(((MG*)market)->mgEwmaSMUDiff < -qp->quotingEwmaSMUThreshold){
           bidStatus = mQuoteState::DownTrendHeld;
           rawQuote->bid.price = 0;
           rawQuote->bid.size = 0;
-          if (((CF*)config)->argDebugQuotes) FN::log("DEBUG", string("QE quote: SMU Protection downtrend ON"));
+          debug("quote: SMU Protection downtrend ON");
         }
       };
       mQuote quote(double widthPing, double buySize, double sellSize) {
@@ -550,7 +552,7 @@ namespace K {
             }
             ((EV*)events)->tStart->start([](Timer *handle) {
               QE *k = (QE*)handle->data;
-              if (((CF*)k->config)->argDebugEvents) FN::log("DEBUG", "EV GW tStart timer");
+              ((EV*)k->events)->debug("QE tStart timer");
               k->start(k->nextStart.begin()->first, k->nextStart.begin()->second, k->nextIsPong);
             }, (nextDiff * 1e+3) + 1e+2, 0);
             tStarted = 1;
@@ -585,6 +587,12 @@ namespace K {
       void stopAllQuotes() {
         stopAllQuotes(mSide::Bid);
         stopAllQuotes(mSide::Ask);
+      };
+      function<void(string,mQuote)> debuq = [&](string k, mQuote rawQuote) {
+        debug(string("quote") + k + " " + to_string((int)bidStatus) + " " + to_string((int)askStatus) + " " + ((json)rawQuote).dump());
+      };
+      function<void(string)> debug = [&](string k) {
+        FN::log("DEBUG", string("QE ") + k);
       };
   };
 }

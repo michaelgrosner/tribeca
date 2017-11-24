@@ -19,13 +19,13 @@ namespace K {
         ((EV*)events)->tWallet->setData(this);
         ((EV*)events)->tWallet->start([](Timer *handle) {
           GW *k = (GW*)handle->data;
-          if (((CF*)k->config)->argDebugEvents) FN::log("DEBUG", "EV GW tWallet timer");
+          ((EV*)k->events)->debug("GW tWallet timer");
           k->gw->wallet();
         }, 0, 15e+3);
         ((EV*)events)->tCancel->setData(this);
         ((EV*)events)->tCancel->start([](Timer *handle) {
           GW *k = (GW*)handle->data;
-          if (((CF*)k->config)->argDebugEvents) FN::log("DEBUG", "EV GW tCancel timer");
+          ((EV*)k->events)->debug("GW tCancel timer");
           if (k->qp->cancelOrdersAuto)
             k->gw->cancelAll();
         }, 0, 3e+5);

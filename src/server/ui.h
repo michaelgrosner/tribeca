@@ -125,7 +125,7 @@ namespace K {
       };
       void run() {
         if (((CF*)config)->argHeadless) return;
-        ((EV*)events)->listen(((CF*)config)->argPort);
+        ((EV*)events)->listen();
       };
     public:
       void welcome(uiTXT k, function<json()> *cb) {
@@ -181,7 +181,7 @@ namespace K {
       };
       void (*sendState)(Timer*) = [](Timer *handle) {
         UI *k = (UI*)handle->data;
-        if (((CF*)k->config)->argDebugEvents) FN::log("DEBUG", "EV UI tDelay timer");
+        ((EV*)k->events)->debug("UI tDelay timer");
         if (!k->realtimeClient) {
           k->sendQueue();
           static unsigned long uiT_1m = 0;

@@ -35,8 +35,8 @@ namespace K {
       };
       void waitData() {
         gw->evDataOrder = [&](mOrder k) {
-          if (((CF*)config)->argDebugEvents) FN::log("DEBUG", "EV OG evDataOrder");
-          if (((CF*)config)->argDebugOrders) FN::log("DEBUG", string("OG reply  ") + k.orderId + "::" + k.exchangeId + " [" + to_string((int)k.orderStatus) + "]: " + k.quantity2str() + "/" + k.lastQuantity2str() + " at price " + k.price2str());
+          ((EV*)events)->debug("OG evDataOrder");
+          debug(string("reply  ") + k.orderId + "::" + k.exchangeId + " [" + to_string((int)k.orderStatus) + "]: " + k.quantity2str() + "/" + k.lastQuantity2str() + " at price " + k.price2str());
           updateOrderState(k);
         };
       };
@@ -50,10 +50,14 @@ namespace K {
         ((UI*)client)->clickme(uiTXT::CleanAllTrades, &kissCleanAllTrades);
         ((UI*)client)->clickme(uiTXT::CleanTrade, &kissCleanTrade);
       };
+      void run() {
+        if (((CF*)config)->argDebugOrders) return;
+        debug = [&](string k) {};
+      };
     public:
       void sendOrder(mSide oS, double oP, double oQ, mOrderType oLM, mTimeInForce oTIF, bool oIP, bool oPO) {
         mOrder o = updateOrderState(mOrder(gw->randId(), gw->exchange, mPair(gw->base, gw->quote), oS, oQ, oLM, oIP, FN::roundSide(oP, gw->minTick, oS), oTIF, mORS::New, oPO));
-        if (((CF*)config)->argDebugOrders) FN::log("DEBUG", string("OG  send  ") + (o.side == mSide::Bid ? "BID id " : "ASK id ") + o.orderId + ": " + o.quantity2str() + " " + o.pair.base + " at price " + o.price2str() + " " + o.pair.quote);
+        debug(string(" send  ") + (o.side == mSide::Bid ? "BID id " : "ASK id ") + o.orderId + ": " + o.quantity2str() + " " + o.pair.base + " at price " + o.price2str() + " " + o.pair.quote);
         gw->send(o.orderId, o.side, o.price2str(), o.quantity2str(), o.type, o.timeInForce, o.preferPostOnly, o.time);
         ++((UI*)client)->orders60sec;
       };
@@ -62,7 +66,7 @@ namespace K {
         if (orders.find(k) == orders.end() or (orders[k].exchangeId == ""))
           return;
         mOrder o = orders[k];
-        if (((CF*)config)->argDebugOrders) FN::log("DEBUG", string("OG cancel ") + (o.side == mSide::Bid ? "BID id " : "ASK id ") + o.orderId + "::" + o.exchangeId);
+        debug(string("cancel ") + (o.side == mSide::Bid ? "BID id " : "ASK id ") + o.orderId + "::" + o.exchangeId);
         gw->cancel(o.orderId, o.exchangeId, o.side, o.time);
       };
       void cleanOrder(string oI, string oE) {
@@ -77,7 +81,7 @@ namespace K {
             if (it_->second == oI) it_ = allOrdersIds.erase(it_); else ++it_;
         }
         ogMutex.unlock();
-        if (((CF*)config)->argDebugOrders) FN::log("DEBUG", string("OG remove ") + oI + "::" + oE);
+        debug(string("remove ") + oI + "::" + oE);
       };
       void countOrders(unsigned int *qNew, unsigned int *qWorking, unsigned int *qDone) {
         map<string, mOrder> orders = ordersBothSides();
@@ -334,9 +338,12 @@ namespace K {
             allOrdersIds[k.exchangeId] = k.orderId;
           allOrders[k.orderId] = k;
           ogMutex.unlock();
-          if (((CF*)config)->argDebugOrders) FN::log("DEBUG", string("OG  save  ") + (k.side == mSide::Bid ? "BID id " : "ASK id ") + k.orderId + "::" + k.exchangeId + " [" + to_string((int)k.orderStatus) + "]: " + k.quantity2str() + " " + k.pair.base + " at price " + k.price2str() + " " + k.pair.quote);
+          debug(string(" save  ") + (k.side == mSide::Bid ? "BID id " : "ASK id ") + k.orderId + "::" + k.exchangeId + " [" + to_string((int)k.orderStatus) + "]: " + k.quantity2str() + " " + k.pair.base + " at price " + k.price2str() + " " + k.pair.quote);
         } else cleanOrder(k.orderId, k.exchangeId);
-        if (((CF*)config)->argDebugOrders) FN::log("DEBUG", string("OG memory ") + to_string(allOrders.size()) + "/" + to_string(allOrdersIds.size()));
+        debug(string("memory ") + to_string(allOrders.size()) + "/" + to_string(allOrdersIds.size()));
+      };
+      function<void(string)> debug = [&](string k) {
+        FN::log("DEBUG", string("OG ") + k);
       };
   };
 }

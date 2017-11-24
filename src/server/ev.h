@@ -50,6 +50,8 @@ namespace K  {
           string k = changelog();
           FN::logVer(k, count(k.begin(), k.end(), '\n'));
         }
+        if (((CF*)config)->argDebugEvents) return;
+        debug = [&](string k) {};
       };
     public:
       void start() {
@@ -67,18 +69,21 @@ namespace K  {
         uiGroup->close();
         halt(code);
       };
-      void listen(int port) {
+      void listen() {
         string protocol("HTTP");
         if ((access("etc/sslcert/server.crt", F_OK) != -1) and (access("etc/sslcert/server.key", F_OK) != -1)
-          and hub->listen(port, uS::TLS::createContext("etc/sslcert/server.crt", "etc/sslcert/server.key", ""), 0, uiGroup)
+          and hub->listen(((CF*)config)->argPort, uS::TLS::createContext("etc/sslcert/server.crt", "etc/sslcert/server.key", ""), 0, uiGroup)
         ) protocol += "S";
-        else if (!hub->listen(port, nullptr, 0, uiGroup))
+        else if (!hub->listen(((CF*)config)->argPort, nullptr, 0, uiGroup))
           FN::logExit("IU", string("Use another UI port number, ")
-            + to_string(port) + " seems already in use by:\n"
-            + FN::output(string("netstat -anp 2>/dev/null | grep ") + to_string(port)),
+            + to_string(((CF*)config)->argPort) + " seems already in use by:\n"
+            + FN::output(string("netstat -anp 2>/dev/null | grep ") + to_string(((CF*)config)->argPort)),
             EXIT_SUCCESS);
-        FN::logUI(protocol, port);
-      }
+        FN::logUI(protocol, ((CF*)config)->argPort);
+      };
+      function<void(string)> debug = [&](string k) {
+        FN::log("DEBUG", string("EV ") + k);
+      };
     private:
       void halt(int code) {
         cout << FN::uiT() << "K exit code " << to_string(code) << "." << '\n';

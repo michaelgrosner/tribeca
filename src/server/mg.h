@@ -63,11 +63,11 @@ namespace K {
       };
       void waitData() {
         gw->evDataTrade = [&](mTrade k) {
-          if (((CF*)config)->argDebugEvents) FN::log("DEBUG", "EV MG evDataTrade");
+          ((EV*)events)->debug("MG evDataTrade");
           tradeUp(k);
         };
         gw->evDataLevels = [&](mLevels k) {
-          if (((CF*)config)->argDebugEvents) FN::log("DEBUG", "EV MG evDataLevels");
+          ((EV*)events)->debug("MG evDataLevels");
           levelUp(k);
         };
       };
