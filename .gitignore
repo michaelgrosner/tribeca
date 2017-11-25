@@ -6,3 +6,4 @@ node_modules
 etc/sslcert/fix.gdax.com.pem
 /Vagrantfile
 .DS_Store
+.idea
