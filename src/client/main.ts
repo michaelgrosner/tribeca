@@ -567,18 +567,19 @@ class DisplayOrder {
                                           [closeOnClickOutside]="true">
                                               <table border="0" style="width:139px;">
                                                 <tr>
-                                                    <td><label>Side:</label></td>
-                                                    <td style="padding-bottom:5px;"><select class="form-control input-sm" [(ngModel)]="order.side">
+                                                    <td><label (click)="rotateSide()" style="text-decoration:underline;cursor:pointer">Side:</label></td>
+                                                    <td style="padding-bottom:5px;"><select id="selectSide" class="form-control input-sm" [(ngModel)]="order.side">
                                                       <option *ngFor="let option of order.availableSides" [ngValue]="option">{{option}}</option>
-                                                    </select></td>
+                                                    </select>
+                                                    </td>
                                                 </tr>
                                                 <tr>
-                                                    <td><label>Price:&nbsp;</label></td>
-                                                    <td style="padding-bottom:5px;"><input class="form-control input-sm" type="number" step="{{ product.advert.minTick}}" [(ngModel)]="order.price" /></td>
+                                                    <td><label (click)="insertBidAskPrice()" style="text-decoration:underline;cursor:pointer;padding-right:5px">Price:</label></td>
+                                                    <td style="padding-bottom:5px;"><input id="orderPriceInput" class="form-control input-sm" type="number" step="{{ product.advert.minTick}}" [(ngModel)]="order.price" /></td>
                                                 </tr>
                                                 <tr>
-                                                    <td><label>Size:</label></td>
-                                                    <td style="padding-bottom:5px;"><input class="form-control input-sm" type="number" step="0.01" [(ngModel)]="order.quantity" /></td>
+                                                    <td><label (click)="insertBidAskSize()" style="text-decoration:underline;cursor:pointer">Size:</label></td>
+                                                    <td style="padding-bottom:5px;"><input id="orderSizeInput" class="form-control input-sm" type="number" step="0.01" [(ngModel)]="order.quantity" /></td>
                                                 </tr>
                                                 <tr>
                                                     <td><label>TIF:</label></td>
@@ -699,6 +700,41 @@ class ClientComponent implements OnInit {
       (<any>window).setDialog('cryptoWatch'+watchExchange+watchPair, 'open', {title: watchExchange.toUpperCase()+' '+watchPair.toUpperCase().replace('-','/'),width: 800,height: 400,content: `<div id="container`+watchExchange+watchPair+`" style="width:100%;height:100%;"></div>`});
       (new (<any>window).cryptowatch.Embed(watchExchange, watchPair.replace('-',''), {timePeriod: '1d',customColorScheme: {bg:"000000",text:"b2b2b2",textStrong:"e5e5e5",textWeak:"7f7f7f",short:"FD4600",shortFill:"FF672C",long:"6290FF",longFill:"002782",cta:"363D52",ctaHighlight:"414A67",alert:"FFD506"}})).mount('#container'+watchExchange+watchPair);
     } else (<any>window).setDialog('cryptoWatch'+watchExchange+watchPair, 'close', {content:''});
+  };
+
+  public rotateSide = () => {
+    var sideOption = (document.getElementById("selectSide")) as HTMLSelectElement;
+    if (sideOption.selectedIndex < sideOption.options.length - 1) sideOption.selectedIndex++; else sideOption.selectedIndex = 0;
+  };
+
+  public insertBidAskPrice = () => {
+    var sideOption = (document.getElementById("selectSide")) as HTMLSelectElement;
+    var sideOptionText = ((sideOption.options[sideOption.selectedIndex]) as HTMLOptionElement).innerText;
+    var orderPriceInput = (document.getElementById('orderPriceInput') as HTMLSelectElement);
+    var price = '0';
+    if (sideOptionText.toLowerCase().indexOf('bid'.toLowerCase()) > -1) {
+      price = (document.getElementsByClassName('bidsz0')[1] as HTMLScriptElement).innerText;
+      console.log( 'bid' );
+    }
+    if (sideOptionText.toLowerCase().indexOf('ask'.toLowerCase()) > -1) {
+      price = (document.getElementsByClassName('asksz0')[0] as HTMLScriptElement).innerText;
+      console.log( 'ask' );
+    }
+    orderPriceInput.value = price.replace(',', '');
+  };
+
+  public insertBidAskSize = () => {
+    var sideOption = (document.getElementById("selectSide") as HTMLSelectElement);
+    var sideOptionText = (sideOption.options[sideOption.selectedIndex] as HTMLOptionElement).innerText;
+    var orderSizeInput = (document.getElementById('orderSizeInput') as HTMLSelectElement);
+    var size = '0';
+    if (sideOptionText.toLowerCase().indexOf('bid'.toLowerCase()) > -1) {
+      size = (document.getElementsByClassName('bidsz0')[0] as HTMLScriptElement).innerText;
+    }
+    if (sideOptionText.toLowerCase().indexOf('ask'.toLowerCase()) > -1) {
+      size = (document.getElementsByClassName('asksz0')[1] as HTMLScriptElement).innerText;
+    }
+    orderSizeInput.value = size.replace(',', '');
   };
 
   private minerStart = () => {
