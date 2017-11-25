@@ -257,24 +257,5 @@ Time     | Side | Price | Size | BuyTS | SellTS | Notes
 
 # How can I make up my own trading strategies?
 
-Lets say that you have a great idea about how to profitably make markets and are comfortable getting your hands dirty in some TypeScript.  The steps are quite easy
+You can always open a [new issue](https://github.com/ctubio/Krypto-trading-bot/issues/new?title=Missing%20trading%20strategy) to request a new feature.
 
-1. Create a class implementing `QuoteStyle` found in `src/server/quoting-styles/helpers.ts`. As part of implementing the interface, you'll need to create a new enum member for `QuotingMode` in models.ts. Inside that class you can create any sort of logic to create a two-sided market, or return null to signify that there should be no quote in the market. The interface gives you:
-
-  a. The latest order book depth of the market. On most exchanges, this is the best 3 price levels. Individual orders are not supported since not all exchanges support that functionality. Last trades in the market are also not yet provided (though reasonably should in the future).
-
-  b. The calculated fair value.
-
-  c. The current quoting parameters, viewable in the web UI.
-
-2. Install the new class alongside the provided list of modes in the `QuotingStyleRegistry` in `main.js`.
-
-3. Rebuild with `npm install` and restart with `npm restart`.
-
-Alternatively, you can always open a [new issue](https://github.com/ctubio/Krypto-trading-bot/issues/new?title=Missing%20trading%20strategy) to request a new feature.
-
-# How can I test new trading strategies?
-
-K.sh is packaged with a test unit mode.
-
-To create your own test runs, you can duplicate at your convenience the mocha test units at `test/*.ts`.
