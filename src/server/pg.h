@@ -120,7 +120,7 @@ namespace K {
         return (json){ safety };
       };
       function<json()> helloTargetBasePos = [&]() {
-        return (json){{{"tbp", targetBasePosition}, {"sideAPR", sideAPR}}};
+        return (json){{{"tbp", targetBasePosition}, {"sideAPR", sideAPR}, {"pDiv", positionDivergence }}};
       };
       mSafety nextSafety() {
         pgMutex.lock();
