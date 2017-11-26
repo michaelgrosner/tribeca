@@ -135,6 +135,16 @@ namespace K {
           ? qp->sellSizePercentage * value / 100
           : qp->sellSize;
         double totalBasePosition = baseAmount + baseHeldAmount;
+        map<double, mTrade> tradesBuy;
+        map<double, mTrade> tradesSell;
+        for (vector<mTrade>::iterator it = ((OG*)broker)->tradesHistory.begin(); it != ((OG*)broker)->tradesHistory.end(); ++it)
+          if (it->side == mSide::Bid)
+            tradesBuy[it->price] = *it;
+          else tradesSell[it->price] = *it;
+        if (qp->safety != mQuotingSafety::PingPong) {
+          if (tradesSell.size()) buySize = tradesSell.rbegin()->second.quantity;
+          if (tradesBuy.size()) sellSize = tradesBuy.rbegin()->second.quantity;
+        }
         if (qp->buySizeMax and qp->aggressivePositionRebalancing != mAPR::Off)
           buySize = fmax(buySize, targetBasePosition - totalBasePosition);
         if (qp->sellSizeMax and qp->aggressivePositionRebalancing != mAPR::Off)
@@ -142,12 +152,6 @@ namespace K {
         double widthPong = qp->widthPercentage
           ? qp->widthPongPercentage * ((MG*)market)->fairValue / 100
           : qp->widthPong;
-        map<double, mTrade> tradesBuy;
-        map<double, mTrade> tradesSell;
-        for (vector<mTrade>::iterator it = ((OG*)broker)->tradesHistory.begin(); it != ((OG*)broker)->tradesHistory.end(); ++it)
-          if (it->side == mSide::Bid)
-            tradesBuy[it->price] = *it;
-          else tradesSell[it->price] = *it;
         double buyPing = 0;
         double sellPong = 0;
         double buyQty = 0;

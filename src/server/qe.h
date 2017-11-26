@@ -145,18 +145,18 @@ namespace K {
         double pDiv = qp->percentageValues
           ? qp->positionDivergencePercentage * value / 100
           : qp->positionDivergence;
-        double buySize = qp->percentageValues
-          ? qp->buySizePercentage * value / 100
-          : qp->buySize;
-        double sellSize = qp->percentageValues
-          ? qp->sellSizePercentage * value / 100
-          : qp->sellSize;
         double widthPing = qp->widthPercentage
           ? qp->widthPingPercentage * ((MG*)market)->fairValue / 100
           : qp->widthPing;
         double widthPong = qp->widthPercentage
           ? qp->widthPongPercentage * ((MG*)market)->fairValue / 100
           : qp->widthPong;
+        double buySize = qp->percentageValues
+          ? qp->buySizePercentage * value / 100
+          : qp->buySize;
+        double sellSize = qp->percentageValues
+          ? qp->sellSizePercentage * value / 100
+          : qp->sellSize;
         if (qp->positionDivergenceMode != mPDivMode::Manual && qp->autoPositionMode != mAutoPositionMode::Manual) pDiv = ((PG*)wallet)->positionDivergence;
         if (buySize and qp->aggressivePositionRebalancing != mAPR::Off and qp->buySizeMax)
           buySize = fmax(buySize, ((PG*)wallet)->targetBasePosition - totalBasePosition);
