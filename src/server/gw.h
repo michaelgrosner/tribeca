@@ -186,7 +186,7 @@ namespace K {
             << "- makeFee: " << gw->makeFee << '\n'
             << "- takeFee: " << gw->takeFee;
           FN::log(string("GW ") + ((CF*)config)->argExchange + ":", ss.str());
-        } else FN::logExit("CF", "Unable to fetch data from " + ((CF*)config)->argExchange + " symbol \"" + gw->symbol + "\"", EXIT_FAILURE, false);
+        } else FN::logExit("CF", "Unable to fetch data from " + ((CF*)config)->argExchange + " symbol \"" + gw->symbol + "\"", EXIT_FAILURE);
       };
   };
 }

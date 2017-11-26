@@ -424,11 +424,10 @@ namespace K {
       static void logWar(string k, string s) {
         logErr(k, s, " Warrrrning: ");
       };
-      static void logExit(string k, string s, int code, bool ev = true) {
+      static void logExit(string k, string s, int code) {
         FN::screen_quit();
         logErr(k, s);
-        if (ev) (*evExit)(code);
-        else exit(code);
+        exit(code);
       };
       static void logErr(string k, string s, string m = " Errrror: ") {
         if (!wBorder) {
@@ -662,8 +661,7 @@ namespace K {
             }
           }
           screen_quit();
-          cout << FN::uiT() << "Excellent decision!" << '\n';
-          (*evExit)(EXIT_SUCCESS);
+          raise(SIGINT);
         }).detach();
         screen_refresh("", 0, argExchange, argCurrency);
       };
