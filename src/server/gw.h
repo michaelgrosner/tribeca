@@ -139,9 +139,10 @@ namespace K {
             os >> gw->minTick;
           }
           k = FN::wJet(string(gw->http).append("/symbols_details"));
-          for (json::iterator it=k.begin(); it!=k.end();++it)
-            if (it->value("pair", "") == gw->symbol)
-              gw->minSize = stod(it->value("minimum_order_size", "0"));
+          if (k.is_array())
+            for (json::iterator it=k.begin(); it!=k.end();++it)
+              if (it->find("pair") != it->end() and it->value("pair", "") == gw->symbol)
+                gw->minSize = stod(it->value("minimum_order_size", "0"));
         }
         else if (e == mExchange::OkCoin) {
           gw->randId = FN::charId;
