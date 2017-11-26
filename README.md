@@ -352,10 +352,6 @@ Anonymous users can also unlock all features for any API Key but is required a p
 
 Alternatively use `--free-version` argument to anonymously avoid the payment and to unlock all features; market levels will be all visible and usable but slowdown a few milliseconds with a [XMR mining calculation](https://github.com/monero-project/monero/blob/master/src/crypto/hash.c#L42) of 1 hash (if the hash meets the current XMR network target it will be send to my XMR pool for my fun and profit).
 
-To provide exclusivity to proefficient traders and to keep teenagers away, once the bot is bug-free, the payment required may be increased by a minimum of x3.
-
-The current payment is to support further development by ctubio to fix all bugs on the market you are paying against (an alternative [Votes](#votes) system).
-
 Otherwise if you choose to not support further development by ctubio, just keep running some old commit and do not upgrade.
 
 ### Donations
