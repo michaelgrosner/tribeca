@@ -660,7 +660,6 @@ namespace K {
               // case KEY_DOWN: wscrl(wLog, 1); wrefresh(wLog); break;
             }
           }
-          screen_quit();
           raise(SIGINT);
         }).detach();
         screen_refresh("", 0, argExchange, argCurrency);
