@@ -11,7 +11,7 @@ namespace K {
                     gwConnectExchange = mConnectivity::Disconnected;
     protected:
       void load() {
-        evExit = &happyEnding;
+        gwEndings.back() = &happyEnding;
         if (((CF*)config)->argAutobot) gwAutoStart = mConnectivity::Connected;
         handshake(gw->exchange);
       };
@@ -51,8 +51,8 @@ namespace K {
         ((EV*)events)->start();
       };
     private:
-      function<void(int)> happyEnding = [&](int code) {
-        ((EV*)events)->stop(code, [&](){
+      function<void()> happyEnding = [&]() {
+        ((EV*)events)->stop([&](){
           FN::log(string("GW ") + ((CF*)config)->argExchange, "Attempting to cancel all open orders, please wait.");
           gw->cancelAll();
           FN::log(string("GW ") + ((CF*)config)->argExchange, "cancell all open orders OK");

@@ -22,7 +22,7 @@ namespace K  {
                              uiQuotingParameters;
     protected:
       void load() {
-        evExit = &happyEnding;
+        gwEndings.push_back(&happyEnding);
         signal(SIGINT, quit);
         signal(SIGUSR1, wtf);
         signal(SIGABRT, wtf);
@@ -57,7 +57,7 @@ namespace K  {
       void start() {
         hub->run();
       };
-      void stop(int code, function<void()> gwCancelAll) {
+      void stop(function<void()> gwCancelAll) {
         tCancel->stop();
         tWallet->stop();
         tCalcs->stop();
@@ -67,7 +67,6 @@ namespace K  {
         gw->gwGroup->close();
         gwCancelAll();
         uiGroup->close();
-        halt(code);
       };
       void listen() {
         string protocol("HTTP");
@@ -85,16 +84,16 @@ namespace K  {
         FN::log("DEBUG", string("EV ") + k);
       };
     private:
-      void halt(int code) {
+      static void halt(int code) {
+        for (vector<function<void()>*>::iterator it=gwEndings.begin(); it!=gwEndings.end();++it) (**it)();
         cout << FN::uiT() << "K exit code " << to_string(code) << "." << '\n';
         exit(code);
       };
-      function<void(int)> happyEnding = [&](int code) {
-        cout << FN::uiT();
+      function<void()> happyEnding = [&]() {
+        cout << FN::uiT() << ((CF*)config)->argExchange << " ";
         for(unsigned int i = 0; i < 21; ++i)
           cout << "THE END IS NEVER ";
         cout << "THE END." << '\n';
-        halt(code);
       };
       static void quit(int sig) {
         FN::screen_quit();
@@ -104,7 +103,7 @@ namespace K  {
           << ((k.is_null() or !k["/value/joke"_json_pointer].is_string())
             ? "let's plant a tree instead.." : k["/value/joke"_json_pointer].get<string>()
           ) << '\n';
-        (*evExit)(EXIT_SUCCESS);
+        halt(EXIT_SUCCESS);
       };
       static void wtf(int sig) {
         FN::screen_quit();
@@ -118,7 +117,7 @@ namespace K  {
           upgrade();
           this_thread::sleep_for(chrono::seconds(21));
         }
-        (*evExit)(EXIT_FAILURE);
+        halt(EXIT_FAILURE);
       };
       static bool latest() {
         return FN::output("test -d .git && git rev-parse @") == FN::output("test -d .git && git rev-parse @{u}");

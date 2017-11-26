@@ -501,7 +501,6 @@ namespace K {
       {"quotesInMemoryDone", k.quotesInMemoryDone}
     };
   };
-  static function<void(int)> *evExit;
   static const char kB64Alphabet[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
                                      "abcdefghijklmnopqrstuvwxyz"
                                      "0123456789+/";
@@ -512,6 +511,7 @@ namespace K {
   static WINDOW *wBorder = nullptr,
                 *wLog = nullptr;
   static mutex wMutex;
+  static vector<function<void()>*> gwEndings;
   class Gw {
     public:
       static Gw *E(mExchange e);
