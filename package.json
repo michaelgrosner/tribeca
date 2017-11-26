@@ -1,6 +1,6 @@
 {
   "name": "K.UI",
-  "version": "3.0.0",
+  "version": "4.0.0",
   "description": "Self-hosted crypto trading bot (automated high frequency market making) in node.js, angular, typescript and c++",
   "dependencies": {
     "@angular/common": "^5.0.2",

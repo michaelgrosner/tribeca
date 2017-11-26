@@ -274,6 +274,10 @@ ws sandbox: [websocket.org](https://www.websocket.org/echo.html)
 
 ### Unreleased Changelog:
 
+nothing yet
+
+### Release 4.0 Changelog:
+
 Updated HitBTC API v2.
 
 Added ZIP installation steps for non-git-lovers.
