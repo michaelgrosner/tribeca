@@ -60,7 +60,7 @@ namespace K {
             mgEwmaS = k.value("ewmaShort", 0.0);
           if (k.find("mgEwmaSM") != k.end() and k.value("time", (unsigned long)0) + qp->quotingEwmaSMPeriods * 6e+4 > FN::T())
             mgEwmaSM = k.value("mgEwmaSM", 0.0);
-          if (k.find("mgEwmaSU") != k.end() and k.value("time", (unsigned long)0) + qp->quotingEwmaSMPeriods * 6e+4 > FN::T())
+          if (k.find("mgEwmaSU") != k.end() and k.value("time", (unsigned long)0) + qp->quotingEwmaSUPeriods * 6e+4 > FN::T())
             mgEwmaSU = k.value("mgEwmaSU", 0.0);
         }
         if (mgEwmaL) FN::log(((CF*)config)->argEwmaLong ? "ARG" : "DB", string("loaded EWMA Long = ") + to_string(mgEwmaL));
