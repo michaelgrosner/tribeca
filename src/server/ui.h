@@ -12,6 +12,7 @@ namespace K {
       map<uiTXT, string> queue;
       map<char, function<json()>*> hello;
       map<char, function<void(json)>*> kiss;
+      unsigned long uiT_1m = 0;
     public:
       unsigned int orders60sec = 0;
     protected:
@@ -184,9 +185,8 @@ namespace K {
         ((EV*)k->events)->debug("UI tDelay timer");
         if (!k->realtimeClient) {
           k->sendQueue();
-          static unsigned long uiT_1m = 0;
-          if (uiT_1m+6e+4 > FN::T()) return;
-          else uiT_1m = FN::T();
+          if (k->uiT_1m+6e+4 > FN::T()) return;
+          else k->uiT_1m = FN::T();
         }
         k->send(uiTXT::ApplicationState, k->serverState());
         k->orders60sec = 0;

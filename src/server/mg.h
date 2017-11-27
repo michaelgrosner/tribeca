@@ -15,6 +15,8 @@ namespace K {
       vector<double> mgStatBid;
       vector<double> mgStatAsk;
       vector<double> mgStatTop;
+      unsigned int mgT_60s = 0;
+      unsigned long mgT_369ms = 0;
     public:
       mLevels levels;
       double fairValue = 0;
@@ -84,9 +86,8 @@ namespace K {
         return !levels.bids.size() or !levels.asks.size();
       };
       void calcStats() {
-        static int mgT = 0;
-        if (++mgT == 60) {
-          mgT = 0;
+        if (++mgT_60s == 60) {
+          mgT_60s = 0;
           ewmaPUp();
           ewmaSMUUp();
           ewmaUp();
@@ -168,11 +169,10 @@ namespace K {
         ((UI*)client)->send(uiTXT::MarketTrade, k);
       };
       void levelUp(mLevels k) {
-        static unsigned long lastUp = 0;
         filter(k);
-        if (lastUp+369 > FN::T()) return;
+        if (mgT_369ms+369 > FN::T()) return;
         ((UI*)client)->send(uiTXT::MarketData, k, true);
-        lastUp = FN::T();
+        mgT_369ms = FN::T();
       };
       void ewmaUp() {
         calcEwma(&mgEwmaL, qp->longEwmaPeriods);

@@ -8,6 +8,7 @@ namespace K {
       mQuoteState bidStatus = mQuoteState::MissingData,
                   askStatus = mQuoteState::MissingData;
       mQuoteStatus status;
+      int AK47inc = 1;
     public:
       mConnectivity gwConnectButton = mConnectivity::Disconnected,
                     gwConnectExchange = mConnectivity::Disconnected;
@@ -326,13 +327,12 @@ namespace K {
       };
       void applyAK47Increment(mQuote *rawQuote, double value) {
         if (qp->safety != mQuotingSafety::AK47) return;
-        static int inc = 1;
         double range = qp->percentageValues
           ? qp->rangePercentage * value / 100
           : qp->range;
-        rawQuote->bid.price -= inc * range;
-        rawQuote->ask.price += inc * range;
-        if (++inc > qp->bullets) inc = 1;
+        rawQuote->bid.price -= AK47inc * range;
+        rawQuote->ask.price += AK47inc * range;
+        if (++AK47inc > qp->bullets) AK47inc = 1;
       };
       void applyStdevProtection(mQuote *rawQuote) {
         if (qp->quotingStdevProtection == mSTDEV::Off or !((MG*)market)->mgStdevFV) return;
