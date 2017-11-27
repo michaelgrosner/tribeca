@@ -83,7 +83,6 @@ namespace K {
     double            sopWidthMultiplier              = 2;
     double            sopSizeMultiplier               = 2;
     double            sopTradesMultiplier             = 2;
-    int               delayAPI                        = 0;
     bool              cancelOrdersAuto                = false;
     double            cleanPongsAuto                  = 0.0;
     double            profitHourInterval              = 0.5;
@@ -144,7 +143,6 @@ namespace K {
       {"sopWidthMultiplier", k.sopWidthMultiplier},
       {"sopSizeMultiplier", k.sopSizeMultiplier},
       {"sopTradesMultiplier", k.sopTradesMultiplier},
-      {"delayAPI", k.delayAPI},
       {"cancelOrdersAuto", k.cancelOrdersAuto},
       {"cleanPongsAuto", k.cleanPongsAuto},
       {"profitHourInterval", k.profitHourInterval},
@@ -205,7 +203,6 @@ namespace K {
     if (j.end() != j.find("sopWidthMultiplier")) k.sopWidthMultiplier = j.at("sopWidthMultiplier").get<double>();
     if (j.end() != j.find("sopSizeMultiplier")) k.sopSizeMultiplier = j.at("sopSizeMultiplier").get<double>();
     if (j.end() != j.find("sopTradesMultiplier")) k.sopTradesMultiplier = j.at("sopTradesMultiplier").get<double>();
-    if (j.end() != j.find("delayAPI")) k.delayAPI = j.at("delayAPI").get<int>();
     if (j.end() != j.find("cancelOrdersAuto")) k.cancelOrdersAuto = j.at("cancelOrdersAuto").get<bool>();
     if (j.end() != j.find("cleanPongsAuto")) k.cleanPongsAuto = j.at("cleanPongsAuto").get<double>();
     if (j.end() != j.find("profitHourInterval")) k.profitHourInterval = j.at("profitHourInterval").get<double>();

@@ -237,7 +237,6 @@ export interface QuotingParameters {
     sopWidthMultiplier?: number;
     sopSizeMultiplier?: number;
     sopTradesMultiplier?: number;
-    delayAPI?: number;
     cancelOrdersAuto?: boolean;
     cleanPongsAuto?: number;
     stepOverSize?: number;

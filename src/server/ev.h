@@ -8,7 +8,6 @@ namespace K  {
     public:
       uWS::Group<uWS::SERVER> *uiGroup = nullptr;
       Timer *tCalcs = nullptr,
-            *tStart = nullptr,
             *tDelay = nullptr,
             *tWallet = nullptr,
             *tCancel = nullptr;
@@ -31,7 +30,6 @@ namespace K  {
       };
       void waitTime() {
         tCalcs = new Timer(hub->getLoop());
-        tStart = new Timer(hub->getLoop());
         tDelay = new Timer(hub->getLoop());
         tWallet = new Timer(hub->getLoop());
         tCancel = new Timer(hub->getLoop());
@@ -61,7 +59,6 @@ namespace K  {
         tCancel->stop();
         tWallet->stop();
         tCalcs->stop();
-        tStart->stop();
         tDelay->stop();
         gw->close();
         gw->gwGroup->close();

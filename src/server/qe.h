@@ -8,8 +8,6 @@ namespace K {
       mQuoteState bidStatus = mQuoteState::MissingData,
                   askStatus = mQuoteState::MissingData;
       mQuoteStatus status;
-      map<mSide, mLevel> nextStart;
-      bool nextIsPong = false;
     public:
       mConnectivity gwConnectButton = mConnectivity::Disconnected,
                     gwConnectExchange = mConnectivity::Disconnected;
@@ -24,7 +22,6 @@ namespace K {
         quotingMode[mQuotingMode::Depth] = &calcDepthOfMarket;
       };
       void waitTime() {
-        ((EV*)events)->tStart->setData(this);
         ((EV*)events)->tCalcs->setData(this);
         ((EV*)events)->tCalcs->start([](Timer *handle) {
           QE *k = (QE*)handle->data;
@@ -533,29 +530,6 @@ namespace K {
         start(side, q, isPong);
       };
       void start(mSide side, mLevel q, bool isPong) {
-        if (qp->delayAPI) {
-          static unsigned int tStarted = 0;
-          static unsigned long qeNextT = 0;
-          long nextDiff = (qeNextT + (6e+4 / qp->delayAPI)) - FN::T();
-          if (nextDiff > 0) {
-            nextStart.clear();
-            nextStart[side] = q;
-            nextIsPong = isPong;
-            if (tStarted) {
-              ((EV*)events)->tStart->stop();
-              tStarted = 0;
-            }
-            ((EV*)events)->tStart->start([](Timer *handle) {
-              QE *k = (QE*)handle->data;
-              ((EV*)k->events)->debug("QE tStart timer");
-              k->start(k->nextStart.begin()->first, k->nextStart.begin()->second, k->nextIsPong);
-            }, (nextDiff * 1e+3) + 1e+2, 0);
-            tStarted = 1;
-            return;
-          }
-          tStarted = 0;
-          qeNextT = FN::T();
-        }
         ((OG*)broker)->sendOrder(side, q.price, q.size, mOrderType::Limit, mTimeInForce::GTC, isPong, true);
       };
       void stopWorstsQuotes(mSide side, double price) {
