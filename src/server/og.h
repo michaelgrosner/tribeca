@@ -14,23 +14,7 @@ namespace K {
         json k = ((DB*)memory)->load(uiTXT::Trades);
         if (k.size())
           for (json::reverse_iterator it = k.rbegin(); it != k.rend(); ++it)
-            tradesHistory.push_back(mTrade(
-              (*it)["tradeId"].get<string>(),
-              (mExchange)(*it)["exchange"].get<int>(),
-              mPair((*it)["/pair/base"_json_pointer].get<string>(), (*it)["/pair/quote"_json_pointer].get<string>()),
-              (*it)["price"].get<double>(),
-              (*it)["quantity"].get<double>(),
-              (mSide)(*it)["side"].get<int>(),
-              (*it)["time"].get<unsigned long>(),
-              (*it)["value"].get<double>(),
-              (*it)["Ktime"].get<unsigned long>(),
-              (*it)["Kqty"].get<double>(),
-              (*it)["Kprice"].get<double>(),
-              (*it)["Kvalue"].get<double>(),
-              (*it)["Kdiff"].get<double>(),
-              (*it)["feeCharged"].get<double>(),
-              (*it)["loadedFromDB"].get<bool>()
-            ));
+            tradesHistory.push_back(*it);
         FN::log("DB", string("loaded ") + to_string(tradesHistory.size()) + " historical Trades");
       };
       void waitData() {

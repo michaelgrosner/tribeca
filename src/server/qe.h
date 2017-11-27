@@ -180,10 +180,10 @@ namespace K {
         debuq("F", rawQuote); applyAK47Increment(&rawQuote, value);
         debuq("G", rawQuote); applyBestWidth(&rawQuote);
         debuq("H", rawQuote); applyTradesPerMinute(&rawQuote, superTradesActive, safetyBuy, safetySell);
-        debuq("J", rawQuote); applyRoundSide(&rawQuote);
-        debuq("K", rawQuote); applyRoundDown(&rawQuote, rawBidSz, rawAskSz, widthPong, safetyBuyPing, safetySellPong, totalQuotePosition, totalBasePosition);
-        debuq("L", rawQuote); applyDepleted(&rawQuote, totalQuotePosition, totalBasePosition);
-        debuq("I", rawQuote); applyWaitingPing(&rawQuote, totalQuotePosition, totalBasePosition, safetyBuyPing, safetySellPong);
+        debuq("I", rawQuote); applyRoundSide(&rawQuote);
+        debuq("J", rawQuote); applyRoundDown(&rawQuote, rawBidSz, rawAskSz, widthPong, safetyBuyPing, safetySellPong, totalQuotePosition, totalBasePosition);
+        debuq("K", rawQuote); applyDepleted(&rawQuote, totalQuotePosition, totalBasePosition);
+        debuq("L", rawQuote); applyWaitingPing(&rawQuote, totalQuotePosition, totalBasePosition, safetyBuyPing, safetySellPong);
         debuq("!", rawQuote);
         debug(string("QE totals ") + "toAsk:" + to_string(totalBasePosition) + " toBid:" + to_string(totalQuotePosition) + " min:" + to_string(gw->minSize));
         return rawQuote;
@@ -331,15 +331,14 @@ namespace K {
         }
       };
       void applyAK47Increment(mQuote *rawQuote, double value) {
-        if (qp->safety == mQuotingSafety::AK47) {
-          static int inc = 1;
-          double range = qp->percentageValues
-            ? qp->rangePercentage * value / 100
-            : qp->range;
-          rawQuote->bid.size -= inc * range;
-          rawQuote->ask.size += inc * range;
-          if (++inc > qp->bullets) inc = 1;
-        }
+        if (qp->safety != mQuotingSafety::AK47) return;
+        static int inc = 1;
+        double range = qp->percentageValues
+          ? qp->rangePercentage * value / 100
+          : qp->range;
+        rawQuote->bid.price -= inc * range;
+        rawQuote->ask.price += inc * range;
+        if (++inc > qp->bullets) inc = 1;
       };
       void applyStdevProtection(mQuote *rawQuote) {
         if (qp->quotingStdevProtection == mSTDEV::Off or !((MG*)market)->mgStdevFV) return;
@@ -532,7 +531,7 @@ namespace K {
       };
       void modify(mSide side, mLevel q, bool isPong) {
         if (qp->safety == mQuotingSafety::AK47)
-          stopWorstQuote(side);
+          stopWorstsQuotes(side, q.price);
         else stopAllQuotes(side);
         start(side, q, isPong);
       };
@@ -564,11 +563,16 @@ namespace K {
       };
       void stopWorstsQuotes(mSide side, double price) {
         multimap<double, mOrder> ordersSide = ((OG*)broker)->ordersAtSide(side);
+        bool k = false;
         for (multimap<double, mOrder>::iterator it = ordersSide.begin(); it != ordersSide.end(); ++it)
           if (side == mSide::Bid
-            ? price < it->second.price
-            : price > it->second.price
-          ) ((OG*)broker)->cancelOrder(it->second.orderId);
+            ? price <= it->second.price
+            : price >= it->second.price
+          ) {
+            k = true;
+            ((OG*)broker)->cancelOrder(it->second.orderId);
+          }
+        if (!k) stopWorstQuote(side);
       };
       void stopWorstQuote(mSide side) {
         multimap<double, mOrder> ordersSide = ((OG*)broker)->ordersAtSide(side);
@@ -584,8 +588,9 @@ namespace K {
           ((OG*)broker)->cancelOrder(it->second.orderId);
       };
       void stopAllQuotes() {
-        stopAllQuotes(mSide::Bid);
-        stopAllQuotes(mSide::Ask);
+        map<string, mOrder> orders = ((OG*)broker)->ordersBothSides();
+        for (map<string, mOrder>::iterator it = orders.begin(); it != orders.end(); ++it)
+          ((OG*)broker)->cancelOrder(it->second.orderId);
       };
       function<void(string,mQuote)> debuq = [&](string k, mQuote rawQuote) {
         debug(string("quote") + k + " " + to_string((int)bidStatus) + " " + to_string((int)askStatus) + " " + ((json)rawQuote).dump());

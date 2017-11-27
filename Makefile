@@ -15,7 +15,7 @@ V_UWS   := 0.14.4
 V_SQL   := 3200100
 V_QF    := v.1.14.4
 V_PVS   := 6.19.23789.1731
-KZIP     = bfb076960d6f8a0d09b3484d80cfa31fe62ad31e
+KZIP     = 2a57a6ebdab645560202ac54b9a7d0cdf41c635e
 KARGS    = -Wextra -std=c++11 -O3 -I$(KLOCAL)/include          \
   src/server/K.cxx -pthread -rdynamic -DUWS_THREADSAFE         \
   -DK_STAMP='"$(shell date --rfc-3339=seconds | cut -f1 -d+)"' \

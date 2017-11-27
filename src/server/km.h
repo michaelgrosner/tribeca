@@ -361,6 +361,23 @@ namespace K {
       {"loadedFromDB", k.loadedFromDB},
     };
   };
+  static void from_json(const json& j, mTrade& k) {
+    if (j.end() != j.find("tradeId")) k.tradeId = j.at("tradeId").get<string>();
+    if (j.end() != j.find("exchange")) k.exchange = (mExchange)j.at("exchange").get<int>();
+    if (j.end() != j.find("pair")) k.pair = mPair(j["/pair/base"_json_pointer].get<string>(), j["/pair/quote"_json_pointer].get<string>());
+    if (j.end() != j.find("price")) k.price = j.at("price").get<double>();
+    if (j.end() != j.find("quantity")) k.quantity = j.at("quantity").get<double>();
+    if (j.end() != j.find("side")) k.side = (mSide)j.at("side").get<int>();
+    if (j.end() != j.find("time")) k.time = j.at("time").get<unsigned long>();
+    if (j.end() != j.find("value")) k.value = j.at("value").get<double>();
+    if (j.end() != j.find("Ktime")) k.Ktime = j.at("Ktime").get<unsigned long>();
+    if (j.end() != j.find("Kqty")) k.Kqty = j.at("Kqty").get<double>();
+    if (j.end() != j.find("Kprice")) k.Kprice = j.at("Kprice").get<double>();
+    if (j.end() != j.find("Kvalue")) k.Kvalue = j.at("Kvalue").get<double>();
+    if (j.end() != j.find("Kdiff")) k.Kdiff = j.at("Kdiff").get<double>();
+    if (j.end() != j.find("feeCharged")) k.feeCharged = j.at("feeCharged").get<double>();
+    if (j.end() != j.find("loadedFromDB")) k.loadedFromDB = j.at("loadedFromDB").get<bool>();
+  };
   struct mOrder {
            string orderId,
                   exchangeId;
