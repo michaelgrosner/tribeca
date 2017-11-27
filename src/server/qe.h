@@ -137,14 +137,12 @@ namespace K {
                safetyBuyPing   = ((PG*)wallet)->safety.buyPing,
                safetySellPong  = ((PG*)wallet)->safety.sellPong,
                safetyBuy       = ((PG*)wallet)->safety.buy,
-               safetySell      = ((PG*)wallet)->safety.sell;
+               safetySell      = ((PG*)wallet)->safety.sell,
+               pDiv            = ((PG*)wallet)->positionDivergence;
         ((PG*)wallet)->pgMutex.unlock();
         if (safetyBuyPing == -1) return mQuote();
         double totalBasePosition = baseAmount + baseHeldAmount;
         double totalQuotePosition = (quoteAmount + quoteHeldAmount) / ((MG*)market)->fairValue;
-        double pDiv = qp->percentageValues
-          ? qp->positionDivergencePercentage * value / 100
-          : qp->positionDivergence;
         double widthPing = qp->widthPercentage
           ? qp->widthPingPercentage * ((MG*)market)->fairValue / 100
           : qp->widthPing;
@@ -157,7 +155,6 @@ namespace K {
         double sellSize = qp->percentageValues
           ? qp->sellSizePercentage * value / 100
           : qp->sellSize;
-        if (qp->positionDivergenceMode != mPDivMode::Manual && qp->autoPositionMode != mAutoPositionMode::Manual) pDiv = ((PG*)wallet)->positionDivergence;
         if (buySize and qp->aggressivePositionRebalancing != mAPR::Off and qp->buySizeMax)
           buySize = fmax(buySize, ((PG*)wallet)->targetBasePosition - totalBasePosition);
         if (sellSize and qp->aggressivePositionRebalancing != mAPR::Off and qp->sellSizeMax)

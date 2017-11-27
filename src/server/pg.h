@@ -88,7 +88,7 @@ namespace K {
         if (targetBasePosition and abs(targetBasePosition - next) < 1e-4 and sideAPR_ == sideAPR) return;
         targetBasePosition = next;
         sideAPR_ = sideAPR;
-        if (qp->autoPositionMode != mAutoPositionMode::Manual) calcDynamicPDiv(value);
+        calcPDiv(value);
         ((EV*)events)->pgTargetBasePosition();
         json k = {{"tbp", targetBasePosition}, {"sideAPR", sideAPR}, {"pDiv", positionDivergence }};
         ((UI*)client)->send(uiTXT::TargetBasePosition, k, true);
@@ -316,19 +316,21 @@ namespace K {
         }
         calcWallet(mWallet(amount, heldAmount, k.side == mSide::Ask ? k.pair.base : k.pair.quote));
       };
-      void calcDynamicPDiv(double value) {
-        double divCenter = 1 - abs((targetBasePosition / value * 2) - 1);
+      void calcPDiv(double value) {
         double pDiv = qp->percentageValues
             ? qp->positionDivergencePercentage * value / 1e+2
             : qp->positionDivergence;
+        if (qp->autoPositionMode == mAutoPositionMode::Manual or mPDivMode::Manual == qp->positionDivergenceMode) positionDivergence = pDiv;
+        else {
+          double divCenter = 1 - abs((targetBasePosition / value * 2) - 1);
           double pDivMin = qp->percentageValues
             ? qp->positionDivergencePercentageMin * value / 1e+2
             : qp->positionDivergenceMin;
-        if (mPDivMode::Manual == qp->positionDivergenceMode) positionDivergence  = pDiv;
-        else if (mPDivMode::Linear == qp->positionDivergenceMode) positionDivergence  = pDivMin + (divCenter * (pDiv - pDivMin));
-        else if (mPDivMode::Sine == qp->positionDivergenceMode) positionDivergence  = pDivMin + (sin(divCenter*M_PI_2) * (pDiv - pDivMin));
-        else if (mPDivMode::SQRT == qp->positionDivergenceMode) positionDivergence  = pDivMin + (sqrt(divCenter) * (pDiv - pDivMin));
-        else if (mPDivMode::Switch == qp->positionDivergenceMode) positionDivergence  = divCenter < 1e-1 ? pDivMin : pDiv;
+          if (mPDivMode::Linear == qp->positionDivergenceMode) positionDivergence = pDivMin + (divCenter * (pDiv - pDivMin));
+          else if (mPDivMode::Sine == qp->positionDivergenceMode) positionDivergence = pDivMin + (sin(divCenter*M_PI_2) * (pDiv - pDivMin));
+          else if (mPDivMode::SQRT == qp->positionDivergenceMode) positionDivergence = pDivMin + (sqrt(divCenter) * (pDiv - pDivMin));
+          else if (mPDivMode::Switch == qp->positionDivergenceMode) positionDivergence = divCenter < 1e-1 ? pDivMin : pDiv;
+        }
       }
   };
 }
