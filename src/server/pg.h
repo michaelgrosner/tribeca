@@ -23,6 +23,7 @@ namespace K {
         if (k.size()) {
           k = k.at(0);
           targetBasePosition = k.value("tbp", 0.0);
+          if (k.find("pDiv") != k.end()) positionDivergence = k.value("pDiv", 0.0);
           sideAPR = k.value("sideAPR", "");
         }
         stringstream ss;
@@ -31,11 +32,7 @@ namespace K {
         k = ((DB*)memory)->load(uiTXT::Position);
         if (k.size()) {
           for (json::reverse_iterator it = k.rbegin(); it != k.rend(); ++it)
-            profits.push_back(mProfit(
-              (*it)["baseValue"].get<double>(),
-              (*it)["quoteValue"].get<double>(),
-              (*it)["time"].get<unsigned long>()
-            ));
+            profits.push_back(*it);
           FN::log("DB", string("loaded ") + to_string(profits.size()) + " historical Profits");
         }
         balance[gw->base] = mWallet(0, 0, gw->base);
@@ -262,19 +259,20 @@ namespace K {
         mProfit profit(baseValue, quoteValue, now);
         double profitBase = 0;
         double profitQuote = 0;
-        if (baseValue and quoteValue) {
+        if (profitT_21s<=3) ++profitT_21s;
+        else if (baseValue and quoteValue) {
           if (profitT_21s+21e+3 < FN::T()) {
             profitT_21s = FN::T();
-            ((DB*)memory)->insert(uiTXT::Position, profit, false, "NULL", now - qp->profitHourInterval * 36e+5);
+            ((DB*)memory)->insert(uiTXT::Position, profit, false, "NULL", now - (qp->profitHourInterval * 36e+5));
+            profitMutex.lock();
+            profits.push_back(profit);
+            for (vector<mProfit>::iterator it = profits.begin(); it != profits.end();)
+              if (it->time + (qp->profitHourInterval * 36e+5) > now) ++it;
+              else it = profits.erase(it);
+            profitBase = ((baseValue - profits.begin()->baseValue) / baseValue) * 1e+2;
+            profitQuote = ((quoteValue - profits.begin()->quoteValue) / quoteValue) * 1e+2;
+            profitMutex.unlock();
           }
-          profitMutex.lock();
-          profits.push_back(profit);
-          for (vector<mProfit>::iterator it = profits.begin(); it != profits.end();)
-            if (it->time + (qp->profitHourInterval * 36e+5) > now) ++it;
-            else it = profits.erase(it);
-          profitBase = ((baseValue - profits.begin()->baseValue) / baseValue) * 1e+2;
-          profitQuote = ((quoteValue - profits.begin()->quoteValue) / quoteValue) * 1e+2;
-          profitMutex.unlock();
         }
         mPosition pos(
           baseWallet.amount,

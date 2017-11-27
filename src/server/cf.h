@@ -106,7 +106,7 @@ namespace K {
               << FN::uiT() << RWHITE << "    --autobot            - automatically start trading on boot." << '\n'
               << FN::uiT() << RWHITE << "    --naked              - do not display CLI, print output to stdout instead." << '\n'
               << FN::uiT() << RWHITE << "    --headless           - do not listen for UI connections," << '\n'
-              << FN::uiT() << RWHITE << "                           ignores '--without-ssl', '-L' and '-P')." << '\n'
+              << FN::uiT() << RWHITE << "                           ignores '--without-ssl', '--whitelist' and '--port'." << '\n'
               << FN::uiT() << RWHITE << "    --without-ssl        - do not use HTTPS for UI connections (use HTTP only)." << '\n'
               << FN::uiT() << RWHITE << "-L, --whitelist=IP       - set IP or csv of IPs to allow UI connections," << '\n'
               << FN::uiT() << RWHITE << "                           alien IPs will get a zip-bomb instead." << '\n'

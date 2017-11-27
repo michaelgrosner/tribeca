@@ -244,6 +244,9 @@ namespace K {
            double baseValue,
                   quoteValue;
     unsigned long time;
+    mProfit():
+      baseValue(0), quoteValue(0), time(0)
+    {};
     mProfit(double b, double q, unsigned long t):
       baseValue(b), quoteValue(q), time(t)
     {};
@@ -254,6 +257,11 @@ namespace K {
       {"quoteValue", k.quoteValue},
       {"time", k.time}
     };
+  };
+  static void from_json(const json& j, mProfit& k) {
+    if (j.end() != j.find("baseValue")) k.baseValue = j.at("baseValue").get<double>();
+    if (j.end() != j.find("quoteValue")) k.quoteValue = j.at("quoteValue").get<double>();
+    if (j.end() != j.find("time")) k.time = j.at("time").get<unsigned long>();
   };
   struct mSafety {
     double buy,
