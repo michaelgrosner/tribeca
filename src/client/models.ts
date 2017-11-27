@@ -177,6 +177,7 @@ export enum QuotingMode { Top, Mid, Join, InverseJoin, InverseTop, HamelinRat, D
 export enum QuotingSafety { Off, PingPong, Boomerang, AK47 }
 export enum FairValueModel { BBO, wBBO }
 export enum AutoPositionMode { Manual, EWMA_LS, EWMA_LMS }
+export enum DynamicPDivMode { Manual, Linear, Sine, SQRT, Switch }
 export enum PingAt { BothSides, BidSide, AskSide, DepletedSide, DepletedBidSide, DepletedAskSide, StopPings }
 export enum PongAt { ShortPingFair, LongPingFair, ShortPingAggressive, LongPingAggressive }
 export enum APR { Off, Size, SizeWidth }
@@ -205,6 +206,9 @@ export interface QuotingParameters {
     targetBasePositionPercentage?: number;
     positionDivergence?: number;
     positionDivergencePercentage?: number;
+    positionDivergenceMin?: number;
+    positionDivergencePercentageMin?: number;
+    positionDivergenceMode?: number;
     percentageValues?: boolean;
     autoPositionMode?: AutoPositionMode;
     aggressivePositionRebalancing?: APR;
@@ -262,6 +266,7 @@ export class TradeSafety {
 export class TargetBasePositionValue {
     constructor(
       public tbp: number,
-      public sideAPR: string
+      public sideAPR: string,
+      public pDiv: number
     ) {}
 }

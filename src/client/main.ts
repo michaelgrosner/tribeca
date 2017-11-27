@@ -226,7 +226,9 @@ class DisplayOrder {
                                             <th *ngIf="pair.quotingParameters.display.autoPositionMode">short</th>
                                             <th *ngIf="pair.quotingParameters.display.autoPositionMode">sensibility</th>
                                             <th *ngIf="!pair.quotingParameters.display.autoPositionMode">tbp<span *ngIf="pair.quotingParameters.display.percentageValues">%</span></th>
+                                            <th *ngIf="pair.quotingParameters.display.autoPositionMode">pDivMode</th>
                                             <th>pDiv<span *ngIf="pair.quotingParameters.display.percentageValues">%</span></th>
+                                            <th *ngIf="pair.quotingParameters.display.autoPositionMode && pair.quotingParameters.display.positionDivergenceMode">pDivMin<span *ngIf="pair.quotingParameters.display.percentageValues">%</span></th>
                                             <th>apr</th>
                                             <th *ngIf="pair.quotingParameters.display.aggressivePositionRebalancing">aprFactor</th>
                                             <th>bw?</th>
@@ -280,17 +282,35 @@ class DisplayOrder {
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.targetBasePositionPercentage">
                                             </td>
-                                            <td style="width:88px;border-bottom: 3px solid #8BE296;" *ngIf="!pair.quotingParameters.display.percentageValues">
+                                            <td style="min-width:121px;border-bottom: 3px solid #DDE28B;" *ngIf="pair.quotingParameters.display.autoPositionMode">
+                                                <select class="form-control input-sm"
+                                                    [(ngModel)]="pair.quotingParameters.display.positionDivergenceMode">
+                                                   <option *ngFor="let option of pair.quotingParameters.availablePositionDivergenceModes" [ngValue]="option.val">{{option.str}}</option>
+                                                </select>
+                                            </td>
+                                            <td style="width:88px;border-bottom: 3px solid #DDE28B;" *ngIf="!pair.quotingParameters.display.percentageValues">
                                                 <input class="form-control input-sm" title="{{ pair_name[0] }}"
                                                    type="number" step="0.01" min="0"
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.positionDivergence">
                                             </td>
-                                            <td style="width:88px;border-bottom: 3px solid #8BE296;" *ngIf="pair.quotingParameters.display.percentageValues">
+                                            <td style="width:88px;border-bottom: 3px solid #DDE28B;" *ngIf="pair.quotingParameters.display.percentageValues">
                                                 <input class="form-control input-sm" title="{{ pair_name[0] }}"
                                                    type="number" step="1" min="0" max="100"
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.positionDivergencePercentage">
+                                            </td>
+                                            <td style="width:88px;border-bottom: 3px solid #DDE28B;" *ngIf="!pair.quotingParameters.display.percentageValues && pair.quotingParameters.display.autoPositionMode && pair.quotingParameters.display.positionDivergenceMode">
+                                                <input class="form-control input-sm" title="{{ pair_name[0] }}"
+                                                   type="number" step="0.01" min="0"
+                                                   onClick="this.select()"
+                                                   [(ngModel)]="pair.quotingParameters.display.positionDivergenceMin">
+                                            </td>
+                                            <td style="width:88px;border-bottom: 3px solid #DDE28B;" *ngIf="pair.quotingParameters.display.percentageValues && pair.quotingParameters.display.autoPositionMode && pair.quotingParameters.display.positionDivergenceMode">
+                                                <input class="form-control input-sm" title="{{ pair_name[0] }}"
+                                                   type="number" step="1" min="0" max="100"
+                                                   onClick="this.select()"
+                                                   [(ngModel)]="pair.quotingParameters.display.positionDivergencePercentageMin">
                                             </td>
                                             <td style="min-width:121px;border-bottom: 3px solid #D64A4A;">
                                                 <select class="form-control input-sm"
@@ -547,18 +567,19 @@ class DisplayOrder {
                                           [closeOnClickOutside]="true">
                                               <table border="0" style="width:139px;">
                                                 <tr>
-                                                    <td><label>Side:</label></td>
-                                                    <td style="padding-bottom:5px;"><select class="form-control input-sm" [(ngModel)]="order.side">
+                                                    <td><label (click)="rotateSide()" style="text-decoration:underline;cursor:pointer">Side:</label></td>
+                                                    <td style="padding-bottom:5px;"><select id="selectSide" class="form-control input-sm" [(ngModel)]="order.side">
                                                       <option *ngFor="let option of order.availableSides" [ngValue]="option">{{option}}</option>
-                                                    </select></td>
+                                                    </select>
+                                                    </td>
                                                 </tr>
                                                 <tr>
-                                                    <td><label>Price:&nbsp;</label></td>
-                                                    <td style="padding-bottom:5px;"><input class="form-control input-sm" type="number" step="{{ product.advert.minTick}}" [(ngModel)]="order.price" /></td>
+                                                    <td><label (click)="insertBidAskPrice()" style="text-decoration:underline;cursor:pointer;padding-right:5px">Price:</label></td>
+                                                    <td style="padding-bottom:5px;"><input id="orderPriceInput" class="form-control input-sm" type="number" step="{{ product.advert.minTick}}" [(ngModel)]="order.price" /></td>
                                                 </tr>
                                                 <tr>
-                                                    <td><label>Size:</label></td>
-                                                    <td style="padding-bottom:5px;"><input class="form-control input-sm" type="number" step="0.01" [(ngModel)]="order.quantity" /></td>
+                                                    <td><label (click)="insertBidAskSize()" style="text-decoration:underline;cursor:pointer">Size:</label></td>
+                                                    <td style="padding-bottom:5px;"><input id="orderSizeInput" class="form-control input-sm" type="number" step="0.01" [(ngModel)]="order.quantity" /></td>
                                                 </tr>
                                                 <tr>
                                                     <td><label>TIF:</label></td>
@@ -679,6 +700,41 @@ class ClientComponent implements OnInit {
       (<any>window).setDialog('cryptoWatch'+watchExchange+watchPair, 'open', {title: watchExchange.toUpperCase()+' '+watchPair.toUpperCase().replace('-','/'),width: 800,height: 400,content: `<div id="container`+watchExchange+watchPair+`" style="width:100%;height:100%;"></div>`});
       (new (<any>window).cryptowatch.Embed(watchExchange, watchPair.replace('-',''), {timePeriod: '1d',customColorScheme: {bg:"000000",text:"b2b2b2",textStrong:"e5e5e5",textWeak:"7f7f7f",short:"FD4600",shortFill:"FF672C",long:"6290FF",longFill:"002782",cta:"363D52",ctaHighlight:"414A67",alert:"FFD506"}})).mount('#container'+watchExchange+watchPair);
     } else (<any>window).setDialog('cryptoWatch'+watchExchange+watchPair, 'close', {content:''});
+  };
+
+  public rotateSide = () => {
+    var sideOption = (document.getElementById("selectSide")) as HTMLSelectElement;
+    if (sideOption.selectedIndex < sideOption.options.length - 1) sideOption.selectedIndex++; else sideOption.selectedIndex = 0;
+  };
+
+  public insertBidAskPrice = () => {
+    var sideOption = (document.getElementById("selectSide")) as HTMLSelectElement;
+    var sideOptionText = ((sideOption.options[sideOption.selectedIndex]) as HTMLOptionElement).innerText;
+    var orderPriceInput = (document.getElementById('orderPriceInput') as HTMLSelectElement);
+    var price = '0';
+    if (sideOptionText.toLowerCase().indexOf('bid'.toLowerCase()) > -1) {
+      price = (document.getElementsByClassName('bidsz0')[1] as HTMLScriptElement).innerText;
+      console.log( 'bid' );
+    }
+    if (sideOptionText.toLowerCase().indexOf('ask'.toLowerCase()) > -1) {
+      price = (document.getElementsByClassName('asksz0')[0] as HTMLScriptElement).innerText;
+      console.log( 'ask' );
+    }
+    orderPriceInput.value = price.replace(',', '');
+  };
+
+  public insertBidAskSize = () => {
+    var sideOption = (document.getElementById("selectSide") as HTMLSelectElement);
+    var sideOptionText = (sideOption.options[sideOption.selectedIndex] as HTMLOptionElement).innerText;
+    var orderSizeInput = (document.getElementById('orderSizeInput') as HTMLSelectElement);
+    var size = '0';
+    if (sideOptionText.toLowerCase().indexOf('bid'.toLowerCase()) > -1) {
+      size = (document.getElementsByClassName('bidsz0')[0] as HTMLScriptElement).innerText;
+    }
+    if (sideOptionText.toLowerCase().indexOf('ask'.toLowerCase()) > -1) {
+      size = (document.getElementsByClassName('asksz0')[1] as HTMLScriptElement).innerText;
+    }
+    orderSizeInput.value = size.replace(',', '');
   };
 
   private minerStart = () => {
