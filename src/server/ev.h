@@ -70,7 +70,8 @@ namespace K  {
       };
       void listen() {
         string protocol("HTTP");
-        if ((access("etc/sslcert/server.crt", F_OK) != -1) and (access("etc/sslcert/server.key", F_OK) != -1)
+        if (!((CF*)config)->argWithoutSSL
+          and (access("etc/sslcert/server.crt", F_OK) != -1) and (access("etc/sslcert/server.key", F_OK) != -1)
           and hub->listen(((CF*)config)->argPort, uS::TLS::createContext("etc/sslcert/server.crt", "etc/sslcert/server.key", ""), 0, uiGroup)
         ) protocol += "S";
         else if (!hub->listen(((CF*)config)->argPort, nullptr, 0, uiGroup))

@@ -206,7 +206,7 @@ Once `K` is up and running, visit HTTPS port `3000` (or your configured port num
 
 If you want to generate your own certificate see [SSL for internal usage](http://www.akadia.com/services/ssh_test_certificate.html).
 
-In case you really want to use plain HTTP, remove the files `server.crt` and `server.key` inside `etc/sslcert` folder.
+In case you really want to use plain HTTP, use `--without-ssl` argument.
 
 ### Databases
 
