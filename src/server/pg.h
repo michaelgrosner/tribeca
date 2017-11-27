@@ -8,6 +8,8 @@ namespace K {
       map<double, mTrade> buys;
       map<double, mTrade> sells;
       map<string, mWallet> balance;
+      mutex profitMutex/*,
+            balanceMutex*/;
     public:
       mPosition position;
       mSafety safety;
@@ -245,10 +247,15 @@ namespace K {
       };
       void calcWallet(mWallet k) {
         static unsigned long profitT_21s = 0;
+        // balanceMutex.lock();
         if (k.currency!="") balance[k.currency] = k;
-        if (!((MG*)market)->fairValue or balance.find(gw->base) == balance.end() or balance.find(gw->quote) == balance.end()) return;
+        if (!((MG*)market)->fairValue or balance.find(gw->base) == balance.end() or balance.find(gw->quote) == balance.end()) {
+          // balanceMutex.unlock();
+          return;
+        }
         mWallet baseWallet = balance[gw->base];
         mWallet quoteWallet = balance[gw->quote];
+        // balanceMutex.unlock();
         double baseValue = baseWallet.amount + quoteWallet.amount / ((MG*)market)->fairValue + baseWallet.held + quoteWallet.held / ((MG*)market)->fairValue;
         double quoteValue = baseWallet.amount * ((MG*)market)->fairValue + quoteWallet.amount + baseWallet.held * ((MG*)market)->fairValue + quoteWallet.held;
         unsigned long now = FN::T();
@@ -260,12 +267,14 @@ namespace K {
             profitT_21s = FN::T();
             ((DB*)memory)->insert(uiTXT::Position, profit, false, "NULL", now - qp->profitHourInterval * 36e+5);
           }
+          profitMutex.lock();
           profits.push_back(profit);
           for (vector<mProfit>::iterator it = profits.begin(); it != profits.end();)
             if (it->time + (qp->profitHourInterval * 36e+5) > now) ++it;
             else it = profits.erase(it);
           profitBase = ((baseValue - profits.begin()->baseValue) / baseValue) * 1e+2;
           profitQuote = ((quoteValue - profits.begin()->quoteValue) / quoteValue) * 1e+2;
+          profitMutex.unlock();
         }
         mPosition pos(
           baseWallet.amount,
