@@ -40,7 +40,7 @@ namespace K {
         stringstream T, T_;
         T << setfill('0') << setw(2) << hours.count() << ":" << setw(2) << minutes.count() << ":" << setw(2) << seconds.count();
         T_ << "." << setfill('0') << setw(3) << milliseconds.count() << setw(3) << microseconds.count();
-        if (!wInit) return string(BGREEN) + T.str() + RGREEN + T_.str() + BWHITE + " ";
+        if (!wBorder) return string(BGREEN) + T.str() + RGREEN + T_.str() + BWHITE + " ";
         wattron(wLog, COLOR_PAIR(COLOR_GREEN));
         wattron(wLog, A_BOLD);
         wprintw(wLog, T.str().data());
@@ -424,14 +424,13 @@ namespace K {
       static void logWar(string k, string s) {
         logErr(k, s, " Warrrrning: ");
       };
-      static void logExit(string k, string s, int code, bool ev = true) {
+      static void logExit(string k, string s, int code) {
         FN::screen_quit();
         logErr(k, s);
-        if (ev) (*evExit)(code);
-        else exit(code);
+        exit(code);
       };
       static void logErr(string k, string s, string m = " Errrror: ") {
-        if (!wInit) {
+        if (!wBorder) {
           cout << uiT() << k << RRED << m << BRED << s << ".\n";
           return;
         }
@@ -453,7 +452,7 @@ namespace K {
         wrefresh(wLog);
       };
       static void logDB(string k) {
-        if (!wInit) {
+        if (!wBorder) {
           cout << uiT() << "DB " << RYELLOW << k << RWHITE << " loaded OK.\n";
           return;
         }
@@ -474,7 +473,7 @@ namespace K {
         wrefresh(wLog);
       };
       static void logUI(string k, int p) {
-        if (!wInit) {
+        if (!wBorder) {
           cout << uiT() << "UI" << RWHITE << " ready over " << RYELLOW << k << RWHITE << " on external port " << RYELLOW << to_string(p) << RWHITE << ".\n";
           return;
         }
@@ -504,7 +503,7 @@ namespace K {
       };
       static void logUIsess(int k, string s) {
         if (s.length() > 7 and s.substr(0, 7) == "::ffff:") s = s.substr(7);
-        if (!wInit) {
+        if (!wBorder) {
           cout << uiT() << "UI " << RYELLOW << to_string(k) << RWHITE << " currently connected, last connection was from " << RYELLOW << s << RWHITE << ".\n";
           return;
         }
@@ -531,7 +530,7 @@ namespace K {
         wrefresh(wLog);
       };
       static void logVer(string k, int c) {
-        if (!wInit) {
+        if (!wBorder) {
           cout << BGREEN << "K" << RGREEN << string(" version ").append(c == -1 ? "unknown (zip install).\n" : (!c ? "0day.\n" : string("-").append(to_string(c)).append("commit").append(c > 1?"s..\n":"..\n"))) << RYELLOW << (c ? k : "") << RWHITE;
           return;
         }
@@ -549,7 +548,7 @@ namespace K {
         wrefresh(wLog);
       };
       static void log(mTrade k, string e) {
-        if (!wInit) {
+        if (!wBorder) {
           cout << FN::uiT() << "GW " << (k.side == mSide::Bid ? RCYAN : RPURPLE) << e << " TRADE " << (k.side == mSide::Bid ? BCYAN : BPURPLE) << (k.side == mSide::Bid ? "BUY " : "SELL ") << k.quantity << " " << k.pair.base << " at price " << k.price << " " << k.pair.quote << " (value " << k.value << " " << k.pair.quote << ").\n";
           return;
         }
@@ -571,7 +570,7 @@ namespace K {
         wrefresh(wLog);
       };
       static void log(string k, string s, string v) {
-        if (!wInit) {
+        if (!wBorder) {
           cout << uiT() << k << RWHITE << " " << s << " " << RYELLOW << v << RWHITE << ".\n";
           return;
         }
@@ -593,7 +592,7 @@ namespace K {
         wrefresh(wLog);
       };
       static void log(string k, string s) {
-        if (!wInit) {
+        if (!wBorder) {
           cout << uiT() << k << RWHITE << " " << s << ".\n";
           return;
         }
@@ -609,7 +608,7 @@ namespace K {
         wrefresh(wLog);
       };
       static void log(string k, int c = COLOR_WHITE, bool b = false) {
-        if (!wInit) {
+        if (!wBorder) {
           cout << RWHITE << k;
           return;
         }
@@ -623,14 +622,14 @@ namespace K {
         wrefresh(wLog);
       };
       static void screen_quit() {
-        if (!wInit) return;
+        if (!wBorder) return;
         lock_guard<mutex> lock(wMutex);
-        wInit = false;
         beep();
         endwin();
+        wBorder = nullptr;
       };
       static void screen(int argColors, string argExchange, string argCurrency) {
-        if ((wBorder = initscr()) == NULL) {
+        if (!(wBorder = initscr())) {
           cout << "NCURSES" << RRED << " Errrror:" << BRED << " Unable to initialize ncurses, try to run in your terminal \"export TERM=xterm\", or use --naked argument." << '\n';
           exit(EXIT_SUCCESS);
         }
@@ -661,18 +660,15 @@ namespace K {
               // case KEY_DOWN: wscrl(wLog, 1); wrefresh(wLog); break;
             }
           }
-          screen_quit();
-          cout << FN::uiT() << "Excellent decision!" << '\n';
-          (*evExit)(EXIT_SUCCESS);
+          raise(SIGINT);
         }).detach();
-        wInit = true;
         screen_refresh("", 0, argExchange, argCurrency);
       };
       static void screen_refresh(map<string, mOrder> k) {
         screen_refresh("", 0, "", "", k, true);
       };
       static void screen_refresh(string protocol = "", int argPort = 0, string argExchange = "", string argCurrency = "", map<string, mOrder> allOrders = map<string, mOrder>(), bool hasOrders = false) {
-        if (!wInit) return;
+        if (!wBorder) return;
         static int p = 0, spin = 0, port = 0;
         static string prtcl = "?", exchange = "?", currency = "?";
         static map<string, mOrder> orders = map<string, mOrder>();
@@ -751,7 +747,7 @@ namespace K {
         wrefresh(wLog);
       };
       static void screen_resize(int sig) {
-        if (!wInit) return;
+        if (!wBorder) return;
         wMutex.lock();
         struct winsize ws;
         if (ioctl(0, TIOCGWINSZ, &ws) < 0 or (ws.ws_row == getmaxy(wBorder) and ws.ws_col == getmaxx(wBorder))) {

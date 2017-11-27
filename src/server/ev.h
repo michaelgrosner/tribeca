@@ -22,7 +22,7 @@ namespace K  {
                              uiQuotingParameters;
     protected:
       void load() {
-        evExit = &happyEnding;
+        gwEndings.push_back(&happyEnding);
         signal(SIGINT, quit);
         signal(SIGUSR1, wtf);
         signal(SIGABRT, wtf);
@@ -50,12 +50,14 @@ namespace K  {
           string k = changelog();
           FN::logVer(k, count(k.begin(), k.end(), '\n'));
         }
+        if (((CF*)config)->argDebugEvents) return;
+        debug = [&](string k) {};
       };
     public:
       void start() {
         hub->run();
       };
-      void stop(int code, function<void()> gwCancelAll) {
+      void stop(function<void()> gwCancelAll) {
         tCancel->stop();
         tWallet->stop();
         tCalcs->stop();
@@ -65,31 +67,33 @@ namespace K  {
         gw->gwGroup->close();
         gwCancelAll();
         uiGroup->close();
-        halt(code);
       };
-      void listen(int port) {
+      void listen() {
         string protocol("HTTP");
         if ((access("etc/sslcert/server.crt", F_OK) != -1) and (access("etc/sslcert/server.key", F_OK) != -1)
-          and hub->listen(port, uS::TLS::createContext("etc/sslcert/server.crt", "etc/sslcert/server.key", ""), 0, uiGroup)
+          and hub->listen(((CF*)config)->argPort, uS::TLS::createContext("etc/sslcert/server.crt", "etc/sslcert/server.key", ""), 0, uiGroup)
         ) protocol += "S";
-        else if (!hub->listen(port, nullptr, 0, uiGroup))
+        else if (!hub->listen(((CF*)config)->argPort, nullptr, 0, uiGroup))
           FN::logExit("IU", string("Use another UI port number, ")
-            + to_string(port) + " seems already in use by:\n"
-            + FN::output(string("netstat -anp 2>/dev/null | grep ") + to_string(port)),
+            + to_string(((CF*)config)->argPort) + " seems already in use by:\n"
+            + FN::output(string("netstat -anp 2>/dev/null | grep ") + to_string(((CF*)config)->argPort)),
             EXIT_SUCCESS);
-        FN::logUI(protocol, port);
-      }
+        FN::logUI(protocol, ((CF*)config)->argPort);
+      };
+      function<void(string)> debug = [&](string k) {
+        FN::log("DEBUG", string("EV ") + k);
+      };
     private:
-      void halt(int code) {
+      static void halt(int code) {
+        for (vector<function<void()>*>::iterator it=gwEndings.begin(); it!=gwEndings.end();++it) (**it)();
         cout << FN::uiT() << "K exit code " << to_string(code) << "." << '\n';
         exit(code);
       };
-      function<void(int)> happyEnding = [&](int code) {
-        cout << FN::uiT();
+      function<void()> happyEnding = [&]() {
+        cout << FN::uiT() << ((CF*)config)->argExchange << " ";
         for(unsigned int i = 0; i < 21; ++i)
           cout << "THE END IS NEVER ";
         cout << "THE END." << '\n';
-        halt(code);
       };
       static void quit(int sig) {
         FN::screen_quit();
@@ -99,7 +103,7 @@ namespace K  {
           << ((k.is_null() or !k["/value/joke"_json_pointer].is_string())
             ? "let's plant a tree instead.." : k["/value/joke"_json_pointer].get<string>()
           ) << '\n';
-        (*evExit)(EXIT_SUCCESS);
+        halt(EXIT_SUCCESS);
       };
       static void wtf(int sig) {
         FN::screen_quit();
@@ -113,7 +117,7 @@ namespace K  {
           upgrade();
           this_thread::sleep_for(chrono::seconds(21));
         }
-        (*evExit)(EXIT_FAILURE);
+        halt(EXIT_FAILURE);
       };
       static bool latest() {
         return FN::output("test -d .git && git rev-parse @") == FN::output("test -d .git && git rev-parse @{u}");

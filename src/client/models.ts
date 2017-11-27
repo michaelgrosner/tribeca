@@ -208,7 +208,7 @@ export interface QuotingParameters {
     positionDivergencePercentage?: number;
     positionDivergenceMin?: number;
     positionDivergencePercentageMin?: number;
-	positionDivergenceMode?: number;
+    positionDivergenceMode?: number;
     percentageValues?: boolean;
     autoPositionMode?: AutoPositionMode;
     aggressivePositionRebalancing?: APR;

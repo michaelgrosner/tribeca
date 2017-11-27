@@ -56,18 +56,21 @@ namespace K {
             mgEwmaM = k.value("ewmaMedium", 0.0);
           if (!mgEwmaS and k.value("time", (unsigned long)0) + qp->shortEwmaPeriods * 6e+4 > FN::T())
             mgEwmaS = k.value("ewmaShort", 0.0);
+          if (k.find("ewmaSMUDiff") != k.end() and k.value("time", (unsigned long)0) + qp->quotingEwmaSMPeriods * 6e+4 > FN::T())
+            mgEwmaSMUDiff = k.value("ewmaSMUDiff", 0.0);
         }
-        FN::log(((CF*)config)->argEwmaLong ? "ARG" : "DB", string("loaded EWMA Long = ") + to_string(mgEwmaL));
-        FN::log(((CF*)config)->argEwmaMedium ? "ARG" : "DB", string("loaded EWMA Medium = ") + to_string(mgEwmaM));
-        FN::log(((CF*)config)->argEwmaShort ? "ARG" : "DB", string("loaded EWMA Short = ") + to_string(mgEwmaS));
+        if (mgEwmaL) FN::log(((CF*)config)->argEwmaLong ? "ARG" : "DB", string("loaded EWMA Long = ") + to_string(mgEwmaL));
+        if (mgEwmaM) FN::log(((CF*)config)->argEwmaMedium ? "ARG" : "DB", string("loaded EWMA Medium = ") + to_string(mgEwmaM));
+        if (mgEwmaS) FN::log(((CF*)config)->argEwmaShort ? "ARG" : "DB", string("loaded EWMA Short = ") + to_string(mgEwmaS));
+        if (mgEwmaSMUDiff) FN::log("DB", string("loaded EWMA Trend = ") + to_string(mgEwmaSMUDiff));
       };
       void waitData() {
         gw->evDataTrade = [&](mTrade k) {
-          if (((CF*)config)->argDebugEvents) FN::log("DEBUG", "EV MG evDataTrade");
+          ((EV*)events)->debug("MG evDataTrade");
           tradeUp(k);
         };
         gw->evDataLevels = [&](mLevels k) {
-          if (((CF*)config)->argDebugEvents) FN::log("DEBUG", "EV MG evDataLevels");
+          ((EV*)events)->debug("MG evDataLevels");
           levelUp(k);
         };
       };
@@ -199,6 +202,7 @@ namespace K {
           {"ewmaLong", mgEwmaL},
           {"ewmaMedium", mgEwmaM},
           {"ewmaShort", mgEwmaS},
+          {"ewmaSMUDiff", mgEwmaSMUDiff},
           {"time", FN::T()}
         });
       };
@@ -210,7 +214,7 @@ namespace K {
         calcEwma(&mgEwmaSM, qp->quotingEwmaSMPeriods);
         calcEwma(&mgEwmaSU, qp->quotingEwmaSUPeriods);
         if(mgEwmaSM && mgEwmaSU)
-		      mgEwmaSMUDiff = ((mgEwmaSU * 100) / mgEwmaSM) - 100;
+          mgEwmaSMUDiff = ((mgEwmaSU * 100) / mgEwmaSM) - 100;
         ((EV*)events)->mgEwmaSMUProtection();
       };
       void filter(mLevels k) {
