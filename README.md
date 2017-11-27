@@ -348,7 +348,7 @@ All features are unlocked for collaborators and contributors (feel free to make 
 
 While locked the amount of market levels is limited (only the first 3 price levels from the exchange are used); once unlocked the bot reads the full market levels of the exchange (up to thousands depending on the exchange).
 
-Anonymous users can also unlock all features for any API Key but is required a payment of 0.01210000 BTC to the address displayed in the IU of the bot, once unlocked feel free to use different currency pairs or reinstall in a different machine but keep the same unlocked API Key (changing the API Key will lock or unlock again the bot).
+Anonymous users can also unlock all features for any API Key but is required a payment of 0.01210000 BTC to the address displayed in the UI of the bot, once unlocked feel free to use different currency pairs but keep the same unlocked API Key (changing the API Key will lock or unlock again the bot).
 
 Alternatively use `--free-version` argument to anonymously avoid the payment and to unlock all features; market levels will be all visible and usable but slowdown a few milliseconds with a [XMR mining calculation](https://github.com/monero-project/monero/blob/master/src/crypto/hash.c#L42) of 1 hash (if the hash meets the current XMR network target it will be send to my XMR pool for my fun and profit).
 
