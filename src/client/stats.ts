@@ -19,6 +19,7 @@ export class StatsComponent implements OnInit {
 
   public positionData: Models.PositionReport;
   public targetBasePosition: number;
+  public positionDivergence: number;
   public fairValue: number;
   public width: number;
   public ewmaShort: number;
@@ -291,24 +292,34 @@ export class StatsComponent implements OnInit {
       lineWidth:3,
       data: []
     },{
-      name: 'Target',
+      name: 'Target (TBP)',
       type: 'spline',
-      yAxis: 1,
+      linkedTo: 0,
       zIndex: 2,
       colorIndex:6,
+      data: []
+    },{
+      name: 'pDiv',
+      type: 'arearange',
+      lineWidth: 0,
+      linkedTo: 0,
+      colorIndex: 6,
+      fillOpacity: 0.3,
+      zIndex: 0,
+      marker: { enabled: false },
       data: []
     },{
       name: 'Available',
       type: 'area',
       colorIndex:0,
       fillOpacity: 0.2,
-      yAxis: 1,
+      linkedTo: 0,
       data: []
     },{
       name: 'Held',
       type: 'area',
       colorIndex:0,
-      yAxis: 1,
+      linkedTo: 0,
       marker:{symbol:'triangle-down'},
       data: []
     }]
@@ -363,21 +374,31 @@ export class StatsComponent implements OnInit {
     },{
       name: 'Target (TBP)',
       type: 'spline',
-      yAxis: 1,
+      linkedTo: 0,
       zIndex: 2,
       colorIndex:6,
       data: []
     },{
+	  name: 'pDiv',
+      type: 'arearange',
+      lineWidth: 0,
+      linkedTo: 0,
+      colorIndex: 6,
+      fillOpacity: 0.3,
+      zIndex: 0,
+      marker: { enabled: false },
+      data: []
+    },{
       name: 'Available',
       type: 'area',
-      yAxis: 1,
+      linkedTo: 0,
       colorIndex:5,
       fillOpacity: 0.2,
       data: []
     },{
       name: 'Held',
       type: 'area',
-      yAxis: 1,
+      linkedTo: 0,
       colorIndex:5,
       data: []
     }]
@@ -525,13 +546,16 @@ export class StatsComponent implements OnInit {
       if (this.targetBasePosition) {
         Highcharts.charts[this.quoteChart].series[1].addPoint([time, (this.positionData.value-this.targetBasePosition)*this.positionData.quoteValue/this.positionData.value], false);
         Highcharts.charts[this.baseChart].series[1].addPoint([time, this.targetBasePosition], false);
+		
+	    Highcharts.charts[this.quoteChart].series[2].addPoint([time, Math.max(0, this.positionData.value-this.targetBasePosition-this.positionDivergence)*this.positionData.quoteValue/this.positionData.value, Math.min(this.positionData.value, this.positionData.value-this.targetBasePosition+this.positionDivergence)*this.positionData.quoteValue/this.positionData.value], this.showStats, false, false);
+	    Highcharts.charts[this.baseChart].series[2].addPoint([time, Math.max(0,this.targetBasePosition-this.positionDivergence), Math.min(this.positionData.value, this.targetBasePosition+this.positionDivergence)], this.showStats, false, false);
       }
       Highcharts.charts[this.quoteChart].series[0].addPoint([time, this.positionData.quoteValue], false);
-      Highcharts.charts[this.quoteChart].series[2].addPoint([time, this.positionData.quoteAmount], false);
-      Highcharts.charts[this.quoteChart].series[3].addPoint([time, this.positionData.quoteHeldAmount], this.showStats);
+      Highcharts.charts[this.quoteChart].series[3].addPoint([time, this.positionData.quoteAmount], false);
+      Highcharts.charts[this.quoteChart].series[4].addPoint([time, this.positionData.quoteHeldAmount], this.showStats);
       Highcharts.charts[this.baseChart].series[0].addPoint([time, this.positionData.value], false);
-      Highcharts.charts[this.baseChart].series[2].addPoint([time, this.positionData.baseAmount], false);
-      Highcharts.charts[this.baseChart].series[3].addPoint([time, this.positionData.baseHeldAmount], this.showStats);
+      Highcharts.charts[this.baseChart].series[3].addPoint([time, this.positionData.baseAmount], false);
+      Highcharts.charts[this.baseChart].series[4].addPoint([time, this.positionData.baseHeldAmount], this.showStats);
     }
   }
 
@@ -574,6 +598,7 @@ export class StatsComponent implements OnInit {
   private updateTargetBasePosition = (value : Models.TargetBasePositionValue) => {
     if (value == null) return;
     this.targetBasePosition = value.tbp;
+    this.positionDivergence = value.pDiv;
   }
 
   private updatePosition = (o: Models.PositionReport) => {
