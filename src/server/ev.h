@@ -7,10 +7,9 @@ namespace K  {
       uWS::Hub *hub = nullptr;
     public:
       uWS::Group<uWS::SERVER> *uiGroup = nullptr;
-      Timer *tCalcs = nullptr,
-            *tDelay = nullptr,
-            *tWallet = nullptr,
-            *tCancel = nullptr;
+      Timer *tServer = nullptr,
+            *tEngine = nullptr,
+            *tClient = nullptr;
       function<void(mOrder)> ogOrder;
       function<void(mTrade)> ogTrade;
       function<void()>       mgLevels,
@@ -29,10 +28,9 @@ namespace K  {
         gw->hub = hub = new uWS::Hub(0, true);
       };
       void waitTime() {
-        tCalcs = new Timer(hub->getLoop());
-        tDelay = new Timer(hub->getLoop());
-        tWallet = new Timer(hub->getLoop());
-        tCancel = new Timer(hub->getLoop());
+        tServer = new Timer(hub->getLoop());
+        tEngine = new Timer(hub->getLoop());
+        tClient = new Timer(hub->getLoop());
       };
       void waitData() {
         gw->gwGroup = hub->createGroup<uWS::CLIENT>();
@@ -56,10 +54,9 @@ namespace K  {
         hub->run();
       };
       void stop(function<void()> gwCancelAll) {
-        tCancel->stop();
-        tWallet->stop();
-        tCalcs->stop();
-        tDelay->stop();
+        tServer->stop();
+        tEngine->stop();
+        tClient->stop();
         gw->close();
         gw->gwGroup->close();
         gwCancelAll();

@@ -23,10 +23,10 @@ namespace K {
         quotingMode[mQuotingMode::Depth] = &calcDepthOfMarket;
       };
       void waitTime() {
-        ((EV*)events)->tCalcs->setData(this);
-        ((EV*)events)->tCalcs->start([](Timer *handle) {
+        ((EV*)events)->tEngine->setData(this);
+        ((EV*)events)->tEngine->start([](Timer *handle) {
           QE *k = (QE*)handle->data;
-          ((EV*)k->events)->debug("QE tCalcs timer");
+          ((EV*)k->events)->debug("QE tEngine timer");
           if (((MG*)k->market)->fairValue) {
             ((MG*)k->market)->calcStats();
             ((PG*)k->wallet)->calcSafety();

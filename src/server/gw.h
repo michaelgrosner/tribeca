@@ -9,6 +9,7 @@ namespace K {
                     gwConnectOrder = mConnectivity::Disconnected,
                     gwConnectMarket = mConnectivity::Disconnected,
                     gwConnectExchange = mConnectivity::Disconnected;
+      unsigned long gwT_5m = 0;
     protected:
       void load() {
         gwEndings.back() = &happyEnding;
@@ -16,19 +17,16 @@ namespace K {
         handshake(gw->exchange);
       };
       void waitTime() {
-        ((EV*)events)->tWallet->setData(this);
-        ((EV*)events)->tWallet->start([](Timer *handle) {
+        ((EV*)events)->tServer->setData(this);
+        ((EV*)events)->tServer->start([](Timer *handle) {
           GW *k = (GW*)handle->data;
-          ((EV*)k->events)->debug("GW tWallet timer");
+          ((EV*)k->events)->debug("GW tServer timer");
           k->gw->wallet();
+          if (k->qp->cancelOrdersAuto) {
+            if (!k->gwT_5m++) k->gw->cancelAll();
+            else if (k->gwT_5m == 20) k->gwT_5m = 0;
+          }
         }, 0, 15e+3);
-        ((EV*)events)->tCancel->setData(this);
-        ((EV*)events)->tCancel->start([](Timer *handle) {
-          GW *k = (GW*)handle->data;
-          ((EV*)k->events)->debug("GW tCancel timer");
-          if (k->qp->cancelOrdersAuto)
-            k->gw->cancelAll();
-        }, 0, 3e+5);
       };
       void waitData() {
         gw->evConnectOrder = [&](mConnectivity k) {
