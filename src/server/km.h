@@ -83,7 +83,6 @@ namespace K {
     double            sopWidthMultiplier              = 2;
     double            sopSizeMultiplier               = 2;
     double            sopTradesMultiplier             = 2;
-    int               delayAPI                        = 0;
     bool              cancelOrdersAuto                = false;
     double            cleanPongsAuto                  = 0.0;
     double            profitHourInterval              = 0.5;
@@ -144,7 +143,6 @@ namespace K {
       {"sopWidthMultiplier", k.sopWidthMultiplier},
       {"sopSizeMultiplier", k.sopSizeMultiplier},
       {"sopTradesMultiplier", k.sopTradesMultiplier},
-      {"delayAPI", k.delayAPI},
       {"cancelOrdersAuto", k.cancelOrdersAuto},
       {"cleanPongsAuto", k.cleanPongsAuto},
       {"profitHourInterval", k.profitHourInterval},
@@ -205,7 +203,6 @@ namespace K {
     if (j.end() != j.find("sopWidthMultiplier")) k.sopWidthMultiplier = j.at("sopWidthMultiplier").get<double>();
     if (j.end() != j.find("sopSizeMultiplier")) k.sopSizeMultiplier = j.at("sopSizeMultiplier").get<double>();
     if (j.end() != j.find("sopTradesMultiplier")) k.sopTradesMultiplier = j.at("sopTradesMultiplier").get<double>();
-    if (j.end() != j.find("delayAPI")) k.delayAPI = j.at("delayAPI").get<int>();
     if (j.end() != j.find("cancelOrdersAuto")) k.cancelOrdersAuto = j.at("cancelOrdersAuto").get<bool>();
     if (j.end() != j.find("cleanPongsAuto")) k.cleanPongsAuto = j.at("cleanPongsAuto").get<double>();
     if (j.end() != j.find("profitHourInterval")) k.profitHourInterval = j.at("profitHourInterval").get<double>();
@@ -247,6 +244,9 @@ namespace K {
            double baseValue,
                   quoteValue;
     unsigned long time;
+    mProfit():
+      baseValue(0), quoteValue(0), time(0)
+    {};
     mProfit(double b, double q, unsigned long t):
       baseValue(b), quoteValue(q), time(t)
     {};
@@ -257,6 +257,11 @@ namespace K {
       {"quoteValue", k.quoteValue},
       {"time", k.time}
     };
+  };
+  static void from_json(const json& j, mProfit& k) {
+    if (j.end() != j.find("baseValue")) k.baseValue = j.at("baseValue").get<double>();
+    if (j.end() != j.find("quoteValue")) k.quoteValue = j.at("quoteValue").get<double>();
+    if (j.end() != j.find("time")) k.time = j.at("time").get<unsigned long>();
   };
   struct mSafety {
     double buy,
@@ -360,6 +365,23 @@ namespace K {
       {"feeCharged", k.feeCharged},
       {"loadedFromDB", k.loadedFromDB},
     };
+  };
+  static void from_json(const json& j, mTrade& k) {
+    if (j.end() != j.find("tradeId")) k.tradeId = j.at("tradeId").get<string>();
+    if (j.end() != j.find("exchange")) k.exchange = (mExchange)j.at("exchange").get<int>();
+    if (j.end() != j.find("pair")) k.pair = mPair(j["/pair/base"_json_pointer].get<string>(), j["/pair/quote"_json_pointer].get<string>());
+    if (j.end() != j.find("price")) k.price = j.at("price").get<double>();
+    if (j.end() != j.find("quantity")) k.quantity = j.at("quantity").get<double>();
+    if (j.end() != j.find("side")) k.side = (mSide)j.at("side").get<int>();
+    if (j.end() != j.find("time")) k.time = j.at("time").get<unsigned long>();
+    if (j.end() != j.find("value")) k.value = j.at("value").get<double>();
+    if (j.end() != j.find("Ktime")) k.Ktime = j.at("Ktime").get<unsigned long>();
+    if (j.end() != j.find("Kqty")) k.Kqty = j.at("Kqty").get<double>();
+    if (j.end() != j.find("Kprice")) k.Kprice = j.at("Kprice").get<double>();
+    if (j.end() != j.find("Kvalue")) k.Kvalue = j.at("Kvalue").get<double>();
+    if (j.end() != j.find("Kdiff")) k.Kdiff = j.at("Kdiff").get<double>();
+    if (j.end() != j.find("feeCharged")) k.feeCharged = j.at("feeCharged").get<double>();
+    if (j.end() != j.find("loadedFromDB")) k.loadedFromDB = j.at("loadedFromDB").get<bool>();
   };
   struct mOrder {
            string orderId,
@@ -501,7 +523,6 @@ namespace K {
       {"quotesInMemoryDone", k.quotesInMemoryDone}
     };
   };
-  static function<void(int)> *evExit;
   static const char kB64Alphabet[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
                                      "abcdefghijklmnopqrstuvwxyz"
                                      "0123456789+/";
@@ -509,10 +530,10 @@ namespace K {
               RBLUE[]  = "\033[0;34m", RPURPLE[] = "\033[0;35m", RCYAN[]  = "\033[0;36m", RWHITE[]  = "\033[0;37m",
               BBLACK[] = "\033[1;30m", BRED[]    = "\033[1;31m", BGREEN[] = "\033[1;32m", BYELLOW[] = "\033[1;33m",
               BBLUE[]  = "\033[1;34m", BPURPLE[] = "\033[1;35m", BCYAN[]  = "\033[1;36m", BWHITE[]  = "\033[1;37m";
-  static bool wInit;
-  static WINDOW *wBorder,
-                *wLog;
+  static WINDOW *wBorder = nullptr,
+                *wLog = nullptr;
   static mutex wMutex;
+  static vector<function<void()>*> gwEndings;
   class Gw {
     public:
       static Gw *E(mExchange e);
@@ -523,10 +544,10 @@ namespace K {
       function<void(mLevels)>       evDataLevels;
       function<void(mConnectivity)> evConnectOrder,
                                     evConnectMarket;
-      uWS::Hub                *hub      = nullptr;
-      uWS::Group<uWS::CLIENT> *gwGroup  = nullptr;
+      uWS::Hub                *hub     = nullptr;
+      uWS::Group<uWS::CLIENT> *gwGroup = nullptr;
       mExchange exchange = mExchange::Null;
-          int free    = 0;
+          int version = 0;
        double makeFee = 0,  minTick = 0,
               takeFee = 0,  minSize = 0;
        string base    = "", quote   = "",
@@ -590,7 +611,7 @@ namespace K {
       void link(Klass *EV, Klass *DB, Klass *UI, Klass *QP, Klass *OG, Klass *MG, Klass *PG, Klass *QE, Klass *GW) {
         Klass *CF = (Klass*)this;
         EV->gwLink(gw);                 UI->gwLink(gw);                 OG->gwLink(gw); MG->gwLink(gw); PG->gwLink(gw); QE->gwLink(gw); GW->gwLink(gw);
-                        DB->cfLink(CF); UI->cfLink(CF);                 OG->cfLink(CF); MG->cfLink(CF); PG->cfLink(CF); QE->cfLink(CF); GW->cfLink(CF);
+        EV->cfLink(CF); DB->cfLink(CF); UI->cfLink(CF);                 OG->cfLink(CF); MG->cfLink(CF); PG->cfLink(CF); QE->cfLink(CF); GW->cfLink(CF);
                                         UI->evLink(EV); QP->evLink(EV); OG->evLink(EV); MG->evLink(EV); PG->evLink(EV); QE->evLink(EV); GW->evLink(EV);
                                         UI->dbLink(DB); QP->dbLink(DB); OG->dbLink(DB); MG->dbLink(DB); PG->dbLink(DB);
                                                         QP->uiLink(UI); OG->uiLink(UI); MG->uiLink(UI); PG->uiLink(UI); QE->uiLink(UI); GW->uiLink(UI);
