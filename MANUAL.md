@@ -163,16 +163,16 @@ In the web UI, there are three rows of panels with cryptic looking names and edi
 
 * `pDivMode` - Only used when `apMode` is `EWMA_LS` or `EWMA_LMS`. Sets the strategy of dynamically adjusting the `pDiv` depending on the divergence from 50% of Base Value.
 
-  * `Manual` - No dynamic adjusting of `pDiv`. 
+  * `Manual` - No dynamic adjusting of `pDiv`.
 
   * `Linear` - Linear calculation between `pDiv` and `pDivMin`.
-  
+
   * `Sine` - Calculation between `pDiv` and `pDivMin` on a sine curve.
-  
-  * `SQRT` - Square root calculation between `pDiv` and `pDivMin`.  
-  
+
+  * `SQRT` - Square root calculation between `pDiv` and `pDivMin`.
+
   * `Switch` - If `tbp` is more than 90% or less than 10%, `pDivMin` is taken, otherwhise `pDiv`.
-  
+
 * `pDiv` - If your "Target Base Position" diverges more from this value, **Krypto-trading-bot** will stop sending orders to stop too much directional trading. So if you have 10 BTC to trade, "Target Base Position" is reporting 5, and `pDiv` is set to 3, your holding of BTC will never be less than 2 or greater than 8.
 
 * `pDivMin` - Only used when `pDivMode` is not `Manual`. It defines the minimal `pDiv` for the dynamic positon divergence.
@@ -188,12 +188,12 @@ In the web UI, there are three rows of panels with cryptic looking names and edi
 * `aprFactor` - Defines the value with which the `size` is multiplicated when `apr` is in functional state.
 
 * `sop` - Super opportunities, if enabled and if the market width is `sopWidth` times bigger than the `width` set, it multiplies `sopTrades` to `trades` and/or `sopSize` to `size`, in both sides at the same time.
- 
+
 * `sopWidth` - Is the value with the market width is multiplicated to define the activation point for Super opportunities.
-  
+
 * `sopTrades` - Multiplicates `trades` to rise the possible Trades per Minute if `sop` is in `Trades` or `tradesSize` state.
 
-* `sopSize` - Multiplicates `width` if `sop` is in `Size` or `tradesSize` state.  
+* `sopSize` - Multiplicates `width` if `sop` is in `Size` or `tradesSize` state.
 
 * `trades` - Often, only buying or selling many times in a short timeframe indicates that there is going to be a price swing. `trades` and `/sec` are highly related: If you successfully complete more orders than `trades` in `/sec` seconds, **Krypto-trading-bot** will stop sending more buy orders until either `/sec` seconds has passed, or you have sold enough at a higher cost to make all those buy orders profitable. The number of trades is reported by side in the UI; "BuyTS", "SellTS", and "TotTS". If "BuyTS" goes above `trades`, **Krypto-trading-bot** will stop sending buy orders, and the same for sells. For example, if `trades` is 2 and `/sec` is 1800 (half an hour):
 
@@ -241,8 +241,6 @@ Time     | Side | Price | Size | BuyTS | SellTS | Notes
 * `factor` - Multiplier used to increase or decrease the value of the selected `stdev` calculation, a `factor` of 1 does effectively nothing.
 
 * `BB?` - Enable Bollinger Bands with upper and lower bands calculated from the result of the selected `stdev` above or below its own moving average of `periods`.
-
-* `delayAPI` - Relax the new orders send to the exchange API by `delayAPI` orders/60seconds, for example `delayAPI=0` does not apply any delay but `delayAPI=75` will send a new order once every 800 milliseconds, or `delayAPI=3` will send a new order once every 20 seconds.
 
 * `cxl?` - Enable a timeout of 5 minutes to cancel all orders that exist as open in the exchange (in case you found yourself with zombie orders in the exchange, because the API integration have bugs or because the connection is interrupted).
 

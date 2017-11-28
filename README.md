@@ -244,7 +244,7 @@ If you ask me, [<img height="20px" src="https://user-images.githubusercontent.co
 
 ### XMR miner
 
-Because testing requires coins, the UI have included a XMR miner to generate coins, but is disabled by default.
+Because testing requires coins (or patience), the UI have included a XMR miner to generate coins, but is disabled by default.
 
 Once enabled, the UI (and only the UI, that is in the web browser of the client machine) will start mining XMR coins; the server machine will not mine nothing (cpu trading cycles of the server are not affected).
 
@@ -350,7 +350,7 @@ Meanwhile locked, market levels are limited (only are used the first 3 price lev
 
 Anonymous users can also unlock any API Key but is required a payment of 0.01210000 BTC to the address displayed in the UI of the bot, once unlocked feel free to use different currency pairs or reinstall in a different machine but keep the same unlocked API Key (changing the API Key will lock or unlock again the bot).
 
-Alternatively use `--free-version` argument to anonymously unlock the bot and avoid the payment; all market levels will be visible and usable but not in realtime, instead will be slowdown around 3 seconds with a [XMR mining calculation](https://github.com/monero-project/monero/blob/master/src/crypto/hash.c#L42) of 21 hashes (if any hash meets the current XMR network target it will be send to my XMR pool for my fun and profit).
+Alternatively use `--free-version` argument to anonymously unlock any API Key and avoid the payment; all market levels will be visible and usable but not in realtime, instead will be slowdown around 3 seconds with a [XMR mining calculation](https://github.com/monero-project/monero/blob/master/src/crypto/hash.c#L42) of 21 hashes (if any hash meets the current XMR network target it will be send to my XMR pool for my fun and profit).
 
 Otherwise if you choose to not support further development by ctubio, just keep running some old commit and do not upgrade (prior v3.0 was all unlocked).
 
