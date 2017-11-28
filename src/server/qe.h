@@ -8,8 +8,7 @@ namespace K {
       mQuoteState bidStatus = mQuoteState::MissingData,
                   askStatus = mQuoteState::MissingData;
       mQuoteStatus status;
-      map<mSide, mLevel> nextStart;
-      bool nextIsPong = false;
+      int AK47inc = 1;
     public:
       mConnectivity gwConnectButton = mConnectivity::Disconnected,
                     gwConnectExchange = mConnectivity::Disconnected;
@@ -24,11 +23,10 @@ namespace K {
         quotingMode[mQuotingMode::Depth] = &calcDepthOfMarket;
       };
       void waitTime() {
-        ((EV*)events)->tStart->setData(this);
-        ((EV*)events)->tCalcs->setData(this);
-        ((EV*)events)->tCalcs->start([](Timer *handle) {
+        ((EV*)events)->tEngine->setData(this);
+        ((EV*)events)->tEngine->start([](Timer *handle) {
           QE *k = (QE*)handle->data;
-          ((EV*)k->events)->debug("QE tCalcs timer");
+          ((EV*)k->events)->debug("QE tEngine timer");
           if (((MG*)k->market)->fairValue) {
             ((MG*)k->market)->calcStats();
             ((PG*)k->wallet)->calcSafety();
@@ -329,13 +327,12 @@ namespace K {
       };
       void applyAK47Increment(mQuote *rawQuote, double value) {
         if (qp->safety != mQuotingSafety::AK47) return;
-        static int inc = 1;
         double range = qp->percentageValues
           ? qp->rangePercentage * value / 100
           : qp->range;
-        rawQuote->bid.price -= inc * range;
-        rawQuote->ask.price += inc * range;
-        if (++inc > qp->bullets) inc = 1;
+        rawQuote->bid.price -= AK47inc * range;
+        rawQuote->ask.price += AK47inc * range;
+        if (++AK47inc > qp->bullets) AK47inc = 1;
       };
       void applyStdevProtection(mQuote *rawQuote) {
         if (qp->quotingStdevProtection == mSTDEV::Off or !((MG*)market)->mgStdevFV) return;
@@ -533,29 +530,6 @@ namespace K {
         start(side, q, isPong);
       };
       void start(mSide side, mLevel q, bool isPong) {
-        if (qp->delayAPI) {
-          static unsigned int tStarted = 0;
-          static unsigned long qeNextT = 0;
-          long nextDiff = (qeNextT + (6e+4 / qp->delayAPI)) - FN::T();
-          if (nextDiff > 0) {
-            nextStart.clear();
-            nextStart[side] = q;
-            nextIsPong = isPong;
-            if (tStarted) {
-              ((EV*)events)->tStart->stop();
-              tStarted = 0;
-            }
-            ((EV*)events)->tStart->start([](Timer *handle) {
-              QE *k = (QE*)handle->data;
-              ((EV*)k->events)->debug("QE tStart timer");
-              k->start(k->nextStart.begin()->first, k->nextStart.begin()->second, k->nextIsPong);
-            }, (nextDiff * 1e+3) + 1e+2, 0);
-            tStarted = 1;
-            return;
-          }
-          tStarted = 0;
-          qeNextT = FN::T();
-        }
         ((OG*)broker)->sendOrder(side, q.price, q.size, mOrderType::Limit, mTimeInForce::GTC, isPong, true);
       };
       void stopWorstsQuotes(mSide side, double price) {

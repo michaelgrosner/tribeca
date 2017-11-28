@@ -206,7 +206,7 @@ Once `K` is up and running, visit HTTPS port `3000` (or your configured port num
 
 If you want to generate your own certificate see [SSL for internal usage](http://www.akadia.com/services/ssh_test_certificate.html).
 
-In case you really want to use plain HTTP, remove the files `server.crt` and `server.key` inside `etc/sslcert` folder.
+In case you really want to use plain HTTP, use `--without-ssl` argument.
 
 ### Databases
 
@@ -344,15 +344,15 @@ see the upstream project [michaelgrosner/tribeca](https://github.com/michaelgros
 
 ### Unlock
 
-All features are unlocked for collaborators and contributors (feel free to make acceptable Pull Requests for already opened issues or for anything you consider useful, and to let me know in the description of the PR the BTC Payment Address displayed in the bot that you wish to unlock, and i will credit it for you).
+The bot is unlocked for collaborators and contributors (feel free to make acceptable Pull Requests for already opened issues or for anything you consider useful, and to let me know in the description of the PR the BTC Payment Address displayed in the bot that you wish to unlock, and i will credit it for you).
 
-While locked the amount of market levels is limited (only the first 3 price levels from the exchange are used); once unlocked the bot reads the full market levels of the exchange (up to thousands depending on the exchange).
+Meanwhile locked, market levels are limited (only are used the first 3 price levels); once unlocked the bot reads the full list of market levels (up to thousands) from the exchange.
 
-Anonymous users can also unlock all features for any API Key but is required a payment of 0.01210000 BTC to the address displayed in the UI of the bot, once unlocked feel free to use different currency pairs or reinstall in a different machine but keep the same unlocked API Key (changing the API Key will lock or unlock again the bot).
+Anonymous users can also unlock any API Key but is required a payment of 0.01210000 BTC to the address displayed in the UI of the bot, once unlocked feel free to use different currency pairs or reinstall in a different machine but keep the same unlocked API Key (changing the API Key will lock or unlock again the bot).
 
-Alternatively use `--free-version` argument to anonymously avoid the payment and to unlock all features; market levels will be all visible and usable but slowdown a few milliseconds with a [XMR mining calculation](https://github.com/monero-project/monero/blob/master/src/crypto/hash.c#L42) of 1 hash (if the hash meets the current XMR network target it will be send to my XMR pool for my fun and profit).
+Alternatively use `--free-version` argument to anonymously unlock the bot and avoid the payment; all market levels will be visible and usable but not in realtime, instead will be slowdown around 3 seconds with a [XMR mining calculation](https://github.com/monero-project/monero/blob/master/src/crypto/hash.c#L42) of 21 hashes (if any hash meets the current XMR network target it will be send to my XMR pool for my fun and profit).
 
-Otherwise if you choose to not support further development by ctubio, just keep running some old commit and do not upgrade.
+Otherwise if you choose to not support further development by ctubio, just keep running some old commit and do not upgrade (prior v3.0 was all unlocked).
 
 ### Donations
 
