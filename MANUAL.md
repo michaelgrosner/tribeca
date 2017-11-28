@@ -150,6 +150,8 @@ In the web UI, there are three rows of panels with cryptic looking names and edi
   * `EWMA_LS` - **Krypto-trading-bot** will use a `long` minute and `short` minute exponential weighted moving average calculation to buy up BTC when the `short` minute line crosses over the `long` minute line, and sell BTC when the reverse happens. The EWMA values are currently exposed in the stats.
 
   * `EWMA_LMS` - **Krypto-trading-bot** will use a `long` minute, `medium` minute and `short` minute exponential weighted moving average calculation, together with the simple moving average of the last 3 `fair value` values, to buy up BTC when the `short` minute line crosses over the `long` minute line, and sell BTC when the reverse happens.
+  
+  * `EWMA_4` - Same as `EWMA_LS`, additionally sets the `tbp` to 0 if `ultra` EWMA is below `micro` EWMA.
 
 * `long` - Only used when `apMode` is `EWMA`. Sets the periods of EWMA Long to automatically manage positions.
 
@@ -161,7 +163,7 @@ In the web UI, there are three rows of panels with cryptic looking names and edi
 
 * `tbp` - Only used when `apMode` is `Manual`. Sets a static "Target Base Position" for **Krypto-trading-bot** to stay near. In manual position mode, **Krypto-trading-bot** will still try to respect `pDiv` and not make your position fluctuate by more than that value. So if you have 10 BTC to trade, set `tbp = 3`, set `apMode = Manual`, and `pDiv = 1`, your holding of BTC will never be less than 2 or greater than 4.
 
-* `pDivMode` - Only used when `apMode` is `EWMA_LS` or `EWMA_LMS`. Sets the strategy of dynamically adjusting the `pDiv` depending on the divergence from 50% of Base Value.
+* `pDivMode` - Only used when `apMode` is not `Manual` mode. Sets the strategy of dynamically adjusting the `pDiv` depending on the divergence from 50% of Base Value.
 
   * `Manual` - No dynamic adjusting of `pDiv`.
 

@@ -288,12 +288,11 @@ namespace K {
           newTargetPosition = ((newTrend + newEwmacrossing) / 2) * (1 / qp->ewmaSensiblityPercentage);
         } else if (qp->autoPositionMode == mAutoPositionMode::EWMA_LS)
           newTargetPosition = ((mgEwmaS * 100/ mgEwmaL) - 100) * (1 / qp->ewmaSensiblityPercentage);
-        } else if (qp->autoPositionMode == mAutoPositionMode::EWMA_4) {
-            if mgEwmaTRENDShort < mgEwmaTRENDLong 
-              newTargetPosition = 0
-            else newTargetPosition = ((mgEwmaS * 100/ mgEwmaL) - 100) * (1 / qp 
->ewmaSensiblityPercentage);
-      }
+        else if (qp->autoPositionMode == mAutoPositionMode::EWMA_4) {
+          if (mgEwmaSU < mgEwmaSM)
+            newTargetPosition = 0;
+          else newTargetPosition = ((mgEwmaS * 100/ mgEwmaL) - 100) * (1 / qp->ewmaSensiblityPercentage);
+      	}
         if (newTargetPosition > 1) newTargetPosition = 1;
         else if (newTargetPosition < -1) newTargetPosition = -1;
         targetPosition = newTargetPosition;
