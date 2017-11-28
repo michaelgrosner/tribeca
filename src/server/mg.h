@@ -15,6 +15,8 @@ namespace K {
       vector<double> mgStatBid;
       vector<double> mgStatAsk;
       vector<double> mgStatTop;
+      unsigned int mgT_60s = 0;
+      unsigned long mgT_369ms = 0;
     public:
       mLevels levels;
       double fairValue = 0;
@@ -56,18 +58,23 @@ namespace K {
             mgEwmaM = k.value("ewmaMedium", 0.0);
           if (!mgEwmaS and k.value("time", (unsigned long)0) + qp->shortEwmaPeriods * 6e+4 > FN::T())
             mgEwmaS = k.value("ewmaShort", 0.0);
+          if (k.find("mgEwmaSM") != k.end() and k.value("time", (unsigned long)0) + qp->quotingEwmaSMPeriods * 6e+4 > FN::T())
+            mgEwmaSM = k.value("mgEwmaSM", 0.0);
+          if (k.find("mgEwmaSU") != k.end() and k.value("time", (unsigned long)0) + qp->quotingEwmaSUPeriods * 6e+4 > FN::T())
+            mgEwmaSU = k.value("mgEwmaSU", 0.0);
         }
-        FN::log(((CF*)config)->argEwmaLong ? "ARG" : "DB", string("loaded EWMA Long = ") + to_string(mgEwmaL));
-        FN::log(((CF*)config)->argEwmaMedium ? "ARG" : "DB", string("loaded EWMA Medium = ") + to_string(mgEwmaM));
-        FN::log(((CF*)config)->argEwmaShort ? "ARG" : "DB", string("loaded EWMA Short = ") + to_string(mgEwmaS));
+        if (mgEwmaL) FN::log(((CF*)config)->argEwmaLong ? "ARG" : "DB", string("loaded EWMA Long = ") + to_string(mgEwmaL));
+        if (mgEwmaM) FN::log(((CF*)config)->argEwmaMedium ? "ARG" : "DB", string("loaded EWMA Medium = ") + to_string(mgEwmaM));
+        if (mgEwmaS) FN::log(((CF*)config)->argEwmaShort ? "ARG" : "DB", string("loaded EWMA Short = ") + to_string(mgEwmaS));
+        if (mgEwmaSM and mgEwmaSU) FN::log("DB", string("loaded EWMA Trend micro/ultra = ") + to_string(mgEwmaSM) + "/" + to_string(mgEwmaSU));
       };
       void waitData() {
         gw->evDataTrade = [&](mTrade k) {
-          if (((CF*)config)->argDebugEvents) FN::log("DEBUG", "EV MG evDataTrade");
+          ((EV*)events)->debug("MG evDataTrade");
           tradeUp(k);
         };
         gw->evDataLevels = [&](mLevels k) {
-          if (((CF*)config)->argDebugEvents) FN::log("DEBUG", "EV MG evDataLevels");
+          ((EV*)events)->debug("MG evDataLevels");
           levelUp(k);
         };
       };
@@ -81,9 +88,8 @@ namespace K {
         return !levels.bids.size() or !levels.asks.size();
       };
       void calcStats() {
-        static int mgT = 0;
-        if (++mgT == 60) {
-          mgT = 0;
+        if (++mgT_60s == 60) {
+          mgT_60s = 0;
           ewmaPUp();
           ewmaSMUUp();
           ewmaUp();
@@ -165,11 +171,10 @@ namespace K {
         ((UI*)client)->send(uiTXT::MarketTrade, k);
       };
       void levelUp(mLevels k) {
-        static unsigned long lastUp = 0;
         filter(k);
-        if (lastUp+369 > FN::T()) return;
+        if (mgT_369ms+369 > FN::T()) return;
         ((UI*)client)->send(uiTXT::MarketData, k, true);
-        lastUp = FN::T();
+        mgT_369ms = FN::T();
       };
       void ewmaUp() {
         calcEwma(&mgEwmaL, qp->longEwmaPeriods);
@@ -199,6 +204,8 @@ namespace K {
           {"ewmaLong", mgEwmaL},
           {"ewmaMedium", mgEwmaM},
           {"ewmaShort", mgEwmaS},
+          {"mgEwmaSM", mgEwmaSM},
+          {"mgEwmaSU", mgEwmaSU},
           {"time", FN::T()}
         });
       };
@@ -209,7 +216,7 @@ namespace K {
       void ewmaSMUUp() {
         calcEwma(&mgEwmaSM, qp->quotingEwmaSMPeriods);
         calcEwma(&mgEwmaSU, qp->quotingEwmaSUPeriods);
-        if(mgEwmaSM && mgEwmaSU)
+        if (mgEwmaSM and mgEwmaSU)
           mgEwmaSMUDiff = ((mgEwmaSU * 100) / mgEwmaSM) - 100;
         ((EV*)events)->mgEwmaSMUProtection();
       };

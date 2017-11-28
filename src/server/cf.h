@@ -10,9 +10,10 @@ namespace K {
           argDebugEvents = 0,
           argDebugOrders = 0,
           argDebugQuotes = 0,
+          argWithoutSSL = 0,
           argHeadless = 0,
-          argNaked = 0,
           argAutobot = 0,
+          argNaked = 0,
           argFree = 0;
       string argTitle = "K.sh",
              argUser = "NULL",
@@ -44,6 +45,7 @@ namespace K {
             {"debug-events", no_argument,       &argDebugEvents,   1},
             {"debug-orders", no_argument,       &argDebugOrders,   1},
             {"debug-quotes", no_argument,       &argDebugQuotes,   1},
+            {"without-ssl",  no_argument,       &argWithoutSSL,    1},
             {"headless",     no_argument,       &argHeadless,      1},
             {"naked",        no_argument,       &argNaked,         1},
             {"autobot",      no_argument,       &argAutobot,       1},
@@ -103,7 +105,9 @@ namespace K {
               << FN::uiT() << RWHITE << "-h, --help               - show this help and quit." << '\n'
               << FN::uiT() << RWHITE << "    --autobot            - automatically start trading on boot." << '\n'
               << FN::uiT() << RWHITE << "    --naked              - do not display CLI, print output to stdout instead." << '\n'
-              << FN::uiT() << RWHITE << "    --headless           - do not listen for UI connections (ignores '-L' and '-P')." << '\n'
+              << FN::uiT() << RWHITE << "    --headless           - do not listen for UI connections," << '\n'
+              << FN::uiT() << RWHITE << "                           ignores '--without-ssl', '--whitelist' and '--port'." << '\n'
+              << FN::uiT() << RWHITE << "    --without-ssl        - do not use HTTPS for UI connections (use HTTP only)." << '\n'
               << FN::uiT() << RWHITE << "-L, --whitelist=IP       - set IP or csv of IPs to allow UI connections," << '\n'
               << FN::uiT() << RWHITE << "                           alien IPs will get a zip-bomb instead." << '\n'
               << FN::uiT() << RWHITE << "-P, --port=NUMBER        - set NUMBER of an open port to listen for UI connections." << '\n'
@@ -195,7 +199,7 @@ namespace K {
         gw->pass = argPassphrase;
         gw->http = argHttp;
         gw->ws = argWss;
-        gw->free = argFree;
+        gw->version = argFree;
       };
     private:
       string base() {

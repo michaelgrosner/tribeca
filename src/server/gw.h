@@ -9,26 +9,24 @@ namespace K {
                     gwConnectOrder = mConnectivity::Disconnected,
                     gwConnectMarket = mConnectivity::Disconnected,
                     gwConnectExchange = mConnectivity::Disconnected;
+      unsigned int gwT_5m = 0;
     protected:
       void load() {
-        evExit = &happyEnding;
+        gwEndings.back() = &happyEnding;
         if (((CF*)config)->argAutobot) gwAutoStart = mConnectivity::Connected;
         handshake(gw->exchange);
       };
       void waitTime() {
-        ((EV*)events)->tWallet->setData(this);
-        ((EV*)events)->tWallet->start([](Timer *handle) {
+        ((EV*)events)->tServer->setData(this);
+        ((EV*)events)->tServer->start([](Timer *handle) {
           GW *k = (GW*)handle->data;
-          if (((CF*)k->config)->argDebugEvents) FN::log("DEBUG", "EV GW tWallet timer");
+          ((EV*)k->events)->debug("GW tServer timer");
           k->gw->wallet();
+          if (k->qp->cancelOrdersAuto) {
+            if (!k->gwT_5m++) k->gw->cancelAll();
+            else if (k->gwT_5m == 20) k->gwT_5m = 0;
+          }
         }, 0, 15e+3);
-        ((EV*)events)->tCancel->setData(this);
-        ((EV*)events)->tCancel->start([](Timer *handle) {
-          GW *k = (GW*)handle->data;
-          if (((CF*)k->config)->argDebugEvents) FN::log("DEBUG", "EV GW tCancel timer");
-          if (k->qp->cancelOrdersAuto)
-            k->gw->cancelAll();
-        }, 0, 3e+5);
       };
       void waitData() {
         gw->evConnectOrder = [&](mConnectivity k) {
@@ -51,8 +49,8 @@ namespace K {
         ((EV*)events)->start();
       };
     private:
-      function<void(int)> happyEnding = [&](int code) {
-        ((EV*)events)->stop(code, [&](){
+      function<void()> happyEnding = [&]() {
+        ((EV*)events)->stop([&](){
           FN::log(string("GW ") + ((CF*)config)->argExchange, "Attempting to cancel all open orders, please wait.");
           gw->cancelAll();
           FN::log(string("GW ") + ((CF*)config)->argExchange, "cancell all open orders OK");
@@ -139,9 +137,10 @@ namespace K {
             os >> gw->minTick;
           }
           k = FN::wJet(string(gw->http).append("/symbols_details"));
-          for (json::iterator it=k.begin(); it!=k.end();++it)
-            if (it->value("pair", "") == gw->symbol)
-              gw->minSize = stod(it->value("minimum_order_size", "0"));
+          if (k.is_array())
+            for (json::iterator it=k.begin(); it!=k.end();++it)
+              if (it->find("pair") != it->end() and it->value("pair", "") == gw->symbol)
+                gw->minSize = stod(it->value("minimum_order_size", "0"));
         }
         else if (e == mExchange::OkCoin) {
           gw->randId = FN::charId;
@@ -185,7 +184,7 @@ namespace K {
             << "- makeFee: " << gw->makeFee << '\n'
             << "- takeFee: " << gw->takeFee;
           FN::log(string("GW ") + ((CF*)config)->argExchange + ":", ss.str());
-        } else FN::logExit("CF", "Unable to fetch data from " + ((CF*)config)->argExchange + " symbol \"" + gw->symbol + "\"", EXIT_FAILURE, false);
+        } else FN::logExit("CF", "Unable to fetch data from " + ((CF*)config)->argExchange + " symbol \"" + gw->symbol + "\"", EXIT_FAILURE);
       };
   };
 }

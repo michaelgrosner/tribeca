@@ -18,14 +18,24 @@ $ docker run -p 3000:3000 -v /path/to/data:/data --name Ksh -t -d ksh
 
 If you run `docker ps`, you should see K container running.
 
+### Vagrantfile
+To build your own portable development environment install [VirtualBox](https://www.virtualbox.org/wiki/Downloads) and [vagrant](https://www.vagrantup.com/downloads.html), then:
+```
+ $ cd path/to/K
+ $ cp etc/Vagrantfile Vagrantfile
+ $ vagrant up
+ $ vagrant ssh
+```
+See more info at [PR #425](https://github.com/ctubio/Krypto-trading-bot/pull/425).
+
 ### K.sh.dist
 Used on install to initialize `./K.sh` file, feel free to add your own hardcoded arguments to your own `./K.sh` file after install.
 
 ### K-stunnel.conf
-To run GDAX FIX API encrypted under SSL, this configuration file will be used to launch [stunnel](https://www.stunnel.org/index.html); no need to edit.
-
-### K-bomb.gzip
-Used by `--whitelist` argument to attempt to crash UI clients from alien IPs not whitelisted.
+Used to launch [stunnel](https://www.stunnel.org/index.html) to run GDAX FIX API encrypted under SSL; no need to edit.
 
 ### without_mysql.m4.patch
 Used against libquickfix sources by `make dist`; no need to edit.
+
+### K-bomb.gzip
+Used by `--whitelist` argument to attempt to crash UI clients from alien IPs not whitelisted; no need to open.

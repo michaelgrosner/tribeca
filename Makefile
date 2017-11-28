@@ -4,8 +4,8 @@ CARCH    = x86_64-linux-gnu arm-linux-gnueabihf aarch64-linux-gnu
 KLOCAL   = build-$(CHOST)/local
 CXX      = $(CHOST)-g++-6
 CC       = $(CHOST)-gcc-6
-KGIT     = 3.0
-KHUB     = 6704776
+KGIT     = 4.0
+KHUB     = 8656597
 V_ZLIB  := 1.2.11
 V_SSL   := 1.1.0f
 V_CURL  := 7.55.1
@@ -15,7 +15,7 @@ V_UWS   := 0.14.4
 V_SQL   := 3200100
 V_QF    := v.1.14.4
 V_PVS   := 6.19.23789.1731
-KZIP     = 9af277c81eb271605055c7fe87eaa608e99dbd09
+KZIP     = 134911ec4d097781914ea2e736bd8bd9702322d2
 KARGS    = -Wextra -std=c++11 -O3 -I$(KLOCAL)/include          \
   src/server/K.cxx -pthread -rdynamic -DUWS_THREADSAFE         \
   -DK_STAMP='"$(shell date --rfc-3339=seconds | cut -f1 -d+)"' \
