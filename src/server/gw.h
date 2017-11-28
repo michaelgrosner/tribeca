@@ -9,7 +9,7 @@ namespace K {
                     gwConnectOrder = mConnectivity::Disconnected,
                     gwConnectMarket = mConnectivity::Disconnected,
                     gwConnectExchange = mConnectivity::Disconnected;
-      unsigned long gwT_5m = 0;
+      unsigned int gwT_5m = 0;
     protected:
       void load() {
         gwEndings.back() = &happyEnding;
