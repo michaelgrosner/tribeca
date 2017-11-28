@@ -7,11 +7,9 @@ namespace K  {
       uWS::Hub *hub = nullptr;
     public:
       uWS::Group<uWS::SERVER> *uiGroup = nullptr;
-      Timer *tCalcs = nullptr,
-            *tStart = nullptr,
-            *tDelay = nullptr,
-            *tWallet = nullptr,
-            *tCancel = nullptr;
+      Timer *tServer = nullptr,
+            *tEngine = nullptr,
+            *tClient = nullptr;
       function<void(mOrder)> ogOrder;
       function<void(mTrade)> ogTrade;
       function<void()>       mgLevels,
@@ -30,11 +28,9 @@ namespace K  {
         gw->hub = hub = new uWS::Hub(0, true);
       };
       void waitTime() {
-        tCalcs = new Timer(hub->getLoop());
-        tStart = new Timer(hub->getLoop());
-        tDelay = new Timer(hub->getLoop());
-        tWallet = new Timer(hub->getLoop());
-        tCancel = new Timer(hub->getLoop());
+        tServer = new Timer(hub->getLoop());
+        tEngine = new Timer(hub->getLoop());
+        tClient = new Timer(hub->getLoop());
       };
       void waitData() {
         gw->gwGroup = hub->createGroup<uWS::CLIENT>();
@@ -58,11 +54,9 @@ namespace K  {
         hub->run();
       };
       void stop(function<void()> gwCancelAll) {
-        tCancel->stop();
-        tWallet->stop();
-        tCalcs->stop();
-        tStart->stop();
-        tDelay->stop();
+        tServer->stop();
+        tEngine->stop();
+        tClient->stop();
         gw->close();
         gw->gwGroup->close();
         gwCancelAll();
@@ -70,7 +64,8 @@ namespace K  {
       };
       void listen() {
         string protocol("HTTP");
-        if ((access("etc/sslcert/server.crt", F_OK) != -1) and (access("etc/sslcert/server.key", F_OK) != -1)
+        if (!((CF*)config)->argWithoutSSL
+          and (access("etc/sslcert/server.crt", F_OK) != -1) and (access("etc/sslcert/server.key", F_OK) != -1)
           and hub->listen(((CF*)config)->argPort, uS::TLS::createContext("etc/sslcert/server.crt", "etc/sslcert/server.key", ""), 0, uiGroup)
         ) protocol += "S";
         else if (!hub->listen(((CF*)config)->argPort, nullptr, 0, uiGroup))

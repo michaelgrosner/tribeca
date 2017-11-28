@@ -12,6 +12,7 @@ namespace K {
       map<uiTXT, string> queue;
       map<char, function<json()>*> hello;
       map<char, function<void(json)>*> kiss;
+      unsigned long uiT_1m = 0;
     public:
       unsigned int orders60sec = 0;
     protected:
@@ -27,8 +28,8 @@ namespace K {
       };
       void waitTime() {
         if (((CF*)config)->argHeadless) return;
-        ((EV*)events)->tDelay->setData(this);
-        ((EV*)events)->tDelay->start(sendState, 0, 0);
+        ((EV*)events)->tClient->setData(this);
+        ((EV*)events)->tClient->start(sendState, 0, 0);
       };
       void waitData() {
         if (((CF*)config)->argHeadless) return;
@@ -143,8 +144,8 @@ namespace K {
       void delayme(double delayUI) {
         if (((CF*)config)->argHeadless) return;
         realtimeClient = !delayUI;
-        ((EV*)events)->tDelay->stop();
-        ((EV*)events)->tDelay->start(sendState, 0, realtimeClient ? 6e+4 : (int)(delayUI*1e+3));
+        ((EV*)events)->tClient->stop();
+        ((EV*)events)->tClient->start(sendState, 0, realtimeClient ? 6e+4 : (int)(delayUI*1e+3));
       };
       void send(uiTXT k, json o, bool delayed = false) {
         if (((CF*)config)->argHeadless or connections == 0) return;
@@ -181,12 +182,11 @@ namespace K {
       };
       void (*sendState)(Timer*) = [](Timer *handle) {
         UI *k = (UI*)handle->data;
-        ((EV*)k->events)->debug("UI tDelay timer");
+        ((EV*)k->events)->debug("UI tClient timer");
         if (!k->realtimeClient) {
           k->sendQueue();
-          static unsigned long uiT_1m = 0;
-          if (uiT_1m+6e+4 > FN::T()) return;
-          else uiT_1m = FN::T();
+          if (k->uiT_1m+6e+4 > FN::T()) return;
+          else k->uiT_1m = FN::T();
         }
         k->send(uiTXT::ApplicationState, k->serverState());
         k->orders60sec = 0;

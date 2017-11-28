@@ -8,6 +8,10 @@ namespace K {
       map<double, mTrade> buys;
       map<double, mTrade> sells;
       map<string, mWallet> balance;
+      mutex profitMutex/*,
+            balanceMutex*/;
+      unsigned long profitT_21s = 0;
+      string sideAPR_ = "!=";
     public:
       mPosition position;
       mSafety safety;
@@ -21,6 +25,7 @@ namespace K {
         if (k.size()) {
           k = k.at(0);
           targetBasePosition = k.value("tbp", 0.0);
+          if (k.find("pDiv") != k.end()) positionDivergence = k.value("pDiv", 0.0);
           sideAPR = k.value("sideAPR", "");
         }
         stringstream ss;
@@ -29,11 +34,7 @@ namespace K {
         k = ((DB*)memory)->load(uiTXT::Position);
         if (k.size()) {
           for (json::reverse_iterator it = k.rbegin(); it != k.rend(); ++it)
-            profits.push_back(mProfit(
-              (*it)["baseValue"].get<double>(),
-              (*it)["quoteValue"].get<double>(),
-              (*it)["time"].get<unsigned long>()
-            ));
+            profits.push_back(*it);
           FN::log("DB", string("loaded ") + to_string(profits.size()) + " historical Profits");
         }
         balance[gw->base] = mWallet(0, 0, gw->base);
@@ -75,7 +76,6 @@ namespace K {
         } else pgMutex.unlock();
       };
       void calcTargetBasePos() {
-        static string sideAPR_ = "!=";
         if (empty()) { FN::logWar("QE", "Unable to calculate TBP, missing market data."); return; }
         pgMutex.lock();
         double value = position.value;
@@ -244,29 +244,20 @@ namespace K {
         return sum;
       };
       void calcWallet(mWallet k) {
-        static unsigned long profitT_21s = 0;
+        // balanceMutex.lock();
         if (k.currency!="") balance[k.currency] = k;
-        if (!((MG*)market)->fairValue or balance.find(gw->base) == balance.end() or balance.find(gw->quote) == balance.end()) return;
+        if (!((MG*)market)->fairValue or balance.find(gw->base) == balance.end() or balance.find(gw->quote) == balance.end()) {
+          // balanceMutex.unlock();
+          return;
+        }
         mWallet baseWallet = balance[gw->base];
         mWallet quoteWallet = balance[gw->quote];
+        // balanceMutex.unlock();
         double baseValue = baseWallet.amount + quoteWallet.amount / ((MG*)market)->fairValue + baseWallet.held + quoteWallet.held / ((MG*)market)->fairValue;
         double quoteValue = baseWallet.amount * ((MG*)market)->fairValue + quoteWallet.amount + baseWallet.held * ((MG*)market)->fairValue + quoteWallet.held;
-        unsigned long now = FN::T();
-        mProfit profit(baseValue, quoteValue, now);
         double profitBase = 0;
         double profitQuote = 0;
-        if (baseValue and quoteValue) {
-          if (profitT_21s+21e+3 < FN::T()) {
-            profitT_21s = FN::T();
-            ((DB*)memory)->insert(uiTXT::Position, profit, false, "NULL", now - qp->profitHourInterval * 36e+5);
-          }
-          profits.push_back(profit);
-          for (vector<mProfit>::iterator it = profits.begin(); it != profits.end();)
-            if (it->time + (qp->profitHourInterval * 36e+5) > now) ++it;
-            else it = profits.erase(it);
-          profitBase = ((baseValue - profits.begin()->baseValue) / baseValue) * 1e+2;
-          profitQuote = ((quoteValue - profits.begin()->quoteValue) / quoteValue) * 1e+2;
-        }
+        calcProfit(&profitBase, &profitQuote, baseValue, quoteValue);
         mPosition pos(
           baseWallet.amount,
           quoteWallet.amount,
@@ -330,6 +321,23 @@ namespace K {
           else if (mPDivMode::Sine == qp->positionDivergenceMode) positionDivergence = pDivMin + (sin(divCenter*M_PI_2) * (pDiv - pDivMin));
           else if (mPDivMode::SQRT == qp->positionDivergenceMode) positionDivergence = pDivMin + (sqrt(divCenter) * (pDiv - pDivMin));
           else if (mPDivMode::Switch == qp->positionDivergenceMode) positionDivergence = divCenter < 1e-1 ? pDivMin : pDiv;
+        }
+      }
+      void calcProfit(double *profitBase, double *profitQuote, double baseValue, double quoteValue) {
+        unsigned long now = FN::T();
+        if (profitT_21s<=3) ++profitT_21s;
+        else if (baseValue and quoteValue and profitT_21s+21e+3 < now) {
+          profitT_21s = now;
+          mProfit profit(baseValue, quoteValue, now);
+          ((DB*)memory)->insert(uiTXT::Position, profit, false, "NULL", now - (qp->profitHourInterval * 36e+5));
+          profitMutex.lock();
+          profits.push_back(profit);
+          for (vector<mProfit>::iterator it = profits.begin(); it != profits.end();)
+            if (it->time + (qp->profitHourInterval * 36e+5) > now) ++it;
+            else it = profits.erase(it);
+          *profitBase = ((baseValue - profits.begin()->baseValue) / baseValue) * 1e+2;
+          *profitQuote = ((quoteValue - profits.begin()->quoteValue) / quoteValue) * 1e+2;
+          profitMutex.unlock();
         }
       }
   };
