@@ -546,9 +546,8 @@ export class StatsComponent implements OnInit {
       if (this.targetBasePosition) {
         Highcharts.charts[this.quoteChart].series[1].addPoint([time, (this.positionData.baseValue-this.targetBasePosition)*this.positionData.quoteValue/this.positionData.baseValue], false);
         Highcharts.charts[this.baseChart].series[1].addPoint([time, this.targetBasePosition], false);
-		
-	    Highcharts.charts[this.quoteChart].series[2].addPoint([time, Math.max(0, this.positionData.value-this.targetBasePosition-this.positionDivergence)*this.positionData.quoteValue/this.positionData.value, Math.min(this.positionData.value, this.positionData.value-this.targetBasePosition+this.positionDivergence)*this.positionData.quoteValue/this.positionData.value], this.showStats, false, false);
-	    Highcharts.charts[this.baseChart].series[2].addPoint([time, Math.max(0,this.targetBasePosition-this.positionDivergence), Math.min(this.positionData.value, this.targetBasePosition+this.positionDivergence)], this.showStats, false, false);
+        Highcharts.charts[this.quoteChart].series[2].addPoint([time, Math.max(0, this.positionData.baseValue-this.targetBasePosition-this.positionDivergence)*this.positionData.quoteValue/this.positionData.baseValue, Math.min(this.positionData.baseValue, this.positionData.baseValue-this.targetBasePosition+this.positionDivergence)*this.positionData.quoteValue/this.positionData.baseValue], this.showStats, false, false);
+        Highcharts.charts[this.baseChart].series[2].addPoint([time, Math.max(0,this.targetBasePosition-this.positionDivergence), Math.min(this.positionData.baseValue, this.targetBasePosition+this.positionDivergence)], this.showStats, false, false);
       }
       Highcharts.charts[this.quoteChart].series[0].addPoint([time, this.positionData.quoteValue], false);
       Highcharts.charts[this.quoteChart].series[3].addPoint([time, this.positionData.quoteAmount], false);
