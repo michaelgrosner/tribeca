@@ -221,8 +221,9 @@ class DisplayOrder {
                                     <thead>
                                         <tr class="active">
                                             <th>apMode</th>
+                                            <th *ngIf="pair.quotingParameters.display.autoPositionMode==3">verylong</th>
                                             <th *ngIf="pair.quotingParameters.display.autoPositionMode">long</th>
-                                            <th *ngIf="pair.quotingParameters.display.autoPositionMode==2">medium</th>
+                                            <th *ngIf="pair.quotingParameters.display.autoPositionMode>1">medium</th>
                                             <th *ngIf="pair.quotingParameters.display.autoPositionMode">short</th>
                                             <th *ngIf="pair.quotingParameters.display.autoPositionMode">sensibility</th>
                                             <th *ngIf="!pair.quotingParameters.display.autoPositionMode">tbp<span *ngIf="pair.quotingParameters.display.percentageValues">%</span></th>
@@ -246,13 +247,19 @@ class DisplayOrder {
                                                    <option *ngFor="let option of pair.quotingParameters.availableAutoPositionModes" [ngValue]="option.val">{{option.str}}</option>
                                                 </select>
                                             </td>
+                                            <td style="width:88px;border-bottom: 3px solid #8BE296;" *ngIf="pair.quotingParameters.display.autoPositionMode==3">
+                                                <input class="form-control input-sm"
+                                                   type="number" step="1" min="1"
+                                                   onClick="this.select()"
+                                                   [(ngModel)]="pair.quotingParameters.display.veryLongEwmaPeriods">
+                                            </td>
                                             <td style="width:88px;border-bottom: 3px solid #8BE296;" *ngIf="pair.quotingParameters.display.autoPositionMode">
                                                 <input class="form-control input-sm"
                                                    type="number" step="1" min="1"
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.longEwmaPeriods">
                                             </td>
-                                            <td style="width:88px;border-bottom: 3px solid #8BE296;" *ngIf="pair.quotingParameters.display.autoPositionMode==2">
+                                            <td style="width:88px;border-bottom: 3px solid #8BE296;" *ngIf="pair.quotingParameters.display.autoPositionMode>1">
                                                 <input class="form-control input-sm"
                                                    type="number" step="1" min="1"
                                                    onClick="this.select()"

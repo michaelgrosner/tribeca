@@ -224,6 +224,7 @@ export interface QuotingParameters {
     range?: number;
     rangePercentage?: number;
     ewmaSensiblityPercentage?: number;
+    veryLongEwmaPeriods?: number;
     longEwmaPeriods?: number;
     mediumEwmaPeriods?: number;
     shortEwmaPeriods?: number;

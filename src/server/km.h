@@ -76,6 +76,7 @@ namespace K {
     double            quotingStdevProtectionFactor    = 1.0;
     int               quotingStdevProtectionPeriods   = 1200;
     double            ewmaSensiblityPercentage        = 0.5;
+    int               veryLongEwmaPeriods             = 400;
     int               longEwmaPeriods                 = 200;
     int               mediumEwmaPeriods               = 100;
     int               shortEwmaPeriods                = 50;
@@ -136,6 +137,7 @@ namespace K {
       {"quotingStdevProtectionFactor", k.quotingStdevProtectionFactor},
       {"quotingStdevProtectionPeriods", k.quotingStdevProtectionPeriods},
       {"ewmaSensiblityPercentage", k.ewmaSensiblityPercentage},
+      {"veryLongEwmaPeriods", k.veryLongEwmaPeriods},
       {"longEwmaPeriods", k.longEwmaPeriods},
       {"mediumEwmaPeriods", k.mediumEwmaPeriods},
       {"shortEwmaPeriods", k.shortEwmaPeriods},
@@ -196,6 +198,7 @@ namespace K {
     if (j.end() != j.find("quotingStdevProtectionFactor")) k.quotingStdevProtectionFactor = j.at("quotingStdevProtectionFactor").get<double>();
     if (j.end() != j.find("quotingStdevProtectionPeriods")) k.quotingStdevProtectionPeriods = j.at("quotingStdevProtectionPeriods").get<int>();
     if (j.end() != j.find("ewmaSensiblityPercentage")) k.ewmaSensiblityPercentage = j.at("ewmaSensiblityPercentage").get<double>();
+    if (j.end() != j.find("veryLongEwmaPeriods")) k.veryLongEwmaPeriods = j.at("veryLongEwmaPeriods").get<int>();
     if (j.end() != j.find("longEwmaPeriods")) k.longEwmaPeriods = j.at("longEwmaPeriods").get<int>();
     if (j.end() != j.find("mediumEwmaPeriods")) k.mediumEwmaPeriods = j.at("mediumEwmaPeriods").get<int>();
     if (j.end() != j.find("shortEwmaPeriods")) k.shortEwmaPeriods = j.at("shortEwmaPeriods").get<int>();
