@@ -8,8 +8,8 @@ import {SubscriberFactory} from './shared_directives';
   selector: 'market-quoting',
   template: `<div class="tradeSafety2" style="margin-top:-4px;padding-top:0px;padding-right:0px;"><div style="padding-top:0px;padding-right:0px;">
       Market Width: <span class="{{ diffMD ? \'text-danger\' : \'text-muted\' }}">{{ diffMD | number:'1.'+product.fixed+'-'+product.fixed }}</span>,
-      Quote Width: <span class="{{ diffPx ? \'text-danger\' : \'text-muted\' }}">{{ diffPx | number:'1.'+product.fixed+'-'+product.fixed }}</span>
-      <div style="padding-left:0px;">Wallet TBP: <span class="text-danger">{{ targetBasePosition | number:'1.3-3' }}</span>, APR: <span class="{{ sideAPRSafety!=\'Off\' ? \'text-danger\' : \'text-muted\' }}">{{ sideAPRSafety }}</span>, Quotes: <span title="New Quotes in memory" class="{{ quotesInMemoryNew ? \'text-danger\' : \'text-muted\' }}">{{ quotesInMemoryNew }}</span>/<span title="Working Quotes in memory" class="{{ quotesInMemoryWorking ? \'text-danger\' : \'text-muted\' }}">{{ quotesInMemoryWorking }}</span>/<span title="Other Quotes in memory" class="{{ quotesInMemoryDone ? \'text-danger\' : \'text-muted\' }}">{{ quotesInMemoryDone }}</span></div>
+      Quote Width: <span class="{{ diffPx ? \'text-danger\' : \'text-muted\' }}">{{ diffPx | number:'1.'+product.fixed+'-'+product.fixed }}</span>, Quotes: <span title="New Quotes in memory" class="{{ quotesInMemoryNew ? \'text-danger\' : \'text-muted\' }}">{{ quotesInMemoryNew }}</span>/<span title="Working Quotes in memory" class="{{ quotesInMemoryWorking ? \'text-danger\' : \'text-muted\' }}">{{ quotesInMemoryWorking }}</span>/<span title="Other Quotes in memory" class="{{ quotesInMemoryDone ? \'text-danger\' : \'text-muted\' }}">{{ quotesInMemoryDone }}</span>
+      <div style="padding-left:0px;">Wallet TBP: <span class="text-danger">{{ targetBasePosition | number:'1.3-3' }}</span>, pDiv: <span class="text-danger">{{ positionDivergence | number:'1.3-3' }}</span>, APR: <span class="{{ sideAPRSafety!=\'Off\' ? \'text-danger\' : \'text-muted\' }}">{{ sideAPRSafety }}</span></div>
       </div></div><div style="padding-right:4px;padding-left:4px;padding-top:4px;"><table class="marketQuoting table table-hover table-responsive text-center">
       <tr class="active">
         <td>bidSize&nbsp;</td>
@@ -26,7 +26,7 @@ import {SubscriberFactory} from './shared_directives';
         <th *ngIf="askStatus != 'Live'" colspan="2" class="text-danger" title="Ask Quote Status">{{ askStatus }}</th>
       </tr>
       <tr class="active" *ngFor="let level of levels; let i = index">
-        <td *ngIf="i == 1 && levels.length == 4" colspan="4"><div class="text-danger" style="height:174px;"><br />Do you want to <a href="{{ product.advert.homepage }}/blob/master/README.md#unlock" target="_blank">unlock</a> all market levels?<br />and to collaborate with the development?<br /><br />Make an acceptable Pull Request on github.<br/>Or send 0.12100000 BTC or more to:<br /><a href="https://www.blocktrail.com/BTC/address/{{ a }}" target="_blank">{{ a }}</a><br /><br />Wait 2 confirmations and restart this bot.<!-- you can remove this message, but obviously the missing market levels will not be displayed magically. the market levels will be only displayed if the also displayed address is credited with 0.12100000 BTC. Note that if you make a Pull Request i will credit the payment for you easy, just let me know in the description of the PR what is the BTC Address displayed in your bot. --></div></td>
+        <td *ngIf="i == 1 && levels.length == 4" colspan="4"><div class="text-danger" style="height:174px;"><br />To <a href="{{ product.advert.homepage }}/blob/master/README.md#unlock" target="_blank">unlock</a> all market levels<br />and to collaborate with the development..<br /><br />make an acceptable Pull Request on github,<br/>or send 0.01210000 BTC or more to:<br /><a href="https://www.blocktrail.com/BTC/address/{{ a }}" target="_blank">{{ a }}</a><br /><br />Wait 2 confirmations and restart this bot.<!-- you can remove this message, but obviously the missing market levels will not be displayed magically. the market levels will be only displayed if the also displayed address is credited with 0.01210000 BTC. Note that if you make a Pull Request i will credit the payment for you easy, just let me know in the description of the PR what is the BTC Address displayed in your bot. --></div></td>
         <td *ngIf="i != 1 || levels.length != 4" [ngClass]="level.bidClass"><div style="z-index:2;position:relative;" [ngClass]="'bidsz' + i + ' num'">{{ level.bidSize | number:'1.4-4' }}</div><div style="float:right;margin-right:19px;"><div [ngClass]="level.bidClassVisual">&nbsp;</div></div></td>
         <td *ngIf="i != 1 || levels.length != 4" [ngClass]="level.bidClass"><div [ngClass]="'bidsz' + i">{{ level.bidPrice | number:'1.'+product.fixed+'-'+product.fixed }}</div></td>
         <td *ngIf="i != 1 || levels.length != 4" [ngClass]="level.askClass"><div [ngClass]="'asksz' + i">{{ level.askPrice | number:'1.'+product.fixed+'-'+product.fixed }}</div></td>
@@ -53,6 +53,7 @@ export class MarketQuotingComponent implements OnInit {
   public noBidReason: string;
   public noAskReason: string;
   private targetBasePosition: number;
+  private positionDivergence: number;
   private sideAPRSafety: string;
   public a: string;
   @Input() product: Models.ProductState;
@@ -93,6 +94,7 @@ export class MarketQuotingComponent implements OnInit {
   private clearTargetBasePosition = () => {
     this.targetBasePosition = null;
     this.sideAPRSafety = null;
+    this.positionDivergence = null;
   }
 
   private clearAddress = () => {
@@ -120,6 +122,7 @@ export class MarketQuotingComponent implements OnInit {
     if (value == null) return;
     this.targetBasePosition = value.tbp;
     this.sideAPRSafety = value.sideAPR || 'Off';
+    this.positionDivergence = value.pDiv;
   }
 
   private updateMarket = (update: Models.Market) => {
@@ -191,8 +194,11 @@ export class MarketQuotingComponent implements OnInit {
   }
 
   private updateQuote = (o) => {
-    if (typeof o[0] == 'object') {
-      // this.clearQuote();
+    if (!o) {
+      this.clearQuote();
+      return;
+    } else if (typeof o[0] == 'object') {
+      this.clearQuote();
       return o.forEach(x => setTimeout(this.updateQuote(x), 0));
     }
     const orderSide = o.side === Models.Side.Bid ? 'orderBids' : 'orderAsks';
@@ -240,18 +246,37 @@ export class MarketQuotingComponent implements OnInit {
     this.quotesInMemoryDone = status.quotesInMemoryDone;
   }
 
+  private forEach = (array, callback) => {
+    for (var i = 0; i < array.length; i++)
+      callback.call(window, array[i]);
+  }
+
   private updateQuoteClass = (levels?: any[]) => {
     if (document.body.className != "visible") return;
     if (levels && levels.length > 0) {
       for (let i = 0; i < levels.length; i++) {
         if (i >= this.levels.length) this.levels[i] = <any>{ };
-        if (levels[i].bidMod===1) (<any>jQuery)('.bidsz'+i+'.num').addClass('buy');
-        if (levels[i].askMod===1) (<any>jQuery)('.asksz'+i+'.num').addClass('sell');
-        (<any>jQuery)('.bidsz'+i).css( 'opacity', levels[i].bidMod===2?0.4:1.0 );
-        (<any>jQuery)('.asksz'+i).css( 'opacity', levels[i].askMod===2?0.4:1.0 );
+        if (levels[i].bidMod===1)
+          this.forEach(document.querySelectorAll('.bidsz'+i), function (el) {
+            if (el.className.indexOf('num')>-1 && el.className.indexOf('buy')==-1) el.className += ' buy';
+          });
+        if (levels[i].askMod===1)
+          this.forEach(document.querySelectorAll('.asksz'+i), function (el) {
+            if (el.className.indexOf('num')>-1 && el.className.indexOf('sell')==-1) el.className += ' sell';
+          });
+        this.forEach(document.querySelectorAll('.bidsz'+i), function (el) {
+          el.style.opacity = levels[i].bidMod===2?0.4:1.0;
+        });
+        this.forEach(document.querySelectorAll('.asksz'+i), function (el) {
+          el.style.opacity = levels[i].askMod===2?0.4:1.0;
+        });
         setTimeout(() => {
-          (<any>jQuery)('.bidsz'+i).css( 'opacity', levels[i].bidMod===2?0.0:1.0 );
-          (<any>jQuery)('.asksz'+i).css( 'opacity', levels[i].askMod===2?0.0:1.0 );
+          this.forEach(document.querySelectorAll('.bidsz'+i), function (el) {
+            el.style.opacity = levels[i].bidMod===2?0.0:1.0;
+          });
+          this.forEach(document.querySelectorAll('.asksz'+i), function (el) {
+            el.style.opacity =  levels[i].askMod===2?0.0:1.0;
+          });
           setTimeout(() => {
             this.levels[i] = Object.assign(this.levels[i], { bidPrice: levels[i].bidPrice, bidSize: levels[i].bidSize, askPrice: levels[i].askPrice, askSize: levels[i].askSize });
             this.levels[i].bidClass = 'active';
@@ -264,7 +289,18 @@ export class MarketQuotingComponent implements OnInit {
               if (this.orderAsks[j].price === this.levels[i].askPrice)
                 this.levels[i].askClass = 'success sell';
             this.levels[i].askClassVisual = String('vsAsk visualSize').concat(<any>Math.round(Math.max(Math.min((Math.log(this.levels[i].askSize)/Math.log(2))*4,19),1)));
-            setTimeout(() => { (<any>jQuery)('.asksz'+i+', .bidsz'+i).css( 'opacity', 1.0 ); (<any>jQuery)('.asksz'+i+'.num'+', .bidsz'+i+'.num').removeClass('sell').removeClass('buy'); }, 1);
+            setTimeout(() => {
+              this.forEach(document.querySelectorAll('.asksz'+i), function (el) {
+                el.style.opacity = 1.0;
+                if (el.className.indexOf('num')>-1)
+                  el.className = el.className.replace(' sell', '');
+              });
+              this.forEach(document.querySelectorAll('.bidsz'+i), function (el) {
+                el.style.opacity = 1.0;
+                if (el.className.indexOf('num')>-1)
+                  el.className = el.className.replace(' buy', '');
+              });
+            }, 1);
           }, 0);
         }, 221);
       }

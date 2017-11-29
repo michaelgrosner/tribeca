@@ -8,10 +8,10 @@ import {SubscriberFactory} from './shared_directives';
   selector: 'market-stats',
   template: `<div class="col-md-6 col-xs-6">
   <table><tr><td>
-    <chart style="position:relative;top:5px;height:339px;width:700px;" type="StockChart" [options]="fvChartOptions" (load)="saveInstance($event.context, 'fv')"></chart>
+    <chart style="position:relative;top:5px;height:366px;width:700px;" type="StockChart" [options]="fvChartOptions" (load)="saveInstance($event.context, 'fv')"></chart>
   </td><td>
-    <chart style="position:relative;top:10px;height:167px;width:700px;" [options]="baseChartOptions" (load)="saveInstance($event.context, 'base')"></chart>
-    <chart style="position:relative;top:11px;height:167px;width:700px;" [options]="quoteChartOptions" (load)="saveInstance($event.context, 'quote')"></chart>
+    <chart style="position:relative;top:10px;height:180px;width:700px;" [options]="baseChartOptions" (load)="saveInstance($event.context, 'base')"></chart>
+    <chart style="position:relative;top:11px;height:180px;width:700px;" [options]="quoteChartOptions" (load)="saveInstance($event.context, 'quote')"></chart>
   </td></tr></table>
     </div>`
 })
@@ -19,6 +19,7 @@ export class StatsComponent implements OnInit {
 
   public positionData: Models.PositionReport;
   public targetBasePosition: number;
+  public positionDivergence: number;
   public fairValue: number;
   public width: number;
   public ewmaShort: number;
@@ -56,7 +57,7 @@ export class StatsComponent implements OnInit {
     title: 'fair value',
     chart: {
         width: 700,
-        height: 339,
+        height: 366,
         zoomType: false,
         backgroundColor:'rgba(255, 255, 255, 0)',
     },
@@ -247,7 +248,7 @@ export class StatsComponent implements OnInit {
     title: 'quote wallet',
     chart: {
         width: 700,
-        height: 167,
+        height: 180,
         zoomType: false,
         resetZoomButton: {theme: {display: 'none'}},
         backgroundColor:'rgba(255, 255, 255, 0)'
@@ -291,24 +292,34 @@ export class StatsComponent implements OnInit {
       lineWidth:3,
       data: []
     },{
-      name: 'Target',
+      name: 'Target (TBP)',
       type: 'spline',
-      yAxis: 1,
+      linkedTo: 0,
       zIndex: 2,
       colorIndex:6,
+      data: []
+    },{
+      name: 'pDiv',
+      type: 'arearange',
+      lineWidth: 0,
+      linkedTo: 0,
+      colorIndex: 6,
+      fillOpacity: 0.3,
+      zIndex: 0,
+      marker: { enabled: false },
       data: []
     },{
       name: 'Available',
       type: 'area',
       colorIndex:0,
       fillOpacity: 0.2,
-      yAxis: 1,
+      linkedTo: 0,
       data: []
     },{
       name: 'Held',
       type: 'area',
       colorIndex:0,
-      yAxis: 1,
+      linkedTo: 0,
       marker:{symbol:'triangle-down'},
       data: []
     }]
@@ -317,7 +328,7 @@ export class StatsComponent implements OnInit {
     title: 'base wallet',
     chart: {
         width: 700,
-        height: 167,
+        height: 180,
         zoomType: false,
         resetZoomButton: {theme: {display: 'none'}},
         backgroundColor:'rgba(255, 255, 255, 0)'
@@ -363,21 +374,31 @@ export class StatsComponent implements OnInit {
     },{
       name: 'Target (TBP)',
       type: 'spline',
-      yAxis: 1,
+      linkedTo: 0,
       zIndex: 2,
       colorIndex:6,
       data: []
     },{
+	  name: 'pDiv',
+      type: 'arearange',
+      lineWidth: 0,
+      linkedTo: 0,
+      colorIndex: 6,
+      fillOpacity: 0.3,
+      zIndex: 0,
+      marker: { enabled: false },
+      data: []
+    },{
       name: 'Available',
       type: 'area',
-      yAxis: 1,
+      linkedTo: 0,
       colorIndex:5,
       fillOpacity: 0.2,
       data: []
     },{
       name: 'Held',
       type: 'area',
-      yAxis: 1,
+      linkedTo: 0,
       colorIndex:5,
       data: []
     }]
@@ -392,6 +413,27 @@ export class StatsComponent implements OnInit {
     this.showStats = showStats;
   }
 
+  private forEach = (array, callback) => {
+    for (var i = 0; i < array.length; i++)
+      callback.call(window, array[i]);
+  }
+
+  private extend = (out) => {
+    out = out || {};
+
+    for (var i = 1; i < arguments.length; i++) {
+      if (!arguments[i])
+        continue;
+
+      for (var key in arguments[i]) {
+        if (arguments[i].hasOwnProperty(key))
+          out[key] = arguments[i][key];
+      }
+    }
+
+    return out;
+  }
+
   constructor(
     @Inject(NgZone) private zone: NgZone,
     @Inject(SubscriberFactory) private subscriberFactory: SubscriberFactory
@@ -404,46 +446,51 @@ export class StatsComponent implements OnInit {
     (<any>Highcharts).customSymbols = {'circle': '●','diamond': '♦','square': '■','triangle': '▲','triangle-down': '▼'};
     Highcharts.setOptions({global: {getTimezoneOffset: function () {return new Date().getTimezoneOffset(); }}});
     setTimeout(() => {
-      jQuery('chart').bind('mousemove touchmove touchstart', function (e: any) {
-        var chart, point, i, event, containerLeft, thisLeft;
-        for (i = 0; i < Highcharts.charts.length; ++i) {
-          chart = Highcharts.charts[i];
-          containerLeft = jQuery(chart.container).offset().left;
-          thisLeft = jQuery(this).offset().left;
-          if (containerLeft == thisLeft && jQuery(chart.container).offset().top == jQuery(this).offset().top) continue;
-          chart.pointer.reset = function () { return undefined; };
-          let ev: any = jQuery.extend(jQuery.Event(e.originalEvent.type), {
-              which: 1,
-              chartX: e.originalEvent.chartX,
-              chartY: e.originalEvent.chartY,
-              clientX: (containerLeft != thisLeft)?containerLeft - thisLeft + e.originalEvent.clientX:e.originalEvent.clientX,
-              clientY: e.originalEvent.clientY,
-              pageX: (containerLeft != thisLeft)?containerLeft - thisLeft + e.originalEvent.pageX:e.originalEvent.pageX,
-              pageY: e.originalEvent.pageY,
-              screenX: (containerLeft != thisLeft)?containerLeft - thisLeft + e.originalEvent.screenX:e.originalEvent.screenX,
-              screenY: e.originalEvent.screenY
-          });
-          event = chart.pointer.normalize(ev);
-          point = chart.series[0].searchPoint(event, true);
-          if (point) {
-            point.onMouseOver();
-            point.series.chart.xAxis[0].drawCrosshair(event, point);
+      /*this.forEach(document.getElementsByTagName('chart'), function (el) {
+        el.addEventListener('mousemove', function (e) {
+          var chart, point, i, event, containerLeft, thisLeft;
+          for (i = 0; i < Highcharts.charts.length; ++i) {
+            chart = Highcharts.charts[i];
+            containerLeft = chart.container.getBoundingClientRect().left;
+            thisLeft = el.getBoundingClientRect().left;
+            if (containerLeft == thisLeft && chart.container.getBoundingClientRect().top == el.getBoundingClientRect().top) continue;
+            chart.pointer.reset = function () { return undefined; };
+            console.log(e);
+            let ev: any = this.extend(new MouseEvent('mousemove'), {
+                which: 1,
+                chartX: e.originalEvent.chartX,
+                chartY: e.originalEvent.chartY,
+                clientX: (containerLeft != thisLeft)?containerLeft - thisLeft + e.originalEvent.clientX:e.originalEvent.clientX,
+                clientY: e.originalEvent.clientY,
+                pageX: (containerLeft != thisLeft)?containerLeft - thisLeft + e.originalEvent.pageX:e.originalEvent.pageX,
+                pageY: e.originalEvent.pageY,
+                screenX: (containerLeft != thisLeft)?containerLeft - thisLeft + e.originalEvent.screenX:e.originalEvent.screenX,
+                screenY: e.originalEvent.screenY
+            });
+            event = chart.pointer.normalize(ev);
+            point = chart.series[0].searchPoint(event, true);
+            if (point) {
+              point.onMouseOver();
+              point.series.chart.xAxis[0].drawCrosshair(event, point);
+            }
           }
-        }
+        });
       });
-      jQuery('chart').bind('mouseleave', function (e) {
-        var chart, point, i, event;
-        for (i = 0; i < Highcharts.charts.length; ++i) {
-          chart = Highcharts.charts[i];
-          event = chart.pointer.normalize(e.originalEvent);
-          point = chart.series[0].searchPoint(event, true);
-          if (point) {
-            point.onMouseOut();
-            chart.tooltip.hide(point);
-            chart.xAxis[0].hideCrosshair();
+      this.forEach(document.getElementsByTagName('chart'), function (el) {
+        el.addEventListener('mouseleave', function (e) {
+          var chart, point, i, event;
+          for (i = 0; i < Highcharts.charts.length; ++i) {
+            chart = Highcharts.charts[i];
+            event = chart.pointer.normalize(e.originalEvent);
+            point = chart.series[0].searchPoint(event, true);
+            if (point) {
+              point.onMouseOut();
+              chart.tooltip.hide(point);
+              chart.xAxis[0].hideCrosshair();
+            }
           }
-        }
-      });
+        });
+      });*/
 
       this.subscriberFactory
         .getSubscriber(this.zone, Models.Topics.FairValue)
@@ -495,17 +542,19 @@ export class StatsComponent implements OnInit {
     }
     if (this.positionData) {
       Highcharts.charts[this.quoteChart].yAxis[1].setExtremes(0, Math.max(this.positionData.quoteValue,Highcharts.charts[this.quoteChart].yAxis[1].getExtremes().dataMax), false, true, { trigger: 'syncExtremes' });
-      Highcharts.charts[this.baseChart].yAxis[1].setExtremes(0, Math.max(this.positionData.value,Highcharts.charts[this.baseChart].yAxis[1].getExtremes().dataMax), false, true, { trigger: 'syncExtremes' });
+      Highcharts.charts[this.baseChart].yAxis[1].setExtremes(0, Math.max(this.positionData.baseValue,Highcharts.charts[this.baseChart].yAxis[1].getExtremes().dataMax), false, true, { trigger: 'syncExtremes' });
       if (this.targetBasePosition) {
-        Highcharts.charts[this.quoteChart].series[1].addPoint([time, (this.positionData.value-this.targetBasePosition)*this.positionData.quoteValue/this.positionData.value], false);
+        Highcharts.charts[this.quoteChart].series[1].addPoint([time, (this.positionData.baseValue-this.targetBasePosition)*this.positionData.quoteValue/this.positionData.baseValue], false);
         Highcharts.charts[this.baseChart].series[1].addPoint([time, this.targetBasePosition], false);
+        Highcharts.charts[this.quoteChart].series[2].addPoint([time, Math.max(0, this.positionData.baseValue-this.targetBasePosition-this.positionDivergence)*this.positionData.quoteValue/this.positionData.baseValue, Math.min(this.positionData.baseValue, this.positionData.baseValue-this.targetBasePosition+this.positionDivergence)*this.positionData.quoteValue/this.positionData.baseValue], this.showStats, false, false);
+        Highcharts.charts[this.baseChart].series[2].addPoint([time, Math.max(0,this.targetBasePosition-this.positionDivergence), Math.min(this.positionData.baseValue, this.targetBasePosition+this.positionDivergence)], this.showStats, false, false);
       }
       Highcharts.charts[this.quoteChart].series[0].addPoint([time, this.positionData.quoteValue], false);
-      Highcharts.charts[this.quoteChart].series[2].addPoint([time, this.positionData.quoteAmount], false);
-      Highcharts.charts[this.quoteChart].series[3].addPoint([time, this.positionData.quoteHeldAmount], this.showStats);
-      Highcharts.charts[this.baseChart].series[0].addPoint([time, this.positionData.value], false);
-      Highcharts.charts[this.baseChart].series[2].addPoint([time, this.positionData.baseAmount], false);
-      Highcharts.charts[this.baseChart].series[3].addPoint([time, this.positionData.baseHeldAmount], this.showStats);
+      Highcharts.charts[this.quoteChart].series[3].addPoint([time, this.positionData.quoteAmount], false);
+      Highcharts.charts[this.quoteChart].series[4].addPoint([time, this.positionData.quoteHeldAmount], this.showStats);
+      Highcharts.charts[this.baseChart].series[0].addPoint([time, this.positionData.baseValue], false);
+      Highcharts.charts[this.baseChart].series[3].addPoint([time, this.positionData.baseAmount], false);
+      Highcharts.charts[this.baseChart].series[4].addPoint([time, this.positionData.baseHeldAmount], this.showStats);
     }
   }
 
@@ -548,6 +597,7 @@ export class StatsComponent implements OnInit {
   private updateTargetBasePosition = (value : Models.TargetBasePositionValue) => {
     if (value == null) return;
     this.targetBasePosition = value.tbp;
+    this.positionDivergence = value.pDiv;
   }
 
   private updatePosition = (o: Models.PositionReport) => {

@@ -16,7 +16,7 @@ export var Topics = {
   ProductAdvertisement: 'j',
   ApplicationState: 'k',
   Notepad: 'l',
-  ToggleConfigs: 'm',
+  ToggleSettings: 'm',
   Position: 'n',
   ExchangeConnectivity: 'o',
   SubmitNewOrder: 'p',
@@ -28,12 +28,13 @@ export var Topics = {
   TargetBasePosition: 'v',
   TradeSafetyValue: 'w',
   CancelAllOrders: 'x',
-  CleanAllClosedOrders: 'y',
-  CleanAllOrders: 'z',
+  CleanAllClosedTrades: 'y',
+  CleanAllTrades: 'z',
   CleanTrade: 'A',
   TradesChart: 'B',
   WalletChart: 'C',
-  EWMAChart: 'D'
+  EWMAChart: 'D',
+  TrendSMU: 'Z'
 }
 
 export class MarketSide {
@@ -133,7 +134,7 @@ export class PositionReport {
                 public quoteAmount: number,
                 public baseHeldAmount: number,
                 public quoteHeldAmount: number,
-                public value: number,
+                public baseValue: number,
                 public quoteValue: number,
                 public profitBase: number,
                 public profitQuote: number,
@@ -152,7 +153,9 @@ export class OrderRequestFromUI {
 export class FairValue {
     constructor(public price: number) {}
 }
-
+export class TrendSMU{
+  constructor(public trend: number) {}
+}
 export class Quote {
     constructor(public price: number,
                 public size: number,
@@ -177,23 +180,24 @@ export enum QuotingMode { Top, Mid, Join, InverseJoin, InverseTop, HamelinRat, D
 export enum QuotingSafety { Off, PingPong, Boomerang, AK47 }
 export enum FairValueModel { BBO, wBBO }
 export enum AutoPositionMode { Manual, EWMA_LS, EWMA_LMS }
+export enum DynamicPDivMode { Manual, Linear, Sine, SQRT, Switch }
 export enum PingAt { BothSides, BidSide, AskSide, DepletedSide, DepletedBidSide, DepletedAskSide, StopPings }
 export enum PongAt { ShortPingFair, LongPingFair, ShortPingAggressive, LongPingAggressive }
 export enum APR { Off, Size, SizeWidth }
-export enum SOP { Off, x2trades, x3trades, x2Size, x3Size, x2tradesSize, x3tradesSize }
+export enum SOP { Off, Trades, Size, TradesSize }
 export enum STDEV { Off, OnFV, OnFVAPROff, OnTops, OnTopsAPROff, OnTop, OnTopAPROff }
 
 export interface QuotingParameters {
-    widthPing?: number;
+    widthPing?: any;
     widthPingPercentage?: number;
-    widthPong?: number;
+    widthPong?: any;
     widthPongPercentage?: number;
     widthPercentage?: boolean;
     bestWidth?: boolean;
-    buySize?: number;
+    buySize?: any;
     buySizePercentage?: number;
     buySizeMax?: boolean;
-    sellSize?: number;
+    sellSize?: any;
     sellSizePercentage?: number;
     sellSizeMax?: boolean;
     pingAt?: PingAt;
@@ -205,6 +209,9 @@ export interface QuotingParameters {
     targetBasePositionPercentage?: number;
     positionDivergence?: number;
     positionDivergencePercentage?: number;
+    positionDivergenceMin?: number;
+    positionDivergencePercentageMin?: number;
+    positionDivergenceMode?: number;
     percentageValues?: boolean;
     autoPositionMode?: AutoPositionMode;
     aggressivePositionRebalancing?: APR;
@@ -212,7 +219,6 @@ export interface QuotingParameters {
     tradesPerMinute?: number;
     tradeRateSeconds?: number;
     quotingEwmaProtection?: boolean;
-    quotingEwmaSMUProtection?: boolean;
     quotingStdevProtection?: STDEV;
     quotingStdevBollingerBands?: boolean;
     audio?: boolean;
@@ -224,13 +230,37 @@ export interface QuotingParameters {
     mediumEwmaPeriods?: number;
     shortEwmaPeriods?: number;
     quotingEwmaProtectionPeriods?: number;
+    /* **************************** */
+    quotingEwmaSMUProtection?: boolean;
     quotingEwmaSMUThreshold?: number;
     quotingEwmaSMPeriods?: number;
     quotingEwmaSUPeriods?: number;
+
+    flipBidSizesOnDowntrend?: boolean;
+    blockBidsOnUptrend?: boolean;
+    blockAsksOnDowntrend?: boolean;
+    blockDowntrend?: boolean;
+    blockUptrend?: boolean;
+    reducePDiv?: boolean;
+    reducePDivFactor?: number;
+    increaseBidSzOnUptrend?: boolean;
+    increaseBidSzOnUptrendFactor?: number;
+
+    keepHighs?: boolean;
+    highsFactor?: number;
+    autoPingWidth?: boolean;
+    statWidthPeriodSec?: number;
+    glueToSMU?: boolean;
+    glueToSMUFactor?: number;
+    endOfBlockDowntrend?: boolean;
+    endOfBlockDowntrendThreshold?: number;
+    /* **************************** */
     quotingStdevProtectionFactor?: number;
     quotingStdevProtectionPeriods?: number;
     aprMultiplier?: number;
     sopWidthMultiplier?: number;
+    sopSizeMultiplier?: number;
+    sopTradesMultiplier?: number;
     delayAPI?: number;
     cancelOrdersAuto?: boolean;
     cleanPongsAuto?: number;
@@ -260,6 +290,7 @@ export class TradeSafety {
 export class TargetBasePositionValue {
     constructor(
       public tbp: number,
-      public sideAPR: string
+      public sideAPR: string,
+      public pDiv: number
     ) {}
 }

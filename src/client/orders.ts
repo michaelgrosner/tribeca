@@ -22,7 +22,7 @@ export class OrdersComponent implements OnInit {
     if (online) return;
     if (!this.gridOptions.api) return;
     this.gridOptions.api.setRowData([]);
-    setTimeout(()=>this.gridOptions.api.refreshView(),0);
+    setTimeout(()=>{try{this.gridOptions.api.redrawRows();}catch(e){}},0);
   }
 
   constructor(
@@ -99,8 +99,11 @@ export class OrdersComponent implements OnInit {
 
   private addRowData = (o) => {
     if (!this.gridOptions.api) return;
-    if (typeof o[0] == 'object') {
-      // this.gridOptions.api.setRowData([]);
+    if (!o) {
+      this.gridOptions.api.setRowData([]);
+      return;
+    } else if (typeof o[0] == 'object') {
+      this.gridOptions.api.setRowData([]);
       return o.forEach(x => setTimeout(this.addRowData(x), 0));
     }
     let exists: boolean = false;
@@ -122,7 +125,7 @@ export class OrdersComponent implements OnInit {
         }
       }
     });
-    setTimeout(()=>this.gridOptions.api.refreshView(),0);
+    setTimeout(()=>{try{this.gridOptions.api.redrawRows();}catch(e){}},0);
     if (!exists && !isClosed)
       this.gridOptions.api.updateRowData({add:[{
         orderId: o.orderId,
