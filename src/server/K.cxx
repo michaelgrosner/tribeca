@@ -1,8 +1,9 @@
-#include <fstream>
 #include <iostream>
+#include <fstream>
 #include <sstream>
 #include <cstdlib>
 #include <cstring>
+#include <random>
 #include <thread>
 #include <mutex>
 #include <chrono>
@@ -12,6 +13,7 @@
 #include <getopt.h>
 #include <signal.h>
 #include <execinfo.h>
+#include <functional>
 #include <algorithm>
 #include <iomanip>
 #include <vector>
@@ -19,7 +21,6 @@
 
 using namespace std;
 
-#include "uv.h"
 #include "json.h"
 #include "sqlite3.h"
 #include "uWS/uWS.h"
@@ -33,9 +34,7 @@ using namespace std;
 #include "quickfix/SocketInitiator.h"
 #include "quickfix/SessionSettings.h"
 #include "quickfix/fix42/NewOrderSingle.h"
-#include "quickfix/fix42/ExecutionReport.h"
 #include "quickfix/fix42/OrderCancelRequest.h"
-#include "quickfix/fix42/OrderCancelReject.h"
 
 using namespace nlohmann;
 
@@ -60,24 +59,25 @@ using namespace nlohmann;
     ;;;;K::UI ui;;;;;;;        ;;;;;;;;;;
     ;;;;K::QP qp;;;;;;;        ;;;;;;;;;;
     ;;;;K::OG og;;;;;;;    ;;    ;;;;;;;;
-;   ;;;;K::MG mg;;;;;;;    ;;;;    ;;;;;;   ;
-;;  ;;;;K::PG pg;;;;;;;    ;;;;    ;;;;;;  ;;
-;;;;;;;;K::QE qe;;;;;;;;;;;;;;;    ;;;;;; ;;;;;;; // youtu.be/nwyDU3SGgQQ
-    ;;;;K::GW gw;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;cf.main(argc, argv);;;;;;;;;;;;;;;;;;;;;; // youtu.be/y0fTof1L-ag
-;;  ;;  ev.wait(/* Wherever you go..    */);;
-;   ;;  db.wait(/* Whatever you do..    */);;
-    ;;  ui.wait(/* I will be right here */);;
-    ;;  qp.wait(/*  waiting for coins.  */);;
-    ;;  og.wait(/* Whatever it takes..  */);;
-    ;;  mg.wait(/* Or how my OS breaks, */);;
-    ;;  pg.wait(/* I will be right here */);;
-    ;;  qe.wait(/*  waiting for coins.  */);;
-;   ;;  gw.wait(/* Day after day.    :wq*/);;
-;;  ;;;;return EXIT_FAILURE;;;;;;;;;;;;;;;;;;
-;;;;;;};;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; ;;;;;;; // youtu.be/dp5hsDgENLk
-;;  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;  ;;
-;                        /*K\*/             ;
+;   ;;;;K::MG mg;;;;;;;    ;;;;    ;;;;;;            ;
+;;  ;;;;K::PG pg;;;;;;;    ;;;;    ;;;;;;           ;;
+;;;;;;;;K::QE qe;;;;;;;;;;;;;;;    ;;;;;;         ;;;;;;;; // youtu.be/dVlGmdl-g9Q
+    ;;;;K::GW gw;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;cf.main(argc, argv);;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; // youtu.be/nwyDU3SGgQQ
+;;  ;;  cf.link(&ev,&db,&ui,&qp,&og,&mg,&pg,&qe,&gw);;
+;   ;;  ev.wait(/*     Wherever you go..         */);;;;;; // youtu.be/DKSO5YlYbOg
+    ;;  db.wait(/*     Whatever you do..         */);;
+    ;;  ui.wait(/*     I will be right here      */);;;;;; // youtu.be/FornpYhezt4
+    ;;  qp.wait(/*      waiting for coins.       */);;
+    ;;  og.wait(/*     Whatever it takes..       */);;;;;; // youtu.be/Wd2fSSt4MDg
+    ;;  mg.wait(/*     Or how my OS breaks,      */);;
+    ;;  pg.wait(/*     I will be right here      */);;;;;; // youtu.be/02OHHWG1EQY
+    ;;  qe.wait(/*      waiting for coins.       */);;
+;   ;;  gw.wait(/*     Day after day.         :wq*/);;;;;; // youtu.be/AMCeEoOgSvc
+;;  ;;;;return EXIT_FAILURE;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;};;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; ;;;;;;; // youtu.be/dp5hsDgENLk
+;;  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;  ;;
+;                        /*K\*/                      ;
          /*    .        kKKKKK,       .          *
                        kKKKK  KK,
      .         ,kFIREKKKKLET  `KK,_          *

@@ -1,43 +1,42 @@
 #ifndef K_EV_H_
 #define K_EV_H_
 
-namespace K {
-  typedef void (*evConnect)      (mConnectivity);
-  typedef void (*evOrder)        (mOrder);
-  typedef void (*evTrade)        (mTrade);
-  typedef void (*evWallet)       (mWallet);
-  typedef void (*evLevels)       (mLevels);
-  typedef void (*evEmpty)        ();
-  extern evConnect ev_gwConnectButton,
-                   ev_gwConnectOrder,
-                   ev_gwConnectMarket,
-                   ev_gwConnectExchange;
-  extern evOrder   ev_gwDataOrder,
-                   ev_ogOrder;
-  extern evTrade   ev_gwDataTrade,
-                   ev_ogTrade;
-  extern evWallet  ev_gwDataWallet;
-  extern evLevels  ev_gwDataLevels;
-  extern evEmpty   ev_mgLevels,
-                   ev_mgEwmaQuoteProtection,
-                   ev_mgTargetPosition,
-                   ev_pgTargetBasePosition,
-                   ev_uiQuotingParameters;
-  static uv_timer_t tCalcs,
-                    tStart,
-                    tDelay,
-                    tWallet,
-                    tCancel;
-  static evEmpty    ev_mgEwmaSMUProtection;
-  static int eCode = EXIT_FAILURE;
+namespace K  {
   class EV: public Klass {
+    private:
+      uWS::Hub *hub = nullptr;
+    public:
+      uWS::Group<uWS::SERVER> *uiGroup = nullptr;
+      Timer *tServer = nullptr,
+            *tEngine = nullptr,
+            *tClient = nullptr;
+      function<void(mOrder)> ogOrder;
+      function<void(mTrade)> ogTrade;
+      function<void()>       mgLevels,
+                             mgEwmaSMUProtection,
+                             mgEwmaQuoteProtection,
+                             mgTargetPosition,
+                             pgTargetBasePosition,
+                             uiQuotingParameters;
     protected:
       void load() {
-        evExit = happyEnding;
+        gwEndings.push_back(&happyEnding);
         signal(SIGINT, quit);
         signal(SIGUSR1, wtf);
         signal(SIGABRT, wtf);
         signal(SIGSEGV, wtf);
+        gw->hub = hub = new uWS::Hub(0, true);
+      };
+      void waitTime() {
+        tServer = new Timer(hub->getLoop());
+        tEngine = new Timer(hub->getLoop());
+        tClient = new Timer(hub->getLoop());
+      };
+      void waitData() {
+        gw->gwGroup = hub->createGroup<uWS::CLIENT>();
+      };
+      void waitUser() {
+        uiGroup = hub->createGroup<uWS::SERVER>(uWS::PERMESSAGE_DEFLATE);
       };
       void run() {
         if (FN::output("test -d .git || echo -n zip") == "zip")
@@ -47,22 +46,59 @@ namespace K {
           string k = changelog();
           FN::logVer(k, count(k.begin(), k.end(), '\n'));
         }
+        if (((CF*)config)->argDebugEvents) return;
+        debug = [&](string k) {};
       };
     public:
-      static void end(int code) {
+      void start() {
+        hub->run();
+      };
+      void stop(function<void()> gwCancelAll) {
+        tServer->stop();
+        tEngine->stop();
+        tClient->stop();
+        gw->close();
+        gw->gwGroup->close();
+        gwCancelAll();
+        uiGroup->close();
+      };
+      void listen() {
+        string protocol("HTTP");
+        if (!((CF*)config)->argWithoutSSL
+          and (access("etc/sslcert/server.crt", F_OK) != -1) and (access("etc/sslcert/server.key", F_OK) != -1)
+          and hub->listen(((CF*)config)->argPort, uS::TLS::createContext("etc/sslcert/server.crt", "etc/sslcert/server.key", ""), 0, uiGroup)
+        ) protocol += "S";
+        else if (!hub->listen(((CF*)config)->argPort, nullptr, 0, uiGroup))
+          FN::logExit("IU", string("Use another UI port number, ")
+            + to_string(((CF*)config)->argPort) + " seems already in use by:\n"
+            + FN::output(string("netstat -anp 2>/dev/null | grep ") + to_string(((CF*)config)->argPort)),
+            EXIT_SUCCESS);
+        FN::logUI(protocol, ((CF*)config)->argPort);
+      };
+      function<void(string)> debug = [&](string k) {
+        FN::log("DEBUG", string("EV ") + k);
+      };
+    private:
+      static void halt(int code) {
+        for (vector<function<void()>*>::iterator it=gwEndings.begin(); it!=gwEndings.end();++it) (**it)();
         cout << FN::uiT() << "K exit code " << to_string(code) << "." << '\n';
         exit(code);
       };
-    private:
+      function<void()> happyEnding = [&]() {
+        cout << FN::uiT() << gw->name << " ";
+        for(unsigned int i = 0; i < 21; ++i)
+          cout << "THE END IS NEVER ";
+        cout << "THE END." << '\n';
+      };
       static void quit(int sig) {
         FN::screen_quit();
         cout << '\n';
         json k = FN::wJet("https://api.icndb.com/jokes/random?escape=javascript&limitTo=[nerdy]");
         cout << FN::uiT() << "Excellent decision! "
-          << ((k.is_null() || !k["/value/joke"_json_pointer].is_string())
+          << ((k.is_null() or !k["/value/joke"_json_pointer].is_string())
             ? "let's plant a tree instead.." : k["/value/joke"_json_pointer].get<string>()
           ) << '\n';
-        evExit(EXIT_SUCCESS);
+        halt(EXIT_SUCCESS);
       };
       static void wtf(int sig) {
         FN::screen_quit();
@@ -76,7 +112,7 @@ namespace K {
           upgrade();
           this_thread::sleep_for(chrono::seconds(21));
         }
-        evExit(EXIT_FAILURE);
+        halt(EXIT_FAILURE);
       };
       static bool latest() {
         return FN::output("test -d .git && git rev-parse @") == FN::output("test -d .git && git rev-parse @{u}");
@@ -98,13 +134,6 @@ namespace K {
           << '\n' << "please copy and paste the error above into a new github issue (noworry for duplicates)."
           << '\n' << "If you agree, go to https://github.com/ctubio/Krypto-trading-bot/issues/new"
           << '\n' << '\n';
-      };
-      static void happyEnding(int code) {
-        cout << FN::uiT();
-        for(unsigned int i = 0; i < 21; ++i)
-          cout << "THE END IS NEVER ";
-        cout << "THE END" << '\n';
-        end(code);
       };
   };
 }

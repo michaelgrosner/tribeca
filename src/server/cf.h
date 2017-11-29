@@ -2,9 +2,36 @@
 #define K_CF_H_
 
 namespace K {
-  static Gw *gw,
-            *gW;
-  class CF: public Klass {
+  class CF: public kLass {
+    public:
+      int argPort = 3000,
+          argColors = 0,
+          argDebug = 0,
+          argDebugEvents = 0,
+          argDebugOrders = 0,
+          argDebugQuotes = 0,
+          argWithoutSSL = 0,
+          argHeadless = 0,
+          argAutobot = 0,
+          argNaked = 0,
+          argFree = 0;
+      string argTitle = "K.sh",
+             argUser = "NULL",
+             argPass = "NULL",
+             argMatryoshka = "https://www.example.com/",
+             argExchange = "NULL",
+             argCurrency = "NULL",
+             argApikey = "NULL",
+             argSecret = "NULL",
+             argUsername = "NULL",
+             argPassphrase = "NULL",
+             argHttp = "NULL",
+             argWss = "NULL",
+             argDatabase = "",
+             argWhitelist = "";
+      double argEwmaShort = 0,
+             argEwmaMedium = 0,
+             argEwmaLong = 0;
     protected:
       void load(int argc, char** argv) {
         cout << BGREEN << "K" << RGREEN << " build " << K_BUILD << " " << K_STAMP << "." << BRED << '\n';
@@ -18,6 +45,7 @@ namespace K {
             {"debug-events", no_argument,       &argDebugEvents,   1},
             {"debug-orders", no_argument,       &argDebugOrders,   1},
             {"debug-quotes", no_argument,       &argDebugQuotes,   1},
+            {"without-ssl",  no_argument,       &argWithoutSSL,    1},
             {"headless",     no_argument,       &argHeadless,      1},
             {"naked",        no_argument,       &argNaked,         1},
             {"autobot",      no_argument,       &argAutobot,       1},
@@ -25,14 +53,12 @@ namespace K {
             {"matryoshka",   required_argument, 0,               'k'},
             {"exchange",     required_argument, 0,               'e'},
             {"currency",     required_argument, 0,               'c'},
-            {"target",       required_argument, 0,               'T'},
             {"apikey",       required_argument, 0,               'A'},
             {"secret",       required_argument, 0,               'S'},
             {"passphrase",   required_argument, 0,               'X'},
             {"username",     required_argument, 0,               'U'},
             {"http",         required_argument, 0,               'H'},
             {"wss",          required_argument, 0,               'W'},
-            {"ws",           required_argument, 0,               'w'},
             {"title",        required_argument, 0,               'K'},
             {"port",         required_argument, 0,               'P'},
             {"user",         required_argument, 0,               'u'},
@@ -45,19 +71,17 @@ namespace K {
             {"version",      no_argument,       0,               'v'},
             {0,              0,                 0,                 0}
           };
-          k = getopt_long(argc, argv, "hvd:l:m:s:p:u:v:c:e:k:P:K:w:W:H:U:X:S:A:T:", args, &i);
+          k = getopt_long(argc, argv, "hvd:l:m:s:p:u:v:c:e:k:P:K:W:H:U:X:S:A:", args, &i);
           if (k == -1) break;
           switch (k) {
             case 0: break;
             case 'P': argPort = stoi(optarg); break;
-            case 'T': argTarget = string(optarg); break;
             case 'A': argApikey = string(optarg); break;
             case 'S': argSecret = string(optarg); break;
             case 'U': argUsername = string(optarg); break;
             case 'X': argPassphrase = string(optarg); break;
             case 'H': argHttp = string(optarg); break;
             case 'W': argWss = string(optarg); break;
-            case 'w': argWs = string(optarg); break;
             case 'e': argExchange = string(optarg); break;
             case 'c': argCurrency = string(optarg); break;
             case 'd': argDatabase = string(optarg); break;
@@ -81,7 +105,9 @@ namespace K {
               << FN::uiT() << RWHITE << "-h, --help               - show this help and quit." << '\n'
               << FN::uiT() << RWHITE << "    --autobot            - automatically start trading on boot." << '\n'
               << FN::uiT() << RWHITE << "    --naked              - do not display CLI, print output to stdout instead." << '\n'
-              << FN::uiT() << RWHITE << "    --headless           - do not listen for UI connections (ignores '-L' and '-P')." << '\n'
+              << FN::uiT() << RWHITE << "    --headless           - do not listen for UI connections," << '\n'
+              << FN::uiT() << RWHITE << "                           ignores '--without-ssl', '--whitelist' and '--port'." << '\n'
+              << FN::uiT() << RWHITE << "    --without-ssl        - do not use HTTPS for UI connections (use HTTP only)." << '\n'
               << FN::uiT() << RWHITE << "-L, --whitelist=IP       - set IP or csv of IPs to allow UI connections," << '\n'
               << FN::uiT() << RWHITE << "                           alien IPs will get a zip-bomb instead." << '\n'
               << FN::uiT() << RWHITE << "-P, --port=NUMBER        - set NUMBER of an open port to listen for UI connections." << '\n'
@@ -94,8 +120,6 @@ namespace K {
               << FN::uiT() << RWHITE << "                           'KORBIT', 'POLONIEX' or 'NULL'." << '\n'
               << FN::uiT() << RWHITE << "-c, --currency=PAIRS     - set currency pairs for trading (use format" << '\n'
               << FN::uiT() << RWHITE << "                           with '/' separator, like 'BTC/EUR')." << '\n'
-              << FN::uiT() << RWHITE << "-T, --target=NAME        - set orders destination (see '--exchange')," << '\n'
-              << FN::uiT() << RWHITE << "                           a value of NULL generates fake orders only." << '\n'
               << FN::uiT() << RWHITE << "-A, --apikey=WORD        - set (never share!) WORD as api key for trading," << '\n'
               << FN::uiT() << RWHITE << "                           mandatory." << '\n'
               << FN::uiT() << RWHITE << "-S, --secret=WORD        - set (never share!) WORD as api secret for trading," << '\n'
@@ -108,8 +132,6 @@ namespace K {
               << FN::uiT() << RWHITE << "                           mandatory." << '\n'
               << FN::uiT() << RWHITE << "-W, --wss=URL            - set URL of api SECURE WS endpoint for trading," << '\n'
               << FN::uiT() << RWHITE << "                           mandatory." << '\n'
-              << FN::uiT() << RWHITE << "-w, --ws=URL             - set URL of api PUBLIC WS endpoint for trading," << '\n'
-              << FN::uiT() << RWHITE << "                           mandatory but may be 'NULL'." << '\n'
               << FN::uiT() << RWHITE << "-d, --database=PATH      - set alternative PATH to database filename," << '\n'
               << FN::uiT() << RWHITE << "                           default PATH is '/data/db/K.*.*.*.db'," << '\n'
               << FN::uiT() << RWHITE << "                           any route to a filename is valid," << '\n'
@@ -148,51 +170,51 @@ namespace K {
           cout << "ARG" << RRED << " Errrror:" << BRED << " Missing mandatory argument \"--exchange\", at least." << '\n';
           exit(EXIT_SUCCESS);
         }
-        if (argDebug) {
-          argDebugEvents = 1;
-          argDebugOrders = 1;
-          argDebugQuotes = 1;
-        }
-        if (!argColors) {
-          RBLACK[0] = 0; RRED[0]    = 0; RGREEN[0] = 0; RYELLOW[0] = 0;
-          RBLUE[0]  = 0; RPURPLE[0] = 0; RCYAN[0]  = 0; RWHITE[0]  = 0;
-          BBLACK[0] = 0; BRED[0]    = 0; BGREEN[0] = 0; BYELLOW[0] = 0;
-          BBLUE[0]  = 0; BPURPLE[0] = 0; BCYAN[0]  = 0; BWHITE[0]  = 0;
-        }
+        if (argDebug)
+          argDebugEvents =
+          argDebugOrders =
+          argDebugQuotes = argDebug;
+        if (!argColors)
+          RBLACK[0] = RRED[0]    = RGREEN[0] = RYELLOW[0] =
+          RBLUE[0]  = RPURPLE[0] = RCYAN[0]  = RWHITE[0]  =
+          BBLACK[0] = BRED[0]    = BGREEN[0] = BYELLOW[0] =
+          BBLUE[0]  = BPURPLE[0] = BCYAN[0]  = BWHITE[0]  = argColors;
         if (argDatabase == "")
           argDatabase = string("/data/db/K.")
-            + to_string((int)cfExchange())
-            + '.' + cfBase()
-            + '.' + cfQuote() + ".db";
+            + to_string((int)exchange())
+            + '.' + base()
+            + '.' + quote() + ".db";
       };
       void run() {
-        if (!argNaked) FN::screen();
-        gw = Gw::E(cfExchange());
+        if (!argNaked) FN::screen(argColors, argExchange, argCurrency);
+        mExchange e = exchange();
+        gw = Gw::E(e);
+        gw->exchange = e;
         gw->name = argExchange;
-        gw->base = cfBase();
-        gw->quote = cfQuote();
+        gw->base = base();
+        gw->quote = quote();
         gw->apikey = argApikey;
         gw->secret = argSecret;
         gw->user = argUsername;
         gw->pass = argPassphrase;
         gw->http = argHttp;
         gw->ws = argWss;
-        gw->wS = argWs;
+        gw->version = argFree;
       };
     private:
-      static string cfBase() {
+      string base() {
         string k_ = argCurrency;
         string k = k_.substr(0, k_.find("/"));
         if (k == k_) FN::logExit("CF", "Invalid currency pair! Must be in the format of BASE/QUOTE, eg BTC/EUR.", EXIT_SUCCESS);
         return FN::S2u(k);
       };
-      static string cfQuote() {
+      string quote() {
         string k_ = argCurrency;
         string k = k_.substr(k_.find("/")+1);
         if (k == k_) FN::logExit("CF", "Invalid currency pair! Must be in the format of BASE/QUOTE, eg BTC/EUR", EXIT_SUCCESS);
         return FN::S2u(k);
       };
-      static mExchange cfExchange() {
+      mExchange exchange() {
         string k = FN::S2l(argExchange);
         if (k == "coinbase") return mExchange::Coinbase;
         else if (k == "okcoin") return mExchange::OkCoin;
@@ -200,8 +222,8 @@ namespace K {
         else if (k == "poloniex") return mExchange::Poloniex;
         else if (k == "korbit") return mExchange::Korbit;
         else if (k == "hitbtc") return mExchange::HitBtc;
-        else if (k == "null") return mExchange::Null;
-        FN::logExit("CF", string("Invalid configuration value \"") + k + "\" as EXCHANGE. See https://github.com/ctubio/Krypto-trading-bot/tree/master/etc#configuration-options for more information", EXIT_SUCCESS);
+        else if (k != "null") FN::logExit("CF", string("Invalid configuration value \"") + k + "\" as EXCHANGE. See https://github.com/ctubio/Krypto-trading-bot/tree/master/etc#configuration-options for more information", EXIT_SUCCESS);
+        return mExchange::Null;
       };
   };
 }

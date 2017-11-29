@@ -14,20 +14,19 @@ namespace K {
     public:
       static string S2l(string k) { transform(k.begin(), k.end(), k.begin(), ::tolower); return k; };
       static string S2u(string k) { transform(k.begin(), k.end(), k.begin(), ::toupper); return k; };
-      static double roundNearest(double value, double minTick) { return round(value / minTick) * minTick; };
-      static double roundUp(double value, double minTick) { return ceil(value / minTick) * minTick; };
-      static double roundDown(double value, double minTick) { return floor(value / minTick) * minTick; };
-      static double roundSide(double oP, double minTick, mSide oS) {
-        if (oS == mSide::Bid) return roundDown(oP, minTick);
-        else if (oS == mSide::Ask) return roundUp(oP, minTick);
-        else return roundNearest(oP, minTick);
+      static double roundNearest(double price, double minTick) { return round(price / minTick) * minTick; };
+      static double roundUp(double price, double minTick) { return ceil(price / minTick) * minTick; };
+      static double roundDown(double price, double minTick) { return floor(price / minTick) * minTick; };
+      static double roundSide(double price, double minTick, mSide side) {
+        if (side == mSide::Bid) return roundDown(price, minTick);
+        else if (side == mSide::Ask) return roundUp(price, minTick);
+        else return roundNearest(price, minTick);
       };
       static unsigned long T() { return chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now().time_since_epoch()).count(); };
       static string uiT() {
-        typedef chrono::duration<int, ratio_multiply<chrono::hours::period, ratio<24>>::type> fnT;
         chrono::time_point<chrono::system_clock> now = chrono::system_clock::now();
         auto t = now.time_since_epoch();
-        fnT days = chrono::duration_cast<fnT>(t);
+        auto days = chrono::duration_cast<chrono::duration<int, ratio_multiply<chrono::hours::period, ratio<24>>::type>>(t);
         t -= days;
         auto hours = chrono::duration_cast<chrono::hours>(t);
         t -= hours;
@@ -41,7 +40,7 @@ namespace K {
         stringstream T, T_;
         T << setfill('0') << setw(2) << hours.count() << ":" << setw(2) << minutes.count() << ":" << setw(2) << seconds.count();
         T_ << "." << setfill('0') << setw(3) << milliseconds.count() << setw(3) << microseconds.count();
-        if (!wInit) return string(BGREEN) + T.str() + RGREEN + T_.str() + BWHITE + " ";
+        if (!wBorder) return string(BGREEN) + T.str() + RGREEN + T_.str() + BWHITE + " ";
         wattron(wLog, COLOR_PAIR(COLOR_GREEN));
         wattron(wLog, A_BOLD);
         wprintw(wLog, T.str().data());
@@ -50,6 +49,37 @@ namespace K {
         wattroff(wLog, COLOR_PAIR(COLOR_GREEN));
         wprintw(wLog, " ");
         return "";
+      };
+      static string int64Id() {
+        static random_device rd;
+        static mt19937_64 gen(rd());
+        uniform_int_distribution<unsigned long long> dis;
+        return to_string(dis(gen)).substr(0,8);
+      };
+      static string charId() {
+        char s[16];
+        for (int i = 0; i < 16; ++i) s[i] = kB64Alphabet[stol(int64Id()) % (sizeof(kB64Alphabet) - 3)];
+        return string(s, 16);
+      };
+      static string uuidId() {
+        static const char alphanum[] = "0123456789"
+                          "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                          "abcdefghijklmnopqrstuvwxyz";
+        string uuid = string(36,' ');
+        unsigned long rnd = stol(int64Id());
+        unsigned long rnd_ = stol(int64Id());
+        uuid[8] = '-';
+        uuid[13] = '-';
+        uuid[18] = '-';
+        uuid[23] = '-';
+        uuid[14] = '4';
+        for(int i=0;i<36;i++)
+          if (i != 8 && i != 13 && i != 18 && i != 14 && i != 23) {
+            if (rnd <= 0x02) { rnd = 0x2000000 + (rnd_ * 0x1000000) | 0; }
+            rnd >>= 4;
+            uuid[i] = alphanum[(i == 19) ? ((rnd & 0xf) & 0x3) | 0x8 : rnd & 0xf];
+          }
+        return S2l(uuid);
       };
       static string oHex(string k) {
        int len = k.length();
@@ -75,12 +105,12 @@ namespace K {
         for(int i = 0; i < SHA512_DIGEST_LENGTH; i++) sprintf(&k_[i*2], "%02x", (unsigned int)digest[i]);
         return k_;
       };
-      static string oHmac256(string p, string s) {
+      static string oHmac256(string p, string s, bool hex) {
         unsigned char* digest;
         digest = HMAC(EVP_sha256(), s.data(), s.length(), (unsigned char*)p.data(), p.length(), NULL, NULL);
         char k_[SHA256_DIGEST_LENGTH*2+1];
         for(int i = 0; i < SHA256_DIGEST_LENGTH; i++) sprintf(&k_[i*2], "%02x", (unsigned int)digest[i]);
-        return oHex(k_);
+        return hex ? oHex(k_) : k_;
       };
       static string oHmac512(string p, string s) {
         unsigned char* digest;
@@ -95,6 +125,10 @@ namespace K {
         char k_[SHA384_DIGEST_LENGTH*2+1];
         for(int i = 0; i < SHA384_DIGEST_LENGTH; i++) sprintf(&k_[i*2], "%02x", (unsigned int)digest[i]);
         return k_;
+      };
+      static void stunnel() {
+        system("test -n \"`/bin/pidof stunnel`\" && kill -9 `/bin/pidof stunnel`");
+        system("stunnel etc/K-stunnel.conf");
       };
       static json wJet(string k) {
         return json::parse(wGet(k));
@@ -161,19 +195,18 @@ namespace K {
         if (!k_.length() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
         return k_;
       };
-      static json wJet(string k, string p, string s) {
-        return json::parse(wGet(k, p, s));
+      static json wJet(string k, bool a, string p) {
+        return json::parse(wGet(k, a, p));
       };
-      static string wGet(string k, string p, string s) {
+      static string wGet(string k, bool a, string p) {
         string k_;
         CURL* curl;
         curl = curl_easy_init();
         if (curl) {
-          struct curl_slist *h_ = NULL;
           curl_easy_setopt(curl, CURLOPT_URL, k.data());
+          if (a) curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
           curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &wcb);
-          h_ = curl_slist_append(h_, string("X-Signature: ").append(s).data());
-          curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
+          curl_easy_setopt(curl, CURLOPT_USERPWD, p.data());
           curl_easy_setopt(curl, CURLOPT_WRITEDATA, &k_);
           curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
           CURLcode r = curl_easy_perform(curl);
@@ -394,10 +427,10 @@ namespace K {
       static void logExit(string k, string s, int code) {
         FN::screen_quit();
         logErr(k, s);
-        evExit(code);
+        exit(code);
       };
       static void logErr(string k, string s, string m = " Errrror: ") {
-        if (!wInit) {
+        if (!wBorder) {
           cout << uiT() << k << RRED << m << BRED << s << ".\n";
           return;
         }
@@ -419,7 +452,7 @@ namespace K {
         wrefresh(wLog);
       };
       static void logDB(string k) {
-        if (!wInit) {
+        if (!wBorder) {
           cout << uiT() << "DB " << RYELLOW << k << RWHITE << " loaded OK.\n";
           return;
         }
@@ -440,7 +473,7 @@ namespace K {
         wrefresh(wLog);
       };
       static void logUI(string k, int p) {
-        if (!wInit) {
+        if (!wBorder) {
           cout << uiT() << "UI" << RWHITE << " ready over " << RYELLOW << k << RWHITE << " on external port " << RYELLOW << to_string(p) << RWHITE << ".\n";
           return;
         }
@@ -466,10 +499,11 @@ namespace K {
         wprintw(wLog, ".\n");
         wattroff(wLog, COLOR_PAIR(COLOR_WHITE));
         wMutex.unlock();
-        FN::screen_refresh();
+        FN::screen_refresh(k, p);
       };
       static void logUIsess(int k, string s) {
-        if (!wInit) {
+        if (s.length() > 7 and s.substr(0, 7) == "::ffff:") s = s.substr(7);
+        if (!wBorder) {
           cout << uiT() << "UI " << RYELLOW << to_string(k) << RWHITE << " currently connected, last connection was from " << RYELLOW << s << RWHITE << ".\n";
           return;
         }
@@ -496,7 +530,7 @@ namespace K {
         wrefresh(wLog);
       };
       static void logVer(string k, int c) {
-        if (!wInit) {
+        if (!wBorder) {
           cout << BGREEN << "K" << RGREEN << string(" version ").append(c == -1 ? "unknown (zip install).\n" : (!c ? "0day.\n" : string("-").append(to_string(c)).append("commit").append(c > 1?"s..\n":"..\n"))) << RYELLOW << (c ? k : "") << RWHITE;
           return;
         }
@@ -514,8 +548,8 @@ namespace K {
         wrefresh(wLog);
       };
       static void log(mTrade k, string e) {
-        if (!wInit) {
-          cout << FN::uiT() << "GW " << (k.side == mSide::Bid ? RCYAN : RPURPLE) << argExchange << " TRADE " << (k.side == mSide::Bid ? BCYAN : BPURPLE) << (k.side == mSide::Bid ? "BUY " : "SELL ") << k.quantity << " " << k.pair.base << " at price " << k.price << " " << k.pair.quote << " (value " << k.value << " " << k.pair.quote << ").\n";
+        if (!wBorder) {
+          cout << FN::uiT() << "GW " << (k.side == mSide::Bid ? RCYAN : RPURPLE) << e << " TRADE " << (k.side == mSide::Bid ? BCYAN : BPURPLE) << (k.side == mSide::Bid ? "BUY " : "SELL ") << k.quantity << " " << k.pair.base << " at price " << k.price << " " << k.pair.quote << " (value " << k.value << " " << k.pair.quote << ").\n";
           return;
         }
         lock_guard<mutex> lock(wMutex);
@@ -536,7 +570,7 @@ namespace K {
         wrefresh(wLog);
       };
       static void log(string k, string s, string v) {
-        if (!wInit) {
+        if (!wBorder) {
           cout << uiT() << k << RWHITE << " " << s << " " << RYELLOW << v << RWHITE << ".\n";
           return;
         }
@@ -558,7 +592,7 @@ namespace K {
         wrefresh(wLog);
       };
       static void log(string k, string s) {
-        if (!wInit) {
+        if (!wBorder) {
           cout << uiT() << k << RWHITE << " " << s << ".\n";
           return;
         }
@@ -574,7 +608,7 @@ namespace K {
         wrefresh(wLog);
       };
       static void log(string k, int c = COLOR_WHITE, bool b = false) {
-        if (!wInit) {
+        if (!wBorder) {
           cout << RWHITE << k;
           return;
         }
@@ -588,15 +622,15 @@ namespace K {
         wrefresh(wLog);
       };
       static void screen_quit() {
-        if (!wInit) return;
+        if (!wBorder) return;
         lock_guard<mutex> lock(wMutex);
-        wInit = false;
         beep();
         endwin();
+        wBorder = nullptr;
       };
-      static void screen() {
-        if ((wBorder = initscr()) == NULL) {
-          cout << "NCURSES" << RRED << " Errrror:" << BRED << " Unable to initialize ncurses." << '\n';
+      static void screen(int argColors, string argExchange, string argCurrency) {
+        if (!(wBorder = initscr())) {
+          cout << "NCURSES" << RRED << " Errrror:" << BRED << " Unable to initialize ncurses, try to run in your terminal \"export TERM=xterm\", or use --naked argument." << '\n';
           exit(EXIT_SUCCESS);
         }
         if (argColors) start_color();
@@ -617,7 +651,7 @@ namespace K {
         signal(SIGWINCH, screen_resize);
         thread([&]() {
           int ch;
-          while ((ch = wgetch(wBorder)) != 'q') {
+          while ((ch = wgetch(wBorder)) != 'q' and ch != 'Q') {
             switch (ch) {
               case ERR: continue;
               // case KEY_PPAGE: wscrl(wLog, -3); wrefresh(wLog); break;
@@ -626,28 +660,35 @@ namespace K {
               // case KEY_DOWN: wscrl(wLog, 1); wrefresh(wLog); break;
             }
           }
-          screen_quit();
-          cout << FN::uiT() << "Excellent decision!" << '\n';
-          evExit(EXIT_SUCCESS);
+          raise(SIGINT);
         }).detach();
-        wInit = true;
-        screen_refresh();
+        screen_refresh("", 0, argExchange, argCurrency);
       };
-      static void screen_refresh() {
-        if (!wInit) return;
-        static int p = 0, spin = 0;
-        multimap<double, mOrder> orderLines;
-        ogMutex.lock();
-        for (map<string, mOrder>::iterator it = allOrders.begin(); it != allOrders.end(); ++it) {
-          if (mORS::Working != it->second.orderStatus) continue;
-          orderLines.insert(pair<double, mOrder>(it->second.price, it->second));
+      static void screen_refresh(map<string, mOrder> k) {
+        screen_refresh("", 0, "", "", k, true);
+      };
+      static void screen_refresh(string protocol = "", int argPort = 0, string argExchange = "", string argCurrency = "", map<string, mOrder> allOrders = map<string, mOrder>(), bool hasOrders = false) {
+        if (!wBorder) return;
+        static int p = 0, spin = 0, port = 0;
+        static string prtcl = "?", exchange = "?", currency = "?";
+        static map<string, mOrder> orders = map<string, mOrder>();
+        if (argPort) port = argPort;
+        if (protocol.length()) prtcl = protocol;
+        if (argExchange.length()) exchange = argExchange;
+        if (argCurrency.length()) currency = argCurrency;
+        multimap<double, mOrder> openOrders;
+        if (hasOrders) {
+          orders = allOrders;
+          for (map<string, mOrder>::iterator it = orders.begin(); it != orders.end(); ++it) {
+            if (mORS::Working != it->second.orderStatus) continue;
+            openOrders.insert(pair<double, mOrder>(it->second.price, it->second));
+          }
         }
-        ogMutex.unlock();
         lock_guard<mutex> lock(wMutex);
         int l = p,
             y = getmaxy(wBorder),
             x = getmaxx(wBorder),
-            k = y - orderLines.size() - 1,
+            k = y - openOrders.size() - 1,
             P = k;
         while (l<y) mvwhline(wBorder, l++, 1, ' ', x-1);
         if (k!=p) {
@@ -659,7 +700,7 @@ namespace K {
         }
         mvwvline(wBorder, 1, 1, ' ', y-1);
         mvwvline(wBorder, k-1, 1, ' ', y-1);
-        for (map<double, mOrder>::reverse_iterator it = orderLines.rbegin(); it != orderLines.rend(); ++it) {
+        for (map<double, mOrder>::reverse_iterator it = openOrders.rbegin(); it != openOrders.rend(); ++it) {
           wattron(wBorder, COLOR_PAIR(it->second.side == mSide::Bid ? COLOR_CYAN : COLOR_MAGENTA));
           stringstream ss;
           ss << setprecision(8) << fixed << (it->second.side == mSide::Bid ? "BID" : "ASK") << " > " << it->second.orderId << ": " << it->second.quantity << " " << it->second.pair.base << " at price " << it->second.price << " " << it->second.pair.quote;
@@ -686,16 +727,16 @@ namespace K {
         mvwaddch(wBorder, 1, 12, ACS_RTEE);
         wattron(wBorder, COLOR_PAIR(COLOR_GREEN));
         wattron(wBorder, A_BOLD);
-        mvwaddstr(wBorder, 1, 14, (argExchange + " " + argCurrency).data());
+        mvwaddstr(wBorder, 1, 14, (exchange + " " + currency).data());
         wattroff(wBorder, A_BOLD);
-        waddstr(wBorder, (argHeadless ? " headless" : " UI on " + uiPrtcl + " port " + to_string(argPort)).data());
+        waddstr(wBorder, (port ? " UI on " + prtcl + " port " + to_string(port) : " headless").data());
         wattroff(wBorder, COLOR_PAIR(COLOR_GREEN));
         mvwaddch(wBorder, k, 0, ACS_LTEE);
         mvwhline(wBorder, k, 1, ACS_HLINE, 3);
         mvwaddch(wBorder, k, 4, ACS_RTEE);
         mvwaddstr(wBorder, k, 5, "< (");
         wattron(wBorder, COLOR_PAIR(COLOR_YELLOW));
-        waddstr(wBorder, to_string(orderLines.size()).data());
+        waddstr(wBorder, to_string(openOrders.size()).data());
         wattroff(wBorder, COLOR_PAIR(COLOR_YELLOW));
         waddstr(wBorder, ") Open Orders..");
         mvwaddch(wBorder, y-1, 0, ACS_LLCORNER);
@@ -706,7 +747,7 @@ namespace K {
         wrefresh(wLog);
       };
       static void screen_resize(int sig) {
-        if (!wInit) return;
+        if (!wBorder) return;
         wMutex.lock();
         struct winsize ws;
         if (ioctl(0, TIOCGWINSZ, &ws) < 0 or (ws.ws_row == getmaxy(wBorder) and ws.ws_col == getmaxx(wBorder))) {
@@ -722,14 +763,6 @@ namespace K {
         lock_guard<mutex> lock(wMutex);
         redrawwin(wLog);
         wrefresh(wLog);
-      };
-      static void close(uv_loop_t* loop) {
-        uv_walk(loop, close_walk_cb, NULL);
-        uv_run(loop, UV_RUN_DEFAULT);
-      };
-      static void close_walk_cb(uv_handle_t* handle, void* arg) {
-        if (!uv_is_closing(handle))
-          uv_close(handle, NULL);
       };
   };
   class B64 {
