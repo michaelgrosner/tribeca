@@ -542,9 +542,9 @@ export class StatsComponent implements OnInit {
     }
     if (this.positionData) {
       Highcharts.charts[this.quoteChart].yAxis[1].setExtremes(0, Math.max(this.positionData.quoteValue,Highcharts.charts[this.quoteChart].yAxis[1].getExtremes().dataMax), false, true, { trigger: 'syncExtremes' });
-      Highcharts.charts[this.baseChart].yAxis[1].setExtremes(0, Math.max(this.positionData.value,Highcharts.charts[this.baseChart].yAxis[1].getExtremes().dataMax), false, true, { trigger: 'syncExtremes' });
+      Highcharts.charts[this.baseChart].yAxis[1].setExtremes(0, Math.max(this.positionData.baseValue,Highcharts.charts[this.baseChart].yAxis[1].getExtremes().dataMax), false, true, { trigger: 'syncExtremes' });
       if (this.targetBasePosition) {
-        Highcharts.charts[this.quoteChart].series[1].addPoint([time, (this.positionData.value-this.targetBasePosition)*this.positionData.quoteValue/this.positionData.value], false);
+        Highcharts.charts[this.quoteChart].series[1].addPoint([time, (this.positionData.baseValue-this.targetBasePosition)*this.positionData.quoteValue/this.positionData.baseValue], false);
         Highcharts.charts[this.baseChart].series[1].addPoint([time, this.targetBasePosition], false);
 		
 	    Highcharts.charts[this.quoteChart].series[2].addPoint([time, Math.max(0, this.positionData.value-this.targetBasePosition-this.positionDivergence)*this.positionData.quoteValue/this.positionData.value, Math.min(this.positionData.value, this.positionData.value-this.targetBasePosition+this.positionDivergence)*this.positionData.quoteValue/this.positionData.value], this.showStats, false, false);
@@ -553,7 +553,7 @@ export class StatsComponent implements OnInit {
       Highcharts.charts[this.quoteChart].series[0].addPoint([time, this.positionData.quoteValue], false);
       Highcharts.charts[this.quoteChart].series[3].addPoint([time, this.positionData.quoteAmount], false);
       Highcharts.charts[this.quoteChart].series[4].addPoint([time, this.positionData.quoteHeldAmount], this.showStats);
-      Highcharts.charts[this.baseChart].series[0].addPoint([time, this.positionData.value], false);
+      Highcharts.charts[this.baseChart].series[0].addPoint([time, this.positionData.baseValue], false);
       Highcharts.charts[this.baseChart].series[3].addPoint([time, this.positionData.baseAmount], false);
       Highcharts.charts[this.baseChart].series[4].addPoint([time, this.positionData.baseHeldAmount], this.showStats);
     }

@@ -85,7 +85,7 @@ namespace K  {
         exit(code);
       };
       function<void()> happyEnding = [&]() {
-        cout << FN::uiT() << ((CF*)config)->argExchange << " ";
+        cout << FN::uiT() << gw->name << " ";
         for(unsigned int i = 0; i < 21; ++i)
           cout << "THE END IS NEVER ";
         cout << "THE END." << '\n';
