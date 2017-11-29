@@ -14,13 +14,13 @@ namespace K {
     public:
       static string S2l(string k) { transform(k.begin(), k.end(), k.begin(), ::tolower); return k; };
       static string S2u(string k) { transform(k.begin(), k.end(), k.begin(), ::toupper); return k; };
-      static double roundNearest(double value, double minTick) { return round(value / minTick) * minTick; };
-      static double roundUp(double value, double minTick) { return ceil(value / minTick) * minTick; };
-      static double roundDown(double value, double minTick) { return floor(value / minTick) * minTick; };
-      static double roundSide(double oP, double minTick, mSide oS) {
-        if (oS == mSide::Bid) return roundDown(oP, minTick);
-        else if (oS == mSide::Ask) return roundUp(oP, minTick);
-        else return roundNearest(oP, minTick);
+      static double roundNearest(double price, double minTick) { return round(price / minTick) * minTick; };
+      static double roundUp(double price, double minTick) { return ceil(price / minTick) * minTick; };
+      static double roundDown(double price, double minTick) { return floor(price / minTick) * minTick; };
+      static double roundSide(double price, double minTick, mSide side) {
+        if (side == mSide::Bid) return roundDown(price, minTick);
+        else if (side == mSide::Ask) return roundUp(price, minTick);
+        else return roundNearest(price, minTick);
       };
       static unsigned long T() { return chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now().time_since_epoch()).count(); };
       static string uiT() {

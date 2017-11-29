@@ -290,17 +290,17 @@ namespace K {
               quoteAmount,
               baseHeldAmount,
               quoteHeldAmount,
-              value,
+              baseValue,
               quoteValue,
               profitBase,
               profitQuote;
         mPair pair;
     mExchange exchange;
     mPosition():
-      baseAmount(0), quoteAmount(0), baseHeldAmount(0), quoteHeldAmount(0), value(0), quoteValue(0), profitBase(0), profitQuote(0), pair(mPair()), exchange((mExchange)0)
+      baseAmount(0), quoteAmount(0), baseHeldAmount(0), quoteHeldAmount(0), baseValue(0), quoteValue(0), profitBase(0), profitQuote(0), pair(mPair()), exchange((mExchange)0)
     {};
     mPosition(double bA, double qA, double bH, double qH, double bV, double qV, double bP, double qP, mPair p, mExchange e):
-      baseAmount(bA), quoteAmount(qA), baseHeldAmount(bH), quoteHeldAmount(qH), value(bV), quoteValue(qV), profitBase(bP), profitQuote(qP), pair(p), exchange(e)
+      baseAmount(bA), quoteAmount(qA), baseHeldAmount(bH), quoteHeldAmount(qH), baseValue(bV), quoteValue(qV), profitBase(bP), profitQuote(qP), pair(p), exchange(e)
     {};
   };
   static void to_json(json& j, const mPosition& k) {
@@ -309,7 +309,7 @@ namespace K {
       {"quoteAmount", k.quoteAmount},
       {"baseHeldAmount", k.baseHeldAmount},
       {"quoteHeldAmount", k.quoteHeldAmount},
-      {"value", k.value},
+      {"baseValue", k.baseValue},
       {"quoteValue", k.quoteValue},
       {"profitBase", k.profitBase},
       {"profitQuote", k.profitQuote},

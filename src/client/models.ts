@@ -133,7 +133,7 @@ export class PositionReport {
                 public quoteAmount: number,
                 public baseHeldAmount: number,
                 public quoteHeldAmount: number,
-                public value: number,
+                public baseValue: number,
                 public quoteValue: number,
                 public profitBase: number,
                 public profitQuote: number,

@@ -51,9 +51,9 @@ namespace K {
     private:
       function<void()> happyEnding = [&]() {
         ((EV*)events)->stop([&](){
-          FN::log(string("GW ") + ((CF*)config)->argExchange, "Attempting to cancel all open orders, please wait.");
+          FN::log(string("GW ") + gw->name, "Attempting to cancel all open orders, please wait.");
           gw->cancelAll();
-          FN::log(string("GW ") + ((CF*)config)->argExchange, "cancell all open orders OK");
+          FN::log(string("GW ") + gw->name, "cancell all open orders OK");
         });
       };
       function<json()> helloProduct = [&]() {
@@ -101,7 +101,7 @@ namespace K {
         if (quotingState == mConnectivity::Connected) quotingState = gwAutoStart;
         if (quotingState != gwQuotingState) {
           gwQuotingState = quotingState;
-          FN::log(string("GW ") + ((CF*)config)->argExchange, "Quoting state changed to", gwQuotingState == mConnectivity::Connected ? "CONNECTED" : "DISCONNECTED");
+          FN::log(string("GW ") + gw->name, "Quoting state changed to", gwQuotingState == mConnectivity::Connected ? "CONNECTED" : "DISCONNECTED");
           ((UI*)client)->send(uiTXT::ActiveState, {{"state", (int)gwQuotingState}});
         }
         ((QE*)engine)->gwConnectButton = gwQuotingState;
@@ -174,7 +174,7 @@ namespace K {
           gw->minSize = 0.01;
         }
         if (gw->minTick and gw->minSize) {
-          FN::log(string("GW ") + ((CF*)config)->argExchange, "allows client IP");
+          FN::log(string("GW ") + gw->name, "allows client IP");
           stringstream ss;
           ss << setprecision(8) << fixed << '\n'
             << "- autoBot: " << (((CF*)config)->argAutobot ? "yes" : "no") << '\n'
@@ -183,8 +183,8 @@ namespace K {
             << "- minSize: " << gw->minSize << '\n'
             << "- makeFee: " << gw->makeFee << '\n'
             << "- takeFee: " << gw->takeFee;
-          FN::log(string("GW ") + ((CF*)config)->argExchange + ":", ss.str());
-        } else FN::logExit("CF", "Unable to fetch data from " + ((CF*)config)->argExchange + " symbol \"" + gw->symbol + "\"", EXIT_FAILURE);
+          FN::log(string("GW ") + gw->name + ":", ss.str());
+        } else FN::logExit("CF", "Unable to fetch data from " + gw->name + " symbol \"" + gw->symbol + "\"", EXIT_FAILURE);
       };
   };
 }

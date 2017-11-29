@@ -127,7 +127,7 @@ namespace K {
       mQuote nextQuote() {
         if (((MG*)market)->empty() or ((PG*)wallet)->empty()) return mQuote();
         ((PG*)wallet)->pgMutex.lock();
-        double value           = ((PG*)wallet)->position.value,
+        double baseValue       = ((PG*)wallet)->position.baseValue,
                baseAmount      = ((PG*)wallet)->position.baseAmount,
                baseHeldAmount  = ((PG*)wallet)->position.baseHeldAmount,
                quoteAmount     = ((PG*)wallet)->position.quoteAmount,
@@ -148,10 +148,10 @@ namespace K {
           ? qp->widthPongPercentage * ((MG*)market)->fairValue / 100
           : qp->widthPong;
         double buySize = qp->percentageValues
-          ? qp->buySizePercentage * value / 100
+          ? qp->buySizePercentage * baseValue / 100
           : qp->buySize;
         double sellSize = qp->percentageValues
-          ? qp->sellSizePercentage * value / 100
+          ? qp->sellSizePercentage * baseValue / 100
           : qp->sellSize;
         if (buySize and qp->aggressivePositionRebalancing != mAPR::Off and qp->buySizeMax)
           buySize = fmax(buySize, ((PG*)wallet)->targetBasePosition - totalBasePosition);
@@ -172,7 +172,7 @@ namespace K {
         debuq("C", rawQuote); applyTotalBasePosition(&rawQuote, totalBasePosition, pDiv, buySize, sellSize, quoteAmount, baseAmount);
         debuq("D", rawQuote); applyStdevProtection(&rawQuote);
         debuq("E", rawQuote); applyAggressivePositionRebalancing(&rawQuote, widthPong, safetyBuyPing, safetySellPong);
-        debuq("F", rawQuote); applyAK47Increment(&rawQuote, value);
+        debuq("F", rawQuote); applyAK47Increment(&rawQuote, baseValue);
         debuq("G", rawQuote); applyBestWidth(&rawQuote);
         debuq("H", rawQuote); applyTradesPerMinute(&rawQuote, superTradesActive, safetyBuy, safetySell);
         debuq("I", rawQuote); applyRoundSide(&rawQuote);
@@ -325,10 +325,10 @@ namespace K {
           }
         }
       };
-      void applyAK47Increment(mQuote *rawQuote, double value) {
+      void applyAK47Increment(mQuote *rawQuote, double baseValue) {
         if (qp->safety != mQuotingSafety::AK47) return;
         double range = qp->percentageValues
-          ? qp->rangePercentage * value / 100
+          ? qp->rangePercentage * baseValue / 100
           : qp->range;
         rawQuote->bid.price -= AK47inc * range;
         rawQuote->ask.price += AK47inc * range;
