@@ -24,6 +24,7 @@ export class StatsComponent implements OnInit {
   public ewmaShort: number;
   public ewmaMedium: number;
   public ewmaLong: number;
+  public ewmaVeryLong: number;
   public ewmaQuote: number;
   public ewmaSMUDiff: number;
   public stdevWidth: Models.IStdev;
@@ -155,6 +156,12 @@ export class StatsComponent implements OnInit {
       name: 'EWMA Quote',
       type: 'spline',
       color: '#ffff00',
+      tooltip: {pointFormatter: this.pointFormatterBase},
+      data: []
+    },{
+      name: 'EWMA Very Long',
+      type: 'spline',
+      colorIndex: 6,
       tooltip: {pointFormatter: this.pointFormatterBase},
       data: []
     },{
@@ -503,19 +510,20 @@ export class StatsComponent implements OnInit {
     this.removeOldPoints(time);
     if (this.fairValue) {
       if (this.stdevWidth) {
-        if (this.stdevWidth.fv) Highcharts.charts[this.fvChart].series[10].addPoint([time, this.stdevWidth.fv], false);
-        if (this.stdevWidth.tops) Highcharts.charts[this.fvChart].series[11].addPoint([time, this.stdevWidth.tops], false);
-        if (this.stdevWidth.ask) Highcharts.charts[this.fvChart].series[12].addPoint([time, this.stdevWidth.ask], false);
-        if (this.stdevWidth.bid) Highcharts.charts[this.fvChart].series[13].addPoint([time, this.stdevWidth.bid], false);
-        if (this.stdevWidth.fv && this.stdevWidth.fvMean) Highcharts.charts[this.fvChart].series[14].addPoint([time, this.stdevWidth.fvMean-this.stdevWidth.fv, this.stdevWidth.fvMean+this.stdevWidth.fv], this.showStats, false, false);
-        if (this.stdevWidth.tops && this.stdevWidth.topsMean) Highcharts.charts[this.fvChart].series[15].addPoint([time, this.stdevWidth.topsMean-this.stdevWidth.tops, this.stdevWidth.topsMean+this.stdevWidth.tops], this.showStats, false, false);
-        if (this.stdevWidth.ask && this.stdevWidth.bid && this.stdevWidth.askMean && this.stdevWidth.bidMean) Highcharts.charts[this.fvChart].series[16].addPoint([time, this.stdevWidth.bidMean-this.stdevWidth.bid, this.stdevWidth.askMean+this.stdevWidth.ask], this.showStats, false, false);
+        if (this.stdevWidth.fv) Highcharts.charts[this.fvChart].series[11].addPoint([time, this.stdevWidth.fv], false);
+        if (this.stdevWidth.tops) Highcharts.charts[this.fvChart].series[12].addPoint([time, this.stdevWidth.tops], false);
+        if (this.stdevWidth.ask) Highcharts.charts[this.fvChart].series[13].addPoint([time, this.stdevWidth.ask], false);
+        if (this.stdevWidth.bid) Highcharts.charts[this.fvChart].series[14].addPoint([time, this.stdevWidth.bid], false);
+        if (this.stdevWidth.fv && this.stdevWidth.fvMean) Highcharts.charts[this.fvChart].series[15].addPoint([time, this.stdevWidth.fvMean-this.stdevWidth.fv, this.stdevWidth.fvMean+this.stdevWidth.fv], this.showStats, false, false);
+        if (this.stdevWidth.tops && this.stdevWidth.topsMean) Highcharts.charts[this.fvChart].series[16].addPoint([time, this.stdevWidth.topsMean-this.stdevWidth.tops, this.stdevWidth.topsMean+this.stdevWidth.tops], this.showStats, false, false);
+        if (this.stdevWidth.ask && this.stdevWidth.bid && this.stdevWidth.askMean && this.stdevWidth.bidMean) Highcharts.charts[this.fvChart].series[17].addPoint([time, this.stdevWidth.bidMean-this.stdevWidth.bid, this.stdevWidth.askMean+this.stdevWidth.ask], this.showStats, false, false);
       }
       if (this.ewmaQuote) Highcharts.charts[this.fvChart].series[6].addPoint([time, this.ewmaQuote], false);
       if (this.ewmaSMUDiff) Highcharts.charts[this.fvChart].series[17].addPoint([time, this.ewmaSMUDiff], false);
-      if (this.ewmaLong) Highcharts.charts[this.fvChart].series[7].addPoint([time, this.ewmaLong], false);
-      if (this.ewmaMedium) Highcharts.charts[this.fvChart].series[8].addPoint([time, this.ewmaMedium], false);
-      if (this.ewmaShort) Highcharts.charts[this.fvChart].series[9].addPoint([time, this.ewmaShort], false);
+      if (this.ewmaVeryLong) Highcharts.charts[this.fvChart].series[7].addPoint([time, this.ewmaVeryLong], false);
+      if (this.ewmaLong) Highcharts.charts[this.fvChart].series[8].addPoint([time, this.ewmaLong], false);
+      if (this.ewmaMedium) Highcharts.charts[this.fvChart].series[9].addPoint([time, this.ewmaMedium], false);
+      if (this.ewmaShort) Highcharts.charts[this.fvChart].series[10].addPoint([time, this.ewmaShort], false);
       Highcharts.charts[this.fvChart].series[0].addPoint([time, this.fairValue], this.showStats);
       if (this.width) Highcharts.charts[this.fvChart].series[1].addPoint([time, this.fairValue-this.width, this.fairValue+this.width], this.showStats, false, false);
     }
@@ -548,6 +556,7 @@ export class StatsComponent implements OnInit {
     if (ewma.ewmaShort) this.ewmaShort = ewma.ewmaShort;
     if (ewma.ewmaMedium) this.ewmaMedium = ewma.ewmaMedium;
     if (ewma.ewmaLong) this.ewmaLong = ewma.ewmaLong;
+    if (ewma.ewmaVeryLong) this.ewmaVeryLong = ewma.ewmaVeryLong;
     if (ewma.stdevWidth) this.stdevWidth = ewma.stdevWidth;
   }
 

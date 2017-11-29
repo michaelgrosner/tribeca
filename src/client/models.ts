@@ -93,6 +93,7 @@ export class EWMAChart {
                 public ewmaShort: number,
                 public ewmaMedium: number,
                 public ewmaLong: number,
+                public ewmaVeryLong: number,
                 public fairValue: number) {}
 }
 
