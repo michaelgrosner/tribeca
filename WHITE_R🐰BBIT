@@ -112,6 +112,14 @@
 :                                                                             :
 :                                                                             :
 :  .. src/server/db.h:  ----------------------------- aka. Database --------- :
+:  :   # Warning: write-only during execution, we read data only before boot. :
+:  :                                                                          :
+:  +-- Whaaat??                                                               :
+:     load()                                                                  :
+:      TODO                                                                   :
+:     insert()                                                                :
+:      TODO                                                                   :
+:     cb()                                                                    :
 :      TODO                                                                   :
 :                                                                             :
 :                                                                             :

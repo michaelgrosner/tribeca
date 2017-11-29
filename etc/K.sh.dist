@@ -54,14 +54,9 @@ UI_OPENPORT=3000
 API_EXCHANGE=NULL
 #  ▌____________________________________________________.
 #  █ API_CURRENCY                                       .
-#  ██ - Allows any existent currency pair (see the website of the exchange), the format must be "AAA/BBB".
+#  ██ - Allows any existent currency pair (see the website of the exchange), the format must be "AAA/ZZZ".
 #API_CURRENCY=BTC/EUR
 API_CURRENCY=BTC/USD
-#  ▌____________________________________________________.
-#  █ API_ORDERS_DESTINATION                             .
-#  ██ - Allows NULL to send fake orders, otherwise if is not NULL orders will be send to the real exchange API.
-#API_ORDERS_DESTINATION=REAL
-API_ORDERS_DESTINATION=NULL
 #  ▌____________________________________________________.
 #  █ API_KEY                                            .
 #  ██ - Allows any valid API KEY (see the website of the exchange).
@@ -92,7 +87,7 @@ API_USERNAME=NULL
 #  ██ - All exchanges must have API_HTTP_ENDPOINT.
 #API_HTTP_ENDPOINT=https://api.gdax.com
 #API_HTTP_ENDPOINT=https://api.bitfinex.com/v1
-#API_HTTP_ENDPOINT=http://api.hitbtc.com
+#API_HTTP_ENDPOINT=https://api.hitbtc.com/api/2
 #API_HTTP_ENDPOINT=https://www.okcoin.com/api/v1/
 #API_HTTP_ENDPOINT=https://api.korbit.co.kr/v1
 #API_HTTP_ENDPOINT=https://poloniex.com
@@ -103,35 +98,27 @@ API_HTTP_ENDPOINT=NULL
 #  ██ - Almost all exchanges must have API_WSS_ENDPOINT, only KORBIT exchange can be NULL.
 #API_WSS_ENDPOINT=wss://ws-feed.gdax.com
 #API_WSS_ENDPOINT=wss://api.bitfinex.com/ws/2
-#API_WSS_ENDPOINT=wss://api.hitbtc.com:8080
+#API_WSS_ENDPOINT=wss://api.hitbtc.com/api/2/ws
 #API_WSS_ENDPOINT=wss://real.okcoin.com:10440/websocket/okcoinapi
 #API_WSS_ENDPOINT=wss://api.poloniex.com
 API_WSS_ENDPOINT=NULL
-#  ▌____________________________________________________.
-#  █ API_WS_ENDPOINT                                    .
-#  ██ - Allows one of the following urls (see the website of the exchange).
-#  ██ - Only HITBTC exchange must have API_WS_ENDPOINT, other exchanges can be NULL.
-#API_WS_ENDPOINT=ws://api.hitbtc.com:80
-API_WS_ENDPOINT=NULL
 #  ██▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
 #  ▌____                                                .
 #  ▌ IV ▐______________________________________________ .
 #  ▌¯¯¯¯                                                .
-until ./app/server/K                                    \
+until `#valgrind` `#gdb --args` ./app/server/K          \
     --title      ${0##*/}                               \
     --port       $UI_OPENPORT                           \
     --user       $UI_USERNAME                           \
     --pass       $UI_PASSWORD                           \
     --exchange   $API_EXCHANGE                          \
     --currency   $API_CURRENCY                          \
-    --target     $API_ORDERS_DESTINATION                \
     --apikey     $API_KEY                               \
     --secret     $API_SECRET                            \
     --passphrase $API_PASSPHRASE                        \
     --username   $API_USERNAME                          \
     --http       $API_HTTP_ENDPOINT                     \
     --wss        $API_WSS_ENDPOINT                      \
-    --ws         $API_WS_ENDPOINT                       \
                  $OPTIONAL_ARGUMENTS "$@"           ;   #
   do                                                # K #
     echo K crashed with exit code $?.. Respawning.. ;   #

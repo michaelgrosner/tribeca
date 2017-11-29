@@ -4,27 +4,26 @@ CARCH    = x86_64-linux-gnu arm-linux-gnueabihf aarch64-linux-gnu
 KLOCAL   = build-$(CHOST)/local
 CXX      = $(CHOST)-g++-6
 CC       = $(CHOST)-gcc-6
-KGIT     = 3.0
-KHUB     = 6704776
+KGIT     = 4.0
+KHUB     = 8656597
 V_ZLIB  := 1.2.11
 V_SSL   := 1.1.0f
 V_CURL  := 7.55.1
 V_NCUR  := 6.0
 V_JSON  := v2.1.1
 V_UWS   := 0.14.4
-V_UV    := 1.15.0
 V_SQL   := 3200100
 V_QF    := v.1.14.4
-KZIP     = a20ae85a275121c0fddfdd04f4c0ee8afba6b972
+V_PVS   := 6.19.23789.1731
+KZIP     = 6c518b7e87819d8d0faf7e49738d69ed107664cc
 KARGS    = -Wextra -std=c++11 -O3 -I$(KLOCAL)/include          \
-  src/server/K.cxx -pthread -rdynamic -DUSE_LIBUV              \
+  src/server/K.cxx -pthread -rdynamic -DUWS_THREADSAFE         \
   -DK_STAMP='"$(shell date --rfc-3339=seconds | cut -f1 -d+)"' \
   -DK_BUILD='"$(CHOST)"'     $(KLOCAL)/include/uWS/*.cpp       \
   $(KLOCAL)/lib/K-$(CHOST).a $(KLOCAL)/lib/libquickfix.a       \
   $(KLOCAL)/lib/libsqlite3.a $(KLOCAL)/lib/libz.a              \
   $(KLOCAL)/lib/libcurl.a    $(KLOCAL)/lib/libssl.a            \
-  $(KLOCAL)/lib/libcrypto.a  $(KLOCAL)/lib/libncurses.a        \
-  $(KLOCAL)/lib/libuv.a      -ldl
+  $(KLOCAL)/lib/libcrypto.a  $(KLOCAL)/lib/libncurses.a -ldl
 
 all: K
 
@@ -66,9 +65,9 @@ help:
 	#  make travis       - provide travis dev box      #
 	#                                                  #
 	#  make build        - download K src precompiled  #
+	#  make pvs          - download pvs src files      #
 	#  make zlib         - download zlib src files     #
 	#  make curl         - download curl src files     #
-	#  make libuv        - download libuv src files    #
 	#  make ncurses      - download ncurses src files  #
 	#  make sqlite       - download sqlite src files   #
 	#  make openssl      - download openssl src files  #
@@ -96,7 +95,7 @@ ifdef KALL
 	unset KALL && echo -n $(CARCH) | xargs -I % -d ' ' $(MAKE) CHOST=% $@
 else
 	mkdir -p build-$(CHOST)
-	CHOST=$(CHOST) $(MAKE) zlib openssl curl sqlite ncurses libuv json uws quickfix
+	CHOST=$(CHOST) $(MAKE) zlib openssl curl sqlite ncurses json uws quickfix
 	test -f /sbin/ldconfig && sudo ldconfig || :
 endif
 
@@ -148,12 +147,6 @@ ncurses: build-$(CHOST)
 	--prefix=$(PWD)/$(KLOCAL) --with-fallbacks=linux,screen,vt100,xterm,xterm-256color,putty-256color     \
 	&& make && make install                                                                               )
 
-libuv: build-$(CHOST)
-	test -d build-$(CHOST)/libuv-$(V_UV) || (                                                   \
-	curl -L https://github.com/libuv/libuv/archive/v$(V_UV).tar.gz | tar xz -C build-$(CHOST)   \
-	&& cd build-$(CHOST)/libuv-$(V_UV) && sh autogen.sh && CC=$(CC) ./configure --host=$(CHOST) \
-	--prefix=$(PWD)/$(KLOCAL) && make && make install                                           )
-
 json: build-$(CHOST)
 	test -f $(KLOCAL)/include/json.h || (mkdir -p $(KLOCAL)/include                  \
 	&& curl -L https://github.com/nlohmann/json/releases/download/$(V_JSON)/json.hpp \
@@ -169,6 +162,12 @@ quickfix: build-$(CHOST)
 	&& CXX=$(CXX) ./configure --prefix=$(PWD)/$(KLOCAL) --enable-shared=no --enable-static=yes     \
 	--host=$(CHOST) && cd UnitTest++ && CXX=$(CXX) make libUnitTest++.a                            \
 	&& cd ../src && CXX=$(CXX) make && make install                                                )
+
+pvs:
+	test -d build-$(CHOST)/pvs-studio-$(V_PVS)-x86_64 || (                     \
+	curl -L http://files.viva64.com/pvs-studio-$(V_PVS)-x86_64.tgz             \
+	| tar xz -C build-$(CHOST) && cd build-$(CHOST)/pvs-studio-$(V_PVS)-x86_64 \
+	&& chmod +x install.sh && sudo ./install.sh                                )
 
 build:
 	curl -L https://github.com/ctubio/Krypto-trading-bot/releases/download/$(KGIT)/$(KZIP)-$(CHOST).tar.gz \
@@ -187,7 +186,7 @@ cleandb: /data/db/K*
 packages:
 	test -n "`command -v apt-get`" && sudo apt-get -y install g++ build-essential automake autoconf libtool libxml2 libxml2-dev zlib1g-dev openssl stunnel python curl gzip imagemagick screen \
 	|| (test -n "`command -v yum`" && sudo yum -y install gcc-c++ automake autoconf libtool libxml2 libxml2-devel openssl stunnel python curl gzip ImageMagick screen) \
-	|| (test -n "`command -v brew`" && (xcode-select --install || :) && (brew install automake autoconf libxml2 sqlite openssl zlib libuv stunnel python curl gzip imagemagick || brew upgrade || :)) \
+	|| (test -n "`command -v brew`" && (xcode-select --install || :) && (brew install automake autoconf libxml2 sqlite openssl zlib stunnel python curl gzip imagemagick || brew upgrade || :)) \
  	|| (test -n "`command -v pacman`" && sudo pacman --noconfirm -S --needed base-devel libxml2 zlib sqlite curl libcurl-compat openssl stunnel python gzip imagemagick screen)
 	sudo mkdir -p /data/db/
 	sudo chown $(shell id -u) /data/db
@@ -204,7 +203,7 @@ docker:
 	@$(MAKE) packages
 	mkdir -p app/server
 	@$(MAKE) build link
-	sed -i "/Usage/,+116d" K.sh
+	sed -i "/Usage/,+105d" K.sh
 
 link:
 	cd app && ln -f -s ../$(KLOCAL)/var/www client
@@ -293,9 +292,19 @@ changelog: .git
 
 test: node_modules/.bin/mocha
 	./node_modules/.bin/mocha --timeout 42000 --compilers ts:ts-node/register test/*.ts
+	$(MAKE) test-c
 
 test-cov: node_modules/.bin/ts-node node_modules/istanbul/lib/cli.js node_modules/.bin/_mocha
+	$(MAKE) test-c
 	./node_modules/.bin/ts-node ./node_modules/istanbul/lib/cli.js cover --report lcovonly --dir test/coverage -e .ts ./node_modules/.bin/_mocha -- --timeout 42000 test/*.ts
+
+test-c:
+	@echo "// This is an independent project of an individual developer. Dear PVS-Studio, please check it.\n// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com\n\n" > src/server/K.test.cxx
+	@cat src/server/K.cxx >> src/server/K.test.cxx
+	@pvs-studio-analyzer analyze --exclude-path $(KLOCAL)/include --source-file src/server/K.test.cxx --cl-params -I$(KLOCAL)/include src/server/K.test.cxx && \
+	plog-converter -a GA:1,2 -t tasklist -o report.tasks PVS-Studio.log
+	@cat report.tasks
+	@rm report.tasks PVS-Studio.log src/server/K.test.cxx
 
 send-cov: node_modules/.bin/codacy-coverage node_modules/.bin/istanbul-coveralls
 	cd test && cat coverage/lcov.info | ./node_modules/.bin/codacy-coverage && ./node_modules/.bin/istanbul-coveralls
@@ -307,6 +316,8 @@ travis:
 	sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-6 50
 	sudo apt-get install g++-6
 	sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-6 50
+	mkdir -p $(KLOCAL)
+	$(MAKE) dist pvs
 	npm install
 
 png: etc/${PNG}.png etc/${PNG}.json
@@ -342,4 +353,4 @@ md5: src
 asandwich:
 	@test `whoami` = 'root' && echo OK || echo make it yourself!
 
-.PHONY: K dist link Linux Darwin build zlib openssl curl ncurses libuv quickfix uws json clean cleandb list screen start stop restart startall stopall restartall gdax packages install docker travis reinstall client www bundle diff latest changelog test test-cov send-cov png png-check release md5 asandwich
+.PHONY: K dist link Linux Darwin build zlib openssl curl ncurses quickfix uws json pvs clean cleandb list screen start stop restart startall stopall restartall gdax packages install docker travis reinstall client www bundle diff latest changelog test test-cov send-cov png png-check release md5 asandwich

@@ -530,3 +530,5 @@ h4{margin:4px 0px!important;}
 .highcharts-xaxis-labels text {color:yellow!important;fill:yellow!important;}
 .table.marketQuoting>thead>tr>td,.table.marketQuoting>tbody>tr>td,.table.marketQuoting>tfoot>tr>td{background-color:#161617;}
 .COINWIDGET_ADDRESS input {color:black;}
+.exchange a {font-size:11px!important;}
+.exchange div {line-height:11px;}
