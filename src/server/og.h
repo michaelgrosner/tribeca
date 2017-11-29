@@ -232,7 +232,7 @@ namespace K {
           o.time,
           val, 0, 0, 0, 0, 0, fee, false
         );
-        FN::log(trade, ((CF*)config)->argExchange);
+        FN::log(trade, gw->name);
         ((EV*)events)->ogTrade(trade);
         if (qp->_matchPings) {
           double widthPong = qp->widthPercentage

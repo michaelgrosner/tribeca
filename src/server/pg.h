@@ -8,8 +8,6 @@ namespace K {
       map<double, mTrade> buys;
       map<double, mTrade> sells;
       map<string, mWallet> balance;
-      mutex profitMutex/*,
-            balanceMutex*/;
       unsigned long profitT_21s = 0;
       string sideAPR_ = "!=";
     public:
@@ -78,25 +76,25 @@ namespace K {
       void calcTargetBasePos() {
         if (empty()) { FN::logWar("QE", "Unable to calculate TBP, missing market data."); return; }
         pgMutex.lock();
-        double value = position.value;
+        double baseValue = position.baseValue;
         pgMutex.unlock();
         double next = qp->autoPositionMode == mAutoPositionMode::Manual
           ? (qp->percentageValues
-            ? qp->targetBasePositionPercentage * value / 1e+2
+            ? qp->targetBasePositionPercentage * baseValue / 1e+2
             : qp->targetBasePosition)
-          : ((1 + ((MG*)market)->targetPosition) / 2) * value;
+          : ((1 + ((MG*)market)->targetPosition) / 2) * baseValue;
         if (targetBasePosition and abs(targetBasePosition - next) < 1e-4 and sideAPR_ == sideAPR) return;
         targetBasePosition = next;
         sideAPR_ = sideAPR;
-        calcPDiv(value);
+        calcPDiv(baseValue);
         ((EV*)events)->pgTargetBasePosition();
         json k = {{"tbp", targetBasePosition}, {"sideAPR", sideAPR}, {"pDiv", positionDivergence }};
         ((UI*)client)->send(uiTXT::TargetBasePosition, k, true);
         ((DB*)memory)->insert(uiTXT::TargetBasePosition, k);
         stringstream ss;
-        ss << (int)(targetBasePosition / value * 1e+2) << "% = " << setprecision(8) << fixed << targetBasePosition;
+        ss << (int)(targetBasePosition / baseValue * 1e+2) << "% = " << setprecision(8) << fixed << targetBasePosition;
         stringstream ss_;
-        ss_ << (int)(positionDivergence  / value * 1e+2) << "% = " << setprecision(8) << fixed << positionDivergence ;
+        ss_ << (int)(positionDivergence  / baseValue * 1e+2) << "% = " << setprecision(8) << fixed << positionDivergence ;
         FN::log("PG", string("TBP: ") + ss.str() + " " + gw->base + ", pDiv: " + ss_.str() + " " + gw->base);
       };
       void addTrade(mTrade k) {
@@ -106,7 +104,7 @@ namespace K {
       };
       bool empty() {
         lock_guard<mutex> lock(pgMutex);
-        return !position.value;
+        return !position.baseValue;
       };
     private:
       function<json()> helloPosition = [&]() {
@@ -122,15 +120,15 @@ namespace K {
       };
       mSafety nextSafety() {
         pgMutex.lock();
-        double value          = position.value,
+        double baseValue      = position.baseValue,
                baseAmount     = position.baseAmount,
                baseHeldAmount = position.baseHeldAmount;
         pgMutex.unlock();
         double buySize = qp->percentageValues
-          ? qp->buySizePercentage * value / 100
+          ? qp->buySizePercentage * baseValue / 100
           : qp->buySize;
         double sellSize = qp->percentageValues
-          ? qp->sellSizePercentage * value / 100
+          ? qp->sellSizePercentage * baseValue / 100
           : qp->sellSize;
         double totalBasePosition = baseAmount + baseHeldAmount;
         map<double, mTrade> tradesBuy;
@@ -244,36 +242,27 @@ namespace K {
         return sum;
       };
       void calcWallet(mWallet k) {
-        // balanceMutex.lock();
         if (k.currency!="") balance[k.currency] = k;
-        if (!((MG*)market)->fairValue or balance.find(gw->base) == balance.end() or balance.find(gw->quote) == balance.end()) {
-          // balanceMutex.unlock();
-          return;
-        }
-        mWallet baseWallet = balance[gw->base];
-        mWallet quoteWallet = balance[gw->quote];
-        // balanceMutex.unlock();
-        double baseValue = baseWallet.amount + quoteWallet.amount / ((MG*)market)->fairValue + baseWallet.held + quoteWallet.held / ((MG*)market)->fairValue;
-        double quoteValue = baseWallet.amount * ((MG*)market)->fairValue + quoteWallet.amount + baseWallet.held * ((MG*)market)->fairValue + quoteWallet.held;
-        double profitBase = 0;
-        double profitQuote = 0;
-        calcProfit(&profitBase, &profitQuote, baseValue, quoteValue);
+        if (!((MG*)market)->fairValue or balance.find(gw->base) == balance.end() or balance.find(gw->quote) == balance.end()) return;
+        pgMutex.lock();
         mPosition pos(
-          baseWallet.amount,
-          quoteWallet.amount,
-          baseWallet.held,
-          quoteWallet.held,
-          baseValue,
-          quoteValue,
-          profitBase,
-          profitQuote,
+          balance[gw->base].amount,
+          balance[gw->quote].amount,
+          balance[gw->base].held,
+          balance[gw->quote].held,
+          balance[gw->base].amount + balance[gw->quote].amount / ((MG*)market)->fairValue + balance[gw->base].held + balance[gw->quote].held / ((MG*)market)->fairValue,
+          balance[gw->base].amount * ((MG*)market)->fairValue + balance[gw->quote].amount + balance[gw->base].held * ((MG*)market)->fairValue + balance[gw->quote].held,
+          position.profitBase,
+          position.profitQuote,
           mPair(gw->base, gw->quote),
           gw->exchange
         );
+        calcProfit(&pos);
+        pgMutex.unlock();
         bool eq = true;
         if (!empty()) {
           pgMutex.lock();
-          eq = abs(pos.value - position.value) < 2e-6;
+          eq = abs(pos.baseValue - position.baseValue) < 2e-6;
           if(eq
             and abs(pos.quoteValue - position.quoteValue) < 2e-2
             and abs(pos.baseAmount - position.baseAmount) < 2e-6
@@ -307,15 +296,15 @@ namespace K {
         }
         calcWallet(mWallet(amount, heldAmount, k.side == mSide::Ask ? k.pair.base : k.pair.quote));
       };
-      void calcPDiv(double value) {
+      void calcPDiv(double baseValue) {
         double pDiv = qp->percentageValues
-            ? qp->positionDivergencePercentage * value / 1e+2
+            ? qp->positionDivergencePercentage * baseValue / 1e+2
             : qp->positionDivergence;
         if (qp->autoPositionMode == mAutoPositionMode::Manual or mPDivMode::Manual == qp->positionDivergenceMode) positionDivergence = pDiv;
         else {
-          double divCenter = 1 - abs((targetBasePosition / value * 2) - 1);
+          double divCenter = 1 - abs((targetBasePosition / baseValue * 2) - 1);
           double pDivMin = qp->percentageValues
-            ? qp->positionDivergencePercentageMin * value / 1e+2
+            ? qp->positionDivergencePercentageMin * baseValue / 1e+2
             : qp->positionDivergenceMin;
           if (mPDivMode::Linear == qp->positionDivergenceMode) positionDivergence = pDivMin + (divCenter * (pDiv - pDivMin));
           else if (mPDivMode::Sine == qp->positionDivergenceMode) positionDivergence = pDivMin + (sin(divCenter*M_PI_2) * (pDiv - pDivMin));
@@ -323,21 +312,19 @@ namespace K {
           else if (mPDivMode::Switch == qp->positionDivergenceMode) positionDivergence = divCenter < 1e-1 ? pDivMin : pDiv;
         }
       }
-      void calcProfit(double *profitBase, double *profitQuote, double baseValue, double quoteValue) {
+      void calcProfit(mPosition *k) {
         unsigned long now = FN::T();
         if (profitT_21s<=3) ++profitT_21s;
-        else if (baseValue and quoteValue and profitT_21s+21e+3 < now) {
+        else if (k->baseValue and k->quoteValue and profitT_21s+21e+3 < now) {
           profitT_21s = now;
-          mProfit profit(baseValue, quoteValue, now);
+          mProfit profit(k->baseValue, k->quoteValue, now);
           ((DB*)memory)->insert(uiTXT::Position, profit, false, "NULL", now - (qp->profitHourInterval * 36e+5));
-          profitMutex.lock();
           profits.push_back(profit);
           for (vector<mProfit>::iterator it = profits.begin(); it != profits.end();)
             if (it->time + (qp->profitHourInterval * 36e+5) > now) ++it;
             else it = profits.erase(it);
-          *profitBase = ((baseValue - profits.begin()->baseValue) / baseValue) * 1e+2;
-          *profitQuote = ((quoteValue - profits.begin()->quoteValue) / quoteValue) * 1e+2;
-          profitMutex.unlock();
+          k->profitBase = ((k->baseValue - profits.begin()->baseValue) / k->baseValue) * 1e+2;
+          k->profitQuote = ((k->quoteValue - profits.begin()->quoteValue) / k->quoteValue) * 1e+2;
         }
       }
   };
