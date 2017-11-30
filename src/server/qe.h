@@ -387,7 +387,7 @@ namespace K {
               blockStatus = 1;
               ((MG*)market)->mgPingAt += " | Block enabled";
               if(qp->keepHighs){
-                rawQuote->ask.price = fmax(rawQuote->ask.price, ((MG*)market)->mgEwmaSU + poW * qp->highsFactor);
+                rawQuote->ask.price = fmax(rawQuote->ask.price, ((MG*)market)->mgEwmaSU + *piW * qp->highsFactor);
                 ((MG*)market)->mgPingAt += " | Keep highs";
               }
               else{
@@ -425,7 +425,7 @@ namespace K {
               blockStatus = -1;
               ((MG*)market)->mgPingAt += " | Block enabled";
               if(qp->keepHighs){
-                rawQuote->bid.price = fmin(rawQuote->bid.price, ((MG*)market)->mgEwmaSU - poW * qp->highsFactor);
+                rawQuote->bid.price = fmin(rawQuote->bid.price, ((MG*)market)->mgEwmaSU - *piW * qp->highsFactor);
                 ((MG*)market)->mgPingAt += " | Keep highs";
               }
               else{
@@ -468,13 +468,13 @@ namespace K {
         //
         if(blockStatus < 0 and qp->blockDowntrend)
         {
-          if(blockAllBids){
+          if(blockAllBids and !qp->keepHighs){
             bidStatus = mQuoteState::DownTrendHeld;
             rawQuote->bid.price = 0;
             rawQuote->bid.size = 0;
             ((MG*)market)->mgPingAt += " | Blocking Bids";
           }
-          if(blockAllAsks){
+          if(blockAllAsks and !qp->glueToSMU){
             askStatus = mQuoteState::DownTrendHeld;
             rawQuote->ask.price = 0;
             rawQuote->ask.size = 0;
@@ -484,13 +484,13 @@ namespace K {
         //
         else if(blockStatus > 0 and qp->blockUptrend)
         {
-          if(blockAllBids){
+          if(blockAllBids and !qp->glueToSMU){
             bidStatus = mQuoteState::UpTrendHeld;
             rawQuote->bid.price = 0;
             rawQuote->bid.size = 0;
             ((MG*)market)->mgPingAt += " | Blocking Bids";
           }
-          if(blockAllAsks){
+          if(blockAllAsks and !qp->keepHighs){
             askStatus = mQuoteState::UpTrendHeld;
             rawQuote->ask.price = 0;
             rawQuote->ask.size = 0;
