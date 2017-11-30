@@ -112,7 +112,7 @@ namespace K {
         fairValue = FN::roundNearest(
           qp->fvModel == mFairValueModel::BBO
             ? (topAskPrice + topBidPrice) / 2
-            : (topAskPrice * topAskSize + topBidPrice * topBidSize) / (topAskSize + topBidSize),
+            : (topAskPrice * topBidSize + topBidPrice * topAskSize) / (topAskSize + topBidSize),
           gw->minTick
         );
         if (!fairValue or (fairValue_ and abs(fairValue - fairValue_) < gw->minTick)) return;
@@ -153,7 +153,7 @@ namespace K {
       void stdevPUp() {
         if (empty()) return;
         double topBid = levels.bids.begin()->price;
-        double topAsk = levels.bids.begin()->price;
+        double topAsk = levels.asks.begin()->price;
         if (!topBid or !topAsk) return;
         mgStatFV.push_back(fairValue);
         mgStatBid.push_back(topBid);
