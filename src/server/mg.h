@@ -298,9 +298,9 @@ namespace K {
         } else if (qp->autoPositionMode == mAutoPositionMode::EWMA_LS)
           newTargetPosition = ((mgEwmaS * 100/ mgEwmaL) - 100) * (1 / qp->ewmaSensiblityPercentage);
         else if (qp->autoPositionMode == mAutoPositionMode::EWMA_4) {
-          if (mgEwmaS < mgEwmaM)
+          if (mgEwmaL < mgEwmaVL)
             newTargetPosition = -1;
-          else newTargetPosition = ((mgEwmaL * 100/ mgEwmaVL) - 100) * (1 / qp->ewmaSensiblityPercentage);
+          else newTargetPosition = ((mgEwmaS * 100/ mgEwmaM) - 100) * (1 / qp->ewmaSensiblityPercentage);
       	}
         if (newTargetPosition > 1) newTargetPosition = 1;
         else if (newTargetPosition < -1) newTargetPosition = -1;
