@@ -151,7 +151,7 @@ In the web UI, there are three rows of panels with cryptic looking names and edi
 
   * `EWMA_LMS` - **Krypto-trading-bot** will use a `long` minute, `medium` minute and `short` minute exponential weighted moving average calculation, together with the simple moving average of the last 3 `fair value` values, to buy up BTC when the `short` minute line crosses over the `long` minute line, and sell BTC when the reverse happens.
   
-  * `EWMA_4` - **Krypto-trading-bot** will use a `verylong` minute and `long` minute EWMA calculation to buy when the `long` minute line crosses over the `verylong` minute line, and sell when the reverse happens. Additionally sets the `tbp` to 0% if the `medium` EWMA minute line crosses over the `short` EWMA minute line.
+  * `EWMA_4` - **Krypto-trading-bot** will use a `medium` minute and `small` minute EWMA calculation to buy when the `small` minute line crosses over the `medium` minute line, and sell when the reverse happens. Additionally sets the `tbp` to 0% if the `verylong` EWMA minute line crosses over the `long` EWMA minute line.
   
 * `verylong` - Only used when `apMode` is `EWMA_4`. Sets the periods of EWMA VeryLong to automatically manage positions.
 
