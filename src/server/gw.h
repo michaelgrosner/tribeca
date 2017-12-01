@@ -108,37 +108,38 @@ namespace K {
         ((QE*)engine)->gwConnectExchange = gwConnectExchange;
       };
       void handshake(mExchange e) {
+        json reply;
         if (e == mExchange::Coinbase) {
           FN::stunnel();
           gw->randId = FN::uuidId;
           gw->symbol = FN::S2u(string(gw->base) + "-" + gw->quote);
-          json k = FN::wJet(string(gw->http) + "/products/" + gw->symbol);
-          gw->minTick = stod(k.value("quote_increment", "0"));
-          gw->minSize = stod(k.value("base_min_size", "0"));
+          reply = FN::wJet(string(gw->http) + "/products/" + gw->symbol);
+          gw->minTick = stod(reply.value("quote_increment", "0"));
+          gw->minSize = stod(reply.value("base_min_size", "0"));
         }
         else if (e == mExchange::HitBtc) {
           gw->randId = FN::charId;
           gw->symbol = FN::S2u(string(gw->base) + gw->quote);
-          json k = FN::wJet(string(gw->http) + "/public/symbol/" + gw->symbol);
-          gw->minTick = stod(k.value("tickSize", "0"));
-          gw->minSize = stod(k.value("quantityIncrement", "0"));
+          reply = FN::wJet(string(gw->http) + "/public/symbol/" + gw->symbol);
+          gw->minTick = stod(reply.value("tickSize", "0"));
+          gw->minSize = stod(reply.value("quantityIncrement", "0"));
         }
         else if (e == mExchange::Bitfinex) {
           gw->randId = FN::int64Id;
           gw->symbol = FN::S2l(string(gw->base) + gw->quote);
-          json k = FN::wJet(string(gw->http) + "/pubticker/" + gw->symbol);
-          if (k.find("last_price") != k.end()) {
+          reply = FN::wJet(string(gw->http) + "/pubticker/" + gw->symbol);
+          if (reply.find("last_price") != reply.end()) {
             stringstream price_;
-            price_ << scientific << stod(k.value("last_price", "0"));
+            price_ << scientific << stod(reply.value("last_price", "0"));
             string _price_ = price_.str();
             for (string::iterator it=_price_.begin(); it!=_price_.end();)
               if (*it == '+' or *it == '-') break; else it = _price_.erase(it);
             stringstream os(string("1e").append(to_string(fmax(stod(_price_),-4)-4)));
             os >> gw->minTick;
           }
-          k = FN::wJet(string(gw->http) + "/symbols_details");
-          if (k.is_array())
-            for (json::iterator it=k.begin(); it!=k.end();++it)
+          reply = FN::wJet(string(gw->http) + "/symbols_details");
+          if (reply.is_array())
+            for (json::iterator it=reply.begin(); it!=reply.end();++it)
               if (it->find("pair") != it->end() and it->value("pair", "") == gw->symbol)
                 gw->minSize = stod(it->value("minimum_order_size", "0"));
         }
@@ -151,18 +152,18 @@ namespace K {
         else if (e == mExchange::Korbit) {
           gw->randId = FN::int64Id;
           gw->symbol = FN::S2l(string(gw->base) + "_" + gw->quote);
-          json k = FN::wJet(string(gw->http) + "/constants");
-          if (k.find(gw->symbol.substr(0,3).append("TickSize")) != k.end()) {
-            gw->minTick = k.value(gw->symbol.substr(0,3).append("TickSize"), 0.0);
+          reply = FN::wJet(string(gw->http) + "/constants");
+          if (reply.find(gw->symbol.substr(0,3).append("TickSize")) != reply.end()) {
+            gw->minTick = reply.value(gw->symbol.substr(0,3).append("TickSize"), 0.0);
             gw->minSize = 0.015;
           }
         }
         else if (e == mExchange::Poloniex) {
           gw->randId = FN::int64Id;
           gw->symbol = FN::FN::S2u(string(gw->base) + "_" + gw->quote);
-          json k = FN::wJet(string(gw->http) + "/public?command=returnTicker");
-          if (k.find(gw->symbol) != k.end()) {
-            istringstream os(string("1e-").append(to_string(6-k[gw->symbol]["last"].get<string>().find("."))));
+          reply = FN::wJet(string(gw->http) + "/public?command=returnTicker");
+          if (reply.find(gw->symbol) != reply.end()) {
+            istringstream os(string("1e-").append(to_string(6-reply[gw->symbol]["last"].get<string>().find("."))));
             os >> gw->minTick;
             gw->minSize = 0.01;
           }
@@ -184,7 +185,7 @@ namespace K {
             << "- makeFee: " << gw->makeFee << '\n'
             << "- takeFee: " << gw->takeFee;
           FN::log(string("GW ") + gw->name + ":", ss.str());
-        } else FN::logExit("CF", "Unable to fetch data from " + gw->name + " symbol \"" + gw->symbol + "\"", EXIT_FAILURE);
+        } else FN::logExit("CF", "Unable to fetch data from " + gw->name + " symbol \"" + gw->symbol + "\", possible error message: " + reply.dump(), EXIT_FAILURE);
       };
   };
 }
