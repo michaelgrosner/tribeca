@@ -93,6 +93,7 @@ export class EWMAChart {
                 public ewmaShort: number,
                 public ewmaMedium: number,
                 public ewmaLong: number,
+                public ewmaVeryLong: number,
                 public fairValue: number) {}
 }
 
@@ -176,7 +177,7 @@ export class CurrencyPair {
 export enum QuotingMode { Top, Mid, Join, InverseJoin, InverseTop, HamelinRat, Depth }
 export enum QuotingSafety { Off, PingPong, Boomerang, AK47 }
 export enum FairValueModel { BBO, wBBO }
-export enum AutoPositionMode { Manual, EWMA_LS, EWMA_LMS }
+export enum AutoPositionMode { Manual, EWMA_LS, EWMA_LMS, EWMA_4 }
 export enum DynamicPDivMode { Manual, Linear, Sine, SQRT, Switch }
 export enum PingAt { BothSides, BidSide, AskSide, DepletedSide, DepletedBidSide, DepletedAskSide, StopPings }
 export enum PongAt { ShortPingFair, LongPingFair, ShortPingAggressive, LongPingAggressive }
@@ -224,6 +225,7 @@ export interface QuotingParameters {
     range?: number;
     rangePercentage?: number;
     ewmaSensiblityPercentage?: number;
+    veryLongEwmaPeriods?: number;
     longEwmaPeriods?: number;
     mediumEwmaPeriods?: number;
     shortEwmaPeriods?: number;
