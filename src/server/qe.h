@@ -516,7 +516,7 @@ namespace K {
         if (!k) return start(side, q, isPong);
         unsigned long T = FN::T();
         for (multimap<double, mOrder>::iterator it = ordersSide.begin(); it != ordersSide.end(); ++it)
-          if (it->first == q.price) { return; }
+          if (it->first == q.price) return;
           else if (it->second.orderStatus == mORS::New) {
             if (T-10e+3>it->second.time) ((OG*)broker)->cleanOrder(it->second.orderId, it->second.exchangeId);
             if (qp->safety != mQuotingSafety::AK47 or (int)k >= qp->bullets) return;
@@ -556,12 +556,14 @@ namespace K {
       void stopAllQuotes(mSide side) {
         multimap<double, mOrder> ordersSide = ((OG*)broker)->ordersAtSide(side);
         for (multimap<double, mOrder>::iterator it = ordersSide.begin(); it != ordersSide.end(); ++it)
-          ((OG*)broker)->cancelOrder(it->second.orderId);
+          if (it->second.orderStatus != mORS::New)
+            ((OG*)broker)->cancelOrder(it->second.orderId);
       };
       void stopAllQuotes() {
         map<string, mOrder> orders = ((OG*)broker)->ordersBothSides();
         for (map<string, mOrder>::iterator it = orders.begin(); it != orders.end(); ++it)
-          ((OG*)broker)->cancelOrder(it->second.orderId);
+          if (it->second.orderStatus != mORS::New)
+            ((OG*)broker)->cancelOrder(it->second.orderId);
       };
       function<void(string,mQuote)> debuq = [&](string k, mQuote rawQuote) {
         debug(string("quote") + k + " " + to_string((int)bidStatus) + " " + to_string((int)askStatus) + " " + ((json)rawQuote).dump());

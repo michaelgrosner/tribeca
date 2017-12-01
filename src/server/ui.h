@@ -51,11 +51,11 @@ namespace K {
             document = "HTTP/1.1 200 OK\r\nConnection: keep-alive\r\nAccept-Ranges: bytes\r\nVary: Accept-Encoding\r\nCache-Control: public, max-age=0\r\n";
             document += "Content-Encoding: gzip\r\nContent-Length: " + to_string(content.str().length()) + "\r\n\r\n" + content.str();
             res->write(document.data(), document.length());
-          } else if (B64auth != "" && auth == "") {
+          } else if (B64auth != "" and auth == "") {
             FN::log("UI", "authorization attempt from", addr);
             document = "HTTP/1.1 401 Unauthorized\r\nWWW-Authenticate: Basic realm=\"Basic Authorization\"\r\nConnection: keep-alive\r\nAccept-Ranges: bytes\r\nVary: Accept-Encoding\r\nContent-Type:text/plain; charset=UTF-8\r\nContent-Length: 0\r\n\r\n";
             res->write(document.data(), document.length());
-          } else if (B64auth != "" && auth != B64auth) {
+          } else if (B64auth != "" and auth != B64auth) {
             FN::log("UI", "authorization failed from", addr);
             document = "HTTP/1.1 403 Forbidden\r\nConnection: keep-alive\r\nAccept-Ranges: bytes\r\nVary: Accept-Encoding\r\nContent-Type:text/plain; charset=UTF-8\r\nContent-Length: 0\r\n\r\n";
             res->write(document.data(), document.length());

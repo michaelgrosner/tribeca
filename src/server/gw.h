@@ -111,22 +111,22 @@ namespace K {
         if (e == mExchange::Coinbase) {
           FN::stunnel();
           gw->randId = FN::uuidId;
-          gw->symbol = FN::S2u(string(gw->base).append("-").append(gw->quote));
-          json k = FN::wJet(string(gw->http).append("/products/").append(gw->symbol));
+          gw->symbol = FN::S2u(string(gw->base) + "-" + gw->quote);
+          json k = FN::wJet(string(gw->http) + "/products/" + gw->symbol);
           gw->minTick = stod(k.value("quote_increment", "0"));
           gw->minSize = stod(k.value("base_min_size", "0"));
         }
         else if (e == mExchange::HitBtc) {
           gw->randId = FN::charId;
-          gw->symbol = FN::S2u(string(gw->base).append(gw->quote));
-          json k = FN::wJet(string(gw->http).append("/public/symbol/").append(gw->symbol));
+          gw->symbol = FN::S2u(string(gw->base) + gw->quote);
+          json k = FN::wJet(string(gw->http) + "/public/symbol/" + gw->symbol);
           gw->minTick = stod(k.value("tickSize", "0"));
           gw->minSize = stod(k.value("quantityIncrement", "0"));
         }
         else if (e == mExchange::Bitfinex) {
           gw->randId = FN::int64Id;
-          gw->symbol = FN::S2l(string(gw->base).append(gw->quote));
-          json k = FN::wJet(string(gw->http).append("/pubticker/").append(gw->symbol));
+          gw->symbol = FN::S2l(string(gw->base) + gw->quote);
+          json k = FN::wJet(string(gw->http) + "/pubticker/" + gw->symbol);
           if (k.find("last_price") != k.end()) {
             stringstream price_;
             price_ << scientific << stod(k.value("last_price", "0"));
@@ -136,7 +136,7 @@ namespace K {
             stringstream os(string("1e").append(to_string(fmax(stod(_price_),-4)-4)));
             os >> gw->minTick;
           }
-          k = FN::wJet(string(gw->http).append("/symbols_details"));
+          k = FN::wJet(string(gw->http) + "/symbols_details");
           if (k.is_array())
             for (json::iterator it=k.begin(); it!=k.end();++it)
               if (it->find("pair") != it->end() and it->value("pair", "") == gw->symbol)
@@ -144,14 +144,14 @@ namespace K {
         }
         else if (e == mExchange::OkCoin) {
           gw->randId = FN::charId;
-          gw->symbol = FN::S2l(string(gw->base).append("_").append(gw->quote));
+          gw->symbol = FN::S2l(string(gw->base) + "_" + gw->quote);
           gw->minTick = "btc" == gw->symbol.substr(0,3) ? 0.01 : 0.001;
           gw->minSize = 0.01;
         }
         else if (e == mExchange::Korbit) {
           gw->randId = FN::int64Id;
-          gw->symbol = FN::S2l(string(gw->base).append("_").append(gw->quote));
-          json k = FN::wJet(string(gw->http).append("/constants"));
+          gw->symbol = FN::S2l(string(gw->base) + "_" + gw->quote);
+          json k = FN::wJet(string(gw->http) + "/constants");
           if (k.find(gw->symbol.substr(0,3).append("TickSize")) != k.end()) {
             gw->minTick = k.value(gw->symbol.substr(0,3).append("TickSize"), 0.0);
             gw->minSize = 0.015;
@@ -159,8 +159,8 @@ namespace K {
         }
         else if (e == mExchange::Poloniex) {
           gw->randId = FN::int64Id;
-          gw->symbol = FN::FN::S2u(string(gw->base).append("_").append(gw->quote));
-          json k = FN::wJet(string(gw->http).append("/public?command=returnTicker"));
+          gw->symbol = FN::FN::S2u(string(gw->base) + "_" + gw->quote);
+          json k = FN::wJet(string(gw->http) + "/public?command=returnTicker");
           if (k.find(gw->symbol) != k.end()) {
             istringstream os(string("1e-").append(to_string(6-k[gw->symbol]["last"].get<string>().find("."))));
             os >> gw->minTick;
@@ -169,7 +169,7 @@ namespace K {
         }
         else if (e == mExchange::Null) {
           gw->randId = FN::int64Id;
-          gw->symbol = FN::FN::S2u(string(gw->base).append("_").append(gw->quote));
+          gw->symbol = FN::FN::S2u(string(gw->base) + "_" + gw->quote);
           gw->minTick = 0.01;
           gw->minSize = 0.01;
         }

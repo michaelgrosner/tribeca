@@ -47,8 +47,7 @@ namespace K {
       };
       void cancelOrder(string k) {
         map<string, mOrder> orders = ordersBothSides();
-        if (orders.find(k) == orders.end() or (orders[k].exchangeId == ""))
-          return;
+        if (orders.find(k) == orders.end() or orders[k].exchangeId == "") return;
         mOrder o = orders[k];
         debug(string("cancel ") + (o.side == mSide::Bid ? "BID id " : "ASK id ") + o.orderId + "::" + o.exchangeId);
         gw->cancel(o.orderId, o.exchangeId, o.side, o.time);
