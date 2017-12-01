@@ -212,8 +212,9 @@ link:
 	$(MAKE) gdax -s
 
 reinstall: src
+	test -d .git && ((test -n "`git diff`" && (echo && echo !!Local changes will be lost!! press now CTRL-C to stop. && echo && sleep 4) || :) \
+	&& git fetch && git merge FETCH_HEAD || (git reset FETCH_HEAD && git checkout .)) || curl https://raw.githubusercontent.com/ctubio/Krypto-trading-bot/master/Makefile > Makefile
 	rm -rf app
-	test -d .git && (git fetch && git merge FETCH_HEAD) || curl https://raw.githubusercontent.com/ctubio/Krypto-trading-bot/master/Makefile > Makefile
 	@$(MAKE) install
 	#@$(MAKE) test -s
 	@$(MAKE) restartall
