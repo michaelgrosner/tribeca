@@ -5,6 +5,7 @@ namespace K {
   class MG: public Klass {
     private:
       vector<mTrade> trades;
+      double mgEwmaVL = 0;
       double mgEwmaL = 0;
       double mgEwmaM = 0;
       double mgEwmaS = 0;
@@ -46,12 +47,15 @@ namespace K {
           calcStdev();
         }
         FN::log("DB", string("loaded ") + to_string(mgStatFV.size()) + " STDEV Periods");
+        if (((CF*)config)->argEwmaVeryLong) mgEwmaVL = ((CF*)config)->argEwmaVeryLong;
         if (((CF*)config)->argEwmaLong) mgEwmaL = ((CF*)config)->argEwmaLong;
         if (((CF*)config)->argEwmaMedium) mgEwmaM = ((CF*)config)->argEwmaMedium;
         if (((CF*)config)->argEwmaShort) mgEwmaS = ((CF*)config)->argEwmaShort;
         k = ((DB*)memory)->load(uiTXT::EWMAChart);
         if (k.size()) {
           k = k.at(0);
+          if (!mgEwmaVL and k.value("time", (unsigned long)0) + qp->veryLongEwmaPeriods * 6e+4 > FN::T())
+            mgEwmaVL = k.value("ewmaVeryLong", 0.0);
           if (!mgEwmaL and k.value("time", (unsigned long)0) + qp->longEwmaPeriods * 6e+4 > FN::T())
             mgEwmaL = k.value("ewmaLong", 0.0);
           if (!mgEwmaM and k.value("time", (unsigned long)0) + qp->mediumEwmaPeriods * 6e+4 > FN::T())
@@ -63,9 +67,10 @@ namespace K {
           if (k.find("mgEwmaSU") != k.end() and k.value("time", (unsigned long)0) + qp->quotingEwmaSUPeriods * 6e+4 > FN::T())
             mgEwmaSU = k.value("mgEwmaSU", 0.0);
         }
-        if (mgEwmaL) FN::log(((CF*)config)->argEwmaLong ? "ARG" : "DB", string("loaded EWMA Long = ") + to_string(mgEwmaL));
-        if (mgEwmaM) FN::log(((CF*)config)->argEwmaMedium ? "ARG" : "DB", string("loaded EWMA Medium = ") + to_string(mgEwmaM));
-        if (mgEwmaS) FN::log(((CF*)config)->argEwmaShort ? "ARG" : "DB", string("loaded EWMA Short = ") + to_string(mgEwmaS));
+        if (mgEwmaVL) FN::log(((CF*)config)->argEwmaVeryLong ? "ARG" : "DB", string("loaded EWMA VeryLong = ") + to_string(mgEwmaVL));
+        if (mgEwmaL)  FN::log(((CF*)config)->argEwmaLong ? "ARG" : "DB", string("loaded EWMA Long = ") + to_string(mgEwmaL));
+        if (mgEwmaM)  FN::log(((CF*)config)->argEwmaMedium ? "ARG" : "DB", string("loaded EWMA Medium = ") + to_string(mgEwmaM));
+        if (mgEwmaS)  FN::log(((CF*)config)->argEwmaShort ? "ARG" : "DB", string("loaded EWMA Short = ") + to_string(mgEwmaS));
         if (mgEwmaSM and mgEwmaSU) FN::log("DB", string("loaded EWMA Trend micro/ultra = ") + to_string(mgEwmaSM) + "/" + to_string(mgEwmaSU));
       };
       void waitData() {
@@ -107,7 +112,7 @@ namespace K {
         fairValue = FN::roundNearest(
           qp->fvModel == mFairValueModel::BBO
             ? (topAskPrice + topBidPrice) / 2
-            : (topAskPrice * topAskSize + topBidPrice * topBidSize) / (topAskSize + topBidSize),
+            : (topAskPrice * topBidSize + topBidPrice * topAskSize) / (topAskSize + topBidSize),
           gw->minTick
         );
         if (!fairValue or (fairValue_ and abs(fairValue - fairValue_) < gw->minTick)) return;
@@ -141,13 +146,14 @@ namespace K {
           {"ewmaShort", mgEwmaS},
           {"ewmaMedium", mgEwmaM},
           {"ewmaLong", mgEwmaL},
+          {"ewmaVeryLong", mgEwmaVL},
           {"fairValue", fairValue}
         }};
       };
       void stdevPUp() {
         if (empty()) return;
         double topBid = levels.bids.begin()->price;
-        double topAsk = levels.bids.begin()->price;
+        double topAsk = levels.asks.begin()->price;
         if (!topBid or !topAsk) return;
         mgStatFV.push_back(fairValue);
         mgStatBid.push_back(topBid);
@@ -177,6 +183,7 @@ namespace K {
         mgT_369ms = FN::T();
       };
       void ewmaUp() {
+	    calcEwma(&mgEwmaVL, qp->veryLongEwmaPeriods);
         calcEwma(&mgEwmaL, qp->longEwmaPeriods);
         calcEwma(&mgEwmaM, qp->mediumEwmaPeriods);
         calcEwma(&mgEwmaS, qp->shortEwmaPeriods);
@@ -198,9 +205,11 @@ namespace K {
           {"ewmaShort", mgEwmaS},
           {"ewmaMedium", mgEwmaM},
           {"ewmaLong", mgEwmaL},
+          {"ewmaVeryLong", mgEwmaVL},
           {"fairValue", fairValue}
         }, true);
         ((DB*)memory)->insert(uiTXT::EWMAChart, {
+	      {"ewmaVeryLong", mgEwmaVL},
           {"ewmaLong", mgEwmaL},
           {"ewmaMedium", mgEwmaM},
           {"ewmaShort", mgEwmaS},
@@ -288,6 +297,11 @@ namespace K {
           newTargetPosition = ((newTrend + newEwmacrossing) / 2) * (1 / qp->ewmaSensiblityPercentage);
         } else if (qp->autoPositionMode == mAutoPositionMode::EWMA_LS)
           newTargetPosition = ((mgEwmaS * 100/ mgEwmaL) - 100) * (1 / qp->ewmaSensiblityPercentage);
+        else if (qp->autoPositionMode == mAutoPositionMode::EWMA_4) {
+          if (mgEwmaL < mgEwmaVL)
+            newTargetPosition = -1;
+          else newTargetPosition = ((mgEwmaS * 100/ mgEwmaM) - 100) * (1 / qp->ewmaSensiblityPercentage);
+      	}
         if (newTargetPosition > 1) newTargetPosition = 1;
         else if (newTargetPosition < -1) newTargetPosition = -1;
         targetPosition = newTargetPosition;
