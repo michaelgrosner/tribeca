@@ -259,7 +259,7 @@ gdax:
 	openssl s_client -showcerts -connect fix.gdax.com:4198 -CApath /etc/ssl/certs < /dev/null \
 	| openssl x509 -outform PEM > etc/sslcert/fix.gdax.com.pem
 
-client: node_modules/.bin/tsc src/client
+client: src/client
 	rm -rf $(KLOCAL)/var
 	mkdir -p $(KLOCAL)/var/www
 	@echo Building client dynamic files..
