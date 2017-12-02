@@ -134,13 +134,15 @@ namespace K {
         map<double, mTrade> tradesBuy;
         map<double, mTrade> tradesSell;
         for (vector<mTrade>::iterator it = ((OG*)broker)->tradesHistory.begin(); it != ((OG*)broker)->tradesHistory.end(); ++it)
-          if (it->side == mSide::Bid)
+          if (it->side == mSide::Bid) {
             tradesBuy[it->price] = *it;
-          else tradesSell[it->price] = *it;
-        if (qp->safety == mQuotingSafety::PingPong) {
-          if (tradesSell.size()) buySize = tradesSell.rbegin()->second.quantity;
-          if (tradesBuy.size()) sellSize = tradesBuy.rbegin()->second.quantity;
-        }
+            if (qp->safety == mQuotingSafety::PingPong)
+              buySize = it->quantity;
+          } else {
+            tradesSell[it->price] = *it;
+            if (qp->safety == mQuotingSafety::PingPong)
+              sellSize = it->quantity;
+          }
         if (qp->buySizeMax and qp->aggressivePositionRebalancing != mAPR::Off)
           buySize = fmax(buySize, targetBasePosition - totalBasePosition);
         if (qp->sellSizeMax and qp->aggressivePositionRebalancing != mAPR::Off)
