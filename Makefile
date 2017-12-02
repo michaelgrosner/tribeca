@@ -15,7 +15,7 @@ V_UWS   := 0.14.4
 V_SQL   := 3200100
 V_QF    := v.1.14.4
 V_PVS   := 6.20.24121.1823
-KZIP     = 615452a7474ea10a53dbed815cce94d38afc3fdb
+KZIP     = a642a4cbdac3d99f40edef1acd4171e947fd8844
 KARGS    = -Wextra -std=c++11 -O3 -I$(KLOCAL)/include          \
   src/server/K.cxx -pthread -rdynamic -DUWS_THREADSAFE         \
   -DK_STAMP='"$(shell date --rfc-3339=seconds | cut -f1 -d+)"' \
@@ -212,7 +212,7 @@ link:
 	$(MAKE) gdax -s
 
 reinstall: src
-	test -d .git && ((test -n "`git diff`" && (echo && echo !!Local changes will be lost!! press now CTRL-C to stop. && echo && sleep 4) || :) \
+	test -d .git && ((test -n "`git diff`" && (echo && echo !!Local changes will be lost!! press CTRL-C to abort. && echo && sleep 4) || :) \
 	&& git fetch && git merge FETCH_HEAD || (git reset FETCH_HEAD && git checkout .)) || curl https://raw.githubusercontent.com/ctubio/Krypto-trading-bot/master/Makefile > Makefile
 	rm -rf app
 	@$(MAKE) install

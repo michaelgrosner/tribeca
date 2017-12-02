@@ -62,9 +62,9 @@ namespace K {
             mgEwmaM = k.value("ewmaMedium", 0.0);
           if (!mgEwmaS and k.value("time", (unsigned long)0) + qp->shortEwmaPeriods * 6e+4 > FN::T())
             mgEwmaS = k.value("ewmaShort", 0.0);
-          if (k.find("mgEwmaSM") != k.end() and k.value("time", (unsigned long)0) + qp->quotingEwmaSMPeriods * 6e+4 > FN::T())
+          if (k.value("time", (unsigned long)0) + qp->quotingEwmaSMPeriods * 6e+4 > FN::T())
             mgEwmaSM = k.value("mgEwmaSM", 0.0);
-          if (k.find("mgEwmaSU") != k.end() and k.value("time", (unsigned long)0) + qp->quotingEwmaSUPeriods * 6e+4 > FN::T())
+          if (k.value("time", (unsigned long)0) + qp->quotingEwmaSUPeriods * 6e+4 > FN::T())
             mgEwmaSU = k.value("mgEwmaSU", 0.0);
         }
         if (mgEwmaVL) FN::log(((CF*)config)->argEwmaVeryLong ? "ARG" : "DB", string("loaded EWMA VeryLong = ") + to_string(mgEwmaVL));
@@ -183,7 +183,7 @@ namespace K {
         mgT_369ms = FN::T();
       };
       void ewmaUp() {
-	    calcEwma(&mgEwmaVL, qp->veryLongEwmaPeriods);
+        calcEwma(&mgEwmaVL, qp->veryLongEwmaPeriods);
         calcEwma(&mgEwmaL, qp->longEwmaPeriods);
         calcEwma(&mgEwmaM, qp->mediumEwmaPeriods);
         calcEwma(&mgEwmaS, qp->shortEwmaPeriods);
@@ -209,7 +209,7 @@ namespace K {
           {"fairValue", fairValue}
         }, true);
         ((DB*)memory)->insert(uiTXT::EWMAChart, {
-	      {"ewmaVeryLong", mgEwmaVL},
+          {"ewmaVeryLong", mgEwmaVL},
           {"ewmaLong", mgEwmaL},
           {"ewmaMedium", mgEwmaM},
           {"ewmaShort", mgEwmaS},
@@ -298,10 +298,9 @@ namespace K {
         } else if (qp->autoPositionMode == mAutoPositionMode::EWMA_LS)
           newTargetPosition = ((mgEwmaS * 100/ mgEwmaL) - 100) * (1 / qp->ewmaSensiblityPercentage);
         else if (qp->autoPositionMode == mAutoPositionMode::EWMA_4) {
-          if (mgEwmaL < mgEwmaVL)
-            newTargetPosition = -1;
+          if (mgEwmaL < mgEwmaVL) newTargetPosition = -1;
           else newTargetPosition = ((mgEwmaS * 100/ mgEwmaM) - 100) * (1 / qp->ewmaSensiblityPercentage);
-      	}
+        }
         if (newTargetPosition > 1) newTargetPosition = 1;
         else if (newTargetPosition < -1) newTargetPosition = -1;
         targetPosition = newTargetPosition;
