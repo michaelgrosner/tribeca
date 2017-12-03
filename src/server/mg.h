@@ -257,6 +257,11 @@ namespace K {
         double variance = sq_diff_sum / n;
         return sqrt(variance) * f;
       };
+      void recalcEwma(double *k, int periods) {
+        for (int i = periods; i > 0; --i) {
+          _calcEwma (
+        }
+      };
       void calcEwma(double *k, int periods) {
         if (*k) {
           double alpha = (double)2 / (periods + 1);
