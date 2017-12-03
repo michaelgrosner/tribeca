@@ -272,7 +272,7 @@ namespace K {
         if (mgStatBid.size()>periods) mgStatBid.erase(mgStatBid.begin(), mgStatBid.end()-periods);
         if (mgStatAsk.size()>periods) mgStatAsk.erase(mgStatAsk.begin(), mgStatAsk.end()-periods);
         if (mgStatTop.size()>periods*2) mgStatTop.erase(mgStatTop.begin(), mgStatTop.end()-(periods*2));
-        if (mgStatMarketWidth.size()>qp->statWidthPeriodSec) mgStatMarketWidth.erase(mgStatMarketWidth.begin(), mgStatMarketWidth.end()-qp->statWidthPeriodSec);
+        if (mgStatMarketWidth.size()>(unsigned int)qp->statWidthPeriodSec) mgStatMarketWidth.erase(mgStatMarketWidth.begin(), mgStatMarketWidth.end()-qp->statWidthPeriodSec);
       };
       void calcStdev() {
         cleanStdev();
