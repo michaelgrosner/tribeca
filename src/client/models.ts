@@ -94,8 +94,7 @@ export class EWMAChart {
                 public ewmaMedium: number,
                 public ewmaLong: number,
                 public ewmaVeryLong: number,
-                public fairValue: number,
-                public pingAt: string) {}
+                public fairValue: number) {}
 }
 
 export class TradeChart {

@@ -24,7 +24,6 @@ export class TradeSafetyComponent implements OnInit {
   private buySizeSafety: number;
   private sellSizeSafety: number;
   private tradeSafetyValue: number;
-  private pingAt: string;
   @Input() tradeFreq: number;
   @Input() product: Models.ProductState;
 
@@ -43,11 +42,6 @@ export class TradeSafetyComponent implements OnInit {
       .getSubscriber(this.zone, Models.Topics.TradeSafetyValue)
       .registerConnectHandler(this.clear)
       .registerSubscriber(this.updateValues);
-
-    this.subscriberFactory
-      .getSubscriber(this.zone, Models.Topics.EWMAChart)
-      .registerConnectHandler(this.clearAvgMktWidth)
-      .registerSubscriber(this.updateAvgMktWidth);
   }
 
   private updateValues = (value: Models.TradeSafety) => {
@@ -68,20 +62,8 @@ export class TradeSafetyComponent implements OnInit {
     this.fairValue = fv.price;
   }
 
-  private updateAvgMktWidth = (value: Models.EWMAChart) => {
-    if (value == null) {
-      this.clearAvgMktWidth();
-      return;
-    }
-
-    this.pingAt = value.pingAt;
-  }
-
   private clearFairValue = () => {
     this.fairValue = null;
-  }
-  private clearAvgMktWidth = () => {
-    this.pingAt = null;
   }
 
   private clear = () => {

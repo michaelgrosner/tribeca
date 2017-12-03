@@ -32,7 +32,6 @@ namespace K {
       double mgStdevAskMean = 0;
       double mgEwmaSM = 0;
       double mgEwmaSU = 0;
-      string mgPingAt = "";
     protected:
       void load() {
         json k = ((DB*)memory)->load(uiTXT::MarketData);
@@ -148,8 +147,7 @@ namespace K {
           {"ewmaMedium", mgEwmaM},
           {"ewmaLong", mgEwmaL},
           {"ewmaVeryLong", mgEwmaVL},
-          {"fairValue", fairValue},
-          {"pingAt", mgPingAt}
+          {"fairValue", fairValue}
         }};
       };
       void stdevPUp() {
@@ -208,8 +206,7 @@ namespace K {
           {"ewmaMedium", mgEwmaM},
           {"ewmaLong", mgEwmaL},
           {"ewmaVeryLong", mgEwmaVL},
-          {"fairValue", fairValue},
-          {"pingAt", mgPingAt}
+          {"fairValue", fairValue}
         }, true);
         ((DB*)memory)->insert(uiTXT::EWMAChart, {
           {"ewmaVeryLong", mgEwmaVL},
