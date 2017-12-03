@@ -376,18 +376,18 @@ namespace K {
         double _bSz = *buySize,
                _sSz = *sellSize;
         // -----> Uptrend
-        if(((MG*)market)->mgEwmaSMUDiff > 0){
-          if(((MG*)market)->mgEwmaSMUDiff > qp->quotingEwmaSMUThreshold){
+        if (((MG*)market)->mgEwmaSMUDiff > 0) {
+          if (((MG*)market)->mgEwmaSMUDiff > qp->quotingEwmaSMUThreshold) {
             mgPingAt += " | SMU Protection uptrend ON";
             //
-            if(qp->blockUptrend){
+            if (!qp->blockUptrend) mgPingAt += " | Block disabled";
+            else {
               blockStatus = 1;
               mgPingAt += " | Block enabled";
               if(qp->keepHighs){
                 rawQuote->ask.price = fmax(rawQuote->ask.price, ((MG*)market)->mgEwmaSU + *piW * qp->highsFactor);
                 mgPingAt += " | Keep highs";
-              }
-              else{
+              } else {
                 blockAllAsks = true;
                 mgPingAt += " | Block Asks";
                 if(qp->blockBidsOnUptrend){
@@ -395,37 +395,33 @@ namespace K {
                   mgPingAt += " | Block Bids";
                 }
               }
-              if(qp->glueToSMU and !blockAllBids){
+              if (qp->glueToSMU and !blockAllBids) {
                 rawQuote->bid.price = fmin(rawQuote->bid.price, ((MG*)market)->mgEwmaSU - *piW / qp->glueToSMUFactor);
                 mgPingAt += " | Glue to SMU";
               }
             }
-            else
-              mgPingAt += " | Block disabled";
             //
-            if(qp->increaseBidSzOnUptrend){
+            if (qp->increaseBidSzOnUptrend) {
               *buySize *= qp->increaseBidSzOnUptrendFactor;
               mgPingAt += " | Increasing bidsize on uptrend";
              }
             //
             if (((CF*)config)->argDebugQuotes) FN::log("DEBUG", string("QE quote: SMU Protection uptrend ON"));
-          }
-          else
-            blockStatus = 0;
+          } else blockStatus = 0;
         }
         // ----> Downtrend
-        if(((MG*)market)->mgEwmaSMUDiff < 0){
+        if (((MG*)market)->mgEwmaSMUDiff < 0) {
           if(((MG*)market)->mgEwmaSMUDiff < -qp->quotingEwmaSMUThreshold){
             mgPingAt += " | SMU Protection downtrend ON";
             //
-            if(qp->blockDowntrend){
+            if (!qp->blockDowntrend) mgPingAt += " | Block disabled";
+            else {
               blockStatus = -1;
               mgPingAt += " | Block enabled";
               if(qp->keepHighs){
                 rawQuote->bid.price = fmin(rawQuote->bid.price, ((MG*)market)->mgEwmaSU - *piW * qp->highsFactor);
                 mgPingAt += " | Keep highs";
-              }
-              else{
+              } else {
                 blockAllBids = true;
                 mgPingAt += " | Block Bids";
                 if(qp->blockAsksOnDowntrend){
@@ -434,44 +430,37 @@ namespace K {
                 }
               }
               //
-              if(qp->glueToSMU and !blockAllAsks){
+              if (qp->glueToSMU and !blockAllAsks) {
                 rawQuote->ask.price = fmax(rawQuote->ask.price, ((MG*)market)->mgEwmaSU + *piW / qp->glueToSMUFactor);
                 mgPingAt += " | Glue to SMU";
               }
             }
-            else
-              mgPingAt += " | Block disabled";
             //
             if (((CF*)config)->argDebugQuotes) FN::log("DEBUG", string("QE quote: SMU Protection downtrend ON"));
             //
-          }
-          else if((qp->endOfBlockDowntrend and ((MG*)market)->mgEwmaSMUDiff >= qp->endOfBlockDowntrendThreshold) or !qp->endOfBlockDowntrend)
-          {
+          } else if ((qp->endOfBlockDowntrend and ((MG*)market)->mgEwmaSMUDiff >= qp->endOfBlockDowntrendThreshold) or !qp->endOfBlockDowntrend)
             blockStatus = 0;
-          }
           // Flip bidsizes on downtrend
-          if(qp->flipBidSizesOnDowntrend and *buySize > *sellSize and ((MG*)market)->mgEwmaSMUDiff < -(qp->quotingEwmaSMUThreshold/2) ){
+          if (qp->flipBidSizesOnDowntrend and *buySize > *sellSize and ((MG*)market)->mgEwmaSMUDiff < -(qp->quotingEwmaSMUThreshold/2) ) {
             *sellSize = _bSz;
             *buySize  = _sSz;
             mgPingAt += " | SMU Fliping BidSizes on downtrend";
            }
         }
         //
-        if(blockStatus != 0)
-            if(qp->reducePDiv){
-              *pDiv /= qp->reducePDivFactor;
-              mgPingAt += " | Reducing pDiv by: " + to_string(qp->reducePDivFactor);
-            }
+        if (blockStatus != 0 and qp->reducePDiv) {
+          *pDiv /= qp->reducePDivFactor;
+          mgPingAt += " | Reducing pDiv by: " + to_string(qp->reducePDivFactor);
+        }
         //
-        if(blockStatus < 0 and qp->blockDowntrend)
-        {
-          if(blockAllBids and !qp->keepHighs){
+        if (blockStatus < 0 and qp->blockDowntrend) {
+          if (blockAllBids and !qp->keepHighs) {
             bidStatus = mQuoteState::DownTrendHeld;
             rawQuote->bid.price = 0;
             rawQuote->bid.size = 0;
             mgPingAt += " | Blocking Bids";
           }
-          if(blockAllAsks and !qp->glueToSMU){
+          if (blockAllAsks and !qp->glueToSMU) {
             askStatus = mQuoteState::DownTrendHeld;
             rawQuote->ask.price = 0;
             rawQuote->ask.size = 0;
@@ -479,22 +468,21 @@ namespace K {
           }
         }
         //
-        else if(blockStatus > 0 and qp->blockUptrend)
-        {
-          if(blockAllBids and !qp->glueToSMU){
+        else if (blockStatus > 0 and qp->blockUptrend) {
+          if (blockAllBids and !qp->glueToSMU){
             bidStatus = mQuoteState::UpTrendHeld;
             rawQuote->bid.price = 0;
             rawQuote->bid.size = 0;
             mgPingAt += " | Blocking Bids";
           }
-          if(blockAllAsks and !qp->keepHighs){
+          if (blockAllAsks and !qp->keepHighs) {
             askStatus = mQuoteState::UpTrendHeld;
             rawQuote->ask.price = 0;
             rawQuote->ask.size = 0;
             mgPingAt += " | Blocking Asks";
           }
         }
-        else{
+        else {
            blockAllBids = false;
            blockAllAsks = false;
         }
