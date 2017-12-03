@@ -378,9 +378,6 @@ class DisplayOrder {
                                             <th>micro</th>
                                             <th>ultra</th>
 
-                                            <th>Reduce pDiv</th>
-                                            <th *ngIf="pair.quotingParameters.display.reducePDiv">pDiv Factor</th>
-
                                             <th>Block Downtrend</th>
                                             <th *ngIf="pair.quotingParameters.display.blockDowntrend">Block Downtrend Asks</th>
                                             <th *ngIf="pair.quotingParameters.display.blockDowntrend">Flip BidSz DownT</th>
@@ -418,17 +415,6 @@ class DisplayOrder {
                                                    type="number" step="1" min="1"
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.quotingEwmaSUPeriods">
-                                            </td>
-
-                                            <td style="width:30px;text-align: center;border-bottom: 3px solid #D64A4A;">
-                                                <input type="checkbox"
-                                                   [(ngModel)]="pair.quotingParameters.display.reducePDiv">
-                                            </td>
-                                            <td style="width:60px;border-bottom: 3px solid #D64A4A;" *ngIf="pair.quotingParameters.display.reducePDiv">
-                                                <input class="form-control input-sm"
-                                                   type="number" step="0.1" min="0"
-                                                   onClick="this.select()"
-                                                   [(ngModel)]="pair.quotingParameters.display.reducePDivFactor">
                                             </td>
 
                                             <td style="width:30px;text-align: center;border-bottom: 3px solid #D64A4A;">

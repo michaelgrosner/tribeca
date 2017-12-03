@@ -9,6 +9,7 @@ namespace K {
       double mgEwmaL = 0;
       double mgEwmaM = 0;
       double mgEwmaS = 0;
+      double mgEwmaSM = 0;
       vector<double> mgSMA3;
       vector<double> mgStatFV;
       vector<double> mgStatBid;
@@ -30,7 +31,6 @@ namespace K {
       double mgStdevBidMean = 0;
       double mgStdevAsk = 0;
       double mgStdevAskMean = 0;
-      double mgEwmaSM = 0;
       double mgEwmaSU = 0;
     protected:
       void load() {

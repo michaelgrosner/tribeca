@@ -94,8 +94,6 @@ namespace K {
     bool              flipBidSizesOnDowntrend       = false;
     bool              blockBidsOnUptrend            = false;
     bool              blockAsksOnDowntrend          = false;
-    bool              reducePDiv                    = false;
-    double            reducePDivFactor              = 3.0;
     bool              blockDowntrend                = true;
     bool              blockUptrend                  = true;
     bool              keepHighs                     = false;
@@ -168,8 +166,6 @@ namespace K {
       {"quotingEwmaSMUThreshold", k.quotingEwmaSMUThreshold},
       {"quotingEwmaSMPeriods", k.quotingEwmaSMPeriods},
       {"quotingEwmaSUPeriods", k.quotingEwmaSUPeriods},
-      {"reducePDiv", k.reducePDiv},
-      {"reducePDivFactor", k.reducePDivFactor},
       {"blockDowntrend", k.blockDowntrend},
       {"blockUptrend", k.blockUptrend},
       {"keepHighs", k.keepHighs},
@@ -244,8 +240,6 @@ namespace K {
     if (j.end() != j.find("quotingEwmaSMUThreshold"))      k.quotingEwmaSMUThreshold = j.at("quotingEwmaSMUThreshold").get<double>();
     if (j.end() != j.find("quotingEwmaSMPeriods"))         k.quotingEwmaSMPeriods = j.at("quotingEwmaSMPeriods").get<int>();
     if (j.end() != j.find("quotingEwmaSUPeriods"))         k.quotingEwmaSUPeriods = j.at("quotingEwmaSUPeriods").get<int>();
-    if (j.end() != j.find("reducePDiv"))                   k.reducePDiv = j.at("reducePDiv").get<bool>();
-    if (j.end() != j.find("reducePDivFactor"))             k.reducePDivFactor = j.at("reducePDivFactor").get<double>();
     if (j.end() != j.find("blockDowntrend"))               k.blockDowntrend = j.at("blockDowntrend").get<bool>();
     if (j.end() != j.find("blockUptrend"))                 k.blockUptrend = j.at("blockUptrend").get<bool>();
     if (j.end() != j.find("keepHighs"))                    k.keepHighs = j.at("keepHighs").get<bool>();

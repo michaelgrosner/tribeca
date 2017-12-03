@@ -240,8 +240,6 @@ export interface QuotingParameters {
     blockAsksOnDowntrend?: boolean;
     blockDowntrend?: boolean;
     blockUptrend?: boolean;
-    reducePDiv?: boolean;
-    reducePDivFactor?: number;
     increaseBidSzOnUptrend?: boolean;
     increaseBidSzOnUptrendFactor?: number;
 

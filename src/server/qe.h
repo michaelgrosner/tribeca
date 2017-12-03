@@ -171,7 +171,7 @@ namespace K {
         bool superTradesActive = false;
         debuq("?", rawQuote); applySuperTrades(&rawQuote, &superTradesActive, widthPing, buySize, sellSize, quoteAmount, baseAmount);
         debuq("A", rawQuote); applyEwmaProtection(&rawQuote);
-        debuq("B", rawQuote); applyEwmaSMUProtection(&rawQuote, &pDiv, &buySize, &sellSize, totalBasePosition, totalQuotePosition, safetyBuyPing, safetySellPong, baseValue, &widthPing, widthPong);
+        debuq("B", rawQuote); applyEwmaSMUProtection(&rawQuote, &buySize, &sellSize, totalBasePosition, totalQuotePosition, safetyBuyPing, safetySellPong, baseValue, &widthPing, widthPong);
         debuq("C", rawQuote); applyTotalBasePosition(&rawQuote, totalBasePosition, pDiv, buySize, sellSize, quoteAmount, baseAmount);
         debuq("D", rawQuote); applyStdevProtection(&rawQuote);
         debuq("E", rawQuote); applyAggressivePositionRebalancing(&rawQuote, widthPong, safetyBuyPing, safetySellPong);
@@ -368,7 +368,7 @@ namespace K {
         rawQuote->ask.price = fmax(((MG*)market)->mgEwmaP, rawQuote->ask.price);
         rawQuote->bid.price = fmin(((MG*)market)->mgEwmaP, rawQuote->bid.price);
       };
-      void applyEwmaSMUProtection(mQuote *rawQuote, double *pDiv, double *buySize, double *sellSize, double tbp, double tqp, double safetyBuyPing, double safetySellPong, double value, double *piW, double poW) {
+      void applyEwmaSMUProtection(mQuote *rawQuote, double *buySize, double *sellSize, double tbp, double tqp, double safetyBuyPing, double safetySellPong, double value, double *piW, double poW) {
         if (!qp->quotingEwmaSMUProtection or !((MG*)market)->mgEwmaSMUDiff) return;
         string trends = "";
         double _bSz = *buySize,
@@ -408,7 +408,7 @@ namespace K {
           } else blockStatus = 0;
         }
         // ----> Downtrend
-        if (((MG*)market)->mgEwmaSMUDiff < 0) {
+        else if (((MG*)market)->mgEwmaSMUDiff < 0) {
           if (((MG*)market)->mgEwmaSMUDiff < -qp->quotingEwmaSMUThreshold) {
             trends += " | SMU Protection downtrend ON";
             //
@@ -445,12 +445,6 @@ namespace K {
             trends += " | SMU Fliping BidSizes on downtrend";
            }
         }
-        //
-        if (blockStatus != 0 and qp->reducePDiv) {
-          *pDiv /= qp->reducePDivFactor;
-          trends += " | Reducing pDiv by: " + to_string(qp->reducePDivFactor);
-        }
-        //
         if (blockStatus < 0 and qp->blockDowntrend) {
           if (blockAllBids and !qp->keepHighs) {
             bidStatus = mQuoteState::DownTrendHeld;
@@ -465,7 +459,6 @@ namespace K {
             trends += " | Blocking Asks";
           }
         }
-        //
         else if (blockStatus > 0 and qp->blockUptrend) {
           if (blockAllBids and !qp->glueToSMU){
             bidStatus = mQuoteState::UpTrendHeld;
