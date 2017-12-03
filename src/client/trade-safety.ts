@@ -13,7 +13,6 @@ import {SubscriberFactory} from './shared_directives';
       SellTS: <span class="{{ sellSafety ? \'text-danger\' : \'text-muted\' }}">{{ sellSafety | number:'1.2-2' }}</span>,
       TotalTS: <span class="{{ tradeSafetyValue ? \'text-danger\' : \'text-muted\' }}">{{ tradeSafetyValue | number:'1.2-2' }}</span>,
       openOrders/60sec: <span class="{{ tradeFreq ? \'text-danger\' : \'text-muted\' }}">{{ tradeFreq | number:'1.0-0' }}</span>,
-      Trend: <span class="{{ trendSMU < 0 ? 'text-danger' : 'text-success' }}">{{ trendSMU | number:'1.3-3' }}</span>
       MktAvg: <span class="{{ avgMktWidth ? 'text-danger' : 'text-success' }}">{{ avgMktWidth | number:'1.3-3' }}</span><span>{{ pingAt }}</span>
     </div>
   </div>`
@@ -26,7 +25,6 @@ export class TradeSafetyComponent implements OnInit {
   private buySizeSafety: number;
   private sellSizeSafety: number;
   private tradeSafetyValue: number;
-  private trendSMU: number;
   private avgMktWidth: number;
   private pingAt: string;
   @Input() tradeFreq: number;
@@ -42,11 +40,6 @@ export class TradeSafetyComponent implements OnInit {
       .getSubscriber(this.zone, Models.Topics.FairValue)
       .registerConnectHandler(this.clearFairValue)
       .registerSubscriber(this.updateFairValue);
-
-    this.subscriberFactory
-      .getSubscriber(this.zone, Models.Topics.TrendSMU)
-      .registerConnectHandler(this.clearTrendSMU)
-      .registerSubscriber(this.updateTrendSMU);
 
     this.subscriberFactory
       .getSubscriber(this.zone, Models.Topics.TradeSafetyValue)
@@ -76,14 +69,6 @@ export class TradeSafetyComponent implements OnInit {
 
     this.fairValue = fv.price;
   }
-  private updateTrendSMU = (trend: Models.TrendSMU) => {
-    if (trend == null) {
-      this.clearTrendSMU();
-      return;
-    }
-
-    this.trendSMU = trend.trend;
-  }
 
   private updateAvgMktWidth = (value: Models.EWMAChart) => {
     if (value == null) {
@@ -97,9 +82,6 @@ export class TradeSafetyComponent implements OnInit {
 
   private clearFairValue = () => {
     this.fairValue = null;
-  }
-  private clearTrendSMU = () => {
-    this.trendSMU = null;
   }
   private clearAvgMktWidth = () => {
     this.avgMktWidth = null;

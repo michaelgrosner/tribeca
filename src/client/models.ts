@@ -33,8 +33,7 @@ export var Topics = {
   CleanTrade: 'A',
   TradesChart: 'B',
   WalletChart: 'C',
-  EWMAChart: 'D',
-  TrendSMU: 'E'
+  EWMAChart: 'D'
 }
 
 export class MarketSide {
@@ -156,9 +155,7 @@ export class OrderRequestFromUI {
 export class FairValue {
     constructor(public price: number) {}
 }
-export class TrendSMU{
-  constructor(public trend: number) {}
-}
+
 export class Quote {
     constructor(public price: number,
                 public size: number,

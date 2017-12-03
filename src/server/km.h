@@ -29,7 +29,7 @@ namespace K {
     MarketTrade = 'r', Trades = 's', ExternalValuation = 't', QuoteStatus = 'u',
     TargetBasePosition = 'v', TradeSafetyValue = 'w', CancelAllOrders = 'x',
     CleanAllClosedTrades = 'y', CleanAllTrades = 'z', CleanTrade = 'A', TradesChart = 'B',
-    WalletChart = 'C', EWMAChart = 'D', TrendSMU = 'E'
+    WalletChart = 'C', EWMAChart = 'D'
   };
   struct mQuotingParams {
     double            widthPing                       = 2.0;

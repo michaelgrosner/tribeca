@@ -93,7 +93,6 @@ namespace K {
       void waitUser() {
         ((UI*)client)->welcome(uiTXT::MarketTrade, &helloTrade);
         ((UI*)client)->welcome(uiTXT::FairValue, &helloFair);
-        ((UI*)client)->welcome(uiTXT::TrendSMU, &helloTrend);
         ((UI*)client)->welcome(uiTXT::EWMAChart, &helloEwma);
       };
     public:
@@ -136,9 +135,6 @@ namespace K {
       };
       function<json()> helloFair = [&]() {
         return (json){{{"price", fairValue}}};
-      };
-      function<json()> helloTrend = [&]() {
-        return (json){{{"trend", mgEwmaSMUDiff}}};
       };
       function<json()> helloEwma = [&]() {
         return (json){{
@@ -246,7 +242,6 @@ namespace K {
         if (mgEwmaSM and mgEwmaSU)
           mgEwmaSMUDiff = ((mgEwmaSU * 100) / mgEwmaSM) - 100;
         ((EV*)events)->mgEwmaSMUProtection();
-        ((UI*)client)->send(uiTXT::TrendSMU, {{"trend", mgEwmaSMUDiff}}, true);
       };
       void filter(mLevels k) {
         levels = k;
