@@ -386,7 +386,7 @@ export class StatsComponent implements OnInit {
       colorIndex:6,
       data: []
     },{
-    name: 'pDiv',
+      name: 'pDiv',
       type: 'arearange',
       lineWidth: 0,
       linkedTo: 0,
