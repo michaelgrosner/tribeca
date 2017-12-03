@@ -159,15 +159,14 @@ namespace K {
         if (empty()) return;
         double topBid = levels.bids.begin()->price;
         double topAsk = levels.asks.begin()->price;
-        double _mktW = topAsk > topBid ? topAsk - topBid : 0.0;
         if (!topBid or !topAsk) return;
         mgStatFV.push_back(fairValue);
         mgStatBid.push_back(topBid);
         mgStatAsk.push_back(topAsk);
         mgStatTop.push_back(topBid);
         mgStatTop.push_back(topAsk);
-        if(_mktW > 0)
-          mgStatMarketWidth.push_back(_mktW);
+        if (topAsk > topBid)
+          mgStatMarketWidth.push_back(topAsk - topBid);
         calcStdev();
         ((DB*)memory)->insert(uiTXT::MarketData, {
           {"fv", fairValue},
