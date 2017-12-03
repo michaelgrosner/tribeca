@@ -33,7 +33,8 @@ export var Topics = {
   CleanTrade: 'A',
   TradesChart: 'B',
   WalletChart: 'C',
-  EWMAChart: 'D'
+  EWMAChart: 'D',
+  TrendSMU: 'Z'
 }
 
 export class MarketSide {
@@ -94,6 +95,7 @@ export class EWMAChart {
                 public ewmaMedium: number,
                 public ewmaLong: number,
                 public ewmaVeryLong: number,
+                public avgMktWidth: number,
                 public fairValue: number) {}
 }
 
@@ -153,7 +155,9 @@ export class OrderRequestFromUI {
 export class FairValue {
     constructor(public price: number) {}
 }
-
+export class TrendSMU{
+  constructor(public trend: number) {}
+}
 export class Quote {
     constructor(public price: number,
                 public size: number,
@@ -217,7 +221,6 @@ export interface QuotingParameters {
     tradesPerMinute?: number;
     tradeRateSeconds?: number;
     quotingEwmaProtection?: boolean;
-    quotingEwmaSMUProtection?: boolean;
     quotingStdevProtection?: STDEV;
     quotingStdevBollingerBands?: boolean;
     audio?: boolean;
@@ -230,15 +233,38 @@ export interface QuotingParameters {
     mediumEwmaPeriods?: number;
     shortEwmaPeriods?: number;
     quotingEwmaProtectionPeriods?: number;
+    /* **************************** */
+    quotingEwmaSMUProtection?: boolean;
     quotingEwmaSMUThreshold?: number;
     quotingEwmaSMPeriods?: number;
     quotingEwmaSUPeriods?: number;
+
+    flipBidSizesOnDowntrend?: boolean;
+    blockBidsOnUptrend?: boolean;
+    blockAsksOnDowntrend?: boolean;
+    blockDowntrend?: boolean;
+    blockUptrend?: boolean;
+    reducePDiv?: boolean;
+    reducePDivFactor?: number;
+    increaseBidSzOnUptrend?: boolean;
+    increaseBidSzOnUptrendFactor?: number;
+
+    keepHighs?: boolean;
+    highsFactor?: number;
+    autoPingWidth?: boolean;
+    statWidthPeriodSec?: number;
+    glueToSMU?: boolean;
+    glueToSMUFactor?: number;
+    endOfBlockDowntrend?: boolean;
+    endOfBlockDowntrendThreshold?: number;
+    /* **************************** */
     quotingStdevProtectionFactor?: number;
     quotingStdevProtectionPeriods?: number;
     aprMultiplier?: number;
     sopWidthMultiplier?: number;
     sopSizeMultiplier?: number;
     sopTradesMultiplier?: number;
+    delayAPI?: number;
     cancelOrdersAuto?: boolean;
     cleanPongsAuto?: number;
     stepOverSize?: number;

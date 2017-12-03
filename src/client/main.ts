@@ -366,6 +366,159 @@ class DisplayOrder {
                                     </tbody>
                                 </table>
                               </td></tr></table>
+                             <table border="0" width="100%"><tr><td style="width:69px;text-align:center;">
+                             <small>TREND PROTECTION</small>
+                              </td><td>
+                                <table class="table table-responsive table-bordered">
+                                    <thead>
+                                        <tr class="active">
+                                            <th>Ewma Trend</th>
+                                                                                       
+                                            <th>threshold</th>
+                                            
+                                            <th>micro</th>
+                                            <th>ultra</th>
+                                            
+                                            <th>AutoPing</th>
+                                            <th *ngIf="pair.quotingParameters.display.autoPingWidth">Ping Stat Period</th>
+                                                                                                                                                                                                                         
+                                            <th>Reduce pDiv</th>
+                                            <th *ngIf="pair.quotingParameters.display.reducePDiv">pDiv Factor</th>
+
+                                            <th>Block Downtrend</th>
+                                            <th *ngIf="pair.quotingParameters.display.blockDowntrend">Block Downtrend Asks</th>
+                                            <th *ngIf="pair.quotingParameters.display.blockDowntrend">Flip BidSz DownT</th>
+                                            <th *ngIf="pair.quotingParameters.display.blockDowntrend">DownT End</th>
+                                            <th *ngIf="pair.quotingParameters.display.blockDowntrend">DownT End Thre</th>
+                                                                                        
+                                            <th>Block Uptrend</th>
+                                            <th *ngIf="pair.quotingParameters.display.blockUptrend">Block Uptrend Bids</th>
+                                            <th>Increase BidSz Uptrend</th>
+                                            <th *ngIf="pair.quotingParameters.display.increaseBidSzOnUptrend">Sz Factor</th>
+                                                                                       
+                                            <th>Keep Highs</th>
+                                            <th *ngIf="pair.quotingParameters.display.keepHighs">Highs Factor</th>
+
+                                            <th>Glue To SMU</th>
+                                            <th *ngIf="pair.quotingParameters.display.glueToSMU">Glue Factor</th>                                                                                        
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr class="active">
+                                            <td style="width:40px;text-align: center;border-bottom: 3px solid #D64A4A;">
+                                                <input type="checkbox"
+                                                   [(ngModel)]="pair.quotingParameters.display.quotingEwmaSMUProtection">
+                                            </td>
+                               
+                                            <td style="width:60px;border-bottom: 3px solid #D64A4A;">
+                                                <input class="form-control input-sm"
+                                                   type="number" step="0.01" min="0.01"
+                                                   onClick="this.select()"
+                                                   [(ngModel)]="pair.quotingParameters.display.quotingEwmaSMUThreshold">
+                                            </td>
+                                            <td style="width:60px;border-bottom: 3px solid #D64A4A;">
+                                                <input class="form-control input-sm"
+                                                   type="number" step="1" min="1"
+                                                   onClick="this.select()"
+                                                   [(ngModel)]="pair.quotingParameters.display.quotingEwmaSMPeriods">
+                                            </td>
+                                            <td style="width:60px;border-bottom: 3px solid #D64A4A;">
+                                                <input class="form-control input-sm"
+                                                   type="number" step="1" min="1"
+                                                   onClick="this.select()"
+                                                   [(ngModel)]="pair.quotingParameters.display.quotingEwmaSUPeriods">
+                                            </td>                       
+                                                                                                                                    
+                                            <td style="width:30px;text-align: center;border-bottom: 3px solid #D64A4A;">
+                                                <input type="checkbox"
+                                                   [(ngModel)]="pair.quotingParameters.display.autoPingWidth">
+                                            </td>
+                                            
+                                            <td style="width:60px;border-bottom: 3px solid #D64A4A;" *ngIf="pair.quotingParameters.display.autoPingWidth">
+                                                <input class="form-control input-sm"
+                                                   type="number" step="0.1" min="0.1"
+                                                   onClick="this.select()"
+                                                   [(ngModel)]="pair.quotingParameters.display.statWidthPeriodSec">
+                                            </td>
+                                                                                       
+                                            <td style="width:30px;text-align: center;border-bottom: 3px solid #D64A4A;">
+                                                <input type="checkbox"
+                                                   [(ngModel)]="pair.quotingParameters.display.reducePDiv">
+                                            </td>                                                            
+                                            <td style="width:60px;border-bottom: 3px solid #D64A4A;" *ngIf="pair.quotingParameters.display.reducePDiv">
+                                                <input class="form-control input-sm"
+                                                   type="number" step="0.1" min="0"
+                                                   onClick="this.select()"
+                                                   [(ngModel)]="pair.quotingParameters.display.reducePDivFactor">
+                                            </td>          
+                                            
+                                            <td style="width:30px;text-align: center;border-bottom: 3px solid #D64A4A;">
+                                                <input type="checkbox"
+                                                   [(ngModel)]="pair.quotingParameters.display.blockDowntrend">
+                                            </td>
+                                            <td style="width:30px;text-align: center;border-bottom: 3px solid #D64A4A;" *ngIf="pair.quotingParameters.display.blockDowntrend">
+                                                <input type="checkbox"
+                                                   [(ngModel)]="pair.quotingParameters.display.blockAsksOnDowntrend">
+                                            </td>
+                                            <td style="width:30px;text-align: center;border-bottom: 3px solid #D64A4A;" *ngIf="pair.quotingParameters.display.blockDowntrend">
+                                                <input type="checkbox"
+                                                   [(ngModel)]="pair.quotingParameters.display.flipBidSizesOnDowntrend">
+                                            </td>
+                                            <td style="width:30px;text-align: center;border-bottom: 3px solid #D64A4A;" *ngIf="pair.quotingParameters.display.blockDowntrend">
+                                                <input type="checkbox"
+                                                   [(ngModel)]="pair.quotingParameters.display.endOfBlockDowntrend">
+                                            </td>                                                         
+                                            <td style="width:60px;border-bottom: 3px solid #D64A4A;" *ngIf="pair.quotingParameters.display.blockDowntrend">
+                                                <input class="form-control input-sm"
+                                                   type="number" step="0.01" max="-0.01"
+                                                   onClick="this.select()"
+                                                   [(ngModel)]="pair.quotingParameters.display.endOfBlockDowntrendThreshold">
+                                            </td>                                                                                                                                         
+                                            <td style="width:30px;text-align: center;border-bottom: 3px solid #D64A4A;">
+                                                <input type="checkbox"
+                                                   [(ngModel)]="pair.quotingParameters.display.blockUptrend">
+                                            </td>
+                                            <td style="width:30px;text-align: center;border-bottom: 3px solid #D64A4A;" *ngIf="pair.quotingParameters.display.blockUptrend">
+                                                <input type="checkbox"
+                                                   [(ngModel)]="pair.quotingParameters.display.blockBidsOnUptrend">
+                                            </td>      
+                                                                                  
+                                            <td style="width:30px;text-align: center;border-bottom: 3px solid #D64A4A;">
+                                                <input type="checkbox"
+                                                   [(ngModel)]="pair.quotingParameters.display.increaseBidSzOnUptrend">
+                                            </td>       
+                                                                                                 
+                                            <td style="width:60px;border-bottom: 3px solid #D64A4A;" *ngIf="pair.quotingParameters.display.increaseBidSzOnUptrend">
+                                                <input class="form-control input-sm"
+                                                   type="number" step="0.1" min="0"
+                                                   onClick="this.select()"
+                                                   [(ngModel)]="pair.quotingParameters.display.increaseBidSzOnUptrendFactor">
+                                            </td>
+                                                                                        
+                                            <td style="width:30px;text-align: center;border-bottom: 3px solid #D64A4A;">
+                                                <input type="checkbox"
+                                                   [(ngModel)]="pair.quotingParameters.display.keepHighs">
+                                            </td>                                                            
+                                            <td style="width:60px;border-bottom: 3px solid #D64A4A;" *ngIf="pair.quotingParameters.display.keepHighs">
+                                                <input class="form-control input-sm"
+                                                   type="number" step="0.1" min="0"
+                                                   onClick="this.select()"
+                                                   [(ngModel)]="pair.quotingParameters.display.highsFactor">
+                                            </td>
+                                            <td style="width:30px;text-align: center;border-bottom: 3px solid #D64A4A;">
+                                                <input type="checkbox"
+                                                   [(ngModel)]="pair.quotingParameters.display.glueToSMU">
+                                            </td>                                                            
+                                            <td style="width:60px;border-bottom: 3px solid #D64A4A;" *ngIf="pair.quotingParameters.display.glueToSMU">
+                                                <input class="form-control input-sm"
+                                                   type="number" step="0.1" min="0"
+                                                   onClick="this.select()"
+                                                   [(ngModel)]="pair.quotingParameters.display.glueToSMUFactor">
+                                            </td>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               
+                                        </tr>
+                                    </tbody>
+                                </table>                                
+                              </td></tr></table>
                               <table border="0" width="100%"><tr><td style="width:69px;text-align:center;">
                                 <small>PROTECTION</small>
                               </td><td>
@@ -377,10 +530,6 @@ class DisplayOrder {
                                             <th>/sec</th>
                                             <th>ewma?</th>
                                             <th *ngIf="pair.quotingParameters.display.quotingEwmaProtection">periodsᵉʷᵐᵃ</th>
-                                            <th>ewmaTrend?</th>
-                                            <th *ngIf="pair.quotingParameters.display.quotingEwmaSMUProtection">threshold</th>
-                                            <th *ngIf="pair.quotingParameters.display.quotingEwmaSMUProtection">micro</th>
-                                            <th *ngIf="pair.quotingParameters.display.quotingEwmaSMUProtection">ultra</th>
                                             <th>stdev</th>
                                             <th *ngIf="pair.quotingParameters.display.quotingStdevProtection">periodsˢᵗᵈᶜᵛ</th>
                                             <th *ngIf="pair.quotingParameters.display.quotingStdevProtection">factor</th>
@@ -433,28 +582,6 @@ class DisplayOrder {
                                                    type="number" step="1" min="1"
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.quotingEwmaProtectionPeriods">
-                                            </td>
-                                            <td style="text-align: center;border-bottom: 3px solid #D64A4A;">
-                                                <input type="checkbox"
-                                                   [(ngModel)]="pair.quotingParameters.display.quotingEwmaSMUProtection">
-                                            </td>
-                                            <td style="width:60px;border-bottom: 3px solid #D64A4A;" *ngIf="pair.quotingParameters.display.quotingEwmaSMUProtection">
-                                                <input class="form-control input-sm"
-                                                   type="number" step="0.01" min="0.01"
-                                                   onClick="this.select()"
-                                                   [(ngModel)]="pair.quotingParameters.display.quotingEwmaSMUThreshold">
-                                            </td>
-                                            <td style="width:60px;border-bottom: 3px solid #D64A4A;" *ngIf="pair.quotingParameters.display.quotingEwmaSMUProtection">
-                                                <input class="form-control input-sm"
-                                                   type="number" step="1" min="1"
-                                                   onClick="this.select()"
-                                                   [(ngModel)]="pair.quotingParameters.display.quotingEwmaSMPeriods">
-                                            </td>
-                                            <td style="width:60px;border-bottom: 3px solid #D64A4A;" *ngIf="pair.quotingParameters.display.quotingEwmaSMUProtection">
-                                                <input class="form-control input-sm"
-                                                   type="number" step="1" min="1"
-                                                   onClick="this.select()"
-                                                   [(ngModel)]="pair.quotingParameters.display.quotingEwmaSUPeriods">
                                             </td>
                                             <td style="width:121px;border-bottom: 3px solid #AF451E;">
                                                 <select class="form-control input-sm"
