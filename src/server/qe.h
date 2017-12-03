@@ -52,10 +52,6 @@ namespace K {
           ((EV*)events)->debug("QE mgEwmaQuoteProtection");
           calcQuote();
         };
-        ((EV*)events)->mgEwmaSMUProtection = [&]() {
-          ((EV*)events)->debug("QE mgEwmaSMUProtection");
-          calcQuote();
-        };
         ((EV*)events)->mgLevels = [&]() {
           ((EV*)events)->debug("QE mgLevels");
           calcQuote();
@@ -168,19 +164,18 @@ namespace K {
         bool superTradesActive = false;
         debuq("?", rawQuote); applySuperTrades(&rawQuote, &superTradesActive, widthPing, buySize, sellSize, quoteAmount, baseAmount);
         debuq("A", rawQuote); applyEwmaProtection(&rawQuote);
-        debuq("B", rawQuote); applyEwmaSMUProtection(&rawQuote);
-        debuq("C", rawQuote); applyTotalBasePosition(&rawQuote, totalBasePosition, pDiv, buySize, sellSize, quoteAmount, baseAmount);
-        debuq("D", rawQuote); applyStdevProtection(&rawQuote);
-        debuq("E", rawQuote); applyAggressivePositionRebalancing(&rawQuote, widthPong, safetyBuyPing, safetySellPong);
-        debuq("F", rawQuote); applyAK47Increment(&rawQuote, baseValue);
-        debuq("G", rawQuote); applyBestWidth(&rawQuote);
-        debuq("H", rawQuote); applyTradesPerMinute(&rawQuote, superTradesActive, safetyBuy, safetySell);
-        debuq("I", rawQuote); applyRoundSide(&rawQuote);
-        debuq("J", rawQuote); applyRoundDown(&rawQuote, rawBidSz, rawAskSz, widthPong, safetyBuyPing, safetySellPong, totalQuotePosition, totalBasePosition);
-        debuq("K", rawQuote); applyDepleted(&rawQuote, totalQuotePosition, totalBasePosition);
-        debuq("L", rawQuote); applyWaitingPing(&rawQuote, totalQuotePosition, totalBasePosition, safetyBuyPing, safetySellPong);
+        debuq("B", rawQuote); applyTotalBasePosition(&rawQuote, totalBasePosition, pDiv, buySize, sellSize, quoteAmount, baseAmount);
+        debuq("C", rawQuote); applyStdevProtection(&rawQuote);
+        debuq("D", rawQuote); applyAggressivePositionRebalancing(&rawQuote, widthPong, safetyBuyPing, safetySellPong);
+        debuq("E", rawQuote); applyAK47Increment(&rawQuote, baseValue);
+        debuq("F", rawQuote); applyBestWidth(&rawQuote);
+        debuq("G", rawQuote); applyTradesPerMinute(&rawQuote, superTradesActive, safetyBuy, safetySell);
+        debuq("H", rawQuote); applyRoundSide(&rawQuote);
+        debuq("I", rawQuote); applyRoundDown(&rawQuote, rawBidSz, rawAskSz, widthPong, safetyBuyPing, safetySellPong, totalQuotePosition, totalBasePosition);
+        debuq("J", rawQuote); applyDepleted(&rawQuote, totalQuotePosition, totalBasePosition);
+        debuq("K", rawQuote); applyWaitingPing(&rawQuote, totalQuotePosition, totalBasePosition, safetyBuyPing, safetySellPong);
         debuq("!", rawQuote);
-        debug(string("QE totals ") + "toAsk:" + to_string(totalBasePosition) + " toBid:" + to_string(totalQuotePosition) + " min:" + to_string(gw->minSize));
+        debug(string("totals ") + "toAsk:" + to_string(totalBasePosition) + " toBid:" + to_string(totalQuotePosition) + " min:" + to_string(gw->minSize));
         return rawQuote;
       };
       void applyRoundSide(mQuote *rawQuote) {
@@ -364,21 +359,6 @@ namespace K {
         if (!qp->quotingEwmaProtection or !((MG*)market)->mgEwmaP) return;
         rawQuote->ask.price = fmax(((MG*)market)->mgEwmaP, rawQuote->ask.price);
         rawQuote->bid.price = fmin(((MG*)market)->mgEwmaP, rawQuote->bid.price);
-      };
-      void applyEwmaSMUProtection(mQuote *rawQuote) {
-        if (!qp->quotingEwmaSMUProtection or !((MG*)market)->mgEwmaSMUDiff) return;
-        if(((MG*)market)->mgEwmaSMUDiff > qp->quotingEwmaSMUThreshold){
-          askStatus = mQuoteState::UpTrendHeld;
-          rawQuote->ask.price = 0;
-          rawQuote->ask.size = 0;
-          debug("QE quote: SMU Protection uptrend ON");
-        }
-        else if(((MG*)market)->mgEwmaSMUDiff < -qp->quotingEwmaSMUThreshold){
-          bidStatus = mQuoteState::DownTrendHeld;
-          rawQuote->bid.price = 0;
-          rawQuote->bid.size = 0;
-          debug("quote: SMU Protection downtrend ON");
-        }
       };
       mQuote quote(double widthPing, double buySize, double sellSize) {
         if (quotingMode.find(qp->mode) == quotingMode.end()) FN::logExit("QE", "Invalid quoting mode", EXIT_SUCCESS);

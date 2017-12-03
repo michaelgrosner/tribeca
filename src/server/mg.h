@@ -9,8 +9,6 @@ namespace K {
       double mgEwmaL = 0;
       double mgEwmaM = 0;
       double mgEwmaS = 0;
-      double mgEwmaSM = 0;
-      double mgEwmaSU = 0;
       vector<double> mgSMA3;
       vector<double> mgStatFV;
       vector<double> mgStatBid;
@@ -25,7 +23,6 @@ namespace K {
       double mgStdevTop = 0;
       double mgStdevTopMean = 0;
       double mgEwmaP = 0;
-      double mgEwmaSMUDiff = 0;
       double mgStdevFV = 0;
       double mgStdevFVMean = 0;
       double mgStdevBid = 0;
@@ -62,16 +59,11 @@ namespace K {
             mgEwmaM = k.value("ewmaMedium", 0.0);
           if (!mgEwmaS and k.value("time", (unsigned long)0) + qp->shortEwmaPeriods * 6e+4 > FN::T())
             mgEwmaS = k.value("ewmaShort", 0.0);
-          if (k.value("time", (unsigned long)0) + qp->quotingEwmaSMPeriods * 6e+4 > FN::T())
-            mgEwmaSM = k.value("mgEwmaSM", 0.0);
-          if (k.value("time", (unsigned long)0) + qp->quotingEwmaSUPeriods * 6e+4 > FN::T())
-            mgEwmaSU = k.value("mgEwmaSU", 0.0);
         }
         if (mgEwmaVL) FN::log(((CF*)config)->argEwmaVeryLong ? "ARG" : "DB", string("loaded EWMA VeryLong = ") + to_string(mgEwmaVL));
         if (mgEwmaL)  FN::log(((CF*)config)->argEwmaLong ? "ARG" : "DB", string("loaded EWMA Long = ") + to_string(mgEwmaL));
         if (mgEwmaM)  FN::log(((CF*)config)->argEwmaMedium ? "ARG" : "DB", string("loaded EWMA Medium = ") + to_string(mgEwmaM));
         if (mgEwmaS)  FN::log(((CF*)config)->argEwmaShort ? "ARG" : "DB", string("loaded EWMA Short = ") + to_string(mgEwmaS));
-        if (mgEwmaSM and mgEwmaSU) FN::log("DB", string("loaded EWMA Trend micro/ultra = ") + to_string(mgEwmaSM) + "/" + to_string(mgEwmaSU));
       };
       void waitData() {
         gw->evDataTrade = [&](mTrade k) {
@@ -96,7 +88,6 @@ namespace K {
         if (++mgT_60s == 60) {
           mgT_60s = 0;
           ewmaPUp();
-          ewmaSMUUp();
           ewmaUp();
         }
         stdevPUp();
@@ -142,7 +133,6 @@ namespace K {
             {"askMean", mgStdevAskMean}
           }},
           {"ewmaQuote", mgEwmaP},
-          {"ewmaSMUDiff", mgEwmaSMUDiff},
           {"ewmaShort", mgEwmaS},
           {"ewmaMedium", mgEwmaM},
           {"ewmaLong", mgEwmaL},
@@ -201,7 +191,6 @@ namespace K {
             {"askMean", mgStdevAskMean}
           }},
           {"ewmaQuote", mgEwmaP},
-          {"ewmaSMUDiff", mgEwmaSMUDiff},
           {"ewmaShort", mgEwmaS},
           {"ewmaMedium", mgEwmaM},
           {"ewmaLong", mgEwmaL},
@@ -213,21 +202,12 @@ namespace K {
           {"ewmaLong", mgEwmaL},
           {"ewmaMedium", mgEwmaM},
           {"ewmaShort", mgEwmaS},
-          {"mgEwmaSM", mgEwmaSM},
-          {"mgEwmaSU", mgEwmaSU},
           {"time", FN::T()}
         });
       };
       void ewmaPUp() {
         calcEwma(&mgEwmaP, qp->quotingEwmaProtectionPeriods);
         ((EV*)events)->mgEwmaQuoteProtection();
-      };
-      void ewmaSMUUp() {
-        calcEwma(&mgEwmaSM, qp->quotingEwmaSMPeriods);
-        calcEwma(&mgEwmaSU, qp->quotingEwmaSUPeriods);
-        if (mgEwmaSM and mgEwmaSU)
-          mgEwmaSMUDiff = ((mgEwmaSU * 100) / mgEwmaSM) - 100;
-        ((EV*)events)->mgEwmaSMUProtection();
       };
       void filter(mLevels k) {
         levels = k;

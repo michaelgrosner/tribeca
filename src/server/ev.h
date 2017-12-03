@@ -13,7 +13,6 @@ namespace K  {
       function<void(mOrder)> ogOrder;
       function<void(mTrade)> ogTrade;
       function<void()>       mgLevels,
-                             mgEwmaSMUProtection,
                              mgEwmaQuoteProtection,
                              mgTargetPosition,
                              pgTargetBasePosition,

@@ -21,7 +21,7 @@ export class TradeSafetyComponent implements OnInit {
   public fairValue: number;
   private buySafety: number;
   private sellSafety: number;
-  private buySizeSafety: number ;
+  private buySizeSafety: number;
   private sellSizeSafety: number;
   private tradeSafetyValue: number;
   @Input() tradeFreq: number;
