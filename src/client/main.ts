@@ -378,9 +378,6 @@ class DisplayOrder {
                                             <th>micro</th>
                                             <th>ultra</th>
 
-                                            <th>AutoPing</th>
-                                            <th *ngIf="pair.quotingParameters.display.autoPingWidth">Ping Stat Period</th>
-
                                             <th>Reduce pDiv</th>
                                             <th *ngIf="pair.quotingParameters.display.reducePDiv">pDiv Factor</th>
 
@@ -421,18 +418,6 @@ class DisplayOrder {
                                                    type="number" step="1" min="1"
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.quotingEwmaSUPeriods">
-                                            </td>
-
-                                            <td style="width:30px;text-align: center;border-bottom: 3px solid #D64A4A;">
-                                                <input type="checkbox"
-                                                   [(ngModel)]="pair.quotingParameters.display.autoPingWidth">
-                                            </td>
-
-                                            <td style="width:60px;border-bottom: 3px solid #D64A4A;" *ngIf="pair.quotingParameters.display.autoPingWidth">
-                                                <input class="form-control input-sm"
-                                                   type="number" step="0.1" min="0.1"
-                                                   onClick="this.select()"
-                                                   [(ngModel)]="pair.quotingParameters.display.statWidthPeriodSec">
                                             </td>
 
                                             <td style="width:30px;text-align: center;border-bottom: 3px solid #D64A4A;">

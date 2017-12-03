@@ -12,8 +12,7 @@ import {SubscriberFactory} from './shared_directives';
       BuyTS: <span class="{{ buySafety ? \'text-danger\' : \'text-muted\' }}">{{ buySafety | number:'1.2-2' }}</span>,
       SellTS: <span class="{{ sellSafety ? \'text-danger\' : \'text-muted\' }}">{{ sellSafety | number:'1.2-2' }}</span>,
       TotalTS: <span class="{{ tradeSafetyValue ? \'text-danger\' : \'text-muted\' }}">{{ tradeSafetyValue | number:'1.2-2' }}</span>,
-      openOrders/60sec: <span class="{{ tradeFreq ? \'text-danger\' : \'text-muted\' }}">{{ tradeFreq | number:'1.0-0' }}</span>,
-      MktAvg: <span class="{{ avgMktWidth ? 'text-danger' : 'text-success' }}">{{ avgMktWidth | number:'1.3-3' }}</span><span>{{ pingAt }}</span>
+      openOrders/60sec: <span class="{{ tradeFreq ? \'text-danger\' : \'text-muted\' }}">{{ tradeFreq | number:'1.0-0' }}</span>
     </div>
   </div>`
 })
@@ -25,7 +24,6 @@ export class TradeSafetyComponent implements OnInit {
   private buySizeSafety: number;
   private sellSizeSafety: number;
   private tradeSafetyValue: number;
-  private avgMktWidth: number;
   private pingAt: string;
   @Input() tradeFreq: number;
   @Input() product: Models.ProductState;
@@ -76,7 +74,6 @@ export class TradeSafetyComponent implements OnInit {
       return;
     }
 
-    this.avgMktWidth = value.avgMktWidth;
     this.pingAt = value.pingAt;
   }
 
@@ -84,7 +81,6 @@ export class TradeSafetyComponent implements OnInit {
     this.fairValue = null;
   }
   private clearAvgMktWidth = () => {
-    this.avgMktWidth = null;
     this.pingAt = null;
   }
 

@@ -95,7 +95,6 @@ export class EWMAChart {
                 public ewmaLong: number,
                 public ewmaVeryLong: number,
                 public fairValue: number,
-                public avgMktWidth: number,
                 public pingAt: string) {}
 }
 
@@ -249,8 +248,6 @@ export interface QuotingParameters {
 
     keepHighs?: boolean;
     highsFactor?: number;
-    autoPingWidth?: boolean;
-    statWidthPeriodSec?: number;
     glueToSMU?: boolean;
     glueToSMUFactor?: number;
     endOfBlockDowntrend?: boolean;

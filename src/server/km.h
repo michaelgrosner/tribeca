@@ -100,8 +100,6 @@ namespace K {
     bool              blockUptrend                  = true;
     bool              keepHighs                     = false;
     double            highsFactor                   = 0.0;
-    bool              autoPingWidth                 = false;
-    int               statWidthPeriodSec            = 0;
     bool              glueToSMU                     = false;
     double            glueToSMUFactor               = 2;
     bool              increaseBidSzOnUptrend        = false;
@@ -176,8 +174,6 @@ namespace K {
       {"blockUptrend", k.blockUptrend},
       {"keepHighs", k.keepHighs},
       {"highsFactor", k.highsFactor},
-      {"autoPingWidth", k.autoPingWidth},
-      {"statWidthPeriodSec", k.statWidthPeriodSec},
       {"glueToSMU", k.glueToSMU},
       {"glueToSMUFactor", k.glueToSMUFactor},
       {"blockBidsOnUptrend", k.blockBidsOnUptrend},
@@ -254,8 +250,6 @@ namespace K {
     if (j.end() != j.find("blockUptrend"))                 k.blockUptrend = j.at("blockUptrend").get<bool>();
     if (j.end() != j.find("keepHighs"))                    k.keepHighs = j.at("keepHighs").get<bool>();
     if (j.end() != j.find("highsFactor"))                  k.highsFactor = j.at("highsFactor").get<double>();
-    if (j.end() != j.find("autoPingWidth"))                k.autoPingWidth = j.at("autoPingWidth").get<bool>();
-    if (j.end() != j.find("statWidthPeriodSec"))           k.statWidthPeriodSec = j.at("statWidthPeriodSec").get<int>();
     if (j.end() != j.find("blockBidsOnUptrend"))           k.blockBidsOnUptrend = j.at("blockBidsOnUptrend").get<bool>();
     if (j.end() != j.find("blockAsksOnDowntrend"))         k.blockAsksOnDowntrend = j.at("blockAsksOnDowntrend").get<bool>();
     if (j.end() != j.find("flipBidSizesOnDowntrend"))      k.flipBidSizesOnDowntrend = j.at("flipBidSizesOnDowntrend").get<bool>();

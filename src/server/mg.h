@@ -14,7 +14,6 @@ namespace K {
       vector<double> mgStatBid;
       vector<double> mgStatAsk;
       vector<double> mgStatTop;
-      vector<double> mgStatMarketWidth;
       unsigned int mgT_60s = 0;
       unsigned long mgT_369ms = 0;
     public:
@@ -33,7 +32,6 @@ namespace K {
       double mgStdevAskMean = 0;
       double mgEwmaSM = 0;
       double mgEwmaSU = 0;
-      double mgAvgMarketWidth = 0;
       string mgPingAt = "";
     protected:
       void load() {
@@ -151,7 +149,6 @@ namespace K {
           {"ewmaLong", mgEwmaL},
           {"ewmaVeryLong", mgEwmaVL},
           {"fairValue", fairValue},
-          {"avgMktWidth", mgAvgMarketWidth},
           {"pingAt", mgPingAt}
         }};
       };
@@ -165,8 +162,6 @@ namespace K {
         mgStatAsk.push_back(topAsk);
         mgStatTop.push_back(topBid);
         mgStatTop.push_back(topAsk);
-        if (topAsk > topBid)
-          mgStatMarketWidth.push_back(topAsk - topBid);
         calcStdev();
         ((DB*)memory)->insert(uiTXT::MarketData, {
           {"fv", fairValue},
@@ -214,7 +209,6 @@ namespace K {
           {"ewmaLong", mgEwmaL},
           {"ewmaVeryLong", mgEwmaVL},
           {"fairValue", fairValue},
-          {"avgMktWidth", mgAvgMarketWidth},
           {"pingAt", mgPingAt}
         }, true);
         ((DB*)memory)->insert(uiTXT::EWMAChart, {
@@ -262,7 +256,6 @@ namespace K {
         if (mgStatBid.size()>periods) mgStatBid.erase(mgStatBid.begin(), mgStatBid.end()-periods);
         if (mgStatAsk.size()>periods) mgStatAsk.erase(mgStatAsk.begin(), mgStatAsk.end()-periods);
         if (mgStatTop.size()>periods*2) mgStatTop.erase(mgStatTop.begin(), mgStatTop.end()-(periods*2));
-        if (mgStatMarketWidth.size()>(unsigned int)qp->statWidthPeriodSec) mgStatMarketWidth.erase(mgStatMarketWidth.begin(), mgStatMarketWidth.end()-qp->statWidthPeriodSec);
       };
       void calcStdev() {
         cleanStdev();
@@ -272,7 +265,6 @@ namespace K {
         mgStdevBid = calcStdev(mgStatBid, k, &mgStdevBidMean);
         mgStdevAsk = calcStdev(mgStatAsk, k, &mgStdevAskMean);
         mgStdevTop = calcStdev(mgStatTop, k, &mgStdevTopMean);
-        mgAvgMarketWidth = floor(calcAvg(mgStatMarketWidth));
       };
       double calcStdev(vector<double> a, double f, double *mean) {
         int n = a.size();
@@ -294,13 +286,6 @@ namespace K {
           *k = alpha * fairValue + (1 - alpha) * *k;
         } else *k = fairValue;
       };
-      double calcAvg(vector<double> mw){
-        double mwSum = 0.0;
-        if (mw.size() == 0) return 0.0;
-        for (vector<double>::iterator it = mw.begin(); it != mw.end(); ++it)
-          mwSum += *it;
-        return ( mwSum / (double) mw.size() );
-      }
       void calcTargetPos() {
         mgSMA3.push_back(fairValue);
         if (mgSMA3.size()>3) mgSMA3.erase(mgSMA3.begin(), mgSMA3.end()-3);

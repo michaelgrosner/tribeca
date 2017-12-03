@@ -160,8 +160,6 @@ namespace K {
           buySize = fmax(buySize, ((PG*)wallet)->targetBasePosition - totalBasePosition);
         if (sellSize and qp->aggressivePositionRebalancing != mAPR::Off and qp->sellSizeMax)
           sellSize = fmax(sellSize, totalBasePosition - ((PG*)wallet)->targetBasePosition);
-        if(qp->quotingEwmaSMUProtection and qp->autoPingWidth and ((MG*)market)->mgAvgMarketWidth > widthPing)
-          widthPing = ((MG*)market)->mgAvgMarketWidth;
         mQuote rawQuote = quote(widthPing, buySize, sellSize);
         if (!rawQuote.bid.price and !rawQuote.ask.price) return mQuote();
         if (rawQuote.bid.price < 0 or rawQuote.ask.price < 0) {
@@ -411,7 +409,7 @@ namespace K {
         }
         // ----> Downtrend
         if (((MG*)market)->mgEwmaSMUDiff < 0) {
-          if(((MG*)market)->mgEwmaSMUDiff < -qp->quotingEwmaSMUThreshold){
+          if (((MG*)market)->mgEwmaSMUDiff < -qp->quotingEwmaSMUThreshold) {
             mgPingAt += " | SMU Protection downtrend ON";
             //
             if (!qp->blockDowntrend) mgPingAt += " | Block disabled";
