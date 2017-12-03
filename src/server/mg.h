@@ -46,10 +46,6 @@ namespace K {
             mgStatAsk.push_back(it->value("ask", 0.0));
             mgStatTop.push_back(it->value("bid", 0.0));
             mgStatTop.push_back(it->value("ask", 0.0));
-
-            double _mktW = (double)it->value("ask", 0.0) > (double)it->value("bid", 0.0) ? (double)it->value("ask", 0.0) - (double)it->value("bid", 0.0) : 0.0;
-            if(_mktW > 0)
-              mgStatMarketWidth.push_back( _mktW );
           }
           calcStdev();
         }
