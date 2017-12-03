@@ -8,9 +8,6 @@ namespace K {
       mQuoteState bidStatus = mQuoteState::MissingData,
                   askStatus = mQuoteState::MissingData;
       mQuoteStatus status;
-      map<mSide, mLevel> nextStart;
-      bool nextIsPong   = false;
-      //
       bool blockAllBids = false;
       bool blockAllAsks = false;
       int  blockStatus  = 0;
