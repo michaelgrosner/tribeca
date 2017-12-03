@@ -380,14 +380,11 @@ class DisplayOrder {
 
                                             <th>Block Downtrend</th>
                                             <th *ngIf="pair.quotingParameters.display.blockDowntrend">Block Downtrend Asks</th>
-                                            <th *ngIf="pair.quotingParameters.display.blockDowntrend">Flip BidSz DownT</th>
                                             <th *ngIf="pair.quotingParameters.display.blockDowntrend">DownT End</th>
                                             <th *ngIf="pair.quotingParameters.display.blockDowntrend">DownT End Thre</th>
 
                                             <th>Block Uptrend</th>
                                             <th *ngIf="pair.quotingParameters.display.blockUptrend">Block Uptrend Bids</th>
-                                            <th>Increase BidSz Uptrend</th>
-                                            <th *ngIf="pair.quotingParameters.display.increaseBidSzOnUptrend">Sz Factor</th>
 
                                             <th>Keep Highs</th>
                                             <th *ngIf="pair.quotingParameters.display.keepHighs">Highs Factor</th>
@@ -427,10 +424,6 @@ class DisplayOrder {
                                             </td>
                                             <td style="width:30px;text-align: center;border-bottom: 3px solid #D64A4A;" *ngIf="pair.quotingParameters.display.blockDowntrend">
                                                 <input type="checkbox"
-                                                   [(ngModel)]="pair.quotingParameters.display.flipBidSizesOnDowntrend">
-                                            </td>
-                                            <td style="width:30px;text-align: center;border-bottom: 3px solid #D64A4A;" *ngIf="pair.quotingParameters.display.blockDowntrend">
-                                                <input type="checkbox"
                                                    [(ngModel)]="pair.quotingParameters.display.endOfBlockDowntrend">
                                             </td>
                                             <td style="width:60px;border-bottom: 3px solid #D64A4A;" *ngIf="pair.quotingParameters.display.blockDowntrend">
@@ -446,18 +439,6 @@ class DisplayOrder {
                                             <td style="width:30px;text-align: center;border-bottom: 3px solid #D64A4A;" *ngIf="pair.quotingParameters.display.blockUptrend">
                                                 <input type="checkbox"
                                                    [(ngModel)]="pair.quotingParameters.display.blockBidsOnUptrend">
-                                            </td>
-
-                                            <td style="width:30px;text-align: center;border-bottom: 3px solid #D64A4A;">
-                                                <input type="checkbox"
-                                                   [(ngModel)]="pair.quotingParameters.display.increaseBidSzOnUptrend">
-                                            </td>
-
-                                            <td style="width:60px;border-bottom: 3px solid #D64A4A;" *ngIf="pair.quotingParameters.display.increaseBidSzOnUptrend">
-                                                <input class="form-control input-sm"
-                                                   type="number" step="0.1" min="0"
-                                                   onClick="this.select()"
-                                                   [(ngModel)]="pair.quotingParameters.display.increaseBidSzOnUptrendFactor">
                                             </td>
 
                                             <td style="width:30px;text-align: center;border-bottom: 3px solid #D64A4A;">

@@ -235,13 +235,10 @@ export interface QuotingParameters {
     quotingEwmaSMPeriods?: number;
     quotingEwmaSUPeriods?: number;
 
-    flipBidSizesOnDowntrend?: boolean;
     blockBidsOnUptrend?: boolean;
     blockAsksOnDowntrend?: boolean;
     blockDowntrend?: boolean;
     blockUptrend?: boolean;
-    increaseBidSzOnUptrend?: boolean;
-    increaseBidSzOnUptrendFactor?: number;
 
     keepHighs?: boolean;
     highsFactor?: number;

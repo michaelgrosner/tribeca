@@ -91,7 +91,6 @@ namespace K {
     double            quotingEwmaSMUThreshold       = 2.0;
     int               quotingEwmaSMPeriods          = 12;
     int               quotingEwmaSUPeriods          = 3;
-    bool              flipBidSizesOnDowntrend       = false;
     bool              blockBidsOnUptrend            = false;
     bool              blockAsksOnDowntrend          = false;
     bool              blockDowntrend                = true;
@@ -100,8 +99,6 @@ namespace K {
     double            highsFactor                   = 0.0;
     bool              glueToSMU                     = false;
     double            glueToSMUFactor               = 2;
-    bool              increaseBidSzOnUptrend        = false;
-    double            increaseBidSzOnUptrendFactor  = 2;
     bool              endOfBlockDowntrend           = false;
     double            endOfBlockDowntrendThreshold  = -0.01;
   };
@@ -174,9 +171,6 @@ namespace K {
       {"glueToSMUFactor", k.glueToSMUFactor},
       {"blockBidsOnUptrend", k.blockBidsOnUptrend},
       {"blockAsksOnDowntrend", k.blockAsksOnDowntrend},
-      {"flipBidSizesOnDowntrend", k.flipBidSizesOnDowntrend},
-      {"increaseBidSzOnUptrend", k.increaseBidSzOnUptrend},
-      {"increaseBidSzOnUptrendFactor", k.increaseBidSzOnUptrendFactor},
       {"endOfBlockDowntrend", k.endOfBlockDowntrend},
       {"endOfBlockDowntrendThreshold", k.endOfBlockDowntrendThreshold}
     };
@@ -246,11 +240,8 @@ namespace K {
     if (j.end() != j.find("highsFactor"))                  k.highsFactor = j.at("highsFactor").get<double>();
     if (j.end() != j.find("blockBidsOnUptrend"))           k.blockBidsOnUptrend = j.at("blockBidsOnUptrend").get<bool>();
     if (j.end() != j.find("blockAsksOnDowntrend"))         k.blockAsksOnDowntrend = j.at("blockAsksOnDowntrend").get<bool>();
-    if (j.end() != j.find("flipBidSizesOnDowntrend"))      k.flipBidSizesOnDowntrend = j.at("flipBidSizesOnDowntrend").get<bool>();
     if (j.end() != j.find("glueToSMU"))                    k.glueToSMU = j.at("glueToSMU").get<bool>();
     if (j.end() != j.find("glueToSMUFactor"))              k.glueToSMUFactor = j.at("glueToSMUFactor").get<double>();
-    if (j.end() != j.find("increaseBidSzOnUptrend"))       k.increaseBidSzOnUptrend = j.at("increaseBidSzOnUptrend").get<bool>();
-    if (j.end() != j.find("increaseBidSzOnUptrendFactor")) k.increaseBidSzOnUptrendFactor = j.at("increaseBidSzOnUptrendFactor").get<double>();
     if (j.end() != j.find("endOfBlockDowntrend"))          k.endOfBlockDowntrend = j.at("endOfBlockDowntrend").get<bool>();
     if (j.end() != j.find("endOfBlockDowntrendThreshold")) k.endOfBlockDowntrendThreshold = j.at("endOfBlockDowntrendThreshold").get<double>();
     // ************************************************************
