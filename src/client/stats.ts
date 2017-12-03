@@ -27,7 +27,6 @@ export class StatsComponent implements OnInit {
   public ewmaLong: number;
   public ewmaVeryLong: number;
   public ewmaQuote: number;
-  public ewmaSMUDiff: number;
   public stdevWidth: Models.IStdev;
   public fvChart: any;
   public quoteChart: any;
@@ -241,13 +240,6 @@ export class StatsComponent implements OnInit {
       color:'#af451e',
       fillOpacity: 0.2,
       zIndex: -1,
-      data: []
-    },{
-      name: 'EWMA SMU Diff',
-      type: 'spline',
-      color: '#fd00ff',
-      tooltip: {pointFormatter: this.pointFormatterBase},
-      yAxis: 1,
       data: []
     }]
   };
@@ -540,7 +532,6 @@ export class StatsComponent implements OnInit {
         if (this.stdevWidth.ask && this.stdevWidth.bid && this.stdevWidth.askMean && this.stdevWidth.bidMean) Highcharts.charts[this.fvChart].series[17].addPoint([time, this.stdevWidth.bidMean-this.stdevWidth.bid, this.stdevWidth.askMean+this.stdevWidth.ask], this.showStats, false, false);
       }
       if (this.ewmaQuote) Highcharts.charts[this.fvChart].series[6].addPoint([time, this.ewmaQuote], false);
-      if (this.ewmaSMUDiff) Highcharts.charts[this.fvChart].series[18].addPoint([time, this.ewmaSMUDiff], false);
       if (this.ewmaVeryLong) Highcharts.charts[this.fvChart].series[7].addPoint([time, this.ewmaVeryLong], false);
       if (this.ewmaLong) Highcharts.charts[this.fvChart].series[8].addPoint([time, this.ewmaLong], false);
       if (this.ewmaMedium) Highcharts.charts[this.fvChart].series[9].addPoint([time, this.ewmaMedium], false);
@@ -575,7 +566,6 @@ export class StatsComponent implements OnInit {
     if (ewma === null) return;
     this.fairValue = ewma.fairValue;
     if (ewma.ewmaQuote) this.ewmaQuote = ewma.ewmaQuote;
-    if (ewma.ewmaSMUDiff) this.ewmaSMUDiff = ewma.ewmaSMUDiff;
     if (ewma.ewmaShort) this.ewmaShort = ewma.ewmaShort;
     if (ewma.ewmaMedium) this.ewmaMedium = ewma.ewmaMedium;
     if (ewma.ewmaLong) this.ewmaLong = ewma.ewmaLong;

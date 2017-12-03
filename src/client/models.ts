@@ -89,7 +89,6 @@ export interface IStdev {
 export class EWMAChart {
     constructor(public stdevWidth: IStdev,
                 public ewmaQuote: number,
-                public ewmaSMUDiff: number,
                 public ewmaShort: number,
                 public ewmaMedium: number,
                 public ewmaLong: number,
@@ -164,7 +163,7 @@ export class TwoSidedQuote {
     constructor(public bid: Quote, public ask: Quote) {}
 }
 
-export enum QuoteStatus { Live, Disconnected, DisabledQuotes, MissingData, UnknownHeld, TBPHeld, MaxTradesSeconds, WaitingPing, DepletedFunds, Crossed, UpTrendHeld, DownTrendHeld }
+export enum QuoteStatus { Live, Disconnected, DisabledQuotes, MissingData, UnknownHeld, TBPHeld, MaxTradesSeconds, WaitingPing, DepletedFunds, Crossed }
 
 export class TwoSidedQuoteStatus {
     constructor(public bidStatus: QuoteStatus, public askStatus: QuoteStatus, public quotesInMemoryNew: number, public quotesInMemoryWorking: number, public quotesInMemoryDone: number) {}
@@ -229,24 +228,6 @@ export interface QuotingParameters {
     mediumEwmaPeriods?: number;
     shortEwmaPeriods?: number;
     quotingEwmaProtectionPeriods?: number;
-    /* **************************** */
-    quotingEwmaSMUProtection?: boolean;
-    quotingEwmaSMUThreshold?: number;
-    quotingEwmaSMPeriods?: number;
-    quotingEwmaSUPeriods?: number;
-
-    blockBidsOnUptrend?: boolean;
-    blockAsksOnDowntrend?: boolean;
-    blockDowntrend?: boolean;
-    blockUptrend?: boolean;
-
-    keepHighs?: boolean;
-    highsFactor?: number;
-    glueToSMU?: boolean;
-    glueToSMUFactor?: number;
-    endOfBlockDowntrend?: boolean;
-    endOfBlockDowntrendThreshold?: number;
-    /* **************************** */
     quotingStdevProtectionFactor?: number;
     quotingStdevProtectionPeriods?: number;
     aprMultiplier?: number;

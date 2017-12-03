@@ -8,9 +8,6 @@ namespace K {
       mQuoteState bidStatus = mQuoteState::MissingData,
                   askStatus = mQuoteState::MissingData;
       mQuoteStatus status;
-      bool blockAllBids = false;
-      bool blockAllAsks = false;
-      int  blockStatus  = 0;
       int AK47inc = 1;
     public:
       mConnectivity gwConnectButton = mConnectivity::Disconnected,
@@ -53,10 +50,6 @@ namespace K {
         };
         ((EV*)events)->mgEwmaQuoteProtection = [&]() {
           ((EV*)events)->debug("QE mgEwmaQuoteProtection");
-          calcQuote();
-        };
-        ((EV*)events)->mgEwmaSMUProtection = [&]() {
-          ((EV*)events)->debug("QE mgEwmaSMUProtection");
           calcQuote();
         };
         ((EV*)events)->mgLevels = [&]() {
@@ -171,7 +164,6 @@ namespace K {
         bool superTradesActive = false;
         debuq("?", rawQuote); applySuperTrades(&rawQuote, &superTradesActive, widthPing, buySize, sellSize, quoteAmount, baseAmount);
         debuq("A", rawQuote); applyEwmaProtection(&rawQuote);
-        debuq("B", rawQuote); applyEwmaSMUProtection(&rawQuote, totalBasePosition, totalQuotePosition, safetyBuyPing, safetySellPong, baseValue, &widthPing, widthPong);
         debuq("C", rawQuote); applyTotalBasePosition(&rawQuote, totalBasePosition, pDiv, buySize, sellSize, quoteAmount, baseAmount);
         debuq("D", rawQuote); applyStdevProtection(&rawQuote);
         debuq("E", rawQuote); applyAggressivePositionRebalancing(&rawQuote, widthPong, safetyBuyPing, safetySellPong);
@@ -367,103 +359,6 @@ namespace K {
         if (!qp->quotingEwmaProtection or !((MG*)market)->mgEwmaP) return;
         rawQuote->ask.price = fmax(((MG*)market)->mgEwmaP, rawQuote->ask.price);
         rawQuote->bid.price = fmin(((MG*)market)->mgEwmaP, rawQuote->bid.price);
-      };
-      void applyEwmaSMUProtection(mQuote *rawQuote, double tbp, double tqp, double safetyBuyPing, double safetySellPong, double value, double *piW, double poW) {
-        if (!qp->quotingEwmaSMUProtection or !((MG*)market)->mgEwmaSMUDiff) return;
-        string trends = "";
-        // -----> Uptrend
-        if (((MG*)market)->mgEwmaSMUDiff > 0) {
-          if (((MG*)market)->mgEwmaSMUDiff > qp->quotingEwmaSMUThreshold) {
-            trends += " | SMU Protection uptrend ON";
-            //
-            if (!qp->blockUptrend) trends += " | Block disabled";
-            else {
-              blockStatus = 1;
-              trends += " | Block enabled";
-              if(qp->keepHighs){
-                rawQuote->ask.price = fmax(rawQuote->ask.price, ((MG*)market)->mgEwmaSU + *piW * qp->highsFactor);
-                trends += " | Keep highs";
-              } else {
-                blockAllAsks = true;
-                trends += " | Block Asks";
-                if(qp->blockBidsOnUptrend){
-                  blockAllBids = qp->blockBidsOnUptrend;
-                  trends += " | Block Bids";
-                }
-              }
-              if (qp->glueToSMU and !blockAllBids) {
-                rawQuote->bid.price = fmin(rawQuote->bid.price, ((MG*)market)->mgEwmaSU - *piW / qp->glueToSMUFactor);
-                trends += " | Glue to SMU";
-              }
-            }
-            if (((CF*)config)->argDebugQuotes) FN::log("DEBUG", string("QE quote: SMU Protection uptrend ON"));
-          } else blockStatus = 0;
-        }
-        // ----> Downtrend
-        else if (((MG*)market)->mgEwmaSMUDiff < 0) {
-          if (((MG*)market)->mgEwmaSMUDiff < -qp->quotingEwmaSMUThreshold) {
-            trends += " | SMU Protection downtrend ON";
-            //
-            if (!qp->blockDowntrend) trends += " | Block disabled";
-            else {
-              blockStatus = -1;
-              trends += " | Block enabled";
-              if(qp->keepHighs){
-                rawQuote->bid.price = fmin(rawQuote->bid.price, ((MG*)market)->mgEwmaSU - *piW * qp->highsFactor);
-                trends += " | Keep highs";
-              } else {
-                blockAllBids = true;
-                trends += " | Block Bids";
-                if(qp->blockAsksOnDowntrend){
-                  blockAllAsks = qp->blockAsksOnDowntrend;
-                  trends += " | Block Asks";
-                }
-              }
-              //
-              if (qp->glueToSMU and !blockAllAsks) {
-                rawQuote->ask.price = fmax(rawQuote->ask.price, ((MG*)market)->mgEwmaSU + *piW / qp->glueToSMUFactor);
-                trends += " | Glue to SMU";
-              }
-            }
-            //
-            if (((CF*)config)->argDebugQuotes) FN::log("DEBUG", string("QE quote: SMU Protection downtrend ON"));
-            //
-          } else if ((qp->endOfBlockDowntrend and ((MG*)market)->mgEwmaSMUDiff >= qp->endOfBlockDowntrendThreshold) or !qp->endOfBlockDowntrend)
-            blockStatus = 0;
-        }
-        if (blockStatus < 0 and qp->blockDowntrend) {
-          if (blockAllBids and !qp->keepHighs) {
-            bidStatus = mQuoteState::DownTrendHeld;
-            rawQuote->bid.price = 0;
-            rawQuote->bid.size = 0;
-            trends += " | Blocking Bids";
-          }
-          if (blockAllAsks and !qp->glueToSMU) {
-            askStatus = mQuoteState::DownTrendHeld;
-            rawQuote->ask.price = 0;
-            rawQuote->ask.size = 0;
-            trends += " | Blocking Asks";
-          }
-        }
-        else if (blockStatus > 0 and qp->blockUptrend) {
-          if (blockAllBids and !qp->glueToSMU){
-            bidStatus = mQuoteState::UpTrendHeld;
-            rawQuote->bid.price = 0;
-            rawQuote->bid.size = 0;
-            trends += " | Blocking Bids";
-          }
-          if (blockAllAsks and !qp->keepHighs) {
-            askStatus = mQuoteState::UpTrendHeld;
-            rawQuote->ask.price = 0;
-            rawQuote->ask.size = 0;
-            trends += " | Blocking Asks";
-          }
-        }
-        else {
-           blockAllBids = false;
-           blockAllAsks = false;
-        }
-        debug(string("trends?") + trends);
       };
       mQuote quote(double widthPing, double buySize, double sellSize) {
         if (quotingMode.find(qp->mode) == quotingMode.end()) FN::logExit("QE", "Invalid quoting mode", EXIT_SUCCESS);
