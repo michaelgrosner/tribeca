@@ -160,7 +160,7 @@ namespace K {
           buySize = fmax(buySize, ((PG*)wallet)->targetBasePosition - totalBasePosition);
         if (sellSize and qp->aggressivePositionRebalancing != mAPR::Off and qp->sellSizeMax)
           sellSize = fmax(sellSize, totalBasePosition - ((PG*)wallet)->targetBasePosition);
-        if(qp->autoPingWidth and ((MG*)market)->mgAvgMarketWidth > widthPing)
+        if(qp->quotingEwmaSMUProtection and qp->autoPingWidth and ((MG*)market)->mgAvgMarketWidth > widthPing)
           widthPing = ((MG*)market)->mgAvgMarketWidth;
         mQuote rawQuote = quote(widthPing, buySize, sellSize);
         if (!rawQuote.bid.price and !rawQuote.ask.price) return mQuote();
@@ -372,40 +372,40 @@ namespace K {
       };
       void applyEwmaSMUProtection(mQuote *rawQuote, double *pDiv, double *buySize, double *sellSize, double tbp, double tqp, double safetyBuyPing, double safetySellPong, double value, double *piW, double poW) {
         if (!qp->quotingEwmaSMUProtection or !((MG*)market)->mgEwmaSMUDiff) return;
-        ((MG*)market)->mgPingAt = "";
+        string mgPingAt = "";
         double _bSz = *buySize,
                _sSz = *sellSize;
         // -----> Uptrend
         if(((MG*)market)->mgEwmaSMUDiff > 0){
           if(((MG*)market)->mgEwmaSMUDiff > qp->quotingEwmaSMUThreshold){
-            ((MG*)market)->mgPingAt += " | SMU Protection uptrend ON";
+            mgPingAt += " | SMU Protection uptrend ON";
             //
             if(qp->blockUptrend){
               blockStatus = 1;
-              ((MG*)market)->mgPingAt += " | Block enabled";
+              mgPingAt += " | Block enabled";
               if(qp->keepHighs){
                 rawQuote->ask.price = fmax(rawQuote->ask.price, ((MG*)market)->mgEwmaSU + *piW * qp->highsFactor);
-                ((MG*)market)->mgPingAt += " | Keep highs";
+                mgPingAt += " | Keep highs";
               }
               else{
                 blockAllAsks = true;
-                ((MG*)market)->mgPingAt += " | Block Asks";
+                mgPingAt += " | Block Asks";
                 if(qp->blockBidsOnUptrend){
                   blockAllBids = qp->blockBidsOnUptrend;
-                  ((MG*)market)->mgPingAt += " | Block Bids";
+                  mgPingAt += " | Block Bids";
                 }
               }
               if(qp->glueToSMU and !blockAllBids){
                 rawQuote->bid.price = fmin(rawQuote->bid.price, ((MG*)market)->mgEwmaSU - *piW / qp->glueToSMUFactor);
-                ((MG*)market)->mgPingAt += " | Glue to SMU";
+                mgPingAt += " | Glue to SMU";
               }
             }
             else
-              ((MG*)market)->mgPingAt += " | Block disabled";
+              mgPingAt += " | Block disabled";
             //
             if(qp->increaseBidSzOnUptrend){
               *buySize *= qp->increaseBidSzOnUptrendFactor;
-              ((MG*)market)->mgPingAt += " | Increasing bidsize on uptrend";
+              mgPingAt += " | Increasing bidsize on uptrend";
              }
             //
             if (((CF*)config)->argDebugQuotes) FN::log("DEBUG", string("QE quote: SMU Protection uptrend ON"));
@@ -416,31 +416,31 @@ namespace K {
         // ----> Downtrend
         if(((MG*)market)->mgEwmaSMUDiff < 0){
           if(((MG*)market)->mgEwmaSMUDiff < -qp->quotingEwmaSMUThreshold){
-            ((MG*)market)->mgPingAt += " | SMU Protection downtrend ON";
+            mgPingAt += " | SMU Protection downtrend ON";
             //
             if(qp->blockDowntrend){
               blockStatus = -1;
-              ((MG*)market)->mgPingAt += " | Block enabled";
+              mgPingAt += " | Block enabled";
               if(qp->keepHighs){
                 rawQuote->bid.price = fmin(rawQuote->bid.price, ((MG*)market)->mgEwmaSU - *piW * qp->highsFactor);
-                ((MG*)market)->mgPingAt += " | Keep highs";
+                mgPingAt += " | Keep highs";
               }
               else{
                 blockAllBids = true;
-                ((MG*)market)->mgPingAt += " | Block Bids";
+                mgPingAt += " | Block Bids";
                 if(qp->blockAsksOnDowntrend){
                   blockAllAsks = qp->blockAsksOnDowntrend;
-                  ((MG*)market)->mgPingAt += " | Block Asks";
+                  mgPingAt += " | Block Asks";
                 }
               }
               //
               if(qp->glueToSMU and !blockAllAsks){
                 rawQuote->ask.price = fmax(rawQuote->ask.price, ((MG*)market)->mgEwmaSU + *piW / qp->glueToSMUFactor);
-                ((MG*)market)->mgPingAt += " | Glue to SMU";
+                mgPingAt += " | Glue to SMU";
               }
             }
             else
-              ((MG*)market)->mgPingAt += " | Block disabled";
+              mgPingAt += " | Block disabled";
             //
             if (((CF*)config)->argDebugQuotes) FN::log("DEBUG", string("QE quote: SMU Protection downtrend ON"));
             //
@@ -453,14 +453,14 @@ namespace K {
           if(qp->flipBidSizesOnDowntrend and *buySize > *sellSize and ((MG*)market)->mgEwmaSMUDiff < -(qp->quotingEwmaSMUThreshold/2) ){
             *sellSize = _bSz;
             *buySize  = _sSz;
-            ((MG*)market)->mgPingAt += " | SMU Fliping BidSizes on downtrend";
+            mgPingAt += " | SMU Fliping BidSizes on downtrend";
            }
         }
         //
         if(blockStatus != 0)
             if(qp->reducePDiv){
               *pDiv /= qp->reducePDivFactor;
-              ((MG*)market)->mgPingAt += " | Reducing pDiv by: " + to_string(qp->reducePDivFactor);
+              mgPingAt += " | Reducing pDiv by: " + to_string(qp->reducePDivFactor);
             }
         //
         if(blockStatus < 0 and qp->blockDowntrend)
@@ -469,13 +469,13 @@ namespace K {
             bidStatus = mQuoteState::DownTrendHeld;
             rawQuote->bid.price = 0;
             rawQuote->bid.size = 0;
-            ((MG*)market)->mgPingAt += " | Blocking Bids";
+            mgPingAt += " | Blocking Bids";
           }
           if(blockAllAsks and !qp->glueToSMU){
             askStatus = mQuoteState::DownTrendHeld;
             rawQuote->ask.price = 0;
             rawQuote->ask.size = 0;
-            ((MG*)market)->mgPingAt += " | Blocking Asks";
+            mgPingAt += " | Blocking Asks";
           }
         }
         //
@@ -485,19 +485,20 @@ namespace K {
             bidStatus = mQuoteState::UpTrendHeld;
             rawQuote->bid.price = 0;
             rawQuote->bid.size = 0;
-            ((MG*)market)->mgPingAt += " | Blocking Bids";
+            mgPingAt += " | Blocking Bids";
           }
           if(blockAllAsks and !qp->keepHighs){
             askStatus = mQuoteState::UpTrendHeld;
             rawQuote->ask.price = 0;
             rawQuote->ask.size = 0;
-            ((MG*)market)->mgPingAt += " | Blocking Asks";
+            mgPingAt += " | Blocking Asks";
           }
         }
         else{
            blockAllBids = false;
            blockAllAsks = false;
         }
+        ((MG*)market)->mgPingAt = mgPingAt;
       };
       mQuote quote(double widthPing, double buySize, double sellSize) {
         if (quotingMode.find(qp->mode) == quotingMode.end()) FN::logExit("QE", "Invalid quoting mode", EXIT_SUCCESS);

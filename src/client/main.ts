@@ -366,8 +366,8 @@ class DisplayOrder {
                                     </tbody>
                                 </table>
                               </td></tr></table>
-                             <table border="0" width="100%" *ngIf="pair.quotingParameters.display.quotingEwmaSMUProtection"><tr><td style="width:69px;text-align:center;">
-                             <small>TREND PROTECTION</small>
+                             <table border="0" width="100%" *ngIf="pair.quotingParameters.display.quotingEwmaSMUProtection"><tr><td style="width:69px;text-align:center;border-bottom: 1px gray solid;">
+                             <small>EWMA&nbsp;TREND<br/>PROTECTION</small>
                               </td><td>
                                 <table class="table table-responsive table-bordered">
                                     <thead>
@@ -528,7 +528,7 @@ class DisplayOrder {
                                             <th *ngIf="pair.quotingParameters.display.quotingStdevProtection">periodsˢᵗᵈᶜᵛ</th>
                                             <th *ngIf="pair.quotingParameters.display.quotingStdevProtection">factor</th>
                                             <th *ngIf="pair.quotingParameters.display.quotingStdevProtection">BB?</th>
-                                            <th>Ewma Trend</th>
+                                            <th>trends?</th>
                                             <th>cxl?</th>
                                             <th>profit</th>
                                             <th>Kmemory</th>

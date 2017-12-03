@@ -540,7 +540,7 @@ export class StatsComponent implements OnInit {
         if (this.stdevWidth.ask && this.stdevWidth.bid && this.stdevWidth.askMean && this.stdevWidth.bidMean) Highcharts.charts[this.fvChart].series[17].addPoint([time, this.stdevWidth.bidMean-this.stdevWidth.bid, this.stdevWidth.askMean+this.stdevWidth.ask], this.showStats, false, false);
       }
       if (this.ewmaQuote) Highcharts.charts[this.fvChart].series[6].addPoint([time, this.ewmaQuote], false);
-      if (this.ewmaSMUDiff) Highcharts.charts[this.fvChart].series[17].addPoint([time, this.ewmaSMUDiff], false);
+      if (this.ewmaSMUDiff) Highcharts.charts[this.fvChart].series[18].addPoint([time, this.ewmaSMUDiff], false);
       if (this.ewmaVeryLong) Highcharts.charts[this.fvChart].series[7].addPoint([time, this.ewmaVeryLong], false);
       if (this.ewmaLong) Highcharts.charts[this.fvChart].series[8].addPoint([time, this.ewmaLong], false);
       if (this.ewmaMedium) Highcharts.charts[this.fvChart].series[9].addPoint([time, this.ewmaMedium], false);

@@ -14,7 +14,7 @@ import {SubscriberFactory} from './shared_directives';
       TotalTS: <span class="{{ tradeSafetyValue ? \'text-danger\' : \'text-muted\' }}">{{ tradeSafetyValue | number:'1.2-2' }}</span>,
       openOrders/60sec: <span class="{{ tradeFreq ? \'text-danger\' : \'text-muted\' }}">{{ tradeFreq | number:'1.0-0' }}</span>,
       Trend: <span class="{{ trendSMU < 0 ? 'text-danger' : 'text-success' }}">{{ trendSMU | number:'1.3-3' }}</span>
-      MktAvg: <span class="{{ avgMktWidth ? 'text-danger' : 'text-success' }}">{{ avgMktWidth | number:'1.3-3' }}</span>
+      MktAvg: <span class="{{ avgMktWidth ? 'text-danger' : 'text-success' }}">{{ avgMktWidth | number:'1.3-3' }}</span><span>{{ pingAt }}</span>
     </div>
   </div>`
 })
@@ -28,6 +28,7 @@ export class TradeSafetyComponent implements OnInit {
   private tradeSafetyValue: number;
   private trendSMU: number;
   private avgMktWidth: number;
+  private pingAt: string;
   @Input() tradeFreq: number;
   @Input() product: Models.ProductState;
 
@@ -91,6 +92,7 @@ export class TradeSafetyComponent implements OnInit {
     }
 
     this.avgMktWidth = value.avgMktWidth;
+    this.pingAt = value.pingAt;
   }
 
   private clearFairValue = () => {
@@ -101,6 +103,7 @@ export class TradeSafetyComponent implements OnInit {
   }
   private clearAvgMktWidth = () => {
     this.avgMktWidth = null;
+    this.pingAt = null;
   }
 
   private clear = () => {
