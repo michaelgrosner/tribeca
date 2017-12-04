@@ -93,6 +93,8 @@ export class EWMAChart {
                 public ewmaMedium: number,
                 public ewmaLong: number,
                 public ewmaVeryLong: number,
+                public tradesBuySize: number,
+                public tradesSellSize: number,
                 public fairValue: number) {}
 }
 
