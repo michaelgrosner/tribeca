@@ -320,7 +320,7 @@ export class StatsComponent implements OnInit {
     },{
       name: 'Target',
       type: 'spline',
-      linkedTo: 0,
+      yAxis: 1,
       zIndex: 2,
       colorIndex:6,
       data: []
@@ -328,7 +328,7 @@ export class StatsComponent implements OnInit {
       name: 'pDiv',
       type: 'arearange',
       lineWidth: 0,
-      linkedTo: 0,
+      yAxis: 1,
       colorIndex: 6,
       fillOpacity: 0.3,
       zIndex: 0,
@@ -339,12 +339,12 @@ export class StatsComponent implements OnInit {
       type: 'area',
       colorIndex:0,
       fillOpacity: 0.2,
-      linkedTo: 0,
+      yAxis: 1,
       data: []
     },{
       name: 'Held',
       type: 'area',
-      linkedTo: 0,
+      yAxis: 1,
       marker:{symbol:'triangle-down'},
       data: []
     }]
@@ -399,7 +399,7 @@ export class StatsComponent implements OnInit {
     },{
       name: 'Target (TBP)',
       type: 'spline',
-      linkedTo: 0,
+      yAxis: 1,
       zIndex: 2,
       colorIndex:6,
       data: []
@@ -407,7 +407,7 @@ export class StatsComponent implements OnInit {
       name: 'pDiv',
       type: 'arearange',
       lineWidth: 0,
-      linkedTo: 0,
+      yAxis: 1,
       colorIndex: 6,
       fillOpacity: 0.3,
       zIndex: 0,
@@ -416,14 +416,14 @@ export class StatsComponent implements OnInit {
     },{
       name: 'Available',
       type: 'area',
-      linkedTo: 0,
+      yAxis: 1,
       colorIndex:5,
       fillOpacity: 0.2,
       data: []
     },{
       name: 'Held',
       type: 'area',
-      linkedTo: 0,
+      yAxis: 1,
       colorIndex:5,
       data: []
     }]
