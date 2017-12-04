@@ -257,9 +257,15 @@ namespace K {
         double variance = sq_diff_sum / n;
         return sqrt(variance) * f;
       };
-      void recalcEwma(double *k, int periods) {
-        for (int i = periods; i > 0; --i) {
-          _calcEwma (
+      double recalcEwma(vector<double> k, int periods) {
+	      double _Ewma = 0;
+	      if (k.size() > 1) {
+	        double alpha = (double)2 / (periods + 1);
+            for (int i = periods; i > 0; --i) {
+	          if (k.size() < periods) value = k.begin()
+			  else value = k[k.end()-i];
+			  _Ewma = alpha * value + (1 - alpha) * _Ewma;
+          }
         }
       };
       void calcEwma(double *k, int periods) {
