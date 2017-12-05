@@ -77,12 +77,12 @@ namespace K {
         bidStatus = mQuoteState::MissingData;
         askStatus = mQuoteState::MissingData;
         if (gwConnectExchange == mConnectivity::Disconnected) {
-          askStatus = mQuoteState::Disconnected;
           bidStatus = mQuoteState::Disconnected;
+          askStatus = mQuoteState::Disconnected;
         } else if (((MG*)market)->fairValue and !((MG*)market)->empty()) {
           if (gwConnectButton == mConnectivity::Disconnected) {
-            askStatus = mQuoteState::DisabledQuotes;
             bidStatus = mQuoteState::DisabledQuotes;
+            askStatus = mQuoteState::DisabledQuotes;
             stopAllQuotes();
           } else {
             bidStatus = mQuoteState::UnknownHeld;
@@ -342,7 +342,7 @@ namespace K {
                   ? ((MG*)market)->mgStdevTop : ((MG*)market)->mgStdevAsk )),
             rawQuote->ask.price
           );
-        if (rawQuote->bid.price and (qp->quotingStdevProtection == mSTDEV::OnFV or qp->quotingStdevProtection == mSTDEV::OnTops or qp->quotingStdevProtection == mSTDEV::OnTop or ((PG*)wallet)->sideAPR != "Buy")) {
+        if (rawQuote->bid.price and (qp->quotingStdevProtection == mSTDEV::OnFV or qp->quotingStdevProtection == mSTDEV::OnTops or qp->quotingStdevProtection == mSTDEV::OnTop or ((PG*)wallet)->sideAPR != "Buy"))
           rawQuote->bid.price = fmin(
             (qp->quotingStdevBollingerBands
               ? (qp->quotingStdevProtection == mSTDEV::OnFV or qp->quotingStdevProtection == mSTDEV::OnFVAPROff)
@@ -353,7 +353,6 @@ namespace K {
                   ? ((MG*)market)->mgStdevTop : ((MG*)market)->mgStdevBid )),
             rawQuote->bid.price
           );
-        }
       };
       void applyEwmaProtection(mQuote *rawQuote) {
         if (!qp->quotingEwmaProtection or !((MG*)market)->mgEwmaP) return;
@@ -428,31 +427,24 @@ namespace K {
         );
       };
       function<mQuote(double, double, double)> calcColossusOfMarket = [&](double widthPing, double buySize, double sellSize) {
-        double bidSz = 0,
-               bidPx = 0,
-               askSz = 0,
-               askPx = 0;
-        unsigned int maxLvl = 0;
-        for (vector<mLevel>::iterator it = ((MG*)market)->levels.bids.begin(); it != ((MG*)market)->levels.bids.end(); ++it) {
-          if (bidSz < it->size && it->price < (((MG*)market)->fairValue - widthPing / 2.0)) {
-            bidSz = it->size;
-            bidPx = it->price;
+        mQuote k = quoteAtTopOfMarket();
+        k.bid.size = 0;
+        k.ask.size = 0;
+        for (vector<mLevel>::iterator it = ((MG*)market)->levels.bids.begin(); it != ((MG*)market)->levels.bids.end(); ++it)
+          if (k.bid.size < it->size and it->price <= k.bid.price) {
+            k.bid.size = it->size;
+            k.bid.price = it->price;
           }
-          if (++maxLvl==13) break;
-        }
-        for (vector<mLevel>::iterator it = ((MG*)market)->levels.asks.begin(); it != ((MG*)market)->levels.asks.end(); ++it) {
-          if (askSz < it->size && it->price > (((MG*)market)->fairValue + widthPing / 2.0)) {
-            askSz = it->size;
-            askPx = it->price;
+        for (vector<mLevel>::iterator it = ((MG*)market)->levels.asks.begin(); it != ((MG*)market)->levels.asks.end(); ++it)
+          if (k.ask.size < it->size and it->price >= k.ask.price) {
+            k.ask.size = it->size;
+            k.ask.price = it->price;
           }
-          if (!--maxLvl) break;
-        }
-        if (bidSz) bidPx = bidPx + gw->minTick;
-        if (askSz) askPx = askPx - gw->minTick;
-        return mQuote(
-          mLevel(bidPx, buySize),
-          mLevel(askPx, sellSize)
-        );
+        if (k.bid.size) k.bid.price + gw->minTick;
+        if (k.ask.size) k.ask.price - gw->minTick;
+        k.bid.size = buySize;
+        k.ask.size = sellSize;
+        return k;
       };
       function<mQuote(double, double, double)> calcDepthOfMarket = [&](double depth, double buySize, double sellSize) {
         double bidPx = ((MG*)market)->levels.bids.begin()->price;
