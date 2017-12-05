@@ -904,7 +904,10 @@ class ClientComponent implements OnInit {
             ? 'https://www.bitfinex.com/trading/'+this.pair_name.join('')
             : (this.exchange_name=='HitBtc'
               ? 'https://hitbtc.com/exchange/'+this.pair_name.join('-to-')
-              : null
+              : (this.exchange_name=='Kraken'
+                ? 'https://www.kraken.com/charts/'
+                : null
+              )
             )
           )
       );
@@ -916,7 +919,10 @@ class ClientComponent implements OnInit {
           ? 'https://www.bitfinex.com/reports/orders'
           : (this.exchange_name=='HitBtc'
             ? 'https://hitbtc.com/reports/orders'
-            : null
+            : (this.exchange_name=='Kraken'
+              ? 'https://www.kraken.com/u/trade'
+              : null
+            )
           )
         )
       );
