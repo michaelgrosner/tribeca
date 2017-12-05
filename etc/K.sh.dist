@@ -49,6 +49,7 @@ UI_OPENPORT=3000
 #API_EXCHANGE=BITFINEX
 #API_EXCHANGE=HITBTC
 #API_EXCHANGE=OKCOIN
+#API_EXCHANGE=KRAKEN
 #API_EXCHANGE=KORBIT
 #API_EXCHANGE=POLONIEX
 API_EXCHANGE=NULL
@@ -92,13 +93,14 @@ API_USERNAME=NULL
 #API_HTTP_ENDPOINT=https://www.okcoin.com/api/v1/
 #API_HTTP_ENDPOINT=https://www.okcoin.cn/api/v1/
 #API_HTTP_ENDPOINT=https://www.okex.com/api/v1/
+#API_HTTP_ENDPOINT=https://api.kraken.com
 #API_HTTP_ENDPOINT=https://api.korbit.co.kr/v1
 #API_HTTP_ENDPOINT=https://poloniex.com
 API_HTTP_ENDPOINT=NULL
 #  ▌____________________________________________________.
 #  █ API_WSS_ENDPOINT                                   .
 #  ██ - Allows one of the following urls (see the website of the exchange).
-#  ██ - Almost all exchanges must have API_WSS_ENDPOINT, only KORBIT exchange can be NULL.
+#  ██ - Almost all exchanges must have API_WSS_ENDPOINT, only KRAKEN and KORBIT exchanges can be NULL.
 #  ██ - Note OKCOIN exchange have 3 possible endpoints.
 #API_WSS_ENDPOINT=wss://ws-feed.gdax.com
 #API_WSS_ENDPOINT=wss://api.bitfinex.com/ws/2

@@ -225,6 +225,7 @@ namespace K {
         else if (k == "okcoin") return mExchange::OkCoin;
         else if (k == "bitfinex") return mExchange::Bitfinex;
         else if (k == "poloniex") return mExchange::Poloniex;
+        else if (k == "kraken") return mExchange::Kraken;
         else if (k == "korbit") return mExchange::Korbit;
         else if (k == "hitbtc") return mExchange::HitBtc;
         else if (k != "null") FN::logExit("CF", string("Invalid configuration value \"") + k + "\" as EXCHANGE. See https://github.com/ctubio/Krypto-trading-bot/tree/master/etc#configuration-options for more information", EXIT_SUCCESS);
