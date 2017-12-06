@@ -898,30 +898,36 @@ class ClientComponent implements OnInit {
     this.exchange_name = Models.Exchange[pa.exchange];
     this.exchange_market = this.exchange_name=='OkCoin'
       ? 'https://www.okcoin.'+(pa.pair.quote=='CNY'?'cn':'com')+'/market.html'
-      : (this.exchange_name=='Coinbase'
-        ? 'https://gdax.com/trade/'+this.pair_name.join('-')
-        : (this.exchange_name=='Bitfinex'
-            ? 'https://www.bitfinex.com/trading/'+this.pair_name.join('')
-            : (this.exchange_name=='HitBtc'
-              ? 'https://hitbtc.com/exchange/'+this.pair_name.join('-to-')
-              : (this.exchange_name=='Kraken'
-                ? 'https://www.kraken.com/charts/'
-                : null
+      : (this.exchange_name=='OkEx'
+        ? 'https://www.okex.com/spot/market/index.do'
+        : (this.exchange_name=='Coinbase'
+          ? 'https://gdax.com/trade/'+this.pair_name.join('-')
+          : (this.exchange_name=='Bitfinex'
+              ? 'https://www.bitfinex.com/trading/'+this.pair_name.join('')
+              : (this.exchange_name=='HitBtc'
+                ? 'https://hitbtc.com/exchange/'+this.pair_name.join('-to-')
+                : (this.exchange_name=='Kraken'
+                  ? 'https://www.kraken.com/charts/'
+                  : null
+                )
               )
             )
           )
       );
     this.exchange_orders = this.exchange_name=='OkCoin'
       ? 'https://www.okcoin.'+(pa.pair.quote=='CNY'?'cn':'com')+'/trade/entrust.do'
-      : (this.exchange_name=='Coinbase'
-        ? 'https://www.gdax.com/orders/'+this.pair_name.join('-')
-        : (this.exchange_name=='Bitfinex'
-          ? 'https://www.bitfinex.com/reports/orders'
-          : (this.exchange_name=='HitBtc'
-            ? 'https://hitbtc.com/reports/orders'
-            : (this.exchange_name=='Kraken'
-              ? 'https://www.kraken.com/u/trade'
-              : null
+      : (this.exchange_name=='OkEx'
+        ? 'https://www.okex.com/spot/trade/spotEntrust.do'
+        : (this.exchange_name=='Coinbase'
+          ? 'https://www.gdax.com/orders/'+this.pair_name.join('-')
+          : (this.exchange_name=='Bitfinex'
+            ? 'https://www.bitfinex.com/reports/orders'
+            : (this.exchange_name=='HitBtc'
+              ? 'https://hitbtc.com/reports/orders'
+              : (this.exchange_name=='Kraken'
+                ? 'https://www.kraken.com/u/trade'
+                : null
+              )
             )
           )
         )

@@ -143,7 +143,7 @@ namespace K {
               if (it->find("pair") != it->end() and it->value("pair", "") == gw->symbol)
                 gw->minSize = stod(it->value("minimum_order_size", "0"));
         }
-        else if (e == mExchange::OkCoin) {
+        else if (e == mExchange::OkCoin or e == mExchange::OkEx) {
           gw->randId = FN::charId;
           gw->symbol = FN::S2l(string(gw->base) + "_" + gw->quote);
           gw->minTick = 0.001;
