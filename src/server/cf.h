@@ -222,7 +222,7 @@ namespace K {
       mExchange exchange() {
         string k = FN::S2l(argExchange);
         if (k == "coinbase") return mExchange::Coinbase;
-        else if (k == "okcoin") return mExchange::OkCoin;
+        else if (k == "okcoin" or k == "okex") return mExchange::OkCoin;
         else if (k == "bitfinex") return mExchange::Bitfinex;
         else if (k == "poloniex") return mExchange::Poloniex;
         else if (k == "kraken") return mExchange::Kraken;

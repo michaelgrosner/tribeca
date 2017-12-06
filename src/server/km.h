@@ -23,7 +23,7 @@ namespace K {
   enum class uiBIT: unsigned char { Hello = '=', Kiss = '-' };
   enum class uiTXT: unsigned char {
     FairValue = 'a', Quote = 'b', ActiveSubscription = 'c', ActiveState = 'd', MarketData = 'e',
-    QuotingParametersChange = 'f', SafetySettings = 'g', Product = 'h', OrderStatusReports = 'i',
+    QuotingParameters = 'f', SafetySettings = 'g', Product = 'h', OrderStatusReports = 'i',
     ProductAdvertisement = 'j', ApplicationState = 'k', Notepad = 'l', ToggleSettings = 'm',
     Position = 'n', ExchangeConnectivity = 'o', SubmitNewOrder = 'p', CancelOrder = 'q',
     MarketTrade = 'r', Trades = 's', ExternalValuation = 't', QuoteStatus = 'u',
