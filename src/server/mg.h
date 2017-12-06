@@ -110,6 +110,12 @@ namespace K {
         gw->evDataWallet(mWallet());
         ((UI*)client)->send(uiTXT::FairValue, {{"price", fairValue}}, true);
       };
+      void recalcEwmas() {
+      	mgEwmaVL = recalcEwma(mgStatFV, qp->veryLongEwmaPeriods);
+        mgEwmaL = recalcEwma(mgStatFV, qp->longEwmaPeriods);
+        mgEwmaM = recalcEwma(mgStatFV, qp->mediumEwmaPeriods);
+        mgEwmaS = recalcEwma(mgStatFV, qp->shortEwmaPeriods);
+      };
     private:
       function<json()> helloTrade = [&]() {
         json k;
@@ -258,15 +264,22 @@ namespace K {
         return sqrt(variance) * f;
       };
       double recalcEwma(vector<double> k, int periods) {
-	      double _Ewma = 0;
-	      if (k.size() > 1) {
-	        double alpha = (double)2 / (periods + 1);
-            for (int i = periods; i > 0; --i) {
-	          if (k.size() < periods) value = k.begin()
-			  else value = k[k.end()-i];
-			  _Ewma = alpha * value + (1 - alpha) * _Ewma;
+	    double Ewma = 0;
+	    double value =0;
+	    if (k.size() > 1) {
+          double alpha = (double)2 / (periods + 1);
+          for (int i = periods; i > 0; --i) {
+	        if (k.size() < periods) value = k[0];
+	        else value = k[k.size()-i-1];
+	    	Ewma = alpha * value + (1 - alpha) * Ewma;
           }
-        }
+          FN::log("MG", string("recalculated EWMA with a period of ") + to_string(periods) + string(" = ") + to_string(Ewma));
+          if (k.size() < periods) FN::log("MG", string("Data missing, only  ") + to_string(k.size()) + string(" real values were available."));
+          return Ewma;
+        } else { 
+	        FN::log("MG", string("Error recalculating EWMA... "));
+	        return 0;
+	        }
       };
       void calcEwma(double *k, int periods) {
         if (*k) {
