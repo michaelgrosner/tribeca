@@ -146,8 +146,8 @@ namespace K {
         else if (e == mExchange::OkCoin) {
           gw->randId = FN::charId;
           gw->symbol = FN::S2l(string(gw->base) + "_" + gw->quote);
-          gw->minTick = "btc" == gw->symbol.substr(0,3) ? 0.01 : 0.001;
-          gw->minSize = 0.01;
+          gw->minTick = 0.001;
+          gw->minSize = 0.001;
         }
         else if (e == mExchange::Kraken) {
           gw->randId = FN::int64Id;

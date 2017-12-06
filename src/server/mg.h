@@ -5,8 +5,8 @@ namespace K {
   class MG: public Klass {
     private:
       vector<mTrade> trades;
-      double tradesBuySize60s = 0;
-      double tradesSellSize60s = 0;
+      double takersBuySize60s = 0;
+      double takersSellSize60s = 0;
       double mgEwmaVL = 0;
       double mgEwmaL = 0;
       double mgEwmaM = 0;
@@ -145,10 +145,10 @@ namespace K {
         }, false, "NULL", FN::T() - 1e+3 * qp->quotingStdevProtectionPeriods);
       };
       void calcStatsTrades() {
-        tradesSellSize60s = tradesBuySize60s = 0;
+        takersSellSize60s = takersBuySize60s = 0;
         for (unsigned i=0; i<trades.size(); ++i)
-          if (trades[i].side == mSide::Bid) tradesBuySize60s += trades[i].quantity;
-          else tradesSellSize60s += trades[i].quantity;
+          if (trades[i].side == mSide::Bid) takersSellSize60s += trades[i].quantity;
+          else takersBuySize60s += trades[i].quantity;
         trades.clear();
       };
       void tradeUp(mTrade k) {
@@ -201,8 +201,8 @@ namespace K {
           {"ewmaMedium", mgEwmaM},
           {"ewmaLong", mgEwmaL},
           {"ewmaVeryLong", mgEwmaVL},
-          {"tradesBuySize", tradesBuySize60s},
-          {"tradesSellSize", tradesSellSize60s},
+          {"tradesBuySize", takersBuySize60s},
+          {"tradesSellSize", takersSellSize60s},
           {"fairValue", fairValue}
         };
       };
