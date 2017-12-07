@@ -14,7 +14,7 @@ import {SubscriberFactory} from './shared_directives';
     <span class="text-muted" title="{{ quoteCurrency }} Total">{{ quotePosition + quoteHeldPosition | number:'1.'+product.fixed+'-'+product.fixed }}</span></small></h4>
     <h4 class="col-md-12 col-xs-2" style="margin-bottom: 0px!important;"><small>Value:</small><br><b title="{{ baseCurrency }} Total">{{ baseValue | number:'1.8-8' }}</b><br/><b title="{{ quoteCurrency }} Total">{{ quoteValue | number:'1.'+product.fixed+'-'+product.fixed }}</b></h4>
     <h4 class="col-md-12 col-xs-2" style="margin-top: 0px!important;"><small style="font-size:69%"><span title="{{ baseCurrency }} profit %" class="{{ profitBase>0 ? \'text-danger\' : \'text-muted\' }}">{{ profitBase>=0?'+':'' }}{{ profitBase | number:'1.2-2' }}%</span>, <span title="{{ quoteCurrency }} profit %" class="{{ profitQuote>0 ? \'text-danger\' : \'text-muted\' }}">{{ profitQuote>=0?'+':'' }}{{ profitQuote | number:'1.2-2' }}%</span></small></h4>
-  </div><div class="positions" *ngIf="!baseCurrency && !quoteCurrency"><br/><b>NO WALLET DATA</b><br/><br/>Do a manual order first using the website of this Market!<br/></div>`
+  </div><div class="positions" *ngIf="!baseCurrency && !quoteCurrency"><br/><b>NO WALLET DATA</b><br/><br/>Do a manual order first using the website of this Market!<br/><br/></div>`
 })
 export class WalletPositionComponent implements OnInit {
 

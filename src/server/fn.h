@@ -98,6 +98,13 @@ namespace K {
         for(int i = 0; i < 16; i++) sprintf(&k_[i*2], "%02x", (unsigned int)digest[i]);
         return S2u(k_);
       };
+      static string oSha256(string k) {
+        unsigned char digest[SHA256_DIGEST_LENGTH];
+        SHA256((unsigned char*)k.data(), k.length(), (unsigned char*)&digest);
+        char k_[SHA256_DIGEST_LENGTH*2+1];
+        for(int i = 0; i < SHA256_DIGEST_LENGTH; i++) sprintf(&k_[i*2], "%02x", (unsigned int)digest[i]);
+        return k_;
+      };
       static string oSha512(string k) {
         unsigned char digest[SHA512_DIGEST_LENGTH];
         SHA512((unsigned char*)k.data(), k.length(), (unsigned char*)&digest);
@@ -105,7 +112,7 @@ namespace K {
         for(int i = 0; i < SHA512_DIGEST_LENGTH; i++) sprintf(&k_[i*2], "%02x", (unsigned int)digest[i]);
         return k_;
       };
-      static string oHmac256(string p, string s, bool hex) {
+      static string oHmac256(string p, string s, bool hex = false) {
         unsigned char* digest;
         digest = HMAC(EVP_sha256(), s.data(), s.length(), (unsigned char*)p.data(), p.length(), NULL, NULL);
         char k_[SHA256_DIGEST_LENGTH*2+1];
@@ -142,9 +149,9 @@ namespace K {
           curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &wcb);
           curl_easy_setopt(curl, CURLOPT_WRITEDATA, &k_);
           curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
-          curl_easy_setopt(curl, CURLOPT_TIMEOUT, 5L);
+          curl_easy_setopt(curl, CURLOPT_TIMEOUT, 13L);
           CURLcode r = curl_easy_perform(curl);
-          if(r != CURLE_OK) FN::logWar("JSON", string("wGet failed ") + curl_easy_strerror(r));
+          if(r != CURLE_OK) FN::logWar("CURL", string("wGet failed ") + curl_easy_strerror(r));
           curl_easy_cleanup(curl);
         }
         if (!k_.length() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
@@ -167,7 +174,7 @@ namespace K {
           curl_easy_setopt(curl, CURLOPT_WRITEDATA, &k_);
           curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
           CURLcode r = curl_easy_perform(curl);
-          if(r != CURLE_OK) FN::logWar("JSON", string("wPost failed ") + curl_easy_strerror(r));
+          if(r != CURLE_OK) FN::logWar("CURL", string("wPost failed ") + curl_easy_strerror(r));
           curl_easy_cleanup(curl);
         }
         if (!k_.length() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
@@ -189,7 +196,31 @@ namespace K {
           curl_easy_setopt(curl, CURLOPT_WRITEDATA, &k_);
           curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
           CURLcode r = curl_easy_perform(curl);
-          if(r != CURLE_OK) FN::logWar("JSON", string("wPost failed ") + curl_easy_strerror(r));
+          if(r != CURLE_OK) FN::logWar("CURL", string("wPost failed ") + curl_easy_strerror(r));
+          curl_easy_cleanup(curl);
+        }
+        if (!k_.length() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
+        return k_;
+      };
+      static json wJet(string k, bool p, string a, string s, string n) {
+        return json::parse(wGet(k, p, a, s, n));
+      };
+      static string wGet(string k, bool p, string a, string s, string n) {
+        string k_;
+        CURL* curl;
+        curl = curl_easy_init();
+        if (curl) {
+          struct curl_slist *h_ = NULL;
+          curl_easy_setopt(curl, CURLOPT_URL, k.data());
+          curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &wcb);
+          curl_easy_setopt(curl, CURLOPT_POSTFIELDS, n.data());
+          h_ = curl_slist_append(h_, string("API-Key: ").append(a).data());
+          h_ = curl_slist_append(h_, string("API-Sign: ").append(s).data());
+          curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
+          curl_easy_setopt(curl, CURLOPT_WRITEDATA, &k_);
+          curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
+          CURLcode r = curl_easy_perform(curl);
+          if(r != CURLE_OK) FN::logWar("CURL", string("wPost failed ") + curl_easy_strerror(r));
           curl_easy_cleanup(curl);
         }
         if (!k_.length() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
@@ -210,7 +241,7 @@ namespace K {
           curl_easy_setopt(curl, CURLOPT_WRITEDATA, &k_);
           curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
           CURLcode r = curl_easy_perform(curl);
-          if(r != CURLE_OK) FN::logWar("JSON", string("wGet failed ") + curl_easy_strerror(r));
+          if(r != CURLE_OK) FN::logWar("CURL", string("wGet failed ") + curl_easy_strerror(r));
           curl_easy_cleanup(curl);
         }
         if (!k_.length() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
@@ -233,7 +264,7 @@ namespace K {
           curl_easy_setopt(curl, CURLOPT_WRITEDATA, &k_);
           curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
           CURLcode r = curl_easy_perform(curl);
-          if(r != CURLE_OK) FN::logWar("JSON", string("wPost failed ") + curl_easy_strerror(r));
+          if(r != CURLE_OK) FN::logWar("CURL", string("wPost failed ") + curl_easy_strerror(r));
           curl_easy_cleanup(curl);
         }
         if (!k_.length() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
@@ -258,7 +289,7 @@ namespace K {
           curl_easy_setopt(curl, CURLOPT_WRITEDATA, &k_);
           curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
           CURLcode r = curl_easy_perform(curl);
-          if(r != CURLE_OK) FN::logWar("JSON", string("wPost failed ") + curl_easy_strerror(r));
+          if(r != CURLE_OK) FN::logWar("CURL", string("wPost failed ") + curl_easy_strerror(r));
           curl_easy_cleanup(curl);
         }
         if (!k_.length() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
@@ -283,7 +314,7 @@ namespace K {
           curl_easy_setopt(curl, CURLOPT_WRITEDATA, &k_);
           curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
           CURLcode r = curl_easy_perform(curl);
-          if(r != CURLE_OK) FN::logWar("JSON", string("wPost failed ") + curl_easy_strerror(r));
+          if(r != CURLE_OK) FN::logWar("CURL", string("wPost failed ") + curl_easy_strerror(r));
           curl_easy_cleanup(curl);
         }
         if (!k_.length() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
@@ -307,7 +338,7 @@ namespace K {
           curl_easy_setopt(curl, CURLOPT_WRITEDATA, &k_);
           curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
           CURLcode r = curl_easy_perform(curl);
-          if(r != CURLE_OK) FN::logWar("JSON", string("wPost failed ") + curl_easy_strerror(r));
+          if(r != CURLE_OK) FN::logWar("CURL", string("wPost failed ") + curl_easy_strerror(r));
           curl_easy_cleanup(curl);
         }
         if (!k_.length() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
@@ -332,7 +363,7 @@ namespace K {
           curl_easy_setopt(curl, CURLOPT_WRITEDATA, &k_);
           curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
           CURLcode r = curl_easy_perform(curl);
-          if(r != CURLE_OK) FN::logWar("JSON", string("wGet failed ") + curl_easy_strerror(r));
+          if(r != CURLE_OK) FN::logWar("CURL", string("wGet failed ") + curl_easy_strerror(r));
           curl_easy_cleanup(curl);
         }
         if (!k_.length() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
@@ -358,7 +389,7 @@ namespace K {
           curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
           curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
           CURLcode r = curl_easy_perform(curl);
-          if(r != CURLE_OK) FN::logWar("JSON", string("wGet failed ") + curl_easy_strerror(r));
+          if(r != CURLE_OK) FN::logWar("CURL", string("wGet failed ") + curl_easy_strerror(r));
           curl_easy_cleanup(curl);
         }
         if (!k_.length() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";

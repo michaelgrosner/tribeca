@@ -28,12 +28,12 @@ namespace K {
         sqlite3_free(zErrMsg);
         return j;
       };
-      void insert(uiTXT k, json o, bool rm = true, string id = "NULL", long time = 0) {
+      void insert(uiTXT k, json o, bool rm = true, string id = "NULL", long expire = 0) {
         char* zErrMsg = 0;
         sqlite3_exec(db, (
-          string((rm or id != "NULL" or time) ? string("DELETE FROM ") + (char)k
+          string((rm or id != "NULL" or expire) ? string("DELETE FROM ") + (char)k
           + (id != "NULL" ? string(" WHERE id = ") + id  : (
-            time ? string(" WHERE time < ") + to_string(time) : ""
+            expire ? string(" WHERE time < ") + to_string(expire) : ""
           ) ) : "") + ";" + (o.is_null() ? "" : string("INSERT INTO ") + (char)k
             + " (id,json) VALUES(" + id + ",'" + o.dump() + "');")
         ).data(), NULL, NULL, &zErrMsg);

@@ -63,7 +63,7 @@ export class MarketTrade {
 }
 
 export enum Connectivity { Disconnected, Connected }
-export enum Exchange { Null, HitBtc, OkCoin, Coinbase, Bitfinex, Korbit, Poloniex }
+export enum Exchange { Null, HitBtc, OkCoin, Coinbase, Bitfinex, Kraken, OkEx, Korbit, Poloniex }
 export enum Side { Bid, Ask, Unknown }
 export enum OrderType { Limit, Market }
 export enum TimeInForce { IOC, FOK, GTC }
@@ -93,6 +93,8 @@ export class EWMAChart {
                 public ewmaMedium: number,
                 public ewmaLong: number,
                 public ewmaVeryLong: number,
+                public tradesBuySize: number,
+                public tradesSellSize: number,
                 public fairValue: number) {}
 }
 

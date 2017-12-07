@@ -5,6 +5,8 @@ namespace K {
   class MG: public Klass {
     private:
       vector<mTrade> trades;
+      double takersBuySize60s = 0;
+      double takersSellSize60s = 0;
       double mgEwmaVL = 0;
       double mgEwmaL = 0;
       double mgEwmaM = 0;
@@ -87,10 +89,11 @@ namespace K {
       void calcStats() {
         if (++mgT_60s == 60) {
           mgT_60s = 0;
-          ewmaPUp();
-          ewmaUp();
+          calcStatsTrades();
+          calcStatsEwmaProtection();
+          calcStatsEwmaPosition();
         }
-        stdevPUp();
+        calcStatsStdevProtection();
       };
       void calcFairValue() {
         if (empty()) return;
@@ -127,26 +130,9 @@ namespace K {
         return (json){{{"price", fairValue}}};
       };
       function<json()> helloEwma = [&]() {
-        return (json){{
-          {"stdevWidth", {
-            {"fv", mgStdevFV},
-            {"fvMean", mgStdevFVMean},
-            {"tops", mgStdevTop},
-            {"topsMean", mgStdevTopMean},
-            {"bid", mgStdevBid},
-            {"bidMean", mgStdevBidMean},
-            {"ask", mgStdevAsk},
-            {"askMean", mgStdevAskMean}
-          }},
-          {"ewmaQuote", mgEwmaP},
-          {"ewmaShort", mgEwmaS},
-          {"ewmaMedium", mgEwmaM},
-          {"ewmaLong", mgEwmaL},
-          {"ewmaVeryLong", mgEwmaVL},
-          {"fairValue", fairValue}
-        }};
+        return (json){ chartStats() };
       };
-      void stdevPUp() {
+      void calcStatsStdevProtection() {
         if (empty()) return;
         double topBid = levels.bids.begin()->price;
         double topAsk = levels.asks.begin()->price;
@@ -164,12 +150,18 @@ namespace K {
           {"time", FN::T()},
         }, false, "NULL", FN::T() - 1e+3 * qp->quotingStdevProtectionPeriods);
       };
+      void calcStatsTrades() {
+        takersSellSize60s = takersBuySize60s = 0;
+        for (unsigned i=0; i<trades.size(); ++i)
+          if (trades[i].side == mSide::Bid) takersSellSize60s += trades[i].quantity;
+          else takersBuySize60s += trades[i].quantity;
+        trades.clear();
+      };
       void tradeUp(mTrade k) {
         k.exchange = gw->exchange;
         k.pair = mPair(gw->base, gw->quote);
         k.time = FN::T();
         trades.push_back(k);
-        if (trades.size()>69) trades.erase(trades.begin());
         ((UI*)client)->send(uiTXT::MarketTrade, k);
       };
       void levelUp(mLevels k) {
@@ -178,14 +170,28 @@ namespace K {
         ((UI*)client)->send(uiTXT::MarketData, k, true);
         mgT_369ms = FN::T();
       };
-      void ewmaUp() {
+      void calcStatsEwmaPosition() {
         calcEwma(&mgEwmaVL, qp->veryLongEwmaPeriods);
         calcEwma(&mgEwmaL, qp->longEwmaPeriods);
         calcEwma(&mgEwmaM, qp->mediumEwmaPeriods);
         calcEwma(&mgEwmaS, qp->shortEwmaPeriods);
         calcTargetPos();
         ((EV*)events)->mgTargetPosition();
-        ((UI*)client)->send(uiTXT::EWMAChart, {
+        ((UI*)client)->send(uiTXT::EWMAChart, chartStats(), true);
+        ((DB*)memory)->insert(uiTXT::EWMAChart, {
+          {"ewmaVeryLong", mgEwmaVL},
+          {"ewmaLong", mgEwmaL},
+          {"ewmaMedium", mgEwmaM},
+          {"ewmaShort", mgEwmaS},
+          {"time", FN::T()}
+        });
+      };
+      void calcStatsEwmaProtection() {
+        calcEwma(&mgEwmaP, qp->quotingEwmaProtectionPeriods);
+        ((EV*)events)->mgEwmaQuoteProtection();
+      };
+      json chartStats() {
+        return {
           {"stdevWidth", {
             {"fv", mgStdevFV},
             {"fvMean", mgStdevFVMean},
@@ -201,19 +207,10 @@ namespace K {
           {"ewmaMedium", mgEwmaM},
           {"ewmaLong", mgEwmaL},
           {"ewmaVeryLong", mgEwmaVL},
+          {"tradesBuySize", takersBuySize60s},
+          {"tradesSellSize", takersSellSize60s},
           {"fairValue", fairValue}
-        }, true);
-        ((DB*)memory)->insert(uiTXT::EWMAChart, {
-          {"ewmaVeryLong", mgEwmaVL},
-          {"ewmaLong", mgEwmaL},
-          {"ewmaMedium", mgEwmaM},
-          {"ewmaShort", mgEwmaS},
-          {"time", FN::T()}
-        });
-      };
-      void ewmaPUp() {
-        calcEwma(&mgEwmaP, qp->quotingEwmaProtectionPeriods);
-        ((EV*)events)->mgEwmaQuoteProtection();
+        };
       };
       void filter(mLevels k) {
         levels = k;
