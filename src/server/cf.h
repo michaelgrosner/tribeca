@@ -223,10 +223,12 @@ namespace K {
         string k = FN::S2l(argExchange);
         if (k == "coinbase") return mExchange::Coinbase;
         else if (k == "okcoin") return mExchange::OkCoin;
+        else if (k == "okex") return mExchange::OkEx;
         else if (k == "bitfinex") return mExchange::Bitfinex;
-        else if (k == "poloniex") return mExchange::Poloniex;
-        else if (k == "korbit") return mExchange::Korbit;
         else if (k == "hitbtc") return mExchange::HitBtc;
+        else if (k == "kraken") return mExchange::Kraken;
+        else if (k == "korbit") return mExchange::Korbit;
+        else if (k == "poloniex") return mExchange::Poloniex;
         else if (k != "null") FN::logExit("CF", string("Invalid configuration value \"") + k + "\" as EXCHANGE. See https://github.com/ctubio/Krypto-trading-bot/tree/master/etc#configuration-options for more information", EXIT_SUCCESS);
         return mExchange::Null;
       };

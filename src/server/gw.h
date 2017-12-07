@@ -134,7 +134,7 @@ namespace K {
             string _price_ = price_.str();
             for (string::iterator it=_price_.begin(); it!=_price_.end();)
               if (*it == '+' or *it == '-') break; else it = _price_.erase(it);
-            stringstream os(string("1e").append(to_string(fmax(stod(_price_),-4)-4)));
+            stringstream os(string("1e") + to_string(fmax(stod(_price_),-4)-4));
             os >> gw->minTick;
           }
           reply = FN::wJet(string(gw->http) + "/symbols_details");
@@ -143,10 +143,27 @@ namespace K {
               if (it->find("pair") != it->end() and it->value("pair", "") == gw->symbol)
                 gw->minSize = stod(it->value("minimum_order_size", "0"));
         }
-        else if (e == mExchange::OkCoin) {
+        else if (e == mExchange::OkCoin or e == mExchange::OkEx) {
           gw->randId = FN::charId;
           gw->symbol = FN::S2l(string(gw->base) + "_" + gw->quote);
-          gw->minTick = "btc" == gw->symbol.substr(0,3) ? 0.01 : 0.001;
+          gw->minTick = 0.001;
+          gw->minSize = 0.001;
+        }
+        else if (e == mExchange::Kraken) {
+          gw->randId = FN::int64Id;
+          gw->symbol = FN::S2u(string(gw->base) + gw->quote);
+          reply = FN::wJet(string(gw->http) + "/0/public/AssetPairs?pair=" + gw->symbol);
+          if (reply.find("result") != reply.end())
+            for (json::iterator it = reply["result"].begin(); it != reply["result"].end(); ++it) {
+              if (it.value().find("pair_decimals") != it.value().end()) {
+                stringstream os(string("1e-") + to_string(it.value().value("pair_decimals", 0)));
+                os >> gw->minTick;
+                gw->symbol = it.key();
+                gw->base = it.value().value("base", gw->base);
+                gw->quote = it.value().value("quote", gw->quote);
+              }
+              break;
+            }
           gw->minSize = 0.01;
         }
         else if (e == mExchange::Korbit) {
