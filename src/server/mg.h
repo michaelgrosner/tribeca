@@ -271,7 +271,7 @@ namespace K {
 	    	Ewma = alpha * value + (1 - alpha) * Ewma;
           }
           FN::log("MG", string("recalculated EWMA with a period of ") + to_string(periods) + string(" = ") + to_string(Ewma));
-          if (k.size() < periods) FN::log("MG", string("Data missing, only  ") + to_string(k.size()) + string(" real values were available."));
+          if (k.size() < periods) FN::log("MG", string("Not enough accumulated values. Only  ") + to_string(k.size()) + string(" real values were available."));
           return Ewma;
         } else { 
 	        FN::log("MG", string("Error recalculating EWMA... "));
