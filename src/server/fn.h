@@ -137,10 +137,10 @@ namespace K {
         system("test -n \"`/bin/pidof stunnel`\" && kill -9 `/bin/pidof stunnel`");
         system("stunnel etc/K-stunnel.conf");
       };
-      static json wJet(string k) {
-        return json::parse(wGet(k));
+      static json wJet(string k, bool f = false) {
+        return json::parse(wGet(k, f));
       };
-      static string wGet(string k) {
+      static string wGet(string k, bool f) {
         string k_;
         CURL* curl;
         curl = curl_easy_init();
@@ -149,9 +149,10 @@ namespace K {
           curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &wcb);
           curl_easy_setopt(curl, CURLOPT_WRITEDATA, &k_);
           curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
-          curl_easy_setopt(curl, CURLOPT_TIMEOUT, 13L);
+          if (f) curl_easy_setopt(curl, CURLOPT_TIMEOUT, 4L);
+          else curl_easy_setopt(curl, CURLOPT_TIMEOUT, 13L);
           CURLcode r = curl_easy_perform(curl);
-          if(r != CURLE_OK) FN::logWar("CURL", string("wGet failed ") + curl_easy_strerror(r));
+          if(!f and r != CURLE_OK) FN::logWar("CURL", string("wGet failed ") + curl_easy_strerror(r));
           curl_easy_cleanup(curl);
         }
         if (!k_.length() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";

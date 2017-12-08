@@ -907,7 +907,7 @@ class ClientComponent implements OnInit {
               : (this.exchange_name=='HitBtc'
                 ? 'https://hitbtc.com/exchange/'+this.pair_name.join('-to-')
                 : (this.exchange_name=='Kraken'
-                  ? 'https://www.kraken.com/charts/'
+                  ? 'https://www.kraken.com/charts'
                   : null
                 )
               )
