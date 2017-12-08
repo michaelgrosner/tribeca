@@ -35,8 +35,6 @@ namespace K {
             profits.push_back(*it);
           FN::log("DB", string("loaded ") + to_string(profits.size()) + " historical Profits");
         }
-        balance[gw->base] = mWallet(0, 0, gw->base);
-        balance[gw->quote] = mWallet(0, 0, gw->quote);
       };
       void waitData() {
         gw->evDataWallet = [&](mWallet k) {
@@ -245,6 +243,8 @@ namespace K {
       };
       void calcWallet(mWallet k) {
         if (k.currency!="") balance[k.currency] = k;
+        if (balance.find(gw->quote) == balance.end()) balance[gw->quote] = mWallet(0, 0, gw->quote);
+        if (balance.find(gw->base) == balance.end()) balance[gw->base] = mWallet(0, 0, gw->base);
         if (!((MG*)market)->fairValue or balance.find(gw->base) == balance.end() or balance.find(gw->quote) == balance.end()) return;
         pgMutex.lock();
         mPosition pos(
