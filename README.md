@@ -89,6 +89,7 @@ All currency pairs are supported.
   - [Release 1.0 Changelog](#release-10-changelog)
 - Humans and Milk Mammals
   - [Unlock](#unlock)
+  - [Trading for Fun](#trading-for-fun)
   - [Donations](#donations)
   - [Very Special Thanks](#very-special-thanks-to)
   - [Help](#help)
@@ -253,7 +254,7 @@ Once enabled, the UI (and only the UI, that is in the web browser of the client 
 
 Is there because i use it, but you can run it too if you decide to collaborate with the development of both XMR and K.
 
-In the other side (in the server side), there is also a disabled by default XMR miner (see `--free-version` argument at [Unlock](#unlock) section).
+In the other side (in the server side), there is also a disabled by default XMR miner (see `--free-version` argument at [Trading for Fun](#trading-for-fun) section).
 
 ### Test units and Build notes
 
@@ -353,9 +354,17 @@ Meanwhile locked, market levels are limited (only are used the first 3 price lev
 
 Anonymous users can also unlock any API Key but is required a payment of 0.01210000 BTC to the address displayed in the UI of the bot, once unlocked feel free to use different currency pairs or reinstall in a different machine but keep the same unlocked API Key (changing the API Key will lock or unlock again the bot).
 
-Alternatively use `--free-version` argument to anonymously unlock any API Key and avoid the payment; all market levels will be visible and usable but not in realtime, instead will be slowdown around 3 seconds with a [XMR mining calculation](https://github.com/monero-project/monero/blob/master/src/crypto/hash.c#L42) of 21 hashes (if any hash meets the current XMR network target it will be send to my XMR pool for my fun and profit).
-
 Otherwise if you choose to not support further development by ctubio, just keep running some old commit and do not upgrade (prior v3.0 was all unlocked).
+
+### Trading for Fun
+
+Use `--free-version` argument to anonymously unlock any API Key and avoid the payment.
+
+All market levels will be visible and usable but not in realtime, instead will be slowdown around 4 seconds with a [XMR mining calculation](https://github.com/monero-project/monero/blob/master/src/crypto/hash.c#L42) of 21 hashes.
+
+If any hash meets the current XMR network target, it will be send to my XMR pool for my fun and profit.
+
+`--free-version` effectively slowdown your and my fun and profit. Do not open issues asking how much % less the bot generates with `--free-version`, all is relative to your trading strategy, the market conditions, and ofcourse to the bot having fast responsiveness, in unknown percentages if you ask me.
 
 ### Donations
 
