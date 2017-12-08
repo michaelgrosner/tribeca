@@ -36,7 +36,7 @@ namespace K {
         json k = ((DB*)memory)->load(uiTXT::MarketData);
         if (k.size()) {
           for (json::reverse_iterator it = k.rbegin(); it != k.rend(); ++it) {
-            if (it->value("time", (unsigned long)0)+ 36*1e+5 <FN::T()) continue;
+            if (it->value("time", (unsigned long)0)+qp->quotingStdevProtectionPeriods*1e+3<FN::T()) continue;
             mgStatFV.push_back(it->value("fv", 0.0));
             mgStatBid.push_back(it->value("bid", 0.0));
             mgStatAsk.push_back(it->value("ask", 0.0));
@@ -92,6 +92,7 @@ namespace K {
           calcStatsTrades();
           calcStatsEwmaProtection();
           calcStatsEwmaPosition();
+          FN::log("DEBUG", "Update ewma");
         }
         calcStatsStdevProtection();
       };
@@ -148,7 +149,7 @@ namespace K {
           {"bid", topBid},
           {"ask", topAsk},
           {"time", FN::T()},
-        }, false, "NULL", FN::T() - 36*1e+5);
+        }, false, "NULL", FN::T() - 1e+3 * qp->quotingStdevProtectionPeriods);
       };
       void calcStatsTrades() {
         takersSellSize60s = takersBuySize60s = 0;
