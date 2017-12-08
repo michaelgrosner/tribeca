@@ -16,6 +16,7 @@ namespace K {
       vector<double> mgStatBid;
       vector<double> mgStatAsk;
       vector<double> mgStatTop;
+      vector<double> FairValueLongTime;
       unsigned int mgT_60s = 0;
       unsigned long mgT_369ms = 0;
     public:
@@ -51,6 +52,10 @@ namespace K {
         if (((CF*)config)->argEwmaMedium) mgEwmaM = ((CF*)config)->argEwmaMedium;
         if (((CF*)config)->argEwmaShort) mgEwmaS = ((CF*)config)->argEwmaShort;
         k = ((DB*)memory)->load(uiTXT::EWMAChart);
+        for (json::reverse_iterator it = k.rbegin(); it != k.rend(); ++it) {
+            if (it->value("time", (unsigned long)0)+864*1e4<FN::T() && it->value("fv", 0.0) > 0  ) continue;
+            FairValueLongTime.push_back(it->value("fv", 0.0));
+          }
         if (k.size()) {
           k = k.at(0);
           if (!mgEwmaVL and k.value("time", (unsigned long)0) + qp->veryLongEwmaPeriods * 6e+4 > FN::T())
@@ -92,7 +97,6 @@ namespace K {
           calcStatsTrades();
           calcStatsEwmaProtection();
           calcStatsEwmaPosition();
-          FN::log("DEBUG", "Update ewma");
         }
         calcStatsStdevProtection();
       };
@@ -115,10 +119,10 @@ namespace K {
         ((UI*)client)->send(uiTXT::FairValue, {{"price", fairValue}}, true);
       };
       void recalcEwmas() {
-      	mgEwmaVL = recalcEwma(mgStatFV, qp->veryLongEwmaPeriods);
-        mgEwmaL = recalcEwma(mgStatFV, qp->longEwmaPeriods);
-        mgEwmaM = recalcEwma(mgStatFV, qp->mediumEwmaPeriods);
-        mgEwmaS = recalcEwma(mgStatFV, qp->shortEwmaPeriods);
+      	mgEwmaVL = recalcEwma(FairValueLongTime, qp->veryLongEwmaPeriods);
+        mgEwmaL = recalcEwma(FairValueLongTime, qp->longEwmaPeriods);
+        mgEwmaM = recalcEwma(FairValueLongTime, qp->mediumEwmaPeriods);
+        mgEwmaS = recalcEwma(FairValueLongTime, qp->shortEwmaPeriods);
       };
     private:
       function<json()> helloTrade = [&]() {
@@ -184,8 +188,10 @@ namespace K {
           {"ewmaLong", mgEwmaL},
           {"ewmaMedium", mgEwmaM},
           {"ewmaShort", mgEwmaS},
+          {"fv", fairValue},
           {"time", FN::T()}
         });
+        FairValueLongTime.push_back(fairValue);
       };
       void calcStatsEwmaProtection() {
         calcEwma(&mgEwmaP, qp->quotingEwmaProtectionPeriods);
@@ -272,10 +278,10 @@ namespace K {
 	    	Ewma = alpha * value + (1 - alpha) * Ewma;
           }
           FN::log("MG", string("recalculated EWMA with a period of ") + to_string(periods) + string(" = ") + to_string(Ewma));
-          if (k.size() < periods) FN::log("MG", string("Not enough accumulated values. Only  ") + to_string(k.size()) + string(" real values were available."));
+          if (k.size() < periods) FN::log("MG", string("Not enough accumulated values. Only  ") + to_string(k.size()) + string(" real values were available"));
           return Ewma;
         } else { 
-	        FN::log("MG", string("Error recalculating EWMA... "));
+	        FN::log("MG", string("Error recalculating EWMA.."));
 	        return 0;
 	        }
       };
