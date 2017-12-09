@@ -29,16 +29,18 @@ namespace K {
         return j;
       };
       void insert(uiTXT k, json o, bool rm = true, string id = "NULL", long expire = 0) {
-        char* zErrMsg = 0;
-        sqlite3_exec(db, (
-          string((rm or id != "NULL" or expire) ? string("DELETE FROM ") + (char)k
-          + (id != "NULL" ? string(" WHERE id = ") + id  : (
-            expire ? string(" WHERE time < ") + to_string(expire) : ""
-          ) ) : "") + ";" + (o.is_null() ? "" : string("INSERT INTO ") + (char)k
-            + " (id,json) VALUES(" + id + ",'" + o.dump() + "');")
-        ).data(), NULL, NULL, &zErrMsg);
-        if (zErrMsg) FN::logWar("DB", string("Sqlite error: ") + zErrMsg);
-        sqlite3_free(zErrMsg);
+        ((EV*)events)->whenever(async(launch::deferred, [this, k, o, rm, id, expire] {
+          char* zErrMsg = 0;
+          sqlite3_exec(db, (
+            string((rm or id != "NULL" or expire) ? string("DELETE FROM ") + (char)k
+            + (id != "NULL" ? string(" WHERE id = ") + id  : (
+              expire ? string(" WHERE time < ") + to_string(expire) : ""
+            ) ) : "") + ";" + (o.is_null() ? "" : string("INSERT INTO ") + (char)k
+              + " (id,json) VALUES(" + id + ",'" + o.dump() + "');")
+          ).data(), NULL, NULL, &zErrMsg);
+          if (zErrMsg) FN::logWar("DB", string("Sqlite error: ") + zErrMsg);
+          sqlite3_free(zErrMsg);
+        }));
       };
       int size() {
         if (((CF*)config)->argDatabase == ":memory:") return 0;

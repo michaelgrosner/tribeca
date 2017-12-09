@@ -5,6 +5,8 @@ namespace K  {
   class EV: public Klass {
     private:
       uWS::Hub *hub = nullptr;
+      Async *fEngine = nullptr;
+      vector<future<void>> futures;
     public:
       uWS::Group<uWS::SERVER> *uiGroup = nullptr;
       Timer *tServer = nullptr,
@@ -32,6 +34,14 @@ namespace K  {
         tClient = new Timer(hub->getLoop());
       };
       void waitData() {
+        fEngine = new Async(hub->getLoop());
+        fEngine->setData(this);
+        fEngine->start([](Async *handle) {
+          EV* k = (EV*)handle->data;
+          for (vector<future<void>>::iterator it = k->futures.begin(); it != k->futures.end();++it)
+            it->get();
+          k->futures.clear();
+        });
         gw->gwGroup = hub->createGroup<uWS::CLIENT>();
       };
       void waitUser() {
@@ -73,6 +83,10 @@ namespace K  {
             + FN::output(string("netstat -anp 2>/dev/null | grep ") + to_string(((CF*)config)->argPort)),
             EXIT_SUCCESS);
         FN::logUI(protocol, ((CF*)config)->argPort);
+      };
+      void whenever(future<void> whatever) {
+        futures.push_back(move(whatever));
+        fEngine->send();
       };
       function<void(string)> debug = [&](string k) {
         FN::log("DEBUG", string("EV ") + k);

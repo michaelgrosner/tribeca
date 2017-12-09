@@ -173,7 +173,9 @@ namespace K {
       void send(uiTXT k, string j) {
         string m(1, (char)uiBIT::Kiss);
         m += string(1, (char)k) + j;
-        ((EV*)events)->uiGroup->broadcast(m.data(), m.length(), uWS::OpCode::TEXT);
+        ((EV*)events)->whenever(async(launch::deferred, [this, m] {
+          ((EV*)events)->uiGroup->broadcast(m.data(), m.length(), uWS::OpCode::TEXT);
+        }));
       };
       void sendQueue() {
         for (map<uiTXT, string>::iterator it = queue.begin(); it != queue.end(); ++it)
