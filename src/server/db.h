@@ -29,7 +29,7 @@ namespace K {
         return j;
       };
       void insert(uiTXT k, json o, bool rm = true, string id = "NULL", long expire = 0) {
-        ((EV*)events)->whenever(async(launch::deferred, [this, k, o, rm, id, expire] {
+        ((EV*)events)->deferred([this, k, o, rm, id, expire]() {
           char* zErrMsg = 0;
           sqlite3_exec(db, (
             string((rm or id != "NULL" or expire) ? string("DELETE FROM ") + (char)k
@@ -40,7 +40,7 @@ namespace K {
           ).data(), NULL, NULL, &zErrMsg);
           if (zErrMsg) FN::logWar("DB", string("Sqlite error: ") + zErrMsg);
           sqlite3_free(zErrMsg);
-        }));
+        });
       };
       int size() {
         if (((CF*)config)->argDatabase == ":memory:") return 0;

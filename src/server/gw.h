@@ -17,7 +17,7 @@ namespace K {
         handshake(gw->exchange);
       };
       void waitTime() {
-        ((EV*)events)->tServer->setData(this);
+        ((EV*)events)->tServer->data = this;
         ((EV*)events)->tServer->start([](Timer *handle) {
           GW *k = (GW*)handle->data;
           ((EV*)k->events)->debug("GW tServer timer");

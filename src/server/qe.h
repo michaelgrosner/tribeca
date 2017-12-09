@@ -23,7 +23,7 @@ namespace K {
         quotingMode[mQuotingMode::Depth] = &calcDepthOfMarket;
       };
       void waitTime() {
-        ((EV*)events)->tEngine->setData(this);
+        ((EV*)events)->tEngine->data = this;
         ((EV*)events)->tEngine->start([](Timer *handle) {
           QE *k = (QE*)handle->data;
           ((EV*)k->events)->debug("QE tEngine timer");
@@ -122,7 +122,6 @@ namespace K {
       };
       mQuote nextQuote() {
         if (((MG*)market)->empty() or ((PG*)wallet)->empty()) return mQuote();
-        ((PG*)wallet)->pgMutex.lock();
         double baseValue       = ((PG*)wallet)->position.baseValue,
                baseAmount      = ((PG*)wallet)->position.baseAmount,
                baseHeldAmount  = ((PG*)wallet)->position.baseHeldAmount,
@@ -133,7 +132,6 @@ namespace K {
                safetyBuy       = ((PG*)wallet)->safety.buy,
                safetySell      = ((PG*)wallet)->safety.sell,
                pDiv            = ((PG*)wallet)->positionDivergence;
-        ((PG*)wallet)->pgMutex.unlock();
         if (safetyBuyPing == -1) return mQuote();
         double totalBasePosition = baseAmount + baseHeldAmount;
         double totalQuotePosition = (quoteAmount + quoteHeldAmount) / ((MG*)market)->fairValue;

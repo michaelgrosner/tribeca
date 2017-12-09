@@ -6,7 +6,6 @@ namespace K {
     private:
       map<string, mOrder> allOrders;
       map<string, string> allOrdersIds;
-      mutex ogMutex;
     public:
       vector<mTrade> tradesHistory;
     protected:
@@ -53,7 +52,6 @@ namespace K {
         gw->cancel(o.orderId, o.exchangeId, o.side, o.time);
       };
       void cleanOrder(string oI, string oE) {
-        ogMutex.lock();
         map<string, mOrder>::iterator it = allOrders.find(oI);
         if (it != allOrders.end()) allOrders.erase(it);
         if (oE != "") {
@@ -63,7 +61,6 @@ namespace K {
           for (map<string, string>::iterator it_ = allOrdersIds.begin(); it_ != allOrdersIds.end();)
             if (it_->second == oI) it_ = allOrdersIds.erase(it_); else ++it_;
         }
-        ogMutex.unlock();
         debug(string("remove ") + oI + "::" + oE);
       };
       void countOrders(unsigned int *qNew, unsigned int *qWorking, unsigned int *qDone) {
@@ -74,7 +71,6 @@ namespace K {
           else ++(*qDone);
       };
       map<string, mOrder> ordersBothSides() {
-        lock_guard<mutex> lock(ogMutex);
         return allOrders;
       };
       multimap<double, mOrder> ordersAtSide(mSide side) {
@@ -140,12 +136,10 @@ namespace K {
         else if (k.orderId != "" and orders.find(k.orderId) != orders.end())
           o = orders[k.orderId];
         else if (k.exchangeId != "") {
-          ogMutex.lock();
           if (allOrdersIds.find(k.exchangeId) != allOrdersIds.end()) {
             o = orders[allOrdersIds[k.exchangeId]];
             k.orderId = o.orderId;
-          } else { ogMutex.unlock(); return o; }
-          ogMutex.unlock();
+          } else return o;
         } else return o;
         if (k.orderId!="") o.orderId = k.orderId;
         if (k.exchangeId!="") o.exchangeId = k.exchangeId;
@@ -316,11 +310,9 @@ namespace K {
       };
       void toMemory(mOrder k) {
         if (k.orderStatus != mORS::Cancelled and k.orderStatus != mORS::Complete) {
-          ogMutex.lock();
           if (k.exchangeId != "")
             allOrdersIds[k.exchangeId] = k.orderId;
           allOrders[k.orderId] = k;
-          ogMutex.unlock();
           debug(string(" save  ") + (k.side == mSide::Bid ? "BID id " : "ASK id ") + k.orderId + "::" + k.exchangeId + " [" + to_string((int)k.orderStatus) + "]: " + k.quantity2str() + " " + k.pair.base + " at price " + k.price2str() + " " + k.pair.quote);
         } else cleanOrder(k.orderId, k.exchangeId);
         debug(string("memory ") + to_string(allOrders.size()) + "/" + to_string(allOrdersIds.size()));

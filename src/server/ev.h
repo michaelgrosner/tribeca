@@ -5,8 +5,8 @@ namespace K  {
   class EV: public Klass {
     private:
       uWS::Hub *hub = nullptr;
-      Async *fEngine = nullptr;
-      vector<future<void>> futures;
+      Async *aEngine = nullptr;
+      vector<function<void()>> asyncFn;
     public:
       uWS::Group<uWS::SERVER> *uiGroup = nullptr;
       Timer *tServer = nullptr,
@@ -34,14 +34,9 @@ namespace K  {
         tClient = new Timer(hub->getLoop());
       };
       void waitData() {
-        fEngine = new Async(hub->getLoop());
-        fEngine->setData(this);
-        fEngine->start([](Async *handle) {
-          EV* k = (EV*)handle->data;
-          for (vector<future<void>>::iterator it = k->futures.begin(); it != k->futures.end();++it)
-            it->get();
-          k->futures.clear();
-        });
+        aEngine = new Async(hub->getLoop());
+        aEngine->data = this;
+        aEngine->start(asyncLoop);
         gw->gwGroup = hub->createGroup<uWS::CLIENT>();
       };
       void waitUser() {
@@ -69,6 +64,7 @@ namespace K  {
         gw->close();
         gw->gwGroup->close();
         gwCancelAll();
+        asyncLoop(aEngine);
         uiGroup->close();
       };
       void listen() {
@@ -84,14 +80,22 @@ namespace K  {
             EXIT_SUCCESS);
         FN::logUI(protocol, ((CF*)config)->argPort);
       };
-      void whenever(future<void> whatever) {
-        futures.push_back(move(whatever));
-        fEngine->send();
+      void deferred(function<void()> fn) {
+        asyncFn.push_back(fn);
+        aEngine->send();
       };
       function<void(string)> debug = [&](string k) {
         FN::log("DEBUG", string("EV ") + k);
       };
     private:
+      void (*asyncLoop)(Async*) = [](Async *handle) {
+        EV* k = (EV*)handle->data;
+        for (vector<function<void()>>::iterator it = k->asyncFn.begin(); it != k->asyncFn.end();) {
+          (*it)();
+          it = k->asyncFn.erase(it);
+        }
+        if (FN::screen_events()) k->aEngine->send();
+      };
       static void halt(int code) {
         for (vector<function<void()>*>::iterator it=gwEndings.begin(); it!=gwEndings.end();++it) (**it)();
         cout << FN::uiT() << "K exit code " << to_string(code) << "." << '\n';

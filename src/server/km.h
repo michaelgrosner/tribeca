@@ -522,7 +522,6 @@ namespace K {
               BBLUE[]  = "\033[1;34m", BPURPLE[] = "\033[1;35m", BCYAN[]  = "\033[1;36m", BWHITE[]  = "\033[1;37m";
   static WINDOW *wBorder = nullptr,
                 *wLog = nullptr;
-  static mutex wMutex;
   static vector<function<void()>*> gwEndings;
   class Gw {
     public:
