@@ -53,11 +53,18 @@ namespace K {
         if (((CF*)config)->argEwmaShort) mgEwmaS = ((CF*)config)->argEwmaShort;
         k = ((DB*)memory)->load(uiTXT::MarketDataLongTerm);
         if (k.size()) {
+	      unsigned long timediff = 0;
+	      unsigned long averageTimediff = 0;
+
           for (json::reverse_iterator it = k.rbegin(); it != k.rend(); ++it) {
-			  if (it->value("time", (unsigned long)0)+864*1e4<FN::T() ) continue;
+			  if (it->value("time", (unsigned long)0) + 864 * 1e4 < FN::T() or it->value("fv", 0.0) <= 0 ) continue;
 			  FairValueLongTerm.push_back(it->value("fv", 0.0));
-			  FN::log(string("Value ") + to_string(it->value("fv", 0.0)));
+			  
+			  if (timediff) averageTimediff += it->value("time", (unsigned long)0) - timediff;
+			  timediff = it->value("time", (unsigned long)0);
           }
+          FN::log("DB", string("loaded ") + to_string(FairValueLongTerm.size()) + string(" historical FairValues"));
+          if (FairValueLongTerm.size()) FN::log("DB", string("Average Milliseconds between values: ") + to_string(averageTimediff/FairValueLongTerm.size()));
         }
         k = ((DB*)memory)->load(uiTXT::EWMAChart);
         if (k.size()) {
@@ -96,12 +103,12 @@ namespace K {
         return !levels.bids.size() or !levels.asks.size();
       };
       void calcStats() {
-        if (++mgT_60s == 60) {
-          mgT_60s = 0;
+        if (mgT_60s == 0) {
           calcStatsTrades();
           calcStatsEwmaProtection();
           calcStatsEwmaPosition();
         }
+        if (++mgT_60s == 60) mgT_60s = 0;
         calcStatsStdevProtection();
       };
       void calcFairValue() {
@@ -199,6 +206,7 @@ namespace K {
           {"time", FN::T()},
         }, false, "NULL", FN::T() - 864*1e4);
         FairValueLongTerm.push_back(fairValue);
+        FN::log(to_string(FN::T()));
       };
       void calcStatsEwmaProtection() {
         calcEwma(&mgEwmaP, qp->quotingEwmaProtectionPeriods);
@@ -276,14 +284,14 @@ namespace K {
       };
       double recalcEwma(vector<double> k,  unsigned int periods) {
 	    double Ewma = 0;
-	    double value =0;
-	    if (k.size() > 1) {
+	    double value = 0;
+	    if (k.size()) {
           double alpha = (double)2 / (periods + 1);
-          for (int i = periods; i > 0; --i) {
+          for (unsigned int i = periods; i > 0; --i) {
 	        if (k.size() <  periods) value = k[0];
 	        else value = k[k.size()-i-1];
-	    	Ewma = alpha * value + (1 - alpha) * Ewma;
-	    	FN::log("MG", string("Calculation ") + to_string(i) +  string(" = ") + to_string(Ewma));
+	        if (Ewma) Ewma = alpha * value + (1 - alpha) * Ewma;  
+	    	else Ewma = value;
           }
           FN::log("MG", string("recalculated EWMA with a period of ") + to_string(periods) + string(" = ") + to_string(Ewma));
           if (k.size() < periods) FN::log("MG", string("Not enough accumulated values. Only  ") + to_string(k.size()) + string(" real values were available"));
