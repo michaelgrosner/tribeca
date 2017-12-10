@@ -286,7 +286,7 @@ namespace K {
 	    double Ewma = 0;
 	    double value = 0;
 	    int size = k.size();
-	    if (size {
+	    if (size) {
           double alpha = (double)2 / (periods + 1);
           for (int i = periods; i > 0; --i) {
 	        if (size < i) value = k.front();
