@@ -286,20 +286,21 @@ namespace K {
       double recalcEwma(vector<double> k,  unsigned int periods) {
 	    double Ewma = 0;
 	    double value = 0;
-	    if (k.size()) {
+	    int size = k.size();
+	    if (size {
           double alpha = (double)2 / (periods + 1);
-          for (unsigned int i = periods; i > 0; --i) {
-	        if (k.size() < i) value = k[0];
-	        else value = k[k.size()-i-1];
+          for (int i = periods; i > 0; --i) {
+	        if (size < i) value = k.front();
+	        else value = k[size-1-i];
 	        if (Ewma) Ewma = alpha * value + (1 - alpha) * Ewma;  
 	    	else Ewma = value;
           }
           FN::log("MG", string("recalculated EWMA with a period of ") + to_string(periods) + string(" = ") + to_string(Ewma));
-          if (k.size() < periods) FN::log("MG", string("Not enough accumulated values. Only  ") + to_string(k.size()) + string(" historical values were available"));
+          if (size < periods) FN::log("MG", string("Not enough accumulated values. Only  ") + to_string(size) + string(" historical values were available"));
           return Ewma;
         } else { 
-	        FN::log("MG", string("Error recalculating EWMA.."));
-	        return 0;
+	        FN::log("MG", string("Error recalculating EWMA.. Using actual fair value"));
+	        return fairValue;
 	        }
       };
       void calcEwma(double *k, int periods) {
