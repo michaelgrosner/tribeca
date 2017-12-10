@@ -43,7 +43,7 @@ namespace K {
         ((EV*)events)->ogOrder = [&](mOrder k) {
           ((EV*)events)->debug(string("PG ogOrder mOrder ") + ((json)k).dump());
           calcWalletAfterOrder(k);
-          FN::screen_refresh(((OG*)broker)->ordersBothSides());
+          FN::screen_refresh(((OG*)broker)->orders);
         };
         ((EV*)events)->mgTargetPosition = [&]() {
           ((EV*)events)->debug("PG mgTargetPosition");
@@ -272,14 +272,14 @@ namespace K {
         double amount = k.side == mSide::Ask
           ? position.baseAmount + position.baseHeldAmount
           : position.quoteAmount + position.quoteHeldAmount;
-        multimap<double, mOrder> ordersSide = ((OG*)broker)->ordersAtSide(k.side);
-        for (multimap<double, mOrder>::iterator it = ordersSide.begin(); it != ordersSide.end(); ++it) {
-          double held = it->second.quantity * (it->second.side == mSide::Bid ? it->second.price : 1);
-          if (amount >= held) {
-            amount -= held;
-            heldAmount += held;
+        for (map<string, mOrder>::iterator it = ((OG*)broker)->orders.begin(); it != ((OG*)broker)->orders.end(); ++it)
+          if (it->second.side == k.side) {
+            double held = it->second.quantity * (it->second.side == mSide::Bid ? it->second.price : 1);
+            if (amount >= held) {
+              amount -= held;
+              heldAmount += held;
+            }
           }
-        }
         calcWallet(mWallet(amount, heldAmount, k.side == mSide::Ask ? k.pair.base : k.pair.quote));
       };
       void calcPDiv(double baseValue) {

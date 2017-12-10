@@ -7,7 +7,7 @@ namespace K {
   enum class mTimeInForce: unsigned int { IOC, FOK, GTC };
   enum class mConnectivity: unsigned int { Disconnected, Connected };
   enum class mOrderType: unsigned int { Limit, Market };
-  enum class mSide: unsigned int { Bid, Ask, Unknown };
+  enum class mSide: unsigned int { Bid, Ask, Both };
   enum class mORS: unsigned int { New, Working, Complete, Cancelled };
   enum class mPingAt: unsigned int { BothSides, BidSide, AskSide, DepletedSide, DepletedBidSide, DepletedAskSide, StopPings };
   enum class mPongAt: unsigned int { ShortPingFair, LongPingFair, ShortPingAggressive, LongPingAggressive };
@@ -271,8 +271,8 @@ namespace K {
       {"buy", k.buy},
       {"sell", k.sell},
       {"combined", k.combined},
-      {"buyPing", k.buyPing},
-      {"sellPong", k.sellPong}
+      {"buyPing", fmax(0, k.buyPing)},
+      {"sellPong", fmax(0, k.sellPong)}
     };
   };
   struct mPosition {

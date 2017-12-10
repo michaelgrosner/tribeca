@@ -83,7 +83,7 @@ namespace K {
           if (gwConnectButton == mConnectivity::Disconnected) {
             bidStatus = mQuoteState::DisabledQuotes;
             askStatus = mQuoteState::DisabledQuotes;
-            stopAllQuotes();
+            stopAllQuotes(mSide::Both);
           } else {
             bidStatus = mQuoteState::UnknownHeld;
             askStatus = mQuoteState::UnknownHeld;
@@ -111,7 +111,10 @@ namespace K {
         ((UI*)client)->send(uiTXT::QuoteStatus, status, true);
       };
       bool diffCounts(unsigned int *qNew, unsigned int *qWorking, unsigned int *qDone) {
-        ((OG*)broker)->countOrders(qNew, qWorking, qDone);
+        for (map<string, mOrder>::iterator it = ((OG*)broker)->orders.begin(); it != ((OG*)broker)->orders.end(); ++it)
+          if (it->second.orderStatus == mORS::New) (*qNew)++;
+          else if (it->second.orderStatus == mORS::Working) (*qWorking)++;
+          else (*qDone)++;
         return *qNew != status.quotesInMemoryNew
           or *qWorking != status.quotesInMemoryWorking
           or *qDone != status.quotesInMemoryDone;
@@ -481,14 +484,14 @@ namespace K {
         } else return mQuoteState::Live;
       };
       void updateQuote(mLevel q, mSide side, bool isPong) {
-        multimap<double, mOrder> ordersSide = ((OG*)broker)->ordersAtSide(side);
-        int k = ordersSide.size();
+        int k = ((OG*)broker)->orders.size();
         if (!k) return start(side, q, isPong);
         unsigned long T = FN::T();
-        for (multimap<double, mOrder>::iterator it = ordersSide.begin(); it != ordersSide.end(); ++it)
-          if (it->first == q.price) return;
+        for (map<string, mOrder>::iterator it = ((OG*)broker)->orders.begin(); it != ((OG*)broker)->orders.end(); ++it)
+          if (it->second.side != side) continue;
+          else if (it->second.price == q.price) return;
           else if (it->second.orderStatus == mORS::New) {
-            if (T-10e+3>it->second.time) ((OG*)broker)->cleanOrder(it->second.orderId, it->second.exchangeId);
+            if (T-10e+3>it->second.time) ((OG*)broker)->cleanOrder(it->second.orderId);
             if (qp->safety != mQuotingSafety::AK47 or (int)k >= qp->bullets) return;
           }
         modify(side, q, isPong);
@@ -503,10 +506,10 @@ namespace K {
         ((OG*)broker)->sendOrder(side, q.price, q.size, mOrderType::Limit, mTimeInForce::GTC, isPong, true);
       };
       void stopWorstsQuotes(mSide side, double price) {
-        multimap<double, mOrder> ordersSide = ((OG*)broker)->ordersAtSide(side);
         bool k = false;
-        for (multimap<double, mOrder>::iterator it = ordersSide.begin(); it != ordersSide.end(); ++it)
-          if (side == mSide::Bid
+        for (map<string, mOrder>::iterator it = ((OG*)broker)->orders.begin(); it != ((OG*)broker)->orders.end(); ++it)
+          if (it->second.side != side) continue;
+          else if (side == mSide::Bid
             ? price <= it->second.price
             : price >= it->second.price
           ) {
@@ -516,23 +519,19 @@ namespace K {
         if (!k) stopWorstQuote(side);
       };
       void stopWorstQuote(mSide side) {
-        multimap<double, mOrder> ordersSide = ((OG*)broker)->ordersAtSide(side);
-        if (ordersSide.size())
+        multimap<double, mOrder> sideByPrice;
+        for (map<string, mOrder>::iterator it = ((OG*)broker)->orders.begin(); it != ((OG*)broker)->orders.end(); ++it)
+          if (it->second.side == side)
+            sideByPrice.insert(pair<double, mOrder>(it->second.price, it->second));
+        if (sideByPrice.size())
           ((OG*)broker)->cancelOrder(side == mSide::Bid
-            ? ordersSide.begin()->second.orderId
-            : ordersSide.rbegin()->second.orderId
+            ? sideByPrice.begin()->second.orderId
+            : sideByPrice.rbegin()->second.orderId
           );
       };
       void stopAllQuotes(mSide side) {
-        multimap<double, mOrder> ordersSide = ((OG*)broker)->ordersAtSide(side);
-        for (multimap<double, mOrder>::iterator it = ordersSide.begin(); it != ordersSide.end(); ++it)
-          if (it->second.orderStatus != mORS::New)
-            ((OG*)broker)->cancelOrder(it->second.orderId);
-      };
-      void stopAllQuotes() {
-        map<string, mOrder> orders = ((OG*)broker)->ordersBothSides();
-        for (map<string, mOrder>::iterator it = orders.begin(); it != orders.end(); ++it)
-          if (it->second.orderStatus != mORS::New)
+        for (map<string, mOrder>::iterator it = ((OG*)broker)->orders.begin(); it != ((OG*)broker)->orders.end(); ++it)
+          if (it->second.orderStatus != mORS::New and (side == mSide::Both or side == it->second.side))
             ((OG*)broker)->cancelOrder(it->second.orderId);
       };
       function<void(string,mQuote)> debuq = [&](string k, mQuote rawQuote) {

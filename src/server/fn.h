@@ -689,7 +689,7 @@ namespace K {
       static void screen_refresh(map<string, mOrder> k) {
         screen_refresh("", 0, "", "", k, true);
       };
-      static void screen_refresh(string protocol = "", int argPort = 0, string argExchange = "", string argCurrency = "", map<string, mOrder> allOrders = map<string, mOrder>(), bool hasOrders = false) {
+      static void screen_refresh(string protocol = "", int argPort = 0, string argExchange = "", string argCurrency = "", map<string, mOrder> Orders = map<string, mOrder>(), bool hasOrders = false) {
         if (!wBorder) return;
         static int p = 0, spin = 0, port = 0;
         static string prtcl = "?", exchange = "?", currency = "?";
@@ -700,7 +700,7 @@ namespace K {
         if (argCurrency.length()) currency = argCurrency;
         multimap<double, mOrder> openOrders;
         if (hasOrders) {
-          orders = allOrders;
+          orders = Orders;
           for (map<string, mOrder>::iterator it = orders.begin(); it != orders.end(); ++it) {
             if (mORS::Working != it->second.orderStatus) continue;
             openOrders.insert(pair<double, mOrder>(it->second.price, it->second));
@@ -762,7 +762,7 @@ namespace K {
         waddstr(wBorder, ") Open Orders..");
         mvwaddch(wBorder, y-1, 0, ACS_LLCORNER);
         mvwaddstr(wBorder, 1, 2, string("|/-\\").substr(++spin, 1).data());
-        if (spin==3) { spin = -1; }
+        if (spin==3) spin = -1;
         move(k-1, 2);
         wrefresh(wBorder);
         wrefresh(wLog);
