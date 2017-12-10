@@ -5,6 +5,7 @@
 #include <cstring>
 #include <random>
 #include <thread>
+#include <future>
 #include <chrono>
 #include <locale>
 #include <time.h>

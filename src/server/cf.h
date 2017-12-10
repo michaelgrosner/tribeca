@@ -191,7 +191,6 @@ namespace K {
             + '.' + quote() + ".db";
       };
       void run() {
-        if (!argNaked) FN::screen(argColors, argExchange, argCurrency);
         mExchange e = exchange();
         gw = Gw::E(e);
         gw->exchange = e;
@@ -205,6 +204,8 @@ namespace K {
         gw->http = argHttp;
         gw->ws = argWss;
         gw->version = argFree;
+        if (argNaked) return;
+        FN::screen_config(argColors, argExchange, argCurrency);
       };
     private:
       string base() {

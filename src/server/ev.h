@@ -7,6 +7,7 @@ namespace K  {
       uWS::Hub *hub = nullptr;
       Async *aEngine = nullptr;
       vector<function<void()>> asyncFn;
+      future<void> hotkey;
     public:
       uWS::Group<uWS::SERVER> *uiGroup = nullptr;
       Timer *tServer = nullptr,
@@ -41,6 +42,8 @@ namespace K  {
       };
       void waitUser() {
         uiGroup = hub->createGroup<uWS::SERVER>(uWS::PERMESSAGE_DEFLATE);
+        if (((CF*)config)->argNaked) return;
+        hotkey = async(launch::async, FN::screen_events);
       };
       void run() {
         if (FN::output("test -d .git || echo -n zip") == "zip")
@@ -94,7 +97,6 @@ namespace K  {
           (*it)();
           it = k->asyncFn.erase(it);
         }
-        if (FN::screen_events()) k->aEngine->send();
       };
       static void halt(int code) {
         for (vector<function<void()>*>::iterator it=gwEndings.begin(); it!=gwEndings.end();++it) (**it)();
@@ -110,7 +112,7 @@ namespace K  {
       static void quit(int sig) {
         FN::screen_quit();
         cout << '\n';
-        json k = FN::wJet("https://api.icndb.com/jokes/random?escape=javascript&limitTo=[nerdy]");
+        json k = FN::wJet("https://api.icndb.com/jokes/random?escape=javascript&limitTo=[nerdy]", true);
         cout << FN::uiT() << "Excellent decision! "
           << ((k.is_null() or !k["/value/joke"_json_pointer].is_string())
             ? "let's plant a tree instead.." : k["/value/joke"_json_pointer].get<string>()
