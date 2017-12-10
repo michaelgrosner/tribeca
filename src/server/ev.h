@@ -5,24 +5,23 @@ namespace K  {
   class EV: public Klass {
     private:
       uWS::Hub *hub = nullptr;
+      Async *aEngine = nullptr;
+      vector<function<void()>> asyncFn;
     public:
       uWS::Group<uWS::SERVER> *uiGroup = nullptr;
-      Timer *tCalcs = nullptr,
-            *tStart = nullptr,
-            *tDelay = nullptr,
-            *tWallet = nullptr,
-            *tCancel = nullptr;
+      Timer *tServer = nullptr,
+            *tEngine = nullptr,
+            *tClient = nullptr;
       function<void(mOrder)> ogOrder;
       function<void(mTrade)> ogTrade;
       function<void()>       mgLevels,
-                             mgEwmaSMUProtection,
                              mgEwmaQuoteProtection,
                              mgTargetPosition,
                              pgTargetBasePosition,
                              uiQuotingParameters;
     protected:
       void load() {
-        evExit = &happyEnding;
+        gwEndings.push_back(&happyEnding);
         signal(SIGINT, quit);
         signal(SIGUSR1, wtf);
         signal(SIGABRT, wtf);
@@ -30,13 +29,14 @@ namespace K  {
         gw->hub = hub = new uWS::Hub(0, true);
       };
       void waitTime() {
-        tCalcs = new Timer(hub->getLoop());
-        tStart = new Timer(hub->getLoop());
-        tDelay = new Timer(hub->getLoop());
-        tWallet = new Timer(hub->getLoop());
-        tCancel = new Timer(hub->getLoop());
+        tServer = new Timer(hub->getLoop());
+        tEngine = new Timer(hub->getLoop());
+        tClient = new Timer(hub->getLoop());
       };
       void waitData() {
+        aEngine = new Async(hub->getLoop());
+        aEngine->data = this;
+        aEngine->start(asyncLoop);
         gw->gwGroup = hub->createGroup<uWS::CLIENT>();
       };
       void waitUser() {
@@ -50,46 +50,62 @@ namespace K  {
           string k = changelog();
           FN::logVer(k, count(k.begin(), k.end(), '\n'));
         }
+        if (((CF*)config)->argDebugEvents) return;
+        debug = [&](string k) {};
       };
     public:
       void start() {
         hub->run();
       };
-      void stop(int code, function<void()> gwCancelAll) {
-        tCancel->stop();
-        tWallet->stop();
-        tCalcs->stop();
-        tStart->stop();
-        tDelay->stop();
+      void stop(function<void()> gwCancelAll) {
+        tServer->stop();
+        tEngine->stop();
+        tClient->stop();
         gw->close();
         gw->gwGroup->close();
         gwCancelAll();
+        asyncLoop(aEngine);
         uiGroup->close();
-        halt(code);
       };
-      void listen(int port) {
+      void listen() {
         string protocol("HTTP");
-        if ((access("etc/sslcert/server.crt", F_OK) != -1) and (access("etc/sslcert/server.key", F_OK) != -1)
-          and hub->listen(port, uS::TLS::createContext("etc/sslcert/server.crt", "etc/sslcert/server.key", ""), 0, uiGroup)
+        if (!((CF*)config)->argWithoutSSL
+          and (access("etc/sslcert/server.crt", F_OK) != -1) and (access("etc/sslcert/server.key", F_OK) != -1)
+          and hub->listen(((CF*)config)->argPort, uS::TLS::createContext("etc/sslcert/server.crt", "etc/sslcert/server.key", ""), 0, uiGroup)
         ) protocol += "S";
-        else if (!hub->listen(port, nullptr, 0, uiGroup))
+        else if (!hub->listen(((CF*)config)->argPort, nullptr, 0, uiGroup))
           FN::logExit("IU", string("Use another UI port number, ")
-            + to_string(port) + " seems already in use by:\n"
-            + FN::output(string("netstat -anp 2>/dev/null | grep ") + to_string(port)),
+            + to_string(((CF*)config)->argPort) + " seems already in use by:\n"
+            + FN::output(string("netstat -anp 2>/dev/null | grep ") + to_string(((CF*)config)->argPort)),
             EXIT_SUCCESS);
-        FN::logUI(protocol, port);
-      }
+        FN::logUI(protocol, ((CF*)config)->argPort);
+      };
+      void deferred(function<void()> fn) {
+        asyncFn.push_back(fn);
+        aEngine->send();
+      };
+      function<void(string)> debug = [&](string k) {
+        FN::log("DEBUG", string("EV ") + k);
+      };
     private:
-      void halt(int code) {
+      void (*asyncLoop)(Async*) = [](Async *handle) {
+        EV* k = (EV*)handle->data;
+        for (vector<function<void()>>::iterator it = k->asyncFn.begin(); it != k->asyncFn.end();) {
+          (*it)();
+          it = k->asyncFn.erase(it);
+        }
+        if (FN::screen_events()) k->aEngine->send();
+      };
+      static void halt(int code) {
+        for (vector<function<void()>*>::iterator it=gwEndings.begin(); it!=gwEndings.end();++it) (**it)();
         cout << FN::uiT() << "K exit code " << to_string(code) << "." << '\n';
         exit(code);
       };
-      function<void(int)> happyEnding = [&](int code) {
-        cout << FN::uiT();
+      function<void()> happyEnding = [&]() {
+        cout << FN::uiT() << gw->name;
         for(unsigned int i = 0; i < 21; ++i)
-          cout << "THE END IS NEVER ";
-        cout << "THE END." << '\n';
-        halt(code);
+          cout << " THE END IS NEVER";
+        cout << " THE END." << '\n';
       };
       static void quit(int sig) {
         FN::screen_quit();
@@ -99,7 +115,7 @@ namespace K  {
           << ((k.is_null() or !k["/value/joke"_json_pointer].is_string())
             ? "let's plant a tree instead.." : k["/value/joke"_json_pointer].get<string>()
           ) << '\n';
-        (*evExit)(EXIT_SUCCESS);
+        halt(EXIT_SUCCESS);
       };
       static void wtf(int sig) {
         FN::screen_quit();
@@ -113,7 +129,7 @@ namespace K  {
           upgrade();
           this_thread::sleep_for(chrono::seconds(21));
         }
-        (*evExit)(EXIT_FAILURE);
+        halt(EXIT_FAILURE);
       };
       static bool latest() {
         return FN::output("test -d .git && git rev-parse @") == FN::output("test -d .git && git rev-parse @{u}");

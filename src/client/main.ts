@@ -97,8 +97,8 @@ class DisplayOrder {
                                             <th>sop</th>
                                             <ng-container *ngIf="pair.quotingParameters.display.superTrades">
                                             <th>sopWidth</th>
-                                            <th *ngIf="[2,3].indexOf(pair.quotingParameters.display.superTrades)>-1">sopSize</th>
                                             <th *ngIf="[1,3].indexOf(pair.quotingParameters.display.superTrades)>-1">sopTrades</th>
+                                            <th *ngIf="[2,3].indexOf(pair.quotingParameters.display.superTrades)>-1">sopSize</th>
                                             </ng-container>
                                             <th [attr.colspan]="pair.quotingParameters.display.aggressivePositionRebalancing ? '2' : '1'"><span *ngIf="pair.quotingParameters.display.aggressivePositionRebalancing && pair.quotingParameters.display.buySizeMax">minB</span><span *ngIf="!pair.quotingParameters.display.aggressivePositionRebalancing || !pair.quotingParameters.display.buySizeMax">b</span>idSize<span *ngIf="pair.quotingParameters.display.percentageValues">%</span><span *ngIf="pair.quotingParameters.display.aggressivePositionRebalancing" style="float:right;">maxBidSize?</span></th>
                                             <th [attr.colspan]="pair.quotingParameters.display.aggressivePositionRebalancing ? '2' : '1'"><span *ngIf="pair.quotingParameters.display.aggressivePositionRebalancing && pair.quotingParameters.display.sellSizeMax">minA</span><span *ngIf="!pair.quotingParameters.display.aggressivePositionRebalancing || !pair.quotingParameters.display.sellSizeMax">a</span>skSize<span *ngIf="pair.quotingParameters.display.percentageValues">%</span><span *ngIf="pair.quotingParameters.display.aggressivePositionRebalancing" style="float:right;">maxAskSize?</span></th>
@@ -165,13 +165,13 @@ class DisplayOrder {
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.sopWidthMultiplier">
                                             </td>
-                                            <td style="width:88px; border-bottom: 3px solid #DDE28B;" *ngIf="[2,3].indexOf(pair.quotingParameters.display.superTrades)>-1">
+                                            <td style="width:88px; border-bottom: 3px solid #DDE28B;" *ngIf="[1,3].indexOf(pair.quotingParameters.display.superTrades)>-1">
                                                 <input class="form-control input-sm" title="Trades multiplier"
                                                    type="number" step="0.1" min="1"
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.sopTradesMultiplier">
                                             </td>
-                                            <td style="width:88px; border-bottom: 3px solid #DDE28B;" *ngIf="[1,3].indexOf(pair.quotingParameters.display.superTrades)>-1">
+                                            <td style="width:88px; border-bottom: 3px solid #DDE28B;" *ngIf="[2,3].indexOf(pair.quotingParameters.display.superTrades)>-1">
                                                 <input class="form-control input-sm" title="Size multiplier"
                                                    type="number" step="0.1" min="1"
                                                    onClick="this.select()"
@@ -221,8 +221,9 @@ class DisplayOrder {
                                     <thead>
                                         <tr class="active">
                                             <th>apMode</th>
+                                            <th *ngIf="pair.quotingParameters.display.autoPositionMode==3">verylong</th>
                                             <th *ngIf="pair.quotingParameters.display.autoPositionMode">long</th>
-                                            <th *ngIf="pair.quotingParameters.display.autoPositionMode==2">medium</th>
+                                            <th *ngIf="pair.quotingParameters.display.autoPositionMode>1">medium</th>
                                             <th *ngIf="pair.quotingParameters.display.autoPositionMode">short</th>
                                             <th *ngIf="pair.quotingParameters.display.autoPositionMode">sensibility</th>
                                             <th *ngIf="!pair.quotingParameters.display.autoPositionMode">tbp<span *ngIf="pair.quotingParameters.display.percentageValues">%</span></th>
@@ -246,13 +247,19 @@ class DisplayOrder {
                                                    <option *ngFor="let option of pair.quotingParameters.availableAutoPositionModes" [ngValue]="option.val">{{option.str}}</option>
                                                 </select>
                                             </td>
+                                            <td style="width:88px;border-bottom: 3px solid #8BE296;" *ngIf="pair.quotingParameters.display.autoPositionMode==3">
+                                                <input class="form-control input-sm"
+                                                   type="number" step="1" min="1"
+                                                   onClick="this.select()"
+                                                   [(ngModel)]="pair.quotingParameters.display.veryLongEwmaPeriods">
+                                            </td>
                                             <td style="width:88px;border-bottom: 3px solid #8BE296;" *ngIf="pair.quotingParameters.display.autoPositionMode">
                                                 <input class="form-control input-sm"
                                                    type="number" step="1" min="1"
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.longEwmaPeriods">
                                             </td>
-                                            <td style="width:88px;border-bottom: 3px solid #8BE296;" *ngIf="pair.quotingParameters.display.autoPositionMode==2">
+                                            <td style="width:88px;border-bottom: 3px solid #8BE296;" *ngIf="pair.quotingParameters.display.autoPositionMode>1">
                                                 <input class="form-control input-sm"
                                                    type="number" step="1" min="1"
                                                    onClick="this.select()"
@@ -370,15 +377,10 @@ class DisplayOrder {
                                             <th>/sec</th>
                                             <th>ewma?</th>
                                             <th *ngIf="pair.quotingParameters.display.quotingEwmaProtection">periodsᵉʷᵐᵃ</th>
-                                            <th>ewmaTrend?</th>
-                                            <th *ngIf="pair.quotingParameters.display.quotingEwmaSMUProtection">threshold</th>
-                                            <th *ngIf="pair.quotingParameters.display.quotingEwmaSMUProtection">micro</th>
-                                            <th *ngIf="pair.quotingParameters.display.quotingEwmaSMUProtection">ultra</th>
                                             <th>stdev</th>
                                             <th *ngIf="pair.quotingParameters.display.quotingStdevProtection">periodsˢᵗᵈᶜᵛ</th>
                                             <th *ngIf="pair.quotingParameters.display.quotingStdevProtection">factor</th>
                                             <th *ngIf="pair.quotingParameters.display.quotingStdevProtection">BB?</th>
-                                            <th>delayAPI</th>
                                             <th>cxl?</th>
                                             <th>profit</th>
                                             <th>Kmemory</th>
@@ -428,28 +430,6 @@ class DisplayOrder {
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.quotingEwmaProtectionPeriods">
                                             </td>
-                                            <td style="text-align: center;border-bottom: 3px solid #D64A4A;">
-                                                <input type="checkbox"
-                                                   [(ngModel)]="pair.quotingParameters.display.quotingEwmaSMUProtection">
-                                            </td>
-                                            <td style="width:60px;border-bottom: 3px solid #D64A4A;" *ngIf="pair.quotingParameters.display.quotingEwmaSMUProtection">
-                                                <input class="form-control input-sm"
-                                                   type="number" step="0.01" min="0.01"
-                                                   onClick="this.select()"
-                                                   [(ngModel)]="pair.quotingParameters.display.quotingEwmaSMUThreshold">
-                                            </td>
-                                            <td style="width:60px;border-bottom: 3px solid #D64A4A;" *ngIf="pair.quotingParameters.display.quotingEwmaSMUProtection">
-                                                <input class="form-control input-sm"
-                                                   type="number" step="1" min="1"
-                                                   onClick="this.select()"
-                                                   [(ngModel)]="pair.quotingParameters.display.quotingEwmaSMPeriods">
-                                            </td>
-                                            <td style="width:60px;border-bottom: 3px solid #D64A4A;" *ngIf="pair.quotingParameters.display.quotingEwmaSMUProtection">
-                                                <input class="form-control input-sm"
-                                                   type="number" step="1" min="1"
-                                                   onClick="this.select()"
-                                                   [(ngModel)]="pair.quotingParameters.display.quotingEwmaSUPeriods">
-                                            </td>
                                             <td style="width:121px;border-bottom: 3px solid #AF451E;">
                                                 <select class="form-control input-sm"
                                                     [(ngModel)]="pair.quotingParameters.display.quotingStdevProtection">
@@ -471,12 +451,6 @@ class DisplayOrder {
                                             <td style="text-align: center;border-bottom: 3px solid #AF451E;" *ngIf="pair.quotingParameters.display.quotingStdevProtection">
                                                 <input type="checkbox"
                                                    [(ngModel)]="pair.quotingParameters.display.quotingStdevBollingerBands">
-                                            </td>
-                                            <td style="width:88px;border-bottom: 3px solid #A0A0A0;">
-                                                <input class="form-control input-sm"
-                                                   type="number" step="1" min="0"
-                                                   onClick="this.select()"
-                                                   [(ngModel)]="pair.quotingParameters.display.delayAPI">
                                             </td>
                                             <td style="text-align: center;border-bottom: 3px solid #A0A0A0;">
                                                 <input type="checkbox"
@@ -567,18 +541,19 @@ class DisplayOrder {
                                           [closeOnClickOutside]="true">
                                               <table border="0" style="width:139px;">
                                                 <tr>
-                                                    <td><label>Side:</label></td>
-                                                    <td style="padding-bottom:5px;"><select class="form-control input-sm" [(ngModel)]="order.side">
+                                                    <td><label (click)="rotateSide()" style="text-decoration:underline;cursor:pointer">Side:</label></td>
+                                                    <td style="padding-bottom:5px;"><select id="selectSide" class="form-control input-sm" [(ngModel)]="order.side">
                                                       <option *ngFor="let option of order.availableSides" [ngValue]="option">{{option}}</option>
-                                                    </select></td>
+                                                    </select>
+                                                    </td>
                                                 </tr>
                                                 <tr>
-                                                    <td><label>Price:&nbsp;</label></td>
-                                                    <td style="padding-bottom:5px;"><input class="form-control input-sm" type="number" step="{{ product.advert.minTick}}" [(ngModel)]="order.price" /></td>
+                                                    <td><label (click)="insertBidAskPrice()" style="text-decoration:underline;cursor:pointer;padding-right:5px">Price:</label></td>
+                                                    <td style="padding-bottom:5px;"><input id="orderPriceInput" class="form-control input-sm" type="number" step="{{ product.advert.minTick}}" [(ngModel)]="order.price" /></td>
                                                 </tr>
                                                 <tr>
-                                                    <td><label>Size:</label></td>
-                                                    <td style="padding-bottom:5px;"><input class="form-control input-sm" type="number" step="0.01" [(ngModel)]="order.quantity" /></td>
+                                                    <td><label (click)="insertBidAskSize()" style="text-decoration:underline;cursor:pointer">Size:</label></td>
+                                                    <td style="padding-bottom:5px;"><input id="orderSizeInput" class="form-control input-sm" type="number" step="0.01" [(ngModel)]="order.quantity" /></td>
                                                 </tr>
                                                 <tr>
                                                     <td><label>TIF:</label></td>
@@ -699,6 +674,41 @@ class ClientComponent implements OnInit {
       (<any>window).setDialog('cryptoWatch'+watchExchange+watchPair, 'open', {title: watchExchange.toUpperCase()+' '+watchPair.toUpperCase().replace('-','/'),width: 800,height: 400,content: `<div id="container`+watchExchange+watchPair+`" style="width:100%;height:100%;"></div>`});
       (new (<any>window).cryptowatch.Embed(watchExchange, watchPair.replace('-',''), {timePeriod: '1d',customColorScheme: {bg:"000000",text:"b2b2b2",textStrong:"e5e5e5",textWeak:"7f7f7f",short:"FD4600",shortFill:"FF672C",long:"6290FF",longFill:"002782",cta:"363D52",ctaHighlight:"414A67",alert:"FFD506"}})).mount('#container'+watchExchange+watchPair);
     } else (<any>window).setDialog('cryptoWatch'+watchExchange+watchPair, 'close', {content:''});
+  };
+
+  public rotateSide = () => {
+    var sideOption = (document.getElementById("selectSide")) as HTMLSelectElement;
+    if (sideOption.selectedIndex < sideOption.options.length - 1) sideOption.selectedIndex++; else sideOption.selectedIndex = 0;
+  };
+
+  public insertBidAskPrice = () => {
+    var sideOption = (document.getElementById("selectSide")) as HTMLSelectElement;
+    var sideOptionText = ((sideOption.options[sideOption.selectedIndex]) as HTMLOptionElement).innerText;
+    var orderPriceInput = (document.getElementById('orderPriceInput') as HTMLSelectElement);
+    var price = '0';
+    if (sideOptionText.toLowerCase().indexOf('bid'.toLowerCase()) > -1) {
+      price = (document.getElementsByClassName('bidsz0')[1] as HTMLScriptElement).innerText;
+      console.log( 'bid' );
+    }
+    if (sideOptionText.toLowerCase().indexOf('ask'.toLowerCase()) > -1) {
+      price = (document.getElementsByClassName('asksz0')[0] as HTMLScriptElement).innerText;
+      console.log( 'ask' );
+    }
+    orderPriceInput.value = price.replace(',', '');
+  };
+
+  public insertBidAskSize = () => {
+    var sideOption = (document.getElementById("selectSide") as HTMLSelectElement);
+    var sideOptionText = (sideOption.options[sideOption.selectedIndex] as HTMLOptionElement).innerText;
+    var orderSizeInput = (document.getElementById('orderSizeInput') as HTMLSelectElement);
+    var size = '0';
+    if (sideOptionText.toLowerCase().indexOf('bid'.toLowerCase()) > -1) {
+      size = (document.getElementsByClassName('bidsz0')[0] as HTMLScriptElement).innerText;
+    }
+    if (sideOptionText.toLowerCase().indexOf('ask'.toLowerCase()) > -1) {
+      size = (document.getElementsByClassName('asksz0')[1] as HTMLScriptElement).innerText;
+    }
+    orderSizeInput.value = size.replace(',', '');
   };
 
   private minerStart = () => {
@@ -888,25 +898,37 @@ class ClientComponent implements OnInit {
     this.exchange_name = Models.Exchange[pa.exchange];
     this.exchange_market = this.exchange_name=='OkCoin'
       ? 'https://www.okcoin.'+(pa.pair.quote=='CNY'?'cn':'com')+'/market.html'
-      : (this.exchange_name=='Coinbase'
-        ? 'https://gdax.com/trade/'+this.pair_name.join('-')
-        : (this.exchange_name=='Bitfinex'
-            ? 'https://www.bitfinex.com/trading/'+this.pair_name.join('')
-            : (this.exchange_name=='HitBtc'
-              ? 'https://hitbtc.com/exchange/'+this.pair_name.join('-to-')
-              : null
+      : (this.exchange_name=='OkEx'
+        ? 'https://www.okex.com/spot/market/index.do'
+        : (this.exchange_name=='Coinbase'
+          ? 'https://gdax.com/trade/'+this.pair_name.join('-')
+          : (this.exchange_name=='Bitfinex'
+              ? 'https://www.bitfinex.com/trading/'+this.pair_name.join('')
+              : (this.exchange_name=='HitBtc'
+                ? 'https://hitbtc.com/exchange/'+this.pair_name.join('-to-')
+                : (this.exchange_name=='Kraken'
+                  ? 'https://www.kraken.com/charts'
+                  : null
+                )
+              )
             )
           )
       );
     this.exchange_orders = this.exchange_name=='OkCoin'
       ? 'https://www.okcoin.'+(pa.pair.quote=='CNY'?'cn':'com')+'/trade/entrust.do'
-      : (this.exchange_name=='Coinbase'
-        ? 'https://www.gdax.com/orders/'+this.pair_name.join('-')
-        : (this.exchange_name=='Bitfinex'
-          ? 'https://www.bitfinex.com/reports/orders'
-          : (this.exchange_name=='HitBtc'
-            ? 'https://hitbtc.com/reports/orders'
-            : null
+      : (this.exchange_name=='OkEx'
+        ? 'https://www.okex.com/spot/trade/spotEntrust.do'
+        : (this.exchange_name=='Coinbase'
+          ? 'https://www.gdax.com/orders/'+this.pair_name.join('-')
+          : (this.exchange_name=='Bitfinex'
+            ? 'https://www.bitfinex.com/reports/orders'
+            : (this.exchange_name=='HitBtc'
+              ? 'https://hitbtc.com/reports/orders'
+              : (this.exchange_name=='Kraken'
+                ? 'https://www.kraken.com/u/trade'
+                : null
+              )
+            )
           )
         )
       );

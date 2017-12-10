@@ -7,11 +7,12 @@ namespace K {
       int connections = 0;
       string B64auth = "",
              notepad = "";
-      bool toggleSettings = true;
-      bool realtimeClient = false;
+      bool toggleSettings = true,
+           realtimeClient = false;
       map<uiTXT, string> queue;
       map<char, function<json()>*> hello;
       map<char, function<void(json)>*> kiss;
+      unsigned long uiT_1m = 0;
     public:
       unsigned int orders60sec = 0;
     protected:
@@ -27,8 +28,8 @@ namespace K {
       };
       void waitTime() {
         if (((CF*)config)->argHeadless) return;
-        ((EV*)events)->tDelay->setData(this);
-        ((EV*)events)->tDelay->start(sendState, 0, 0);
+        ((EV*)events)->tClient->data = this;
+        ((EV*)events)->tClient->start(sendState, 0, 0);
       };
       void waitData() {
         if (((CF*)config)->argHeadless) return;
@@ -50,11 +51,11 @@ namespace K {
             document = "HTTP/1.1 200 OK\r\nConnection: keep-alive\r\nAccept-Ranges: bytes\r\nVary: Accept-Encoding\r\nCache-Control: public, max-age=0\r\n";
             document += "Content-Encoding: gzip\r\nContent-Length: " + to_string(content.str().length()) + "\r\n\r\n" + content.str();
             res->write(document.data(), document.length());
-          } else if (B64auth != "" && auth == "") {
+          } else if (B64auth != "" and auth == "") {
             FN::log("UI", "authorization attempt from", addr);
             document = "HTTP/1.1 401 Unauthorized\r\nWWW-Authenticate: Basic realm=\"Basic Authorization\"\r\nConnection: keep-alive\r\nAccept-Ranges: bytes\r\nVary: Accept-Encoding\r\nContent-Type:text/plain; charset=UTF-8\r\nContent-Length: 0\r\n\r\n";
             res->write(document.data(), document.length());
-          } else if (B64auth != "" && auth != B64auth) {
+          } else if (B64auth != "" and auth != B64auth) {
             FN::log("UI", "authorization failed from", addr);
             document = "HTTP/1.1 403 Forbidden\r\nConnection: keep-alive\r\nAccept-Ranges: bytes\r\nVary: Accept-Encoding\r\nContent-Type:text/plain; charset=UTF-8\r\nContent-Length: 0\r\n\r\n";
             res->write(document.data(), document.length());
@@ -125,7 +126,7 @@ namespace K {
       };
       void run() {
         if (((CF*)config)->argHeadless) return;
-        ((EV*)events)->listen(((CF*)config)->argPort);
+        ((EV*)events)->listen();
       };
     public:
       void welcome(uiTXT k, function<json()> *cb) {
@@ -143,8 +144,8 @@ namespace K {
       void delayme(double delayUI) {
         if (((CF*)config)->argHeadless) return;
         realtimeClient = !delayUI;
-        ((EV*)events)->tDelay->stop();
-        ((EV*)events)->tDelay->start(sendState, 0, realtimeClient ? 6e+4 : (int)(delayUI*1e+3));
+        ((EV*)events)->tClient->stop();
+        ((EV*)events)->tClient->start(sendState, 0, realtimeClient ? 6e+4 : (int)(delayUI*1e+3));
       };
       void send(uiTXT k, json o, bool delayed = false) {
         if (((CF*)config)->argHeadless or connections == 0) return;
@@ -172,7 +173,9 @@ namespace K {
       void send(uiTXT k, string j) {
         string m(1, (char)uiBIT::Kiss);
         m += string(1, (char)k) + j;
-        ((EV*)events)->uiGroup->broadcast(m.data(), m.length(), uWS::OpCode::TEXT);
+        ((EV*)events)->deferred([this, m]() {
+          ((EV*)events)->uiGroup->broadcast(m.data(), m.length(), uWS::OpCode::TEXT);
+        });
       };
       void sendQueue() {
         for (map<uiTXT, string>::iterator it = queue.begin(); it != queue.end(); ++it)
@@ -181,12 +184,11 @@ namespace K {
       };
       void (*sendState)(Timer*) = [](Timer *handle) {
         UI *k = (UI*)handle->data;
-        if (((CF*)k->config)->argDebugEvents) FN::log("DEBUG", "EV UI tDelay timer");
+        ((EV*)k->events)->debug("UI tClient timer");
         if (!k->realtimeClient) {
           k->sendQueue();
-          static unsigned long uiT_1m = 0;
-          if (uiT_1m+6e+4 > FN::T()) return;
-          else uiT_1m = FN::T();
+          if (k->uiT_1m+6e+4 > FN::T()) return;
+          else k->uiT_1m = FN::T();
         }
         k->send(uiTXT::ApplicationState, k->serverState());
         k->orders60sec = 0;

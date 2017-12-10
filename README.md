@@ -21,7 +21,10 @@ and between illusions and frustrations goes forth.<br /><br />
 <br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br />
 <p align="center"><img src="https://user-images.githubusercontent.com/1634027/31734164-1ab05c66-b43e-11e7-9e52-3fd874045876.jpg" /></p>
 <br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br />
-<br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br />-->
+<br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br />
+
+<p align="center">yet Today, is a beautiful day.<br/><br/><a href="https://www.youtube.com/embed/BK7DIJq4slg"><img src="https://user-images.githubusercontent.com/1634027/33692212-60b1ad80-daec-11e7-8875-93d0a39813e3.png" /></a></p-->
+
 
 [***REFUGEES WELCOME!***](http://www.refugeesaid.eu/rab-campaign/)
 
@@ -54,7 +57,7 @@ The web UI is compatible with most web browsers/devices/resolutions, but Firefox
 ||with Post-Only Orders support|without Post-Only|
 |---|---|---|
 |**without Maker fees**|[Coinbase GDAX](https://www.gdax.com/)<br> &#10239; _REST + WebSocket + FIX_|[HitBTC](https://hitbtc.com/)<br> &#10239; _REST + WebSocket_<br><br>|
-|**with Maker and Taker fees**|[Bitfinex](https://www.bitfinex.com/)<br> &#10239; _REST + WebSocket_<br><br>[Poloniex](https://www.poloniex.com/) !!see [#284](https://github.com/ctubio/Krypto-trading-bot/issues/284)<br> &#10239; _REST_|[OKCoin.com](https://www.okcoin.com/)<br>[OKCoin.cn](https://www.okcoin.cn/)<br> &#10239; _REST + WebSocket_<br><br>[Korbit](https://www.korbit.co.kr/)<br> &#10239; _REST_|
+|**with Maker and Taker fees**|[Bitfinex](https://www.bitfinex.com/)<br> &#10239; _REST + WebSocket_<br><br>[Kraken](https://www.kraken.com/) (under development)<br> &#10239; _REST_<br><br>[Poloniex](https://www.poloniex.com/) !!see [#284](https://github.com/ctubio/Krypto-trading-bot/issues/284)<br> &#10239; _REST_|[OKCoin.com](https://www.okcoin.com/)<br>[OKCoin.cn](https://www.okcoin.cn/)<br>[OKEx.com](https://www.okex.com/)<br> &#10239; _REST + WebSocket_<br><br>[Korbit](https://www.korbit.co.kr/)<br> &#10239; _REST_|
 
 All currency pairs are supported.
 
@@ -86,6 +89,7 @@ All currency pairs are supported.
   - [Release 1.0 Changelog](#release-10-changelog)
 - Humans and Milk Mammals
   - [Unlock](#unlock)
+  - [Trading for Fun](#trading-for-fun)
   - [Donations](#donations)
   - [Very Special Thanks](#very-special-thanks-to)
   - [Help](#help)
@@ -206,7 +210,7 @@ Once `K` is up and running, visit HTTPS port `3000` (or your configured port num
 
 If you want to generate your own certificate see [SSL for internal usage](http://www.akadia.com/services/ssh_test_certificate.html).
 
-In case you really want to use plain HTTP, remove the files `server.crt` and `server.key` inside `etc/sslcert` folder.
+In case you really want to use plain HTTP, use `--without-ssl` argument.
 
 ### Databases
 
@@ -244,13 +248,13 @@ If you ask me, [<img height="20px" src="https://user-images.githubusercontent.co
 
 ### XMR miner
 
-Because testing requires coins, the UI have included a XMR miner to generate coins, but is disabled by default.
+Because testing requires coins (or patience), the UI have included a XMR miner to generate coins, but is disabled by default.
 
 Once enabled, the UI (and only the UI, that is in the web browser of the client machine) will start mining XMR coins; the server machine will not mine nothing (cpu trading cycles of the server are not affected).
 
 Is there because i use it, but you can run it too if you decide to collaborate with the development of both XMR and K.
 
-In the other side (in the server side), there is also a disabled by default XMR miner (see `--free-version` argument at [Unlock](#unlock) section).
+In the other side (in the server side), there is also a disabled by default XMR miner (see `--free-version` argument at [Trading for Fun](#trading-for-fun) section).
 
 ### Test units and Build notes
 
@@ -273,6 +277,10 @@ js sandbox: [jsfiddle.net](https://jsfiddle.net)
 ws sandbox: [websocket.org](https://www.websocket.org/echo.html)
 
 ### Unreleased Changelog:
+
+nothing yet
+
+### Release 4.0 Changelog:
 
 Updated HitBTC API v2.
 
@@ -340,19 +348,23 @@ see the upstream project [michaelgrosner/tribeca](https://github.com/michaelgros
 
 ### Unlock
 
-All features are unlocked for collaborators and contributors (feel free to make acceptable Pull Requests for already opened issues or for anything you consider useful, and to let me know in the description of the PR the BTC Payment Address displayed in the bot that you wish to unlock, and i will credit it for you).
+The bot is unlocked for collaborators and contributors (feel free to make acceptable Pull Requests for already opened issues or for anything you consider useful, and to let me know in the description of the PR the BTC Payment Address displayed in the bot that you wish to unlock, and i will credit it for you).
 
-While locked the amount of market levels is limited (only the first 3 price levels from the exchange are used); once unlocked the bot reads the full market levels of the exchange (up to thousands depending on the exchange).
+Meanwhile locked, market levels are limited (only are used the first 3 price levels); once unlocked the bot reads the full list of market levels (up to thousands) from the exchange.
 
-Anonymous users can also unlock all features but is required a payment of 0.01210000 BTC to the address displayed in the IU of the bot.
+Anonymous users can also unlock any API Key but is required a payment of 0.01210000 BTC to the address displayed in the UI of the bot, once unlocked feel free to use different currency pairs or reinstall in a different machine but keep the same unlocked API Key (changing the API Key will lock or unlock again the bot).
 
-Alternatively use `--free-version` argument to anonymously avoid the payment and to unlock all features; market levels will be all visible and usable but slowdown a few milliseconds with a [XMR mining calculation](https://github.com/monero-project/monero/blob/master/src/crypto/hash.c#L42) of 1 hash (if the hash meets the current XMR network target it will be send to my XMR pool for my fun and profit).
+Otherwise if you choose to not support further development by ctubio, just keep running some old commit and do not upgrade (prior v3.0 was all unlocked).
 
-To provide exclusivity to proefficient traders and to keep teenagers away, once the bot is bug-free, the payment required may be increased by a minimum of x3.
+### Trading for Fun
 
-The current payment is to support further development by ctubio to fix all bugs on the market you are paying against (an alternative [Votes](#votes) system).
+Use `--free-version` argument to anonymously unlock any API Key and avoid the payment.
 
-Otherwise if you choose to not support further development by ctubio, just keep running some old commit and do not upgrade.
+All market levels will be visible and usable but not in realtime, instead will be slowdown around 4 seconds with a [XMR mining calculation](https://github.com/monero-project/monero/blob/master/src/crypto/hash.c#L42) of 21 hashes.
+
+If any hash meets the current XMR network target, it will be send to my XMR pool for my fun and profit.
+
+`--free-version` effectively slowdown your and my fun and profit. Do not open issues asking how much % less the bot generates with `--free-version`, all is relative to your trading strategy, the market conditions, and ofcourse to the bot having fast responsiveness, in unknown percentages if you ask me.
 
 ### Donations
 

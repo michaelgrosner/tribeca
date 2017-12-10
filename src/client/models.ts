@@ -63,7 +63,7 @@ export class MarketTrade {
 }
 
 export enum Connectivity { Disconnected, Connected }
-export enum Exchange { Null, HitBtc, OkCoin, Coinbase, Bitfinex, Korbit, Poloniex }
+export enum Exchange { Null, HitBtc, OkCoin, Coinbase, Bitfinex, Kraken, OkEx, Korbit, Poloniex }
 export enum Side { Bid, Ask, Unknown }
 export enum OrderType { Limit, Market }
 export enum TimeInForce { IOC, FOK, GTC }
@@ -89,10 +89,12 @@ export interface IStdev {
 export class EWMAChart {
     constructor(public stdevWidth: IStdev,
                 public ewmaQuote: number,
-                public ewmaSMUDiff: number,
                 public ewmaShort: number,
                 public ewmaMedium: number,
                 public ewmaLong: number,
+                public ewmaVeryLong: number,
+                public tradesBuySize: number,
+                public tradesSellSize: number,
                 public fairValue: number) {}
 }
 
@@ -133,7 +135,7 @@ export class PositionReport {
                 public quoteAmount: number,
                 public baseHeldAmount: number,
                 public quoteHeldAmount: number,
-                public value: number,
+                public baseValue: number,
                 public quoteValue: number,
                 public profitBase: number,
                 public profitQuote: number,
@@ -163,7 +165,7 @@ export class TwoSidedQuote {
     constructor(public bid: Quote, public ask: Quote) {}
 }
 
-export enum QuoteStatus { Live, Disconnected, DisabledQuotes, MissingData, UnknownHeld, TBPHeld, MaxTradesSeconds, WaitingPing, DepletedFunds, Crossed, UpTrendHeld, DownTrendHeld }
+export enum QuoteStatus { Live, Disconnected, DisabledQuotes, MissingData, UnknownHeld, TBPHeld, MaxTradesSeconds, WaitingPing, DepletedFunds, Crossed }
 
 export class TwoSidedQuoteStatus {
     constructor(public bidStatus: QuoteStatus, public askStatus: QuoteStatus, public quotesInMemoryNew: number, public quotesInMemoryWorking: number, public quotesInMemoryDone: number) {}
@@ -176,7 +178,7 @@ export class CurrencyPair {
 export enum QuotingMode { Top, Mid, Join, InverseJoin, InverseTop, HamelinRat, Depth }
 export enum QuotingSafety { Off, PingPong, Boomerang, AK47 }
 export enum FairValueModel { BBO, wBBO }
-export enum AutoPositionMode { Manual, EWMA_LS, EWMA_LMS }
+export enum AutoPositionMode { Manual, EWMA_LS, EWMA_LMS, EWMA_4 }
 export enum DynamicPDivMode { Manual, Linear, Sine, SQRT, Switch }
 export enum PingAt { BothSides, BidSide, AskSide, DepletedSide, DepletedBidSide, DepletedAskSide, StopPings }
 export enum PongAt { ShortPingFair, LongPingFair, ShortPingAggressive, LongPingAggressive }
@@ -216,7 +218,6 @@ export interface QuotingParameters {
     tradesPerMinute?: number;
     tradeRateSeconds?: number;
     quotingEwmaProtection?: boolean;
-    quotingEwmaSMUProtection?: boolean;
     quotingStdevProtection?: STDEV;
     quotingStdevBollingerBands?: boolean;
     audio?: boolean;
@@ -224,20 +225,17 @@ export interface QuotingParameters {
     range?: number;
     rangePercentage?: number;
     ewmaSensiblityPercentage?: number;
+    veryLongEwmaPeriods?: number;
     longEwmaPeriods?: number;
     mediumEwmaPeriods?: number;
     shortEwmaPeriods?: number;
     quotingEwmaProtectionPeriods?: number;
-    quotingEwmaSMUThreshold?: number;
-    quotingEwmaSMPeriods?: number;
-    quotingEwmaSUPeriods?: number;
     quotingStdevProtectionFactor?: number;
     quotingStdevProtectionPeriods?: number;
     aprMultiplier?: number;
     sopWidthMultiplier?: number;
     sopSizeMultiplier?: number;
     sopTradesMultiplier?: number;
-    delayAPI?: number;
     cancelOrdersAuto?: boolean;
     cleanPongsAuto?: number;
     stepOverSize?: number;

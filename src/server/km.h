@@ -2,20 +2,20 @@
 #define K_KM_H_
 
 namespace K {
-  enum class mExchange: unsigned int { Null, HitBtc, OkCoin, Coinbase, Bitfinex, Korbit, Poloniex };
+  enum class mExchange: unsigned int { Null, HitBtc, OkCoin, Coinbase, Bitfinex, Kraken, OkEx, Korbit, Poloniex };
   enum class mGatewayType: unsigned int { MarketData, OrderEntry };
   enum class mTimeInForce: unsigned int { IOC, FOK, GTC };
   enum class mConnectivity: unsigned int { Disconnected, Connected };
   enum class mOrderType: unsigned int { Limit, Market };
-  enum class mSide: unsigned int { Bid, Ask, Unknown };
+  enum class mSide: unsigned int { Bid, Ask, Both };
   enum class mORS: unsigned int { New, Working, Complete, Cancelled };
   enum class mPingAt: unsigned int { BothSides, BidSide, AskSide, DepletedSide, DepletedBidSide, DepletedAskSide, StopPings };
   enum class mPongAt: unsigned int { ShortPingFair, LongPingFair, ShortPingAggressive, LongPingAggressive };
   enum class mQuotingMode: unsigned int { Top, Mid, Join, InverseJoin, InverseTop, HamelinRat, Depth };
   enum class mQuotingSafety: unsigned int { Off, PingPong, Boomerang, AK47 };
-  enum class mQuoteState: unsigned int { Live, Disconnected, DisabledQuotes, MissingData, UnknownHeld, TBPHeld, MaxTradesSeconds, WaitingPing, DepletedFunds, Crossed, UpTrendHeld, DownTrendHeld };
+  enum class mQuoteState: unsigned int { Live, Disconnected, DisabledQuotes, MissingData, UnknownHeld, TBPHeld, MaxTradesSeconds, WaitingPing, DepletedFunds, Crossed };
   enum class mFairValueModel: unsigned int { BBO, wBBO };
-  enum class mAutoPositionMode: unsigned int { Manual, EWMA_LS, EWMA_LMS };
+  enum class mAutoPositionMode: unsigned int { Manual, EWMA_LS, EWMA_LMS, EWMA_4 };
   enum class mPDivMode: unsigned int { Manual, Linear, Sine, SQRT, Switch};
   enum class mAPR: unsigned int { Off, Size, SizeWidth };
   enum class mSOP: unsigned int { Off, Trades, Size, TradesSize };
@@ -23,7 +23,7 @@ namespace K {
   enum class uiBIT: unsigned char { Hello = '=', Kiss = '-' };
   enum class uiTXT: unsigned char {
     FairValue = 'a', Quote = 'b', ActiveSubscription = 'c', ActiveState = 'd', MarketData = 'e',
-    QuotingParametersChange = 'f', SafetySettings = 'g', Product = 'h', OrderStatusReports = 'i',
+    QuotingParameters = 'f', SafetySettings = 'g', Product = 'h', OrderStatusReports = 'i',
     ProductAdvertisement = 'j', ApplicationState = 'k', Notepad = 'l', ToggleSettings = 'm',
     Position = 'n', ExchangeConnectivity = 'o', SubmitNewOrder = 'p', CancelOrder = 'q',
     MarketTrade = 'r', Trades = 's', ExternalValuation = 't', QuoteStatus = 'u',
@@ -67,15 +67,12 @@ namespace K {
     int               tradeRateSeconds                = 3;
     bool              quotingEwmaProtection           = true;
     int               quotingEwmaProtectionPeriods    = 200;
-    bool              quotingEwmaSMUProtection        = false;
-    double            quotingEwmaSMUThreshold         = 2.0;
-    int               quotingEwmaSMPeriods            = 12;
-    int               quotingEwmaSUPeriods            = 3;
     mSTDEV            quotingStdevProtection          = mSTDEV::Off;
     bool              quotingStdevBollingerBands      = false;
     double            quotingStdevProtectionFactor    = 1.0;
     int               quotingStdevProtectionPeriods   = 1200;
     double            ewmaSensiblityPercentage        = 0.5;
+    int               veryLongEwmaPeriods             = 400;
     int               longEwmaPeriods                 = 200;
     int               mediumEwmaPeriods               = 100;
     int               shortEwmaPeriods                = 50;
@@ -83,7 +80,6 @@ namespace K {
     double            sopWidthMultiplier              = 2;
     double            sopSizeMultiplier               = 2;
     double            sopTradesMultiplier             = 2;
-    int               delayAPI                        = 0;
     bool              cancelOrdersAuto                = false;
     double            cleanPongsAuto                  = 0.0;
     double            profitHourInterval              = 0.5;
@@ -128,15 +124,12 @@ namespace K {
       {"tradeRateSeconds", k.tradeRateSeconds},
       {"quotingEwmaProtection", k.quotingEwmaProtection},
       {"quotingEwmaProtectionPeriods", k.quotingEwmaProtectionPeriods},
-      {"quotingEwmaSMUProtection", k.quotingEwmaSMUProtection},
-      {"quotingEwmaSMUThreshold", k.quotingEwmaSMUThreshold},
-      {"quotingEwmaSMPeriods", k.quotingEwmaSMPeriods},
-      {"quotingEwmaSUPeriods", k.quotingEwmaSUPeriods},
       {"quotingStdevProtection", (int)k.quotingStdevProtection},
       {"quotingStdevBollingerBands", k.quotingStdevBollingerBands},
       {"quotingStdevProtectionFactor", k.quotingStdevProtectionFactor},
       {"quotingStdevProtectionPeriods", k.quotingStdevProtectionPeriods},
       {"ewmaSensiblityPercentage", k.ewmaSensiblityPercentage},
+      {"veryLongEwmaPeriods", k.veryLongEwmaPeriods},
       {"longEwmaPeriods", k.longEwmaPeriods},
       {"mediumEwmaPeriods", k.mediumEwmaPeriods},
       {"shortEwmaPeriods", k.shortEwmaPeriods},
@@ -144,7 +137,6 @@ namespace K {
       {"sopWidthMultiplier", k.sopWidthMultiplier},
       {"sopSizeMultiplier", k.sopSizeMultiplier},
       {"sopTradesMultiplier", k.sopTradesMultiplier},
-      {"delayAPI", k.delayAPI},
       {"cancelOrdersAuto", k.cancelOrdersAuto},
       {"cleanPongsAuto", k.cleanPongsAuto},
       {"profitHourInterval", k.profitHourInterval},
@@ -189,15 +181,12 @@ namespace K {
     if (j.end() != j.find("tradeRateSeconds")) k.tradeRateSeconds = j.at("tradeRateSeconds").get<int>();
     if (j.end() != j.find("quotingEwmaProtection")) k.quotingEwmaProtection = j.at("quotingEwmaProtection").get<bool>();
     if (j.end() != j.find("quotingEwmaProtectionPeriods")) k.quotingEwmaProtectionPeriods = j.at("quotingEwmaProtectionPeriods").get<int>();
-    if (j.end() != j.find("quotingEwmaSMUProtection")) k.quotingEwmaSMUProtection = j.at("quotingEwmaSMUProtection").get<bool>();
-    if (j.end() != j.find("quotingEwmaSMUThreshold")) k.quotingEwmaSMUThreshold = j.at("quotingEwmaSMUThreshold").get<double>();
-    if (j.end() != j.find("quotingEwmaSMPeriods")) k.quotingEwmaSMPeriods = j.at("quotingEwmaSMPeriods").get<int>();
-    if (j.end() != j.find("quotingEwmaSUPeriods")) k.quotingEwmaSUPeriods = j.at("quotingEwmaSUPeriods").get<int>();
     if (j.end() != j.find("quotingStdevProtection")) k.quotingStdevProtection = (mSTDEV)j.at("quotingStdevProtection").get<int>();
     if (j.end() != j.find("quotingStdevBollingerBands")) k.quotingStdevBollingerBands = j.at("quotingStdevBollingerBands").get<bool>();
     if (j.end() != j.find("quotingStdevProtectionFactor")) k.quotingStdevProtectionFactor = j.at("quotingStdevProtectionFactor").get<double>();
     if (j.end() != j.find("quotingStdevProtectionPeriods")) k.quotingStdevProtectionPeriods = j.at("quotingStdevProtectionPeriods").get<int>();
     if (j.end() != j.find("ewmaSensiblityPercentage")) k.ewmaSensiblityPercentage = j.at("ewmaSensiblityPercentage").get<double>();
+    if (j.end() != j.find("veryLongEwmaPeriods")) k.veryLongEwmaPeriods = j.at("veryLongEwmaPeriods").get<int>();
     if (j.end() != j.find("longEwmaPeriods")) k.longEwmaPeriods = j.at("longEwmaPeriods").get<int>();
     if (j.end() != j.find("mediumEwmaPeriods")) k.mediumEwmaPeriods = j.at("mediumEwmaPeriods").get<int>();
     if (j.end() != j.find("shortEwmaPeriods")) k.shortEwmaPeriods = j.at("shortEwmaPeriods").get<int>();
@@ -205,13 +194,11 @@ namespace K {
     if (j.end() != j.find("sopWidthMultiplier")) k.sopWidthMultiplier = j.at("sopWidthMultiplier").get<double>();
     if (j.end() != j.find("sopSizeMultiplier")) k.sopSizeMultiplier = j.at("sopSizeMultiplier").get<double>();
     if (j.end() != j.find("sopTradesMultiplier")) k.sopTradesMultiplier = j.at("sopTradesMultiplier").get<double>();
-    if (j.end() != j.find("delayAPI")) k.delayAPI = j.at("delayAPI").get<int>();
     if (j.end() != j.find("cancelOrdersAuto")) k.cancelOrdersAuto = j.at("cancelOrdersAuto").get<bool>();
     if (j.end() != j.find("cleanPongsAuto")) k.cleanPongsAuto = j.at("cleanPongsAuto").get<double>();
     if (j.end() != j.find("profitHourInterval")) k.profitHourInterval = j.at("profitHourInterval").get<double>();
     if (j.end() != j.find("audio")) k.audio = j.at("audio").get<bool>();
     if (j.end() != j.find("delayUI")) k.delayUI = j.at("delayUI").get<int>();
-    if ((int)k.mode > 6) k.mode = mQuotingMode::Top; // remove after everybody have the new mode/safety in their databases (2018)
     if (k.mode == mQuotingMode::Depth) k.widthPercentage = false;
     k._matchPings = k.safety == mQuotingSafety::Boomerang or k.safety == mQuotingSafety::AK47;
   };
@@ -247,6 +234,9 @@ namespace K {
            double baseValue,
                   quoteValue;
     unsigned long time;
+    mProfit():
+      baseValue(0), quoteValue(0), time(0)
+    {};
     mProfit(double b, double q, unsigned long t):
       baseValue(b), quoteValue(q), time(t)
     {};
@@ -257,6 +247,11 @@ namespace K {
       {"quoteValue", k.quoteValue},
       {"time", k.time}
     };
+  };
+  static void from_json(const json& j, mProfit& k) {
+    if (j.end() != j.find("baseValue")) k.baseValue = j.at("baseValue").get<double>();
+    if (j.end() != j.find("quoteValue")) k.quoteValue = j.at("quoteValue").get<double>();
+    if (j.end() != j.find("time")) k.time = j.at("time").get<unsigned long>();
   };
   struct mSafety {
     double buy,
@@ -276,8 +271,8 @@ namespace K {
       {"buy", k.buy},
       {"sell", k.sell},
       {"combined", k.combined},
-      {"buyPing", k.buyPing},
-      {"sellPong", k.sellPong}
+      {"buyPing", fmax(0, k.buyPing)},
+      {"sellPong", fmax(0, k.sellPong)}
     };
   };
   struct mPosition {
@@ -285,17 +280,17 @@ namespace K {
               quoteAmount,
               baseHeldAmount,
               quoteHeldAmount,
-              value,
+              baseValue,
               quoteValue,
               profitBase,
               profitQuote;
         mPair pair;
     mExchange exchange;
     mPosition():
-      baseAmount(0), quoteAmount(0), baseHeldAmount(0), quoteHeldAmount(0), value(0), quoteValue(0), profitBase(0), profitQuote(0), pair(mPair()), exchange((mExchange)0)
+      baseAmount(0), quoteAmount(0), baseHeldAmount(0), quoteHeldAmount(0), baseValue(0), quoteValue(0), profitBase(0), profitQuote(0), pair(mPair()), exchange((mExchange)0)
     {};
     mPosition(double bA, double qA, double bH, double qH, double bV, double qV, double bP, double qP, mPair p, mExchange e):
-      baseAmount(bA), quoteAmount(qA), baseHeldAmount(bH), quoteHeldAmount(qH), value(bV), quoteValue(qV), profitBase(bP), profitQuote(qP), pair(p), exchange(e)
+      baseAmount(bA), quoteAmount(qA), baseHeldAmount(bH), quoteHeldAmount(qH), baseValue(bV), quoteValue(qV), profitBase(bP), profitQuote(qP), pair(p), exchange(e)
     {};
   };
   static void to_json(json& j, const mPosition& k) {
@@ -304,7 +299,7 @@ namespace K {
       {"quoteAmount", k.quoteAmount},
       {"baseHeldAmount", k.baseHeldAmount},
       {"quoteHeldAmount", k.quoteHeldAmount},
-      {"value", k.value},
+      {"baseValue", k.baseValue},
       {"quoteValue", k.quoteValue},
       {"profitBase", k.profitBase},
       {"profitQuote", k.profitQuote},
@@ -360,6 +355,23 @@ namespace K {
       {"feeCharged", k.feeCharged},
       {"loadedFromDB", k.loadedFromDB},
     };
+  };
+  static void from_json(const json& j, mTrade& k) {
+    if (j.end() != j.find("tradeId")) k.tradeId = j.at("tradeId").get<string>();
+    if (j.end() != j.find("exchange")) k.exchange = (mExchange)j.at("exchange").get<int>();
+    if (j.end() != j.find("pair")) k.pair = mPair(j["/pair/base"_json_pointer].get<string>(), j["/pair/quote"_json_pointer].get<string>());
+    if (j.end() != j.find("price")) k.price = j.at("price").get<double>();
+    if (j.end() != j.find("quantity")) k.quantity = j.at("quantity").get<double>();
+    if (j.end() != j.find("side")) k.side = (mSide)j.at("side").get<int>();
+    if (j.end() != j.find("time")) k.time = j.at("time").get<unsigned long>();
+    if (j.end() != j.find("value")) k.value = j.at("value").get<double>();
+    if (j.end() != j.find("Ktime")) k.Ktime = j.at("Ktime").get<unsigned long>();
+    if (j.end() != j.find("Kqty")) k.Kqty = j.at("Kqty").get<double>();
+    if (j.end() != j.find("Kprice")) k.Kprice = j.at("Kprice").get<double>();
+    if (j.end() != j.find("Kvalue")) k.Kvalue = j.at("Kvalue").get<double>();
+    if (j.end() != j.find("Kdiff")) k.Kdiff = j.at("Kdiff").get<double>();
+    if (j.end() != j.find("feeCharged")) k.feeCharged = j.at("feeCharged").get<double>();
+    if (j.end() != j.find("loadedFromDB")) k.loadedFromDB = j.at("loadedFromDB").get<bool>();
   };
   struct mOrder {
            string orderId,
@@ -501,7 +513,6 @@ namespace K {
       {"quotesInMemoryDone", k.quotesInMemoryDone}
     };
   };
-  static function<void(int)> *evExit;
   static const char kB64Alphabet[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
                                      "abcdefghijklmnopqrstuvwxyz"
                                      "0123456789+/";
@@ -509,10 +520,9 @@ namespace K {
               RBLUE[]  = "\033[0;34m", RPURPLE[] = "\033[0;35m", RCYAN[]  = "\033[0;36m", RWHITE[]  = "\033[0;37m",
               BBLACK[] = "\033[1;30m", BRED[]    = "\033[1;31m", BGREEN[] = "\033[1;32m", BYELLOW[] = "\033[1;33m",
               BBLUE[]  = "\033[1;34m", BPURPLE[] = "\033[1;35m", BCYAN[]  = "\033[1;36m", BWHITE[]  = "\033[1;37m";
-  static bool wInit;
-  static WINDOW *wBorder,
-                *wLog;
-  static mutex wMutex;
+  static WINDOW *wBorder = nullptr,
+                *wLog = nullptr;
+  static vector<function<void()>*> gwEndings;
   class Gw {
     public:
       static Gw *E(mExchange e);
@@ -523,10 +533,10 @@ namespace K {
       function<void(mLevels)>       evDataLevels;
       function<void(mConnectivity)> evConnectOrder,
                                     evConnectMarket;
-      uWS::Hub                *hub      = nullptr;
-      uWS::Group<uWS::CLIENT> *gwGroup  = nullptr;
+      uWS::Hub                *hub     = nullptr;
+      uWS::Group<uWS::CLIENT> *gwGroup = nullptr;
       mExchange exchange = mExchange::Null;
-          int free    = 0;
+          int version = 0;
        double makeFee = 0,  minTick = 0,
               takeFee = 0,  minSize = 0;
        string base    = "", quote   = "",
@@ -590,8 +600,8 @@ namespace K {
       void link(Klass *EV, Klass *DB, Klass *UI, Klass *QP, Klass *OG, Klass *MG, Klass *PG, Klass *QE, Klass *GW) {
         Klass *CF = (Klass*)this;
         EV->gwLink(gw);                 UI->gwLink(gw);                 OG->gwLink(gw); MG->gwLink(gw); PG->gwLink(gw); QE->gwLink(gw); GW->gwLink(gw);
-                        DB->cfLink(CF); UI->cfLink(CF);                 OG->cfLink(CF); MG->cfLink(CF); PG->cfLink(CF); QE->cfLink(CF); GW->cfLink(CF);
-                                        UI->evLink(EV); QP->evLink(EV); OG->evLink(EV); MG->evLink(EV); PG->evLink(EV); QE->evLink(EV); GW->evLink(EV);
+        EV->cfLink(CF); DB->cfLink(CF); UI->cfLink(CF);                 OG->cfLink(CF); MG->cfLink(CF); PG->cfLink(CF); QE->cfLink(CF); GW->cfLink(CF);
+                        DB->evLink(EV); UI->evLink(EV); QP->evLink(EV); OG->evLink(EV); MG->evLink(EV); PG->evLink(EV); QE->evLink(EV); GW->evLink(EV);
                                         UI->dbLink(DB); QP->dbLink(DB); OG->dbLink(DB); MG->dbLink(DB); PG->dbLink(DB);
                                                         QP->uiLink(UI); OG->uiLink(UI); MG->uiLink(UI); PG->uiLink(UI); QE->uiLink(UI); GW->uiLink(UI);
                                                         QP->qpLink(&p); OG->qpLink(&p); MG->qpLink(&p); PG->qpLink(&p); QE->qpLink(&p); GW->qpLink(&p);
