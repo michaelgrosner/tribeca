@@ -282,11 +282,11 @@ namespace K {
         double variance = sq_diff_sum / n;
         return sqrt(variance) * f;
       };
-      double recalcEwma(vector<double> k,  unsigned int periods) {
-	    double Ewma = 0;
-	    double value = 0;
+      double recalcEwma(vector<double> k,  int periods) {
 	    int size = k.size();
 	    if (size) {
+		  double Ewma = 0;
+	      double value = 0;
           double alpha = (double)2 / (periods + 1);
           for (int i = periods; i > 0; --i) {
 	        if (size < i) value = k.front();
