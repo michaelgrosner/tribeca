@@ -59,12 +59,11 @@ namespace K {
           for (json::reverse_iterator it = k.rbegin(); it != k.rend(); ++it) {
 			  if (it->value("time", (unsigned long)0) + 864 * 1e4 < FN::T() or it->value("fv", 0.0) <= 0 ) continue;
 			  FairValueLongTerm.push_back(it->value("fv", 0.0));
-			  
 			  if (timediff) averageTimediff += it->value("time", (unsigned long)0) - timediff;
 			  timediff = it->value("time", (unsigned long)0);
           }
           FN::log("DB", string("loaded ") + to_string(FairValueLongTerm.size()) + string(" historical FairValues"));
-          if (FairValueLongTerm.size()) FN::log("DB", string("Average Milliseconds between values: ") + to_string(averageTimediff/FairValueLongTerm.size()));
+          if (FairValueLongTerm.size()>1) FN::log("DB", string("Average Milliseconds between values: ") + to_string(averageTimediff/(FairValueLongTerm.size()-1)));
         }
         k = ((DB*)memory)->load(uiTXT::EWMAChart);
         if (k.size()) {
@@ -206,7 +205,6 @@ namespace K {
           {"time", FN::T()},
         }, false, "NULL", FN::T() - 864*1e4);
         FairValueLongTerm.push_back(fairValue);
-        FN::log(to_string(FN::T()));
       };
       void calcStatsEwmaProtection() {
         calcEwma(&mgEwmaP, qp->quotingEwmaProtectionPeriods);
