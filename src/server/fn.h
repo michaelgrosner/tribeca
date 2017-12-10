@@ -137,10 +137,10 @@ namespace K {
         system("test -n \"`/bin/pidof stunnel`\" && kill -9 `/bin/pidof stunnel`");
         system("stunnel etc/K-stunnel.conf");
       };
-      static json wJet(string k) {
-        return json::parse(wGet(k));
+      static json wJet(string k, bool f = false) {
+        return json::parse(wGet(k, f));
       };
-      static string wGet(string k) {
+      static string wGet(string k, bool f) {
         string k_;
         CURL* curl;
         curl = curl_easy_init();
@@ -149,9 +149,10 @@ namespace K {
           curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &wcb);
           curl_easy_setopt(curl, CURLOPT_WRITEDATA, &k_);
           curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
-          curl_easy_setopt(curl, CURLOPT_TIMEOUT, 13L);
+          if (f) curl_easy_setopt(curl, CURLOPT_TIMEOUT, 4L);
+          else curl_easy_setopt(curl, CURLOPT_TIMEOUT, 13L);
           CURLcode r = curl_easy_perform(curl);
-          if(r != CURLE_OK) FN::logWar("CURL", string("wGet failed ") + curl_easy_strerror(r));
+          if(!f and r != CURLE_OK) FN::logWar("CURL", string("wGet failed ") + curl_easy_strerror(r));
           curl_easy_cleanup(curl);
         }
         if (!k_.length() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
@@ -465,7 +466,6 @@ namespace K {
           cout << uiT() << k << RRED << m << BRED << s << ".\n";
           return;
         }
-        lock_guard<mutex> lock(wMutex);
         wmove(wLog, getmaxy(wLog)-1, 0);
         uiT();
         wattron(wLog, COLOR_PAIR(COLOR_WHITE));
@@ -487,7 +487,6 @@ namespace K {
           cout << uiT() << "DB " << RYELLOW << k << RWHITE << " loaded OK.\n";
           return;
         }
-        lock_guard<mutex> lock(wMutex);
         wmove(wLog, getmaxy(wLog)-1, 0);
         uiT();
         wattron(wLog, COLOR_PAIR(COLOR_WHITE));
@@ -508,7 +507,6 @@ namespace K {
           cout << uiT() << "UI" << RWHITE << " ready over " << RYELLOW << k << RWHITE << " on external port " << RYELLOW << to_string(p) << RWHITE << ".\n";
           return;
         }
-        wMutex.lock();
         wmove(wLog, getmaxy(wLog)-1, 0);
         uiT();
         wattron(wLog, COLOR_PAIR(COLOR_WHITE));
@@ -529,7 +527,6 @@ namespace K {
         wattron(wLog, COLOR_PAIR(COLOR_WHITE));
         wprintw(wLog, ".\n");
         wattroff(wLog, COLOR_PAIR(COLOR_WHITE));
-        wMutex.unlock();
         FN::screen_refresh(k, p);
       };
       static void logUIsess(int k, string s) {
@@ -538,7 +535,6 @@ namespace K {
           cout << uiT() << "UI " << RYELLOW << to_string(k) << RWHITE << " currently connected, last connection was from " << RYELLOW << s << RWHITE << ".\n";
           return;
         }
-        lock_guard<mutex> lock(wMutex);
         wmove(wLog, getmaxy(wLog)-1, 0);
         uiT();
         wattron(wLog, COLOR_PAIR(COLOR_WHITE));
@@ -565,7 +561,6 @@ namespace K {
           cout << BGREEN << "K" << RGREEN << string(" version ").append(c == -1 ? "unknown (zip install).\n" : (!c ? "0day.\n" : string("-").append(to_string(c)).append("commit").append(c > 1?"s..\n":"..\n"))) << RYELLOW << (c ? k : "") << RWHITE;
           return;
         }
-        lock_guard<mutex> lock(wMutex);
         wmove(wLog, getmaxy(wLog)-1, 0);
         wattron(wLog, COLOR_PAIR(COLOR_GREEN));
         wattron(wLog, A_BOLD);
@@ -583,7 +578,6 @@ namespace K {
           cout << FN::uiT() << "GW " << (k.side == mSide::Bid ? RCYAN : RPURPLE) << e << " TRADE " << (k.side == mSide::Bid ? BCYAN : BPURPLE) << (k.side == mSide::Bid ? "BUY " : "SELL ") << k.quantity << " " << k.pair.base << " at price " << k.price << " " << k.pair.quote << " (value " << k.value << " " << k.pair.quote << ").\n";
           return;
         }
-        lock_guard<mutex> lock(wMutex);
         wmove(wLog, getmaxy(wLog)-1, 0);
         uiT();
         wattron(wLog, A_BOLD);
@@ -605,7 +599,6 @@ namespace K {
           cout << uiT() << k << RWHITE << " " << s << " " << RYELLOW << v << RWHITE << ".\n";
           return;
         }
-        lock_guard<mutex> lock(wMutex);
         wmove(wLog, getmaxy(wLog)-1, 0);
         uiT();
         wattron(wLog, COLOR_PAIR(COLOR_WHITE));
@@ -627,7 +620,6 @@ namespace K {
           cout << uiT() << k << RWHITE << " " << s << ".\n";
           return;
         }
-        lock_guard<mutex> lock(wMutex);
         wmove(wLog, getmaxy(wLog)-1, 0);
         uiT();
         wattron(wLog, COLOR_PAIR(COLOR_WHITE));
@@ -643,7 +635,6 @@ namespace K {
           cout << RWHITE << k;
           return;
         }
-        lock_guard<mutex> lock(wMutex);
         wmove(wLog, getmaxy(wLog)-1, 0);
         if (b) wattron(wLog, A_BOLD);
         wattron(wLog, COLOR_PAIR(c));
@@ -654,7 +645,6 @@ namespace K {
       };
       static void screen_quit() {
         if (!wBorder) return;
-        lock_guard<mutex> lock(wMutex);
         beep();
         endwin();
         wBorder = nullptr;
@@ -668,6 +658,7 @@ namespace K {
         use_default_colors();
         cbreak();
         noecho();
+        nodelay(wBorder, true);
         keypad(wBorder, true);
         init_pair(COLOR_WHITE, COLOR_WHITE, COLOR_BLACK);
         init_pair(COLOR_GREEN, COLOR_GREEN, COLOR_BLACK);
@@ -680,25 +671,25 @@ namespace K {
         scrollok(wLog, true);
         idlok(wLog, true);
         signal(SIGWINCH, screen_resize);
-        thread([&]() {
-          int ch;
-          while ((ch = wgetch(wBorder)) != 'q' and ch != 'Q') {
-            switch (ch) {
-              case ERR: continue;
-              // case KEY_PPAGE: wscrl(wLog, -3); wrefresh(wLog); break;
-              // case KEY_NPAGE: wscrl(wLog, 3); wrefresh(wLog); break;
-              // case KEY_UP: wscrl(wLog, -1); wrefresh(wLog); break;
-              // case KEY_DOWN: wscrl(wLog, 1); wrefresh(wLog); break;
-            }
-          }
-          raise(SIGINT);
-        }).detach();
         screen_refresh("", 0, argExchange, argCurrency);
+      };
+      static bool screen_events() {
+        if (!wBorder) return false;
+        int ch;
+        if ((ch = wgetch(wBorder)) == 'q' or ch == 'Q') raise(SIGINT);
+        // else switch (ch) {
+          // case ERR: return true;
+          // case KEY_PPAGE: wscrl(wLog, -3); wrefresh(wLog); break;
+          // case KEY_NPAGE: wscrl(wLog, 3); wrefresh(wLog); break;
+          // case KEY_UP: wscrl(wLog, -1); wrefresh(wLog); break;
+          // case KEY_DOWN: wscrl(wLog, 1); wrefresh(wLog); break;
+        // }
+        return true;
       };
       static void screen_refresh(map<string, mOrder> k) {
         screen_refresh("", 0, "", "", k, true);
       };
-      static void screen_refresh(string protocol = "", int argPort = 0, string argExchange = "", string argCurrency = "", map<string, mOrder> allOrders = map<string, mOrder>(), bool hasOrders = false) {
+      static void screen_refresh(string protocol = "", int argPort = 0, string argExchange = "", string argCurrency = "", map<string, mOrder> Orders = map<string, mOrder>(), bool hasOrders = false) {
         if (!wBorder) return;
         static int p = 0, spin = 0, port = 0;
         static string prtcl = "?", exchange = "?", currency = "?";
@@ -709,13 +700,12 @@ namespace K {
         if (argCurrency.length()) currency = argCurrency;
         multimap<double, mOrder> openOrders;
         if (hasOrders) {
-          orders = allOrders;
+          orders = Orders;
           for (map<string, mOrder>::iterator it = orders.begin(); it != orders.end(); ++it) {
             if (mORS::Working != it->second.orderStatus) continue;
             openOrders.insert(pair<double, mOrder>(it->second.price, it->second));
           }
         }
-        lock_guard<mutex> lock(wMutex);
         int l = p,
             y = getmaxy(wBorder),
             x = getmaxx(wBorder),
@@ -771,27 +761,22 @@ namespace K {
         wattroff(wBorder, COLOR_PAIR(COLOR_YELLOW));
         waddstr(wBorder, ") Open Orders..");
         mvwaddch(wBorder, y-1, 0, ACS_LLCORNER);
-        mvwaddstr(wBorder, y-1, x-1, string("|/-\\").substr(++spin, 1).data());
-        if (spin==3) { spin = -1; }
+        mvwaddstr(wBorder, 1, 2, string("|/-\\").substr(++spin, 1).data());
+        if (spin==3) spin = -1;
         move(k-1, 2);
         wrefresh(wBorder);
         wrefresh(wLog);
       };
       static void screen_resize(int sig) {
         if (!wBorder) return;
-        wMutex.lock();
         struct winsize ws;
-        if (ioctl(0, TIOCGWINSZ, &ws) < 0 or (ws.ws_row == getmaxy(wBorder) and ws.ws_col == getmaxx(wBorder))) {
-          wMutex.unlock();
+        if (ioctl(0, TIOCGWINSZ, &ws) < 0 or (ws.ws_row == getmaxy(wBorder) and ws.ws_col == getmaxx(wBorder)))
           return;
-        }
         if (ws.ws_row < 10) ws.ws_row = 10;
         if (ws.ws_col < 20) ws.ws_col = 20;
         wresize(wBorder, ws.ws_row, ws.ws_col);
         resizeterm(ws.ws_row, ws.ws_col);
-        wMutex.unlock();
         screen_refresh();
-        lock_guard<mutex> lock(wMutex);
         redrawwin(wLog);
         wrefresh(wLog);
       };

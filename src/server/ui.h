@@ -28,7 +28,7 @@ namespace K {
       };
       void waitTime() {
         if (((CF*)config)->argHeadless) return;
-        ((EV*)events)->tClient->setData(this);
+        ((EV*)events)->tClient->data = this;
         ((EV*)events)->tClient->start(sendState, 0, 0);
       };
       void waitData() {
@@ -173,7 +173,9 @@ namespace K {
       void send(uiTXT k, string j) {
         string m(1, (char)uiBIT::Kiss);
         m += string(1, (char)k) + j;
-        ((EV*)events)->uiGroup->broadcast(m.data(), m.length(), uWS::OpCode::TEXT);
+        ((EV*)events)->deferred([this, m]() {
+          ((EV*)events)->uiGroup->broadcast(m.data(), m.length(), uWS::OpCode::TEXT);
+        });
       };
       void sendQueue() {
         for (map<uiTXT, string>::iterator it = queue.begin(); it != queue.end(); ++it)
