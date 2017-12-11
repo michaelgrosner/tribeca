@@ -16,6 +16,7 @@ namespace K {
       vector<double> mgStatBid;
       vector<double> mgStatAsk;
       vector<double> mgStatTop;
+      vector<double> FairValueLongTerm;
       unsigned int mgT_60s = 0;
       unsigned long mgT_369ms = 0;
     public:
@@ -50,6 +51,19 @@ namespace K {
         if (((CF*)config)->argEwmaLong) mgEwmaL = ((CF*)config)->argEwmaLong;
         if (((CF*)config)->argEwmaMedium) mgEwmaM = ((CF*)config)->argEwmaMedium;
         if (((CF*)config)->argEwmaShort) mgEwmaS = ((CF*)config)->argEwmaShort;
+        k = ((DB*)memory)->load(uiTXT::MarketDataLongTerm);
+        if (k.size()) {
+	      unsigned long lastTime = 0;
+	      unsigned long averageTimediff = 0;
+          for (json::reverse_iterator it = k.rbegin(); it != k.rend(); ++it) {
+			  if (it->value("time", (unsigned long)0) + 864 * 1e4 < FN::T() or it->value("fv", 0.0) <= 0 ) continue;
+			  FairValueLongTerm.push_back(it->value("fv", 0.0));
+			  if (lastTime) averageTimediff += it->value("time", (unsigned long)0) - lastTime;
+			  lastTime = it->value("time", (unsigned long)0);
+          }
+          FN::log("DB", string("loaded ") + to_string(FairValueLongTerm.size()) + string(" historical FairValues"));
+          if (FairValueLongTerm.size()>1) FN::log("DB", string("Average Milliseconds between values: ") + to_string(averageTimediff/FairValueLongTerm.size()));
+        }
         k = ((DB*)memory)->load(uiTXT::EWMAChart);
         if (k.size()) {
           k = k.at(0);
@@ -87,12 +101,12 @@ namespace K {
         return !levels.bids.size() or !levels.asks.size();
       };
       void calcStats() {
-        if (++mgT_60s == 60) {
-          mgT_60s = 0;
+        if (mgT_60s == 0) {
           calcStatsTrades();
           calcStatsEwmaProtection();
           calcStatsEwmaPosition();
         }
+        if (++mgT_60s == 60) mgT_60s = 0;
         calcStatsStdevProtection();
       };
       void calcFairValue() {
@@ -112,6 +126,16 @@ namespace K {
         if (!fairValue or (fairValue_ and abs(fairValue - fairValue_) < gw->minTick)) return;
         gw->evDataWallet(mWallet());
         ((UI*)client)->send(uiTXT::FairValue, {{"price", fairValue}}, true);
+      };
+      void recalcEwmas() {
+	    FN::log("DB", string("Old EwmaVL ") + to_string(mgEwmaVL));
+      	mgEwmaVL = recalcEwma(FairValueLongTerm, qp->veryLongEwmaPeriods);
+      	FN::log("DB", string("Old EwmaL ") + to_string(mgEwmaL));
+        mgEwmaL = recalcEwma(FairValueLongTerm, qp->longEwmaPeriods);
+        FN::log("DB", string("Old EwmaM ") + to_string(mgEwmaM));
+        mgEwmaM = recalcEwma(FairValueLongTerm, qp->mediumEwmaPeriods);
+        FN::log("DB", string("Old EwmaS ") + to_string(mgEwmaS));
+        mgEwmaS = recalcEwma(FairValueLongTerm, qp->shortEwmaPeriods);
       };
     private:
       function<json()> helloTrade = [&]() {
@@ -179,6 +203,11 @@ namespace K {
           {"ewmaShort", mgEwmaS},
           {"time", FN::T()}
         });
+        ((DB*)memory)->insert(uiTXT::MarketDataLongTerm, {
+          {"fv", fairValue},
+          {"time", FN::T()},
+        }, false, "NULL", FN::T() - 864*1e4);
+        FairValueLongTerm.push_back(fairValue);
       };
       void calcStatsEwmaProtection() {
         calcEwma(&mgEwmaP, qp->quotingEwmaProtectionPeriods);
@@ -252,6 +281,26 @@ namespace K {
         }
         double variance = sq_diff_sum / n;
         return sqrt(variance) * f;
+      };
+      double recalcEwma(vector<double> k,  int periods) {
+	    int size = k.size();
+	    if (size) {
+		  double Ewma = 0;
+	      double value = 0;
+          double alpha = (double)2 / (periods + 1);
+          for (int i = periods; i > 0; --i) {
+	        if (size < i) value = k.front();
+	        else value = k[size-1-i];
+	        if (Ewma) Ewma = alpha * value + (1 - alpha) * Ewma;  
+	    	else Ewma = value;
+          }
+          FN::log("MG", string("recalculated EWMA with a period of ") + to_string(periods) + string(" = ") + to_string(Ewma));
+          if (size < periods) FN::log("MG", string("Not enough accumulated values. Only  ") + to_string(size) + string(" historical values were available"));
+          return Ewma;
+        } else { 
+	        FN::log("MG", string("Error recalculating EWMA.. Using actual fair value"));
+	        return fairValue;
+	        }
       };
       void calcEwma(double *k, int periods) {
         if (*k) {
