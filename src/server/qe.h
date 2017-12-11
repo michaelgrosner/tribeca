@@ -40,7 +40,7 @@ namespace K {
           ((MG*)market)->calcFairValue();
           ((PG*)wallet)->calcTargetBasePos();
           ((PG*)wallet)->calcSafety();
-          ((MG*)market)->recalcEwmas();
+          ((MG*)market)->calcEwmaHistory();
           calcQuote();
         };
         ((EV*)events)->ogTrade = [&](mTrade k) {

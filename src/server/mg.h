@@ -16,7 +16,7 @@ namespace K {
       vector<double> mgStatBid;
       vector<double> mgStatAsk;
       vector<double> mgStatTop;
-      vector<double> FairValueLongTerm;
+      vector<double> fairValue24h;
       unsigned int mgT_60s = 0;
       unsigned long mgT_369ms = 0;
     public:
@@ -51,19 +51,6 @@ namespace K {
         if (((CF*)config)->argEwmaLong) mgEwmaL = ((CF*)config)->argEwmaLong;
         if (((CF*)config)->argEwmaMedium) mgEwmaM = ((CF*)config)->argEwmaMedium;
         if (((CF*)config)->argEwmaShort) mgEwmaS = ((CF*)config)->argEwmaShort;
-        k = ((DB*)memory)->load(uiTXT::MarketDataLongTerm);
-        if (k.size()) {
-	      unsigned long lastTime = 0;
-	      unsigned long averageTimediff = 0;
-          for (json::reverse_iterator it = k.rbegin(); it != k.rend(); ++it) {
-			  if (it->value("time", (unsigned long)0) + 864 * 1e4 < FN::T() or it->value("fv", 0.0) <= 0 ) continue;
-			  FairValueLongTerm.push_back(it->value("fv", 0.0));
-			  if (lastTime) averageTimediff += it->value("time", (unsigned long)0) - lastTime;
-			  lastTime = it->value("time", (unsigned long)0);
-          }
-          FN::log("DB", string("loaded ") + to_string(FairValueLongTerm.size()) + string(" historical FairValues"));
-          if (FairValueLongTerm.size()>1) FN::log("DB", string("Average Milliseconds between values: ") + to_string(averageTimediff/FairValueLongTerm.size()));
-        }
         k = ((DB*)memory)->load(uiTXT::EWMAChart);
         if (k.size()) {
           k = k.at(0);
@@ -80,6 +67,20 @@ namespace K {
         if (mgEwmaL)  FN::log(((CF*)config)->argEwmaLong ? "ARG" : "DB", string("loaded EWMA Long = ") + to_string(mgEwmaL));
         if (mgEwmaM)  FN::log(((CF*)config)->argEwmaMedium ? "ARG" : "DB", string("loaded EWMA Medium = ") + to_string(mgEwmaM));
         if (mgEwmaS)  FN::log(((CF*)config)->argEwmaShort ? "ARG" : "DB", string("loaded EWMA Short = ") + to_string(mgEwmaS));
+        k = ((DB*)memory)->load(uiTXT::MarketDataLongTerm);
+        if (k.size()) {
+          unsigned long lastTime = 0,
+                        meanTime = 0;
+          for (json::reverse_iterator it = k.rbegin(); it != k.rend(); ++it) {
+            if (it->value("time", (unsigned long)0) + 864e+4 < FN::T() or it->value("fv", 0.0) <= 0) continue;
+            fairValue24h.push_back(it->value("fv", 0.0));
+            if (lastTime) meanTime += it->value("time", (unsigned long)0) - lastTime;
+            lastTime = it->value("time", (unsigned long)0);
+          }
+          FN::log("DB", string("loaded ") + to_string(fairValue24h.size()) + " historical FairValues" + (
+            fairValue24h.size() ? " (save time avg: " + to_string(meanTime/fairValue24h.size()) + "ms)" : ""
+          ));
+        }
       };
       void waitData() {
         gw->evDataTrade = [&](mTrade k) {
@@ -101,12 +102,11 @@ namespace K {
         return !levels.bids.size() or !levels.asks.size();
       };
       void calcStats() {
-        if (mgT_60s == 0) {
+        if (!mgT_60s++) {
           calcStatsTrades();
           calcStatsEwmaProtection();
           calcStatsEwmaPosition();
-        }
-        if (++mgT_60s == 60) mgT_60s = 0;
+        } else if (mgT_60s == 60) mgT_60s = 0;
         calcStatsStdevProtection();
       };
       void calcFairValue() {
@@ -127,15 +127,11 @@ namespace K {
         gw->evDataWallet(mWallet());
         ((UI*)client)->send(uiTXT::FairValue, {{"price", fairValue}}, true);
       };
-      void recalcEwmas() {
-	    FN::log("DB", string("Old EwmaVL ") + to_string(mgEwmaVL));
-      	mgEwmaVL = recalcEwma(FairValueLongTerm, qp->veryLongEwmaPeriods);
-      	FN::log("DB", string("Old EwmaL ") + to_string(mgEwmaL));
-        mgEwmaL = recalcEwma(FairValueLongTerm, qp->longEwmaPeriods);
-        FN::log("DB", string("Old EwmaM ") + to_string(mgEwmaM));
-        mgEwmaM = recalcEwma(FairValueLongTerm, qp->mediumEwmaPeriods);
-        FN::log("DB", string("Old EwmaS ") + to_string(mgEwmaS));
-        mgEwmaS = recalcEwma(FairValueLongTerm, qp->shortEwmaPeriods);
+      void calcEwmaHistory() {
+        calcEwmaHistory(&mgEwmaVL, qp->veryLongEwmaPeriods);
+        calcEwmaHistory(&mgEwmaL, qp->longEwmaPeriods);
+        calcEwmaHistory(&mgEwmaM, qp->mediumEwmaPeriods);
+        calcEwmaHistory(&mgEwmaS, qp->shortEwmaPeriods);
       };
     private:
       function<json()> helloTrade = [&]() {
@@ -189,10 +185,11 @@ namespace K {
         mgT_369ms = FN::T();
       };
       void calcStatsEwmaPosition() {
-        calcEwma(&mgEwmaVL, qp->veryLongEwmaPeriods);
-        calcEwma(&mgEwmaL, qp->longEwmaPeriods);
-        calcEwma(&mgEwmaM, qp->mediumEwmaPeriods);
-        calcEwma(&mgEwmaS, qp->shortEwmaPeriods);
+        fairValue24h.push_back(fairValue);
+        calcEwma(&mgEwmaVL, qp->veryLongEwmaPeriods, fairValue);
+        calcEwma(&mgEwmaL, qp->longEwmaPeriods, fairValue);
+        calcEwma(&mgEwmaM, qp->mediumEwmaPeriods, fairValue);
+        calcEwma(&mgEwmaS, qp->shortEwmaPeriods, fairValue);
         calcTargetPos();
         ((EV*)events)->mgTargetPosition();
         ((UI*)client)->send(uiTXT::EWMAChart, chartStats(), true);
@@ -206,11 +203,10 @@ namespace K {
         ((DB*)memory)->insert(uiTXT::MarketDataLongTerm, {
           {"fv", fairValue},
           {"time", FN::T()},
-        }, false, "NULL", FN::T() - 864*1e4);
-        FairValueLongTerm.push_back(fairValue);
+        }, false, "NULL", FN::T() - 864e+4);
       };
       void calcStatsEwmaProtection() {
-        calcEwma(&mgEwmaP, qp->quotingEwmaProtectionPeriods);
+        calcEwma(&mgEwmaP, qp->quotingEwmaProtectionPeriods, fairValue);
         ((EV*)events)->mgEwmaQuoteProtection();
       };
       json chartStats() {
@@ -268,45 +264,33 @@ namespace K {
         mgStdevAsk = calcStdev(mgStatAsk, k, &mgStdevAskMean);
         mgStdevTop = calcStdev(mgStatTop, k, &mgStdevTopMean);
       };
-      double calcStdev(vector<double> a, double f, double *mean) {
-        int n = a.size();
-        if (n == 0) return 0.0;
+      double calcStdev(vector<double> k, double f, double *mean) {
+        int n = k.size();
+        if (!n) return 0.0;
         double sum = 0;
-        for (int i = 0; i < n; ++i) sum += a[i];
+        for (int i = 0; i < n; ++i) sum += k[i];
         *mean = sum / n;
         double sq_diff_sum = 0;
         for (int i = 0; i < n; ++i) {
-          double diff = a[i] - *mean;
+          double diff = k[i] - *mean;
           sq_diff_sum += diff * diff;
         }
         double variance = sq_diff_sum / n;
         return sqrt(variance) * f;
       };
-      double recalcEwma(vector<double> k,  int periods) {
-	    int size = k.size();
-	    if (size) {
-		  double Ewma = 0;
-	      double value = 0;
-          double alpha = (double)2 / (periods + 1);
-          for (int i = periods; i > 0; --i) {
-	        if (size < i) value = k.front();
-	        else value = k[size-1-i];
-	        if (Ewma) Ewma = alpha * value + (1 - alpha) * Ewma;  
-	    	else Ewma = value;
-          }
-          FN::log("MG", string("recalculated EWMA with a period of ") + to_string(periods) + string(" = ") + to_string(Ewma));
-          if (size < periods) FN::log("MG", string("Not enough accumulated values. Only  ") + to_string(size) + string(" historical values were available"));
-          return Ewma;
-        } else { 
-	        FN::log("MG", string("Error recalculating EWMA.. Using actual fair value"));
-	        return fairValue;
-	        }
+      void calcEwmaHistory(double *k, int periods) {
+        int n = fairValue24h.size();
+        if (!n or !periods or n < periods) return;
+        n = periods;
+        double ewma = 0;
+        while (n--) calcEwma(&ewma, periods, *(fairValue24h.end()-n));
+        if (ewma) *k = ewma;
       };
-      void calcEwma(double *k, int periods) {
+      void calcEwma(double *k, int periods, double value) {
         if (*k) {
-          double alpha = (double)2 / (periods + 1);
-          *k = alpha * fairValue + (1 - alpha) * *k;
-        } else *k = fairValue;
+          double alpha = 2.0 / (periods + 1);
+          *k = alpha * value + (1 - alpha) * *k;
+        } else *k = value;
       };
       void calcTargetPos() {
         mgSMA3.push_back(fairValue);
