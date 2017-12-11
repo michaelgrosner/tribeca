@@ -643,13 +643,7 @@ namespace K {
         if (b) wattroff(wLog, A_BOLD);
         wrefresh(wLog);
       };
-      static void screen_quit() {
-        if (!wBorder) return;
-        beep();
-        endwin();
-        wBorder = nullptr;
-      };
-      static void screen(int argColors, string argExchange, string argCurrency) {
+      static void screen_config(int argColors, string argExchange, string argCurrency) {
         if (!(wBorder = initscr())) {
           cout << "NCURSES" << RRED << " Errrror:" << BRED << " Unable to initialize ncurses, try to run in your terminal \"export TERM=xterm\", or use --naked argument." << '\n';
           exit(EXIT_SUCCESS);
@@ -658,7 +652,6 @@ namespace K {
         use_default_colors();
         cbreak();
         noecho();
-        nodelay(wBorder, true);
         keypad(wBorder, true);
         init_pair(COLOR_WHITE, COLOR_WHITE, COLOR_BLACK);
         init_pair(COLOR_GREEN, COLOR_GREEN, COLOR_BLACK);
@@ -673,18 +666,25 @@ namespace K {
         signal(SIGWINCH, screen_resize);
         screen_refresh("", 0, argExchange, argCurrency);
       };
-      static bool screen_events() {
-        if (!wBorder) return false;
+      static void screen_quit() {
+        if (!wBorder) return;
+        beep();
+        endwin();
+        wBorder = nullptr;
+      };
+      static void screen_events() {
+        if (!wBorder) return;
         int ch;
-        if ((ch = wgetch(wBorder)) == 'q' or ch == 'Q') raise(SIGINT);
-        // else switch (ch) {
-          // case ERR: return true;
-          // case KEY_PPAGE: wscrl(wLog, -3); wrefresh(wLog); break;
-          // case KEY_NPAGE: wscrl(wLog, 3); wrefresh(wLog); break;
-          // case KEY_UP: wscrl(wLog, -1); wrefresh(wLog); break;
-          // case KEY_DOWN: wscrl(wLog, 1); wrefresh(wLog); break;
-        // }
-        return true;
+        while ((ch = wgetch(wBorder)) != 'q' and ch != 'Q') {
+          switch (ch) {
+            case ERR: continue;
+            // case KEY_PPAGE: wscrl(wLog, -3); wrefresh(wLog); break;
+            // case KEY_NPAGE: wscrl(wLog, 3); wrefresh(wLog); break;
+            // case KEY_UP: wscrl(wLog, -1); wrefresh(wLog); break;
+            // case KEY_DOWN: wscrl(wLog, 1); wrefresh(wLog); break;
+          }
+        }
+        raise(SIGINT);
       };
       static void screen_refresh(map<string, mOrder> k) {
         screen_refresh("", 0, "", "", k, true);
