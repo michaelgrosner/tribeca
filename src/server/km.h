@@ -48,7 +48,7 @@ namespace K {
     mPongAt           pongAt                          = mPongAt::ShortPingFair;
     mQuotingMode      mode                            = mQuotingMode::Top;
     mQuotingSafety    safety                          = mQuotingSafety::Boomerang;
-    int               bullets                         = 2;
+    unsigned int      bullets                         = 2;
     double            range                           = 0.5;
     double            rangePercentage                 = 1.0;
     mFairValueModel   fvModel                         = mFairValueModel::BBO;
@@ -84,7 +84,7 @@ namespace K {
     double            cleanPongsAuto                  = 0.0;
     double            profitHourInterval              = 0.5;
     bool              audio                           = false;
-    int               delayUI                         = 7;
+    unsigned int      delayUI                         = 7;
     bool              _matchPings                     = true;
   };
   static void to_json(json& j, const mQuotingParams& k) {
@@ -162,7 +162,7 @@ namespace K {
     if (j.end() != j.find("pongAt")) k.pongAt = (mPongAt)j.at("pongAt").get<int>();
     if (j.end() != j.find("mode")) k.mode = (mQuotingMode)j.at("mode").get<int>();
     if (j.end() != j.find("safety")) k.safety = (mQuotingSafety)j.at("safety").get<int>();
-    if (j.end() != j.find("bullets")) k.bullets = j.at("bullets").get<int>();
+    if (j.end() != j.find("bullets")) k.bullets = max(0, j.at("bullets").get<int>());
     if (j.end() != j.find("range")) k.range = j.at("range").get<double>();
     if (j.end() != j.find("rangePercentage")) k.rangePercentage = j.at("rangePercentage").get<double>();
     if (j.end() != j.find("fvModel")) k.fvModel = (mFairValueModel)j.at("fvModel").get<int>();
@@ -198,7 +198,7 @@ namespace K {
     if (j.end() != j.find("cleanPongsAuto")) k.cleanPongsAuto = j.at("cleanPongsAuto").get<double>();
     if (j.end() != j.find("profitHourInterval")) k.profitHourInterval = j.at("profitHourInterval").get<double>();
     if (j.end() != j.find("audio")) k.audio = j.at("audio").get<bool>();
-    if (j.end() != j.find("delayUI")) k.delayUI = j.at("delayUI").get<int>();
+    if (j.end() != j.find("delayUI")) k.delayUI = max(0, j.at("delayUI").get<int>());
     if (k.mode == mQuotingMode::Depth) k.widthPercentage = false;
     k._matchPings = k.safety == mQuotingSafety::Boomerang or k.safety == mQuotingSafety::AK47;
   };
