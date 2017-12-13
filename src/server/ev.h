@@ -7,7 +7,7 @@ namespace K  {
       uWS::Hub *hub = nullptr;
       Async *aEngine = nullptr;
       vector<function<void()>> asyncFn;
-      future<void> hotkey;
+      future<int> hotkey;
     public:
       uWS::Group<uWS::SERVER> *uiGroup = nullptr;
       Timer *tServer = nullptr,
@@ -96,6 +96,11 @@ namespace K  {
         for (vector<function<void()>>::iterator it = k->asyncFn.begin(); it != k->asyncFn.end();) {
           (*it)();
           it = k->asyncFn.erase(it);
+        }
+        if (k->hotkey.valid() and k->hotkey.wait_for(chrono::nanoseconds(0)) == future_status::ready) {
+          int ch = k->hotkey.get();
+          if (ch == 'q' or ch == 'Q')
+            k->quit(EXIT_SUCCESS);
         }
       };
       static void halt(int code) {
