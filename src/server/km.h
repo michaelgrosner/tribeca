@@ -141,8 +141,7 @@ namespace K {
       {"cleanPongsAuto", k.cleanPongsAuto},
       {"profitHourInterval", k.profitHourInterval},
       {"audio", k.audio},
-      {"delayUI", k.delayUI},
-      {"_matchPings", k._matchPings}
+      {"delayUI", k.delayUI}
     };
   };
   static void from_json(const json& j, mQuotingParams& k) {
@@ -162,7 +161,7 @@ namespace K {
     if (j.end() != j.find("pongAt")) k.pongAt = (mPongAt)j.at("pongAt").get<int>();
     if (j.end() != j.find("mode")) k.mode = (mQuotingMode)j.at("mode").get<int>();
     if (j.end() != j.find("safety")) k.safety = (mQuotingSafety)j.at("safety").get<int>();
-    if (j.end() != j.find("bullets")) k.bullets = max(0, j.at("bullets").get<int>());
+    if (j.end() != j.find("bullets")) k.bullets = max(1, j.at("bullets").get<int>());
     if (j.end() != j.find("range")) k.range = j.at("range").get<double>();
     if (j.end() != j.find("rangePercentage")) k.rangePercentage = j.at("rangePercentage").get<double>();
     if (j.end() != j.find("fvModel")) k.fvModel = (mFairValueModel)j.at("fvModel").get<int>();
