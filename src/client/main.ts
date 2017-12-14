@@ -375,6 +375,7 @@ class DisplayOrder {
                                             <th>fv</th>
                                             <th style="text-align:right;">trades</th>
                                             <th>/sec</th>
+                                            <th>ewmaWidth?</th>
                                             <th>ewma?</th>
                                             <th *ngIf="pair.quotingParameters.display.quotingEwmaProtection">periodsᵉʷᵐᵃ</th>
                                             <th>stdev</th>
@@ -419,6 +420,10 @@ class DisplayOrder {
                                                    type="number" step="1" min="0"
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.tradeRateSeconds">
+                                            </td>
+                                            <td style="width:30px;text-align: center;border-bottom: 3px solid #D64A4A;">
+                                                <input type="checkbox"
+                                                   [(ngModel)]="pair.quotingParameters.display.ewmaPingWidth">
                                             </td>
                                             <td style="text-align: center;border-bottom: 3px solid #F0A0A0;">
                                                 <input type="checkbox"

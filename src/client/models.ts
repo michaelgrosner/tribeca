@@ -217,6 +217,7 @@ export interface QuotingParameters {
     superTrades?: SOP;
     tradesPerMinute?: number;
     tradeRateSeconds?: number;
+    ewmaPingWidth?: boolean;
     quotingEwmaProtection?: boolean;
     quotingStdevProtection?: STDEV;
     quotingStdevBollingerBands?: boolean;

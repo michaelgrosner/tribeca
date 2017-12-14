@@ -65,6 +65,7 @@ namespace K {
     mSOP              superTrades                     = mSOP::Off;
     double            tradesPerMinute                 = 0.9;
     int               tradeRateSeconds                = 3;
+    bool              ewmaPingWidth                   = false;
     bool              quotingEwmaProtection           = true;
     int               quotingEwmaProtectionPeriods    = 200;
     mSTDEV            quotingStdevProtection          = mSTDEV::Off;
@@ -122,6 +123,7 @@ namespace K {
       {"superTrades", (int)k.superTrades},
       {"tradesPerMinute", k.tradesPerMinute},
       {"tradeRateSeconds", k.tradeRateSeconds},
+      {"ewmaPingWidth", k.ewmaPingWidth},
       {"quotingEwmaProtection", k.quotingEwmaProtection},
       {"quotingEwmaProtectionPeriods", k.quotingEwmaProtectionPeriods},
       {"quotingStdevProtection", (int)k.quotingStdevProtection},
@@ -179,6 +181,7 @@ namespace K {
     if (j.end() != j.find("superTrades")) k.superTrades = (mSOP)j.at("superTrades").get<int>();
     if (j.end() != j.find("tradesPerMinute")) k.tradesPerMinute = j.at("tradesPerMinute").get<double>();
     if (j.end() != j.find("tradeRateSeconds")) k.tradeRateSeconds = j.at("tradeRateSeconds").get<int>();
+    if (j.end() != j.find("ewmaPingWidth")) k.ewmaPingWidth = j.at("ewmaPingWidth").get<bool>();
     if (j.end() != j.find("quotingEwmaProtection")) k.quotingEwmaProtection = j.at("quotingEwmaProtection").get<bool>();
     if (j.end() != j.find("quotingEwmaProtectionPeriods")) k.quotingEwmaProtectionPeriods = j.at("quotingEwmaProtectionPeriods").get<int>();
     if (j.end() != j.find("quotingStdevProtection")) k.quotingStdevProtection = (mSTDEV)j.at("quotingStdevProtection").get<int>();

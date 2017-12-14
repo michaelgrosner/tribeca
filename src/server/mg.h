@@ -212,6 +212,7 @@ namespace K {
       void calcStatsEwmaProtection() {
         calcEwma(&mgEwmaP, qp->quotingEwmaProtectionPeriods, fairValue);
         calcEwma(&mgEwmaW, qp->quotingEwmaProtectionPeriods, averageWidth);
+        FN::log("EV", string("AverageWidth: ") + to_string(mgEwmaW) + string("AverageCount: ") + to_string(averageCount));
         averageCount = 0;
         ((EV*)events)->mgEwmaQuoteProtection();
       };
