@@ -128,10 +128,10 @@ namespace K {
         ((UI*)client)->send(uiTXT::FairValue, {{"price", fairValue}}, true);
       };
       void calcEwmaHistory() {
-        calcEwmaHistory(&mgEwmaVL, qp->veryLongEwmaPeriods);
-        calcEwmaHistory(&mgEwmaL, qp->longEwmaPeriods);
-        calcEwmaHistory(&mgEwmaM, qp->mediumEwmaPeriods);
-        calcEwmaHistory(&mgEwmaS, qp->shortEwmaPeriods);
+        calcEwmaHistory(&mgEwmaVL, qp->veryLongEwmaPeriods, "VeryLong");
+        calcEwmaHistory(&mgEwmaL, qp->longEwmaPeriods, "Long");
+        calcEwmaHistory(&mgEwmaM, qp->mediumEwmaPeriods, "Medium");
+        calcEwmaHistory(&mgEwmaS, qp->shortEwmaPeriods, "Short");
       };
     private:
       function<json()> helloTrade = [&]() {
@@ -278,13 +278,13 @@ namespace K {
         double variance = sq_diff_sum / n;
         return sqrt(variance) * f;
       };
-      void calcEwmaHistory(double *k, int periods) {
+      void calcEwmaHistory(double *k, int periods, string name) {
         int n = fairValue96h.size();
         if (!n or !periods or n < periods) return;
-        n = periods-1;
-        double ewma = *(fairValue96h.end()-periods);
-        while (--n) calcEwma(&ewma, periods, *(fairValue96h.end()-n));
-        if (ewma) *k = ewma;
+        n = periods;
+        *k = 0;
+        while (n--) calcEwma(k, periods, *(fairValue96h.end()-n-1));
+        FN::log("MG", string("reloaded EWMA ") + name + " = " + to_string(*k));
       };
       void calcEwma(double *k, int periods, double value) {
         if (*k) {
