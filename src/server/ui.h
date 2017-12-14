@@ -141,11 +141,11 @@ namespace K {
           kiss[(char)k] = cb;
         else FN::logExit("UI", string("Use only a single unique message handler for each \"") + (char)k + "\" event", EXIT_SUCCESS);
       };
-      void delayme(double delayUI) {
+      void delayme(unsigned int delayUI) {
         if (((CF*)config)->argHeadless) return;
         realtimeClient = !delayUI;
         ((EV*)events)->tClient->stop();
-        ((EV*)events)->tClient->start(sendState, 0, realtimeClient ? 6e+4 : (int)(delayUI*1e+3));
+        ((EV*)events)->tClient->start(sendState, 0, realtimeClient ? 6e+4 : delayUI*1e+3);
       };
       void send(uiTXT k, json o, bool delayed = false) {
         if (((CF*)config)->argHeadless or connections == 0) return;

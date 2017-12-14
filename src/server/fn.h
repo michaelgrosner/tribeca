@@ -672,19 +672,10 @@ namespace K {
         endwin();
         wBorder = nullptr;
       };
-      static void screen_events() {
-        if (!wBorder) return;
-        int ch;
-        while ((ch = wgetch(wBorder)) != 'q' and ch != 'Q') {
-          switch (ch) {
-            case ERR: continue;
-            // case KEY_PPAGE: wscrl(wLog, -3); wrefresh(wLog); break;
-            // case KEY_NPAGE: wscrl(wLog, 3); wrefresh(wLog); break;
-            // case KEY_UP: wscrl(wLog, -1); wrefresh(wLog); break;
-            // case KEY_DOWN: wscrl(wLog, 1); wrefresh(wLog); break;
-          }
-        }
-        raise(SIGINT);
+      static int screen_events() {
+        return wBorder
+          ? wgetch(wBorder)
+          : 'q';
       };
       static void screen_refresh(map<string, mOrder> k) {
         screen_refresh("", 0, "", "", k, true);

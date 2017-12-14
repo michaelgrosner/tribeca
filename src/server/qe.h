@@ -8,7 +8,7 @@ namespace K {
       mQuoteState bidStatus = mQuoteState::MissingData,
                   askStatus = mQuoteState::MissingData;
       mQuoteStatus status;
-      int AK47inc = 1;
+      unsigned int AK47inc = 1;
     public:
       mConnectivity gwConnectButton = mConnectivity::Disconnected,
                     gwConnectExchange = mConnectivity::Disconnected;
@@ -487,7 +487,7 @@ namespace K {
         } else return mQuoteState::Live;
       };
       void updateQuote(mLevel q, mSide side, bool isPong) {
-        int k = ((OG*)broker)->orders.size();
+        unsigned int k = ((OG*)broker)->orders.size();
         if (!k) return start(side, q, isPong);
         unsigned long T = FN::T();
         for (map<string, mOrder>::iterator it = ((OG*)broker)->orders.begin(); it != ((OG*)broker)->orders.end(); ++it)
@@ -495,7 +495,7 @@ namespace K {
           else if (it->second.price == q.price) return;
           else if (it->second.orderStatus == mORS::New) {
             if (T-10e+3>it->second.time) ((OG*)broker)->cleanOrder(it->second.orderId);
-            if (qp->safety != mQuotingSafety::AK47 or (int)k >= qp->bullets) return;
+            if (qp->safety != mQuotingSafety::AK47 or k >= qp->bullets) return;
           }
         modify(side, q, isPong);
       };

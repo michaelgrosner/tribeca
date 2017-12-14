@@ -16,7 +16,7 @@ namespace K {
       vector<double> mgStatBid;
       vector<double> mgStatAsk;
       vector<double> mgStatTop;
-      vector<double> fairValue24h;
+      vector<double> fairValue96h;
       unsigned int mgT_60s = 0;
       unsigned long mgT_369ms = 0;
       double averageWidth = 0;
@@ -75,13 +75,13 @@ namespace K {
           unsigned long lastTime = 0,
                         meanTime = 0;
           for (json::reverse_iterator it = k.rbegin(); it != k.rend(); ++it) {
-            if (it->value("time", (unsigned long)0) + 864e+4 < FN::T() or it->value("fv", 0.0) <= 0) continue;
-            fairValue24h.push_back(it->value("fv", 0.0));
+            if (it->value("time", (unsigned long)0) + 3456e+4 < FN::T() or it->value("fv", 0.0) <= 0) continue;
+            fairValue96h.push_back(it->value("fv", 0.0));
             if (lastTime) meanTime += it->value("time", (unsigned long)0) - lastTime;
             lastTime = it->value("time", (unsigned long)0);
           }
-          FN::log("DB", string("loaded ") + to_string(fairValue24h.size()) + " historical FairValues" + (
-            fairValue24h.size() ? " (save time avg: " + to_string(meanTime/fairValue24h.size()) + "ms)" : ""
+          FN::log("DB", string("loaded ") + to_string(fairValue96h.size()) + " historical FairValues" + (
+            fairValue96h.size() ? " (save time avg: " + to_string(meanTime/fairValue96h.size()) + "ms)" : ""
           ));
         }
       };
@@ -132,10 +132,10 @@ namespace K {
         averageWidth = ((averageWidth * averageCount) + topAskPrice - topBidPrice) / ++averageCount;
       };
       void calcEwmaHistory() {
-        calcEwmaHistory(&mgEwmaVL, qp->veryLongEwmaPeriods);
-        calcEwmaHistory(&mgEwmaL, qp->longEwmaPeriods);
-        calcEwmaHistory(&mgEwmaM, qp->mediumEwmaPeriods);
-        calcEwmaHistory(&mgEwmaS, qp->shortEwmaPeriods);
+        calcEwmaHistory(&mgEwmaVL, qp->veryLongEwmaPeriods, "VeryLong");
+        calcEwmaHistory(&mgEwmaL, qp->longEwmaPeriods, "Long");
+        calcEwmaHistory(&mgEwmaM, qp->mediumEwmaPeriods, "Medium");
+        calcEwmaHistory(&mgEwmaS, qp->shortEwmaPeriods, "Short");
       };
     private:
       function<json()> helloTrade = [&]() {
@@ -189,7 +189,7 @@ namespace K {
         mgT_369ms = FN::T();
       };
       void calcStatsEwmaPosition() {
-        fairValue24h.push_back(fairValue);
+        fairValue96h.push_back(fairValue);
         calcEwma(&mgEwmaVL, qp->veryLongEwmaPeriods, fairValue);
         calcEwma(&mgEwmaL, qp->longEwmaPeriods, fairValue);
         calcEwma(&mgEwmaM, qp->mediumEwmaPeriods, fairValue);
@@ -207,7 +207,7 @@ namespace K {
         ((DB*)memory)->insert(uiTXT::MarketDataLongTerm, {
           {"fv", fairValue},
           {"time", FN::T()},
-        }, false, "NULL", FN::T() - 864e+4);
+        }, false, "NULL", FN::T() - 3456e+4);
       };
       void calcStatsEwmaProtection() {
         calcEwma(&mgEwmaP, qp->quotingEwmaProtectionPeriods, fairValue);
@@ -285,13 +285,13 @@ namespace K {
         double variance = sq_diff_sum / n;
         return sqrt(variance) * f;
       };
-      void calcEwmaHistory(double *k, int periods) {
-        int n = fairValue24h.size();
+      void calcEwmaHistory(double *k, int periods, string name) {
+        int n = fairValue96h.size();
         if (!n or !periods or n < periods) return;
         n = periods;
-        double ewma = 0;
-        while (n--) calcEwma(&ewma, periods, *(fairValue24h.end()-n));
-        if (ewma) *k = ewma;
+        *k = 0;
+        while (n--) calcEwma(k, periods, *(fairValue96h.end()-n-1));
+        FN::log("MG", string("reloaded EWMA ") + name + " = " + to_string(*k));
       };
       void calcEwma(double *k, int periods, double value) {
         if (*k) {
