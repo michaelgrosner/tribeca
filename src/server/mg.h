@@ -283,7 +283,7 @@ namespace K {
         if (!n or !periods or n < periods) return;
         n = periods;
         *k = 0;
-        while (n--) calcEwma(k, periods, *(fairValue96h.end()-n-1));
+        while (n--) calcEwma(k, periods, *(fairValue96h.rbegin()+n));
         FN::log("MG", string("reloaded EWMA ") + name + " = " + to_string(*k));
       };
       void calcEwma(double *k, int periods, double value) {
