@@ -283,7 +283,7 @@ namespace K {
         if (!n or !periods or n < periods) return;
         n = periods-1;
         double ewma = *(fairValue96h.end()-periods);
-        while (n--) calcEwma(&ewma, periods, *(fairValue96h.end()-n));
+        while (--n) calcEwma(&ewma, periods, *(fairValue96h.end()-n));
         if (ewma) *k = ewma;
       };
       void calcEwma(double *k, int periods, double value) {
