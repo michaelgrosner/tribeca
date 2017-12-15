@@ -166,12 +166,12 @@ namespace K {
     if (j.end() != j.find("rangePercentage")) k.rangePercentage = fmin(1e+2, fmax(1e-1, j.at("rangePercentage").get<double>()));
     if (j.end() != j.find("fvModel")) k.fvModel = (mFairValueModel)j.at("fvModel").get<int>();
     if (j.end() != j.find("targetBasePosition")) k.targetBasePosition = j.at("targetBasePosition").get<double>();
-    if (j.end() != j.find("targetBasePositionPercentage")) k.targetBasePositionPercentage = fmin(1e+2, max(1, j.at("targetBasePositionPercentage").get<int>()));
+    if (j.end() != j.find("targetBasePositionPercentage")) k.targetBasePositionPercentage = fmin(1e+2, max(0, j.at("targetBasePositionPercentage").get<int>()));
     if (j.end() != j.find("positionDivergenceMin")) k.positionDivergenceMin = j.at("positionDivergenceMin").get<double>();
     if (j.end() != j.find("positionDivergenceMode")) k.positionDivergenceMode = (mPDivMode)j.at("positionDivergenceMode").get<int>();
     if (j.end() != j.find("positionDivergence")) k.positionDivergence = j.at("positionDivergence").get<double>();
-    if (j.end() != j.find("positionDivergencePercentage")) k.positionDivergencePercentage = fmin(1e+2, max(1, j.at("positionDivergencePercentage").get<int>()));
-    if (j.end() != j.find("positionDivergencePercentageMin")) k.positionDivergencePercentageMin = fmin(1e+2, max(1, j.at("positionDivergencePercentageMin").get<int>()));
+    if (j.end() != j.find("positionDivergencePercentage")) k.positionDivergencePercentage = fmin(1e+2, max(0, j.at("positionDivergencePercentage").get<int>()));
+    if (j.end() != j.find("positionDivergencePercentageMin")) k.positionDivergencePercentageMin = fmin(1e+2, max(0, j.at("positionDivergencePercentageMin").get<int>()));
     if (j.end() != j.find("percentageValues")) k.percentageValues = j.at("percentageValues").get<bool>();
     if (j.end() != j.find("autoPositionMode")) k.autoPositionMode = (mAutoPositionMode)j.at("autoPositionMode").get<int>();
     if (j.end() != j.find("aggressivePositionRebalancing")) k.aggressivePositionRebalancing = (mAPR)j.at("aggressivePositionRebalancing").get<int>();
