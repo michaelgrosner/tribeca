@@ -69,7 +69,7 @@ namespace K {
         }
       };
       void calcTargetBasePos() {
-        if (empty()) { FN::logWar("QE", "Unable to calculate TBP, missing market data."); return; }
+        if (empty()) { FN::logWar("QE", "Unable to calculate TBP, missing market data"); return; }
         double baseValue = position.baseValue;
         double next = qp->autoPositionMode == mAutoPositionMode::Manual
           ? (qp->percentageValues
@@ -99,14 +99,18 @@ namespace K {
         return !position.baseValue;
       };
     private:
-      function<json()> helloPosition = [&]() {
-        return (json){ position };
+      function<void(json*)> helloPosition = [&](json *welcome) {
+        *welcome = { position };
       };
-      function<json()> helloSafety = [&]() {
-        return (json){ safety };
+      function<void(json*)> helloSafety = [&](json *welcome) {
+        *welcome = { safety };
       };
-      function<json()> helloTargetBasePos = [&]() {
-        return (json){{{"tbp", targetBasePosition}, {"sideAPR", sideAPR}, {"pDiv", positionDivergence }}};
+      function<void(json*)> helloTargetBasePos = [&](json *welcome) {
+        *welcome = { {
+          {"tbp", targetBasePosition},
+          {"sideAPR", sideAPR},
+          {"pDiv", positionDivergence}
+        } };
       };
       mSafety nextSafety() {
         double baseValue      = position.baseValue,

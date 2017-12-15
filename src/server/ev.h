@@ -7,7 +7,7 @@ namespace K  {
       uWS::Hub *hub = nullptr;
       Async *aEngine = nullptr;
       vector<function<void()>> asyncFn;
-      future<void> hotkey;
+      future<int> hotkey;
     public:
       uWS::Group<uWS::SERVER> *uiGroup = nullptr;
       Timer *tServer = nullptr,
@@ -91,23 +91,28 @@ namespace K  {
         FN::log("DEBUG", string("EV ") + k);
       };
     private:
+      function<void()> happyEnding = [&]() {
+        cout << FN::uiT() << gw->name;
+        for(unsigned int i = 0; i < 21; ++i)
+          cout << " THE END IS NEVER";
+        cout << " THE END." << '\n';
+      };
       void (*asyncLoop)(Async*) = [](Async *handle) {
         EV* k = (EV*)handle->data;
         for (vector<function<void()>>::iterator it = k->asyncFn.begin(); it != k->asyncFn.end();) {
           (*it)();
           it = k->asyncFn.erase(it);
         }
+        if (k->hotkey.valid() and k->hotkey.wait_for(chrono::nanoseconds(0)) == future_status::ready) {
+          int ch = k->hotkey.get();
+          if (ch == 'q' or ch == 'Q')
+            raise(SIGINT);
+        }
       };
       static void halt(int code) {
         for (vector<function<void()>*>::iterator it=gwEndings.begin(); it!=gwEndings.end();++it) (**it)();
         cout << FN::uiT() << "K exit code " << to_string(code) << "." << '\n';
         exit(code);
-      };
-      function<void()> happyEnding = [&]() {
-        cout << FN::uiT() << gw->name;
-        for(unsigned int i = 0; i < 21; ++i)
-          cout << " THE END IS NEVER";
-        cout << " THE END." << '\n';
       };
       static void quit(int sig) {
         FN::screen_quit();
@@ -135,10 +140,10 @@ namespace K  {
       };
       static bool latest() {
         return FN::output("test -d .git && git rev-parse @") == FN::output("test -d .git && git rev-parse @{u}");
-      }
+      };
       static string changelog() {
         return FN::output("test -d .git && git --no-pager log --graph --oneline @..@{u}");
-      }
+      };
       static void upgrade() {
         cout << '\n' << BYELLOW << "Hint!" << RYELLOW
           << '\n' << "please upgrade to the latest commit; the encountered error may be already fixed at:"

@@ -56,28 +56,32 @@ namespace K {
           FN::log(string("GW ") + gw->name, "cancell all open orders OK");
         });
       };
-      function<json()> helloProduct = [&]() {
-        return (json){{
+      function<void(json*)> helloProduct = [&](json *welcome) {
+        *welcome = { {
           {"exchange", (int)gw->exchange},
           {"pair", {{"base", gw->base}, {"quote", gw->quote}}},
           {"minTick", gw->minTick},
           {"environment", ((CF*)config)->argTitle},
           {"matryoshka", ((CF*)config)->argMatryoshka},
           {"homepage", "https://github.com/ctubio/Krypto-trading-bot"}
-        }};
+        } };
       };
-      function<json()> helloStatus = [&]() {
-        return (json){{{"status", (int)gwConnectExchange}}};
+      function<void(json*)> helloStatus = [&](json *welcome) {
+        *welcome = { {
+          {"status", (unsigned int)gwConnectExchange}
+        } };
       };
-      function<json()> helloState = [&]() {
-        return (json){{{"state",  (int)gwQuotingState}}};
+      function<void(json*)> helloState = [&](json *welcome) {
+        *welcome = { {
+          {"state",  (unsigned int)gwQuotingState}
+        } };
       };
-      function<void(json)> kissState = [&](json k) {
-        if (!k.is_object() or !k["state"].is_number()) {
+      function<void(json)> kissState = [&](json butterfly) {
+        if (!butterfly.is_object() or !butterfly["state"].is_number()) {
           FN::logWar("JSON", "Missing state at kissState, ignored");
           return;
         }
-        mConnectivity autoStart = (mConnectivity)k["state"].get<int>();
+        mConnectivity autoStart = (mConnectivity)butterfly["state"].get<int>();
         if (autoStart != gwAutoStart) {
           gwAutoStart = autoStart;
           clientSemaphore();
@@ -107,9 +111,9 @@ namespace K {
         ((QE*)engine)->gwConnectButton = gwQuotingState;
         ((QE*)engine)->gwConnectExchange = gwConnectExchange;
       };
-      void handshake(mExchange e) {
+      void handshake(mExchange k) {
         json reply;
-        if (e == mExchange::Coinbase) {
+        if (k == mExchange::Coinbase) {
           FN::stunnel();
           gw->randId = FN::uuidId;
           gw->symbol = FN::S2u(string(gw->base) + "-" + gw->quote);
@@ -117,14 +121,14 @@ namespace K {
           gw->minTick = stod(reply.value("quote_increment", "0"));
           gw->minSize = stod(reply.value("base_min_size", "0"));
         }
-        else if (e == mExchange::HitBtc) {
+        else if (k == mExchange::HitBtc) {
           gw->randId = FN::charId;
           gw->symbol = FN::S2u(string(gw->base) + gw->quote);
           reply = FN::wJet(string(gw->http) + "/public/symbol/" + gw->symbol);
           gw->minTick = stod(reply.value("tickSize", "0"));
           gw->minSize = stod(reply.value("quantityIncrement", "0"));
         }
-        else if (e == mExchange::Bitfinex) {
+        else if (k == mExchange::Bitfinex) {
           gw->randId = FN::int64Id;
           gw->symbol = FN::S2l(string(gw->base) + gw->quote);
           reply = FN::wJet(string(gw->http) + "/pubticker/" + gw->symbol);
@@ -143,13 +147,13 @@ namespace K {
               if (it->find("pair") != it->end() and it->value("pair", "") == gw->symbol)
                 gw->minSize = stod(it->value("minimum_order_size", "0"));
         }
-        else if (e == mExchange::OkCoin or e == mExchange::OkEx) {
+        else if (k == mExchange::OkCoin or k == mExchange::OkEx) {
           gw->randId = FN::charId;
           gw->symbol = FN::S2l(string(gw->base) + "_" + gw->quote);
-          gw->minTick = 0.001;
+          gw->minTick = 0.0001;
           gw->minSize = 0.001;
         }
-        else if (e == mExchange::Kraken) {
+        else if (k == mExchange::Kraken) {
           gw->randId = FN::int64Id;
           gw->symbol = FN::S2u(string(gw->base) + gw->quote);
           reply = FN::wJet(string(gw->http) + "/0/public/AssetPairs?pair=" + gw->symbol);
@@ -166,7 +170,7 @@ namespace K {
             }
           gw->minSize = 0.01;
         }
-        else if (e == mExchange::Korbit) {
+        else if (k == mExchange::Korbit) {
           gw->randId = FN::int64Id;
           gw->symbol = FN::S2l(string(gw->base) + "_" + gw->quote);
           reply = FN::wJet(string(gw->http) + "/constants");
@@ -175,7 +179,7 @@ namespace K {
             gw->minSize = 0.015;
           }
         }
-        else if (e == mExchange::Poloniex) {
+        else if (k == mExchange::Poloniex) {
           gw->randId = FN::int64Id;
           gw->symbol = FN::FN::S2u(string(gw->base) + "_" + gw->quote);
           reply = FN::wJet(string(gw->http) + "/public?command=returnTicker");
@@ -185,7 +189,7 @@ namespace K {
             gw->minSize = 0.01;
           }
         }
-        else if (e == mExchange::Null) {
+        else if (k == mExchange::Null) {
           gw->randId = FN::int64Id;
           gw->symbol = FN::FN::S2u(string(gw->base) + "_" + gw->quote);
           gw->minTick = 0.01;
