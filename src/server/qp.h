@@ -19,25 +19,15 @@ namespace K {
         ((UI*)client)->delayme(qp->delayUI);
       };
     private:
-      function<json()> hello = [&]() {
-        return (json){ *qp };
+      function<void(json*)> hello = [&](json *welcome) {
+        *welcome = { *qp };
       };
-      function<void(json)> kiss = [&](json k) {
-        if (k.value("buySize", 0.0) > 0
-          and k.value("sellSize", 0.0) > 0
-          and k.value("buySizePercentage", 0.0) > 0
-          and k.value("sellSizePercentage", 0.0) > 0
-          and k.value("widthPing", 0.0) > 0
-          and k.value("widthPong", 0.0) > 0
-          and k.value("widthPingPercentage", 0.0) > 0
-          and k.value("widthPongPercentage", 0.0) > 0
-        ) {
-          *qp = k;
-          ((DB*)memory)->insert(uiTXT::QuotingParameters, *qp);
-          ((EV*)events)->uiQuotingParameters();
-          ((UI*)client)->delayme(qp->delayUI);
-        }
+      function<void(json)> kiss = [&](json butterfly) {
+        *qp = butterfly;
+        ((EV*)events)->uiQuotingParameters();
+        ((UI*)client)->delayme(qp->delayUI);
         ((UI*)client)->send(uiTXT::QuotingParameters, *qp);
+        ((DB*)memory)->insert(uiTXT::QuotingParameters, *qp);
       };
   };
 }

@@ -39,10 +39,10 @@ namespace K {
     bool              widthPercentage                 = false;
     bool              bestWidth                       = true;
     double            buySize                         = 0.02;
-    int               buySizePercentage               = 7;
+    unsigned int      buySizePercentage               = 7;
     bool              buySizeMax                      = false;
     double            sellSize                        = 0.01;
-    int               sellSizePercentage              = 7;
+    unsigned int      sellSizePercentage              = 7;
     bool              sellSizeMax                     = false;
     mPingAt           pingAt                          = mPingAt::BothSides;
     mPongAt           pongAt                          = mPongAt::ShortPingFair;
@@ -50,33 +50,33 @@ namespace K {
     mQuotingSafety    safety                          = mQuotingSafety::Boomerang;
     unsigned int      bullets                         = 2;
     double            range                           = 0.5;
-    double            rangePercentage                 = 1.0;
+    double            rangePercentage                 = 5.0;
     mFairValueModel   fvModel                         = mFairValueModel::BBO;
     double            targetBasePosition              = 1.0;
-    int               targetBasePositionPercentage    = 50;
+    unsigned int      targetBasePositionPercentage    = 50;
     double            positionDivergence              = 0.9;
     double            positionDivergenceMin           = 0.4;
-    int               positionDivergencePercentage    = 21;
-    int               positionDivergencePercentageMin = 10;
+    unsigned int      positionDivergencePercentage    = 21;
+    unsigned int      positionDivergencePercentageMin = 10;
     mPDivMode         positionDivergenceMode          = mPDivMode::Manual;
     bool              percentageValues                = false;
     mAutoPositionMode autoPositionMode                = mAutoPositionMode::EWMA_LS;
     mAPR              aggressivePositionRebalancing   = mAPR::Off;
     mSOP              superTrades                     = mSOP::Off;
     double            tradesPerMinute                 = 0.9;
-    int               tradeRateSeconds                = 3;
+    unsigned int               tradeRateSeconds                = 3;
     bool              ewmaPingWidth                   = false;
     bool              quotingEwmaProtection           = true;
-    int               quotingEwmaProtectionPeriods    = 200;
+    unsigned int      quotingEwmaProtectionPeriods    = 200;
     mSTDEV            quotingStdevProtection          = mSTDEV::Off;
     bool              quotingStdevBollingerBands      = false;
     double            quotingStdevProtectionFactor    = 1.0;
-    int               quotingStdevProtectionPeriods   = 1200;
+    unsigned int      quotingStdevProtectionPeriods   = 1200;
     double            ewmaSensiblityPercentage        = 0.5;
-    int               veryLongEwmaPeriods             = 400;
-    int               longEwmaPeriods                 = 200;
-    int               mediumEwmaPeriods               = 100;
-    int               shortEwmaPeriods                = 50;
+    unsigned int      veryLongEwmaPeriods             = 400;
+    unsigned int      longEwmaPeriods                 = 200;
+    unsigned int      mediumEwmaPeriods               = 100;
+    unsigned int      shortEwmaPeriods                = 50;
     double            aprMultiplier                   = 2;
     double            sopWidthMultiplier              = 2;
     double            sopSizeMultiplier               = 2;
@@ -102,31 +102,31 @@ namespace K {
       {"sellSize", k.sellSize},
       {"sellSizePercentage", k.sellSizePercentage},
       {"sellSizeMax", k.sellSizeMax},
-      {"pingAt", (int)k.pingAt},
-      {"pongAt", (int)k.pongAt},
-      {"mode", (int)k.mode},
-      {"safety", (int)k.safety},
+      {"pingAt", (unsigned int)k.pingAt},
+      {"pongAt", (unsigned int)k.pongAt},
+      {"mode", (unsigned int)k.mode},
+      {"safety", (unsigned int)k.safety},
       {"bullets", k.bullets},
       {"range", k.range},
       {"rangePercentage", k.rangePercentage},
-      {"fvModel", (int)k.fvModel},
+      {"fvModel", (unsigned int)k.fvModel},
       {"targetBasePosition", k.targetBasePosition},
       {"targetBasePositionPercentage", k.targetBasePositionPercentage},
       {"positionDivergence", k.positionDivergence},
       {"positionDivergencePercentage", k.positionDivergencePercentage},
       {"positionDivergenceMin", k.positionDivergenceMin},
       {"positionDivergencePercentageMin", k.positionDivergencePercentageMin},
-      {"positionDivergenceMode", (int)k.positionDivergenceMode},
+      {"positionDivergenceMode", (unsigned int)k.positionDivergenceMode},
       {"percentageValues", k.percentageValues},
       {"autoPositionMode", (int)k.autoPositionMode},
-      {"aggressivePositionRebalancing", (int)k.aggressivePositionRebalancing},
-      {"superTrades", (int)k.superTrades},
+      {"aggressivePositionRebalancing", (unsigned int)k.aggressivePositionRebalancing},
+      {"superTrades", (unsigned int)k.superTrades},
       {"tradesPerMinute", k.tradesPerMinute},
       {"tradeRateSeconds", k.tradeRateSeconds},
       {"ewmaPingWidth", k.ewmaPingWidth},
       {"quotingEwmaProtection", k.quotingEwmaProtection},
       {"quotingEwmaProtectionPeriods", k.quotingEwmaProtectionPeriods},
-      {"quotingStdevProtection", (int)k.quotingStdevProtection},
+      {"quotingStdevProtection", (unsigned int)k.quotingStdevProtection},
       {"quotingStdevBollingerBands", k.quotingStdevBollingerBands},
       {"quotingStdevProtectionFactor", k.quotingStdevProtectionFactor},
       {"quotingStdevProtectionPeriods", k.quotingStdevProtectionPeriods},
@@ -147,17 +147,17 @@ namespace K {
     };
   };
   static void from_json(const json& j, mQuotingParams& k) {
-    if (j.end() != j.find("widthPing")) k.widthPing = j.at("widthPing").get<double>();
-    if (j.end() != j.find("widthPingPercentage")) k.widthPingPercentage = j.at("widthPingPercentage").get<double>();
-    if (j.end() != j.find("widthPong")) k.widthPong = j.at("widthPong").get<double>();
-    if (j.end() != j.find("widthPongPercentage")) k.widthPongPercentage = j.at("widthPongPercentage").get<double>();
+    if (j.end() != j.find("widthPing")) k.widthPing = fmax(1e-8, j.at("widthPing").get<double>());
+    if (j.end() != j.find("widthPingPercentage")) k.widthPingPercentage = fmin(1e+2, fmax(0.1, j.at("widthPingPercentage").get<double>()));
+    if (j.end() != j.find("widthPong")) k.widthPong = fmax(1e-8, j.at("widthPong").get<double>());
+    if (j.end() != j.find("widthPongPercentage")) k.widthPongPercentage = fmin(1e+2, fmax(0.1, j.at("widthPongPercentage").get<double>()));
     if (j.end() != j.find("widthPercentage")) k.widthPercentage = j.at("widthPercentage").get<bool>();
     if (j.end() != j.find("bestWidth")) k.bestWidth = j.at("bestWidth").get<bool>();
-    if (j.end() != j.find("buySize")) k.buySize = j.at("buySize").get<double>();
-    if (j.end() != j.find("buySizePercentage")) k.buySizePercentage = j.at("buySizePercentage").get<int>();
+    if (j.end() != j.find("buySize")) k.buySize = fmax(1e-8, j.at("buySize").get<double>());
+    if (j.end() != j.find("buySizePercentage")) k.buySizePercentage = fmin(1e+2, max(1, j.at("buySizePercentage").get<int>()));
     if (j.end() != j.find("buySizeMax")) k.buySizeMax = j.at("buySizeMax").get<bool>();
-    if (j.end() != j.find("sellSize")) k.sellSize = j.at("sellSize").get<double>();
-    if (j.end() != j.find("sellSizePercentage")) k.sellSizePercentage = j.at("sellSizePercentage").get<int>();
+    if (j.end() != j.find("sellSize")) k.sellSize = fmax(1e-8, j.at("sellSize").get<double>());
+    if (j.end() != j.find("sellSizePercentage")) k.sellSizePercentage = fmin(1e+2, max(1, j.at("sellSizePercentage").get<int>()));
     if (j.end() != j.find("sellSizeMax")) k.sellSizeMax = j.at("sellSizeMax").get<bool>();
     if (j.end() != j.find("pingAt")) k.pingAt = (mPingAt)j.at("pingAt").get<int>();
     if (j.end() != j.find("pongAt")) k.pongAt = (mPongAt)j.at("pongAt").get<int>();
@@ -165,33 +165,33 @@ namespace K {
     if (j.end() != j.find("safety")) k.safety = (mQuotingSafety)j.at("safety").get<int>();
     if (j.end() != j.find("bullets")) k.bullets = max(1, j.at("bullets").get<int>());
     if (j.end() != j.find("range")) k.range = j.at("range").get<double>();
-    if (j.end() != j.find("rangePercentage")) k.rangePercentage = j.at("rangePercentage").get<double>();
+    if (j.end() != j.find("rangePercentage")) k.rangePercentage = fmin(1e+2, fmax(1e-1, j.at("rangePercentage").get<double>()));
     if (j.end() != j.find("fvModel")) k.fvModel = (mFairValueModel)j.at("fvModel").get<int>();
     if (j.end() != j.find("targetBasePosition")) k.targetBasePosition = j.at("targetBasePosition").get<double>();
-    if (j.end() != j.find("targetBasePositionPercentage")) k.targetBasePositionPercentage = j.at("targetBasePositionPercentage").get<int>();
+    if (j.end() != j.find("targetBasePositionPercentage")) k.targetBasePositionPercentage = fmin(1e+2, max(1, j.at("targetBasePositionPercentage").get<int>()));
     if (j.end() != j.find("positionDivergenceMin")) k.positionDivergenceMin = j.at("positionDivergenceMin").get<double>();
-    if (j.end() != j.find("positionDivergencePercentageMin")) k.positionDivergencePercentageMin = j.at("positionDivergencePercentageMin").get<int>();
     if (j.end() != j.find("positionDivergenceMode")) k.positionDivergenceMode = (mPDivMode)j.at("positionDivergenceMode").get<int>();
     if (j.end() != j.find("positionDivergence")) k.positionDivergence = j.at("positionDivergence").get<double>();
-    if (j.end() != j.find("positionDivergencePercentage")) k.positionDivergencePercentage = j.at("positionDivergencePercentage").get<int>();
+    if (j.end() != j.find("positionDivergencePercentage")) k.positionDivergencePercentage = fmin(1e+2, max(1, j.at("positionDivergencePercentage").get<int>()));
+    if (j.end() != j.find("positionDivergencePercentageMin")) k.positionDivergencePercentageMin = fmin(1e+2, max(1, j.at("positionDivergencePercentageMin").get<int>()));
     if (j.end() != j.find("percentageValues")) k.percentageValues = j.at("percentageValues").get<bool>();
     if (j.end() != j.find("autoPositionMode")) k.autoPositionMode = (mAutoPositionMode)j.at("autoPositionMode").get<int>();
     if (j.end() != j.find("aggressivePositionRebalancing")) k.aggressivePositionRebalancing = (mAPR)j.at("aggressivePositionRebalancing").get<int>();
     if (j.end() != j.find("superTrades")) k.superTrades = (mSOP)j.at("superTrades").get<int>();
     if (j.end() != j.find("tradesPerMinute")) k.tradesPerMinute = j.at("tradesPerMinute").get<double>();
-    if (j.end() != j.find("tradeRateSeconds")) k.tradeRateSeconds = j.at("tradeRateSeconds").get<int>();
+    if (j.end() != j.find("tradeRateSeconds")) k.tradeRateSeconds = max(0, j.at("tradeRateSeconds").get<int>());
     if (j.end() != j.find("ewmaPingWidth")) k.ewmaPingWidth = j.at("ewmaPingWidth").get<bool>();
     if (j.end() != j.find("quotingEwmaProtection")) k.quotingEwmaProtection = j.at("quotingEwmaProtection").get<bool>();
-    if (j.end() != j.find("quotingEwmaProtectionPeriods")) k.quotingEwmaProtectionPeriods = j.at("quotingEwmaProtectionPeriods").get<int>();
+    if (j.end() != j.find("quotingEwmaProtectionPeriods")) k.quotingEwmaProtectionPeriods = max(1, j.at("quotingEwmaProtectionPeriods").get<int>());
     if (j.end() != j.find("quotingStdevProtection")) k.quotingStdevProtection = (mSTDEV)j.at("quotingStdevProtection").get<int>();
     if (j.end() != j.find("quotingStdevBollingerBands")) k.quotingStdevBollingerBands = j.at("quotingStdevBollingerBands").get<bool>();
     if (j.end() != j.find("quotingStdevProtectionFactor")) k.quotingStdevProtectionFactor = j.at("quotingStdevProtectionFactor").get<double>();
-    if (j.end() != j.find("quotingStdevProtectionPeriods")) k.quotingStdevProtectionPeriods = j.at("quotingStdevProtectionPeriods").get<int>();
+    if (j.end() != j.find("quotingStdevProtectionPeriods")) k.quotingStdevProtectionPeriods = max(1, j.at("quotingStdevProtectionPeriods").get<int>());
     if (j.end() != j.find("ewmaSensiblityPercentage")) k.ewmaSensiblityPercentage = j.at("ewmaSensiblityPercentage").get<double>();
-    if (j.end() != j.find("veryLongEwmaPeriods")) k.veryLongEwmaPeriods = j.at("veryLongEwmaPeriods").get<int>();
-    if (j.end() != j.find("longEwmaPeriods")) k.longEwmaPeriods = j.at("longEwmaPeriods").get<int>();
-    if (j.end() != j.find("mediumEwmaPeriods")) k.mediumEwmaPeriods = j.at("mediumEwmaPeriods").get<int>();
-    if (j.end() != j.find("shortEwmaPeriods")) k.shortEwmaPeriods = j.at("shortEwmaPeriods").get<int>();
+    if (j.end() != j.find("veryLongEwmaPeriods")) k.veryLongEwmaPeriods = max(1, j.at("veryLongEwmaPeriods").get<int>());
+    if (j.end() != j.find("longEwmaPeriods")) k.longEwmaPeriods = max(1, j.at("longEwmaPeriods").get<int>());
+    if (j.end() != j.find("mediumEwmaPeriods")) k.mediumEwmaPeriods = max(1, j.at("mediumEwmaPeriods").get<int>());
+    if (j.end() != j.find("shortEwmaPeriods")) k.shortEwmaPeriods = max(1, j.at("shortEwmaPeriods").get<int>());
     if (j.end() != j.find("aprMultiplier")) k.aprMultiplier = j.at("aprMultiplier").get<double>();
     if (j.end() != j.find("sopWidthMultiplier")) k.sopWidthMultiplier = j.at("sopWidthMultiplier").get<double>();
     if (j.end() != j.find("sopSizeMultiplier")) k.sopSizeMultiplier = j.at("sopSizeMultiplier").get<double>();

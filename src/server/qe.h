@@ -71,8 +71,8 @@ namespace K {
         debug = [&](string k) {};
       };
     private:
-      function<json()> hello = [&]() {
-        return (json){ status };
+      function<void(json*)> hello = [&](json *welcome) {
+        *welcome = { status };
       };
       void calcQuote() {
         bidStatus = mQuoteState::MissingData;

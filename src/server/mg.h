@@ -138,17 +138,17 @@ namespace K {
         calcEwmaHistory(&mgEwmaS, qp->shortEwmaPeriods, "Short");
       };
     private:
-      function<json()> helloTrade = [&]() {
-        json k;
+      function<void(json*)> helloTrade = [&](json *welcome) {
         for (unsigned i=0; i<trades.size(); ++i)
-          k.push_back(trades[i]);
-        return k;
+          welcome->push_back(trades[i]);
       };
-      function<json()> helloFair = [&]() {
-        return (json){{{"price", fairValue}}};
+      function<void(json*)> helloFair = [&](json *welcome) {
+        *welcome = { {
+          {"price", fairValue}
+        } };
       };
-      function<json()> helloEwma = [&]() {
-        return (json){ chartStats() };
+      function<void(json*)> helloEwma = [&](json *welcome) {
+        *welcome = { chartStats() };
       };
       void calcStatsStdevProtection() {
         if (empty()) return;
@@ -170,7 +170,7 @@ namespace K {
       };
       void calcStatsTrades() {
         takersSellSize60s = takersBuySize60s = 0;
-        for (unsigned i=0; i<trades.size(); ++i)
+        for (unsigned int i = 0; i<trades.size(); ++i)
           if (trades[i].side == mSide::Bid) takersSellSize60s += trades[i].quantity;
           else takersBuySize60s += trades[i].quantity;
         trades.clear();
@@ -265,39 +265,38 @@ namespace K {
       void calcStdev() {
         cleanStdev();
         if (mgStatFV.size() < 2 or mgStatBid.size() < 2 or mgStatAsk.size() < 2 or mgStatTop.size() < 4) return;
-        double k = qp->quotingStdevProtectionFactor;
-        mgStdevFV = calcStdev(mgStatFV, k, &mgStdevFVMean);
-        mgStdevBid = calcStdev(mgStatBid, k, &mgStdevBidMean);
-        mgStdevAsk = calcStdev(mgStatAsk, k, &mgStdevAskMean);
-        mgStdevTop = calcStdev(mgStatTop, k, &mgStdevTopMean);
+        mgStdevFV = calcStdev(&mgStdevFVMean, qp->quotingStdevProtectionFactor, mgStatFV);
+        mgStdevBid = calcStdev(&mgStdevBidMean, qp->quotingStdevProtectionFactor, mgStatBid);
+        mgStdevAsk = calcStdev(&mgStdevAskMean, qp->quotingStdevProtectionFactor, mgStatAsk);
+        mgStdevTop = calcStdev(&mgStdevTopMean, qp->quotingStdevProtectionFactor, mgStatTop);
       };
-      double calcStdev(vector<double> k, double f, double *mean) {
-        int n = k.size();
+      double calcStdev(double *mean, double factor, vector<double> values) {
+        unsigned int n = values.size();
         if (!n) return 0.0;
         double sum = 0;
-        for (int i = 0; i < n; ++i) sum += k[i];
+        for (unsigned int i = 0; i < n; ++i) sum += values[i];
         *mean = sum / n;
         double sq_diff_sum = 0;
-        for (int i = 0; i < n; ++i) {
-          double diff = k[i] - *mean;
+        for (unsigned int i = 0; i < n; ++i) {
+          double diff = values[i] - *mean;
           sq_diff_sum += diff * diff;
         }
         double variance = sq_diff_sum / n;
-        return sqrt(variance) * f;
+        return sqrt(variance) * factor;
       };
-      void calcEwmaHistory(double *k, int periods, string name) {
-        int n = fairValue96h.size();
+      void calcEwmaHistory(double *mean, unsigned int periods, string name) {
+        unsigned int n = fairValue96h.size();
         if (!n or !periods or n < periods) return;
         n = periods;
-        *k = 0;
-        while (n--) calcEwma(k, periods, *(fairValue96h.end()-n-1));
-        FN::log("MG", string("reloaded EWMA ") + name + " = " + to_string(*k));
+        *mean = 0;
+        while (n--) calcEwma(mean, periods, *(fairValue96h.rbegin()+n));
+        FN::log("MG", string("reloaded EWMA ") + name + " = " + to_string(*mean));
       };
-      void calcEwma(double *k, int periods, double value) {
-        if (*k) {
+      void calcEwma(double *mean, unsigned int periods, double value) {
+        if (*mean) {
           double alpha = 2.0 / (periods + 1);
-          *k = alpha * value + (1 - alpha) * *k;
-        } else *k = value;
+          *mean = alpha * value + (1 - alpha) * *mean;
+        } else *mean = value;
       };
       void calcTargetPos() {
         mgSMA3.push_back(fairValue);
