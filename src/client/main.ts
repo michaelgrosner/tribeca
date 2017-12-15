@@ -377,7 +377,7 @@ class DisplayOrder {
                                             <th>/sec</th>
                                             <th>ewmaWidth?</th>
                                             <th>ewma?</th>
-                                            <th *ngIf="pair.quotingParameters.display.quotingEwmaProtection">periodsᵉʷᵐᵃ</th>
+                                            <th *ngIf="pair.quotingParameters.display.quotingEwmaProtection || pair.quotingParameters.display.ewmaPingWidth">periodsᵉʷᵐᵃ</th>
                                             <th>stdev</th>
                                             <th *ngIf="pair.quotingParameters.display.quotingStdevProtection">periodsˢᵗᵈᶜᵛ</th>
                                             <th *ngIf="pair.quotingParameters.display.quotingStdevProtection">factor</th>
@@ -429,7 +429,7 @@ class DisplayOrder {
                                                 <input type="checkbox"
                                                    [(ngModel)]="pair.quotingParameters.display.quotingEwmaProtection">
                                             </td>
-                                            <td style="width:88px;border-bottom: 3px solid #F0A0A0;" *ngIf="pair.quotingParameters.display.quotingEwmaProtection">
+                                            <td style="width:88px;border-bottom: 3px solid #F0A0A0;" *ngIf="pair.quotingParameters.display.quotingEwmaProtection || pair.quotingParameters.display.ewmaPingWidth">
                                                 <input class="form-control input-sm"
                                                    type="number" step="1" min="1"
                                                    onClick="this.select()"
