@@ -146,9 +146,9 @@ namespace K {
   };
   static void from_json(const json& j, mQuotingParams& k) {
     if (j.end() != j.find("widthPing")) k.widthPing = fmax(1e-8, j.at("widthPing").get<double>());
-    if (j.end() != j.find("widthPingPercentage")) k.widthPingPercentage = fmin(1e+2, fmax(0.1, j.at("widthPingPercentage").get<double>()));
+    if (j.end() != j.find("widthPingPercentage")) k.widthPingPercentage = fmin(1e+2, fmax(1e-1, j.at("widthPingPercentage").get<double>()));
     if (j.end() != j.find("widthPong")) k.widthPong = fmax(1e-8, j.at("widthPong").get<double>());
-    if (j.end() != j.find("widthPongPercentage")) k.widthPongPercentage = fmin(1e+2, fmax(0.1, j.at("widthPongPercentage").get<double>()));
+    if (j.end() != j.find("widthPongPercentage")) k.widthPongPercentage = fmin(1e+2, fmax(1e-1, j.at("widthPongPercentage").get<double>()));
     if (j.end() != j.find("widthPercentage")) k.widthPercentage = j.at("widthPercentage").get<bool>();
     if (j.end() != j.find("bestWidth")) k.bestWidth = j.at("bestWidth").get<bool>();
     if (j.end() != j.find("buySize")) k.buySize = fmax(1e-8, j.at("buySize").get<double>());
