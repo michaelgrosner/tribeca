@@ -20,7 +20,7 @@ namespace K {
       unsigned int mgT_60s = 0;
       unsigned long mgT_369ms = 0;
       double averageWidth = 0;
-      unsigned int averageCount;
+      unsigned int averageCount = 0;
     public:
       mLevels levels;
       double fairValue = 0;
@@ -212,7 +212,7 @@ namespace K {
       void calcStatsEwmaProtection() {
         calcEwma(&mgEwmaP, qp->quotingEwmaProtectionPeriods, fairValue);
         calcEwma(&mgEwmaW, qp->quotingEwmaProtectionPeriods, averageWidth);
-        FN::log("EV", string("AverageWidth: ") + to_string(mgEwmaW) + string("AverageCount: ") + to_string(averageCount));
+        FN::log("EV", string("AverageWidth: ") + to_string(averageWidth) + string(" AverageCount: ") + to_string(averageCount) + string(" ewmaWidth: ") + to_string(mgEwmaW));
         averageCount = 0;
         ((EV*)events)->mgEwmaQuoteProtection();
       };
