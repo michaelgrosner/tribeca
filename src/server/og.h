@@ -54,48 +54,44 @@ namespace K {
         debug(string("remove ") + oI);
       };
     private:
-      function<json()> helloTrades = [&]() {
-        json k;
+      function<void(json*)> helloTrades = [&](json *welcome) {
         for (vector<mTrade>::iterator it = tradesHistory.begin(); it != tradesHistory.end(); ++it) {
           it->loadedFromDB = true;
-          k.push_back(*it);
+          welcome->push_back(*it);
         }
-        return k;
       };
-      function<json()> helloOrders = [&]() {
-        json k;
+      function<void(json*)> helloOrders = [&](json *welcome) {
         for (map<string, mOrder>::iterator it = orders.begin(); it != orders.end(); ++it) {
           if (mORS::Working != it->second.orderStatus) continue;
-          k.push_back(it->second);
+          welcome->push_back(it->second);
         }
-        return k;
       };
-      function<void(json)> kissCancelAllOrders = [&](json k) {
+      function<void(json)> kissCancelAllOrders = [&](json butterfly) {
         cancelOpenOrders();
       };
-      function<void(json)> kissCleanAllClosedTrades = [&](json k) {
+      function<void(json)> kissCleanAllClosedTrades = [&](json butterfly) {
         cleanClosedTrades();
       };
-      function<void(json)> kissCleanAllTrades = [&](json k) {
+      function<void(json)> kissCleanAllTrades = [&](json butterfly) {
         cleanTrades();
       };
-      function<void(json)> kissCancelOrder = [&](json k) {
-        if (k.is_object() and k["orderId"].is_string())
-          cancelOrder(k["orderId"].get<string>());
+      function<void(json)> kissCancelOrder = [&](json butterfly) {
+        if (butterfly.is_object() and butterfly["orderId"].is_string())
+          cancelOrder(butterfly["orderId"].get<string>());
         else FN::logWar("JSON", "Missing orderId at kissCancelOrder, ignored");
       };
-      function<void(json)> kissCleanTrade = [&](json k) {
-        if (k.is_object() and k["tradeId"].is_string())
-          cleanTrade(k["tradeId"].get<string>());
+      function<void(json)> kissCleanTrade = [&](json butterfly) {
+        if (butterfly.is_object() and butterfly["tradeId"].is_string())
+          cleanTrade(butterfly["tradeId"].get<string>());
         else FN::logWar("JSON", "Missing tradeId at kissCleanTrade, ignored");
       };
-      function<void(json)> kissSubmitNewOrder = [&](json k) {
+      function<void(json)> kissSubmitNewOrder = [&](json butterfly) {
         sendOrder(
-          k.value("side", "") == "Bid" ? mSide::Bid : mSide::Ask,
-          k.value("price", 0.0),
-          k.value("quantity", 0.0),
-          k.value("orderType", "") == "Limit" ? mOrderType::Limit : mOrderType::Market,
-          k.value("timeInForce", "") == "GTC" ? mTimeInForce::GTC : (k.value("timeInForce", "") == "FOK" ? mTimeInForce::FOK : mTimeInForce::IOC),
+          butterfly.value("side", "") == "Bid" ? mSide::Bid : mSide::Ask,
+          butterfly.value("price", 0.0),
+          butterfly.value("quantity", 0.0),
+          butterfly.value("orderType", "") == "Limit" ? mOrderType::Limit : mOrderType::Market,
+          butterfly.value("timeInForce", "") == "GTC" ? mTimeInForce::GTC : (butterfly.value("timeInForce", "") == "FOK" ? mTimeInForce::FOK : mTimeInForce::IOC),
           false,
           false
         );
@@ -111,12 +107,12 @@ namespace K {
               o = it->second;
               break;
             }
-        if (o.orderId=="") return o;
-        if (k.exchangeId!="") o.exchangeId = k.exchangeId;
-        if ((int)k.orderStatus!=0) o.orderStatus = k.orderStatus;
-        if (k.price!=0) o.price = k.price;
-        if (k.quantity!=0) o.quantity = k.quantity;
-        if (k.lastQuantity!=0) o.lastQuantity = k.lastQuantity;
+        if (!o.orderId.length()) return o;
+        if (k.exchangeId.length()) o.exchangeId = k.exchangeId;
+        if (k.orderStatus != mORS::New) o.orderStatus = k.orderStatus;
+        if (k.price) o.price = k.price;
+        if (k.quantity) o.quantity = k.quantity;
+        if (k.lastQuantity) o.lastQuantity = k.lastQuantity;
         if (k.time) o.time = k.time;
         if (k.computationalLatency) o.computationalLatency = k.computationalLatency;
         if (!o.time) o.time = FN::T();
@@ -126,7 +122,7 @@ namespace K {
         toMemory(o);
         ((EV*)events)->ogOrder(o);
         if (o.orderStatus != mORS::New) toClient();
-        if (o.lastQuantity > 0) toHistory(o);
+        if (o.lastQuantity) toHistory(o);
         return o;
       };
       void cancelOpenOrders() {
