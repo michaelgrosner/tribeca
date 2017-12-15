@@ -64,7 +64,7 @@ namespace K {
     mAPR              aggressivePositionRebalancing   = mAPR::Off;
     mSOP              superTrades                     = mSOP::Off;
     double            tradesPerMinute                 = 0.9;
-    unsigned int               tradeRateSeconds                = 3;
+    unsigned int      tradeRateSeconds                = 3;
     bool              ewmaPingWidth                   = false;
     bool              quotingEwmaProtection           = true;
     unsigned int      quotingEwmaProtectionPeriods    = 200;
