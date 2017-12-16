@@ -485,16 +485,18 @@ namespace K {
         } else return mQuoteState::Live;
       };
       void updateQuote(mLevel q, mSide side, bool isPong) {
-        unsigned int k = ((OG*)broker)->orders.size();
-        if (!k) return start(side, q, isPong);
-        unsigned long T = FN::T();
+        if (((OG*)broker)->orders.empty()) return start(side, q, isPong);
+        unsigned int n = 0;
+        vector<string> zombie;
+        unsigned long now = FN::T();
         for (map<string, mOrder>::iterator it = ((OG*)broker)->orders.begin(); it != ((OG*)broker)->orders.end(); ++it)
           if (it->second.side != side) continue;
           else if (it->second.price == q.price) return;
-          else if (it->second.orderStatus == mORS::New) {
-            if (T-10e+3>it->second.time) ((OG*)broker)->cleanOrder(it->second.orderId);
-            if (qp->safety != mQuotingSafety::AK47 or k >= qp->bullets) return;
-          }
+          else if (it->second.orderStatus == mORS::New)
+            if (now-10e+3>it->second.time) zombie.push_back(it->second.orderId);
+            else if (qp->safety != mQuotingSafety::AK47 or ++n >= qp->bullets) return;
+        for (vector<string>::iterator it = zombie.begin(); it != zombie.end(); ++it)
+          ((OG*)broker)->cleanOrder(*it);
         modify(side, q, isPong);
       };
       void modify(mSide side, mLevel q, bool isPong) {

@@ -130,7 +130,7 @@ class DisplayOrder {
                                             </td>
                                             <td style="width:88px; border-bottom: 3px solid #DDE28B;" *ngIf="pair.quotingParameters.display.safety==3 && !pair.quotingParameters.display.percentageValues">
                                                 <input class="form-control input-sm" title="{{ pair_name[1] }}"
-                                                   type="number" step="{{ product.advert.minTick}}" min="{{ product.advert.minTick}}"
+                                                   type="number"
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.range">
                                             </td>
