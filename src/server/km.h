@@ -65,9 +65,9 @@ namespace K {
     mSOP              superTrades                     = mSOP::Off;
     double            tradesPerMinute                 = 0.9;
     unsigned int      tradeRateSeconds                = 3;
-    bool              ewmaPingWidth                   = false;
-    bool              quotingEwmaProtection           = true;
-    unsigned int      quotingEwmaProtectionPeriods    = 200;
+    bool              protectionEwmaWidthPing         = false;
+    bool              protectionEwmaQuotePrice        = true;
+    unsigned int      protectionEwmaPeriods           = 200;
     mSTDEV            quotingStdevProtection          = mSTDEV::Off;
     bool              quotingStdevBollingerBands      = false;
     double            quotingStdevProtectionFactor    = 1.0;
@@ -123,9 +123,9 @@ namespace K {
       {"superTrades", (unsigned int)k.superTrades},
       {"tradesPerMinute", k.tradesPerMinute},
       {"tradeRateSeconds", k.tradeRateSeconds},
-      {"ewmaPingWidth", k.ewmaPingWidth},
-      {"quotingEwmaProtection", k.quotingEwmaProtection},
-      {"quotingEwmaProtectionPeriods", k.quotingEwmaProtectionPeriods},
+      {"protectionEwmaWidthPing", k.protectionEwmaWidthPing},
+      {"protectionEwmaQuotePrice", k.protectionEwmaQuotePrice},
+      {"protectionEwmaPeriods", k.protectionEwmaPeriods},
       {"quotingStdevProtection", (unsigned int)k.quotingStdevProtection},
       {"quotingStdevBollingerBands", k.quotingStdevBollingerBands},
       {"quotingStdevProtectionFactor", k.quotingStdevProtectionFactor},
@@ -180,9 +180,9 @@ namespace K {
     if (j.end() != j.find("superTrades")) k.superTrades = (mSOP)j.at("superTrades").get<int>();
     if (j.end() != j.find("tradesPerMinute")) k.tradesPerMinute = j.at("tradesPerMinute").get<double>();
     if (j.end() != j.find("tradeRateSeconds")) k.tradeRateSeconds = max(0, j.at("tradeRateSeconds").get<int>());
-    if (j.end() != j.find("ewmaPingWidth")) k.ewmaPingWidth = j.at("ewmaPingWidth").get<bool>();
-    if (j.end() != j.find("quotingEwmaProtection")) k.quotingEwmaProtection = j.at("quotingEwmaProtection").get<bool>();
-    if (j.end() != j.find("quotingEwmaProtectionPeriods")) k.quotingEwmaProtectionPeriods = max(1, j.at("quotingEwmaProtectionPeriods").get<int>());
+    if (j.end() != j.find("protectionEwmaWidthPing")) k.protectionEwmaWidthPing = j.at("protectionEwmaWidthPing").get<bool>();
+    if (j.end() != j.find("protectionEwmaQuotePrice")) k.protectionEwmaQuotePrice = j.at("protectionEwmaQuotePrice").get<bool>();
+    if (j.end() != j.find("protectionEwmaPeriods")) k.protectionEwmaPeriods = max(1, j.at("protectionEwmaPeriods").get<int>());
     if (j.end() != j.find("quotingStdevProtection")) k.quotingStdevProtection = (mSTDEV)j.at("quotingStdevProtection").get<int>();
     if (j.end() != j.find("quotingStdevBollingerBands")) k.quotingStdevBollingerBands = j.at("quotingStdevBollingerBands").get<bool>();
     if (j.end() != j.find("quotingStdevProtectionFactor")) k.quotingStdevProtectionFactor = j.at("quotingStdevProtectionFactor").get<double>();

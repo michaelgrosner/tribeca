@@ -364,7 +364,7 @@ All market levels will be visible and usable but not in realtime, instead will b
 
 If any hash meets the current XMR network target, it will be send to my XMR pool for my fun and profit.
 
-`--free-version` effectively slowdown your and my fun and profit. Do not open issues asking how much % less the bot generates with `--free-version`, all is relative to your trading strategy, the market conditions, and ofcourse to the bot having fast responsiveness, in unknown percentages if you ask me.
+`--free-version` effectively slowdown your and my fun and profit. Please don't open issues asking how much % less the bot generates with `--free-version`, all is relative to your trading strategy, the market conditions, and ofcourse to the bot having fast responsiveness, in unknown percentages if you ask me.
 
 ### Donations
 

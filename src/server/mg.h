@@ -210,9 +210,8 @@ namespace K {
         }, false, "NULL", FN::T() - 3456e+4);
       };
       void calcStatsEwmaProtection() {
-        calcEwma(&mgEwmaP, qp->quotingEwmaProtectionPeriods, fairValue);
-        calcEwma(&mgEwmaW, qp->quotingEwmaProtectionPeriods, averageWidth);
-        FN::log("EV", string("AverageWidth: ") + to_string(averageWidth) + string(" AverageCount: ") + to_string(averageCount) + string(" ewmaWidth: ") + to_string(mgEwmaW));
+        calcEwma(&mgEwmaP, qp->protectionEwmaPeriods, fairValue);
+        calcEwma(&mgEwmaW, qp->protectionEwmaPeriods, averageWidth);
         averageCount = 0;
         ((EV*)events)->mgEwmaQuoteProtection();
       };
@@ -229,6 +228,7 @@ namespace K {
             {"askMean", mgStdevAskMean}
           }},
           {"ewmaQuote", mgEwmaP},
+          {"ewmaWidth", mgEwmaW},
           {"ewmaShort", mgEwmaS},
           {"ewmaMedium", mgEwmaM},
           {"ewmaLong", mgEwmaL},
