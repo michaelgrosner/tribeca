@@ -63,10 +63,10 @@ namespace K {
           if (!mgEwmaS and k.value("time", (unsigned long)0) + qp->shortEwmaPeriods * 6e+4 > FN::T())
             mgEwmaS = k.value("ewmaShort", 0.0);
         }
-        if (mgEwmaVL) FN::log(((CF*)config)->argEwmaVeryLong ? "ARG" : "DB", string("loaded EWMA VeryLong = ") + to_string(mgEwmaVL));
-        if (mgEwmaL)  FN::log(((CF*)config)->argEwmaLong ? "ARG" : "DB", string("loaded EWMA Long = ") + to_string(mgEwmaL));
-        if (mgEwmaM)  FN::log(((CF*)config)->argEwmaMedium ? "ARG" : "DB", string("loaded EWMA Medium = ") + to_string(mgEwmaM));
-        if (mgEwmaS)  FN::log(((CF*)config)->argEwmaShort ? "ARG" : "DB", string("loaded EWMA Short = ") + to_string(mgEwmaS));
+        if (mgEwmaVL) FN::log(((CF*)config)->argEwmaVeryLong ? "ARG" : "DB", string("loaded ") + to_string(mgEwmaVL) + " EWMA VeryLong");
+        if (mgEwmaL)  FN::log(((CF*)config)->argEwmaLong ? "ARG" : "DB", string("loaded ") + to_string(mgEwmaL) + " EWMA Long");
+        if (mgEwmaM)  FN::log(((CF*)config)->argEwmaMedium ? "ARG" : "DB", string("loaded ") + to_string(mgEwmaM) + " EWMA Medium");
+        if (mgEwmaS)  FN::log(((CF*)config)->argEwmaShort ? "ARG" : "DB", string("loaded ") + to_string(mgEwmaS) + " EWMA Short");
         k = ((DB*)memory)->load(uiTXT::MarketDataLongTerm);
         if (k.size()) {
           unsigned long lastTime = 0,
@@ -283,7 +283,7 @@ namespace K {
         n = periods;
         *mean = 0;
         while (n--) calcEwma(mean, periods, *(fairValue96h.rbegin()+n));
-        FN::log("MG", string("reloaded EWMA ") + name + " = " + to_string(*mean));
+        FN::log("MG", string("reloaded ") + to_string(*mean) + " EWMA " + name);
       };
       void calcEwma(double *mean, unsigned int periods, double value) {
         if (*mean) {

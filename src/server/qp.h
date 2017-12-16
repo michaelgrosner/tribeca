@@ -16,7 +16,7 @@ namespace K {
         ((UI*)client)->clickme(uiTXT::QuotingParameters, &kiss);
       };
       void run() {
-        ((UI*)client)->delayme(qp->delayUI);
+        delayUI();
       };
     private:
       function<void(json*)> hello = [&](json *welcome) {
@@ -25,9 +25,12 @@ namespace K {
       function<void(json)> kiss = [&](json butterfly) {
         *qp = butterfly;
         ((EV*)events)->uiQuotingParameters();
-        ((UI*)client)->delayme(qp->delayUI);
         ((UI*)client)->send(uiTXT::QuotingParameters, *qp);
         ((DB*)memory)->insert(uiTXT::QuotingParameters, *qp);
+        delayUI();
+      };
+      void delayUI() {
+        ((UI*)client)->delayme(qp->delayUI);
       };
   };
 }
