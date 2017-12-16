@@ -19,6 +19,8 @@ namespace K {
       vector<double> fairValue96h;
       unsigned int mgT_60s = 0;
       unsigned long mgT_369ms = 0;
+      double averageWidth = 0;
+      unsigned int averageCount = 0;
     public:
       mLevels levels;
       double fairValue = 0;
@@ -26,6 +28,7 @@ namespace K {
       double mgStdevTop = 0;
       double mgStdevTopMean = 0;
       double mgEwmaP = 0;
+      double mgEwmaW = 0;
       double mgStdevFV = 0;
       double mgStdevFVMean = 0;
       double mgStdevBid = 0;
@@ -126,6 +129,7 @@ namespace K {
         if (!fairValue or (fairValue_ and abs(fairValue - fairValue_) < gw->minTick)) return;
         gw->evDataWallet(mWallet());
         ((UI*)client)->send(uiTXT::FairValue, {{"price", fairValue}}, true);
+        averageWidth = ((averageWidth * averageCount) + topAskPrice - topBidPrice) / ++averageCount;
       };
       void calcEwmaHistory() {
         calcEwmaHistory(&mgEwmaVL, qp->veryLongEwmaPeriods, "VeryLong");
@@ -206,7 +210,9 @@ namespace K {
         }, false, "NULL", FN::T() - 3456e+4);
       };
       void calcStatsEwmaProtection() {
-        calcEwma(&mgEwmaP, qp->quotingEwmaProtectionPeriods, fairValue);
+        calcEwma(&mgEwmaP, qp->protectionEwmaPeriods, fairValue);
+        calcEwma(&mgEwmaW, qp->protectionEwmaPeriods, averageWidth);
+        averageCount = 0;
         ((EV*)events)->mgEwmaQuoteProtection();
       };
       json chartStats() {
@@ -222,6 +228,7 @@ namespace K {
             {"askMean", mgStdevAskMean}
           }},
           {"ewmaQuote", mgEwmaP},
+          {"ewmaWidth", mgEwmaW},
           {"ewmaShort", mgEwmaS},
           {"ewmaMedium", mgEwmaM},
           {"ewmaLong", mgEwmaL},

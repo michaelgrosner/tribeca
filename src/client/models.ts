@@ -89,6 +89,7 @@ export interface IStdev {
 export class EWMAChart {
     constructor(public stdevWidth: IStdev,
                 public ewmaQuote: number,
+                public ewmaWidth: number,
                 public ewmaShort: number,
                 public ewmaMedium: number,
                 public ewmaLong: number,
@@ -217,7 +218,8 @@ export interface QuotingParameters {
     superTrades?: SOP;
     tradesPerMinute?: number;
     tradeRateSeconds?: number;
-    quotingEwmaProtection?: boolean;
+    protectionEwmaWidthPing?: boolean;
+    protectionEwmaQuotePrice?: boolean;
     quotingStdevProtection?: STDEV;
     quotingStdevBollingerBands?: boolean;
     audio?: boolean;
@@ -229,7 +231,7 @@ export interface QuotingParameters {
     longEwmaPeriods?: number;
     mediumEwmaPeriods?: number;
     shortEwmaPeriods?: number;
-    quotingEwmaProtectionPeriods?: number;
+    protectionEwmaPeriods?: number;
     quotingStdevProtectionFactor?: number;
     quotingStdevProtectionPeriods?: number;
     aprMultiplier?: number;

@@ -22,11 +22,12 @@ export class StatsComponent implements OnInit {
   public positionDivergence: number;
   public fairValue: number;
   public width: number;
+  public ewmaQuote: number;
+  public ewmaWidth: number;
   public ewmaShort: number;
   public ewmaMedium: number;
   public ewmaLong: number;
   public ewmaVeryLong: number;
-  public ewmaQuote: number;
   public stdevWidth: Models.IStdev;
   public tradesBuySize: number;
   public tradesSellSize: number;
@@ -39,8 +40,8 @@ export class StatsComponent implements OnInit {
   }
   private pointFormatterBase = function () {
     return this.series.type=='arearange'
-      ? '<tr><td><span style="color:'+this.series.color+'">●</span>'+this.series.name+' High:</td><td style="text-align:right;"> <b>'+this.high.toFixed((<any>Highcharts).customProductFixed)+' ' + ((<any>Highcharts).customQuoteCurrency) + '</b></td></tr>'
-        + '<tr><td><span style="color:'+this.series.color+'">●</span>'+this.series.name+' Low:</td><td style="text-align:right;"> <b>'+this.low.toFixed((<any>Highcharts).customProductFixed)+' ' + ((<any>Highcharts).customQuoteCurrency) + '</b></td></tr>'
+      ? '<tr><td><span style="color:'+this.series.color+'">●</span>'+this.series.name+(this.series.name=="Width" && (<any>Highcharts).quotingParameters.protectionEwmaWidthPing?" EWMA":"")+' High:</td><td style="text-align:right;"> <b>'+this.high.toFixed((<any>Highcharts).customProductFixed)+' ' + ((<any>Highcharts).customQuoteCurrency) + '</b></td></tr>'
+        + '<tr><td><span style="color:'+this.series.color+'">●</span>'+this.series.name+(this.series.name=="Width" && (<any>Highcharts).quotingParameters.protectionEwmaWidthPing?" EWMA":"")+' Low:</td><td style="text-align:right;"> <b>'+this.low.toFixed((<any>Highcharts).customProductFixed)+' ' + ((<any>Highcharts).customQuoteCurrency) + '</b></td></tr>'
       : '<tr><td><span style="color:'+this.series.color+'">' + (<any>Highcharts).customSymbols[this.series.symbol] + '</span> '+this.series.name+':</td><td style="text-align:right;"> <b>'+this.y.toFixed((<any>Highcharts).customProductFixed)+' ' + ((<any>Highcharts).customQuoteCurrency) + '</b></td></tr>';
   }
   private pointFormatterQuote = function () {
@@ -431,6 +432,10 @@ export class StatsComponent implements OnInit {
 
   @Input() product: Models.ProductState;
 
+  @Input() set setQuotingParameters(o: Models.QuotingParameters) {
+    (<any>Highcharts).quotingParameters = o;
+  }
+
   private showStats: boolean;
   @Input() set setShowStats(showStats: boolean) {
     if (!this.showStats && showStats)
@@ -568,7 +573,8 @@ export class StatsComponent implements OnInit {
       if (this.ewmaMedium) Highcharts.charts[this.fvChart].series[9].addPoint([time, this.ewmaMedium], false);
       if (this.ewmaShort) Highcharts.charts[this.fvChart].series[10].addPoint([time, this.ewmaShort], false);
       Highcharts.charts[this.fvChart].series[0].addPoint([time, this.fairValue], this.showStats);
-      if (this.width) Highcharts.charts[this.fvChart].series[1].addPoint([time, this.fairValue-this.width, this.fairValue+this.width], this.showStats, false, false);
+      if ((<any>Highcharts).quotingParameters.protectionEwmaWidthPing && this.ewmaWidth) Highcharts.charts[this.fvChart].series[1].addPoint([time, this.fairValue-this.ewmaWidth, this.fairValue+this.ewmaWidth], this.showStats, false, false);
+      else if (this.width) Highcharts.charts[this.fvChart].series[1].addPoint([time, this.fairValue-this.width, this.fairValue+this.width], this.showStats, false, false);
     }
     if (this.positionData) {
       Highcharts.charts[this.quoteChart].yAxis[1].setExtremes(0, Math.max(this.positionData.quoteValue,Highcharts.charts[this.quoteChart].yAxis[1].getExtremes().dataMax), false, true, { trigger: 'syncExtremes' });
@@ -595,6 +601,7 @@ export class StatsComponent implements OnInit {
     if (o === null) return;
     this.fairValue = o.fairValue;
     if (o.ewmaQuote) this.ewmaQuote = o.ewmaQuote;
+    if (o.ewmaWidth) this.ewmaWidth = o.ewmaWidth;
     if (o.ewmaShort) this.ewmaShort = o.ewmaShort;
     if (o.ewmaMedium) this.ewmaMedium = o.ewmaMedium;
     if (o.ewmaLong) this.ewmaLong = o.ewmaLong;

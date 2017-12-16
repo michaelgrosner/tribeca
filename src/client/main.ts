@@ -375,8 +375,9 @@ class DisplayOrder {
                                             <th>fv</th>
                                             <th style="text-align:right;">trades</th>
                                             <th>/sec</th>
-                                            <th>ewma?</th>
-                                            <th *ngIf="pair.quotingParameters.display.quotingEwmaProtection">periodsᵉʷᵐᵃ</th>
+                                            <th>ewmaPrice?</th>
+                                            <th *ngIf="pair.quotingParameters.display.protectionEwmaQuotePrice || pair.quotingParameters.display.protectionEwmaWidthPing">periodsᵉʷᵐᵃ</th>
+                                            <th>ewmaWidth?</th>
                                             <th>stdev</th>
                                             <th *ngIf="pair.quotingParameters.display.quotingStdevProtection">periodsˢᵗᵈᶜᵛ</th>
                                             <th *ngIf="pair.quotingParameters.display.quotingStdevProtection">factor</th>
@@ -422,13 +423,17 @@ class DisplayOrder {
                                             </td>
                                             <td style="text-align: center;border-bottom: 3px solid #F0A0A0;">
                                                 <input type="checkbox"
-                                                   [(ngModel)]="pair.quotingParameters.display.quotingEwmaProtection">
+                                                   [(ngModel)]="pair.quotingParameters.display.protectionEwmaQuotePrice">
                                             </td>
-                                            <td style="width:88px;border-bottom: 3px solid #F0A0A0;" *ngIf="pair.quotingParameters.display.quotingEwmaProtection">
+                                            <td style="width:88px;border-bottom: 3px solid #F0A0A0;" *ngIf="pair.quotingParameters.display.protectionEwmaQuotePrice || pair.quotingParameters.display.protectionEwmaWidthPing">
                                                 <input class="form-control input-sm"
                                                    type="number" step="1" min="1"
                                                    onClick="this.select()"
-                                                   [(ngModel)]="pair.quotingParameters.display.quotingEwmaProtectionPeriods">
+                                                   [(ngModel)]="pair.quotingParameters.display.protectionEwmaPeriods">
+                                            </td>
+                                            <td style="width:30px;text-align: center;border-bottom: 3px solid #F0A0A0;">
+                                                <input type="checkbox"
+                                                   [(ngModel)]="pair.quotingParameters.display.protectionEwmaWidthPing">
                                             </td>
                                             <td style="width:121px;border-bottom: 3px solid #AF451E;">
                                                 <select class="form-control input-sm"
@@ -516,7 +521,7 @@ class DisplayOrder {
                         </div>
 
                         <div [hidden]="!showStats" [ngClass]="showStats == 2 ? 'col-md-11 col-xs-12 absolute-charts' : 'col-md-11 col-xs-12 relative-charts'">
-                          <market-stats [setShowStats]="!!showStats" [product]="product"></market-stats>
+                          <market-stats [setShowStats]="!!showStats" [product]="product" [setQuotingParameters]="pair.quotingParameters.display"></market-stats>
                         </div>
                         <div [hidden]="showStats === 1" class="col-md-9 col-xs-12" style="padding-left:0px;padding-bottom:0px;">
                           <div class="row">
