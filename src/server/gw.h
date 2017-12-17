@@ -4,17 +4,14 @@
 namespace K {
   class GW: public Klass {
     private:
-      mConnectivity gwAutoStart = mConnectivity::Disconnected,
-                    gwQuotingState = mConnectivity::Disconnected,
-                    gwConnectOrder = mConnectivity::Disconnected,
-                    gwConnectMarket = mConnectivity::Disconnected,
-                    gwConnectExchange = mConnectivity::Disconnected;
+      mConnectivity gwAdminEnabled = mConnectivity::Disconnected,
+                    gwConnectOrders = mConnectivity::Disconnected,
+                    gwConnectMarket = mConnectivity::Disconnected;
       unsigned int gwT_5m = 0;
     protected:
       void load() {
         gwEndings.back() = &happyEnding;
-        if (((CF*)config)->argAutobot) gwAutoStart = mConnectivity::Connected;
-        handshake(gw->exchange);
+        handshake(gw->exchange, ((CF*)config)->argAutobot);
       };
       void waitTime() {
         ((EV*)events)->tServer->data = this;
@@ -22,19 +19,17 @@ namespace K {
           GW *k = (GW*)handle->data;
           ((EV*)k->events)->debug("GW tServer timer");
           k->gw->wallet();
-          if (k->qp->cancelOrdersAuto) {
+          if (k->qp->cancelOrdersAuto)
             if (!k->gwT_5m++) k->gw->cancelAll();
             else if (k->gwT_5m == 20) k->gwT_5m = 0;
-          }
         }, 0, 15e+3);
       };
       void waitData() {
         gw->evConnectOrder = [&](mConnectivity k) {
-          serverSemaphore(mGatewayType::OrderEntry, k);
+          serverSemaphore(&gwConnectOrders, k);
         };
         gw->evConnectMarket = [&](mConnectivity k) {
-          serverSemaphore(mGatewayType::MarketData, k);
-          if (k == mConnectivity::Disconnected)
+          if (!serverSemaphore(&gwConnectMarket, k))
             gw->evDataLevels(mLevels());
         };
         gw->levels();
@@ -59,7 +54,7 @@ namespace K {
       function<void(json*)> helloProduct = [&](json *welcome) {
         *welcome = { {
           {"exchange", (int)gw->exchange},
-          {"pair", {{"base", gw->base}, {"quote", gw->quote}}},
+          {"pair", mPair(gw->base, gw->quote)},
           {"minTick", gw->minTick},
           {"environment", ((CF*)config)->argTitle},
           {"matryoshka", ((CF*)config)->argMatryoshka},
@@ -68,50 +63,41 @@ namespace K {
       };
       function<void(json*)> helloStatus = [&](json *welcome) {
         *welcome = { {
-          {"status", (unsigned int)gwConnectExchange}
+          {"status", (int)((QE*)engine)->gwConnectExchange}
         } };
       };
       function<void(json*)> helloState = [&](json *welcome) {
         *welcome = { {
-          {"state",  (unsigned int)gwQuotingState}
+          {"state",  (int)((QE*)engine)->gwConnectButton}
         } };
       };
       function<void(json)> kissState = [&](json butterfly) {
-        if (!butterfly.is_object() or !butterfly["state"].is_number()) {
-          FN::logWar("JSON", "Missing state at kissState, ignored");
-          return;
-        }
-        mConnectivity autoStart = (mConnectivity)butterfly["state"].get<int>();
-        if (autoStart != gwAutoStart) {
-          gwAutoStart = autoStart;
+        if (!butterfly.is_object() or !butterfly["state"].is_number()) return;
+        mConnectivity updated = (mConnectivity)butterfly["state"].get<int>();
+        if (gwAdminEnabled != updated) {
+          gwAdminEnabled = updated;
           clientSemaphore();
         }
       };
-      void serverSemaphore(mGatewayType gwT, mConnectivity gwS) {
-        if (gwT == mGatewayType::MarketData) {
-          if (gwConnectMarket == gwS) return;
-          gwConnectMarket = gwS;
-        } else if (gwT == mGatewayType::OrderEntry) {
-          if (gwConnectOrder == gwS) return;
-          gwConnectOrder = gwS;
+      bool serverSemaphore(mConnectivity *current, mConnectivity updated) {
+        if (*current != updated) {
+          *current = updated;
+          ((QE*)engine)->gwConnectExchange = (mConnectivity)((int)gwConnectMarket * (int)gwConnectOrders);
+          clientSemaphore();
+          ((UI*)client)->send(uiTXT::ExchangeConnectivity, {{"status", (int)((QE*)engine)->gwConnectExchange}});
         }
-        gwConnectExchange = gwConnectMarket == mConnectivity::Connected and gwConnectOrder == mConnectivity::Connected
-          ? mConnectivity::Connected : mConnectivity::Disconnected;
-        clientSemaphore();
-        ((UI*)client)->send(uiTXT::ExchangeConnectivity, {{"status", (int)gwConnectExchange}});
+        return updated == mConnectivity::Connected;
       };
       void clientSemaphore() {
-        mConnectivity quotingState = gwConnectExchange;
-        if (quotingState == mConnectivity::Connected) quotingState = gwAutoStart;
-        if (quotingState != gwQuotingState) {
-          gwQuotingState = quotingState;
-          FN::log(string("GW ") + gw->name, "Quoting state changed to", gwQuotingState == mConnectivity::Connected ? "CONNECTED" : "DISCONNECTED");
-          ((UI*)client)->send(uiTXT::ActiveState, {{"state", (int)gwQuotingState}});
+        mConnectivity updated = (int)((QE*)engine)->gwConnectExchange ? gwAdminEnabled : mConnectivity::Disconnected;
+        if (((QE*)engine)->gwConnectButton != updated) {
+          ((QE*)engine)->gwConnectButton = updated;
+          FN::log(string("GW ") + gw->name, "Quoting state changed to", ((QE*)engine)->gwConnectButton == mConnectivity::Connected ? "CONNECTED" : "DISCONNECTED");
+          ((UI*)client)->send(uiTXT::ActiveState, {{"state", (int)((QE*)engine)->gwConnectButton}});
         }
-        ((QE*)engine)->gwConnectButton = gwQuotingState;
-        ((QE*)engine)->gwConnectExchange = gwConnectExchange;
       };
-      void handshake(mExchange k) {
+      void handshake(mExchange k, int autobot) {
+        if (autobot) gwAdminEnabled = mConnectivity::Connected;
         json reply;
         if (k == mExchange::Coinbase) {
           FN::stunnel();
@@ -199,7 +185,7 @@ namespace K {
           FN::log(string("GW ") + gw->name, "allows client IP");
           stringstream ss;
           ss << setprecision(8) << fixed << '\n'
-            << "- autoBot: " << (((CF*)config)->argAutobot ? "yes" : "no") << '\n'
+            << "- autoBot: " << (autobot ? "yes" : "no") << '\n'
             << "- symbols: " << gw->symbol << '\n'
             << "- minTick: " << gw->minTick << '\n'
             << "- minSize: " << gw->minSize << '\n'

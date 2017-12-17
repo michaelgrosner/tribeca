@@ -33,7 +33,8 @@ export var Topics = {
   CleanTrade: 'A',
   TradesChart: 'B',
   WalletChart: 'C',
-  EWMAChart: 'D'
+  EWMAChart: 'D',
+  MarketDataLongTerm: 'G'
 }
 
 export class MarketSide {
@@ -54,8 +55,7 @@ export class MarketStats {
 }
 
 export class MarketTrade {
-    constructor(public exchange: Exchange,
-                public pair: CurrencyPair,
+    constructor(public pair: CurrencyPair,
                 public price: number,
                 public quantity: number,
                 public time: number,
@@ -110,7 +110,6 @@ export class TradeChart {
 export class Trade {
     constructor(public tradeId: string,
                 public time: number,
-                public exchange: Exchange,
                 public pair: CurrencyPair,
                 public price: number,
                 public quantity: number,
@@ -140,8 +139,7 @@ export class PositionReport {
                 public quoteValue: number,
                 public profitBase: number,
                 public profitQuote: number,
-                public pair: CurrencyPair,
-                public exchange: Exchange) {}
+                public pair: CurrencyPair) {}
 }
 
 export class OrderRequestFromUI {

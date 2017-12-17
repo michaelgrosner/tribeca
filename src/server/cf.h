@@ -175,6 +175,10 @@ namespace K {
           cout << "ARG" << RRED << " Errrror:" << BRED << " Missing mandatory argument \"--exchange\", at least." << '\n';
           exit(EXIT_SUCCESS);
         }
+        if (argCurrency.find("/") == string::npos) {
+          cout << "ARG" << RRED << " Errrror:" << BRED << " Invalid currency pair; must be in the format of BASE/QUOTE, like BTC/EUR." << '\n';
+          exit(EXIT_SUCCESS);
+        }
         if (argDebug)
           argDebugEvents =
           argDebugOrders =
@@ -184,53 +188,50 @@ namespace K {
           RBLUE[0]  = RPURPLE[0] = RCYAN[0]  = RWHITE[0]  =
           BBLACK[0] = BRED[0]    = BGREEN[0] = BYELLOW[0] =
           BBLUE[0]  = BPURPLE[0] = BCYAN[0]  = BWHITE[0]  = argColors;
-        if (argDatabase == "")
-          argDatabase = string("/data/db/K.")
-            + to_string((int)exchange())
+        if (argDatabase == "") {
+          argDatabase = string("/data/db/K")
+            + '.' + FN::S2u(argExchange)
             + '.' + base()
-            + '.' + quote() + ".db";
+            + '.' + quote()
+            + '.' + "db";
+          string deprecated = string("/data/db/K")
+            + '.' + to_string((int)deprecated_exchange())
+            + '.' + base()
+            + '.' + quote()
+            + '.' + "db";
+          if (access(deprecated.data(), F_OK) != -1)
+            FN::output(string("mv ") + deprecated + " " + argDatabase);
+        }
       };
       void run() {
-        mExchange e = exchange();
-        gw = Gw::E(e);
-        gw->exchange = e;
-        gw->name = argExchange;
-        gw->base = base();
-        gw->quote = quote();
-        gw->apikey = argApikey;
-        gw->secret = argSecret;
-        gw->user = argUsername;
-        gw->pass = argPassphrase;
-        gw->http = argHttp;
-        gw->ws = argWss;
-        gw->version = argFree;
+        gw = Gw::config(
+          base(),      quote(),
+          argExchange, argFree,
+          argApikey,   argSecret,
+          argUsername, argPassphrase,
+          argHttp,     argWss
+        );
         if (argNaked) return;
         FN::screen_config(argColors, argExchange, argCurrency);
       };
     private:
       string base() {
-        string k_ = argCurrency;
-        string k = k_.substr(0, k_.find("/"));
-        if (k == k_) FN::logExit("CF", "Invalid currency pair! Must be in the format of BASE/QUOTE, eg BTC/EUR.", EXIT_SUCCESS);
-        return FN::S2u(k);
+        return FN::S2u(argCurrency.substr(0, argCurrency.find("/")));
       };
       string quote() {
-        string k_ = argCurrency;
-        string k = k_.substr(k_.find("/")+1);
-        if (k == k_) FN::logExit("CF", "Invalid currency pair! Must be in the format of BASE/QUOTE, eg BTC/EUR", EXIT_SUCCESS);
-        return FN::S2u(k);
+        return FN::S2u(argCurrency.substr(argCurrency.find("/")+1));
       };
-      mExchange exchange() {
-        string k = FN::S2l(argExchange);
-        if (k == "coinbase") return mExchange::Coinbase;
-        else if (k == "okcoin") return mExchange::OkCoin;
-        else if (k == "okex") return mExchange::OkEx;
-        else if (k == "bitfinex") return mExchange::Bitfinex;
-        else if (k == "hitbtc") return mExchange::HitBtc;
-        else if (k == "kraken") return mExchange::Kraken;
-        else if (k == "korbit") return mExchange::Korbit;
-        else if (k == "poloniex") return mExchange::Poloniex;
-        else if (k != "null") FN::logExit("CF", string("Invalid configuration value \"") + k + "\" as EXCHANGE. See https://github.com/ctubio/Krypto-trading-bot/tree/master/etc#configuration-options for more information", EXIT_SUCCESS);
+      mExchange deprecated_exchange() {
+        string k = FN::S2u(argExchange);
+        if (k == "COINBASE") return mExchange::Coinbase;
+        else if (k == "BITFINEX") return mExchange::Bitfinex;
+        else if (k == "HITBTC") return mExchange::HitBtc;
+        else if (k == "OKEX") return mExchange::OkEx;
+        else if (k == "OKCOIN") return mExchange::OkCoin;
+        else if (k == "KRAKEN") return mExchange::Kraken;
+        else if (k == "KORBIT") return mExchange::Korbit;
+        else if (k == "POLONIEX") return mExchange::Poloniex;
+        else if (k != "NULL") FN::logExit("CF", string("Invalid configuration value \"") + k + "\" as EXCHANGE. See https://github.com/ctubio/Krypto-trading-bot for more information", EXIT_SUCCESS);
         return mExchange::Null;
       };
   };

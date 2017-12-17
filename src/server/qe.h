@@ -80,7 +80,7 @@ namespace K {
         if (gwConnectExchange == mConnectivity::Disconnected) {
           bidStatus = mQuoteState::Disconnected;
           askStatus = mQuoteState::Disconnected;
-        } else if (((MG*)market)->fairValue and !((MG*)market)->empty()) {
+        } else if (((MG*)market)->fairValue and !((MG*)market)->levels.empty()) {
           if (gwConnectButton == mConnectivity::Disconnected) {
             bidStatus = mQuoteState::DisabledQuotes;
             askStatus = mQuoteState::DisabledQuotes;
@@ -125,7 +125,7 @@ namespace K {
           or askStatus != status.askStatus;
       };
       mQuote nextQuote() {
-        if (((MG*)market)->empty() or ((PG*)wallet)->empty()) return mQuote();
+        if (((MG*)market)->levels.empty() or ((PG*)wallet)->position.empty()) return mQuote();
         double baseValue       = ((PG*)wallet)->position.baseValue,
                baseAmount      = ((PG*)wallet)->position.baseAmount,
                baseHeldAmount  = ((PG*)wallet)->position.baseHeldAmount,

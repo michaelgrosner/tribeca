@@ -101,9 +101,6 @@ namespace K {
         ((UI*)client)->welcome(uiTXT::EWMAChart, &helloEwma);
       };
     public:
-      bool empty() {
-        return !levels.bids.size() or !levels.asks.size();
-      };
       void calcStats() {
         if (!mgT_60s++) {
           calcStatsTrades();
@@ -113,7 +110,7 @@ namespace K {
         calcStatsStdevProtection();
       };
       void calcFairValue() {
-        if (empty()) return;
+        if (levels.empty()) return;
         double fairValue_ = fairValue;
         double topAskPrice = levels.asks.begin()->price;
         double topBidPrice = levels.bids.begin()->price;
@@ -151,7 +148,7 @@ namespace K {
         *welcome = { chartStats() };
       };
       void calcStatsStdevProtection() {
-        if (empty()) return;
+        if (levels.empty()) return;
         double topBid = levels.bids.begin()->price;
         double topAsk = levels.asks.begin()->price;
         if (!topBid or !topAsk) return;
@@ -176,7 +173,6 @@ namespace K {
         trades.clear();
       };
       void tradeUp(mTrade k) {
-        k.exchange = gw->exchange;
         k.pair = mPair(gw->base, gw->quote);
         k.time = FN::T();
         trades.push_back(k);
@@ -240,10 +236,10 @@ namespace K {
       };
       void filter(mLevels k) {
         levels = k;
-        if (empty()) return;
+        if (levels.empty()) return;
         for (map<string, mOrder>::iterator it = ((OG*)broker)->orders.begin(); it != ((OG*)broker)->orders.end(); ++it)
           filter(mSide::Bid == it->second.side ? &levels.bids : &levels.asks, it->second);
-        if (empty()) return;
+        if (levels.empty()) return;
         calcFairValue();
         ((EV*)events)->mgLevels();
       };

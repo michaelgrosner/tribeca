@@ -37,7 +37,7 @@ namespace K {
       };
     public:
       void sendOrder(mSide oS, double oP, double oQ, mOrderType oLM, mTimeInForce oTIF, bool oIP, bool oPO) {
-        mOrder o = updateOrderState(mOrder(gw->randId(), gw->exchange, mPair(gw->base, gw->quote), oS, oQ, oLM, oIP, FN::roundSide(oP, gw->minTick, oS), oTIF, mORS::New, oPO));
+        mOrder o = updateOrderState(mOrder(gw->randId(), mPair(gw->base, gw->quote), oS, oQ, oLM, oIP, FN::roundSide(oP, gw->minTick, oS), oTIF, mORS::New, oPO));
         debug(string(" send  ") + (o.side == mSide::Bid ? "BID id " : "ASK id ") + o.orderId + ": " + o.quantity2str() + " " + o.pair.base + " at price " + o.price2str() + " " + o.pair.quote);
         gw->send(o.orderId, o.side, o.price2str(), o.quantity2str(), o.type, o.timeInForce, o.preferPostOnly, o.time);
         ((UI*)client)->orders60sec++;
@@ -78,12 +78,10 @@ namespace K {
       function<void(json)> kissCancelOrder = [&](json butterfly) {
         if (butterfly.is_object() and butterfly["orderId"].is_string())
           cancelOrder(butterfly["orderId"].get<string>());
-        else FN::logWar("JSON", "Missing orderId at kissCancelOrder, ignored");
       };
       function<void(json)> kissCleanTrade = [&](json butterfly) {
         if (butterfly.is_object() and butterfly["tradeId"].is_string())
           cleanTrade(butterfly["tradeId"].get<string>());
-        else FN::logWar("JSON", "Missing tradeId at kissCleanTrade, ignored");
       };
       function<void(json)> kissSubmitNewOrder = [&](json butterfly) {
         sendOrder(
@@ -173,7 +171,6 @@ namespace K {
         double val = abs(o.price * o.lastQuantity);
         mTrade trade(
           to_string(FN::T()),
-          o.exchange,
           o.pair,
           o.price,
           o.lastQuantity,

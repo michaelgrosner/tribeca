@@ -3,7 +3,6 @@
 
 namespace K {
   enum class mExchange: unsigned int { Null, HitBtc, OkCoin, Coinbase, Bitfinex, Kraken, OkEx, Korbit, Poloniex };
-  enum class mGatewayType: unsigned int { MarketData, OrderEntry };
   enum class mTimeInForce: unsigned int { IOC, FOK, GTC };
   enum class mConnectivity: unsigned int { Disconnected, Connected };
   enum class mOrderType: unsigned int { Limit, Market };
@@ -214,6 +213,12 @@ namespace K {
       base(b), quote(q)
     {};
   };
+  static void to_json(json& j, const mPair& k) {
+    j = {
+      {"base", k.base},
+      {"quote", k.quote}
+    };
+  };
   struct mWallet {
     double amount,
            held;
@@ -287,13 +292,15 @@ namespace K {
               profitBase,
               profitQuote;
         mPair pair;
-    mExchange exchange;
     mPosition():
-      baseAmount(0), quoteAmount(0), baseHeldAmount(0), quoteHeldAmount(0), baseValue(0), quoteValue(0), profitBase(0), profitQuote(0), pair(mPair()), exchange((mExchange)0)
+      baseAmount(0), quoteAmount(0), baseHeldAmount(0), quoteHeldAmount(0), baseValue(0), quoteValue(0), profitBase(0), profitQuote(0), pair(mPair())
     {};
-    mPosition(double bA, double qA, double bH, double qH, double bV, double qV, double bP, double qP, mPair p, mExchange e):
-      baseAmount(bA), quoteAmount(qA), baseHeldAmount(bH), quoteHeldAmount(qH), baseValue(bV), quoteValue(qV), profitBase(bP), profitQuote(qP), pair(p), exchange(e)
+    mPosition(double bA, double qA, double bH, double qH, double bV, double qV, double bP, double qP, mPair p):
+      baseAmount(bA), quoteAmount(qA), baseHeldAmount(bH), quoteHeldAmount(qH), baseValue(bV), quoteValue(qV), profitBase(bP), profitQuote(qP), pair(p)
     {};
+    bool empty() {
+      return !baseValue;
+    };
   };
   static void to_json(json& j, const mPosition& k) {
     j = {
@@ -305,13 +312,11 @@ namespace K {
       {"quoteValue", k.quoteValue},
       {"profitBase", k.profitBase},
       {"profitQuote", k.profitQuote},
-      {"pair", {{"base", k.pair.base}, {"quote", k.pair.quote}}},
-      {"exchange", (int)k.exchange}
+      {"pair", k.pair}
     };
   };
   struct mTrade {
            string tradeId;
-        mExchange exchange;
             mSide side;
             mPair pair;
            double price,
@@ -327,24 +332,23 @@ namespace K {
              bool loadedFromDB;
 
     mTrade():
-      tradeId(""), exchange((mExchange)0), pair(mPair()), price(0), quantity(0), side((mSide)0), time(0), value(0), Ktime(0), Kqty(0), Kprice(0), Kvalue(0), Kdiff(0), feeCharged(0), loadedFromDB(false)
+      tradeId(""), pair(mPair()), price(0), quantity(0), side((mSide)0), time(0), value(0), Ktime(0), Kqty(0), Kprice(0), Kvalue(0), Kdiff(0), feeCharged(0), loadedFromDB(false)
     {};
     mTrade(double p, double q, unsigned long t):
-      tradeId(""), exchange((mExchange)0), pair(mPair()), price(p), quantity(q), side((mSide)0), time(t), value(0), Ktime(0), Kqty(0), Kprice(0), Kvalue(0), Kdiff(0), feeCharged(0), loadedFromDB(false)
+      tradeId(""), pair(mPair()), price(p), quantity(q), side((mSide)0), time(t), value(0), Ktime(0), Kqty(0), Kprice(0), Kvalue(0), Kdiff(0), feeCharged(0), loadedFromDB(false)
     {};
     mTrade(double p, double q, mSide s):
-      tradeId(""), exchange((mExchange)0), pair(mPair()), price(p), quantity(q), side(s), time(0), value(0), Ktime(0), Kqty(0), Kprice(0), Kvalue(0), Kdiff(0), feeCharged(0), loadedFromDB(false)
+      tradeId(""), pair(mPair()), price(p), quantity(q), side(s), time(0), value(0), Ktime(0), Kqty(0), Kprice(0), Kvalue(0), Kdiff(0), feeCharged(0), loadedFromDB(false)
     {};
-    mTrade(string i, mExchange e, mPair P, double p, double q, mSide S, unsigned long t, double v, unsigned long Kt, double Kq, double Kp, double Kv, double Kd, double f, bool l):
-      tradeId(i), exchange(e), pair(P), price(p), quantity(q), side(S), time(t), value(v), Ktime(Kt), Kqty(Kq), Kprice(Kp), Kvalue(Kv), Kdiff(Kd), feeCharged(f), loadedFromDB(l)
+    mTrade(string i, mPair P, double p, double q, mSide S, unsigned long t, double v, unsigned long Kt, double Kq, double Kp, double Kv, double Kd, double f, bool l):
+      tradeId(i), pair(P), price(p), quantity(q), side(S), time(t), value(v), Ktime(Kt), Kqty(Kq), Kprice(Kp), Kvalue(Kv), Kdiff(Kd), feeCharged(f), loadedFromDB(l)
     {};
   };
   static void to_json(json& j, const mTrade& k) {
     j = {
       {"tradeId", k.tradeId},
       {"time", k.time},
-      {"exchange", (int)k.exchange},
-      {"pair", {{"base", k.pair.base}, {"quote", k.pair.quote}}},
+      {"pair", k.pair},
       {"price", k.price},
       {"quantity", k.quantity},
       {"side", (int)k.side},
@@ -360,7 +364,6 @@ namespace K {
   };
   static void from_json(const json& j, mTrade& k) {
     if (j.end() != j.find("tradeId")) k.tradeId = j.at("tradeId").get<string>();
-    if (j.end() != j.find("exchange")) k.exchange = (mExchange)j.at("exchange").get<int>();
     if (j.end() != j.find("pair")) k.pair = mPair(j["/pair/base"_json_pointer].get<string>(), j["/pair/quote"_json_pointer].get<string>());
     if (j.end() != j.find("price")) k.price = j.at("price").get<double>();
     if (j.end() != j.find("quantity")) k.quantity = j.at("quantity").get<double>();
@@ -378,7 +381,6 @@ namespace K {
   struct mOrder {
            string orderId,
                   exchangeId;
-        mExchange exchange;
             mPair pair;
             mSide side;
            double price,
@@ -392,16 +394,16 @@ namespace K {
     unsigned long time,
                   computationalLatency;
     mOrder():
-      orderId(""), exchangeId(""), exchange((mExchange)0), pair(mPair()), side((mSide)0), quantity(0), type((mOrderType)0), isPong(false), price(0), timeInForce((mTimeInForce)0), orderStatus((mORS)0), preferPostOnly(false), lastQuantity(0), time(0), computationalLatency(0)
+      orderId(""), exchangeId(""), pair(mPair()), side((mSide)0), quantity(0), type((mOrderType)0), isPong(false), price(0), timeInForce((mTimeInForce)0), orderStatus((mORS)0), preferPostOnly(false), lastQuantity(0), time(0), computationalLatency(0)
     {};
     mOrder(string o, mORS s):
-      orderId(o), exchangeId(""), exchange((mExchange)0), pair(mPair()), side((mSide)0), quantity(0), type((mOrderType)0), isPong(false), price(0), timeInForce((mTimeInForce)0), orderStatus(s), preferPostOnly(false), lastQuantity(0), time(0), computationalLatency(0)
+      orderId(o), exchangeId(""), pair(mPair()), side((mSide)0), quantity(0), type((mOrderType)0), isPong(false), price(0), timeInForce((mTimeInForce)0), orderStatus(s), preferPostOnly(false), lastQuantity(0), time(0), computationalLatency(0)
     {};
     mOrder(string o, string e, mORS s, double p, double q, double Q):
-      orderId(o), exchangeId(e), exchange((mExchange)0), pair(mPair()), side((mSide)0), quantity(q), type((mOrderType)0), isPong(false), price(p), timeInForce((mTimeInForce)0), orderStatus(s), preferPostOnly(false), lastQuantity(Q), time(0), computationalLatency(0)
+      orderId(o), exchangeId(e), pair(mPair()), side((mSide)0), quantity(q), type((mOrderType)0), isPong(false), price(p), timeInForce((mTimeInForce)0), orderStatus(s), preferPostOnly(false), lastQuantity(Q), time(0), computationalLatency(0)
     {};
-    mOrder(string o, mExchange e, mPair P, mSide S, double q, mOrderType t, bool i, double p, mTimeInForce F, mORS s, bool O):
-      orderId(o), exchangeId(""), exchange(e), pair(P), side(S), quantity(q), type(t), isPong(i), price(p), timeInForce(F), orderStatus(s), preferPostOnly(O), lastQuantity(0), time(0), computationalLatency(0)
+    mOrder(string o, mPair P, mSide S, double q, mOrderType t, bool i, double p, mTimeInForce F, mORS s, bool O):
+      orderId(o), exchangeId(""), pair(P), side(S), quantity(q), type(t), isPong(i), price(p), timeInForce(F), orderStatus(s), preferPostOnly(O), lastQuantity(0), time(0), computationalLatency(0)
     {};
     string quantity2str() {
       stringstream ss;
@@ -423,8 +425,7 @@ namespace K {
     j = {
       {"orderId", k.orderId},
       {"exchangeId", k.exchangeId},
-      {"exchange", (int)k.exchange},
-      {"pair", {{"base", k.pair.base}, {"quote", k.pair.quote}}},
+      {"pair", k.pair},
       {"side", (int)k.side},
       {"quantity", k.quantity},
       {"type", (int)k.type},
@@ -457,6 +458,9 @@ namespace K {
     mLevels(vector<mLevel> b, vector<mLevel> a):
       bids(b), asks(a)
     {};
+    bool empty() {
+      return bids.empty() or asks.empty();
+    };
   };
   static void to_json(json& j, const mLevels& k) {
     json b, a;
@@ -527,7 +531,7 @@ namespace K {
   static vector<function<void()>*> gwEndings;
   class Gw {
     public:
-      static Gw *E(mExchange e);
+      static Gw *config(string, string, string, int, string, string, string, string, string, string);
       string (*randId)() = 0;
       function<void(mOrder)>        evDataOrder;
       function<void(mTrade)>        evDataTrade;
@@ -537,22 +541,22 @@ namespace K {
                                     evConnectMarket;
       uWS::Hub                *hub     = nullptr;
       uWS::Group<uWS::CLIENT> *gwGroup = nullptr;
-      mExchange exchange = mExchange::Null;
-          int version = 0;
-       double makeFee = 0,  minTick = 0,
-              takeFee = 0,  minSize = 0;
-       string base    = "", quote   = "",
-              name    = "", symbol  = "",
-              apikey  = "", secret  = "",
-              user    = "", pass    = "",
-              ws      = "", http    = "";
-      virtual string A() = 0;
+      mExchange exchange = (mExchange)0;
+         int version = 0;
+      double makeFee = 0,  minTick = 0,
+             takeFee = 0,  minSize = 0;
+      string base    = "", quote   = "",
+             name    = "", symbol  = "",
+             apikey  = "", secret  = "",
+             user    = "", pass    = "",
+             ws      = "", http    = "";
       virtual   void wallet() = 0,
                      levels() = 0,
-                     send(string oI, mSide oS, string oP, string oQ, mOrderType oLM, mTimeInForce oTIF, bool oPO, unsigned long oT) = 0,
-                     cancel(string oI, string oE, mSide oS, unsigned long oT) = 0,
+                     send(string, mSide, string, string, mOrderType, mTimeInForce, bool, unsigned long) = 0,
+                     cancel(string, string, mSide, unsigned long) = 0,
                      cancelAll() = 0,
                      close() = 0;
+      virtual string A() = 0;
   };
   class Klass {
     protected:

@@ -57,7 +57,7 @@ namespace K {
       };
     public:
       void calcSafety() {
-        if (empty() or !((MG*)market)->fairValue) return;
+        if (position.empty() or !((MG*)market)->fairValue) return;
         mSafety next = nextSafety();
         if (safety.buyPing == -1
           or next.combined != safety.combined
@@ -69,7 +69,7 @@ namespace K {
         }
       };
       void calcTargetBasePos() {
-        if (empty()) { FN::logWar("QE", "Unable to calculate TBP, missing market data"); return; }
+        if (position.empty()) return FN::logWar("PG", "Unable to calculate TBP, missing wallet data");
         double baseValue = position.baseValue;
         double next = qp->autoPositionMode == mAutoPositionMode::Manual
           ? (qp->percentageValues
@@ -91,12 +91,13 @@ namespace K {
         FN::log("PG", string("TBP: ") + ss.str() + " " + gw->base + ", pDiv: " + ss_.str() + " " + gw->base);
       };
       void addTrade(mTrade k) {
-        mTrade k_(k.price, k.quantity, k.time);
-        if (k.side == mSide::Bid) buys[k.price] = k_;
-        else sells[k.price] = k_;
-      };
-      bool empty() {
-        return !position.baseValue;
+        (k.side == mSide::Bid
+          ? buys : sells
+        )[k.price] = mTrade(
+          k.price,
+          k.quantity,
+          k.time
+        );
       };
     private:
       function<void(json*)> helloPosition = [&](json *welcome) {
@@ -113,28 +114,20 @@ namespace K {
         } };
       };
       mSafety nextSafety() {
-        double baseValue      = position.baseValue,
-               baseAmount     = position.baseAmount,
-               baseHeldAmount = position.baseHeldAmount;
         double buySize = qp->percentageValues
-          ? qp->buySizePercentage * baseValue / 100
+          ? qp->buySizePercentage * position.baseValue / 100
           : qp->buySize;
         double sellSize = qp->percentageValues
-          ? qp->sellSizePercentage * baseValue / 100
+          ? qp->sellSizePercentage * position.baseValue / 100
           : qp->sellSize;
-        double totalBasePosition = baseAmount + baseHeldAmount;
+        double totalBasePosition = position.baseAmount + position.baseHeldAmount;
         map<double, mTrade> tradesBuy;
         map<double, mTrade> tradesSell;
-        for (vector<mTrade>::iterator it = ((OG*)broker)->tradesHistory.begin(); it != ((OG*)broker)->tradesHistory.end(); ++it)
-          if (it->side == mSide::Bid) {
-            tradesBuy[it->price] = *it;
-            if (qp->safety == mQuotingSafety::PingPong)
-              buySize = it->quantity;
-          } else {
-            tradesSell[it->price] = *it;
-            if (qp->safety == mQuotingSafety::PingPong)
-              sellSize = it->quantity;
-          }
+        for (vector<mTrade>::iterator it = ((OG*)broker)->tradesHistory.begin(); it != ((OG*)broker)->tradesHistory.end(); ++it) {
+          (it->side == mSide::Bid ? tradesBuy : tradesSell)[it->price] = *it;
+          if (qp->safety == mQuotingSafety::PingPong)
+            (it->side == mSide::Bid ? buySize : sellSize) = it->quantity;
+        }
         if (qp->buySizeMax and qp->aggressivePositionRebalancing != mAPR::Off)
           buySize = fmax(buySize, targetBasePosition - totalBasePosition);
         if (qp->sellSizeMax and qp->aggressivePositionRebalancing != mAPR::Off)
@@ -249,12 +242,11 @@ namespace K {
           balance[gw->base].amount * ((MG*)market)->fairValue + balance[gw->quote].amount + balance[gw->base].held * ((MG*)market)->fairValue + balance[gw->quote].held,
           position.profitBase,
           position.profitQuote,
-          mPair(gw->base, gw->quote),
-          gw->exchange
+          mPair(gw->base, gw->quote)
         );
         calcProfit(&pos);
         bool eq = true;
-        if (!empty()) {
+        if (!position.empty()) {
           eq = abs(pos.baseValue - position.baseValue) < 2e-6;
           if(eq
             and abs(pos.quoteValue - position.quoteValue) < 2e-2
@@ -271,7 +263,7 @@ namespace K {
         ((UI*)client)->send(uiTXT::Position, pos, true);
       };
       void calcWalletAfterOrder(mOrder k) {
-        if (empty()) return;
+        if (position.empty()) return;
         double heldAmount = 0;
         double amount = k.side == mSide::Ask
           ? position.baseAmount + position.baseHeldAmount
