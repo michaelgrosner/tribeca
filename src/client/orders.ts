@@ -1,10 +1,9 @@
-import {NgZone, Component, Inject, Input, OnInit} from '@angular/core';
+import {Component, Inject, Input, OnInit} from '@angular/core';
 import {GridOptions, ColDef, RowNode} from "ag-grid/main";
-import moment = require('moment');
 
 import Models = require('./models');
 import Subscribe = require('./subscribe');
-import {SubscriberFactory, FireFactory, BaseCurrencyCellComponent, QuoteCurrencyCellComponent} from './shared_directives';
+import {FireFactory, BaseCurrencyCellComponent, QuoteCurrencyCellComponent} from './shared_directives';
 
 @Component({
   selector: 'order-list',
@@ -30,8 +29,6 @@ export class OrdersComponent implements OnInit {
   }
 
   constructor(
-    @Inject(NgZone) private zone: NgZone,
-    @Inject(SubscriberFactory) private subscriberFactory: SubscriberFactory,
     @Inject(FireFactory) private fireFactory: FireFactory
   ) {}
 
@@ -52,11 +49,12 @@ export class OrdersComponent implements OnInit {
         return '<button type="button" class="btn btn-danger btn-xs"><span data-action-type="remove" style="font-size: 16px;font-weight: bold;padding: 0px;line-height: 12px;">&times;</span></button>';
       } },
       { width: 82, suppressSizeToFit: true, field: 'time', headerName: 'time', cellRenderer:(params) => {
-        return (params.value) ? params.value.format('HH:mm:ss,SSS') : '';
+        var d = new Date(params.value||0);
+        return d.getHours()+':'+d.getMinutes()+':'+d.getSeconds()+','+d.getMilliseconds();
       },
-        cellClass: 'fs11px', comparator: (a: moment.Moment, b: moment.Moment) => a.diff(b)
+        cellClass: 'fs11px'
       },
-      { width: 40, suppressSizeToFit: true, field: 'side', headerName: 'side' , cellRenderer:(params) => {
+      { width: 40, suppressSizeToFit: true, field: 'side', headerName: 'side', cellRenderer:(params) => {
         return (params.data.pong ? '¯' : '_') + params.value;
       }, cellClass: (params) => {
         if (params.value === 'Bid') return 'buy';
@@ -109,7 +107,7 @@ export class OrdersComponent implements OnInit {
         if (isClosed) this.gridOptions.api.updateRowData({remove:[node.data]});
         else {
           node.setData(Object.assign(node.data, {
-            time: (moment.isMoment(o.time) ? o.time : moment(o.time)),
+            time: o.time,
             price: o.price,
             value: Math.round(o.price * o.quantity * 100) / 100,
             tif: Models.TimeInForce[o.timeInForce],
@@ -132,7 +130,7 @@ export class OrdersComponent implements OnInit {
         lat: o.computationalLatency+'ms',
         qty: o.quantity,
         pong: o.isPong,
-        time: (moment.isMoment(o.time) ? o.time : moment(o.time)),
+        time: o.time,
         quoteSymbol: this.product.advert.pair.quote,
         productFixed: this.product.fixed
       }]});

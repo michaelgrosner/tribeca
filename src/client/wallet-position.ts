@@ -1,7 +1,6 @@
-import {NgZone, Component, Inject, Input} from '@angular/core';
+import {Component, Input} from '@angular/core';
 
 import Models = require('./models');
-import {SubscriberFactory} from './shared_directives';
 
 @Component({
   selector: 'wallet-position',
@@ -28,41 +27,32 @@ export class WalletPositionComponent {
   public quoteValue: number;
   private profitBase: number = 0;
   private profitQuote: number = 0;
+
   @Input() product: Models.ProductState;
 
   @Input() set setPosition(o: Models.PositionReport) {
-    this.updatePosition(o);
-  }
-
-  constructor(
-    @Inject(NgZone) private zone: NgZone,
-    @Inject(SubscriberFactory) private subscriberFactory: SubscriberFactory
-  ) {}
-
-  private clearPosition = () => {
-    this.baseCurrency = null;
-    this.quoteCurrency = null;
-    this.basePosition = null;
-    this.quotePosition = null;
-    this.baseHeldPosition = null;
-    this.quoteHeldPosition = null;
-    this.baseValue = null;
-    this.quoteValue = null;
-    this.profitBase = 0;
-    this.profitQuote = 0;
-  }
-
-  private updatePosition = (o: Models.PositionReport) => {
-    if (o === null) return this.clearPosition();
-    this.basePosition = o.baseAmount;
-    this.quotePosition = o.quoteAmount;
-    this.baseHeldPosition = o.baseHeldAmount;
-    this.quoteHeldPosition = o.quoteHeldAmount;
-    this.baseValue = o.baseValue;
-    this.quoteValue = o.quoteValue;
-    this.profitBase = o.profitBase;
-    this.profitQuote = o.profitQuote;
-    this.baseCurrency = o.pair.base;
-    this.quoteCurrency = o.pair.quote;
+    if (o === null) {
+      this.baseCurrency = null;
+      this.quoteCurrency = null;
+      this.basePosition = null;
+      this.quotePosition = null;
+      this.baseHeldPosition = null;
+      this.quoteHeldPosition = null;
+      this.baseValue = null;
+      this.quoteValue = null;
+      this.profitBase = 0;
+      this.profitQuote = 0;
+    } else {
+      this.basePosition = o.baseAmount;
+      this.quotePosition = o.quoteAmount;
+      this.baseHeldPosition = o.baseHeldAmount;
+      this.quoteHeldPosition = o.quoteHeldAmount;
+      this.baseValue = o.baseValue;
+      this.quoteValue = o.quoteValue;
+      this.profitBase = o.profitBase;
+      this.profitQuote = o.profitQuote;
+      this.baseCurrency = o.pair.base;
+      this.quoteCurrency = o.pair.quote;
+    }
   }
 }

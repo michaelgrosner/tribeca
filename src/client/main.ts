@@ -12,8 +12,6 @@ import Highcharts = require('highcharts');
 import Highstock = require('highcharts/highstock');
 require('highcharts/highcharts-more.js')(Highstock);
 
-import moment = require("moment");
-
 import Models = require('./models');
 import Subscribe = require('./subscribe');
 import {SharedModule, FireFactory, SubscriberFactory, BaseCurrencyCellComponent, QuoteCurrencyCellComponent} from './shared_directives';
@@ -517,7 +515,7 @@ class DisplayOrder {
                         </div>
 
                         <div [hidden]="!showStats" [ngClass]="showStats == 2 ? 'col-md-11 col-xs-12 absolute-charts' : 'col-md-11 col-xs-12 relative-charts'">
-                          <market-stats [setShowStats]="!!showStats" [product]="product" [setQuotingParameters]="pair.quotingParameters.display" [setTargetBasePosition]="TargetBasePosition" [setPosition]="Position" [setFairValue]="FairValue"></market-stats>
+                          <market-stats [setShowStats]="!!showStats" [product]="product" [setQuotingParameters]="pair.quotingParameters.display" [setTargetBasePosition]="TargetBasePosition"  [setMarketData]="MarketData" [setEWMAChartData]="EWMAChartData" [setTradesChartData]="TradesChartData" [setPosition]="Position" [setFairValue]="FairValue"></market-stats>
                         </div>
                         <div [hidden]="showStats === 1" class="col-md-9 col-xs-12" style="padding-left:0px;padding-bottom:0px;">
                           <div class="row">
@@ -525,7 +523,7 @@ class DisplayOrder {
                           </div>
                           <div class="row" style="padding-top:0px;">
                             <div class="col-md-4 col-xs-12" style="padding-left:0px;padding-top:0px;padding-right:0px;">
-                                <market-quoting [online]="!!pair.active.display.state" [product]="product" [a]="A" [setOrderList]="orderList"  [setTargetBasePosition]="TargetBasePosition"></market-quoting>
+                                <market-quoting [online]="!!pair.active.display.state" [product]="product" [a]="A" [setQuoteStatus]="QuoteStatus" [setMarketData]="MarketData" [setOrderList]="orderList" [setTargetBasePosition]="TargetBasePosition"></market-quoting>
                             </div>
                             <div class="col-md-8 col-xs-12" style="padding-left:0px;padding-right:0px;padding-top:0px;">
                               <div class="row">
@@ -647,7 +645,11 @@ class ClientComponent implements OnInit {
   public Trade: Models.Trade = null;
   public Position: Models.PositionReport = null;
   public TradeSafety: Models.TradeSafety = null;
-  public TargetBasePosition: Models.TargetBasePositionValue;
+  public TargetBasePosition: Models.TargetBasePositionValue = null;
+  public MarketData: Models.Market = null;
+  public QuoteStatus: Models.TwoSidedQuoteStatus = null;
+  public EWMAChartData: Models.EWMAChart = null;
+  public TradesChartData: Models.TradeChart = null;
   public cancelAllOrders = () => {};
   public cleanAllClosedOrders = () => {};
   public cleanAllOrders = () => {};
@@ -796,12 +798,12 @@ class ClientComponent implements OnInit {
       .registerDisconnectedHandler(() => { this.orderList = []; });
 
     this.subscriberFactory
-      .getSubscriber(this.zone, Models.Topics.FairValue)
-      .registerSubscriber((o: Models.FairValue) => { this.FairValue = o; });
-
-    this.subscriberFactory
       .getSubscriber(this.zone, Models.Topics.Position)
       .registerSubscriber((o: Models.PositionReport) => { this.Position = o; });
+
+    this.subscriberFactory
+      .getSubscriber(this.zone, Models.Topics.FairValue)
+      .registerSubscriber((o: Models.FairValue) => { this.FairValue = o; });
 
     this.subscriberFactory
       .getSubscriber(this.zone, Models.Topics.TradeSafetyValue)
@@ -813,8 +815,26 @@ class ClientComponent implements OnInit {
       .registerDisconnectedHandler(() => { this.Trade = null; });
 
     this.subscriberFactory
+      .getSubscriber(this.zone, Models.Topics.MarketData)
+      .registerSubscriber((o: Models.Market) => { this.MarketData = o; })
+      .registerDisconnectedHandler(() => { this.MarketData = null; });
+
+    this.subscriberFactory
+      .getSubscriber(this.zone, Models.Topics.QuoteStatus)
+      .registerSubscriber((o: Models.TwoSidedQuoteStatus) => { this.QuoteStatus = o; })
+      .registerDisconnectedHandler(() => { this.QuoteStatus = null; });
+
+    this.subscriberFactory
       .getSubscriber(this.zone, Models.Topics.TargetBasePosition)
       .registerSubscriber((o: Models.TargetBasePositionValue) => { this.TargetBasePosition = o; });
+
+    this.subscriberFactory
+      .getSubscriber(this.zone, Models.Topics.EWMAChart)
+      .registerSubscriber((o: Models.EWMAChart) => { this.EWMAChartData = o; });
+
+    this.subscriberFactory
+      .getSubscriber(this.zone, Models.Topics.TradesChart)
+      .registerSubscriber((o: Models.TradeChart) => { this.TradesChartData = o; });
 
     this.cancelAllOrders = () => this.fireFactory
       .getFire(Models.Topics.CancelAllOrders)
@@ -928,7 +948,7 @@ class ClientComponent implements OnInit {
     this.online = true;
     window.document.title = '['+pa.environment+']';
     this.matryoshka = pa.matryoshka;
-    this.system_theme = this.getTheme(moment.utc().hours());
+    this.system_theme = this.getTheme((new Date).getHours());
     this.setTheme();
     this.pair_name = [pa.pair.base, pa.pair.quote];
     this.exchange_name = Models.Exchange[pa.exchange];

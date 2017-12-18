@@ -1,8 +1,6 @@
-import {NgZone, Component, Inject, Input, OnInit} from '@angular/core';
-import moment = require('moment');
+import {Component, Input} from '@angular/core';
 
 import Models = require('./models');
-import {SubscriberFactory} from './shared_directives';
 
 @Component({
   selector: 'market-quoting',
@@ -34,7 +32,7 @@ import {SubscriberFactory} from './shared_directives';
       </tr>
     </table></div>`
 })
-export class MarketQuotingComponent implements OnInit {
+export class MarketQuotingComponent {
 
   public levels: any[];
   public qBidSz: number;
@@ -55,7 +53,9 @@ export class MarketQuotingComponent implements OnInit {
   private targetBasePosition: number;
   private positionDivergence: number;
   private sideAPRSafety: string;
+
   @Input() product: Models.ProductState;
+
   @Input() a: string;
 
   @Input() set online(online: boolean) {
@@ -64,66 +64,46 @@ export class MarketQuotingComponent implements OnInit {
     this.updateQuoteClass();
   }
 
-  @Input() set setOrderList(o) {
+  @Input() set setOrderList(o: any[]) {
     this.updateQuote(o);
   }
 
   @Input() set setTargetBasePosition(o: Models.TargetBasePositionValue) {
-    this.updateTargetBasePosition(o);
+    if (o == null) {
+      this.targetBasePosition = null;
+      this.sideAPRSafety = null;
+      this.positionDivergence = null;
+    } else {
+      this.targetBasePosition = o.tbp;
+      this.sideAPRSafety = o.sideAPR || 'Off';
+      this.positionDivergence = o.pDiv;
+    }
   }
 
-  constructor(
-    @Inject(NgZone) private zone: NgZone,
-    @Inject(SubscriberFactory) private subscriberFactory: SubscriberFactory
-  ) {
-    this.clearMarket();
-    this.clearQuote();
-  }
-
-  ngOnInit() {
-    [
-      [Models.Topics.MarketData, this.updateMarket, this.clearMarket],
-      [Models.Topics.QuoteStatus, this.updateQuoteStatus, this.clearQuoteStatus],
-    ].forEach(x => (<T>(topic: string, updateFn, clearFn) => {
-      this.subscriberFactory
-        .getSubscriber<T>(this.zone, topic)
-        .registerConnectHandler(clearFn)
-        .registerSubscriber(updateFn);
-    }).call(this, x[0], x[1], x[2]));
-  }
-
-  private clearMarket = () => {
-    this.levels = [];
-  }
-
-  private clearTargetBasePosition = () => {
-    this.targetBasePosition = null;
-    this.sideAPRSafety = null;
-    this.positionDivergence = null;
+  @Input() set setQuoteStatus(o) {
+    if (o == null) {
+      this.bidStatus = Models.QuoteStatus[1];
+      this.askStatus = Models.QuoteStatus[1];
+      this.quotesInMemoryNew = 0;
+      this.quotesInMemoryWorking = 0;
+      this.quotesInMemoryDone = 0;
+    } else {
+      this.bidStatus = Models.QuoteStatus[o.bidStatus];
+      this.askStatus = Models.QuoteStatus[o.askStatus];
+      this.quotesInMemoryNew = o.quotesInMemoryNew;
+      this.quotesInMemoryWorking = o.quotesInMemoryWorking;
+      this.quotesInMemoryDone = o.quotesInMemoryDone;
+    }
   }
 
   private clearQuote = () => {
     this.orderBids = [];
     this.orderAsks = [];
   }
-  private clearQuoteStatus = () => {
-    this.bidStatus = Models.QuoteStatus[1];
-    this.askStatus = Models.QuoteStatus[1];
-    this.quotesInMemoryNew = 0;
-    this.quotesInMemoryWorking = 0;
-    this.quotesInMemoryDone = 0;
-  }
 
-  private updateTargetBasePosition = (value : Models.TargetBasePositionValue) => {
-    if (value == null) return this.clearTargetBasePosition();
-    this.targetBasePosition = value.tbp;
-    this.sideAPRSafety = value.sideAPR || 'Off';
-    this.positionDivergence = value.pDiv;
-  }
-
-  private updateMarket = (update: Models.Market) => {
+  @Input() set setMarketData(update: Models.Market) {
     if (update == null || typeof update.bids == "undefined" || typeof update.asks == "undefined" || !update.bids || !update.asks) {
-      this.clearMarket();
+      this.levels = [];
       return;
     }
 
@@ -228,19 +208,6 @@ export class MarketQuotingComponent implements OnInit {
     }
 
     this.updateQuoteClass();
-  }
-
-  private updateQuoteStatus = (status: Models.TwoSidedQuoteStatus) => {
-    if (status == null) {
-      this.clearQuoteStatus();
-      return;
-    }
-
-    this.bidStatus = Models.QuoteStatus[status.bidStatus];
-    this.askStatus = Models.QuoteStatus[status.askStatus];
-    this.quotesInMemoryNew = status.quotesInMemoryNew;
-    this.quotesInMemoryWorking = status.quotesInMemoryWorking;
-    this.quotesInMemoryDone = status.quotesInMemoryDone;
   }
 
   private forEach = (array, callback) => {

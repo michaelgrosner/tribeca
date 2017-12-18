@@ -1,7 +1,5 @@
-import {NgModule, Component, Injectable, Inject} from '@angular/core';
+import {NgModule, Component, Injectable} from '@angular/core';
 import {AgRendererComponent} from 'ag-grid-angular/main';
-
-import moment = require('moment');
 
 import Subscribe = require("./subscribe");
 import Models = require("./models");

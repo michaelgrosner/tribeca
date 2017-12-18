@@ -1,7 +1,6 @@
-import {NgZone, Component, Inject, Input} from '@angular/core';
+import {Component, Input} from '@angular/core';
 
 import Models = require('./models');
-import {SubscriberFactory} from './shared_directives';
 
 @Component({
   selector: 'trade-safety',
@@ -24,44 +23,31 @@ export class TradeSafetyComponent {
   private buySizeSafety: number;
   private sellSizeSafety: number;
   private tradeSafetyValue: number;
+
   @Input() tradeFreq: number;
+
   @Input() product: Models.ProductState;
 
   @Input() set setFairValue(o: Models.FairValue) {
-    this.updateFairValue(o);
+    if (o === null)
+      this.fairValue = null;
+    else
+      this.fairValue = o.price;
   }
 
   @Input() set setTradeSafety(o: Models.TradeSafety) {
-    this.updateSafety(o);
-  }
-
-  constructor(
-    @Inject(NgZone) private zone: NgZone,
-    @Inject(SubscriberFactory) private subscriberFactory: SubscriberFactory
-  ) {}
-
-  private updateSafety = (value: Models.TradeSafety) => {
-    if (value == null) {
+    if (o === null) {
       this.tradeSafetyValue = null;
       this.buySafety = null;
       this.sellSafety = null;
       this.buySizeSafety = null;
       this.sellSizeSafety = null;
-      return;
+    } else {
+      this.tradeSafetyValue = o.combined;
+      this.buySafety = o.buy;
+      this.sellSafety = o.sell;
+      this.buySizeSafety = o.buyPing;
+      this.sellSizeSafety = o.sellPong;
     }
-    this.tradeSafetyValue = value.combined;
-    this.buySafety = value.buy;
-    this.sellSafety = value.sell;
-    this.buySizeSafety = value.buyPing;
-    this.sellSizeSafety = value.sellPong;
-  }
-
-  private updateFairValue = (fv: Models.FairValue) => {
-    if (fv == null) {
-      this.fairValue = null;
-      return;
-    }
-
-    this.fairValue = fv.price;
   }
 }

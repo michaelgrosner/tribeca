@@ -1,8 +1,7 @@
-import {NgZone, Component, Inject, Input, OnInit} from '@angular/core';
+import {Component, Input, OnInit} from '@angular/core';
 import Highcharts = require('highcharts');
 
 import Models = require('./models');
-import {SubscriberFactory} from './shared_directives';
 
 @Component({
   selector: 'market-stats',
@@ -437,15 +436,57 @@ export class StatsComponent implements OnInit {
   }
 
   @Input() set setFairValue(o: Models.FairValue) {
-    this.updateFairValue(o);
+    if (o == null) return;
+    this.fairValue = o.price;
   }
 
   @Input() set setTargetBasePosition(o: Models.TargetBasePositionValue) {
-    this.updateTargetBasePosition(o);
+    if (o == null) return;
+    this.targetBasePosition = o.tbp;
+    this.positionDivergence = o.pDiv;
   }
 
   @Input() set setPosition(o: Models.PositionReport) {
-    this.updatePosition(o);
+    if (o === null) return;
+    let time = new Date().getTime();
+    if (!(<any>Highcharts).customBaseCurrency) (<any>Highcharts).customBaseCurrency = o.pair.base;
+    if (!(<any>Highcharts).customQuoteCurrency) (<any>Highcharts).customQuoteCurrency = o.pair.quote;
+    this.positionData = o;
+  }
+
+  @Input() set setMarketData(o: Models.Market) {
+    if (o && o.bids && o.bids.length && o.asks && o.asks.length)
+      this.width = (o.asks[0].price - o.bids[0].price) / 2;
+  }
+
+  @Input() set setEWMAChartData(o: Models.EWMAChart) {
+    if (o === null) return;
+    this.fairValue = o.fairValue;
+    if (o.ewmaQuote) this.ewmaQuote = o.ewmaQuote;
+    if (o.ewmaWidth) this.ewmaWidth = o.ewmaWidth;
+    if (o.ewmaShort) this.ewmaShort = o.ewmaShort;
+    if (o.ewmaMedium) this.ewmaMedium = o.ewmaMedium;
+    if (o.ewmaLong) this.ewmaLong = o.ewmaLong;
+    if (o.ewmaVeryLong) this.ewmaVeryLong = o.ewmaVeryLong;
+    if (o.stdevWidth) this.stdevWidth = o.stdevWidth;
+    if (o.tradesBuySize) this.tradesBuySize = o.tradesBuySize;
+    if (o.tradesSellSize) this.tradesSellSize = o.tradesSellSize;
+  }
+
+  @Input() set setTradesChartData(t: Models.TradeChart) {
+    if (t===null) return;
+    let time = new Date().getTime();
+    Highcharts.charts[this.fvChart].series[Models.Side[t.side] == 'Bid' ? 4 : 2].addPoint([time, t.price], false);
+    (<any>Highcharts).charts[this.fvChart].series[Models.Side[t.side] == 'Bid' ? 5 : 3].addPoint({
+      x: time,
+      title: (t.pong ? '¯' : '_')+(Models.Side[t.side] == 'Bid' ? 'B' : 'S'),
+      useHTML:true,
+      text: '<tr><td colspan="2"><b><span style="color:'+(Models.Side[t.side] == 'Bid' ? '#0000FF':'#FF0000')+';">'+(Models.Side[t.side] == 'Bid' ? '▼':'▲')+'</span> '+(Models.Side[t.side] == 'Bid' ? 'Buy':'Sell')+'</b> (P'+(t.pong?'o':'i')+'ng)</td></tr>'
+        + '<tr><td>' + 'Price:</td><td style="text-align:right;"> <b>' + t.price.toFixed((<any>Highcharts).customProductFixed) + ' ' + ((<any>Highcharts).customQuoteCurrency) + '</b></td></tr>'
+        + '<tr><td>' + 'Qty:</td><td style="text-align:right;"> <b>' + t.quantity.toFixed(8) + ' ' + ((<any>Highcharts).customBaseCurrency) + '</b></td></tr>'
+        + '<tr><td>' + 'Value:</td><td style="text-align:right;"> <b>' + t.value.toFixed((<any>Highcharts).customProductFixed) + ' ' + ((<any>Highcharts).customQuoteCurrency) + '</b></td></tr>'
+    }, this.showStats && !this.fairValue);
+    this.updateCharts(time);
   }
 
   private showStats: boolean;
@@ -476,78 +517,58 @@ export class StatsComponent implements OnInit {
     return out;
   }
 
-  constructor(
-    @Inject(NgZone) private zone: NgZone,
-    @Inject(SubscriberFactory) private subscriberFactory: SubscriberFactory
-  ) {}
-
   ngOnInit() {
     (<any>Highcharts).customBaseCurrency = '';
     (<any>Highcharts).customQuoteCurrency = '';
     (<any>Highcharts).customProductFixed = this.product.fixed;
     (<any>Highcharts).customSymbols = {'circle': '●','diamond': '♦','square': '■','triangle': '▲','triangle-down': '▼'};
     Highcharts.setOptions({global: {getTimezoneOffset: function () {return new Date().getTimezoneOffset(); }}});
-    setTimeout(() => {
-      /*this.forEach(document.getElementsByTagName('chart'), function (el) {
-        el.addEventListener('mousemove', function (e) {
-          var chart, point, i, event, containerLeft, thisLeft;
-          for (i = 0; i < Highcharts.charts.length; ++i) {
-            chart = Highcharts.charts[i];
-            containerLeft = chart.container.getBoundingClientRect().left;
-            thisLeft = el.getBoundingClientRect().left;
-            if (containerLeft == thisLeft && chart.container.getBoundingClientRect().top == el.getBoundingClientRect().top) continue;
-            chart.pointer.reset = function () { return undefined; };
-            console.log(e);
-            let ev: any = this.extend(new MouseEvent('mousemove'), {
-                which: 1,
-                chartX: e.originalEvent.chartX,
-                chartY: e.originalEvent.chartY,
-                clientX: (containerLeft != thisLeft)?containerLeft - thisLeft + e.originalEvent.clientX:e.originalEvent.clientX,
-                clientY: e.originalEvent.clientY,
-                pageX: (containerLeft != thisLeft)?containerLeft - thisLeft + e.originalEvent.pageX:e.originalEvent.pageX,
-                pageY: e.originalEvent.pageY,
-                screenX: (containerLeft != thisLeft)?containerLeft - thisLeft + e.originalEvent.screenX:e.originalEvent.screenX,
-                screenY: e.originalEvent.screenY
-            });
-            event = chart.pointer.normalize(ev);
-            point = chart.series[0].searchPoint(event, true);
-            if (point) {
-              point.onMouseOver();
-              point.series.chart.xAxis[0].drawCrosshair(event, point);
-            }
+    /*this.forEach(document.getElementsByTagName('chart'), function (el) {
+      el.addEventListener('mousemove', function (e) {
+        var chart, point, i, event, containerLeft, thisLeft;
+        for (i = 0; i < Highcharts.charts.length; ++i) {
+          chart = Highcharts.charts[i];
+          containerLeft = chart.container.getBoundingClientRect().left;
+          thisLeft = el.getBoundingClientRect().left;
+          if (containerLeft == thisLeft && chart.container.getBoundingClientRect().top == el.getBoundingClientRect().top) continue;
+          chart.pointer.reset = function () { return undefined; };
+          console.log(e);
+          let ev: any = this.extend(new MouseEvent('mousemove'), {
+              which: 1,
+              chartX: e.originalEvent.chartX,
+              chartY: e.originalEvent.chartY,
+              clientX: (containerLeft != thisLeft)?containerLeft - thisLeft + e.originalEvent.clientX:e.originalEvent.clientX,
+              clientY: e.originalEvent.clientY,
+              pageX: (containerLeft != thisLeft)?containerLeft - thisLeft + e.originalEvent.pageX:e.originalEvent.pageX,
+              pageY: e.originalEvent.pageY,
+              screenX: (containerLeft != thisLeft)?containerLeft - thisLeft + e.originalEvent.screenX:e.originalEvent.screenX,
+              screenY: e.originalEvent.screenY
+          });
+          event = chart.pointer.normalize(ev);
+          point = chart.series[0].searchPoint(event, true);
+          if (point) {
+            point.onMouseOver();
+            point.series.chart.xAxis[0].drawCrosshair(event, point);
           }
-        });
+        }
       });
-      this.forEach(document.getElementsByTagName('chart'), function (el) {
-        el.addEventListener('mouseleave', function (e) {
-          var chart, point, i, event;
-          for (i = 0; i < Highcharts.charts.length; ++i) {
-            chart = Highcharts.charts[i];
-            event = chart.pointer.normalize(e.originalEvent);
-            point = chart.series[0].searchPoint(event, true);
-            if (point) {
-              point.onMouseOut();
-              chart.tooltip.hide(point);
-              chart.xAxis[0].hideCrosshair();
-            }
+    });
+    this.forEach(document.getElementsByTagName('chart'), function (el) {
+      el.addEventListener('mouseleave', function (e) {
+        var chart, point, i, event;
+        for (i = 0; i < Highcharts.charts.length; ++i) {
+          chart = Highcharts.charts[i];
+          event = chart.pointer.normalize(e.originalEvent);
+          point = chart.series[0].searchPoint(event, true);
+          if (point) {
+            point.onMouseOut();
+            chart.tooltip.hide(point);
+            chart.xAxis[0].hideCrosshair();
           }
-        });
-      });*/
-
-      this.subscriberFactory
-        .getSubscriber(this.zone, Models.Topics.MarketData)
-        .registerSubscriber(this.updateMarket);
-
-      this.subscriberFactory
-        .getSubscriber(this.zone, Models.Topics.EWMAChart)
-        .registerSubscriber(this.addEWMAChartData);
-
-      this.subscriberFactory
-        .getSubscriber(this.zone, Models.Topics.TradesChart)
-        .registerSubscriber(this.addTradesChartData);
-
-      setInterval(() => this.updateCharts(new Date().getTime()), 10000);
-    }, 10000);
+        }
+      });
+    });*/
+    setInterval(() => this.updateCharts(new Date().getTime()), 10000);
   }
 
   private updateCharts = (time: number) => {
@@ -592,30 +613,6 @@ export class StatsComponent implements OnInit {
     }
   }
 
-  private updateFairValue = (fv: Models.FairValue) => {
-    if (fv == null) return;
-    this.fairValue = fv.price;
-  }
-
-  private addEWMAChartData = (o: Models.EWMAChart) => {
-    if (o === null) return;
-    this.fairValue = o.fairValue;
-    if (o.ewmaQuote) this.ewmaQuote = o.ewmaQuote;
-    if (o.ewmaWidth) this.ewmaWidth = o.ewmaWidth;
-    if (o.ewmaShort) this.ewmaShort = o.ewmaShort;
-    if (o.ewmaMedium) this.ewmaMedium = o.ewmaMedium;
-    if (o.ewmaLong) this.ewmaLong = o.ewmaLong;
-    if (o.ewmaVeryLong) this.ewmaVeryLong = o.ewmaVeryLong;
-    if (o.stdevWidth) this.stdevWidth = o.stdevWidth;
-    if (o.tradesBuySize) this.tradesBuySize = o.tradesBuySize;
-    if (o.tradesSellSize) this.tradesSellSize = o.tradesSellSize;
-  }
-
-  private updateMarket = (update: Models.Market) => {
-    if (update && update.bids && update.bids.length && update.asks && update.asks.length)
-      this.width = (update.asks[0].price - update.bids[0].price) / 2;
-  }
-
   private addTradesChartData = (t: Models.TradeChart) => {
     let time = new Date().getTime();
     Highcharts.charts[this.fvChart].series[Models.Side[t.side] == 'Bid' ? 4 : 2].addPoint([time, t.price], false);
@@ -629,20 +626,6 @@ export class StatsComponent implements OnInit {
         + '<tr><td>' + 'Value:</td><td style="text-align:right;"> <b>' + t.value.toFixed((<any>Highcharts).customProductFixed) + ' ' + ((<any>Highcharts).customQuoteCurrency) + '</b></td></tr>'
     }, this.showStats && !this.fairValue);
     this.updateCharts(time);
-  }
-
-  private updateTargetBasePosition = (value : Models.TargetBasePositionValue) => {
-    if (value == null) return;
-    this.targetBasePosition = value.tbp;
-    this.positionDivergence = value.pDiv;
-  }
-
-  private updatePosition = (o: Models.PositionReport) => {
-    if (o === null) return;
-    let time = new Date().getTime();
-    if (!(<any>Highcharts).customBaseCurrency) (<any>Highcharts).customBaseCurrency = o.pair.base;
-    if (!(<any>Highcharts).customQuoteCurrency) (<any>Highcharts).customQuoteCurrency = o.pair.quote;
-    this.positionData = o;
   }
 
   private removeOldPoints = (time: number) => {
