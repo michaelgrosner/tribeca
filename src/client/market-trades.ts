@@ -43,7 +43,7 @@ export class MarketTradesComponent implements OnInit {
     return [
       { width: 82, field: 'time', headerName: 'time', cellRenderer:(params) => {
         var d = new Date(params.value||0);
-        return d.getHours()+':'+d.getMinutes()+':'+d.getSeconds()+','+d.getMilliseconds();
+        return (d.getHours()+'').padStart(2, "0")+':'+(d.getMinutes()+'').padStart(2, "0")+':'+(d.getSeconds()+'').padStart(2, "0")+','+(d.getMilliseconds()+'').padStart(3, "0");
       },sort: 'desc', cellClass: (params) => {
           return 'fs11px '+(!params.data.recent ? "text-muted" : "");
       } },
