@@ -55,13 +55,21 @@ export class MarketQuotingComponent implements OnInit {
   private targetBasePosition: number;
   private positionDivergence: number;
   private sideAPRSafety: string;
-  public a: string;
   @Input() product: Models.ProductState;
+  @Input() a: string;
 
   @Input() set online(online: boolean) {
     if (online) return;
     this.clearQuote();
     this.updateQuoteClass();
+  }
+
+  @Input() set setOrderList(o) {
+    this.updateQuote(o);
+  }
+
+  @Input() set setTargetBasePosition(o: Models.TargetBasePositionValue) {
+    this.updateTargetBasePosition(o);
   }
 
   constructor(
@@ -75,10 +83,7 @@ export class MarketQuotingComponent implements OnInit {
   ngOnInit() {
     [
       [Models.Topics.MarketData, this.updateMarket, this.clearMarket],
-      [Models.Topics.OrderStatusReports, this.updateQuote, this.clearQuote],
       [Models.Topics.QuoteStatus, this.updateQuoteStatus, this.clearQuoteStatus],
-      [Models.Topics.TargetBasePosition, this.updateTargetBasePosition, this.clearTargetBasePosition],
-      [Models.Topics.ApplicationState, this.updateAddress, this.clearAddress]
     ].forEach(x => (<T>(topic: string, updateFn, clearFn) => {
       this.subscriberFactory
         .getSubscriber<T>(this.zone, topic)
@@ -97,19 +102,10 @@ export class MarketQuotingComponent implements OnInit {
     this.positionDivergence = null;
   }
 
-  private clearAddress = () => {
-    this.a = "";
-  }
-
   private clearQuote = () => {
     this.orderBids = [];
     this.orderAsks = [];
   }
-
-  private updateAddress = (A) => {
-    this.a = A.a;
-  }
-
   private clearQuoteStatus = () => {
     this.bidStatus = Models.QuoteStatus[1];
     this.askStatus = Models.QuoteStatus[1];
@@ -119,7 +115,7 @@ export class MarketQuotingComponent implements OnInit {
   }
 
   private updateTargetBasePosition = (value : Models.TargetBasePositionValue) => {
-    if (value == null) return;
+    if (value == null) return this.clearTargetBasePosition();
     this.targetBasePosition = value.tbp;
     this.sideAPRSafety = value.sideAPR || 'Off';
     this.positionDivergence = value.pDiv;
@@ -194,13 +190,14 @@ export class MarketQuotingComponent implements OnInit {
   }
 
   private updateQuote = (o) => {
-    if (!o) {
+    if (!o || (typeof o.length == 'number' && !o.length)) {
       this.clearQuote();
       return;
-    } else if (typeof o[0] == 'object') {
+    } else if (typeof o.length == 'number' && typeof o[0] == 'object') {
       this.clearQuote();
       return o.forEach(x => setTimeout(this.updateQuote(x), 0));
     }
+
     const orderSide = o.side === Models.Side.Bid ? 'orderBids' : 'orderAsks';
     if (o.orderStatus == Models.OrderStatus.Cancelled
       || o.orderStatus == Models.OrderStatus.Complete

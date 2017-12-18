@@ -436,6 +436,18 @@ export class StatsComponent implements OnInit {
     (<any>Highcharts).quotingParameters = o;
   }
 
+  @Input() set setFairValue(o: Models.FairValue) {
+    this.updateFairValue(o);
+  }
+
+  @Input() set setTargetBasePosition(o: Models.TargetBasePositionValue) {
+    this.updateTargetBasePosition(o);
+  }
+
+  @Input() set setPosition(o: Models.PositionReport) {
+    this.updatePosition(o);
+  }
+
   private showStats: boolean;
   @Input() set setShowStats(showStats: boolean) {
     if (!this.showStats && showStats)
@@ -523,20 +535,8 @@ export class StatsComponent implements OnInit {
       });*/
 
       this.subscriberFactory
-        .getSubscriber(this.zone, Models.Topics.FairValue)
-        .registerSubscriber(this.updateFairValue);
-
-      this.subscriberFactory
         .getSubscriber(this.zone, Models.Topics.MarketData)
         .registerSubscriber(this.updateMarket);
-
-      this.subscriberFactory
-        .getSubscriber(this.zone, Models.Topics.Position)
-        .registerSubscriber(this.updatePosition);
-
-      this.subscriberFactory
-        .getSubscriber(this.zone, Models.Topics.TargetBasePosition)
-        .registerSubscriber(this.updateTargetBasePosition);
 
       this.subscriberFactory
         .getSubscriber(this.zone, Models.Topics.EWMAChart)

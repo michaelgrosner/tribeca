@@ -25,6 +25,10 @@ export class OrdersComponent implements OnInit {
     setTimeout(()=>{try{this.gridOptions.api.redrawRows();}catch(e){}},0);
   }
 
+  @Input() set setOrderList(o) {
+    this.addRowData(o);
+  }
+
   constructor(
     @Inject(NgZone) private zone: NgZone,
     @Inject(SubscriberFactory) private subscriberFactory: SubscriberFactory,
@@ -37,20 +41,9 @@ export class OrdersComponent implements OnInit {
     this.gridOptions.columnDefs = this.createColumnDefs();
     this.gridOptions.suppressNoRowsOverlay = true;
     this.gridOptions.enableColResize = true;
-    setTimeout(this.loadSubscriber, 500);
-  }
-
-  private subscribed: boolean = false;
-  public loadSubscriber = () => {
-    if (this.subscribed) return;
-    this.subscribed = true;
 
     this.fireCxl = this.fireFactory
       .getFire(Models.Topics.CancelOrder);
-
-    this.subscriberFactory
-      .getSubscriber(this.zone, Models.Topics.OrderStatusReports)
-      .registerSubscriber(this.addRowData);
   }
 
   private createColumnDefs = (): ColDef[] => {
@@ -98,14 +91,15 @@ export class OrdersComponent implements OnInit {
   }
 
   private addRowData = (o) => {
-    if (!this.gridOptions.api) return;
-    if (!o) {
+    if (!this.gridOptions.api || this.product.advert.pair == null) return;
+    if (!o || (typeof o.length == 'number' && !o.length)) {
       this.gridOptions.api.setRowData([]);
       return;
-    } else if (typeof o[0] == 'object') {
+    } else if (typeof o.length == 'number' && typeof o[0] == 'object') {
       this.gridOptions.api.setRowData([]);
       return o.forEach(x => setTimeout(this.addRowData(x), 0));
     }
+
     let exists: boolean = false;
     let isClosed: boolean = (o.orderStatus == Models.OrderStatus.Cancelled
       || o.orderStatus == Models.OrderStatus.Complete);

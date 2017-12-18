@@ -24,6 +24,28 @@ export class TradesComponent implements OnInit {
 
   @Input() product: Models.ProductState;
 
+  @Input() set setQuotingParameters(o: Models.QuotingParameters) {
+    this.audio = o.audio;
+    if (!this.gridOptions.api) return;
+    var isK = (o.safety === Models.QuotingSafety.Boomerang || o.safety === Models.QuotingSafety.AK47);
+    this.gridOptions.columnDefs.map((r: ColDef) => {
+      ['Kqty','Kprice','Kvalue','Kdiff','Ktime',['time','timePing'],['price','pxPing'],['quantity','qtyPing'],['value','valPing']].map(t => {
+        if (t[0]==r.field) r.headerName = isK ? t[1] : t[1].replace('Ping','');
+        if (r.field[0]=='K') r.hide = !isK;
+      });
+      return r;
+    });
+    this.gridOptions.api.setColumnDefs(this.gridOptions.columnDefs);
+  }
+
+  @Input() set setTrade(o: Models.Trade) {
+    if (o === null) {
+      if (this.gridOptions.rowData)
+        this.gridOptions.api.setRowData([]);
+    }
+    else this.addRowData(o);
+  }
+
   @Output() onTradesLength = new EventEmitter<number>();
 
   constructor(
@@ -38,25 +60,9 @@ export class TradesComponent implements OnInit {
     this.gridOptions.columnDefs = this.createColumnDefs();
     this.gridOptions.overlayNoRowsTemplate = `<span class="ag-overlay-no-rows-center">empty history of trades</span>`;
     this.gridOptions.enableColResize = true;
-    setTimeout(this.loadSubscriber, 3321);
-  }
-
-  private subscribed: boolean = false;
-  public loadSubscriber = () => {
-    if (this.subscribed) return;
-    this.subscribed = true;
 
     this.fireCxl = this.fireFactory
       .getFire(Models.Topics.CleanTrade);
-
-    this.subscriberFactory
-      .getSubscriber(this.zone, Models.Topics.QuotingParametersChange)
-      .registerSubscriber(this.updateQP);
-
-    this.subscriberFactory
-      .getSubscriber(this.zone, Models.Topics.Trades)
-      .registerConnectHandler(() => this.gridOptions.rowData.length = 0)
-      .registerSubscriber(this.addRowData);
   }
 
   private createColumnDefs = (): ColDef[] => {
@@ -175,19 +181,5 @@ export class TradesComponent implements OnInit {
 
     this.gridOptions.api.sizeColumnsToFit();
     this.onTradesLength.emit(this.gridOptions.api.getModel().getRowCount());
-  }
-
-  private updateQP = (qp: Models.QuotingParameters) => {
-    this.audio = qp.audio;
-    if (!this.gridOptions.api) return;
-    var isK = (qp.safety === Models.QuotingSafety.Boomerang || qp.safety === Models.QuotingSafety.AK47);
-    this.gridOptions.columnDefs.map((r: ColDef) => {
-      ['Kqty','Kprice','Kvalue','Kdiff','Ktime',['time','timePing'],['price','pxPing'],['quantity','qtyPing'],['value','valPing']].map(t => {
-        if (t[0]==r.field) r.headerName = isK ? t[1] : t[1].replace('Ping','');
-        if (r.field[0]=='K') r.hide = !isK;
-      });
-      return r;
-    });
-    this.gridOptions.api.setColumnDefs(this.gridOptions.columnDefs);
   }
 }

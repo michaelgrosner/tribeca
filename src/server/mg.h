@@ -72,17 +72,10 @@ namespace K {
         if (mgEwmaS)  FN::log(((CF*)config)->argEwmaShort ? "ARG" : "DB", string("loaded ") + to_string(mgEwmaS) + " EWMA Short");
         k = ((DB*)memory)->load(uiTXT::MarketDataLongTerm);
         if (k.size()) {
-          unsigned long lastTime = 0,
-                        meanTime = 0;
-          for (json::reverse_iterator it = k.rbegin(); it != k.rend(); ++it) {
-            if (it->value("time", (unsigned long)0) + 3456e+4 < FN::T() or it->value("fv", 0.0) <= 0) continue;
-            fairValue96h.push_back(it->value("fv", 0.0));
-            if (lastTime) meanTime += it->value("time", (unsigned long)0) - lastTime;
-            lastTime = it->value("time", (unsigned long)0);
-          }
-          FN::log("DB", string("loaded ") + to_string(fairValue96h.size()) + " historical FairValues" + (
-            fairValue96h.size() ? " (save time avg: " + to_string(meanTime/fairValue96h.size()) + "ms)" : ""
-          ));
+          for (json::reverse_iterator it = k.rbegin(); it != k.rend(); ++it)
+            if (it->value("time", (unsigned long)0) + 3456e+4 > FN::T() and it->value("fv", 0.0))
+              fairValue96h.push_back(it->value("fv", 0.0));
+          if (fairValue96h.size()) FN::log("DB", string("loaded ") + to_string(fairValue96h.size()) + " historical FairValues");
         }
       };
       void waitData() {

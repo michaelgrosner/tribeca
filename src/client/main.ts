@@ -70,14 +70,14 @@ class DisplayOrder {
 @Component({
   selector: 'ui',
   template: `<div>
-    <div *ngIf="!online">
+    <div [hidden]="online">
         <h4 class="text-danger text-center">{{ product.advert.environment ? product.advert.environment+' is d' : 'D' }}isconnected.</h4>
     </div>
-    <div *ngIf="online">
+    <div [hidden]="!online">
         <div class="container-fluid">
             <div>
                 <div style="padding: 5px;padding-top:10px;margin-top:7px;" [ngClass]="pair.connected ? 'bg-success img-rounded' : 'bg-danger img-rounded'">
-                    <div class="row" [hidden]="!showSettings">
+                    <div *ngIf="online" class="row" [hidden]="!showSettings">
                         <div class="col-md-12 col-xs-12">
                             <div class="row">
                               <table border="0" width="100%"><tr><td style="width:69px;text-align:center;border-bottom: 1px gray solid;">
@@ -388,14 +388,11 @@ class DisplayOrder {
                                             <th>delayUI</th>
                                             <th>audio?</th>
                                             <th colspan="2">
-                                                <span *ngIf="!pair.quotingParameters.pending && pair.quotingParameters.connected" class="text-success">
+                                                <span *ngIf="!pair.quotingParameters.pending" class="text-success">
                                                     Applied
                                                 </span>
-                                                <span *ngIf="pair.quotingParameters.pending && pair.quotingParameters.connected" class="text-warning">
+                                                <span *ngIf="pair.quotingParameters.pending" class="text-warning">
                                                     Pending
-                                                </span>
-                                                <span *ngIf="!pair.quotingParameters.connected" class="text-danger">
-                                                    Not Connected
                                                 </span>
                                             </th>
                                         </tr>
@@ -494,7 +491,6 @@ class DisplayOrder {
                                                 <input class="btn btn-default btn"
                                                     style="width:50px"
                                                     type="submit"
-                                                    [disabled]="!pair.quotingParameters.connected"
                                                     (click)="pair.quotingParameters.submit()"
                                                     value="Save" />
                                             </td>
@@ -509,10 +505,10 @@ class DisplayOrder {
                         <div class="col-md-1 col-xs-12 text-center" style="padding-right:0px;">
                             <div class="row img-rounded exchange">
                                 <div *ngIf="pair.connectionMessage">{{ pair.connectionMessage }}</div>
-                                <button style="font-size:16px;" class="col-md-12 col-xs-3" [ngClass]="pair.active.getClass()" [disabled]="!pair.active.connected" (click)="pair.active.submit()">
+                                <button style="font-size:16px;" class="col-md-12 col-xs-3" [ngClass]="pair.active.getClass()" (click)="pair.active.submit()">
                                     {{ exchange_name }}<br/>{{ pair_name.join('/') }}
                                 </button>
-                                <wallet-position [product]="product"></wallet-position>
+                                <wallet-position [product]="product" [setPosition]="Position"></wallet-position>
                                 <a [hidden]="!exchange_market" href="{{ exchange_market }}" target="_blank">Market</a><span [hidden]="!exchange_market || !exchange_orders ">,</span>
                                 <a [hidden]="!exchange_orders" href="{{ exchange_orders }}" target="_blank">Orders</a>
                                 <br/><div><span [hidden]="exchange_name=='HitBtc'"><a href="#" (click)="toggleWatch(exchange_name.toLowerCase(), this.pair_name.join('-').toLowerCase())">Watch</a>, </span><a href="#" (click)="toggleStats()">Stats</a></div>
@@ -521,15 +517,15 @@ class DisplayOrder {
                         </div>
 
                         <div [hidden]="!showStats" [ngClass]="showStats == 2 ? 'col-md-11 col-xs-12 absolute-charts' : 'col-md-11 col-xs-12 relative-charts'">
-                          <market-stats [setShowStats]="!!showStats" [product]="product" [setQuotingParameters]="pair.quotingParameters.display"></market-stats>
+                          <market-stats [setShowStats]="!!showStats" [product]="product" [setQuotingParameters]="pair.quotingParameters.display" [setTargetBasePosition]="TargetBasePosition" [setPosition]="Position" [setFairValue]="FairValue"></market-stats>
                         </div>
                         <div [hidden]="showStats === 1" class="col-md-9 col-xs-12" style="padding-left:0px;padding-bottom:0px;">
                           <div class="row">
-                            <trade-safety [tradeFreq]="tradeFreq" [product]="product"></trade-safety>
+                            <trade-safety [tradeFreq]="tradeFreq" [product]="product" [setFairValue]="FairValue" [setTradeSafety]="TradeSafety"></trade-safety>
                           </div>
                           <div class="row" style="padding-top:0px;">
                             <div class="col-md-4 col-xs-12" style="padding-left:0px;padding-top:0px;padding-right:0px;">
-                                <market-quoting [online]="!!pair.active.display.state" [product]="product"></market-quoting>
+                                <market-quoting [online]="!!pair.active.display.state" [product]="product" [a]="A" [setOrderList]="orderList"  [setTargetBasePosition]="TargetBasePosition"></market-quoting>
                             </div>
                             <div class="col-md-8 col-xs-12" style="padding-left:0px;padding-right:0px;padding-top:0px;">
                               <div class="row">
@@ -601,11 +597,11 @@ class DisplayOrder {
                                   </div>
                                 </div>
                                 <div class="col-md-10 col-xs-12" style="padding-right:0px;padding-top:4px;">
-                                  <order-list [online]="!!pair.active.display.state" [product]="product"></order-list>
+                                  <order-list [online]="!!pair.active.display.state" [product]="product" [setOrderList]="orderList"></order-list>
                                 </div>
                               </div>
                               <div class="row">
-                                <trade-list (onTradesLength)="onTradesLength($event)" [product]="product"></trade-list>
+                                <trade-list (onTradesLength)="onTradesLength($event)" [product]="product" [setQuotingParameters]="pair.quotingParameters.display" [setTrade]="Trade"></trade-list>
                               </div>
                             </div>
                           </div>
@@ -614,7 +610,7 @@ class DisplayOrder {
                           <textarea [(ngModel)]="notepad" (ngModelChange)="changeNotepad(notepad)" placeholder="ephemeral notepad" class="ephemeralnotepad" style="height:69px;width: 100%;max-width: 100%;"></textarea>
                           <market-trades [product]="product"></market-trades>
                         </div>
-                      </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -630,6 +626,7 @@ class DisplayOrder {
 })
 class ClientComponent implements OnInit {
 
+  public A: string;
   public homepage: string;
   public matryoshka: string;
   public server_memory: string;
@@ -645,6 +642,12 @@ class ClientComponent implements OnInit {
   public exchange_market: string;
   public exchange_orders: string;
   public pair_name: string[];
+  public orderList: any[] = [];
+  public FairValue: Models.FairValue = null;
+  public Trade: Models.Trade = null;
+  public Position: Models.PositionReport = null;
+  public TradeSafety: Models.TradeSafety = null;
+  public TargetBasePosition: Models.TargetBasePositionValue;
   public cancelAllOrders = () => {};
   public cleanAllClosedOrders = () => {};
   public cleanAllOrders = () => {};
@@ -785,6 +788,34 @@ class ClientComponent implements OnInit {
   ) {}
 
   ngOnInit() {
+    this.pair = new Pair.DisplayPair(this.zone, this.subscriberFactory, this.fireFactory);
+
+    this.subscriberFactory
+      .getSubscriber(this.zone, Models.Topics.OrderStatusReports)
+      .registerSubscriber((o: any[]) => { this.orderList = o; })
+      .registerDisconnectedHandler(() => { this.orderList = []; });
+
+    this.subscriberFactory
+      .getSubscriber(this.zone, Models.Topics.FairValue)
+      .registerSubscriber((o: Models.FairValue) => { this.FairValue = o; });
+
+    this.subscriberFactory
+      .getSubscriber(this.zone, Models.Topics.Position)
+      .registerSubscriber((o: Models.PositionReport) => { this.Position = o; });
+
+    this.subscriberFactory
+      .getSubscriber(this.zone, Models.Topics.TradeSafetyValue)
+      .registerSubscriber((o: Models.TradeSafety) => { this.TradeSafety = o; });
+
+    this.subscriberFactory
+      .getSubscriber(this.zone, Models.Topics.Trades)
+      .registerSubscriber((o: Models.Trade) => { this.Trade = o; })
+      .registerDisconnectedHandler(() => { this.Trade = null; });
+
+    this.subscriberFactory
+      .getSubscriber(this.zone, Models.Topics.TargetBasePosition)
+      .registerSubscriber((o: Models.TargetBasePositionValue) => { this.TargetBasePosition = o; });
+
     this.cancelAllOrders = () => this.fireFactory
       .getFire(Models.Topics.CancelAllOrders)
       .fire();
@@ -859,7 +890,6 @@ class ClientComponent implements OnInit {
     this.exchange_name = null;
     this.exchange_market = null;
     this.exchange_orders = null;
-    this.pair = null;
   }
 
   private bytesToSize = (input:number, precision:number) => {
@@ -874,6 +904,7 @@ class ClientComponent implements OnInit {
     this.client_memory = this.bytesToSize((<any>window.performance).memory ? (<any>window.performance).memory.usedJSHeapSize : 1, 0);
     this.db_size = this.bytesToSize(as.dbsize, 0);
     this.system_theme = this.getTheme(as.hour);
+    this.A = (<any>as).a;
     this.tradeFreq = (as.freq);
     this.setTheme();
   }
@@ -937,7 +968,6 @@ class ClientComponent implements OnInit {
           )
         )
       );
-    this.pair = new Pair.DisplayPair(this.zone, this.subscriberFactory, this.fireFactory);
     this.product.advert = pa;
     this.homepage = pa.homepage;
     this.product.fixed = Math.max(0, Math.floor(Math.log10(pa.minTick)) * -1);

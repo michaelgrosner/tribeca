@@ -1,4 +1,4 @@
-import {NgZone, Component, Inject, Input, OnInit} from '@angular/core';
+import {NgZone, Component, Inject, Input} from '@angular/core';
 
 import Models = require('./models');
 import {SubscriberFactory} from './shared_directives';
@@ -16,7 +16,7 @@ import {SubscriberFactory} from './shared_directives';
     </div>
   </div>`
 })
-export class TradeSafetyComponent implements OnInit {
+export class TradeSafetyComponent {
 
   public fairValue: number;
   private buySafety: number;
@@ -27,25 +27,28 @@ export class TradeSafetyComponent implements OnInit {
   @Input() tradeFreq: number;
   @Input() product: Models.ProductState;
 
+  @Input() set setFairValue(o: Models.FairValue) {
+    this.updateFairValue(o);
+  }
+
+  @Input() set setTradeSafety(o: Models.TradeSafety) {
+    this.updateSafety(o);
+  }
+
   constructor(
     @Inject(NgZone) private zone: NgZone,
     @Inject(SubscriberFactory) private subscriberFactory: SubscriberFactory
   ) {}
 
-  ngOnInit() {
-    this.subscriberFactory
-      .getSubscriber(this.zone, Models.Topics.FairValue)
-      .registerConnectHandler(this.clearFairValue)
-      .registerSubscriber(this.updateFairValue);
-
-    this.subscriberFactory
-      .getSubscriber(this.zone, Models.Topics.TradeSafetyValue)
-      .registerConnectHandler(this.clear)
-      .registerSubscriber(this.updateValues);
-  }
-
-  private updateValues = (value: Models.TradeSafety) => {
-    if (value == null) return;
+  private updateSafety = (value: Models.TradeSafety) => {
+    if (value == null) {
+      this.tradeSafetyValue = null;
+      this.buySafety = null;
+      this.sellSafety = null;
+      this.buySizeSafety = null;
+      this.sellSizeSafety = null;
+      return;
+    }
     this.tradeSafetyValue = value.combined;
     this.buySafety = value.buy;
     this.sellSafety = value.sell;
@@ -55,22 +58,10 @@ export class TradeSafetyComponent implements OnInit {
 
   private updateFairValue = (fv: Models.FairValue) => {
     if (fv == null) {
-      this.clearFairValue();
+      this.fairValue = null;
       return;
     }
 
     this.fairValue = fv.price;
-  }
-
-  private clearFairValue = () => {
-    this.fairValue = null;
-  }
-
-  private clear = () => {
-    this.tradeSafetyValue = null;
-    this.buySafety = null;
-    this.sellSafety = null;
-    this.buySizeSafety = null;
-    this.sellSizeSafety = null;
   }
 }

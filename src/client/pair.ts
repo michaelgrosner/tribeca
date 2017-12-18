@@ -19,8 +19,10 @@ class FormViewModel<T> {
     if (this._submitConverter === null)
       this._submitConverter = d => d;
 
-    _sub.registerSubscriber(this.update);
-    this.connected = _sub.connected;
+    if (_sub !== null) {
+      _sub.registerSubscriber(this.update);
+      this.connected = _sub.connected;
+    }
     this.master = JSON.parse(JSON.stringify(defaultParameter));
     this.display = JSON.parse(JSON.stringify(defaultParameter));
   }
@@ -133,21 +135,20 @@ export class DisplayPair {
     subscriberFactory: SubscriberFactory,
     fireFactory: FireFactory
   ) {
+    this.active = new QuotingButtonViewModel(
+      null,
+      fireFactory
+        .getFire(Models.Topics.Connectivity)
+    );
+
     this.connectedToServer = subscriberFactory
-      .getSubscriber(zone, Models.Topics.ExchangeConnectivity)
+      .getSubscriber(zone, Models.Topics.Connectivity)
       .registerSubscriber(this.setExchangeStatus)
       .registerConnectHandler(() => this.setServerStatus(true))
       .registerDisconnectedHandler(() => this.setServerStatus(false))
       .connected;
 
     this.setStatus();
-
-    this.active = new QuotingButtonViewModel(
-      subscriberFactory
-        .getSubscriber(zone, Models.Topics.ActiveState),
-      fireFactory
-        .getFire(Models.Topics.ActiveState)
-    );
 
     this.quotingParameters = new DisplayQuotingParameters(
       subscriberFactory
@@ -172,6 +173,7 @@ export class DisplayPair {
   }
 
   private setExchangeStatus = (cs) => {
+      this.active.update(cs);
       this.connectedToExchange = cs.status == Models.Connectivity.Connected;
       this.setStatus();
   };

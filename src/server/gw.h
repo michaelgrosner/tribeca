@@ -11,7 +11,8 @@ namespace K {
     protected:
       void load() {
         gwEndings.back() = &happyEnding;
-        handshake(gw->exchange, ((CF*)config)->argAutobot);
+        gwAdminEnabled = (mConnectivity)((CF*)config)->argAutobot;
+        handshake(gw->exchange);
       };
       void waitTime() {
         ((EV*)events)->tServer->data = this;
@@ -36,9 +37,8 @@ namespace K {
       };
       void waitUser() {
         ((UI*)client)->welcome(uiTXT::ProductAdvertisement, &helloProduct);
-        ((UI*)client)->welcome(uiTXT::ExchangeConnectivity, &helloStatus);
-        ((UI*)client)->welcome(uiTXT::ActiveState, &helloState);
-        ((UI*)client)->clickme(uiTXT::ActiveState, &kissState);
+        ((UI*)client)->welcome(uiTXT::Connectivity, &helloState);
+        ((UI*)client)->clickme(uiTXT::Connectivity, &kissState);
       };
       void run() {
         ((EV*)events)->start();
@@ -61,15 +61,8 @@ namespace K {
           {"homepage", "https://github.com/ctubio/Krypto-trading-bot"}
         } };
       };
-      function<void(json*)> helloStatus = [&](json *welcome) {
-        *welcome = { {
-          {"status", (int)((QE*)engine)->gwConnectExchange}
-        } };
-      };
       function<void(json*)> helloState = [&](json *welcome) {
-        *welcome = { {
-          {"state",  (int)((QE*)engine)->gwConnectButton}
-        } };
+        *welcome = { serverState() };
       };
       function<void(json)> kissState = [&](json butterfly) {
         if (!butterfly.is_object() or !butterfly["state"].is_number()) return;
@@ -79,25 +72,29 @@ namespace K {
           clientSemaphore();
         }
       };
-      bool serverSemaphore(mConnectivity *current, mConnectivity updated) {
+      int serverSemaphore(mConnectivity *current, mConnectivity updated) {
         if (*current != updated) {
           *current = updated;
           ((QE*)engine)->gwConnectExchange = (mConnectivity)((int)gwConnectMarket * (int)gwConnectOrders);
           clientSemaphore();
-          ((UI*)client)->send(uiTXT::ExchangeConnectivity, {{"status", (int)((QE*)engine)->gwConnectExchange}});
         }
-        return updated == mConnectivity::Connected;
+        return (int)updated;
       };
       void clientSemaphore() {
-        mConnectivity updated = (int)((QE*)engine)->gwConnectExchange ? gwAdminEnabled : mConnectivity::Disconnected;
+        mConnectivity updated = (mConnectivity)((int)gwAdminEnabled * (int)((QE*)engine)->gwConnectExchange);
         if (((QE*)engine)->gwConnectButton != updated) {
           ((QE*)engine)->gwConnectButton = updated;
-          FN::log(string("GW ") + gw->name, "Quoting state changed to", ((QE*)engine)->gwConnectButton == mConnectivity::Connected ? "CONNECTED" : "DISCONNECTED");
-          ((UI*)client)->send(uiTXT::ActiveState, {{"state", (int)((QE*)engine)->gwConnectButton}});
+          FN::log(string("GW ") + gw->name, "Quoting state changed to", string((int)((QE*)engine)->gwConnectButton?"":"DIS") + "CONNECTED");
         }
+        ((UI*)client)->send(uiTXT::Connectivity, serverState());
       };
-      void handshake(mExchange k, int autobot) {
-        if (autobot) gwAdminEnabled = mConnectivity::Connected;
+      json serverState() {
+        return {
+          {"state",  (int)((QE*)engine)->gwConnectButton},
+          {"status", (int)((QE*)engine)->gwConnectExchange}
+        };
+      };
+      void handshake(mExchange k) {
         json reply;
         if (k == mExchange::Coinbase) {
           FN::stunnel();
@@ -185,7 +182,7 @@ namespace K {
           FN::log(string("GW ") + gw->name, "allows client IP");
           stringstream ss;
           ss << setprecision(8) << fixed << '\n'
-            << "- autoBot: " << (autobot ? "yes" : "no") << '\n'
+            << "- autoBot: " << ((int)gwAdminEnabled ? "yes" : "no") << '\n'
             << "- symbols: " << gw->symbol << '\n'
             << "- minTick: " << gw->minTick << '\n'
             << "- minSize: " << gw->minSize << '\n'

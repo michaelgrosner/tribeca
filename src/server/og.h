@@ -160,7 +160,7 @@ namespace K {
         }
       };
       void toClient() {
-        json k;
+        json k = json::array();
         for (map<string, mOrder>::iterator it = orders.begin(); it != orders.end(); ++it)
           if (it->second.orderStatus == mORS::Working)
             k.push_back(it->second);
