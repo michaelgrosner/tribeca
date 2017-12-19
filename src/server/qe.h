@@ -113,8 +113,8 @@ namespace K {
       };
       bool diffCounts(unsigned int *qNew, unsigned int *qWorking, unsigned int *qDone) {
         for (map<string, mOrder>::iterator it = ((OG*)broker)->orders.begin(); it != ((OG*)broker)->orders.end(); ++it)
-          if (it->second.orderStatus == mORS::New) (*qNew)++;
-          else if (it->second.orderStatus == mORS::Working) (*qWorking)++;
+          if (it->second.orderStatus == mStatus::New) (*qNew)++;
+          else if (it->second.orderStatus == mStatus::Working) (*qWorking)++;
           else (*qDone)++;
         return *qNew != status.quotesInMemoryNew
           or *qWorking != status.quotesInMemoryWorking
@@ -494,7 +494,7 @@ namespace K {
         for (map<string, mOrder>::iterator it = ((OG*)broker)->orders.begin(); it != ((OG*)broker)->orders.end(); ++it)
           if (it->second.side != side) continue;
           else if (it->second.price == q.price) return;
-          else if (it->second.orderStatus == mORS::New)
+          else if (it->second.orderStatus == mStatus::New)
             if (now-10e+3>it->second.time) zombie.push_back(it->second.orderId);
             else if (qp->safety != mQuotingSafety::AK47 or ++n >= qp->bullets) return;
         for (vector<string>::iterator it = zombie.begin(); it != zombie.end(); ++it)
@@ -536,7 +536,7 @@ namespace K {
       };
       void stopAllQuotes(mSide side) {
         for (map<string, mOrder>::iterator it = ((OG*)broker)->orders.begin(); it != ((OG*)broker)->orders.end(); ++it)
-          if (it->second.orderStatus != mORS::New and (side == mSide::Both or side == it->second.side))
+          if (it->second.orderStatus != mStatus::New and (side == mSide::Both or side == it->second.side))
             ((OG*)broker)->cancelOrder(it->second.orderId);
       };
       function<void(string,mQuote)> debuq = [&](string k, mQuote rawQuote) {

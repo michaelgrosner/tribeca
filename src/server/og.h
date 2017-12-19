@@ -17,7 +17,7 @@ namespace K {
       void waitData() {
         gw->evDataOrder = [&](mOrder k) {
           ((EV*)events)->debug("OG evDataOrder");
-          debug(string("reply  ") + k.orderId + "::" + k.exchangeId + " [" + to_string((int)k.orderStatus) + "]: " + k.quantity2str() + "/" + k.lastQuantity2str() + " at price " + k.price2str());
+          debug(string("reply  ") + k.orderId + "::" + k.exchangeId + " [" + to_string((int)k.orderStatus) + "]: " + k.quantity2str() + "/" + k.tradeQuantity2str() + " at price " + k.price2str());
           updateOrderState(k);
         };
       };
@@ -37,7 +37,7 @@ namespace K {
       };
     public:
       void sendOrder(mSide oS, double oP, double oQ, mOrderType oLM, mTimeInForce oTIF, bool oIP, bool oPO) {
-        mOrder o = updateOrderState(mOrder(gw->randId(), mPair(gw->base, gw->quote), oS, oQ, oLM, oIP, FN::roundSide(oP, gw->minTick, oS), oTIF, mORS::New, oPO));
+        mOrder o = updateOrderState(mOrder(gw->randId(), mPair(gw->base, gw->quote), oS, oQ, oLM, oIP, FN::roundSide(oP, gw->minTick, oS), oTIF, mStatus::New, oPO));
         debug(string(" send  ") + (o.side == mSide::Bid ? "BID id " : "ASK id ") + o.orderId + ": " + o.quantity2str() + " " + o.pair.base + " at price " + o.price2str() + " " + o.pair.quote);
         gw->send(o.orderId, o.side, o.price2str(), o.quantity2str(), o.type, o.timeInForce, o.preferPostOnly, o.time);
         ((UI*)client)->orders60sec++;
@@ -62,7 +62,7 @@ namespace K {
       };
       function<void(json*)> helloOrders = [&](json *welcome) {
         for (map<string, mOrder>::iterator it = orders.begin(); it != orders.end(); ++it) {
-          if (mORS::Working != it->second.orderStatus) continue;
+          if (mStatus::Working != it->second.orderStatus) continue;
           welcome->push_back(it->second);
         }
       };
@@ -96,7 +96,7 @@ namespace K {
       };
       mOrder updateOrderState(mOrder k) {
         mOrder o;
-        if (k.orderStatus == mORS::New) o = k;
+        if (k.orderStatus == mStatus::New) o = k;
         else if (k.orderId != "" and orders.find(k.orderId) != orders.end())
           o = orders[k.orderId];
         else if (k.exchangeId != "")
@@ -107,25 +107,26 @@ namespace K {
             }
         if (!o.orderId.length()) return o;
         if (k.exchangeId.length()) o.exchangeId = k.exchangeId;
-        if (k.orderStatus != mORS::New) o.orderStatus = k.orderStatus;
+        if (k.orderStatus != mStatus::New) o.orderStatus = k.orderStatus;
         if (k.price) o.price = k.price;
         if (k.quantity) o.quantity = k.quantity;
-        if (k.lastQuantity) o.lastQuantity = k.lastQuantity;
         if (k.time) o.time = k.time;
         if (k.computationalLatency) o.computationalLatency = k.computationalLatency;
         if (!o.time) o.time = FN::T();
-        if (!o.computationalLatency and o.orderStatus == mORS::Working)
+        if (!o.computationalLatency and o.orderStatus == mStatus::Working)
           o.computationalLatency = FN::T() - o.time;
         if (o.computationalLatency) o.time = FN::T();
         toMemory(o);
         ((EV*)events)->ogOrder(o);
-        if (o.orderStatus != mORS::New) toClient();
-        if (o.lastQuantity) toHistory(o);
+        if (o.orderStatus != mStatus::New)
+          toClient();
+        if (k.tradeQuantity)
+          toHistory(o, k.tradeQuantity);
         return o;
       };
       void cancelOpenOrders() {
         for (map<string, mOrder>::iterator it = orders.begin(); it != orders.end(); ++it)
-          if (mORS::New == it->second.orderStatus or mORS::Working == it->second.orderStatus)
+          if (mStatus::New == it->second.orderStatus or mStatus::Working == it->second.orderStatus)
             cancelOrder(it->first);
       };
       void cleanClosedTrades() {
@@ -162,18 +163,18 @@ namespace K {
       void toClient() {
         json k = json::array();
         for (map<string, mOrder>::iterator it = orders.begin(); it != orders.end(); ++it)
-          if (it->second.orderStatus == mORS::Working)
+          if (it->second.orderStatus == mStatus::Working)
             k.push_back(it->second);
         ((UI*)client)->send(uiTXT::OrderStatusReports, k, true);
       };
-      void toHistory(mOrder o) {
+      void toHistory(mOrder o, double qty) {
         double fee = 0;
-        double val = abs(o.price * o.lastQuantity);
+        double val = abs(o.price * qty);
         mTrade trade(
           to_string(FN::T()),
           o.pair,
           o.price,
-          o.lastQuantity,
+          qty,
           o.side,
           o.time,
           val, 0, 0, 0, 0, 0, fee, false
@@ -262,7 +263,7 @@ namespace K {
         }
       };
       void toMemory(mOrder k) {
-        if (k.orderStatus == mORS::New or k.orderStatus == mORS::Working) {
+        if (k.orderStatus == mStatus::New or k.orderStatus == mStatus::Working) {
           orders[k.orderId] = k;
           debug(string(" save  ") + (k.side == mSide::Bid ? "BID id " : "ASK id ") + k.orderId + "::" + k.exchangeId + " [" + to_string((int)k.orderStatus) + "]: " + k.quantity2str() + " " + k.pair.base + " at price " + k.price2str() + " " + k.pair.quote);
         } else cleanOrder(k.orderId);
