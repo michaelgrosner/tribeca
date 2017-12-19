@@ -1,6 +1,6 @@
 import {Component, Input} from '@angular/core';
 
-import Models = require('./models');
+import * as Models from './models';
 
 @Component({
   selector: 'market-quoting',

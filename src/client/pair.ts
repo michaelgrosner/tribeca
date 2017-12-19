@@ -1,7 +1,7 @@
 import {NgZone} from '@angular/core';
 
-import Models = require('./models');
-import Subscribe = require('./subscribe');
+import * as Models from './models';
+import * as Subscribe from './subscribe';
 import {FireFactory, SubscriberFactory} from './shared_directives';
 
 class FormViewModel<T> {

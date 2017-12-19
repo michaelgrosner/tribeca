@@ -1,13 +1,14 @@
 import {Component, Input, OnInit} from '@angular/core';
-import Highcharts = require('highcharts');
+import * as Highcharts from "highcharts";
+import * as Subscribe from './subscribe';
 
-import Models = require('./models');
+import * as Models from './models';
 
 @Component({
   selector: 'market-stats',
   template: `<div class="col-md-6 col-xs-6">
   <table><tr><td>
-    <chart style="position:relative;top:5px;height:380px;width:700px;" type="StockChart" [options]="fvChartOptions" (load)="saveInstance($event.context, 'fv')"></chart>
+    <chart style="position:relative;top:5px;height:380px;width:700px;" [options]="fvChartOptions" (load)="saveInstance($event.context, 'fv')"></chart>
   </td><td>
     <chart style="position:relative;top:10px;height:180px;width:700px;" [options]="baseChartOptions" (load)="saveInstance($event.context, 'base')"></chart>
     <chart style="position:relative;top:11px;height:180px;width:700px;" [options]="quoteChartOptions" (load)="saveInstance($event.context, 'quote')"></chart>
@@ -62,6 +63,9 @@ export class StatsComponent implements OnInit {
         height: 380,
         zoomType: false,
         backgroundColor:'rgba(255, 255, 255, 0)',
+    },
+    plotOptions: {
+      series: {marker: {enabled: false}}
     },
     navigator: {enabled: false},
     rangeSelector:{enabled: false,height:0},

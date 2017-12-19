@@ -1,8 +1,8 @@
 import {NgModule, Component, Injectable} from '@angular/core';
 import {AgRendererComponent} from 'ag-grid-angular/main';
 
-import Subscribe = require("./subscribe");
-import Models = require("./models");
+import * as Subscribe from './subscribe';
+import * as Models from './models';
 
 @Injectable()
 export class FireFactory {
