@@ -41,7 +41,7 @@ Gateways are ideally stateless (some state may be needed in order to perform exc
 
 Navigate to the Web UI as described in the install process. You should see a screen like:
 
-![](https://github.com/ctubio/**Krypto-trading-bot**/raw/master/etc/img/K.png)
+![](https://github.com/ctubio/Krypto-trading-bot/raw/master/etc/img/K.png)
 
 * Market Data and Quotes - this is perhaps the most important screen in the app.
 
