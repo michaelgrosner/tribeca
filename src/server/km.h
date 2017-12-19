@@ -3,11 +3,11 @@
 
 namespace K {
   enum class mExchange: unsigned int { Null, HitBtc, OkCoin, Coinbase, Bitfinex, Kraken, OkEx, Korbit, Poloniex };
-  enum class mTimeInForce: unsigned int { IOC, FOK, GTC };
   enum class mConnectivity: unsigned int { Disconnected, Connected };
+  enum class mStatus: unsigned int { New, Working, Complete, Cancelled };
+  enum class mTimeInForce: unsigned int { IOC, FOK, GTC };
   enum class mOrderType: unsigned int { Limit, Market };
   enum class mSide: unsigned int { Bid, Ask, Both };
-  enum class mORS: unsigned int { New, Working, Complete, Cancelled };
   enum class mPingAt: unsigned int { BothSides, BidSide, AskSide, DepletedSide, DepletedBidSide, DepletedAskSide, StopPings };
   enum class mPongAt: unsigned int { ShortPingFair, LongPingFair, ShortPingAggressive, LongPingAggressive };
   enum class mQuotingMode: unsigned int { Top, Mid, Join, InverseJoin, InverseTop, HamelinRat, Depth };
@@ -344,7 +344,7 @@ namespace K {
     {};
   };
   static void to_json(json& j, const mTrade& k) {
-    j = {
+    if (k.tradeId.length()) j = {
       {"tradeId", k.tradeId},
       {"time", k.time},
       {"pair", k.pair},
@@ -359,6 +359,13 @@ namespace K {
       {"Kdiff", k.Kdiff},
       {"feeCharged", k.feeCharged},
       {"loadedFromDB", k.loadedFromDB},
+    };
+    else j = {
+      {"time", k.time},
+      {"pair", k.pair},
+      {"price", k.price},
+      {"quantity", k.quantity},
+      {"side", (int)k.side}
     };
   };
   static void from_json(const json& j, mTrade& k) {
@@ -384,34 +391,34 @@ namespace K {
             mSide side;
            double price,
                   quantity,
-                  lastQuantity;
+                  tradeQuantity;
        mOrderType type;
      mTimeInForce timeInForce;
-             mORS orderStatus;
+             mStatus orderStatus;
              bool isPong,
                   preferPostOnly;
     unsigned long time,
                   computationalLatency;
     mOrder():
-      orderId(""), exchangeId(""), pair(mPair()), side((mSide)0), quantity(0), type((mOrderType)0), isPong(false), price(0), timeInForce((mTimeInForce)0), orderStatus((mORS)0), preferPostOnly(false), lastQuantity(0), time(0), computationalLatency(0)
+      orderId(""), exchangeId(""), pair(mPair()), side((mSide)0), quantity(0), type((mOrderType)0), isPong(false), price(0), timeInForce((mTimeInForce)0), orderStatus((mStatus)0), preferPostOnly(false), tradeQuantity(0), time(0), computationalLatency(0)
     {};
-    mOrder(string o, mORS s):
-      orderId(o), exchangeId(""), pair(mPair()), side((mSide)0), quantity(0), type((mOrderType)0), isPong(false), price(0), timeInForce((mTimeInForce)0), orderStatus(s), preferPostOnly(false), lastQuantity(0), time(0), computationalLatency(0)
+    mOrder(string o, mStatus s):
+      orderId(o), exchangeId(""), pair(mPair()), side((mSide)0), quantity(0), type((mOrderType)0), isPong(false), price(0), timeInForce((mTimeInForce)0), orderStatus(s), preferPostOnly(false), tradeQuantity(0), time(0), computationalLatency(0)
     {};
-    mOrder(string o, string e, mORS s, double p, double q, double Q):
-      orderId(o), exchangeId(e), pair(mPair()), side((mSide)0), quantity(q), type((mOrderType)0), isPong(false), price(p), timeInForce((mTimeInForce)0), orderStatus(s), preferPostOnly(false), lastQuantity(Q), time(0), computationalLatency(0)
+    mOrder(string o, string e, mStatus s, double p, double q, double Q):
+      orderId(o), exchangeId(e), pair(mPair()), side((mSide)0), quantity(q), type((mOrderType)0), isPong(false), price(p), timeInForce((mTimeInForce)0), orderStatus(s), preferPostOnly(false), tradeQuantity(Q), time(0), computationalLatency(0)
     {};
-    mOrder(string o, mPair P, mSide S, double q, mOrderType t, bool i, double p, mTimeInForce F, mORS s, bool O):
-      orderId(o), exchangeId(""), pair(P), side(S), quantity(q), type(t), isPong(i), price(p), timeInForce(F), orderStatus(s), preferPostOnly(O), lastQuantity(0), time(0), computationalLatency(0)
+    mOrder(string o, mPair P, mSide S, double q, mOrderType t, bool i, double p, mTimeInForce F, mStatus s, bool O):
+      orderId(o), exchangeId(""), pair(P), side(S), quantity(q), type(t), isPong(i), price(p), timeInForce(F), orderStatus(s), preferPostOnly(O), tradeQuantity(0), time(0), computationalLatency(0)
     {};
     string quantity2str() {
       stringstream ss;
       ss << setprecision(8) << fixed << quantity;
       return ss.str();
     };
-    string lastQuantity2str() {
+    string tradeQuantity2str() {
       stringstream ss;
-      ss << setprecision(8) << fixed << lastQuantity;
+      ss << setprecision(8) << fixed << tradeQuantity;
       return ss.str();
     };
     string price2str() {
@@ -433,7 +440,7 @@ namespace K {
       {"timeInForce", (int)k.timeInForce},
       {"orderStatus", (int)k.orderStatus},
       {"preferPostOnly", k.preferPostOnly},
-      {"lastQuantity", k.lastQuantity},
+      {"tradeQuantity", k.tradeQuantity},
       {"time", k.time},
       {"computationalLatency", k.computationalLatency}
     };
