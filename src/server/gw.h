@@ -111,7 +111,7 @@ namespace K {
           gw->minTick = stod(reply.value("tickSize", "0"));
           gw->minSize = stod(reply.value("quantityIncrement", "0"));
         }
-        else if (k == mExchange::Bitfinex) {
+        else if (k == mExchange::Bitfinex or k == mExchange::BitfinexMargin) {
           gw->randId = FN::int64Id;
           gw->symbol = FN::S2l(string(gw->base) + gw->quote);
           reply = FN::wJet(string(gw->http) + "/pubticker/" + gw->symbol);

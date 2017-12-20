@@ -47,7 +47,7 @@ export class TradeSafetyComponent {
       this.buySafety = o.buy;
       this.sellSafety = o.sell;
       this.buySizeSafety = o.buyPing;
-      this.sellSizeSafety = o.sellPong;
+      this.sellSizeSafety = o.sellPing;
     }
   }
 }

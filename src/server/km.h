@@ -2,12 +2,12 @@
 #define K_KM_H_
 
 namespace K {
-  enum class mExchange: unsigned int { Null, HitBtc, OkCoin, Coinbase, Bitfinex, Kraken, OkEx, Korbit, Poloniex };
+  enum class mExchange: unsigned int { Null, HitBtc, OkCoin, Coinbase, Bitfinex, Kraken, OkEx, BitfinexMargin, Korbit, Poloniex };
   enum class mConnectivity: unsigned int { Disconnected, Connected };
   enum class mStatus: unsigned int { New, Working, Complete, Cancelled };
+  enum class mSide: unsigned int { Bid, Ask, Both };
   enum class mTimeInForce: unsigned int { IOC, FOK, GTC };
   enum class mOrderType: unsigned int { Limit, Market };
-  enum class mSide: unsigned int { Bid, Ask, Both };
   enum class mPingAt: unsigned int { BothSides, BidSide, AskSide, DepletedSide, DepletedBidSide, DepletedAskSide, StopPings };
   enum class mPongAt: unsigned int { ShortPingFair, LongPingFair, ShortPingAggressive, LongPingAggressive };
   enum class mQuotingMode: unsigned int { Top, Mid, Join, InverseJoin, InverseTop, HamelinRat, Depth };
@@ -264,12 +264,12 @@ namespace K {
            sell,
            combined,
            buyPing,
-           sellPong;
+           sellPing;
     mSafety():
-      buy(0), sell(0), combined(0), buyPing(-1), sellPong(-1)
+      buy(0), sell(0), combined(0), buyPing(-1), sellPing(-1)
     {};
     mSafety(double b, double s, double c, double bP, double sP):
-      buy(b), sell(s), combined(c), buyPing(bP), sellPong(sP)
+      buy(b), sell(s), combined(c), buyPing(bP), sellPing(sP)
     {};
   };
   static void to_json(json& j, const mSafety& k) {
@@ -278,7 +278,7 @@ namespace K {
       {"sell", k.sell},
       {"combined", k.combined},
       {"buyPing", fmax(0, k.buyPing)},
-      {"sellPong", fmax(0, k.sellPong)}
+      {"sellPing", fmax(0, k.sellPing)}
     };
   };
   struct mPosition {

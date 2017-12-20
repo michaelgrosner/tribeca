@@ -119,8 +119,8 @@ namespace K {
               << FN::uiT() << RWHITE << "-p, --pass=WORD           - set allowed WORD as password for UI connections," << '\n'
               << FN::uiT() << RWHITE << "                            mandatory but may be 'NULL'." << '\n'
               << FN::uiT() << RWHITE << "-e, --exchange=NAME       - set exchange NAME for trading, mandatory one of:" << '\n'
-              << FN::uiT() << RWHITE << "                            'COINBASE', 'BITFINEX', 'HITBTC', 'OKCOIN'," << '\n'
-              << FN::uiT() << RWHITE << "                            'KORBIT', 'POLONIEX' or 'NULL'." << '\n'
+              << FN::uiT() << RWHITE << "                            'COINBASE', 'BITFINEX',  'BITFINEX_MARGIN', 'HITBTC'," << '\n'
+              << FN::uiT() << RWHITE << "                            'OKCOIN', 'KORBIT', 'POLONIEX' or 'NULL'." << '\n'
               << FN::uiT() << RWHITE << "-c, --currency=PAIRS      - set currency pairs for trading (use format" << '\n'
               << FN::uiT() << RWHITE << "                            with '/' separator, like 'BTC/EUR')." << '\n'
               << FN::uiT() << RWHITE << "-A, --apikey=WORD         - set (never share!) WORD as api key for trading," << '\n'
@@ -225,6 +225,7 @@ namespace K {
         string k = FN::S2u(argExchange);
         if (k == "COINBASE") return mExchange::Coinbase;
         else if (k == "BITFINEX") return mExchange::Bitfinex;
+        else if (k == "BITFINEX_MARGIN") return mExchange::BitfinexMargin;
         else if (k == "HITBTC") return mExchange::HitBtc;
         else if (k == "OKEX") return mExchange::OkEx;
         else if (k == "OKCOIN") return mExchange::OkCoin;

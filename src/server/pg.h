@@ -62,7 +62,7 @@ namespace K {
         if (safety.buyPing == -1
           or next.combined != safety.combined
           or next.buyPing != safety.buyPing
-          or next.sellPong != safety.sellPong
+          or next.sellPing != safety.sellPing
         ) {
           safety = next;
           ((UI*)client)->send(uiTXT::TradeSafetyValue, next);
@@ -120,7 +120,6 @@ namespace K {
         double sellSize = qp->percentageValues
           ? qp->sellSizePercentage * position.baseValue / 100
           : qp->sellSize;
-        double totalBasePosition = position.baseAmount + position.baseHeldAmount;
         map<double, mTrade> tradesBuy;
         map<double, mTrade> tradesSell;
         for (vector<mTrade>::iterator it = ((OG*)broker)->tradesHistory.begin(); it != ((OG*)broker)->tradesHistory.end(); ++it) {
@@ -128,32 +127,29 @@ namespace K {
           if (qp->safety == mQuotingSafety::PingPong)
             (it->side == mSide::Bid ? buySize : sellSize) = it->quantity;
         }
-        if (qp->buySizeMax and qp->aggressivePositionRebalancing != mAPR::Off)
-          buySize = fmax(buySize, targetBasePosition - totalBasePosition);
-        if (qp->sellSizeMax and qp->aggressivePositionRebalancing != mAPR::Off)
-          sellSize = fmax(sellSize, totalBasePosition - targetBasePosition);
+        double totalBasePosition = position.baseAmount + position.baseHeldAmount;
+        if (qp->aggressivePositionRebalancing != mAPR::Off) {
+          if (qp->buySizeMax) buySize = fmax(buySize, targetBasePosition - totalBasePosition);
+          if (qp->sellSizeMax) sellSize = fmax(sellSize, totalBasePosition - targetBasePosition);
+        }
         double widthPong = qp->widthPercentage
           ? qp->widthPongPercentage * ((MG*)market)->fairValue / 100
           : qp->widthPong;
-        double buyPing = 0;
-        double sellPong = 0;
-        double buyQty = 0;
-        double sellQty = 0;
-        if (qp->pongAt == mPongAt::ShortPingFair
-          or qp->pongAt == mPongAt::ShortPingAggressive
-        ) {
+        double buyPing = 0,
+               sellPing = 0,
+               buyQty = 0,
+               sellQty = 0;
+        if (qp->pongAt == mPongAt::ShortPingFair or qp->pongAt == mPongAt::ShortPingAggressive) {
           matchBestPing(&tradesBuy, &buyPing, &buyQty, sellSize, widthPong, true);
-          matchBestPing(&tradesSell, &sellPong, &sellQty, buySize, widthPong);
+          matchBestPing(&tradesSell, &sellPing, &sellQty, buySize, widthPong);
           if (!buyQty) matchFirstPing(&tradesBuy, &buyPing, &buyQty, sellSize, widthPong*-1, true);
-          if (!sellQty) matchFirstPing(&tradesSell, &sellPong, &sellQty, buySize, widthPong*-1);
-        } else if (qp->pongAt == mPongAt::LongPingFair
-          or qp->pongAt == mPongAt::LongPingAggressive
-        ) {
+          if (!sellQty) matchFirstPing(&tradesSell, &sellPing, &sellQty, buySize, widthPong*-1);
+        } else if (qp->pongAt == mPongAt::LongPingFair or qp->pongAt == mPongAt::LongPingAggressive) {
           matchLastPing(&tradesBuy, &buyPing, &buyQty, sellSize, widthPong);
-          matchLastPing(&tradesSell, &sellPong, &sellQty, buySize, widthPong, true);
+          matchLastPing(&tradesSell, &sellPing, &sellQty, buySize, widthPong, true);
         }
         if (buyQty) buyPing /= buyQty;
-        if (sellQty) sellPong /= sellQty;
+        if (sellQty) sellPing /= sellQty;
         clean();
         double sumBuys = sum(&buys);
         double sumSells = sum(&sells);
@@ -162,40 +158,39 @@ namespace K {
           sumSells / sellSize,
           (sumBuys + sumSells) / (buySize + sellSize),
           buyPing,
-          sellPong
+          sellPing
         );
       };
-      void matchFirstPing(map<double, mTrade>* trades, double* ping, double* qty, double qtyMax, double width, bool reverse = false) {
-        matchPing(qp->_matchPings, true, true, trades, ping, qty, qtyMax, width, reverse);
+      void matchFirstPing(map<double, mTrade> *trades, double *ping, double *qty, double qtyMax, double width, bool reverse = false) {
+        matchPing(true, true, trades, ping, qty, qtyMax, width, reverse);
       };
-      void matchBestPing(map<double, mTrade>* trades, double* ping, double* qty, double qtyMax, double width, bool reverse = false) {
-        matchPing(qp->_matchPings, true, false, trades, ping, qty, qtyMax, width, reverse);
+      void matchBestPing(map<double, mTrade> *trades, double *ping, double *qty, double qtyMax, double width, bool reverse = false) {
+        matchPing(true, false, trades, ping, qty, qtyMax, width, reverse);
       };
-      void matchLastPing(map<double, mTrade>* trades, double* ping, double* qty, double qtyMax, double width, bool reverse = false) {
-        matchPing(qp->_matchPings, false, true, trades, ping, qty, qtyMax, width, reverse);
+      void matchLastPing(map<double, mTrade> *trades, double *ping, double *qty, double qtyMax, double width, bool reverse = false) {
+        matchPing(false, true, trades, ping, qty, qtyMax, width, reverse);
       };
-      void matchPing(bool matchPings, bool near, bool far, map<double, mTrade>* trades, double* ping, double* qty, double qtyMax, double width, bool reverse = false) {
+      void matchPing(bool near, bool far, map<double, mTrade> *trades, double *ping, double *qty, double qtyMax, double width, bool reverse = false) {
         int dir = width > 0 ? 1 : -1;
         if (reverse) for (map<double, mTrade>::reverse_iterator it = trades->rbegin(); it != trades->rend(); ++it) {
-          if (matchPing(matchPings, near, far, ping, width, qty, qtyMax, dir * ((MG*)market)->fairValue, dir * it->second.price, it->second.quantity, it->second.price, it->second.Kqty, reverse))
+          if (matchPing(near, far, ping, qty, qtyMax, width, dir * ((MG*)market)->fairValue, dir * it->second.price, it->second.quantity, it->second.price, it->second.Kqty, reverse))
             break;
         } else for (map<double, mTrade>::iterator it = trades->begin(); it != trades->end(); ++it)
-          if (matchPing(matchPings, near, far, ping, width, qty, qtyMax, dir * ((MG*)market)->fairValue, dir * it->second.price, it->second.quantity, it->second.price, it->second.Kqty, reverse))
+          if (matchPing(near, far, ping, qty, qtyMax, width, dir * ((MG*)market)->fairValue, dir * it->second.price, it->second.quantity, it->second.price, it->second.Kqty, reverse))
             break;
       };
-      bool matchPing(bool matchPings, bool near, bool far, double *ping, double width, double* qty, double qtyMax, double fv, double price, double qtyTrade, double priceTrade, double KqtyTrade, bool reverse) {
+      bool matchPing(bool near, bool far, double *ping, double *qty, double qtyMax, double width, double fv, double price, double qtyTrade, double priceTrade, double KqtyTrade, bool reverse) {
         if (reverse) { fv *= -1; price *= -1; width *= -1; }
         if (*qty < qtyMax
           and (far ? fv > price : true)
           and (near ? (reverse ? fv - width : fv + width) < price : true)
-          and (!matchPings or KqtyTrade < qtyTrade)
-        ) matchPing(ping, qty, qtyMax, qtyTrade, priceTrade);
+          and (!qp->_matchPings or KqtyTrade < qtyTrade)
+        ) {
+          double qty_ = fmin(qtyMax - *qty, qtyTrade);
+          *ping += priceTrade * qty_;
+          *qty += qty_;
+        }
         return *qty >= qtyMax;
-      };
-      void matchPing(double* ping, double* qty, double qtyMax, double qtyTrade, double priceTrade) {
-        double qty_ = fmin(qtyMax - *qty, qtyTrade);
-        *ping += priceTrade * qty_;
-        *qty += qty_;
       };
       void clean() {
         if (buys.size()) expire(&buys);

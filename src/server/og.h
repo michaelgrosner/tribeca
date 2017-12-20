@@ -73,7 +73,7 @@ namespace K {
         cleanClosedTrades();
       };
       function<void(json)> kissCleanAllTrades = [&](json butterfly) {
-        cleanTrades();
+        cleanTrade("", true);
       };
       function<void(json)> kissCancelOrder = [&](json butterfly) {
         if (butterfly.is_object() and butterfly["orderId"].is_string())
@@ -120,8 +120,7 @@ namespace K {
         ((EV*)events)->ogOrder(o);
         if (o.orderStatus != mStatus::New)
           toClient();
-        if (k.tradeQuantity)
-          toHistory(o, k.tradeQuantity);
+        toHistory(o, k.tradeQuantity);
         return o;
       };
       void cancelOpenOrders() {
@@ -140,23 +139,15 @@ namespace K {
           }
         }
       };
-      void cleanTrades() {
+      void cleanTrade(string k, bool all = false) {
         for (vector<mTrade>::iterator it = tradesHistory.begin(); it != tradesHistory.end();) {
-          it->Kqty = -1;
-          ((UI*)client)->send(uiTXT::Trades, *it);
-          ((DB*)memory)->insert(uiTXT::Trades, {}, false, it->tradeId);
-          it = tradesHistory.erase(it);
-        }
-      };
-      void cleanTrade(string k) {
-        for (vector<mTrade>::iterator it = tradesHistory.begin(); it != tradesHistory.end();) {
-          if (it->tradeId != k) ++it;
+          if (!all and it->tradeId != k) ++it;
           else {
             it->Kqty = -1;
             ((UI*)client)->send(uiTXT::Trades, *it);
             ((DB*)memory)->insert(uiTXT::Trades, {}, false, it->tradeId);
             it = tradesHistory.erase(it);
-            break;
+            if (!all) break;
           }
         }
       };
@@ -168,8 +159,8 @@ namespace K {
         ((UI*)client)->send(uiTXT::OrderStatusReports, k, true);
       };
       void toHistory(mOrder o, double qty) {
+        if (!qty) return;
         double fee = 0;
-        double val = abs(o.price * qty);
         mTrade trade(
           to_string(FN::T()),
           o.pair,
@@ -177,10 +168,11 @@ namespace K {
           qty,
           o.side,
           o.time,
-          val, 0, 0, 0, 0, 0, fee, false
+          abs(o.price * qty),
+          0, 0, 0, 0, 0, fee, false
         );
-        FN::log(trade, gw->name);
         ((EV*)events)->ogTrade(trade);
+        FN::log(trade, gw->name);
         if (qp->_matchPings) {
           double widthPong = qp->widthPercentage
             ? qp->widthPongPercentage * trade.price / 100
@@ -242,7 +234,7 @@ namespace K {
           pong->quantity = pong->quantity - Kqty;
           pong->value = abs(pong->price*pong->quantity);
           if (it->quantity<=it->Kqty)
-            it->Kdiff = abs((it->quantity*it->price)-(it->Kqty*it->Kprice));
+            it->Kdiff = abs(it->quantity * it->price - it->Kqty * it->Kprice);
           it->loadedFromDB = false;
           ((UI*)client)->send(uiTXT::Trades, *it);
           ((DB*)memory)->insert(uiTXT::Trades, *it, false, it->tradeId);
