@@ -118,6 +118,12 @@ class DisplayQuotingParameters extends FormViewModel<Models.QuotingParameters> {
     }
     return names;
   }
+
+  public backup = () => {
+    try{
+      this.display = JSON.parse(window.prompt('Backup quoting parameters\n\nTo export the current setup, copy all from the input below and paste it somewhere else.\n\nTo import a setup replacement, replace the quoting parameters below by some new, then click [Save] to apply.\n\nCurrent/New setup of quoting parameters:', JSON.stringify(this.display))) || this.display;
+    }catch(e){}
+  };
 }
 
 export class DisplayPair {

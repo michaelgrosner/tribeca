@@ -481,6 +481,11 @@ class DisplayOrder {
                                             </td>
                                             <td style="text-align: center;border-bottom: 3px solid #A0A0A0;">
                                                 <input class="btn btn-default btn"
+                                                    style="width:61px"
+                                                    type="button"
+                                                    (click)="pair.quotingParameters.backup()"
+                                                    value="Backup" />
+                                                <input class="btn btn-default btn"
                                                     style="width:55px"
                                                     type="button"
                                                     (click)="pair.quotingParameters.reset()"
