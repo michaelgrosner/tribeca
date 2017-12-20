@@ -217,8 +217,8 @@ reinstall: src
 	rm -rf app
 	@$(MAKE) install
 	#@$(MAKE) test -s
-	@$(MAKE) restartall
-	@echo && echo ..done! Please refresh the GUI if is currently opened in your browser.
+	#@$(MAKE) restartall
+	@echo && echo ..done! Please restart any running instance and also refresh the UI if is currently opened in your browser.
 
 list:
 	@screen -list || :

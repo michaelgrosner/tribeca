@@ -164,7 +164,7 @@ It just contains a few variables with examples ready to be reused (the suggested
 
 ### Upgrade to the latest commit
 
-After each reinstall, `make restartall` will be executed automatically.
+After reinstall, you will need to manually restart any running instances.
 
 To upgrade under Manual ZIP Installation, please run `make reinstall`.
 
