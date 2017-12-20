@@ -228,7 +228,7 @@ To set a different database path or to set an [in-memory database](https://sqlit
 
 ### Charts
 
-The metrics are not saved anywhere, is just UI data collected with a visibility retention of 6 hours, to display over time:
+The metrics are not saved anywhere, is just UI data collected with a visibility retention of n hours (where n is the value of `profit` quoting parameter), to display over time:
 
  * Market Fair Value with High and Low Prices
  * Trades Complete

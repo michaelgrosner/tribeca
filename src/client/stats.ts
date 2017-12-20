@@ -634,7 +634,7 @@ export class StatsComponent implements OnInit {
 
   private removeOldPoints = (time: number) => {
     Highcharts.charts.forEach(chart => { chart.series.forEach(serie => {
-      while(serie.data.length && Math.abs(time - serie.data[0].x) > 21600000)
+      while(serie.data.length && Math.abs(time - serie.data[0].x) > (<any>Highcharts).quotingParameters.profitHourInterval * 36e+5)
         serie.data[0].remove(false);
     })});
   }
