@@ -510,7 +510,7 @@ class DisplayOrder {
                             <div class="row img-rounded exchange">
                                 <div *ngIf="pair.connectionMessage">{{ pair.connectionMessage }}</div>
                                 <button style="font-size:16px;" class="col-md-12 col-xs-3" [ngClass]="pair.active.getClass()" (click)="pair.active.submit()">
-                                    {{ exchange_name }}<br/>{{ pair_name.join('/') }}
+                                    {{ exchange_name.replace('Margin', ' [M]') }}<br/>{{ pair_name.join('/') }}
                                 </button>
                                 <wallet-position [product]="product" [setPosition]="Position"></wallet-position>
                                 <a [hidden]="!exchange_market" href="{{ exchange_market }}" target="_blank">Market</a><span [hidden]="!exchange_market || !exchange_orders ">,</span>
