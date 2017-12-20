@@ -642,7 +642,7 @@ class ClientComponent implements OnInit {
   public showStats: number = 0;
   public order: DisplayOrder;
   public pair: Pair.DisplayPair;
-  public exchange_name: string;
+  public exchange_name: string = "";
   public exchange_market: string;
   public exchange_orders: string;
   public pair_name: string[];
@@ -913,7 +913,7 @@ class ClientComponent implements OnInit {
   private reset = (online: boolean) => {
     this.online = online;
     this.pair_name = [null, null];
-    this.exchange_name = null;
+    this.exchange_name = "";
     this.exchange_market = null;
     this.exchange_orders = null;
   }
