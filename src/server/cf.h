@@ -36,46 +36,44 @@ namespace K {
     protected:
       void load(int argc, char** argv) {
         cout << BGREEN << "K" << RGREEN << " build " << K_BUILD << " " << K_STAMP << "." << BRED << '\n';
-        int k;
-        while (true) {
-          int i = 0;
-          static struct option args[] = {
-            {"help",         no_argument,       0,               'h'},
-            {"colors",       no_argument,       &argColors,        1},
-            {"debug",        no_argument,       &argDebug,         1},
-            {"debug-events", no_argument,       &argDebugEvents,   1},
-            {"debug-orders", no_argument,       &argDebugOrders,   1},
-            {"debug-quotes", no_argument,       &argDebugQuotes,   1},
-            {"without-ssl",  no_argument,       &argWithoutSSL,    1},
-            {"headless",     no_argument,       &argHeadless,      1},
-            {"naked",        no_argument,       &argNaked,         1},
-            {"autobot",      no_argument,       &argAutobot,       1},
-            {"whitelist",    required_argument, 0,               'L'},
-            {"matryoshka",   required_argument, 0,               'k'},
-            {"exchange",     required_argument, 0,               'e'},
-            {"currency",     required_argument, 0,               'c'},
-            {"apikey",       required_argument, 0,               'A'},
-            {"secret",       required_argument, 0,               'S'},
-            {"passphrase",   required_argument, 0,               'X'},
-            {"username",     required_argument, 0,               'U'},
-            {"http",         required_argument, 0,               'H'},
-            {"wss",          required_argument, 0,               'W'},
-            {"title",        required_argument, 0,               'K'},
-            {"port",         required_argument, 0,               'P'},
-            {"user",         required_argument, 0,               'u'},
-            {"pass",         required_argument, 0,               'p'},
-            {"database",     required_argument, 0,               'd'},
-            {"ewma-short",   required_argument, 0,               's'},
-            {"ewma-medium",  required_argument, 0,               'm'},
-            {"ewma-long",    required_argument, 0,               'l'},
-            {"ewma-verylong",required_argument, 0,               'V'},
-            {"free-version", no_argument,       &argFree,          1},
-            {"version",      no_argument,       0,               'v'},
-            {0,              0,                 0,                 0}
-          };
-          k = getopt_long(argc, argv, "hvd:l:m:s:p:u:v:c:e:k:P:K:W:H:U:X:S:A:", args, &i);
-          if (k == -1) break;
-          switch (k) {
+        static const struct option args[] = {
+          {"help",         no_argument,       0,               'h'},
+          {"colors",       no_argument,       &argColors,        1},
+          {"debug",        no_argument,       &argDebug,         1},
+          {"debug-events", no_argument,       &argDebugEvents,   1},
+          {"debug-orders", no_argument,       &argDebugOrders,   1},
+          {"debug-quotes", no_argument,       &argDebugQuotes,   1},
+          {"without-ssl",  no_argument,       &argWithoutSSL,    1},
+          {"headless",     no_argument,       &argHeadless,      1},
+          {"naked",        no_argument,       &argNaked,         1},
+          {"autobot",      no_argument,       &argAutobot,       1},
+          {"whitelist",    required_argument, 0,               'L'},
+          {"matryoshka",   required_argument, 0,               'k'},
+          {"exchange",     required_argument, 0,               'e'},
+          {"currency",     required_argument, 0,               'c'},
+          {"apikey",       required_argument, 0,               'A'},
+          {"secret",       required_argument, 0,               'S'},
+          {"passphrase",   required_argument, 0,               'X'},
+          {"username",     required_argument, 0,               'U'},
+          {"http",         required_argument, 0,               'H'},
+          {"wss",          required_argument, 0,               'W'},
+          {"title",        required_argument, 0,               'K'},
+          {"port",         required_argument, 0,               'P'},
+          {"user",         required_argument, 0,               'u'},
+          {"pass",         required_argument, 0,               'p'},
+          {"database",     required_argument, 0,               'd'},
+          {"ewma-short",   required_argument, 0,               's'},
+          {"ewma-medium",  required_argument, 0,               'm'},
+          {"ewma-long",    required_argument, 0,               'l'},
+          {"ewma-verylong",required_argument, 0,               'V'},
+          {"free-version", no_argument,       &argFree,          1},
+          {"version",      no_argument,       0,               'v'},
+          {0,              0,                 0,                 0}
+        };
+        int k = 0;
+        while (++k) {
+          switch (k = getopt_long(argc, argv, "hvd:l:m:s:p:u:v:c:e:k:P:K:W:H:U:X:S:A:", args, NULL)) {
+            case -1: break;
             case 0: break;
             case 'P': argPort = stoi(optarg); break;
             case 'A': argApikey = string(optarg); break;

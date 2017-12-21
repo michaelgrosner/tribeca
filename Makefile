@@ -7,7 +7,7 @@ CC       = $(CHOST)-gcc-6
 KGIT     = 4.0
 KHUB     = 8656597
 V_ZLIB  := 1.2.11
-V_SSL   := 1.1.0f
+V_SSL   := 1.1.0g
 V_CURL  := 7.57.0
 V_NCUR  := 6.0
 V_JSON  := v3.0.0
@@ -15,7 +15,7 @@ V_UWS   := 0.14.4
 V_SQL   := 3210000
 V_QF    := v.1.14.4
 V_PVS   := 6.20.24121.1823
-KZIP     = e1e810c51b5fb6427d5def914bd54b682f255c0b
+KZIP     = ec72a0d544e5ede0dd6438d037b4f030ce755b00
 KARGS    = -Wextra -std=c++11 -O3 -I$(KLOCAL)/include          \
   src/server/K.cxx -pthread -rdynamic -DUWS_THREADSAFE         \
   -DK_STAMP='"$(shell date --rfc-3339=seconds | cut -f1 -d+)"' \
