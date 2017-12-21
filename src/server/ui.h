@@ -116,6 +116,7 @@ namespace K {
       };
       void waitUser() {
         welcome(uiTXT::ApplicationState, &helloServer);
+        welcome(uiTXT::ProductAdvertisement, &helloProduct);
         welcome(uiTXT::Notepad, &helloNotes);
         clickme(uiTXT::Notepad, &kissNotes);
         welcome(uiTXT::ToggleSettings, &helloSettings);
@@ -152,6 +153,16 @@ namespace K {
     private:
       function<void(json*)> helloServer = [&](json *welcome) {
         *welcome = { serverState() };
+      };
+      function<void(json*)> helloProduct = [&](json *welcome) {
+        *welcome = { {
+          {"exchange", gw->exchange},
+          {"pair", mPair(gw->base, gw->quote)},
+          {"minTick", gw->minTick},
+          {"environment", ((CF*)config)->argTitle},
+          {"matryoshka", ((CF*)config)->argMatryoshka},
+          {"homepage", "https://github.com/ctubio/Krypto-trading-bot"}
+        } };
       };
       function<void(json*)> helloNotes = [&](json *welcome) {
         *welcome = { notepad };

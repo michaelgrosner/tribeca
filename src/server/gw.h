@@ -36,9 +36,8 @@ namespace K {
         gw->levels();
       };
       void waitUser() {
-        ((UI*)client)->welcome(uiTXT::ProductAdvertisement, &helloProduct);
-        ((UI*)client)->welcome(uiTXT::Connectivity, &helloState);
-        ((UI*)client)->clickme(uiTXT::Connectivity, &kissState);
+        ((UI*)client)->welcome(uiTXT::Connectivity, &hello);
+        ((UI*)client)->clickme(uiTXT::Connectivity, &kiss);
       };
       void run() {
         ((EV*)events)->start();
@@ -51,20 +50,10 @@ namespace K {
           FN::log(string("GW ") + gw->name, "cancell all open orders OK");
         });
       };
-      function<void(json*)> helloProduct = [&](json *welcome) {
-        *welcome = { {
-          {"exchange", gw->exchange},
-          {"pair", mPair(gw->base, gw->quote)},
-          {"minTick", gw->minTick},
-          {"environment", ((CF*)config)->argTitle},
-          {"matryoshka", ((CF*)config)->argMatryoshka},
-          {"homepage", "https://github.com/ctubio/Krypto-trading-bot"}
-        } };
-      };
-      function<void(json*)> helloState = [&](json *welcome) {
+      function<void(json*)> hello = [&](json *welcome) {
         *welcome = { serverState() };
       };
-      function<void(json)> kissState = [&](json butterfly) {
+      function<void(json)> kiss = [&](json butterfly) {
         if (!butterfly.is_object() or !butterfly["state"].is_number()) return;
         mConnectivity updated = butterfly["state"].get<mConnectivity>();
         if (gwAdminEnabled != updated) {
