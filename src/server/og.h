@@ -130,7 +130,7 @@ namespace K {
       };
       void cleanClosedTrades() {
         for (vector<mTrade>::iterator it = tradesHistory.begin(); it != tradesHistory.end();) {
-          if (it->Kqty+0.0001 < it->quantity) ++it;
+          if (it->Kqty < it->quantity) ++it;
           else {
             it->Kqty = -1;
             ((UI*)client)->send(uiTXT::Trades, *it);
@@ -191,7 +191,7 @@ namespace K {
         }
         ((UI*)client)->send(uiTXT::TradesChart, {
           {"price", trade.price},
-          {"side", (int)trade.side},
+          {"side", trade.side},
           {"quantity", trade.quantity},
           {"value", trade.value},
           {"pong", o.isPong}

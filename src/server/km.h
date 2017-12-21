@@ -100,31 +100,31 @@ namespace K {
       {"sellSize", k.sellSize},
       {"sellSizePercentage", k.sellSizePercentage},
       {"sellSizeMax", k.sellSizeMax},
-      {"pingAt", (unsigned int)k.pingAt},
-      {"pongAt", (unsigned int)k.pongAt},
-      {"mode", (unsigned int)k.mode},
-      {"safety", (unsigned int)k.safety},
+      {"pingAt", k.pingAt},
+      {"pongAt", k.pongAt},
+      {"mode", k.mode},
+      {"safety", k.safety},
       {"bullets", k.bullets},
       {"range", k.range},
       {"rangePercentage", k.rangePercentage},
-      {"fvModel", (unsigned int)k.fvModel},
+      {"fvModel", k.fvModel},
       {"targetBasePosition", k.targetBasePosition},
       {"targetBasePositionPercentage", k.targetBasePositionPercentage},
       {"positionDivergence", k.positionDivergence},
       {"positionDivergencePercentage", k.positionDivergencePercentage},
       {"positionDivergenceMin", k.positionDivergenceMin},
       {"positionDivergencePercentageMin", k.positionDivergencePercentageMin},
-      {"positionDivergenceMode", (unsigned int)k.positionDivergenceMode},
+      {"positionDivergenceMode", k.positionDivergenceMode},
       {"percentageValues", k.percentageValues},
-      {"autoPositionMode", (int)k.autoPositionMode},
-      {"aggressivePositionRebalancing", (unsigned int)k.aggressivePositionRebalancing},
-      {"superTrades", (unsigned int)k.superTrades},
+      {"autoPositionMode", k.autoPositionMode},
+      {"aggressivePositionRebalancing", k.aggressivePositionRebalancing},
+      {"superTrades", k.superTrades},
       {"tradesPerMinute", k.tradesPerMinute},
       {"tradeRateSeconds", k.tradeRateSeconds},
       {"protectionEwmaWidthPing", k.protectionEwmaWidthPing},
       {"protectionEwmaQuotePrice", k.protectionEwmaQuotePrice},
       {"protectionEwmaPeriods", k.protectionEwmaPeriods},
-      {"quotingStdevProtection", (unsigned int)k.quotingStdevProtection},
+      {"quotingStdevProtection", k.quotingStdevProtection},
       {"quotingStdevBollingerBands", k.quotingStdevBollingerBands},
       {"quotingStdevProtectionFactor", k.quotingStdevProtectionFactor},
       {"quotingStdevProtectionPeriods", k.quotingStdevProtectionPeriods},
@@ -157,31 +157,31 @@ namespace K {
     if (j.end() != j.find("sellSize")) k.sellSize = fmax(1e-8, j.at("sellSize").get<double>());
     if (j.end() != j.find("sellSizePercentage")) k.sellSizePercentage = fmin(1e+2, max(1, j.at("sellSizePercentage").get<int>()));
     if (j.end() != j.find("sellSizeMax")) k.sellSizeMax = j.at("sellSizeMax").get<bool>();
-    if (j.end() != j.find("pingAt")) k.pingAt = (mPingAt)j.at("pingAt").get<int>();
-    if (j.end() != j.find("pongAt")) k.pongAt = (mPongAt)j.at("pongAt").get<int>();
-    if (j.end() != j.find("mode")) k.mode = (mQuotingMode)j.at("mode").get<int>();
-    if (j.end() != j.find("safety")) k.safety = (mQuotingSafety)j.at("safety").get<int>();
+    if (j.end() != j.find("pingAt")) k.pingAt = j.at("pingAt").get<mPingAt>();
+    if (j.end() != j.find("pongAt")) k.pongAt = j.at("pongAt").get<mPongAt>();
+    if (j.end() != j.find("mode")) k.mode = j.at("mode").get<mQuotingMode>();
+    if (j.end() != j.find("safety")) k.safety = j.at("safety").get<mQuotingSafety>();
     if (j.end() != j.find("bullets")) k.bullets = min(10, max(1, j.at("bullets").get<int>()));
     if (j.end() != j.find("range")) k.range = j.at("range").get<double>();
     if (j.end() != j.find("rangePercentage")) k.rangePercentage = fmin(1e+2, fmax(1e-1, j.at("rangePercentage").get<double>()));
-    if (j.end() != j.find("fvModel")) k.fvModel = (mFairValueModel)j.at("fvModel").get<int>();
+    if (j.end() != j.find("fvModel")) k.fvModel = j.at("fvModel").get<mFairValueModel>();
     if (j.end() != j.find("targetBasePosition")) k.targetBasePosition = j.at("targetBasePosition").get<double>();
     if (j.end() != j.find("targetBasePositionPercentage")) k.targetBasePositionPercentage = fmin(1e+2, max(0, j.at("targetBasePositionPercentage").get<int>()));
     if (j.end() != j.find("positionDivergenceMin")) k.positionDivergenceMin = j.at("positionDivergenceMin").get<double>();
-    if (j.end() != j.find("positionDivergenceMode")) k.positionDivergenceMode = (mPDivMode)j.at("positionDivergenceMode").get<int>();
+    if (j.end() != j.find("positionDivergenceMode")) k.positionDivergenceMode = j.at("positionDivergenceMode").get<mPDivMode>();
     if (j.end() != j.find("positionDivergence")) k.positionDivergence = j.at("positionDivergence").get<double>();
     if (j.end() != j.find("positionDivergencePercentage")) k.positionDivergencePercentage = fmin(1e+2, max(0, j.at("positionDivergencePercentage").get<int>()));
     if (j.end() != j.find("positionDivergencePercentageMin")) k.positionDivergencePercentageMin = fmin(1e+2, max(0, j.at("positionDivergencePercentageMin").get<int>()));
     if (j.end() != j.find("percentageValues")) k.percentageValues = j.at("percentageValues").get<bool>();
-    if (j.end() != j.find("autoPositionMode")) k.autoPositionMode = (mAutoPositionMode)j.at("autoPositionMode").get<int>();
-    if (j.end() != j.find("aggressivePositionRebalancing")) k.aggressivePositionRebalancing = (mAPR)j.at("aggressivePositionRebalancing").get<int>();
-    if (j.end() != j.find("superTrades")) k.superTrades = (mSOP)j.at("superTrades").get<int>();
+    if (j.end() != j.find("autoPositionMode")) k.autoPositionMode = j.at("autoPositionMode").get<mAutoPositionMode>();
+    if (j.end() != j.find("aggressivePositionRebalancing")) k.aggressivePositionRebalancing = j.at("aggressivePositionRebalancing").get<mAPR>();
+    if (j.end() != j.find("superTrades")) k.superTrades = j.at("superTrades").get<mSOP>();
     if (j.end() != j.find("tradesPerMinute")) k.tradesPerMinute = j.at("tradesPerMinute").get<double>();
     if (j.end() != j.find("tradeRateSeconds")) k.tradeRateSeconds = max(0, j.at("tradeRateSeconds").get<int>());
     if (j.end() != j.find("protectionEwmaWidthPing")) k.protectionEwmaWidthPing = j.at("protectionEwmaWidthPing").get<bool>();
     if (j.end() != j.find("protectionEwmaQuotePrice")) k.protectionEwmaQuotePrice = j.at("protectionEwmaQuotePrice").get<bool>();
     if (j.end() != j.find("protectionEwmaPeriods")) k.protectionEwmaPeriods = max(1, j.at("protectionEwmaPeriods").get<int>());
-    if (j.end() != j.find("quotingStdevProtection")) k.quotingStdevProtection = (mSTDEV)j.at("quotingStdevProtection").get<int>();
+    if (j.end() != j.find("quotingStdevProtection")) k.quotingStdevProtection = j.at("quotingStdevProtection").get<mSTDEV>();
     if (j.end() != j.find("quotingStdevBollingerBands")) k.quotingStdevBollingerBands = j.at("quotingStdevBollingerBands").get<bool>();
     if (j.end() != j.find("quotingStdevProtectionFactor")) k.quotingStdevProtectionFactor = j.at("quotingStdevProtectionFactor").get<double>();
     if (j.end() != j.find("quotingStdevProtectionPeriods")) k.quotingStdevProtectionPeriods = max(1, j.at("quotingStdevProtectionPeriods").get<int>());
@@ -350,7 +350,7 @@ namespace K {
       {"pair", k.pair},
       {"price", k.price},
       {"quantity", k.quantity},
-      {"side", (int)k.side},
+      {"side", k.side},
       {"value", k.value},
       {"Ktime", k.Ktime},
       {"Kqty", k.Kqty},
@@ -365,7 +365,7 @@ namespace K {
       {"pair", k.pair},
       {"price", k.price},
       {"quantity", k.quantity},
-      {"side", (int)k.side}
+      {"side", k.side}
     };
   };
   static void from_json(const json& j, mTrade& k) {
@@ -373,7 +373,7 @@ namespace K {
     if (j.end() != j.find("pair")) k.pair = mPair(j["/pair/base"_json_pointer].get<string>(), j["/pair/quote"_json_pointer].get<string>());
     if (j.end() != j.find("price")) k.price = j.at("price").get<double>();
     if (j.end() != j.find("quantity")) k.quantity = j.at("quantity").get<double>();
-    if (j.end() != j.find("side")) k.side = (mSide)j.at("side").get<int>();
+    if (j.end() != j.find("side")) k.side = j.at("side").get<mSide>();
     if (j.end() != j.find("time")) k.time = j.at("time").get<unsigned long>();
     if (j.end() != j.find("value")) k.value = j.at("value").get<double>();
     if (j.end() != j.find("Ktime")) k.Ktime = j.at("Ktime").get<unsigned long>();
@@ -432,13 +432,13 @@ namespace K {
       {"orderId", k.orderId},
       {"exchangeId", k.exchangeId},
       {"pair", k.pair},
-      {"side", (int)k.side},
+      {"side", k.side},
       {"quantity", k.quantity},
-      {"type", (int)k.type},
+      {"type", k.type},
       {"isPong", k.isPong},
       {"price", k.price},
-      {"timeInForce", (int)k.timeInForce},
-      {"orderStatus", (int)k.orderStatus},
+      {"timeInForce", k.timeInForce},
+      {"orderStatus", k.orderStatus},
       {"preferPostOnly", k.preferPostOnly},
       {"tradeQuantity", k.tradeQuantity},
       {"time", k.time},
@@ -518,8 +518,8 @@ namespace K {
   };
   static void to_json(json& j, const mQuoteStatus& k) {
     j = {
-      {"bidStatus", (int)k.bidStatus},
-      {"askStatus", (int)k.askStatus},
+      {"bidStatus", k.bidStatus},
+      {"askStatus", k.askStatus},
       {"quotesInMemoryNew", k.quotesInMemoryNew},
       {"quotesInMemoryWorking", k.quotesInMemoryWorking},
       {"quotesInMemoryDone", k.quotesInMemoryDone}

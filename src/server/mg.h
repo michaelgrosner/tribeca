@@ -104,11 +104,11 @@ namespace K {
       };
       void calcFairValue() {
         if (levels.empty()) return;
-        double fairValue_ = fairValue;
-        double topAskPrice = levels.asks.begin()->price;
-        double topBidPrice = levels.bids.begin()->price;
-        double topAskSize = levels.asks.begin()->size;
-        double topBidSize = levels.bids.begin()->size;
+        double fairValue_ = fairValue,
+               topAskPrice = levels.asks.begin()->price,
+               topBidPrice = levels.bids.begin()->price,
+               topAskSize = levels.asks.begin()->size,
+               topBidSize = levels.bids.begin()->size;
         if (!topAskPrice or !topBidPrice or !topAskSize or !topBidSize) return;
         fairValue = FN::roundNearest(
           qp->fvModel == mFairValueModel::BBO

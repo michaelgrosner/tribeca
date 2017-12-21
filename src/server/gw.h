@@ -53,7 +53,7 @@ namespace K {
       };
       function<void(json*)> helloProduct = [&](json *welcome) {
         *welcome = { {
-          {"exchange", (int)gw->exchange},
+          {"exchange", gw->exchange},
           {"pair", mPair(gw->base, gw->quote)},
           {"minTick", gw->minTick},
           {"environment", ((CF*)config)->argTitle},
@@ -90,8 +90,8 @@ namespace K {
       };
       json serverState() {
         return {
-          {"state",  (int)((QE*)engine)->gwConnectButton},
-          {"status", (int)((QE*)engine)->gwConnectExchange}
+          {"state",  ((QE*)engine)->gwConnectButton},
+          {"status", ((QE*)engine)->gwConnectExchange}
         };
       };
       void handshake(mExchange k) {
