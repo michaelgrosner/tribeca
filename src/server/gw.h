@@ -66,31 +66,31 @@ namespace K {
       };
       function<void(json)> kissState = [&](json butterfly) {
         if (!butterfly.is_object() or !butterfly["state"].is_number()) return;
-        mConnectivity updated = (mConnectivity)butterfly["state"].get<int>();
+        mConnectivity updated = butterfly["state"].get<mConnectivity>();
         if (gwAdminEnabled != updated) {
           gwAdminEnabled = updated;
           clientSemaphore();
         }
       };
-      int serverSemaphore(mConnectivity *current, mConnectivity updated) {
+      mConnectivity serverSemaphore(mConnectivity *current, mConnectivity updated) {
         if (*current != updated) {
           *current = updated;
-          ((QE*)engine)->gwConnectExchange = (mConnectivity)((int)gwConnectMarket * (int)gwConnectOrders);
+          ((QE*)engine)->gwConnectExchange = gwConnectMarket * gwConnectOrders;
           clientSemaphore();
         }
-        return (int)updated;
+        return updated;
       };
       void clientSemaphore() {
-        mConnectivity updated = (mConnectivity)((int)gwAdminEnabled * (int)((QE*)engine)->gwConnectExchange);
+        mConnectivity updated = gwAdminEnabled * ((QE*)engine)->gwConnectExchange;
         if (((QE*)engine)->gwConnectButton != updated) {
           ((QE*)engine)->gwConnectButton = updated;
-          FN::log(string("GW ") + gw->name, "Quoting state changed to", string((int)((QE*)engine)->gwConnectButton?"":"DIS") + "CONNECTED");
+          FN::log(string("GW ") + gw->name, "Quoting state changed to", string(!((QE*)engine)->gwConnectButton?"DIS":"") + "CONNECTED");
         }
         ((UI*)client)->send(uiTXT::Connectivity, serverState());
       };
       json serverState() {
         return {
-          {"state",  ((QE*)engine)->gwConnectButton},
+          {"state", ((QE*)engine)->gwConnectButton},
           {"status", ((QE*)engine)->gwConnectExchange}
         };
       };
@@ -182,7 +182,7 @@ namespace K {
           FN::log(string("GW ") + gw->name, "allows client IP");
           stringstream ss;
           ss << setprecision(8) << fixed << '\n'
-            << "- autoBot: " << ((int)gwAdminEnabled ? "yes" : "no") << '\n'
+            << "- autoBot: " << (!gwAdminEnabled ? "no" : "yes") << '\n'
             << "- symbols: " << gw->symbol << '\n'
             << "- minTick: " << gw->minTick << '\n'
             << "- minSize: " << gw->minSize << '\n'

@@ -77,11 +77,11 @@ namespace K {
       void calcQuote() {
         bidStatus = mQuoteState::MissingData;
         askStatus = mQuoteState::MissingData;
-        if (gwConnectExchange == mConnectivity::Disconnected) {
+        if (!gwConnectExchange) {
           bidStatus = mQuoteState::Disconnected;
           askStatus = mQuoteState::Disconnected;
         } else if (((MG*)market)->fairValue and !((MG*)market)->levels.empty()) {
-          if (gwConnectButton == mConnectivity::Disconnected) {
+          if (!gwConnectButton) {
             bidStatus = mQuoteState::DisabledQuotes;
             askStatus = mQuoteState::DisabledQuotes;
             stopAllQuotes(mSide::Both);
