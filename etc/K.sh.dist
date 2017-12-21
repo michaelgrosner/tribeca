@@ -8,7 +8,7 @@
 #  █ configurable! executable! K.sh initialization file █
 #  █▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▀▄▄██▄▌ ▌▐ ▐▄██▄▄▀▄▄▄▄▄▄▄▄▄▄▄▄▄▄█
 #  █▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▄▀▀▀▀▀▌▄  ▄▐▀▀▀▀▀▄▀▀▀▀▀▀▀▀▀▀▀▀▀▀█
-#  █▌ Today, is a beautiful day.▐▌ btw, on THIS file.. ▐█
+#  █▌ Today, is a beautiful day.▐▌.btw, on THIS file.. ▐█
 #  ██   I. Define hardcoded optional K argumentss. F F ██
 #  ██  II. Define initial mandatory UI argumentss. E R ██
 #  ██ III. Define initial mandatory API arguments. E E ██
