@@ -42,7 +42,13 @@ export class StatsComponent implements OnInit {
     return this.series.type=='arearange'
       ? '<tr><td><span style="color:'+this.series.color+'">●</span>'+this.series.name+(this.series.name=="Width" && (<any>Highcharts).quotingParameters.protectionEwmaWidthPing?" EWMA":"")+' High:</td><td style="text-align:right;"> <b>'+this.high.toFixed((<any>Highcharts).customProductFixed)+' ' + ((<any>Highcharts).customQuoteCurrency) + '</b></td></tr>'
         + '<tr><td><span style="color:'+this.series.color+'">●</span>'+this.series.name+(this.series.name=="Width" && (<any>Highcharts).quotingParameters.protectionEwmaWidthPing?" EWMA":"")+' Low:</td><td style="text-align:right;"> <b>'+this.low.toFixed((<any>Highcharts).customProductFixed)+' ' + ((<any>Highcharts).customQuoteCurrency) + '</b></td></tr>'
-      : '<tr><td><span style="color:'+this.series.color+'">' + (<any>Highcharts).customSymbols[this.series.symbol] + '</span> '+this.series.name+':</td><td style="text-align:right;"> <b>'+this.y.toFixed((<any>Highcharts).customProductFixed)+' ' + ((<any>Highcharts).customQuoteCurrency) + '</b></td></tr>';
+      : ( this.series.type=='bubble'
+        ? '<tr><td colspan="2"><b><span style="color:'+this.series.color+';">'+this.dir+'</span> '+this.side+'</b> (P'+this.pong+'ng)</td></tr>'
+          + '<tr><td>' + 'Price:</td><td style="text-align:right;"> <b>'+this.price+' '+this.quote+'</b></td></tr>'
+          + '<tr><td>' + 'Qty:</td><td style="text-align:right;"> <b>'+this.qty+' '+this.base+'</b></td></tr>'
+          + '<tr><td>' + 'Value:</td><td style="text-align:right;"> <b>'+this.val+' '+this.quote+'</b></td></tr>'
+        :'<tr><td><span style="color:'+this.series.color+'">' + (<any>Highcharts).customSymbols[this.series.symbol] + '</span> '+this.series.name+':</td><td style="text-align:right;"> <b>'+this.y.toFixed((<any>Highcharts).customProductFixed)+' ' + ((<any>Highcharts).customQuoteCurrency) + '</b></td></tr>'
+      );
   }
   private pointFormatterQuote = function () {
     return '<tr><td><span style="color:'+this.series.color+'">' + (<any>Highcharts).customSymbols[this.series.symbol||'square'] + '</span> '+this.series.name+':</td><td style="text-align:right;"> <b>'+this.y.toFixed(8)+' ' + ((<any>Highcharts).customBaseCurrency) + '</b></td></tr>';
@@ -59,14 +65,13 @@ export class StatsComponent implements OnInit {
   public fvChartOptions = {
     title: 'fair value',
     chart: {
+        type: 'bubble',
         width: 700,
         height: 380,
         zoomType: false,
         backgroundColor:'rgba(255, 255, 255, 0)',
     },
-    plotOptions: {
-      series: {marker: {enabled: false}}
-    },
+    plotOptions: {series: {marker: {enabled: false}}},
     navigator: {enabled: false},
     rangeSelector:{enabled: false,height:0},
     scrollbar: {enabled: false},
@@ -143,13 +148,14 @@ export class StatsComponent implements OnInit {
       id: 'sellseries'
     },{
       name: 'Sell',
-      type: 'flags',
+      type: 'bubble',
       zIndex:2,
       colorIndex: 5,
+      marker: {enabled: true},
+      tooltip: {pointFormatter: this.pointFormatterBase},
+      dataLabels: {enabled: true, format: '{point.title}'},
       data: [],
-      onSeries: 'sellseries',
-      shape: 'circlepin',
-      width: 16
+      linkedTo: ':previous'
     },{
       name: 'Buy',
       type: 'spline',
@@ -160,13 +166,14 @@ export class StatsComponent implements OnInit {
       id: 'buyseries'
     },{
       name: 'Buy',
-      type: 'flags',
+      type: 'bubble',
       zIndex:2,
       colorIndex: 0,
+      marker: {enabled: true},
+      tooltip: {pointFormatter: this.pointFormatterBase},
+      dataLabels: {enabled: true, format: '{point.title}'},
       data: [],
-      onSeries: 'buyseries',
-      shape: 'circlepin',
-      width: 16
+      linkedTo: ':previous'
     },{
       name: 'EWMA Quote',
       type: 'spline',
@@ -483,13 +490,18 @@ export class StatsComponent implements OnInit {
     Highcharts.charts[this.fvChart].series[Models.Side[t.side] == 'Bid' ? 4 : 2].addPoint([time, t.price], false);
     (<any>Highcharts).charts[this.fvChart].series[Models.Side[t.side] == 'Bid' ? 5 : 3].addPoint({
       x: time,
+      y: t.price,
+      z: t.quantity,
       title: (t.pong ? '¯' : '_')+(Models.Side[t.side] == 'Bid' ? 'B' : 'S'),
-      useHTML:true,
-      text: '<tr><td colspan="2"><b><span style="color:'+(Models.Side[t.side] == 'Bid' ? '#0000FF':'#FF0000')+';">'+(Models.Side[t.side] == 'Bid' ? '▼':'▲')+'</span> '+(Models.Side[t.side] == 'Bid' ? 'Buy':'Sell')+'</b> (P'+(t.pong?'o':'i')+'ng)</td></tr>'
-        + '<tr><td>' + 'Price:</td><td style="text-align:right;"> <b>' + t.price.toFixed((<any>Highcharts).customProductFixed) + ' ' + ((<any>Highcharts).customQuoteCurrency) + '</b></td></tr>'
-        + '<tr><td>' + 'Qty:</td><td style="text-align:right;"> <b>' + t.quantity.toFixed(8) + ' ' + ((<any>Highcharts).customBaseCurrency) + '</b></td></tr>'
-        + '<tr><td>' + 'Value:</td><td style="text-align:right;"> <b>' + t.value.toFixed((<any>Highcharts).customProductFixed) + ' ' + ((<any>Highcharts).customQuoteCurrency) + '</b></td></tr>'
-    }, this.showStats && !this.fairValue);
+      dir:(Models.Side[t.side] == 'Bid' ? '▼':'▲'),
+      side:(Models.Side[t.side] == 'Bid' ? 'Buy':'Sell'),
+      pong:(t.pong?'o':'i'),
+      price:t.price.toFixed((<any>Highcharts).customProductFixed),
+      qty:t.quantity.toFixed(8),
+      val:t.value.toFixed((<any>Highcharts).customProductFixed),
+      quote:((<any>Highcharts).customQuoteCurrency),
+      base:((<any>Highcharts).customBaseCurrency)
+    }, true);
     this.updateCharts(time);
   }
 
@@ -615,21 +627,6 @@ export class StatsComponent implements OnInit {
       Highcharts.charts[this.baseChart].series[3].addPoint([time, this.positionData.baseAmount], false);
       Highcharts.charts[this.baseChart].series[4].addPoint([time, this.positionData.baseHeldAmount], this.showStats);
     }
-  }
-
-  private addTradesChartData = (t: Models.TradeChart) => {
-    let time = new Date().getTime();
-    Highcharts.charts[this.fvChart].series[Models.Side[t.side] == 'Bid' ? 4 : 2].addPoint([time, t.price], false);
-    (<any>Highcharts).charts[this.fvChart].series[Models.Side[t.side] == 'Bid' ? 5 : 3].addPoint({
-      x: time,
-      title: (t.pong ? '¯' : '_')+(Models.Side[t.side] == 'Bid' ? 'B' : 'S'),
-      useHTML:true,
-      text: '<tr><td colspan="2"><b><span style="color:'+(Models.Side[t.side] == 'Bid' ? '#0000FF':'#FF0000')+';">'+(Models.Side[t.side] == 'Bid' ? '▼':'▲')+'</span> '+(Models.Side[t.side] == 'Bid' ? 'Buy':'Sell')+'</b> (P'+(t.pong?'o':'i')+'ng)</td></tr>'
-        + '<tr><td>' + 'Price:</td><td style="text-align:right;"> <b>' + t.price.toFixed((<any>Highcharts).customProductFixed) + ' ' + ((<any>Highcharts).customQuoteCurrency) + '</b></td></tr>'
-        + '<tr><td>' + 'Qty:</td><td style="text-align:right;"> <b>' + t.quantity.toFixed(8) + ' ' + ((<any>Highcharts).customBaseCurrency) + '</b></td></tr>'
-        + '<tr><td>' + 'Value:</td><td style="text-align:right;"> <b>' + t.value.toFixed((<any>Highcharts).customProductFixed) + ' ' + ((<any>Highcharts).customQuoteCurrency) + '</b></td></tr>'
-    }, this.showStats && !this.fairValue);
-    this.updateCharts(time);
   }
 
   private removeOldPoints = (time: number) => {

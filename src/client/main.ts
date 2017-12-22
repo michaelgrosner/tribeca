@@ -9,9 +9,8 @@ import {AgGridModule} from 'ag-grid-angular/main';
 import {ChartModule} from 'angular2-highcharts';
 import {PopoverModule} from 'ng4-popover';
 import * as Highcharts from 'highcharts';
-import * as Highstock from 'highcharts/highstock';
 declare var require: (filename: string) => any;
-require('highcharts/highcharts-more')(Highstock);
+require('highcharts/highcharts-more')(Highcharts);
 
 import * as Models from './models';
 import * as Subscribe from './subscribe';
@@ -1016,8 +1015,7 @@ class ClientComponent implements OnInit {
       BaseCurrencyCellComponent,
       QuoteCurrencyCellComponent
     ]),
-    ChartModule.forRoot(Highcharts),
-    ChartModule.forRoot(Highstock)
+    ChartModule.forRoot(Highcharts)
   ],
   declarations: [
     ClientComponent,
