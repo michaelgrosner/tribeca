@@ -29,7 +29,7 @@ namespace K {
     CancelAllOrders      = 'x', CleanAllClosedTrades = 'y', CleanAllTrades     = 'z', CleanTrade         = 'A',
     TradesChart          = 'B', WalletChart          = 'C', EWMAChart          = 'D', MarketDataLongTerm = 'G'
   };
-  static          bool operator! (mConnectivity k_)                    { return !(unsigned int)k_; };
+  static          bool operator! (mConnectivity k_)                   { return !(unsigned int)k_; };
   static mConnectivity operator* (mConnectivity _k, mConnectivity k_) { return (mConnectivity)((unsigned int)_k * (unsigned int)k_); };
   struct mQuotingParams {
     double            widthPing                       = 2.0;
