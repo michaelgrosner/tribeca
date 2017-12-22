@@ -168,14 +168,14 @@ namespace K {
         *welcome = { notepad };
       };
       function<void(json)> kissNotes = [&](json butterfly) {
-        if (!butterfly.is_null() and butterfly.size())
+        if (butterfly.is_array() and butterfly.size())
           notepad = butterfly.at(0);
       };
       function<void(json*)> helloSettings = [&](json *welcome) {
         *welcome = { toggleSettings };
       };
       function<void(json)> kissSettings = [&](json butterfly) {
-        if (!butterfly.is_null() and butterfly.size())
+        if (butterfly.is_array() and butterfly.size())
           toggleSettings = butterfly.at(0);
       };
       void send(uiTXT k, string j) {

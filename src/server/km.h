@@ -21,15 +21,15 @@ namespace K {
   enum class mSTDEV: unsigned int { Off, OnFV, OnFVAPROff, OnTops, OnTopsAPROff, OnTop, OnTopAPROff };
   enum class uiBIT: unsigned char { Hello = '=', Kiss = '-' };
   enum class uiTXT: unsigned char {
-    FairValue = 'a', Quote = 'b', ActiveSubscription = 'c', Connectivity = 'd', MarketData = 'e',
-    QuotingParameters = 'f', SafetySettings = 'g', Product = 'h', OrderStatusReports = 'i',
-    ProductAdvertisement = 'j', ApplicationState = 'k', Notepad = 'l', ToggleSettings = 'm',
-    Position = 'n', SubmitNewOrder = 'p', CancelOrder = 'q', MarketTrade = 'r', Trades = 's',
-    ExternalValuation = 't', QuoteStatus = 'u', TargetBasePosition = 'v', TradeSafetyValue = 'w',
-    CancelAllOrders = 'x', CleanAllClosedTrades = 'y', CleanAllTrades = 'z', CleanTrade = 'A',
-    TradesChart = 'B', WalletChart = 'C', EWMAChart = 'D', MarketDataLongTerm = 'G'
+    FairValue            = 'a', Quote                = 'b', ActiveSubscription = 'c', Connectivity       = 'd', MarketData       = 'e',
+    QuotingParameters    = 'f', SafetySettings       = 'g', Product            = 'h', OrderStatusReports = 'i',
+    ProductAdvertisement = 'j', ApplicationState     = 'k', Notepad            = 'l', ToggleSettings     = 'm',
+    Position             = 'n',                             SubmitNewOrder     = 'p', CancelOrder        = 'q', MarketTrade      = 'r',
+    Trades               = 's',ExternalValuation     = 't', QuoteStatus        = 'u', TargetBasePosition = 'v', TradeSafetyValue = 'w',
+    CancelAllOrders      = 'x', CleanAllClosedTrades = 'y', CleanAllTrades     = 'z', CleanTrade         = 'A',
+    TradesChart          = 'B', WalletChart          = 'C', EWMAChart          = 'D', MarketDataLongTerm = 'G'
   };
-  static          bool operator! (mConnectivity k_)                   { return !(unsigned int)k_; };
+  static          bool operator! (mConnectivity k_)                    { return !(unsigned int)k_; };
   static mConnectivity operator* (mConnectivity _k, mConnectivity k_) { return (mConnectivity)((unsigned int)_k * (unsigned int)k_); };
   struct mQuotingParams {
     double            widthPing                       = 2.0;
@@ -90,117 +90,121 @@ namespace K {
   };
   static void to_json(json& j, const mQuotingParams& k) {
     j = {
-      {"widthPing", k.widthPing},
-      {"widthPingPercentage", k.widthPingPercentage},
-      {"widthPong", k.widthPong},
-      {"widthPongPercentage", k.widthPongPercentage},
-      {"widthPercentage", k.widthPercentage},
-      {"bestWidth", k.bestWidth},
-      {"buySize", k.buySize},
-      {"buySizePercentage", k.buySizePercentage},
-      {"buySizeMax", k.buySizeMax},
-      {"sellSize", k.sellSize},
-      {"sellSizePercentage", k.sellSizePercentage},
-      {"sellSizeMax", k.sellSizeMax},
-      {"pingAt", k.pingAt},
-      {"pongAt", k.pongAt},
-      {"mode", k.mode},
-      {"safety", k.safety},
-      {"bullets", k.bullets},
-      {"range", k.range},
-      {"rangePercentage", k.rangePercentage},
-      {"fvModel", k.fvModel},
-      {"targetBasePosition", k.targetBasePosition},
-      {"targetBasePositionPercentage", k.targetBasePositionPercentage},
-      {"positionDivergence", k.positionDivergence},
-      {"positionDivergencePercentage", k.positionDivergencePercentage},
-      {"positionDivergenceMin", k.positionDivergenceMin},
+      {                      "widthPing", k.widthPing                      },
+      {            "widthPingPercentage", k.widthPingPercentage            },
+      {                      "widthPong", k.widthPong                      },
+      {            "widthPongPercentage", k.widthPongPercentage            },
+      {                "widthPercentage", k.widthPercentage                },
+      {                      "bestWidth", k.bestWidth                      },
+      {                        "buySize", k.buySize                        },
+      {              "buySizePercentage", k.buySizePercentage              },
+      {                     "buySizeMax", k.buySizeMax                     },
+      {                       "sellSize", k.sellSize                       },
+      {             "sellSizePercentage", k.sellSizePercentage             },
+      {                    "sellSizeMax", k.sellSizeMax                    },
+      {                         "pingAt", k.pingAt                         },
+      {                         "pongAt", k.pongAt                         },
+      {                           "mode", k.mode                           },
+      {                         "safety", k.safety                         },
+      {                        "bullets", k.bullets                        },
+      {                          "range", k.range                          },
+      {                "rangePercentage", k.rangePercentage                },
+      {                        "fvModel", k.fvModel                        },
+      {             "targetBasePosition", k.targetBasePosition             },
+      {   "targetBasePositionPercentage", k.targetBasePositionPercentage   },
+      {             "positionDivergence", k.positionDivergence             },
+      {   "positionDivergencePercentage", k.positionDivergencePercentage   },
+      {          "positionDivergenceMin", k.positionDivergenceMin          },
       {"positionDivergencePercentageMin", k.positionDivergencePercentageMin},
-      {"positionDivergenceMode", k.positionDivergenceMode},
-      {"percentageValues", k.percentageValues},
-      {"autoPositionMode", k.autoPositionMode},
-      {"aggressivePositionRebalancing", k.aggressivePositionRebalancing},
-      {"superTrades", k.superTrades},
-      {"tradesPerMinute", k.tradesPerMinute},
-      {"tradeRateSeconds", k.tradeRateSeconds},
-      {"protectionEwmaWidthPing", k.protectionEwmaWidthPing},
-      {"protectionEwmaQuotePrice", k.protectionEwmaQuotePrice},
-      {"protectionEwmaPeriods", k.protectionEwmaPeriods},
-      {"quotingStdevProtection", k.quotingStdevProtection},
-      {"quotingStdevBollingerBands", k.quotingStdevBollingerBands},
-      {"quotingStdevProtectionFactor", k.quotingStdevProtectionFactor},
-      {"quotingStdevProtectionPeriods", k.quotingStdevProtectionPeriods},
-      {"ewmaSensiblityPercentage", k.ewmaSensiblityPercentage},
-      {"veryLongEwmaPeriods", k.veryLongEwmaPeriods},
-      {"longEwmaPeriods", k.longEwmaPeriods},
-      {"mediumEwmaPeriods", k.mediumEwmaPeriods},
-      {"shortEwmaPeriods", k.shortEwmaPeriods},
-      {"aprMultiplier", k.aprMultiplier},
-      {"sopWidthMultiplier", k.sopWidthMultiplier},
-      {"sopSizeMultiplier", k.sopSizeMultiplier},
-      {"sopTradesMultiplier", k.sopTradesMultiplier},
-      {"cancelOrdersAuto", k.cancelOrdersAuto},
-      {"cleanPongsAuto", k.cleanPongsAuto},
-      {"profitHourInterval", k.profitHourInterval},
-      {"audio", k.audio},
-      {"delayUI", k.delayUI}
+      {         "positionDivergenceMode", k.positionDivergenceMode         },
+      {               "percentageValues", k.percentageValues               },
+      {               "autoPositionMode", k.autoPositionMode               },
+      {  "aggressivePositionRebalancing", k.aggressivePositionRebalancing  },
+      {                    "superTrades", k.superTrades                    },
+      {                "tradesPerMinute", k.tradesPerMinute                },
+      {               "tradeRateSeconds", k.tradeRateSeconds               },
+      {        "protectionEwmaWidthPing", k.protectionEwmaWidthPing        },
+      {       "protectionEwmaQuotePrice", k.protectionEwmaQuotePrice       },
+      {          "protectionEwmaPeriods", k.protectionEwmaPeriods          },
+      {         "quotingStdevProtection", k.quotingStdevProtection         },
+      {     "quotingStdevBollingerBands", k.quotingStdevBollingerBands     },
+      {   "quotingStdevProtectionFactor", k.quotingStdevProtectionFactor   },
+      {  "quotingStdevProtectionPeriods", k.quotingStdevProtectionPeriods  },
+      {       "ewmaSensiblityPercentage", k.ewmaSensiblityPercentage       },
+      {            "veryLongEwmaPeriods", k.veryLongEwmaPeriods            },
+      {                "longEwmaPeriods", k.longEwmaPeriods                },
+      {              "mediumEwmaPeriods", k.mediumEwmaPeriods              },
+      {               "shortEwmaPeriods", k.shortEwmaPeriods               },
+      {                  "aprMultiplier", k.aprMultiplier                  },
+      {             "sopWidthMultiplier", k.sopWidthMultiplier             },
+      {              "sopSizeMultiplier", k.sopSizeMultiplier              },
+      {            "sopTradesMultiplier", k.sopTradesMultiplier            },
+      {               "cancelOrdersAuto", k.cancelOrdersAuto               },
+      {                 "cleanPongsAuto", k.cleanPongsAuto                 },
+      {             "profitHourInterval", k.profitHourInterval             },
+      {                          "audio", k.audio                          },
+      {                        "delayUI", k.delayUI                        }
     };
   };
   static void from_json(const json& j, mQuotingParams& k) {
-    if (j.end() != j.find("widthPing")) k.widthPing = fmax(1e-8, j.at("widthPing").get<double>());
-    if (j.end() != j.find("widthPingPercentage")) k.widthPingPercentage = fmin(1e+2, fmax(1e-1, j.at("widthPingPercentage").get<double>()));
-    if (j.end() != j.find("widthPong")) k.widthPong = fmax(1e-8, j.at("widthPong").get<double>());
-    if (j.end() != j.find("widthPongPercentage")) k.widthPongPercentage = fmin(1e+2, fmax(1e-1, j.at("widthPongPercentage").get<double>()));
-    if (j.end() != j.find("widthPercentage")) k.widthPercentage = j.at("widthPercentage").get<bool>();
-    if (j.end() != j.find("bestWidth")) k.bestWidth = j.at("bestWidth").get<bool>();
-    if (j.end() != j.find("buySize")) k.buySize = fmax(1e-8, j.at("buySize").get<double>());
-    if (j.end() != j.find("buySizePercentage")) k.buySizePercentage = fmin(1e+2, max(1, j.at("buySizePercentage").get<int>()));
-    if (j.end() != j.find("buySizeMax")) k.buySizeMax = j.at("buySizeMax").get<bool>();
-    if (j.end() != j.find("sellSize")) k.sellSize = fmax(1e-8, j.at("sellSize").get<double>());
-    if (j.end() != j.find("sellSizePercentage")) k.sellSizePercentage = fmin(1e+2, max(1, j.at("sellSizePercentage").get<int>()));
-    if (j.end() != j.find("sellSizeMax")) k.sellSizeMax = j.at("sellSizeMax").get<bool>();
-    if (j.end() != j.find("pingAt")) k.pingAt = j.at("pingAt").get<mPingAt>();
-    if (j.end() != j.find("pongAt")) k.pongAt = j.at("pongAt").get<mPongAt>();
-    if (j.end() != j.find("mode")) k.mode = j.at("mode").get<mQuotingMode>();
-    if (j.end() != j.find("safety")) k.safety = j.at("safety").get<mQuotingSafety>();
-    if (j.end() != j.find("bullets")) k.bullets = min(10, max(1, j.at("bullets").get<int>()));
-    if (j.end() != j.find("range")) k.range = j.at("range").get<double>();
-    if (j.end() != j.find("rangePercentage")) k.rangePercentage = fmin(1e+2, fmax(1e-1, j.at("rangePercentage").get<double>()));
-    if (j.end() != j.find("fvModel")) k.fvModel = j.at("fvModel").get<mFairValueModel>();
-    if (j.end() != j.find("targetBasePosition")) k.targetBasePosition = j.at("targetBasePosition").get<double>();
-    if (j.end() != j.find("targetBasePositionPercentage")) k.targetBasePositionPercentage = fmin(1e+2, max(0, j.at("targetBasePositionPercentage").get<int>()));
-    if (j.end() != j.find("positionDivergenceMin")) k.positionDivergenceMin = j.at("positionDivergenceMin").get<double>();
-    if (j.end() != j.find("positionDivergenceMode")) k.positionDivergenceMode = j.at("positionDivergenceMode").get<mPDivMode>();
-    if (j.end() != j.find("positionDivergence")) k.positionDivergence = j.at("positionDivergence").get<double>();
-    if (j.end() != j.find("positionDivergencePercentage")) k.positionDivergencePercentage = fmin(1e+2, max(0, j.at("positionDivergencePercentage").get<int>()));
-    if (j.end() != j.find("positionDivergencePercentageMin")) k.positionDivergencePercentageMin = fmin(1e+2, max(0, j.at("positionDivergencePercentageMin").get<int>()));
-    if (j.end() != j.find("percentageValues")) k.percentageValues = j.at("percentageValues").get<bool>();
-    if (j.end() != j.find("autoPositionMode")) k.autoPositionMode = j.at("autoPositionMode").get<mAutoPositionMode>();
-    if (j.end() != j.find("aggressivePositionRebalancing")) k.aggressivePositionRebalancing = j.at("aggressivePositionRebalancing").get<mAPR>();
-    if (j.end() != j.find("superTrades")) k.superTrades = j.at("superTrades").get<mSOP>();
-    if (j.end() != j.find("tradesPerMinute")) k.tradesPerMinute = j.at("tradesPerMinute").get<double>();
-    if (j.end() != j.find("tradeRateSeconds")) k.tradeRateSeconds = max(0, j.at("tradeRateSeconds").get<int>());
-    if (j.end() != j.find("protectionEwmaWidthPing")) k.protectionEwmaWidthPing = j.at("protectionEwmaWidthPing").get<bool>();
-    if (j.end() != j.find("protectionEwmaQuotePrice")) k.protectionEwmaQuotePrice = j.at("protectionEwmaQuotePrice").get<bool>();
-    if (j.end() != j.find("protectionEwmaPeriods")) k.protectionEwmaPeriods = max(1, j.at("protectionEwmaPeriods").get<int>());
-    if (j.end() != j.find("quotingStdevProtection")) k.quotingStdevProtection = j.at("quotingStdevProtection").get<mSTDEV>();
-    if (j.end() != j.find("quotingStdevBollingerBands")) k.quotingStdevBollingerBands = j.at("quotingStdevBollingerBands").get<bool>();
-    if (j.end() != j.find("quotingStdevProtectionFactor")) k.quotingStdevProtectionFactor = j.at("quotingStdevProtectionFactor").get<double>();
-    if (j.end() != j.find("quotingStdevProtectionPeriods")) k.quotingStdevProtectionPeriods = max(1, j.at("quotingStdevProtectionPeriods").get<int>());
-    if (j.end() != j.find("ewmaSensiblityPercentage")) k.ewmaSensiblityPercentage = j.at("ewmaSensiblityPercentage").get<double>();
-    if (j.end() != j.find("veryLongEwmaPeriods")) k.veryLongEwmaPeriods = max(1, j.at("veryLongEwmaPeriods").get<int>());
-    if (j.end() != j.find("longEwmaPeriods")) k.longEwmaPeriods = max(1, j.at("longEwmaPeriods").get<int>());
-    if (j.end() != j.find("mediumEwmaPeriods")) k.mediumEwmaPeriods = max(1, j.at("mediumEwmaPeriods").get<int>());
-    if (j.end() != j.find("shortEwmaPeriods")) k.shortEwmaPeriods = max(1, j.at("shortEwmaPeriods").get<int>());
-    if (j.end() != j.find("aprMultiplier")) k.aprMultiplier = j.at("aprMultiplier").get<double>();
-    if (j.end() != j.find("sopWidthMultiplier")) k.sopWidthMultiplier = j.at("sopWidthMultiplier").get<double>();
-    if (j.end() != j.find("sopSizeMultiplier")) k.sopSizeMultiplier = j.at("sopSizeMultiplier").get<double>();
-    if (j.end() != j.find("sopTradesMultiplier")) k.sopTradesMultiplier = j.at("sopTradesMultiplier").get<double>();
-    if (j.end() != j.find("cancelOrdersAuto")) k.cancelOrdersAuto = j.at("cancelOrdersAuto").get<bool>();
-    if (j.end() != j.find("cleanPongsAuto")) k.cleanPongsAuto = j.at("cleanPongsAuto").get<double>();
-    if (j.end() != j.find("profitHourInterval")) k.profitHourInterval = j.at("profitHourInterval").get<double>();
-    if (j.end() != j.find("audio")) k.audio = j.at("audio").get<bool>();
-    if (j.end() != j.find("delayUI")) k.delayUI = max(0, j.at("delayUI").get<int>());
+    json o = j;
+    for (json::iterator it = o.begin(); it != o.end();)
+      if (it.value().is_null()) it = o.erase(it); else ++it;
+    mQuotingParams def;
+    k.widthPing                       = fmax(1e-8,            o.value("widthPing", def.widthPing));
+    k.widthPingPercentage             = fmin(1e+2, fmax(1e-1, o.value("widthPingPercentage", def.widthPingPercentage)));
+    k.widthPong                       = fmax(1e-8,            o.value("widthPong", def.widthPong));
+    k.widthPongPercentage             = fmin(1e+2, fmax(1e-1, o.value("widthPongPercentage", def.widthPongPercentage)));
+    k.widthPercentage                 =                       o.value("widthPercentage", def.widthPercentage);
+    k.bestWidth                       =                       o.value("bestWidth", def.bestWidth);
+    k.buySize                         = fmax(1e-8,            o.value("buySize", def.buySize));
+    k.buySizePercentage               = fmin(1e+2, fmax(1,    o.value("buySizePercentage", def.buySizePercentage)));
+    k.buySizeMax                      =                       o.value("buySizeMax", def.buySizeMax);
+    k.sellSize                        = fmax(1e-8,            o.value("sellSize", def.sellSize));
+    k.sellSizePercentage              = fmin(1e+2, fmax(1,    o.value("sellSizePercentage", def.sellSizePercentage)));
+    k.sellSizeMax                     =                       o.value("sellSizeMax", def.sellSizeMax);
+    k.pingAt                          =                       o.value("pingAt", def.pingAt);
+    k.pongAt                          =                       o.value("pongAt", def.pongAt);
+    k.mode                            =                       o.value("mode", def.mode);
+    k.safety                          =                       o.value("safety", def.safety);
+    k.bullets                         = fmin(10, fmax(1,      o.value("bullets", def.bullets)));
+    k.range                           =                       o.value("range", def.range);
+    k.rangePercentage                 = fmin(1e+2, fmax(1e-1, o.value("rangePercentage", def.rangePercentage)));
+    k.fvModel                         =                       o.value("fvModel", def.fvModel);
+    k.targetBasePosition              =                       o.value("targetBasePosition", def.targetBasePosition);
+    k.targetBasePositionPercentage    = fmin(1e+2, fmax(0,    o.value("targetBasePositionPercentage", def.targetBasePositionPercentage)));
+    k.positionDivergenceMin           =                       o.value("positionDivergenceMin", def.positionDivergenceMin);
+    k.positionDivergenceMode          =                       o.value("positionDivergenceMode", def.positionDivergenceMode);
+    k.positionDivergence              =                       o.value("positionDivergence", def.positionDivergence);
+    k.positionDivergencePercentage    = fmin(1e+2, fmax(0,    o.value("positionDivergencePercentage", def.positionDivergencePercentage)));
+    k.positionDivergencePercentageMin = fmin(1e+2, fmax(0,    o.value("positionDivergencePercentageMin", def.positionDivergencePercentageMin)));
+    k.percentageValues                =                       o.value("percentageValues", def.percentageValues);
+    k.autoPositionMode                =                       o.value("autoPositionMode", def.autoPositionMode);
+    k.aggressivePositionRebalancing   =                       o.value("aggressivePositionRebalancing", def.aggressivePositionRebalancing);
+    k.superTrades                     =                       o.value("superTrades", def.superTrades);
+    k.tradesPerMinute                 =                       o.value("tradesPerMinute", def.tradesPerMinute);
+    k.tradeRateSeconds                = fmax(0,               o.value("tradeRateSeconds", def.tradeRateSeconds));
+    k.protectionEwmaWidthPing         =                       o.value("protectionEwmaWidthPing", def.protectionEwmaWidthPing);
+    k.protectionEwmaQuotePrice        =                       o.value("protectionEwmaQuotePrice", def.protectionEwmaQuotePrice);
+    k.protectionEwmaPeriods           = fmax(1,               o.value("protectionEwmaPeriods", def.protectionEwmaPeriods));
+    k.quotingStdevProtection          =                       o.value("quotingStdevProtection", def.quotingStdevProtection);
+    k.quotingStdevBollingerBands      =                       o.value("quotingStdevBollingerBands", def.quotingStdevBollingerBands);
+    k.quotingStdevProtectionFactor    =                       o.value("quotingStdevProtectionFactor", def.quotingStdevProtectionFactor);
+    k.quotingStdevProtectionPeriods   = fmax(1,               o.value("quotingStdevProtectionPeriods", def.quotingStdevProtectionPeriods));
+    k.ewmaSensiblityPercentage        =                       o.value("ewmaSensiblityPercentage", def.ewmaSensiblityPercentage);
+    k.veryLongEwmaPeriods             = fmax(1,               o.value("veryLongEwmaPeriods", def.veryLongEwmaPeriods));
+    k.longEwmaPeriods                 = fmax(1,               o.value("longEwmaPeriods", def.longEwmaPeriods));
+    k.mediumEwmaPeriods               = fmax(1,               o.value("mediumEwmaPeriods", def.mediumEwmaPeriods));
+    k.shortEwmaPeriods                = fmax(1,               o.value("shortEwmaPeriods", def.shortEwmaPeriods));
+    k.aprMultiplier                   =                       o.value("aprMultiplier", def.aprMultiplier);
+    k.sopWidthMultiplier              =                       o.value("sopWidthMultiplier", def.sopWidthMultiplier);
+    k.sopSizeMultiplier               =                       o.value("sopSizeMultiplier", def.sopSizeMultiplier);
+    k.sopTradesMultiplier             =                       o.value("sopTradesMultiplier", def.sopTradesMultiplier);
+    k.cancelOrdersAuto                =                       o.value("cancelOrdersAuto", def.cancelOrdersAuto);
+    k.cleanPongsAuto                  =                       o.value("cleanPongsAuto", def.cleanPongsAuto);
+    k.profitHourInterval              =                       o.value("profitHourInterval", def.profitHourInterval);
+    k.audio                           =                       o.value("audio", def.audio);
+    k.delayUI                         = fmax(0,               o.value("delayUI", def.delayUI));
     if (k.mode == mQuotingMode::Depth) k.widthPercentage = false;
     k._matchPings = k.safety == mQuotingSafety::Boomerang or k.safety == mQuotingSafety::AK47;
   };
@@ -216,9 +220,16 @@ namespace K {
   };
   static void to_json(json& j, const mPair& k) {
     j = {
-      {"base", k.base},
+      { "base", k.base },
       {"quote", k.quote}
     };
+  };
+  static void from_json(const json& j, mPair& k) {
+    json o = j;
+    for (json::iterator it = o.begin(); it != o.end();)
+      if (it.value().is_null()) it = o.erase(it); else ++it;
+    k.base  = o.value("base", "");
+    k.quote = o.value("quote", "");
   };
   struct mWallet {
     double amount,
@@ -233,8 +244,8 @@ namespace K {
   };
   static void to_json(json& j, const mWallet& k) {
     j = {
-      {"amount", k.amount},
-      {"held", k.held},
+      {  "amount", k.amount  },
+      {    "held", k.held    },
       {"currency", k.currency}
     };
   };
@@ -251,15 +262,18 @@ namespace K {
   };
   static void to_json(json& j, const mProfit& k) {
     j = {
-      {"baseValue", k.baseValue},
+      { "baseValue", k.baseValue },
       {"quoteValue", k.quoteValue},
-      {"time", k.time}
+      {      "time", k.time      }
     };
   };
   static void from_json(const json& j, mProfit& k) {
-    if (j.end() != j.find("baseValue")) k.baseValue = j.at("baseValue").get<double>();
-    if (j.end() != j.find("quoteValue")) k.quoteValue = j.at("quoteValue").get<double>();
-    if (j.end() != j.find("time")) k.time = j.at("time").get<unsigned long>();
+    json o = j;
+    for (json::iterator it = o.begin(); it != o.end();)
+      if (it.value().is_null()) it = o.erase(it); else ++it;
+    k.baseValue  = o.value("baseValue", 0.0);
+    k.quoteValue = o.value("quoteValue", 0.0);
+    k.time       = o.value("time", (unsigned long)0);
   };
   struct mSafety {
     double buy,
@@ -276,10 +290,10 @@ namespace K {
   };
   static void to_json(json& j, const mSafety& k) {
     j = {
-      {"buy", k.buy},
-      {"sell", k.sell},
-      {"combined", k.combined},
-      {"buyPing", fmax(0, k.buyPing)},
+      {     "buy", k.buy              },
+      {    "sell", k.sell             },
+      {"combined", k.combined         },
+      { "buyPing", fmax(0, k.buyPing) },
       {"sellPing", fmax(0, k.sellPing)}
     };
   };
@@ -305,15 +319,15 @@ namespace K {
   };
   static void to_json(json& j, const mPosition& k) {
     j = {
-      {"baseAmount", k.baseAmount},
-      {"quoteAmount", k.quoteAmount},
-      {"baseHeldAmount", k.baseHeldAmount},
+      {     "baseAmount", k.baseAmount     },
+      {    "quoteAmount", k.quoteAmount    },
+      { "baseHeldAmount", k.baseHeldAmount },
       {"quoteHeldAmount", k.quoteHeldAmount},
-      {"baseValue", k.baseValue},
-      {"quoteValue", k.quoteValue},
-      {"profitBase", k.profitBase},
-      {"profitQuote", k.profitQuote},
-      {"pair", k.pair}
+      {      "baseValue", k.baseValue      },
+      {     "quoteValue", k.quoteValue     },
+      {     "profitBase", k.profitBase     },
+      {    "profitQuote", k.profitQuote    },
+      {           "pair", k.pair           }
     };
   };
   struct mTrade {
@@ -347,44 +361,47 @@ namespace K {
   };
   static void to_json(json& j, const mTrade& k) {
     if (k.tradeId.length()) j = {
-      {"tradeId", k.tradeId},
-      {"time", k.time},
-      {"pair", k.pair},
-      {"price", k.price},
-      {"quantity", k.quantity},
-      {"side", k.side},
-      {"value", k.value},
-      {"Ktime", k.Ktime},
-      {"Kqty", k.Kqty},
-      {"Kprice", k.Kprice},
-      {"Kvalue", k.Kvalue},
-      {"Kdiff", k.Kdiff},
-      {"feeCharged", k.feeCharged},
+      {     "tradeId", k.tradeId     },
+      {        "time", k.time        },
+      {        "pair", k.pair        },
+      {       "price", k.price       },
+      {    "quantity", k.quantity    },
+      {        "side", k.side        },
+      {       "value", k.value       },
+      {       "Ktime", k.Ktime       },
+      {        "Kqty", k.Kqty        },
+      {      "Kprice", k.Kprice      },
+      {      "Kvalue", k.Kvalue      },
+      {       "Kdiff", k.Kdiff       },
+      {  "feeCharged", k.feeCharged  },
       {"loadedFromDB", k.loadedFromDB},
     };
     else j = {
-      {"time", k.time},
-      {"pair", k.pair},
-      {"price", k.price},
+      {     "time", k.time   },
+      {     "pair", k.pair   },
+      {    "price", k.price  },
       {"quantity", k.quantity},
-      {"side", k.side}
+      {    "side", k.side    }
     };
   };
   static void from_json(const json& j, mTrade& k) {
-    if (j.end() != j.find("tradeId")) k.tradeId = j.at("tradeId").get<string>();
-    if (j.end() != j.find("pair")) k.pair = mPair(j["/pair/base"_json_pointer].get<string>(), j["/pair/quote"_json_pointer].get<string>());
-    if (j.end() != j.find("price")) k.price = j.at("price").get<double>();
-    if (j.end() != j.find("quantity")) k.quantity = j.at("quantity").get<double>();
-    if (j.end() != j.find("side")) k.side = j.at("side").get<mSide>();
-    if (j.end() != j.find("time")) k.time = j.at("time").get<unsigned long>();
-    if (j.end() != j.find("value")) k.value = j.at("value").get<double>();
-    if (j.end() != j.find("Ktime")) k.Ktime = j.at("Ktime").get<unsigned long>();
-    if (j.end() != j.find("Kqty")) k.Kqty = j.at("Kqty").get<double>();
-    if (j.end() != j.find("Kprice")) k.Kprice = j.at("Kprice").get<double>();
-    if (j.end() != j.find("Kvalue")) k.Kvalue = j.at("Kvalue").get<double>();
-    if (j.end() != j.find("Kdiff")) k.Kdiff = j.at("Kdiff").get<double>();
-    if (j.end() != j.find("feeCharged")) k.feeCharged = j.at("feeCharged").get<double>();
-    if (j.end() != j.find("loadedFromDB")) k.loadedFromDB = j.at("loadedFromDB").get<bool>();
+    json o = j;
+    for (json::iterator it = o.begin(); it != o.end();)
+      if (it.value().is_null()) it = o.erase(it); else ++it;
+    k.tradeId      = o.value("tradeId", "");
+    k.pair         = o.value("pair", json::object());
+    k.price        = o.value("price", 0.0);
+    k.quantity     = o.value("quantity", 0.0);
+    k.side         = o.value("side", (mSide)0);
+    k.time         = o.value("time", (unsigned long)0);
+    k.value        = o.value("value", 0.0);
+    k.Ktime        = o.value("Ktime", (unsigned long)0);
+    k.Kqty         = o.value("Kqty", 0.0);
+    k.Kprice       = o.value("Kprice", 0.0);
+    k.Kvalue       = o.value("Kvalue", 0.0);
+    k.Kdiff        = o.value("Kdiff", 0.0);
+    k.feeCharged   = o.value("feeCharged", 0.0);
+    k.loadedFromDB = o.value("loadedFromDB", false);
   };
   struct mOrder {
            string orderId,
@@ -431,19 +448,19 @@ namespace K {
   };
   static void to_json(json& j, const mOrder& k) {
     j = {
-      {"orderId", k.orderId},
-      {"exchangeId", k.exchangeId},
-      {"pair", k.pair},
-      {"side", k.side},
-      {"quantity", k.quantity},
-      {"type", k.type},
-      {"isPong", k.isPong},
-      {"price", k.price},
-      {"timeInForce", k.timeInForce},
-      {"orderStatus", k.orderStatus},
-      {"preferPostOnly", k.preferPostOnly},
-      {"tradeQuantity", k.tradeQuantity},
-      {"time", k.time},
+      {             "orderId", k.orderId             },
+      {          "exchangeId", k.exchangeId          },
+      {                "pair", k.pair                },
+      {                "side", k.side                },
+      {            "quantity", k.quantity            },
+      {                "type", k.type                },
+      {              "isPong", k.isPong              },
+      {               "price", k.price               },
+      {         "timeInForce", k.timeInForce         },
+      {         "orderStatus", k.orderStatus         },
+      {      "preferPostOnly", k.preferPostOnly      },
+      {       "tradeQuantity", k.tradeQuantity       },
+      {                "time", k.time                },
       {"computationalLatency", k.computationalLatency}
     };
   };
@@ -456,6 +473,12 @@ namespace K {
     mLevel(double p, double s):
       price(p), size(s)
     {};
+  };
+  static void to_json(json& j, const mLevel& k) {
+    j = {
+      {"price", k.price},
+      { "size", k.size }
+    };
   };
   struct mLevels {
     vector<mLevel> bids,
@@ -471,12 +494,10 @@ namespace K {
     };
   };
   static void to_json(json& j, const mLevels& k) {
-    json b, a;
-    for (vector<mLevel>::const_iterator it = k.bids.begin(); it != k.bids.end(); ++it)
-      b.push_back({{"price", it->price}, {"size", it->size}});
-    for (vector<mLevel>::const_iterator it = k.asks.begin(); it != k.asks.end(); ++it)
-      a.push_back({{"price", it->price}, {"size", it->size}});
-    j = {{"bids", b}, {"asks", a}};
+    j = {
+      {"bids", k.bids},
+      {"asks", k.asks}
+    };
   };
   struct mQuote {
     mLevel bid,
@@ -495,14 +516,8 @@ namespace K {
   };
   static void to_json(json& j, const mQuote& k) {
     j = {
-      {"bid", {
-        {"price", k.bid.price},
-        {"size", k.bid.size}
-      }},
-      {"ask", {
-        {"price", k.ask.price},
-        {"size", k.ask.size}
-      }}
+      {"bid", k.bid},
+      {"ask", k.ask}
     };
   };
   struct mQuoteStatus {
@@ -520,11 +535,11 @@ namespace K {
   };
   static void to_json(json& j, const mQuoteStatus& k) {
     j = {
-      {"bidStatus", k.bidStatus},
-      {"askStatus", k.askStatus},
-      {"quotesInMemoryNew", k.quotesInMemoryNew},
+      {"bidStatus",             k.bidStatus},
+      {"askStatus",             k.askStatus},
+      {"quotesInMemoryNew",     k.quotesInMemoryNew},
       {"quotesInMemoryWorking", k.quotesInMemoryWorking},
-      {"quotesInMemoryDone", k.quotesInMemoryDone}
+      {"quotesInMemoryDone",    k.quotesInMemoryDone}
     };
   };
   static const char kB64Alphabet[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
