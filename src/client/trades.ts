@@ -70,7 +70,9 @@ export class TradesComponent implements OnInit {
       {width: 95, suppressSizeToFit: true, field:'time', headerName:'t', cellRenderer:(params) => {
         var d = new Date(params.value||0);
         return (d.getDate()+'').padStart(2, "0")+'/'+((d.getMonth()+1)+'').padStart(2, "0")+' '+(d.getHours()+'').padStart(2, "0")+':'+(d.getMinutes()+'').padStart(2, "0")+':'+(d.getSeconds()+'').padStart(2, "0");
-      }, cellClass: 'fs11px', sort: 'desc'},
+      }, cellClass: 'fs11px', sort: 'desc', comparator: (valueA: any, valueB: any, nodeA: RowNode, nodeB: RowNode, isInverted: boolean) => {
+          return (nodeA.data.Ktime||nodeA.data.time) - (nodeB.data.Ktime||nodeB.data.time);
+      }},
       {width: 95, suppressSizeToFit: true, field:'Ktime', hide:true, headerName:'timePong', cellRenderer:(params) => {
         if (params.value==0) return '';
         var d = new Date(params.value);
