@@ -150,10 +150,10 @@ export class StatsComponent implements OnInit {
       name: 'Sell',
       type: 'bubble',
       zIndex:2,
-      colorIndex: 5,
-      marker: {enabled: true},
+      color: 'white',
+      marker: {enabled: true,fillColor: 'transparent',lineColor: Highcharts.getOptions().colors[5]},
       tooltip: {pointFormatter: this.pointFormatterBase},
-      dataLabels: {enabled: true, format: '{point.title}'},
+      dataLabels: {enabled: true,format: '{point.title}'},
       data: [],
       linkedTo: ':previous'
     },{
@@ -168,10 +168,10 @@ export class StatsComponent implements OnInit {
       name: 'Buy',
       type: 'bubble',
       zIndex:2,
-      colorIndex: 0,
-      marker: {enabled: true},
+      color: 'white',
+      marker: {enabled: true,fillColor: 'transparent',lineColor: Highcharts.getOptions().colors[0]},
       tooltip: {pointFormatter: this.pointFormatterBase},
-      dataLabels: {enabled: true, format: '{point.title}'},
+      dataLabels: {enabled: true,format: '{point.title}'},
       data: [],
       linkedTo: ':previous'
     },{
