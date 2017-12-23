@@ -84,7 +84,7 @@ namespace K {
               url = path;
             }
             if (url.length())
-              content << ifstream(FN::readlink("app/client").substr(3) + url).rdbuf();
+              content << ifstream(FN::readlink("app/client").substr(48) + url).rdbuf();
             else if (stol(FN::int64Id()) % 21) {
               document = "HTTP/1.1 404 Not Found\r\n";
               content << "Today, is a beautiful day.";
