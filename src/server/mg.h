@@ -73,7 +73,7 @@ namespace K {
         k = ((DB*)memory)->load(uiTXT::MarketDataLongTerm);
         if (k.size()) {
           for (json::reverse_iterator it = k.rbegin(); it != k.rend(); ++it)
-            if (it->value("time", (unsigned long)0) + 3456e+4 > FN::T() and it->value("fv", 0.0))
+            if (it->value("time", (unsigned long)0) + 3456e+5 > FN::T() and it->value("fv", 0.0))
               fairValue96h.push_back(it->value("fv", 0.0));
           if (fairValue96h.size()) FN::log("DB", string("loaded ") + to_string(fairValue96h.size()) + " historical FairValues");
         }
@@ -179,6 +179,8 @@ namespace K {
       };
       void calcStatsEwmaPosition() {
         fairValue96h.push_back(fairValue);
+        if (fairValue96h.size() > 5760)
+          fairValue96h.erase(fairValue96h.begin(), fairValue96h.begin()+fairValue96h.size()-5760);
         calcEwma(&mgEwmaVL, qp->veryLongEwmaPeriods, fairValue);
         calcEwma(&mgEwmaL, qp->longEwmaPeriods, fairValue);
         calcEwma(&mgEwmaM, qp->mediumEwmaPeriods, fairValue);
@@ -196,7 +198,7 @@ namespace K {
         ((DB*)memory)->insert(uiTXT::MarketDataLongTerm, {
           {"fv", fairValue},
           {"time", FN::T()},
-        }, false, "NULL", FN::T() - 3456e+4);
+        }, false, "NULL", FN::T() - 3456e+5);
       };
       void calcStatsEwmaProtection() {
         calcEwma(&mgEwmaP, qp->protectionEwmaPeriods, fairValue);
