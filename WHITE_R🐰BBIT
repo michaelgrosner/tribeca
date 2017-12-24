@@ -31,7 +31,10 @@
 :       forget about this. is executed by "make install" every. single. time. :
 :                                                                             :
 :      $ make dist                                                            :
-:       TODO                                                                  :
+:       once upon a time there was a vast empty build folder but not anymore. :
+:        all includes (see Makefile and src/server/K.cxx) will be downloaded. :
+:        no errors or warnings expected, unless by happy libquickfix; ignore. :
+:        when done, rebuild anytime K Server with "make" (but do some mods!). :
 :                                                                             :
 :      $ make clean                                                           :
 :       TODO                                                                  :
@@ -187,4 +190,4 @@
           ~             ~        ~      ~      ~~   ~             ~
 
    youtu.be/aeyTr43cEYw       youtu.be/fnb8CQ9X-YM       youtu.be/pxxovTZRJic
-       youtu.be/_vsCx6VnOnI   youtu.be/rvY1AKiAJDw   youtu.be/eb6UyUibREU
+       youtu.be/_vsCx6VnOnI   youtu.be/SQM4qbwyxCM   youtu.be/eb6UyUibREU
