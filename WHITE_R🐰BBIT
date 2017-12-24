@@ -26,14 +26,17 @@
 :  :  # set CARCH env var to your arch if it differs (on redhats, ubuntus..). :
 :  :                                                                          :
 :  +-- Whaaat??                                                               :
-:     One-time targets:                                                       :
+:     One-time targets: (one-time means everytime new versions are available) :
 :      $ make packages                                                        :
-:       TODO                                                                  :
+:       forget about this. is executed by "make install" every. single. time. :
 :                                                                             :
 :      $ make dist                                                            :
 :       TODO                                                                  :
 :                                                                             :
-:     Devel targets:                                                          :
+:      $ make clean                                                           :
+:       TODO                                                                  :
+:                                                                             :
+:     Devel targets: (an excuse to refill a glass of milk no matter the boss) :
 :      $ make                                                                 :
 :       TODO                                                                  :
 :                                                                             :
@@ -41,13 +44,13 @@
 :       TODO                                                                  :
 :                                                                             :
 :     User targets:                                                           :
+:      $ make latest                                                          :
+:       TODO                                                                  :
+:                                                                             :
 :      $ make install                                                         :
 :       TODO                                                                  :
 :                                                                             :
 :      $ make reinstall                                                       :
-:       TODO                                                                  :
-:                                                                             :
-:      $ make latest                                                          :
 :       TODO                                                                  :
 :                                                                             :
 :     Private targets:                                                        :
@@ -116,11 +119,16 @@
 :  :                                                                          :
 :  +-- Whaaat??                                                               :
 :     load()                                                                  :
-:      TODO                                                                   :
+:      returns always 1 json array, with 0 items in case no record exist yet. :
 :     insert()                                                                :
-:      TODO                                                                   :
-:     cb()                                                                    :
-:      TODO                                                                   :
+:      callme with data that can not be lost after quick reboots (reinstall). :
+:       the same call must also clean out of date records; setting rm flag to :
+:       true will delete all before insert 1, setting id argument will delete :
+:       only the matching record with same id before insert 1, setting expire :
+:       argument to a timestamp will delete all older before insert 1. Please :
+:       ensure the database is a golden image of the memory. Do not forget to :
+:       create or remove data always on both, memory and database, as if one. :
+:       !before insert, consider twice if data must really survive reboots..! :
 :                                                                             :
 :                                                                             :
 :  .. src/server/ui.h:  ----------------------------- aka. User Interface --- :
