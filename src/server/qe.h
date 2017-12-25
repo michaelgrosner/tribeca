@@ -63,7 +63,7 @@ namespace K {
         };
       };
       void waitUser() {
-        ((UI*)client)->welcome(uiTXT::QuoteStatus, &hello);
+        ((UI*)client)->welcome(mMatter::QuoteStatus, &hello);
       };
       void run() {
         if (((CF*)config)->argDebugQuotes) return;
@@ -109,7 +109,7 @@ namespace K {
         bool k = diffCounts(&quotesInMemoryNew, &quotesInMemoryWorking, &quotesInMemoryDone);
         if (!diffStatus() and !k) return;
         status = mQuoteStatus(bidStatus, askStatus, quotesInMemoryNew, quotesInMemoryWorking, quotesInMemoryDone);
-        ((UI*)client)->send(uiTXT::QuoteStatus, status, true);
+        ((UI*)client)->send(mMatter::QuoteStatus, status, true);
       };
       bool diffCounts(unsigned int *qNew, unsigned int *qWorking, unsigned int *qDone) {
         for (map<string, mOrder>::iterator it = ((OG*)broker)->orders.begin(); it != ((OG*)broker)->orders.end(); ++it)
@@ -176,39 +176,39 @@ namespace K {
         debuq("E", rawQuote); applyAK47Increment(&rawQuote, baseValue);
         debuq("F", rawQuote); applyBestWidth(&rawQuote);
         debuq("G", rawQuote); applyTradesPerMinute(&rawQuote, superTradesActive, safetyBuy, safetySell);
-        debuq("H", rawQuote); applyRoundSide(&rawQuote);
-        debuq("I", rawQuote); applyRoundDown(&rawQuote, rawBidSz, rawAskSz, widthPong, safetyBuyPing, safetysellPing, totalQuotePosition, totalBasePosition);
+        debuq("H", rawQuote); applyRoundPrice(&rawQuote);
+        debuq("I", rawQuote); applyRoundSize(&rawQuote, rawBidSz, rawAskSz, totalQuotePosition, totalBasePosition);
         debuq("J", rawQuote); applyDepleted(&rawQuote, totalQuotePosition, totalBasePosition);
         debuq("K", rawQuote); applyWaitingPing(&rawQuote, totalQuotePosition, totalBasePosition, safetyBuyPing, safetysellPing);
         debuq("!", rawQuote);
-        debug(string("totals ") + "toAsk:" + to_string(totalBasePosition) + " toBid:" + to_string(totalQuotePosition) + " min:" + to_string(gw->minSize));
+        rawQuote.isAskPong = (safetyBuyPing and rawQuote.ask.price and rawQuote.ask.price >= safetyBuyPing + widthPong);
+        rawQuote.isBidPong = (safetysellPing and rawQuote.bid.price and rawQuote.bid.price <= safetysellPing - widthPong);
+        debug(string("totals ") + "toAsk:" + to_string(totalBasePosition) + ", toBid:" + to_string(totalQuotePosition));
         return rawQuote;
       };
-      void applyRoundSide(mQuote *rawQuote) {
+      void applyRoundPrice(mQuote *rawQuote) {
         if (rawQuote->bid.price) {
-          rawQuote->bid.price = FN::roundSide(rawQuote->bid.price, gw->minTick, mSide::Bid);
+          rawQuote->bid.price = floor(rawQuote->bid.price / gw->minTick) * gw->minTick;
           rawQuote->bid.price = fmax(0, rawQuote->bid.price);
         }
         if (rawQuote->ask.price) {
-          rawQuote->ask.price = FN::roundSide(rawQuote->ask.price, gw->minTick, mSide::Ask);
+          rawQuote->ask.price = ceil(rawQuote->ask.price / gw->minTick) * gw->minTick;
           rawQuote->ask.price = fmax(rawQuote->bid.price + gw->minTick, rawQuote->ask.price);
         }
       };
-      void applyRoundDown(mQuote *rawQuote, const double rawBidSz, const double rawAskSz, double widthPong, double safetyBuyPing, double safetysellPing, double totalQuotePosition, double totalBasePosition) {
+      void applyRoundSize(mQuote *rawQuote, const double rawBidSz, const double rawAskSz, double totalQuotePosition, double totalBasePosition) {
         if (rawQuote->ask.size) {
           if (rawQuote->ask.size > totalBasePosition)
             rawQuote->ask.size = (!rawBidSz or rawBidSz > totalBasePosition)
               ? totalBasePosition : rawBidSz;
-          rawQuote->ask.size = FN::roundDown(fmax(gw->minSize, rawQuote->ask.size), 1e-8);
-          rawQuote->isAskPong = (safetyBuyPing and rawQuote->ask.price and rawQuote->ask.price >= safetyBuyPing + widthPong);
-        } else rawQuote->isAskPong = false;
+          rawQuote->ask.size = floor(fmax(gw->minSize, rawQuote->ask.size) / 1e-8) * 1e-8;
+        }
         if (rawQuote->bid.size) {
           if (rawQuote->bid.size > totalQuotePosition)
             rawQuote->bid.size = (!rawAskSz or rawAskSz > totalQuotePosition)
               ? totalQuotePosition : rawAskSz;
-          rawQuote->bid.size = FN::roundDown(fmax(gw->minSize, rawQuote->bid.size), 1e-8);
-          rawQuote->isBidPong = (safetysellPing and rawQuote->bid.price and rawQuote->bid.price <= safetysellPing - widthPong);
-        } else rawQuote->isBidPong = false;
+          rawQuote->bid.size = floor(fmax(gw->minSize, rawQuote->bid.size) / 1e-8) * 1e-8;
+        }
       };
       void applyWaitingPing(mQuote *rawQuote, double totalQuotePosition, double totalBasePosition, double safetyBuyPing, double safetysellPing) {
         if (!qp->_matchPings and qp->safety != mQuotingSafety::PingPong) return;

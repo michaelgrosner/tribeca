@@ -37,7 +37,7 @@ namespace K {
       double mgStdevAskMean = 0;
     protected:
       void load() {
-        json k = ((DB*)memory)->load(uiTXT::MarketData);
+        json k = ((DB*)memory)->load(mMatter::MarketData);
         if (k.size()) {
           for (json::reverse_iterator it = k.rbegin(); it != k.rend(); ++it) {
             if (it->value("time", (unsigned long)0)+qp->quotingStdevProtectionPeriods*1e+3<FN::T()) continue;
@@ -54,7 +54,7 @@ namespace K {
         if (((CF*)config)->argEwmaLong) mgEwmaL = ((CF*)config)->argEwmaLong;
         if (((CF*)config)->argEwmaMedium) mgEwmaM = ((CF*)config)->argEwmaMedium;
         if (((CF*)config)->argEwmaShort) mgEwmaS = ((CF*)config)->argEwmaShort;
-        k = ((DB*)memory)->load(uiTXT::EWMAChart);
+        k = ((DB*)memory)->load(mMatter::EWMAChart);
         if (k.size()) {
           k = k.at(0);
           if (!mgEwmaVL and k.value("time", (unsigned long)0) + qp->veryLongEwmaPeriods * 6e+4 > FN::T())
@@ -70,7 +70,7 @@ namespace K {
         if (mgEwmaL)  FN::log(((CF*)config)->argEwmaLong ? "ARG" : "DB", string("loaded ") + to_string(mgEwmaL) + " EWMA Long");
         if (mgEwmaM)  FN::log(((CF*)config)->argEwmaMedium ? "ARG" : "DB", string("loaded ") + to_string(mgEwmaM) + " EWMA Medium");
         if (mgEwmaS)  FN::log(((CF*)config)->argEwmaShort ? "ARG" : "DB", string("loaded ") + to_string(mgEwmaS) + " EWMA Short");
-        k = ((DB*)memory)->load(uiTXT::MarketDataLongTerm);
+        k = ((DB*)memory)->load(mMatter::MarketDataLongTerm);
         if (k.size()) {
           for (json::reverse_iterator it = k.rbegin(); it != k.rend(); ++it)
             if (it->value("time", (unsigned long)0) + 3456e+5 > FN::T() and it->value("fv", 0.0))
@@ -89,9 +89,9 @@ namespace K {
         };
       };
       void waitUser() {
-        ((UI*)client)->welcome(uiTXT::MarketTrade, &helloTrade);
-        ((UI*)client)->welcome(uiTXT::FairValue, &helloFair);
-        ((UI*)client)->welcome(uiTXT::EWMAChart, &helloEwma);
+        ((UI*)client)->welcome(mMatter::MarketTrade, &helloTrade);
+        ((UI*)client)->welcome(mMatter::FairValue, &helloFair);
+        ((UI*)client)->welcome(mMatter::EWMAChart, &helloEwma);
       };
     public:
       void calcStats() {
@@ -110,15 +110,12 @@ namespace K {
                topAskSize = levels.asks.begin()->size,
                topBidSize = levels.bids.begin()->size;
         if (!topAskPrice or !topBidPrice or !topAskSize or !topBidSize) return;
-        fairValue = FN::roundNearest(
-          qp->fvModel == mFairValueModel::BBO
-            ? (topAskPrice + topBidPrice) / 2
-            : (topAskPrice * topBidSize + topBidPrice * topAskSize) / (topAskSize + topBidSize),
-          gw->minTick
-        );
+        fairValue = qp->fvModel == mFairValueModel::BBO
+          ? (topAskPrice + topBidPrice) / 2
+          : (topAskPrice * topBidSize + topBidPrice * topAskSize) / (topAskSize + topBidSize);
         if (!fairValue or (fairValue_ and abs(fairValue - fairValue_) < gw->minTick)) return;
         gw->evDataWallet(mWallet());
-        ((UI*)client)->send(uiTXT::FairValue, {{"price", fairValue}}, true);
+        ((UI*)client)->send(mMatter::FairValue, {{"price", fairValue}}, true);
         averageWidth = ((averageWidth * averageCount) + topAskPrice - topBidPrice) / ++averageCount;
       };
       void calcEwmaHistory() {
@@ -151,7 +148,7 @@ namespace K {
         mgStatTop.push_back(topBid);
         mgStatTop.push_back(topAsk);
         calcStdev();
-        ((DB*)memory)->insert(uiTXT::MarketData, {
+        ((DB*)memory)->insert(mMatter::MarketData, {
           {"fv", fairValue},
           {"bid", topBid},
           {"ask", topAsk},
@@ -169,12 +166,12 @@ namespace K {
         k.pair = mPair(gw->base, gw->quote);
         k.time = FN::T();
         trades.push_back(k);
-        ((UI*)client)->send(uiTXT::MarketTrade, k);
+        ((UI*)client)->send(mMatter::MarketTrade, k);
       };
       void levelUp(mLevels k) {
         filter(k);
         if (mgT_369ms+369 > FN::T()) return;
-        ((UI*)client)->send(uiTXT::MarketData, k, true);
+        ((UI*)client)->send(mMatter::MarketData, k, true);
         mgT_369ms = FN::T();
       };
       void calcStatsEwmaPosition() {
@@ -187,15 +184,15 @@ namespace K {
         calcEwma(&mgEwmaS, qp->shortEwmaPeriods, fairValue);
         calcTargetPos();
         ((EV*)events)->mgTargetPosition();
-        ((UI*)client)->send(uiTXT::EWMAChart, chartStats(), true);
-        ((DB*)memory)->insert(uiTXT::EWMAChart, {
+        ((UI*)client)->send(mMatter::EWMAChart, chartStats(), true);
+        ((DB*)memory)->insert(mMatter::EWMAChart, {
           {"ewmaVeryLong", mgEwmaVL},
           {"ewmaLong", mgEwmaL},
           {"ewmaMedium", mgEwmaM},
           {"ewmaShort", mgEwmaS},
           {"time", FN::T()}
         });
-        ((DB*)memory)->insert(uiTXT::MarketDataLongTerm, {
+        ((DB*)memory)->insert(mMatter::MarketDataLongTerm, {
           {"fv", fairValue},
           {"time", FN::T()},
         }, false, "NULL", FN::T() - 3456e+5);

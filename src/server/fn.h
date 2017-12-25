@@ -14,14 +14,6 @@ namespace K {
     public:
       static string S2l(string k) { transform(k.begin(), k.end(), k.begin(), ::tolower); return k; };
       static string S2u(string k) { transform(k.begin(), k.end(), k.begin(), ::toupper); return k; };
-      static double roundNearest(double price, double minTick) { return round(price / minTick) * minTick; };
-      static double roundUp(double price, double minTick) { return ceil(price / minTick) * minTick; };
-      static double roundDown(double price, double minTick) { return floor(price / minTick) * minTick; };
-      static double roundSide(double price, double minTick, mSide side) {
-        if (side == mSide::Bid) return roundDown(price, minTick);
-        else if (side == mSide::Ask) return roundUp(price, minTick);
-        else return roundNearest(price, minTick);
-      };
       static unsigned long T() { return chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now().time_since_epoch()).count(); };
       static string uiT() {
         chrono::time_point<chrono::system_clock> now = chrono::system_clock::now();
