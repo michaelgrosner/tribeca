@@ -1,19 +1,20 @@
 import { Observable } from 'rxjs/Observable';
 
-import Models = require("./models");
+import * as Models from './models';
 
-class KSocket extends WebSocket {
+class KSocket {
+  public ws;
   constructor() {
-    super(location.origin.replace('http', 'ws'));
-    for (const ev in events) events[ev].forEach(cb => this.addEventListener(ev, cb));
-    this.addEventListener('close', () => {
+    this.ws = new WebSocket(location.origin.replace('http', 'ws'));
+    for (const ev in events) events[ev].forEach(cb => this.ws.addEventListener(ev, cb));
+    this.ws.addEventListener('close', () => {
       setTimeout(() => { socket = new KSocket(); }, 5000);
     });
   }
   public setEventListener = (ev, cb) => {
     if (typeof events[ev] == 'undefined') events[ev] = [];
     events[ev].push(cb);
-    this.addEventListener(ev, cb);
+    this.ws.addEventListener(ev, cb);
   }
 }
 
@@ -36,7 +37,7 @@ export class Subscriber<T> extends Observable<T> implements ISubscribe<T> {
     private _topic: string
   ) {
     super(observer => {
-      if (socket.readyState==1) this.onConnect();
+      if (socket.ws.readyState==1) this.onConnect();
 
       socket.setEventListener('open', this.onConnect);
       socket.setEventListener('close', this.onDisconnect);
@@ -53,14 +54,14 @@ export class Subscriber<T> extends Observable<T> implements ISubscribe<T> {
   }
 
   public get connected(): boolean {
-    return socket.readyState == 1;
+    return socket.ws.readyState == 1;
   }
 
   private onConnect = () => {
       if (this._connectHandler !== null)
           this._connectHandler();
 
-      socket.send(Models.Prefixes.SNAPSHOT + this._topic);
+      socket.ws.send(Models.Prefixes.SNAPSHOT + this._topic);
   };
 
   private onDisconnect = () => {
@@ -98,6 +99,6 @@ export class Fire<T> implements IFire<T> {
     constructor(private _topic: string) {}
 
     public fire = (msg?: T) : void => {
-        socket.send(Models.Prefixes.MESSAGE + this._topic + (typeof msg == 'object' ? JSON.stringify(msg) : msg));
+        socket.ws.send(Models.Prefixes.MESSAGE + this._topic + (typeof msg == 'object' ? JSON.stringify(msg) : msg));
     };
 }

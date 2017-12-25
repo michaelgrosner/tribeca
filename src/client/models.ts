@@ -7,7 +7,7 @@ export var Topics = {
   FairValue: 'a',
   Quote: 'b',
   ActiveSubscription: 'c',
-  ActiveState: 'd',
+  Connectivity: 'd',
   MarketData: 'e',
   QuotingParametersChange: 'f',
   SafetySettings: 'g',
@@ -18,7 +18,6 @@ export var Topics = {
   Notepad: 'l',
   ToggleSettings: 'm',
   Position: 'n',
-  ExchangeConnectivity: 'o',
   SubmitNewOrder: 'p',
   CancelOrder: 'q',
   MarketTrade: 'r',
@@ -33,7 +32,8 @@ export var Topics = {
   CleanTrade: 'A',
   TradesChart: 'B',
   WalletChart: 'C',
-  EWMAChart: 'D'
+  EWMAChart: 'D',
+  MarketDataLongTerm: 'G'
 }
 
 export class MarketSide {
@@ -54,8 +54,7 @@ export class MarketStats {
 }
 
 export class MarketTrade {
-    constructor(public exchange: Exchange,
-                public pair: CurrencyPair,
+    constructor(public pair: CurrencyPair,
                 public price: number,
                 public quantity: number,
                 public time: number,
@@ -63,7 +62,7 @@ export class MarketTrade {
 }
 
 export enum Connectivity { Disconnected, Connected }
-export enum Exchange { Null, HitBtc, OkCoin, Coinbase, Bitfinex, Kraken, OkEx, Korbit, Poloniex }
+export enum Exchange { Null, HitBtc, OkCoin, Coinbase, Bitfinex, Kraken, OkEx, BitfinexMargin, Korbit, Poloniex }
 export enum Side { Bid, Ask, Unknown }
 export enum OrderType { Limit, Market }
 export enum TimeInForce { IOC, FOK, GTC }
@@ -89,6 +88,7 @@ export interface IStdev {
 export class EWMAChart {
     constructor(public stdevWidth: IStdev,
                 public ewmaQuote: number,
+                public ewmaWidth: number,
                 public ewmaShort: number,
                 public ewmaMedium: number,
                 public ewmaLong: number,
@@ -109,7 +109,6 @@ export class TradeChart {
 export class Trade {
     constructor(public tradeId: string,
                 public time: number,
-                public exchange: Exchange,
                 public pair: CurrencyPair,
                 public price: number,
                 public quantity: number,
@@ -139,8 +138,7 @@ export class PositionReport {
                 public quoteValue: number,
                 public profitBase: number,
                 public profitQuote: number,
-                public pair: CurrencyPair,
-                public exchange: Exchange) {}
+                public pair: CurrencyPair) {}
 }
 
 export class OrderRequestFromUI {
@@ -217,8 +215,8 @@ export interface QuotingParameters {
     superTrades?: SOP;
     tradesPerMinute?: number;
     tradeRateSeconds?: number;
-    ewmaPingWidth?: boolean;
-    quotingEwmaProtection?: boolean;
+    protectionEwmaWidthPing?: boolean;
+    protectionEwmaQuotePrice?: boolean;
     quotingStdevProtection?: STDEV;
     quotingStdevBollingerBands?: boolean;
     audio?: boolean;
@@ -230,7 +228,7 @@ export interface QuotingParameters {
     longEwmaPeriods?: number;
     mediumEwmaPeriods?: number;
     shortEwmaPeriods?: number;
-    quotingEwmaProtectionPeriods?: number;
+    protectionEwmaPeriods?: number;
     quotingStdevProtectionFactor?: number;
     quotingStdevProtectionPeriods?: number;
     aprMultiplier?: number;
@@ -258,7 +256,7 @@ export class TradeSafety {
       public sell: number,
       public combined: number,
       public buyPing: number,
-      public sellPong: number
+      public sellPing: number
     ) {}
 }
 

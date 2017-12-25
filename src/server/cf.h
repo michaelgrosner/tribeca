@@ -36,46 +36,44 @@ namespace K {
     protected:
       void load(int argc, char** argv) {
         cout << BGREEN << "K" << RGREEN << " build " << K_BUILD << " " << K_STAMP << "." << BRED << '\n';
-        int k;
-        while (true) {
-          int i = 0;
-          static struct option args[] = {
-            {"help",         no_argument,       0,               'h'},
-            {"colors",       no_argument,       &argColors,        1},
-            {"debug",        no_argument,       &argDebug,         1},
-            {"debug-events", no_argument,       &argDebugEvents,   1},
-            {"debug-orders", no_argument,       &argDebugOrders,   1},
-            {"debug-quotes", no_argument,       &argDebugQuotes,   1},
-            {"without-ssl",  no_argument,       &argWithoutSSL,    1},
-            {"headless",     no_argument,       &argHeadless,      1},
-            {"naked",        no_argument,       &argNaked,         1},
-            {"autobot",      no_argument,       &argAutobot,       1},
-            {"whitelist",    required_argument, 0,               'L'},
-            {"matryoshka",   required_argument, 0,               'k'},
-            {"exchange",     required_argument, 0,               'e'},
-            {"currency",     required_argument, 0,               'c'},
-            {"apikey",       required_argument, 0,               'A'},
-            {"secret",       required_argument, 0,               'S'},
-            {"passphrase",   required_argument, 0,               'X'},
-            {"username",     required_argument, 0,               'U'},
-            {"http",         required_argument, 0,               'H'},
-            {"wss",          required_argument, 0,               'W'},
-            {"title",        required_argument, 0,               'K'},
-            {"port",         required_argument, 0,               'P'},
-            {"user",         required_argument, 0,               'u'},
-            {"pass",         required_argument, 0,               'p'},
-            {"database",     required_argument, 0,               'd'},
-            {"ewma-short",   required_argument, 0,               's'},
-            {"ewma-medium",  required_argument, 0,               'm'},
-            {"ewma-long",    required_argument, 0,               'l'},
-            {"ewma-verylong",required_argument, 0,               'V'},
-            {"free-version", no_argument,       &argFree,          1},
-            {"version",      no_argument,       0,               'v'},
-            {0,              0,                 0,                 0}
-          };
-          k = getopt_long(argc, argv, "hvd:l:m:s:p:u:v:c:e:k:P:K:W:H:U:X:S:A:", args, &i);
-          if (k == -1) break;
-          switch (k) {
+        static const struct option args[] = {
+          {"help",         no_argument,       0,               'h'},
+          {"colors",       no_argument,       &argColors,        1},
+          {"debug",        no_argument,       &argDebug,         1},
+          {"debug-events", no_argument,       &argDebugEvents,   1},
+          {"debug-orders", no_argument,       &argDebugOrders,   1},
+          {"debug-quotes", no_argument,       &argDebugQuotes,   1},
+          {"without-ssl",  no_argument,       &argWithoutSSL,    1},
+          {"headless",     no_argument,       &argHeadless,      1},
+          {"naked",        no_argument,       &argNaked,         1},
+          {"autobot",      no_argument,       &argAutobot,       1},
+          {"whitelist",    required_argument, 0,               'L'},
+          {"matryoshka",   required_argument, 0,               'k'},
+          {"exchange",     required_argument, 0,               'e'},
+          {"currency",     required_argument, 0,               'c'},
+          {"apikey",       required_argument, 0,               'A'},
+          {"secret",       required_argument, 0,               'S'},
+          {"passphrase",   required_argument, 0,               'X'},
+          {"username",     required_argument, 0,               'U'},
+          {"http",         required_argument, 0,               'H'},
+          {"wss",          required_argument, 0,               'W'},
+          {"title",        required_argument, 0,               'K'},
+          {"port",         required_argument, 0,               'P'},
+          {"user",         required_argument, 0,               'u'},
+          {"pass",         required_argument, 0,               'p'},
+          {"database",     required_argument, 0,               'd'},
+          {"ewma-short",   required_argument, 0,               's'},
+          {"ewma-medium",  required_argument, 0,               'm'},
+          {"ewma-long",    required_argument, 0,               'l'},
+          {"ewma-verylong",required_argument, 0,               'V'},
+          {"free-version", no_argument,       &argFree,          1},
+          {"version",      no_argument,       0,               'v'},
+          {0,              0,                 0,                 0}
+        };
+        int k = 0;
+        while (++k) {
+          switch (k = getopt_long(argc, argv, "hvd:l:m:s:p:u:v:c:e:k:P:K:W:H:U:X:S:A:", args, NULL)) {
+            case -1: break;
             case 0: break;
             case 'P': argPort = stoi(optarg); break;
             case 'A': argApikey = string(optarg); break;
@@ -119,8 +117,8 @@ namespace K {
               << FN::uiT() << RWHITE << "-p, --pass=WORD           - set allowed WORD as password for UI connections," << '\n'
               << FN::uiT() << RWHITE << "                            mandatory but may be 'NULL'." << '\n'
               << FN::uiT() << RWHITE << "-e, --exchange=NAME       - set exchange NAME for trading, mandatory one of:" << '\n'
-              << FN::uiT() << RWHITE << "                            'COINBASE', 'BITFINEX', 'HITBTC', 'OKCOIN'," << '\n'
-              << FN::uiT() << RWHITE << "                            'KORBIT', 'POLONIEX' or 'NULL'." << '\n'
+              << FN::uiT() << RWHITE << "                            'COINBASE', 'BITFINEX',  'BITFINEX_MARGIN', 'HITBTC'," << '\n'
+              << FN::uiT() << RWHITE << "                            'OKCOIN', 'KORBIT', 'POLONIEX' or 'NULL'." << '\n'
               << FN::uiT() << RWHITE << "-c, --currency=PAIRS      - set currency pairs for trading (use format" << '\n'
               << FN::uiT() << RWHITE << "                            with '/' separator, like 'BTC/EUR')." << '\n'
               << FN::uiT() << RWHITE << "-A, --apikey=WORD         - set (never share!) WORD as api key for trading," << '\n'
@@ -175,6 +173,10 @@ namespace K {
           cout << "ARG" << RRED << " Errrror:" << BRED << " Missing mandatory argument \"--exchange\", at least." << '\n';
           exit(EXIT_SUCCESS);
         }
+        if (argCurrency.find("/") == string::npos) {
+          cout << "ARG" << RRED << " Errrror:" << BRED << " Invalid currency pair; must be in the format of BASE/QUOTE, like BTC/EUR." << '\n';
+          exit(EXIT_SUCCESS);
+        }
         if (argDebug)
           argDebugEvents =
           argDebugOrders =
@@ -184,53 +186,51 @@ namespace K {
           RBLUE[0]  = RPURPLE[0] = RCYAN[0]  = RWHITE[0]  =
           BBLACK[0] = BRED[0]    = BGREEN[0] = BYELLOW[0] =
           BBLUE[0]  = BPURPLE[0] = BCYAN[0]  = BWHITE[0]  = argColors;
-        if (argDatabase == "")
-          argDatabase = string("/data/db/K.")
-            + to_string((int)exchange())
+        if (argDatabase == "") {
+          argDatabase = string("/data/db/K")
+            + '.' + FN::S2u(argExchange)
             + '.' + base()
-            + '.' + quote() + ".db";
+            + '.' + quote()
+            + '.' + "db";
+          string deprecated = string("/data/db/K")
+            + '.' + to_string((int)deprecated_exchange())
+            + '.' + base()
+            + '.' + quote()
+            + '.' + "db";
+          if (access(deprecated.data(), F_OK) != -1)
+            FN::output(string("mv ") + deprecated + " " + argDatabase);
+        }
       };
       void run() {
-        mExchange e = exchange();
-        gw = Gw::E(e);
-        gw->exchange = e;
-        gw->name = argExchange;
-        gw->base = base();
-        gw->quote = quote();
-        gw->apikey = argApikey;
-        gw->secret = argSecret;
-        gw->user = argUsername;
-        gw->pass = argPassphrase;
-        gw->http = argHttp;
-        gw->ws = argWss;
-        gw->version = argFree;
+        gw = Gw::config(
+          base(),      quote(),
+          argExchange, argFree,
+          argApikey,   argSecret,
+          argUsername, argPassphrase,
+          argHttp,     argWss
+        );
         if (argNaked) return;
         FN::screen_config(argColors, argExchange, argCurrency);
       };
     private:
       string base() {
-        string k_ = argCurrency;
-        string k = k_.substr(0, k_.find("/"));
-        if (k == k_) FN::logExit("CF", "Invalid currency pair! Must be in the format of BASE/QUOTE, eg BTC/EUR.", EXIT_SUCCESS);
-        return FN::S2u(k);
+        return FN::S2u(argCurrency.substr(0, argCurrency.find("/")));
       };
       string quote() {
-        string k_ = argCurrency;
-        string k = k_.substr(k_.find("/")+1);
-        if (k == k_) FN::logExit("CF", "Invalid currency pair! Must be in the format of BASE/QUOTE, eg BTC/EUR", EXIT_SUCCESS);
-        return FN::S2u(k);
+        return FN::S2u(argCurrency.substr(argCurrency.find("/")+1));
       };
-      mExchange exchange() {
-        string k = FN::S2l(argExchange);
-        if (k == "coinbase") return mExchange::Coinbase;
-        else if (k == "okcoin") return mExchange::OkCoin;
-        else if (k == "okex") return mExchange::OkEx;
-        else if (k == "bitfinex") return mExchange::Bitfinex;
-        else if (k == "hitbtc") return mExchange::HitBtc;
-        else if (k == "kraken") return mExchange::Kraken;
-        else if (k == "korbit") return mExchange::Korbit;
-        else if (k == "poloniex") return mExchange::Poloniex;
-        else if (k != "null") FN::logExit("CF", string("Invalid configuration value \"") + k + "\" as EXCHANGE. See https://github.com/ctubio/Krypto-trading-bot/tree/master/etc#configuration-options for more information", EXIT_SUCCESS);
+      mExchange deprecated_exchange() {
+        string k = FN::S2u(argExchange);
+        if (k == "COINBASE") return mExchange::Coinbase;
+        else if (k == "BITFINEX") return mExchange::Bitfinex;
+        else if (k == "BITFINEX_MARGIN") return mExchange::BitfinexMargin;
+        else if (k == "HITBTC") return mExchange::HitBtc;
+        else if (k == "OKEX") return mExchange::OkEx;
+        else if (k == "OKCOIN") return mExchange::OkCoin;
+        else if (k == "KRAKEN") return mExchange::Kraken;
+        else if (k == "KORBIT") return mExchange::Korbit;
+        else if (k == "POLONIEX") return mExchange::Poloniex;
+        else if (k != "NULL") FN::logExit("CF", string("Invalid configuration value \"") + k + "\" as EXCHANGE. See https://github.com/ctubio/Krypto-trading-bot for more information", EXIT_SUCCESS);
         return mExchange::Null;
       };
   };

@@ -1,10 +1,9 @@
-import {NgZone, Component, Inject, Input, OnInit} from '@angular/core';
-import {GridOptions, ColDef, RowNode} from "ag-grid/main";
-import moment = require('moment');
+import {Component, Inject, Input, OnInit} from '@angular/core';
+import {GridOptions, ColDef, RowNode} from 'ag-grid/main';
 
-import Models = require('./models');
-import Subscribe = require('./subscribe');
-import {SubscriberFactory, FireFactory, BaseCurrencyCellComponent, QuoteCurrencyCellComponent} from './shared_directives';
+import * as Models from './models';
+import * as Subscribe from './subscribe';
+import {FireFactory, BaseCurrencyCellComponent, QuoteCurrencyCellComponent} from './shared_directives';
 
 @Component({
   selector: 'order-list',
@@ -25,9 +24,11 @@ export class OrdersComponent implements OnInit {
     setTimeout(()=>{try{this.gridOptions.api.redrawRows();}catch(e){}},0);
   }
 
+  @Input() set setOrderList(o) {
+    this.addRowData(o);
+  }
+
   constructor(
-    @Inject(NgZone) private zone: NgZone,
-    @Inject(SubscriberFactory) private subscriberFactory: SubscriberFactory,
     @Inject(FireFactory) private fireFactory: FireFactory
   ) {}
 
@@ -37,20 +38,9 @@ export class OrdersComponent implements OnInit {
     this.gridOptions.columnDefs = this.createColumnDefs();
     this.gridOptions.suppressNoRowsOverlay = true;
     this.gridOptions.enableColResize = true;
-    setTimeout(this.loadSubscriber, 500);
-  }
-
-  private subscribed: boolean = false;
-  public loadSubscriber = () => {
-    if (this.subscribed) return;
-    this.subscribed = true;
 
     this.fireCxl = this.fireFactory
       .getFire(Models.Topics.CancelOrder);
-
-    this.subscriberFactory
-      .getSubscriber(this.zone, Models.Topics.OrderStatusReports)
-      .registerSubscriber(this.addRowData);
   }
 
   private createColumnDefs = (): ColDef[] => {
@@ -59,11 +49,12 @@ export class OrdersComponent implements OnInit {
         return '<button type="button" class="btn btn-danger btn-xs"><span data-action-type="remove" style="font-size: 16px;font-weight: bold;padding: 0px;line-height: 12px;">&times;</span></button>';
       } },
       { width: 82, suppressSizeToFit: true, field: 'time', headerName: 'time', cellRenderer:(params) => {
-        return (params.value) ? params.value.format('HH:mm:ss,SSS') : '';
+        var d = new Date(params.value||0);
+        return (d.getHours()+'').padStart(2, "0")+':'+(d.getMinutes()+'').padStart(2, "0")+':'+(d.getSeconds()+'').padStart(2, "0")+','+(d.getMilliseconds()+'').padStart(3, "0");
       },
-        cellClass: 'fs11px', comparator: (a: moment.Moment, b: moment.Moment) => a.diff(b)
+        cellClass: 'fs11px'
       },
-      { width: 40, suppressSizeToFit: true, field: 'side', headerName: 'side' , cellRenderer:(params) => {
+      { width: 40, suppressSizeToFit: true, field: 'side', headerName: 'side', cellRenderer:(params) => {
         return (params.data.pong ? '¯' : '_') + params.value;
       }, cellClass: (params) => {
         if (params.value === 'Bid') return 'buy';
@@ -98,14 +89,15 @@ export class OrdersComponent implements OnInit {
   }
 
   private addRowData = (o) => {
-    if (!this.gridOptions.api) return;
-    if (!o) {
+    if (!this.gridOptions.api || this.product.advert.pair == null) return;
+    if (!o || (typeof o.length == 'number' && !o.length)) {
       this.gridOptions.api.setRowData([]);
       return;
-    } else if (typeof o[0] == 'object') {
+    } else if (typeof o.length == 'number' && typeof o[0] == 'object') {
       this.gridOptions.api.setRowData([]);
       return o.forEach(x => setTimeout(this.addRowData(x), 0));
     }
+
     let exists: boolean = false;
     let isClosed: boolean = (o.orderStatus == Models.OrderStatus.Cancelled
       || o.orderStatus == Models.OrderStatus.Complete);
@@ -115,7 +107,7 @@ export class OrdersComponent implements OnInit {
         if (isClosed) this.gridOptions.api.updateRowData({remove:[node.data]});
         else {
           node.setData(Object.assign(node.data, {
-            time: (moment.isMoment(o.time) ? o.time : moment(o.time)),
+            time: o.time,
             price: o.price,
             value: Math.round(o.price * o.quantity * 100) / 100,
             tif: Models.TimeInForce[o.timeInForce],
@@ -138,7 +130,7 @@ export class OrdersComponent implements OnInit {
         lat: o.computationalLatency+'ms',
         qty: o.quantity,
         pong: o.isPong,
-        time: (moment.isMoment(o.time) ? o.time : moment(o.time)),
+        time: o.time,
         quoteSymbol: this.product.advert.pair.quote,
         productFixed: this.product.fixed
       }]});

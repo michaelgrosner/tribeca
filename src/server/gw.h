@@ -4,16 +4,14 @@
 namespace K {
   class GW: public Klass {
     private:
-      mConnectivity gwAutoStart = mConnectivity::Disconnected,
-                    gwQuotingState = mConnectivity::Disconnected,
-                    gwConnectOrder = mConnectivity::Disconnected,
-                    gwConnectMarket = mConnectivity::Disconnected,
-                    gwConnectExchange = mConnectivity::Disconnected;
+      mConnectivity gwAdminEnabled = mConnectivity::Disconnected,
+                    gwConnectOrders = mConnectivity::Disconnected,
+                    gwConnectMarket = mConnectivity::Disconnected;
       unsigned int gwT_5m = 0;
     protected:
       void load() {
         gwEndings.back() = &happyEnding;
-        if (((CF*)config)->argAutobot) gwAutoStart = mConnectivity::Connected;
+        gwAdminEnabled = (mConnectivity)((CF*)config)->argAutobot;
         handshake(gw->exchange);
       };
       void waitTime() {
@@ -22,28 +20,24 @@ namespace K {
           GW *k = (GW*)handle->data;
           ((EV*)k->events)->debug("GW tServer timer");
           k->gw->wallet();
-          if (k->qp->cancelOrdersAuto) {
+          if (k->qp->cancelOrdersAuto)
             if (!k->gwT_5m++) k->gw->cancelAll();
             else if (k->gwT_5m == 20) k->gwT_5m = 0;
-          }
         }, 0, 15e+3);
       };
       void waitData() {
         gw->evConnectOrder = [&](mConnectivity k) {
-          serverSemaphore(mGatewayType::OrderEntry, k);
+          serverSemaphore(&gwConnectOrders, k);
         };
         gw->evConnectMarket = [&](mConnectivity k) {
-          serverSemaphore(mGatewayType::MarketData, k);
-          if (k == mConnectivity::Disconnected)
+          if (!serverSemaphore(&gwConnectMarket, k))
             gw->evDataLevels(mLevels());
         };
         gw->levels();
       };
       void waitUser() {
-        ((UI*)client)->welcome(uiTXT::ProductAdvertisement, &helloProduct);
-        ((UI*)client)->welcome(uiTXT::ExchangeConnectivity, &helloStatus);
-        ((UI*)client)->welcome(uiTXT::ActiveState, &helloState);
-        ((UI*)client)->clickme(uiTXT::ActiveState, &kissState);
+        ((UI*)client)->welcome(uiTXT::Connectivity, &hello);
+        ((UI*)client)->clickme(uiTXT::Connectivity, &kiss);
       };
       void run() {
         ((EV*)events)->start();
@@ -56,60 +50,38 @@ namespace K {
           FN::log(string("GW ") + gw->name, "cancell all open orders OK");
         });
       };
-      function<void(json*)> helloProduct = [&](json *welcome) {
-        *welcome = { {
-          {"exchange", (int)gw->exchange},
-          {"pair", {{"base", gw->base}, {"quote", gw->quote}}},
-          {"minTick", gw->minTick},
-          {"environment", ((CF*)config)->argTitle},
-          {"matryoshka", ((CF*)config)->argMatryoshka},
-          {"homepage", "https://github.com/ctubio/Krypto-trading-bot"}
-        } };
+      function<void(json*)> hello = [&](json *welcome) {
+        *welcome = { serverState() };
       };
-      function<void(json*)> helloStatus = [&](json *welcome) {
-        *welcome = { {
-          {"status", (unsigned int)gwConnectExchange}
-        } };
-      };
-      function<void(json*)> helloState = [&](json *welcome) {
-        *welcome = { {
-          {"state",  (unsigned int)gwQuotingState}
-        } };
-      };
-      function<void(json)> kissState = [&](json butterfly) {
-        if (!butterfly.is_object() or !butterfly["state"].is_number()) {
-          FN::logWar("JSON", "Missing state at kissState, ignored");
-          return;
-        }
-        mConnectivity autoStart = (mConnectivity)butterfly["state"].get<int>();
-        if (autoStart != gwAutoStart) {
-          gwAutoStart = autoStart;
+      function<void(json)> kiss = [&](json butterfly) {
+        if (!butterfly.is_object() or !butterfly["state"].is_number()) return;
+        mConnectivity updated = butterfly["state"].get<mConnectivity>();
+        if (gwAdminEnabled != updated) {
+          gwAdminEnabled = updated;
           clientSemaphore();
         }
       };
-      void serverSemaphore(mGatewayType gwT, mConnectivity gwS) {
-        if (gwT == mGatewayType::MarketData) {
-          if (gwConnectMarket == gwS) return;
-          gwConnectMarket = gwS;
-        } else if (gwT == mGatewayType::OrderEntry) {
-          if (gwConnectOrder == gwS) return;
-          gwConnectOrder = gwS;
+      mConnectivity serverSemaphore(mConnectivity *current, mConnectivity updated) {
+        if (*current != updated) {
+          *current = updated;
+          ((QE*)engine)->gwConnectExchange = gwConnectMarket * gwConnectOrders;
+          clientSemaphore();
         }
-        gwConnectExchange = gwConnectMarket == mConnectivity::Connected and gwConnectOrder == mConnectivity::Connected
-          ? mConnectivity::Connected : mConnectivity::Disconnected;
-        clientSemaphore();
-        ((UI*)client)->send(uiTXT::ExchangeConnectivity, {{"status", (int)gwConnectExchange}});
+        return updated;
       };
       void clientSemaphore() {
-        mConnectivity quotingState = gwConnectExchange;
-        if (quotingState == mConnectivity::Connected) quotingState = gwAutoStart;
-        if (quotingState != gwQuotingState) {
-          gwQuotingState = quotingState;
-          FN::log(string("GW ") + gw->name, "Quoting state changed to", gwQuotingState == mConnectivity::Connected ? "CONNECTED" : "DISCONNECTED");
-          ((UI*)client)->send(uiTXT::ActiveState, {{"state", (int)gwQuotingState}});
+        mConnectivity updated = gwAdminEnabled * ((QE*)engine)->gwConnectExchange;
+        if (((QE*)engine)->gwConnectButton != updated) {
+          ((QE*)engine)->gwConnectButton = updated;
+          FN::log(string("GW ") + gw->name, "Quoting state changed to", string(!((QE*)engine)->gwConnectButton?"DIS":"") + "CONNECTED");
         }
-        ((QE*)engine)->gwConnectButton = gwQuotingState;
-        ((QE*)engine)->gwConnectExchange = gwConnectExchange;
+        ((UI*)client)->send(uiTXT::Connectivity, serverState());
+      };
+      json serverState() {
+        return {
+          {"state", ((QE*)engine)->gwConnectButton},
+          {"status", ((QE*)engine)->gwConnectExchange}
+        };
       };
       void handshake(mExchange k) {
         json reply;
@@ -128,7 +100,7 @@ namespace K {
           gw->minTick = stod(reply.value("tickSize", "0"));
           gw->minSize = stod(reply.value("quantityIncrement", "0"));
         }
-        else if (k == mExchange::Bitfinex) {
+        else if (k == mExchange::Bitfinex or k == mExchange::BitfinexMargin) {
           gw->randId = FN::int64Id;
           gw->symbol = FN::S2l(string(gw->base) + gw->quote);
           reply = FN::wJet(string(gw->http) + "/pubticker/" + gw->symbol);
@@ -199,7 +171,7 @@ namespace K {
           FN::log(string("GW ") + gw->name, "allows client IP");
           stringstream ss;
           ss << setprecision(8) << fixed << '\n'
-            << "- autoBot: " << (((CF*)config)->argAutobot ? "yes" : "no") << '\n'
+            << "- autoBot: " << (!gwAdminEnabled ? "no" : "yes") << '\n'
             << "- symbols: " << gw->symbol << '\n'
             << "- minTick: " << gw->minTick << '\n'
             << "- minSize: " << gw->minSize << '\n'

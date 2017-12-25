@@ -8,7 +8,7 @@
 #  █ configurable! executable! K.sh initialization file █
 #  █▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▀▄▄██▄▌ ▌▐ ▐▄██▄▄▀▄▄▄▄▄▄▄▄▄▄▄▄▄▄█
 #  █▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▄▀▀▀▀▀▌▄  ▄▐▀▀▀▀▀▄▀▀▀▀▀▀▀▀▀▀▀▀▀▀█
-#  █▌ Today, is a beautiful day.▐▌ btw, on THIS file.. ▐█
+#  █▌ Today, is a beautiful day.▐▌.btw, on THIS file.. ▐█
 #  ██   I. Define hardcoded optional K argumentss. F F ██
 #  ██  II. Define initial mandatory UI argumentss. E R ██
 #  ██ III. Define initial mandatory API arguments. E E ██
@@ -47,6 +47,7 @@ UI_OPENPORT=3000
 #  ██ - Allows one of the following exchange names (or leave NULL for test mode):
 #API_EXCHANGE=COINBASE
 #API_EXCHANGE=BITFINEX
+#API_EXCHANGE=BITFINEX_MARGIN
 #API_EXCHANGE=HITBTC
 #API_EXCHANGE=OKCOIN
 #API_EXCHANGE=OKEX

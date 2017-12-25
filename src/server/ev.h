@@ -119,16 +119,14 @@ namespace K  {
         cout << '\n';
         json k = FN::wJet("https://api.icndb.com/jokes/random?escape=javascript&limitTo=[nerdy]", true);
         cout << FN::uiT() << "Excellent decision! "
-          << ((k.is_null() or !k["/value/joke"_json_pointer].is_string())
-            ? "let's plant a tree instead.." : k["/value/joke"_json_pointer].get<string>()
-          ) << '\n';
+             << k.value("/value/joke"_json_pointer, "let's plant a tree instead..") << '\n';
         halt(EXIT_SUCCESS);
       };
       static void wtf(int sig) {
         FN::screen_quit();
         cout << FN::uiT() << RCYAN << "Errrror: Signal " << sig << " "  << strsignal(sig);
         if (latest()) {
-          cout << " (Three-Headed Monkey found)." << '\n';
+          cout << " (Three-Headed Monkey found):" << '\n';
           report();
           this_thread::sleep_for(chrono::seconds(3));
         } else {

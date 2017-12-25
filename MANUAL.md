@@ -41,7 +41,7 @@ Gateways are ideally stateless (some state may be needed in order to perform exc
 
 Navigate to the Web UI as described in the install process. You should see a screen like:
 
-![](https://github.com/ctubio/**Krypto-trading-bot**/raw/master/etc/img/K.png)
+![](https://github.com/ctubio/Krypto-trading-bot/raw/master/etc/img/K.png)
 
 * Market Data and Quotes - this is perhaps the most important screen in the app.
 
@@ -150,9 +150,9 @@ In the web UI, there are three rows of panels with cryptic looking names and edi
   * `EWMA_LS` - **Krypto-trading-bot** will use a `long` minute and `short` minute exponential weighted moving average calculation to buy up BTC when the `short` minute line crosses over the `long` minute line, and sell BTC when the reverse happens. The EWMA values are currently exposed in the stats.
 
   * `EWMA_LMS` - **Krypto-trading-bot** will use a `long` minute, `medium` minute and `short` minute exponential weighted moving average calculation, together with the simple moving average of the last 3 `fair value` values, to buy up BTC when the `short` minute line crosses over the `long` minute line, and sell BTC when the reverse happens.
-  
+
   * `EWMA_4` - **Krypto-trading-bot** will use a `medium` minute and `small` minute EWMA calculation to buy when the `small` minute line crosses over the `medium` minute line, and sell when the reverse happens. Additionally sets the `tbp` to 0% if the `verylong` EWMA minute line crosses over the `long` EWMA minute line.
-  
+
 * `verylong` - Only used when `apMode` is `EWMA_4`. Sets the periods of EWMA VeryLong to automatically manage positions.
 
 * `long` - Only used when `apMode` is `EWMA`. Sets the periods of EWMA Long to automatically manage positions.
@@ -212,9 +212,11 @@ Time     | Side | Price | Size | BuyTS | SellTS | Notes
 
 * `/sec` - see `trades`.
 
-* `ewma?` - Use a quote protection of `periods` smoothed line of the price to limit the price while sending new orders.
+* `ewmaPrice?` - Use a quote protection of `periods` smoothed line of the fair value to limit the price while sending new orders.
 
-* `periodsᵉʷᵐᵃ` - Maximum amount of values collected in the sequences used to calculate the `ewma?` quote protection. After collect sequentially every 1 minute the value of the `fair value`, and before place new orders, a limit will be always applied to the new orders price using a `ewma` calculation, taking into account only the last `periods` periods in each sequence.
+* `ewmaWidth?` - Use a quote protection of `periods` smoothed line of the width (between the top bid and the top ask) to limit the widthPing while sending new orders.
+
+* `periodsᵉʷᵐᵃ` - Maximum amount of values collected in the sequences used to calculate the `ewmaPrice?` and `ewmaWidth?` quote protection. After collect sequentially every 1 minute the value of the `fair value`, and before place new orders, a limit will be always applied to the new orders price using a `ewma` calculation, taking into account only the last `periods` periods in each sequence.
 
 * `ewmaTrend?` - Use a trend protection of double `periods` (Ultra+Micro) smoothed lines of the price to limit uptrend sells and downtrend buys.
 
@@ -248,9 +250,9 @@ Time     | Side | Price | Size | BuyTS | SellTS | Notes
 
 * `cxl?` - Enable a timeout of 5 minutes to cancel all orders that exist as open in the exchange (in case you found yourself with zombie orders in the exchange, because the API integration have bugs or because the connection is interrupted).
 
-* `profit` - Interval in hours to recalculate the display of Profit (under wallet values), for example a `profit` of 0.5 will compare the current wallet values and the values from half hour ago to display the +/- % of increment between both.
+* `profit` - Timeframe in hours to calculate the display of Profit (under wallet values) and also interval in hour to remove data points from the Stats, for example a `profit` of 0.5 will compare the current wallet values and the values from half hour ago to display the +/- % of increment between both and will remove data from the Stats older than half an hour.
 
-* `Kmemory` - Timeout in days for Pings (yet unmatched trades) and/or Pongs (K trades) to remain in memory, a value of `0` keeps the history in memory forever; a positive value remove only Pongs after `Kmemory` days; but a negative value remove both Pings and Pongs after `Kmemory` days (for example a value of `-2` will keep a history of trades no longer than 2 days without matter if Pings are not matched by Pongs).
+* `Kmemory` - Timeout in days for Pings (yet unmatched trades) and/or Pongs (K trades) to remain in memory, a value of `0` keeps the history in memory forever; a positive value remove only Pongs after `Kmemory` days; but a negative value remove both Pings and Pongs after `Kmemory` days (for example a value of `-2` will keep a history of trades no longer than 2 days without matter if Pings are not matched by Pongs; or a value of `-0.25` will do so but limited to 6h).
 
 * `delayUI` - Relax the display of UI data by `delayUI` seconds. Set a value of 0 (zero) to display UI data in realtime, but this may penalize the communication with the exchange if you end up sending too much frequent UI data (like in low latency environments with super fast market data updates; at home is OK in realtime because the latency of **Krypto-trading-bot** with the exchange tends to be higher than the latency of **Krypto-trading-bot** with your browser).
 

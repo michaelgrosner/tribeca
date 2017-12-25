@@ -1,10 +1,9 @@
-import {NgZone, Component, Inject, EventEmitter, Input, Output, OnInit} from '@angular/core';
-import {GridOptions, ColDef, RowNode} from "ag-grid/main";
-import moment = require('moment');
+import {Component, Inject, EventEmitter, Input, Output, OnInit} from '@angular/core';
+import {GridOptions, ColDef, RowNode} from 'ag-grid/main';
 
-import Models = require('./models');
-import Subscribe = require('./subscribe');
-import {SubscriberFactory, FireFactory, BaseCurrencyCellComponent, QuoteCurrencyCellComponent} from './shared_directives';
+import * as Models from './models';
+import * as Subscribe from './subscribe';
+import {FireFactory, BaseCurrencyCellComponent, QuoteCurrencyCellComponent} from './shared_directives';
 
 @Component({
   selector: 'trade-list',
@@ -24,11 +23,31 @@ export class TradesComponent implements OnInit {
 
   @Input() product: Models.ProductState;
 
+  @Input() set setQuotingParameters(o: Models.QuotingParameters) {
+    this.audio = o.audio;
+    if (!this.gridOptions.api) return;
+    var isK = (o.safety === Models.QuotingSafety.Boomerang || o.safety === Models.QuotingSafety.AK47);
+    this.gridOptions.columnDefs.map((r: ColDef) => {
+      ['Kqty','Kprice','Kvalue','Kdiff','Ktime',['time','timePing'],['price','pxPing'],['quantity','qtyPing'],['value','valPing']].map(t => {
+        if (t[0]==r.field) r.headerName = isK ? t[1] : t[1].replace('Ping','');
+        if (r.field[0]=='K') r.hide = !isK;
+      });
+      return r;
+    });
+    this.gridOptions.api.setColumnDefs(this.gridOptions.columnDefs);
+  }
+
+  @Input() set setTrade(o: Models.Trade) {
+    if (o === null) {
+      if (this.gridOptions.rowData)
+        this.gridOptions.api.setRowData([]);
+    }
+    else this.addRowData(o);
+  }
+
   @Output() onTradesLength = new EventEmitter<number>();
 
   constructor(
-    @Inject(NgZone) private zone: NgZone,
-    @Inject(SubscriberFactory) private subscriberFactory: SubscriberFactory,
     @Inject(FireFactory) private fireFactory: FireFactory
   ) {}
 
@@ -38,25 +57,9 @@ export class TradesComponent implements OnInit {
     this.gridOptions.columnDefs = this.createColumnDefs();
     this.gridOptions.overlayNoRowsTemplate = `<span class="ag-overlay-no-rows-center">empty history of trades</span>`;
     this.gridOptions.enableColResize = true;
-    setTimeout(this.loadSubscriber, 3321);
-  }
-
-  private subscribed: boolean = false;
-  public loadSubscriber = () => {
-    if (this.subscribed) return;
-    this.subscribed = true;
 
     this.fireCxl = this.fireFactory
       .getFire(Models.Topics.CleanTrade);
-
-    this.subscriberFactory
-      .getSubscriber(this.zone, Models.Topics.QuotingParametersChange)
-      .registerSubscriber(this.updateQP);
-
-    this.subscriberFactory
-      .getSubscriber(this.zone, Models.Topics.Trades)
-      .registerConnectHandler(() => this.gridOptions.rowData.length = 0)
-      .registerSubscriber(this.addRowData);
   }
 
   private createColumnDefs = (): ColDef[] => {
@@ -65,12 +68,15 @@ export class TradesComponent implements OnInit {
         return '<button type="button" class="btn btn-danger btn-xs"><span data-action-type="remove" style="font-size: 16px;font-weight: bold;padding: 0px;line-height: 12px;">&times;</span></button>';
       } },
       {width: 95, suppressSizeToFit: true, field:'time', headerName:'t', cellRenderer:(params) => {
-        return (params.value) ? params.value.format('D/M HH:mm:ss') : '';
-      }, cellClass: 'fs11px', comparator: (aValue: moment.Moment, bValue: moment.Moment, aNode: RowNode, bNode: RowNode) => {
-        return (aNode.data.Ktime||aNode.data.time).diff(bNode.data.Ktime||bNode.data.time);
-      }, sort: 'desc'},
+        var d = new Date(params.value||0);
+        return (d.getDate()+'').padStart(2, "0")+'/'+((d.getMonth()+1)+'').padStart(2, "0")+' '+(d.getHours()+'').padStart(2, "0")+':'+(d.getMinutes()+'').padStart(2, "0")+':'+(d.getSeconds()+'').padStart(2, "0");
+      }, cellClass: 'fs11px', sort: 'desc', comparator: (valueA: any, valueB: any, nodeA: RowNode, nodeB: RowNode, isInverted: boolean) => {
+          return (nodeA.data.Ktime||nodeA.data.time) - (nodeB.data.Ktime||nodeB.data.time);
+      }},
       {width: 95, suppressSizeToFit: true, field:'Ktime', hide:true, headerName:'timePong', cellRenderer:(params) => {
-        return (params.value && params.value!='Invalid date') ? params.value.format('D/M HH:mm:ss') : '';
+        if (params.value==0) return '';
+        var d = new Date(params.value);
+        return (d.getDate()+'').padStart(2, "0")+'/'+((d.getMonth()+1)+'').padStart(2, "0")+' '+(d.getHours()+'').padStart(2, "0")+':'+(d.getMinutes()+'').padStart(2, "0")+':'+(d.getSeconds()+'').padStart(2, "0");
       }, cellClass: 'fs11px' },
       {width: 40, suppressSizeToFit: true, field:'side', headerName:'side', cellClass: (params) => {
         if (params.value === 'Buy') return 'buy';
@@ -124,10 +130,10 @@ export class TradesComponent implements OnInit {
           const merged = (node.data.quantity != t.quantity);
           if (t.Ktime && <any>t.Ktime=='Invalid date') t.Ktime = null;
           node.setData(Object.assign(node.data, {
-            time: (moment.isMoment(t.time) ? t.time : moment(t.time)),
+            time: t.time,
             quantity: t.quantity,
             value: t.value,
-            Ktime: t.Ktime?(moment.isMoment(t.Ktime) ? t.Ktime : moment(t.Ktime)):null,
+            Ktime: t.Ktime || 0,
             Kqty: t.Kqty ? t.Kqty : null,
             Kprice: t.Kprice ? t.Kprice : null,
             Kvalue: t.Kvalue ? t.Kvalue : null,
@@ -152,12 +158,12 @@ export class TradesComponent implements OnInit {
         if (t.Ktime && <any>t.Ktime=='Invalid date') t.Ktime = null;
         this.gridOptions.api.updateRowData({add:[{
           tradeId: t.tradeId,
-          time: (moment.isMoment(t.time) ? t.time : moment(t.time)),
+          time: t.time,
           price: t.price,
           quantity: t.quantity,
           side: t.Kqty >= t.quantity ? 'K' : (t.side === Models.Side.Ask ? "Sell" : "Buy"),
           value: t.value,
-          Ktime: t.Ktime ? (moment.isMoment(t.Ktime) ? t.Ktime : moment(t.Ktime)) : null,
+          Ktime: t.Ktime || 0,
           Kqty: t.Kqty ? t.Kqty : null,
           Kprice: t.Kprice ? t.Kprice : null,
           Kvalue: t.Kvalue ? t.Kvalue : null,
@@ -175,19 +181,5 @@ export class TradesComponent implements OnInit {
 
     this.gridOptions.api.sizeColumnsToFit();
     this.onTradesLength.emit(this.gridOptions.api.getModel().getRowCount());
-  }
-
-  private updateQP = (qp: Models.QuotingParameters) => {
-    this.audio = qp.audio;
-    if (!this.gridOptions.api) return;
-    var isK = (qp.safety === Models.QuotingSafety.Boomerang || qp.safety === Models.QuotingSafety.AK47);
-    this.gridOptions.columnDefs.map((r: ColDef) => {
-      ['Kqty','Kprice','Kvalue','Kdiff','Ktime',['time','timePing'],['price','pxPing'],['quantity','qtyPing'],['value','valPing']].map(t => {
-        if (t[0]==r.field) r.headerName = isK ? t[1] : t[1].replace('Ping','');
-        if (r.field[0]=='K') r.hide = !isK;
-      });
-      return r;
-    });
-    this.gridOptions.api.setColumnDefs(this.gridOptions.columnDefs);
   }
 }

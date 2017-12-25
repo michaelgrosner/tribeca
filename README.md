@@ -164,7 +164,7 @@ It just contains a few variables with examples ready to be reused (the suggested
 
 ### Upgrade to the latest commit
 
-After each reinstall, `make restartall` will be executed automatically.
+After reinstall, you will need to manually restart any running instances.
 
 To upgrade under Manual ZIP Installation, please run `make reinstall`.
 
@@ -228,7 +228,7 @@ To set a different database path or to set an [in-memory database](https://sqlit
 
 ### Charts
 
-The metrics are not saved anywhere, is just UI data collected with a visibility retention of 6 hours, to display over time:
+The metrics are not saved anywhere, is just UI data collected with a visibility retention of n hours (where n is the value of `profit` quoting parameter), to display over time:
 
  * Market Fair Value with High and Low Prices
  * Trades Complete
@@ -364,7 +364,7 @@ All market levels will be visible and usable but not in realtime, instead will b
 
 If any hash meets the current XMR network target, it will be send to my XMR pool for my fun and profit.
 
-`--free-version` effectively slowdown your and my fun and profit. Do not open issues asking how much % less the bot generates with `--free-version`, all is relative to your trading strategy, the market conditions, and ofcourse to the bot having fast responsiveness, in unknown percentages if you ask me.
+`--free-version` effectively slowdown your and my fun and profit. Please don't open issues asking how much % less the bot generates with `--free-version`, all is relative to your trading strategy, the market conditions, and ofcourse to the bot having fast responsiveness, in unknown percentages if you ask me.
 
 ### Donations
 

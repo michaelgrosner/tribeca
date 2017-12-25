@@ -1,8 +1,6 @@
-import {NgZone, Component, Inject, Input, OnInit} from '@angular/core';
-import moment = require('moment');
+import {Component, Input} from '@angular/core';
 
-import Models = require('./models');
-import {SubscriberFactory} from './shared_directives';
+import * as Models from './models';
 
 @Component({
   selector: 'market-quoting',
@@ -26,7 +24,7 @@ import {SubscriberFactory} from './shared_directives';
         <th *ngIf="askStatus != 'Live'" colspan="2" class="text-danger" title="Ask Quote Status">{{ askStatus }}</th>
       </tr>
       <tr class="active" *ngFor="let level of levels; let i = index">
-        <td *ngIf="i == 1 && levels.length == 4" colspan="4"><div class="text-danger" style="height:174px;"><br />To <a href="{{ product.advert.homepage }}/blob/master/README.md#unlock" target="_blank">unlock</a> all market levels<br />and to collaborate with the development..<br /><br />make an acceptable Pull Request on github,<br/>or send 0.01210000 BTC or more to:<br /><a href="https://www.blocktrail.com/BTC/address/{{ a }}" target="_blank">{{ a }}</a><br /><br />Wait 2 confirmations and restart this bot.<!-- you can remove this message, but obviously the missing market levels will not be displayed magically. the market levels will be only displayed if the also displayed address is credited with 0.01210000 BTC. Note that if you make a Pull Request i will credit the payment for you easy, just let me know in the description of the PR what is the BTC Address displayed in your bot. --></div></td>
+        <td *ngIf="i == 1 && levels.length == 4" colspan="4"><div class="text-danger" style="height:174px;"><br />To <a href="{{ product.advert.homepage }}/blob/master/README.md#unlock" target="_blank">unlock</a> all market levels<br />and to collaborate with the development..<br /><br />make an acceptable Pull Request on github,<br/>or send 0.01210000 BTC or more to:<br /><a href="https://www.blocktrail.com/BTC/address/{{ a }}" target="_blank">{{ a }}</a><br /><br />Wait 0 confirmations and restart this bot.<!-- you can remove this message, but obviously the missing market levels will not be displayed magically. the market levels will be only displayed if the also displayed address is credited with 0.01210000 BTC. Note that if you make a Pull Request i will credit the payment for you easy, just let me know in the description of the PR what is the BTC Address displayed in your bot. --></div></td>
         <td *ngIf="i != 1 || levels.length != 4" [ngClass]="level.bidClass"><div style="z-index:2;position:relative;" [ngClass]="'bidsz' + i + ' num'">{{ level.bidSize | number:'1.4-4' }}</div><div style="float:right;margin-right:19px;"><div [ngClass]="level.bidClassVisual">&nbsp;</div></div></td>
         <td *ngIf="i != 1 || levels.length != 4" [ngClass]="level.bidClass"><div [ngClass]="'bidsz' + i">{{ level.bidPrice | number:'1.'+product.fixed+'-'+product.fixed }}</div></td>
         <td *ngIf="i != 1 || levels.length != 4" [ngClass]="level.askClass"><div [ngClass]="'asksz' + i">{{ level.askPrice | number:'1.'+product.fixed+'-'+product.fixed }}</div></td>
@@ -34,7 +32,7 @@ import {SubscriberFactory} from './shared_directives';
       </tr>
     </table></div>`
 })
-export class MarketQuotingComponent implements OnInit {
+export class MarketQuotingComponent {
 
   public levels: any[];
   public qBidSz: number;
@@ -55,8 +53,10 @@ export class MarketQuotingComponent implements OnInit {
   private targetBasePosition: number;
   private positionDivergence: number;
   private sideAPRSafety: string;
-  public a: string;
+
   @Input() product: Models.ProductState;
+
+  @Input() a: string;
 
   @Input() set online(online: boolean) {
     if (online) return;
@@ -64,41 +64,36 @@ export class MarketQuotingComponent implements OnInit {
     this.updateQuoteClass();
   }
 
-  constructor(
-    @Inject(NgZone) private zone: NgZone,
-    @Inject(SubscriberFactory) private subscriberFactory: SubscriberFactory
-  ) {
-    this.clearMarket();
-    this.clearQuote();
+  @Input() set setOrderList(o: any[]) {
+    this.updateQuote(o);
   }
 
-  ngOnInit() {
-    [
-      [Models.Topics.MarketData, this.updateMarket, this.clearMarket],
-      [Models.Topics.OrderStatusReports, this.updateQuote, this.clearQuote],
-      [Models.Topics.QuoteStatus, this.updateQuoteStatus, this.clearQuoteStatus],
-      [Models.Topics.TargetBasePosition, this.updateTargetBasePosition, this.clearTargetBasePosition],
-      [Models.Topics.ApplicationState, this.updateAddress, this.clearAddress]
-    ].forEach(x => (<T>(topic: string, updateFn, clearFn) => {
-      this.subscriberFactory
-        .getSubscriber<T>(this.zone, topic)
-        .registerConnectHandler(clearFn)
-        .registerSubscriber(updateFn);
-    }).call(this, x[0], x[1], x[2]));
+  @Input() set setTargetBasePosition(o: Models.TargetBasePositionValue) {
+    if (o == null) {
+      this.targetBasePosition = null;
+      this.sideAPRSafety = null;
+      this.positionDivergence = null;
+    } else {
+      this.targetBasePosition = o.tbp;
+      this.sideAPRSafety = o.sideAPR || 'Off';
+      this.positionDivergence = o.pDiv;
+    }
   }
 
-  private clearMarket = () => {
-    this.levels = [];
-  }
-
-  private clearTargetBasePosition = () => {
-    this.targetBasePosition = null;
-    this.sideAPRSafety = null;
-    this.positionDivergence = null;
-  }
-
-  private clearAddress = () => {
-    this.a = "";
+  @Input() set setQuoteStatus(o) {
+    if (o == null) {
+      this.bidStatus = Models.QuoteStatus[1];
+      this.askStatus = Models.QuoteStatus[1];
+      this.quotesInMemoryNew = 0;
+      this.quotesInMemoryWorking = 0;
+      this.quotesInMemoryDone = 0;
+    } else {
+      this.bidStatus = Models.QuoteStatus[o.bidStatus];
+      this.askStatus = Models.QuoteStatus[o.askStatus];
+      this.quotesInMemoryNew = o.quotesInMemoryNew;
+      this.quotesInMemoryWorking = o.quotesInMemoryWorking;
+      this.quotesInMemoryDone = o.quotesInMemoryDone;
+    }
   }
 
   private clearQuote = () => {
@@ -106,28 +101,9 @@ export class MarketQuotingComponent implements OnInit {
     this.orderAsks = [];
   }
 
-  private updateAddress = (A) => {
-    this.a = A.a;
-  }
-
-  private clearQuoteStatus = () => {
-    this.bidStatus = Models.QuoteStatus[1];
-    this.askStatus = Models.QuoteStatus[1];
-    this.quotesInMemoryNew = 0;
-    this.quotesInMemoryWorking = 0;
-    this.quotesInMemoryDone = 0;
-  }
-
-  private updateTargetBasePosition = (value : Models.TargetBasePositionValue) => {
-    if (value == null) return;
-    this.targetBasePosition = value.tbp;
-    this.sideAPRSafety = value.sideAPR || 'Off';
-    this.positionDivergence = value.pDiv;
-  }
-
-  private updateMarket = (update: Models.Market) => {
+  @Input() set setMarketData(update: Models.Market) {
     if (update == null || typeof update.bids == "undefined" || typeof update.asks == "undefined" || !update.bids || !update.asks) {
-      this.clearMarket();
+      this.levels = [];
       return;
     }
 
@@ -194,13 +170,14 @@ export class MarketQuotingComponent implements OnInit {
   }
 
   private updateQuote = (o) => {
-    if (!o) {
+    if (!o || (typeof o.length == 'number' && !o.length)) {
       this.clearQuote();
       return;
-    } else if (typeof o[0] == 'object') {
+    } else if (typeof o.length == 'number' && typeof o[0] == 'object') {
       this.clearQuote();
       return o.forEach(x => setTimeout(this.updateQuote(x), 0));
     }
+
     const orderSide = o.side === Models.Side.Bid ? 'orderBids' : 'orderAsks';
     if (o.orderStatus == Models.OrderStatus.Cancelled
       || o.orderStatus == Models.OrderStatus.Complete
@@ -231,19 +208,6 @@ export class MarketQuotingComponent implements OnInit {
     }
 
     this.updateQuoteClass();
-  }
-
-  private updateQuoteStatus = (status: Models.TwoSidedQuoteStatus) => {
-    if (status == null) {
-      this.clearQuoteStatus();
-      return;
-    }
-
-    this.bidStatus = Models.QuoteStatus[status.bidStatus];
-    this.askStatus = Models.QuoteStatus[status.askStatus];
-    this.quotesInMemoryNew = status.quotesInMemoryNew;
-    this.quotesInMemoryWorking = status.quotesInMemoryWorking;
-    this.quotesInMemoryDone = status.quotesInMemoryDone;
   }
 
   private forEach = (array, callback) => {

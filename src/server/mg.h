@@ -20,7 +20,7 @@ namespace K {
       unsigned int mgT_60s = 0;
       unsigned long mgT_369ms = 0;
       double averageWidth = 0;
-      unsigned int averageCount;
+      unsigned int averageCount = 0;
     public:
       mLevels levels;
       double fairValue = 0;
@@ -66,23 +66,16 @@ namespace K {
           if (!mgEwmaS and k.value("time", (unsigned long)0) + qp->shortEwmaPeriods * 6e+4 > FN::T())
             mgEwmaS = k.value("ewmaShort", 0.0);
         }
-        if (mgEwmaVL) FN::log(((CF*)config)->argEwmaVeryLong ? "ARG" : "DB", string("loaded EWMA VeryLong = ") + to_string(mgEwmaVL));
-        if (mgEwmaL)  FN::log(((CF*)config)->argEwmaLong ? "ARG" : "DB", string("loaded EWMA Long = ") + to_string(mgEwmaL));
-        if (mgEwmaM)  FN::log(((CF*)config)->argEwmaMedium ? "ARG" : "DB", string("loaded EWMA Medium = ") + to_string(mgEwmaM));
-        if (mgEwmaS)  FN::log(((CF*)config)->argEwmaShort ? "ARG" : "DB", string("loaded EWMA Short = ") + to_string(mgEwmaS));
+        if (mgEwmaVL) FN::log(((CF*)config)->argEwmaVeryLong ? "ARG" : "DB", string("loaded ") + to_string(mgEwmaVL) + " EWMA VeryLong");
+        if (mgEwmaL)  FN::log(((CF*)config)->argEwmaLong ? "ARG" : "DB", string("loaded ") + to_string(mgEwmaL) + " EWMA Long");
+        if (mgEwmaM)  FN::log(((CF*)config)->argEwmaMedium ? "ARG" : "DB", string("loaded ") + to_string(mgEwmaM) + " EWMA Medium");
+        if (mgEwmaS)  FN::log(((CF*)config)->argEwmaShort ? "ARG" : "DB", string("loaded ") + to_string(mgEwmaS) + " EWMA Short");
         k = ((DB*)memory)->load(uiTXT::MarketDataLongTerm);
         if (k.size()) {
-          unsigned long lastTime = 0,
-                        meanTime = 0;
-          for (json::reverse_iterator it = k.rbegin(); it != k.rend(); ++it) {
-            if (it->value("time", (unsigned long)0) + 3456e+4 < FN::T() or it->value("fv", 0.0) <= 0) continue;
-            fairValue96h.push_back(it->value("fv", 0.0));
-            if (lastTime) meanTime += it->value("time", (unsigned long)0) - lastTime;
-            lastTime = it->value("time", (unsigned long)0);
-          }
-          FN::log("DB", string("loaded ") + to_string(fairValue96h.size()) + " historical FairValues" + (
-            fairValue96h.size() ? " (save time avg: " + to_string(meanTime/fairValue96h.size()) + "ms)" : ""
-          ));
+          for (json::reverse_iterator it = k.rbegin(); it != k.rend(); ++it)
+            if (it->value("time", (unsigned long)0) + 3456e+5 > FN::T() and it->value("fv", 0.0))
+              fairValue96h.push_back(it->value("fv", 0.0));
+          if (fairValue96h.size()) FN::log("DB", string("loaded ") + to_string(fairValue96h.size()) + " historical FairValues");
         }
       };
       void waitData() {
@@ -101,9 +94,6 @@ namespace K {
         ((UI*)client)->welcome(uiTXT::EWMAChart, &helloEwma);
       };
     public:
-      bool empty() {
-        return !levels.bids.size() or !levels.asks.size();
-      };
       void calcStats() {
         if (!mgT_60s++) {
           calcStatsTrades();
@@ -113,12 +103,12 @@ namespace K {
         calcStatsStdevProtection();
       };
       void calcFairValue() {
-        if (empty()) return;
-        double fairValue_ = fairValue;
-        double topAskPrice = levels.asks.begin()->price;
-        double topBidPrice = levels.bids.begin()->price;
-        double topAskSize = levels.asks.begin()->size;
-        double topBidSize = levels.bids.begin()->size;
+        if (levels.empty()) return;
+        double fairValue_ = fairValue,
+               topAskPrice = levels.asks.begin()->price,
+               topBidPrice = levels.bids.begin()->price,
+               topAskSize = levels.asks.begin()->size,
+               topBidSize = levels.bids.begin()->size;
         if (!topAskPrice or !topBidPrice or !topAskSize or !topBidSize) return;
         fairValue = FN::roundNearest(
           qp->fvModel == mFairValueModel::BBO
@@ -151,7 +141,7 @@ namespace K {
         *welcome = { chartStats() };
       };
       void calcStatsStdevProtection() {
-        if (empty()) return;
+        if (levels.empty()) return;
         double topBid = levels.bids.begin()->price;
         double topAsk = levels.asks.begin()->price;
         if (!topBid or !topAsk) return;
@@ -176,7 +166,6 @@ namespace K {
         trades.clear();
       };
       void tradeUp(mTrade k) {
-        k.exchange = gw->exchange;
         k.pair = mPair(gw->base, gw->quote);
         k.time = FN::T();
         trades.push_back(k);
@@ -190,6 +179,8 @@ namespace K {
       };
       void calcStatsEwmaPosition() {
         fairValue96h.push_back(fairValue);
+        if (fairValue96h.size() > 5760)
+          fairValue96h.erase(fairValue96h.begin(), fairValue96h.begin()+fairValue96h.size()-5760);
         calcEwma(&mgEwmaVL, qp->veryLongEwmaPeriods, fairValue);
         calcEwma(&mgEwmaL, qp->longEwmaPeriods, fairValue);
         calcEwma(&mgEwmaM, qp->mediumEwmaPeriods, fairValue);
@@ -207,12 +198,11 @@ namespace K {
         ((DB*)memory)->insert(uiTXT::MarketDataLongTerm, {
           {"fv", fairValue},
           {"time", FN::T()},
-        }, false, "NULL", FN::T() - 3456e+4);
+        }, false, "NULL", FN::T() - 3456e+5);
       };
       void calcStatsEwmaProtection() {
-        calcEwma(&mgEwmaP, qp->quotingEwmaProtectionPeriods, fairValue);
-        calcEwma(&mgEwmaW, qp->quotingEwmaProtectionPeriods, averageWidth);
-        FN::log("EV", string("AverageWidth: ") + to_string(mgEwmaW) + string("AverageCount: ") + to_string(averageCount));
+        calcEwma(&mgEwmaP, qp->protectionEwmaPeriods, fairValue);
+        calcEwma(&mgEwmaW, qp->protectionEwmaPeriods, averageWidth);
         averageCount = 0;
         ((EV*)events)->mgEwmaQuoteProtection();
       };
@@ -229,6 +219,7 @@ namespace K {
             {"askMean", mgStdevAskMean}
           }},
           {"ewmaQuote", mgEwmaP},
+          {"ewmaWidth", mgEwmaW},
           {"ewmaShort", mgEwmaS},
           {"ewmaMedium", mgEwmaM},
           {"ewmaLong", mgEwmaL},
@@ -240,10 +231,10 @@ namespace K {
       };
       void filter(mLevels k) {
         levels = k;
-        if (empty()) return;
+        if (levels.empty()) return;
         for (map<string, mOrder>::iterator it = ((OG*)broker)->orders.begin(); it != ((OG*)broker)->orders.end(); ++it)
           filter(mSide::Bid == it->second.side ? &levels.bids : &levels.asks, it->second);
-        if (empty()) return;
+        if (levels.empty()) return;
         calcFairValue();
         ((EV*)events)->mgLevels();
       };
@@ -290,7 +281,7 @@ namespace K {
         n = periods;
         *mean = 0;
         while (n--) calcEwma(mean, periods, *(fairValue96h.rbegin()+n));
-        FN::log("MG", string("reloaded EWMA ") + name + " = " + to_string(*mean));
+        FN::log("MG", string("reloaded ") + to_string(*mean) + " EWMA " + name);
       };
       void calcEwma(double *mean, unsigned int periods, double value) {
         if (*mean) {

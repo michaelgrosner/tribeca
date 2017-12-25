@@ -20,7 +20,7 @@ namespace K {
           + "json  BLOB                                                                          NOT NULL,"
           + "time  TIMESTAMP DEFAULT (CAST((julianday('now') - 2440587.5)*86400000 AS INTEGER))  NOT NULL);"
         ).data(), NULL, NULL, &zErrMsg);
-        json j = json::parse("[]");
+        json j = json::array();
         sqlite3_exec(db, (
           string("SELECT json FROM ") + (char)k + " ORDER BY time DESC;"
         ).data(), cb, (void*)&j, &zErrMsg);

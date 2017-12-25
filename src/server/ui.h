@@ -83,18 +83,14 @@ namespace K {
               document += "Content-Type: audio/mpeg\r\n";
               url = path;
             }
-            if (url.length() > 0) content << ifstream(FN::readlink("app/client").substr(3) + url).rdbuf();
-            else {
-              struct timespec txxs;
-              clock_gettime(CLOCK_MONOTONIC, &txxs);
-              srand((time_t)txxs.tv_nsec);
-              if (rand() % 21) {
-                document = "HTTP/1.1 404 Not Found\r\n";
-                content << "Today, is a beautiful day.";
-              } else { // Humans! go to any random url to check your luck
-                document = "HTTP/1.1 418 I'm a teapot\r\n";
-                content << "Today, is your lucky day!";
-              }
+            if (url.length())
+              content << ifstream(FN::readlink("app/client").substr(48) + url).rdbuf();
+            else if (stol(FN::int64Id()) % 21) {
+              document = "HTTP/1.1 404 Not Found\r\n";
+              content << "Today, is a beautiful day.";
+            } else { // Humans! go to any random url to check your luck
+              document = "HTTP/1.1 418 I'm a teapot\r\n";
+              content << "Today, is your lucky day!";
             }
             document += "Content-Length: " + to_string(content.str().length()) + "\r\n\r\n" + content.str();
             res->write(document.data(), document.length());
@@ -120,6 +116,7 @@ namespace K {
       };
       void waitUser() {
         welcome(uiTXT::ApplicationState, &helloServer);
+        welcome(uiTXT::ProductAdvertisement, &helloProduct);
         welcome(uiTXT::Notepad, &helloNotes);
         clickme(uiTXT::Notepad, &kissNotes);
         welcome(uiTXT::ToggleSettings, &helloSettings);
@@ -157,18 +154,28 @@ namespace K {
       function<void(json*)> helloServer = [&](json *welcome) {
         *welcome = { serverState() };
       };
+      function<void(json*)> helloProduct = [&](json *welcome) {
+        *welcome = { {
+          {"exchange", gw->exchange},
+          {"pair", mPair(gw->base, gw->quote)},
+          {"minTick", gw->minTick},
+          {"environment", ((CF*)config)->argTitle},
+          {"matryoshka", ((CF*)config)->argMatryoshka},
+          {"homepage", "https://github.com/ctubio/Krypto-trading-bot"}
+        } };
+      };
       function<void(json*)> helloNotes = [&](json *welcome) {
         *welcome = { notepad };
       };
       function<void(json)> kissNotes = [&](json butterfly) {
-        if (!butterfly.is_null() and butterfly.size())
+        if (butterfly.is_array() and butterfly.size())
           notepad = butterfly.at(0);
       };
       function<void(json*)> helloSettings = [&](json *welcome) {
         *welcome = { toggleSettings };
       };
       function<void(json)> kissSettings = [&](json butterfly) {
-        if (!butterfly.is_null() and butterfly.size())
+        if (butterfly.is_array() and butterfly.size())
           toggleSettings = butterfly.at(0);
       };
       void send(uiTXT k, string j) {

@@ -7,15 +7,15 @@ CC       = $(CHOST)-gcc-6
 KGIT     = 4.0
 KHUB     = 8656597
 V_ZLIB  := 1.2.11
-V_SSL   := 1.1.0f
-V_CURL  := 7.55.1
+V_SSL   := 1.1.0g
+V_CURL  := 7.57.0
 V_NCUR  := 6.0
-V_JSON  := v2.1.1
+V_JSON  := v3.0.0
 V_UWS   := 0.14.4
-V_SQL   := 3200100
+V_SQL   := 3210000
 V_QF    := v.1.14.4
 V_PVS   := 6.20.24121.1823
-KZIP     = ff4d7a9b40531057616c9417eb2347e01231706b
+KZIP     = 403eaf5ffc52f5cacf3af9762525469c1c866c5a
 KARGS    = -Wextra -std=c++11 -O3 -I$(KLOCAL)/include          \
   src/server/K.cxx -pthread -rdynamic -DUWS_THREADSAFE         \
   -DK_STAMP='"$(shell date --rfc-3339=seconds | cut -f1 -d+)"' \
@@ -203,10 +203,10 @@ docker:
 	@$(MAKE) packages
 	mkdir -p app/server
 	@$(MAKE) build link
-	sed -i "/Usage/,+112d" K.sh
+	sed -i "/Usage/,+113d" K.sh
 
 link:
-	cd app && ln -f -s ../$(KLOCAL)/var/www client
+	cd app && ln -f -s \[\!`echo -n "0x46 0x52 0x45 0x45 0x44 0x4f 0x4d" | xxd -r`\ FOR\ `echo -n "0x43 0x41 0x54 0x41 0x4c 0x4f 0x4e 0x49 0x41" | xxd -r`\!\]\ btw\ K\ client\ is\ at\ ../$(KLOCAL)/var/www client
 	cd app/server && ln -f -s ../../$(KLOCAL)/bin/K-$(CHOST) K
 	test -n "`ls *.sh 2>/dev/null`" || (cp etc/K.sh.dist K.sh && chmod +x K.sh)
 	$(MAKE) gdax -s
@@ -217,8 +217,8 @@ reinstall: src
 	rm -rf app
 	@$(MAKE) install
 	#@$(MAKE) test -s
-	@$(MAKE) restartall
-	@echo && echo ..done! Please refresh the GUI if is currently opened in your browser.
+	#@$(MAKE) restartall
+	@echo && echo ..done! Please restart any running instance and also refresh the UI if is currently opened in your browser.
 
 list:
 	@screen -list || :
@@ -265,7 +265,7 @@ client: src/client
 	mkdir -p $(KLOCAL)/var/www
 	@echo Building client dynamic files..
 	@npm install
-	./node_modules/.bin/tsc --alwaysStrict --experimentalDecorators -t ES6 -m commonjs --outDir $(KLOCAL)/var/www/js src/client/*.ts
+	./node_modules/.bin/tsc --alwaysStrict --experimentalDecorators -t ES2017 -m commonjs --outDir $(KLOCAL)/var/www/js src/client/*.ts
 	@echo DONE
 
 www: src/www $(KLOCAL)/var/www
@@ -276,7 +276,7 @@ www: src/www $(KLOCAL)/var/www
 bundle: client www node_modules/.bin/browserify node_modules/.bin/uglifyjs $(KLOCAL)/var/www/js/main.js
 	@echo Building client bundle file..
 	mkdir -p $(KLOCAL)/var/www/js/client
-	./node_modules/.bin/browserify -t [ babelify --presets [ babili es2016 ] ] $(KLOCAL)/var/www/js/main.js $(KLOCAL)/var/www/js/lib/*.js | ./node_modules/.bin/uglifyjs | gzip > $(KLOCAL)/var/www/js/client/bundle.min.js
+	./node_modules/.bin/browserify -t [ babelify --presets [ babili env ] ] $(KLOCAL)/var/www/js/main.js $(KLOCAL)/var/www/js/lib/*.js | ./node_modules/.bin/uglifyjs | gzip > $(KLOCAL)/var/www/js/client/bundle.min.js
 	rm $(KLOCAL)/var/www/js/*.js
 	echo $(CARCH) | xargs -d ' ' -I % echo % | grep -v $(CHOST) | xargs -I % sh -c 'if test -d build-%; then rm -rf build-%/local/var;mkdir -p build-%/local/var;cp -R $(KLOCAL)/var build-%/local; fi'
 	@echo DONE

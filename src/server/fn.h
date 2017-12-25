@@ -693,7 +693,7 @@ namespace K {
         if (hasOrders) {
           orders = Orders;
           for (map<string, mOrder>::iterator it = orders.begin(); it != orders.end(); ++it) {
-            if (mORS::Working != it->second.orderStatus) continue;
+            if (mStatus::Working != it->second.orderStatus) continue;
             openOrders.insert(pair<double, mOrder>(it->second.price, it->second));
           }
         }
