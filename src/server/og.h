@@ -110,7 +110,6 @@ namespace K {
         if (k.orderStatus != mStatus::New) o.orderStatus = k.orderStatus;
         if (k.price) o.price = k.price;
         if (k.quantity) o.quantity = k.quantity;
-        if (k.tradeQuantity) o.tradeQuantity = k.tradeQuantity;
         if (k.time) o.time = k.time;
         if (k.computationalLatency) o.computationalLatency = k.computationalLatency;
         if (!o.time) o.time = FN::T();
@@ -118,11 +117,12 @@ namespace K {
           o.computationalLatency = FN::T() - o.time;
         if (o.computationalLatency) o.time = FN::T();
         toMemory(o);
+        if (k.tradeQuantity) o.tradeQuantity = k.tradeQuantity;
         ((EV*)events)->ogOrder(o);
-        if (o.orderStatus != mStatus::New)
-          toClient();
         toHistory(o);
         o.tradeQuantity = 0;
+        if (o.orderStatus != mStatus::New)
+          toClient();
         return o;
       };
       void cancelOpenOrders() {
