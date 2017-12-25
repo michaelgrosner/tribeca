@@ -5,15 +5,14 @@ namespace K {
   class QP: public Klass {
     protected:
       void load() {
-        json k = ((DB*)memory)->load(uiTXT::QuotingParameters);
-        if (k.size()) {
-          *qp = k.at(0);
-          FN::log("DB", "loaded Quoting Parameters OK");
-        } else FN::logWar("QP", "using default values for Quoting Parameters");
+        json k = ((DB*)memory)->load(mMatter::QuotingParameters);
+        if (k.empty()) return FN::logWar("QP", "using default values for Quoting Parameters");
+        *qp = k.at(0);
+        FN::log("DB", "loaded Quoting Parameters OK");
       };
       void waitUser() {
-        ((UI*)client)->welcome(uiTXT::QuotingParameters, &hello);
-        ((UI*)client)->clickme(uiTXT::QuotingParameters, &kiss);
+        ((UI*)client)->welcome(mMatter::QuotingParameters, &hello);
+        ((UI*)client)->clickme(mMatter::QuotingParameters, &kiss);
       };
       void run() {
         delayUI();
@@ -25,8 +24,8 @@ namespace K {
       function<void(json)> kiss = [&](json butterfly) {
         *qp = butterfly;
         ((EV*)events)->uiQuotingParameters();
-        ((UI*)client)->send(uiTXT::QuotingParameters, *qp);
-        ((DB*)memory)->insert(uiTXT::QuotingParameters, *qp);
+        ((UI*)client)->send(mMatter::QuotingParameters, *qp);
+        ((DB*)memory)->insert(mMatter::QuotingParameters, *qp);
         delayUI();
       };
       void delayUI() {

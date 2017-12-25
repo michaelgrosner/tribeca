@@ -18,7 +18,7 @@ namespace K {
       string sideAPR = "";
     protected:
       void load() {
-        json k = ((DB*)memory)->load(uiTXT::TargetBasePosition);
+        json k = ((DB*)memory)->load(mMatter::TargetBasePosition);
         if (k.size()) {
           k = k.at(0);
           targetBasePosition = k.value("tbp", 0.0);
@@ -28,7 +28,7 @@ namespace K {
         stringstream ss;
         ss << setprecision(8) << fixed << targetBasePosition;
         FN::log("DB", string("loaded TBP = ") + ss.str() + " " + gw->base);
-        k = ((DB*)memory)->load(uiTXT::Position);
+        k = ((DB*)memory)->load(mMatter::Position);
         if (k.size()) {
           for (json::reverse_iterator it = k.rbegin(); it != k.rend(); ++it)
             profits.push_back(*it);
@@ -51,9 +51,9 @@ namespace K {
         };
       };
       void waitUser() {
-        ((UI*)client)->welcome(uiTXT::Position, &helloPosition);
-        ((UI*)client)->welcome(uiTXT::TradeSafetyValue, &helloSafety);
-        ((UI*)client)->welcome(uiTXT::TargetBasePosition, &helloTargetBasePos);
+        ((UI*)client)->welcome(mMatter::Position, &helloPosition);
+        ((UI*)client)->welcome(mMatter::TradeSafetyValue, &helloSafety);
+        ((UI*)client)->welcome(mMatter::TargetBasePosition, &helloTargetBasePos);
       };
     public:
       void calcSafety() {
@@ -65,7 +65,7 @@ namespace K {
           or next.sellPing != safety.sellPing
         ) {
           safety = next;
-          ((UI*)client)->send(uiTXT::TradeSafetyValue, next);
+          ((UI*)client)->send(mMatter::TradeSafetyValue, next);
         }
       };
       void calcTargetBasePos() {
@@ -82,8 +82,8 @@ namespace K {
         calcPDiv(baseValue);
         ((EV*)events)->pgTargetBasePosition();
         json k = {{"tbp", targetBasePosition}, {"sideAPR", sideAPR}, {"pDiv", positionDivergence }};
-        ((UI*)client)->send(uiTXT::TargetBasePosition, k, true);
-        ((DB*)memory)->insert(uiTXT::TargetBasePosition, k);
+        ((UI*)client)->send(mMatter::TargetBasePosition, k, true);
+        ((DB*)memory)->insert(mMatter::TargetBasePosition, k);
         stringstream ss;
         ss << (int)(targetBasePosition / baseValue * 1e+2) << "% = " << setprecision(8) << fixed << targetBasePosition;
         stringstream ss_;
@@ -255,7 +255,7 @@ namespace K {
         }
         position = pos;
         if (!eq) calcTargetBasePos();
-        ((UI*)client)->send(uiTXT::Position, pos, true);
+        ((UI*)client)->send(mMatter::Position, pos, true);
       };
       void calcWalletAfterOrder(mOrder k) {
         if (position.empty()) return;
@@ -271,7 +271,18 @@ namespace K {
               heldAmount += held;
             }
           }
-        calcWallet(mWallet(amount, heldAmount, k.side == mSide::Ask ? k.pair.base : k.pair.quote));
+        double completedAmount = k.tradeQuantity * (k.side == mSide::Ask ? k.price : 1);
+        if (completedAmount) {
+          double oppositeAmount = k.side == mSide::Ask
+            ? position.quoteAmount
+            : position.baseAmount;
+          double oppositeHeldAmount = k.side == mSide::Ask
+            ? position.quoteHeldAmount
+            : position.baseHeldAmount;
+          calcWallet(mWallet(oppositeAmount + completedAmount, oppositeHeldAmount, k.side == mSide::Ask ? k.pair.quote : k.pair.base));
+        }
+        completedAmount = k.tradeQuantity * (k.side == mSide::Bid ? k.price : 1);
+        calcWallet(mWallet(amount - completedAmount, heldAmount, k.side == mSide::Ask ? k.pair.base : k.pair.quote));
       };
       void calcPDiv(double baseValue) {
         double pDiv = qp->percentageValues
@@ -295,7 +306,7 @@ namespace K {
         else if (k->baseValue and k->quoteValue and profitT_21s+21e+3 < now) {
           profitT_21s = now;
           mProfit profit(k->baseValue, k->quoteValue, now);
-          ((DB*)memory)->insert(uiTXT::Position, profit, false, "NULL", now - (qp->profitHourInterval * 36e+5));
+          ((DB*)memory)->insert(mMatter::Position, profit, false, "NULL", now - (qp->profitHourInterval * 36e+5));
           profits.push_back(profit);
           for (vector<mProfit>::iterator it = profits.begin(); it != profits.end();)
             if (it->time + (qp->profitHourInterval * 36e+5) > now) ++it;

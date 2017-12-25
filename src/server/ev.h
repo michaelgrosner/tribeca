@@ -27,6 +27,7 @@ namespace K  {
         signal(SIGUSR1, wtf);
         signal(SIGABRT, wtf);
         signal(SIGSEGV, wtf);
+        version();
         gw->hub = hub = new uWS::Hub(0, true);
       };
       void waitTime() {
@@ -46,13 +47,6 @@ namespace K  {
         hotkey = async(launch::async, FN::screen_events);
       };
       void run() {
-        if (FN::output("test -d .git || echo -n zip") == "zip")
-          FN::logVer("", -1);
-        else {
-          FN::output("git fetch");
-          string k = changelog();
-          FN::logVer(k, count(k.begin(), k.end(), '\n'));
-        }
         if (((CF*)config)->argDebugEvents) return;
         debug = [&](string k) {};
       };
@@ -108,6 +102,13 @@ namespace K  {
           if (ch == 'q' or ch == 'Q')
             raise(SIGINT);
         }
+      };
+      void version() {
+        if (access(".git", F_OK) != -1) {
+          FN::output("git fetch");
+          string k = changelog();
+          FN::logVer(k, count(k.begin(), k.end(), '\n'));
+        } else FN::logVer("", -1);
       };
       static void halt(int code) {
         for (vector<function<void()>*>::iterator it=gwEndings.begin(); it!=gwEndings.end();++it) (**it)();
