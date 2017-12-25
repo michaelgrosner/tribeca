@@ -377,9 +377,9 @@ namespace K {
       {"loadedFromDB", k.loadedFromDB},
     };
     else j = {
-      {     "time", k.time   },
-      {     "pair", k.pair   },
-      {    "price", k.price  },
+      {    "time", k.time    },
+      {    "pair", k.pair    },
+      {   "price", k.price   },
       {"quantity", k.quantity},
       {    "side", k.side    }
     };
