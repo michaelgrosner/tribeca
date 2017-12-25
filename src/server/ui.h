@@ -11,7 +11,7 @@ namespace K {
            realtimeClient = false;
       map<char, function<void(json*)>*> hello;
       map<char, function<void(json)>*> kisses;
-      map<uiTXT, string> queue;
+      map<mMatter, string> queue;
       unsigned long uiT_1m = 0;
     public:
       unsigned int orders60sec = 0;
@@ -104,36 +104,36 @@ namespace K {
             if (((CF*)config)->argWhitelist.find(addr) == string::npos)
               return;
           }
-          if (uiBIT::Hello == (uiBIT)message[0] and hello.find(message[1]) != hello.end()) {
+          if (mPortal::Hello == (mPortal)message[0] and hello.find(message[1]) != hello.end()) {
             json welcome;
             (*hello[message[1]])(&welcome);
             if (!welcome.is_null()) webSocket->send((string(message, 2) + welcome.dump()).data(), uWS::OpCode::TEXT);
-          } else if (uiBIT::Kiss == (uiBIT)message[0] and kisses.find(message[1]) != kisses.end())
+          } else if (mPortal::Kiss == (mPortal)message[0] and kisses.find(message[1]) != kisses.end())
             (*kisses[message[1]])(json::parse((length > 2 and (message[2] == '[' or message[2] == '{'))
               ? string(message, length).substr(2, length-2) : "{}"
             ));
         });
       };
       void waitUser() {
-        welcome(uiTXT::ApplicationState, &helloServer);
-        welcome(uiTXT::ProductAdvertisement, &helloProduct);
-        welcome(uiTXT::Notepad, &helloNotes);
-        clickme(uiTXT::Notepad, &kissNotes);
-        welcome(uiTXT::ToggleSettings, &helloSettings);
-        clickme(uiTXT::ToggleSettings, &kissSettings);
+        welcome(mMatter::ApplicationState, &helloServer);
+        welcome(mMatter::ProductAdvertisement, &helloProduct);
+        welcome(mMatter::Notepad, &helloNotes);
+        clickme(mMatter::Notepad, &kissNotes);
+        welcome(mMatter::ToggleSettings, &helloSettings);
+        clickme(mMatter::ToggleSettings, &kissSettings);
       };
       void run() {
         if (((CF*)config)->argHeadless) return;
         ((EV*)events)->listen();
       };
     public:
-      void welcome(uiTXT k, function<void(json*)> *fn) {
+      void welcome(mMatter k, function<void(json*)> *fn) {
         if (((CF*)config)->argHeadless) return;
         if (hello.find((char)k) == hello.end())
           hello[(char)k] = fn;
         else FN::logExit("UI", string("Use only a single unique message handler for each \"") + (char)k + "\" event", EXIT_SUCCESS);
       };
-      void clickme(uiTXT k, function<void(json)> *fn) {
+      void clickme(mMatter k, function<void(json)> *fn) {
         if (((CF*)config)->argHeadless) return;
         if (kisses.find((char)k) == kisses.end())
           kisses[(char)k] = fn;
@@ -145,7 +145,7 @@ namespace K {
         ((EV*)events)->tClient->stop();
         ((EV*)events)->tClient->start(sendState, 0, realtimeClient ? 6e+4 : delayUI*1e+3);
       };
-      void send(uiTXT k, json o, bool delayed = false) {
+      void send(mMatter k, json o, bool delayed = false) {
         if (((CF*)config)->argHeadless or connections == 0) return;
         if (realtimeClient or !delayed) send(k, o.dump());
         else queue[k] = o.dump();
@@ -178,15 +178,15 @@ namespace K {
         if (butterfly.is_array() and butterfly.size())
           toggleSettings = butterfly.at(0);
       };
-      void send(uiTXT k, string j) {
-        string m(1, (char)uiBIT::Kiss);
-        m += string(1, (char)k) + j;
+      void send(mMatter k, string j) {
+        string m(1, (char)mPortal::Kiss);
+        m += (char)k + j;
         ((EV*)events)->deferred([this, m]() {
           ((EV*)events)->uiGroup->broadcast(m.data(), m.length(), uWS::OpCode::TEXT);
         });
       };
       void sendQueue() {
-        for (map<uiTXT, string>::iterator it = queue.begin(); it != queue.end(); ++it)
+        for (map<mMatter, string>::iterator it = queue.begin(); it != queue.end(); ++it)
           send(it->first, it->second);
         queue.clear();
       };
@@ -198,15 +198,12 @@ namespace K {
           if (k->uiT_1m+6e+4 > FN::T()) return;
           else k->uiT_1m = FN::T();
         }
-        k->send(uiTXT::ApplicationState, k->serverState());
+        k->send(mMatter::ApplicationState, k->serverState());
         k->orders60sec = 0;
       };
       json serverState() {
-        time_t rawtime;
-        time(&rawtime);
         return {
           {"memory", FN::memory()},
-          {"hour", localtime(&rawtime)->tm_hour},
           {"freq", orders60sec},
           {"dbsize", ((DB*)memory)->size()},
           {"a", gw->A()}
