@@ -68,6 +68,16 @@ namespace K {
           ((UI*)client)->send(mMatter::TradeSafetyValue, next);
         }
       };
+      void calcSafetyAfterTrade(mTrade k) {
+        (k.side == mSide::Bid
+          ? buys : sells
+        )[k.price] = mTrade(
+          k.price,
+          k.quantity,
+          k.time
+        );
+        calcSafety();
+      };
       void calcTargetBasePos() {
         if (position.empty()) return FN::logWar("PG", "Unable to calculate TBP, missing wallet data");
         double baseValue = position.baseValue;
@@ -82,22 +92,13 @@ namespace K {
         calcPDiv(baseValue);
         ((EV*)events)->pgTargetBasePosition();
         json k = {{"tbp", targetBasePosition}, {"sideAPR", sideAPR}, {"pDiv", positionDivergence }};
-        ((UI*)client)->send(mMatter::TargetBasePosition, k, true);
+        ((UI*)client)->send(mMatter::TargetBasePosition, k);
         ((DB*)memory)->insert(mMatter::TargetBasePosition, k);
         stringstream ss;
         ss << (int)(targetBasePosition / baseValue * 1e+2) << "% = " << setprecision(8) << fixed << targetBasePosition;
         stringstream ss_;
         ss_ << (int)(positionDivergence  / baseValue * 1e+2) << "% = " << setprecision(8) << fixed << positionDivergence;
         FN::log("PG", string("TBP: ") + ss.str() + " " + gw->base + ", pDiv: " + ss_.str() + " " + gw->base);
-      };
-      void addTrade(mTrade k) {
-        (k.side == mSide::Bid
-          ? buys : sells
-        )[k.price] = mTrade(
-          k.price,
-          k.quantity,
-          k.time
-        );
       };
     private:
       function<void(json*)> helloPosition = [&](json *welcome) {
@@ -255,7 +256,7 @@ namespace K {
         }
         position = pos;
         if (!eq) calcTargetBasePos();
-        ((UI*)client)->send(mMatter::Position, pos, true);
+        ((UI*)client)->send(mMatter::Position, pos);
       };
       void calcWalletAfterOrder(mOrder k) {
         if (position.empty()) return;

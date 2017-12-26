@@ -360,7 +360,14 @@ namespace K {
     {};
   };
   static void to_json(json& j, const mTrade& k) {
-    if (k.tradeId.length()) j = {
+    if (k.tradeId.empty()) j = {
+      {    "time", k.time    },
+      {    "pair", k.pair    },
+      {   "price", k.price   },
+      {"quantity", k.quantity},
+      {    "side", k.side    }
+    };
+    else j = {
       {     "tradeId", k.tradeId     },
       {        "time", k.time        },
       {        "pair", k.pair        },
@@ -375,13 +382,6 @@ namespace K {
       {       "Kdiff", k.Kdiff       },
       {  "feeCharged", k.feeCharged  },
       {"loadedFromDB", k.loadedFromDB},
-    };
-    else j = {
-      {    "time", k.time    },
-      {    "pair", k.pair    },
-      {   "price", k.price   },
-      {"quantity", k.quantity},
-      {    "side", k.side    }
     };
   };
   static void from_json(const json& j, mTrade& k) {

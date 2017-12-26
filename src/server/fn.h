@@ -158,7 +158,7 @@ namespace K {
           if(!f and r != CURLE_OK) FN::logWar("CURL", string("wGet failed ") + curl_easy_strerror(r));
           curl_easy_cleanup(curl);
         }
-        if (!k_.length() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
+        if (k_.empty() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
         return k_;
       };
       static json wJet(string k, string p) {
@@ -181,7 +181,7 @@ namespace K {
           if(r != CURLE_OK) FN::logWar("CURL", string("wPost failed ") + curl_easy_strerror(r));
           curl_easy_cleanup(curl);
         }
-        if (!k_.length() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
+        if (k_.empty() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
         return k_;
       };
       static json wJet(string k, string t, bool auth) {
@@ -203,7 +203,7 @@ namespace K {
           if(r != CURLE_OK) FN::logWar("CURL", string("wPost failed ") + curl_easy_strerror(r));
           curl_easy_cleanup(curl);
         }
-        if (!k_.length() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
+        if (k_.empty() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
         return k_;
       };
       static json wJet(string k, bool p, string a, string s, string n) {
@@ -227,7 +227,7 @@ namespace K {
           if(r != CURLE_OK) FN::logWar("CURL", string("wPost failed ") + curl_easy_strerror(r));
           curl_easy_cleanup(curl);
         }
-        if (!k_.length() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
+        if (k_.empty() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
         return k_;
       };
       static json wJet(string k, bool a, string p) {
@@ -248,7 +248,7 @@ namespace K {
           if(r != CURLE_OK) FN::logWar("CURL", string("wGet failed ") + curl_easy_strerror(r));
           curl_easy_cleanup(curl);
         }
-        if (!k_.length() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
+        if (k_.empty() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
         return k_;
       };
       static json wJet(string k, string p, string s, bool post) {
@@ -271,7 +271,7 @@ namespace K {
           if(r != CURLE_OK) FN::logWar("CURL", string("wPost failed ") + curl_easy_strerror(r));
           curl_easy_cleanup(curl);
         }
-        if (!k_.length() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
+        if (k_.empty() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
         return k_;
       };
       static json wJet(string k, string p, string a, string s) {
@@ -296,7 +296,7 @@ namespace K {
           if(r != CURLE_OK) FN::logWar("CURL", string("wPost failed ") + curl_easy_strerror(r));
           curl_easy_cleanup(curl);
         }
-        if (!k_.length() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
+        if (k_.empty() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
         return k_;
       };
       static json wJet(string k, string p, string a, string s, bool post) {
@@ -321,7 +321,7 @@ namespace K {
           if(r != CURLE_OK) FN::logWar("CURL", string("wPost failed ") + curl_easy_strerror(r));
           curl_easy_cleanup(curl);
         }
-        if (!k_.length() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
+        if (k_.empty() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
         return k_;
       };
       static json wJet(string k, string p, string a, string s, bool post, bool auth) {
@@ -345,7 +345,7 @@ namespace K {
           if(r != CURLE_OK) FN::logWar("CURL", string("wPost failed ") + curl_easy_strerror(r));
           curl_easy_cleanup(curl);
         }
-        if (!k_.length() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
+        if (k_.empty() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
         return k_;
       };
       static json wJet(string k, string t, string a, string s, string p) {
@@ -370,7 +370,7 @@ namespace K {
           if(r != CURLE_OK) FN::logWar("CURL", string("wGet failed ") + curl_easy_strerror(r));
           curl_easy_cleanup(curl);
         }
-        if (!k_.length() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
+        if (k_.empty() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
         return k_;
       };
       static json wJet(string k, string t, string a, string s, string p, bool d) {
@@ -396,7 +396,7 @@ namespace K {
           if(r != CURLE_OK) FN::logWar("CURL", string("wGet failed ") + curl_easy_strerror(r));
           curl_easy_cleanup(curl);
         }
-        if (!k_.length() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
+        if (k_.empty() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
         return k_;
       };
       static size_t wcb(void *buf, size_t size, size_t nmemb, void *up) {
@@ -679,9 +679,9 @@ namespace K {
         static string prtcl = "?", exchange = "?", currency = "?";
         static map<string, mOrder> orders = map<string, mOrder>();
         if (argPort) port = argPort;
-        if (protocol.length()) prtcl = protocol;
-        if (argExchange.length()) exchange = argExchange;
-        if (argCurrency.length()) currency = argCurrency;
+        if (!protocol.empty()) prtcl = protocol;
+        if (!argExchange.empty()) exchange = argExchange;
+        if (!argCurrency.empty()) currency = argCurrency;
         multimap<double, mOrder, greater<double>> openOrders;
         if (hasOrders) {
           orders = Orders;

@@ -115,7 +115,7 @@ namespace K {
           : (topAskPrice * topBidSize + topBidPrice * topAskSize) / (topAskSize + topBidSize);
         if (!fairValue or (fairValue_ and abs(fairValue - fairValue_) < gw->minTick)) return;
         gw->evDataWallet(mWallet());
-        ((UI*)client)->send(mMatter::FairValue, {{"price", fairValue}}, true);
+        ((UI*)client)->send(mMatter::FairValue, {{"price", fairValue}});
         averageWidth = ((averageWidth * averageCount) + topAskPrice - topBidPrice) / ++averageCount;
       };
       void calcEwmaHistory() {
@@ -171,7 +171,7 @@ namespace K {
       void levelUp(mLevels k) {
         filter(k);
         if (mgT_369ms+369 > FN::T()) return;
-        ((UI*)client)->send(mMatter::MarketData, k, true);
+        ((UI*)client)->send(mMatter::MarketData, k);
         mgT_369ms = FN::T();
       };
       void calcStatsEwmaPosition() {
@@ -184,7 +184,7 @@ namespace K {
         calcEwma(&mgEwmaS, qp->shortEwmaPeriods, fairValue);
         calcTargetPos();
         ((EV*)events)->mgTargetPosition();
-        ((UI*)client)->send(mMatter::EWMAChart, chartStats(), true);
+        ((UI*)client)->send(mMatter::EWMAChart, chartStats());
         ((DB*)memory)->insert(mMatter::EWMAChart, {
           {"ewmaVeryLong", mgEwmaVL},
           {"ewmaLong", mgEwmaL},

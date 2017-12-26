@@ -73,7 +73,7 @@ namespace K {
         cleanClosedTrades();
       };
       function<void(json)> kissCleanAllTrades = [&](json butterfly) {
-        cleanTrade("", true);
+        cleanTrade("");
       };
       function<void(json)> kissCancelOrder = [&](json butterfly) {
         if (butterfly.is_object() and butterfly["orderId"].is_string())
@@ -105,8 +105,8 @@ namespace K {
               o = it.second;
               break;
             }
-        if (!o.orderId.length()) return o;
-        if (k.exchangeId.length()) o.exchangeId = k.exchangeId;
+        if (o.orderId.empty()) return o;
+        if (!k.exchangeId.empty()) o.exchangeId = k.exchangeId;
         if (k.orderStatus != mStatus::New) o.orderStatus = k.orderStatus;
         if (k.price) o.price = k.price;
         if (k.quantity) o.quantity = k.quantity;
@@ -140,7 +140,8 @@ namespace K {
             it = tradesHistory.erase(it);
           }
       };
-      void cleanTrade(string k, bool all = false) {
+      void cleanTrade(string k) {
+        bool all = k.empty();
         for (vector<mTrade>::iterator it = tradesHistory.begin(); it != tradesHistory.end();)
           if (!all and it->tradeId != k) ++it;
           else {
@@ -156,7 +157,7 @@ namespace K {
         for (map<string, mOrder>::value_type &it : orders)
           if (it.second.orderStatus == mStatus::Working)
             k.push_back(it.second);
-        ((UI*)client)->send(mMatter::OrderStatusReports, k, true);
+        ((UI*)client)->send(mMatter::OrderStatusReports, k);
       };
       void toHistory(mOrder o) {
         if (!o.tradeQuantity) return;
