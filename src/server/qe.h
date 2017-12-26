@@ -112,9 +112,9 @@ namespace K {
         ((UI*)client)->send(mMatter::QuoteStatus, status, true);
       };
       bool diffCounts(unsigned int *qNew, unsigned int *qWorking, unsigned int *qDone) {
-        for (map<string, mOrder>::iterator it = ((OG*)broker)->orders.begin(); it != ((OG*)broker)->orders.end(); ++it)
-          if (it->second.orderStatus == mStatus::New) (*qNew)++;
-          else if (it->second.orderStatus == mStatus::Working) (*qWorking)++;
+        for (map<string, mOrder>::value_type &it : ((OG*)broker)->orders)
+          if (it.second.orderStatus == mStatus::New) (*qNew)++;
+          else if (it.second.orderStatus == mStatus::Working) (*qWorking)++;
           else (*qDone)++;
         return *qNew != status.quotesInMemoryNew
           or *qWorking != status.quotesInMemoryWorking
@@ -493,11 +493,11 @@ namespace K {
         unsigned int n = 0;
         vector<string> zombie;
         unsigned long now = FN::T();
-        for (map<string, mOrder>::iterator it = ((OG*)broker)->orders.begin(); it != ((OG*)broker)->orders.end(); ++it)
-          if (it->second.side != side) continue;
-          else if (it->second.price == q.price and it->second.quantity == q.size) return;
-          else if (it->second.orderStatus == mStatus::New)
-            if (now-10e+3>it->second.time) zombie.push_back(it->second.orderId);
+        for (map<string, mOrder>::value_type &it : ((OG*)broker)->orders)
+          if (it.second.side != side) continue;
+          else if (it.second.price == q.price and it.second.quantity == q.size) return;
+          else if (it.second.orderStatus == mStatus::New)
+            if (now-10e+3>it.second.time) zombie.push_back(it.second.orderId);
             else if (qp->safety != mQuotingSafety::AK47 or ++n >= qp->bullets) return;
         for (string &it : zombie) ((OG*)broker)->cleanOrder(it);
         modify(side, q, isPong);
@@ -513,22 +513,22 @@ namespace K {
       };
       void stopWorstsQuotes(mSide side, double price) {
         bool k = false;
-        for (map<string, mOrder>::iterator it = ((OG*)broker)->orders.begin(); it != ((OG*)broker)->orders.end(); ++it)
-          if (it->second.side != side) continue;
+        for (map<string, mOrder>::value_type &it : ((OG*)broker)->orders)
+          if (it.second.side != side) continue;
           else if (side == mSide::Bid
-            ? price <= it->second.price
-            : price >= it->second.price
+            ? price <= it.second.price
+            : price >= it.second.price
           ) {
             k = true;
-            ((OG*)broker)->cancelOrder(it->second.orderId);
+            ((OG*)broker)->cancelOrder(it.second.orderId);
           }
         if (!k) stopWorstQuote(side);
       };
       void stopWorstQuote(mSide side) {
         multimap<double, mOrder> sideByPrice;
-        for (map<string, mOrder>::iterator it = ((OG*)broker)->orders.begin(); it != ((OG*)broker)->orders.end(); ++it)
-          if (it->second.side == side)
-            sideByPrice.insert(pair<double, mOrder>(it->second.price, it->second));
+        for (map<string, mOrder>::value_type &it : ((OG*)broker)->orders)
+          if (it.second.side == side)
+            sideByPrice.insert(pair<double, mOrder>(it.second.price, it.second));
         if (sideByPrice.size())
           ((OG*)broker)->cancelOrder(side == mSide::Bid
             ? sideByPrice.begin()->second.orderId
@@ -536,9 +536,9 @@ namespace K {
           );
       };
       void stopAllQuotes(mSide side) {
-        for (map<string, mOrder>::iterator it = ((OG*)broker)->orders.begin(); it != ((OG*)broker)->orders.end(); ++it)
-          if (it->second.orderStatus != mStatus::New and (side == mSide::Both or side == it->second.side))
-            ((OG*)broker)->cancelOrder(it->second.orderId);
+        for (map<string, mOrder>::value_type &it : ((OG*)broker)->orders)
+          if (it.second.orderStatus != mStatus::New and (side == mSide::Both or side == it.second.side))
+            ((OG*)broker)->cancelOrder(it.second.orderId);
       };
       function<void(string,mQuote)> debuq = [&](string k, mQuote rawQuote) {
         debug(string("quote") + k + " " + to_string((int)bidStatus) + " " + to_string((int)askStatus) + " " + ((json)rawQuote).dump());

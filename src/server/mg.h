@@ -229,8 +229,8 @@ namespace K {
       void filter(mLevels k) {
         levels = k;
         if (levels.empty()) return;
-        for (map<string, mOrder>::iterator it = ((OG*)broker)->orders.begin(); it != ((OG*)broker)->orders.end(); ++it)
-          filter(mSide::Bid == it->second.side ? &levels.bids : &levels.asks, it->second);
+        for (map<string, mOrder>::value_type &it : ((OG*)broker)->orders)
+          filter(mSide::Bid == it.second.side ? &levels.bids : &levels.asks, it.second);
         if (levels.empty()) return;
         calcFairValue();
         ((EV*)events)->mgLevels();

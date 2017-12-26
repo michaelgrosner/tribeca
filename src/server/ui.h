@@ -185,8 +185,8 @@ namespace K {
         });
       };
       void sendQueue() {
-        for (map<mMatter, string>::iterator it = queue.begin(); it != queue.end(); ++it)
-          send(it->first, it->second);
+        for (map<mMatter, string>::value_type &it : queue)
+          send(it.first, it.second);
         queue.clear();
       };
       void (*sendState)(Timer*) = [](Timer *handle) {

@@ -682,12 +682,12 @@ namespace K {
         if (protocol.length()) prtcl = protocol;
         if (argExchange.length()) exchange = argExchange;
         if (argCurrency.length()) currency = argCurrency;
-        multimap<double, mOrder> openOrders;
+        multimap<double, mOrder, greater<double>> openOrders;
         if (hasOrders) {
           orders = Orders;
-          for (map<string, mOrder>::iterator it = orders.begin(); it != orders.end(); ++it) {
-            if (mStatus::Working != it->second.orderStatus) continue;
-            openOrders.insert(pair<double, mOrder>(it->second.price, it->second));
+          for (map<string, mOrder>::value_type &it : orders) {
+            if (mStatus::Working != it.second.orderStatus) continue;
+            openOrders.insert(pair<double, mOrder>(it.second.price, it.second));
           }
         }
         int l = p,
@@ -705,12 +705,12 @@ namespace K {
         }
         mvwvline(wBorder, 1, 1, ' ', y-1);
         mvwvline(wBorder, k-1, 1, ' ', y-1);
-        for (map<double, mOrder>::reverse_iterator it = openOrders.rbegin(); it != openOrders.rend(); ++it) {
-          wattron(wBorder, COLOR_PAIR(it->second.side == mSide::Bid ? COLOR_CYAN : COLOR_MAGENTA));
+        for (map<double, mOrder, greater<double>>::value_type &it : openOrders) {
+          wattron(wBorder, COLOR_PAIR(it.second.side == mSide::Bid ? COLOR_CYAN : COLOR_MAGENTA));
           stringstream ss;
-          ss << setprecision(8) << fixed << (it->second.side == mSide::Bid ? "BID" : "ASK") << " > " << it->second.orderId << ": " << it->second.quantity << " " << it->second.pair.base << " at price " << it->second.price << " " << it->second.pair.quote;
+          ss << setprecision(8) << fixed << (it.second.side == mSide::Bid ? "BID" : "ASK") << " > " << it.second.orderId << ": " << it.second.quantity << " " << it.second.pair.base << " at price " << it.second.price << " " << it.second.pair.quote;
           mvwaddstr(wBorder, ++P, 1, ss.str().data());
-          wattroff(wBorder, COLOR_PAIR(it->second.side == mSide::Bid ? COLOR_CYAN : COLOR_MAGENTA));
+          wattroff(wBorder, COLOR_PAIR(it.second.side == mSide::Bid ? COLOR_CYAN : COLOR_MAGENTA));
         }
         mvwaddch(wBorder, 0, 0, ACS_ULCORNER);
         mvwhline(wBorder, 0, 1, ACS_HLINE, max(80, x));

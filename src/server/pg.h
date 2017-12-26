@@ -197,7 +197,7 @@ namespace K {
         if (sells.size()) expire(&sells);
         skip();
       };
-      void expire(map<double, mTrade>* k) {
+      void expire(map<double, mTrade> *k) {
         unsigned long now = FN::T();
         for (map<double, mTrade>::iterator it = k->begin(); it != k->end();)
           if (it->second.time + qp->tradeRateSeconds * 1e+3 > now) ++it;
@@ -217,10 +217,10 @@ namespace K {
             sells.erase(sells.begin());
         }
       };
-      double sum(map<double, mTrade>* k) {
+      double sum(map<double, mTrade> *k) {
         double sum = 0;
-        for (map<double, mTrade>::iterator it = k->begin(); it != k->end(); ++it)
-          sum += it->second.quantity;
+        for (map<double, mTrade>::value_type &it : *k)
+          sum += it.second.quantity;
         return sum;
       };
       void calcWallet(mWallet k) {
@@ -263,9 +263,9 @@ namespace K {
         double amount = k.side == mSide::Ask
           ? position.baseAmount + position.baseHeldAmount
           : position.quoteAmount + position.quoteHeldAmount;
-        for (map<string, mOrder>::iterator it = ((OG*)broker)->orders.begin(); it != ((OG*)broker)->orders.end(); ++it)
-          if (it->second.side == k.side) {
-            double held = it->second.quantity * (it->second.side == mSide::Bid ? it->second.price : 1);
+        for (map<string, mOrder>::value_type &it : ((OG*)broker)->orders)
+          if (it.second.side == k.side) {
+            double held = it.second.quantity * (it.second.side == mSide::Bid ? it.second.price : 1);
             if (amount >= held) {
               amount -= held;
               heldAmount += held;

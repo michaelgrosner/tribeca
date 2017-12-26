@@ -61,9 +61,9 @@ namespace K {
         }
       };
       function<void(json*)> helloOrders = [&](json *welcome) {
-        for (map<string, mOrder>::iterator it = orders.begin(); it != orders.end(); ++it) {
-          if (mStatus::Working != it->second.orderStatus) continue;
-          welcome->push_back(it->second);
+        for (map<string, mOrder>::value_type &it : orders) {
+          if (mStatus::Working != it.second.orderStatus) continue;
+          welcome->push_back(it.second);
         }
       };
       function<void(json)> kissCancelAllOrders = [&](json butterfly) {
@@ -100,9 +100,9 @@ namespace K {
         else if (k.orderId != "" and orders.find(k.orderId) != orders.end())
           o = orders[k.orderId];
         else if (k.exchangeId != "")
-          for (map<string, mOrder>::iterator it = orders.begin(); it != orders.end(); ++it)
-            if (it->second.exchangeId == k.exchangeId) {
-              o = it->second;
+          for (map<string, mOrder>::value_type &it : orders)
+            if (it.second.exchangeId == k.exchangeId) {
+              o = it.second;
               break;
             }
         if (!o.orderId.length()) return o;
@@ -126,9 +126,9 @@ namespace K {
         return o;
       };
       void cancelOpenOrders() {
-        for (map<string, mOrder>::iterator it = orders.begin(); it != orders.end(); ++it)
-          if (mStatus::New == it->second.orderStatus or mStatus::Working == it->second.orderStatus)
-            cancelOrder(it->first);
+        for (map<string, mOrder>::value_type &it : orders)
+          if (mStatus::New == it.second.orderStatus or mStatus::Working == it.second.orderStatus)
+            cancelOrder(it.first);
       };
       void cleanClosedTrades() {
         for (vector<mTrade>::iterator it = tradesHistory.begin(); it != tradesHistory.end();)
@@ -153,9 +153,9 @@ namespace K {
       };
       void toClient() {
         json k = json::array();
-        for (map<string, mOrder>::iterator it = orders.begin(); it != orders.end(); ++it)
-          if (it->second.orderStatus == mStatus::Working)
-            k.push_back(it->second);
+        for (map<string, mOrder>::value_type &it : orders)
+          if (it.second.orderStatus == mStatus::Working)
+            k.push_back(it.second);
         ((UI*)client)->send(mMatter::OrderStatusReports, k, true);
       };
       void toHistory(mOrder o) {
