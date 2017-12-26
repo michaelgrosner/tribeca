@@ -55,9 +55,9 @@ namespace K {
       };
     private:
       function<void(json*)> helloTrades = [&](json *welcome) {
-        for (vector<mTrade>::iterator it = tradesHistory.begin(); it != tradesHistory.end(); ++it) {
-          it->loadedFromDB = true;
-          welcome->push_back(*it);
+        for (mTrade &it : tradesHistory) {
+          it.loadedFromDB = true;
+          welcome->push_back(it);
         }
       };
       function<void(json*)> helloOrders = [&](json *welcome) {
@@ -131,7 +131,7 @@ namespace K {
             cancelOrder(it->first);
       };
       void cleanClosedTrades() {
-        for (vector<mTrade>::iterator it = tradesHistory.begin(); it != tradesHistory.end();) {
+        for (vector<mTrade>::iterator it = tradesHistory.begin(); it != tradesHistory.end();)
           if (it->Kqty < it->quantity) ++it;
           else {
             it->Kqty = -1;
@@ -139,10 +139,9 @@ namespace K {
             ((DB*)memory)->insert(mMatter::Trades, {}, false, it->tradeId);
             it = tradesHistory.erase(it);
           }
-        }
       };
       void cleanTrade(string k, bool all = false) {
-        for (vector<mTrade>::iterator it = tradesHistory.begin(); it != tradesHistory.end();) {
+        for (vector<mTrade>::iterator it = tradesHistory.begin(); it != tradesHistory.end();)
           if (!all and it->tradeId != k) ++it;
           else {
             it->Kqty = -1;
@@ -151,7 +150,6 @@ namespace K {
             it = tradesHistory.erase(it);
             if (!all) break;
           }
-        }
       };
       void toClient() {
         json k = json::array();
@@ -180,11 +178,11 @@ namespace K {
             ? qp->widthPongPercentage * trade.price / 100
             : qp->widthPong;
           map<double, string> matches;
-          for (vector<mTrade>::iterator it = tradesHistory.begin(); it != tradesHistory.end(); ++it)
-            if (it->quantity - it->Kqty > 0
-              and it->side == (trade.side == mSide::Bid ? mSide::Ask : mSide::Bid)
-              and (trade.side == mSide::Bid ? (it->price > trade.price + widthPong) : (it->price < trade.price - widthPong))
-            ) matches[it->price] = it->tradeId;
+          for (mTrade &it : tradesHistory)
+            if (it.quantity - it.Kqty > 0
+              and it.side == (trade.side == mSide::Bid ? mSide::Ask : mSide::Bid)
+              and (trade.side == mSide::Bid ? (it.price > trade.price + widthPong) : (it.price < trade.price - widthPong))
+            ) matches[it.price] = it.tradeId;
           matchPong(matches, (qp->pongAt == mPongAt::LongPingFair or qp->pongAt == mPongAt::LongPingAggressive) ? trade.side == mSide::Ask : trade.side == mSide::Bid, trade);
         } else {
           ((UI*)client)->send(mMatter::Trades, trade);
@@ -207,15 +205,15 @@ namespace K {
           if (!matchPong(it->second, &pong)) break;
         if (pong.quantity > 0) {
           bool eq = false;
-          for (vector<mTrade>::iterator it = tradesHistory.begin(); it != tradesHistory.end(); ++it) {
-            if (it->price!=pong.price or it->side!=pong.side or it->quantity<=it->Kqty) continue;
+          for (mTrade &it : tradesHistory) {
+            if (it.price!=pong.price or it.side!=pong.side or it.quantity<=it.Kqty) continue;
             eq = true;
-            it->time = pong.time;
-            it->quantity = it->quantity + pong.quantity;
-            it->value = it->value + pong.value;
-            it->loadedFromDB = false;
-            ((UI*)client)->send(mMatter::Trades, *it);
-            ((DB*)memory)->insert(mMatter::Trades, *it, false, it->tradeId);
+            it.time = pong.time;
+            it.quantity = it.quantity + pong.quantity;
+            it.value = it.value + pong.value;
+            it.loadedFromDB = false;
+            ((UI*)client)->send(mMatter::Trades, it);
+            ((DB*)memory)->insert(mMatter::Trades, it, false, it.tradeId);
             break;
           }
           if (!eq) {
@@ -226,20 +224,20 @@ namespace K {
         }
       };
       bool matchPong(string match, mTrade* pong) {
-        for (vector<mTrade>::iterator it = tradesHistory.begin(); it != tradesHistory.end(); ++it) {
-          if (it->tradeId != match) continue;
-          double Kqty = fmin(pong->quantity, it->quantity - it->Kqty);
-          it->Ktime = pong->time;
-          it->Kprice = ((Kqty*pong->price) + (it->Kqty*it->Kprice)) / (it->Kqty+Kqty);
-          it->Kqty = it->Kqty + Kqty;
-          it->Kvalue = abs(it->Kqty*it->Kprice);
+        for (mTrade &it : tradesHistory) {
+          if (it.tradeId != match) continue;
+          double Kqty = fmin(pong->quantity, it.quantity - it.Kqty);
+          it.Ktime = pong->time;
+          it.Kprice = ((Kqty*pong->price) + (it.Kqty*it.Kprice)) / (it.Kqty+Kqty);
+          it.Kqty = it.Kqty + Kqty;
+          it.Kvalue = abs(it.Kqty*it.Kprice);
           pong->quantity = pong->quantity - Kqty;
           pong->value = abs(pong->price*pong->quantity);
-          if (it->quantity<=it->Kqty)
-            it->Kdiff = abs(it->quantity * it->price - it->Kqty * it->Kprice);
-          it->loadedFromDB = false;
-          ((UI*)client)->send(mMatter::Trades, *it);
-          ((DB*)memory)->insert(mMatter::Trades, *it, false, it->tradeId);
+          if (it.quantity<=it.Kqty)
+            it.Kdiff = abs(it.quantity * it.price - it.Kqty * it.Kprice);
+          it.loadedFromDB = false;
+          ((UI*)client)->send(mMatter::Trades, it);
+          ((DB*)memory)->insert(mMatter::Trades, it, false, it.tradeId);
           break;
         }
         return pong->quantity > 0;
@@ -247,14 +245,13 @@ namespace K {
       void cleanAuto(unsigned long k, double pT) {
         if (pT == 0) return;
         unsigned long pT_ = k - (abs(pT) * 864e5);
-        for (vector<mTrade>::iterator it = tradesHistory.begin(); it != tradesHistory.end();) {
+        for (vector<mTrade>::iterator it = tradesHistory.begin(); it != tradesHistory.end();)
           if (it->time < pT_ and (pT < 0 or it->Kqty >= it->quantity)) {
             it->Kqty = -1;
             ((UI*)client)->send(mMatter::Trades, *it);
             ((DB*)memory)->insert(mMatter::Trades, {}, false, it->tradeId);
             it = tradesHistory.erase(it);
           } else ++it;
-        }
       };
       void toMemory(mOrder k) {
         if (k.orderStatus == mStatus::New or k.orderStatus == mStatus::Working) {

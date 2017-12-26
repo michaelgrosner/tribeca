@@ -290,8 +290,7 @@ namespace K {
         mgSMA3.push_back(fairValue);
         if (mgSMA3.size()>3) mgSMA3.erase(mgSMA3.begin(), mgSMA3.end()-3);
         double SMA3 = 0;
-        for (vector<double>::iterator it = mgSMA3.begin(); it != mgSMA3.end(); ++it)
-          SMA3 += *it;
+        for (double &it : mgSMA3) SMA3 += it;
         SMA3 /= mgSMA3.size();
         double newTargetPosition = 0;
         if (qp->autoPositionMode == mAutoPositionMode::EWMA_LMS) {

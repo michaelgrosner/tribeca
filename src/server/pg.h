@@ -122,10 +122,10 @@ namespace K {
           : qp->sellSize;
         map<double, mTrade> tradesBuy;
         map<double, mTrade> tradesSell;
-        for (vector<mTrade>::iterator it = ((OG*)broker)->tradesHistory.begin(); it != ((OG*)broker)->tradesHistory.end(); ++it) {
-          (it->side == mSide::Bid ? tradesBuy : tradesSell)[it->price] = *it;
+        for (mTrade &it: ((OG*)broker)->tradesHistory) {
+          (it.side == mSide::Bid ? tradesBuy : tradesSell)[it.price] = it;
           if (qp->safety == mQuotingSafety::PingPong)
-            (it->side == mSide::Bid ? buySize : sellSize) = it->quantity;
+            (it.side == mSide::Bid ? buySize : sellSize) = it.quantity;
         }
         double totalBasePosition = position.baseAmount + position.baseHeldAmount;
         if (qp->aggressivePositionRebalancing != mAPR::Off) {

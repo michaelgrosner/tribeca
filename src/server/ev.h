@@ -93,9 +93,9 @@ namespace K  {
       };
       void (*asyncLoop)(Async*) = [](Async *handle) {
         EV* k = (EV*)handle->data;
-        for (vector<function<void()>>::iterator it = k->asyncFn.begin(); it != k->asyncFn.end();) {
-          (*it)();
-          it = k->asyncFn.erase(it);
+        if (k->asyncFn.size()) {
+          for (function<void()> &it : k->asyncFn) it();
+          k->asyncFn.clear();
         }
         if (k->hotkey.valid() and k->hotkey.wait_for(chrono::nanoseconds(0)) == future_status::ready) {
           int ch = k->hotkey.get();
@@ -111,7 +111,7 @@ namespace K  {
         } else FN::logVer("", -1);
       };
       static void halt(int code) {
-        for (vector<function<void()>*>::iterator it=gwEndings.begin(); it!=gwEndings.end();++it) (**it)();
+        for (function<void()>* &it : gwEndings) (*it)();
         cout << FN::uiT() << "K exit code " << to_string(code) << "." << '\n';
         exit(code);
       };
