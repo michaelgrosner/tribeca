@@ -23,8 +23,7 @@ namespace K {
           or ((CF*)config)->argPass == "NULL"
           or ((CF*)config)->argPass == ""
         ) return;
-        B64::Encode(((CF*)config)->argUser + ':' + ((CF*)config)->argPass, &B64auth);
-        B64auth = string("Basic ") + B64auth;
+        B64auth = string("Basic ") + FN::oB64(((CF*)config)->argUser + ':' + ((CF*)config)->argPass);
       };
       void waitTime() {
         if (((CF*)config)->argHeadless) return;

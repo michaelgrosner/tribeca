@@ -279,10 +279,10 @@ namespace K {
           double oppositeHeldAmount = k.side == mSide::Ask
             ? position.quoteHeldAmount
             : position.baseHeldAmount;
-          calcWallet(mWallet(oppositeAmount + completedAmount, oppositeHeldAmount, k.side == mSide::Ask ? k.pair.quote : k.pair.base));
+          calcWallet(mWallet(fmax(0, oppositeAmount + completedAmount), oppositeHeldAmount, k.side == mSide::Ask ? k.pair.quote : k.pair.base));
         }
         completedAmount = k.tradeQuantity * (k.side == mSide::Bid ? k.price : 1);
-        calcWallet(mWallet(amount - completedAmount, heldAmount, k.side == mSide::Ask ? k.pair.base : k.pair.quote));
+        calcWallet(mWallet(fmax(0, amount - completedAmount), heldAmount, k.side == mSide::Ask ? k.pair.base : k.pair.quote));
       };
       void calcPDiv(double baseValue) {
         double pDiv = qp->percentageValues
