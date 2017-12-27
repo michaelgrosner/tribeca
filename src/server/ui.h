@@ -107,10 +107,12 @@ namespace K {
             json welcome;
             (*hello[message[1]])(&welcome);
             if (!welcome.is_null()) webSocket->send((string(message, 2) + welcome.dump()).data(), uWS::OpCode::TEXT);
-          } else if (mPortal::Kiss == (mPortal)message[0] and kisses.find(message[1]) != kisses.end())
-            (*kisses[message[1]])(json::parse((length > 2 and (message[2] == '[' or message[2] == '{'))
-              ? string(message, length).substr(2, length-2) : "{}"
-            ));
+          } else if (mPortal::Kiss == (mPortal)message[0] and kisses.find(message[1]) != kisses.end()) {
+            json butterfly = json::parse((length > 2 and message[2] == '{') ? string(message, length).substr(2, length-2) : "{}");
+            for (json::iterator it = butterfly.begin(); it != butterfly.end();)
+              if (it.value().is_null()) it = butterfly.erase(it); else ++it;
+            (*kisses[message[1]])(butterfly);
+          }
         });
       };
       void waitUser() {
