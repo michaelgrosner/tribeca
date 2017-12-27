@@ -18,8 +18,11 @@ namespace K {
       string sideAPR = "";
     protected:
       void load() {
+        for (json &it : ((DB*)memory)->load(mMatter::Position))
+          profits.push_back(it);
+        FN::log("DB", string("loaded ") + to_string(profits.size()) + " historical Profits");
         json k = ((DB*)memory)->load(mMatter::TargetBasePosition);
-        if (k.size()) {
+        if (!k.empty()) {
           k = k.at(0);
           targetBasePosition = k.value("tbp", 0.0);
           if (k.find("pDiv") != k.end()) positionDivergence = k.value("pDiv", 0.0);
@@ -28,12 +31,6 @@ namespace K {
         stringstream ss;
         ss << setprecision(8) << fixed << targetBasePosition;
         FN::log("DB", string("loaded TBP = ") + ss.str() + " " + gw->base);
-        k = ((DB*)memory)->load(mMatter::Position);
-        if (k.size()) {
-          for (json::reverse_iterator it = k.rbegin(); it != k.rend(); ++it)
-            profits.push_back(*it);
-          FN::log("DB", string("loaded ") + to_string(profits.size()) + " historical Profits");
-        }
       };
       void waitData() {
         gw->evDataWallet = [&](mWallet k) {

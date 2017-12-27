@@ -37,25 +37,22 @@ namespace K {
       double mgStdevAskMean = 0;
     protected:
       void load() {
-        json k = ((DB*)memory)->load(mMatter::MarketData);
-        if (k.size()) {
-          for (json::reverse_iterator it = k.rbegin(); it != k.rend(); ++it) {
-            if (it->value("time", (unsigned long)0)+qp->quotingStdevProtectionPeriods*1e+3<FN::T()) continue;
-            mgStatFV.push_back(it->value("fv", 0.0));
-            mgStatBid.push_back(it->value("bid", 0.0));
-            mgStatAsk.push_back(it->value("ask", 0.0));
-            mgStatTop.push_back(it->value("bid", 0.0));
-            mgStatTop.push_back(it->value("ask", 0.0));
-          }
-          calcStdev();
+        for (json &it : ((DB*)memory)->load(mMatter::MarketData)) {
+          if (it.value("time", (unsigned long)0) + qp->quotingStdevProtectionPeriods * 1e+3 < FN::T()) continue;
+          mgStatFV.push_back(it.value("fv", 0.0));
+          mgStatBid.push_back(it.value("bid", 0.0));
+          mgStatAsk.push_back(it.value("ask", 0.0));
+          mgStatTop.push_back(it.value("bid", 0.0));
+          mgStatTop.push_back(it.value("ask", 0.0));
         }
+        calcStdev();
         FN::log("DB", string("loaded ") + to_string(mgStatFV.size()) + " STDEV Periods");
         if (((CF*)config)->argEwmaVeryLong) mgEwmaVL = ((CF*)config)->argEwmaVeryLong;
         if (((CF*)config)->argEwmaLong) mgEwmaL = ((CF*)config)->argEwmaLong;
         if (((CF*)config)->argEwmaMedium) mgEwmaM = ((CF*)config)->argEwmaMedium;
         if (((CF*)config)->argEwmaShort) mgEwmaS = ((CF*)config)->argEwmaShort;
-        k = ((DB*)memory)->load(mMatter::EWMAChart);
-        if (k.size()) {
+        json k = ((DB*)memory)->load(mMatter::EWMAChart);
+        if (!k.empty()) {
           k = k.at(0);
           if (!mgEwmaVL and k.value("time", (unsigned long)0) + qp->veryLongEwmaPeriods * 6e+4 > FN::T())
             mgEwmaVL = k.value("ewmaVeryLong", 0.0);
@@ -70,13 +67,10 @@ namespace K {
         if (mgEwmaL)  FN::log(((CF*)config)->argEwmaLong ? "ARG" : "DB", string("loaded ") + to_string(mgEwmaL) + " EWMA Long");
         if (mgEwmaM)  FN::log(((CF*)config)->argEwmaMedium ? "ARG" : "DB", string("loaded ") + to_string(mgEwmaM) + " EWMA Medium");
         if (mgEwmaS)  FN::log(((CF*)config)->argEwmaShort ? "ARG" : "DB", string("loaded ") + to_string(mgEwmaS) + " EWMA Short");
-        k = ((DB*)memory)->load(mMatter::MarketDataLongTerm);
-        if (k.size()) {
-          for (json::reverse_iterator it = k.rbegin(); it != k.rend(); ++it)
-            if (it->value("time", (unsigned long)0) + 3456e+5 > FN::T() and it->value("fv", 0.0))
-              fairValue96h.push_back(it->value("fv", 0.0));
-          if (fairValue96h.size()) FN::log("DB", string("loaded ") + to_string(fairValue96h.size()) + " historical FairValues");
-        }
+        for (json &it : ((DB*)memory)->load(mMatter::MarketDataLongTerm))
+          if (it.value("time", (unsigned long)0) + 3456e+5 > FN::T() and it.value("fv", 0.0))
+            fairValue96h.push_back(it.value("fv", 0.0));
+        FN::log("DB", string("loaded ") + to_string(fairValue96h.size()) + " historical FairValues");
       };
       void waitData() {
         gw->evDataTrade = [&](mTrade k) {
@@ -126,8 +120,8 @@ namespace K {
       };
     private:
       function<void(json*)> helloTrade = [&](json *welcome) {
-        for (unsigned i=0; i<trades.size(); ++i)
-          welcome->push_back(trades[i]);
+        for (mTrade &it : trades)
+          welcome->push_back(it);
       };
       function<void(json*)> helloFair = [&](json *welcome) {
         *welcome = { {
@@ -157,9 +151,10 @@ namespace K {
       };
       void calcStatsTrades() {
         takersSellSize60s = takersBuySize60s = 0;
-        for (unsigned int i = 0; i<trades.size(); ++i)
-          if (trades[i].side == mSide::Bid) takersSellSize60s += trades[i].quantity;
-          else takersBuySize60s += trades[i].quantity;
+        if (trades.empty()) return;
+        for (mTrade &it : trades)
+          if (it.side == mSide::Bid) takersSellSize60s += it.quantity;
+          else takersBuySize60s += it.quantity;
         trades.clear();
       };
       void tradeUp(mTrade k) {
@@ -262,11 +257,11 @@ namespace K {
         unsigned int n = values.size();
         if (!n) return 0.0;
         double sum = 0;
-        for (unsigned int i = 0; i < n; ++i) sum += values[i];
+        for (double &it : values) sum += it;
         *mean = sum / n;
         double sq_diff_sum = 0;
-        for (unsigned int i = 0; i < n; ++i) {
-          double diff = values[i] - *mean;
+        for (double &it : values) {
+          double diff = it - *mean;
           sq_diff_sum += diff * diff;
         }
         double variance = sq_diff_sum / n;

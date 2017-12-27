@@ -50,7 +50,7 @@ namespace K {
       };
       static string charId() {
         char s[16];
-        for (int i = 0; i < 16; ++i) s[i] = alphanum[stol(int64Id()) % (sizeof(alphanum) - 1)];
+        for (unsigned int i = 0; i < 16; ++i) s[i] = alphanum[stol(int64Id()) % (sizeof(alphanum) - 1)];
         return string(s, 16);
       };
       static string uuidId() {
@@ -62,7 +62,7 @@ namespace K {
         uuid[18] = '-';
         uuid[23] = '-';
         uuid[14] = '4';
-        for(int i=0;i<36;i++)
+        for (unsigned int i=0;i<36;i++)
           if (i != 8 && i != 13 && i != 18 && i != 14 && i != 23) {
             if (rnd <= 0x02) { rnd = 0x2000000 + (rnd_ * 0x1000000) | 0; }
             rnd >>= 4;
@@ -71,9 +71,9 @@ namespace K {
         return S2l(uuid);
       };
       static string oHex(string k) {
-       int len = k.length();
+       unsigned int len = k.length();
         string k_;
-        for(int i=0; i< len; i+=2) {
+        for (unsigned int i=0; i < len; i+=2) {
           string byte = k.substr(i,2);
           char chr = (char)(int)strtol(byte.data(), NULL, 16);
           k_.push_back(chr);
@@ -98,42 +98,42 @@ namespace K {
         unsigned char digest[MD5_DIGEST_LENGTH];
         MD5((unsigned char*)k.data(), k.length(), (unsigned char*)&digest);
         char k_[16*2+1];
-        for(int i = 0; i < 16; i++) sprintf(&k_[i*2], "%02x", (unsigned int)digest[i]);
+        for (unsigned int i = 0; i < 16; i++) sprintf(&k_[i*2], "%02x", (unsigned int)digest[i]);
         return S2u(k_);
       };
       static string oSha256(string k) {
         unsigned char digest[SHA256_DIGEST_LENGTH];
         SHA256((unsigned char*)k.data(), k.length(), (unsigned char*)&digest);
         char k_[SHA256_DIGEST_LENGTH*2+1];
-        for(int i = 0; i < SHA256_DIGEST_LENGTH; i++) sprintf(&k_[i*2], "%02x", (unsigned int)digest[i]);
+        for (unsigned int i = 0; i < SHA256_DIGEST_LENGTH; i++) sprintf(&k_[i*2], "%02x", (unsigned int)digest[i]);
         return k_;
       };
       static string oSha512(string k) {
         unsigned char digest[SHA512_DIGEST_LENGTH];
         SHA512((unsigned char*)k.data(), k.length(), (unsigned char*)&digest);
         char k_[SHA512_DIGEST_LENGTH*2+1];
-        for(int i = 0; i < SHA512_DIGEST_LENGTH; i++) sprintf(&k_[i*2], "%02x", (unsigned int)digest[i]);
+        for (unsigned int i = 0; i < SHA512_DIGEST_LENGTH; i++) sprintf(&k_[i*2], "%02x", (unsigned int)digest[i]);
         return k_;
       };
       static string oHmac256(string p, string s, bool hex = false) {
         unsigned char* digest;
         digest = HMAC(EVP_sha256(), s.data(), s.length(), (unsigned char*)p.data(), p.length(), NULL, NULL);
         char k_[SHA256_DIGEST_LENGTH*2+1];
-        for(int i = 0; i < SHA256_DIGEST_LENGTH; i++) sprintf(&k_[i*2], "%02x", (unsigned int)digest[i]);
+        for (unsigned int i = 0; i < SHA256_DIGEST_LENGTH; i++) sprintf(&k_[i*2], "%02x", (unsigned int)digest[i]);
         return hex ? oHex(k_) : k_;
       };
       static string oHmac512(string p, string s) {
         unsigned char* digest;
         digest = HMAC(EVP_sha512(), s.data(), s.length(), (unsigned char*)p.data(), p.length(), NULL, NULL);
         char k_[SHA512_DIGEST_LENGTH*2+1];
-        for(int i = 0; i < SHA512_DIGEST_LENGTH; i++) sprintf(&k_[i*2], "%02x", (unsigned int)digest[i]);
+        for (unsigned int i = 0; i < SHA512_DIGEST_LENGTH; i++) sprintf(&k_[i*2], "%02x", (unsigned int)digest[i]);
         return k_;
       };
       static string oHmac384(string p, string s) {
         unsigned char* digest;
         digest = HMAC(EVP_sha384(), s.data(), s.length(), (unsigned char*)p.data(), p.length(), NULL, NULL);
         char k_[SHA384_DIGEST_LENGTH*2+1];
-        for(int i = 0; i < SHA384_DIGEST_LENGTH; i++) sprintf(&k_[i*2], "%02x", (unsigned int)digest[i]);
+        for (unsigned int i = 0; i < SHA384_DIGEST_LENGTH; i++) sprintf(&k_[i*2], "%02x", (unsigned int)digest[i]);
         return k_;
       };
       static void stunnel() {

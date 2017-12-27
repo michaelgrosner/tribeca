@@ -4,7 +4,7 @@
 namespace K {
   class GW: public Klass {
     private:
-      mConnectivity gwAdminEnabled = mConnectivity::Disconnected,
+      mConnectivity gwAdminEnabled  = mConnectivity::Disconnected,
                     gwConnectOrders = mConnectivity::Disconnected,
                     gwConnectMarket = mConnectivity::Disconnected;
       unsigned int gwT_5m = 0;

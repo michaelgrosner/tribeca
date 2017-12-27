@@ -8,10 +8,8 @@ namespace K {
       vector<mTrade> tradesHistory;
     protected:
       void load() {
-        json k = ((DB*)memory)->load(mMatter::Trades);
-        if (k.size())
-          for (json::reverse_iterator it = k.rbegin(); it != k.rend(); ++it)
-            tradesHistory.push_back(*it);
+        for (json &it : ((DB*)memory)->load(mMatter::Trades))
+          tradesHistory.push_back(it);
         FN::log("DB", string("loaded ") + to_string(tradesHistory.size()) + " historical Trades");
       };
       void waitData() {

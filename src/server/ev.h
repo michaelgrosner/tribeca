@@ -93,13 +93,13 @@ namespace K  {
     private:
       function<void()> happyEnding = [&]() {
         cout << FN::uiT() << gw->name;
-        for(unsigned int i = 0; i < 21; ++i)
+        for (unsigned int i = 0; i < 21; ++i)
           cout << " THE END IS NEVER";
         cout << " THE END." << '\n';
       };
       void (*asyncLoop)(Async*) = [](Async *handle) {
         EV* k = (EV*)handle->data;
-        if (k->asyncFn.size()) {
+        if (!k->asyncFn.empty()) {
           for (function<void()> &it : k->asyncFn) it();
           k->asyncFn.clear();
         }

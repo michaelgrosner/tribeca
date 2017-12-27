@@ -10,17 +10,17 @@ namespace K {
       mQuoteStatus status;
       unsigned int AK47inc = 1;
     public:
-      mConnectivity gwConnectButton = mConnectivity::Disconnected,
+      mConnectivity gwConnectButton   = mConnectivity::Disconnected,
                     gwConnectExchange = mConnectivity::Disconnected;
     protected:
       void load() {
-        quotingMode[mQuotingMode::Top] = &calcTopOfMarket;
-        quotingMode[mQuotingMode::Mid] = &calcMidOfMarket;
-        quotingMode[mQuotingMode::Join] = &calcJoinMarket;
+        quotingMode[mQuotingMode::Top]         = &calcTopOfMarket;
+        quotingMode[mQuotingMode::Mid]         = &calcMidOfMarket;
+        quotingMode[mQuotingMode::Join]        = &calcJoinMarket;
         quotingMode[mQuotingMode::InverseJoin] = &calcInverseJoinMarket;
-        quotingMode[mQuotingMode::InverseTop] = &calcInverseTopOfMarket;
-        quotingMode[mQuotingMode::HamelinRat] = &calcColossusOfMarket;
-        quotingMode[mQuotingMode::Depth] = &calcDepthOfMarket;
+        quotingMode[mQuotingMode::InverseTop]  = &calcInverseTopOfMarket;
+        quotingMode[mQuotingMode::HamelinRat]  = &calcColossusOfMarket;
+        quotingMode[mQuotingMode::Depth]       = &calcDepthOfMarket;
       };
       void waitTime() {
         ((EV*)events)->tEngine->data = this;

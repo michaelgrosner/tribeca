@@ -26,7 +26,7 @@ namespace K {
         ).data(), NULL, NULL, &zErrMsg);
         json j = json::array();
         sqlite3_exec(db, (
-          string("SELECT json FROM ") + (char)k + " ORDER BY time DESC;"
+          string("SELECT json FROM ") + (char)k + " ORDER BY time ASC;"
         ).data(), cb, (void*)&j, &zErrMsg);
         if (zErrMsg) FN::logWar("DB", string("Sqlite error: ") + zErrMsg);
         sqlite3_free(zErrMsg);
@@ -52,7 +52,7 @@ namespace K {
       };
     private:
       static int cb(void *param, int argc, char **argv, char **azColName) {
-        for (int i = 0; i < argc; i++)
+        for (int i = 0; i < argc; ++i)
           ((json*)param)->push_back(json::parse(argv[i]));
         return 0;
       };
