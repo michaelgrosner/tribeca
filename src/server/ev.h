@@ -115,54 +115,68 @@ namespace K  {
           string k = changelog();
           FN::logVer(k, count(k.begin(), k.end(), '\n'));
         } else FN::logVer("", -1);
+        THIS_WAS_A_TRIUMPH
+          << "- upstream: " << ((CF*)config)->argExchange << '\n'
+          << "- currency: " << ((CF*)config)->argCurrency << '\n'
+          << "- roll-out: " << to_string(FN::T())         << '\n';
       };
-      static void halt(int code) {
-        for (function<void()>* &it : gwEndings) (*it)();
-        cout << FN::uiT() << "K exit code " << to_string(code) << "." << '\n';
-        exit(code);
-      };
-      static void quit(int sig) {
+      static void halt(int last_int_alive) {
         FN::screen_quit();
-        cout << '\n';
-        json k = FN::wJet("https://api.icndb.com/jokes/random?escape=javascript&limitTo=[nerdy]", true);
-        cout << FN::uiT() << "Excellent decision! "
-             << k.value("/value/joke"_json_pointer, "let's plant a tree instead..") << '\n';
+        cout << '\n' << FN::uiT() << THIS_WAS_A_TRIUMPH.str();
+        for (function<void()>* &it : gwEndings) (*it)();
+        if (last_int_alive == EXIT_FAILURE)
+          this_thread::sleep_for(chrono::seconds(3));
+        cout << FN::uiT() << "K exit code " << to_string(last_int_alive) << "." << '\n';
+        exit(last_int_alive);
+      };
+      static void quit(int last_int_alive) {
+        THIS_WAS_A_TRIUMPH.str("");
+        THIS_WAS_A_TRIUMPH << "Excellent decision! "
+          << FN::wJet("https://api.icndb.com/jokes/random?escape=javascript&limitTo=[nerdy]", true)
+             .value("/value/joke"_json_pointer, "let's plant a tree instead..") << '\n';
         halt(EXIT_SUCCESS);
       };
-      static void wtf(int sig) {
-        FN::screen_quit();
-        cout << FN::uiT() << RCYAN << "Errrror: Signal " << sig << " "  << strsignal(sig);
-        if (latest()) {
-          cout << " (Three-Headed Monkey found):" << '\n';
+      static void  wtf(int last_int_alive) {
+        ostringstream rollout(THIS_WAS_A_TRIUMPH.str());
+        THIS_WAS_A_TRIUMPH.str("");
+        THIS_WAS_A_TRIUMPH << RCYAN << "Errrror: Signal " << last_int_alive << " "  << strsignal(last_int_alive);
+        if (unsupported()) upgrade();
+        else {
+          THIS_WAS_A_TRIUMPH
+            << " (Three-Headed Monkey found):" << '\n' << rollout.str()
+            << "- lastbeat: " << to_string(FN::T()) << '\n'
+            << "- tracelog: " << '\n';
+          void *k[69];
+          size_t jumps = backtrace(k, 69);
+          char **trace = backtrace_symbols(k, jumps);
+          size_t i;
+          for (i = 0; i < jumps; i++) THIS_WAS_A_TRIUMPH << trace[i] << '\n';
+          free(trace);
           report();
-          this_thread::sleep_for(chrono::seconds(3));
-        } else {
-          cout << " (deprecated K version found)." << '\n';
-          upgrade();
-          this_thread::sleep_for(chrono::seconds(21));
         }
         halt(EXIT_FAILURE);
       };
-      static bool latest() {
-        return FN::output("test -d .git && git rev-parse @") == FN::output("test -d .git && git rev-parse @{u}");
-      };
-      static string changelog() {
-        return FN::output("test -d .git && git --no-pager log --graph --oneline @..@{u}");
+      static void report() {
+        THIS_WAS_A_TRIUMPH
+          << '\n' << BRED << "Yikes!" << RRED
+          << '\n' << "please copy and paste the error above into a new github issue (noworry for duplicates)."
+          << '\n' << "If you agree, go to https://github.com/ctubio/Krypto-trading-bot/issues/new"
+          << '\n' << '\n';
       };
       static void upgrade() {
-        cout << '\n' << BYELLOW << "Hint!" << RYELLOW
+        THIS_WAS_A_TRIUMPH
+          << " (deprecated K version found)." << '\n'
+          << '\n' << BYELLOW << "Hint!" << RYELLOW
           << '\n' << "please upgrade to the latest commit; the encountered error may be already fixed at:"
           << '\n' << changelog()
           << '\n' << "If you agree, consider to run \"make latest\" prior further executions."
           << '\n' << '\n';
       };
-      static void report() {
-        void *k[69];
-        backtrace_symbols_fd(k, backtrace(k, 69), STDERR_FILENO);
-        cout << '\n' << BRED << "Yikes!" << RRED
-          << '\n' << "please copy and paste the error above into a new github issue (noworry for duplicates)."
-          << '\n' << "If you agree, go to https://github.com/ctubio/Krypto-trading-bot/issues/new"
-          << '\n' << '\n';
+      static bool unsupported() {
+        return FN::output("test -d .git && git rev-parse @") != FN::output("test -d .git && git rev-parse @{u}");
+      };
+      static string changelog() {
+        return FN::output("test -d .git && git --no-pager log --graph --oneline @..@{u}");
       };
   };
 }

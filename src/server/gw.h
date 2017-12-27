@@ -46,7 +46,7 @@ namespace K {
       function<void()> happyEnding = [&]() {
         ((EV*)events)->stop([&]() {
           if (((CF*)config)->argDustybot)
-            FN::log(string("GW ") + gw->name, "Dustybot is enabled, remember to cancel manually any open order.");
+            FN::log(string("GW ") + gw->name, "--dustybot is enabled, remember to cancel manually any open order.");
           else {
             FN::log(string("GW ") + gw->name, "Attempting to cancel all open orders, please wait.");
             gw->cancelAll();
