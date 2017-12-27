@@ -12,6 +12,7 @@ namespace K {
           argDebugQuotes = 0,
           argWithoutSSL = 0,
           argHeadless = 0,
+          argDustybot = 0,
           argAutobot = 0,
           argNaked = 0,
           argFree = 0;
@@ -47,6 +48,7 @@ namespace K {
           {"headless",     no_argument,       &argHeadless,      1},
           {"naked",        no_argument,       &argNaked,         1},
           {"autobot",      no_argument,       &argAutobot,       1},
+          {"dustybot",     no_argument,       &argDustybot,      1},
           {"whitelist",    required_argument, 0,               'L'},
           {"matryoshka",   required_argument, 0,               'k'},
           {"exchange",     required_argument, 0,               'e'},
@@ -105,6 +107,7 @@ namespace K {
               << FN::uiT() << "[arguments]:" << '\n'
               << FN::uiT() << RWHITE << "-h, --help                - show this help and quit." << '\n'
               << FN::uiT() << RWHITE << "    --autobot             - automatically start trading on boot." << '\n'
+              << FN::uiT() << RWHITE << "    --dustybot            - do not automatically cancel all orders on exit." << '\n'
               << FN::uiT() << RWHITE << "    --naked               - do not display CLI, print output to stdout instead." << '\n'
               << FN::uiT() << RWHITE << "    --headless            - do not listen for UI connections," << '\n'
               << FN::uiT() << RWHITE << "                            ignores '--without-ssl', '--whitelist' and '--port'." << '\n'
