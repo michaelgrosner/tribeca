@@ -261,5 +261,5 @@ Time     | Side | Price | Size | BuyTS | SellTS | Notes
 
 # How can I make up my own trading strategies?
 
-You can always open a [new issue](https://github.com/ctubio/**Krypto-trading-bot**/issues/new?title=Missing%20trading%20strategy) to request a new feature.
+You can always open a [new issue](https://github.com/ctubio/Krypto-trading-bot/issues/new?title=Missing%20trading%20strategy) to request a new feature.
 
