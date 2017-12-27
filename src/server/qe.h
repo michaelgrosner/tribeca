@@ -365,7 +365,8 @@ namespace K {
         rawQuote->bid.price = fmin(((MG*)market)->mgEwmaP, rawQuote->bid.price);
       };
       mQuote quote(double widthPing, double buySize, double sellSize) {
-        if (quotingMode.find(qp->mode) == quotingMode.end()) FN::logExit("QE", "Invalid quoting mode", EXIT_SUCCESS);
+        if (quotingMode.find(qp->mode) == quotingMode.end())
+          exit(((EV*)events)->error("QE", "Invalid quoting mode"));
         return (*quotingMode[qp->mode])(widthPing, buySize, sellSize);
       };
       mQuote quoteAtTopOfMarket() {

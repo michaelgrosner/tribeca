@@ -449,11 +449,6 @@ namespace K {
       static void logWar(string k, string s) {
         logErr(k, s, " Warrrrning: ");
       };
-      static void logExit(string k, string s, int code) {
-        FN::screen_quit();
-        logErr(k, s);
-        exit(code);
-      };
       static void logErr(string k, string s, string m = " Errrror: ") {
         if (!wBorder) {
           cout << uiT() << k << RRED << m << BRED << s << ".\n";

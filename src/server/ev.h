@@ -28,6 +28,7 @@ namespace K  {
         signal(SIGABRT, wtf);
         signal(SIGSEGV, wtf);
         version();
+        if (!gw) exit(error("GW", string("Unable to load a valid gateway using --exchange=") + ((CF*)config)->argExchange + " argument"));
         gw->hub = hub = new uWS::Hub(0, true);
       };
       void waitTime() {
@@ -71,15 +72,20 @@ namespace K  {
           and hub->listen(((CF*)config)->argPort, uS::TLS::createContext("etc/sslcert/server.crt", "etc/sslcert/server.key", ""), 0, uiGroup)
         ) protocol += "S";
         else if (!hub->listen(((CF*)config)->argPort, nullptr, 0, uiGroup))
-          FN::logExit("IU", string("Use another UI port number, ")
+          exit(error("IU", string("Use another UI port number, ")
             + to_string(((CF*)config)->argPort) + " seems already in use by:\n"
-            + FN::output(string("netstat -anp 2>/dev/null | grep ") + to_string(((CF*)config)->argPort)),
-            EXIT_SUCCESS);
+            + FN::output(string("netstat -anp 2>/dev/null | grep ") + to_string(((CF*)config)->argPort))
+          ));
         FN::logUI(protocol, ((CF*)config)->argPort);
       };
       void deferred(function<void()> fn) {
         asyncFn.push_back(fn);
         aEngine->send();
+      };
+      int error(string k, string s, bool reboot = false) {
+        FN::screen_quit();
+        FN::logErr(k, s);
+        return reboot ? EXIT_FAILURE : EXIT_SUCCESS;
       };
       function<void(string)> debug = [&](string k) {
         FN::log("DEBUG", string("EV ") + k);

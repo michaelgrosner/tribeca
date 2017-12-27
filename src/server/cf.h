@@ -230,7 +230,6 @@ namespace K {
         else if (k == "KRAKEN") return mExchange::Kraken;
         else if (k == "KORBIT") return mExchange::Korbit;
         else if (k == "POLONIEX") return mExchange::Poloniex;
-        else if (k != "NULL") FN::logExit("CF", string("Invalid configuration value \"") + k + "\" as EXCHANGE. See https://github.com/ctubio/Krypto-trading-bot for more information", EXIT_SUCCESS);
         return mExchange::Null;
       };
   };

@@ -168,7 +168,7 @@ namespace K {
           gw->minSize = 0.01;
         }
         if (!gw->minTick or !gw->minSize)
-          return FN::logExit("CF", "Unable to fetch data from " + gw->name + " for symbol \"" + gw->symbol + "\", possible error message: " + reply.dump(), EXIT_FAILURE);
+          exit(((EV*)events)->error("CF", "Unable to fetch data from " + gw->name + " for symbol \"" + gw->symbol + "\", possible error message: " + reply.dump(), true));
         FN::log(string("GW ") + gw->name, "allows client IP");
         stringstream ss;
         ss << setprecision(8) << fixed << '\n'

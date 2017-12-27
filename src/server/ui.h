@@ -135,11 +135,11 @@ namespace K {
     public:
       function<void(mMatter, function<void(json*)>*)> welcome = [&](mMatter k, function<void(json*)> *fn) {
         if (hello.find((char)k) == hello.end()) hello[(char)k] = fn;
-        else FN::logExit("UI", string("Use only a single unique message handler for each \"") + (char)k + "\" welcome event", EXIT_SUCCESS);
+        else exit(((EV*)events)->error("UI", string("Use only a single unique message handler for each \"") + (char)k + "\" welcome event"));
       };
       function<void(mMatter, function<void(json)>*)> clickme = [&](mMatter k, function<void(json)> *fn) {
         if (kisses.find((char)k) == kisses.end()) kisses[(char)k] = fn;
-        else FN::logExit("UI", string("Use only a single unique message handler for each \"") + (char)k + "\" clickme event", EXIT_SUCCESS);
+        else exit(((EV*)events)->error("UI", string("Use only a single unique message handler for each \"") + (char)k + "\" clickme event"));
       };
       function<void(unsigned int)> delayme = [&](unsigned int delayUI) {
         realtimeClient = !delayUI;
