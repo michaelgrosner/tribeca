@@ -53,6 +53,8 @@ namespace K  {
       };
     public:
       void start() {
+        THIS_WAS_A_TRIUMPH
+          << "- roll-out: " << to_string(FN::T()) << '\n';
         hub->run();
       };
       void stop(function<void()> gwCancelAll) {
@@ -117,8 +119,7 @@ namespace K  {
         } else FN::logVer("", -1);
         THIS_WAS_A_TRIUMPH
           << "- upstream: " << ((CF*)config)->argExchange << '\n'
-          << "- currency: " << ((CF*)config)->argCurrency << '\n'
-          << "- roll-out: " << to_string(FN::T())         << '\n';
+          << "- currency: " << ((CF*)config)->argCurrency << '\n';
       };
       static void halt(int last_int_alive) {
         FN::screen_quit();
@@ -131,7 +132,8 @@ namespace K  {
       };
       static void quit(int last_int_alive) {
         THIS_WAS_A_TRIUMPH.str("");
-        THIS_WAS_A_TRIUMPH << "Excellent decision! "
+        THIS_WAS_A_TRIUMPH
+          << "Excellent decision! "
           << FN::wJet("https://api.icndb.com/jokes/random?escape=javascript&limitTo=[nerdy]", true)
              .value("/value/joke"_json_pointer, "let's plant a tree instead..") << '\n';
         halt(EXIT_SUCCESS);
@@ -139,7 +141,8 @@ namespace K  {
       static void  wtf(int last_int_alive) {
         ostringstream rollout(THIS_WAS_A_TRIUMPH.str());
         THIS_WAS_A_TRIUMPH.str("");
-        THIS_WAS_A_TRIUMPH << RCYAN << "Errrror: Signal " << last_int_alive << " "  << strsignal(last_int_alive);
+        THIS_WAS_A_TRIUMPH
+          << RCYAN << "Errrror: Signal " << last_int_alive << " "  << strsignal(last_int_alive);
         if (unsupported()) upgrade();
         else {
           THIS_WAS_A_TRIUMPH
@@ -150,7 +153,9 @@ namespace K  {
           size_t jumps = backtrace(k, 69);
           char **trace = backtrace_symbols(k, jumps);
           size_t i;
-          for (i = 0; i < jumps; i++) THIS_WAS_A_TRIUMPH << trace[i] << '\n';
+          for (i = 0; i < jumps; i++)
+            THIS_WAS_A_TRIUMPH
+              << trace[i] << '\n';
           free(trace);
           report();
         }
