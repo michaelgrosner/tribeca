@@ -41,7 +41,7 @@ namespace K {
         ((UI*)client)->orders60sec++;
       };
       void cancelOrder(string k) {
-        if (orders.find(k) == orders.end() or orders[k].exchangeId == "") return;
+        if (orders.find(k) == orders.end() or orders[k].exchangeId.empty()) return;
         mOrder o = orders[k];
         debug(string("cancel ") + (o.side == mSide::Bid ? "BID id " : "ASK id ") + o.orderId + "::" + o.exchangeId);
         gw->cancel(o.orderId, o.exchangeId, o.side, o.time);
@@ -95,9 +95,9 @@ namespace K {
       mOrder updateOrderState(mOrder k) {
         mOrder o;
         if (k.orderStatus == mStatus::New) o = k;
-        else if (k.orderId != "" and orders.find(k.orderId) != orders.end())
+        else if (!k.orderId.empty() and orders.find(k.orderId) != orders.end())
           o = orders[k.orderId];
-        else if (k.exchangeId != "")
+        else if (!k.exchangeId.empty())
           for (map<string, mOrder>::value_type &it : orders)
             if (it.second.exchangeId == k.exchangeId) {
               o = it.second;

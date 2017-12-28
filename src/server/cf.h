@@ -172,7 +172,7 @@ namespace K {
           cout << '\n';
           exit(EXIT_SUCCESS);
         }
-        if (argExchange == "") {
+        if (argExchange.empty()) {
           cout << "ARG" << RRED << " Errrror:" << BRED << " Missing mandatory argument \"--exchange\", at least." << '\n';
           exit(EXIT_SUCCESS);
         }
@@ -189,7 +189,7 @@ namespace K {
           RBLUE[0]  = RPURPLE[0] = RCYAN[0]  = RWHITE[0]  =
           BBLACK[0] = BRED[0]    = BGREEN[0] = BYELLOW[0] =
           BBLUE[0]  = BPURPLE[0] = BCYAN[0]  = BWHITE[0]  = argColors;
-        if (argDatabase == "") {
+        if (argDatabase.empty()) {
           argDatabase = string("/data/db/K")
             + '.' + FN::S2u(argExchange)
             + '.' + base()
