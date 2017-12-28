@@ -602,31 +602,31 @@ namespace K {
       };
       void gwLink(Gw *k) { gw = k; };
       void qpLink(mQuotingParams *k) { qp = k; };
-      void cfLink(Klass *k) { config = k; };
-      void evLink(Klass *k) { events = k; };
-      void dbLink(Klass *k) { memory = k; };
-      void uiLink(Klass *k) { client = k; };
-      void ogLink(Klass *k) { broker = k; };
-      void mgLink(Klass *k) { market = k; };
-      void pgLink(Klass *k) { wallet = k; };
-      void qeLink(Klass *k) { engine = k; };
+      void cfLink(Klass &k) { config = &k; };
+      void evLink(Klass &k) { events = &k; };
+      void dbLink(Klass &k) { memory = &k; };
+      void uiLink(Klass &k) { client = &k; };
+      void ogLink(Klass &k) { broker = &k; };
+      void mgLink(Klass &k) { market = &k; };
+      void pgLink(Klass &k) { wallet = &k; };
+      void qeLink(Klass &k) { engine = &k; };
   };
   class kLass: public Klass {
     private:
       mQuotingParams p;
     public:
-      void link(Klass *EV, Klass *DB, Klass *UI, Klass *QP, Klass *OG, Klass *MG, Klass *PG, Klass *QE, Klass *GW) {
-        Klass *CF = (Klass*)this;
-        EV->gwLink(gw);                 UI->gwLink(gw);                 OG->gwLink(gw); MG->gwLink(gw); PG->gwLink(gw); QE->gwLink(gw); GW->gwLink(gw);
-        EV->cfLink(CF); DB->cfLink(CF); UI->cfLink(CF);                 OG->cfLink(CF); MG->cfLink(CF); PG->cfLink(CF); QE->cfLink(CF); GW->cfLink(CF);
-                        DB->evLink(EV); UI->evLink(EV); QP->evLink(EV); OG->evLink(EV); MG->evLink(EV); PG->evLink(EV); QE->evLink(EV); GW->evLink(EV);
-                                        UI->dbLink(DB); QP->dbLink(DB); OG->dbLink(DB); MG->dbLink(DB); PG->dbLink(DB);
-                                                        QP->uiLink(UI); OG->uiLink(UI); MG->uiLink(UI); PG->uiLink(UI); QE->uiLink(UI); GW->uiLink(UI);
-                                                        QP->qpLink(&p); OG->qpLink(&p); MG->qpLink(&p); PG->qpLink(&p); QE->qpLink(&p); GW->qpLink(&p);
-                                                                                        MG->ogLink(OG); PG->ogLink(OG); QE->ogLink(OG);
-                                                                                                        PG->mgLink(MG); QE->mgLink(MG);
-                                                                                                                        QE->pgLink(PG);
-                                                                                                                                        GW->qeLink(QE);
+      void link(Klass &EV, Klass &DB, Klass &UI, Klass &QP, Klass &OG, Klass &MG, Klass &PG, Klass &QE, Klass &GW) {
+        Klass &CF = *this;
+        EV.gwLink(gw);                UI.gwLink(gw);                OG.gwLink(gw); MG.gwLink(gw); PG.gwLink(gw); QE.gwLink(gw); GW.gwLink(gw);
+        EV.cfLink(CF); DB.cfLink(CF); UI.cfLink(CF);                OG.cfLink(CF); MG.cfLink(CF); PG.cfLink(CF); QE.cfLink(CF); GW.cfLink(CF);
+                       DB.evLink(EV); UI.evLink(EV); QP.evLink(EV); OG.evLink(EV); MG.evLink(EV); PG.evLink(EV); QE.evLink(EV); GW.evLink(EV);
+                                      UI.dbLink(DB); QP.dbLink(DB); OG.dbLink(DB); MG.dbLink(DB); PG.dbLink(DB);
+                                                     QP.uiLink(UI); OG.uiLink(UI); MG.uiLink(UI); PG.uiLink(UI); QE.uiLink(UI); GW.uiLink(UI);
+                                                     QP.qpLink(&p); OG.qpLink(&p); MG.qpLink(&p); PG.qpLink(&p); QE.qpLink(&p); GW.qpLink(&p);
+                                                                                   MG.ogLink(OG); PG.ogLink(OG); QE.ogLink(OG);
+                                                                                                  PG.mgLink(MG); QE.mgLink(MG);
+                                                                                                                 QE.pgLink(PG);
+                                                                                                                                GW.qeLink(QE);
       };
   };
 }
