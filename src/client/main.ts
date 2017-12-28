@@ -14,7 +14,7 @@ require('highcharts/highcharts-more')(Highcharts);
 
 import * as Models from './models';
 import * as Subscribe from './subscribe';
-import {SharedModule, FireFactory, SubscriberFactory, BaseCurrencyCellComponent, QuoteCurrencyCellComponent} from './shared_directives';
+import {SharedModule, FireFactory, SubscriberFactory, BaseCurrencyCellComponent, QuoteCurrencyCellComponent, QuoteUntruncatedCurrencyCellComponent} from './shared_directives';
 import * as Pair from './pair';
 import {WalletPositionComponent} from './wallet-position';
 import {MarketQuotingComponent} from './market-quoting';
@@ -1013,7 +1013,8 @@ class ClientComponent implements OnInit {
     PopoverModule,
     AgGridModule.withComponents([
       BaseCurrencyCellComponent,
-      QuoteCurrencyCellComponent
+      QuoteCurrencyCellComponent,
+      QuoteUntruncatedCurrencyCellComponent
     ]),
     ChartModule.forRoot(Highcharts)
   ],
@@ -1027,6 +1028,7 @@ class ClientComponent implements OnInit {
     TradeSafetyComponent,
     BaseCurrencyCellComponent,
     QuoteCurrencyCellComponent,
+    QuoteUntruncatedCurrencyCellComponent,
     StatsComponent
   ],
   bootstrap: [ClientComponent]

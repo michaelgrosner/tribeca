@@ -82,6 +82,27 @@ export class QuoteCurrencyCellComponent implements AgRendererComponent {
   }
 }
 
+@Component({
+    selector: 'quote-untruncated-currency-cell',
+    template: `{{ quoteSymbol }}{{ params.value }}`
+})
+export class QuoteUntruncatedCurrencyCellComponent implements AgRendererComponent {
+  private params:any;
+  private quoteSymbol:string = 'USD';
+
+  agInit(params:any):void {
+    this.params = params;
+    if ('quoteSymbol' in params.node.data)
+      this.quoteSymbol = params.node.data.quoteSymbol.substr(0,3).replace('USD','$').replace('EUR','€');
+    if (!params.value)
+      this.quoteSymbol = "";
+  }
+
+  refresh(): boolean {
+      return false;
+  }
+}
+
 @NgModule({
   providers: [
     SubscriberFactory,
