@@ -34,16 +34,16 @@ namespace K {
       };
       void waitData() {
         gw->evDataWallet = [&](mWallet k) {
-          ((EV*)events)->debug(string("PG evDataWallet mWallet ") + ((json)k).dump());
+          ((EV*)events)->debug(string(__PRETTY_FUNCTION__) + ((json)k).dump());
           calcWallet(k);
         };
         ((EV*)events)->ogOrder = [&](mOrder k) {
-          ((EV*)events)->debug(string("PG ogOrder mOrder ") + ((json)k).dump());
+          ((EV*)events)->debug(string(__PRETTY_FUNCTION__) + ((json)k).dump());
           calcWalletAfterOrder(k);
           FN::screen_refresh(((OG*)broker)->orders);
         };
         ((EV*)events)->mgTargetPosition = [&]() {
-          ((EV*)events)->debug("PG mgTargetPosition");
+          ((EV*)events)->debug(__PRETTY_FUNCTION__);
           calcTargetBasePos();
         };
       };

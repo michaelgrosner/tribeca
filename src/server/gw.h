@@ -18,7 +18,7 @@ namespace K {
         ((EV*)events)->tServer->data = this;
         ((EV*)events)->tServer->start([](Timer *handle) {
           GW *k = (GW*)handle->data;
-          ((EV*)k->events)->debug("GW tServer timer");
+          ((EV*)k->events)->debug(__PRETTY_FUNCTION__);
           k->gw->wallet();
           if (k->qp->cancelOrdersAuto)
             if (!k->gwT_5m++) k->gw->cancelAll();

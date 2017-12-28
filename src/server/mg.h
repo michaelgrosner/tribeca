@@ -74,11 +74,11 @@ namespace K {
       };
       void waitData() {
         gw->evDataTrade = [&](mTrade k) {
-          ((EV*)events)->debug("MG evDataTrade");
+          ((EV*)events)->debug(__PRETTY_FUNCTION__);
           tradeUp(k);
         };
         gw->evDataLevels = [&](mLevels k) {
-          ((EV*)events)->debug("MG evDataLevels");
+          ((EV*)events)->debug(__PRETTY_FUNCTION__);
           levelUp(k);
         };
       };

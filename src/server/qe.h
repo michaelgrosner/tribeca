@@ -26,7 +26,7 @@ namespace K {
         ((EV*)events)->tEngine->data = this;
         ((EV*)events)->tEngine->start([](Timer *handle) {
           QE *k = (QE*)handle->data;
-          ((EV*)k->events)->debug("QE tEngine timer");
+          ((EV*)k->events)->debug(__PRETTY_FUNCTION__);
           if (((MG*)k->market)->fairValue) {
             ((MG*)k->market)->calcStats();
             ((PG*)k->wallet)->calcSafety();
@@ -36,7 +36,7 @@ namespace K {
       };
       void waitData() {
         ((EV*)events)->uiQuotingParameters = [&]() {
-          ((EV*)events)->debug("QE uiQuotingParameters");
+          ((EV*)events)->debug(__PRETTY_FUNCTION__);
           ((MG*)market)->calcFairValue();
           ((PG*)wallet)->calcTargetBasePos();
           ((PG*)wallet)->calcSafety();
@@ -44,20 +44,20 @@ namespace K {
           calcQuote();
         };
         ((EV*)events)->ogTrade = [&](mTrade k) {
-          ((EV*)events)->debug("QE ogTrade");
+          ((EV*)events)->debug(__PRETTY_FUNCTION__);
           ((PG*)wallet)->calcSafetyAfterTrade(k);
           calcQuote();
         };
         ((EV*)events)->mgEwmaQuoteProtection = [&]() {
-          ((EV*)events)->debug("QE mgEwmaQuoteProtection");
+          ((EV*)events)->debug(__PRETTY_FUNCTION__);
           calcQuote();
         };
         ((EV*)events)->mgLevels = [&]() {
-          ((EV*)events)->debug("QE mgLevels");
+          ((EV*)events)->debug(__PRETTY_FUNCTION__);
           calcQuote();
         };
         ((EV*)events)->pgTargetBasePosition = [&]() {
-          ((EV*)events)->debug("QE pgTargetBasePosition");
+          ((EV*)events)->debug(__PRETTY_FUNCTION__);
           calcQuote();
         };
       };

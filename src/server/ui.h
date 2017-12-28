@@ -204,7 +204,7 @@ namespace K {
       };
       void (*sendState)(Timer*) = [](Timer *handle) {
         UI *k = (UI*)handle->data;
-        ((EV*)k->events)->debug("UI tClient timer");
+        ((EV*)k->events)->debug(__PRETTY_FUNCTION__);
         if (!k->realtimeClient) {
           k->broadcastQueue();
           if (k->uiT_1m+6e+4 > FN::T()) return;

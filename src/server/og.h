@@ -14,7 +14,7 @@ namespace K {
       };
       void waitData() {
         gw->evDataOrder = [&](mOrder k) {
-          ((EV*)events)->debug("OG evDataOrder");
+          ((EV*)events)->debug(__PRETTY_FUNCTION__);
           debug(string("reply  ") + k.orderId + "::" + k.exchangeId + " [" + to_string((int)k.orderStatus) + "]: " + k.quantity2str() + "/" + k.tradeQuantity2str() + " at price " + k.price2str());
           updateOrderState(k);
         };
