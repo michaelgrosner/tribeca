@@ -14,14 +14,6 @@ namespace K {
     public:
       static string S2l(string k) { transform(k.begin(), k.end(), k.begin(), ::tolower); return k; };
       static string S2u(string k) { transform(k.begin(), k.end(), k.begin(), ::toupper); return k; };
-      static double roundNearest(double price, double minTick) { return round(price / minTick) * minTick; };
-      static double roundUp(double price, double minTick) { return ceil(price / minTick) * minTick; };
-      static double roundDown(double price, double minTick) { return floor(price / minTick) * minTick; };
-      static double roundSide(double price, double minTick, mSide side) {
-        if (side == mSide::Bid) return roundDown(price, minTick);
-        else if (side == mSide::Ask) return roundUp(price, minTick);
-        else return roundNearest(price, minTick);
-      };
       static unsigned long T() { return chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now().time_since_epoch()).count(); };
       static string uiT() {
         chrono::time_point<chrono::system_clock> now = chrono::system_clock::now();
@@ -58,13 +50,10 @@ namespace K {
       };
       static string charId() {
         char s[16];
-        for (int i = 0; i < 16; ++i) s[i] = kB64Alphabet[stol(int64Id()) % (sizeof(kB64Alphabet) - 3)];
+        for (unsigned int i = 0; i < 16; ++i) s[i] = alphanum[stol(int64Id()) % (sizeof(alphanum) - 1)];
         return string(s, 16);
       };
       static string uuidId() {
-        static const char alphanum[] = "0123456789"
-                          "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-                          "abcdefghijklmnopqrstuvwxyz";
         string uuid = string(36,' ');
         unsigned long rnd = stol(int64Id());
         unsigned long rnd_ = stol(int64Id());
@@ -73,7 +62,7 @@ namespace K {
         uuid[18] = '-';
         uuid[23] = '-';
         uuid[14] = '4';
-        for(int i=0;i<36;i++)
+        for (unsigned int i=0;i<36;i++)
           if (i != 8 && i != 13 && i != 18 && i != 14 && i != 23) {
             if (rnd <= 0x02) { rnd = 0x2000000 + (rnd_ * 0x1000000) | 0; }
             rnd >>= 4;
@@ -82,55 +71,69 @@ namespace K {
         return S2l(uuid);
       };
       static string oHex(string k) {
-       int len = k.length();
+       unsigned int len = k.length();
         string k_;
-        for(int i=0; i< len; i+=2) {
+        for (unsigned int i=0; i < len; i+=2) {
           string byte = k.substr(i,2);
           char chr = (char)(int)strtol(byte.data(), NULL, 16);
           k_.push_back(chr);
         }
         return k_;
       };
+      static string oB64(string k) {
+        BIO *bio, *b64;
+        BUF_MEM *bufferPtr;
+        b64 = BIO_new(BIO_f_base64());
+        bio = BIO_new(BIO_s_mem());
+        bio = BIO_push(b64, bio);
+        BIO_set_flags(bio, BIO_FLAGS_BASE64_NO_NL);
+        BIO_write(bio, k.data(), k.length());
+        BIO_flush(bio);
+        BIO_get_mem_ptr(bio, &bufferPtr);
+        BIO_set_close(bio, BIO_NOCLOSE);
+        BIO_free_all(bio);
+        return (*bufferPtr).data;
+      };
       static string oMd5(string k) {
         unsigned char digest[MD5_DIGEST_LENGTH];
         MD5((unsigned char*)k.data(), k.length(), (unsigned char*)&digest);
         char k_[16*2+1];
-        for(int i = 0; i < 16; i++) sprintf(&k_[i*2], "%02x", (unsigned int)digest[i]);
+        for (unsigned int i = 0; i < 16; i++) sprintf(&k_[i*2], "%02x", (unsigned int)digest[i]);
         return S2u(k_);
       };
       static string oSha256(string k) {
         unsigned char digest[SHA256_DIGEST_LENGTH];
         SHA256((unsigned char*)k.data(), k.length(), (unsigned char*)&digest);
         char k_[SHA256_DIGEST_LENGTH*2+1];
-        for(int i = 0; i < SHA256_DIGEST_LENGTH; i++) sprintf(&k_[i*2], "%02x", (unsigned int)digest[i]);
+        for (unsigned int i = 0; i < SHA256_DIGEST_LENGTH; i++) sprintf(&k_[i*2], "%02x", (unsigned int)digest[i]);
         return k_;
       };
       static string oSha512(string k) {
         unsigned char digest[SHA512_DIGEST_LENGTH];
         SHA512((unsigned char*)k.data(), k.length(), (unsigned char*)&digest);
         char k_[SHA512_DIGEST_LENGTH*2+1];
-        for(int i = 0; i < SHA512_DIGEST_LENGTH; i++) sprintf(&k_[i*2], "%02x", (unsigned int)digest[i]);
+        for (unsigned int i = 0; i < SHA512_DIGEST_LENGTH; i++) sprintf(&k_[i*2], "%02x", (unsigned int)digest[i]);
         return k_;
       };
       static string oHmac256(string p, string s, bool hex = false) {
         unsigned char* digest;
         digest = HMAC(EVP_sha256(), s.data(), s.length(), (unsigned char*)p.data(), p.length(), NULL, NULL);
         char k_[SHA256_DIGEST_LENGTH*2+1];
-        for(int i = 0; i < SHA256_DIGEST_LENGTH; i++) sprintf(&k_[i*2], "%02x", (unsigned int)digest[i]);
+        for (unsigned int i = 0; i < SHA256_DIGEST_LENGTH; i++) sprintf(&k_[i*2], "%02x", (unsigned int)digest[i]);
         return hex ? oHex(k_) : k_;
       };
       static string oHmac512(string p, string s) {
         unsigned char* digest;
         digest = HMAC(EVP_sha512(), s.data(), s.length(), (unsigned char*)p.data(), p.length(), NULL, NULL);
         char k_[SHA512_DIGEST_LENGTH*2+1];
-        for(int i = 0; i < SHA512_DIGEST_LENGTH; i++) sprintf(&k_[i*2], "%02x", (unsigned int)digest[i]);
+        for (unsigned int i = 0; i < SHA512_DIGEST_LENGTH; i++) sprintf(&k_[i*2], "%02x", (unsigned int)digest[i]);
         return k_;
       };
       static string oHmac384(string p, string s) {
         unsigned char* digest;
         digest = HMAC(EVP_sha384(), s.data(), s.length(), (unsigned char*)p.data(), p.length(), NULL, NULL);
         char k_[SHA384_DIGEST_LENGTH*2+1];
-        for(int i = 0; i < SHA384_DIGEST_LENGTH; i++) sprintf(&k_[i*2], "%02x", (unsigned int)digest[i]);
+        for (unsigned int i = 0; i < SHA384_DIGEST_LENGTH; i++) sprintf(&k_[i*2], "%02x", (unsigned int)digest[i]);
         return k_;
       };
       static void stunnel() {
@@ -155,7 +158,7 @@ namespace K {
           if(!f and r != CURLE_OK) FN::logWar("CURL", string("wGet failed ") + curl_easy_strerror(r));
           curl_easy_cleanup(curl);
         }
-        if (!k_.length() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
+        if (k_.empty() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
         return k_;
       };
       static json wJet(string k, string p) {
@@ -178,7 +181,7 @@ namespace K {
           if(r != CURLE_OK) FN::logWar("CURL", string("wPost failed ") + curl_easy_strerror(r));
           curl_easy_cleanup(curl);
         }
-        if (!k_.length() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
+        if (k_.empty() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
         return k_;
       };
       static json wJet(string k, string t, bool auth) {
@@ -200,7 +203,7 @@ namespace K {
           if(r != CURLE_OK) FN::logWar("CURL", string("wPost failed ") + curl_easy_strerror(r));
           curl_easy_cleanup(curl);
         }
-        if (!k_.length() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
+        if (k_.empty() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
         return k_;
       };
       static json wJet(string k, bool p, string a, string s, string n) {
@@ -224,7 +227,7 @@ namespace K {
           if(r != CURLE_OK) FN::logWar("CURL", string("wPost failed ") + curl_easy_strerror(r));
           curl_easy_cleanup(curl);
         }
-        if (!k_.length() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
+        if (k_.empty() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
         return k_;
       };
       static json wJet(string k, bool a, string p) {
@@ -245,7 +248,7 @@ namespace K {
           if(r != CURLE_OK) FN::logWar("CURL", string("wGet failed ") + curl_easy_strerror(r));
           curl_easy_cleanup(curl);
         }
-        if (!k_.length() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
+        if (k_.empty() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
         return k_;
       };
       static json wJet(string k, string p, string s, bool post) {
@@ -268,7 +271,7 @@ namespace K {
           if(r != CURLE_OK) FN::logWar("CURL", string("wPost failed ") + curl_easy_strerror(r));
           curl_easy_cleanup(curl);
         }
-        if (!k_.length() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
+        if (k_.empty() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
         return k_;
       };
       static json wJet(string k, string p, string a, string s) {
@@ -293,7 +296,7 @@ namespace K {
           if(r != CURLE_OK) FN::logWar("CURL", string("wPost failed ") + curl_easy_strerror(r));
           curl_easy_cleanup(curl);
         }
-        if (!k_.length() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
+        if (k_.empty() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
         return k_;
       };
       static json wJet(string k, string p, string a, string s, bool post) {
@@ -318,7 +321,7 @@ namespace K {
           if(r != CURLE_OK) FN::logWar("CURL", string("wPost failed ") + curl_easy_strerror(r));
           curl_easy_cleanup(curl);
         }
-        if (!k_.length() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
+        if (k_.empty() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
         return k_;
       };
       static json wJet(string k, string p, string a, string s, bool post, bool auth) {
@@ -342,7 +345,7 @@ namespace K {
           if(r != CURLE_OK) FN::logWar("CURL", string("wPost failed ") + curl_easy_strerror(r));
           curl_easy_cleanup(curl);
         }
-        if (!k_.length() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
+        if (k_.empty() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
         return k_;
       };
       static json wJet(string k, string t, string a, string s, string p) {
@@ -367,7 +370,7 @@ namespace K {
           if(r != CURLE_OK) FN::logWar("CURL", string("wGet failed ") + curl_easy_strerror(r));
           curl_easy_cleanup(curl);
         }
-        if (!k_.length() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
+        if (k_.empty() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
         return k_;
       };
       static json wJet(string k, string t, string a, string s, string p, bool d) {
@@ -393,22 +396,12 @@ namespace K {
           if(r != CURLE_OK) FN::logWar("CURL", string("wGet failed ") + curl_easy_strerror(r));
           curl_easy_cleanup(curl);
         }
-        if (!k_.length() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
+        if (k_.empty() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
         return k_;
       };
       static size_t wcb(void *buf, size_t size, size_t nmemb, void *up) {
         ((string*)up)->append((char*)buf, size * nmemb);
         return size * nmemb;
-      };
-      static string toP(double num, int n) {
-        if(num == 0) return "0";
-        double d = ceil(log10(num < 0 ? -num : num));
-        int power = n - (int)d;
-        double magnitude = pow(10., power);
-        long shifted = ::round(num*magnitude);
-        ostringstream oss;
-        oss << shifted / magnitude;
-        return oss.str();
       };
       static int procSelfStatus(char* line){
         int i = strlen(line);
@@ -455,11 +448,6 @@ namespace K {
       };
       static void logWar(string k, string s) {
         logErr(k, s, " Warrrrning: ");
-      };
-      static void logExit(string k, string s, int code) {
-        FN::screen_quit();
-        logErr(k, s);
-        exit(code);
       };
       static void logErr(string k, string s, string m = " Errrror: ") {
         if (!wBorder) {
@@ -686,15 +674,15 @@ namespace K {
         static string prtcl = "?", exchange = "?", currency = "?";
         static map<string, mOrder> orders = map<string, mOrder>();
         if (argPort) port = argPort;
-        if (protocol.length()) prtcl = protocol;
-        if (argExchange.length()) exchange = argExchange;
-        if (argCurrency.length()) currency = argCurrency;
-        multimap<double, mOrder> openOrders;
+        if (!protocol.empty()) prtcl = protocol;
+        if (!argExchange.empty()) exchange = argExchange;
+        if (!argCurrency.empty()) currency = argCurrency;
+        multimap<double, mOrder, greater<double>> openOrders;
         if (hasOrders) {
           orders = Orders;
-          for (map<string, mOrder>::iterator it = orders.begin(); it != orders.end(); ++it) {
-            if (mStatus::Working != it->second.orderStatus) continue;
-            openOrders.insert(pair<double, mOrder>(it->second.price, it->second));
+          for (map<string, mOrder>::value_type &it : orders) {
+            if (mStatus::Working != it.second.orderStatus) continue;
+            openOrders.insert(pair<double, mOrder>(it.second.price, it.second));
           }
         }
         int l = p,
@@ -712,12 +700,12 @@ namespace K {
         }
         mvwvline(wBorder, 1, 1, ' ', y-1);
         mvwvline(wBorder, k-1, 1, ' ', y-1);
-        for (map<double, mOrder>::reverse_iterator it = openOrders.rbegin(); it != openOrders.rend(); ++it) {
-          wattron(wBorder, COLOR_PAIR(it->second.side == mSide::Bid ? COLOR_CYAN : COLOR_MAGENTA));
+        for (map<double, mOrder, greater<double>>::value_type &it : openOrders) {
+          wattron(wBorder, COLOR_PAIR(it.second.side == mSide::Bid ? COLOR_CYAN : COLOR_MAGENTA));
           stringstream ss;
-          ss << setprecision(8) << fixed << (it->second.side == mSide::Bid ? "BID" : "ASK") << " > " << it->second.orderId << ": " << it->second.quantity << " " << it->second.pair.base << " at price " << it->second.price << " " << it->second.pair.quote;
+          ss << setprecision(8) << fixed << (it.second.side == mSide::Bid ? "BID" : "ASK") << " > " << it.second.orderId << ": " << it.second.quantity << " " << it.second.pair.base << " at price " << it.second.price << " " << it.second.pair.quote;
           mvwaddstr(wBorder, ++P, 1, ss.str().data());
-          wattroff(wBorder, COLOR_PAIR(it->second.side == mSide::Bid ? COLOR_CYAN : COLOR_MAGENTA));
+          wattroff(wBorder, COLOR_PAIR(it.second.side == mSide::Bid ? COLOR_CYAN : COLOR_MAGENTA));
         }
         mvwaddch(wBorder, 0, 0, ACS_ULCORNER);
         mvwhline(wBorder, 0, 1, ACS_HLINE, max(80, x));
@@ -771,150 +759,6 @@ namespace K {
         redrawwin(wLog);
         wrefresh(wLog);
       };
-  };
-  class B64 {
-   public:
-    static bool Encode(const std::string &in, std::string *out) {
-      int i = 0, j = 0;
-      size_t enc_len = 0;
-      unsigned char a3[3];
-      unsigned char a4[4];
-      out->resize(EncodedLength(in));
-      int input_len = in.size();
-      std::string::const_iterator input = in.begin();
-      while (input_len--) {
-        a3[i++] = *(input++);
-        if (i == 3) {
-          a3_to_a4(a4, a3);
-          for (i = 0; i < 4; i++) (*out)[enc_len++] = kB64Alphabet[a4[i]];
-          i = 0;
-        }
-      }
-      if (i) {
-        for (j = i; j < 3; j++) a3[j] = '\0';
-        a3_to_a4(a4, a3);
-        for (j = 0; j < i + 1; j++) (*out)[enc_len++] = kB64Alphabet[a4[j]];
-        while ((i++ < 3)) (*out)[enc_len++] = '=';
-      }
-      return (enc_len == out->size());
-    }
-    static bool Encode(const char *input, size_t input_length, char *out, size_t out_length) {
-      int i = 0, j = 0;
-      char *out_begin = out;
-      unsigned char a3[3];
-      unsigned char a4[4];
-      size_t encoded_length = EncodedLength(input_length);
-      if (out_length < encoded_length) return false;
-      while (input_length--) {
-        a3[i++] = *input++;
-        if (i == 3) {
-          a3_to_a4(a4, a3);
-          for (i = 0; i < 4; i++) *out++ = kB64Alphabet[a4[i]];
-          i = 0;
-        }
-      }
-      if (i) {
-        for (j = i; j < 3; j++) a3[j] = '\0';
-        a3_to_a4(a4, a3);
-        for (j = 0; j < i + 1; j++) *out++ = kB64Alphabet[a4[j]];
-        while ((i++ < 3)) *out++ = '=';
-      }
-      return (out == (out_begin + encoded_length));
-    }
-    static bool Decode(const std::string &in, std::string *out) {
-      int i = 0, j = 0;
-      size_t dec_len = 0;
-      unsigned char a3[3];
-      unsigned char a4[4];
-      int input_len = in.size();
-      std::string::const_iterator input = in.begin();
-      out->resize(DecodedLength(in));
-      while (input_len--) {
-        if (*input == '=') break;
-        a4[i++] = *(input++);
-        if (i == 4) {
-          for (i = 0; i <4; i++) a4[i] = b64_lookup(a4[i]);
-          a4_to_a3(a3,a4);
-          for (i = 0; i < 3; i++) (*out)[dec_len++] = a3[i];
-          i = 0;
-        }
-      }
-      if (i) {
-        for (j = i; j < 4; j++) a4[j] = '\0';
-        for (j = 0; j < 4; j++) a4[j] = b64_lookup(a4[j]);
-        a4_to_a3(a3,a4);
-        for (j = 0; j < i - 1; j++) (*out)[dec_len++] = a3[j];
-      }
-      return (dec_len == out->size());
-    }
-
-    static bool Decode(const char *input, size_t input_length, char *out, size_t out_length) {
-      int i = 0, j = 0;
-      char *out_begin = out;
-      unsigned char a3[3];
-      unsigned char a4[4];
-      size_t decoded_length = DecodedLength(input, input_length);
-      if (out_length < decoded_length) return false;
-      while (input_length--) {
-        if (*input == '=') break;
-        a4[i++] = *(input++);
-        if (i == 4) {
-          for (i = 0; i <4; i++) a4[i] = b64_lookup(a4[i]);
-          a4_to_a3(a3,a4);
-          for (i = 0; i < 3; i++) *out++ = a3[i];
-          i = 0;
-        }
-      }
-      if (i) {
-        for (j = i; j < 4; j++) a4[j] = '\0';
-        for (j = 0; j < 4; j++) a4[j] = b64_lookup(a4[j]);
-        a4_to_a3(a3,a4);
-        for (j = 0; j < i - 1; j++) *out++ = a3[j];
-      }
-      return (out == (out_begin + decoded_length));
-    }
-    static int DecodedLength(const char *in, size_t in_length) {
-      int numEq = 0;
-      const char *in_end = in + in_length;
-      while (*--in_end == '=') ++numEq;
-      return ((6 * in_length) / 8) - numEq;
-    }
-    static int DecodedLength(const std::string &in) {
-      int numEq = 0;
-      int n = in.size();
-      for (std::string::const_reverse_iterator it = in.rbegin(); *it == '='; ++it)
-        ++numEq;
-      return ((6 * n) / 8) - numEq;
-    }
-    inline static int EncodedLength(size_t length) {
-      return (length + 2 - ((length + 2) % 3)) / 3 * 4;
-    }
-    inline static int EncodedLength(const std::string &in) {
-      return EncodedLength(in.length());
-    }
-    inline static void StripPadding(std::string *in) {
-      while (!in->empty() && *(in->rbegin()) == '=') in->resize(in->size() - 1);
-    }
-   private:
-    static inline void a3_to_a4(unsigned char * a4, unsigned char * a3) {
-      a4[0] = (a3[0] & 0xfc) >> 2;
-      a4[1] = ((a3[0] & 0x03) << 4) + ((a3[1] & 0xf0) >> 4);
-      a4[2] = ((a3[1] & 0x0f) << 2) + ((a3[2] & 0xc0) >> 6);
-      a4[3] = (a3[2] & 0x3f);
-    }
-    static inline void a4_to_a3(unsigned char * a3, unsigned char * a4) {
-      a3[0] = (a4[0] << 2) + ((a4[1] & 0x30) >> 4);
-      a3[1] = ((a4[1] & 0xf) << 4) + ((a4[2] & 0x3c) >> 2);
-      a3[2] = ((a4[2] & 0x3) << 6) + a4[3];
-    }
-    static inline unsigned char b64_lookup(unsigned char c) {
-      if(c >='A' && c <='Z') return c - 'A';
-      if(c >='a' && c <='z') return c - 71;
-      if(c >='0' && c <='9') return c + 4;
-      if(c == '+') return 62;
-      if(c == '/') return 63;
-      return 255;
-    }
   };
 }
 

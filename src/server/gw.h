@@ -4,7 +4,7 @@
 namespace K {
   class GW: public Klass {
     private:
-      mConnectivity gwAdminEnabled = mConnectivity::Disconnected,
+      mConnectivity gwAdminEnabled  = mConnectivity::Disconnected,
                     gwConnectOrders = mConnectivity::Disconnected,
                     gwConnectMarket = mConnectivity::Disconnected;
       unsigned int gwT_5m = 0;
@@ -18,7 +18,7 @@ namespace K {
         ((EV*)events)->tServer->data = this;
         ((EV*)events)->tServer->start([](Timer *handle) {
           GW *k = (GW*)handle->data;
-          ((EV*)k->events)->debug("GW tServer timer");
+          ((EV*)k->events)->debug(__PRETTY_FUNCTION__);
           k->gw->wallet();
           if (k->qp->cancelOrdersAuto)
             if (!k->gwT_5m++) k->gw->cancelAll();
@@ -36,18 +36,22 @@ namespace K {
         gw->levels();
       };
       void waitUser() {
-        ((UI*)client)->welcome(uiTXT::Connectivity, &hello);
-        ((UI*)client)->clickme(uiTXT::Connectivity, &kiss);
+        ((UI*)client)->welcome(mMatter::Connectivity, &hello);
+        ((UI*)client)->clickme(mMatter::Connectivity, &kiss);
       };
       void run() {
         ((EV*)events)->start();
       };
     private:
       function<void()> happyEnding = [&]() {
-        ((EV*)events)->stop([&](){
-          FN::log(string("GW ") + gw->name, "Attempting to cancel all open orders, please wait.");
-          gw->cancelAll();
-          FN::log(string("GW ") + gw->name, "cancell all open orders OK");
+        ((EV*)events)->stop([&]() {
+          if (((CF*)config)->argDustybot)
+            FN::log(string("GW ") + gw->name, "--dustybot is enabled, remember to cancel manually any open order.");
+          else {
+            FN::log(string("GW ") + gw->name, "Attempting to cancel all open orders, please wait.");
+            gw->cancelAll();
+            FN::log(string("GW ") + gw->name, "cancell all open orders OK");
+          }
         });
       };
       function<void(json*)> hello = [&](json *welcome) {
@@ -75,7 +79,7 @@ namespace K {
           ((QE*)engine)->gwConnectButton = updated;
           FN::log(string("GW ") + gw->name, "Quoting state changed to", string(!((QE*)engine)->gwConnectButton?"DIS":"") + "CONNECTED");
         }
-        ((UI*)client)->send(uiTXT::Connectivity, serverState());
+        ((UI*)client)->send(mMatter::Connectivity, serverState());
       };
       json serverState() {
         return {
@@ -167,18 +171,18 @@ namespace K {
           gw->minTick = 0.01;
           gw->minSize = 0.01;
         }
-        if (gw->minTick and gw->minSize) {
-          FN::log(string("GW ") + gw->name, "allows client IP");
-          stringstream ss;
-          ss << setprecision(8) << fixed << '\n'
-            << "- autoBot: " << (!gwAdminEnabled ? "no" : "yes") << '\n'
-            << "- symbols: " << gw->symbol << '\n'
-            << "- minTick: " << gw->minTick << '\n'
-            << "- minSize: " << gw->minSize << '\n'
-            << "- makeFee: " << gw->makeFee << '\n'
-            << "- takeFee: " << gw->takeFee;
-          FN::log(string("GW ") + gw->name + ":", ss.str());
-        } else FN::logExit("CF", "Unable to fetch data from " + gw->name + " symbol \"" + gw->symbol + "\", possible error message: " + reply.dump(), EXIT_FAILURE);
+        if (!gw->minTick or !gw->minSize)
+          exit(((EV*)events)->error("CF", "Unable to fetch data from " + gw->name + " for symbol \"" + gw->symbol + "\", possible error message: " + reply.dump(), true));
+        FN::log(string("GW ") + gw->name, "allows client IP");
+        stringstream ss;
+        ss << setprecision(gw->minTick < 1e-8 ? 10 : 8) << fixed << '\n'
+          << "- autoBot: " << (!gwAdminEnabled ? "no" : "yes") << '\n'
+          << "- symbols: " << gw->symbol << '\n'
+          << "- minTick: " << gw->minTick << '\n'
+          << "- minSize: " << gw->minSize << '\n'
+          << "- makeFee: " << gw->makeFee << '\n'
+          << "- takeFee: " << gw->takeFee;
+        FN::log(string("GW ") + gw->name + ":", ss.str());
       };
   };
 }

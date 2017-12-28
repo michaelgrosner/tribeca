@@ -8,11 +8,15 @@ namespace K {
     protected:
       void load() {
         if (sqlite3_open(((CF*)config)->argDatabase.data(), &db))
-          FN::logExit("DB", sqlite3_errmsg(db), EXIT_SUCCESS);
+          exit(((EV*)events)->error("DB", sqlite3_errmsg(db)));
         FN::logDB(((CF*)config)->argDatabase);
       };
+      void run() {
+        if (((CF*)config)->argDatabase != ":memory:") return;
+        size = [&]() { return 0; };
+      };
     public:
-      json load(uiTXT k) {
+      json load(mMatter k) {
         char* zErrMsg = 0;
         sqlite3_exec(db, (
           string("CREATE TABLE ") + (char)k + "("
@@ -22,13 +26,13 @@ namespace K {
         ).data(), NULL, NULL, &zErrMsg);
         json j = json::array();
         sqlite3_exec(db, (
-          string("SELECT json FROM ") + (char)k + " ORDER BY time DESC;"
+          string("SELECT json FROM ") + (char)k + " ORDER BY time ASC;"
         ).data(), cb, (void*)&j, &zErrMsg);
         if (zErrMsg) FN::logWar("DB", string("Sqlite error: ") + zErrMsg);
         sqlite3_free(zErrMsg);
         return j;
       };
-      void insert(uiTXT k, json o, bool rm = true, string id = "NULL", long expire = 0) {
+      void insert(mMatter k, json o, bool rm = true, string id = "NULL", unsigned long expire = 0) {
         ((EV*)events)->deferred([this, k, o, rm, id, expire]() {
           char* zErrMsg = 0;
           sqlite3_exec(db, (
@@ -42,14 +46,13 @@ namespace K {
           sqlite3_free(zErrMsg);
         });
       };
-      int size() {
-        if (((CF*)config)->argDatabase == ":memory:") return 0;
+      function<unsigned int()> size = [&]() {
         struct stat st;
-        return stat(((CF*)config)->argDatabase.data(), &st) != 0 ? 0 : st.st_size;
+        return stat(((CF*)config)->argDatabase.data(), &st) ? 0 : st.st_size;
       };
     private:
       static int cb(void *param, int argc, char **argv, char **azColName) {
-        for (int i = 0; i < argc; i++)
+        for (int i = 0; i < argc; ++i)
           ((json*)param)->push_back(json::parse(argv[i]));
         return 0;
       };

@@ -19,8 +19,8 @@ namespace K {
   enum class mAPR: unsigned int { Off, Size, SizeWidth };
   enum class mSOP: unsigned int { Off, Trades, Size, TradesSize };
   enum class mSTDEV: unsigned int { Off, OnFV, OnFVAPROff, OnTops, OnTopsAPROff, OnTop, OnTopAPROff };
-  enum class uiBIT: unsigned char { Hello = '=', Kiss = '-' };
-  enum class uiTXT: unsigned char {
+  enum class mPortal: unsigned char { Hello = '=', Kiss = '-' };
+  enum class mMatter: unsigned char {
     FairValue            = 'a', Quote                = 'b', ActiveSubscription = 'c', Connectivity       = 'd', MarketData       = 'e',
     QuotingParameters    = 'f', SafetySettings       = 'g', Product            = 'h', OrderStatusReports = 'i',
     ProductAdvertisement = 'j', ApplicationState     = 'k', Notepad            = 'l', ToggleSettings     = 'm',
@@ -147,64 +147,61 @@ namespace K {
     };
   };
   static void from_json(const json& j, mQuotingParams& k) {
-    json o = j;
-    for (json::iterator it = o.begin(); it != o.end();)
-      if (it.value().is_null()) it = o.erase(it); else ++it;
     mQuotingParams def;
-    k.widthPing                       = fmax(1e-8,            o.value("widthPing", def.widthPing));
-    k.widthPingPercentage             = fmin(1e+2, fmax(1e-1, o.value("widthPingPercentage", def.widthPingPercentage)));
-    k.widthPong                       = fmax(1e-8,            o.value("widthPong", def.widthPong));
-    k.widthPongPercentage             = fmin(1e+2, fmax(1e-1, o.value("widthPongPercentage", def.widthPongPercentage)));
-    k.widthPercentage                 =                       o.value("widthPercentage", def.widthPercentage);
-    k.bestWidth                       =                       o.value("bestWidth", def.bestWidth);
-    k.buySize                         = fmax(1e-8,            o.value("buySize", def.buySize));
-    k.buySizePercentage               = fmin(1e+2, fmax(1,    o.value("buySizePercentage", def.buySizePercentage)));
-    k.buySizeMax                      =                       o.value("buySizeMax", def.buySizeMax);
-    k.sellSize                        = fmax(1e-8,            o.value("sellSize", def.sellSize));
-    k.sellSizePercentage              = fmin(1e+2, fmax(1,    o.value("sellSizePercentage", def.sellSizePercentage)));
-    k.sellSizeMax                     =                       o.value("sellSizeMax", def.sellSizeMax);
-    k.pingAt                          =                       o.value("pingAt", def.pingAt);
-    k.pongAt                          =                       o.value("pongAt", def.pongAt);
-    k.mode                            =                       o.value("mode", def.mode);
-    k.safety                          =                       o.value("safety", def.safety);
-    k.bullets                         = fmin(10, fmax(1,      o.value("bullets", def.bullets)));
-    k.range                           =                       o.value("range", def.range);
-    k.rangePercentage                 = fmin(1e+2, fmax(1e-1, o.value("rangePercentage", def.rangePercentage)));
-    k.fvModel                         =                       o.value("fvModel", def.fvModel);
-    k.targetBasePosition              =                       o.value("targetBasePosition", def.targetBasePosition);
-    k.targetBasePositionPercentage    = fmin(1e+2, fmax(0,    o.value("targetBasePositionPercentage", def.targetBasePositionPercentage)));
-    k.positionDivergenceMin           =                       o.value("positionDivergenceMin", def.positionDivergenceMin);
-    k.positionDivergenceMode          =                       o.value("positionDivergenceMode", def.positionDivergenceMode);
-    k.positionDivergence              =                       o.value("positionDivergence", def.positionDivergence);
-    k.positionDivergencePercentage    = fmin(1e+2, fmax(0,    o.value("positionDivergencePercentage", def.positionDivergencePercentage)));
-    k.positionDivergencePercentageMin = fmin(1e+2, fmax(0,    o.value("positionDivergencePercentageMin", def.positionDivergencePercentageMin)));
-    k.percentageValues                =                       o.value("percentageValues", def.percentageValues);
-    k.autoPositionMode                =                       o.value("autoPositionMode", def.autoPositionMode);
-    k.aggressivePositionRebalancing   =                       o.value("aggressivePositionRebalancing", def.aggressivePositionRebalancing);
-    k.superTrades                     =                       o.value("superTrades", def.superTrades);
-    k.tradesPerMinute                 =                       o.value("tradesPerMinute", def.tradesPerMinute);
-    k.tradeRateSeconds                = fmax(0,               o.value("tradeRateSeconds", def.tradeRateSeconds));
-    k.protectionEwmaWidthPing         =                       o.value("protectionEwmaWidthPing", def.protectionEwmaWidthPing);
-    k.protectionEwmaQuotePrice        =                       o.value("protectionEwmaQuotePrice", def.protectionEwmaQuotePrice);
-    k.protectionEwmaPeriods           = fmax(1,               o.value("protectionEwmaPeriods", def.protectionEwmaPeriods));
-    k.quotingStdevProtection          =                       o.value("quotingStdevProtection", def.quotingStdevProtection);
-    k.quotingStdevBollingerBands      =                       o.value("quotingStdevBollingerBands", def.quotingStdevBollingerBands);
-    k.quotingStdevProtectionFactor    =                       o.value("quotingStdevProtectionFactor", def.quotingStdevProtectionFactor);
-    k.quotingStdevProtectionPeriods   = fmax(1,               o.value("quotingStdevProtectionPeriods", def.quotingStdevProtectionPeriods));
-    k.ewmaSensiblityPercentage        =                       o.value("ewmaSensiblityPercentage", def.ewmaSensiblityPercentage);
-    k.veryLongEwmaPeriods             = fmax(1,               o.value("veryLongEwmaPeriods", def.veryLongEwmaPeriods));
-    k.longEwmaPeriods                 = fmax(1,               o.value("longEwmaPeriods", def.longEwmaPeriods));
-    k.mediumEwmaPeriods               = fmax(1,               o.value("mediumEwmaPeriods", def.mediumEwmaPeriods));
-    k.shortEwmaPeriods                = fmax(1,               o.value("shortEwmaPeriods", def.shortEwmaPeriods));
-    k.aprMultiplier                   =                       o.value("aprMultiplier", def.aprMultiplier);
-    k.sopWidthMultiplier              =                       o.value("sopWidthMultiplier", def.sopWidthMultiplier);
-    k.sopSizeMultiplier               =                       o.value("sopSizeMultiplier", def.sopSizeMultiplier);
-    k.sopTradesMultiplier             =                       o.value("sopTradesMultiplier", def.sopTradesMultiplier);
-    k.cancelOrdersAuto                =                       o.value("cancelOrdersAuto", def.cancelOrdersAuto);
-    k.cleanPongsAuto                  =                       o.value("cleanPongsAuto", def.cleanPongsAuto);
-    k.profitHourInterval              =                       o.value("profitHourInterval", def.profitHourInterval);
-    k.audio                           =                       o.value("audio", def.audio);
-    k.delayUI                         = fmax(0,               o.value("delayUI", def.delayUI));
+    k.widthPing                       = fmax(1e-8,            j.value("widthPing", def.widthPing));
+    k.widthPingPercentage             = fmin(1e+2, fmax(1e-1, j.value("widthPingPercentage", def.widthPingPercentage)));
+    k.widthPong                       = fmax(1e-8,            j.value("widthPong", def.widthPong));
+    k.widthPongPercentage             = fmin(1e+2, fmax(1e-1, j.value("widthPongPercentage", def.widthPongPercentage)));
+    k.widthPercentage                 =                       j.value("widthPercentage", def.widthPercentage);
+    k.bestWidth                       =                       j.value("bestWidth", def.bestWidth);
+    k.buySize                         = fmax(1e-8,            j.value("buySize", def.buySize));
+    k.buySizePercentage               = fmin(1e+2, fmax(1,    j.value("buySizePercentage", def.buySizePercentage)));
+    k.buySizeMax                      =                       j.value("buySizeMax", def.buySizeMax);
+    k.sellSize                        = fmax(1e-8,            j.value("sellSize", def.sellSize));
+    k.sellSizePercentage              = fmin(1e+2, fmax(1,    j.value("sellSizePercentage", def.sellSizePercentage)));
+    k.sellSizeMax                     =                       j.value("sellSizeMax", def.sellSizeMax);
+    k.pingAt                          =                       j.value("pingAt", def.pingAt);
+    k.pongAt                          =                       j.value("pongAt", def.pongAt);
+    k.mode                            =                       j.value("mode", def.mode);
+    k.safety                          =                       j.value("safety", def.safety);
+    k.bullets                         = fmin(10, fmax(1,      j.value("bullets", def.bullets)));
+    k.range                           =                       j.value("range", def.range);
+    k.rangePercentage                 = fmin(1e+2, fmax(1e-1, j.value("rangePercentage", def.rangePercentage)));
+    k.fvModel                         =                       j.value("fvModel", def.fvModel);
+    k.targetBasePosition              =                       j.value("targetBasePosition", def.targetBasePosition);
+    k.targetBasePositionPercentage    = fmin(1e+2, fmax(0,    j.value("targetBasePositionPercentage", def.targetBasePositionPercentage)));
+    k.positionDivergenceMin           =                       j.value("positionDivergenceMin", def.positionDivergenceMin);
+    k.positionDivergenceMode          =                       j.value("positionDivergenceMode", def.positionDivergenceMode);
+    k.positionDivergence              =                       j.value("positionDivergence", def.positionDivergence);
+    k.positionDivergencePercentage    = fmin(1e+2, fmax(0,    j.value("positionDivergencePercentage", def.positionDivergencePercentage)));
+    k.positionDivergencePercentageMin = fmin(1e+2, fmax(0,    j.value("positionDivergencePercentageMin", def.positionDivergencePercentageMin)));
+    k.percentageValues                =                       j.value("percentageValues", def.percentageValues);
+    k.autoPositionMode                =                       j.value("autoPositionMode", def.autoPositionMode);
+    k.aggressivePositionRebalancing   =                       j.value("aggressivePositionRebalancing", def.aggressivePositionRebalancing);
+    k.superTrades                     =                       j.value("superTrades", def.superTrades);
+    k.tradesPerMinute                 =                       j.value("tradesPerMinute", def.tradesPerMinute);
+    k.tradeRateSeconds                = fmax(0,               j.value("tradeRateSeconds", def.tradeRateSeconds));
+    k.protectionEwmaWidthPing         =                       j.value("protectionEwmaWidthPing", def.protectionEwmaWidthPing);
+    k.protectionEwmaQuotePrice        =                       j.value("protectionEwmaQuotePrice", def.protectionEwmaQuotePrice);
+    k.protectionEwmaPeriods           = fmax(1,               j.value("protectionEwmaPeriods", def.protectionEwmaPeriods));
+    k.quotingStdevProtection          =                       j.value("quotingStdevProtection", def.quotingStdevProtection);
+    k.quotingStdevBollingerBands      =                       j.value("quotingStdevBollingerBands", def.quotingStdevBollingerBands);
+    k.quotingStdevProtectionFactor    =                       j.value("quotingStdevProtectionFactor", def.quotingStdevProtectionFactor);
+    k.quotingStdevProtectionPeriods   = fmax(1,               j.value("quotingStdevProtectionPeriods", def.quotingStdevProtectionPeriods));
+    k.ewmaSensiblityPercentage        =                       j.value("ewmaSensiblityPercentage", def.ewmaSensiblityPercentage);
+    k.veryLongEwmaPeriods             = fmax(1,               j.value("veryLongEwmaPeriods", def.veryLongEwmaPeriods));
+    k.longEwmaPeriods                 = fmax(1,               j.value("longEwmaPeriods", def.longEwmaPeriods));
+    k.mediumEwmaPeriods               = fmax(1,               j.value("mediumEwmaPeriods", def.mediumEwmaPeriods));
+    k.shortEwmaPeriods                = fmax(1,               j.value("shortEwmaPeriods", def.shortEwmaPeriods));
+    k.aprMultiplier                   =                       j.value("aprMultiplier", def.aprMultiplier);
+    k.sopWidthMultiplier              =                       j.value("sopWidthMultiplier", def.sopWidthMultiplier);
+    k.sopSizeMultiplier               =                       j.value("sopSizeMultiplier", def.sopSizeMultiplier);
+    k.sopTradesMultiplier             =                       j.value("sopTradesMultiplier", def.sopTradesMultiplier);
+    k.cancelOrdersAuto                =                       j.value("cancelOrdersAuto", def.cancelOrdersAuto);
+    k.cleanPongsAuto                  =                       j.value("cleanPongsAuto", def.cleanPongsAuto);
+    k.profitHourInterval              =                       j.value("profitHourInterval", def.profitHourInterval);
+    k.audio                           =                       j.value("audio", def.audio);
+    k.delayUI                         = fmax(0,               j.value("delayUI", def.delayUI));
     if (k.mode == mQuotingMode::Depth) k.widthPercentage = false;
     k._matchPings = k.safety == mQuotingSafety::Boomerang or k.safety == mQuotingSafety::AK47;
   };
@@ -225,11 +222,8 @@ namespace K {
     };
   };
   static void from_json(const json& j, mPair& k) {
-    json o = j;
-    for (json::iterator it = o.begin(); it != o.end();)
-      if (it.value().is_null()) it = o.erase(it); else ++it;
-    k.base  = o.value("base", "");
-    k.quote = o.value("quote", "");
+    k.base  = j.value("base", "");
+    k.quote = j.value("quote", "");
   };
   struct mWallet {
     double amount,
@@ -268,12 +262,9 @@ namespace K {
     };
   };
   static void from_json(const json& j, mProfit& k) {
-    json o = j;
-    for (json::iterator it = o.begin(); it != o.end();)
-      if (it.value().is_null()) it = o.erase(it); else ++it;
-    k.baseValue  = o.value("baseValue", 0.0);
-    k.quoteValue = o.value("quoteValue", 0.0);
-    k.time       = o.value("time", (unsigned long)0);
+    k.baseValue  = j.value("baseValue", 0.0);
+    k.quoteValue = j.value("quoteValue", 0.0);
+    k.time       = j.value("time", (unsigned long)0);
   };
   struct mSafety {
     double buy,
@@ -360,7 +351,14 @@ namespace K {
     {};
   };
   static void to_json(json& j, const mTrade& k) {
-    if (k.tradeId.length()) j = {
+    if (k.tradeId.empty()) j = {
+      {    "time", k.time    },
+      {    "pair", k.pair    },
+      {   "price", k.price   },
+      {"quantity", k.quantity},
+      {    "side", k.side    }
+    };
+    else j = {
       {     "tradeId", k.tradeId     },
       {        "time", k.time        },
       {        "pair", k.pair        },
@@ -376,32 +374,22 @@ namespace K {
       {  "feeCharged", k.feeCharged  },
       {"loadedFromDB", k.loadedFromDB},
     };
-    else j = {
-      {     "time", k.time   },
-      {     "pair", k.pair   },
-      {    "price", k.price  },
-      {"quantity", k.quantity},
-      {    "side", k.side    }
-    };
   };
   static void from_json(const json& j, mTrade& k) {
-    json o = j;
-    for (json::iterator it = o.begin(); it != o.end();)
-      if (it.value().is_null()) it = o.erase(it); else ++it;
-    k.tradeId      = o.value("tradeId", "");
-    k.pair         = o.value("pair", json::object());
-    k.price        = o.value("price", 0.0);
-    k.quantity     = o.value("quantity", 0.0);
-    k.side         = o.value("side", (mSide)0);
-    k.time         = o.value("time", (unsigned long)0);
-    k.value        = o.value("value", 0.0);
-    k.Ktime        = o.value("Ktime", (unsigned long)0);
-    k.Kqty         = o.value("Kqty", 0.0);
-    k.Kprice       = o.value("Kprice", 0.0);
-    k.Kvalue       = o.value("Kvalue", 0.0);
-    k.Kdiff        = o.value("Kdiff", 0.0);
-    k.feeCharged   = o.value("feeCharged", 0.0);
-    k.loadedFromDB = o.value("loadedFromDB", false);
+    k.tradeId      = j.value("tradeId", "");
+    k.pair         = j.value("pair", json::object());
+    k.price        = j.value("price", 0.0);
+    k.quantity     = j.value("quantity", 0.0);
+    k.side         = j.value("side", (mSide)0);
+    k.time         = j.value("time", (unsigned long)0);
+    k.value        = j.value("value", 0.0);
+    k.Ktime        = j.value("Ktime", (unsigned long)0);
+    k.Kqty         = j.value("Kqty", 0.0);
+    k.Kprice       = j.value("Kprice", 0.0);
+    k.Kvalue       = j.value("Kvalue", 0.0);
+    k.Kdiff        = j.value("Kdiff", 0.0);
+    k.feeCharged   = j.value("feeCharged", 0.0);
+    k.loadedFromDB = j.value("loadedFromDB", false);
   };
   struct mOrder {
            string orderId,
@@ -542,15 +530,16 @@ namespace K {
       {"quotesInMemoryDone",    k.quotesInMemoryDone}
     };
   };
-  static const char kB64Alphabet[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-                                     "abcdefghijklmnopqrstuvwxyz"
-                                     "0123456789+/";
+  static const char alphanum[] = "0123456789"
+                                 "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                                 "abcdefghijklmnopqrstuvwxyz";
   static char RBLACK[] = "\033[0;30m", RRED[]    = "\033[0;31m", RGREEN[] = "\033[0;32m", RYELLOW[] = "\033[0;33m",
               RBLUE[]  = "\033[0;34m", RPURPLE[] = "\033[0;35m", RCYAN[]  = "\033[0;36m", RWHITE[]  = "\033[0;37m",
               BBLACK[] = "\033[1;30m", BRED[]    = "\033[1;31m", BGREEN[] = "\033[1;32m", BYELLOW[] = "\033[1;33m",
               BBLUE[]  = "\033[1;34m", BPURPLE[] = "\033[1;35m", BCYAN[]  = "\033[1;36m", BWHITE[]  = "\033[1;37m";
   static WINDOW *wBorder = nullptr,
-                *wLog = nullptr;
+                *wLog    = nullptr;
+  static ostringstream             THIS_WAS_A_TRIUMPH;
   static vector<function<void()>*> gwEndings;
   class Gw {
     public:
@@ -613,31 +602,31 @@ namespace K {
       };
       void gwLink(Gw *k) { gw = k; };
       void qpLink(mQuotingParams *k) { qp = k; };
-      void cfLink(Klass *k) { config = k; };
-      void evLink(Klass *k) { events = k; };
-      void dbLink(Klass *k) { memory = k; };
-      void uiLink(Klass *k) { client = k; };
-      void ogLink(Klass *k) { broker = k; };
-      void mgLink(Klass *k) { market = k; };
-      void pgLink(Klass *k) { wallet = k; };
-      void qeLink(Klass *k) { engine = k; };
+      void cfLink(Klass &k) { config = &k; };
+      void evLink(Klass &k) { events = &k; };
+      void dbLink(Klass &k) { memory = &k; };
+      void uiLink(Klass &k) { client = &k; };
+      void ogLink(Klass &k) { broker = &k; };
+      void mgLink(Klass &k) { market = &k; };
+      void pgLink(Klass &k) { wallet = &k; };
+      void qeLink(Klass &k) { engine = &k; };
   };
   class kLass: public Klass {
     private:
       mQuotingParams p;
     public:
-      void link(Klass *EV, Klass *DB, Klass *UI, Klass *QP, Klass *OG, Klass *MG, Klass *PG, Klass *QE, Klass *GW) {
-        Klass *CF = (Klass*)this;
-        EV->gwLink(gw);                 UI->gwLink(gw);                 OG->gwLink(gw); MG->gwLink(gw); PG->gwLink(gw); QE->gwLink(gw); GW->gwLink(gw);
-        EV->cfLink(CF); DB->cfLink(CF); UI->cfLink(CF);                 OG->cfLink(CF); MG->cfLink(CF); PG->cfLink(CF); QE->cfLink(CF); GW->cfLink(CF);
-                        DB->evLink(EV); UI->evLink(EV); QP->evLink(EV); OG->evLink(EV); MG->evLink(EV); PG->evLink(EV); QE->evLink(EV); GW->evLink(EV);
-                                        UI->dbLink(DB); QP->dbLink(DB); OG->dbLink(DB); MG->dbLink(DB); PG->dbLink(DB);
-                                                        QP->uiLink(UI); OG->uiLink(UI); MG->uiLink(UI); PG->uiLink(UI); QE->uiLink(UI); GW->uiLink(UI);
-                                                        QP->qpLink(&p); OG->qpLink(&p); MG->qpLink(&p); PG->qpLink(&p); QE->qpLink(&p); GW->qpLink(&p);
-                                                                                        MG->ogLink(OG); PG->ogLink(OG); QE->ogLink(OG);
-                                                                                                        PG->mgLink(MG); QE->mgLink(MG);
-                                                                                                                        QE->pgLink(PG);
-                                                                                                                                        GW->qeLink(QE);
+      void link(Klass &EV, Klass &DB, Klass &UI, Klass &QP, Klass &OG, Klass &MG, Klass &PG, Klass &QE, Klass &GW) {
+        Klass &CF = *this;
+        EV.gwLink(gw);                UI.gwLink(gw);                OG.gwLink(gw); MG.gwLink(gw); PG.gwLink(gw); QE.gwLink(gw); GW.gwLink(gw);
+        EV.cfLink(CF); DB.cfLink(CF); UI.cfLink(CF);                OG.cfLink(CF); MG.cfLink(CF); PG.cfLink(CF); QE.cfLink(CF); GW.cfLink(CF);
+                       DB.evLink(EV); UI.evLink(EV); QP.evLink(EV); OG.evLink(EV); MG.evLink(EV); PG.evLink(EV); QE.evLink(EV); GW.evLink(EV);
+                                      UI.dbLink(DB); QP.dbLink(DB); OG.dbLink(DB); MG.dbLink(DB); PG.dbLink(DB);
+                                                     QP.uiLink(UI); OG.uiLink(UI); MG.uiLink(UI); PG.uiLink(UI); QE.uiLink(UI); GW.uiLink(UI);
+                                                     QP.qpLink(&p); OG.qpLink(&p); MG.qpLink(&p); PG.qpLink(&p); QE.qpLink(&p); GW.qpLink(&p);
+                                                                                   MG.ogLink(OG); PG.ogLink(OG); QE.ogLink(OG);
+                                                                                                  PG.mgLink(MG); QE.mgLink(MG);
+                                                                                                                 QE.pgLink(PG);
+                                                                                                                                GW.qeLink(QE);
       };
   };
 }

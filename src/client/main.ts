@@ -14,7 +14,7 @@ require('highcharts/highcharts-more')(Highcharts);
 
 import * as Models from './models';
 import * as Subscribe from './subscribe';
-import {SharedModule, FireFactory, SubscriberFactory, BaseCurrencyCellComponent, QuoteCurrencyCellComponent} from './shared_directives';
+import {SharedModule, FireFactory, SubscriberFactory, BaseCurrencyCellComponent, QuoteCurrencyCellComponent, QuoteUntruncatedCurrencyCellComponent} from './shared_directives';
 import * as Pair from './pair';
 import {WalletPositionComponent} from './wallet-position';
 import {MarketQuotingComponent} from './market-quoting';
@@ -924,14 +924,14 @@ class ClientComponent implements OnInit {
     return (input / Math.pow(1024, index)).toFixed(precision) + unit[index] + 'B'
   }
 
-  private onAppState = (as : Models.ApplicationState) => {
-    this.server_memory = this.bytesToSize(as.memory, 0);
+  private onAppState = (o : Models.ApplicationState) => {
+    this.server_memory = this.bytesToSize(o.memory, 0);
     this.client_memory = this.bytesToSize((<any>window.performance).memory ? (<any>window.performance).memory.usedJSHeapSize : 1, 0);
-    this.db_size = this.bytesToSize(as.dbsize, 0);
-    this.system_theme = this.getTheme(as.hour);
-    this.A = (<any>as).a;
-    this.tradeFreq = (as.freq);
+    this.db_size = this.bytesToSize(o.dbsize, 0);
+    this.tradeFreq = (o.freq);
+    this.system_theme = this.getTheme((new Date).getHours());
     this.setTheme();
+    this.A = (<any>o).a;
   }
 
   private setTheme = () => {
@@ -1013,7 +1013,8 @@ class ClientComponent implements OnInit {
     PopoverModule,
     AgGridModule.withComponents([
       BaseCurrencyCellComponent,
-      QuoteCurrencyCellComponent
+      QuoteCurrencyCellComponent,
+      QuoteUntruncatedCurrencyCellComponent
     ]),
     ChartModule.forRoot(Highcharts)
   ],
@@ -1027,6 +1028,7 @@ class ClientComponent implements OnInit {
     TradeSafetyComponent,
     BaseCurrencyCellComponent,
     QuoteCurrencyCellComponent,
+    QuoteUntruncatedCurrencyCellComponent,
     StatsComponent
   ],
   bootstrap: [ClientComponent]

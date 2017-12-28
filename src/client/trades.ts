@@ -3,7 +3,7 @@ import {GridOptions, ColDef, RowNode} from 'ag-grid/main';
 
 import * as Models from './models';
 import * as Subscribe from './subscribe';
-import {FireFactory, BaseCurrencyCellComponent, QuoteCurrencyCellComponent} from './shared_directives';
+import {FireFactory, BaseCurrencyCellComponent, QuoteCurrencyCellComponent, QuoteUntruncatedCurrencyCellComponent} from './shared_directives';
 
 @Component({
   selector: 'trade-list',
@@ -92,10 +92,10 @@ export class TradesComponent implements OnInit {
       }, cellRendererFramework: BaseCurrencyCellComponent},
       {width: 69, field:'value', headerName:'val', cellClass: (params) => {
         if (params.data.side === 'K') return (params.data.price > params.data.Kprice) ? "sell" : "buy"; else return params.data.side === 'Sell' ? "sell" : "buy";
-      }, cellRendererFramework: QuoteCurrencyCellComponent},
+      }, cellRendererFramework: QuoteUntruncatedCurrencyCellComponent},
       {width: 75, field:'Kvalue', headerName:'valPong', hide:true, cellClass: (params) => {
         if (params.data.side === 'K') return (params.data.price < params.data.Kprice) ? "sell" : "buy"; else return params.data.Kqty ? ((params.data.price < params.data.Kprice) ? "sell" : "buy") : "";
-      }, cellRendererFramework: QuoteCurrencyCellComponent},
+      }, cellRendererFramework: QuoteUntruncatedCurrencyCellComponent},
       {width: 65, suppressSizeToFit: true, field:'Kqty', headerName:'qtyPong', hide:true, cellClass: (params) => {
         if (params.data.side === 'K') return (params.data.price < params.data.Kprice) ? "sell" : "buy"; else return params.data.Kqty ? ((params.data.price < params.data.Kprice) ? "sell" : "buy") : "";
       }, cellRendererFramework: BaseCurrencyCellComponent},
@@ -104,7 +104,7 @@ export class TradesComponent implements OnInit {
       }, cellRendererFramework: QuoteCurrencyCellComponent},
       {width: 65, field:'Kdiff', headerName:'Kdiff', hide:true, cellClass: (params) => {
         if (params.data.side === 'K') return "kira"; else return "";
-      }, cellRendererFramework: QuoteCurrencyCellComponent}
+      }, cellRendererFramework: QuoteUntruncatedCurrencyCellComponent}
     ];
   }
 
