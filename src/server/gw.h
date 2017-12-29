@@ -16,13 +16,8 @@ namespace K {
       };
       void waitTime() {
         ((EV*)events)->tServer->data = this;
-        ((EV*)events)->tServer->start([](Timer *handle) {
-          GW *k = (GW*)handle->data;
-          ((EV*)k->events)->debug(__PRETTY_FUNCTION__);
-          k->gw->wallet();
-          if (k->qp->cancelOrdersAuto)
-            if (!k->gwT_5m++) k->gw->cancelAll();
-            else if (k->gwT_5m == 20) k->gwT_5m = 0;
+        ((EV*)events)->tServer->start([](Timer *tServer) {
+          ((GW*)tServer->data)->timer_15s();
         }, 0, 15e+3);
       };
       void waitData() {
@@ -86,6 +81,12 @@ namespace K {
           {"state", ((QE*)engine)->gwConnectButton},
           {"status", ((QE*)engine)->gwConnectExchange}
         };
+      };
+      void timer_15s() { _debugEvent_
+        gw->wallet();
+        if (qp->cancelOrdersAuto)
+          if (!gwT_5m++) gw->cancelAll();
+          else if (gwT_5m == 20) gwT_5m = 0;
       };
       void handshake(mExchange k) {
         json reply;
@@ -172,7 +173,7 @@ namespace K {
           gw->minSize = 0.01;
         }
         if (!gw->minTick or !gw->minSize)
-          exit(((EV*)events)->error("CF", "Unable to fetch data from " + gw->name + " for symbol \"" + gw->symbol + "\", possible error message: " + reply.dump(), true));
+          exit(_errorEvent_("CF", "Unable to fetch data from " + gw->name + " for symbol \"" + gw->symbol + "\", possible error message: " + reply.dump(), true));
         FN::log(string("GW ") + gw->name, "allows client IP");
         stringstream ss;
         ss << setprecision(gw->minTick < 1e-8 ? 10 : 8) << fixed << '\n'

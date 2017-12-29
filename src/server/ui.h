@@ -12,9 +12,9 @@ namespace K {
       map<char, function<void(json*)>*> hello;
       map<char, function<void(json)>*> kisses;
       map<mMatter, string> queue;
-      unsigned long uiT_1m = 0;
+      unsigned long uiT_60s = 0;
     public:
-      unsigned int orders60sec = 0;
+      unsigned int orders_60s = 0;
     protected:
       void load() {
         if (((CF*)config)->argHeadless
@@ -28,7 +28,7 @@ namespace K {
       void waitTime() {
         if (((CF*)config)->argHeadless) return;
         ((EV*)events)->tClient->data = this;
-        ((EV*)events)->tClient->start(sendState, 0, 0);
+        ((EV*)events)->tClient->start(timer, 0, 0);
       };
       void waitData() {
         if (((CF*)config)->argHeadless) return;
@@ -137,16 +137,16 @@ namespace K {
     public:
       function<void(mMatter, function<void(json*)>*)> welcome = [&](mMatter k, function<void(json*)> *fn) {
         if (hello.find((char)k) == hello.end()) hello[(char)k] = fn;
-        else exit(((EV*)events)->error("UI", string("Use only a single unique message handler for each \"") + (char)k + "\" welcome event"));
+        else exit(_errorEvent_("UI", string("Use only a single unique message handler for each \"") + (char)k + "\" welcome event"));
       };
       function<void(mMatter, function<void(json)>*)> clickme = [&](mMatter k, function<void(json)> *fn) {
         if (kisses.find((char)k) == kisses.end()) kisses[(char)k] = fn;
-        else exit(((EV*)events)->error("UI", string("Use only a single unique message handler for each \"") + (char)k + "\" clickme event"));
+        else exit(_errorEvent_("UI", string("Use only a single unique message handler for each \"") + (char)k + "\" clickme event"));
       };
       function<void(unsigned int)> delayme = [&](unsigned int delayUI) {
         realtimeClient = !delayUI;
         ((EV*)events)->tClient->stop();
-        ((EV*)events)->tClient->start(sendState, 0, realtimeClient ? 6e+4 : delayUI*1e+3);
+        ((EV*)events)->tClient->start(timer, 0, realtimeClient ? 6e+4 : delayUI * 1e+3);
       };
       function<void(mMatter, json)> send = [&](mMatter k, json o) {
         if (connections == 0) return;
@@ -202,21 +202,22 @@ namespace K {
           broadcast(it.first, it.second);
         queue.clear();
       };
-      void (*sendState)(Timer*) = [](Timer *handle) {
-        UI *k = (UI*)handle->data;
-        ((EV*)k->events)->debug(__PRETTY_FUNCTION__);
-        if (!k->realtimeClient) {
-          k->broadcastQueue();
-          if (k->uiT_1m+6e+4 > FN::T()) return;
-          else k->uiT_1m = FN::T();
+      void (*timer)(Timer*) = [](Timer *tClient) {
+        ((UI*)tClient->data)->timer_60s_or_Xs();
+      };
+      void timer_60s_or_Xs() { _debugEvent_
+        if (!realtimeClient) {
+          broadcastQueue();
+          if (uiT_60s + 6e+4 > FN::T()) return;
+          else uiT_60s = FN::T();
         }
-        k->send(mMatter::ApplicationState, k->serverState());
-        k->orders60sec = 0;
+        send(mMatter::ApplicationState, serverState());
+        orders_60s = 0;
       };
       json serverState() {
         return {
           {"memory", FN::memory()},
-          {"freq", orders60sec},
+          {"freq", orders_60s},
           {"dbsize", ((DB*)memory)->size()},
           {"a", gw->A()}
         };

@@ -13,8 +13,7 @@ namespace K {
         FN::log("DB", string("loaded ") + to_string(tradesHistory.size()) + " historical Trades");
       };
       void waitData() {
-        gw->evDataOrder = [&](mOrder k) {
-          ((EV*)events)->debug(__PRETTY_FUNCTION__);
+        gw->evDataOrder = [&](mOrder k) { _debugEvent_
           debug(string("reply  ") + k.orderId + "::" + k.exchangeId + " [" + to_string((int)k.orderStatus) + "]: " + k.quantity2str() + "/" + k.tradeQuantity2str() + " at price " + k.price2str());
           updateOrderState(k);
         };
@@ -38,7 +37,7 @@ namespace K {
         mOrder o = updateOrderState(mOrder(gw->randId(), mPair(gw->base, gw->quote), side, qty, type, isPong, price, tif, mStatus::New, postOnly));
         debug(string(" send  ") + (o.side == mSide::Bid ? "BID id " : "ASK id ") + o.orderId + ": " + o.quantity2str() + " " + o.pair.base + " at price " + o.price2str() + " " + o.pair.quote);
         gw->send(o.orderId, o.side, o.price2str(), o.quantity2str(), o.type, o.timeInForce, o.preferPostOnly, o.time);
-        ((UI*)client)->orders60sec++;
+        ((UI*)client)->orders_60s++;
       };
       void cancelOrder(string k) {
         if (orders.find(k) == orders.end() or orders[k].exchangeId.empty()) return;

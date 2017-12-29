@@ -24,40 +24,29 @@ namespace K {
       };
       void waitTime() {
         ((EV*)events)->tEngine->data = this;
-        ((EV*)events)->tEngine->start([](Timer *handle) {
-          QE *k = (QE*)handle->data;
-          ((EV*)k->events)->debug(__PRETTY_FUNCTION__);
-          if (((MG*)k->market)->fairValue) {
-            ((MG*)k->market)->calcStats();
-            ((PG*)k->wallet)->calcSafety();
-            k->calcQuote();
-          } else FN::logWar("QE", "Unable to calculate quote, missing fair value");
+        ((EV*)events)->tEngine->start([](Timer *tEngine) {
+          ((QE*)tEngine->data)->timer_1s();
         }, 1e+3, 1e+3);
       };
       void waitData() {
-        ((EV*)events)->uiQuotingParameters = [&]() {
-          ((EV*)events)->debug(__PRETTY_FUNCTION__);
+        ((EV*)events)->uiQuotingParameters = [&]() { _debugEvent_
           ((MG*)market)->calcFairValue();
           ((PG*)wallet)->calcTargetBasePos();
           ((PG*)wallet)->calcSafety();
           ((MG*)market)->calcEwmaHistory();
           calcQuote();
         };
-        ((EV*)events)->ogTrade = [&](mTrade k) {
-          ((EV*)events)->debug(__PRETTY_FUNCTION__);
+        ((EV*)events)->ogTrade = [&](mTrade k) { _debugEvent_
           ((PG*)wallet)->calcSafetyAfterTrade(k);
           calcQuote();
         };
-        ((EV*)events)->mgEwmaQuoteProtection = [&]() {
-          ((EV*)events)->debug(__PRETTY_FUNCTION__);
+        ((EV*)events)->mgEwmaQuoteProtection = [&]() { _debugEvent_
           calcQuote();
         };
-        ((EV*)events)->mgLevels = [&]() {
-          ((EV*)events)->debug(__PRETTY_FUNCTION__);
+        ((EV*)events)->mgLevels = [&]() { _debugEvent_
           calcQuote();
         };
-        ((EV*)events)->pgTargetBasePosition = [&]() {
-          ((EV*)events)->debug(__PRETTY_FUNCTION__);
+        ((EV*)events)->pgTargetBasePosition = [&]() { _debugEvent_
           calcQuote();
         };
       };
@@ -72,6 +61,13 @@ namespace K {
     private:
       function<void(json*)> hello = [&](json *welcome) {
         *welcome = { status };
+      };
+      void timer_1s() { _debugEvent_
+        if (((MG*)market)->fairValue) {
+          ((MG*)market)->calcStats();
+          ((PG*)wallet)->calcSafety();
+          calcQuote();
+        } else FN::logWar("QE", "Unable to calculate quote, missing market data");
       };
       void calcQuote() {
         bidStatus = mQuoteState::MissingData;
@@ -366,7 +362,7 @@ namespace K {
       };
       mQuote quote(double widthPing, double buySize, double sellSize) {
         if (quotingMode.find(qp->mode) == quotingMode.end())
-          exit(((EV*)events)->error("QE", "Invalid quoting mode"));
+          exit(_errorEvent_("QE", "Invalid quoting mode"));
         return (*quotingMode[qp->mode])(widthPing, buySize, sellSize);
       };
       mQuote quoteAtTopOfMarket() {

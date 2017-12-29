@@ -33,17 +33,14 @@ namespace K {
         FN::log("DB", string("loaded TBP = ") + ss.str() + " " + gw->base);
       };
       void waitData() {
-        gw->evDataWallet = [&](mWallet k) {
-          ((EV*)events)->debug(string(__PRETTY_FUNCTION__) + ((json)k).dump());
+        gw->evDataWallet = [&](mWallet k) { _debugEvent_
           calcWallet(k);
         };
-        ((EV*)events)->ogOrder = [&](mOrder k) {
-          ((EV*)events)->debug(string(__PRETTY_FUNCTION__) + ((json)k).dump());
+        ((EV*)events)->ogOrder = [&](mOrder k) { _debugEvent_
           calcWalletAfterOrder(k);
           FN::screen_refresh(((OG*)broker)->orders);
         };
-        ((EV*)events)->mgTargetPosition = [&]() {
-          ((EV*)events)->debug(__PRETTY_FUNCTION__);
+        ((EV*)events)->mgTargetPosition = [&]() { _debugEvent_
           calcTargetBasePos();
         };
       };

@@ -1,6 +1,9 @@
 #ifndef K_EV_H_
 #define K_EV_H_
 
+#define _errorEvent_ ((EV*)events)->error
+#define _debugEvent_ ((EV*)events)->debug(__PRETTY_FUNCTION__);
+
 namespace K  {
   class EV: public Klass {
     private:

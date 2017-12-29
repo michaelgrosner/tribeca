@@ -8,7 +8,7 @@ namespace K {
     protected:
       void load() {
         if (sqlite3_open(((CF*)config)->argDatabase.data(), &db))
-          exit(((EV*)events)->error("DB", sqlite3_errmsg(db)));
+          exit(_errorEvent_("DB", sqlite3_errmsg(db)));
         FN::logDB(((CF*)config)->argDatabase);
       };
       void run() {
