@@ -269,6 +269,15 @@ client: src/client
 	@echo DONE
 
 www: src/www $(KLOCAL)/var/www
+	@echo Compiling CSS files...
+	rm src/www/css/*
+	./node_modules/.bin/node-sass --style compressed --output src/www/css/ src/www/sass/ 
+	cd src/www/css/
+	for j in *.css
+	do 
+	mv -v -- $j ${j%.css}.min.css
+	done
+	cd ../../..
 	@echo Building client static files..
 	cp -R src/www/* $(KLOCAL)/var/www/
 	@echo DONE
