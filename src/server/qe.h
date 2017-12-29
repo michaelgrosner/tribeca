@@ -495,7 +495,7 @@ namespace K {
         unsigned long now = FN::T();
         for (map<string, mOrder>::value_type &it : ((OG*)broker)->orders)
           if (it.second.side != side) continue;
-          else if (it.second.price == q.price) return;
+          else if (abs(it.second.price - q.price) < gw->minTick) return;
           else if (it.second.orderStatus == mStatus::New)
             if (now-10e+3>it.second.time) zombie.push_back(it.second.orderId);
             else if (qp->safety != mQuotingSafety::AK47 or ++n >= qp->bullets) return;
