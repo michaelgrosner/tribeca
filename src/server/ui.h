@@ -208,8 +208,8 @@ namespace K {
       void timer_60s_or_Xs() {                                      _debugEvent_
         if (!realtimeClient) {
           broadcastQueue();
-          if (uiT_60s + 6e+4 > FN::T()) return;
-          else uiT_60s = FN::T();
+          if (uiT_60s + 6e+4 > _Tstamp_) return;
+          else uiT_60s = _Tstamp_;
         }
         send(mMatter::ApplicationState, serverState());
         orders_60s = 0;

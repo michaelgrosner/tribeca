@@ -9,12 +9,15 @@
 #define K_STAMP "0"
 #endif
 
+#define _Tstamp_ chrono::duration_cast<chrono::milliseconds>(     \
+                   chrono::system_clock::now().time_since_epoch() \
+                 ).count()
+
 namespace K {
   class FN {
     public:
       static string S2l(string k) { transform(k.begin(), k.end(), k.begin(), ::tolower); return k; };
       static string S2u(string k) { transform(k.begin(), k.end(), k.begin(), ::toupper); return k; };
-      static unsigned long T() { return chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now().time_since_epoch()).count(); };
       static string uiT() {
         chrono::time_point<chrono::system_clock> now = chrono::system_clock::now();
         auto t = now.time_since_epoch();

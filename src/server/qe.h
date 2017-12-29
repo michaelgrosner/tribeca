@@ -488,7 +488,7 @@ namespace K {
         if (((OG*)broker)->orders.empty()) return start(side, q, isPong);
         unsigned int n = 0;
         vector<string> zombie;
-        unsigned long now = FN::T();
+        unsigned long now = _Tstamp_;
         for (map<string, mOrder>::value_type &it : ((OG*)broker)->orders)
           if (it.second.side != side) continue;
           else if (abs(it.second.price - q.price) < gw->minTick) return;

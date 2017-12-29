@@ -75,8 +75,8 @@ namespace K {
         int k = 0;
         while (++k) {
           switch (k = getopt_long(argc, argv, "hvd:l:m:s:p:u:v:c:e:k:P:K:W:H:U:X:S:A:", args, NULL)) {
-            case -1: break;
-            case 0: break;
+            case -1 :
+            case  0 : break;
             case 'P': argPort = stoi(optarg); break;
             case 'A': argApikey = string(optarg); break;
             case 'S': argSecret = string(optarg); break;
@@ -97,8 +97,10 @@ namespace K {
             case 'V': argEwmaVeryLong = stod(optarg); break;
             case 'L': argWhitelist = string(optarg); break;
             case 'h': cout
-              << RGREEN << "This is free software: the quoting engine and UI are open source," << '\n' << "feel free to hack both as you need." << '\n'
-              << RGREEN << "This is non-free software: the exchange integrations are licensed" << '\n' << "by and under the law of my grandma, feel free to crack all." << '\n'
+              << RGREEN << "This is free software: the quoting engine and UI are open source,"
+                        << '\n' << "feel free to hack both as you need." << '\n'
+              << RGREEN << "This is non-free software: the exchange integrations are licensed"
+                        << '\n' << "by and under the law of my grandma, feel free to crack all." << '\n'
               << RGREEN << "  questions: " << RYELLOW << "https://earn.com/analpaper/" << '\n'
               << BGREEN << "K" << RGREEN << " bugkiller: " << RYELLOW << "https://github.com/ctubio/Krypto-trading-bot/issues/new" << '\n'
               << RGREEN << "  downloads: " << RYELLOW << "ssh://git@github.com/ctubio/Krypto-trading-bot" << '\n';
@@ -173,11 +175,13 @@ namespace K {
           exit(EXIT_SUCCESS);
         }
         if (argExchange.empty()) {
-          cout << "ARG" << RRED << " Errrror:" << BRED << " Missing mandatory argument \"--exchange\", at least." << '\n';
+          cout << "ARG" << RRED << " Errrror:" << BRED
+               << " Missing mandatory argument \"--exchange\", at least." << '\n';
           exit(EXIT_SUCCESS);
         }
         if (argCurrency.find("/") == string::npos) {
-          cout << "ARG" << RRED << " Errrror:" << BRED << " Invalid currency pair; must be in the format of BASE/QUOTE, like BTC/EUR." << '\n';
+          cout << "ARG" << RRED << " Errrror:" << BRED
+               << " Invalid currency pair; must be in the format of BASE/QUOTE, like BTC/EUR." << '\n';
           exit(EXIT_SUCCESS);
         }
         if (argDebug)

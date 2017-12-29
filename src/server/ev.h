@@ -57,7 +57,7 @@ namespace K  {
     public:
       void start() {
         THIS_WAS_A_TRIUMPH
-          << "- roll-out: " << to_string(FN::T()) << '\n';
+          << "- roll-out: " << to_string(_Tstamp_) << '\n';
         hub->run();
       };
       void stop(function<void()> gwCancelAll) {
@@ -150,7 +150,7 @@ namespace K  {
         else {
           THIS_WAS_A_TRIUMPH
             << " (Three-Headed Monkey found):" << '\n' << rollout.str()
-            << "- lastbeat: " << to_string(FN::T()) << '\n'
+            << "- lastbeat: " << to_string(_Tstamp_) << '\n'
             << "- tracelog: " << '\n';
           void *k[69];
           size_t jumps = backtrace(k, 69);

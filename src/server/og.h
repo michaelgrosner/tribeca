@@ -109,10 +109,10 @@ namespace K {
         if (k.quantity) o.quantity = k.quantity;
         if (k.time) o.time = k.time;
         if (k.computationalLatency) o.computationalLatency = k.computationalLatency;
-        if (!o.time) o.time = FN::T();
+        if (!o.time) o.time = _Tstamp_;
         if (!o.computationalLatency and o.orderStatus == mStatus::Working)
-          o.computationalLatency = FN::T() - o.time;
-        if (o.computationalLatency) o.time = FN::T();
+          o.computationalLatency = _Tstamp_ - o.time;
+        if (o.computationalLatency) o.time = _Tstamp_;
         toMemory(o);
         if (k.tradeQuantity) o.tradeQuantity = k.tradeQuantity;
         ((EV*)events)->ogOrder(o);
@@ -160,7 +160,7 @@ namespace K {
         if (!o.tradeQuantity) return;
         double fee = 0;
         mTrade trade(
-          to_string(FN::T()),
+          to_string(_Tstamp_),
           o.pair,
           o.price,
           o.tradeQuantity,
