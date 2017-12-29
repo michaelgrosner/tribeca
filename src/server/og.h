@@ -13,7 +13,7 @@ namespace K {
         FN::log("DB", string("loaded ") + to_string(tradesHistory.size()) + " historical Trades");
       };
       void waitData() {
-        gw->evDataOrder = [&](mOrder k) { _debugEvent_
+        gw->evDataOrder = [&](mOrder k) {                           _debugEvent_
           debug(string("reply  ") + k.orderId + "::" + k.exchangeId + " [" + to_string((int)k.orderStatus) + "]: " + k.quantity2str() + "/" + k.tradeQuantity2str() + " at price " + k.price2str());
           updateOrderState(k);
         };

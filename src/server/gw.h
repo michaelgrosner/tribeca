@@ -82,7 +82,7 @@ namespace K {
           {"status", ((QE*)engine)->gwConnectExchange}
         };
       };
-      void timer_15s() { _debugEvent_
+      void timer_15s() {                                            _debugEvent_
         gw->wallet();
         if (qp->cancelOrdersAuto)
           if (!gwT_5m++) gw->cancelAll();

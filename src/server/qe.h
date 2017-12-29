@@ -29,24 +29,24 @@ namespace K {
         }, 1e+3, 1e+3);
       };
       void waitData() {
-        ((EV*)events)->uiQuotingParameters = [&]() { _debugEvent_
+        ((EV*)events)->uiQuotingParameters = [&]() {                _debugEvent_
           ((MG*)market)->calcFairValue();
           ((PG*)wallet)->calcTargetBasePos();
           ((PG*)wallet)->calcSafety();
           ((MG*)market)->calcEwmaHistory();
           calcQuote();
         };
-        ((EV*)events)->ogTrade = [&](mTrade k) { _debugEvent_
+        ((EV*)events)->ogTrade = [&](mTrade k) {                    _debugEvent_
           ((PG*)wallet)->calcSafetyAfterTrade(k);
           calcQuote();
         };
-        ((EV*)events)->mgEwmaQuoteProtection = [&]() { _debugEvent_
+        ((EV*)events)->mgEwmaQuoteProtection = [&]() {              _debugEvent_
           calcQuote();
         };
-        ((EV*)events)->mgLevels = [&]() { _debugEvent_
+        ((EV*)events)->mgLevels = [&]() {                           _debugEvent_
           calcQuote();
         };
-        ((EV*)events)->pgTargetBasePosition = [&]() { _debugEvent_
+        ((EV*)events)->pgTargetBasePosition = [&]() {               _debugEvent_
           calcQuote();
         };
       };
@@ -62,7 +62,7 @@ namespace K {
       function<void(json*)> hello = [&](json *welcome) {
         *welcome = { status };
       };
-      void timer_1s() { _debugEvent_
+      void timer_1s() {                                             _debugEvent_
         if (((MG*)market)->fairValue) {
           ((MG*)market)->calcStats();
           ((PG*)wallet)->calcSafety();

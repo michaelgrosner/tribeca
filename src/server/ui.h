@@ -205,7 +205,7 @@ namespace K {
       void (*timer)(Timer*) = [](Timer *tClient) {
         ((UI*)tClient->data)->timer_60s_or_Xs();
       };
-      void timer_60s_or_Xs() { _debugEvent_
+      void timer_60s_or_Xs() {                                      _debugEvent_
         if (!realtimeClient) {
           broadcastQueue();
           if (uiT_60s + 6e+4 > FN::T()) return;

@@ -33,14 +33,14 @@ namespace K {
         FN::log("DB", string("loaded TBP = ") + ss.str() + " " + gw->base);
       };
       void waitData() {
-        gw->evDataWallet = [&](mWallet k) { _debugEvent_
+        gw->evDataWallet = [&](mWallet k) {                         _debugEvent_
           calcWallet(k);
         };
-        ((EV*)events)->ogOrder = [&](mOrder k) { _debugEvent_
+        ((EV*)events)->ogOrder = [&](mOrder k) {                    _debugEvent_
           calcWalletAfterOrder(k);
           FN::screen_refresh(((OG*)broker)->orders);
         };
-        ((EV*)events)->mgTargetPosition = [&]() { _debugEvent_
+        ((EV*)events)->mgTargetPosition = [&]() {                   _debugEvent_
           calcTargetBasePos();
         };
       };
