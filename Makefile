@@ -303,7 +303,6 @@ test: node_modules/.bin/mocha
 	$(MAKE) test-c
 
 test-cov: node_modules/.bin/ts-node node_modules/istanbul/lib/cli.js node_modules/.bin/_mocha
-	$(MAKE) test-c
 	./node_modules/.bin/ts-node ./node_modules/istanbul/lib/cli.js cover --report lcovonly --dir test/coverage -e .ts ./node_modules/.bin/_mocha -- --timeout 42000 test/*.ts
 
 test-c:
@@ -324,11 +323,10 @@ travis-gcc:
 	sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-6 50
 	sudo apt-get install g++-6
 	sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-6 50
-	$(MAKE) travis-dist
+	$(MAKE) travis-dist pvs
 
 travis-dist:
 	mkdir -p $(KLOCAL)
-	$(MAKE) pvs
 	npm install
 
 png: etc/${PNG}.png etc/${PNG}.json
