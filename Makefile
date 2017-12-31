@@ -85,7 +85,7 @@ K: src/server/K.cxx
 ifdef KALL
 	unset KALL && echo -n $(CARCH) | tr ' ' "\n" | xargs -I % $(MAKE) CHOST=% $@
 else
-	@$(CXX) --version || :
+	@$(CXX) --version
 	mkdir -p $(KLOCAL)/bin
 	CHOST=$(CHOST) $(MAKE) $(shell test -n "`echo $(CHOST) | grep darwin`" && echo Darwin || uname -s)
 	chmod +x $(KLOCAL)/bin/K-$(CHOST)
@@ -109,7 +109,7 @@ Darwin: build-$(CHOST)
 zlib: build-$(CHOST)
 	test -d build-$(CHOST)/zlib-$(V_ZLIB) || (                                 \
 	curl -L https://zlib.net/zlib-$(V_ZLIB).tar.gz | tar xz -C build-$(CHOST)  \
-	&& cd build-$(CHOST)/zlib-$(V_ZLIB) && CC=$(CC) CHOST=$(CHOST) ./configure \
+	&& cd build-$(CHOST)/zlib-$(V_ZLIB) && CC=$(CC) ./configure --static       \
 	--prefix=$(PWD)/$(KLOCAL) && make && make install                          )
 
 openssl: build-$(CHOST)
