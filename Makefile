@@ -161,8 +161,8 @@ quickfix: build-$(CHOST)
 	&& sed -i "s/bin spec test examples doc//" Makefile.am                                         \
 	&& sed -i "s/CXX = g++/CXX \?= g++/" UnitTest++/Makefile                                       \
 	&& CXX=$(CXX) AR=$(CHOST)-ar ./configure --prefix=$(PWD)/$(KLOCAL) --enable-shared=no          \
-	--host=$(CHOST) && cd UnitTest++ && CXX=$(CXX) make libUnitTest++.a                            \
-	--enable-static=yes && cd ../src/C++ && CXX=$(CXX) make && make install                        )
+	--enable-static=yes --host=$(CHOST) && cd UnitTest++ && CXX=$(CXX) make libUnitTest++.a        \
+	&& cd ../src/C++ && CXX=$(CXX) make && make install                        )
 
 libuv: build-$(CHOST)
 	test -d build-$(CHOST)/libuv-$(V_UV) || (                                                     \

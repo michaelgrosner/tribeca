@@ -23,11 +23,9 @@ before_install:
 install:
   - yes 1 | make install
 
-script:
-  - make test-c
-#  - make test-cov
+script: make test-cov
 
-#after_success: make send-cov
+after_success: make send-cov
 
 notifications:
   email:
