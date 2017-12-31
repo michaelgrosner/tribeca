@@ -16,7 +16,7 @@ V_SQL   := 3210000
 V_QF    := v.1.14.4
 V_UV    := 1.18.0
 V_PVS   := 6.20.24121.1823
-KZIP     = 51ae2803e940fda85d14bf6d976f225eada2bcf9
+KZIP     = ce1801f43d451c87ed2c21390dbc822bcfea8240
 KARGS    = -Wextra -std=c++11 -O3 -I$(KLOCAL)/include          \
   src/server/K.cxx -pthread -rdynamic -Wl,-rpath,'$$ORIGIN'    \
   -DK_STAMP='"$(shell date --rfc-3339=seconds | cut -f1 -d+)"' \
@@ -202,7 +202,7 @@ install:
 	@$(MAKE) packages
 	mkdir -p app/server
 	@echo ================================================================================ && echo && echo "Select your architecture to download pre-compiled binaries:" && echo
-	@echo -n $(CARCH) | tr ' ' "\n" | xargs -I % echo % | cat -n && echo && echo "(Hint! uname says \"`uname -s` `uname -m`\")" && echo
+	@echo -n $(CARCH) | tr ' ' "\n" | xargs -I % echo % | cat -n && echo && echo "(Hint! uname says \"`uname -s` `uname -m`\"; btw darwin does not work yet)" && echo
 	@read -p "[1/2/3/4]: " chost; \
 	CHOST=`echo $(CARCH) | cut -d ' ' -f$${chost}` $(MAKE) build link
 
