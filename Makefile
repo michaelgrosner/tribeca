@@ -16,9 +16,9 @@ V_SQL   := 3210000
 V_QF    := v.1.14.4
 V_UV    := 1.18.0
 V_PVS   := 6.20.24121.1823
-KZIP     = ce1801f43d451c87ed2c21390dbc822bcfea8240
+KZIP     = 160490354bcd0393625ea8dd617eb5b455f88909
 KARGS    = -Wextra -std=c++11 -O3 -I$(KLOCAL)/include          \
-  src/server/K.cxx -pthread -rdynamic -Wl,-rpath,'$$ORIGIN'    \
+  src/server/K.cxx -pthread -rdynamic                          \
   -DK_STAMP='"$(shell date --rfc-3339=seconds | cut -f1 -d+)"' \
   -DK_BUILD='"$(CHOST)"'     $(KLOCAL)/include/uWS/*.cpp       \
   $(KLOCAL)/lib/K-$(CHOST).a $(KLOCAL)/lib/libquickfix.a       \
@@ -104,7 +104,7 @@ Linux: build-$(CHOST)
 	$(CXX) -o $(KLOCAL)/bin/K-$(CHOST) -DUWS_THREADSAFE -static-libstdc++ -static-libgcc -g $(KARGS)
 
 Darwin: build-$(CHOST)
-	$(CXX) -o $(KLOCAL)/bin/K-$(CHOST) -DUSE_LIBUV -L. `$(CXX) -print-libgcc-file-name` $(KLOCAL)/lib/libuv.a -msse4.1 -maes -mpclmul -mmacosx-version-min=10.13 -nostartfiles $(KARGS)
+	$(CXX) -o $(KLOCAL)/bin/K-$(CHOST) -DUSE_LIBUV $(KLOCAL)/lib/libuv.a `$(CXX) -print-libgcc-file-name` -msse4.1 -maes -mpclmul -mmacosx-version-min=10.13 -nostartfiles $(KARGS)
 
 zlib: build-$(CHOST)
 	test -d build-$(CHOST)/zlib-$(V_ZLIB) || (                                 \
@@ -165,10 +165,10 @@ quickfix: build-$(CHOST)
 	&& cd ../src/C++ && CXX=$(CXX) make && make install                        )
 
 libuv: build-$(CHOST)
-	test -d build-$(CHOST)/libuv-$(V_UV) || (                                                     \
-	curl -L https://github.com/libuv/libuv/archive/v$(V_UV).tar.gz | tar xz -C build-$(CHOST)     \
-	&& cd build-$(CHOST)/libuv-$(V_UV) && sh autogen.sh && CC="$(CC)" ./configure --host=$(CHOST) \
-	--prefix=$(PWD)/$(KLOCAL) && make && make install                                             )
+	test -z "`echo $(CHOST) | grep darwin`" || test -d build-$(CHOST)/libuv-$(V_UV) || (      \
+	curl -L https://github.com/libuv/libuv/archive/v$(V_UV).tar.gz | tar xz -C build-$(CHOST) \
+	&& cd build-$(CHOST)/libuv-$(V_UV) && sh autogen.sh && CC=$(CC) ./configure               \
+	--host=$(CHOST) --prefix=$(PWD)/$(KLOCAL) --disable-shared && make && make install        )
 
 pvs:
 	test -d build-$(CHOST)/pvs-studio-$(V_PVS)-x86_64 || (                     \
