@@ -18,7 +18,7 @@ branches:
 
 before_install:
   - test $TRAVIS_OS_NAME == "osx" && brew install --with-default-names gnu-sed || :;
-  - test $TRAVIS_OS_NAME == "linux" && make travis || :;
+  - test $TRAVIS_OS_NAME == "linux" && make travis-gcc || make travis-dist;
 
 install:
   - test $TRAVIS_OS_NAME == "linux" && (yes 1 | make install) || :;
