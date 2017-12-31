@@ -406,25 +406,10 @@ namespace K {
         ((string*)up)->append((char*)buf, size * nmemb);
         return size * nmemb;
       };
-      static int procSelfStatus(char* line){
-        int i = strlen(line);
-        const char* p = line;
-        while (*p <'0' || *p > '9') p++;
-        line[i-3] = '\0';
-        i = atoi(p);
-        return i;
-      };
       static int memory() {
-        FILE* file = fopen("/proc/self/status", "r");
-        int result = -1;
-        char line[128];
-        while (fgets(line, 128, file) != NULL)
-          if (strncmp(line, "VmRSS:", 6) == 0) {
-            result = procSelfStatus(line);
-            break;
-          }
-        fclose(file);
-        return result * 1e+3;
+        string ps = output(string("ps -p") + to_string(::getpid()) + " -o rss | tail -n 1 | sed 's/ //'");
+        if (ps.empty()) ps = "0";
+        return stoi(ps) * 1e+3;
       };
       static string output(string cmd) {
         string data;
@@ -445,7 +430,7 @@ namespace K {
         ssize_t len;
         while((len = ::readlink(pathname, &buffer[0], buffer.size())) == static_cast<ssize_t>(buffer.size()))
           buffer.resize(buffer.size() * 2);
-        if (len == -1) FN::logWar("FN", "readlink failed");
+        if (len == -1) logWar("FN", "readlink failed");
         buffer.resize(len);
         return buffer;
       };
