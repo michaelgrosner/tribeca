@@ -328,7 +328,7 @@ travis-gcc:
 
 travis-dist:
 	mkdir -p $(KLOCAL)
-	$(MAKE) dist pvs
+	$(MAKE) pvs
 	npm install
 
 png: etc/${PNG}.png etc/${PNG}.json

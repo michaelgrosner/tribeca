@@ -8,10 +8,6 @@ os:
   - linux
   - osx
 
-compiler:
-  - clang
-  - gcc
-
 language: node_js
 
 node_js:
