@@ -41,7 +41,7 @@ namespace K  {
       };
       void waitData() {
         aEngine = new Async(hub->getLoop());
-        aEngine->data = this;
+        aEngine->setData(this);
         aEngine->start(asyncLoop);
         gw->gwGroup = hub->createGroup<uWS::CLIENT>();
       };
@@ -103,7 +103,7 @@ namespace K  {
         cout << " THE END." << '\n';
       };
       void (*asyncLoop)(Async*) = [](Async *handle) {
-        EV* k = (EV*)handle->data;
+        EV* k = (EV*)handle->getData();
         if (!k->asyncFn.empty()) {
           for (function<void()> &it : k->asyncFn) it();
           k->asyncFn.clear();

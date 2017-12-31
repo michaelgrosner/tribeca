@@ -15,9 +15,9 @@ namespace K {
         handshake(gw->exchange);
       };
       void waitTime() {
-        ((EV*)events)->tServer->data = this;
+        ((EV*)events)->tServer->setData(this);
         ((EV*)events)->tServer->start([](Timer *tServer) {
-          ((GW*)tServer->data)->timer_15s();
+          ((GW*)tServer->getData())->timer_15s();
         }, 0, 15e+3);
       };
       void waitData() {

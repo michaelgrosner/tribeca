@@ -23,9 +23,9 @@ namespace K {
         quotingMode[mQuotingMode::Depth]       = &calcDepthOfMarket;
       };
       void waitTime() {
-        ((EV*)events)->tEngine->data = this;
+        ((EV*)events)->tEngine->setData(this);
         ((EV*)events)->tEngine->start([](Timer *tEngine) {
-          ((QE*)tEngine->data)->timer_1s();
+          ((QE*)tEngine->getData())->timer_1s();
         }, 1e+3, 1e+3);
       };
       void waitData() {

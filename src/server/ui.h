@@ -27,7 +27,7 @@ namespace K {
       };
       void waitTime() {
         if (((CF*)config)->argHeadless) return;
-        ((EV*)events)->tClient->data = this;
+        ((EV*)events)->tClient->setData(this);
         ((EV*)events)->tClient->start(timer, 0, 0);
       };
       void waitData() {
@@ -203,7 +203,7 @@ namespace K {
         queue.clear();
       };
       void (*timer)(Timer*) = [](Timer *tClient) {
-        ((UI*)tClient->data)->timer_60s_or_Xs();
+        ((UI*)tClient->getData())->timer_60s_or_Xs();
       };
       void timer_60s_or_Xs() {                                      _debugEvent_
         if (!realtimeClient) {
