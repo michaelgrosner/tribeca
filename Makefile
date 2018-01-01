@@ -16,7 +16,7 @@ V_SQL   := 3210000
 V_QF    := v.1.14.4
 V_UV    := 1.18.0
 V_PVS   := 6.20.24121.1823
-KZIP     = 160490354bcd0393625ea8dd617eb5b455f88909
+KZIP     = 89d629317330c59b1b0e9cd5b76717b506ec2f33
 KARGS    = -Wextra -std=c++11 -O3 -I$(KLOCAL)/include          \
   src/server/K.cxx -pthread -rdynamic                          \
   -DK_STAMP='"$(shell date --rfc-3339=seconds | cut -f1 -d+)"' \
@@ -349,8 +349,7 @@ ifdef KALL
 	unset KALL && echo -n $(CARCH) | tr ' ' "\n" | xargs -I % $(MAKE) CHOST=% $@
 else
 	@tar -cvzf $(KZIP)-$(CHOST).tar.gz                                                                                   \
-	LICENSE COPYING THANKS README.md MANUAL.md src etc $(KLOCAL)/bin/K-$(CHOST) $(KLOCAL)/var                            \
-	$(KLOCAL)/$(shell test -n "`echo $(CHOST) | grep darwin`" && echo lib || echo lib/K-$(CHOST).a)                      \
+	LICENSE COPYING THANKS README.md MANUAL.md src etc $(KLOCAL)/bin/K-$(CHOST) $(KLOCAL)/var $(KLOCAL)/lib/K-$(CHOST).a \
 	Makefile && curl -s -n -H "Content-Type:application/octet-stream" -H "Authorization: token ${KRELEASE}"              \
 	--data-binary "@$(PWD)/$(KZIP)-$(CHOST).tar.gz"                                                                      \
 	"https://uploads.github.com/repos/ctubio/Krypto-trading-bot/releases/$(KHUB)/assets?name=$(KZIP)-$(CHOST).tar.gz"    \
