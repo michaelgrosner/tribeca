@@ -523,11 +523,11 @@ namespace K {
   };
   static void to_json(json& j, const mQuoteStatus& k) {
     j = {
-      {"bidStatus",             k.bidStatus},
-      {"askStatus",             k.askStatus},
-      {"quotesInMemoryNew",     k.quotesInMemoryNew},
+      {            "bidStatus", k.bidStatus            },
+      {            "askStatus", k.askStatus            },
+      {    "quotesInMemoryNew", k.quotesInMemoryNew    },
       {"quotesInMemoryWorking", k.quotesInMemoryWorking},
-      {"quotesInMemoryDone",    k.quotesInMemoryDone}
+      {   "quotesInMemoryDone", k.quotesInMemoryDone   }
     };
   };
   static const char alphanum[] = "0123456789"
