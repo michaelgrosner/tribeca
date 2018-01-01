@@ -23,23 +23,24 @@
 :  .. Makefile: ------------------------------------- aka. noautoconf ------- :
 :  :  # boooriiing docs at https://www.gnu.org/software/make/manual/make.html :
 :  :                                                                          :
-:  :  # without env vars should work, but cross compilation is possible with: :
-:  :  # set CHOST env var as the target triplet (on redhats, ubuntus, macos). :
-:  :  # set KALL=1 env var to make all the supported targets at once, lovely. :
+:  :  # a target without env vars is OK but cross compilation is viable with: :
+:  :  - set CHOST env var as the target triplet (on redhats, ubuntus, macos). :
+:  :  - set KALL=1 env var to make all the supported targets at once, lovely. :
 :  :                                                                          :
 :  +-- Whaaat??                                                               :
 :     One-time targets: (one-time means everytime new versions are available) :
 :      $ make packages                                                        :
-:       forget about this. is executed by "make install" every. single. time. :
+:       forget about this, is executed by "make install" every. single. time. :
 :                                                                             :
 :      $ make dist                                                            :
-:       once upon a time there was a vast empty build folder but not anymore. :
+:       once upon a time, there was vast empty build folders but not anymore. :
 :        all includes (see Makefile and src/server/K.cxx) will be downloaded. :
 :        no errors or warnings expected, unless by happy libquickfix; ignore. :
 :        when done, rebuild anytime K Server with "make" (but do some mods!). :
 :                                                                             :
 :      $ make clean                                                           :
-:       after some time the youth goes away and will leave this world behind. :
+:       after some time, the youth goes away and I will leave a world behind. :
+:        don't be sad life is life and this world will never forget our time. :
 :                                                                             :
 :     Devel targets: (an excuse to refill a glass of milk no matter the boss) :
 :      $ make                                                                 :
