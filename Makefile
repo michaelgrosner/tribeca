@@ -16,7 +16,7 @@ V_SQL   := 3210000
 V_QF    := v.1.14.4
 V_UV    := 1.18.0
 V_PVS   := 6.20.24121.1823
-KZIP     = b3b7db2548b9a80eb2b87b3b4ea206bf8dcd288d
+KZIP     = 4a5b3cab3d8151901dc6a71575b874168e68c923
 KARGS    = -Wextra -std=c++11 -O3 -I$(KLOCAL)/include      \
   src/server/K.cxx -pthread -rdynamic                      \
   -DK_STAMP='"$(shell date "+%Y-%m-%d %H:%M:%S")"'         \
@@ -104,7 +104,7 @@ Linux: build-$(CHOST)
 	$(CXX) -o $(KLOCAL)/bin/K-$(CHOST) -DUWS_THREADSAFE -static-libstdc++ -static-libgcc -g $(KARGS)
 
 Darwin: build-$(CHOST)
-	$(CXX) -o $(KLOCAL)/bin/K-$(CHOST) -DUSE_LIBUV $(KLOCAL)/lib/libuv.a `$(CXX) -print-libgcc-file-name` -msse4.1 -maes -mpclmul -mmacosx-version-min=10.13 -nostartfiles $(KARGS)
+	$(CXX) -o $(KLOCAL)/bin/K-$(CHOST) -DUSE_LIBUV $(KLOCAL)/lib/libuv.a -msse4.1 -maes -mpclmul -mmacosx-version-min=10.13 -nostartfiles $(KARGS)
 
 zlib: build-$(CHOST)
 	test -d build-$(CHOST)/zlib-$(V_ZLIB) || (                                 \

@@ -174,7 +174,8 @@ namespace K {
         }
         if (!gw->minTick or !gw->minSize)
           exit(_errorEvent_("CF", "Unable to fetch data from " + gw->name + " for symbol \"" + gw->symbol + "\", possible error message: " + reply.dump(), true));
-        FN::log(string("GW ") + gw->name, "allows client IP");
+        if (k != mExchange::Null)
+          FN::log(string("GW ") + gw->name, "allows client IP");
         stringstream ss;
         ss << setprecision(gw->minTick < 1e-8 ? 10 : 8) << fixed << '\n'
           << "- autoBot: " << (!gwAdminEnabled ? "no" : "yes") << '\n'

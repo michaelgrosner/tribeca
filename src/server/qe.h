@@ -174,7 +174,7 @@ namespace K {
         debuq("H", rawQuote); applyRoundPrice(&rawQuote);
         debuq("I", rawQuote); applyRoundSize(&rawQuote, rawBidSz, rawAskSz, totalQuotePosition, totalBasePosition);
         debuq("J", rawQuote); applyDepleted(&rawQuote, totalQuotePosition, totalBasePosition);
-        debuq("K", rawQuote); applyWaitingPing(&rawQuote, totalQuotePosition, totalBasePosition, safetyBuyPing, safetysellPing);
+        debuq("K", rawQuote); applyWaitingPing(&rawQuote, safetyBuyPing, safetysellPing);
         debuq("!", rawQuote);
         rawQuote.isAskPong = (safetyBuyPing and rawQuote.ask.price and rawQuote.ask.price >= safetyBuyPing + widthPong);
         rawQuote.isBidPong = (safetysellPing and rawQuote.bid.price and rawQuote.bid.price <= safetysellPing - widthPong);
@@ -205,7 +205,7 @@ namespace K {
           rawQuote->bid.size = floor(fmax(gw->minSize, rawQuote->bid.size) / 1e-8) * 1e-8;
         }
       };
-      void applyWaitingPing(mQuote *rawQuote, double totalQuotePosition, double totalBasePosition, double safetyBuyPing, double safetysellPing) {
+      void applyWaitingPing(mQuote *rawQuote, double safetyBuyPing, double safetysellPing) {
         if (!qp->_matchPings and qp->safety != mQuotingSafety::PingPong) return;
         if (!safetyBuyPing and (
           (bidStatus != mQuoteState::DepletedFunds and (qp->pingAt == mPingAt::DepletedSide or qp->pingAt == mPingAt::DepletedBidSide))

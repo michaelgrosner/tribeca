@@ -158,7 +158,7 @@ namespace K {
           if (f) curl_easy_setopt(curl, CURLOPT_TIMEOUT, 4L);
           else curl_easy_setopt(curl, CURLOPT_TIMEOUT, 13L);
           CURLcode r = curl_easy_perform(curl);
-          if(!f and r != CURLE_OK) FN::logWar("CURL", string("wGet failed ") + curl_easy_strerror(r));
+          if (!f and r != CURLE_OK) FN::logWar("CURL", string("wGet failed ") + curl_easy_strerror(r));
           curl_easy_cleanup(curl);
         }
         if (k_.empty() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
