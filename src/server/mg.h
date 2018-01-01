@@ -11,6 +11,10 @@ namespace K {
       double mgEwmaL = 0;
       double mgEwmaM = 0;
       double mgEwmaS = 0;
+      int VLEP = qp->veryLongEwmaPeriods;
+      int  LEP = qp->longEwmaPeriods;
+      int  MEP = qp->mediumEwmaPeriods;
+      int  SEP = qp->shortEwmaPeriods;
       vector<double> mgSMA3;
       vector<double> mgStatFV;
       vector<double> mgStatBid;
@@ -112,14 +116,10 @@ namespace K {
         averageWidth /= ++averageCount;
       };
       void calcEwmaHistory() {
-        static int VLEP = qp->veryLongEwmaPeriods;
-        static int  LEP = qp->longEwmaPeriods;
-        static int  MEP = qp->mediumEwmaPeriods;
-        static int  SEP = qp->shortEwmaPeriods;
-        if (!VLEP = qp->veryLongEwmaPeriods) calcEwmaHistory(&mgEwmaVL, qp->veryLongEwmaPeriods, "VeryLong");
-        if (!LEP = qp->longEwmaPeriods) calcEwmaHistory(&mgEwmaL, qp->longEwmaPeriods, "Long");
-        if (!MEP = qp->mediumEwmaPeriods) calcEwmaHistory(&mgEwmaM, qp->mediumEwmaPeriods, "Medium");
-        if (!SEP = qp->shortEwmaPeriods) calcEwmaHistory(&mgEwmaS, qp->shortEwmaPeriods, "Short");
+        if (VLEP != qp->veryLongEwmaPeriods) { VLEP = qp->veryLongEwmaPeriods; calcEwmaHistory(&mgEwmaVL, VLEP, "VeryLong"); }
+        if (LEP != qp->longEwmaPeriods) { LEP = qp->longEwmaPeriods; calcEwmaHistory(&mgEwmaL, LEP, "Long"); }
+        if (MEP != qp->mediumEwmaPeriods) { MEP = qp->mediumEwmaPeriods; calcEwmaHistory(&mgEwmaM, qp->mediumEwmaPeriods, "Medium"); }
+        if (SEP != qp->shortEwmaPeriods) { SEP = qp->shortEwmaPeriods; calcEwmaHistory(&mgEwmaS, qp->shortEwmaPeriods, "Short"); }
       };
     private:
       function<void(json*)> helloTrade = [&](json *welcome) {
