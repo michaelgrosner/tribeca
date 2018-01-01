@@ -17,13 +17,13 @@ V_QF    := v.1.14.4
 V_UV    := 1.18.0
 V_PVS   := 6.20.24121.1823
 KZIP     = 89d629317330c59b1b0e9cd5b76717b506ec2f33
-KARGS    = -Wextra -std=c++11 -O3 -I$(KLOCAL)/include          \
-  src/server/K.cxx -pthread -rdynamic                          \
-  -DK_STAMP='"$(shell date --rfc-3339=seconds | cut -f1 -d+)"' \
-  -DK_BUILD='"$(CHOST)"'     $(KLOCAL)/include/uWS/*.cpp       \
-  $(KLOCAL)/lib/K-$(CHOST).a $(KLOCAL)/lib/libquickfix.a       \
-  $(KLOCAL)/lib/libsqlite3.a $(KLOCAL)/lib/libz.a              \
-  $(KLOCAL)/lib/libcurl.a    $(KLOCAL)/lib/libssl.a            \
+KARGS    = -Wextra -std=c++11 -O3 -I$(KLOCAL)/include      \
+  src/server/K.cxx -pthread -rdynamic                      \
+  -DK_STAMP='"$(shell date "+%Y-%m-%d %H:%M:%S")"'         \
+  -DK_BUILD='"$(CHOST)"'     $(KLOCAL)/include/uWS/*.cpp   \
+  $(KLOCAL)/lib/K-$(CHOST).a $(KLOCAL)/lib/libquickfix.a   \
+  $(KLOCAL)/lib/libsqlite3.a $(KLOCAL)/lib/libz.a          \
+  $(KLOCAL)/lib/libcurl.a    $(KLOCAL)/lib/libssl.a        \
   $(KLOCAL)/lib/libcrypto.a  $(KLOCAL)/lib/libncurses.a -ldl
 
 all: K
@@ -158,11 +158,15 @@ quickfix: build-$(CHOST)
 	curl -L https://github.com/quickfix/quickfix/archive/$(V_QF).tar.gz | tar xz -C build-$(CHOST) \
 	&& patch build-$(CHOST)/quickfix-$(V_QF)/m4/ax_lib_mysql.m4 < etc/without_mysql.m4.patch       \
 	&& cd build-$(CHOST)/quickfix-$(V_QF) && ./bootstrap                                           \
-	&& sed -i "s/bin spec test examples doc//" Makefile.am                                         \
-	&& sed -i "s/CXX = g++/CXX \?= g++/" UnitTest++/Makefile                                       \
+	&& (test -n "`echo $(CHOST) | grep darwin`" &&                                                 \
+	sed -i '' "s/bin spec test examples doc//" Makefile.am ||                                      \
+	sed -i "s/bin spec test examples doc//" Makefile.am)                                           \
+	&& (test -n "`echo $(CHOST) | grep darwin`" &&                                                 \
+	sed -i '' "s/CXX = g++/CXX \?= g++/" UnitTest++/Makefile ||                                    \
+	sed -i "s/CXX = g++/CXX \?= g++/" UnitTest++/Makefile)                                         \
 	&& CXX=$(CXX) AR=$(CHOST)-ar ./configure --prefix=$(PWD)/$(KLOCAL) --enable-shared=no          \
 	--enable-static=yes --host=$(CHOST) && cd UnitTest++ && CXX=$(CXX) make libUnitTest++.a        \
-	&& cd ../src/C++ && CXX=$(CXX) make && make install                        )
+	&& cd ../src/C++ && CXX=$(CXX) make && make install                                            )
 
 libuv: build-$(CHOST)
 	test -z "`echo $(CHOST) | grep darwin`" || test -d build-$(CHOST)/libuv-$(V_UV) || (      \
