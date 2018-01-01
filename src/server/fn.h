@@ -151,7 +151,7 @@ namespace K {
         CURL* curl;
         curl = curl_easy_init();
         if (curl) {
-          curl_easy_setopt(curl, CURLOPT_CAINFO, "etc/sslcert/cabundle.pem");
+          curl_easy_setopt(curl, CURLOPT_CAINFO, "etc/K-cabundle.pem");
           curl_easy_setopt(curl, CURLOPT_URL, k.data());
           curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &wcb);
           curl_easy_setopt(curl, CURLOPT_WRITEDATA, &k_);
@@ -174,7 +174,7 @@ namespace K {
         curl = curl_easy_init();
         if (curl) {
           struct curl_slist *h_ = NULL;
-          curl_easy_setopt(curl, CURLOPT_CAINFO, "etc/sslcert/cabundle.pem");
+          curl_easy_setopt(curl, CURLOPT_CAINFO, "etc/K-cabundle.pem");
           curl_easy_setopt(curl, CURLOPT_URL, k.data());
           curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &wcb);
           curl_easy_setopt(curl, CURLOPT_POSTFIELDS, p.data());
@@ -198,7 +198,7 @@ namespace K {
         curl = curl_easy_init();
         if (curl) {
           struct curl_slist *h_ = NULL;
-          curl_easy_setopt(curl, CURLOPT_CAINFO, "etc/sslcert/cabundle.pem");
+          curl_easy_setopt(curl, CURLOPT_CAINFO, "etc/K-cabundle.pem");
           curl_easy_setopt(curl, CURLOPT_URL, k.data());
           curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &wcb);
           if (!t.empty()) h_ = curl_slist_append(h_, string("Authorization: Bearer ").append(t).data());
@@ -221,7 +221,7 @@ namespace K {
         curl = curl_easy_init();
         if (curl) {
           struct curl_slist *h_ = NULL;
-          curl_easy_setopt(curl, CURLOPT_CAINFO, "etc/sslcert/cabundle.pem");
+          curl_easy_setopt(curl, CURLOPT_CAINFO, "etc/K-cabundle.pem");
           curl_easy_setopt(curl, CURLOPT_URL, k.data());
           curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &wcb);
           curl_easy_setopt(curl, CURLOPT_POSTFIELDS, n.data());
@@ -245,7 +245,7 @@ namespace K {
         CURL* curl;
         curl = curl_easy_init();
         if (curl) {
-          curl_easy_setopt(curl, CURLOPT_CAINFO, "etc/sslcert/cabundle.pem");
+          curl_easy_setopt(curl, CURLOPT_CAINFO, "etc/K-cabundle.pem");
           curl_easy_setopt(curl, CURLOPT_URL, k.data());
           if (a) curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
           curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &wcb);
@@ -268,7 +268,7 @@ namespace K {
         curl = curl_easy_init();
         if (curl) {
           struct curl_slist *h_ = NULL;
-          curl_easy_setopt(curl, CURLOPT_CAINFO, "etc/sslcert/cabundle.pem");
+          curl_easy_setopt(curl, CURLOPT_CAINFO, "etc/K-cabundle.pem");
           curl_easy_setopt(curl, CURLOPT_URL, k.data());
           curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &wcb);
           curl_easy_setopt(curl, CURLOPT_POSTFIELDS, p.data());
@@ -292,7 +292,7 @@ namespace K {
         curl = curl_easy_init();
         if (curl) {
           struct curl_slist *h_ = NULL;
-          curl_easy_setopt(curl, CURLOPT_CAINFO, "etc/sslcert/cabundle.pem");
+          curl_easy_setopt(curl, CURLOPT_CAINFO, "etc/K-cabundle.pem");
           curl_easy_setopt(curl, CURLOPT_URL, k.data());
           curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &wcb);
           curl_easy_setopt(curl, CURLOPT_POSTFIELDS, p.data());
@@ -318,7 +318,7 @@ namespace K {
         curl = curl_easy_init();
         if (curl) {
           struct curl_slist *h_ = NULL;
-          curl_easy_setopt(curl, CURLOPT_CAINFO, "etc/sslcert/cabundle.pem");
+          curl_easy_setopt(curl, CURLOPT_CAINFO, "etc/K-cabundle.pem");
           curl_easy_setopt(curl, CURLOPT_URL, k.data());
           curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &wcb);
           curl_easy_setopt(curl, CURLOPT_POSTFIELDS, p.data());
@@ -344,7 +344,7 @@ namespace K {
         curl = curl_easy_init();
         if (curl) {
           struct curl_slist *h_ = NULL;
-          curl_easy_setopt(curl, CURLOPT_CAINFO, "etc/sslcert/cabundle.pem");
+          curl_easy_setopt(curl, CURLOPT_CAINFO, "etc/K-cabundle.pem");
           curl_easy_setopt(curl, CURLOPT_URL, k.data());
           curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &wcb);
           curl_easy_setopt(curl, CURLOPT_POSTFIELDS, p.data());
@@ -369,7 +369,7 @@ namespace K {
         curl = curl_easy_init();
         if (curl) {
           struct curl_slist *h_ = NULL;
-          curl_easy_setopt(curl, CURLOPT_CAINFO, "etc/sslcert/cabundle.pem");
+          curl_easy_setopt(curl, CURLOPT_CAINFO, "etc/K-cabundle.pem");
           curl_easy_setopt(curl, CURLOPT_URL, k.data());
           curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &wcb);
           h_ = curl_slist_append(h_, string("CB-ACCESS-KEY: ").append(a).data());
@@ -395,7 +395,7 @@ namespace K {
         curl = curl_easy_init();
         if (curl) {
           struct curl_slist *h_ = NULL;
-          curl_easy_setopt(curl, CURLOPT_CAINFO, "etc/sslcert/cabundle.pem");
+          curl_easy_setopt(curl, CURLOPT_CAINFO, "etc/K-cabundle.pem");
           curl_easy_setopt(curl, CURLOPT_URL, k.data());
           curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &wcb);
           h_ = curl_slist_append(h_, string("CB-ACCESS-KEY: ").append(a).data());
