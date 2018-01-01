@@ -76,6 +76,7 @@ help:
 	#  make uws          - download uws src files      #
 	#  make quickfix     - download quickfix src files #
 	#  make gdax         - download gdax ssl cert      #
+	#  make cabundle     - download ssl CA certs       #
 	#  make clean        - remove external src files   #
 	#  KALL=1 make clean - remove external src files   #
 	#  make cleandb      - remove databases            #
@@ -267,10 +268,10 @@ screen:
 	echo Detach screen hotkey: holding CTRL hit A then D \
 	&& sleep 2 && screen -r $(K)) || screen -list || :
 
-cacert:
+cabundle:
 	rm -f etc/sslcert/cacert.pem
 	curl --remote-name --time-cond cacert.pem https://curl.haxx.se/ca/cacert.pem
-	mv cacert.pem etc/sslcert/cabundle.pem
+	mv cacert.pem etc/K-cabundle.pem
 
 gdax:
 	openssl s_client -showcerts -connect fix.gdax.com:4198 -CApath /etc/ssl/certs < /dev/null \
