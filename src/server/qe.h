@@ -442,8 +442,8 @@ namespace K {
             k.ask.size = it.size;
             k.ask.price = it.price;
           }
-        if (k.bid.size) k.bid.price + gw->minTick;
-        if (k.ask.size) k.ask.price - gw->minTick;
+        if (k.bid.size) k.bid.price += gw->minTick;
+        if (k.ask.size) k.ask.price -= gw->minTick;
         k.bid.size = buySize;
         k.ask.size = sellSize;
         return k;

@@ -142,8 +142,8 @@ namespace K {
                 gw->symbol = it.key();
                 gw->base = it.value().value("base", gw->base);
                 gw->quote = it.value().value("quote", gw->quote);
+                break;
               }
-              break;
             }
           gw->minSize = 0.01;
         }

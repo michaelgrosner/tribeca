@@ -108,7 +108,8 @@ namespace K {
         if (!fairValue or (fairValue_ and abs(fairValue - fairValue_) < gw->minTick)) return;
         gw->evDataWallet(mWallet());
         ((UI*)client)->send(mMatter::FairValue, {{"price", fairValue}});
-        averageWidth = ((averageWidth * averageCount) + topAskPrice - topBidPrice) / ++averageCount;
+        averageWidth = ((averageWidth * averageCount) + topAskPrice - topBidPrice);
+        averageWidth /= ++averageCount;
       };
       void calcEwmaHistory() {
         calcEwmaHistory(&mgEwmaVL, qp->veryLongEwmaPeriods, "VeryLong");

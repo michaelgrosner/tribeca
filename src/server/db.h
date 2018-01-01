@@ -4,7 +4,7 @@
 namespace K {
   class DB: public Klass {
     private:
-      sqlite3* db;
+      sqlite3* db = nullptr;
     protected:
       void load() {
         if (sqlite3_open(((CF*)config)->argDatabase.data(), &db))

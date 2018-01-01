@@ -104,9 +104,9 @@ namespace K {
               return;
           }
           if (mPortal::Hello == (mPortal)message[0] and hello.find(message[1]) != hello.end()) {
-            json welcome;
-            (*hello[message[1]])(&welcome);
-            if (!welcome.is_null()) webSocket->send((string(message, 2) + welcome.dump()).data(), uWS::OpCode::TEXT);
+            json reply;
+            (*hello[message[1]])(&reply);
+            if (!reply.is_null()) webSocket->send((string(message, 2) + reply.dump()).data(), uWS::OpCode::TEXT);
           } else if (mPortal::Kiss == (mPortal)message[0] and kisses.find(message[1]) != kisses.end()) {
             json butterfly = json::parse((length > 2 and message[2] == '{') ? string(message, length).substr(2, length-2) : "{}");
             for (json::iterator it = butterfly.begin(); it != butterfly.end();)
