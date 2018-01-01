@@ -73,29 +73,29 @@ namespace K {
           {0,              0,                 0,                 0}
         };
         int k = 0;
-        while (++k) {
+        while (++k)
           switch (k = getopt_long(argc, argv, "hvd:l:m:s:p:u:v:c:e:k:P:K:W:H:U:X:S:A:", args, NULL)) {
             case -1 :
             case  0 : break;
-            case 'P': argPort = stoi(optarg); break;
-            case 'A': argApikey = string(optarg); break;
-            case 'S': argSecret = string(optarg); break;
-            case 'U': argUsername = string(optarg); break;
-            case 'X': argPassphrase = string(optarg); break;
-            case 'H': argHttp = string(optarg); break;
-            case 'W': argWss = string(optarg); break;
-            case 'e': argExchange = string(optarg); break;
-            case 'c': argCurrency = string(optarg); break;
-            case 'd': argDatabase = string(optarg); break;
-            case 'k': argMatryoshka = string(optarg); break;
-            case 'K': argTitle = string(optarg); break;
-            case 'u': argUser = string(optarg); break;
-            case 'p': argPass = string(optarg); break;
-            case 's': argEwmaShort = stod(optarg); break;
-            case 'm': argEwmaMedium = stod(optarg); break;
-            case 'l': argEwmaLong = stod(optarg); break;
-            case 'V': argEwmaVeryLong = stod(optarg); break;
-            case 'L': argWhitelist = string(optarg); break;
+            case 'P': argPort         = stoi(optarg);   break;
+            case 'A': argApikey       = string(optarg); break;
+            case 'S': argSecret       = string(optarg); break;
+            case 'U': argUsername     = string(optarg); break;
+            case 'X': argPassphrase   = string(optarg); break;
+            case 'H': argHttp         = string(optarg); break;
+            case 'W': argWss          = string(optarg); break;
+            case 'e': argExchange     = string(optarg); break;
+            case 'c': argCurrency     = string(optarg); break;
+            case 'd': argDatabase     = string(optarg); break;
+            case 'k': argMatryoshka   = string(optarg); break;
+            case 'K': argTitle        = string(optarg); break;
+            case 'u': argUser         = string(optarg); break;
+            case 'p': argPass         = string(optarg); break;
+            case 'L': argWhitelist    = string(optarg); break;
+            case 's': argEwmaShort    = stod(optarg);   break;
+            case 'm': argEwmaMedium   = stod(optarg);   break;
+            case 'l': argEwmaLong     = stod(optarg);   break;
+            case 'V': argEwmaVeryLong = stod(optarg);   break;
             case 'h': cout
               << RGREEN << "This is free software: the quoting engine and UI are open source,"
                         << '\n' << "feel free to hack both as you need." << '\n'
@@ -167,7 +167,6 @@ namespace K {
             case 'v': exit(EXIT_SUCCESS);
             default: abort();
           }
-        }
         if (optind < argc) {
           cout << "ARG" << RRED << " Errrror:" << BRED << " non-option ARGV-elements: ";
           while(optind < argc) cout << argv[optind++];
@@ -193,20 +192,12 @@ namespace K {
           RBLUE[0]  = RPURPLE[0] = RCYAN[0]  = RWHITE[0]  =
           BBLACK[0] = BRED[0]    = BGREEN[0] = BYELLOW[0] =
           BBLUE[0]  = BPURPLE[0] = BCYAN[0]  = BWHITE[0]  = argColors;
-        if (argDatabase.empty()) {
+        if (argDatabase.empty())
           argDatabase = string("/data/db/K")
             + '.' + FN::S2u(argExchange)
             + '.' + base()
             + '.' + quote()
             + '.' + "db";
-          string deprecated = string("/data/db/K")
-            + '.' + to_string((int)deprecated_exchange())
-            + '.' + base()
-            + '.' + quote()
-            + '.' + "db";
-          if (access(deprecated.data(), F_OK) != -1)
-            FN::output(string("mv ") + deprecated + " " + argDatabase);
-        }
       };
       void run() {
         gw = Gw::config(
@@ -225,19 +216,6 @@ namespace K {
       };
       string quote() {
         return FN::S2u(argCurrency.substr(argCurrency.find("/")+1));
-      };
-      mExchange deprecated_exchange() {
-        string k = FN::S2u(argExchange);
-        if (k == "COINBASE") return mExchange::Coinbase;
-        else if (k == "BITFINEX") return mExchange::Bitfinex;
-        else if (k == "BITFINEX_MARGIN") return mExchange::BitfinexMargin;
-        else if (k == "HITBTC") return mExchange::HitBtc;
-        else if (k == "OKEX") return mExchange::OkEx;
-        else if (k == "OKCOIN") return mExchange::OkCoin;
-        else if (k == "KRAKEN") return mExchange::Kraken;
-        else if (k == "KORBIT") return mExchange::Korbit;
-        else if (k == "POLONIEX") return mExchange::Poloniex;
-        return mExchange::Null;
       };
   };
 }
