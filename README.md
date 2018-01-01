@@ -278,7 +278,7 @@ ws sandbox: [websocket.org](https://www.websocket.org/echo.html)
 
 ### Unreleased Changelog:
 
-nothing yet
+Added build chain for OSX v10.13.
 
 ### Release 4.0 Changelog:
 
