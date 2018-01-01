@@ -206,7 +206,7 @@ install:
 	@$(MAKE) packages
 	mkdir -p app/server
 	@echo ================================================================================ && echo && echo "Select your architecture to download pre-compiled binaries:" && echo
-	@echo -n $(CARCH) | tr ' ' "\n" | xargs -I % echo % | cat -n && echo && echo "(Hint! uname says \"`uname -s` `uname -m`\"; btw darwin does not work yet)" && echo
+	@echo -n $(CARCH) | tr ' ' "\n" | xargs -I % echo % | cat -n && echo && echo "(Hint! uname says \"`uname -s` `uname -m`\")" && echo
 	@read -p "[1/2/3/4]: " chost; \
 	CHOST=`echo $(CARCH) | cut -d ' ' -f$${chost}` $(MAKE) build link
 
