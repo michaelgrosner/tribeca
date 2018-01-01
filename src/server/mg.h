@@ -112,10 +112,14 @@ namespace K {
         averageWidth /= ++averageCount;
       };
       void calcEwmaHistory() {
-        calcEwmaHistory(&mgEwmaVL, qp->veryLongEwmaPeriods, "VeryLong");
-        calcEwmaHistory(&mgEwmaL, qp->longEwmaPeriods, "Long");
-        calcEwmaHistory(&mgEwmaM, qp->mediumEwmaPeriods, "Medium");
-        calcEwmaHistory(&mgEwmaS, qp->shortEwmaPeriods, "Short");
+        static int VLEP = qp->veryLongEwmaPeriods;
+        static int  LEP = qp->longEwmaPeriods;
+        static int  MEP = qp->mediumEwmaPeriods;
+        static int  SEP = qp->shortEwmaPeriods;
+        if (!VLEP = qp->veryLongEwmaPeriods) calcEwmaHistory(&mgEwmaVL, qp->veryLongEwmaPeriods, "VeryLong");
+        if (!LEP = qp->longEwmaPeriods) calcEwmaHistory(&mgEwmaL, qp->longEwmaPeriods, "Long");
+        if (!MEP = qp->mediumEwmaPeriods) calcEwmaHistory(&mgEwmaM, qp->mediumEwmaPeriods, "Medium");
+        if (!SEP = qp->shortEwmaPeriods) calcEwmaHistory(&mgEwmaS, qp->shortEwmaPeriods, "Short");
       };
     private:
       function<void(json*)> helloTrade = [&](json *welcome) {
@@ -268,9 +272,8 @@ namespace K {
       };
       void calcEwmaHistory(double *mean, unsigned int periods, string name) {
         unsigned int n = fairValue96h.size();
-        if (!n or !periods or n < periods) return;
-        n = periods;
-        *mean = 0;
+        if (!n) return;
+        *mean = fairValue96h.begin();
         while (n--) calcEwma(mean, periods, *(fairValue96h.rbegin()+n));
         FN::log("MG", string("reloaded ") + to_string(*mean) + " EWMA " + name);
       };
