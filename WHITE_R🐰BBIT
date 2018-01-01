@@ -23,7 +23,9 @@
 :  .. Makefile: ------------------------------------- aka. noautoconf ------- :
 :  :  # boooriiing docs at https://www.gnu.org/software/make/manual/make.html :
 :  :                                                                          :
-:  :  # set CHOST env var to your arch if it differs (on redhats, ubuntus..). :
+:  :  # without env vars should work, but cross compilation is possible with: :
+:  :  # set CHOST env var as the target triplet (on redhats, ubuntus, macos). :
+:  :  # set KALL=1 env var to make all the supported targets at once, lovely. :
 :  :                                                                          :
 :  +-- Whaaat??                                                               :
 :     One-time targets: (one-time means everytime new versions are available) :
@@ -37,13 +39,16 @@
 :        when done, rebuild anytime K Server with "make" (but do some mods!). :
 :                                                                             :
 :      $ make clean                                                           :
-:       TODO                                                                  :
+:       after some time the youth goes away and will leave this world behind. :
 :                                                                             :
 :     Devel targets: (an excuse to refill a glass of milk no matter the boss) :
 :      $ make                                                                 :
 :       TODO                                                                  :
 :                                                                             :
 :      $ make bundle                                                          :
+:       TODO                                                                  :
+:                                                                             :
+:      $ make test-c                                                          :
 :       TODO                                                                  :
 :                                                                             :
 :     User targets:                                                           :
