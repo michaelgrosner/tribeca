@@ -11,10 +11,10 @@ namespace K {
       double mgEwmaL = 0;
       double mgEwmaM = 0;
       double mgEwmaS = 0;
-      int VLEP = qp->veryLongEwmaPeriods;
-      int  LEP = qp->longEwmaPeriods;
-      int  MEP = qp->mediumEwmaPeriods;
-      int  SEP = qp->shortEwmaPeriods;
+      unsigned int VLEP = qp->veryLongEwmaPeriods;
+      unsigned int  LEP = qp->longEwmaPeriods;
+      unsigned int  MEP = qp->mediumEwmaPeriods;
+      unsigned int  SEP = qp->shortEwmaPeriods;
       vector<double> mgSMA3;
       vector<double> mgStatFV;
       vector<double> mgStatBid;
@@ -273,7 +273,7 @@ namespace K {
       void calcEwmaHistory(double *mean, unsigned int periods, string name) {
         unsigned int n = fairValue96h.size();
         if (!n) return;
-        *mean = fairValue96h.begin();
+        *mean = fairValue96h.front();
         while (n--) calcEwma(mean, periods, *(fairValue96h.rbegin()+n));
         FN::log("MG", string("reloaded ") + to_string(*mean) + " EWMA " + name);
       };
