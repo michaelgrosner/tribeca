@@ -269,9 +269,8 @@ screen:
 	&& sleep 2 && screen -r $(K)) || screen -list || :
 
 cabundle:
-	rm -f etc/sslcert/cacert.pem
-	curl --remote-name --time-cond cacert.pem https://curl.haxx.se/ca/cacert.pem
-	mv cacert.pem etc/K-cabundle.pem
+	curl --remote-name --time-cond etc/K-cabundle.pem https://curl.haxx.se/ca/cacert.pem
+	@test -f cacert.pem && mv cacert.pem etc/K-cabundle.pem || :
 
 gdax:
 	openssl s_client -showcerts -connect fix.gdax.com:4198 -CApath /etc/ssl/certs < /dev/null \
