@@ -11,10 +11,6 @@ namespace K {
       double mgEwmaL = 0;
       double mgEwmaM = 0;
       double mgEwmaS = 0;
-      unsigned int VLEP = qp->veryLongEwmaPeriods;
-      unsigned int  LEP = qp->longEwmaPeriods;
-      unsigned int  MEP = qp->mediumEwmaPeriods;
-      unsigned int  SEP = qp->shortEwmaPeriods;
       vector<double> mgSMA3;
       vector<double> mgStatFV;
       vector<double> mgStatBid;
@@ -116,6 +112,10 @@ namespace K {
         averageWidth /= ++averageCount;
       };
       void calcEwmaHistory() {
+	    static unsigned int VLEP = qp->veryLongEwmaPeriods;
+        static unsigned int  LEP = qp->longEwmaPeriods;
+        static unsigned int  MEP = qp->mediumEwmaPeriods;
+        static unsigned int  SEP = qp->shortEwmaPeriods;
         if (VLEP != qp->veryLongEwmaPeriods) { VLEP = qp->veryLongEwmaPeriods; calcEwmaHistory(&mgEwmaVL, VLEP, "VeryLong"); }
         if (LEP != qp->longEwmaPeriods) { LEP = qp->longEwmaPeriods; calcEwmaHistory(&mgEwmaL, LEP, "Long"); }
         if (MEP != qp->mediumEwmaPeriods) { MEP = qp->mediumEwmaPeriods; calcEwmaHistory(&mgEwmaM, qp->mediumEwmaPeriods, "Medium"); }
