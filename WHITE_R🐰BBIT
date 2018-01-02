@@ -24,7 +24,7 @@
 :  :  # boooriiing docs at https://www.gnu.org/software/make/manual/make.html :
 :  :                                                                          :
 :  :  # a target without env vars is OK but cross compilation is viable with: :
-:  :  - set CHOST env var as the target triplet (on redhats, ubuntus, macos). :
+:  :  - set CHOST env var as any target triplet (on redhats, ubuntus, macos). :
 :  :  - set KALL=1 env var to make all the supported targets at once, lovely. :
 :  :                                                                          :
 :  +-- Whaaat??                                                               :
@@ -52,7 +52,7 @@
 :      $ make test-c                                                          :
 :       TODO                                                                  :
 :                                                                             :
-:     User targets:                                                           :
+:     User targets: (oh my dog! command-line commands! lets see what happens) :
 :      $ make latest                                                          :
 :       TODO                                                                  :
 :                                                                             :
@@ -62,13 +62,13 @@
 :      $ make reinstall                                                       :
 :       TODO                                                                  :
 :                                                                             :
-:     Private targets:                                                        :
+:     Private targets: (!no trespassing! move along, nothing to execute here) :
 :      $ make release                                                         :
 :       TODO                                                                  :
 :                                                                             :
-:     Encrypted targets:                                                      :
+:     Encrypted targets: (here! im here!! crack me! i have been always here!) :
 :      $ make enc                                                             :
-:       TODO                                                                  :
+:       not sure but.. is nice that github shows +2 releases, dont you think? :
 :                                                                             :
 :     Missing targets:                                                        :
 :      $ make onestep-install-for-node-and-node-friend-npm                    :
