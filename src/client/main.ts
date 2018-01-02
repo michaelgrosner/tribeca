@@ -932,7 +932,6 @@ class ClientComponent implements OnInit {
     this.db_size = this.bytesToSize(o.dbsize, 0);
     this.bid_levels = o.bids;
     this.ask_levels = o.asks;
-    this.db_size = this.bytesToSize(o.dbsize, 0);
     this.tradeFreq = (o.freq);
     this.system_theme = this.getTheme((new Date).getHours());
     this.setTheme();
