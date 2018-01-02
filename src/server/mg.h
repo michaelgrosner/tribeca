@@ -38,7 +38,7 @@ namespace K {
     protected:
       void load() {
         for (json &it : ((DB*)memory)->load(mMatter::MarketData)) {
-          if (it.value("time", (unsigned long)0) + qp->quotingStdevProtectionPeriods * 1e+3 < FN::T()) continue;
+          if (it.value("time", (unsigned long)0) + qp->quotingStdevProtectionPeriods * 1e+3 < _Tstamp_) continue;
           mgStatFV.push_back(it.value("fv", 0.0));
           mgStatBid.push_back(it.value("bid", 0.0));
           mgStatAsk.push_back(it.value("ask", 0.0));
@@ -54,13 +54,13 @@ namespace K {
         json k = ((DB*)memory)->load(mMatter::EWMAChart);
         if (!k.empty()) {
           k = k.at(0);
-          if (!mgEwmaVL and k.value("time", (unsigned long)0) + qp->veryLongEwmaPeriods * 6e+4 > FN::T())
+          if (!mgEwmaVL and k.value("time", (unsigned long)0) + qp->veryLongEwmaPeriods * 6e+4 > _Tstamp_)
             mgEwmaVL = k.value("ewmaVeryLong", 0.0);
-          if (!mgEwmaL and k.value("time", (unsigned long)0) + qp->longEwmaPeriods * 6e+4 > FN::T())
+          if (!mgEwmaL and k.value("time", (unsigned long)0) + qp->longEwmaPeriods * 6e+4 > _Tstamp_)
             mgEwmaL = k.value("ewmaLong", 0.0);
-          if (!mgEwmaM and k.value("time", (unsigned long)0) + qp->mediumEwmaPeriods * 6e+4 > FN::T())
+          if (!mgEwmaM and k.value("time", (unsigned long)0) + qp->mediumEwmaPeriods * 6e+4 > _Tstamp_)
             mgEwmaM = k.value("ewmaMedium", 0.0);
-          if (!mgEwmaS and k.value("time", (unsigned long)0) + qp->shortEwmaPeriods * 6e+4 > FN::T())
+          if (!mgEwmaS and k.value("time", (unsigned long)0) + qp->shortEwmaPeriods * 6e+4 > _Tstamp_)
             mgEwmaS = k.value("ewmaShort", 0.0);
         }
         if (mgEwmaVL) FN::log(((CF*)config)->argEwmaVeryLong ? "ARG" : "DB", string("loaded ") + to_string(mgEwmaVL) + " EWMA VeryLong");
@@ -68,17 +68,15 @@ namespace K {
         if (mgEwmaM)  FN::log(((CF*)config)->argEwmaMedium ? "ARG" : "DB", string("loaded ") + to_string(mgEwmaM) + " EWMA Medium");
         if (mgEwmaS)  FN::log(((CF*)config)->argEwmaShort ? "ARG" : "DB", string("loaded ") + to_string(mgEwmaS) + " EWMA Short");
         for (json &it : ((DB*)memory)->load(mMatter::MarketDataLongTerm))
-          if (it.value("time", (unsigned long)0) + 3456e+5 > FN::T() and it.value("fv", 0.0))
+          if (it.value("time", (unsigned long)0) + 3456e+5 > _Tstamp_ and it.value("fv", 0.0))
             fairValue96h.push_back(it.value("fv", 0.0));
         FN::log("DB", string("loaded ") + to_string(fairValue96h.size()) + " historical FairValues");
       };
       void waitData() {
-        gw->evDataTrade = [&](mTrade k) {
-          ((EV*)events)->debug(__PRETTY_FUNCTION__);
+        gw->evDataTrade = [&](mTrade k) {                           _debugEvent_
           tradeUp(k);
         };
-        gw->evDataLevels = [&](mLevels k) {
-          ((EV*)events)->debug(__PRETTY_FUNCTION__);
+        gw->evDataLevels = [&](mLevels k) {                         _debugEvent_
           levelUp(k);
         };
       };
@@ -110,7 +108,8 @@ namespace K {
         if (!fairValue or (fairValue_ and abs(fairValue - fairValue_) < gw->minTick)) return;
         gw->evDataWallet(mWallet());
         ((UI*)client)->send(mMatter::FairValue, {{"price", fairValue}});
-        averageWidth = ((averageWidth * averageCount) + topAskPrice - topBidPrice) / ++averageCount;
+        averageWidth = ((averageWidth * averageCount) + topAskPrice - topBidPrice);
+        averageWidth /= ++averageCount;
       };
       void calcEwmaHistory() {
         calcEwmaHistory(&mgEwmaVL, qp->veryLongEwmaPeriods, "VeryLong");
@@ -146,8 +145,8 @@ namespace K {
           {"fv", fairValue},
           {"bid", topBid},
           {"ask", topAsk},
-          {"time", FN::T()},
-        }, false, "NULL", FN::T() - 1e+3 * qp->quotingStdevProtectionPeriods);
+          {"time", _Tstamp_},
+        }, false, "NULL", _Tstamp_ - 1e+3 * qp->quotingStdevProtectionPeriods);
       };
       void calcStatsTrades() {
         takersSellSize60s = takersBuySize60s = 0;
@@ -159,15 +158,17 @@ namespace K {
       };
       void tradeUp(mTrade k) {
         k.pair = mPair(gw->base, gw->quote);
-        k.time = FN::T();
+        k.time = _Tstamp_;
         trades.push_back(k);
         ((UI*)client)->send(mMatter::MarketTrade, k);
       };
       void levelUp(mLevels k) {
         filter(k);
-        if (mgT_369ms+369 > FN::T()) return;
+        if (mgT_369ms + 369e+0 > _Tstamp_) return;
+        ((UI*)client)->bid_levels = k.bids.size();
+        ((UI*)client)->ask_levels = k.asks.size();
         ((UI*)client)->send(mMatter::MarketData, k);
-        mgT_369ms = FN::T();
+        mgT_369ms = _Tstamp_;
       };
       void calcStatsEwmaPosition() {
         fairValue96h.push_back(fairValue);
@@ -185,12 +186,12 @@ namespace K {
           {"ewmaLong", mgEwmaL},
           {"ewmaMedium", mgEwmaM},
           {"ewmaShort", mgEwmaS},
-          {"time", FN::T()}
+          {"time", _Tstamp_}
         });
         ((DB*)memory)->insert(mMatter::MarketDataLongTerm, {
           {"fv", fairValue},
-          {"time", FN::T()},
-        }, false, "NULL", FN::T() - 3456e+5);
+          {"time", _Tstamp_},
+        }, false, "NULL", _Tstamp_ - 3456e+5);
       };
       void calcStatsEwmaProtection() {
         calcEwma(&mgEwmaP, qp->protectionEwmaPeriods, fairValue);

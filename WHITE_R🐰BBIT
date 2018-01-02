@@ -23,21 +23,24 @@
 :  .. Makefile: ------------------------------------- aka. noautoconf ------- :
 :  :  # boooriiing docs at https://www.gnu.org/software/make/manual/make.html :
 :  :                                                                          :
-:  :  # set CARCH env var to your arch if it differs (on redhats, ubuntus..). :
+:  :  # a target without env vars is OK but cross compilation is viable with: :
+:  :  - set CHOST env var as any target triplet (on redhats, ubuntus, macos). :
+:  :  - set KALL=1 env var to make all the supported targets at once, lovely. :
 :  :                                                                          :
 :  +-- Whaaat??                                                               :
 :     One-time targets: (one-time means everytime new versions are available) :
 :      $ make packages                                                        :
-:       forget about this. is executed by "make install" every. single. time. :
+:       forget about this, is executed by "make install" every. single. time. :
 :                                                                             :
 :      $ make dist                                                            :
-:       once upon a time there was a vast empty build folder but not anymore. :
+:       once upon a time, there was vast empty build folders but not anymore. :
 :        all includes (see Makefile and src/server/K.cxx) will be downloaded. :
 :        no errors or warnings expected, unless by happy libquickfix; ignore. :
 :        when done, rebuild anytime K Server with "make" (but do some mods!). :
 :                                                                             :
 :      $ make clean                                                           :
-:       TODO                                                                  :
+:       after some time, the youth goes away and I will leave a world behind. :
+:        don't be sad life is life and this world will never forget our time. :
 :                                                                             :
 :     Devel targets: (an excuse to refill a glass of milk no matter the boss) :
 :      $ make                                                                 :
@@ -46,7 +49,10 @@
 :      $ make bundle                                                          :
 :       TODO                                                                  :
 :                                                                             :
-:     User targets:                                                           :
+:      $ make test-c                                                          :
+:       TODO                                                                  :
+:                                                                             :
+:     User targets: (oh my dog! command-line commands! lets see what happens) :
 :      $ make latest                                                          :
 :       TODO                                                                  :
 :                                                                             :
@@ -56,13 +62,13 @@
 :      $ make reinstall                                                       :
 :       TODO                                                                  :
 :                                                                             :
-:     Private targets:                                                        :
+:     Private targets: (!no trespassing! move along, nothing to execute here) :
 :      $ make release                                                         :
 :       TODO                                                                  :
 :                                                                             :
-:     Encrypted targets:                                                      :
+:     Encrypted targets: (here! im here!! crack me! i have been always here!) :
 :      $ make enc                                                             :
-:       TODO                                                                  :
+:       not sure but.. is nice that github shows +2 releases, dont you think? :
 :                                                                             :
 :     Missing targets:                                                        :
 :      $ make onestep-install-for-node-and-node-friend-npm                    :

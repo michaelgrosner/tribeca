@@ -1,6 +1,9 @@
 #ifndef K_EV_H_
 #define K_EV_H_
 
+#define _errorEvent_ ((EV*)events)->error
+#define _debugEvent_ ((EV*)events)->debug(__PRETTY_FUNCTION__);
+
 namespace K  {
   class EV: public Klass {
     private:
@@ -38,7 +41,7 @@ namespace K  {
       };
       void waitData() {
         aEngine = new Async(hub->getLoop());
-        aEngine->data = this;
+        aEngine->setData(this);
         aEngine->start(asyncLoop);
         gw->gwGroup = hub->createGroup<uWS::CLIENT>();
       };
@@ -54,7 +57,7 @@ namespace K  {
     public:
       void start() {
         THIS_WAS_A_TRIUMPH
-          << "- roll-out: " << to_string(FN::T()) << '\n';
+          << "- roll-out: " << to_string(_Tstamp_) << '\n';
         hub->run();
       };
       void stop(function<void()> gwCancelAll) {
@@ -100,7 +103,7 @@ namespace K  {
         cout << " THE END." << '\n';
       };
       void (*asyncLoop)(Async*) = [](Async *handle) {
-        EV* k = (EV*)handle->data;
+        EV* k = (EV*)handle->getData();
         if (!k->asyncFn.empty()) {
           for (function<void()> &it : k->asyncFn) it();
           k->asyncFn.clear();
@@ -147,7 +150,7 @@ namespace K  {
         else {
           THIS_WAS_A_TRIUMPH
             << " (Three-Headed Monkey found):" << '\n' << rollout.str()
-            << "- lastbeat: " << to_string(FN::T()) << '\n'
+            << "- lastbeat: " << to_string(_Tstamp_) << '\n'
             << "- tracelog: " << '\n';
           void *k[69];
           size_t jumps = backtrace(k, 69);

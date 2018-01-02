@@ -33,17 +33,14 @@ namespace K {
         FN::log("DB", string("loaded TBP = ") + ss.str() + " " + gw->base);
       };
       void waitData() {
-        gw->evDataWallet = [&](mWallet k) {
-          ((EV*)events)->debug(string(__PRETTY_FUNCTION__) + ((json)k).dump());
+        gw->evDataWallet = [&](mWallet k) {                         _debugEvent_
           calcWallet(k);
         };
-        ((EV*)events)->ogOrder = [&](mOrder k) {
-          ((EV*)events)->debug(string(__PRETTY_FUNCTION__) + ((json)k).dump());
+        ((EV*)events)->ogOrder = [&](mOrder k) {                    _debugEvent_
           calcWalletAfterOrder(k);
           FN::screen_refresh(((OG*)broker)->orders);
         };
-        ((EV*)events)->mgTargetPosition = [&]() {
-          ((EV*)events)->debug(__PRETTY_FUNCTION__);
+        ((EV*)events)->mgTargetPosition = [&]() {                   _debugEvent_
           calcTargetBasePos();
         };
       };
@@ -196,7 +193,7 @@ namespace K {
         skip();
       };
       void expire(map<double, mTrade> *k) {
-        unsigned long now = FN::T();
+        unsigned long now = _Tstamp_;
         for (map<double, mTrade>::iterator it = k->begin(); it != k->end();)
           if (it->second.time + qp->tradeRateSeconds * 1e+3 > now) ++it;
           else it = k->erase(it);
@@ -299,7 +296,7 @@ namespace K {
         }
       }
       void calcProfit(mPosition *k) {
-        unsigned long now = FN::T();
+        unsigned long now = _Tstamp_;
         if (profitT_21s<=3) ++profitT_21s;
         else if (k->baseValue and k->quoteValue and profitT_21s+21e+3 < now) {
           profitT_21s = now;
