@@ -96,6 +96,7 @@ export class QuoteUntruncatedCurrencyCellComponent implements AgRendererComponen
       this.quoteSymbol = params.node.data.quoteSymbol.substr(0,3).replace('USD','$').replace('EUR','€');
     if (!params.value)
       this.quoteSymbol = "";
+    else params.value = parseFloat(params.value.toFixed(8));
   }
 
   refresh(): boolean {

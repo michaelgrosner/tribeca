@@ -16,7 +16,7 @@ V_SQL   := 3210000
 V_QF    := v.1.14.4
 V_UV    := 1.18.0
 V_PVS   := 6.20.24121.1823
-KZIP     = ce80719668afcd8e82d2921647f4269b3ab8d64e
+KZIP     = 9ac4d68b3567f707523ee53f7b40c013ee263cb4
 KARGS    = -Wextra -std=c++11 -O3 -I$(KLOCAL)/include      \
   src/server/K.cxx -pthread -rdynamic                      \
   -DK_STAMP='"$(shell date "+%Y-%m-%d %H:%M:%S")"'         \
@@ -269,8 +269,7 @@ screen:
 	&& sleep 2 && screen -r $(K)) || screen -list || :
 
 cabundle:
-	curl --remote-name --time-cond etc/K-cabundle.pem https://curl.haxx.se/ca/cacert.pem
-	@test -f cacert.pem && mv cacert.pem etc/K-cabundle.pem || :
+	curl --time-cond etc/K-cabundle.pem https://curl.haxx.se/ca/cacert.pem -o etc/K-cabundle.pem
 
 gdax:
 	openssl s_client -showcerts -connect fix.gdax.com:4198 -CApath /etc/ssl/certs < /dev/null \
