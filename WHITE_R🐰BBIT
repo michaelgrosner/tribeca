@@ -37,7 +37,7 @@
 :        all includes (see Makefile and src/server/K.cxx) will be downloaded. :
 :        no errors or warnings expected, unless by happy libquickfix; ignore. :
 :        when done, rebuild anytime K Server with "make" (but do some mods!). :
-:        !will never be done! unless "make install" is, in advance, executed. :
+:        !will never be done! unless "make install" is: in advance! executed. :
 :                                                                             :
 :      $ make clean                                                           :
 :       after some time, the youth goes away and I will leave a world behind. :
