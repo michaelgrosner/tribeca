@@ -24,7 +24,7 @@
 :  :  # boooriiing docs at https://www.gnu.org/software/make/manual/make.html :
 :  :                                                                          :
 :  :  # a target without env vars is OK but cross compilation is viable with: :
-:  :  - set CHOST env var as the target triplet (on redhats, ubuntus, macos). :
+:  :  - set CHOST env var as any target triplet (on redhats, ubuntus, macos). :
 :  :  - set KALL=1 env var to make all the supported targets at once, lovely. :
 :  :                                                                          :
 :  +-- Whaaat??                                                               :
@@ -37,6 +37,7 @@
 :        all includes (see Makefile and src/server/K.cxx) will be downloaded. :
 :        no errors or warnings expected, unless by happy libquickfix; ignore. :
 :        when done, rebuild anytime K Server with "make" (but do some mods!). :
+:        !will never be done! unless "make install" is: in advance! executed. :
 :                                                                             :
 :      $ make clean                                                           :
 :       after some time, the youth goes away and I will leave a world behind. :
@@ -52,27 +53,29 @@
 :      $ make test-c                                                          :
 :       TODO                                                                  :
 :                                                                             :
-:     User targets:                                                           :
-:      $ make latest                                                          :
-:       TODO                                                                  :
-:                                                                             :
+:     User targets: (oh my dog! command-line commands! lets see what happens) :
 :      $ make install                                                         :
-:       TODO                                                                  :
+:       what happens here is mandatory. This is the very first step. Not only :
+:        the last public version will be downloaded but also the private lib. :
+:        K only runs and only can be recompiled if "make install" goes first. :
 :                                                                             :
 :      $ make reinstall                                                       :
 :       TODO                                                                  :
 :                                                                             :
-:     Private targets:                                                        :
+:      $ make latest                                                          :
+:       TODO                                                                  :
+:                                                                             :
+:     Private targets: (!no trespassing! move along, nothing to execute here) :
 :      $ make release                                                         :
 :       TODO                                                                  :
 :                                                                             :
-:     Encrypted targets:                                                      :
+:     Encrypted targets: (here! im here!! crack me! i have been always here!) :
 :      $ make enc                                                             :
-:       TODO                                                                  :
+:       not sure but.. is nice that github shows +2 releases, dont you think? :
 :                                                                             :
-:     Missing targets:                                                        :
+:     Missing targets: (let's plant a tree instead, or better two nice trees) :
 :      $ make onestep-install-for-node-and-node-friend-npm                    :
-:       TODO                                                                  :
+:       see https://www.ecosia.org/search?q=node+install+from+package+manager :
 :                                                                             :
 :_____________________________________________________________________________:
 :                                                                             :

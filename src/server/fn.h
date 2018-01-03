@@ -95,7 +95,7 @@ namespace K {
         BIO_get_mem_ptr(bio, &bufferPtr);
         BIO_set_close(bio, BIO_NOCLOSE);
         BIO_free_all(bio);
-        return (*bufferPtr).data;
+        return string(bufferPtr->data, bufferPtr->length);
       };
       static string oMd5(string k) {
         unsigned char digest[MD5_DIGEST_LENGTH];

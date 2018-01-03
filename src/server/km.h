@@ -482,9 +482,15 @@ namespace K {
     };
   };
   static void to_json(json& j, const mLevels& k) {
+    vector<mLevel> bids,
+                   asks;
+    for (const mLevel &it : k.bids)
+      if (bids.size() < 15) bids.push_back(it); else break;
+    for (const mLevel &it : k.asks)
+      if (asks.size() < 15) asks.push_back(it); else break;
     j = {
-      {"bids", k.bids},
-      {"asks", k.asks}
+      {"bids", bids},
+      {"asks", asks}
     };
   };
   struct mQuote {
