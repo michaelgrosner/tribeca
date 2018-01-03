@@ -53,13 +53,15 @@
 :       TODO                                                                  :
 :                                                                             :
 :     User targets: (oh my dog! command-line commands! lets see what happens) :
-:      $ make latest                                                          :
-:       TODO                                                                  :
-:                                                                             :
 :      $ make install                                                         :
-:       TODO                                                                  :
+:       what happens here is mandatory. This is the very first step. Not only :
+:        the last public version will be downloaded but also the private lib. :
+:        K only runs and only can be recompiled if "make install" goes first. :
 :                                                                             :
 :      $ make reinstall                                                       :
+:       TODO                                                                  :
+:                                                                             :
+:      $ make latest                                                          :
 :       TODO                                                                  :
 :                                                                             :
 :     Private targets: (!no trespassing! move along, nothing to execute here) :
