@@ -11,6 +11,7 @@ namespace K {
           argDebugOrders = 0,
           argDebugQuotes = 0,
           argWithoutSSL = 0,
+          argMaxLevels = 0,
           argHeadless = 0,
           argDustybot = 0,
           argAutobot = 0,
@@ -63,21 +64,23 @@ namespace K {
           {"port",         required_argument, 0,               'P'},
           {"user",         required_argument, 0,               'u'},
           {"pass",         required_argument, 0,               'p'},
-          {"database",     required_argument, 0,               'd'},
           {"ewma-short",   required_argument, 0,               's'},
           {"ewma-medium",  required_argument, 0,               'm'},
           {"ewma-long",    required_argument, 0,               'l'},
           {"ewma-verylong",required_argument, 0,               'V'},
+          {"database",     required_argument, 0,               'd'},
+          {"market-limit", required_argument, 0,               'M'},
           {"free-version", no_argument,       &argFree,          1},
           {"version",      no_argument,       0,               'v'},
           {0,              0,                 0,                 0}
         };
         int k = 0;
         while (++k)
-          switch (k = getopt_long(argc, argv, "hvd:l:m:s:p:u:v:c:e:k:P:K:W:H:U:X:S:A:", args, NULL)) {
+          switch (k = getopt_long(argc, argv, "hvc:d:e:k:l:m:s:p:u:v:A:H:K:M:P:S:U:W:X:", args, NULL)) {
             case -1 :
             case  0 : break;
             case 'P': argPort         = stoi(optarg);   break;
+            case 'M': argMaxLevels    = stoi(optarg);   break;
             case 'A': argApikey       = string(optarg); break;
             case 'S': argSecret       = string(optarg); break;
             case 'U': argUsername     = string(optarg); break;
@@ -150,6 +153,9 @@ namespace K {
               << FN::uiT() << RWHITE << "                            overwrites the value from the database." << '\n'
               << FN::uiT() << RWHITE << "-V, --ewma-verylong=PRICE - set initial ewma verylong value," << '\n'
               << FN::uiT() << RWHITE << "                            overwrites the value from the database." << '\n'
+              << FN::uiT() << RWHITE << "-M, --market-limit=NUMBER - set NUMBER of maximum price levels for the orderbook," << '\n'
+              << FN::uiT() << RWHITE << "                            minimum is '15', maximum (not set) is limit by exchange." << '\n'
+              << FN::uiT() << RWHITE << "                            locked bots smells like '--market-limit=3' spirit." << '\n'
               << FN::uiT() << RWHITE << "    --debug-events        - print detailed output about event handlers." << '\n'
               << FN::uiT() << RWHITE << "    --debug-orders        - print detailed output about exchange messages." << '\n'
               << FN::uiT() << RWHITE << "    --debug-quotes        - print detailed output about quoting engine." << '\n'
@@ -198,6 +204,7 @@ namespace K {
             + '.' + base()
             + '.' + quote()
             + '.' + "db";
+        if (argMaxLevels) argMaxLevels = max(15, argMaxLevels);
       };
       void run() {
         gw = Gw::config(
@@ -205,7 +212,8 @@ namespace K {
           argExchange, argFree,
           argApikey,   argSecret,
           argUsername, argPassphrase,
-          argHttp,     argWss
+          argHttp,     argWss,
+          argMaxLevels
         );
         if (argNaked) return;
         FN::screen_config(argColors, argExchange, argCurrency);
