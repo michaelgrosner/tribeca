@@ -126,7 +126,7 @@ namespace K {
               << FN::uiT() << RWHITE << "                            mandatory but may be 'NULL'." << '\n'
               << FN::uiT() << RWHITE << "-e, --exchange=NAME       - set exchange NAME for trading, mandatory one of:" << '\n'
               << FN::uiT() << RWHITE << "                            'COINBASE', 'BITFINEX',  'BITFINEX_MARGIN', 'HITBTC'," << '\n'
-              << FN::uiT() << RWHITE << "                            'OKCOIN', 'KORBIT', 'POLONIEX' or 'NULL'." << '\n'
+              << FN::uiT() << RWHITE << "                            'OKCOIN', 'OKEX', 'KORBIT', 'POLONIEX' or 'NULL'." << '\n'
               << FN::uiT() << RWHITE << "-c, --currency=PAIRS      - set currency pairs for trading (use format" << '\n'
               << FN::uiT() << RWHITE << "                            with '/' separator, like 'BTC/EUR')." << '\n'
               << FN::uiT() << RWHITE << "-A, --apikey=WORD         - set (never share!) WORD as api key for trading," << '\n'
