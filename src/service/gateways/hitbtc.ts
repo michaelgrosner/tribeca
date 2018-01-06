@@ -21,7 +21,8 @@ import log from "../logging";
 const shortId = require("shortid");
 const SortedMap = require("collections/sorted-map");
 
-const _lotMultiplier = 100.0;  // FIXME: Is this still valid in api v2?
+// const _lotMultiplier = 100.0;  // FIXME: Is this still valid in api v2?
+const _lotMultiplier = 1.0;  // FIXME: Is this still valid in api v2?
 
 interface NoncePayload<T> {
     nonce: number;
@@ -44,9 +45,9 @@ interface NewOrder extends HitBtcPayload {
     clientOrderId : string;
     symbol : string;
     side : string;
-    quantity : number;
+    quantity : string;
     type : string;
-    price : number;
+    price : string;
     timeInForce : string;
 }
 
@@ -359,8 +360,8 @@ class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
             symbol: this._symbolProvider.symbol,
             side: HitBtcOrderEntryGateway.getSide(order.side),
             type: HitBtcOrderEntryGateway.getType(order.type),
-            quantity: order.quantity * _lotMultiplier,
-            price: order.price * 300,
+            quantity: (order.quantity * _lotMultiplier).toString(),
+            price: (order.price * 300).toString(), // TODO Remove multiplication
             timeInForce: HitBtcOrderEntryGateway.getTif(order.timeInForce)
         };
 
