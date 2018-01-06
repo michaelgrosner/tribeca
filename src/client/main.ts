@@ -867,6 +867,8 @@ class ClientComponent implements OnInit {
     }
 
     window.addEventListener("message", e => {
+      if (!e.data.indexOf) return;
+
       if (e.data.indexOf('height=')===0) {
         document.getElementById('matryoshka').style.height = e.data.replace('height=','');
         this.resizeMatryoshka();
