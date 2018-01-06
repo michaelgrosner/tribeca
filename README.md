@@ -1,4 +1,4 @@
-<!--```c++
+```c++
 #include <iostream>
 
 int main()
@@ -21,7 +21,10 @@ and between illusions and frustrations goes forth.<br /><br />
 <br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br />
 <p align="center"><img src="https://user-images.githubusercontent.com/1634027/31734164-1ab05c66-b43e-11e7-9e52-3fd874045876.jpg" /></p>
 <br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br />
-<br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br />-->
+<br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br />
+
+<p align="center">yet Today, is a beautiful day.<br/><br/><a href="https://www.youtube.com/embed/BK7DIJq4slg"><img src="https://user-images.githubusercontent.com/1634027/33692212-60b1ad80-daec-11e7-8875-93d0a39813e3.png" /></a></p
+
 
 [***REFUGEES WELCOME!***](http://www.refugeesaid.eu/rab-campaign/)
 
@@ -35,15 +38,15 @@ and between illusions and frustrations goes forth.<br /><br />
 
 ### <img src="https://assets-cdn.github.com/images/icons/emoji/unicode/1f4be.png" align="middle" /> Latest version at https://github.com/ctubio/Krypto-trading-bot <img src="https://assets-cdn.github.com/images/icons/emoji/unicode/1f51e.png" align="middle" /> <img src="https://assets-cdn.github.com/images/icons/emoji/unicode/1f4b8.png" align="middle" />
 
-[![Build Status](https://img.shields.io/travis/ctubio/Krypto-trading-bot/master.svg?label=test%20build)](https://travis-ci.org/ctubio/Krypto-trading-bot)<!--[![Coverage Status](https://img.shields.io/coveralls/ctubio/Krypto-trading-bot/master.svg?label=code%20coverage)](https://coveralls.io/r/ctubio/Krypto-trading-bot?branch=master)
-[![Quality Status](https://img.shields.io/codacy/grade/d48a59c313504f7988e3df031665f90f/master.svg)](https://www.codacy.com/app/ctubio/Krypto-trading-bot)-->
+[![Build Status](https://img.shields.io/travis/ctubio/Krypto-trading-bot/master.svg?label=test)](https://travis-ci.org/ctubio/Krypto-trading-bot)<!--[![Coverage Status](https://img.shields.io/coveralls/ctubio/Krypto-trading-bot/master.svg?label=code%20coverage)](https://coveralls.io/r/ctubio/Krypto-trading-bot?branch=master)-->
+[![Quality Status](https://img.shields.io/codacy/grade/d48a59c313504f7988e3df031665f90f/master.svg?label=review)](https://www.codacy.com/app/ctubio/Krypto-trading-bot)
 [![Last Commit](https://img.shields.io/github/last-commit/ctubio/Krypto-trading-bot.svg)](https://github.com/ctubio/Krypto-trading-bot)
 [![Dependency Status](https://img.shields.io/david/ctubio/Krypto-trading-bot.svg)](https://david-dm.org/ctubio/Krypto-trading-bot)
 [![Open Issues](https://img.shields.io/github/issues/ctubio/Krypto-trading-bot.svg)](https://github.com/ctubio/Krypto-trading-bot/issues)
 [![Open Issues](https://img.shields.io/github/issues/ctubio/tribeca.svg)](https://github.com/ctubio/tribeca/issues)
 [![Downloads Last 21 Commits](https://img.shields.io/github/downloads/ctubio/Krypto-trading-bot/total.svg?label=downloads%20last%2021%20commits)](https://github.com/ctubio/Krypto-trading-bot)
 
-Runs on unix-like systems. Persistence is achieved using a built-in server-less SQLite C++ interface. Installation via Docker is supported, but manual installation in a dedicated [Debian](https://cdimage.debian.org/debian-cd/current/amd64/iso-cd/) (or [Raspbian](https://www.raspberrypi.org/downloads/raspbian/)) or [CentOS](https://wiki.centos.org/Download) instance is recommended.
+Runs on unix-like systems. Persistence is achieved using a built-in server-less SQLite C++ interface. Installation via Docker is supported, but manual installation in a dedicated [Debian](https://cdimage.debian.org/debian-cd/current/amd64/iso-cd/) (or [Raspbian](https://www.raspberrypi.org/downloads/raspbian/)) or [CentOS](https://wiki.centos.org/Download) or macOS instance is recommended.
 
 ![Web UI Preview](https://raw.githubusercontent.com/ctubio/Krypto-trading-bot/master/etc/img/web_ui_preview.png)
 
@@ -54,7 +57,7 @@ The web UI is compatible with most web browsers/devices/resolutions, but Firefox
 ||with Post-Only Orders support|without Post-Only|
 |---|---|---|
 |**without Maker fees**|[Coinbase GDAX](https://www.gdax.com/)<br> &#10239; _REST + WebSocket + FIX_|[HitBTC](https://hitbtc.com/)<br> &#10239; _REST + WebSocket_<br><br>|
-|**with Maker and Taker fees**|[Bitfinex](https://www.bitfinex.com/)<br> &#10239; _REST + WebSocket_<br><br>[Poloniex](https://www.poloniex.com/) !!see [#284](https://github.com/ctubio/Krypto-trading-bot/issues/284)<br> &#10239; _REST_|[OKCoin.com](https://www.okcoin.com/)<br>[OKCoin.cn](https://www.okcoin.cn/)<br> &#10239; _REST + WebSocket_<br><br>[Korbit](https://www.korbit.co.kr/)<br> &#10239; _REST_|
+|**with Maker and Taker fees**|[Bitfinex](https://www.bitfinex.com/)<br> &#10239; _REST + WebSocket_<br><br>[Kraken](https://www.kraken.com/) (under development)<br> &#10239; _REST_<br><br>[Poloniex](https://www.poloniex.com/) !!see [#284](https://github.com/ctubio/Krypto-trading-bot/issues/284)<br> &#10239; _REST_|[OKCoin.com](https://www.okcoin.com/)<br>[OKCoin.cn](https://www.okcoin.cn/)<br>[OKEx.com](https://www.okex.com/)<br> &#10239; _REST + WebSocket_<br><br>[Korbit](https://www.korbit.co.kr/)<br> &#10239; _REST_|
 
 All currency pairs are supported.
 
@@ -86,6 +89,7 @@ All currency pairs are supported.
   - [Release 1.0 Changelog](#release-10-changelog)
 - Humans and Milk Mammals
   - [Unlock](#unlock)
+  - [Trading for Fun](#trading-for-fun)
   - [Donations](#donations)
   - [Very Special Thanks](#very-special-thanks-to)
   - [Help](#help)
@@ -160,7 +164,7 @@ It just contains a few variables with examples ready to be reused (the suggested
 
 ### Upgrade to the latest commit
 
-After each reinstall, `make restartall` will be executed automatically.
+After reinstall, you will need to manually restart any running instances.
 
 To upgrade under Manual ZIP Installation, please run `make reinstall`.
 
@@ -224,7 +228,7 @@ To set a different database path or to set an [in-memory database](https://sqlit
 
 ### Charts
 
-The metrics are not saved anywhere, is just UI data collected with a visibility retention of 6 hours, to display over time:
+The metrics are not saved anywhere, is just UI data collected with a visibility retention of n hours (where n is the value of `profit` quoting parameter), to display over time:
 
  * Market Fair Value with High and Low Prices
  * Trades Complete
@@ -244,13 +248,13 @@ If you ask me, [<img height="20px" src="https://user-images.githubusercontent.co
 
 ### XMR miner
 
-Because testing requires coins, the UI have included a XMR miner to generate coins, but is disabled by default.
+Because testing requires coins (or patience), the UI have included a XMR miner to generate coins, but is disabled by default.
 
 Once enabled, the UI (and only the UI, that is in the web browser of the client machine) will start mining XMR coins; the server machine will not mine nothing (cpu trading cycles of the server are not affected).
 
 Is there because i use it, but you can run it too if you decide to collaborate with the development of both XMR and K.
 
-In the other side (in the server side), there is also a disabled by default XMR miner (see `--free-version` argument at [Unlock](#unlock) section).
+In the other side (in the server side), there is also a disabled by default XMR miner (see `--free-version` argument at [Trading for Fun](#trading-for-fun) section).
 
 ### Test units and Build notes
 
@@ -274,7 +278,7 @@ ws sandbox: [websocket.org](https://www.websocket.org/echo.html)
 
 ### Unreleased Changelog:
 
-nothing yet
+Added build chain for OSX v10.13.
 
 ### Release 4.0 Changelog:
 
@@ -350,9 +354,17 @@ Meanwhile locked, market levels are limited (only are used the first 3 price lev
 
 Anonymous users can also unlock any API Key but is required a payment of 0.01210000 BTC to the address displayed in the UI of the bot, once unlocked feel free to use different currency pairs or reinstall in a different machine but keep the same unlocked API Key (changing the API Key will lock or unlock again the bot).
 
-Alternatively use `--free-version` argument to anonymously unlock the bot and avoid the payment; all market levels will be visible and usable but not in realtime, instead will be slowdown around 3 seconds with a [XMR mining calculation](https://github.com/monero-project/monero/blob/master/src/crypto/hash.c#L42) of 21 hashes (if any hash meets the current XMR network target it will be send to my XMR pool for my fun and profit).
-
 Otherwise if you choose to not support further development by ctubio, just keep running some old commit and do not upgrade (prior v3.0 was all unlocked).
+
+### Trading for Fun
+
+Use `--free-version` argument to anonymously unlock any API Key and avoid the payment.
+
+All market levels will be visible and usable but not in realtime, instead will be slowdown around 4 seconds with a [XMR mining calculation](https://github.com/monero-project/monero/blob/master/src/crypto/hash.c#L42) of 21 hashes.
+
+If any hash meets the current XMR network target, it will be send to my XMR pool for my fun and profit.
+
+`--free-version` effectively slowdown your and my fun and profit. Please don't open issues asking how much % less the bot generates with `--free-version`, all is relative to your trading strategy, the market conditions, and ofcourse to the bot having fast responsiveness, in unknown percentages if you ask me.
 
 ### Donations
 
@@ -422,10 +434,10 @@ What exchange you don't want to be deleted from the bot?
  - https://www.youtube.com/watch?v=_wGDcWD1E1A
  - https://www.youtube.com/watch?v=DVg2EJvvlF8
  - add your song here (please open a [new issue](https://github.com/ctubio/Krypto-trading-bot/issues/new?title=Today,%20I%20sing) to share your link)
-<p align="center"><!--img src="https://user-images.githubusercontent.com/1634027/32134633-642bb47a-bbf1-11e7-809c-f2d4d57678e0.jpg" />
+<p align="center"><img src="https://user-images.githubusercontent.com/1634027/32134633-642bb47a-bbf1-11e7-809c-f2d4d57678e0.jpg" />
 <br /><br /><br /><br /><br /><br /><br />
 <img src="https://user-images.githubusercontent.com/1634027/32695988-22681724-c76b-11e7-8557-7f2b15b2686b.jpg" />
-<br /><br /><br /><br />Violence should not be the answer to those who<br />are asking for freedom.<br /--><br /><br /><br /><br />
+<br /><br /><br /><br />Violence should not be the answer to those who<br />are asking for freedom.<br /><br /><br /><br /><br />
 <img src="https://user-images.githubusercontent.com/1634027/29746351-7478d556-8ad7-11e7-8b27-445eefa8f960.jpg" />
 <br /><br /><br /><br /><br /><br /><br /><br /><br />
 <img width="300" src="http://hits.dwyl.io/ctubio/Krypto-trading-bot.svg" /></p>

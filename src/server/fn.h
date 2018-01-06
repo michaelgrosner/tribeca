@@ -9,20 +9,15 @@
 #define K_STAMP "0"
 #endif
 
+#define _Tstamp_ chrono::duration_cast<chrono::milliseconds>(     \
+                   chrono::system_clock::now().time_since_epoch() \
+                 ).count()
+
 namespace K {
   class FN {
     public:
       static string S2l(string k) { transform(k.begin(), k.end(), k.begin(), ::tolower); return k; };
       static string S2u(string k) { transform(k.begin(), k.end(), k.begin(), ::toupper); return k; };
-      static double roundNearest(double value, double minTick) { return round(value / minTick) * minTick; };
-      static double roundUp(double value, double minTick) { return ceil(value / minTick) * minTick; };
-      static double roundDown(double value, double minTick) { return floor(value / minTick) * minTick; };
-      static double roundSide(double oP, double minTick, mSide oS) {
-        if (oS == mSide::Bid) return roundDown(oP, minTick);
-        else if (oS == mSide::Ask) return roundUp(oP, minTick);
-        else return roundNearest(oP, minTick);
-      };
-      static unsigned long T() { return chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now().time_since_epoch()).count(); };
       static string uiT() {
         chrono::time_point<chrono::system_clock> now = chrono::system_clock::now();
         auto t = now.time_since_epoch();
@@ -58,13 +53,10 @@ namespace K {
       };
       static string charId() {
         char s[16];
-        for (int i = 0; i < 16; ++i) s[i] = kB64Alphabet[stol(int64Id()) % (sizeof(kB64Alphabet) - 3)];
+        for (unsigned int i = 0; i < 16; ++i) s[i] = alphanum[stol(int64Id()) % (sizeof(alphanum) - 1)];
         return string(s, 16);
       };
       static string uuidId() {
-        static const char alphanum[] = "0123456789"
-                          "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-                          "abcdefghijklmnopqrstuvwxyz";
         string uuid = string(36,' ');
         unsigned long rnd = stol(int64Id());
         unsigned long rnd_ = stol(int64Id());
@@ -73,7 +65,7 @@ namespace K {
         uuid[18] = '-';
         uuid[23] = '-';
         uuid[14] = '4';
-        for(int i=0;i<36;i++)
+        for (unsigned int i=0;i<36;i++)
           if (i != 8 && i != 13 && i != 18 && i != 14 && i != 23) {
             if (rnd <= 0x02) { rnd = 0x2000000 + (rnd_ * 0x1000000) | 0; }
             rnd >>= 4;
@@ -82,72 +74,95 @@ namespace K {
         return S2l(uuid);
       };
       static string oHex(string k) {
-       int len = k.length();
+       unsigned int len = k.length();
         string k_;
-        for(int i=0; i< len; i+=2) {
+        for (unsigned int i=0; i < len; i+=2) {
           string byte = k.substr(i,2);
           char chr = (char)(int)strtol(byte.data(), NULL, 16);
           k_.push_back(chr);
         }
         return k_;
       };
+      static string oB64(string k) {
+        BIO *bio, *b64;
+        BUF_MEM *bufferPtr;
+        b64 = BIO_new(BIO_f_base64());
+        bio = BIO_new(BIO_s_mem());
+        bio = BIO_push(b64, bio);
+        BIO_set_flags(bio, BIO_FLAGS_BASE64_NO_NL);
+        BIO_write(bio, k.data(), k.length());
+        BIO_flush(bio);
+        BIO_get_mem_ptr(bio, &bufferPtr);
+        BIO_set_close(bio, BIO_NOCLOSE);
+        BIO_free_all(bio);
+        return string(bufferPtr->data, bufferPtr->length);
+      };
       static string oMd5(string k) {
         unsigned char digest[MD5_DIGEST_LENGTH];
         MD5((unsigned char*)k.data(), k.length(), (unsigned char*)&digest);
         char k_[16*2+1];
-        for(int i = 0; i < 16; i++) sprintf(&k_[i*2], "%02x", (unsigned int)digest[i]);
+        for (unsigned int i = 0; i < 16; i++) sprintf(&k_[i*2], "%02x", (unsigned int)digest[i]);
         return S2u(k_);
+      };
+      static string oSha256(string k) {
+        unsigned char digest[SHA256_DIGEST_LENGTH];
+        SHA256((unsigned char*)k.data(), k.length(), (unsigned char*)&digest);
+        char k_[SHA256_DIGEST_LENGTH*2+1];
+        for (unsigned int i = 0; i < SHA256_DIGEST_LENGTH; i++) sprintf(&k_[i*2], "%02x", (unsigned int)digest[i]);
+        return k_;
       };
       static string oSha512(string k) {
         unsigned char digest[SHA512_DIGEST_LENGTH];
         SHA512((unsigned char*)k.data(), k.length(), (unsigned char*)&digest);
         char k_[SHA512_DIGEST_LENGTH*2+1];
-        for(int i = 0; i < SHA512_DIGEST_LENGTH; i++) sprintf(&k_[i*2], "%02x", (unsigned int)digest[i]);
+        for (unsigned int i = 0; i < SHA512_DIGEST_LENGTH; i++) sprintf(&k_[i*2], "%02x", (unsigned int)digest[i]);
         return k_;
       };
-      static string oHmac256(string p, string s, bool hex) {
+      static string oHmac256(string p, string s, bool hex = false) {
         unsigned char* digest;
         digest = HMAC(EVP_sha256(), s.data(), s.length(), (unsigned char*)p.data(), p.length(), NULL, NULL);
         char k_[SHA256_DIGEST_LENGTH*2+1];
-        for(int i = 0; i < SHA256_DIGEST_LENGTH; i++) sprintf(&k_[i*2], "%02x", (unsigned int)digest[i]);
+        for (unsigned int i = 0; i < SHA256_DIGEST_LENGTH; i++) sprintf(&k_[i*2], "%02x", (unsigned int)digest[i]);
         return hex ? oHex(k_) : k_;
       };
       static string oHmac512(string p, string s) {
         unsigned char* digest;
         digest = HMAC(EVP_sha512(), s.data(), s.length(), (unsigned char*)p.data(), p.length(), NULL, NULL);
         char k_[SHA512_DIGEST_LENGTH*2+1];
-        for(int i = 0; i < SHA512_DIGEST_LENGTH; i++) sprintf(&k_[i*2], "%02x", (unsigned int)digest[i]);
+        for (unsigned int i = 0; i < SHA512_DIGEST_LENGTH; i++) sprintf(&k_[i*2], "%02x", (unsigned int)digest[i]);
         return k_;
       };
       static string oHmac384(string p, string s) {
         unsigned char* digest;
         digest = HMAC(EVP_sha384(), s.data(), s.length(), (unsigned char*)p.data(), p.length(), NULL, NULL);
         char k_[SHA384_DIGEST_LENGTH*2+1];
-        for(int i = 0; i < SHA384_DIGEST_LENGTH; i++) sprintf(&k_[i*2], "%02x", (unsigned int)digest[i]);
+        for (unsigned int i = 0; i < SHA384_DIGEST_LENGTH; i++) sprintf(&k_[i*2], "%02x", (unsigned int)digest[i]);
         return k_;
       };
       static void stunnel() {
         system("test -n \"`/bin/pidof stunnel`\" && kill -9 `/bin/pidof stunnel`");
         system("stunnel etc/K-stunnel.conf");
       };
-      static json wJet(string k) {
-        return json::parse(wGet(k));
+      static json wJet(string k, bool f = false) {
+        return json::parse(wGet(k, f));
       };
-      static string wGet(string k) {
+      static string wGet(string k, bool f) {
         string k_;
         CURL* curl;
         curl = curl_easy_init();
         if (curl) {
+          curl_easy_setopt(curl, CURLOPT_CAINFO, "etc/K-cabundle.pem");
           curl_easy_setopt(curl, CURLOPT_URL, k.data());
           curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &wcb);
           curl_easy_setopt(curl, CURLOPT_WRITEDATA, &k_);
           curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
-          curl_easy_setopt(curl, CURLOPT_TIMEOUT, 5L);
+          if (f) curl_easy_setopt(curl, CURLOPT_TIMEOUT, 4L);
+          else curl_easy_setopt(curl, CURLOPT_TIMEOUT, 13L);
           CURLcode r = curl_easy_perform(curl);
-          if(r != CURLE_OK) FN::logWar("JSON", string("wGet failed ") + curl_easy_strerror(r));
+          if (!f and r != CURLE_OK) FN::logWar("CURL", string("wGet failed ") + curl_easy_strerror(r));
           curl_easy_cleanup(curl);
         }
-        if (!k_.length() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
+        if (k_.empty() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
         return k_;
       };
       static json wJet(string k, string p) {
@@ -159,6 +174,7 @@ namespace K {
         curl = curl_easy_init();
         if (curl) {
           struct curl_slist *h_ = NULL;
+          curl_easy_setopt(curl, CURLOPT_CAINFO, "etc/K-cabundle.pem");
           curl_easy_setopt(curl, CURLOPT_URL, k.data());
           curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &wcb);
           curl_easy_setopt(curl, CURLOPT_POSTFIELDS, p.data());
@@ -167,10 +183,10 @@ namespace K {
           curl_easy_setopt(curl, CURLOPT_WRITEDATA, &k_);
           curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
           CURLcode r = curl_easy_perform(curl);
-          if(r != CURLE_OK) FN::logWar("JSON", string("wPost failed ") + curl_easy_strerror(r));
+          if(r != CURLE_OK) FN::logWar("CURL", string("wPost failed ") + curl_easy_strerror(r));
           curl_easy_cleanup(curl);
         }
-        if (!k_.length() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
+        if (k_.empty() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
         return k_;
       };
       static json wJet(string k, string t, bool auth) {
@@ -182,17 +198,43 @@ namespace K {
         curl = curl_easy_init();
         if (curl) {
           struct curl_slist *h_ = NULL;
+          curl_easy_setopt(curl, CURLOPT_CAINFO, "etc/K-cabundle.pem");
           curl_easy_setopt(curl, CURLOPT_URL, k.data());
           curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &wcb);
-          if (t != "") h_ = curl_slist_append(h_, string("Authorization: Bearer ").append(t).data());
+          if (!t.empty()) h_ = curl_slist_append(h_, string("Authorization: Bearer ").append(t).data());
           curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
           curl_easy_setopt(curl, CURLOPT_WRITEDATA, &k_);
           curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
           CURLcode r = curl_easy_perform(curl);
-          if(r != CURLE_OK) FN::logWar("JSON", string("wPost failed ") + curl_easy_strerror(r));
+          if(r != CURLE_OK) FN::logWar("CURL", string("wPost failed ") + curl_easy_strerror(r));
           curl_easy_cleanup(curl);
         }
-        if (!k_.length() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
+        if (k_.empty() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
+        return k_;
+      };
+      static json wJet(string k, bool p, string a, string s, string n) {
+        return json::parse(wGet(k, p, a, s, n));
+      };
+      static string wGet(string k, bool p, string a, string s, string n) {
+        string k_;
+        CURL* curl;
+        curl = curl_easy_init();
+        if (curl) {
+          struct curl_slist *h_ = NULL;
+          curl_easy_setopt(curl, CURLOPT_CAINFO, "etc/K-cabundle.pem");
+          curl_easy_setopt(curl, CURLOPT_URL, k.data());
+          curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &wcb);
+          curl_easy_setopt(curl, CURLOPT_POSTFIELDS, n.data());
+          h_ = curl_slist_append(h_, string("API-Key: ").append(a).data());
+          h_ = curl_slist_append(h_, string("API-Sign: ").append(s).data());
+          curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
+          curl_easy_setopt(curl, CURLOPT_WRITEDATA, &k_);
+          curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
+          CURLcode r = curl_easy_perform(curl);
+          if(r != CURLE_OK) FN::logWar("CURL", string("wPost failed ") + curl_easy_strerror(r));
+          curl_easy_cleanup(curl);
+        }
+        if (k_.empty() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
         return k_;
       };
       static json wJet(string k, bool a, string p) {
@@ -203,6 +245,7 @@ namespace K {
         CURL* curl;
         curl = curl_easy_init();
         if (curl) {
+          curl_easy_setopt(curl, CURLOPT_CAINFO, "etc/K-cabundle.pem");
           curl_easy_setopt(curl, CURLOPT_URL, k.data());
           if (a) curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
           curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &wcb);
@@ -210,10 +253,10 @@ namespace K {
           curl_easy_setopt(curl, CURLOPT_WRITEDATA, &k_);
           curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
           CURLcode r = curl_easy_perform(curl);
-          if(r != CURLE_OK) FN::logWar("JSON", string("wGet failed ") + curl_easy_strerror(r));
+          if(r != CURLE_OK) FN::logWar("CURL", string("wGet failed ") + curl_easy_strerror(r));
           curl_easy_cleanup(curl);
         }
-        if (!k_.length() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
+        if (k_.empty() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
         return k_;
       };
       static json wJet(string k, string p, string s, bool post) {
@@ -225,6 +268,7 @@ namespace K {
         curl = curl_easy_init();
         if (curl) {
           struct curl_slist *h_ = NULL;
+          curl_easy_setopt(curl, CURLOPT_CAINFO, "etc/K-cabundle.pem");
           curl_easy_setopt(curl, CURLOPT_URL, k.data());
           curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &wcb);
           curl_easy_setopt(curl, CURLOPT_POSTFIELDS, p.data());
@@ -233,10 +277,10 @@ namespace K {
           curl_easy_setopt(curl, CURLOPT_WRITEDATA, &k_);
           curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
           CURLcode r = curl_easy_perform(curl);
-          if(r != CURLE_OK) FN::logWar("JSON", string("wPost failed ") + curl_easy_strerror(r));
+          if(r != CURLE_OK) FN::logWar("CURL", string("wPost failed ") + curl_easy_strerror(r));
           curl_easy_cleanup(curl);
         }
-        if (!k_.length() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
+        if (k_.empty() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
         return k_;
       };
       static json wJet(string k, string p, string a, string s) {
@@ -248,6 +292,7 @@ namespace K {
         curl = curl_easy_init();
         if (curl) {
           struct curl_slist *h_ = NULL;
+          curl_easy_setopt(curl, CURLOPT_CAINFO, "etc/K-cabundle.pem");
           curl_easy_setopt(curl, CURLOPT_URL, k.data());
           curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &wcb);
           curl_easy_setopt(curl, CURLOPT_POSTFIELDS, p.data());
@@ -258,10 +303,10 @@ namespace K {
           curl_easy_setopt(curl, CURLOPT_WRITEDATA, &k_);
           curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
           CURLcode r = curl_easy_perform(curl);
-          if(r != CURLE_OK) FN::logWar("JSON", string("wPost failed ") + curl_easy_strerror(r));
+          if(r != CURLE_OK) FN::logWar("CURL", string("wPost failed ") + curl_easy_strerror(r));
           curl_easy_cleanup(curl);
         }
-        if (!k_.length() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
+        if (k_.empty() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
         return k_;
       };
       static json wJet(string k, string p, string a, string s, bool post) {
@@ -273,6 +318,7 @@ namespace K {
         curl = curl_easy_init();
         if (curl) {
           struct curl_slist *h_ = NULL;
+          curl_easy_setopt(curl, CURLOPT_CAINFO, "etc/K-cabundle.pem");
           curl_easy_setopt(curl, CURLOPT_URL, k.data());
           curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &wcb);
           curl_easy_setopt(curl, CURLOPT_POSTFIELDS, p.data());
@@ -283,10 +329,10 @@ namespace K {
           curl_easy_setopt(curl, CURLOPT_WRITEDATA, &k_);
           curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
           CURLcode r = curl_easy_perform(curl);
-          if(r != CURLE_OK) FN::logWar("JSON", string("wPost failed ") + curl_easy_strerror(r));
+          if(r != CURLE_OK) FN::logWar("CURL", string("wPost failed ") + curl_easy_strerror(r));
           curl_easy_cleanup(curl);
         }
-        if (!k_.length() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
+        if (k_.empty() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
         return k_;
       };
       static json wJet(string k, string p, string a, string s, bool post, bool auth) {
@@ -298,19 +344,20 @@ namespace K {
         curl = curl_easy_init();
         if (curl) {
           struct curl_slist *h_ = NULL;
+          curl_easy_setopt(curl, CURLOPT_CAINFO, "etc/K-cabundle.pem");
           curl_easy_setopt(curl, CURLOPT_URL, k.data());
           curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &wcb);
           curl_easy_setopt(curl, CURLOPT_POSTFIELDS, p.data());
           h_ = curl_slist_append(h_, "Content-Type: application/x-www-form-urlencoded");
-          if (t != "") h_ = curl_slist_append(h_, string("Authorization: Bearer ").append(t).data());
+          if (!t.empty()) h_ = curl_slist_append(h_, string("Authorization: Bearer ").append(t).data());
           curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
           curl_easy_setopt(curl, CURLOPT_WRITEDATA, &k_);
           curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
           CURLcode r = curl_easy_perform(curl);
-          if(r != CURLE_OK) FN::logWar("JSON", string("wPost failed ") + curl_easy_strerror(r));
+          if(r != CURLE_OK) FN::logWar("CURL", string("wPost failed ") + curl_easy_strerror(r));
           curl_easy_cleanup(curl);
         }
-        if (!k_.length() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
+        if (k_.empty() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
         return k_;
       };
       static json wJet(string k, string t, string a, string s, string p) {
@@ -322,6 +369,7 @@ namespace K {
         curl = curl_easy_init();
         if (curl) {
           struct curl_slist *h_ = NULL;
+          curl_easy_setopt(curl, CURLOPT_CAINFO, "etc/K-cabundle.pem");
           curl_easy_setopt(curl, CURLOPT_URL, k.data());
           curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &wcb);
           h_ = curl_slist_append(h_, string("CB-ACCESS-KEY: ").append(a).data());
@@ -332,10 +380,10 @@ namespace K {
           curl_easy_setopt(curl, CURLOPT_WRITEDATA, &k_);
           curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
           CURLcode r = curl_easy_perform(curl);
-          if(r != CURLE_OK) FN::logWar("JSON", string("wGet failed ") + curl_easy_strerror(r));
+          if(r != CURLE_OK) FN::logWar("CURL", string("wGet failed ") + curl_easy_strerror(r));
           curl_easy_cleanup(curl);
         }
-        if (!k_.length() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
+        if (k_.empty() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
         return k_;
       };
       static json wJet(string k, string t, string a, string s, string p, bool d) {
@@ -347,6 +395,7 @@ namespace K {
         curl = curl_easy_init();
         if (curl) {
           struct curl_slist *h_ = NULL;
+          curl_easy_setopt(curl, CURLOPT_CAINFO, "etc/K-cabundle.pem");
           curl_easy_setopt(curl, CURLOPT_URL, k.data());
           curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &wcb);
           h_ = curl_slist_append(h_, string("CB-ACCESS-KEY: ").append(a).data());
@@ -358,45 +407,20 @@ namespace K {
           curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
           curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
           CURLcode r = curl_easy_perform(curl);
-          if(r != CURLE_OK) FN::logWar("JSON", string("wGet failed ") + curl_easy_strerror(r));
+          if(r != CURLE_OK) FN::logWar("CURL", string("wGet failed ") + curl_easy_strerror(r));
           curl_easy_cleanup(curl);
         }
-        if (!k_.length() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
+        if (k_.empty() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
         return k_;
       };
       static size_t wcb(void *buf, size_t size, size_t nmemb, void *up) {
         ((string*)up)->append((char*)buf, size * nmemb);
         return size * nmemb;
       };
-      static string toP(double num, int n) {
-        if(num == 0) return "0";
-        double d = ceil(log10(num < 0 ? -num : num));
-        int power = n - (int)d;
-        double magnitude = pow(10., power);
-        long shifted = ::round(num*magnitude);
-        ostringstream oss;
-        oss << shifted / magnitude;
-        return oss.str();
-      };
-      static int procSelfStatus(char* line){
-        int i = strlen(line);
-        const char* p = line;
-        while (*p <'0' || *p > '9') p++;
-        line[i-3] = '\0';
-        i = atoi(p);
-        return i;
-      };
       static int memory() {
-        FILE* file = fopen("/proc/self/status", "r");
-        int result = -1;
-        char line[128];
-        while (fgets(line, 128, file) != NULL)
-          if (strncmp(line, "VmRSS:", 6) == 0) {
-            result = procSelfStatus(line);
-            break;
-          }
-        fclose(file);
-        return result * 1e+3;
+        string ps = output(string("ps -p") + to_string(::getpid()) + " -o rss | tail -n 1 | sed 's/ //'");
+        if (ps.empty()) ps = "0";
+        return stoi(ps) * 1e+3;
       };
       static string output(string cmd) {
         string data;
@@ -417,24 +441,18 @@ namespace K {
         ssize_t len;
         while((len = ::readlink(pathname, &buffer[0], buffer.size())) == static_cast<ssize_t>(buffer.size()))
           buffer.resize(buffer.size() * 2);
-        if (len == -1) FN::logWar("FN", "readlink failed");
+        if (len == -1) logWar("FN", "readlink failed");
         buffer.resize(len);
         return buffer;
       };
       static void logWar(string k, string s) {
         logErr(k, s, " Warrrrning: ");
       };
-      static void logExit(string k, string s, int code) {
-        FN::screen_quit();
-        logErr(k, s);
-        exit(code);
-      };
       static void logErr(string k, string s, string m = " Errrror: ") {
         if (!wBorder) {
           cout << uiT() << k << RRED << m << BRED << s << ".\n";
           return;
         }
-        lock_guard<mutex> lock(wMutex);
         wmove(wLog, getmaxy(wLog)-1, 0);
         uiT();
         wattron(wLog, COLOR_PAIR(COLOR_WHITE));
@@ -456,7 +474,6 @@ namespace K {
           cout << uiT() << "DB " << RYELLOW << k << RWHITE << " loaded OK.\n";
           return;
         }
-        lock_guard<mutex> lock(wMutex);
         wmove(wLog, getmaxy(wLog)-1, 0);
         uiT();
         wattron(wLog, COLOR_PAIR(COLOR_WHITE));
@@ -477,7 +494,6 @@ namespace K {
           cout << uiT() << "UI" << RWHITE << " ready over " << RYELLOW << k << RWHITE << " on external port " << RYELLOW << to_string(p) << RWHITE << ".\n";
           return;
         }
-        wMutex.lock();
         wmove(wLog, getmaxy(wLog)-1, 0);
         uiT();
         wattron(wLog, COLOR_PAIR(COLOR_WHITE));
@@ -498,7 +514,6 @@ namespace K {
         wattron(wLog, COLOR_PAIR(COLOR_WHITE));
         wprintw(wLog, ".\n");
         wattroff(wLog, COLOR_PAIR(COLOR_WHITE));
-        wMutex.unlock();
         FN::screen_refresh(k, p);
       };
       static void logUIsess(int k, string s) {
@@ -507,7 +522,6 @@ namespace K {
           cout << uiT() << "UI " << RYELLOW << to_string(k) << RWHITE << " currently connected, last connection was from " << RYELLOW << s << RWHITE << ".\n";
           return;
         }
-        lock_guard<mutex> lock(wMutex);
         wmove(wLog, getmaxy(wLog)-1, 0);
         uiT();
         wattron(wLog, COLOR_PAIR(COLOR_WHITE));
@@ -534,7 +548,6 @@ namespace K {
           cout << BGREEN << "K" << RGREEN << string(" version ").append(c == -1 ? "unknown (zip install).\n" : (!c ? "0day.\n" : string("-").append(to_string(c)).append("commit").append(c > 1?"s..\n":"..\n"))) << RYELLOW << (c ? k : "") << RWHITE;
           return;
         }
-        lock_guard<mutex> lock(wMutex);
         wmove(wLog, getmaxy(wLog)-1, 0);
         wattron(wLog, COLOR_PAIR(COLOR_GREEN));
         wattron(wLog, A_BOLD);
@@ -552,7 +565,6 @@ namespace K {
           cout << FN::uiT() << "GW " << (k.side == mSide::Bid ? RCYAN : RPURPLE) << e << " TRADE " << (k.side == mSide::Bid ? BCYAN : BPURPLE) << (k.side == mSide::Bid ? "BUY " : "SELL ") << k.quantity << " " << k.pair.base << " at price " << k.price << " " << k.pair.quote << " (value " << k.value << " " << k.pair.quote << ").\n";
           return;
         }
-        lock_guard<mutex> lock(wMutex);
         wmove(wLog, getmaxy(wLog)-1, 0);
         uiT();
         wattron(wLog, A_BOLD);
@@ -574,7 +586,6 @@ namespace K {
           cout << uiT() << k << RWHITE << " " << s << " " << RYELLOW << v << RWHITE << ".\n";
           return;
         }
-        lock_guard<mutex> lock(wMutex);
         wmove(wLog, getmaxy(wLog)-1, 0);
         uiT();
         wattron(wLog, COLOR_PAIR(COLOR_WHITE));
@@ -596,7 +607,6 @@ namespace K {
           cout << uiT() << k << RWHITE << " " << s << ".\n";
           return;
         }
-        lock_guard<mutex> lock(wMutex);
         wmove(wLog, getmaxy(wLog)-1, 0);
         uiT();
         wattron(wLog, COLOR_PAIR(COLOR_WHITE));
@@ -612,7 +622,6 @@ namespace K {
           cout << RWHITE << k;
           return;
         }
-        lock_guard<mutex> lock(wMutex);
         wmove(wLog, getmaxy(wLog)-1, 0);
         if (b) wattron(wLog, A_BOLD);
         wattron(wLog, COLOR_PAIR(c));
@@ -621,14 +630,7 @@ namespace K {
         if (b) wattroff(wLog, A_BOLD);
         wrefresh(wLog);
       };
-      static void screen_quit() {
-        if (!wBorder) return;
-        lock_guard<mutex> lock(wMutex);
-        beep();
-        endwin();
-        wBorder = nullptr;
-      };
-      static void screen(int argColors, string argExchange, string argCurrency) {
+      static void screen_config(int argColors, string argExchange, string argCurrency) {
         if (!(wBorder = initscr())) {
           cout << "NCURSES" << RRED << " Errrror:" << BRED << " Unable to initialize ncurses, try to run in your terminal \"export TERM=xterm\", or use --naked argument." << '\n';
           exit(EXIT_SUCCESS);
@@ -649,42 +651,39 @@ namespace K {
         scrollok(wLog, true);
         idlok(wLog, true);
         signal(SIGWINCH, screen_resize);
-        thread([&]() {
-          int ch;
-          while ((ch = wgetch(wBorder)) != 'q' and ch != 'Q') {
-            switch (ch) {
-              case ERR: continue;
-              // case KEY_PPAGE: wscrl(wLog, -3); wrefresh(wLog); break;
-              // case KEY_NPAGE: wscrl(wLog, 3); wrefresh(wLog); break;
-              // case KEY_UP: wscrl(wLog, -1); wrefresh(wLog); break;
-              // case KEY_DOWN: wscrl(wLog, 1); wrefresh(wLog); break;
-            }
-          }
-          raise(SIGINT);
-        }).detach();
         screen_refresh("", 0, argExchange, argCurrency);
+      };
+      static void screen_quit() {
+        if (!wBorder) return;
+        beep();
+        endwin();
+        wBorder = nullptr;
+      };
+      static int screen_events() {
+        return wBorder
+          ? wgetch(wBorder)
+          : 'q';
       };
       static void screen_refresh(map<string, mOrder> k) {
         screen_refresh("", 0, "", "", k, true);
       };
-      static void screen_refresh(string protocol = "", int argPort = 0, string argExchange = "", string argCurrency = "", map<string, mOrder> allOrders = map<string, mOrder>(), bool hasOrders = false) {
+      static void screen_refresh(string protocol = "", int argPort = 0, string argExchange = "", string argCurrency = "", map<string, mOrder> Orders = map<string, mOrder>(), bool hasOrders = false) {
         if (!wBorder) return;
         static int p = 0, spin = 0, port = 0;
         static string prtcl = "?", exchange = "?", currency = "?";
         static map<string, mOrder> orders = map<string, mOrder>();
         if (argPort) port = argPort;
-        if (protocol.length()) prtcl = protocol;
-        if (argExchange.length()) exchange = argExchange;
-        if (argCurrency.length()) currency = argCurrency;
-        multimap<double, mOrder> openOrders;
+        if (!protocol.empty()) prtcl = protocol;
+        if (!argExchange.empty()) exchange = argExchange;
+        if (!argCurrency.empty()) currency = argCurrency;
+        multimap<double, mOrder, greater<double>> openOrders;
         if (hasOrders) {
-          orders = allOrders;
-          for (map<string, mOrder>::iterator it = orders.begin(); it != orders.end(); ++it) {
-            if (mORS::Working != it->second.orderStatus) continue;
-            openOrders.insert(pair<double, mOrder>(it->second.price, it->second));
+          orders = Orders;
+          for (map<string, mOrder>::value_type &it : orders) {
+            if (mStatus::Working != it.second.orderStatus) continue;
+            openOrders.insert(pair<double, mOrder>(it.second.price, it.second));
           }
         }
-        lock_guard<mutex> lock(wMutex);
         int l = p,
             y = getmaxy(wBorder),
             x = getmaxx(wBorder),
@@ -700,12 +699,12 @@ namespace K {
         }
         mvwvline(wBorder, 1, 1, ' ', y-1);
         mvwvline(wBorder, k-1, 1, ' ', y-1);
-        for (map<double, mOrder>::reverse_iterator it = openOrders.rbegin(); it != openOrders.rend(); ++it) {
-          wattron(wBorder, COLOR_PAIR(it->second.side == mSide::Bid ? COLOR_CYAN : COLOR_MAGENTA));
+        for (map<double, mOrder, greater<double>>::value_type &it : openOrders) {
+          wattron(wBorder, COLOR_PAIR(it.second.side == mSide::Bid ? COLOR_CYAN : COLOR_MAGENTA));
           stringstream ss;
-          ss << setprecision(8) << fixed << (it->second.side == mSide::Bid ? "BID" : "ASK") << " > " << it->second.orderId << ": " << it->second.quantity << " " << it->second.pair.base << " at price " << it->second.price << " " << it->second.pair.quote;
+          ss << setprecision(8) << fixed << (it.second.side == mSide::Bid ? "BID" : "ASK") << " > " << it.second.orderId << ": " << it.second.quantity << " " << it.second.pair.base << " at price " << it.second.price << " " << it.second.pair.quote;
           mvwaddstr(wBorder, ++P, 1, ss.str().data());
-          wattroff(wBorder, COLOR_PAIR(it->second.side == mSide::Bid ? COLOR_CYAN : COLOR_MAGENTA));
+          wattroff(wBorder, COLOR_PAIR(it.second.side == mSide::Bid ? COLOR_CYAN : COLOR_MAGENTA));
         }
         mvwaddch(wBorder, 0, 0, ACS_ULCORNER);
         mvwhline(wBorder, 0, 1, ACS_HLINE, max(80, x));
@@ -740,174 +739,25 @@ namespace K {
         wattroff(wBorder, COLOR_PAIR(COLOR_YELLOW));
         waddstr(wBorder, ") Open Orders..");
         mvwaddch(wBorder, y-1, 0, ACS_LLCORNER);
-        mvwaddstr(wBorder, y-1, x-1, string("|/-\\").substr(++spin, 1).data());
-        if (spin==3) { spin = -1; }
+        mvwaddstr(wBorder, 1, 2, string("|/-\\").substr(++spin, 1).data());
+        if (spin==3) spin = -1;
         move(k-1, 2);
         wrefresh(wBorder);
         wrefresh(wLog);
       };
       static void screen_resize(int sig) {
         if (!wBorder) return;
-        wMutex.lock();
         struct winsize ws;
-        if (ioctl(0, TIOCGWINSZ, &ws) < 0 or (ws.ws_row == getmaxy(wBorder) and ws.ws_col == getmaxx(wBorder))) {
-          wMutex.unlock();
+        if (ioctl(0, TIOCGWINSZ, &ws) < 0 or (ws.ws_row == getmaxy(wBorder) and ws.ws_col == getmaxx(wBorder)))
           return;
-        }
         if (ws.ws_row < 10) ws.ws_row = 10;
         if (ws.ws_col < 20) ws.ws_col = 20;
         wresize(wBorder, ws.ws_row, ws.ws_col);
         resizeterm(ws.ws_row, ws.ws_col);
-        wMutex.unlock();
         screen_refresh();
-        lock_guard<mutex> lock(wMutex);
         redrawwin(wLog);
         wrefresh(wLog);
       };
-  };
-  class B64 {
-   public:
-    static bool Encode(const std::string &in, std::string *out) {
-      int i = 0, j = 0;
-      size_t enc_len = 0;
-      unsigned char a3[3];
-      unsigned char a4[4];
-      out->resize(EncodedLength(in));
-      int input_len = in.size();
-      std::string::const_iterator input = in.begin();
-      while (input_len--) {
-        a3[i++] = *(input++);
-        if (i == 3) {
-          a3_to_a4(a4, a3);
-          for (i = 0; i < 4; i++) (*out)[enc_len++] = kB64Alphabet[a4[i]];
-          i = 0;
-        }
-      }
-      if (i) {
-        for (j = i; j < 3; j++) a3[j] = '\0';
-        a3_to_a4(a4, a3);
-        for (j = 0; j < i + 1; j++) (*out)[enc_len++] = kB64Alphabet[a4[j]];
-        while ((i++ < 3)) (*out)[enc_len++] = '=';
-      }
-      return (enc_len == out->size());
-    }
-    static bool Encode(const char *input, size_t input_length, char *out, size_t out_length) {
-      int i = 0, j = 0;
-      char *out_begin = out;
-      unsigned char a3[3];
-      unsigned char a4[4];
-      size_t encoded_length = EncodedLength(input_length);
-      if (out_length < encoded_length) return false;
-      while (input_length--) {
-        a3[i++] = *input++;
-        if (i == 3) {
-          a3_to_a4(a4, a3);
-          for (i = 0; i < 4; i++) *out++ = kB64Alphabet[a4[i]];
-          i = 0;
-        }
-      }
-      if (i) {
-        for (j = i; j < 3; j++) a3[j] = '\0';
-        a3_to_a4(a4, a3);
-        for (j = 0; j < i + 1; j++) *out++ = kB64Alphabet[a4[j]];
-        while ((i++ < 3)) *out++ = '=';
-      }
-      return (out == (out_begin + encoded_length));
-    }
-    static bool Decode(const std::string &in, std::string *out) {
-      int i = 0, j = 0;
-      size_t dec_len = 0;
-      unsigned char a3[3];
-      unsigned char a4[4];
-      int input_len = in.size();
-      std::string::const_iterator input = in.begin();
-      out->resize(DecodedLength(in));
-      while (input_len--) {
-        if (*input == '=') break;
-        a4[i++] = *(input++);
-        if (i == 4) {
-          for (i = 0; i <4; i++) a4[i] = b64_lookup(a4[i]);
-          a4_to_a3(a3,a4);
-          for (i = 0; i < 3; i++) (*out)[dec_len++] = a3[i];
-          i = 0;
-        }
-      }
-      if (i) {
-        for (j = i; j < 4; j++) a4[j] = '\0';
-        for (j = 0; j < 4; j++) a4[j] = b64_lookup(a4[j]);
-        a4_to_a3(a3,a4);
-        for (j = 0; j < i - 1; j++) (*out)[dec_len++] = a3[j];
-      }
-      return (dec_len == out->size());
-    }
-
-    static bool Decode(const char *input, size_t input_length, char *out, size_t out_length) {
-      int i = 0, j = 0;
-      char *out_begin = out;
-      unsigned char a3[3];
-      unsigned char a4[4];
-      size_t decoded_length = DecodedLength(input, input_length);
-      if (out_length < decoded_length) return false;
-      while (input_length--) {
-        if (*input == '=') break;
-        a4[i++] = *(input++);
-        if (i == 4) {
-          for (i = 0; i <4; i++) a4[i] = b64_lookup(a4[i]);
-          a4_to_a3(a3,a4);
-          for (i = 0; i < 3; i++) *out++ = a3[i];
-          i = 0;
-        }
-      }
-      if (i) {
-        for (j = i; j < 4; j++) a4[j] = '\0';
-        for (j = 0; j < 4; j++) a4[j] = b64_lookup(a4[j]);
-        a4_to_a3(a3,a4);
-        for (j = 0; j < i - 1; j++) *out++ = a3[j];
-      }
-      return (out == (out_begin + decoded_length));
-    }
-    static int DecodedLength(const char *in, size_t in_length) {
-      int numEq = 0;
-      const char *in_end = in + in_length;
-      while (*--in_end == '=') ++numEq;
-      return ((6 * in_length) / 8) - numEq;
-    }
-    static int DecodedLength(const std::string &in) {
-      int numEq = 0;
-      int n = in.size();
-      for (std::string::const_reverse_iterator it = in.rbegin(); *it == '='; ++it)
-        ++numEq;
-      return ((6 * n) / 8) - numEq;
-    }
-    inline static int EncodedLength(size_t length) {
-      return (length + 2 - ((length + 2) % 3)) / 3 * 4;
-    }
-    inline static int EncodedLength(const std::string &in) {
-      return EncodedLength(in.length());
-    }
-    inline static void StripPadding(std::string *in) {
-      while (!in->empty() && *(in->rbegin()) == '=') in->resize(in->size() - 1);
-    }
-   private:
-    static inline void a3_to_a4(unsigned char * a4, unsigned char * a3) {
-      a4[0] = (a3[0] & 0xfc) >> 2;
-      a4[1] = ((a3[0] & 0x03) << 4) + ((a3[1] & 0xf0) >> 4);
-      a4[2] = ((a3[1] & 0x0f) << 2) + ((a3[2] & 0xc0) >> 6);
-      a4[3] = (a3[2] & 0x3f);
-    }
-    static inline void a4_to_a3(unsigned char * a3, unsigned char * a4) {
-      a3[0] = (a4[0] << 2) + ((a4[1] & 0x30) >> 4);
-      a3[1] = ((a4[1] & 0xf) << 4) + ((a4[2] & 0x3c) >> 2);
-      a3[2] = ((a4[2] & 0x3) << 6) + a4[3];
-    }
-    static inline unsigned char b64_lookup(unsigned char c) {
-      if(c >='A' && c <='Z') return c - 'A';
-      if(c >='a' && c <='z') return c - 71;
-      if(c >='0' && c <='9') return c + 4;
-      if(c == '+') return 62;
-      if(c == '/') return 63;
-      return 255;
-    }
   };
 }
 

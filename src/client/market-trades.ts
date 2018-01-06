@@ -1,8 +1,7 @@
 import {NgZone, Component, Inject, Input, OnInit} from '@angular/core';
-import {GridOptions, ColDef, RowNode} from "ag-grid/main";
-import moment = require('moment');
+import {GridOptions, ColDef, RowNode} from 'ag-grid/main';
 
-import Models = require('./models');
+import * as Models from './models';
 import {SubscriberFactory, BaseCurrencyCellComponent, QuoteCurrencyCellComponent} from './shared_directives';
 
 @Component({
@@ -43,10 +42,9 @@ export class MarketTradesComponent implements OnInit {
   private createColumnDefs = (): ColDef[] => {
     return [
       { width: 82, field: 'time', headerName: 'time', cellRenderer:(params) => {
-        return (params.value) ? params.value.format('HH:mm:ss,SSS') : '';
-      },
-        comparator: (a: moment.Moment, b: moment.Moment) => a.diff(b),
-        sort: 'desc', cellClass: (params) => {
+        var d = new Date(params.value||0);
+        return (d.getHours()+'').padStart(2, "0")+':'+(d.getMinutes()+'').padStart(2, "0")+':'+(d.getSeconds()+'').padStart(2, "0")+','+(d.getMilliseconds()+'').padStart(3, "0");
+      },sort: 'desc', cellClass: (params) => {
           return 'fs11px '+(!params.data.recent ? "text-muted" : "");
       } },
       { width: 75, field: 'price', headerName: 'price', cellClass: (params) => {
@@ -68,7 +66,7 @@ export class MarketTradesComponent implements OnInit {
       this.gridOptions.api.updateRowData({add:[{
         price: trade.price,
         quantity: trade.quantity,
-        time: (moment.isMoment(trade.time) ? trade.time : moment(trade.time)),
+        time: trade.time,
         recent: true,
         side: Models.Side[trade.side],
         quoteSymbol: trade.pair.quote,
@@ -76,9 +74,9 @@ export class MarketTradesComponent implements OnInit {
       }]});
 
     this.gridOptions.api.forEachNode((node: RowNode) => {
-      if (Math.abs(moment.utc().valueOf() - moment(node.data.time).valueOf()) > 3600000)
+      if (Math.abs(trade.time - node.data.time) > 3600000)
         this.gridOptions.api.updateRowData({remove:[node.data]});
-      else if (Math.abs(moment.utc().valueOf() - moment(node.data.time).valueOf()) > 7000)
+      else if (Math.abs(trade.time - node.data.time) > 7000)
         node.setData(Object.assign(node.data, {recent: false}));
     });
   }

@@ -1,10 +1,8 @@
-import {NgModule, Component, Injectable, Inject} from '@angular/core';
+import {NgModule, Component, Injectable} from '@angular/core';
 import {AgRendererComponent} from 'ag-grid-angular/main';
 
-import moment = require('moment');
-
-import Subscribe = require("./subscribe");
-import Models = require("./models");
+import * as Subscribe from './subscribe';
+import * as Models from './models';
 
 @Injectable()
 export class FireFactory {
@@ -77,6 +75,28 @@ export class QuoteCurrencyCellComponent implements AgRendererComponent {
       this.quoteSymbol = params.node.data.quoteSymbol.substr(0,3);
     if ('productFixed' in params.node.data)
       this.productFixed = params.node.data.productFixed;
+  }
+
+  refresh(): boolean {
+      return false;
+  }
+}
+
+@Component({
+    selector: 'quote-untruncated-currency-cell',
+    template: `{{ quoteSymbol }}{{ params.value }}`
+})
+export class QuoteUntruncatedCurrencyCellComponent implements AgRendererComponent {
+  private params:any;
+  private quoteSymbol:string = 'USD';
+
+  agInit(params:any):void {
+    this.params = params;
+    if ('quoteSymbol' in params.node.data)
+      this.quoteSymbol = params.node.data.quoteSymbol.substr(0,3).replace('USD','$').replace('EUR','€');
+    if (!params.value)
+      this.quoteSymbol = "";
+    else params.value = parseFloat(params.value.toFixed(8));
   }
 
   refresh(): boolean {

@@ -41,7 +41,7 @@ Gateways are ideally stateless (some state may be needed in order to perform exc
 
 Navigate to the Web UI as described in the install process. You should see a screen like:
 
-![](https://github.com/ctubio/**Krypto-trading-bot**/raw/master/etc/img/K.png)
+![](https://github.com/ctubio/Krypto-trading-bot/raw/master/etc/img/K.png)
 
 * Market Data and Quotes - this is perhaps the most important screen in the app.
 
@@ -151,9 +151,13 @@ In the web UI, there are three rows of panels with cryptic looking names and edi
 
   * `EWMA_LMS` - **Krypto-trading-bot** will use a `long` minute, `medium` minute and `short` minute exponential weighted moving average calculation, together with the simple moving average of the last 3 `fair value` values, to buy up BTC when the `short` minute line crosses over the `long` minute line, and sell BTC when the reverse happens.
 
+  * `EWMA_4` - **Krypto-trading-bot** will use a `medium` minute and `small` minute EWMA calculation to buy when the `small` minute line crosses over the `medium` minute line, and sell when the reverse happens. Additionally sets the `tbp` to 0% if the `verylong` EWMA minute line crosses over the `long` EWMA minute line.
+
+* `verylong` - Only used when `apMode` is `EWMA_4`. Sets the periods of EWMA VeryLong to automatically manage positions.
+
 * `long` - Only used when `apMode` is `EWMA`. Sets the periods of EWMA Long to automatically manage positions.
 
-* `medium` - Not used yet. Sets the periods of EWMA Medium.
+* `medium` - Only used when `apMode` is `EWMA_LMS` or `EWMA_4`. Sets the periods of EWMA Medium to automatically manage positions.
 
 * `short` - Only used when `apMode` is `EWMA`. Sets the periods of EWMA Short to automatically manage positions.
 
@@ -161,18 +165,18 @@ In the web UI, there are three rows of panels with cryptic looking names and edi
 
 * `tbp` - Only used when `apMode` is `Manual`. Sets a static "Target Base Position" for **Krypto-trading-bot** to stay near. In manual position mode, **Krypto-trading-bot** will still try to respect `pDiv` and not make your position fluctuate by more than that value. So if you have 10 BTC to trade, set `tbp = 3`, set `apMode = Manual`, and `pDiv = 1`, your holding of BTC will never be less than 2 or greater than 4.
 
-* `pDivMode` - Only used when `apMode` is `EWMA_LS` or `EWMA_LMS`. Sets the strategy of dynamically adjusting the `pDiv` depending on the divergence from 50% of Base Value.
+* `pDivMode` - Only used when `apMode` is not `Manual` mode. Sets the strategy of dynamically adjusting the `pDiv` depending on the divergence from 50% of Base Value.
 
-  * `Manual` - No dynamic adjusting of `pDiv`. 
+  * `Manual` - No dynamic adjusting of `pDiv`.
 
   * `Linear` - Linear calculation between `pDiv` and `pDivMin`.
-  
+
   * `Sine` - Calculation between `pDiv` and `pDivMin` on a sine curve.
-  
-  * `SQRT` - Square root calculation between `pDiv` and `pDivMin`.  
-  
+
+  * `SQRT` - Square root calculation between `pDiv` and `pDivMin`.
+
   * `Switch` - If `tbp` is more than 90% or less than 10%, `pDivMin` is taken, otherwhise `pDiv`.
-  
+
 * `pDiv` - If your "Target Base Position" diverges more from this value, **Krypto-trading-bot** will stop sending orders to stop too much directional trading. So if you have 10 BTC to trade, "Target Base Position" is reporting 5, and `pDiv` is set to 3, your holding of BTC will never be less than 2 or greater than 8.
 
 * `pDivMin` - Only used when `pDivMode` is not `Manual`. It defines the minimal `pDiv` for the dynamic positon divergence.
@@ -188,12 +192,12 @@ In the web UI, there are three rows of panels with cryptic looking names and edi
 * `aprFactor` - Defines the value with which the `size` is multiplicated when `apr` is in functional state.
 
 * `sop` - Super opportunities, if enabled and if the market width is `sopWidth` times bigger than the `width` set, it multiplies `sopTrades` to `trades` and/or `sopSize` to `size`, in both sides at the same time.
- 
+
 * `sopWidth` - Is the value with the market width is multiplicated to define the activation point for Super opportunities.
-  
+
 * `sopTrades` - Multiplicates `trades` to rise the possible Trades per Minute if `sop` is in `Trades` or `tradesSize` state.
 
-* `sopSize` - Multiplicates `width` if `sop` is in `Size` or `tradesSize` state.  
+* `sopSize` - Multiplicates `width` if `sop` is in `Size` or `tradesSize` state.
 
 * `trades` - Often, only buying or selling many times in a short timeframe indicates that there is going to be a price swing. `trades` and `/sec` are highly related: If you successfully complete more orders than `trades` in `/sec` seconds, **Krypto-trading-bot** will stop sending more buy orders until either `/sec` seconds has passed, or you have sold enough at a higher cost to make all those buy orders profitable. The number of trades is reported by side in the UI; "BuyTS", "SellTS", and "TotTS". If "BuyTS" goes above `trades`, **Krypto-trading-bot** will stop sending buy orders, and the same for sells. For example, if `trades` is 2 and `/sec` is 1800 (half an hour):
 
@@ -208,9 +212,11 @@ Time     | Side | Price | Size | BuyTS | SellTS | Notes
 
 * `/sec` - see `trades`.
 
-* `ewma?` - Use a quote protection of `periods` smoothed line of the price to limit the price while sending new orders.
+* `ewmaPrice?` - Use a quote protection of `periods` smoothed line of the fair value to limit the price while sending new orders.
 
-* `periodsᵉʷᵐᵃ` - Maximum amount of values collected in the sequences used to calculate the `ewma?` quote protection. After collect sequentially every 1 minute the value of the `fair value`, and before place new orders, a limit will be always applied to the new orders price using a `ewma` calculation, taking into account only the last `periods` periods in each sequence.
+* `ewmaWidth?` - Use a quote protection of `periods` smoothed line of the width (between the top bid and the top ask) to limit the widthPing while sending new orders.
+
+* `periodsᵉʷᵐᵃ` - Maximum amount of values collected in the sequences used to calculate the `ewmaPrice?` and `ewmaWidth?` quote protection. After collect sequentially every 1 minute the value of the `fair value`, and before place new orders, a limit will be always applied to the new orders price using a `ewma` calculation, taking into account only the last `periods` periods in each sequence.
 
 * `ewmaTrend?` - Use a trend protection of double `periods` (Ultra+Micro) smoothed lines of the price to limit uptrend sells and downtrend buys.
 
@@ -242,13 +248,11 @@ Time     | Side | Price | Size | BuyTS | SellTS | Notes
 
 * `BB?` - Enable Bollinger Bands with upper and lower bands calculated from the result of the selected `stdev` above or below its own moving average of `periods`.
 
-* `delayAPI` - Relax the new orders send to the exchange API by `delayAPI` orders/60seconds, for example `delayAPI=0` does not apply any delay but `delayAPI=75` will send a new order once every 800 milliseconds, or `delayAPI=3` will send a new order once every 20 seconds.
-
 * `cxl?` - Enable a timeout of 5 minutes to cancel all orders that exist as open in the exchange (in case you found yourself with zombie orders in the exchange, because the API integration have bugs or because the connection is interrupted).
 
-* `profit` - Interval in hours to recalculate the display of Profit (under wallet values), for example a `profit` of 0.5 will compare the current wallet values and the values from half hour ago to display the +/- % of increment between both.
+* `profit` - Timeframe in hours to calculate the display of Profit (under wallet values) and also interval in hour to remove data points from the Stats, for example a `profit` of 0.5 will compare the current wallet values and the values from half hour ago to display the +/- % of increment between both and will remove data from the Stats older than half an hour.
 
-* `Kmemory` - Timeout in days for Pings (yet unmatched trades) and/or Pongs (K trades) to remain in memory, a value of `0` keeps the history in memory forever; a positive value remove only Pongs after `Kmemory` days; but a negative value remove both Pings and Pongs after `Kmemory` days (for example a value of `-2` will keep a history of trades no longer than 2 days without matter if Pings are not matched by Pongs).
+* `Kmemory` - Timeout in days for Pings (yet unmatched trades) and/or Pongs (K trades) to remain in memory, a value of `0` keeps the history in memory forever; a positive value remove only Pongs after `Kmemory` days; but a negative value remove both Pings and Pongs after `Kmemory` days (for example a value of `-2` will keep a history of trades no longer than 2 days without matter if Pings are not matched by Pongs; or a value of `-0.25` will do so but limited to 6h).
 
 * `delayUI` - Relax the display of UI data by `delayUI` seconds. Set a value of 0 (zero) to display UI data in realtime, but this may penalize the communication with the exchange if you end up sending too much frequent UI data (like in low latency environments with super fast market data updates; at home is OK in realtime because the latency of **Krypto-trading-bot** with the exchange tends to be higher than the latency of **Krypto-trading-bot** with your browser).
 
@@ -257,5 +261,5 @@ Time     | Side | Price | Size | BuyTS | SellTS | Notes
 
 # How can I make up my own trading strategies?
 
-You can always open a [new issue](https://github.com/ctubio/**Krypto-trading-bot**/issues/new?title=Missing%20trading%20strategy) to request a new feature.
+You can always open a [new issue](https://github.com/ctubio/Krypto-trading-bot/issues/new?title=Missing%20trading%20strategy) to request a new feature.
 

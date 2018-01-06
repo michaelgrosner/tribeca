@@ -5,39 +5,31 @@ namespace K {
   class QP: public Klass {
     protected:
       void load() {
-        json k = ((DB*)memory)->load(uiTXT::QuotingParametersChange);
-        if (k.size()) {
-          *qp = k.at(0);
-          FN::log("DB", "loaded Quoting Parameters OK");
-        } else FN::logWar("QP", "using default values for Quoting Parameters");
+        json k = ((DB*)memory)->load(mMatter::QuotingParameters);
+        if (k.empty()) return FN::logWar("QP", "using default values for Quoting Parameters");
+        *qp = k.at(0);
+        FN::log("DB", "loaded Quoting Parameters OK");
       };
       void waitUser() {
-        ((UI*)client)->welcome(uiTXT::QuotingParametersChange, &hello);
-        ((UI*)client)->clickme(uiTXT::QuotingParametersChange, &kiss);
+        ((UI*)client)->welcome(mMatter::QuotingParameters, &hello);
+        ((UI*)client)->clickme(mMatter::QuotingParameters, &kiss);
       };
       void run() {
-        ((UI*)client)->delayme(qp->delayUI);
+        delayUI();
       };
     private:
-      function<json()> hello = [&]() {
-        return (json){ *qp };
+      function<void(json*)> hello = [&](json *welcome) {
+        *welcome = { *qp };
       };
-      function<void(json)> kiss = [&](json k) {
-        if (k.value("buySize", 0.0) > 0
-          and k.value("sellSize", 0.0) > 0
-          and k.value("buySizePercentage", 0.0) > 0
-          and k.value("sellSizePercentage", 0.0) > 0
-          and k.value("widthPing", 0.0) > 0
-          and k.value("widthPong", 0.0) > 0
-          and k.value("widthPingPercentage", 0.0) > 0
-          and k.value("widthPongPercentage", 0.0) > 0
-        ) {
-          *qp = k;
-          ((DB*)memory)->insert(uiTXT::QuotingParametersChange, *qp);
-          ((EV*)events)->uiQuotingParameters();
-          ((UI*)client)->delayme(qp->delayUI);
-        }
-        ((UI*)client)->send(uiTXT::QuotingParametersChange, *qp);
+      function<void(json)> kiss = [&](json butterfly) {
+        *qp = butterfly;
+        ((EV*)events)->uiQuotingParameters();
+        ((UI*)client)->send(mMatter::QuotingParameters, *qp);
+        ((DB*)memory)->insert(mMatter::QuotingParameters, *qp);
+        delayUI();
+      };
+      void delayUI() {
+        ((UI*)client)->delayme(qp->delayUI);
       };
   };
 }

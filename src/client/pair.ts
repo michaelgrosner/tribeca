@@ -1,7 +1,7 @@
 import {NgZone} from '@angular/core';
 
-import Models = require('./models');
-import Subscribe = require('./subscribe');
+import * as Models from './models';
+import * as Subscribe from './subscribe';
 import {FireFactory, SubscriberFactory} from './shared_directives';
 
 class FormViewModel<T> {
@@ -19,8 +19,10 @@ class FormViewModel<T> {
     if (this._submitConverter === null)
       this._submitConverter = d => d;
 
-    _sub.registerSubscriber(this.update);
-    this.connected = _sub.connected;
+    if (_sub !== null) {
+      _sub.registerSubscriber(this.update);
+      this.connected = _sub.connected;
+    }
     this.master = JSON.parse(JSON.stringify(defaultParameter));
     this.display = JSON.parse(JSON.stringify(defaultParameter));
   }
@@ -116,6 +118,12 @@ class DisplayQuotingParameters extends FormViewModel<Models.QuotingParameters> {
     }
     return names;
   }
+
+  public backup = () => {
+    try{
+      this.display = JSON.parse(window.prompt('Backup quoting parameters\n\nTo export the current setup, copy all from the input below and paste it somewhere else.\n\nTo import a setup replacement, replace the quoting parameters below by some new, then click [Save] to apply.\n\nCurrent/New setup of quoting parameters:', JSON.stringify(this.display))) || this.display;
+    }catch(e){}
+  };
 }
 
 export class DisplayPair {
@@ -133,21 +141,20 @@ export class DisplayPair {
     subscriberFactory: SubscriberFactory,
     fireFactory: FireFactory
   ) {
+    this.active = new QuotingButtonViewModel(
+      null,
+      fireFactory
+        .getFire(Models.Topics.Connectivity)
+    );
+
     this.connectedToServer = subscriberFactory
-      .getSubscriber(zone, Models.Topics.ExchangeConnectivity)
+      .getSubscriber(zone, Models.Topics.Connectivity)
       .registerSubscriber(this.setExchangeStatus)
       .registerConnectHandler(() => this.setServerStatus(true))
       .registerDisconnectedHandler(() => this.setServerStatus(false))
       .connected;
 
     this.setStatus();
-
-    this.active = new QuotingButtonViewModel(
-      subscriberFactory
-        .getSubscriber(zone, Models.Topics.ActiveState),
-      fireFactory
-        .getFire(Models.Topics.ActiveState)
-    );
 
     this.quotingParameters = new DisplayQuotingParameters(
       subscriberFactory
@@ -172,6 +179,7 @@ export class DisplayPair {
   }
 
   private setExchangeStatus = (cs) => {
+      this.active.update(cs);
       this.connectedToExchange = cs.status == Models.Connectivity.Connected;
       this.setStatus();
   };
