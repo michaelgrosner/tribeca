@@ -97,6 +97,18 @@ namespace K {
         BIO_free_all(bio);
         return string(bufferPtr->data, bufferPtr->length);
       };
+      static string oB64decode(string k) {
+        BIO *bio, *b64;
+        char buffer[k.length()];
+        b64 = BIO_new(BIO_f_base64());
+        bio = BIO_new_mem_buf(k.data(), k.length());
+        bio = BIO_push(b64, bio);
+        BIO_set_flags(bio, BIO_FLAGS_BASE64_NO_NL);
+        BIO_set_close(bio, BIO_NOCLOSE);
+        int len = BIO_read(bio, buffer, k.length());
+        BIO_free_all(bio);
+        return string(buffer, len);
+      };
       static string oMd5(string k) {
         unsigned char digest[MD5_DIGEST_LENGTH];
         MD5((unsigned char*)k.data(), k.length(), (unsigned char*)&digest);
