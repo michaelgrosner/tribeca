@@ -88,23 +88,22 @@ interface MarketDataIncrementalRefresh {
 }
 
 interface ExecutionReport {
-    orderId : string;
+    id : string;
     clientOrderId : string;
-    execReportType : "new"|"canceled"|"rejected"|"expired"|"trade"|"status";
-    orderStatus : "new"|"partiallyFilled"|"filled"|"canceled"|"rejected"|"expired";
-    orderRejectReason? : string;
+    reportType : "new"|"canceled"|"rejected"|"expired"|"trade"|"status";
+    status : "new"|"partiallyFilled"|"filled"|"canceled"|"rejected"|"expired";
     symbol : string;
     side : string;
     timestamp : number;
-    price : number;
-    quantity : number;
+    price : string;
+    quantity : string;
     type : string;
     timeInForce : string;
     tradeId? : string;
     lastQuantity? : number;
     lastPrice? : number;
     leavesQuantity? : number;
-    cumQuantity? : number;
+    cumQuantity? : string;
     averagePrice? : number;
 }
 
@@ -361,7 +360,7 @@ class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
             side: HitBtcOrderEntryGateway.getSide(order.side),
             type: HitBtcOrderEntryGateway.getType(order.type),
             quantity: (order.quantity * _lotMultiplier).toString(),
-            price: (order.price * 300).toString(), // TODO Remove multiplication
+            price: (order.price).toString(),
             timeInForce: HitBtcOrderEntryGateway.getTif(order.timeInForce)
         };
 
@@ -374,7 +373,7 @@ class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     };
 
     private static getStatus(m : ExecutionReport) : Models.OrderStatus {
-        switch (m.execReportType) {
+        switch (m.reportType) {
             case "new":
             case "status":
                 return Models.OrderStatus.Working;
@@ -384,7 +383,7 @@ class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
             case "rejected":
                 return Models.OrderStatus.Rejected;
             case "trade":
-                if (m.orderStatus == "filled")
+                if (m.status == "filled")
                     return Models.OrderStatus.Complete;
                 else
                     return Models.OrderStatus.Working;
@@ -433,27 +432,23 @@ class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
         let lastQuantity : number = undefined;
         let lastPrice : number = undefined;
         
-
         const status : Models.OrderStatusUpdate = {
-            exchangeId: msg.orderId,
+            exchangeId: msg.id,
             orderId: msg.clientOrderId,
             orderStatus: ordStatus,
             time: t,
         };
 
-        if (msg.lastQuantity > 0 && msg.execReportType === "trade") {
+        if (msg.lastQuantity > 0 && msg.reportType === "trade") {
             status.lastQuantity = msg.lastQuantity / _lotMultiplier;
             status.lastPrice = msg.lastPrice;
         }
-
-        if (msg.orderRejectReason)
-            status.rejectMessage = msg.orderRejectReason;
 
         if (status.leavesQuantity)
             status.leavesQuantity = msg.leavesQuantity / _lotMultiplier;
         
         if (msg.cumQuantity)
-            status.cumQuantity = msg.cumQuantity / _lotMultiplier;
+            status.cumQuantity = parseFloat(msg.cumQuantity) / _lotMultiplier;
 
         if (msg.averagePrice)
             status.averagePrice = msg.averagePrice;
@@ -500,14 +495,17 @@ class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
             if (this._log.debug())
                 this._log.debug(msg, "message");
 
-            if (msg.hasOwnProperty("ExecutionReport")) {
-                this.onExecutionReport(new Models.Timestamped(msg.ExecutionReport, raw.time));
+            if (msg.method === 'report') {
+                this.onExecutionReport(new Models.Timestamped(msg.params, raw.time));
             }
-            else if (msg.hasOwnProperty("CancelReject")) {
-                this.onCancelReject(new Models.Timestamped(msg.CancelReject, raw.time));
+            else if (msg.id === 'newOrder' || msg.id === "cancelOrder") {
+                // Handled by report
             }
             else if (msg.id == 'login' && msg.result === true) {
                 this._log.info("Logged in successfuly");
+                this.onLogin();
+            } else if (msg.id === 'subscribeReports' && msg.result === true) {
+                this._log.info("Subscribed to reports")
             }
             else {
                 this._log.info("unhandled message", msg);
@@ -521,6 +519,10 @@ class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 
     generateClientOrderId = () => {
         return shortId.generate();
+    }
+
+    onLogin = () => {
+        this.sendAuth("subscribeReports", {});
     }
 
     private readonly _log = log("tribeca:gateway:HitBtcOE");
