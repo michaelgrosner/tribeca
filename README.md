@@ -200,7 +200,7 @@ To run multiple instances using a collection of config files:
 
 2. Edit the new config file `vim X.sh`
 
-3. Run the new instance with `./X.sh` or to run in the background, use `K=X.sh make start`. To attach to the new instance's scree, use`K=X.sh make screen`. To stop the new instance, use `K=X.sh make stop` and to restart it, use `K=X.sh make restart`. The environment variable `K` specifies the filename of the config file that you want to use.
+3. Run the new instance with `./X.sh` or to run in the background, use `K=X.sh make start`. To attach to the new instance's screen, use `K=X.sh make screen`. To stop the new instance, use `K=X.sh make stop` and to restart it, use `K=X.sh make restart`. The environment variable `K` specifies the filename of the config file that you want to use.
 
 4. Open in the web browser the different pages of the ports of the different running instances, or display the UI of all instances together in a single page using the MATRYOSHKA link in the footer (that can be predefined using the optional argument `--matryoshka=URL`).
 
