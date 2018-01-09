@@ -73,6 +73,25 @@ namespace K {
           }
         return S2l(uuid);
       };
+      static string oZip(string k) {
+        z_stream zs;
+        if (inflateInit2(&zs, -15) != Z_OK) return "";
+        zs.next_in = (Bytef*)k.data();
+        zs.avail_in = k.size();
+        int ret;
+        char outbuffer[32768];
+        string k_;
+        do {
+          zs.avail_out = 32768;
+          zs.next_out = (Bytef*)outbuffer;
+          ret = inflate(&zs, Z_SYNC_FLUSH);
+          if (k_.size() < zs.total_out)
+            k_.append(outbuffer, zs.total_out - k_.size());
+        } while (ret == Z_OK);
+        inflateEnd(&zs);
+        if (ret != Z_STREAM_END) return "";
+        return k_;
+      };
       static string oHex(string k) {
        unsigned int len = k.length();
         string k_;
