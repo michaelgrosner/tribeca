@@ -155,7 +155,35 @@ namespace K {
         system("test -n \"`/bin/pidof stunnel`\" && kill -9 `/bin/pidof stunnel`");
         system("stunnel etc/K-stunnel.conf");
       };
-      static json wJet(string k, bool f = false) {
+      static int memory() {
+        string ps = output(string("ps -p") + to_string(::getpid()) + " -o rss | tail -n 1 | sed 's/ //'");
+        if (ps.empty()) ps = "0";
+        return stoi(ps) * 1e+3;
+      };
+      static string output(string cmd) {
+        string data;
+        FILE * stream;
+        const int max_buffer = 256;
+        char buffer[max_buffer];
+        cmd.append(" 2>&1");
+        stream = popen(cmd.c_str(), "r");
+        if (stream) {
+          while (!feof(stream))
+            if (fgets(buffer, max_buffer, stream) != NULL) data.append(buffer);
+          pclose(stream);
+        }
+        return data;
+      };
+      static string readlink(const char* pathname) {
+        string buffer(64, '\0');
+        ssize_t len;
+        while((len = ::readlink(pathname, &buffer[0], buffer.size())) == static_cast<ssize_t>(buffer.size()))
+          buffer.resize(buffer.size() * 2);
+        if (len == -1) logWar("FN", "readlink failed");
+        buffer.resize(len);
+        return buffer;
+      };
+      static json   wJet(string k, bool f = false) {
         return json::parse(wGet(k, f));
       };
       static string wGet(string k, bool f) {
@@ -177,7 +205,7 @@ namespace K {
         if (k_.empty() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
         return k_;
       };
-      static json wJet(string k, string p) {
+      static json   wJet(string k, string p) {
         return json::parse(wGet(k, p));
       };
       static string wGet(string k, string p) {
@@ -201,7 +229,7 @@ namespace K {
         if (k_.empty() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
         return k_;
       };
-      static json wJet(string k, string t, bool auth) {
+      static json   wJet(string k, string t, bool auth) {
         return json::parse(wGet(k, t, auth));
       };
       static string wGet(string k, string t, bool auth) {
@@ -224,7 +252,7 @@ namespace K {
         if (k_.empty() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
         return k_;
       };
-      static json wJet(string k, bool p, string a, string s, string n) {
+      static json   wJet(string k, bool p, string a, string s, string n) {
         return json::parse(wGet(k, p, a, s, n));
       };
       static string wGet(string k, bool p, string a, string s, string n) {
@@ -249,7 +277,7 @@ namespace K {
         if (k_.empty() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
         return k_;
       };
-      static json wJet(string k, bool a, string p) {
+      static json   wJet(string k, bool a, string p) {
         return json::parse(wGet(k, a, p));
       };
       static string wGet(string k, bool a, string p) {
@@ -271,7 +299,7 @@ namespace K {
         if (k_.empty() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
         return k_;
       };
-      static json wJet(string k, string p, string s, bool post) {
+      static json   wJet(string k, string p, string s, bool post) {
         return json::parse(wGet(k, p, s, post));
       };
       static string wGet(string k, string p, string s, bool post) {
@@ -295,7 +323,7 @@ namespace K {
         if (k_.empty() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
         return k_;
       };
-      static json wJet(string k, string p, string a, string s) {
+      static json   wJet(string k, string p, string a, string s) {
         return json::parse(wGet(k, p, a, s));
       };
       static string wGet(string k, string p, string a, string s) {
@@ -321,7 +349,7 @@ namespace K {
         if (k_.empty() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
         return k_;
       };
-      static json wJet(string k, string p, string a, string s, bool post) {
+      static json   wJet(string k, string p, string a, string s, bool post) {
         return json::parse(wGet(k, p, a, s, post));
       };
       static string wGet(string k, string p, string a, string s, bool post) {
@@ -347,10 +375,10 @@ namespace K {
         if (k_.empty() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
         return k_;
       };
-      static json wJet(string k, string p, string a, string s, bool post, bool auth) {
+      static json   wJet(string k, string p, string a, string s, bool post, bool auth) {
         return json::parse(wGet(k, p, a, s, post, auth));
       };
-      static string wGet(string k, string p, string t, string s, bool post, bool auth) {
+      static string wGet(string k, string p, string a, string s, bool post, bool auth) {
         string k_;
         CURL* curl;
         curl = curl_easy_init();
@@ -361,7 +389,7 @@ namespace K {
           curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &wcb);
           curl_easy_setopt(curl, CURLOPT_POSTFIELDS, p.data());
           h_ = curl_slist_append(h_, "Content-Type: application/x-www-form-urlencoded");
-          if (!t.empty()) h_ = curl_slist_append(h_, string("Authorization: Bearer ").append(t).data());
+          if (!a.empty()) h_ = curl_slist_append(h_, string("Authorization: Bearer ").append(a).data());
           curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
           curl_easy_setopt(curl, CURLOPT_WRITEDATA, &k_);
           curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
@@ -372,7 +400,7 @@ namespace K {
         if (k_.empty() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
         return k_;
       };
-      static json wJet(string k, string t, string a, string s, string p) {
+      static json   wJet(string k, string t, string a, string s, string p) {
         return json::parse(wGet(k, t, a, s, p));
       };
       static string wGet(string k, string t, string a, string s, string p) {
@@ -398,7 +426,7 @@ namespace K {
         if (k_.empty() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
         return k_;
       };
-      static json wJet(string k, string t, string a, string s, string p, bool d) {
+      static json   wJet(string k, string t, string a, string s, string p, bool d) {
         return json::parse(wGet(k, t, a, s, p, d));
       };
       static string wGet(string k, string t, string a, string s, string p, bool d) {
@@ -428,34 +456,6 @@ namespace K {
       static size_t wcb(void *buf, size_t size, size_t nmemb, void *up) {
         ((string*)up)->append((char*)buf, size * nmemb);
         return size * nmemb;
-      };
-      static int memory() {
-        string ps = output(string("ps -p") + to_string(::getpid()) + " -o rss | tail -n 1 | sed 's/ //'");
-        if (ps.empty()) ps = "0";
-        return stoi(ps) * 1e+3;
-      };
-      static string output(string cmd) {
-        string data;
-        FILE * stream;
-        const int max_buffer = 256;
-        char buffer[max_buffer];
-        cmd.append(" 2>&1");
-        stream = popen(cmd.c_str(), "r");
-        if (stream) {
-          while (!feof(stream))
-            if (fgets(buffer, max_buffer, stream) != NULL) data.append(buffer);
-          pclose(stream);
-        }
-        return data;
-      };
-      static string readlink(const char* pathname) {
-        string buffer(64, '\0');
-        ssize_t len;
-        while((len = ::readlink(pathname, &buffer[0], buffer.size())) == static_cast<ssize_t>(buffer.size()))
-          buffer.resize(buffer.size() * 2);
-        if (len == -1) logWar("FN", "readlink failed");
-        buffer.resize(len);
-        return buffer;
       };
       static void logWar(string k, string s) {
         logErr(k, s, " Warrrrning: ");
@@ -671,7 +671,7 @@ namespace K {
         endwin();
         wBorder = nullptr;
       };
-      static int screen_events() {
+      static int  screen_events() {
         return wBorder
           ? wgetch(wBorder)
           : 'q';

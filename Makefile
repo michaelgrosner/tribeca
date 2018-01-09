@@ -1,11 +1,11 @@
 K       ?= K.sh
 CHOST   ?= $(shell (test -d .git && test -n "`command -v g++`") && g++ -dumpmachine || ls . | grep build- | head -n1 | cut -d '/' -f1 | cut -d '-' -f2-)
 CARCH    = x86_64-linux-gnu arm-linux-gnueabihf aarch64-linux-gnu x86_64-apple-darwin17
+KLOCAL   = build-$(CHOST)/local
 CXX      = $(CHOST)-g++
 CC       = $(CHOST)-gcc
 ERR      = *** K require g++ v6, but g++ v6 was not found at $(shell which $(CXX))
 HINT     = consider to create a symlink at $(shell which $(CXX)) pointing to your g++-6 executable
-KLOCAL   = build-$(CHOST)/local
 KGIT     = 4.0
 KHUB     = 8656597
 V_ZLIB  := 1.2.11
@@ -18,7 +18,7 @@ V_SQL   := 3210000
 V_QF    := v.1.14.4
 V_UV    := 1.18.0
 V_PVS   := 6.20.24121.1823
-KZIP     = d22b12e05b0b4174469f308327184d1b676d9fb2
+KZIP     = 7c0e58038ba944cb57e9651e3d05d44ee259c210
 KARGS    = -Wextra -std=c++11 -O3 -I$(KLOCAL)/include      \
   src/server/K.cxx -pthread -rdynamic                      \
   -DK_STAMP='"$(shell date "+%Y-%m-%d %H:%M:%S")"'         \
