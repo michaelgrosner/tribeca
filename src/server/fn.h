@@ -45,21 +45,28 @@ namespace K {
         wprintw(wLog, " ");
         return "";
       };
-      static string int64Id() {
+      static unsigned long long int64() {
         static random_device rd;
         static mt19937_64 gen(rd());
-        uniform_int_distribution<unsigned long long> dis;
-        return to_string(dis(gen)).substr(0,8);
+        return uniform_int_distribution<unsigned long long>()(gen);
+      };
+      static string int64Id() {
+        return to_string(int64()).substr(0,8);
       };
       static string charId() {
         char s[16];
-        for (unsigned int i = 0; i < 16; ++i) s[i] = alphanum[stol(int64Id()) % (sizeof(alphanum) - 1)];
+        for (unsigned int i = 0; i < 16; ++i) s[i] = alphanum[int64() % (sizeof(alphanum) - 1)];
         return string(s, 16);
       };
+      static string uuidId32() {
+        string uuid = uuidId();
+        uuid.erase(remove(uuid.begin(), uuid.end(), '-'), uuid.end());
+        return uuid;
+      }
       static string uuidId() {
         string uuid = string(36,' ');
-        unsigned long rnd = stol(int64Id());
-        unsigned long rnd_ = stol(int64Id());
+        unsigned long long rnd = int64();
+        unsigned long long rnd_ = int64();
         uuid[8] = '-';
         uuid[13] = '-';
         uuid[18] = '-';

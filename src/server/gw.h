@@ -99,7 +99,7 @@ namespace K {
           gw->minSize = stod(reply.value("base_min_size", "0"));
         }
         else if (k == mExchange::HitBtc) {
-          gw->randId = FN::charId;
+          gw->randId = FN::uuidId32;
           gw->symbol = FN::S2u(string(gw->base) + gw->quote);
           reply = FN::wJet(string(gw->http) + "/public/symbol/" + gw->symbol);
           gw->minTick = stod(reply.value("tickSize", "0"));
@@ -167,7 +167,7 @@ namespace K {
           }
         }
         else if (k == mExchange::Null) {
-          gw->randId = FN::int64Id;
+          gw->randId = FN::uuidId;
           gw->symbol = FN::FN::S2u(string(gw->base) + "_" + gw->quote);
           gw->minTick = 0.01;
           gw->minSize = 0.01;

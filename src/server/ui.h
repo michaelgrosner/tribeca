@@ -86,7 +86,7 @@ namespace K {
             }
             if (!url.empty())
               content << ifstream(FN::readlink("app/client").substr(48) + url).rdbuf();
-            else if (stol(FN::int64Id()) % 21) {
+            else if (FN::int64() % 21) {
               document = "HTTP/1.1 404 Not Found\r\n";
               content << "Today, is a beautiful day.";
             } else { // Humans! go to any random url to check your luck
