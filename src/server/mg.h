@@ -127,11 +127,11 @@ namespace K {
 	    }
         if (MEP != qp->mediumEwmaPeriods) {
 	        MEP  = qp->mediumEwmaPeriods;
-	        calcEwmaHistory(&mgEwmaM, qp->mediumEwmaPeriods, "Medium"); 
+	        calcEwmaHistory(&mgEwmaM, MEP, "Medium"); 
 	    }
         if (SEP != qp->shortEwmaPeriods) {
 	        SEP  = qp->shortEwmaPeriods;
-	        calcEwmaHistory(&mgEwmaS, qp->shortEwmaPeriods, "Short");
+	        calcEwmaHistory(&mgEwmaS, SEP, "Short");
 	    }
       };
     private:
