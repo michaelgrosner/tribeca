@@ -296,17 +296,20 @@ namespace K {
         if (k_.empty() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
         return k_;
       };
-      static json   wJet(string k, bool a, string p) {
-        return json::parse(wGet(k, a, p));
+      static json   wJet(string k, bool a, string p, string s) {
+        return json::parse(wGet(k, a, p, s));
       };
-      static string wGet(string k, bool a, string p) {
+      static string wGet(string k, bool a, string p, string s) {
         string k_;
         CURL* curl;
         curl = curl_easy_init();
         if (curl) {
           curl_easy_setopt(curl, CURLOPT_CAINFO, "etc/K-cabundle.pem");
           curl_easy_setopt(curl, CURLOPT_URL, k.data());
-          if (a) curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
+          if (a) {
+            curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
+            curl_easy_setopt(curl, CURLOPT_POSTFIELDS, s.data());
+          }
           curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &wcb);
           curl_easy_setopt(curl, CURLOPT_USERPWD, p.data());
           curl_easy_setopt(curl, CURLOPT_WRITEDATA, &k_);
