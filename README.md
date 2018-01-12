@@ -1,4 +1,4 @@
-<p align="center"><a href="https://www.edwardsnowden.com/"><img src="https://user-images.githubusercontent.com/1634027/34749312-0d46f928-f5a1-11e7-8fe2-d8fc437ec2a0.jpg" /></a></p><br/>
+<p align="right">self reminder:<br><b>patience is the mother of science</b></p>
 <!--
 
 ```c++
