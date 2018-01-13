@@ -106,7 +106,7 @@ namespace K {
           gw->minSize = stod(reply.value("quantityIncrement", "0"));
         }
         else if (k == mExchange::Bitfinex or k == mExchange::BitfinexMargin) {
-          gw->randId = FN::int64Id;
+          gw->randId = FN::int45Id;
           gw->symbol = FN::S2l(string(gw->base) + gw->quote);
           reply = FN::wJet(string(gw->http) + "/pubticker/" + gw->symbol);
           if (reply.find("last_price") != reply.end()) {
@@ -131,7 +131,7 @@ namespace K {
           gw->minSize = 0.001;
         }
         else if (k == mExchange::Kraken) {
-          gw->randId = FN::int64Id;
+          gw->randId = FN::int45Id;
           gw->symbol = FN::S2u(string(gw->base) + gw->quote);
           reply = FN::wJet(string(gw->http) + "/0/public/AssetPairs?pair=" + gw->symbol);
           if (reply.find("result") != reply.end())
@@ -148,7 +148,7 @@ namespace K {
           gw->minSize = 0.01;
         }
         else if (k == mExchange::Korbit) {
-          gw->randId = FN::int64Id;
+          gw->randId = FN::int45Id;
           gw->symbol = FN::S2l(string(gw->base) + "_" + gw->quote);
           reply = FN::wJet(string(gw->http) + "/constants");
           if (reply.find(gw->symbol.substr(0,3).append("TickSize")) != reply.end()) {
@@ -157,7 +157,7 @@ namespace K {
           }
         }
         else if (k == mExchange::Poloniex) {
-          gw->randId = FN::int64Id;
+          gw->randId = FN::int45Id;
           gw->symbol = FN::FN::S2u(string(gw->base) + "_" + gw->quote);
           reply = FN::wJet(string(gw->http) + "/public?command=returnTicker");
           if (reply.find(gw->symbol) != reply.end()) {

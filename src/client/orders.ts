@@ -111,7 +111,7 @@ export class OrdersComponent implements OnInit {
             price: o.price,
             value: Math.round(o.price * o.quantity * 100) / 100,
             tif: Models.TimeInForce[o.timeInForce],
-            lat: o.computationalLatency+'ms',
+            lat: o.latency+'ms',
             qty: o.quantity
           }));
         }
@@ -127,7 +127,7 @@ export class OrdersComponent implements OnInit {
         exchange: o.exchange,
         type: Models.OrderType[o.type],
         tif: Models.TimeInForce[o.timeInForce],
-        lat: o.computationalLatency+'ms',
+        lat: o.latency+'ms',
         qty: o.quantity,
         pong: o.isPong,
         time: o.time,

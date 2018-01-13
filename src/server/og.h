@@ -33,17 +33,33 @@ namespace K {
         debug = [&](string k) {};
       };
     public:
-      void sendOrder(mSide side, double price, double qty, mOrderType type, mTimeInForce tif, bool isPong, bool postOnly) {
-        mOrder o = updateOrderState(mOrder(gw->randId(), mPair(gw->base, gw->quote), side, qty, type, isPong, price, tif, mStatus::New, postOnly));
-        debug(string(" send  ") + (o.side == mSide::Bid ? "BID id " : "ASK id ") + o.orderId + ": " + o.quantity2str() + " " + o.pair.base + " at price " + o.price2str() + " " + o.pair.quote);
-        gw->send(o.orderId, o.side, o.price2str(), o.quantity2str(), o.type, o.timeInForce, o.preferPostOnly, o.time);
+      void sendOrder(vector<string> toCancel, mSide side, double price, double qty, mOrderType type, mTimeInForce tif, bool isPong, bool postOnly) {
+        string replaceOrderId,
+               replaceExchangeId;
+        if (!toCancel.empty()) {
+          replaceOrderId = side == mSide::Bid ? toCancel.back() : toCancel.front();
+          toCancel.erase(toCancel.begin()+(side == mSide::Bid ? toCancel.size()-1 : 0));
+          for (string &it : toCancel) cancelOrder(it);
+        }
+        string newId(gw->randId());
+        updateOrderState(mOrder(newId, mPair(gw->base, gw->quote), side, qty, type, isPong, price, tif, mStatus::New, postOnly));
+        mOrder *o = &orders[newId];
+        debug(string(" send  ") + (replaceOrderId.empty() ? "" : replaceOrderId+ "> ") + (o->side == mSide::Bid ? "BID id " : "ASK id ") + o->orderId + ": " + o->quantity2str() + " " + o->pair.base + " at price " + o->price2str() + " " + o->pair.quote);
+        if (!replaceOrderId.empty())
+          if (orders.find(replaceOrderId) == orders.end() or orders[replaceOrderId].exchangeId.empty())
+            replaceOrderId = "";
+          else replaceExchangeId = orders[replaceOrderId].exchangeId;
+        gw->send(replaceOrderId, replaceExchangeId, o->orderId, o->side, o->price2str(), o->quantity2str(), o->type, o->timeInForce, o->preferPostOnly, o->time);
         ((UI*)client)->orders_60s++;
       };
       void cancelOrder(string k) {
-        if (orders.find(k) == orders.end() or orders[k].exchangeId.empty()) return;
-        mOrder o = orders[k];
-        debug(string("cancel ") + (o.side == mSide::Bid ? "BID id " : "ASK id ") + o.orderId + "::" + o.exchangeId);
-        gw->cancel(o.orderId, o.exchangeId, o.side, o.time);
+        if (orders.find(k) == orders.end()
+          or orders[k].exchangeId.empty()
+          or orders[k].waitingCancel + 3e+3 > _Tstamp_
+        ) return;
+        orders[k].waitingCancel = _Tstamp_;
+        debug(string("cancel ") + (orders[k].side == mSide::Bid ? "BID id " : "ASK id ") + orders[k].orderId + "::" + orders[k].exchangeId);
+        gw->cancel(orders[k].orderId, orders[k].exchangeId, orders[k].side, orders[k].time);
       };
       void cleanOrder(string k) {
         map<string, mOrder>::iterator it = orders.find(k);
@@ -82,6 +98,7 @@ namespace K {
       };
       function<void(json)> kissSubmitNewOrder = [&](json butterfly) {
         sendOrder(
+          vector<string>(),
           butterfly.value("side", "") == "Bid" ? mSide::Bid : mSide::Ask,
           butterfly.value("price", 0.0),
           butterfly.value("quantity", 0.0),
@@ -91,36 +108,36 @@ namespace K {
           false
         );
       };
-      mOrder updateOrderState(mOrder k) {
-        mOrder o;
-        if (k.orderStatus == mStatus::New) o = k;
-        else if (!k.orderId.empty() and orders.find(k.orderId) != orders.end())
-          o = orders[k.orderId];
-        else if (!k.exchangeId.empty())
+      void updateOrderState(mOrder k) {
+        if (k.orderStatus == mStatus::New) orders[k.orderId] = k;
+        if (k.orderId.empty() and !k.exchangeId.empty())
           for (map<string, mOrder>::value_type &it : orders)
-            if (it.second.exchangeId == k.exchangeId) {
-              o = it.second;
+            if (k.exchangeId == it.second.exchangeId) {
+              k.orderId = it.first;
               break;
             }
-        if (o.orderId.empty()) return o;
-        if (!k.exchangeId.empty()) o.exchangeId = k.exchangeId;
-        if (k.orderStatus != mStatus::New) o.orderStatus = k.orderStatus;
-        if (k.price) o.price = k.price;
-        if (k.quantity) o.quantity = k.quantity;
-        if (k.time) o.time = k.time;
-        if (k.computationalLatency) o.computationalLatency = k.computationalLatency;
-        if (!o.time) o.time = _Tstamp_;
-        if (!o.computationalLatency and o.orderStatus == mStatus::Working)
-          o.computationalLatency = _Tstamp_ - o.time;
-        if (o.computationalLatency) o.time = _Tstamp_;
-        toMemory(o);
-        if (k.tradeQuantity) o.tradeQuantity = k.tradeQuantity;
+        if (k.orderId.empty() or orders.find(k.orderId) == orders.end()) return;
+        mOrder *o = &orders[k.orderId];
+        o->orderStatus = k.orderStatus;
+        if (!k.exchangeId.empty()) o->exchangeId = k.exchangeId;
+        if (k.price) o->price = k.price;
+        if (k.quantity) o->quantity = k.quantity;
+        if (k.time) o->time = k.time;
+        if (k.latency) o->latency = k.latency;
+        if (!o->time) o->time = _Tstamp_;
+        if (!o->latency and o->orderStatus == mStatus::Working)
+          o->latency = _Tstamp_ - o->time;
+        if (o->latency) o->time = _Tstamp_;
+        if (k.tradeQuantity) o->tradeQuantity = k.tradeQuantity;
         ((EV*)events)->ogOrder(o);
         toHistory(o);
-        o.tradeQuantity = 0;
-        if (o.orderStatus != mStatus::New)
+        if (k.tradeQuantity) o->tradeQuantity = 0;
+        if (k.orderStatus == mStatus::Cancelled or k.orderStatus == mStatus::Complete)
+          cleanOrder(k.orderId);
+        else debug(string(" saved ") + (o->side == mSide::Bid ? "BID id " : "ASK id ") + o->orderId + "::" + o->exchangeId + " [" + to_string((int)o->orderStatus) + "]: " + o->quantity2str() + " " + o->pair.base + " at price " + o->price2str() + " " + o->pair.quote);
+        debug(string("memory ") + to_string(orders.size()));
+        if (k.orderStatus != mStatus::New)
           toClient();
-        return o;
       };
       void cancelOpenOrders() {
         for (map<string, mOrder>::value_type &it : orders)
@@ -156,20 +173,20 @@ namespace K {
             k.push_back(it.second);
         ((UI*)client)->send(mMatter::OrderStatusReports, k);
       };
-      void toHistory(mOrder o) {
-        if (!o.tradeQuantity) return;
+      void toHistory(mOrder *o) {
+        if (!o->tradeQuantity) return;
         double fee = 0;
         mTrade trade(
           to_string(_Tstamp_),
-          o.pair,
-          o.price,
-          o.tradeQuantity,
-          o.side,
-          o.time,
-          abs(o.price * o.tradeQuantity),
+          o->pair,
+          o->price,
+          o->tradeQuantity,
+          o->side,
+          o->time,
+          abs(o->price * o->tradeQuantity),
           0, 0, 0, 0, 0, fee, false
         );
-        ((EV*)events)->ogTrade(trade);
+        ((EV*)events)->ogTrade(&trade);
         FN::log(trade, gw->name);
         if (qp->_matchPings) {
           double widthPong = qp->widthPercentage
@@ -192,7 +209,7 @@ namespace K {
           {"side", trade.side},
           {"quantity", trade.quantity},
           {"value", trade.value},
-          {"pong", o.isPong}
+          {"pong", o->isPong}
         });
         cleanAuto(trade.time, qp->cleanPongsAuto);
       };
@@ -250,13 +267,6 @@ namespace K {
             ((DB*)memory)->insert(mMatter::Trades, {}, false, it->tradeId);
             it = tradesHistory.erase(it);
           } else ++it;
-      };
-      void toMemory(mOrder k) {
-        if (k.orderStatus == mStatus::New or k.orderStatus == mStatus::Working) {
-          orders[k.orderId] = k;
-          debug(string(" save  ") + (k.side == mSide::Bid ? "BID id " : "ASK id ") + k.orderId + "::" + k.exchangeId + " [" + to_string((int)k.orderStatus) + "]: " + k.quantity2str() + " " + k.pair.base + " at price " + k.price2str() + " " + k.pair.quote);
-        } else cleanOrder(k.orderId);
-        debug(string("memory ") + to_string(orders.size()));
       };
       function<void(string)> debug = [&](string k) {
         FN::log("DEBUG", string("OG ") + k);

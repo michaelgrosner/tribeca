@@ -36,7 +36,7 @@ namespace K {
           ((MG*)market)->calcEwmaHistory();
           calcQuote();
         };
-        ((EV*)events)->ogTrade = [&](mTrade k) {                    _debugEvent_
+        ((EV*)events)->ogTrade = [&](mTrade *k) {                   _debugEvent_
           ((PG*)wallet)->calcSafetyAfterTrade(k);
           calcQuote();
         };
@@ -107,10 +107,17 @@ namespace K {
         ((UI*)client)->send(mMatter::QuoteStatus, status);
       };
       bool diffCounts(unsigned int *qNew, unsigned int *qWorking, unsigned int *qDone) {
+        ((MG*)market)->filterBidOrders.clear();
+        ((MG*)market)->filterAskOrders.clear();
         for (map<string, mOrder>::value_type &it : ((OG*)broker)->orders)
           if (it.second.orderStatus == mStatus::New) (*qNew)++;
-          else if (it.second.orderStatus == mStatus::Working) (*qWorking)++;
-          else (*qDone)++;
+          else if (it.second.orderStatus == mStatus::Working) {
+            (mSide::Bid == it.second.side
+              ? ((MG*)market)->filterBidOrders
+              : ((MG*)market)->filterAskOrders
+            )[it.second.price] += it.second.quantity;
+            (*qWorking)++;
+          } else (*qDone)++;
         return *qNew != status.quotesInMemoryNew
           or *qWorking != status.quotesInMemoryWorking
           or *qDone != status.quotesInMemoryDone;
@@ -485,51 +492,27 @@ namespace K {
         } else return mQuoteState::Live;
       };
       void updateQuote(mLevel q, mSide side, bool isPong) {
-        if (((OG*)broker)->orders.empty()) return start(side, q, isPong);
         unsigned int n = 0;
-        vector<string> zombie;
+        vector<string> toCancel,
+                       working,
+                       zombies;
         unsigned long now = _Tstamp_;
         for (map<string, mOrder>::value_type &it : ((OG*)broker)->orders)
           if (it.second.side != side) continue;
           else if (abs(it.second.price - q.price) < gw->minTick) return;
-          else if (it.second.orderStatus == mStatus::New)
-            if (now-10e+3>it.second.time) zombie.push_back(it.second.orderId);
+          else if (it.second.orderStatus == mStatus::New) {
+            if (now-10e+3>it.second.time) zombies.push_back(it.second.orderId);
             else if (qp->safety != mQuotingSafety::AK47 or ++n >= qp->bullets) return;
-        for (string &it : zombie) ((OG*)broker)->cleanOrder(it);
-        modify(side, q, isPong);
-      };
-      void modify(mSide side, mLevel q, bool isPong) {
-        if (qp->safety == mQuotingSafety::AK47)
-          stopWorstsQuotes(side, q.price);
-        else stopAllQuotes(side);
-        start(side, q, isPong);
-      };
-      void start(mSide side, mLevel q, bool isPong) {
-        ((OG*)broker)->sendOrder(side, q.price, q.size, mOrderType::Limit, mTimeInForce::GTC, isPong, true);
-      };
-      void stopWorstsQuotes(mSide side, double price) {
-        bool k = false;
-        for (map<string, mOrder>::value_type &it : ((OG*)broker)->orders)
-          if (it.second.side != side) continue;
-          else if (side == mSide::Bid
-            ? price <= it.second.price
-            : price >= it.second.price
-          ) {
-            k = true;
-            ((OG*)broker)->cancelOrder(it.second.orderId);
+          } else {
+            if (qp->safety != mQuotingSafety::AK47 or (
+              side == mSide::Bid ? q.price <= it.second.price : q.price >= it.second.price
+            )) toCancel.push_back(it.second.orderId);
+            else working.push_back(it.second.orderId);
           }
-        if (!k) stopWorstQuote(side);
-      };
-      void stopWorstQuote(mSide side) {
-        multimap<double, mOrder> sideByPrice;
-        for (map<string, mOrder>::value_type &it : ((OG*)broker)->orders)
-          if (it.second.side == side)
-            sideByPrice.insert(pair<double, mOrder>(it.second.price, it.second));
-        if (sideByPrice.size())
-          ((OG*)broker)->cancelOrder(side == mSide::Bid
-            ? sideByPrice.begin()->second.orderId
-            : sideByPrice.rbegin()->second.orderId
-          );
+        for (string &it : zombies) ((OG*)broker)->cleanOrder(it);
+        if (qp->safety == mQuotingSafety::AK47 and toCancel.empty() and !working.empty())
+          toCancel.push_back(side == mSide::Bid ? working.front() : working.back());
+        ((OG*)broker)->sendOrder(toCancel, side, q.price, q.size, mOrderType::Limit, mTimeInForce::GTC, isPong, true);
       };
       void stopAllQuotes(mSide side) {
         for (map<string, mOrder>::value_type &it : ((OG*)broker)->orders)

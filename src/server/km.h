@@ -405,18 +405,19 @@ namespace K {
              bool isPong,
                   preferPostOnly;
     unsigned long time,
-                  computationalLatency;
+                  waitingCancel,
+                  latency;
     mOrder():
-      orderId(""), exchangeId(""), pair(mPair()), side((mSide)0), quantity(0), type((mOrderType)0), isPong(false), price(0), timeInForce((mTimeInForce)0), orderStatus((mStatus)0), preferPostOnly(false), tradeQuantity(0), time(0), computationalLatency(0)
+      orderId(""), exchangeId(""), pair(mPair()), side((mSide)0), quantity(0), type((mOrderType)0), isPong(false), price(0), timeInForce((mTimeInForce)0), orderStatus((mStatus)0), preferPostOnly(false), tradeQuantity(0), time(0), waitingCancel(0), latency(0)
     {};
     mOrder(string o, mStatus s):
-      orderId(o), exchangeId(""), pair(mPair()), side((mSide)0), quantity(0), type((mOrderType)0), isPong(false), price(0), timeInForce((mTimeInForce)0), orderStatus(s), preferPostOnly(false), tradeQuantity(0), time(0), computationalLatency(0)
+      orderId(o), exchangeId(""), pair(mPair()), side((mSide)0), quantity(0), type((mOrderType)0), isPong(false), price(0), timeInForce((mTimeInForce)0), orderStatus(s), preferPostOnly(false), tradeQuantity(0), time(0), waitingCancel(0), latency(0)
     {};
     mOrder(string o, string e, mStatus s, double p, double q, double Q):
-      orderId(o), exchangeId(e), pair(mPair()), side((mSide)0), quantity(q), type((mOrderType)0), isPong(false), price(p), timeInForce((mTimeInForce)0), orderStatus(s), preferPostOnly(false), tradeQuantity(Q), time(0), computationalLatency(0)
+      orderId(o), exchangeId(e), pair(mPair()), side((mSide)0), quantity(q), type((mOrderType)0), isPong(false), price(p), timeInForce((mTimeInForce)0), orderStatus(s), preferPostOnly(false), tradeQuantity(Q), time(0), waitingCancel(0), latency(0)
     {};
     mOrder(string o, mPair P, mSide S, double q, mOrderType t, bool i, double p, mTimeInForce F, mStatus s, bool O):
-      orderId(o), exchangeId(""), pair(P), side(S), quantity(q), type(t), isPong(i), price(p), timeInForce(F), orderStatus(s), preferPostOnly(O), tradeQuantity(0), time(0), computationalLatency(0)
+      orderId(o), exchangeId(""), pair(P), side(S), quantity(q), type(t), isPong(i), price(p), timeInForce(F), orderStatus(s), preferPostOnly(O), tradeQuantity(0), time(0), waitingCancel(0), latency(0)
     {};
     string quantity2str() {
       stringstream ss;
@@ -436,20 +437,20 @@ namespace K {
   };
   static void to_json(json& j, const mOrder& k) {
     j = {
-      {             "orderId", k.orderId             },
-      {          "exchangeId", k.exchangeId          },
-      {                "pair", k.pair                },
-      {                "side", k.side                },
-      {            "quantity", k.quantity            },
-      {                "type", k.type                },
-      {              "isPong", k.isPong              },
-      {               "price", k.price               },
-      {         "timeInForce", k.timeInForce         },
-      {         "orderStatus", k.orderStatus         },
-      {      "preferPostOnly", k.preferPostOnly      },
-      {       "tradeQuantity", k.tradeQuantity       },
-      {                "time", k.time                },
-      {"computationalLatency", k.computationalLatency}
+      {       "orderId", k.orderId       },
+      {    "exchangeId", k.exchangeId    },
+      {          "pair", k.pair          },
+      {          "side", k.side          },
+      {      "quantity", k.quantity      },
+      {          "type", k.type          },
+      {        "isPong", k.isPong        },
+      {         "price", k.price         },
+      {   "timeInForce", k.timeInForce   },
+      {   "orderStatus", k.orderStatus   },
+      {"preferPostOnly", k.preferPostOnly},
+      { "tradeQuantity", k.tradeQuantity },
+      {          "time", k.time          },
+      {       "latency", k.latency       }
     };
   };
   struct mLevel {
@@ -536,9 +537,6 @@ namespace K {
       {   "quotesInMemoryDone", k.quotesInMemoryDone   }
     };
   };
-  static const char alphanum[] = "0123456789"
-                                 "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-                                 "abcdefghijklmnopqrstuvwxyz";
   static char RBLACK[] = "\033[0;30m", RRED[]    = "\033[0;31m", RGREEN[] = "\033[0;32m", RYELLOW[] = "\033[0;33m",
               RBLUE[]  = "\033[0;34m", RPURPLE[] = "\033[0;35m", RCYAN[]  = "\033[0;36m", RWHITE[]  = "\033[0;37m",
               BBLACK[] = "\033[1;30m", BRED[]    = "\033[1;31m", BGREEN[] = "\033[1;32m", BYELLOW[] = "\033[1;33m",
@@ -570,7 +568,7 @@ namespace K {
              ws      = "", http    = "";
       virtual   void wallet() = 0,
                      levels() = 0,
-                     send(string, mSide, string, string, mOrderType, mTimeInForce, bool, unsigned long) = 0,
+                     send(string, string, string, mSide, string, string, mOrderType, mTimeInForce, bool, unsigned long) = 0,
                      cancel(string, string, mSide, unsigned long) = 0,
                      cancelAll() = 0,
                      close() = 0;

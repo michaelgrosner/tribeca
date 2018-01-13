@@ -16,13 +16,13 @@ namespace K  {
       Timer *tServer = nullptr,
             *tEngine = nullptr,
             *tClient = nullptr;
-      function<void(mOrder)> ogOrder;
-      function<void(mTrade)> ogTrade;
-      function<void()>       mgLevels,
-                             mgEwmaQuoteProtection,
-                             mgTargetPosition,
-                             pgTargetBasePosition,
-                             uiQuotingParameters;
+      function<void(mOrder*)> ogOrder;
+      function<void(mTrade*)> ogTrade;
+      function<void()>        mgLevels,
+                              mgEwmaQuoteProtection,
+                              mgTargetPosition,
+                              pgTargetBasePosition,
+                              uiQuotingParameters;
     protected:
       void load() {
         gwEndings.push_back(&happyEnding);
