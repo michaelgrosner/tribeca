@@ -35,6 +35,8 @@ namespace K {
       double mgStdevBidMean = 0;
       double mgStdevAsk = 0;
       double mgStdevAskMean = 0;
+      map<double, double> filterBidOrders,
+                          filterAskOrders;
     protected:
       void load() {
         for (json &it : ((DB*)memory)->load(mMatter::MarketData)) {
@@ -163,12 +165,29 @@ namespace K {
         ((UI*)client)->send(mMatter::MarketTrade, k);
       };
       void levelUp(mLevels k) {
-        filter(k);
+        levels = k;
+        if (!filterBidOrders.empty()) filter(&levels.bids, &filterBidOrders);
+        if (!filterAskOrders.empty()) filter(&levels.asks, &filterAskOrders);
+        calcFairValue();
+        ((EV*)events)->mgLevels();
         if (mgT_369ms + 369e+0 > _Tstamp_) return;
         ((UI*)client)->bid_levels = k.bids.size();
         ((UI*)client)->ask_levels = k.asks.size();
         ((UI*)client)->send(mMatter::MarketData, k);
         mgT_369ms = _Tstamp_;
+      };
+      void filter(vector<mLevel> *k, map<double, double> *o) {
+        for (vector<mLevel>::iterator it = k->begin(); it != k->end();) {
+          for (map<double, double>::iterator it_ = o->begin(); it_ != o->end();)
+            if (abs(it->price - it_->first) < gw->minTick) {
+              it->size = it->size - it_->second;
+              o->erase(it_);
+              break;
+            } else ++it_;
+          if (it->size < gw->minTick) it = k->erase(it);
+          else ++it;
+          if (o->empty()) break;
+        }
       };
       void calcStatsEwmaPosition() {
         fairValue96h.push_back(fairValue);
@@ -221,36 +240,6 @@ namespace K {
           {"tradesSellSize", takersSellSize60s},
           {"fairValue", fairValue}
         };
-      };
-      void filter(mLevels k) {
-        levels = k;
-        if (levels.empty()) return;
-        map<double, double> filterBidOrders,
-                            filterAskOrders;
-        for (map<string, mOrder>::value_type &it : ((OG*)broker)->orders)
-          (mSide::Bid == it.second.side ? filterBidOrders : filterAskOrders)[it.second.price] += it.second.quantity;
-        if (!filterBidOrders.empty()) filter(&levels.bids, &filterBidOrders);
-        if (!filterAskOrders.empty()) filter(&levels.asks, &filterAskOrders);
-        if (levels.empty()) return;
-        calcFairValue();
-        ((EV*)events)->mgLevels();
-      };
-      void filter(vector<mLevel> *k, map<double, double> *o) {
-        for (vector<mLevel>::iterator it = k->begin(); it != k->end();) {
-          bool rm = false;
-          for (map<double, double>::iterator it_ = o->begin(); it_ != o->end();)
-            if (abs(it->price - it_->first) < gw->minTick) {
-              it->size = it->size - it_->second;
-              if (it->size < gw->minTick) {
-                rm = true;
-                it = k->erase(it);
-              }
-              o->erase(it_);
-              break;
-            } else ++it_;
-          if (o->empty()) break;
-          if (!rm) ++it;
-        }
       };
       void cleanStdev() {
         size_t periods = (size_t)qp->quotingStdevProtectionPeriods;
