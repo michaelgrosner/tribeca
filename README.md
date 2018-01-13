@@ -185,7 +185,7 @@ Feel free anytime to check if there are new modifications with `make diff`.
 
 Once you decide that is time to upgrade, execute `make latest` to download and install the latest modifications in your remote branch (or directly `make reinstall` to skip the validation of the new commit messages).
 
-If you only use `git` to pull the latest commits, you will still need to recompile using `make reinstall` and then `make restart` to start using the latest version.
+If you only use `git` to pull the latest commits, you will still need to recompile using `make reinstall` (or `make dist K bundle`) and then `make restart` to start using the latest version.
 
 ### Multiple instances party time
 
