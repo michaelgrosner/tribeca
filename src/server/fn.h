@@ -9,6 +9,10 @@
 #define K_STAMP "0"
 #endif
 
+#define _AZnums_ "0123456789"                 \
+                 "ABCDEFGHIJKLMNOPQRSTUVWXYZ" \
+                 "abcdefghijklmnopqrstuvwxyz"
+
 #define _Tstamp_ chrono::duration_cast<chrono::milliseconds>(     \
                    chrono::system_clock::now().time_since_epoch() \
                  ).count()
@@ -19,8 +23,7 @@ namespace K {
       static string S2l(string k) { transform(k.begin(), k.end(), k.begin(), ::tolower); return k; };
       static string S2u(string k) { transform(k.begin(), k.end(), k.begin(), ::toupper); return k; };
       static string uiT() {
-        chrono::time_point<chrono::system_clock> now = chrono::system_clock::now();
-        auto t = now.time_since_epoch();
+        auto t = chrono::system_clock::now().time_since_epoch();
         auto days = chrono::duration_cast<chrono::duration<int, ratio_multiply<chrono::hours::period, ratio<24>>::type>>(t);
         t -= days;
         auto hours = chrono::duration_cast<chrono::hours>(t);
@@ -33,8 +36,13 @@ namespace K {
         t -= milliseconds;
         auto microseconds = chrono::duration_cast<chrono::microseconds>(t);
         stringstream T, T_;
-        T << setfill('0') << setw(2) << hours.count() << ":" << setw(2) << minutes.count() << ":" << setw(2) << seconds.count();
-        T_ << "." << setfill('0') << setw(3) << milliseconds.count() << setw(3) << microseconds.count();
+        T << setfill('0')
+          << setw(2) << hours.count() << ":"
+          << setw(2) << minutes.count() << ":"
+          << setw(2) << seconds.count();
+        T_ << setfill('0') << "."
+           << setw(3) << milliseconds.count()
+           << setw(3) << microseconds.count();
         if (!wBorder) return string(BGREEN) + T.str() + RGREEN + T_.str() + BWHITE + " ";
         wattron(wLog, COLOR_PAIR(COLOR_GREEN));
         wattron(wLog, A_BOLD);
@@ -50,12 +58,12 @@ namespace K {
         static mt19937_64 gen(rd());
         return uniform_int_distribution<unsigned long long>()(gen);
       };
-      static string int64Id() {
-        return to_string(int64()).substr(0,8);
+      static string int45Id() {
+        return to_string(int64()).substr(0,10);
       };
       static string charId() {
         char s[16];
-        for (unsigned int i = 0; i < 16; ++i) s[i] = alphanum[int64() % (sizeof(alphanum) - 1)];
+        for (unsigned int i = 0; i < 16; ++i) s[i] = _AZnums_[int64() % (sizeof(_AZnums_) - 1)];
         return string(s, 16);
       };
       static string uuidId32() {
@@ -76,7 +84,7 @@ namespace K {
           if (i != 8 && i != 13 && i != 18 && i != 14 && i != 23) {
             if (rnd <= 0x02) { rnd = 0x2000000 + (rnd_ * 0x1000000) | 0; }
             rnd >>= 4;
-            uuid[i] = alphanum[(i == 19) ? ((rnd & 0xf) & 0x3) | 0x8 : rnd & 0xf];
+            uuid[i] = _AZnums_[(i == 19) ? ((rnd & 0xf) & 0x3) | 0x8 : rnd & 0xf];
           }
         return S2l(uuid);
       };
@@ -720,10 +728,9 @@ namespace K {
         multimap<double, mOrder, greater<double>> openOrders;
         if (hasOrders) {
           orders = Orders;
-          for (map<string, mOrder>::value_type &it : orders) {
-            if (mStatus::Working != it.second.orderStatus) continue;
-            openOrders.insert(pair<double, mOrder>(it.second.price, it.second));
-          }
+          for (map<string, mOrder>::value_type &it : orders)
+            if (mStatus::Working == it.second.orderStatus)
+              openOrders.insert(pair<double, mOrder>(it.second.price, it.second));
         }
         int l = p,
             y = getmaxy(wBorder),
