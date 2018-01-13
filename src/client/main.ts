@@ -922,6 +922,7 @@ class ClientComponent implements OnInit {
   }
 
   private bytesToSize = (input:number, precision:number) => {
+    if (!input) return '0B';
     let unit = ['', 'K', 'M', 'G', 'T', 'P'];
     let index = Math.floor(Math.log(input) / Math.log(1024));
     if (index >= unit.length) return input + 'B';

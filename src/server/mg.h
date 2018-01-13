@@ -225,19 +225,32 @@ namespace K {
       void filter(mLevels k) {
         levels = k;
         if (levels.empty()) return;
+        map<double, double> filterBidOrders,
+                            filterAskOrders;
         for (map<string, mOrder>::value_type &it : ((OG*)broker)->orders)
-          filter(mSide::Bid == it.second.side ? &levels.bids : &levels.asks, it.second);
+          (mSide::Bid == it.second.side ? filterBidOrders : filterAskOrders)[it.second.price] += it.second.quantity;
+        if (!filterBidOrders.empty()) filter(&levels.bids, &filterBidOrders);
+        if (!filterAskOrders.empty()) filter(&levels.asks, &filterAskOrders);
         if (levels.empty()) return;
         calcFairValue();
         ((EV*)events)->mgLevels();
       };
-      void filter(vector<mLevel>* k, mOrder o) {
-        for (vector<mLevel>::iterator it = k->begin(); it != k->end();)
-          if (abs(it->price - o.price) < gw->minTick) {
-            it->size = it->size - o.quantity;
-            if (it->size < gw->minTick) k->erase(it);
-            break;
-          } else ++it;
+      void filter(vector<mLevel> *k, map<double, double> *o) {
+        for (vector<mLevel>::iterator it = k->begin(); it != k->end();) {
+          bool rm = false;
+          for (map<double, double>::iterator it_ = o->begin(); it_ != o->end();)
+            if (abs(it->price - it_->first) < gw->minTick) {
+              it->size = it->size - it_->second;
+              if (it->size < gw->minTick) {
+                rm = true;
+                it = k->erase(it);
+              }
+              o->erase(it_);
+              break;
+            } else ++it_;
+          if (o->empty()) break;
+          if (!rm) ++it;
+        }
       };
       void cleanStdev() {
         size_t periods = (size_t)qp->quotingStdevProtectionPeriods;
