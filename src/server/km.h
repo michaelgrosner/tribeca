@@ -105,7 +105,7 @@ namespace K {
     };
     bool diffOnce(bool *k) {
       bool ret = *k;
-      if (ret) *k = false;
+      if (*k) *k = false;
       return ret;
     };
   };

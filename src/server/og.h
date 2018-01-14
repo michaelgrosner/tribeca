@@ -127,14 +127,14 @@ namespace K {
         if (!o->latency and o->orderStatus == mStatus::Working)
           o->latency = _Tstamp_ - o->time;
         if (o->latency) o->time = _Tstamp_;
-        if (k.tradeQuantity) o->tradeQuantity = k.tradeQuantity;
-        ((EV*)events)->ogOrder(o);
-        toHistory(o);
-        if (k.tradeQuantity) o->tradeQuantity = 0;
+        mOrder unclean = *o;
+        if (k.tradeQuantity) unclean.tradeQuantity = k.tradeQuantity;
         if (k.orderStatus == mStatus::Cancelled or k.orderStatus == mStatus::Complete)
           cleanOrder(k.orderId);
         else debug(string(" saved ") + (o->side == mSide::Bid ? "BID id " : "ASK id ") + o->orderId + "::" + o->exchangeId + " [" + to_string((int)o->orderStatus) + "]: " + o->quantity2str() + " " + o->pair.base + " at price " + o->price2str() + " " + o->pair.quote);
         debug(string("memory ") + to_string(orders.size()));
+        ((EV*)events)->ogOrder(&unclean);
+        if (k.tradeQuantity) toHistory(unclean);
         if (k.orderStatus != mStatus::New)
           toClient();
       };
@@ -172,17 +172,17 @@ namespace K {
             k.push_back(it.second);
         ((UI*)client)->send(mMatter::OrderStatusReports, k);
       };
-      void toHistory(mOrder *o) {
-        if (!o->tradeQuantity) return;
+      void toHistory(mOrder &o) {
+        if (!o.tradeQuantity) return;
         double fee = 0;
         mTrade trade(
           to_string(_Tstamp_),
-          o->pair,
-          o->price,
-          o->tradeQuantity,
-          o->side,
-          o->time,
-          abs(o->price * o->tradeQuantity),
+          o.pair,
+          o.price,
+          o.tradeQuantity,
+          o.side,
+          o.time,
+          abs(o.price * o.tradeQuantity),
           0, 0, 0, 0, 0, fee, false
         );
         ((EV*)events)->ogTrade(&trade);
@@ -208,7 +208,7 @@ namespace K {
           {"side", trade.side},
           {"quantity", trade.quantity},
           {"value", trade.value},
-          {"pong", o->isPong}
+          {"pong", o.isPong}
         });
         cleanAuto(trade.time, qp->cleanPongsAuto);
       };
