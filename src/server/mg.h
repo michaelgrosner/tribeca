@@ -48,6 +48,7 @@ namespace K {
           mgStatTop.push_back(it.value("ask", 0.0));
         }
         calcStdev();
+        calcEwmaHistory();
         FN::log("DB", string("loaded ") + to_string(mgStatFV.size()) + " STDEV Periods");
         if (((CF*)config)->argEwmaVeryLong) mgEwmaVL = ((CF*)config)->argEwmaVeryLong;
         if (((CF*)config)->argEwmaLong) mgEwmaL = ((CF*)config)->argEwmaLong;
@@ -114,10 +115,26 @@ namespace K {
         averageWidth /= ++averageCount;
       };
       void calcEwmaHistory() {
-        calcEwmaHistory(&mgEwmaVL, qp->veryLongEwmaPeriods, "VeryLong");
-        calcEwmaHistory(&mgEwmaL, qp->longEwmaPeriods, "Long");
-        calcEwmaHistory(&mgEwmaM, qp->mediumEwmaPeriods, "Medium");
-        calcEwmaHistory(&mgEwmaS, qp->shortEwmaPeriods, "Short");
+	    static unsigned int VLEP = qp->veryLongEwmaPeriods;
+        static unsigned int  LEP = qp->longEwmaPeriods;
+        static unsigned int  MEP = qp->mediumEwmaPeriods;
+        static unsigned int  SEP = qp->shortEwmaPeriods;
+        if (VLEP != qp->veryLongEwmaPeriods) {
+	        VLEP  = qp->veryLongEwmaPeriods;
+	        calcEwmaHistory(&mgEwmaVL, VLEP, "VeryLong"); 
+	    }
+        if (LEP != qp->longEwmaPeriods) {
+	        LEP  = qp->longEwmaPeriods;
+	        calcEwmaHistory(&mgEwmaL, LEP, "Long");
+	    }
+        if (MEP != qp->mediumEwmaPeriods) {
+	        MEP  = qp->mediumEwmaPeriods;
+	        calcEwmaHistory(&mgEwmaM, MEP, "Medium"); 
+	    }
+        if (SEP != qp->shortEwmaPeriods) {
+	        SEP  = qp->shortEwmaPeriods;
+	        calcEwmaHistory(&mgEwmaS, SEP, "Short");
+	    }
       };
     private:
       function<void(json*)> helloTrade = [&](json *welcome) {
@@ -272,9 +289,8 @@ namespace K {
       };
       void calcEwmaHistory(double *mean, unsigned int periods, string name) {
         unsigned int n = fairValue96h.size();
-        if (!n or !periods or n < periods) return;
-        n = periods;
-        *mean = 0;
+        if (!n) return;
+        *mean = fairValue96h.front();
         while (n--) calcEwma(mean, periods, *(fairValue96h.rbegin()+n));
         FN::log("MG", string("reloaded ") + to_string(*mean) + " EWMA " + name);
       };
