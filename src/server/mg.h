@@ -166,8 +166,8 @@ namespace K {
       };
       void levelUp(mLevels k) {
         levels = k;
-        if (!filterBidOrders.empty()) filter(&levels.bids, &filterBidOrders);
-        if (!filterAskOrders.empty()) filter(&levels.asks, &filterAskOrders);
+        if (!filterBidOrders.empty()) filter(&levels.bids, filterBidOrders);
+        if (!filterAskOrders.empty()) filter(&levels.asks, filterAskOrders);
         calcFairValue();
         ((EV*)events)->mgLevels();
         if (mgT_369ms + 369e+0 > _Tstamp_) return;
@@ -176,17 +176,17 @@ namespace K {
         ((UI*)client)->send(mMatter::MarketData, k);
         mgT_369ms = _Tstamp_;
       };
-      void filter(vector<mLevel> *k, map<double, double> *o) {
+      void filter(vector<mLevel> *k, map<double, double> o) {
         for (vector<mLevel>::iterator it = k->begin(); it != k->end();) {
-          for (map<double, double>::iterator it_ = o->begin(); it_ != o->end();)
+          for (map<double, double>::iterator it_ = o.begin(); it_ != o.end();)
             if (abs(it->price - it_->first) < gw->minTick) {
               it->size = it->size - it_->second;
-              o->erase(it_);
+              o.erase(it_);
               break;
             } else ++it_;
           if (it->size < gw->minTick) it = k->erase(it);
           else ++it;
-          if (o->empty()) break;
+          if (o.empty()) break;
         }
       };
       void calcStatsEwmaPosition() {

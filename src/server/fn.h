@@ -61,17 +61,12 @@ namespace K {
       static string int45Id() {
         return to_string(int64()).substr(0,10);
       };
-      static string charId() {
+      static string char16Id() {
         char s[16];
         for (unsigned int i = 0; i < 16; ++i) s[i] = _AZnums_[int64() % (sizeof(_AZnums_) - 1)];
         return string(s, 16);
       };
-      static string uuidId32() {
-        string uuid = uuidId();
-        uuid.erase(remove(uuid.begin(), uuid.end(), '-'), uuid.end());
-        return uuid;
-      }
-      static string uuidId() {
+      static string uuid36Id() {
         string uuid = string(36,' ');
         unsigned long long rnd = int64();
         unsigned long long rnd_ = int64();
@@ -82,12 +77,17 @@ namespace K {
         uuid[14] = '4';
         for (unsigned int i=0;i<36;i++)
           if (i != 8 && i != 13 && i != 18 && i != 14 && i != 23) {
-            if (rnd <= 0x02) { rnd = 0x2000000 + (rnd_ * 0x1000000) | 0; }
+            if (rnd <= 0x02) rnd = 0x2000000 + (rnd_ * 0x1000000) | 0;
             rnd >>= 4;
             uuid[i] = _AZnums_[(i == 19) ? ((rnd & 0xf) & 0x3) | 0x8 : rnd & 0xf];
           }
         return S2l(uuid);
       };
+      static string uuid32Id() {
+        string uuid = uuid36Id();
+        uuid.erase(remove(uuid.begin(), uuid.end(), '-'), uuid.end());
+        return uuid;
+      }
       static string oZip(string k) {
         z_stream zs;
         if (inflateInit2(&zs, -15) != Z_OK) return "";

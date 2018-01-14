@@ -74,10 +74,9 @@ namespace K {
         }
       };
       function<void(json*)> helloOrders = [&](json *welcome) {
-        for (map<string, mOrder>::value_type &it : orders) {
-          if (mStatus::Working != it.second.orderStatus) continue;
-          welcome->push_back(it.second);
-        }
+        for (map<string, mOrder>::value_type &it : orders)
+          if (mStatus::Working == it.second.orderStatus)
+            welcome->push_back(it.second);
       };
       function<void(json)> kissCancelAllOrders = [&](json butterfly) {
         cancelOpenOrders();
