@@ -271,11 +271,11 @@ namespace K {
             }
           }
         calcWallet(mWallet(amount, heldAmount, k->side == mSide::Ask ? k->pair.base : k->pair.quote));
-        if (!k->tradeQuantity or walletT_5s + 5e+3 > _Tstamp_) return;
-        walletT_5s = _Tstamp_;
-        ((EV*)events)->deferred([this]() {
-          gw->wallet();
-        });
+        // if (!k->tradeQuantity or walletT_5s + 5e+3 > _Tstamp_) return;
+        // walletT_5s = _Tstamp_;
+        // ((EV*)events)->deferred([this]() {
+          // gw->wallet();
+        // });
       };
       void calcPDiv(double baseValue) {
         double pDiv = qp->percentageValues
