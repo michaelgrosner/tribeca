@@ -48,7 +48,6 @@ namespace K {
           mgStatTop.push_back(it.value("ask", 0.0));
         }
         calcStdev();
-        calcEwmaHistory();
         FN::log("DB", string("loaded ") + to_string(mgStatFV.size()) + " STDEV Periods");
         if (((CF*)config)->argEwmaVeryLong) mgEwmaVL = ((CF*)config)->argEwmaVeryLong;
         if (((CF*)config)->argEwmaLong) mgEwmaL = ((CF*)config)->argEwmaLong;
@@ -115,26 +114,10 @@ namespace K {
         averageWidth /= ++averageCount;
       };
       void calcEwmaHistory() {
-	    static unsigned int VLEP = qp->veryLongEwmaPeriods;
-        static unsigned int  LEP = qp->longEwmaPeriods;
-        static unsigned int  MEP = qp->mediumEwmaPeriods;
-        static unsigned int  SEP = qp->shortEwmaPeriods;
-        if (VLEP != qp->veryLongEwmaPeriods) {
-	        VLEP  = qp->veryLongEwmaPeriods;
-	        calcEwmaHistory(&mgEwmaVL, VLEP, "VeryLong"); 
-	    }
-        if (LEP != qp->longEwmaPeriods) {
-	        LEP  = qp->longEwmaPeriods;
-	        calcEwmaHistory(&mgEwmaL, LEP, "Long");
-	    }
-        if (MEP != qp->mediumEwmaPeriods) {
-	        MEP  = qp->mediumEwmaPeriods;
-	        calcEwmaHistory(&mgEwmaM, MEP, "Medium"); 
-	    }
-        if (SEP != qp->shortEwmaPeriods) {
-	        SEP  = qp->shortEwmaPeriods;
-	        calcEwmaHistory(&mgEwmaS, SEP, "Short");
-	    }
+        if (qp->diffOnce(&qp->_diffVLEP)) calcEwmaHistory(&mgEwmaVL, qp->veryLongEwmaPeriods, "VeryLong");
+        if (qp->diffOnce(&qp->_diffLEP)) calcEwmaHistory(&mgEwmaL, qp->longEwmaPeriods, "Long");
+        if (qp->diffOnce(&qp->_diffMEP)) calcEwmaHistory(&mgEwmaM, qp->mediumEwmaPeriods, "Medium");
+        if (qp->diffOnce(&qp->_diffSEP)) calcEwmaHistory(&mgEwmaS, qp->shortEwmaPeriods, "Short");
       };
     private:
       function<void(json*)> helloTrade = [&](json *welcome) {
