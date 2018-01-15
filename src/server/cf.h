@@ -30,6 +30,7 @@ namespace K {
              argHttp = "NULL",
              argWss = "NULL",
              argDatabase = "",
+             argDiskdata = "",
              argWhitelist = "";
       double argEwmaShort = 0,
              argEwmaMedium = 0,
@@ -198,8 +199,11 @@ namespace K {
           RBLUE[0]  = RPURPLE[0] = RCYAN[0]  = RWHITE[0]  =
           BBLACK[0] = BRED[0]    = BGREEN[0] = BYELLOW[0] =
           BBLUE[0]  = BPURPLE[0] = BCYAN[0]  = BWHITE[0]  = argColors;
-        if (argDatabase.empty())
-          argDatabase = string("/data/db/K")
+        if (argDatabase.empty() or argDatabase == ":memory:")
+          (argDatabase == ":memory:"
+            ? argDiskdata
+            : argDatabase
+          ) = string("/data/db/K")
             + '.' + FN::S2u(argExchange)
             + '.' + base()
             + '.' + quote()

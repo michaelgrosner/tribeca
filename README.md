@@ -237,6 +237,8 @@ To explore each database file you can use https://github.com/sqlitebrowser/sqlit
 
 To set a different database path or to set an [in-memory database](https://sqlite.org/inmemorydb.html), use `--database=PATH` argument (see `--help`).
 
+Even if using an in-memory database, the quoting parameters are always loaded from and saved into the disk file database.
+
 ### Charts
 
 The metrics are not saved anywhere, it is just UI data collected with a visibility retention of `n` hours (where `n` is the value of `profit` quoting parameter), to display over time:
