@@ -29,7 +29,7 @@ namespace K {
         ((DB*)memory)->insert(mMatter::QuotingParameters, *qp);
         delayUI();
       };
-      void delayUI() {
+      inline void delayUI() {
         ((UI*)client)->delayme(qp->delayUI);
       };
   };

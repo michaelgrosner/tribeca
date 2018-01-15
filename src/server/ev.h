@@ -2,6 +2,7 @@
 #define K_EV_H_
 
 #define _errorEvent_ ((EV*)events)->error
+
 #define _debugEvent_ ((EV*)events)->debug(__PRETTY_FUNCTION__);
 
 namespace K  {

@@ -223,10 +223,10 @@ namespace K {
         FN::screen_config(argColors, argExchange, argCurrency);
       };
     private:
-      string base() {
+      inline string base() {
         return FN::S2u(argCurrency.substr(0, argCurrency.find("/")));
       };
-      string quote() {
+      inline string quote() {
         return FN::S2u(argCurrency.substr(argCurrency.find("/")+1));
       };
   };
