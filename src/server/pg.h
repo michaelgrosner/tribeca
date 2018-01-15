@@ -9,7 +9,7 @@ namespace K {
       map<double, mTrade> sells;
       map<string, mWallet> balance;
       unsigned long profitT_21s = 0;
-      unsigned long walletT_5s = 0;
+      unsigned long walletT_2s = 0;
       string sideAPR_ = "!=";
     public:
       mPosition position;
@@ -271,11 +271,11 @@ namespace K {
             }
           }
         calcWallet(mWallet(amount, heldAmount, k->side == mSide::Ask ? k->pair.base : k->pair.quote));
-        // if (!k->tradeQuantity or walletT_5s + 5e+3 > _Tstamp_) return;
-        // walletT_5s = _Tstamp_;
-        // ((EV*)events)->deferred([this]() {
-          // gw->wallet();
-        // });
+        if (!k->tradeQuantity or walletT_2s + 2e+3 > _Tstamp_) return;
+        walletT_2s = _Tstamp_;
+        ((EV*)events)->deferred([this]() {
+          gw->wallet();
+        });
       };
       void calcPDiv(double baseValue) {
         double pDiv = qp->percentageValues
