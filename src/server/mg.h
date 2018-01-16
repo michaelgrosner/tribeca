@@ -18,7 +18,7 @@ namespace K {
       vector<double> mgStatTop;
       vector<double> fairValue96h;
       unsigned int mgT_60s = 0;
-      unsigned long mgT_369ms = 0;
+      unsigned long long mgT_369ms = 0;
       double averageWidth = 0;
       unsigned int averageCount = 0;
     public:
@@ -40,7 +40,7 @@ namespace K {
     protected:
       void load() {
         for (json &it : ((DB*)memory)->load(mMatter::MarketData)) {
-          if (it.value("time", (unsigned long)0) + qp->quotingStdevProtectionPeriods * 1e+3 < _Tstamp_) continue;
+          if (it.value("time", (unsigned long long)0) + qp->quotingStdevProtectionPeriods * 1e+3 < _Tstamp_) continue;
           mgStatFV.push_back(it.value("fv", 0.0));
           mgStatBid.push_back(it.value("bid", 0.0));
           mgStatAsk.push_back(it.value("ask", 0.0));
@@ -56,13 +56,13 @@ namespace K {
         json k = ((DB*)memory)->load(mMatter::EWMAChart);
         if (!k.empty()) {
           k = k.at(0);
-          if (!mgEwmaVL and k.value("time", (unsigned long)0) + qp->veryLongEwmaPeriods * 6e+4 > _Tstamp_)
+          if (!mgEwmaVL and k.value("time", (unsigned long long)0) + qp->veryLongEwmaPeriods * 6e+4 > _Tstamp_)
             mgEwmaVL = k.value("ewmaVeryLong", 0.0);
-          if (!mgEwmaL and k.value("time", (unsigned long)0) + qp->longEwmaPeriods * 6e+4 > _Tstamp_)
+          if (!mgEwmaL and k.value("time", (unsigned long long)0) + qp->longEwmaPeriods * 6e+4 > _Tstamp_)
             mgEwmaL = k.value("ewmaLong", 0.0);
-          if (!mgEwmaM and k.value("time", (unsigned long)0) + qp->mediumEwmaPeriods * 6e+4 > _Tstamp_)
+          if (!mgEwmaM and k.value("time", (unsigned long long)0) + qp->mediumEwmaPeriods * 6e+4 > _Tstamp_)
             mgEwmaM = k.value("ewmaMedium", 0.0);
-          if (!mgEwmaS and k.value("time", (unsigned long)0) + qp->shortEwmaPeriods * 6e+4 > _Tstamp_)
+          if (!mgEwmaS and k.value("time", (unsigned long long)0) + qp->shortEwmaPeriods * 6e+4 > _Tstamp_)
             mgEwmaS = k.value("ewmaShort", 0.0);
         }
         if (mgEwmaVL) FN::log(((CF*)config)->argEwmaVeryLong ? "ARG" : "DB", string("loaded ") + to_string(mgEwmaVL) + " EWMA VeryLong");
@@ -70,7 +70,7 @@ namespace K {
         if (mgEwmaM)  FN::log(((CF*)config)->argEwmaMedium ? "ARG" : "DB", string("loaded ") + to_string(mgEwmaM) + " EWMA Medium");
         if (mgEwmaS)  FN::log(((CF*)config)->argEwmaShort ? "ARG" : "DB", string("loaded ") + to_string(mgEwmaS) + " EWMA Short");
         for (json &it : ((DB*)memory)->load(mMatter::MarketDataLongTerm))
-          if (it.value("time", (unsigned long)0) + 3456e+5 > _Tstamp_ and it.value("fv", 0.0))
+          if (it.value("time", (unsigned long long)0) + 3456e+5 > _Tstamp_ and it.value("fv", 0.0))
             fairValue96h.push_back(it.value("fv", 0.0));
         FN::log("DB", string("loaded ") + to_string(fairValue96h.size()) + " historical FairValues");
       };

@@ -48,7 +48,7 @@ namespace K {
         sqlite3_free(zErrMsg);
         return j;
       };
-      void insert(mMatter k, json o, bool rm = true, string id = "NULL", unsigned long expire = 0) {
+      void insert(mMatter k, json o, bool rm = true, string id = "NULL", unsigned long long expire = 0) {
         ((EV*)events)->deferred([this, k, o, rm, id, expire]() {
           char* zErrMsg = 0;
           sqlite3_exec(db, (

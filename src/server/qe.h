@@ -106,7 +106,7 @@ namespace K {
         ((MG*)market)->filterBidOrders.clear();
         ((MG*)market)->filterAskOrders.clear();
         vector<string> zombies;
-        unsigned long now = _Tstamp_;
+        unsigned long long now = _Tstamp_;
         for (map<string, mOrder>::value_type &it : ((OG*)broker)->orders)
           if (it.second.orderStatus == mStatus::New) {
             if (now-10e+3>it.second.time) zombies.push_back(it.second.orderId);

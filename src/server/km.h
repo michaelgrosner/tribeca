@@ -264,13 +264,13 @@ namespace K {
     };
   };
   struct mProfit {
-           double baseValue,
-                  quoteValue;
-    unsigned long time;
+                double baseValue,
+                       quoteValue;
+    unsigned long long time;
     mProfit():
       baseValue(0), quoteValue(0), time(0)
     {};
-    mProfit(double b, double q, unsigned long t):
+    mProfit(double b, double q, unsigned long long t):
       baseValue(b), quoteValue(q), time(t)
     {};
   };
@@ -284,7 +284,7 @@ namespace K {
   static void from_json(const json& j, mProfit& k) {
     k.baseValue  = j.value("baseValue", 0.0);
     k.quoteValue = j.value("quoteValue", 0.0);
-    k.time       = j.value("time", (unsigned long)0);
+    k.time       = j.value("time", (unsigned long long)0);
   };
   struct mSafety {
     double buy,
@@ -342,31 +342,31 @@ namespace K {
     };
   };
   struct mTrade {
-           string tradeId;
-            mSide side;
-            mPair pair;
-           double price,
-                  quantity,
-                  value,
-                  Kqty,
-                  Kvalue,
-                  Kprice,
-                  Kdiff,
-                  feeCharged;
-    unsigned long time,
-                  Ktime;
-             bool loadedFromDB;
+                string tradeId;
+                 mSide side;
+                 mPair pair;
+                double price,
+                       quantity,
+                       value,
+                       Kqty,
+                       Kvalue,
+                       Kprice,
+                       Kdiff,
+                       feeCharged;
+    unsigned long long time,
+                       Ktime;
+                  bool loadedFromDB;
 
     mTrade():
       tradeId(""), pair(mPair()), price(0), quantity(0), side((mSide)0), time(0), value(0), Ktime(0), Kqty(0), Kprice(0), Kvalue(0), Kdiff(0), feeCharged(0), loadedFromDB(false)
     {};
-    mTrade(double p, double q, unsigned long t):
+    mTrade(double p, double q, unsigned long long t):
       tradeId(""), pair(mPair()), price(p), quantity(q), side((mSide)0), time(t), value(0), Ktime(0), Kqty(0), Kprice(0), Kvalue(0), Kdiff(0), feeCharged(0), loadedFromDB(false)
     {};
     mTrade(double p, double q, mSide s):
       tradeId(""), pair(mPair()), price(p), quantity(q), side(s), time(0), value(0), Ktime(0), Kqty(0), Kprice(0), Kvalue(0), Kdiff(0), feeCharged(0), loadedFromDB(false)
     {};
-    mTrade(string i, mPair P, double p, double q, mSide S, unsigned long t, double v, unsigned long Kt, double Kq, double Kp, double Kv, double Kd, double f, bool l):
+    mTrade(string i, mPair P, double p, double q, mSide S, unsigned long long t, double v, unsigned long long Kt, double Kq, double Kp, double Kv, double Kd, double f, bool l):
       tradeId(i), pair(P), price(p), quantity(q), side(S), time(t), value(v), Ktime(Kt), Kqty(Kq), Kprice(Kp), Kvalue(Kv), Kdiff(Kd), feeCharged(f), loadedFromDB(l)
     {};
   };
@@ -401,9 +401,9 @@ namespace K {
     k.price        = j.value("price", 0.0);
     k.quantity     = j.value("quantity", 0.0);
     k.side         = j.value("side", (mSide)0);
-    k.time         = j.value("time", (unsigned long)0);
+    k.time         = j.value("time", (unsigned long long)0);
     k.value        = j.value("value", 0.0);
-    k.Ktime        = j.value("Ktime", (unsigned long)0);
+    k.Ktime        = j.value("Ktime", (unsigned long long)0);
     k.Kqty         = j.value("Kqty", 0.0);
     k.Kprice       = j.value("Kprice", 0.0);
     k.Kvalue       = j.value("Kvalue", 0.0);
@@ -412,21 +412,21 @@ namespace K {
     k.loadedFromDB = j.value("loadedFromDB", false);
   };
   struct mOrder {
-           string orderId,
-                  exchangeId;
-            mPair pair;
-            mSide side;
-           double price,
-                  quantity,
-                  tradeQuantity;
-       mOrderType type;
-     mTimeInForce timeInForce;
-             mStatus orderStatus;
-             bool isPong,
-                  preferPostOnly;
-    unsigned long time,
-                  waitingCancel,
-                  latency;
+                string orderId,
+                       exchangeId;
+                 mPair pair;
+                mSide side;
+                double price,
+                       quantity,
+                       tradeQuantity;
+            mOrderType type;
+          mTimeInForce timeInForce;
+                  mStatus orderStatus;
+                  bool isPong,
+                       preferPostOnly;
+    unsigned long long time,
+                       waitingCancel,
+                       latency;
     mOrder():
       orderId(""), exchangeId(""), pair(mPair()), side((mSide)0), quantity(0), type((mOrderType)0), isPong(false), price(0), timeInForce((mTimeInForce)0), orderStatus((mStatus)0), preferPostOnly(false), tradeQuantity(0), time(0), waitingCancel(0), latency(0)
     {};
@@ -588,8 +588,8 @@ namespace K {
              ws      = "", http    = "";
       virtual   void wallet() = 0,
                      levels() = 0,
-                     send(string, string, string, mSide, string, string, mOrderType, mTimeInForce, bool, unsigned long) = 0,
-                     cancel(string, string, mSide, unsigned long) = 0,
+                     send(string, string, string, mSide, string, string, mOrderType, mTimeInForce, bool, unsigned long long) = 0,
+                     cancel(string, string, mSide, unsigned long long) = 0,
                      cancelAll() = 0,
                      close() = 0;
       virtual string A() = 0;

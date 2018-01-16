@@ -256,9 +256,9 @@ namespace K {
         }
         return pong->quantity > 0;
       };
-      void cleanAuto(unsigned long k, double pT) {
+      void cleanAuto(unsigned long long k, double pT) {
         if (pT == 0) return;
-        unsigned long pT_ = k - (abs(pT) * 864e5);
+        unsigned long long pT_ = k - (abs(pT) * 864e5);
         for (vector<mTrade>::iterator it = tradesHistory.begin(); it != tradesHistory.end();)
           if (it->time < pT_ and (pT < 0 or it->Kqty >= it->quantity)) {
             it->Kqty = -1;
