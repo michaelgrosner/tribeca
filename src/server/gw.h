@@ -140,13 +140,14 @@ namespace K {
               if (it.value().find("pair_decimals") != it.value().end()) {
                 stringstream os(string("1e-") + to_string(it.value().value("pair_decimals", 0)));
                 os >> gw->minTick;
+                os = stringstream(string("1e-") + to_string(it.value().value("lot_decimals", 0)));
+                os >> gw->minSize;
                 gw->symbol = it.key();
                 gw->base = it.value().value("base", gw->base);
                 gw->quote = it.value().value("quote", gw->quote);
                 break;
               }
             }
-          gw->minSize = 0.01;
         }
         else if (k == mExchange::Korbit) {
           gw->randId = FN::int45Id;

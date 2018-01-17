@@ -421,7 +421,7 @@ namespace K {
                        tradeQuantity;
             mOrderType type;
           mTimeInForce timeInForce;
-                  mStatus orderStatus;
+               mStatus orderStatus;
                   bool isPong,
                        preferPostOnly;
     unsigned long long time,
