@@ -73,7 +73,7 @@ export class OrdersComponent implements OnInit {
       { width: 45, suppressSizeToFit: true, field: 'type', headerName: 'type' },
       { width: 40, field: 'tif', headerName: 'tif' },
       { width: 45, field: 'lat', headerName: 'lat'},
-      { width: 90, suppressSizeToFit: true, field: 'orderId', headerName: 'openOrderId', cellRenderer:(params) => {
+      { width: 90, suppressSizeToFit: true, field: 'exchangeId', headerName: 'openOrderId', cellRenderer:(params) => {
         return (params.value) ? params.value.toString().split('-')[0] : '';
       }}
     ];
@@ -121,6 +121,7 @@ export class OrdersComponent implements OnInit {
     if (!exists && !isClosed)
       this.gridOptions.api.updateRowData({add:[{
         orderId: o.orderId,
+        exchangeId: o.exchangeId,
         side: Models.Side[o.side],
         price: o.price,
         value: Math.round(o.price * o.quantity * 100) / 100,
