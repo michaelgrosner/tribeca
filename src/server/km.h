@@ -567,7 +567,7 @@ namespace K {
   static vector<function<void()>*> gwEndings;
   class Gw {
     public:
-      static Gw *config(string, string, string, int, string, string, string, string, string, string, int);
+      static Gw *config(string, string, string, int, string, string, string, string, string, string, int, int);
       string (*randId)() = 0;
       function<void(mOrder)>        evDataOrder;
       function<void(mTrade)>        evDataTrade;
@@ -578,7 +578,8 @@ namespace K {
       uWS::Hub                *hub     = nullptr;
       uWS::Group<uWS::CLIENT> *gwGroup = nullptr;
       mExchange exchange = (mExchange)0;
-         int version = 0, maxLevel = 0;
+         int version = 0, maxLevel = 0,
+             debug   = 0;
       double makeFee = 0,  minTick = 0,
              takeFee = 0,  minSize = 0;
       string base    = "", quote   = "",

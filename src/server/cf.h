@@ -7,6 +7,7 @@ namespace K {
       int argPort = 3000,
           argColors = 0,
           argDebug = 0,
+          argDebugSecret = 0,
           argDebugEvents = 0,
           argDebugOrders = 0,
           argDebugQuotes = 0,
@@ -43,6 +44,7 @@ namespace K {
           {"help",         no_argument,       0,               'h'},
           {"colors",       no_argument,       &argColors,        1},
           {"debug",        no_argument,       &argDebug,         1},
+          {"debug-secret", no_argument,       &argDebugSecret,   1},
           {"debug-events", no_argument,       &argDebugEvents,   1},
           {"debug-orders", no_argument,       &argDebugOrders,   1},
           {"debug-quotes", no_argument,       &argDebugQuotes,   1},
@@ -157,6 +159,7 @@ namespace K {
               << FN::uiT() << RWHITE << "-M, --market-limit=NUMBER - set NUMBER of maximum price levels for the orderbook," << '\n'
               << FN::uiT() << RWHITE << "                            minimum is '15', maximum (not set) is limit by exchange." << '\n'
               << FN::uiT() << RWHITE << "                            locked bots smells like '--market-limit=3' spirit." << '\n'
+              << FN::uiT() << RWHITE << "    --debug-secret        - print (never share!) secret inputs and outputs." << '\n'
               << FN::uiT() << RWHITE << "    --debug-events        - print detailed output about event handlers." << '\n'
               << FN::uiT() << RWHITE << "    --debug-orders        - print detailed output about exchange messages." << '\n'
               << FN::uiT() << RWHITE << "    --debug-quotes        - print detailed output about quoting engine." << '\n'
@@ -191,6 +194,7 @@ namespace K {
           exit(EXIT_SUCCESS);
         }
         if (argDebug)
+          argDebugSecret =
           argDebugEvents =
           argDebugOrders =
           argDebugQuotes = argDebug;
@@ -212,12 +216,12 @@ namespace K {
       };
       void run() {
         gw = Gw::config(
-          base(),      quote(),
-          argExchange, argFree,
-          argApikey,   argSecret,
-          argUsername, argPassphrase,
-          argHttp,     argWss,
-          argMaxLevels
+          base(),       quote(),
+          argExchange,  argFree,
+          argApikey,    argSecret,
+          argUsername,  argPassphrase,
+          argHttp,      argWss,
+          argMaxLevels, argDebugSecret
         );
         if (argNaked) return;
         FN::screen_config(argColors, argExchange, argCurrency);
