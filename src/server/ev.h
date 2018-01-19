@@ -20,9 +20,7 @@ namespace K  {
       function<void(mOrder*)> ogOrder;
       function<void(mTrade*)> ogTrade;
       function<void()>        mgLevels,
-                              mgEwmaQuoteProtection,
                               mgTargetPosition,
-                              pgTargetBasePosition,
                               uiQuotingParameters;
     protected:
       void load() {

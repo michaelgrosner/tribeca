@@ -36,13 +36,7 @@ namespace K {
           ((MG*)market)->calcEwmaHistory();
           calcQuote();
         };
-        ((EV*)events)->mgEwmaQuoteProtection = [&]() {              _debugEvent_
-          calcQuote();
-        };
         ((EV*)events)->mgLevels = [&]() {                           _debugEvent_
-          calcQuote();
-        };
-        ((EV*)events)->pgTargetBasePosition = [&]() {               _debugEvent_
           calcQuote();
         };
       };
@@ -65,7 +59,7 @@ namespace K {
           calcQuote();
         } else FN::logWar("QE", "Unable to calculate quote, missing market data");
       };
-      void calcQuote() {
+      void calcQuote() {                                            _debugEvent_
         bidStatus = mQuoteState::MissingData;
         askStatus = mQuoteState::MissingData;
         if (!gwConnectExchange) {

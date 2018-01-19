@@ -88,7 +88,6 @@ namespace K {
         targetBasePosition = next;
         sideAPR_ = sideAPR;
         calcPDiv(baseValue);
-        ((EV*)events)->pgTargetBasePosition();
         json k = {{"tbp", targetBasePosition}, {"sideAPR", sideAPR}, {"pDiv", positionDivergence }};
         ((UI*)client)->send(mMatter::TargetBasePosition, k);
         ((DB*)memory)->insert(mMatter::TargetBasePosition, k);
@@ -273,9 +272,7 @@ namespace K {
         calcWallet(mWallet(amount, heldAmount, k->side == mSide::Ask ? k->pair.base : k->pair.quote));
         if (!k->tradeQuantity or walletT_2s + 2e+3 > _Tstamp_) return;
         walletT_2s = _Tstamp_;
-        ((EV*)events)->deferred([this]() {
-          gw->wallet();
-        });
+        gw->wallet();
       };
       void calcPDiv(double baseValue) {
         double pDiv = qp->percentageValues

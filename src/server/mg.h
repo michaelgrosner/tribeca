@@ -216,7 +216,6 @@ namespace K {
         calcEwma(&mgEwmaP, qp->protectionEwmaPeriods, fairValue);
         calcEwma(&mgEwmaW, qp->protectionEwmaPeriods, averageWidth);
         averageCount = 0;
-        ((EV*)events)->mgEwmaQuoteProtection();
       };
       json chartStats() {
         return {
