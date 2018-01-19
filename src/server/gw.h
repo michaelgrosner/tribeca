@@ -136,7 +136,7 @@ namespace K {
           gw->symbol = FN::S2u(string(gw->base) + gw->quote);
           reply = FN::wJet(string(gw->http) + "/0/public/AssetPairs?pair=" + gw->symbol);
           if (reply.find("result") != reply.end())
-            for (json::iterator it = reply["result"].begin(); it != reply["result"].end(); ++it) {
+            for (json::iterator it = reply["result"].begin(); it != reply["result"].end(); ++it)
               if (it.value().find("pair_decimals") != it.value().end()) {
                 stringstream os(string("1e-") + to_string(it.value().value("pair_decimals", 0)));
                 os >> gw->minTick;
@@ -147,7 +147,6 @@ namespace K {
                 gw->quote = it.value().value("quote", gw->quote);
                 break;
               }
-            }
         }
         else if (k == mExchange::Korbit) {
           gw->randId = FN::int45Id;

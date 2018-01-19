@@ -170,7 +170,7 @@ namespace K {
         if (!filterAskOrders.empty()) filter(&levels.asks, filterAskOrders);
         calcFairValue();
         ((EV*)events)->mgLevels();
-        if (mgT_369ms + 369e+0 > _Tstamp_) return;
+        if (!k.empty() and mgT_369ms + 369e+0 > _Tstamp_) return;
         ((UI*)client)->bid_levels = k.bids.size();
         ((UI*)client)->ask_levels = k.asks.size();
         ((UI*)client)->send(mMatter::MarketData, k);

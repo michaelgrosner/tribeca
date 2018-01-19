@@ -65,7 +65,11 @@ namespace K {
         if (!gwConnectExchange) {
           bidStatus = mQuoteState::Disconnected;
           askStatus = mQuoteState::Disconnected;
-        } else if (((MG*)market)->fairValue and !((MG*)market)->levels.empty()) {
+        } else if (((MG*)market)->fairValue
+          and !((MG*)market)->levels.empty()
+          and !((PG*)wallet)->position.empty()
+          and ((PG*)wallet)->safety.buyPing != -1
+        ) {
           if (!gwConnectButton) {
             bidStatus = mQuoteState::DisabledQuotes;
             askStatus = mQuoteState::DisabledQuotes;
@@ -78,7 +82,7 @@ namespace K {
         }
         sendStatusToUI();
       };
-      void sendQuoteToAPI() {
+      inline void sendQuoteToAPI() {
         mQuote quote = nextQuote();
         bidStatus = checkCrossedQuotes(mSide::Bid, &quote);
         askStatus = checkCrossedQuotes(mSide::Ask, &quote);
@@ -87,7 +91,7 @@ namespace K {
         if (bidStatus == mQuoteState::Live) updateQuote(quote.bid, mSide::Bid, quote.isBidPong);
         else stopAllQuotes(mSide::Bid);
       };
-      void sendStatusToUI() {
+      inline void sendStatusToUI() {
         unsigned int quotesInMemoryNew = 0;
         unsigned int quotesInMemoryWorking = 0;
         unsigned int quotesInMemoryDone = 0;
@@ -121,8 +125,7 @@ namespace K {
         return bidStatus != status.bidStatus
           or askStatus != status.askStatus;
       };
-      mQuote nextQuote() {
-        if (((MG*)market)->levels.empty() or ((PG*)wallet)->position.empty()) return mQuote();
+      inline mQuote nextQuote() {
         double baseValue       = ((PG*)wallet)->position.baseValue,
                baseAmount      = ((PG*)wallet)->position.baseAmount,
                baseHeldAmount  = ((PG*)wallet)->position.baseHeldAmount,
@@ -133,7 +136,6 @@ namespace K {
                safetyBuy       = ((PG*)wallet)->safety.buy,
                safetySell      = ((PG*)wallet)->safety.sell,
                pDiv            = ((PG*)wallet)->positionDivergence;
-        if (safetyBuyPing == -1) return mQuote();
         double totalBasePosition = baseAmount + baseHeldAmount;
         double totalQuotePosition = (quoteAmount + quoteHeldAmount) / ((MG*)market)->fairValue;
         double widthPing = qp->widthPercentage
