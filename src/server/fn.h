@@ -61,6 +61,9 @@ namespace K {
       static string int45Id() {
         return to_string(int64()).substr(0,10);
       };
+      static string int32Id() {
+        return to_string(int64()).substr(0,8);
+      };
       static string char16Id() {
         char s[16];
         for (unsigned int i = 0; i < 16; ++i) s[i] = _AZnums_[int64() % (sizeof(_AZnums_) - 1)];

@@ -132,7 +132,7 @@ namespace K {
           gw->minSize = 0.001;
         }
         else if (k == mExchange::Kraken) {
-          gw->randId = FN::int45Id;
+          gw->randId = FN::int32Id;
           gw->symbol = FN::S2u(string(gw->base) + gw->quote);
           reply = FN::wJet(string(gw->http) + "/0/public/AssetPairs?pair=" + gw->symbol);
           if (reply.find("result") != reply.end())
