@@ -298,6 +298,9 @@ namespace K {
     mSafety(double b, double s, double c, double bP, double sP):
       buy(b), sell(s), combined(c), buyPing(bP), sellPing(sP)
     {};
+    bool empty() {
+      return buyPing == -1;
+    };
   };
   static void to_json(json& j, const mSafety& k) {
     j = {
