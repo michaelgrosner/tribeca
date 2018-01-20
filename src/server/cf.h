@@ -11,6 +11,7 @@ namespace K {
           argDebugEvents = 0,
           argDebugOrders = 0,
           argDebugQuotes = 0,
+          argDebugWallet = 0,
           argWithoutSSL = 0,
           argMaxLevels = 0,
           argHeadless = 0,
@@ -48,6 +49,7 @@ namespace K {
           {"debug-events", no_argument,       &argDebugEvents,   1},
           {"debug-orders", no_argument,       &argDebugOrders,   1},
           {"debug-quotes", no_argument,       &argDebugQuotes,   1},
+          {"debug-wallet", no_argument,       &argDebugWallet,   1},
           {"without-ssl",  no_argument,       &argWithoutSSL,    1},
           {"headless",     no_argument,       &argHeadless,      1},
           {"naked",        no_argument,       &argNaked,         1},
@@ -163,6 +165,7 @@ namespace K {
               << FN::uiT() << RWHITE << "    --debug-events        - print detailed output about event handlers." << '\n'
               << FN::uiT() << RWHITE << "    --debug-orders        - print detailed output about exchange messages." << '\n'
               << FN::uiT() << RWHITE << "    --debug-quotes        - print detailed output about quoting engine." << '\n'
+              << FN::uiT() << RWHITE << "    --debug-wallet        - print detailed output about target base position." << '\n'
               << FN::uiT() << RWHITE << "    --debug               - print detailed output about all the (previous) things!" << '\n'
               << FN::uiT() << RWHITE << "    --colors              - print highlighted output." << '\n'
               << FN::uiT() << RWHITE << "-k, --matryoshka=URL      - set Matryoshka link URL of the next UI." << '\n'
@@ -197,7 +200,8 @@ namespace K {
           argDebugSecret =
           argDebugEvents =
           argDebugOrders =
-          argDebugQuotes = argDebug;
+          argDebugQuotes =
+          argDebugWallet = argDebug;
         if (!argColors)
           RBLACK[0] = RRED[0]    = RGREEN[0] = RYELLOW[0] =
           RBLUE[0]  = RPURPLE[0] = RCYAN[0]  = RWHITE[0]  =
