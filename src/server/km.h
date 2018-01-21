@@ -1,6 +1,12 @@
 #ifndef K_KM_H_
 #define K_KM_H_
 
+#define mClock  unsigned long long
+#define mPrice  double
+#define mAmount double
+#define mRandId string
+#define mCoinId string
+
 namespace K {
   enum class mExchange: unsigned int { Null, HitBtc, OkCoin, Coinbase, Bitfinex, Kraken, OkEx, BitfinexMargin, Korbit, Poloniex };
   enum class mConnectivity: unsigned int { Disconnected, Connected };
@@ -32,16 +38,16 @@ namespace K {
   static          bool operator! (mConnectivity k_)                   { return !(unsigned int)k_; };
   static mConnectivity operator* (mConnectivity _k, mConnectivity k_) { return (mConnectivity)((unsigned int)_k * (unsigned int)k_); };
   struct mQuotingParams {
-    double            widthPing                       = 2.0;
+    mPrice            widthPing                       = 2.0;
     double            widthPingPercentage             = 0.25;
-    double            widthPong                       = 2.0;
+    mPrice            widthPong                       = 2.0;
     double            widthPongPercentage             = 0.25;
     bool              widthPercentage                 = false;
     bool              bestWidth                       = true;
-    double            buySize                         = 0.02;
+    mAmount           buySize                         = 0.02;
     unsigned int      buySizePercentage               = 7;
     bool              buySizeMax                      = false;
-    double            sellSize                        = 0.01;
+    mAmount           sellSize                        = 0.01;
     unsigned int      sellSizePercentage              = 7;
     bool              sellSizeMax                     = false;
     mPingAt           pingAt                          = mPingAt::BothSides;
@@ -49,13 +55,13 @@ namespace K {
     mQuotingMode      mode                            = mQuotingMode::Top;
     mQuotingSafety    safety                          = mQuotingSafety::Boomerang;
     unsigned int      bullets                         = 2;
-    double            range                           = 0.5;
+    mPrice            range                           = 0.5;
     double            rangePercentage                 = 5.0;
     mFairValueModel   fvModel                         = mFairValueModel::BBO;
-    double            targetBasePosition              = 1.0;
+    mAmount           targetBasePosition              = 1.0;
     unsigned int      targetBasePositionPercentage    = 50;
-    double            positionDivergence              = 0.9;
-    double            positionDivergenceMin           = 0.4;
+    mAmount           positionDivergence              = 0.9;
+    mAmount           positionDivergenceMin           = 0.4;
     unsigned int      positionDivergencePercentage    = 21;
     unsigned int      positionDivergencePercentageMin = 10;
     mPDivMode         positionDivergenceMode          = mPDivMode::Manual;
@@ -226,12 +232,12 @@ namespace K {
     k.flag();
   };
   struct mPair {
-    string base,
-           quote;
+    mCoinId base,
+            quote;
     mPair():
       base(""), quote("")
     {};
-    mPair(string b, string q):
+    mPair(mCoinId b, mCoinId q):
       base(b), quote(q)
     {};
   };
@@ -246,13 +252,13 @@ namespace K {
     k.quote = j.value("quote", "");
   };
   struct mWallet {
-    double amount,
-           held;
-    string currency;
+    mAmount amount,
+            held;
+    mCoinId currency;
     mWallet():
       amount(0), held(0), currency("")
     {};
-    mWallet(double a, double h, string c):
+    mWallet(mAmount a, mAmount h, mCoinId c):
       amount(a), held(h), currency(c)
     {};
   };
@@ -264,13 +270,13 @@ namespace K {
     };
   };
   struct mProfit {
-                double baseValue,
-                       quoteValue;
-    unsigned long long time;
+    mAmount baseValue,
+            quoteValue;
+     mClock time;
     mProfit():
       baseValue(0), quoteValue(0), time(0)
     {};
-    mProfit(double b, double q, unsigned long long t):
+    mProfit(mAmount b, mAmount q, mClock t):
       baseValue(b), quoteValue(q), time(t)
     {};
   };
@@ -284,18 +290,18 @@ namespace K {
   static void from_json(const json& j, mProfit& k) {
     k.baseValue  = j.value("baseValue", 0.0);
     k.quoteValue = j.value("quoteValue", 0.0);
-    k.time       = j.value("time", (unsigned long long)0);
+    k.time       = j.value("time", (mClock)0);
   };
   struct mSafety {
     double buy,
            sell,
-           combined,
-           buyPing,
+           combined;
+    mPrice buyPing,
            sellPing;
     mSafety():
       buy(0), sell(0), combined(0), buyPing(-1), sellPing(-1)
     {};
-    mSafety(double b, double s, double c, double bP, double sP):
+    mSafety(double b, double s, double c, mPrice bP, mPrice sP):
       buy(b), sell(s), combined(c), buyPing(bP), sellPing(sP)
     {};
     bool empty() {
@@ -312,19 +318,19 @@ namespace K {
     };
   };
   struct mPosition {
-       double baseAmount,
-              quoteAmount,
-              baseHeldAmount,
-              quoteHeldAmount,
-              baseValue,
-              quoteValue,
-              profitBase,
-              profitQuote;
-        mPair pair;
+    mAmount baseAmount,
+            quoteAmount,
+            baseHeldAmount,
+            quoteHeldAmount,
+            baseValue,
+            quoteValue,
+            profitBase,
+            profitQuote;
+      mPair pair;
     mPosition():
       baseAmount(0), quoteAmount(0), baseHeldAmount(0), quoteHeldAmount(0), baseValue(0), quoteValue(0), profitBase(0), profitQuote(0), pair(mPair())
     {};
-    mPosition(double bA, double qA, double bH, double qH, double bV, double qV, double bP, double qP, mPair p):
+    mPosition(mAmount bA, mAmount qA, mAmount bH, mAmount qH, mAmount bV, mAmount qV, mAmount bP, mAmount qP, mPair p):
       baseAmount(bA), quoteAmount(qA), baseHeldAmount(bH), quoteHeldAmount(qH), baseValue(bV), quoteValue(qV), profitBase(bP), profitQuote(qP), pair(p)
     {};
     bool empty() {
@@ -345,31 +351,30 @@ namespace K {
     };
   };
   struct mTrade {
-                string tradeId;
-                 mSide side;
-                 mPair pair;
-                double price,
-                       quantity,
-                       value,
-                       Kqty,
-                       Kvalue,
-                       Kprice,
-                       Kdiff,
-                       feeCharged;
-    unsigned long long time,
-                       Ktime;
-                  bool loadedFromDB;
-
+      string tradeId;
+       mSide side;
+       mPair pair;
+     mPrice price,
+            Kprice;
+    mAmount quantity,
+            value,
+            Kqty,
+            Kvalue,
+            Kdiff,
+            feeCharged;
+     mClock time,
+            Ktime;
+       bool loadedFromDB;
     mTrade():
       tradeId(""), pair(mPair()), price(0), quantity(0), side((mSide)0), time(0), value(0), Ktime(0), Kqty(0), Kprice(0), Kvalue(0), Kdiff(0), feeCharged(0), loadedFromDB(false)
     {};
-    mTrade(double p, double q, unsigned long long t):
+    mTrade(mPrice p, mAmount q, mClock t):
       tradeId(""), pair(mPair()), price(p), quantity(q), side((mSide)0), time(t), value(0), Ktime(0), Kqty(0), Kprice(0), Kvalue(0), Kdiff(0), feeCharged(0), loadedFromDB(false)
     {};
-    mTrade(double p, double q, mSide s):
+    mTrade(mPrice p, mAmount q, mSide s):
       tradeId(""), pair(mPair()), price(p), quantity(q), side(s), time(0), value(0), Ktime(0), Kqty(0), Kprice(0), Kvalue(0), Kdiff(0), feeCharged(0), loadedFromDB(false)
     {};
-    mTrade(string i, mPair P, double p, double q, mSide S, unsigned long long t, double v, unsigned long long Kt, double Kq, double Kp, double Kv, double Kd, double f, bool l):
+    mTrade(string i, mPair P, mPrice p, mAmount q, mSide S, mClock t, mAmount v, mClock Kt, mAmount Kq, mPrice Kp, mAmount Kv, mAmount Kd, mAmount f, bool l):
       tradeId(i), pair(P), price(p), quantity(q), side(S), time(t), value(v), Ktime(Kt), Kqty(Kq), Kprice(Kp), Kvalue(Kv), Kdiff(Kd), feeCharged(f), loadedFromDB(l)
     {};
   };
@@ -404,9 +409,9 @@ namespace K {
     k.price        = j.value("price", 0.0);
     k.quantity     = j.value("quantity", 0.0);
     k.side         = j.value("side", (mSide)0);
-    k.time         = j.value("time", (unsigned long long)0);
+    k.time         = j.value("time", (mClock)0);
     k.value        = j.value("value", 0.0);
-    k.Ktime        = j.value("Ktime", (unsigned long long)0);
+    k.Ktime        = j.value("Ktime", (mClock)0);
     k.Kqty         = j.value("Kqty", 0.0);
     k.Kprice       = j.value("Kprice", 0.0);
     k.Kvalue       = j.value("Kvalue", 0.0);
@@ -415,31 +420,31 @@ namespace K {
     k.loadedFromDB = j.value("loadedFromDB", false);
   };
   struct mOrder {
-                string orderId,
-                       exchangeId;
-                 mPair pair;
-                mSide side;
-                double price,
-                       quantity,
-                       tradeQuantity;
-            mOrderType type;
-          mTimeInForce timeInForce;
-               mStatus orderStatus;
-                  bool isPong,
-                       preferPostOnly;
-    unsigned long long time,
-                       waitingCancel,
-                       latency;
+         mRandId orderId,
+                 exchangeId;
+           mPair pair;
+           mSide side;
+          mPrice price;
+         mAmount quantity,
+                 tradeQuantity;
+      mOrderType type;
+    mTimeInForce timeInForce;
+         mStatus orderStatus;
+            bool isPong,
+                 preferPostOnly;
+          mClock time,
+                 waitingCancel,
+                 latency;
     mOrder():
       orderId(""), exchangeId(""), pair(mPair()), side((mSide)0), quantity(0), type((mOrderType)0), isPong(false), price(0), timeInForce((mTimeInForce)0), orderStatus((mStatus)0), preferPostOnly(false), tradeQuantity(0), time(0), waitingCancel(0), latency(0)
     {};
-    mOrder(string o, mStatus s):
+    mOrder(mRandId o, mStatus s):
       orderId(o), exchangeId(""), pair(mPair()), side((mSide)0), quantity(0), type((mOrderType)0), isPong(false), price(0), timeInForce((mTimeInForce)0), orderStatus(s), preferPostOnly(false), tradeQuantity(0), time(0), waitingCancel(0), latency(0)
     {};
-    mOrder(string o, string e, mStatus s, double p, double q, double Q):
+    mOrder(mRandId o, mRandId e, mStatus s, mPrice p, mAmount q, mAmount Q):
       orderId(o), exchangeId(e), pair(mPair()), side((mSide)0), quantity(q), type((mOrderType)0), isPong(false), price(p), timeInForce((mTimeInForce)0), orderStatus(s), preferPostOnly(false), tradeQuantity(Q), time(0), waitingCancel(0), latency(0)
     {};
-    mOrder(string o, mPair P, mSide S, double q, mOrderType t, bool i, double p, mTimeInForce F, mStatus s, bool O):
+    mOrder(mRandId o, mPair P, mSide S, mAmount q, mOrderType t, bool i, mPrice p, mTimeInForce F, mStatus s, bool O):
       orderId(o), exchangeId(""), pair(P), side(S), quantity(q), type(t), isPong(i), price(p), timeInForce(F), orderStatus(s), preferPostOnly(O), tradeQuantity(0), time(0), waitingCancel(0), latency(0)
     {};
     string quantity2str() {
@@ -477,12 +482,12 @@ namespace K {
     };
   };
   struct mLevel {
-    double price,
-           size;
+     mPrice price;
+    mAmount size;
     mLevel():
       price(0), size(0)
     {};
-    mLevel(double p, double s):
+    mLevel(mPrice p, mAmount s):
       price(p), size(s)
     {};
   };
@@ -570,8 +575,7 @@ namespace K {
   static vector<function<void()>*> gwEndings;
   class Gw {
     public:
-      static Gw *config(string, string, string, int, string, string, string, string, string, string, int, int);
-      string (*randId)() = 0;
+      static Gw *config(mCoinId, mCoinId, string, int, string, string, string, string, string, string, int, int);
       function<void(mOrder)>        evDataOrder;
       function<void(mTrade)>        evDataTrade;
       function<void(mWallet)>       evDataWallet;
@@ -581,19 +585,21 @@ namespace K {
       uWS::Hub                *hub     = nullptr;
       uWS::Group<uWS::CLIENT> *gwGroup = nullptr;
       mExchange exchange = (mExchange)0;
-         int version = 0, maxLevel = 0,
-             debug   = 0;
-      double makeFee = 0,  minTick = 0,
-             takeFee = 0,  minSize = 0;
-      string base    = "", quote   = "",
-             name    = "", symbol  = "",
-             apikey  = "", secret  = "",
-             user    = "", pass    = "",
-             ws      = "", http    = "";
+            int version  = 0, maxLevel = 0,
+                debug    = 0;
+         mPrice minTick  = 0;
+        mAmount makeFee  = 0, takeFee  = 0,
+                minSize  = 0;
+        mCoinId base     = "", quote   = "";
+         string name     = "", symbol  = "",
+                apikey   = "", secret  = "",
+                user     = "", pass    = "",
+                ws       = "", http    = "";
+      mRandId (*randId)() = 0;
       virtual   void wallet() = 0,
                      levels() = 0,
-                     send(string, string, string, mSide, string, string, mOrderType, mTimeInForce, bool, unsigned long long) = 0,
-                     cancel(string, string, mSide, unsigned long long) = 0,
+                     send(mRandId, mRandId, mRandId, mSide, string, string, mOrderType, mTimeInForce, bool, mClock) = 0,
+                     cancel(mRandId, mRandId, mSide, mClock) = 0,
                      cancelAll() = 0,
                      close() = 0;
       virtual string A() = 0;

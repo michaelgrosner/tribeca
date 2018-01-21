@@ -32,31 +32,31 @@ namespace K {
         };
       };
     public:
-      json load(mMatter k) {
+      json load(mMatter table) {
         char* zErrMsg = 0;
         sqlite3_exec(db, (
-          string("CREATE TABLE ") + _table_(k) + "("
+          string("CREATE TABLE ") + _table_(table) + "("
           + "id    INTEGER   PRIMARY KEY AUTOINCREMENT                                           NOT NULL,"
           + "json  BLOB                                                                          NOT NULL,"
           + "time  TIMESTAMP DEFAULT (CAST((julianday('now') - 2440587.5)*86400000 AS INTEGER))  NOT NULL);"
         ).data(), NULL, NULL, &zErrMsg);
         json j = json::array();
         sqlite3_exec(db, (
-          string("SELECT json FROM ") + _table_(k) + " ORDER BY time ASC;"
+          string("SELECT json FROM ") + _table_(table) + " ORDER BY time ASC;"
         ).data(), cb, (void*)&j, &zErrMsg);
         if (zErrMsg) FN::logWar("DB", string("Sqlite error: ") + zErrMsg);
         sqlite3_free(zErrMsg);
         return j;
       };
-      void insert(mMatter k, json o, bool rm = true, string id = "NULL", unsigned long long expire = 0) {
-        ((EV*)events)->deferred([this, k, o, rm, id, expire]() {
+      void insert(mMatter table, json cell, bool rm = true, string updateId = "NULL", mClock rmOlder = 0) {
+        ((EV*)events)->deferred([this, table, cell, rm, updateId, rmOlder]() {
           char* zErrMsg = 0;
           sqlite3_exec(db, (
-            string((rm or id != "NULL" or expire) ? string("DELETE FROM ") + _table_(k)
-            + (id != "NULL" ? string(" WHERE id = ") + id  : (
-              expire ? string(" WHERE time < ") + to_string(expire) : ""
-            ) ) : "") + ";" + (o.is_null() ? "" : string("INSERT INTO ") + _table_(k)
-              + " (id,json) VALUES(" + id + ",'" + o.dump() + "');")
+            string((rm or updateId != "NULL" or rmOlder) ? string("DELETE FROM ") + _table_(table)
+            + (updateId != "NULL" ? string(" WHERE id = ") + updateId  : (
+              rmOlder ? string(" WHERE time < ") + to_string(rmOlder) : ""
+            ) ) : "") + ";" + (cell.is_null() ? "" : string("INSERT INTO ") + _table_(table)
+              + " (id,json) VALUES(" + updateId + ",'" + cell.dump() + "');")
           ).data(), NULL, NULL, &zErrMsg);
           if (zErrMsg) FN::logWar("DB", string("Sqlite error: ") + zErrMsg);
           sqlite3_free(zErrMsg);

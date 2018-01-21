@@ -9,7 +9,7 @@
 #define K_STAMP "0"
 #endif
 
-#define _AZnums_ "0123456789"                 \
+#define _numsAz_ "0123456789"                 \
                  "ABCDEFGHIJKLMNOPQRSTUVWXYZ" \
                  "abcdefghijklmnopqrstuvwxyz"
 
@@ -66,7 +66,7 @@ namespace K {
       };
       static string char16Id() {
         char s[16];
-        for (unsigned int i = 0; i < 16; ++i) s[i] = _AZnums_[int64() % (sizeof(_AZnums_) - 1)];
+        for (unsigned int i = 0; i < 16; ++i) s[i] = _numsAz_[int64() % (sizeof(_numsAz_) - 1)];
         return string(s, 16);
       };
       static string uuid36Id() {
@@ -82,7 +82,7 @@ namespace K {
           if (i != 8 && i != 13 && i != 18 && i != 14 && i != 23) {
             if (rnd <= 0x02) rnd = 0x2000000 + (rnd_ * 0x1000000) | 0;
             rnd >>= 4;
-            uuid[i] = _AZnums_[(i == 19) ? ((rnd & 0xf) & 0x3) | 0x8 : rnd & 0xf];
+            uuid[i] = _numsAz_[(i == 19) ? ((rnd & 0xf) & 0x3) | 0x8 : rnd & 0xf];
           }
         return S2l(uuid);
       };
@@ -614,7 +614,7 @@ namespace K {
       };
       static void log(mTrade k, string e) {
         if (!wBorder) {
-          cout << FN::uiT() << "GW " << (k.side == mSide::Bid ? RCYAN : RPURPLE) << e << " TRADE " << (k.side == mSide::Bid ? BCYAN : BPURPLE) << (k.side == mSide::Bid ? "BUY " : "SELL ") << k.quantity << " " << k.pair.base << " at price " << k.price << " " << k.pair.quote << " (value " << k.value << " " << k.pair.quote << ").\n";
+          cout << FN::uiT() << "GW " << (k.side == mSide::Bid ? RCYAN : RPURPLE) << e << " TRADE " << (k.side == mSide::Bid ? BCYAN : BPURPLE) << (k.side == mSide::Bid ? "BUY  " : "SELL ") << k.quantity << " " << k.pair.base << " at price " << k.price << " " << k.pair.quote << " (value " << k.value << " " << k.pair.quote << ").\n";
           return;
         }
         wmove(wLog, getmaxy(wLog)-1, 0);
@@ -719,21 +719,21 @@ namespace K {
       static void screen_refresh(map<string, mOrder> k) {
         screen_refresh("", 0, "", "", k, true);
       };
-      static void screen_refresh(string protocol = "", int argPort = 0, string argExchange = "", string argCurrency = "", map<string, mOrder> Orders = map<string, mOrder>(), bool hasOrders = false) {
+      static void screen_refresh(string protocol = "", int argPort = 0, string argExchange = "", string argCurrency = "", map<mRandId, mOrder> Orders = map<string, mOrder>(), bool hasOrders = false) {
         if (!wBorder) return;
         static int p = 0, spin = 0, port = 0;
         static string prtcl = "?", exchange = "?", currency = "?";
-        static map<string, mOrder> orders = map<string, mOrder>();
+        static map<mRandId, mOrder> orders = map<mRandId, mOrder>();
         if (argPort) port = argPort;
         if (!protocol.empty()) prtcl = protocol;
         if (!argExchange.empty()) exchange = argExchange;
         if (!argCurrency.empty()) currency = argCurrency;
-        multimap<double, mOrder, greater<double>> openOrders;
+        multimap<mPrice, mOrder, greater<mPrice>> openOrders;
         if (hasOrders) {
           orders = Orders;
-          for (map<string, mOrder>::value_type &it : orders)
+          for (map<mRandId, mOrder>::value_type &it : orders)
             if (mStatus::Working == it.second.orderStatus)
-              openOrders.insert(pair<double, mOrder>(it.second.price, it.second));
+              openOrders.insert(pair<mPrice, mOrder>(it.second.price, it.second));
         }
         int l = p,
             y = getmaxy(wBorder),
@@ -750,7 +750,7 @@ namespace K {
         }
         mvwvline(wBorder, 1, 1, ' ', y-1);
         mvwvline(wBorder, k-1, 1, ' ', y-1);
-        for (map<double, mOrder, greater<double>>::value_type &it : openOrders) {
+        for (map<mPrice, mOrder, greater<mPrice>>::value_type &it : openOrders) {
           wattron(wBorder, COLOR_PAIR(it.second.side == mSide::Bid ? COLOR_CYAN : COLOR_MAGENTA));
           stringstream ss;
           ss << setprecision(8) << fixed << (it.second.side == mSide::Bid ? "BID" : "ASK") << " > " << it.second.exchangeId << ": " << it.second.quantity << " " << it.second.pair.base << " at price " << it.second.price << " " << it.second.pair.quote;

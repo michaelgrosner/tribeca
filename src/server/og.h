@@ -4,7 +4,7 @@
 namespace K {
   class OG: public Klass {
     public:
-      map<string, mOrder> orders;
+      map<mRandId, mOrder> orders;
       vector<mTrade> tradesHistory;
     protected:
       void load() {
@@ -33,38 +33,36 @@ namespace K {
         debug = [&](string k) {};
       };
     public:
-      void sendOrder(vector<string> toCancel, mSide side, double price, double qty, mOrderType type, mTimeInForce tif, bool isPong, bool postOnly) {
-        string replaceOrderId,
+      void sendOrder(vector<mRandId> toCancel, mSide side, mPrice price, mAmount qty, mOrderType type, mTimeInForce tif, bool isPong, bool postOnly) {
+        mRandId replaceOrderId,
                replaceExchangeId;
         if (!toCancel.empty()) {
           replaceOrderId = side == mSide::Bid ? toCancel.back() : toCancel.front();
           toCancel.erase(toCancel.begin()+(side == mSide::Bid ? toCancel.size()-1 : 0));
-          for (string &it : toCancel) cancelOrder(it);
+          for (mRandId &it : toCancel) cancelOrder(it);
         }
-        string newId(gw->randId());
-        updateOrderState(mOrder(newId, mPair(gw->base, gw->quote), side, qty, type, isPong, price, tif, mStatus::New, postOnly));
-        mOrder *o = &orders[newId];
-        debug(string(" send  ") + (replaceOrderId.empty() ? "" : replaceOrderId+ "> ") + (o->side == mSide::Bid ? "BID id " : "ASK id ") + o->orderId + ": " + o->quantity2str() + " " + o->pair.base + " at price " + o->price2str() + " " + o->pair.quote);
+        mRandId orderId(gw->randId());
+        updateOrderState(mOrder(orderId, mPair(gw->base, gw->quote), side, qty, type, isPong, price, tif, mStatus::New, postOnly));
+        mOrder *o = &orders[orderId];
         if (!replaceOrderId.empty())
           if (orders.find(replaceOrderId) == orders.end() or orders[replaceOrderId].exchangeId.empty())
             replaceOrderId = "";
           else replaceExchangeId = orders[replaceOrderId].exchangeId;
+        debug(string(" send  ") + (replaceOrderId.empty() ? "" : replaceOrderId+ "> ") + (o->side == mSide::Bid ? "BID id " : "ASK id ") + o->orderId + ": " + o->quantity2str() + " " + o->pair.base + " at price " + o->price2str() + " " + o->pair.quote);
         gw->send(replaceOrderId, replaceExchangeId, o->orderId, o->side, o->price2str(), o->quantity2str(), o->type, o->timeInForce, o->preferPostOnly, o->time);
         ((UI*)client)->orders_60s++;
       };
-      void cancelOrder(string k) {
-        if (orders.find(k) == orders.end()
-          or orders[k].exchangeId.empty()
-          or orders[k].waitingCancel + 3e+3 > _Tstamp_
-        ) return;
-        orders[k].waitingCancel = _Tstamp_;
-        debug(string("cancel ") + (orders[k].side == mSide::Bid ? "BID id " : "ASK id ") + orders[k].orderId + "::" + orders[k].exchangeId);
-        gw->cancel(orders[k].orderId, orders[k].exchangeId, orders[k].side, orders[k].time);
+      void cancelOrder(mRandId orderId) {
+        mOrder *o = &orders[orderId];
+        if (o->exchangeId.empty() or o->waitingCancel + 3e+3 > _Tstamp_) return;
+        o->waitingCancel = _Tstamp_;
+        debug(string("cancel ") + (o->side == mSide::Bid ? "BID id " : "ASK id ") + o->orderId + "::" + o->exchangeId);
+        gw->cancel(o->orderId, o->exchangeId, o->side, o->time);
       };
-      void cleanOrder(string k) {
-        map<string, mOrder>::iterator it = orders.find(k);
+      void cleanOrder(mRandId &orderId) {
+        debug(string("remove ") + orderId);
+        map<mRandId, mOrder>::iterator it = orders.find(orderId);
         if (it != orders.end()) orders.erase(it);
-        debug(string("remove ") + k);
       };
     private:
       function<void(json*)> helloTrades = [&](json *welcome) {
@@ -74,7 +72,7 @@ namespace K {
         }
       };
       function<void(json*)> helloOrders = [&](json *welcome) {
-        for (map<string, mOrder>::value_type &it : orders)
+        for (map<mRandId, mOrder>::value_type &it : orders)
           if (mStatus::Working == it.second.orderStatus)
             welcome->push_back(it.second);
       };
@@ -87,17 +85,19 @@ namespace K {
       function<void(json)> kissCleanAllTrades = [&](json butterfly) {
         cleanTrade("");
       };
-      function<void(json)> kissCancelOrder = [&](json butterfly) {
-        if (butterfly.is_object() and butterfly["orderId"].is_string())
-          cancelOrder(butterfly["orderId"].get<string>());
-      };
       function<void(json)> kissCleanTrade = [&](json butterfly) {
         if (butterfly.is_object() and butterfly["tradeId"].is_string())
           cleanTrade(butterfly["tradeId"].get<string>());
       };
+      function<void(json)> kissCancelOrder = [&](json butterfly) {
+        mRandId orderId = (butterfly.is_object() and butterfly["orderId"].is_string())
+          ? butterfly["orderId"].get<mRandId>() : "";
+        if (orderId.empty() or orders.find(orderId) == orders.end()) return;
+        cancelOrder(orderId);
+      };
       function<void(json)> kissSubmitNewOrder = [&](json butterfly) {
         sendOrder(
-          vector<string>(),
+          vector<mRandId>(),
           butterfly.value("side", "") == "Bid" ? mSide::Bid : mSide::Ask,
           butterfly.value("price", 0.0),
           butterfly.value("quantity", 0.0),
@@ -110,7 +110,7 @@ namespace K {
       void updateOrderState(mOrder k) {
         if (k.orderStatus == mStatus::New) orders[k.orderId] = k;
         if (k.orderId.empty() and !k.exchangeId.empty())
-          for (map<string, mOrder>::value_type &it : orders)
+          for (map<mRandId, mOrder>::value_type &it : orders)
             if (k.exchangeId == it.second.exchangeId) {
               k.orderId = it.first;
               break;
@@ -139,7 +139,7 @@ namespace K {
           toClient();
       };
       void cancelOpenOrders() {
-        for (map<string, mOrder>::value_type &it : orders)
+        for (map<mRandId, mOrder>::value_type &it : orders)
           if (mStatus::New == it.second.orderStatus or mStatus::Working == it.second.orderStatus)
             cancelOrder(it.first);
       };
@@ -167,14 +167,14 @@ namespace K {
       };
       void toClient() {
         json k = json::array();
-        for (map<string, mOrder>::value_type &it : orders)
+        for (map<mRandId, mOrder>::value_type &it : orders)
           if (it.second.orderStatus == mStatus::Working)
             k.push_back(it.second);
         ((UI*)client)->send(mMatter::OrderStatusReports, k);
       };
       void toHistory(mOrder &o) {
         if (!o.tradeQuantity) return;
-        double fee = 0;
+        mAmount fee = 0;
         mTrade trade(
           to_string(_Tstamp_),
           o.pair,
@@ -188,10 +188,10 @@ namespace K {
         ((EV*)events)->ogTrade(&trade);
         FN::log(trade, gw->name);
         if (qp->_matchPings) {
-          double widthPong = qp->widthPercentage
+          mPrice widthPong = qp->widthPercentage
             ? qp->widthPongPercentage * trade.price / 100
             : qp->widthPong;
-          map<double, string> matches;
+          map<mPrice, string> matches;
           for (mTrade &it : tradesHistory)
             if (it.quantity - it.Kqty > 0
               and it.side == (trade.side == mSide::Bid ? mSide::Ask : mSide::Bid)
@@ -210,12 +210,12 @@ namespace K {
           {"value", trade.value},
           {"pong", o.isPong}
         });
-        cleanAuto(trade.time, qp->cleanPongsAuto);
+        if (qp->cleanPongsAuto) cleanAuto(trade.time);
       };
-      void matchPong(map<double, string> matches, bool reverse, mTrade pong) {
-        if (reverse) for (map<double, string>::reverse_iterator it = matches.rbegin(); it != matches.rend(); ++it) {
+      void matchPong(map<mPrice, string> matches, bool reverse, mTrade pong) {
+        if (reverse) for (map<mPrice, string>::reverse_iterator it = matches.rbegin(); it != matches.rend(); ++it) {
           if (!matchPong(it->second, &pong)) break;
-        } else for (map<double, string>::iterator it = matches.begin(); it != matches.end(); ++it)
+        } else for (map<mPrice, string>::iterator it = matches.begin(); it != matches.end(); ++it)
           if (!matchPong(it->second, &pong)) break;
         if (pong.quantity > 0) {
           bool eq = false;
@@ -240,7 +240,7 @@ namespace K {
       bool matchPong(string match, mTrade* pong) {
         for (mTrade &it : tradesHistory) {
           if (it.tradeId != match) continue;
-          double Kqty = fmin(pong->quantity, it.quantity - it.Kqty);
+          mAmount Kqty = fmin(pong->quantity, it.quantity - it.Kqty);
           it.Ktime = pong->time;
           it.Kprice = ((Kqty*pong->price) + (it.Kqty*it.Kprice)) / (it.Kqty+Kqty);
           it.Kqty = it.Kqty + Kqty;
@@ -256,11 +256,10 @@ namespace K {
         }
         return pong->quantity > 0;
       };
-      void cleanAuto(unsigned long long now, double pT) {
-        if (pT == 0) return;
-        unsigned long long pT_ = now - (abs(pT) * 864e5);
+      void cleanAuto(mClock now) {
+        mClock pT_ = now - (abs(qp->cleanPongsAuto) * 864e5);
         for (vector<mTrade>::iterator it = tradesHistory.begin(); it != tradesHistory.end();)
-          if (it->time < pT_ and (pT < 0 or it->Kqty >= it->quantity)) {
+          if (it->time < pT_ and (qp->cleanPongsAuto < 0 or it->Kqty >= it->quantity)) {
             it->Kqty = -1;
             ((UI*)client)->send(mMatter::Trades, *it);
             ((DB*)memory)->insert(mMatter::Trades, {}, false, it->tradeId);

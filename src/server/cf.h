@@ -4,40 +4,21 @@
 namespace K {
   class CF: public kLass {
     public:
-      int argPort = 3000,
-          argColors = 0,
-          argDebug = 0,
-          argDebugSecret = 0,
-          argDebugEvents = 0,
-          argDebugOrders = 0,
-          argDebugQuotes = 0,
-          argDebugWallet = 0,
-          argWithoutSSL = 0,
-          argMaxLevels = 0,
-          argHeadless = 0,
-          argDustybot = 0,
-          argAutobot = 0,
-          argNaked = 0,
-          argFree = 0;
-      string argTitle = "K.sh",
-             argUser = "NULL",
-             argPass = "NULL",
-             argMatryoshka = "https://www.example.com/",
-             argExchange = "NULL",
-             argCurrency = "NULL",
-             argApikey = "NULL",
-             argSecret = "NULL",
-             argUsername = "NULL",
-             argPassphrase = "NULL",
-             argHttp = "NULL",
-             argWss = "NULL",
-             argDatabase = "",
-             argDiskdata = "",
-             argWhitelist = "";
-      double argEwmaShort = 0,
-             argEwmaMedium = 0,
-             argEwmaLong = 0,
-             argEwmaVeryLong = 0;
+         int argPort         = 3000,   argColors       = 0, argDebug        = 0,
+             argDebugSecret  = 0,      argDebugEvents  = 0, argDebugOrders  = 0,
+             argDebugQuotes  = 0,      argDebugWallet  = 0, argWithoutSSL   = 0,
+             argMaxLevels    = 0,      argHeadless     = 0, argDustybot     = 0,
+             argAutobot      = 0,      argNaked        = 0, argFree         = 0;
+    mPrice argEwmaShort    = 0,      argEwmaMedium   = 0,
+             argEwmaLong     = 0,      argEwmaVeryLong = 0;
+      string argTitle        = "K.sh", argMatryoshka   = "https://www.example.com/",
+             argUser         = "NULL", argPass         = "NULL",
+             argExchange     = "NULL", argCurrency     = "NULL",
+             argApikey       = "NULL", argSecret       = "NULL",
+             argUsername     = "NULL", argPassphrase   = "NULL",
+             argHttp         = "NULL", argWss          = "NULL",
+             argDatabase     = "",     argDiskdata     = "",
+             argWhitelist    = "";
     protected:
       void load(int argc, char** argv) {
         cout << BGREEN << "K" << RGREEN << " build " << K_BUILD << " " << K_STAMP << "." << BRED << '\n';
@@ -231,10 +212,10 @@ namespace K {
         FN::screen_config(argColors, argExchange, argCurrency);
       };
     private:
-      inline string base() {
+      inline mCoinId base() {
         return FN::S2u(argCurrency.substr(0, argCurrency.find("/")));
       };
-      inline string quote() {
+      inline mCoinId quote() {
         return FN::S2u(argCurrency.substr(argCurrency.find("/")+1));
       };
   };

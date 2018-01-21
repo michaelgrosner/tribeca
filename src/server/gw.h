@@ -89,7 +89,7 @@ namespace K {
             gw->cancelAll();
           else if (gwT_5m == 20) gwT_5m = 0;
       };
-      void handshake(mExchange k) {
+      inline void handshake(mExchange k) {
         json reply;
         if (k == mExchange::Coinbase) {
           FN::stunnel();

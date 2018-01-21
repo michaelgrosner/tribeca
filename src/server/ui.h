@@ -12,7 +12,7 @@ namespace K {
       map<char, function<void(json*)>*> hello;
       map<char, function<void(json)>*> kisses;
       map<mMatter, string> queue;
-      unsigned long long uiT_60s = 0;
+      mClock uiT_60s = 0;
     public:
       unsigned int orders_60s = 0;
       unsigned int bid_levels = 0;
