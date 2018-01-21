@@ -54,7 +54,7 @@ namespace K {
       function<void(json*)> hello = [&](json *welcome) {
         *welcome = { status };
       };
-      void timer_1s() {                                             _debugEvent_
+      inline void timer_1s() {                                      _debugEvent_
         if (((MG*)market)->fairValue) {
           ((MG*)market)->calcStats();
           ((PG*)wallet)->calcSafety();
