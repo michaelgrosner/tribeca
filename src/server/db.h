@@ -53,7 +53,7 @@ namespace K {
           char* zErrMsg = 0;
           sqlite3_exec(db, (
             string((rm or updateId != "NULL" or rmOlder) ? string("DELETE FROM ") + _table_(table)
-            + (updateId != "NULL" ? string(" WHERE id = ") + updateId  : (
+            + (updateId != "NULL" ? string(" WHERE id = ") + updateId : (
               rmOlder ? string(" WHERE time < ") + to_string(rmOlder) : ""
             ) ) : "") + ";" + (cell.is_null() ? "" : string("INSERT INTO ") + _table_(table)
               + " (id,json) VALUES(" + updateId + ",'" + cell.dump() + "');")

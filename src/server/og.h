@@ -54,8 +54,8 @@ namespace K {
       };
       void cancelOrder(mRandId orderId) {
         mOrder *o = &orders[orderId];
-        if (o->exchangeId.empty() or o->waitingCancel + 3e+3 > _Tstamp_) return;
-        o->waitingCancel = _Tstamp_;
+        if (o->exchangeId.empty() or o->_waitingCancel + 3e+3 > _Tstamp_) return;
+        o->_waitingCancel = _Tstamp_;
         debug(string("cancel ") + (o->side == mSide::Bid ? "BID id " : "ASK id ") + o->orderId + "::" + o->exchangeId);
         gw->cancel(o->orderId, o->exchangeId, o->side, o->time);
       };

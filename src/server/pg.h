@@ -223,17 +223,20 @@ namespace K {
         return sum;
       };
       void calcWallet(mWallet k) {
-        if (k.currency!="") balance[k.currency] = k;
+        if (k.currency != "") balance[k.currency] = k;
         if (balance.find(gw->quote) == balance.end()) balance[gw->quote] = mWallet(0, 0, gw->quote);
         if (balance.find(gw->base) == balance.end()) balance[gw->base] = mWallet(0, 0, gw->base);
         if (!((MG*)market)->fairValue or balance.find(gw->base) == balance.end() or balance.find(gw->quote) == balance.end()) return;
         mPosition pos(
           balance[gw->base].amount,
           balance[gw->quote].amount,
+          balance[gw->quote].amount / ((MG*)market)->fairValue,
           balance[gw->base].held,
           balance[gw->quote].held,
-          balance[gw->base].amount + balance[gw->quote].amount / ((MG*)market)->fairValue + balance[gw->base].held + balance[gw->quote].held / ((MG*)market)->fairValue,
-          balance[gw->base].amount * ((MG*)market)->fairValue + balance[gw->quote].amount + balance[gw->base].held * ((MG*)market)->fairValue + balance[gw->quote].held,
+          balance[gw->base].amount + balance[gw->base].held,
+          (balance[gw->quote].amount + balance[gw->quote].held) / ((MG*)market)->fairValue,
+          (balance[gw->quote].amount + balance[gw->quote].held) / ((MG*)market)->fairValue + balance[gw->base].amount + balance[gw->base].held,
+          (balance[gw->base].amount + balance[gw->base].held) * ((MG*)market)->fairValue + balance[gw->quote].amount + balance[gw->quote].held,
           position.profitBase,
           position.profitQuote,
           mPair(gw->base, gw->quote)
@@ -295,7 +298,7 @@ namespace K {
       void calcProfit(mPosition *k) {
         mClock now = _Tstamp_;
         if (profitT_21s<=3) ++profitT_21s;
-        else if (k->baseValue and k->quoteValue and profitT_21s+21e+3 < now) {
+        else if (k->baseValue and k->quoteValue and profitT_21s + 21e+3 < now) {
           profitT_21s = now;
           mProfit profit(k->baseValue, k->quoteValue, now);
           ((DB*)memory)->insert(mMatter::Position, profit, false, "NULL", now - (qp->profitHourInterval * 36e+5));

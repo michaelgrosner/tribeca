@@ -119,10 +119,10 @@ namespace K {
       };
       void waitUser() {
         if (((CF*)config)->argHeadless) {
-          welcome = [&](mMatter k, function<void(json*)> *fn) {};
-          clickme = [&](mMatter k, function<void(json)> *fn) {};
+          welcome = [&](mMatter type, function<void(json*)> *fn) {};
+          clickme = [&](mMatter type, function<void(json)> *fn) {};
           delayme = [&](unsigned int delayUI) {};
-          send = [&](mMatter k, json o) {};
+          send = [&](mMatter type, json msg) {};
         } else {
           welcome(mMatter::ApplicationState, &helloServer);
           welcome(mMatter::ProductAdvertisement, &helloProduct);
@@ -137,32 +137,32 @@ namespace K {
         ((EV*)events)->listen();
       };
     public:
-      function<void(mMatter, function<void(json*)>*)> welcome = [&](mMatter k, function<void(json*)> *fn) {
-        if (hello.find((char)k) == hello.end()) hello[(char)k] = fn;
-        else exit(_errorEvent_("UI", string("Use only a single unique message handler for each \"") + (char)k + "\" welcome event"));
+      function<void(mMatter, function<void(json*)>*)> welcome = [&](mMatter type, function<void(json*)> *fn) {
+        if (hello.find((char)type) == hello.end()) hello[(char)type] = fn;
+        else exit(_errorEvent_("UI", string("Use only a single unique message handler for each \"") + (char)type + "\" welcome event"));
       };
-      function<void(mMatter, function<void(json)>*)> clickme = [&](mMatter k, function<void(json)> *fn) {
-        if (kisses.find((char)k) == kisses.end()) kisses[(char)k] = fn;
-        else exit(_errorEvent_("UI", string("Use only a single unique message handler for each \"") + (char)k + "\" clickme event"));
+      function<void(mMatter, function<void(json)>*)> clickme = [&](mMatter type, function<void(json)> *fn) {
+        if (kisses.find((char)type) == kisses.end()) kisses[(char)type] = fn;
+        else exit(_errorEvent_("UI", string("Use only a single unique message handler for each \"") + (char)type + "\" clickme event"));
       };
       function<void(unsigned int)> delayme = [&](unsigned int delayUI) {
         realtimeClient = !delayUI;
         ((EV*)events)->tClient->stop();
         ((EV*)events)->tClient->start(timer, 0, realtimeClient ? 6e+4 : delayUI * 1e+3);
       };
-      function<void(mMatter, json)> send = [&](mMatter k, json o) {
+      function<void(mMatter, json)> send = [&](mMatter type, json msg) {
         if (connections == 0) return;
         bool delayed = (
-          k == mMatter::FairValue
-          or k == mMatter::OrderStatusReports
-          or k == mMatter::QuoteStatus
-          or k == mMatter::Position
-          or k == mMatter::TargetBasePosition
-          or k == mMatter::EWMAChart
-          or k == mMatter::MarketData
+          type == mMatter::FairValue
+          or type == mMatter::OrderStatusReports
+          or type == mMatter::QuoteStatus
+          or type == mMatter::Position
+          or type == mMatter::TargetBasePosition
+          or type == mMatter::EWMAChart
+          or type == mMatter::MarketData
         );
-        if (realtimeClient or !delayed) broadcast(k, o.dump());
-        else queue[k] = o.dump();
+        if (realtimeClient or !delayed) broadcast(type, msg.dump());
+        else queue[type] = msg.dump();
       };
     private:
       function<void(json*)> helloServer = [&](json *welcome) {
@@ -192,11 +192,11 @@ namespace K {
         if (butterfly.is_array() and butterfly.size())
           toggleSettings = butterfly.at(0);
       };
-      void broadcast(mMatter k, string j) {
-        string m(1, (char)mPortal::Kiss);
-        m += (char)k + j;
-        ((EV*)events)->deferred([this, m]() {
-          ((EV*)events)->uiGroup->broadcast(m.data(), m.length(), uWS::OpCode::TEXT);
+      void broadcast(mMatter type, string msg) {
+        msg.insert(msg.begin(), (char)type);
+        msg.insert(msg.begin(), (char)mPortal::Kiss);
+        ((EV*)events)->deferred([this, msg]() {
+          ((EV*)events)->uiGroup->broadcast(msg.data(), msg.length(), uWS::OpCode::TEXT);
         });
       };
       void broadcastQueue() {
