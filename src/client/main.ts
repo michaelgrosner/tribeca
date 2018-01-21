@@ -84,22 +84,22 @@ class DisplayOrder {
                                 <table class="table table-responsive table-bordered" style="margin-bottom:0px;">
                                     <thead>
                                         <tr class="active">
-                                            <th>%</th>
-                                            <th>mode</th>
-                                            <th>safety</th>
-                                            <th *ngIf="pair.quotingParameters.display.safety==3">bullets</th>
-                                            <th *ngIf="pair.quotingParameters.display.safety==3 && !pair.quotingParameters.display.percentageValues">range</th>
-                                            <th *ngIf="pair.quotingParameters.display.safety==3 && pair.quotingParameters.display.percentageValues">range%</th>
-                                            <th *ngIf="[1,2,3].indexOf(pair.quotingParameters.display.safety)>-1">pingAt</th>
-                                            <th *ngIf="[1,2,3].indexOf(pair.quotingParameters.display.safety)>-1">pongAt</th>
-                                            <th>sop</th>
+                                            <th title="If enabled, the values of bidSize, askSize, tbp, pDiv and range will be a percentage related to the total funds.">%</th>
+                                            <th title="Sets the quoting mode">mode</th>
+                                            <th title="Sets a quoting Safety">safety</th>
+                                            <th title="Maximum amount of trades placed in each side." *ngIf="pair.quotingParameters.display.safety==3">bullets</th>
+                                            <th title="Minimum width between bullets in USD (ex. a value of .3 is 30 cents)." *ngIf="pair.quotingParameters.display.safety==3 && !pair.quotingParameters.display.percentageValues">range</th>
+                                            <th title="Minimum width between bullets in USD (ex. a value of .3 is 30 cents)." *ngIf="pair.quotingParameters.display.safety==3 && pair.quotingParameters.display.percentageValues">range%</th>
+                                            <th title="Pongs are always placed in both sides." *ngIf="[1,2,3].indexOf(pair.quotingParameters.display.safety)>-1">pingAt</th>
+                                            <th title="" *ngIf="[1,2,3].indexOf(pair.quotingParameters.display.safety)>-1">pongAt</th>
+                                            <th title="Super opportunities, if enabled and if the market width is sopWidth times bigger than the width set, it multiplies sopTrades to trades and/or sopSize to size, in both sides at the same time.">sop</th>
                                             <ng-container *ngIf="pair.quotingParameters.display.superTrades">
-                                            <th>sopWidth</th>
-                                            <th *ngIf="[1,3].indexOf(pair.quotingParameters.display.superTrades)>-1">sopTrades</th>
-                                            <th *ngIf="[2,3].indexOf(pair.quotingParameters.display.superTrades)>-1">sopSize</th>
+                                            <th title="The value with the market width is multiplicated to define the activation point for Super opportunities.">sopWidth</th>
+                                            <th title="Multiplicates trades to rise the possible Trades per Minute if sop is in Trades or tradesSize state." *ngIf="[1,3].indexOf(pair.quotingParameters.display.superTrades)>-1">sopTrades</th>
+                                            <th title="Multiplicates width if sop is in Size or tradesSize state." *ngIf="[2,3].indexOf(pair.quotingParameters.display.superTrades)>-1">sopSize</th>
                                             </ng-container>
-                                            <th [attr.colspan]="pair.quotingParameters.display.aggressivePositionRebalancing ? '2' : '1'"><span *ngIf="pair.quotingParameters.display.aggressivePositionRebalancing && pair.quotingParameters.display.buySizeMax">minB</span><span *ngIf="!pair.quotingParameters.display.aggressivePositionRebalancing || !pair.quotingParameters.display.buySizeMax">b</span>idSize<span *ngIf="pair.quotingParameters.display.percentageValues">%</span><span *ngIf="pair.quotingParameters.display.aggressivePositionRebalancing" style="float:right;">maxBidSize?</span></th>
-                                            <th [attr.colspan]="pair.quotingParameters.display.aggressivePositionRebalancing ? '2' : '1'"><span *ngIf="pair.quotingParameters.display.aggressivePositionRebalancing && pair.quotingParameters.display.sellSizeMax">minA</span><span *ngIf="!pair.quotingParameters.display.aggressivePositionRebalancing || !pair.quotingParameters.display.sellSizeMax">a</span>skSize<span *ngIf="pair.quotingParameters.display.percentageValues">%</span><span *ngIf="pair.quotingParameters.display.aggressivePositionRebalancing" style="float:right;">maxAskSize?</span></th>
+                                            <th title="Maximum bid size of our quote in BTC (ex. a value of 1.5 is 1.5 bitcoins). With the exception for when apr is checked and the system is aggressively rebalancing positions after they get out of whack." [attr.colspan]="pair.quotingParameters.display.aggressivePositionRebalancing ? '2' : '1'"><span *ngIf="pair.quotingParameters.display.aggressivePositionRebalancing && pair.quotingParameters.display.buySizeMax">minB</span><span *ngIf="!pair.quotingParameters.display.aggressivePositionRebalancing || !pair.quotingParameters.display.buySizeMax">b</span>idSize<span *ngIf="pair.quotingParameters.display.percentageValues">%</span><span *ngIf="pair.quotingParameters.display.aggressivePositionRebalancing" style="float:right;">maxBidSize?</span></th>
+                                            <th title="Maximum ask size of our quote in BTC (ex. a value of 1.5 is 1.5 bitcoins). With the exception for when apr is checked and the system is aggressively rebalancing positions after they get out of whack." [attr.colspan]="pair.quotingParameters.display.aggressivePositionRebalancing ? '2' : '1'"><span *ngIf="pair.quotingParameters.display.aggressivePositionRebalancing && pair.quotingParameters.display.sellSizeMax">minA</span><span *ngIf="!pair.quotingParameters.display.aggressivePositionRebalancing || !pair.quotingParameters.display.sellSizeMax">a</span>skSize<span *ngIf="pair.quotingParameters.display.percentageValues">%</span><span *ngIf="pair.quotingParameters.display.aggressivePositionRebalancing" style="float:right;">maxAskSize?</span></th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -218,23 +218,23 @@ class DisplayOrder {
                                 <table class="table table-responsive table-bordered" style="margin-bottom:0px;">
                                     <thead>
                                         <tr class="active">
-                                            <th>apMode</th>
-                                            <th *ngIf="pair.quotingParameters.display.autoPositionMode==3">verylong</th>
-                                            <th *ngIf="pair.quotingParameters.display.autoPositionMode">long</th>
-                                            <th *ngIf="pair.quotingParameters.display.autoPositionMode>1">medium</th>
-                                            <th *ngIf="pair.quotingParameters.display.autoPositionMode">short</th>
-                                            <th *ngIf="pair.quotingParameters.display.autoPositionMode">sensibility</th>
-                                            <th *ngIf="!pair.quotingParameters.display.autoPositionMode">tbp<span *ngIf="pair.quotingParameters.display.percentageValues">%</span></th>
-                                            <th *ngIf="pair.quotingParameters.display.autoPositionMode">pDivMode</th>
-                                            <th>pDiv<span *ngIf="pair.quotingParameters.display.percentageValues">%</span></th>
-                                            <th *ngIf="pair.quotingParameters.display.autoPositionMode && pair.quotingParameters.display.positionDivergenceMode">pDivMin<span *ngIf="pair.quotingParameters.display.percentageValues">%</span></th>
-                                            <th>apr</th>
-                                            <th *ngIf="pair.quotingParameters.display.aggressivePositionRebalancing">aprFactor</th>
-                                            <th>bw?</th>
-                                            <th *ngIf="[6].indexOf(pair.quotingParameters.display.mode)==-1">%w?</th>
-                                            <th *ngIf="[1,2,3].indexOf(pair.quotingParameters.display.safety)==-1"><span *ngIf="[6].indexOf(pair.quotingParameters.display.mode)==-1">width</span><span *ngIf="[6].indexOf(pair.quotingParameters.display.mode)>-1">depth</span><span *ngIf="pair.quotingParameters.display.widthPercentage && [6].indexOf(pair.quotingParameters.display.mode)==-1">%</span></th>
-                                            <th *ngIf="[1,2,3].indexOf(pair.quotingParameters.display.safety)>-1">pingWidth<span *ngIf="pair.quotingParameters.display.widthPercentage">%</span></th>
-                                            <th *ngIf="[1,2,3].indexOf(pair.quotingParameters.display.safety)>-1">pongWidth<span *ngIf="pair.quotingParameters.display.widthPercentage">%</span></th>
+                                            <th title="Automatic position management">apMode</th>
+                                            <th title="Sets the periods of EWMA VeryLong to automatically manage positions." *ngIf="pair.quotingParameters.display.autoPositionMode==3">verylong</th>
+                                            <th title="Sets the periods of EWMA Long to automatically manage positions." *ngIf="pair.quotingParameters.display.autoPositionMode">long</th>
+                                            <th title="Sets the periods of EWMA Medium to automatically manage positions." *ngIf="pair.quotingParameters.display.autoPositionMode>1">medium</th>
+                                            <th title="Sets the periods of EWMA Short to automatically manage positions." *ngIf="pair.quotingParameters.display.autoPositionMode">short</th>
+                                            <th title="Threshold removed from each period, affects EWMA Long, Medium and Short. The decimal value must be betweem 0 and 1." *ngIf="pair.quotingParameters.display.autoPositionMode">sensibility</th>
+                                            <th title="Sets a static Target Base Position for Krypto-trading-bot to stay near. Krypto-trading-bot will still try to respect pDiv and not make your position fluctuate by more than that value." *ngIf="!pair.quotingParameters.display.autoPositionMode">tbp<span *ngIf="pair.quotingParameters.display.percentageValues">%</span></th>
+                                            <th title="Sets the strategy of dynamically adjusting the pDiv depending on the divergence from 50% of Base Value." *ngIf="pair.quotingParameters.display.autoPositionMode">pDivMode</th>
+                                            <th title="If your Target Base Position diverges more from this value, Krypto-trading-bot will stop sending orders to stop too much directional trading.">pDiv<span *ngIf="pair.quotingParameters.display.percentageValues">%</span></th>
+                                            <th title="It defines the minimal pDiv for the dynamic positon divergence." *ngIf="pair.quotingParameters.display.autoPositionMode && pair.quotingParameters.display.positionDivergenceMode">pDivMin<span *ngIf="pair.quotingParameters.display.percentageValues">%</span></th>
+                                            <th title="If you're in a state where Krypto-trading-bot has stopped sending orders because your position has diverged too far from Target Base Position, this setting will much more aggressively try to fix that discrepancy by placing orders much larger than size and at prices much more aggressive than width normally allows.">apr</th>
+                                            <th title="Defines the value with which the size is multiplicated when apr is in functional state." *ngIf="pair.quotingParameters.display.aggressivePositionRebalancing">aprFactor</th>
+                                            <th title="Enable Best Width to place orders avoiding hollows in the book, while accomodating new orders right near to existent orders in the book." >bw?</th>
+                                            <th title="The values of width or widthPing and widthPong will be a percentage related to the fair value; useful when calculating profits subtracting exchange's fees (that usually are percentages too)." *ngIf="[6].indexOf(pair.quotingParameters.display.mode)==-1">%w?</th>
+                                            <th title="Minimum width (spread) of our quote in USD (ex. a value of .3 is 30 cents). With the exception for when apr is checked and the system is aggressively rebalancing positions after they get out of whack, width will always be respected." *ngIf="[1,2,3].indexOf(pair.quotingParameters.display.safety)==-1"><span *ngIf="[6].indexOf(pair.quotingParameters.display.mode)==-1">width</span><span *ngIf="[6].indexOf(pair.quotingParameters.display.mode)>-1">depth</span><span *ngIf="pair.quotingParameters.display.widthPercentage && [6].indexOf(pair.quotingParameters.display.mode)==-1">%</span></th>
+                                            <th title="Minimum width (spread) of our quote in USD (ex. a value of .3 is 30 cents). With the exception for when apr is checked and the system is aggressively rebalancing positions after they get out of whack, width will always be respected." *ngIf="[1,2,3].indexOf(pair.quotingParameters.display.safety)>-1">pingWidth<span *ngIf="pair.quotingParameters.display.widthPercentage">%</span></th>
+                                            <th title="Minimum width (spread) of our quote in USD (ex. a value of .3 is 30 cents). Used only if previous Pings exists in the opposite side." *ngIf="[1,2,3].indexOf(pair.quotingParameters.display.safety)>-1">pongWidth<span *ngIf="pair.quotingParameters.display.widthPercentage">%</span></th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -370,21 +370,21 @@ class DisplayOrder {
                                 <table class="table table-responsive table-bordered">
                                     <thead>
                                         <tr class="active">
-                                            <th>fv</th>
-                                            <th style="text-align:right;">trades</th>
-                                            <th>/sec</th>
-                                            <th>ewmaPrice?</th>
-                                            <th *ngIf="pair.quotingParameters.display.protectionEwmaQuotePrice || pair.quotingParameters.display.protectionEwmaWidthPing">periodsᵉʷᵐᵃ</th>
-                                            <th>ewmaWidth?</th>
-                                            <th>stdev</th>
-                                            <th *ngIf="pair.quotingParameters.display.quotingStdevProtection">periodsˢᵗᵈᶜᵛ</th>
-                                            <th *ngIf="pair.quotingParameters.display.quotingStdevProtection">factor</th>
-                                            <th *ngIf="pair.quotingParameters.display.quotingStdevProtection">BB?</th>
-                                            <th>cxl?</th>
-                                            <th>profit</th>
-                                            <th>Kmemory</th>
-                                            <th>delayUI</th>
-                                            <th>audio?</th>
+                                            <th title="Sets the fair value calculation mode">fv</th>
+                                            <th title="If you successfully complete more orders than trades in /sec seconds, Krypto-trading-bot will stop sending more buy orders until either /sec seconds has passed, or you have sold enough at a higher cost to make all those buy orders profitable." style="text-align:right;">trades</th>
+                                            <th title="If you successfully complete more orders than trades in /sec seconds, Krypto-trading-bot will stop sending more buy orders until either /sec seconds has passed, or you have sold enough at a higher cost to make all those buy orders profitable.">/sec</th>
+                                            <th title="Use a quote protection of periods smoothed line of the fair value to limit the price while sending new orders.">ewmaPrice?</th>
+                                            <th title="Maximum amount of values collected in the sequences used to calculate the ewmaPrice? and ewmaWidth? quote protection." *ngIf="pair.quotingParameters.display.protectionEwmaQuotePrice || pair.quotingParameters.display.protectionEwmaWidthPing">periodsᵉʷᵐᵃ</th>
+                                            <th title="Use a quote protection of periods smoothed line of the width (between the top bid and the top ask) to limit the widthPing while sending new orders.">ewmaWidth?</th>
+                                            <th title="Limit the price of new orders.">stdev</th>
+                                            <th title="Maximum amount of values collected in the sequences used to calculate the STDEV, each side may have its own STDEV calculation with the same amount of periods." *ngIf="pair.quotingParameters.display.quotingStdevProtection">periodsˢᵗᵈᶜᵛ</th>
+                                            <th title="Multiplier used to increase or decrease the value of the selected stdev calculation, a factor of 1 does effectively nothing." *ngIf="pair.quotingParameters.display.quotingStdevProtection">factor</th>
+                                            <th title="Enable Bollinger Bands with upper and lower bands calculated from the result of the selected stdev above or below its own moving average of periods." *ngIf="pair.quotingParameters.display.quotingStdevProtection">BB?</th>
+                                            <th title="Enable a timeout of 5 minutes to cancel all orders that exist as open in the exchange (in case you found yourself with zombie orders in the exchange, because the API integration have bugs or because the connection is interrupted).">cxl?</th>
+                                            <th title="Timeframe in hours to calculate the display of Profit (under wallet values) and also interval in hour to remove data points from the Stats.">profit</th>
+                                            <th title="Timeout in days for Pings (yet unmatched trades) and/or Pongs (K trades) to remain in memory, a value of 0 keeps the history in memory forever; a positive value remove only Pongs after Kmemory days; but a negative value remove both Pings and Pongs after Kmemory days.">Kmemory</th>
+                                            <th title="Relax the display of UI data by delayUI seconds. Set a value of 0 (zero) to display UI data in realtime, but this may penalize the communication with the exchange if you end up sending too much frequent UI data.">delayUI</th>
+                                            <th title="Plays a sound for each new trade (ping-pong modes have 2 sounds for each type of trade).">audio?</th>
                                             <th colspan="2">
                                                 <span *ngIf="!pair.quotingParameters.pending" class="text-success">
                                                     Applied
