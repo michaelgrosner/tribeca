@@ -493,6 +493,12 @@ namespace K {
     mLevel(mPrice p, mAmount s):
       price(p), size(s)
     {};
+    bool clear() {
+      price = size = 0;
+    };
+    bool empty() {
+      return !price or !size;
+    };
   };
   static void to_json(json& j, const mLevel& k) {
     j = {
@@ -509,6 +515,9 @@ namespace K {
     mLevels(vector<mLevel> b, vector<mLevel> a):
       bids(b), asks(a)
     {};
+    mPrice spread() {
+      return empty() ? 0 : asks.begin()->price - bids.begin()->price;
+    };
     bool empty() {
       return bids.empty() or asks.empty();
     };
