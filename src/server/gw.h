@@ -83,7 +83,7 @@ namespace K {
         };
       };
       inline void timer_15s() {                                     _debugEvent_
-        gw->wallet();
+        ((EV*)events)->async(&gw->askForWallet);
         if (qp->cancelOrdersAuto)
           if (!gwT_5m++)
             gw->cancelAll();

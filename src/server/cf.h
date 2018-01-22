@@ -177,6 +177,28 @@ namespace K {
                << " Invalid currency pair; must be in the format of BASE/QUOTE, like BTC/EUR." << '\n';
           exit(EXIT_SUCCESS);
         }
+        tidy();
+      };
+      void run() {
+        gw = Gw::config(
+          base(),       quote(),
+          argExchange,  argFree,
+          argApikey,    argSecret,
+          argUsername,  argPassphrase,
+          argHttp,      argWss,
+          argMaxLevels, argDebugSecret
+        );
+        if (argNaked) return;
+        FN::screen_config(argColors, argExchange, argCurrency);
+      };
+    private:
+      inline mCoinId base() {
+        return FN::S2u(argCurrency.substr(0, argCurrency.find("/")));
+      };
+      inline mCoinId quote() {
+        return FN::S2u(argCurrency.substr(argCurrency.find("/")+1));
+      };
+      inline void tidy() {
         if (argDebug)
           argDebugSecret =
           argDebugEvents =
@@ -198,25 +220,8 @@ namespace K {
             + '.' + quote()
             + '.' + "db";
         if (argMaxLevels) argMaxLevels = max(15, argMaxLevels);
-      };
-      void run() {
-        gw = Gw::config(
-          base(),       quote(),
-          argExchange,  argFree,
-          argApikey,    argSecret,
-          argUsername,  argPassphrase,
-          argHttp,      argWss,
-          argMaxLevels, argDebugSecret
-        );
-        if (argNaked) return;
-        FN::screen_config(argColors, argExchange, argCurrency);
-      };
-    private:
-      inline mCoinId base() {
-        return FN::S2u(argCurrency.substr(0, argCurrency.find("/")));
-      };
-      inline mCoinId quote() {
-        return FN::S2u(argCurrency.substr(argCurrency.find("/")+1));
+        if (argUser == "NULL") argUser.clear();
+        if (argPass == "NULL") argPass.clear();
       };
   };
 }

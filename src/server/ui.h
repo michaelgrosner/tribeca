@@ -20,9 +20,7 @@ namespace K {
     protected:
       void load() {
         if (((CF*)config)->argHeadless
-          or ((CF*)config)->argUser == "NULL"
           or ((CF*)config)->argUser.empty()
-          or ((CF*)config)->argPass == "NULL"
           or ((CF*)config)->argPass.empty()
         ) return;
         B64auth = string("Basic ") + FN::oB64(((CF*)config)->argUser + ':' + ((CF*)config)->argPass);

@@ -587,6 +587,7 @@ namespace K {
   static vector<function<void()>*> gwEndings;
   class Gw {
     public:
+      virtual string A() = 0;
       static Gw *config(mCoinId, mCoinId, string, int, string, string, string, string, string, string, int, int);
       function<void(mOrder)>        evDataOrder;
       function<void(mTrade)>        evDataTrade;
@@ -608,13 +609,31 @@ namespace K {
                 user     = "", pass    = "",
                 ws       = "", http    = "";
       mRandId (*randId)() = 0;
-      virtual   void wallet() = 0,
-                     levels() = 0,
-                     send(mRandId, mRandId, mRandId, mSide, string, string, mOrderType, mTimeInForce, bool, mClock) = 0,
-                     cancel(mRandId, mRandId, mSide, mClock) = 0,
-                     cancelAll() = 0,
-                     close() = 0;
-      virtual string A() = 0;
+      virtual vector<mWallet> wallet() = 0;
+      virtual void levels() = 0,
+                   send(mRandId, mRandId, mRandId, mSide, string, string, mOrderType, mTimeInForce, bool, mClock) = 0,
+                   cancel(mRandId, mRandId, mSide, mClock) = 0,
+                   cancelAll() = 0,
+                   close() = 0;
+      bool nativeAsyncWallet = false;
+      future<vector<mWallet>> futureWallet;
+      function<bool()> askForWallet = [&]() {
+        if (!futureWallet.valid())
+          if (nativeAsyncWallet) wallet();
+          else futureWallet = ::async(launch::async, [this]{ return wallet(); });
+        return futureWallet.valid();
+      };
+      bool waitForWallet() {
+        if (futureWallet.valid() and futureWallet.wait_for(chrono::nanoseconds(0))==future_status::ready) {
+          vector<mWallet> wallets = futureWallet.get();
+          for (mWallet &it : wallets) evDataWallet(it);
+        }
+        return futureWallet.valid();
+      };
+      bool waitForData() {
+        bool retWallet = waitForWallet();
+        return retWallet;
+      };
   };
   class Klass {
     protected:

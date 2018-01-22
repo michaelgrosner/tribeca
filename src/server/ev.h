@@ -47,7 +47,7 @@ namespace K  {
       void waitUser() {
         uiGroup = hub->createGroup<uWS::SERVER>(uWS::PERMESSAGE_DEFLATE);
         if (((CF*)config)->argNaked) return;
-        hotkey = async(launch::async, FN::screen_events);
+        hotkey = ::async(launch::async, FN::screen_events);
       };
       void run() {
         if (((CF*)config)->argDebugEvents) return;
@@ -86,6 +86,9 @@ namespace K  {
         asyncFn.push_back(fn);
         aEngine->send();
       };
+      void async(function<bool()> *fn) {
+        if ((*fn)()) aEngine->send();
+      };
       int error(string k, string s, bool reboot = false) {
         FN::screen_quit();
         FN::logErr(k, s);
@@ -101,12 +104,13 @@ namespace K  {
           cout << " THE END IS NEVER";
         cout << " THE END." << '\n';
       };
-      void (*asyncLoop)(Async*) = [](Async *handle) {
-        EV* k = (EV*)handle->getData();
+      void (*asyncLoop)(Async*) = [](Async *aEngine) {
+        EV* k = (EV*)aEngine->getData();
         if (!k->asyncFn.empty()) {
           for (function<void()> &it : k->asyncFn) it();
           k->asyncFn.clear();
         }
+        if (k->gw->waitForData()) aEngine->send();
         if (k->hotkey.valid() and k->hotkey.wait_for(chrono::nanoseconds(0)) == future_status::ready) {
           int ch = k->hotkey.get();
           if (ch == 'q' or ch == 'Q')
