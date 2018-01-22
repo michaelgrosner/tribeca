@@ -118,7 +118,7 @@ export class StatsComponent implements OnInit {
     tooltip: {
         shared: true,
         useHTML: true,
-        headerFormat: '<small>{point.x:%A} <b>{point.x:%H:%M:%S}</b></small><table>',
+        headerFormat: 'Fair value:<br><small>{point.x:%A} <b>{point.x:%H:%M:%S}</b></small><table>',
         footerFormat: '</table>'
     },
     series: [{
@@ -294,7 +294,7 @@ export class StatsComponent implements OnInit {
     tooltip: {
         shared: true,
         useHTML: true,
-        headerFormat: '<small>{point.x:%A} <b>{point.x:%H:%M:%S}</b></small><table>',
+        headerFormat: 'Quote wallet:<br><small>{point.x:%A} <b>{point.x:%H:%M:%S}</b></small><table>',
         footerFormat: '</table>',
         pointFormatter: this.pointFormatterBase
     },
@@ -372,7 +372,7 @@ export class StatsComponent implements OnInit {
     credits: {enabled: false},
     tooltip: {
         shared: true,
-        headerFormat: '<small>{point.x:%A} <b>{point.x:%H:%M:%S}</b></small><table>',
+        headerFormat: 'Base wallet:<br><small>{point.x:%A} <b>{point.x:%H:%M:%S}</b></small><table>',
         footerFormat: '</table>',
         useHTML: true,
         pointFormatter: this.pointFormatterQuote
