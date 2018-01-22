@@ -110,7 +110,8 @@ namespace K  {
           for (function<void()> &it : k->asyncFn) it();
           k->asyncFn.clear();
         }
-        if (k->gw->waitForData()) aEngine->send();
+        if (k->gw->waitForData())
+          aEngine->send();
         if (k->hotkey.valid() and k->hotkey.wait_for(chrono::nanoseconds(0)) == future_status::ready) {
           int ch = k->hotkey.get();
           if (ch == 'q' or ch == 'Q')

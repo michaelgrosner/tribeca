@@ -44,7 +44,7 @@ namespace K {
             FN::log(string("GW ") + gw->name, "--dustybot is enabled, remember to cancel manually any open order.");
           else {
             FN::log(string("GW ") + gw->name, "Attempting to cancel all open orders, please wait.");
-            gw->cancelAll();
+            for (mOrder &it : gw->sync_cancelAll()) gw->evDataOrder(it);
             FN::log(string("GW ") + gw->name, "cancell all open orders OK");
           }
         });
@@ -83,10 +83,10 @@ namespace K {
         };
       };
       inline void timer_15s() {                                     _debugEvent_
-        ((EV*)events)->async(&gw->askForWallet);
+        ((EV*)events)->async(&gw->wallet);
         if (qp->cancelOrdersAuto)
           if (!gwT_5m++)
-            gw->cancelAll();
+            ((EV*)events)->async(&gw->cancelAll);
           else if (gwT_5m == 20) gwT_5m = 0;
       };
       inline void handshake(mExchange k) {

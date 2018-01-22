@@ -493,7 +493,7 @@ namespace K {
     mLevel(mPrice p, mAmount s):
       price(p), size(s)
     {};
-    bool clear() {
+    void clear() {
       price = size = 0;
     };
     bool empty() {
@@ -595,8 +595,6 @@ namespace K {
       function<void(mLevels)>       evDataLevels;
       function<void(mConnectivity)> evConnectOrder,
                                     evConnectMarket;
-      uWS::Hub                *hub     = nullptr;
-      uWS::Group<uWS::CLIENT> *gwGroup = nullptr;
       mExchange exchange = (mExchange)0;
             int version  = 0, maxLevel = 0,
                 debug    = 0;
@@ -608,31 +606,48 @@ namespace K {
                 apikey   = "", secret  = "",
                 user     = "", pass    = "",
                 ws       = "", http    = "";
+      uWS::Hub                *hub     = nullptr;
+      uWS::Group<uWS::CLIENT> *gwGroup = nullptr;
       mRandId (*randId)() = 0;
-      virtual vector<mWallet> wallet() = 0;
+      virtual vector<mOrder> sync_cancelAll() = 0;
       virtual void levels() = 0,
                    send(mRandId, mRandId, mRandId, mSide, string, string, mOrderType, mTimeInForce, bool, mClock) = 0,
                    cancel(mRandId, mRandId, mSide, mClock) = 0,
-                   cancelAll() = 0,
                    close() = 0;
-      bool nativeAsyncWallet = false;
-      future<vector<mWallet>> futureWallet;
-      function<bool()> askForWallet = [&]() {
-        if (!futureWallet.valid())
-          if (nativeAsyncWallet) wallet();
-          else futureWallet = ::async(launch::async, [this]{ return wallet(); });
-        return futureWallet.valid();
+      function<bool()> wallet = [&]() {
+        if (!replyWallet.valid() and !async_wallet())
+          replyWallet = ::async(launch::async, [this] { return sync_wallet(); });
+        return replyWallet.valid();
       };
-      bool waitForWallet() {
-        if (futureWallet.valid() and futureWallet.wait_for(chrono::nanoseconds(0))==future_status::ready) {
-          vector<mWallet> wallets = futureWallet.get();
-          for (mWallet &it : wallets) evDataWallet(it);
-        }
-        return futureWallet.valid();
+      function<bool()> cancelAll = [&]() {
+        if (!replyCancelAll.valid())
+          replyCancelAll = ::async(launch::async, [this] { return sync_cancelAll(); });
+        return replyCancelAll.valid();
       };
       bool waitForData() {
-        bool retWallet = waitForWallet();
-        return retWallet;
+        bool waitingWallet    = waitForWallet(),
+             waitingCancelAll = waitForCancelAll();
+        return waitingWallet
+            or waitingCancelAll;
+      };
+    private:
+      virtual bool async_wallet() { return false; };
+      virtual vector<mWallet> sync_wallet() { return vector<mWallet>(); };
+      future<vector<mOrder>> replyCancelAll;
+      future<vector<mWallet>> replyWallet;
+      bool waitForWallet() {
+        if (replyWallet.valid() and replyWallet.wait_for(chrono::nanoseconds(0))==future_status::ready) {
+          vector<mWallet> k = replyWallet.get();
+          for (mWallet &it : k) evDataWallet(it);
+        }
+        return replyWallet.valid();
+      };
+      bool waitForCancelAll() {
+        if (replyCancelAll.valid() and replyCancelAll.wait_for(chrono::nanoseconds(0))==future_status::ready) {
+          vector<mOrder> k = replyCancelAll.get();
+          for (mOrder &it : k) evDataOrder(it);
+        }
+        return replyCancelAll.valid();
       };
   };
   class Klass {
