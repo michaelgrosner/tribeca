@@ -113,7 +113,7 @@ namespace K {
         mClock now = _Tstamp_;
         for (map<mRandId, mOrder>::value_type &it : ((OG*)broker)->orders)
           if (it.second.orderStatus == mStatus::New) {
-            if (now-10e+3>it.second.time) zombies.push_back(it.second.orderId);
+            if (now-10e+3>it.second.time) zombies.push_back(it.first);
             (*qNew)++;
           } else if (it.second.orderStatus == mStatus::Working) {
             (mSide::Bid == it.second.side
@@ -484,8 +484,8 @@ namespace K {
             if (qp->safety != mQuotingSafety::AK47 or ++n >= qp->bullets) return;
           } else if (qp->safety != mQuotingSafety::AK47 or (
             side == mSide::Bid ? q.price <= it.second.price : q.price >= it.second.price
-          )) toCancel.push_back(it.second.orderId);
-          else working.push_back(it.second.orderId);
+          )) toCancel.push_back(it.first);
+          else working.push_back(it.first);
         if (qp->safety == mQuotingSafety::AK47 and toCancel.empty() and !working.empty())
           toCancel.push_back(side == mSide::Bid ? working.front() : working.back());
         ((OG*)broker)->sendOrder(toCancel, side, q.price, q.size, mOrderType::Limit, mTimeInForce::GTC, isPong, true);

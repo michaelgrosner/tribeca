@@ -625,28 +625,22 @@ namespace K {
         return replyCancelAll.valid();
       };
       bool waitForData() {
-        bool waitingWallet    = waitForWallet(),
-             waitingCancelAll = waitForCancelAll();
-        return waitingWallet
-            or waitingCancelAll;
+        return waitForWallet()
+             | waitForCancelAll();
       };
     private:
       virtual bool async_wallet() { return false; };
       virtual vector<mWallet> sync_wallet() { return vector<mWallet>(); };
-      future<vector<mOrder>> replyCancelAll;
       future<vector<mWallet>> replyWallet;
-      bool waitForWallet() {
-        if (replyWallet.valid() and replyWallet.wait_for(chrono::nanoseconds(0))==future_status::ready) {
-          vector<mWallet> k = replyWallet.get();
-          for (mWallet &it : k) evDataWallet(it);
-        }
+      future<vector<mOrder>> replyCancelAll;
+      unsigned int waitForWallet() {
+        if (replyWallet.valid() and replyWallet.wait_for(chrono::nanoseconds(0))==future_status::ready)
+          for (mWallet &it : replyWallet.get()) evDataWallet(it);
         return replyWallet.valid();
       };
-      bool waitForCancelAll() {
-        if (replyCancelAll.valid() and replyCancelAll.wait_for(chrono::nanoseconds(0))==future_status::ready) {
-          vector<mOrder> k = replyCancelAll.get();
-          for (mOrder &it : k) evDataOrder(it);
-        }
+      unsigned int waitForCancelAll() {
+        if (replyCancelAll.valid() and replyCancelAll.wait_for(chrono::nanoseconds(0))==future_status::ready)
+          for (mOrder &it : replyCancelAll.get()) evDataOrder(it);
         return replyCancelAll.valid();
       };
   };

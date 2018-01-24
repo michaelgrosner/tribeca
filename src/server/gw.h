@@ -45,7 +45,7 @@ namespace K {
           else {
             FN::log(string("GW ") + gw->name, "Attempting to cancel all open orders, please wait.");
             for (mOrder &it : gw->sync_cancelAll()) gw->evDataOrder(it);
-            FN::log(string("GW ") + gw->name, "cancell all open orders OK");
+            FN::log(string("GW ") + gw->name, "cancel all open orders OK");
           }
         });
       };

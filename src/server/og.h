@@ -35,7 +35,7 @@ namespace K {
     public:
       void sendOrder(vector<mRandId> toCancel, mSide side, mPrice price, mAmount qty, mOrderType type, mTimeInForce tif, bool isPong, bool postOnly) {
         mRandId replaceOrderId,
-               replaceExchangeId;
+                replaceExchangeId;
         if (!toCancel.empty()) {
           replaceOrderId = side == mSide::Bid ? toCancel.back() : toCancel.front();
           toCancel.erase(toCancel.begin()+(side == mSide::Bid ? toCancel.size()-1 : 0));

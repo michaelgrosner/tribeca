@@ -219,7 +219,9 @@ namespace K {
             + '.' + base()
             + '.' + quote()
             + '.' + "db";
-        if (argMaxLevels) argMaxLevels = max(15, argMaxLevels);
+        argMaxLevels = argMaxLevels
+          ? max(15, argMaxLevels)
+          : 321;
         if (argUser == "NULL") argUser.clear();
         if (argPass == "NULL") argPass.clear();
       };
