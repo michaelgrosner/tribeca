@@ -936,6 +936,7 @@ class ClientComponent implements OnInit {
     this.bid_levels = o.bids;
     this.ask_levels = o.asks;
     this.tradeFreq = (o.freq);
+    this.user_theme = this.user_theme!==null ? this.user_theme : (o.theme==1 ? '' : (o.theme==2 ? '-dark' : this.user_theme));
     this.system_theme = this.getTheme((new Date).getHours());
     this.setTheme();
     this.A = (<any>o).a;
@@ -960,8 +961,6 @@ class ClientComponent implements OnInit {
     this.online = true;
     window.document.title = '['+pa.environment+']';
     this.matryoshka = pa.matryoshka;
-    this.system_theme = this.getTheme((new Date).getHours());
-    this.setTheme();
     this.pair_name = [pa.pair.base, pa.pair.quote];
     this.exchange_name = Models.Exchange[pa.exchange];
     this.exchange_market = this.exchange_name=='OkCoin'

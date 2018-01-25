@@ -220,6 +220,7 @@ namespace K {
           {"freq", orders_60s},
           {"bids", bid_levels},
           {"asks", ask_levels},
+          {"theme", ((CF*)config)->argIgnoreMoon + ((CF*)config)->argIgnoreSun},
           {"dbsize", ((DB*)memory)->size()},
           {"a", gw->A()}
         };

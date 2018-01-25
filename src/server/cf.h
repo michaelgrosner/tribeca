@@ -8,7 +8,8 @@ namespace K {
            argDebugSecret  = 0,      argDebugEvents  = 0, argDebugOrders  = 0,
            argDebugQuotes  = 0,      argDebugWallet  = 0, argWithoutSSL   = 0,
            argMaxLevels    = 0,      argHeadless     = 0, argDustybot     = 0,
-           argAutobot      = 0,      argNaked        = 0, argFree         = 0;
+           argAutobot      = 0,      argNaked        = 0, argFree         = 0,
+           argIgnoreSun    = 0,      argIgnoreMoon   = 0;
     mPrice argEwmaShort    = 0,      argEwmaMedium   = 0,
            argEwmaLong     = 0,      argEwmaVeryLong = 0;
     string argTitle        = "K.sh", argMatryoshka   = "https://www.example.com/",
@@ -32,6 +33,8 @@ namespace K {
           {"debug-quotes", no_argument,       &argDebugQuotes,   1},
           {"debug-wallet", no_argument,       &argDebugWallet,   1},
           {"without-ssl",  no_argument,       &argWithoutSSL,    1},
+          {"ignore-sun",   no_argument,       &argIgnoreSun,     2},
+          {"ignore-moon",  no_argument,       &argIgnoreMoon,    1},
           {"headless",     no_argument,       &argHeadless,      1},
           {"naked",        no_argument,       &argNaked,         1},
           {"autobot",      no_argument,       &argAutobot,       1},
@@ -101,6 +104,8 @@ namespace K {
               << FN::uiT() << RWHITE << "    --dustybot            - do not automatically cancel all orders on exit." << '\n'
               << FN::uiT() << RWHITE << "    --naked               - do not display CLI, print output to stdout instead." << '\n'
               << FN::uiT() << RWHITE << "    --headless            - do not listen for UI connections," << '\n'
+              << FN::uiT() << RWHITE << "    --ignore-sun          - do not switch UI to light theme on daylight." << '\n'
+              << FN::uiT() << RWHITE << "    --ignore-moon         - do not switch UI to dark theme on moonlight." << '\n'
               << FN::uiT() << RWHITE << "                            ignores '--without-ssl', '--whitelist' and '--port'." << '\n'
               << FN::uiT() << RWHITE << "    --without-ssl         - do not use HTTPS for UI connections (use HTTP only)." << '\n'
               << FN::uiT() << RWHITE << "-L, --whitelist=IP        - set IP or csv of IPs to allow UI connections," << '\n'
@@ -140,7 +145,7 @@ namespace K {
               << FN::uiT() << RWHITE << "-V, --ewma-verylong=PRICE - set initial ewma verylong value," << '\n'
               << FN::uiT() << RWHITE << "                            overwrites the value from the database." << '\n'
               << FN::uiT() << RWHITE << "-M, --market-limit=NUMBER - set NUMBER of maximum price levels for the orderbook," << '\n'
-              << FN::uiT() << RWHITE << "                            minimum is '15', maximum (not set) is limit by exchange." << '\n'
+              << FN::uiT() << RWHITE << "                            default NUMBER is '321' and the minimum is '15'." << '\n'
               << FN::uiT() << RWHITE << "                            locked bots smells like '--market-limit=3' spirit." << '\n'
               << FN::uiT() << RWHITE << "    --debug-secret        - print (never share!) secret inputs and outputs." << '\n'
               << FN::uiT() << RWHITE << "    --debug-events        - print detailed output about event handlers." << '\n'
@@ -224,6 +229,7 @@ namespace K {
           : 321;
         if (argUser == "NULL") argUser.clear();
         if (argPass == "NULL") argPass.clear();
+        if (argIgnoreSun and argIgnoreMoon) argIgnoreSun = 0;
       };
   };
 }
