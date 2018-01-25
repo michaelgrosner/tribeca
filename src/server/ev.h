@@ -10,8 +10,9 @@ namespace K  {
     private:
       uWS::Hub *hub = nullptr;
       Async *aEngine = nullptr;
-      vector<function<void()>> asyncFn;
+      vector<function<void()>> slowFn;
       future<int> hotkey;
+      map<int, function<void()>*> hotFn;
     public:
       uWS::Group<uWS::SERVER> *uiGroup = nullptr;
       Timer *tServer = nullptr,
@@ -47,7 +48,7 @@ namespace K  {
       void waitUser() {
         uiGroup = hub->createGroup<uWS::SERVER>(uWS::PERMESSAGE_DEFLATE);
         if (((CF*)config)->argNaked) return;
-        hotkey = ::async(launch::async, FN::screen_events);
+        hotkeys();
       };
       void run() {
         if (((CF*)config)->argDebugEvents) return;
@@ -82,8 +83,13 @@ namespace K  {
           ));
         FN::logUI(protocol, ((CF*)config)->argPort);
       };
+      void pressme(int ch, function<void()> *fn) {
+        if (((CF*)config)->argNaked) return;
+        if (hotFn.find(ch) == hotFn.end()) hotFn[ch] = fn;
+        else exit(error("EV", string("Use only a single unique key handler for \"") + to_string(ch) + "\" pressme hotkey"));
+      };
       void deferred(function<void()> fn) {
-        asyncFn.push_back(fn);
+        slowFn.push_back(fn);
         aEngine->send();
       };
       void async(function<bool()> *fn) {
@@ -106,9 +112,9 @@ namespace K  {
       };
       void (*asyncLoop)(Async*) = [](Async *aEngine) {
         EV* k = (EV*)aEngine->getData();
-        if (!k->asyncFn.empty()) {
-          for (function<void()> &it : k->asyncFn) it();
-          k->asyncFn.clear();
+        if (!k->slowFn.empty()) {
+          for (function<void()> &it : k->slowFn) it();
+          k->slowFn.clear();
         }
         if (k->gw->waitForData())
           aEngine->send();
@@ -116,7 +122,15 @@ namespace K  {
           int ch = k->hotkey.get();
           if (ch == 'q' or ch == 'Q')
             raise(SIGINT);
+          else {
+            if (k->hotFn.find(ch) != k->hotFn.end())
+              (*k->hotFn[ch])();
+            k->hotkeys();
+          }
         }
+      };
+      void hotkeys() {
+        hotkey = ::async(launch::async, FN::screen_events);
       };
       void version() {
         if (access(".git", F_OK) != -1) {
