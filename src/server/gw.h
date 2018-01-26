@@ -33,7 +33,7 @@ namespace K {
       void waitUser() {
         ((UI*)client)->welcome(mMatter::Connectivity, &hello);
         ((UI*)client)->clickme(mMatter::Connectivity, &kiss);
-        ((EV*)events)->pressme(27, &hotkey);
+        ((EV*)events)->pressme(mHotkey::ESC, &hotkiss);
       };
       void run() {
         ((EV*)events)->start();
@@ -61,7 +61,7 @@ namespace K {
           clientSemaphore();
         }
       };
-      function<void()> hotkey = [&]() {
+      function<void()> hotkiss = [&]() {
         gwAdminEnabled = !gwAdminEnabled
           ? mConnectivity::Connected
           : mConnectivity::Disconnected;

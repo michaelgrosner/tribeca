@@ -711,10 +711,10 @@ namespace K {
         endwin();
         wBorder = nullptr;
       };
-      static int  screen_events() {
+      static mHotkey screen_events() {
         return wBorder
-          ? wgetch(wBorder)
-          : 'q';
+          ? (mHotkey)wgetch(wBorder)
+          : mHotkey::q;
       };
       static void screen_refresh(map<string, mOrder> k) {
         screen_refresh("", 0, "", "", k, true);

@@ -11,8 +11,8 @@ namespace K  {
       uWS::Hub *hub = nullptr;
       Async *aEngine = nullptr;
       vector<function<void()>> slowFn;
-      future<int> hotkey;
-      map<int, function<void()>*> hotFn;
+      future<mHotkey> hotkey;
+      map<mHotkey, function<void()>*> hotFn;
     public:
       uWS::Group<uWS::SERVER> *uiGroup = nullptr;
       Timer *tServer = nullptr,
@@ -83,10 +83,10 @@ namespace K  {
           ));
         FN::logUI(protocol, ((CF*)config)->argPort);
       };
-      void pressme(int ch, function<void()> *fn) {
+      void pressme(mHotkey ch, function<void()> *fn) {
         if (((CF*)config)->argNaked) return;
         if (hotFn.find(ch) == hotFn.end()) hotFn[ch] = fn;
-        else exit(error("EV", string("Use only a single unique key handler for \"") + to_string(ch) + "\" pressme hotkey"));
+        else exit(error("EV", string("Use only a single unique key handler for \"") + to_string((int)ch) + "\" pressme mHotkey"));
       };
       void deferred(function<void()> fn) {
         slowFn.push_back(fn);
@@ -119,8 +119,8 @@ namespace K  {
         if (k->gw->waitForData())
           aEngine->send();
         if (k->hotkey.valid() and k->hotkey.wait_for(chrono::nanoseconds(0)) == future_status::ready) {
-          int ch = k->hotkey.get();
-          if (ch == 'q' or ch == 'Q')
+          mHotkey ch = k->hotkey.get();
+          if (ch == mHotkey::q or ch == mHotkey::Q)
             raise(SIGINT);
           else {
             if (k->hotFn.find(ch) != k->hotFn.end())

@@ -25,13 +25,14 @@ namespace K {
   enum class mAPR: unsigned int { Off, Size, SizeWidth };
   enum class mSOP: unsigned int { Off, Trades, Size, TradesSize };
   enum class mSTDEV: unsigned int { Off, OnFV, OnFVAPROff, OnTops, OnTopsAPROff, OnTop, OnTopAPROff };
+  enum class mHotkey: int { ESC = 27, Q = 81, q = 113 };
   enum class mPortal: unsigned char { Hello = '=', Kiss = '-' };
   enum class mMatter: unsigned char {
     FairValue            = 'a', Quote                = 'b', ActiveSubscription = 'c', Connectivity       = 'd', MarketData       = 'e',
     QuotingParameters    = 'f', SafetySettings       = 'g', Product            = 'h', OrderStatusReports = 'i',
     ProductAdvertisement = 'j', ApplicationState     = 'k', Notepad            = 'l', ToggleSettings     = 'm',
     Position             = 'n',                             SubmitNewOrder     = 'p', CancelOrder        = 'q', MarketTrade      = 'r',
-    Trades               = 's',ExternalValuation     = 't', QuoteStatus        = 'u', TargetBasePosition = 'v', TradeSafetyValue = 'w',
+    Trades               = 's', ExternalValuation    = 't', QuoteStatus        = 'u', TargetBasePosition = 'v', TradeSafetyValue = 'w',
     CancelAllOrders      = 'x', CleanAllClosedTrades = 'y', CleanAllTrades     = 'z', CleanTrade         = 'A',
     TradesChart          = 'B', WalletChart          = 'C', EWMAChart          = 'D', MarketDataLongTerm = 'G'
   };
