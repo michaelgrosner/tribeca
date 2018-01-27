@@ -4,37 +4,22 @@
 namespace K {
   class CF: public kLass {
     public:
-      int argPort = 3000,
-          argColors = 0,
-          argDebug = 0,
-          argDebugEvents = 0,
-          argDebugOrders = 0,
-          argDebugQuotes = 0,
-          argWithoutSSL = 0,
-          argMaxLevels = 0,
-          argHeadless = 0,
-          argDustybot = 0,
-          argAutobot = 0,
-          argNaked = 0,
-          argFree = 0;
-      string argTitle = "K.sh",
-             argUser = "NULL",
-             argPass = "NULL",
-             argMatryoshka = "https://www.example.com/",
-             argExchange = "NULL",
-             argCurrency = "NULL",
-             argApikey = "NULL",
-             argSecret = "NULL",
-             argUsername = "NULL",
-             argPassphrase = "NULL",
-             argHttp = "NULL",
-             argWss = "NULL",
-             argDatabase = "",
-             argWhitelist = "";
-      double argEwmaShort = 0,
-             argEwmaMedium = 0,
-             argEwmaLong = 0,
-             argEwmaVeryLong = 0;
+       int argPort         = 3000,   argColors       = 0, argDebug        = 0,
+           argDebugSecret  = 0,      argDebugEvents  = 0, argDebugOrders  = 0,
+           argDebugQuotes  = 0,      argDebugWallet  = 0, argWithoutSSL   = 0,
+           argMaxLevels    = 0,      argHeadless     = 0, argDustybot     = 0,
+           argAutobot      = 0,      argNaked        = 0, argFree         = 0,
+           argIgnoreSun    = 0,      argIgnoreMoon   = 0;
+    mPrice argEwmaShort    = 0,      argEwmaMedium   = 0,
+           argEwmaLong     = 0,      argEwmaVeryLong = 0;
+    string argTitle        = "K.sh", argMatryoshka   = "https://www.example.com/",
+           argUser         = "NULL", argPass         = "NULL",
+           argExchange     = "NULL", argCurrency     = "NULL",
+           argApikey       = "NULL", argSecret       = "NULL",
+           argUsername     = "NULL", argPassphrase   = "NULL",
+           argHttp         = "NULL", argWss          = "NULL",
+           argDatabase     = "",     argDiskdata     = "",
+           argWhitelist    = "";
     protected:
       void load(int argc, char** argv) {
         cout << BGREEN << "K" << RGREEN << " build " << K_BUILD << " " << K_STAMP << "." << BRED << '\n';
@@ -42,10 +27,14 @@ namespace K {
           {"help",         no_argument,       0,               'h'},
           {"colors",       no_argument,       &argColors,        1},
           {"debug",        no_argument,       &argDebug,         1},
+          {"debug-secret", no_argument,       &argDebugSecret,   1},
           {"debug-events", no_argument,       &argDebugEvents,   1},
           {"debug-orders", no_argument,       &argDebugOrders,   1},
           {"debug-quotes", no_argument,       &argDebugQuotes,   1},
+          {"debug-wallet", no_argument,       &argDebugWallet,   1},
           {"without-ssl",  no_argument,       &argWithoutSSL,    1},
+          {"ignore-sun",   no_argument,       &argIgnoreSun,     2},
+          {"ignore-moon",  no_argument,       &argIgnoreMoon,    1},
           {"headless",     no_argument,       &argHeadless,      1},
           {"naked",        no_argument,       &argNaked,         1},
           {"autobot",      no_argument,       &argAutobot,       1},
@@ -126,7 +115,7 @@ namespace K {
               << FN::uiT() << RWHITE << "                            mandatory but may be 'NULL'." << '\n'
               << FN::uiT() << RWHITE << "-e, --exchange=NAME       - set exchange NAME for trading, mandatory one of:" << '\n'
               << FN::uiT() << RWHITE << "                            'COINBASE', 'BITFINEX',  'BITFINEX_MARGIN', 'HITBTC'," << '\n'
-              << FN::uiT() << RWHITE << "                            'OKCOIN', 'KORBIT', 'POLONIEX' or 'NULL'." << '\n'
+              << FN::uiT() << RWHITE << "                            'OKCOIN', 'OKEX', 'KORBIT', 'POLONIEX' or 'NULL'." << '\n'
               << FN::uiT() << RWHITE << "-c, --currency=PAIRS      - set currency pairs for trading (use format" << '\n'
               << FN::uiT() << RWHITE << "                            with '/' separator, like 'BTC/EUR')." << '\n'
               << FN::uiT() << RWHITE << "-A, --apikey=WORD         - set (never share!) WORD as api key for trading," << '\n'
@@ -154,13 +143,17 @@ namespace K {
               << FN::uiT() << RWHITE << "-V, --ewma-verylong=PRICE - set initial ewma verylong value," << '\n'
               << FN::uiT() << RWHITE << "                            overwrites the value from the database." << '\n'
               << FN::uiT() << RWHITE << "-M, --market-limit=NUMBER - set NUMBER of maximum price levels for the orderbook," << '\n'
-              << FN::uiT() << RWHITE << "                            minimum is '15', maximum (not set) is limit by exchange." << '\n'
+              << FN::uiT() << RWHITE << "                            default NUMBER is '321' and the minimum is '15'." << '\n'
               << FN::uiT() << RWHITE << "                            locked bots smells like '--market-limit=3' spirit." << '\n'
+              << FN::uiT() << RWHITE << "    --debug-secret        - print (never share!) secret inputs and outputs." << '\n'
               << FN::uiT() << RWHITE << "    --debug-events        - print detailed output about event handlers." << '\n'
               << FN::uiT() << RWHITE << "    --debug-orders        - print detailed output about exchange messages." << '\n'
               << FN::uiT() << RWHITE << "    --debug-quotes        - print detailed output about quoting engine." << '\n'
+              << FN::uiT() << RWHITE << "    --debug-wallet        - print detailed output about target base position." << '\n'
               << FN::uiT() << RWHITE << "    --debug               - print detailed output about all the (previous) things!" << '\n'
               << FN::uiT() << RWHITE << "    --colors              - print highlighted output." << '\n'
+              << FN::uiT() << RWHITE << "    --ignore-sun          - do not switch UI to light theme on daylight." << '\n'
+              << FN::uiT() << RWHITE << "    --ignore-moon         - do not switch UI to dark theme on moonlight." << '\n'
               << FN::uiT() << RWHITE << "-k, --matryoshka=URL      - set Matryoshka link URL of the next UI." << '\n'
               << FN::uiT() << RWHITE << "-K, --title=WORD          - set WORD as UI title to identify different bots." << '\n'
               << FN::uiT() << RWHITE << "    --free-version        - work with all market levels but slowdown with 21 XMR hash." << '\n'
@@ -189,41 +182,54 @@ namespace K {
                << " Invalid currency pair; must be in the format of BASE/QUOTE, like BTC/EUR." << '\n';
           exit(EXIT_SUCCESS);
         }
-        if (argDebug)
-          argDebugEvents =
-          argDebugOrders =
-          argDebugQuotes = argDebug;
-        if (!argColors)
-          RBLACK[0] = RRED[0]    = RGREEN[0] = RYELLOW[0] =
-          RBLUE[0]  = RPURPLE[0] = RCYAN[0]  = RWHITE[0]  =
-          BBLACK[0] = BRED[0]    = BGREEN[0] = BYELLOW[0] =
-          BBLUE[0]  = BPURPLE[0] = BCYAN[0]  = BWHITE[0]  = argColors;
-        if (argDatabase.empty())
-          argDatabase = string("/data/db/K")
-            + '.' + FN::S2u(argExchange)
-            + '.' + base()
-            + '.' + quote()
-            + '.' + "db";
-        if (argMaxLevels) argMaxLevels = max(15, argMaxLevels);
+        tidy();
       };
       void run() {
         gw = Gw::config(
-          base(),      quote(),
-          argExchange, argFree,
-          argApikey,   argSecret,
-          argUsername, argPassphrase,
-          argHttp,     argWss,
-          argMaxLevels
+          base(),       quote(),
+          argExchange,  argFree,
+          argApikey,    argSecret,
+          argUsername,  argPassphrase,
+          argHttp,      argWss,
+          argMaxLevels, argDebugSecret
         );
         if (argNaked) return;
         FN::screen_config(argColors, argExchange, argCurrency);
       };
     private:
-      string base() {
+      inline mCoinId base() {
         return FN::S2u(argCurrency.substr(0, argCurrency.find("/")));
       };
-      string quote() {
+      inline mCoinId quote() {
         return FN::S2u(argCurrency.substr(argCurrency.find("/")+1));
+      };
+      inline void tidy() {
+        if (argDebug)
+          argDebugSecret =
+          argDebugEvents =
+          argDebugOrders =
+          argDebugQuotes =
+          argDebugWallet = argDebug;
+        if (!argColors)
+          RBLACK[0] = RRED[0]    = RGREEN[0] = RYELLOW[0] =
+          RBLUE[0]  = RPURPLE[0] = RCYAN[0]  = RWHITE[0]  =
+          BBLACK[0] = BRED[0]    = BGREEN[0] = BYELLOW[0] =
+          BBLUE[0]  = BPURPLE[0] = BCYAN[0]  = BWHITE[0]  = argColors;
+        if (argDatabase.empty() or argDatabase == ":memory:")
+          (argDatabase == ":memory:"
+            ? argDiskdata
+            : argDatabase
+          ) = string("/data/db/K")
+            + '.' + FN::S2u(argExchange)
+            + '.' + base()
+            + '.' + quote()
+            + '.' + "db";
+        argMaxLevels = argMaxLevels
+          ? max(15, argMaxLevels)
+          : 321;
+        if (argUser == "NULL") argUser.clear();
+        if (argPass == "NULL") argPass.clear();
+        if (argIgnoreSun and argIgnoreMoon) argIgnoreSun = 0;
       };
   };
 }

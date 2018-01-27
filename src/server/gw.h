@@ -33,6 +33,7 @@ namespace K {
       void waitUser() {
         ((UI*)client)->welcome(mMatter::Connectivity, &hello);
         ((UI*)client)->clickme(mMatter::Connectivity, &kiss);
+        ((EV*)events)->pressme(27, &hotkey);
       };
       void run() {
         ((EV*)events)->start();
@@ -44,8 +45,8 @@ namespace K {
             FN::log(string("GW ") + gw->name, "--dustybot is enabled, remember to cancel manually any open order.");
           else {
             FN::log(string("GW ") + gw->name, "Attempting to cancel all open orders, please wait.");
-            gw->cancelAll();
-            FN::log(string("GW ") + gw->name, "cancell all open orders OK");
+            for (mOrder &it : gw->sync_cancelAll()) gw->evDataOrder(it);
+            FN::log(string("GW ") + gw->name, "cancel all open orders OK");
           }
         });
       };
@@ -59,6 +60,12 @@ namespace K {
           gwAdminEnabled = updated;
           clientSemaphore();
         }
+      };
+      function<void()> hotkey = [&]() {
+        gwAdminEnabled = !gwAdminEnabled
+          ? mConnectivity::Connected
+          : mConnectivity::Disconnected;
+        clientSemaphore();
       };
       mConnectivity serverSemaphore(mConnectivity *current, mConnectivity updated) {
         if (*current != updated) {
@@ -82,31 +89,32 @@ namespace K {
           {"status", ((QE*)engine)->gwConnectExchange}
         };
       };
-      void timer_15s() {                                            _debugEvent_
-        gw->wallet();
+      inline void timer_15s() {                                     _debugEvent_
+        ((EV*)events)->async(&gw->wallet);
         if (qp->cancelOrdersAuto)
-          if (!gwT_5m++) gw->cancelAll();
+          if (!gwT_5m++)
+            ((EV*)events)->async(&gw->cancelAll);
           else if (gwT_5m == 20) gwT_5m = 0;
       };
-      void handshake(mExchange k) {
+      inline void handshake(mExchange k) {
         json reply;
         if (k == mExchange::Coinbase) {
           FN::stunnel();
-          gw->randId = FN::uuidId;
+          gw->randId = FN::uuid36Id;
           gw->symbol = FN::S2u(string(gw->base) + "-" + gw->quote);
           reply = FN::wJet(string(gw->http) + "/products/" + gw->symbol);
           gw->minTick = stod(reply.value("quote_increment", "0"));
           gw->minSize = stod(reply.value("base_min_size", "0"));
         }
         else if (k == mExchange::HitBtc) {
-          gw->randId = FN::charId;
+          gw->randId = FN::uuid32Id;
           gw->symbol = FN::S2u(string(gw->base) + gw->quote);
           reply = FN::wJet(string(gw->http) + "/public/symbol/" + gw->symbol);
           gw->minTick = stod(reply.value("tickSize", "0"));
           gw->minSize = stod(reply.value("quantityIncrement", "0"));
         }
         else if (k == mExchange::Bitfinex or k == mExchange::BitfinexMargin) {
-          gw->randId = FN::int64Id;
+          gw->randId = FN::int45Id;
           gw->symbol = FN::S2l(string(gw->base) + gw->quote);
           reply = FN::wJet(string(gw->http) + "/pubticker/" + gw->symbol);
           if (reply.find("last_price") != reply.end()) {
@@ -125,30 +133,30 @@ namespace K {
                 gw->minSize = stod(it->value("minimum_order_size", "0"));
         }
         else if (k == mExchange::OkCoin or k == mExchange::OkEx) {
-          gw->randId = FN::charId;
+          gw->randId = FN::char16Id;
           gw->symbol = FN::S2l(string(gw->base) + "_" + gw->quote);
           gw->minTick = 0.0001;
           gw->minSize = 0.001;
         }
         else if (k == mExchange::Kraken) {
-          gw->randId = FN::int64Id;
+          gw->randId = FN::int32Id;
           gw->symbol = FN::S2u(string(gw->base) + gw->quote);
           reply = FN::wJet(string(gw->http) + "/0/public/AssetPairs?pair=" + gw->symbol);
           if (reply.find("result") != reply.end())
-            for (json::iterator it = reply["result"].begin(); it != reply["result"].end(); ++it) {
+            for (json::iterator it = reply["result"].begin(); it != reply["result"].end(); ++it)
               if (it.value().find("pair_decimals") != it.value().end()) {
                 stringstream os(string("1e-") + to_string(it.value().value("pair_decimals", 0)));
                 os >> gw->minTick;
+                os = stringstream(string("1e-") + to_string(it.value().value("lot_decimals", 0)));
+                os >> gw->minSize;
                 gw->symbol = it.key();
                 gw->base = it.value().value("base", gw->base);
                 gw->quote = it.value().value("quote", gw->quote);
                 break;
               }
-            }
-          gw->minSize = 0.01;
         }
         else if (k == mExchange::Korbit) {
-          gw->randId = FN::int64Id;
+          gw->randId = FN::int45Id;
           gw->symbol = FN::S2l(string(gw->base) + "_" + gw->quote);
           reply = FN::wJet(string(gw->http) + "/constants");
           if (reply.find(gw->symbol.substr(0,3).append("TickSize")) != reply.end()) {
@@ -157,7 +165,7 @@ namespace K {
           }
         }
         else if (k == mExchange::Poloniex) {
-          gw->randId = FN::int64Id;
+          gw->randId = FN::int45Id;
           gw->symbol = FN::FN::S2u(string(gw->base) + "_" + gw->quote);
           reply = FN::wJet(string(gw->http) + "/public?command=returnTicker");
           if (reply.find(gw->symbol) != reply.end()) {
@@ -167,7 +175,7 @@ namespace K {
           }
         }
         else if (k == mExchange::Null) {
-          gw->randId = FN::int64Id;
+          gw->randId = FN::uuid36Id;
           gw->symbol = FN::FN::S2u(string(gw->base) + "_" + gw->quote);
           gw->minTick = 0.01;
           gw->minSize = 0.01;

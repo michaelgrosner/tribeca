@@ -22,13 +22,14 @@ namespace K {
         *welcome = { *qp };
       };
       function<void(json)> kiss = [&](json butterfly) {
-        *qp = butterfly;
+        mQuotingParams prev(*qp);
+        (*qp = butterfly).diff(prev);
         ((EV*)events)->uiQuotingParameters();
         ((UI*)client)->send(mMatter::QuotingParameters, *qp);
         ((DB*)memory)->insert(mMatter::QuotingParameters, *qp);
         delayUI();
       };
-      void delayUI() {
+      inline void delayUI() {
         ((UI*)client)->delayme(qp->delayUI);
       };
   };

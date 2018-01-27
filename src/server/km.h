@@ -1,6 +1,12 @@
 #ifndef K_KM_H_
 #define K_KM_H_
 
+#define mClock  unsigned long long
+#define mPrice  double
+#define mAmount double
+#define mRandId string
+#define mCoinId string
+
 namespace K {
   enum class mExchange: unsigned int { Null, HitBtc, OkCoin, Coinbase, Bitfinex, Kraken, OkEx, BitfinexMargin, Korbit, Poloniex };
   enum class mConnectivity: unsigned int { Disconnected, Connected };
@@ -32,16 +38,16 @@ namespace K {
   static          bool operator! (mConnectivity k_)                   { return !(unsigned int)k_; };
   static mConnectivity operator* (mConnectivity _k, mConnectivity k_) { return (mConnectivity)((unsigned int)_k * (unsigned int)k_); };
   struct mQuotingParams {
-    double            widthPing                       = 2.0;
+    mPrice            widthPing                       = 2.0;
     double            widthPingPercentage             = 0.25;
-    double            widthPong                       = 2.0;
+    mPrice            widthPong                       = 2.0;
     double            widthPongPercentage             = 0.25;
     bool              widthPercentage                 = false;
     bool              bestWidth                       = true;
-    double            buySize                         = 0.02;
+    mAmount           buySize                         = 0.02;
     unsigned int      buySizePercentage               = 7;
     bool              buySizeMax                      = false;
-    double            sellSize                        = 0.01;
+    mAmount           sellSize                        = 0.01;
     unsigned int      sellSizePercentage              = 7;
     bool              sellSizeMax                     = false;
     mPingAt           pingAt                          = mPingAt::BothSides;
@@ -49,13 +55,13 @@ namespace K {
     mQuotingMode      mode                            = mQuotingMode::Top;
     mQuotingSafety    safety                          = mQuotingSafety::Boomerang;
     unsigned int      bullets                         = 2;
-    double            range                           = 0.5;
+    mPrice            range                           = 0.5;
     double            rangePercentage                 = 5.0;
     mFairValueModel   fvModel                         = mFairValueModel::BBO;
-    double            targetBasePosition              = 1.0;
+    mAmount           targetBasePosition              = 1.0;
     unsigned int      targetBasePositionPercentage    = 50;
-    double            positionDivergence              = 0.9;
-    double            positionDivergenceMin           = 0.4;
+    mAmount           positionDivergence              = 0.9;
+    mAmount           positionDivergenceMin           = 0.4;
     unsigned int      positionDivergencePercentage    = 21;
     unsigned int      positionDivergencePercentageMin = 10;
     mPDivMode         positionDivergenceMode          = mPDivMode::Manual;
@@ -87,6 +93,27 @@ namespace K {
     bool              audio                           = false;
     unsigned int      delayUI                         = 7;
     bool              _matchPings                     = true;
+    bool              _diffVLEP                       = false;
+    bool              _diffLEP                        = false;
+    bool              _diffMEP                        = false;
+    bool              _diffSEP                        = false;
+    void tidy() {
+      if (mode == mQuotingMode::Depth) widthPercentage = false;
+    };
+    void flag() {
+      _matchPings = safety == mQuotingSafety::Boomerang or safety == mQuotingSafety::AK47;
+    };
+    void diff(mQuotingParams prev) {
+      _diffVLEP = prev.veryLongEwmaPeriods != veryLongEwmaPeriods;
+      _diffLEP = prev.longEwmaPeriods != longEwmaPeriods;
+      _diffMEP = prev.mediumEwmaPeriods != mediumEwmaPeriods;
+      _diffSEP = prev.shortEwmaPeriods != shortEwmaPeriods;
+    };
+    bool diffOnce(bool *k) {
+      bool ret = *k;
+      if (*k) *k = false;
+      return ret;
+    };
   };
   static void to_json(json& j, const mQuotingParams& k) {
     j = {
@@ -147,71 +174,70 @@ namespace K {
     };
   };
   static void from_json(const json& j, mQuotingParams& k) {
-    mQuotingParams def;
-    k.widthPing                       = fmax(1e-8,            j.value("widthPing", def.widthPing));
-    k.widthPingPercentage             = fmin(1e+2, fmax(1e-1, j.value("widthPingPercentage", def.widthPingPercentage)));
-    k.widthPong                       = fmax(1e-8,            j.value("widthPong", def.widthPong));
-    k.widthPongPercentage             = fmin(1e+2, fmax(1e-1, j.value("widthPongPercentage", def.widthPongPercentage)));
-    k.widthPercentage                 =                       j.value("widthPercentage", def.widthPercentage);
-    k.bestWidth                       =                       j.value("bestWidth", def.bestWidth);
-    k.buySize                         = fmax(1e-8,            j.value("buySize", def.buySize));
-    k.buySizePercentage               = fmin(1e+2, fmax(1,    j.value("buySizePercentage", def.buySizePercentage)));
-    k.buySizeMax                      =                       j.value("buySizeMax", def.buySizeMax);
-    k.sellSize                        = fmax(1e-8,            j.value("sellSize", def.sellSize));
-    k.sellSizePercentage              = fmin(1e+2, fmax(1,    j.value("sellSizePercentage", def.sellSizePercentage)));
-    k.sellSizeMax                     =                       j.value("sellSizeMax", def.sellSizeMax);
-    k.pingAt                          =                       j.value("pingAt", def.pingAt);
-    k.pongAt                          =                       j.value("pongAt", def.pongAt);
-    k.mode                            =                       j.value("mode", def.mode);
-    k.safety                          =                       j.value("safety", def.safety);
-    k.bullets                         = fmin(10, fmax(1,      j.value("bullets", def.bullets)));
-    k.range                           =                       j.value("range", def.range);
-    k.rangePercentage                 = fmin(1e+2, fmax(1e-1, j.value("rangePercentage", def.rangePercentage)));
-    k.fvModel                         =                       j.value("fvModel", def.fvModel);
-    k.targetBasePosition              =                       j.value("targetBasePosition", def.targetBasePosition);
-    k.targetBasePositionPercentage    = fmin(1e+2, fmax(0,    j.value("targetBasePositionPercentage", def.targetBasePositionPercentage)));
-    k.positionDivergenceMin           =                       j.value("positionDivergenceMin", def.positionDivergenceMin);
-    k.positionDivergenceMode          =                       j.value("positionDivergenceMode", def.positionDivergenceMode);
-    k.positionDivergence              =                       j.value("positionDivergence", def.positionDivergence);
-    k.positionDivergencePercentage    = fmin(1e+2, fmax(0,    j.value("positionDivergencePercentage", def.positionDivergencePercentage)));
-    k.positionDivergencePercentageMin = fmin(1e+2, fmax(0,    j.value("positionDivergencePercentageMin", def.positionDivergencePercentageMin)));
-    k.percentageValues                =                       j.value("percentageValues", def.percentageValues);
-    k.autoPositionMode                =                       j.value("autoPositionMode", def.autoPositionMode);
-    k.aggressivePositionRebalancing   =                       j.value("aggressivePositionRebalancing", def.aggressivePositionRebalancing);
-    k.superTrades                     =                       j.value("superTrades", def.superTrades);
-    k.tradesPerMinute                 =                       j.value("tradesPerMinute", def.tradesPerMinute);
-    k.tradeRateSeconds                = fmax(0,               j.value("tradeRateSeconds", def.tradeRateSeconds));
-    k.protectionEwmaWidthPing         =                       j.value("protectionEwmaWidthPing", def.protectionEwmaWidthPing);
-    k.protectionEwmaQuotePrice        =                       j.value("protectionEwmaQuotePrice", def.protectionEwmaQuotePrice);
-    k.protectionEwmaPeriods           = fmax(1,               j.value("protectionEwmaPeriods", def.protectionEwmaPeriods));
-    k.quotingStdevProtection          =                       j.value("quotingStdevProtection", def.quotingStdevProtection);
-    k.quotingStdevBollingerBands      =                       j.value("quotingStdevBollingerBands", def.quotingStdevBollingerBands);
-    k.quotingStdevProtectionFactor    =                       j.value("quotingStdevProtectionFactor", def.quotingStdevProtectionFactor);
-    k.quotingStdevProtectionPeriods   = fmax(1,               j.value("quotingStdevProtectionPeriods", def.quotingStdevProtectionPeriods));
-    k.ewmaSensiblityPercentage        =                       j.value("ewmaSensiblityPercentage", def.ewmaSensiblityPercentage);
-    k.veryLongEwmaPeriods             = fmax(1,               j.value("veryLongEwmaPeriods", def.veryLongEwmaPeriods));
-    k.longEwmaPeriods                 = fmax(1,               j.value("longEwmaPeriods", def.longEwmaPeriods));
-    k.mediumEwmaPeriods               = fmax(1,               j.value("mediumEwmaPeriods", def.mediumEwmaPeriods));
-    k.shortEwmaPeriods                = fmax(1,               j.value("shortEwmaPeriods", def.shortEwmaPeriods));
-    k.aprMultiplier                   =                       j.value("aprMultiplier", def.aprMultiplier);
-    k.sopWidthMultiplier              =                       j.value("sopWidthMultiplier", def.sopWidthMultiplier);
-    k.sopSizeMultiplier               =                       j.value("sopSizeMultiplier", def.sopSizeMultiplier);
-    k.sopTradesMultiplier             =                       j.value("sopTradesMultiplier", def.sopTradesMultiplier);
-    k.cancelOrdersAuto                =                       j.value("cancelOrdersAuto", def.cancelOrdersAuto);
-    k.cleanPongsAuto                  =                       j.value("cleanPongsAuto", def.cleanPongsAuto);
-    k.profitHourInterval              =                       j.value("profitHourInterval", def.profitHourInterval);
-    k.audio                           =                       j.value("audio", def.audio);
-    k.delayUI                         = fmax(0,               j.value("delayUI", def.delayUI));
-    if (k.mode == mQuotingMode::Depth) k.widthPercentage = false;
-    k._matchPings = k.safety == mQuotingSafety::Boomerang or k.safety == mQuotingSafety::AK47;
+    k.widthPing                       = fmax(1e-8,            j.value("widthPing", k.widthPing));
+    k.widthPingPercentage             = fmin(1e+2, fmax(1e-1, j.value("widthPingPercentage", k.widthPingPercentage)));
+    k.widthPong                       = fmax(1e-8,            j.value("widthPong", k.widthPong));
+    k.widthPongPercentage             = fmin(1e+2, fmax(1e-1, j.value("widthPongPercentage", k.widthPongPercentage)));
+    k.widthPercentage                 =                       j.value("widthPercentage", k.widthPercentage);
+    k.bestWidth                       =                       j.value("bestWidth", k.bestWidth);
+    k.buySize                         = fmax(1e-8,            j.value("buySize", k.buySize));
+    k.buySizePercentage               = fmin(1e+2, fmax(1,    j.value("buySizePercentage", k.buySizePercentage)));
+    k.buySizeMax                      =                       j.value("buySizeMax", k.buySizeMax);
+    k.sellSize                        = fmax(1e-8,            j.value("sellSize", k.sellSize));
+    k.sellSizePercentage              = fmin(1e+2, fmax(1,    j.value("sellSizePercentage", k.sellSizePercentage)));
+    k.sellSizeMax                     =                       j.value("sellSizeMax", k.sellSizeMax);
+    k.pingAt                          =                       j.value("pingAt", k.pingAt);
+    k.pongAt                          =                       j.value("pongAt", k.pongAt);
+    k.mode                            =                       j.value("mode", k.mode);
+    k.safety                          =                       j.value("safety", k.safety);
+    k.bullets                         = fmin(10, fmax(1,      j.value("bullets", k.bullets)));
+    k.range                           =                       j.value("range", k.range);
+    k.rangePercentage                 = fmin(1e+2, fmax(1e-1, j.value("rangePercentage", k.rangePercentage)));
+    k.fvModel                         =                       j.value("fvModel", k.fvModel);
+    k.targetBasePosition              =                       j.value("targetBasePosition", k.targetBasePosition);
+    k.targetBasePositionPercentage    = fmin(1e+2, fmax(0,    j.value("targetBasePositionPercentage", k.targetBasePositionPercentage)));
+    k.positionDivergenceMin           =                       j.value("positionDivergenceMin", k.positionDivergenceMin);
+    k.positionDivergenceMode          =                       j.value("positionDivergenceMode", k.positionDivergenceMode);
+    k.positionDivergence              =                       j.value("positionDivergence", k.positionDivergence);
+    k.positionDivergencePercentage    = fmin(1e+2, fmax(0,    j.value("positionDivergencePercentage", k.positionDivergencePercentage)));
+    k.positionDivergencePercentageMin = fmin(1e+2, fmax(0,    j.value("positionDivergencePercentageMin", k.positionDivergencePercentageMin)));
+    k.percentageValues                =                       j.value("percentageValues", k.percentageValues);
+    k.autoPositionMode                =                       j.value("autoPositionMode", k.autoPositionMode);
+    k.aggressivePositionRebalancing   =                       j.value("aggressivePositionRebalancing", k.aggressivePositionRebalancing);
+    k.superTrades                     =                       j.value("superTrades", k.superTrades);
+    k.tradesPerMinute                 =                       j.value("tradesPerMinute", k.tradesPerMinute);
+    k.tradeRateSeconds                = fmax(0,               j.value("tradeRateSeconds", k.tradeRateSeconds));
+    k.protectionEwmaWidthPing         =                       j.value("protectionEwmaWidthPing", k.protectionEwmaWidthPing);
+    k.protectionEwmaQuotePrice        =                       j.value("protectionEwmaQuotePrice", k.protectionEwmaQuotePrice);
+    k.protectionEwmaPeriods           = fmax(1,               j.value("protectionEwmaPeriods", k.protectionEwmaPeriods));
+    k.quotingStdevProtection          =                       j.value("quotingStdevProtection", k.quotingStdevProtection);
+    k.quotingStdevBollingerBands      =                       j.value("quotingStdevBollingerBands", k.quotingStdevBollingerBands);
+    k.quotingStdevProtectionFactor    =                       j.value("quotingStdevProtectionFactor", k.quotingStdevProtectionFactor);
+    k.quotingStdevProtectionPeriods   = fmax(1,               j.value("quotingStdevProtectionPeriods", k.quotingStdevProtectionPeriods));
+    k.ewmaSensiblityPercentage        =                       j.value("ewmaSensiblityPercentage", k.ewmaSensiblityPercentage);
+    k.veryLongEwmaPeriods             = fmax(1,               j.value("veryLongEwmaPeriods", k.veryLongEwmaPeriods));
+    k.longEwmaPeriods                 = fmax(1,               j.value("longEwmaPeriods", k.longEwmaPeriods));
+    k.mediumEwmaPeriods               = fmax(1,               j.value("mediumEwmaPeriods", k.mediumEwmaPeriods));
+    k.shortEwmaPeriods                = fmax(1,               j.value("shortEwmaPeriods", k.shortEwmaPeriods));
+    k.aprMultiplier                   =                       j.value("aprMultiplier", k.aprMultiplier);
+    k.sopWidthMultiplier              =                       j.value("sopWidthMultiplier", k.sopWidthMultiplier);
+    k.sopSizeMultiplier               =                       j.value("sopSizeMultiplier", k.sopSizeMultiplier);
+    k.sopTradesMultiplier             =                       j.value("sopTradesMultiplier", k.sopTradesMultiplier);
+    k.cancelOrdersAuto                =                       j.value("cancelOrdersAuto", k.cancelOrdersAuto);
+    k.cleanPongsAuto                  =                       j.value("cleanPongsAuto", k.cleanPongsAuto);
+    k.profitHourInterval              =                       j.value("profitHourInterval", k.profitHourInterval);
+    k.audio                           =                       j.value("audio", k.audio);
+    k.delayUI                         = fmax(0,               j.value("delayUI", k.delayUI));
+    k.tidy();
+    k.flag();
   };
   struct mPair {
-    string base,
-           quote;
+    mCoinId base,
+            quote;
     mPair():
       base(""), quote("")
     {};
-    mPair(string b, string q):
+    mPair(mCoinId b, mCoinId q):
       base(b), quote(q)
     {};
   };
@@ -226,13 +252,13 @@ namespace K {
     k.quote = j.value("quote", "");
   };
   struct mWallet {
-    double amount,
-           held;
-    string currency;
+    mAmount amount,
+            held;
+    mCoinId currency;
     mWallet():
       amount(0), held(0), currency("")
     {};
-    mWallet(double a, double h, string c):
+    mWallet(mAmount a, mAmount h, mCoinId c):
       amount(a), held(h), currency(c)
     {};
   };
@@ -244,13 +270,13 @@ namespace K {
     };
   };
   struct mProfit {
-           double baseValue,
-                  quoteValue;
-    unsigned long time;
+    mAmount baseValue,
+            quoteValue;
+     mClock time;
     mProfit():
       baseValue(0), quoteValue(0), time(0)
     {};
-    mProfit(double b, double q, unsigned long t):
+    mProfit(mAmount b, mAmount q, mClock t):
       baseValue(b), quoteValue(q), time(t)
     {};
   };
@@ -264,20 +290,23 @@ namespace K {
   static void from_json(const json& j, mProfit& k) {
     k.baseValue  = j.value("baseValue", 0.0);
     k.quoteValue = j.value("quoteValue", 0.0);
-    k.time       = j.value("time", (unsigned long)0);
+    k.time       = j.value("time", (mClock)0);
   };
   struct mSafety {
     double buy,
            sell,
-           combined,
-           buyPing,
+           combined;
+    mPrice buyPing,
            sellPing;
     mSafety():
       buy(0), sell(0), combined(0), buyPing(-1), sellPing(-1)
     {};
-    mSafety(double b, double s, double c, double bP, double sP):
+    mSafety(double b, double s, double c, mPrice bP, mPrice sP):
       buy(b), sell(s), combined(c), buyPing(bP), sellPing(sP)
     {};
+    bool empty() {
+      return buyPing == -1;
+    };
   };
   static void to_json(json& j, const mSafety& k) {
     j = {
@@ -289,20 +318,23 @@ namespace K {
     };
   };
   struct mPosition {
-       double baseAmount,
-              quoteAmount,
-              baseHeldAmount,
-              quoteHeldAmount,
-              baseValue,
-              quoteValue,
-              profitBase,
-              profitQuote;
-        mPair pair;
+    mAmount baseAmount,
+            quoteAmount,
+            _quoteAmountValue,
+            baseHeldAmount,
+            quoteHeldAmount,
+            _baseTotal,
+            _quoteTotal,
+            baseValue,
+            quoteValue,
+            profitBase,
+            profitQuote;
+      mPair pair;
     mPosition():
-      baseAmount(0), quoteAmount(0), baseHeldAmount(0), quoteHeldAmount(0), baseValue(0), quoteValue(0), profitBase(0), profitQuote(0), pair(mPair())
+      baseAmount(0), quoteAmount(0), _quoteAmountValue(0), baseHeldAmount(0), quoteHeldAmount(0), _baseTotal(0), _quoteTotal(0), baseValue(0), quoteValue(0), profitBase(0), profitQuote(0), pair(mPair())
     {};
-    mPosition(double bA, double qA, double bH, double qH, double bV, double qV, double bP, double qP, mPair p):
-      baseAmount(bA), quoteAmount(qA), baseHeldAmount(bH), quoteHeldAmount(qH), baseValue(bV), quoteValue(qV), profitBase(bP), profitQuote(qP), pair(p)
+    mPosition(mAmount bA, mAmount qA, mAmount qAV, mAmount bH, mAmount qH, mAmount bT, mAmount qT, mAmount bV, mAmount qV, mAmount bP, mAmount qP, mPair p):
+      baseAmount(bA), quoteAmount(qA), _quoteAmountValue(qAV), baseHeldAmount(bH), quoteHeldAmount(qH), _baseTotal(bT), _quoteTotal(qT), baseValue(bV), quoteValue(qV), profitBase(bP), profitQuote(qP), pair(p)
     {};
     bool empty() {
       return !baseValue;
@@ -322,31 +354,30 @@ namespace K {
     };
   };
   struct mTrade {
-           string tradeId;
-            mSide side;
-            mPair pair;
-           double price,
-                  quantity,
-                  value,
-                  Kqty,
-                  Kvalue,
-                  Kprice,
-                  Kdiff,
-                  feeCharged;
-    unsigned long time,
-                  Ktime;
-             bool loadedFromDB;
-
+     string tradeId;
+      mSide side;
+      mPair pair;
+     mPrice price,
+            Kprice;
+    mAmount quantity,
+            value,
+            Kqty,
+            Kvalue,
+            Kdiff,
+            feeCharged;
+     mClock time,
+            Ktime;
+       bool loadedFromDB;
     mTrade():
       tradeId(""), pair(mPair()), price(0), quantity(0), side((mSide)0), time(0), value(0), Ktime(0), Kqty(0), Kprice(0), Kvalue(0), Kdiff(0), feeCharged(0), loadedFromDB(false)
     {};
-    mTrade(double p, double q, unsigned long t):
+    mTrade(mPrice p, mAmount q, mClock t):
       tradeId(""), pair(mPair()), price(p), quantity(q), side((mSide)0), time(t), value(0), Ktime(0), Kqty(0), Kprice(0), Kvalue(0), Kdiff(0), feeCharged(0), loadedFromDB(false)
     {};
-    mTrade(double p, double q, mSide s):
+    mTrade(mPrice p, mAmount q, mSide s):
       tradeId(""), pair(mPair()), price(p), quantity(q), side(s), time(0), value(0), Ktime(0), Kqty(0), Kprice(0), Kvalue(0), Kdiff(0), feeCharged(0), loadedFromDB(false)
     {};
-    mTrade(string i, mPair P, double p, double q, mSide S, unsigned long t, double v, unsigned long Kt, double Kq, double Kp, double Kv, double Kd, double f, bool l):
+    mTrade(string i, mPair P, mPrice p, mAmount q, mSide S, mClock t, mAmount v, mClock Kt, mAmount Kq, mPrice Kp, mAmount Kv, mAmount Kd, mAmount f, bool l):
       tradeId(i), pair(P), price(p), quantity(q), side(S), time(t), value(v), Ktime(Kt), Kqty(Kq), Kprice(Kp), Kvalue(Kv), Kdiff(Kd), feeCharged(f), loadedFromDB(l)
     {};
   };
@@ -381,9 +412,9 @@ namespace K {
     k.price        = j.value("price", 0.0);
     k.quantity     = j.value("quantity", 0.0);
     k.side         = j.value("side", (mSide)0);
-    k.time         = j.value("time", (unsigned long)0);
+    k.time         = j.value("time", (mClock)0);
     k.value        = j.value("value", 0.0);
-    k.Ktime        = j.value("Ktime", (unsigned long)0);
+    k.Ktime        = j.value("Ktime", (mClock)0);
     k.Kqty         = j.value("Kqty", 0.0);
     k.Kprice       = j.value("Kprice", 0.0);
     k.Kvalue       = j.value("Kvalue", 0.0);
@@ -392,31 +423,32 @@ namespace K {
     k.loadedFromDB = j.value("loadedFromDB", false);
   };
   struct mOrder {
-           string orderId,
-                  exchangeId;
-            mPair pair;
-            mSide side;
-           double price,
-                  quantity,
-                  tradeQuantity;
-       mOrderType type;
-     mTimeInForce timeInForce;
-             mStatus orderStatus;
-             bool isPong,
-                  preferPostOnly;
-    unsigned long time,
-                  computationalLatency;
+         mRandId orderId,
+                 exchangeId;
+           mPair pair;
+           mSide side;
+          mPrice price;
+         mAmount quantity,
+                 tradeQuantity;
+      mOrderType type;
+    mTimeInForce timeInForce;
+         mStatus orderStatus;
+            bool isPong,
+                 preferPostOnly;
+          mClock time,
+                 latency,
+                 _waitingCancel;
     mOrder():
-      orderId(""), exchangeId(""), pair(mPair()), side((mSide)0), quantity(0), type((mOrderType)0), isPong(false), price(0), timeInForce((mTimeInForce)0), orderStatus((mStatus)0), preferPostOnly(false), tradeQuantity(0), time(0), computationalLatency(0)
+      orderId(""), exchangeId(""), pair(mPair()), side((mSide)0), quantity(0), type((mOrderType)0), isPong(false), price(0), timeInForce((mTimeInForce)0), orderStatus((mStatus)0), preferPostOnly(false), tradeQuantity(0), time(0), _waitingCancel(0), latency(0)
     {};
-    mOrder(string o, mStatus s):
-      orderId(o), exchangeId(""), pair(mPair()), side((mSide)0), quantity(0), type((mOrderType)0), isPong(false), price(0), timeInForce((mTimeInForce)0), orderStatus(s), preferPostOnly(false), tradeQuantity(0), time(0), computationalLatency(0)
+    mOrder(mRandId o, mStatus s):
+      orderId(o), exchangeId(""), pair(mPair()), side((mSide)0), quantity(0), type((mOrderType)0), isPong(false), price(0), timeInForce((mTimeInForce)0), orderStatus(s), preferPostOnly(false), tradeQuantity(0), time(0), _waitingCancel(0), latency(0)
     {};
-    mOrder(string o, string e, mStatus s, double p, double q, double Q):
-      orderId(o), exchangeId(e), pair(mPair()), side((mSide)0), quantity(q), type((mOrderType)0), isPong(false), price(p), timeInForce((mTimeInForce)0), orderStatus(s), preferPostOnly(false), tradeQuantity(Q), time(0), computationalLatency(0)
+    mOrder(mRandId o, mRandId e, mStatus s, mPrice p, mAmount q, mAmount Q):
+      orderId(o), exchangeId(e), pair(mPair()), side((mSide)0), quantity(q), type((mOrderType)0), isPong(false), price(p), timeInForce((mTimeInForce)0), orderStatus(s), preferPostOnly(false), tradeQuantity(Q), time(0), _waitingCancel(0), latency(0)
     {};
-    mOrder(string o, mPair P, mSide S, double q, mOrderType t, bool i, double p, mTimeInForce F, mStatus s, bool O):
-      orderId(o), exchangeId(""), pair(P), side(S), quantity(q), type(t), isPong(i), price(p), timeInForce(F), orderStatus(s), preferPostOnly(O), tradeQuantity(0), time(0), computationalLatency(0)
+    mOrder(mRandId o, mPair P, mSide S, mAmount q, mOrderType t, bool i, mPrice p, mTimeInForce F, mStatus s, bool O):
+      orderId(o), exchangeId(""), pair(P), side(S), quantity(q), type(t), isPong(i), price(p), timeInForce(F), orderStatus(s), preferPostOnly(O), tradeQuantity(0), time(0), _waitingCancel(0), latency(0)
     {};
     string quantity2str() {
       stringstream ss;
@@ -436,31 +468,37 @@ namespace K {
   };
   static void to_json(json& j, const mOrder& k) {
     j = {
-      {             "orderId", k.orderId             },
-      {          "exchangeId", k.exchangeId          },
-      {                "pair", k.pair                },
-      {                "side", k.side                },
-      {            "quantity", k.quantity            },
-      {                "type", k.type                },
-      {              "isPong", k.isPong              },
-      {               "price", k.price               },
-      {         "timeInForce", k.timeInForce         },
-      {         "orderStatus", k.orderStatus         },
-      {      "preferPostOnly", k.preferPostOnly      },
-      {       "tradeQuantity", k.tradeQuantity       },
-      {                "time", k.time                },
-      {"computationalLatency", k.computationalLatency}
+      {       "orderId", k.orderId       },
+      {    "exchangeId", k.exchangeId    },
+      {          "pair", k.pair          },
+      {          "side", k.side          },
+      {      "quantity", k.quantity      },
+      {          "type", k.type          },
+      {        "isPong", k.isPong        },
+      {         "price", k.price         },
+      {   "timeInForce", k.timeInForce   },
+      {   "orderStatus", k.orderStatus   },
+      {"preferPostOnly", k.preferPostOnly},
+      { "tradeQuantity", k.tradeQuantity },
+      {          "time", k.time          },
+      {       "latency", k.latency       }
     };
   };
   struct mLevel {
-    double price,
-           size;
+     mPrice price;
+    mAmount size;
     mLevel():
       price(0), size(0)
     {};
-    mLevel(double p, double s):
+    mLevel(mPrice p, mAmount s):
       price(p), size(s)
     {};
+    void clear() {
+      price = size = 0;
+    };
+    bool empty() {
+      return !price or !size;
+    };
   };
   static void to_json(json& j, const mLevel& k) {
     j = {
@@ -477,6 +515,9 @@ namespace K {
     mLevels(vector<mLevel> b, vector<mLevel> a):
       bids(b), asks(a)
     {};
+    mPrice spread() {
+      return empty() ? 0 : asks.begin()->price - bids.begin()->price;
+    };
     bool empty() {
       return bids.empty() or asks.empty();
     };
@@ -536,9 +577,6 @@ namespace K {
       {   "quotesInMemoryDone", k.quotesInMemoryDone   }
     };
   };
-  static const char alphanum[] = "0123456789"
-                                 "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-                                 "abcdefghijklmnopqrstuvwxyz";
   static char RBLACK[] = "\033[0;30m", RRED[]    = "\033[0;31m", RGREEN[] = "\033[0;32m", RYELLOW[] = "\033[0;33m",
               RBLUE[]  = "\033[0;34m", RPURPLE[] = "\033[0;35m", RCYAN[]  = "\033[0;36m", RWHITE[]  = "\033[0;37m",
               BBLACK[] = "\033[1;30m", BRED[]    = "\033[1;31m", BGREEN[] = "\033[1;32m", BYELLOW[] = "\033[1;33m",
@@ -549,32 +587,62 @@ namespace K {
   static vector<function<void()>*> gwEndings;
   class Gw {
     public:
-      static Gw *config(string, string, string, int, string, string, string, string, string, string, int);
-      string (*randId)() = 0;
+      virtual string A() = 0;
+      static Gw *config(mCoinId, mCoinId, string, int, string, string, string, string, string, string, int, int);
       function<void(mOrder)>        evDataOrder;
       function<void(mTrade)>        evDataTrade;
       function<void(mWallet)>       evDataWallet;
       function<void(mLevels)>       evDataLevels;
       function<void(mConnectivity)> evConnectOrder,
                                     evConnectMarket;
+      mExchange exchange = (mExchange)0;
+            int version  = 0, maxLevel = 0,
+                debug    = 0;
+         mPrice minTick  = 0;
+        mAmount makeFee  = 0, takeFee  = 0,
+                minSize  = 0;
+        mCoinId base     = "", quote   = "";
+         string name     = "", symbol  = "",
+                apikey   = "", secret  = "",
+                user     = "", pass    = "",
+                ws       = "", http    = "";
       uWS::Hub                *hub     = nullptr;
       uWS::Group<uWS::CLIENT> *gwGroup = nullptr;
-      mExchange exchange = (mExchange)0;
-         int version = 0, maxLevel = 0;
-      double makeFee = 0,  minTick = 0,
-             takeFee = 0,  minSize = 0;
-      string base    = "", quote   = "",
-             name    = "", symbol  = "",
-             apikey  = "", secret  = "",
-             user    = "", pass    = "",
-             ws      = "", http    = "";
-      virtual   void wallet() = 0,
-                     levels() = 0,
-                     send(string, mSide, string, string, mOrderType, mTimeInForce, bool, unsigned long) = 0,
-                     cancel(string, string, mSide, unsigned long) = 0,
-                     cancelAll() = 0,
-                     close() = 0;
-      virtual string A() = 0;
+      mRandId (*randId)() = 0;
+      virtual vector<mOrder> sync_cancelAll() = 0;
+      virtual void levels() = 0,
+                   send(mRandId, mRandId, mRandId, mSide, string, string, mOrderType, mTimeInForce, bool, mClock) = 0,
+                   cancel(mRandId, mRandId, mSide, mClock) = 0,
+                   close() = 0;
+      function<bool()> wallet = [&]() {
+        if (!replyWallet.valid() and !async_wallet())
+          replyWallet = ::async(launch::async, [this] { return sync_wallet(); });
+        return replyWallet.valid();
+      };
+      function<bool()> cancelAll = [&]() {
+        if (!replyCancelAll.valid())
+          replyCancelAll = ::async(launch::async, [this] { return sync_cancelAll(); });
+        return replyCancelAll.valid();
+      };
+      bool waitForData() {
+        return waitForWallet()
+             | waitForCancelAll();
+      };
+    private:
+      virtual bool async_wallet() { return false; };
+      virtual vector<mWallet> sync_wallet() { return vector<mWallet>(); };
+      future<vector<mWallet>> replyWallet;
+      future<vector<mOrder>> replyCancelAll;
+      unsigned int waitForWallet() {
+        if (replyWallet.valid() and replyWallet.wait_for(chrono::nanoseconds(0))==future_status::ready)
+          for (mWallet &it : replyWallet.get()) evDataWallet(it);
+        return replyWallet.valid();
+      };
+      unsigned int waitForCancelAll() {
+        if (replyCancelAll.valid() and replyCancelAll.wait_for(chrono::nanoseconds(0))==future_status::ready)
+          for (mOrder &it : replyCancelAll.get()) evDataOrder(it);
+        return replyCancelAll.valid();
+      };
   };
   class Klass {
     protected:
