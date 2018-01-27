@@ -6,9 +6,9 @@ namespace K {
     protected:
       void load() {
         json k = ((DB*)memory)->load(mMatter::QuotingParameters);
-        if (k.empty()) return FN::logWar("QP", "using default values for Quoting Parameters");
+        if (k.empty()) return ((SH*)screen)->logWar("QP", "using default values for Quoting Parameters");
         *qp = k.at(0);
-        FN::log("DB", "loaded Quoting Parameters OK");
+        ((SH*)screen)->log("DB", "loaded Quoting Parameters OK");
       };
       void waitUser() {
         ((UI*)client)->welcome(mMatter::QuotingParameters, &hello);

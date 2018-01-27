@@ -59,7 +59,7 @@ namespace K {
           ((MG*)market)->calcStats();
           ((PG*)wallet)->calcSafety();
           calcQuote();
-        } else FN::logWar("QE", "Unable to calculate quote, missing market data");
+        } else ((SH*)screen)->logWar("QE", "Unable to calculate quote, missing market data");
       };
       inline void findMode(string event) {
         if (quotingMode.find(qp->mode) == quotingMode.end())
@@ -152,7 +152,7 @@ namespace K {
         mQuote rawQuote = (*quotingMode[qp->mode])(widthPing, rawBidSz, rawAskSz);
         if (rawQuote.bid.price <= 0 or rawQuote.ask.price <= 0) {
           if (rawQuote.bid.price or rawQuote.ask.price)
-            FN::logWar("QP", "Negative price detected, widthPing must be smaller");
+            ((SH*)screen)->logWar("QP", "Negative price detected, widthPing must be smaller");
           return mQuote();
         }
         bool superTradesActive = false;
@@ -469,7 +469,7 @@ namespace K {
           cross = quote->ask.price <= quote->bid.price;
         }
         if (cross) {
-          FN::logWar("QE", "Cross quote detected");
+          ((SH*)screen)->logWar("QE", "Cross quote detected");
           return mQuoteState::Crossed;
         } else return mQuoteState::Live;
       };
@@ -499,7 +499,7 @@ namespace K {
         debug(string("quote") + k + " " + to_string((int)bidStatus) + " " + to_string((int)askStatus) + " " + ((json)rawQuote).dump());
       };
       function<void(string)> debug = [&](string k) {
-        FN::log("DEBUG", string("QE ") + k);
+        ((SH*)screen)->log("DEBUG", string("QE ") + k);
       };
   };
 }

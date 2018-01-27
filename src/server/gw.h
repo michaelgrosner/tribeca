@@ -33,7 +33,7 @@ namespace K {
       void waitUser() {
         ((UI*)client)->welcome(mMatter::Connectivity, &hello);
         ((UI*)client)->clickme(mMatter::Connectivity, &kiss);
-        ((EV*)events)->pressme(mHotkey::ESC, &hotkiss);
+        ((SH*)screen)->pressme(mHotkey::ESC, &hotkiss);
       };
       void run() {
         ((EV*)events)->start();
@@ -42,11 +42,11 @@ namespace K {
       function<void()> happyEnding = [&]() {
         ((EV*)events)->stop([&]() {
           if (((CF*)config)->argDustybot)
-            FN::log(string("GW ") + gw->name, "--dustybot is enabled, remember to cancel manually any open order.");
+            ((SH*)screen)->log(string("GW ") + gw->name, "--dustybot is enabled, remember to cancel manually any open order.");
           else {
-            FN::log(string("GW ") + gw->name, "Attempting to cancel all open orders, please wait.");
+            ((SH*)screen)->log(string("GW ") + gw->name, "Attempting to cancel all open orders, please wait.");
             for (mOrder &it : gw->sync_cancelAll()) gw->evDataOrder(it);
-            FN::log(string("GW ") + gw->name, "cancel all open orders OK");
+            ((SH*)screen)->log(string("GW ") + gw->name, "cancel all open orders OK");
           }
         });
       };
@@ -79,7 +79,7 @@ namespace K {
         mConnectivity updated = gwAdminEnabled * ((QE*)engine)->gwConnectExchange;
         if (((QE*)engine)->gwConnectButton != updated) {
           ((QE*)engine)->gwConnectButton = updated;
-          FN::log(string("GW ") + gw->name, "Quoting state changed to", string(!((QE*)engine)->gwConnectButton?"DIS":"") + "CONNECTED");
+          ((SH*)screen)->log(string("GW ") + gw->name, "Quoting state changed to", string(!((QE*)engine)->gwConnectButton?"DIS":"") + "CONNECTED");
         }
         ((UI*)client)->send(mMatter::Connectivity, serverState());
       };
@@ -183,7 +183,7 @@ namespace K {
         if (!gw->minTick or !gw->minSize)
           exit(_errorEvent_("CF", "Unable to fetch data from " + gw->name + " for symbol \"" + gw->symbol + "\", possible error message: " + reply.dump(), true));
         if (k != mExchange::Null)
-          FN::log(string("GW ") + gw->name, "allows client IP");
+          ((SH*)screen)->log(string("GW ") + gw->name, "allows client IP");
         stringstream ss;
         ss << setprecision(gw->minTick < 1e-8 ? 10 : 8) << fixed << '\n'
           << "- autoBot: " << (!gwAdminEnabled ? "no" : "yes") << '\n'
@@ -192,7 +192,7 @@ namespace K {
           << "- minSize: " << gw->minSize << '\n'
           << "- makeFee: " << gw->makeFee << '\n'
           << "- takeFee: " << gw->takeFee;
-        FN::log(string("GW ") + gw->name + ":", ss.str());
+        ((SH*)screen)->log(string("GW ") + gw->name + ":", ss.str());
       };
   };
 }

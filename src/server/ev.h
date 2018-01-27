@@ -11,8 +11,6 @@ namespace K  {
       uWS::Hub *hub = nullptr;
       Async *aEngine = nullptr;
       vector<function<void()>> slowFn;
-      future<mHotkey> hotkey;
-      map<mHotkey, function<void()>*> hotFn;
     public:
       uWS::Group<uWS::SERVER> *uiGroup = nullptr;
       Timer *tServer = nullptr,
@@ -47,8 +45,6 @@ namespace K  {
       };
       void waitUser() {
         uiGroup = hub->createGroup<uWS::SERVER>(uWS::PERMESSAGE_DEFLATE);
-        if (((CF*)config)->argNaked) return;
-        hotkeys();
       };
       void run() {
         if (((CF*)config)->argDebugEvents) return;
@@ -81,12 +77,7 @@ namespace K  {
             + to_string(((CF*)config)->argPort) + " seems already in use by:\n"
             + FN::output(string("netstat -anp 2>/dev/null | grep ") + to_string(((CF*)config)->argPort))
           ));
-        FN::logUI(protocol, ((CF*)config)->argPort);
-      };
-      void pressme(mHotkey ch, function<void()> *fn) {
-        if (((CF*)config)->argNaked) return;
-        if (hotFn.find(ch) == hotFn.end()) hotFn[ch] = fn;
-        else exit(error("EV", string("Use only a single unique key handler for \"") + to_string((int)ch) + "\" pressme mHotkey"));
+        ((SH*)screen)->logUI(protocol, ((CF*)config)->argPort);
       };
       void deferred(function<void()> fn) {
         slowFn.push_back(fn);
@@ -96,16 +87,16 @@ namespace K  {
         if ((*fn)()) aEngine->send();
       };
       int error(string k, string s, bool reboot = false) {
-        FN::screen_quit();
-        FN::logErr(k, s);
+        ((SH*)screen)->quit();
+        ((SH*)screen)->logErr(k, s);
         return reboot ? EXIT_FAILURE : EXIT_SUCCESS;
       };
       function<void(string)> debug = [&](string k) {
-        FN::log("DEBUG", string("EV ") + k);
+        ((SH*)screen)->log("DEBUG", string("EV ") + k);
       };
     private:
       function<void()> happyEnding = [&]() {
-        cout << FN::uiT() << gw->name;
+        cout << ((SH*)screen)->uiT() << gw->name;
         for (unsigned int i = 0; i < 21; ++i)
           cout << " THE END IS NEVER";
         cout << " THE END." << '\n';
@@ -118,37 +109,23 @@ namespace K  {
         }
         if (k->gw->waitForData())
           aEngine->send();
-        if (k->hotkey.valid() and k->hotkey.wait_for(chrono::nanoseconds(0)) == future_status::ready) {
-          mHotkey ch = k->hotkey.get();
-          if (ch == mHotkey::q or ch == mHotkey::Q)
-            raise(SIGINT);
-          else {
-            if (k->hotFn.find(ch) != k->hotFn.end())
-              (*k->hotFn[ch])();
-            k->hotkeys();
-          }
-        }
-      };
-      void hotkeys() {
-        hotkey = ::async(launch::async, FN::screen_events);
+        ((SH*)screen)->waitForUser();
       };
       void version() {
         if (access(".git", F_OK) != -1) {
           FN::output("git fetch");
           string k = changelog();
-          FN::logVer(k, count(k.begin(), k.end(), '\n'));
-        } else FN::logVer("", -1);
+          ((SH*)screen)->logVer(k, count(k.begin(), k.end(), '\n'));
+        } else ((SH*)screen)->logVer("", -1);
         THIS_WAS_A_TRIUMPH
           << "- upstream: " << ((CF*)config)->argExchange << '\n'
           << "- currency: " << ((CF*)config)->argCurrency << '\n';
       };
       static void halt(int last_int_alive) {
-        FN::screen_quit();
-        cout << '\n' << FN::uiT() << THIS_WAS_A_TRIUMPH.str();
         for (function<void()>* &it : gwEndings) (*it)();
         if (last_int_alive == EXIT_FAILURE)
           this_thread::sleep_for(chrono::seconds(3));
-        cout << FN::uiT() << "K exit code " << to_string(last_int_alive) << "." << '\n';
+        cout << ((SH*)screen)->uiT() << "K exit code " << to_string(last_int_alive) << "." << '\n';
         exit(last_int_alive);
       };
       static void quit(int last_int_alive) {

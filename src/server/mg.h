@@ -48,7 +48,7 @@ namespace K {
           mgStatTop.push_back(it.value("ask", 0.0));
         }
         calcStdev();
-        FN::log("DB", string("loaded ") + to_string(mgStatFV.size()) + " STDEV Periods");
+        ((SH*)screen)->log("DB", string("loaded ") + to_string(mgStatFV.size()) + " STDEV Periods");
         if (((CF*)config)->argEwmaVeryLong) mgEwmaVL = ((CF*)config)->argEwmaVeryLong;
         if (((CF*)config)->argEwmaLong) mgEwmaL = ((CF*)config)->argEwmaLong;
         if (((CF*)config)->argEwmaMedium) mgEwmaM = ((CF*)config)->argEwmaMedium;
@@ -65,14 +65,14 @@ namespace K {
           if (!mgEwmaS and k.value("time", (mClock)0) + qp->shortEwmaPeriods * 6e+4 > _Tstamp_)
             mgEwmaS = k.value("ewmaShort", 0.0);
         }
-        if (mgEwmaVL) FN::log(((CF*)config)->argEwmaVeryLong ? "ARG" : "DB", string("loaded ") + to_string(mgEwmaVL) + " EWMA VeryLong");
-        if (mgEwmaL)  FN::log(((CF*)config)->argEwmaLong ? "ARG" : "DB", string("loaded ") + to_string(mgEwmaL) + " EWMA Long");
-        if (mgEwmaM)  FN::log(((CF*)config)->argEwmaMedium ? "ARG" : "DB", string("loaded ") + to_string(mgEwmaM) + " EWMA Medium");
-        if (mgEwmaS)  FN::log(((CF*)config)->argEwmaShort ? "ARG" : "DB", string("loaded ") + to_string(mgEwmaS) + " EWMA Short");
+        if (mgEwmaVL) ((SH*)screen)->log(((CF*)config)->argEwmaVeryLong ? "ARG" : "DB", string("loaded ") + to_string(mgEwmaVL) + " EWMA VeryLong");
+        if (mgEwmaL)  ((SH*)screen)->log(((CF*)config)->argEwmaLong ? "ARG" : "DB", string("loaded ") + to_string(mgEwmaL) + " EWMA Long");
+        if (mgEwmaM)  ((SH*)screen)->log(((CF*)config)->argEwmaMedium ? "ARG" : "DB", string("loaded ") + to_string(mgEwmaM) + " EWMA Medium");
+        if (mgEwmaS)  ((SH*)screen)->log(((CF*)config)->argEwmaShort ? "ARG" : "DB", string("loaded ") + to_string(mgEwmaS) + " EWMA Short");
         for (json &it : ((DB*)memory)->load(mMatter::MarketDataLongTerm))
           if (it.value("time", (mClock)0) + 3456e+5 > _Tstamp_ and it.value("fv", 0.0))
             fairValue96h.push_back(it.value("fv", 0.0));
-        FN::log("DB", string("loaded ") + to_string(fairValue96h.size()) + " historical FairValues");
+        ((SH*)screen)->log("DB", string("loaded ") + to_string(fairValue96h.size()) + " historical FairValues");
       };
       void waitData() {
         gw->evDataTrade = [&](mTrade k) {                           _debugEvent_
@@ -275,7 +275,7 @@ namespace K {
         if (!n) return;
         *mean = fairValue96h.front();
         while (n--) calcEwma(mean, periods, *(fairValue96h.rbegin()+n));
-        FN::log("MG", string("reloaded ") + to_string(*mean) + " EWMA " + name);
+        ((SH*)screen)->log("MG", string("reloaded ") + to_string(*mean) + " EWMA " + name);
       };
       void calcEwma(mPrice *mean, unsigned int periods, mPrice value) {
         if (*mean) {

@@ -12,16 +12,16 @@ namespace K {
       void load() {
         if (sqlite3_open(((CF*)config)->argDatabase.data(), &db))
           exit(_errorEvent_("DB", sqlite3_errmsg(db)));
-        FN::logDB(((CF*)config)->argDatabase);
+        ((SH*)screen)->logDB(((CF*)config)->argDatabase);
         if (((CF*)config)->argDiskdata.empty()) return;
         qpdb = "qpdb";
         char* zErrMsg = 0;
         sqlite3_exec(db, (
           string("ATTACH '") + ((CF*)config)->argDiskdata + "' AS " + qpdb + ";"
         ).data(), NULL, NULL, &zErrMsg);
-        if (zErrMsg) FN::logWar("DB", string("Sqlite error: ") + zErrMsg);
+        if (zErrMsg) ((SH*)screen)->logWar("DB", string("Sqlite error: ") + zErrMsg);
         sqlite3_free(zErrMsg);
-        FN::logDB(((CF*)config)->argDiskdata);
+        ((SH*)screen)->logDB(((CF*)config)->argDiskdata);
       };
       void run() {
         if (((CF*)config)->argDatabase == ":memory:") return;
@@ -44,7 +44,7 @@ namespace K {
         sqlite3_exec(db, (
           string("SELECT json FROM ") + _table_(table) + " ORDER BY time ASC;"
         ).data(), cb, (void*)&j, &zErrMsg);
-        if (zErrMsg) FN::logWar("DB", string("Sqlite error: ") + zErrMsg);
+        if (zErrMsg) ((SH*)screen)->logWar("DB", string("Sqlite error: ") + zErrMsg);
         sqlite3_free(zErrMsg);
         return j;
       };
@@ -58,7 +58,7 @@ namespace K {
             ) ) : "") + ";" + (cell.is_null() ? "" : string("INSERT INTO ") + _table_(table)
               + " (id,json) VALUES(" + updateId + ",'" + cell.dump() + "');")
           ).data(), NULL, NULL, &zErrMsg);
-          if (zErrMsg) FN::logWar("DB", string("Sqlite error: ") + zErrMsg);
+          if (zErrMsg) ((SH*)screen)->logWar("DB", string("Sqlite error: ") + zErrMsg);
           sqlite3_free(zErrMsg);
         });
       };
