@@ -17,17 +17,18 @@ namespace K {
       WINDOW *wBorder = nullptr,
              *wLog    = nullptr;
       int p = 0,
-          spin = 0,
-          port = 0;
-      string prtcl = "?",
-             exchange = "?",
-             currency = "?";
-      map<mRandId, mOrder> orders;
+          spin = 0;
+      string title = "?";
+      multimap<mPrice, mOrder, greater<mPrice>> openOrders;
+    public:
+      int port = 0;
+      string protocol = "?";
+      mConnectivity gwConnectButton   = mConnectivity::Disconnected,
+                    gwConnectExchange = mConnectivity::Disconnected;
     public:
       SH() {
         cout << BGREEN << "K" << RGREEN << " build " << K_BUILD << " " << K_STAMP << "." << BRED << '\n';
         gwEndings.push_back(&happyEnding);
-        shResize = &resize;
       };
       void* config(int argNaked, int argColors, string argExchange, string argCurrency) {
         if (argNaked) return this;
@@ -35,6 +36,7 @@ namespace K {
           cout << "NCURSES" << RRED << " Errrror:" << BRED << " Unable to initialize ncurses, try to run in your terminal \"export TERM=xterm\", or use --naked argument." << '\n';
           exit(EXIT_SUCCESS);
         }
+        title = string(argExchange) + " " + argCurrency;
         if (argColors) start_color();
         use_default_colors();
         cbreak();
@@ -50,8 +52,9 @@ namespace K {
         wLog = subwin(wBorder, getmaxy(wBorder)-4, getmaxx(wBorder)-2, 3, 2);
         scrollok(wLog, true);
         idlok(wLog, true);
+        shResize = &resize;
         signal(SIGWINCH, sigResize);
-        refresh("", 0, argExchange, argCurrency);
+        refresh();
         hotkeys();
         return this;
       };
@@ -79,10 +82,7 @@ namespace K {
           hotkeys();
         }
       };
-      void refresh(map<string, mOrder> k) {
-        refresh("", 0, "", "", k, true);
-      };
-      string uiT() {
+      string stamp() {
         auto t = chrono::system_clock::now().time_since_epoch();
         auto days = chrono::duration_cast<chrono::duration<int, ratio_multiply<chrono::hours::period, ratio<24>>::type>>(t);
         t -= days;
@@ -118,11 +118,11 @@ namespace K {
       };
       void logErr(string k, string s, string m = " Errrror: ") {
         if (!wBorder) {
-          cout << uiT() << k << RRED << m << BRED << s << ".\n";
+          cout << stamp() << k << RRED << m << BRED << s << ".\n";
           return;
         }
         wmove(wLog, getmaxy(wLog)-1, 0);
-        uiT();
+        stamp();
         wattron(wLog, COLOR_PAIR(COLOR_WHITE));
         wattron(wLog, A_BOLD);
         wprintw(wLog, k.data());
@@ -139,11 +139,11 @@ namespace K {
       };
       void logDB(string k) {
         if (!wBorder) {
-          cout << uiT() << "DB " << RYELLOW << k << RWHITE << " loaded OK.\n";
+          cout << stamp() << "DB " << RYELLOW << k << RWHITE << " loaded OK.\n";
           return;
         }
         wmove(wLog, getmaxy(wLog)-1, 0);
-        uiT();
+        stamp();
         wattron(wLog, COLOR_PAIR(COLOR_WHITE));
         wattron(wLog, A_BOLD);
         wprintw(wLog, "DB ");
@@ -157,13 +157,13 @@ namespace K {
         wattroff(wLog, COLOR_PAIR(COLOR_WHITE));
         wrefresh(wLog);
       };
-      void logUI(string k, int p) {
+      void logUI() {
         if (!wBorder) {
-          cout << uiT() << "UI" << RWHITE << " ready over " << RYELLOW << k << RWHITE << " on external port " << RYELLOW << to_string(p) << RWHITE << ".\n";
+          cout << stamp() << "UI" << RWHITE << " ready over " << RYELLOW << protocol << RWHITE << " on external port " << RYELLOW << to_string(port) << RWHITE << ".\n";
           return;
         }
         wmove(wLog, getmaxy(wLog)-1, 0);
-        uiT();
+        stamp();
         wattron(wLog, COLOR_PAIR(COLOR_WHITE));
         wattron(wLog, A_BOLD);
         wprintw(wLog, "UI");
@@ -171,27 +171,27 @@ namespace K {
         wprintw(wLog, " ready over ");
         wattroff(wLog, COLOR_PAIR(COLOR_WHITE));
         wattron(wLog, COLOR_PAIR(COLOR_YELLOW));
-        wprintw(wLog, k.data());
+        wprintw(wLog, protocol.data());
         wattroff(wLog, COLOR_PAIR(COLOR_YELLOW));
         wattron(wLog, COLOR_PAIR(COLOR_WHITE));
         wprintw(wLog, " on external port ");
         wattroff(wLog, COLOR_PAIR(COLOR_WHITE));
         wattron(wLog, COLOR_PAIR(COLOR_YELLOW));
-        wprintw(wLog, to_string(p).data());
+        wprintw(wLog, to_string(port).data());
         wattroff(wLog, COLOR_PAIR(COLOR_YELLOW));
         wattron(wLog, COLOR_PAIR(COLOR_WHITE));
         wprintw(wLog, ".\n");
         wattroff(wLog, COLOR_PAIR(COLOR_WHITE));
-        refresh(k, p);
+        refresh();
       };
       void logUIsess(int k, string s) {
         if (s.length() > 7 and s.substr(0, 7) == "::ffff:") s = s.substr(7);
         if (!wBorder) {
-          cout << uiT() << "UI " << RYELLOW << to_string(k) << RWHITE << " currently connected, last connection was from " << RYELLOW << s << RWHITE << ".\n";
+          cout << stamp() << "UI " << RYELLOW << to_string(k) << RWHITE << " currently connected, last connection was from " << RYELLOW << s << RWHITE << ".\n";
           return;
         }
         wmove(wLog, getmaxy(wLog)-1, 0);
-        uiT();
+        stamp();
         wattron(wLog, COLOR_PAIR(COLOR_WHITE));
         wattron(wLog, A_BOLD);
         wprintw(wLog, "UI ");
@@ -230,11 +230,11 @@ namespace K {
       };
       void log(mTrade k, string e) {
         if (!wBorder) {
-          cout << uiT() << "GW " << (k.side == mSide::Bid ? RCYAN : RPURPLE) << e << " TRADE " << (k.side == mSide::Bid ? BCYAN : BPURPLE) << (k.side == mSide::Bid ? "BUY  " : "SELL ") << k.quantity << " " << k.pair.base << " at price " << k.price << " " << k.pair.quote << " (value " << k.value << " " << k.pair.quote << ").\n";
+          cout << stamp() << "GW " << (k.side == mSide::Bid ? RCYAN : RPURPLE) << e << " TRADE " << (k.side == mSide::Bid ? BCYAN : BPURPLE) << (k.side == mSide::Bid ? "BUY  " : "SELL ") << k.quantity << " " << k.pair.base << " at price " << k.price << " " << k.pair.quote << " (value " << k.value << " " << k.pair.quote << ").\n";
           return;
         }
         wmove(wLog, getmaxy(wLog)-1, 0);
-        uiT();
+        stamp();
         wattron(wLog, A_BOLD);
         wattron(wLog, COLOR_PAIR(COLOR_WHITE));
         wprintw(wLog, "GW ");
@@ -251,11 +251,11 @@ namespace K {
       };
       void log(string k, string s, string v) {
         if (!wBorder) {
-          cout << uiT() << k << RWHITE << " " << s << " " << RYELLOW << v << RWHITE << ".\n";
+          cout << stamp() << k << RWHITE << " " << s << " " << RYELLOW << v << RWHITE << ".\n";
           return;
         }
         wmove(wLog, getmaxy(wLog)-1, 0);
-        uiT();
+        stamp();
         wattron(wLog, COLOR_PAIR(COLOR_WHITE));
         wattron(wLog, A_BOLD);
         wprintw(wLog, k.data());
@@ -272,11 +272,11 @@ namespace K {
       };
       void log(string k, string s) {
         if (!wBorder) {
-          cout << uiT() << k << RWHITE << " " << s << ".\n";
+          cout << stamp() << k << RWHITE << " " << s << ".\n";
           return;
         }
         wmove(wLog, getmaxy(wLog)-1, 0);
-        uiT();
+        stamp();
         wattron(wLog, COLOR_PAIR(COLOR_WHITE));
         wattron(wLog, A_BOLD);
         wprintw(wLog, k.data());
@@ -298,44 +298,16 @@ namespace K {
         if (b) wattroff(wLog, A_BOLD);
         wrefresh(wLog);
       };
-    private:
-      function<void()> happyEnding = [&]() {
-        quit();
-        cout << '\n' << uiT() << THIS_WAS_A_TRIUMPH.str();
-      };
-      void hotkeys() {
-        hotkey = ::async(launch::async, [&] {
-          return wBorder
-            ? (mHotkey)wgetch(wBorder)
-            : mHotkey::q;
-        });
-      };
-      function<void()> resize = [&]() {
+      void log(map<mRandId, mOrder> orders) {
         if (!wBorder) return;
-        struct winsize ws;
-        if (ioctl(0, TIOCGWINSZ, &ws) < 0 or (ws.ws_row == getmaxy(wBorder) and ws.ws_col == getmaxx(wBorder)))
-          return;
-        if (ws.ws_row < 10) ws.ws_row = 10;
-        if (ws.ws_col < 20) ws.ws_col = 20;
-        wresize(wBorder, ws.ws_row, ws.ws_col);
-        resizeterm(ws.ws_row, ws.ws_col);
+        openOrders.clear();
+        for (map<mRandId, mOrder>::value_type &it : orders)
+          if (mStatus::Working == it.second.orderStatus)
+            openOrders.insert(pair<mPrice, mOrder>(it.second.price, it.second));
         refresh();
-        redrawwin(wLog);
-        wrefresh(wLog);
       };
-      void refresh(string protocol = "", int argPort = 0, string argExchange = "", string argCurrency = "", map<mRandId, mOrder> Orders = map<string, mOrder>(), bool hasOrders = false) {
+      void refresh() {
         if (!wBorder) return;
-        if (argPort) port = argPort;
-        if (!protocol.empty()) prtcl = protocol;
-        if (!argExchange.empty()) exchange = argExchange;
-        if (!argCurrency.empty()) currency = argCurrency;
-        multimap<mPrice, mOrder, greater<mPrice>> openOrders;
-        if (hasOrders) {
-          orders = Orders;
-          for (map<mRandId, mOrder>::value_type &it : orders)
-            if (mStatus::Working == it.second.orderStatus)
-              openOrders.insert(pair<mPrice, mOrder>(it.second.price, it.second));
-        }
         int l = p,
             y = getmaxy(wBorder),
             x = getmaxx(wBorder),
@@ -369,26 +341,43 @@ namespace K {
         mvwaddch(wBorder, 0, 14, 'K' | A_BOLD);
         wattroff(wBorder, COLOR_PAIR(COLOR_GREEN));
         mvwaddch(wBorder, 0, 18+string(K_BUILD).length()+string(K_STAMP).length(), ACS_LTEE);
-        mvwaddch(wBorder, 0, x-12, ACS_RTEE);
-        mvwaddstr(wBorder, 0, x-11, " [ ]: Quit!");
+        mvwaddch(wBorder, 0, x-26, ACS_RTEE);
+        mvwaddstr(wBorder, 0, x-25, (string(" [   ]: ") + (!gwConnectButton ? "Start" : "Stop?") + ", [ ]: Quit!").data());
         mvwaddch(wBorder, 0, x-9, 'q' | A_BOLD);
+        wattron(wBorder, A_BOLD);
+        mvwaddstr(wBorder, 0, x-23, "ESC");
+        wattroff(wBorder, A_BOLD);
         mvwaddch(wBorder, 0, 7, ACS_TTEE);
         mvwaddch(wBorder, 1, 7, ACS_LLCORNER);
         mvwhline(wBorder, 1, 8, ACS_HLINE, 4);
         mvwaddch(wBorder, 1, 12, ACS_RTEE);
         wattron(wBorder, COLOR_PAIR(COLOR_GREEN));
         wattron(wBorder, A_BOLD);
-        mvwaddstr(wBorder, 1, 14, (exchange + " " + currency).data());
+        mvwaddstr(wBorder, 1, 14, title.data());
         wattroff(wBorder, A_BOLD);
-        waddstr(wBorder, (port ? " UI on " + prtcl + " port " + to_string(port) : " headless").data());
+        waddstr(wBorder, (port ? " UI on " + protocol + " port " + to_string(port) : " headless").data());
         wattroff(wBorder, COLOR_PAIR(COLOR_GREEN));
         mvwaddch(wBorder, k, 0, ACS_LTEE);
         mvwhline(wBorder, k, 1, ACS_HLINE, 3);
         mvwaddch(wBorder, k, 4, ACS_RTEE);
         mvwaddstr(wBorder, k, 5, "< (");
-        wattron(wBorder, COLOR_PAIR(COLOR_YELLOW));
-        waddstr(wBorder, to_string(openOrders.size()).data());
-        wattroff(wBorder, COLOR_PAIR(COLOR_YELLOW));
+        if (!gwConnectExchange) {
+          wattron(wBorder, COLOR_PAIR(COLOR_RED));
+          wattron(wBorder, A_BOLD);
+          waddstr(wBorder, "DISCONNECTED");
+          wattroff(wBorder, A_BOLD);
+          wattroff(wBorder, COLOR_PAIR(COLOR_RED));
+        } else if (!gwConnectButton) {
+          wattron(wBorder, COLOR_PAIR(COLOR_YELLOW));
+          wattron(wBorder, A_BLINK);
+          waddstr(wBorder, "press START to trade");
+          wattroff(wBorder, A_BLINK);
+          wattroff(wBorder, COLOR_PAIR(COLOR_YELLOW));
+        } else {
+          wattron(wBorder, COLOR_PAIR(COLOR_YELLOW));
+          waddstr(wBorder, to_string(openOrders.size()).data());
+          wattroff(wBorder, COLOR_PAIR(COLOR_YELLOW));
+        }
         waddstr(wBorder, ") Open Orders..");
         mvwaddch(wBorder, y-1, 0, ACS_LLCORNER);
         mvwaddstr(wBorder, 1, 2, string("|/-\\").substr(++spin, 1).data());
@@ -396,6 +385,27 @@ namespace K {
         move(k-1, 2);
         wrefresh(wBorder);
         wrefresh(wLog);
+      };
+    private:
+      function<void()> happyEnding = [&]() {
+        quit();
+        cout << '\n' << stamp() << THIS_WAS_A_TRIUMPH.str();
+      };
+      void hotkeys() {
+        hotkey = ::async(launch::async, [&] { return (mHotkey)wgetch(wBorder); });
+      };
+      function<void()> resize = [&]() {
+        if (!wBorder) return;
+        struct winsize ws;
+        if (ioctl(0, TIOCGWINSZ, &ws) < 0 or (ws.ws_row == getmaxy(wBorder) and ws.ws_col == getmaxx(wBorder)))
+          return;
+        werase(wBorder);
+        werase(wLog);
+        if (ws.ws_row < 10) ws.ws_row = 10;
+        if (ws.ws_col < 20) ws.ws_col = 20;
+        wresize(wBorder, ws.ws_row, ws.ws_col);
+        resizeterm(ws.ws_row, ws.ws_col);
+        refresh();
       };
   };
 }

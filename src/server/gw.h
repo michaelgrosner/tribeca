@@ -70,6 +70,7 @@ namespace K {
       mConnectivity serverSemaphore(mConnectivity *current, mConnectivity updated) {
         if (*current != updated) {
           *current = updated;
+          ((SH*)screen)->gwConnectExchange =
           ((QE*)engine)->gwConnectExchange = gwConnectMarket * gwConnectOrders;
           clientSemaphore();
         }
@@ -78,10 +79,12 @@ namespace K {
       void clientSemaphore() {
         mConnectivity updated = gwAdminEnabled * ((QE*)engine)->gwConnectExchange;
         if (((QE*)engine)->gwConnectButton != updated) {
+          ((SH*)screen)->gwConnectButton =
           ((QE*)engine)->gwConnectButton = updated;
           ((SH*)screen)->log(string("GW ") + gw->name, "Quoting state changed to", string(!((QE*)engine)->gwConnectButton?"DIS":"") + "CONNECTED");
         }
         ((UI*)client)->send(mMatter::Connectivity, serverState());
+        ((SH*)screen)->refresh();
       };
       json serverState() {
         return {

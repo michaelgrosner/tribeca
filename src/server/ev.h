@@ -67,17 +67,18 @@ namespace K  {
         uiGroup->close();
       };
       void listen() {
-        string protocol("HTTP");
+        ((SH*)screen)->protocol = "HTTP";
         if (!((CF*)config)->argWithoutSSL
           and (access("etc/sslcert/server.crt", F_OK) != -1) and (access("etc/sslcert/server.key", F_OK) != -1)
           and hub->listen(((CF*)config)->argPort, uS::TLS::createContext("etc/sslcert/server.crt", "etc/sslcert/server.key", ""), 0, uiGroup)
-        ) protocol += "S";
+        ) ((SH*)screen)->protocol += "S";
         else if (!hub->listen(((CF*)config)->argPort, nullptr, 0, uiGroup))
           exit(error("IU", string("Use another UI port number, ")
             + to_string(((CF*)config)->argPort) + " seems already in use by:\n"
             + FN::output(string("netstat -anp 2>/dev/null | grep ") + to_string(((CF*)config)->argPort))
           ));
-        ((SH*)screen)->logUI(protocol, ((CF*)config)->argPort);
+        ((SH*)screen)->port = ((CF*)config)->argPort;
+        ((SH*)screen)->logUI();
       };
       void deferred(function<void()> fn) {
         slowFn.push_back(fn);
@@ -96,7 +97,7 @@ namespace K  {
       };
     private:
       function<void()> happyEnding = [&]() {
-        cout << ((SH*)screen)->uiT() << gw->name;
+        cout << ((SH*)screen)->stamp() << gw->name;
         for (unsigned int i = 0; i < 21; ++i)
           cout << " THE END IS NEVER";
         cout << " THE END." << '\n';
@@ -125,7 +126,7 @@ namespace K  {
         for (function<void()>* &it : gwEndings) (*it)();
         if (last_int_alive == EXIT_FAILURE)
           this_thread::sleep_for(chrono::seconds(3));
-        cout << ((SH*)screen)->uiT() << "K exit code " << to_string(last_int_alive) << "." << '\n';
+        cout << ((SH*)screen)->stamp() << "K exit code " << to_string(last_int_alive) << "." << '\n';
         exit(last_int_alive);
       };
       static void quit(int last_int_alive) {
@@ -146,6 +147,7 @@ namespace K  {
           THIS_WAS_A_TRIUMPH
             << " (Three-Headed Monkey found):" << '\n' << rollout.str()
             << "- lastbeat: " << to_string(_Tstamp_) << '\n'
+            << "- os-uname: " << FN::output("uname -srvmo") << '\n'
             << "- tracelog: " << '\n';
           void *k[69];
           size_t jumps = backtrace(k, 69);

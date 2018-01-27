@@ -39,7 +39,7 @@ namespace K {
         };
         ((EV*)events)->ogOrder = [&](mOrder *k) {                   _debugEvent_
           calcWalletAfterOrder(k);
-          ((SH*)screen)->refresh(((OG*)broker)->orders);
+          ((SH*)screen)->log(((OG*)broker)->orders);
         };
         ((EV*)events)->ogTrade = [&](mTrade *k) {                   _debugEvent_
           calcSafetyAfterTrade(k);
