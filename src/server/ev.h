@@ -38,7 +38,7 @@ namespace K  {
         tClient = new Timer(hub->getLoop());
       };
       void waitData() {
-        aEngine = new Async(hub->getLoop());
+        gw->aEngine = aEngine = new Async(hub->getLoop());
         aEngine->setData(this);
         aEngine->start(asyncLoop);
         gw->gwGroup = hub->createGroup<uWS::CLIENT>();

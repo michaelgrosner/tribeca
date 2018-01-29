@@ -28,7 +28,7 @@ namespace K {
           if (!serverSemaphore(&gwConnectMarket, k))
             gw->evDataLevels(mLevels());
         };
-        gw->levels();
+        gw->connect();
       };
       void waitUser() {
         ((UI*)client)->welcome(mMatter::Connectivity, &hello);

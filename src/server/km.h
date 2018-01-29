@@ -589,7 +589,13 @@ namespace K {
   class Gw {
     public:
       virtual string A() = 0;
-      void *screen = nullptr;
+      void                    *screen  = nullptr;
+      uWS::Hub                *hub     = nullptr;
+      uWS::Group<uWS::CLIENT> *gwGroup = nullptr;
+      Async                   *aEngine = nullptr;
+      Timer          *tReconnectMarket = nullptr,
+                     *tReconnectTrades = nullptr,
+                     *tReconnectOrders = nullptr;
       static Gw *config(mCoinId, mCoinId, string, int, string, string, string, string, string, string, int, int, void*);
       function<void(mOrder)>        evDataOrder;
       function<void(mTrade)>        evDataTrade;
@@ -608,14 +614,55 @@ namespace K {
                 apikey   = "", secret  = "",
                 user     = "", pass    = "",
                 ws       = "", http    = "";
-      uWS::Hub                *hub     = nullptr;
-      uWS::Group<uWS::CLIENT> *gwGroup = nullptr;
       mRandId (*randId)() = 0;
-      virtual vector<mOrder> sync_cancelAll() = 0;
-      virtual void levels() = 0,
-                   send(mRandId, mRandId, mRandId, mSide, string, string, mOrderType, mTimeInForce, bool, mClock) = 0,
+      virtual void send(mRandId, mRandId, mRandId, mSide, string, string, mOrderType, mTimeInForce, bool, mClock) = 0,
                    cancel(mRandId, mRandId, mSide, mClock) = 0,
                    close() = 0;
+      void levelsConnect() {
+        if (!tReconnectMarket){
+          tReconnectMarket = new Timer(hub->getLoop());
+          tReconnectMarket->setData(this);
+        }
+        tReconnectMarket->start([](Timer *handle) {
+          Gw* gw = (Gw*)handle->getData();
+          gw->tReconnectMarket->stop();
+          gw->hub->connect(gw->ws, nullptr, {}, 5000, gw->gwGroup);
+        }, 0, 10e+3);
+      };
+      void connect() {
+        if (async_levels()) levelsConnect();
+        else {
+          tReconnectMarket = new Timer(hub->getLoop());
+          tReconnectMarket->setData(this);
+          tReconnectMarket->start([](Timer *handle) {
+            Gw* gw = (Gw*)handle->getData();
+            if (gw->levels()) gw->aEngine->send();
+          }, 2e+3, 2e+3);
+        }
+        if (!async_trades()) {
+          tReconnectTrades = new Timer(hub->getLoop());
+          tReconnectTrades->setData(this);
+          tReconnectTrades->start([](Timer *handle) {
+            Gw* gw = (Gw*)handle->getData();
+            if (gw->trades()) gw->aEngine->send();
+          }, 60e+3, 60e+3);
+        }
+        if (!async_orders()) {
+          tReconnectOrders = new Timer(hub->getLoop());
+          tReconnectOrders->setData(this);
+          tReconnectOrders->start([](Timer *handle) {
+            Gw* gw = (Gw*)handle->getData();
+            if (gw->orders()) gw->aEngine->send();
+          }, 2e+3, 2e+3);
+        }
+      };
+      bool waitForData() {
+        return waitFor(replyOrders, evDataOrder)
+             | waitFor(replyLevels, evDataLevels)
+             | waitFor(replyTrades, evDataTrade)
+             | waitFor(replyWallet, evDataWallet)
+             | waitFor(replyCancelAll, evDataOrder);
+      };
       function<bool()> wallet = [&]() {
         if (!replyWallet.valid() and !async_wallet())
           replyWallet = ::async(launch::async, [this] { return sync_wallet(); });
@@ -626,24 +673,43 @@ namespace K {
           replyCancelAll = ::async(launch::async, [this] { return sync_cancelAll(); });
         return replyCancelAll.valid();
       };
-      bool waitForData() {
-        return waitForWallet()
-             | waitForCancelAll();
+      virtual vector<mOrder> sync_cancelAll() = 0;
+    protected:
+      bool levels() {
+        if (!replyLevels.valid())
+          replyLevels = ::async(launch::async, [this] { return sync_levels(); });
+        return replyLevels.valid();
       };
-    private:
+      bool trades() {
+        if (!replyTrades.valid())
+          replyTrades = ::async(launch::async, [this] { return sync_trades(); });
+        return replyTrades.valid();
+      };
+      bool orders() {
+        if (!replyOrders.valid())
+          replyOrders = ::async(launch::async, [this] { return sync_orders(); });
+        return replyOrders.valid();
+      };
       virtual bool async_wallet() { return false; };
+      virtual bool async_levels() { return false; };
+      virtual bool async_trades() { return false; };
+      virtual bool async_orders() { return false; };
       virtual vector<mWallet> sync_wallet() { return vector<mWallet>(); };
+      virtual vector<mLevels> sync_levels() { return vector<mLevels>(); };
+      virtual vector<mTrade> sync_trades() { return vector<mTrade>(); };
+      virtual vector<mOrder> sync_orders() { return vector<mOrder>(); };
       future<vector<mWallet>> replyWallet;
+      future<vector<mLevels>> replyLevels;
+      future<vector<mTrade>> replyTrades;
+      future<vector<mOrder>> replyOrders;
       future<vector<mOrder>> replyCancelAll;
-      unsigned int waitForWallet() {
-        if (replyWallet.valid() and replyWallet.wait_for(chrono::nanoseconds(0))==future_status::ready)
-          for (mWallet &it : replyWallet.get()) evDataWallet(it);
-        return replyWallet.valid();
-      };
-      unsigned int waitForCancelAll() {
-        if (replyCancelAll.valid() and replyCancelAll.wait_for(chrono::nanoseconds(0))==future_status::ready)
-          for (mOrder &it : replyCancelAll.get()) evDataOrder(it);
-        return replyCancelAll.valid();
+      template<typename mData> unsigned int waitFor(future<vector<mData>> &reply, function<void(mData)> &fn) {
+        bool waiting = reply.valid();
+        if (waiting and reply.wait_for(chrono::nanoseconds(0))==future_status::ready) {
+          for (mData &it : reply.get()) fn(it);
+          waiting = false;
+        }
+        return waiting;
       };
   };
   class Klass {

@@ -298,10 +298,10 @@ namespace K {
         if (b) wattroff(wLog, A_BOLD);
         wrefresh(wLog);
       };
-      void log(map<mRandId, mOrder> orders) {
+      void log(map<mRandId, mOrder> *orders) {
         if (!wBorder) return;
         openOrders.clear();
-        for (map<mRandId, mOrder>::value_type &it : orders)
+        for (map<mRandId, mOrder>::value_type &it : *orders)
           if (mStatus::Working == it.second.orderStatus)
             openOrders.insert(pair<mPrice, mOrder>(it.second.price, it.second));
         refresh();
@@ -395,14 +395,13 @@ namespace K {
         hotkey = ::async(launch::async, [&] { return (mHotkey)wgetch(wBorder); });
       };
       function<void()> resize = [&]() {
-        if (!wBorder) return;
         struct winsize ws;
         if (ioctl(0, TIOCGWINSZ, &ws) < 0 or (ws.ws_row == getmaxy(wBorder) and ws.ws_col == getmaxx(wBorder)))
           return;
         werase(wBorder);
         werase(wLog);
         if (ws.ws_row < 10) ws.ws_row = 10;
-        if (ws.ws_col < 20) ws.ws_col = 20;
+        if (ws.ws_col < 30) ws.ws_col = 30;
         wresize(wBorder, ws.ws_row, ws.ws_col);
         resizeterm(ws.ws_row, ws.ws_col);
         refresh();

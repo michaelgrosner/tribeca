@@ -49,15 +49,14 @@ namespace K {
         return j;
       };
       void insert(mMatter table, json cell, bool rm = true, string updateId = "NULL", mClock rmOlder = 0) {
-        ((EV*)events)->deferred([this, table, cell, rm, updateId, rmOlder]() {
+        string sql = string((rm or updateId != "NULL" or rmOlder) ? string("DELETE FROM ") + _table_(table)
+          + (updateId != "NULL" ? string(" WHERE id = ") + updateId : (
+            rmOlder ? string(" WHERE time < ") + to_string(rmOlder) : ""
+          ) ) : "") + ";" + (cell.is_null() ? "" : string("INSERT INTO ") + _table_(table)
+            + " (id,json) VALUES(" + updateId + ",'" + cell.dump() + "');");
+        ((EV*)events)->deferred([this, sql]() {
           char* zErrMsg = 0;
-          sqlite3_exec(db, (
-            string((rm or updateId != "NULL" or rmOlder) ? string("DELETE FROM ") + _table_(table)
-            + (updateId != "NULL" ? string(" WHERE id = ") + updateId : (
-              rmOlder ? string(" WHERE time < ") + to_string(rmOlder) : ""
-            ) ) : "") + ";" + (cell.is_null() ? "" : string("INSERT INTO ") + _table_(table)
-              + " (id,json) VALUES(" + updateId + ",'" + cell.dump() + "');")
-          ).data(), NULL, NULL, &zErrMsg);
+          sqlite3_exec(db, sql.data(), NULL, NULL, &zErrMsg);
           if (zErrMsg) ((SH*)screen)->logWar("DB", string("Sqlite error: ") + zErrMsg);
           sqlite3_free(zErrMsg);
         });
