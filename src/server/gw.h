@@ -93,10 +93,10 @@ namespace K {
         };
       };
       inline void timer_15s() {                                     _debugEvent_
-        ((EV*)events)->async(&gw->wallet);
+        gw->async(gw->wallet);
         if (qp->cancelOrdersAuto)
           if (!gwT_5m++)
-            ((EV*)events)->async(&gw->cancelAll);
+            gw->async(gw->cancelAll);
           else if (gwT_5m == 20) gwT_5m = 0;
       };
       inline void handshake(mExchange k) {

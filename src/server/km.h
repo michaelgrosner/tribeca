@@ -618,41 +618,40 @@ namespace K {
       virtual void send(mRandId, mRandId, mRandId, mSide, string, string, mOrderType, mTimeInForce, bool, mClock) = 0,
                    cancel(mRandId, mRandId, mSide, mClock) = 0,
                    close() = 0;
-      void levelsConnect() {
-        if (!tReconnectMarket){
-          tReconnectMarket = new Timer(hub->getLoop());
-          tReconnectMarket->setData(this);
-        }
-        tReconnectMarket->start([](Timer *handle) {
-          Gw* gw = (Gw*)handle->getData();
-          gw->tReconnectMarket->stop();
+      inline void levelsConnect() {
+        tReconnectMarket->start([](Timer *tReconnectMarket) {
+          Gw* gw = (Gw*)tReconnectMarket->getData();
+          tReconnectMarket->stop();
           gw->hub->connect(gw->ws, nullptr, {}, 5000, gw->gwGroup);
         }, 0, 10e+3);
       };
+      void async(function<bool()> &fn) {
+        if (fn()) aEngine->send();
+      };
       void connect() {
+        tReconnectMarket = new Timer(hub->getLoop());
+        tReconnectMarket->setData(this);
         if (async_levels()) levelsConnect();
         else {
-          tReconnectMarket = new Timer(hub->getLoop());
-          tReconnectMarket->setData(this);
-          tReconnectMarket->start([](Timer *handle) {
-            Gw* gw = (Gw*)handle->getData();
-            if (gw->levels()) gw->aEngine->send();
+          tReconnectMarket->start([](Timer *tReconnectMarket) {
+            Gw* gw = (Gw*)tReconnectMarket->getData();
+            gw->async(gw->levels);
           }, 2e+3, 2e+3);
         }
         if (!async_trades()) {
           tReconnectTrades = new Timer(hub->getLoop());
           tReconnectTrades->setData(this);
-          tReconnectTrades->start([](Timer *handle) {
-            Gw* gw = (Gw*)handle->getData();
-            if (gw->trades()) gw->aEngine->send();
+          tReconnectTrades->start([](Timer *tReconnectTrades) {
+            Gw* gw = (Gw*)tReconnectTrades->getData();
+            gw->async(gw->trades);
           }, 60e+3, 60e+3);
         }
         if (!async_orders()) {
           tReconnectOrders = new Timer(hub->getLoop());
           tReconnectOrders->setData(this);
-          tReconnectOrders->start([](Timer *handle) {
-            Gw* gw = (Gw*)handle->getData();
-            if (gw->orders()) gw->aEngine->send();
+          tReconnectOrders->start([](Timer *tReconnectOrders) {
+            Gw* gw = (Gw*)tReconnectOrders->getData();
+            gw->async(gw->orders);
           }, 2e+3, 2e+3);
         }
       };
@@ -675,17 +674,17 @@ namespace K {
       };
       virtual vector<mOrder> sync_cancelAll() = 0;
     protected:
-      bool levels() {
+      function<bool()> levels = [&]() {
         if (!replyLevels.valid())
           replyLevels = ::async(launch::async, [this] { return sync_levels(); });
         return replyLevels.valid();
       };
-      bool trades() {
+      function<bool()> trades = [&]() {
         if (!replyTrades.valid())
           replyTrades = ::async(launch::async, [this] { return sync_trades(); });
         return replyTrades.valid();
       };
-      bool orders() {
+      function<bool()> orders = [&]() {
         if (!replyOrders.valid())
           replyOrders = ::async(launch::async, [this] { return sync_orders(); });
         return replyOrders.valid();

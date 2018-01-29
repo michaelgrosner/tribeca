@@ -84,9 +84,6 @@ namespace K  {
         slowFn.push_back(fn);
         aEngine->send();
       };
-      void async(function<bool()> *fn) {
-        if ((*fn)()) aEngine->send();
-      };
       int error(string k, string s, bool reboot = false) {
         ((SH*)screen)->quit();
         ((SH*)screen)->logErr(k, s);
