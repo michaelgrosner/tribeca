@@ -594,8 +594,7 @@ class DisplayOrder {
                                       <button type="button"
                                               class="btn btn-danger navbar-btn"
                                               (click)="cleanAllOrders()"
-                                              *ngIf="[1,2,3].indexOf(pair.quotingParameters.display.safety)>-1"
-                                              data-placement="bottom">Clean Pings
+                                              data-placement="bottom">{{ [1,2,3].indexOf(pair.quotingParameters.display.safety)>-1 ? 'Clean Pings' : 'Clean Trades' }}
                                       </button>
                                   </div>
                                 </div>
