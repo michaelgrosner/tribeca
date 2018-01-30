@@ -23,12 +23,6 @@ namespace K {
         quotingMode[mQuotingMode::Depth]       = &calcDepthOfMarket;
         findMode("loaded");
       };
-      void waitTime() {
-        ((EV*)events)->tEngine->setData(this);
-        ((EV*)events)->tEngine->start([](Timer *tEngine) {
-          ((QE*)tEngine->getData())->timer_1s();
-        }, 1e+3, 1e+3);
-      };
       void waitData() {
         ((EV*)events)->uiQuotingParameters = [&]() {                _debugEvent_
           findMode("saved");
@@ -41,6 +35,12 @@ namespace K {
         ((EV*)events)->mgLevels = [&]() {                           _debugEvent_
           calcQuote();
         };
+      };
+      void waitTime() {
+        ((EV*)events)->tEngine->setData(this);
+        ((EV*)events)->tEngine->start([](Timer *tEngine) {
+          ((QE*)tEngine->getData())->timer_1s();
+        }, 1e+3, 1e+3);
       };
       void waitUser() {
         ((UI*)client)->welcome(mMatter::QuoteStatus, &hello);

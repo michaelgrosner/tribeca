@@ -25,11 +25,6 @@ namespace K {
         ) return;
         B64auth = string("Basic ") + FN::oB64(((CF*)config)->argUser + ':' + ((CF*)config)->argPass);
       };
-      void waitTime() {
-        if (((CF*)config)->argHeadless) return;
-        ((EV*)events)->tClient->setData(this);
-        ((EV*)events)->tClient->start(timer, 0, 0);
-      };
       void waitData() {
         if (((CF*)config)->argHeadless) return;
         ((EV*)events)->uiGroup->onConnection([&](uWS::WebSocket<uWS::SERVER> *webSocket, uWS::HttpRequest req) {
@@ -114,6 +109,11 @@ namespace K {
             (*kisses[message[1]])(butterfly);
           }
         });
+      };
+      void waitTime() {
+        if (((CF*)config)->argHeadless) return;
+        ((EV*)events)->tClient->setData(this);
+        ((EV*)events)->tClient->start(timer, 0, 0);
       };
       void waitUser() {
         if (((CF*)config)->argHeadless) {

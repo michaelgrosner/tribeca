@@ -276,7 +276,7 @@ namespace K {
         calcWallet(mWallet(amount, heldAmount, k->side == mSide::Ask ? k->pair.base : k->pair.quote));
         if (!k->tradeQuantity or walletT_2s + 2e+3 > _Tstamp_) return;
         walletT_2s = _Tstamp_;
-        gw->async(gw->wallet);
+        ((EV*)events)->async(gw->wallet);
       };
       void calcPDiv(mAmount baseValue) {
         mAmount pDiv = qp->percentageValues

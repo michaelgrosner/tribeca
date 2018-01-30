@@ -32,16 +32,16 @@ namespace K  {
         if (!gw) exit(error("GW", string("Unable to load a valid gateway using --exchange=") + ((CF*)config)->argExchange + " argument"));
         gw->hub = hub = new uWS::Hub(0, true);
       };
+      void waitData() {
+        aEngine = new Async(hub->getLoop());
+        aEngine->setData(this);
+        aEngine->start(asyncLoop);
+        gw->gwGroup = hub->createGroup<uWS::CLIENT>();
+      };
       void waitTime() {
         tServer = new Timer(hub->getLoop());
         tEngine = new Timer(hub->getLoop());
         tClient = new Timer(hub->getLoop());
-      };
-      void waitData() {
-        gw->aEngine = aEngine = new Async(hub->getLoop());
-        aEngine->setData(this);
-        aEngine->start(asyncLoop);
-        gw->gwGroup = hub->createGroup<uWS::CLIENT>();
       };
       void waitUser() {
         uiGroup = hub->createGroup<uWS::SERVER>(uWS::PERMESSAGE_DEFLATE);
@@ -83,6 +83,9 @@ namespace K  {
       void deferred(function<void()> fn) {
         slowFn.push_back(fn);
         aEngine->send();
+      };
+      void async(function<bool()> &fn) {
+        if (fn()) aEngine->send();
       };
       int error(string k, string s, bool reboot = false) {
         ((SH*)screen)->quit();
@@ -144,7 +147,7 @@ namespace K  {
           THIS_WAS_A_TRIUMPH
             << " (Three-Headed Monkey found):" << '\n' << rollout.str()
             << "- lastbeat: " << to_string(_Tstamp_) << '\n'
-            << "- os-uname: " << FN::output("uname -srvmo") << '\n'
+            << "- os-uname: " << FN::output("uname -srvmo")
             << "- tracelog: " << '\n';
           void *k[69];
           size_t jumps = backtrace(k, 69);

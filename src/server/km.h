@@ -592,11 +592,8 @@ namespace K {
       void                    *screen  = nullptr;
       uWS::Hub                *hub     = nullptr;
       uWS::Group<uWS::CLIENT> *gwGroup = nullptr;
-      Async                   *aEngine = nullptr;
-      Timer          *tReconnectMarket = nullptr,
-                     *tReconnectTrades = nullptr,
-                     *tReconnectOrders = nullptr;
       static Gw *config(mCoinId, mCoinId, string, int, string, string, string, string, string, string, int, int, void*);
+      function<void(string)>        reconnect;
       function<void(mOrder)>        evDataOrder;
       function<void(mTrade)>        evDataTrade;
       function<void(mWallet)>       evDataWallet;
@@ -618,81 +615,24 @@ namespace K {
       virtual void send(mRandId, mRandId, mRandId, mSide, string, string, mOrderType, mTimeInForce, bool, mClock) = 0,
                    cancel(mRandId, mRandId, mSide, mClock) = 0,
                    close() = 0;
-      inline void levelsConnect() {
-        tReconnectMarket->start([](Timer *tReconnectMarket) {
-          Gw* gw = (Gw*)tReconnectMarket->getData();
-          tReconnectMarket->stop();
-          gw->hub->connect(gw->ws, nullptr, {}, 5000, gw->gwGroup);
-        }, 0, 10e+3);
-      };
-      void async(function<bool()> &fn) {
-        if (fn()) aEngine->send();
-      };
-      void connect() {
-        tReconnectMarket = new Timer(hub->getLoop());
-        tReconnectMarket->setData(this);
-        if (async_levels()) levelsConnect();
-        else {
-          tReconnectMarket->start([](Timer *tReconnectMarket) {
-            Gw* gw = (Gw*)tReconnectMarket->getData();
-            gw->async(gw->levels);
-          }, 2e+3, 2e+3);
-        }
-        if (!async_trades()) {
-          tReconnectTrades = new Timer(hub->getLoop());
-          tReconnectTrades->setData(this);
-          tReconnectTrades->start([](Timer *tReconnectTrades) {
-            Gw* gw = (Gw*)tReconnectTrades->getData();
-            gw->async(gw->trades);
-          }, 60e+3, 60e+3);
-        }
-        if (!async_orders()) {
-          tReconnectOrders = new Timer(hub->getLoop());
-          tReconnectOrders->setData(this);
-          tReconnectOrders->start([](Timer *tReconnectOrders) {
-            Gw* gw = (Gw*)tReconnectOrders->getData();
-            gw->async(gw->orders);
-          }, 2e+3, 2e+3);
-        }
-      };
-      bool waitForData() {
+      inline bool waitForData() {
         return waitFor(replyOrders, evDataOrder)
              | waitFor(replyLevels, evDataLevels)
              | waitFor(replyTrades, evDataTrade)
              | waitFor(replyWallet, evDataWallet)
              | waitFor(replyCancelAll, evDataOrder);
       };
-      function<bool()> wallet = [&]() {
-        if (!replyWallet.valid() and !async_wallet())
-          replyWallet = ::async(launch::async, [this] { return sync_wallet(); });
-        return replyWallet.valid();
-      };
-      function<bool()> cancelAll = [&]() {
-        if (!replyCancelAll.valid())
-          replyCancelAll = ::async(launch::async, [this] { return sync_cancelAll(); });
-        return replyCancelAll.valid();
-      };
-      virtual vector<mOrder> sync_cancelAll() = 0;
-    protected:
-      function<bool()> levels = [&]() {
-        if (!replyLevels.valid())
-          replyLevels = ::async(launch::async, [this] { return sync_levels(); });
-        return replyLevels.valid();
-      };
-      function<bool()> trades = [&]() {
-        if (!replyTrades.valid())
-          replyTrades = ::async(launch::async, [this] { return sync_trades(); });
-        return replyTrades.valid();
-      };
-      function<bool()> orders = [&]() {
-        if (!replyOrders.valid())
-          replyOrders = ::async(launch::async, [this] { return sync_orders(); });
-        return replyOrders.valid();
-      };
-      virtual bool async_wallet() { return false; };
+      function<bool()> wallet = [&]() { return !(async_wallet() or !askFor(replyWallet, [&]() { return sync_wallet(); })); };
+      function<bool()> levels = [&]() { return askFor(replyLevels, [&]() { return sync_levels(); }); };
+      function<bool()> trades = [&]() { return askFor(replyTrades, [&]() { return sync_trades(); }); };
+      function<bool()> orders = [&]() { return askFor(replyOrders, [&]() { return sync_orders(); }); };
+      function<bool()> cancelAll = [&]() { return askFor(replyCancelAll, [&]() { return sync_cancelAll(); }); };
       virtual bool async_levels() { return false; };
       virtual bool async_trades() { return false; };
       virtual bool async_orders() { return false; };
+      virtual vector<mOrder> sync_cancelAll() = 0;
+    protected:
+      virtual bool async_wallet() { return false; };
       virtual vector<mWallet> sync_wallet() { return vector<mWallet>(); };
       virtual vector<mLevels> sync_levels() { return vector<mLevels>(); };
       virtual vector<mTrade> sync_trades() { return vector<mTrade>(); };
@@ -702,7 +642,15 @@ namespace K {
       future<vector<mTrade>> replyTrades;
       future<vector<mOrder>> replyOrders;
       future<vector<mOrder>> replyCancelAll;
-      template<typename mData> unsigned int waitFor(future<vector<mData>> &reply, function<void(mData)> &fn) {
+      template<typename mData, typename sync> inline bool askFor(future<vector<mData>> &reply, sync fn) {
+        bool waiting = reply.valid();
+        if (!waiting) {
+          reply = ::async(launch::async, fn);
+          waiting = true;
+        }
+        return waiting;
+      };
+      template<typename mData> inline unsigned int waitFor(future<vector<mData>> &reply, function<void(mData)> &fn) {
         bool waiting = reply.valid();
         if (waiting and reply.wait_for(chrono::nanoseconds(0))==future_status::ready) {
           for (mData &it : reply.get()) fn(it);
@@ -736,8 +684,8 @@ namespace K {
       };
       void wait() {
         load();
-        waitTime();
         waitData();
+        waitTime();
         waitUser();
         run();
       };
