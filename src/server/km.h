@@ -673,8 +673,8 @@ namespace K {
                      *engine = nullptr;
       virtual void load(int argc, char** argv) {};
       virtual void load() {};
-      virtual void waitTime() {};
       virtual void waitData() {};
+      virtual void waitTime() {};
       virtual void waitUser() {};
       virtual void run() {};
     public:

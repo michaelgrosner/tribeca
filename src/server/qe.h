@@ -36,12 +36,6 @@ namespace K {
           calcQuote();
         };
       };
-      void waitTime() {
-        ((EV*)events)->tEngine->setData(this);
-        ((EV*)events)->tEngine->start([](Timer *tEngine) {
-          ((QE*)tEngine->getData())->timer_1s();
-        }, 1e+3, 1e+3);
-      };
       void waitUser() {
         ((UI*)client)->welcome(mMatter::QuoteStatus, &hello);
       };
@@ -50,16 +44,17 @@ namespace K {
         debuq = [&](string k, mQuote &rawQuote) {};
         debug = [&](string k) {};
       };
-    private:
-      function<void(json*)> hello = [&](json *welcome) {
-        *welcome = { status };
-      };
+    public:
       inline void timer_1s() {                                      _debugEvent_
         if (((MG*)market)->fairValue) {
           ((MG*)market)->calcStats();
           ((PG*)wallet)->calcSafety();
           calcQuote();
         } else ((SH*)screen)->logWar("QE", "Unable to calculate quote, missing market data");
+      };
+    private:
+      function<void(json*)> hello = [&](json *welcome) {
+        *welcome = { status };
       };
       inline void findMode(string event) {
         if (quotingMode.find(qp->mode) == quotingMode.end())

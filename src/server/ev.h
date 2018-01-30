@@ -14,7 +14,6 @@ namespace K  {
     public:
       uWS::Group<uWS::SERVER> *uiGroup = nullptr;
       Timer *tServer = nullptr,
-            *tEngine = nullptr,
             *tClient = nullptr;
       function<void(mOrder*)> ogOrder;
       function<void(mTrade*)> ogTrade;
@@ -40,7 +39,6 @@ namespace K  {
       };
       void waitTime() {
         tServer = new Timer(hub->getLoop());
-        tEngine = new Timer(hub->getLoop());
         tClient = new Timer(hub->getLoop());
       };
       void waitUser() {
@@ -58,7 +56,6 @@ namespace K  {
       };
       void stop(function<void()> gwCancelAll) {
         tServer->stop();
-        tEngine->stop();
         tClient->stop();
         gw->close();
         gw->gwGroup->close();
