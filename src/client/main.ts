@@ -376,6 +376,10 @@ class DisplayOrder {
                                             <th title="Use a quote protection of periods smoothed line of the fair value to limit the price while sending new orders.">ewmaPrice?</th>
                                             <th title="Maximum amount of values collected in the sequences used to calculate the ewmaPrice? and ewmaWidth? quote protection." *ngIf="pair.quotingParameters.display.protectionEwmaQuotePrice || pair.quotingParameters.display.protectionEwmaWidthPing">periodsᵉʷᵐᵃ</th>
                                             <th title="Use a quote protection of periods smoothed line of the width (between the top bid and the top ask) to limit the widthPing while sending new orders.">ewmaWidth?</th>
+                                            <th title="To do..">ewmaTrend?</th>
+											<th title="To do.." *ngIf="pair.quotingParameters.display.quotingEwmaTrendProtection">threshold</th>
+											<th title="To do.." *ngIf="pair.quotingParameters.display.quotingEwmaTrendProtection">micro</th>
+											<th title="To do.." *ngIf="pair.quotingParameters.display.quotingEwmaTrendProtection">ultra</th>
                                             <th title="Limit the price of new orders.">stdev</th>
                                             <th title="Maximum amount of values collected in the sequences used to calculate the STDEV, each side may have its own STDEV calculation with the same amount of periods." *ngIf="pair.quotingParameters.display.quotingStdevProtection">periodsˢᵗᵈᶜᵛ</th>
                                             <th title="Multiplier used to increase or decrease the value of the selected stdev calculation, a factor of 1 does effectively nothing." *ngIf="pair.quotingParameters.display.quotingStdevProtection">factor</th>
@@ -430,10 +434,32 @@ class DisplayOrder {
                                                 <input type="checkbox"
                                                    [(ngModel)]="pair.quotingParameters.display.protectionEwmaWidthPing">
                                             </td>
+                                            <td style="text-align: center;border-bottom: 3px solid #fd00ff;">
+                                                <input type="checkbox"
+                                                   [(ngModel)]="pair.quotingParameters.display.quotingEwmaTrendProtection">
+                                            </td>
+                                            <td style="width:60px;border-bottom: 3px solid #fd00ff;" *ngIf="pair.quotingParameters.display.quotingEwmaTrendProtection">
+                                            <input class="form-control input-sm"
+                                                type="number" step="0.1" min="0.1"
+                                                   onClick="this.select()"
+                                                   [(ngModel)]="pair.quotingParameters.display.quotingEwmaTrendThreshold">
+                                            </td>
+                                            <td style="width:60px;border-bottom: 3px solid #fd00ff;" *ngIf="pair.quotingParameters.display.quotingEwmaTrendProtection">
+                                                <input class="form-control input-sm"
+                                                	type="number" step="1" min="1"
+                                                    onClick="this.select()"
+                                                    [(ngModel)]="pair.quotingParameters.display.extraShortEwmaPeriods">
+                                            </td>
+                                            <td style="width:60px;border-bottom: 3px solid #fd00ff;" *ngIf="pair.quotingParameters.display.quotingEwmaTrendProtection">
+                                                <input class="form-control input-sm"
+                                                    type="number" step="1" min="1"
+                                                    onClick="this.select()"
+													[(ngModel)]="pair.quotingParameters.display.ultraShortEwmaPeriods">
+	                                        </td> 
                                             <td style="width:121px;border-bottom: 3px solid #AF451E;">
                                                 <select class="form-control input-sm"
                                                     [(ngModel)]="pair.quotingParameters.display.quotingStdevProtection">
-                                                   <option *ngFor="let option of pair.quotingParameters.availableSTDEV" [ngValue]="option.val">{{option.str}}</option>
+                                                    <option *ngFor="let option of pair.quotingParameters.availableSTDEV" [ngValue]="option.val">{{option.str}}</option>
                                                 </select>
                                             </td>
                                             <td style="width:88px;border-bottom: 3px solid #AF451E;" *ngIf="pair.quotingParameters.display.quotingStdevProtection">

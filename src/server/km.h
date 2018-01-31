@@ -18,7 +18,7 @@ namespace K {
   enum class mPongAt: unsigned int { ShortPingFair, LongPingFair, ShortPingAggressive, LongPingAggressive };
   enum class mQuotingMode: unsigned int { Top, Mid, Join, InverseJoin, InverseTop, HamelinRat, Depth };
   enum class mQuotingSafety: unsigned int { Off, PingPong, Boomerang, AK47 };
-  enum class mQuoteState: unsigned int { Live, Disconnected, DisabledQuotes, MissingData, UnknownHeld, TBPHeld, MaxTradesSeconds, WaitingPing, DepletedFunds, Crossed };
+  enum class mQuoteState: unsigned int { Live, Disconnected, DisabledQuotes, MissingData, UnknownHeld, TBPHeld, MaxTradesSeconds, WaitingPing, DepletedFunds, Crossed, UpTrendHeld, DownTrendHeld };
   enum class mFairValueModel: unsigned int { BBO, wBBO };
   enum class mAutoPositionMode: unsigned int { Manual, EWMA_LS, EWMA_LMS, EWMA_4 };
   enum class mPDivMode: unsigned int { Manual, Linear, Sine, SQRT, Switch};
@@ -79,10 +79,14 @@ namespace K {
     double            quotingStdevProtectionFactor    = 1.0;
     unsigned int      quotingStdevProtectionPeriods   = 1200;
     double            ewmaSensiblityPercentage        = 0.5;
+    bool              quotingEwmaTrendProtection      = false;
+    double            quotingEwmaTrendThreshold       = 2.0;
     unsigned int      veryLongEwmaPeriods             = 400;
     unsigned int      longEwmaPeriods                 = 200;
     unsigned int      mediumEwmaPeriods               = 100;
     unsigned int      shortEwmaPeriods                = 50;
+    unsigned int      extraShortEwmaPeriods           = 12;
+    unsigned int      ultraShortEwmaPeriods           = 3;
     double            aprMultiplier                   = 2;
     double            sopWidthMultiplier              = 2;
     double            sopSizeMultiplier               = 2;
@@ -97,6 +101,8 @@ namespace K {
     bool              _diffLEP                        = false;
     bool              _diffMEP                        = false;
     bool              _diffSEP                        = false;
+    bool              _diffXSEP                       = false;
+    bool              _diffUEP                        = false;
     void tidy() {
       if (mode == mQuotingMode::Depth) widthPercentage = false;
     };
@@ -108,6 +114,8 @@ namespace K {
       _diffLEP = prev.longEwmaPeriods != longEwmaPeriods;
       _diffMEP = prev.mediumEwmaPeriods != mediumEwmaPeriods;
       _diffSEP = prev.shortEwmaPeriods != shortEwmaPeriods;
+      _diffXSEP = prev.extraShortEwmaPeriods != shortEwmaPeriods;
+      _diffUEP = prev.ultraShortEwmaPeriods != shortEwmaPeriods;
     };
     bool diffOnce(bool *k) {
       bool ret = *k;
@@ -158,10 +166,14 @@ namespace K {
       {   "quotingStdevProtectionFactor", k.quotingStdevProtectionFactor   },
       {  "quotingStdevProtectionPeriods", k.quotingStdevProtectionPeriods  },
       {       "ewmaSensiblityPercentage", k.ewmaSensiblityPercentage       },
+      {    "quotingEwmaTrendProtection ", k.quotingEwmaTrendProtection     },
+      {      "quotingEwmaTrendThreshold", k.quotingEwmaTrendThreshold      },
       {            "veryLongEwmaPeriods", k.veryLongEwmaPeriods            },
       {                "longEwmaPeriods", k.longEwmaPeriods                },
       {              "mediumEwmaPeriods", k.mediumEwmaPeriods              },
       {               "shortEwmaPeriods", k.shortEwmaPeriods               },
+      {          "extraShortEwmaPeriods", k.extraShortEwmaPeriods          },
+      {          "ultraShortEwmaPeriods", k.ultraShortEwmaPeriods          },
       {                  "aprMultiplier", k.aprMultiplier                  },
       {             "sopWidthMultiplier", k.sopWidthMultiplier             },
       {              "sopSizeMultiplier", k.sopSizeMultiplier              },
@@ -215,10 +227,14 @@ namespace K {
     k.quotingStdevProtectionFactor    =                       j.value("quotingStdevProtectionFactor", k.quotingStdevProtectionFactor);
     k.quotingStdevProtectionPeriods   = fmax(1,               j.value("quotingStdevProtectionPeriods", k.quotingStdevProtectionPeriods));
     k.ewmaSensiblityPercentage        =                       j.value("ewmaSensiblityPercentage", k.ewmaSensiblityPercentage);
-    k.veryLongEwmaPeriods             = fmax(1,               j.value("veryLongEwmaPeriods", k.veryLongEwmaPeriods));
+    k.quotingEwmaTrendProtection      =                       j.value("quotingEwmaTrendProtection", k.quotingEwmaTrendProtection);
+	k.quotingEwmaTrendThreshold       =                       j.value("quotingEwmaTrendThreshold ", k.quotingEwmaTrendThreshold);
+	k.veryLongEwmaPeriods             = fmax(1,               j.value("veryLongEwmaPeriods", k.veryLongEwmaPeriods));
     k.longEwmaPeriods                 = fmax(1,               j.value("longEwmaPeriods", k.longEwmaPeriods));
     k.mediumEwmaPeriods               = fmax(1,               j.value("mediumEwmaPeriods", k.mediumEwmaPeriods));
     k.shortEwmaPeriods                = fmax(1,               j.value("shortEwmaPeriods", k.shortEwmaPeriods));
+    k.extraShortEwmaPeriods           = fmax(1,               j.value("extraShortEwmaPeriods", k.extraShortEwmaPeriods));
+	k.ultraShortEwmaPeriods           = fmax(1,               j.value("ultraShortEwmaPeriods", k.ultraShortEwmaPeriods));
     k.aprMultiplier                   =                       j.value("aprMultiplier", k.aprMultiplier);
     k.sopWidthMultiplier              =                       j.value("sopWidthMultiplier", k.sopWidthMultiplier);
     k.sopSizeMultiplier               =                       j.value("sopSizeMultiplier", k.sopSizeMultiplier);

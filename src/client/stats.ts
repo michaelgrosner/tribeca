@@ -28,6 +28,7 @@ export class StatsComponent implements OnInit {
   public ewmaMedium: number;
   public ewmaLong: number;
   public ewmaVeryLong: number;
+  public ewmaTrendDiff: number;
   public stdevWidth: Models.IStdev;
   public tradesBuySize: number;
   public tradesSellSize: number;
@@ -279,6 +280,13 @@ export class StatsComponent implements OnInit {
       colorIndex:5,
       data: [],
       zIndex: -2
+    },{
+      name: 'EWMA SMU Diff',
+      type: 'spline',
+      color: '#fd00ff',
+      tooltip: {pointFormatter: this.pointFormatterBase},
+      yAxis: 1,
+      data: []
     }]
   };
   public quoteChartOptions = {
@@ -482,6 +490,7 @@ export class StatsComponent implements OnInit {
     if (o.stdevWidth) this.stdevWidth = o.stdevWidth;
     if (o.tradesBuySize) this.tradesBuySize = o.tradesBuySize;
     if (o.tradesSellSize) this.tradesSellSize = o.tradesSellSize;
+    if (o.ewmaTrendDiff) this.ewmaTrendDiff = o.ewmaTrendDiff;
   }
 
   @Input() set setTradesChartData(t: Models.TradeChart) {
@@ -610,6 +619,7 @@ export class StatsComponent implements OnInit {
       if (this.ewmaMedium) Highcharts.charts[this.fvChart].series[9].addPoint([time, this.ewmaMedium], false);
       if (this.ewmaShort) Highcharts.charts[this.fvChart].series[10].addPoint([time, this.ewmaShort], false);
       Highcharts.charts[this.fvChart].series[0].addPoint([time, this.fairValue], this.showStats);
+      if (this.ewmaTrendDiff) Highcharts.charts[this.fvChart].series[20].addPoint([time, this.ewmaTrendDiff], false);
       if ((<any>Highcharts).quotingParameters.protectionEwmaWidthPing && this.ewmaWidth) Highcharts.charts[this.fvChart].series[1].addPoint([time, this.fairValue-this.ewmaWidth, this.fairValue+this.ewmaWidth], this.showStats, false, false);
       else if (this.width) Highcharts.charts[this.fvChart].series[1].addPoint([time, this.fairValue-this.width, this.fairValue+this.width], this.showStats, false, false);
     }
