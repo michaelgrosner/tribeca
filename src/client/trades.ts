@@ -3,7 +3,7 @@ import {GridOptions, ColDef, RowNode} from 'ag-grid/main';
 
 import * as Models from './models';
 import * as Subscribe from './subscribe';
-import {FireFactory, BaseCurrencyCellComponent, QuoteCurrencyCellComponent, QuoteUntruncatedCurrencyCellComponent} from './shared_directives';
+import {FireFactory, BaseCurrencyCellComponent, QuoteCurrencyCellComponent} from './shared_directives';
 
 @Component({
   selector: 'trade-list',
@@ -92,10 +92,10 @@ export class TradesComponent implements OnInit {
       }, cellRendererFramework: BaseCurrencyCellComponent},
       {width: 69, field:'value', headerName:'val', cellClass: (params) => {
         if (params.data.side === 'K') return (params.data.price > params.data.Kprice) ? "sell" : "buy"; else return params.data.side === 'Sell' ? "sell" : "buy";
-      }, cellRendererFramework: QuoteUntruncatedCurrencyCellComponent},
+      }, cellRendererFramework: QuoteCurrencyCellComponent},
       {width: 75, field:'Kvalue', headerName:'valPong', hide:true, cellClass: (params) => {
         if (params.data.side === 'K') return (params.data.price < params.data.Kprice) ? "sell" : "buy"; else return params.data.Kqty ? ((params.data.price < params.data.Kprice) ? "sell" : "buy") : "";
-      }, cellRendererFramework: QuoteUntruncatedCurrencyCellComponent},
+      }, cellRendererFramework: QuoteCurrencyCellComponent},
       {width: 65, suppressSizeToFit: true, field:'Kqty', headerName:'qtyPong', hide:true, cellClass: (params) => {
         if (params.data.side === 'K') return (params.data.price < params.data.Kprice) ? "sell" : "buy"; else return params.data.Kqty ? ((params.data.price < params.data.Kprice) ? "sell" : "buy") : "";
       }, cellRendererFramework: BaseCurrencyCellComponent},
@@ -104,7 +104,9 @@ export class TradesComponent implements OnInit {
       }, cellRendererFramework: QuoteCurrencyCellComponent},
       {width: 65, field:'Kdiff', headerName:'Kdiff', hide:true, cellClass: (params) => {
         if (params.data.side === 'K') return "kira"; else return "";
-      }, cellRendererFramework: QuoteUntruncatedCurrencyCellComponent}
+      }, cellRenderer: (params) => {
+        return (!params.value) ? "" : params.data.quoteSymbol + parseFloat(params.value.toFixed(8));
+      }}
     ];
   }
 
@@ -168,7 +170,7 @@ export class TradesComponent implements OnInit {
           Kprice: t.Kprice ? t.Kprice : null,
           Kvalue: t.Kvalue ? t.Kvalue : null,
           Kdiff: t.Kdiff && t.Kdiff!=0 ? t.Kdiff : null,
-          quoteSymbol: t.pair.quote,
+          quoteSymbol: t.pair.quote.substr(0,3).replace('USD','$').replace('EUR','€'),
           productFixed: this.product.fixed
         }]});
         if (t.loadedFromDB === false && this.audio) {

@@ -67,7 +67,7 @@ export class BaseCurrencyCellComponent implements AgRendererComponent {
 export class QuoteCurrencyCellComponent implements AgRendererComponent {
   private params:any;
   private quoteSymbol:string = 'USD';
-  private productFixed:number = 2;
+  private productFixed:number = 8;
 
   agInit(params:any):void {
     this.params = params;
@@ -75,27 +75,6 @@ export class QuoteCurrencyCellComponent implements AgRendererComponent {
       this.quoteSymbol = params.node.data.quoteSymbol.substr(0,3);
     if ('productFixed' in params.node.data)
       this.productFixed = params.node.data.productFixed;
-  }
-
-  refresh(): boolean {
-      return false;
-  }
-}
-
-@Component({
-    selector: 'quote-untruncated-currency-cell',
-    template: `{{ quoteSymbol }}{{ params.value }}`
-})
-export class QuoteUntruncatedCurrencyCellComponent implements AgRendererComponent {
-  private params:any;
-  private quoteSymbol:string = 'USD';
-
-  agInit(params:any):void {
-    this.params = params;
-    if ('quoteSymbol' in params.node.data)
-      this.quoteSymbol = params.node.data.quoteSymbol.substr(0,3).replace('USD','$').replace('EUR','€');
-    if (!params.value)
-      this.quoteSymbol = "";
   }
 
   refresh(): boolean {
