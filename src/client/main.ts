@@ -974,7 +974,10 @@ class ClientComponent implements OnInit {
                 ? 'https://hitbtc.com/exchange/'+this.pair_name.join('-to-')
                 : (this.exchange_name=='Kraken'
                   ? 'https://www.kraken.com/charts'
-                  : null
+                  : (this.exchange_name=='Poloniex'
+                    ? 'https://poloniex.com/exchange'
+                    : null
+                  )
                 )
               )
             )
@@ -992,7 +995,10 @@ class ClientComponent implements OnInit {
               ? 'https://hitbtc.com/reports/orders'
               : (this.exchange_name=='Kraken'
                 ? 'https://www.kraken.com/u/trade'
-                : null
+                : (this.exchange_name=='Poloniex'
+                  ? 'https://poloniex.com/tradeHistory'
+                  : null
+                )
               )
             )
           )

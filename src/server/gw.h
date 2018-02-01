@@ -105,9 +105,9 @@ namespace K {
         if (gwT_countdown and gwT_countdown-- == 1)
           gw->hub->connect(gw->ws, nullptr, {}, 5000, gw->gwGroup);
         else ((QE*)engine)->timer_1s();
-        if (sync_orders)
+        if (sync_orders and !(gwT_5m % 2))
           ((EV*)events)->async(gw->orders);
-        if (sync_levels and !(gwT_5m % 2))
+        if (sync_levels and !(gwT_5m % 3))
           ((EV*)events)->async(gw->levels);
         if (!(gwT_5m % 15))
           ((EV*)events)->async(gw->wallet);
@@ -197,12 +197,12 @@ namespace K {
         }
         else if (k == mExchange::Poloniex) {
           gw->randId = FN::int45Id;
-          gw->symbol = FN::FN::S2u(string(gw->base) + "_" + gw->quote);
+          gw->symbol = FN::FN::S2u(string(gw->quote) + "_" + gw->base);
           reply = FN::wJet(string(gw->http) + "/public?command=returnTicker");
           if (reply.find(gw->symbol) != reply.end()) {
             istringstream os(string("1e-").append(to_string(6-reply[gw->symbol]["last"].get<string>().find("."))));
             os >> gw->minTick;
-            gw->minSize = 0.01;
+            gw->minSize = 0.001;
           }
         }
         else if (k == mExchange::Null) {

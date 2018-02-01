@@ -56,9 +56,9 @@ namespace K {
       function<void(json*)> hello = [&](json *welcome) {
         *welcome = { status };
       };
-      inline void findMode(string event) {
+      inline void findMode(string reason) {
         if (quotingMode.find(qp->mode) == quotingMode.end())
-          exit(_errorEvent_("QE", string("Invalid quoting mode ") + event + ", consider to remove the database file"));
+          exit(_errorEvent_("QE", string("Invalid quoting mode ") + reason + ", consider to remove the database file"));
       }
       void calcQuote() {                                            _debugEvent_
         bidStatus = mQuoteState::MissingData;
@@ -471,7 +471,7 @@ namespace K {
       void updateQuote(mLevel q, mSide side, bool isPong) {
         unsigned int n = 0;
         vector<mRandId> toCancel,
-                          working;
+                        working;
         for (map<mRandId, mOrder>::value_type &it : ((OG*)broker)->orders)
           if (it.second.side != side) continue;
           else if (abs(it.second.price - q.price) < gw->minTick) return;
@@ -486,9 +486,11 @@ namespace K {
         ((OG*)broker)->sendOrder(toCancel, side, q.price, q.size, mOrderType::Limit, mTimeInForce::GTC, isPong, true);
       };
       void stopAllQuotes(mSide side) {
+        vector<mRandId> toCancel;
         for (map<mRandId, mOrder>::value_type &it : ((OG*)broker)->orders)
           if (it.second.orderStatus == mStatus::Working and (side == mSide::Both or side == it.second.side))
-            ((OG*)broker)->cancelOrder(it.first);
+            toCancel.push_back(it.first);
+        for (mRandId &it : toCancel) ((OG*)broker)->cancelOrder(it);
       };
       function<void(string, mQuote&)> debuq = [&](string k, mQuote &rawQuote) {
         debug(string("quote") + k + " " + to_string((int)bidStatus) + " " + to_string((int)askStatus) + " " + ((json)rawQuote).dump());
