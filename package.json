@@ -27,6 +27,7 @@
     "uglify-es": "^3.2.2",
     "uglifycss": "^0.0.27",
     "node-sass": "^4.7.2",
+    "renamer": "^0.6.1",
     "zone.js": "^0.8.18"
     
   },
