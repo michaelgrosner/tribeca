@@ -296,8 +296,8 @@ www: src/www $(KLOCAL)/var/www
 css: 
 	@echo Compiling CSS files...
 	rm -rf $(KLOCAL)/var/www/css/*
-	./node_modules/.bin/node-sass --style compressed --output $(KLOCAL)/var/www/css/ src/www/sass/ 
-	./node_modules/.bin/renamer --dry-run --find .css --replace .min.css '$(KLOCAL)/var/www/css/*.css'
+	./node_modules/.bin/node-sass --output-style compressed --output $(KLOCAL)/var/www/css/ src/www/sass/ 
+	./node_modules/.bin/renamer --find .css --replace .min.css '$(KLOCAL)/var/www/css/*.css'
 	@echo DONE
 
 bundle: client www css node_modules/.bin/browserify node_modules/.bin/uglifyjs $(KLOCAL)/var/www/js/main.js
