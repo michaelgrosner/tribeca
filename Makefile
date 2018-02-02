@@ -60,6 +60,7 @@ help:
 	#                                                  #
 	#  make client       - compile K client src        #
 	#  make www          - compile K client src        #
+	#  make css          - compile K client css        #
 	#  make bundle       - compile K client bundle     #
 	#                                                  #
 	#  make test         - run tests                   #
@@ -288,20 +289,18 @@ client: src/client
 	@echo DONE
 
 www: src/www $(KLOCAL)/var/www
-	@echo Compiling CSS files...
-	rm src/www/css/*
-	./node_modules/.bin/node-sass --style compressed --output src/www/css/ src/www/sass/ 
-	cd src/www/css/
-	for j in *.css
-	do 
-	mv -v -- $j ${j%.css}.min.css
-	done
-	cd ../../..
 	@echo Building client static files..
 	cp -R src/www/* $(KLOCAL)/var/www/
 	@echo DONE
+	
+css: 
+	@echo Compiling CSS files...
+	rm -rf $(KLOCAL)/var/www/css/*
+	./node_modules/.bin/node-sass --style compressed --output $(KLOCAL)/var/www/css/ src/www/sass/ 
+	./node_modules/.bin/renamer --dry-run --find .css --replace .min.css '$(KLOCAL)/var/www/css/*.css'
+	@echo DONE
 
-bundle: client www node_modules/.bin/browserify node_modules/.bin/uglifyjs $(KLOCAL)/var/www/js/main.js
+bundle: client www css node_modules/.bin/browserify node_modules/.bin/uglifyjs $(KLOCAL)/var/www/js/main.js
 	@echo Building client bundle file..
 	mkdir -p $(KLOCAL)/var/www/js/client
 	./node_modules/.bin/browserify -t [ babelify --presets [ babili env ] ] $(KLOCAL)/var/www/js/main.js $(KLOCAL)/var/www/js/lib/*.js | ./node_modules/.bin/uglifyjs | gzip > $(KLOCAL)/var/www/js/client/bundle.min.js
