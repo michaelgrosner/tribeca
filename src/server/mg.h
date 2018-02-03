@@ -104,7 +104,6 @@ namespace K {
           calcStatsTrades();
           calcStatsEwmaProtection();
           calcStatsEwmaPosition();
-          calcStatsEwmaTrendProtection();
         } else if (mgT_60s == 60) mgT_60s = 0;
         calcStatsStdevProtection();
       };
@@ -212,6 +211,9 @@ namespace K {
         calcEwma(&mgEwmaL, qp->longEwmaPeriods, fairValue);
         calcEwma(&mgEwmaM, qp->mediumEwmaPeriods, fairValue);
         calcEwma(&mgEwmaS, qp->shortEwmaPeriods, fairValue);
+        calcEwma(&mgEwmaXS, qp->extraShortEwmaPeriods, fairValue);
+        calcEwma(&mgEwmaU, qp->ultraShortEwmaPeriods, fairValue);
+        if(mgEwmaXS and mgEwmaU) mgEwmaTrendDiff = ((mgEwmaU * 100) / mgEwmaXS) - 100;
         calcTargetPos();
         ((EV*)events)->mgTargetPosition();
         ((UI*)client)->send(mMatter::EWMAChart, chartStats());
@@ -220,6 +222,8 @@ namespace K {
           {"ewmaLong", mgEwmaL},
           {"ewmaMedium", mgEwmaM},
           {"ewmaShort", mgEwmaS},
+          {"ewmaExtraShort", mgEwmaXS},
+          {"ewmaUltraShort", mgEwmaU},
           {"time", _Tstamp_}
         });
         ((DB*)memory)->insert(mMatter::MarketDataLongTerm, {
@@ -255,17 +259,6 @@ namespace K {
           {"tradesSellSize", takersSellSize60s},
           {"fairValue", fairValue}
         };
-      };
-      void calcStatsEwmaTrendProtection() {
-        calcEwma(&mgEwmaXS, qp->extraShortEwmaPeriods, fairValue);
-        calcEwma(&mgEwmaU, qp->ultraShortEwmaPeriods, fairValue);
-        ((DB*)memory)->insert(mMatter::EWMAChart, {
-          {"ewmaExtraShort", mgEwmaXS},
-          {"ewmaUltraShoer", mgEwmaU},
-          {"time", _Tstamp_}
-        });
-        if(mgEwmaXS and mgEwmaU)
-          mgEwmaTrendDiff = ((mgEwmaU * 100) / mgEwmaXS) - 100;
       };
       void cleanStdev() {
         size_t periods = (size_t)qp->quotingStdevProtectionPeriods;
