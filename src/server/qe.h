@@ -351,17 +351,16 @@ namespace K {
         rawQuote->bid.price = fmin(((MG*)market)->mgEwmaP, rawQuote->bid.price);
       };
       inline void applyEwmaTrendProtection(mQuote *rawQuote) {
-        if (qp.quotingEwmaTrendProtection and mgEwmaTrendDiff) {
-          if(mgEwmaTrendDiff > qp.quotingEwmaTrendThreshold){
-            qeAskStatus = mQuoteState::UpTrendHeld;
-            rawQuote.ask.price = 0;
-            rawQuote.ask.size = 0;
-          }
-          else if(mgEwmaTrendDiff < -qp.quotingEwmaTrendThreshold){
-            qeBidStatus = mQuoteState::DownTrendHeld;
-            rawQuote.bid.price = 0;
-            rawQuote.bid.size = 0;
-          }
+        if (!qp->quotingEwmaTrendProtection or !((MG*)market)->mgEwmaTrendDiff) return;
+        if (((MG*)market)->mgEwmaTrendDiff > qp->quotingEwmaTrendThreshold){
+          askStatus = mQuoteState::UpTrendHeld;
+          rawQuote->ask.price = 0;
+          rawQuote->ask.size = 0;
+        }
+        else if (((MG*)market)->mgEwmaTrendDiff < -qp->quotingEwmaTrendThreshold){
+          bidStatus = mQuoteState::DownTrendHeld;
+          rawQuote->bid.price = 0;
+          rawQuote->bid.size = 0;
         }
       };
       mQuote quoteAtTopOfMarket() {

@@ -115,8 +115,8 @@ namespace K {
       _diffLEP = prev.longEwmaPeriods != longEwmaPeriods;
       _diffMEP = prev.mediumEwmaPeriods != mediumEwmaPeriods;
       _diffSEP = prev.shortEwmaPeriods != shortEwmaPeriods;
-      _diffXSEP = prev.extraShortEwmaPeriods != shortEwmaPeriods;
-      _diffUEP = prev.ultraShortEwmaPeriods != shortEwmaPeriods;
+      _diffXSEP = prev.extraShortEwmaPeriods != extraShortEwmaPeriods;
+      _diffUEP = prev.ultraShortEwmaPeriods != ultraShortEwmaPeriods;
     };
     bool diffOnce(bool *k) {
       bool ret = *k;
@@ -167,7 +167,7 @@ namespace K {
       {   "quotingStdevProtectionFactor", k.quotingStdevProtectionFactor   },
       {  "quotingStdevProtectionPeriods", k.quotingStdevProtectionPeriods  },
       {       "ewmaSensiblityPercentage", k.ewmaSensiblityPercentage       },
-      {    "quotingEwmaTrendProtection ", k.quotingEwmaTrendProtection     },
+      {     "quotingEwmaTrendProtection", k.quotingEwmaTrendProtection     },
       {      "quotingEwmaTrendThreshold", k.quotingEwmaTrendThreshold      },
       {            "veryLongEwmaPeriods", k.veryLongEwmaPeriods            },
       {                "longEwmaPeriods", k.longEwmaPeriods                },
@@ -229,7 +229,7 @@ namespace K {
     k.quotingStdevProtectionPeriods   = fmax(1,               j.value("quotingStdevProtectionPeriods", k.quotingStdevProtectionPeriods));
     k.ewmaSensiblityPercentage        =                       j.value("ewmaSensiblityPercentage", k.ewmaSensiblityPercentage);
     k.quotingEwmaTrendProtection      =                       j.value("quotingEwmaTrendProtection", k.quotingEwmaTrendProtection);
-    k.quotingEwmaTrendThreshold       =                       j.value("quotingEwmaTrendThreshold ", k.quotingEwmaTrendThreshold);
+    k.quotingEwmaTrendThreshold       =                       j.value("quotingEwmaTrendThreshold", k.quotingEwmaTrendThreshold);
     k.veryLongEwmaPeriods             = fmax(1,               j.value("veryLongEwmaPeriods", k.veryLongEwmaPeriods));
     k.longEwmaPeriods                 = fmax(1,               j.value("longEwmaPeriods", k.longEwmaPeriods));
     k.mediumEwmaPeriods               = fmax(1,               j.value("mediumEwmaPeriods", k.mediumEwmaPeriods));

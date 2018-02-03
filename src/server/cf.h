@@ -10,7 +10,8 @@ namespace K {
            argMaxLevels    = 0,      argHeadless     = 0, argDustybot     = 0,
            argAutobot      = 0,      argNaked        = 0, argFree         = 0,
            argIgnoreSun    = 0,      argIgnoreMoon   = 0, argLifetime     = 0;
-    mPrice argEwmaShort    = 0,      argEwmaMedium   = 0,
+    mPrice argEwmaUShort   = 0,      argEwmaXShort   = 0,
+    	   argEwmaShort    = 0,      argEwmaMedium   = 0,
            argEwmaLong     = 0,      argEwmaVeryLong = 0;
     string argTitle        = "K.sh", argMatryoshka   = "https://www.example.com/",
            argUser         = "NULL", argPass         = "NULL",
