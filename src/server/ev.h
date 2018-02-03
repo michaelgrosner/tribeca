@@ -144,7 +144,7 @@ namespace K  {
           THIS_WAS_A_TRIUMPH
             << " (Three-Headed Monkey found):" << '\n' << rollout.str()
             << "- lastbeat: " << to_string(_Tstamp_) << '\n'
-            << "- os-uname: " << FN::output("uname -srvmo")
+            << "- os-uname: " << FN::output("uname -srvm")
             << "- tracelog: " << '\n';
           void *k[69];
           size_t jumps = backtrace(k, 69);
