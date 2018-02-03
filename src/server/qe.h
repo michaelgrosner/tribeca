@@ -163,6 +163,7 @@ namespace K {
         debuq("I", rawQuote); applyRoundSize(&rawQuote, rawBidSz, rawAskSz);
         debuq("J", rawQuote); applyDepleted(&rawQuote);
         debuq("K", rawQuote); applyWaitingPing(&rawQuote);
+        debuq("L", rawQuote); applyEwmaTrendProtection(&rawQuote);
         debuq("!", rawQuote);
         debug(string("totals ") + "toAsk: " + to_string(((PG*)wallet)->position._baseTotal) + ", "
                                 + "toBid: " + to_string(((PG*)wallet)->position._quoteTotal));
@@ -348,6 +349,20 @@ namespace K {
         if (!qp->protectionEwmaQuotePrice or !((MG*)market)->mgEwmaP) return;
         rawQuote->ask.price = fmax(((MG*)market)->mgEwmaP, rawQuote->ask.price);
         rawQuote->bid.price = fmin(((MG*)market)->mgEwmaP, rawQuote->bid.price);
+      };
+      inline void applyEwmaTrendProtection(mQuote *rawQuote) {
+        if (qp.quotingEwmaTrendProtection and mgEwmaTrendDiff) {
+          if(mgEwmaTrendDiff > qp.quotingEwmaTrendThreshold){
+            qeAskStatus = mQuoteState::UpTrendHeld;
+            rawQuote.ask.price = 0;
+            rawQuote.ask.size = 0;
+          }
+          else if(mgEwmaTrendDiff < -qp.quotingEwmaTrendThreshold){
+            qeBidStatus = mQuoteState::DownTrendHeld;
+            rawQuote.bid.price = 0;
+            rawQuote.bid.size = 0;
+          }
+        }
       };
       mQuote quoteAtTopOfMarket() {
         mLevel topBid = ((MG*)market)->levels.bids.begin()->size > gw->minTick
