@@ -472,6 +472,7 @@ namespace K {
         unsigned int n = 0;
         vector<mRandId> toCancel,
                         working;
+        mClock now = _Tstamp_;
         for (map<mRandId, mOrder>::value_type &it : ((OG*)broker)->orders)
           if (it.second.side != side) continue;
           else if (abs(it.second.price - q.price) < gw->minTick) return;
@@ -479,8 +480,10 @@ namespace K {
             if (qp->safety != mQuotingSafety::AK47 or ++n >= qp->bullets) return;
           } else if (qp->safety != mQuotingSafety::AK47 or (
             side == mSide::Bid ? q.price <= it.second.price : q.price >= it.second.price
-          )) toCancel.push_back(it.first);
-          else working.push_back(it.first);
+          )) {
+            if (((CF*)config)->argLifetime and it.second.time + ((CF*)config)->argLifetime > now) return;
+            toCancel.push_back(it.first);
+          } else working.push_back(it.first);
         if (qp->safety == mQuotingSafety::AK47 and toCancel.empty() and !working.empty())
           toCancel.push_back(side == mSide::Bid ? working.front() : working.back());
         ((OG*)broker)->sendOrder(toCancel, side, q.price, q.size, mOrderType::Limit, mTimeInForce::GTC, isPong, true);

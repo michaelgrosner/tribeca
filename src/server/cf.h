@@ -9,7 +9,7 @@ namespace K {
            argDebugQuotes  = 0,      argDebugWallet  = 0, argWithoutSSL   = 0,
            argMaxLevels    = 0,      argHeadless     = 0, argDustybot     = 0,
            argAutobot      = 0,      argNaked        = 0, argFree         = 0,
-           argIgnoreSun    = 0,      argIgnoreMoon   = 0;
+           argIgnoreSun    = 0,      argIgnoreMoon   = 0, argLifetime     = 0;
     mPrice argEwmaShort    = 0,      argEwmaMedium   = 0,
            argEwmaLong     = 0,      argEwmaVeryLong = 0;
     string argTitle        = "K.sh", argMatryoshka   = "https://www.example.com/",
@@ -39,6 +39,7 @@ namespace K {
           {"naked",        no_argument,       &argNaked,         1},
           {"autobot",      no_argument,       &argAutobot,       1},
           {"dustybot",     no_argument,       &argDustybot,      1},
+          {"lifetime",     required_argument, 0,               'T'},
           {"whitelist",    required_argument, 0,               'L'},
           {"matryoshka",   required_argument, 0,               'k'},
           {"exchange",     required_argument, 0,               'e'},
@@ -65,11 +66,12 @@ namespace K {
         };
         int k = 0;
         while (++k)
-          switch (k = getopt_long(argc, argv, "hvc:d:e:k:l:m:s:p:u:v:A:H:K:M:P:S:U:W:X:", args, NULL)) {
+          switch (k = getopt_long(argc, argv, "hvc:d:e:k:l:m:s:p:u:v:A:H:K:M:P:S:T:U:W:X:", args, NULL)) {
             case -1 :
             case  0 : break;
             case 'P': argPort         = stoi(optarg);   break;
             case 'M': argMaxLevels    = stoi(optarg);   break;
+            case 'T': argLifetime     = stoi(optarg);   break;
             case 'A': argApikey       = string(optarg); break;
             case 'S': argSecret       = string(optarg); break;
             case 'U': argUsername     = string(optarg); break;
@@ -145,6 +147,8 @@ namespace K {
               << ((SH*)screen)->stamp() << RWHITE << "-M, --market-limit=NUMBER - set NUMBER of maximum price levels for the orderbook," << '\n'
               << ((SH*)screen)->stamp() << RWHITE << "                            default NUMBER is '321' and the minimum is '15'." << '\n'
               << ((SH*)screen)->stamp() << RWHITE << "                            locked bots smells like '--market-limit=3' spirit." << '\n'
+              << ((SH*)screen)->stamp() << RWHITE << "-T, --lifetime=NUMBER     - set NUMBER of minimum seconds before cancel open orders," << '\n'
+              << ((SH*)screen)->stamp() << RWHITE << "                            otherwise open orders will be replaced anytime required." << '\n'
               << ((SH*)screen)->stamp() << RWHITE << "    --debug-secret        - print (never share!) secret inputs and outputs." << '\n'
               << ((SH*)screen)->stamp() << RWHITE << "    --debug-events        - print detailed output about event handlers." << '\n'
               << ((SH*)screen)->stamp() << RWHITE << "    --debug-orders        - print detailed output about exchange messages." << '\n'
@@ -232,6 +236,7 @@ namespace K {
         if (argUser == "NULL") argUser.clear();
         if (argPass == "NULL") argPass.clear();
         if (argIgnoreSun and argIgnoreMoon) argIgnoreSun = 0;
+        if (argLifetime) argLifetime *= 1e+3;
       };
   };
 }
