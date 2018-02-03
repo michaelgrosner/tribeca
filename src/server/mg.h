@@ -36,7 +36,8 @@ namespace K {
              mgStdevBid = 0,
              mgStdevBidMean = 0,
              mgStdevAsk = 0,
-             mgStdevAskMean = 0;
+             mgStdevAskMean = 0,
+             mgEwmaTrendDiff = 0;
       map<mPrice, mAmount> filterBidOrders,
                            filterAskOrders;
     protected:
@@ -246,11 +247,10 @@ namespace K {
         };
       };
       void calcStatsEwmaTrendProtection() {
-        calcEwma(&mgEwmaXS, qp.quotingEwmaSMPeriods, fairValue);
-        calcEwma(&mgEwmaU, qp.quotingEwmaSUPeriods, fairValue);
-        if(mgEwmaXS && mgEwmaU)
-		      mgEwmaTrendDiff = ((mgEwmaU * 100) / mgEwmaXS) - 100;
-        ev_mgEwmaSMUProtection();
+        calcEwma(&mgEwmaXS, qp->extraShortEwmaPeriods, fairValue);
+        calcEwma(&mgEwmaU, qp->ultraShortEwmaPeriods, fairValue);
+        if(mgEwmaXS and mgEwmaU)
+          mgEwmaTrendDiff = ((mgEwmaU * 100) / mgEwmaXS) - 100;
       };
       void cleanStdev() {
         size_t periods = (size_t)qp->quotingStdevProtectionPeriods;

@@ -377,9 +377,9 @@ class DisplayOrder {
                                             <th title="Maximum amount of values collected in the sequences used to calculate the ewmaPrice? and ewmaWidth? quote protection." *ngIf="pair.quotingParameters.display.protectionEwmaQuotePrice || pair.quotingParameters.display.protectionEwmaWidthPing">periodsᵉʷᵐᵃ</th>
                                             <th title="Use a quote protection of periods smoothed line of the width (between the top bid and the top ask) to limit the widthPing while sending new orders.">ewmaWidth?</th>
                                             <th title="To do..">ewmaTrend?</th>
-											<th title="To do.." *ngIf="pair.quotingParameters.display.quotingEwmaTrendProtection">threshold</th>
-											<th title="To do.." *ngIf="pair.quotingParameters.display.quotingEwmaTrendProtection">micro</th>
-											<th title="To do.." *ngIf="pair.quotingParameters.display.quotingEwmaTrendProtection">ultra</th>
+                                            <th title="To do.." *ngIf="pair.quotingParameters.display.quotingEwmaTrendProtection">threshold</th>
+                                            <th title="To do.." *ngIf="pair.quotingParameters.display.quotingEwmaTrendProtection">micro</th>
+                                            <th title="To do.." *ngIf="pair.quotingParameters.display.quotingEwmaTrendProtection">ultra</th>
                                             <th title="Limit the price of new orders.">stdev</th>
                                             <th title="Maximum amount of values collected in the sequences used to calculate the STDEV, each side may have its own STDEV calculation with the same amount of periods." *ngIf="pair.quotingParameters.display.quotingStdevProtection">periodsˢᵗᵈᶜᵛ</th>
                                             <th title="Multiplier used to increase or decrease the value of the selected stdev calculation, a factor of 1 does effectively nothing." *ngIf="pair.quotingParameters.display.quotingStdevProtection">factor</th>
@@ -446,7 +446,7 @@ class DisplayOrder {
                                             </td>
                                             <td style="width:60px;border-bottom: 3px solid #fd00ff;" *ngIf="pair.quotingParameters.display.quotingEwmaTrendProtection">
                                                 <input class="form-control input-sm"
-                                                	type="number" step="1" min="1"
+                                                  type="number" step="1" min="1"
                                                     onClick="this.select()"
                                                     [(ngModel)]="pair.quotingParameters.display.extraShortEwmaPeriods">
                                             </td>
@@ -454,8 +454,8 @@ class DisplayOrder {
                                                 <input class="form-control input-sm"
                                                     type="number" step="1" min="1"
                                                     onClick="this.select()"
-													[(ngModel)]="pair.quotingParameters.display.ultraShortEwmaPeriods">
-	                                        </td> 
+                                                    [(ngModel)]="pair.quotingParameters.display.ultraShortEwmaPeriods">
+                                          </td>
                                             <td style="width:121px;border-bottom: 3px solid #AF451E;">
                                                 <select class="form-control input-sm"
                                                     [(ngModel)]="pair.quotingParameters.display.quotingStdevProtection">
