@@ -10,7 +10,9 @@ namespace K {
       mPrice mgEwmaVL = 0,
              mgEwmaL = 0,
              mgEwmaM = 0,
-             mgEwmaS = 0;
+             mgEwmaS = 0,
+             mgEwmaXS = 0,
+             mgEwmaU = 0;
       vector<mPrice> mgSMA3,
                      mgStatFV,
                      mgStatBid,
@@ -93,6 +95,7 @@ namespace K {
           calcStatsTrades();
           calcStatsEwmaProtection();
           calcStatsEwmaPosition();
+          calcStatsEwmaTrendProtection();
         } else if (mgT_60s == 60) mgT_60s = 0;
         calcStatsStdevProtection();
       };
@@ -236,10 +239,18 @@ namespace K {
           {"ewmaMedium", mgEwmaM},
           {"ewmaLong", mgEwmaL},
           {"ewmaVeryLong", mgEwmaVL},
+          {"ewmaTrendDiff", mgEwmaTrendDiff},
           {"tradesBuySize", takersBuySize60s},
           {"tradesSellSize", takersSellSize60s},
           {"fairValue", fairValue}
         };
+      };
+      void calcStatsEwmaTrendProtection() {
+        calcEwma(&mgEwmaXS, qp.quotingEwmaSMPeriods, fairValue);
+        calcEwma(&mgEwmaU, qp.quotingEwmaSUPeriods, fairValue);
+        if(mgEwmaXS && mgEwmaU)
+		      mgEwmaTrendDiff = ((mgEwmaU * 100) / mgEwmaXS) - 100;
+        ev_mgEwmaSMUProtection();
       };
       void cleanStdev() {
         size_t periods = (size_t)qp->quotingStdevProtectionPeriods;
