@@ -93,6 +93,7 @@ export class EWMAChart {
                 public ewmaMedium: number,
                 public ewmaLong: number,
                 public ewmaVeryLong: number,
+                public ewmaTrendDiff: number,
                 public tradesBuySize: number,
                 public tradesSellSize: number,
                 public fairValue: number) {}
@@ -163,7 +164,7 @@ export class TwoSidedQuote {
     constructor(public bid: Quote, public ask: Quote) {}
 }
 
-export enum QuoteStatus { Live, Disconnected, DisabledQuotes, MissingData, UnknownHeld, TBPHeld, MaxTradesSeconds, WaitingPing, DepletedFunds, Crossed }
+export enum QuoteStatus { Live, Disconnected, DisabledQuotes, MissingData, UnknownHeld, TBPHeld, MaxTradesSeconds, WaitingPing, DepletedFunds, Crossed, UpTrendHeld, DownTrendHeld }
 
 export class TwoSidedQuoteStatus {
     constructor(public bidStatus: QuoteStatus, public askStatus: QuoteStatus, public quotesInMemoryNew: number, public quotesInMemoryWorking: number, public quotesInMemoryDone: number) {}
@@ -217,6 +218,8 @@ export interface QuotingParameters {
     tradeRateSeconds?: number;
     protectionEwmaWidthPing?: boolean;
     protectionEwmaQuotePrice?: boolean;
+    quotingEwmaTrendProtection?: boolean;
+    quotingEwmaTrendThreshold?: number;
     quotingStdevProtection?: STDEV;
     quotingStdevBollingerBands?: boolean;
     audio?: boolean;
@@ -228,6 +231,8 @@ export interface QuotingParameters {
     longEwmaPeriods?: number;
     mediumEwmaPeriods?: number;
     shortEwmaPeriods?: number;
+    microEwmaPeriods?: number;
+    ultraEwmaPeriods?: number;
     protectionEwmaPeriods?: number;
     quotingStdevProtectionFactor?: number;
     quotingStdevProtectionPeriods?: number;
