@@ -376,10 +376,10 @@ class DisplayOrder {
                                             <th title="Use a quote protection of periods smoothed line of the fair value to limit the price while sending new orders.">ewmaPrice?</th>
                                             <th title="Maximum amount of values collected in the sequences used to calculate the ewmaPrice? and ewmaWidth? quote protection." *ngIf="pair.quotingParameters.display.protectionEwmaQuotePrice || pair.quotingParameters.display.protectionEwmaWidthPing">periodsᵉʷᵐᵃ</th>
                                             <th title="Use a quote protection of periods smoothed line of the width (between the top bid and the top ask) to limit the widthPing while sending new orders.">ewmaWidth?</th>
-                                            <th title="To do..">ewmaTrend?</th>
-                                            <th title="To do.." *ngIf="pair.quotingParameters.display.quotingEwmaTrendProtection">threshold</th>
-                                            <th title="To do.." *ngIf="pair.quotingParameters.display.quotingEwmaTrendProtection">micro</th>
-                                            <th title="To do.." *ngIf="pair.quotingParameters.display.quotingEwmaTrendProtection">ultra</th>
+                                            <th title="Use a trend protection of double periods (Ultra+Micro) smoothed lines of the price to limit uptrend sells and downtrend buys.">ewmaTrend?</th>
+                                            <th title="When trend stregth is above positive threshold value bot stops selling, when strength below negative threshold value bot stops buying">threshold</th>
+                                            <th title="Time in minutes to define Micro EMA" *ngIf="pair.quotingParameters.display.quotingEwmaTrendProtection">micro</th>
+                                            <th title="Time in minutes to define Ultra EMA" *ngIf="pair.quotingParameters.display.quotingEwmaTrendProtection">ultra</th>
                                             <th title="Limit the price of new orders.">stdev</th>
                                             <th title="Maximum amount of values collected in the sequences used to calculate the STDEV, each side may have its own STDEV calculation with the same amount of periods." *ngIf="pair.quotingParameters.display.quotingStdevProtection">periodsˢᵗᵈᶜᵛ</th>
                                             <th title="Multiplier used to increase or decrease the value of the selected stdev calculation, a factor of 1 does effectively nothing." *ngIf="pair.quotingParameters.display.quotingStdevProtection">factor</th>
