@@ -354,13 +354,11 @@ namespace K {
         if (!qp->quotingEwmaTrendProtection or !((MG*)market)->mgEwmaTrendDiff) return;
         if (((MG*)market)->mgEwmaTrendDiff > qp->quotingEwmaTrendThreshold){
           askStatus = mQuoteState::UpTrendHeld;
-          rawQuote->ask.price = 0;
-          rawQuote->ask.size = 0;
+          rawQuote->ask.clear();
         }
         else if (((MG*)market)->mgEwmaTrendDiff < -qp->quotingEwmaTrendThreshold){
           bidStatus = mQuoteState::DownTrendHeld;
-          rawQuote->bid.price = 0;
-          rawQuote->bid.size = 0;
+          rawQuote->bid.clear();
         }
       };
       mQuote quoteAtTopOfMarket() {

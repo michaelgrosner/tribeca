@@ -130,7 +130,7 @@ namespace K {
         if (qp->diffOnce(&qp->_diffMEP)) calcEwmaHistory(&mgEwmaM, qp->mediumEwmaPeriods, "Medium");
         if (qp->diffOnce(&qp->_diffSEP)) calcEwmaHistory(&mgEwmaS, qp->shortEwmaPeriods, "Short");
         if (qp->diffOnce(&qp->_diffXSEP)) calcEwmaHistory(&mgEwmaXS, qp->extraShortEwmaPeriods, "ExtraShort");
-		if (qp->diffOnce(&qp->_diffUEP)) calcEwmaHistory(&mgEwmaU, qp->ultraShortEwmaPeriods, "UltraShort");
+        if (qp->diffOnce(&qp->_diffUEP)) calcEwmaHistory(&mgEwmaU, qp->ultraShortEwmaPeriods, "UltraShort");
       };
     private:
       function<void(json*)> helloTrade = [&](json *welcome) {
