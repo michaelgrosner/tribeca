@@ -13,12 +13,12 @@ namespace K {
            sync_trades = false,
            sync_orders = false;
     protected:
-      void load() {
+      void load() {                                                 _debugEvent_
         gwEndings.back() = &happyEnding;
         gwAdminEnabled = (mConnectivity)((CF*)config)->argAutobot;
         handshake(gw->exchange);
       };
-      void waitData() {
+      void waitData() {                                             _debugEvent_
         gw->reconnect = [&](string reason) {
           gwConnect(reason);
         };
@@ -30,7 +30,7 @@ namespace K {
             gw->evDataLevels(mLevels());
         };
       };
-      void waitTime() {
+      void waitTime() {                                             _debugEvent_
         if (!(sync_levels = !gw->async_levels())) gwConnect();
         sync_trades = !gw->async_trades();
         sync_orders = !gw->async_orders();
@@ -39,12 +39,12 @@ namespace K {
           ((GW*)tServer->getData())->timer_1s();
         }, 0, 1e+3);
       };
-      void waitUser() {
+      void waitUser() {                                             _debugEvent_
         ((UI*)client)->welcome(mMatter::Connectivity, &hello);
         ((UI*)client)->clickme(mMatter::Connectivity, &kiss);
         ((SH*)screen)->pressme(mHotkey::ESC, &hotkiss);
       };
-      void run() {
+      void run() {                                                  _debugEvent_
         ((EV*)events)->start();
       };
     private:
