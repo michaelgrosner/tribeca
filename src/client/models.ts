@@ -231,8 +231,8 @@ export interface QuotingParameters {
     longEwmaPeriods?: number;
     mediumEwmaPeriods?: number;
     shortEwmaPeriods?: number;
-    microEwmaPeriods?: number;
-    ultraEwmaPeriods?: number;
+    extraShortEwmaPeriods?: number;
+    ultraShortEwmaPeriods?: number;
     protectionEwmaPeriods?: number;
     quotingStdevProtectionFactor?: number;
     quotingStdevProtectionPeriods?: number;

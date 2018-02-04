@@ -56,6 +56,8 @@ namespace K {
         if (((CF*)config)->argEwmaLong) mgEwmaL = ((CF*)config)->argEwmaLong;
         if (((CF*)config)->argEwmaMedium) mgEwmaM = ((CF*)config)->argEwmaMedium;
         if (((CF*)config)->argEwmaShort) mgEwmaS = ((CF*)config)->argEwmaShort;
+        if (((CF*)config)->argEwmaXShort) mgEwmaXS = ((CF*)config)->argEwmaXShort;
+        if (((CF*)config)->argEwmaUShort) mgEwmaU = ((CF*)config)->argEwmaUShort;
         json k = ((DB*)memory)->load(mMatter::EWMAChart);
         if (!k.empty()) {
           k = k.at(0);
@@ -67,11 +69,17 @@ namespace K {
             mgEwmaM = k.value("ewmaMedium", 0.0);
           if (!mgEwmaS and k.value("time", (mClock)0) + qp->shortEwmaPeriods * 6e+4 > _Tstamp_)
             mgEwmaS = k.value("ewmaShort", 0.0);
+          if (!mgEwmaXS and k.value("time", (mClock)0) + qp->extraShortEwmaPeriods * 6e+4 > _Tstamp_)
+            mgEwmaXS = k.value("ewmaExtraShort", 0.0);
+          if (!mgEwmaU and k.value("time", (mClock)0) + qp->ultraShortEwmaPeriods * 6e+4 > _Tstamp_)
+            mgEwmaU = k.value("ewmaUltraShort", 0.0);
         }
         if (mgEwmaVL) ((SH*)screen)->log(((CF*)config)->argEwmaVeryLong ? "ARG" : "DB", string("loaded ") + to_string(mgEwmaVL) + " EWMA VeryLong");
         if (mgEwmaL)  ((SH*)screen)->log(((CF*)config)->argEwmaLong ? "ARG" : "DB", string("loaded ") + to_string(mgEwmaL) + " EWMA Long");
         if (mgEwmaM)  ((SH*)screen)->log(((CF*)config)->argEwmaMedium ? "ARG" : "DB", string("loaded ") + to_string(mgEwmaM) + " EWMA Medium");
         if (mgEwmaS)  ((SH*)screen)->log(((CF*)config)->argEwmaShort ? "ARG" : "DB", string("loaded ") + to_string(mgEwmaS) + " EWMA Short");
+        if (mgEwmaXS) ((SH*)screen)->log(((CF*)config)->argEwmaXShort ? "ARG" : "DB", string("loaded ") + to_string(mgEwmaXS) + " EWMA ExtraShort");
+        if (mgEwmaU)  ((SH*)screen)->log(((CF*)config)->argEwmaUShort ? "ARG" : "DB", string("loaded ") + to_string(mgEwmaU) + " EWMA UltraShort");
         for (json &it : ((DB*)memory)->load(mMatter::MarketDataLongTerm))
           if (it.value("time", (mClock)0) + 3456e+5 > _Tstamp_ and it.value("fv", 0.0))
             fairValue96h.push_back(it.value("fv", 0.0));
@@ -96,7 +104,6 @@ namespace K {
           calcStatsTrades();
           calcStatsEwmaProtection();
           calcStatsEwmaPosition();
-          calcStatsEwmaTrendProtection();
         } else if (mgT_60s == 60) mgT_60s = 0;
         calcStatsStdevProtection();
       };
@@ -122,6 +129,8 @@ namespace K {
         if (qp->diffOnce(&qp->_diffLEP)) calcEwmaHistory(&mgEwmaL, qp->longEwmaPeriods, "Long");
         if (qp->diffOnce(&qp->_diffMEP)) calcEwmaHistory(&mgEwmaM, qp->mediumEwmaPeriods, "Medium");
         if (qp->diffOnce(&qp->_diffSEP)) calcEwmaHistory(&mgEwmaS, qp->shortEwmaPeriods, "Short");
+        if (qp->diffOnce(&qp->_diffXSEP)) calcEwmaHistory(&mgEwmaXS, qp->extraShortEwmaPeriods, "ExtraShort");
+		if (qp->diffOnce(&qp->_diffUEP)) calcEwmaHistory(&mgEwmaU, qp->ultraShortEwmaPeriods, "UltraShort");
       };
     private:
       function<void(json*)> helloTrade = [&](json *welcome) {
@@ -202,6 +211,9 @@ namespace K {
         calcEwma(&mgEwmaL, qp->longEwmaPeriods, fairValue);
         calcEwma(&mgEwmaM, qp->mediumEwmaPeriods, fairValue);
         calcEwma(&mgEwmaS, qp->shortEwmaPeriods, fairValue);
+        calcEwma(&mgEwmaXS, qp->extraShortEwmaPeriods, fairValue);
+        calcEwma(&mgEwmaU, qp->ultraShortEwmaPeriods, fairValue);
+        if(mgEwmaXS and mgEwmaU) mgEwmaTrendDiff = ((mgEwmaU * 100) / mgEwmaXS) - 100;
         calcTargetPos();
         ((EV*)events)->mgTargetPosition();
         ((UI*)client)->send(mMatter::EWMAChart, chartStats());
@@ -210,6 +222,8 @@ namespace K {
           {"ewmaLong", mgEwmaL},
           {"ewmaMedium", mgEwmaM},
           {"ewmaShort", mgEwmaS},
+          {"ewmaExtraShort", mgEwmaXS},
+          {"ewmaUltraShort", mgEwmaU},
           {"time", _Tstamp_}
         });
         ((DB*)memory)->insert(mMatter::MarketDataLongTerm, {
@@ -245,12 +259,6 @@ namespace K {
           {"tradesSellSize", takersSellSize60s},
           {"fairValue", fairValue}
         };
-      };
-      void calcStatsEwmaTrendProtection() {
-        calcEwma(&mgEwmaXS, qp->extraShortEwmaPeriods, fairValue);
-        calcEwma(&mgEwmaU, qp->ultraShortEwmaPeriods, fairValue);
-        if(mgEwmaXS and mgEwmaU)
-          mgEwmaTrendDiff = ((mgEwmaU * 100) / mgEwmaXS) - 100;
       };
       void cleanStdev() {
         size_t periods = (size_t)qp->quotingStdevProtectionPeriods;
