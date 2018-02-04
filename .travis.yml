@@ -27,9 +27,9 @@ install:
 
 script:
   - test $TRAVIS_OS_NAME == "linux" && make test-c || :;
-#  - make test-cov
+  - make test-cov
 
-#after_success: make send-cov
+after_success: make send-cov
 
 notifications:
   email:

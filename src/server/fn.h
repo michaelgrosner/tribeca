@@ -153,17 +153,18 @@ namespace K {
         system("(kill -9 `pgrep stunnel` || :) && stunnel etc/K-stunnel.conf");
       };
       static int memory() {
-        string ps = output(string("ps -p") + to_string(::getpid()) + " -o rss | tail -n 1 | sed 's/ //'");
+        string ps = output(string("ps -p") + to_string(::getpid()) + " -orss | tail -n1");
+        ps.erase(remove(ps.begin(), ps.end(), ' '), ps.end());
         if (ps.empty()) ps = "0";
         return stoi(ps) * 1e+3;
       };
       static string output(string cmd) {
         string data;
-        FILE * stream;
+        FILE *stream;
         const int max_buffer = 256;
         char buffer[max_buffer];
         cmd.append(" 2>&1");
-        stream = popen(cmd.c_str(), "r");
+        stream = popen(cmd.data(), "r");
         if (stream) {
           while (!feof(stream))
             if (fgets(buffer, max_buffer, stream) != NULL) data.append(buffer);
@@ -171,10 +172,10 @@ namespace K {
         }
         return data;
       };
-      static string readlink(const char* pathname) {
+      static string readlink(const char* path) {
         string buffer(64, '\0');
         ssize_t len;
-        while((len = ::readlink(pathname, &buffer[0], buffer.size())) == static_cast<ssize_t>(buffer.size()))
+        while((len = ::readlink(path, &buffer[0], buffer.size())) == (ssize_t)buffer.size())
           buffer.resize(buffer.size() * 2);
         if (len == -1) ((SH*)screen)->logWar("FN", "readlink failed");
         buffer.resize(len);
