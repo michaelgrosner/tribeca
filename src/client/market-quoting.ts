@@ -102,7 +102,7 @@ export class MarketQuotingComponent {
   }
 
   @Input() set setMarketData(update: Models.Market) {
-    if (update == null || typeof update.bids == "undefined" || typeof update.asks == "undefined" || !update.bids || !update.asks) {
+    if (update == null || typeof update.bids == "undefined" || typeof update.asks == "undefined" || !update.bids || !update.asks || !update.bids.length || !update.asks.length) {
       this.levels = [];
       return;
     }

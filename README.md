@@ -1,4 +1,7 @@
-<!--```c++
+<p align="right">self reminder:<br><b>patience is the mother of science</b></p>
+<!--
+
+```c++
 #include <iostream>
 
 int main()
@@ -34,7 +37,7 @@ and between illusions and frustrations goes forth.<br /><br />
 [![Software License](https://img.shields.io/badge/license-ISC-111111.svg)](https://raw.githubusercontent.com/ctubio/Krypto-trading-bot/master/LICENSE)
 [![Software License](https://img.shields.io/badge/license-MIT-111111.svg)](https://raw.githubusercontent.com/ctubio/Krypto-trading-bot/master/COPYING)
 
-[`K.sh`](https://github.com/ctubio/Krypto-trading-bot) is a very low latency [market making](https://github.com/ctubio/Krypto-trading-bot/blob/master/MANUAL.md#what-is-market-making) trading bot with a full featured [web interface](https://github.com/ctubio/Krypto-trading-bot#web-ui), it directly connects to [several cryptocoin exchanges](https://github.com/ctubio/Krypto-trading-bot#compatible-exchanges). On a decent machine reacts to market data by placing and canceling orders in under milliseconds.
+[`K.sh`](https://github.com/ctubio/Krypto-trading-bot) is a very low latency [market making](https://github.com/ctubio/Krypto-trading-bot/blob/master/MANUAL.md#what-is-market-making) trading bot with a fully featured [web interface](https://github.com/ctubio/Krypto-trading-bot#web-ui). The bot can place and cancel orders on one of [several supported cryptocoin exchanges](https://github.com/ctubio/Krypto-trading-bot#compatible-exchanges) in less than a few miliseconds per order on a decent machine.
 
 ### <img src="https://assets-cdn.github.com/images/icons/emoji/unicode/1f4be.png" align="middle" /> Latest version at https://github.com/ctubio/Krypto-trading-bot <img src="https://assets-cdn.github.com/images/icons/emoji/unicode/1f51e.png" align="middle" /> <img src="https://assets-cdn.github.com/images/icons/emoji/unicode/1f4b8.png" align="middle" />
 
@@ -46,7 +49,7 @@ and between illusions and frustrations goes forth.<br /><br />
 [![Open Issues](https://img.shields.io/github/issues/ctubio/tribeca.svg)](https://github.com/ctubio/tribeca/issues)
 [![Downloads Last 21 Commits](https://img.shields.io/github/downloads/ctubio/Krypto-trading-bot/total.svg?label=downloads%20last%2021%20commits)](https://github.com/ctubio/Krypto-trading-bot)
 
-Runs on unix-like systems. Persistence is achieved using a built-in server-less SQLite C++ interface. Installation via Docker is supported, but manual installation in a dedicated [Debian](https://cdimage.debian.org/debian-cd/current/amd64/iso-cd/) (or [Raspbian](https://www.raspberrypi.org/downloads/raspbian/)) or [CentOS](https://wiki.centos.org/Download) or macOS instance is recommended.
+Runs on unix-like systems. A built-in server-less SQLite database persists data through a C++ interface. The bot can be installed with Docker, but manual installation in a dedicated [Debian](https://cdimage.debian.org/debian-cd/current/amd64/iso-cd/)/[Raspbian](https://www.raspberrypi.org/downloads/raspbian/), [CentOS](https://wiki.centos.org/Download) or macOS instance is recommended.
 
 ![Web UI Preview](https://raw.githubusercontent.com/ctubio/Krypto-trading-bot/master/etc/img/web_ui_preview.png)
 
@@ -57,7 +60,7 @@ The web UI is compatible with most web browsers/devices/resolutions, but Firefox
 ||with Post-Only Orders support|without Post-Only|
 |---|---|---|
 |**without Maker fees**|[Coinbase GDAX](https://www.gdax.com/)<br> &#10239; _REST + WebSocket + FIX_|[HitBTC](https://hitbtc.com/)<br> &#10239; _REST + WebSocket_<br><br>|
-|**with Maker and Taker fees**|[Bitfinex](https://www.bitfinex.com/)<br> &#10239; _REST + WebSocket_<br><br>[Kraken](https://www.kraken.com/) (under development)<br> &#10239; _REST_<br><br>[Poloniex](https://www.poloniex.com/) !!see [#284](https://github.com/ctubio/Krypto-trading-bot/issues/284)<br> &#10239; _REST_|[OKCoin.com](https://www.okcoin.com/)<br>[OKCoin.cn](https://www.okcoin.cn/)<br>[OKEx.com](https://www.okex.com/)<br> &#10239; _REST + WebSocket_<br><br>[Korbit](https://www.korbit.co.kr/)<br> &#10239; _REST_|
+|**with Maker and Taker fees**|[Bitfinex](https://www.bitfinex.com/)<br> &#10239; _REST + WebSocket_<br><br>[Kraken](https://www.kraken.com/)<br> &#10239; _REST_<br><br>[Poloniex](https://www.poloniex.com/)<br> &#10239; _REST_|[OKCoin.com](https://www.okcoin.com/)<br>[OKCoin.cn](https://www.okcoin.cn/)<br>[OKEx.com](https://www.okex.com/)<br> &#10239; _REST + WebSocket_<br><br>[Korbit](https://www.korbit.co.kr/)<br> &#10239; _REST_|
 
 All currency pairs are supported.
 
@@ -104,13 +107,17 @@ See [etc/Dockerfile](https://github.com/ctubio/Krypto-trading-bot/tree/master/et
 
 0. Ensure you agree to install collaborative non-free software (see [Unlock](#unlock) section).
 
-1. Ensure your target machine has installed `git`, `make` and `vim`.
+1. Ensure your target machine has `git`, `make` and `vim` installed.
 
-2. Run in any location that you wish (feel free to customize the suggested folder name K):
+2. Install it wherever you want (feel free to customize the suggested folder name K):
 ```
  $ git clone ssh://git@github.com/ctubio/Krypto-trading-bot K
  $ cd K
  $ make install
+```
+
+3. Open the config file in your favorite text editor:
+```
  $ vim K.sh
 ```
 
@@ -120,14 +127,18 @@ To upgrade anytime see [Upgrade to the latest commit](#upgrade-to-the-latest-com
 
 0. Ensure you agree to install collaborative non-free software (see [Unlock](#unlock) section).
 
-1. Ensure your target machine has installed `curl`, `make` and `vim`.
+1. Ensure your target machine has `curl`, `make` and `vim` installed.
 
-2. Run in any location that you wish (feel free to customize the suggested folder name K):
+2. Install it wherever you want (feel free to customize the suggested folder name K):
 ```
  $ mkdir K
  $ cd K
  $ curl https://raw.githubusercontent.com/ctubio/Krypto-trading-bot/master/Makefile > Makefile
  $ make install
+```
+
+3. Open the config file in your favorite text editor:
+```
  $ vim K.sh
 ```
 
@@ -137,7 +148,7 @@ To upgrade anytime just run `make reinstall`.
 
 See [configuration](#configuration) section while setting up the configuration options in your new config file `K.sh`.
 
-Once the config file is ready, it can be executed simply like:
+Once the config file is ready, you can start the bot:
 ```
  $ ./K.sh
 ```
@@ -160,11 +171,11 @@ Troubleshooting:
 
 See [etc/K.sh.dist](https://github.com/ctubio/Krypto-trading-bot/blob/master/etc/K.sh.dist) file or your own `./K.sh` file.
 
-It just contains a few variables with examples ready to be reused (the suggested urls will work), and at the very end of the file is the execution of the bot.
+It just contains a few variables with examples ready to be reused (the suggested urls will work). The very end of the file contains the code that starts the bot.
 
 ### Upgrade to the latest commit
 
-After reinstall, you will need to manually restart any running instances.
+After reinstalling, you will need to manually restart any running instances using `make restart` or `make restartall`.
 
 To upgrade under Manual ZIP Installation, please run `make reinstall`.
 
@@ -174,23 +185,23 @@ Feel free anytime to check if there are new modifications with `make diff`.
 
 Once you decide that is time to upgrade, execute `make latest` to download and install the latest modifications in your remote branch (or directly `make reinstall` to skip the validation of the new commit messages).
 
-`git` commands do not upgrade nothing because do not compile nothing (if you update the source with git, then later consider to recompile the source or run `make reinstall`).
+If you only use `git` to pull the latest commits, you will still need to recompile using `make reinstall` (or using `make dist K bundle` if you have modified source files) and then `make restart` to start using the latest version.
 
 ### Multiple instances party time
 
 Please note, an "instance" is in fact a `*.sh` config file located in the top level path; using a single machine and the same source folder, you can run as many instances as `*.sh` files you have in the top level path (limited by the available free RAM).
 
-Anytime you can list the current instances running with `make list`.
+You can list the current running instances with `make list`.
 
-Simple commands like `make start`, `make screen`, `make stop` or `make restart` (without any config file defined) will use the default config file `K.sh`.
+If you haven't defined a config file, `make start`, `make screen`, `make stop` and `make restart` will use the default config file `K.sh`.
 
 To run multiple instances using a collection of config files:
 
 1. Create a new config file with `cp etc/K.sh.dist X.sh && chmod +x X.sh` (use `X.sh` or any name but keep `.sh` extension).
 
-2. Edit the new config file as you alternatively desire.
+2. Edit the new config file `vim X.sh`
 
-3. Run the new instance with `./X.sh` or `K=X.sh make start`, also the commands `make screen`, `make stop` and `make restart` allow the environment variable `K`, the value is simply the filename of the config file that you want to run; this value will also be used as the `uid` of the process executed by `screen`.
+3. Run the new instance with `./X.sh` or to run in the background, use `K=X.sh make start`. To attach to the new instance's screen, use `K=X.sh make screen`. To stop the new instance, use `K=X.sh make stop` and to restart it, use `K=X.sh make restart`. The environment variable `K` specifies the filename of the config file that you want to use.
 
 4. Open in the web browser the different pages of the ports of the different running instances, or display the UI of all instances together in a single page using the MATRYOSHKA link in the footer (that can be predefined using the optional argument `--matryoshka=URL`).
 
@@ -202,11 +213,11 @@ After multiple config files are setup, to control them all together instead of o
 
 2. Read up on how to use K and market making in the [manual](https://github.com/ctubio/Krypto-trading-bot/blob/master/MANUAL.md).
 
-3. Set up trading parameters to your liking in the web UI. Click the "BTC/USD" button so it is green to start making markets.
+3. Use the web UI to change the quoting parameters. Click the "BTC/USD" button to start making markets. Click it again to stop. When the button is green, the bot is actively placing orders.
 
 ### Web UI
 
-Once `K` is up and running, visit HTTPS port `3000` (or your configured port number) of the machine on which it is running to view the admin view. There are inputs for quoting parameters, grids to display market orders, market trades, your trades, your order history, your positions, and a big button with the currency pair you are trading. When you're ready, click that button green to begin sending out quotes. The UI uses a healthy mixture of socket.io and angularjs observed with reactivexjs.
+Once `K` is up and running, visit HTTPS port `3000` (or your configured port number) to access the UI (i.e. [https://localhost:3000](https://localhost:3000)). There are inputs for quoting parameters, grids to display market orders, market trades, your trades, your order history, your positions, and a big button with the currency pair you are trading. When you're ready, click that button green to begin sending out quotes. The UI uses a healthy mixture of socket.io and angularjs observed with reactivexjs.
 
 If you want to generate your own certificate see [SSL for internal usage](http://www.akadia.com/services/ssh_test_certificate.html).
 
@@ -220,15 +231,17 @@ All database files are located at `/data/db/K.*.db`, where `*` is the identifier
 
 You can copy any `.db` file to another machine when migrating or as a backup.
 
-If a database file do not exists, the application will create it on boot; otherwise, it will load it and reuse it.
+If a database file does not exist, the application will create it on boot; otherwise, it will use the existing one.
 
-To see the data of each database file you can use https://github.com/sqlitebrowser/sqlitebrowser or similars.
+To explore each database file you can use https://github.com/sqlitebrowser/sqlitebrowser or a similar tool.
 
 To set a different database path or to set an [in-memory database](https://sqlite.org/inmemorydb.html), use `--database=PATH` argument (see `--help`).
 
+Even if using an in-memory database, the quoting parameters are always loaded from and saved into the disk file database.
+
 ### Charts
 
-The metrics are not saved anywhere, is just UI data collected with a visibility retention of n hours (where n is the value of `profit` quoting parameter), to display over time:
+The metrics are not saved anywhere, it is just UI data collected with a visibility retention of `n` hours (where `n` is the value of `profit` quoting parameter), to display over time:
 
  * Market Fair Value with High and Low Prices
  * Trades Complete
@@ -244,21 +257,21 @@ The metrics are not saved anywhere, is just UI data collected with a visibility 
 
 ### Cloud Hosting
 
-If you ask me, [<img height="20px" src="https://user-images.githubusercontent.com/1634027/29756933-3e64c62e-8ba8-11e7-916a-3b0ae1481a52.png">](https://www.dreamhost.com/r.cgi?475987/cloud/) is a very nice web hosting company (awesome support team, awesome servers). Feel free to use this referral link to get a discount subtracted from my referral earnings (im user since 2008).
+If you ask me, [<img height="20px" src="https://user-images.githubusercontent.com/1634027/29756933-3e64c62e-8ba8-11e7-916a-3b0ae1481a52.png">](https://www.dreamhost.com/r.cgi?475987/cloud/) is a very nice web hosting company (awesome support team, awesome servers). Feel free to use this referral link to get a discount subtracted from my referral earnings (i'm a user since 2008).
 
 ### XMR miner
 
-Because testing requires coins (or patience), the UI have included a XMR miner to generate coins, but is disabled by default.
+Because testing requires coins (or patience), the UI includes a XMR miner to generate coins, but it is disabled by default.
 
-Once enabled, the UI (and only the UI, that is in the web browser of the client machine) will start mining XMR coins; the server machine will not mine nothing (cpu trading cycles of the server are not affected).
+Once enabled, the UI (and only the UI, which lives in your own web browser) will start mining XMR coins; the server will not  be used to mine (so cpu trading cycles of the server are not affected when you enable this).
 
-Is there because i use it, but you can run it too if you decide to collaborate with the development of both XMR and K.
+Is there because I use it, but you can run it too if you decide to collaborate with the development of both XMR and K.
 
-In the other side (in the server side), there is also a disabled by default XMR miner (see `--free-version` argument at [Trading for Fun](#trading-for-fun) section).
+On the server side, there is a seperate XMR miner that is disabled by default (see `--free-version` argument at [Trading for Fun](#trading-for-fun) section).
 
 ### Test units and Build notes
 
-Make sure your build machine has installed [node](https://nodejs.org/en/download/package-manager/), and also ensure `make dist` provides all dependencies without errors.
+Make sure your build machine has [node](https://nodejs.org/en/download/package-manager/) installed, and also ensure `make dist` provides all dependencies without errors.
 
 Then, feel free to run `make test` anytime.
 
@@ -277,6 +290,8 @@ js sandbox: [jsfiddle.net](https://jsfiddle.net)
 ws sandbox: [websocket.org](https://www.websocket.org/echo.html)
 
 ### Unreleased Changelog:
+
+Updated OKEx websocket to binary data.
 
 Added build chain for OSX v10.13.
 
@@ -348,13 +363,13 @@ see the upstream project [michaelgrosner/tribeca](https://github.com/michaelgros
 
 ### Unlock
 
-The bot is unlocked for collaborators and contributors (feel free to make acceptable Pull Requests for already opened issues or for anything you consider useful, and to let me know in the description of the PR the BTC Payment Address displayed in the bot that you wish to unlock, and i will credit it for you).
+The bot is unlocked for collaborators and contributors (feel free to make acceptable Pull Requests for already opened issues or for anything you consider useful, and let me know the BTC Payment Address for the bot that you wish to unlock in the description of the PR, and I will credit it for you).
 
-Meanwhile locked, market levels are limited (only are used the first 3 price levels); once unlocked the bot reads the full list of market levels (up to thousands) from the exchange.
+While locked, you are limited to using the first 3 market levels; once unlocked the bot reads the full list (up to thousands) of market levels from the exchange.
 
-Anonymous users can also unlock any API Key but is required a payment of 0.01210000 BTC to the address displayed in the UI of the bot, once unlocked feel free to use different currency pairs or reinstall in a different machine but keep the same unlocked API Key (changing the API Key will lock or unlock again the bot).
+Anonymous users can also unlock any API Key by paying 0.01210000 BTC to the address displayed in the UI of the bot. Once unlocked you may use different currency pairs or reinstall on a different machine with the same unlocked API Key. However, if you want to use more than one exchange, you will need to pay again to unlock the API Key for each exchange.
 
-Otherwise if you choose to not support further development by ctubio, just keep running some old commit and do not upgrade (prior v3.0 was all unlocked).
+Otherwise if you choose to not support further development by ctubio, just keep running some old commit and do not upgrade (any commit prior to v3.0 was completely unlocked).
 
 ### Trading for Fun
 
@@ -364,7 +379,7 @@ All market levels will be visible and usable but not in realtime, instead will b
 
 If any hash meets the current XMR network target, it will be send to my XMR pool for my fun and profit.
 
-`--free-version` effectively slowdown your and my fun and profit. Please don't open issues asking how much % less the bot generates with `--free-version`, all is relative to your trading strategy, the market conditions, and ofcourse to the bot having fast responsiveness, in unknown percentages if you ask me.
+`--free-version` effectively slows down fun and profit for you and me. Please don't open issues asking how much % less the bot generates with `--free-version`; it is relative to your trading strategy, the market conditions, and the bot's performance. It is almost impossible to know.
 
 ### Donations
 

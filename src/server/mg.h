@@ -5,40 +5,45 @@ namespace K {
   class MG: public Klass {
     private:
       vector<mTrade> trades;
-      double takersBuySize60s = 0;
-      double takersSellSize60s = 0;
-      double mgEwmaVL = 0;
-      double mgEwmaL = 0;
-      double mgEwmaM = 0;
-      double mgEwmaS = 0;
-      vector<double> mgSMA3;
-      vector<double> mgStatFV;
-      vector<double> mgStatBid;
-      vector<double> mgStatAsk;
-      vector<double> mgStatTop;
-      vector<double> fairValue96h;
-      unsigned int mgT_60s = 0;
-      unsigned long mgT_369ms = 0;
-      double averageWidth = 0;
-      unsigned int averageCount = 0;
+      mAmount takersBuySize60s = 0,
+              takersSellSize60s = 0;
+      mPrice mgEwmaVL = 0,
+             mgEwmaL = 0,
+             mgEwmaM = 0,
+             mgEwmaS = 0,
+             mgEwmaXS = 0,
+             mgEwmaU = 0;
+      vector<mPrice> mgSMA3,
+                     mgStatFV,
+                     mgStatBid,
+                     mgStatAsk,
+                     mgStatTop,
+                     fairValue96h;
+      mClock mgT_369ms = 0;
+      mPrice averageWidth = 0;
+      unsigned int mgT_60s = 0,
+                   averageCount = 0;
     public:
       mLevels levels;
-      double fairValue = 0;
-      double targetPosition = 0;
-      double mgStdevTop = 0;
-      double mgStdevTopMean = 0;
-      double mgEwmaP = 0;
-      double mgEwmaW = 0;
-      double mgStdevFV = 0;
-      double mgStdevFVMean = 0;
-      double mgStdevBid = 0;
-      double mgStdevBidMean = 0;
-      double mgStdevAsk = 0;
-      double mgStdevAskMean = 0;
+      mPrice fairValue = 0,
+             mgEwmaP = 0,
+             mgEwmaW = 0;
+      double targetPosition = 0,
+             mgStdevTop = 0,
+             mgStdevTopMean = 0,
+             mgStdevFV = 0,
+             mgStdevFVMean = 0,
+             mgStdevBid = 0,
+             mgStdevBidMean = 0,
+             mgStdevAsk = 0,
+             mgStdevAskMean = 0,
+             mgEwmaTrendDiff = 0;
+      map<mPrice, mAmount> filterBidOrders,
+                           filterAskOrders;
     protected:
       void load() {
         for (json &it : ((DB*)memory)->load(mMatter::MarketData)) {
-          if (it.value("time", (unsigned long)0) + qp->quotingStdevProtectionPeriods * 1e+3 < _Tstamp_) continue;
+          if (it.value("time", (mClock)0) + qp->quotingStdevProtectionPeriods * 1e+3 < _Tstamp_) continue;
           mgStatFV.push_back(it.value("fv", 0.0));
           mgStatBid.push_back(it.value("bid", 0.0));
           mgStatAsk.push_back(it.value("ask", 0.0));
@@ -46,31 +51,39 @@ namespace K {
           mgStatTop.push_back(it.value("ask", 0.0));
         }
         calcStdev();
-        FN::log("DB", string("loaded ") + to_string(mgStatFV.size()) + " STDEV Periods");
+        ((SH*)screen)->log("DB", string("loaded ") + to_string(mgStatFV.size()) + " STDEV Periods");
         if (((CF*)config)->argEwmaVeryLong) mgEwmaVL = ((CF*)config)->argEwmaVeryLong;
         if (((CF*)config)->argEwmaLong) mgEwmaL = ((CF*)config)->argEwmaLong;
         if (((CF*)config)->argEwmaMedium) mgEwmaM = ((CF*)config)->argEwmaMedium;
         if (((CF*)config)->argEwmaShort) mgEwmaS = ((CF*)config)->argEwmaShort;
+        if (((CF*)config)->argEwmaXShort) mgEwmaXS = ((CF*)config)->argEwmaXShort;
+        if (((CF*)config)->argEwmaUShort) mgEwmaU = ((CF*)config)->argEwmaUShort;
         json k = ((DB*)memory)->load(mMatter::EWMAChart);
         if (!k.empty()) {
           k = k.at(0);
-          if (!mgEwmaVL and k.value("time", (unsigned long)0) + qp->veryLongEwmaPeriods * 6e+4 > _Tstamp_)
+          if (!mgEwmaVL and k.value("time", (mClock)0) + qp->veryLongEwmaPeriods * 6e+4 > _Tstamp_)
             mgEwmaVL = k.value("ewmaVeryLong", 0.0);
-          if (!mgEwmaL and k.value("time", (unsigned long)0) + qp->longEwmaPeriods * 6e+4 > _Tstamp_)
+          if (!mgEwmaL and k.value("time", (mClock)0) + qp->longEwmaPeriods * 6e+4 > _Tstamp_)
             mgEwmaL = k.value("ewmaLong", 0.0);
-          if (!mgEwmaM and k.value("time", (unsigned long)0) + qp->mediumEwmaPeriods * 6e+4 > _Tstamp_)
+          if (!mgEwmaM and k.value("time", (mClock)0) + qp->mediumEwmaPeriods * 6e+4 > _Tstamp_)
             mgEwmaM = k.value("ewmaMedium", 0.0);
-          if (!mgEwmaS and k.value("time", (unsigned long)0) + qp->shortEwmaPeriods * 6e+4 > _Tstamp_)
+          if (!mgEwmaS and k.value("time", (mClock)0) + qp->shortEwmaPeriods * 6e+4 > _Tstamp_)
             mgEwmaS = k.value("ewmaShort", 0.0);
+          if (!mgEwmaXS and k.value("time", (mClock)0) + qp->extraShortEwmaPeriods * 6e+4 > _Tstamp_)
+            mgEwmaXS = k.value("ewmaExtraShort", 0.0);
+          if (!mgEwmaU and k.value("time", (mClock)0) + qp->ultraShortEwmaPeriods * 6e+4 > _Tstamp_)
+            mgEwmaU = k.value("ewmaUltraShort", 0.0);
         }
-        if (mgEwmaVL) FN::log(((CF*)config)->argEwmaVeryLong ? "ARG" : "DB", string("loaded ") + to_string(mgEwmaVL) + " EWMA VeryLong");
-        if (mgEwmaL)  FN::log(((CF*)config)->argEwmaLong ? "ARG" : "DB", string("loaded ") + to_string(mgEwmaL) + " EWMA Long");
-        if (mgEwmaM)  FN::log(((CF*)config)->argEwmaMedium ? "ARG" : "DB", string("loaded ") + to_string(mgEwmaM) + " EWMA Medium");
-        if (mgEwmaS)  FN::log(((CF*)config)->argEwmaShort ? "ARG" : "DB", string("loaded ") + to_string(mgEwmaS) + " EWMA Short");
+        if (mgEwmaVL) ((SH*)screen)->log(((CF*)config)->argEwmaVeryLong ? "ARG" : "DB", string("loaded ") + to_string(mgEwmaVL) + " EWMA VeryLong");
+        if (mgEwmaL)  ((SH*)screen)->log(((CF*)config)->argEwmaLong ? "ARG" : "DB", string("loaded ") + to_string(mgEwmaL) + " EWMA Long");
+        if (mgEwmaM)  ((SH*)screen)->log(((CF*)config)->argEwmaMedium ? "ARG" : "DB", string("loaded ") + to_string(mgEwmaM) + " EWMA Medium");
+        if (mgEwmaS)  ((SH*)screen)->log(((CF*)config)->argEwmaShort ? "ARG" : "DB", string("loaded ") + to_string(mgEwmaS) + " EWMA Short");
+        if (mgEwmaXS) ((SH*)screen)->log(((CF*)config)->argEwmaXShort ? "ARG" : "DB", string("loaded ") + to_string(mgEwmaXS) + " EWMA ExtraShort");
+        if (mgEwmaU)  ((SH*)screen)->log(((CF*)config)->argEwmaUShort ? "ARG" : "DB", string("loaded ") + to_string(mgEwmaU) + " EWMA UltraShort");
         for (json &it : ((DB*)memory)->load(mMatter::MarketDataLongTerm))
-          if (it.value("time", (unsigned long)0) + 3456e+5 > _Tstamp_ and it.value("fv", 0.0))
+          if (it.value("time", (mClock)0) + 3456e+5 > _Tstamp_ and it.value("fv", 0.0))
             fairValue96h.push_back(it.value("fv", 0.0));
-        FN::log("DB", string("loaded ") + to_string(fairValue96h.size()) + " historical FairValues");
+        ((SH*)screen)->log("DB", string("loaded ") + to_string(fairValue96h.size()) + " historical FairValues");
       };
       void waitData() {
         gw->evDataTrade = [&](mTrade k) {                           _debugEvent_
@@ -96,11 +109,11 @@ namespace K {
       };
       void calcFairValue() {
         if (levels.empty()) return;
-        double fairValue_ = fairValue,
+        mPrice fairValue_  = fairValue,
                topAskPrice = levels.asks.begin()->price,
-               topBidPrice = levels.bids.begin()->price,
-               topAskSize = levels.asks.begin()->size,
-               topBidSize = levels.bids.begin()->size;
+               topBidPrice = levels.bids.begin()->price;
+        mAmount topAskSize = levels.asks.begin()->size,
+                topBidSize = levels.bids.begin()->size;
         if (!topAskPrice or !topBidPrice or !topAskSize or !topBidSize) return;
         fairValue = qp->fvModel == mFairValueModel::BBO
           ? (topAskPrice + topBidPrice) / 2
@@ -112,10 +125,12 @@ namespace K {
         averageWidth /= ++averageCount;
       };
       void calcEwmaHistory() {
-        calcEwmaHistory(&mgEwmaVL, qp->veryLongEwmaPeriods, "VeryLong");
-        calcEwmaHistory(&mgEwmaL, qp->longEwmaPeriods, "Long");
-        calcEwmaHistory(&mgEwmaM, qp->mediumEwmaPeriods, "Medium");
-        calcEwmaHistory(&mgEwmaS, qp->shortEwmaPeriods, "Short");
+        if (qp->diffOnce(&qp->_diffVLEP)) calcEwmaHistory(&mgEwmaVL, qp->veryLongEwmaPeriods, "VeryLong");
+        if (qp->diffOnce(&qp->_diffLEP)) calcEwmaHistory(&mgEwmaL, qp->longEwmaPeriods, "Long");
+        if (qp->diffOnce(&qp->_diffMEP)) calcEwmaHistory(&mgEwmaM, qp->mediumEwmaPeriods, "Medium");
+        if (qp->diffOnce(&qp->_diffSEP)) calcEwmaHistory(&mgEwmaS, qp->shortEwmaPeriods, "Short");
+        if (qp->diffOnce(&qp->_diffXSEP)) calcEwmaHistory(&mgEwmaXS, qp->extraShortEwmaPeriods, "ExtraShort");
+        if (qp->diffOnce(&qp->_diffUEP)) calcEwmaHistory(&mgEwmaU, qp->ultraShortEwmaPeriods, "UltraShort");
       };
     private:
       function<void(json*)> helloTrade = [&](json *welcome) {
@@ -132,9 +147,8 @@ namespace K {
       };
       void calcStatsStdevProtection() {
         if (levels.empty()) return;
-        double topBid = levels.bids.begin()->price;
-        double topAsk = levels.asks.begin()->price;
-        if (!topBid or !topAsk) return;
+        mPrice topBid = levels.bids.begin()->price,
+               topAsk = levels.asks.begin()->price;
         mgStatFV.push_back(fairValue);
         mgStatBid.push_back(topBid);
         mgStatAsk.push_back(topAsk);
@@ -152,8 +166,10 @@ namespace K {
         takersSellSize60s = takersBuySize60s = 0;
         if (trades.empty()) return;
         for (mTrade &it : trades)
-          if (it.side == mSide::Bid) takersSellSize60s += it.quantity;
-          else takersBuySize60s += it.quantity;
+          (it.side == mSide::Bid
+            ? takersSellSize60s
+            : takersBuySize60s
+          ) += it.quantity;
         trades.clear();
       };
       void tradeUp(mTrade k) {
@@ -163,12 +179,29 @@ namespace K {
         ((UI*)client)->send(mMatter::MarketTrade, k);
       };
       void levelUp(mLevels k) {
-        filter(k);
-        if (mgT_369ms + 369e+0 > _Tstamp_) return;
+        levels = k;
+        if (!filterBidOrders.empty()) filter(&levels.bids, filterBidOrders);
+        if (!filterAskOrders.empty()) filter(&levels.asks, filterAskOrders);
+        calcFairValue();
+        ((EV*)events)->mgLevels();
+        if (!k.empty() and mgT_369ms + 369e+0 > _Tstamp_) return;
         ((UI*)client)->bid_levels = k.bids.size();
         ((UI*)client)->ask_levels = k.asks.size();
         ((UI*)client)->send(mMatter::MarketData, k);
         mgT_369ms = _Tstamp_;
+      };
+      void filter(vector<mLevel> *k, map<mPrice, mAmount> o) {
+        for (vector<mLevel>::iterator it = k->begin(); it != k->end();) {
+          for (map<mPrice, mAmount>::iterator it_ = o.begin(); it_ != o.end();)
+            if (abs(it->price - it_->first) < gw->minTick) {
+              it->size = it->size - it_->second;
+              o.erase(it_);
+              break;
+            } else ++it_;
+          if (it->size < gw->minTick) it = k->erase(it);
+          else ++it;
+          if (o.empty()) break;
+        }
       };
       void calcStatsEwmaPosition() {
         fairValue96h.push_back(fairValue);
@@ -178,6 +211,9 @@ namespace K {
         calcEwma(&mgEwmaL, qp->longEwmaPeriods, fairValue);
         calcEwma(&mgEwmaM, qp->mediumEwmaPeriods, fairValue);
         calcEwma(&mgEwmaS, qp->shortEwmaPeriods, fairValue);
+        calcEwma(&mgEwmaXS, qp->extraShortEwmaPeriods, fairValue);
+        calcEwma(&mgEwmaU, qp->ultraShortEwmaPeriods, fairValue);
+        if(mgEwmaXS and mgEwmaU) mgEwmaTrendDiff = ((mgEwmaU * 100) / mgEwmaXS) - 100;
         calcTargetPos();
         ((EV*)events)->mgTargetPosition();
         ((UI*)client)->send(mMatter::EWMAChart, chartStats());
@@ -186,6 +222,8 @@ namespace K {
           {"ewmaLong", mgEwmaL},
           {"ewmaMedium", mgEwmaM},
           {"ewmaShort", mgEwmaS},
+          {"ewmaExtraShort", mgEwmaXS},
+          {"ewmaUltraShort", mgEwmaU},
           {"time", _Tstamp_}
         });
         ((DB*)memory)->insert(mMatter::MarketDataLongTerm, {
@@ -197,7 +235,6 @@ namespace K {
         calcEwma(&mgEwmaP, qp->protectionEwmaPeriods, fairValue);
         calcEwma(&mgEwmaW, qp->protectionEwmaPeriods, averageWidth);
         averageCount = 0;
-        ((EV*)events)->mgEwmaQuoteProtection();
       };
       json chartStats() {
         return {
@@ -217,27 +254,11 @@ namespace K {
           {"ewmaMedium", mgEwmaM},
           {"ewmaLong", mgEwmaL},
           {"ewmaVeryLong", mgEwmaVL},
+          {"ewmaTrendDiff", mgEwmaTrendDiff},
           {"tradesBuySize", takersBuySize60s},
           {"tradesSellSize", takersSellSize60s},
           {"fairValue", fairValue}
         };
-      };
-      void filter(mLevels k) {
-        levels = k;
-        if (levels.empty()) return;
-        for (map<string, mOrder>::value_type &it : ((OG*)broker)->orders)
-          filter(mSide::Bid == it.second.side ? &levels.bids : &levels.asks, it.second);
-        if (levels.empty()) return;
-        calcFairValue();
-        ((EV*)events)->mgLevels();
-      };
-      void filter(vector<mLevel>* k, mOrder o) {
-        for (vector<mLevel>::iterator it = k->begin(); it != k->end();)
-          if (abs(it->price - o.price) < gw->minTick) {
-            it->size = it->size - o.quantity;
-            if (it->size < gw->minTick) k->erase(it);
-            break;
-          } else ++it;
       };
       void cleanStdev() {
         size_t periods = (size_t)qp->quotingStdevProtectionPeriods;
@@ -254,29 +275,28 @@ namespace K {
         mgStdevAsk = calcStdev(&mgStdevAskMean, qp->quotingStdevProtectionFactor, mgStatAsk);
         mgStdevTop = calcStdev(&mgStdevTopMean, qp->quotingStdevProtectionFactor, mgStatTop);
       };
-      double calcStdev(double *mean, double factor, vector<double> values) {
+      double calcStdev(mPrice *mean, double factor, vector<mPrice> values) {
         unsigned int n = values.size();
         if (!n) return 0.0;
         double sum = 0;
-        for (double &it : values) sum += it;
+        for (mPrice &it : values) sum += it;
         *mean = sum / n;
         double sq_diff_sum = 0;
-        for (double &it : values) {
-          double diff = it - *mean;
+        for (mPrice &it : values) {
+          mPrice diff = it - *mean;
           sq_diff_sum += diff * diff;
         }
         double variance = sq_diff_sum / n;
         return sqrt(variance) * factor;
       };
-      void calcEwmaHistory(double *mean, unsigned int periods, string name) {
+      void calcEwmaHistory(mPrice *mean, unsigned int periods, string name) {
         unsigned int n = fairValue96h.size();
-        if (!n or !periods or n < periods) return;
-        n = periods;
-        *mean = 0;
+        if (!n) return;
+        *mean = fairValue96h.front();
         while (n--) calcEwma(mean, periods, *(fairValue96h.rbegin()+n));
-        FN::log("MG", string("reloaded ") + to_string(*mean) + " EWMA " + name);
+        ((SH*)screen)->log("MG", string("reloaded ") + to_string(*mean) + " EWMA " + name);
       };
-      void calcEwma(double *mean, unsigned int periods, double value) {
+      void calcEwma(mPrice *mean, unsigned int periods, mPrice value) {
         if (*mean) {
           double alpha = 2.0 / (periods + 1);
           *mean = alpha * value + (1 - alpha) * *mean;
@@ -285,8 +305,8 @@ namespace K {
       void calcTargetPos() {
         mgSMA3.push_back(fairValue);
         if (mgSMA3.size()>3) mgSMA3.erase(mgSMA3.begin(), mgSMA3.end()-3);
-        double SMA3 = 0;
-        for (double &it : mgSMA3) SMA3 += it;
+        mPrice SMA3 = 0;
+        for (mPrice &it : mgSMA3) SMA3 += it;
         SMA3 /= mgSMA3.size();
         double newTargetPosition = 0;
         if (qp->autoPositionMode == mAutoPositionMode::EWMA_LMS) {
@@ -294,10 +314,10 @@ namespace K {
           double newEwmacrossing = ((mgEwmaS * 100 / mgEwmaM) - 100);
           newTargetPosition = ((newTrend + newEwmacrossing) / 2) * (1 / qp->ewmaSensiblityPercentage);
         } else if (qp->autoPositionMode == mAutoPositionMode::EWMA_LS)
-          newTargetPosition = ((mgEwmaS * 100/ mgEwmaL) - 100) * (1 / qp->ewmaSensiblityPercentage);
+          newTargetPosition = ((mgEwmaS * 100 / mgEwmaL) - 100) * (1 / qp->ewmaSensiblityPercentage);
         else if (qp->autoPositionMode == mAutoPositionMode::EWMA_4) {
           if (mgEwmaL < mgEwmaVL) newTargetPosition = -1;
-          else newTargetPosition = ((mgEwmaS * 100/ mgEwmaM) - 100) * (1 / qp->ewmaSensiblityPercentage);
+          else newTargetPosition = ((mgEwmaS * 100 / mgEwmaM) - 100) * (1 / qp->ewmaSensiblityPercentage);
         }
         if (newTargetPosition > 1) newTargetPosition = 1;
         else if (newTargetPosition < -1) newTargetPosition = -1;

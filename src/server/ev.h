@@ -2,6 +2,7 @@
 #define K_EV_H_
 
 #define _errorEvent_ ((EV*)events)->error
+
 #define _debugEvent_ ((EV*)events)->debug(__PRETTY_FUNCTION__);
 
 namespace K  {
@@ -9,20 +10,16 @@ namespace K  {
     private:
       uWS::Hub *hub = nullptr;
       Async *aEngine = nullptr;
-      vector<function<void()>> asyncFn;
-      future<int> hotkey;
+      vector<function<void()>> slowFn;
     public:
       uWS::Group<uWS::SERVER> *uiGroup = nullptr;
       Timer *tServer = nullptr,
-            *tEngine = nullptr,
             *tClient = nullptr;
-      function<void(mOrder)> ogOrder;
-      function<void(mTrade)> ogTrade;
-      function<void()>       mgLevels,
-                             mgEwmaQuoteProtection,
-                             mgTargetPosition,
-                             pgTargetBasePosition,
-                             uiQuotingParameters;
+      function<void(mOrder*)> ogOrder;
+      function<void(mTrade*)> ogTrade;
+      function<void()>        mgLevels,
+                              mgTargetPosition,
+                              uiQuotingParameters;
     protected:
       void load() {
         gwEndings.push_back(&happyEnding);
@@ -34,21 +31,18 @@ namespace K  {
         if (!gw) exit(error("GW", string("Unable to load a valid gateway using --exchange=") + ((CF*)config)->argExchange + " argument"));
         gw->hub = hub = new uWS::Hub(0, true);
       };
-      void waitTime() {
-        tServer = new Timer(hub->getLoop());
-        tEngine = new Timer(hub->getLoop());
-        tClient = new Timer(hub->getLoop());
-      };
       void waitData() {
         aEngine = new Async(hub->getLoop());
         aEngine->setData(this);
         aEngine->start(asyncLoop);
         gw->gwGroup = hub->createGroup<uWS::CLIENT>();
       };
+      void waitTime() {
+        tServer = new Timer(hub->getLoop());
+        tClient = new Timer(hub->getLoop());
+      };
       void waitUser() {
         uiGroup = hub->createGroup<uWS::SERVER>(uWS::PERMESSAGE_DEFLATE);
-        if (((CF*)config)->argNaked) return;
-        hotkey = async(launch::async, FN::screen_events);
       };
       void run() {
         if (((CF*)config)->argDebugEvents) return;
@@ -62,7 +56,6 @@ namespace K  {
       };
       void stop(function<void()> gwCancelAll) {
         tServer->stop();
-        tEngine->stop();
         tClient->stop();
         gw->close();
         gw->gwGroup->close();
@@ -71,66 +64,66 @@ namespace K  {
         uiGroup->close();
       };
       void listen() {
-        string protocol("HTTP");
+        ((SH*)screen)->protocol = "HTTP";
         if (!((CF*)config)->argWithoutSSL
           and (access("etc/sslcert/server.crt", F_OK) != -1) and (access("etc/sslcert/server.key", F_OK) != -1)
           and hub->listen(((CF*)config)->argPort, uS::TLS::createContext("etc/sslcert/server.crt", "etc/sslcert/server.key", ""), 0, uiGroup)
-        ) protocol += "S";
+        ) ((SH*)screen)->protocol += "S";
         else if (!hub->listen(((CF*)config)->argPort, nullptr, 0, uiGroup))
           exit(error("IU", string("Use another UI port number, ")
             + to_string(((CF*)config)->argPort) + " seems already in use by:\n"
             + FN::output(string("netstat -anp 2>/dev/null | grep ") + to_string(((CF*)config)->argPort))
           ));
-        FN::logUI(protocol, ((CF*)config)->argPort);
+        ((SH*)screen)->port = ((CF*)config)->argPort;
+        ((SH*)screen)->logUI();
       };
       void deferred(function<void()> fn) {
-        asyncFn.push_back(fn);
+        slowFn.push_back(fn);
         aEngine->send();
       };
+      void async(function<bool()> &fn) {
+        if (fn()) aEngine->send();
+      };
       int error(string k, string s, bool reboot = false) {
-        FN::screen_quit();
-        FN::logErr(k, s);
+        ((SH*)screen)->quit();
+        ((SH*)screen)->logErr(k, s);
         return reboot ? EXIT_FAILURE : EXIT_SUCCESS;
       };
       function<void(string)> debug = [&](string k) {
-        FN::log("DEBUG", string("EV ") + k);
+        ((SH*)screen)->log("DEBUG", string("EV ") + k);
       };
     private:
       function<void()> happyEnding = [&]() {
-        cout << FN::uiT() << gw->name;
+        cout << ((SH*)screen)->stamp() << gw->name;
         for (unsigned int i = 0; i < 21; ++i)
           cout << " THE END IS NEVER";
         cout << " THE END." << '\n';
       };
-      void (*asyncLoop)(Async*) = [](Async *handle) {
-        EV* k = (EV*)handle->getData();
-        if (!k->asyncFn.empty()) {
-          for (function<void()> &it : k->asyncFn) it();
-          k->asyncFn.clear();
+      void (*asyncLoop)(Async*) = [](Async *aEngine) {
+        EV* k = (EV*)aEngine->getData();
+        if (!k->slowFn.empty()) {
+          for (function<void()> &it : k->slowFn) it();
+          k->slowFn.clear();
         }
-        if (k->hotkey.valid() and k->hotkey.wait_for(chrono::nanoseconds(0)) == future_status::ready) {
-          int ch = k->hotkey.get();
-          if (ch == 'q' or ch == 'Q')
-            raise(SIGINT);
-        }
+        if (k->gw->waitForData())
+          aEngine->send();
+        ((SH*)screen)->waitForUser();
       };
       void version() {
         if (access(".git", F_OK) != -1) {
           FN::output("git fetch");
           string k = changelog();
-          FN::logVer(k, count(k.begin(), k.end(), '\n'));
-        } else FN::logVer("", -1);
+          ((SH*)screen)->logVer(k, count(k.begin(), k.end(), '\n'));
+        } else ((SH*)screen)->logVer("", -1);
         THIS_WAS_A_TRIUMPH
           << "- upstream: " << ((CF*)config)->argExchange << '\n'
           << "- currency: " << ((CF*)config)->argCurrency << '\n';
       };
       static void halt(int last_int_alive) {
-        FN::screen_quit();
-        cout << '\n' << FN::uiT() << THIS_WAS_A_TRIUMPH.str();
         for (function<void()>* &it : gwEndings) (*it)();
         if (last_int_alive == EXIT_FAILURE)
           this_thread::sleep_for(chrono::seconds(3));
-        cout << FN::uiT() << "K exit code " << to_string(last_int_alive) << "." << '\n';
+        cout << ((SH*)screen)->stamp() << "K exit code " << to_string(last_int_alive) << "." << '\n';
         exit(last_int_alive);
       };
       static void quit(int last_int_alive) {
@@ -151,6 +144,7 @@ namespace K  {
           THIS_WAS_A_TRIUMPH
             << " (Three-Headed Monkey found):" << '\n' << rollout.str()
             << "- lastbeat: " << to_string(_Tstamp_) << '\n'
+            << "- os-uname: " << FN::output("uname -srvm")
             << "- tracelog: " << '\n';
           void *k[69];
           size_t jumps = backtrace(k, 69);

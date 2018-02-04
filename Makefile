@@ -4,6 +4,8 @@ CARCH    = x86_64-linux-gnu arm-linux-gnueabihf aarch64-linux-gnu x86_64-apple-d
 KLOCAL   = build-$(CHOST)/local
 CXX      = $(CHOST)-g++
 CC       = $(CHOST)-gcc
+ERR      = *** K require g++ v6, but g++ v6 was not found at $(shell which $(CXX))
+HINT     = consider to create a symlink at $(shell which $(CXX)) pointing to your g++-6 executable
 KGIT     = 4.0
 KHUB     = 8656597
 V_ZLIB  := 1.2.11
@@ -15,8 +17,8 @@ V_UWS   := 0.14.4
 V_SQL   := 3210000
 V_QF    := v.1.14.4
 V_UV    := 1.18.0
-V_PVS   := 6.20.24121.1823
-KZIP     = dbccf70940c5206b9046c0bba2fbbcdfe0e8e21c
+V_PVS   := 6.21.24657.1946
+KZIP     = 6b393e683c5f8a7f9701a27e839d3111b1028e86
 KARGS    = -Wextra -std=c++11 -O3 -I$(KLOCAL)/include      \
   src/server/K.cxx -pthread -rdynamic                      \
   -DK_STAMP='"$(shell date "+%Y-%m-%d %H:%M:%S")"'         \
@@ -86,6 +88,7 @@ K: src/server/K.cxx
 ifdef KALL
 	unset KALL && echo -n $(CARCH) | tr ' ' "\n" | xargs -I % $(MAKE) CHOST=% $@
 else
+	@$(if $(shell sh -c 'test "`g++ -dumpversion | cut -d . -f1`" != "6" || echo 1'),,$(warning $(ERR));$(error $(HINT)))
 	@$(CXX) --version
 	mkdir -p $(KLOCAL)/bin
 	CHOST=$(CHOST) $(MAKE) $(shell test -n "`echo $(CHOST) | grep darwin`" && echo Darwin || uname -s)
@@ -96,6 +99,7 @@ dist:
 ifdef KALL
 	unset KALL && echo -n $(CARCH) | tr ' ' "\n" | xargs -I % $(MAKE) CHOST=% $@
 else
+	@$(if $(shell sh -c 'test "`g++ -dumpversion | cut -d . -f1`" != "6" || echo 1'),,$(warning $(ERR));$(error $(HINT)))
 	mkdir -p build-$(CHOST)
 	CHOST=$(CHOST) $(MAKE) zlib openssl curl sqlite ncurses json uws quickfix libuv
 	test -f /sbin/ldconfig && sudo ldconfig || :
@@ -198,7 +202,7 @@ cleandb: /data/db/K*
 packages:
 	test -n "`command -v apt-get`" && sudo apt-get -y install g++ build-essential automake autoconf libtool libxml2 libxml2-dev zlib1g-dev openssl stunnel python curl gzip screen \
 	|| (test -n "`command -v yum`" && sudo yum -y install gcc-c++ automake autoconf libtool libxml2 libxml2-devel openssl stunnel python curl gzip screen) \
-	|| (test -n "`command -v brew`" && (xcode-select --install || :) && (brew install automake autoconf libxml2 sqlite openssl zlib stunnel python curl gzip || brew upgrade || :)) \
+	|| (test -n "`command -v brew`" && (xcode-select --install || :) && (brew install automake autoconf libxml2 sqlite openssl zlib stunnel python curl gzip proctools || brew upgrade || :)) \
  	|| (test -n "`command -v pacman`" && sudo pacman --noconfirm -S --needed base-devel libxml2 zlib sqlite curl libcurl-compat openssl stunnel python gzip screen)
 	sudo mkdir -p /data/db/
 	sudo chown $(shell id -u) /data/db

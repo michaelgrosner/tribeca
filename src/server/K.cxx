@@ -42,6 +42,7 @@ using namespace std;
 using namespace nlohmann;
 
 #include "km.h"
+#include "sh.h"
 #include "fn.h"
 #include "cf.h"
 #include "ev.h"
