@@ -402,6 +402,7 @@ or donate your time with programming or financial suggestions in the topical IRC
 - https://github.com/michaelgrosner/tribeca (https://github.com/michaelgrosner)
 - https://www.sqlite.org
 - https://github.com/michaelgrosner/tribeca (https://github.com/michaelgrosner)
+- but Most Special Thanks goes to [your mother](https://youtu.be/YDafHsyyTNk).
 
 ### Help
 
