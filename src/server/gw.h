@@ -119,7 +119,7 @@ namespace K {
             ((EV*)events)->async(gw->cancelAll);
         }
       };
-      inline void gwConnect(string reason = "") {
+      inline void gwConnect(string reason = "") {                   _debugEvent_
         if (reason.empty())
           gwT_countdown = 1;
         else {

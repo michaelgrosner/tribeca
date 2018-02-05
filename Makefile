@@ -18,7 +18,7 @@ V_SQL   := 3210000
 V_QF    := v.1.14.4
 V_UV    := 1.18.0
 V_PVS   := 6.21.24657.1946
-KZIP     = 6b393e683c5f8a7f9701a27e839d3111b1028e86
+KZIP     = e2f924d7ec837c93a905ab1c93d5c696cc58e2a4
 KARGS    = -Wextra -std=c++11 -O3 -I$(KLOCAL)/include      \
   src/server/K.cxx -pthread -rdynamic                      \
   -DK_STAMP='"$(shell date "+%Y-%m-%d %H:%M:%S")"'         \

@@ -150,7 +150,7 @@ namespace K {
         return k_;
       };
       static void stunnel() {
-        system("(kill -9 `pgrep stunnel` || :) && stunnel etc/K-stunnel.conf");
+        system("(pkill stunnel || :) && stunnel etc/K-stunnel.conf");
       };
       static int memory() {
         string ps = output(string("ps -p") + to_string(::getpid()) + " -orss | tail -n1");
