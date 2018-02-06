@@ -18,7 +18,7 @@ V_SQL   := 3210000
 V_QF    := v.1.14.4
 V_UV    := 1.18.0
 V_PVS   := 6.21.24657.1946
-KZIP     = eaa4d8e7e77154939b95c46faf56b17d92703829
+KZIP     = 639e73bcb5c8c16fc875d21d06313d938b042ca6
 KARGS    = -Wextra -std=c++11 -O3 -I$(KLOCAL)/include      \
   src/server/K.cxx -pthread -rdynamic                      \
   -DK_STAMP='"$(shell date "+%Y-%m-%d %H:%M:%S")"'         \
@@ -298,7 +298,7 @@ css:
 	rm -rf $(KLOCAL)/var/www/css
 	mkdir -p $(KLOCAL)/var/www/css
 	./node_modules/.bin/node-sass --output-style compressed --output $(KLOCAL)/var/www/css/ src/www/sass/
-	ls $$PWD/$(KLOCAL)/var/www/css/*[^\.min].css | rename 's/(\.css)$$/\.min$$1/'
+	ls -1 $$PWD/$(KLOCAL)/var/www/css/*[^\.min].css | rename 's/(\.css)$$/\.min$$1/'
 	@echo DONE
 
 bundle: client www css node_modules/.bin/browserify node_modules/.bin/uglifyjs $(KLOCAL)/var/www/js/main.js
