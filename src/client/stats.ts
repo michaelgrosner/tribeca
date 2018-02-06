@@ -54,6 +54,9 @@ export class StatsComponent implements OnInit {
   private pointFormatterQuote = function () {
     return '<tr><td><span style="color:'+this.series.color+'">' + (<any>Highcharts).customSymbols[this.series.symbol||'square'] + '</span> '+this.series.name+':</td><td style="text-align:right;"> <b>'+this.y.toFixed(8)+' ' + ((<any>Highcharts).customBaseCurrency) + '</b></td></tr>';
   }
+  private pointFormatterPercentage = function () {
+    return '<tr><td><span style="color:'+this.series.color+'">' + (<any>Highcharts).customSymbols[this.series.symbol||'square'] + '</span> '+this.series.name+':</td><td style="text-align:right;"> <b>'+this.y.toFixed(4)+' % </b></td></tr>';
+  }
   private syncExtremes = function (e) {
     var thisChart = this.chart;
     if (e.trigger !== 'syncExtremes') {
@@ -81,13 +84,14 @@ export class StatsComponent implements OnInit {
       type: 'datetime',
       crosshair: true,
       // events: {setExtremes: this.syncExtremes},
-      labels: {enabled: false},
+      labels: {enabled: true},
       gridLineWidth: 0,
       dateTimeLabelFormats: {millisecond: '%H:%M:%S',second: '%H:%M:%S',minute: '%H:%M',hour: '%H:%M',day: '%m-%d',week: '%m-%d',month: '%m',year: '%Y'}
     },
     yAxis: [{
       title: {text: 'Fair Value and Trades'},
-      labels: {enabled: false},
+      labels: {enabled: true},
+      crosshair: true,
       gridLineWidth: 0
     },{
       title: {text: 'STDEV 20'},
@@ -102,6 +106,13 @@ export class StatsComponent implements OnInit {
       groupPadding: 0,
       borderWidth: 0,
       shadow: false,
+      gridLineWidth: 0
+      },{
+      title: {text: 'Percentage'},
+      min: -100,
+      max: 100,
+      labels: {enabled: false},
+      opposite: true,
       gridLineWidth: 0
     }],
     legend: {
@@ -190,13 +201,13 @@ export class StatsComponent implements OnInit {
     },{
       name: 'EWMA Long',
       type: 'spline',
-      colorIndex: 6,
+      colorIndex: 5,
       tooltip: {pointFormatter: this.pointFormatterBase},
       data: []
     },{
       name: 'EWMA Medium',
       type: 'spline',
-      colorIndex: 6,
+      colorIndex: 4,
       tooltip: {pointFormatter: this.pointFormatterBase},
       data: []
     },{
@@ -212,6 +223,7 @@ export class StatsComponent implements OnInit {
       color:'#af451e',
       tooltip: {pointFormatter: this.pointFormatterBase},
       yAxis: 1,
+      visible: false,
       data: []
     },{
       name: 'STDEV Tops',
@@ -220,6 +232,7 @@ export class StatsComponent implements OnInit {
       color:'#af451e',
       tooltip: {pointFormatter: this.pointFormatterBase},
       yAxis: 1,
+      visible: false,
       data: []
     },{
       name: 'STDEV TopAsk',
@@ -228,6 +241,7 @@ export class StatsComponent implements OnInit {
       color:'#af451e',
       tooltip: {pointFormatter: this.pointFormatterBase},
       yAxis: 1,
+      visible: false,
       data: []
     },{
       name: 'STDEV TopBid',
@@ -236,6 +250,7 @@ export class StatsComponent implements OnInit {
       color:'#af451e',
       tooltip: {pointFormatter: this.pointFormatterBase},
       yAxis: 1,
+      visible: false,
       data: []
     },{
       name: 'STDEV BBFair',
@@ -245,6 +260,7 @@ export class StatsComponent implements OnInit {
       color:'#af451e',
       fillOpacity: 0.2,
       zIndex: -1,
+      visible: false,
       data: []
     },{
       name: 'STDEV BBTops',
@@ -254,6 +270,7 @@ export class StatsComponent implements OnInit {
       color:'#af451e',
       fillOpacity: 0.2,
       zIndex: -1,
+      visible: false,
       data: []
     },{
       name: 'STDEV BBTop',
@@ -263,6 +280,7 @@ export class StatsComponent implements OnInit {
       color:'#af451e',
       fillOpacity: 0.2,
       zIndex: -1,
+      visible: false,
       data: []
     },{
       type: 'column',
@@ -281,11 +299,12 @@ export class StatsComponent implements OnInit {
       data: [],
       zIndex: -2
     },{
-      name: 'EWMA SMU Diff',
+      name: 'EWMA Trend Diff',
       type: 'spline',
       color: '#fd00ff',
-      tooltip: {pointFormatter: this.pointFormatterBase},
-      yAxis: 1,
+      tooltip: {pointFormatter: this.pointFormatterPercentage},
+      yAxis: 3,
+      visible: false,
       data: []
     }]
   };
