@@ -28,6 +28,7 @@ export class StatsComponent implements OnInit {
   public ewmaMedium: number;
   public ewmaLong: number;
   public ewmaVeryLong: number;
+  public ewmaTrendDiff: number;
   public stdevWidth: Models.IStdev;
   public tradesBuySize: number;
   public tradesSellSize: number;
@@ -52,6 +53,9 @@ export class StatsComponent implements OnInit {
   }
   private pointFormatterQuote = function () {
     return '<tr><td><span style="color:'+this.series.color+'">' + (<any>Highcharts).customSymbols[this.series.symbol||'square'] + '</span> '+this.series.name+':</td><td style="text-align:right;"> <b>'+this.y.toFixed(8)+' ' + ((<any>Highcharts).customBaseCurrency) + '</b></td></tr>';
+  }
+  private pointFormatterPercentage = function () {
+    return '<tr><td><span style="color:'+this.series.color+'">' + (<any>Highcharts).customSymbols[this.series.symbol||'square'] + '</span> '+this.series.name+':</td><td style="text-align:right;"> <b>'+this.y.toFixed(4)+' % </b></td></tr>';
   }
   private syncExtremes = function (e) {
     var thisChart = this.chart;
@@ -80,13 +84,14 @@ export class StatsComponent implements OnInit {
       type: 'datetime',
       crosshair: true,
       // events: {setExtremes: this.syncExtremes},
-      labels: {enabled: false},
+      labels: {enabled: true},
       gridLineWidth: 0,
       dateTimeLabelFormats: {millisecond: '%H:%M:%S',second: '%H:%M:%S',minute: '%H:%M',hour: '%H:%M',day: '%m-%d',week: '%m-%d',month: '%m',year: '%Y'}
     },
     yAxis: [{
       title: {text: 'Fair Value and Trades'},
-      labels: {enabled: false},
+      labels: {enabled: true},
+      crosshair: true,
       gridLineWidth: 0
     },{
       title: {text: 'STDEV 20'},
@@ -101,6 +106,13 @@ export class StatsComponent implements OnInit {
       groupPadding: 0,
       borderWidth: 0,
       shadow: false,
+      gridLineWidth: 0
+      },{
+      title: {text: 'Percentage'},
+      min: -100,
+      max: 100,
+      labels: {enabled: false},
+      opposite: true,
       gridLineWidth: 0
     }],
     legend: {
@@ -189,13 +201,13 @@ export class StatsComponent implements OnInit {
     },{
       name: 'EWMA Long',
       type: 'spline',
-      colorIndex: 6,
+      colorIndex: 5,
       tooltip: {pointFormatter: this.pointFormatterBase},
       data: []
     },{
       name: 'EWMA Medium',
       type: 'spline',
-      colorIndex: 6,
+      colorIndex: 4,
       tooltip: {pointFormatter: this.pointFormatterBase},
       data: []
     },{
@@ -211,6 +223,7 @@ export class StatsComponent implements OnInit {
       color:'#af451e',
       tooltip: {pointFormatter: this.pointFormatterBase},
       yAxis: 1,
+      visible: false,
       data: []
     },{
       name: 'STDEV Tops',
@@ -219,6 +232,7 @@ export class StatsComponent implements OnInit {
       color:'#af451e',
       tooltip: {pointFormatter: this.pointFormatterBase},
       yAxis: 1,
+      visible: false,
       data: []
     },{
       name: 'STDEV TopAsk',
@@ -227,6 +241,7 @@ export class StatsComponent implements OnInit {
       color:'#af451e',
       tooltip: {pointFormatter: this.pointFormatterBase},
       yAxis: 1,
+      visible: false,
       data: []
     },{
       name: 'STDEV TopBid',
@@ -235,6 +250,7 @@ export class StatsComponent implements OnInit {
       color:'#af451e',
       tooltip: {pointFormatter: this.pointFormatterBase},
       yAxis: 1,
+      visible: false,
       data: []
     },{
       name: 'STDEV BBFair',
@@ -244,6 +260,7 @@ export class StatsComponent implements OnInit {
       color:'#af451e',
       fillOpacity: 0.2,
       zIndex: -1,
+      visible: false,
       data: []
     },{
       name: 'STDEV BBTops',
@@ -253,6 +270,7 @@ export class StatsComponent implements OnInit {
       color:'#af451e',
       fillOpacity: 0.2,
       zIndex: -1,
+      visible: false,
       data: []
     },{
       name: 'STDEV BBTop',
@@ -262,6 +280,7 @@ export class StatsComponent implements OnInit {
       color:'#af451e',
       fillOpacity: 0.2,
       zIndex: -1,
+      visible: false,
       data: []
     },{
       type: 'column',
@@ -279,6 +298,14 @@ export class StatsComponent implements OnInit {
       colorIndex:5,
       data: [],
       zIndex: -2
+    },{
+      name: 'EWMA Trend Diff',
+      type: 'spline',
+      color: '#fd00ff',
+      tooltip: {pointFormatter: this.pointFormatterPercentage},
+      yAxis: 3,
+      visible: false,
+      data: []
     }]
   };
   public quoteChartOptions = {
@@ -482,6 +509,7 @@ export class StatsComponent implements OnInit {
     if (o.stdevWidth) this.stdevWidth = o.stdevWidth;
     if (o.tradesBuySize) this.tradesBuySize = o.tradesBuySize;
     if (o.tradesSellSize) this.tradesSellSize = o.tradesSellSize;
+    if (o.ewmaTrendDiff) this.ewmaTrendDiff = o.ewmaTrendDiff;
   }
 
   @Input() set setTradesChartData(t: Models.TradeChart) {
@@ -610,6 +638,7 @@ export class StatsComponent implements OnInit {
       if (this.ewmaMedium) Highcharts.charts[this.fvChart].series[9].addPoint([time, this.ewmaMedium], false);
       if (this.ewmaShort) Highcharts.charts[this.fvChart].series[10].addPoint([time, this.ewmaShort], false);
       Highcharts.charts[this.fvChart].series[0].addPoint([time, this.fairValue], this.showStats);
+      if (this.ewmaTrendDiff) Highcharts.charts[this.fvChart].series[20].addPoint([time, this.ewmaTrendDiff], false);
       if ((<any>Highcharts).quotingParameters.protectionEwmaWidthPing && this.ewmaWidth) Highcharts.charts[this.fvChart].series[1].addPoint([time, this.fairValue-this.ewmaWidth, this.fairValue+this.ewmaWidth], this.showStats, false, false);
       else if (this.width) Highcharts.charts[this.fvChart].series[1].addPoint([time, this.fairValue-this.width, this.fairValue+this.width], this.showStats, false, false);
     }

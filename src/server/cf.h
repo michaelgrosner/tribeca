@@ -9,9 +9,9 @@ namespace K {
            argDebugQuotes  = 0,      argDebugWallet  = 0, argWithoutSSL   = 0,
            argMaxLevels    = 0,      argHeadless     = 0, argDustybot     = 0,
            argAutobot      = 0,      argNaked        = 0, argFree         = 0,
-           argIgnoreSun    = 0,      argIgnoreMoon   = 0;
-    mPrice argEwmaShort    = 0,      argEwmaMedium   = 0,
-           argEwmaLong     = 0,      argEwmaVeryLong = 0;
+           argIgnoreSun    = 0,      argIgnoreMoon   = 0, argLifetime     = 0;
+    mPrice argEwmaUShort   = 0,      argEwmaXShort   = 0, argEwmaShort    = 0,
+           argEwmaMedium   = 0,      argEwmaLong     = 0, argEwmaVeryLong = 0;
     string argTitle        = "K.sh", argMatryoshka   = "https://www.example.com/",
            argUser         = "NULL", argPass         = "NULL",
            argExchange     = "NULL", argCurrency     = "NULL",
@@ -39,6 +39,7 @@ namespace K {
           {"naked",        no_argument,       &argNaked,         1},
           {"autobot",      no_argument,       &argAutobot,       1},
           {"dustybot",     no_argument,       &argDustybot,      1},
+          {"lifetime",     required_argument, 0,               'T'},
           {"whitelist",    required_argument, 0,               'L'},
           {"matryoshka",   required_argument, 0,               'k'},
           {"exchange",     required_argument, 0,               'e'},
@@ -53,10 +54,12 @@ namespace K {
           {"port",         required_argument, 0,               'P'},
           {"user",         required_argument, 0,               'u'},
           {"pass",         required_argument, 0,               'p'},
-          {"ewma-short",   required_argument, 0,               's'},
-          {"ewma-medium",  required_argument, 0,               'm'},
-          {"ewma-long",    required_argument, 0,               'l'},
-          {"ewma-verylong",required_argument, 0,               'V'},
+          {"ewma-ultra",   required_argument, 0,               905},
+          {"ewma-micro",   required_argument, 0,               904},
+          {"ewma-short",   required_argument, 0,               903},
+          {"ewma-medium",  required_argument, 0,               902},
+          {"ewma-long",    required_argument, 0,               901},
+          {"ewma-verylong",required_argument, 0,               900},
           {"database",     required_argument, 0,               'd'},
           {"market-limit", required_argument, 0,               'M'},
           {"free-version", no_argument,       &argFree,          1},
@@ -65,11 +68,12 @@ namespace K {
         };
         int k = 0;
         while (++k)
-          switch (k = getopt_long(argc, argv, "hvc:d:e:k:l:m:s:p:u:v:A:H:K:M:P:S:U:W:X:", args, NULL)) {
+          switch (k = getopt_long(argc, argv, "hvc:d:e:k:p:u:A:H:K:M:P:S:T:U:W:X:", args, NULL)) {
             case -1 :
             case  0 : break;
             case 'P': argPort         = stoi(optarg);   break;
             case 'M': argMaxLevels    = stoi(optarg);   break;
+            case 'T': argLifetime     = stoi(optarg);   break;
             case 'A': argApikey       = string(optarg); break;
             case 'S': argSecret       = string(optarg); break;
             case 'U': argUsername     = string(optarg); break;
@@ -84,10 +88,12 @@ namespace K {
             case 'u': argUser         = string(optarg); break;
             case 'p': argPass         = string(optarg); break;
             case 'L': argWhitelist    = string(optarg); break;
-            case 's': argEwmaShort    = stod(optarg);   break;
-            case 'm': argEwmaMedium   = stod(optarg);   break;
-            case 'l': argEwmaLong     = stod(optarg);   break;
-            case 'V': argEwmaVeryLong = stod(optarg);   break;
+            case 905: argEwmaUShort   = stod(optarg);   break;
+            case 904: argEwmaXShort   = stod(optarg);   break;
+            case 903: argEwmaShort    = stod(optarg);   break;
+            case 902: argEwmaMedium   = stod(optarg);   break;
+            case 901: argEwmaLong     = stod(optarg);   break;
+            case 900: argEwmaVeryLong = stod(optarg);   break;
             case 'h': cout
               << RGREEN << "This is free software: the quoting engine and UI are open source,"
                         << '\n' << "feel free to hack both as you need." << '\n'
@@ -134,17 +140,23 @@ namespace K {
               << ((SH*)screen)->stamp() << RWHITE << "                            default PATH is '/data/db/K.*.*.*.db'," << '\n'
               << ((SH*)screen)->stamp() << RWHITE << "                            any route to a filename is valid," << '\n'
               << ((SH*)screen)->stamp() << RWHITE << "                            or use ':memory:' (see sqlite.org/inmemorydb.html)." << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "-s, --ewma-short=PRICE    - set initial ewma short value," << '\n'
+              << ((SH*)screen)->stamp() << RWHITE << "    --ewma-ultra=PRICE    - set initial ewma ultra short value," << '\n'
               << ((SH*)screen)->stamp() << RWHITE << "                            overwrites the value from the database." << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "-m, --ewma-medium=PRICE   - set initial ewma medium value," << '\n'
+              << ((SH*)screen)->stamp() << RWHITE << "    --ewma-micro=PRICE    - set initial ewma micro short value," << '\n'
               << ((SH*)screen)->stamp() << RWHITE << "                            overwrites the value from the database." << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "-l, --ewma-long=PRICE     - set initial ewma long value," << '\n'
+              << ((SH*)screen)->stamp() << RWHITE << "    --ewma-short=PRICE    - set initial ewma short value," << '\n'
               << ((SH*)screen)->stamp() << RWHITE << "                            overwrites the value from the database." << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "-V, --ewma-verylong=PRICE - set initial ewma verylong value," << '\n'
+              << ((SH*)screen)->stamp() << RWHITE << "    --ewma-medium=PRICE   - set initial ewma medium value," << '\n'
               << ((SH*)screen)->stamp() << RWHITE << "                            overwrites the value from the database." << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "-M, --market-limit=NUMBER - set NUMBER of maximum price levels for the orderbook," << '\n'
+              << ((SH*)screen)->stamp() << RWHITE << "    --ewma-long=PRICE     - set initial ewma long value," << '\n'
+              << ((SH*)screen)->stamp() << RWHITE << "                            overwrites the value from the database." << '\n'
+              << ((SH*)screen)->stamp() << RWHITE << "    --ewma-verylong=PRICE - set initial ewma verylong value," << '\n'
+              << ((SH*)screen)->stamp() << RWHITE << "                            overwrites the value from the database." << '\n'
+              << ((SH*)screen)->stamp() << RWHITE << "    --market-limit=NUMBER - set NUMBER of maximum price levels for the orderbook," << '\n'
               << ((SH*)screen)->stamp() << RWHITE << "                            default NUMBER is '321' and the minimum is '15'." << '\n'
               << ((SH*)screen)->stamp() << RWHITE << "                            locked bots smells like '--market-limit=3' spirit." << '\n'
+              << ((SH*)screen)->stamp() << RWHITE << "-T, --lifetime=NUMBER     - set NUMBER of minimum seconds before cancel open orders," << '\n'
+              << ((SH*)screen)->stamp() << RWHITE << "                            otherwise open orders will be replaced anytime required." << '\n'
               << ((SH*)screen)->stamp() << RWHITE << "    --debug-secret        - print (never share!) secret inputs and outputs." << '\n'
               << ((SH*)screen)->stamp() << RWHITE << "    --debug-events        - print detailed output about event handlers." << '\n'
               << ((SH*)screen)->stamp() << RWHITE << "    --debug-orders        - print detailed output about exchange messages." << '\n'
@@ -232,6 +244,7 @@ namespace K {
         if (argUser == "NULL") argUser.clear();
         if (argPass == "NULL") argPass.clear();
         if (argIgnoreSun and argIgnoreMoon) argIgnoreSun = 0;
+        if (argLifetime) argLifetime *= 1e+3;
       };
   };
 }

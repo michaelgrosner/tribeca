@@ -13,12 +13,12 @@ namespace K {
            sync_trades = false,
            sync_orders = false;
     protected:
-      void load() {
+      void load() {                                                 _debugEvent_
         gwEndings.back() = &happyEnding;
         gwAdminEnabled = (mConnectivity)((CF*)config)->argAutobot;
         handshake(gw->exchange);
       };
-      void waitData() {
+      void waitData() {                                             _debugEvent_
         gw->reconnect = [&](string reason) {
           gwConnect(reason);
         };
@@ -30,7 +30,7 @@ namespace K {
             gw->evDataLevels(mLevels());
         };
       };
-      void waitTime() {
+      void waitTime() {                                             _debugEvent_
         if (!(sync_levels = !gw->async_levels())) gwConnect();
         sync_trades = !gw->async_trades();
         sync_orders = !gw->async_orders();
@@ -39,12 +39,12 @@ namespace K {
           ((GW*)tServer->getData())->timer_1s();
         }, 0, 1e+3);
       };
-      void waitUser() {
+      void waitUser() {                                             _debugEvent_
         ((UI*)client)->welcome(mMatter::Connectivity, &hello);
         ((UI*)client)->clickme(mMatter::Connectivity, &kiss);
         ((SH*)screen)->pressme(mHotkey::ESC, &hotkiss);
       };
-      void run() {
+      void run() {                                                  _debugEvent_
         ((EV*)events)->start();
       };
     private:
@@ -105,9 +105,9 @@ namespace K {
         if (gwT_countdown and gwT_countdown-- == 1)
           gw->hub->connect(gw->ws, nullptr, {}, 5000, gw->gwGroup);
         else ((QE*)engine)->timer_1s();
-        if (sync_orders)
+        if (sync_orders and !(gwT_5m % 2))
           ((EV*)events)->async(gw->orders);
-        if (sync_levels and !(gwT_5m % 2))
+        if (sync_levels and !(gwT_5m % 3))
           ((EV*)events)->async(gw->levels);
         if (!(gwT_5m % 15))
           ((EV*)events)->async(gw->wallet);
@@ -119,7 +119,7 @@ namespace K {
             ((EV*)events)->async(gw->cancelAll);
         }
       };
-      inline void gwConnect(string reason = "") {
+      inline void gwConnect(string reason = "") {                   _debugEvent_
         if (reason.empty())
           gwT_countdown = 1;
         else {
@@ -197,12 +197,12 @@ namespace K {
         }
         else if (k == mExchange::Poloniex) {
           gw->randId = FN::int45Id;
-          gw->symbol = FN::FN::S2u(string(gw->base) + "_" + gw->quote);
+          gw->symbol = FN::FN::S2u(string(gw->quote) + "_" + gw->base);
           reply = FN::wJet(string(gw->http) + "/public?command=returnTicker");
           if (reply.find(gw->symbol) != reply.end()) {
             istringstream os(string("1e-").append(to_string(6-reply[gw->symbol]["last"].get<string>().find("."))));
             os >> gw->minTick;
-            gw->minSize = 0.01;
+            gw->minSize = 0.001;
           }
         }
         else if (k == mExchange::Null) {
