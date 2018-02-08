@@ -57,6 +57,7 @@ namespace K {
             for (mOrder &it : gw->sync_cancelAll()) gw->evDataOrder(it);
             ((SH*)screen)->log(string("GW ") + gw->name, "cancel all open orders OK");
           }
+          if (gw->exchange == mExchange::Coinbase) FN::stunnel();
         });
       };
       function<void(json*)> hello = [&](json *welcome) {
@@ -130,7 +131,7 @@ namespace K {
       inline void handshake(mExchange k) {
         json reply;
         if (k == mExchange::Coinbase) {
-          FN::stunnel();
+          FN::stunnel(true);
           gw->randId = FN::uuid36Id;
           gw->symbol = FN::S2u(string(gw->base) + "-" + gw->quote);
           reply = FN::wJet(string(gw->http) + "/products/" + gw->symbol);

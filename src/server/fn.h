@@ -149,8 +149,9 @@ namespace K {
         for (unsigned int i = 0; i < SHA384_DIGEST_LENGTH; i++) sprintf(&k_[i*2], "%02x", (unsigned int)digest[i]);
         return k_;
       };
-      static void stunnel() {
-        system("(pkill stunnel || :) && stunnel etc/K-stunnel.conf");
+      static void stunnel(bool reboot = false) {
+        system("pkill stunnel || :");
+        if (reboot) system("stunnel etc/K-stunnel.conf");
       };
       static int memory() {
         string ps = output(string("ps -p") + to_string(::getpid()) + " -orss | tail -n1");
