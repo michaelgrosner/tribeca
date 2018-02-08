@@ -197,17 +197,17 @@ namespace K {
         tidy();
       };
       void run() {
+        ((SH*)screen)->config(
+          argNaked,    argColors,
+          argExchange, argCurrency
+        );
         gw = Gw::config(
           base(),       quote(),
           argExchange,  argFree,
           argApikey,    argSecret,
           argUsername,  argPassphrase,
           argHttp,      argWss,
-          argMaxLevels, argDebugSecret,
-          ((SH*)screen)->config(
-            argNaked,    argColors,
-            argExchange, argCurrency
-          )
+          argMaxLevels, argDebugSecret
         );
       };
     private:

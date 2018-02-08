@@ -605,11 +605,11 @@ namespace K {
   class Gw {
     public:
       virtual string A() = 0;
-      void                    *screen  = nullptr;
       uWS::Hub                *hub     = nullptr;
       uWS::Group<uWS::CLIENT> *gwGroup = nullptr;
-      static Gw *config(mCoinId, mCoinId, string, int, string, string, string, string, string, string, int, int, void*);
-      function<void(string)>        reconnect;
+      static Gw *config(mCoinId, mCoinId, string, int, string, string, string, string, string, string, int, int);
+      function<void(string)>        log,
+                                    reconnect;
       function<void(mOrder)>        evDataOrder;
       function<void(mTrade)>        evDataTrade;
       function<void(mWallet)>       evDataWallet;

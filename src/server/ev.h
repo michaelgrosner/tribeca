@@ -32,6 +32,14 @@ namespace K  {
         gw->hub = hub = new uWS::Hub(0, true);
       };
       void waitData() {
+        gw->log = [&](string reason) {
+          deferred([this, reason]() {
+            string name = string(reason.find(">>>") == reason.find("<<<") ? "DEBUG" : "GW") + " " + gw->name;
+            if (reason.find("Error") != string::npos)
+              ((SH*)screen)->logWar(name, reason);
+            else ((SH*)screen)->log(name, reason);
+          });
+        };
         aEngine = new Async(hub->getLoop());
         aEngine->setData(this);
         aEngine->start(asyncLoop);
