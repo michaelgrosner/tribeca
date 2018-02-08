@@ -212,7 +212,7 @@ install:
 	@$(MAKE) packages
 	mkdir -p app/server
 	@yes = | head -n`expr $(shell tput cols) / 2` | xargs echo && echo " _  __\n| |/ /\n| ' /   Select your architecture\n| . \\   to download pre-compiled binaries:\n|_|\\_\\ \n"
-	@echo -n $(CARCH) | tr ' ' "\n" | cat -n && echo "\n\n(Hint! uname says \"`uname -sm`\")\n"
+	@echo $(CARCH) | tr ' ' "\n" | cat -n && echo "\n(Hint! uname says \"`uname -sm`\")\n"
 	@read -p "[1/2/3/4]: " chost; \
 	CHOST=`echo $(CARCH) | cut -d ' ' -f$${chost}` $(MAKE) build link
 
