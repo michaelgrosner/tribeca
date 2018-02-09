@@ -149,16 +149,6 @@ namespace K {
         for (unsigned int i = 0; i < SHA384_DIGEST_LENGTH; i++) sprintf(&k_[i*2], "%02x", (unsigned int)digest[i]);
         return k_;
       };
-      static void stunnel(bool reboot = false) {
-        system("pkill stunnel || :");
-        if (reboot) system("stunnel etc/K-stunnel.conf");
-      };
-      static int memory() {
-        string ps = output(string("ps -p") + to_string(::getpid()) + " -orss | tail -n1");
-        ps.erase(remove(ps.begin(), ps.end(), ' '), ps.end());
-        if (ps.empty()) ps = "0";
-        return stoi(ps) * 1e+3;
-      };
       static string output(string cmd) {
         string data;
         FILE *stream;
@@ -173,278 +163,160 @@ namespace K {
         }
         return data;
       };
-      static string readlink(const char* path) {
-        string buffer(64, '\0');
-        ssize_t len;
-        while((len = ::readlink(path, &buffer[0], buffer.size())) == (ssize_t)buffer.size())
-          buffer.resize(buffer.size() * 2);
-        if (len == -1) ((SH*)screen)->logWar("FN", "readlink failed");
-        buffer.resize(len);
-        return buffer;
-      };
       static json   wJet(string k, bool f = false) {
         return json::parse(wGet(k, f));
       };
       static string wGet(string k, bool f) {
-        string k_;
-        CURL* curl = curl_easy_init();
-        if (curl) {
-          curl_easy_setopt(curl, CURLOPT_CAINFO, "etc/K-cabundle.pem");
-          curl_easy_setopt(curl, CURLOPT_URL, k.data());
-          curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &wcb);
-          curl_easy_setopt(curl, CURLOPT_WRITEDATA, &k_);
-          curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
+        return curl_perform(curl_init(k), [&](CURL *curl) {
           if (f) curl_easy_setopt(curl, CURLOPT_TIMEOUT, 4L);
           else curl_easy_setopt(curl, CURLOPT_TIMEOUT, 13L);
-          CURLcode r = curl_easy_perform(curl);
-          if (!f and r != CURLE_OK) ((SH*)screen)->logWar("CURL", string("wGet failed ") + curl_easy_strerror(r));
-          curl_easy_cleanup(curl);
-        }
-        if (k_.empty() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
-        return k_;
+        }, f);
       };
       static json   wJet(string k, string p) {
         return json::parse(wGet(k, p));
       };
       static string wGet(string k, string p) {
-        string k_;
-        CURL* curl = curl_easy_init();
-        if (curl) {
+        return curl_perform(curl_init(k), [&](CURL *curl) {
           struct curl_slist *h_ = NULL;
-          curl_easy_setopt(curl, CURLOPT_CAINFO, "etc/K-cabundle.pem");
-          curl_easy_setopt(curl, CURLOPT_URL, k.data());
-          curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &wcb);
-          curl_easy_setopt(curl, CURLOPT_POSTFIELDS, p.data());
           h_ = curl_slist_append(h_, "Content-Type: application/x-www-form-urlencoded");
           curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
-          curl_easy_setopt(curl, CURLOPT_WRITEDATA, &k_);
-          curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
-          CURLcode r = curl_easy_perform(curl);
-          if (r != CURLE_OK) ((SH*)screen)->logWar("CURL", string("wPost failed ") + curl_easy_strerror(r));
-          curl_easy_cleanup(curl);
-        }
-        if (k_.empty() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
-        return k_;
+          curl_easy_setopt(curl, CURLOPT_POSTFIELDS, p.data());
+        });
       };
       static json   wJet(string k, string t, bool auth) {
         return json::parse(wGet(k, t, auth));
       };
       static string wGet(string k, string t, bool auth) {
-        string k_;
-        CURL* curl = curl_easy_init();
-        if (curl) {
+        return curl_perform(curl_init(k), [&](CURL *curl) {
           struct curl_slist *h_ = NULL;
-          curl_easy_setopt(curl, CURLOPT_CAINFO, "etc/K-cabundle.pem");
-          curl_easy_setopt(curl, CURLOPT_URL, k.data());
-          curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &wcb);
           if (!t.empty()) h_ = curl_slist_append(h_, string("Authorization: Bearer ").append(t).data());
           curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
-          curl_easy_setopt(curl, CURLOPT_WRITEDATA, &k_);
-          curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
-          CURLcode r = curl_easy_perform(curl);
-          if (r != CURLE_OK) ((SH*)screen)->logWar("CURL", string("wPost failed ") + curl_easy_strerror(r));
-          curl_easy_cleanup(curl);
-        }
-        if (k_.empty() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
-        return k_;
+        });
       };
       static json   wJet(string k, bool p, string a, string s, string n) {
         return json::parse(wGet(k, p, a, s, n));
       };
       static string wGet(string k, bool p, string a, string s, string n) {
-        string k_;
-        CURL* curl = curl_easy_init();
-        if (curl) {
+        return curl_perform(curl_init(k), [&](CURL *curl) {
           struct curl_slist *h_ = NULL;
-          curl_easy_setopt(curl, CURLOPT_CAINFO, "etc/K-cabundle.pem");
-          curl_easy_setopt(curl, CURLOPT_URL, k.data());
-          curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &wcb);
-          curl_easy_setopt(curl, CURLOPT_POSTFIELDS, n.data());
           h_ = curl_slist_append(h_, string("API-Key: ").append(a).data());
           h_ = curl_slist_append(h_, string("API-Sign: ").append(s).data());
           curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
-          curl_easy_setopt(curl, CURLOPT_WRITEDATA, &k_);
-          curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
-          CURLcode r = curl_easy_perform(curl);
-          if (r != CURLE_OK) ((SH*)screen)->logWar("CURL", string("wPost failed ") + curl_easy_strerror(r));
-          curl_easy_cleanup(curl);
-        }
-        if (k_.empty() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
-        return k_;
+          curl_easy_setopt(curl, CURLOPT_POSTFIELDS, n.data());
+        });
       };
       static json   wJet(string k, bool a, string p, string s) {
         return json::parse(wGet(k, a, p, s));
       };
       static string wGet(string k, bool a, string p, string s) {
-        string k_;
-        CURL* curl = curl_easy_init();
-        if (curl) {
-          curl_easy_setopt(curl, CURLOPT_CAINFO, "etc/K-cabundle.pem");
-          curl_easy_setopt(curl, CURLOPT_URL, k.data());
+        return curl_perform(curl_init(k), [&](CURL *curl) {
           if (a) {
             curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
             curl_easy_setopt(curl, CURLOPT_POSTFIELDS, s.data());
           }
-          curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &wcb);
           curl_easy_setopt(curl, CURLOPT_USERPWD, p.data());
-          curl_easy_setopt(curl, CURLOPT_WRITEDATA, &k_);
-          curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
-          CURLcode r = curl_easy_perform(curl);
-          if (r != CURLE_OK) ((SH*)screen)->logWar("CURL", string("wGet failed ") + curl_easy_strerror(r));
-          curl_easy_cleanup(curl);
-        }
-        if (k_.empty() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
-        return k_;
+        });
       };
       static json   wJet(string k, string p, string s, bool post) {
         return json::parse(wGet(k, p, s, post));
       };
       static string wGet(string k, string p, string s, bool post) {
-        string k_;
-        CURL* curl = curl_easy_init();
-        if (curl) {
+        return curl_perform(curl_init(k), [&](CURL *curl) {
           struct curl_slist *h_ = NULL;
-          curl_easy_setopt(curl, CURLOPT_CAINFO, "etc/K-cabundle.pem");
-          curl_easy_setopt(curl, CURLOPT_URL, k.data());
-          curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &wcb);
-          curl_easy_setopt(curl, CURLOPT_POSTFIELDS, p.data());
           h_ = curl_slist_append(h_, string("X-Signature: ").append(s).data());
           curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
-          curl_easy_setopt(curl, CURLOPT_WRITEDATA, &k_);
-          curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
-          CURLcode r = curl_easy_perform(curl);
-          if (r != CURLE_OK) ((SH*)screen)->logWar("CURL", string("wPost failed ") + curl_easy_strerror(r));
-          curl_easy_cleanup(curl);
-        }
-        if (k_.empty() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
-        return k_;
+          curl_easy_setopt(curl, CURLOPT_POSTFIELDS, p.data());
+        });
       };
       static json   wJet(string k, string p, string a, string s) {
         return json::parse(wGet(k, p, a, s));
       };
       static string wGet(string k, string p, string a, string s) {
-        string k_;
-        CURL* curl = curl_easy_init();
-        if (curl) {
+        return curl_perform(curl_init(k), [&](CURL *curl) {
           struct curl_slist *h_ = NULL;
-          curl_easy_setopt(curl, CURLOPT_CAINFO, "etc/K-cabundle.pem");
-          curl_easy_setopt(curl, CURLOPT_URL, k.data());
-          curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &wcb);
-          curl_easy_setopt(curl, CURLOPT_POSTFIELDS, p.data());
           h_ = curl_slist_append(h_, "Content-Type: application/x-www-form-urlencoded");
           h_ = curl_slist_append(h_, string("Key: ").append(a).data());
           h_ = curl_slist_append(h_, string("Sign: ").append(s).data());
           curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
-          curl_easy_setopt(curl, CURLOPT_WRITEDATA, &k_);
-          curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
-          CURLcode r = curl_easy_perform(curl);
-          if (r != CURLE_OK) ((SH*)screen)->logWar("CURL", string("wPost failed ") + curl_easy_strerror(r));
-          curl_easy_cleanup(curl);
-        }
-        if (k_.empty() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
-        return k_;
+          curl_easy_setopt(curl, CURLOPT_POSTFIELDS, p.data());
+        });
       };
       static json   wJet(string k, string p, string a, string s, bool post) {
         return json::parse(wGet(k, p, a, s, post));
       };
       static string wGet(string k, string p, string a, string s, bool post) {
-        string k_;
-        CURL* curl = curl_easy_init();
-        if (curl) {
+        return curl_perform(curl_init(k), [&](CURL *curl) {
           struct curl_slist *h_ = NULL;
-          curl_easy_setopt(curl, CURLOPT_CAINFO, "etc/K-cabundle.pem");
-          curl_easy_setopt(curl, CURLOPT_URL, k.data());
-          curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &wcb);
-          curl_easy_setopt(curl, CURLOPT_POSTFIELDS, p.data());
           h_ = curl_slist_append(h_, string("X-BFX-APIKEY: ").append(a).data());
           h_ = curl_slist_append(h_, string("X-BFX-PAYLOAD: ").append(p).data());
           h_ = curl_slist_append(h_, string("X-BFX-SIGNATURE: ").append(s).data());
           curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
-          curl_easy_setopt(curl, CURLOPT_WRITEDATA, &k_);
-          curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
-          CURLcode r = curl_easy_perform(curl);
-          if (r != CURLE_OK) ((SH*)screen)->logWar("CURL", string("wPost failed ") + curl_easy_strerror(r));
-          curl_easy_cleanup(curl);
-        }
-        if (k_.empty() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
-        return k_;
+          curl_easy_setopt(curl, CURLOPT_POSTFIELDS, p.data());
+        });
       };
       static json   wJet(string k, string p, string a, string s, bool post, bool auth) {
         return json::parse(wGet(k, p, a, s, post, auth));
       };
       static string wGet(string k, string p, string a, string s, bool post, bool auth) {
-        string k_;
-        CURL* curl = curl_easy_init();
-        if (curl) {
+        return curl_perform(curl_init(k), [&](CURL *curl) {
           struct curl_slist *h_ = NULL;
-          curl_easy_setopt(curl, CURLOPT_CAINFO, "etc/K-cabundle.pem");
-          curl_easy_setopt(curl, CURLOPT_URL, k.data());
-          curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &wcb);
-          curl_easy_setopt(curl, CURLOPT_POSTFIELDS, p.data());
           h_ = curl_slist_append(h_, "Content-Type: application/x-www-form-urlencoded");
           if (!a.empty()) h_ = curl_slist_append(h_, string("Authorization: Bearer ").append(a).data());
           curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
-          curl_easy_setopt(curl, CURLOPT_WRITEDATA, &k_);
-          curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
-          CURLcode r = curl_easy_perform(curl);
-          if (r != CURLE_OK) ((SH*)screen)->logWar("CURL", string("wPost failed ") + curl_easy_strerror(r));
-          curl_easy_cleanup(curl);
-        }
-        if (k_.empty() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
-        return k_;
+          curl_easy_setopt(curl, CURLOPT_POSTFIELDS, p.data());
+        });
       };
       static json   wJet(string k, string t, string a, string s, string p) {
         return json::parse(wGet(k, t, a, s, p));
       };
       static string wGet(string k, string t, string a, string s, string p) {
-        string k_;
-        CURL* curl = curl_easy_init();
-        if (curl) {
+        return curl_perform(curl_init(k), [&](CURL *curl) {
           struct curl_slist *h_ = NULL;
-          curl_easy_setopt(curl, CURLOPT_CAINFO, "etc/K-cabundle.pem");
-          curl_easy_setopt(curl, CURLOPT_URL, k.data());
-          curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &wcb);
           h_ = curl_slist_append(h_, string("CB-ACCESS-KEY: ").append(a).data());
           h_ = curl_slist_append(h_, string("CB-ACCESS-SIGN: ").append(s).data());
           h_ = curl_slist_append(h_, string("CB-ACCESS-TIMESTAMP: ").append(t).data());
           h_ = curl_slist_append(h_, string("CB-ACCESS-PASSPHRASE: ").append(p).data());
           curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
-          curl_easy_setopt(curl, CURLOPT_WRITEDATA, &k_);
-          curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
-          CURLcode r = curl_easy_perform(curl);
-          if (r != CURLE_OK) ((SH*)screen)->logWar("CURL", string("wGet failed ") + curl_easy_strerror(r));
-          curl_easy_cleanup(curl);
-        }
-        if (k_.empty() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
-        return k_;
+        });
       };
       static json   wJet(string k, string t, string a, string s, string p, bool d) {
         return json::parse(wGet(k, t, a, s, p, d));
       };
       static string wGet(string k, string t, string a, string s, string p, bool d) {
-        string k_;
-        CURL* curl = curl_easy_init();
-        if (curl) {
+        return curl_perform(curl_init(k), [&](CURL *curl) {
           struct curl_slist *h_ = NULL;
-          curl_easy_setopt(curl, CURLOPT_CAINFO, "etc/K-cabundle.pem");
-          curl_easy_setopt(curl, CURLOPT_URL, k.data());
-          curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &wcb);
           h_ = curl_slist_append(h_, string("CB-ACCESS-KEY: ").append(a).data());
           h_ = curl_slist_append(h_, string("CB-ACCESS-SIGN: ").append(s).data());
           h_ = curl_slist_append(h_, string("CB-ACCESS-TIMESTAMP: ").append(t).data());
           h_ = curl_slist_append(h_, string("CB-ACCESS-PASSPHRASE: ").append(p).data());
           curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
-          curl_easy_setopt(curl, CURLOPT_WRITEDATA, &k_);
           curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
+        });
+      };
+      static CURL* curl_init(string url) {
+        CURL *curl = curl_easy_init();
+        if (curl) {
           curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
+          curl_easy_setopt(curl, CURLOPT_CAINFO, "etc/K-cabundle.pem");
+          curl_easy_setopt(curl, CURLOPT_URL, url.data());
+        }
+        return curl;
+      };
+      static string curl_perform(CURL* curl, function<void(CURL *curl)> curl_setopt, bool debug = true) {
+        string reply;
+        if (curl) {
+          curl_setopt(curl);
+          curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &curl_write);
+          curl_easy_setopt(curl, CURLOPT_WRITEDATA, &reply);
           CURLcode r = curl_easy_perform(curl);
-          if (r != CURLE_OK) ((SH*)screen)->logWar("CURL", string("wGet failed ") + curl_easy_strerror(r));
+          if (debug and r != CURLE_OK)
+            ((SH*)screen)->logWar("CURL", string("wGet failed ") + curl_easy_strerror(r));
           curl_easy_cleanup(curl);
         }
-        if (k_.empty() or (k_[0]!='{' and k_[0]!='[')) k_ = "{}";
-        return k_;
+        if (reply.empty() or (reply[0]!='{' and reply[0]!='[')) reply = "{}";
+        return reply;
       };
-      static size_t wcb(void *buf, size_t size, size_t nmemb, void *up) {
+      static size_t curl_write(void *buf, size_t size, size_t nmemb, void *up) {
         ((string*)up)->append((char*)buf, size * nmemb);
         return size * nmemb;
       };

@@ -78,7 +78,7 @@ namespace K {
               url = path;
             }
             if (!url.empty())
-              content << ifstream(FN::readlink("app/client").substr(48) + url).rdbuf();
+              content << ifstream(readlink("app/client").substr(48) + url).rdbuf();
             else if (FN::int64() % 21) {
               document = "HTTP/1.1 404 Not Found\r\n";
               content << "Today, is a beautiful day.";
@@ -214,9 +214,15 @@ namespace K {
         send(mMatter::ApplicationState, serverState());
         orders_60s = 0;
       };
+      unsigned int memorySize() {
+        string ps = FN::output(string("ps -p") + to_string(::getpid()) + " -orss | tail -n1");
+        ps.erase(remove(ps.begin(), ps.end(), ' '), ps.end());
+        if (ps.empty()) ps = "0";
+        return stoi(ps) * 1e+3;
+      };
       json serverState() {
         return {
-          {"memory", FN::memory()},
+          {"memory", memorySize()},
           {"freq", orders_60s},
           {"bids", bid_levels},
           {"asks", ask_levels},
@@ -224,6 +230,15 @@ namespace K {
           {"dbsize", ((DB*)memory)->size()},
           {"a", gw->A()}
         };
+      };
+      string readlink(const char* path) {
+        string buffer(64, '\0');
+        ssize_t len;
+        while((len = ::readlink(path, &buffer[0], buffer.size())) == (ssize_t)buffer.size())
+          buffer.resize(buffer.size() * 2);
+        if (len == -1) buffer.clear();
+        else buffer.resize(len);
+        return buffer;
       };
   };
 }
