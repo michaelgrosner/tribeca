@@ -138,7 +138,7 @@ namespace K  {
         THIS_WAS_A_TRIUMPH.str("");
         THIS_WAS_A_TRIUMPH
           << "Excellent decision! "
-          << FN::wJet("https://api.icndb.com/jokes/random?escape=javascript&limitTo=[nerdy]", true)
+          << FN::wJet("https://api.icndb.com/jokes/random?escape=javascript&limitTo=[nerdy]", 4L)
              .value("/value/joke"_json_pointer, "let's plant a tree instead..") << '\n';
         halt(EXIT_SUCCESS);
       };
