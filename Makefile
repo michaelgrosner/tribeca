@@ -176,8 +176,26 @@ quickfix: build-$(CHOST)
 	sed -i '' "s/SUBDIRS = test//" src/C++/Makefile.am ||                                          \
 	sed -i "s/SUBDIRS = test//" src/C++/Makefile.am)                                               \
 	&& (test -n "`echo $(CHOST) | grep mingw32`" &&                                                \
-	(sed -i "s/\(-DHAVE_CONFIG_H\)/\'\1 -D_MSC_VER=1400\'/" configure &&                           \
-	sed -i "s/W\(insock2\)/w\1/" src/C++/Utility.h && sed -i "s/W\(insock2\)/w\1/" src/C++/SocketMonitor.h) || :)                                           \
+	(sed -i "s/\(typedef int\)/\/\/\1/" src/C++/Utility.h src/C++/SocketMonitor.h && sed -i "s/W\(insock2\)/w\1/" src/C++/Utility.h src/C++/SocketMonitor.h && sed -i "29s/_MSC_VER/_WIN32/" src/C++/SocketServer.cpp && sed -i "63s/_MSC_VER/_WIN32/" src/C++/Utility.h && \
+	sed -i "s/\&\(func\)/\1/" src/C++/Utility.cpp &&\
+	sed -i "s/_stdcall//" src/C++/Utility.h &&\
+	sed -i "s/GetCurrentThread/GetCurrentThreadId/" src/C++/Utility.cpp &&\
+	sed -i "133s/_MSC_VER/_WIN32/" src/C++/Utility.h &&\
+	sed -i "140s/_MSC_VER/_WIN32/" src/C++/Utility.h &&\
+	sed -i "153s/_MSC_VER/_WIN32/" src/C++/Utility.h &&\
+	sed -i "83s/_MSC_VER/_WIN32/" src/C++/Utility.cpp &&\
+	sed -i "98s/_MSC_VER/_WIN32/" src/C++/Utility.cpp &&\
+	sed -i "275s/_MSC_VER/_WIN32/" src/C++/Utility.cpp &&\
+	sed -i "257s/_MSC_VER/_WIN32/" src/C++/Utility.cpp &&\
+	sed -i "364s/_MSC_VER/_WIN32/" src/C++/Utility.cpp &&\
+	sed -i "380s/_MSC_VER/_WIN32/" src/C++/Utility.cpp &&\
+	sed -i "396s/_MSC_VER/_WIN32/" src/C++/Utility.cpp &&\
+	sed -i "460s/_MSC_VER/_WIN32/" src/C++/Utility.cpp &&\
+	sed -i "417s/_MSC_VER/_WIN32/" src/C++/Utility.cpp &&\
+	sed -i "427s/_MSC_VER/_WIN32/" src/C++/Utility.cpp &&\
+	sed -i "437s/_MSC_VER/_WIN32/" src/C++/Utility.cpp &&\
+	sed -i "477s/_MSC_VER/_WIN32/" src/C++/Utility.cpp &&\
+	sed -i "346s/_MSC_VER/_WIN32/" src/C++/Utility.cpp && sed -i "264s/_MSC_VER/_WIN32/" src/C++/Utility.cpp && sed -i "248s/_MSC_VER/_WIN32/" src/C++/Utility.cpp && sed -i "202s/_MSC_VER/_WIN32/" src/C++/Utility.cpp && sed -i "227s/_MSC_VER/_WIN32/" src/C++/Utility.cpp && sed -i "171s/_MSC_VER/_WIN32/" src/C++/Utility.cpp && sed -i "161s/_MSC_VER/_WIN32/" src/C++/Utility.h && sed -i "28s/_MSC_VER/_WIN32/" src/C++/SocketConnector.cpp && sed -i "s/_MSC_VER/_WIN32/" src/C++/Mutex.h src/C++/SocketMonitor.h) || :)                                           \
 	&& CXX=$(CXX) AR=$(CHOST)-ar ./configure --prefix=$(PWD)/$(KLOCAL) --enable-shared=no          \
 	--enable-static=yes --host=$(CHOST) && cd src/C++ && CXX=$(CXX) make && make install           )
 
@@ -301,7 +319,7 @@ www: src/www $(KLOCAL)/var/www
 	@echo DONE
 
 css: src/www/sass
-	@echo Building CSS files..
+	@echo Building client CSS files..
 	rm -rf $(KLOCAL)/var/www/css
 	mkdir -p $(KLOCAL)/var/www/css
 	./node_modules/.bin/node-sass --output-style compressed --output $(KLOCAL)/var/www/css/ src/www/sass/ \
