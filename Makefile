@@ -1,6 +1,6 @@
 K       ?= K.sh
 CHOST   ?= $(shell (test -d .git && test -n "`command -v g++`") && g++ -dumpmachine || ls . | grep build- | head -n1 | cut -d '/' -f1 | cut -d '-' -f2-)
-CARCH    = x86_64-linux-gnu arm-linux-gnueabihf aarch64-linux-gnu x86_64-apple-darwin17
+CARCH    = x86_64-linux-gnu arm-linux-gnueabihf aarch64-linux-gnu x86_64-apple-darwin17 x86_64-w64-mingw32
 KLOCAL   = build-$(CHOST)/local
 CXX      = $(CHOST)-g++
 CC       = $(CHOST)-gcc
@@ -113,16 +113,21 @@ Darwin: build-$(CHOST)
 	$(CXX) -o $(KLOCAL)/bin/K-$(CHOST) -DUSE_LIBUV $(KLOCAL)/lib/libuv.a -msse4.1 -maes -mpclmul -mmacosx-version-min=10.13 -nostartfiles $(KARGS)
 
 zlib: build-$(CHOST)
-	test -d build-$(CHOST)/zlib-$(V_ZLIB) || (                                 \
-	curl -L https://zlib.net/zlib-$(V_ZLIB).tar.gz | tar xz -C build-$(CHOST)  \
-	&& cd build-$(CHOST)/zlib-$(V_ZLIB) && CC=$(CC) ./configure --static       \
-	--prefix=$(PWD)/$(KLOCAL) && make && make install                          )
+	test -d build-$(CHOST)/zlib-$(V_ZLIB) || (                                                  \
+	curl -L https://zlib.net/zlib-$(V_ZLIB).tar.gz | tar xz -C build-$(CHOST)                   \
+	&& cd build-$(CHOST)/zlib-$(V_ZLIB) && (test -n "`echo $(CHOST) | grep mingw32`" &&         \
+	(sed -i "s/^\(PREFIX =\).*$$/\1$(CHOST)-/" win32/Makefile.gcc && make -fwin32/Makefile.gcc  \
+	&& BINARY_PATH=$(PWD)/$(KLOCAL)/bin INCLUDE_PATH=$(PWD)/$(KLOCAL)/include                   \
+	LIBRARY_PATH=$(PWD)/$(KLOCAL)/lib make install -fwin32/Makefile.gcc)                        \
+	|| (CC=$(CC) ./configure --static --prefix=$(PWD)/$(KLOCAL) && make && make install))       )
 
 openssl: build-$(CHOST)
-	test -d build-$(CHOST)/openssl-$(V_SSL) || (                                                             \
-	curl -L https://www.openssl.org/source/openssl-$(V_SSL).tar.gz | tar xz -C build-$(CHOST)                \
-	&& cd build-$(CHOST)/openssl-$(V_SSL) && CC=$(CC) RANLIB=$(CHOST)-ranlib AR=$(CHOST)-ar ./Configure dist \
-	-fPIC --prefix=$(PWD)/$(KLOCAL) --openssldir=$(PWD)/$(KLOCAL) && make && make install_sw install_ssldirs )
+	test -d build-$(CHOST)/openssl-$(V_SSL) || (                                              \
+	curl -L https://www.openssl.org/source/openssl-$(V_SSL).tar.gz | tar xz -C build-$(CHOST) \
+	&& cd build-$(CHOST)/openssl-$(V_SSL) && ./Configure                                      \
+	$(shell test -n "`echo $(CHOST) | grep mingw32`" && echo mingw64 || echo dist)            \
+	--cross-compile-prefix=$(CHOST)- -fPIC --prefix=$(PWD)/$(KLOCAL)                          \
+	--openssldir=$(PWD)/$(KLOCAL) && make && make install_sw install_ssldirs                  )
 
 curl: build-$(CHOST)
 	test -d build-$(CHOST)/curl-$(V_CURL) || (                                                  \
@@ -141,23 +146,23 @@ sqlite: build-$(CHOST)
 	&& cd build-$(CHOST)/sqlite-autoconf-$(V_SQL) && CC=$(CC) ./configure --prefix=$(PWD)/$(KLOCAL) \
 	--host=$(CHOST) --enable-static --disable-shared --enable-threadsafe && make && make install    )
 
-uws: build-$(CHOST)
-	test -d build-$(CHOST)/uWebSockets-$(V_UWS)                                    \
-	|| curl -L https://github.com/uNetworking/uWebSockets/archive/v$(V_UWS).tar.gz \
-	| tar xz -C build-$(CHOST) && mkdir -p $(KLOCAL)/include/uWS                   \
-	&& cp build-$(CHOST)/uWebSockets-$(V_UWS)/src/* $(KLOCAL)/include/uWS/
-
 ncurses: build-$(CHOST)
-	test -d build-$(CHOST)/ncurses-$(V_NCUR) || (                                                         \
-	curl -L http://ftp.gnu.org/pub/gnu/ncurses/ncurses-$(V_NCUR).tar.gz | tar xz -C build-$(CHOST)        \
-	&& cd build-$(CHOST)/ncurses-$(V_NCUR) && CC=$(CC) AR=$(CHOST)-ar CXX=$(CXX) CPPFLAGS=-P ./configure  \
-	--host=$(CHOST) --prefix=$(PWD)/$(KLOCAL)                                                             \
-	--with-fallbacks=linux,screen,vt100,xterm,xterm-256color,putty-256color && make && make install       )
+	test -d build-$(CHOST)/ncurses-$(V_NCUR) || (                                                        \
+	curl -L http://ftp.gnu.org/pub/gnu/ncurses/ncurses-$(V_NCUR).tar.gz | tar xz -C build-$(CHOST)       \
+	&& cd build-$(CHOST)/ncurses-$(V_NCUR) && CC=$(CC) AR=$(CHOST)-ar CXX=$(CXX) CPPFLAGS=-P ./configure \
+	--host=$(CHOST) --prefix=$(PWD)/$(KLOCAL) --enable-term-driver --enable-sp-funcs                     \
+	--with-fallbacks=linux,screen,vt100,xterm,xterm-256color,putty-256color && make && make install      )
 
 json: build-$(CHOST)
 	test -f $(KLOCAL)/include/json.h || (mkdir -p $(KLOCAL)/include                  \
 	&& curl -L https://github.com/nlohmann/json/releases/download/$(V_JSON)/json.hpp \
 	-o $(KLOCAL)/include/json.h                                                      )
+
+uws: build-$(CHOST)
+	test -d build-$(CHOST)/uWebSockets-$(V_UWS)                                    \
+	|| curl -L https://github.com/uNetworking/uWebSockets/archive/v$(V_UWS).tar.gz \
+	| tar xz -C build-$(CHOST) && mkdir -p $(KLOCAL)/include/uWS                   \
+	&& cp build-$(CHOST)/uWebSockets-$(V_UWS)/src/* $(KLOCAL)/include/uWS/
 
 quickfix: build-$(CHOST)
 	test -d build-$(CHOST)/quickfix-$(V_QF) || (                                                   \
@@ -168,11 +173,13 @@ quickfix: build-$(CHOST)
 	sed -i '' "s/bin spec test examples doc//" Makefile.am ||                                      \
 	sed -i "s/bin spec test examples doc//" Makefile.am)                                           \
 	&& (test -n "`echo $(CHOST) | grep darwin`" &&                                                 \
-	sed -i '' "s/CXX = g++/CXX \?= g++/" UnitTest++/Makefile ||                                    \
-	sed -i "s/CXX = g++/CXX \?= g++/" UnitTest++/Makefile)                                         \
+	sed -i '' "s/SUBDIRS = test//" src/C++/Makefile.am ||                                          \
+	sed -i "s/SUBDIRS = test//" src/C++/Makefile.am)                                               \
+	&& (test -n "`echo $(CHOST) | grep mingw32`" &&                                                \
+	(sed -i "s/\(-DHAVE_CONFIG_H\)/\'\1 -D_MSC_VER=1400\'/" configure &&                           \
+	sed -i "s/W\(insock2\)/w\1/" src/C++/Utility.h && sed -i "s/W\(insock2\)/w\1/" src/C++/SocketMonitor.h) || :)                                           \
 	&& CXX=$(CXX) AR=$(CHOST)-ar ./configure --prefix=$(PWD)/$(KLOCAL) --enable-shared=no          \
-	--enable-static=yes --host=$(CHOST) && cd UnitTest++ && CXX=$(CXX) make libUnitTest++.a        \
-	&& cd ../src/C++ && CXX=$(CXX) make && make install                                            )
+	--enable-static=yes --host=$(CHOST) && cd src/C++ && CXX=$(CXX) make && make install           )
 
 libuv: build-$(CHOST)
 	test -z "`echo $(CHOST) | grep darwin`" || test -d build-$(CHOST)/libuv-$(V_UV) || (      \
@@ -213,7 +220,7 @@ install:
 	mkdir -p app/server
 	@yes = | head -n`expr $(shell tput cols) / 2` | xargs echo && echo " _  __\n| |/ /\n| ' /   Select your architecture\n| . \\   to download pre-compiled binaries:\n|_|\\_\\ \n"
 	@echo $(CARCH) | tr ' ' "\n" | cat -n && echo "\n(Hint! uname says \"`uname -sm`\")\n"
-	@read -p "[1/2/3/4]: " chost; \
+	@read -p "[1/2/3/4/5]: " chost; \
 	CHOST=`echo $(CARCH) | cut -d ' ' -f$${chost}` $(MAKE) build link
 
 docker:
