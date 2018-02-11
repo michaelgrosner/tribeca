@@ -256,7 +256,7 @@ install:
 	@$(MAKE) packages
 	mkdir -p app/server
 	@yes = | head -n`expr $(shell tput cols) / 2` | xargs echo && echo " _  __\n| |/ /\n| ' /   Select your architecture\n| . \\   to download pre-compiled binaries:\n|_|\\_\\ \n"
-	@echo $(CARCH) | tr ' ' "\n" | cat -n && echo "\n(Hint! uname says \"`uname -sm`\", but win32 does not work yet)\n"
+	@echo $(CARCH) | tr ' ' "\n" | cat -n && echo "\n(Hint! uname says \"`uname -sm`\", and win32 does not work yet)\n"
 	@read -p "[1/2/3/4/5]: " chost; \
 	CHOST=`echo $(CARCH) | cut -d ' ' -f$${chost}` $(MAKE) build link
 
@@ -413,11 +413,11 @@ release:
 ifdef KALL
 	unset KALL && echo -n $(CARCH) | tr ' ' "\n" | xargs -I % $(MAKE) CHOST=% $@
 else
-	@tar -cvzf $(KZIP)-$(CHOST).tar.gz                                                                                     \
-	LICENSE COPYING THANKS README.md MANUAL.md src etc $(KLOCAL)/bin/K-$(CHOST)* $(KLOCAL)/var $(KLOCAL)/lib/K-$(CHOST).a  \
-	Makefile WHITE_* && curl -s -n -H "Content-Type:application/octet-stream" -H "Authorization: token ${KRELEASE}"        \
-	--data-binary "@$(PWD)/$(KZIP)-$(CHOST).tar.gz"                                                                        \
-	"https://uploads.github.com/repos/ctubio/Krypto-trading-bot/releases/$(KHUB)/assets?name=$(KZIP)-$(CHOST).tar.gz"      \
+	@tar -cvzf $(KZIP)-$(CHOST).tar.gz $(KLOCAL)/bin/K-$(CHOST)* $(KLOCAL)/bin/*dll $(KLOCAL)/lib/K-$(CHOST).a        \
+	$(KLOCAL)/var LICENSE COPYING THANKS README.md MANUAL.md src etc Makefile WHITE_* &&                              \
+	curl -s -n -H "Content-Type:application/octet-stream" -H "Authorization: token ${KRELEASE}"                       \
+	--data-binary "@$(PWD)/$(KZIP)-$(CHOST).tar.gz"                                                                   \
+	"https://uploads.github.com/repos/ctubio/Krypto-trading-bot/releases/$(KHUB)/assets?name=$(KZIP)-$(CHOST).tar.gz" \
 	&& rm $(KZIP)-$(CHOST).tar.gz && echo && echo DONE $(KZIP)-$(CHOST).tar.gz
 endif
 
