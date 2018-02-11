@@ -1,7 +1,7 @@
 #ifndef K_PG_H_
 #define K_PG_H_
 
-#ifdef _WIN32
+#ifndef M_PI_2
 #define M_PI_2 1.5707963267948965579989817342720925807952880859375
 #endif
 
