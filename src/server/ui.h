@@ -28,16 +28,28 @@ namespace K {
       void waitData() {
         if (((CF*)config)->argHeadless) return;
         ((EV*)events)->uiGroup->onConnection([&](uWS::WebSocket<uWS::SERVER> *webSocket, uWS::HttpRequest req) {
+#ifdef _WIN32
+          ++connections;
+#else
           ((SH*)screen)->logUIsess(++connections, webSocket->getAddress().address);
+#endif
         });
         ((EV*)events)->uiGroup->onDisconnection([&](uWS::WebSocket<uWS::SERVER> *webSocket, int code, char *message, size_t length) {
+#ifdef _WIN32
+          --connections;
+#else
           ((SH*)screen)->logUIsess(--connections, webSocket->getAddress().address);
+#endif
         });
         ((EV*)events)->uiGroup->onHttpRequest([&](uWS::HttpResponse *res, uWS::HttpRequest req, char *data, size_t length, size_t remainingBytes) {
           string document;
           stringstream content;
           string auth = req.getHeader("authorization").toString();
-          string addr = res->getHttpSocket()->getAddress().address;
+          string addr =
+#ifdef _WIN32
+          "?";
+#else
+          res->getHttpSocket()->getAddress().address;
           if (addr.length() > 7 and addr.substr(0, 7) == "::ffff:") addr = addr.substr(7);
           if (!((CF*)config)->argWhitelist.empty() and ((CF*)config)->argWhitelist.find(addr) == string::npos) {
             ((SH*)screen)->log("UI", "dropping gzip bomb on", addr);
@@ -45,7 +57,9 @@ namespace K {
             document = "HTTP/1.1 200 OK\r\nConnection: keep-alive\r\nAccept-Ranges: bytes\r\nVary: Accept-Encoding\r\nCache-Control: public, max-age=0\r\n";
             document += "Content-Encoding: gzip\r\nContent-Length: " + to_string(content.str().length()) + "\r\n\r\n" + content.str();
             res->write(document.data(), document.length());
-          } else if (!B64auth.empty() and auth.empty()) {
+          } else
+#endif
+            if (!B64auth.empty() and auth.empty()) {
             ((SH*)screen)->log("UI", "authorization attempt from", addr);
             document = "HTTP/1.1 401 Unauthorized\r\nWWW-Authenticate: Basic realm=\"Basic Authorization\"\r\nConnection: keep-alive\r\nAccept-Ranges: bytes\r\nVary: Accept-Encoding\r\nContent-Type:text/plain; charset=UTF-8\r\nContent-Length: 0\r\n\r\n";
             res->write(document.data(), document.length());
@@ -92,12 +106,14 @@ namespace K {
         });
         ((EV*)events)->uiGroup->onMessage([&](uWS::WebSocket<uWS::SERVER> *webSocket, const char *message, size_t length, uWS::OpCode opCode) {
           if (length < 2) return;
+#ifndef _WIN32
           if (!((CF*)config)->argWhitelist.empty()) {
             string addr = webSocket->getAddress().address;
             if (addr.length() > 7 and addr.substr(0, 7) == "::ffff:") addr = addr.substr(7);
             if (((CF*)config)->argWhitelist.find(addr) == string::npos)
               return;
           }
+#endif
           if (mPortal::Hello == (mPortal)message[0] and hello.find(message[1]) != hello.end()) {
             json reply;
             (*hello[message[1]])(&reply);
@@ -233,11 +249,13 @@ namespace K {
       };
       string readlink(const char* path) {
         string buffer(64, '\0');
+#ifndef _WIN32
         ssize_t len;
         while((len = ::readlink(path, &buffer[0], buffer.size())) == (ssize_t)buffer.size())
           buffer.resize(buffer.size() * 2);
         if (len == -1) buffer.clear();
         else buffer.resize(len);
+#endif
         return buffer;
       };
   };

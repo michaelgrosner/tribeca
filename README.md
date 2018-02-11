@@ -292,6 +292,8 @@ ws sandbox: [websocket.org](https://www.websocket.org/echo.html)
 
 ### Unreleased Changelog:
 
+Added build chain for win32.
+
 Updated OKEx websocket to binary data.
 
 Added build chain for OSX v10.13.

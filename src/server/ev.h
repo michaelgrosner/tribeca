@@ -24,7 +24,9 @@ namespace K  {
       void load() {
         gwEndings.push_back(&happyEnding);
         signal(SIGINT, quit);
+#ifndef _WIN32
         signal(SIGUSR1, wtf);
+#endif
         signal(SIGABRT, wtf);
         signal(SIGSEGV, wtf);
         version();
@@ -146,12 +148,17 @@ namespace K  {
         ostringstream rollout(THIS_WAS_A_TRIUMPH.str());
         THIS_WAS_A_TRIUMPH.str("");
         THIS_WAS_A_TRIUMPH
-          << RCYAN << "Errrror: Signal " << last_int_alive << " "  << strsignal(last_int_alive);
+          << RCYAN << "Errrror: Signal " << last_int_alive
+#ifndef _WIN32
+          << " "  << strsignal(last_int_alive)
+#endif
+          ;
         if (unsupported()) upgrade();
         else {
           THIS_WAS_A_TRIUMPH
             << " (Three-Headed Monkey found):" << '\n' << rollout.str()
             << "- lastbeat: " << to_string(_Tstamp_) << '\n'
+#ifndef _WIN32
             << "- os-uname: " << FN::output("uname -srvm")
             << "- tracelog: " << '\n';
           void *k[69];
@@ -161,7 +168,9 @@ namespace K  {
           for (i = 0; i < jumps; i++)
             THIS_WAS_A_TRIUMPH
               << trace[i] << '\n';
-          free(trace);
+          free(trace)
+#endif
+          ;
           report();
         }
         halt(EXIT_FAILURE);

@@ -1,5 +1,5 @@
 K       ?= K.sh
-CHOST   ?= $(shell (test -d .git && test -n "`command -v g++`") && g++ -dumpmachine || ls . | grep build- | head -n1 | cut -d '/' -f1 | cut -d '-' -f2-)
+CHOST   ?= $(shell (test -d .git && test -n "`command -v g++`") && g++ -dumpmachine || ls -1 . | grep build- | head -n1 | cut -d '/' -f1 | cut -d '-' -f2-)
 CARCH    = x86_64-linux-gnu arm-linux-gnueabihf aarch64-linux-gnu x86_64-apple-darwin17 x86_64-w64-mingw32
 KLOCAL   = build-$(CHOST)/local
 CXX      = $(CHOST)-g++
@@ -19,14 +19,14 @@ V_QF    := v.1.14.4
 V_UV    := 1.18.0
 V_PVS   := 6.21.24657.1946
 KZIP     = cc662b752b9c569225d80917fdb650fb5e1b9b3c
-KARGS    = -Wextra -std=c++11 -O3 -I$(KLOCAL)/include      \
-  src/server/K.cxx -pthread -rdynamic                      \
-  -DK_STAMP='"$(shell date "+%Y-%m-%d %H:%M:%S")"'         \
-  -DK_BUILD='"$(CHOST)"'     $(KLOCAL)/include/uWS/*.cpp   \
-  $(KLOCAL)/lib/K-$(CHOST).a $(KLOCAL)/lib/libquickfix.a   \
-  $(KLOCAL)/lib/libsqlite3.a $(KLOCAL)/lib/libz.a          \
-  $(KLOCAL)/lib/libcurl.a    $(KLOCAL)/lib/libssl.a        \
-  $(KLOCAL)/lib/libcrypto.a  $(KLOCAL)/lib/libncurses.a -ldl
+KARGS    = src/server/K.cxx                              \
+  -std=c++11 -O3 -I$(KLOCAL)/include -pthread -Wextra    \
+  -DK_STAMP='"$(shell date "+%Y-%m-%d %H:%M:%S")"'       \
+  -DK_BUILD='"$(CHOST)"'     $(KLOCAL)/include/uWS/*.cpp \
+  $(KLOCAL)/lib/K-$(CHOST).a $(KLOCAL)/lib/libquickfix.a \
+  $(KLOCAL)/lib/libsqlite3.a $(KLOCAL)/lib/libz.a        \
+  $(KLOCAL)/lib/libcurl.a    $(KLOCAL)/lib/libssl.a      \
+  $(KLOCAL)/lib/libcrypto.a  $(KLOCAL)/lib/libncurses.a
 
 all: K
 
@@ -92,8 +92,8 @@ else
 	@$(if $(shell sh -c 'test "`g++ -dumpversion | cut -d . -f1`" != "6" || echo 1'),,$(warning $(ERR));$(error $(HINT)))
 	@$(CXX) --version
 	mkdir -p $(KLOCAL)/bin
-	CHOST=$(CHOST) $(MAKE) $(shell test -n "`echo $(CHOST) | grep darwin`" && echo Darwin || uname -s)
-	chmod +x $(KLOCAL)/bin/K-$(CHOST)
+	CHOST=$(CHOST) $(MAKE) $(shell test -n "`echo $(CHOST) | grep darwin`" && echo Darwin || (test -n "`echo $(CHOST) | grep mingw32`" && echo Win32 || uname -s))
+	chmod +x $(KLOCAL)/bin/K-$(CHOST)$(shell test -n "`echo $(CHOST) | grep mingw32`" && echo .exe || :)
 endif
 
 dist:
@@ -107,10 +107,13 @@ else
 endif
 
 Linux: build-$(CHOST)
-	$(CXX) -o $(KLOCAL)/bin/K-$(CHOST) -DUWS_THREADSAFE -static-libstdc++ -static-libgcc -g $(KARGS)
+	$(CXX) -o $(KLOCAL)/bin/K-$(CHOST) -DUWS_THREADSAFE -static-libstdc++ -static-libgcc -g -rdynamic $(KARGS) -ldl
 
 Darwin: build-$(CHOST)
-	$(CXX) -o $(KLOCAL)/bin/K-$(CHOST) -DUSE_LIBUV $(KLOCAL)/lib/libuv.a -msse4.1 -maes -mpclmul -mmacosx-version-min=10.13 -nostartfiles $(KARGS)
+	$(CXX) -o $(KLOCAL)/bin/K-$(CHOST) -DUSE_LIBUV $(KLOCAL)/lib/libuv.a -msse4.1 -maes -mpclmul -mmacosx-version-min=10.13 -nostartfiles -rdynamic $(KARGS) -ldl
+
+Win32: build-$(CHOST)
+	$(CXX)-posix -o $(KLOCAL)/bin/K-$(CHOST).exe -DUSE_LIBUV $(KARGS) $(KLOCAL)/lib/libuv.dll.a $(KLOCAL)/lib/libssl.dll.a $(KLOCAL)/lib/libcrypto.dll.a -DCURL_STATICLIB -static -lstdc++ -lgcc -lwldap32 -lws2_32
 
 zlib: build-$(CHOST)
 	test -d build-$(CHOST)/zlib-$(V_ZLIB) || (                                                  \
@@ -150,7 +153,9 @@ ncurses: build-$(CHOST)
 	test -d build-$(CHOST)/ncurses-$(V_NCUR) || (                                                        \
 	curl -L http://ftp.gnu.org/pub/gnu/ncurses/ncurses-$(V_NCUR).tar.gz | tar xz -C build-$(CHOST)       \
 	&& cd build-$(CHOST)/ncurses-$(V_NCUR) && CC=$(CC) AR=$(CHOST)-ar CXX=$(CXX) CPPFLAGS=-P ./configure \
-	--host=$(CHOST) --prefix=$(PWD)/$(KLOCAL) --enable-term-driver --enable-sp-funcs                     \
+	--host=$(CHOST) --prefix=$(PWD)/$(KLOCAL)  $(shell test -n "`echo $(CHOST) | grep mingw32`" && echo  \
+	--without-cxx-binding --without-ada --enable-reentrant 	--with-normal --disable-home-terminfo        \
+	--enable-sp-funcs --enable-term-driver --enable-interop || :)                                        \
 	--with-fallbacks=linux,screen,vt100,xterm,xterm-256color,putty-256color && make && make install      )
 
 json: build-$(CHOST)
@@ -162,7 +167,10 @@ uws: build-$(CHOST)
 	test -d build-$(CHOST)/uWebSockets-$(V_UWS)                                    \
 	|| curl -L https://github.com/uNetworking/uWebSockets/archive/v$(V_UWS).tar.gz \
 	| tar xz -C build-$(CHOST) && mkdir -p $(KLOCAL)/include/uWS                   \
-	&& cp build-$(CHOST)/uWebSockets-$(V_UWS)/src/* $(KLOCAL)/include/uWS/
+	&& cp build-$(CHOST)/uWebSockets-$(V_UWS)/src/* $(KLOCAL)/include/uWS/         \
+	&& (test -n "`echo $(CHOST) | grep mingw32`" &&                                \
+	(sed -i "s/W\(s2tcpip\)/w\1/" $(KLOCAL)/include/uWS/Networking.h &&            \
+	sed -i "s/WinSock2/winsock2/" $(KLOCAL)/include/uWS/Networking.h) ||          :)
 
 quickfix: build-$(CHOST)
 	test -d build-$(CHOST)/quickfix-$(V_QF) || (                                                   \
@@ -175,35 +183,46 @@ quickfix: build-$(CHOST)
 	&& (test -n "`echo $(CHOST) | grep darwin`" &&                                                 \
 	sed -i '' "s/SUBDIRS = test//" src/C++/Makefile.am ||                                          \
 	sed -i "s/SUBDIRS = test//" src/C++/Makefile.am)                                               \
-	&& (test -n "`echo $(CHOST) | grep mingw32`" &&                                                \
-	(sed -i "s/\(typedef int\)/\/\/\1/" src/C++/Utility.h src/C++/SocketMonitor.h && sed -i "s/W\(insock2\)/w\1/" src/C++/Utility.h src/C++/SocketMonitor.h && sed -i "29s/_MSC_VER/_WIN32/" src/C++/SocketServer.cpp && sed -i "63s/_MSC_VER/_WIN32/" src/C++/Utility.h && \
-	sed -i "s/\&\(func\)/\1/" src/C++/Utility.cpp &&\
-	sed -i "s/_stdcall//" src/C++/Utility.h &&\
-	sed -i "s/GetCurrentThread/GetCurrentThreadId/" src/C++/Utility.cpp &&\
-	sed -i "133s/_MSC_VER/_WIN32/" src/C++/Utility.h &&\
-	sed -i "140s/_MSC_VER/_WIN32/" src/C++/Utility.h &&\
-	sed -i "153s/_MSC_VER/_WIN32/" src/C++/Utility.h &&\
-	sed -i "83s/_MSC_VER/_WIN32/" src/C++/Utility.cpp &&\
-	sed -i "98s/_MSC_VER/_WIN32/" src/C++/Utility.cpp &&\
-	sed -i "275s/_MSC_VER/_WIN32/" src/C++/Utility.cpp &&\
-	sed -i "257s/_MSC_VER/_WIN32/" src/C++/Utility.cpp &&\
-	sed -i "364s/_MSC_VER/_WIN32/" src/C++/Utility.cpp &&\
-	sed -i "380s/_MSC_VER/_WIN32/" src/C++/Utility.cpp &&\
-	sed -i "396s/_MSC_VER/_WIN32/" src/C++/Utility.cpp &&\
-	sed -i "460s/_MSC_VER/_WIN32/" src/C++/Utility.cpp &&\
-	sed -i "417s/_MSC_VER/_WIN32/" src/C++/Utility.cpp &&\
-	sed -i "427s/_MSC_VER/_WIN32/" src/C++/Utility.cpp &&\
-	sed -i "437s/_MSC_VER/_WIN32/" src/C++/Utility.cpp &&\
-	sed -i "477s/_MSC_VER/_WIN32/" src/C++/Utility.cpp &&\
-	sed -i "346s/_MSC_VER/_WIN32/" src/C++/Utility.cpp && sed -i "264s/_MSC_VER/_WIN32/" src/C++/Utility.cpp && sed -i "248s/_MSC_VER/_WIN32/" src/C++/Utility.cpp && sed -i "202s/_MSC_VER/_WIN32/" src/C++/Utility.cpp && sed -i "227s/_MSC_VER/_WIN32/" src/C++/Utility.cpp && sed -i "171s/_MSC_VER/_WIN32/" src/C++/Utility.cpp && sed -i "161s/_MSC_VER/_WIN32/" src/C++/Utility.h && sed -i "28s/_MSC_VER/_WIN32/" src/C++/SocketConnector.cpp && sed -i "s/_MSC_VER/_WIN32/" src/C++/Mutex.h src/C++/SocketMonitor.h) || :)                                           \
+	&& (test -n "`echo $(CHOST) | grep mingw32`" && (                                              \
+	sed -i "s/\(typedef int\)/\/\/\1/" src/C++/Utility.h src/C++/SocketMonitor.h &&                \
+	sed -i "s/W\(insock2\)/w\1/" src/C++/Utility.h src/C++/SocketMonitor.h &&                      \
+	sed -i "s/\&\(func\)/\1/" src/C++/Utility.cpp &&                                               \
+	sed -i "s/_stdcall//" src/C++/Utility.h &&                                                     \
+	sed -i "s/GetCurrentThread/GetCurrentThreadId/" src/C++/Utility.cpp &&                         \
+	sed -i "63s/_MSC_VER/_WIN32/" src/C++/Utility.h &&                                             \
+	sed -i "133s/_MSC_VER/_WIN32/" src/C++/Utility.h &&                                            \
+	sed -i "140s/_MSC_VER/_WIN32/" src/C++/Utility.h &&                                            \
+	sed -i "153s/_MSC_VER/_WIN32/" src/C++/Utility.h &&                                            \
+	sed -i "161s/_MSC_VER/_WIN32/" src/C++/Utility.h &&                                            \
+	sed -i "83s/_MSC_VER/_WIN32/" src/C++/Utility.cpp &&                                           \
+	sed -i "98s/_MSC_VER/_WIN32/" src/C++/Utility.cpp &&                                           \
+	sed -i "171s/_MSC_VER/_WIN32/" src/C++/Utility.cpp &&                                          \
+	sed -i "275s/_MSC_VER/_WIN32/" src/C++/Utility.cpp &&                                          \
+	sed -i "257s/_MSC_VER/_WIN32/" src/C++/Utility.cpp &&                                          \
+	sed -i "364s/_MSC_VER/_WIN32/" src/C++/Utility.cpp &&                                          \
+	sed -i "380s/_MSC_VER/_WIN32/" src/C++/Utility.cpp &&                                          \
+	sed -i "396s/_MSC_VER/_WIN32/" src/C++/Utility.cpp &&                                          \
+	sed -i "460s/_MSC_VER/_WIN32/" src/C++/Utility.cpp &&                                          \
+	sed -i "417s/_MSC_VER/_WIN32/" src/C++/Utility.cpp &&                                          \
+	sed -i "427s/_MSC_VER/_WIN32/" src/C++/Utility.cpp &&                                          \
+	sed -i "437s/_MSC_VER/_WIN32/" src/C++/Utility.cpp &&                                          \
+	sed -i "477s/_MSC_VER/_WIN32/" src/C++/Utility.cpp &&                                          \
+	sed -i "346s/_MSC_VER/_WIN32/" src/C++/Utility.cpp &&                                          \
+	sed -i "264s/_MSC_VER/_WIN32/" src/C++/Utility.cpp &&                                          \
+	sed -i "248s/_MSC_VER/_WIN32/" src/C++/Utility.cpp &&                                          \
+	sed -i "202s/_MSC_VER/_WIN32/" src/C++/Utility.cpp &&                                          \
+	sed -i "227s/_MSC_VER/_WIN32/" src/C++/Utility.cpp &&                                          \
+	sed -i "29s/_MSC_VER/_WIN32/" src/C++/SocketServer.cpp &&                                      \
+	sed -i "28s/_MSC_VER/_WIN32/" src/C++/SocketConnector.cpp &&                                   \
+	sed -i "s/_MSC_VER/_WIN32/" src/C++/Mutex.h src/C++/SocketMonitor.h) || :)                     \
 	&& CXX=$(CXX) AR=$(CHOST)-ar ./configure --prefix=$(PWD)/$(KLOCAL) --enable-shared=no          \
 	--enable-static=yes --host=$(CHOST) && cd src/C++ && CXX=$(CXX) make && make install           )
 
 libuv: build-$(CHOST)
-	test -z "`echo $(CHOST) | grep darwin`" || test -d build-$(CHOST)/libuv-$(V_UV) || (      \
-	curl -L https://github.com/libuv/libuv/archive/v$(V_UV).tar.gz | tar xz -C build-$(CHOST) \
-	&& cd build-$(CHOST)/libuv-$(V_UV) && sh autogen.sh && CC=$(CC) ./configure               \
-	--host=$(CHOST) --prefix=$(PWD)/$(KLOCAL) --disable-shared && make && make install        )
+	test -z "`echo $(CHOST) | grep darwin;echo $(CHOST) | grep mingw32`" || test -d build-$(CHOST)/libuv-$(V_UV) || ( \
+	curl -L https://github.com/libuv/libuv/archive/v$(V_UV).tar.gz | tar xz -C build-$(CHOST)                         \
+	&& cd build-$(CHOST)/libuv-$(V_UV) && sh autogen.sh && CC=$(CC) ./configure --host=$(CHOST)                       \
+	--prefix=$(PWD)/$(KLOCAL) && make && make install                                                                 )
 
 pvs:
 	test -d build-$(CHOST)/pvs-studio-$(V_PVS)-x86_64 || (                     \
@@ -237,7 +256,7 @@ install:
 	@$(MAKE) packages
 	mkdir -p app/server
 	@yes = | head -n`expr $(shell tput cols) / 2` | xargs echo && echo " _  __\n| |/ /\n| ' /   Select your architecture\n| . \\   to download pre-compiled binaries:\n|_|\\_\\ \n"
-	@echo $(CARCH) | tr ' ' "\n" | cat -n && echo "\n(Hint! uname says \"`uname -sm`\")\n"
+	@echo $(CARCH) | tr ' ' "\n" | cat -n && echo "\n(Hint! uname says \"`uname -sm`\", but win32 does not work yet)\n"
 	@read -p "[1/2/3/4/5]: " chost; \
 	CHOST=`echo $(CARCH) | cut -d ' ' -f$${chost}` $(MAKE) build link
 
@@ -394,11 +413,11 @@ release:
 ifdef KALL
 	unset KALL && echo -n $(CARCH) | tr ' ' "\n" | xargs -I % $(MAKE) CHOST=% $@
 else
-	@tar -cvzf $(KZIP)-$(CHOST).tar.gz                                                                                   \
-	LICENSE COPYING THANKS README.md MANUAL.md src etc $(KLOCAL)/bin/K-$(CHOST) $(KLOCAL)/var $(KLOCAL)/lib/K-$(CHOST).a \
-	Makefile && curl -s -n -H "Content-Type:application/octet-stream" -H "Authorization: token ${KRELEASE}"              \
-	--data-binary "@$(PWD)/$(KZIP)-$(CHOST).tar.gz"                                                                      \
-	"https://uploads.github.com/repos/ctubio/Krypto-trading-bot/releases/$(KHUB)/assets?name=$(KZIP)-$(CHOST).tar.gz"    \
+	@tar -cvzf $(KZIP)-$(CHOST).tar.gz                                                                                     \
+	LICENSE COPYING THANKS README.md MANUAL.md src etc $(KLOCAL)/bin/K-$(CHOST)* $(KLOCAL)/var $(KLOCAL)/lib/K-$(CHOST).a  \
+	Makefile WHITE_* && curl -s -n -H "Content-Type:application/octet-stream" -H "Authorization: token ${KRELEASE}"        \
+	--data-binary "@$(PWD)/$(KZIP)-$(CHOST).tar.gz"                                                                        \
+	"https://uploads.github.com/repos/ctubio/Krypto-trading-bot/releases/$(KHUB)/assets?name=$(KZIP)-$(CHOST).tar.gz"      \
 	&& rm $(KZIP)-$(CHOST).tar.gz && echo && echo DONE $(KZIP)-$(CHOST).tar.gz
 endif
 

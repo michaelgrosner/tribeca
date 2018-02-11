@@ -52,8 +52,10 @@ namespace K {
         wLog = subwin(wBorder, getmaxy(wBorder)-4, getmaxx(wBorder)-2, 3, 2);
         scrollok(wLog, true);
         idlok(wLog, true);
+#if CAN_RESIZE
         shResize = &resize;
         signal(SIGWINCH, sigResize);
+#endif
         refresh();
         hotkeys();
         return this;
@@ -395,15 +397,24 @@ namespace K {
         hotkey = ::async(launch::async, [&] { return (mHotkey)wgetch(wBorder); });
       };
       function<void()> resize = [&]() {
+#if CAN_RESIZE
         struct winsize ws;
-        if (ioctl(0, TIOCGWINSZ, &ws) < 0 or (ws.ws_row == getmaxy(wBorder) and ws.ws_col == getmaxx(wBorder)))
-          return;
+        if (
+#ifdef _WIN32
+        ioctlsocket(0, TIOCGWINSZ, &( ( unsigned long& )ws)) < 0
+#else
+        ioctl(0, TIOCGWINSZ, &ws) < 0
+#endif
+        or (ws.ws_row == getmaxy(wBorder) and ws.ws_col == getmaxx(wBorder))) return;
+#endif
         werase(wBorder);
         werase(wLog);
+#if CAN_RESIZE
         if (ws.ws_row < 10) ws.ws_row = 10;
         if (ws.ws_col < 30) ws.ws_col = 30;
         wresize(wBorder, ws.ws_row, ws.ws_col);
         resizeterm(ws.ws_row, ws.ws_col);
+#endif
         refresh();
       };
   };
