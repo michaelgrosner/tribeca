@@ -34,7 +34,7 @@ Used on install to initialize `./K.sh` file, feel free to add your own hardcoded
 ### K-stunnel.conf
 Used on boot (only for GDAX) to run [stunnel](https://www.stunnel.org/index.html) in the background to provide SSL encryption for [FIX API](https://docs.gdax.com/#ssl-tunnels); no need to edit.
 
-### *.patch
+### with*.patch
 Used against libquickfix sources by `make dist`; no need to edit.
 
 ### K-cabundle.pem
