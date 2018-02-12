@@ -175,15 +175,15 @@ uws: build-$(CHOST)
 quickfix: build-$(CHOST)
 	test -d build-$(CHOST)/quickfix-$(V_QF) || (                                                   \
 	curl -L https://github.com/quickfix/quickfix/archive/$(V_QF).tar.gz | tar xz -C build-$(CHOST) \
-	&& patch build-$(CHOST)/quickfix-$(V_QF)/m4/ax_lib_mysql.m4 < etc/without_mysql.m4.patch       \
+	&& patch build-$(CHOST)/quickfix-$(V_QF)/m4/ax_lib_mysql.m4 < src/build/without_mysql.m4.patch \
 	&& cd build-$(CHOST)/quickfix-$(V_QF) && ./bootstrap                                           \
 	&& (test -n "`echo $(CHOST) | grep darwin`" &&                                                 \
 	sed -i '' "s/bin spec test examples doc//" Makefile.am ||                                      \
 	sed -i "s/bin spec test examples doc//" Makefile.am)                                           \
 	&& (test -n "`echo $(CHOST) | grep darwin`" &&                                                 \
 	sed -i '' "s/SUBDIRS = test//" src/C++/Makefile.am ||                                          \
-	sed -i "s/SUBDIRS = test//" src/C++/Makefile.am) &&                                            \
-	(test -n "`echo $(CHOST) | grep mingw32`" && patch -p2 < ../../etc/with_win32.src.patch || :)  \
+	sed -i "s/SUBDIRS = test//" src/C++/Makefile.am) && (test -n "`echo $(CHOST) | grep mingw32`"  \
+	&& patch -p2 < ../../src/build/with_win32.src.patch || :)                                      \
 	&& CXX=$(CXX) AR=$(CHOST)-ar ./configure --prefix=$(PWD)/$(KLOCAL) --enable-shared=no          \
 	--enable-static=yes --host=$(CHOST) && cd src/C++ && CXX=$(CXX) make && make install           )
 
