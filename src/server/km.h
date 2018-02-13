@@ -318,13 +318,13 @@ namespace K {
     mAmount buySize,
             sellSize;
     mSafety():
-      buy(0), sell(0), combined(0), buyPing(-1), sellPing(-1), buySize(0), sellSize(0)
+      buy(0), sell(0), combined(0), buyPing(0), sellPing(0), buySize(0), sellSize(0)
     {};
     mSafety(double b, double s, double c, mPrice bP, mPrice sP, mPrice bS, mPrice sS):
       buy(b), sell(s), combined(c), buyPing(bP), sellPing(sP), buySize(bS), sellSize(sS)
     {};
     bool empty() {
-      return buyPing == -1;
+      return !buySize and !sellSize;
     };
   };
   static void to_json(json& j, const mSafety& k) {
@@ -333,9 +333,7 @@ namespace K {
       {    "sell", k.sell             },
       {"combined", k.combined         },
       { "buyPing", fmax(0, k.buyPing) },
-      {"sellPing", fmax(0, k.sellPing)},
-      { "buySize", k.buySize          },
-      {"sellSize", k.sellSize         }
+      {"sellPing", fmax(0, k.sellPing)}
     };
   };
   struct mPosition {

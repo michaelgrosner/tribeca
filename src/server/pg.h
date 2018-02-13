@@ -60,15 +60,12 @@ namespace K {
     public:
       void calcSafety() {
         if (position.empty() or !((MG*)market)->fairValue) return;
-        mSafety next = nextSafety();
-        if (safety.buyPing == -1
-          or next.combined != safety.combined
-          or next.buyPing != safety.buyPing
-          or next.sellPing != safety.sellPing
-        ) {
-          safety = next;
-          ((UI*)client)->send(mMatter::TradeSafetyValue, next);
-        }
+        mSafety prev = safety;
+        safety = nextSafety();
+        if (prev.combined != safety.combined
+          or prev.buyPing != safety.buyPing
+          or prev.sellPing != safety.sellPing
+        ) ((UI*)client)->send(mMatter::TradeSafetyValue, safety);
       };
       void calcSafetyAfterTrade(mTrade *k) {
         (k->side == mSide::Bid
