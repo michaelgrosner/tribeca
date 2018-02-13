@@ -40,7 +40,7 @@ export class MarketDataBroker implements Interfaces.IMarketDataBroker {
             rawMarketPublisher.publish(this._currentBook);
             persister.persist(new Models.Market(
                 _.take(this.currentBook.bids, 3), 
-                _.take(this.currentBook.bids, 3), 
+                _.take(this.currentBook.asks, 3), 
                 new Date()));
         }, moment.duration(1, "second"));
 
