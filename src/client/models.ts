@@ -180,7 +180,7 @@ export enum FairValueModel { BBO, wBBO }
 export enum AutoPositionMode { Manual, EWMA_LS, EWMA_LMS, EWMA_4 }
 export enum DynamicPDivMode { Manual, Linear, Sine, SQRT, Switch }
 export enum PingAt { BothSides, BidSide, AskSide, DepletedSide, DepletedBidSide, DepletedAskSide, StopPings }
-export enum PongAt { ShortPingFair, LongPingFair, ShortPingAggressive, LongPingAggressive }
+export enum PongAt { ShortPingFair, AveragePingFair, LongPingFair, ShortPingAggressive, AveragePingAggressive, LongPingAggressive }
 export enum APR { Off, Size, SizeWidth }
 export enum SOP { Off, Trades, Size, TradesSize }
 export enum STDEV { Off, OnFV, OnFVAPROff, OnTops, OnTopsAPROff, OnTop, OnTopAPROff }

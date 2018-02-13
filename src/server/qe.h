@@ -130,21 +130,13 @@ namespace K {
         mPrice widthPing = qp->widthPercentage
           ? qp->widthPingPercentage * ((MG*)market)->fairValue / 100
           : qp->widthPing;
-        mAmount rawBidSz = qp->percentageValues
-          ? qp->buySizePercentage * ((PG*)wallet)->position.baseValue / 100
-          : qp->buySize;
-        mAmount rawAskSz = qp->percentageValues
-          ? qp->sellSizePercentage * ((PG*)wallet)->position.baseValue / 100
-          : qp->sellSize;
-        if (qp->aggressivePositionRebalancing != mAPR::Off) {
-          if (rawBidSz and qp->buySizeMax)
-            rawBidSz = fmax(rawBidSz, ((PG*)wallet)->targetBasePosition - ((PG*)wallet)->position._baseTotal);
-          if (rawAskSz and qp->sellSizeMax)
-            rawAskSz = fmax(rawAskSz, ((PG*)wallet)->position._baseTotal - ((PG*)wallet)->targetBasePosition);
-        }
         if(qp->protectionEwmaWidthPing and ((MG*)market)->mgEwmaW)
           widthPing = fmax(widthPing, ((MG*)market)->mgEwmaW);
-        mQuote rawQuote = (*quotingMode[qp->mode])(widthPing, rawBidSz, rawAskSz);
+        mQuote rawQuote = (*quotingMode[qp->mode])(
+          widthPing,
+          ((PG*)wallet)->safety.buySize,
+          ((PG*)wallet)->safety.sellSize
+        );
         if (rawQuote.bid.price <= 0 or rawQuote.ask.price <= 0) {
           if (rawQuote.bid.price or rawQuote.ask.price)
             ((SH*)screen)->logWar("QP", "Negative price detected, widthPing must be smaller");
@@ -160,7 +152,7 @@ namespace K {
         debuq("F", rawQuote); applyBestWidth(&rawQuote);
         debuq("G", rawQuote); applyTradesPerMinute(&rawQuote, superTradesActive);
         debuq("H", rawQuote); applyRoundPrice(&rawQuote);
-        debuq("I", rawQuote); applyRoundSize(&rawQuote, rawBidSz, rawAskSz);
+        debuq("I", rawQuote); applyRoundSize(&rawQuote);
         debuq("J", rawQuote); applyDepleted(&rawQuote);
         debuq("K", rawQuote); applyWaitingPing(&rawQuote);
         debuq("L", rawQuote); applyEwmaTrendProtection(&rawQuote);
@@ -179,17 +171,15 @@ namespace K {
           rawQuote->ask.price = fmax(rawQuote->bid.price + gw->minTick, rawQuote->ask.price);
         }
       };
-      inline void applyRoundSize(mQuote *rawQuote, const mAmount rawBidSz, const mAmount rawAskSz) {
+      inline void applyRoundSize(mQuote *rawQuote) {
         if (!rawQuote->ask.empty()) {
           if (rawQuote->ask.size > ((PG*)wallet)->position._baseTotal)
-            rawQuote->ask.size = (!rawBidSz or rawBidSz > ((PG*)wallet)->position._baseTotal)
-              ? ((PG*)wallet)->position._baseTotal : rawBidSz;
+            rawQuote->ask.size = ((PG*)wallet)->position._baseTotal;
           rawQuote->ask.size = floor(fmax(gw->minSize, rawQuote->ask.size) / 1e-8) * 1e-8;
         }
         if (!rawQuote->bid.empty()) {
           if (rawQuote->bid.size > ((PG*)wallet)->position._quoteTotal)
-            rawQuote->bid.size = (!rawAskSz or rawAskSz > ((PG*)wallet)->position._quoteTotal)
-              ? ((PG*)wallet)->position._quoteTotal : rawAskSz;
+            rawQuote->bid.size = ((PG*)wallet)->position._quoteTotal;
           rawQuote->bid.size = floor(fmax(gw->minSize, rawQuote->bid.size) / 1e-8) * 1e-8;
         }
       };
@@ -233,6 +223,7 @@ namespace K {
         if (!rawQuote->ask.empty() and safetyBuyPing) {
           if ((qp->aggressivePositionRebalancing == mAPR::SizeWidth and ((PG*)wallet)->sideAPR == "Sell")
             or qp->pongAt == mPongAt::ShortPingAggressive
+            or qp->pongAt == mPongAt::AveragePingAggressive
             or qp->pongAt == mPongAt::LongPingAggressive
             or rawQuote->ask.price < safetyBuyPing + widthPong
           ) rawQuote->ask.price = safetyBuyPing + widthPong;
@@ -242,6 +233,7 @@ namespace K {
         if (!rawQuote->bid.empty() and safetysellPing) {
           if ((qp->aggressivePositionRebalancing == mAPR::SizeWidth and ((PG*)wallet)->sideAPR == "Buy")
             or qp->pongAt == mPongAt::ShortPingAggressive
+            or qp->pongAt == mPongAt::AveragePingAggressive
             or qp->pongAt == mPongAt::LongPingAggressive
             or rawQuote->bid.price > safetysellPing - widthPong
           ) rawQuote->bid.price = safetysellPing - widthPong;

@@ -15,7 +15,7 @@ namespace K {
   enum class mTimeInForce: unsigned int { IOC, FOK, GTC };
   enum class mOrderType: unsigned int { Limit, Market };
   enum class mPingAt: unsigned int { BothSides, BidSide, AskSide, DepletedSide, DepletedBidSide, DepletedAskSide, StopPings };
-  enum class mPongAt: unsigned int { ShortPingFair, LongPingFair, ShortPingAggressive, LongPingAggressive };
+  enum class mPongAt: unsigned int { ShortPingFair, AveragePingFair, LongPingFair, ShortPingAggressive, AveragePingAggressive, LongPingAggressive };
   enum class mQuotingMode: unsigned int { Top, Mid, Join, InverseJoin, InverseTop, HamelinRat, Depth };
   enum class mQuotingSafety: unsigned int { Off, PingPong, Boomerang, AK47 };
   enum class mQuoteState: unsigned int { Live, Disconnected, DisabledQuotes, MissingData, UnknownHeld, TBPHeld, MaxTradesSeconds, WaitingPing, DepletedFunds, Crossed, UpTrendHeld, DownTrendHeld };
@@ -315,11 +315,13 @@ namespace K {
            combined;
     mPrice buyPing,
            sellPing;
+    mAmount buySize,
+            sellSize;
     mSafety():
-      buy(0), sell(0), combined(0), buyPing(-1), sellPing(-1)
+      buy(0), sell(0), combined(0), buyPing(-1), sellPing(-1), buySize(0), sellSize(0)
     {};
-    mSafety(double b, double s, double c, mPrice bP, mPrice sP):
-      buy(b), sell(s), combined(c), buyPing(bP), sellPing(sP)
+    mSafety(double b, double s, double c, mPrice bP, mPrice sP, mPrice bS, mPrice sS):
+      buy(b), sell(s), combined(c), buyPing(bP), sellPing(sP), buySize(bS), sellSize(sS)
     {};
     bool empty() {
       return buyPing == -1;
@@ -331,7 +333,9 @@ namespace K {
       {    "sell", k.sell             },
       {"combined", k.combined         },
       { "buyPing", fmax(0, k.buyPing) },
-      {"sellPing", fmax(0, k.sellPing)}
+      {"sellPing", fmax(0, k.sellPing)},
+      { "buySize", k.buySize          },
+      {"sellSize", k.sellSize         }
     };
   };
   struct mPosition {

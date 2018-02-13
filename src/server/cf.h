@@ -243,7 +243,7 @@ namespace K {
           : 321;
         if (argUser == "NULL") argUser.clear();
         if (argPass == "NULL") argPass.clear();
-        if (argIgnoreSun and argIgnoreMoon) argIgnoreSun = 0;
+        if (argIgnoreSun and argIgnoreMoon) argIgnoreMoon = 0;
         if (argLifetime) argLifetime *= 1e+3;
       };
   };

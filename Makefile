@@ -18,7 +18,7 @@ V_SQL   := 3210000
 V_QF    := v.1.14.4
 V_UV    := 1.18.0
 V_PVS   := 6.21.24657.1946
-KZIP     = cc662b752b9c569225d80917fdb650fb5e1b9b3c
+KZIP     = d3de51e3a0c422b33d9421a3eef4fb04a84e3c0b
 KARGS    = src/server/K.cxx                              \
   -std=c++11 -O3 -I$(KLOCAL)/include -pthread -Wextra    \
   -DK_STAMP='"$(shell date "+%Y-%m-%d %H:%M:%S")"'       \
@@ -382,7 +382,8 @@ release:
 ifdef KALL
 	unset KALL && echo -n $(CARCH) | tr ' ' "\n" | xargs -I % $(MAKE) CHOST=% $@
 else
-	@tar -cvzf $(KZIP)-$(CHOST).tar.gz $(KLOCAL)/bin/K-$(CHOST)* $(KLOCAL)/bin/*dll $(KLOCAL)/lib/K-$(CHOST).a        \
+	@tar -cvzf $(KZIP)-$(CHOST).tar.gz $(KLOCAL)/bin/K-$(CHOST)* $(KLOCAL)/lib/K-$(CHOST).a                           \
+	$(shell test -n "`echo $(CHOST) | grep mingw32`" && echo $(KLOCAL)/bin/*dll || :)                                 \
 	$(KLOCAL)/var LICENSE COPYING THANKS README.md MANUAL.md src etc Makefile WHITE_* &&                              \
 	curl -s -n -H "Content-Type:application/octet-stream" -H "Authorization: token ${KRELEASE}"                       \
 	--data-binary "@$(PWD)/$(KZIP)-$(CHOST).tar.gz"                                                                   \

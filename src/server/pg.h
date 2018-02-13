@@ -150,6 +150,9 @@ namespace K {
         } else if (qp->pongAt == mPongAt::LongPingFair or qp->pongAt == mPongAt::LongPingAggressive) {
           matchLastPing(&tradesBuy, &buyPing, &buyQty, sellSize, widthPong);
           matchLastPing(&tradesSell, &sellPing, &sellQty, buySize, widthPong, true);
+        } else if (qp->pongAt == mPongAt::AveragePingFair or qp->pongAt == mPongAt::AveragePingAggressive) {
+          matchAllPing(&tradesBuy, &buyPing, &buyQty, sellSize, widthPong);
+          matchAllPing(&tradesSell, &sellPing, &sellQty, buySize, widthPong);
         }
         if (buyQty) buyPing /= buyQty;
         if (sellQty) sellPing /= sellQty;
@@ -161,7 +164,9 @@ namespace K {
           sumSells / sellSize,
           (sumBuys + sumSells) / (buySize + sellSize),
           buyPing,
-          sellPing
+          sellPing,
+          buySize,
+          sellSize
         );
       };
       void matchFirstPing(map<mPrice, mTrade> *trades, mPrice *ping, mAmount *qty, mAmount qtyMax, mPrice width, bool reverse = false) {
@@ -172,6 +177,9 @@ namespace K {
       };
       void matchLastPing(map<mPrice, mTrade> *trades, mPrice *ping, mAmount *qty, mAmount qtyMax, mPrice width, bool reverse = false) {
         matchPing(false, true, trades, ping, qty, qtyMax, width, reverse);
+      };
+      void matchAllPing(map<mPrice, mTrade> *trades, mPrice *ping, mAmount *qty, mAmount qtyMax, mPrice width) {
+        matchPing(false, false, trades, ping, qty, qtyMax, width);
       };
       void matchPing(bool _near, bool _far, map<mPrice, mTrade> *trades, mPrice *ping, mAmount *qty, mAmount qtyMax, mPrice width, bool reverse = false) {
         int dir = width > 0 ? 1 : -1;
@@ -184,16 +192,18 @@ namespace K {
       };
       bool matchPing(bool _near, bool _far, mPrice *ping, mAmount *qty, mAmount qtyMax, mPrice width, mPrice fv, mPrice price, mAmount qtyTrade, mPrice priceTrade, mAmount KqtyTrade, bool reverse) {
         if (reverse) { fv *= -1; price *= -1; width *= -1; }
-        if (*qty < qtyMax
+        if (((!_near and !_far) or *qty < qtyMax)
           and (_far ? fv > price : true)
           and (_near ? (reverse ? fv - width : fv + width) < price : true)
           and (!qp->_matchPings or KqtyTrade < qtyTrade)
         ) {
-          mAmount qty_ = fmin(qtyMax - *qty, qtyTrade);
+          mAmount qty_ = qtyTrade;
+          if (_near or _far)
+            mAmount qty_ = fmin(qtyMax - *qty, qty_);
           *ping += priceTrade * qty_;
           *qty += qty_;
         }
-        return *qty >= qtyMax;
+        return *qty >= qtyMax and (_near or _far);
       };
       void clean() {
         if (buys.size()) expire(&buys);
