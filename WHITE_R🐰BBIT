@@ -84,9 +84,9 @@
 :  :                                                                          :
 :  +-- Whaaat??                                                               :
 :       ____     Login    ____    Admin     ____                              :
-:      |gw.h# <<-------- |cf.h| -------->> |ui.h# K client                    :
-:       ¯¯¯¯#             ¯¯¯¯              ¯¯¯¯|                             :
-:           #   Wallet    ____                  | P                           :
+:      |gw.h# <<-------- |cf.h| -------->> |ui.h# K Client                    :
+:       ¯¯¯¯#             ¯¯¯¯             |sh.h# K Shell                     :
+:           #   Wallet    ____              ¯¯¯¯| P                           :
 :           # -------->> |pg.h#        ____     V a                           :
 :         A #             ¯¯¯¯#       |km.h|____V r                           :
 :         P #   Trades        # <<->> |fn.h|qp.h| a                           :
@@ -96,7 +96,7 @@
 :         x #             ¯¯¯¯#                 V e                           :
 :         c #   Orders    ____#   Quotes    ____V r                           :
 :         h # <<------>> |og.h# <<------>> |qe.h| s                           :
-:         ange            ¯¯¯¯# K server    ¯¯¯¯                              :
+:         ange            ¯¯¯¯# K Server    ¯¯¯¯                              :
 :                         ____#____                                           :
 :                        |db.h|ev.h|                                          :
 :                         ¯¯¯¯ ¯¯¯¯                                           :
@@ -118,11 +118,11 @@
 :      TODO                                                                   :
 :                                                                             :
 :                                                                             :
-:  .. src/server/sh.h:  ----------------------------- aka. Shell ------------ :
+:  .. src/server/cf.h:  ----------------------------- aka. Configurations --- :
 :      TODO                                                                   :
 :                                                                             :
 :                                                                             :
-:  .. src/server/cf.h:  ----------------------------- aka. Configurations --- :
+:  .. src/server/sh.h:  ----------------------------- aka. Shell ------------ :
 :      TODO                                                                   :
 :                                                                             :
 :                                                                             :
