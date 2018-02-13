@@ -45,6 +45,7 @@ interface CoinbaseReceived extends CoinbaseBase {
     order_id: string; // guid
     size: string; // "0.00"
     price: string; // "0.00"
+    order_type: string;
 }
 
 // The order is now open on the order book. This message will only be sent for orders which are not fully filled
@@ -231,6 +232,10 @@ class CoinbaseOrderBook {
     };
 
     public onReceived = (msg: CoinbaseReceived, t: Date): boolean => {
+        if(msg.order_type == 'market'){
+            return;
+        }
+        
         var price = convertPrice(msg.price);
         var size = convertSize(msg.size);
         var side = convertSide(msg);
