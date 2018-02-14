@@ -77,6 +77,10 @@ namespace K {
               document += "Content-Type: audio/mpeg\r\n";
               url = path;
             }
+            } else if (leaf == "ico") {
+              document += "Content-Type: image/x-icon\r\n";
+              url = path;
+            }
             if (!url.empty())
               content << ifstream(readlink("app/client").substr(48) + url).rdbuf();
             else if (FN::int64() % 21) {
