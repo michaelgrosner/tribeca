@@ -73,12 +73,11 @@ namespace K {
             } else if (leaf == "png") {
               document += "Content-Type: image/png\r\n";
               url = path;
-            } else if (leaf == "mp3") {
-              document += "Content-Type: audio/mpeg\r\n";
-              url = path;
-            }
             } else if (leaf == "ico") {
               document += "Content-Type: image/x-icon\r\n";
+              url = path;
+            } else if (leaf == "mp3") {
+              document += "Content-Type: audio/mpeg\r\n";
               url = path;
             }
             if (!url.empty())

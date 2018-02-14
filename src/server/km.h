@@ -279,7 +279,7 @@ namespace K {
       amount(a), held(h), currency(c)
     {};
     void reset(mAmount a, mAmount h) {
-      if (currency.empty()) return;
+      if (empty()) return;
       amount =  a;
       held = h;
     };
