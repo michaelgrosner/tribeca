@@ -278,12 +278,39 @@ namespace K {
     mWallet(mAmount a, mAmount h, mCoinId c):
       amount(a), held(h), currency(c)
     {};
+    void reset(mAmount a, mAmount h) {
+      if (currency.empty()) return;
+      amount =  a;
+      held = h;
+    };
+    bool empty() {
+      return currency.empty();
+    };
   };
   static void to_json(json& j, const mWallet& k) {
     j = {
       {  "amount", k.amount  },
       {    "held", k.held    },
       {"currency", k.currency}
+    };
+  };
+  struct mWallets {
+    mWallet base,
+            quote;
+    mWallets():
+      base(mWallet()), quote(mWallet())
+    {};
+    mWallets(mWallet b, mWallet q):
+      base(b), quote(q)
+    {};
+    bool empty() {
+      return base.empty() or quote.empty();
+    };
+  };
+  static void to_json(json& j, const mWallets& k) {
+    j = {
+      { "base", k.base },
+      {"quote", k.quote}
     };
   };
   struct mProfit {
@@ -614,8 +641,8 @@ namespace K {
                                     reconnect;
       function<void(mOrder)>        evDataOrder;
       function<void(mTrade)>        evDataTrade;
-      function<void(mWallet)>       evDataWallet;
       function<void(mLevels)>       evDataLevels;
+      function<void(mWallets)>      evDataWallet;
       function<void(mConnectivity)> evConnectOrder,
                                     evConnectMarket;
       mExchange exchange = (mExchange)0;
@@ -637,10 +664,10 @@ namespace K {
         return waitFor(replyOrders, evDataOrder)
              | waitFor(replyLevels, evDataLevels)
              | waitFor(replyTrades, evDataTrade)
-             | waitFor(replyWallet, evDataWallet)
+             | waitFor(replyWallets, evDataWallet)
              | waitFor(replyCancelAll, evDataOrder);
       };
-      function<bool()> wallet = [&]() { return !(async_wallet() or !askFor(replyWallet, [&]() { return sync_wallet(); })); };
+      function<bool()> wallet = [&]() { return !(async_wallet() or !askFor(replyWallets, [&]() { return sync_wallet(); })); };
       function<bool()> levels = [&]() { return askFor(replyLevels, [&]() { return sync_levels(); }); };
       function<bool()> trades = [&]() { return askFor(replyTrades, [&]() { return sync_trades(); }); };
       function<bool()> orders = [&]() { return askFor(replyOrders, [&]() { return sync_orders(); }); };
@@ -651,11 +678,11 @@ namespace K {
       virtual vector<mOrder> sync_cancelAll() = 0;
     protected:
       virtual bool async_wallet() { return false; };
-      virtual vector<mWallet> sync_wallet() { return vector<mWallet>(); };
+      virtual vector<mWallets> sync_wallet() { return vector<mWallets>(); };
       virtual vector<mLevels> sync_levels() { return vector<mLevels>(); };
       virtual vector<mTrade> sync_trades() { return vector<mTrade>(); };
       virtual vector<mOrder> sync_orders() { return vector<mOrder>(); };
-      future<vector<mWallet>> replyWallet;
+      future<vector<mWallets>> replyWallets;
       future<vector<mLevels>> replyLevels;
       future<vector<mTrade>> replyTrades;
       future<vector<mOrder>> replyOrders;

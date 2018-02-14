@@ -35,12 +35,7 @@ namespace K  {
       };
       void waitData() {
         gw->log = [&](string reason) {
-          deferred([this, reason]() {
-            string name = string(reason.find(">>>") != reason.find("<<<") ? "DEBUG" : "GW") + " " + gw->name;
-            if (reason.find("Error") != string::npos)
-              ((SH*)screen)->logWar(name, reason);
-            else ((SH*)screen)->log(name, reason);
-          });
+          gwLog(reason);
         };
         aEngine = new Async(hub->getLoop());
         aEngine->setData(this);
@@ -118,6 +113,14 @@ namespace K  {
         if (k->gw->waitForData())
           aEngine->send();
         ((SH*)screen)->waitForUser();
+      };
+      inline void gwLog(string reason) {
+        deferred([this, reason]() {
+          string name = string(reason.find(">>>") != reason.find("<<<") ? "DEBUG" : "GW") + " " + gw->name;
+          if (reason.find("Error") != string::npos)
+            ((SH*)screen)->logWar(name, reason);
+          else ((SH*)screen)->log(name, reason);
+        });
       };
       void version() {
         if (access(".git", F_OK) != -1) {

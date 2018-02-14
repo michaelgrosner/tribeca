@@ -8,12 +8,12 @@
 namespace K {
   class PG: public Klass {
     private:
+      mWallets balance;
       vector<mProfit> profits;
-      map<mPrice, mTrade> buys;
-      map<mPrice, mTrade> sells;
-      map<mCoinId, mWallet> balance;
-      mClock profitT_21s = 0;
-      mClock walletT_2s = 0;
+      map<mPrice, mTrade> buys,
+                          sells;
+      mClock profitT_21s = 0,
+             walletT_2s = 0;
       string sideAPR_ = "!=";
     public:
       mPosition position;
@@ -38,7 +38,7 @@ namespace K {
         ((SH*)screen)->log("DB", string("loaded TBP = ") + ss.str() + " " + gw->base);
       };
       void waitData() {
-        gw->evDataWallet = [&](mWallet k) {                         _debugEvent_
+        gw->evDataWallet = [&](mWallets k) {                        _debugEvent_
           calcWallet(k);
         };
         ((EV*)events)->ogOrder = [&](mOrder *k) {                   _debugEvent_
@@ -233,21 +233,20 @@ namespace K {
           sum += it.second.quantity;
         return sum;
       };
-      void calcWallet(mWallet k) {
-        if (k.currency != "") balance[k.currency] = k;
-        if (balance.find(gw->quote) == balance.end()) balance[gw->quote] = mWallet(0, 0, gw->quote);
-        if (balance.find(gw->base) == balance.end()) balance[gw->base] = mWallet(0, 0, gw->base);
-        if (!((MG*)market)->fairValue or balance.find(gw->base) == balance.end() or balance.find(gw->quote) == balance.end()) return;
+      void calcWallet(mWallets k) {
+        if (!k.empty()) balance = k;
+        if (balance.empty() or !((MG*)market)->fairValue) return;
+        if (((CF*)config)->argMaxWallet) applyMaxWallet();
         mPosition pos(
-          balance[gw->base].amount,
-          balance[gw->quote].amount,
-          balance[gw->quote].amount / ((MG*)market)->fairValue,
-          balance[gw->base].held,
-          balance[gw->quote].held,
-          balance[gw->base].amount + balance[gw->base].held,
-          (balance[gw->quote].amount + balance[gw->quote].held) / ((MG*)market)->fairValue,
-          (balance[gw->quote].amount + balance[gw->quote].held) / ((MG*)market)->fairValue + balance[gw->base].amount + balance[gw->base].held,
-          (balance[gw->base].amount + balance[gw->base].held) * ((MG*)market)->fairValue + balance[gw->quote].amount + balance[gw->quote].held,
+          balance.base.amount,
+          balance.quote.amount,
+          balance.quote.amount / ((MG*)market)->fairValue,
+          balance.base.held,
+          balance.quote.held,
+          balance.base.amount + balance.base.held,
+          (balance.quote.amount + balance.quote.held) / ((MG*)market)->fairValue,
+          (balance.quote.amount + balance.quote.held) / ((MG*)market)->fairValue + balance.base.amount + balance.base.held,
+          (balance.base.amount + balance.base.held) * ((MG*)market)->fairValue + balance.quote.amount + balance.quote.held,
           position.profitBase,
           position.profitQuote,
           mPair(gw->base, gw->quote)
@@ -284,7 +283,11 @@ namespace K {
               heldAmount += held;
             }
           }
-        calcWallet(mWallet(amount, heldAmount, k->side == mSide::Ask ? k->pair.base : k->pair.quote));
+        (k->side == mSide::Ask
+          ? balance.base
+          : balance.quote
+        ).reset(amount, heldAmount);
+        calcWallet(mWallets());
         if (!k->tradeQuantity or walletT_2s + 2e+3 > _Tstamp_) return;
         walletT_2s = _Tstamp_;
         ((EV*)events)->async(gw->wallet);
@@ -305,7 +308,7 @@ namespace K {
           else if (mPDivMode::SQRT == qp->positionDivergenceMode) positionDivergence = pDivMin + (sqrt(divCenter) * (pDiv - pDivMin));
           else if (mPDivMode::Switch == qp->positionDivergenceMode) positionDivergence = divCenter < 1e-1 ? pDivMin : pDiv;
         }
-      }
+      };
       void calcProfit(mPosition *k) {
         mClock now = _Tstamp_;
         if (profitT_21s<=3) ++profitT_21s;
@@ -320,7 +323,18 @@ namespace K {
           k->profitBase = ((k->baseValue - profits.begin()->baseValue) / k->baseValue) * 1e+2;
           k->profitQuote = ((k->quoteValue - profits.begin()->quoteValue) / k->quoteValue) * 1e+2;
         }
-      }
+      };
+      inline void applyMaxWallet() {
+        mAmount maxWallet = ((CF*)config)->argMaxWallet;
+        maxWallet -= balance.quote.held / ((MG*)market)->fairValue;
+        if (maxWallet > 0 and balance.quote.amount / ((MG*)market)->fairValue > maxWallet) {
+          balance.quote.amount = maxWallet * ((MG*)market)->fairValue;
+          maxWallet = 0;
+        } else maxWallet -= balance.quote.amount / ((MG*)market)->fairValue;
+        maxWallet -= balance.base.held;
+        if (maxWallet > 0 and balance.base.amount > maxWallet)
+          balance.base.amount = maxWallet;
+      };
   };
 }
 
