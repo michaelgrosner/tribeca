@@ -60,7 +60,7 @@
     "ws": "^1.0.1"
   },
   "devDependencies": {
-    "@types/lodash": "^4.14.95",
+    "@types/lodash": "^4.14.102",
     "mocha": "3.2.0",
     "typescript": "^2.7.1"
   },
