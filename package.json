@@ -18,7 +18,6 @@
     "@types/express-serve-static-core": "^4.0.44",
     "@types/form-data": "0.0.33",
     "@types/jquery": "^2.0.41",
-    "@types/lodash": "https://registry.npmjs.org/@types/lodash/-/lodash-4.14.62.tgz",
     "@types/mime": "0.0.29",
     "@types/mongodb": "^2.1.43",
     "@types/node": "^7.0.12",
@@ -47,7 +46,7 @@
     "grunt-contrib-watch": "1.0.0",
     "grunt-ts": "6.0.0-beta.15",
     "jquery": "3.2.1",
-    "lodash": "4.17.4",
+    "lodash": "^4.17.4",
     "moment": "2.18.1",
     "mongodb": "2.2.25",
     "node-uuid": "1.4.8",
@@ -56,13 +55,14 @@
     "shortid": "2.2.8",
     "socket.io": "^1.4.5",
     "socket.io-client": "1.7.3",
-    "typescript": "^2.4.1",
     "typings": "2.1.0",
     "utf-8-validate": "^1.2.1",
     "ws": "^1.0.1"
   },
   "devDependencies": {
-    "mocha": "3.2.0"
+    "@types/lodash": "^4.14.95",
+    "mocha": "3.2.0",
+    "typescript": "^2.7.1"
   },
   "scripts": {
     "test": "mocha"
