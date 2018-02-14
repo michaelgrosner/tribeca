@@ -57,7 +57,7 @@ namespace K {
         ((EV*)events)->deferred([this, sql]() {
           char* zErrMsg = 0;
           sqlite3_exec(db, sql.data(), NULL, NULL, &zErrMsg);
-          if (zErrMsg) ((SH*)screen)->logWar("DB", string("Sqlite error: ") + zErrMsg);
+          if (zErrMsg) ((SH*)screen)->logWar("DB", string("Sqlite error: ") + zErrMsg + " at " + sql);
           sqlite3_free(zErrMsg);
         });
       };

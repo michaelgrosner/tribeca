@@ -5,6 +5,7 @@
 #include <cstring>
 #include <random>
 #include <thread>
+#include <mutex>
 #include <future>
 #include <chrono>
 #include <locale>
@@ -12,12 +13,14 @@
 #include <math.h>
 #include <getopt.h>
 #include <signal.h>
-#include <execinfo.h>
 #include <functional>
 #include <algorithm>
 #include <iomanip>
 #include <vector>
 #include <map>
+#ifndef _WIN32
+#include <execinfo.h>
+#endif
 
 using namespace std;
 

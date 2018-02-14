@@ -1,6 +1,6 @@
 K       ?= K.sh
-CHOST   ?= $(shell (test -d .git && test -n "`command -v g++`") && g++ -dumpmachine || ls . | grep build- | head -n1 | cut -d '/' -f1 | cut -d '-' -f2-)
-CARCH    = x86_64-linux-gnu arm-linux-gnueabihf aarch64-linux-gnu x86_64-apple-darwin17
+CHOST   ?= $(shell (test -d .git && test -n "`command -v g++`") && g++ -dumpmachine || ls -1 . | grep build- | head -n1 | cut -d '/' -f1 | cut -d '-' -f2-)
+CARCH    = x86_64-linux-gnu arm-linux-gnueabihf aarch64-linux-gnu x86_64-apple-darwin17 x86_64-w64-mingw32
 KLOCAL   = build-$(CHOST)/local
 CXX      = $(CHOST)-g++
 CC       = $(CHOST)-gcc
@@ -18,15 +18,15 @@ V_SQL   := 3210000
 V_QF    := v.1.14.4
 V_UV    := 1.18.0
 V_PVS   := 6.21.24657.1946
-KZIP     = 5cb3a4bab34ce7e1aeb1d72cc155b3f272668e3e
-KARGS    = -Wextra -std=c++11 -O3 -I$(KLOCAL)/include      \
-  src/server/K.cxx -pthread -rdynamic                      \
-  -DK_STAMP='"$(shell date "+%Y-%m-%d %H:%M:%S")"'         \
-  -DK_BUILD='"$(CHOST)"'     $(KLOCAL)/include/uWS/*.cpp   \
-  $(KLOCAL)/lib/K-$(CHOST).a $(KLOCAL)/lib/libquickfix.a   \
-  $(KLOCAL)/lib/libsqlite3.a $(KLOCAL)/lib/libz.a          \
-  $(KLOCAL)/lib/libcurl.a    $(KLOCAL)/lib/libssl.a        \
-  $(KLOCAL)/lib/libcrypto.a  $(KLOCAL)/lib/libncurses.a -ldl
+KZIP     = 9c7bf77891be45fedb6b670cbc228a3ec559dbea
+KARGS    = src/server/K.cxx                              \
+  -std=c++11 -O3 -I$(KLOCAL)/include -pthread -Wextra    \
+  -DK_STAMP='"$(shell date "+%Y-%m-%d %H:%M:%S")"'       \
+  -DK_BUILD='"$(CHOST)"'     $(KLOCAL)/include/uWS/*.cpp \
+  $(KLOCAL)/lib/K-$(CHOST).a $(KLOCAL)/lib/libquickfix.a \
+  $(KLOCAL)/lib/libsqlite3.a $(KLOCAL)/lib/libz.a        \
+  $(KLOCAL)/lib/libcurl.a    $(KLOCAL)/lib/libssl.a      \
+  $(KLOCAL)/lib/libcrypto.a  $(KLOCAL)/lib/libncurses.a
 
 all: K
 
@@ -92,8 +92,8 @@ else
 	@$(if $(shell sh -c 'test "`g++ -dumpversion | cut -d . -f1`" != "6" || echo 1'),,$(warning $(ERR));$(error $(HINT)))
 	@$(CXX) --version
 	mkdir -p $(KLOCAL)/bin
-	CHOST=$(CHOST) $(MAKE) $(shell test -n "`echo $(CHOST) | grep darwin`" && echo Darwin || uname -s)
-	chmod +x $(KLOCAL)/bin/K-$(CHOST)
+	CHOST=$(CHOST) $(MAKE) $(shell test -n "`echo $(CHOST) | grep darwin`" && echo Darwin || (test -n "`echo $(CHOST) | grep mingw32`" && echo Win32 || uname -s))
+	chmod +x $(KLOCAL)/bin/K-$(CHOST)$(shell test -n "`echo $(CHOST) | grep mingw32`" && echo .exe || :)
 endif
 
 dist:
@@ -107,22 +107,30 @@ else
 endif
 
 Linux: build-$(CHOST)
-	$(CXX) -o $(KLOCAL)/bin/K-$(CHOST) -DUWS_THREADSAFE -static-libstdc++ -static-libgcc -g $(KARGS)
+	$(CXX) -o $(KLOCAL)/bin/K-$(CHOST) -DUWS_THREADSAFE -static-libstdc++ -static-libgcc -g -rdynamic $(KARGS) -ldl
 
 Darwin: build-$(CHOST)
-	$(CXX) -o $(KLOCAL)/bin/K-$(CHOST) -DUSE_LIBUV $(KLOCAL)/lib/libuv.a -msse4.1 -maes -mpclmul -mmacosx-version-min=10.13 -nostartfiles $(KARGS)
+	$(CXX) -o $(KLOCAL)/bin/K-$(CHOST) -DUSE_LIBUV $(KLOCAL)/lib/libuv.a -msse4.1 -maes -mpclmul -mmacosx-version-min=10.13 -nostartfiles -rdynamic $(KARGS) -ldl
+
+Win32: build-$(CHOST)
+	$(CXX)-posix -o $(KLOCAL)/bin/K-$(CHOST).exe -DUSE_LIBUV $(KARGS) $(KLOCAL)/lib/libuv.dll.a $(KLOCAL)/lib/libssl.dll.a $(KLOCAL)/lib/libcrypto.dll.a -DCURL_STATICLIB -static -lstdc++ -lgcc -lwldap32 -lws2_32
 
 zlib: build-$(CHOST)
-	test -d build-$(CHOST)/zlib-$(V_ZLIB) || (                                 \
-	curl -L https://zlib.net/zlib-$(V_ZLIB).tar.gz | tar xz -C build-$(CHOST)  \
-	&& cd build-$(CHOST)/zlib-$(V_ZLIB) && CC=$(CC) ./configure --static       \
-	--prefix=$(PWD)/$(KLOCAL) && make && make install                          )
+	test -d build-$(CHOST)/zlib-$(V_ZLIB) || (                                                  \
+	curl -L https://zlib.net/zlib-$(V_ZLIB).tar.gz | tar xz -C build-$(CHOST)                   \
+	&& cd build-$(CHOST)/zlib-$(V_ZLIB) && (test -n "`echo $(CHOST) | grep mingw32`" &&         \
+	(sed -i "s/^\(PREFIX =\).*$$/\1$(CHOST)-/" win32/Makefile.gcc && make -fwin32/Makefile.gcc  \
+	&& BINARY_PATH=$(PWD)/$(KLOCAL)/bin INCLUDE_PATH=$(PWD)/$(KLOCAL)/include                   \
+	LIBRARY_PATH=$(PWD)/$(KLOCAL)/lib make install -fwin32/Makefile.gcc)                        \
+	|| (CC=$(CC) ./configure --static --prefix=$(PWD)/$(KLOCAL) && make && make install))       )
 
 openssl: build-$(CHOST)
-	test -d build-$(CHOST)/openssl-$(V_SSL) || (                                                             \
-	curl -L https://www.openssl.org/source/openssl-$(V_SSL).tar.gz | tar xz -C build-$(CHOST)                \
-	&& cd build-$(CHOST)/openssl-$(V_SSL) && CC=$(CC) RANLIB=$(CHOST)-ranlib AR=$(CHOST)-ar ./Configure dist \
-	-fPIC --prefix=$(PWD)/$(KLOCAL) --openssldir=$(PWD)/$(KLOCAL) && make && make install_sw install_ssldirs )
+	test -d build-$(CHOST)/openssl-$(V_SSL) || (                                              \
+	curl -L https://www.openssl.org/source/openssl-$(V_SSL).tar.gz | tar xz -C build-$(CHOST) \
+	&& cd build-$(CHOST)/openssl-$(V_SSL) && ./Configure                                      \
+	$(shell test -n "`echo $(CHOST) | grep mingw32`" && echo mingw64 || echo dist)            \
+	--cross-compile-prefix=$(CHOST)- -fPIC --prefix=$(PWD)/$(KLOCAL)                          \
+	--openssldir=$(PWD)/$(KLOCAL) && make && make install_sw install_ssldirs                  )
 
 curl: build-$(CHOST)
 	test -d build-$(CHOST)/curl-$(V_CURL) || (                                                  \
@@ -141,44 +149,49 @@ sqlite: build-$(CHOST)
 	&& cd build-$(CHOST)/sqlite-autoconf-$(V_SQL) && CC=$(CC) ./configure --prefix=$(PWD)/$(KLOCAL) \
 	--host=$(CHOST) --enable-static --disable-shared --enable-threadsafe && make && make install    )
 
-uws: build-$(CHOST)
-	test -d build-$(CHOST)/uWebSockets-$(V_UWS)                                    \
-	|| curl -L https://github.com/uNetworking/uWebSockets/archive/v$(V_UWS).tar.gz \
-	| tar xz -C build-$(CHOST) && mkdir -p $(KLOCAL)/include/uWS                   \
-	&& cp build-$(CHOST)/uWebSockets-$(V_UWS)/src/* $(KLOCAL)/include/uWS/
-
 ncurses: build-$(CHOST)
-	test -d build-$(CHOST)/ncurses-$(V_NCUR) || (                                                         \
-	curl -L http://ftp.gnu.org/pub/gnu/ncurses/ncurses-$(V_NCUR).tar.gz | tar xz -C build-$(CHOST)        \
-	&& cd build-$(CHOST)/ncurses-$(V_NCUR) && CC=$(CC) AR=$(CHOST)-ar CXX=$(CXX) CPPFLAGS=-P ./configure  \
-	--host=$(CHOST) --prefix=$(PWD)/$(KLOCAL)                                                             \
-	--with-fallbacks=linux,screen,vt100,xterm,xterm-256color,putty-256color && make && make install       )
+	test -d build-$(CHOST)/ncurses-$(V_NCUR) || (                                                        \
+	curl -L http://ftp.gnu.org/pub/gnu/ncurses/ncurses-$(V_NCUR).tar.gz | tar xz -C build-$(CHOST)       \
+	&& cd build-$(CHOST)/ncurses-$(V_NCUR) && CC=$(CC) AR=$(CHOST)-ar CXX=$(CXX) CPPFLAGS=-P ./configure \
+	--host=$(CHOST) --prefix=$(PWD)/$(KLOCAL)  $(shell test -n "`echo $(CHOST) | grep mingw32`" && echo  \
+	--without-cxx-binding --without-ada --enable-reentrant 	--with-normal --disable-home-terminfo        \
+	--enable-sp-funcs --enable-term-driver --enable-interop || :)                                        \
+	--with-fallbacks=linux,screen,vt100,xterm,xterm-256color,putty-256color && make && make install      )
 
 json: build-$(CHOST)
 	test -f $(KLOCAL)/include/json.h || (mkdir -p $(KLOCAL)/include                  \
 	&& curl -L https://github.com/nlohmann/json/releases/download/$(V_JSON)/json.hpp \
 	-o $(KLOCAL)/include/json.h                                                      )
 
+uws: build-$(CHOST)
+	test -d build-$(CHOST)/uWebSockets-$(V_UWS)                                    \
+	|| curl -L https://github.com/uNetworking/uWebSockets/archive/v$(V_UWS).tar.gz \
+	| tar xz -C build-$(CHOST) && mkdir -p $(KLOCAL)/include/uWS                   \
+	&& cp build-$(CHOST)/uWebSockets-$(V_UWS)/src/* $(KLOCAL)/include/uWS/         \
+	&& (test -n "`echo $(CHOST) | grep mingw32`" &&                                \
+	(sed -i "s/W\(s2tcpip\)/w\1/" $(KLOCAL)/include/uWS/Networking.h &&            \
+	sed -i "s/WinSock2/winsock2/" $(KLOCAL)/include/uWS/Networking.h) ||          :)
+
 quickfix: build-$(CHOST)
 	test -d build-$(CHOST)/quickfix-$(V_QF) || (                                                   \
 	curl -L https://github.com/quickfix/quickfix/archive/$(V_QF).tar.gz | tar xz -C build-$(CHOST) \
-	&& patch build-$(CHOST)/quickfix-$(V_QF)/m4/ax_lib_mysql.m4 < etc/without_mysql.m4.patch       \
+	&& patch build-$(CHOST)/quickfix-$(V_QF)/m4/ax_lib_mysql.m4 < src/build/without_mysql.m4.patch \
 	&& cd build-$(CHOST)/quickfix-$(V_QF) && ./bootstrap                                           \
 	&& (test -n "`echo $(CHOST) | grep darwin`" &&                                                 \
 	sed -i '' "s/bin spec test examples doc//" Makefile.am ||                                      \
 	sed -i "s/bin spec test examples doc//" Makefile.am)                                           \
 	&& (test -n "`echo $(CHOST) | grep darwin`" &&                                                 \
-	sed -i '' "s/CXX = g++/CXX \?= g++/" UnitTest++/Makefile ||                                    \
-	sed -i "s/CXX = g++/CXX \?= g++/" UnitTest++/Makefile)                                         \
+	sed -i '' "s/SUBDIRS = test//" src/C++/Makefile.am ||                                          \
+	sed -i "s/SUBDIRS = test//" src/C++/Makefile.am) && (test -n "`echo $(CHOST) | grep mingw32`"  \
+	&& patch -p2 < ../../src/build/with_win32.src.patch || :)                                      \
 	&& CXX=$(CXX) AR=$(CHOST)-ar ./configure --prefix=$(PWD)/$(KLOCAL) --enable-shared=no          \
-	--enable-static=yes --host=$(CHOST) && cd UnitTest++ && CXX=$(CXX) make libUnitTest++.a        \
-	&& cd ../src/C++ && CXX=$(CXX) make && make install                                            )
+	--enable-static=yes --host=$(CHOST) && cd src/C++ && CXX=$(CXX) make && make install           )
 
 libuv: build-$(CHOST)
-	test -z "`echo $(CHOST) | grep darwin`" || test -d build-$(CHOST)/libuv-$(V_UV) || (      \
-	curl -L https://github.com/libuv/libuv/archive/v$(V_UV).tar.gz | tar xz -C build-$(CHOST) \
-	&& cd build-$(CHOST)/libuv-$(V_UV) && sh autogen.sh && CC=$(CC) ./configure               \
-	--host=$(CHOST) --prefix=$(PWD)/$(KLOCAL) --disable-shared && make && make install        )
+	test -z "`echo $(CHOST) | grep darwin;echo $(CHOST) | grep mingw32`" || test -d build-$(CHOST)/libuv-$(V_UV) || ( \
+	curl -L https://github.com/libuv/libuv/archive/v$(V_UV).tar.gz | tar xz -C build-$(CHOST)                         \
+	&& cd build-$(CHOST)/libuv-$(V_UV) && sh autogen.sh && CC=$(CC) ./configure --host=$(CHOST)                       \
+	--prefix=$(PWD)/$(KLOCAL) && make && make install                                                                 )
 
 pvs:
 	test -d build-$(CHOST)/pvs-studio-$(V_PVS)-x86_64 || (                     \
@@ -201,19 +214,19 @@ cleandb: /data/db/K*
 	rm -rf /data/db/K*.db
 
 packages:
-	test -n "`command -v apt-get`" && sudo apt-get -y install g++ build-essential automake autoconf libtool libxml2 libxml2-dev zlib1g-dev openssl stunnel python curl gzip screen rename \
-	|| (test -n "`command -v yum`" && sudo yum -y install gcc-c++ automake autoconf libtool libxml2 libxml2-devel openssl stunnel python curl gzip screen rename) \
-	|| (test -n "`command -v brew`" && (xcode-select --install || :) && (brew install automake autoconf libxml2 sqlite openssl zlib stunnel python curl gzip proctools rename || brew upgrade || :)) \
- 	|| (test -n "`command -v pacman`" && sudo pacman --noconfirm -S --needed base-devel libxml2 zlib sqlite curl libcurl-compat openssl stunnel python gzip screen rename)
+	test -n "`command -v apt-get`" && sudo apt-get -y install g++ build-essential automake autoconf libtool libxml2 libxml2-dev zlib1g-dev openssl stunnel python curl gzip screen \
+	|| (test -n "`command -v yum`" && sudo yum -y install gcc-c++ automake autoconf libtool libxml2 libxml2-devel openssl stunnel python curl gzip screen) \
+	|| (test -n "`command -v brew`" && (xcode-select --install || :) && (brew install automake autoconf libxml2 sqlite openssl zlib stunnel python curl gzip proctools || brew upgrade || :)) \
+	|| (test -n "`command -v pacman`" && sudo pacman --noconfirm -S --needed base-devel libxml2 zlib sqlite curl libcurl-compat openssl stunnel python gzip screen)
 	sudo mkdir -p /data/db/
 	sudo chown $(shell id -u) /data/db
 
 install:
 	@$(MAKE) packages
 	mkdir -p app/server
-	@echo ================================================================================ && echo && echo "Select your architecture to download pre-compiled binaries:" && echo
-	@echo -n $(CARCH) | tr ' ' "\n" | xargs -I % echo % | cat -n && echo && echo "(Hint! uname says \"`uname -s` `uname -m`\")" && echo
-	@read -p "[1/2/3/4]: " chost; \
+	@yes = | head -n`expr $(shell tput cols) / 2` | xargs echo && echo " _  __\n| |/ /\n| ' /   Select your architecture\n| . \\   to download pre-compiled binaries:\n|_|\\_\\ \n"
+	@echo $(CARCH) | tr ' ' "\n" | cat -n && echo "\n(Hint! uname says \"`uname -sm`\", and win32 does not work yet)\n"
+	@read -p "[1/2/3/4/5]: " chost; \
 	CHOST=`echo $(CARCH) | cut -d ' ' -f$${chost}` $(MAKE) build link
 
 docker:
@@ -293,12 +306,12 @@ www: src/www $(KLOCAL)/var/www
 	cp -R src/www/* $(KLOCAL)/var/www/
 	@echo DONE
 
-css:
-	@echo Building CSS files..
+css: src/www/sass
+	@echo Building client CSS files..
 	rm -rf $(KLOCAL)/var/www/css
 	mkdir -p $(KLOCAL)/var/www/css
-	./node_modules/.bin/node-sass --output-style compressed --output $(KLOCAL)/var/www/css/ src/www/sass/
-	ls -1 $$PWD/$(KLOCAL)/var/www/css/*[^\.min].css | rename 's/(\.css)$$/\.min$$1/'
+	./node_modules/.bin/node-sass --output-style compressed --output $(KLOCAL)/var/www/css/ src/www/sass/ \
+	&& ls -1 $$PWD/$(KLOCAL)/var/www/css/*[^\.min].css | sed -r 's/(.*)(\.css)$$/\1\2 \1\.min\2/' | xargs -I % sh -c 'mv %;'
 	@echo DONE
 
 bundle: client www css node_modules/.bin/browserify node_modules/.bin/uglifyjs $(KLOCAL)/var/www/js/main.js
@@ -369,11 +382,12 @@ release:
 ifdef KALL
 	unset KALL && echo -n $(CARCH) | tr ' ' "\n" | xargs -I % $(MAKE) CHOST=% $@
 else
-	@tar -cvzf $(KZIP)-$(CHOST).tar.gz                                                                                   \
-	LICENSE COPYING THANKS README.md MANUAL.md src etc $(KLOCAL)/bin/K-$(CHOST) $(KLOCAL)/var $(KLOCAL)/lib/K-$(CHOST).a \
-	Makefile && curl -s -n -H "Content-Type:application/octet-stream" -H "Authorization: token ${KRELEASE}"              \
-	--data-binary "@$(PWD)/$(KZIP)-$(CHOST).tar.gz"                                                                      \
-	"https://uploads.github.com/repos/ctubio/Krypto-trading-bot/releases/$(KHUB)/assets?name=$(KZIP)-$(CHOST).tar.gz"    \
+	@tar -cvzf $(KZIP)-$(CHOST).tar.gz $(KLOCAL)/bin/K-$(CHOST)* $(KLOCAL)/lib/K-$(CHOST).a                           \
+	$(shell test -n "`echo $(CHOST) | grep mingw32`" && echo $(KLOCAL)/bin/*dll || :)                                 \
+	$(KLOCAL)/var LICENSE COPYING THANKS README.md MANUAL.md src etc Makefile WHITE_* &&                              \
+	curl -s -n -H "Content-Type:application/octet-stream" -H "Authorization: token ${KRELEASE}"                       \
+	--data-binary "@$(PWD)/$(KZIP)-$(CHOST).tar.gz"                                                                   \
+	"https://uploads.github.com/repos/ctubio/Krypto-trading-bot/releases/$(KHUB)/assets?name=$(KZIP)-$(CHOST).tar.gz" \
 	&& rm $(KZIP)-$(CHOST).tar.gz && echo && echo DONE $(KZIP)-$(CHOST).tar.gz
 endif
 

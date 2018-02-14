@@ -34,9 +34,6 @@ Used on install to initialize `./K.sh` file, feel free to add your own hardcoded
 ### K-stunnel.conf
 Used on boot (only for GDAX) to run [stunnel](https://www.stunnel.org/index.html) in the background to provide SSL encryption for [FIX API](https://docs.gdax.com/#ssl-tunnels); no need to edit.
 
-### without_mysql.m4.patch
-Used against libquickfix sources by `make dist`; no need to edit.
-
 ### K-cabundle.pem
 Used by `libcurl` to access HTTPS resources, may be updated (with `make cabundle`) monthly from [curl.haxx.se](https://curl.haxx.se/docs/caextract.html); no need to update unless an error of CA certificates is displayed by curl in the logs.
 

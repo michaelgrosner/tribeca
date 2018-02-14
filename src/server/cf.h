@@ -4,22 +4,23 @@
 namespace K {
   class CF: public kLass {
     public:
-       int argPort         = 3000,   argColors       = 0, argDebug        = 0,
-           argDebugSecret  = 0,      argDebugEvents  = 0, argDebugOrders  = 0,
-           argDebugQuotes  = 0,      argDebugWallet  = 0, argWithoutSSL   = 0,
-           argMaxLevels    = 0,      argHeadless     = 0, argDustybot     = 0,
-           argAutobot      = 0,      argNaked        = 0, argFree         = 0,
-           argIgnoreSun    = 0,      argIgnoreMoon   = 0, argLifetime     = 0;
-    mPrice argEwmaUShort   = 0,      argEwmaXShort   = 0, argEwmaShort    = 0,
-           argEwmaMedium   = 0,      argEwmaLong     = 0, argEwmaVeryLong = 0;
-    string argTitle        = "K.sh", argMatryoshka   = "https://www.example.com/",
-           argUser         = "NULL", argPass         = "NULL",
-           argExchange     = "NULL", argCurrency     = "NULL",
-           argApikey       = "NULL", argSecret       = "NULL",
-           argUsername     = "NULL", argPassphrase   = "NULL",
-           argHttp         = "NULL", argWss          = "NULL",
-           argDatabase     = "",     argDiskdata     = "",
-           argWhitelist    = "";
+        int argPort         = 3000,   argColors       = 0, argDebug        = 0,
+            argDebugSecret  = 0,      argDebugEvents  = 0, argDebugOrders  = 0,
+            argDebugQuotes  = 0,      argDebugWallet  = 0, argWithoutSSL   = 0,
+            argHeadless     = 0,      argDustybot     = 0,  argLifetime    = 0,
+            argAutobot      = 0,      argNaked        = 0, argFree         = 0,
+            argIgnoreSun    = 0,      argIgnoreMoon   = 0, argMaxLevels    = 0;
+    mAmount argMaxWallet    = 0;
+     mPrice argEwmaUShort   = 0,      argEwmaXShort   = 0, argEwmaShort    = 0,
+            argEwmaMedium   = 0,      argEwmaLong     = 0, argEwmaVeryLong = 0;
+     string argTitle        = "K.sh", argMatryoshka   = "https://www.example.com/",
+            argUser         = "NULL", argPass         = "NULL",
+            argExchange     = "NULL", argCurrency     = "NULL",
+            argApikey       = "NULL", argSecret       = "NULL",
+            argUsername     = "NULL", argPassphrase   = "NULL",
+            argHttp         = "NULL", argWss          = "NULL",
+            argDatabase     = "",     argDiskdata     = "",
+            argWhitelist    = "";
     protected:
       void load(int argc, char** argv) {
         screen = new SH();
@@ -41,19 +42,19 @@ namespace K {
           {"dustybot",     no_argument,       &argDustybot,      1},
           {"lifetime",     required_argument, 0,               'T'},
           {"whitelist",    required_argument, 0,               'L'},
-          {"matryoshka",   required_argument, 0,               'k'},
-          {"exchange",     required_argument, 0,               'e'},
-          {"currency",     required_argument, 0,               'c'},
-          {"apikey",       required_argument, 0,               'A'},
-          {"secret",       required_argument, 0,               'S'},
-          {"passphrase",   required_argument, 0,               'X'},
-          {"username",     required_argument, 0,               'U'},
-          {"http",         required_argument, 0,               'H'},
-          {"wss",          required_argument, 0,               'W'},
+          {"port",         required_argument, 0,               999},
+          {"user",         required_argument, 0,               998},
+          {"pass",         required_argument, 0,               997},
+          {"exchange",     required_argument, 0,               996},
+          {"currency",     required_argument, 0,               995},
+          {"apikey",       required_argument, 0,               994},
+          {"secret",       required_argument, 0,               993},
+          {"passphrase",   required_argument, 0,               992},
+          {"username",     required_argument, 0,               991},
+          {"http",         required_argument, 0,               990},
+          {"wss",          required_argument, 0,               989},
           {"title",        required_argument, 0,               'K'},
-          {"port",         required_argument, 0,               'P'},
-          {"user",         required_argument, 0,               'u'},
-          {"pass",         required_argument, 0,               'p'},
+          {"matryoshka",   required_argument, 0,               'k'},
           {"ewma-ultra",   required_argument, 0,               905},
           {"ewma-micro",   required_argument, 0,               904},
           {"ewma-short",   required_argument, 0,               903},
@@ -61,6 +62,7 @@ namespace K {
           {"ewma-long",    required_argument, 0,               901},
           {"ewma-verylong",required_argument, 0,               900},
           {"database",     required_argument, 0,               'd'},
+          {"wallet-limit", required_argument, 0,               'W'},
           {"market-limit", required_argument, 0,               'M'},
           {"free-version", no_argument,       &argFree,          1},
           {"version",      no_argument,       0,               'v'},
@@ -68,26 +70,27 @@ namespace K {
         };
         int k = 0;
         while (++k)
-          switch (k = getopt_long(argc, argv, "hvc:d:e:k:p:u:A:H:K:M:P:S:T:U:W:X:", args, NULL)) {
+          switch (k = getopt_long(argc, argv, "hvd:k:K:L:M:T:W:", args, NULL)) {
             case -1 :
             case  0 : break;
-            case 'P': argPort         = stoi(optarg);   break;
             case 'M': argMaxLevels    = stoi(optarg);   break;
             case 'T': argLifetime     = stoi(optarg);   break;
-            case 'A': argApikey       = string(optarg); break;
-            case 'S': argSecret       = string(optarg); break;
-            case 'U': argUsername     = string(optarg); break;
-            case 'X': argPassphrase   = string(optarg); break;
-            case 'H': argHttp         = string(optarg); break;
-            case 'W': argWss          = string(optarg); break;
-            case 'e': argExchange     = string(optarg); break;
-            case 'c': argCurrency     = string(optarg); break;
+            case 999: argPort         = stoi(optarg);   break;
+            case 998: argUser         = string(optarg); break;
+            case 997: argPass         = string(optarg); break;
+            case 996: argExchange     = string(optarg); break;
+            case 995: argCurrency     = string(optarg); break;
+            case 994: argApikey       = string(optarg); break;
+            case 993: argSecret       = string(optarg); break;
+            case 992: argPassphrase   = string(optarg); break;
+            case 991: argUsername     = string(optarg); break;
+            case 990: argHttp         = string(optarg); break;
+            case 989: argWss          = string(optarg); break;
             case 'd': argDatabase     = string(optarg); break;
             case 'k': argMatryoshka   = string(optarg); break;
             case 'K': argTitle        = string(optarg); break;
-            case 'u': argUser         = string(optarg); break;
-            case 'p': argPass         = string(optarg); break;
             case 'L': argWhitelist    = string(optarg); break;
+            case 'W': argMaxWallet    = stod(optarg);   break;
             case 905: argEwmaUShort   = stod(optarg);   break;
             case 904: argEwmaXShort   = stod(optarg);   break;
             case 903: argEwmaShort    = stod(optarg);   break;
@@ -114,27 +117,27 @@ namespace K {
               << ((SH*)screen)->stamp() << RWHITE << "    --without-ssl         - do not use HTTPS for UI connections (use HTTP only)." << '\n'
               << ((SH*)screen)->stamp() << RWHITE << "-L, --whitelist=IP        - set IP or csv of IPs to allow UI connections," << '\n'
               << ((SH*)screen)->stamp() << RWHITE << "                            alien IPs will get a zip-bomb instead." << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "-P, --port=NUMBER         - set NUMBER of an open port to listen for UI connections." << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "-u, --user=WORD           - set allowed WORD as username for UI connections," << '\n'
+              << ((SH*)screen)->stamp() << RWHITE << "    --port=NUMBER         - set NUMBER of an open port to listen for UI connections." << '\n'
+              << ((SH*)screen)->stamp() << RWHITE << "    --user=WORD           - set allowed WORD as username for UI connections," << '\n'
               << ((SH*)screen)->stamp() << RWHITE << "                            mandatory but may be 'NULL'." << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "-p, --pass=WORD           - set allowed WORD as password for UI connections," << '\n'
+              << ((SH*)screen)->stamp() << RWHITE << "    --pass=WORD           - set allowed WORD as password for UI connections," << '\n'
               << ((SH*)screen)->stamp() << RWHITE << "                            mandatory but may be 'NULL'." << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "-e, --exchange=NAME       - set exchange NAME for trading, mandatory one of:" << '\n'
+              << ((SH*)screen)->stamp() << RWHITE << "    --exchange=NAME       - set exchange NAME for trading, mandatory one of:" << '\n'
               << ((SH*)screen)->stamp() << RWHITE << "                            'COINBASE', 'BITFINEX',  'BITFINEX_MARGIN', 'HITBTC'," << '\n'
               << ((SH*)screen)->stamp() << RWHITE << "                            'OKCOIN', 'OKEX', 'KORBIT', 'POLONIEX' or 'NULL'." << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "-c, --currency=PAIRS      - set currency pairs for trading (use format" << '\n'
+              << ((SH*)screen)->stamp() << RWHITE << "    --currency=PAIRS      - set currency pairs for trading (use format" << '\n'
               << ((SH*)screen)->stamp() << RWHITE << "                            with '/' separator, like 'BTC/EUR')." << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "-A, --apikey=WORD         - set (never share!) WORD as api key for trading," << '\n'
+              << ((SH*)screen)->stamp() << RWHITE << "    --apikey=WORD         - set (never share!) WORD as api key for trading," << '\n'
               << ((SH*)screen)->stamp() << RWHITE << "                            mandatory." << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "-S, --secret=WORD         - set (never share!) WORD as api secret for trading," << '\n'
+              << ((SH*)screen)->stamp() << RWHITE << "    --secret=WORD         - set (never share!) WORD as api secret for trading," << '\n'
               << ((SH*)screen)->stamp() << RWHITE << "                            mandatory." << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "-X, --passphrase=WORD     - set (never share!) WORD as api passphrase for trading," << '\n'
+              << ((SH*)screen)->stamp() << RWHITE << "    --passphrase=WORD     - set (never share!) WORD as api passphrase for trading," << '\n'
               << ((SH*)screen)->stamp() << RWHITE << "                            mandatory but may be 'NULL'." << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "-U, --username=WORD       - set (never share!) WORD as api username for trading," << '\n'
+              << ((SH*)screen)->stamp() << RWHITE << "    --username=WORD       - set (never share!) WORD as api username for trading," << '\n'
               << ((SH*)screen)->stamp() << RWHITE << "                            mandatory but may be 'NULL'." << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "-H, --http=URL            - set URL of api HTTP/S endpoint for trading," << '\n'
+              << ((SH*)screen)->stamp() << RWHITE << "    --http=URL            - set URL of api HTTP/S endpoint for trading," << '\n'
               << ((SH*)screen)->stamp() << RWHITE << "                            mandatory." << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "-W, --wss=URL             - set URL of api SECURE WS endpoint for trading," << '\n'
+              << ((SH*)screen)->stamp() << RWHITE << "    --wss=URL             - set URL of api SECURE WS endpoint for trading," << '\n'
               << ((SH*)screen)->stamp() << RWHITE << "                            mandatory." << '\n'
               << ((SH*)screen)->stamp() << RWHITE << "-d, --database=PATH       - set alternative PATH to database filename," << '\n'
               << ((SH*)screen)->stamp() << RWHITE << "                            default PATH is '/data/db/K.*.*.*.db'," << '\n'
@@ -152,11 +155,13 @@ namespace K {
               << ((SH*)screen)->stamp() << RWHITE << "                            overwrites the value from the database." << '\n'
               << ((SH*)screen)->stamp() << RWHITE << "    --ewma-verylong=PRICE - set initial ewma verylong value," << '\n'
               << ((SH*)screen)->stamp() << RWHITE << "                            overwrites the value from the database." << '\n'
+              << ((SH*)screen)->stamp() << RWHITE << "    --wallet-limit=AMOUNT - set AMOUNT in base currency to limit the balance," << '\n'
+              << ((SH*)screen)->stamp() << RWHITE << "                            otherwise the full available balance can be used." << '\n'
               << ((SH*)screen)->stamp() << RWHITE << "    --market-limit=NUMBER - set NUMBER of maximum price levels for the orderbook," << '\n'
               << ((SH*)screen)->stamp() << RWHITE << "                            default NUMBER is '321' and the minimum is '15'." << '\n'
               << ((SH*)screen)->stamp() << RWHITE << "                            locked bots smells like '--market-limit=3' spirit." << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "-T, --lifetime=NUMBER     - set NUMBER of minimum seconds before cancel open orders," << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "                            otherwise open orders will be replaced anytime required." << '\n'
+              << ((SH*)screen)->stamp() << RWHITE << "-T, --lifetime=NUMBER     - set NUMBER of minimum seconds to keep open orders open," << '\n'
+              << ((SH*)screen)->stamp() << RWHITE << "                            otherwise open orders can be replaced anytime required." << '\n'
               << ((SH*)screen)->stamp() << RWHITE << "    --debug-secret        - print (never share!) secret inputs and outputs." << '\n'
               << ((SH*)screen)->stamp() << RWHITE << "    --debug-events        - print detailed output about event handlers." << '\n'
               << ((SH*)screen)->stamp() << RWHITE << "    --debug-orders        - print detailed output about exchange messages." << '\n'
@@ -197,17 +202,17 @@ namespace K {
         tidy();
       };
       void run() {
+        ((SH*)screen)->config(
+          argNaked,    argColors,
+          argExchange, argCurrency
+        );
         gw = Gw::config(
           base(),       quote(),
           argExchange,  argFree,
           argApikey,    argSecret,
           argUsername,  argPassphrase,
           argHttp,      argWss,
-          argMaxLevels, argDebugSecret,
-          ((SH*)screen)->config(
-            argNaked,    argColors,
-            argExchange, argCurrency
-          )
+          argMaxLevels, argDebugSecret
         );
       };
     private:
@@ -243,7 +248,7 @@ namespace K {
           : 321;
         if (argUser == "NULL") argUser.clear();
         if (argPass == "NULL") argPass.clear();
-        if (argIgnoreSun and argIgnoreMoon) argIgnoreSun = 0;
+        if (argIgnoreSun and argIgnoreMoon) argIgnoreMoon = 0;
         if (argLifetime) argLifetime *= 1e+3;
       };
   };

@@ -194,10 +194,20 @@ namespace K {
           map<mPrice, string> matches;
           for (mTrade &it : tradesHistory)
             if (it.quantity - it.Kqty > 0
-              and it.side == (trade.side == mSide::Bid ? mSide::Ask : mSide::Bid)
-              and (trade.side == mSide::Bid ? (it.price > trade.price + widthPong) : (it.price < trade.price - widthPong))
+              and it.side != trade.side
+              and (qp->pongAt == mPongAt::AveragePingFair
+                or qp->pongAt == mPongAt::AveragePingAggressive
+                or (trade.side == mSide::Bid
+                  ? (it.price > trade.price + widthPong)
+                  : (it.price < trade.price - widthPong)
+                )
+              )
             ) matches[it.price] = it.tradeId;
-          matchPong(matches, (qp->pongAt == mPongAt::LongPingFair or qp->pongAt == mPongAt::LongPingAggressive) ? trade.side == mSide::Ask : trade.side == mSide::Bid, trade);
+          matchPong(
+            matches,
+            trade,
+            (qp->pongAt == mPongAt::LongPingFair or qp->pongAt == mPongAt::LongPingAggressive) ? trade.side == mSide::Ask : trade.side == mSide::Bid
+          );
         } else {
           ((UI*)client)->send(mMatter::Trades, trade);
           ((DB*)memory)->insert(mMatter::Trades, trade, false, trade.tradeId);
@@ -212,7 +222,7 @@ namespace K {
         });
         if (qp->cleanPongsAuto) cleanAuto(trade.time);
       };
-      void matchPong(map<mPrice, string> matches, bool reverse, mTrade pong) {
+      void matchPong(map<mPrice, string> matches, mTrade pong, bool reverse) {
         if (reverse) for (map<mPrice, string>::reverse_iterator it = matches.rbegin(); it != matches.rend(); ++it) {
           if (!matchPong(it->second, &pong)) break;
         } else for (map<mPrice, string>::iterator it = matches.begin(); it != matches.end(); ++it)

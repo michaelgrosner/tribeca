@@ -1,0 +1,316 @@
+--- build/quickfix-v.1.14.4/src/C++/Utility.cpp	2014-09-15 17:22:31.000000000 +0000
++++ build/quickfix-v.1.14.4/src/C++/Utility.cpp	2018-02-10 21:58:54.053917023 +0000
+@@ -80,7 +80,7 @@ std::string string_strip( const std::str
+
+ void socket_init()
+ {
+-#ifdef _MSC_VER
++#ifdef _WIN32
+   WORD version = MAKEWORD( 2, 2 );
+   WSADATA data;
+   WSAStartup( version, &data );
+@@ -95,7 +95,7 @@ void socket_init()
+
+ void socket_term()
+ {
+-#ifdef _MSC_VER
++#ifdef _WIN32
+   WSACleanup();
+ #endif
+ }
+@@ -168,7 +168,7 @@ void socket_close( int s )
+ bool socket_fionread( int s, int& bytes )
+ {
+   bytes = 0;
+-#if defined(_MSC_VER)
++#if defined(_WIN32)
+   return ::ioctlsocket( s, FIONREAD, &( ( unsigned long& ) bytes ) ) == 0;
+ #elif defined(USING_STREAMS)
+   return ::ioctl( s, I_NREAD, &bytes ) >= 0;
+@@ -199,7 +199,7 @@ int socket_setsockopt( int s, int opt, i
+   if( opt == TCP_NODELAY )
+     level = IPPROTO_TCP;
+
+-#ifdef _MSC_VER
++#ifdef _WIN32
+   return ::setsockopt( s, level, opt,
+                        ( char* ) & optval, sizeof( optval ) );
+ #else
+@@ -224,7 +224,7 @@ int socket_getsockopt( int s, int opt, i
+                        ( char* ) & optval, & length );
+ }
+
+-#ifndef _MSC_VER
++#ifndef _WIN32
+ int socket_fcntl( int s, int opt, int arg )
+ {
+   return ::fcntl( s, opt, arg );
+@@ -245,7 +245,7 @@ int socket_setfcntlflag( int s, int arg
+
+ void socket_setnonblock( int socket )
+ {
+-#ifdef _MSC_VER
++#ifdef _WIN32
+   u_long opt = 1;
+   ::ioctlsocket( socket, FIONBIO, &opt );
+ #else
+@@ -254,14 +254,14 @@ void socket_setnonblock( int socket )
+ }
+ bool socket_isValid( int socket )
+ {
+-#ifdef _MSC_VER
++#ifdef _WIN32
+   return socket != INVALID_SOCKET;
+ #else
+   return socket >= 0;
+ #endif
+ }
+
+-#ifndef _MSC_VER
++#ifndef _WIN32
+ bool socket_isBad( int s )
+ {
+   struct stat buf;
+@@ -272,7 +272,7 @@ bool socket_isBad( int s )
+
+ void socket_invalidate( int& socket )
+ {
+-#ifdef _MSC_VER
++#ifdef _WIN32
+   socket = INVALID_SOCKET;
+ #else
+   socket = -1;
+@@ -343,7 +343,7 @@ const char* socket_peername( int socket
+
+ std::pair<int, int> socket_createpair()
+ {
+-#ifdef _MSC_VER
++#ifdef _WIN32
+   int acceptor = socket_createAcceptor(0, true);
+   const char* host = socket_hostname( acceptor );
+   short port = socket_hostport( acceptor );
+@@ -361,7 +361,7 @@ std::pair<int, int> socket_createpair()
+
+ tm time_gmtime( const time_t* t )
+ {
+-#ifdef _MSC_VER
++#ifdef _WIN32
+   #if( _MSC_VER >= 1400 )
+     tm result;
+     gmtime_s( &result, t );
+@@ -377,7 +377,7 @@ tm time_gmtime( const time_t* t )
+
+ tm time_localtime( const time_t* t)
+ {
+-#ifdef _MSC_VER
++#ifdef _WIN32
+   #if( _MSC_VER >= 1400 )
+     tm result;
+     localtime_s( &result, t );
+@@ -393,10 +393,10 @@ tm time_localtime( const time_t* t)
+
+ bool thread_spawn( THREAD_START_ROUTINE func, void* var, thread_id& thread )
+ {
+-#ifdef _MSC_VER
++#ifdef _WIN32
+   thread_id result = 0;
+   unsigned int id = 0;
+-  result = _beginthreadex( NULL, 0, &func, var, 0, &id );
++  result = _beginthreadex( NULL, 0, func, var, 0, &id );
+   if ( result == 0 ) return false;
+ #else
+   thread_id result = 0;
+@@ -414,7 +414,7 @@ bool thread_spawn( THREAD_START_ROUTINE
+
+ void thread_join( thread_id thread )
+ {
+-#ifdef _MSC_VER
++#ifdef _WIN32
+   WaitForSingleObject( ( void* ) thread, INFINITE );
+   CloseHandle((HANDLE)thread);
+ #else
+@@ -424,7 +424,7 @@ void thread_join( thread_id thread )
+
+ void thread_detach( thread_id thread )
+ {
+-#ifdef _MSC_VER
++#ifdef _WIN32
+   CloseHandle((HANDLE)thread);
+ #else
+   pthread_t t = thread;
+@@ -434,8 +434,8 @@ void thread_detach( thread_id thread )
+
+ thread_id thread_self()
+ {
+-#ifdef _MSC_VER
+-  return (unsigned)GetCurrentThread();
++#ifdef _WIN32
++  return (unsigned)GetCurrentThreadId();
+ #else
+   return pthread_self();
+ #endif
+@@ -457,7 +457,7 @@ void process_sleep( double s )
+
+ std::string file_separator()
+ {
+-#ifdef _MSC_VER
++#ifdef _WIN32
+   return "\\";
+ #else
+   return "/";
+@@ -474,7 +474,7 @@ void file_mkdir( const char* path )
+     createPath += *pos;
+     if( *pos == '/' || *pos == '\\' || (pos - path) == length )
+     {
+-    #ifdef _MSC_VER
++    #ifdef _WIN32
+       _mkdir( createPath.c_str() );
+     #else
+       // use umask to override rwx for all
+--- build/quickfix-v.1.14.4/src/C++/Utility.h	2014-09-15 17:22:31.000000000 +0000
++++ build/quickfix-v.1.14.4/src/C++/Utility.h	2018-02-10 21:58:54.057917041 +0000
+@@ -60,14 +60,14 @@
+   #define ALLOCATOR std::allocator
+ #endif
+
+-#ifdef _MSC_VER
++#ifdef _WIN32
+ /////////////////////////////////////////////
+-#include <Winsock2.h>
++#include <winsock2.h>
+ #include <process.h>
+ #include <direct.h>
+ #include <time.h>
+-typedef int socklen_t;
+-typedef int ssize_t;
++//typedef int socklen_t;
++//typedef int ssize_t;
+ /////////////////////////////////////////////
+ #else
+ /////////////////////////////////////////////
+@@ -130,14 +130,14 @@ bool socket_disconnected( int s );
+ int socket_setsockopt( int s, int opt );
+ int socket_setsockopt( int s, int opt, int optval );
+ int socket_getsockopt( int s, int opt, int& optval );
+-#ifndef _MSC_VER
++#ifndef _WIN32
+ int socket_fcntl( int s, int opt, int arg );
+ int socket_getfcntlflag( int s, int arg );
+ int socket_setfcntlflag( int s, int arg );
+ #endif
+ void socket_setnonblock( int s );
+ bool socket_isValid( int socket );
+-#ifndef _MSC_VER
++#ifndef _WIN32
+ bool socket_isBad( int s );
+ #endif
+ void socket_invalidate( int& socket );
+@@ -150,15 +150,15 @@ std::pair<int, int> socket_createpair();
+ tm time_gmtime( const time_t* t );
+ tm time_localtime( const time_t* t );
+
+-#ifdef _MSC_VER
+-typedef unsigned int (_stdcall THREAD_START_ROUTINE)(void *);
+-#define  THREAD_PROC unsigned int _stdcall
++#ifdef _WIN32
++typedef unsigned int (THREAD_START_ROUTINE)(void *);
++#define THREAD_PROC unsigned int
+ #else
+ extern "C" { typedef void * (THREAD_START_ROUTINE)(void *); }
+ #define THREAD_PROC void *
+ #endif
+
+-#ifdef _MSC_VER
++#ifdef _WIN32
+ typedef unsigned thread_id;
+ #else
+ typedef pthread_t thread_id;
+--- build/quickfix-v.1.14.4/src/C++/SocketServer.cpp	2014-09-15 17:22:31.000000000 +0000
++++ build/quickfix-v.1.14.4/src/C++/SocketServer.cpp	2018-02-10 21:58:54.001916791 +0000
+@@ -26,7 +26,7 @@
+ #include "SocketServer.h"
+ #include "Utility.h"
+ #include "Exceptions.h"
+-#ifndef _MSC_VER
++#ifndef _WIN32
+ #include <unistd.h>
+ #include <sys/ioctl.h>
+ #include <sys/types.h>
+--- build/quickfix-v.1.14.4/src/C++/SocketConnector.cpp	2014-09-15 17:22:31.000000000 +0000
++++ build/quickfix-v.1.14.4/src/C++/SocketConnector.cpp	2018-02-10 21:58:54.057917041 +0000
+@@ -25,7 +25,7 @@
+
+ #include "SocketConnector.h"
+ #include "Utility.h"
+-#ifndef _MSC_VER
++#ifndef _WIN32
+ #include <unistd.h>
+ #include <sys/ioctl.h>
+ #include <sys/types.h>
+--- build/quickfix-v.1.14.4/src/C++/SocketMonitor.h	2014-09-15 17:22:31.000000000 +0000
++++ build/quickfix-v.1.14.4/src/C++/SocketMonitor.h	2018-02-10 21:58:54.057917041 +0000
+@@ -22,13 +22,13 @@
+ #ifndef FIX_SOCKETMONITOR_H
+ #define FIX_SOCKETMONITOR_H
+
+-#ifdef _MSC_VER
++#ifdef _WIN32
+ #pragma warning( disable : 4503 4355 4786 4290 )
+ #endif
+
+-#ifdef _MSC_VER
+-#include <Winsock2.h>
+-typedef int socklen_t;
++#ifdef _WIN32
++#include <winsock2.h>
++//typedef int socklen_t;
+ #else
+ #include <sys/types.h>
+ #include <sys/socket.h>
+--- build/quickfix-v.1.14.4/src/C++/Mutex.h	2014-09-15 17:22:31.000000000 +0000
++++ build/quickfix-v.1.14.4/src/C++/Mutex.h	2018-02-11 23:41:35.462110696 +0000
+@@ -32,7 +32,7 @@ class Mutex
+ public:
+   Mutex()
+   {
+-#ifdef _MSC_VER
++#ifdef _WIN32
+     InitializeCriticalSection( &m_mutex );
+ #else
+     m_count = 0;
+@@ -47,7 +47,7 @@ public:
+
+   ~Mutex()
+   {
+-#ifdef _MSC_VER
++#ifdef _WIN32
+     DeleteCriticalSection( &m_mutex );
+ #else
+     pthread_mutex_destroy( &m_mutex );
+@@ -56,7 +56,7 @@ public:
+
+   void lock()
+   {
+-#ifdef _MSC_VER
++#ifdef _WIN32
+     EnterCriticalSection( &m_mutex );
+ #else
+     if ( m_count && m_threadID == pthread_self() )
+@@ -69,7 +69,7 @@ public:
+
+   void unlock()
+   {
+-#ifdef _MSC_VER
++#ifdef _WIN32
+     LeaveCriticalSection( &m_mutex );
+ #else
+     if ( m_count > 1 )
+@@ -82,7 +82,7 @@ public:
+
+ private:
+
+-#ifdef _MSC_VER
++#ifdef _WIN32
+   CRITICAL_SECTION m_mutex;
+ #else
+   pthread_mutex_t m_mutex;

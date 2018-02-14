@@ -15,7 +15,7 @@ namespace K {
   enum class mTimeInForce: unsigned int { IOC, FOK, GTC };
   enum class mOrderType: unsigned int { Limit, Market };
   enum class mPingAt: unsigned int { BothSides, BidSide, AskSide, DepletedSide, DepletedBidSide, DepletedAskSide, StopPings };
-  enum class mPongAt: unsigned int { ShortPingFair, LongPingFair, ShortPingAggressive, LongPingAggressive };
+  enum class mPongAt: unsigned int { ShortPingFair, AveragePingFair, LongPingFair, ShortPingAggressive, AveragePingAggressive, LongPingAggressive };
   enum class mQuotingMode: unsigned int { Top, Mid, Join, InverseJoin, InverseTop, HamelinRat, Depth };
   enum class mQuotingSafety: unsigned int { Off, PingPong, Boomerang, AK47 };
   enum class mQuoteState: unsigned int { Live, Disconnected, DisabledQuotes, MissingData, UnknownHeld, TBPHeld, MaxTradesSeconds, WaitingPing, DepletedFunds, Crossed, UpTrendHeld, DownTrendHeld };
@@ -278,12 +278,39 @@ namespace K {
     mWallet(mAmount a, mAmount h, mCoinId c):
       amount(a), held(h), currency(c)
     {};
+    void reset(mAmount a, mAmount h) {
+      if (currency.empty()) return;
+      amount =  a;
+      held = h;
+    };
+    bool empty() {
+      return currency.empty();
+    };
   };
   static void to_json(json& j, const mWallet& k) {
     j = {
       {  "amount", k.amount  },
       {    "held", k.held    },
       {"currency", k.currency}
+    };
+  };
+  struct mWallets {
+    mWallet base,
+            quote;
+    mWallets():
+      base(mWallet()), quote(mWallet())
+    {};
+    mWallets(mWallet b, mWallet q):
+      base(b), quote(q)
+    {};
+    bool empty() {
+      return base.empty() or quote.empty();
+    };
+  };
+  static void to_json(json& j, const mWallets& k) {
+    j = {
+      { "base", k.base },
+      {"quote", k.quote}
     };
   };
   struct mProfit {
@@ -315,14 +342,16 @@ namespace K {
            combined;
     mPrice buyPing,
            sellPing;
+    mAmount buySize,
+            sellSize;
     mSafety():
-      buy(0), sell(0), combined(0), buyPing(-1), sellPing(-1)
+      buy(0), sell(0), combined(0), buyPing(0), sellPing(0), buySize(0), sellSize(0)
     {};
-    mSafety(double b, double s, double c, mPrice bP, mPrice sP):
-      buy(b), sell(s), combined(c), buyPing(bP), sellPing(sP)
+    mSafety(double b, double s, double c, mPrice bP, mPrice sP, mPrice bS, mPrice sS):
+      buy(b), sell(s), combined(c), buyPing(bP), sellPing(sP), buySize(bS), sellSize(sS)
     {};
     bool empty() {
-      return buyPing == -1;
+      return !buySize and !sellSize;
     };
   };
   static void to_json(json& j, const mSafety& k) {
@@ -605,15 +634,15 @@ namespace K {
   class Gw {
     public:
       virtual string A() = 0;
-      void                    *screen  = nullptr;
       uWS::Hub                *hub     = nullptr;
       uWS::Group<uWS::CLIENT> *gwGroup = nullptr;
-      static Gw *config(mCoinId, mCoinId, string, int, string, string, string, string, string, string, int, int, void*);
-      function<void(string)>        reconnect;
+      static Gw *config(mCoinId, mCoinId, string, int, string, string, string, string, string, string, int, int);
+      function<void(string)>        log,
+                                    reconnect;
       function<void(mOrder)>        evDataOrder;
       function<void(mTrade)>        evDataTrade;
-      function<void(mWallet)>       evDataWallet;
       function<void(mLevels)>       evDataLevels;
+      function<void(mWallets)>      evDataWallet;
       function<void(mConnectivity)> evConnectOrder,
                                     evConnectMarket;
       mExchange exchange = (mExchange)0;
@@ -635,10 +664,10 @@ namespace K {
         return waitFor(replyOrders, evDataOrder)
              | waitFor(replyLevels, evDataLevels)
              | waitFor(replyTrades, evDataTrade)
-             | waitFor(replyWallet, evDataWallet)
+             | waitFor(replyWallets, evDataWallet)
              | waitFor(replyCancelAll, evDataOrder);
       };
-      function<bool()> wallet = [&]() { return !(async_wallet() or !askFor(replyWallet, [&]() { return sync_wallet(); })); };
+      function<bool()> wallet = [&]() { return !(async_wallet() or !askFor(replyWallets, [&]() { return sync_wallet(); })); };
       function<bool()> levels = [&]() { return askFor(replyLevels, [&]() { return sync_levels(); }); };
       function<bool()> trades = [&]() { return askFor(replyTrades, [&]() { return sync_trades(); }); };
       function<bool()> orders = [&]() { return askFor(replyOrders, [&]() { return sync_orders(); }); };
@@ -649,11 +678,11 @@ namespace K {
       virtual vector<mOrder> sync_cancelAll() = 0;
     protected:
       virtual bool async_wallet() { return false; };
-      virtual vector<mWallet> sync_wallet() { return vector<mWallet>(); };
+      virtual vector<mWallets> sync_wallet() { return vector<mWallets>(); };
       virtual vector<mLevels> sync_levels() { return vector<mLevels>(); };
       virtual vector<mTrade> sync_trades() { return vector<mTrade>(); };
       virtual vector<mOrder> sync_orders() { return vector<mOrder>(); };
-      future<vector<mWallet>> replyWallet;
+      future<vector<mWallets>> replyWallets;
       future<vector<mLevels>> replyLevels;
       future<vector<mTrade>> replyTrades;
       future<vector<mOrder>> replyOrders;

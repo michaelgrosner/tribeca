@@ -24,7 +24,9 @@ namespace K  {
       void load() {
         gwEndings.push_back(&happyEnding);
         signal(SIGINT, quit);
+#ifndef _WIN32
         signal(SIGUSR1, wtf);
+#endif
         signal(SIGABRT, wtf);
         signal(SIGSEGV, wtf);
         version();
@@ -32,6 +34,9 @@ namespace K  {
         gw->hub = hub = new uWS::Hub(0, true);
       };
       void waitData() {
+        gw->log = [&](string reason) {
+          gwLog(reason);
+        };
         aEngine = new Async(hub->getLoop());
         aEngine->setData(this);
         aEngine->start(asyncLoop);
@@ -109,6 +114,14 @@ namespace K  {
           aEngine->send();
         ((SH*)screen)->waitForUser();
       };
+      inline void gwLog(string reason) {
+        deferred([this, reason]() {
+          string name = string(reason.find(">>>") != reason.find("<<<") ? "DEBUG" : "GW") + " " + gw->name;
+          if (reason.find("Error") != string::npos)
+            ((SH*)screen)->logWar(name, reason);
+          else ((SH*)screen)->log(name, reason);
+        });
+      };
       void version() {
         if (access(".git", F_OK) != -1) {
           FN::output("git fetch");
@@ -130,7 +143,7 @@ namespace K  {
         THIS_WAS_A_TRIUMPH.str("");
         THIS_WAS_A_TRIUMPH
           << "Excellent decision! "
-          << FN::wJet("https://api.icndb.com/jokes/random?escape=javascript&limitTo=[nerdy]", true)
+          << FN::wJet("https://api.icndb.com/jokes/random?escape=javascript&limitTo=[nerdy]", 4L)
              .value("/value/joke"_json_pointer, "let's plant a tree instead..") << '\n';
         halt(EXIT_SUCCESS);
       };
@@ -138,12 +151,17 @@ namespace K  {
         ostringstream rollout(THIS_WAS_A_TRIUMPH.str());
         THIS_WAS_A_TRIUMPH.str("");
         THIS_WAS_A_TRIUMPH
-          << RCYAN << "Errrror: Signal " << last_int_alive << " "  << strsignal(last_int_alive);
+          << RCYAN << "Errrror: Signal " << last_int_alive
+#ifndef _WIN32
+          << " "  << strsignal(last_int_alive)
+#endif
+          ;
         if (unsupported()) upgrade();
         else {
           THIS_WAS_A_TRIUMPH
             << " (Three-Headed Monkey found):" << '\n' << rollout.str()
             << "- lastbeat: " << to_string(_Tstamp_) << '\n'
+#ifndef _WIN32
             << "- os-uname: " << FN::output("uname -srvm")
             << "- tracelog: " << '\n';
           void *k[69];
@@ -153,7 +171,9 @@ namespace K  {
           for (i = 0; i < jumps; i++)
             THIS_WAS_A_TRIUMPH
               << trace[i] << '\n';
-          free(trace);
+          free(trace)
+#endif
+          ;
           report();
         }
         halt(EXIT_FAILURE);

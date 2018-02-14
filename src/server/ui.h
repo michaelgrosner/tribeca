@@ -39,7 +39,7 @@ namespace K {
           string auth = req.getHeader("authorization").toString();
           string addr = res->getHttpSocket()->getAddress().address;
           if (addr.length() > 7 and addr.substr(0, 7) == "::ffff:") addr = addr.substr(7);
-          if (!((CF*)config)->argWhitelist.empty() and ((CF*)config)->argWhitelist.find(addr) == string::npos) {
+          if (addr.length() > 7 and !((CF*)config)->argWhitelist.empty() and ((CF*)config)->argWhitelist.find(addr) == string::npos) {
             ((SH*)screen)->log("UI", "dropping gzip bomb on", addr);
             content << ifstream("etc/K-bomb.gzip").rdbuf();
             document = "HTTP/1.1 200 OK\r\nConnection: keep-alive\r\nAccept-Ranges: bytes\r\nVary: Accept-Encoding\r\nCache-Control: public, max-age=0\r\n";
@@ -78,7 +78,7 @@ namespace K {
               url = path;
             }
             if (!url.empty())
-              content << ifstream(FN::readlink("app/client").substr(48) + url).rdbuf();
+              content << ifstream(readlink("app/client").substr(48) + url).rdbuf();
             else if (FN::int64() % 21) {
               document = "HTTP/1.1 404 Not Found\r\n";
               content << "Today, is a beautiful day.";
@@ -95,7 +95,7 @@ namespace K {
           if (!((CF*)config)->argWhitelist.empty()) {
             string addr = webSocket->getAddress().address;
             if (addr.length() > 7 and addr.substr(0, 7) == "::ffff:") addr = addr.substr(7);
-            if (((CF*)config)->argWhitelist.find(addr) == string::npos)
+            if (addr.length() > 7 and ((CF*)config)->argWhitelist.find(addr) == string::npos)
               return;
           }
           if (mPortal::Hello == (mPortal)message[0] and hello.find(message[1]) != hello.end()) {
@@ -214,9 +214,15 @@ namespace K {
         send(mMatter::ApplicationState, serverState());
         orders_60s = 0;
       };
+      unsigned int memorySize() {
+        string ps = FN::output(string("ps -p") + to_string(::getpid()) + " -orss | tail -n1");
+        ps.erase(remove(ps.begin(), ps.end(), ' '), ps.end());
+        if (ps.empty()) ps = "0";
+        return stoi(ps) * 1e+3;
+      };
       json serverState() {
         return {
-          {"memory", FN::memory()},
+          {"memory", memorySize()},
           {"freq", orders_60s},
           {"bids", bid_levels},
           {"asks", ask_levels},
@@ -224,6 +230,17 @@ namespace K {
           {"dbsize", ((DB*)memory)->size()},
           {"a", gw->A()}
         };
+      };
+      string readlink(const char* path) {
+        string buffer(64, '\0');
+#ifndef _WIN32
+        ssize_t len;
+        while((len = ::readlink(path, &buffer[0], buffer.size())) == (ssize_t)buffer.size())
+          buffer.resize(buffer.size() * 2);
+        if (len == -1) buffer.clear();
+        else buffer.resize(len);
+#endif
+        return buffer;
       };
   };
 }

@@ -119,7 +119,7 @@ namespace K {
           ? (topAskPrice + topBidPrice) / 2
           : (topAskPrice * topBidSize + topBidPrice * topAskSize) / (topAskSize + topBidSize);
         if (!fairValue or (fairValue_ and abs(fairValue - fairValue_) < gw->minTick)) return;
-        gw->evDataWallet(mWallet());
+        gw->evDataWallet(mWallets());
         ((UI*)client)->send(mMatter::FairValue, {{"price", fairValue}});
         averageWidth = ((averageWidth * averageCount) + topAskPrice - topBidPrice);
         averageWidth /= ++averageCount;
