@@ -1,4 +1,5 @@
-<p align="right">self reminder:<br><b>patience is the mother of science</b></p>
+<img align="left" src="https://user-images.githubusercontent.com/1634027/36237231-e611590e-11fa-11e8-8486-6675078501dc.jpg" /><p align="right">self reminder:<br><b>patience is the mother of science</b></p>
+<br clear="left"/>
 <!--
 
 ```c++
