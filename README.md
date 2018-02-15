@@ -1,5 +1,5 @@
-<img align="left" src="https://user-images.githubusercontent.com/1634027/36237231-e611590e-11fa-11e8-8486-6675078501dc.jpg" /><p align="right">self reminder:<br><b>patience is the mother of science</b></p>
-<br clear="left"/>
+<img align="left" src="https://user-images.githubusercontent.com/1634027/36237231-e611590e-11fa-11e8-8486-6675078501dc.jpg" /><p align="right">self reminder:<br><b>patience is the mother of science</b></p><br><a href="http://ciutatrefugi.barcelona/en/welcome-barcelona">\*\*\* REFUGEES WELCOME! \*\*\*</a><br/>&thinsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="http://missingmigrants.iom.int/">\*\*\* FATAL ROUTES? \*\*\*</a>
+<br clear="left">
 <!--
 
 ```c++
@@ -28,9 +28,6 @@ and between illusions and frustrations goes forth.<br /><br />
 <br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br />
 
 <p align="center">yet Today, is a beautiful day.<br/><br/><a href="https://www.youtube.com/embed/BK7DIJq4slg"><img src="https://user-images.githubusercontent.com/1634027/33692212-60b1ad80-daec-11e7-8875-93d0a39813e3.png" /></a></p-->
-
-
-[***REFUGEES WELCOME!***](http://www.refugeesaid.eu/rab-campaign/)
 
 [![Release](https://img.shields.io/github/release/ctubio/Krypto-trading-bot.svg)](https://github.com/ctubio/Krypto-trading-bot/releases)
 [![Platform](https://img.shields.io/badge/platform-unix--like-lightgray.svg)](https://www.gnu.org/)
