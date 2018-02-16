@@ -219,7 +219,7 @@ namespace K {
           argMaxLevels, argDebugSecret,
           argTestChamber
         );
-        chambers();
+        if (argTestChamber) chambers();
       };
     private:
       inline mCoinId base() {
@@ -258,10 +258,9 @@ namespace K {
         if (argLifetime) argLifetime *= 1e+3;
       };
       inline void chambers() {
-        if (argTestChamber)
-          if (argTestChamber==1)
-            ((SH*)screen)->logWar("CF", "Test Chamber #1: GDAX send new before cancel old");
-          else ((SH*)screen)->logWar("CF", string("ignored Test Chamber #") + to_string(argTestChamber));
+        if (argTestChamber==1)
+          ((SH*)screen)->logWar("CF", "Test Chamber #1: GDAX send new before cancel old");
+        else ((SH*)screen)->logWar("CF", string("ignored Test Chamber #") + to_string(argTestChamber));
       };
   };
 }
