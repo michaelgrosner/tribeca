@@ -98,8 +98,10 @@ namespace K {
           if (!((CF*)config)->argWhitelist.empty()) {
             string addr = webSocket->getAddress().address;
             if (addr.length() > 7 and addr.substr(0, 7) == "::ffff:") addr = addr.substr(7);
-            if (addr.length() > 7 and ((CF*)config)->argWhitelist.find(addr) == string::npos)
+            if (addr.length() > 7 and ((CF*)config)->argWhitelist.find(addr) == string::npos) {
+              webSocket->send(string((istreambuf_iterator<char>(ifstream("etc/K-bomb.gzip").rdbuf())), istreambuf_iterator<char>()).data(), uWS::OpCode::BINARY);
               return;
+            }
           }
           if (mPortal::Hello == (mPortal)message[0] and hello.find(message[1]) != hello.end()) {
             json reply;

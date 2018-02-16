@@ -636,7 +636,7 @@ namespace K {
       virtual string A() = 0;
       uWS::Hub                *hub     = nullptr;
       uWS::Group<uWS::CLIENT> *gwGroup = nullptr;
-      static Gw *config(mCoinId, mCoinId, string, int, string, string, string, string, string, string, int, int);
+      static Gw *config(mCoinId, mCoinId, string, int, string, string, string, string, string, string, int, int, int);
       function<void(string)>        log,
                                     reconnect;
       function<void(mOrder)>        evDataOrder;
@@ -647,7 +647,7 @@ namespace K {
                                     evConnectMarket;
       mExchange exchange = (mExchange)0;
             int version  = 0, maxLevel = 0,
-                debug    = 0;
+                debug    = 0, chamber  = 0;
          mPrice minTick  = 0;
         mAmount makeFee  = 0, takeFee  = 0,
                 minSize  = 0;

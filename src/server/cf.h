@@ -9,7 +9,8 @@ namespace K {
             argDebugQuotes  = 0,      argDebugWallet  = 0, argWithoutSSL   = 0,
             argHeadless     = 0,      argDustybot     = 0,  argLifetime    = 0,
             argAutobot      = 0,      argNaked        = 0, argFree         = 0,
-            argIgnoreSun    = 0,      argIgnoreMoon   = 0, argMaxLevels    = 0;
+            argIgnoreSun    = 0,      argIgnoreMoon   = 0, argMaxLevels    = 0,
+            argTestChamber  = 0;
     mAmount argMaxWallet    = 0;
      mPrice argEwmaUShort   = 0,      argEwmaXShort   = 0, argEwmaShort    = 0,
             argEwmaMedium   = 0,      argEwmaLong     = 0, argEwmaVeryLong = 0;
@@ -64,6 +65,7 @@ namespace K {
           {"database",     required_argument, 0,               'd'},
           {"wallet-limit", required_argument, 0,               'W'},
           {"market-limit", required_argument, 0,               'M'},
+          {"test-chamber", no_argument,       &argTestChamber, 'x'},
           {"free-version", no_argument,       &argFree,          1},
           {"version",      no_argument,       0,               'v'},
           {0,              0,                 0,                 0}
@@ -73,6 +75,7 @@ namespace K {
           switch (k = getopt_long(argc, argv, "hvd:k:K:L:M:T:W:", args, NULL)) {
             case -1 :
             case  0 : break;
+            case 'x': argTestChamber  = stoi(optarg);   break;
             case 'M': argMaxLevels    = stoi(optarg);   break;
             case 'T': argLifetime     = stoi(optarg);   break;
             case 999: argPort         = stoi(optarg);   break;
@@ -173,6 +176,7 @@ namespace K {
               << ((SH*)screen)->stamp() << RWHITE << "    --ignore-moon         - do not switch UI to dark theme on moonlight." << '\n'
               << ((SH*)screen)->stamp() << RWHITE << "-k, --matryoshka=URL      - set Matryoshka link URL of the next UI." << '\n'
               << ((SH*)screen)->stamp() << RWHITE << "-K, --title=WORD          - set WORD as UI title to identify different bots." << '\n'
+              << ((SH*)screen)->stamp() << RWHITE << "-x, --test-chamber=NUMBER - set NUMBER of candidate feature to test (ask to your dev)." << '\n'
               << ((SH*)screen)->stamp() << RWHITE << "    --free-version        - work with all market levels but slowdown with 21 XMR hash." << '\n'
               << ((SH*)screen)->stamp() << RWHITE << "-v, --version             - show current build version and quit." << '\n'
               << RGREEN << "  more help: " << RYELLOW << "https://github.com/ctubio/Krypto-trading-bot/blob/master/MANUAL.md" << '\n'
@@ -212,7 +216,8 @@ namespace K {
           argApikey,    argSecret,
           argUsername,  argPassphrase,
           argHttp,      argWss,
-          argMaxLevels, argDebugSecret
+          argMaxLevels, argDebugSecret,
+          argTestChamber
         );
       };
     private:
