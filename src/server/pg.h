@@ -125,7 +125,7 @@ namespace K {
         for (mTrade &it: ((OG*)broker)->tradesHistory) {
           (it.side == mSide::Bid ? tradesBuy : tradesSell)[it.price] = it;
           if (qp->safety == mQuotingSafety::PingPong)
-            (it.side == mSide::Bid ? buySize : sellSize) = it.quantity;
+            (it.side == mSide::Ask ? buySize : sellSize) = it.quantity;
         }
         mAmount totalBasePosition = position.baseAmount + position.baseHeldAmount;
         if (qp->aggressivePositionRebalancing != mAPR::Off) {
