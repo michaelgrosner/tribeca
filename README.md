@@ -290,6 +290,8 @@ ws sandbox: [websocket.org](https://www.websocket.org/echo.html)
 
 ### Unreleased Changelog:
 
+Added --test-chamber=NUMBER argument to easy deploy multiple release candidate versions.
+
 Added build chain for win32.
 
 Updated OKEx websocket to binary data.
