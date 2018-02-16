@@ -30,8 +30,8 @@ namespace K {
         cout << BGREEN << "K" << RGREEN << " build " << K_BUILD << " " << K_STAMP << "." << BRED << '\n';
         gwEndings.push_back(&happyEnding);
       };
-      void* config(int argNaked, int argColors, string argExchange, string argCurrency) {
-        if (argNaked) return this;
+      void config(int argNaked, int argColors, string argExchange, string argCurrency) {
+        if (argNaked) return;
         if (!(wBorder = initscr())) {
           cout << "NCURSES" << RRED << " Errrror:" << BRED << " Unable to initialize ncurses, try to run in your terminal \"export TERM=xterm\", or use --naked argument." << '\n';
           exit(EXIT_SUCCESS);
@@ -58,7 +58,7 @@ namespace K {
 #endif
         refresh();
         hotkeys();
-        return this;
+        return;
       };
       static void sigResize(int sig) {
         (*shResize)();

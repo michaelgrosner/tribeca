@@ -29,7 +29,7 @@ namespace K  {
 #endif
         signal(SIGABRT, wtf);
         signal(SIGSEGV, wtf);
-        version();
+        if (!((CF*)config)->argTestChamber) version();
         if (!gw) exit(error("GW", string("Unable to load a valid gateway using --exchange=") + ((CF*)config)->argExchange + " argument"));
         gw->hub = hub = new uWS::Hub(0, true);
       };

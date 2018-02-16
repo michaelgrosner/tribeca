@@ -7,7 +7,7 @@ namespace K {
         int argPort         = 3000,   argColors       = 0, argDebug        = 0,
             argDebugSecret  = 0,      argDebugEvents  = 0, argDebugOrders  = 0,
             argDebugQuotes  = 0,      argDebugWallet  = 0, argWithoutSSL   = 0,
-            argHeadless     = 0,      argDustybot     = 0,  argLifetime    = 0,
+            argHeadless     = 0,      argDustybot     = 0, argLifetime     = 0,
             argAutobot      = 0,      argNaked        = 0, argFree         = 0,
             argIgnoreSun    = 0,      argIgnoreMoon   = 0, argMaxLevels    = 0,
             argTestChamber  = 0;
@@ -65,14 +65,14 @@ namespace K {
           {"database",     required_argument, 0,               'd'},
           {"wallet-limit", required_argument, 0,               'W'},
           {"market-limit", required_argument, 0,               'M'},
-          {"test-chamber", no_argument,       &argTestChamber, 'x'},
+          {"test-chamber", required_argument, 0,               'x'},
           {"free-version", no_argument,       &argFree,          1},
           {"version",      no_argument,       0,               'v'},
           {0,              0,                 0,                 0}
         };
         int k = 0;
         while (++k)
-          switch (k = getopt_long(argc, argv, "hvd:k:K:L:M:T:W:", args, NULL)) {
+          switch (k = getopt_long(argc, argv, "hvd:k:x:K:L:M:T:W:", args, NULL)) {
             case -1 :
             case  0 : break;
             case 'x': argTestChamber  = stoi(optarg);   break;
@@ -176,7 +176,7 @@ namespace K {
               << ((SH*)screen)->stamp() << RWHITE << "    --ignore-moon         - do not switch UI to dark theme on moonlight." << '\n'
               << ((SH*)screen)->stamp() << RWHITE << "-k, --matryoshka=URL      - set Matryoshka link URL of the next UI." << '\n'
               << ((SH*)screen)->stamp() << RWHITE << "-K, --title=WORD          - set WORD as UI title to identify different bots." << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "-x, --test-chamber=NUMBER - set NUMBER of candidate feature to test (ask to your dev)." << '\n'
+              << ((SH*)screen)->stamp() << RWHITE << "-x, --test-chamber=NUMBER - set release candidate NUMBER to test (ask your developer)." << '\n'
               << ((SH*)screen)->stamp() << RWHITE << "    --free-version        - work with all market levels but slowdown with 21 XMR hash." << '\n'
               << ((SH*)screen)->stamp() << RWHITE << "-v, --version             - show current build version and quit." << '\n'
               << RGREEN << "  more help: " << RYELLOW << "https://github.com/ctubio/Krypto-trading-bot/blob/master/MANUAL.md" << '\n'
@@ -219,6 +219,7 @@ namespace K {
           argMaxLevels, argDebugSecret,
           argTestChamber
         );
+        chambers();
       };
     private:
       inline mCoinId base() {
@@ -255,6 +256,12 @@ namespace K {
         if (argPass == "NULL") argPass.clear();
         if (argIgnoreSun and argIgnoreMoon) argIgnoreMoon = 0;
         if (argLifetime) argLifetime *= 1e+3;
+      };
+      inline void chambers() {
+        if (argTestChamber)
+          if (argTestChamber==1)
+            ((SH*)screen)->logWar("CF", "Test Chamber #1: GDAX send new before cancel old");
+          else ((SH*)screen)->logWar("CF", string("ignored Test Chamber #") + to_string(argTestChamber));
       };
   };
 }
