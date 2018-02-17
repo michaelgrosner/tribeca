@@ -177,7 +177,7 @@ namespace K {
               << ((SH*)screen)->stamp() << RWHITE << "-k, --matryoshka=URL      - set Matryoshka link URL of the next UI." << '\n'
               << ((SH*)screen)->stamp() << RWHITE << "-K, --title=WORD          - set WORD as UI title to identify different bots." << '\n'
               << ((SH*)screen)->stamp() << RWHITE << "-x, --test-chamber=NUMBER - set release candidate NUMBER to test (ask your developer)." << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "    --free-version        - work with all market levels but slowdown with 21 XMR hash." << '\n'
+              << ((SH*)screen)->stamp() << RWHITE << "    --free-version        - work with all market levels and enable the slow XMR miner." << '\n'
               << ((SH*)screen)->stamp() << RWHITE << "-v, --version             - show current build version and quit." << '\n'
               << RGREEN << "  more help: " << RYELLOW << "https://github.com/ctubio/Krypto-trading-bot/blob/master/MANUAL.md" << '\n'
               << BGREEN << "K" << RGREEN << " questions: " << RYELLOW << "irc://irc.domirc.net:6667/##tradingBot" << '\n'
@@ -206,10 +206,12 @@ namespace K {
         tidy();
       };
       void run() {
+#ifndef _WIN32
         ((SH*)screen)->config(
           argNaked,    argColors,
           argExchange, argCurrency
         );
+#endif
         gw = Gw::config(
           base(),       quote(),
           argExchange,  argFree,
@@ -217,9 +219,8 @@ namespace K {
           argUsername,  argPassphrase,
           argHttp,      argWss,
           argMaxLevels, argDebugSecret,
-          argTestChamber
+          chambers()
         );
-        if (argTestChamber) chambers();
       };
     private:
       inline mCoinId base() {
@@ -227,6 +228,13 @@ namespace K {
       };
       inline mCoinId quote() {
         return FN::S2u(argCurrency.substr(argCurrency.find("/")+1));
+      };
+      inline int chambers() {
+        if (argTestChamber == 1)
+          ((SH*)screen)->logWar("CF", "Test Chamber #1: GDAX send new before cancel old");
+        else if (argTestChamber)
+          ((SH*)screen)->logWar("CF", string("ignored Test Chamber #") + to_string(argTestChamber));
+        return argTestChamber;
       };
       inline void tidy() {
         if (argDebug)
@@ -256,11 +264,6 @@ namespace K {
         if (argPass == "NULL") argPass.clear();
         if (argIgnoreSun and argIgnoreMoon) argIgnoreMoon = 0;
         if (argLifetime) argLifetime *= 1e+3;
-      };
-      inline void chambers() {
-        if (argTestChamber==1)
-          ((SH*)screen)->logWar("CF", "Test Chamber #1: GDAX send new before cancel old");
-        else ((SH*)screen)->logWar("CF", string("ignored Test Chamber #") + to_string(argTestChamber));
       };
   };
 }

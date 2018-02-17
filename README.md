@@ -378,7 +378,7 @@ Otherwise if you choose to not support further development by ctubio, just keep 
 
 Use `--free-version` argument to anonymously unlock any API Key and avoid the payment.
 
-All market levels will be visible and usable but not in realtime, instead will be slowdown around 4 seconds with a [XMR mining calculation](https://github.com/monero-project/monero/blob/master/src/crypto/hash.c#L42) of 21 hashes.
+All market levels will be visible and usable but not in realtime, instead will be slowdown around 7 seconds doing [XMR mining calculations](https://github.com/monero-project/monero/blob/master/src/crypto/hash.c#L42).
 
 If any hash meets the current XMR network target, it will be send to my XMR pool for my fun and profit.
 

@@ -24,13 +24,13 @@ namespace K  {
       void load() {
         gwEndings.push_back(&happyEnding);
         signal(SIGINT, quit);
+        signal(SIGABRT, wtf);
+        signal(SIGSEGV, wtf);
 #ifndef _WIN32
         signal(SIGUSR1, wtf);
 #endif
-        signal(SIGABRT, wtf);
-        signal(SIGSEGV, wtf);
-        if (!((CF*)config)->argTestChamber) version();
         if (!gw) exit(error("GW", string("Unable to load a valid gateway using --exchange=") + ((CF*)config)->argExchange + " argument"));
+        if (!gw->chamber) version();
         gw->hub = hub = new uWS::Hub(0, true);
       };
       void waitData() {

@@ -52,13 +52,10 @@ namespace K {
         wLog = subwin(wBorder, getmaxy(wBorder)-4, getmaxx(wBorder)-2, 3, 2);
         scrollok(wLog, true);
         idlok(wLog, true);
-#if CAN_RESIZE
         shResize = &resize;
         signal(SIGWINCH, sigResize);
-#endif
         refresh();
         hotkeys();
-        return;
       };
       static void sigResize(int sig) {
         (*shResize)();
@@ -399,13 +396,7 @@ namespace K {
       function<void()> resize = [&]() {
 #if CAN_RESIZE
         struct winsize ws;
-        if (
-#ifdef _WIN32
-        ioctlsocket(0, TIOCGWINSZ, &( ( unsigned long& )ws)) < 0
-#else
-        ioctl(0, TIOCGWINSZ, &ws) < 0
-#endif
-        or (ws.ws_row == getmaxy(wBorder) and ws.ws_col == getmaxx(wBorder))) return;
+        if (ioctl(0, TIOCGWINSZ, &ws) < 0 or (ws.ws_row == getmaxy(wBorder) and ws.ws_col == getmaxx(wBorder))) return;
 #endif
         werase(wBorder);
         werase(wLog);
