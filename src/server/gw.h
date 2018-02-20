@@ -130,7 +130,7 @@ namespace K {
       };
       inline void stunnel(bool reboot = false) {
         system("pkill stunnel || :");
-        if (reboot) system("stunnel etc/K-stunnel.conf");
+        if (reboot) system("stunnel etc/stunnel.conf");
       };
       inline void handshake(mExchange k) {
         json reply;

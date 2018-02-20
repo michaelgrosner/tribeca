@@ -52,8 +52,10 @@ namespace K {
         wLog = subwin(wBorder, getmaxy(wBorder)-4, getmaxx(wBorder)-2, 3, 2);
         scrollok(wLog, true);
         idlok(wLog, true);
+#if CAN_RESIZE
         shResize = &resize;
         signal(SIGWINCH, sigResize);
+#endif
         refresh();
         hotkeys();
       };

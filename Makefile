@@ -6,6 +6,7 @@ CXX      = $(CHOST)-g++
 CC       = $(CHOST)-gcc
 ERR      = *** K require g++ v6, but g++ v6 was not found at $(shell which $(CXX))
 HINT     = consider to create a symlink at $(shell which $(CXX)) pointing to your g++-6 executable
+V_CXX    = 6
 KGIT     = 4.0
 KHUB     = 8656597
 V_ZLIB  := 1.2.11
@@ -18,9 +19,9 @@ V_SQL   := 3210000
 V_QF    := v.1.14.4
 V_UV    := 1.18.0
 V_PVS   := 6.21.24657.1946
-KZIP     = eeb558fdfa0aea840a1621be500c3b4d6ad351ae
-KARGS    = src/server/K.cxx                              \
-  -std=c++11 -O3 -I$(KLOCAL)/include -pthread -Wextra    \
+KZIP     = f554584991f88e8a42c27bceb140ac56ee6ef52e
+KARGS    = -std=c++11 -O3 -I$(KLOCAL)/include -pthread   \
+  $(KLOCAL)/lib/K-$(CHOST)-docroot.o src/server/K.cxx    \
   -DK_STAMP='"$(shell date "+%Y-%m-%d %H:%M:%S")"'       \
   -DK_BUILD='"$(CHOST)"'     $(KLOCAL)/include/uWS/*.cpp \
   $(KLOCAL)/lib/K-$(CHOST).a $(KLOCAL)/lib/libquickfix.a \
@@ -62,6 +63,7 @@ help:
 	#  make www          - compile K client src        #
 	#  make css          - compile K client css        #
 	#  make bundle       - compile K client bundle     #
+	#  make docroot      - compile K client lib        #
 	#                                                  #
 	#  make test         - run tests                   #
 	#  make test-cov     - run tests and coverage      #
@@ -89,7 +91,7 @@ K: src/server/K.cxx
 ifdef KALL
 	unset KALL && echo -n $(CARCH) | tr ' ' "\n" | xargs -I % $(MAKE) CHOST=% $@
 else
-	@$(if $(shell sh -c 'test "`g++ -dumpversion | cut -d . -f1`" != "6" || echo 1'),,$(warning $(ERR));$(error $(HINT)))
+	@$(if $(shell sh -c 'test "`g++ -dumpversion | cut -d . -f1`" != $(V_CXX) || echo 1'),,$(warning $(ERR));$(error $(HINT)))
 	@$(CXX) --version
 	mkdir -p $(KLOCAL)/bin
 	CHOST=$(CHOST) $(MAKE) $(shell test -n "`echo $(CHOST) | grep darwin`" && echo Darwin || (test -n "`echo $(CHOST) | grep mingw32`" && echo Win32 || uname -s))
@@ -100,10 +102,17 @@ dist:
 ifdef KALL
 	unset KALL && echo -n $(CARCH) | tr ' ' "\n" | xargs -I % $(MAKE) CHOST=% $@
 else
-	@$(if $(shell sh -c 'test "`g++ -dumpversion | cut -d . -f1`" != "6" || echo 1'),,$(warning $(ERR));$(error $(HINT)))
+	@$(if $(shell sh -c 'test "`g++ -dumpversion | cut -d . -f1`" != $(V_CXX) || echo 1'),,$(warning $(ERR));$(error $(HINT)))
 	mkdir -p build-$(CHOST)
 	CHOST=$(CHOST) $(MAKE) zlib openssl curl sqlite ncurses json uws quickfix libuv
 	test -f /sbin/ldconfig && sudo ldconfig || :
+endif
+
+docroot:
+ifdef KALL
+	unset KALL && echo -n $(CARCH) | tr ' ' "\n" | xargs -I % $(MAKE) CHOST=% $@
+else
+	cd $(KLOCAL) && $(CXX) -c ../../src/build/document_root.S -o lib/K-$(CHOST)-docroot.o
 endif
 
 Linux: build-$(CHOST)
@@ -236,7 +245,6 @@ docker:
 	sed -i "/Usage/,+113d" K.sh
 
 link:
-	cd app && ln -f -s \[\!`echo -n "0x46 0x52 0x45 0x45 0x44 0x4f 0x4d" | xxd -r`\ FOR\ `echo -n "0x43 0x41 0x54 0x41 0x4c 0x4f 0x4e 0x49 0x41" | xxd -r`\!\]\ btw\ K\ client\ is\ at\ ../$(KLOCAL)/var/www client
 	cd app/server && ln -f -s ../../$(KLOCAL)/bin/K-$(CHOST) K
 	test -n "`ls *.sh 2>/dev/null`" || (cp etc/K.sh.dist K.sh && chmod +x K.sh)
 	$(MAKE) gdax -s
@@ -287,7 +295,7 @@ screen:
 	&& sleep 2 && screen -r $(K)) || screen -list || :
 
 cabundle:
-	curl --time-cond etc/K-cabundle.pem https://curl.haxx.se/ca/cacert.pem -o etc/K-cabundle.pem
+	curl --time-cond etc/cabundle.pem https://curl.haxx.se/ca/cacert.pem -o etc/cabundle.pem
 
 gdax:
 	openssl s_client -showcerts -connect fix.gdax.com:4198 -CApath /etc/ssl/certs < /dev/null \
@@ -310,7 +318,8 @@ css: src/www/sass
 	@echo Building client CSS files..
 	rm -rf $(KLOCAL)/var/www/css
 	mkdir -p $(KLOCAL)/var/www/css
-	./node_modules/.bin/node-sass --output-style compressed --output $(KLOCAL)/var/www/css/ src/www/sass/ \
+	./node_modules/.bin/node-sass --output-style compressed --output $(KLOCAL)/var/www/css/ src/www/sass/                   \
+	&& cat $(KLOCAL)/var/www/css/ag-grid.css >> $(KLOCAL)/var/www/css/bootstrap.css && rm $(KLOCAL)/var/www/css/ag-grid.css \
 	&& ls -1 $$PWD/$(KLOCAL)/var/www/css/*[^\.min].css | sed -r 's/(.*)(\.css)$$/\1\2 \1\.min\2/' | xargs -I % sh -c 'mv %;'
 	@echo DONE
 
@@ -318,8 +327,9 @@ bundle: client www css node_modules/.bin/browserify node_modules/.bin/uglifyjs $
 	@echo Building client bundle file..
 	mkdir -p $(KLOCAL)/var/www/js/client
 	./node_modules/.bin/browserify -t [ babelify --presets [ babili env ] ] $(KLOCAL)/var/www/js/main.js $(KLOCAL)/var/www/js/lib/*.js | ./node_modules/.bin/uglifyjs | gzip > $(KLOCAL)/var/www/js/client/bundle.min.js
-	rm -rf $(KLOCAL)/var/www/js/*.js $(KLOCAL)/var/www/sass
+	rm -rf $(KLOCAL)/var/www/js/lib $(KLOCAL)/var/www/js/*.js $(KLOCAL)/var/www/sass
 	echo $(CARCH) | tr ' ' "\n" | xargs -I % echo % | grep -v $(CHOST) | xargs -I % sh -c 'if test -d build-%; then rm -rf build-%/local/var;mkdir -p build-%/local/var;cp -R $(KLOCAL)/var build-%/local; fi'
+	echo $(CARCH) | tr ' ' "\n" | xargs -I % echo % | xargs -I % sh -c 'if test -d build-%; then CHOST=% make docroot; fi'
 	@echo DONE
 
 diff: .git
@@ -382,10 +392,10 @@ release:
 ifdef KALL
 	unset KALL && echo -n $(CARCH) | tr ' ' "\n" | xargs -I % $(MAKE) CHOST=% $@
 else
-	@tar -cvzf $(KZIP)-$(CHOST).tar.gz $(KLOCAL)/bin/K-$(CHOST)* $(KLOCAL)/lib/K-$(CHOST).a                           \
+	@tar -cvzf $(KZIP)-$(CHOST).tar.gz $(KLOCAL)/bin/K-$(CHOST)* $(KLOCAL)/lib/K-$(CHOST)*                            \
 	$(shell test -n "`echo $(CHOST) | grep mingw32`" && echo $(KLOCAL)/bin/*dll || :)                                 \
-	$(KLOCAL)/var LICENSE COPYING THANKS README.md MANUAL.md src etc Makefile WHITE_* &&                              \
-	curl -s -n -H "Content-Type:application/octet-stream" -H "Authorization: token ${KRELEASE}"                       \
+	LICENSE COPYING THANKS README.md MANUAL.md src etc Makefile WHITE_*                                               \
+	&& curl -s -n -H "Content-Type:application/octet-stream" -H "Authorization: token ${KRELEASE}"                    \
 	--data-binary "@$(PWD)/$(KZIP)-$(CHOST).tar.gz"                                                                   \
 	"https://uploads.github.com/repos/ctubio/Krypto-trading-bot/releases/$(KHUB)/assets?name=$(KZIP)-$(CHOST).tar.gz" \
 	&& rm $(KZIP)-$(CHOST).tar.gz && echo && echo DONE $(KZIP)-$(CHOST).tar.gz

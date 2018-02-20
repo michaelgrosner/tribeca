@@ -290,6 +290,8 @@ ws sandbox: [websocket.org](https://www.websocket.org/echo.html)
 
 ### Unreleased Changelog:
 
+Added build-in document root to stop reading files from disk.
+
 Added --test-chamber=NUMBER argument to easy deploy multiple release candidate versions.
 
 Added build chain for win32.
