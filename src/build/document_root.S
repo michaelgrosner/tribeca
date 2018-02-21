@@ -9,11 +9,11 @@
 .macro \
     .docroot   var              , uri
     .global    SYM(\var)
-    .global    SYM(\var\()_len)
+    .global    SYM(\var\()_end)
 SYM(\var):
     .incbin    "\uri"
-SYM(\var\()_len):
-    .long      . - SYM(\var)
+SYM(\var\()_end):
+    .byte      0
 .endm
 
     .docroot   _www_html_index  , var/www/index.html

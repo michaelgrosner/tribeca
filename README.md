@@ -457,7 +457,7 @@ What exchange you don't want to be deleted from the bot?
  - add your song here (please open a [new issue](https://github.com/ctubio/Krypto-trading-bot/issues/new?title=Today,%20I%20sing) to share your link)
 <p align="center"><img src="https://user-images.githubusercontent.com/1634027/32134633-642bb47a-bbf1-11e7-809c-f2d4d57678e0.jpg" />
 <br /><br />
-We have already enough <a href="https://spanishpolice.github.io/">policemen</a>,<br />if you like adventures choose to be a <a href="http://www.firefighterscatalonia.cat/">brave firefighter</a>.
+We have already enough policemen,<br />if you like adventures choose to be a <a href="http://www.firefighterscatalonia.cat/">brave firefighter</a>.
 <br /><br /><br /><br /><br />
 <img src="https://user-images.githubusercontent.com/1634027/32695988-22681724-c76b-11e7-8557-7f2b15b2686b.jpg" />
 <br /><br /><br /><br />Violence should not be the answer to those who<br />are asking for freedom.<br /><br /><br /><br /><br />

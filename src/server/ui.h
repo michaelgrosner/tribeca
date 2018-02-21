@@ -2,11 +2,11 @@
 #define K_UI_H_
 
 extern const char _www_html_index,     _www_ico_favicon,     _www_css_base,
+                  _www_html_index_end, _www_ico_favicon_end, _www_css_base_end,
                   _www_gzip_bomb,      _www_mp3_audio_0,     _www_css_light,
-                  _www_js_bundle,      _www_mp3_audio_1,     _www_css_dark;
-extern const long _www_html_index_len, _www_ico_favicon_len, _www_css_base_len,
-                  _www_gzip_bomb_len,  _www_mp3_audio_0_len, _www_css_light_len,
-                  _www_js_bundle_len,  _www_mp3_audio_1_len, _www_css_dark_len;
+                  _www_gzip_bomb_end,  _www_mp3_audio_0_end, _www_css_light_end,
+                  _www_js_bundle,      _www_mp3_audio_1,     _www_css_dark,
+                  _www_js_bundle_end,  _www_mp3_audio_1_end, _www_css_dark_end;
 namespace K {
   class UI: public Klass {
     private:
@@ -47,7 +47,7 @@ namespace K {
           if (addr.length() > 7 and !((CF*)config)->argWhitelist.empty() and ((CF*)config)->argWhitelist.find(addr) == string::npos) {
             ((SH*)screen)->log("UI", "dropping gzip bomb on", addr);
             document = "HTTP/1.1 200 OK\r\nConnection: keep-alive\r\nAccept-Ranges: bytes\r\nVary: Accept-Encoding\r\nCache-Control: public, max-age=0\r\n";
-            document += "Content-Encoding: gzip\r\nContent-Length: " + to_string(_www_gzip_bomb_len) + "\r\n\r\n" + string(&_www_gzip_bomb, _www_gzip_bomb_len);
+            document += "Content-Encoding: gzip\r\nContent-Length: " + to_string(&_www_gzip_bomb_end - &_www_gzip_bomb) + "\r\n\r\n" + string(&_www_gzip_bomb, &_www_gzip_bomb_end - &_www_gzip_bomb);
             res->write(document.data(), document.length());
           } else if (!B64auth.empty() and auth.empty()) {
             ((SH*)screen)->log("UI", "authorization attempt from", addr);
@@ -65,27 +65,27 @@ namespace K {
             if (leaf == "/") {
               ((SH*)screen)->log("UI", "authorization success from", addr);
               document += "Content-Type: text/html; charset=UTF-8\r\n";
-              content = string(&_www_html_index, _www_html_index_len);
+              content = string(&_www_html_index, &_www_html_index_end - &_www_html_index);
             } else if (leaf == "js") {
               document += "Content-Type: application/javascript; charset=UTF-8\r\nContent-Encoding: gzip\r\n";
-              content = string(&_www_js_bundle, _www_js_bundle_len);
+              content = string(&_www_js_bundle, &_www_js_bundle_end - &_www_js_bundle);
             } else if (leaf == "css") {
               document += "Content-Type: text/css; charset=UTF-8\r\n";
               if (path.find("css/bootstrap.min.css") != string::npos)
-                content = string(&_www_css_base, _www_css_base_len);
+                content = string(&_www_css_base, &_www_css_base_end - &_www_css_base);
               else if (path.find("css/bootstrap-theme-dark.min.css") != string::npos)
-                content = string(&_www_css_dark, _www_css_dark_len);
+                content = string(&_www_css_dark, &_www_css_dark_end - &_www_css_dark);
               else if (path.find("css/bootstrap-theme.min.css") != string::npos)
-                content = string(&_www_css_light, _www_css_light_len);
+                content = string(&_www_css_light, &_www_css_light_end - &_www_css_light);
             } else if (leaf == "ico") {
               document += "Content-Type: image/x-icon\r\n";
-              content = string(&_www_ico_favicon, _www_ico_favicon_len);
+              content = string(&_www_ico_favicon, &_www_ico_favicon_end - &_www_ico_favicon);
             } else if (leaf == "mp3") {
               document += "Content-Type: audio/mpeg\r\n";
               if (path.find("audio/0.mp3") != string::npos)
-                content = string(&_www_mp3_audio_0, _www_mp3_audio_0_len);
+                content = string(&_www_mp3_audio_0, &_www_mp3_audio_0_end - &_www_mp3_audio_0);
               else if (path.find("audio/1.mp3") != string::npos)
-                content = string(&_www_mp3_audio_1, _www_mp3_audio_1_len);
+                content = string(&_www_mp3_audio_1, &_www_mp3_audio_1_end - &_www_mp3_audio_1);
             }
             if (content.empty())
               if (FN::int64() % 21) {
@@ -105,7 +105,7 @@ namespace K {
             string addr = webSocket->getAddress().address;
             if (addr.length() > 7 and addr.substr(0, 7) == "::ffff:") addr = addr.substr(7);
             if (addr.length() > 7 and ((CF*)config)->argWhitelist.find(addr) == string::npos) {
-              webSocket->send(string(&_www_gzip_bomb, _www_gzip_bomb_len).data(), uWS::OpCode::BINARY);
+              webSocket->send(string(&_www_gzip_bomb, &_www_gzip_bomb_end - &_www_gzip_bomb).data(), uWS::OpCode::BINARY);
               return;
             }
           }
