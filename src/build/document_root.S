@@ -1,5 +1,5 @@
 #ifdef __APPLE__
-#  define SYM(sym) _##sym
+#  define SYM(sym) _ ## sym
 #else
 #  define SYM(sym) sym
 #endif
@@ -9,11 +9,11 @@
 .macro \
     .docroot   var              , uri
     .global    SYM(\var)
-    .global    SYM(\var\()_end)
+    .global    SYM(\var\()_len)
 SYM(\var):
     .incbin    "\uri"
-SYM(\var\()_end):
-    .byte      0
+SYM(\var\()_len):
+    .int       . - SYM(\var)
 .endm
 
     .docroot   _www_html_index  , var/www/index.html

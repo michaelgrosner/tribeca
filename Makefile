@@ -19,7 +19,7 @@ V_SQL   := 3210000
 V_QF    := v.1.14.4
 V_UV    := 1.18.0
 V_PVS   := 6.21.24657.1946
-KZIP     = c9520c9e70b9f66b5eb7fee0fdefabc100c1d4b6
+KZIP     = 8cbeb27901a3e45c6ae3d23a8af2ba6f8e4190ae
 KARGS    = -std=c++11 -O3 -I$(KLOCAL)/include -pthread   \
   $(KLOCAL)/lib/K-$(CHOST)-docroot.o src/server/K.cxx    \
   -DK_STAMP='"$(shell date "+%Y-%m-%d %H:%M:%S")"'       \
