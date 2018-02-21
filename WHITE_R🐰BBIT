@@ -84,8 +84,8 @@
 :  :                                                                          :
 :  +-- Whaaat??                                                               :
 :       ____     Login    ____    Admin     ____                              :
-:      |gw.h# <<-------- |cf.h| -------->> |ui.h# K Client                    :
-:       ¯¯¯¯#             ¯¯¯¯             |sh.h# K Shell                     :
+:      |gw.h# <<-------- |cf.h| -------->> |sh.h# K Shell                     :
+:       ¯¯¯¯#             ¯¯¯¯             |ui.h# K Client                    :
 :           #   Wallet    ____              ¯¯¯¯| P                           :
 :           # -------->> |pg.h#        ____     V a                           :
 :         A #             ¯¯¯¯#       |km.h|____V r                           :
