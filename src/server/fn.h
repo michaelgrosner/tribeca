@@ -238,7 +238,7 @@ namespace K {
           curl_easy_setopt(curl, CURLOPT_POSTFIELDS, p.data());
         });
       };
-      static json wJet(string k, string t, string a, string s, string p) {
+      static json wJet(string k, string t, string a, string s, string p, bool d = false) {
         return curl_perform(k, [&](CURL *curl) {
           struct curl_slist *h_ = NULL;
           h_ = curl_slist_append(h_, string("CB-ACCESS-KEY: ").append(a).data());
@@ -246,17 +246,7 @@ namespace K {
           h_ = curl_slist_append(h_, string("CB-ACCESS-TIMESTAMP: ").append(t).data());
           h_ = curl_slist_append(h_, string("CB-ACCESS-PASSPHRASE: ").append(p).data());
           curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
-        });
-      };
-      static json wJet(string k, string t, string a, string s, string p, bool d) {
-        return curl_perform(k, [&](CURL *curl) {
-          struct curl_slist *h_ = NULL;
-          h_ = curl_slist_append(h_, string("CB-ACCESS-KEY: ").append(a).data());
-          h_ = curl_slist_append(h_, string("CB-ACCESS-SIGN: ").append(s).data());
-          h_ = curl_slist_append(h_, string("CB-ACCESS-TIMESTAMP: ").append(t).data());
-          h_ = curl_slist_append(h_, string("CB-ACCESS-PASSPHRASE: ").append(p).data());
-          curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
-          curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
+          if (d) curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
         });
       };
       static json curl_perform(string url, function<void(CURL *curl)> curl_setopt, bool debug = true) {

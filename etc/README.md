@@ -37,5 +37,5 @@ Used on boot (only for GDAX) to run [stunnel](https://www.stunnel.org/index.html
 ### cabundle.pem
 Used by `libcurl` to access HTTPS resources, may be updated (with `make cabundle`) monthly from [curl.haxx.se](https://curl.haxx.se/docs/caextract.html); no need to update unless an error of CA certificates is displayed by curl in the logs.
 
-### src/www/.bomb.gzip
+### ../src/www/.bomb.gzip
 Used by `--whitelist` argument to attempt to crash UI clients from alien IPs not whitelisted; no need to open.
