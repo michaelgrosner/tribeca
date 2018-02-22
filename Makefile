@@ -92,8 +92,8 @@ help:
 	#                                                  #
 
 chost:
-	@echo -n $(shell (test -d .git && test -n "`command -v g++`") && \
-	g++ -dumpmachine || ls -1 . | grep build- | head -n1 | cut -d '/' -f1 | cut -d '-' -f2-)
+	@(test -d .git && test -n "`command -v g++`") && \
+	g++ -dumpmachine || ls -1 . | grep build- | head -n1 | cut -d '/' -f1 | cut -d '-' -f2-
 
 K: src/server/K.cxx
 ifdef KALL
