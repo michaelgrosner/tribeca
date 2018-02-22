@@ -2,8 +2,8 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
 PATCH    = 2
-BUILD    = 0
-CHOST   ?= $(shell $(MAKE) CHOST= chost)
+BUILD    = 1
+CHOST   ?= $(shell (test -d .git && test -n "`command -v g++`") && g++ -dumpmachine || ls -1 . | grep build- | head -n1 | cut -d '/' -f1 | cut -d '-' -f2-)
 CARCH    = x86_64-linux-gnu arm-linux-gnueabihf aarch64-linux-gnu x86_64-apple-darwin17 x86_64-w64-mingw32
 KLOCAL  := build-$(CHOST)/local
 CXX     := $(CHOST)-g++
@@ -90,10 +90,6 @@ help:
 	#  KALL=1 make clean - remove external src files   #
 	#  make cleandb      - remove databases            #
 	#                                                  #
-
-chost:
-	@(test -d .git && test -n "`command -v g++`") && \
-	g++ -dumpmachine || ls -1 . | grep build- | head -n1 | cut -d '/' -f1 | cut -d '-' -f2-
 
 K: src/server/K.cxx
 ifdef KALL
@@ -393,22 +389,22 @@ MAJORcheckOK:
 	@sed -i "s/^\(MINOR    =\).*$$/\1 0/" Makefile
 	@sed -i "s/^\(PATCH    =\).*$$/\1 0/" Makefile
 	@sed -i "s/^\(BUILD    =\).*$$/\1 0/" Makefile
-	$(MAKE) KALL=1 release
+	KALL=1 $(MAKE) release
 
 MINORheckOK:
 	@sed -i "s/^\(MINOR    = \).*$$/\1$(shell expr $(MINOR) + 1)/" Makefile
 	@sed -i "s/^\(PATCH    =\).*$$/\1 0/" Makefile
 	@sed -i "s/^\(BUILD    =\).*$$/\1 0/" Makefile
-	$(MAKE) KALL=1 release
+	KALL=1 $(MAKE) release
 
 PATCHcheckOK:
 	@sed -i "s/^\(PATCH    = \).*$$/\1$(shell expr $(PATCH) + 1)/" Makefile
 	@sed -i "s/^\(BUILD    =\).*$$/\1 0/" Makefile
-	$(MAKE) KALL=1 release
+	KALL=1 $(MAKE) release
 
 BUILDcheckOK:
 	@sed -i "s/^\(BUILD    = \).*$$/\1$(shell expr $(BUILD) + 1)/" Makefile
-	$(MAKE) KALL=1 release
+	KALL=1 $(MAKE) release
 
 release:
 ifdef KALL
