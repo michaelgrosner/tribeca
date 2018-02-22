@@ -1,14 +1,6 @@
 #ifndef K_SH_H_
 #define K_SH_H_
 
-#ifndef K_BUILD
-#define K_BUILD "0"
-#endif
-
-#ifndef K_STAMP
-#define K_STAMP "0"
-#endif
-
 namespace K {
   class SH {
     private:
@@ -29,6 +21,11 @@ namespace K {
       SH() {
         cout << BGREEN << "K" << RGREEN << " build " << K_BUILD << " " << K_STAMP << "." << BRED << '\n';
         gwEndings.push_back(&happyEnding);
+        if (access(".git", F_OK) != -1) {
+          FN::output("git fetch");
+          string k = changelog();
+          logVer(k, count(k.begin(), k.end(), '\n'));
+        } else logVer("", -1);
       };
       void config(int argNaked, int argColors, string argExchange, string argCurrency) {
         if (argNaked) return;
@@ -61,6 +58,9 @@ namespace K {
       };
       static void sigResize(int sig) {
         (*shResize)();
+      };
+      static string changelog() {
+        return FN::output("test -d .git && git --no-pager log --graph --oneline @..@{u}");
       };
       void pressme(mHotkey ch, function<void()> *fn) {
         if (!wBorder) return;
@@ -213,21 +213,7 @@ namespace K {
         wrefresh(wLog);
       };
       void logVer(string k, int c) {
-        if (!wBorder) {
-          cout << BGREEN << "K" << RGREEN << string(" version ").append(c == -1 ? "unknown (zip install).\n" : (!c ? "0day.\n" : string("-").append(to_string(c)).append("commit").append(c > 1?"s..\n":"..\n"))) << RYELLOW << (c ? k : "") << RWHITE;
-          return;
-        }
-        wmove(wLog, getmaxy(wLog)-1, 0);
-        wattron(wLog, COLOR_PAIR(COLOR_GREEN));
-        wattron(wLog, A_BOLD);
-        wprintw(wLog, "K");
-        wattroff(wLog, A_BOLD);
-        wprintw(wLog, string(" version ").append(c == -1 ? "unknown (zip install).\n" : (!c ? "0day.\n" : string("-").append(to_string(c)).append("commit").append(c > 1?"s..\n":"..\n"))).data());
-        wattroff(wLog, COLOR_PAIR(COLOR_GREEN));
-        wattron(wLog, COLOR_PAIR(COLOR_YELLOW));
-        if (c) wprintw(wLog, k.data());
-        wattroff(wLog, COLOR_PAIR(COLOR_YELLOW));
-        wrefresh(wLog);
+        cout << BGREEN << K_0_DAY << RGREEN << string(c == -1 ? " (zip install).\n" : (!c ? " (0day).\n" : string(" -").append(to_string(c)).append("commit").append(c > 1?"s..\n":"..\n"))) << RYELLOW << (c ? k : "") << RWHITE;
       };
       void log(mTrade k, string e) {
         if (!wBorder) {

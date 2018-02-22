@@ -29,8 +29,10 @@ namespace K  {
 #ifndef _WIN32
         signal(SIGUSR1, wtf);
 #endif
+        THIS_WAS_A_TRIUMPH
+          << "- upstream: " << ((CF*)config)->argExchange << '\n'
+          << "- currency: " << ((CF*)config)->argCurrency << '\n';
         if (!gw) exit(error("GW", string("Unable to load a valid gateway using --exchange=") + ((CF*)config)->argExchange + " argument"));
-        if (!gw->chamber) version();
         gw->hub = hub = new uWS::Hub(0, true);
       };
       void waitData() {
@@ -122,16 +124,6 @@ namespace K  {
           else ((SH*)screen)->log(name, reason);
         });
       };
-      void version() {
-        if (access(".git", F_OK) != -1) {
-          FN::output("git fetch");
-          string k = changelog();
-          ((SH*)screen)->logVer(k, count(k.begin(), k.end(), '\n'));
-        } else ((SH*)screen)->logVer("", -1);
-        THIS_WAS_A_TRIUMPH
-          << "- upstream: " << ((CF*)config)->argExchange << '\n'
-          << "- currency: " << ((CF*)config)->argCurrency << '\n';
-      };
       static void halt(int last_int_alive) {
         for (function<void()>* &it : gwEndings) (*it)();
         if (last_int_alive == EXIT_FAILURE)
@@ -190,15 +182,12 @@ namespace K  {
           << " (deprecated K version found)." << '\n'
           << '\n' << BYELLOW << "Hint!" << RYELLOW
           << '\n' << "please upgrade to the latest commit; the encountered error may be already fixed at:"
-          << '\n' << changelog()
+          << '\n' << SH::changelog()
           << '\n' << "If you agree, consider to run \"make latest\" prior further executions."
           << '\n' << '\n';
       };
       static bool unsupported() {
         return FN::output("test -d .git && git rev-parse @") != FN::output("test -d .git && git rev-parse @{u}");
-      };
-      static string changelog() {
-        return FN::output("test -d .git && git --no-pager log --graph --oneline @..@{u}");
       };
   };
 }

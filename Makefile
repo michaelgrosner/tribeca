@@ -1,27 +1,31 @@
 K       ?= K.sh
-CHOST   ?= $(shell (test -d .git && test -n "`command -v g++`") && g++ -dumpmachine || ls -1 . | grep build- | head -n1 | cut -d '/' -f1 | cut -d '-' -f2-)
+MAJOR    = 0
+MINOR    = 4
+PATCH    = 2
+BUILD    = 0
+CHOST   ?= $(shell $(MAKE) CHOST= chost)
 CARCH    = x86_64-linux-gnu arm-linux-gnueabihf aarch64-linux-gnu x86_64-apple-darwin17 x86_64-w64-mingw32
-KLOCAL   = build-$(CHOST)/local
-CXX      = $(CHOST)-g++
-CC       = $(CHOST)-gcc
-ERR      = *** K require g++ v6, but g++ v6 was not found at $(shell which $(CXX))
-HINT     = consider to create a symlink at $(shell which $(CXX)) pointing to your g++-6 executable
+KLOCAL  := build-$(CHOST)/local
+CXX     := $(CHOST)-g++
+CC      := $(CHOST)-gcc
 V_CXX    = 6
+ERR     := *** K require g++ v$(V_CXX), but g++ v$(V_CXX) was not found at $(shell which "$(CXX)" 2> /dev/null)
+HINT    := consider to create a symlink at $(shell which "$(CXX)" 2> /dev/null) pointing to your g++-$(V_CXX) executable
 KGIT     = 4.0
 KHUB     = 8656597
-V_ZLIB  := 1.2.11
-V_SSL   := 1.1.0g
-V_CURL  := 7.57.0
-V_NCUR  := 6.0
-V_JSON  := v3.0.0
-V_UWS   := 0.14.4
-V_SQL   := 3210000
-V_QF    := v.1.14.4
-V_UV    := 1.18.0
-V_PVS   := 6.21.24657.1946
-KZIP     = 8cbeb27901a3e45c6ae3d23a8af2ba6f8e4190ae
-KARGS    = -std=c++11 -O3 -I$(KLOCAL)/include -pthread   \
+V_ZLIB   = 1.2.11
+V_SSL    = 1.1.0g
+V_CURL   = 7.57.0
+V_NCUR   = 6.0
+V_JSON   = v3.0.0
+V_UWS    = 0.14.4
+V_SQL    = 3210000
+V_QF     = v.1.14.4
+V_UV     = 1.18.0
+V_PVS    = 6.21.24657.1946
+KARGS   := -I$(KLOCAL)/include -pthread -std=c++11 -O3   \
   $(KLOCAL)/lib/K-$(CHOST)-docroot.o src/server/K.cxx    \
+  -DK_0_DAY='"v$(MAJOR).$(MINOR).$(PATCH)+$(BUILD)"'     \
   -DK_STAMP='"$(shell date "+%Y-%m-%d %H:%M:%S")"'       \
   -DK_BUILD='"$(CHOST)"'     $(KLOCAL)/include/uWS/*.cpp \
   $(KLOCAL)/lib/K-$(CHOST).a $(KLOCAL)/lib/libquickfix.a \
@@ -86,6 +90,10 @@ help:
 	#  KALL=1 make clean - remove external src files   #
 	#  make cleandb      - remove databases            #
 	#                                                  #
+
+chost:
+	@echo -n $(shell (test -d .git && test -n "`command -v g++`") && \
+	g++ -dumpmachine || ls -1 . | grep build- | head -n1 | cut -d '/' -f1 | cut -d '-' -f2-)
 
 K: src/server/K.cxx
 ifdef KALL
@@ -209,8 +217,8 @@ pvs:
 	&& chmod +x install.sh && sudo ./install.sh                                )
 
 build:
-	curl -L https://github.com/ctubio/Krypto-trading-bot/releases/download/$(KGIT)/$(KZIP)-$(CHOST).tar.gz \
-	| tar xz && chmod +x build-*/local/lib/K-$(CHOST).a build-*/local/bin/K-$(CHOST)
+	curl -L https://github.com/ctubio/Krypto-trading-bot/releases/download/$(KGIT)/v$(MAJOR).$(MINOR).$(PATCH).$(BUILD)-$(CHOST).tar.gz \
+	| tar xz && chmod +x build-*/local/bin/K-$(CHOST)
 
 clean:
 ifdef KALL
@@ -380,25 +388,39 @@ png: etc/${PNG}.png etc/${PNG}.json
 png-check: etc/${PNG}.png
 	@test -n "`identify -verbose etc/${PNG}.png | grep 'K\.conf'`" && echo Configuration injected into etc/${PNG}.png OK, feel free to remove etc/${PNG}.json anytime. || echo nope, injection failed.
 
-check:
-	@echo $(KZIP)
-	@shasum $(KLOCAL)/bin/K-$(CHOST) | cut -d ' ' -f1
+MAJORcheckOK:
+	@sed -i "s/^\(MAJOR    = \).*$$/\1$(shell expr $(MAJOR) + 1)/" Makefile
+	@sed -i "s/^\(MINOR    =\).*$$/\1 0/" Makefile
+	@sed -i "s/^\(PATCH    =\).*$$/\1 0/" Makefile
+	@sed -i "s/^\(BUILD    =\).*$$/\1 0/" Makefile
+	$(MAKE) KALL=1 release
 
-checkOK:
-	@sed -i "s/^\(KZIP     = \).*$$/\1`shasum $(KLOCAL)/bin/K-$(CHOST) | cut -d ' ' -f1`/" Makefile
-	@$(MAKE) check -s
+MINORheckOK:
+	@sed -i "s/^\(MINOR    = \).*$$/\1$(shell expr $(MINOR) + 1)/" Makefile
+	@sed -i "s/^\(PATCH    =\).*$$/\1 0/" Makefile
+	@sed -i "s/^\(BUILD    =\).*$$/\1 0/" Makefile
+	$(MAKE) KALL=1 release
+
+PATCHcheckOK:
+	@sed -i "s/^\(PATCH    = \).*$$/\1$(shell expr $(PATCH) + 1)/" Makefile
+	@sed -i "s/^\(BUILD    =\).*$$/\1 0/" Makefile
+	$(MAKE) KALL=1 release
+
+BUILDcheckOK:
+	@sed -i "s/^\(BUILD    = \).*$$/\1$(shell expr $(BUILD) + 1)/" Makefile
+	$(MAKE) KALL=1 release
 
 release:
 ifdef KALL
 	unset KALL && echo -n $(CARCH) | tr ' ' "\n" | xargs -I % $(MAKE) CHOST=% $@
 else
-	@tar -cvzf $(KZIP)-$(CHOST).tar.gz $(KLOCAL)/bin/K-$(CHOST)* $(KLOCAL)/lib/K-$(CHOST)*                            \
-	$(shell test -n "`echo $(CHOST) | grep mingw32`" && echo $(KLOCAL)/bin/*dll || :)                                 \
-	LICENSE COPYING THANKS README.md MANUAL.md src etc Makefile WHITE_*                                               \
-	&& curl -s -n -H "Content-Type:application/octet-stream" -H "Authorization: token ${KRELEASE}"                    \
-	--data-binary "@$(PWD)/$(KZIP)-$(CHOST).tar.gz"                                                                   \
-	"https://uploads.github.com/repos/ctubio/Krypto-trading-bot/releases/$(KHUB)/assets?name=$(KZIP)-$(CHOST).tar.gz" \
-	&& rm $(KZIP)-$(CHOST).tar.gz && echo && echo DONE $(KZIP)-$(CHOST).tar.gz
+	@tar -cvzf v$(MAJOR).$(MINOR).$(PATCH).$(BUILD)-$(CHOST).tar.gz $(KLOCAL)/bin/K-$(CHOST)* $(KLOCAL)/lib/K-$(CHOST)*                             \
+	$(shell test -n "`echo $(CHOST) | grep mingw32`" && echo $(KLOCAL)/bin/*dll || :)                                                              \
+	LICENSE COPYING THANKS README.md MANUAL.md src etc Makefile WHITE_*                                                                            \
+	&& curl -s -n -H "Content-Type:application/octet-stream" -H "Authorization: token ${KRELEASE}"                                                 \
+	--data-binary "@$(PWD)/v$(MAJOR).$(MINOR).$(PATCH).$(BUILD)-$(CHOST).tar.gz"                                                                 \
+	"https://uploads.github.com/repos/ctubio/Krypto-trading-bot/releases/$(KHUB)/assets?name=v$(MAJOR).$(MINOR).$(PATCH).$(BUILD)-$(CHOST).tar.gz" \
+	&& rm v$(MAJOR).$(MINOR).$(PATCH).$(BUILD)-$(CHOST).tar.gz && echo && echo DONE v$(MAJOR).$(MINOR).$(PATCH).$(BUILD)-$(CHOST).tar.gz
 endif
 
 md5: src

@@ -107,8 +107,7 @@ namespace K {
                         << '\n' << "by and under the law of my grandma, feel free to crack all." << '\n'
               << RGREEN << "  questions: " << RYELLOW << "https://earn.com/analpaper/" << '\n'
               << BGREEN << "K" << RGREEN << " bugkiller: " << RYELLOW << "https://github.com/ctubio/Krypto-trading-bot/issues/new" << '\n'
-              << RGREEN << "  downloads: " << RYELLOW << "ssh://git@github.com/ctubio/Krypto-trading-bot" << '\n';
-            case '?': cout
+              << RGREEN << "  downloads: " << RYELLOW << "ssh://git@github.com/ctubio/Krypto-trading-bot" << '\n'
               << ((SH*)screen)->stamp() << "Usage:" << BYELLOW << " ./K.sh [arguments]" << '\n'
               << ((SH*)screen)->stamp() << "[arguments]:" << '\n'
               << ((SH*)screen)->stamp() << RWHITE << "-h, --help                - show this help and quit." << '\n'
@@ -182,10 +181,9 @@ namespace K {
               << RGREEN << "  more help: " << RYELLOW << "https://github.com/ctubio/Krypto-trading-bot/blob/master/MANUAL.md" << '\n'
               << BGREEN << "K" << RGREEN << " questions: " << RYELLOW << "irc://irc.domirc.net:6667/##tradingBot" << '\n'
               << RGREEN << "  home page: " << RYELLOW << "https://ca.rles-tub.io./trades" << '\n';
-              exit(EXIT_SUCCESS);
-              break;
+            case '?':
             case 'v': exit(EXIT_SUCCESS);
-            default: abort();
+            default : abort();
           }
         if (optind < argc) {
           cout << "ARG" << RRED << " Errrror:" << BRED << " non-option ARGV-elements: ";

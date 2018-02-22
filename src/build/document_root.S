@@ -4,9 +4,9 @@
 #  define SYM(sym) sym
 #endif
 
-.data
+    .data
 
-.macro \
+  .macro \
     .docroot   var              , uri
     .global    SYM(\var)
     .global    SYM(\var\()_len)
@@ -14,7 +14,7 @@ SYM(\var):
     .incbin    "\uri"
 SYM(\var\()_len):
     .int       . - SYM(\var)
-.endm
+  .endm
 
     .docroot   _www_html_index  , var/www/index.html
     .docroot   _www_ico_favicon , var/www/favicon.ico
