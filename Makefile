@@ -2,8 +2,8 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
 PATCH    = 2
-BUILD    = 4
-CHOST   ?= $(shell (test -d .git && test -n "`command -v g++`") && g++ -dumpmachine || ls -1 . | grep build- | head -n1 | cut -d '/' -f1 | cut -d '-' -f2-)
+BUILD    = 5
+CHOST   ?= $(shell $(MAKE) CHOST= chost)
 CARCH    = x86_64-linux-gnu arm-linux-gnueabihf aarch64-linux-gnu x86_64-apple-darwin17 x86_64-w64-mingw32
 KLOCAL  := build-$(CHOST)/local
 CXX     := $(CHOST)-g++
@@ -89,6 +89,10 @@ help:
 	#  make cleandb      - remove databases            #
 	#                                                  #
 
+chost:
+	@echo -n $(shell (test -d .git && test -n "`command -v g++`") && \
+	g++ -dumpmachine || ls -1 . | grep build- | head -n1 | cut -d '/' -f1 | cut -d '-' -f2-)
+
 K: src/server/K.cxx
 ifdef KALL
 	unset KALL && echo -n $(CARCH) | tr ' ' "\n" | xargs -I % $(MAKE) CHOST=% $@
@@ -117,16 +121,16 @@ else
 	cd $(KLOCAL) && $(CXX) -c ../../src/build/document_root.S -o lib/K-$(CHOST)-docroot.o
 endif
 
-Linux: build-$(CHOST)
+Linux:
 	$(CXX) -o $(KLOCAL)/bin/K-$(CHOST) -DUWS_THREADSAFE -static-libstdc++ -static-libgcc -g -rdynamic $(KARGS) -ldl
 
-Darwin: build-$(CHOST)
+Darwin:
 	$(CXX) -o $(KLOCAL)/bin/K-$(CHOST) -DUSE_LIBUV $(KLOCAL)/lib/libuv.a -msse4.1 -maes -mpclmul -mmacosx-version-min=10.13 -nostartfiles -rdynamic $(KARGS) -ldl
 
-Win32: build-$(CHOST)
+Win32:
 	$(CXX)-posix -o $(KLOCAL)/bin/K-$(CHOST).exe -DUSE_LIBUV $(KARGS) $(KLOCAL)/lib/libuv.dll.a $(KLOCAL)/lib/libssl.dll.a $(KLOCAL)/lib/libcrypto.dll.a -DCURL_STATICLIB -static -lstdc++ -lgcc -lwldap32 -lws2_32
 
-zlib: build-$(CHOST)
+zlib:
 	test -d build-$(CHOST)/zlib-$(V_ZLIB) || (                                                  \
 	curl -L https://zlib.net/zlib-$(V_ZLIB).tar.gz | tar xz -C build-$(CHOST)                   \
 	&& cd build-$(CHOST)/zlib-$(V_ZLIB) && (test -n "`echo $(CHOST) | grep mingw32`" &&         \
@@ -135,7 +139,7 @@ zlib: build-$(CHOST)
 	LIBRARY_PATH=$(PWD)/$(KLOCAL)/lib make install -fwin32/Makefile.gcc)                        \
 	|| (CC=$(CC) ./configure --static --prefix=$(PWD)/$(KLOCAL) && make && make install))       )
 
-openssl: build-$(CHOST)
+openssl:
 	test -d build-$(CHOST)/openssl-$(V_SSL) || (                                              \
 	curl -L https://www.openssl.org/source/openssl-$(V_SSL).tar.gz | tar xz -C build-$(CHOST) \
 	&& cd build-$(CHOST)/openssl-$(V_SSL) && ./Configure                                      \
@@ -143,7 +147,7 @@ openssl: build-$(CHOST)
 	--cross-compile-prefix=$(CHOST)- -fPIC --prefix=$(PWD)/$(KLOCAL)                          \
 	--openssldir=$(PWD)/$(KLOCAL) && make && make install_sw install_ssldirs                  )
 
-curl: build-$(CHOST)
+curl:
 	test -d build-$(CHOST)/curl-$(V_CURL) || (                                                  \
 	curl -L https://curl.haxx.se/download/curl-$(V_CURL).tar.gz | tar xz -C build-$(CHOST)      \
 	&& cd build-$(CHOST)/curl-$(V_CURL) && CC=$(CC) ./configure --with-ca-path=/etc/ssl/certs   \
@@ -154,13 +158,13 @@ curl: build-$(CHOST)
 	--disable-imap --disable-smtp --disable-gopher --disable-smb --without-libidn2              \
 	--with-zlib=$(PWD)/$(KLOCAL) --with-ssl=$(PWD)/$(KLOCAL) && make && make install            )
 
-sqlite: build-$(CHOST)
+sqlite:
 	test -d build-$(CHOST)/sqlite-autoconf-$(V_SQL) || (                                            \
 	curl -L https://sqlite.org/2017/sqlite-autoconf-$(V_SQL).tar.gz | tar xz -C build-$(CHOST)      \
 	&& cd build-$(CHOST)/sqlite-autoconf-$(V_SQL) && CC=$(CC) ./configure --prefix=$(PWD)/$(KLOCAL) \
 	--host=$(CHOST) --enable-static --disable-shared --enable-threadsafe && make && make install    )
 
-ncurses: build-$(CHOST)
+ncurses:
 	test -d build-$(CHOST)/ncurses-$(V_NCUR) || (                                                        \
 	curl -L http://ftp.gnu.org/pub/gnu/ncurses/ncurses-$(V_NCUR).tar.gz | tar xz -C build-$(CHOST)       \
 	&& cd build-$(CHOST)/ncurses-$(V_NCUR) && CC=$(CC) AR=$(CHOST)-ar CXX=$(CXX) CPPFLAGS=-P ./configure \
@@ -169,12 +173,12 @@ ncurses: build-$(CHOST)
 	--enable-sp-funcs --enable-term-driver --enable-interop || :)                                        \
 	--with-fallbacks=linux,screen,vt100,xterm,xterm-256color,putty-256color && make && make install      )
 
-json: build-$(CHOST)
+json:
 	test -f $(KLOCAL)/include/json.h || (mkdir -p $(KLOCAL)/include                  \
 	&& curl -L https://github.com/nlohmann/json/releases/download/$(V_JSON)/json.hpp \
 	-o $(KLOCAL)/include/json.h                                                      )
 
-uws: build-$(CHOST)
+uws:
 	test -d build-$(CHOST)/uWebSockets-$(V_UWS)                                    \
 	|| curl -L https://github.com/uNetworking/uWebSockets/archive/v$(V_UWS).tar.gz \
 	| tar xz -C build-$(CHOST) && mkdir -p $(KLOCAL)/include/uWS                   \
@@ -183,7 +187,7 @@ uws: build-$(CHOST)
 	(sed -i "s/W\(s2tcpip\)/w\1/" $(KLOCAL)/include/uWS/Networking.h &&            \
 	sed -i "s/WinSock2/winsock2/" $(KLOCAL)/include/uWS/Networking.h) ||          :)
 
-quickfix: build-$(CHOST)
+quickfix:
 	test -d build-$(CHOST)/quickfix-$(V_QF) || (                                                   \
 	curl -L https://github.com/quickfix/quickfix/archive/$(V_QF).tar.gz | tar xz -C build-$(CHOST) \
 	&& patch build-$(CHOST)/quickfix-$(V_QF)/m4/ax_lib_mysql.m4 < src/build/without_mysql.m4.patch \
@@ -198,7 +202,7 @@ quickfix: build-$(CHOST)
 	&& CXX=$(CXX) AR=$(CHOST)-ar ./configure --prefix=$(PWD)/$(KLOCAL) --enable-shared=no          \
 	--enable-static=yes --host=$(CHOST) && cd src/C++ && CXX=$(CXX) make && make install           )
 
-libuv: build-$(CHOST)
+libuv:
 	test -z "`echo $(CHOST) | grep darwin;echo $(CHOST) | grep mingw32`" || test -d build-$(CHOST)/libuv-$(V_UV) || ( \
 	curl -L https://github.com/libuv/libuv/archive/v$(V_UV).tar.gz | tar xz -C build-$(CHOST)                         \
 	&& cd build-$(CHOST)/libuv-$(V_UV) && sh autogen.sh && CC=$(CC) ./configure --host=$(CHOST)                       \
@@ -311,7 +315,7 @@ client: src/client
 	./node_modules/.bin/tsc --alwaysStrict --experimentalDecorators -t ES2017 -m commonjs --outDir $(KLOCAL)/var/www/js src/client/*.ts
 	@echo DONE
 
-www: src/www $(KLOCAL)/var/www
+www: src/www
 	@echo Building client static files..
 	cp -R src/www/* $(KLOCAL)/var/www/
 	@echo DONE
@@ -325,7 +329,7 @@ css: src/www/sass
 	&& ls -1 $$PWD/$(KLOCAL)/var/www/css/*[^\.min].css | sed -r 's/(.*)(\.css)$$/\1\2 \1\.min\2/' | xargs -I % sh -c 'mv %;'
 	@echo DONE
 
-bundle: client www css node_modules/.bin/browserify node_modules/.bin/uglifyjs $(KLOCAL)/var/www/js/main.js
+bundle: client www css node_modules/.bin/browserify node_modules/.bin/uglifyjs
 	@echo Building client bundle file..
 	mkdir -p $(KLOCAL)/var/www/js/client
 	./node_modules/.bin/browserify -t [ babelify --presets [ babili env ] ] $(KLOCAL)/var/www/js/main.js $(KLOCAL)/var/www/js/lib/*.js | ./node_modules/.bin/uglifyjs | gzip > $(KLOCAL)/var/www/js/client/bundle.min.js
