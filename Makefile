@@ -391,22 +391,22 @@ MAJORcheckOK:
 	@sed -i "s/^\(MINOR    =\).*$$/\1 0/" Makefile
 	@sed -i "s/^\(PATCH    =\).*$$/\1 0/" Makefile
 	@sed -i "s/^\(BUILD    =\).*$$/\1 0/" Makefile
-	KALL=1 $(MAKE) release
+	KALL=1 $(MAKE) K release
 
 MINORheckOK:
 	@sed -i "s/^\(MINOR    = \).*$$/\1$(shell expr $(MINOR) + 1)/" Makefile
 	@sed -i "s/^\(PATCH    =\).*$$/\1 0/" Makefile
 	@sed -i "s/^\(BUILD    =\).*$$/\1 0/" Makefile
-	KALL=1 $(MAKE) release
+	KALL=1 $(MAKE) K release
 
 PATCHcheckOK:
 	@sed -i "s/^\(PATCH    = \).*$$/\1$(shell expr $(PATCH) + 1)/" Makefile
 	@sed -i "s/^\(BUILD    =\).*$$/\1 0/" Makefile
-	KALL=1 $(MAKE) release
+	KALL=1 $(MAKE) K release
 
 BUILDcheckOK:
 	@sed -i "s/^\(BUILD    = \).*$$/\1$(shell expr $(BUILD) + 1)/" Makefile
-	KALL=1 $(MAKE) release
+	KALL=1 $(MAKE) K release
 
 release:
 ifdef KALL
@@ -429,4 +429,4 @@ md5: src
 asandwich:
 	@test `whoami` = 'root' && echo OK || echo make it yourself!
 
-.PHONY: K dist link Linux Darwin build zlib openssl curl ncurses quickfix uws json pvs clean cleandb list screen start stop restart startall stopall restartall gdax packages install docker travis reinstall client www bundle diff latest changelog test test-cov send-cov png png-check release md5 asandwich
+.PHONY: K chost dist link Linux Darwin build zlib openssl curl ncurses quickfix uws json pvs clean cleandb list screen start stop restart startall stopall restartall gdax packages install docker travis reinstall client www bundle diff latest changelog test test-cov send-cov png png-check release md5 asandwich
