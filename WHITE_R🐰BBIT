@@ -176,7 +176,7 @@
 :                                                                             :
 :_____________________________________________________________________________:
 :                                                                             :
-:  .. src/client: ----------------------------------- aka. K Client --------- :
+:  .. src/client-2d: -------------------------------- aka. K 2D Legacy Client :
 :      boooriiing docs at https://angular.io/api                              :
 :      boooriiing docs at https://www.typescriptlang.org/docs/home.html       :
 :      boooriiing docs at https://www.ag-grid.com/javascript-grid-api/        :

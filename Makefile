@@ -1,8 +1,8 @@
 K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
-PATCH    = 2
-BUILD    = 5
+PATCH    = 3
+BUILD    = 0
 CHOST   ?= $(shell $(MAKE) CHOST= chost)
 CARCH    = x86_64-linux-gnu arm-linux-gnueabihf aarch64-linux-gnu x86_64-apple-darwin17 x86_64-w64-mingw32
 KLOCAL  := build-$(CHOST)/local
@@ -61,11 +61,11 @@ help:
 	#  make changelog    - show commits                #
 	#  make latest       - show commits and reinstall  #
 	#                                                  #
-	#  make client       - compile K client src        #
-	#  make www          - compile K client src        #
-	#  make css          - compile K client css        #
-	#  make bundle       - compile K client bundle     #
-	#  make docroot      - compile K client lib        #
+	#  make clients      - compile K clients src       #
+	#  make www          - compile K clients src       #
+	#  make css          - compile K clients css       #
+	#  make bundle       - compile K clients bundle    #
+	#  make docroot      - compile K clients lib       #
 	#                                                  #
 	#  make test         - run tests                   #
 	#  make test-cov     - run tests and coverage      #
@@ -307,21 +307,21 @@ gdax:
 	@openssl s_client -showcerts -connect fix.gdax.com:4198 -CApath /etc/ssl/certs < /dev/null 2> /dev/null \
 	| openssl x509 -outform PEM > etc/sslcert/fix.gdax.com.pem
 
-client: src/client
+clients: src/client-2d
 	rm -rf $(KLOCAL)/var
 	mkdir -p $(KLOCAL)/var/www
-	@echo Building client dynamic files..
+	@echo Building clients dynamic files..
 	@npm install
-	./node_modules/.bin/tsc --alwaysStrict --experimentalDecorators -t ES2017 -m commonjs --outDir $(KLOCAL)/var/www/js src/client/*.ts
+	./node_modules/.bin/tsc --alwaysStrict --experimentalDecorators -t ES2017 -m commonjs --outDir $(KLOCAL)/var/www/js src/client-2d/*.ts
 	@echo DONE
 
 www: src/www
-	@echo Building client static files..
+	@echo Building clients static files..
 	cp -R src/www/* $(KLOCAL)/var/www/
 	@echo DONE
 
 css: src/www/sass
-	@echo Building client CSS files..
+	@echo Building clients CSS files..
 	rm -rf $(KLOCAL)/var/www/css
 	mkdir -p $(KLOCAL)/var/www/css
 	./node_modules/.bin/node-sass --output-style compressed --output $(KLOCAL)/var/www/css/ src/www/sass/                   \
@@ -329,8 +329,8 @@ css: src/www/sass
 	&& ls -1 $$PWD/$(KLOCAL)/var/www/css/*[^\.min].css | sed -r 's/(.*)(\.css)$$/\1\2 \1\.min\2/' | xargs -I % sh -c 'mv %;'
 	@echo DONE
 
-bundle: client www css node_modules/.bin/browserify node_modules/.bin/uglifyjs
-	@echo Building client bundle file..
+bundle: clients www css node_modules/.bin/browserify node_modules/.bin/uglifyjs
+	@echo Building clients bundle zip and docroot lib..
 	mkdir -p $(KLOCAL)/var/www/js/client
 	./node_modules/.bin/browserify -t [ babelify --presets [ babili env ] ] $(KLOCAL)/var/www/js/main.js $(KLOCAL)/var/www/js/lib/*.js | ./node_modules/.bin/uglifyjs | gzip > $(KLOCAL)/var/www/js/client/bundle.min.js
 	rm -rf $(KLOCAL)/var/www/js/lib $(KLOCAL)/var/www/js/*.js $(KLOCAL)/var/www/sass
@@ -429,4 +429,4 @@ md5: src
 asandwich:
 	@test `whoami` = 'root' && echo OK || echo make it yourself!
 
-.PHONY: K chost dist link Linux Darwin build zlib openssl curl ncurses quickfix uws json pvs clean cleandb list screen start stop restart startall stopall restartall gdax packages install docker travis reinstall client www bundle diff latest changelog test test-cov send-cov png png-check release md5 asandwich
+.PHONY: K chost dist link Linux Darwin build zlib openssl curl ncurses quickfix uws json pvs clean cleandb list screen start stop restart startall stopall restartall gdax packages install docker travis reinstall clients www bundle diff latest changelog test test-cov send-cov png png-check release md5 asandwich
