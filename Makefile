@@ -140,12 +140,12 @@ zlib:
 	|| (CC=$(CC) ./configure --static --prefix=$(PWD)/$(KLOCAL) && make && make install))       )
 
 openssl:
-	test -d build-$(CHOST)/openssl-$(V_SSL) || (                                              \
-	curl -L https://www.openssl.org/source/openssl-$(V_SSL).tar.gz | tar xz -C build-$(CHOST) \
-	&& cd build-$(CHOST)/openssl-$(V_SSL) && ./Configure                                      \
-	$(shell test -n "`echo $(CHOST) | grep mingw32`" && echo mingw64 || echo dist)            \
-	--cross-compile-prefix=$(CHOST)- -fPIC --prefix=$(PWD)/$(KLOCAL)                          \
-	--openssldir=$(PWD)/$(KLOCAL) && make && make install_sw install_ssldirs                  )
+	test -d build-$(CHOST)/openssl-$(V_SSL) || (                                               \
+	curl -L https://www.openssl.org/source/openssl-$(V_SSL).tar.gz | tar xz -C build-$(CHOST)  \
+	&& cd build-$(CHOST)/openssl-$(V_SSL) &&                                                   \
+	./Configure $(shell test -n "`echo $(CHOST) | grep mingw32`" && echo mingw64 || echo dist) \
+	--cross-compile-prefix=$(CHOST)- --prefix=$(PWD)/$(KLOCAL)                                 \
+	--openssldir=$(PWD)/$(KLOCAL) && make && make install_sw install_ssldirs                   )
 
 curl:
 	test -d build-$(CHOST)/curl-$(V_CURL) || (                                                  \
@@ -429,4 +429,4 @@ md5: src
 asandwich:
 	@test `whoami` = 'root' && echo OK || echo make it yourself!
 
-.PHONY: K chost dist link Linux Darwin build zlib openssl curl ncurses quickfix uws json pvs clean cleandb list screen start stop restart startall stopall restartall gdax packages install docker travis reinstall clients www bundle diff latest changelog test test-cov send-cov png png-check release md5 asandwich
+.PHONY: K chost dist link Linux Darwin Win32 build zlib openssl curl ncurses quickfix uws json pvs clean cleandb list screen start stop restart startall stopall restartall gdax packages install docker travis reinstall clients www bundle diff latest changelog test test-cov send-cov png png-check release md5 asandwich

@@ -1,33 +1,5 @@
 <img align="left" src="https://user-images.githubusercontent.com/1634027/36237231-e611590e-11fa-11e8-8486-6675078501dc.jpg" /><p align="right">self reminder:<br><b>patience is the mother of science</b></p><br><a href="http://ciutatrefugi.barcelona/en/welcome-barcelona">\*\*\* REFUGEES WELCOME! \*\*\*</a><br/>&thinsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="http://missingmigrants.iom.int/">\*\*\* FATAL ROUTES? \*\*\*</a>
 <br clear="left">
-<!--
-
-```c++
-#include <iostream>
-
-int main()
-{
-  std::cout << "Hello World! did you know?";
-}
-```
-<p align="center"><img src="https://user-images.githubusercontent.com/1634027/32386807-b0bd1808-c0c2-11e7-9d98-9cb28e6fd51d.jpg" /></p>
-<p align="center"><img src="https://user-images.githubusercontent.com/1634027/31733764-e79df244-b43c-11e7-9186-92b6744db290.png" /></p>
-<br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br />
-<p align="center">I am from a country that is certainly old,<br />
-It has been a long time forgotten and oppressed.<br />
-<br />
-I am from a country where fear is called sanity,<br />
-that walks one step forward and two backwards.<br />
-<br />
-I am from a country that slowly breaks down,<br />
-and between illusions and frustrations goes forth.<br /><br />
-<img src="https://user-images.githubusercontent.com/1634027/32696081-78efb9dc-c76e-11e7-87df-f67db7cbfda8.jpg" /><br />Our battle? freedom, democracy and peace.<br />We will never surrender.<br /><br />There is no jail, prision guard, lock or court decision<br />that can, if we do not want it to, deprive ourselves of begin the way we are.</p>
-<br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br />
-<p align="center"><img src="https://user-images.githubusercontent.com/1634027/31734164-1ab05c66-b43e-11e7-9e52-3fd874045876.jpg" /></p>
-<br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br />
-<br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br />
-
-<p align="center">yet Today, is a beautiful day.<br/><br/><a href="https://www.youtube.com/embed/BK7DIJq4slg"><img src="https://user-images.githubusercontent.com/1634027/33692212-60b1ad80-daec-11e7-8875-93d0a39813e3.png" /></a></p-->
 
 [![Release](https://img.shields.io/github/release/ctubio/Krypto-trading-bot.svg)](https://github.com/ctubio/Krypto-trading-bot/releases)
 [![Platform](https://img.shields.io/badge/platform-unix--like-lightgray.svg)](https://www.gnu.org/)
@@ -374,7 +346,7 @@ While locked, you are limited to using the first 3 market levels; once unlocked 
 
 Anonymous users can also unlock any API Key by paying 0.01210000 BTC to the address displayed in the UI of the bot. Once unlocked you may use different currency pairs or reinstall on a different machine with the same unlocked API Key. However, if you want to use more than one exchange, you will need to pay again to unlock the API Key for each exchange.
 
-Otherwise if you choose to not support further development by ctubio, just keep running some old commit and do not upgrade (any commit prior to v3.0 was completely unlocked).
+Otherwise if you choose to not support further development by ctubio, just keep running some old commit and do not upgrade (any commit prior to v0.3.0 was completely unlocked).
 
 ### Trading for Fun
 
