@@ -63,4 +63,5 @@ export class ActiveRepository implements Interfaces.IRepository<boolean> {
             this.NewParameters.trigger();
             this._pub.publish(this.latest);
         }
-    };
+    }
+};
