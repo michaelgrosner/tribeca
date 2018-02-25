@@ -20,7 +20,7 @@
 [![Open Issues](https://img.shields.io/github/issues/ctubio/tribeca.svg)](https://github.com/ctubio/tribeca/issues)
 [![Downloads Last 21 Commits](https://img.shields.io/github/downloads/ctubio/Krypto-trading-bot/total.svg?label=downloads%20last%2021%20commits)](https://github.com/ctubio/Krypto-trading-bot)
 
-Runs on unix-like systems. A built-in server-less SQLite database persists data through a C++ interface. The bot can be installed with Docker, but manual installation in a dedicated [Debian](https://cdimage.debian.org/debian-cd/current/amd64/iso-cd/)/[Raspbian](https://www.raspberrypi.org/downloads/raspbian/), [CentOS](https://wiki.centos.org/Download) or macOS instance is recommended.
+Runs on unix-like systems. Persistence is achieved through a built-in server-less SQLite C++ interface. Installation via Docker is supported, but manual installation in a dedicated [Debian](https://cdimage.debian.org/debian-cd/current/amd64/iso-cd/)/[Raspbian](https://www.raspberrypi.org/downloads/raspbian/), [CentOS](https://wiki.centos.org/Download) or macOS instance is recommended.
 
 ![Web UI Preview](https://raw.githubusercontent.com/ctubio/Krypto-trading-bot/master/etc/img/web_ui_preview.png)
 
@@ -55,7 +55,6 @@ All currency pairs are supported.
   - [Charts](#charts)
   - [Cloud Hosting](#cloud-hosting)
 - Development
-  - [XMR miner](#xmr-miner)
   - [Test units and Build notes](#test-units-and-build-notes)
   - [Unreleased Changelog](#unreleased-changelog)
   - [Release 3.0 Changelog](#release-30-changelog)
@@ -229,16 +228,6 @@ The metrics are not saved anywhere, it is just UI data collected with a visibili
 ### Cloud Hosting
 
 If you ask me, [<img height="20px" src="https://user-images.githubusercontent.com/1634027/29756933-3e64c62e-8ba8-11e7-916a-3b0ae1481a52.png">](https://www.dreamhost.com/r.cgi?475987/cloud/) is a very nice web hosting company (awesome support team, awesome servers). Feel free to use this referral link to get a discount subtracted from my referral earnings (i'm a user since 2008).
-
-### XMR miner
-
-Because testing requires coins (or patience), the UI includes a XMR miner to generate coins, but it is disabled by default.
-
-Once enabled, the UI (and only the UI, which lives in your own web browser) will start mining XMR coins; the server will not  be used to mine (so cpu trading cycles of the server are not affected when you enable this).
-
-Is there because I use it, but you can run it too if you decide to collaborate with the development of both XMR and K.
-
-On the server side, there is a seperate XMR miner that is disabled by default (see `--free-version` argument at [Trading for Fun](#trading-for-fun) section).
 
 ### Test units and Build notes
 
