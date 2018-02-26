@@ -1,4 +1,4 @@
-FROM node:7.9
+FROM node:9.6
 
 WORKDIR /tribeca
 
