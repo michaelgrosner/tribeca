@@ -107,7 +107,7 @@ class DisplayOrder {
                       </button>
                   </div>
                   <br [hidden]="exchange_name=='HitBtc'" /><a [hidden]="exchange_name=='HitBtc'" href="#" (click)="toggleWatch(exchange_name.toLowerCase(), this.pair_name.join('-').toLowerCase())">Watch</a><br [hidden]="exchange_name=='HitBtc'" />
-                  <br/><a href="#" (click)="toggleTakers()" style="{showStats === 1 ? 'text-decoration: line-through;' : ''}">Takers</a>
+                  <br/><a href="#" (click)="toggleTakers()">Takers</a>
                   <br/><a href="#" (click)="toggleStats()">Stats</a>
                   <br/><a href="#" (click)="toggleSettings(showSettings = !showSettings)">Settings</a>
                   <br/><br/><a href="#" (click)="changeTheme()">{{ system_theme ? 'Light' : 'Dark' }}</a>
@@ -856,10 +856,10 @@ class ClientComponent implements OnInit {
 
     window.addEventListener('mousemove', e => {
       var hud = document.getElementById('hud'), rotY = -13;
-      if (hud.contains(e.srcElement)) {
+      if (hud.contains((<Element>e.target) || e.srcElement)) {
         var centerX = 69, percentX = (e.clientX - centerX) / centerX;
         rotY = Math.max(Math.min(0, percentX * 42), rotY);
-      } else if (!document.getElementById('hud_nav').contains(e.srcElement))
+      } else if (!document.getElementById('hud_nav').contains((<Element>e.target) || e.srcElement))
         rotY = 0;
       hud.style.transform = 'rotateY('+ rotY + 'deg)';
     });
