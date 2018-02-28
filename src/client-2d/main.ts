@@ -73,8 +73,46 @@ class DisplayOrder {
     </div>
     <div [hidden]="!online">
         <div class="container-fluid">
-            <div>
-                <div style="padding: 5px;padding-top:10px;margin-top:7px;" [ngClass]="pair.connected ? 'bg-success img-rounded' : 'bg-danger img-rounded'">
+            <div style="perspective: 100vw;">
+                <div id="hud_nav" [ngClass]="pair.connected ? 'bg-success' : 'bg-danger'">
+                  <br/><br/><a [hidden]="!exchange_market" href="{{ exchange_market }}" target="_blank">Market</a>
+                  <br/><a [hidden]="!exchange_orders" href="{{ exchange_orders }}" target="_blank">Orders</a>
+                  <br/><br/><div>
+                      <button type="button"
+                              class="btn btn-xs btn-primary navbar-btn"
+                              id="order_form"
+                              [popover]="myPopover">Submit Order
+                      </button>
+                  </div>
+                  <div style="padding-top: 2px;padding-bottom: 2px;">
+                      <button type="button"
+                              class="btn btn-xs btn-danger navbar-btn"
+                              (click)="cancelAllOrders()"
+                              data-placement="bottom">Cancel Orders
+                      </button>
+                  </div>
+                  <div style="padding-bottom: 2px;">
+                      <button type="button"
+                              class="btn btn-xs btn-info navbar-btn"
+                              (click)="cleanAllClosedOrders()"
+                              *ngIf="[1,2,3].indexOf(pair.quotingParameters.display.safety)>-1"
+                              data-placement="bottom">Clean Pongs
+                      </button>
+                  </div>
+                  <div>
+                      <button type="button"
+                              class="btn btn-xs btn-danger navbar-btn"
+                              (click)="cleanAllOrders()"
+                              data-placement="bottom">{{ [1,2,3].indexOf(pair.quotingParameters.display.safety)>-1 ? 'Clean Pings' : 'Clean Trades' }}
+                      </button>
+                  </div>
+                  <br [hidden]="exchange_name=='HitBtc'" /><a [hidden]="exchange_name=='HitBtc'" href="#" (click)="toggleWatch(exchange_name.toLowerCase(), this.pair_name.join('-').toLowerCase())">Watch</a><br [hidden]="exchange_name=='HitBtc'" />
+                  <br/><a href="#" (click)="toggleTakers()" style="{showStats === 1 ? 'text-decoration: line-through;' : ''}">Takers</a>
+                  <br/><a href="#" (click)="toggleStats()">Stats</a>
+                  <br/><a href="#" (click)="toggleSettings(showSettings = !showSettings)">Settings</a>
+                  <br/><br/><a href="#" (click)="changeTheme()">{{ system_theme ? 'Light' : 'Dark' }}</a>
+                </div>
+                <div id="hud" style="padding: 5px;padding-top:10px;margin-top:7px;" [ngClass]="pair.connected ? 'bg-success img-rounded' : 'bg-danger img-rounded'">
                     <div *ngIf="online" class="row" [hidden]="!showSettings">
                         <div class="col-md-12 col-xs-12">
                             <div class="row">
@@ -538,17 +576,13 @@ class DisplayOrder {
                                     {{ exchange_name.replace('Margin', ' [M]') }}<br/>{{ pair_name.join('/') }}
                                 </button>
                                 <wallet-position [product]="product" [setPosition]="Position"></wallet-position>
-                                <a [hidden]="!exchange_market" href="{{ exchange_market }}" target="_blank">Market</a><span [hidden]="!exchange_market || !exchange_orders ">,</span>
-                                <a [hidden]="!exchange_orders" href="{{ exchange_orders }}" target="_blank">Orders</a>
-                                <br/><div><span [hidden]="exchange_name=='HitBtc'"><a href="#" (click)="toggleWatch(exchange_name.toLowerCase(), this.pair_name.join('-').toLowerCase())">Watch</a>, </span><a href="#" (click)="toggleStats()">Stats</a></div>
-                                <a href="#" (click)="toggleSettings(showSettings = !showSettings)">Settings</a>
                             </div>
                         </div>
 
                         <div [hidden]="!showStats" [ngClass]="showStats == 2 ? 'col-md-11 col-xs-12 absolute-charts' : 'col-md-11 col-xs-12 relative-charts'">
                           <market-stats [setShowStats]="!!showStats" [product]="product" [setQuotingParameters]="pair.quotingParameters.display" [setTargetBasePosition]="TargetBasePosition"  [setMarketData]="MarketData" [setEWMAChartData]="EWMAChartData" [setTradesChartData]="TradesChartData" [setPosition]="Position" [setFairValue]="FairValue"></market-stats>
                         </div>
-                        <div [hidden]="showStats === 1" class="col-md-9 col-xs-12" style="padding-left:0px;padding-bottom:0px;">
+                        <div [hidden]="showStats === 1" class="col-md-{{ showTakers ? '9' : '11' }} col-xs-12" style="padding-left:0px;padding-bottom:0px;">
                           <div class="row">
                             <trade-safety [tradeFreq]="tradeFreq" [product]="product" [setFairValue]="FairValue" [setTradeSafety]="TradeSafety"></trade-safety>
                           </div>
@@ -559,70 +593,7 @@ class DisplayOrder {
                             <div class="col-md-8 col-xs-12" style="padding-left:0px;padding-right:0px;padding-top:0px;">
                               <div class="row">
                                 <div class="exchangeActions col-md-2 col-xs-12 text-center img-rounded">
-                                  <div>
-                                      <button type="button"
-                                              class="btn btn-primary navbar-btn"
-                                              id="order_form"
-                                              [popover]="myPopover">Submit Order
-                                      </button>
-                                      <popover-content #myPopover
-                                          placement="bottom"
-                                          [animation]="true"
-                                          [closeOnClickOutside]="true">
-                                              <table border="0" style="width:139px;">
-                                                <tr>
-                                                    <td><label (click)="rotateSide()" style="text-decoration:underline;cursor:pointer">Side:</label></td>
-                                                    <td style="padding-bottom:5px;"><select id="selectSide" class="form-control input-sm" [(ngModel)]="order.side">
-                                                      <option *ngFor="let option of order.availableSides" [ngValue]="option">{{option}}</option>
-                                                    </select>
-                                                    </td>
-                                                </tr>
-                                                <tr>
-                                                    <td><label (click)="insertBidAskPrice()" style="text-decoration:underline;cursor:pointer;padding-right:5px">Price:</label></td>
-                                                    <td style="padding-bottom:5px;"><input id="orderPriceInput" class="form-control input-sm" type="number" step="{{ product.advert.minTick}}" [(ngModel)]="order.price" /></td>
-                                                </tr>
-                                                <tr>
-                                                    <td><label (click)="insertBidAskSize()" style="text-decoration:underline;cursor:pointer">Size:</label></td>
-                                                    <td style="padding-bottom:5px;"><input id="orderSizeInput" class="form-control input-sm" type="number" step="0.01" [(ngModel)]="order.quantity" /></td>
-                                                </tr>
-                                                <tr>
-                                                    <td><label>TIF:</label></td>
-                                                    <td style="padding-bottom:5px;"><select class="form-control input-sm" [(ngModel)]="order.timeInForce">
-                                                      <option *ngFor="let option of order.availableTifs" [ngValue]="option">{{option}}</option>
-                                                    </select></td>
-                                                </tr>
-                                                <tr>
-                                                    <td><label>Type:</label></td>
-                                                    <td style="padding-bottom:5px;"><select class="form-control input-sm" [(ngModel)]="order.orderType">
-                                                      <option *ngFor="let option of order.availableOrderTypes" [ngValue]="option">{{option}}</option>
-                                                    </select></td>
-                                                </tr>
-                                                <tr><td colspan="2" class="text-center"><button type="button" class="btn btn-success" (click)="myPopover.hide()" (click)="order.submit()">Submit</button></td></tr>
-                                              </table>
-                                      </popover-content>
-                                  </div>
-                                  <div style="padding-top: 2px;padding-bottom: 2px;">
-                                      <button type="button"
-                                              class="btn btn-danger navbar-btn"
-                                              (click)="cancelAllOrders()"
-                                              data-placement="bottom">Cancel Orders
-                                      </button>
-                                  </div>
-                                  <div style="padding-bottom: 2px;">
-                                      <button type="button"
-                                              class="btn btn-info navbar-btn"
-                                              (click)="cleanAllClosedOrders()"
-                                              *ngIf="[1,2,3].indexOf(pair.quotingParameters.display.safety)>-1"
-                                              data-placement="bottom">Clean Pongs
-                                      </button>
-                                  </div>
-                                  <div>
-                                      <button type="button"
-                                              class="btn btn-danger navbar-btn"
-                                              (click)="cleanAllOrders()"
-                                              data-placement="bottom">{{ [1,2,3].indexOf(pair.quotingParameters.display.safety)>-1 ? 'Clean Pings' : 'Clean Trades' }}
-                                      </button>
-                                  </div>
+                                  <textarea [(ngModel)]="notepad" (ngModelChange)="changeNotepad(notepad)" placeholder="ephemeral notepad" class="ephemeralnotepad" style="height:131px;width: 100%;max-width: 100%;"></textarea>
                                 </div>
                                 <div class="col-md-10 col-xs-12" style="padding-right:0px;padding-top:4px;">
                                   <order-list [online]="!!pair.active.display.state" [product]="product" [setOrderList]="orderList"></order-list>
@@ -634,18 +605,52 @@ class DisplayOrder {
                             </div>
                           </div>
                         </div>
-                        <div [hidden]="showStats === 1" class="col-md-2 col-xs-12" style="padding-left:0px;">
-                          <textarea [(ngModel)]="notepad" (ngModelChange)="changeNotepad(notepad)" placeholder="ephemeral notepad" class="ephemeralnotepad" style="height:69px;width: 100%;max-width: 100%;"></textarea>
+                        <div [hidden]="!showTakers || showStats === 1" class="col-md-2 col-xs-12" style="padding-left:0px;">
                           <market-trades [product]="product"></market-trades>
                         </div>
                     </div>
                 </div>
+                <popover-content #myPopover
+                    placement="right"
+                    [animation]="true"
+                    [closeOnClickOutside]="true">
+                        <table border="0" style="width:139px;z-index:3;">
+                          <tr>
+                              <td><label (click)="rotateSide()" style="text-decoration:underline;cursor:pointer">Side:</label></td>
+                              <td style="padding-bottom:5px;"><select id="selectSide" class="form-control input-sm" [(ngModel)]="order.side">
+                                <option *ngFor="let option of order.availableSides" [ngValue]="option">{{option}}</option>
+                              </select>
+                              </td>
+                          </tr>
+                          <tr>
+                              <td><label (click)="insertBidAskPrice()" style="text-decoration:underline;cursor:pointer;padding-right:5px">Price:</label></td>
+                              <td style="padding-bottom:5px;"><input id="orderPriceInput" class="form-control input-sm" type="number" step="{{ product.advert.minTick}}" [(ngModel)]="order.price" /></td>
+                          </tr>
+                          <tr>
+                              <td><label (click)="insertBidAskSize()" style="text-decoration:underline;cursor:pointer">Size:</label></td>
+                              <td style="padding-bottom:5px;"><input id="orderSizeInput" class="form-control input-sm" type="number" step="0.01" [(ngModel)]="order.quantity" /></td>
+                          </tr>
+                          <tr>
+                              <td><label>TIF:</label></td>
+                              <td style="padding-bottom:5px;"><select class="form-control input-sm" [(ngModel)]="order.timeInForce">
+                                <option *ngFor="let option of order.availableTifs" [ngValue]="option">{{option}}</option>
+                              </select></td>
+                          </tr>
+                          <tr>
+                              <td><label>Type:</label></td>
+                              <td style="padding-bottom:5px;"><select class="form-control input-sm" [(ngModel)]="order.orderType">
+                                <option *ngFor="let option of order.availableOrderTypes" [ngValue]="option">{{option}}</option>
+                              </select></td>
+                          </tr>
+                          <tr><td colspan="2" class="text-center"><button type="button" class="btn btn-success" (click)="myPopover.hide()" (click)="order.submit()">Submit</button></td></tr>
+                        </table>
+                </popover-content>
             </div>
         </div>
     </div>
     <address class="text-center">
       <small>
-        <a href="{{ homepage }}/blob/master/README.md" target="_blank">README</a> - <a href="{{ homepage }}/blob/master/MANUAL.md" target="_blank">MANUAL</a> - <a href="{{ homepage }}" target="_blank">SOURCE</a> - <a href="#" (click)="changeTheme()">changeTheme(<span [hidden]="!system_theme">LIGHT</span><span [hidden]="system_theme">DARK</span>)</a> - <span title="Server used RAM" style="margin-top: 6px;display: inline-block;">{{ server_memory }}</span> - <span title="Client used RAM" style="margin-top: 6px;display: inline-block;">{{ client_memory }}</span> - <span title="Database Size" style="margin-top: 6px;display: inline-block;">{{ db_size }}</span> - <span title="Pings in memory" style="margin-top: 6px;display: inline-block;">{{ tradesLength }}</span> - <span title="Market Levels in memory (bids|asks)" style="margin-top: 6px;display: inline-block;">{{ bid_levels }}|{{ ask_levels }}</span> - <a href="#" (click)="openMatryoshka()">MATRYOSHKA</a> - <a href="{{ homepage }}/issues/new?title=%5Btopic%5D%20short%20and%20sweet%20description&body=description%0Aplease,%20consider%20to%20add%20all%20possible%20details%20%28if%20any%29%20about%20your%20new%20feature%20request%20or%20bug%20report%0A%0A%2D%2D%2D%0A%60%60%60%0Aapp%20exchange%3A%20{{ exchange_name }}/{{ pair_name.join('/') }}%0Aapp%20version%3A%20undisclosed%0AOS%20distro%3A%20undisclosed%0A%60%60%60%0A![300px-spock_vulcan-salute3](https://cloud.githubusercontent.com/assets/1634027/22077151/4110e73e-ddb3-11e6-9d84-358e9f133d34.png)" target="_blank">CREATE ISSUE</a> - <a href="https://earn.com/analpaper/" target="_blank">HELP</a> - <a title="irc://irc.domirc.net:6697/##tradingBot" href="irc://irc.domirc.net:6697/##tradingBot">IRC</a>|<a target="_blank" href="https://kiwiirc.com/client/irc.domirc.net:6697/?theme=cli##tradingBot" rel="nofollow">www</a>
+        <a href="{{ homepage }}/blob/master/README.md" target="_blank">README</a> - <a href="{{ homepage }}/blob/master/MANUAL.md" target="_blank">MANUAL</a> - <a href="{{ homepage }}" target="_blank">SOURCE</a> - <span [hidden]="!online"><span title="Server used RAM" style="margin-top: 6px;display: inline-block;">{{ server_memory }}</span> - <span title="Client used RAM" style="margin-top: 6px;display: inline-block;">{{ client_memory }}</span> - <span title="Database Size" style="margin-top: 6px;display: inline-block;">{{ db_size }}</span> - <span title="Pings in memory" style="margin-top: 6px;display: inline-block;">{{ tradesLength }}</span> - <span title="Market Levels in memory (bids|asks)" style="margin-top: 6px;display: inline-block;">{{ bid_levels }}|{{ ask_levels }}</span> - </span><a href="#" (click)="openMatryoshka()">MATRYOSHKA</a> - <a href="{{ homepage }}/issues/new?title=%5Btopic%5D%20short%20and%20sweet%20description&body=description%0Aplease,%20consider%20to%20add%20all%20possible%20details%20%28if%20any%29%20about%20your%20new%20feature%20request%20or%20bug%20report%0A%0A%2D%2D%2D%0A%60%60%60%0Aapp%20exchange%3A%20{{ exchange_name }}/{{ pair_name.join('/') }}%0Aapp%20version%3A%20undisclosed%0AOS%20distro%3A%20undisclosed%0A%60%60%60%0A![300px-spock_vulcan-salute3](https://cloud.githubusercontent.com/assets/1634027/22077151/4110e73e-ddb3-11e6-9d84-358e9f133d34.png)" target="_blank">CREATE ISSUE</a> - <a href="https://earn.com/analpaper/" target="_blank">HELP</a> - <a title="irc://irc.domirc.net:6697/##tradingBot" href="irc://irc.domirc.net:6697/##tradingBot">IRC</a>|<a target="_blank" href="https://kiwiirc.com/client/irc.domirc.net:6697/?theme=cli##tradingBot" rel="nofollow">www</a>
       </small>
     </address>
     <iframe id="matryoshka" style="margin:0px;padding:0px;border:0px;width:100%;height:0px;" src="about:blank"></iframe>
@@ -664,6 +669,7 @@ class ClientComponent implements OnInit {
   public notepad: string;
   public online: boolean;
   public showSettings: boolean = false;
+  public showTakers: boolean = false;
   public showStats: number = 0;
   public order: DisplayOrder;
   public pair: Pair.DisplayPair;
@@ -686,6 +692,9 @@ class ClientComponent implements OnInit {
   public cleanAllOrders = () => {};
   public toggleSettings = (showSettings:boolean) => {};
   public changeNotepad = (content: string) => {};
+  public toggleTakers = () => {
+    this.showTakers = !this.showTakers;
+  };
   public toggleStats = () => {
     if (++this.showStats>=3) this.showStats = 0;
   };
@@ -844,6 +853,16 @@ class ClientComponent implements OnInit {
         .fire([showSettings]);
       setTimeout(this.resizeMatryoshka, 100);
     }
+
+    window.addEventListener('mousemove', e => {
+      var hud = document.getElementById('hud'), rotY = -13;
+      if (hud.contains(e.srcElement)) {
+        var centerX = 69, percentX = (e.clientX - centerX) / centerX;
+        rotY = Math.max(Math.min(0, percentX * 42), rotY);
+      } else if (!document.getElementById('hud_nav').contains(e.srcElement))
+        rotY = 0;
+      hud.style.transform = 'rotateY('+ rotY + 'deg)';
+    });
 
     window.addEventListener("message", e => {
       if (!e.data.indexOf) return;

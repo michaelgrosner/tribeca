@@ -12,6 +12,7 @@ html {
 
 body {
   margin: 0;
+  overflow-x:hidden;
 }
 
 article, aside, details, figcaption, figure, footer, header, hgroup, main, menu, nav, section, summary {
@@ -302,7 +303,7 @@ html {
 
 body {
   font-family: monospace;
-  font-size: 11px;
+  font-size: 13px;
   line-height: 1.1;
   color: #333;
   background-color: #fff;
@@ -675,7 +676,6 @@ address {
 .container, .container-fluid {
   margin-right: auto;
   margin-left: auto;
-  padding-left: 7.5px;
   padding-right: 7.5px;
 }
 
@@ -5984,4 +5984,21 @@ tr.chatbro_message {
   &:last-child td:nth-child(3) {
     padding-bottom: 7px !important;
   }
+}
+
+div#hud {
+  transition:ease 1s;
+  z-index: 1;
+  margin-left: 7.5px;
+}
+
+div#hud_nav {
+  width: 10em;
+  height: 100%;
+  position: absolute;
+  transform: rotatey(45deg);
+  z-index: -1;
+  border-radius: 0px 6px 6px 0px;
+  padding-top: 21px;
+  padding-left: 10px;
 }

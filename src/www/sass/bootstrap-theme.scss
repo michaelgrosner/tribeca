@@ -454,6 +454,10 @@
   filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ffdff0d8', endColorstr='#ffd0e9c6', GradientType=0);
 }
 
+.bg-success {
+  background-color: rgba(223, 240, 216, 0.90);
+}
+
 .panel-info > .panel-heading {
   background-image: -webkit-linear-gradient(top, #d9edf7 0, #c4e3f3 100%);
   background-image: -o-linear-gradient(top, #d9edf7 0, #c4e3f3 100%);
@@ -495,7 +499,7 @@
 
 .btn-xs, .btn-group-xs > .btn {
   padding: 1px 3px;
-  font-size: 9px;
+  font-size: 11px;
   line-height: 1.1;
   border-radius: 3px;
 }
@@ -1008,4 +1012,8 @@
   padding-bottom: 8px;
   border-top-left-radius: 0px;
   border-top-right-radius: 0px;
+}
+
+div#hud, div#hud_nav {
+  border: 1px solid white;
 }

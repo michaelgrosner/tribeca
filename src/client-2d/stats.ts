@@ -8,10 +8,10 @@ import * as Models from './models';
   selector: 'market-stats',
   template: `<div class="col-md-6 col-xs-6">
   <table><tr><td>
-    <chart style="position:relative;top:5px;height:380px;width:700px;" [options]="fvChartOptions" (load)="saveInstance($event.context, 'fv')"></chart>
+    <chart style="position:relative;top:5px;height:330px;width:700px;" [options]="fvChartOptions" (load)="saveInstance($event.context, 'fv')"></chart>
   </td><td>
-    <chart style="position:relative;top:10px;height:180px;width:700px;" [options]="baseChartOptions" (load)="saveInstance($event.context, 'base')"></chart>
-    <chart style="position:relative;top:11px;height:180px;width:700px;" [options]="quoteChartOptions" (load)="saveInstance($event.context, 'quote')"></chart>
+    <chart style="position:relative;top:10px;height:155px;width:700px;" [options]="baseChartOptions" (load)="saveInstance($event.context, 'base')"></chart>
+    <chart style="position:relative;top:11px;height:155px;width:700px;" [options]="quoteChartOptions" (load)="saveInstance($event.context, 'quote')"></chart>
   </td></tr></table>
     </div>`
 })
@@ -71,7 +71,7 @@ export class StatsComponent implements OnInit {
     chart: {
         type: 'bubble',
         width: 700,
-        height: 380,
+        height: 330,
         zoomType: false,
         backgroundColor:'rgba(255, 255, 255, 0)',
     },
@@ -312,7 +312,7 @@ export class StatsComponent implements OnInit {
     title: 'quote wallet',
     chart: {
         width: 700,
-        height: 180,
+        height: 155,
         zoomType: false,
         resetZoomButton: {theme: {display: 'none'}},
         backgroundColor:'rgba(255, 255, 255, 0)'
@@ -391,7 +391,7 @@ export class StatsComponent implements OnInit {
     title: 'base wallet',
     chart: {
         width: 700,
-        height: 180,
+        height: 155,
         zoomType: false,
         resetZoomButton: {theme: {display: 'none'}},
         backgroundColor:'rgba(255, 255, 255, 0)'

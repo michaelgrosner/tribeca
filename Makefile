@@ -1,8 +1,8 @@
 K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
-PATCH    = 3
-BUILD    = 2
+PATCH    = 4
+BUILD    = 0
 CHOST   ?= $(shell $(MAKE) CHOST= chost)
 CARCH    = x86_64-linux-gnu arm-linux-gnueabihf aarch64-linux-gnu x86_64-apple-darwin17 x86_64-w64-mingw32
 KLOCAL  := build-$(CHOST)/local
