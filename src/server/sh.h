@@ -230,7 +230,7 @@ namespace K {
         wprintw(wLog, string(e).append(" TRADE ").data());
         wattroff(wLog, A_BOLD);
         stringstream ss;
-        ss << setprecision(8) << fixed << (k.side == mSide::Bid ? "BUY " : "SELL ") << k.quantity << " " << k.pair.base << " at price " << k.price << " " << k.pair.quote << " (value " << k.value << " " << k.pair.quote << ")";
+        ss << setprecision(8) << fixed << (k.side == mSide::Bid ? "BUY  " : "SELL ") << k.quantity << " " << k.pair.base << " at price " << k.price << " " << k.pair.quote << " (value " << k.value << " " << k.pair.quote << ")";
         wprintw(wLog, ss.str().data());
         wprintw(wLog, ".\n");
         wattroff(wLog, COLOR_PAIR(k.side == mSide::Bid ? COLOR_CYAN : COLOR_MAGENTA));
@@ -298,7 +298,7 @@ namespace K {
         int l = p,
             y = getmaxy(wBorder),
             x = getmaxx(wBorder),
-            k = y - openOrders.size() - 1,
+            k = y - max((int)openOrders.size(), !gwConnectButton ? 0 : 2) - 1,
             P = k;
         while (l<y) mvwhline(wBorder, l++, 1, ' ', x-1);
         if (k!=p) {
