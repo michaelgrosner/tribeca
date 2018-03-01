@@ -196,7 +196,7 @@ namespace K {
         ) {
           mAmount qty_ = qtyTrade;
           if (_near or _far)
-            mAmount qty_ = fmin(qtyMax - *qty, qty_);
+            qty_ = fmin(qtyMax - *qty, qty_);
           *ping += priceTrade * qty_;
           *qty += qty_;
         }
