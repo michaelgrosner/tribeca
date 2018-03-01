@@ -151,12 +151,11 @@ namespace K {
       };
       static string output(string cmd) {
         string data;
-        FILE *stream;
-        const int max_buffer = 256;
-        char buffer[max_buffer];
         cmd.append(" 2>&1");
-        stream = popen(cmd.data(), "r");
+        FILE *stream = popen(cmd.data(), "r");
         if (stream) {
+          const int max_buffer = 256;
+          char buffer[max_buffer];
           while (!feof(stream))
             if (fgets(buffer, max_buffer, stream) != NULL) data.append(buffer);
           pclose(stream);

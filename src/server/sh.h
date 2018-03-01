@@ -22,7 +22,7 @@ namespace K {
         cout << BGREEN << "K" << RGREEN << " build " << K_BUILD << " " << K_STAMP << "." << BRED << '\n';
         gwEndings.push_back(&happyEnding);
         if (access(".git", F_OK) != -1) {
-          FN::output("git fetch");
+          system("git fetch");
           string k = changelog();
           logVer(k, count(k.begin(), k.end(), '\n'));
         } else logVer("", -1);
