@@ -2,7 +2,7 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
 PATCH    = 4
-BUILD    = 3
+BUILD    = 4
 CHOST   ?= $(shell $(MAKE) CHOST= chost)
 CARCH    = x86_64-linux-gnu arm-linux-gnueabihf aarch64-linux-gnu x86_64-apple-darwin17 x86_64-w64-mingw32
 KLOCAL  := build-$(CHOST)/local
@@ -386,27 +386,30 @@ png: etc/${PNG}.png etc/${PNG}.json
 png-check: etc/${PNG}.png
 	@test -n "`identify -verbose etc/${PNG}.png | grep 'K\.conf'`" && echo Configuration injected into etc/${PNG}.png OK, feel free to remove etc/${PNG}.json anytime. || echo nope, injection failed.
 
+checkOK:
+	git diff && git status && read ctrl_c && KALL=1 $(MAKE) K release
+
 MAJORcheckOK:
-	@sed -i "s/^\(MAJOR    = \).*$$/\1$(shell expr $(MAJOR) + 1)/" Makefile
+	@sed -i "s/^\(MAJOR    =\).*$$/\1 $(shell expr $(MAJOR) + 1)/" Makefile
 	@sed -i "s/^\(MINOR    =\).*$$/\1 0/" Makefile
 	@sed -i "s/^\(PATCH    =\).*$$/\1 0/" Makefile
 	@sed -i "s/^\(BUILD    =\).*$$/\1 0/" Makefile
-	KALL=1 $(MAKE) K release
+	$(MAKE) checkOK
 
-MINORheckOK:
-	@sed -i "s/^\(MINOR    = \).*$$/\1$(shell expr $(MINOR) + 1)/" Makefile
+MINORcheckOK:
+	@sed -i "s/^\(MINOR    =\).*$$/\1 $(shell expr $(MINOR) + 1)/" Makefile
 	@sed -i "s/^\(PATCH    =\).*$$/\1 0/" Makefile
 	@sed -i "s/^\(BUILD    =\).*$$/\1 0/" Makefile
-	KALL=1 $(MAKE) K release
+	$(MAKE) checkOK
 
 PATCHcheckOK:
-	@sed -i "s/^\(PATCH    = \).*$$/\1$(shell expr $(PATCH) + 1)/" Makefile
+	@sed -i "s/^\(PATCH    =\).*$$/\1 $(shell expr $(PATCH) + 1)/" Makefile
 	@sed -i "s/^\(BUILD    =\).*$$/\1 0/" Makefile
-	KALL=1 $(MAKE) K release
+	$(MAKE) checkOK
 
 BUILDcheckOK:
-	@sed -i "s/^\(BUILD    = \).*$$/\1$(shell expr $(BUILD) + 1)/" Makefile
-	KALL=1 $(MAKE) K release
+	@sed -i "s/^\(BUILD    =\).*$$/\1 $(shell expr $(BUILD) + 1)/" Makefile
+	$(MAKE) checkOK
 
 release:
 ifdef KALL

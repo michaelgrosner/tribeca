@@ -75,7 +75,7 @@ class DisplayOrder {
         <div class="container-fluid">
             <div style="perspective: 100vw;">
                 <div id="hud_nav" [ngClass]="pair.connected ? 'bg-success' : 'bg-danger'">
-                  <br/><br/><a [hidden]="!exchange_market" href="{{ exchange_market }}" target="_blank">Market</a>
+                  <a [hidden]="!exchange_market" href="{{ exchange_market }}" target="_blank">Market</a>
                   <br/><a [hidden]="!exchange_orders" href="{{ exchange_orders }}" target="_blank">Orders</a>
                   <br/><br/><div>
                       <button type="button"
