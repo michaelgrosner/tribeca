@@ -855,6 +855,7 @@ class ClientComponent implements OnInit {
     }
 
     window.addEventListener('mousemove', e => {
+      if (window.innerWidth <= 991) return;
       var hud = document.getElementById('hud'), rotY = -13;
       if (hud.contains((<Element>e.target) || e.srcElement)) {
         var centerX = 69, percentX = (e.clientX - centerX) / centerX;

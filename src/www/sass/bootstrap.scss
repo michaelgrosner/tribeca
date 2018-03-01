@@ -5999,6 +5999,13 @@ div#hud_nav {
   transform: rotateY(45deg);
   z-index: -1;
   border-radius: 0px 6px 6px 0px;
-  padding-top: 21px;
-  padding-left: 10px;
+  padding: 36px 0px 21px 10px;
+}
+@media (max-width: 991px) {
+  div#hud_nav {
+    transform: rotateY(0deg);
+    height: inherit;
+    position: inherit;
+    padding-top: 21px;
+  }
 }
