@@ -121,8 +121,8 @@ interface MarketTrade {
 }
 
 class SideMarketData {
-    private readonly _data : Map<string, Models.MarketSide>;
-    private readonly _collator = new Intl.Collator(undefined, {numeric: true, sensitivity: 'base'})
+    private _data : Map<string, Models.MarketSide>;
+    private _collator = new Intl.Collator(undefined, {numeric: true, sensitivity: 'base'})
 
     constructor(side: Models.Side) {
         const compare = side === Models.Side.Bid ? 
@@ -169,12 +169,12 @@ class SideMarketData {
 class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
     MarketData = new Utils.Evt<Models.Market>();
     MarketTrade = new Utils.Evt<Models.GatewayMarketTrade>();
-    private readonly _marketDataWs : WebSocket;
+    private _marketDataWs : WebSocket;
 
     private _hasProcessedSnapshot = false;
 
-    private readonly _lastBids = new SideMarketData(Models.Side.Bid);
-    private readonly _lastAsks = new SideMarketData(Models.Side.Ask);
+    private _lastBids = new SideMarketData(Models.Side.Bid);
+    private _lastAsks = new SideMarketData(Models.Side.Ask);
     private onMarketDataIncrementalRefresh = (msg : MarketDataIncrementalRefresh, t : Date) => {
         if (msg.symbol !== this._symbolProvider.symbol || !this._hasProcessedSnapshot) return;
         this.onMarketDataUpdate(msg.bid, msg.ask, t);
@@ -230,7 +230,7 @@ class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
 
     ConnectChanged = new Utils.Evt<Models.ConnectivityStatus>();
     private onConnectionStatusChange = () => {
-        if (this._marketDataWs.isConnected && this._tradesClient.connected) {
+        if (this._marketDataWs.isConnected) {
             this.ConnectChanged.trigger(Models.ConnectivityStatus.Connected);
         }
         else {
@@ -250,7 +250,6 @@ class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
         this.MarketTrade.trigger(new Models.GatewayMarketTrade(t.price, t.amount, new Date(), false, side));
     };
 
-    private readonly _tradesClient : SocketIOClient.Socket;
     private readonly _log = log("tribeca:gateway:HitBtcMD");
     constructor(
             config : Config.IConfigProvider, 
@@ -263,11 +262,6 @@ class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
             this.onConnectionStatusChange, 
             this.onConnectionStatusChange);
         this._marketDataWs.connect();
-
-        this._tradesClient = io.connect(config.GetString("HitBtcSocketIoUrl") + "/trades/" + this._symbolProvider.symbol);
-        this._tradesClient.on("connect", this.onConnectionStatusChange);
-        this._tradesClient.on("trade", this.onTrade);
-        this._tradesClient.on("disconnect", this.onConnectionStatusChange);
 
         request.get(
             {url: url.resolve(config.GetString("HitBtcPullUrl"), "/api/1/public/" + this._symbolProvider.symbol + "/orderbook")},
@@ -292,7 +286,7 @@ class HitBtcMarketDataGateway implements Interfaces.IMarketDataGateway {
 
 class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
     OrderUpdate = new Utils.Evt<Models.OrderStatusUpdate>();
-    private readonly _orderEntryWs : WebSocket;
+    private _orderEntryWs : WebSocket;
 
     public cancelsByClientOrderId = true;
     
@@ -474,19 +468,25 @@ class HitBtcOrderEntryGateway implements Interfaces.IOrderEntryGateway {
 
     private onMessage = (raw : Models.Timestamped<string>) => {
         try {
-            const msg = JSON.parse(raw.data);
-
-            if (this._log.debug())
-                this._log.debug(msg, "message");
-
-            if (msg.hasOwnProperty("ExecutionReport")) {
-                this.onExecutionReport(new Models.Timestamped(msg.ExecutionReport, raw.time));
-            }
-            else if (msg.hasOwnProperty("CancelReject")) {
-                this.onCancelReject(new Models.Timestamped(msg.CancelReject, raw.time));
-            }
-            else {
-                this._log.info("unhandled message", msg);
+            if (raw.data == 'Slow down... You should login first.')
+            {
+                this.sendAuth("Login",{});
+                this.onConnectionStatusChange();
+            } else {
+                const msg = JSON.parse(raw.data);
+    
+                if (this._log.debug())
+                    this._log.debug(msg, "message");
+    
+                if (msg.hasOwnProperty("ExecutionReport")) {
+                    this.onExecutionReport(new Models.Timestamped(msg.ExecutionReport, raw.time));
+                }
+                else if (msg.hasOwnProperty("CancelReject")) {
+                    this.onCancelReject(new Models.Timestamped(msg.CancelReject, raw.time));
+                }
+                else {
+                    this._log.info("unhandled message", msg);
+                }
             }
         }
         catch (e) {
