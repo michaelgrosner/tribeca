@@ -40,28 +40,25 @@ namespace K {
           ((SH*)screen)->logUIsess(--connections, webSocket->getAddress().address);
         });
         ((EV*)events)->uiGroup->onHttpRequest([&](uWS::HttpResponse *res, uWS::HttpRequest req, char *data, size_t length, size_t remainingBytes) {
-          string document;
-          string auth = req.getHeader("authorization").toString();
-          string addr = res->getHttpSocket()->getAddress().address;
+          string document,
+                 content,
+                 addr = res->getHttpSocket()->getAddress().address;
+          const string auth = req.getHeader("authorization").toString();
           if (addr.length() > 7 and addr.substr(0, 7) == "::ffff:") addr = addr.substr(7);
           if (addr.length() > 7 and !((CF*)config)->argWhitelist.empty() and ((CF*)config)->argWhitelist.find(addr) == string::npos) {
             ((SH*)screen)->log("UI", "dropping gzip bomb on", addr);
-            document = "HTTP/1.1 200 OK\r\nConnection: keep-alive\r\nAccept-Ranges: bytes\r\nVary: Accept-Encoding\r\nCache-Control: public, max-age=0\r\n";
-            document += "Content-Encoding: gzip\r\nContent-Length: " + to_string(_www_gzip_bomb_len) + "\r\n\r\n" + string(&_www_gzip_bomb, _www_gzip_bomb_len);
-            res->write(document.data(), document.length());
+            document = "HTTP/1.1 200 OK\r\nConnection: keep-alive\r\nAccept-Ranges: bytes\r\nVary: Accept-Encoding\r\nCache-Control: public, max-age=0\r\nContent-Encoding: gzip\r\n";
+            content = string(&_www_gzip_bomb, _www_gzip_bomb_len);
           } else if (!B64auth.empty() and auth.empty()) {
             ((SH*)screen)->log("UI", "authorization attempt from", addr);
-            document = "HTTP/1.1 401 Unauthorized\r\nWWW-Authenticate: Basic realm=\"Basic Authorization\"\r\nConnection: keep-alive\r\nAccept-Ranges: bytes\r\nVary: Accept-Encoding\r\nContent-Type:text/plain; charset=UTF-8\r\nContent-Length: 0\r\n\r\n";
-            res->write(document.data(), document.length());
+            document = "HTTP/1.1 401 Unauthorized\r\nWWW-Authenticate: Basic realm=\"Basic Authorization\"\r\nConnection: keep-alive\r\nAccept-Ranges: bytes\r\nVary: Accept-Encoding\r\nContent-Type:text/plain; charset=UTF-8\r\n";
           } else if (!B64auth.empty() and auth != B64auth) {
             ((SH*)screen)->log("UI", "authorization failed from", addr);
-            document = "HTTP/1.1 403 Forbidden\r\nConnection: keep-alive\r\nAccept-Ranges: bytes\r\nVary: Accept-Encoding\r\nContent-Type:text/plain; charset=UTF-8\r\nContent-Length: 0\r\n\r\n";
-            res->write(document.data(), document.length());
+            document = "HTTP/1.1 403 Forbidden\r\nConnection: keep-alive\r\nAccept-Ranges: bytes\r\nVary: Accept-Encoding\r\nContent-Type:text/plain; charset=UTF-8\r\n";
           } else if (req.getMethod() == uWS::HttpMethod::METHOD_GET) {
-            string content;
             document = "HTTP/1.1 200 OK\r\nConnection: keep-alive\r\nAccept-Ranges: bytes\r\nVary: Accept-Encoding\r\nCache-Control: public, max-age=0\r\n";
-            const string path = req.getUrl().toString();
-            const string leaf = path.substr(path.find_last_of('.')+1);
+            const string path = req.getUrl().toString(),
+                         leaf = path.substr(path.find_last_of('.')+1);
             if (leaf == "/") {
               ((SH*)screen)->log("UI", "authorization success from", addr);
               document += "Content-Type: text/html; charset=UTF-8\r\n";
@@ -95,9 +92,10 @@ namespace K {
                 document = "HTTP/1.1 418 I'm a teapot\r\n";
                 content = "Today, is your lucky day!";
               }
-            document += "Content-Length: " + to_string(content.length()) + "\r\n\r\n" + content;
-            res->write(document.data(), document.length());
           }
+          if (document.empty()) return;
+          document += "Content-Length: " + to_string(content.length()) + "\r\n\r\n" + content;
+          res->write(document.data(), document.length());
         });
         ((EV*)events)->uiGroup->onMessage([&](uWS::WebSocket<uWS::SERVER> *webSocket, const char *message, size_t length, uWS::OpCode opCode) {
           if (length < 2) return;
