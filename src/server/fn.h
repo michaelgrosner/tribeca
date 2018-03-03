@@ -20,10 +20,10 @@ namespace K {
         return uniform_int_distribution<unsigned long long>()(gen);
       };
       static string int45Id() {
-        return to_string(int64()).substr(0,10);
+        return to_string(int64()).substr(0, 10);
       };
       static string int32Id() {
-        return to_string(int64()).substr(0,8);
+        return to_string(int64()).substr(0, 8);
       };
       static string char16Id() {
         char s[16];
@@ -31,7 +31,7 @@ namespace K {
         return string(s, 16);
       };
       static string uuid36Id() {
-        string uuid = string(36,' ');
+        string uuid = string(36, ' ');
         unsigned long long rnd = int64();
         unsigned long long rnd_ = int64();
         uuid[8] = '-';

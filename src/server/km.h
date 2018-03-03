@@ -629,7 +629,6 @@ namespace K {
               BBLUE[]  = "\033[1;34m", BPURPLE[] = "\033[1;35m", BCYAN[]  = "\033[1;36m", BWHITE[]  = "\033[1;37m";
   static ostringstream             THIS_WAS_A_TRIUMPH;
   static vector<function<void()>*> gwEndings;
-  static function<void()>* shResize;
   static void *screen = nullptr;
   class Gw {
     public:

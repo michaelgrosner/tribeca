@@ -56,9 +56,6 @@ namespace K {
         refresh();
         hotkeys();
       };
-      static void sigResize(int sig) {
-        (*shResize)();
-      };
       static string changelog() {
         return FN::output("test -d .git && git --no-pager log --graph --oneline @..@{u}");
       };
@@ -381,21 +378,21 @@ namespace K {
       void hotkeys() {
         hotkey = ::async(launch::async, [&] { return (mHotkey)wgetch(wBorder); });
       };
-      function<void()> resize = [&]() {
 #if CAN_RESIZE
+      static function<void()>* shResize;
+      static void sigResize(int sig) { (*shResize)(); };
+      function<void()> resize = [&]() {
         struct winsize ws;
         if (ioctl(0, TIOCGWINSZ, &ws) < 0 or (ws.ws_row == getmaxy(wBorder) and ws.ws_col == getmaxx(wBorder))) return;
-#endif
         werase(wBorder);
         werase(wLog);
-#if CAN_RESIZE
         if (ws.ws_row < 10) ws.ws_row = 10;
         if (ws.ws_col < 30) ws.ws_col = 30;
         wresize(wBorder, ws.ws_row, ws.ws_col);
         resizeterm(ws.ws_row, ws.ws_col);
-#endif
         refresh();
       };
+#endif
   };
 }
 
