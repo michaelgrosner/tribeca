@@ -626,10 +626,10 @@ namespace K {
   static char RBLACK[] = "\033[0;30m", RRED[]    = "\033[0;31m", RGREEN[] = "\033[0;32m", RYELLOW[] = "\033[0;33m",
               RBLUE[]  = "\033[0;34m", RPURPLE[] = "\033[0;35m", RCYAN[]  = "\033[0;36m", RWHITE[]  = "\033[0;37m",
               BBLACK[] = "\033[1;30m", BRED[]    = "\033[1;31m", BGREEN[] = "\033[1;32m", BYELLOW[] = "\033[1;33m",
-              BBLUE[]  = "\033[1;34m", BPURPLE[] = "\033[1;35m", BCYAN[]  = "\033[1;36m", BWHITE[]  = "\033[1;37m";
+              BBLUE[]  = "\033[1;34m", BPURPLE[] = "\033[1;35m", BCYAN[]  = "\033[1;36m", BWHITE[]  = "\033[1;37m",
+              RRESET[] = "\033[0m";
   static ostringstream             THIS_WAS_A_TRIUMPH;
   static vector<function<void()>*> gwEndings;
-  static void *screen = nullptr;
   class Gw {
     public:
       virtual string A() = 0;
@@ -707,6 +707,7 @@ namespace K {
     protected:
       Gw             *gw = nullptr;
       mQuotingParams *qp = nullptr;
+      void           *screen = nullptr;
       Klass          *config = nullptr,
                      *events = nullptr,
                      *memory = nullptr,
@@ -735,6 +736,7 @@ namespace K {
       };
       void gwLink(Gw *k) { gw = k; };
       void qpLink(mQuotingParams *k) { qp = k; };
+      void shLink( void *k) { screen = k; };
       void cfLink(Klass &k) { config = &k; };
       void evLink(Klass &k) { events = &k; };
       void dbLink(Klass &k) { memory = &k; };
@@ -750,7 +752,9 @@ namespace K {
     public:
       void link(Klass &EV, Klass &DB, Klass &UI, Klass &QP, Klass &OG, Klass &MG, Klass &PG, Klass &QE, Klass &GW) {
         Klass &CF = *this;
+        void *sh = screen;
         EV.gwLink(gw);                UI.gwLink(gw);                OG.gwLink(gw); MG.gwLink(gw); PG.gwLink(gw); QE.gwLink(gw); GW.gwLink(gw);
+        EV.shLink(sh); DB.shLink(sh); UI.shLink(sh); QP.shLink(sh); OG.shLink(sh); MG.shLink(sh); PG.shLink(sh); QE.shLink(sh); GW.shLink(sh);
         EV.cfLink(CF); DB.cfLink(CF); UI.cfLink(CF);                OG.cfLink(CF); MG.cfLink(CF); PG.cfLink(CF); QE.cfLink(CF); GW.cfLink(CF);
                        DB.evLink(EV); UI.evLink(EV); QP.evLink(EV); OG.evLink(EV); MG.evLink(EV); PG.evLink(EV); QE.evLink(EV); GW.evLink(EV);
                                       UI.dbLink(DB); QP.dbLink(DB); OG.dbLink(DB); MG.dbLink(DB); PG.dbLink(DB);

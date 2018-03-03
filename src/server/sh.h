@@ -8,7 +8,7 @@ namespace K {
       map<mHotkey, function<void()>*> hotFn;
       WINDOW *wBorder = nullptr,
              *wLog    = nullptr;
-      int p = 0,
+      int cursor = 0,
           spin = 0;
       string title = "?";
       multimap<mPrice, mOrder, greater<mPrice>> openOrders;
@@ -19,7 +19,7 @@ namespace K {
                     gwConnectExchange = mConnectivity::Disconnected;
     public:
       SH() {
-        cout << BGREEN << "K" << RGREEN << " build " << K_BUILD << " " << K_STAMP << "." << BRED << '\n';
+        cout << BGREEN << "K" << RGREEN << " build " << K_BUILD << ' ' << K_STAMP << '.' << BRED << '\n';
         gwEndings.push_back(&happyEnding);
         if (access(".git", F_OK) != -1) {
           system("git fetch");
@@ -33,7 +33,7 @@ namespace K {
           cout << "NCURSES" << RRED << " Errrror:" << BRED << " Unable to initialize ncurses, try to run in your terminal \"export TERM=xterm\", or use --naked argument." << '\n';
           exit(EXIT_SUCCESS);
         }
-        title = string(argExchange) + " " + argCurrency;
+        title = string(argExchange) + ' ' + argCurrency;
         if (argColors) start_color();
         use_default_colors();
         cbreak();
@@ -95,13 +95,13 @@ namespace K {
         auto microseconds = chrono::duration_cast<chrono::microseconds>(t);
         stringstream T, T_;
         T << setfill('0')
-          << setw(2) << hours.count() << ":"
-          << setw(2) << minutes.count() << ":"
+          << setw(2) << hours.count() << ':'
+          << setw(2) << minutes.count() << ':'
           << setw(2) << seconds.count();
-        T_ << setfill('0') << "."
+        T_ << setfill('0') << '.'
            << setw(3) << milliseconds.count()
            << setw(3) << microseconds.count();
-        if (!wBorder) return string(BGREEN) + T.str() + RGREEN + T_.str() + BWHITE + " ";
+        if (!wBorder) return string(BGREEN) + T.str() + RGREEN + T_.str() + BWHITE + ' ';
         wattron(wLog, COLOR_PAIR(COLOR_GREEN));
         wattron(wLog, A_BOLD);
         wprintw(wLog, T.str().data());
@@ -214,7 +214,7 @@ namespace K {
       };
       void log(mTrade k, string e) {
         if (!wBorder) {
-          cout << stamp() << "GW " << (k.side == mSide::Bid ? RCYAN : RPURPLE) << e << " TRADE " << (k.side == mSide::Bid ? BCYAN : BPURPLE) << (k.side == mSide::Bid ? "BUY  " : "SELL ") << k.quantity << " " << k.pair.base << " at price " << k.price << " " << k.pair.quote << " (value " << k.value << " " << k.pair.quote << ").\n";
+          cout << stamp() << "GW " << (k.side == mSide::Bid ? RCYAN : RPURPLE) << e << " TRADE " << (k.side == mSide::Bid ? BCYAN : BPURPLE) << (k.side == mSide::Bid ? "BUY  " : "SELL ") << k.quantity << ' ' << k.pair.base << " at price " << k.price << ' ' << k.pair.quote << " (value " << k.value << ' ' << k.pair.quote << ").\n";
           return;
         }
         wmove(wLog, getmaxy(wLog)-1, 0);
@@ -227,7 +227,7 @@ namespace K {
         wprintw(wLog, string(e).append(" TRADE ").data());
         wattroff(wLog, A_BOLD);
         stringstream ss;
-        ss << setprecision(8) << fixed << (k.side == mSide::Bid ? "BUY  " : "SELL ") << k.quantity << " " << k.pair.base << " at price " << k.price << " " << k.pair.quote << " (value " << k.value << " " << k.pair.quote << ")";
+        ss << setprecision(8) << fixed << (k.side == mSide::Bid ? "BUY  " : "SELL ") << k.quantity << ' ' << k.pair.base << " at price " << k.price << ' ' << k.pair.quote << " (value " << k.value << ' ' << k.pair.quote << ")";
         wprintw(wLog, ss.str().data());
         wprintw(wLog, ".\n");
         wattroff(wLog, COLOR_PAIR(k.side == mSide::Bid ? COLOR_CYAN : COLOR_MAGENTA));
@@ -235,7 +235,7 @@ namespace K {
       };
       void log(string k, string s, string v) {
         if (!wBorder) {
-          cout << stamp() << k << RWHITE << " " << s << " " << RYELLOW << v << RWHITE << ".\n";
+          cout << stamp() << k << RWHITE << ' ' << s << ' ' << RYELLOW << v << RWHITE << ".\n";
           return;
         }
         wmove(wLog, getmaxy(wLog)-1, 0);
@@ -256,7 +256,7 @@ namespace K {
       };
       void log(string k, string s) {
         if (!wBorder) {
-          cout << stamp() << k << RWHITE << " " << s << ".\n";
+          cout << stamp() << k << RWHITE << ' ' << s << ".\n";
           return;
         }
         wmove(wLog, getmaxy(wLog)-1, 0);
@@ -292,36 +292,36 @@ namespace K {
       };
       void refresh() {
         if (!wBorder) return;
-        int l = p,
+        int lastcursor = cursor,
             y = getmaxy(wBorder),
             x = getmaxx(wBorder),
-            k = y - max((int)openOrders.size(), !gwConnectButton ? 0 : 2) - 1,
-            P = k;
-        while (l<y) mvwhline(wBorder, l++, 1, ' ', x-1);
-        if (k!=p) {
-          if (k<p) wscrl(wLog, p-k);
-          wresize(wLog, k-3, x-2);
-          if (k>p) wscrl(wLog, p-k);
+            yMaxLog = y - max((int)openOrders.size(), !gwConnectButton ? 0 : 2) - 1,
+            yOrders = yMaxLog;
+        while (lastcursor<y) mvwhline(wBorder, lastcursor++, 1, ' ', x-1);
+        if (yMaxLog!=cursor) {
+          if (yMaxLog<cursor) wscrl(wLog, cursor-yMaxLog);
+          wresize(wLog, yMaxLog-3, x-2);
+          if (yMaxLog>cursor) wscrl(wLog, cursor-yMaxLog);
           wrefresh(wLog);
-          p = k;
+          cursor = yMaxLog;
         }
         mvwvline(wBorder, 1, 1, ' ', y-1);
-        mvwvline(wBorder, k-1, 1, ' ', y-1);
+        mvwvline(wBorder, yMaxLog-1, 1, ' ', y-1);
         for (map<mPrice, mOrder, greater<mPrice>>::value_type &it : openOrders) {
           wattron(wBorder, COLOR_PAIR(it.second.side == mSide::Bid ? COLOR_CYAN : COLOR_MAGENTA));
           stringstream ss;
-          ss << setprecision(8) << fixed << (it.second.side == mSide::Bid ? "BID" : "ASK") << " > " << it.second.exchangeId << ": " << it.second.quantity << " " << it.second.pair.base << " at price " << it.second.price << " " << it.second.pair.quote << " (value " << abs(it.second.price * it.second.quantity) << " " << it.second.pair.quote << ").";
-          mvwaddstr(wBorder, ++P, 1, ss.str().data());
+          ss << setprecision(8) << fixed << (it.second.side == mSide::Bid ? "BID" : "ASK") << " > " << it.second.exchangeId << ": " << it.second.quantity << ' ' << it.second.pair.base << " at price " << it.second.price << ' ' << it.second.pair.quote << " (value " << abs(it.second.price * it.second.quantity) << ' ' << it.second.pair.quote << ").";
+          mvwaddstr(wBorder, ++yOrders, 1, ss.str().data());
           wattroff(wBorder, COLOR_PAIR(it.second.side == mSide::Bid ? COLOR_CYAN : COLOR_MAGENTA));
         }
         mvwaddch(wBorder, 0, 0, ACS_ULCORNER);
         mvwhline(wBorder, 0, 1, ACS_HLINE, max(80, x));
-        mvwvline(wBorder, 1, 0, ACS_VLINE, k);
-        mvwvline(wBorder, k, 0, ACS_LTEE, y);
+        mvwvline(wBorder, 1, 0, ACS_VLINE, yMaxLog);
+        mvwvline(wBorder, yMaxLog, 0, ACS_LTEE, y);
         mvwaddch(wBorder, y, 0, ACS_BTEE);
         mvwaddch(wBorder, 0, 12, ACS_RTEE);
         wattron(wBorder, COLOR_PAIR(COLOR_GREEN));
-        mvwaddstr(wBorder, 0, 13, (string("   ") + K_BUILD + " " + K_STAMP + " ").data());
+        mvwaddstr(wBorder, 0, 13, (string("   ") + K_BUILD + ' ' + K_STAMP + ' ').data());
         mvwaddch(wBorder, 0, 14, 'K' | A_BOLD);
         wattroff(wBorder, COLOR_PAIR(COLOR_GREEN));
         mvwaddch(wBorder, 0, 18+string(K_BUILD).length()+string(K_STAMP).length(), ACS_LTEE);
@@ -341,10 +341,10 @@ namespace K {
         wattroff(wBorder, A_BOLD);
         waddstr(wBorder, (port ? " UI on " + protocol + " port " + to_string(port) : " headless").data());
         wattroff(wBorder, COLOR_PAIR(COLOR_GREEN));
-        mvwaddch(wBorder, k, 0, ACS_LTEE);
-        mvwhline(wBorder, k, 1, ACS_HLINE, 3);
-        mvwaddch(wBorder, k, 4, ACS_RTEE);
-        mvwaddstr(wBorder, k, 5, "< (");
+        mvwaddch(wBorder, yMaxLog, 0, ACS_LTEE);
+        mvwhline(wBorder, yMaxLog, 1, ACS_HLINE, 3);
+        mvwaddch(wBorder, yMaxLog, 4, ACS_RTEE);
+        mvwaddstr(wBorder, yMaxLog, 5, "< (");
         if (!gwConnectExchange) {
           wattron(wBorder, COLOR_PAIR(COLOR_RED));
           wattron(wBorder, A_BOLD);
@@ -366,7 +366,7 @@ namespace K {
         mvwaddch(wBorder, y-1, 0, ACS_LLCORNER);
         mvwaddstr(wBorder, 1, 2, string("|/-\\").substr(++spin, 1).data());
         if (spin==3) spin = -1;
-        move(k-1, 2);
+        move(yMaxLog-1, 2);
         wrefresh(wBorder);
         wrefresh(wLog);
       };

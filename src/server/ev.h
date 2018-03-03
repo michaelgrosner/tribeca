@@ -114,7 +114,7 @@ namespace K  {
         }
         if (k->gw->waitForData())
           aEngine->send();
-        ((SH*)screen)->waitForUser();
+        ((SH*)k->screen)->waitForUser();
       };
       inline void gwLog(string reason) {
         deferred([this, reason]() {
@@ -128,7 +128,11 @@ namespace K  {
         for (function<void()>* &it : gwEndings) (*it)();
         if (last_int_alive == EXIT_FAILURE)
           this_thread::sleep_for(chrono::seconds(3));
-        cout << ((SH*)screen)->stamp() << "K exit code " << to_string(last_int_alive) << "." << '\n';
+        cout << BGREEN << 'K'
+             << RGREEN << " exit code "
+             << BGREEN << to_string(last_int_alive)
+             << RGREEN << '.'
+             << RRESET << '\n';
         exit(last_int_alive);
       };
       static void quit(int last_int_alive) {
@@ -136,7 +140,8 @@ namespace K  {
         THIS_WAS_A_TRIUMPH
           << "Excellent decision! "
           << FN::wJet("https://api.icndb.com/jokes/random?escape=javascript&limitTo=[nerdy]", 4L)
-             .value("/value/joke"_json_pointer, "let's plant a tree instead..") << '\n';
+               .value("/value/joke"_json_pointer, "let's plant a tree instead..")
+          << '\n';
         halt(EXIT_SUCCESS);
       };
       static void  wtf(int last_int_alive) {

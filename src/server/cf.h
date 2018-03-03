@@ -22,9 +22,12 @@ namespace K {
             argHttp         = "NULL", argWss          = "NULL",
             argDatabase     = "",     argDiskdata     = "",
             argWhitelist    = "";
+    public:
+      CF() {
+        screen = new SH();
+      }
     protected:
       void load(int argc, char** argv) {
-        screen = new SH();
         static const struct option args[] = {
           {"help",         no_argument,       0,               'h'},
           {"colors",       no_argument,       &argColors,        1},
@@ -245,7 +248,8 @@ namespace K {
           RBLACK[0] = RRED[0]    = RGREEN[0] = RYELLOW[0] =
           RBLUE[0]  = RPURPLE[0] = RCYAN[0]  = RWHITE[0]  =
           BBLACK[0] = BRED[0]    = BGREEN[0] = BYELLOW[0] =
-          BBLUE[0]  = BPURPLE[0] = BCYAN[0]  = BWHITE[0]  = argColors;
+          BBLUE[0]  = BPURPLE[0] = BCYAN[0]  = BWHITE[0]  =
+          RRESET[0] = argColors;
         if (argDatabase.empty() or argDatabase == ":memory:")
           (argDatabase == ":memory:"
             ? argDiskdata
