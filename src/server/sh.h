@@ -1,6 +1,8 @@
 #ifndef K_SH_H_
 #define K_SH_H_
 
+#define _redAlert_ ((SH*)screen)->error
+
 namespace K {
   vector<function<void()>*> endingFn;
   char RBLACK[] = "\033[0;30m", RRED[]    = "\033[0;31m", RGREEN[] = "\033[0;32m", RYELLOW[] = "\033[0;33m",
@@ -73,6 +75,11 @@ namespace K {
         beep();
         endwin();
         wBorder = nullptr;
+      };
+      int error(string k, string s, bool reboot = false) {
+        quit();
+        logErr(k, s);
+        return reboot ? EXIT_FAILURE : EXIT_SUCCESS;
       };
       void waitForUser() {
         if (!hotkey.valid() or hotkey.wait_for(chrono::nanoseconds(0)) != future_status::ready) return;

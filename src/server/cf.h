@@ -189,21 +189,12 @@ namespace K {
             default : abort();
           }
         if (optind < argc) {
-          cout << "ARG" << RRED << " Errrror:" << BRED << " non-option ARGV-elements: ";
-          while(optind < argc) cout << argv[optind++];
-          cout << '\n';
-          exit(EXIT_SUCCESS);
+          string argerr;
+          while(optind < argc) argerr += string(" ") + argv[optind++];
+          exit(_redAlert_("CF", string("non-option ARGV-elements:") + argerr));
         }
-        if (argExchange.empty()) {
-          cout << "ARG" << RRED << " Errrror:" << BRED
-               << " Missing mandatory argument \"--exchange\", at least." << '\n';
-          exit(EXIT_SUCCESS);
-        }
-        if (argCurrency.find("/") == string::npos) {
-          cout << "ARG" << RRED << " Errrror:" << BRED
-               << " Invalid currency pair; must be in the format of BASE/QUOTE, like BTC/EUR." << '\n';
-          exit(EXIT_SUCCESS);
-        }
+        if (argCurrency.find("/") == string::npos)
+          exit(_redAlert_("CF", "Invalid currency pair; must be in the format of BASE/QUOTE, like BTC/EUR"));
         tidy();
       };
       void run() {
@@ -222,6 +213,8 @@ namespace K {
           argMaxLevels, argDebugSecret,
           chambers()
         );
+        if (!gw)
+          exit(_redAlert_("CF", string("Unable to load a valid gateway using --exchange=") + argExchange + " argument"));
       };
     private:
       inline mCoinId base() {

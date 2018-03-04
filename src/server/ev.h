@@ -1,8 +1,6 @@
 #ifndef K_EV_H_
 #define K_EV_H_
 
-#define _errorEvent_ ((EV*)events)->error
-
 #define _debugEvent_ ((EV*)events)->debug(__PRETTY_FUNCTION__);
 
 namespace K  {
@@ -24,16 +22,15 @@ namespace K  {
     protected:
       void load() {
         endingFn.push_back(&happyEnding);
-        endingFn.push_back(&dummyEnding);
+        endingFn.push_back(&neverEnding);
         signal(SIGINT, quit);
         signal(SIGABRT, wtf);
         signal(SIGSEGV, wtf);
 #ifndef _WIN32
         signal(SIGUSR1, wtf);
 #endif
-        tracelog += "- upstream: " + ((CF*)config)->argExchange + '\n'
-                 +  "- currency: " + ((CF*)config)->argCurrency + '\n';
-        if (!gw) exit(error("GW", string("Unable to load a valid gateway using --exchange=") + ((CF*)config)->argExchange + " argument"));
+        tracelog = "- upstream: " + ((CF*)config)->argExchange + '\n'
+                 + "- currency: " + ((CF*)config)->argCurrency + '\n';
         gw->hub = hub = new uWS::Hub(0, true);
       };
       void waitData() {
@@ -77,7 +74,7 @@ namespace K  {
           and hub->listen(((CF*)config)->argPort, uS::TLS::createContext("etc/sslcert/server.crt", "etc/sslcert/server.key", ""), 0, uiGroup)
         ) ((SH*)screen)->protocol += 'S';
         else if (!hub->listen(((CF*)config)->argPort, nullptr, 0, uiGroup))
-          exit(error("IU", string("Use another UI port number, ")
+          exit(_redAlert_("IU", string("Use another UI port number, ")
             + to_string(((CF*)config)->argPort) + " seems already in use by:\n"
             + FN::output(string("netstat -anp 2>/dev/null | grep ") + to_string(((CF*)config)->argPort))
           ));
@@ -91,11 +88,6 @@ namespace K  {
       void async(function<bool()> &fn) {
         if (fn()) aEngine->send();
       };
-      int error(string k, string s, bool reboot = false) {
-        ((SH*)screen)->quit();
-        ((SH*)screen)->logErr(k, s);
-        return reboot ? EXIT_FAILURE : EXIT_SUCCESS;
-      };
       function<void(string)> debug = [&](string k) {
         ((SH*)screen)->log("DEBUG", string("EV ") + k);
       };
@@ -103,7 +95,7 @@ namespace K  {
       function<void()> happyEnding = [&]() {
         cout << tracelog;
       };
-      function<void()> dummyEnding = [&]() {
+      function<void()> neverEnding = [&]() {
         cout << gw->name;
         for (unsigned int i = 0; i < 21; ++i)
           cout << " THE END IS NEVER";
