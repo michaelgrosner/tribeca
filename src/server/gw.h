@@ -14,7 +14,7 @@ namespace K {
            sync_orders = false;
     protected:
       void load() {                                                 _debugEvent_
-        gwEndings.back() = &happyEnding;
+        endingFn.back() = &happyEnding;
         gwAdminEnabled = (mConnectivity)((CF*)config)->argAutobot;
         handshake(gw->exchange);
       };

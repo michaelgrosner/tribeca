@@ -623,13 +623,6 @@ namespace K {
       {   "quotesInMemoryDone", k.quotesInMemoryDone   }
     };
   };
-  static char RBLACK[] = "\033[0;30m", RRED[]    = "\033[0;31m", RGREEN[] = "\033[0;32m", RYELLOW[] = "\033[0;33m",
-              RBLUE[]  = "\033[0;34m", RPURPLE[] = "\033[0;35m", RCYAN[]  = "\033[0;36m", RWHITE[]  = "\033[0;37m",
-              BBLACK[] = "\033[1;30m", BRED[]    = "\033[1;31m", BGREEN[] = "\033[1;32m", BYELLOW[] = "\033[1;33m",
-              BBLUE[]  = "\033[1;34m", BPURPLE[] = "\033[1;35m", BCYAN[]  = "\033[1;36m", BWHITE[]  = "\033[1;37m",
-              RRESET[] = "\033[0m";
-  static ostringstream             THIS_WAS_A_TRIUMPH;
-  static vector<function<void()>*> gwEndings;
   class Gw {
     public:
       virtual string A() = 0;
@@ -723,34 +716,34 @@ namespace K {
       virtual void waitUser() {};
       virtual void run() {};
     public:
-      void main(int argc, char** argv) {
+      inline void main(int argc, char** argv) {
         load(argc, argv);
         run();
       };
-      void wait() {
+      inline void wait() {
         load();
         waitData();
         waitTime();
         waitUser();
         run();
       };
-      void gwLink(Gw *k) { gw = k; };
-      void qpLink(mQuotingParams *k) { qp = k; };
-      void shLink( void *k) { screen = k; };
-      void cfLink(Klass &k) { config = &k; };
-      void evLink(Klass &k) { events = &k; };
-      void dbLink(Klass &k) { memory = &k; };
-      void uiLink(Klass &k) { client = &k; };
-      void ogLink(Klass &k) { broker = &k; };
-      void mgLink(Klass &k) { market = &k; };
-      void pgLink(Klass &k) { wallet = &k; };
-      void qeLink(Klass &k) { engine = &k; };
+      inline void gwLink(Gw *k) { gw = k; };
+      inline void qpLink(mQuotingParams *k) { qp = k; };
+      inline void shLink( void *k) { screen = k; };
+      inline void cfLink(Klass &k) { config = &k; };
+      inline void evLink(Klass &k) { events = &k; };
+      inline void dbLink(Klass &k) { memory = &k; };
+      inline void uiLink(Klass &k) { client = &k; };
+      inline void ogLink(Klass &k) { broker = &k; };
+      inline void mgLink(Klass &k) { market = &k; };
+      inline void pgLink(Klass &k) { wallet = &k; };
+      inline void qeLink(Klass &k) { engine = &k; };
   };
   class kLass: public Klass {
     private:
       mQuotingParams p;
     public:
-      void link(Klass &EV, Klass &DB, Klass &UI, Klass &QP, Klass &OG, Klass &MG, Klass &PG, Klass &QE, Klass &GW) {
+      inline void link(Klass &EV, Klass &DB, Klass &UI, Klass &QP, Klass &OG, Klass &MG, Klass &PG, Klass &QE, Klass &GW) {
         Klass &CF = *this;
         void *sh = screen;
         EV.gwLink(gw);                UI.gwLink(gw);                OG.gwLink(gw); MG.gwLink(gw); PG.gwLink(gw); QE.gwLink(gw); GW.gwLink(gw);

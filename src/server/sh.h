@@ -2,6 +2,12 @@
 #define K_SH_H_
 
 namespace K {
+  vector<function<void()>*> endingFn;
+  char RBLACK[] = "\033[0;30m", RRED[]    = "\033[0;31m", RGREEN[] = "\033[0;32m", RYELLOW[] = "\033[0;33m",
+       RBLUE[]  = "\033[0;34m", RPURPLE[] = "\033[0;35m", RCYAN[]  = "\033[0;36m", RWHITE[]  = "\033[0;37m",
+       BBLACK[] = "\033[1;30m", BRED[]    = "\033[1;31m", BGREEN[] = "\033[1;32m", BYELLOW[] = "\033[1;33m",
+       BBLUE[]  = "\033[1;34m", BPURPLE[] = "\033[1;35m", BCYAN[]  = "\033[1;36m", BWHITE[]  = "\033[1;37m",
+       RRESET[] = "\033[0m";
   class SH {
     private:
       future<mHotkey> hotkey;
@@ -20,7 +26,7 @@ namespace K {
     public:
       SH() {
         cout << BGREEN << "K" << RGREEN << " build " << K_BUILD << ' ' << K_STAMP << '.' << BRED << '\n';
-        gwEndings.push_back(&happyEnding);
+        endingFn.push_back(&happyEnding);
         if (access(".git", F_OK) != -1) {
           system("git fetch");
           string k = changelog();
@@ -50,8 +56,7 @@ namespace K {
         scrollok(wLog, true);
         idlok(wLog, true);
 #if CAN_RESIZE
-        shResize = &resize;
-        signal(SIGWINCH, sigResize);
+        signal(SIGWINCH, resize);
 #endif
         refresh();
         hotkeys();
@@ -373,14 +378,12 @@ namespace K {
     private:
       function<void()> happyEnding = [&]() {
         quit();
-        cout << '\n' << stamp() << THIS_WAS_A_TRIUMPH.str();
+        cout << '\n' << stamp();
       };
       void hotkeys() {
         hotkey = ::async(launch::async, [&] { return (mHotkey)wgetch(wBorder); });
       };
 #if CAN_RESIZE
-      static function<void()>* shResize;
-      static void sigResize(int sig) { (*shResize)(); };
       function<void()> resize = [&]() {
         struct winsize ws;
         if (ioctl(0, TIOCGWINSZ, &ws) < 0 or (ws.ws_row == getmaxy(wBorder) and ws.ws_col == getmaxx(wBorder))) return;
