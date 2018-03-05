@@ -745,9 +745,9 @@ namespace K {
     public:
       inline void link(Klass &EV, Klass &DB, Klass &UI, Klass &QP, Klass &OG, Klass &MG, Klass &PG, Klass &QE, Klass &GW) {
         Klass &CF = *this;
-        void *sh = screen;
+        void *SH = screen;
         EV.gwLink(gw);                UI.gwLink(gw);                OG.gwLink(gw); MG.gwLink(gw); PG.gwLink(gw); QE.gwLink(gw); GW.gwLink(gw);
-        EV.shLink(sh); DB.shLink(sh); UI.shLink(sh); QP.shLink(sh); OG.shLink(sh); MG.shLink(sh); PG.shLink(sh); QE.shLink(sh); GW.shLink(sh);
+        EV.shLink(SH); DB.shLink(SH); UI.shLink(SH); QP.shLink(SH); OG.shLink(SH); MG.shLink(SH); PG.shLink(SH); QE.shLink(SH); GW.shLink(SH);
         EV.cfLink(CF); DB.cfLink(CF); UI.cfLink(CF);                OG.cfLink(CF); MG.cfLink(CF); PG.cfLink(CF); QE.cfLink(CF); GW.cfLink(CF);
                        DB.evLink(EV); UI.evLink(EV); QP.evLink(EV); OG.evLink(EV); MG.evLink(EV); PG.evLink(EV); QE.evLink(EV); GW.evLink(EV);
                                       UI.dbLink(DB); QP.dbLink(DB); OG.dbLink(DB); MG.dbLink(DB); PG.dbLink(DB);
