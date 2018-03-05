@@ -191,7 +191,7 @@ namespace K {
         if (optind < argc) {
           string argerr;
           while(optind < argc) argerr += string(" ") + argv[optind++];
-          exit(_redAlert_("CF", string("non-option ARGV-elements:") + argerr));
+          exit(_redAlert_("CF", string("Invalid argument option:") + argerr));
         }
         if (argCurrency.find("/") == string::npos)
           exit(_redAlert_("CF", "Invalid currency pair; must be in the format of BASE/QUOTE, like BTC/EUR"));
@@ -214,7 +214,8 @@ namespace K {
           chambers()
         );
         if (!gw)
-          exit(_redAlert_("CF", string("Unable to load a valid gateway using --exchange=") + argExchange + " argument"));
+          exit(_redAlert_("CF", string("Unable to load a valid gateway using --exchange=")
+            + argExchange + " argument"));
       };
     private:
       inline mCoinId base() {

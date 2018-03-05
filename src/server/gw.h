@@ -217,7 +217,10 @@ namespace K {
           gw->minSize = 0.01;
         }
         if (!gw->minTick or !gw->minSize)
-          exit(_redAlert_("CF", "Unable to fetch data from " + gw->name + " for symbol \"" + gw->symbol + "\", possible error message: " + reply.dump(), true));
+          exit(_redAlert_("CF", "Unable to fetch data from " + gw->name
+            + " for symbol \"" + gw->symbol + "\", possible error message: "
+            + reply.dump(),
+          true));
         if (k != mExchange::Null)
           ((SH*)screen)->log(string("GW ") + gw->name, "allows client IP");
         stringstream ss;

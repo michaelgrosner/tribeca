@@ -58,7 +58,8 @@ namespace K {
       };
       inline void findMode(string reason) {
         if (quotingMode.find(qp->mode) == quotingMode.end())
-          exit(_redAlert_("QE", string("Invalid quoting mode ") + reason + ", consider to remove the database file"));
+          exit(_redAlert_("QE", string("Invalid quoting mode ")
+            + reason + ", consider to remove the database file"));
       }
       void calcQuote() {                                            _debugEvent_
         bidStatus = mQuoteState::MissingData;
