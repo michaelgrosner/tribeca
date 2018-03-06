@@ -18,7 +18,10 @@ namespace K {
              *wLog    = nullptr;
       int cursor = 0,
           spin = 0;
-      string title = "?";
+      string title = "?",
+             base = "?",
+             quote = "?",
+             fairValue = "?";
       multimap<mPrice, mOrder, greater<mPrice>> openOrders;
     public:
       int port = 0;
@@ -35,13 +38,15 @@ namespace K {
           logVer(k, count(k.begin(), k.end(), '\n'));
         } else logVer("", -1);
       };
-      void config(int argNaked, int argColors, string argExchange, string argCurrency) {
+      void config(string base_, string quote_, string argExchange, int argColors, int argNaked) {
         if (argNaked) return;
         if (!(wBorder = initscr())) {
           cout << "NCURSES" << RRED << " Errrror:" << BRED << " Unable to initialize ncurses, try to run in your terminal \"export TERM=xterm\", or use --naked argument." << '\n';
           exit(EXIT_SUCCESS);
         }
-        title = string(argExchange) + ' ' + argCurrency;
+        base = base_;
+        quote = quote_;
+        title = argExchange;
         if (argColors) start_color();
         use_default_colors();
         cbreak();
@@ -302,6 +307,15 @@ namespace K {
             openOrders.insert(pair<mPrice, mOrder>(it.second.price, it.second));
         refresh();
       };
+      void log(double fv) {
+        if (!wBorder) return;
+        stringstream ss;
+        ss << setprecision(8) << fixed << fv;
+        fairValue = ss.str();
+        fairValue.erase(fairValue.find_last_not_of('0') + 1, string::npos);
+        fairValue.erase(fairValue.find_last_not_of('.') + 1, string::npos);
+        refresh();
+      };
       void refresh() {
         if (!wBorder) return;
         int lastcursor = cursor,
@@ -328,6 +342,7 @@ namespace K {
         }
         mvwaddch(wBorder, 0, 0, ACS_ULCORNER);
         mvwhline(wBorder, 0, 1, ACS_HLINE, max(80, x));
+        mvwhline(wBorder, 1, 14, ' ', max(80, x)-14);
         mvwvline(wBorder, 1, 0, ACS_VLINE, yMaxLog);
         mvwvline(wBorder, yMaxLog, 0, ACS_LTEE, y);
         mvwaddch(wBorder, y, 0, ACS_BTEE);
@@ -348,16 +363,26 @@ namespace K {
         wattron(wBorder, A_BOLD);
         mvwaddstr(wBorder, 0, x-23, "ESC");
         wattroff(wBorder, A_BOLD);
+        // wattron(wBorder, COLOR_PAIR(COLOR_GREEN));
+        // mvwaddstr(wBorder, 1, x-fairValue.length(), fairValue.data());
+        // wattroff(wBorder, COLOR_PAIR(COLOR_GREEN));
         mvwaddch(wBorder, 0, 7, ACS_TTEE);
         mvwaddch(wBorder, 1, 7, ACS_LLCORNER);
         mvwhline(wBorder, 1, 8, ACS_HLINE, 4);
         mvwaddch(wBorder, 1, 12, ACS_RTEE);
-        // wattron(wBorder, COLOR_PAIR(COLOR_GREEN));
-        // wattron(wBorder, A_BOLD);
-        // mvwaddstr(wBorder, 1, 14, title.data());
-        // wattroff(wBorder, A_BOLD);
-        // waddstr(wBorder, ("Balance").data());
-        // wattroff(wBorder, COLOR_PAIR(COLOR_GREEN));
+        wattron(wBorder, COLOR_PAIR(COLOR_GREEN));
+        string fair1 = string("1 ") + base + " = ";
+        string fair2 = string(" ") + quote + ' ';
+        mvwaddstr(wBorder, 1, 14, fair1.data());
+        wattron(wBorder, A_BOLD);
+        waddstr(wBorder, fairValue.data());
+        wattroff(wBorder, A_BOLD);
+        waddstr(wBorder, fair2.data());
+        wattroff(wBorder, COLOR_PAIR(COLOR_GREEN));
+        mvwaddch(wBorder, 0, 18+title1.length()+title2.length(), ACS_TTEE);
+        mvwaddch(wBorder, 1, 18+title1.length()+title2.length(), ACS_LRCORNER);
+        mvwhline(wBorder, 1, 14+fair1.length()+fairValue.length()+fair2.length(), ACS_HLINE, 18+title1.length()+title2.length()-14-fair1.length()-fairValue.length()-fair2.length());
+        mvwaddch(wBorder, 1, 14+fair1.length()+fairValue.length()+fair2.length(), ACS_LTEE);
         mvwaddch(wBorder, yMaxLog, 0, ACS_LTEE);
         mvwhline(wBorder, yMaxLog, 1, ACS_HLINE, 3);
         mvwaddch(wBorder, yMaxLog, 4, ACS_RTEE);
