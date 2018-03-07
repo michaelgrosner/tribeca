@@ -223,15 +223,14 @@ namespace K {
           true));
         if (k != mExchange::Null)
           ((SH*)screen)->log(string("GW ") + gw->name, "allows client IP");
-        stringstream ss;
-        ss << setprecision(gw->minTick < 1e-8 ? 10 : 8) << fixed << '\n'
-          << "- autoBot: " << (!gwAdminEnabled ? "no" : "yes") << '\n'
-          << "- symbols: " << gw->symbol << '\n'
-          << "- minTick: " << gw->minTick << '\n'
-          << "- minSize: " << gw->minSize << '\n'
-          << "- makeFee: " << gw->makeFee << '\n'
-          << "- takeFee: " << gw->takeFee;
-        ((SH*)screen)->log(string("GW ") + gw->name + ":", ss.str());
+        unsigned int precision = gw->minTick < 1e-8 ? 10 : 8;
+        ((SH*)screen)->log(string("GW ") + gw->name + ":", string("\n")
+          + "- autoBot: " + (!gwAdminEnabled ? "no" : "yes") + '\n'
+          + "- symbols: " + gw->symbol + '\n'
+          + "- minTick: " + FN::strX(gw->minTick, precision) + '\n'
+          + "- minSize: " + FN::strX(gw->minSize, precision) + '\n'
+          + "- makeFee: " + FN::strX(gw->makeFee, precision) + '\n'
+          + "- takeFee: " + FN::strX(gw->takeFee, precision));
       };
   };
 }

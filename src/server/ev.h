@@ -55,7 +55,7 @@ namespace K  {
       };
     public:
       void start(/* KMxTWEpb9ig */) {
-        tracelog += "- roll-out: " + to_string(_Tstamp_) + '\n';
+        tracelog += string("- roll-out: ") + to_string(_Tstamp_) + '\n';
         hub->run();
       };
       void stop(function<void()> gwCancelAll) {
@@ -145,14 +145,14 @@ namespace K  {
 #endif
           + ' ';
         if (FN::output("test -d .git && git rev-parse @") != FN::output("test -d .git && git rev-parse @{u}"))
-          tracelog += "(deprecated K version found)." + '\n'
+          tracelog += string("(deprecated K version found).") + '\n'
             + '\n' + string(BYELLOW) + "Hint!" + string(RYELLOW)
             + '\n' + "please upgrade to the latest commit; the encountered error may be already fixed at:"
             + '\n' + SH::changelog()
             + '\n' + "If you agree, consider to run \"make latest\" prior further executions."
             + '\n' + '\n';
         else {
-          tracelog += "(Three-Headed Monkey found):" + '\n' + rollout
+          tracelog += string("(Three-Headed Monkey found):") + '\n' + rollout
             + "- lastbeat: " + to_string(_Tstamp_) + '\n'
 #ifndef _WIN32
             + "- os-uname: " + FN::output("uname -srvm")
@@ -162,7 +162,7 @@ namespace K  {
           char **trace = backtrace_symbols(k, jumps);
           size_t i;
           for (i = 0; i < jumps; i++)
-            tracelog += trace[i] + '\n';
+            tracelog += string(trace[i]) + '\n';
           free(trace)
 #endif
           ;

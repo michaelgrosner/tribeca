@@ -33,9 +33,7 @@ namespace K {
           if (k.find("pDiv") != k.end()) positionDivergence = k.value("pDiv", 0.0);
           sideAPR = k.value("sideAPR", "");
         }
-        stringstream ss;
-        ss << setprecision(8) << fixed << targetBasePosition;
-        ((SH*)screen)->log("DB", string("loaded TBP = ") + ss.str() + " " + gw->base);
+        ((SH*)screen)->log("DB", string("loaded TBP = ") + FN::str8(targetBasePosition) + " " + gw->base);
       };
       void waitData() {
         gw->evDataWallet = [&](mWallets k) {                        _debugEvent_
@@ -93,11 +91,11 @@ namespace K {
         ((UI*)client)->send(mMatter::TargetBasePosition, k);
         ((DB*)memory)->insert(mMatter::TargetBasePosition, k);
         if (!((CF*)config)->argDebugWallet) return;
-        stringstream ss;
-        ss << (int)(targetBasePosition / baseValue * 1e+2) << "% = " << setprecision(8) << fixed << targetBasePosition;
-        stringstream ss_;
-        ss_ << (int)(positionDivergence  / baseValue * 1e+2) << "% = " << setprecision(8) << fixed << positionDivergence;
-        ((SH*)screen)->log("PG", string("TBP: ") + ss.str() + " " + gw->base + ", pDiv: " + ss_.str() + " " + gw->base);
+        ((SH*)screen)->log("PG", string("TBP: ")
+          + to_string((int)(targetBasePosition / baseValue * 1e+2)) + "% = " + FN::str8(targetBasePosition)
+          + " " + gw->base + ", pDiv: "
+          + to_string((int)(positionDivergence  / baseValue * 1e+2)) + "% = " + FN::str8(positionDivergence)
+          + " " + gw->base);
       };
     private:
       function<void(json*)> helloPosition = [&](json *welcome) {

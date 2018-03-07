@@ -381,7 +381,14 @@ namespace K {
     {};
     mPosition(mAmount bA, mAmount qA, mAmount qAV, mAmount bH, mAmount qH, mAmount bT, mAmount qT, mAmount bV, mAmount qV, mAmount bP, mAmount qP, mPair p):
       baseAmount(bA), quoteAmount(qA), _quoteAmountValue(qAV), baseHeldAmount(bH), quoteHeldAmount(qH), _baseTotal(bT), _quoteTotal(qT), baseValue(bV), quoteValue(qV), profitBase(bP), profitQuote(qP), pair(p)
-    {};
+    {
+      _trunc8_(baseAmount)
+      _trunc8_(quoteAmount)
+      _trunc8_(baseHeldAmount)
+      _trunc8_(quoteHeldAmount)
+      _trunc8_(baseValue)
+      _trunc8_(quoteValue)
+    };
     bool empty() {
       return !baseValue;
     };
@@ -496,21 +503,6 @@ namespace K {
     mOrder(mRandId o, mPair P, mSide S, mAmount q, mOrderType t, bool i, mPrice p, mTimeInForce F, mStatus s, bool O):
       orderId(o), exchangeId(""), pair(P), side(S), quantity(q), type(t), isPong(i), price(p), timeInForce(F), orderStatus(s), preferPostOnly(O), tradeQuantity(0), time(0), _waitingCancel(0), latency(0)
     {};
-    string quantity2str() {
-      stringstream ss;
-      ss << setprecision(8) << fixed << quantity;
-      return ss.str();
-    };
-    string tradeQuantity2str() {
-      stringstream ss;
-      ss << setprecision(8) << fixed << tradeQuantity;
-      return ss.str();
-    };
-    string price2str() {
-      stringstream ss;
-      ss << setprecision(8) << fixed << price;
-      return ss.str();
-    };
   };
   static void to_json(json& j, const mOrder& k) {
     j = {

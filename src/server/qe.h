@@ -174,16 +174,12 @@ namespace K {
       };
       inline void applyRoundSize(mQuote *rawQuote) {
         if (!rawQuote->ask.empty()) {
-          stringstream ss;
-          ss << setprecision(8) << fixed
-             << fmax(fmin(rawQuote->ask.size, ((PG*)wallet)->position._baseTotal), gw->minSize);
-          rawQuote->ask.size = stod(ss.str());
+          rawQuote->ask.size = fmax(fmin(rawQuote->ask.size, ((PG*)wallet)->position._baseTotal), gw->minSize);
+          _trunc8_(rawQuote->ask.size)
         }
         if (!rawQuote->bid.empty()) {
-          stringstream ss_;
-          ss_ << setprecision(8) << fixed
-              << fmax(fmin(rawQuote->bid.size, ((PG*)wallet)->position._quoteTotal), gw->minSize);
-          rawQuote->bid.size = stod(ss_.str());
+          rawQuote->bid.size = fmax(fmin(rawQuote->bid.size, ((PG*)wallet)->position._quoteTotal), gw->minSize);
+          _trunc8_(rawQuote->bid.size)
         }
       };
       inline void applyDepleted(mQuote *rawQuote) {

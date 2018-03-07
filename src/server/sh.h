@@ -41,6 +41,7 @@ namespace K {
           string k = changelog();
           logVer(k, count(k.begin(), k.end(), '\n'));
         } else logVer("", -1);
+        cout << RRESET;
       };
       void config(string base_, string quote_, string argExchange, int argColors, int argNaked) {
         if (argNaked) return;
@@ -88,6 +89,7 @@ namespace K {
       int error(string k, string s, bool reboot = false) {
         quit();
         logErr(k, s);
+        cout << RRESET;
         return reboot ? EXIT_FAILURE : EXIT_SUCCESS;
       };
       void waitForUser() {
@@ -247,9 +249,11 @@ namespace K {
         wattron(wLog, COLOR_PAIR(k.side == mSide::Bid ? COLOR_CYAN : COLOR_MAGENTA));
         wprintw(wLog, string(e).append(" TRADE ").data());
         wattroff(wLog, A_BOLD);
-        stringstream ss;
-        ss << setprecision(8) << fixed << (k.side == mSide::Bid ? "BUY  " : "SELL ") << k.quantity << ' ' << k.pair.base << " at price " << k.price << ' ' << k.pair.quote << " (value " << k.value << ' ' << k.pair.quote << ")";
-        wprintw(wLog, ss.str().data());
+        wprintw(wLog, (string(k.side == mSide::Bid ? "BUY  " : "SELL ")
+          + FN::str8(k.quantity) + ' ' + k.pair.base + " at price "
+          + FN::str8(k.price) + ' ' + k.pair.quote + " (value "
+          + FN::str8(k.value) + ' ' + k.pair.quote + ")"
+        ).data());
         wprintw(wLog, ".\n");
         wattroff(wLog, COLOR_PAIR(k.side == mSide::Bid ? COLOR_CYAN : COLOR_MAGENTA));
         wrefresh(wLog);
@@ -321,11 +325,7 @@ namespace K {
       };
       void log(double fv) {
         if (!wBorder) return;
-        stringstream ss;
-        ss << setprecision(8) << fixed << fv;
-        fairValue = ss.str();
-        fairValue.erase(fairValue.find_last_not_of('0') + 1, string::npos);
-        fairValue.erase(fairValue.find_last_not_of('.') + 1, string::npos);
+        _fixed8_(fv, fairValue)
         refresh();
       };
       void refresh() {
@@ -347,9 +347,11 @@ namespace K {
         mvwvline(wBorder, yMaxLog-1, 1, ' ', y-1);
         for (map<mPrice, mOrder, greater<mPrice>>::value_type &it : openOrders) {
           wattron(wBorder, COLOR_PAIR(it.second.side == mSide::Bid ? COLOR_CYAN : COLOR_MAGENTA));
-          stringstream ss;
-          ss << setprecision(8) << fixed << (it.second.side == mSide::Bid ? "BID" : "ASK") << " > " << it.second.quantity << ' ' << it.second.pair.base << " at price " << it.second.price << ' ' << it.second.pair.quote << " (value " << abs(it.second.price * it.second.quantity) << ' ' << it.second.pair.quote << ").";
-          mvwaddstr(wBorder, ++yOrders, 1, ss.str().data());
+          mvwaddstr(wBorder, ++yOrders, 1, (string(it.second.side == mSide::Bid ? "BID" : "ASK") + " > "
+            + FN::str8(it.second.quantity) + ' ' + it.second.pair.base + " at price "
+            + FN::str8(it.second.price) + ' ' + it.second.pair.quote + " (value "
+            + FN::str8(abs(it.second.price * it.second.quantity)) + ' ' + it.second.pair.quote + ")."
+          ).data());
           wattroff(wBorder, COLOR_PAIR(it.second.side == mSide::Bid ? COLOR_CYAN : COLOR_MAGENTA));
         }
         mvwaddch(wBorder, 0, 0, ACS_ULCORNER);

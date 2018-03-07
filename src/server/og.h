@@ -14,7 +14,7 @@ namespace K {
       };
       void waitData() {
         gw->evDataOrder = [&](mOrder k) {                           _debugEvent_
-          debug(string("reply  ") + k.orderId + "::" + k.exchangeId + " [" + to_string((int)k.orderStatus) + "]: " + k.quantity2str() + "/" + k.tradeQuantity2str() + " at price " + k.price2str());
+          debug(string("reply  ") + k.orderId + "::" + k.exchangeId + " [" + to_string((int)k.orderStatus) + "]: " + FN::str8(k.quantity) + "/" + FN::str8(k.tradeQuantity) + " at price " + FN::str8(k.price));
           updateOrderState(k);
         };
       };
@@ -48,8 +48,8 @@ namespace K {
           if (orders.find(replaceOrderId) == orders.end() or orders[replaceOrderId].exchangeId.empty())
             replaceOrderId = "";
           else replaceExchangeId = orders[replaceOrderId].exchangeId;
-        debug(string(" send  ") + (replaceOrderId.empty() ? "" : replaceOrderId+ "> ") + (o->side == mSide::Bid ? "BID id " : "ASK id ") + o->orderId + ": " + o->quantity2str() + " " + o->pair.base + " at price " + o->price2str() + " " + o->pair.quote);
-        gw->send(replaceOrderId, replaceExchangeId, o->orderId, o->side, o->price2str(), o->quantity2str(), o->type, o->timeInForce, o->preferPostOnly, o->time);
+        debug(string(" send  ") + (replaceOrderId.empty() ? "" : replaceOrderId+ "> ") + (o->side == mSide::Bid ? "BID id " : "ASK id ") + o->orderId + ": " + FN::str8(o->quantity) + " " + o->pair.base + " at price " + FN::str8(o->price) + " " + o->pair.quote);
+        gw->send(replaceOrderId, replaceExchangeId, o->orderId, o->side, FN::str8(o->price), FN::str8(o->quantity), o->type, o->timeInForce, o->preferPostOnly, o->time);
         ((UI*)client)->orders_60s++;
       };
       void cancelOrder(mRandId orderId) {
@@ -131,7 +131,7 @@ namespace K {
         if (k.tradeQuantity) unclean.tradeQuantity = k.tradeQuantity;
         if (k.orderStatus == mStatus::Cancelled or k.orderStatus == mStatus::Complete)
           cleanOrder(k.orderId);
-        else debug(string(" saved ") + (o->side == mSide::Bid ? "BID id " : "ASK id ") + o->orderId + "::" + o->exchangeId + " [" + to_string((int)o->orderStatus) + "]: " + o->quantity2str() + " " + o->pair.base + " at price " + o->price2str() + " " + o->pair.quote);
+        else debug(string(" saved ") + (o->side == mSide::Bid ? "BID id " : "ASK id ") + o->orderId + "::" + o->exchangeId + " [" + to_string((int)o->orderStatus) + "]: " + FN::str8(o->quantity) + " " + o->pair.base + " at price " + FN::str8(o->price) + " " + o->pair.quote);
         debug(string("memory ") + to_string(orders.size()));
         ((EV*)events)->ogOrder(&unclean);
         if (k.tradeQuantity) toHistory(unclean);

@@ -9,11 +9,24 @@
                    chrono::system_clock::now().time_since_epoch() \
                  ).count()
 
+#define _fixedX_(d, s, x) { stringstream ss;     \
+                           ss << setprecision(x) \
+                              << fixed << d;     \
+                           s = ss.str();         }
+
+#define _fixed8_(d, s) _fixedX_(d, s, 8)
+
+#define _trunc8_(d) { string s;      \
+                      _fixed8_(d, s) \
+                      d = stod(s);   }
+
 namespace K {
   class FN {
     public:
-      static string S2l(string k) { transform(k.begin(), k.end(), k.begin(), ::tolower); return k; };
-      static string S2u(string k) { transform(k.begin(), k.end(), k.begin(), ::toupper); return k; };
+      inline static string str8(double d) { string s; _fixed8_(d, s) return s; };
+      inline static string strX(double d, unsigned int X) { string s; _fixedX_(d, s, X) return s; };
+      inline static string S2l(string s) { transform(s.begin(), s.end(), s.begin(), ::tolower); return s; };
+      inline static string S2u(string s) { transform(s.begin(), s.end(), s.begin(), ::toupper); return s; };
       static unsigned long long int64() {
         static random_device rd;
         static mt19937_64 gen(rd());

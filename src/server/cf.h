@@ -183,7 +183,8 @@ namespace K {
               << ((SH*)screen)->stamp() << RWHITE << "-v, --version             - show current build version and quit." << '\n'
               << RGREEN << "  more help: " << RYELLOW << "https://github.com/ctubio/Krypto-trading-bot/blob/master/MANUAL.md" << '\n'
               << BGREEN << "K" << RGREEN << " questions: " << RYELLOW << "irc://irc.domirc.net:6667/##tradingBot" << '\n'
-              << RGREEN << "  home page: " << RYELLOW << "https://ca.rles-tub.io./trades" << '\n';
+              << RGREEN << "  home page: " << RYELLOW << "https://ca.rles-tub.io./trades" << '\n'
+              << RRESET;
             case '?':
             case 'v': exit(EXIT_SUCCESS);
             default : abort();
