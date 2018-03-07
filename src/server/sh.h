@@ -17,7 +17,11 @@ namespace K {
       WINDOW *wBorder = nullptr,
              *wLog    = nullptr;
       int cursor = 0,
-          spin = 0;
+          spin = 0,
+          baseAmount = 0,
+          baseHeld = 0,
+          quoteAmount = 0,
+          quoteHeld = 0;
       string title = "?",
              base = "?",
              quote = "?",
@@ -59,7 +63,7 @@ namespace K {
         init_pair(COLOR_BLUE, COLOR_BLUE, COLOR_BLACK);
         init_pair(COLOR_MAGENTA, COLOR_MAGENTA, COLOR_BLACK);
         init_pair(COLOR_CYAN, COLOR_CYAN, COLOR_BLACK);
-        wLog = subwin(wBorder, getmaxy(wBorder)-4, getmaxx(wBorder)-2, 3, 2);
+        wLog = subwin(wBorder, getmaxy(wBorder)-4, getmaxx(wBorder)-2-6, 3, 2);
         scrollok(wLog, true);
         idlok(wLog, true);
 #if CAN_RESIZE
@@ -307,6 +311,14 @@ namespace K {
             openOrders.insert(pair<mPrice, mOrder>(it.second.price, it.second));
         refresh();
       };
+      void log(mPosition &pos) {
+        if (!wBorder) return;
+        baseAmount = ceil(pos.baseAmount * 10 / pos.baseValue);
+        baseHeld = ceil(pos.baseHeldAmount * 10 / pos.baseValue);
+        quoteAmount = ceil(pos.quoteAmount * 10 / pos.quoteValue);
+        quoteHeld = ceil(pos.quoteHeldAmount * 10 / pos.quoteValue);
+        refresh();
+      };
       void log(double fv) {
         if (!wBorder) return;
         stringstream ss;
@@ -326,7 +338,7 @@ namespace K {
         while (lastcursor<y) mvwhline(wBorder, lastcursor++, 1, ' ', x-1);
         if (yMaxLog!=cursor) {
           if (yMaxLog<cursor) wscrl(wLog, cursor-yMaxLog);
-          wresize(wLog, yMaxLog-3, x-2);
+          wresize(wLog, yMaxLog-3, x-2-6);
           if (yMaxLog>cursor) wscrl(wLog, cursor-yMaxLog);
           wrefresh(wLog);
           cursor = yMaxLog;
@@ -336,7 +348,7 @@ namespace K {
         for (map<mPrice, mOrder, greater<mPrice>>::value_type &it : openOrders) {
           wattron(wBorder, COLOR_PAIR(it.second.side == mSide::Bid ? COLOR_CYAN : COLOR_MAGENTA));
           stringstream ss;
-          ss << setprecision(8) << fixed << (it.second.side == mSide::Bid ? "BID" : "ASK") << " > " << it.second.exchangeId << ": " << it.second.quantity << ' ' << it.second.pair.base << " at price " << it.second.price << ' ' << it.second.pair.quote << " (value " << abs(it.second.price * it.second.quantity) << ' ' << it.second.pair.quote << ").";
+          ss << setprecision(8) << fixed << (it.second.side == mSide::Bid ? "BID" : "ASK") << " > " << it.second.quantity << ' ' << it.second.pair.base << " at price " << it.second.price << ' ' << it.second.pair.quote << " (value " << abs(it.second.price * it.second.quantity) << ' ' << it.second.pair.quote << ").";
           mvwaddstr(wBorder, ++yOrders, 1, ss.str().data());
           wattroff(wBorder, COLOR_PAIR(it.second.side == mSide::Bid ? COLOR_CYAN : COLOR_MAGENTA));
         }
@@ -363,9 +375,6 @@ namespace K {
         wattron(wBorder, A_BOLD);
         mvwaddstr(wBorder, 0, x-23, "ESC");
         wattroff(wBorder, A_BOLD);
-        // wattron(wBorder, COLOR_PAIR(COLOR_GREEN));
-        // mvwaddstr(wBorder, 1, x-fairValue.length(), fairValue.data());
-        // wattroff(wBorder, COLOR_PAIR(COLOR_GREEN));
         mvwaddch(wBorder, 0, 7, ACS_TTEE);
         mvwaddch(wBorder, 1, 7, ACS_LLCORNER);
         mvwhline(wBorder, 1, 8, ACS_HLINE, 4);
@@ -379,10 +388,33 @@ namespace K {
         wattroff(wBorder, A_BOLD);
         waddstr(wBorder, fair2.data());
         wattroff(wBorder, COLOR_PAIR(COLOR_GREEN));
-        mvwaddch(wBorder, 0, 18+title1.length()+title2.length(), ACS_TTEE);
-        mvwaddch(wBorder, 1, 18+title1.length()+title2.length(), ACS_LRCORNER);
-        mvwhline(wBorder, 1, 14+fair1.length()+fairValue.length()+fair2.length(), ACS_HLINE, 18+title1.length()+title2.length()-14-fair1.length()-fairValue.length()-fair2.length());
-        mvwaddch(wBorder, 1, 14+fair1.length()+fairValue.length()+fair2.length(), ACS_LTEE);
+        size_t xLenFair = 14+fair1.length()+fairValue.length()+fair2.length(),
+               xMaxFair = max(xLenFair+1, 18+title1.length()+title2.length());
+        mvwaddch(wBorder, 0, xMaxFair, ACS_TTEE);
+        mvwaddch(wBorder, 1, xMaxFair, ACS_LRCORNER);
+        mvwhline(wBorder, 1, xLenFair, ACS_HLINE, xMaxFair - xLenFair);
+        mvwaddch(wBorder, 1, xLenFair, ACS_LTEE);
+        int yPos = max(1, (y / 2) - 6);
+        mvwvline(wBorder, yPos+1, x-3, ' ', 10);
+        mvwvline(wBorder, yPos+1, x-4, ' ', 10);
+        wattron(wBorder, COLOR_PAIR(COLOR_CYAN));
+        mvwvline(wBorder, yPos+11-quoteAmount-quoteHeld, x-4, ACS_CKBOARD, quoteHeld);
+        wattron(wBorder, A_BOLD);
+        mvwvline(wBorder, yPos+11-quoteAmount, x-4, ACS_CKBOARD, quoteAmount);
+        wattroff(wBorder, A_BOLD);
+        wattroff(wBorder, COLOR_PAIR(COLOR_CYAN));
+        wattron(wBorder, COLOR_PAIR(COLOR_MAGENTA));
+        mvwvline(wBorder, yPos+11-baseAmount-baseHeld, x-3, ACS_CKBOARD, baseHeld);
+        wattron(wBorder, A_BOLD);
+        mvwvline(wBorder, yPos+11-baseAmount, x-3, ACS_CKBOARD, baseAmount);
+        wattroff(wBorder, A_BOLD);
+        wattroff(wBorder, COLOR_PAIR(COLOR_MAGENTA));
+        mvwaddch(wBorder, yPos, x-2, ACS_URCORNER);
+        mvwaddch(wBorder, yPos+11, x-2, ACS_LRCORNER);
+        mvwaddch(wBorder, yPos, x-5, ACS_ULCORNER);
+        mvwaddch(wBorder, yPos+11, x-5, ACS_LLCORNER);
+        mvwhline(wBorder, yPos, x-4, ACS_HLINE, 2);
+        mvwhline(wBorder, yPos+11, x-4, ACS_HLINE, 2);
         mvwaddch(wBorder, yMaxLog, 0, ACS_LTEE);
         mvwhline(wBorder, yMaxLog, 1, ACS_HLINE, 3);
         mvwaddch(wBorder, yMaxLog, 4, ACS_RTEE);
@@ -423,7 +455,10 @@ namespace K {
 #if CAN_RESIZE
       function<void()> resize = [&]() {
         struct winsize ws;
-        if (ioctl(0, TIOCGWINSZ, &ws) < 0 or (ws.ws_row == getmaxy(wBorder) and ws.ws_col == getmaxx(wBorder))) return;
+        if (ioctl(0, TIOCGWINSZ, &ws) < 0
+          or (ws.ws_row == getmaxy(wBorder)
+          and ws.ws_col == getmaxx(wBorder))
+        ) return;
         werase(wBorder);
         werase(wLog);
         if (ws.ws_row < 10) ws.ws_row = 10;

@@ -268,6 +268,7 @@ namespace K {
         position = pos;
         if (!eq) calcTargetBasePos();
         ((UI*)client)->send(mMatter::Position, pos);
+        ((SH*)screen)->log(pos);
       };
       void calcWalletAfterOrder(mOrder *k) {
         if (position.empty()) return;
