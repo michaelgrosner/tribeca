@@ -280,7 +280,7 @@ namespace K {
     {};
     void reset(mAmount a, mAmount h) {
       if (empty()) return;
-      amount =  a;
+      amount = a;
       held = h;
     };
     bool empty() {

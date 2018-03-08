@@ -148,6 +148,8 @@ namespace K {
           reply = FN::wJet(string(gw->http) + "/public/symbol/" + gw->symbol);
           gw->minTick = stod(reply.value("tickSize", "0"));
           gw->minSize = stod(reply.value("quantityIncrement", "0"));
+          gw->base = reply.value("baseCurrency", gw->base);
+          gw->quote = reply.value("quoteCurrency", gw->quote);
         }
         else if (k == mExchange::Bitfinex or k == mExchange::BitfinexMargin) {
           gw->randId = FN::int45Id;

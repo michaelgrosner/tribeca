@@ -276,7 +276,9 @@ namespace K {
           : position.quoteAmount + position.quoteHeldAmount;
         for (map<mRandId, mOrder>::value_type &it : ((OG*)broker)->orders)
           if (it.second.side == k->side) {
-            mAmount held = it.second.quantity * (it.second.side == mSide::Bid ? it.second.price : 1);
+            mAmount held = it.second.quantity;
+            if (it.second.side == mSide::Bid)
+              held *= it.second.price;
             if (amount >= held) {
               amount -= held;
               heldAmount += held;

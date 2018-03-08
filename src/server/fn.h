@@ -88,7 +88,7 @@ namespace K {
        unsigned int len = k.length();
         string k_;
         for (unsigned int i=0; i < len; i+=2) {
-          string byte = k.substr(i,2);
+          string byte = k.substr(i, 2);
           char chr = (char)(int)strtol(byte.data(), NULL, 16);
           k_.push_back(chr);
         }
