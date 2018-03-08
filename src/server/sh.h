@@ -25,6 +25,8 @@ namespace K {
       string title = "?",
              base = "?",
              quote = "?",
+             baseValue = "?",
+             quoteValue = "?",
              fairValue = "?";
       multimap<mPrice, mOrder, greater<mPrice>> openOrders;
     public:
@@ -317,10 +319,12 @@ namespace K {
       };
       void log(mPosition &pos) {
         if (!wBorder) return;
-        baseAmount = ceil(pos.baseAmount * 10 / pos.baseValue);
-        baseHeld = ceil(pos.baseHeldAmount * 10 / pos.baseValue);
-        quoteAmount = ceil(pos.quoteAmount * 10 / pos.quoteValue);
-        quoteHeld = ceil(pos.quoteHeldAmount * 10 / pos.quoteValue);
+        baseAmount = round(pos.baseAmount * 10 / pos.baseValue);
+        baseHeld = round(pos.baseHeldAmount * 10 / pos.baseValue);
+        quoteAmount = round(pos.quoteAmount * 10 / pos.quoteValue);
+        quoteHeld = round(pos.quoteHeldAmount * 10 / pos.quoteValue);
+        _fixed8_(pos.baseValue, baseValue)
+        _fixed8_(pos.quoteValue, quoteValue)
         refresh();
       };
       void log(double fv) {
@@ -350,7 +354,7 @@ namespace K {
           mvwaddstr(wBorder, ++yOrders, 1, (string(it.second.side == mSide::Bid ? "BID" : "ASK") + " > "
             + FN::str8(it.second.quantity) + ' ' + it.second.pair.base + " at price "
             + FN::str8(it.second.price) + ' ' + it.second.pair.quote + " (value "
-            + FN::str8(abs(it.second.price * it.second.quantity)) + ' ' + it.second.pair.quote + ")."
+            + FN::str8(abs(it.second.price * it.second.quantity)) + ' ' + it.second.pair.quote + ")"
           ).data());
           wattroff(wBorder, COLOR_PAIR(it.second.side == mSide::Bid ? COLOR_CYAN : COLOR_MAGENTA));
         }
@@ -382,20 +386,21 @@ namespace K {
         mvwhline(wBorder, 1, 8, ACS_HLINE, 4);
         mvwaddch(wBorder, 1, 12, ACS_RTEE);
         wattron(wBorder, COLOR_PAIR(COLOR_GREEN));
-        string fair1 = string("1 ") + base + " = ";
-        string fair2 = string(" ") + quote + ' ';
-        mvwaddstr(wBorder, 1, 14, fair1.data());
         wattron(wBorder, A_BOLD);
-        waddstr(wBorder, fairValue.data());
+        waddstr(wBorder, (string(" ") + baseValue).data());
         wattroff(wBorder, A_BOLD);
-        waddstr(wBorder, fair2.data());
+        waddstr(wBorder, (string(" ") + base + " or ").data());
+        wattron(wBorder, A_BOLD);
+        waddstr(wBorder, quoteValue.data());
+        wattroff(wBorder, A_BOLD);
+        waddstr(wBorder, (string(" ") + quote + ' ').data());
         wattroff(wBorder, COLOR_PAIR(COLOR_GREEN));
-        size_t xLenFair = 14+fair1.length()+fairValue.length()+fair2.length(),
-               xMaxFair = max(xLenFair+1, 18+title1.length()+title2.length());
-        mvwaddch(wBorder, 0, xMaxFair, ACS_TTEE);
-        mvwaddch(wBorder, 1, xMaxFair, ACS_LRCORNER);
-        mvwhline(wBorder, 1, xLenFair, ACS_HLINE, xMaxFair - xLenFair);
-        mvwaddch(wBorder, 1, xLenFair, ACS_LTEE);
+        size_t xLenValue = 14+baseValue.length()+quoteValue.length()+base.length()+quote.length()+7,
+               xMaxValue = max(xLenValue+1, 18+title1.length()+title2.length());
+        mvwaddch(wBorder, 0, xMaxValue, ACS_TTEE);
+        mvwaddch(wBorder, 1, xMaxValue, ACS_LRCORNER);
+        mvwhline(wBorder, 1, xLenValue, ACS_HLINE, xMaxValue - xLenValue);
+        mvwaddch(wBorder, 1, xLenValue, ACS_LTEE);
         int yPos = max(1, (y / 2) - 6);
         mvwvline(wBorder, yPos+1, x-3, ' ', 10);
         mvwvline(wBorder, yPos+1, x-4, ' ', 10);
@@ -427,18 +432,31 @@ namespace K {
           waddstr(wBorder, "DISCONNECTED");
           wattroff(wBorder, A_BOLD);
           wattroff(wBorder, COLOR_PAIR(COLOR_RED));
-        } else if (!gwConnectButton) {
-          wattron(wBorder, COLOR_PAIR(COLOR_YELLOW));
-          wattron(wBorder, A_BLINK);
-          waddstr(wBorder, "press START to trade");
-          wattroff(wBorder, A_BLINK);
-          wattroff(wBorder, COLOR_PAIR(COLOR_YELLOW));
+          waddch(wBorder, ')');
         } else {
-          wattron(wBorder, COLOR_PAIR(COLOR_YELLOW));
-          waddstr(wBorder, to_string(openOrders.size()).data());
-          wattroff(wBorder, COLOR_PAIR(COLOR_YELLOW));
+          if (!gwConnectButton) {
+            wattron(wBorder, COLOR_PAIR(COLOR_YELLOW));
+            wattron(wBorder, A_BLINK);
+            waddstr(wBorder, "press START to trade");
+            wattroff(wBorder, A_BLINK);
+            wattroff(wBorder, COLOR_PAIR(COLOR_YELLOW));
+            waddch(wBorder, ')');
+          } else {
+            wattron(wBorder, COLOR_PAIR(COLOR_YELLOW));
+            waddstr(wBorder, to_string(openOrders.size()).data());
+            wattroff(wBorder, COLOR_PAIR(COLOR_YELLOW));
+            waddstr(wBorder, ") Open Orders");
+          }
+          waddstr(wBorder, " while");
+          wattron(wBorder, COLOR_PAIR(COLOR_GREEN));
+          waddstr(wBorder, (string(" 1 ") + base + " = ").data());
+          wattron(wBorder, A_BOLD);
+          waddstr(wBorder, fairValue.data());
+          wattroff(wBorder, A_BOLD);
+          waddstr(wBorder, (string(" ") + quote).data());
+          wattroff(wBorder, COLOR_PAIR(COLOR_GREEN));
+          waddch(wBorder, !gwConnectButton ? ' ' : ':');
         }
-        waddstr(wBorder, ") Open Orders..");
         mvwaddch(wBorder, y-1, 0, ACS_LLCORNER);
         mvwaddstr(wBorder, 1, 2, string("|/-\\").substr(++spin, 1).data());
         if (spin==3) spin = -1;
