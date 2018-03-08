@@ -385,16 +385,21 @@ namespace K {
         mvwaddch(wBorder, 1, 7, ACS_LLCORNER);
         mvwhline(wBorder, 1, 8, ACS_HLINE, 4);
         mvwaddch(wBorder, 1, 12, ACS_RTEE);
-        wattron(wBorder, COLOR_PAIR(COLOR_GREEN));
+        wattron(wBorder, COLOR_PAIR(COLOR_MAGENTA));
         wattron(wBorder, A_BOLD);
-        waddstr(wBorder, (string(" ") + baseValue).data());
+        waddstr(wBorder, (string(" ") + baseValue + ' ').data());
         wattroff(wBorder, A_BOLD);
-        waddstr(wBorder, (string(" ") + base + " or ").data());
+        waddstr(wBorder, base.data());
+        wattroff(wBorder, COLOR_PAIR(COLOR_MAGENTA));
+        wattron(wBorder, COLOR_PAIR(COLOR_GREEN));
+        waddstr(wBorder, " or ");
+        wattroff(wBorder, COLOR_PAIR(COLOR_GREEN));
+        wattron(wBorder, COLOR_PAIR(COLOR_CYAN));
         wattron(wBorder, A_BOLD);
         waddstr(wBorder, quoteValue.data());
         wattroff(wBorder, A_BOLD);
         waddstr(wBorder, (string(" ") + quote + ' ').data());
-        wattroff(wBorder, COLOR_PAIR(COLOR_GREEN));
+        wattroff(wBorder, COLOR_PAIR(COLOR_CYAN));
         size_t xLenValue = 14+baseValue.length()+quoteValue.length()+base.length()+quote.length()+7,
                xMaxValue = max(xLenValue+1, 18+title1.length()+title2.length());
         mvwaddch(wBorder, 0, xMaxValue, ACS_TTEE);
