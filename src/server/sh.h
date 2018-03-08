@@ -402,13 +402,13 @@ namespace K {
         wattron(wBorder, COLOR_PAIR(COLOR_CYAN));
         mvwvline(wBorder, yPos+11-quoteAmount-quoteHeld, x-4, ACS_CKBOARD, quoteHeld);
         wattron(wBorder, A_BOLD);
-        mvwvline(wBorder, yPos+11-quoteAmount, x-4, ACS_CKBOARD, quoteAmount);
+        mvwvline(wBorder, yPos+11-quoteAmount, x-4, ' ' | A_REVERSE, quoteAmount);
         wattroff(wBorder, A_BOLD);
         wattroff(wBorder, COLOR_PAIR(COLOR_CYAN));
         wattron(wBorder, COLOR_PAIR(COLOR_MAGENTA));
         mvwvline(wBorder, yPos+11-baseAmount-baseHeld, x-3, ACS_CKBOARD, baseHeld);
         wattron(wBorder, A_BOLD);
-        mvwvline(wBorder, yPos+11-baseAmount, x-3, ACS_CKBOARD, baseAmount);
+        mvwvline(wBorder, yPos+11-baseAmount, x-3, ' ' | A_REVERSE, baseAmount);
         wattroff(wBorder, A_BOLD);
         wattroff(wBorder, COLOR_PAIR(COLOR_MAGENTA));
         mvwaddch(wBorder, yPos, x-2, ACS_URCORNER);

@@ -9,8 +9,8 @@
                    chrono::system_clock::now().time_since_epoch() \
                  ).count()
 
-#define _fixedX_(d, s, x) { stringstream ss;     \
-                           ss << setprecision(x) \
+#define _fixedX_(d, s, X) { stringstream ss;     \
+                           ss << setprecision(X) \
                               << fixed << d;     \
                            s = ss.str();         }
 
@@ -23,8 +23,8 @@
 namespace K {
   class FN {
     public:
-      inline static string str8(double d) { string s; _fixed8_(d, s) return s; };
       inline static string strX(double d, unsigned int X) { string s; _fixedX_(d, s, X) return s; };
+      inline static string str8(double d) { return strX(d, 8); };
       inline static string S2l(string s) { transform(s.begin(), s.end(), s.begin(), ::tolower); return s; };
       inline static string S2u(string s) { transform(s.begin(), s.end(), s.begin(), ::toupper); return s; };
       static unsigned long long int64() {
