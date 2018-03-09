@@ -18,6 +18,7 @@ namespace K {
              *wLog    = nullptr;
       int cursor = 0,
           spin = 0,
+          port = 0,
           baseAmount = 0,
           baseHeld = 0,
           quoteAmount = 0,
@@ -30,8 +31,7 @@ namespace K {
              fairValue = "?";
       multimap<mPrice, mOrder, greater<mPrice>> openOrders;
     public:
-      int port = 0;
-      string protocol = "?";
+      string protocol = "HTTP";
       mConnectivity gwConnectButton   = mConnectivity::Disconnected,
                     gwConnectExchange = mConnectivity::Disconnected;
     public:
@@ -45,8 +45,7 @@ namespace K {
         } else logVer("", -1);
         cout << RRESET;
       };
-      void config(string base_, string quote_, string argExchange, int argColors, int argNaked) {
-        if (argNaked) return;
+      void config(string base_, string quote_, string argExchange, int argColors, int argPort) {
         if (!(wBorder = initscr())) {
           cout << "NCURSES" << RRED << " Errrror:" << BRED << " Unable to initialize ncurses, try to run in your terminal \"export TERM=xterm\", or use --naked argument." << '\n';
           exit(EXIT_SUCCESS);
@@ -54,6 +53,7 @@ namespace K {
         base = base_;
         quote = quote_;
         title = argExchange;
+        port = argPort;
         if (argColors) start_color();
         use_default_colors();
         cbreak();

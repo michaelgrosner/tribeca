@@ -200,11 +200,12 @@ namespace K {
       };
       void run() {
 #ifndef _WIN32
-        ((SH*)screen)->config(
-          base(),       quote(),
-          argExchange,  argColors,
-          argNaked
-        );
+        if (!argNaked)
+          ((SH*)screen)->config(
+            base(),       quote(),
+            argExchange,  argColors,
+            argPort
+          );
 #endif
         gw = Gw::config(
           base(),       quote(),
@@ -261,6 +262,7 @@ namespace K {
         if (argUser == "NULL") argUser.clear();
         if (argPass == "NULL") argPass.clear();
         if (argIgnoreSun and argIgnoreMoon) argIgnoreMoon = 0;
+        if (argHeadless) argPort = 0;
       };
   };
 }

@@ -68,7 +68,6 @@ namespace K  {
         uiGroup->close();
       };
       void listen() {
-        ((SH*)screen)->protocol = "HTTP";
         if (!((CF*)config)->argWithoutSSL
           and (access("etc/sslcert/server.crt", F_OK) != -1) and (access("etc/sslcert/server.key", F_OK) != -1)
           and hub->listen(((CF*)config)->argPort, uS::TLS::createContext("etc/sslcert/server.crt", "etc/sslcert/server.key", ""), 0, uiGroup)
@@ -78,7 +77,6 @@ namespace K  {
             + to_string(((CF*)config)->argPort) + " seems already in use by:\n"
             + FN::output(string("netstat -anp 2>/dev/null | grep ") + to_string(((CF*)config)->argPort))
           ));
-        ((SH*)screen)->port = ((CF*)config)->argPort;
         ((SH*)screen)->logUI();
       };
       void deferred(function<void()> fn) {
