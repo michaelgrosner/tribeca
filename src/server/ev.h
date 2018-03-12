@@ -14,11 +14,6 @@ namespace K  {
       uWS::Group<uWS::SERVER> *uiGroup = nullptr;
       Timer *tServer = nullptr,
             *tClient = nullptr;
-      function<void(mOrder*)> ogOrder;
-      function<void(mTrade*)> ogTrade;
-      function<void()>        mgLevels,
-                              mgTargetPosition,
-                              uiQuotingParameters;
     protected:
       void load() {
         endingFn.push_back(&happyEnding);

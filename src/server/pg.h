@@ -39,16 +39,9 @@ namespace K {
         gw->evDataWallet = [&](mWallets k) {                        _debugEvent_
           calcWallet(k);
         };
-        ((EV*)events)->ogOrder = [&](mOrder *k) {                   _debugEvent_
-          calcWalletAfterOrder(k);
-          ((SH*)screen)->log(&((OG*)broker)->orders);
-        };
-        ((EV*)events)->ogTrade = [&](mTrade *k) {                   _debugEvent_
-          calcSafetyAfterTrade(k);
-        };
-        ((EV*)events)->mgTargetPosition = [&]() {                   _debugEvent_
-          calcTargetBasePos();
-        };
+        ((MG*)market)->calcTargetBasePos = &calcTargetBasePos;
+        ((OG*)broker)->calcWalletAfterOrder = &calcWalletAfterOrder;
+        ((OG*)broker)->calcSafetyAfterTrade = &calcSafetyAfterTrade;
       };
       void waitUser() {
         ((UI*)client)->welcome(mMatter::Position, &helloPosition);
@@ -65,17 +58,7 @@ namespace K {
           or prev.sellPing != safety.sellPing
         ) ((UI*)client)->send(mMatter::TradeSafetyValue, safety);
       };
-      void calcSafetyAfterTrade(mTrade *k) {
-        (k->side == mSide::Bid
-          ? buys : sells
-        )[k->price] = mTrade(
-          k->price,
-          k->quantity,
-          k->time
-        );
-        calcSafety();
-      };
-      void calcTargetBasePos() {
+      function<void()> calcTargetBasePos = [&]() {                  _debugEvent_
         if (position.empty()) return ((SH*)screen)->logWar("PG", "Unable to calculate TBP, missing wallet data");
         mAmount baseValue = position.baseValue;
         mAmount next = qp->autoPositionMode == mAutoPositionMode::Manual
@@ -110,6 +93,16 @@ namespace K {
           {"sideAPR", sideAPR},
           {"pDiv", positionDivergence}
         } };
+      };
+      function<void(mTrade*)> calcSafetyAfterTrade = [&](mTrade *k) {
+        (k->side == mSide::Bid
+          ? buys : sells
+        )[k->price] = mTrade(
+          k->price,
+          k->quantity,
+          k->time
+        );
+        calcSafety();
       };
       mSafety nextSafety() {
         mAmount buySize = qp->percentageValues
@@ -268,7 +261,7 @@ namespace K {
         ((UI*)client)->send(mMatter::Position, pos);
         ((SH*)screen)->log(pos);
       };
-      void calcWalletAfterOrder(mOrder *k) {
+      function<void(mOrder*)> calcWalletAfterOrder = [&](mOrder *k) {
         if (position.empty()) return;
         mAmount heldAmount = 0;
         mAmount amount = k->side == mSide::Ask

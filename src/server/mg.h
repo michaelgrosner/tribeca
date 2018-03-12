@@ -24,6 +24,8 @@ namespace K {
       unsigned int mgT_60s = 0,
                    averageCount = 0;
     public:
+      function<void()> *calcQuote,
+                       *calcTargetBasePos;
       mLevels levels;
       mPrice fairValue = 0,
              mgEwmaP = 0,
@@ -184,7 +186,7 @@ namespace K {
         if (!filterBidOrders.empty()) filter(&levels.bids, filterBidOrders);
         if (!filterAskOrders.empty()) filter(&levels.asks, filterAskOrders);
         calcFairValue();
-        ((EV*)events)->mgLevels();
+        (*calcQuote)();
         if (!k.empty() and mgT_369ms + 369e+0 > _Tstamp_) return;
         ((UI*)client)->bid_levels = k.bids.size();
         ((UI*)client)->ask_levels = k.asks.size();
@@ -216,7 +218,7 @@ namespace K {
         calcEwma(&mgEwmaU, qp->ultraShortEwmaPeriods, fairValue);
         if(mgEwmaXS and mgEwmaU) mgEwmaTrendDiff = ((mgEwmaU * 100) / mgEwmaXS) - 100;
         calcTargetPos();
-        ((EV*)events)->mgTargetPosition();
+        (*calcTargetBasePos)();
         ((UI*)client)->send(mMatter::EWMAChart, chartStats());
         ((DB*)memory)->insert(mMatter::EWMAChart, {
           {"ewmaVeryLong", mgEwmaVL},

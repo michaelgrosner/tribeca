@@ -24,17 +24,7 @@ namespace K {
         findMode("loaded");
       };
       void waitData() {
-        ((EV*)events)->uiQuotingParameters = [&]() {                _debugEvent_
-          findMode("saved");
-          ((MG*)market)->calcFairValue();
-          ((PG*)wallet)->calcTargetBasePos();
-          ((PG*)wallet)->calcSafety();
-          ((MG*)market)->calcEwmaHistory();
-          calcQuote();
-        };
-        ((EV*)events)->mgLevels = [&]() {                           _debugEvent_
-          calcQuote();
-        };
+        ((MG*)market)->calcQuote = &calcQuote;
       };
       void waitUser() {
         ((UI*)client)->welcome(mMatter::QuoteStatus, &hello);
@@ -52,16 +42,12 @@ namespace K {
           calcQuote();
         } else ((SH*)screen)->logWar("QE", "Unable to calculate quote, missing market data");
       };
-    private:
-      function<void(json*)> hello = [&](json *welcome) {
-        *welcome = { status };
-      };
       inline void findMode(string reason) {
         if (quotingMode.find(qp->mode) == quotingMode.end())
           exit(_redAlert_("QE", string("Invalid quoting mode ")
             + reason + ", consider to remove the database file"));
-      }
-      void calcQuote() {                                            _debugEvent_
+      };
+      function<void()> calcQuote = [&]() {                          _debugEvent_
         bidStatus = mQuoteState::MissingData;
         askStatus = mQuoteState::MissingData;
         if (!gwConnectExchange) {
@@ -83,6 +69,10 @@ namespace K {
           }
         }
         sendStatusToUI();
+      };
+    private:
+      function<void(json*)> hello = [&](json *welcome) {
+        *welcome = { status };
       };
       inline void sendQuoteToAPI() {
         mQuote quote = nextQuote();
