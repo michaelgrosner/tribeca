@@ -580,7 +580,7 @@ class DisplayOrder {
                         </div>
 
                         <div [hidden]="!showStats" [ngClass]="showStats == 2 ? 'col-md-11 col-xs-12 absolute-charts' : 'col-md-11 col-xs-12 relative-charts'">
-                          <market-stats [setShowStats]="!!showStats" [product]="product" [setQuotingParameters]="pair.quotingParameters.display" [setTargetBasePosition]="TargetBasePosition"  [setMarketData]="MarketData" [setEWMAChartData]="EWMAChartData" [setTradesChartData]="TradesChartData" [setPosition]="Position" [setFairValue]="FairValue"></market-stats>
+                          <market-stats ondblclick="this.style.opacity=this.style.opacity<1?1:0.4" [setShowStats]="!!showStats" [product]="product" [setQuotingParameters]="pair.quotingParameters.display" [setTargetBasePosition]="TargetBasePosition"  [setMarketData]="MarketData" [setEWMAChartData]="EWMAChartData" [setTradesChartData]="TradesChartData" [setPosition]="Position" [setFairValue]="FairValue"></market-stats>
                         </div>
                         <div [hidden]="showStats === 1" class="col-md-{{ showTakers ? '9' : '11' }} col-xs-12" style="padding-left:0px;padding-bottom:0px;">
                           <div class="row">
@@ -588,7 +588,7 @@ class DisplayOrder {
                           </div>
                           <div class="row" style="padding-top:0px;">
                             <div class="col-md-4 col-xs-12" style="padding-left:0px;padding-top:0px;padding-right:0px;">
-                                <market-quoting [online]="!!pair.active.display.state" [product]="product" [a]="A" [setQuoteStatus]="QuoteStatus" [setMarketData]="MarketData" [setOrderList]="orderList" [setTargetBasePosition]="TargetBasePosition"></market-quoting>
+                                <market-quoting  [online]="!!pair.active.display.state" [product]="product" [a]="A" [setQuoteStatus]="QuoteStatus" [setMarketData]="MarketData" [setOrderList]="orderList" [setTargetBasePosition]="TargetBasePosition"></market-quoting>
                             </div>
                             <div class="col-md-8 col-xs-12" style="padding-left:0px;padding-right:0px;padding-top:0px;">
                               <div class="row">
