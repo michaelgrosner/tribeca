@@ -112,14 +112,14 @@ class DisplayOrder {
                   <br/><a href="#" (click)="toggleSettings(showSettings = !showSettings)">Settings</a>
                   <br/><br/><a href="#" (click)="changeTheme()">{{ system_theme ? 'Light' : 'Dark' }}</a>
                 </div>
-                <div id="hud" style="padding: 5px;padding-top:10px;margin-top:7px;" [ngClass]="pair.connected ? 'bg-success img-rounded' : 'bg-danger img-rounded'">
+                <div id="hud" style="margin-top:7px;" [ngClass]="pair.connected ? 'bg-success img-rounded' : 'bg-danger img-rounded'">
                     <div *ngIf="online" class="row" [hidden]="!showSettings">
                         <div class="col-md-12 col-xs-12">
                             <div class="row">
                               <table border="0" width="100%"><tr><td style="width:69px;text-align:center;border-bottom: 1px gray solid;">
                                 <small>MARKET<br/>MAKING</small>
                               </td><td>
-                                <table class="table table-responsive table-bordered" style="margin-bottom:0px;">
+                                <table class="table table-responsive" style="margin-bottom:0px;">
                                     <thead>
                                         <tr class="active">
                                             <th title="If enabled, the values of bidSize, askSize, tbp, pDiv and range will be a percentage related to the total funds.">%</th>
@@ -253,7 +253,7 @@ class DisplayOrder {
                               <table border="0" width="100%"><tr><td style="width:69px;text-align:center;border-bottom: 1px gray solid;">
                                 <small>TECHNICAL<br/>ANALYSIS</small>
                               </td><td>
-                                <table class="table table-responsive table-bordered" style="margin-bottom:0px;">
+                                <table class="table table-responsive" style="margin-bottom:0px;">
                                     <thead>
                                         <tr class="active">
                                             <th title="Automatic position management">apMode</th>
@@ -405,7 +405,7 @@ class DisplayOrder {
                               <table border="0" width="100%"><tr><td style="width:69px;text-align:center;">
                                 <small>PROTECTION</small>
                               </td><td>
-                                <table class="table table-responsive table-bordered">
+                                <table class="table table-responsive">
                                     <thead>
                                         <tr class="active">
                                             <th title="Sets the fair value calculation mode">fv</th>
