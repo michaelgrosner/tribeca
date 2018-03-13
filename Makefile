@@ -389,7 +389,7 @@ png-check: etc/${PNG}.png
 checkOK:
 	read -p "KMOD: " KMOD;date=`date` && git diff && git status && read ctrl_c \
 	&& KALL=1 $(MAKE) K release && git add . && git commit -S -m "$${KMOD}" && \
-	git push && echo $date && date
+	git push && echo $${date} && date
 
 MAJOR:
 	@sed -i "s/^\(MAJOR    =\).*$$/\1 $(shell expr $(MAJOR) + 1)/" Makefile
