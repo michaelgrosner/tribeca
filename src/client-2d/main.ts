@@ -112,7 +112,7 @@ class DisplayOrder {
                   <br/><a href="#" (click)="toggleSettings(showSettings = !showSettings)">Settings</a>
                   <br/><br/><a href="#" (click)="changeTheme()">{{ system_theme ? 'Light' : 'Dark' }}</a>
                 </div>
-                <div id="hud" style="margin-top:7px;" [ngClass]="pair.connected ? 'bg-success img-rounded' : 'bg-danger img-rounded'">
+                <div id="hud" [ngClass]="pair.connected ? 'bg-success img-rounded' : 'bg-danger img-rounded'">
                     <div *ngIf="online" class="row" [hidden]="!showSettings">
                         <div class="col-md-12 col-xs-12">
                             <div class="row">

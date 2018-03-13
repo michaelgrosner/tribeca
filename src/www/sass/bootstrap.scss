@@ -5991,10 +5991,12 @@ div#hud, div#hud_nav {
   border-image-outset: 8px;
   border-width: 9px;
   border-style: solid;
+  margin-top: 7px;
+  margin-bottom: 5px;
 }
 
 div#hud {
-  transition:ease 1s;
+  transition:ease 0.5s;
   z-index: 1;
   margin-left: 7.5px;
 }
