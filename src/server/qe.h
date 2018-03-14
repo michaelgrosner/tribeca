@@ -8,7 +8,7 @@ namespace K {
       mQuoteState bidStatus = mQuoteState::MissingData,
                   askStatus = mQuoteState::MissingData;
       mQuoteStatus status;
-      unsigned int AK47inc = 1;
+      unsigned int AK47inc = 0;
     public:
       mConnectivity gwConnectButton   = mConnectivity::Disconnected,
                     gwConnectExchange = mConnectivity::Disconnected;
@@ -299,7 +299,7 @@ namespace K {
           rawQuote->bid.price -= AK47inc * range;
         if (!rawQuote->ask.empty())
           rawQuote->ask.price += AK47inc * range;
-        if (++AK47inc > qp->bullets) AK47inc = 1;
+        if (++AK47inc > qp->bullets) AK47inc = 0;
       };
       inline void applyStdevProtection(mQuote *rawQuote) {
         if (qp->quotingStdevProtection == mSTDEV::Off or !((MG*)market)->mgStdevFV) return;
