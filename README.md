@@ -353,7 +353,7 @@ nope, this project doesn't have maintenance costs. but you can donate to your fa
 
 or see the upstream project [michaelgrosner/tribeca](https://github.com/michaelgrosner/tribeca).
 
-or donate your time with programming or financial suggestions in the topical IRC channel [##tradingBot](https://kiwiirc.com/client/irc.freenode.net:6697/?theme=cli#tradingBot) at irc.freenode.net on port 6697 (SSL), or 6667 (plain) or feel free to make any question, but questions technically are not donations.
+or donate your time with programming or financial suggestions in the IRC channel [#tradingBot](https://kiwiirc.com/client/irc.freenode.net:6697/?theme=cli#tradingBot) at irc.freenode.net on port 6697 (SSL), or 6667 (plain) or feel free to make any question, but questions technically are not donations.
 
 ### Very Special Thanks to:
 
