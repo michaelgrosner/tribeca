@@ -138,7 +138,7 @@ namespace K {
         (*calcWalletAfterOrder)(&unclean);
         if (k.tradeQuantity) toHistory(unclean);
         if (k.orderStatus != mStatus::New)
-          toClient();
+          toClient(k.orderStatus == mStatus::Working);
       };
       void cancelOpenOrders() {
         for (map<mRandId, mOrder>::value_type &it : orders)
@@ -167,8 +167,8 @@ namespace K {
             if (!all) break;
           }
       };
-      void toClient() {
-        ((SH*)screen)->log(&orders);
+      void toClient(bool working) {
+        ((SH*)screen)->log(&orders, working);
         json k = json::array();
         for (map<mRandId, mOrder>::value_type &it : orders)
           if (it.second.orderStatus == mStatus::Working)

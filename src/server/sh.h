@@ -17,7 +17,7 @@ namespace K {
       WINDOW *wBorder = nullptr,
              *wLog    = nullptr;
       int cursor = 0,
-          spin = 0,
+          spinOrders = 0,
           port = 0,
           baseAmount = 0,
           baseHeld = 0,
@@ -34,6 +34,7 @@ namespace K {
       string protocol = "HTTP";
       mConnectivity *gwConnected         = nullptr,
                     *gwConnectedExchange = nullptr;
+
     public:
       SH() {
         cout << BGREEN << "K" << RGREEN << " build " << K_BUILD << ' ' << K_STAMP << '.' << BRED << '\n';
@@ -309,12 +310,13 @@ namespace K {
         if (b) wattroff(wLog, A_BOLD);
         wrefresh(wLog);
       };
-      void log(map<mRandId, mOrder> *orders) {
+      void log(map<mRandId, mOrder> *orders, bool working) {
         if (!wBorder) return;
         openOrders.clear();
         for (map<mRandId, mOrder>::value_type &it : *orders)
           if (mStatus::Working == it.second.orderStatus)
             openOrders.insert(pair<mPrice, mOrder>(it.second.price, it.second));
+        if (working and ++spinOrders == 4) spinOrders = 0;
         refresh();
       };
       void log(mPosition &pos) {
@@ -463,8 +465,7 @@ namespace K {
           waddch(wBorder, (!gwConnected or !*gwConnected) ? ' ' : ':');
         }
         mvwaddch(wBorder, y-1, 0, ACS_LLCORNER);
-        mvwaddstr(wBorder, 1, 2, string("|/-\\").substr(++spin, 1).data());
-        if (spin==3) spin = -1;
+        mvwaddstr(wBorder, 1, 2, string("|/-\\").substr(spinOrders, 1).data());
         move(yMaxLog-1, 2);
         wrefresh(wBorder);
         wrefresh(wLog);
