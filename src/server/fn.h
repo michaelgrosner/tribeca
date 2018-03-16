@@ -25,8 +25,8 @@ namespace K {
     public:
       inline static string strX(double d, unsigned int X) { string s; _fixedX_(d, s, X) return s; };
       inline static string str8(double d) { return strX(d, 8); };
-      inline static string S2l(string s) { transform(s.begin(), s.end(), s.begin(), ::tolower); return s; };
-      inline static string S2u(string s) { transform(s.begin(), s.end(), s.begin(), ::toupper); return s; };
+      inline static string strL(string s) { transform(s.begin(), s.end(), s.begin(), ::tolower); return s; };
+      inline static string strU(string s) { transform(s.begin(), s.end(), s.begin(), ::toupper); return s; };
       static unsigned long long int64() {
         static random_device rd;
         static mt19937_64 gen(rd());
@@ -58,7 +58,7 @@ namespace K {
             rnd >>= 4;
             uuid[i] = _numsAz_[(i == 19) ? ((rnd & 0xf) & 0x3) | 0x8 : rnd & 0xf];
           }
-        return S2l(uuid);
+        return strL(uuid);
       };
       static string uuid32Id() {
         string uuid = uuid36Id();
@@ -125,7 +125,7 @@ namespace K {
         MD5((unsigned char*)k.data(), k.length(), (unsigned char*)&digest);
         char k_[16*2+1];
         for (unsigned int i = 0; i < 16; i++) sprintf(&k_[i*2], "%02x", (unsigned int)digest[i]);
-        return S2u(k_);
+        return strU(k_);
       };
       static string oSha256(string k) {
         unsigned char digest[SHA256_DIGEST_LENGTH];

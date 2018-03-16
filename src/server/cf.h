@@ -222,10 +222,10 @@ namespace K {
       };
     private:
       inline mCoinId base() {
-        return FN::S2u(argCurrency.substr(0, argCurrency.find("/")));
+        return FN::strU(argCurrency.substr(0, argCurrency.find("/")));
       };
       inline mCoinId quote() {
-        return FN::S2u(argCurrency.substr(argCurrency.find("/")+1));
+        return FN::strU(argCurrency.substr(argCurrency.find("/")+1));
       };
       inline int chambers() {
         if (argTestChamber == 1)
@@ -251,7 +251,7 @@ namespace K {
             ? argDiskdata
             : argDatabase
           ) = string("/data/db/K")
-            + '.' + FN::S2u(argExchange)
+            + '.' + FN::strU(argExchange)
             + '.' + base()
             + '.' + quote()
             + '.' + "db";

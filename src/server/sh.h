@@ -32,8 +32,8 @@ namespace K {
       multimap<mPrice, mOrder, greater<mPrice>> openOrders;
     public:
       string protocol = "HTTP";
-      mConnectivity *gwConnectButton   = nullptr,
-                    *gwConnectExchange = nullptr;
+      mConnectivity *gwConnected         = nullptr,
+                    *gwConnectedExchange = nullptr;
     public:
       SH() {
         cout << BGREEN << "K" << RGREEN << " build " << K_BUILD << ' ' << K_STAMP << '.' << BRED << '\n';
@@ -337,7 +337,7 @@ namespace K {
         int lastcursor = cursor,
             y = getmaxy(wBorder),
             x = getmaxx(wBorder),
-            yMaxLog = y - max((int)openOrders.size(), (!gwConnectButton or !*gwConnectButton) ? 0 : 2) - 1,
+            yMaxLog = y - max((int)openOrders.size(), (!gwConnected or !*gwConnected) ? 0 : 2) - 1,
             yOrders = yMaxLog;
         while (lastcursor<y) mvwhline(wBorder, lastcursor++, 1, ' ', x-1);
         if (yMaxLog!=cursor) {
@@ -376,7 +376,7 @@ namespace K {
         wattroff(wBorder, COLOR_PAIR(COLOR_GREEN));
         mvwaddch(wBorder, 0, 13+title1.length()+title2.length(), ACS_LTEE);
         mvwaddch(wBorder, 0, x-26, ACS_RTEE);
-        mvwaddstr(wBorder, 0, x-25, (string(" [   ]: ") + ((!gwConnectButton or !*gwConnectButton) ? "Start" : "Stop?") + ", [ ]: Quit!").data());
+        mvwaddstr(wBorder, 0, x-25, (string(" [   ]: ") + ((!gwConnected or !*gwConnected) ? "Start" : "Stop?") + ", [ ]: Quit!").data());
         mvwaddch(wBorder, 0, x-9, 'q' | A_BOLD);
         wattron(wBorder, A_BOLD);
         mvwaddstr(wBorder, 0, x-23, "ESC");
@@ -431,7 +431,7 @@ namespace K {
         mvwhline(wBorder, yMaxLog, 1, ACS_HLINE, 3);
         mvwaddch(wBorder, yMaxLog, 4, ACS_RTEE);
         mvwaddstr(wBorder, yMaxLog, 5, "< (");
-        if (!gwConnectExchange or !*gwConnectExchange) {
+        if (!gwConnectedExchange or !*gwConnectedExchange) {
           wattron(wBorder, COLOR_PAIR(COLOR_RED));
           wattron(wBorder, A_BOLD);
           waddstr(wBorder, "DISCONNECTED");
@@ -439,7 +439,7 @@ namespace K {
           wattroff(wBorder, COLOR_PAIR(COLOR_RED));
           waddch(wBorder, ')');
         } else {
-          if (!gwConnectButton or !*gwConnectButton) {
+          if (!gwConnected or !*gwConnected) {
             wattron(wBorder, COLOR_PAIR(COLOR_YELLOW));
             wattron(wBorder, A_BLINK);
             waddstr(wBorder, "press START to trade");
@@ -460,7 +460,7 @@ namespace K {
           wattroff(wBorder, A_BOLD);
           waddstr(wBorder, (string(" ") + quote).data());
           wattroff(wBorder, COLOR_PAIR(COLOR_GREEN));
-          waddch(wBorder, (!gwConnectButton or !*gwConnectButton) ? ' ' : ':');
+          waddch(wBorder, (!gwConnected or !*gwConnected) ? ' ' : ':');
         }
         mvwaddch(wBorder, y-1, 0, ACS_LLCORNER);
         mvwaddstr(wBorder, 1, 2, string("|/-\\").substr(++spin, 1).data());
