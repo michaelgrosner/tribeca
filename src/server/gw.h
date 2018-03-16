@@ -78,9 +78,7 @@ namespace K {
         }
       };
       function<void()> hotkiss = [&]() {
-        gwAdminEnabled = !gwAdminEnabled
-          ? mConnectivity::Connected
-          : mConnectivity::Disconnected;
+        gwAdminEnabled = (mConnectivity)!gwAdminEnabled;
         gwAdminSemaphore();
       };
       mConnectivity gwSemaphore(mConnectivity *current, mConnectivity updated) {
