@@ -10,8 +10,8 @@ namespace K {
       mQuoteStatus status;
       unsigned int AK47inc = 0;
     public:
-      mConnectivity gwConnectButton   = mConnectivity::Disconnected,
-                    gwConnectExchange = mConnectivity::Disconnected;
+      mConnectivity *gwConnectButton   = nullptr,
+                    *gwConnectExchange = nullptr;
     protected:
       void load() {
         quotingMode[mQuotingMode::Top]         = &calcTopOfMarket;
@@ -50,7 +50,7 @@ namespace K {
       function<void()> calcQuote = [&]() {                          _debugEvent_
         bidStatus = mQuoteState::MissingData;
         askStatus = mQuoteState::MissingData;
-        if (!gwConnectExchange) {
+        if (!*gwConnectExchange) {
           bidStatus = mQuoteState::Disconnected;
           askStatus = mQuoteState::Disconnected;
         } else if (((MG*)market)->fairValue
@@ -58,7 +58,7 @@ namespace K {
           and !((PG*)wallet)->position.empty()
           and !((PG*)wallet)->safety.empty()
         ) {
-          if (!gwConnectButton) {
+          if (!*gwConnectButton) {
             bidStatus = mQuoteState::DisabledQuotes;
             askStatus = mQuoteState::DisabledQuotes;
             stopAllQuotes(mSide::Both);

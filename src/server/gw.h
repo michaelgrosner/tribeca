@@ -6,7 +6,9 @@ namespace K {
     private:
       mConnectivity gwAdminEnabled  = mConnectivity::Disconnected,
                     gwConnectOrders = mConnectivity::Disconnected,
-                    gwConnectMarket = mConnectivity::Disconnected;
+                    gwConnectMarket = mConnectivity::Disconnected,
+                    gwConnectButton = mConnectivity::Disconnected,
+                    gwConnectExchange = mConnectivity::Disconnected;
       unsigned int gwT_5m = 0,
                    gwT_countdown = 0;
       bool sync_levels = false,
@@ -19,6 +21,10 @@ namespace K {
         handshake(gw->exchange);
       };
       void waitData() {                                             _debugEvent_
+        ((QE*)engine)->gwConnectExchange =
+        ((SH*)screen)->gwConnectExchange = &gwConnectExchange;
+        ((QE*)engine)->gwConnectButton =
+        ((SH*)screen)->gwConnectButton = &gwConnectButton;
         gw->reconnect = [&](string reason) {
           gwConnect(reason);
         };
@@ -80,26 +86,24 @@ namespace K {
       mConnectivity gwSemaphore(mConnectivity *current, mConnectivity updated) {
         if (*current != updated) {
           *current = updated;
-          ((SH*)screen)->gwConnectExchange =
-          ((QE*)engine)->gwConnectExchange = gwConnectMarket * gwConnectOrders;
+          gwConnectExchange = gwConnectMarket * gwConnectOrders;
           gwAdminSemaphore();
         }
         return updated;
       };
       void gwAdminSemaphore() {
-        mConnectivity updated = gwAdminEnabled * ((QE*)engine)->gwConnectExchange;
-        if (((QE*)engine)->gwConnectButton != updated) {
-          ((SH*)screen)->gwConnectButton =
-          ((QE*)engine)->gwConnectButton = updated;
-          ((SH*)screen)->log(string("GW ") + gw->name, "Quoting state changed to", string(!((QE*)engine)->gwConnectButton?"DIS":"") + "CONNECTED");
+        mConnectivity updated = gwAdminEnabled * gwConnectExchange;
+        if (gwConnectButton != updated) {
+          gwConnectButton = updated;
+          ((SH*)screen)->log(string("GW ") + gw->name, "Quoting state changed to", string(!gwConnectButton?"DIS":"") + "CONNECTED");
         }
         ((UI*)client)->send(mMatter::Connectivity, semaphore());
         ((SH*)screen)->refresh();
       };
       json semaphore() {
         return {
-          {"state", ((QE*)engine)->gwConnectButton},
-          {"status", ((QE*)engine)->gwConnectExchange}
+          {"state", gwConnectButton},
+          {"status", gwConnectExchange}
         };
       };
       inline void timer_1s() {                                      _debugEvent_

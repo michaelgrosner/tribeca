@@ -240,13 +240,12 @@ namespace K {
           argDebugEvents =
           argDebugOrders =
           argDebugQuotes =
-          argDebugWallet = argDebug;
+          argDebugWallet = 1;
         if (!argColors)
           RBLACK[0] = RRED[0]    = RGREEN[0] = RYELLOW[0] =
           RBLUE[0]  = RPURPLE[0] = RCYAN[0]  = RWHITE[0]  =
           BBLACK[0] = BRED[0]    = BGREEN[0] = BYELLOW[0] =
-          BBLUE[0]  = BPURPLE[0] = BCYAN[0]  = BWHITE[0]  =
-          RRESET[0] = argColors;
+          BBLUE[0]  = BPURPLE[0] = BCYAN[0]  = BWHITE[0]  = RRESET[0] = 0;
         if (argDatabase.empty() or argDatabase == ":memory:")
           (argDatabase == ":memory:"
             ? argDiskdata
@@ -263,6 +262,7 @@ namespace K {
         if (argPass == "NULL") argPass.clear();
         if (argIgnoreSun and argIgnoreMoon) argIgnoreMoon = 0;
         if (argHeadless) argPort = 0;
+        else if (!argPort) argHeadless = 1;
       };
   };
 }
