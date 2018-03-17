@@ -25,6 +25,7 @@ namespace K {
       };
       void waitData() {
         ((MG*)market)->calcQuote = &calcQuote;
+        qp->calcQuoteAfterSavedParams = &calcQuoteAfterSavedParams;
       };
       void waitUser() {
         ((UI*)client)->welcome(mMatter::QuoteStatus, &hello);
@@ -42,10 +43,13 @@ namespace K {
           calcQuote();
         } else ((SH*)screen)->logWar("QE", "Unable to calculate quote, missing market data");
       };
-      inline void findMode(string reason) {
-        if (quotingMode.find(qp->mode) == quotingMode.end())
-          exit(_redAlert_("QE", string("Invalid quoting mode ")
-            + reason + ", consider to remove the database file"));
+      function<void()> calcQuoteAfterSavedParams = [&]() {
+        findMode("saved");
+        ((MG*)market)->calcFairValue();
+        ((PG*)wallet)->calcTargetBasePos();
+        ((PG*)wallet)->calcSafety();
+        ((MG*)market)->calcEwmaHistory();
+        calcQuote();
       };
       function<void()> calcQuote = [&]() {                          _debugEvent_
         bidStatus = mQuoteState::MissingData;
@@ -73,6 +77,11 @@ namespace K {
     private:
       function<void(json*)> hello = [&](json *welcome) {
         *welcome = { status };
+      };
+      inline void findMode(string reason) {
+        if (quotingMode.find(qp->mode) == quotingMode.end())
+          exit(_redAlert_("QE", string("Invalid quoting mode ")
+            + reason + ", consider to remove the database file"));
       };
       inline void sendQuoteToAPI() {
         mQuote quote = nextQuote();

@@ -24,12 +24,7 @@ namespace K {
       function<void(json)> kiss = [&](json butterfly) {
         mQuotingParams prev(*qp);
         (*qp = butterfly).diff(prev);
-        ((QE*)engine)->findMode("saved");
-        ((MG*)market)->calcFairValue();
-        ((PG*)wallet)->calcTargetBasePos();
-        ((PG*)wallet)->calcSafety();
-        ((MG*)market)->calcEwmaHistory();
-        ((QE*)engine)->calcQuote();
+        (*qp->calcQuoteAfterSavedParams)();
         ((UI*)client)->send(mMatter::QuotingParameters, *qp);
         ((DB*)memory)->insert(mMatter::QuotingParameters, *qp);
         delayUI();

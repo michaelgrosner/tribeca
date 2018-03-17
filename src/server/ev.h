@@ -132,11 +132,11 @@ namespace K  {
       };
       static void wtf(int sig) {
         string rollout = tracelog;
-        tracelog = string(RCYAN) + "Errrror: Signal " + to_string(sig)
+        tracelog = string(RCYAN) + "Errrror: Signal " + to_string(sig) + ' '
 #ifndef _WIN32
-          + ' ' + strsignal(sig)
+          + strsignal(sig)
 #endif
-          + ' ';
+          ;
         if (FN::output("test -d .git && git rev-parse @") != FN::output("test -d .git && git rev-parse @{u}"))
           tracelog += string("(deprecated K version found).") + '\n'
             + '\n' + string(BYELLOW) + "Hint!" + string(RYELLOW)

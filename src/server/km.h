@@ -110,19 +110,19 @@ namespace K {
     void flag() {
       _matchPings = safety == mQuotingSafety::Boomerang or safety == mQuotingSafety::AK47;
     };
-    void diff(mQuotingParams prev) {
+    void diff(mQuotingParams &prev) {
       _diffVLEP = prev.veryLongEwmaPeriods != veryLongEwmaPeriods;
       _diffLEP = prev.longEwmaPeriods != longEwmaPeriods;
       _diffMEP = prev.mediumEwmaPeriods != mediumEwmaPeriods;
       _diffSEP = prev.shortEwmaPeriods != shortEwmaPeriods;
       _diffXSEP = prev.extraShortEwmaPeriods != extraShortEwmaPeriods;
       _diffUEP = prev.ultraShortEwmaPeriods != ultraShortEwmaPeriods;
+      equal(prev);
     };
-    bool diffOnce(bool *k) {
-      bool ret = *k;
-      if (*k) *k = false;
-      return ret;
+    void equal(mQuotingParams &prev) {
+      calcQuoteAfterSavedParams = prev.calcQuoteAfterSavedParams;
     };
+    function<void()> *calcQuoteAfterSavedParams;
   };
   static void to_json(json& j, const mQuotingParams& k) {
     j = {
@@ -636,6 +636,7 @@ namespace K {
                 apikey   = "", secret  = "",
                 user     = "", pass    = "",
                 ws       = "", http    = "";
+           bool forceUpdate = false;
       mRandId (*randId)() = 0;
       virtual void send(mRandId, mRandId, mRandId, mSide, string, string, mOrderType, mTimeInForce, bool, mClock) = 0,
                    cancel(mRandId, mRandId, mSide, mClock) = 0,
@@ -734,17 +735,17 @@ namespace K {
       inline void link(Klass &EV, Klass &DB, Klass &UI, Klass &QP, Klass &OG, Klass &MG, Klass &PG, Klass &QE, Klass &GW) {
         Klass &CF = *this;
         void *SH = screen;
-        EV.gwLink(gw);                UI.gwLink(gw); OG.gwLink(gw); MG.gwLink(gw); PG.gwLink(gw); QE.gwLink(gw);                GW.gwLink(gw);
-        EV.shLink(SH); DB.shLink(SH); UI.shLink(SH); OG.shLink(SH); MG.shLink(SH); PG.shLink(SH); QE.shLink(SH); QP.shLink(SH); GW.shLink(SH);
-        EV.cfLink(CF); DB.cfLink(CF); UI.cfLink(CF); OG.cfLink(CF); MG.cfLink(CF); PG.cfLink(CF); QE.cfLink(CF);                GW.cfLink(CF);
-                       DB.evLink(EV); UI.evLink(EV); OG.evLink(EV); MG.evLink(EV); PG.evLink(EV); QE.evLink(EV); QP.evLink(EV); GW.evLink(EV);
-                                      UI.dbLink(DB); OG.dbLink(DB); MG.dbLink(DB); PG.dbLink(DB);                QP.dbLink(DB);
-                                                     OG.uiLink(UI); MG.uiLink(UI); PG.uiLink(UI); QE.uiLink(UI); QP.uiLink(UI); GW.uiLink(UI);
-                                                     OG.qpLink(&p); MG.qpLink(&p); PG.qpLink(&p); QE.qpLink(&p); QP.qpLink(&p); GW.qpLink(&p);
-                                                                    MG.ogLink(OG); PG.ogLink(OG); QE.ogLink(OG);
-                                                                                   PG.mgLink(MG); QE.mgLink(MG); QP.mgLink(MG);
-                                                                                                  QE.pgLink(PG); QP.pgLink(PG);
-                                                                                                                 QP.qeLink(QE); GW.qeLink(QE);
+        EV.gwLink(gw);                UI.gwLink(gw);                OG.gwLink(gw); MG.gwLink(gw); PG.gwLink(gw); QE.gwLink(gw); GW.gwLink(gw);
+        EV.shLink(SH); DB.shLink(SH); UI.shLink(SH); QP.shLink(SH); OG.shLink(SH); MG.shLink(SH); PG.shLink(SH); QE.shLink(SH); GW.shLink(SH);
+        EV.cfLink(CF); DB.cfLink(CF); UI.cfLink(CF);                OG.cfLink(CF); MG.cfLink(CF); PG.cfLink(CF); QE.cfLink(CF); GW.cfLink(CF);
+                       DB.evLink(EV); UI.evLink(EV);                OG.evLink(EV); MG.evLink(EV); PG.evLink(EV); QE.evLink(EV); GW.evLink(EV);
+                                      UI.dbLink(DB); QP.dbLink(DB); OG.dbLink(DB); MG.dbLink(DB); PG.dbLink(DB);
+                                                     QP.uiLink(UI); OG.uiLink(UI); MG.uiLink(UI); PG.uiLink(UI); QE.uiLink(UI); GW.uiLink(UI);
+                                                     QP.qpLink(&p); OG.qpLink(&p); MG.qpLink(&p); PG.qpLink(&p); QE.qpLink(&p); GW.qpLink(&p);
+                                                                                   MG.ogLink(OG); PG.ogLink(OG); QE.ogLink(OG);
+                                                                                                  PG.mgLink(MG); QE.mgLink(MG);
+                                                                                                                 QE.pgLink(PG);
+                                                                                                                                GW.qeLink(QE);
       };
   };
 }

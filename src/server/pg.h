@@ -12,8 +12,7 @@ namespace K {
       vector<mProfit> profits;
       map<mPrice, mTrade> buys,
                           sells;
-      mClock profitT_21s = 0,
-             walletT_2s = 0;
+      mClock profitT_21s = 0;
       string sideAPR_ = "!=";
     public:
       mPosition position;
@@ -278,9 +277,8 @@ namespace K {
           : balance.quote
         ).reset(amount, heldAmount);
         calcWallet(mWallets());
-        if (!refreshWallet or walletT_2s + 2e+3 > _Tstamp_) return;
-        walletT_2s = _Tstamp_;
-        ((EV*)events)->async(gw->wallet);
+        if (refreshWallet)
+          gw->forceUpdate = true;
       };
       void calcPDiv(mAmount baseValue) {
         mAmount pDiv = qp->percentageValues

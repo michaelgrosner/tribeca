@@ -128,12 +128,12 @@ namespace K {
         averageWidth /= ++averageCount;
       };
       void calcEwmaHistory() {
-        if (qp->diffOnce(&qp->_diffVLEP)) calcEwmaHistory(&mgEwmaVL, qp->veryLongEwmaPeriods, "VeryLong");
-        if (qp->diffOnce(&qp->_diffLEP)) calcEwmaHistory(&mgEwmaL, qp->longEwmaPeriods, "Long");
-        if (qp->diffOnce(&qp->_diffMEP)) calcEwmaHistory(&mgEwmaM, qp->mediumEwmaPeriods, "Medium");
-        if (qp->diffOnce(&qp->_diffSEP)) calcEwmaHistory(&mgEwmaS, qp->shortEwmaPeriods, "Short");
-        if (qp->diffOnce(&qp->_diffXSEP)) calcEwmaHistory(&mgEwmaXS, qp->extraShortEwmaPeriods, "ExtraShort");
-        if (qp->diffOnce(&qp->_diffUEP)) calcEwmaHistory(&mgEwmaU, qp->ultraShortEwmaPeriods, "UltraShort");
+        if (FN::trueOnce(&qp->_diffVLEP)) calcEwmaHistory(&mgEwmaVL, qp->veryLongEwmaPeriods, "VeryLong");
+        if (FN::trueOnce(&qp->_diffLEP)) calcEwmaHistory(&mgEwmaL, qp->longEwmaPeriods, "Long");
+        if (FN::trueOnce(&qp->_diffMEP)) calcEwmaHistory(&mgEwmaM, qp->mediumEwmaPeriods, "Medium");
+        if (FN::trueOnce(&qp->_diffSEP)) calcEwmaHistory(&mgEwmaS, qp->shortEwmaPeriods, "Short");
+        if (FN::trueOnce(&qp->_diffXSEP)) calcEwmaHistory(&mgEwmaXS, qp->extraShortEwmaPeriods, "ExtraShort");
+        if (FN::trueOnce(&qp->_diffUEP)) calcEwmaHistory(&mgEwmaU, qp->ultraShortEwmaPeriods, "UltraShort");
       };
     private:
       function<void(json*)> helloTrade = [&](json *welcome) {

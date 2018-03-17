@@ -111,7 +111,8 @@ namespace K {
         else ((QE*)engine)->timer_1s();
         if (sync_orders and !(gwT_5m % 2))  ((EV*)events)->async(gw->orders);
         if (sync_levels and !(gwT_5m % 3))  ((EV*)events)->async(gw->levels);
-        if (!(gwT_5m % 15))                 ((EV*)events)->async(gw->wallet);
+        if (FN::trueOnce(&gw->forceUpdate)
+          or !(gwT_5m % 15))                ((EV*)events)->async(gw->wallet);
         if (sync_trades and !(gwT_5m % 60)) ((EV*)events)->async(gw->trades);
         if (++gwT_5m == 300) {
           gwT_5m = 0;
