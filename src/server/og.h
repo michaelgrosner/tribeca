@@ -6,7 +6,7 @@ namespace K {
     public:
       map<mRandId, mOrder> orders;
       vector<mTrade> tradesHistory;
-      function<void(mOrder*)>* calcWalletAfterOrder;
+      function<void(mSide, bool)>* calcWalletAfterOrder;
       function<void(mTrade*)>* calcSafetyAfterTrade;
     protected:
       void load() {
@@ -110,8 +110,10 @@ namespace K {
         );
       };
       void updateOrderState(mOrder k) {
-        if (k.orderStatus == mStatus::New) orders[k.orderId] = k;
-        if (k.orderId.empty() and !k.exchangeId.empty())
+        bool saved = k.orderStatus != mStatus::New,
+             working = k.orderStatus == mStatus::Working;
+        if (!saved) orders[k.orderId] = k;
+        else if (k.orderId.empty() and !k.exchangeId.empty())
           for (map<mRandId, mOrder>::value_type &it : orders)
             if (k.exchangeId == it.second.exchangeId) {
               k.orderId = it.first;
@@ -126,19 +128,19 @@ namespace K {
         if (k.time) o->time = k.time;
         if (k.latency) o->latency = k.latency;
         if (!o->time) o->time = _Tstamp_;
-        if (!o->latency and o->orderStatus == mStatus::Working)
-          o->latency = _Tstamp_ - o->time;
+        if (!o->latency and working) o->latency = _Tstamp_ - o->time;
         if (o->latency) o->time = _Tstamp_;
-        mOrder unclean = *o;
-        if (k.tradeQuantity) unclean.tradeQuantity = k.tradeQuantity;
-        if (k.orderStatus == mStatus::Cancelled or k.orderStatus == mStatus::Complete)
-          cleanOrder(k.orderId);
+        if (k.tradeQuantity)
+          toHistory(o, k.tradeQuantity);
+        k.side = o->side;
+        if (saved and !working)
+          cleanOrder(o->orderId);
         else debug(string(" saved ") + (o->side == mSide::Bid ? "BID id " : "ASK id ") + o->orderId + "::" + o->exchangeId + " [" + to_string((int)o->orderStatus) + "]: " + FN::str8(o->quantity) + " " + o->pair.base + " at price " + FN::str8(o->price) + " " + o->pair.quote);
         debug(string("memory ") + to_string(orders.size()));
-        (*calcWalletAfterOrder)(&unclean);
-        if (k.tradeQuantity) toHistory(unclean);
-        if (k.orderStatus != mStatus::New)
-          toClient(k.orderStatus == mStatus::Working);
+        if (saved) {
+          (*calcWalletAfterOrder)(k.side, k.tradeQuantity > 0);
+          toClient(working);
+        }
       };
       void cancelOpenOrders() {
         for (map<mRandId, mOrder>::value_type &it : orders)
@@ -167,7 +169,7 @@ namespace K {
             if (!all) break;
           }
       };
-      void toClient(bool working) {
+      inline void toClient(bool working) {
         ((SH*)screen)->log(&orders, working);
         json k = json::array();
         for (map<mRandId, mOrder>::value_type &it : orders)
@@ -175,17 +177,16 @@ namespace K {
             k.push_back(it.second);
         ((UI*)client)->send(mMatter::OrderStatusReports, k);
       };
-      void toHistory(mOrder &o) {
-        if (!o.tradeQuantity) return;
+      inline void toHistory(mOrder *o, double tradeQuantity) {
         mAmount fee = 0;
         mTrade trade(
           to_string(_Tstamp_),
-          o.pair,
-          o.price,
-          o.tradeQuantity,
-          o.side,
-          o.time,
-          abs(o.price * o.tradeQuantity),
+          o->pair,
+          o->price,
+          tradeQuantity,
+          o->side,
+          o->time,
+          abs(o->price * tradeQuantity),
           0, 0, 0, 0, 0, fee, false
         );
         (*calcSafetyAfterTrade)(&trade);
@@ -221,7 +222,7 @@ namespace K {
           {"side", trade.side},
           {"quantity", trade.quantity},
           {"value", trade.value},
-          {"pong", o.isPong}
+          {"pong", o->isPong}
         });
         if (qp->cleanPongsAuto) cleanAuto(trade.time);
       };

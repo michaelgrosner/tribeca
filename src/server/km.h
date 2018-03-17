@@ -424,9 +424,6 @@ namespace K {
     mTrade():
       tradeId(""), pair(mPair()), price(0), quantity(0), side((mSide)0), time(0), value(0), Ktime(0), Kqty(0), Kprice(0), Kvalue(0), Kdiff(0), feeCharged(0), loadedFromDB(false)
     {};
-    mTrade(mPrice p, mAmount q, mClock t):
-      tradeId(""), pair(mPair()), price(p), quantity(q), side((mSide)0), time(t), value(0), Ktime(0), Kqty(0), Kprice(0), Kvalue(0), Kdiff(0), feeCharged(0), loadedFromDB(false)
-    {};
     mTrade(mPrice p, mAmount q, mSide s):
       tradeId(""), pair(mPair()), price(p), quantity(q), side(s), time(0), value(0), Ktime(0), Kqty(0), Kprice(0), Kvalue(0), Kdiff(0), feeCharged(0), loadedFromDB(false)
     {};
@@ -517,7 +514,6 @@ namespace K {
       {   "timeInForce", k.timeInForce   },
       {   "orderStatus", k.orderStatus   },
       {"preferPostOnly", k.preferPostOnly},
-      { "tradeQuantity", k.tradeQuantity },
       {          "time", k.time          },
       {       "latency", k.latency       }
     };

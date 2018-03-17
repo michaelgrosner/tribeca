@@ -97,11 +97,7 @@ namespace K {
       function<void(mTrade*)> calcSafetyAfterTrade = [&](mTrade *k) {
         (k->side == mSide::Bid
           ? buys : sells
-        )[k->price] = mTrade(
-          k->price,
-          k->quantity,
-          k->time
-        );
+        )[k->price] = *k;
         calcSafety();
       };
       mSafety nextSafety() {
@@ -261,14 +257,14 @@ namespace K {
         ((UI*)client)->send(mMatter::Position, pos);
         ((SH*)screen)->log(pos);
       };
-      function<void(mOrder*)> calcWalletAfterOrder = [&](mOrder *k) {
+      function<void(mSide, bool)> calcWalletAfterOrder = [&](mSide side, bool refreshWallet) {
         if (position.empty()) return;
         mAmount heldAmount = 0;
-        mAmount amount = k->side == mSide::Ask
+        mAmount amount = side == mSide::Ask
           ? position.baseAmount + position.baseHeldAmount
           : position.quoteAmount + position.quoteHeldAmount;
         for (map<mRandId, mOrder>::value_type &it : ((OG*)broker)->orders)
-          if (it.second.side == k->side and it.second.orderStatus == mStatus::Working) {
+          if (it.second.side == side and it.second.orderStatus == mStatus::Working) {
             mAmount held = it.second.quantity;
             if (it.second.side == mSide::Bid)
               held *= it.second.price;
@@ -277,12 +273,12 @@ namespace K {
               heldAmount += held;
             }
           }
-        (k->side == mSide::Ask
+        (side == mSide::Ask
           ? balance.base
           : balance.quote
         ).reset(amount, heldAmount);
         calcWallet(mWallets());
-        if (!k->tradeQuantity or walletT_2s + 2e+3 > _Tstamp_) return;
+        if (!refreshWallet or walletT_2s + 2e+3 > _Tstamp_) return;
         walletT_2s = _Tstamp_;
         ((EV*)events)->async(gw->wallet);
       };
