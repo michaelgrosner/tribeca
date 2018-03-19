@@ -1,6 +1,6 @@
-///<reference path="utils.ts"/>
-///<reference path="interfaces.ts"/>
-///<reference path="fair-value.ts"/>
+/// <reference path="utils.ts"/>
+/// <reference path="interfaces.ts"/>
+/// <reference path="fair-value.ts"/>
 
 import Utils = require("./utils");
 import Interfaces = require("./interfaces");

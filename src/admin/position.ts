@@ -2,7 +2,7 @@
 /// <reference path="../common/messaging.ts" />
 /// <amd-dependency path="ui.bootstrap"/>
 /// <reference path="shared_directives.ts"/>
-///<reference path="pair.ts"/>
+/// <reference path="pair.ts"/>
 
 import angular = require("angular");
 import Models = require("../common/models");

@@ -1,7 +1,7 @@
 /// <reference path="utils.ts" />
 /// <reference path="../common/models.ts" />
 /// <reference path="../common/messaging.ts" />
-///<reference path="persister.ts"/>
+/// <reference path="persister.ts"/>
 
 import Models = require("../common/models");
 import Messaging = require("../common/messaging");
