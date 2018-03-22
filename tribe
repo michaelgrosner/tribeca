@@ -1,0 +1,28 @@
+#!/bin/bash
+
+. env.sh
+
+start () {
+
+   cd tribeca/service
+   forever start main.js
+}
+stop () {
+   forever stop main.js
+}
+
+
+case $1 in
+   start) 
+      start
+      ;;
+   status)
+      forever list
+      ;;
+   stop)
+      stop
+      ;;
+   default)
+      echo "usage :   tribeca start|status|stop "
+esac
+
