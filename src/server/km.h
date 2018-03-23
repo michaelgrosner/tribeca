@@ -563,9 +563,9 @@ namespace K {
     };
   };
   struct mLevelsDiff: public mLevels {
-    inline vector<mLevel> diff(vector<mLevel> *from, vector<mLevel> to) {
+    inline vector<mLevel> diff(vector<mLevel> from, vector<mLevel> to) {
       vector<mLevel> patch;
-      for (mLevel &it : *from) {
+      for (mLevel &it : from) {
         vector<mLevel>::iterator it_ = find_if(to.begin(), to.end(),
           [it](const mLevel &_it) { return it.price == _it.price; }
         );
@@ -579,11 +579,11 @@ namespace K {
       }
       if (!to.empty())
         patch.insert(patch.end(), to.begin(), to.end());
-      *from = patch;
+      return patch;
     };
     inline json diff(mLevels &to) {
-      diff(&bids, to.bids);
-      diff(&asks, to.asks);
+      bids = diff(bids, to.bids);
+      asks = diff(asks, to.asks);
       json patch = *this;
       reset(to);
       return patch;
