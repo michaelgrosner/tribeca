@@ -1577,7 +1577,7 @@ table {
 
 .table > {
   thead > tr > td.active, tbody > tr > td.active, tfoot > tr > td.active, thead > tr > th.active, tbody > tr > th.active, tfoot > tr > th.active, thead > tr.active > td, tbody > tr.active > td, tfoot > tr.active > td, thead > tr.active > th, tbody > tr.active > th, tfoot > tr.active > th {
-    background-color: #393838;
+    background-color: transparent;
   }
 }
 
@@ -7758,7 +7758,7 @@ h4 {
 }
 
 .table.marketQuoting > {
-  thead > tr > td, tbody > tr > td, tfoot > tr > td {
+  thead > tr > td, tbody > tr, tbody > tr > td, tfoot > tr > td {
     background-color: #161617;
   }
 }

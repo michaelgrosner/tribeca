@@ -1457,11 +1457,6 @@ caption {
   background-color: #f9f9f9;
 }
 
-.table-hover > tbody > tr:hover td {
-  padding: 0px;
-  margin: 0px;
-}
-
 table {
   col[class*="col-"] {
     position: static;
@@ -5756,6 +5751,10 @@ table.marketQuoting {
   }
   td {
     padding: 0px;
+    position:relative;
+    div {
+      z-index: 1;
+    }
     div.bgSize {
       position: absolute;
       width: 100%;
@@ -5763,14 +5762,15 @@ table.marketQuoting {
       right: 0px;
       bottom: 0px;
       height: 16px;
+      z-index: -1;
     }
-    &.asks1 {
+    div.asks1 {
       animation-duration: 221ms;
       animation-timing-function: step-end;
       animation-iteration-count: 1;
       animation-name: colorAsks;
     }
-    &.bids1 {
+    div.bids1 {
       animation-duration: 0.3s;
       animation-timing-function: step-end;
       animation-iteration-count: 1;
@@ -5786,7 +5786,7 @@ table.marketQuoting {
         color: #ff8e8c;
       }
     }
-    &.bids2, &.asks2 {
+    div.bids2, div.asks2 {
       animation-duration: 0.3s;
       animation-timing-function: linear;
       animation-name: clearBidAsk;

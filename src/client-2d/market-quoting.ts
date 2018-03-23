@@ -31,24 +31,32 @@ import * as Models from './models';
           <td><div class="text-danger text-center"><br />To <a href="{{ product.advert.homepage }}/blob/master/README.md#unlock" target="_blank">unlock</a> all market levels<br />and to collaborate with the development..<br /><br />make an acceptable Pull Request on github,<br/>or send 0.01210000 BTC or more to:<br /><a href="https://www.blocktrail.com/BTC/address/{{ a }}" target="_blank">{{ a }}</a><br /><br />Wait 0 confirmations and restart this bot. <!-- you can remove this message, but obviously the missing market levels will not be displayed magically. the market levels will be only displayed if the also displayed address is credited with 0.01210000 BTC. Note that if you make a Pull Request i will credit the payment for you easy, just let me know in the description of the PR what is the BTC Address displayed in your bot.--></div></td>
         </tr>
         <tr [ngClass]="orderPriceBids.indexOf(lvl.price)==-1?'active':'success buy'" *ngFor="let lvl of levels.bids; let i = index">
-          <td [ngClass]="'bids'+lvl.cssMod">
-            <div class="bgSize" [ngStyle]="{'background': getBgSize(lvl, 'bids')}"></div>
-            {{ lvl.size | number:'1.4-4' }}
+          <td>
+            <div style="position:relative;" [ngClass]="'bids'+lvl.cssMod">
+              <div class="bgSize" [ngStyle]="{'background': getBgSize(lvl, 'bids')}"></div>
+              {{ lvl.size | number:'1.4-4' }}
+            </div>
           </td>
-          <td [ngClass]="'bids'+(lvl.cssMod==2?2:0)">
-            {{ lvl.price | number:'1.'+product.fixed+'-'+product.fixed }}
+          <td>
+            <div [ngClass]="'bids'+(lvl.cssMod==2?2:0)">
+              {{ lvl.price | number:'1.'+product.fixed+'-'+product.fixed }}
+            </div>
           </td>
         </tr>
       </table>
       <table class="marketQuoting table table-hover table-responsive text-center" style="width:50%;">
         <tr *ngIf="a" style="height:0px;" class="skip"><td></td></tr>
         <tr [ngClass]="orderPriceAsks.indexOf(lvl.price)==-1?'active':'success sell'" *ngFor="let lvl of levels.asks; let i = index">
-          <td [ngClass]="'asks'+(lvl.cssMod==2?2:0)">
-            {{ lvl.price | number:'1.'+product.fixed+'-'+product.fixed }}
+          <td>
+            <div [ngClass]="'asks'+(lvl.cssMod==2?2:0)">
+              {{ lvl.price | number:'1.'+product.fixed+'-'+product.fixed }}
+            </div>
           </td>
-          <td [ngClass]="'asks'+lvl.cssMod">
-            <div class="bgSize" [ngStyle]="{'background': getBgSize(lvl, 'asks')}"></div>
-            {{ lvl.size | number:'1.4-4' }}
+          <td>
+            <div style="position:relative;" [ngClass]="'asks'+lvl.cssMod">
+              <div class="bgSize" [ngStyle]="{'background': getBgSize(lvl, 'asks')}"></div>
+              {{ lvl.size | number:'1.4-4' }}
+            </div>
           </td>
         </tr>
       </table>
