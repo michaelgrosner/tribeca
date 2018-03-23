@@ -191,7 +191,9 @@ namespace K {
         if (!filterAskOrders.empty()) filter(&levels.asks, filterAskOrders);
         calcFairValue();
         (*calcQuote)();
-        if (levelsDiff.empty() or k.empty() or mgT_369ms + 369e+0 > _Tstamp_) return;
+        if (levelsDiff.empty() or k.empty()
+          or mgT_369ms + max(369e+0, qp->delayUI * 1e+3) > _Tstamp_
+        ) return;
         ((UI*)client)->send(mMatter::MarketData, levelsDiff.diff(k));
         mgT_369ms = _Tstamp_;
       };

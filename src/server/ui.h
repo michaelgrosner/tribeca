@@ -168,9 +168,9 @@ namespace K {
           or type == mMatter::Position
           or type == mMatter::TargetBasePosition
           or type == mMatter::EWMAChart
-          or type == mMatter::MarketData
         );
-        if (realtimeClient or !delayed) broadcast(type, msg.dump());
+        if (realtimeClient or !delayed)
+          broadcast(type, msg.dump());
         else queue[type] = msg.dump();
       };
     private:
