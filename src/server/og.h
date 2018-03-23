@@ -68,10 +68,9 @@ namespace K {
       };
     private:
       function<void(json*)> helloTrades = [&](json *welcome) {
-        for (mTrade &it : tradesHistory) {
+        for (mTrade &it : tradesHistory)
           it.loadedFromDB = true;
-          welcome->push_back(it);
-        }
+        *welcome = tradesHistory;
       };
       function<void(json*)> helloOrders = [&](json *welcome) {
         for (map<mRandId, mOrder>::value_type &it : orders)

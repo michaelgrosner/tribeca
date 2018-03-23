@@ -23,6 +23,7 @@ namespace K {
       mPrice averageWidth = 0;
       unsigned int mgT_60s = 0,
                    averageCount = 0;
+      mLevelsDiff levelsDiff;
     public:
       function<void()> *calcQuote,
                        *calcTargetBasePos;
@@ -96,6 +97,7 @@ namespace K {
         };
       };
       void waitUser() {
+        ((UI*)client)->welcome(mMatter::MarketData, &helloLevels);
         ((UI*)client)->welcome(mMatter::MarketTrade, &helloTrade);
         ((UI*)client)->welcome(mMatter::FairValue, &helloFair);
         ((UI*)client)->welcome(mMatter::EWMAChart, &helloEwma);
@@ -136,9 +138,11 @@ namespace K {
         if (FN::trueOnce(&qp->_diffUEP)) calcEwmaHistory(&mgEwmaU, qp->ultraShortEwmaPeriods, "UltraShort");
       };
     private:
+      function<void(json*)> helloLevels = [&](json *welcome) {
+        *welcome = { levelsDiff.reset(levels) };
+      };
       function<void(json*)> helloTrade = [&](json *welcome) {
-        for (mTrade &it : trades)
-          welcome->push_back(it);
+        *welcome = trades;
       };
       function<void(json*)> helloFair = [&](json *welcome) {
         *welcome = { {
@@ -187,10 +191,8 @@ namespace K {
         if (!filterAskOrders.empty()) filter(&levels.asks, filterAskOrders);
         calcFairValue();
         (*calcQuote)();
-        if (!k.empty() and mgT_369ms + 369e+0 > _Tstamp_) return;
-        ((UI*)client)->bid_levels = k.bids.size();
-        ((UI*)client)->ask_levels = k.asks.size();
-        ((UI*)client)->send(mMatter::MarketData, k);
+        if (levelsDiff.empty() or k.empty() or mgT_369ms + 369e+0 > _Tstamp_) return;
+        ((UI*)client)->send(mMatter::MarketData, levelsDiff.diff(k));
         mgT_369ms = _Tstamp_;
       };
       void filter(vector<mLevel> *k, map<mPrice, mAmount> o) {

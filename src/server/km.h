@@ -527,10 +527,10 @@ namespace K {
     mLevel(mPrice p, mAmount s):
       price(p), size(s)
     {};
-    void clear() {
+    inline void clear() {
       price = size = 0;
     };
-    bool empty() {
+    inline bool empty() {
       return !price or !size;
     };
   };
@@ -549,23 +549,56 @@ namespace K {
     mLevels(vector<mLevel> b, vector<mLevel> a):
       bids(b), asks(a)
     {};
-    mPrice spread() {
+    inline mPrice spread() {
       return empty() ? 0 : asks.begin()->price - bids.begin()->price;
     };
-    bool empty() {
+    inline bool empty() {
       return bids.empty() or asks.empty();
     };
   };
   static void to_json(json& j, const mLevels& k) {
-    vector<mLevel> bids,
-                   asks;
-    for (const mLevel &it : k.bids)
-      if (bids.size() < 15) bids.push_back(it); else break;
-    for (const mLevel &it : k.asks)
-      if (asks.size() < 15) asks.push_back(it); else break;
     j = {
-      {"bids", bids},
-      {"asks", asks}
+      {"bids", k.bids},
+      {"asks", k.asks}
+    };
+  };
+  struct mLevelsDiff: public mLevels {
+    inline vector<mLevel> diff(vector<mLevel> *from, vector<mLevel> to) {
+      vector<mLevel> patch;
+      for (mLevel &it : *from) {
+        vector<mLevel>::iterator it_ = find_if(to.begin(), to.end(),
+          [it](const mLevel &_it) { return it.price == _it.price; }
+        );
+        mAmount size = 0;
+        if (it_ != to.end()) {
+          size = it_->size;
+          to.erase(it_);
+        }
+        if (size != it.size)
+          patch.push_back(mLevel(it.price, size));
+      }
+      if (!to.empty())
+        patch.insert(patch.end(), to.begin(), to.end());
+      *from = patch;
+    };
+    inline json diff(mLevels &to) {
+      diff(&bids, to.bids);
+      diff(&asks, to.asks);
+      json patch = *this;
+      reset(to);
+      return patch;
+    }
+    inline mLevels reset(mLevels &from) {
+      bids = from.bids;
+      asks = from.asks;
+      return from;
+    };
+  };
+  static void to_json(json& j, const mLevelsDiff& k) {
+    j = {
+      {"bids", k.bids},
+      {"asks", k.asks},
+      {"diff", true}
     };
   };
   struct mQuote {

@@ -1558,7 +1558,7 @@ caption {
   background-color: #3d3d3d;
 }
 
-.table-hover > tbody > tr:hover {
+.table-hover > tbody > tr:hover td {
   background-color: #464545;
 }
 
@@ -1577,7 +1577,7 @@ table {
 
 .table > {
   thead > tr > td.active, tbody > tr > td.active, tfoot > tr > td.active, thead > tr > th.active, tbody > tr > th.active, tfoot > tr > th.active, thead > tr.active > td, tbody > tr.active > td, tfoot > tr.active > td, thead > tr.active > th, tbody > tr.active > th, tfoot > tr.active > th {
-    background-color: transparent;
+    background-color: #393838;
   }
 }
 
@@ -1671,7 +1671,6 @@ table {
     margin-bottom: 15.75px;
     overflow-y: hidden;
     -ms-overflow-style: -ms-autohiding-scrollbar;
-    border: 1px solid #464545;
     > {
       .table {
         margin-bottom: 0;
@@ -7762,10 +7761,6 @@ h4 {
   thead > tr > td, tbody > tr > td, tfoot > tr > td {
     background-color: #161617;
   }
-}
-
-.COINWIDGET_ADDRESS input {
-  color: black;
 }
 
 .exchange {

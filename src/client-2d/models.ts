@@ -38,7 +38,8 @@ export var Topics = {
 
 export class MarketSide {
     constructor(public price: number,
-                public size: number) { }
+                public size: number,
+                public cssMod: number) { }
 }
 
 export class Market {

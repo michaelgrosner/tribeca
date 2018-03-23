@@ -21,8 +21,6 @@ namespace K {
       mClock uiT_60s = 0;
     public:
       unsigned int orders_60s = 0;
-      unsigned int bid_levels = 0;
-      unsigned int ask_levels = 0;
     protected:
       void load() {
         if (((CF*)config)->argHeadless
@@ -237,8 +235,6 @@ namespace K {
         return {
           {"memory", memorySize()},
           {"freq", orders_60s},
-          {"bids", bid_levels},
-          {"asks", ask_levels},
           {"theme", ((CF*)config)->argIgnoreMoon + ((CF*)config)->argIgnoreSun},
           {"dbsize", ((DB*)memory)->size()},
           {"a", gw->A()}

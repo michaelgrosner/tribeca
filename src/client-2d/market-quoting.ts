@@ -1,53 +1,82 @@
-import {Component, Input} from '@angular/core';
+import {Component, EventEmitter, Input, Output} from '@angular/core';
 
 import * as Models from './models';
 
 @Component({
   selector: 'market-quoting',
   template: `<div class="tradeSafety2" style="margin-top:-4px;padding-top:0px;padding-right:0px;"><div style="padding-top:0px;padding-right:0px;">
-      Market Width: <span class="{{ diffMD ? \'text-danger\' : \'text-muted\' }}">{{ diffMD | number:'1.'+product.fixed+'-'+product.fixed }}</span>,
-      Quote Width: <span class="{{ diffPx ? \'text-danger\' : \'text-muted\' }}">{{ diffPx | number:'1.'+product.fixed+'-'+product.fixed }}</span>, Quotes: <span title="New Quotes in memory" class="{{ quotesInMemoryNew ? \'text-danger\' : \'text-muted\' }}">{{ quotesInMemoryNew }}</span>/<span title="Working Quotes in memory" class="{{ quotesInMemoryWorking ? \'text-danger\' : \'text-muted\' }}">{{ quotesInMemoryWorking }}</span>/<span title="Other Quotes in memory" class="{{ quotesInMemoryDone ? \'text-danger\' : \'text-muted\' }}">{{ quotesInMemoryDone }}</span>
+      Market Width: <span class="{{ marketWidth ? \'text-danger\' : \'text-muted\' }}">{{ marketWidth | number:'1.'+product.fixed+'-'+product.fixed }}</span>,
+      Quote Width: <span class="{{ ordersWidth ? \'text-danger\' : \'text-muted\' }}">{{ ordersWidth | number:'1.'+product.fixed+'-'+product.fixed }}</span>, Quotes: <span title="New Quotes in memory" class="{{ quotesInMemoryNew ? \'text-danger\' : \'text-muted\' }}">{{ quotesInMemoryNew }}</span>/<span title="Working Quotes in memory" class="{{ quotesInMemoryWorking ? \'text-danger\' : \'text-muted\' }}">{{ quotesInMemoryWorking }}</span>/<span title="Other Quotes in memory" class="{{ quotesInMemoryDone ? \'text-danger\' : \'text-muted\' }}">{{ quotesInMemoryDone }}</span>
       <div style="padding-left:0px;">Wallet TBP: <span class="text-danger">{{ targetBasePosition | number:'1.3-3' }}</span>, pDiv: <span class="text-danger">{{ positionDivergence | number:'1.3-3' }}</span>, APR: <span class="{{ sideAPRSafety!=\'Off\' ? \'text-danger\' : \'text-muted\' }}">{{ sideAPRSafety }}</span></div>
-      </div></div><div style="padding-right:4px;padding-left:4px;padding-top:4px;"><table class="marketQuoting table table-hover table-responsive text-center">
-      <tr class="active">
-        <td>bidSize&nbsp;</td>
-        <td>bidPrice</td>
-        <td>askPrice</td>
-        <td>askSize&nbsp;</td>
-      </tr>
-      <tr class="info">
-        <th *ngIf="bidStatus == 'Live'" class="text-danger">{{ qBidSz | number:'1.4-4' }}<span *ngIf="!qBidSz">&nbsp;</span></th>
-        <th *ngIf="bidStatus == 'Live'" class="text-danger">{{ qBidPx | number:'1.'+product.fixed+'-'+product.fixed }}</th>
-        <th *ngIf="bidStatus != 'Live'" colspan="2" class="text-danger" title="Bids Quote Status">{{ bidStatus }}</th>
-        <th *ngIf="askStatus == 'Live'" class="text-danger">{{ qAskPx | number:'1.'+product.fixed+'-'+product.fixed }}</th>
-        <th *ngIf="askStatus == 'Live'" class="text-danger">{{ qAskSz | number:'1.4-4' }}<span *ngIf="!qAskSz">&nbsp;</span></th>
-        <th *ngIf="askStatus != 'Live'" colspan="2" class="text-danger" title="Ask Quote Status">{{ askStatus }}</th>
-      </tr>
-      <tr class="active" *ngFor="let level of levels; let i = index">
-        <td *ngIf="i == 1 && levels.length == 4" colspan="4"><div class="text-danger" style="height:174px;"><br />To <a href="{{ product.advert.homepage }}/blob/master/README.md#unlock" target="_blank">unlock</a> all market levels<br />and to collaborate with the development..<br /><br />make an acceptable Pull Request on github,<br/>or send 0.01210000 BTC or more to:<br /><a href="https://www.blocktrail.com/BTC/address/{{ a }}" target="_blank">{{ a }}</a><br /><br />Wait 0 confirmations and restart this bot.<!-- you can remove this message, but obviously the missing market levels will not be displayed magically. the market levels will be only displayed if the also displayed address is credited with 0.01210000 BTC. Note that if you make a Pull Request i will credit the payment for you easy, just let me know in the description of the PR what is the BTC Address displayed in your bot. --></div></td>
-        <td *ngIf="i != 1 || levels.length != 4" [ngClass]="level.bidClass"><div style="z-index:2;position:relative;" [ngClass]="'bidsz' + i + ' num'">{{ level.bidSize | number:'1.4-4' }}</div><div style="float:right;margin-right:19px;"><div [ngClass]="level.bidClassVisual">&nbsp;</div></div></td>
-        <td *ngIf="i != 1 || levels.length != 4" [ngClass]="level.bidClass"><div [ngClass]="'bidsz' + i">{{ level.bidPrice | number:'1.'+product.fixed+'-'+product.fixed }}</div></td>
-        <td *ngIf="i != 1 || levels.length != 4" [ngClass]="level.askClass"><div [ngClass]="'asksz' + i">{{ level.askPrice | number:'1.'+product.fixed+'-'+product.fixed }}</div></td>
-        <td *ngIf="i != 1 || levels.length != 4" [ngClass]="level.askClass"><div style="float:left;"><div [ngClass]="level.askClassVisual">&nbsp;</div></div><div style="z-index:2;position:relative;" [ngClass]="'asksz' + i + ' num'">{{ level.askSize | number:'1.4-4' }}</div></td>
-      </tr>
-    </table></div>`
+      </div></div><div style="padding-right:4px;padding-left:4px;padding-top:4px;">
+      <table class="marketQuoting table table-hover table-responsive text-center">
+        <tr class="active">
+          <td>bidSize&nbsp;</td>
+          <td>bidPrice</td>
+          <td>askPrice</td>
+          <td>askSize&nbsp;</td>
+        </tr>
+        <tr class="info">
+          <th *ngIf="bidStatus == 'Live'" class="text-danger">{{ qBidSz | number:'1.4-4' }}<span *ngIf="!qBidSz">&nbsp;</span></th>
+          <th *ngIf="bidStatus == 'Live'" class="text-danger">{{ qBidPx | number:'1.'+product.fixed+'-'+product.fixed }}</th>
+          <th *ngIf="bidStatus != 'Live'" colspan="2" class="text-danger" title="Bids Quote Status">{{ bidStatus }}</th>
+          <th *ngIf="askStatus == 'Live'" class="text-danger">{{ qAskPx | number:'1.'+product.fixed+'-'+product.fixed }}</th>
+          <th *ngIf="askStatus == 'Live'" class="text-danger">{{ qAskSz | number:'1.4-4' }}<span *ngIf="!qAskSz">&nbsp;</span></th>
+          <th *ngIf="askStatus != 'Live'" colspan="2" class="text-danger" title="Ask Quote Status">{{ askStatus }}</th>
+        </tr>
+      </table>
+    <div *ngIf="levels != null" [ngClass]="(a?'a ':'')+'levels'">
+      <table class="marketQuoting table table-hover table-responsive text-center" style="width:50%;float:left;">
+        <tr *ngIf="a" class="skip">
+          <td><div class="text-danger text-center"><br />To <a href="{{ product.advert.homepage }}/blob/master/README.md#unlock" target="_blank">unlock</a> all market levels<br />and to collaborate with the development..<br /><br />make an acceptable Pull Request on github,<br/>or send 0.01210000 BTC or more to:<br /><a href="https://www.blocktrail.com/BTC/address/{{ a }}" target="_blank">{{ a }}</a><br /><br />Wait 0 confirmations and restart this bot. <!-- you can remove this message, but obviously the missing market levels will not be displayed magically. the market levels will be only displayed if the also displayed address is credited with 0.01210000 BTC. Note that if you make a Pull Request i will credit the payment for you easy, just let me know in the description of the PR what is the BTC Address displayed in your bot.--></div></td>
+        </tr>
+        <tr [ngClass]="orderPriceBids.indexOf(lvl.price)==-1?'active':'success buy'" *ngFor="let lvl of levels.bids; let i = index">
+          <td [ngClass]="'bids'+lvl.cssMod">
+            <div class="bgSize" [ngStyle]="{'background': getBgSize(lvl, 'bids')}"></div>
+            {{ lvl.size | number:'1.4-4' }}
+          </td>
+          <td [ngClass]="'bids'+(lvl.cssMod==2?2:0)">
+            {{ lvl.price | number:'1.'+product.fixed+'-'+product.fixed }}
+          </td>
+        </tr>
+      </table>
+      <table class="marketQuoting table table-hover table-responsive text-center" style="width:50%;">
+        <tr *ngIf="a" style="height:0px;" class="skip"><td></td></tr>
+        <tr [ngClass]="orderPriceAsks.indexOf(lvl.price)==-1?'active':'success sell'" *ngFor="let lvl of levels.asks; let i = index">
+          <td [ngClass]="'asks'+(lvl.cssMod==2?2:0)">
+            {{ lvl.price | number:'1.'+product.fixed+'-'+product.fixed }}
+          </td>
+          <td [ngClass]="'asks'+lvl.cssMod">
+            <div class="bgSize" [ngStyle]="{'background': getBgSize(lvl, 'asks')}"></div>
+            {{ lvl.size | number:'1.4-4' }}
+          </td>
+        </tr>
+      </table>
+    </div>
+    </div>`
 })
 export class MarketQuotingComponent {
 
-  public levels: any[];
+  public levels: Models.Market = null;
+  public allBidsSize: number = 0;
+  public allAsksSize: number = 0;
+  public dirtyBids: number = 0;
+  public dirtyAsks: number = 0;
   public qBidSz: number;
   public qBidPx: number;
   public qAskPx: number;
   public qAskSz: number;
   public orderBids: any[];
   public orderAsks: any[];
+  public orderPriceBids: number[] = [];
+  public orderPriceAsks: number[] = [];
   public bidStatus: string;
   public askStatus: string;
   public quotesInMemoryNew: number;
   public quotesInMemoryWorking: number;
   public quotesInMemoryDone: number;
-  public diffMD: number;
-  public diffPx: number;
+  public marketWidth: number;
+  public ordersWidth: number;
   public noBidReason: string;
   public noAskReason: string;
   private targetBasePosition: number;
@@ -61,8 +90,11 @@ export class MarketQuotingComponent {
   @Input() set online(online: boolean) {
     if (online) return;
     this.clearQuote();
-    this.updateQuoteClass();
   }
+
+  @Output() onBidsLength = new EventEmitter<number>();
+  @Output() onAsksLength = new EventEmitter<number>();
+  @Output() onMarketWidth = new EventEmitter<number>();
 
   @Input() set setOrderList(o: any[]) {
     this.updateQuote(o);
@@ -101,72 +133,96 @@ export class MarketQuotingComponent {
     this.orderAsks = [];
   }
 
+  private getBgSize = (lvl: Models.MarketSide, side: string) => {
+    var allSize: string = side=='bids'?'allBidsSize':'allAsksSize';
+    var red: string = side=='bids'?'141':'255';
+    var green: string = side=='bids'?'226':'142';
+    var blue: string = side=='bids'?'255':'140';
+    var dir: string = side=='bids'?'left':'right';
+    return 'linear-gradient(to '+dir+', rgba('+red+', '+green+', '+blue+', 0.69) '
+      + Math.ceil(lvl.size/this[allSize]*100)
+      + '%, rgba('+red+', '+green+', '+blue+', 0) 0%)';
+  }
+
+  private incrementMarketData = (diff: Models.MarketSide[], side: string) => {
+    var allSize: string = side=='bids'?'allBidsSize':'allAsksSize';
+    var dirtySize: string = side=='bids'?'dirtyBids':'dirtyAsks';
+    for (var i: number = 0; i < diff.length; i++) {
+      var found = false;;
+      for (var j: number = 0; j < this.levels[side].length; j++)
+        if (diff[i].price === this.levels[side][j].price) {
+          found = true;
+          this[allSize] -= this.levels[side][j].size;
+          if (diff[i].size) {
+            this.levels[side][j].size = diff[i].size;
+            this.levels[side][j].cssMod = 1;
+            this[allSize] += this.levels[side][j].size;
+          } else {
+            this.levels[side][j].cssMod = 2;
+            this[dirtySize]++;
+          }
+          break;
+        }
+      if (!found && diff[i].size) {
+        for (var j: number = 0; j < this.levels[side].length; j++)
+          if (this.levels[side][j].cssMod != 2 && (side == 'bids'
+            ? diff[i].price > this.levels[side][j].price
+            : diff[i].price < this.levels[side][j].price)
+          ) {
+            found = true;
+            this[allSize] += diff[i].size;
+            this.levels[side].splice(j, 0, diff[i]);
+            this.levels[side][j].cssMod = 1;
+            break;
+          }
+        if (!found) {
+          this[allSize] += diff[i].size;
+          this.levels[side].push(diff[i]);
+          this.levels[side][this.levels[side].length - 1].cssMod = 1;
+        }
+      }
+    }
+  };
+
   @Input() set setMarketData(update: Models.Market) {
-    if (update == null || typeof update.bids == "undefined" || typeof update.asks == "undefined" || !update.bids || !update.asks || !update.bids.length || !update.asks.length) {
-      this.levels = [];
-      return;
-    }
-
-    for (var i: number = 0; i < this.orderAsks.length; i++)
-      if (!update.asks.filter(x => x.price===this.orderAsks[i].price).length) {
-        for (var j: number = 0; j < update.asks.length;j++)
-          if (update.asks[j].price>this.orderAsks[i].price) break;
-        update.asks.splice(j-(j==update.asks.length?0:1), 0, {price:this.orderAsks[i].price, size:this.orderAsks[i].quantity});
-        update.asks = update.asks.slice(0, -1);
+    if (update == null || typeof (<any>update).diff != 'boolean') {
+      this.allBidsSize = 0;
+      this.allAsksSize = 0;
+      if (update != null) {
+        for (var i: number = 0; i < update.bids.length; i++)
+          this.allBidsSize += update.bids[i].size;
+        for (var i: number = 0; i < update.asks.length; i++)
+          this.allAsksSize += update.asks[i].size;
       }
-    for (var i: number = 0; i < this.orderBids.length; i++)
-      if (!update.bids.filter(x => x.price===this.orderBids[i].price).length) {
-        for (var j: number = 0; j < update.bids.length;j++)
-          if (update.bids[j].price<this.orderBids[i].price) break;
-        update.bids.splice(j-(j==update.bids.length?0:1), 0, {price:this.orderBids[i].price, size:this.orderBids[i].quantity});
-        update.bids = update.bids.slice(0, -1);
+      this.levels = update;
+    } else {
+      if (this.levels == null) return;
+      for (var i = this.levels.bids.length - 1; i >= 0; i--)
+        if (this.levels.bids[i].cssMod)
+          if (this.levels.bids[i].cssMod==2)
+            this.levels.bids.splice(i, 1);
+          else this.levels.bids[i].cssMod = 0;
+      for (var i = this.levels.asks.length - 1; i >= 0; i--)
+        if (this.levels.asks[i].cssMod)
+          if (this.levels.asks[i].cssMod==2)
+            this.levels.asks.splice(i, 1);
+          else this.levels.asks[i].cssMod = 0;
+      // if (document.body.className != 'visible')
+      this.dirtyBids = 0;
+      this.dirtyAsks = 0;
+      this.incrementMarketData(update.bids, 'bids');
+      this.incrementMarketData(update.asks, 'asks');
+      if (this.levels == null) {
+        this.onBidsLength.emit(0);
+        this.onAsksLength.emit(0);
+        this.marketWidth = 0;
+      } else {
+        this.onBidsLength.emit(this.levels.bids.length - this.dirtyBids);
+        this.onAsksLength.emit(this.levels.asks.length - this.dirtyAsks);
+        this.marketWidth = this.levels.asks[0].price - this.levels.bids[0].price;
       }
-
-    var _levels = [];
-    for (var j: number = 0; j < update.asks.length; j++) {
-      if (j >= _levels.length) _levels[j] = <any>{};
-      _levels[j] = Object.assign(_levels[j], { askPrice: update.asks[j].price, askSize: update.asks[j].size });
+      this.onMarketWidth.emit(this.marketWidth);
     }
-
-    for (var j: number = 0; j < update.bids.length; j++) {
-      if (j >= _levels.length) _levels[j] = <any>{};
-      _levels[j] = Object.assign(_levels[j], { bidPrice: update.bids[j].price, bidSize: update.bids[j].size });
-      if (j==0) this.diffMD = _levels[j].askPrice - _levels[j].bidPrice;
-      else if (j==1) this.diffPx = Math.max((this.qAskPx && this.qBidPx) ? this.qAskPx - this.qBidPx : 0, 0);
-    }
-
-    var modAsk: number;
-    var modBid: number;
-    for (var i: number = this.levels.length;i--;) {
-      if (i >= _levels.length) {
-        _levels[i] = <any>{};
-        continue;
-      }
-      modAsk = 2;
-      modBid = 2;
-      for (var h: number = _levels.length;h--;) {
-        if (modAsk===2 && this.levels[i].askPrice===_levels[h].askPrice)
-          modAsk = this.levels[i].askSize!==_levels[h].askSize ? 1 : 0;
-        if (modBid===2 && this.levels[i].bidPrice===_levels[h].bidPrice)
-          modBid = this.levels[i].bidSize!==_levels[h].bidSize ? 1 : 0;
-        if (modBid!==2 && modAsk!==2) break;
-      }
-      _levels[i] = Object.assign(_levels[i], { bidMod: modBid, askMod: modAsk });
-    }
-    for (var h: number = _levels.length;h--;) {
-      modAsk = 0;
-      modBid = 0;
-      for (var i: number = this.levels.length;i--;) {
-        if (!modAsk && this.levels[i].askPrice===_levels[h].askPrice)
-          modAsk = 1;
-        if (!modBid && this.levels[i].bidPrice===_levels[h].bidPrice)
-          modBid = 1;
-        if (modBid && modAsk) break;
-      }
-      if (!modBid) _levels[h] = Object.assign(_levels[h], { bidMod: 1 });
-      if (!modAsk) _levels[h] = Object.assign(_levels[h], { askMod: 1 });
-    }
-    this.updateQuoteClass(_levels);
   }
 
   private updateQuote = (o) => {
@@ -179,6 +235,7 @@ export class MarketQuotingComponent {
     }
 
     const orderSide = o.side === Models.Side.Bid ? 'orderBids' : 'orderAsks';
+    const orderPrice = o.side === Models.Side.Bid ? 'orderPriceBids' : 'orderPriceAsks';
     if (o.orderStatus == Models.OrderStatus.Cancelled
       || o.orderStatus == Models.OrderStatus.Complete
     ) this[orderSide] = this[orderSide].filter(x => x.orderId !== o.orderId);
@@ -189,6 +246,7 @@ export class MarketQuotingComponent {
         price: o.price,
         quantity: o.quantity,
       });
+    this[orderPrice] = this[orderSide].map((a)=>a.price);
 
     if (this.orderBids.length) {
       var bid = this.orderBids.reduce((a,b)=>a.price>b.price?a:b);
@@ -207,67 +265,6 @@ export class MarketQuotingComponent {
       this.qAskSz = null;
     }
 
-    this.updateQuoteClass();
-  }
-
-  private forEach = (array, callback) => {
-    for (var i = 0; i < array.length; i++)
-      callback.call(window, array[i]);
-  }
-
-  private updateQuoteClass = (levels?: any[]) => {
-    if (document.body.className != "visible") return;
-    if (levels && levels.length > 0) {
-      for (let i = 0; i < levels.length; i++) {
-        if (i >= this.levels.length) this.levels[i] = <any>{ };
-        if (levels[i].bidMod===1)
-          this.forEach(document.querySelectorAll('.bidsz'+i), function (el) {
-            if (el.className.indexOf('num')>-1 && el.className.indexOf('buy')==-1) el.className += ' buy';
-          });
-        if (levels[i].askMod===1)
-          this.forEach(document.querySelectorAll('.asksz'+i), function (el) {
-            if (el.className.indexOf('num')>-1 && el.className.indexOf('sell')==-1) el.className += ' sell';
-          });
-        this.forEach(document.querySelectorAll('.bidsz'+i), function (el) {
-          el.style.opacity = levels[i].bidMod===2?0.4:1.0;
-        });
-        this.forEach(document.querySelectorAll('.asksz'+i), function (el) {
-          el.style.opacity = levels[i].askMod===2?0.4:1.0;
-        });
-        setTimeout(() => {
-          this.forEach(document.querySelectorAll('.bidsz'+i), function (el) {
-            el.style.opacity = levels[i].bidMod===2?0.0:1.0;
-          });
-          this.forEach(document.querySelectorAll('.asksz'+i), function (el) {
-            el.style.opacity =  levels[i].askMod===2?0.0:1.0;
-          });
-          setTimeout(() => {
-            this.levels[i] = Object.assign(this.levels[i], { bidPrice: levels[i].bidPrice, bidSize: levels[i].bidSize, askPrice: levels[i].askPrice, askSize: levels[i].askSize });
-            this.levels[i].bidClass = 'active';
-            for (var j = 0; j < this.orderBids.length; j++)
-              if (this.orderBids[j].price === this.levels[i].bidPrice)
-                this.levels[i].bidClass = 'success buy';
-            this.levels[i].bidClassVisual = String('vsBuy visualSize').concat(<any>Math.round(Math.max(Math.min((Math.log(this.levels[i].bidSize)/Math.log(2))*4,19),1)));
-            this.levels[i].askClass = 'active';
-            for (var j = 0; j < this.orderAsks.length; j++)
-              if (this.orderAsks[j].price === this.levels[i].askPrice)
-                this.levels[i].askClass = 'success sell';
-            this.levels[i].askClassVisual = String('vsAsk visualSize').concat(<any>Math.round(Math.max(Math.min((Math.log(this.levels[i].askSize)/Math.log(2))*4,19),1)));
-            setTimeout(() => {
-              this.forEach(document.querySelectorAll('.asksz'+i), function (el) {
-                el.style.opacity = 1.0;
-                if (el.className.indexOf('num')>-1)
-                  el.className = el.className.replace(' sell', '');
-              });
-              this.forEach(document.querySelectorAll('.bidsz'+i), function (el) {
-                el.style.opacity = 1.0;
-                if (el.className.indexOf('num')>-1)
-                  el.className = el.className.replace(' buy', '');
-              });
-            }, 1);
-          }, 0);
-        }, 221);
-      }
-    }
+    this.ordersWidth = Math.max((this.qAskPx && this.qBidPx) ? this.qAskPx - this.qBidPx : 0, 0);
   }
 }

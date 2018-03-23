@@ -477,6 +477,10 @@ export class StatsComponent implements OnInit {
     if (o == null) return;
     this.fairValue = o.price;
   }
+  @Input() set setMarketWidth(o: number) {
+    if (o == null) return;
+    this.width = o / 2;
+  }
 
   @Input() set setTargetBasePosition(o: Models.TargetBasePositionValue) {
     if (o == null) return;
@@ -490,11 +494,6 @@ export class StatsComponent implements OnInit {
     if (!(<any>Highcharts).customBaseCurrency) (<any>Highcharts).customBaseCurrency = o.pair.base;
     if (!(<any>Highcharts).customQuoteCurrency) (<any>Highcharts).customQuoteCurrency = o.pair.quote;
     this.positionData = o;
-  }
-
-  @Input() set setMarketData(o: Models.Market) {
-    if (o && o.bids && o.bids.length && o.asks && o.asks.length)
-      this.width = (o.asks[0].price - o.bids[0].price) / 2;
   }
 
   @Input() set setEWMAChartData(o: Models.EWMAChart) {

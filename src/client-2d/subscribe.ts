@@ -46,7 +46,7 @@ export class Subscriber<T> extends Observable<T> implements ISubscribe<T> {
         const data = JSON.parse(msg.data.substr(2));
         if (Models.Prefixes.MESSAGE+this._topic == topic) observer.next(data);
         else if (Models.Prefixes.SNAPSHOT+this._topic == topic)
-          data.forEach(item => setTimeout(() => observer.next(item), 0));
+          data.forEach(item => observer.next(item));
       });
 
       return () => {};

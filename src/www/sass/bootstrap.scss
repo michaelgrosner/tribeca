@@ -1457,8 +1457,9 @@ caption {
   background-color: #f9f9f9;
 }
 
-.table-hover > tbody > tr:hover {
-  background-color: #f5f5f5;
+.table-hover > tbody > tr:hover td {
+  padding: 0px;
+  margin: 0px;
 }
 
 table {
@@ -1476,7 +1477,7 @@ table {
 
 .table > {
   thead > tr > td.active, tbody > tr > td.active, tfoot > tr > td.active, thead > tr > th.active, tbody > tr > th.active, tfoot > tr > th.active, thead > tr.active > td, tbody > tr.active > td, tfoot > tr.active > td, thead > tr.active > th, tbody > tr.active > th, tfoot > tr.active > th {
-    background-color: transparent;
+    background-color: #e8e8e8;
   }
 }
 
@@ -1570,7 +1571,6 @@ table {
     margin-bottom: 9px;
     overflow-y: hidden;
     -ms-overflow-style: -ms-autohiding-scrollbar;
-    border: 1px solid #ddd;
     > {
       .table {
         margin-bottom: 0;
@@ -5580,108 +5580,6 @@ button.close {
   }
 }
 
-.marketQuoting .num {
-  display: inline-block;
-}
-
-.vsBuy {
-  background: #8de2ff;
-  position: absolute;
-  overflow: hidden;
-  float: right;
-  display: inline-block;
-  z-index: 1;
-}
-
-.vsAsk {
-  z-index: 1;
-  background: #ff8e8c;
-  position: absolute;
-  display: inline-block;
-  float: left;
-  overflow: hidden;
-}
-
-.visualSize0 {
-  width: 0px;
-}
-
-.visualSize1 {
-  width: 1px;
-}
-
-.visualSize2 {
-  width: 2px;
-}
-
-.visualSize3 {
-  width: 3px;
-}
-
-.visualSize4 {
-  width: 4px;
-}
-
-.visualSize5 {
-  width: 5px;
-}
-
-.visualSize6 {
-  width: 6px;
-}
-
-.visualSize7 {
-  width: 7px;
-}
-
-.visualSize8 {
-  width: 8px;
-}
-
-.visualSize9 {
-  width: 9px;
-}
-
-.visualSize10 {
-  width: 10px;
-}
-
-.visualSize11 {
-  width: 11px;
-}
-
-.visualSize12 {
-  width: 12px;
-}
-
-.visualSize13 {
-  width: 13px;
-}
-
-.visualSize14 {
-  width: 14px;
-}
-
-.visualSize15 {
-  width: 15px;
-}
-
-.visualSize16 {
-  width: 16px;
-}
-
-.visualSize17 {
-  width: 17px;
-}
-
-.visualSize18 {
-  width: 18px;
-}
-
-.visualSize19 {
-  width: 19px;
-}
-
 .positions {
   margin-top: 50px;
   h4:last-child {
@@ -5691,126 +5589,6 @@ button.close {
 
 tr.info td {
   padding: 3px !important;
-}
-
-.vsBuy {
-  &.visualSize0 {
-    margin-left: 19px;
-  }
-  &.visualSize1 {
-    margin-left: 18px;
-  }
-  &.visualSize2 {
-    margin-left: 17px;
-  }
-  &.visualSize3 {
-    margin-left: 16px;
-  }
-  &.visualSize4 {
-    margin-left: 15px;
-  }
-  &.visualSize5 {
-    margin-left: 14px;
-  }
-  &.visualSize6 {
-    margin-left: 13px;
-  }
-  &.visualSize7 {
-    margin-left: 12px;
-  }
-  &.visualSize8 {
-    margin-left: 11px;
-  }
-  &.visualSize9 {
-    margin-left: 10px;
-  }
-  &.visualSize10 {
-    margin-left: 9px;
-  }
-  &.visualSize11 {
-    margin-left: 8px;
-  }
-  &.visualSize12 {
-    margin-left: 7px;
-  }
-  &.visualSize13 {
-    margin-left: 6px;
-  }
-  &.visualSize14 {
-    margin-left: 5px;
-  }
-  &.visualSize15 {
-    margin-left: 4px;
-  }
-  &.visualSize16 {
-    margin-left: 3px;
-  }
-  &.visualSize17 {
-    margin-left: 2px;
-  }
-  &.visualSize18 {
-    margin-left: 1px;
-  }
-}
-
-.vsAsk {
-  &.visualSize0 {
-    margin-right: 19px;
-  }
-  &.visualSize1 {
-    margin-right: 18px;
-  }
-  &.visualSize2 {
-    margin-right: 17px;
-  }
-  &.visualSize3 {
-    margin-right: 16px;
-  }
-  &.visualSize4 {
-    margin-right: 15px;
-  }
-  &.visualSize5 {
-    margin-right: 14px;
-  }
-  &.visualSize6 {
-    margin-right: 13px;
-  }
-  &.visualSize7 {
-    margin-right: 12px;
-  }
-  &.visualSize8 {
-    margin-right: 11px;
-  }
-  &.visualSize9 {
-    margin-right: 10px;
-  }
-  &.visualSize10 {
-    margin-right: 9px;
-  }
-  &.visualSize11 {
-    margin-right: 8px;
-  }
-  &.visualSize12 {
-    margin-right: 7px;
-  }
-  &.visualSize13 {
-    margin-right: 6px;
-  }
-  &.visualSize14 {
-    margin-right: 5px;
-  }
-  &.visualSize15 {
-    margin-right: 4px;
-  }
-  &.visualSize16 {
-    margin-right: 3px;
-  }
-  &.visualSize17 {
-    margin-right: 2px;
-  }
-  &.visualSize18 {
-    margin-right: 1px;
-  }
 }
 
 address {
@@ -5952,21 +5730,95 @@ input:invalid {
     position: absolute;
   }
 }
-
-table.marketQuoting {
-  font-size: 12px;
-}
-
-.COINWIDGETCOM_WINDOW {
-  background: rgba(0, 255, 0, 0.25) !important;
-}
-
-.COINWIDGETCOM_BUTTON_BITCOIN {
-  span {
-    font-size: 25px;
+div.levels {
+  overflow-y: auto;
+  height: 253px;
+  &.a {
+    overflow-y: hidden;
   }
-  img {
-    display: none !important;
+}
+table.marketQuoting {
+  margin-bottom: 0px;
+  font-size: 12px;
+  tr.skip {
+    height: 0px;
+    position: relative;
+    td {
+      position: absolute;
+      width: 200%;
+      width: -webkit-fill-available;
+      z-index: 1;
+      background-color: transparent!important;
+      div {
+        height:160px;
+      }
+    }
+  }
+  td {
+    padding: 0px;
+    div.bgSize {
+      position: absolute;
+      width: 100%;
+      top: 0px;
+      right: 0px;
+      bottom: 0px;
+      height: 16px;
+    }
+    &.asks1 {
+      animation-duration: 221ms;
+      animation-timing-function: step-end;
+      animation-iteration-count: 1;
+      animation-name: colorAsks;
+    }
+    &.bids1 {
+      animation-duration: 0.3s;
+      animation-timing-function: step-end;
+      animation-iteration-count: 1;
+      animation-name: colorBids;
+    }
+    @keyframes colorBids {
+      from {
+        color: #8de2ff;
+      }
+    }
+    @keyframes colorAsks {
+      from {
+        color: #ff8e8c;
+      }
+    }
+    &.bids2, &.asks2 {
+      animation-duration: 0.3s;
+      animation-timing-function: linear;
+      animation-name: clearBidAsk;
+      animation-iteration-count: 1;
+      opacity: 0.0;
+      display: block;
+      height: 0px;
+      margin-top:-2em;
+    }
+    @keyframes clearBidAsk{
+      0% {
+        margin-top:0em;
+        height:inherit;
+        opacity:1;
+      }
+      50% {
+        margin-top:0em;
+        height:inherit;
+        opacity:0.4
+      }
+      100% {
+        display:none;
+      }
+    }
+  }
+}
+
+div.levels.a {
+  table {
+    tr.active:nth-child(2) {
+      height: 150px;
+    }
   }
 }
 
