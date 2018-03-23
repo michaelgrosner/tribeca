@@ -383,7 +383,7 @@ class DisplayOrder {
                                             </td>
                                             <td style="width:169px;border-bottom: 3px solid #8BE296;" *ngIf="pair.quotingParameters.display.widthPercentage && [6].indexOf(pair.quotingParameters.display.mode)==-1">
                                                 <input class="width-option form-control input-sm" title="{{ pair_name[1] }}"
-                                                   type="number" step="0.01" min="0.01" max="100"
+                                                   type="number" step="0.001" min="0.001" max="100"
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.widthPingPercentage">
                                             </td>
@@ -395,7 +395,7 @@ class DisplayOrder {
                                             </td>
                                             <td style="width:169px;border-bottom: 3px solid #8BE296;" *ngIf="[1,2,3].indexOf(pair.quotingParameters.display.safety)>-1 && pair.quotingParameters.display.widthPercentage">
                                                 <input class="width-option form-control input-sm" title="{{ pair_name[1] }}"
-                                                   type="number" step="0.01" min="0.01" max="100"
+                                                   type="number" step="0.001" min="0.001" max="100"
                                                    onClick="this.select()"
                                                    [(ngModel)]="pair.quotingParameters.display.widthPongPercentage">
                                             </td>
