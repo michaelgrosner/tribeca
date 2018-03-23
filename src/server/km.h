@@ -122,7 +122,7 @@ namespace K {
     void equal(mQuotingParams &prev) {
       calcQuoteAfterSavedParams = prev.calcQuoteAfterSavedParams;
     };
-    function<void()> *calcQuoteAfterSavedParams;
+    function<void()> *calcQuoteAfterSavedParams = nullptr;
   };
   static void to_json(json& j, const mQuotingParams& k) {
     j = {

@@ -6,8 +6,8 @@ namespace K {
     public:
       map<mRandId, mOrder> orders;
       vector<mTrade> tradesHistory;
-      function<void(mSide, bool)>* calcWalletAfterOrder;
-      function<void(mTrade*)>* calcSafetyAfterTrade;
+      function<void(mSide, bool)>* calcWalletAfterOrder = nullptr;
+      function<void(mTrade*)>* calcSafetyAfterTrade     = nullptr;
     protected:
       void load() {
         for (json &it : ((DB*)memory)->load(mMatter::Trades))

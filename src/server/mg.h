@@ -25,8 +25,8 @@ namespace K {
                    averageCount = 0;
       mLevelsDiff levelsDiff;
     public:
-      function<void()> *calcQuote,
-                       *calcTargetBasePos;
+      function<void()> *calcQuote         = nullptr,
+                       *calcTargetBasePos = nullptr;
       mLevels levels;
       mPrice fairValue = 0,
              mgEwmaP = 0,
