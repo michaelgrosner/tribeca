@@ -227,7 +227,19 @@ export class MarketQuotingComponent {
       } else {
         this.onBidsLength.emit(this.levels.bids.length - this.dirtyBids);
         this.onAsksLength.emit(this.levels.asks.length - this.dirtyAsks);
-        this.marketWidth = this.levels.asks[0].price - this.levels.bids[0].price;
+        var topBid: number = 0;
+        var topAsk: number = 0;
+        for (var i: number = 0; i < this.levels.bids.length; i++)
+          if (this.levels.bids[i].cssMod != 2) {
+            topBid = this.levels.bids[i].price;
+            break;
+          }
+        for (var i: number = 0; i < this.levels.asks.length; i++)
+          if (this.levels.asks[i].cssMod != 2) {
+            topAsk = this.levels.asks[i].price;
+            break;
+          }
+        this.marketWidth = (topBid && topAsk) ? topAsk - topBid : 0;
       }
       this.onMarketWidth.emit(this.marketWidth);
     }
