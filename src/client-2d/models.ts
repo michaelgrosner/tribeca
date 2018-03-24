@@ -253,7 +253,7 @@ export class ProductAdvertisement {
 }
 
 export class ApplicationState {
-    constructor(public memory: number, public freq: number, public bids: number, public asks: number, public theme: number, public dbsize: number) { }
+    constructor(public memory: number, public freq: number, public theme: number, public dbsize: number) { }
 }
 
 export class TradeSafety {
