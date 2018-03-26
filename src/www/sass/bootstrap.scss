@@ -5749,6 +5749,11 @@ table.marketQuoting {
       }
     }
   }
+  tr.active {
+    td {
+      width: 50%;
+    }
+  }
   td {
     padding: 0px;
     position:relative;
@@ -5761,7 +5766,7 @@ table.marketQuoting {
       top: 0px;
       right: 0px;
       bottom: 0px;
-      height: 16px;
+      height: 100%;
       z-index: -1;
     }
     div.asks1 {
