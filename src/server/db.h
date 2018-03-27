@@ -61,11 +61,11 @@ namespace K {
     private:
       inline void exec(const string &sql, json *result = nullptr) {
         char* zErrMsg = 0;
-        sqlite3_exec(db, sql.data(), result ? cb : nullptr, (void*)result, &zErrMsg);
+        sqlite3_exec(db, sql.data(), result ? read : nullptr, (void*)result, &zErrMsg);
         if (zErrMsg) ((SH*)screen)->logWar("DB", string("Sqlite error: ") + zErrMsg + " at " + sql);
         sqlite3_free(zErrMsg);
       };
-      static int cb(void *result, int argc, char **argv, char **azColName) {
+      static int read(void *result, int argc, char **argv, char **azColName) {
         for (int i = 0; i < argc; ++i)
           ((json*)result)->push_back(json::parse(argv[i]));
         return 0;

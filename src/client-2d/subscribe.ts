@@ -44,9 +44,9 @@ export class Subscriber<T> extends Observable<T> implements ISubscribe<T> {
       socket.setEventListener('message', (msg) => {
         const topic = msg.data.substr(0,2);
         const data = JSON.parse(msg.data.substr(2));
-        if (Models.Prefixes.MESSAGE+this._topic == topic) observer.next(data);
+        if (Models.Prefixes.MESSAGE+this._topic == topic) setTimeout(() => observer.next(data), 0);
         else if (Models.Prefixes.SNAPSHOT+this._topic == topic)
-          data.forEach(item => observer.next(item));
+          data.forEach(item => setTimeout(() => observer.next(item), 0));
       });
 
       return () => {};
