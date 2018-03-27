@@ -110,9 +110,13 @@ namespace K {
             (*hello[message[1]])(&reply);
             if (!reply.is_null()) webSocket->send((string(message, 2) + reply.dump()).data(), uWS::OpCode::TEXT);
           } else if (mPortal::Kiss == (mPortal)message[0] and kisses.find(message[1]) != kisses.end()) {
-            json butterfly = json::parse((length > 2 and message[2] == '{') ? string(message, length).substr(2, length-2) : "{}");
+            json butterfly = json::parse(
+              (length > 2 and message[2] == '{')
+                ? string(message, length).substr(2, length-2)
+                : "{}"
+            );
             for (json::iterator it = butterfly.begin(); it != butterfly.end();)
-              if (it.value().is_null()) it = butterfly.erase(it); else ++it;
+              if (it.value().is_null()) it = butterfly.erase(it); else it++;
             (*kisses[message[1]])(butterfly);
           }
         });
@@ -124,10 +128,10 @@ namespace K {
       };
       void waitUser() {
         if (((CF*)config)->argHeadless) {
-          welcome = [&](mMatter type, function<void(json*)> *fn) {};
-          clickme = [&](mMatter type, function<void(json)> *fn) {};
-          delayme = [&](unsigned int delayUI) {};
-          send = [&](mMatter type, json msg) {};
+          welcome = [](mMatter type, function<void(json*)> *fn) {};
+          clickme = [](mMatter type, function<void(json)> *fn) {};
+          delayme = [](unsigned int delayUI) {};
+          send = [](mMatter type, json msg) {};
         } else {
           welcome(mMatter::ApplicationState, &helloServer);
           welcome(mMatter::ProductAdvertisement, &helloProduct);

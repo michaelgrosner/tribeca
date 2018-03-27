@@ -240,7 +240,7 @@ namespace K {
           argDebugEvents =
           argDebugOrders =
           argDebugQuotes =
-          argDebugWallet = 1;
+          argDebugWallet = argDebug;
         if (!argColors)
           RBLACK[0] = RRED[0]    = RGREEN[0] = RYELLOW[0] =
           RBLUE[0]  = RPURPLE[0] = RCYAN[0]  = RWHITE[0]  =

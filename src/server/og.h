@@ -32,7 +32,7 @@ namespace K {
       };
       void run() {
         if (((CF*)config)->argDebugOrders) return;
-        debug = [&](string k) {};
+        debug = [](string k) {};
       };
     public:
       void sendOrder(vector<mRandId> toCancel, mSide side, mPrice price, mAmount qty, mOrderType type, mTimeInForce tif, bool isPong, bool postOnly) {
@@ -169,7 +169,7 @@ namespace K {
           }
       };
       inline void toClient(bool working) {
-        ((SH*)screen)->log(&orders, working);
+        ((SH*)screen)->log(orders, working);
         json k = json::array();
         for (map<mRandId, mOrder>::value_type &it : orders)
           if (it.second.orderStatus == mStatus::Working)

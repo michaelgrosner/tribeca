@@ -46,7 +46,7 @@ namespace K  {
       };
       void run() {
         if (((CF*)config)->argDebugEvents) return;
-        debug = [&](string k) {};
+        debug = [](string k) {};
       };
     public:
       void start(/* KMxTWEpb9ig */) {
@@ -106,7 +106,10 @@ namespace K  {
       };
       inline void gwLog(string reason) {
         deferred([this, reason]() {
-          string name = string(reason.find(">>>") != reason.find("<<<") ? "DEBUG" : "GW") + ' ' + gw->name;
+          string name = string(
+            reason.find(">>>") != reason.find("<<<")
+              ? "DEBUG" : "GW"
+          ) + ' ' + gw->name;
           if (reason.find("Error") != string::npos)
             ((SH*)screen)->logWar(name, reason);
           else ((SH*)screen)->log(name, reason);

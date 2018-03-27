@@ -310,16 +310,16 @@ namespace K {
         if (b) wattroff(wLog, A_BOLD);
         wrefresh(wLog);
       };
-      void log(map<mRandId, mOrder> *orders, bool working) {
+      void log(const map<mRandId, mOrder> &orders, bool working) {
         if (!wBorder) return;
         openOrders.clear();
-        for (map<mRandId, mOrder>::value_type &it : *orders)
+        for (const map<mRandId, mOrder>::value_type &it : orders)
           if (mStatus::Working == it.second.orderStatus)
             openOrders.insert(pair<mPrice, mOrder>(it.second.price, it.second));
         if (working and ++spinOrders == 4) spinOrders = 0;
         refresh();
       };
-      void log(mPosition &pos) {
+      void log(const mPosition &pos) {
         if (!wBorder) return;
         baseAmount = round(pos.baseAmount * 10 / pos.baseValue);
         baseHeld = round(pos.baseHeldAmount * 10 / pos.baseValue);
