@@ -10,7 +10,7 @@ import * as Models from './models';
       <div style="padding-left:0px;">Wallet TBP: <span class="text-danger">{{ targetBasePosition | number:'1.3-3' }}</span>, pDiv: <span class="text-danger">{{ positionDivergence | number:'1.3-3' }}</span>, APR: <span class="{{ sideAPRSafety!=\'Off\' ? \'text-danger\' : \'text-muted\' }}">{{ sideAPRSafety }}</span></div>
       </div></div><div style="padding-right:4px;padding-left:4px;padding-top:4px;">
       <table class="marketQuoting table table-hover table-responsive text-center">
-        <tr class="active">
+        <tr class="info">
           <td>bidSize&nbsp;</td>
           <td>bidPrice</td>
           <td>askPrice</td>
