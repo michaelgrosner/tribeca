@@ -1470,12 +1470,6 @@ table {
   }
 }
 
-.table > {
-  thead > tr > td.active, tbody > tr > td.active, tfoot > tr > td.active, thead > tr > th.active, tbody > tr > th.active, tfoot > tr > th.active, thead > tr.active > td, tbody > tr.active > td, tfoot > tr.active > td, thead > tr.active > th, tbody > tr.active > th, tfoot > tr.active > th {
-    background-color: #e8e8e8;
-  }
-}
-
 .table-hover > tbody > tr {
   > {
     td.active:hover, th.active:hover {
@@ -1483,7 +1477,7 @@ table {
     }
   }
   &.active:hover > td, &:hover > .active, &.active:hover > th {
-    background-color: #e8e8e8;
+    background-color: #cccccc;
   }
 }
 
@@ -5801,7 +5795,7 @@ table.marketQuoting {
       height: 0px;
       margin-top:-2em;
     }
-    @keyframes clearBidAsk{
+    @keyframes clearBidAsk {
       0% {
         margin-top:0em;
         height:inherit;

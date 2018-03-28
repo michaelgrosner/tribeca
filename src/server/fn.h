@@ -27,11 +27,7 @@ namespace K {
       inline static string str8(double d) { return strX(d, 8); };
       inline static string strL(string s) { transform(s.begin(), s.end(), s.begin(), ::tolower); return s; };
       inline static string strU(string s) { transform(s.begin(), s.end(), s.begin(), ::toupper); return s; };
-      inline static bool trueOnce(bool *k) {
-        bool k_ = *k;
-        if (*k) *k = false;
-        return k_;
-      };
+      inline static bool trueOnce(bool *k) { return *k ? !(*k = !*k) : *k; };
       static unsigned long long int64() {
         static random_device rd;
         static mt19937_64 gen(rd());
