@@ -225,7 +225,7 @@ namespace K {
         return FN::strU(argCurrency.substr(0, argCurrency.find("/")));
       };
       inline mCoinId quote() {
-        return FN::strU(argCurrency.substr(argCurrency.find("/")+1));
+        return FN::strU(argCurrency.substr(argCurrency.find("/") + 1));
       };
       inline int chambers() {
         if (argTestChamber == 1)
