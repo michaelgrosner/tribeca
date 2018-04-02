@@ -535,10 +535,15 @@ namespace K {
     };
   };
   static void to_json(json& j, const mLevel& k) {
-    j = {
-      {"price", k.price},
-      { "size", k.size }
-    };
+    if (k.size)
+      j = {
+        {"price", k.price},
+        { "size", k.size }
+      };
+    else
+      j = {
+        {"price", k.price}
+      };
   };
   struct mLevels {
     vector<mLevel> bids,

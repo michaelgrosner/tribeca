@@ -59,7 +59,7 @@ namespace K {
       };
       function<unsigned int()> size = []() { return 0; };
     private:
-      inline void exec(const string &sql, json *result = nullptr) {
+      inline void exec(const string &sql, json *const result = nullptr) {
         char* zErrMsg = 0;
         sqlite3_exec(db, sql.data(), result ? read : nullptr, (void*)result, &zErrMsg);
         if (zErrMsg) ((SH*)screen)->logWar("DB", string("Sqlite error: ") + zErrMsg + " at " + sql);

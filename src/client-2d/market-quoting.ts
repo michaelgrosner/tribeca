@@ -156,6 +156,7 @@ export class MarketQuotingComponent {
     var allSize: string = side=='bids'?'allBidsSize':'allAsksSize';
     var dirtySize: string = side=='bids'?'dirtyBids':'dirtyAsks';
     for (var i: number = 0; i < diff.length; i++) {
+      if (typeof diff[i].size != 'number') diff[i].size = 0;
       var found = false;;
       for (var j: number = 0; j < this.levels[side].length; j++)
         if (diff[i].price === this.levels[side][j].price) {

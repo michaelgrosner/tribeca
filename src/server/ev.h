@@ -53,7 +53,7 @@ namespace K  {
         tracelog += string("- roll-out: ") + to_string(_Tstamp_) + '\n';
         hub->run();
       };
-      void stop(function<void()> gwCancelAll) {
+      void stop(const function<void()> &gwCancelAll) {
         tServer->stop();
         tClient->stop();
         gw->close();
@@ -74,14 +74,14 @@ namespace K  {
           ));
         ((SH*)screen)->logUI();
       };
-      void deferred(function<void()> fn) {
+      void deferred(const function<void()> &fn) {
         slowFn.push_back(fn);
         aEngine->send();
       };
-      void async(function<bool()> &fn) {
+      void async(const function<bool()> &fn) {
         if (fn()) aEngine->send();
       };
-      function<void(string)> debug = [&](string k) {
+      function<void(string)> debug = [&](const string k) {
         ((SH*)screen)->log("DEBUG", string("EV ") + k);
       };
     private:
@@ -94,7 +94,7 @@ namespace K  {
           cout << " THE END IS NEVER";
         cout << " THE END." << '\n';
       };
-      void (*asyncLoop)(Async*) = [](Async *aEngine) {
+      void (*asyncLoop)(Async*) = [](Async *const aEngine) {
         EV* k = (EV*)aEngine->getData();
         if (!k->slowFn.empty()) {
           for (function<void()> &it : k->slowFn) it();
@@ -104,7 +104,7 @@ namespace K  {
           aEngine->send();
         ((SH*)k->screen)->waitForUser();
       };
-      inline void gwLog(string reason) {
+      inline void gwLog(const string reason) {
         deferred([this, reason]() {
           string name = string(
             reason.find(">>>") != reason.find("<<<")
@@ -115,7 +115,7 @@ namespace K  {
           else ((SH*)screen)->log(name, reason);
         });
       };
-      static void halt(int code) {
+      static void halt(const int code) {
         for (function<void()>* &it : endingFn) (*it)();
         if (code == EXIT_FAILURE)
           this_thread::sleep_for(chrono::seconds(3));
@@ -126,14 +126,14 @@ namespace K  {
              << RRESET << '\n';
         exit(code);
       };
-      static void quit(int sig) {
+      static void quit(const int sig) {
         tracelog = string("Excellent decision! ")
           + FN::wJet("https://api.icndb.com/jokes/random?escape=javascript&limitTo=[nerdy]", 4L)
               .value("/value/joke"_json_pointer, "let's plant a tree instead..")
           + '\n';
         halt(EXIT_SUCCESS);
       };
-      static void wtf(int sig) {
+      static void wtf(const int sig) {
         string rollout = tracelog;
         tracelog = string(RCYAN) + "Errrror: Signal " + to_string(sig) + ' '
 #ifndef _WIN32
