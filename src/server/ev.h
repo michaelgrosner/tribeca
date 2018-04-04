@@ -106,7 +106,7 @@ namespace K  {
       };
       inline void gwLog(const string reason) {
         deferred([this, reason]() {
-          string name = string(
+          const string name = string(
             reason.find(">>>") != reason.find("<<<")
               ? "DEBUG" : "GW"
           ) + ' ' + gw->name;
@@ -134,7 +134,7 @@ namespace K  {
         halt(EXIT_SUCCESS);
       };
       static void wtf(const int sig) {
-        string rollout = tracelog;
+        const string rollout = tracelog;
         tracelog = string(RCYAN) + "Errrror: Signal " + to_string(sig) + ' '
 #ifndef _WIN32
           + strsignal(sig)
