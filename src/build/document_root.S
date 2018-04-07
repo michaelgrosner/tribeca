@@ -25,3 +25,5 @@ SYM(\var\()_len):
     .docroot   _www_mp3_audio_0 , var/www/audio/0.mp3
     .docroot   _www_mp3_audio_1 , var/www/audio/1.mp3
     .docroot   _www_gzip_bomb   , ../../src/www/.bomb.gzip
+
+    .end
