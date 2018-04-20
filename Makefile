@@ -2,7 +2,7 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
 PATCH    = 6
-BUILD    = 11
+BUILD    = 12
 CHOST   ?= $(shell $(MAKE) CHOST= chost -s)
 CARCH    = x86_64-linux-gnu arm-linux-gnueabihf aarch64-linux-gnu x86_64-apple-darwin17 x86_64-w64-mingw32
 KLOCAL  := build-$(CHOST)/local
@@ -12,15 +12,15 @@ V_CXX    = 6
 ERR     := *** K require g++ v$(V_CXX), but g++ v$(V_CXX) was not found at $(shell which "$(CXX)" 2> /dev/null)
 HINT    := consider to create a symlink at $(shell which "$(CXX)" 2> /dev/null) pointing to your g++-$(V_CXX) executable
 V_ZLIB   = 1.2.11
-V_SSL    = 1.1.0g
-V_CURL   = 7.57.0
-V_NCUR   = 6.0
-V_JSON   = v3.0.0
-V_UWS    = 0.14.4
-V_SQL    = 3210000
+V_SSL    = 1.1.0h
+V_CURL   = 7.59.0
+V_NCUR   = 6.1
+V_JSON   = v3.1.2
+V_UWS    = 0.14.7
+V_SQL    = 3230100
 V_QF     = v.1.14.4
-V_UV     = 1.18.0
-V_PVS    = 6.21.24657.1946
+V_UV     = 1.20.1
+V_PVS    = 6.23.25627.2229
 KARGS   := -I$(KLOCAL)/include -pthread -std=c++11 -O3   \
   $(KLOCAL)/lib/K-$(CHOST)-docroot.o src/server/K.cxx    \
   -DK_0_DAY='"v$(MAJOR).$(MINOR).$(PATCH)+$(BUILD)"'     \
@@ -122,7 +122,7 @@ else
 endif
 
 Linux:
-	$(CXX) -o $(KLOCAL)/bin/K-$(CHOST) -DUWS_THREADSAFE -static-libstdc++ -static-libgcc -g -rdynamic $(KARGS) -ldl
+	$(CXX) -o $(KLOCAL)/bin/K-$(CHOST) -DHAVE_STD_UNIQUE_PTR -DUWS_THREADSAFE -static-libstdc++ -static-libgcc -g -rdynamic $(KARGS) -ldl
 
 Darwin:
 	$(CXX) -o $(KLOCAL)/bin/K-$(CHOST) -DUSE_LIBUV $(KLOCAL)/lib/libuv.a -msse4.1 -maes -mpclmul -mmacosx-version-min=10.13 -nostartfiles -rdynamic $(KARGS) -ldl
@@ -142,7 +142,7 @@ zlib:
 openssl:
 	test -d build-$(CHOST)/openssl-$(V_SSL) || (                                               \
 	curl -L https://www.openssl.org/source/openssl-$(V_SSL).tar.gz | tar xz -C build-$(CHOST)  \
-	&& cd build-$(CHOST)/openssl-$(V_SSL) &&                                                   \
+	&& cd build-$(CHOST)/openssl-$(V_SSL) && CC=gcc                                            \
 	./Configure $(shell test -n "`echo $(CHOST) | grep mingw32`" && echo mingw64 || echo dist) \
 	--cross-compile-prefix=$(CHOST)- --prefix=$(PWD)/$(KLOCAL)                                 \
 	--openssldir=$(PWD)/$(KLOCAL) && make && make install_sw install_ssldirs                   )
@@ -160,7 +160,7 @@ curl:
 
 sqlite:
 	test -d build-$(CHOST)/sqlite-autoconf-$(V_SQL) || (                                            \
-	curl -L https://sqlite.org/2017/sqlite-autoconf-$(V_SQL).tar.gz | tar xz -C build-$(CHOST)      \
+	curl -L https://sqlite.org/2018/sqlite-autoconf-$(V_SQL).tar.gz | tar xz -C build-$(CHOST)      \
 	&& cd build-$(CHOST)/sqlite-autoconf-$(V_SQL) && CC=$(CC) ./configure --prefix=$(PWD)/$(KLOCAL) \
 	--host=$(CHOST) --enable-static --disable-shared --enable-threadsafe && make && make install    )
 
@@ -168,9 +168,10 @@ ncurses:
 	test -d build-$(CHOST)/ncurses-$(V_NCUR) || (                                                        \
 	curl -L http://ftp.gnu.org/pub/gnu/ncurses/ncurses-$(V_NCUR).tar.gz | tar xz -C build-$(CHOST)       \
 	&& cd build-$(CHOST)/ncurses-$(V_NCUR) && CC=$(CC) AR=$(CHOST)-ar CXX=$(CXX) CPPFLAGS=-P ./configure \
-	--host=$(CHOST) --prefix=$(PWD)/$(KLOCAL)  $(shell test -n "`echo $(CHOST) | grep mingw32`" && echo  \
-	--without-cxx-binding --without-ada --enable-reentrant 	--with-normal --disable-home-terminfo        \
-	--enable-sp-funcs --enable-term-driver --enable-interop || :)                                        \
+	--host=$(CHOST) --prefix=$(PWD)/$(KLOCAL) $(shell test -n "`echo $(CHOST) | grep mingw32`" && echo   \
+	--without-cxx-binding --without-ada --enable-reentrant --with-normal                                 \
+	--disable-home-terminfo --enable-sp-funcs --enable-term-driver --enable-interop || :)                \
+	--disable-lib-suffixes --without-debug --without-progs --without-tests                               \
 	--with-fallbacks=linux,screen,vt100,xterm,xterm-256color,putty-256color && make && make install      )
 
 json:
@@ -205,7 +206,7 @@ quickfix:
 libuv:
 	test -z "`echo $(CHOST) | grep darwin;echo $(CHOST) | grep mingw32`" || test -d build-$(CHOST)/libuv-$(V_UV) || ( \
 	curl -L https://github.com/libuv/libuv/archive/v$(V_UV).tar.gz | tar xz -C build-$(CHOST)                         \
-	&& cd build-$(CHOST)/libuv-$(V_UV) && sh autogen.sh && CC=$(CC) ./configure --host=$(CHOST)                       \
+	&& cd build-$(CHOST)/libuv-$(V_UV) && sh autogen.sh && CC=$(CHOST)-clang ./configure --host=$(CHOST)              \
 	--prefix=$(PWD)/$(KLOCAL) && make && make install                                                                 )
 
 pvs:

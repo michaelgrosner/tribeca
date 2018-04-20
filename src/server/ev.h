@@ -65,7 +65,7 @@ namespace K  {
       void listen() {
         if (!((CF*)config)->argWithoutSSL
           and (access("etc/sslcert/server.crt", F_OK) != -1) and (access("etc/sslcert/server.key", F_OK) != -1)
-          and hub->listen(((CF*)config)->argPort, uS::TLS::createContext("etc/sslcert/server.crt", "etc/sslcert/server.key", ""), 0, uiGroup)
+          and hub->listen(((CF*)config)->argPort, TLS::createContext("etc/sslcert/server.crt", "etc/sslcert/server.key", ""), 0, uiGroup)
         ) ((SH*)screen)->protocol += 'S';
         else if (!hub->listen(((CF*)config)->argPort, nullptr, 0, uiGroup))
           exit(_redAlert_("IU", string("Use another UI port number, ")
