@@ -2,7 +2,7 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
 PATCH    = 6
-BUILD    = 12
+BUILD    = 13
 CHOST   ?= $(shell $(MAKE) CHOST= chost -s)
 CARCH    = x86_64-linux-gnu arm-linux-gnueabihf aarch64-linux-gnu x86_64-apple-darwin17 x86_64-w64-mingw32
 KLOCAL  := build-$(CHOST)/local
@@ -350,7 +350,7 @@ changelog: .git
 	@_() { echo `git rev-parse $$1`; }; echo && git --no-pager log --graph --oneline @..@{u} && test `_ @` != `_ @{u}` || echo No need to upgrade, both versions are equal.
 
 test: node_modules/.bin/mocha
-	./node_modules/.bin/mocha --timeout 42000 --compilers ts:ts-node/register test/*.ts
+	./node_modules/.bin/mocha --compilers ts:ts-node/register test/*.ts
 	$(MAKE) test-c
 
 test-cov: node_modules/.bin/ts-node node_modules/istanbul/lib/cli.js node_modules/.bin/_mocha
