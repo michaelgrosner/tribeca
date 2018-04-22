@@ -113,9 +113,9 @@ namespace K {
         chrono::system_clock::time_point clock = _Tclock_;
         chrono::system_clock::duration t = clock.time_since_epoch();
         t -= chrono::duration_cast<chrono::seconds>(t);
-        chrono::system_clock::duration milliseconds = chrono::duration_cast<chrono::milliseconds>(t);
+        auto milliseconds = chrono::duration_cast<chrono::milliseconds>(t);
         t -= milliseconds;
-        chrono::system_clock::duration microseconds = chrono::duration_cast<chrono::microseconds>(t);
+        auto microseconds = chrono::duration_cast<chrono::microseconds>(t);
         stringstream microtime;
         microtime << setfill('0') << '.'
           << setw(3) << milliseconds.count()
