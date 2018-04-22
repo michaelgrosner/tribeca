@@ -5,8 +5,10 @@
                  "ABCDEFGHIJKLMNOPQRSTUVWXYZ" \
                  "abcdefghijklmnopqrstuvwxyz"
 
-#define _Tstamp_ chrono::duration_cast<chrono::milliseconds>(     \
-                   chrono::system_clock::now().time_since_epoch() \
+#define _Tclock_ chrono::system_clock::now()
+
+#define _Tstamp_ chrono::duration_cast<chrono::milliseconds>( \
+                   _Tclock_.time_since_epoch()                \
                  ).count()
 
 #define _fixedX_(d, s, X) { stringstream ss;     \

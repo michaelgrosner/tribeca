@@ -16,7 +16,8 @@ namespace K {
       map<mHotkey, function<void()>*> hotFn;
       WINDOW *wBorder = nullptr,
              *wLog    = nullptr;
-      int cursor = 0,
+      int naked = 0,
+          cursor = 0,
           spinOrders = 0,
           port = 0,
           baseAmount = 0,
@@ -46,7 +47,9 @@ namespace K {
         } else logVer("", -1);
         cout << RRESET;
       };
-      void config(string base_, string quote_, string argExchange, int argColors, int argPort) {
+      void config(string base_, string quote_, string argExchange, int argColors, int argPort, int argNaked) {
+        naked = argNaked;
+        if (naked) return;
         if (!(wBorder = initscr())) {
           cout << "NCURSES" << RRED << " Errrror:" << BRED << " Unable to initialize ncurses, try to run in your terminal \"export TERM=xterm\", or use --naked argument." << '\n';
           exit(EXIT_SUCCESS);
@@ -107,32 +110,26 @@ namespace K {
         }
       };
       string stamp() {
-        auto t = chrono::system_clock::now().time_since_epoch();
-        auto days = chrono::duration_cast<chrono::duration<int, ratio_multiply<chrono::hours::period, ratio<24>>::type>>(t);
-        t -= days;
-        auto hours = chrono::duration_cast<chrono::hours>(t);
-        t -= hours;
-        auto minutes = chrono::duration_cast<chrono::minutes>(t);
-        t -= minutes;
-        auto seconds = chrono::duration_cast<chrono::seconds>(t);
-        t -= seconds;
-        auto milliseconds = chrono::duration_cast<chrono::milliseconds>(t);
+        chrono::system_clock::time_point clock = _Tclock_;
+        chrono::system_clock::duration t = clock.time_since_epoch();
+        t -= chrono::duration_cast<chrono::seconds>(t);
+        chrono::system_clock::duration milliseconds = chrono::duration_cast<chrono::milliseconds>(t);
         t -= milliseconds;
-        auto microseconds = chrono::duration_cast<chrono::microseconds>(t);
-        stringstream T, T_;
-        T << setfill('0')
-          << setw(2) << hours.count() << ':'
-          << setw(2) << minutes.count() << ':'
-          << setw(2) << seconds.count();
-        T_ << setfill('0') << '.'
-           << setw(3) << milliseconds.count()
-           << setw(3) << microseconds.count();
-        if (!wBorder) return string(BGREEN) + T.str() + RGREEN + T_.str() + BWHITE + ' ';
+        chrono::system_clock::duration microseconds = chrono::duration_cast<chrono::microseconds>(t);
+        stringstream microtime;
+        microtime << setfill('0') << '.'
+          << setw(3) << milliseconds.count()
+          << setw(3) << microseconds.count();
+        time_t tt = chrono::system_clock::to_time_t(clock);
+        int len = naked ? 15 : 9;
+        char datetime[len];
+        strftime(datetime, len, naked ? "%m/%d %T" : "%T", localtime(&tt));
+        if (!wBorder) return string(BGREEN) + datetime + RGREEN + microtime.str() + BWHITE + ' ';
         wattron(wLog, COLOR_PAIR(COLOR_GREEN));
         wattron(wLog, A_BOLD);
-        wprintw(wLog, T.str().data());
+        wprintw(wLog, datetime);
         wattroff(wLog, A_BOLD);
-        wprintw(wLog, T_.str().data());
+        wprintw(wLog, microtime.str().data());
         wattroff(wLog, COLOR_PAIR(COLOR_GREEN));
         wprintw(wLog, " ");
         return "";

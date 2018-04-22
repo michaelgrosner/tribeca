@@ -200,12 +200,11 @@ namespace K {
       };
       void run() {
 #ifndef _WIN32
-        if (!argNaked)
-          ((SH*)screen)->config(
-            base(),       quote(),
-            argExchange,  argColors,
-            argPort
-          );
+        ((SH*)screen)->config(
+          base(),       quote(),
+          argExchange,  argColors,
+          argPort,      argNaked
+        );
 #endif
         gw = Gw::config(
           base(),       quote(),
