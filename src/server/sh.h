@@ -35,7 +35,6 @@ namespace K {
       string protocol = "HTTP";
       mConnectivity *gwConnected         = nullptr,
                     *gwConnectedExchange = nullptr;
-
     public:
       SH() {
         cout << BGREEN << "K" << RGREEN << " build " << K_BUILD << ' ' << K_STAMP << '.' << BRED << '\n';

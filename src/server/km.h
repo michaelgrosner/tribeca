@@ -110,7 +110,7 @@ namespace K {
     void flag() {
       _matchPings = safety == mQuotingSafety::Boomerang or safety == mQuotingSafety::AK47;
     };
-    void diff(mQuotingParams &prev) {
+    void diff(const mQuotingParams &prev) {
       _diffVLEP = prev.veryLongEwmaPeriods != veryLongEwmaPeriods;
       _diffLEP = prev.longEwmaPeriods != longEwmaPeriods;
       _diffMEP = prev.mediumEwmaPeriods != mediumEwmaPeriods;
@@ -119,12 +119,12 @@ namespace K {
       _diffUEP = prev.ultraShortEwmaPeriods != ultraShortEwmaPeriods;
       equal(prev);
     };
-    void equal(mQuotingParams &prev) {
+    void equal(const mQuotingParams &prev) {
       calcQuoteAfterSavedParams = prev.calcQuoteAfterSavedParams;
     };
     function<void()> *calcQuoteAfterSavedParams = nullptr;
   };
-  static void to_json(json& j, const mQuotingParams& k) {
+  static void to_json(json &j, const mQuotingParams &k) {
     j = {
       {                      "widthPing", k.widthPing                      },
       {            "widthPingPercentage", k.widthPingPercentage            },
@@ -186,7 +186,7 @@ namespace K {
       {                        "delayUI", k.delayUI                        }
     };
   };
-  static void from_json(const json& j, mQuotingParams& k) {
+  static void from_json(const json &j, mQuotingParams &k) {
     k.widthPing                       = fmax(1e-8,            j.value("widthPing", k.widthPing));
     k.widthPingPercentage             = fmin(1e+2, fmax(1e-1, j.value("widthPingPercentage", k.widthPingPercentage)));
     k.widthPong                       = fmax(1e-8,            j.value("widthPong", k.widthPong));
@@ -258,13 +258,13 @@ namespace K {
       base(b), quote(q)
     {};
   };
-  static void to_json(json& j, const mPair& k) {
+  static void to_json(json &j, const mPair &k) {
     j = {
       { "base", k.base },
       {"quote", k.quote}
     };
   };
-  static void from_json(const json& j, mPair& k) {
+  static void from_json(const json &j, mPair &k) {
     k.base  = j.value("base", "");
     k.quote = j.value("quote", "");
   };
@@ -278,7 +278,7 @@ namespace K {
     mWallet(mAmount a, mAmount h, mCoinId c):
       amount(a), held(h), currency(c)
     {};
-    void reset(mAmount a, mAmount h) {
+    void reset(const mAmount &a, const mAmount &h) {
       if (empty()) return;
       amount = a;
       held = h;
@@ -287,7 +287,7 @@ namespace K {
       return currency.empty();
     };
   };
-  static void to_json(json& j, const mWallet& k) {
+  static void to_json(json &j, const mWallet &k) {
     j = {
       {  "amount", k.amount  },
       {    "held", k.held    },
@@ -307,7 +307,7 @@ namespace K {
       return base.empty() or quote.empty();
     };
   };
-  static void to_json(json& j, const mWallets& k) {
+  static void to_json(json &j, const mWallets &k) {
     j = {
       { "base", k.base },
       {"quote", k.quote}
@@ -324,14 +324,14 @@ namespace K {
       baseValue(b), quoteValue(q), time(t)
     {};
   };
-  static void to_json(json& j, const mProfit& k) {
+  static void to_json(json &j, const mProfit &k) {
     j = {
       { "baseValue", k.baseValue },
       {"quoteValue", k.quoteValue},
       {      "time", k.time      }
     };
   };
-  static void from_json(const json& j, mProfit& k) {
+  static void from_json(const json &j, mProfit &k) {
     k.baseValue  = j.value("baseValue", 0.0);
     k.quoteValue = j.value("quoteValue", 0.0);
     k.time       = j.value("time", (mClock)0);
@@ -354,7 +354,7 @@ namespace K {
       return !buySize and !sellSize;
     };
   };
-  static void to_json(json& j, const mSafety& k) {
+  static void to_json(json &j, const mSafety &k) {
     j = {
       {     "buy", k.buy              },
       {    "sell", k.sell             },
@@ -393,7 +393,7 @@ namespace K {
       return !baseValue;
     };
   };
-  static void to_json(json& j, const mPosition& k) {
+  static void to_json(json &j, const mPosition &k) {
     j = {
       {     "baseAmount", k.baseAmount     },
       {    "quoteAmount", k.quoteAmount    },
@@ -431,7 +431,7 @@ namespace K {
       tradeId(i), pair(P), price(p), quantity(q), side(S), time(t), value(v), Ktime(Kt), Kqty(Kq), Kprice(Kp), Kvalue(Kv), Kdiff(Kd), feeCharged(f), loadedFromDB(l)
     {};
   };
-  static void to_json(json& j, const mTrade& k) {
+  static void to_json(json &j, const mTrade &k) {
     if (k.tradeId.empty()) j = {
       {    "time", k.time    },
       {    "pair", k.pair    },
@@ -456,7 +456,7 @@ namespace K {
       {"loadedFromDB", k.loadedFromDB},
     };
   };
-  static void from_json(const json& j, mTrade& k) {
+  static void from_json(const json &j, mTrade &k) {
     k.tradeId      = j.value("tradeId", "");
     k.pair         = j.value("pair", json::object());
     k.price        = j.value("price", 0.0);
@@ -501,7 +501,7 @@ namespace K {
       orderId(o), exchangeId(""), pair(P), side(S), quantity(q), type(t), isPong(i), price(p), timeInForce(F), orderStatus(s), preferPostOnly(O), tradeQuantity(0), time(0), _waitingCancel(0), latency(0)
     {};
   };
-  static void to_json(json& j, const mOrder& k) {
+  static void to_json(json &j, const mOrder &k) {
     j = {
       {       "orderId", k.orderId       },
       {    "exchangeId", k.exchangeId    },
@@ -534,7 +534,7 @@ namespace K {
       return !price or !size;
     };
   };
-  static void to_json(json& j, const mLevel& k) {
+  static void to_json(json &j, const mLevel &k) {
     if (k.size)
       j = {
         {"price", k.price},
@@ -561,7 +561,7 @@ namespace K {
       return bids.empty() or asks.empty();
     };
   };
-  static void to_json(json& j, const mLevels& k) {
+  static void to_json(json &j, const mLevels &k) {
     j = {
       {"bids", k.bids},
       {"asks", k.asks}
@@ -602,7 +602,7 @@ namespace K {
       return from;
     };
   };
-  static void to_json(json& j, const mLevelsDiff& k) {
+  static void to_json(json &j, const mLevelsDiff &k) {
     j = {
       {"bids", k.bids},
       {"asks", k.asks},
@@ -624,7 +624,7 @@ namespace K {
       bid(b), ask(a), isBidPong(bP), isAskPong(aP)
     {};
   };
-  static void to_json(json& j, const mQuote& k) {
+  static void to_json(json &j, const mQuote &k) {
     j = {
       {"bid", k.bid},
       {"ask", k.ask}
@@ -643,7 +643,7 @@ namespace K {
       bidStatus(b), askStatus(a), quotesInMemoryNew(n), quotesInMemoryWorking(w), quotesInMemoryDone(d)
     {};
   };
-  static void to_json(json& j, const mQuoteStatus& k) {
+  static void to_json(json &j, const mQuoteStatus &k) {
     j = {
       {            "bidStatus", k.bidStatus            },
       {            "askStatus", k.askStatus            },
@@ -773,7 +773,9 @@ namespace K {
     private:
       mQuotingParams p;
     public:
-      inline void link(Klass &EV, Klass &DB, Klass &UI, Klass &QP, Klass &OG, Klass &MG, Klass &PG, Klass &QE, Klass &GW) {
+      inline void link(
+        Klass &EV,     Klass &DB,     Klass &UI,     Klass &QP,     Klass &OG,     Klass &MG,     Klass &PG,     Klass &QE,     Klass &GW
+      ) {
         Klass &CF = *this;
         void *SH = screen;
         EV.gwLink(gw);                UI.gwLink(gw);                OG.gwLink(gw); MG.gwLink(gw); PG.gwLink(gw); QE.gwLink(gw); GW.gwLink(gw);
