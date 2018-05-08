@@ -473,7 +473,7 @@ namespace K {
       void updateQuote(mLevel q, mSide side, bool isPong) {
         unsigned int n = 0;
         vector<mRandId> toCancel,
-                        working;
+                        keepWorking;
         mClock now = _Tstamp_;
         for (map<mRandId, mOrder>::value_type &it : ((OG*)broker)->orders)
           if (it.second.side != side) continue;
@@ -485,9 +485,9 @@ namespace K {
           )) {
             if (((CF*)config)->argLifetime and it.second.time + ((CF*)config)->argLifetime > now) return;
             toCancel.push_back(it.first);
-          } else working.push_back(it.first);
-        if (qp->safety == mQuotingSafety::AK47 and toCancel.empty() and !working.empty())
-          toCancel.push_back(side == mSide::Bid ? working.front() : working.back());
+          } else keepWorking.push_back(it.first);
+        if (qp->safety == mQuotingSafety::AK47 and toCancel.empty() and !keepWorking.empty())
+          toCancel.push_back(side == mSide::Bid ? keepWorking.front() : keepWorking.back());
         ((OG*)broker)->sendOrder(toCancel, side, q.price, q.size, mOrderType::Limit, mTimeInForce::GTC, isPong, true);
       };
       void stopAllQuotes(mSide side) {

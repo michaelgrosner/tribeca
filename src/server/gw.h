@@ -131,7 +131,7 @@ namespace K {
         system("pkill stunnel || :");
         if (reboot) system("stunnel etc/stunnel.conf");
       };
-      inline void handshake(mExchange k) {
+      inline void handshake(const mExchange &k) {
         json reply;
         if (k == mExchange::Coinbase) {
           stunnel(true);
