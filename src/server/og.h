@@ -60,12 +60,7 @@ namespace K {
         }
         if (replaceAllowed and !replaceExchangeId.empty()) {
           debug(string(" update") + (side == mSide::Bid ? "BID" : "ASK") + " id " + replaceOrderId + ": " + FN::str8(qty) + " " + gw->base + " at price " + FN::str8(price) + " " + gw->quote);
-          gw->send_update(
-            replaceExchangeId,
-            side,
-            FN::str8(price),
-            FN::str8(qty)
-          );
+          gw->send_update(replaceExchangeId, FN::str8(price));
         } else {
           mRandId newOrderId = gw->randId();
           updateOrderState(mOrder(
@@ -97,14 +92,14 @@ namespace K {
         }
         ((UI*)client)->orders_60s++;
       };
-      void cancelOrder(mRandId orderId) {
+      void cancelOrder(const mRandId &orderId) {
         mOrder *o = &orders[orderId];
         if (o->exchangeId.empty() or o->_waitingCancel + 3e+3 > _Tstamp_) return;
         o->_waitingCancel = _Tstamp_;
         debug(string("cancel ") + (o->side == mSide::Bid ? "BID id " : "ASK id ") + o->orderId + "::" + o->exchangeId);
         gw->cancel(o->orderId, o->exchangeId, o->side, o->time);
       };
-      void cleanOrder(mRandId &orderId) {
+      void cleanOrder(const mRandId &orderId) {
         debug(string("remove ") + orderId);
         map<mRandId, mOrder>::iterator it = orders.find(orderId);
         if (it != orders.end()) orders.erase(it);
@@ -127,7 +122,7 @@ namespace K {
         cleanClosedTrades();
       };
       function<void(json)> kissCleanAllTrades = [&](json butterfly) {
-        cleanTrade("");
+        cleanTrade();
       };
       function<void(json)> kissCleanTrade = [&](json butterfly) {
         if (butterfly.is_object() and butterfly["tradeId"].is_string())
@@ -199,7 +194,7 @@ namespace K {
             it = tradesHistory.erase(it);
           }
       };
-      void cleanTrade(string k) {
+      void cleanTrade(string k = "") {
         bool all = k.empty();
         for (vector<mTrade>::iterator it = tradesHistory.begin(); it != tradesHistory.end();)
           if (!all and it->tradeId != k) ++it;

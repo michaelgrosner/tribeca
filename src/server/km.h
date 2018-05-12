@@ -682,7 +682,7 @@ namespace K {
       virtual void send(mRandId, mRandId, mRandId, mSide, string, string, mOrderType, mTimeInForce, bool, mClock) = 0,
                    cancel(mRandId, mRandId, mSide, mClock) = 0,
                    close() = 0;
-      virtual void send_update(mRandId, mSide, string, string) { log("Error gw->send_update: Not Implemented"); };
+      virtual void send_update(mRandId, string) { log("Error gw->send_update: Not Implemented"); };
       inline bool waitForData() {
         return waitFor(replyOrders, evDataOrder)
              | waitFor(replyLevels, evDataLevels)
