@@ -57,6 +57,7 @@ All currency pairs are supported.
 - Development
   - [Test units and Build notes](#test-units-and-build-notes)
   - [Unreleased Changelog](#unreleased-changelog)
+  - [Release 4.0 Changelog](#release-40-changelog)
   - [Release 3.0 Changelog](#release-30-changelog)
   - [Release 2.0 Changelog](#release-20-changelog)
   - [Release 1.0 Changelog](#release-10-changelog)
@@ -233,9 +234,7 @@ If you ask me, [<img height="20px" src="https://user-images.githubusercontent.co
 
 Make sure your build machine has [node](https://nodejs.org/en/download/package-manager/) installed, and also ensure `make dist` provides all dependencies without errors.
 
-Then, feel free to run `make test` anytime.
-
-To rebuild the application with your modifications, see `make help` and choose a target.
+To rebuild the application with your modifications, see `make help` and choose a target (`make bundle K` may be what you are looking for).
 
 To pipe the output to stdout, execute the application in the foreground with `./K.sh --naked`.
 
