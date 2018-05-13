@@ -47,7 +47,7 @@ UI_OPENPORT=3000
 #  ██ - Allows one of the following exchange names (or leave NULL for test mode):
 #API_EXCHANGE=COINBASE
 #API_EXCHANGE=BITFINEX
-#API_EXCHANGE=BITFINEX_MARGIN
+#API_EXCHANGE=ETHFINEX
 #API_EXCHANGE=HITBTC
 #API_EXCHANGE=OKCOIN
 #API_EXCHANGE=OKEX
@@ -90,6 +90,7 @@ API_USERNAME=NULL
 #  ██ - All exchanges must have API_HTTP_ENDPOINT.
 #API_HTTP_ENDPOINT=https://api.gdax.com
 #API_HTTP_ENDPOINT=https://api.bitfinex.com/v1
+#API_HTTP_ENDPOINT=https://api.ethfinex.com/v1
 #API_HTTP_ENDPOINT=https://api.hitbtc.com/api/2
 #API_HTTP_ENDPOINT=https://www.okcoin.com/api/v1/
 #API_HTTP_ENDPOINT=https://www.okcoin.cn/api/v1/
@@ -104,6 +105,7 @@ API_HTTP_ENDPOINT=NULL
 #  ██ - Almost all exchanges must have API_WSS_ENDPOINT, only KRAKEN and KORBIT exchanges can be NULL.
 #API_WSS_ENDPOINT=wss://ws-feed.gdax.com
 #API_WSS_ENDPOINT=wss://api.bitfinex.com/ws/2
+#API_WSS_ENDPOINT=wss://api.ethfinex.com/ws/2
 #API_WSS_ENDPOINT=wss://api.hitbtc.com/api/2/ws
 #API_WSS_ENDPOINT=wss://real.okcoin.com:10440/websocket/okcoinapi
 #API_WSS_ENDPOINT=wss://real.okcoin.cn:10440/websocket/okcoinapi

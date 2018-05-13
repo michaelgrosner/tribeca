@@ -150,7 +150,7 @@ namespace K {
           gw->base = reply.value("baseCurrency", gw->base);
           gw->quote = reply.value("quoteCurrency", gw->quote);
         }
-        else if (k == mExchange::Bitfinex or k == mExchange::BitfinexMargin) {
+        else if (k == mExchange::Bitfinex or k == mExchange::Ethfinex) {
           gw->randId = FN::int45Id;
           gw->symbol = FN::strL(string(gw->base) + gw->quote);
           reply = FN::wJet(string(gw->http) + "/pubticker/" + gw->symbol);

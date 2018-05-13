@@ -8,7 +8,7 @@
 #define mCoinId string
 
 namespace K {
-  enum class mExchange: unsigned int { Null, HitBtc, OkCoin, Coinbase, Bitfinex, Kraken, OkEx, BitfinexMargin, Korbit, Poloniex };
+  enum class mExchange: unsigned int { Null, HitBtc, OkCoin, Coinbase, Bitfinex, Ethfinex, Kraken, OkEx, Korbit, Poloniex };
   enum class mConnectivity: unsigned int { Disconnected, Connected };
   enum class mStatus: unsigned int { New, Working, Complete, Cancelled };
   enum class mSide: unsigned int { Bid, Ask, Both };

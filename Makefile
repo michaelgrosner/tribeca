@@ -2,7 +2,7 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
 PATCH    = 6
-BUILD    = 25
+BUILD    = 26
 CHOST   ?= $(shell $(MAKE) CHOST= chost -s)
 CARCH    = x86_64-linux-gnu arm-linux-gnueabihf aarch64-linux-gnu x86_64-apple-darwin17 x86_64-w64-mingw32
 KLOCAL  := build-$(CHOST)/local
@@ -249,7 +249,7 @@ docker:
 	@$(MAKE) packages
 	mkdir -p app/server
 	@$(MAKE) build link
-	sed -i "/Usage/,+113d" K.sh
+	sed -i "/Usage/,+115d" K.sh
 
 link:
 	cd app/server && ln -f -s ../../$(KLOCAL)/bin/K-$(CHOST) K

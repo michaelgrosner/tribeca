@@ -15,7 +15,7 @@ namespace K {
         for (json &it : ((DB*)memory)->load(mMatter::Trades))
           tradesHistory.push_back(it);
         ((SH*)screen)->log("DB", string("loaded ") + to_string(tradesHistory.size()) + " historical Trades");
-        replaceAllowed = gw->exchange == mExchange::Bitfinex;
+        replaceAllowed = (gw->exchange == mExchange::Bitfinex or gw->exchange == mExchange::Ethfinex);
       };
       void waitData() {
         gw->evDataOrder = [&](mOrder k) {                           _debugEvent_
