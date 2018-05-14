@@ -47,6 +47,7 @@ namespace K {
         cout << RRESET;
       };
       void config(string base_, string quote_, string argExchange, int argColors, int argPort, int argNaked) {
+        port = argPort;
         naked = argNaked;
         if (naked) return;
         if (!(wBorder = initscr())) {
@@ -56,7 +57,6 @@ namespace K {
         base = base_;
         quote = quote_;
         title = argExchange;
-        port = argPort;
         if (argColors) start_color();
         use_default_colors();
         cbreak();
