@@ -55,12 +55,8 @@ All currency pairs are supported.
   - [Charts](#charts)
   - [Cloud Hosting](#cloud-hosting)
 - Development
-  - [Test units and Build notes](#test-units-and-build-notes)
-  - [Unreleased Changelog](#unreleased-changelog)
-  - [Release 4.0 Changelog](#release-40-changelog)
-  - [Release 3.0 Changelog](#release-30-changelog)
-  - [Release 2.0 Changelog](#release-20-changelog)
-  - [Release 1.0 Changelog](#release-10-changelog)
+  - [Build notes](#build-notes)
+  - [Changelogs](#unreleased-changelog)
 - Humans and Milk Mammals
   - [Unlock](#unlock)
   - [Trading for Fun](#trading-for-fun)
@@ -230,7 +226,7 @@ The metrics are not saved anywhere, it is just UI data collected with a visibili
 
 If you ask me, [<img height="20px" src="https://user-images.githubusercontent.com/1634027/29756933-3e64c62e-8ba8-11e7-916a-3b0ae1481a52.png">](https://www.dreamhost.com/r.cgi?475987/cloud/) is a very nice web hosting company (awesome support team, awesome servers). Feel free to use this referral link to get a discount subtracted from my referral earnings (i'm a user since 2008).
 
-### Test units and Build notes
+### Build notes
 
 Make sure your build machine has [node](https://nodejs.org/en/download/package-manager/) installed, and also ensure `make dist` provides all dependencies without errors.
 
@@ -249,6 +245,8 @@ js sandbox: [jsfiddle.net](https://jsfiddle.net)
 ws sandbox: [websocket.org](https://www.websocket.org/echo.html)
 
 ### Unreleased Changelog:
+
+Added Ethfinex API.
 
 Added build-in document root to stop reading files from disk.
 
