@@ -53,7 +53,7 @@ namespace K {
         }
         if (gw->replace and !replaceOrderId.empty()) {
           if (!orders[replaceOrderId].exchangeId.empty()) {
-            debug(string(" update") + (side == mSide::Bid ? "BID" : "ASK") + " id " + replaceOrderId + ":  at price " + FN::str8(price) + " " + gw->quote);
+            debug(string("update ") + (side == mSide::Bid ? "BID" : "ASK") + " id " + replaceOrderId + ":  at price " + FN::str8(price) + " " + gw->quote);
             orders[replaceOrderId].price = price;
             gw->replace(orders[replaceOrderId].exchangeId, FN::str8(price));
           }
