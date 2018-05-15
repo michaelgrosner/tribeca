@@ -212,12 +212,15 @@ namespace K {
           argApikey,    argSecret,
           argUsername,  argPassphrase,
           argHttp,      argWss,
-          argMaxLevels, argDebugSecret,
-          chambers()
+          argMaxLevels, argDebugSecret
         );
         if (!gw)
           exit(_redAlert_("CF", string("Unable to load a valid gateway using --exchange=")
             + argExchange + " argument"));
+        if (argTestChamber == 1)
+          ((SH*)screen)->logWar("CF", "Test Chamber #1: send new orders before cancel old");
+        else if (argTestChamber)
+          ((SH*)screen)->logWar("CF", string("ignored Test Chamber #") + to_string(argTestChamber));
       };
     private:
       inline mCoinId base() {
@@ -225,13 +228,6 @@ namespace K {
       };
       inline mCoinId quote() {
         return FN::strU(argCurrency.substr(argCurrency.find("/") + 1));
-      };
-      inline int chambers() {
-        if (argTestChamber == 1)
-          ((SH*)screen)->logWar("CF", "Test Chamber #1: GDAX send new before cancel old");
-        else if (argTestChamber)
-          ((SH*)screen)->logWar("CF", string("ignored Test Chamber #") + to_string(argTestChamber));
-        return argTestChamber;
       };
       inline void tidy() {
         if (argDebug)

@@ -3,8 +3,6 @@
 
 namespace K {
   class OG: public Klass {
-    private:
-      bool replaceAllowed = false;
     public:
       map<mRandId, mOrder> orders;
       vector<mTrade> tradesHistory;
@@ -15,7 +13,6 @@ namespace K {
         for (json &it : ((DB*)memory)->load(mMatter::Trades))
           tradesHistory.push_back(it);
         ((SH*)screen)->log("DB", string("loaded ") + to_string(tradesHistory.size()) + " historical Trades");
-        replaceAllowed = (gw->exchange == mExchange::Bitfinex or gw->exchange == mExchange::Ethfinex);
       };
       void waitData() {
         gw->evDataOrder = [&](mOrder k) {                           _debugEvent_
@@ -48,20 +45,20 @@ namespace K {
         const bool            &isPong  ,
         const bool            &postOnly
       ) {
-        mRandId replaceOrderId,
-                replaceExchangeId;
+        mRandId replaceOrderId;
         if (!toCancel.empty()) {
           replaceOrderId = side == mSide::Bid ? toCancel.back() : toCancel.front();
           toCancel.erase(side == mSide::Bid ? toCancel.end()-1 : toCancel.begin());
           for (mRandId &it : toCancel) cancelOrder(it);
-          if (orders.find(replaceOrderId) == orders.end() or orders[replaceOrderId].exchangeId.empty())
-            replaceOrderId.clear();
-          else replaceExchangeId = orders[replaceOrderId].exchangeId;
         }
-        if (replaceAllowed and !replaceExchangeId.empty()) {
-          debug(string(" update") + (side == mSide::Bid ? "BID" : "ASK") + " id " + replaceOrderId + ": " + FN::str8(qty) + " " + gw->base + " at price " + FN::str8(price) + " " + gw->quote);
-          gw->send_update(replaceExchangeId, FN::str8(price));
+        if (gw->replace and !replaceOrderId.empty()) {
+          if (!orders[replaceOrderId].exchangeId.empty()) {
+            debug(string(" update") + (side == mSide::Bid ? "BID" : "ASK") + " id " + replaceOrderId + ":  at price " + FN::str8(price) + " " + gw->quote);
+            orders[replaceOrderId].price = price;
+            gw->replace(orders[replaceOrderId].exchangeId, FN::str8(price));
+          }
         } else {
+          if (((CF*)config)->argTestChamber != 1) cancelOrder(replaceOrderId);
           mRandId newOrderId = gw->randId();
           updateOrderState(mOrder(
             newOrderId,
@@ -77,9 +74,7 @@ namespace K {
           ));
           mOrder *o = &orders[newOrderId];
           debug(string(" send  ") + replaceOrderId + "> " + (o->side == mSide::Bid ? "BID" : "ASK") + " id " + o->orderId + ": " + FN::str8(o->quantity) + " " + o->pair.base + " at price " + FN::str8(o->price) + " " + o->pair.quote);
-          gw->send(
-            replaceOrderId,
-            replaceExchangeId,
+          gw->place(
             o->orderId,
             o->side,
             FN::str8(o->price),
@@ -89,15 +84,17 @@ namespace K {
             o->preferPostOnly,
             o->time
           );
+          if (((CF*)config)->argTestChamber == 1) cancelOrder(replaceOrderId);
         }
         ((UI*)client)->orders_60s++;
       };
       void cancelOrder(const mRandId &orderId) {
+        if (orderId.empty()) return;
         mOrder *o = &orders[orderId];
         if (o->exchangeId.empty() or o->_waitingCancel + 3e+3 > _Tstamp_) return;
         o->_waitingCancel = _Tstamp_;
         debug(string("cancel ") + (o->side == mSide::Bid ? "BID id " : "ASK id ") + o->orderId + "::" + o->exchangeId);
-        gw->cancel(o->orderId, o->exchangeId, o->side, o->time);
+        gw->cancel(o->orderId, o->exchangeId);
       };
       void cleanOrder(const mRandId &orderId) {
         debug(string("remove ") + orderId);

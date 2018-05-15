@@ -657,7 +657,7 @@ namespace K {
       virtual string A() = 0;
       uWS::Hub                *hub     = nullptr;
       uWS::Group<uWS::CLIENT> *gwGroup = nullptr;
-      static Gw *config(mCoinId, mCoinId, string, int, string, string, string, string, string, string, int, int, int);
+      static Gw *config(mCoinId, mCoinId, string, int, string, string, string, string, string, string, int, int);
       function<void(string)>        log,
                                     reconnect;
       function<void(mOrder)>        evDataOrder;
@@ -666,9 +666,14 @@ namespace K {
       function<void(mWallets)>      evDataWallet;
       function<void(mConnectivity)> evConnectOrder,
                                     evConnectMarket;
+      function<void(mRandId, string)> replace;
+      virtual void place(mRandId, mSide, string, string, mOrderType, mTimeInForce, bool, mClock) = 0,
+                   cancel(mRandId, mRandId) = 0,
+                   close() = 0;
+      mRandId (*randId)() = nullptr;
       mExchange exchange = (mExchange)0;
             int version  = 0, maxLevel = 0,
-                debug    = 0, chamber  = 0;
+                debug    = 0;
          mPrice minTick  = 0;
         mAmount makeFee  = 0, takeFee  = 0,
                 minSize  = 0;
@@ -678,11 +683,6 @@ namespace K {
                 user     = "", pass    = "",
                 ws       = "", http    = "";
            bool forceUpdate = false;
-      mRandId (*randId)() = 0;
-      virtual void send(mRandId, mRandId, mRandId, mSide, string, string, mOrderType, mTimeInForce, bool, mClock) = 0,
-                   cancel(mRandId, mRandId, mSide, mClock) = 0,
-                   close() = 0;
-      virtual void send_update(mRandId, string) { log("Error gw->send_update: Not Implemented"); };
       inline bool waitForData() {
         return waitFor(replyOrders, evDataOrder)
              | waitFor(replyLevels, evDataLevels)
