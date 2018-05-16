@@ -424,3 +424,5 @@ We have already enough policemen,<br />if you like adventures choose to be a <a 
 <img width="300" src="http://hits.dwyl.io/ctubio/Krypto-trading-bot.svg" /></p>
 
 ### discord for general discussion, issues and enhancements
+
+https://discord.gg/QK7WsH
