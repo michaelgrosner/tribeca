@@ -62,6 +62,7 @@ All currency pairs are supported.
   - [Trading for Fun](#trading-for-fun)
   - [Donations](#donations)
   - [Very Special Thanks](#very-special-thanks-to)
+  - [General Discussion](#general-discussion)
   - [Help](#help)
   - [Issues](#issues)
   - [Votes](#votes)
@@ -367,6 +368,10 @@ or donate your time with programming or financial suggestions in the IRC channel
 - https://github.com/michaelgrosner/tribeca (https://github.com/michaelgrosner)
 - but Most Special Thanks goes to [your mother](https://youtu.be/YDafHsyyTNk).
 
+### General Discussion
+
+[IRC](https://kiwiirc.com/client/irc.freenode.net:6697/?theme=cli#tradingBot) is awesome!<br/>but if you dislike it, there is an unofficial Discord channel at https://discord.gg/QK7WsH (with nice users but without me).
+
 ### Help
 
 If you need installation or usage support contact me at [earn.com/analpaper](https://earn.com/analpaper/) (non-free high-priority service).
@@ -422,7 +427,3 @@ We have already enough policemen,<br />if you like adventures choose to be a <a 
 <img src="https://user-images.githubusercontent.com/1634027/29746351-7478d556-8ad7-11e7-8b27-445eefa8f960.jpg" />
 <br /><br /><br /><br /><br /><br /><br /><br /><br />
 <img width="300" src="http://hits.dwyl.io/ctubio/Krypto-trading-bot.svg" /></p>
-
-### discord for general discussion, issues and enhancements
-
-https://discord.gg/QK7WsH
