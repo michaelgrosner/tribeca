@@ -245,7 +245,7 @@ js sandbox: [jsfiddle.net](https://jsfiddle.net)
 
 ws sandbox: [websocket.org](https://www.websocket.org/echo.html)
 
-### Unreleased Changelog:
+### Unreleased v0.4.x Changelog:
 
 Added Ethfinex API.
 
@@ -259,7 +259,7 @@ Updated OKEx websocket to binary data.
 
 Added build chain for OSX v10.13.
 
-### Release 4.0 Changelog:
+### Release v0.4.0 Changelog:
 
 Updated HitBTC API v2.
 
@@ -283,7 +283,7 @@ Added built-in SQLite C++ interface to replace external mongodb server.
 
 Added Poloniex API.
 
-### Release 3.0 Changelog:
+### Release v0.3.0 Changelog:
 
 Updated application name to K because of Kira.
 
@@ -309,7 +309,7 @@ Added GDAX FIX API with stunnel.
 
 Added Korbit API.
 
-### Release 2.0 Changelog:
+### Release v0.2.0 Changelog:
 
 Added new quoting styles PingPong, Boomerang, AK-47.
 
@@ -321,7 +321,7 @@ Added https, dark theme and new UI elements.
 
 Added a bit of love to Kira.
 
-### Release 1.0 Changelog:
+### Release v0.1.0 Changelog:
 
 see the upstream project [michaelgrosner/tribeca](https://github.com/michaelgrosner/tribeca).
 
