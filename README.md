@@ -422,3 +422,5 @@ We have already enough policemen,<br />if you like adventures choose to be a <a 
 <img src="https://user-images.githubusercontent.com/1634027/29746351-7478d556-8ad7-11e7-8b27-445eefa8f960.jpg" />
 <br /><br /><br /><br /><br /><br /><br /><br /><br />
 <img width="300" src="http://hits.dwyl.io/ctubio/Krypto-trading-bot.svg" /></p>
+
+### discord for general discussion, issues and enhancements
