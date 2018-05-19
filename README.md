@@ -370,7 +370,7 @@ or donate your time with programming or financial suggestions in the IRC channel
 
 ### General Discussion
 
-[IRC](https://kiwiirc.com/client/irc.freenode.net:6697/?theme=cli#tradingBot) is awesome!<br/>but if you dislike it, there is an unofficial Discord channel at https://discord.gg/QK7WsH (with nice users but without me).
+[IRC](https://kiwiirc.com/client/irc.freenode.net:6697/?theme=cli#tradingBot) is awesome!<br/>but if you dislike it, there is an unofficial Discord channel at https://discord.gg/vdZHyJH (with nice users but without me).
 
 ### Help
 
