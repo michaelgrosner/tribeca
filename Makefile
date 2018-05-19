@@ -2,7 +2,7 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
 PATCH    = 6
-BUILD    = 31
+BUILD    = 32
 CHOST   ?= $(shell $(MAKE) CHOST= chost -s)
 CARCH    = x86_64-linux-gnu arm-linux-gnueabihf aarch64-linux-gnu x86_64-apple-darwin17 x86_64-w64-mingw32
 KLOCAL  := build-$(CHOST)/local
@@ -18,7 +18,7 @@ V_NCUR   = 6.1
 V_JSON   = v3.1.2
 V_UWS    = 0.14.7
 V_SQL    = 3230100
-V_QF     = v.1.14.4
+V_QF     = 1.15.1
 V_UV     = 1.20.1
 V_PVS    = 6.23.25627.2229
 KARGS   := -I$(KLOCAL)/include -pthread -std=c++11 -O3   \
@@ -189,19 +189,18 @@ uws:
 	sed -i "s/WinSock2/winsock2/" $(KLOCAL)/include/uWS/Networking.h) ||          :)
 
 quickfix:
-	test -d build-$(CHOST)/quickfix-$(V_QF) || (                                                   \
-	curl -L https://github.com/quickfix/quickfix/archive/$(V_QF).tar.gz | tar xz -C build-$(CHOST) \
-	&& patch build-$(CHOST)/quickfix-$(V_QF)/m4/ax_lib_mysql.m4 < src/build/without_mysql.m4.patch \
-	&& cd build-$(CHOST)/quickfix-$(V_QF) && ./bootstrap                                           \
-	&& (test -n "`echo $(CHOST) | grep darwin`" &&                                                 \
-	sed -i '' "s/bin spec test examples doc//" Makefile.am ||                                      \
-	sed -i "s/bin spec test examples doc//" Makefile.am)                                           \
-	&& (test -n "`echo $(CHOST) | grep darwin`" &&                                                 \
-	sed -i '' "s/SUBDIRS = test//" src/C++/Makefile.am ||                                          \
-	sed -i "s/SUBDIRS = test//" src/C++/Makefile.am) && (test -n "`echo $(CHOST) | grep mingw32`"  \
-	&& patch -p2 < ../../src/build/with_win32.src.patch || :)                                      \
-	&& CXX=$(CXX) AR=$(CHOST)-ar ./configure --prefix=$(PWD)/$(KLOCAL) --enable-shared=no          \
-	--enable-static=yes --host=$(CHOST) && cd src/C++ && CXX=$(CXX) make && make install           )
+	test -d build-$(CHOST)/quickfix-$(V_QF) || (                                                    \
+	curl -L https://github.com/quickfix/quickfix/archive/v$(V_QF).tar.gz | tar xz -C build-$(CHOST) \
+	&& cd build-$(CHOST)/quickfix-$(V_QF) && ./bootstrap                                            \
+	&& (test -n "`echo $(CHOST) | grep darwin`" &&                                                  \
+	sed -i '' "s/bin spec test examples doc//" Makefile.am ||                                       \
+	sed -i "s/bin spec test examples doc//" Makefile.am)                                            \
+	&& (test -n "`echo $(CHOST) | grep darwin`" &&                                                  \
+	sed -i '' "s/SUBDIRS = test//" src/C++/Makefile.am ||                                           \
+	sed -i "s/SUBDIRS = test//" src/C++/Makefile.am) && (test -n "`echo $(CHOST) | grep mingw32`"   \
+	&& patch -p2 < ../../src/build/with_win32.src.patch || :)                                       \
+	&& CXX=$(CXX) AR=$(CHOST)-ar ./configure --prefix=$(PWD)/$(KLOCAL) --enable-shared=no           \
+	--enable-static=yes --host=$(CHOST) && cd src/C++ && CXX=$(CXX) make && make install            )
 
 libuv:
 	test -z "`echo $(CHOST) | grep darwin;echo $(CHOST) | grep mingw32`" || test -d build-$(CHOST)/libuv-$(V_UV) || ( \

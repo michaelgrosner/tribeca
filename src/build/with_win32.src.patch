@@ -107,7 +107,7 @@
    #if( _MSC_VER >= 1400 )
      tm result;
      localtime_s( &result, t );
-@@ -393,10 +393,10 @@ tm time_localtime( const time_t* t)
+@@ -393,8 +393,8 @@ }
 
  bool thread_spawn( THREAD_START_ROUTINE func, void* var, thread_id& thread )
  {
@@ -115,12 +115,9 @@
 +#ifdef _WIN32
    thread_id result = 0;
    unsigned int id = 0;
--  result = _beginthreadex( NULL, 0, &func, var, 0, &id );
-+  result = _beginthreadex( NULL, 0, func, var, 0, &id );
+   result = _beginthreadex( NULL, 0, func, var, 0, &id );
    if ( result == 0 ) return false;
- #else
-   thread_id result = 0;
-@@ -414,7 +414,7 @@ bool thread_spawn( THREAD_START_ROUTINE
+@@ -414,7 +414,7 @@ }
 
  void thread_join( thread_id thread )
  {
@@ -205,14 +202,14 @@
  bool socket_isBad( int s );
  #endif
  void socket_invalidate( int& socket );
-@@ -150,15 +150,15 @@ std::pair<int, int> socket_createpair();
- tm time_gmtime( const time_t* t );
- tm time_localtime( const time_t* t );
-
--#ifdef _MSC_VER
--typedef unsigned int (_stdcall THREAD_START_ROUTINE)(void *);
+@@ -150,15 +150,15 @@
+ #if(_MSC_VER >= 1900)
+ typedef _beginthreadex_proc_type THREAD_START_ROUTINE;
+ #define THREAD_PROC unsigned int _stdcall
+-#elif(_MSC_VER > 0)
+-typedef unsigned int (_stdcall * THREAD_START_ROUTINE)(void *);
 -#define  THREAD_PROC unsigned int _stdcall
-+#ifdef _WIN32
++#elif(_WIN32)
 +typedef unsigned int (THREAD_START_ROUTINE)(void *);
 +#define THREAD_PROC unsigned int
  #else
