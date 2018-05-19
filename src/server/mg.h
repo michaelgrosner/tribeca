@@ -26,6 +26,7 @@ namespace K {
       mLevelsDiff levelsDiff;
     public:
       function<void()> *calcQuote         = nullptr,
+                       *calcWallet        = nullptr,
                        *calcTargetBasePos = nullptr;
       mLevels levels;
       mPrice fairValue = 0,
@@ -123,7 +124,7 @@ namespace K {
           ? (topAskPrice + topBidPrice) / 2
           : (topAskPrice * topBidSize + topBidPrice * topAskSize) / (topAskSize + topBidSize);
         if (!fairValue or (fairValue_ and abs(fairValue - fairValue_) < gw->minTick)) return;
-        gw->evDataWallet(mWallets());
+        (*calcWallet)();
         ((UI*)client)->send(mMatter::FairValue, {{"price", fairValue}});
         ((SH*)screen)->log(fairValue);
         averageWidth = ((averageWidth * averageCount) + topAskPrice - topBidPrice);

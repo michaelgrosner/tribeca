@@ -29,7 +29,7 @@ namespace K  {
         gw->hub = hub = new uWS::Hub(0, true);
       };
       void waitData() {
-        gw->log = [&](string reason) {
+        gw->log = [&](const string &reason) {
           gwLog(reason);
         };
         aEngine = new Async(hub->getLoop());
@@ -104,7 +104,7 @@ namespace K  {
           aEngine->send();
         ((SH*)k->screen)->waitForUser();
       };
-      inline void gwLog(const string reason) {
+      inline void gwLog(const string &reason) {
         deferred([this, reason]() {
           const string name = string(
             reason.find(">>>") != reason.find("<<<")

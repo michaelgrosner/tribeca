@@ -6,8 +6,8 @@ namespace K {
     public:
       map<mRandId, mOrder> orders;
       vector<mTrade> tradesHistory;
-      function<void(mSide, bool)>* calcWalletAfterOrder = nullptr;
-      function<void(mTrade*)>* calcSafetyAfterTrade     = nullptr;
+      function<void(const mSide&)>* calcWalletAfterOrder = nullptr;
+      function<void(const mTrade&)>* calcSafetyAfterTrade = nullptr;
     protected:
       void load() {
         for (json &it : ((DB*)memory)->load(mMatter::Trades))
@@ -164,15 +164,17 @@ namespace K {
         if (!o->time) o->time = _Tstamp_;
         if (!o->latency and working) o->latency = _Tstamp_ - o->time;
         if (o->latency) o->time = _Tstamp_;
-        if (k.tradeQuantity)
+        if (k.tradeQuantity) {
           toHistory(o, k.tradeQuantity);
+          gw->refreshWallet = true;
+        }
         k.side = o->side;
         if (saved and !working)
           cleanOrder(o->orderId);
         else debug(string(" saved ") + (o->side == mSide::Bid ? "BID id " : "ASK id ") + o->orderId + "::" + o->exchangeId + " [" + to_string((int)o->orderStatus) + "]: " + FN::str8(o->quantity) + " " + o->pair.base + " at price " + FN::str8(o->price) + " " + o->pair.quote);
         debug(string("memory ") + to_string(orders.size()));
         if (saved) {
-          (*calcWalletAfterOrder)(k.side, k.tradeQuantity > 0);
+          (*calcWalletAfterOrder)(k.side);
           toClient(working);
         }
       };
@@ -223,7 +225,7 @@ namespace K {
           abs(o->price * tradeQuantity),
           0, 0, 0, 0, 0, fee, false
         );
-        (*calcSafetyAfterTrade)(&trade);
+        (*calcSafetyAfterTrade)(trade);
         ((SH*)screen)->log(trade, gw->name);
         if (qp->_matchPings) {
           mPrice widthPong = qp->widthPercentage

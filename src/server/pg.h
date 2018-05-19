@@ -36,8 +36,10 @@ namespace K {
       };
       void waitData() {
         gw->evDataWallet = [&](mWallets k) {                        _debugEvent_
-          calcWallet(k);
+          if (!k.empty()) balance = k;
+          calcWallet();
         };
+        ((MG*)market)->calcWallet = &calcWallet;
         ((MG*)market)->calcTargetBasePos = &calcTargetBasePos;
         ((OG*)broker)->calcWalletAfterOrder = &calcWalletAfterOrder;
         ((OG*)broker)->calcSafetyAfterTrade = &calcSafetyAfterTrade;
@@ -93,10 +95,10 @@ namespace K {
           {"pDiv", positionDivergence}
         } };
       };
-      function<void(mTrade*)> calcSafetyAfterTrade = [&](mTrade *k) {
-        (k->side == mSide::Bid
+      function<void(const mTrade&)> calcSafetyAfterTrade = [&](const mTrade &k) {
+        (k.side == mSide::Bid
           ? buys : sells
-        )[k->price] = *k;
+        )[k.price] = k;
         calcSafety();
       };
       mSafety nextSafety() {
@@ -219,8 +221,7 @@ namespace K {
           sum += it.second.quantity;
         return sum;
       };
-      void calcWallet(mWallets k) {
-        if (!k.empty()) balance = k;
+      function<void()> calcWallet = [&]() {
         if (balance.empty() or !((MG*)market)->fairValue) return;
         if (((CF*)config)->argMaxWallet) applyMaxWallet();
         mPosition pos(
@@ -256,7 +257,7 @@ namespace K {
         ((UI*)client)->send(mMatter::Position, pos);
         ((SH*)screen)->log(pos);
       };
-      function<void(mSide, bool)> calcWalletAfterOrder = [&](mSide side, bool refreshWallet) {
+      function<void(const mSide&)> calcWalletAfterOrder = [&](const mSide &side) {
         if (position.empty()) return;
         mAmount heldAmount = 0;
         mAmount amount = side == mSide::Ask
@@ -276,9 +277,7 @@ namespace K {
           ? balance.base
           : balance.quote
         ).reset(amount, heldAmount);
-        calcWallet(mWallets());
-        if (refreshWallet)
-          gw->forceUpdate = true;
+        calcWallet();
       };
       void calcPDiv(mAmount baseValue) {
         mAmount pDiv = qp->percentageValues

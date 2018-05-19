@@ -658,7 +658,7 @@ namespace K {
       uWS::Hub                *hub     = nullptr;
       uWS::Group<uWS::CLIENT> *gwGroup = nullptr;
       static Gw *config(mCoinId, mCoinId, string, int, string, string, string, string, string, string, int, int);
-      function<void(string)>        log,
+      function<void(const string&)> log,
                                     reconnect;
       function<void(mOrder)>        evDataOrder;
       function<void(mTrade)>        evDataTrade;
@@ -682,7 +682,7 @@ namespace K {
                 apikey   = "", secret  = "",
                 user     = "", pass    = "",
                 ws       = "", http    = "";
-           bool forceUpdate = false;
+           bool refreshWallet = false;
       inline bool waitForData() {
         return waitFor(replyOrders, evDataOrder)
              | waitFor(replyLevels, evDataLevels)
@@ -710,18 +710,24 @@ namespace K {
       future<vector<mTrade>> replyTrades;
       future<vector<mOrder>> replyOrders;
       future<vector<mOrder>> replyCancelAll;
-      template<typename mData, typename sync> inline bool askFor(future<vector<mData>> &reply, sync fn) {
+      template<typename mData, typename syncFn> inline bool askFor(
+              future<vector<mData>> &reply,
+        const syncFn                &read
+      ) {
         bool waiting = reply.valid();
         if (!waiting) {
-          reply = ::async(launch::async, fn);
+          reply = ::async(launch::async, read);
           waiting = true;
         }
         return waiting;
       };
-      template<typename mData> inline unsigned int waitFor(future<vector<mData>> &reply, function<void(mData)> &fn) {
+      template<typename mData> inline unsigned int waitFor(
+              future<vector<mData>> &reply,
+        const function<void(mData)> &write
+      ) {
         bool waiting = reply.valid();
         if (waiting and reply.wait_for(chrono::nanoseconds(0))==future_status::ready) {
-          for (mData &it : reply.get()) fn(it);
+          for (mData &it : reply.get()) write(it);
           waiting = false;
         }
         return waiting;
