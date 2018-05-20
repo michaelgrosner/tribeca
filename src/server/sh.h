@@ -29,7 +29,8 @@ namespace K {
              quote = "?",
              baseValue = "?",
              quoteValue = "?",
-             fairValue = "?";
+             fairValue = "?",
+             wtfismyip = "";
       multimap<mPrice, mOrder, greater<mPrice>> openOrders;
     public:
       string protocol = "HTTP";
@@ -49,6 +50,7 @@ namespace K {
       void config(string base_, string quote_, string argExchange, int argColors, int argPort, int argNaked) {
         port = argPort;
         naked = argNaked;
+        wtfismyip = FN::wJet("https://wtfismyip.com/json", 4L).value("/YourFuckingIPAddress"_json_pointer, "");
         if (naked) return;
         if (!(wBorder = initscr())) {
           cout << "NCURSES" << RRED << " Errrror:" << BRED << " Unable to initialize ncurses, try to run in your terminal \"export TERM=xterm\", or use --naked argument." << '\n';
@@ -179,7 +181,11 @@ namespace K {
       };
       void logUI() {
         if (!wBorder) {
-          cout << stamp() << "UI" << RWHITE << " ready over " << RYELLOW << protocol << RWHITE << " on external port " << RYELLOW << to_string(port) << RWHITE << ".\n";
+          cout << stamp() << "UI" << RWHITE << " ready ";
+          if (wtfismyip.empty())
+            cout << "over " << RYELLOW << protocol << RWHITE << " on external port " << RYELLOW << to_string(port) << RWHITE << ".\n";
+          else
+            cout << "at " << RYELLOW << FN::strL(protocol) << "://" << wtfismyip << ":" << to_string(port) << RWHITE << ".\n";
           return;
         }
         wmove(wLog, getmaxy(wLog)-1, 0);
@@ -188,17 +194,30 @@ namespace K {
         wattron(wLog, A_BOLD);
         wprintw(wLog, "UI");
         wattroff(wLog, A_BOLD);
-        wprintw(wLog, " ready over ");
-        wattroff(wLog, COLOR_PAIR(COLOR_WHITE));
-        wattron(wLog, COLOR_PAIR(COLOR_YELLOW));
-        wprintw(wLog, protocol.data());
-        wattroff(wLog, COLOR_PAIR(COLOR_YELLOW));
-        wattron(wLog, COLOR_PAIR(COLOR_WHITE));
-        wprintw(wLog, " on external port ");
-        wattroff(wLog, COLOR_PAIR(COLOR_WHITE));
-        wattron(wLog, COLOR_PAIR(COLOR_YELLOW));
-        wprintw(wLog, to_string(port).data());
-        wattroff(wLog, COLOR_PAIR(COLOR_YELLOW));
+        wprintw(wLog, " ready ");
+        if (wtfismyip.empty()) {
+          wprintw(wLog, "over ");
+          wattroff(wLog, COLOR_PAIR(COLOR_WHITE));
+          wattron(wLog, COLOR_PAIR(COLOR_YELLOW));
+          wprintw(wLog, protocol.data());
+          wattroff(wLog, COLOR_PAIR(COLOR_YELLOW));
+          wattron(wLog, COLOR_PAIR(COLOR_WHITE));
+          wprintw(wLog, " on external port ");
+          wattroff(wLog, COLOR_PAIR(COLOR_WHITE));
+          wattron(wLog, COLOR_PAIR(COLOR_YELLOW));
+          wprintw(wLog, to_string(port).data());
+          wattroff(wLog, COLOR_PAIR(COLOR_YELLOW));
+        } else {
+          wprintw(wLog, "at ");
+          wattroff(wLog, COLOR_PAIR(COLOR_WHITE));
+          wattron(wLog, COLOR_PAIR(COLOR_YELLOW));
+          wprintw(wLog, FN::strL(protocol).data());
+          wprintw(wLog, "://");
+          wprintw(wLog, wtfismyip.data());
+          wprintw(wLog, ":");
+          wprintw(wLog, to_string(port).data());
+          wattroff(wLog, COLOR_PAIR(COLOR_YELLOW));
+        }
         wattron(wLog, COLOR_PAIR(COLOR_WHITE));
         wprintw(wLog, ".\n");
         wattroff(wLog, COLOR_PAIR(COLOR_WHITE));
@@ -365,7 +384,12 @@ namespace K {
         mvwaddch(wBorder, 0, 12, ACS_RTEE);
         wattron(wBorder, COLOR_PAIR(COLOR_GREEN));
         string title1 = string("   ") + title;
-        string title2 = string(" ") + (port ? "UI on " + protocol + " port " + to_string(port) : "headless")  + ' ';
+        string title2 = string(" ") + (port
+          ? "UI" + (wtfismyip.empty()
+            ? " on " + protocol + " port " + to_string(port)
+            : " at " + FN::strL(protocol) + "://" + wtfismyip + ":" + to_string(port)
+          ) : "headless"
+        )  + ' ';
         wattron(wBorder, A_BOLD);
         mvwaddstr(wBorder, 0, 13, title1.data());
         wattroff(wBorder, A_BOLD);
