@@ -23,14 +23,14 @@ namespace K {
       unsigned int orders_60s = 0;
     protected:
       void load() {
-        if (((CF*)config)->argHeadless
-          or ((CF*)config)->argUser.empty()
-          or ((CF*)config)->argPass.empty()
+        if (args.headless
+          or args.user.empty()
+          or args.pass.empty()
         ) return;
-        B64auth = string("Basic ") + FN::oB64(((CF*)config)->argUser + ':' + ((CF*)config)->argPass);
+        B64auth = string("Basic ") + FN::oB64(args.user + ':' + args.pass);
       };
       void waitData() {
-        if (((CF*)config)->argHeadless) return;
+        if (args.headless) return;
         ((EV*)events)->uiGroup->onConnection([&](uWS::WebSocket<uWS::SERVER> *webSocket, uWS::HttpRequest req) {
           ((SH*)screen)->logUIsess(++connections, webSocket->getAddress().address);
         });
@@ -43,7 +43,7 @@ namespace K {
                  addr = res->getHttpSocket()->getAddress().address;
           const string auth = req.getHeader("authorization").toString();
           if (addr.length() > 7 and addr.substr(0, 7) == "::ffff:") addr = addr.substr(7);
-          if (addr.length() > 7 and !((CF*)config)->argWhitelist.empty() and ((CF*)config)->argWhitelist.find(addr) == string::npos) {
+          if (addr.length() > 7 and !args.whitelist.empty() and args.whitelist.find(addr) == string::npos) {
             ((SH*)screen)->log("UI", "dropping gzip bomb on", addr);
             document = "HTTP/1.1 200 OK\r\nConnection: keep-alive\r\nAccept-Ranges: bytes\r\nVary: Accept-Encoding\r\nCache-Control: public, max-age=0\r\nContent-Encoding: gzip\r\n";
             content = string(&_www_gzip_bomb, _www_gzip_bomb_len);
@@ -97,10 +97,10 @@ namespace K {
         });
         ((EV*)events)->uiGroup->onMessage([&](uWS::WebSocket<uWS::SERVER> *webSocket, const char *message, size_t length, uWS::OpCode opCode) {
           if (length < 2) return;
-          if (!((CF*)config)->argWhitelist.empty()) {
+          if (!args.whitelist.empty()) {
             string addr = webSocket->getAddress().address;
             if (addr.length() > 7 and addr.substr(0, 7) == "::ffff:") addr = addr.substr(7);
-            if (addr.length() > 7 and ((CF*)config)->argWhitelist.find(addr) == string::npos) {
+            if (addr.length() > 7 and args.whitelist.find(addr) == string::npos) {
               webSocket->send(string(&_www_gzip_bomb, _www_gzip_bomb_len).data(), uWS::OpCode::BINARY);
               return;
             }
@@ -122,12 +122,12 @@ namespace K {
         });
       };
       void waitTime() {
-        if (((CF*)config)->argHeadless) return;
+        if (args.headless) return;
         ((EV*)events)->tClient->setData(this);
         ((EV*)events)->tClient->start(timer, 0, 0);
       };
       void waitUser() {
-        if (((CF*)config)->argHeadless) {
+        if (args.headless) {
           welcome = [](mMatter type, function<void(json*)> *fn) {};
           clickme = [](mMatter type, function<void(json)> *fn) {};
           delayme = [](unsigned int delayUI) {};
@@ -142,7 +142,7 @@ namespace K {
         }
       };
       void run() {
-        if (((CF*)config)->argHeadless) return;
+        if (args.headless) return;
         ((EV*)events)->listen();
       };
     public:
@@ -186,8 +186,8 @@ namespace K {
           {"exchange", gw->exchange},
           {"pair", mPair(gw->base, gw->quote)},
           {"minTick", gw->minTick},
-          {"environment", ((CF*)config)->argTitle},
-          {"matryoshka", ((CF*)config)->argMatryoshka},
+          {"environment", args.title},
+          {"matryoshka", args.matryoshka},
           {"homepage", "https://github.com/ctubio/Krypto-trading-bot"}
         } };
       };
@@ -239,7 +239,7 @@ namespace K {
         return {
           {"memory", memorySize()},
           {"freq", orders_60s},
-          {"theme", ((CF*)config)->argIgnoreMoon + ((CF*)config)->argIgnoreSun},
+          {"theme", args.ignoreMoon + args.ignoreSun},
           {"dbsize", ((DB*)memory)->size()},
           {"a", gw->A()}
         };

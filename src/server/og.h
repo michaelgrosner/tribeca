@@ -31,7 +31,7 @@ namespace K {
         ((UI*)client)->clickme(mMatter::CleanTrade, &kissCleanTrade);
       };
       void run() {
-        if (((CF*)config)->argDebugOrders) return;
+        if (args.debugOrders) return;
         debug = [](string k) {};
       };
     public:
@@ -58,7 +58,7 @@ namespace K {
             gw->replace(orders[replaceOrderId].exchangeId, FN::str8(price));
           }
         } else {
-          if (((CF*)config)->argTestChamber != 1) cancelOrder(replaceOrderId);
+          if (args.testChamber != 1) cancelOrder(replaceOrderId);
           mRandId newOrderId = gw->randId();
           updateOrderState(mOrder(
             newOrderId,
@@ -84,7 +84,7 @@ namespace K {
             o->preferPostOnly,
             o->time
           );
-          if (((CF*)config)->argTestChamber == 1) cancelOrder(replaceOrderId);
+          if (args.testChamber == 1) cancelOrder(replaceOrderId);
         }
         ((UI*)client)->orders_60s++;
       };

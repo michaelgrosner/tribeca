@@ -10,17 +10,17 @@ namespace K {
       string qpdb = "main";
     protected:
       void load() {
-        if (sqlite3_open(((CF*)config)->argDatabase.data(), &db))
+        if (sqlite3_open(args.database.data(), &db))
           exit(_redAlert_("DB", sqlite3_errmsg(db)));
-        ((SH*)screen)->logDB(((CF*)config)->argDatabase);
-        if (((CF*)config)->argDiskdata.empty()) return;
+        ((SH*)screen)->logDB(args.database);
+        if (args.diskdata.empty()) return;
         qpdb = "qpdb";
-        exec(string("ATTACH '") + ((CF*)config)->argDiskdata + "' AS " + qpdb + ";");
-        ((SH*)screen)->logDB(((CF*)config)->argDiskdata);
+        exec(string("ATTACH '") + args.diskdata + "' AS " + qpdb + ";");
+        ((SH*)screen)->logDB(args.diskdata);
       };
       void run() {
-        if (((CF*)config)->argDatabase == ":memory:") return;
-        const char* path = ((CF*)config)->argDatabase.data();
+        if (args.database == ":memory:") return;
+        const char* path = args.database.data();
         size = [path]() {
           struct stat st;
           return stat(path, &st) ? 0 : st.st_size;

@@ -381,14 +381,7 @@ namespace K {
     {};
     mPosition(mAmount bA, mAmount qA, mAmount qAV, mAmount bH, mAmount qH, mAmount bT, mAmount qT, mAmount bV, mAmount qV, mAmount bP, mAmount qP, mPair p):
       baseAmount(bA), quoteAmount(qA), _quoteAmountValue(qAV), baseHeldAmount(bH), quoteHeldAmount(qH), _baseTotal(bT), _quoteTotal(qT), baseValue(bV), quoteValue(qV), profitBase(bP), profitQuote(qP), pair(p)
-    {
-      _trunc8_(baseAmount)
-      _trunc8_(quoteAmount)
-      _trunc8_(baseHeldAmount)
-      _trunc8_(quoteHeldAmount)
-      _trunc8_(baseValue)
-      _trunc8_(quoteValue)
-    };
+    {};
     bool empty() {
       return !baseValue;
     };
@@ -652,6 +645,27 @@ namespace K {
       {   "quotesInMemoryDone", k.quotesInMemoryDone   }
     };
   };
+  static struct mArgs {
+        int port          = 3000,   colors      = 0, debug        = 0,
+            debugSecret   = 0,      debugEvents = 0, debugOrders  = 0,
+            debugQuotes   = 0,      debugWallet = 0, withoutSSL   = 0,
+            headless      = 0,      dustybot    = 0, lifetime     = 0,
+            autobot       = 0,      naked       = 0, free         = 0,
+            ignoreSun     = 0,      ignoreMoon  = 0, maxLevels    = 0,
+            testChamber   = 0;
+    mAmount maxWallet     = 0;
+     mPrice ewmaUShort    = 0,      ewmaXShort  = 0, ewmaShort    = 0,
+            ewmaMedium    = 0,      ewmaLong    = 0, ewmaVeryLong = 0;
+     string title         = "K.sh", matryoshka  = "https://www.example.com/",
+            user          = "NULL", pass        = "NULL",
+            exchange      = "NULL", currency    = "NULL",
+            apikey        = "NULL", secret      = "NULL",
+            username      = "NULL", passphrase  = "NULL",
+            http          = "NULL", wss         = "NULL",
+            database      = "",     diskdata    = "",
+            whitelist     = "";
+    const char *inet = nullptr;
+  } args;
   class Gw {
     public:
       virtual string A() = 0;

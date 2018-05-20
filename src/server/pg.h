@@ -74,7 +74,7 @@ namespace K {
         json k = {{"tbp", targetBasePosition}, {"sideAPR", sideAPR}, {"pDiv", positionDivergence }};
         ((UI*)client)->send(mMatter::TargetBasePosition, k);
         ((DB*)memory)->insert(mMatter::TargetBasePosition, k);
-        if (!((CF*)config)->argDebugWallet) return;
+        if (!args.debugWallet) return;
         ((SH*)screen)->log("PG", string("TBP: ")
           + to_string((int)(targetBasePosition / baseValue * 1e+2)) + "% = " + FN::str8(targetBasePosition)
           + " " + gw->base + ", pDiv: "
@@ -223,17 +223,17 @@ namespace K {
       };
       function<void()> calcWallet = [&]() {
         if (balance.empty() or !((MG*)market)->fairValue) return;
-        if (((CF*)config)->argMaxWallet) applyMaxWallet();
+        if (args.maxWallet) applyMaxWallet();
         mPosition pos(
-          balance.base.amount,
-          balance.quote.amount,
+          FN::d8(balance.base.amount),
+          FN::d8(balance.quote.amount),
           balance.quote.amount / ((MG*)market)->fairValue,
-          balance.base.held,
-          balance.quote.held,
+          FN::d8(balance.base.held),
+          FN::d8(balance.quote.held),
           balance.base.amount + balance.base.held,
           (balance.quote.amount + balance.quote.held) / ((MG*)market)->fairValue,
-          (balance.quote.amount + balance.quote.held) / ((MG*)market)->fairValue + balance.base.amount + balance.base.held,
-          (balance.base.amount + balance.base.held) * ((MG*)market)->fairValue + balance.quote.amount + balance.quote.held,
+          FN::d8((balance.quote.amount + balance.quote.held) / ((MG*)market)->fairValue + balance.base.amount + balance.base.held),
+          FN::d8((balance.base.amount + balance.base.held) * ((MG*)market)->fairValue + balance.quote.amount + balance.quote.held),
           position.profitBase,
           position.profitQuote,
           mPair(gw->base, gw->quote)
@@ -312,7 +312,7 @@ namespace K {
         }
       };
       inline void applyMaxWallet() {
-        mAmount maxWallet = ((CF*)config)->argMaxWallet;
+        mAmount maxWallet = args.maxWallet;
         maxWallet -= balance.quote.held / ((MG*)market)->fairValue;
         if (maxWallet > 0 and balance.quote.amount / ((MG*)market)->fairValue > maxWallet) {
           balance.quote.amount = maxWallet * ((MG*)market)->fairValue;

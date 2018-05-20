@@ -56,12 +56,12 @@ namespace K {
         }
         calcStdev();
         ((SH*)screen)->log("DB", string("loaded ") + to_string(mgStatFV.size()) + " STDEV Periods");
-        if (((CF*)config)->argEwmaVeryLong) mgEwmaVL = ((CF*)config)->argEwmaVeryLong;
-        if (((CF*)config)->argEwmaLong) mgEwmaL = ((CF*)config)->argEwmaLong;
-        if (((CF*)config)->argEwmaMedium) mgEwmaM = ((CF*)config)->argEwmaMedium;
-        if (((CF*)config)->argEwmaShort) mgEwmaS = ((CF*)config)->argEwmaShort;
-        if (((CF*)config)->argEwmaXShort) mgEwmaXS = ((CF*)config)->argEwmaXShort;
-        if (((CF*)config)->argEwmaUShort) mgEwmaU = ((CF*)config)->argEwmaUShort;
+        if (args.ewmaVeryLong) mgEwmaVL = args.ewmaVeryLong;
+        if (args.ewmaLong) mgEwmaL = args.ewmaLong;
+        if (args.ewmaMedium) mgEwmaM = args.ewmaMedium;
+        if (args.ewmaShort) mgEwmaS = args.ewmaShort;
+        if (args.ewmaXShort) mgEwmaXS = args.ewmaXShort;
+        if (args.ewmaUShort) mgEwmaU = args.ewmaUShort;
         json k = ((DB*)memory)->load(mMatter::EWMAChart);
         if (!k.empty()) {
           k = k.at(0);
@@ -78,12 +78,12 @@ namespace K {
           if (!mgEwmaU and k.value("time", (mClock)0) + qp->ultraShortEwmaPeriods * 6e+4 > _Tstamp_)
             mgEwmaU = k.value("ewmaUltraShort", 0.0);
         }
-        if (mgEwmaVL) ((SH*)screen)->log(((CF*)config)->argEwmaVeryLong ? "ARG" : "DB", string("loaded ") + to_string(mgEwmaVL) + " EWMA VeryLong");
-        if (mgEwmaL)  ((SH*)screen)->log(((CF*)config)->argEwmaLong ? "ARG" : "DB", string("loaded ") + to_string(mgEwmaL) + " EWMA Long");
-        if (mgEwmaM)  ((SH*)screen)->log(((CF*)config)->argEwmaMedium ? "ARG" : "DB", string("loaded ") + to_string(mgEwmaM) + " EWMA Medium");
-        if (mgEwmaS)  ((SH*)screen)->log(((CF*)config)->argEwmaShort ? "ARG" : "DB", string("loaded ") + to_string(mgEwmaS) + " EWMA Short");
-        if (mgEwmaXS) ((SH*)screen)->log(((CF*)config)->argEwmaXShort ? "ARG" : "DB", string("loaded ") + to_string(mgEwmaXS) + " EWMA ExtraShort");
-        if (mgEwmaU)  ((SH*)screen)->log(((CF*)config)->argEwmaUShort ? "ARG" : "DB", string("loaded ") + to_string(mgEwmaU) + " EWMA UltraShort");
+        if (mgEwmaVL) ((SH*)screen)->log(args.ewmaVeryLong ? "ARG" : "DB", string("loaded ") + to_string(mgEwmaVL) + " EWMA VeryLong");
+        if (mgEwmaL)  ((SH*)screen)->log(args.ewmaLong ? "ARG" : "DB", string("loaded ") + to_string(mgEwmaL) + " EWMA Long");
+        if (mgEwmaM)  ((SH*)screen)->log(args.ewmaMedium ? "ARG" : "DB", string("loaded ") + to_string(mgEwmaM) + " EWMA Medium");
+        if (mgEwmaS)  ((SH*)screen)->log(args.ewmaShort ? "ARG" : "DB", string("loaded ") + to_string(mgEwmaS) + " EWMA Short");
+        if (mgEwmaXS) ((SH*)screen)->log(args.ewmaXShort ? "ARG" : "DB", string("loaded ") + to_string(mgEwmaXS) + " EWMA ExtraShort");
+        if (mgEwmaU)  ((SH*)screen)->log(args.ewmaUShort ? "ARG" : "DB", string("loaded ") + to_string(mgEwmaU) + " EWMA UltraShort");
         for (json &it : ((DB*)memory)->load(mMatter::MarketDataLongTerm))
           if (it.value("time", (mClock)0) + 3456e+5 > _Tstamp_ and it.value("fv", 0.0))
             fairValue96h.push_back(it.value("fv", 0.0));

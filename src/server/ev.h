@@ -24,8 +24,8 @@ namespace K  {
 #ifndef _WIN32
         signal(SIGUSR1, wtf);
 #endif
-        tracelog = "- upstream: " + ((CF*)config)->argExchange + '\n'
-                 + "- currency: " + ((CF*)config)->argCurrency + '\n';
+        tracelog = "- upstream: " + args.exchange + '\n'
+                 + "- currency: " + args.currency + '\n';
         gw->hub = hub = new uWS::Hub(0, true);
       };
       void waitData() {
@@ -45,7 +45,7 @@ namespace K  {
         uiGroup = hub->createGroup<uWS::SERVER>(uWS::PERMESSAGE_DEFLATE);
       };
       void run() {
-        if (((CF*)config)->argDebugEvents) return;
+        if (args.debugEvents) return;
         debug = [](string k) {};
       };
     public:
@@ -63,15 +63,25 @@ namespace K  {
         uiGroup->close();
       };
       void listen() {
-        if (!((CF*)config)->argWithoutSSL
-          and (access("etc/sslcert/server.crt", F_OK) != -1) and (access("etc/sslcert/server.key", F_OK) != -1)
-          and hub->listen(((CF*)config)->argPort, TLS::createContext("etc/sslcert/server.crt", "etc/sslcert/server.key", ""), 0, uiGroup)
+        if (!args.withoutSSL
+          and (access("etc/sslcert/server.crt", F_OK) != -1)
+          and (access("etc/sslcert/server.key", F_OK) != -1)
+          and hub->listen(
+            args.inet, args.port,
+            TLS::createContext("etc/sslcert/server.crt", "etc/sslcert/server.key", ""),
+            0, uiGroup
+          )
         ) ((SH*)screen)->protocol += 'S';
-        else if (!hub->listen(((CF*)config)->argPort, nullptr, 0, uiGroup))
-          exit(_redAlert_("IU", string("Use another UI port number, ")
-            + to_string(((CF*)config)->argPort) + " seems already in use by:\n"
-            + FN::output(string("netstat -anp 2>/dev/null | grep ") + to_string(((CF*)config)->argPort))
+        else if (!hub->listen(
+          args.inet, args.port,
+          nullptr,
+          0, uiGroup
+        )) {
+          const string hint = FN::output(string("netstat -anp 2>/dev/null | grep ") + to_string(args.port));
+          exit(_redAlert_("UI", "Unable to listen to UI port number " + to_string(args.port) + ", "
+            + (hint.empty() ? "try another network interface" : "seems already in use by:\n" + hint)
           ));
+        }
         ((SH*)screen)->logUI();
       };
       void deferred(const function<void()> &fn) {

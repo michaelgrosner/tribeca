@@ -4,46 +4,27 @@
 namespace K {
   class CF: public kLass {
     public:
-        int argPort         = 3000,   argColors       = 0, argDebug        = 0,
-            argDebugSecret  = 0,      argDebugEvents  = 0, argDebugOrders  = 0,
-            argDebugQuotes  = 0,      argDebugWallet  = 0, argWithoutSSL   = 0,
-            argHeadless     = 0,      argDustybot     = 0, argLifetime     = 0,
-            argAutobot      = 0,      argNaked        = 0, argFree         = 0,
-            argIgnoreSun    = 0,      argIgnoreMoon   = 0, argMaxLevels    = 0,
-            argTestChamber  = 0;
-    mAmount argMaxWallet    = 0;
-     mPrice argEwmaUShort   = 0,      argEwmaXShort   = 0, argEwmaShort    = 0,
-            argEwmaMedium   = 0,      argEwmaLong     = 0, argEwmaVeryLong = 0;
-     string argTitle        = "K.sh", argMatryoshka   = "https://www.example.com/",
-            argUser         = "NULL", argPass         = "NULL",
-            argExchange     = "NULL", argCurrency     = "NULL",
-            argApikey       = "NULL", argSecret       = "NULL",
-            argUsername     = "NULL", argPassphrase   = "NULL",
-            argHttp         = "NULL", argWss          = "NULL",
-            argDatabase     = "",     argDiskdata     = "",
-            argWhitelist    = "";
-    public:
       CF() {
         screen = new SH();
       }
     protected:
       void load(int argc, char** argv) {
-        static const struct option args[] = {
+        static const struct option opts[] = {
           {"help",         no_argument,       0,               'h'},
-          {"colors",       no_argument,       &argColors,        1},
-          {"debug",        no_argument,       &argDebug,         1},
-          {"debug-secret", no_argument,       &argDebugSecret,   1},
-          {"debug-events", no_argument,       &argDebugEvents,   1},
-          {"debug-orders", no_argument,       &argDebugOrders,   1},
-          {"debug-quotes", no_argument,       &argDebugQuotes,   1},
-          {"debug-wallet", no_argument,       &argDebugWallet,   1},
-          {"without-ssl",  no_argument,       &argWithoutSSL,    1},
-          {"ignore-sun",   no_argument,       &argIgnoreSun,     2},
-          {"ignore-moon",  no_argument,       &argIgnoreMoon,    1},
-          {"headless",     no_argument,       &argHeadless,      1},
-          {"naked",        no_argument,       &argNaked,         1},
-          {"autobot",      no_argument,       &argAutobot,       1},
-          {"dustybot",     no_argument,       &argDustybot,      1},
+          {"colors",       no_argument,       &args.colors,      1},
+          {"debug",        no_argument,       &args.debug,       1},
+          {"debug-secret", no_argument,       &args.debugSecret, 1},
+          {"debug-events", no_argument,       &args.debugEvents, 1},
+          {"debug-orders", no_argument,       &args.debugOrders, 1},
+          {"debug-quotes", no_argument,       &args.debugQuotes, 1},
+          {"debug-wallet", no_argument,       &args.debugWallet, 1},
+          {"without-ssl",  no_argument,       &args.withoutSSL,  1},
+          {"ignore-sun",   no_argument,       &args.ignoreSun,   2},
+          {"ignore-moon",  no_argument,       &args.ignoreMoon,  1},
+          {"headless",     no_argument,       &args.headless,    1},
+          {"naked",        no_argument,       &args.naked,       1},
+          {"autobot",      no_argument,       &args.autobot,     1},
+          {"dustybot",     no_argument,       &args.dustybot,    1},
           {"lifetime",     required_argument, 0,               'T'},
           {"whitelist",    required_argument, 0,               'L'},
           {"port",         required_argument, 0,               999},
@@ -69,40 +50,42 @@ namespace K {
           {"wallet-limit", required_argument, 0,               'W'},
           {"market-limit", required_argument, 0,               'M'},
           {"test-chamber", required_argument, 0,               'x'},
-          {"free-version", no_argument,       &argFree,          1},
+          {"interface",    required_argument, 0,               'i'},
+          {"free-version", no_argument,       &args.free,        1},
           {"version",      no_argument,       0,               'v'},
           {0,              0,                 0,                 0}
         };
         int k = 0;
         while (++k)
-          switch (k = getopt_long(argc, argv, "hvd:k:x:K:L:M:T:W:", args, NULL)) {
+          switch (k = getopt_long(argc, argv, "hvd:i:k:x:K:L:M:T:W:", opts, NULL)) {
             case -1 :
             case  0 : break;
-            case 'x': argTestChamber  = stoi(optarg);   break;
-            case 'M': argMaxLevels    = stoi(optarg);   break;
-            case 'T': argLifetime     = stoi(optarg);   break;
-            case 999: argPort         = stoi(optarg);   break;
-            case 998: argUser         = string(optarg); break;
-            case 997: argPass         = string(optarg); break;
-            case 996: argExchange     = string(optarg); break;
-            case 995: argCurrency     = string(optarg); break;
-            case 994: argApikey       = string(optarg); break;
-            case 993: argSecret       = string(optarg); break;
-            case 992: argPassphrase   = string(optarg); break;
-            case 991: argUsername     = string(optarg); break;
-            case 990: argHttp         = string(optarg); break;
-            case 989: argWss          = string(optarg); break;
-            case 'd': argDatabase     = string(optarg); break;
-            case 'k': argMatryoshka   = string(optarg); break;
-            case 'K': argTitle        = string(optarg); break;
-            case 'L': argWhitelist    = string(optarg); break;
-            case 'W': argMaxWallet    = stod(optarg);   break;
-            case 905: argEwmaUShort   = stod(optarg);   break;
-            case 904: argEwmaXShort   = stod(optarg);   break;
-            case 903: argEwmaShort    = stod(optarg);   break;
-            case 902: argEwmaMedium   = stod(optarg);   break;
-            case 901: argEwmaLong     = stod(optarg);   break;
-            case 900: argEwmaVeryLong = stod(optarg);   break;
+            case 'x': args.testChamber  = stoi(optarg);   break;
+            case 'M': args.maxLevels    = stoi(optarg);   break;
+            case 'T': args.lifetime     = stoi(optarg);   break;
+            case 999: args.port         = stoi(optarg);   break;
+            case 998: args.user         = string(optarg); break;
+            case 997: args.pass         = string(optarg); break;
+            case 996: args.exchange     = string(optarg); break;
+            case 995: args.currency     = string(optarg); break;
+            case 994: args.apikey       = string(optarg); break;
+            case 993: args.secret       = string(optarg); break;
+            case 992: args.passphrase   = string(optarg); break;
+            case 991: args.username     = string(optarg); break;
+            case 990: args.http         = string(optarg); break;
+            case 989: args.wss          = string(optarg); break;
+            case 'd': args.database     = string(optarg); break;
+            case 'k': args.matryoshka   = string(optarg); break;
+            case 'K': args.title        = string(optarg); break;
+            case 'L': args.whitelist    = string(optarg); break;
+            case 'i': args.inet         = strdup(optarg); break;
+            case 'W': args.maxWallet    = stod(optarg);   break;
+            case 905: args.ewmaUShort   = stod(optarg);   break;
+            case 904: args.ewmaXShort   = stod(optarg);   break;
+            case 903: args.ewmaShort    = stod(optarg);   break;
+            case 902: args.ewmaMedium   = stod(optarg);   break;
+            case 901: args.ewmaLong     = stod(optarg);   break;
+            case 900: args.ewmaVeryLong = stod(optarg);   break;
             case 'h': cout
               << RGREEN << "This is free software: the quoting engine and UI are open source,"
                         << '\n' << "feel free to hack both as you need." << '\n'
@@ -179,6 +162,8 @@ namespace K {
               << ((SH*)screen)->stamp() << RWHITE << "-k, --matryoshka=URL      - set Matryoshka link URL of the next UI." << '\n'
               << ((SH*)screen)->stamp() << RWHITE << "-K, --title=WORD          - set WORD as UI title to identify different bots." << '\n'
               << ((SH*)screen)->stamp() << RWHITE << "-x, --test-chamber=NUMBER - set release candidate NUMBER to test (ask your developer)." << '\n'
+              << ((SH*)screen)->stamp() << RWHITE << "-i, --interface=IP        - set IP to bind as outgoing network interface," << '\n'
+              << ((SH*)screen)->stamp() << RWHITE << "                            default IP is the system default network interface." << '\n'
               << ((SH*)screen)->stamp() << RWHITE << "    --free-version        - work with all market levels and enable the slow XMR miner." << '\n'
               << ((SH*)screen)->stamp() << RWHITE << "-v, --version             - show current build version and quit." << '\n'
               << RGREEN << "  more help: " << RYELLOW << "https://github.com/ctubio/Krypto-trading-bot/blob/master/MANUAL.md" << '\n'
@@ -194,73 +179,71 @@ namespace K {
           while(optind < argc) argerr += string(" ") + argv[optind++];
           exit(_redAlert_("CF", string("Invalid argument option:") + argerr));
         }
-        if (argCurrency.find("/") == string::npos or argCurrency.length() < 3)
+        if (args.currency.find("/") == string::npos or args.currency.length() < 3)
           exit(_redAlert_("CF", "Invalid currency pair; must be in the format of BASE/QUOTE, like BTC/EUR"));
-        if (argExchange.empty())
+        if (args.exchange.empty())
           exit(_redAlert_("CF", "Undefined exchange; the config file may have errors (there are extra spaces or double defined variables?)"));
         tidy();
       };
       void run() {
 #ifndef _WIN32
-        ((SH*)screen)->config(
-          base(),       quote(),
-          argExchange,  argColors,
-          argPort,      argNaked
-        );
+        ((SH*)screen)->config(base(), quote());
 #endif
         gw = Gw::config(
-          base(),       quote(),
-          argExchange,  argFree,
-          argApikey,    argSecret,
-          argUsername,  argPassphrase,
-          argHttp,      argWss,
-          argMaxLevels, argDebugSecret
+          base(),         quote(),
+          args.exchange,  args.free,
+          args.apikey,    args.secret,
+          args.username,  args.passphrase,
+          args.http,      args.wss,
+          args.maxLevels, args.debugSecret
         );
         if (!gw)
           exit(_redAlert_("CF", string("Unable to load a valid gateway using --exchange=")
-            + argExchange + " argument"));
-        if (argTestChamber == 1)
+            + args.exchange + " argument"));
+        if (args.inet)
+          ((SH*)screen)->log("CF", "Network Interface for outgoing traffic is", args.inet);
+        if (args.testChamber == 1)
           ((SH*)screen)->logWar("CF", "Test Chamber #1: send new orders before cancel old");
-        else if (argTestChamber)
-          ((SH*)screen)->logWar("CF", string("ignored Test Chamber #") + to_string(argTestChamber));
+        else if (args.testChamber)
+          ((SH*)screen)->logWar("CF", string("ignored Test Chamber #") + to_string(args.testChamber));
       };
     private:
       inline mCoinId base() {
-        return FN::strU(argCurrency.substr(0, argCurrency.find("/")));
+        return FN::strU(args.currency.substr(0, args.currency.find("/")));
       };
       inline mCoinId quote() {
-        return FN::strU(argCurrency.substr(argCurrency.find("/") + 1));
+        return FN::strU(args.currency.substr(args.currency.find("/") + 1));
       };
       inline void tidy() {
-        argExchange = FN::strU(argExchange);
-        if (argDebug)
-          argDebugSecret =
-          argDebugEvents =
-          argDebugOrders =
-          argDebugQuotes =
-          argDebugWallet = argDebug;
-        if (!argColors)
+        args.exchange = FN::strU(args.exchange);
+        if (args.debug)
+          args.debugSecret =
+          args.debugEvents =
+          args.debugOrders =
+          args.debugQuotes =
+          args.debugWallet = args.debug;
+        if (!args.colors)
           RBLACK[0] = RRED[0]    = RGREEN[0] = RYELLOW[0] =
           RBLUE[0]  = RPURPLE[0] = RCYAN[0]  = RWHITE[0]  =
           BBLACK[0] = BRED[0]    = BGREEN[0] = BYELLOW[0] =
           BBLUE[0]  = BPURPLE[0] = BCYAN[0]  = BWHITE[0]  = RRESET[0] = 0;
-        if (argDatabase.empty() or argDatabase == ":memory:")
-          (argDatabase == ":memory:"
-            ? argDiskdata
-            : argDatabase
+        if (args.database.empty() or args.database == ":memory:")
+          (args.database == ":memory:"
+            ? args.diskdata
+            : args.database
           ) = string("/data/db/K")
-            + '.' + argExchange
+            + '.' + args.exchange
             + '.' + base()
             + '.' + quote()
             + '.' + "db";
-        argMaxLevels = argMaxLevels
-          ? max(15, argMaxLevels)
+        args.maxLevels = args.maxLevels
+          ? max(15, args.maxLevels)
           : 321;
-        if (argUser == "NULL") argUser.clear();
-        if (argPass == "NULL") argPass.clear();
-        if (argIgnoreSun and argIgnoreMoon) argIgnoreMoon = 0;
-        if (argHeadless) argPort = 0;
-        else if (!argPort) argHeadless = 1;
+        if (args.user == "NULL") args.user.clear();
+        if (args.pass == "NULL") args.pass.clear();
+        if (args.ignoreSun and args.ignoreMoon) args.ignoreMoon = 0;
+        if (args.headless) args.port = 0;
+        else if (!args.port) args.headless = 1;
       };
   };
 }

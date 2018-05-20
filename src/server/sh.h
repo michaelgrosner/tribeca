@@ -16,10 +16,8 @@ namespace K {
       map<mHotkey, function<void()>*> hotFn;
       WINDOW *wBorder = nullptr,
              *wLog    = nullptr;
-      int naked = 0,
-          cursor = 0,
+      int cursor = 0,
           spinOrders = 0,
-          port = 0,
           baseAmount = 0,
           baseHeld = 0,
           quoteAmount = 0,
@@ -47,19 +45,16 @@ namespace K {
         } else logVer("", -1);
         cout << RRESET;
       };
-      void config(string base_, string quote_, string argExchange, int argColors, int argPort, int argNaked) {
-        port = argPort;
-        naked = argNaked;
+      void config(string base_, string quote_) {
         wtfismyip = FN::wJet("https://wtfismyip.com/json", 4L).value("/YourFuckingIPAddress"_json_pointer, "");
-        if (naked) return;
+        if (args.naked) return;
         if (!(wBorder = initscr())) {
           cout << "NCURSES" << RRED << " Errrror:" << BRED << " Unable to initialize ncurses, try to run in your terminal \"export TERM=xterm\", or use --naked argument." << '\n';
           exit(EXIT_SUCCESS);
         }
         base = base_;
         quote = quote_;
-        title = argExchange;
-        if (argColors) start_color();
+        if (args.colors) start_color();
         use_default_colors();
         cbreak();
         noecho();
@@ -122,9 +117,9 @@ namespace K {
           << setw(3) << milliseconds.count()
           << setw(3) << microseconds.count();
         time_t tt = chrono::system_clock::to_time_t(clock);
-        int len = naked ? 15 : 9;
+        int len = args.naked ? 15 : 9;
         char datetime[len];
-        strftime(datetime, len, naked ? "%m/%d %T" : "%T", localtime(&tt));
+        strftime(datetime, len, args.naked ? "%m/%d %T" : "%T", localtime(&tt));
         if (!wBorder) return string(BGREEN) + datetime + RGREEN + microtime.str() + BWHITE + ' ';
         wattron(wLog, COLOR_PAIR(COLOR_GREEN));
         wattron(wLog, A_BOLD);
@@ -183,9 +178,9 @@ namespace K {
         if (!wBorder) {
           cout << stamp() << "UI" << RWHITE << " ready ";
           if (wtfismyip.empty())
-            cout << "over " << RYELLOW << protocol << RWHITE << " on external port " << RYELLOW << to_string(port) << RWHITE << ".\n";
+            cout << "over " << RYELLOW << protocol << RWHITE << " on external port " << RYELLOW << to_string(args.port) << RWHITE << ".\n";
           else
-            cout << "at " << RYELLOW << FN::strL(protocol) << "://" << wtfismyip << ":" << to_string(port) << RWHITE << ".\n";
+            cout << "at " << RYELLOW << FN::strL(protocol) << "://" << wtfismyip << ":" << to_string(args.port) << RWHITE << ".\n";
           return;
         }
         wmove(wLog, getmaxy(wLog)-1, 0);
@@ -205,7 +200,7 @@ namespace K {
           wprintw(wLog, " on external port ");
           wattroff(wLog, COLOR_PAIR(COLOR_WHITE));
           wattron(wLog, COLOR_PAIR(COLOR_YELLOW));
-          wprintw(wLog, to_string(port).data());
+          wprintw(wLog, to_string(args.port).data());
           wattroff(wLog, COLOR_PAIR(COLOR_YELLOW));
         } else {
           wprintw(wLog, "at ");
@@ -215,7 +210,7 @@ namespace K {
           wprintw(wLog, "://");
           wprintw(wLog, wtfismyip.data());
           wprintw(wLog, ":");
-          wprintw(wLog, to_string(port).data());
+          wprintw(wLog, to_string(args.port).data());
           wattroff(wLog, COLOR_PAIR(COLOR_YELLOW));
         }
         wattron(wLog, COLOR_PAIR(COLOR_WHITE));
@@ -340,13 +335,13 @@ namespace K {
         baseHeld = round(pos.baseHeldAmount * 10 / pos.baseValue);
         quoteAmount = round(pos.quoteAmount * 10 / pos.quoteValue);
         quoteHeld = round(pos.quoteHeldAmount * 10 / pos.quoteValue);
-        _fixed8_(pos.baseValue, baseValue)
-        _fixed8_(pos.quoteValue, quoteValue)
+        baseValue = FN::str8(pos.baseValue);
+        quoteValue = FN::str8(pos.quoteValue);
         refresh();
       };
       void log(double fv) {
         if (!wBorder) return;
-        _fixed8_(fv, fairValue)
+        fairValue = FN::str8(fv);
         refresh();
       };
       void refresh() {
@@ -383,11 +378,11 @@ namespace K {
         mvwaddch(wBorder, y, 0, ACS_BTEE);
         mvwaddch(wBorder, 0, 12, ACS_RTEE);
         wattron(wBorder, COLOR_PAIR(COLOR_GREEN));
-        string title1 = string("   ") + title;
-        string title2 = string(" ") + (port
+        string title1 = string("   ") + args.exchange;
+        string title2 = string(" ") + (args.port
           ? "UI" + (wtfismyip.empty()
-            ? " on " + protocol + " port " + to_string(port)
-            : " at " + FN::strL(protocol) + "://" + wtfismyip + ":" + to_string(port)
+            ? " on " + protocol + " port " + to_string(args.port)
+            : " at " + FN::strL(protocol) + "://" + wtfismyip + ":" + to_string(args.port)
           ) : "headless"
         )  + ' ';
         wattron(wBorder, A_BOLD);

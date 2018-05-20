@@ -247,6 +247,8 @@ ws sandbox: [websocket.org](https://www.websocket.org/echo.html)
 
 ### Unreleased v0.4.x Changelog:
 
+Added --interface=IP argument to bind outgoing traffic to a specific network interface.
+
 Added Ethfinex API.
 
 Added build-in document root to stop reading files from disk.

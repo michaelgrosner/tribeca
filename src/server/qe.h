@@ -31,7 +31,7 @@ namespace K {
         ((UI*)client)->welcome(mMatter::QuoteStatus, &hello);
       };
       void run() {
-        if (((CF*)config)->argDebugQuotes) return;
+        if (args.debugQuotes) return;
         debuq = [&](string k, mQuote &rawQuote) {};
         debug = [&](string k) {};
       };
@@ -172,14 +172,22 @@ namespace K {
         }
       };
       inline void applyRoundSize(mQuote *rawQuote) {
-        if (!rawQuote->ask.empty()) {
-          rawQuote->ask.size = fmax(fmin(rawQuote->ask.size, ((PG*)wallet)->position._baseTotal), gw->minSize);
-          _trunc8_(rawQuote->ask.size)
-        }
-        if (!rawQuote->bid.empty()) {
-          rawQuote->bid.size = fmax(fmin(rawQuote->bid.size, ((PG*)wallet)->position._quoteTotal), gw->minSize);
-          _trunc8_(rawQuote->bid.size)
-        }
+        if (!rawQuote->ask.empty())
+          rawQuote->ask.size = FN::d8(fmax(
+            fmin(
+              rawQuote->ask.size,
+              ((PG*)wallet)->position._baseTotal
+            ),
+            gw->minSize
+          ));
+        if (!rawQuote->bid.empty())
+          rawQuote->bid.size = FN::d8(fmax(
+            fmin(
+              rawQuote->bid.size,
+              ((PG*)wallet)->position._quoteTotal
+            ),
+            gw->minSize
+          ));
       };
       inline void applyDepleted(mQuote *rawQuote) {
         if (rawQuote->bid.size > ((PG*)wallet)->position._quoteTotal) {
@@ -483,7 +491,7 @@ namespace K {
           } else if (qp->safety != mQuotingSafety::AK47 or (
             side == mSide::Bid ? q.price <= it.second.price : q.price >= it.second.price
           )) {
-            if (((CF*)config)->argLifetime and it.second.time + ((CF*)config)->argLifetime > now) return;
+            if (args.lifetime and it.second.time + args.lifetime > now) return;
             toCancel.push_back(it.first);
           } else keepWorking.push_back(it.first);
         if (qp->safety == mQuotingSafety::AK47 and toCancel.empty() and !keepWorking.empty())

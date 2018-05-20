@@ -16,17 +16,12 @@
                               << fixed << d;     \
                            s = ss.str();         }
 
-#define _fixed8_(d, s) _fixedX_(d, s, 8)
-
-#define _trunc8_(d) { string s;      \
-                      _fixed8_(d, s) \
-                      d = stod(s);   }
-
 namespace K {
   class FN {
     public:
       inline static string strX(double d, unsigned int X) { string s; _fixedX_(d, s, X) return s; };
       inline static string str8(double d) { return strX(d, 8); };
+      inline static double d8(double d) { return stod(str8(d)); };
       inline static string strL(string s) { transform(s.begin(), s.end(), s.begin(), ::tolower); return s; };
       inline static string strU(string s) { transform(s.begin(), s.end(), s.begin(), ::toupper); return s; };
       inline static bool trueOnce(bool *k) { return *k ? !(*k = !*k) : *k; };
@@ -271,6 +266,7 @@ namespace K {
           curl_setopt(curl);
           curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
           curl_easy_setopt(curl, CURLOPT_CAINFO, "etc/cabundle.pem");
+          curl_easy_setopt(curl, CURLOPT_INTERFACE, args.inet);
           curl_easy_setopt(curl, CURLOPT_URL, url.data());
           curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &curl_write);
           curl_easy_setopt(curl, CURLOPT_WRITEDATA, &reply);
