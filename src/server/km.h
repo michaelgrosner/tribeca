@@ -38,7 +38,7 @@ namespace K {
   };
   static          bool operator! (mConnectivity k_)                   { return !(unsigned int)k_; };
   static mConnectivity operator* (mConnectivity _k, mConnectivity k_) { return (mConnectivity)((unsigned int)_k * (unsigned int)k_); };
-  struct mQuotingParams {
+  static struct mQuotingParams {
     mPrice            widthPing                       = 2.0;
     double            widthPingPercentage             = 0.25;
     mPrice            widthPong                       = 2.0;
@@ -123,7 +123,7 @@ namespace K {
       calcQuoteAfterSavedParams = prev.calcQuoteAfterSavedParams;
     };
     function<void()> *calcQuoteAfterSavedParams = nullptr;
-  };
+  } qp;
   static void to_json(json &j, const mQuotingParams &k) {
     j = {
       {                      "widthPing", k.widthPing                      },
@@ -750,10 +750,8 @@ namespace K {
   class Klass {
     protected:
       Gw             *gw = nullptr;
-      mQuotingParams *qp = nullptr;
       void           *screen = nullptr;
-      Klass          *config = nullptr,
-                     *events = nullptr,
+      Klass          *events = nullptr,
                      *memory = nullptr,
                      *client = nullptr,
                      *broker = nullptr,
@@ -779,9 +777,7 @@ namespace K {
         run();
       };
       inline void gwLink(Gw *k) { gw = k; };
-      inline void qpLink(mQuotingParams *k) { qp = k; };
       inline void shLink( void *k) { screen = k; };
-      inline void cfLink(Klass &k) { config = &k; };
       inline void evLink(Klass &k) { events = &k; };
       inline void dbLink(Klass &k) { memory = &k; };
       inline void uiLink(Klass &k) { client = &k; };
@@ -791,21 +787,16 @@ namespace K {
       inline void qeLink(Klass &k) { engine = &k; };
   };
   class kLass: public Klass {
-    private:
-      mQuotingParams p;
     public:
       inline void link(
         Klass &EV,     Klass &DB,     Klass &UI,     Klass &QP,     Klass &OG,     Klass &MG,     Klass &PG,     Klass &QE,     Klass &GW
       ) {
-        Klass &CF = *this;
         void *SH = screen;
         EV.gwLink(gw);                UI.gwLink(gw);                OG.gwLink(gw); MG.gwLink(gw); PG.gwLink(gw); QE.gwLink(gw); GW.gwLink(gw);
         EV.shLink(SH); DB.shLink(SH); UI.shLink(SH); QP.shLink(SH); OG.shLink(SH); MG.shLink(SH); PG.shLink(SH); QE.shLink(SH); GW.shLink(SH);
-        EV.cfLink(CF); DB.cfLink(CF); UI.cfLink(CF);                OG.cfLink(CF); MG.cfLink(CF); PG.cfLink(CF); QE.cfLink(CF); GW.cfLink(CF);
                        DB.evLink(EV); UI.evLink(EV);                OG.evLink(EV); MG.evLink(EV); PG.evLink(EV); QE.evLink(EV); GW.evLink(EV);
                                       UI.dbLink(DB); QP.dbLink(DB); OG.dbLink(DB); MG.dbLink(DB); PG.dbLink(DB);
                                                      QP.uiLink(UI); OG.uiLink(UI); MG.uiLink(UI); PG.uiLink(UI); QE.uiLink(UI); GW.uiLink(UI);
-                                                     QP.qpLink(&p); OG.qpLink(&p); MG.qpLink(&p); PG.qpLink(&p); QE.qpLink(&p); GW.qpLink(&p);
                                                                                    MG.ogLink(OG); PG.ogLink(OG); QE.ogLink(OG);
                                                                                                   PG.mgLink(MG); QE.mgLink(MG);
                                                                                                                  QE.pgLink(PG);

@@ -227,16 +227,16 @@ namespace K {
         );
         (*calcSafetyAfterTrade)(trade);
         ((SH*)screen)->log(trade, gw->name);
-        if (qp->_matchPings) {
-          mPrice widthPong = qp->widthPercentage
-            ? qp->widthPongPercentage * trade.price / 100
-            : qp->widthPong;
+        if (qp._matchPings) {
+          mPrice widthPong = qp.widthPercentage
+            ? qp.widthPongPercentage * trade.price / 100
+            : qp.widthPong;
           map<mPrice, string> matches;
           for (mTrade &it : tradesHistory)
             if (it.quantity - it.Kqty > 0
               and it.side != trade.side
-              and (qp->pongAt == mPongAt::AveragePingFair
-                or qp->pongAt == mPongAt::AveragePingAggressive
+              and (qp.pongAt == mPongAt::AveragePingFair
+                or qp.pongAt == mPongAt::AveragePingAggressive
                 or (trade.side == mSide::Bid
                   ? (it.price > trade.price + widthPong)
                   : (it.price < trade.price - widthPong)
@@ -246,7 +246,7 @@ namespace K {
           matchPong(
             matches,
             trade,
-            (qp->pongAt == mPongAt::LongPingFair or qp->pongAt == mPongAt::LongPingAggressive) ? trade.side == mSide::Ask : trade.side == mSide::Bid
+            (qp.pongAt == mPongAt::LongPingFair or qp.pongAt == mPongAt::LongPingAggressive) ? trade.side == mSide::Ask : trade.side == mSide::Bid
           );
         } else {
           ((UI*)client)->send(mMatter::Trades, trade);
@@ -260,7 +260,7 @@ namespace K {
           {"value", trade.value},
           {"pong", o->isPong}
         });
-        if (qp->cleanPongsAuto) cleanAuto(trade.time);
+        if (qp.cleanPongsAuto) cleanAuto(trade.time);
       };
       void matchPong(map<mPrice, string> matches, mTrade pong, bool reverse) {
         if (reverse) for (map<mPrice, string>::reverse_iterator it = matches.rbegin(); it != matches.rend(); ++it) {
@@ -307,9 +307,9 @@ namespace K {
         return pong->quantity > 0;
       };
       void cleanAuto(mClock now) {
-        mClock pT_ = now - (abs(qp->cleanPongsAuto) * 864e5);
+        mClock pT_ = now - (abs(qp.cleanPongsAuto) * 864e5);
         for (vector<mTrade>::iterator it = tradesHistory.begin(); it != tradesHistory.end();)
-          if (it->time < pT_ and (qp->cleanPongsAuto < 0 or it->Kqty >= it->quantity)) {
+          if (it->time < pT_ and (qp.cleanPongsAuto < 0 or it->Kqty >= it->quantity)) {
             it->Kqty = -1;
             ((UI*)client)->send(mMatter::Trades, *it);
             ((DB*)memory)->insert(mMatter::Trades, {}, false, it->tradeId);

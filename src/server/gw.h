@@ -25,9 +25,6 @@ namespace K {
         ((SH*)screen)->gwConnected = &gwConnected;
         ((QE*)engine)->gwConnectedExchange =
         ((SH*)screen)->gwConnectedExchange = &gwConnectedExchange;
-        gw->reconnect = [&](const string &reason) {
-          gwConnect(reason);
-        };
         gw->evConnectOrder = [&](mConnectivity k) {
           gwSemaphore(&gwConnectedExchangeOrders, k);
         };
@@ -35,12 +32,17 @@ namespace K {
           gwSemaphore(&gwConnectedExchangeMarket, k);
           if (!k) gw->evDataLevels(mLevels());
         };
+        gw->reconnect = [&](const string &reason) {
+          gwT_countdown = 7;
+          ((SH*)screen)->log(string("GW ") + gw->name, string("WS ") + reason
+            + ", reconnecting in " + to_string(gwT_countdown) + "s.");
+        };
       };
       void waitTime() {                                             _debugEvent_
         sync_levels = !gw->async_levels();
         sync_trades = !gw->async_trades();
         sync_orders = !gw->async_orders();
-        if (!sync_levels) gwConnect();
+        if (!sync_levels) gwT_countdown = 1;
         ((EV*)events)->tServer->setData(this);
         ((EV*)events)->tServer->start([](Timer *tServer) {
           ((GW*)tServer->getData())->timer_1s();
@@ -115,15 +117,7 @@ namespace K {
         if (sync_trades and !(gwT_5m % 60)) ((EV*)events)->async(gw->trades);
         if (++gwT_5m == 300) {
           gwT_5m = 0;
-          if (qp->cancelOrdersAuto)         ((EV*)events)->async(gw->cancelAll);
-        }
-      };
-      inline void gwConnect(const string &reason = "") {            _debugEvent_
-        if (reason.empty())
-          gwT_countdown = 1;
-        else {
-          gwT_countdown = 7;
-          ((SH*)screen)->log(string("GW ") + gw->name, string("WS ") + reason + ", reconnecting in " + to_string(gwT_countdown) + "s.");
+          if (qp.cancelOrdersAuto)          ((EV*)events)->async(gw->cancelAll);
         }
       };
       inline void stunnel(bool reboot = false) {
