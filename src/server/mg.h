@@ -55,7 +55,7 @@ namespace K {
           mgStatTop.push_back(it.value("ask", 0.0));
         }
         calcStdev();
-        ((SH*)screen)->log("DB", string("loaded ") + to_string(mgStatFV.size()) + " STDEV Periods");
+        screen.log("DB", string("loaded ") + to_string(mgStatFV.size()) + " STDEV Periods");
         if (args.ewmaVeryLong) mgEwmaVL = args.ewmaVeryLong;
         if (args.ewmaLong) mgEwmaL = args.ewmaLong;
         if (args.ewmaMedium) mgEwmaM = args.ewmaMedium;
@@ -78,16 +78,16 @@ namespace K {
           if (!mgEwmaU and k.value("time", (mClock)0) + qp.ultraShortEwmaPeriods * 6e+4 > _Tstamp_)
             mgEwmaU = k.value("ewmaUltraShort", 0.0);
         }
-        if (mgEwmaVL) ((SH*)screen)->log(args.ewmaVeryLong ? "ARG" : "DB", string("loaded ") + to_string(mgEwmaVL) + " EWMA VeryLong");
-        if (mgEwmaL)  ((SH*)screen)->log(args.ewmaLong ? "ARG" : "DB", string("loaded ") + to_string(mgEwmaL) + " EWMA Long");
-        if (mgEwmaM)  ((SH*)screen)->log(args.ewmaMedium ? "ARG" : "DB", string("loaded ") + to_string(mgEwmaM) + " EWMA Medium");
-        if (mgEwmaS)  ((SH*)screen)->log(args.ewmaShort ? "ARG" : "DB", string("loaded ") + to_string(mgEwmaS) + " EWMA Short");
-        if (mgEwmaXS) ((SH*)screen)->log(args.ewmaXShort ? "ARG" : "DB", string("loaded ") + to_string(mgEwmaXS) + " EWMA ExtraShort");
-        if (mgEwmaU)  ((SH*)screen)->log(args.ewmaUShort ? "ARG" : "DB", string("loaded ") + to_string(mgEwmaU) + " EWMA UltraShort");
+        if (mgEwmaVL) screen.log(args.ewmaVeryLong ? "ARG" : "DB", string("loaded ") + to_string(mgEwmaVL) + " EWMA VeryLong");
+        if (mgEwmaL)  screen.log(args.ewmaLong ? "ARG" : "DB", string("loaded ") + to_string(mgEwmaL) + " EWMA Long");
+        if (mgEwmaM)  screen.log(args.ewmaMedium ? "ARG" : "DB", string("loaded ") + to_string(mgEwmaM) + " EWMA Medium");
+        if (mgEwmaS)  screen.log(args.ewmaShort ? "ARG" : "DB", string("loaded ") + to_string(mgEwmaS) + " EWMA Short");
+        if (mgEwmaXS) screen.log(args.ewmaXShort ? "ARG" : "DB", string("loaded ") + to_string(mgEwmaXS) + " EWMA ExtraShort");
+        if (mgEwmaU)  screen.log(args.ewmaUShort ? "ARG" : "DB", string("loaded ") + to_string(mgEwmaU) + " EWMA UltraShort");
         for (json &it : ((DB*)memory)->load(mMatter::MarketDataLongTerm))
           if (it.value("time", (mClock)0) + 3456e+5 > _Tstamp_ and it.value("fv", 0.0))
             fairValue96h.push_back(it.value("fv", 0.0));
-        ((SH*)screen)->log("DB", string("loaded ") + to_string(fairValue96h.size()) + " historical FairValues");
+        screen.log("DB", string("loaded ") + to_string(fairValue96h.size()) + " historical FairValues");
       };
       void waitData() {
         gw->evDataTrade = [&](mTrade k) {                           _debugEvent_
@@ -126,7 +126,7 @@ namespace K {
         if (!fairValue or (fairValue_ and abs(fairValue - fairValue_) < gw->minTick)) return;
         (*calcWallet)();
         ((UI*)client)->send(mMatter::FairValue, {{"price", fairValue}});
-        ((SH*)screen)->log(fairValue);
+        screen.log(fairValue);
         averageWidth = ((averageWidth * averageCount) + topAskPrice - topBidPrice);
         averageWidth /= ++averageCount;
       };
@@ -302,7 +302,7 @@ namespace K {
         if (!n) return;
         *mean = fairValue96h.front();
         while (n--) calcEwma(mean, periods, *(fairValue96h.rbegin()+n));
-        ((SH*)screen)->log("MG", string("reloaded ") + to_string(*mean) + " EWMA " + name);
+        screen.log("MG", string("reloaded ") + to_string(*mean) + " EWMA " + name);
       };
       void calcEwma(mPrice *mean, unsigned int periods, mPrice value) {
         if (*mean) {

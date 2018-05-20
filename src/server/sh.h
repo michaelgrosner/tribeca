@@ -1,7 +1,7 @@
 #ifndef K_SH_H_
 #define K_SH_H_
 
-#define _redAlert_ ((SH*)screen)->error
+#define _redAlert_ screen.error
 
 namespace K {
   vector<function<void()>*> endingFn;
@@ -509,7 +509,7 @@ namespace K {
         refresh();
       };
 #endif
-  };
+  } screen;
 }
 
 #endif

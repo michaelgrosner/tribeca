@@ -666,7 +666,7 @@ namespace K {
             whitelist     = "";
     const char *inet = nullptr;
   } args;
-  class Gw {
+  static class Gw {
     public:
       virtual string A() = 0;
       uWS::Hub                *hub     = nullptr;
@@ -746,29 +746,22 @@ namespace K {
         }
         return waiting;
       };
-  };
+  } *gw;
   class Klass {
     protected:
-      Gw             *gw = nullptr;
-      void           *screen = nullptr;
-      Klass          *events = nullptr,
-                     *memory = nullptr,
-                     *client = nullptr,
-                     *broker = nullptr,
-                     *market = nullptr,
-                     *wallet = nullptr,
-                     *engine = nullptr;
-      virtual void load(int argc, char** argv) {};
+      Klass *events = nullptr,
+            *memory = nullptr,
+            *client = nullptr,
+            *broker = nullptr,
+            *market = nullptr,
+            *wallet = nullptr,
+            *engine = nullptr;
       virtual void load() {};
       virtual void waitData() {};
       virtual void waitTime() {};
       virtual void waitUser() {};
       virtual void run() {};
     public:
-      inline void main(int argc, char** argv) {
-        load(argc, argv);
-        run();
-      };
       inline void wait() {
         load();
         waitData();
@@ -776,8 +769,6 @@ namespace K {
         waitUser();
         run();
       };
-      inline void gwLink(Gw *k) { gw = k; };
-      inline void shLink( void *k) { screen = k; };
       inline void evLink(Klass &k) { events = &k; };
       inline void dbLink(Klass &k) { memory = &k; };
       inline void uiLink(Klass &k) { client = &k; };
@@ -785,23 +776,6 @@ namespace K {
       inline void mgLink(Klass &k) { market = &k; };
       inline void pgLink(Klass &k) { wallet = &k; };
       inline void qeLink(Klass &k) { engine = &k; };
-  };
-  class kLass: public Klass {
-    public:
-      inline void link(
-        Klass &EV,     Klass &DB,     Klass &UI,     Klass &QP,     Klass &OG,     Klass &MG,     Klass &PG,     Klass &QE,     Klass &GW
-      ) {
-        void *SH = screen;
-        EV.gwLink(gw);                UI.gwLink(gw);                OG.gwLink(gw); MG.gwLink(gw); PG.gwLink(gw); QE.gwLink(gw); GW.gwLink(gw);
-        EV.shLink(SH); DB.shLink(SH); UI.shLink(SH); QP.shLink(SH); OG.shLink(SH); MG.shLink(SH); PG.shLink(SH); QE.shLink(SH); GW.shLink(SH);
-                       DB.evLink(EV); UI.evLink(EV);                OG.evLink(EV); MG.evLink(EV); PG.evLink(EV); QE.evLink(EV); GW.evLink(EV);
-                                      UI.dbLink(DB); QP.dbLink(DB); OG.dbLink(DB); MG.dbLink(DB); PG.dbLink(DB);
-                                                     QP.uiLink(UI); OG.uiLink(UI); MG.uiLink(UI); PG.uiLink(UI); QE.uiLink(UI); GW.uiLink(UI);
-                                                                                   MG.ogLink(OG); PG.ogLink(OG); QE.ogLink(OG);
-                                                                                                  PG.mgLink(MG); QE.mgLink(MG);
-                                                                                                                 QE.pgLink(PG);
-                                                                                                                                GW.qeLink(QE);
-      };
   };
 }
 

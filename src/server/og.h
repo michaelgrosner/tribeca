@@ -12,7 +12,7 @@ namespace K {
       void load() {
         for (json &it : ((DB*)memory)->load(mMatter::Trades))
           tradesHistory.push_back(it);
-        ((SH*)screen)->log("DB", string("loaded ") + to_string(tradesHistory.size()) + " historical Trades");
+        screen.log("DB", string("loaded ") + to_string(tradesHistory.size()) + " historical Trades");
       };
       void waitData() {
         gw->evDataOrder = [&](mOrder k) {                           _debugEvent_
@@ -206,7 +206,7 @@ namespace K {
           }
       };
       inline void toClient(bool working) {
-        ((SH*)screen)->log(orders, working);
+        screen.log(orders, working);
         json k = json::array();
         for (map<mRandId, mOrder>::value_type &it : orders)
           if (it.second.orderStatus == mStatus::Working)
@@ -226,7 +226,7 @@ namespace K {
           0, 0, 0, 0, 0, fee, false
         );
         (*calcSafetyAfterTrade)(trade);
-        ((SH*)screen)->log(trade, gw->name);
+        screen.log(trade, gw->name);
         if (qp._matchPings) {
           mPrice widthPong = qp.widthPercentage
             ? qp.widthPongPercentage * trade.price / 100
@@ -317,7 +317,7 @@ namespace K {
           } else ++it;
       };
       function<void(string)> debug = [&](string k) {
-        ((SH*)screen)->log("DEBUG", string("OG ") + k);
+        screen.log("DEBUG", string("OG ") + k);
       };
   };
 }

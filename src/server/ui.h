@@ -32,10 +32,10 @@ namespace K {
       void waitData() {
         if (args.headless) return;
         ((EV*)events)->uiGroup->onConnection([&](uWS::WebSocket<uWS::SERVER> *webSocket, uWS::HttpRequest req) {
-          ((SH*)screen)->logUIsess(++connections, webSocket->getAddress().address);
+          screen.logUIsess(++connections, webSocket->getAddress().address);
         });
         ((EV*)events)->uiGroup->onDisconnection([&](uWS::WebSocket<uWS::SERVER> *webSocket, int code, char *message, size_t length) {
-          ((SH*)screen)->logUIsess(--connections, webSocket->getAddress().address);
+          screen.logUIsess(--connections, webSocket->getAddress().address);
         });
         ((EV*)events)->uiGroup->onHttpRequest([&](uWS::HttpResponse *res, uWS::HttpRequest req, char *data, size_t length, size_t remainingBytes) {
           string document,
@@ -44,21 +44,21 @@ namespace K {
           const string auth = req.getHeader("authorization").toString();
           if (addr.length() > 7 and addr.substr(0, 7) == "::ffff:") addr = addr.substr(7);
           if (addr.length() > 7 and !args.whitelist.empty() and args.whitelist.find(addr) == string::npos) {
-            ((SH*)screen)->log("UI", "dropping gzip bomb on", addr);
+            screen.log("UI", "dropping gzip bomb on", addr);
             document = "HTTP/1.1 200 OK\r\nConnection: keep-alive\r\nAccept-Ranges: bytes\r\nVary: Accept-Encoding\r\nCache-Control: public, max-age=0\r\nContent-Encoding: gzip\r\n";
             content = string(&_www_gzip_bomb, _www_gzip_bomb_len);
           } else if (!B64auth.empty() and auth.empty()) {
-            ((SH*)screen)->log("UI", "authorization attempt from", addr);
+            screen.log("UI", "authorization attempt from", addr);
             document = "HTTP/1.1 401 Unauthorized\r\nWWW-Authenticate: Basic realm=\"Basic Authorization\"\r\nConnection: keep-alive\r\nAccept-Ranges: bytes\r\nVary: Accept-Encoding\r\nContent-Type:text/plain; charset=UTF-8\r\n";
           } else if (!B64auth.empty() and auth != B64auth) {
-            ((SH*)screen)->log("UI", "authorization failed from", addr);
+            screen.log("UI", "authorization failed from", addr);
             document = "HTTP/1.1 403 Forbidden\r\nConnection: keep-alive\r\nAccept-Ranges: bytes\r\nVary: Accept-Encoding\r\nContent-Type:text/plain; charset=UTF-8\r\n";
           } else if (req.getMethod() == uWS::HttpMethod::METHOD_GET) {
             document = "HTTP/1.1 200 OK\r\nConnection: keep-alive\r\nAccept-Ranges: bytes\r\nVary: Accept-Encoding\r\nCache-Control: public, max-age=0\r\n";
             const string path = req.getUrl().toString(),
                          leaf = path.substr(path.find_last_of('.')+1);
             if (leaf == "/") {
-              ((SH*)screen)->log("UI", "authorization success from", addr);
+              screen.log("UI", "authorization success from", addr);
               document += "Content-Type: text/html; charset=UTF-8\r\n";
               content = string(&_www_html_index, _www_html_index_len);
             } else if (leaf == "js") {

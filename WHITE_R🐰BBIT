@@ -105,10 +105,13 @@
 :  :   # Warning: my home is your home, if there are houses owned by someone. :
 :  :                                                                          :
 :  +-- Whaaat??                                                               :
-:     external sources and namespaces are defined here, our home from now on. :
-:     internal sources are just collections of static classes and global vars :
-:      without any includes. There is no functional programming in our home.. :
-:      K Server is proudly non-stop changing states and mutating global data. :
+:  :  external sources and namespaces are defined here, our home from now on. :
+:  :  internal sources are just collections of static classes and global vars :
+:  :   without any includes. There is no functional programming in our home.. :
+:  :   K Server is proudly non-stop changing states and mutating global data. :
+:  :                                                                          :
+:  +-- Globals??                                                              :
+:     args, qp, gw, screen                                                    :                                                                 :
 :                                                                             :
 :  .. src/server/km.h:  ----------------------------- aka. K Models --------- :
 :      TODO                                                                   :

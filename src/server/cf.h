@@ -2,13 +2,9 @@
 #define K_CF_H_
 
 namespace K {
-  class CF: public kLass {
+  class CF {
     public:
-      CF() {
-        screen = new SH();
-      }
-    protected:
-      void load(int argc, char** argv) {
+      inline void main(int argc, char** argv) {
         static const struct option opts[] = {
           {"help",         no_argument,       0,               'h'},
           {"colors",       no_argument,       &args.colors,      1},
@@ -94,78 +90,78 @@ namespace K {
               << RGREEN << "  questions: " << RYELLOW << "https://earn.com/analpaper/" << '\n'
               << BGREEN << "K" << RGREEN << " bugkiller: " << RYELLOW << "https://github.com/ctubio/Krypto-trading-bot/issues/new" << '\n'
               << RGREEN << "  downloads: " << RYELLOW << "ssh://git@github.com/ctubio/Krypto-trading-bot" << '\n'
-              << ((SH*)screen)->stamp() << "Usage:" << BYELLOW << " ./K.sh [arguments]" << '\n'
-              << ((SH*)screen)->stamp() << "[arguments]:" << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "-h, --help                - show this help and quit." << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "    --autobot             - automatically start trading on boot." << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "    --dustybot            - do not automatically cancel all orders on exit." << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "    --naked               - do not display CLI, print output to stdout instead." << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "    --headless            - do not listen for UI connections," << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "                            ignores '--without-ssl', '--whitelist' and '--port'." << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "    --without-ssl         - do not use HTTPS for UI connections (use HTTP only)." << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "-L, --whitelist=IP        - set IP or csv of IPs to allow UI connections," << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "                            alien IPs will get a zip-bomb instead." << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "    --port=NUMBER         - set NUMBER of an open port to listen for UI connections." << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "    --user=WORD           - set allowed WORD as username for UI connections," << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "                            mandatory but may be 'NULL'." << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "    --pass=WORD           - set allowed WORD as password for UI connections," << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "                            mandatory but may be 'NULL'." << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "    --exchange=NAME       - set exchange NAME for trading, mandatory one of:" << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "                            'COINBASE', 'BITFINEX',  'BITFINEX_MARGIN', 'HITBTC'," << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "                            'OKCOIN', 'OKEX', 'KORBIT', 'POLONIEX' or 'NULL'." << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "    --currency=PAIRS      - set currency pairs for trading (use format" << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "                            with '/' separator, like 'BTC/EUR')." << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "    --apikey=WORD         - set (never share!) WORD as api key for trading," << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "                            mandatory." << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "    --secret=WORD         - set (never share!) WORD as api secret for trading," << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "                            mandatory." << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "    --passphrase=WORD     - set (never share!) WORD as api passphrase for trading," << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "                            mandatory but may be 'NULL'." << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "    --username=WORD       - set (never share!) WORD as api username for trading," << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "                            mandatory but may be 'NULL'." << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "    --http=URL            - set URL of api HTTP/S endpoint for trading," << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "                            mandatory." << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "    --wss=URL             - set URL of api SECURE WS endpoint for trading," << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "                            mandatory." << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "-d, --database=PATH       - set alternative PATH to database filename," << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "                            default PATH is '/data/db/K.*.*.*.db'," << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "                            any route to a filename is valid," << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "                            or use ':memory:' (see sqlite.org/inmemorydb.html)." << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "    --ewma-ultra=PRICE    - set initial ewma ultra short value," << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "                            overwrites the value from the database." << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "    --ewma-micro=PRICE    - set initial ewma micro short value," << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "                            overwrites the value from the database." << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "    --ewma-short=PRICE    - set initial ewma short value," << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "                            overwrites the value from the database." << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "    --ewma-medium=PRICE   - set initial ewma medium value," << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "                            overwrites the value from the database." << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "    --ewma-long=PRICE     - set initial ewma long value," << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "                            overwrites the value from the database." << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "    --ewma-verylong=PRICE - set initial ewma verylong value," << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "                            overwrites the value from the database." << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "    --wallet-limit=AMOUNT - set AMOUNT in base currency to limit the balance," << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "                            otherwise the full available balance can be used." << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "    --market-limit=NUMBER - set NUMBER of maximum price levels for the orderbook," << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "                            default NUMBER is '321' and the minimum is '15'." << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "                            locked bots smells like '--market-limit=3' spirit." << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "-T, --lifetime=NUMBER     - set NUMBER of minimum milliseconds to keep orders open," << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "                            otherwise open orders can be replaced anytime required." << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "    --debug-secret        - print (never share!) secret inputs and outputs." << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "    --debug-events        - print detailed output about event handlers." << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "    --debug-orders        - print detailed output about exchange messages." << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "    --debug-quotes        - print detailed output about quoting engine." << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "    --debug-wallet        - print detailed output about target base position." << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "    --debug               - print detailed output about all the (previous) things!" << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "    --colors              - print highlighted output." << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "    --ignore-sun          - do not switch UI to light theme on daylight." << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "    --ignore-moon         - do not switch UI to dark theme on moonlight." << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "-k, --matryoshka=URL      - set Matryoshka link URL of the next UI." << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "-K, --title=WORD          - set WORD as UI title to identify different bots." << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "-x, --test-chamber=NUMBER - set release candidate NUMBER to test (ask your developer)." << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "-i, --interface=IP        - set IP to bind as outgoing network interface," << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "                            default IP is the system default network interface." << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "    --free-version        - work with all market levels and enable the slow XMR miner." << '\n'
-              << ((SH*)screen)->stamp() << RWHITE << "-v, --version             - show current build version and quit." << '\n'
+              << screen.stamp() << "Usage:" << BYELLOW << " ./K.sh [arguments]" << '\n'
+              << screen.stamp() << "[arguments]:" << '\n'
+              << screen.stamp() << RWHITE << "-h, --help                - show this help and quit." << '\n'
+              << screen.stamp() << RWHITE << "    --autobot             - automatically start trading on boot." << '\n'
+              << screen.stamp() << RWHITE << "    --dustybot            - do not automatically cancel all orders on exit." << '\n'
+              << screen.stamp() << RWHITE << "    --naked               - do not display CLI, print output to stdout instead." << '\n'
+              << screen.stamp() << RWHITE << "    --headless            - do not listen for UI connections," << '\n'
+              << screen.stamp() << RWHITE << "                            ignores '--without-ssl', '--whitelist' and '--port'." << '\n'
+              << screen.stamp() << RWHITE << "    --without-ssl         - do not use HTTPS for UI connections (use HTTP only)." << '\n'
+              << screen.stamp() << RWHITE << "-L, --whitelist=IP        - set IP or csv of IPs to allow UI connections," << '\n'
+              << screen.stamp() << RWHITE << "                            alien IPs will get a zip-bomb instead." << '\n'
+              << screen.stamp() << RWHITE << "    --port=NUMBER         - set NUMBER of an open port to listen for UI connections." << '\n'
+              << screen.stamp() << RWHITE << "    --user=WORD           - set allowed WORD as username for UI connections," << '\n'
+              << screen.stamp() << RWHITE << "                            mandatory but may be 'NULL'." << '\n'
+              << screen.stamp() << RWHITE << "    --pass=WORD           - set allowed WORD as password for UI connections," << '\n'
+              << screen.stamp() << RWHITE << "                            mandatory but may be 'NULL'." << '\n'
+              << screen.stamp() << RWHITE << "    --exchange=NAME       - set exchange NAME for trading, mandatory one of:" << '\n'
+              << screen.stamp() << RWHITE << "                            'COINBASE', 'BITFINEX',  'BITFINEX_MARGIN', 'HITBTC'," << '\n'
+              << screen.stamp() << RWHITE << "                            'OKCOIN', 'OKEX', 'KORBIT', 'POLONIEX' or 'NULL'." << '\n'
+              << screen.stamp() << RWHITE << "    --currency=PAIRS      - set currency pairs for trading (use format" << '\n'
+              << screen.stamp() << RWHITE << "                            with '/' separator, like 'BTC/EUR')." << '\n'
+              << screen.stamp() << RWHITE << "    --apikey=WORD         - set (never share!) WORD as api key for trading," << '\n'
+              << screen.stamp() << RWHITE << "                            mandatory." << '\n'
+              << screen.stamp() << RWHITE << "    --secret=WORD         - set (never share!) WORD as api secret for trading," << '\n'
+              << screen.stamp() << RWHITE << "                            mandatory." << '\n'
+              << screen.stamp() << RWHITE << "    --passphrase=WORD     - set (never share!) WORD as api passphrase for trading," << '\n'
+              << screen.stamp() << RWHITE << "                            mandatory but may be 'NULL'." << '\n'
+              << screen.stamp() << RWHITE << "    --username=WORD       - set (never share!) WORD as api username for trading," << '\n'
+              << screen.stamp() << RWHITE << "                            mandatory but may be 'NULL'." << '\n'
+              << screen.stamp() << RWHITE << "    --http=URL            - set URL of api HTTP/S endpoint for trading," << '\n'
+              << screen.stamp() << RWHITE << "                            mandatory." << '\n'
+              << screen.stamp() << RWHITE << "    --wss=URL             - set URL of api SECURE WS endpoint for trading," << '\n'
+              << screen.stamp() << RWHITE << "                            mandatory." << '\n'
+              << screen.stamp() << RWHITE << "-d, --database=PATH       - set alternative PATH to database filename," << '\n'
+              << screen.stamp() << RWHITE << "                            default PATH is '/data/db/K.*.*.*.db'," << '\n'
+              << screen.stamp() << RWHITE << "                            any route to a filename is valid," << '\n'
+              << screen.stamp() << RWHITE << "                            or use ':memory:' (see sqlite.org/inmemorydb.html)." << '\n'
+              << screen.stamp() << RWHITE << "    --ewma-ultra=PRICE    - set initial ewma ultra short value," << '\n'
+              << screen.stamp() << RWHITE << "                            overwrites the value from the database." << '\n'
+              << screen.stamp() << RWHITE << "    --ewma-micro=PRICE    - set initial ewma micro short value," << '\n'
+              << screen.stamp() << RWHITE << "                            overwrites the value from the database." << '\n'
+              << screen.stamp() << RWHITE << "    --ewma-short=PRICE    - set initial ewma short value," << '\n'
+              << screen.stamp() << RWHITE << "                            overwrites the value from the database." << '\n'
+              << screen.stamp() << RWHITE << "    --ewma-medium=PRICE   - set initial ewma medium value," << '\n'
+              << screen.stamp() << RWHITE << "                            overwrites the value from the database." << '\n'
+              << screen.stamp() << RWHITE << "    --ewma-long=PRICE     - set initial ewma long value," << '\n'
+              << screen.stamp() << RWHITE << "                            overwrites the value from the database." << '\n'
+              << screen.stamp() << RWHITE << "    --ewma-verylong=PRICE - set initial ewma verylong value," << '\n'
+              << screen.stamp() << RWHITE << "                            overwrites the value from the database." << '\n'
+              << screen.stamp() << RWHITE << "    --wallet-limit=AMOUNT - set AMOUNT in base currency to limit the balance," << '\n'
+              << screen.stamp() << RWHITE << "                            otherwise the full available balance can be used." << '\n'
+              << screen.stamp() << RWHITE << "    --market-limit=NUMBER - set NUMBER of maximum price levels for the orderbook," << '\n'
+              << screen.stamp() << RWHITE << "                            default NUMBER is '321' and the minimum is '15'." << '\n'
+              << screen.stamp() << RWHITE << "                            locked bots smells like '--market-limit=3' spirit." << '\n'
+              << screen.stamp() << RWHITE << "-T, --lifetime=NUMBER     - set NUMBER of minimum milliseconds to keep orders open," << '\n'
+              << screen.stamp() << RWHITE << "                            otherwise open orders can be replaced anytime required." << '\n'
+              << screen.stamp() << RWHITE << "    --debug-secret        - print (never share!) secret inputs and outputs." << '\n'
+              << screen.stamp() << RWHITE << "    --debug-events        - print detailed output about event handlers." << '\n'
+              << screen.stamp() << RWHITE << "    --debug-orders        - print detailed output about exchange messages." << '\n'
+              << screen.stamp() << RWHITE << "    --debug-quotes        - print detailed output about quoting engine." << '\n'
+              << screen.stamp() << RWHITE << "    --debug-wallet        - print detailed output about target base position." << '\n'
+              << screen.stamp() << RWHITE << "    --debug               - print detailed output about all the (previous) things!" << '\n'
+              << screen.stamp() << RWHITE << "    --colors              - print highlighted output." << '\n'
+              << screen.stamp() << RWHITE << "    --ignore-sun          - do not switch UI to light theme on daylight." << '\n'
+              << screen.stamp() << RWHITE << "    --ignore-moon         - do not switch UI to dark theme on moonlight." << '\n'
+              << screen.stamp() << RWHITE << "-k, --matryoshka=URL      - set Matryoshka link URL of the next UI." << '\n'
+              << screen.stamp() << RWHITE << "-K, --title=WORD          - set WORD as UI title to identify different bots." << '\n'
+              << screen.stamp() << RWHITE << "-x, --test-chamber=NUMBER - set release candidate NUMBER to test (ask your developer)." << '\n'
+              << screen.stamp() << RWHITE << "-i, --interface=IP        - set IP to bind as outgoing network interface," << '\n'
+              << screen.stamp() << RWHITE << "                            default IP is the system default network interface." << '\n'
+              << screen.stamp() << RWHITE << "    --free-version        - work with all market levels and enable the slow XMR miner." << '\n'
+              << screen.stamp() << RWHITE << "-v, --version             - show current build version and quit." << '\n'
               << RGREEN << "  more help: " << RYELLOW << "https://github.com/ctubio/Krypto-trading-bot/blob/master/MANUAL.md" << '\n'
               << BGREEN << "K" << RGREEN << " questions: " << RYELLOW << "irc://irc.freenode.net:6667/#tradingBot" << '\n'
               << RGREEN << "  home page: " << RYELLOW << "https://ca.rles-tub.io./trades" << '\n'
@@ -184,10 +180,23 @@ namespace K {
         if (args.exchange.empty())
           exit(_redAlert_("CF", "Undefined exchange; the config file may have errors (there are extra spaces or double defined variables?)"));
         tidy();
+        config();
       };
-      void run() {
+      inline void link(
+        Klass &EV, Klass &DB,     Klass &UI,     Klass &QP,     Klass &OG,     Klass &MG,     Klass &PG,     Klass &QE,     Klass &GW
+      ) {
+                   DB.evLink(EV); UI.evLink(EV);                OG.evLink(EV); MG.evLink(EV); PG.evLink(EV); QE.evLink(EV); GW.evLink(EV);
+                                  UI.dbLink(DB); QP.dbLink(DB); OG.dbLink(DB); MG.dbLink(DB); PG.dbLink(DB);
+                                                 QP.uiLink(UI); OG.uiLink(UI); MG.uiLink(UI); PG.uiLink(UI); QE.uiLink(UI); GW.uiLink(UI);
+                                                                               MG.ogLink(OG); PG.ogLink(OG); QE.ogLink(OG);
+                                                                                              PG.mgLink(MG); QE.mgLink(MG);
+                                                                                                             QE.pgLink(PG);
+                                                                                                                            GW.qeLink(QE);
+      };
+    private:
+      inline void config() {
 #ifndef _WIN32
-        ((SH*)screen)->config(base(), quote());
+        screen.config(base(), quote());
 #endif
         gw = Gw::config(
           base(),         quote(),
@@ -201,13 +210,12 @@ namespace K {
           exit(_redAlert_("CF", string("Unable to load a valid gateway using --exchange=")
             + args.exchange + " argument"));
         if (args.inet)
-          ((SH*)screen)->log("CF", "Network Interface for outgoing traffic is", args.inet);
+          screen.log("CF", "Network Interface for outgoing traffic is", args.inet);
         if (args.testChamber == 1)
-          ((SH*)screen)->logWar("CF", "Test Chamber #1: send new orders before cancel old");
+          screen.logWar("CF", "Test Chamber #1: send new orders before cancel old");
         else if (args.testChamber)
-          ((SH*)screen)->logWar("CF", string("ignored Test Chamber #") + to_string(args.testChamber));
+          screen.logWar("CF", string("ignored Test Chamber #") + to_string(args.testChamber));
       };
-    private:
       inline mCoinId base() {
         return FN::strU(args.currency.substr(0, args.currency.find("/")));
       };

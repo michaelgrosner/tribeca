@@ -24,7 +24,7 @@ namespace K {
       void load() {
         for (json &it : ((DB*)memory)->load(mMatter::Position))
           profits.push_back(it);
-        ((SH*)screen)->log("DB", string("loaded ") + to_string(profits.size()) + " historical Profits");
+        screen.log("DB", string("loaded ") + to_string(profits.size()) + " historical Profits");
         json k = ((DB*)memory)->load(mMatter::TargetBasePosition);
         if (!k.empty()) {
           k = k.at(0);
@@ -32,7 +32,7 @@ namespace K {
           if (k.find("pDiv") != k.end()) positionDivergence = k.value("pDiv", 0.0);
           sideAPR = k.value("sideAPR", "");
         }
-        ((SH*)screen)->log("DB", string("loaded TBP = ") + FN::str8(targetBasePosition) + " " + gw->base);
+        screen.log("DB", string("loaded TBP = ") + FN::str8(targetBasePosition) + " " + gw->base);
       };
       void waitData() {
         gw->evDataWallet = [&](mWallets k) {                        _debugEvent_
@@ -60,7 +60,7 @@ namespace K {
         ) ((UI*)client)->send(mMatter::TradeSafetyValue, safety);
       };
       function<void()> calcTargetBasePos = [&]() {                  _debugEvent_
-        if (position.empty()) return ((SH*)screen)->logWar("PG", "Unable to calculate TBP, missing wallet data");
+        if (position.empty()) return screen.logWar("PG", "Unable to calculate TBP, missing wallet data");
         mAmount baseValue = position.baseValue;
         mAmount next = qp.autoPositionMode == mAutoPositionMode::Manual
           ? (qp.percentageValues
@@ -75,7 +75,7 @@ namespace K {
         ((UI*)client)->send(mMatter::TargetBasePosition, k);
         ((DB*)memory)->insert(mMatter::TargetBasePosition, k);
         if (!args.debugWallet) return;
-        ((SH*)screen)->log("PG", string("TBP: ")
+        screen.log("PG", string("TBP: ")
           + to_string((int)(targetBasePosition / baseValue * 1e+2)) + "% = " + FN::str8(targetBasePosition)
           + " " + gw->base + ", pDiv: "
           + to_string((int)(positionDivergence  / baseValue * 1e+2)) + "% = " + FN::str8(positionDivergence)
@@ -255,7 +255,7 @@ namespace K {
         position = pos;
         if (!eq) calcTargetBasePos();
         ((UI*)client)->send(mMatter::Position, pos);
-        ((SH*)screen)->log(pos);
+        screen.log(pos);
       };
       function<void(const mSide&)> calcWalletAfterOrder = [&](const mSide &side) {
         if (position.empty()) return;

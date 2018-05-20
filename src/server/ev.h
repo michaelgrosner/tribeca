@@ -71,7 +71,7 @@ namespace K  {
             TLS::createContext("etc/sslcert/server.crt", "etc/sslcert/server.key", ""),
             0, uiGroup
           )
-        ) ((SH*)screen)->protocol += 'S';
+        ) screen.protocol += 'S';
         else if (!hub->listen(
           args.inet, args.port,
           nullptr,
@@ -82,7 +82,7 @@ namespace K  {
             + (hint.empty() ? "try another network interface" : "seems already in use by:\n" + hint)
           ));
         }
-        ((SH*)screen)->logUI();
+        screen.logUI();
       };
       void deferred(const function<void()> &fn) {
         slowFn.push_back(fn);
@@ -92,7 +92,7 @@ namespace K  {
         if (fn()) aEngine->send();
       };
       function<void(string)> debug = [&](const string k) {
-        ((SH*)screen)->log("DEBUG", string("EV ") + k);
+        screen.log("DEBUG", string("EV ") + k);
       };
     private:
       function<void()> happyEnding = [&]() {
@@ -110,9 +110,8 @@ namespace K  {
           for (function<void()> &it : k->slowFn) it();
           k->slowFn.clear();
         }
-        if (k->gw->waitForData())
-          aEngine->send();
-        ((SH*)k->screen)->waitForUser();
+        if (gw->waitForData()) aEngine->send();
+        screen.waitForUser();
       };
       inline void gwLog(const string &reason) {
         deferred([this, reason]() {
@@ -121,8 +120,8 @@ namespace K  {
               ? "DEBUG" : "GW"
           ) + ' ' + gw->name;
           if (reason.find("Error") != string::npos)
-            ((SH*)screen)->logWar(name, reason);
-          else ((SH*)screen)->log(name, reason);
+            screen.logWar(name, reason);
+          else screen.log(name, reason);
         });
       };
       static void halt(const int code) {

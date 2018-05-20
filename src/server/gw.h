@@ -22,9 +22,9 @@ namespace K {
       };
       void waitData() {                                             _debugEvent_
         ((QE*)engine)->gwConnected =
-        ((SH*)screen)->gwConnected = &gwConnected;
+        screen.gwConnected = &gwConnected;
         ((QE*)engine)->gwConnectedExchange =
-        ((SH*)screen)->gwConnectedExchange = &gwConnectedExchange;
+        screen.gwConnectedExchange = &gwConnectedExchange;
         gw->evConnectOrder = [&](mConnectivity k) {
           gwSemaphore(&gwConnectedExchangeOrders, k);
         };
@@ -34,7 +34,7 @@ namespace K {
         };
         gw->reconnect = [&](const string &reason) {
           gwT_countdown = 7;
-          ((SH*)screen)->log(string("GW ") + gw->name, string("WS ") + reason
+          screen.log(string("GW ") + gw->name, string("WS ") + reason
             + ", reconnecting in " + to_string(gwT_countdown) + "s.");
         };
       };
@@ -51,7 +51,7 @@ namespace K {
       void waitUser() {                                             _debugEvent_
         ((UI*)client)->welcome(mMatter::Connectivity, &hello);
         ((UI*)client)->clickme(mMatter::Connectivity, &kiss);
-        ((SH*)screen)->pressme(mHotkey::ESC, &hotkiss);
+        screen.pressme(mHotkey::ESC, &hotkiss);
       };
       void run() {                                                  _debugEvent_
         ((EV*)events)->start();
@@ -60,11 +60,11 @@ namespace K {
       function<void()> happyEnding = [&]() {
         ((EV*)events)->stop([&]() {
           if (args.dustybot)
-            ((SH*)screen)->log(string("GW ") + gw->name, "--dustybot is enabled, remember to cancel manually any open order.");
+            screen.log(string("GW ") + gw->name, "--dustybot is enabled, remember to cancel manually any open order.");
           else {
-            ((SH*)screen)->log(string("GW ") + gw->name, "Attempting to cancel all open orders, please wait.");
+            screen.log(string("GW ") + gw->name, "Attempting to cancel all open orders, please wait.");
             for (mOrder &it : gw->sync_cancelAll()) gw->evDataOrder(it);
-            ((SH*)screen)->log(string("GW ") + gw->name, "cancel all open orders OK");
+            screen.log(string("GW ") + gw->name, "cancel all open orders OK");
           }
           if (gw->exchange == mExchange::Coinbase) stunnel();
         });
@@ -95,10 +95,10 @@ namespace K {
         mConnectivity updated = gwConnectedAdmin * gwConnectedExchange;
         if (gwConnected != updated) {
           gwConnected = updated;
-          ((SH*)screen)->log(string("GW ") + gw->name, "Quoting state changed to", string(!gwConnected?"DIS":"") + "CONNECTED");
+          screen.log(string("GW ") + gw->name, "Quoting state changed to", string(!gwConnected?"DIS":"") + "CONNECTED");
         }
         ((UI*)client)->send(mMatter::Connectivity, semaphore());
-        ((SH*)screen)->refresh();
+        screen.refresh();
       };
       json semaphore() {
         return {
@@ -216,9 +216,9 @@ namespace K {
             + reply.dump(),
           true));
         if (gw->exchange != mExchange::Null)
-          ((SH*)screen)->log(string("GW ") + gw->name, "allows client IP");
+          screen.log(string("GW ") + gw->name, "allows client IP");
         unsigned int precision = gw->minTick < 1e-8 ? 10 : 8;
-        ((SH*)screen)->log(string("GW ") + gw->name + ":", string("\n")
+        screen.log(string("GW ") + gw->name + ":", string("\n")
           + "- autoBot: " + (!gwConnectedAdmin ? "no" : "yes") + '\n'
           + "- symbols: " + gw->symbol + '\n'
           + "- minTick: " + FN::strX(gw->minTick, precision) + '\n'
