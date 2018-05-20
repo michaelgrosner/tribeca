@@ -78,7 +78,7 @@ namespace K  {
           0, uiGroup
         )) {
           const string hint = FN::output(string("netstat -anp 2>/dev/null | grep ") + to_string(args.port));
-          exit(_redAlert_("UI", "Unable to listen to UI port number " + to_string(args.port) + ", "
+          exit(screen.error("UI", "Unable to listen to UI port number " + to_string(args.port) + ", "
             + (hint.empty() ? "try another network interface" : "seems already in use by:\n" + hint)
           ));
         }

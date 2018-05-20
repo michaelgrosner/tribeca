@@ -173,12 +173,12 @@ namespace K {
         if (optind < argc) {
           string argerr;
           while(optind < argc) argerr += string(" ") + argv[optind++];
-          exit(_redAlert_("CF", string("Invalid argument option:") + argerr));
+          exit(screen.error("CF", string("Invalid argument option:") + argerr));
         }
         if (args.currency.find("/") == string::npos or args.currency.length() < 3)
-          exit(_redAlert_("CF", "Invalid currency pair; must be in the format of BASE/QUOTE, like BTC/EUR"));
+          exit(screen.error("CF", "Invalid currency pair; must be in the format of BASE/QUOTE, like BTC/EUR"));
         if (args.exchange.empty())
-          exit(_redAlert_("CF", "Undefined exchange; the config file may have errors (there are extra spaces or double defined variables?)"));
+          exit(screen.error("CF", "Undefined exchange; the config file may have errors (there are extra spaces or double defined variables?)"));
         tidy();
         config();
       };
@@ -207,7 +207,7 @@ namespace K {
           args.maxLevels, args.debugSecret
         );
         if (!gw)
-          exit(_redAlert_("CF", string("Unable to load a valid gateway using --exchange=")
+          exit(screen.error("CF", string("Unable to load a valid gateway using --exchange=")
             + args.exchange + " argument"));
         if (args.inet)
           screen.log("CF", "Network Interface for outgoing traffic is", args.inet);

@@ -11,7 +11,7 @@ namespace K {
     protected:
       void load() {
         if (sqlite3_open(args.database.data(), &db))
-          exit(_redAlert_("DB", sqlite3_errmsg(db)));
+          exit(screen.error("DB", sqlite3_errmsg(db)));
         screen.logDB(args.database);
         if (args.diskdata.empty()) return;
         qpdb = "qpdb";

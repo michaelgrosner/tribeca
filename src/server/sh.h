@@ -1,8 +1,6 @@
 #ifndef K_SH_H_
 #define K_SH_H_
 
-#define _redAlert_ screen.error
-
 namespace K {
   vector<function<void()>*> endingFn;
   char RBLACK[] = "\033[0;30m", RRED[]    = "\033[0;31m", RGREEN[] = "\033[0;32m", RYELLOW[] = "\033[0;33m",

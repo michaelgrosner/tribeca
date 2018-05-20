@@ -211,7 +211,7 @@ namespace K {
           gw->minSize = 0.01;
         }
         if (!gw->minTick or !gw->minSize)
-          exit(_redAlert_("CF", "Unable to fetch data from " + gw->name
+          exit(screen.error("CF", "Unable to fetch data from " + gw->name
             + " for symbol \"" + gw->symbol + "\", possible error message: "
             + reply.dump(),
           true));

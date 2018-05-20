@@ -148,13 +148,13 @@ namespace K {
     public:
       function<void(mMatter, function<void(json*)>*)> welcome = [&](mMatter type, function<void(json*)> *fn) {
         if (hello.find((char)type) != hello.end())
-          exit(_redAlert_("UI", string("Use only a single unique message handler for \"")
+          exit(screen.error("UI", string("Use only a single unique message handler for \"")
             + (char)type + "\" welcome event"));
         hello[(char)type] = fn;
       };
       function<void(mMatter, function<void(json)>*)> clickme = [&](mMatter type, function<void(json)> *fn) {
         if (kisses.find((char)type) != kisses.end())
-          exit(_redAlert_("UI", string("Use only a single unique message handler for \"")
+          exit(screen.error("UI", string("Use only a single unique message handler for \"")
             + (char)type + "\" clickme event"));
         kisses[(char)type] = fn;
       };
