@@ -2,7 +2,7 @@
 #define K_CF_H_
 
 namespace K {
-  class CF {
+  class CF: public kLass {
     public:
       inline void main(int argc, char** argv) {
         static const struct option opts[] = {
@@ -45,6 +45,7 @@ namespace K {
           {"database",     required_argument, 0,               'd'},
           {"wallet-limit", required_argument, 0,               'W'},
           {"market-limit", required_argument, 0,               'M'},
+          {"client-limit", required_argument, 0,               'C'},
           {"test-chamber", required_argument, 0,               'x'},
           {"interface",    required_argument, 0,               'i'},
           {"free-version", no_argument,       &args.free,        1},
@@ -58,6 +59,7 @@ namespace K {
             case  0 : break;
             case 'x': args.testChamber  = stoi(optarg);   break;
             case 'M': args.maxLevels    = stoi(optarg);   break;
+            case 'C': args.maxAdmins    = stoi(optarg);   break;
             case 'T': args.lifetime     = stoi(optarg);   break;
             case 999: args.port         = stoi(optarg);   break;
             case 998: args.user         = string(optarg); break;
@@ -97,7 +99,9 @@ namespace K {
               << screen.stamp() << RWHITE << "    --dustybot            - do not automatically cancel all orders on exit." << '\n'
               << screen.stamp() << RWHITE << "    --naked               - do not display CLI, print output to stdout instead." << '\n'
               << screen.stamp() << RWHITE << "    --headless            - do not listen for UI connections," << '\n'
-              << screen.stamp() << RWHITE << "                            ignores '--without-ssl', '--whitelist' and '--port'." << '\n'
+              << screen.stamp() << RWHITE << "                            all other UI related arguments will be ignored." << '\n'
+              << screen.stamp() << RWHITE << "-C, --client-limit=NUMBER - set NUMBER of maximum concurrent UI connections," << '\n'
+              << screen.stamp() << RWHITE << "                            minimum NUMBER is '1', otherwise use '--headless'." << '\n'
               << screen.stamp() << RWHITE << "    --without-ssl         - do not use HTTPS for UI connections (use HTTP only)." << '\n'
               << screen.stamp() << RWHITE << "-L, --whitelist=IP        - set IP or csv of IPs to allow UI connections," << '\n'
               << screen.stamp() << RWHITE << "                            alien IPs will get a zip-bomb instead." << '\n'
@@ -181,17 +185,6 @@ namespace K {
           exit(screen.error("CF", "Undefined exchange; the config file may have errors (there are extra spaces or double defined variables?)"));
         tidy();
         config();
-      };
-      inline void link(
-        Klass &EV, Klass &DB,     Klass &UI,     Klass &QP,     Klass &OG,     Klass &MG,     Klass &PG,     Klass &QE,     Klass &GW
-      ) {
-                   DB.evLink(EV); UI.evLink(EV);                OG.evLink(EV); MG.evLink(EV); PG.evLink(EV); QE.evLink(EV); GW.evLink(EV);
-                                  UI.dbLink(DB); QP.dbLink(DB); OG.dbLink(DB); MG.dbLink(DB); PG.dbLink(DB);
-                                                 QP.uiLink(UI); OG.uiLink(UI); MG.uiLink(UI); PG.uiLink(UI); QE.uiLink(UI); GW.uiLink(UI);
-                                                                               MG.ogLink(OG); PG.ogLink(OG); QE.ogLink(OG);
-                                                                                              PG.mgLink(MG); QE.mgLink(MG);
-                                                                                                             QE.pgLink(PG);
-                                                                                                                            GW.qeLink(QE);
       };
     private:
       inline void config() {

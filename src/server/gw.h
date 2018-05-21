@@ -44,7 +44,7 @@ namespace K {
         sync_orders = !gw->async_orders();
         if (!sync_levels) gwT_countdown = 1;
         ((EV*)events)->tServer->setData(this);
-        ((EV*)events)->tServer->start([](Timer *tServer) {
+        ((EV*)events)->tServer->start([](uS::Timer *tServer) {
           ((GW*)tServer->getData())->timer_1s();
         }, 0, 1e+3);
       };

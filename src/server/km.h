@@ -652,7 +652,7 @@ namespace K {
             headless      = 0,      dustybot    = 0, lifetime     = 0,
             autobot       = 0,      naked       = 0, free         = 0,
             ignoreSun     = 0,      ignoreMoon  = 0, maxLevels    = 0,
-            testChamber   = 0;
+            maxAdmins     = 0,      testChamber = 0;
     mAmount maxWallet     = 0;
      mPrice ewmaUShort    = 0,      ewmaXShort  = 0, ewmaShort    = 0,
             ewmaMedium    = 0,      ewmaLong    = 0, ewmaVeryLong = 0;
@@ -776,6 +776,20 @@ namespace K {
       inline void mgLink(Klass &k) { market = &k; };
       inline void pgLink(Klass &k) { wallet = &k; };
       inline void qeLink(Klass &k) { engine = &k; };
+  };
+  class kLass {
+    public:
+      inline void link(
+        Klass &EV,     Klass &DB,     Klass &UI,     Klass &QP,     Klass &OG,     Klass &MG,     Klass &PG,     Klass &QE,     Klass &GW
+      ) {
+                       DB.evLink(EV); UI.evLink(EV);                OG.evLink(EV); MG.evLink(EV); PG.evLink(EV); QE.evLink(EV); GW.evLink(EV);
+                                      UI.dbLink(DB); QP.dbLink(DB); OG.dbLink(DB); MG.dbLink(DB); PG.dbLink(DB);
+                                                     QP.uiLink(UI); OG.uiLink(UI); MG.uiLink(UI); PG.uiLink(UI); QE.uiLink(UI); GW.uiLink(UI);
+                                                                                   MG.ogLink(OG); PG.ogLink(OG); QE.ogLink(OG);
+                                                                                                  PG.mgLink(MG); QE.mgLink(MG);
+                                                                                                                 QE.pgLink(PG);
+                                                                                                                                GW.qeLink(QE);
+      };
   };
 }
 

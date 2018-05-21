@@ -217,7 +217,7 @@ namespace K {
         refresh();
       };
       void logUIsess(int k, string s) {
-        if (s.length() > 7 and s.substr(0, 7) == "::ffff:") s = s.substr(7);
+        if (s.empty()) s = "unknown";
         if (!wBorder) {
           cout << stamp() << "UI " << RYELLOW << to_string(k) << RWHITE << " currently connected, last connection was from " << RYELLOW << s << RWHITE << ".\n";
           return;

@@ -42,7 +42,6 @@ using namespace std;
 #include "quickfix/fix42/OrderCancelRequest.h"
 
 using namespace nlohmann;
-using namespace uS;
 
 #include "km.h"
 #include "fn.h"

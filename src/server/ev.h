@@ -7,13 +7,14 @@ namespace K  {
   string tracelog;
   class EV: public Klass {
     private:
+      int connections = 0;
       uWS::Hub *hub = nullptr;
-      Async *aEngine = nullptr;
+      uWS::Group<uWS::SERVER> *uiGroup = nullptr;
+      uS::Async *aEngine = nullptr;
       vector<function<void()>> slowFn;
     public:
-      uWS::Group<uWS::SERVER> *uiGroup = nullptr;
-      Timer *tServer = nullptr,
-            *tClient = nullptr;
+      uS::Timer *tServer = nullptr,
+                *tClient = nullptr;
     protected:
       void load() {
         endingFn.push_back(&happyEnding);
@@ -32,16 +33,17 @@ namespace K  {
         gw->log = [&](const string &reason) {
           gwLog(reason);
         };
-        aEngine = new Async(hub->getLoop());
+        aEngine = new uS::Async(hub->getLoop());
         aEngine->setData(this);
         aEngine->start(asyncLoop);
         gw->gwGroup = hub->createGroup<uWS::CLIENT>();
       };
       void waitTime() {
-        tServer = new Timer(hub->getLoop());
-        tClient = new Timer(hub->getLoop());
+        tServer = new uS::Timer(hub->getLoop());
+        tClient = new uS::Timer(hub->getLoop());
       };
       void waitUser() {
+        if (args.headless) return;
         uiGroup = hub->createGroup<uWS::SERVER>(uWS::PERMESSAGE_DEFLATE);
       };
       void run() {
@@ -60,15 +62,20 @@ namespace K  {
         gw->gwGroup->close();
         gwCancelAll();
         asyncLoop(aEngine);
-        uiGroup->close();
+        if (uiGroup) uiGroup->close();
       };
-      void listen() {
+      inline function<void(const mMatter&, string)> listen(
+        const function<void()> &onConnection,
+        const function<void()> &onDisconnection,
+        const function<string(const string&, const bool&, const string&, const string&)> &onHttpRequest,
+        const function<string(const string&, const string&)> &onMessage
+      ) {
         if (!args.withoutSSL
           and (access("etc/sslcert/server.crt", F_OK) != -1)
           and (access("etc/sslcert/server.key", F_OK) != -1)
           and hub->listen(
             args.inet, args.port,
-            TLS::createContext("etc/sslcert/server.crt", "etc/sslcert/server.key", ""),
+            uS::TLS::createContext("etc/sslcert/server.crt", "etc/sslcert/server.key", ""),
             0, uiGroup
           )
         ) screen.protocol += 'S';
@@ -82,7 +89,48 @@ namespace K  {
             + (hint.empty() ? "try another network interface" : "seems already in use by:\n" + hint)
           ));
         }
+        uiGroup->onConnection([this, onConnection](uWS::WebSocket<uWS::SERVER> *webSocket, uWS::HttpRequest req) {
+          if (!connections++) onConnection();
+          screen.logUIsess(connections, cleanAddress(webSocket->getAddress().address));
+          if (args.maxAdmins and connections > args.maxAdmins) {
+            webSocket->close();
+            screen.log("UI", "--client-limit was reached by", cleanAddress(webSocket->getAddress().address));
+          }
+        });
+        uiGroup->onDisconnection([this, onDisconnection](uWS::WebSocket<uWS::SERVER> *webSocket, int code, char *message, size_t length) {
+          if (!--connections) onDisconnection();
+          screen.logUIsess(connections, cleanAddress(webSocket->getAddress().address));
+        });
+        uiGroup->onHttpRequest([this, onHttpRequest](uWS::HttpResponse *res, uWS::HttpRequest req, char *data, size_t length, size_t remainingBytes) {
+          const string response = onHttpRequest(
+            req.getUrl().toString(),
+            req.getMethod() == uWS::HttpMethod::METHOD_GET,
+            req.getHeader("authorization").toString(),
+            cleanAddress(res->getHttpSocket()->getAddress().address)
+          );
+          if (!response.empty()) res->write(response.data(), response.length());
+        });
+        uiGroup->onMessage([this, onMessage](uWS::WebSocket<uWS::SERVER> *webSocket, const char *message, size_t length, uWS::OpCode opCode) {
+          if (length < 2) return;
+          const string response = onMessage(
+            string(message, length),
+            !args.whitelist.empty()
+              ? cleanAddress(webSocket->getAddress().address)
+              : ""
+          );
+          webSocket->send(
+            response.data(),
+            response.substr(0, 2) == "PK"
+              ? uWS::OpCode::BINARY
+              : uWS::OpCode::TEXT
+          );
+        });
         screen.logUI();
+        return [this](const mMatter &type, string msg) {
+          msg.insert(msg.begin(), (char)type);
+          msg.insert(msg.begin(), (char)mPortal::Kiss);
+          uiGroup->broadcast(msg.data(), msg.length(), uWS::OpCode::TEXT);
+        };
       };
       void deferred(const function<void()> &fn) {
         slowFn.push_back(fn);
@@ -104,7 +152,7 @@ namespace K  {
           cout << " THE END IS NEVER";
         cout << " THE END." << '\n';
       };
-      void (*asyncLoop)(Async*) = [](Async *const aEngine) {
+      void (*asyncLoop)(uS::Async*) = [](uS::Async *const aEngine) {
         EV* k = (EV*)aEngine->getData();
         if (!k->slowFn.empty()) {
           for (function<void()> &it : k->slowFn) it();
@@ -123,6 +171,11 @@ namespace K  {
             screen.logWar(name, reason);
           else screen.log(name, reason);
         });
+      };
+      inline static string cleanAddress(string addr) {
+        if (addr.length() > 7 and addr.substr(0, 7) == "::ffff:") addr = addr.substr(7);
+        if (addr.length() < 7) addr.clear();
+        return addr;
       };
       static void halt(const int code) {
         for (function<void()>* &it : endingFn) (*it)();
