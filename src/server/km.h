@@ -188,9 +188,9 @@ namespace K {
   };
   static void from_json(const json &j, mQuotingParams &k) {
     k.widthPing                       = fmax(1e-8,            j.value("widthPing", k.widthPing));
-    k.widthPingPercentage             = fmin(1e+2, fmax(1e-1, j.value("widthPingPercentage", k.widthPingPercentage)));
+    k.widthPingPercentage             = fmin(1e+2, fmax(1e-3, j.value("widthPingPercentage", k.widthPingPercentage)));
     k.widthPong                       = fmax(1e-8,            j.value("widthPong", k.widthPong));
-    k.widthPongPercentage             = fmin(1e+2, fmax(1e-1, j.value("widthPongPercentage", k.widthPongPercentage)));
+    k.widthPongPercentage             = fmin(1e+2, fmax(1e-3, j.value("widthPongPercentage", k.widthPongPercentage)));
     k.widthPercentage                 =                       j.value("widthPercentage", k.widthPercentage);
     k.bestWidth                       =                       j.value("bestWidth", k.bestWidth);
     k.buySize                         = fmax(1e-8,            j.value("buySize", k.buySize));
@@ -205,7 +205,7 @@ namespace K {
     k.safety                          =                       j.value("safety", k.safety);
     k.bullets                         = fmin(10, fmax(1,      j.value("bullets", k.bullets)));
     k.range                           =                       j.value("range", k.range);
-    k.rangePercentage                 = fmin(1e+2, fmax(1e-1, j.value("rangePercentage", k.rangePercentage)));
+    k.rangePercentage                 = fmin(1e+2, fmax(1e-3, j.value("rangePercentage", k.rangePercentage)));
     k.fvModel                         =                       j.value("fvModel", k.fvModel);
     k.targetBasePosition              =                       j.value("targetBasePosition", k.targetBasePosition);
     k.targetBasePositionPercentage    = fmin(1e+2, fmax(0,    j.value("targetBasePositionPercentage", k.targetBasePositionPercentage)));
