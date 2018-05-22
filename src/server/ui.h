@@ -34,10 +34,11 @@ namespace K {
         uWS::Group<uWS::SERVER> *uiGroup = ((EV*)events)->listen();
         uiGroup->onConnection([&](uWS::WebSocket<uWS::SERVER> *webSocket, uWS::HttpRequest req) {
           onConnection();
-          screen.logUIsess(connections, cleanAddress(webSocket->getAddress().address));
+          const string addr = cleanAddress(webSocket->getAddress().address);
+          screen.logUIsess(connections, addr);
           if (args.maxAdmins and connections > args.maxAdmins) {
+            screen.log("UI", "--client-limit reached by", addr);
             webSocket->close();
-            screen.log("UI", "--client-limit was reached by", cleanAddress(webSocket->getAddress().address));
           }
         });
         uiGroup->onDisconnection([&](uWS::WebSocket<uWS::SERVER> *webSocket, int code, char *message, size_t length) {
@@ -59,14 +60,15 @@ namespace K {
             string(message, length),
             !args.whitelist.empty()
               ? cleanAddress(webSocket->getAddress().address)
-              : ""
+              : "unknown"
           );
-          webSocket->send(
-            response.data(),
-            response.substr(0, 2) == "PK"
-              ? uWS::OpCode::BINARY
-              : uWS::OpCode::TEXT
-          );
+          if (!response.empty())
+            webSocket->send(
+              response.data(),
+              response.substr(0, 2) == "PK"
+                ? uWS::OpCode::BINARY
+                : uWS::OpCode::TEXT
+            );
         });
         broadcast = [uiGroup](const mMatter &type, string msg) {
           msg.insert(msg.begin(), (char)type);
@@ -162,17 +164,16 @@ namespace K {
       };
       inline string onHttpRequest(const string &path, const bool &get, const string &auth, const string &addr) {
         string document,
-               content,
-               address = addr.empty() ? "unknown" : addr;
-        if (!addr.empty() and !args.whitelist.empty() and args.whitelist.find(addr) == string::npos) {
-          screen.log("UI", "dropping gzip bomb on", address);
+               content;
+        if (addr != "unknown" and !args.whitelist.empty() and args.whitelist.find(addr) == string::npos) {
+          screen.log("UI", "dropping gzip bomb on", addr);
           document = "HTTP/1.1 200 OK\r\nConnection: keep-alive\r\nAccept-Ranges: bytes\r\nVary: Accept-Encoding\r\nCache-Control: public, max-age=0\r\nContent-Encoding: gzip\r\n";
           content = string(&_www_gzip_bomb, _www_gzip_bomb_len);
         } else if (!B64auth.empty() and auth.empty()) {
-          screen.log("UI", "authorization attempt from", address);
+          screen.log("UI", "authorization attempt from", addr);
           document = "HTTP/1.1 401 Unauthorized\r\nWWW-Authenticate: Basic realm=\"Basic Authorization\"\r\nConnection: keep-alive\r\nAccept-Ranges: bytes\r\nVary: Accept-Encoding\r\nContent-Type:text/plain; charset=UTF-8\r\n";
         } else if (!B64auth.empty() and auth != B64auth) {
-          screen.log("UI", "authorization failed from", address);
+          screen.log("UI", "authorization failed from", addr);
           document = "HTTP/1.1 403 Forbidden\r\nConnection: keep-alive\r\nAccept-Ranges: bytes\r\nVary: Accept-Encoding\r\nContent-Type:text/plain; charset=UTF-8\r\n";
         } else if (get) {
           document = "HTTP/1.1 200 OK\r\nConnection: keep-alive\r\nAccept-Ranges: bytes\r\nVary: Accept-Encoding\r\nCache-Control: public, max-age=0\r\n";
@@ -180,10 +181,10 @@ namespace K {
           if (leaf == "/") {
             document += "Content-Type: text/html; charset=UTF-8\r\n";
             if (!args.maxAdmins or connections < args.maxAdmins) {
-              screen.log("UI", "authorization success from", address);
+              screen.log("UI", "authorization success from", addr);
               content = string(&_www_html_index, _www_html_index_len);
             } else {
-              screen.log("UI", "--client-limit was reached by", address);
+              screen.log("UI", "--client-limit reached by", addr);
               content = "Thank you! but our princess is already in this castle!<br/>Refresh the page anytime to retry.";
             }
           } else if (leaf == "js") {
@@ -221,14 +222,13 @@ namespace K {
         return document;
       };
       inline string onMessage(const string &message, const string &addr) {
-        string response;
-        if (!addr.empty() and args.whitelist.find(addr) == string::npos)
-          response = string(&_www_gzip_bomb, _www_gzip_bomb_len);
+        if (addr != "unknown" and args.whitelist.find(addr) == string::npos)
+          return string(&_www_gzip_bomb, _www_gzip_bomb_len);
         if (mPortal::Hello == (mPortal)message[0] and hello.find(message[1]) != hello.end()) {
           json reply;
           (*hello[message[1]])(&reply);
           if (!reply.is_null())
-            response = message.substr(0, 2) + reply.dump();
+            return message.substr(0, 2) + reply.dump();
         } else if (mPortal::Kiss == (mPortal)message[0] and kisses.find(message[1]) != kisses.end()) {
           json butterfly = json::parse(
             (message.length() > 2 and message[2] == '{')
@@ -239,7 +239,7 @@ namespace K {
             if (it.value().is_null()) it = butterfly.erase(it); else it++;
           (*kisses[message[1]])(butterfly);
         }
-        return response;
+        return "";
       };
       function<void(const mMatter &type, string msg)> broadcast;
       inline void broadcastQueue() {
@@ -259,10 +259,10 @@ namespace K {
         send(mMatter::ApplicationState, serverState());
         orders_60s = 0;
       };
-      inline static string cleanAddress(string addr) {
+      static string cleanAddress(string addr) {
         if (addr.length() > 7 and addr.substr(0, 7) == "::ffff:") addr = addr.substr(7);
         if (addr.length() < 7) addr.clear();
-        return addr;
+        return addr.empty() ? "unknown" : addr;
       };
       inline unsigned int memorySize() {
         string ps = FN::output(string("ps -p") + to_string(::getpid()) + " -orss | tail -n1");
