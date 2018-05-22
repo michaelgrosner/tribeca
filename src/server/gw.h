@@ -124,7 +124,7 @@ namespace K {
           and !(gwT_5m % qp.delayUI))       ((UI*)client)->timer_Xs();
         if (!(++gwT_5m % 300)) {
           if (qp.cancelOrdersAuto)          ((EV*)events)->async(gw->cancelAll);
-          if (gwT_5m == 300 * (qp.delayUI?:1))
+          if (gwT_5m >= 300 * (qp.delayUI?:1))
             gwT_5m = 0;
         }
       };

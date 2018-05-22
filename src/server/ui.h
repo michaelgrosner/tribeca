@@ -13,8 +13,7 @@ namespace K {
       int connections = 0;
       string B64auth = "",
              notepad = "";
-      bool toggleSettings = true,
-           realtimeClient = false;
+      bool toggleSettings = true;
       map<char, function<void(json*)>*> hello;
       map<char, function<void(json)>*> kisses;
       map<mMatter, string> queue;
@@ -79,7 +78,6 @@ namespace K {
         if (args.headless) {
           welcome = [](mMatter type, function<void(json*)> *fn) {};
           clickme = [](mMatter type, function<void(json)> *fn) {};
-          delayme = [](unsigned int delayUI) {};
         } else {
           welcome(mMatter::ApplicationState, &helloServer);
           welcome(mMatter::ProductAdvertisement, &helloProduct);
@@ -105,12 +103,9 @@ namespace K {
       function<void(mMatter, json)> send_nowhere = [](mMatter type, json msg) {};
       function<void(mMatter, json)> send = send_nowhere;
       function<void(mMatter, json)> send_somewhere = [&](mMatter type, json msg) {
-        if (realtimeClient or !delayed(type))
+        if (!qp.delayUI or !delayed(type))
           broadcast(type, msg.dump());
         else queue[type] = msg.dump();
-      };
-      function<void(unsigned int)> delayme = [&](unsigned int delayUI) {
-        realtimeClient = !delayUI;
       };
       inline void timer_Xs() {
         for (map<mMatter, string>::value_type &it : queue)

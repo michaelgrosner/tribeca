@@ -14,9 +14,6 @@ namespace K {
         ((UI*)client)->welcome(mMatter::QuotingParameters, &hello);
         ((UI*)client)->clickme(mMatter::QuotingParameters, &kiss);
       };
-      void run() {
-        delayUI();
-      };
     private:
       function<void(json*)> hello = [&](json *welcome) {
         *welcome = { qp };
@@ -27,10 +24,6 @@ namespace K {
         (*qp.calcQuoteAfterSavedParams)();
         ((UI*)client)->send(mMatter::QuotingParameters, qp);
         ((DB*)memory)->insert(mMatter::QuotingParameters, qp);
-        delayUI();
-      };
-      inline void delayUI() {
-        ((UI*)client)->delayme(qp.delayUI);
       };
   };
 }
