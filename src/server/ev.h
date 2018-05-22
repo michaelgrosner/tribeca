@@ -7,9 +7,7 @@ namespace K  {
   string tracelog;
   class EV: public Klass {
     private:
-      int connections = 0;
       uWS::Hub *hub = nullptr;
-      uWS::Group<uWS::SERVER> *uiGroup = nullptr;
       uS::Async *aEngine = nullptr;
       vector<function<void()>> slowFn;
     public:
@@ -44,7 +42,7 @@ namespace K  {
       };
       void waitUser() {
         if (args.headless) return;
-        uiGroup = hub->createGroup<uWS::SERVER>(uWS::PERMESSAGE_DEFLATE);
+        hub->createGroup<uWS::SERVER>(uWS::PERMESSAGE_DEFLATE);
       };
       void run() {
         if (args.debugEvents) return;
@@ -62,75 +60,24 @@ namespace K  {
         gw->gwGroup->close();
         gwCancelAll();
         asyncLoop(aEngine);
-        if (uiGroup) uiGroup->close();
+        hub->getDefaultGroup<uWS::SERVER>().close();
       };
-      inline function<void(const mMatter&, string)> listen(
-        const function<void()> &onConnection,
-        const function<void()> &onDisconnection,
-        const function<string(const string&, const bool&, const string&, const string&)> &onHttpRequest,
-        const function<string(const string&, const string&)> &onMessage
-      ) {
+      inline uWS::Group<uWS::SERVER>* listen() {
+        uWS::Group<uWS::SERVER> *uiGroup = &hub->getDefaultGroup<uWS::SERVER>();
         if (!args.withoutSSL
           and (access("etc/sslcert/server.crt", F_OK) != -1)
           and (access("etc/sslcert/server.key", F_OK) != -1)
           and hub->listen(
             args.inet, args.port,
-            uS::TLS::createContext("etc/sslcert/server.crt", "etc/sslcert/server.key", ""),
+            uS::TLS::createContext("etc/sslcert/server.crt",
+                                   "etc/sslcert/server.key", ""),
             0, uiGroup
           )
         ) screen.protocol += 'S';
-        else if (!hub->listen(
-          args.inet, args.port,
-          nullptr,
-          0, uiGroup
-        )) {
-          const string hint = FN::output(string("netstat -anp 2>/dev/null | grep ") + to_string(args.port));
-          exit(screen.error("UI", "Unable to listen to UI port number " + to_string(args.port) + ", "
-            + (hint.empty() ? "try another network interface" : "seems already in use by:\n" + hint)
-          ));
-        }
-        uiGroup->onConnection([this, onConnection](uWS::WebSocket<uWS::SERVER> *webSocket, uWS::HttpRequest req) {
-          if (!connections++) onConnection();
-          screen.logUIsess(connections, cleanAddress(webSocket->getAddress().address));
-          if (args.maxAdmins and connections > args.maxAdmins) {
-            webSocket->close();
-            screen.log("UI", "--client-limit was reached by", cleanAddress(webSocket->getAddress().address));
-          }
-        });
-        uiGroup->onDisconnection([this, onDisconnection](uWS::WebSocket<uWS::SERVER> *webSocket, int code, char *message, size_t length) {
-          if (!--connections) onDisconnection();
-          screen.logUIsess(connections, cleanAddress(webSocket->getAddress().address));
-        });
-        uiGroup->onHttpRequest([this, onHttpRequest](uWS::HttpResponse *res, uWS::HttpRequest req, char *data, size_t length, size_t remainingBytes) {
-          const string response = onHttpRequest(
-            req.getUrl().toString(),
-            req.getMethod() == uWS::HttpMethod::METHOD_GET,
-            req.getHeader("authorization").toString(),
-            cleanAddress(res->getHttpSocket()->getAddress().address)
-          );
-          if (!response.empty()) res->write(response.data(), response.length());
-        });
-        uiGroup->onMessage([this, onMessage](uWS::WebSocket<uWS::SERVER> *webSocket, const char *message, size_t length, uWS::OpCode opCode) {
-          if (length < 2) return;
-          const string response = onMessage(
-            string(message, length),
-            !args.whitelist.empty()
-              ? cleanAddress(webSocket->getAddress().address)
-              : ""
-          );
-          webSocket->send(
-            response.data(),
-            response.substr(0, 2) == "PK"
-              ? uWS::OpCode::BINARY
-              : uWS::OpCode::TEXT
-          );
-        });
+        else if (!hub->listen(args.inet, args.port, nullptr, 0, uiGroup))
+          exit(hint());
         screen.logUI();
-        return [this](const mMatter &type, string msg) {
-          msg.insert(msg.begin(), (char)type);
-          msg.insert(msg.begin(), (char)mPortal::Kiss);
-          uiGroup->broadcast(msg.data(), msg.length(), uWS::OpCode::TEXT);
-        };
+        return uiGroup;
       };
       void deferred(const function<void()> &fn) {
         slowFn.push_back(fn);
@@ -172,10 +119,11 @@ namespace K  {
           else screen.log(name, reason);
         });
       };
-      inline static string cleanAddress(string addr) {
-        if (addr.length() > 7 and addr.substr(0, 7) == "::ffff:") addr = addr.substr(7);
-        if (addr.length() < 7) addr.clear();
-        return addr;
+      inline int hint() {
+        const string netstat = FN::output(string("netstat -anp 2>/dev/null | grep ") + to_string(args.port));
+        return screen.error("UI", "Unable to listen to UI port number " + to_string(args.port) + ", "
+          + (netstat.empty() ? "try another network interface" : "seems already in use by:\n" + netstat)
+        );
       };
       static void halt(const int code) {
         for (function<void()>* &it : endingFn) (*it)();

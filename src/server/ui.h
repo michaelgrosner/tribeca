@@ -10,6 +10,7 @@ extern const  int _www_html_index_len, _www_ico_favicon_len, _www_css_base_len,
 namespace K {
   class UI: public Klass {
     private:
+      int connections = 0;
       string B64auth = "",
              notepad = "";
       bool toggleSettings = true,
@@ -30,16 +31,48 @@ namespace K {
       };
       void waitData() {
         if (args.headless) return;
-        broadcast = ((EV*)events)->listen(
-          [&]() { onConnection(); },
-          [&]() { onDisconnection(); },
-          [&](const string &path, const bool &get, const string &auth, const string &addr) {
-            return onHttpRequest(path, get, auth, addr);
-          },
-          [&](const string &message, const string &addr) {
-            return onMessage(message, addr);
+        uWS::Group<uWS::SERVER> *uiGroup = ((EV*)events)->listen();
+        uiGroup->onConnection([&](uWS::WebSocket<uWS::SERVER> *webSocket, uWS::HttpRequest req) {
+          onConnection();
+          screen.logUIsess(connections, cleanAddress(webSocket->getAddress().address));
+          if (args.maxAdmins and connections > args.maxAdmins) {
+            webSocket->close();
+            screen.log("UI", "--client-limit was reached by", cleanAddress(webSocket->getAddress().address));
           }
-        );
+        });
+        uiGroup->onDisconnection([&](uWS::WebSocket<uWS::SERVER> *webSocket, int code, char *message, size_t length) {
+          onDisconnection();
+          screen.logUIsess(connections, cleanAddress(webSocket->getAddress().address));
+        });
+        uiGroup->onHttpRequest([&](uWS::HttpResponse *res, uWS::HttpRequest req, char *data, size_t length, size_t remainingBytes) {
+          const string response = onHttpRequest(
+            req.getUrl().toString(),
+            req.getMethod() == uWS::HttpMethod::METHOD_GET,
+            req.getHeader("authorization").toString(),
+            cleanAddress(res->getHttpSocket()->getAddress().address)
+          );
+          if (!response.empty()) res->write(response.data(), response.length());
+        });
+        uiGroup->onMessage([&](uWS::WebSocket<uWS::SERVER> *webSocket, const char *message, size_t length, uWS::OpCode opCode) {
+          if (length < 2) return;
+          const string response = onMessage(
+            string(message, length),
+            !args.whitelist.empty()
+              ? cleanAddress(webSocket->getAddress().address)
+              : ""
+          );
+          webSocket->send(
+            response.data(),
+            response.substr(0, 2) == "PK"
+              ? uWS::OpCode::BINARY
+              : uWS::OpCode::TEXT
+          );
+        });
+        broadcast = [uiGroup](const mMatter &type, string msg) {
+          msg.insert(msg.begin(), (char)type);
+          msg.insert(msg.begin(), (char)mPortal::Kiss);
+          uiGroup->broadcast(msg.data(), msg.length(), uWS::OpCode::TEXT);
+        };
       };
       void waitTime() {
         if (args.headless) return;
@@ -113,11 +146,19 @@ namespace K {
         if (butterfly.is_array() and butterfly.size())
           toggleSettings = butterfly.at(0);
       };
+      inline static bool delayed(const mMatter &type) {
+        return type == mMatter::FairValue
+          or type == mMatter::OrderStatusReports
+          or type == mMatter::QuoteStatus
+          or type == mMatter::Position
+          or type == mMatter::TargetBasePosition
+          or type == mMatter::EWMAChart;
+      };
       inline void onConnection() {
-        send = send_somewhere;
+        if (!connections++) send = send_somewhere;
       };
       inline void onDisconnection() {
-        send = send_nowhere;
+        if (!--connections) send = send_nowhere;
       };
       inline string onHttpRequest(const string &path, const bool &get, const string &auth, const string &addr) {
         string document,
@@ -137,9 +178,14 @@ namespace K {
           document = "HTTP/1.1 200 OK\r\nConnection: keep-alive\r\nAccept-Ranges: bytes\r\nVary: Accept-Encoding\r\nCache-Control: public, max-age=0\r\n";
           const string leaf = path.substr(path.find_last_of('.')+1);
           if (leaf == "/") {
-            screen.log("UI", "authorization success from", address);
             document += "Content-Type: text/html; charset=UTF-8\r\n";
-            content = string(&_www_html_index, _www_html_index_len);
+            if (!args.maxAdmins or connections < args.maxAdmins) {
+              screen.log("UI", "authorization success from", address);
+              content = string(&_www_html_index, _www_html_index_len);
+            } else {
+              screen.log("UI", "--client-limit was reached by", address);
+              content = "Thank you! but our princess is already in this castle!<br/>Refresh the page anytime to retry.";
+            }
           } else if (leaf == "js") {
             document += "Content-Type: application/javascript; charset=UTF-8\r\nContent-Encoding: gzip\r\n";
             content = string(&_www_js_bundle, _www_js_bundle_len);
@@ -195,19 +241,11 @@ namespace K {
         }
         return response;
       };
-      function<void(const mMatter&, string)> broadcast;
-      void broadcastQueue() {
+      function<void(const mMatter &type, string msg)> broadcast;
+      inline void broadcastQueue() {
         for (map<mMatter, string>::value_type &it : queue)
           broadcast(it.first, it.second);
         queue.clear();
-      };
-      inline static bool delayed(const mMatter &type) {
-        return type == mMatter::FairValue
-          or type == mMatter::OrderStatusReports
-          or type == mMatter::QuoteStatus
-          or type == mMatter::Position
-          or type == mMatter::TargetBasePosition
-          or type == mMatter::EWMAChart;
       };
       void (*timer)(uS::Timer*) = [](uS::Timer *tClient) {
         ((UI*)tClient->getData())->timer_60s_or_Xs();
@@ -221,7 +259,12 @@ namespace K {
         send(mMatter::ApplicationState, serverState());
         orders_60s = 0;
       };
-      unsigned int memorySize() {
+      inline static string cleanAddress(string addr) {
+        if (addr.length() > 7 and addr.substr(0, 7) == "::ffff:") addr = addr.substr(7);
+        if (addr.length() < 7) addr.clear();
+        return addr;
+      };
+      inline unsigned int memorySize() {
         string ps = FN::output(string("ps -p") + to_string(::getpid()) + " -orss | tail -n1");
         ps.erase(remove(ps.begin(), ps.end(), ' '), ps.end());
         if (ps.empty()) ps = "0";
