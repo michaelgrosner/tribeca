@@ -43,9 +43,9 @@ namespace K {
         sync_trades = !gw->async_trades();
         sync_orders = !gw->async_orders();
         if (!sync_levels) gwT_countdown = 1;
-        ((EV*)events)->tServer->setData(this);
-        ((EV*)events)->tServer->start([](uS::Timer *tServer) {
-          ((GW*)tServer->getData())->timer_1s();
+        ((EV*)events)->timer->setData(this);
+        ((EV*)events)->timer->start([](uS::Timer *timer) {
+          ((GW*)timer->getData())->timer_1s();
         }, 0, 1e+3);
       };
       void waitUser() {                                             _debugEvent_
@@ -110,14 +110,22 @@ namespace K {
         if (gwT_countdown and gwT_countdown-- == 1)
           gw->hub->connect(gw->ws, nullptr, {}, 5e+3, gw->gwGroup);
         else ((QE*)engine)->timer_1s();
-        if (sync_orders and !(gwT_5m % 2))  ((EV*)events)->async(gw->orders);
-        if (sync_levels and !(gwT_5m % 3))  ((EV*)events)->async(gw->levels);
+        if (sync_orders
+          and !(gwT_5m % 2))                ((EV*)events)->async(gw->orders);
+        if (sync_levels
+          and !(gwT_5m % 3))                ((EV*)events)->async(gw->levels);
         if (FN::trueOnce(&gw->refreshWallet)
           or !(gwT_5m % 15))                ((EV*)events)->async(gw->wallet);
-        if (sync_trades and !(gwT_5m % 60)) ((EV*)events)->async(gw->trades);
-        if (++gwT_5m == 300) {
-          gwT_5m = 0;
+        if (!(gwT_5m % 60)) {
+          if (sync_trades)                  ((EV*)events)->async(gw->trades);
+                                            ((UI*)client)->timer_60s();
+        }
+        if (qp.delayUI
+          and !(gwT_5m % qp.delayUI))       ((UI*)client)->timer_Xs();
+        if (!(++gwT_5m % 300)) {
           if (qp.cancelOrdersAuto)          ((EV*)events)->async(gw->cancelAll);
+          if (gwT_5m == 300 * (qp.delayUI?:1))
+            gwT_5m = 0;
         }
       };
       inline void stunnel(bool reboot = false) {

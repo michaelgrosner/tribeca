@@ -302,10 +302,10 @@ namespace K {
         else if (k->baseValue and k->quoteValue and profitT_21s + 21e+3 < now) {
           profitT_21s = now;
           mProfit profit(k->baseValue, k->quoteValue, now);
-          ((DB*)memory)->insert(mMatter::Position, profit, false, "NULL", now - (qp.profitHourInterval * 36e+5));
+          ((DB*)memory)->insert(mMatter::Position, profit, false, "NULL", now - (qp.profitHourInterval * 3600e+3));
           profits.push_back(profit);
           for (vector<mProfit>::iterator it = profits.begin(); it != profits.end();)
-            if (it->time + (qp.profitHourInterval * 36e+5) > now) ++it;
+            if (it->time + (qp.profitHourInterval * 3600e+3) > now) ++it;
             else it = profits.erase(it);
           k->profitBase = ((k->baseValue - profits.begin()->baseValue) / k->baseValue) * 1e+2;
           k->profitQuote = ((k->quoteValue - profits.begin()->quoteValue) / k->quoteValue) * 1e+2;

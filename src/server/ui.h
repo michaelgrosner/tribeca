@@ -18,7 +18,6 @@ namespace K {
       map<char, function<void(json*)>*> hello;
       map<char, function<void(json)>*> kisses;
       map<mMatter, string> queue;
-      mClock uiT_60s = 0;
     public:
       unsigned int orders_60s = 0;
     protected:
@@ -76,11 +75,6 @@ namespace K {
           uiGroup->broadcast(msg.data(), msg.length(), uWS::OpCode::TEXT);
         };
       };
-      void waitTime() {
-        if (args.headless) return;
-        ((EV*)events)->tClient->setData(this);
-        ((EV*)events)->tClient->start(timer, 0, 0);
-      };
       void waitUser() {
         if (args.headless) {
           welcome = [](mMatter type, function<void(json*)> *fn) {};
@@ -108,17 +102,24 @@ namespace K {
             + (char)type + "\" clickme event"));
         kisses[(char)type] = fn;
       };
-      function<void(unsigned int)> delayme = [&](unsigned int delayUI) {
-        realtimeClient = !delayUI;
-        ((EV*)events)->tClient->stop();
-        ((EV*)events)->tClient->start(timer, 0, realtimeClient ? 6e+4 : delayUI * 1e+3);
-      };
       function<void(mMatter, json)> send_nowhere = [](mMatter type, json msg) {};
       function<void(mMatter, json)> send = send_nowhere;
       function<void(mMatter, json)> send_somewhere = [&](mMatter type, json msg) {
         if (realtimeClient or !delayed(type))
           broadcast(type, msg.dump());
         else queue[type] = msg.dump();
+      };
+      function<void(unsigned int)> delayme = [&](unsigned int delayUI) {
+        realtimeClient = !delayUI;
+      };
+      inline void timer_Xs() {
+        for (map<mMatter, string>::value_type &it : queue)
+          broadcast(it.first, it.second);
+        queue.clear();
+      };
+      inline void timer_60s() {
+        send(mMatter::ApplicationState, serverState());
+        orders_60s = 0;
       };
     private:
       function<void(json*)> helloServer = [&](json *welcome) {
@@ -241,24 +242,7 @@ namespace K {
         }
         return "";
       };
-      function<void(const mMatter &type, string msg)> broadcast;
-      inline void broadcastQueue() {
-        for (map<mMatter, string>::value_type &it : queue)
-          broadcast(it.first, it.second);
-        queue.clear();
-      };
-      void (*timer)(uS::Timer*) = [](uS::Timer *tClient) {
-        ((UI*)tClient->getData())->timer_60s_or_Xs();
-      };
-      inline void timer_60s_or_Xs() {                               _debugEvent_
-        if (!realtimeClient) {
-          broadcastQueue();
-          if (uiT_60s + 6e+4 > _Tstamp_) return;
-          else uiT_60s = _Tstamp_;
-        }
-        send(mMatter::ApplicationState, serverState());
-        orders_60s = 0;
-      };
+      function<void(const mMatter&, string)> broadcast;
       static string cleanAddress(string addr) {
         if (addr.length() > 7 and addr.substr(0, 7) == "::ffff:") addr = addr.substr(7);
         if (addr.length() < 7) addr.clear();

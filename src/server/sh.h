@@ -20,8 +20,7 @@ namespace K {
           baseHeld = 0,
           quoteAmount = 0,
           quoteHeld = 0;
-      string title = "?",
-             base = "?",
+      string base = "?",
              quote = "?",
              baseValue = "?",
              quoteValue = "?",

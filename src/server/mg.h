@@ -65,17 +65,17 @@ namespace K {
         json k = ((DB*)memory)->load(mMatter::EWMAChart);
         if (!k.empty()) {
           k = k.at(0);
-          if (!mgEwmaVL and k.value("time", (mClock)0) + qp.veryLongEwmaPeriods * 6e+4 > _Tstamp_)
+          if (!mgEwmaVL and k.value("time", (mClock)0) + qp.veryLongEwmaPeriods * 60e+3 > _Tstamp_)
             mgEwmaVL = k.value("ewmaVeryLong", 0.0);
-          if (!mgEwmaL and k.value("time", (mClock)0) + qp.longEwmaPeriods * 6e+4 > _Tstamp_)
+          if (!mgEwmaL and k.value("time", (mClock)0) + qp.longEwmaPeriods * 60e+3 > _Tstamp_)
             mgEwmaL = k.value("ewmaLong", 0.0);
-          if (!mgEwmaM and k.value("time", (mClock)0) + qp.mediumEwmaPeriods * 6e+4 > _Tstamp_)
+          if (!mgEwmaM and k.value("time", (mClock)0) + qp.mediumEwmaPeriods * 60e+3 > _Tstamp_)
             mgEwmaM = k.value("ewmaMedium", 0.0);
-          if (!mgEwmaS and k.value("time", (mClock)0) + qp.shortEwmaPeriods * 6e+4 > _Tstamp_)
+          if (!mgEwmaS and k.value("time", (mClock)0) + qp.shortEwmaPeriods * 60e+3 > _Tstamp_)
             mgEwmaS = k.value("ewmaShort", 0.0);
-          if (!mgEwmaXS and k.value("time", (mClock)0) + qp.extraShortEwmaPeriods * 6e+4 > _Tstamp_)
+          if (!mgEwmaXS and k.value("time", (mClock)0) + qp.extraShortEwmaPeriods * 60e+3 > _Tstamp_)
             mgEwmaXS = k.value("ewmaExtraShort", 0.0);
-          if (!mgEwmaU and k.value("time", (mClock)0) + qp.ultraShortEwmaPeriods * 6e+4 > _Tstamp_)
+          if (!mgEwmaU and k.value("time", (mClock)0) + qp.ultraShortEwmaPeriods * 60e+3 > _Tstamp_)
             mgEwmaU = k.value("ewmaUltraShort", 0.0);
         }
         if (mgEwmaVL) screen.log(args.ewmaVeryLong ? "ARG" : "DB", string("loaded ") + to_string(mgEwmaVL) + " EWMA VeryLong");
@@ -85,7 +85,7 @@ namespace K {
         if (mgEwmaXS) screen.log(args.ewmaXShort ? "ARG" : "DB", string("loaded ") + to_string(mgEwmaXS) + " EWMA ExtraShort");
         if (mgEwmaU)  screen.log(args.ewmaUShort ? "ARG" : "DB", string("loaded ") + to_string(mgEwmaU) + " EWMA UltraShort");
         for (json &it : ((DB*)memory)->load(mMatter::MarketDataLongTerm))
-          if (it.value("time", (mClock)0) + 3456e+5 > _Tstamp_ and it.value("fv", 0.0))
+          if (it.value("time", (mClock)0) + 345600e+3 > _Tstamp_ and it.value("fv", 0.0))
             fairValue96h.push_back(it.value("fv", 0.0));
         screen.log("DB", string("loaded ") + to_string(fairValue96h.size()) + " historical FairValues");
       };
@@ -237,7 +237,7 @@ namespace K {
         ((DB*)memory)->insert(mMatter::MarketDataLongTerm, {
           {"fv", fairValue},
           {"time", _Tstamp_},
-        }, false, "NULL", _Tstamp_ - 3456e+5);
+        }, false, "NULL", _Tstamp_ - 345600e+3);
       };
       void calcStatsEwmaProtection() {
         calcEwma(&mgEwmaP, qp.protectionEwmaPeriods, fairValue);

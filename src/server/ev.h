@@ -11,8 +11,7 @@ namespace K  {
       uS::Async *aEngine = nullptr;
       vector<function<void()>> slowFn;
     public:
-      uS::Timer *tServer = nullptr,
-                *tClient = nullptr;
+      uS::Timer *timer = nullptr;
     protected:
       void load() {
         endingFn.push_back(&happyEnding);
@@ -37,8 +36,7 @@ namespace K  {
         gw->gwGroup = hub->createGroup<uWS::CLIENT>();
       };
       void waitTime() {
-        tServer = new uS::Timer(hub->getLoop());
-        tClient = new uS::Timer(hub->getLoop());
+        timer = new uS::Timer(hub->getLoop());
       };
       void waitUser() {
         if (args.headless) return;
@@ -54,8 +52,7 @@ namespace K  {
         hub->run();
       };
       void stop(const function<void()> &gwCancelAll) {
-        tServer->stop();
-        tClient->stop();
+        timer->stop();
         gw->close();
         gw->gwGroup->close();
         gwCancelAll();
@@ -74,8 +71,12 @@ namespace K  {
             0, uiGroup
           )
         ) screen.protocol += 'S';
-        else if (!hub->listen(args.inet, args.port, nullptr, 0, uiGroup))
-          exit(hint());
+        else if (!hub->listen(args.inet, args.port, nullptr, 0, uiGroup)) {
+          const string netstat = FN::output(string("netstat -anp 2>/dev/null | grep ") + to_string(args.port));
+          exit(screen.error("UI", "Unable to listen to UI port number " + to_string(args.port) + ", "
+            + (netstat.empty() ? "try another network interface" : "seems already in use by:\n" + netstat)
+          ));
+        }
         screen.logUI();
         return uiGroup;
       };
@@ -118,12 +119,6 @@ namespace K  {
             screen.logWar(name, reason);
           else screen.log(name, reason);
         });
-      };
-      inline int hint() {
-        const string netstat = FN::output(string("netstat -anp 2>/dev/null | grep ") + to_string(args.port));
-        return screen.error("UI", "Unable to listen to UI port number " + to_string(args.port) + ", "
-          + (netstat.empty() ? "try another network interface" : "seems already in use by:\n" + netstat)
-        );
       };
       static void halt(const int code) {
         for (function<void()>* &it : endingFn) (*it)();
