@@ -16,8 +16,6 @@ namespace K {
       map<char, function<void(json*)>*> hello;
       map<char, function<void(json)>*> kisses;
       map<mMatter, string> queue;
-    public:
-      unsigned int orders_60s = 0;
     protected:
       void load() {
         if (args.headless
@@ -28,8 +26,8 @@ namespace K {
       };
       void waitData() {
         if (args.headless) return;
-        auto ui = &((EV*)events)->listen()->getDefaultGroup<uWS::SERVER>();
-        ui->onConnection([&](uWS::WebSocket<uWS::SERVER> *webSocket, uWS::HttpRequest req) {
+        auto client = &((EV*)events)->listen()->getDefaultGroup<uWS::SERVER>();
+        client->onConnection([&](uWS::WebSocket<uWS::SERVER> *webSocket, uWS::HttpRequest req) {
           onConnection();
           const string addr = cleanAddress(webSocket->getAddress().address);
           screen.logUIsess(connections, addr);
@@ -38,11 +36,11 @@ namespace K {
             webSocket->close();
           }
         });
-        ui->onDisconnection([&](uWS::WebSocket<uWS::SERVER> *webSocket, int code, char *message, size_t length) {
+        client->onDisconnection([&](uWS::WebSocket<uWS::SERVER> *webSocket, int code, char *message, size_t length) {
           onDisconnection();
           screen.logUIsess(connections, cleanAddress(webSocket->getAddress().address));
         });
-        ui->onHttpRequest([&](uWS::HttpResponse *res, uWS::HttpRequest req, char *data, size_t length, size_t remainingBytes) {
+        client->onHttpRequest([&](uWS::HttpResponse *res, uWS::HttpRequest req, char *data, size_t length, size_t remainingBytes) {
           const string response = onHttpRequest(
             req.getUrl().toString(),
             req.getMethod() == uWS::HttpMethod::METHOD_GET,
@@ -51,7 +49,7 @@ namespace K {
           );
           if (!response.empty()) res->write(response.data(), response.length());
         });
-        ui->onMessage([&](uWS::WebSocket<uWS::SERVER> *webSocket, const char *message, size_t length, uWS::OpCode opCode) {
+        client->onMessage([&](uWS::WebSocket<uWS::SERVER> *webSocket, const char *message, size_t length, uWS::OpCode opCode) {
           if (length < 2) return;
           const string response = onMessage(
             string(message, length),
@@ -67,51 +65,46 @@ namespace K {
                 : uWS::OpCode::TEXT
             );
         });
-        broadcast = [ui](const mMatter &type, string msg) {
+        broadcast = [client](const mMatter &type, string msg) {
           msg.insert(msg.begin(), (char)type);
           msg.insert(msg.begin(), (char)mPortal::Kiss);
-          ui->broadcast(msg.data(), msg.length(), uWS::OpCode::TEXT);
+          client->broadcast(msg.data(), msg.length(), uWS::OpCode::TEXT);
         };
       };
       void waitUser() {
         if (args.headless) {
-          welcome = [](mMatter type, function<void(json*)> *fn) {};
-          clickme = [](mMatter type, function<void(json)> *fn) {};
+          client.welcome = [](mMatter type, function<void(json*)> *fn) {};
+          client.clickme = [](mMatter type, function<void(json)> *fn) {};
         } else {
-          welcome(mMatter::ApplicationState, &helloServer);
-          welcome(mMatter::ProductAdvertisement, &helloProduct);
-          welcome(mMatter::Notepad, &helloNotes);
-          clickme(mMatter::Notepad, &kissNotes);
+          client.welcome = [&](mMatter type, function<void(json*)> *fn) {
+            if (hello.find((char)type) != hello.end())
+              exit(screen.error("UI", string("Use only a single unique message handler for \"")
+                + (char)type + "\" welcome event"));
+            hello[(char)type] = fn;
+          };
+          client.clickme = [&](mMatter type, function<void(json)> *fn) {
+            if (kisses.find((char)type) != kisses.end())
+              exit(screen.error("UI", string("Use only a single unique message handler for \"")
+                + (char)type + "\" clickme event"));
+            kisses[(char)type] = fn;
+          };
+          client.welcome(mMatter::ApplicationState, &helloServer);
+          client.welcome(mMatter::ProductAdvertisement, &helloProduct);
+          client.welcome(mMatter::Notepad, &helloNotes);
+          client.clickme(mMatter::Notepad, &kissNotes);
         }
       };
-    public:
-      function<void(mMatter, function<void(json*)>*)> welcome = [&](mMatter type, function<void(json*)> *fn) {
-        if (hello.find((char)type) != hello.end())
-          exit(screen.error("UI", string("Use only a single unique message handler for \"")
-            + (char)type + "\" welcome event"));
-        hello[(char)type] = fn;
-      };
-      function<void(mMatter, function<void(json)>*)> clickme = [&](mMatter type, function<void(json)> *fn) {
-        if (kisses.find((char)type) != kisses.end())
-          exit(screen.error("UI", string("Use only a single unique message handler for \"")
-            + (char)type + "\" clickme event"));
-        kisses[(char)type] = fn;
-      };
-      function<void(mMatter, json)> send_nowhere = [](mMatter type, json msg) {};
-      function<void(mMatter, json)> send = send_nowhere;
-      function<void(mMatter, json)> send_somewhere = [&](mMatter type, json msg) {
-        if (!qp.delayUI or !delayed(type))
-          broadcast(type, msg.dump());
-        else queue[type] = msg.dump();
-      };
-      inline void timer_Xs() {
-        for (map<mMatter, string>::value_type &it : queue)
-          broadcast(it.first, it.second);
-        queue.clear();
-      };
-      inline void timer_60s() {
-        send(mMatter::ApplicationState, serverState());
-        orders_60s = 0;
+      void run() {
+        client.send = send_nowhere;
+        client.timer_60s = [&]() {
+          client.send(mMatter::ApplicationState, serverState());
+          client.orders_60s = 0;
+        };
+        client.timer_Xs = [&]() {
+          for (map<mMatter, string>::value_type &it : queue)
+            broadcast(it.first, it.second);
+          queue.clear();
+        };
       };
     private:
       function<void(json*)> helloServer = [&](json *welcome) {
@@ -134,6 +127,12 @@ namespace K {
         if (butterfly.is_array() and butterfly.size())
           notepad = butterfly.at(0);
       };
+      function<void(mMatter, json)> send_nowhere = [](mMatter type, json msg) {};
+      function<void(mMatter, json)> send_somewhere = [&](mMatter type, json msg) {
+        if (!qp.delayUI or !delayed(type))
+          broadcast(type, msg.dump());
+        else queue[type] = msg.dump();
+      };
       inline static bool delayed(const mMatter &type) {
         return type == mMatter::FairValue
           or type == mMatter::OrderStatusReports
@@ -143,10 +142,10 @@ namespace K {
           or type == mMatter::EWMAChart;
       };
       inline void onConnection() {
-        if (!connections++) send = send_somewhere;
+        if (!connections++) client.send = send_somewhere;
       };
       inline void onDisconnection() {
-        if (!--connections) send = send_nowhere;
+        if (!--connections) client.send = send_nowhere;
       };
       inline string onHttpRequest(const string &path, const bool &get, const string &auth, const string &addr) {
         string document,
@@ -242,7 +241,7 @@ namespace K {
       json serverState() {
         return {
           {"memory", memorySize()},
-          {"freq", orders_60s},
+          {"freq", client.orders_60s},
           {"theme", args.ignoreMoon + args.ignoreSun},
           {"dbsize", ((DB*)memory)->size()},
           {"a", gw->A()}

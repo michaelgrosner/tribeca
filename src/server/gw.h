@@ -49,8 +49,8 @@ namespace K {
         }, 0, 1e+3);
       };
       void waitUser() {                                             _debugEvent_
-        ((UI*)client)->welcome(mMatter::Connectivity, &hello);
-        ((UI*)client)->clickme(mMatter::Connectivity, &kiss);
+        client.welcome(mMatter::Connectivity, &hello);
+        client.clickme(mMatter::Connectivity, &kiss);
         screen.pressme(mHotkey::ESC, &hotkiss);
       };
       void run() {                                                  _debugEvent_
@@ -98,7 +98,7 @@ namespace K {
           gwConnected = updated;
           screen.log(string("GW ") + gw->name, "Quoting state changed to", string(!gwConnected?"DIS":"") + "CONNECTED");
         }
-        ((UI*)client)->send(mMatter::Connectivity, semaphore());
+        client.send(mMatter::Connectivity, semaphore());
         screen.refresh();
       };
       json semaphore() {
@@ -119,10 +119,10 @@ namespace K {
           or !(gwT_5m % 15))                ((EV*)events)->async(gw->wallet);
         if (!(gwT_5m % 60)) {
           if (sync_trades)                  ((EV*)events)->async(gw->trades);
-                                            ((UI*)client)->timer_60s();
+                                            client.timer_60s();
         }
         if (qp.delayUI
-          and !(gwT_5m % qp.delayUI))       ((UI*)client)->timer_Xs();
+          and !(gwT_5m % qp.delayUI))       client.timer_Xs();
         if (!(++gwT_5m % 300)) {
           if (qp.cancelOrdersAuto)          ((EV*)events)->async(gw->cancelAll);
           if (gwT_5m >= 300 * (qp.delayUI?:1))

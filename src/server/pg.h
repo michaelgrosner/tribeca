@@ -41,9 +41,9 @@ namespace K {
         ((OG*)broker)->calcSafetyAfterTrade = &calcSafetyAfterTrade;
       };
       void waitUser() {
-        ((UI*)client)->welcome(mMatter::Position, &helloPosition);
-        ((UI*)client)->welcome(mMatter::TradeSafetyValue, &helloSafety);
-        ((UI*)client)->welcome(mMatter::TargetBasePosition, &helloTargetBasePos);
+        client.welcome(mMatter::Position, &helloPosition);
+        client.welcome(mMatter::TradeSafetyValue, &helloSafety);
+        client.welcome(mMatter::TargetBasePosition, &helloTargetBasePos);
       };
     public:
       void calcSafety() {
@@ -53,7 +53,7 @@ namespace K {
         if (prev.combined != safety.combined
           or prev.buyPing != safety.buyPing
           or prev.sellPing != safety.sellPing
-        ) ((UI*)client)->send(mMatter::TradeSafetyValue, safety);
+        ) client.send(mMatter::TradeSafetyValue, safety);
       };
       function<void()> calcTargetBasePos = [&]() {                  _debugEvent_
         if (position.empty()) return screen.logWar("PG", "Unable to calculate TBP, missing wallet data");
@@ -68,7 +68,7 @@ namespace K {
         sideAPR_ = sideAPR;
         calcPDiv(baseValue);
         json k = {{"tbp", targetBasePosition}, {"sideAPR", sideAPR}, {"pDiv", positionDivergence }};
-        ((UI*)client)->send(mMatter::TargetBasePosition, k);
+        client.send(mMatter::TargetBasePosition, k);
         ((DB*)memory)->insert(mMatter::TargetBasePosition, k);
         if (!args.debugWallet) return;
         screen.log("PG", string("TBP: ")
@@ -250,7 +250,7 @@ namespace K {
         }
         position = pos;
         if (!eq) calcTargetBasePos();
-        ((UI*)client)->send(mMatter::Position, pos);
+        client.send(mMatter::Position, pos);
         screen.log(pos);
       };
       function<void(const mSide&)> calcWalletAfterOrder = [&](const mSide &side) {

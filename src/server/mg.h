@@ -98,10 +98,10 @@ namespace K {
         };
       };
       void waitUser() {
-        ((UI*)client)->welcome(mMatter::MarketData, &helloLevels);
-        ((UI*)client)->welcome(mMatter::MarketTrade, &helloTrade);
-        ((UI*)client)->welcome(mMatter::FairValue, &helloFair);
-        ((UI*)client)->welcome(mMatter::EWMAChart, &helloEwma);
+        client.welcome(mMatter::MarketData, &helloLevels);
+        client.welcome(mMatter::MarketTrade, &helloTrade);
+        client.welcome(mMatter::FairValue, &helloFair);
+        client.welcome(mMatter::EWMAChart, &helloEwma);
       };
     public:
       void calcStats() {
@@ -125,7 +125,7 @@ namespace K {
           : (topAskPrice * topBidSize + topBidPrice * topAskSize) / (topAskSize + topBidSize);
         if (!fairValue or (fairValue_ and abs(fairValue - fairValue_) < gw->minTick)) return;
         (*calcWallet)();
-        ((UI*)client)->send(mMatter::FairValue, {{"price", fairValue}});
+        client.send(mMatter::FairValue, {{"price", fairValue}});
         screen.log(fairValue);
         averageWidth = ((averageWidth * averageCount) + topAskPrice - topBidPrice);
         averageWidth /= ++averageCount;
@@ -184,7 +184,7 @@ namespace K {
         k.pair = mPair(gw->base, gw->quote);
         k.time = _Tstamp_;
         trades.push_back(k);
-        ((UI*)client)->send(mMatter::MarketTrade, k);
+        client.send(mMatter::MarketTrade, k);
       };
       void levelUp(mLevels k) {
         levels = k;
@@ -195,7 +195,7 @@ namespace K {
         if (levelsDiff.empty() or k.empty()
           or mgT_369ms + max(369e+0, qp.delayUI * 1e+3) > _Tstamp_
         ) return;
-        ((UI*)client)->send(mMatter::MarketData, levelsDiff.diff(k));
+        client.send(mMatter::MarketData, levelsDiff.diff(k));
         mgT_369ms = _Tstamp_;
       };
       void filter(vector<mLevel> *k, map<mPrice, mAmount> o) {
@@ -224,7 +224,7 @@ namespace K {
         if(mgEwmaXS and mgEwmaU) mgEwmaTrendDiff = ((mgEwmaU * 100) / mgEwmaXS) - 100;
         calcTargetPos();
         (*calcTargetBasePos)();
-        ((UI*)client)->send(mMatter::EWMAChart, chartStats());
+        client.send(mMatter::EWMAChart, chartStats());
         ((DB*)memory)->insert(mMatter::EWMAChart, {
           {"ewmaVeryLong", mgEwmaVL},
           {"ewmaLong", mgEwmaL},

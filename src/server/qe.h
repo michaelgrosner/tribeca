@@ -28,7 +28,7 @@ namespace K {
         qp.calcQuoteAfterSavedParams = &calcQuoteAfterSavedParams;
       };
       void waitUser() {
-        ((UI*)client)->welcome(mMatter::QuoteStatus, &hello);
+        client.welcome(mMatter::QuoteStatus, &hello);
       };
       void run() {
         if (args.debugQuotes) return;
@@ -99,7 +99,7 @@ namespace K {
         bool k = diffCounts(&quotesInMemoryNew, &quotesInMemoryWorking, &quotesInMemoryDone);
         if (!diffStatus() and !k) return;
         status = mQuoteStatus(bidStatus, askStatus, quotesInMemoryNew, quotesInMemoryWorking, quotesInMemoryDone);
-        ((UI*)client)->send(mMatter::QuoteStatus, status);
+        client.send(mMatter::QuoteStatus, status);
       };
       inline bool diffCounts(unsigned int *qNew, unsigned int *qWorking, unsigned int *qDone) {
         ((MG*)market)->filterBidOrders.clear();

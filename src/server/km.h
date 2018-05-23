@@ -670,6 +670,14 @@ namespace K {
             whitelist     = "";
     const char *inet = nullptr;
   } args;
+  static struct mClient {
+    function<void(mMatter, function<void(json*)>*)> welcome;
+    function<void(mMatter, function<void(json)>*)> clickme;
+    function<void(mMatter, json)> send;
+    function<void()> timer_Xs;
+    function<void()> timer_60s;
+    unsigned int orders_60s = 0;
+  } client;
   static class Gw {
     public:
       virtual string A() = 0;
@@ -754,7 +762,6 @@ namespace K {
     protected:
       Klass *events = nullptr,
             *memory = nullptr,
-            *client = nullptr,
             *broker = nullptr,
             *market = nullptr,
             *wallet = nullptr,
@@ -774,7 +781,6 @@ namespace K {
       };
       inline void evLink(Klass &k) { events = &k; };
       inline void dbLink(Klass &k) { memory = &k; };
-      inline void uiLink(Klass &k) { client = &k; };
       inline void ogLink(Klass &k) { broker = &k; };
       inline void mgLink(Klass &k) { market = &k; };
       inline void pgLink(Klass &k) { wallet = &k; };
@@ -787,7 +793,6 @@ namespace K {
       ) {
                        DB.evLink(EV); UI.evLink(EV);                OG.evLink(EV); MG.evLink(EV); PG.evLink(EV); QE.evLink(EV); GW.evLink(EV);
                                       UI.dbLink(DB); QP.dbLink(DB); OG.dbLink(DB); MG.dbLink(DB); PG.dbLink(DB);
-                                                     QP.uiLink(UI); OG.uiLink(UI); MG.uiLink(UI); PG.uiLink(UI); QE.uiLink(UI); GW.uiLink(UI);
                                                                                    MG.ogLink(OG); PG.ogLink(OG); QE.ogLink(OG);
                                                                                                   PG.mgLink(MG); QE.mgLink(MG);
                                                                                                                  QE.pgLink(PG);

@@ -11,8 +11,8 @@ namespace K {
         screen.log("DB", "loaded Quoting Parameters OK");
       };
       void waitUser() {
-        ((UI*)client)->welcome(mMatter::QuotingParameters, &hello);
-        ((UI*)client)->clickme(mMatter::QuotingParameters, &kiss);
+        client.welcome(mMatter::QuotingParameters, &hello);
+        client.clickme(mMatter::QuotingParameters, &kiss);
       };
     private:
       function<void(json*)> hello = [&](json *welcome) {
@@ -22,7 +22,7 @@ namespace K {
         mQuotingParams prev(qp);
         (qp = butterfly).diff(prev);
         (*qp.calcQuoteAfterSavedParams)();
-        ((UI*)client)->send(mMatter::QuotingParameters, qp);
+        client.send(mMatter::QuotingParameters, qp);
         ((DB*)memory)->insert(mMatter::QuotingParameters, qp);
       };
   };
