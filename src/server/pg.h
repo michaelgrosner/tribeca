@@ -1,10 +1,6 @@
 #ifndef K_PG_H_
 #define K_PG_H_
 
-#ifndef M_PI_2
-#define M_PI_2 1.5707963267948965579989817342720925807952880859375
-#endif
-
 namespace K {
   class PG: public Klass {
     private:

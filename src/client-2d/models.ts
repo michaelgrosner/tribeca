@@ -16,7 +16,6 @@ export var Topics = {
   ProductAdvertisement: 'j',
   ApplicationState: 'k',
   Notepad: 'l',
-  ToggleSettings: 'm',
   Position: 'n',
   SubmitNewOrder: 'p',
   CancelOrder: 'q',

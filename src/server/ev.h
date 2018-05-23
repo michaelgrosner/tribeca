@@ -33,7 +33,7 @@ namespace K  {
         aEngine = new uS::Async(hub->getLoop());
         aEngine->setData(this);
         aEngine->start(asyncLoop);
-        gw->gwGroup = hub->createGroup<uWS::CLIENT>();
+        hub->createGroup<uWS::CLIENT>();
       };
       void waitTime() {
         timer = new uS::Timer(hub->getLoop());
@@ -54,13 +54,15 @@ namespace K  {
       void stop(const function<void()> &gwCancelAll) {
         timer->stop();
         gw->close();
-        gw->gwGroup->close();
+        hub->getDefaultGroup<uWS::CLIENT>().close();
         gwCancelAll();
         asyncLoop(aEngine);
         hub->getDefaultGroup<uWS::SERVER>().close();
       };
-      inline uWS::Group<uWS::SERVER>* listen() {
-        uWS::Group<uWS::SERVER> *uiGroup = &hub->getDefaultGroup<uWS::SERVER>();
+      inline void connect() {
+        hub->connect(gw->ws, nullptr, {}, 5e+3, &hub->getDefaultGroup<uWS::CLIENT>());
+      };
+      inline uWS::Hub* listen() {
         if (!args.withoutSSL
           and (access("etc/sslcert/server.crt", F_OK) != -1)
           and (access("etc/sslcert/server.key", F_OK) != -1)
@@ -68,17 +70,17 @@ namespace K  {
             args.inet, args.port,
             uS::TLS::createContext("etc/sslcert/server.crt",
                                    "etc/sslcert/server.key", ""),
-            0, uiGroup
+            0, &hub->getDefaultGroup<uWS::SERVER>()
           )
         ) screen.protocol += 'S';
-        else if (!hub->listen(args.inet, args.port, nullptr, 0, uiGroup)) {
+        else if (!hub->listen(args.inet, args.port, nullptr, 0, &hub->getDefaultGroup<uWS::SERVER>())) {
           const string netstat = FN::output(string("netstat -anp 2>/dev/null | grep ") + to_string(args.port));
           exit(screen.error("UI", "Unable to listen to UI port number " + to_string(args.port) + ", "
             + (netstat.empty() ? "try another network interface" : "seems already in use by:\n" + netstat)
           ));
         }
         screen.logUI();
-        return uiGroup;
+        return hub;
       };
       void deferred(const function<void()> &fn) {
         slowFn.push_back(fn);

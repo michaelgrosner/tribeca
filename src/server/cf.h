@@ -100,8 +100,7 @@ namespace K {
               << screen.stamp() << RWHITE << "    --naked               - do not display CLI, print output to stdout instead." << '\n'
               << screen.stamp() << RWHITE << "    --headless            - do not listen for UI connections," << '\n'
               << screen.stamp() << RWHITE << "                            all other UI related arguments will be ignored." << '\n'
-              << screen.stamp() << RWHITE << "-C, --client-limit=NUMBER - set NUMBER of maximum concurrent UI connections," << '\n'
-              << screen.stamp() << RWHITE << "                            minimum NUMBER is '1', otherwise use '--headless'." << '\n'
+              << screen.stamp() << RWHITE << "-C, --client-limit=NUMBER - set NUMBER of maximum concurrent UI connections." << '\n'
               << screen.stamp() << RWHITE << "    --without-ssl         - do not use HTTPS for UI connections (use HTTP only)." << '\n'
               << screen.stamp() << RWHITE << "-L, --whitelist=IP        - set IP or csv of IPs to allow UI connections," << '\n'
               << screen.stamp() << RWHITE << "                            alien IPs will get a zip-bomb instead." << '\n'
@@ -244,7 +243,7 @@ namespace K {
         if (args.pass == "NULL") args.pass.clear();
         if (args.ignoreSun and args.ignoreMoon) args.ignoreMoon = 0;
         if (args.headless) args.port = 0;
-        else if (!args.port) args.headless = 1;
+        else if (!args.port or !args.maxAdmins) args.headless = 1;
       };
   };
 }

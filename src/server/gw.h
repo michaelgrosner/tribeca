@@ -108,9 +108,9 @@ namespace K {
         };
       };
       inline void timer_1s() {                                      _debugEvent_
-        if (gwT_countdown and gwT_countdown-- == 1)
-          gw->hub->connect(gw->ws, nullptr, {}, 5e+3, gw->gwGroup);
-        else ((QE*)engine)->timer_1s();
+        if (gwT_countdown
+          and gwT_countdown-- == 1)         ((EV*)events)->connect();
+        else                                ((QE*)engine)->timer_1s();
         if (sync_orders
           and !(gwT_5m % 2))                ((EV*)events)->async(gw->orders);
         if (sync_levels

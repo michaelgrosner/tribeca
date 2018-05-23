@@ -7,6 +7,10 @@
 #define mRandId string
 #define mCoinId string
 
+#ifndef M_PI_2
+#define M_PI_2 1.5707963267948965579989817342720925807952880859375
+#endif
+
 namespace K {
   enum class mExchange: unsigned int { Null, HitBtc, OkCoin, Coinbase, Bitfinex, Ethfinex, Kraken, OkEx, Korbit, Poloniex };
   enum class mConnectivity: unsigned int { Disconnected, Connected };
@@ -30,7 +34,7 @@ namespace K {
   enum class mMatter: unsigned char {
     FairValue            = 'a', Quote                = 'b', ActiveSubscription = 'c', Connectivity       = 'd', MarketData       = 'e',
     QuotingParameters    = 'f', SafetySettings       = 'g', Product            = 'h', OrderStatusReports = 'i',
-    ProductAdvertisement = 'j', ApplicationState     = 'k', Notepad            = 'l', ToggleSettings     = 'm',
+    ProductAdvertisement = 'j', ApplicationState     = 'k', Notepad            = 'l',
     Position             = 'n',                             SubmitNewOrder     = 'p', CancelOrder        = 'q', MarketTrade      = 'r',
     Trades               = 's', ExternalValuation    = 't', QuoteStatus        = 'u', TargetBasePosition = 'v', TradeSafetyValue = 'w',
     CancelAllOrders      = 'x', CleanAllClosedTrades = 'y', CleanAllTrades     = 'z', CleanTrade         = 'A',
@@ -652,7 +656,7 @@ namespace K {
             headless      = 0,      dustybot    = 0, lifetime     = 0,
             autobot       = 0,      naked       = 0, free         = 0,
             ignoreSun     = 0,      ignoreMoon  = 0, maxLevels    = 0,
-            maxAdmins     = 0,      testChamber = 0;
+            maxAdmins     = 7,      testChamber = 0;
     mAmount maxWallet     = 0;
      mPrice ewmaUShort    = 0,      ewmaXShort  = 0, ewmaShort    = 0,
             ewmaMedium    = 0,      ewmaLong    = 0, ewmaVeryLong = 0;
@@ -669,8 +673,7 @@ namespace K {
   static class Gw {
     public:
       virtual string A() = 0;
-      uWS::Hub                *hub     = nullptr;
-      uWS::Group<uWS::CLIENT> *gwGroup = nullptr;
+      uWS::Hub *hub = nullptr;
       static Gw *config(mCoinId, mCoinId, string, int, string, string, string, string, string, string, int, int);
       function<void(const string&)> log,
                                     reconnect;

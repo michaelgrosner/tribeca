@@ -13,7 +13,6 @@ namespace K {
       int connections = 0;
       string B64auth = "",
              notepad = "";
-      bool toggleSettings = true;
       map<char, function<void(json*)>*> hello;
       map<char, function<void(json)>*> kisses;
       map<mMatter, string> queue;
@@ -29,21 +28,21 @@ namespace K {
       };
       void waitData() {
         if (args.headless) return;
-        uWS::Group<uWS::SERVER> *uiGroup = ((EV*)events)->listen();
-        uiGroup->onConnection([&](uWS::WebSocket<uWS::SERVER> *webSocket, uWS::HttpRequest req) {
+        auto ui = &((EV*)events)->listen()->getDefaultGroup<uWS::SERVER>();
+        ui->onConnection([&](uWS::WebSocket<uWS::SERVER> *webSocket, uWS::HttpRequest req) {
           onConnection();
           const string addr = cleanAddress(webSocket->getAddress().address);
           screen.logUIsess(connections, addr);
-          if (args.maxAdmins and connections > args.maxAdmins) {
-            screen.log("UI", "--client-limit reached by", addr);
+          if (connections > args.maxAdmins) {
+            screen.log("UI", "--client-limit=\"" + to_string(args.maxAdmins) + "\" reached by", addr);
             webSocket->close();
           }
         });
-        uiGroup->onDisconnection([&](uWS::WebSocket<uWS::SERVER> *webSocket, int code, char *message, size_t length) {
+        ui->onDisconnection([&](uWS::WebSocket<uWS::SERVER> *webSocket, int code, char *message, size_t length) {
           onDisconnection();
           screen.logUIsess(connections, cleanAddress(webSocket->getAddress().address));
         });
-        uiGroup->onHttpRequest([&](uWS::HttpResponse *res, uWS::HttpRequest req, char *data, size_t length, size_t remainingBytes) {
+        ui->onHttpRequest([&](uWS::HttpResponse *res, uWS::HttpRequest req, char *data, size_t length, size_t remainingBytes) {
           const string response = onHttpRequest(
             req.getUrl().toString(),
             req.getMethod() == uWS::HttpMethod::METHOD_GET,
@@ -52,7 +51,7 @@ namespace K {
           );
           if (!response.empty()) res->write(response.data(), response.length());
         });
-        uiGroup->onMessage([&](uWS::WebSocket<uWS::SERVER> *webSocket, const char *message, size_t length, uWS::OpCode opCode) {
+        ui->onMessage([&](uWS::WebSocket<uWS::SERVER> *webSocket, const char *message, size_t length, uWS::OpCode opCode) {
           if (length < 2) return;
           const string response = onMessage(
             string(message, length),
@@ -68,10 +67,10 @@ namespace K {
                 : uWS::OpCode::TEXT
             );
         });
-        broadcast = [uiGroup](const mMatter &type, string msg) {
+        broadcast = [ui](const mMatter &type, string msg) {
           msg.insert(msg.begin(), (char)type);
           msg.insert(msg.begin(), (char)mPortal::Kiss);
-          uiGroup->broadcast(msg.data(), msg.length(), uWS::OpCode::TEXT);
+          ui->broadcast(msg.data(), msg.length(), uWS::OpCode::TEXT);
         };
       };
       void waitUser() {
@@ -83,8 +82,6 @@ namespace K {
           welcome(mMatter::ProductAdvertisement, &helloProduct);
           welcome(mMatter::Notepad, &helloNotes);
           clickme(mMatter::Notepad, &kissNotes);
-          welcome(mMatter::ToggleSettings, &helloSettings);
-          clickme(mMatter::ToggleSettings, &kissSettings);
         }
       };
     public:
@@ -137,13 +134,6 @@ namespace K {
         if (butterfly.is_array() and butterfly.size())
           notepad = butterfly.at(0);
       };
-      function<void(json*)> helloSettings = [&](json *welcome) {
-        *welcome = { toggleSettings };
-      };
-      function<void(json)> kissSettings = [&](json butterfly) {
-        if (butterfly.is_array() and butterfly.size())
-          toggleSettings = butterfly.at(0);
-      };
       inline static bool delayed(const mMatter &type) {
         return type == mMatter::FairValue
           or type == mMatter::OrderStatusReports
@@ -176,11 +166,11 @@ namespace K {
           const string leaf = path.substr(path.find_last_of('.')+1);
           if (leaf == "/") {
             document += "Content-Type: text/html; charset=UTF-8\r\n";
-            if (!args.maxAdmins or connections < args.maxAdmins) {
+            if (connections < args.maxAdmins) {
               screen.log("UI", "authorization success from", addr);
               content = string(&_www_html_index, _www_html_index_len);
             } else {
-              screen.log("UI", "--client-limit reached by", addr);
+              screen.log("UI", "--client-limit=\"" + to_string(args.maxAdmins) + "\" reached by", addr);
               content = "Thank you! but our princess is already in this castle!<br/>Refresh the page anytime to retry.";
             }
           } else if (leaf == "js") {

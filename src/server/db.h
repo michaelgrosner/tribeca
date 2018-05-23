@@ -1,8 +1,6 @@
 #ifndef K_DB_H_
 #define K_DB_H_
 
-#define _table_(k) (k == mMatter::QuotingParameters ? qpdb : "main") + "." + (char)k
-
 namespace K {
   class DB: public Klass {
     private:
@@ -15,7 +13,7 @@ namespace K {
         screen.logDB(args.database);
         if (args.diskdata.empty()) return;
         qpdb = "qpdb";
-        exec(string("ATTACH '") + args.diskdata + "' AS " + qpdb + ";");
+        exec("ATTACH '" + args.diskdata + "' AS " + qpdb + ";");
         screen.logDB(args.diskdata);
       };
       void run() {
@@ -28,12 +26,12 @@ namespace K {
       };
     public:
       json load(const mMatter &table) {
-        exec(string("CREATE TABLE IF NOT EXISTS ") + _table_(table) + "("
+        exec("CREATE TABLE IF NOT EXISTS " + schema(table) + "("
           + "id    INTEGER   PRIMARY KEY AUTOINCREMENT                                           NOT NULL,"
           + "json  BLOB                                                                          NOT NULL,"
           + "time  TIMESTAMP DEFAULT (CAST((julianday('now') - 2440587.5)*86400000 AS INTEGER))  NOT NULL);");
         json result = json::array();
-        exec(string("SELECT json FROM ") + _table_(table) + " ORDER BY time ASC;", &result);
+        exec("SELECT json FROM " + schema(table) + " ORDER BY time ASC;", &result);
         return result;
       };
       void insert(
@@ -45,13 +43,13 @@ namespace K {
       ) {
         const string sql = string(
           (rm or updateId != "NULL" or rmOlder)
-            ? string("DELETE FROM ") + _table_(table) + (
+            ? "DELETE FROM " + schema(table) + (
               updateId != "NULL"
-                ? string(" WHERE id = ") + updateId
-                : (rmOlder ? string(" WHERE time < ") + to_string(rmOlder) : "")
+                ? " WHERE id = " + updateId
+                : (rmOlder ? " WHERE time < " + to_string(rmOlder) : "")
             ) : ""
         ) + ";"
-          + (cell.is_null() ? "" : string("INSERT INTO ") + _table_(table)
+          + (cell.is_null() ? "" : "INSERT INTO " + schema(table)
           + " (id,json) VALUES(" + updateId + ",'" + cell.dump() + "');");
         ((EV*)events)->deferred([this, sql]() {
           exec(sql);
@@ -59,6 +57,9 @@ namespace K {
       };
       function<unsigned int()> size = []() { return 0; };
     private:
+      inline string schema(const mMatter &table) {
+        return (table == mMatter::QuotingParameters ? qpdb : "main") + "." + (char)table;
+      };
       inline void exec(const string &sql, json *const result = nullptr) {
         char* zErrMsg = 0;
         sqlite3_exec(db, sql.data(), result ? read : nullptr, (void*)result, &zErrMsg);

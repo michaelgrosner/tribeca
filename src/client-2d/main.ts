@@ -666,7 +666,7 @@ class ClientComponent implements OnInit {
   public db_size: string;
   public notepad: string;
   public online: boolean;
-  public showSettings: boolean = false;
+  public showSettings: boolean = true;
   public showTakers: boolean = false;
   public showStats: number = 0;
   public order: DisplayOrder;
@@ -688,7 +688,9 @@ class ClientComponent implements OnInit {
   public cancelAllOrders = () => {};
   public cleanAllClosedOrders = () => {};
   public cleanAllOrders = () => {};
-  public toggleSettings = (showSettings:boolean) => {};
+  public toggleSettings = (showSettings:boolean) => {
+    setTimeout(this.resizeMatryoshka, 100);
+  };
   public changeNotepad = (content: string) => {};
   public toggleTakers = () => {
     this.showTakers = !this.showTakers;
@@ -848,13 +850,6 @@ class ClientComponent implements OnInit {
       .getFire(Models.Topics.Notepad)
       .fire([content]);
 
-    this.toggleSettings = (showSettings:boolean) => {
-      this.fireFactory
-        .getFire(Models.Topics.ToggleSettings)
-        .fire([showSettings]);
-      setTimeout(this.resizeMatryoshka, 100);
-    }
-
     window.addEventListener('mousemove', e => {
       if (window.innerWidth <= 991) return;
       var hud = document.getElementById('hud'), rotY = -13;
@@ -895,18 +890,10 @@ class ClientComponent implements OnInit {
     this.subscriberFactory
       .getSubscriber(this.zone, Models.Topics.Notepad)
       .registerSubscriber(this.onNotepad);
-
-    this.subscriberFactory
-      .getSubscriber(this.zone, Models.Topics.ToggleSettings)
-      .registerSubscriber(this.onToggleSettings);
   }
 
   private onNotepad = (notepad : string) => {
     this.notepad = notepad;
-  }
-
-  private onToggleSettings = (showSettings: boolean) => {
-    this.showSettings = showSettings;
   }
 
   public onTradesLength(tradesLength: number) {
