@@ -66,8 +66,9 @@ namespace K {
             for (mOrder &it : gw->sync_cancelAll()) gw->evDataOrder(it);
             screen.log(string("GW ") + gw->name, "cancel all open orders OK");
           }
-          if (gw->exchange == mExchange::Coinbase) stunnel();
         });
+        if (gw->exchange == mExchange::Coinbase)
+          stunnel();
       };
       function<void(json*)> hello = [&](json *welcome) {
         *welcome = { semaphore() };
