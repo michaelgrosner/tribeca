@@ -8,10 +8,11 @@ namespace K  {
   class EV: public Klass {
     private:
       uWS::Hub *hub = nullptr;
+      uS::Timer *timer = nullptr;
       uS::Async *aEngine = nullptr;
       vector<function<void()>> slowFn;
-    public:
-      uS::Timer *timer = nullptr;
+      unsigned int evT_5m = 0,
+                   gwT_countdown = 0;
     protected:
       void load() {
         endingFn.push_back(&happyEnding);
@@ -27,16 +28,25 @@ namespace K  {
         gw->hub = hub = new uWS::Hub(0, true);
       };
       void waitData() {
-        gw->log = [&](const string &reason) {
-          gwLog(reason);
-        };
         aEngine = new uS::Async(hub->getLoop());
         aEngine->setData(this);
         aEngine->start(asyncLoop);
         hub->createGroup<uWS::CLIENT>();
+        gw->reconnect = [&](const string &reason) {
+          gwT_countdown = 7;
+          screen.log(string("GW ") + gw->name, string("WS ") + reason
+            + ", reconnecting in " + to_string(gwT_countdown) + "s.");
+        };
+        gw->log = [&](const string &reason) {
+          gwLog(reason);
+        };
       };
       void waitTime() {
         timer = new uS::Timer(hub->getLoop());
+        timer->setData(this);
+        timer->start([](uS::Timer *timer) {
+          ((EV*)timer->getData())->timer_1s();
+        }, 0, 1e+3);
       };
       void waitUser() {
         if (args.headless) return;
@@ -44,11 +54,12 @@ namespace K  {
       };
       void run() {
         if (args.debugEvents) return;
-        debug = [](string k) {};
+        debug = [](const string &k) {};
       };
     public:
       void start(/* KMxTWEpb9ig */) {
         tracelog += string("- roll-out: ") + to_string(_Tstamp_) + '\n';
+        if (gw->asyncWs()) gwT_countdown = 1;
         hub->run();
       };
       void stop(const function<void()> &gwCancelAll) {
@@ -58,9 +69,6 @@ namespace K  {
         gwCancelAll();
         asyncLoop(aEngine);
         hub->getDefaultGroup<uWS::SERVER>().close();
-      };
-      inline void connect() {
-        hub->connect(gw->ws, nullptr, {}, 5e+3, &hub->getDefaultGroup<uWS::CLIENT>());
       };
       inline uWS::Hub* listen() {
         if (!args.withoutSSL
@@ -86,10 +94,7 @@ namespace K  {
         slowFn.push_back(fn);
         aEngine->send();
       };
-      void async(const function<bool()> &fn) {
-        if (fn()) aEngine->send();
-      };
-      function<void(string)> debug = [&](const string k) {
+      function<void(const string&)> debug = [&](const string &k) {
         screen.log("DEBUG", string("EV ") + k);
       };
     private:
@@ -110,6 +115,33 @@ namespace K  {
         }
         if (gw->waitForData()) aEngine->send();
         screen.waitForUser();
+      };
+      void async(const function<bool()> &fn) {
+        if (fn()) aEngine->send();
+      };
+      inline void connect() {
+        hub->connect(gw->ws, nullptr, {}, 5e+3, &hub->getDefaultGroup<uWS::CLIENT>());
+      };
+      inline void timer_1s() {
+        if (!gwT_countdown)                   engine.timer_1s();
+        else if (gwT_countdown-- == 1)        connect();
+        if (FN::trueOnce(&gw->refreshWallet)
+          or !(evT_5m % 15))                  async(gw->wallet);
+        if (!gw->async) {
+          if (!(evT_5m % 2))                  async(gw->orders);
+          if (!(evT_5m % 3))                  async(gw->levels);
+          if (!(evT_5m % 60)) {
+                                              async(gw->trades);
+                                              client.timer_60s();
+          }
+        }
+        if (qp.delayUI
+          and !(evT_5m % qp.delayUI))         client.timer_Xs();
+        if (!(++evT_5m % 300)) {
+          if (qp.cancelOrdersAuto)            async(gw->cancelAll);
+          if (evT_5m >= 300 * (qp.delayUI?:1))
+            evT_5m = 0;
+        }
       };
       inline void gwLog(const string &reason) {
         deferred([this, reason]() {

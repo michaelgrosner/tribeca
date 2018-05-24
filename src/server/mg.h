@@ -25,8 +25,7 @@ namespace K {
                    averageCount = 0;
       mLevelsDiff levelsDiff;
     public:
-      function<void()> *calcQuote         = nullptr,
-                       *calcWallet        = nullptr,
+      function<void()> *calcWallet        = nullptr,
                        *calcTargetBasePos = nullptr;
       mLevels levels;
       mPrice fairValue = 0,
@@ -191,7 +190,7 @@ namespace K {
         if (!filterBidOrders.empty()) filter(&levels.bids, filterBidOrders);
         if (!filterAskOrders.empty()) filter(&levels.asks, filterAskOrders);
         calcFairValue();
-        (*calcQuote)();
+        engine.calcQuote();
         if (levelsDiff.empty() or k.empty()
           or mgT_369ms + max(369e+0, qp.delayUI * 1e+3) > _Tstamp_
         ) return;

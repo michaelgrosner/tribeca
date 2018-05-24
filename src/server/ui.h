@@ -14,7 +14,7 @@ namespace K {
       string B64auth = "",
              notepad = "";
       map<char, function<void(json*)>*> hello;
-      map<char, function<void(json)>*> kisses;
+      map<char, function<void(const json&)>*> kisses;
       map<mMatter, string> queue;
     protected:
       void load() {
@@ -65,46 +65,47 @@ namespace K {
                 : uWS::OpCode::TEXT
             );
         });
-        broadcast = [client](const mMatter &type, string msg) {
+        broadcast = [this, client](const mMatter &type, string msg) {
           msg.insert(msg.begin(), (char)type);
           msg.insert(msg.begin(), (char)mPortal::Kiss);
-          client->broadcast(msg.data(), msg.length(), uWS::OpCode::TEXT);
+          ((EV*)events)->deferred([client, msg]() {
+            client->broadcast(msg.data(), msg.length(), uWS::OpCode::TEXT);
+          });
         };
       };
-      void waitUser() {
-        if (args.headless) {
-          client.welcome = [](mMatter type, function<void(json*)> *fn) {};
-          client.clickme = [](mMatter type, function<void(json)> *fn) {};
-        } else {
-          client.welcome = [&](mMatter type, function<void(json*)> *fn) {
-            if (hello.find((char)type) != hello.end())
-              exit(screen.error("UI", string("Use only a single unique message handler for \"")
-                + (char)type + "\" welcome event"));
-            hello[(char)type] = fn;
-          };
-          client.clickme = [&](mMatter type, function<void(json)> *fn) {
-            if (kisses.find((char)type) != kisses.end())
-              exit(screen.error("UI", string("Use only a single unique message handler for \"")
-                + (char)type + "\" clickme event"));
-            kisses[(char)type] = fn;
-          };
-          client.welcome(mMatter::ApplicationState, &helloServer);
-          client.welcome(mMatter::ProductAdvertisement, &helloProduct);
-          client.welcome(mMatter::Notepad, &helloNotes);
-          client.clickme(mMatter::Notepad, &kissNotes);
-        }
-      };
-      void run() {
-        client.send = send_nowhere;
-        client.timer_60s = [&]() {
-          client.send(mMatter::ApplicationState, serverState());
-          client.orders_60s = 0;
-        };
+      void waitTime() {
+        if (args.headless) return;
         client.timer_Xs = [&]() {
           for (map<mMatter, string>::value_type &it : queue)
             broadcast(it.first, it.second);
           queue.clear();
         };
+        client.timer_60s = [&]() {
+          client.send(mMatter::ApplicationState, serverState());
+          client.orders_60s = 0;
+        };
+      }
+      void waitUser() {
+        if (args.headless) return;
+        client.welcome = [&](const mMatter &type, function<void(json*)> *fn) {
+          if (hello.find((char)type) != hello.end())
+            exit(screen.error("UI", string("Use only a single unique message handler for \"")
+              + (char)type + "\" welcome event"));
+          hello[(char)type] = fn;
+        };
+        client.clickme = [&](const mMatter &type, function<void(const json&)> *fn) {
+          if (kisses.find((char)type) != kisses.end())
+            exit(screen.error("UI", string("Use only a single unique message handler for \"")
+              + (char)type + "\" clickme event"));
+          kisses[(char)type] = fn;
+        };
+        client.welcome(mMatter::ApplicationState, &helloServer);
+        client.welcome(mMatter::ProductAdvertisement, &helloProduct);
+        client.welcome(mMatter::Notepad, &helloNotes);
+        client.clickme(mMatter::Notepad, &kissNotes);
+      };
+      void run() {
+        client.send = send_nowhere;
       };
     private:
       function<void(json*)> helloServer = [&](json *welcome) {
@@ -123,12 +124,13 @@ namespace K {
       function<void(json*)> helloNotes = [&](json *welcome) {
         *welcome = { notepad };
       };
-      function<void(json)> kissNotes = [&](json butterfly) {
+      function<void(const json&)> kissNotes = [&](const json &butterfly) {
         if (butterfly.is_array() and butterfly.size())
           notepad = butterfly.at(0);
       };
-      function<void(mMatter, json)> send_nowhere = [](mMatter type, json msg) {};
-      function<void(mMatter, json)> send_somewhere = [&](mMatter type, json msg) {
+      function<void(const mMatter&, string)> broadcast = [](const mMatter &type, string msg) {};
+      function<void(const mMatter&, const json&)> send_nowhere = [](const mMatter &type, const json &msg) {};
+      function<void(const mMatter&, const json&)> send_somewhere = [&](const mMatter &type, const json &msg) {
         if (!qp.delayUI or !delayed(type))
           broadcast(type, msg.dump());
         else queue[type] = msg.dump();
@@ -226,7 +228,6 @@ namespace K {
         }
         return "";
       };
-      function<void(const mMatter&, string)> broadcast;
       static string cleanAddress(string addr) {
         if (addr.length() > 7 and addr.substr(0, 7) == "::ffff:") addr = addr.substr(7);
         if (addr.length() < 7) addr.clear();

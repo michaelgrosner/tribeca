@@ -9,9 +9,6 @@ namespace K {
                   askStatus = mQuoteState::MissingData;
       mQuoteStatus status;
       unsigned int AK47inc = 0;
-    public:
-      mConnectivity *gwConnected         = nullptr,
-                    *gwConnectedExchange = nullptr;
     protected:
       void load() {
         quotingMode[mQuotingMode::Top]         = &calcTopOfMarket;
@@ -24,55 +21,54 @@ namespace K {
         findMode("loaded");
       };
       void waitData() {
-        ((MG*)market)->calcQuote = &calcQuote;
-        qp.calcQuoteAfterSavedParams = &calcQuoteAfterSavedParams;
+        engine.calcQuote = [&]() {                                  _debugEvent_
+          bidStatus = mQuoteState::MissingData;
+          askStatus = mQuoteState::MissingData;
+          if (!engine.gwConnectedExchange) {
+            bidStatus = mQuoteState::Disconnected;
+            askStatus = mQuoteState::Disconnected;
+          } else if (((MG*)market)->fairValue
+            and !((MG*)market)->levels.empty()
+            and !((PG*)wallet)->position.empty()
+            and !((PG*)wallet)->safety.empty()
+          ) {
+            if (!engine.gwConnected) {
+              bidStatus = mQuoteState::DisabledQuotes;
+              askStatus = mQuoteState::DisabledQuotes;
+              stopAllQuotes(mSide::Both);
+            } else {
+              bidStatus = mQuoteState::UnknownHeld;
+              askStatus = mQuoteState::UnknownHeld;
+              sendQuoteToAPI();
+            }
+          }
+          sendStatusToUI();
+        };
+        engine.calcQuoteAfterSavedParams = [&]() {
+          findMode("saved");
+          ((MG*)market)->calcFairValue();
+          ((PG*)wallet)->calcTargetBasePos();
+          ((PG*)wallet)->calcSafety();
+          ((MG*)market)->calcEwmaHistory();
+          engine.calcQuote();
+        };
+      };
+      void waitTime() {
+        engine.timer_1s = [&]() {                         _debugEvent_
+          if (((MG*)market)->fairValue) {
+            ((MG*)market)->calcStats();
+            ((PG*)wallet)->calcSafety();
+            engine.calcQuote();
+          } else screen.logWar("QE", "Unable to calculate quote, missing market data");
+        };
       };
       void waitUser() {
         client.welcome(mMatter::QuoteStatus, &hello);
       };
       void run() {
         if (args.debugQuotes) return;
-        debuq = [&](string k, mQuote &rawQuote) {};
-        debug = [&](string k) {};
-      };
-    public:
-      inline void timer_1s() {                                      _debugEvent_
-        if (((MG*)market)->fairValue) {
-          ((MG*)market)->calcStats();
-          ((PG*)wallet)->calcSafety();
-          calcQuote();
-        } else screen.logWar("QE", "Unable to calculate quote, missing market data");
-      };
-      function<void()> calcQuoteAfterSavedParams = [&]() {
-        findMode("saved");
-        ((MG*)market)->calcFairValue();
-        ((PG*)wallet)->calcTargetBasePos();
-        ((PG*)wallet)->calcSafety();
-        ((MG*)market)->calcEwmaHistory();
-        calcQuote();
-      };
-      function<void()> calcQuote = [&]() {                          _debugEvent_
-        bidStatus = mQuoteState::MissingData;
-        askStatus = mQuoteState::MissingData;
-        if (!*gwConnectedExchange) {
-          bidStatus = mQuoteState::Disconnected;
-          askStatus = mQuoteState::Disconnected;
-        } else if (((MG*)market)->fairValue
-          and !((MG*)market)->levels.empty()
-          and !((PG*)wallet)->position.empty()
-          and !((PG*)wallet)->safety.empty()
-        ) {
-          if (!*gwConnected) {
-            bidStatus = mQuoteState::DisabledQuotes;
-            askStatus = mQuoteState::DisabledQuotes;
-            stopAllQuotes(mSide::Both);
-          } else {
-            bidStatus = mQuoteState::UnknownHeld;
-            askStatus = mQuoteState::UnknownHeld;
-            sendQuoteToAPI();
-          }
-        }
-        sendStatusToUI();
+        debuq = [&](const string &k, const mQuote &rawQuote) {};
+        debug = [&](const string &k) {};
       };
     private:
       function<void(json*)> hello = [&](json *welcome) {
@@ -505,10 +501,10 @@ namespace K {
             toCancel.push_back(it.first);
         for (mRandId &it : toCancel) ((OG*)broker)->cancelOrder(it);
       };
-      function<void(string, mQuote&)> debuq = [&](string k, mQuote &rawQuote) {
+      function<void(const string&, const mQuote&)> debuq = [&](const string &k, const mQuote &rawQuote) {
         debug(string("quote") + k + " " + to_string((int)bidStatus) + " " + to_string((int)askStatus) + " " + ((json)rawQuote).dump());
       };
-      function<void(string)> debug = [&](string k) {
+      function<void(const string&)> debug = [&](const string &k) {
         screen.log("DEBUG", string("QE ") + k);
       };
   };

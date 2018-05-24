@@ -4,27 +4,15 @@
 namespace K {
   class GW: public Klass {
     private:
-      mConnectivity gwConnected               = mConnectivity::Disconnected,
-                    gwConnectedAdmin          = mConnectivity::Disconnected,
-                    gwConnectedExchange       = mConnectivity::Disconnected,
+      mConnectivity gwConnectedAdmin          = mConnectivity::Disconnected,
                     gwConnectedExchangeOrders = mConnectivity::Disconnected,
                     gwConnectedExchangeMarket = mConnectivity::Disconnected;
-      unsigned int gwT_5m        = 0,
-                   gwT_countdown = 0;
-      bool sync_levels = false,
-           sync_trades = false,
-           sync_orders = false;
     protected:
-      void load() {                                                 _debugEvent_
+      void load() {
         endingFn.back() = &happyEnding;
         gwConnectedAdmin = (mConnectivity)args.autobot;
-        handshake();
       };
-      void waitData() {                                             _debugEvent_
-        ((QE*)engine)->gwConnected =
-        screen.gwConnected = &gwConnected;
-        ((QE*)engine)->gwConnectedExchange =
-        screen.gwConnectedExchange = &gwConnectedExchange;
+      void waitData() {
         gw->evConnectOrder = [&](mConnectivity k) {
           gwSemaphore(&gwConnectedExchangeOrders, k);
         };
@@ -32,28 +20,14 @@ namespace K {
           gwSemaphore(&gwConnectedExchangeMarket, k);
           if (!k) gw->evDataLevels(mLevels());
         };
-        gw->reconnect = [&](const string &reason) {
-          gwT_countdown = 7;
-          screen.log(string("GW ") + gw->name, string("WS ") + reason
-            + ", reconnecting in " + to_string(gwT_countdown) + "s.");
-        };
       };
-      void waitTime() {                                             _debugEvent_
-        sync_levels = !gw->async_levels();
-        sync_trades = !gw->async_trades();
-        sync_orders = !gw->async_orders();
-        if (!sync_levels) gwT_countdown = 1;
-        ((EV*)events)->timer->setData(this);
-        ((EV*)events)->timer->start([](uS::Timer *timer) {
-          ((GW*)timer->getData())->timer_1s();
-        }, 0, 1e+3);
-      };
-      void waitUser() {                                             _debugEvent_
+      void waitUser() {
         client.welcome(mMatter::Connectivity, &hello);
         client.clickme(mMatter::Connectivity, &kiss);
         screen.pressme(mHotkey::ESC, &hotkiss);
       };
       void run() {                                                  _debugEvent_
+        handshake();
         ((EV*)events)->start();
       };
     private:
@@ -73,7 +47,7 @@ namespace K {
       function<void(json*)> hello = [&](json *welcome) {
         *welcome = { semaphore() };
       };
-      function<void(json)> kiss = [&](json butterfly) {
+      function<void(const json&)> kiss = [&](const json &butterfly) {
         if (!butterfly.is_object() or !butterfly["state"].is_number()) return;
         mConnectivity updated = butterfly["state"].get<mConnectivity>();
         if (gwConnectedAdmin != updated) {
@@ -88,46 +62,24 @@ namespace K {
       void gwSemaphore(mConnectivity *const current, const mConnectivity &updated) {
         if (*current != updated) {
           *current = updated;
-          gwConnectedExchange = gwConnectedExchangeMarket * gwConnectedExchangeOrders;
+          engine.gwConnectedExchange = gwConnectedExchangeMarket * gwConnectedExchangeOrders;
           gwAdminSemaphore();
         }
       };
       void gwAdminSemaphore() {
-        mConnectivity updated = gwConnectedAdmin * gwConnectedExchange;
-        if (gwConnected != updated) {
-          gwConnected = updated;
-          screen.log(string("GW ") + gw->name, "Quoting state changed to", string(!gwConnected?"DIS":"") + "CONNECTED");
+        mConnectivity updated = gwConnectedAdmin * engine.gwConnectedExchange;
+        if (engine.gwConnected != updated) {
+          engine.gwConnected = updated;
+          screen.log(string("GW ") + gw->name, "Quoting state changed to", string(!engine.gwConnected?"DIS":"") + "CONNECTED");
         }
         client.send(mMatter::Connectivity, semaphore());
         screen.refresh();
       };
       json semaphore() {
         return {
-          {"state", gwConnected},
-          {"status", gwConnectedExchange}
+          {"state", engine.gwConnected},
+          {"status", engine.gwConnectedExchange}
         };
-      };
-      inline void timer_1s() {                                      _debugEvent_
-        if (gwT_countdown
-          and gwT_countdown-- == 1)         ((EV*)events)->connect();
-        else                                ((QE*)engine)->timer_1s();
-        if (sync_orders
-          and !(gwT_5m % 2))                ((EV*)events)->async(gw->orders);
-        if (sync_levels
-          and !(gwT_5m % 3))                ((EV*)events)->async(gw->levels);
-        if (FN::trueOnce(&gw->refreshWallet)
-          or !(gwT_5m % 15))                ((EV*)events)->async(gw->wallet);
-        if (!(gwT_5m % 60)) {
-          if (sync_trades)                  ((EV*)events)->async(gw->trades);
-                                            client.timer_60s();
-        }
-        if (qp.delayUI
-          and !(gwT_5m % qp.delayUI))       client.timer_Xs();
-        if (!(++gwT_5m % 300)) {
-          if (qp.cancelOrdersAuto)          ((EV*)events)->async(gw->cancelAll);
-          if (gwT_5m >= 300 * (qp.delayUI?:1))
-            gwT_5m = 0;
-        }
       };
       inline void stunnel(bool reboot = false) {
         system("pkill stunnel || :");
@@ -219,8 +171,10 @@ namespace K {
           gw->minTick = 0.01;
           gw->minSize = 0.01;
         }
+        if (!gw->randId or gw->symbol.empty())
+          exit(screen.error("GW", "Incomplete handshake aborted."));
         if (!gw->minTick or !gw->minSize)
-          exit(screen.error("CF", "Unable to fetch data from " + gw->name
+          exit(screen.error("GW", "Unable to fetch data from " + gw->name
             + " for symbol \"" + gw->symbol + "\", possible error message: "
             + reply.dump(),
           true));

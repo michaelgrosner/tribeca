@@ -121,12 +121,7 @@ namespace K {
       _diffSEP = prev.shortEwmaPeriods != shortEwmaPeriods;
       _diffXSEP = prev.extraShortEwmaPeriods != extraShortEwmaPeriods;
       _diffUEP = prev.ultraShortEwmaPeriods != ultraShortEwmaPeriods;
-      equal(prev);
     };
-    void equal(const mQuotingParams &prev) {
-      calcQuoteAfterSavedParams = prev.calcQuoteAfterSavedParams;
-    };
-    function<void()> *calcQuoteAfterSavedParams = nullptr;
   } qp;
   static void to_json(json &j, const mQuotingParams &k) {
     j = {
@@ -671,13 +666,20 @@ namespace K {
     const char *inet = nullptr;
   } args;
   static struct mClient {
-    function<void(mMatter, function<void(json*)>*)> welcome;
-    function<void(mMatter, function<void(json)>*)> clickme;
-    function<void(mMatter, json)> send;
-    function<void()> timer_Xs;
-    function<void()> timer_60s;
-    unsigned int orders_60s = 0;
+        unsigned int orders_60s = 0;
+    function<void()> timer_Xs   = [&]() {},
+                     timer_60s  = [&]() {};
+    function<void(const mMatter&, function<void(json*)>*)>       welcome = [](const mMatter &type, function<void(json*)> *fn) {};
+    function<void(const mMatter&, function<void(const json&)>*)> clickme = [](const mMatter &type, function<void(const json&)> *fn) {};
+    function<void(const mMatter&, const json&)>                  send;
   } client;
+  static struct mEngine {
+    function<void()> timer_1s,
+                     calcQuote,
+                     calcQuoteAfterSavedParams;
+       mConnectivity gwConnected         = mConnectivity::Disconnected,
+                     gwConnectedExchange = mConnectivity::Disconnected;
+  } engine;
   static class Gw {
     public:
       virtual string A() = 0;
@@ -707,7 +709,9 @@ namespace K {
                 apikey   = "", secret  = "",
                 user     = "", pass    = "",
                 ws       = "", http    = "";
-           bool refreshWallet = false;
+      bool refreshWallet = false,
+                   async = false;
+      virtual bool asyncWs() = 0;
       inline bool waitForData() {
         return waitFor(replyOrders, evDataOrder)
              | waitFor(replyLevels, evDataLevels)
@@ -720,9 +724,6 @@ namespace K {
       function<bool()> trades = [&]() { return askFor(replyTrades, [&]() { return sync_trades(); }); };
       function<bool()> orders = [&]() { return askFor(replyOrders, [&]() { return sync_orders(); }); };
       function<bool()> cancelAll = [&]() { return askFor(replyCancelAll, [&]() { return sync_cancelAll(); }); };
-      virtual bool async_levels() { return false; };
-      virtual bool async_trades() { return false; };
-      virtual bool async_orders() { return false; };
       virtual vector<mOrder> sync_cancelAll() = 0;
     protected:
       virtual bool async_wallet() { return false; };
@@ -764,8 +765,7 @@ namespace K {
             *memory = nullptr,
             *broker = nullptr,
             *market = nullptr,
-            *wallet = nullptr,
-            *engine = nullptr;
+            *wallet = nullptr;
       virtual void load() {};
       virtual void waitData() {};
       virtual void waitTime() {};
@@ -784,7 +784,6 @@ namespace K {
       inline void ogLink(Klass &k) { broker = &k; };
       inline void mgLink(Klass &k) { market = &k; };
       inline void pgLink(Klass &k) { wallet = &k; };
-      inline void qeLink(Klass &k) { engine = &k; };
   };
   class kLass {
     public:
@@ -796,7 +795,6 @@ namespace K {
                                                                                    MG.ogLink(OG); PG.ogLink(OG); QE.ogLink(OG);
                                                                                                   PG.mgLink(MG); QE.mgLink(MG);
                                                                                                                  QE.pgLink(PG);
-                                                                                                                                GW.qeLink(QE);
       };
   };
 }

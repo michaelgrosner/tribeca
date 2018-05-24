@@ -18,10 +18,10 @@ namespace K {
       function<void(json*)> hello = [&](json *welcome) {
         *welcome = { qp };
       };
-      function<void(json)> kiss = [&](json butterfly) {
+      function<void(const json&)> kiss = [&](const json &butterfly) {
         mQuotingParams prev(qp);
         (qp = butterfly).diff(prev);
-        (*qp.calcQuoteAfterSavedParams)();
+        engine.calcQuoteAfterSavedParams();
         client.send(mMatter::QuotingParameters, qp);
         ((DB*)memory)->insert(mMatter::QuotingParameters, qp);
       };

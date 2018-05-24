@@ -32,7 +32,7 @@ namespace K {
       };
       void run() {
         if (args.debugOrders) return;
-        debug = [](string k) {};
+        debug = [](const string &k) {};
       };
     public:
       void sendOrder(
@@ -112,26 +112,26 @@ namespace K {
           if (mStatus::Working == it.second.orderStatus)
             welcome->push_back(it.second);
       };
-      function<void(json)> kissCancelAllOrders = [&](json butterfly) {
+      function<void(const json&)> kissCancelAllOrders = [&](const json &butterfly) {
         cancelOpenOrders();
       };
-      function<void(json)> kissCleanAllClosedTrades = [&](json butterfly) {
+      function<void(const json&)> kissCleanAllClosedTrades = [&](const json &butterfly) {
         cleanClosedTrades();
       };
-      function<void(json)> kissCleanAllTrades = [&](json butterfly) {
+      function<void(const json&)> kissCleanAllTrades = [&](const json &butterfly) {
         cleanTrade();
       };
-      function<void(json)> kissCleanTrade = [&](json butterfly) {
+      function<void(const json&)> kissCleanTrade = [&](const json &butterfly) {
         if (butterfly.is_object() and butterfly["tradeId"].is_string())
           cleanTrade(butterfly["tradeId"].get<string>());
       };
-      function<void(json)> kissCancelOrder = [&](json butterfly) {
+      function<void(const json&)> kissCancelOrder = [&](const json &butterfly) {
         mRandId orderId = (butterfly.is_object() and butterfly["orderId"].is_string())
           ? butterfly["orderId"].get<mRandId>() : "";
         if (orderId.empty() or orders.find(orderId) == orders.end()) return;
         cancelOrder(orderId);
       };
-      function<void(json)> kissSubmitNewOrder = [&](json butterfly) {
+      function<void(const json&)> kissSubmitNewOrder = [&](const json &butterfly) {
         sendOrder(
           vector<mRandId>(),
           butterfly.value("side", "") == "Bid" ? mSide::Bid : mSide::Ask,
@@ -316,7 +316,7 @@ namespace K {
             it = tradesHistory.erase(it);
           } else ++it;
       };
-      function<void(string)> debug = [&](string k) {
+      function<void(const string&)> debug = [&](const string &k) {
         screen.log("DEBUG", string("OG ") + k);
       };
   };

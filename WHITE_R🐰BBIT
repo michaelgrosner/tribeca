@@ -111,9 +111,9 @@
 :  :   K Server is proudly non-stop changing states and mutating global data. :
 :  :                                                                          :
 :  +-- Globals??                                                              :
-:     args, qp, gw, client, screen                                            :                                                                 :
+:     args, qp, gw, engine, client, screen                                    :
 :                                                                             :
-:  .. src/server/km.h:  ----------------------------- aka. K Models --------- :
+:  .. src/server/ks.h:  ----------------------------- aka. K Structures ----- :
 :      TODO                                                                   :
 :                                                                             :
 :                                                                             :
