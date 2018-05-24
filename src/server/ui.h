@@ -82,7 +82,7 @@ namespace K {
         };
         client.timer_60s = [&]() {
           client.send(mMatter::ApplicationState, serverState());
-          client.orders_60s = 0;
+          engine.orders_60s = 0;
         };
       }
       void waitUser() {
@@ -242,7 +242,7 @@ namespace K {
       json serverState() {
         return {
           {"memory", memorySize()},
-          {"freq", client.orders_60s},
+          {"freq", engine.orders_60s},
           {"theme", args.ignoreMoon + args.ignoreSun},
           {"dbsize", ((DB*)memory)->size()},
           {"a", gw->A()}

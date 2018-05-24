@@ -24,7 +24,7 @@ namespace K {
         engine.calcQuote = [&]() {                                  _debugEvent_
           bidStatus = mQuoteState::MissingData;
           askStatus = mQuoteState::MissingData;
-          if (!engine.gwConnectedExchange) {
+          if (!engine.greenGateway) {
             bidStatus = mQuoteState::Disconnected;
             askStatus = mQuoteState::Disconnected;
           } else if (((MG*)market)->fairValue
@@ -32,7 +32,7 @@ namespace K {
             and !((PG*)wallet)->position.empty()
             and !((PG*)wallet)->safety.empty()
           ) {
-            if (!engine.gwConnected) {
+            if (!engine.greenButton) {
               bidStatus = mQuoteState::DisabledQuotes;
               askStatus = mQuoteState::DisabledQuotes;
               stopAllQuotes(mSide::Both);

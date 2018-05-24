@@ -1,5 +1,5 @@
-#ifndef K_KM_H_
-#define K_KM_H_
+#ifndef K_KS_H_
+#define K_KS_H_
 
 #define mClock  unsigned long long
 #define mPrice  double
@@ -666,7 +666,6 @@ namespace K {
     const char *inet = nullptr;
   } args;
   static struct mClient {
-        unsigned int orders_60s = 0;
     function<void()> timer_Xs   = [&]() {},
                      timer_60s  = [&]() {};
     function<void(const mMatter&, function<void(json*)>*)>       welcome = [](const mMatter &type, function<void(json*)> *fn) {};
@@ -677,8 +676,9 @@ namespace K {
     function<void()> timer_1s,
                      calcQuote,
                      calcQuoteAfterSavedParams;
-       mConnectivity gwConnected         = mConnectivity::Disconnected,
-                     gwConnectedExchange = mConnectivity::Disconnected;
+        unsigned int orders_60s = 0;
+       mConnectivity greenButton  = mConnectivity::Disconnected,
+                     greenGateway = mConnectivity::Disconnected;
   } engine;
   static class Gw {
     public:

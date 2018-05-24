@@ -86,7 +86,7 @@ namespace K {
           );
           if (args.testChamber == 1) cancelOrder(replaceOrderId);
         }
-        client.orders_60s++;
+        engine.orders_60s++;
       };
       void cancelOrder(const mRandId &orderId) {
         if (orderId.empty()) return;

@@ -4,20 +4,20 @@
 namespace K {
   class GW: public Klass {
     private:
-      mConnectivity gwConnectedAdmin          = mConnectivity::Disconnected,
-                    gwConnectedExchangeOrders = mConnectivity::Disconnected,
-                    gwConnectedExchangeMarket = mConnectivity::Disconnected;
+      mConnectivity adminAgreement     = mConnectivity::Disconnected,
+                    greenGatewayOrders = mConnectivity::Disconnected,
+                    greenGatewayMarket = mConnectivity::Disconnected;
     protected:
       void load() {
         endingFn.back() = &happyEnding;
-        gwConnectedAdmin = (mConnectivity)args.autobot;
+        adminAgreement = (mConnectivity)args.autobot;
       };
       void waitData() {
         gw->evConnectOrder = [&](mConnectivity k) {
-          gwSemaphore(&gwConnectedExchangeOrders, k);
+          gwSemaphore(&greenGatewayOrders, k);
         };
         gw->evConnectMarket = [&](mConnectivity k) {
-          gwSemaphore(&gwConnectedExchangeMarket, k);
+          gwSemaphore(&greenGatewayMarket, k);
           if (!k) gw->evDataLevels(mLevels());
         };
       };
@@ -50,35 +50,35 @@ namespace K {
       function<void(const json&)> kiss = [&](const json &butterfly) {
         if (!butterfly.is_object() or !butterfly["state"].is_number()) return;
         mConnectivity updated = butterfly["state"].get<mConnectivity>();
-        if (gwConnectedAdmin != updated) {
-          gwConnectedAdmin = updated;
+        if (adminAgreement != updated) {
+          adminAgreement = updated;
           gwAdminSemaphore();
         }
       };
       function<void()> hotkiss = [&]() {
-        gwConnectedAdmin = (mConnectivity)!gwConnectedAdmin;
+        adminAgreement = (mConnectivity)!adminAgreement;
         gwAdminSemaphore();
       };
       void gwSemaphore(mConnectivity *const current, const mConnectivity &updated) {
         if (*current != updated) {
           *current = updated;
-          engine.gwConnectedExchange = gwConnectedExchangeMarket * gwConnectedExchangeOrders;
+          engine.greenGateway = greenGatewayMarket * greenGatewayOrders;
           gwAdminSemaphore();
         }
       };
       void gwAdminSemaphore() {
-        mConnectivity updated = gwConnectedAdmin * engine.gwConnectedExchange;
-        if (engine.gwConnected != updated) {
-          engine.gwConnected = updated;
-          screen.log(string("GW ") + gw->name, "Quoting state changed to", string(!engine.gwConnected?"DIS":"") + "CONNECTED");
+        mConnectivity updated = adminAgreement * engine.greenGateway;
+        if (engine.greenButton != updated) {
+          engine.greenButton = updated;
+          screen.log(string("GW ") + gw->name, "Quoting state changed to", string(!engine.greenButton?"DIS":"") + "CONNECTED");
         }
         client.send(mMatter::Connectivity, semaphore());
         screen.refresh();
       };
       json semaphore() {
         return {
-          {"state", engine.gwConnected},
-          {"status", engine.gwConnectedExchange}
+          {"state", engine.greenButton},
+          {"status", engine.greenGateway}
         };
       };
       inline void stunnel(bool reboot = false) {
@@ -182,7 +182,7 @@ namespace K {
           screen.log(string("GW ") + gw->name, "allows client IP");
         unsigned int precision = gw->minTick < 1e-8 ? 10 : 8;
         screen.log(string("GW ") + gw->name + ":", string("\n")
-          + "- autoBot: " + (!gwConnectedAdmin ? "no" : "yes") + '\n'
+          + "- autoBot: " + (!adminAgreement ? "no" : "yes") + '\n'
           + "- symbols: " + gw->symbol + '\n'
           + "- minTick: " + FN::strX(gw->minTick, precision) + '\n'
           + "- minSize: " + FN::strX(gw->minSize, precision) + '\n'
