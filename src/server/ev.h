@@ -7,11 +7,11 @@ namespace K  {
   string tracelog;
   class EV: public Klass {
     private:
-      uWS::Hub *hub = nullptr;
+      uWS::Hub  *hub   = nullptr;
       uS::Timer *timer = nullptr;
-      uS::Async *aEngine = nullptr;
+      uS::Async *loop  = nullptr;
       vector<function<void()>> slowFn;
-      unsigned int evT_5m = 0,
+      unsigned int evT_5m        = 0,
                    gwT_countdown = 0;
     protected:
       void load() {
@@ -28,9 +28,9 @@ namespace K  {
         gw->hub = hub = new uWS::Hub(0, true);
       };
       void waitData() {
-        aEngine = new uS::Async(hub->getLoop());
-        aEngine->setData(this);
-        aEngine->start(asyncLoop);
+        loop = new uS::Async(hub->getLoop());
+        loop->setData(this);
+        loop->start(walk);
         hub->createGroup<uWS::CLIENT>();
         gw->reconnect = [&](const string &reason) {
           gwT_countdown = 7;
@@ -67,7 +67,7 @@ namespace K  {
         gw->close();
         hub->getDefaultGroup<uWS::CLIENT>().close();
         gwCancelAll();
-        asyncLoop(aEngine);
+        walk(loop);
         hub->getDefaultGroup<uWS::SERVER>().close();
       };
       inline uWS::Hub* listen() {
@@ -92,7 +92,7 @@ namespace K  {
       };
       void deferred(const function<void()> &fn) {
         slowFn.push_back(fn);
-        aEngine->send();
+        loop->send();
       };
       function<void(const string&)> debug = [&](const string &k) {
         screen.log("DEBUG", string("EV ") + k);
@@ -107,17 +107,17 @@ namespace K  {
           cout << " THE END IS NEVER";
         cout << " THE END." << '\n';
       };
-      void (*asyncLoop)(uS::Async*) = [](uS::Async *const aEngine) {
-        EV* k = (EV*)aEngine->getData();
+      void (*walk)(uS::Async*) = [](uS::Async *const loop) {
+        EV* k = (EV*)loop->getData();
         if (!k->slowFn.empty()) {
           for (function<void()> &it : k->slowFn) it();
           k->slowFn.clear();
         }
-        if (gw->waitForData()) aEngine->send();
+        if (gw->waitForData()) loop->send();
         screen.waitForUser();
       };
       void async(const function<bool()> &fn) {
-        if (fn()) aEngine->send();
+        if (fn()) loop->send();
       };
       inline void connect() {
         hub->connect(gw->ws, nullptr, {}, 5e+3, &hub->getDefaultGroup<uWS::CLIENT>());
