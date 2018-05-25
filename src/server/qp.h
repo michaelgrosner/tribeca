@@ -5,7 +5,7 @@ namespace K {
   class QP: public Klass {
     protected:
       void load() {
-        json k = ((DB*)memory)->load(mMatter::QuotingParameters);
+        json k = sqlite.select(mMatter::QuotingParameters);
         if (k.empty()) return screen.logWar("QP", "using default values for Quoting Parameters");
         qp = k.at(0);
         screen.log("DB", "loaded Quoting Parameters OK");
@@ -23,7 +23,7 @@ namespace K {
         (qp = butterfly).diff(prev);
         engine.calcQuoteAfterSavedParams();
         client.send(mMatter::QuotingParameters, qp);
-        ((DB*)memory)->insert(mMatter::QuotingParameters, qp);
+        sqlite.insert(mMatter::QuotingParameters, qp);
       };
   };
 }

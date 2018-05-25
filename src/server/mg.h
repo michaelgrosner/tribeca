@@ -45,7 +45,7 @@ namespace K {
                            filterAskOrders;
     protected:
       void load() {
-        for (json &it : ((DB*)memory)->load(mMatter::MarketData)) {
+        for (json &it : sqlite.select(mMatter::MarketData)) {
           if (it.value("time", (mClock)0) + qp.quotingStdevProtectionPeriods * 1e+3 < _Tstamp_) continue;
           mgStatFV.push_back(it.value("fv", 0.0));
           mgStatBid.push_back(it.value("bid", 0.0));
@@ -61,7 +61,7 @@ namespace K {
         if (args.ewmaShort) mgEwmaS = args.ewmaShort;
         if (args.ewmaXShort) mgEwmaXS = args.ewmaXShort;
         if (args.ewmaUShort) mgEwmaU = args.ewmaUShort;
-        json k = ((DB*)memory)->load(mMatter::EWMAChart);
+        json k = sqlite.select(mMatter::EWMAChart);
         if (!k.empty()) {
           k = k.at(0);
           if (!mgEwmaVL and k.value("time", (mClock)0) + qp.veryLongEwmaPeriods * 60e+3 > _Tstamp_)
@@ -83,7 +83,7 @@ namespace K {
         if (mgEwmaS)  screen.log(args.ewmaShort ? "ARG" : "DB", string("loaded ") + to_string(mgEwmaS) + " EWMA Short");
         if (mgEwmaXS) screen.log(args.ewmaXShort ? "ARG" : "DB", string("loaded ") + to_string(mgEwmaXS) + " EWMA ExtraShort");
         if (mgEwmaU)  screen.log(args.ewmaUShort ? "ARG" : "DB", string("loaded ") + to_string(mgEwmaU) + " EWMA UltraShort");
-        for (json &it : ((DB*)memory)->load(mMatter::MarketDataLongTerm))
+        for (json &it : sqlite.select(mMatter::MarketDataLongTerm))
           if (it.value("time", (mClock)0) + 345600e+3 > _Tstamp_ and it.value("fv", 0.0))
             fairValue96h.push_back(it.value("fv", 0.0));
         screen.log("DB", string("loaded ") + to_string(fairValue96h.size()) + " historical FairValues");
@@ -162,7 +162,7 @@ namespace K {
         mgStatTop.push_back(topBid);
         mgStatTop.push_back(topAsk);
         calcStdev();
-        ((DB*)memory)->insert(mMatter::MarketData, {
+        sqlite.insert(mMatter::MarketData, {
           {"fv", fairValue},
           {"bid", topBid},
           {"ask", topAsk},
@@ -224,7 +224,7 @@ namespace K {
         calcTargetPos();
         (*calcTargetBasePos)();
         client.send(mMatter::EWMAChart, chartStats());
-        ((DB*)memory)->insert(mMatter::EWMAChart, {
+        sqlite.insert(mMatter::EWMAChart, {
           {"ewmaVeryLong", mgEwmaVL},
           {"ewmaLong", mgEwmaL},
           {"ewmaMedium", mgEwmaM},
@@ -233,7 +233,7 @@ namespace K {
           {"ewmaUltraShort", mgEwmaU},
           {"time", _Tstamp_}
         });
-        ((DB*)memory)->insert(mMatter::MarketDataLongTerm, {
+        sqlite.insert(mMatter::MarketDataLongTerm, {
           {"fv", fairValue},
           {"time", _Tstamp_},
         }, false, "NULL", _Tstamp_ - 345600e+3);

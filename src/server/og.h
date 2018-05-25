@@ -10,7 +10,7 @@ namespace K {
       function<void(const mTrade&)>* calcSafetyAfterTrade = nullptr;
     protected:
       void load() {
-        for (json &it : ((DB*)memory)->load(mMatter::Trades))
+        for (json &it : sqlite.select(mMatter::Trades))
           tradesHistory.push_back(it);
         screen.log("DB", string("loaded ") + to_string(tradesHistory.size()) + " historical Trades");
       };
@@ -189,7 +189,7 @@ namespace K {
           else {
             it->Kqty = -1;
             client.send(mMatter::Trades, *it);
-            ((DB*)memory)->insert(mMatter::Trades, {}, false, it->tradeId);
+            sqlite.insert(mMatter::Trades, {}, false, it->tradeId);
             it = tradesHistory.erase(it);
           }
       };
@@ -200,7 +200,7 @@ namespace K {
           else {
             it->Kqty = -1;
             client.send(mMatter::Trades, *it);
-            ((DB*)memory)->insert(mMatter::Trades, {}, false, it->tradeId);
+            sqlite.insert(mMatter::Trades, {}, false, it->tradeId);
             it = tradesHistory.erase(it);
             if (!all) break;
           }
@@ -250,7 +250,7 @@ namespace K {
           );
         } else {
           client.send(mMatter::Trades, trade);
-          ((DB*)memory)->insert(mMatter::Trades, trade, false, trade.tradeId);
+          sqlite.insert(mMatter::Trades, trade, false, trade.tradeId);
           tradesHistory.push_back(trade);
         }
         client.send(mMatter::TradesChart, {
@@ -277,12 +277,12 @@ namespace K {
             it.value = it.value + pong.value;
             it.loadedFromDB = false;
             client.send(mMatter::Trades, it);
-            ((DB*)memory)->insert(mMatter::Trades, it, false, it.tradeId);
+            sqlite.insert(mMatter::Trades, it, false, it.tradeId);
             break;
           }
           if (!eq) {
             client.send(mMatter::Trades, pong);
-            ((DB*)memory)->insert(mMatter::Trades, pong, false, pong.tradeId);
+            sqlite.insert(mMatter::Trades, pong, false, pong.tradeId);
             tradesHistory.push_back(pong);
           }
         }
@@ -301,7 +301,7 @@ namespace K {
             it.Kdiff = abs(it.quantity * it.price - it.Kqty * it.Kprice);
           it.loadedFromDB = false;
           client.send(mMatter::Trades, it);
-          ((DB*)memory)->insert(mMatter::Trades, it, false, it.tradeId);
+          sqlite.insert(mMatter::Trades, it, false, it.tradeId);
           break;
         }
         return pong->quantity > 0;
@@ -312,7 +312,7 @@ namespace K {
           if (it->time < pT_ and (qp.cleanPongsAuto < 0 or it->Kqty >= it->quantity)) {
             it->Kqty = -1;
             client.send(mMatter::Trades, *it);
-            ((DB*)memory)->insert(mMatter::Trades, {}, false, it->tradeId);
+            sqlite.insert(mMatter::Trades, {}, false, it->tradeId);
             it = tradesHistory.erase(it);
           } else ++it;
       };

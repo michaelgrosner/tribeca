@@ -111,7 +111,7 @@
 :  :   K Server is proudly non-stop changing states and mutating global data. :
 :  :                                                                          :
 :  +-- Globals??                                                              :
-:     args, qp, gw, engine, client, screen                                    :
+:     args, sqlite, qp, gw, engine, client, screen                            :
 :                                                                             :
 :  .. src/server/ks.h:  ----------------------------- aka. K Structures ----- :
 :      TODO                                                                   :
@@ -122,11 +122,17 @@
 :                                                                             :
 :                                                                             :
 :  .. src/server/cf.h:  ----------------------------- aka. Configurations --- :
-:      TODO                                                                   :
+:  :   TODO                                                                   :
+:  :                                                                          :
+:  +-- Whaaat??                                                               :
+:     args                                                                    :
 :                                                                             :
 :                                                                             :
 :  .. src/server/sh.h:  ----------------------------- aka. Shell ------------ :
-:      TODO                                                                   :
+:  :   TODO                                                                   :
+:  :                                                                          :
+:  +-- Whaaat??                                                               :
+:     screen                                                                  :
 :                                                                             :
 :                                                                             :
 :  .. src/server/ev.h:  ----------------------------- aka. Events ----------- :
@@ -137,9 +143,9 @@
 :  :   # Warning: write-only during execution, we read data only before boot. :
 :  :                                                                          :
 :  +-- Whaaat??                                                               :
-:     load()                                                                  :
+:     sqlite.select()                                                         :
 :      returns always 1 json array, with 0 items in case no record exist yet. :
-:     insert()                                                                :
+:     sqlite.insert()                                                         :
 :      callme with data that can not be lost after quick reboots (reinstall). :
 :       the same call must also clean out of date records; setting rm flag to :
 :       true will delete all before insert 1, setting id argument will delete :
@@ -151,15 +157,24 @@
 :                                                                             :
 :                                                                             :
 :  .. src/server/ui.h:  ----------------------------- aka. User Interface --- :
-:      TODO                                                                   :
+:  :   TODO                                                                   :
+:  :                                                                          :
+:  +-- Whaaat??                                                               :
+:     client                                                                  :
 :                                                                             :
 :                                                                             :
 :  .. src/server/qp.h:  ----------------------------- aka. Quoting Parameters :
-:      TODO                                                                   :
+:  :   TODO                                                                   :
+:  :                                                                          :
+:  +-- Whaaat??                                                               :
+:     qp                                                                      :
 :                                                                             :
 :                                                                             :
 :  .. src/server/qe.h:  ----------------------------- aka. Quoting Engine --- :
-:      TODO                                                                   :
+:  :   TODO                                                                   :
+:  :                                                                          :
+:  +-- Whaaat??                                                               :
+:     engine                                                                  :
 :                                                                             :
 :                                                                             :
 :  .. src/server/og.h:  ----------------------------- aka. Orders Gateway --- :
@@ -175,7 +190,10 @@
 :                                                                             :
 :                                                                             :
 :  .. src/server/gw.h:  ----------------------------- aka. Gateway ---------- :
-:      TODO                                                                   :
+:  :   TODO                                                                   :
+:  :                                                                          :
+:  +-- Whaaat??                                                               :
+:     gw                                                                      :
 :                                                                             :
 :_____________________________________________________________________________:
 :                                                                             :

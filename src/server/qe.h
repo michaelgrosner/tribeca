@@ -54,7 +54,7 @@ namespace K {
         };
       };
       void waitTime() {
-        engine.timer_1s = [&]() {                         _debugEvent_
+        engine.timer_1s = [&]() {                                   _debugEvent_
           if (((MG*)market)->fairValue) {
             ((MG*)market)->calcStats();
             ((PG*)wallet)->calcSafety();

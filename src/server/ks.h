@@ -665,9 +665,23 @@ namespace K {
             whitelist     = "";
     const char *inet = nullptr;
   } args;
+  static struct mMemory {
+    function<json(const mMatter&)> select;
+    void insert(
+      const mMatter &table            ,
+      const json    &cell             ,
+      const bool    &rm       = true  ,
+      const string  &updateId = "NULL",
+      const mClock  &rmOlder  = 0
+    ) {
+      delete_insert(table, cell, rm, updateId, rmOlder);
+    };
+    function<void(const mMatter&, const json&, const bool&, const string&, const mClock&)> delete_insert;
+    function<unsigned int()> size = []() { return 0; };
+  } sqlite;
   static struct mClient {
-    function<void()> timer_Xs   = [&]() {},
-                     timer_60s  = [&]() {};
+    function<void()> timer_Xs   = []() {},
+                     timer_60s  = []() {};
     function<void(const mMatter&, function<void(json*)>*)>       welcome = [](const mMatter &type, function<void(json*)> *fn) {};
     function<void(const mMatter&, function<void(const json&)>*)> clickme = [](const mMatter &type, function<void(const json&)> *fn) {};
     function<void(const mMatter&, const json&)>                  send;
@@ -762,7 +776,6 @@ namespace K {
   class Klass {
     protected:
       Klass *events = nullptr,
-            *memory = nullptr,
             *broker = nullptr,
             *market = nullptr,
             *wallet = nullptr;
@@ -780,7 +793,6 @@ namespace K {
         run();
       };
       inline void evLink(Klass &k) { events = &k; };
-      inline void dbLink(Klass &k) { memory = &k; };
       inline void ogLink(Klass &k) { broker = &k; };
       inline void mgLink(Klass &k) { market = &k; };
       inline void pgLink(Klass &k) { wallet = &k; };
@@ -791,7 +803,6 @@ namespace K {
         Klass &EV,     Klass &DB,     Klass &UI,     Klass &QP,     Klass &OG,     Klass &MG,     Klass &PG,     Klass &QE,     Klass &GW
       ) {
                        DB.evLink(EV); UI.evLink(EV);                OG.evLink(EV); MG.evLink(EV); PG.evLink(EV); QE.evLink(EV); GW.evLink(EV);
-                                      UI.dbLink(DB); QP.dbLink(DB); OG.dbLink(DB); MG.dbLink(DB); PG.dbLink(DB);
                                                                                    MG.ogLink(OG); PG.ogLink(OG); QE.ogLink(OG);
                                                                                                   PG.mgLink(MG); QE.mgLink(MG);
                                                                                                                  QE.pgLink(PG);

@@ -18,10 +18,10 @@ namespace K {
       string sideAPR = "";
     protected:
       void load() {
-        for (json &it : ((DB*)memory)->load(mMatter::Position))
+        for (json &it : sqlite.select(mMatter::Position))
           profits.push_back(it);
         screen.log("DB", string("loaded ") + to_string(profits.size()) + " historical Profits");
-        json k = ((DB*)memory)->load(mMatter::TargetBasePosition);
+        json k = sqlite.select(mMatter::TargetBasePosition);
         if (!k.empty()) {
           k = k.at(0);
           targetBasePosition = k.value("tbp", 0.0);
@@ -69,7 +69,7 @@ namespace K {
         calcPDiv(baseValue);
         json k = {{"tbp", targetBasePosition}, {"sideAPR", sideAPR}, {"pDiv", positionDivergence }};
         client.send(mMatter::TargetBasePosition, k);
-        ((DB*)memory)->insert(mMatter::TargetBasePosition, k);
+        sqlite.insert(mMatter::TargetBasePosition, k);
         if (!args.debugWallet) return;
         screen.log("PG", string("TBP: ")
           + to_string((int)(targetBasePosition / baseValue * 1e+2)) + "% = " + FN::str8(targetBasePosition)
@@ -298,7 +298,7 @@ namespace K {
         else if (k->baseValue and k->quoteValue and profitT_21s + 21e+3 < now) {
           profitT_21s = now;
           mProfit profit(k->baseValue, k->quoteValue, now);
-          ((DB*)memory)->insert(mMatter::Position, profit, false, "NULL", now - (qp.profitHourInterval * 3600e+3));
+          sqlite.insert(mMatter::Position, profit, false, "NULL", now - (qp.profitHourInterval * 3600e+3));
           profits.push_back(profit);
           for (vector<mProfit>::iterator it = profits.begin(); it != profits.end();)
             if (it->time + (qp.profitHourInterval * 3600e+3) > now) ++it;

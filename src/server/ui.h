@@ -244,7 +244,7 @@ namespace K {
           {"memory", memorySize()},
           {"freq", engine.orders_60s},
           {"theme", args.ignoreMoon + args.ignoreSun},
-          {"dbsize", ((DB*)memory)->size()},
+          {"dbsize", sqlite.size()},
           {"a", gw->A()}
         };
       };
