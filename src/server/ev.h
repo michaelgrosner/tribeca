@@ -1,8 +1,6 @@
 #ifndef K_EV_H_
 #define K_EV_H_
 
-#define _debugEvent_ ((EV*)events)->debug(__PRETTY_FUNCTION__);
-
 namespace K  {
   string tracelog;
   class EV: public Klass {
@@ -28,9 +26,6 @@ namespace K  {
         gw->hub = hub = new uWS::Hub(0, true);
       };
       void waitData() {
-        loop = new uS::Async(hub->getLoop());
-        loop->setData(this);
-        loop->start(walk);
         hub->createGroup<uWS::CLIENT>();
         gw->reconnect = [&](const string &reason) {
           gwT_countdown = 7;
@@ -51,55 +46,53 @@ namespace K  {
       void waitUser() {
         if (args.headless) return;
         hub->createGroup<uWS::SERVER>(uWS::PERMESSAGE_DEFLATE);
+        events.listen = [&]() {
+          if (!args.withoutSSL
+            and (access("etc/sslcert/server.crt", F_OK) != -1)
+            and (access("etc/sslcert/server.key", F_OK) != -1)
+            and hub->listen(
+              args.inet, args.port,
+              uS::TLS::createContext("etc/sslcert/server.crt",
+                                     "etc/sslcert/server.key", ""),
+              0, &hub->getDefaultGroup<uWS::SERVER>()
+            )
+          ) screen.protocol += 'S';
+          else if (!hub->listen(args.inet, args.port, nullptr, 0, &hub->getDefaultGroup<uWS::SERVER>())) {
+            const string netstat = FN::output(string("netstat -anp 2>/dev/null | grep ") + to_string(args.port));
+            exit(screen.error("UI", "Unable to listen to UI port number " + to_string(args.port) + ", "
+              + (netstat.empty() ? "try another network interface" : "seems already in use by:\n" + netstat)
+            ));
+          }
+          screen.logUI();
+          return hub;
+        };
       };
       void run() {
-        if (args.debugEvents) return;
-        debug = [](const string &k) {};
-      };
-    public:
-      void start(/* KMxTWEpb9ig */) {
-        tracelog += string("- roll-out: ") + to_string(_Tstamp_) + '\n';
-        if (gw->asyncWs()) gwT_countdown = 1;
-        hub->run();
-      };
-      void stop(const function<void()> &gwCancelAll) {
-        timer->stop();
-        gw->close();
-        hub->getDefaultGroup<uWS::CLIENT>().close();
-        gwCancelAll();
-        walk(loop);
-        hub->getDefaultGroup<uWS::SERVER>().close();
-      };
-      inline uWS::Hub* listen() {
-        if (!args.withoutSSL
-          and (access("etc/sslcert/server.crt", F_OK) != -1)
-          and (access("etc/sslcert/server.key", F_OK) != -1)
-          and hub->listen(
-            args.inet, args.port,
-            uS::TLS::createContext("etc/sslcert/server.crt",
-                                   "etc/sslcert/server.key", ""),
-            0, &hub->getDefaultGroup<uWS::SERVER>()
-          )
-        ) screen.protocol += 'S';
-        else if (!hub->listen(args.inet, args.port, nullptr, 0, &hub->getDefaultGroup<uWS::SERVER>())) {
-          const string netstat = FN::output(string("netstat -anp 2>/dev/null | grep ") + to_string(args.port));
-          exit(screen.error("UI", "Unable to listen to UI port number " + to_string(args.port) + ", "
-            + (netstat.empty() ? "try another network interface" : "seems already in use by:\n" + netstat)
-          ));
-        }
-        screen.logUI();
-        return hub;
-      };
-      void deferred(const function<void()> &fn) {
-        slowFn.push_back(fn);
-        loop->send();
-      };
-      function<void(const string&)> debug = [&](const string &k) {
-        screen.log("DEBUG", string("EV ") + k);
+        loop = new uS::Async(hub->getLoop());
+        loop->setData(this);
+        loop->start(walk);
+        events.start = [&](/* KMxTWEpb9ig */) {
+          tracelog += string("- roll-out: ") + to_string(_Tstamp_) + '\n';
+          if (gw->asyncWs()) gwT_countdown = 1;
+          hub->run();
+        };
+        events.stop = [&]() {
+          timer->stop();
+          gw->close();
+          hub->getDefaultGroup<uWS::CLIENT>().close();
+          gwCancelAll();
+          walk(loop);
+          hub->getDefaultGroup<uWS::SERVER>().close();
+        };
+        events.deferred = [&](const function<void()> &fn) {
+          slowFn.push_back(fn);
+          loop->send();
+        };
       };
     private:
       function<void()> happyEnding = [&]() {
         cout << tracelog;
+        tracelog.clear();
       };
       function<void()> neverEnding = [&]() {
         cout << gw->name;
@@ -143,8 +136,17 @@ namespace K  {
             evT_5m = 0;
         }
       };
+      inline void gwCancelAll() {
+        if (args.dustybot)
+          screen.log(string("GW ") + gw->name, "--dustybot is enabled, remember to cancel manually any open order.");
+        else {
+          screen.log(string("GW ") + gw->name, "Attempting to cancel all open orders, please wait.");
+          for (mOrder &it : gw->sync_cancelAll()) gw->evDataOrder(it);
+          screen.log(string("GW ") + gw->name, "cancel all open orders OK");
+        }
+      };
       inline void gwLog(const string &reason) {
-        deferred([this, reason]() {
+        events.deferred([this, reason]() {
           const string name = string(
             reason.find(">>>") != reason.find("<<<")
               ? "DEBUG" : "GW"
@@ -173,6 +175,7 @@ namespace K  {
         halt(EXIT_SUCCESS);
       };
       static void wtf(const int sig) {
+        if (tracelog.empty()) exit(screen.error("EV", "loop of errors omitted"));
         const string rollout = tracelog;
         tracelog = string(RCYAN) + "Errrror: Signal " + to_string(sig) + ' '
 #ifndef _WIN32

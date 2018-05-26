@@ -1,6 +1,8 @@
 #ifndef K_SH_H_
 #define K_SH_H_
 
+#define _debugEvent_ screen.debug(__PRETTY_FUNCTION__);
+
 namespace K {
   vector<function<void()>*> endingFn;
   char RBLACK[] = "\033[0;30m", RRED[]    = "\033[0;31m", RGREEN[] = "\033[0;32m", RYELLOW[] = "\033[0;33m",
@@ -42,7 +44,11 @@ namespace K {
       };
       void config(string base_, string quote_) {
         wtfismyip = FN::wJet("https://wtfismyip.com/json", 4L).value("/YourFuckingIPAddress"_json_pointer, "");
-        if (args.naked) return;
+        if (!args.debugEvents) debug = [](const string &k) {};
+#ifndef _WIN32
+        if (args.naked)
+#endif
+          return;
         if (!(wBorder = initscr())) {
           cout << "NCURSES" << RRED << " Errrror:" << BRED << " Unable to initialize ncurses, try to run in your terminal \"export TERM=xterm\", or use --naked argument." << '\n';
           exit(EXIT_SUCCESS);
@@ -124,6 +130,9 @@ namespace K {
         wattroff(wLog, COLOR_PAIR(COLOR_GREEN));
         wprintw(wLog, " ");
         return "";
+      };
+      function<void(const string&)> debug = [&](const string &k) {
+        log("DEBUG", string("EV ") + k);
       };
       void logWar(string k, string s) {
         logErr(k, s, " Warrrrning: ");

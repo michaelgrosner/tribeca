@@ -26,13 +26,13 @@ namespace K {
       };
       void waitData() {
         if (args.headless) return;
-        auto client = &((EV*)events)->listen()->getDefaultGroup<uWS::SERVER>();
+        auto client = &events.listen()->getDefaultGroup<uWS::SERVER>();
         client->onConnection([&](uWS::WebSocket<uWS::SERVER> *webSocket, uWS::HttpRequest req) {
           onConnection();
           const string addr = cleanAddress(webSocket->getAddress().address);
           screen.logUIsess(connections, addr);
           if (connections > args.maxAdmins) {
-            screen.log("UI", "--client-limit=\"" + to_string(args.maxAdmins) + "\" reached by", addr);
+            screen.log("UI", "--client-limit=" + to_string(args.maxAdmins) + " reached by", addr);
             webSocket->close();
           }
         });
@@ -68,7 +68,7 @@ namespace K {
         broadcast = [this, client](const mMatter &type, string msg) {
           msg.insert(msg.begin(), (char)type);
           msg.insert(msg.begin(), (char)mPortal::Kiss);
-          ((EV*)events)->deferred([client, msg]() {
+          events.deferred([client, msg]() {
             client->broadcast(msg.data(), msg.length(), uWS::OpCode::TEXT);
           });
         };
@@ -171,7 +171,7 @@ namespace K {
               screen.log("UI", "authorization success from", addr);
               content = string(&_www_html_index, _www_html_index_len);
             } else {
-              screen.log("UI", "--client-limit=\"" + to_string(args.maxAdmins) + "\" reached by", addr);
+              screen.log("UI", "--client-limit=" + to_string(args.maxAdmins) + " reached by", addr);
               content = "Thank you! but our princess is already in this castle!<br/>Refresh the page anytime to retry.";
             }
           } else if (leaf == "js") {

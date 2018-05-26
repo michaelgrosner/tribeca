@@ -187,9 +187,7 @@ namespace K {
       };
     private:
       inline void config() {
-#ifndef _WIN32
         screen.config(base(), quote());
-#endif
         gw = Gw::config(
           base(),         quote(),
           args.exchange,  args.free,

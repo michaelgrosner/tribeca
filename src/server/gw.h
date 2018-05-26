@@ -28,21 +28,13 @@ namespace K {
       };
       void run() {                                                  _debugEvent_
         handshake();
-        ((EV*)events)->start();
+        if (gw->exchange == mExchange::Coinbase) stunnel(true);
+        events.start();
       };
     private:
       function<void()> happyEnding = [&]() {
-        ((EV*)events)->stop([&]() {
-          if (args.dustybot)
-            screen.log(string("GW ") + gw->name, "--dustybot is enabled, remember to cancel manually any open order.");
-          else {
-            screen.log(string("GW ") + gw->name, "Attempting to cancel all open orders, please wait.");
-            for (mOrder &it : gw->sync_cancelAll()) gw->evDataOrder(it);
-            screen.log(string("GW ") + gw->name, "cancel all open orders OK");
-          }
-        });
-        if (gw->exchange == mExchange::Coinbase)
-          stunnel();
+        events.stop();
+        if (gw->exchange == mExchange::Coinbase) stunnel(false);
       };
       function<void(json*)> hello = [&](json *welcome) {
         *welcome = { semaphore() };
@@ -81,14 +73,13 @@ namespace K {
           {"status", engine.greenGateway}
         };
       };
-      inline void stunnel(bool reboot = false) {
+      inline void stunnel(bool reboot) {
         system("pkill stunnel || :");
         if (reboot) system("stunnel etc/stunnel.conf");
       };
       inline void handshake() {
         json reply;
         if (gw->exchange == mExchange::Coinbase) {
-          stunnel(true);
           gw->randId = FN::uuid36Id;
           gw->symbol = gw->base + "-" + gw->quote;
           reply = FN::wJet(gw->http + "/products/" + gw->symbol);

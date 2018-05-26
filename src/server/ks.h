@@ -665,9 +665,15 @@ namespace K {
             whitelist     = "";
     const char *inet = nullptr;
   } args;
-  static struct mMemory {
+  static struct mEvents {
+    function<void()> start,
+                     stop;
+    function<void(const function<void()>&)> deferred;
+    function<uWS::Hub*()> listen;
+  } events;
+  static struct mSqlite {
     function<json(const mMatter&)> select;
-    void insert(
+    inline void insert(
       const mMatter &table            ,
       const json    &cell             ,
       const bool    &rm       = true  ,
@@ -772,11 +778,10 @@ namespace K {
         }
         return waiting;
       };
-  } *gw;
+  } *gw = nullptr;
   class Klass {
     protected:
-      Klass *events = nullptr,
-            *broker = nullptr,
+      Klass *broker = nullptr,
             *market = nullptr,
             *wallet = nullptr;
       virtual void load() {};
@@ -792,7 +797,6 @@ namespace K {
         waitUser();
         run();
       };
-      inline void evLink(Klass &k) { events = &k; };
       inline void ogLink(Klass &k) { broker = &k; };
       inline void mgLink(Klass &k) { market = &k; };
       inline void pgLink(Klass &k) { wallet = &k; };
@@ -802,7 +806,6 @@ namespace K {
       inline void link(
         Klass &EV,     Klass &DB,     Klass &UI,     Klass &QP,     Klass &OG,     Klass &MG,     Klass &PG,     Klass &QE,     Klass &GW
       ) {
-                       DB.evLink(EV); UI.evLink(EV);                OG.evLink(EV); MG.evLink(EV); PG.evLink(EV); QE.evLink(EV); GW.evLink(EV);
                                                                                    MG.ogLink(OG); PG.ogLink(OG); QE.ogLink(OG);
                                                                                                   PG.mgLink(MG); QE.mgLink(MG);
                                                                                                                  QE.pgLink(PG);

@@ -43,7 +43,7 @@ namespace K {
           ) + ";"
             + (cell.is_null() ? "" : "INSERT INTO " + schema(table)
             + " (id,json) VALUES(" + updateId + ",'" + cell.dump() + "');");
-          ((EV*)events)->deferred([this, sql]() {
+          events.deferred([this, sql]() {
             exec(sql);
           });
         };
