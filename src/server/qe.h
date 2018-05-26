@@ -102,7 +102,7 @@ namespace K {
         market.filterAskOrders.clear();
         vector<mRandId> zombies;
         mClock now = _Tstamp_;
-        for (map<mRandId, mOrder>::value_type &it : ((OG*)broker)->orders)
+        for (map<mRandId, mOrder>::value_type &it : broker.orders)
           if (it.second.orderStatus == mStatus::New) {
             if (now-10e+3>it.second.time) zombies.push_back(it.first);
             (*qNew)++;
@@ -113,7 +113,7 @@ namespace K {
             )[it.second.price] += it.second.quantity;
             (*qWorking)++;
           } else (*qDone)++;
-        for (mRandId &it : zombies) ((OG*)broker)->cleanOrder(it);
+        for (mRandId &it : zombies) broker.cleanOrder(it);
         return *qNew != status.quotesInMemoryNew
           or *qWorking != status.quotesInMemoryWorking
           or *qDone != status.quotesInMemoryDone;
@@ -479,7 +479,7 @@ namespace K {
         vector<mRandId> toCancel,
                         keepWorking;
         mClock now = _Tstamp_;
-        for (map<mRandId, mOrder>::value_type &it : ((OG*)broker)->orders)
+        for (map<mRandId, mOrder>::value_type &it : broker.orders)
           if (it.second.side != side) continue;
           else if (abs(it.second.price - q.price) < gw->minTick) return;
           else if (it.second.orderStatus == mStatus::New) {
@@ -492,14 +492,14 @@ namespace K {
           } else keepWorking.push_back(it.first);
         if (qp.safety == mQuotingSafety::AK47 and toCancel.empty() and !keepWorking.empty())
           toCancel.push_back(side == mSide::Bid ? keepWorking.front() : keepWorking.back());
-        ((OG*)broker)->sendOrder(toCancel, side, q.price, q.size, mOrderType::Limit, mTimeInForce::GTC, isPong, true);
+        broker.sendOrder(toCancel, side, q.price, q.size, mOrderType::Limit, mTimeInForce::GTC, isPong, true);
       };
       void stopAllQuotes(mSide side) {
         vector<mRandId> toCancel;
-        for (map<mRandId, mOrder>::value_type &it : ((OG*)broker)->orders)
+        for (map<mRandId, mOrder>::value_type &it : broker.orders)
           if (it.second.orderStatus == mStatus::Working and (side == mSide::Both or side == it.second.side))
             toCancel.push_back(it.first);
-        for (mRandId &it : toCancel) ((OG*)broker)->cancelOrder(it);
+        for (mRandId &it : toCancel) broker.cancelOrder(it);
       };
       function<void(const string&, const mQuote&)> debuq = [&](const string &k, const mQuote &rawQuote) {
         debug(string("quote") + k + " " + to_string((int)bidStatus) + " " + to_string((int)askStatus) + " " + ((json)rawQuote).dump());

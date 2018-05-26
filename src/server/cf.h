@@ -2,7 +2,7 @@
 #define K_CF_H_
 
 namespace K {
-  class CF: public kLass {
+  class CF {
     public:
       inline void main(int argc, char** argv) {
         static const struct option opts[] = {

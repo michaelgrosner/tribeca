@@ -102,7 +102,7 @@ namespace K {
           mAmount amount = side == mSide::Ask
             ? wallet.position.baseAmount + wallet.position.baseHeldAmount
             : wallet.position.quoteAmount + wallet.position.quoteHeldAmount;
-          for (map<mRandId, mOrder>::value_type &it : ((OG*)broker)->orders)
+          for (map<mRandId, mOrder>::value_type &it : broker.orders)
             if (it.second.side == side and it.second.orderStatus == mStatus::Working) {
               mAmount held = it.second.quantity;
               if (it.second.side == mSide::Bid)
@@ -149,7 +149,7 @@ namespace K {
           : qp.sellSize;
         map<mPrice, mTrade> tradesBuy;
         map<mPrice, mTrade> tradesSell;
-        for (mTrade &it: ((OG*)broker)->tradesHistory) {
+        for (mTrade &it: broker.tradesHistory) {
           (it.side == mSide::Bid ? tradesBuy : tradesSell)[it.price] = it;
           if (qp.safety == mQuotingSafety::PingPong)
             (it.side == mSide::Ask ? buySize : sellSize) = it.quantity;

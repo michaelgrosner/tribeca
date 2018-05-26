@@ -86,9 +86,9 @@
 :       ____     Login    ____    Admin     ____                              :
 :      |gw.h# <<-------- |cf.h| -------->> |sh.h# K Shell                     :
 :       ¯¯¯¯#             ¯¯¯¯             |ui.h# K Client                    :
-:           #   Wallet    ____              ¯¯¯¯| P                           :
-:           # -------->> |pg.h#        ____     V a                           :
-:         A #             ¯¯¯¯#       |km.h|____V r                           :
+:           #   Wallet    ____         ____ ¯¯¯¯| P                           :
+:           # -------->> |pg.h#       |ds.h|    V a                           :
+:         A #             ¯¯¯¯#       |if.h|____V r                           :
 :         P #   Trades        # <<->> |fn.h|qp.h| a                           :
 :         I #     &           # a D    ¯¯¯¯ ¯¯¯¯| m                           :
 :           #   Levels    ____# t               | e                           :
@@ -111,9 +111,14 @@
 :  :   K Server is proudly non-stop changing states and mutating global data. :
 :  :                                                                          :
 :  +-- Globals??                                                              :
-:     args, events, sqlite, qp, gw, wallet, market, engine, client, screen    :
+:                     args, screen, client, events, sqlite                    :
+:                    qp, wallet, market, broker, engine, gw                   :
 :                                                                             :
-:  .. src/server/ks.h:  ----------------------------- aka. K Structures ----- :
+:  .. src/server/ds.h:  ----------------------------- aka. Data Structures -- :
+:      TODO                                                                   :
+:                                                                             :
+:                                                                             :
+:  .. src/server/if.h:  ----------------------------- aka. Interfaces ------- :
 :      TODO                                                                   :
 :                                                                             :
 :                                                                             :
@@ -181,7 +186,10 @@
 :                                                                             :
 :                                                                             :
 :  .. src/server/og.h:  ----------------------------- aka. Orders Gateway --- :
-:      TODO                                                                   :
+:  :   TODO                                                                   :
+:  :                                                                          :
+:  +-- Whaaat??                                                               :
+:     broker                                                                  :
 :                                                                             :
 :                                                                             :
 :  .. src/server/mg.h:  ----------------------------- aka. Market Gateway --- :
