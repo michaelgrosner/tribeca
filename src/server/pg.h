@@ -10,12 +10,6 @@ namespace K {
                           sells;
       mClock profitT_21s = 0;
       string sideAPR_ = "!=";
-    public:
-      mPosition position;
-      mSafety safety;
-      mAmount targetBasePosition = 0,
-              positionDivergence = 0;
-      string sideAPR = "";
     protected:
       void load() {
         for (json &it : sqlite.select(mMatter::Position))
@@ -24,85 +18,134 @@ namespace K {
         json k = sqlite.select(mMatter::TargetBasePosition);
         if (!k.empty()) {
           k = k.at(0);
-          targetBasePosition = k.value("tbp", 0.0);
-          if (k.find("pDiv") != k.end()) positionDivergence = k.value("pDiv", 0.0);
-          sideAPR = k.value("sideAPR", "");
+          wallet.targetBasePosition = k.value("tbp", 0.0);
+          if (k.find("pDiv") != k.end()) wallet.positionDivergence = k.value("pDiv", 0.0);
+          wallet.sideAPR = k.value("sideAPR", "");
         }
-        screen.log("DB", string("loaded TBP = ") + FN::str8(targetBasePosition) + " " + gw->base);
+        screen.log("DB", string("loaded TBP = ") + FN::str8(wallet.targetBasePosition) + " " + gw->base);
       };
       void waitData() {
         gw->evDataWallet = [&](mWallets k) {                        _debugEvent_
           if (!k.empty()) balance = k;
-          calcWallet();
+          wallet.calcWallet();
         };
-        ((MG*)market)->calcWallet = &calcWallet;
-        ((MG*)market)->calcTargetBasePos = &calcTargetBasePos;
-        ((OG*)broker)->calcWalletAfterOrder = &calcWalletAfterOrder;
-        ((OG*)broker)->calcSafetyAfterTrade = &calcSafetyAfterTrade;
+        wallet.calcSafety = [&]() {
+          if (wallet.position.empty() or !((MG*)market)->fairValue) return;
+          mSafety prev = wallet.safety;
+          wallet.safety = nextSafety();
+          if (prev.combined != wallet.safety.combined
+            or prev.buyPing != wallet.safety.buyPing
+            or prev.sellPing != wallet.safety.sellPing
+          ) client.send(mMatter::TradeSafetyValue, wallet.safety);
+        };
+        wallet.calcTargetBasePos = [&]() {                          _debugEvent_
+          if (wallet.position.empty()) return screen.logWar("PG", "Unable to calculate TBP, missing wallet data");
+          mAmount baseValue = wallet.position.baseValue;
+          mAmount next = qp.autoPositionMode == mAutoPositionMode::Manual
+            ? (qp.percentageValues
+              ? qp.targetBasePositionPercentage * baseValue / 1e+2
+              : qp.targetBasePosition)
+            : ((1 + ((MG*)market)->targetPosition) / 2) * baseValue;
+          if (wallet.targetBasePosition and abs(wallet.targetBasePosition - next) < 1e-4 and sideAPR_ == wallet.sideAPR) return;
+          wallet.targetBasePosition = next;
+          sideAPR_ = wallet.sideAPR;
+          calcPDiv(baseValue);
+          json k = positionState();
+          client.send(mMatter::TargetBasePosition, k);
+          sqlite.insert(mMatter::TargetBasePosition, k);
+          if (!args.debugWallet) return;
+          screen.log("PG", string("TBP: ")
+            + to_string((int)(wallet.targetBasePosition / baseValue * 1e+2)) + "% = " + FN::str8(wallet.targetBasePosition)
+            + " " + gw->base + ", pDiv: "
+            + to_string((int)(wallet.positionDivergence  / baseValue * 1e+2)) + "% = " + FN::str8(wallet.positionDivergence)
+            + " " + gw->base);
+        };
+        wallet.calcWallet = [&]() {
+          if (balance.empty() or !((MG*)market)->fairValue) return;
+          if (args.maxWallet) applyMaxWallet();
+          mPosition pos(
+            FN::d8(balance.base.amount),
+            FN::d8(balance.quote.amount),
+            balance.quote.amount / ((MG*)market)->fairValue,
+            FN::d8(balance.base.held),
+            FN::d8(balance.quote.held),
+            balance.base.amount + balance.base.held,
+            (balance.quote.amount + balance.quote.held) / ((MG*)market)->fairValue,
+            FN::d8((balance.quote.amount + balance.quote.held) / ((MG*)market)->fairValue + balance.base.amount + balance.base.held),
+            FN::d8((balance.base.amount + balance.base.held) * ((MG*)market)->fairValue + balance.quote.amount + balance.quote.held),
+            wallet.position.profitBase,
+            wallet.position.profitQuote,
+            mPair(gw->base, gw->quote)
+          );
+          calcProfit(&pos);
+          bool eq = true;
+          if (!wallet.position.empty()) {
+            eq = abs(pos.baseValue - wallet.position.baseValue) < 2e-6;
+            if(eq
+              and abs(pos.quoteValue - wallet.position.quoteValue) < 2e-2
+              and abs(pos.baseAmount - wallet.position.baseAmount) < 2e-6
+              and abs(pos.quoteAmount - wallet.position.quoteAmount) < 2e-2
+              and abs(pos.baseHeldAmount - wallet.position.baseHeldAmount) < 2e-6
+              and abs(pos.quoteHeldAmount - wallet.position.quoteHeldAmount) < 2e-2
+              and abs(pos.profitBase - wallet.position.profitBase) < 2e-2
+              and abs(pos.profitQuote - wallet.position.profitQuote) < 2e-2
+            ) return;
+          }
+          wallet.position = pos;
+          if (!eq) wallet.calcTargetBasePos();
+          client.send(mMatter::Position, pos);
+          screen.log(pos);
+        };
+        wallet.calcWalletAfterOrder = [&](const mSide &side) {
+          if (wallet.position.empty()) return;
+          mAmount heldAmount = 0;
+          mAmount amount = side == mSide::Ask
+            ? wallet.position.baseAmount + wallet.position.baseHeldAmount
+            : wallet.position.quoteAmount + wallet.position.quoteHeldAmount;
+          for (map<mRandId, mOrder>::value_type &it : ((OG*)broker)->orders)
+            if (it.second.side == side and it.second.orderStatus == mStatus::Working) {
+              mAmount held = it.second.quantity;
+              if (it.second.side == mSide::Bid)
+                held *= it.second.price;
+              if (amount >= held) {
+                amount -= held;
+                heldAmount += held;
+              }
+            }
+          (side == mSide::Ask
+            ? balance.base
+            : balance.quote
+          ).reset(amount, heldAmount);
+          wallet.calcWallet();
+        };
+        wallet.calcSafetyAfterTrade = [&](const mTrade &k) {
+          (k.side == mSide::Bid
+            ? buys : sells
+          )[k.price] = k;
+          wallet.calcSafety();
+        };
       };
       void waitUser() {
         client.welcome(mMatter::Position, &helloPosition);
         client.welcome(mMatter::TradeSafetyValue, &helloSafety);
         client.welcome(mMatter::TargetBasePosition, &helloTargetBasePos);
       };
-    public:
-      void calcSafety() {
-        if (position.empty() or !((MG*)market)->fairValue) return;
-        mSafety prev = safety;
-        safety = nextSafety();
-        if (prev.combined != safety.combined
-          or prev.buyPing != safety.buyPing
-          or prev.sellPing != safety.sellPing
-        ) client.send(mMatter::TradeSafetyValue, safety);
-      };
-      function<void()> calcTargetBasePos = [&]() {                  _debugEvent_
-        if (position.empty()) return screen.logWar("PG", "Unable to calculate TBP, missing wallet data");
-        mAmount baseValue = position.baseValue;
-        mAmount next = qp.autoPositionMode == mAutoPositionMode::Manual
-          ? (qp.percentageValues
-            ? qp.targetBasePositionPercentage * baseValue / 1e+2
-            : qp.targetBasePosition)
-          : ((1 + ((MG*)market)->targetPosition) / 2) * baseValue;
-        if (targetBasePosition and abs(targetBasePosition - next) < 1e-4 and sideAPR_ == sideAPR) return;
-        targetBasePosition = next;
-        sideAPR_ = sideAPR;
-        calcPDiv(baseValue);
-        json k = {{"tbp", targetBasePosition}, {"sideAPR", sideAPR}, {"pDiv", positionDivergence }};
-        client.send(mMatter::TargetBasePosition, k);
-        sqlite.insert(mMatter::TargetBasePosition, k);
-        if (!args.debugWallet) return;
-        screen.log("PG", string("TBP: ")
-          + to_string((int)(targetBasePosition / baseValue * 1e+2)) + "% = " + FN::str8(targetBasePosition)
-          + " " + gw->base + ", pDiv: "
-          + to_string((int)(positionDivergence  / baseValue * 1e+2)) + "% = " + FN::str8(positionDivergence)
-          + " " + gw->base);
-      };
     private:
       function<void(json*)> helloPosition = [&](json *welcome) {
-        *welcome = { position };
+        *welcome = { wallet.position };
       };
       function<void(json*)> helloSafety = [&](json *welcome) {
-        *welcome = { safety };
+        *welcome = { wallet.safety };
       };
       function<void(json*)> helloTargetBasePos = [&](json *welcome) {
-        *welcome = { {
-          {"tbp", targetBasePosition},
-          {"sideAPR", sideAPR},
-          {"pDiv", positionDivergence}
-        } };
-      };
-      function<void(const mTrade&)> calcSafetyAfterTrade = [&](const mTrade &k) {
-        (k.side == mSide::Bid
-          ? buys : sells
-        )[k.price] = k;
-        calcSafety();
+        *welcome = { positionState() };
       };
       mSafety nextSafety() {
         mAmount buySize = qp.percentageValues
-          ? qp.buySizePercentage * position.baseValue / 100
+          ? qp.buySizePercentage * wallet.position.baseValue / 100
           : qp.buySize;
         mAmount sellSize = qp.percentageValues
-          ? qp.sellSizePercentage * position.baseValue / 100
+          ? qp.sellSizePercentage * wallet.position.baseValue / 100
           : qp.sellSize;
         map<mPrice, mTrade> tradesBuy;
         map<mPrice, mTrade> tradesSell;
@@ -111,10 +154,10 @@ namespace K {
           if (qp.safety == mQuotingSafety::PingPong)
             (it.side == mSide::Ask ? buySize : sellSize) = it.quantity;
         }
-        mAmount totalBasePosition = position.baseAmount + position.baseHeldAmount;
+        mAmount totalBasePosition = wallet.position.baseAmount + wallet.position.baseHeldAmount;
         if (qp.aggressivePositionRebalancing != mAPR::Off) {
-          if (qp.buySizeMax) buySize = fmax(buySize, targetBasePosition - totalBasePosition);
-          if (qp.sellSizeMax) sellSize = fmax(sellSize, totalBasePosition - targetBasePosition);
+          if (qp.buySizeMax) buySize = fmax(buySize, wallet.targetBasePosition - totalBasePosition);
+          if (qp.sellSizeMax) sellSize = fmax(sellSize, totalBasePosition - wallet.targetBasePosition);
         }
         mPrice widthPong = qp.widthPercentage
           ? qp.widthPongPercentage * ((MG*)market)->fairValue / 100
@@ -217,79 +260,21 @@ namespace K {
           sum += it.second.quantity;
         return sum;
       };
-      function<void()> calcWallet = [&]() {
-        if (balance.empty() or !((MG*)market)->fairValue) return;
-        if (args.maxWallet) applyMaxWallet();
-        mPosition pos(
-          FN::d8(balance.base.amount),
-          FN::d8(balance.quote.amount),
-          balance.quote.amount / ((MG*)market)->fairValue,
-          FN::d8(balance.base.held),
-          FN::d8(balance.quote.held),
-          balance.base.amount + balance.base.held,
-          (balance.quote.amount + balance.quote.held) / ((MG*)market)->fairValue,
-          FN::d8((balance.quote.amount + balance.quote.held) / ((MG*)market)->fairValue + balance.base.amount + balance.base.held),
-          FN::d8((balance.base.amount + balance.base.held) * ((MG*)market)->fairValue + balance.quote.amount + balance.quote.held),
-          position.profitBase,
-          position.profitQuote,
-          mPair(gw->base, gw->quote)
-        );
-        calcProfit(&pos);
-        bool eq = true;
-        if (!position.empty()) {
-          eq = abs(pos.baseValue - position.baseValue) < 2e-6;
-          if(eq
-            and abs(pos.quoteValue - position.quoteValue) < 2e-2
-            and abs(pos.baseAmount - position.baseAmount) < 2e-6
-            and abs(pos.quoteAmount - position.quoteAmount) < 2e-2
-            and abs(pos.baseHeldAmount - position.baseHeldAmount) < 2e-6
-            and abs(pos.quoteHeldAmount - position.quoteHeldAmount) < 2e-2
-            and abs(pos.profitBase - position.profitBase) < 2e-2
-            and abs(pos.profitQuote - position.profitQuote) < 2e-2
-          ) return;
-        }
-        position = pos;
-        if (!eq) calcTargetBasePos();
-        client.send(mMatter::Position, pos);
-        screen.log(pos);
-      };
-      function<void(const mSide&)> calcWalletAfterOrder = [&](const mSide &side) {
-        if (position.empty()) return;
-        mAmount heldAmount = 0;
-        mAmount amount = side == mSide::Ask
-          ? position.baseAmount + position.baseHeldAmount
-          : position.quoteAmount + position.quoteHeldAmount;
-        for (map<mRandId, mOrder>::value_type &it : ((OG*)broker)->orders)
-          if (it.second.side == side and it.second.orderStatus == mStatus::Working) {
-            mAmount held = it.second.quantity;
-            if (it.second.side == mSide::Bid)
-              held *= it.second.price;
-            if (amount >= held) {
-              amount -= held;
-              heldAmount += held;
-            }
-          }
-        (side == mSide::Ask
-          ? balance.base
-          : balance.quote
-        ).reset(amount, heldAmount);
-        calcWallet();
-      };
       void calcPDiv(mAmount baseValue) {
         mAmount pDiv = qp.percentageValues
           ? qp.positionDivergencePercentage * baseValue / 1e+2
           : qp.positionDivergence;
         if (qp.autoPositionMode == mAutoPositionMode::Manual or mPDivMode::Manual == qp.positionDivergenceMode)
-          positionDivergence = pDiv;
+          wallet.positionDivergence = pDiv;
         else {
           mAmount pDivMin = qp.percentageValues
             ? qp.positionDivergencePercentageMin * baseValue / 1e+2
             : qp.positionDivergenceMin;
-          double divCenter = 1 - abs((targetBasePosition / baseValue * 2) - 1);
-          if (mPDivMode::Linear == qp.positionDivergenceMode) positionDivergence = pDivMin + (divCenter * (pDiv - pDivMin));
-          else if (mPDivMode::Sine == qp.positionDivergenceMode) positionDivergence = pDivMin + (sin(divCenter*M_PI_2) * (pDiv - pDivMin));
-          else if (mPDivMode::SQRT == qp.positionDivergenceMode) positionDivergence = pDivMin + (sqrt(divCenter) * (pDiv - pDivMin));
-          else if (mPDivMode::Switch == qp.positionDivergenceMode) positionDivergence = divCenter < 1e-1 ? pDivMin : pDiv;
+          double divCenter = 1 - abs((wallet.targetBasePosition / baseValue * 2) - 1);
+          if (mPDivMode::Linear == qp.positionDivergenceMode) wallet.positionDivergence = pDivMin + (divCenter * (pDiv - pDivMin));
+          else if (mPDivMode::Sine == qp.positionDivergenceMode) wallet.positionDivergence = pDivMin + (sin(divCenter*M_PI_2) * (pDiv - pDivMin));
+          else if (mPDivMode::SQRT == qp.positionDivergenceMode) wallet.positionDivergence = pDivMin + (sqrt(divCenter) * (pDiv - pDivMin));
+          else if (mPDivMode::Switch == qp.positionDivergenceMode) wallet.positionDivergence = divCenter < 1e-1 ? pDivMin : pDiv;
         }
       };
       void calcProfit(mPosition *k) {
@@ -317,6 +302,13 @@ namespace K {
         maxWallet -= balance.base.held;
         if (maxWallet > 0 and balance.base.amount > maxWallet)
           balance.base.amount = maxWallet;
+      };
+      json positionState() {
+        return {
+            {"tbp", wallet.targetBasePosition},
+            {"sideAPR", wallet.sideAPR},
+            {"pDiv", wallet.positionDivergence }
+          };
       };
   };
 }

@@ -6,8 +6,6 @@ namespace K {
     public:
       map<mRandId, mOrder> orders;
       vector<mTrade> tradesHistory;
-      function<void(const mSide&)>* calcWalletAfterOrder = nullptr;
-      function<void(const mTrade&)>* calcSafetyAfterTrade = nullptr;
     protected:
       void load() {
         for (json &it : sqlite.select(mMatter::Trades))
@@ -174,7 +172,7 @@ namespace K {
         else debug(string(" saved ") + (o->side == mSide::Bid ? "BID id " : "ASK id ") + o->orderId + "::" + o->exchangeId + " [" + to_string((int)o->orderStatus) + "]: " + FN::str8(o->quantity) + " " + o->pair.base + " at price " + FN::str8(o->price) + " " + o->pair.quote);
         debug(string("memory ") + to_string(orders.size()));
         if (saved) {
-          (*calcWalletAfterOrder)(k.side);
+          wallet.calcWalletAfterOrder(k.side);
           toClient(working);
         }
       };
@@ -225,7 +223,7 @@ namespace K {
           abs(o->price * tradeQuantity),
           0, 0, 0, 0, 0, fee, false
         );
-        (*calcSafetyAfterTrade)(trade);
+        wallet.calcSafetyAfterTrade(trade);
         screen.log(trade, gw->name);
         if (qp._matchPings) {
           mPrice widthPong = qp.widthPercentage

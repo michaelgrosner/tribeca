@@ -25,8 +25,6 @@ namespace K {
                    averageCount = 0;
       mLevelsDiff levelsDiff;
     public:
-      function<void()> *calcWallet        = nullptr,
-                       *calcTargetBasePos = nullptr;
       mLevels levels;
       mPrice fairValue = 0,
              mgEwmaP = 0,
@@ -123,7 +121,7 @@ namespace K {
           ? (topAskPrice + topBidPrice) / 2
           : (topAskPrice * topBidSize + topBidPrice * topAskSize) / (topAskSize + topBidSize);
         if (!fairValue or (fairValue_ and abs(fairValue - fairValue_) < gw->minTick)) return;
-        (*calcWallet)();
+        wallet.calcWallet();
         client.send(mMatter::FairValue, {{"price", fairValue}});
         screen.log(fairValue);
         averageWidth = ((averageWidth * averageCount) + topAskPrice - topBidPrice);
@@ -222,7 +220,7 @@ namespace K {
         calcEwma(&mgEwmaU, qp.ultraShortEwmaPeriods, fairValue);
         if(mgEwmaXS and mgEwmaU) mgEwmaTrendDiff = ((mgEwmaU * 100) / mgEwmaXS) - 100;
         calcTargetPos();
-        (*calcTargetBasePos)();
+        wallet.calcTargetBasePos();
         client.send(mMatter::EWMAChart, chartStats());
         sqlite.insert(mMatter::EWMAChart, {
           {"ewmaVeryLong", mgEwmaVL},

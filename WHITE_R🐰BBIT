@@ -111,7 +111,7 @@
 :  :   K Server is proudly non-stop changing states and mutating global data. :
 :  :                                                                          :
 :  +-- Globals??                                                              :
-:     args, events, sqlite, qp, gw, engine, client, screen                            :
+:     args, events, sqlite, qp, gw, wallet, engine, client, screen            :
 :                                                                             :
 :  .. src/server/ks.h:  ----------------------------- aka. K Structures ----- :
 :      TODO                                                                   :
@@ -189,7 +189,10 @@
 :                                                                             :
 :                                                                             :
 :  .. src/server/pg.h:  ----------------------------- aka. Position Gateway - :
-:      TODO                                                                   :
+:  :   TODO                                                                   :
+:  :                                                                          :
+:  +-- Whaaat??                                                               :
+:     wallet                                                                    :
 :                                                                             :
 :                                                                             :
 :  .. src/server/gw.h:  ----------------------------- aka. Gateway ---------- :

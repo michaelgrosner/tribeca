@@ -644,7 +644,7 @@ namespace K {
       {   "quotesInMemoryDone", k.quotesInMemoryDone   }
     };
   };
-  static struct mArgs {
+  static struct kArgs {
         int port          = 3000,   colors      = 0, debug        = 0,
             debugSecret   = 0,      debugEvents = 0, debugOrders  = 0,
             debugQuotes   = 0,      debugWallet = 0, withoutSSL   = 0,
@@ -665,13 +665,13 @@ namespace K {
             whitelist     = "";
     const char *inet = nullptr;
   } args;
-  static struct mEvents {
+  static struct kEvents {
     function<void()> start,
                      stop;
     function<void(const function<void()>&)> deferred;
     function<uWS::Hub*()> listen;
   } events;
-  static struct mSqlite {
+  static struct kSqlite {
     function<json(const mMatter&)> select;
     inline void insert(
       const mMatter &table            ,
@@ -685,14 +685,26 @@ namespace K {
     function<void(const mMatter&, const json&, const bool&, const string&, const mClock&)> delete_insert;
     function<unsigned int()> size = []() { return 0; };
   } sqlite;
-  static struct mClient {
+  static struct kClient {
     function<void()> timer_Xs   = []() {},
                      timer_60s  = []() {};
     function<void(const mMatter&, function<void(json*)>*)>       welcome = [](const mMatter &type, function<void(json*)> *fn) {};
     function<void(const mMatter&, function<void(const json&)>*)> clickme = [](const mMatter &type, function<void(const json&)> *fn) {};
     function<void(const mMatter&, const json&)>                  send;
   } client;
-  static struct mEngine {
+  static struct kWallet {
+    mPosition position;
+    mSafety safety;
+    mAmount targetBasePosition = 0,
+            positionDivergence = 0;
+    string sideAPR = "";
+    function<void()> calcWallet,
+                     calcSafety,
+                     calcTargetBasePos;
+    function<void(const mSide&)> calcWalletAfterOrder;
+    function<void(const mTrade&)> calcSafetyAfterTrade;
+  } wallet;
+  static struct kEngine {
     function<void()> timer_1s,
                      calcQuote,
                      calcQuoteAfterSavedParams;
@@ -782,8 +794,7 @@ namespace K {
   class Klass {
     protected:
       Klass *broker = nullptr,
-            *market = nullptr,
-            *wallet = nullptr;
+            *market = nullptr;
       virtual void load() {};
       virtual void waitData() {};
       virtual void waitTime() {};
@@ -799,7 +810,6 @@ namespace K {
       };
       inline void ogLink(Klass &k) { broker = &k; };
       inline void mgLink(Klass &k) { market = &k; };
-      inline void pgLink(Klass &k) { wallet = &k; };
   };
   class kLass {
     public:
@@ -808,7 +818,6 @@ namespace K {
       ) {
                                                                                    MG.ogLink(OG); PG.ogLink(OG); QE.ogLink(OG);
                                                                                                   PG.mgLink(MG); QE.mgLink(MG);
-                                                                                                                 QE.pgLink(PG);
       };
   };
 }
