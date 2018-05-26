@@ -24,23 +24,6 @@ namespace K {
       unsigned int mgT_60s = 0,
                    averageCount = 0;
       mLevelsDiff levelsDiff;
-    public:
-      mLevels levels;
-      mPrice fairValue = 0,
-             mgEwmaP = 0,
-             mgEwmaW = 0;
-      double targetPosition = 0,
-             mgStdevTop = 0,
-             mgStdevTopMean = 0,
-             mgStdevFV = 0,
-             mgStdevFVMean = 0,
-             mgStdevBid = 0,
-             mgStdevBidMean = 0,
-             mgStdevAsk = 0,
-             mgStdevAskMean = 0,
-             mgEwmaTrendDiff = 0;
-      map<mPrice, mAmount> filterBidOrders,
-                           filterAskOrders;
     protected:
       void load() {
         for (json &it : sqlite.select(mMatter::MarketData)) {
@@ -93,6 +76,41 @@ namespace K {
         gw->evDataLevels = [&](mLevels k) {                         _debugEvent_
           levelUp(k);
         };
+        market.calcStats = [&]() {
+          if (!mgT_60s++) {
+            calcStatsTrades();
+            calcStatsEwmaProtection();
+            calcStatsEwmaPosition();
+          } else if (mgT_60s == 60) mgT_60s = 0;
+          calcStatsStdevProtection();
+        };
+        market.calcFairValue = [&]() {
+          if (market.levels.empty()) return;
+          mPrice prev  = market.fairValue,
+                 topAskPrice = market.levels.asks.begin()->price,
+                 topBidPrice = market.levels.bids.begin()->price;
+          mAmount topAskSize = market.levels.asks.begin()->size,
+                  topBidSize = market.levels.bids.begin()->size;
+          if (!topAskPrice or !topBidPrice or !topAskSize or !topBidSize) return;
+          market.fairValue = qp.fvModel == mFairValueModel::BBO
+            ? (topAskPrice + topBidPrice) / 2
+            : (topAskPrice * topBidSize + topBidPrice * topAskSize) / (topAskSize + topBidSize);
+          if (!market.fairValue or (prev and abs(market.fairValue - prev) < gw->minTick)) return;
+          wallet.calcWallet();
+          client.send(mMatter::FairValue, {{"price", market.fairValue}});
+          screen.log(market.fairValue);
+          averageWidth = ((averageWidth * averageCount) + topAskPrice - topBidPrice);
+          averageWidth /= ++averageCount;
+        };
+        market.calcEwmaHistory = [&]() {
+          if (FN::trueOnce(&qp._diffVLEP)) calcEwmaHistory(&mgEwmaVL, qp.veryLongEwmaPeriods, "VeryLong");
+          if (FN::trueOnce(&qp._diffLEP)) calcEwmaHistory(&mgEwmaL, qp.longEwmaPeriods, "Long");
+          if (FN::trueOnce(&qp._diffMEP)) calcEwmaHistory(&mgEwmaM, qp.mediumEwmaPeriods, "Medium");
+          if (FN::trueOnce(&qp._diffSEP)) calcEwmaHistory(&mgEwmaS, qp.shortEwmaPeriods, "Short");
+          if (FN::trueOnce(&qp._diffXSEP)) calcEwmaHistory(&mgEwmaXS, qp.extraShortEwmaPeriods, "ExtraShort");
+          if (FN::trueOnce(&qp._diffUEP)) calcEwmaHistory(&mgEwmaU, qp.ultraShortEwmaPeriods, "UltraShort");
+        };
+
       };
       void waitUser() {
         client.welcome(mMatter::MarketData, &helloLevels);
@@ -100,68 +118,33 @@ namespace K {
         client.welcome(mMatter::FairValue, &helloFair);
         client.welcome(mMatter::EWMAChart, &helloEwma);
       };
-    public:
-      void calcStats() {
-        if (!mgT_60s++) {
-          calcStatsTrades();
-          calcStatsEwmaProtection();
-          calcStatsEwmaPosition();
-        } else if (mgT_60s == 60) mgT_60s = 0;
-        calcStatsStdevProtection();
-      };
-      void calcFairValue() {
-        if (levels.empty()) return;
-        mPrice fairValue_  = fairValue,
-               topAskPrice = levels.asks.begin()->price,
-               topBidPrice = levels.bids.begin()->price;
-        mAmount topAskSize = levels.asks.begin()->size,
-                topBidSize = levels.bids.begin()->size;
-        if (!topAskPrice or !topBidPrice or !topAskSize or !topBidSize) return;
-        fairValue = qp.fvModel == mFairValueModel::BBO
-          ? (topAskPrice + topBidPrice) / 2
-          : (topAskPrice * topBidSize + topBidPrice * topAskSize) / (topAskSize + topBidSize);
-        if (!fairValue or (fairValue_ and abs(fairValue - fairValue_) < gw->minTick)) return;
-        wallet.calcWallet();
-        client.send(mMatter::FairValue, {{"price", fairValue}});
-        screen.log(fairValue);
-        averageWidth = ((averageWidth * averageCount) + topAskPrice - topBidPrice);
-        averageWidth /= ++averageCount;
-      };
-      void calcEwmaHistory() {
-        if (FN::trueOnce(&qp._diffVLEP)) calcEwmaHistory(&mgEwmaVL, qp.veryLongEwmaPeriods, "VeryLong");
-        if (FN::trueOnce(&qp._diffLEP)) calcEwmaHistory(&mgEwmaL, qp.longEwmaPeriods, "Long");
-        if (FN::trueOnce(&qp._diffMEP)) calcEwmaHistory(&mgEwmaM, qp.mediumEwmaPeriods, "Medium");
-        if (FN::trueOnce(&qp._diffSEP)) calcEwmaHistory(&mgEwmaS, qp.shortEwmaPeriods, "Short");
-        if (FN::trueOnce(&qp._diffXSEP)) calcEwmaHistory(&mgEwmaXS, qp.extraShortEwmaPeriods, "ExtraShort");
-        if (FN::trueOnce(&qp._diffUEP)) calcEwmaHistory(&mgEwmaU, qp.ultraShortEwmaPeriods, "UltraShort");
-      };
     private:
       function<void(json*)> helloLevels = [&](json *welcome) {
-        *welcome = { levelsDiff.reset(levels) };
+        *welcome = { levelsDiff.reset(market.levels) };
       };
       function<void(json*)> helloTrade = [&](json *welcome) {
         *welcome = trades;
       };
       function<void(json*)> helloFair = [&](json *welcome) {
         *welcome = { {
-          {"price", fairValue}
+          {"price", market.fairValue}
         } };
       };
       function<void(json*)> helloEwma = [&](json *welcome) {
         *welcome = { chartStats() };
       };
       void calcStatsStdevProtection() {
-        if (levels.empty()) return;
-        mPrice topBid = levels.bids.begin()->price,
-               topAsk = levels.asks.begin()->price;
-        mgStatFV.push_back(fairValue);
+        if (market.levels.empty()) return;
+        mPrice topBid = market.levels.bids.begin()->price,
+               topAsk = market.levels.asks.begin()->price;
+        mgStatFV.push_back(market.fairValue);
         mgStatBid.push_back(topBid);
         mgStatAsk.push_back(topAsk);
         mgStatTop.push_back(topBid);
         mgStatTop.push_back(topAsk);
         calcStdev();
         sqlite.insert(mMatter::MarketData, {
-          {"fv", fairValue},
+          {"fv", market.fairValue},
           {"bid", topBid},
           {"ask", topAsk},
           {"time", _Tstamp_},
@@ -184,10 +167,10 @@ namespace K {
         client.send(mMatter::MarketTrade, k);
       };
       void levelUp(mLevels k) {
-        levels = k;
-        if (!filterBidOrders.empty()) filter(&levels.bids, filterBidOrders);
-        if (!filterAskOrders.empty()) filter(&levels.asks, filterAskOrders);
-        calcFairValue();
+        market.levels = k;
+        if (!market.filterBidOrders.empty()) filter(&market.levels.bids, market.filterBidOrders);
+        if (!market.filterAskOrders.empty()) filter(&market.levels.asks, market.filterAskOrders);
+        market.calcFairValue();
         engine.calcQuote();
         if (levelsDiff.empty() or k.empty()
           or mgT_369ms + max(369e+0, qp.delayUI * 1e+3) > _Tstamp_
@@ -209,16 +192,16 @@ namespace K {
         }
       };
       void calcStatsEwmaPosition() {
-        fairValue96h.push_back(fairValue);
+        fairValue96h.push_back(market.fairValue);
         if (fairValue96h.size() > 5760)
           fairValue96h.erase(fairValue96h.begin(), fairValue96h.begin()+fairValue96h.size()-5760);
-        calcEwma(&mgEwmaVL, qp.veryLongEwmaPeriods, fairValue);
-        calcEwma(&mgEwmaL, qp.longEwmaPeriods, fairValue);
-        calcEwma(&mgEwmaM, qp.mediumEwmaPeriods, fairValue);
-        calcEwma(&mgEwmaS, qp.shortEwmaPeriods, fairValue);
-        calcEwma(&mgEwmaXS, qp.extraShortEwmaPeriods, fairValue);
-        calcEwma(&mgEwmaU, qp.ultraShortEwmaPeriods, fairValue);
-        if(mgEwmaXS and mgEwmaU) mgEwmaTrendDiff = ((mgEwmaU * 100) / mgEwmaXS) - 100;
+        calcEwma(&mgEwmaVL, qp.veryLongEwmaPeriods, market.fairValue);
+        calcEwma(&mgEwmaL, qp.longEwmaPeriods, market.fairValue);
+        calcEwma(&mgEwmaM, qp.mediumEwmaPeriods, market.fairValue);
+        calcEwma(&mgEwmaS, qp.shortEwmaPeriods, market.fairValue);
+        calcEwma(&mgEwmaXS, qp.extraShortEwmaPeriods, market.fairValue);
+        calcEwma(&mgEwmaU, qp.ultraShortEwmaPeriods, market.fairValue);
+        if(mgEwmaXS and mgEwmaU) market.mgEwmaTrendDiff = ((mgEwmaU * 100) / mgEwmaXS) - 100;
         calcTargetPos();
         wallet.calcTargetBasePos();
         client.send(mMatter::EWMAChart, chartStats());
@@ -232,37 +215,37 @@ namespace K {
           {"time", _Tstamp_}
         });
         sqlite.insert(mMatter::MarketDataLongTerm, {
-          {"fv", fairValue},
+          {"fv", market.fairValue},
           {"time", _Tstamp_},
         }, false, "NULL", _Tstamp_ - 345600e+3);
       };
       void calcStatsEwmaProtection() {
-        calcEwma(&mgEwmaP, qp.protectionEwmaPeriods, fairValue);
-        calcEwma(&mgEwmaW, qp.protectionEwmaPeriods, averageWidth);
+        calcEwma(&market.mgEwmaP, qp.protectionEwmaPeriods, market.fairValue);
+        calcEwma(&market.mgEwmaW, qp.protectionEwmaPeriods, averageWidth);
         averageCount = 0;
       };
       json chartStats() {
         return {
           {"stdevWidth", {
-            {"fv", mgStdevFV},
-            {"fvMean", mgStdevFVMean},
-            {"tops", mgStdevTop},
-            {"topsMean", mgStdevTopMean},
-            {"bid", mgStdevBid},
-            {"bidMean", mgStdevBidMean},
-            {"ask", mgStdevAsk},
-            {"askMean", mgStdevAskMean}
+            {"fv", market.mgStdevFV},
+            {"fvMean", market.mgStdevFVMean},
+            {"tops", market.mgStdevTop},
+            {"topsMean", market.mgStdevTopMean},
+            {"bid", market.mgStdevBid},
+            {"bidMean", market.mgStdevBidMean},
+            {"ask", market.mgStdevAsk},
+            {"askMean", market.mgStdevAskMean}
           }},
-          {"ewmaQuote", mgEwmaP},
-          {"ewmaWidth", mgEwmaW},
+          {"ewmaQuote", market.mgEwmaP},
+          {"ewmaWidth", market.mgEwmaW},
           {"ewmaShort", mgEwmaS},
           {"ewmaMedium", mgEwmaM},
           {"ewmaLong", mgEwmaL},
           {"ewmaVeryLong", mgEwmaVL},
-          {"ewmaTrendDiff", mgEwmaTrendDiff},
+          {"ewmaTrendDiff", market.mgEwmaTrendDiff},
           {"tradesBuySize", takersBuySize60s},
           {"tradesSellSize", takersSellSize60s},
-          {"fairValue", fairValue}
+          {"fairValue", market.fairValue}
         };
       };
       void cleanStdev() {
@@ -275,10 +258,10 @@ namespace K {
       void calcStdev() {
         cleanStdev();
         if (mgStatFV.size() < 2 or mgStatBid.size() < 2 or mgStatAsk.size() < 2 or mgStatTop.size() < 4) return;
-        mgStdevFV = calcStdev(&mgStdevFVMean, qp.quotingStdevProtectionFactor, mgStatFV);
-        mgStdevBid = calcStdev(&mgStdevBidMean, qp.quotingStdevProtectionFactor, mgStatBid);
-        mgStdevAsk = calcStdev(&mgStdevAskMean, qp.quotingStdevProtectionFactor, mgStatAsk);
-        mgStdevTop = calcStdev(&mgStdevTopMean, qp.quotingStdevProtectionFactor, mgStatTop);
+        market.mgStdevFV = calcStdev(&market.mgStdevFVMean, qp.quotingStdevProtectionFactor, mgStatFV);
+        market.mgStdevBid = calcStdev(&market.mgStdevBidMean, qp.quotingStdevProtectionFactor, mgStatBid);
+        market.mgStdevAsk = calcStdev(&market.mgStdevAskMean, qp.quotingStdevProtectionFactor, mgStatAsk);
+        market.mgStdevTop = calcStdev(&market.mgStdevTopMean, qp.quotingStdevProtectionFactor, mgStatTop);
       };
       double calcStdev(mPrice *mean, double factor, vector<mPrice> values) {
         unsigned int n = values.size();
@@ -308,7 +291,7 @@ namespace K {
         } else *mean = value;
       };
       void calcTargetPos() {
-        mgSMA3.push_back(fairValue);
+        mgSMA3.push_back(market.fairValue);
         if (mgSMA3.size()>3) mgSMA3.erase(mgSMA3.begin(), mgSMA3.end()-3);
         mPrice SMA3 = 0;
         for (mPrice &it : mgSMA3) SMA3 += it;
@@ -326,7 +309,7 @@ namespace K {
         }
         if (newTargetPosition > 1) newTargetPosition = 1;
         else if (newTargetPosition < -1) newTargetPosition = -1;
-        targetPosition = newTargetPosition;
+        market.targetPosition = newTargetPosition;
       };
   };
 }

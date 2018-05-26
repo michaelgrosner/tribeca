@@ -704,6 +704,27 @@ namespace K {
     function<void(const mSide&)> calcWalletAfterOrder;
     function<void(const mTrade&)> calcSafetyAfterTrade;
   } wallet;
+  static struct kMarket {
+    mLevels levels;
+    mPrice fairValue = 0,
+           mgEwmaP = 0,
+           mgEwmaW = 0;
+    double targetPosition = 0,
+           mgStdevTop = 0,
+           mgStdevTopMean = 0,
+           mgStdevFV = 0,
+           mgStdevFVMean = 0,
+           mgStdevBid = 0,
+           mgStdevBidMean = 0,
+           mgStdevAsk = 0,
+           mgStdevAskMean = 0,
+           mgEwmaTrendDiff = 0;
+    map<mPrice, mAmount> filterBidOrders,
+                         filterAskOrders;
+    function<void()> calcStats,
+                     calcFairValue,
+                     calcEwmaHistory;
+  } market;
   static struct kEngine {
     function<void()> timer_1s,
                      calcQuote,
@@ -793,8 +814,7 @@ namespace K {
   } *gw = nullptr;
   class Klass {
     protected:
-      Klass *broker = nullptr,
-            *market = nullptr;
+      Klass *broker = nullptr;
       virtual void load() {};
       virtual void waitData() {};
       virtual void waitTime() {};
@@ -809,7 +829,6 @@ namespace K {
         run();
       };
       inline void ogLink(Klass &k) { broker = &k; };
-      inline void mgLink(Klass &k) { market = &k; };
   };
   class kLass {
     public:
@@ -817,7 +836,6 @@ namespace K {
         Klass &EV,     Klass &DB,     Klass &UI,     Klass &QP,     Klass &OG,     Klass &MG,     Klass &PG,     Klass &QE,     Klass &GW
       ) {
                                                                                    MG.ogLink(OG); PG.ogLink(OG); QE.ogLink(OG);
-                                                                                                  PG.mgLink(MG); QE.mgLink(MG);
       };
   };
 }
