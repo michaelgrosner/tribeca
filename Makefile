@@ -2,7 +2,7 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
 PATCH    = 7
-BUILD    = 17
+BUILD    = 18
 CHOST   ?= $(shell $(MAKE) CHOST= chost -s)
 CARCH    = x86_64-linux-gnu arm-linux-gnueabihf aarch64-linux-gnu x86_64-apple-darwin17 x86_64-w64-mingw32
 KLOCAL  := build-$(CHOST)/local
@@ -13,13 +13,13 @@ ERR     := *** K require g++ v$(V_CXX), but g++ v$(V_CXX) was not found at $(she
 HINT    := consider to create a symlink at $(shell which "$(CXX)" 2> /dev/null) pointing to your g++-$(V_CXX) executable
 V_ZLIB   = 1.2.11
 V_SSL    = 1.1.0h
-V_CURL   = 7.59.0
+V_CURL   = 7.60.0
 V_NCUR   = 6.1
 V_JSON   = v3.1.2
 V_UWS    = 0.14.7
 V_SQL    = 3230100
 V_QF     = 1.15.1
-V_UV     = 1.20.1
+V_UV     = 1.20.3
 V_PVS    = 6.23.25627.2229
 KARGS   := -I$(KLOCAL)/include -pthread -std=c++11 -O3   \
   $(KLOCAL)/lib/K-$(CHOST)-docroot.o src/server/K.cxx    \
