@@ -60,7 +60,7 @@ using namespace nlohmann;
 
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;;int main(int argc, char** argv) {;;
-    ;;;;K::SH s;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;;;;K::SH sh;;;;;;;;;;;;;;;;;;;;;;;;;
     ;;;;K::CF cf;;;;;;;;;;;;;;;;;;;;;;;;;
     ;;;;K::EV ev;;;;;;;    ;;;;    ;;;;;;
     ;;;;K::DB db;;;;;;;    ;;    ;;;;;;;;
@@ -70,8 +70,7 @@ using namespace nlohmann;
     ;;;;K::MG mg;;;;;;;    ;;;;    ;;;;;;
 ;   ;;;;K::PG pg;;;;;;;    ;;;;    ;;;;;;           ;
 ;;  ;;;;K::QE qe;;;;;;;;;;;;;;;    ;;;;;;          ;;
-;;;;;;;;K::GW gw;;;;;;;;;;;;;;;;;;;;;;;;;        ;;;;
-    ;;/*Plea*/s.wait();;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; // youtu.be/dVlGmdl-g9Q
+;;;;;;;;K::GW gw;;;;;;;;;;;;;;;;;;;;;;;;;        ;;;;;;;; // youtu.be/dVlGmdl-g9Q
 ;;;;;;;;cf.main(argc, argv);;;;;;;;;;;;;;;;;;;;;;;;;;
 ;   ;;  ev.wait(/*     Wherever you go..        */);;;;;; // youtu.be/DKSO5YlYbOg
     ;;  db.wait(/*     Whatever you do..        */);;

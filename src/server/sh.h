@@ -10,8 +10,11 @@ namespace K {
        BBLACK[] = "\033[1;30m", BRED[]    = "\033[1;31m", BGREEN[] = "\033[1;32m", BYELLOW[] = "\033[1;33m",
        BBLUE[]  = "\033[1;34m", BPURPLE[] = "\033[1;35m", BCYAN[]  = "\033[1;36m", BWHITE[]  = "\033[1;37m",
        RRESET[] = "\033[0m";
-  class SH: public Klass,
-            public Screen { public: SH() { screen = this; }
+  class SH: public Screen {
+    public: SH() {
+      screen = this;
+      logVer();
+    };
     private:
       future<mHotkey> hotkey;
       map<mHotkey, function<void()>*> hotFn;
@@ -31,13 +34,9 @@ namespace K {
              protocol = "?",
              wtfismyip = "";
       multimap<mPrice, mOrder, greater<mPrice>> openOrders;
-    protected:
-      void load() {
-        endingFn.push_back(&happyEnding);
-        logVer();
-      };
     public:
       void config(string base_, string quote_) {
+        endingFn.push_back(&happyEnding);
         wtfismyip = FN::wJet("https://wtfismyip.com/json", 4L).value("/YourFuckingIPAddress"_json_pointer, "");
         if (!args.debugEvents) debug = [](const string &k) {};
 #ifndef _WIN32
