@@ -6,14 +6,19 @@ import * as Models from './models';
 
 @Component({
   selector: 'market-stats',
-  template: `<div class="col-md-6 col-xs-6">
-  <table><tr><td>
-    <chart style="position:relative;top:5px;height:330px;width:700px;" [options]="fvChartOptions" (load)="saveInstance($event.context, 'fv')"></chart>
-  </td><td>
-    <chart style="position:relative;top:10px;height:155px;width:700px;" [options]="baseChartOptions" (load)="saveInstance($event.context, 'base')"></chart>
-    <chart style="position:relative;top:11px;height:155px;width:700px;" [options]="quoteChartOptions" (load)="saveInstance($event.context, 'quote')"></chart>
-  </td></tr></table>
-    </div>`
+  template: `<div class="col-md-12 col-xs-12" style="height:520px;">
+    <div class="col-md-6 col-xs-6">
+        <chart style="display: block;" [options]="fvChartOptions" (load)="saveInstance($event.context, 'fv')"></chart>
+    </div>
+    <div class="col-md-6 col-xs-6">
+      <div style="height:260px;">
+        <chart style="display: block;" [options]="baseChartOptions" (load)="saveInstance($event.context, 'base')"></chart>
+      </div>
+      <div style="height:260px;">
+        <chart style="display: block;" [options]="quoteChartOptions" (load)="saveInstance($event.context, 'quote')"></chart>
+      </div>
+    </div>
+  </div>`
 })
 export class StatsComponent implements OnInit {
 
@@ -69,9 +74,9 @@ export class StatsComponent implements OnInit {
   public fvChartOptions = {
     title: 'fair value',
     chart: {
+        width: null,
+        height: 520,
         type: 'bubble',
-        width: 700,
-        height: 330,
         zoomType: false,
         backgroundColor:'rgba(255, 255, 255, 0)',
     },
@@ -311,8 +316,8 @@ export class StatsComponent implements OnInit {
   public quoteChartOptions = {
     title: 'quote wallet',
     chart: {
-        width: 700,
-        height: 155,
+        width: null,
+        height: 260,
         zoomType: false,
         resetZoomButton: {theme: {display: 'none'}},
         backgroundColor:'rgba(255, 255, 255, 0)'
@@ -390,8 +395,8 @@ export class StatsComponent implements OnInit {
   public baseChartOptions = {
     title: 'base wallet',
     chart: {
-        width: 700,
-        height: 155,
+        width: null,
+        height: 260,
         zoomType: false,
         resetZoomButton: {theme: {display: 'none'}},
         backgroundColor:'rgba(255, 255, 255, 0)'
