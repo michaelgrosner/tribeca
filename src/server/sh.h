@@ -1,7 +1,7 @@
 #ifndef K_SH_H_
 #define K_SH_H_
 
-#define _debugEvent_ screen.debug(__PRETTY_FUNCTION__);
+#define _debugEvent_ ((SH*)screen)->debug(__PRETTY_FUNCTION__);
 
 namespace K {
   vector<function<void()>*> endingFn;
@@ -10,7 +10,8 @@ namespace K {
        BBLACK[] = "\033[1;30m", BRED[]    = "\033[1;31m", BGREEN[] = "\033[1;32m", BYELLOW[] = "\033[1;33m",
        BBLUE[]  = "\033[1;34m", BPURPLE[] = "\033[1;35m", BCYAN[]  = "\033[1;36m", BWHITE[]  = "\033[1;37m",
        RRESET[] = "\033[0m";
-  class SH {
+  class SH: public Klass,
+            public Screen { public: SH() { screen = this; }
     private:
       future<mHotkey> hotkey;
       map<mHotkey, function<void()>*> hotFn;
@@ -27,21 +28,15 @@ namespace K {
              baseValue = "?",
              quoteValue = "?",
              fairValue = "?",
+             protocol = "?",
              wtfismyip = "";
       multimap<mPrice, mOrder, greater<mPrice>> openOrders;
-    public:
-      string protocol = "HTTP";
-    public:
-      SH() {
-        cout << BGREEN << "K" << RGREEN << " build " << K_BUILD << ' ' << K_STAMP << '.' << BRED << '\n';
+    protected:
+      void load() {
         endingFn.push_back(&happyEnding);
-        if (access(".git", F_OK) != -1) {
-          system("git fetch");
-          string k = changelog();
-          logVer(k, count(k.begin(), k.end(), '\n'));
-        } else logVer("", -1);
-        cout << RRESET;
+        logVer();
       };
+    public:
       void config(string base_, string quote_) {
         wtfismyip = FN::wJet("https://wtfismyip.com/json", 4L).value("/YourFuckingIPAddress"_json_pointer, "");
         if (!args.debugEvents) debug = [](const string &k) {};
@@ -76,18 +71,9 @@ namespace K {
         refresh();
         hotkeys();
       };
-      static string changelog() {
-        return FN::output("test -d .git && git --no-pager log --graph --oneline @..@{u}");
-      };
       void pressme(mHotkey ch, function<void()> *fn) {
         if (!wBorder) return;
         hotFn[ch] = fn;
-      };
-      void quit() {
-        if (!wBorder) return;
-        beep();
-        endwin();
-        wBorder = nullptr;
       };
       int error(string k, string s, bool reboot = false) {
         quit();
@@ -131,12 +117,6 @@ namespace K {
         wprintw(wLog, " ");
         return "";
       };
-      function<void(const string&)> debug = [&](const string &k) {
-        log("DEBUG", string("EV ") + k);
-      };
-      void logWar(string k, string s) {
-        logErr(k, s, " Warrrrning: ");
-      };
       void logErr(string k, string s, string m = " Errrror: ") {
         if (!wBorder) {
           cout << stamp() << k << RRED << m << BRED << s << ".\n";
@@ -178,7 +158,8 @@ namespace K {
         wattroff(wLog, COLOR_PAIR(COLOR_WHITE));
         wrefresh(wLog);
       };
-      void logUI() {
+      void logUI(const string &protocol_) {
+        protocol = protocol_;
         if (!wBorder) {
           cout << stamp() << "UI" << RWHITE << " ready ";
           if (wtfismyip.empty())
@@ -247,9 +228,6 @@ namespace K {
         wprintw(wLog, ".\n");
         wattroff(wLog, COLOR_PAIR(COLOR_WHITE));
         wrefresh(wLog);
-      };
-      void logVer(string k, int c) {
-        cout << BGREEN << K_0_DAY << RGREEN << string(c == -1 ? " (zip install).\n" : (!c ? " (0day).\n" : string(" -").append(to_string(c)).append("commit").append(c > 1?"s..\n":"..\n"))) << RYELLOW << (c ? k : "") << RWHITE;
       };
       void log(mTrade k, string e) {
         if (!wBorder) {
@@ -352,7 +330,7 @@ namespace K {
         int lastcursor = cursor,
             y = getmaxy(wBorder),
             x = getmaxx(wBorder),
-            yMaxLog = y - max((int)openOrders.size(), !engine.greenButton ? 0 : 2) - 1,
+            yMaxLog = y - max((int)openOrders.size(), !engine->greenButton ? 0 : 2) - 1,
             yOrders = yMaxLog;
         while (lastcursor<y) mvwhline(wBorder, lastcursor++, 1, ' ', x-1);
         if (yMaxLog!=cursor) {
@@ -396,7 +374,7 @@ namespace K {
         wattroff(wBorder, COLOR_PAIR(COLOR_GREEN));
         mvwaddch(wBorder, 0, 13+title1.length()+title2.length(), ACS_LTEE);
         mvwaddch(wBorder, 0, x-26, ACS_RTEE);
-        mvwaddstr(wBorder, 0, x-25, (string(" [   ]: ") + (!engine.greenButton ? "Start" : "Stop?") + ", [ ]: Quit!").data());
+        mvwaddstr(wBorder, 0, x-25, (string(" [   ]: ") + (!engine->greenButton ? "Start" : "Stop?") + ", [ ]: Quit!").data());
         mvwaddch(wBorder, 0, x-9, 'q' | A_BOLD);
         wattron(wBorder, A_BOLD);
         mvwaddstr(wBorder, 0, x-23, "ESC");
@@ -451,7 +429,7 @@ namespace K {
         mvwhline(wBorder, yMaxLog, 1, ACS_HLINE, 3);
         mvwaddch(wBorder, yMaxLog, 4, ACS_RTEE);
         mvwaddstr(wBorder, yMaxLog, 5, "< (");
-        if (!engine.greenGateway) {
+        if (!engine->greenGateway) {
           wattron(wBorder, COLOR_PAIR(COLOR_RED));
           wattron(wBorder, A_BOLD);
           waddstr(wBorder, "DISCONNECTED");
@@ -459,7 +437,7 @@ namespace K {
           wattroff(wBorder, COLOR_PAIR(COLOR_RED));
           waddch(wBorder, ')');
         } else {
-          if (!engine.greenButton) {
+          if (!engine->greenButton) {
             wattron(wBorder, COLOR_PAIR(COLOR_YELLOW));
             wattron(wBorder, A_BLINK);
             waddstr(wBorder, "press START to trade");
@@ -480,7 +458,7 @@ namespace K {
           wattroff(wBorder, A_BOLD);
           waddstr(wBorder, (string(" ") + quote).data());
           wattroff(wBorder, COLOR_PAIR(COLOR_GREEN));
-          waddch(wBorder, !engine.greenButton ? ' ' : ':');
+          waddch(wBorder, !engine->greenButton ? ' ' : ':');
         }
         mvwaddch(wBorder, y-1, 0, ACS_LLCORNER);
         mvwaddstr(wBorder, 1, 2, string("|/-\\").substr(spinOrders, 1).data());
@@ -492,6 +470,24 @@ namespace K {
       function<void()> happyEnding = [&]() {
         quit();
         cout << '\n' << stamp();
+      };
+      void quit() {
+        if (!wBorder) return;
+        beep();
+        endwin();
+        wBorder = nullptr;
+      };
+      inline void logVer() {
+        cout << BGREEN << "K" << RGREEN << " build " << K_BUILD << ' ' << K_STAMP << '.' << BRED << '\n';
+        if (access(".git", F_OK) != -1) {
+          system("git fetch");
+          string k = FN::changelog();
+          logVer(k, count(k.begin(), k.end(), '\n'));
+        } else logVer("", -1);
+        cout << RRESET;
+      };
+      void logVer(string k, int c) {
+        cout << BGREEN << K_0_DAY << RGREEN << string(c == -1 ? " (zip install).\n" : (!c ? " (0day).\n" : string(" -").append(to_string(c)).append("commit").append(c > 1?"s..\n":"..\n"))) << RYELLOW << (c ? k : "") << RWHITE;
       };
       void hotkeys() {
         hotkey = ::async(launch::async, [&] { return (mHotkey)wgetch(wBorder); });
@@ -512,7 +508,7 @@ namespace K {
         refresh();
       };
 #endif
-  } screen;
+  };
 }
 
 #endif

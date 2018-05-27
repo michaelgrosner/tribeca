@@ -173,6 +173,13 @@ namespace K {
         }
         return data;
       };
+      static string changelog() {
+        return output("test -d .git && git --no-pager log --graph --oneline @..@{u}");
+      };
+      static void stunnel(bool reboot) {
+        system("pkill stunnel || :");
+        if (reboot) system("stunnel etc/stunnel.conf");
+      };
       static json wJet(string k, long timeout = 13) {
         return curl_perform(k, [&](CURL *curl) {
           curl_easy_setopt(curl, CURLOPT_TIMEOUT, timeout);

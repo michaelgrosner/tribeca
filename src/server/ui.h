@@ -8,7 +8,8 @@ extern const  int _www_html_index_len, _www_ico_favicon_len, _www_css_base_len,
                   _www_gzip_bomb_len,  _www_mp3_audio_0_len, _www_css_light_len,
                   _www_js_bundle_len,  _www_mp3_audio_1_len, _www_css_dark_len;
 namespace K {
-  class UI: public Klass {
+  class UI: public Klass,
+            public Client { public: UI() { client = this; }
     private:
       int connections = 0;
       string B64auth = "",
@@ -26,19 +27,19 @@ namespace K {
       };
       void waitData() {
         if (args.headless) return;
-        auto client = &events.listen()->getDefaultGroup<uWS::SERVER>();
+        auto client = &events->listen()->getDefaultGroup<uWS::SERVER>();
         client->onConnection([&](uWS::WebSocket<uWS::SERVER> *webSocket, uWS::HttpRequest req) {
           onConnection();
           const string addr = cleanAddress(webSocket->getAddress().address);
-          screen.logUIsess(connections, addr);
+          screen->logUIsess(connections, addr);
           if (connections > args.maxAdmins) {
-            screen.log("UI", "--client-limit=" + to_string(args.maxAdmins) + " reached by", addr);
+            screen->log("UI", "--client-limit=" + to_string(args.maxAdmins) + " reached by", addr);
             webSocket->close();
           }
         });
         client->onDisconnection([&](uWS::WebSocket<uWS::SERVER> *webSocket, int code, char *message, size_t length) {
           onDisconnection();
-          screen.logUIsess(connections, cleanAddress(webSocket->getAddress().address));
+          screen->logUIsess(connections, cleanAddress(webSocket->getAddress().address));
         });
         client->onHttpRequest([&](uWS::HttpResponse *res, uWS::HttpRequest req, char *data, size_t length, size_t remainingBytes) {
           const string response = onHttpRequest(
@@ -68,44 +69,43 @@ namespace K {
         broadcast = [this, client](const mMatter &type, string msg) {
           msg.insert(msg.begin(), (char)type);
           msg.insert(msg.begin(), (char)mPortal::Kiss);
-          events.deferred([client, msg]() {
+          events->deferred([client, msg]() {
             client->broadcast(msg.data(), msg.length(), uWS::OpCode::TEXT);
           });
         };
       };
-      void waitTime() {
-        if (args.headless) return;
-        client.timer_Xs = [&]() {
-          for (map<mMatter, string>::value_type &it : queue)
-            broadcast(it.first, it.second);
-          queue.clear();
-        };
-        client.timer_60s = [&]() {
-          client.send(mMatter::ApplicationState, serverState());
-          engine.orders_60s = 0;
-        };
-      }
       void waitUser() {
         if (args.headless) return;
-        client.welcome = [&](const mMatter &type, function<void(json*)> *fn) {
+        welcome = [&](const mMatter &type, function<void(json*)> *fn) {
           if (hello.find((char)type) != hello.end())
-            exit(screen.error("UI", string("Use only a single unique message handler for \"")
+            exit(screen->error("UI", string("Use only a single unique message handler for \"")
               + (char)type + "\" welcome event"));
           hello[(char)type] = fn;
         };
-        client.clickme = [&](const mMatter &type, function<void(const json&)> *fn) {
+        clickme = [&](const mMatter &type, function<void(const json&)> *fn) {
           if (kisses.find((char)type) != kisses.end())
-            exit(screen.error("UI", string("Use only a single unique message handler for \"")
+            exit(screen->error("UI", string("Use only a single unique message handler for \"")
               + (char)type + "\" clickme event"));
           kisses[(char)type] = fn;
         };
-        client.welcome(mMatter::ApplicationState, &helloServer);
-        client.welcome(mMatter::ProductAdvertisement, &helloProduct);
-        client.welcome(mMatter::Notepad, &helloNotes);
-        client.clickme(mMatter::Notepad, &kissNotes);
+        welcome(mMatter::ApplicationState, &helloServer);
+        welcome(mMatter::ProductAdvertisement, &helloProduct);
+        welcome(mMatter::Notepad, &helloNotes);
+        clickme(mMatter::Notepad, &kissNotes);
       };
       void run() {
-        client.send = send_nowhere;
+        send = send_nowhere;
+      };
+    public:
+      void timer_Xs() {
+        for (map<mMatter, string>::value_type &it : queue)
+          broadcast(it.first, it.second);
+        queue.clear();
+      };
+      void timer_60s() {
+        if (!args.headless)
+          send(mMatter::ApplicationState, serverState());
+        engine->orders_60s = 0;
       };
     private:
       function<void(json*)> helloServer = [&](json *welcome) {
@@ -144,23 +144,23 @@ namespace K {
           or type == mMatter::EWMAChart;
       };
       inline void onConnection() {
-        if (!connections++) client.send = send_somewhere;
+        if (!connections++) send = send_somewhere;
       };
       inline void onDisconnection() {
-        if (!--connections) client.send = send_nowhere;
+        if (!--connections) send = send_nowhere;
       };
       inline string onHttpRequest(const string &path, const bool &get, const string &auth, const string &addr) {
         string document,
                content;
         if (addr != "unknown" and !args.whitelist.empty() and args.whitelist.find(addr) == string::npos) {
-          screen.log("UI", "dropping gzip bomb on", addr);
+          screen->log("UI", "dropping gzip bomb on", addr);
           document = "HTTP/1.1 200 OK\r\nConnection: keep-alive\r\nAccept-Ranges: bytes\r\nVary: Accept-Encoding\r\nCache-Control: public, max-age=0\r\nContent-Encoding: gzip\r\n";
           content = string(&_www_gzip_bomb, _www_gzip_bomb_len);
         } else if (!B64auth.empty() and auth.empty()) {
-          screen.log("UI", "authorization attempt from", addr);
+          screen->log("UI", "authorization attempt from", addr);
           document = "HTTP/1.1 401 Unauthorized\r\nWWW-Authenticate: Basic realm=\"Basic Authorization\"\r\nConnection: keep-alive\r\nAccept-Ranges: bytes\r\nVary: Accept-Encoding\r\nContent-Type:text/plain; charset=UTF-8\r\n";
         } else if (!B64auth.empty() and auth != B64auth) {
-          screen.log("UI", "authorization failed from", addr);
+          screen->log("UI", "authorization failed from", addr);
           document = "HTTP/1.1 403 Forbidden\r\nConnection: keep-alive\r\nAccept-Ranges: bytes\r\nVary: Accept-Encoding\r\nContent-Type:text/plain; charset=UTF-8\r\n";
         } else if (get) {
           document = "HTTP/1.1 200 OK\r\nConnection: keep-alive\r\nAccept-Ranges: bytes\r\nVary: Accept-Encoding\r\nCache-Control: public, max-age=0\r\n";
@@ -168,10 +168,10 @@ namespace K {
           if (leaf == "/") {
             document += "Content-Type: text/html; charset=UTF-8\r\n";
             if (connections < args.maxAdmins) {
-              screen.log("UI", "authorization success from", addr);
+              screen->log("UI", "authorization success from", addr);
               content = string(&_www_html_index, _www_html_index_len);
             } else {
-              screen.log("UI", "--client-limit=" + to_string(args.maxAdmins) + " reached by", addr);
+              screen->log("UI", "--client-limit=" + to_string(args.maxAdmins) + " reached by", addr);
               content = "Thank you! but our princess is already in this castle!<br/>Refresh the page anytime to retry.";
             }
           } else if (leaf == "js") {
@@ -242,9 +242,9 @@ namespace K {
       json serverState() {
         return {
           {"memory", memorySize()},
-          {"freq", engine.orders_60s},
+          {"freq", engine->orders_60s},
           {"theme", args.ignoreMoon + args.ignoreSun},
-          {"dbsize", sqlite.size()},
+          {"dbsize", sqlite->size()},
           {"a", gw->A()}
         };
       };

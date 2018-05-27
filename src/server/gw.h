@@ -22,19 +22,19 @@ namespace K {
         };
       };
       void waitUser() {
-        client.welcome(mMatter::Connectivity, &hello);
-        client.clickme(mMatter::Connectivity, &kiss);
-        screen.pressme(mHotkey::ESC, &hotkiss);
+        client->welcome(mMatter::Connectivity, &hello);
+        client->clickme(mMatter::Connectivity, &kiss);
+        screen->pressme(mHotkey::ESC, &hotkiss);
       };
       void run() {                                                  _debugEvent_
         handshake();
-        if (gw->exchange == mExchange::Coinbase) stunnel(true);
-        events.start();
+        if (gw->exchange == mExchange::Coinbase) FN::stunnel(true);
+        events->start();
       };
     private:
       function<void()> happyEnding = [&]() {
-        events.stop();
-        if (gw->exchange == mExchange::Coinbase) stunnel(false);
+        events->stop();
+        if (gw->exchange == mExchange::Coinbase) FN::stunnel(false);
       };
       function<void(json*)> hello = [&](json *welcome) {
         *welcome = { semaphore() };
@@ -54,28 +54,24 @@ namespace K {
       void gwSemaphore(mConnectivity *const current, const mConnectivity &updated) {
         if (*current != updated) {
           *current = updated;
-          engine.greenGateway = greenGatewayMarket * greenGatewayOrders;
+          engine->greenGateway = greenGatewayMarket * greenGatewayOrders;
           gwAdminSemaphore();
         }
       };
       void gwAdminSemaphore() {
-        mConnectivity updated = adminAgreement * engine.greenGateway;
-        if (engine.greenButton != updated) {
-          engine.greenButton = updated;
-          screen.log(string("GW ") + gw->name, "Quoting state changed to", string(!engine.greenButton?"DIS":"") + "CONNECTED");
+        mConnectivity updated = adminAgreement * engine->greenGateway;
+        if (engine->greenButton != updated) {
+          engine->greenButton = updated;
+          screen->log(string("GW ") + gw->name, "Quoting state changed to", string(!engine->greenButton?"DIS":"") + "CONNECTED");
         }
-        client.send(mMatter::Connectivity, semaphore());
-        screen.refresh();
+        client->send(mMatter::Connectivity, semaphore());
+        screen->refresh();
       };
       json semaphore() {
         return {
-          {"state", engine.greenButton},
-          {"status", engine.greenGateway}
+          {"state", engine->greenButton},
+          {"status", engine->greenGateway}
         };
-      };
-      inline void stunnel(bool reboot) {
-        system("pkill stunnel || :");
-        if (reboot) system("stunnel etc/stunnel.conf");
       };
       inline void handshake() {
         json reply;
@@ -163,16 +159,16 @@ namespace K {
           gw->minSize = 0.01;
         }
         if (!gw->randId or gw->symbol.empty())
-          exit(screen.error("GW", "Incomplete handshake aborted."));
+          exit(screen->error("GW", "Incomplete handshake aborted."));
         if (!gw->minTick or !gw->minSize)
-          exit(screen.error("GW", "Unable to fetch data from " + gw->name
+          exit(screen->error("GW", "Unable to fetch data from " + gw->name
             + " for symbol \"" + gw->symbol + "\", possible error message: "
             + reply.dump(),
           true));
         if (gw->exchange != mExchange::Null)
-          screen.log(string("GW ") + gw->name, "allows client IP");
+          screen->log(string("GW ") + gw->name, "allows client IP");
         unsigned int precision = gw->minTick < 1e-8 ? 10 : 8;
-        screen.log(string("GW ") + gw->name + ":", string("\n")
+        screen->log(string("GW ") + gw->name + ":", string("\n")
           + "- autoBot: " + (!adminAgreement ? "no" : "yes") + '\n'
           + "- symbols: " + gw->symbol + '\n'
           + "- minTick: " + FN::strX(gw->minTick, precision) + '\n'

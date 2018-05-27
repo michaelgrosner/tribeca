@@ -42,6 +42,27 @@ namespace K {
   };
   static          bool operator! (mConnectivity k_)                   { return !(unsigned int)k_; };
   static mConnectivity operator* (mConnectivity _k, mConnectivity k_) { return (mConnectivity)((unsigned int)_k * (unsigned int)k_); };
+  static struct mArgs {
+        int port          = 3000,   colors      = 0, debug        = 0,
+            debugSecret   = 0,      debugEvents = 0, debugOrders  = 0,
+            debugQuotes   = 0,      debugWallet = 0, withoutSSL   = 0,
+            headless      = 0,      dustybot    = 0, lifetime     = 0,
+            autobot       = 0,      naked       = 0, free         = 0,
+            ignoreSun     = 0,      ignoreMoon  = 0, maxLevels    = 0,
+            maxAdmins     = 7,      testChamber = 0;
+    mAmount maxWallet     = 0;
+     mPrice ewmaUShort    = 0,      ewmaXShort  = 0, ewmaShort    = 0,
+            ewmaMedium    = 0,      ewmaLong    = 0, ewmaVeryLong = 0;
+     string title         = "K.sh", matryoshka  = "https://www.example.com/",
+            user          = "NULL", pass        = "NULL",
+            exchange      = "NULL", currency    = "NULL",
+            apikey        = "NULL", secret      = "NULL",
+            username      = "NULL", passphrase  = "NULL",
+            http          = "NULL", wss         = "NULL",
+            database      = "",     diskdata    = "",
+            whitelist     = "";
+    const char *inet = nullptr;
+  } args;
   static struct mQuotingParams {
     mPrice            widthPing                       = 2.0;
     double            widthPingPercentage             = 0.25;

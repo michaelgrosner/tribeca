@@ -2,67 +2,68 @@
 #define K_IF_H_
 
 namespace K {
-  static struct kArgs {
-        int port          = 3000,   colors      = 0, debug        = 0,
-            debugSecret   = 0,      debugEvents = 0, debugOrders  = 0,
-            debugQuotes   = 0,      debugWallet = 0, withoutSSL   = 0,
-            headless      = 0,      dustybot    = 0, lifetime     = 0,
-            autobot       = 0,      naked       = 0, free         = 0,
-            ignoreSun     = 0,      ignoreMoon  = 0, maxLevels    = 0,
-            maxAdmins     = 7,      testChamber = 0;
-    mAmount maxWallet     = 0;
-     mPrice ewmaUShort    = 0,      ewmaXShort  = 0, ewmaShort    = 0,
-            ewmaMedium    = 0,      ewmaLong    = 0, ewmaVeryLong = 0;
-     string title         = "K.sh", matryoshka  = "https://www.example.com/",
-            user          = "NULL", pass        = "NULL",
-            exchange      = "NULL", currency    = "NULL",
-            apikey        = "NULL", secret      = "NULL",
-            username      = "NULL", passphrase  = "NULL",
-            http          = "NULL", wss         = "NULL",
-            database      = "",     diskdata    = "",
-            whitelist     = "";
-    const char *inet = nullptr;
-  } args;
-  static struct kEvents {
-    function<void()> start,
-                     stop;
-    function<void(const function<void()>&)> deferred;
-    function<uWS::Hub*()> listen;
-  } events;
-  static struct kSqlite {
-    function<json(const mMatter&)> select;
-    inline void insert(
-      const mMatter &table            ,
-      const json    &cell             ,
-      const bool    &rm       = true  ,
-      const string  &updateId = "NULL",
-      const mClock  &rmOlder  = 0
-    ) {
-      delete_insert(table, cell, rm, updateId, rmOlder);
+  static struct Screen {
+    virtual void config(string base_, string quote_) = 0;
+    virtual void pressme(mHotkey ch, function<void()> *fn) = 0;
+    virtual int error(string k, string s, bool reboot = false) = 0;
+    virtual void waitForUser() = 0;
+    virtual string stamp() = 0;
+    virtual void logErr(string k, string s, string m = " Errrror: ") = 0;
+    void logWar(string k, string s) {
+      logErr(k, s, " Warrrrning: ");
     };
-    function<void(const mMatter&, const json&, const bool&, const string&, const mClock&)> delete_insert;
+    virtual void logDB(string k) = 0;
+    virtual void logUI(const string &protocol_) = 0;
+    virtual void logUIsess(int k, string s) = 0;
+    virtual void log(mTrade k, string e) = 0;
+    virtual void log(string k, string s, string v) = 0;
+    virtual void log(string k, string s) = 0;
+    virtual void log(string k, int c = COLOR_WHITE, bool b = false) = 0;
+    virtual void log(const map<mRandId, mOrder> &orders, bool working) = 0;
+    virtual void log(const mPosition &pos) = 0;
+    virtual void log(double fv) = 0;
+    function<void(const string&)> debug = [&](const string &k) {
+      log("DEBUG", string("EV ") + k);
+    };
+    virtual void refresh() = 0;
+  } *screen = nullptr;
+  static struct Events {
+    virtual uWS::Hub* listen() = 0;
+    virtual void start() = 0;
+    virtual void stop() = 0;
+    virtual void deferred(const function<void()> &fn) = 0;
+  } *events = nullptr;
+  static struct Sqlite {
+    virtual json select(const mMatter &table) = 0;
+    virtual void insert(
+    const mMatter &table            ,
+    const json    &cell             ,
+    const bool    &rm       = true  ,
+    const string  &updateId = "NULL",
+    const mClock  &rmOlder  = 0
+    ) = 0;
     function<unsigned int()> size = []() { return 0; };
-  } sqlite;
-  static struct kClient {
-    function<void()> timer_Xs   = []() {},
-                     timer_60s  = []() {};
+  } *sqlite = nullptr;
+  static struct Client {
+    virtual void timer_Xs() = 0;
+    virtual void timer_60s() = 0;
     function<void(const mMatter&, function<void(json*)>*)>       welcome = [](const mMatter &type, function<void(json*)> *fn) {};
     function<void(const mMatter&, function<void(const json&)>*)> clickme = [](const mMatter &type, function<void(const json&)> *fn) {};
     function<void(const mMatter&, const json&)>                  send;
-  } client;
-  static struct kWallet {
+  } *client = nullptr;
+  static struct Wallet {
     mPosition position;
     mSafety safety;
     mAmount targetBasePosition = 0,
             positionDivergence = 0;
     string sideAPR = "";
-    function<void()> calcWallet,
-                     calcSafety,
-                     calcTargetBasePos;
-    function<void(const mSide&)> calcWalletAfterOrder;
-    function<void(const mTrade&)> calcSafetyAfterTrade;
-  } wallet;
-  static struct kMarket {
+    virtual void calcWallet() = 0;
+    virtual void calcSafety() = 0;
+    virtual void calcTargetBasePos() = 0;
+    virtual void calcWalletAfterOrder(const mSide&) = 0;
+    virtual void calcSafetyAfterTrade(const mTrade&) = 0;
+  } *wallet = nullptr;
+  static struct Market {
     mLevels levels;
     mPrice fairValue = 0,
            mgEwmaP = 0,
@@ -79,16 +80,16 @@ namespace K {
            mgEwmaTrendDiff = 0;
     map<mPrice, mAmount> filterBidOrders,
                          filterAskOrders;
-    function<void()> calcStats,
-                     calcFairValue,
-                     calcEwmaHistory;
-  } market;
-  static struct kBroker {
+    virtual void calcStats() = 0;
+    virtual void calcFairValue() = 0;
+    virtual void calcEwmaHistory() = 0;
+  } *market = nullptr;
+  static struct Broker {
     map<mRandId, mOrder> orders;
     vector<mTrade> tradesHistory;
-    function<void(const mRandId&)> cleanOrder,
-                                   cancelOrder;
-    function<void(
+    virtual void cleanOrder(const mRandId&) = 0;
+    virtual void cancelOrder(const mRandId&) = 0;
+    virtual void sendOrder(
             vector<mRandId>  toCancel,
       const mSide           &side    ,
       const mPrice          &price   ,
@@ -97,16 +98,16 @@ namespace K {
       const mTimeInForce    &tif     ,
       const bool            &isPong  ,
       const bool            &postOnly
-    )> sendOrder;
-  } broker;
-  static struct kEngine {
-    function<void()> timer_1s,
-                     calcQuote,
-                     calcQuoteAfterSavedParams;
-        unsigned int orders_60s = 0;
-       mConnectivity greenButton  = mConnectivity::Disconnected,
-                     greenGateway = mConnectivity::Disconnected;
-  } engine;
+    ) = 0;;
+  } *broker = nullptr;
+  static struct Engine {
+    unsigned int orders_60s = 0;
+    mConnectivity greenButton  = mConnectivity::Disconnected,
+                  greenGateway = mConnectivity::Disconnected;
+    virtual void timer_1s() = 0;
+    virtual void calcQuote() = 0;
+    virtual void calcQuoteAfterSavedParams() = 0;
+  } *engine = nullptr;
   static class Gw {
     public:
       virtual string A() = 0;
@@ -152,6 +153,15 @@ namespace K {
       function<bool()> orders = [&]() { return askFor(replyOrders, [&]() { return sync_orders(); }); };
       function<bool()> cancelAll = [&]() { return askFor(replyCancelAll, [&]() { return sync_cancelAll(); }); };
       virtual vector<mOrder> sync_cancelAll() = 0;
+      inline void clean() {
+        if (args.dustybot)
+          screen->log(string("GW ") + name, "--dustybot is enabled, remember to cancel manually any open order.");
+        else {
+          screen->log(string("GW ") + name, "Attempting to cancel all open orders, please wait.");
+          for (mOrder &it : sync_cancelAll()) evDataOrder(it);
+          screen->log(string("GW ") + name, "cancel all open orders OK");
+        }
+      };
     protected:
       virtual bool async_wallet() { return false; };
       virtual vector<mWallets> sync_wallet() { return vector<mWallets>(); };
