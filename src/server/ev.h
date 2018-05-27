@@ -124,11 +124,9 @@ namespace K  {
         if (!gw->async) {
           if (!(evT_5m % 2))                  async(gw->orders);
           if (!(evT_5m % 3))                  async(gw->levels);
-          if (!(evT_5m % 60)) {
-                                              async(gw->trades);
-                                              client->timer_60s();
-          }
+          if (!(evT_5m % 60))                 async(gw->trades);
         }
+        if (!(evT_5m % 60))                   client->timer_60s();
         if (!args.headless and qp.delayUI
           and !(evT_5m % qp.delayUI))         client->timer_Xs();
         if (!(++evT_5m % 300)) {
