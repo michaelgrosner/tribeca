@@ -123,13 +123,13 @@ export class StatsComponent implements OnInit {
     legend: {
       enabled:true,
       itemStyle: {
-        color: 'lightgray'
+        color: 'yellowgreen'
       },
       itemHoverStyle: {
-        color: 'gray'
+        color: 'gold'
       },
       itemHiddenStyle: {
-        color: 'black'
+        color: 'darkgrey'
       }
     },
     tooltip: {
