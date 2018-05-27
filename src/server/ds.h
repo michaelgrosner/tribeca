@@ -42,14 +42,19 @@ namespace K {
   };
   static          bool operator! (mConnectivity k_)                   { return !(unsigned int)k_; };
   static mConnectivity operator* (mConnectivity _k, mConnectivity k_) { return (mConnectivity)((unsigned int)_k * (unsigned int)k_); };
+  static char RBLACK[] = "\033[0;30m", RRED[]    = "\033[0;31m", RGREEN[] = "\033[0;32m", RYELLOW[] = "\033[0;33m",
+              RBLUE[]  = "\033[0;34m", RPURPLE[] = "\033[0;35m", RCYAN[]  = "\033[0;36m", RWHITE[]  = "\033[0;37m",
+              BBLACK[] = "\033[1;30m", BRED[]    = "\033[1;31m", BGREEN[] = "\033[1;32m", BYELLOW[] = "\033[1;33m",
+              BBLUE[]  = "\033[1;34m", BPURPLE[] = "\033[1;35m", BCYAN[]  = "\033[1;36m", BWHITE[]  = "\033[1;37m",
+              RRESET[] = "\033[0m";
   static struct mArgs {
-        int port          = 3000,   colors      = 0, debug        = 0,
-            debugSecret   = 0,      debugEvents = 0, debugOrders  = 0,
-            debugQuotes   = 0,      debugWallet = 0, withoutSSL   = 0,
-            headless      = 0,      dustybot    = 0, lifetime     = 0,
-            autobot       = 0,      naked       = 0, free         = 0,
-            ignoreSun     = 0,      ignoreMoon  = 0, maxLevels    = 0,
-            maxAdmins     = 7,      testChamber = 0;
+        int port          = 3000,   colors      = 0, debug       = 0,
+            debugSecret   = 0,      debugEvents = 0, debugOrders = 0,
+            debugQuotes   = 0,      debugWallet = 0, withoutSSL  = 0,
+            headless      = 0,      dustybot    = 0, lifetime    = 0,
+            autobot       = 0,      naked       = 0, free        = 0,
+            ignoreSun     = 0,      ignoreMoon  = 0, testChamber = 0,
+            maxAdmins     = 7,      maxLevels   = 321;
     mAmount maxWallet     = 0;
      mPrice ewmaUShort    = 0,      ewmaXShort  = 0, ewmaShort    = 0,
             ewmaMedium    = 0,      ewmaLong    = 0, ewmaVeryLong = 0;

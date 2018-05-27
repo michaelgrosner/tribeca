@@ -160,15 +160,15 @@ namespace K {
         for (unsigned int i = 0; i < SHA384_DIGEST_LENGTH; i++) sprintf(&k_[i*2], "%02x", (unsigned int)digest[i]);
         return k_;
       };
-      static string output(string cmd) {
+      static string output(const string &cmd) {
         string data;
-        cmd.append(" 2>&1");
-        FILE *stream = popen(cmd.data(), "r");
+        FILE *stream = popen((cmd + " 2>&1").data(), "r");
         if (stream) {
           const int max_buffer = 256;
           char buffer[max_buffer];
           while (!feof(stream))
-            if (fgets(buffer, max_buffer, stream) != NULL) data.append(buffer);
+            if (fgets(buffer, max_buffer, stream) != NULL)
+              data += buffer;
           pclose(stream);
         }
         return data;
@@ -176,32 +176,32 @@ namespace K {
       static string changelog() {
         return output("test -d .git && git --no-pager log --graph --oneline @..@{u}");
       };
-      static void stunnel(bool reboot) {
+      static void stunnel(const bool &reboot) {
         system("pkill stunnel || :");
         if (reboot) system("stunnel etc/stunnel.conf");
       };
-      static json wJet(string k, long timeout = 13) {
-        return curl_perform(k, [&](CURL *curl) {
+      static json wJet(const string &url, long timeout = 13) {
+        return curl_perform(url, [&](CURL *curl) {
           curl_easy_setopt(curl, CURLOPT_TIMEOUT, timeout);
         }, timeout == 13);
       };
-      static json wJet(string k, string p) {
-        return curl_perform(k, [&](CURL *curl) {
+      static json wJet(const string &url, string p) {
+        return curl_perform(url, [&](CURL *curl) {
           struct curl_slist *h_ = NULL;
           h_ = curl_slist_append(h_, "Content-Type: application/x-www-form-urlencoded");
           curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
           curl_easy_setopt(curl, CURLOPT_POSTFIELDS, p.data());
         });
       };
-      static json wJet(string k, string t, bool auth) {
-        return curl_perform(k, [&](CURL *curl) {
+      static json wJet(const string &url, string t, bool auth) {
+        return curl_perform(url, [&](CURL *curl) {
           struct curl_slist *h_ = NULL;
           if (!t.empty()) h_ = curl_slist_append(h_, string("Authorization: Bearer ").append(t).data());
           curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
         });
       };
-      static json wJet(string k, bool p, string a, string s, string n) {
-        return curl_perform(k, [&](CURL *curl) {
+      static json wJet(const string &url, bool p, string a, string s, string n) {
+        return curl_perform(url, [&](CURL *curl) {
           struct curl_slist *h_ = NULL;
           h_ = curl_slist_append(h_, string("API-Key: ").append(a).data());
           h_ = curl_slist_append(h_, string("API-Sign: ").append(s).data());
@@ -209,8 +209,8 @@ namespace K {
           curl_easy_setopt(curl, CURLOPT_POSTFIELDS, n.data());
         });
       };
-      static json wJet(string k, bool a, string p, string s) {
-        return curl_perform(k, [&](CURL *curl) {
+      static json wJet(const string &url, bool a, string p, string s) {
+        return curl_perform(url, [&](CURL *curl) {
           if (a) {
             curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
             curl_easy_setopt(curl, CURLOPT_POSTFIELDS, s.data());
@@ -218,16 +218,16 @@ namespace K {
           curl_easy_setopt(curl, CURLOPT_USERPWD, p.data());
         });
       };
-      static json wJet(string k, string p, string s, bool post) {
-        return curl_perform(k, [&](CURL *curl) {
+      static json wJet(const string &url, string p, string s, bool post) {
+        return curl_perform(url, [&](CURL *curl) {
           struct curl_slist *h_ = NULL;
           h_ = curl_slist_append(h_, string("X-Signature: ").append(s).data());
           curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
           curl_easy_setopt(curl, CURLOPT_POSTFIELDS, p.data());
         });
       };
-      static json wJet(string k, string p, string a, string s) {
-        return curl_perform(k, [&](CURL *curl) {
+      static json wJet(const string &url, string p, string a, string s) {
+        return curl_perform(url, [&](CURL *curl) {
           struct curl_slist *h_ = NULL;
           h_ = curl_slist_append(h_, "Content-Type: application/x-www-form-urlencoded");
           h_ = curl_slist_append(h_, string("Key: ").append(a).data());
@@ -236,8 +236,8 @@ namespace K {
           curl_easy_setopt(curl, CURLOPT_POSTFIELDS, p.data());
         });
       };
-      static json wJet(string k, string p, string a, string s, bool post) {
-        return curl_perform(k, [&](CURL *curl) {
+      static json wJet(const string &url, string p, string a, string s, bool post) {
+        return curl_perform(url, [&](CURL *curl) {
           struct curl_slist *h_ = NULL;
           h_ = curl_slist_append(h_, string("X-BFX-APIKEY: ").append(a).data());
           h_ = curl_slist_append(h_, string("X-BFX-PAYLOAD: ").append(p).data());
@@ -246,8 +246,8 @@ namespace K {
           curl_easy_setopt(curl, CURLOPT_POSTFIELDS, p.data());
         });
       };
-      static json wJet(string k, string p, string a, string s, bool post, bool auth) {
-        return curl_perform(k, [&](CURL *curl) {
+      static json wJet(const string &url, string p, string a, string s, bool post, bool auth) {
+        return curl_perform(url, [&](CURL *curl) {
           struct curl_slist *h_ = NULL;
           h_ = curl_slist_append(h_, "Content-Type: application/x-www-form-urlencoded");
           if (!a.empty()) h_ = curl_slist_append(h_, string("Authorization: Bearer ").append(a).data());
@@ -255,8 +255,8 @@ namespace K {
           curl_easy_setopt(curl, CURLOPT_POSTFIELDS, p.data());
         });
       };
-      static json wJet(string k, string t, string a, string s, string p, bool d = false) {
-        return curl_perform(k, [&](CURL *curl) {
+      static json wJet(const string &url, string t, string a, string s, string p, bool d = false) {
+        return curl_perform(url, [&](CURL *curl) {
           struct curl_slist *h_ = NULL;
           h_ = curl_slist_append(h_, string("CB-ACCESS-KEY: ").append(a).data());
           h_ = curl_slist_append(h_, string("CB-ACCESS-SIGN: ").append(s).data());
@@ -266,7 +266,7 @@ namespace K {
           if (d) curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
         });
       };
-      static json curl_perform(string url, function<void(CURL *curl)> curl_setopt, bool debug = true) {
+      static json curl_perform(const string &url, function<void(CURL *curl)> curl_setopt, bool debug = true) {
         string reply;
         CURL *curl = curl_easy_init();
         if (curl) {

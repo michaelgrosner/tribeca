@@ -82,7 +82,7 @@ namespace K  {
         timer->stop();
         gw->close();
         hub->getDefaultGroup<uWS::CLIENT>().close();
-        gw->clean();
+        gw->clear();
         walk(loop);
         hub->getDefaultGroup<uWS::SERVER>().close();
       };

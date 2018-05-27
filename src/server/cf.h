@@ -187,11 +187,10 @@ namespace K {
       };
     private:
       inline void config() {
-        screen->config(
-          base(),         quote()
-        );
+        screen->config();
         gw = Gw::config(
-          base(),         quote(),
+          args.currency.substr(0, args.currency.find("/")),
+          args.currency.substr(1+ args.currency.find("/")),
           args.exchange,  args.free,
           args.apikey,    args.secret,
           args.username,  args.passphrase,
@@ -199,23 +198,18 @@ namespace K {
           args.maxLevels, args.debugSecret
         );
         if (!gw)
-          exit(screen->error("CF", string("Unable to load a valid gateway using --exchange=")
+          exit(screen->error("CF", "Unable to load a valid gateway using --exchange="
             + args.exchange + " argument"));
         if (args.inet)
           screen->log("CF", "Network Interface for outgoing traffic is", args.inet);
         if (args.testChamber == 1)
           screen->logWar("CF", "Test Chamber #1: send new orders before cancel old");
         else if (args.testChamber)
-          screen->logWar("CF", string("ignored Test Chamber #") + to_string(args.testChamber));
-      };
-      inline mCoinId base() {
-        return FN::strU(args.currency.substr(0, args.currency.find("/")));
-      };
-      inline mCoinId quote() {
-        return FN::strU(args.currency.substr(args.currency.find("/") + 1));
+          screen->logWar("CF", "ignored Test Chamber #" + to_string(args.testChamber));
       };
       inline void tidy() {
         args.exchange = FN::strU(args.exchange);
+        args.currency = FN::strU(args.currency);
         if (args.debug)
           args.debugSecret =
           args.debugEvents =
@@ -233,12 +227,9 @@ namespace K {
             : args.database
           ) = string("/data/db/K")
             + '.' + args.exchange
-            + '.' + base()
-            + '.' + quote()
+            + '.' + string(args.currency).replace(args.currency.find("/"), 1, ".")
             + '.' + "db";
-        args.maxLevels = args.maxLevels
-          ? max(15, args.maxLevels)
-          : 321;
+        args.maxLevels = max(15, args.maxLevels);
         if (args.user == "NULL") args.user.clear();
         if (args.pass == "NULL") args.pass.clear();
         if (args.ignoreSun and args.ignoreMoon) args.ignoreMoon = 0;

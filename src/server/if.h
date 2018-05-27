@@ -2,8 +2,28 @@
 #define K_IF_H_
 
 namespace K {
+  static vector<function<void()>*> endingFn;
   static struct Screen {
-    virtual void config(string base_, string quote_) = 0;
+    Screen() {
+      cout << BGREEN << "K"
+           << RGREEN << " build " << K_BUILD << ' ' << K_STAMP
+           << '.' << BRED << '\n';
+      string changes;
+      int commits = -1;
+      if (access(".git", F_OK) != -1) {
+        system("git fetch");
+        changes = FN::changelog();
+        commits = count(changes.begin(), changes.end(), '\n');
+      }
+      cout << BGREEN << K_0_DAY << RGREEN << ' ' << (commits == -1
+        ? "(zip install)"
+        : (commits
+          ? '-' + to_string(commits) + "commit" + (commits == 1?"":"s") + '.'
+          : "(0day)"
+        )
+      ) << ".\n" << RYELLOW << changes << RWHITE << RRESET;
+    };
+    virtual void config() = 0;
     virtual void pressme(mHotkey ch, function<void()> *fn) = 0;
     virtual int error(string k, string s, bool reboot = false) = 0;
     virtual void waitForUser() = 0;
@@ -153,7 +173,7 @@ namespace K {
       function<bool()> orders = [&]() { return askFor(replyOrders, [&]() { return sync_orders(); }); };
       function<bool()> cancelAll = [&]() { return askFor(replyCancelAll, [&]() { return sync_cancelAll(); }); };
       virtual vector<mOrder> sync_cancelAll() = 0;
-      inline void clean() {
+      inline void clear() {
         if (args.dustybot)
           screen->log(string("GW ") + name, "--dustybot is enabled, remember to cancel manually any open order.");
         else {

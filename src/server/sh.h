@@ -1,20 +1,10 @@
 #ifndef K_SH_H_
 #define K_SH_H_
 
-#define _debugEvent_ ((SH*)screen)->debug(__PRETTY_FUNCTION__);
+#define _debugEvent_ screen->debug(__PRETTY_FUNCTION__);
 
 namespace K {
-  vector<function<void()>*> endingFn;
-  char RBLACK[] = "\033[0;30m", RRED[]    = "\033[0;31m", RGREEN[] = "\033[0;32m", RYELLOW[] = "\033[0;33m",
-       RBLUE[]  = "\033[0;34m", RPURPLE[] = "\033[0;35m", RCYAN[]  = "\033[0;36m", RWHITE[]  = "\033[0;37m",
-       BBLACK[] = "\033[1;30m", BRED[]    = "\033[1;31m", BGREEN[] = "\033[1;32m", BYELLOW[] = "\033[1;33m",
-       BBLUE[]  = "\033[1;34m", BPURPLE[] = "\033[1;35m", BCYAN[]  = "\033[1;36m", BWHITE[]  = "\033[1;37m",
-       RRESET[] = "\033[0m";
-  class SH: public Screen {
-    public: SH() {
-      screen = this;
-      logVer();
-    };
+  class SH: public Screen { public: SH() { screen = this; };
     private:
       future<mHotkey> hotkey;
       map<mHotkey, function<void()>*> hotFn;
@@ -26,16 +16,14 @@ namespace K {
           baseHeld = 0,
           quoteAmount = 0,
           quoteHeld = 0;
-      string base = "?",
-             quote = "?",
-             baseValue = "?",
+      string baseValue = "?",
              quoteValue = "?",
              fairValue = "?",
              protocol = "?",
              wtfismyip = "";
       multimap<mPrice, mOrder, greater<mPrice>> openOrders;
     public:
-      void config(string base_, string quote_) {
+      void config() {
         endingFn.push_back(&happyEnding);
         wtfismyip = FN::wJet("https://wtfismyip.com/json", 4L).value("/YourFuckingIPAddress"_json_pointer, "");
         if (!args.debugEvents) debug = [](const string &k) {};
@@ -47,8 +35,6 @@ namespace K {
           cout << "NCURSES" << RRED << " Errrror:" << BRED << " Unable to initialize ncurses, try to run in your terminal \"export TERM=xterm\", or use --naked argument." << '\n';
           exit(EXIT_SUCCESS);
         }
-        base = base_;
-        quote = quote_;
         if (args.colors) start_color();
         use_default_colors();
         cbreak();
@@ -386,6 +372,12 @@ namespace K {
         wattron(wBorder, A_BOLD);
         waddstr(wBorder, (string(" ") + baseValue + ' ').data());
         wattroff(wBorder, A_BOLD);
+        string base = "?",
+               quote = "?";
+        if (gw) {
+          base = gw->base;
+          quote = gw->quote;
+        }
         waddstr(wBorder, base.data());
         wattroff(wBorder, COLOR_PAIR(COLOR_MAGENTA));
         wattron(wBorder, COLOR_PAIR(COLOR_GREEN));
@@ -475,18 +467,6 @@ namespace K {
         beep();
         endwin();
         wBorder = nullptr;
-      };
-      inline void logVer() {
-        cout << BGREEN << "K" << RGREEN << " build " << K_BUILD << ' ' << K_STAMP << '.' << BRED << '\n';
-        if (access(".git", F_OK) != -1) {
-          system("git fetch");
-          string k = FN::changelog();
-          logVer(k, count(k.begin(), k.end(), '\n'));
-        } else logVer("", -1);
-        cout << RRESET;
-      };
-      void logVer(string k, int c) {
-        cout << BGREEN << K_0_DAY << RGREEN << string(c == -1 ? " (zip install).\n" : (!c ? " (0day).\n" : string(" -").append(to_string(c)).append("commit").append(c > 1?"s..\n":"..\n"))) << RYELLOW << (c ? k : "") << RWHITE;
       };
       void hotkeys() {
         hotkey = ::async(launch::async, [&] { return (mHotkey)wgetch(wBorder); });
