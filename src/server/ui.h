@@ -103,8 +103,7 @@ namespace K {
         queue.clear();
       };
       void timer_60s() {
-        if (!args.headless)
-          send(mMatter::ApplicationState, serverState());
+        send(mMatter::ApplicationState, serverState());
         engine->orders_60s = 0;
       };
     private:

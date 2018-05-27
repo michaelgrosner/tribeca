@@ -34,7 +34,7 @@ import * as Models from './models';
           <td>
             <div style="position:relative;" [ngClass]="'bids'+lvl.cssMod">
               <div class="bgSize" [ngStyle]="{'background': getBgSize(lvl, 'bids')}"></div>
-              {{ lvl.size | number:'1.4-4' }}
+              {{ getSizeLevel(lvl.size | number:'1.4-4', true) }}<span class="truncated">{{ getSizeLevel(lvl.size | number:'1.4-4', false) }}</span>
             </div>
           </td>
           <td>
@@ -55,7 +55,7 @@ import * as Models from './models';
           <td>
             <div style="position:relative;" [ngClass]="'asks'+lvl.cssMod">
               <div class="bgSize" [ngStyle]="{'background': getBgSize(lvl, 'asks')}"></div>
-              {{ lvl.size | number:'1.4-4' }}
+              {{ getSizeLevel(lvl.size | number:'1.4-4', true) }}<span class="truncated">{{ getSizeLevel(lvl.size | number:'1.4-4', false) }}</span>
             </div>
           </td>
         </tr>
@@ -139,6 +139,23 @@ export class MarketQuotingComponent {
   private clearQuote = () => {
     this.orderBids = [];
     this.orderAsks = [];
+  }
+
+  private getSizeLevel = (size: string, ret: boolean) => {
+    var decimals = (''+size).indexOf(".")+1;
+    if (!decimals) return ret?size:"";
+    var tokens: string[] = size.split("");
+    var token: string = tokens.pop();
+    var zeros: number = 0;
+    while(token == "0" || token == ".") {
+      zeros++;
+      if (token == ".") break;
+      token = tokens.pop();
+    }
+    if (!zeros) return ret?size:"";
+    return ret
+      ? size.substr(0, size.length-zeros)
+      : size.substr(size.length-zeros);
   }
 
   private getBgSize = (lvl: Models.MarketSide, side: string) => {

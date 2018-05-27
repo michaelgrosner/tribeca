@@ -5834,7 +5834,9 @@ tr.chatbro_message {
     padding-bottom: 7px !important;
   }
 }
-
+span.truncated {
+    opacity: 0.25;
+}
 div#hud, div#hud_nav {
   border-image-repeat: stretch;
   border-image-slice: 45%;
