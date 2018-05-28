@@ -217,7 +217,7 @@ namespace K {
             return message.substr(0, 2) + reply.dump();
         } else if (mPortal::Kiss == (mPortal)message[0] and kisses.find(message[1]) != kisses.end()) {
           json butterfly = json::parse(
-            (message.length() > 2 and message[2] == '{')
+            (message.length() > 2 and (message[2] == '{' or message[2] == '['))
               ? message.substr(2)
               : "{}"
           );

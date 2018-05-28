@@ -48,12 +48,12 @@ namespace K {
               BBLUE[]  = "\033[1;34m", BPURPLE[] = "\033[1;35m", BCYAN[]  = "\033[1;36m", BWHITE[]  = "\033[1;37m",
               RRESET[] = "\033[0m";
   static struct mArgs {
-        int port          = 3000,   colors      = 0, debug       = 0,
-            debugSecret   = 0,      debugEvents = 0, debugOrders = 0,
-            debugQuotes   = 0,      debugWallet = 0, withoutSSL  = 0,
-            headless      = 0,      dustybot    = 0, lifetime    = 0,
-            autobot       = 0,      naked       = 0, free        = 0,
-            ignoreSun     = 0,      ignoreMoon  = 0, testChamber = 0,
+        int port          = 3000,   colors      = 0, debug        = 0,
+            debugSecret   = 0,      debugEvents = 0, debugOrders  = 0,
+            debugQuotes   = 0,      debugWallet = 0, withoutSSL   = 0,
+            headless      = 0,      dustybot    = 0, lifetime     = 0,
+            autobot       = 0,      naked       = 0, free         = 0,
+            ignoreSun     = 0,      ignoreMoon  = 0, testChamber  = 0,
             maxAdmins     = 7,      maxLevels   = 321;
     mAmount maxWallet     = 0;
      mPrice ewmaUShort    = 0,      ewmaXShort  = 0, ewmaShort    = 0,
