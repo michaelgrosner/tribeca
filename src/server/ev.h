@@ -14,7 +14,6 @@ namespace K  {
     protected:
       void load() {
         endingFn.push_back(&happyEnding);
-        endingFn.push_back(&neverEnding);
         gw->hub = hub = new uWS::Hub(0, true);
       };
       void waitData() {
@@ -85,12 +84,6 @@ namespace K  {
       function<void()> happyEnding = [&]() {
         cout << tracelog;
         tracelog.clear();
-      };
-      function<void()> neverEnding = [&]() {
-        cout << gw->name;
-        for (unsigned int i = 0; i < 21; ++i)
-          cout << " THE END IS NEVER";
-        cout << " THE END." << '\n';
       };
       void (*walk)(uS::Async*) = [](uS::Async *const loop) {
         EV* k = (EV*)loop->getData();

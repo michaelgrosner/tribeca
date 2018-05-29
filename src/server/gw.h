@@ -9,7 +9,7 @@ namespace K {
                     greenGatewayMarket = mConnectivity::Disconnected;
     protected:
       void load() {
-        endingFn.back() = &happyEnding;
+        endingFn.push_back(&happyEnding);
         adminAgreement = (mConnectivity)args.autobot;
       };
       void waitData() {
