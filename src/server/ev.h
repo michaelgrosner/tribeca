@@ -2,9 +2,8 @@
 #define K_EV_H_
 
 namespace K  {
-  string tracelog;
   class EV: public Klass,
-            public Events { public: EV() { events = this; }
+            public Events { public: EV() { events = this; };
     private:
       uWS::Hub  *hub   = nullptr;
       uS::Timer *timer = nullptr;
@@ -16,14 +15,6 @@ namespace K  {
       void load() {
         endingFn.push_back(&happyEnding);
         endingFn.push_back(&neverEnding);
-        signal(SIGINT, quit);
-        signal(SIGABRT, wtf);
-        signal(SIGSEGV, wtf);
-#ifndef _WIN32
-        signal(SIGUSR1, wtf);
-#endif
-        tracelog = "- exchange: " + args.exchange + '\n'
-                 + "- currency: " + args.currency + '\n';
         gw->hub = hub = new uWS::Hub(0, true);
       };
       void waitData() {
@@ -145,61 +136,6 @@ namespace K  {
             screen->logWar(name, reason);
           else screen->log(name, reason);
         });
-      };
-      static void halt(const int code) {
-        for (function<void()>* &it : endingFn) (*it)();
-        if (code == EXIT_FAILURE)
-          this_thread::sleep_for(chrono::seconds(3));
-        cout << BGREEN << 'K'
-             << RGREEN << " exit code "
-             << BGREEN << to_string(code)
-             << RGREEN << '.'
-             << RRESET << '\n';
-        exit(code);
-      };
-      static void quit(const int sig) {
-        tracelog = string("Excellent decision! ")
-          + FN::wJet("https://api.icndb.com/jokes/random?escape=javascript&limitTo=[nerdy]", 4L)
-              .value("/value/joke"_json_pointer, "let's plant a tree instead..")
-          + '\n';
-        halt(EXIT_SUCCESS);
-      };
-      static void wtf(const int sig) {
-        if (tracelog.empty()) exit(screen->error("EV", "loop of errors omitted"));
-        const string rollout = tracelog;
-        tracelog = string(RCYAN) + "Errrror: Signal " + to_string(sig) + ' '
-#ifndef _WIN32
-          + strsignal(sig)
-#endif
-          ;
-        if (FN::output("test -d .git && git rev-parse @") != FN::output("test -d .git && git rev-parse @{u}"))
-          tracelog += string("(deprecated K version found).") + '\n'
-            + '\n' + string(BYELLOW) + "Hint!" + string(RYELLOW)
-            + '\n' + "please upgrade to the latest commit; the encountered error may be already fixed at:"
-            + '\n' + FN::changelog()
-            + '\n' + "If you agree, consider to run \"make latest\" prior further executions."
-            + '\n' + '\n';
-        else {
-          tracelog += string("(Three-Headed Monkey found):") + '\n' + rollout
-            + "- lastbeat: " + to_string(_Tstamp_) + '\n'
-#ifndef _WIN32
-            + "- os-uname: " + FN::output("uname -srvm")
-            + "- tracelog: " + '\n';
-          void *k[69];
-          size_t jumps = backtrace(k, 69);
-          char **trace = backtrace_symbols(k, jumps);
-          size_t i;
-          for (i = 0; i < jumps; i++)
-            tracelog += string(trace[i]) + '\n';
-          free(trace)
-#endif
-          ;
-          tracelog += '\n' + string(BRED) + "Yikes!" + string(RRED)
-            + '\n' + "please copy and paste the error above into a new github issue (noworry for duplicates)."
-            + '\n' + "If you agree, go to https://github.com/ctubio/Krypto-trading-bot/issues/new"
-            + '\n' + '\n';
-        }
-        halt(EXIT_FAILURE);
       };
   };
 }

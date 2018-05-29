@@ -3,7 +3,7 @@
 
 namespace K {
   class QE: public Klass,
-            public Engine { public: QE() { engine = this; }
+            public Engine { public: QE() { engine = this; };
     private:
       map<mQuotingMode, function<mQuote(mPrice, mAmount, mAmount)>*> quotingMode;
       mQuoteState bidStatus = mQuoteState::MissingData,

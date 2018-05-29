@@ -613,7 +613,7 @@ namespace K {
       json patch = *this;
       reset(to);
       return patch;
-    }
+    };
     inline mLevels reset(const mLevels &from) {
       bids = from.bids;
       asks = from.asks;

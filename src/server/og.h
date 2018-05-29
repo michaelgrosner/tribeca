@@ -3,7 +3,7 @@
 
 namespace K {
   class OG: public Klass,
-            public Broker { public: OG() { broker = this; }
+            public Broker { public: OG() { broker = this; };
     protected:
       void load() {
         for (json &it : sqlite->select(mMatter::Trades))

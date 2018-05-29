@@ -3,7 +3,7 @@
 
 namespace K {
   class DB: public Klass,
-            public Sqlite { public: DB() { sqlite = this; }
+            public Sqlite { public: DB() { sqlite = this; };
     private:
       sqlite3 *db = nullptr;
       string qpdb = "main";

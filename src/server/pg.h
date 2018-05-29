@@ -3,7 +3,7 @@
 
 namespace K {
   class PG: public Klass,
-            public Wallet { public: PG() { wallet = this; }
+            public Wallet { public: PG() { wallet = this; };
     private:
       mWallets balance;
       vector<mProfit> profits;

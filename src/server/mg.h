@@ -3,7 +3,7 @@
 
 namespace K {
   class MG: public Klass,
-            public Market { public: MG() { market = this; }
+            public Market { public: MG() { market = this; };
     private:
       vector<mTrade> trades;
       mAmount takersBuySize60s = 0,

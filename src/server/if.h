@@ -2,7 +2,6 @@
 #define K_IF_H_
 
 namespace K {
-  static vector<function<void()>*> endingFn;
   static struct Screen {
     Screen() {
       cout << BGREEN << "K"
@@ -216,6 +215,78 @@ namespace K {
         return waiting;
       };
   } *gw = nullptr;
+  static vector<function<void()>*> endingFn;
+  static string tracelog;
+  static class Ending {
+    public:
+      Ending () {
+        signal(SIGINT, quit);
+        signal(SIGABRT, wtf);
+        signal(SIGSEGV, wtf);
+#ifndef _WIN32
+        signal(SIGUSR1, wtf);
+#endif
+      };
+    private:
+      static void halt(const int code) {
+        for (function<void()>* &it : endingFn) (*it)();
+        if (code == EXIT_FAILURE)
+          this_thread::sleep_for(chrono::seconds(3));
+        cout << BGREEN << 'K'
+             << RGREEN << " exit code "
+             << BGREEN << to_string(code)
+             << RGREEN << '.'
+             << RRESET << '\n';
+        exit(code);
+      };
+      static void quit(const int sig) {
+        tracelog = string("Excellent decision! ")
+          + FN::wJet("https://api.icndb.com/jokes/random?escape=javascript&limitTo=[nerdy]", 4L)
+              .value("/value/joke"_json_pointer, "let's plant a tree instead..")
+          + '\n';
+        halt(EXIT_SUCCESS);
+      };
+      static void wtf(const int sig) {
+        if (tracelog.empty()) exit(screen->error("EV", "loop of errors omitted"));
+        const string rollout = tracelog;
+        tracelog = string(RCYAN) + "Errrror: Signal " + to_string(sig) + ' '
+#ifndef _WIN32
+          + strsignal(sig)
+#endif
+          + ' ';
+        if (FN::output("test -d .git && git rev-parse @") != FN::output("test -d .git && git rev-parse @{u}"))
+          tracelog += string("(deprecated K version found).") + '\n'
+            + '\n' + string(BYELLOW) + "Hint!" + string(RYELLOW)
+            + '\n' + "please upgrade to the latest commit; the encountered error may be already fixed at:"
+            + '\n' + FN::changelog()
+            + '\n' + "If you agree, consider to run \"make latest\" prior further executions."
+            + '\n' + '\n';
+        else {
+          tracelog += string("(Three-Headed Monkey found):") + '\n'
+            + "- exchange: " + args.exchange + '\n'
+            + "- currency: " + args.currency + '\n'
+            + rollout
+            + "- lastbeat: " + to_string(_Tstamp_) + '\n'
+#ifndef _WIN32
+            + "- os-uname: " + FN::output("uname -srvm")
+            + "- tracelog: " + '\n';
+          void *k[69];
+          size_t jumps = backtrace(k, 69);
+          char **trace = backtrace_symbols(k, jumps);
+          size_t i;
+          for (i = 0; i < jumps; i++)
+            tracelog += string(trace[i]) + '\n';
+          free(trace)
+#endif
+          ;
+          tracelog += '\n' + string(BRED) + "Yikes!" + string(RRED)
+            + '\n' + "please copy and paste the error above into a new github issue (noworry for duplicates)."
+            + '\n' + "If you agree, go to https://github.com/ctubio/Krypto-trading-bot/issues/new"
+            + '\n' + '\n';
+        }
+        halt(EXIT_FAILURE);
+      };
+  } ending;
   class Klass {
     protected:
       virtual void load() {};
