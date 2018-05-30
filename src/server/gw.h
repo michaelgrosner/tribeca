@@ -9,7 +9,6 @@ namespace K {
                     greenGatewayMarket = mConnectivity::Disconnected;
     protected:
       void load() {
-        endingFn.push_back(&happyEnding);
         adminAgreement = (mConnectivity)args.autobot;
       };
       void waitData() {
@@ -29,13 +28,11 @@ namespace K {
       void run() {                                                  _debugEvent_
         handshake();
         if (gw->exchange == mExchange::Coinbase) FN::stunnel(true);
-        events->start();
       };
-    private:
-      function<void()> happyEnding = [&]() {
-        events->stop();
+      void end() {
         if (gw->exchange == mExchange::Coinbase) FN::stunnel(false);
       };
+    private:
       function<void(json*)> hello = [&](json *welcome) {
         *welcome = { semaphore() };
       };

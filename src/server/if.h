@@ -45,11 +45,11 @@ namespace K {
       log("DEBUG", string("EV ") + k);
     };
     virtual void refresh() = 0;
+    virtual void end() = 0;
   } *screen = nullptr;
   static struct Events {
     virtual uWS::Hub* listen() = 0;
     virtual void start() = 0;
-    virtual void stop() = 0;
     virtual void deferred(const function<void()> &fn) = 0;
   } *events = nullptr;
   static struct Sqlite {
@@ -215,11 +215,17 @@ namespace K {
         return waiting;
       };
   } *gw = nullptr;
-  static vector<function<void()>*> endingFn;
   static string tracelog;
+  static vector<function<void()>> happyEndingFn, endingFn = {
+    [](){
+      screen->end();
+      cout << '\n' << screen->stamp() << tracelog;
+    }
+  };
   static class Ending {
     public:
-      Ending () {
+      Ending (/* KMxTWEpb9ig */) {
+        tracelog = "- roll-out: " + to_string(_Tstamp_) + '\n';
         signal(SIGINT, quit);
         signal(SIGABRT, wtf);
         signal(SIGSEGV, wtf);
@@ -229,7 +235,8 @@ namespace K {
       };
     private:
       static void halt(const int code) {
-        for (function<void()>* &it : endingFn) (*it)();
+        endingFn.swap(happyEndingFn);
+        for (function<void()> &it : happyEndingFn) it();
         if (code == EXIT_FAILURE)
           this_thread::sleep_for(chrono::seconds(3));
         cout << BGREEN << 'K'
@@ -240,14 +247,13 @@ namespace K {
         exit(code);
       };
       static void quit(const int sig) {
-        tracelog = string("Excellent decision! ")
+        tracelog = "Excellent decision! "
           + FN::wJet("https://api.icndb.com/jokes/random?escape=javascript&limitTo=[nerdy]", 4L)
               .value("/value/joke"_json_pointer, "let's plant a tree instead..")
           + '\n';
         halt(EXIT_SUCCESS);
       };
       static void wtf(const int sig) {
-        if (tracelog.empty()) exit(screen->error("EV", "loop of errors omitted"));
         const string rollout = tracelog;
         tracelog = string(RCYAN) + "Errrror: Signal " + to_string(sig) + ' '
 #ifndef _WIN32
@@ -268,6 +274,7 @@ namespace K {
             + rollout
             + "- lastbeat: " + to_string(_Tstamp_) + '\n'
 #ifndef _WIN32
+            + "- binbuild: " + string(K_BUILD)
             + "- os-uname: " + FN::output("uname -srvm")
             + "- tracelog: " + '\n';
           void *k[69];
@@ -294,6 +301,7 @@ namespace K {
       virtual void waitTime() {};
       virtual void waitUser() {};
       virtual void run() {};
+      virtual void end() {};
     public:
       inline void wait() {
         load();
@@ -301,6 +309,10 @@ namespace K {
         waitTime();
         waitUser();
         run();
+        endingFn.push_back([&](){
+          end();
+        });
+        if (gw->randId) events->start();
       };
   };
 }

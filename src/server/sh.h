@@ -24,7 +24,6 @@ namespace K {
       multimap<mPrice, mOrder, greater<mPrice>> openOrders;
     public:
       void config() {
-        endingFn.push_back(&happyEnding);
         wtfismyip = FN::wJet("https://wtfismyip.com/json", 4L).value("/YourFuckingIPAddress"_json_pointer, "");
         if (!args.debugEvents) debug = [](const string &k) {};
 #ifndef _WIN32
@@ -61,7 +60,7 @@ namespace K {
         hotFn[ch] = fn;
       };
       int error(string k, string s, bool reboot = false) {
-        quit();
+        end();
         logErr(k, s);
         cout << RRESET;
         return reboot ? EXIT_FAILURE : EXIT_SUCCESS;
@@ -457,17 +456,13 @@ namespace K {
         wrefresh(wBorder);
         wrefresh(wLog);
       };
-    private:
-      function<void()> happyEnding = [&]() {
-        quit();
-        cout << '\n' << stamp();
-      };
-      void quit() {
+      void end() {
         if (!wBorder) return;
         beep();
         endwin();
         wBorder = nullptr;
       };
+    private:
       void hotkeys() {
         hotkey = ::async(launch::async, [&] { return (mHotkey)wgetch(wBorder); });
       };

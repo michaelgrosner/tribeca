@@ -13,7 +13,6 @@ namespace K  {
                    gwT_countdown = 0;
     protected:
       void load() {
-        endingFn.push_back(&happyEnding);
         gw->hub = hub = new uWS::Hub(0, true);
       };
       void waitData() {
@@ -43,6 +42,14 @@ namespace K  {
         loop->setData(this);
         loop->start(walk);
       };
+      void end() {
+        timer->stop();
+        gw->close();
+        hub->getDefaultGroup<uWS::CLIENT>().close();
+        gw->clear();
+        walk(loop);
+        hub->getDefaultGroup<uWS::SERVER>().close();
+      };
     public:
       uWS::Hub* listen() {
         if (!args.withoutSSL
@@ -63,27 +70,17 @@ namespace K  {
         } else screen->logUI("HTTP");
         return hub;
       };
-      void start(/* KMxTWEpb9ig */) {
-        tracelog += string("- roll-out: ") + to_string(_Tstamp_) + '\n';
+      void start() {
         if (gw->asyncWs()) gwT_countdown = 1;
         hub->run();
-      };
-      void stop() {
-        timer->stop();
-        gw->close();
-        hub->getDefaultGroup<uWS::CLIENT>().close();
-        gw->clear();
-        walk(loop);
-        hub->getDefaultGroup<uWS::SERVER>().close();
       };
       void deferred(const function<void()> &fn) {
         slowFn.push_back(fn);
         loop->send();
       };
     private:
-      function<void()> happyEnding = [&]() {
-        cout << tracelog;
-        tracelog.clear();
+      void async(const function<bool()> &fn) {
+        if (fn()) loop->send();
       };
       void (*walk)(uS::Async*) = [](uS::Async *const loop) {
         EV* k = (EV*)loop->getData();
@@ -93,9 +90,6 @@ namespace K  {
         }
         if (gw->waitForData()) loop->send();
         screen->waitForUser();
-      };
-      void async(const function<bool()> &fn) {
-        if (fn()) loop->send();
       };
       inline void connect() {
         hub->connect(gw->ws, nullptr, {}, 5e+3, &hub->getDefaultGroup<uWS::CLIENT>());
@@ -120,11 +114,11 @@ namespace K  {
         }
       };
       inline void gwLog(const string &reason) {
-        deferred([this, reason]() {
-          const string name = string(
-            reason.find(">>>") != reason.find("<<<")
-              ? "DEBUG" : "GW"
-          ) + ' ' + gw->name;
+        const string name = string(
+          reason.find(">>>") != reason.find("<<<")
+            ? "DEBUG" : "GW"
+        ) + ' ' + gw->name;
+        deferred([name, reason]() {
           if (reason.find("Error") != string::npos)
             screen->logWar(name, reason);
           else screen->log(name, reason);
