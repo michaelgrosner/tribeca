@@ -55,11 +55,11 @@ namespace K {
   static struct Sqlite {
     virtual json select(const mMatter &table) = 0;
     virtual void insert(
-    const mMatter &table            ,
-    const json    &cell             ,
-    const bool    &rm       = true  ,
-    const string  &updateId = "NULL",
-    const mClock  &rmOlder  = 0
+      const mMatter &table            ,
+      const json    &cell             ,
+      const bool    &rm       = true  ,
+      const string  &updateId = "NULL",
+      const mClock  &rmOlder  = 0
     ) = 0;
     function<unsigned int()> size = []() { return 0; };
   } *sqlite = nullptr;
@@ -160,11 +160,13 @@ namespace K {
                    async = false;
       virtual bool asyncWs() = 0;
       inline bool waitForData() {
-        return waitFor(replyOrders, evDataOrder)
-             | waitFor(replyLevels, evDataLevels)
-             | waitFor(replyTrades, evDataTrade)
-             | waitFor(replyWallets, evDataWallet)
-             | waitFor(replyCancelAll, evDataOrder);
+        return (async
+          ? false
+          : waitFor(replyOrders, evDataOrder)
+            | waitFor(replyLevels, evDataLevels)
+            | waitFor(replyTrades, evDataTrade)
+        ) | waitFor(replyWallets, evDataWallet)
+          | waitFor(replyCancelAll, evDataOrder);
       };
       function<bool()> wallet = [&]() { return !(async_wallet() or !askFor(replyWallets, [&]() { return sync_wallet(); })); };
       function<bool()> levels = [&]() { return askFor(replyLevels, [&]() { return sync_levels(); }); };
@@ -274,7 +276,7 @@ namespace K {
             + rollout
             + "- lastbeat: " + to_string(_Tstamp_) + '\n'
 #ifndef _WIN32
-            + "- binbuild: " + string(K_BUILD)
+            + "- binbuild: " + string(K_BUILD) + '\n'
             + "- os-uname: " + FN::output("uname -srvm")
             + "- tracelog: " + '\n';
           void *k[69];
