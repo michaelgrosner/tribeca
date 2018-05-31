@@ -177,7 +177,7 @@ namespace K {
       inline void clear() {
         if (args.dustybot)
           screen->log(string("GW ") + name, "--dustybot is enabled, remember to cancel manually any open order.");
-        else {
+        else if (evDataOrder) {
           screen->log(string("GW ") + name, "Attempting to cancel all open orders, please wait.");
           for (mOrder &it : sync_cancelAll()) evDataOrder(it);
           screen->log(string("GW ") + name, "cancel all open orders OK");

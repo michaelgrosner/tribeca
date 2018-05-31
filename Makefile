@@ -2,7 +2,7 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
 PATCH    = 7
-BUILD    = 26
+BUILD    = 27
 CHOST   ?= $(shell $(MAKE) CHOST= chost -s)
 CARCH    = x86_64-linux-gnu arm-linux-gnueabihf aarch64-linux-gnu x86_64-apple-darwin17 x86_64-w64-mingw32
 KLOCAL  := build-$(CHOST)/local
@@ -387,7 +387,7 @@ png-check: etc/${PNG}.png
 	@test -n "`identify -verbose etc/${PNG}.png | grep 'K\.conf'`" && echo Configuration injected into etc/${PNG}.png OK, feel free to remove etc/${PNG}.json anytime. || echo nope, injection failed.
 
 checkOK:
-	read -p "KMOD: " KMOD;date=`date` && git diff && git status && read ctrl_c \
+	read -p "KMOD: " KMOD;date=`date`;git diff;git status && read ctrl_c \
 	&& KALL=1 $(MAKE) K release && git add . && git commit -S -m "$${KMOD}" && \
 	git push && echo $${date} && date
 
