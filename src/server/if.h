@@ -27,10 +27,7 @@ namespace K {
     virtual int error(string k, string s, bool reboot = false) = 0;
     virtual void waitForUser() = 0;
     virtual string stamp() = 0;
-    virtual void logErr(string k, string s, string m = " Errrror: ") = 0;
-    void logWar(string k, string s) {
-      logErr(k, s, " Warrrrning: ");
-    };
+    virtual void logWar(string k, string s, string m = " Warrrrning: ") = 0;
     virtual void logDB(string k) = 0;
     virtual void logUI(const string &protocol_) = 0;
     virtual void logUIsess(int k, string s) = 0;
@@ -275,8 +272,8 @@ namespace K {
             + "- currency: " + args.currency + '\n'
             + rollout
             + "- lastbeat: " + to_string(_Tstamp_) + '\n'
-#ifndef _WIN32
             + "- binbuild: " + string(K_BUILD) + '\n'
+#ifndef _WIN32
             + "- os-uname: " + FN::output("uname -srvm")
             + "- tracelog: " + '\n';
           void *k[69];

@@ -61,7 +61,7 @@ namespace K {
       };
       int error(string k, string s, bool reboot = false) {
         end();
-        logErr(k, s);
+        logWar(k, s, " Errrror: ");
         cout << RRESET;
         return reboot ? EXIT_FAILURE : EXIT_SUCCESS;
       };
@@ -101,7 +101,7 @@ namespace K {
         wprintw(wLog, " ");
         return "";
       };
-      void logErr(string k, string s, string m = " Errrror: ") {
+      void logWar(string k, string s, string m = " Warrrrning: ") {
         if (!wBorder) {
           cout << stamp() << k << RRED << m << BRED << s << ".\n";
           return;
