@@ -233,7 +233,7 @@ namespace K {
         return addr.empty() ? "unknown" : addr;
       };
       inline unsigned int memorySize() {
-        string ps = FN::output(string("ps -p") + to_string(::getpid()) + " -orss | tail -n1");
+        string ps = FN::output("ps -p" + to_string(::getpid()) + " -orss | tail -n1");
         ps.erase(remove(ps.begin(), ps.end(), ' '), ps.end());
         if (ps.empty()) ps = "0";
         return stoi(ps) * 1e+3;
@@ -241,6 +241,7 @@ namespace K {
       json serverState() {
         return {
           {"memory", memorySize()},
+          {"inet", string(args.inet?:"")},
           {"freq", engine->orders_60s},
           {"theme", args.ignoreMoon + args.ignoreSun},
           {"dbsize", sqlite->size()},
