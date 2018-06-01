@@ -222,7 +222,7 @@ namespace K {
           0, 0, 0, 0, 0, fee, false
         );
         wallet->calcSafetyAfterTrade(trade);
-        screen->log(trade, gw->name);
+        screen->log(trade, o->isPong);
         if (qp._matchPings) {
           mPrice widthPong = qp.widthPercentage
             ? qp.widthPongPercentage * trade.price / 100
@@ -303,9 +303,9 @@ namespace K {
         return pong->quantity > 0;
       };
       void cleanAuto(mClock now) {
-        mClock pT_ = now - (abs(qp.cleanPongsAuto) * 864e5);
+        mClock pT_ = now - (abs(qp.cleanPongsAuto) * 86400e3);
         for (vector<mTrade>::iterator it = tradesHistory.begin(); it != tradesHistory.end();)
-          if (it->time < pT_ and (qp.cleanPongsAuto < 0 or it->Kqty >= it->quantity)) {
+          if ((it->Ktime?:it->time) < pT_ and (qp.cleanPongsAuto < 0 or it->Kqty >= it->quantity)) {
             it->Kqty = -1;
             client->send(mMatter::Trades, *it);
             sqlite->insert(mMatter::Trades, {}, false, it->tradeId);

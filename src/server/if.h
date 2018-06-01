@@ -31,7 +31,7 @@ namespace K {
     virtual void logDB(string k) = 0;
     virtual void logUI(const string &protocol_) = 0;
     virtual void logUIsess(int k, string s) = 0;
-    virtual void log(mTrade k, string e) = 0;
+    virtual void log(mTrade k, bool isPong) = 0;
     virtual void log(string k, string s, string v) = 0;
     virtual void log(string k, string s) = 0;
     virtual void log(string k, int c = COLOR_WHITE, bool b = false) = 0;

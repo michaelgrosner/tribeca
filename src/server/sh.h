@@ -213,9 +213,9 @@ namespace K {
         wattroff(wLog, COLOR_PAIR(COLOR_WHITE));
         wrefresh(wLog);
       };
-      void log(mTrade k, string e) {
+      void log(mTrade k, bool isPong) {
         if (!wBorder) {
-          cout << stamp() << "GW " << (k.side == mSide::Bid ? RCYAN : RPURPLE) << e << " TRADE " << (k.side == mSide::Bid ? BCYAN : BPURPLE) << (k.side == mSide::Bid ? "BUY  " : "SELL ") << k.quantity << ' ' << k.pair.base << " at price " << k.price << ' ' << k.pair.quote << " (value " << k.value << ' ' << k.pair.quote << ").\n";
+          cout << stamp() << "GW " << (k.side == mSide::Bid ? RCYAN : RPURPLE) << gw->name << (isPong?" PONG":" PING") << " TRADE " << (k.side == mSide::Bid ? BCYAN : BPURPLE) << (k.side == mSide::Bid ? "BUY  " : "SELL ") << k.quantity << ' ' << k.pair.base << " at price " << k.price << ' ' << k.pair.quote << " (value " << k.value << ' ' << k.pair.quote << ").\n";
           return;
         }
         wmove(wLog, getmaxy(wLog)-1, 0);
@@ -225,7 +225,7 @@ namespace K {
         wprintw(wLog, "GW ");
         wattroff(wLog, COLOR_PAIR(COLOR_WHITE));
         wattron(wLog, COLOR_PAIR(k.side == mSide::Bid ? COLOR_CYAN : COLOR_MAGENTA));
-        wprintw(wLog, string(e).append(" TRADE ").data());
+        wprintw(wLog, (gw->name + (isPong?" PONG":" PING") + " TRADE ").data());
         wattroff(wLog, A_BOLD);
         wprintw(wLog, (string(k.side == mSide::Bid ? "BUY  " : "SELL ")
           + FN::str8(k.quantity) + ' ' + k.pair.base + " at price "
