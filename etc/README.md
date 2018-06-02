@@ -1,5 +1,10 @@
+### docker-compose
+If you are already a professional Docker user, see [docker-compose](https://github.com/ctubio/Krypto-trading-bot/tree/master/etc/docker-compose) folder.
+
+Otherwise, a simplified Docker setup for Docker beginners is available below.
+
 ### Dockerfile
-To run K.sh under winy (or if you love Docker), make use of the [Dockerfile](https://raw.githubusercontent.com/ctubio/Krypto-trading-bot/master/etc/Dockerfile):
+To run K.sh under winy (or if you love Docker), make use of the simplified [Dockerfile](https://raw.githubusercontent.com/ctubio/Krypto-trading-bot/master/etc/Dockerfile):
 
 1. Please install [docker](https://www.docker.com/) for your system before proceeding. Requires at least Docker 1.7.1. Mac/Windows only: Ensure boot2docker or docker-machine is set up, depending on Docker version. See [the docs](https://docs.docker.com/installation/mac/) for more help.
 
