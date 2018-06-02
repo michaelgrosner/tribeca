@@ -13,7 +13,7 @@ After everything is settle, and you have your three containers running (_proxy, 
 
 1. Copy `docker-compose.yml` and `Dockerfile` files to your computer.
 
-2. Copy .env.sample file and rename it to .env. Then, update this file with your preferences.
+2. Copy `.env.sample` file and rename it to `.env`. Then, update this file with your preferences.
 
 >This container must use a network connected to your webproxy or the same network of your webproxy.
 
