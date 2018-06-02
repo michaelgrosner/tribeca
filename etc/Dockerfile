@@ -8,9 +8,6 @@ RUN git clone -b master https://github.com/ctubio/Krypto-trading-bot.git K
 
 WORKDIR K
 
-# Remove the ssl certificate (GUI accessible over plain HTTP, not recommended):
-#RUN rm -rf etc/sslcert/server.*
-
 RUN make docker
 
 EXPOSE 3000 5000
@@ -33,4 +30,4 @@ ENV API_USERNAME NULL
 ENV API_HTTP_ENDPOINT NULL
 ENV API_WSS_ENDPOINT NULL
 
-CMD ["./K.sh", "--naked"]
+CMD ["./K.sh", "--naked", "--without-ssl"]

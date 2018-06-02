@@ -4,6 +4,8 @@
 /test/coverage
 /node_modules
 /etc/sslcert/fix.gdax.com.pem
+/etc/sslcert/server.crt
+/etc/sslcert/server.key
 /Vagrantfile
 .DS_Store
 .idea
