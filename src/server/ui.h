@@ -19,15 +19,16 @@ namespace K {
       map<mMatter, string> queue;
     protected:
       void load() {
-        if (args.headless
+        if (!hub
           or args.user.empty()
           or args.pass.empty()
         ) return;
         B64auth = string("Basic ") + FN::oB64(args.user + ':' + args.pass);
       };
       void waitData() {
-        if (args.headless) return;
-        auto client = &events->listen()->getDefaultGroup<uWS::SERVER>();
+        if (!hub) return;
+        listen();
+        auto client = &hub->getDefaultGroup<uWS::SERVER>();
         client->onConnection([&](uWS::WebSocket<uWS::SERVER> *webSocket, uWS::HttpRequest req) {
           onConnection();
           const string addr = cleanAddress(webSocket->getAddress().address);
@@ -75,7 +76,7 @@ namespace K {
         };
       };
       void waitUser() {
-        if (args.headless) return;
+        if (!hub) return;
         welcome = [&](const mMatter &type, function<void(json *const)> fn) {
           if (hello.find((char)type) != hello.end())
             exit(screen->error("UI", string("Use only a single unique message handler for \"")
@@ -127,6 +128,24 @@ namespace K {
         if (butterfly.is_array() and butterfly.size())
           notepad = butterfly.at(0);
       };
+      void listen() {
+        if (!args.withoutSSL
+          and (access("etc/sslcert/server.crt", F_OK) != -1)
+          and (access("etc/sslcert/server.key", F_OK) != -1)
+          and hub->listen(
+            args.inet, args.port,
+            uS::TLS::createContext("etc/sslcert/server.crt",
+                                   "etc/sslcert/server.key", ""),
+            0, &hub->getDefaultGroup<uWS::SERVER>()
+          )
+        ) screen->logUI("HTTPS");
+        else if (!hub->listen(args.inet, args.port, nullptr, 0, &hub->getDefaultGroup<uWS::SERVER>())) {
+          const string netstat = FN::output(string("netstat -anp 2>/dev/null | grep ") + to_string(args.port));
+          exit(screen->error("UI", "Unable to listen to UI port number " + to_string(args.port) + ", "
+            + (netstat.empty() ? "try another network interface" : "seems already in use by:\n" + netstat)
+          ));
+        } else screen->logUI("HTTP");
+      };
       function<void(const mMatter&, string)> broadcast = [](const mMatter &type, string msg) {};
       function<void(const mMatter&, const json&)> send_nowhere = [](const mMatter &type, const json &msg) {};
       function<void(const mMatter&, const json&)> send_somewhere = [&](const mMatter &type, const json &msg) {
@@ -134,7 +153,7 @@ namespace K {
           broadcast(type, msg.dump());
         else queue[type] = msg.dump();
       };
-      inline static bool delayed(const mMatter &type) {
+      static bool delayed(const mMatter &type) {
         return type == mMatter::FairValue
           or type == mMatter::OrderStatusReports
           or type == mMatter::QuoteStatus
@@ -142,13 +161,13 @@ namespace K {
           or type == mMatter::TargetBasePosition
           or type == mMatter::EWMAChart;
       };
-      inline void onConnection() {
+      void onConnection() {
         if (!connections++) send = send_somewhere;
       };
-      inline void onDisconnection() {
+      void onDisconnection() {
         if (!--connections) send = send_nowhere;
       };
-      inline string onHttpRequest(const string &path, const bool &get, const string &auth, const string &addr) {
+      string onHttpRequest(const string &path, const bool &get, const string &auth, const string &addr) {
         string document,
                content;
         if (addr != "unknown" and !args.whitelist.empty() and args.whitelist.find(addr) == string::npos) {
@@ -207,7 +226,7 @@ namespace K {
           document += "Content-Length: " + to_string(content.length()) + "\r\n\r\n" + content;
         return document;
       };
-      inline string onMessage(const string &message, const string &addr) {
+      string onMessage(const string &message, const string &addr) {
         if (addr != "unknown" and args.whitelist.find(addr) == string::npos)
           return string(&_www_gzip_bomb, _www_gzip_bomb_len);
         if (mPortal::Hello == (mPortal)message[0] and hello.find(message[1]) != hello.end()) {
@@ -232,7 +251,7 @@ namespace K {
         if (addr.length() < 7) addr.clear();
         return addr.empty() ? "unknown" : addr;
       };
-      inline unsigned int memorySize() {
+      unsigned int memorySize() {
         string ps = FN::output("ps -p" + to_string(::getpid()) + " -orss | tail -n1");
         ps.erase(remove(ps.begin(), ps.end(), ' '), ps.end());
         if (ps.empty()) ps = "0";

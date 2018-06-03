@@ -201,7 +201,7 @@ namespace K {
             if (!all) break;
           }
       };
-      inline void toClient(bool working) {
+      void toClient(bool working) {
         screen->log(orders, working);
         json k = json::array();
         for (map<mRandId, mOrder>::value_type &it : orders)
@@ -209,7 +209,7 @@ namespace K {
             k.push_back(it.second);
         client->send(mMatter::OrderStatusReports, k);
       };
-      inline void toHistory(mOrder *o, double tradeQuantity) {
+      void toHistory(mOrder *o, double tradeQuantity) {
         mAmount fee = 0;
         mTrade trade(
           to_string(_Tstamp_),

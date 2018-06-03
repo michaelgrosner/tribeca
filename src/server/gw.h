@@ -70,7 +70,7 @@ namespace K {
           {"status", engine->greenGateway}
         };
       };
-      inline void handshake() {
+      void handshake() {
         json reply;
         if (gw->exchange == mExchange::Coinbase) {
           gw->randId = FN::uuid36Id;

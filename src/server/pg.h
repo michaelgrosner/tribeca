@@ -294,7 +294,7 @@ namespace K {
           k->profitQuote = ((k->quoteValue - profits.begin()->quoteValue) / k->quoteValue) * 1e+2;
         }
       };
-      inline void applyMaxWallet() {
+      void applyMaxWallet() {
         mAmount maxWallet = args.maxWallet;
         maxWallet -= balance.quote.held / market->fairValue;
         if (maxWallet > 0 and balance.quote.amount / market->fairValue > maxWallet) {

@@ -57,10 +57,10 @@ namespace K {
         });
       };
     private:
-      inline string schema(const mMatter &table) {
+      string schema(const mMatter &table) {
         return (table == mMatter::QuotingParameters ? qpdb : "main") + "." + (char)table;
       };
-      inline void exec(const string &sql, json *const result = nullptr) {
+      void exec(const string &sql, json *const result = nullptr) {
         char* zErrMsg = 0;
         sqlite3_exec(db, sql.data(), result ? read : nullptr, (void*)result, &zErrMsg);
         if (zErrMsg) screen->logWar("DB", string("SQLite error: ") + zErrMsg + " at " + sql);

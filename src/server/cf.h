@@ -4,7 +4,7 @@
 namespace K {
   class CF {
     public:
-      inline void main(int argc, char** argv) {
+      void main(int argc, char** argv) {
         static const struct option opts[] = {
           {"help",         no_argument,       0,               'h'},
           {"colors",       no_argument,       &args.colors,      1},
@@ -186,7 +186,7 @@ namespace K {
         config();
       };
     private:
-      inline void config() {
+      void config() {
         screen->config();
         gw = Gw::config(
           args.currency.substr(0, args.currency.find("/")),
@@ -207,7 +207,7 @@ namespace K {
         else if (args.testChamber)
           screen->logWar("CF", "ignored Test Chamber #" + to_string(args.testChamber));
       };
-      inline void tidy() {
+      void tidy() {
         args.exchange = FN::strU(args.exchange);
         args.currency = FN::strU(args.currency);
         if (args.debug)

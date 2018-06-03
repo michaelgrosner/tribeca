@@ -545,10 +545,10 @@ namespace K {
     mLevel(mPrice p, mAmount s):
       price(p), size(s)
     {};
-    inline void clear() {
+    void clear() {
       price = size = 0;
     };
-    inline bool empty() {
+    bool empty() {
       return !price or !size;
     };
   };
@@ -572,10 +572,10 @@ namespace K {
     mLevels(vector<mLevel> b, vector<mLevel> a):
       bids(b), asks(a)
     {};
-    inline mPrice spread() {
+    mPrice spread() {
       return empty() ? 0 : asks.begin()->price - bids.begin()->price;
     };
-    inline bool empty() {
+    bool empty() {
       return bids.empty() or asks.empty();
     };
   };
@@ -586,7 +586,7 @@ namespace K {
     };
   };
   struct mLevelsDiff: public mLevels {
-    inline vector<mLevel> diff(const vector<mLevel> &from, vector<mLevel> to) {
+    vector<mLevel> diff(const vector<mLevel> &from, vector<mLevel> to) {
       vector<mLevel> patch;
       for (const mLevel &it : from) {
         vector<mLevel>::iterator it_ = find_if(
@@ -607,14 +607,14 @@ namespace K {
         patch.insert(patch.end(), to.begin(), to.end());
       return patch;
     };
-    inline json diff(const mLevels &to) {
+    json diff(const mLevels &to) {
       bids = diff(bids, to.bids);
       asks = diff(asks, to.asks);
       json patch = *this;
       reset(to);
       return patch;
     };
-    inline mLevels reset(const mLevels &from) {
+    mLevels reset(const mLevels &from) {
       bids = from.bids;
       asks = from.asks;
       return from;

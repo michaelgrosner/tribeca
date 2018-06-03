@@ -46,7 +46,6 @@ namespace K {
   } *screen = nullptr;
 
   static struct Events {
-    virtual uWS::Hub* listen() = 0;
     virtual void start() = 0;
     virtual void deferred(const function<void()> &fn) = 0;
   } *events = nullptr;
@@ -64,6 +63,7 @@ namespace K {
   } *sqlite = nullptr;
 
   static struct Client {
+    uWS::Hub* hub = nullptr;
     virtual void timer_Xs() = 0;
     virtual void timer_60s() = 0;
     function<void(const mMatter&, function<void(json *const)>)> welcome = [](const mMatter &type, function<void(json *const)> fn) {};
@@ -138,20 +138,9 @@ namespace K {
     public:
       virtual string A() = 0;
       uWS::Hub *hub = nullptr;
+      Screen *screen = nullptr;
+      Events *events = nullptr;
       static Gw *config(mCoinId, mCoinId, string, int, string, string, string, string, string, string, int, int);
-      function<void(const string&)> log,
-                                    reconnect;
-      function<void(mOrder)>        evDataOrder;
-      function<void(mTrade)>        evDataTrade;
-      function<void(mLevels)>       evDataLevels;
-      function<void(mWallets)>      evDataWallet;
-      function<void(mConnectivity)> evConnectOrder,
-                                    evConnectMarket;
-      function<void(mRandId, string)> replace;
-      virtual void place(mRandId, mSide, string, string, mOrderType, mTimeInForce, bool, mClock) = 0,
-                   cancel(mRandId, mRandId) = 0,
-                   close() = 0;
-      mRandId (*randId)() = nullptr;
       mExchange exchange = (mExchange)0;
             int version  = 0, maxLevel = 0,
                 debug    = 0;
@@ -163,10 +152,25 @@ namespace K {
                 apikey   = "", secret  = "",
                 user     = "", pass    = "",
                 ws       = "", http    = "";
+      unsigned int countdown = 0;
+      void connect() {
+        hub->connect(ws, nullptr, {}, 5e+3, &hub->getDefaultGroup<uWS::CLIENT>());
+      };
+      function<void(mOrder)>        evDataOrder;
+      function<void(mTrade)>        evDataTrade;
+      function<void(mLevels)>       evDataLevels;
+      function<void(mWallets)>      evDataWallet;
+      function<void(mConnectivity)> evConnectOrder,
+                                    evConnectMarket;
+      function<void(mRandId, string)> replace;
+      virtual void place(mRandId, mSide, string, string, mOrderType, mTimeInForce, bool, mClock) = 0,
+                   cancel(mRandId, mRandId) = 0,
+                   close() = 0;
+      mRandId (*randId)() = nullptr;
       bool refreshWallet = false,
                    async = false;
       virtual bool asyncWs() = 0;
-      inline bool waitForData() {
+      bool waitForData() {
         return (async
           ? false
           : waitFor(replyOrders, evDataOrder)
@@ -181,7 +185,7 @@ namespace K {
       function<bool()> orders = [&]() { return askFor(replyOrders, [&]() { return sync_orders(); }); };
       function<bool()> cancelAll = [&]() { return askFor(replyCancelAll, [&]() { return sync_cancelAll(); }); };
       virtual vector<mOrder> sync_cancelAll() = 0;
-      inline void clear() {
+      void clear() {
         if (args.dustybot)
           screen->log(string("GW ") + name, "--dustybot is enabled, remember to cancel manually any open order.");
         else if (evDataOrder) {
@@ -191,6 +195,22 @@ namespace K {
         }
       };
     protected:
+      void reconnect(const string &reason) {
+        countdown = 7;
+        screen->log(string("GW ") + name, string("WS ") + reason
+          + ", reconnecting in " + to_string(countdown) + "s.");
+      };
+      void log(const string &reason) {
+        events->deferred([this, reason]() {
+          const string prefix = string(
+            reason.find(">>>") != reason.find("<<<")
+              ? "DEBUG" : "GW"
+          ) + ' ' + name;
+          if (reason.find("Error") != string::npos)
+            screen->logWar(prefix, reason);
+          else screen->log(prefix, reason);
+        });
+      };
       virtual bool async_wallet() { return false; };
       virtual vector<mWallets> sync_wallet() { return vector<mWallets>(); };
       virtual vector<mLevels> sync_levels() { return vector<mLevels>(); };
@@ -201,7 +221,7 @@ namespace K {
       future<vector<mTrade>> replyTrades;
       future<vector<mOrder>> replyOrders;
       future<vector<mOrder>> replyCancelAll;
-      template<typename mData, typename syncFn> inline bool askFor(
+      template<typename mData, typename syncFn> bool askFor(
               future<vector<mData>> &reply,
         const syncFn                &read
       ) {
@@ -212,7 +232,7 @@ namespace K {
         }
         return waiting;
       };
-      template<typename mData> inline unsigned int waitFor(
+      template<typename mData> unsigned int waitFor(
               future<vector<mData>> &reply,
         const function<void(mData)> &write
       ) {
@@ -316,7 +336,7 @@ namespace K {
       virtual void run() {};
       virtual void end() {};
     public:
-      inline void wait() {
+      void wait() {
         load();
         waitData();
         waitTime();

@@ -77,7 +77,7 @@ namespace K {
           exit(screen->error("QE", string("Invalid quoting mode ")
             + reason + ", consider to remove the database file"));
       };
-      inline void sendQuoteToAPI() {
+      void sendQuoteToAPI() {
         mQuote quote = nextQuote();
         bidStatus = checkCrossedQuotes(mSide::Bid, &quote);
         askStatus = checkCrossedQuotes(mSide::Ask, &quote);
@@ -86,7 +86,7 @@ namespace K {
         if (bidStatus == mQuoteState::Live) updateQuote(quote.bid, mSide::Bid, quote.isBidPong);
         else stopAllQuotes(mSide::Bid);
       };
-      inline void sendStatusToUI() {
+      void sendStatusToUI() {
         unsigned int quotesInMemoryNew = 0;
         unsigned int quotesInMemoryWorking = 0;
         unsigned int quotesInMemoryDone = 0;
@@ -95,7 +95,7 @@ namespace K {
         status = mQuoteStatus(bidStatus, askStatus, quotesInMemoryNew, quotesInMemoryWorking, quotesInMemoryDone);
         client->send(mMatter::QuoteStatus, status);
       };
-      inline bool diffCounts(unsigned int *qNew, unsigned int *qWorking, unsigned int *qDone) {
+      bool diffCounts(unsigned int *qNew, unsigned int *qWorking, unsigned int *qDone) {
         market->filterBidOrders.clear();
         market->filterAskOrders.clear();
         vector<mRandId> zombies;
@@ -116,11 +116,11 @@ namespace K {
           or *qWorking != status.quotesInMemoryWorking
           or *qDone != status.quotesInMemoryDone;
       };
-      inline bool diffStatus() {
+      bool diffStatus() {
         return bidStatus != status.bidStatus
           or askStatus != status.askStatus;
       };
-      inline mQuote nextQuote() {
+      mQuote nextQuote() {
         mPrice widthPing = qp.widthPercentage
           ? qp.widthPingPercentage * market->fairValue / 100
           : qp.widthPing;
@@ -155,7 +155,7 @@ namespace K {
                                 + "toBid: " + to_string(wallet->position._quoteTotal));
         return rawQuote;
       };
-      inline void applyRoundPrice(mQuote *rawQuote) {
+      void applyRoundPrice(mQuote *rawQuote) {
         if (!rawQuote->bid.empty()) {
           rawQuote->bid.price = floor(rawQuote->bid.price / gw->minTick) * gw->minTick;
           rawQuote->bid.price = fmax(0, rawQuote->bid.price);
@@ -165,7 +165,7 @@ namespace K {
           rawQuote->ask.price = fmax(rawQuote->bid.price + gw->minTick, rawQuote->ask.price);
         }
       };
-      inline void applyRoundSize(mQuote *rawQuote) {
+      void applyRoundSize(mQuote *rawQuote) {
         if (!rawQuote->ask.empty())
           rawQuote->ask.size = FN::d8(fmax(
             fmin(
@@ -183,7 +183,7 @@ namespace K {
             gw->minSize
           ));
       };
-      inline void applyDepleted(mQuote *rawQuote) {
+      void applyDepleted(mQuote *rawQuote) {
         if (rawQuote->bid.size > wallet->position._quoteTotal) {
           bidStatus = mQuoteState::DepletedFunds;
           rawQuote->bid.clear();
@@ -193,7 +193,7 @@ namespace K {
           rawQuote->ask.clear();
         }
       };
-      inline void applyWaitingPing(mQuote *rawQuote) {
+      void applyWaitingPing(mQuote *rawQuote) {
         if (!qp._matchPings and qp.safety != mQuotingSafety::PingPong) return;
         if (!rawQuote->isAskPong and (
           (bidStatus != mQuoteState::DepletedFunds and (qp.pingAt == mPingAt::DepletedSide or qp.pingAt == mPingAt::DepletedBidSide))
@@ -214,7 +214,7 @@ namespace K {
           rawQuote->bid.clear();
         }
       };
-      inline void applyAggressivePositionRebalancing(mQuote *rawQuote) {
+      void applyAggressivePositionRebalancing(mQuote *rawQuote) {
         if (!qp._matchPings) return;
         mPrice widthPong = qp.widthPercentage
           ? qp.widthPongPercentage * market->fairValue / 100
@@ -240,7 +240,7 @@ namespace K {
           rawQuote->isBidPong = rawQuote->bid.price <= safetysellPing - widthPong;
         }
       };
-      inline void applyBestWidth(mQuote *rawQuote) {
+      void applyBestWidth(mQuote *rawQuote) {
         if (!qp.bestWidth) return;
         if (!rawQuote->ask.empty())
           for (mLevel &it : market->levels.asks)
@@ -261,7 +261,7 @@ namespace K {
               }
             }
       };
-      inline void applyTotalBasePosition(mQuote *rawQuote) {
+      void applyTotalBasePosition(mQuote *rawQuote) {
         if (wallet->position._baseTotal < wallet->targetBasePosition - wallet->positionDivergence) {
           askStatus = mQuoteState::TBPHeld;
           rawQuote->ask.clear();
@@ -280,7 +280,7 @@ namespace K {
         }
         else wallet->sideAPR = "Off";
       };
-      inline void applyTradesPerMinute(mQuote *rawQuote, bool superTradesActive) {
+      void applyTradesPerMinute(mQuote *rawQuote, bool superTradesActive) {
         if (wallet->safety.sell > (qp.tradesPerMinute * (superTradesActive ? qp.sopWidthMultiplier : 1))) {
           askStatus = mQuoteState::MaxTradesSeconds;
           rawQuote->ask.clear();
@@ -290,7 +290,7 @@ namespace K {
           rawQuote->bid.clear();
         }
       };
-      inline void applySuperTrades(mQuote *rawQuote, bool *superTradesActive, mPrice widthPing) {
+      void applySuperTrades(mQuote *rawQuote, bool *superTradesActive, mPrice widthPing) {
         if (qp.superTrades != mSOP::Off
           and widthPing * qp.sopWidthMultiplier < market->levels.spread()
         ) {
@@ -301,7 +301,7 @@ namespace K {
           }
         }
       };
-      inline void applyAK47Increment(mQuote *rawQuote) {
+      void applyAK47Increment(mQuote *rawQuote) {
         if (qp.safety != mQuotingSafety::AK47) return;
         mPrice range = qp.percentageValues
           ? qp.rangePercentage * wallet->position.baseValue / 100
@@ -312,7 +312,7 @@ namespace K {
           rawQuote->ask.price += AK47inc * range;
         if (++AK47inc > qp.bullets) AK47inc = 0;
       };
-      inline void applyStdevProtection(mQuote *rawQuote) {
+      void applyStdevProtection(mQuote *rawQuote) {
         if (qp.quotingStdevProtection == mSTDEV::Off or !market->mgStdevFV) return;
         if (!rawQuote->ask.empty() and (qp.quotingStdevProtection == mSTDEV::OnFV or qp.quotingStdevProtection == mSTDEV::OnTops or qp.quotingStdevProtection == mSTDEV::OnTop or wallet->sideAPR != "Sell"))
           rawQuote->ask.price = fmax(
@@ -337,12 +337,12 @@ namespace K {
             rawQuote->bid.price
           );
       };
-      inline void applyEwmaProtection(mQuote *rawQuote) {
+      void applyEwmaProtection(mQuote *rawQuote) {
         if (!qp.protectionEwmaQuotePrice or !market->mgEwmaP) return;
         rawQuote->ask.price = fmax(market->mgEwmaP, rawQuote->ask.price);
         rawQuote->bid.price = fmin(market->mgEwmaP, rawQuote->bid.price);
       };
-      inline void applyEwmaTrendProtection(mQuote *rawQuote) {
+      void applyEwmaTrendProtection(mQuote *rawQuote) {
         if (!qp.quotingEwmaTrendProtection or !market->mgEwmaTrendDiff) return;
         if (market->mgEwmaTrendDiff > qp.quotingEwmaTrendThreshold){
           askStatus = mQuoteState::UpTrendHeld;
