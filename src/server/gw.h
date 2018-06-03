@@ -21,11 +21,11 @@ namespace K {
         };
       };
       void waitUser() {
-        client->welcome(mMatter::Connectivity, &hello);
-        client->clickme(mMatter::Connectivity, &kiss);
-        screen->pressme(mHotkey::ESC, &hotkiss);
+        client->WELCOME(mMatter::Connectivity, hello);
+        client->CLICKME(mMatter::Connectivity, kiss);
+        screen->PRESSME(mHotkey::ESC,          hotkiss);
       };
-      void run() {                                                  _debugEvent_
+      void run() {                                                  PRETTY_DEBUG
         handshake();
         if (gw->exchange == mExchange::Coinbase) FN::stunnel(true);
       };
@@ -33,10 +33,10 @@ namespace K {
         if (gw->exchange == mExchange::Coinbase) FN::stunnel(false);
       };
     private:
-      function<void(json*)> hello = [&](json *welcome) {
+      void hello(json *const welcome) {
         *welcome = { semaphore() };
       };
-      function<void(const json&)> kiss = [&](const json &butterfly) {
+      void kiss(const json &butterfly) {
         if (!butterfly.is_object() or !butterfly["state"].is_number()) return;
         mConnectivity updated = butterfly["state"].get<mConnectivity>();
         if (adminAgreement != updated) {
@@ -44,7 +44,7 @@ namespace K {
           gwAdminSemaphore();
         }
       };
-      function<void()> hotkiss = [&]() {
+      void hotkiss() {
         adminAgreement = (mConnectivity)!adminAgreement;
         gwAdminSemaphore();
       };

@@ -71,18 +71,18 @@ namespace K {
         screen->log("DB", string("loaded ") + to_string(fairValue96h.size()) + " historical FairValues");
       };
       void waitData() {
-        gw->evDataTrade = [&](mTrade k) {                           _debugEvent_
+        gw->evDataTrade = [&](mTrade k) {                           PRETTY_DEBUG
           tradeUp(k);
         };
-        gw->evDataLevels = [&](mLevels k) {                         _debugEvent_
+        gw->evDataLevels = [&](mLevels k) {                         PRETTY_DEBUG
           levelUp(k);
         };
       };
       void waitUser() {
-        client->welcome(mMatter::MarketData, &helloLevels);
-        client->welcome(mMatter::MarketTrade, &helloTrade);
-        client->welcome(mMatter::FairValue, &helloFair);
-        client->welcome(mMatter::EWMAChart, &helloEwma);
+        client->WELCOME(mMatter::MarketData,  helloLevels);
+        client->WELCOME(mMatter::MarketTrade, helloTrade);
+        client->WELCOME(mMatter::FairValue,   helloFair);
+        client->WELCOME(mMatter::EWMAChart,   helloEwma);
       };
     public:
       void calcStats() {
@@ -120,18 +120,18 @@ namespace K {
         if (FN::trueOnce(&qp._diffUEP)) calcEwmaHistory(&mgEwmaU, qp.ultraShortEwmaPeriods, "UltraShort");
       };
     private:
-      function<void(json*)> helloLevels = [&](json *welcome) {
+      void helloLevels(json *const welcome) {
         *welcome = { levelsDiff.reset(levels) };
       };
-      function<void(json*)> helloTrade = [&](json *welcome) {
+      void helloTrade(json *const welcome) {
         *welcome = trades;
       };
-      function<void(json*)> helloFair = [&](json *welcome) {
+      void helloFair(json *const welcome) {
         *welcome = { {
           {"price", fairValue}
         } };
       };
-      function<void(json*)> helloEwma = [&](json *welcome) {
+      void helloEwma(json *const welcome) {
         *welcome = { chartStats() };
       };
       void calcStatsStdevProtection() {

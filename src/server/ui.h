@@ -14,8 +14,8 @@ namespace K {
       int connections = 0;
       string B64auth = "",
              notepad = "";
-      map<char, function<void(json*)>*> hello;
-      map<char, function<void(const json&)>*> kisses;
+      map<char, function<void(json *const)>> hello;
+      map<char, function<void(const json&)>> kisses;
       map<mMatter, string> queue;
     protected:
       void load() {
@@ -76,22 +76,22 @@ namespace K {
       };
       void waitUser() {
         if (args.headless) return;
-        welcome = [&](const mMatter &type, function<void(json*)> *fn) {
+        welcome = [&](const mMatter &type, function<void(json *const)> fn) {
           if (hello.find((char)type) != hello.end())
             exit(screen->error("UI", string("Use only a single unique message handler for \"")
               + (char)type + "\" welcome event"));
           hello[(char)type] = fn;
         };
-        clickme = [&](const mMatter &type, function<void(const json&)> *fn) {
+        clickme = [&](const mMatter &type, function<void(const json&)> fn) {
           if (kisses.find((char)type) != kisses.end())
             exit(screen->error("UI", string("Use only a single unique message handler for \"")
               + (char)type + "\" clickme event"));
           kisses[(char)type] = fn;
         };
-        welcome(mMatter::ApplicationState, &helloServer);
-        welcome(mMatter::ProductAdvertisement, &helloProduct);
-        welcome(mMatter::Notepad, &helloNotes);
-        clickme(mMatter::Notepad, &kissNotes);
+        WELCOME(mMatter::ApplicationState,     helloServer);
+        WELCOME(mMatter::ProductAdvertisement, helloProduct);
+        WELCOME(mMatter::Notepad,              helloNotes);
+        CLICKME(mMatter::Notepad,              kissNotes);
       };
       void run() {
         send = send_nowhere;
@@ -107,10 +107,10 @@ namespace K {
         engine->orders_60s = 0;
       };
     private:
-      function<void(json*)> helloServer = [&](json *welcome) {
+      void helloServer(json *const welcome) {
         *welcome = { serverState() };
       };
-      function<void(json*)> helloProduct = [&](json *welcome) {
+      void helloProduct(json *const welcome) {
         *welcome = { {
           {"exchange", gw->exchange},
           {"pair", mPair(gw->base, gw->quote)},
@@ -120,10 +120,10 @@ namespace K {
           {"homepage", "https://github.com/ctubio/Krypto-trading-bot"}
         } };
       };
-      function<void(json*)> helloNotes = [&](json *welcome) {
+      void helloNotes(json *const welcome) {
         *welcome = { notepad };
       };
-      function<void(const json&)> kissNotes = [&](const json &butterfly) {
+      void kissNotes(const json &butterfly) {
         if (butterfly.is_array() and butterfly.size())
           notepad = butterfly.at(0);
       };
@@ -212,7 +212,7 @@ namespace K {
           return string(&_www_gzip_bomb, _www_gzip_bomb_len);
         if (mPortal::Hello == (mPortal)message[0] and hello.find(message[1]) != hello.end()) {
           json reply;
-          (*hello[message[1]])(&reply);
+          hello[message[1]](&reply);
           if (!reply.is_null())
             return message.substr(0, 2) + reply.dump();
         } else if (mPortal::Kiss == (mPortal)message[0] and kisses.find(message[1]) != kisses.end()) {
@@ -223,7 +223,7 @@ namespace K {
           );
           for (json::iterator it = butterfly.begin(); it != butterfly.end();)
             if (it.value().is_null()) it = butterfly.erase(it); else it++;
-          (*kisses[message[1]])(butterfly);
+          kisses[message[1]](butterfly);
         }
         return "";
       };

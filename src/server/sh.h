@@ -1,13 +1,11 @@
 #ifndef K_SH_H_
 #define K_SH_H_
 
-#define _debugEvent_ screen->debug(__PRETTY_FUNCTION__);
-
 namespace K {
   class SH: public Screen { public: SH() { screen = this; };
     private:
       future<mHotkey> hotkey;
-      map<mHotkey, function<void()>*> hotFn;
+      map<mHotkey, function<void()>> hotFn;
       WINDOW *wBorder = nullptr,
              *wLog    = nullptr;
       int cursor = 0,
@@ -55,7 +53,7 @@ namespace K {
         refresh();
         hotkeys();
       };
-      void pressme(mHotkey ch, function<void()> *fn) {
+      void pressme(mHotkey ch, function<void()> fn) {
         if (!wBorder) return;
         hotFn[ch] = fn;
       };
@@ -72,7 +70,7 @@ namespace K {
           raise(SIGINT);
         else {
           if (hotFn.find(ch) != hotFn.end())
-            (*hotFn[ch])();
+            hotFn[ch]();
           hotkeys();
         }
       };

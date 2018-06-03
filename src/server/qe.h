@@ -22,7 +22,7 @@ namespace K {
         findMode("loaded");
       };
       void waitUser() {
-        client->welcome(mMatter::QuoteStatus, &hello);
+        client->WELCOME(mMatter::QuoteStatus, hello);
       };
       void run() {
         if (args.debugQuotes) return;
@@ -30,7 +30,7 @@ namespace K {
         debug = [&](const string &k) {};
       };
     public:
-      void calcQuote() {                                            _debugEvent_
+      void calcQuote() {                                            PRETTY_DEBUG
         bidStatus = mQuoteState::MissingData;
         askStatus = mQuoteState::MissingData;
         if (!greenGateway) {
@@ -61,7 +61,7 @@ namespace K {
         market->calcEwmaHistory();
         calcQuote();
       };
-      void timer_1s() {                                             _debugEvent_
+      void timer_1s() {                                             PRETTY_DEBUG
         if (market->fairValue) {
           market->calcStats();
           wallet->calcSafety();
@@ -69,10 +69,10 @@ namespace K {
         } else screen->logWar("QE", "Unable to calculate quote, missing market data");
       };
     private:
-      function<void(json*)> hello = [&](json *welcome) {
+      void hello(json *const welcome) {
         *welcome = { status };
       };
-      inline void findMode(string reason) {
+      void findMode(const string &reason) {
         if (quotingMode.find(qp.mode) == quotingMode.end())
           exit(screen->error("QE", string("Invalid quoting mode ")
             + reason + ", consider to remove the database file"));

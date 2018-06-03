@@ -19,12 +19,12 @@
 namespace K {
   class FN {
     public:
-      inline static string strX(double d, unsigned int X) { string s; _fixedX_(d, s, X) return s; };
-      inline static string str8(double d) { return strX(d, 8); };
-      inline static double d8(double d) { return stod(str8(d)); };
-      inline static string strL(string s) { transform(s.begin(), s.end(), s.begin(), ::tolower); return s; };
-      inline static string strU(string s) { transform(s.begin(), s.end(), s.begin(), ::toupper); return s; };
-      inline static bool trueOnce(bool *k) { return *k ? !(*k = !*k) : *k; };
+      static string strX(double d, unsigned int X) { string s; _fixedX_(d, s, X) return s; };
+      static string str8(double d) { return strX(d, 8); };
+      static double d8(double d) { return stod(str8(d)); };
+      static string strL(string s) { transform(s.begin(), s.end(), s.begin(), ::tolower); return s; };
+      static string strU(string s) { transform(s.begin(), s.end(), s.begin(), ::toupper); return s; };
+      static bool trueOnce(bool *k) { return *k ? !(*k = !*k) : *k; };
       static unsigned long long int64() {
         static random_device rd;
         static mt19937_64 gen(rd());

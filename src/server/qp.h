@@ -11,15 +11,15 @@ namespace K {
         screen->log("DB", "loaded Quoting Parameters OK");
       };
       void waitUser() {
-        client->welcome(mMatter::QuotingParameters, &hello);
-        client->clickme(mMatter::QuotingParameters, &kiss);
+        client->WELCOME(mMatter::QuotingParameters, hello);
+        client->CLICKME(mMatter::QuotingParameters, kiss);
       };
     private:
-      function<void(json*)> hello = [&](json *welcome) {
+      void hello(json *const welcome) {
         *welcome = { qp };
       };
-      function<void(const json&)> kiss = [&](const json &butterfly) {
-        mQuotingParams prev(qp);
+      void kiss(const json &butterfly) {
+        mQuotingParams prev = qp;
         (qp = butterfly).diff(prev);
         engine->calcQuoteAfterSavedParams();
         client->send(mMatter::QuotingParameters, qp);

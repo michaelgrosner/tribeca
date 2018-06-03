@@ -23,7 +23,8 @@ namespace K {
       ) << ".\n" << RYELLOW << changes << RWHITE << RRESET;
     };
     virtual void config() = 0;
-    virtual void pressme(mHotkey ch, function<void()> *fn) = 0;
+    virtual void pressme(mHotkey ch, function<void()> fn) = 0;
+#define PRESSME(ch, fn) pressme(ch, [&]() { fn(); });
     virtual int error(string k, string s, bool reboot = false) = 0;
     virtual void waitForUser() = 0;
     virtual string stamp() = 0;
@@ -38,17 +39,18 @@ namespace K {
     virtual void log(const map<mRandId, mOrder> &orders, bool working) = 0;
     virtual void log(const mPosition &pos) = 0;
     virtual void log(double fv) = 0;
-    function<void(const string&)> debug = [&](const string &k) {
-      log("DEBUG", string("EV ") + k);
-    };
+    function<void(const string&)> debug = [&](const string &k) { log("DEBUG", string("EV ") + k); };
+#define PRETTY_DEBUG screen->debug(__PRETTY_FUNCTION__);
     virtual void refresh() = 0;
     virtual void end() = 0;
   } *screen = nullptr;
+
   static struct Events {
     virtual uWS::Hub* listen() = 0;
     virtual void start() = 0;
     virtual void deferred(const function<void()> &fn) = 0;
   } *events = nullptr;
+
   static struct Sqlite {
     virtual json select(const mMatter &table) = 0;
     virtual void insert(
@@ -60,13 +62,17 @@ namespace K {
     ) = 0;
     function<unsigned int()> size = []() { return 0; };
   } *sqlite = nullptr;
+
   static struct Client {
     virtual void timer_Xs() = 0;
     virtual void timer_60s() = 0;
-    function<void(const mMatter&, function<void(json*)>*)>       welcome = [](const mMatter &type, function<void(json*)> *fn) {};
-    function<void(const mMatter&, function<void(const json&)>*)> clickme = [](const mMatter &type, function<void(const json&)> *fn) {};
-    function<void(const mMatter&, const json&)>                  send;
+    function<void(const mMatter&, function<void(json *const)>)> welcome = [](const mMatter &type, function<void(json *const)> fn) {};
+#define WELCOME(type, hello) welcome(type, [&](json *const welcome) { hello(welcome); });
+    function<void(const mMatter&, function<void(const json&)>)> clickme = [](const mMatter &type, function<void(const json&)> fn) {};
+#define CLICKME(type, kiss) clickme(type, [&](const json &butterfly) { kiss(butterfly); });
+    function<void(const mMatter&, const json&)>                 send;
   } *client = nullptr;
+
   static struct Wallet {
     mPosition position;
     mSafety safety;
@@ -79,6 +85,7 @@ namespace K {
     virtual void calcWalletAfterOrder(const mSide&) = 0;
     virtual void calcSafetyAfterTrade(const mTrade&) = 0;
   } *wallet = nullptr;
+
   static struct Market {
     mLevels levels;
     mPrice fairValue = 0,
@@ -100,6 +107,7 @@ namespace K {
     virtual void calcFairValue() = 0;
     virtual void calcEwmaHistory() = 0;
   } *market = nullptr;
+
   static struct Broker {
     map<mRandId, mOrder> orders;
     vector<mTrade> tradesHistory;
@@ -116,6 +124,7 @@ namespace K {
       const bool            &postOnly
     ) = 0;;
   } *broker = nullptr;
+
   static struct Engine {
     unsigned int orders_60s = 0;
     mConnectivity greenButton  = mConnectivity::Disconnected,
@@ -124,6 +133,7 @@ namespace K {
     virtual void calcQuote() = 0;
     virtual void calcQuoteAfterSavedParams() = 0;
   } *engine = nullptr;
+
   static class Gw {
     public:
       virtual string A() = 0;
@@ -214,13 +224,16 @@ namespace K {
         return waiting;
       };
   } *gw = nullptr;
+
   static string tracelog;
+
   static vector<function<void()>> happyEndingFn, endingFn = {
     [](){
       screen->end();
       cout << '\n' << screen->stamp() << tracelog;
     }
   };
+
   static class Ending {
     public:
       Ending (/* KMxTWEpb9ig */) {
@@ -293,6 +306,7 @@ namespace K {
         halt(EXIT_FAILURE);
       };
   } ending;
+
   class Klass {
     protected:
       virtual void load() {};

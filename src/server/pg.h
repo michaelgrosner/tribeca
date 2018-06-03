@@ -26,15 +26,15 @@ namespace K {
         screen->log("DB", string("loaded TBP = ") + FN::str8(targetBasePosition) + " " + gw->base);
       };
       void waitData() {
-        gw->evDataWallet = [&](mWallets k) {                        _debugEvent_
+        gw->evDataWallet = [&](mWallets k) {                        PRETTY_DEBUG
           if (!k.empty()) balance = k;
           calcWallet();
         };
       };
       void waitUser() {
-        client->welcome(mMatter::Position, &helloPosition);
-        client->welcome(mMatter::TradeSafetyValue, &helloSafety);
-        client->welcome(mMatter::TargetBasePosition, &helloTargetBasePos);
+        client->WELCOME(mMatter::Position,           helloPosition);
+        client->WELCOME(mMatter::TradeSafetyValue,   helloSafety);
+        client->WELCOME(mMatter::TargetBasePosition, helloTargetBasePos);
       };
     public:
       void calcSafety() {
@@ -46,7 +46,7 @@ namespace K {
           or prev.sellPing != safety.sellPing
         ) client->send(mMatter::TradeSafetyValue, safety);
       };
-      void calcTargetBasePos() {                                    _debugEvent_
+      void calcTargetBasePos() {                                    PRETTY_DEBUG
         if (position.empty()) return screen->logWar("PG", "Unable to calculate TBP, missing wallet data");
         mAmount baseValue = position.baseValue;
         mAmount next = qp.autoPositionMode == mAutoPositionMode::Manual
@@ -133,13 +133,13 @@ namespace K {
         calcSafety();
       };
     private:
-      function<void(json*)> helloPosition = [&](json *welcome) {
+      void helloPosition(json *const welcome) {
         *welcome = { position };
       };
-      function<void(json*)> helloSafety = [&](json *welcome) {
+      void helloSafety(json *const welcome) {
         *welcome = { safety };
       };
-      function<void(json*)> helloTargetBasePos = [&](json *welcome) {
+      void helloTargetBasePos(json *const welcome) {
         *welcome = { positionState() };
       };
       mSafety nextSafety() {

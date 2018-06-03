@@ -11,20 +11,20 @@ namespace K {
         screen->log("DB", string("loaded ") + to_string(tradesHistory.size()) + " historical Trades");
       };
       void waitData() {
-        gw->evDataOrder = [&](mOrder k) {                           _debugEvent_
+        gw->evDataOrder = [&](mOrder k) {                           PRETTY_DEBUG
           debug(string("reply  ") + k.orderId + "::" + k.exchangeId + " [" + to_string((int)k.orderStatus) + "]: " + FN::str8(k.quantity) + "/" + FN::str8(k.tradeQuantity) + " at price " + FN::str8(k.price));
           updateOrderState(k);
         };
       };
       void waitUser() {
-        client->welcome(mMatter::Trades, &helloTrades);
-        client->welcome(mMatter::OrderStatusReports, &helloOrders);
-        client->clickme(mMatter::SubmitNewOrder, &kissSubmitNewOrder);
-        client->clickme(mMatter::CancelOrder, &kissCancelOrder);
-        client->clickme(mMatter::CancelAllOrders, &kissCancelAllOrders);
-        client->clickme(mMatter::CleanAllClosedTrades, &kissCleanAllClosedTrades);
-        client->clickme(mMatter::CleanAllTrades, &kissCleanAllTrades);
-        client->clickme(mMatter::CleanTrade, &kissCleanTrade);
+        client->WELCOME(mMatter::Trades,               helloTrades);
+        client->WELCOME(mMatter::OrderStatusReports,   helloOrders);
+        client->CLICKME(mMatter::SubmitNewOrder,       kissSubmitNewOrder);
+        client->CLICKME(mMatter::CancelOrder,          kissCancelOrder);
+        client->CLICKME(mMatter::CancelAllOrders,      kissCancelAllOrders);
+        client->CLICKME(mMatter::CleanAllClosedTrades, kissCleanAllClosedTrades);
+        client->CLICKME(mMatter::CleanAllTrades,       kissCleanAllTrades);
+        client->CLICKME(mMatter::CleanTrade,           kissCleanTrade);
       };
       void run() {
         if (args.debugOrders) return;
@@ -98,36 +98,36 @@ namespace K {
         if (it != orders.end()) orders.erase(it);
       };
     private:
-      function<void(json*)> helloTrades = [&](json *welcome) {
+      void helloTrades(json *const welcome) {
         for (mTrade &it : tradesHistory)
           it.loadedFromDB = true;
         *welcome = tradesHistory;
       };
-      function<void(json*)> helloOrders = [&](json *welcome) {
+      void helloOrders(json *const welcome) {
         for (map<mRandId, mOrder>::value_type &it : orders)
           if (mStatus::Working == it.second.orderStatus)
             welcome->push_back(it.second);
       };
-      function<void(const json&)> kissCancelAllOrders = [&](const json &butterfly) {
+      void kissCancelAllOrders(const json &butterfly) {
         cancelOpenOrders();
       };
-      function<void(const json&)> kissCleanAllClosedTrades = [&](const json &butterfly) {
+      void kissCleanAllClosedTrades(const json &butterfly) {
         cleanClosedTrades();
       };
-      function<void(const json&)> kissCleanAllTrades = [&](const json &butterfly) {
+      void kissCleanAllTrades(const json &butterfly) {
         cleanTrade();
       };
-      function<void(const json&)> kissCleanTrade = [&](const json &butterfly) {
+      void kissCleanTrade(const json &butterfly) {
         if (butterfly.is_object() and butterfly["tradeId"].is_string())
           cleanTrade(butterfly["tradeId"].get<string>());
       };
-      function<void(const json&)> kissCancelOrder = [&](const json &butterfly) {
+      void kissCancelOrder(const json &butterfly) {
         mRandId orderId = (butterfly.is_object() and butterfly["orderId"].is_string())
           ? butterfly["orderId"].get<mRandId>() : "";
         if (orderId.empty() or orders.find(orderId) == orders.end()) return;
         cancelOrder(orderId);
       };
-      function<void(const json&)> kissSubmitNewOrder = [&](const json &butterfly) {
+      void kissSubmitNewOrder(const json &butterfly) {
         sendOrder(
           vector<mRandId>(),
           butterfly.value("side", "") == "Bid" ? mSide::Bid : mSide::Ask,
