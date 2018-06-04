@@ -161,16 +161,16 @@ namespace K {
       function<bool()> cancelAll = [&]() { return askFor(replyCancelAll, [&]() { return sync_cancelAll(); }); };
       void clear() {
         if (args.dustybot)
-          screen->log(string("GW ") + name, "--dustybot is enabled, remember to cancel manually any open order.");
+          screen->log("GW " + name, "--dustybot is enabled, remember to cancel manually any open order.");
         else if (evDataOrder) {
-          screen->log(string("GW ") + name, "Attempting to cancel all open orders, please wait.");
+          screen->log("GW " + name, "Attempting to cancel all open orders, please wait.");
           for (mOrder &it : sync_cancelAll()) evDataOrder(it);
-          screen->log(string("GW ") + name, "cancel all open orders OK");
+          screen->log("GW " + name, "cancel all open orders OK");
         }
       };
       bool refreshWallet = false,
                    async = false;
-//BO non-free gw library functions from build-*/local/lib/K-*.a (the lib redefines all virtual gateway class members below)
+//BO non-free gw library functions from build-*/local/lib/K-*.a (it just redefines all virtual gateway class members below)
 /**/  virtual bool asyncWs() = 0;                                            // set the boolean above if is not REST-only api
 /**/  virtual string /*BTC unlock */A/*ddress*/() = 0;
 /**/  static Gw *config(mCoinId, mCoinId, string, int, string, string, string, string, string, string, int, int); // set args
@@ -185,7 +185,7 @@ namespace K {
 /**/  virtual vector<mLevels>  sync_levels() { return vector<mLevels>(); };  // call and read sync levels data from exchange
 /**/  virtual vector<mTrade>   sync_trades() { return vector<mTrade>(); };   // call and read sync trades data from exchange
 /**/  virtual vector<mOrder>   sync_orders() { return vector<mOrder>(); };   // call and read sync orders data from exchange
-//EO non-free gw library functions from build-*/local/lib/K-*.a (the lib redefines all virtual gateway class members above)
+//EO non-free gw library functions from build-*/local/lib/K-*.a (it just redefines all virtual gateway class members above)
       void reconnect(const string &reason) {
         countdown = 7;
         screen->log(string("GW ") + name, string("WS ") + reason
