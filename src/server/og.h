@@ -313,7 +313,7 @@ namespace K {
           } else ++it;
       };
       function<void(const string&)> debug = [&](const string &k) {
-        screen->log("DEBUG", string("OG ") + k);
+        screen->log("DEBUG OG", k);
       };
   };
 }

@@ -500,10 +500,10 @@ namespace K {
         for (mRandId &it : toCancel) broker->cancelOrder(it);
       };
       function<void(const string&, const mQuote&)> debuq = [&](const string &k, const mQuote &rawQuote) {
-        debug(string("quote") + k + " " + to_string((int)bidStatus) + " " + to_string((int)askStatus) + " " + ((json)rawQuote).dump());
+        debug("quote" + k + " " + to_string((int)bidStatus) + " " + to_string((int)askStatus) + " " + ((json)rawQuote).dump());
       };
       function<void(const string&)> debug = [&](const string &k) {
-        screen->log("DEBUG", string("QE ") + k);
+        screen->log("DEBUG QE", k);
       };
   };
 }

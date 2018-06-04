@@ -23,11 +23,7 @@ namespace K {
     public:
       void config() {
         wtfismyip = FN::wJet("https://wtfismyip.com/json", 4L).value("/YourFuckingIPAddress"_json_pointer, "");
-        if (!args.debugEvents) debug = [](const string &k) {};
-#ifndef _WIN32
-        if (args.naked)
-#endif
-          return;
+        if (args.naked) return;
         if (!(wBorder = initscr())) {
           cout << "NCURSES" << RRED << " Errrror:" << BRED << " Unable to initialize ncurses, try to run in your terminal \"export TERM=xterm\", or use --naked argument." << '\n';
           exit(EXIT_SUCCESS);

@@ -76,19 +76,6 @@ namespace K {
         };
       };
       void waitUser() {
-        if (!socket) return;
-        welcome = [&](const mMatter &type, function<void(json *const)> fn) {
-          if (hello.find((char)type) != hello.end())
-            exit(screen->error("UI", string("Use only a single unique message handler for \"")
-              + (char)type + "\" welcome event"));
-          hello[(char)type] = fn;
-        };
-        clickme = [&](const mMatter &type, function<void(const json&)> fn) {
-          if (kisses.find((char)type) != kisses.end())
-            exit(screen->error("UI", string("Use only a single unique message handler for \"")
-              + (char)type + "\" clickme event"));
-          kisses[(char)type] = fn;
-        };
         WELCOME(mMatter::ApplicationState,     helloServer);
         WELCOME(mMatter::ProductAdvertisement, helloProduct);
         WELCOME(mMatter::Notepad,              helloNotes);
@@ -98,6 +85,18 @@ namespace K {
         send = send_nowhere;
       };
     public:
+      void welcome(const mMatter &type, function<void(json *const)> fn) {
+        if (hello.find((char)type) != hello.end())
+          exit(screen->error("UI", string("Use only a single unique handler for \"")
+            + (char)type + "\" welcome event"));
+        hello[(char)type] = fn;
+      };
+      void clickme(const mMatter &type, function<void(const json&)> fn) {
+        if (kisses.find((char)type) != kisses.end())
+          exit(screen->error("UI", string("Use only a single unique handler for \"")
+            + (char)type + "\" clickme event"));
+        kisses[(char)type] = fn;
+      };
       void timer_Xs() {
         for (map<mMatter, string>::value_type &it : queue)
           broadcast(it.first, it.second);

@@ -26,7 +26,6 @@ namespace K  {
         }, 0, 1e+3);
       };
       void waitUser() {
-        if (args.headless) return;
         client->socket = socket;
         socket->createGroup<uWS::SERVER>(uWS::PERMESSAGE_DEFLATE);
       };
@@ -44,10 +43,6 @@ namespace K  {
         socket->getDefaultGroup<uWS::SERVER>().close();
       };
     public:
-      void start() {
-        if (gw->asyncWs()) gw->countdown = 1;
-        socket->run();
-      };
       void deferred(const function<void()> &fn) {
         slowFn.push_back(fn);
         loop->send();

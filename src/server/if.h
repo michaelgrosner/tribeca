@@ -33,17 +33,15 @@ namespace K {
     virtual void logUIsess(int, string) = 0;
     virtual void log(const mTrade&, const bool&) = 0;
     virtual void log(const string&, const string&, const string& = "") = 0;
+#define PRETTY_DEBUG if (args.debugEvents) screen->log("DEBUG EV", __PRETTY_FUNCTION__);
     virtual void log(const map<mRandId, mOrder>&, const bool&) = 0;
     virtual void log(const mPosition&) = 0;
     virtual void log(const mPrice&) = 0;
-    function<void(const string&)> debug = [&](const string &k) { log("DEBUG", "EV " + k); };
-#define PRETTY_DEBUG screen->debug(__PRETTY_FUNCTION__);
     virtual void refresh() = 0;
     virtual void end() = 0;
   } *screen = nullptr;
 
   static struct Events {
-    virtual void start() = 0;
     virtual void deferred(const function<void()>&) = 0;
   } *events = nullptr;
 
@@ -55,13 +53,13 @@ namespace K {
 
   static struct Client {
     uWS::Hub* socket = nullptr;
+    function<void(const mMatter&, const json&)> send;
     virtual void timer_Xs() = 0;
     virtual void timer_60s() = 0;
-    function<void(const mMatter&, function<void(json *const)>)> welcome = [](const mMatter &type, function<void(json *const)> fn) {};
+    virtual void welcome(const mMatter&, function<void(json *const)>) = 0;
 #define WELCOME(type, hello) welcome(type, [&](json *const welcome) { hello(welcome); });
-    function<void(const mMatter&, function<void(const json&)>)> clickme = [](const mMatter &type, function<void(const json&)> fn) {};
+    virtual void clickme(const mMatter&, function<void(const json&)>) = 0;
 #define CLICKME(type, kiss) clickme(type, [&](const json &butterfly) { kiss(butterfly); });
-    function<void(const mMatter&, const json&)>                 send;
   } *client = nullptr;
 
   static struct Wallet {
@@ -139,6 +137,10 @@ namespace K {
       void connect() {
         socket->connect(ws, nullptr, {}, 5e+3, &socket->getDefaultGroup<uWS::CLIENT>());
       };
+      void run() {
+        if (async) countdown = 1;
+        socket->run();
+      };
       function<void(mOrder)>        evDataOrder;
       function<void(mTrade)>        evDataTrade;
       function<void(mLevels)>       evDataLevels;
@@ -170,14 +172,14 @@ namespace K {
       };
       bool refreshWallet = false,
                    async = false;
-//BO non-free gw library functions from build-*/local/lib/K-*.a (it just redefines all virtual gateway class members below)
-/**/  virtual bool asyncWs() = 0;                                            // set the boolean above if is not REST-only api
+//BO non-free gw library functions from build-*/local/lib/K-*.a (it just redefines all virtual gateway class members below).
+/**/  virtual bool online() = 0;                                             // wait for exchange and maybe set async = true
 /**/  virtual string /*BTC unlock */A/*ddress*/() = 0;
-/**/  static Gw *config(mCoinId, mCoinId, string, int, string, string, string, string, string, string, int, int); // set args
-/**/  function<void(mRandId, string)> replace;                               // send msg to exchange
-/**/  virtual void place(mRandId, mSide, string, string, mOrderType, mTimeInForce, bool, mClock) = 0, // send msg to exchange
-/**/               cancel(mRandId, mRandId) = 0,                             // send msg to exchange
-/**/               close() = 0;                                              // close connection but without reconnect
+/**/  static Gw*config(mCoinId, mCoinId, string, int, string, string, string, string, string, string, int, int); // set args
+/**/  function<void(mRandId, string)> replace;                               // call         async orders data from exchange
+/**/  virtual void place(mRandId, mSide, string, string, mOrderType, mTimeInForce, bool, mClock) = 0, // same as above/below
+/**/               cancel(mRandId, mRandId) = 0,                             // call         async orders data from exchange
+/**/               close() = 0;                                              // disconnect but without waiting for reconnect
 /**/  virtual vector<mOrder>   sync_cancelAll() = 0;                         // call and read sync orders data from exchange
 /**/protected:
 /**/  virtual bool            async_wallet() { return false; };              // call         async wallet data from exchange
@@ -185,7 +187,7 @@ namespace K {
 /**/  virtual vector<mLevels>  sync_levels() { return vector<mLevels>(); };  // call and read sync levels data from exchange
 /**/  virtual vector<mTrade>   sync_trades() { return vector<mTrade>(); };   // call and read sync trades data from exchange
 /**/  virtual vector<mOrder>   sync_orders() { return vector<mOrder>(); };   // call and read sync orders data from exchange
-//EO non-free gw library functions from build-*/local/lib/K-*.a (it just redefines all virtual gateway class members above)
+//EO non-free gw library functions from build-*/local/lib/K-*.a (it just redefines all virtual gateway class members above).
       void reconnect(const string &reason) {
         countdown = 7;
         screen->log(string("GW ") + name, string("WS ") + reason
@@ -324,12 +326,13 @@ namespace K {
         load();
         waitData();
         waitTime();
-        waitUser();
+        if (!args.headless)
+          waitUser();
         run();
         endingFn.push_back([&](){
           end();
         });
-        if (gw->randId) events->start();
+        if (gw->online()) gw->run();
       };
   };
 }

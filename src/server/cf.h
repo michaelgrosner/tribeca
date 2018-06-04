@@ -235,6 +235,9 @@ namespace K {
         if (args.ignoreSun and args.ignoreMoon) args.ignoreMoon = 0;
         if (args.headless) args.port = 0;
         else if (!args.port or !args.maxAdmins) args.headless = 1;
+#ifdef _WIN32
+        args.naked = 1;
+#endif
       };
   };
 }
