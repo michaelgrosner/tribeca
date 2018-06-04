@@ -5,22 +5,21 @@ namespace K  {
   class EV: public Klass,
             public Events { public: EV() { events = this; };
     private:
-      uWS::Hub  *hub   = nullptr;
-      uS::Timer *timer = nullptr;
-      uS::Async *loop  = nullptr;
+      uWS::Hub  *socket = nullptr;
+      uS::Timer *timer  = nullptr;
+      uS::Async *loop   = nullptr;
       vector<function<void()>> slowFn;
       unsigned int tick = 0;
     protected:
       void load() {
         gw->screen = screen;
-        gw->events = events;
-        gw->hub = hub = new uWS::Hub(0, true);
+        gw->socket = socket = new uWS::Hub(0, true);
       };
       void waitData() {
-        hub->createGroup<uWS::CLIENT>();
+        socket->createGroup<uWS::CLIENT>();
       };
       void waitTime() {
-        timer = new uS::Timer(hub->getLoop());
+        timer = new uS::Timer(socket->getLoop());
         timer->setData(this);
         timer->start([](uS::Timer *timer) {
           ((EV*)timer->getData())->timer_1s();
@@ -28,26 +27,26 @@ namespace K  {
       };
       void waitUser() {
         if (args.headless) return;
-        client->hub = hub;
-        hub->createGroup<uWS::SERVER>(uWS::PERMESSAGE_DEFLATE);
+        client->socket = socket;
+        socket->createGroup<uWS::SERVER>(uWS::PERMESSAGE_DEFLATE);
       };
       void run() {
-        loop = new uS::Async(hub->getLoop());
+        loop = new uS::Async(socket->getLoop());
         loop->setData(this);
         loop->start(walk);
       };
       void end() {
         timer->stop();
         gw->close();
-        hub->getDefaultGroup<uWS::CLIENT>().close();
+        socket->getDefaultGroup<uWS::CLIENT>().close();
         gw->clear();
         walk(loop);
-        hub->getDefaultGroup<uWS::SERVER>().close();
+        socket->getDefaultGroup<uWS::SERVER>().close();
       };
     public:
       void start() {
         if (gw->asyncWs()) gw->countdown = 1;
-        hub->run();
+        socket->run();
       };
       void deferred(const function<void()> &fn) {
         slowFn.push_back(fn);
@@ -58,7 +57,7 @@ namespace K  {
         if (fn()) loop->send();
       };
       void (*walk)(uS::Async*) = [](uS::Async *const loop) {
-        EV* k = (EV*)loop->getData();
+        EV *k = (EV*)loop->getData();
         if (!k->slowFn.empty()) {
           for (function<void()> &it : k->slowFn) it();
           k->slowFn.clear();
@@ -77,7 +76,7 @@ namespace K  {
           if (!(tick % 60))                  async(gw->trades);
         }
         if (!(tick % 60))                    client->timer_60s();
-        if (client->hub and qp.delayUI
+        if (client->socket and qp.delayUI
           and !(tick % qp.delayUI))          client->timer_Xs();
         if (!(++tick % 300)) {
           if (qp.cancelOrdersAuto)           async(gw->cancelAll);

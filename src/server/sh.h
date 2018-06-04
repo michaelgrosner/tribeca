@@ -120,26 +120,6 @@ namespace K {
         wattroff(wLog, COLOR_PAIR(COLOR_WHITE));
         wrefresh(wLog);
       };
-      void logDB(string k) {
-        if (!wBorder) {
-          cout << stamp() << "DB " << RYELLOW << k << RWHITE << " loaded OK.\n";
-          return;
-        }
-        wmove(wLog, getmaxy(wLog)-1, 0);
-        stamp();
-        wattron(wLog, COLOR_PAIR(COLOR_WHITE));
-        wattron(wLog, A_BOLD);
-        wprintw(wLog, "DB ");
-        wattroff(wLog, A_BOLD);
-        wattroff(wLog, COLOR_PAIR(COLOR_WHITE));
-        wattron(wLog, COLOR_PAIR(COLOR_YELLOW));
-        wprintw(wLog, k.data());
-        wattroff(wLog, COLOR_PAIR(COLOR_YELLOW));
-        wattron(wLog, COLOR_PAIR(COLOR_WHITE));
-        wprintw(wLog, " loaded OK.\n");
-        wattroff(wLog, COLOR_PAIR(COLOR_WHITE));
-        wrefresh(wLog);
-      };
       void logUI(const string &protocol_) {
         protocol = protocol_;
         if (!wBorder) {
@@ -211,7 +191,7 @@ namespace K {
         wattroff(wLog, COLOR_PAIR(COLOR_WHITE));
         wrefresh(wLog);
       };
-      void log(mTrade k, bool isPong) {
+      void log(const mTrade &k, const bool &isPong) {
         if (!wBorder) {
           cout << stamp() << "GW " << (k.side == mSide::Bid ? RCYAN : RPURPLE) << gw->name << (isPong?" PONG":" PING") << " TRADE " << (k.side == mSide::Bid ? BCYAN : BPURPLE) << (k.side == mSide::Bid ? "BUY  " : "SELL ") << k.quantity << ' ' << k.pair.base << " at price " << k.price << ' ' << k.pair.quote << " (value " << k.value << ' ' << k.pair.quote << ").\n";
           return;
@@ -234,9 +214,12 @@ namespace K {
         wattroff(wLog, COLOR_PAIR(k.side == mSide::Bid ? COLOR_CYAN : COLOR_MAGENTA));
         wrefresh(wLog);
       };
-      void log(string k, string s, string v) {
+      void log(const string &k, const string &s, const string &v = "") {
         if (!wBorder) {
-          cout << stamp() << k << RWHITE << ' ' << s << ' ' << RYELLOW << v << RWHITE << ".\n";
+          cout << stamp() << k << RWHITE << ' ' << s;
+          if (!v.empty())
+            cout << ' ' << RYELLOW << v << RWHITE;
+          cout << ".\n";
           return;
         }
         wmove(wLog, getmaxy(wLog)-1, 0);
@@ -245,45 +228,21 @@ namespace K {
         wattron(wLog, A_BOLD);
         wprintw(wLog, k.data());
         wattroff(wLog, A_BOLD);
-        wprintw(wLog, string(" ").append(s).append(" ").data());
-        wattroff(wLog, COLOR_PAIR(COLOR_WHITE));
-        wattron(wLog, COLOR_PAIR(COLOR_YELLOW));
-        wprintw(wLog, v.data());
-        wattroff(wLog, COLOR_PAIR(COLOR_YELLOW));
-        wattron(wLog, COLOR_PAIR(COLOR_WHITE));
+        if (v.empty())
+          wprintw(wLog, string(" ").append(s).data());
+        else {
+          wprintw(wLog, string(" ").append(s).append(" ").data());
+          wattroff(wLog, COLOR_PAIR(COLOR_WHITE));
+          wattron(wLog, COLOR_PAIR(COLOR_YELLOW));
+          wprintw(wLog, v.data());
+          wattroff(wLog, COLOR_PAIR(COLOR_YELLOW));
+          wattron(wLog, COLOR_PAIR(COLOR_WHITE));
+        }
         wprintw(wLog, ".\n");
         wattroff(wLog, COLOR_PAIR(COLOR_WHITE));
         wrefresh(wLog);
       };
-      void log(string k, string s) {
-        if (!wBorder) {
-          cout << stamp() << k << RWHITE << ' ' << s << ".\n";
-          return;
-        }
-        wmove(wLog, getmaxy(wLog)-1, 0);
-        stamp();
-        wattron(wLog, COLOR_PAIR(COLOR_WHITE));
-        wattron(wLog, A_BOLD);
-        wprintw(wLog, k.data());
-        wattroff(wLog, A_BOLD);
-        wprintw(wLog, string(" ").append(s).append(".\n").data());
-        wattroff(wLog, COLOR_PAIR(COLOR_WHITE));
-        wrefresh(wLog);
-      };
-      void log(string k, int c = COLOR_WHITE, bool b = false) {
-        if (!wBorder) {
-          cout << RWHITE << k;
-          return;
-        }
-        wmove(wLog, getmaxy(wLog)-1, 0);
-        if (b) wattron(wLog, A_BOLD);
-        wattron(wLog, COLOR_PAIR(c));
-        wprintw(wLog, k.data());
-        wattroff(wLog, COLOR_PAIR(c));
-        if (b) wattroff(wLog, A_BOLD);
-        wrefresh(wLog);
-      };
-      void log(const map<mRandId, mOrder> &orders, bool working) {
+      void log(const map<mRandId, mOrder> &orders, const bool &working) {
         if (!wBorder) return;
         openOrders.clear();
         for (const map<mRandId, mOrder>::value_type &it : orders)
@@ -302,7 +261,7 @@ namespace K {
         quoteValue = FN::str8(pos.quoteValue);
         refresh();
       };
-      void log(double fv) {
+      void log(const mPrice &fv) {
         if (!wBorder) return;
         fairValue = FN::str8(fv);
         refresh();

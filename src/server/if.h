@@ -23,23 +23,20 @@ namespace K {
       ) << ".\n" << RYELLOW << changes << RWHITE << RRESET;
     };
     virtual void config() = 0;
-    virtual void pressme(mHotkey ch, function<void()> fn) = 0;
+    virtual void pressme(mHotkey, function<void()>) = 0;
 #define PRESSME(ch, fn) pressme(ch, [&]() { fn(); });
-    virtual int error(string k, string s, bool reboot = false) = 0;
+    virtual int error(string, string, bool = false) = 0;
     virtual void waitForUser() = 0;
     virtual string stamp() = 0;
-    virtual void logWar(string k, string s, string m = " Warrrrning: ") = 0;
-    virtual void logDB(string k) = 0;
-    virtual void logUI(const string &protocol_) = 0;
-    virtual void logUIsess(int k, string s) = 0;
-    virtual void log(mTrade k, bool isPong) = 0;
-    virtual void log(string k, string s, string v) = 0;
-    virtual void log(string k, string s) = 0;
-    virtual void log(string k, int c = COLOR_WHITE, bool b = false) = 0;
-    virtual void log(const map<mRandId, mOrder> &orders, bool working) = 0;
-    virtual void log(const mPosition &pos) = 0;
-    virtual void log(double fv) = 0;
-    function<void(const string&)> debug = [&](const string &k) { log("DEBUG", string("EV ") + k); };
+    virtual void logWar(string, string, string = " Warrrrning: ") = 0;
+    virtual void logUI(const string&) = 0;
+    virtual void logUIsess(int, string) = 0;
+    virtual void log(const mTrade&, const bool&) = 0;
+    virtual void log(const string&, const string&, const string& = "") = 0;
+    virtual void log(const map<mRandId, mOrder>&, const bool&) = 0;
+    virtual void log(const mPosition&) = 0;
+    virtual void log(const mPrice&) = 0;
+    function<void(const string&)> debug = [&](const string &k) { log("DEBUG", "EV " + k); };
 #define PRETTY_DEBUG screen->debug(__PRETTY_FUNCTION__);
     virtual void refresh() = 0;
     virtual void end() = 0;
@@ -47,23 +44,17 @@ namespace K {
 
   static struct Events {
     virtual void start() = 0;
-    virtual void deferred(const function<void()> &fn) = 0;
+    virtual void deferred(const function<void()>&) = 0;
   } *events = nullptr;
 
   static struct Sqlite {
-    virtual json select(const mMatter &table) = 0;
-    virtual void insert(
-      const mMatter &table            ,
-      const json    &cell             ,
-      const bool    &rm       = true  ,
-      const string  &updateId = "NULL",
-      const mClock  &rmOlder  = 0
-    ) = 0;
+    virtual json select(const mMatter&) = 0;
+    virtual void insert(const mMatter&, const json&, const bool& = true, const string& = "NULL", const mClock& = 0) = 0;
     function<unsigned int()> size = []() { return 0; };
   } *sqlite = nullptr;
 
   static struct Client {
-    uWS::Hub* hub = nullptr;
+    uWS::Hub* socket = nullptr;
     virtual void timer_Xs() = 0;
     virtual void timer_60s() = 0;
     function<void(const mMatter&, function<void(json *const)>)> welcome = [](const mMatter &type, function<void(json *const)> fn) {};
@@ -114,15 +105,9 @@ namespace K {
     virtual void cleanOrder(const mRandId&) = 0;
     virtual void cancelOrder(const mRandId&) = 0;
     virtual void sendOrder(
-            vector<mRandId>  toCancel,
-      const mSide           &side    ,
-      const mPrice          &price   ,
-      const mAmount         &qty     ,
-      const mOrderType      &type    ,
-      const mTimeInForce    &tif     ,
-      const bool            &isPong  ,
-      const bool            &postOnly
-    ) = 0;;
+      vector<mRandId>,   const mSide&,        const mPrice&, const mAmount&,
+      const mOrderType&, const mTimeInForce&, const bool&,   const bool&
+    ) = 0;
   } *broker = nullptr;
 
   static struct Engine {
@@ -136,11 +121,10 @@ namespace K {
 
   static class Gw {
     public:
-      virtual string A() = 0;
-      uWS::Hub *hub = nullptr;
-      Screen *screen = nullptr;
-      Events *events = nullptr;
-      static Gw *config(mCoinId, mCoinId, string, int, string, string, string, string, string, string, int, int);
+      Screen   *screen = nullptr;
+      uWS::Hub *socket = nullptr;
+      mRandId (*randId)() = nullptr;
+      unsigned int countdown = 0;
       mExchange exchange = (mExchange)0;
             int version  = 0, maxLevel = 0,
                 debug    = 0;
@@ -152,9 +136,8 @@ namespace K {
                 apikey   = "", secret  = "",
                 user     = "", pass    = "",
                 ws       = "", http    = "";
-      unsigned int countdown = 0;
       void connect() {
-        hub->connect(ws, nullptr, {}, 5e+3, &hub->getDefaultGroup<uWS::CLIENT>());
+        socket->connect(ws, nullptr, {}, 5e+3, &socket->getDefaultGroup<uWS::CLIENT>());
       };
       function<void(mOrder)>        evDataOrder;
       function<void(mTrade)>        evDataTrade;
@@ -162,14 +145,6 @@ namespace K {
       function<void(mWallets)>      evDataWallet;
       function<void(mConnectivity)> evConnectOrder,
                                     evConnectMarket;
-      function<void(mRandId, string)> replace;
-      virtual void place(mRandId, mSide, string, string, mOrderType, mTimeInForce, bool, mClock) = 0,
-                   cancel(mRandId, mRandId) = 0,
-                   close() = 0;
-      mRandId (*randId)() = nullptr;
-      bool refreshWallet = false,
-                   async = false;
-      virtual bool asyncWs() = 0;
       bool waitForData() {
         return (async
           ? false
@@ -184,7 +159,6 @@ namespace K {
       function<bool()> trades = [&]() { return askFor(replyTrades, [&]() { return sync_trades(); }); };
       function<bool()> orders = [&]() { return askFor(replyOrders, [&]() { return sync_orders(); }); };
       function<bool()> cancelAll = [&]() { return askFor(replyCancelAll, [&]() { return sync_cancelAll(); }); };
-      virtual vector<mOrder> sync_cancelAll() = 0;
       void clear() {
         if (args.dustybot)
           screen->log(string("GW ") + name, "--dustybot is enabled, remember to cancel manually any open order.");
@@ -194,28 +168,38 @@ namespace K {
           screen->log(string("GW ") + name, "cancel all open orders OK");
         }
       };
-    protected:
+      bool refreshWallet = false,
+                   async = false;
+//BO non-free gw library functions from build-*/local/lib/K-*.a (the lib redefines all virtual gateway class members below)
+/**/  virtual bool asyncWs() = 0;                                            // set the boolean above if is not REST-only api
+/**/  virtual string /*BTC unlock */A/*ddress*/() = 0;
+/**/  static Gw *config(mCoinId, mCoinId, string, int, string, string, string, string, string, string, int, int); // set args
+/**/  function<void(mRandId, string)> replace;                               // send msg to exchange
+/**/  virtual void place(mRandId, mSide, string, string, mOrderType, mTimeInForce, bool, mClock) = 0, // send msg to exchange
+/**/               cancel(mRandId, mRandId) = 0,                             // send msg to exchange
+/**/               close() = 0;                                              // close connection but without reconnect
+/**/  virtual vector<mOrder>   sync_cancelAll() = 0;                         // call and read sync orders data from exchange
+/**/protected:
+/**/  virtual bool            async_wallet() { return false; };              // call         async wallet data from exchange
+/**/  virtual vector<mWallets> sync_wallet() { return vector<mWallets>(); }; // call and read sync wallet data from exchange
+/**/  virtual vector<mLevels>  sync_levels() { return vector<mLevels>(); };  // call and read sync levels data from exchange
+/**/  virtual vector<mTrade>   sync_trades() { return vector<mTrade>(); };   // call and read sync trades data from exchange
+/**/  virtual vector<mOrder>   sync_orders() { return vector<mOrder>(); };   // call and read sync orders data from exchange
+//EO non-free gw library functions from build-*/local/lib/K-*.a (the lib redefines all virtual gateway class members above)
       void reconnect(const string &reason) {
         countdown = 7;
         screen->log(string("GW ") + name, string("WS ") + reason
           + ", reconnecting in " + to_string(countdown) + "s.");
       };
       void log(const string &reason) {
-        events->deferred([this, reason]() {
-          const string prefix = string(
-            reason.find(">>>") != reason.find("<<<")
-              ? "DEBUG" : "GW"
-          ) + ' ' + name;
-          if (reason.find("Error") != string::npos)
-            screen->logWar(prefix, reason);
-          else screen->log(prefix, reason);
-        });
+        const string prefix = string(
+          reason.find(">>>") != reason.find("<<<")
+            ? "DEBUG" : "GW"
+        ) + ' ' + name;
+        if (reason.find("Error") != string::npos)
+          screen->logWar(prefix, reason);
+        else screen->log(prefix, reason);
       };
-      virtual bool async_wallet() { return false; };
-      virtual vector<mWallets> sync_wallet() { return vector<mWallets>(); };
-      virtual vector<mLevels> sync_levels() { return vector<mLevels>(); };
-      virtual vector<mTrade> sync_trades() { return vector<mTrade>(); };
-      virtual vector<mOrder> sync_orders() { return vector<mOrder>(); };
       future<vector<mWallets>> replyWallets;
       future<vector<mLevels>> replyLevels;
       future<vector<mTrade>> replyTrades;

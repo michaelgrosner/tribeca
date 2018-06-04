@@ -19,16 +19,16 @@ namespace K {
       map<mMatter, string> queue;
     protected:
       void load() {
-        if (!hub
+        if (!socket
           or args.user.empty()
           or args.pass.empty()
         ) return;
-        B64auth = string("Basic ") + FN::oB64(args.user + ':' + args.pass);
+        B64auth = "Basic " + FN::oB64(args.user + ':' + args.pass);
       };
       void waitData() {
-        if (!hub) return;
+        if (!socket) return;
         listen();
-        auto client = &hub->getDefaultGroup<uWS::SERVER>();
+        auto client = &socket->getDefaultGroup<uWS::SERVER>();
         client->onConnection([&](uWS::WebSocket<uWS::SERVER> *webSocket, uWS::HttpRequest req) {
           onConnection();
           const string addr = cleanAddress(webSocket->getAddress().address);
@@ -76,7 +76,7 @@ namespace K {
         };
       };
       void waitUser() {
-        if (!hub) return;
+        if (!socket) return;
         welcome = [&](const mMatter &type, function<void(json *const)> fn) {
           if (hello.find((char)type) != hello.end())
             exit(screen->error("UI", string("Use only a single unique message handler for \"")
@@ -132,14 +132,14 @@ namespace K {
         if (!args.withoutSSL
           and (access("etc/sslcert/server.crt", F_OK) != -1)
           and (access("etc/sslcert/server.key", F_OK) != -1)
-          and hub->listen(
+          and socket->listen(
             args.inet, args.port,
             uS::TLS::createContext("etc/sslcert/server.crt",
                                    "etc/sslcert/server.key", ""),
-            0, &hub->getDefaultGroup<uWS::SERVER>()
+            0, &socket->getDefaultGroup<uWS::SERVER>()
           )
         ) screen->logUI("HTTPS");
-        else if (!hub->listen(args.inet, args.port, nullptr, 0, &hub->getDefaultGroup<uWS::SERVER>())) {
+        else if (!socket->listen(args.inet, args.port, nullptr, 0, &socket->getDefaultGroup<uWS::SERVER>())) {
           const string netstat = FN::output(string("netstat -anp 2>/dev/null | grep ") + to_string(args.port));
           exit(screen->error("UI", "Unable to listen to UI port number " + to_string(args.port) + ", "
             + (netstat.empty() ? "try another network interface" : "seems already in use by:\n" + netstat)
