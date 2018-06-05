@@ -15,7 +15,7 @@ namespace K {
       void load() {
         for (json &it : sqlite->select(mMatter::Position))
           profits.push_back(it);
-        screen->log("DB", string("loaded ") + to_string(profits.size()) + " historical Profits");
+        screen->log("DB", "loaded " + to_string(profits.size()) + " historical Profits");
         json k = sqlite->select(mMatter::TargetBasePosition);
         if (!k.empty()) {
           k = k.at(0);
@@ -23,7 +23,7 @@ namespace K {
           if (k.find("pDiv") != k.end()) positionDivergence = k.value("pDiv", 0.0);
           sideAPR = k.value("sideAPR", "");
         }
-        screen->log("DB", string("loaded TBP = ") + FN::str8(targetBasePosition) + " " + gw->base);
+        screen->log("DB", "loaded TBP = " + FN::str8(targetBasePosition) + " " + gw->base);
       };
       void waitData() {
         gw->evDataWallet = [&](mWallets k) {                        PRETTY_DEBUG
@@ -62,7 +62,7 @@ namespace K {
         client->send(mMatter::TargetBasePosition, k);
         sqlite->insert(mMatter::TargetBasePosition, k);
         if (!args.debugWallet) return;
-        screen->log("PG", string("TBP: ")
+        screen->log("PG", "TBP: "
           + to_string((int)(targetBasePosition / baseValue * 1e+2)) + "% = " + FN::str8(targetBasePosition)
           + " " + gw->base + ", pDiv: "
           + to_string((int)(positionDivergence  / baseValue * 1e+2)) + "% = " + FN::str8(positionDivergence)

@@ -8,7 +8,7 @@ namespace K {
       void load() {
         for (json &it : sqlite->select(mMatter::Trades))
           tradesHistory.push_back(it);
-        screen->log("DB", string("loaded ") + to_string(tradesHistory.size()) + " historical Trades");
+        screen->log("DB", "loaded " + to_string(tradesHistory.size()) + " historical Trades");
       };
       void waitData() {
         gw->evDataOrder = [&](mOrder k) {                           PRETTY_DEBUG
@@ -45,7 +45,7 @@ namespace K {
         }
         if (gw->replace and !replaceOrderId.empty()) {
           if (!orders[replaceOrderId].exchangeId.empty()) {
-            DEBOG(string("update ") + (side == mSide::Bid ? "BID" : "ASK") + " id " + replaceOrderId + ":  at price " + FN::str8(price) + " " + gw->quote);
+            DEBOG("update " + ((side == mSide::Bid ? "BID" : "ASK") + (" id " + replaceOrderId)) + ":  at price " + FN::str8(price) + " " + gw->quote);
             orders[replaceOrderId].price = price;
             gw->replace(orders[replaceOrderId].exchangeId, FN::str8(price));
           }
@@ -85,7 +85,7 @@ namespace K {
         mOrder *o = &orders[orderId];
         if (o->exchangeId.empty() or o->_waitingCancel + 3e+3 > _Tstamp_) return;
         o->_waitingCancel = _Tstamp_;
-        DEBOG(string("cancel ") + (o->side == mSide::Bid ? "BID id " : "ASK id ") + o->orderId + "::" + o->exchangeId);
+        DEBOG("cancel " + ((o->side == mSide::Bid ? "BID id " : "ASK id ") + o->orderId) + "::" + o->exchangeId);
         gw->cancel(o->orderId, o->exchangeId);
       };
       void cleanOrder(const mRandId &orderId) {
@@ -163,7 +163,7 @@ namespace K {
         k.side = o->side;
         if (saved and !working)
           cleanOrder(o->orderId);
-        else DEBOG(string(" saved ") + (o->side == mSide::Bid ? "BID id " : "ASK id ") + o->orderId + "::" + o->exchangeId + " [" + to_string((int)o->orderStatus) + "]: " + FN::str8(o->quantity) + " " + o->pair.base + " at price " + FN::str8(o->price) + " " + o->pair.quote);
+        else DEBOG(" saved " + ((o->side == mSide::Bid ? "BID id " : "ASK id ") + o->orderId) + "::" + o->exchangeId + " [" + to_string((int)o->orderStatus) + "]: " + FN::str8(o->quantity) + " " + o->pair.base + " at price " + FN::str8(o->price) + " " + o->pair.quote);
         DEBOG("memory " + to_string(orders.size()));
         if (saved) {
           wallet->calcWalletAfterOrder(k.side);

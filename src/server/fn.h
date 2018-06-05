@@ -196,15 +196,15 @@ namespace K {
       static json wJet(const string &url, string t, bool auth) {
         return curl_perform(url, [&](CURL *curl) {
           struct curl_slist *h_ = NULL;
-          if (!t.empty()) h_ = curl_slist_append(h_, string("Authorization: Bearer ").append(t).data());
+          if (!t.empty()) h_ = curl_slist_append(h_, ("Authorization: Bearer " + t).data());
           curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
         });
       };
       static json wJet(const string &url, bool p, string a, string s, string n) {
         return curl_perform(url, [&](CURL *curl) {
           struct curl_slist *h_ = NULL;
-          h_ = curl_slist_append(h_, string("API-Key: ").append(a).data());
-          h_ = curl_slist_append(h_, string("API-Sign: ").append(s).data());
+          h_ = curl_slist_append(h_, ("API-Key: " + a).data());
+          h_ = curl_slist_append(h_, ("API-Sign: " + s).data());
           curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
           curl_easy_setopt(curl, CURLOPT_POSTFIELDS, n.data());
         });
@@ -221,7 +221,7 @@ namespace K {
       static json wJet(const string &url, string p, string s, bool post) {
         return curl_perform(url, [&](CURL *curl) {
           struct curl_slist *h_ = NULL;
-          h_ = curl_slist_append(h_, string("X-Signature: ").append(s).data());
+          h_ = curl_slist_append(h_, ("X-Signature: " + s).data());
           curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
           curl_easy_setopt(curl, CURLOPT_POSTFIELDS, p.data());
         });
@@ -230,8 +230,8 @@ namespace K {
         return curl_perform(url, [&](CURL *curl) {
           struct curl_slist *h_ = NULL;
           h_ = curl_slist_append(h_, "Content-Type: application/x-www-form-urlencoded");
-          h_ = curl_slist_append(h_, string("Key: ").append(a).data());
-          h_ = curl_slist_append(h_, string("Sign: ").append(s).data());
+          h_ = curl_slist_append(h_, ("Key: " + a).data());
+          h_ = curl_slist_append(h_, ("Sign: " + s).data());
           curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
           curl_easy_setopt(curl, CURLOPT_POSTFIELDS, p.data());
         });
@@ -239,9 +239,9 @@ namespace K {
       static json wJet(const string &url, string p, string a, string s, bool post) {
         return curl_perform(url, [&](CURL *curl) {
           struct curl_slist *h_ = NULL;
-          h_ = curl_slist_append(h_, string("X-BFX-APIKEY: ").append(a).data());
-          h_ = curl_slist_append(h_, string("X-BFX-PAYLOAD: ").append(p).data());
-          h_ = curl_slist_append(h_, string("X-BFX-SIGNATURE: ").append(s).data());
+          h_ = curl_slist_append(h_, ("X-BFX-APIKEY: " + a).data());
+          h_ = curl_slist_append(h_, ("X-BFX-PAYLOAD: " + p).data());
+          h_ = curl_slist_append(h_, ("X-BFX-SIGNATURE: " + s).data());
           curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
           curl_easy_setopt(curl, CURLOPT_POSTFIELDS, p.data());
         });
@@ -250,7 +250,7 @@ namespace K {
         return curl_perform(url, [&](CURL *curl) {
           struct curl_slist *h_ = NULL;
           h_ = curl_slist_append(h_, "Content-Type: application/x-www-form-urlencoded");
-          if (!a.empty()) h_ = curl_slist_append(h_, string("Authorization: Bearer ").append(a).data());
+          if (!a.empty()) h_ = curl_slist_append(h_, ("Authorization: Bearer " + a).data());
           curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
           curl_easy_setopt(curl, CURLOPT_POSTFIELDS, p.data());
         });
@@ -258,10 +258,10 @@ namespace K {
       static json wJet(const string &url, string t, string a, string s, string p, bool d = false) {
         return curl_perform(url, [&](CURL *curl) {
           struct curl_slist *h_ = NULL;
-          h_ = curl_slist_append(h_, string("CB-ACCESS-KEY: ").append(a).data());
-          h_ = curl_slist_append(h_, string("CB-ACCESS-SIGN: ").append(s).data());
-          h_ = curl_slist_append(h_, string("CB-ACCESS-TIMESTAMP: ").append(t).data());
-          h_ = curl_slist_append(h_, string("CB-ACCESS-PASSPHRASE: ").append(p).data());
+          h_ = curl_slist_append(h_, ("CB-ACCESS-KEY: " + a).data());
+          h_ = curl_slist_append(h_, ("CB-ACCESS-SIGN: " + s).data());
+          h_ = curl_slist_append(h_, ("CB-ACCESS-TIMESTAMP: " + t).data());
+          h_ = curl_slist_append(h_, ("CB-ACCESS-PASSPHRASE: " + p).data());
           curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
           if (d) curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
         });

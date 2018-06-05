@@ -6,7 +6,7 @@ namespace K {
     Screen() {
       cout << BGREEN << "K"
            << RGREEN << " build " << K_BUILD << ' ' << K_STAMP
-           << '.' << BRED << '\n';
+           << ".\n";
       string changes;
       int commits = -1;
       if (access(".git", F_OK) != -1) {
@@ -20,7 +20,7 @@ namespace K {
           ? '-' + to_string(commits) + "commit" + (commits == 1?"":"s") + '.'
           : "(0day)"
         )
-      ) << ".\n" << RYELLOW << changes << RWHITE << RRESET;
+      ) << ".\n" << RYELLOW << changes << RRESET;
     };
     virtual void config() = 0;
     virtual void pressme(mHotkey, function<void()>) = 0;
@@ -137,6 +137,8 @@ namespace K {
                 apikey   = "", secret  = "",
                 user     = "", pass    = "",
                 ws       = "", http    = "";
+      bool refreshWallet = false,
+                   async = false;
       void connect() {
         socket->connect(ws, nullptr, {}, 5e+3, &socket->getDefaultGroup<uWS::CLIENT>());
       };
@@ -173,8 +175,6 @@ namespace K {
           screen->log("GW " + name, "cancel all open orders OK");
         }
       };
-      bool refreshWallet = false,
-                   async = false;
 //BO non-free gw library functions from build-*/local/lib/K-*.a (it just redefines all virtual gateway class members below).
 /**/  virtual bool online() = 0;                                             // wait for exchange and maybe set async = true
 /**/  virtual string /*BTC unlock */A/*ddress*/() = 0;
@@ -193,8 +193,7 @@ namespace K {
 //EO non-free gw library functions from build-*/local/lib/K-*.a (it just redefines all virtual gateway class members above).
       void reconnect(const string &reason) {
         countdown = 7;
-        screen->log(string("GW ") + name, string("WS ") + reason
-          + ", reconnecting in " + to_string(countdown) + "s.");
+        screen->log("GW " + name, "WS " + reason + ", reconnecting in " + to_string(countdown) + "s.");
       };
       void log(const string &reason) {
         const string prefix = string(

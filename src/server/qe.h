@@ -69,7 +69,7 @@ namespace K {
       };
       void findMode(const string &reason) {
         if (quotingMode.find(qp.mode) == quotingMode.end())
-          exit(screen->error("QE", string("Invalid quoting mode ")
+          exit(screen->error("QE", "Invalid quoting mode "
             + reason + ", consider to remove the database file"));
       };
       void sendQuoteToAPI() {
@@ -146,8 +146,8 @@ namespace K {
         DEBUQ("K", bidStatus, askStatus, rawQuote); applyWaitingPing(&rawQuote);
         DEBUQ("L", bidStatus, askStatus, rawQuote); applyEwmaTrendProtection(&rawQuote);
         DEBUQ("!", bidStatus, askStatus, rawQuote);
-        DEBUG(string("totals ") + "toAsk: " + to_string(wallet->position._baseTotal) + ", "
-                                + "toBid: " + to_string(wallet->position._quoteTotal));
+        DEBUG("totals " + ("toAsk: " + to_string(wallet->position._baseTotal))
+                        + ", toBid: " + to_string(wallet->position._quoteTotal));
         return rawQuote;
       };
       void applyRoundPrice(mQuote *rawQuote) {

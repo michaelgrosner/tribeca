@@ -59,7 +59,7 @@ namespace K {
         mConnectivity updated = adminAgreement * engine->greenGateway;
         if (engine->greenButton != updated) {
           engine->greenButton = updated;
-          screen->log(string("GW ") + gw->name, "Quoting state changed to", string(!engine->greenButton?"DIS":"") + "CONNECTED");
+          screen->log("GW " + gw->name, "Quoting state changed to", string(!engine->greenButton?"DIS":"") + "CONNECTED");
         }
         client->send(mMatter::Connectivity, semaphore());
         screen->refresh();
@@ -98,7 +98,7 @@ namespace K {
             string _price_ = price_.str();
             for (string::iterator it=_price_.begin(); it!=_price_.end();)
               if (*it == '+' or *it == '-') break; else it = _price_.erase(it);
-            stringstream os(string("1e") + to_string(fmax(stod(_price_),-4)-4));
+            stringstream os("1e" + to_string(fmax(stod(_price_),-4)-4));
             os >> gw->minTick;
           }
           reply = FN::wJet(gw->http + "/symbols_details");
@@ -120,9 +120,9 @@ namespace K {
           if (reply.find("result") != reply.end())
             for (json::iterator it = reply["result"].begin(); it != reply["result"].end(); ++it)
               if (it.value().find("pair_decimals") != it.value().end()) {
-                stringstream os(string("1e-") + to_string(it.value().value("pair_decimals", 0)));
+                stringstream os("1e-" + to_string(it.value().value("pair_decimals", 0)));
                 os >> gw->minTick;
-                os = stringstream(string("1e-") + to_string(it.value().value("lot_decimals", 0)));
+                os = stringstream("1e-" + to_string(it.value().value("lot_decimals", 0)));
                 os >> gw->minSize;
                 gw->symbol = it.key();
                 gw->base = it.value().value("base", gw->base);
@@ -144,7 +144,7 @@ namespace K {
           gw->symbol = gw->quote + "_" + gw->base;
           reply = FN::wJet(gw->http + "/public?command=returnTicker");
           if (reply.find(gw->symbol) != reply.end()) {
-            istringstream os(string("1e-").append(to_string(6-reply[gw->symbol]["last"].get<string>().find("."))));
+            istringstream os("1e-" + to_string(6-reply[gw->symbol]["last"].get<string>().find(".")));
             os >> gw->minTick;
             gw->minSize = 0.001;
           }
@@ -163,9 +163,9 @@ namespace K {
             + reply.dump(),
           true));
         if (gw->exchange != mExchange::Null)
-          screen->log(string("GW ") + gw->name, "allows client IP");
+          screen->log("GW " + gw->name, "allows client IP");
         unsigned int precision = gw->minTick < 1e-8 ? 10 : 8;
-        screen->log(string("GW ") + gw->name + ":", string("\n")
+        screen->log("GW " + gw->name + ":", string("\n")
           + "- autoBot: " + (!adminAgreement ? "no" : "yes") + '\n'
           + "- symbols: " + gw->symbol + '\n'
           + "- minTick: " + FN::strX(gw->minTick, precision) + '\n'

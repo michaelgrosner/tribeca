@@ -176,7 +176,7 @@ namespace K {
         if (optind < argc) {
           string argerr;
           while(optind < argc) argerr += string(" ") + argv[optind++];
-          exit(screen->error("CF", string("Invalid argument option:") + argerr));
+          exit(screen->error("CF", "Invalid argument option:" + argerr));
         }
         if (args.currency.find("/") == string::npos or args.currency.length() < 3)
           exit(screen->error("CF", "Invalid currency pair; must be in the format of BASE/QUOTE, like BTC/EUR"));
@@ -225,10 +225,10 @@ namespace K {
           (args.database == ":memory:"
             ? args.diskdata
             : args.database
-          ) = string("/data/db/K")
-            + '.' + args.exchange
-            + '.' + string(args.currency).replace(args.currency.find("/"), 1, ".")
-            + '.' + "db";
+          ) = "/data/db/K"
+            + ('.' + args.exchange)
+            +  '.' + string(args.currency).replace(args.currency.find("/"), 1, ".")
+            +  '.' + "db";
         args.maxLevels = max(15, args.maxLevels);
         if (args.user == "NULL") args.user.clear();
         if (args.pass == "NULL") args.pass.clear();

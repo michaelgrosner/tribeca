@@ -85,7 +85,7 @@ namespace K {
         int len = args.naked ? 15 : 9;
         char datetime[len];
         strftime(datetime, len, args.naked ? "%m/%d %T" : "%T", localtime(&tt));
-        if (!wBorder) return string(BGREEN) + datetime + RGREEN + microtime.str() + BWHITE + ' ';
+        if (!wBorder) return (BGREEN + (datetime + (RGREEN + microtime.str()))) + BWHITE + ' ';
         wattron(wLog, COLOR_PAIR(COLOR_GREEN));
         wattron(wLog, A_BOLD);
         wprintw(wLog, datetime);
@@ -201,7 +201,7 @@ namespace K {
         wattron(wLog, COLOR_PAIR(k.side == mSide::Bid ? COLOR_CYAN : COLOR_MAGENTA));
         wprintw(wLog, (gw->name + (isPong?" PONG":" PING") + " TRADE ").data());
         wattroff(wLog, A_BOLD);
-        wprintw(wLog, (string(k.side == mSide::Bid ? "BUY  " : "SELL ")
+        wprintw(wLog, ((k.side == mSide::Bid ? "BUY  " : "SELL ")
           + FN::str8(k.quantity) + ' ' + k.pair.base + " at price "
           + FN::str8(k.price) + ' ' + k.pair.quote + " (value "
           + FN::str8(k.value) + ' ' + k.pair.quote + ")"
@@ -224,10 +224,9 @@ namespace K {
         wattron(wLog, A_BOLD);
         wprintw(wLog, k.data());
         wattroff(wLog, A_BOLD);
-        if (v.empty())
-          wprintw(wLog, string(" ").append(s).data());
-        else {
-          wprintw(wLog, string(" ").append(s).append(" ").data());
+        wprintw(wLog, (" " + s).data());
+        if (!v.empty()) {
+          wprintw(wLog, " ");
           wattroff(wLog, COLOR_PAIR(COLOR_WHITE));
           wattron(wLog, COLOR_PAIR(COLOR_YELLOW));
           wprintw(wLog, v.data());
@@ -281,8 +280,8 @@ namespace K {
         mvwvline(wBorder, yMaxLog-1, 1, ' ', y-1);
         for (map<mPrice, mOrder, greater<mPrice>>::value_type &it : openOrders) {
           wattron(wBorder, COLOR_PAIR(it.second.side == mSide::Bid ? COLOR_CYAN : COLOR_MAGENTA));
-          mvwaddstr(wBorder, ++yOrders, 1, (string(it.second.side == mSide::Bid ? "BID" : "ASK") + " > "
-            + FN::str8(it.second.quantity) + ' ' + it.second.pair.base + " at price "
+          mvwaddstr(wBorder, ++yOrders, 1, (((it.second.side == mSide::Bid ? "BID" : "ASK") + (" > "
+            + FN::str8(it.second.quantity))) + ' ' + it.second.pair.base + " at price "
             + FN::str8(it.second.price) + ' ' + it.second.pair.quote + " (value "
             + FN::str8(abs(it.second.price * it.second.quantity)) + ' ' + it.second.pair.quote + ")"
           ).data());
@@ -296,8 +295,8 @@ namespace K {
         mvwaddch(wBorder, y, 0, ACS_BTEE);
         mvwaddch(wBorder, 0, 12, ACS_RTEE);
         wattron(wBorder, COLOR_PAIR(COLOR_GREEN));
-        string title1 = string("   ") + args.exchange;
-        string title2 = string(" ") + (args.port
+        string title1 = "   " + args.exchange;
+        string title2 = " " + (args.port
           ? "UI" + (wtfismyip.empty()
             ? " on " + protocol + " port " + to_string(args.port)
             : " at " + FN::strL(protocol) + "://" + wtfismyip + ":" + to_string(args.port)
@@ -322,7 +321,7 @@ namespace K {
         mvwaddch(wBorder, 1, 12, ACS_RTEE);
         wattron(wBorder, COLOR_PAIR(COLOR_MAGENTA));
         wattron(wBorder, A_BOLD);
-        waddstr(wBorder, (string(" ") + baseValue + ' ').data());
+        waddstr(wBorder, (" " + baseValue + ' ').data());
         wattroff(wBorder, A_BOLD);
         string base = "?",
                quote = "?";
@@ -339,7 +338,7 @@ namespace K {
         wattron(wBorder, A_BOLD);
         waddstr(wBorder, quoteValue.data());
         wattroff(wBorder, A_BOLD);
-        waddstr(wBorder, (string(" ") + quote + ' ').data());
+        waddstr(wBorder, (" " + quote + ' ').data());
         wattroff(wBorder, COLOR_PAIR(COLOR_CYAN));
         size_t xLenValue = 14+baseValue.length()+quoteValue.length()+base.length()+quote.length()+7,
                xMaxValue = max(xLenValue+1, 18+title1.length()+title2.length());
@@ -395,11 +394,11 @@ namespace K {
           }
           waddstr(wBorder, " while");
           wattron(wBorder, COLOR_PAIR(COLOR_GREEN));
-          waddstr(wBorder, (string(" 1 ") + base + " = ").data());
+          waddstr(wBorder, (" 1 " + base + " = ").data());
           wattron(wBorder, A_BOLD);
           waddstr(wBorder, fairValue.data());
           wattroff(wBorder, A_BOLD);
-          waddstr(wBorder, (string(" ") + quote).data());
+          waddstr(wBorder, (" " + quote).data());
           wattroff(wBorder, COLOR_PAIR(COLOR_GREEN));
           waddch(wBorder, !engine->greenButton ? ' ' : ':');
         }
