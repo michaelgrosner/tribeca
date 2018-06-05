@@ -24,11 +24,6 @@ namespace K {
       void waitUser() {
         client->WELCOME(mMatter::QuoteStatus, hello);
       };
-      void run() {
-        if (args.debugQuotes) return;
-        debuq = [&](const string &k, const mQuote &rawQuote) {};
-        debug = [&](const string &k) {};
-      };
     public:
       void calcQuote() {                                            PRETTY_DEBUG
         bidStatus = mQuoteState::MissingData;
@@ -137,21 +132,21 @@ namespace K {
           return mQuote();
         }
         bool superTradesActive = false;
-        debuq("?", rawQuote); applySuperTrades(&rawQuote, &superTradesActive, widthPing);
-        debuq("A", rawQuote); applyEwmaProtection(&rawQuote);
-        debuq("B", rawQuote); applyTotalBasePosition(&rawQuote);
-        debuq("C", rawQuote); applyStdevProtection(&rawQuote);
-        debuq("D", rawQuote); applyAggressivePositionRebalancing(&rawQuote);
-        debuq("E", rawQuote); applyAK47Increment(&rawQuote);
-        debuq("F", rawQuote); applyBestWidth(&rawQuote);
-        debuq("G", rawQuote); applyTradesPerMinute(&rawQuote, superTradesActive);
-        debuq("H", rawQuote); applyRoundPrice(&rawQuote);
-        debuq("I", rawQuote); applyRoundSize(&rawQuote);
-        debuq("J", rawQuote); applyDepleted(&rawQuote);
-        debuq("K", rawQuote); applyWaitingPing(&rawQuote);
-        debuq("L", rawQuote); applyEwmaTrendProtection(&rawQuote);
-        debuq("!", rawQuote);
-        debug(string("totals ") + "toAsk: " + to_string(wallet->position._baseTotal) + ", "
+        DEBUQ("?", bidStatus, askStatus, rawQuote); applySuperTrades(&rawQuote, &superTradesActive, widthPing);
+        DEBUQ("A", bidStatus, askStatus, rawQuote); applyEwmaProtection(&rawQuote);
+        DEBUQ("B", bidStatus, askStatus, rawQuote); applyTotalBasePosition(&rawQuote);
+        DEBUQ("C", bidStatus, askStatus, rawQuote); applyStdevProtection(&rawQuote);
+        DEBUQ("D", bidStatus, askStatus, rawQuote); applyAggressivePositionRebalancing(&rawQuote);
+        DEBUQ("E", bidStatus, askStatus, rawQuote); applyAK47Increment(&rawQuote);
+        DEBUQ("F", bidStatus, askStatus, rawQuote); applyBestWidth(&rawQuote);
+        DEBUQ("G", bidStatus, askStatus, rawQuote); applyTradesPerMinute(&rawQuote, superTradesActive);
+        DEBUQ("H", bidStatus, askStatus, rawQuote); applyRoundPrice(&rawQuote);
+        DEBUQ("I", bidStatus, askStatus, rawQuote); applyRoundSize(&rawQuote);
+        DEBUQ("J", bidStatus, askStatus, rawQuote); applyDepleted(&rawQuote);
+        DEBUQ("K", bidStatus, askStatus, rawQuote); applyWaitingPing(&rawQuote);
+        DEBUQ("L", bidStatus, askStatus, rawQuote); applyEwmaTrendProtection(&rawQuote);
+        DEBUQ("!", bidStatus, askStatus, rawQuote);
+        DEBUG(string("totals ") + "toAsk: " + to_string(wallet->position._baseTotal) + ", "
                                 + "toBid: " + to_string(wallet->position._quoteTotal));
         return rawQuote;
       };
@@ -498,12 +493,6 @@ namespace K {
           if (it.second.orderStatus == mStatus::Working and (side == mSide::Both or side == it.second.side))
             toCancel.push_back(it.first);
         for (mRandId &it : toCancel) broker->cancelOrder(it);
-      };
-      function<void(const string&, const mQuote&)> debuq = [&](const string &k, const mQuote &rawQuote) {
-        debug("quote" + k + " " + to_string((int)bidStatus) + " " + to_string((int)askStatus) + " " + ((json)rawQuote).dump());
-      };
-      function<void(const string&)> debug = [&](const string &k) {
-        screen->log("DEBUG QE", k);
       };
   };
 }

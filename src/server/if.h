@@ -24,7 +24,7 @@ namespace K {
     };
     virtual void config() = 0;
     virtual void pressme(mHotkey, function<void()>) = 0;
-#define PRESSME(ch, fn) pressme(ch, [&]() { fn(); });
+#define PRESSME(ch, fn) pressme(ch, [&]() { fn(); })
     virtual int error(string, string, bool = false) = 0;
     virtual void waitForUser() = 0;
     virtual string stamp() = 0;
@@ -34,6 +34,9 @@ namespace K {
     virtual void log(const mTrade&, const bool&) = 0;
     virtual void log(const string&, const string&, const string& = "") = 0;
 #define PRETTY_DEBUG if (args.debugEvents) screen->log("DEBUG EV", __PRETTY_FUNCTION__);
+#define DEBOG(x)     if (args.debugOrders) screen->log("DEBUG OG", x)
+#define DEBUG(x)     if (args.debugQuotes) screen->log("DEBUG QE", x)
+#define DEBUQ(x, b, a, q) DEBUG("quote " x " " + to_string((int)b) + ":" + to_string((int)a) + " " + ((json)q).dump())
     virtual void log(const map<mRandId, mOrder>&, const bool&) = 0;
     virtual void log(const mPosition&) = 0;
     virtual void log(const mPrice&) = 0;
@@ -57,9 +60,9 @@ namespace K {
     virtual void timer_Xs() = 0;
     virtual void timer_60s() = 0;
     virtual void welcome(const mMatter&, function<void(json *const)>) = 0;
-#define WELCOME(type, hello) welcome(type, [&](json *const welcome) { hello(welcome); });
+#define WELCOME(type, hello) welcome(type, [&](json *const welcome) { hello(welcome); })
     virtual void clickme(const mMatter&, function<void(const json&)>) = 0;
-#define CLICKME(type, kiss) clickme(type, [&](const json &butterfly) { kiss(butterfly); });
+#define CLICKME(type, kiss) clickme(type, [&](const json &butterfly) { kiss(butterfly); })
   } *client = nullptr;
 
   static struct Wallet {

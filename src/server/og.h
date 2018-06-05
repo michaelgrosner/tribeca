@@ -12,7 +12,7 @@ namespace K {
       };
       void waitData() {
         gw->evDataOrder = [&](mOrder k) {                           PRETTY_DEBUG
-          debug(string("reply  ") + k.orderId + "::" + k.exchangeId + " [" + to_string((int)k.orderStatus) + "]: " + FN::str8(k.quantity) + "/" + FN::str8(k.tradeQuantity) + " at price " + FN::str8(k.price));
+          DEBOG("reply  " + k.orderId + "::" + k.exchangeId + " [" + to_string((int)k.orderStatus) + "]: " + FN::str8(k.quantity) + "/" + FN::str8(k.tradeQuantity) + " at price " + FN::str8(k.price));
           updateOrderState(k);
         };
       };
@@ -25,10 +25,6 @@ namespace K {
         client->CLICKME(mMatter::CleanAllClosedTrades, kissCleanAllClosedTrades);
         client->CLICKME(mMatter::CleanAllTrades,       kissCleanAllTrades);
         client->CLICKME(mMatter::CleanTrade,           kissCleanTrade);
-      };
-      void run() {
-        if (args.debugOrders) return;
-        debug = [](const string &k) {};
       };
     public:
       void sendOrder(
@@ -49,7 +45,7 @@ namespace K {
         }
         if (gw->replace and !replaceOrderId.empty()) {
           if (!orders[replaceOrderId].exchangeId.empty()) {
-            debug(string("update ") + (side == mSide::Bid ? "BID" : "ASK") + " id " + replaceOrderId + ":  at price " + FN::str8(price) + " " + gw->quote);
+            DEBOG(string("update ") + (side == mSide::Bid ? "BID" : "ASK") + " id " + replaceOrderId + ":  at price " + FN::str8(price) + " " + gw->quote);
             orders[replaceOrderId].price = price;
             gw->replace(orders[replaceOrderId].exchangeId, FN::str8(price));
           }
@@ -69,7 +65,7 @@ namespace K {
             postOnly
           ));
           mOrder *o = &orders[newOrderId];
-          debug(string(" send  ") + replaceOrderId + "> " + (o->side == mSide::Bid ? "BID" : "ASK") + " id " + o->orderId + ": " + FN::str8(o->quantity) + " " + o->pair.base + " at price " + FN::str8(o->price) + " " + o->pair.quote);
+          DEBOG(" send  " + replaceOrderId + "> " + (o->side == mSide::Bid ? "BID" : "ASK") + " id " + o->orderId + ": " + FN::str8(o->quantity) + " " + o->pair.base + " at price " + FN::str8(o->price) + " " + o->pair.quote);
           gw->place(
             o->orderId,
             o->side,
@@ -89,11 +85,11 @@ namespace K {
         mOrder *o = &orders[orderId];
         if (o->exchangeId.empty() or o->_waitingCancel + 3e+3 > _Tstamp_) return;
         o->_waitingCancel = _Tstamp_;
-        debug(string("cancel ") + (o->side == mSide::Bid ? "BID id " : "ASK id ") + o->orderId + "::" + o->exchangeId);
+        DEBOG(string("cancel ") + (o->side == mSide::Bid ? "BID id " : "ASK id ") + o->orderId + "::" + o->exchangeId);
         gw->cancel(o->orderId, o->exchangeId);
       };
       void cleanOrder(const mRandId &orderId) {
-        debug(string("remove ") + orderId);
+        DEBOG("remove " + orderId);
         map<mRandId, mOrder>::iterator it = orders.find(orderId);
         if (it != orders.end()) orders.erase(it);
       };
@@ -167,8 +163,8 @@ namespace K {
         k.side = o->side;
         if (saved and !working)
           cleanOrder(o->orderId);
-        else debug(string(" saved ") + (o->side == mSide::Bid ? "BID id " : "ASK id ") + o->orderId + "::" + o->exchangeId + " [" + to_string((int)o->orderStatus) + "]: " + FN::str8(o->quantity) + " " + o->pair.base + " at price " + FN::str8(o->price) + " " + o->pair.quote);
-        debug(string("memory ") + to_string(orders.size()));
+        else DEBOG(string(" saved ") + (o->side == mSide::Bid ? "BID id " : "ASK id ") + o->orderId + "::" + o->exchangeId + " [" + to_string((int)o->orderStatus) + "]: " + FN::str8(o->quantity) + " " + o->pair.base + " at price " + FN::str8(o->price) + " " + o->pair.quote);
+        DEBOG("memory " + to_string(orders.size()));
         if (saved) {
           wallet->calcWalletAfterOrder(k.side);
           toClient(working);
@@ -311,9 +307,6 @@ namespace K {
             sqlite->insert(mMatter::Trades, {}, false, it->tradeId);
             it = tradesHistory.erase(it);
           } else ++it;
-      };
-      function<void(const string&)> debug = [&](const string &k) {
-        screen->log("DEBUG OG", k);
       };
   };
 }
