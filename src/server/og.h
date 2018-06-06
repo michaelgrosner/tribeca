@@ -16,7 +16,7 @@ namespace K {
           updateOrderState(k);
         };
       };
-      void waitUser() {
+      void waitWebAdmin() {
         client->WELCOME(mMatter::Trades,               helloTrades);
         client->WELCOME(mMatter::OrderStatusReports,   helloOrders);
         client->CLICKME(mMatter::SubmitNewOrder,       kissSubmitNewOrder);

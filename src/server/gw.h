@@ -20,10 +20,12 @@ namespace K {
           if (!k) gw->evDataLevels(mLevels());
         };
       };
-      void waitUser() {
+      void waitWebAdmin() {
         client->WELCOME(mMatter::Connectivity, hello);
         client->CLICKME(mMatter::Connectivity, kiss);
-        screen->PRESSME(mHotkey::ESC,          hotkiss);
+      };
+      void waitSysAdmin() {
+        screen->PRESSME(mHotkey::ESC, hotkiss);
       };
       void run() {                                                  PRETTY_DEBUG
         handshake();

@@ -17,7 +17,7 @@ namespace K {
         exec("ATTACH '" + args.diskdata + "' AS " + qpdb + ";");
         screen->log("DB", "loaded OK from", args.diskdata);
       };
-      void run() {
+      void waitWebAdmin() {
         if (args.database == ":memory:") return;
         const char* path = args.database.data();
         size = [path]() {

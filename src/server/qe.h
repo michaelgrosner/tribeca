@@ -21,7 +21,7 @@ namespace K {
         quotingMode[mQuotingMode::Depth]       = &calcDepthOfMarket;
         findMode("loaded");
       };
-      void waitUser() {
+      void waitWebAdmin() {
         client->WELCOME(mMatter::QuoteStatus, hello);
       };
     public:

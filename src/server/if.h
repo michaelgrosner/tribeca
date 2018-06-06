@@ -176,7 +176,7 @@ namespace K {
         }
       };
 //BO non-free gw library functions from build-*/local/lib/K-*.a (it just redefines all virtual gateway class members below).
-/**/  virtual bool online() = 0;                                             // wait for exchange and maybe set async = true
+/**/  virtual bool ready() = 0;                                              // wait for exchange and maybe set async = true
 /**/  virtual string /*BTC unlock */A/*ddress*/() = 0;
 /**/  static Gw*config(mCoinId, mCoinId, string, int, string, string, string, string, string, string, int, int); // set args
 /**/  function<void(mRandId, string)> replace;                               // call         async orders data from exchange
@@ -320,7 +320,8 @@ namespace K {
       virtual void load() {};
       virtual void waitData() {};
       virtual void waitTime() {};
-      virtual void waitUser() {};
+      virtual void waitSysAdmin() {};
+      virtual void waitWebAdmin() {};
       virtual void run() {};
       virtual void end() {};
     public:
@@ -328,13 +329,13 @@ namespace K {
         load();
         waitData();
         waitTime();
-        if (!args.headless)
-          waitUser();
+        if (!args.headless) waitWebAdmin();
+        if (!args.naked)    waitSysAdmin();
         run();
         endingFn.push_back([&](){
           end();
         });
-        if (gw->online()) gw->run();
+        if (gw->ready()) gw->run();
       };
   };
 }

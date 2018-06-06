@@ -10,7 +10,7 @@ namespace K {
         qp = k.at(0);
         screen->log("DB", "loaded Quoting Parameters OK");
       };
-      void waitUser() {
+      void waitWebAdmin() {
         client->WELCOME(mMatter::QuotingParameters, hello);
         client->CLICKME(mMatter::QuotingParameters, kiss);
       };

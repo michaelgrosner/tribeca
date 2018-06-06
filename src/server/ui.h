@@ -75,7 +75,7 @@ namespace K {
           });
         };
       };
-      void waitUser() {
+      void waitWebAdmin() {
         WELCOME(mMatter::ApplicationState,     helloServer);
         WELCOME(mMatter::ProductAdvertisement, helloProduct);
         WELCOME(mMatter::Notepad,              helloNotes);

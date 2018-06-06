@@ -25,7 +25,7 @@ namespace K  {
           ((EV*)timer->getData())->timer_1s();
         }, 0, 1e+3);
       };
-      void waitUser() {
+      void waitWebAdmin() {
         client->socket = socket;
         socket->createGroup<uWS::SERVER>(uWS::PERMESSAGE_DEFLATE);
       };

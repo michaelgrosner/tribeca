@@ -31,7 +31,7 @@ namespace K {
           calcWallet();
         };
       };
-      void waitUser() {
+      void waitWebAdmin() {
         client->WELCOME(mMatter::Position,           helloPosition);
         client->WELCOME(mMatter::TradeSafetyValue,   helloSafety);
         client->WELCOME(mMatter::TargetBasePosition, helloTargetBasePos);

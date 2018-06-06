@@ -78,7 +78,7 @@ namespace K {
           levelUp(k);
         };
       };
-      void waitUser() {
+      void waitWebAdmin() {
         client->WELCOME(mMatter::MarketData,  helloLevels);
         client->WELCOME(mMatter::MarketTrade, helloTrade);
         client->WELCOME(mMatter::FairValue,   helloFair);
