@@ -51,6 +51,8 @@ namespace K {
       };
       void pressme(mHotkey ch, function<void()> fn) {
         if (!wBorder) return;
+        if (hotFn.find(ch) != hotFn.end())
+          exit(error("SH", string("Too many handlers for \"") + (char)ch + "\" pressme event"));
         hotFn[ch] = fn;
       };
       int error(string k, string s, bool reboot = false) {
@@ -62,13 +64,9 @@ namespace K {
       void waitForUser() {
         if (!hotkey.valid() or hotkey.wait_for(chrono::nanoseconds(0)) != future_status::ready) return;
         mHotkey ch = hotkey.get();
-        if (ch == mHotkey::q or ch == mHotkey::Q)
-          raise(SIGINT);
-        else {
-          if (hotFn.find(ch) != hotFn.end())
-            hotFn[ch]();
-          hotkeys();
-        }
+        if (hotFn.find(ch) != hotFn.end())
+          hotFn[ch]();
+        hotkeys();
       };
       string stamp() {
         chrono::system_clock::time_point clock = _Tclock_;

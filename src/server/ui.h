@@ -87,14 +87,12 @@ namespace K {
     public:
       void welcome(const mMatter &type, function<void(json *const)> fn) {
         if (hello.find((char)type) != hello.end())
-          exit(screen->error("UI", string("Use only a single unique handler for \"")
-            + (char)type + "\" welcome event"));
+          exit(screen->error("UI", string("Too many handlers for \"") + (char)type + "\" welcome event"));
         hello[(char)type] = fn;
       };
       void clickme(const mMatter &type, function<void(const json&)> fn) {
         if (kisses.find((char)type) != kisses.end())
-          exit(screen->error("UI", string("Use only a single unique handler for \"")
-            + (char)type + "\" clickme event"));
+          exit(screen->error("UI", string("Too many handlers for \"") + (char)type + "\" clickme event"));
         kisses[(char)type] = fn;
       };
       void timer_Xs() {
