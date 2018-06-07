@@ -578,7 +578,7 @@ namespace K {
     bool empty() {
       return bids.empty() or asks.empty();
     };
-    bool clear() {
+    void clear() {
       bids.clear();
       asks.clear();
     };
