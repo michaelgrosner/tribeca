@@ -11,10 +11,7 @@ namespace K {
         screen->log("DB", "loaded " + to_string(tradesHistory.size()) + " historical Trades");
       };
       void waitData() {
-        gw->evDataOrder = [&](mOrder k) {                           PRETTY_DEBUG
-          DEBOG("reply  " + k.orderId + "::" + k.exchangeId + " [" + to_string((int)k.orderStatus) + "]: " + FN::str8(k.quantity) + "/" + FN::str8(k.tradeQuantity) + " at price " + FN::str8(k.price));
-          updateOrderState(k);
-        };
+        gw->WRITEME(mOrder, orderUp);
       };
       void waitWebAdmin() {
         client->WELCOME(mMatter::Trades,               helloTrades);
@@ -134,6 +131,10 @@ namespace K {
           false,
           false
         );
+      };
+      void orderUp(mOrder k) {                                      PRETTY_DEBUG
+        DEBOG("reply  " + k.orderId + "::" + k.exchangeId + " [" + to_string((int)k.orderStatus) + "]: " + FN::str8(k.quantity) + "/" + FN::str8(k.tradeQuantity) + " at price " + FN::str8(k.price));
+        updateOrderState(k);
       };
       void updateOrderState(mOrder k) {
         bool saved = k.orderStatus != mStatus::New,

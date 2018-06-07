@@ -71,12 +71,8 @@ namespace K {
         screen->log("DB", "loaded " + to_string(fairValue96h.size()) + " historical FairValues");
       };
       void waitData() {
-        gw->evDataTrade = [&](mTrade k) {                           PRETTY_DEBUG
-          tradeUp(k);
-        };
-        gw->evDataLevels = [&](mLevels k) {                         PRETTY_DEBUG
-          levelUp(k);
-        };
+        gw->WRITEME(mTrade,  tradeUp);
+        gw->WRITEME(mLevels, levelUp);
       };
       void waitWebAdmin() {
         client->WELCOME(mMatter::MarketData,  helloLevels);
@@ -161,13 +157,13 @@ namespace K {
           ) += it.quantity;
         trades.clear();
       };
-      void tradeUp(mTrade k) {
+      void tradeUp(mTrade k) {                                      PRETTY_DEBUG
         k.pair = mPair(gw->base, gw->quote);
         k.time = _Tstamp_;
         trades.push_back(k);
         client->send(mMatter::MarketTrade, k);
       };
-      void levelUp(mLevels k) {
+      void levelUp(mLevels k) {                                     PRETTY_DEBUG
         levels = k;
         if (!filterBidOrders.empty()) filter(&levels.bids, filterBidOrders);
         if (!filterAskOrders.empty()) filter(&levels.asks, filterAskOrders);

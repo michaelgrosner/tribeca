@@ -146,20 +146,22 @@ namespace K {
         if (async) countdown = 1;
         socket->run();
       };
-      function<void(mOrder)>        evDataOrder;
-      function<void(mTrade)>        evDataTrade;
-      function<void(mLevels)>       evDataLevels;
-      function<void(mWallets)>      evDataWallet;
-      function<void(mConnectivity)> evConnectOrder,
-                                    evConnectMarket;
+      function<void(mOrder)>        write_mOrder;
+      function<void(mTrade)>        write_mTrade;
+      function<void(mLevels)>       write_mLevels;
+      function<void(mWallets)>      write_mWallets;
+      function<void(mConnectivity)> write_mConnectivityOrders,
+                                    write_mConnectivityMarket;
+#define WRITEME(  mData,     fn) write_##mData     = [&](mData data) { fn(data); }
+#define WRITETOME(mData, to, fn) write_##mData##to = [&](mData data) { fn(data); }
       bool waitForData() {
         return (async
           ? false
-          : waitFor(replyOrders, evDataOrder)
-            | waitFor(replyLevels, evDataLevels)
-            | waitFor(replyTrades, evDataTrade)
-        ) | waitFor(replyWallets, evDataWallet)
-          | waitFor(replyCancelAll, evDataOrder);
+          : waitFor(replyOrders, write_mOrder)
+            | waitFor(replyLevels, write_mLevels)
+            | waitFor(replyTrades, write_mTrade)
+        ) | waitFor(replyWallets, write_mWallets)
+          | waitFor(replyCancelAll, write_mOrder);
       };
       function<bool()> wallet = [&]() { return !(async_wallet() or !askFor(replyWallets, [&]() { return sync_wallet(); })); };
       function<bool()> levels = [&]() { return askFor(replyLevels, [&]() { return sync_levels(); }); };
@@ -169,9 +171,9 @@ namespace K {
       void clear() {
         if (args.dustybot)
           screen->log("GW " + name, "--dustybot is enabled, remember to cancel manually any open order.");
-        else if (evDataOrder) {
+        else if (write_mOrder) {
           screen->log("GW " + name, "Attempting to cancel all open orders, please wait.");
-          for (mOrder &it : sync_cancelAll()) evDataOrder(it);
+          for (mOrder &it : sync_cancelAll()) write_mOrder(it);
           screen->log("GW " + name, "cancel all open orders OK");
         }
       };

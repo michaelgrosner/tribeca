@@ -20,16 +20,13 @@ namespace K {
         if (!k.empty()) {
           k = k.at(0);
           targetBasePosition = k.value("tbp", 0.0);
-          if (k.find("pDiv") != k.end()) positionDivergence = k.value("pDiv", 0.0);
+          positionDivergence = k.value("pDiv", 0.0);
           sideAPR = k.value("sideAPR", "");
         }
         screen->log("DB", "loaded TBP = " + FN::str8(targetBasePosition) + " " + gw->base);
       };
       void waitData() {
-        gw->evDataWallet = [&](mWallets k) {                        PRETTY_DEBUG
-          if (!k.empty()) balance = k;
-          calcWallet();
-        };
+        gw->WRITEME(mWallets, walletUp);
       };
       void waitWebAdmin() {
         client->WELCOME(mMatter::Position,           helloPosition);
@@ -141,6 +138,10 @@ namespace K {
       };
       void helloTargetBasePos(json *const welcome) {
         *welcome = { positionState() };
+      };
+      void walletUp(mWallets k) {                                 PRETTY_DEBUG
+        if (!k.empty()) balance = k;
+        calcWallet();
       };
       mSafety nextSafety() {
         mAmount buySize = qp.percentageValues

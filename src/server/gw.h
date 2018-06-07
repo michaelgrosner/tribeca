@@ -12,13 +12,8 @@ namespace K {
         adminAgreement = (mConnectivity)args.autobot;
       };
       void waitData() {
-        gw->evConnectOrder = [&](mConnectivity k) {
-          gwSemaphore(&greenGatewayOrders, k);
-        };
-        gw->evConnectMarket = [&](mConnectivity k) {
-          gwSemaphore(&greenGatewayMarket, k);
-          if (!k) gw->evDataLevels(mLevels());
-        };
+        gw->WRITETOME(mConnectivity, Orders, ordersUp);
+        gw->WRITETOME(mConnectivity, Market, marketUp);
       };
       void waitWebAdmin() {
         client->WELCOME(mMatter::Connectivity, hello);
@@ -49,6 +44,13 @@ namespace K {
       void hotkiss() {
         adminAgreement = (mConnectivity)!adminAgreement;
         gwAdminSemaphore();
+      };
+      void ordersUp(mConnectivity k) {
+        gwSemaphore(&greenGatewayOrders, k);
+      };
+      void marketUp(mConnectivity k) {
+        gwSemaphore(&greenGatewayMarket, k);
+        if (!k) gw->write_mLevels(mLevels());
       };
       void gwSemaphore(mConnectivity *const current, const mConnectivity &updated) {
         if (*current != updated) {

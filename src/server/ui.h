@@ -257,7 +257,7 @@ namespace K {
       json serverState() {
         return {
           {"memory", memorySize()},
-          {"inet", string(args.inet?:"")},
+          {"inet", string(args.inet ?: "")},
           {"freq", engine->orders_60s},
           {"theme", args.ignoreMoon + args.ignoreSun},
           {"dbsize", sqlite->size()},
