@@ -47,7 +47,7 @@ namespace K {
           engine->greenGateway = k;
           gwAdminSemaphore();
         }
-        if (!k) gw->write_mLevels(mLevels());
+        if (!k) market->levels.clear();
       };
       void gwAdminSemaphore() {
         mConnectivity updated = adminAgreement * engine->greenGateway;

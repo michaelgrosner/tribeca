@@ -130,6 +130,24 @@ namespace K {
       void helloEwma(json *const welcome) {
         *welcome = { chartStats() };
       };
+      void read_mTrade(mTrade k) {                                  PRETTY_DEBUG
+        k.pair = mPair(gw->base, gw->quote);
+        k.time = _Tstamp_;
+        trades.push_back(k);
+        client->send(mMatter::MarketTrade, k);
+      };
+      void read_mLevels(mLevels k) {                                PRETTY_DEBUG
+        levels = k;
+        if (!filterBidOrders.empty()) filter(&levels.bids, filterBidOrders);
+        if (!filterAskOrders.empty()) filter(&levels.asks, filterAskOrders);
+        calcFairValue();
+        engine->calcQuote();
+        if (levelsDiff.empty() or k.empty()
+          or mgT_369ms + max(369.0, qp.delayUI * 1e+3) > _Tstamp_
+        ) return;
+        client->send(mMatter::MarketData, levelsDiff.diff(k));
+        mgT_369ms = _Tstamp_;
+      };
       void calcStatsStdevProtection() {
         if (levels.empty()) return;
         mPrice topBid = levels.bids.begin()->price,
@@ -156,24 +174,6 @@ namespace K {
             : takersBuySize60s
           ) += it.quantity;
         trades.clear();
-      };
-      void read_mTrade(mTrade k) {                                  PRETTY_DEBUG
-        k.pair = mPair(gw->base, gw->quote);
-        k.time = _Tstamp_;
-        trades.push_back(k);
-        client->send(mMatter::MarketTrade, k);
-      };
-      void read_mLevels(mLevels k) {                                PRETTY_DEBUG
-        levels = k;
-        if (!filterBidOrders.empty()) filter(&levels.bids, filterBidOrders);
-        if (!filterAskOrders.empty()) filter(&levels.asks, filterAskOrders);
-        calcFairValue();
-        engine->calcQuote();
-        if (levelsDiff.empty() or k.empty()
-          or mgT_369ms + max(369e+0, qp.delayUI * 1e+3) > _Tstamp_
-        ) return;
-        client->send(mMatter::MarketData, levelsDiff.diff(k));
-        mgT_369ms = _Tstamp_;
       };
       void filter(vector<mLevel> *k, map<mPrice, mAmount> o) {
         for (vector<mLevel>::iterator it = k->begin(); it != k->end();) {

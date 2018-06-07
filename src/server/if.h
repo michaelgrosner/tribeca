@@ -320,8 +320,8 @@ namespace K {
       virtual void load() {};
       virtual void waitData() {};
       virtual void waitTime() {};
-      virtual void waitSysAdmin() {};
       virtual void waitWebAdmin() {};
+      virtual void waitSysAdmin() {};
       virtual void run() {};
       virtual void end() {};
     public:

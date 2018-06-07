@@ -578,6 +578,10 @@ namespace K {
     bool empty() {
       return bids.empty() or asks.empty();
     };
+    bool clear() {
+      bids.clear();
+      asks.clear();
+    };
   };
   static void to_json(json &j, const mLevels &k) {
     j = {
