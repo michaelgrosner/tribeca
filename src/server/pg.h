@@ -26,7 +26,7 @@ namespace K {
         screen->log("DB", "loaded TBP = " + FN::str8(targetBasePosition) + " " + gw->base);
       };
       void waitData() {
-        gw->WRITEME(mWallets, walletUp);
+        gw->WRITEME(mWallets, read_mWallets);
       };
       void waitWebAdmin() {
         client->WELCOME(mMatter::Position,           helloPosition);
@@ -139,7 +139,7 @@ namespace K {
       void helloTargetBasePos(json *const welcome) {
         *welcome = { positionState() };
       };
-      void walletUp(mWallets k) {                                 PRETTY_DEBUG
+      void read_mWallets(mWallets k) {                              PRETTY_DEBUG
         if (!k.empty()) balance = k;
         calcWallet();
       };

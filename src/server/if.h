@@ -150,10 +150,8 @@ namespace K {
       function<void(mTrade)>        write_mTrade;
       function<void(mLevels)>       write_mLevels;
       function<void(mWallets)>      write_mWallets;
-      function<void(mConnectivity)> write_mConnectivityOrders,
-                                    write_mConnectivityMarket;
-#define WRITEME(  mData,     fn) write_##mData     = [&](mData data) { fn(data); }
-#define WRITETOME(mData, to, fn) write_##mData##to = [&](mData data) { fn(data); }
+      function<void(mConnectivity)> write_mConnectivity;
+#define WRITEME(mData, fn) write_##mData = [&](mData data) { fn(data); }
       bool waitForData() {
         return (async
           ? false

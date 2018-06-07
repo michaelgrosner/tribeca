@@ -4,16 +4,13 @@
 namespace K {
   class GW: public Klass {
     private:
-      mConnectivity adminAgreement     = mConnectivity::Disconnected,
-                    greenGatewayOrders = mConnectivity::Disconnected,
-                    greenGatewayMarket = mConnectivity::Disconnected;
+      mConnectivity adminAgreement = mConnectivity::Disconnected;
     protected:
       void load() {
         adminAgreement = (mConnectivity)args.autobot;
       };
       void waitData() {
-        gw->WRITETOME(mConnectivity, Orders, ordersUp);
-        gw->WRITETOME(mConnectivity, Market, marketUp);
+        gw->WRITEME(mConnectivity, read_mConnectivity);
       };
       void waitWebAdmin() {
         client->WELCOME(mMatter::Connectivity, hello);
@@ -35,9 +32,9 @@ namespace K {
       };
       void kiss(const json &butterfly) {
         if (!butterfly.is_object() or !butterfly["state"].is_number()) return;
-        mConnectivity updated = butterfly["state"].get<mConnectivity>();
-        if (adminAgreement != updated) {
-          adminAgreement = updated;
+        mConnectivity k = butterfly["state"].get<mConnectivity>();
+        if (adminAgreement != k) {
+          adminAgreement = k;
           gwAdminSemaphore();
         }
       };
@@ -45,19 +42,12 @@ namespace K {
         adminAgreement = (mConnectivity)!adminAgreement;
         gwAdminSemaphore();
       };
-      void ordersUp(mConnectivity k) {
-        gwSemaphore(&greenGatewayOrders, k);
-      };
-      void marketUp(mConnectivity k) {
-        gwSemaphore(&greenGatewayMarket, k);
-        if (!k) gw->write_mLevels(mLevels());
-      };
-      void gwSemaphore(mConnectivity *const current, const mConnectivity &updated) {
-        if (*current != updated) {
-          *current = updated;
-          engine->greenGateway = greenGatewayMarket * greenGatewayOrders;
+      void read_mConnectivity(mConnectivity k) {
+        if (engine->greenGateway != k) {
+          engine->greenGateway = k;
           gwAdminSemaphore();
         }
+        if (!k) gw->write_mLevels(mLevels());
       };
       void gwAdminSemaphore() {
         mConnectivity updated = adminAgreement * engine->greenGateway;
