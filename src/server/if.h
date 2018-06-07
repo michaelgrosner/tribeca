@@ -151,7 +151,7 @@ namespace K {
       function<void(mLevels)>       write_mLevels;
       function<void(mWallets)>      write_mWallets;
       function<void(mConnectivity)> write_mConnectivity;
-#define WRITEME(mData, fn) write_##mData = [&](mData data) { fn(data); }
+#define WRITEME(mData, fn) write_##mData = [&](mData rawdata) { fn(rawdata); }
       bool waitForData() {
         return (async
           ? false

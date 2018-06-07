@@ -26,12 +26,12 @@ namespace K {
         screen->log("DB", "loaded TBP = " + FN::str8(targetBasePosition) + " " + gw->base);
       };
       void waitData() {
-        gw->WRITEME(mWallets, read_mWallets);
+        gw->WRITEME(mWallets, read);
       };
       void waitWebAdmin() {
-        client->WELCOME(mMatter::Position,           helloPosition);
-        client->WELCOME(mMatter::TradeSafetyValue,   helloSafety);
-        client->WELCOME(mMatter::TargetBasePosition, helloTargetBasePos);
+        client->WELCOME(mMatter::Position,           hello_Position);
+        client->WELCOME(mMatter::TradeSafetyValue,   hello_Safety);
+        client->WELCOME(mMatter::TargetBasePosition, hello_TargetBasePos);
       };
     public:
       void calcSafety() {
@@ -130,17 +130,17 @@ namespace K {
         calcSafety();
       };
     private:
-      void helloPosition(json *const welcome) {
+      void hello_Position(json *const welcome) {
         *welcome = { position };
       };
-      void helloSafety(json *const welcome) {
+      void hello_Safety(json *const welcome) {
         *welcome = { safety };
       };
-      void helloTargetBasePos(json *const welcome) {
+      void hello_TargetBasePos(json *const welcome) {
         *welcome = { positionState() };
       };
-      void read_mWallets(mWallets k) {                              PRETTY_DEBUG
-        if (!k.empty()) balance = k;
+      void read(mWallets rawdata) {                                 PRETTY_DEBUG
+        if (!rawdata.empty()) balance = rawdata;
         calcWallet();
       };
       mSafety nextSafety() {

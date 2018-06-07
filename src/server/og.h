@@ -11,17 +11,17 @@ namespace K {
         screen->log("DB", "loaded " + to_string(tradesHistory.size()) + " historical Trades");
       };
       void waitData() {
-        gw->WRITEME(mOrder, read_mOrder);
+        gw->WRITEME(mOrder, read);
       };
       void waitWebAdmin() {
-        client->WELCOME(mMatter::Trades,               helloTrades);
-        client->WELCOME(mMatter::OrderStatusReports,   helloOrders);
-        client->CLICKME(mMatter::SubmitNewOrder,       kissSubmitNewOrder);
-        client->CLICKME(mMatter::CancelOrder,          kissCancelOrder);
-        client->CLICKME(mMatter::CancelAllOrders,      kissCancelAllOrders);
-        client->CLICKME(mMatter::CleanAllClosedTrades, kissCleanAllClosedTrades);
-        client->CLICKME(mMatter::CleanAllTrades,       kissCleanAllTrades);
-        client->CLICKME(mMatter::CleanTrade,           kissCleanTrade);
+        client->WELCOME(mMatter::Trades,               hello_Trades);
+        client->WELCOME(mMatter::OrderStatusReports,   hello_Orders);
+        client->CLICKME(mMatter::SubmitNewOrder,       kiss_SubmitNewOrder);
+        client->CLICKME(mMatter::CancelOrder,          kiss_CancelOrder);
+        client->CLICKME(mMatter::CancelAllOrders,      kiss_CancelAllOrders);
+        client->CLICKME(mMatter::CleanAllClosedTrades, kiss_CleanAllClosedTrades);
+        client->CLICKME(mMatter::CleanAllTrades,       kiss_CleanAllTrades);
+        client->CLICKME(mMatter::CleanTrade,           kiss_CleanTrade);
       };
     public:
       void sendOrder(
@@ -91,36 +91,36 @@ namespace K {
         if (it != orders.end()) orders.erase(it);
       };
     private:
-      void helloTrades(json *const welcome) {
+      void hello_Trades(json *const welcome) {
         for (mTrade &it : tradesHistory)
           it.loadedFromDB = true;
         *welcome = tradesHistory;
       };
-      void helloOrders(json *const welcome) {
+      void hello_Orders(json *const welcome) {
         for (map<mRandId, mOrder>::value_type &it : orders)
           if (mStatus::Working == it.second.orderStatus)
             welcome->push_back(it.second);
       };
-      void kissCancelAllOrders(const json &butterfly) {
+      void kiss_CancelAllOrders(const json &butterfly) {
         cancelOpenOrders();
       };
-      void kissCleanAllClosedTrades(const json &butterfly) {
+      void kiss_CleanAllClosedTrades(const json &butterfly) {
         cleanClosedTrades();
       };
-      void kissCleanAllTrades(const json &butterfly) {
+      void kiss_CleanAllTrades(const json &butterfly) {
         cleanTrade();
       };
-      void kissCleanTrade(const json &butterfly) {
+      void kiss_CleanTrade(const json &butterfly) {
         if (butterfly.is_object() and butterfly["tradeId"].is_string())
           cleanTrade(butterfly["tradeId"].get<string>());
       };
-      void kissCancelOrder(const json &butterfly) {
+      void kiss_CancelOrder(const json &butterfly) {
         mRandId orderId = (butterfly.is_object() and butterfly["orderId"].is_string())
           ? butterfly["orderId"].get<mRandId>() : "";
         if (orderId.empty() or orders.find(orderId) == orders.end()) return;
         cancelOrder(orderId);
       };
-      void kissSubmitNewOrder(const json &butterfly) {
+      void kiss_SubmitNewOrder(const json &butterfly) {
         sendOrder(
           vector<mRandId>(),
           butterfly.value("side", "") == "Bid" ? mSide::Bid : mSide::Ask,
@@ -132,9 +132,9 @@ namespace K {
           false
         );
       };
-      void read_mOrder(mOrder k) {                                  PRETTY_DEBUG
-        DEBOG("reply  " + k.orderId + "::" + k.exchangeId + " [" + to_string((int)k.orderStatus) + "]: " + FN::str8(k.quantity) + "/" + FN::str8(k.tradeQuantity) + " at price " + FN::str8(k.price));
-        updateOrderState(k);
+      void read(mOrder rawdata) {                                  PRETTY_DEBUG
+        DEBOG("reply  " + rawdata.orderId + "::" + rawdata.exchangeId + " [" + to_string((int)rawdata.orderStatus) + "]: " + FN::str8(rawdata.quantity) + "/" + FN::str8(rawdata.tradeQuantity) + " at price " + FN::str8(rawdata.price));
+        updateOrderState(rawdata);
       };
       void updateOrderState(mOrder k) {
         bool saved = k.orderStatus != mStatus::New,

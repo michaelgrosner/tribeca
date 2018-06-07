@@ -76,10 +76,10 @@ namespace K {
         };
       };
       void waitWebAdmin() {
-        WELCOME(mMatter::ApplicationState,     helloServer);
-        WELCOME(mMatter::ProductAdvertisement, helloProduct);
-        WELCOME(mMatter::Notepad,              helloNotes);
-        CLICKME(mMatter::Notepad,              kissNotes);
+        WELCOME(mMatter::ApplicationState,     hello_Server);
+        WELCOME(mMatter::ProductAdvertisement, hello_Product);
+        WELCOME(mMatter::Notepad,              hello_Notes);
+        CLICKME(mMatter::Notepad,              kiss_Notes);
       };
       void run() {
         send = send_nowhere;
@@ -105,10 +105,10 @@ namespace K {
         engine->orders_60s = 0;
       };
     private:
-      void helloServer(json *const welcome) {
+      void hello_Server(json *const welcome) {
         *welcome = { serverState() };
       };
-      void helloProduct(json *const welcome) {
+      void hello_Product(json *const welcome) {
         *welcome = { {
           {"exchange", gw->exchange},
           {"pair", mPair(gw->base, gw->quote)},
@@ -118,10 +118,10 @@ namespace K {
           {"homepage", "https://github.com/ctubio/Krypto-trading-bot"}
         } };
       };
-      void helloNotes(json *const welcome) {
+      void hello_Notes(json *const welcome) {
         *welcome = { notepad };
       };
-      void kissNotes(const json &butterfly) {
+      void kiss_Notes(const json &butterfly) {
         if (butterfly.is_array() and butterfly.size())
           notepad = butterfly.at(0);
       };

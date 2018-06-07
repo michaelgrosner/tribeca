@@ -75,10 +75,10 @@ namespace K {
         gw->WRITEME(mLevels, read_mLevels);
       };
       void waitWebAdmin() {
-        client->WELCOME(mMatter::MarketData,  helloLevels);
-        client->WELCOME(mMatter::MarketTrade, helloTrade);
-        client->WELCOME(mMatter::FairValue,   helloFair);
-        client->WELCOME(mMatter::EWMAChart,   helloEwma);
+        client->WELCOME(mMatter::MarketData,  hello_Levels);
+        client->WELCOME(mMatter::MarketTrade, hello_Trade);
+        client->WELCOME(mMatter::FairValue,   hello_Fair);
+        client->WELCOME(mMatter::EWMAChart,   hello_Ewma);
       };
     public:
       void calcStats() {
@@ -116,36 +116,36 @@ namespace K {
         if (FN::trueOnce(&qp._diffUEP)) calcEwmaHistory(&mgEwmaU, qp.ultraShortEwmaPeriods, "UltraShort");
       };
     private:
-      void helloLevels(json *const welcome) {
+      void hello_Levels(json *const welcome) {
         *welcome = { levelsDiff.reset(levels) };
       };
-      void helloTrade(json *const welcome) {
+      void hello_Trade(json *const welcome) {
         *welcome = trades;
       };
-      void helloFair(json *const welcome) {
+      void hello_Fair(json *const welcome) {
         *welcome = { {
           {"price", fairValue}
         } };
       };
-      void helloEwma(json *const welcome) {
+      void hello_Ewma(json *const welcome) {
         *welcome = { chartStats() };
       };
-      void read_mTrade(mTrade k) {                                  PRETTY_DEBUG
-        k.pair = mPair(gw->base, gw->quote);
-        k.time = _Tstamp_;
-        trades.push_back(k);
-        client->send(mMatter::MarketTrade, k);
+      void read_mTrade(mTrade rawdata) {                            PRETTY_DEBUG
+        rawdata.pair = mPair(gw->base, gw->quote);
+        rawdata.time = _Tstamp_;
+        trades.push_back(rawdata);
+        client->send(mMatter::MarketTrade, rawdata);
       };
-      void read_mLevels(mLevels k) {                                PRETTY_DEBUG
-        levels = k;
+      void read_mLevels(mLevels rawdata) {                          PRETTY_DEBUG
+        levels = rawdata;
         if (!filterBidOrders.empty()) filter(&levels.bids, filterBidOrders);
         if (!filterAskOrders.empty()) filter(&levels.asks, filterAskOrders);
         calcFairValue();
         engine->calcQuote();
-        if (levelsDiff.empty() or k.empty()
+        if (levelsDiff.empty() or rawdata.empty()
           or mgT_369ms + max(369.0, qp.delayUI * 1e+3) > _Tstamp_
         ) return;
-        client->send(mMatter::MarketData, levelsDiff.diff(k));
+        client->send(mMatter::MarketData, levelsDiff.diff(rawdata));
         mgT_369ms = _Tstamp_;
       };
       void calcStatsStdevProtection() {

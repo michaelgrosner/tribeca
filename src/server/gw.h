@@ -10,7 +10,7 @@ namespace K {
         adminAgreement = (mConnectivity)args.autobot;
       };
       void waitData() {
-        gw->WRITEME(mConnectivity, read_mConnectivity);
+        gw->WRITEME(mConnectivity, read);
       };
       void waitWebAdmin() {
         client->WELCOME(mMatter::Connectivity, hello);
@@ -35,21 +35,21 @@ namespace K {
         mConnectivity k = butterfly["state"].get<mConnectivity>();
         if (adminAgreement != k) {
           adminAgreement = k;
-          gwAdminSemaphore();
+          gwSemaphore();
         }
       };
       void hotkiss() {
         adminAgreement = (mConnectivity)!adminAgreement;
-        gwAdminSemaphore();
+        gwSemaphore();
       };
-      void read_mConnectivity(mConnectivity k) {
-        if (engine->greenGateway != k) {
-          engine->greenGateway = k;
-          gwAdminSemaphore();
+      void read(mConnectivity rawdata) {
+        if (engine->greenGateway != rawdata) {
+          engine->greenGateway = rawdata;
+          gwSemaphore();
         }
-        if (!k) market->levels.clear();
+        if (!rawdata) market->levels.clear();
       };
-      void gwAdminSemaphore() {
+      void gwSemaphore() {
         mConnectivity updated = adminAgreement * engine->greenGateway;
         if (engine->greenButton != updated) {
           engine->greenButton = updated;
