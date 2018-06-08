@@ -42,7 +42,7 @@ namespace K {
         adminAgreement = (mConnectivity)!adminAgreement;
         gwSemaphore();
       };
-      void read(mConnectivity rawdata) {
+      void read(const mConnectivity &rawdata) {
         if (engine->greenGateway != rawdata) {
           engine->greenGateway = rawdata;
           gwSemaphore();

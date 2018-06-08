@@ -139,7 +139,7 @@ namespace K {
       void hello_TargetBasePos(json *const welcome) {
         *welcome = { positionState() };
       };
-      void read(mWallets rawdata) {                                 PRETTY_DEBUG
+      void read(const mWallets &rawdata) {                          PRETTY_DEBUG
         if (!rawdata.empty()) balance = rawdata;
         calcWallet();
       };

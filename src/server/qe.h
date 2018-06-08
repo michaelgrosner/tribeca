@@ -473,7 +473,7 @@ namespace K {
                         keepWorking;
         mClock now = _Tstamp_;
         for (map<mRandId, mOrder>::value_type &it : broker->orders)
-          if (it.second.side != side) continue;
+          if (it.second.side != side or !it.second.preferPostOnly) continue;
           else if (abs(it.second.price - q.price) < gw->minTick) return;
           else if (it.second.orderStatus == mStatus::New) {
             if (qp.safety != mQuotingSafety::AK47 or ++n >= qp.bullets) return;
@@ -490,8 +490,9 @@ namespace K {
       void stopAllQuotes(mSide side) {
         vector<mRandId> toCancel;
         for (map<mRandId, mOrder>::value_type &it : broker->orders)
-          if (it.second.orderStatus == mStatus::Working and (side == mSide::Both or side == it.second.side))
-            toCancel.push_back(it.first);
+          if (it.second.orderStatus == mStatus::Working and (side == mSide::Both
+              or (side == it.second.side and it.second.preferPostOnly)
+          )) toCancel.push_back(it.first);
         for (mRandId &it : toCancel) broker->cancelOrder(it);
       };
   };

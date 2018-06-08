@@ -49,7 +49,7 @@ namespace K {
         refresh();
         hotkeys();
       };
-      void pressme(mHotkey ch, function<void()> fn) {
+      void pressme(const mHotkey &ch, function<void()> fn) {
         if (!wBorder) return;
         if (hotFn.find(ch) != hotFn.end())
           exit(error("SH", string("Too many handlers for \"") + (char)ch + "\" pressme event"));

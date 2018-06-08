@@ -122,7 +122,7 @@ namespace K {
       };
       void kiss_SubmitNewOrder(const json &butterfly) {
         sendOrder(
-          vector<mRandId>(),
+          {},
           butterfly.value("side", "") == "Bid" ? mSide::Bid : mSide::Ask,
           butterfly.value("price", 0.0),
           butterfly.value("quantity", 0.0),
@@ -132,7 +132,7 @@ namespace K {
           false
         );
       };
-      void read(mOrder rawdata) {                                  PRETTY_DEBUG
+      void read(const mOrder &rawdata) {                            PRETTY_DEBUG
         DEBOG("reply  " + rawdata.orderId + "::" + rawdata.exchangeId + " [" + to_string((int)rawdata.orderStatus) + "]: " + FN::str8(rawdata.quantity) + "/" + FN::str8(rawdata.tradeQuantity) + " at price " + FN::str8(rawdata.price));
         updateOrderState(rawdata);
       };

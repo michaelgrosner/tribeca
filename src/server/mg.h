@@ -130,13 +130,11 @@ namespace K {
       void hello_Ewma(json *const welcome) {
         *welcome = { chartStats() };
       };
-      void read_mTrade(mTrade rawdata) {                            PRETTY_DEBUG
-        rawdata.pair = mPair(gw->base, gw->quote);
-        rawdata.time = _Tstamp_;
+      void read_mTrade(const mTrade &rawdata) {                     PRETTY_DEBUG
         trades.push_back(rawdata);
         client->send(mMatter::MarketTrade, rawdata);
       };
-      void read_mLevels(mLevels rawdata) {                          PRETTY_DEBUG
+      void read_mLevels(const mLevels &rawdata) {                   PRETTY_DEBUG
         levels = rawdata;
         if (!filterBidOrders.empty()) filter(&levels.bids, filterBidOrders);
         if (!filterAskOrders.empty()) filter(&levels.asks, filterAskOrders);

@@ -308,7 +308,7 @@ namespace K {
       amount = a;
       held = h;
     };
-    bool empty() {
+    bool empty() const {
       return currency.empty();
     };
   };
@@ -328,7 +328,7 @@ namespace K {
     mWallets(mWallet b, mWallet q):
       base(b), quote(q)
     {};
-    bool empty() {
+    bool empty() const {
       return base.empty() or quote.empty();
     };
   };
@@ -375,7 +375,7 @@ namespace K {
     mSafety(double b, double s, double c, mPrice bP, mPrice sP, mPrice bS, mPrice sS):
       buy(b), sell(s), combined(c), buyPing(bP), sellPing(sP), buySize(bS), sellSize(sS)
     {};
-    bool empty() {
+    bool empty() const {
       return !buySize and !sellSize;
     };
   };
@@ -407,7 +407,7 @@ namespace K {
     mPosition(mAmount bA, mAmount qA, mAmount qAV, mAmount bH, mAmount qH, mAmount bT, mAmount qT, mAmount bV, mAmount qV, mAmount bP, mAmount qP, mPair p):
       baseAmount(bA), quoteAmount(qA), _quoteAmountValue(qAV), baseHeldAmount(bH), quoteHeldAmount(qH), _baseTotal(bT), _quoteTotal(qT), baseValue(bV), quoteValue(qV), profitBase(bP), profitQuote(qP), pair(p)
     {};
-    bool empty() {
+    bool empty() const {
       return !baseValue;
     };
   };
@@ -442,8 +442,8 @@ namespace K {
     mTrade():
       tradeId(""), pair(mPair()), price(0), quantity(0), side((mSide)0), time(0), value(0), Ktime(0), Kqty(0), Kprice(0), Kvalue(0), Kdiff(0), feeCharged(0), loadedFromDB(false)
     {};
-    mTrade(mPrice p, mAmount q, mSide s):
-      tradeId(""), pair(mPair()), price(p), quantity(q), side(s), time(0), value(0), Ktime(0), Kqty(0), Kprice(0), Kvalue(0), Kdiff(0), feeCharged(0), loadedFromDB(false)
+    mTrade(mPair P, mPrice p, mAmount q, mSide s, mClock t):
+      tradeId(""), pair(P), price(p), quantity(q), side(s), time(t), value(0), Ktime(0), Kqty(0), Kprice(0), Kvalue(0), Kdiff(0), feeCharged(0), loadedFromDB(false)
     {};
     mTrade(string i, mPair P, mPrice p, mAmount q, mSide S, mClock t, mAmount v, mClock Kt, mAmount Kq, mPrice Kp, mAmount Kv, mAmount Kd, mAmount f, bool l):
       tradeId(i), pair(P), price(p), quantity(q), side(S), time(t), value(v), Ktime(Kt), Kqty(Kq), Kprice(Kp), Kvalue(Kv), Kdiff(Kd), feeCharged(f), loadedFromDB(l)
@@ -548,7 +548,7 @@ namespace K {
     void clear() {
       price = size = 0;
     };
-    bool empty() {
+    bool empty() const {
       return !price or !size;
     };
   };
@@ -572,10 +572,10 @@ namespace K {
     mLevels(vector<mLevel> b, vector<mLevel> a):
       bids(b), asks(a)
     {};
-    mPrice spread() {
+    mPrice spread() const {
       return empty() ? 0 : asks.begin()->price - bids.begin()->price;
     };
-    bool empty() {
+    bool empty() const {
       return bids.empty() or asks.empty();
     };
     void clear() {

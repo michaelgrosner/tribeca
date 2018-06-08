@@ -23,7 +23,7 @@ namespace K {
       ) << ".\n" << RYELLOW << changes << RRESET;
     };
     virtual void config() = 0;
-    virtual void pressme(mHotkey, function<void()>) = 0;
+    virtual void pressme(const mHotkey&, function<void()>) = 0;
 #define PRESSME(ch, fn) pressme(ch, [&]() { fn(); })
     virtual int error(string, string, bool = false) = 0;
     virtual void waitForUser() = 0;
@@ -146,12 +146,12 @@ namespace K {
         if (async) countdown = 1;
         socket->run();
       };
-      function<void(mOrder)>        write_mOrder;
-      function<void(mTrade)>        write_mTrade;
-      function<void(mLevels)>       write_mLevels;
-      function<void(mWallets)>      write_mWallets;
-      function<void(mConnectivity)> write_mConnectivity;
-#define WRITEME(mData, fn) write_##mData = [&](mData rawdata) { fn(rawdata); }
+      function<void(const mOrder&)>        write_mOrder;
+      function<void(const mTrade&)>        write_mTrade;
+      function<void(const mLevels&)>       write_mLevels;
+      function<void(const mWallets&)>      write_mWallets;
+      function<void(const mConnectivity&)> write_mConnectivity;
+#define WRITEME(mData, fn) write_##mData = [&](const mData &rawdata) { fn(rawdata); }
       bool waitForData() {
         return (async
           ? false
@@ -186,10 +186,10 @@ namespace K {
 /**/  virtual vector<mOrder>   sync_cancelAll() = 0;                         // call and read sync orders data from exchange
 /**/protected:
 /**/  virtual bool            async_wallet() { return false; };              // call         async wallet data from exchange
-/**/  virtual vector<mWallets> sync_wallet() { return vector<mWallets>(); }; // call and read sync wallet data from exchange
-/**/  virtual vector<mLevels>  sync_levels() { return vector<mLevels>(); };  // call and read sync levels data from exchange
-/**/  virtual vector<mTrade>   sync_trades() { return vector<mTrade>(); };   // call and read sync trades data from exchange
-/**/  virtual vector<mOrder>   sync_orders() { return vector<mOrder>(); };   // call and read sync orders data from exchange
+/**/  virtual vector<mWallets> sync_wallet() { return {}; };                 // call and read sync wallet data from exchange
+/**/  virtual vector<mLevels>  sync_levels() { return {}; };                 // call and read sync levels data from exchange
+/**/  virtual vector<mTrade>   sync_trades() { return {}; };                 // call and read sync trades data from exchange
+/**/  virtual vector<mOrder>   sync_orders() { return {}; };                 // call and read sync orders data from exchange
 //EO non-free gw library functions from build-*/local/lib/K-*.a (it just redefines all virtual gateway class members above).
       void reconnect(const string &reason) {
         countdown = 7;
@@ -221,8 +221,8 @@ namespace K {
         return waiting;
       };
       template<typename mData> unsigned int waitFor(
-              future<vector<mData>> &reply,
-        const function<void(mData)> &write
+              future<vector<mData>>        &reply,
+        const function<void(const mData&)> &write
       ) {
         bool waiting = reply.valid();
         if (waiting and reply.wait_for(chrono::nanoseconds(0))==future_status::ready) {
