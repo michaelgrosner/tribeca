@@ -276,11 +276,11 @@ namespace K {
         else wallet->target.sideAPR = "Off";
       };
       void applyTradesPerMinute(mQuote *rawQuote, bool superTradesActive) {
-        if (wallet->safety.sell > (qp.tradesPerMinute * (superTradesActive ? qp.sopWidthMultiplier : 1))) {
+        if (wallet->safety.sell >= (qp.tradesPerMinute * (superTradesActive ? qp.sopWidthMultiplier : 1))) {
           askStatus = mQuoteState::MaxTradesSeconds;
           rawQuote->ask.clear();
         }
-        if (wallet->safety.buy > (qp.tradesPerMinute * (superTradesActive ? qp.sopWidthMultiplier : 1))) {
+        if (wallet->safety.buy >= (qp.tradesPerMinute * (superTradesActive ? qp.sopWidthMultiplier : 1))) {
           bidStatus = mQuoteState::MaxTradesSeconds;
           rawQuote->bid.clear();
         }
