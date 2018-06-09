@@ -9,22 +9,17 @@ namespace K {
       vector<mProfit> profits;
       map<mPrice, mTrade> buys,
                           sells;
-      mClock profitT_21s = 0;
       string sideAPRDiff = "!=";
     protected:
-      void load() {
+      void load() {{
         for (json &it : sqlite->select(mMatter::Position))
           profits.push_back(it);
         screen->log("DB", "loaded " + to_string(profits.size()) + " historical Profits");
+      }{
         json k = sqlite->select(mMatter::TargetBasePosition);
-        if (!k.empty()) {
-          k = k.at(0);
-          targetBasePosition = k.value("tbp", 0.0);
-          positionDivergence = k.value("pDiv", 0.0);
-          sideAPR = k.value("sideAPR", "");
-        }
-        screen->log("DB", "loaded TBP = " + FN::str8(targetBasePosition) + " " + gw->base);
-      };
+        if (!k.empty()) target = k.at(0);
+        screen->log("DB", "loaded TBP = " + FN::str8(target.targetBasePosition) + " " + gw->base);
+      }};
       void waitData() {
         gw->WRITEME(mWallets, read);
       };
@@ -51,18 +46,17 @@ namespace K {
             ? qp.targetBasePositionPercentage * baseValue / 1e+2
             : qp.targetBasePosition)
           : ((1 + market->targetPosition) / 2) * baseValue;
-        if (targetBasePosition and abs(targetBasePosition - next) < 1e-4 and sideAPRDiff == sideAPR) return;
-        targetBasePosition = next;
-        sideAPRDiff = sideAPR;
+        if (target.targetBasePosition and abs(target.targetBasePosition - next) < 1e-4 and sideAPRDiff == target.sideAPR) return;
+        target.targetBasePosition = next;
+        sideAPRDiff = target.sideAPR;
         calcPDiv(baseValue);
-        json k = positionState();
-        client->send(mMatter::TargetBasePosition, k);
-        sqlite->insert(mMatter::TargetBasePosition, k);
+        client->send(mMatter::TargetBasePosition, target);
+        sqlite->insert(mMatter::TargetBasePosition, target);
         if (!args.debugWallet) return;
         screen->log("PG", "TBP: "
-          + to_string((int)(targetBasePosition / baseValue * 1e+2)) + "% = " + FN::str8(targetBasePosition)
+          + to_string((int)(target.targetBasePosition / baseValue * 1e+2)) + "% = " + FN::str8(target.targetBasePosition)
           + " " + gw->base + ", pDiv: "
-          + to_string((int)(positionDivergence  / baseValue * 1e+2)) + "% = " + FN::str8(positionDivergence)
+          + to_string((int)(target.positionDivergence  / baseValue * 1e+2)) + "% = " + FN::str8(target.positionDivergence)
           + " " + gw->base);
       };
       void calcWallet() {
@@ -137,7 +131,7 @@ namespace K {
         *welcome = { safety };
       };
       void hello_TargetBasePos(json *const welcome) {
-        *welcome = { positionState() };
+        *welcome = { target };
       };
       void read(const mWallets &rawdata) {                          PRETTY_DEBUG
         if (!rawdata.empty()) balance = rawdata;
@@ -159,8 +153,8 @@ namespace K {
         }
         mAmount totalBasePosition = position.baseAmount + position.baseHeldAmount;
         if (qp.aggressivePositionRebalancing != mAPR::Off) {
-          if (qp.buySizeMax) buySize = fmax(buySize, targetBasePosition - totalBasePosition);
-          if (qp.sellSizeMax) sellSize = fmax(sellSize, totalBasePosition - targetBasePosition);
+          if (qp.buySizeMax) buySize = fmax(buySize, target.targetBasePosition - totalBasePosition);
+          if (qp.sellSizeMax) sellSize = fmax(sellSize, totalBasePosition - target.targetBasePosition);
         }
         mPrice widthPong = qp.widthPercentage
           ? qp.widthPongPercentage * market->fairValue / 100
@@ -268,32 +262,29 @@ namespace K {
           ? qp.positionDivergencePercentage * baseValue / 1e+2
           : qp.positionDivergence;
         if (qp.autoPositionMode == mAutoPositionMode::Manual or mPDivMode::Manual == qp.positionDivergenceMode)
-          positionDivergence = pDiv;
+          target.positionDivergence = pDiv;
         else {
           mAmount pDivMin = qp.percentageValues
             ? qp.positionDivergencePercentageMin * baseValue / 1e+2
             : qp.positionDivergenceMin;
-          double divCenter = 1 - abs((targetBasePosition / baseValue * 2) - 1);
-          if (mPDivMode::Linear == qp.positionDivergenceMode) positionDivergence = pDivMin + (divCenter * (pDiv - pDivMin));
-          else if (mPDivMode::Sine == qp.positionDivergenceMode) positionDivergence = pDivMin + (sin(divCenter*M_PI_2) * (pDiv - pDivMin));
-          else if (mPDivMode::SQRT == qp.positionDivergenceMode) positionDivergence = pDivMin + (sqrt(divCenter) * (pDiv - pDivMin));
-          else if (mPDivMode::Switch == qp.positionDivergenceMode) positionDivergence = divCenter < 1e-1 ? pDivMin : pDiv;
+          double divCenter = 1 - abs((target.targetBasePosition / baseValue * 2) - 1);
+          if (mPDivMode::Linear == qp.positionDivergenceMode) target.positionDivergence = pDivMin + (divCenter * (pDiv - pDivMin));
+          else if (mPDivMode::Sine == qp.positionDivergenceMode) target.positionDivergence = pDivMin + (sin(divCenter*M_PI_2) * (pDiv - pDivMin));
+          else if (mPDivMode::SQRT == qp.positionDivergenceMode) target.positionDivergence = pDivMin + (sqrt(divCenter) * (pDiv - pDivMin));
+          else if (mPDivMode::Switch == qp.positionDivergenceMode) target.positionDivergence = divCenter < 1e-1 ? pDivMin : pDiv;
         }
       };
       void calcProfit(mPosition *k) {
         mClock now = _Tstamp_;
-        if (profitT_21s<=3) ++profitT_21s;
-        else if (k->baseValue and k->quoteValue and profitT_21s + 21e+3 < now) {
-          profitT_21s = now;
-          mProfit profit(k->baseValue, k->quoteValue, now);
-          sqlite->insert(mMatter::Position, profit, false, "NULL", now - (qp.profitHourInterval * 3600e+3));
-          profits.push_back(profit);
-          for (vector<mProfit>::iterator it = profits.begin(); it != profits.end();)
-            if (it->time + (qp.profitHourInterval * 3600e+3) > now) ++it;
-            else it = profits.erase(it);
-          k->profitBase = ((k->baseValue - profits.begin()->baseValue) / k->baseValue) * 1e+2;
-          k->profitQuote = ((k->quoteValue - profits.begin()->quoteValue) / k->quoteValue) * 1e+2;
-        }
+        if (!profits.size() or profits.back().time + 21e+3 > now) return;
+        mProfit profit(k->baseValue, k->quoteValue, now);
+        sqlite->insert(mMatter::Position, profit, false, "NULL", now - (qp.profitHourInterval * 3600e+3));
+        profits.push_back(profit);
+        for (vector<mProfit>::iterator it = profits.begin(); it != profits.end();)
+          if (it->time + (qp.profitHourInterval * 3600e+3) > now) ++it;
+          else it = profits.erase(it);
+        k->profitBase = ((k->baseValue - profits.begin()->baseValue) / k->baseValue) * 1e+2;
+        k->profitQuote = ((k->quoteValue - profits.begin()->quoteValue) / k->quoteValue) * 1e+2;
       };
       void applyMaxWallet() {
         mAmount maxWallet = args.maxWallet;
@@ -305,13 +296,6 @@ namespace K {
         maxWallet -= balance.base.held;
         if (maxWallet > 0 and balance.base.amount > maxWallet)
           balance.base.amount = maxWallet;
-      };
-      json positionState() {
-        return {
-            {"tbp", targetBasePosition},
-            {"sideAPR", sideAPR},
-            {"pDiv", positionDivergence }
-          };
       };
   };
 }

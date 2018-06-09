@@ -67,10 +67,8 @@ namespace K {
 
   static struct Wallet {
     mPosition position;
+    mTarget target;
     mSafety safety;
-    mAmount targetBasePosition = 0,
-            positionDivergence = 0;
-    string sideAPR = "";
     virtual void calcWallet() = 0;
     virtual void calcSafety() = 0;
     virtual void calcTargetBasePos() = 0;
@@ -151,7 +149,7 @@ namespace K {
       function<void(const mLevels&)>       write_mLevels;
       function<void(const mWallets&)>      write_mWallets;
       function<void(const mConnectivity&)> write_mConnectivity;
-#define WRITEME(mData, fn) write_##mData = [&](const mData &rawdata) { fn(rawdata); }
+#define WRITEME(mData, read) write_##mData = [&](const mData &rawdata) { read(rawdata); }
       bool waitForData() {
         return (async
           ? false

@@ -26,17 +26,23 @@ namespace K {
                    averageCount = 0;
       mLevelsDiff levelsDiff;
     protected:
-      void load() {
-        for (json &it : sqlite->select(mMatter::MarketData)) {
-          if (it.value("time", (mClock)0) + qp.quotingStdevProtectionPeriods * 1e+3 < _Tstamp_) continue;
-          mgStatFV.push_back(it.value("fv", 0.0));
-          mgStatBid.push_back(it.value("bid", 0.0));
-          mgStatAsk.push_back(it.value("ask", 0.0));
-          mgStatTop.push_back(it.value("bid", 0.0));
-          mgStatTop.push_back(it.value("ask", 0.0));
-        }
+      void load() {{
+        for (json &it : sqlite->select(mMatter::MarketData))
+          if (it.value("time", (mClock)0) + qp.quotingStdevProtectionPeriods * 1e+3 > _Tstamp_) {
+            mgStatFV.push_back(it.value("fv", 0.0));
+            mgStatBid.push_back(it.value("bid", 0.0));
+            mgStatAsk.push_back(it.value("ask", 0.0));
+            mgStatTop.push_back(it.value("bid", 0.0));
+            mgStatTop.push_back(it.value("ask", 0.0));
+          }
         calcStdev();
         screen->log("DB", "loaded " + to_string(mgStatFV.size()) + " STDEV Periods");
+      }{
+        for (json &it : sqlite->select(mMatter::MarketDataLongTerm))
+          if (it.value("time", (mClock)0) + 345600e+3 > _Tstamp_ and it.value("fv", 0.0))
+            fairValue96h.push_back(it.value("fv", 0.0));
+        screen->log("DB", "loaded " + to_string(fairValue96h.size()) + " historical FairValues");
+      }{
         if (args.ewmaVeryLong) mgEwmaVL = args.ewmaVeryLong;
         if (args.ewmaLong) mgEwmaL = args.ewmaLong;
         if (args.ewmaMedium) mgEwmaM = args.ewmaMedium;
@@ -46,17 +52,18 @@ namespace K {
         json k = sqlite->select(mMatter::EWMAChart);
         if (!k.empty()) {
           k = k.at(0);
-          if (!mgEwmaVL and k.value("time", (mClock)0) + qp.veryLongEwmaPeriods * 60e+3 > _Tstamp_)
+          mClock time = k.value("time", (mClock)0);
+          if (!mgEwmaVL and time + qp.veryLongEwmaPeriods * 60e+3 > _Tstamp_)
             mgEwmaVL = k.value("ewmaVeryLong", 0.0);
-          if (!mgEwmaL and k.value("time", (mClock)0) + qp.longEwmaPeriods * 60e+3 > _Tstamp_)
+          if (!mgEwmaL and time + qp.longEwmaPeriods * 60e+3 > _Tstamp_)
             mgEwmaL = k.value("ewmaLong", 0.0);
-          if (!mgEwmaM and k.value("time", (mClock)0) + qp.mediumEwmaPeriods * 60e+3 > _Tstamp_)
+          if (!mgEwmaM and time + qp.mediumEwmaPeriods * 60e+3 > _Tstamp_)
             mgEwmaM = k.value("ewmaMedium", 0.0);
-          if (!mgEwmaS and k.value("time", (mClock)0) + qp.shortEwmaPeriods * 60e+3 > _Tstamp_)
+          if (!mgEwmaS and time + qp.shortEwmaPeriods * 60e+3 > _Tstamp_)
             mgEwmaS = k.value("ewmaShort", 0.0);
-          if (!mgEwmaXS and k.value("time", (mClock)0) + qp.extraShortEwmaPeriods * 60e+3 > _Tstamp_)
+          if (!mgEwmaXS and time + qp.extraShortEwmaPeriods * 60e+3 > _Tstamp_)
             mgEwmaXS = k.value("ewmaExtraShort", 0.0);
-          if (!mgEwmaU and k.value("time", (mClock)0) + qp.ultraShortEwmaPeriods * 60e+3 > _Tstamp_)
+          if (!mgEwmaU and time + qp.ultraShortEwmaPeriods * 60e+3 > _Tstamp_)
             mgEwmaU = k.value("ewmaUltraShort", 0.0);
         }
         if (mgEwmaVL) screen->log(args.ewmaVeryLong ? "ARG" : "DB", "loaded " + to_string(mgEwmaVL) + " EWMA VeryLong");
@@ -65,11 +72,7 @@ namespace K {
         if (mgEwmaS) screen->log(args.ewmaShort ? "ARG" : "DB", "loaded " + to_string(mgEwmaS) + " EWMA Short");
         if (mgEwmaXS) screen->log(args.ewmaXShort ? "ARG" : "DB", "loaded " + to_string(mgEwmaXS) + " EWMA ExtraShort");
         if (mgEwmaU) screen->log(args.ewmaUShort ? "ARG" : "DB", "loaded " + to_string(mgEwmaU) + " EWMA UltraShort");
-        for (json &it : sqlite->select(mMatter::MarketDataLongTerm))
-          if (it.value("time", (mClock)0) + 345600e+3 > _Tstamp_ and it.value("fv", 0.0))
-            fairValue96h.push_back(it.value("fv", 0.0));
-        screen->log("DB", "loaded " + to_string(fairValue96h.size()) + " historical FairValues");
-      };
+      }};
       void waitData() {
         gw->WRITEME(mTrade,  read_mTrade);
         gw->WRITEME(mLevels, read_mLevels);
@@ -140,10 +143,10 @@ namespace K {
         if (!filterAskOrders.empty()) filter(&levels.asks, filterAskOrders);
         calcFairValue();
         engine->calcQuote();
-        if (levelsDiff.empty() or rawdata.empty()
+        if (levelsDiff.empty() or levels.empty()
           or mgT_369ms + max(369.0, qp.delayUI * 1e+3) > _Tstamp_
         ) return;
-        client->send(mMatter::MarketData, levelsDiff.diff(rawdata));
+        client->send(mMatter::MarketData, levelsDiff.diff(levels));
         mgT_369ms = _Tstamp_;
       };
       void calcStatsStdevProtection() {

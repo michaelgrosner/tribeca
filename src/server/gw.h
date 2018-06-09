@@ -44,15 +44,15 @@ namespace K {
       };
       void read(const mConnectivity &rawdata) {
         if (engine->greenGateway != rawdata) {
-          engine->greenGateway = rawdata;
+          if (!(engine->greenGateway = rawdata))
+            market->levels.clear();
           gwSemaphore();
         }
-        if (!rawdata) market->levels.clear();
       };
       void gwSemaphore() {
-        mConnectivity updated = adminAgreement * engine->greenGateway;
-        if (engine->greenButton != updated) {
-          engine->greenButton = updated;
+        mConnectivity k = adminAgreement * engine->greenGateway;
+        if (engine->greenButton != k) {
+          engine->greenButton = k;
           screen->log("GW " + gw->name, "Quoting state changed to", string(!engine->greenButton?"DIS":"") + "CONNECTED");
         }
         client->send(mMatter::Connectivity, semaphore());

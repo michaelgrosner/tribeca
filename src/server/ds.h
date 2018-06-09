@@ -424,6 +424,26 @@ namespace K {
       {           "pair", k.pair           }
     };
   };
+  struct mTarget {
+    mAmount targetBasePosition,
+            positionDivergence;
+     string sideAPR;
+    mTarget():
+      targetBasePosition(0), positionDivergence(0), sideAPR("")
+    {};
+  };
+  static void to_json(json &j, const mTarget &k) {
+    j = {
+      {    "tbp", k.targetBasePosition},
+      {   "pDiv", k.positionDivergence},
+      {"sideAPR", k.sideAPR           }
+    };
+  };
+  static void from_json(const json &j, mTarget &k) {
+    k.targetBasePosition = j.value("tbp", 0.0);
+    k.positionDivergence = j.value("pDiv", 0.0);
+    k.sideAPR            = j.value("sideAPR", "");
+  };
   struct mTrade {
      string tradeId;
       mSide side;
