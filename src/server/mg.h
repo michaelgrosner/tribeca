@@ -14,11 +14,8 @@ namespace K {
              mgEwmaS = 0,
              mgEwmaXS = 0,
              mgEwmaU = 0;
+      vector<mStdev> stdev;
       vector<mPrice> mgSMA3,
-                     mgStatFV,
-                     mgStatBid,
-                     mgStatAsk,
-                     mgStatTop,
                      fairValue96h;
       mClock mgT_369ms = 0;
       mPrice averageWidth = 0;
@@ -27,20 +24,13 @@ namespace K {
       mLevelsDiff levelsDiff;
     protected:
       void load() {{
-        for (json &it : sqlite->select(mMatter::MarketData))
-          if (it.value("time", (mClock)0) + qp.quotingStdevProtectionPeriods * 1e+3 > _Tstamp_) {
-            mgStatFV.push_back(it.value("fv", 0.0));
-            mgStatBid.push_back(it.value("bid", 0.0));
-            mgStatAsk.push_back(it.value("ask", 0.0));
-            mgStatTop.push_back(it.value("bid", 0.0));
-            mgStatTop.push_back(it.value("ask", 0.0));
-          }
+        for (json &it : sqlite->select(mMatter::MarketData, _Tstamp_ - 1e+3 * qp.quotingStdevProtectionPeriods))
+          stdev.push_back(it);
         calcStdev();
-        screen->log("DB", "loaded " + to_string(mgStatFV.size()) + " STDEV Periods");
+        screen->log("DB", "loaded " + to_string(stdev.size()) + " STDEV Periods");
       }{
-        for (json &it : sqlite->select(mMatter::MarketDataLongTerm))
-          if (it.value("time", (mClock)0) + 345600e+3 > _Tstamp_ and it.value("fv", 0.0))
-            fairValue96h.push_back(it.value("fv", 0.0));
+        for (json &it : sqlite->select(mMatter::MarketDataLongTerm, _Tstamp_ - 345600e+3))
+          fairValue96h.push_back(it.value("fv", 0.0));
         screen->log("DB", "loaded " + to_string(fairValue96h.size()) + " historical FairValues");
       }{
         if (args.ewmaVeryLong) mgEwmaVL = args.ewmaVeryLong;
@@ -151,20 +141,13 @@ namespace K {
       };
       void calcStatsStdevProtection() {
         if (levels.empty()) return;
-        mPrice topBid = levels.bids.begin()->price,
-               topAsk = levels.asks.begin()->price;
-        mgStatFV.push_back(fairValue);
-        mgStatBid.push_back(topBid);
-        mgStatAsk.push_back(topAsk);
-        mgStatTop.push_back(topBid);
-        mgStatTop.push_back(topAsk);
+        stdev.push_back(mStdev(
+          fairValue,
+          levels.bids.begin()->price,
+          levels.asks.begin()->price
+        ));
+        sqlite->insert(mMatter::MarketData, stdev.back(), false, "NULL", _Tstamp_ - 1e+3 * qp.quotingStdevProtectionPeriods);
         calcStdev();
-        sqlite->insert(mMatter::MarketData, {
-          {"fv", fairValue},
-          {"bid", topBid},
-          {"ask", topAsk},
-          {"time", _Tstamp_},
-        }, false, "NULL", _Tstamp_ - 1e+3 * qp.quotingStdevProtectionPeriods);
       };
       void calcStatsTrades() {
         takersSellSize60s = takersBuySize60s = 0;
@@ -246,34 +229,54 @@ namespace K {
           {"fairValue", fairValue}
         };
       };
-      void cleanStdev() {
-        size_t periods = (size_t)qp.quotingStdevProtectionPeriods;
-        if (mgStatFV.size()>periods) mgStatFV.erase(mgStatFV.begin(), mgStatFV.end()-periods);
-        if (mgStatBid.size()>periods) mgStatBid.erase(mgStatBid.begin(), mgStatBid.end()-periods);
-        if (mgStatAsk.size()>periods) mgStatAsk.erase(mgStatAsk.begin(), mgStatAsk.end()-periods);
-        if (mgStatTop.size()>periods*2) mgStatTop.erase(mgStatTop.begin(), mgStatTop.end()-(periods*2));
+      void expireStdev() {
+        if (stdev.size() > qp.quotingStdevProtectionPeriods)
+          stdev.erase(stdev.begin(), stdev.end() - qp.quotingStdevProtectionPeriods);
       };
       void calcStdev() {
-        cleanStdev();
-        if (mgStatFV.size() < 2 or mgStatBid.size() < 2 or mgStatAsk.size() < 2 or mgStatTop.size() < 4) return;
-        mgStdevFV = calcStdev(&mgStdevFVMean, qp.quotingStdevProtectionFactor, mgStatFV);
-        mgStdevBid = calcStdev(&mgStdevBidMean, qp.quotingStdevProtectionFactor, mgStatBid);
-        mgStdevAsk = calcStdev(&mgStdevAskMean, qp.quotingStdevProtectionFactor, mgStatAsk);
-        mgStdevTop = calcStdev(&mgStdevTopMean, qp.quotingStdevProtectionFactor, mgStatTop);
+        expireStdev();
+        if (stdev.size() < 2) return;
+        mgStdevFV = calcStdev(&mgStdevFVMean, "fv");
+        mgStdevBid = calcStdev(&mgStdevBidMean, "bid");
+        mgStdevAsk = calcStdev(&mgStdevAskMean, "ask");
+        mgStdevTop = calcStdev(&mgStdevTopMean, "top");
       };
-      double calcStdev(mPrice *mean, double factor, vector<mPrice> values) {
-        unsigned int n = values.size();
+      double calcStdev(mPrice *mean, string type) {
+        unsigned int n = stdev.size() * (type == "top" ? 2 : 1);
         if (!n) return 0.0;
         double sum = 0;
-        for (mPrice &it : values) sum += it;
+        for (mStdev &it : stdev)
+          if (type == "fv")
+            sum += it.fv;
+          else if (type == "bid")
+            sum += it.topBid;
+          else if (type == "ask")
+            sum += it.topAsk;
+          else if (type == "top") {
+            sum += it.topBid + it.topAsk;
+          }
         *mean = sum / n;
         double sq_diff_sum = 0;
-        for (mPrice &it : values) {
-          mPrice diff = it - *mean;
+        for (mStdev &it : stdev) {
+          mPrice diff = 0;
+          if (type == "fv")
+            diff = it.fv;
+          else if (type == "bid")
+            diff = it.topBid;
+          else if (type == "ask")
+            diff = it.topAsk;
+          else if (type == "top") {
+            diff = it.topBid;
+          }
+          diff -= *mean;
           sq_diff_sum += diff * diff;
+          if (type == "top") {
+            diff = it.topAsk - *mean;
+            sq_diff_sum += diff * diff;
+          }
         }
         double variance = sq_diff_sum / n;
-        return sqrt(variance) * factor;
+        return sqrt(variance) * qp.quotingStdevProtectionFactor;
       };
       void calcEwmaHistory(mPrice *mean, unsigned int periods, string name) {
         unsigned int n = fairValue96h.size();

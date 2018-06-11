@@ -444,6 +444,29 @@ namespace K {
     k.positionDivergence = j.value("pDiv", 0.0);
     k.sideAPR            = j.value("sideAPR", "");
   };
+  struct mStdev {
+    mPrice fv,
+           topBid,
+           topAsk;
+    mStdev():
+      fv(0), topBid(0), topAsk(0)
+    {};
+    mStdev(mPrice f, mPrice b, mPrice a):
+      fv(f), topBid(b), topAsk(a)
+    {};
+  };
+  static void to_json(json &j, const mStdev &k) {
+    j = {
+      { "fv", k.fv    },
+      {"bid", k.topBid},
+      {"ask", k.topAsk}
+    };
+  };
+  static void from_json(const json &j, mStdev &k) {
+    k.fv = j.value("fv", 0.0);
+    k.topBid = j.value("bid", 0.0);
+    k.topAsk = j.value("ask", 0.0);
+  };
   struct mTrade {
      string tradeId;
       mSide side;

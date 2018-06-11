@@ -26,13 +26,15 @@ namespace K {
         };
       };
     public:
-      json select(const mMatter &table) {
+      json select(const mMatter &table, const mClock &skipOlder = 0) {
         exec("CREATE TABLE IF NOT EXISTS " + schema(table) + "("
           + "id    INTEGER   PRIMARY KEY AUTOINCREMENT                                           NOT NULL,"
           + "json  BLOB                                                                          NOT NULL,"
           + "time  TIMESTAMP DEFAULT (CAST((julianday('now') - 2440587.5)*86400000 AS INTEGER))  NOT NULL);");
         json result = json::array();
-        exec("SELECT json FROM " + schema(table) + " ORDER BY time ASC;", &result);
+        exec("SELECT json FROM " + schema(table) + (
+          skipOlder ? " WHERE time >= " + to_string(skipOlder) : ""
+        ) + " ORDER BY time ASC;", &result);
         return result;
       };
       void insert(

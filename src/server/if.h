@@ -49,7 +49,7 @@ namespace K {
   } *events = nullptr;
 
   static struct Sqlite {
-    virtual json select(const mMatter&) = 0;
+    virtual json select(const mMatter&, const mClock& = 0) = 0;
     virtual void insert(const mMatter&, const json&, const bool& = true, const string& = "NULL", const mClock& = 0) = 0;
     function<unsigned int()> size = []() { return 0; };
   } *sqlite = nullptr;

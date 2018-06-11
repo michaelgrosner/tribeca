@@ -2,7 +2,7 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
 PATCH    = 7
-BUILD    = 49
+BUILD    = 50
 CHOST   ?= $(shell $(MAKE) CHOST= chost -s)
 CARCH    = x86_64-linux-gnu arm-linux-gnueabihf aarch64-linux-gnu x86_64-apple-darwin17 x86_64-w64-mingw32
 KLOCAL  := build-$(CHOST)/local
@@ -240,7 +240,7 @@ install:
 	@$(MAKE) packages
 	mkdir -p app/server
 	@yes = | head -n`expr $(shell tput cols) / 2` | xargs echo && echo " _  __\n| |/ /\n| ' /   Select your (beloved) architecture\n| . \\   to download pre-compiled binaries:\n|_|\\_\\ \n"
-	@echo $(CARCH) | tr ' ' "\n" | cat -n && echo "\n(Hint! uname says \"`uname -sm`\", and win32 does not work yet)\n"
+	@echo $(CARCH) | tr ' ' "\n" | cat -n && echo "\n(Hint! uname says \"`uname -sm`\", and win32 auto-install does not work yet)\n"
 	@read -p "[1/2/3/4/5]: " chost; \
 	CHOST=`echo $(CARCH) | cut -d ' ' -f$${chost}` $(MAKE) build link
 
