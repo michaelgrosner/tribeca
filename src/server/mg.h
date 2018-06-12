@@ -26,42 +26,36 @@ namespace K {
       void load() {{
         for (json &it : sqlite->select(mMatter::MarketData, _Tstamp_ - 1e+3 * qp.quotingStdevProtectionPeriods))
           stdev.push_back(it);
-        calcStdev();
         screen->log("DB", "loaded " + to_string(stdev.size()) + " STDEV Periods");
+        calcStdev();
       }{
         for (json &it : sqlite->select(mMatter::MarketDataLongTerm, _Tstamp_ - 345600e+3))
           fairValue96h.push_back(it.value("fv", 0.0));
         screen->log("DB", "loaded " + to_string(fairValue96h.size()) + " historical FairValues");
       }{
-        if (args.ewmaVeryLong) mgEwmaVL = args.ewmaVeryLong;
-        if (args.ewmaLong) mgEwmaL = args.ewmaLong;
-        if (args.ewmaMedium) mgEwmaM = args.ewmaMedium;
-        if (args.ewmaShort) mgEwmaS = args.ewmaShort;
-        if (args.ewmaXShort) mgEwmaXS = args.ewmaXShort;
-        if (args.ewmaUShort) mgEwmaU = args.ewmaUShort;
         json k = sqlite->select(mMatter::EWMAChart);
         if (!k.empty()) {
           k = k.at(0);
           mClock time = k.value("time", (mClock)0);
-          if (!mgEwmaVL and time + qp.veryLongEwmaPeriods * 60e+3 > _Tstamp_)
-            mgEwmaVL = k.value("ewmaVeryLong", 0.0);
-          if (!mgEwmaL and time + qp.longEwmaPeriods * 60e+3 > _Tstamp_)
-            mgEwmaL = k.value("ewmaLong", 0.0);
-          if (!mgEwmaM and time + qp.mediumEwmaPeriods * 60e+3 > _Tstamp_)
-            mgEwmaM = k.value("ewmaMedium", 0.0);
-          if (!mgEwmaS and time + qp.shortEwmaPeriods * 60e+3 > _Tstamp_)
-            mgEwmaS = k.value("ewmaShort", 0.0);
-          if (!mgEwmaXS and time + qp.extraShortEwmaPeriods * 60e+3 > _Tstamp_)
-            mgEwmaXS = k.value("ewmaExtraShort", 0.0);
-          if (!mgEwmaU and time + qp.ultraShortEwmaPeriods * 60e+3 > _Tstamp_)
-            mgEwmaU = k.value("ewmaUltraShort", 0.0);
+          if (time + qp.veryLongEwmaPeriods   * 60e+3 > _Tstamp_) mgEwmaVL = k.value("ewmaVeryLong", 0.0);
+          if (time + qp.longEwmaPeriods       * 60e+3 > _Tstamp_) mgEwmaL  = k.value("ewmaLong", 0.0);
+          if (time + qp.mediumEwmaPeriods     * 60e+3 > _Tstamp_) mgEwmaM  = k.value("ewmaMedium", 0.0);
+          if (time + qp.shortEwmaPeriods      * 60e+3 > _Tstamp_) mgEwmaS  = k.value("ewmaShort", 0.0);
+          if (time + qp.extraShortEwmaPeriods * 60e+3 > _Tstamp_) mgEwmaXS = k.value("ewmaExtraShort", 0.0);
+          if (time + qp.ultraShortEwmaPeriods * 60e+3 > _Tstamp_) mgEwmaU  = k.value("ewmaUltraShort", 0.0);
         }
+        if (args.ewmaVeryLong) mgEwmaVL = args.ewmaVeryLong;
+        if (args.ewmaLong)     mgEwmaL  = args.ewmaLong;
+        if (args.ewmaMedium)   mgEwmaM  = args.ewmaMedium;
+        if (args.ewmaShort)    mgEwmaS  = args.ewmaShort;
+        if (args.ewmaXShort)   mgEwmaXS = args.ewmaXShort;
+        if (args.ewmaUShort)   mgEwmaU  = args.ewmaUShort;
         if (mgEwmaVL) screen->log(args.ewmaVeryLong ? "ARG" : "DB", "loaded " + to_string(mgEwmaVL) + " EWMA VeryLong");
-        if (mgEwmaL) screen->log(args.ewmaLong ? "ARG" : "DB", "loaded " + to_string(mgEwmaL) + " EWMA Long");
-        if (mgEwmaM) screen->log(args.ewmaMedium ? "ARG" : "DB", "loaded " + to_string(mgEwmaM) + " EWMA Medium");
-        if (mgEwmaS) screen->log(args.ewmaShort ? "ARG" : "DB", "loaded " + to_string(mgEwmaS) + " EWMA Short");
-        if (mgEwmaXS) screen->log(args.ewmaXShort ? "ARG" : "DB", "loaded " + to_string(mgEwmaXS) + " EWMA ExtraShort");
-        if (mgEwmaU) screen->log(args.ewmaUShort ? "ARG" : "DB", "loaded " + to_string(mgEwmaU) + " EWMA UltraShort");
+        if (mgEwmaL)  screen->log(args.ewmaLong     ? "ARG" : "DB", "loaded " + to_string(mgEwmaL)  + " EWMA Long");
+        if (mgEwmaM)  screen->log(args.ewmaMedium   ? "ARG" : "DB", "loaded " + to_string(mgEwmaM)  + " EWMA Medium");
+        if (mgEwmaS)  screen->log(args.ewmaShort    ? "ARG" : "DB", "loaded " + to_string(mgEwmaS)  + " EWMA Short");
+        if (mgEwmaXS) screen->log(args.ewmaXShort   ? "ARG" : "DB", "loaded " + to_string(mgEwmaXS) + " EWMA ExtraShort");
+        if (mgEwmaU)  screen->log(args.ewmaUShort   ? "ARG" : "DB", "loaded " + to_string(mgEwmaU)  + " EWMA UltraShort");
       }};
       void waitData() {
         gw->WRITEME(mTrade,  read_mTrade);
@@ -89,7 +83,6 @@ namespace K {
                topBidPrice = levels.bids.begin()->price;
         mAmount topAskSize = levels.asks.begin()->size,
                 topBidSize = levels.bids.begin()->size;
-        if (!topAskPrice or !topBidPrice or !topAskSize or !topBidSize) return;
         fairValue = qp.fvModel == mFairValueModel::BBO
           ? (topAskPrice + topBidPrice) / 2
           : (topAskPrice * topBidSize + topBidPrice * topAskSize) / (topAskSize + topBidSize);
@@ -195,10 +188,7 @@ namespace K {
           {"ewmaUltraShort", mgEwmaU},
           {"time", _Tstamp_}
         });
-        sqlite->insert(mMatter::MarketDataLongTerm, {
-          {"fv", fairValue},
-          {"time", _Tstamp_},
-        }, false, "NULL", _Tstamp_ - 345600e+3);
+        sqlite->insert(mMatter::MarketDataLongTerm, {{"fv", fairValue}}, false, "NULL", _Tstamp_ - 345600e+3);
       };
       void calcStatsEwmaProtection() {
         calcEwma(&mgEwmaP, qp.protectionEwmaPeriods, fairValue);
