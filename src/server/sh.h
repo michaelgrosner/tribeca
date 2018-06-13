@@ -187,7 +187,7 @@ namespace K {
       };
       void log(const mTrade &k, const bool &isPong) {
         if (!wBorder) {
-          cout << stamp() << "GW " << (k.side == mSide::Bid ? RCYAN : RPURPLE) << gw->name << (isPong?" PONG":" PING") << " TRADE " << (k.side == mSide::Bid ? BCYAN : BPURPLE) << (k.side == mSide::Bid ? "BUY  " : "SELL ") << k.quantity << ' ' << k.pair.base << " at price " << k.price << ' ' << k.pair.quote << " (value " << k.value << ' ' << k.pair.quote << ").\n";
+          cout << stamp() << "GW " << (k.side == mSide::Bid ? RCYAN : RPURPLE) << gw->name << (isPong?" PONG":" PING") << " TRADE " << (k.side == mSide::Bid ? BCYAN : BPURPLE) << (k.side == mSide::Bid ? "BUY  " : "SELL ") << FN::str8(k.quantity) << ' ' << k.pair.base << " at price " << k.price << ' ' << k.pair.quote << " (value " << k.value << ' ' << k.pair.quote << ").\n";
           return;
         }
         wmove(wLog, getmaxy(wLog)-1, 0);
