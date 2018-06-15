@@ -6,20 +6,23 @@ namespace K {
             public Wallet { public: PG() { wallet = this; };
     private:
       mWallets balance;
-      vector<mProfit> profits;
+      mProfits profits;
       map<mPrice, mTrade> buys,
                           sells;
       string sideAPRDiff = "!=";
     protected:
-      void load() {{
-        for (json &it : sqlite->select(mMatter::Position))
-          profits.push_back(it);
-        screen->log("DB", "loaded " + to_string(profits.size()) + " historical Profits");
-      }{
-        json k = sqlite->select(mMatter::TargetBasePosition);
-        if (!k.empty()) target = k.at(0);
-        screen->log("DB", "loaded TBP = " + FN::str8(target.targetBasePosition) + " " + gw->base);
-      }};
+      void load() {
+        sqlite->select(
+          FROM mMatter::Position
+          INTO profits
+          THEN "loaded % historical Profits"
+        );
+        sqlite->select(
+          FROM mMatter::TargetBasePosition
+          INTO target
+          THEN "loaded TBP = % " + gw->base
+        );
+      };
       void waitData() {
         gw->WRITEME(mWallets, read);
       };

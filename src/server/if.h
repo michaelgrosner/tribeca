@@ -49,7 +49,11 @@ namespace K {
   } *events = nullptr;
 
   static struct Sqlite {
-    virtual json select(const mMatter&, const mClock& = 0) = 0;
+    virtual void select(const mMatter&, mFromDb *const, const string&, const string& = "") = 0;
+#define FROM
+#define INTO ,&
+#define THEN ,
+#define WARN ,
     virtual void insert(const mMatter&, const json&, const bool& = true, const string& = "NULL", const mClock& = 0) = 0;
     function<unsigned int()> size = []() { return 0; };
   } *sqlite = nullptr;
@@ -78,9 +82,8 @@ namespace K {
 
   static struct Market {
     mLevels levels;
-    mPrice fairValue = 0,
-           mgEwmaP = 0,
-           mgEwmaW = 0;
+    mPrice fairValue = 0;
+    mEwma ewma;
     double targetPosition = 0,
            mgStdevTop = 0,
            mgStdevTopMean = 0,
@@ -100,7 +103,7 @@ namespace K {
 
   static struct Broker {
     map<mRandId, mOrder> orders;
-    vector<mTrade> tradesHistory;
+    mTrades tradesHistory;
     virtual void cleanOrder(const mRandId&) = 0;
     virtual void cancelOrder(const mRandId&) = 0;
     virtual void sendOrder(

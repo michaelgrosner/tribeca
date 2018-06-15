@@ -56,8 +56,6 @@ namespace K {
             ignoreSun     = 0,      ignoreMoon  = 0, testChamber  = 0,
             maxAdmins     = 7,      maxLevels   = 321;
     mAmount maxWallet     = 0;
-     mPrice ewmaUShort    = 0,      ewmaXShort  = 0, ewmaShort    = 0,
-            ewmaMedium    = 0,      ewmaLong    = 0, ewmaVeryLong = 0;
      string title         = "K.sh", matryoshka  = "https://www.example.com/",
             user          = "NULL", pass        = "NULL",
             exchange      = "NULL", currency    = "NULL",
@@ -68,7 +66,12 @@ namespace K {
             whitelist     = "";
     const char *inet = nullptr;
   } args;
-  static struct mQuotingParams {
+  struct mFromDb {
+    virtual void read(const json &j) = 0;
+    virtual string explain() = 0;
+    virtual mClock expire() = 0;
+  };
+  static struct mQuotingParams: public mFromDb {
     mPrice            widthPing                       = 2.0;
     double            widthPingPercentage             = 0.25;
     mPrice            widthPong                       = 2.0;
@@ -147,6 +150,15 @@ namespace K {
       _diffSEP = prev.shortEwmaPeriods != shortEwmaPeriods;
       _diffXSEP = prev.extraShortEwmaPeriods != extraShortEwmaPeriods;
       _diffUEP = prev.ultraShortEwmaPeriods != ultraShortEwmaPeriods;
+    };
+    void read(const json &j) {
+      *this = j.at(0);
+    };
+    string explain() {
+      return "Quoting Parameters";
+    };
+    mClock expire() {
+      return 0;
     };
   } qp;
   static void to_json(json &j, const mQuotingParams &k) {
@@ -361,6 +373,19 @@ namespace K {
     k.quoteValue = j.value("quoteValue", 0.0);
     k.time       = j.value("time", (mClock)0);
   };
+  struct mProfits: public mFromDb,
+                   public vector<mProfit> {
+    void read(const json &j) {
+      for (const json &it : j)
+        push_back(it);
+    };
+    string explain() {
+      return to_string(size());
+    };
+    mClock expire() {
+      return 3600e+3 * qp.profitHourInterval;
+    };
+  };
   struct mSafety {
     double buy,
            sell,
@@ -424,13 +449,22 @@ namespace K {
       {           "pair", k.pair           }
     };
   };
-  struct mTarget {
+  struct mTarget: public mFromDb {
     mAmount targetBasePosition,
             positionDivergence;
      string sideAPR;
     mTarget():
       targetBasePosition(0), positionDivergence(0), sideAPR("")
     {};
+    void read(const json &j) {
+      *this = j.at(0);
+    };
+    string explain() {
+      return to_string(targetBasePosition);
+    };
+    mClock expire() {
+      return 0;
+    };
   };
   static void to_json(json &j, const mTarget &k) {
     j = {
@@ -444,15 +478,77 @@ namespace K {
     k.positionDivergence = j.value("pDiv", 0.0);
     k.sideAPR            = j.value("sideAPR", "");
   };
-  struct mStdev {
-    mPrice fv,
-           topBid,
+  struct mEwma: public mFromDb {
+    mPrice mgEwmaVL,
+           mgEwmaL,
+           mgEwmaM,
+           mgEwmaS,
+           mgEwmaXS,
+           mgEwmaU,
+           mgEwmaP,
+           mgEwmaW;
+    mEwma():
+      mgEwmaVL(0), mgEwmaL(0), mgEwmaM(0), mgEwmaS(0), mgEwmaXS(0), mgEwmaU(0), mgEwmaP(0), mgEwmaW(0)
+    {};
+    void read(const json &j) {
+      *this = j.at(0);
+    };
+    string explain() {
+      return "EWMA Values";
+    };
+    mClock expire() {
+      return 60e+3 * min(qp.veryLongEwmaPeriods,
+                     min(qp.longEwmaPeriods,
+                     min(qp.mediumEwmaPeriods,
+                     min(qp.shortEwmaPeriods,
+                     min(qp.extraShortEwmaPeriods,
+                         qp.ultraShortEwmaPeriods
+                     )))));
+    };
+  };
+  static void to_json(json &j, const mEwma &k) {
+    j = {
+      {  "ewmaVeryLong", k.mgEwmaVL},
+      {      "ewmaLong", k.mgEwmaL },
+      {    "ewmaMedium", k.mgEwmaM },
+      {     "ewmaShort", k.mgEwmaS },
+      {"ewmaExtraShort", k.mgEwmaXS},
+      {"ewmaUltraShort", k.mgEwmaU }
+    };
+  };
+  static void from_json(const json &j, mEwma &k) {
+    k.mgEwmaVL = j.value("ewmaVeryLong", 0.0);
+    k.mgEwmaL  = j.value("ewmaLong", 0.0);
+    k.mgEwmaM  = j.value("ewmaMedium", 0.0);
+    k.mgEwmaS  = j.value("ewmaShort", 0.0);
+    k.mgEwmaXS = j.value("ewmaExtraShort", 0.0);
+    k.mgEwmaU  = j.value("ewmaUltraShort", 0.0);
+  };
+  struct mFairValue {
+    mPrice fv;
+    mFairValue():
+      fv(0)
+    {};
+    mFairValue(mPrice f):
+      fv(f)
+    {};
+  };
+  static void to_json(json &j, const mFairValue &k) {
+    j = {
+      {"fv", k.fv}
+    };
+  };
+  static void from_json(const json &j, mFairValue &k) {
+    k.fv = j.value("fv", 0.0);
+  };
+  struct mStdev: public mFairValue {
+    mPrice topBid,
            topAsk;
     mStdev():
-      fv(0), topBid(0), topAsk(0)
+      topBid(0), topAsk(0)
     {};
     mStdev(mPrice f, mPrice b, mPrice a):
-      fv(f), topBid(b), topAsk(a)
+      topBid(b), topAsk(a)
     {};
   };
   static void to_json(json &j, const mStdev &k) {
@@ -466,6 +562,32 @@ namespace K {
     k.fv = j.value("fv", 0.0);
     k.topBid = j.value("bid", 0.0);
     k.topAsk = j.value("ask", 0.0);
+  };
+  struct mStdevs: public mFromDb,
+                   public vector<mStdev> {
+    void read(const json &j) {
+      for (const json &it : j)
+        push_back(it);
+    };
+    string explain() {
+      return to_string(size());
+    };
+    mClock expire() {
+      return 1e+3 * qp.quotingStdevProtectionPeriods;
+    };
+  };
+  struct mFairValues: public mFromDb,
+                      public vector<mFairValue> {
+    void read(const json &j) {
+      for (const json &it : j)
+        push_back(it);
+    };
+    string explain() {
+      return to_string(size());
+    };
+    mClock expire() {
+      return 345600e+3;
+    };
   };
   struct mTrade {
      string tradeId;
@@ -532,6 +654,19 @@ namespace K {
     k.Kdiff        = j.value("Kdiff", 0.0);
     k.feeCharged   = j.value("feeCharged", 0.0);
     k.loadedFromDB = j.value("loadedFromDB", false);
+  };
+  struct mTrades: public mFromDb,
+                  public vector<mTrade> {
+    void read(const json &j) {
+      for (const json &it : j)
+        push_back(it);
+    };
+    string explain() {
+      return to_string(size());
+    };
+    mClock expire() {
+      return 0;
+    };
   };
   struct mOrder {
          mRandId orderId,

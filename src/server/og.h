@@ -6,9 +6,11 @@ namespace K {
             public Broker { public: OG() { broker = this; };
     protected:
       void load() {
-        for (json &it : sqlite->select(mMatter::Trades))
-          tradesHistory.push_back(it);
-        screen->log("DB", "loaded " + to_string(tradesHistory.size()) + " historical Trades");
+        sqlite->select(
+          FROM mMatter::Trades
+          INTO tradesHistory
+          THEN "loaded % historical Trades"
+        );
       };
       void waitData() {
         gw->WRITEME(mOrder, read);

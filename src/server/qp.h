@@ -5,10 +5,12 @@ namespace K {
   class QP: public Klass {
     protected:
       void load() {
-        json k = sqlite->select(mMatter::QuotingParameters);
-        if (k.empty()) return screen->logWar("QP", "using default values for Quoting Parameters");
-        qp = k.at(0);
-        screen->log("DB", "loaded Quoting Parameters OK");
+        sqlite->select(
+          FROM mMatter::QuotingParameters
+          INTO qp
+          THEN "loaded last % OK"
+          WARN "using default values for %"
+        );
       };
       void waitWebAdmin() {
         client->WELCOME(mMatter::QuotingParameters, hello);

@@ -119,8 +119,8 @@ namespace K {
         mPrice widthPing = qp.widthPercentage
           ? qp.widthPingPercentage * market->fairValue / 100
           : qp.widthPing;
-        if(qp.protectionEwmaWidthPing and market->mgEwmaW)
-          widthPing = fmax(widthPing, market->mgEwmaW);
+        if(qp.protectionEwmaWidthPing and market->ewma.mgEwmaW)
+          widthPing = fmax(widthPing, market->ewma.mgEwmaW);
         mQuote rawQuote = (*quotingMode[qp.mode])(
           widthPing,
           wallet->safety.buySize,
@@ -333,9 +333,9 @@ namespace K {
           );
       };
       void applyEwmaProtection(mQuote *rawQuote) {
-        if (!qp.protectionEwmaQuotePrice or !market->mgEwmaP) return;
-        rawQuote->ask.price = fmax(market->mgEwmaP, rawQuote->ask.price);
-        rawQuote->bid.price = fmin(market->mgEwmaP, rawQuote->bid.price);
+        if (!qp.protectionEwmaQuotePrice or !market->ewma.mgEwmaP) return;
+        rawQuote->ask.price = fmax(market->ewma.mgEwmaP, rawQuote->ask.price);
+        rawQuote->bid.price = fmin(market->ewma.mgEwmaP, rawQuote->bid.price);
       };
       void applyEwmaTrendProtection(mQuote *rawQuote) {
         if (!qp.quotingEwmaTrendProtection or !market->mgEwmaTrendDiff) return;

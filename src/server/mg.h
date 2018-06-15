@@ -8,55 +8,34 @@ namespace K {
       vector<mTrade> trades;
       mAmount takersBuySize60s = 0,
               takersSellSize60s = 0;
-      mPrice mgEwmaVL = 0,
-             mgEwmaL = 0,
-             mgEwmaM = 0,
-             mgEwmaS = 0,
-             mgEwmaXS = 0,
-             mgEwmaU = 0;
-      vector<mStdev> stdev;
-      vector<mPrice> mgSMA3,
-                     fairValue96h;
+      mStdevs stdev;
+      vector<mPrice> mgSMA3;
+      mFairValues fairValue96h;
       mClock mgT_369ms = 0;
-      mPrice averageWidth = 0;
       unsigned int mgT_60s = 0,
                    averageCount = 0;
+      mPrice averageWidth = 0;
       mLevelsDiff levelsDiff;
     protected:
-      void load() {{
-        for (json &it : sqlite->select(mMatter::MarketData, _Tstamp_ - 1e+3 * qp.quotingStdevProtectionPeriods))
-          stdev.push_back(it);
-        screen->log("DB", "loaded " + to_string(stdev.size()) + " STDEV Periods");
+      void load() {
+        sqlite->select(
+          FROM mMatter::MarketData
+          INTO stdev
+          THEN "loaded % STDEV Periods"
+        );
         calcStdev();
-      }{
-        for (json &it : sqlite->select(mMatter::MarketDataLongTerm, _Tstamp_ - 345600e+3))
-          fairValue96h.push_back(it.value("fv", 0.0));
-        screen->log("DB", "loaded " + to_string(fairValue96h.size()) + " historical FairValues");
-      }{
-        json k = sqlite->select(mMatter::EWMAChart);
-        if (!k.empty()) {
-          k = k.at(0);
-          mClock time = k.value("time", (mClock)0);
-          if (time + qp.veryLongEwmaPeriods   * 60e+3 > _Tstamp_) mgEwmaVL = k.value("ewmaVeryLong", 0.0);
-          if (time + qp.longEwmaPeriods       * 60e+3 > _Tstamp_) mgEwmaL  = k.value("ewmaLong", 0.0);
-          if (time + qp.mediumEwmaPeriods     * 60e+3 > _Tstamp_) mgEwmaM  = k.value("ewmaMedium", 0.0);
-          if (time + qp.shortEwmaPeriods      * 60e+3 > _Tstamp_) mgEwmaS  = k.value("ewmaShort", 0.0);
-          if (time + qp.extraShortEwmaPeriods * 60e+3 > _Tstamp_) mgEwmaXS = k.value("ewmaExtraShort", 0.0);
-          if (time + qp.ultraShortEwmaPeriods * 60e+3 > _Tstamp_) mgEwmaU  = k.value("ewmaUltraShort", 0.0);
-        }
-        if (args.ewmaVeryLong) mgEwmaVL = args.ewmaVeryLong;
-        if (args.ewmaLong)     mgEwmaL  = args.ewmaLong;
-        if (args.ewmaMedium)   mgEwmaM  = args.ewmaMedium;
-        if (args.ewmaShort)    mgEwmaS  = args.ewmaShort;
-        if (args.ewmaXShort)   mgEwmaXS = args.ewmaXShort;
-        if (args.ewmaUShort)   mgEwmaU  = args.ewmaUShort;
-        if (mgEwmaVL) screen->log(args.ewmaVeryLong ? "ARG" : "DB", "loaded " + to_string(mgEwmaVL) + " EWMA VeryLong");
-        if (mgEwmaL)  screen->log(args.ewmaLong     ? "ARG" : "DB", "loaded " + to_string(mgEwmaL)  + " EWMA Long");
-        if (mgEwmaM)  screen->log(args.ewmaMedium   ? "ARG" : "DB", "loaded " + to_string(mgEwmaM)  + " EWMA Medium");
-        if (mgEwmaS)  screen->log(args.ewmaShort    ? "ARG" : "DB", "loaded " + to_string(mgEwmaS)  + " EWMA Short");
-        if (mgEwmaXS) screen->log(args.ewmaXShort   ? "ARG" : "DB", "loaded " + to_string(mgEwmaXS) + " EWMA ExtraShort");
-        if (mgEwmaU)  screen->log(args.ewmaUShort   ? "ARG" : "DB", "loaded " + to_string(mgEwmaU)  + " EWMA UltraShort");
-      }};
+        sqlite->select(
+          FROM mMatter::MarketDataLongTerm
+          INTO fairValue96h
+          THEN "loaded % historical Fair Values"
+        );
+        sqlite->select(
+          FROM mMatter::EWMAChart
+          INTO ewma
+          THEN "loaded last % OK"
+          WARN "consider to warm up some %"
+        );
+      };
       void waitData() {
         gw->WRITEME(mTrade,  read_mTrade);
         gw->WRITEME(mLevels, read_mLevels);
@@ -94,12 +73,12 @@ namespace K {
         averageWidth /= ++averageCount;
       };
       void calcEwmaHistory() {
-        if (FN::trueOnce(&qp._diffVLEP)) calcEwmaHistory(&mgEwmaVL, qp.veryLongEwmaPeriods, "VeryLong");
-        if (FN::trueOnce(&qp._diffLEP)) calcEwmaHistory(&mgEwmaL, qp.longEwmaPeriods, "Long");
-        if (FN::trueOnce(&qp._diffMEP)) calcEwmaHistory(&mgEwmaM, qp.mediumEwmaPeriods, "Medium");
-        if (FN::trueOnce(&qp._diffSEP)) calcEwmaHistory(&mgEwmaS, qp.shortEwmaPeriods, "Short");
-        if (FN::trueOnce(&qp._diffXSEP)) calcEwmaHistory(&mgEwmaXS, qp.extraShortEwmaPeriods, "ExtraShort");
-        if (FN::trueOnce(&qp._diffUEP)) calcEwmaHistory(&mgEwmaU, qp.ultraShortEwmaPeriods, "UltraShort");
+        if (FN::trueOnce(&qp._diffVLEP)) calcEwmaHistory(&ewma.mgEwmaVL, qp.veryLongEwmaPeriods, "VeryLong");
+        if (FN::trueOnce(&qp._diffLEP)) calcEwmaHistory(&ewma.mgEwmaL, qp.longEwmaPeriods, "Long");
+        if (FN::trueOnce(&qp._diffMEP)) calcEwmaHistory(&ewma.mgEwmaM, qp.mediumEwmaPeriods, "Medium");
+        if (FN::trueOnce(&qp._diffSEP)) calcEwmaHistory(&ewma.mgEwmaS, qp.shortEwmaPeriods, "Short");
+        if (FN::trueOnce(&qp._diffXSEP)) calcEwmaHistory(&ewma.mgEwmaXS, qp.extraShortEwmaPeriods, "ExtraShort");
+        if (FN::trueOnce(&qp._diffUEP)) calcEwmaHistory(&ewma.mgEwmaU, qp.ultraShortEwmaPeriods, "UltraShort");
       };
     private:
       void hello_Levels(json *const welcome) {
@@ -166,33 +145,26 @@ namespace K {
         }
       };
       void calcStatsEwmaPosition() {
-        fairValue96h.push_back(fairValue);
-        if (fairValue96h.size() > 5760)
-          fairValue96h.erase(fairValue96h.begin(), fairValue96h.begin()+fairValue96h.size()-5760);
-        calcEwma(&mgEwmaVL, qp.veryLongEwmaPeriods, fairValue);
-        calcEwma(&mgEwmaL, qp.longEwmaPeriods, fairValue);
-        calcEwma(&mgEwmaM, qp.mediumEwmaPeriods, fairValue);
-        calcEwma(&mgEwmaS, qp.shortEwmaPeriods, fairValue);
-        calcEwma(&mgEwmaXS, qp.extraShortEwmaPeriods, fairValue);
-        calcEwma(&mgEwmaU, qp.ultraShortEwmaPeriods, fairValue);
-        if(mgEwmaXS and mgEwmaU) mgEwmaTrendDiff = ((mgEwmaU * 100) / mgEwmaXS) - 100;
+        fairValue96h.push_back(mFairValue(fairValue));
+        mClock expire = fairValue96h.expire() / 60e+3;
+        if (fairValue96h.size() > expire)
+          fairValue96h.erase(fairValue96h.begin(), fairValue96h.begin() + fairValue96h.size() - expire);
+        calcEwma(&ewma.mgEwmaVL, qp.veryLongEwmaPeriods, fairValue);
+        calcEwma(&ewma.mgEwmaL, qp.longEwmaPeriods, fairValue);
+        calcEwma(&ewma.mgEwmaM, qp.mediumEwmaPeriods, fairValue);
+        calcEwma(&ewma.mgEwmaS, qp.shortEwmaPeriods, fairValue);
+        calcEwma(&ewma.mgEwmaXS, qp.extraShortEwmaPeriods, fairValue);
+        calcEwma(&ewma.mgEwmaU, qp.ultraShortEwmaPeriods, fairValue);
+        if(ewma.mgEwmaXS and ewma.mgEwmaU) mgEwmaTrendDiff = ((ewma.mgEwmaU * 100) / ewma.mgEwmaXS) - 100;
         calcTargetPos();
         wallet->calcTargetBasePos();
         client->send(mMatter::EWMAChart, chartStats());
-        sqlite->insert(mMatter::EWMAChart, {
-          {"ewmaVeryLong", mgEwmaVL},
-          {"ewmaLong", mgEwmaL},
-          {"ewmaMedium", mgEwmaM},
-          {"ewmaShort", mgEwmaS},
-          {"ewmaExtraShort", mgEwmaXS},
-          {"ewmaUltraShort", mgEwmaU},
-          {"time", _Tstamp_}
-        });
-        sqlite->insert(mMatter::MarketDataLongTerm, {{"fv", fairValue}}, false, "NULL", _Tstamp_ - 345600e+3);
+        sqlite->insert(mMatter::EWMAChart, ewma);
+        sqlite->insert(mMatter::MarketDataLongTerm, fairValue96h.back(), false, "NULL", _Tstamp_ - 345600e+3);
       };
       void calcStatsEwmaProtection() {
-        calcEwma(&mgEwmaP, qp.protectionEwmaPeriods, fairValue);
-        calcEwma(&mgEwmaW, qp.protectionEwmaPeriods, averageWidth);
+        calcEwma(&ewma.mgEwmaP, qp.protectionEwmaPeriods, fairValue);
+        calcEwma(&ewma.mgEwmaW, qp.protectionEwmaPeriods, averageWidth);
         averageCount = 0;
       };
       json chartStats() {
@@ -207,12 +179,12 @@ namespace K {
             {"ask", mgStdevAsk},
             {"askMean", mgStdevAskMean}
           }},
-          {"ewmaQuote", mgEwmaP},
-          {"ewmaWidth", mgEwmaW},
-          {"ewmaShort", mgEwmaS},
-          {"ewmaMedium", mgEwmaM},
-          {"ewmaLong", mgEwmaL},
-          {"ewmaVeryLong", mgEwmaVL},
+          {"ewmaQuote", ewma.mgEwmaP},
+          {"ewmaWidth", ewma.mgEwmaW},
+          {"ewmaShort", ewma.mgEwmaS},
+          {"ewmaMedium", ewma.mgEwmaM},
+          {"ewmaLong", ewma.mgEwmaL},
+          {"ewmaVeryLong", ewma.mgEwmaVL},
           {"ewmaTrendDiff", mgEwmaTrendDiff},
           {"tradesBuySize", takersBuySize60s},
           {"tradesSellSize", takersSellSize60s},
@@ -271,8 +243,8 @@ namespace K {
       void calcEwmaHistory(mPrice *mean, unsigned int periods, string name) {
         unsigned int n = fairValue96h.size();
         if (!n) return;
-        *mean = fairValue96h.front();
-        while (n--) calcEwma(mean, periods, *(fairValue96h.rbegin()+n));
+        *mean = fairValue96h.front().fv;
+        while (n--) calcEwma(mean, periods, (fairValue96h.rbegin()+n)->fv);
         screen->log("MG", "reloaded " + to_string(*mean) + " EWMA " + name);
       };
       void calcEwma(mPrice *mean, unsigned int periods, mPrice value) {
@@ -289,14 +261,14 @@ namespace K {
         SMA3 /= mgSMA3.size();
         double newTargetPosition = 0;
         if (qp.autoPositionMode == mAutoPositionMode::EWMA_LMS) {
-          double newTrend = ((SMA3 * 100 / mgEwmaL) - 100);
-          double newEwmacrossing = ((mgEwmaS * 100 / mgEwmaM) - 100);
+          double newTrend = ((SMA3 * 100 / ewma.mgEwmaL) - 100);
+          double newEwmacrossing = ((ewma.mgEwmaS * 100 / ewma.mgEwmaM) - 100);
           newTargetPosition = ((newTrend + newEwmacrossing) / 2) * (1 / qp.ewmaSensiblityPercentage);
         } else if (qp.autoPositionMode == mAutoPositionMode::EWMA_LS)
-          newTargetPosition = ((mgEwmaS * 100 / mgEwmaL) - 100) * (1 / qp.ewmaSensiblityPercentage);
+          newTargetPosition = ((ewma.mgEwmaS * 100 / ewma.mgEwmaL) - 100) * (1 / qp.ewmaSensiblityPercentage);
         else if (qp.autoPositionMode == mAutoPositionMode::EWMA_4) {
-          if (mgEwmaL < mgEwmaVL) newTargetPosition = -1;
-          else newTargetPosition = ((mgEwmaS * 100 / mgEwmaM) - 100) * (1 / qp.ewmaSensiblityPercentage);
+          if (ewma.mgEwmaL < ewma.mgEwmaVL) newTargetPosition = -1;
+          else newTargetPosition = ((ewma.mgEwmaS * 100 / ewma.mgEwmaM) - 100) * (1 / qp.ewmaSensiblityPercentage);
         }
         if (newTargetPosition > 1) newTargetPosition = 1;
         else if (newTargetPosition < -1) newTargetPosition = -1;

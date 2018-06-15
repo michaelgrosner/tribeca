@@ -36,12 +36,6 @@ namespace K {
           {"wss",          required_argument, 0,               989},
           {"title",        required_argument, 0,               'K'},
           {"matryoshka",   required_argument, 0,               'k'},
-          {"ewma-ultra",   required_argument, 0,               905},
-          {"ewma-micro",   required_argument, 0,               904},
-          {"ewma-short",   required_argument, 0,               903},
-          {"ewma-medium",  required_argument, 0,               902},
-          {"ewma-long",    required_argument, 0,               901},
-          {"ewma-verylong",required_argument, 0,               900},
           {"database",     required_argument, 0,               'd'},
           {"wallet-limit", required_argument, 0,               'W'},
           {"market-limit", required_argument, 0,               'M'},
@@ -78,12 +72,6 @@ namespace K {
             case 'L': args.whitelist    = string(optarg); break;
             case 'i': args.inet         = strdup(optarg); break;
             case 'W': args.maxWallet    = stod(optarg);   break;
-            case 905: args.ewmaUShort   = stod(optarg);   break;
-            case 904: args.ewmaXShort   = stod(optarg);   break;
-            case 903: args.ewmaShort    = stod(optarg);   break;
-            case 902: args.ewmaMedium   = stod(optarg);   break;
-            case 901: args.ewmaLong     = stod(optarg);   break;
-            case 900: args.ewmaVeryLong = stod(optarg);   break;
             case 'h': cout
               << RGREEN << "This is free software: the quoting engine and UI are open source,"
                         << '\n' << "feel free to hack both as you need." << '\n'
@@ -130,18 +118,6 @@ namespace K {
               << screen->stamp() << RWHITE << "                            default PATH is '/data/db/K.*.*.*.db'," << '\n'
               << screen->stamp() << RWHITE << "                            any route to a filename is valid," << '\n'
               << screen->stamp() << RWHITE << "                            or use ':memory:' (see sqlite.org/inmemorydb.html)." << '\n'
-              << screen->stamp() << RWHITE << "    --ewma-ultra=PRICE    - set initial ewma ultra short value," << '\n'
-              << screen->stamp() << RWHITE << "                            overwrites the value from the database." << '\n'
-              << screen->stamp() << RWHITE << "    --ewma-micro=PRICE    - set initial ewma micro short value," << '\n'
-              << screen->stamp() << RWHITE << "                            overwrites the value from the database." << '\n'
-              << screen->stamp() << RWHITE << "    --ewma-short=PRICE    - set initial ewma short value," << '\n'
-              << screen->stamp() << RWHITE << "                            overwrites the value from the database." << '\n'
-              << screen->stamp() << RWHITE << "    --ewma-medium=PRICE   - set initial ewma medium value," << '\n'
-              << screen->stamp() << RWHITE << "                            overwrites the value from the database." << '\n'
-              << screen->stamp() << RWHITE << "    --ewma-long=PRICE     - set initial ewma long value," << '\n'
-              << screen->stamp() << RWHITE << "                            overwrites the value from the database." << '\n'
-              << screen->stamp() << RWHITE << "    --ewma-verylong=PRICE - set initial ewma verylong value," << '\n'
-              << screen->stamp() << RWHITE << "                            overwrites the value from the database." << '\n'
               << screen->stamp() << RWHITE << "    --wallet-limit=AMOUNT - set AMOUNT in base currency to limit the balance," << '\n'
               << screen->stamp() << RWHITE << "                            otherwise the full available balance can be used." << '\n'
               << screen->stamp() << RWHITE << "    --market-limit=NUMBER - set NUMBER of maximum price levels for the orderbook," << '\n'
