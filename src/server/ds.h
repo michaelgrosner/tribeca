@@ -67,9 +67,12 @@ namespace K {
     const char *inet = nullptr;
   } args;
   struct mFromDb {
-    virtual void read(const json &j) = 0;
-    virtual string explain() = 0;
-    virtual mClock expire() = 0;
+    virtual void select(const json &j) = 0;
+    virtual json dump() const = 0;
+    virtual string increment() const { return "NULL"; };
+    virtual string explain() const = 0;
+    virtual double limit() const  { return 0; };
+    virtual mClock lifetime() const  { return 0; };
   };
   static struct mQuotingParams: public mFromDb {
     mPrice            widthPing                       = 2.0;
@@ -151,14 +154,14 @@ namespace K {
       _diffXSEP = prev.extraShortEwmaPeriods != extraShortEwmaPeriods;
       _diffUEP = prev.ultraShortEwmaPeriods != ultraShortEwmaPeriods;
     };
-    void read(const json &j) {
+    void select(const json &j) {
       *this = j.at(0);
     };
-    string explain() {
-      return "Quoting Parameters";
+    json dump() const {
+      return *this;
     };
-    mClock expire() {
-      return 0;
+    string explain() const {
+      return "Quoting Parameters";
     };
   } qp;
   static void to_json(json &j, const mQuotingParams &k) {
@@ -375,15 +378,21 @@ namespace K {
   };
   struct mProfits: public mFromDb,
                    public vector<mProfit> {
-    void read(const json &j) {
+    void select(const json &j) {
       for (const json &it : j)
         push_back(it);
     };
-    string explain() {
+    json dump() const {
+      return back();
+    };
+    string explain() const {
       return to_string(size());
     };
-    mClock expire() {
-      return 3600e+3 * qp.profitHourInterval;
+    double limit() const {
+      return qp.profitHourInterval;
+    };
+    mClock lifetime() const {
+      return 3600e+3 * limit();
     };
   };
   struct mSafety {
@@ -456,14 +465,14 @@ namespace K {
     mTarget():
       targetBasePosition(0), positionDivergence(0), sideAPR("")
     {};
-    void read(const json &j) {
+    void select(const json &j) {
       *this = j.at(0);
     };
-    string explain() {
-      return to_string(targetBasePosition);
+    json dump() const {
+      return *this;
     };
-    mClock expire() {
-      return 0;
+    string explain() const {
+      return to_string(targetBasePosition);
     };
   };
   static void to_json(json &j, const mTarget &k) {
@@ -487,33 +496,40 @@ namespace K {
            mgEwmaU,
            mgEwmaP,
            mgEwmaW;
+    double mgEwmaTrendDiff;
     mEwma():
-      mgEwmaVL(0), mgEwmaL(0), mgEwmaM(0), mgEwmaS(0), mgEwmaXS(0), mgEwmaU(0), mgEwmaP(0), mgEwmaW(0)
+      mgEwmaVL(0), mgEwmaL(0), mgEwmaM(0), mgEwmaS(0), mgEwmaXS(0), mgEwmaU(0), mgEwmaP(0), mgEwmaW(0), mgEwmaTrendDiff(0)
     {};
-    void read(const json &j) {
+    void select(const json &j) {
       *this = j.at(0);
     };
-    string explain() {
+    json dump() const {
+      return *this;
+    };
+    string explain() const {
       return "EWMA Values";
     };
-    mClock expire() {
-      return 60e+3 * min(qp.veryLongEwmaPeriods,
-                     min(qp.longEwmaPeriods,
-                     min(qp.mediumEwmaPeriods,
-                     min(qp.shortEwmaPeriods,
-                     min(qp.extraShortEwmaPeriods,
+    mClock lifetime() const {
+      return 60e+3 * max(qp.veryLongEwmaPeriods,
+                     max(qp.longEwmaPeriods,
+                     max(qp.mediumEwmaPeriods,
+                     max(qp.shortEwmaPeriods,
+                     max(qp.extraShortEwmaPeriods,
                          qp.ultraShortEwmaPeriods
                      )))));
     };
   };
   static void to_json(json &j, const mEwma &k) {
     j = {
-      {  "ewmaVeryLong", k.mgEwmaVL},
-      {      "ewmaLong", k.mgEwmaL },
-      {    "ewmaMedium", k.mgEwmaM },
-      {     "ewmaShort", k.mgEwmaS },
-      {"ewmaExtraShort", k.mgEwmaXS},
-      {"ewmaUltraShort", k.mgEwmaU }
+      {  "ewmaVeryLong", k.mgEwmaVL       },
+      {      "ewmaLong", k.mgEwmaL        },
+      {    "ewmaMedium", k.mgEwmaM        },
+      {     "ewmaShort", k.mgEwmaS        },
+      {"ewmaExtraShort", k.mgEwmaXS       },
+      {"ewmaUltraShort", k.mgEwmaU        },
+      {     "ewmaQuote", k.mgEwmaP        },
+      {     "ewmaWidth", k.mgEwmaW        },
+      { "ewmaTrendDiff", k.mgEwmaTrendDiff}
     };
   };
   static void from_json(const json &j, mEwma &k) {
@@ -541,6 +557,25 @@ namespace K {
   static void from_json(const json &j, mFairValue &k) {
     k.fv = j.value("fv", 0.0);
   };
+  struct mFairValues: public mFromDb,
+                      public vector<mFairValue> {
+    void select(const json &j) {
+      for (const json &it : j)
+        push_back(it);
+    };
+    json dump() const {
+      return back();
+    };
+    string explain() const {
+      return to_string(size());
+    };
+    double limit() const {
+      return 5760;
+    };
+    mClock lifetime() const {
+      return 60e+3 * limit();
+    };
+  };
   struct mStdev: public mFairValue {
     mPrice topBid,
            topAsk;
@@ -564,29 +599,22 @@ namespace K {
     k.topAsk = j.value("ask", 0.0);
   };
   struct mStdevs: public mFromDb,
-                   public vector<mStdev> {
-    void read(const json &j) {
+                  public vector<mStdev> {
+    void select(const json &j) {
       for (const json &it : j)
         push_back(it);
     };
-    string explain() {
+    json dump() const {
+      return back();
+    };
+    string explain() const {
       return to_string(size());
     };
-    mClock expire() {
-      return 1e+3 * qp.quotingStdevProtectionPeriods;
+    double limit() const {
+      return qp.quotingStdevProtectionPeriods;
     };
-  };
-  struct mFairValues: public mFromDb,
-                      public vector<mFairValue> {
-    void read(const json &j) {
-      for (const json &it : j)
-        push_back(it);
-    };
-    string explain() {
-      return to_string(size());
-    };
-    mClock expire() {
-      return 345600e+3;
+    mClock lifetime() const {
+      return 1e+3 * limit();
     };
   };
   struct mTrade {
@@ -653,19 +681,22 @@ namespace K {
     k.Kvalue       = j.value("Kvalue", 0.0);
     k.Kdiff        = j.value("Kdiff", 0.0);
     k.feeCharged   = j.value("feeCharged", 0.0);
-    k.loadedFromDB = j.value("loadedFromDB", false);
+    k.loadedFromDB = true;
   };
   struct mTrades: public mFromDb,
                   public vector<mTrade> {
-    void read(const json &j) {
-      for (const json &it : j)
-        push_back(it);
+    void select(const json &j) {
+      for (const json &it : j) push_back(it);
     };
-    string explain() {
+    json dump() const {
+      if (rbegin()->Kqty == -1) return nullptr;
+      else return back();
+    };
+    string increment() const {
+      return rbegin()->tradeId;
+    };
+    string explain() const {
       return to_string(size());
-    };
-    mClock expire() {
-      return 0;
     };
   };
   struct mOrder {

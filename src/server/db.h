@@ -27,35 +27,37 @@ namespace K {
       };
     public:
       void select(const mMatter &table, mFromDb *const data, const string &ok, const string &ko = "") {
-        exec("CREATE TABLE IF NOT EXISTS " + schema(table) + "("
-          + "id    INTEGER   PRIMARY KEY AUTOINCREMENT                                           NOT NULL,"
-          + "json  BLOB                                                                          NOT NULL,"
-          + "time  TIMESTAMP DEFAULT (CAST((julianday('now') - 2440587.5)*86400000 AS INTEGER))  NOT NULL);");
         json result = json::array();
-        exec(expire(table, data) + "SELECT json FROM " + schema(table) + " ORDER BY time ASC;", &result);
+        exec(
+          create(table)
+          + truncate(table, data->lifetime())
+          + "SELECT json FROM " + schema(table) + " ORDER BY time ASC;",
+          &result
+        );
         if (!result.empty()) {
-          data->read(result);
+          data->select(result);
           screen->log("DB", explain(data, ok));
         } else if (!ko.empty())
           screen->logWar("DB", explain(data, ko));
       };
-      void insert(
-        const mMatter &table            ,
-        const json    &cell             ,
-        const bool    &rm       = true  ,
-        const string  &updateId = "NULL",
-        const mClock  &rmOlder  = 0
-      ) {
-        const string sql = (
-          (rm or updateId != "NULL" or rmOlder)
+      void insert(const mMatter &table, const mFromDb &data) {
+        const json   blob  = data.dump();
+        const double limit = data.limit();
+        const mClock lifetime = data.lifetime();
+        const string incr = data.increment(),
+                     sql  = (
+          (incr != "NULL" or !limit or lifetime)
             ? "DELETE FROM " + schema(table) + (
-              updateId != "NULL"
-                ? " WHERE id = " + updateId
-                : (rmOlder ? " WHERE time < " + to_string(rmOlder) : "")
-            ) : ""
-        ) + ";"
-          + (cell.is_null() ? "" : "INSERT INTO " + schema(table)
-          + " (id,json) VALUES(" + updateId + ",'" + cell.dump() + "');");
+              incr != "NULL"
+                ? " WHERE id = " + incr
+                : (limit ? " WHERE time < " + to_string(_Tstamp_ - lifetime) : "")
+            ) + ";" : ""
+        ) + (
+          blob.is_null()
+            ? ""
+            : "INSERT INTO " + schema(table)
+              + " (id,json) VALUES(" + incr + ",'" + blob.dump() + "');"
+        );
         events->deferred([this, sql]() {
           exec(sql);
         });
@@ -64,10 +66,15 @@ namespace K {
       string schema(const mMatter &table) {
         return (table == mMatter::QuotingParameters ? qpdb : "main") + "." + (char)table;
       };
-      string expire(const mMatter &table, mFromDb *const data) {
-        mClock rmOlder = data->expire();
-        return rmOlder
-          ? "DELETE FROM " + schema(table) + " WHERE time < " + to_string(_Tstamp_ - rmOlder) + ";"
+      string create(const mMatter &table) {
+        return "CREATE TABLE IF NOT EXISTS " + schema(table) + "("
+          + "id    INTEGER   PRIMARY KEY AUTOINCREMENT                                           NOT NULL,"
+          + "json  BLOB                                                                          NOT NULL,"
+          + "time  TIMESTAMP DEFAULT (CAST((julianday('now') - 2440587.5)*86400000 AS INTEGER))  NOT NULL);";
+      };
+      string truncate(const mMatter &table, const mClock &lifetime) {
+        return lifetime
+          ? "DELETE FROM " + schema(table) + " WHERE time < " + to_string(_Tstamp_ - lifetime) + ";"
           : "";
       };
       string explain(mFromDb *const data, string msg) {

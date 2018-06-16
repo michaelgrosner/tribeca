@@ -118,7 +118,7 @@ namespace K {
           levels.bids.begin()->price,
           levels.asks.begin()->price
         ));
-        sqlite->insert(mMatter::MarketData, stdev.back(), false, "NULL", _Tstamp_ - 1e+3 * qp.quotingStdevProtectionPeriods);
+        sqlite->insert(mMatter::MarketData, stdev);
         calcStdev();
       };
       void calcStatsTrades() {
@@ -146,21 +146,20 @@ namespace K {
       };
       void calcStatsEwmaPosition() {
         fairValue96h.push_back(mFairValue(fairValue));
-        mClock expire = fairValue96h.expire() / 60e+3;
-        if (fairValue96h.size() > expire)
-          fairValue96h.erase(fairValue96h.begin(), fairValue96h.begin() + fairValue96h.size() - expire);
+        if (fairValue96h.size() > fairValue96h.limit())
+          fairValue96h.erase(fairValue96h.begin(), fairValue96h.begin() + fairValue96h.size() - fairValue96h.limit());
         calcEwma(&ewma.mgEwmaVL, qp.veryLongEwmaPeriods, fairValue);
         calcEwma(&ewma.mgEwmaL, qp.longEwmaPeriods, fairValue);
         calcEwma(&ewma.mgEwmaM, qp.mediumEwmaPeriods, fairValue);
         calcEwma(&ewma.mgEwmaS, qp.shortEwmaPeriods, fairValue);
         calcEwma(&ewma.mgEwmaXS, qp.extraShortEwmaPeriods, fairValue);
         calcEwma(&ewma.mgEwmaU, qp.ultraShortEwmaPeriods, fairValue);
-        if(ewma.mgEwmaXS and ewma.mgEwmaU) mgEwmaTrendDiff = ((ewma.mgEwmaU * 100) / ewma.mgEwmaXS) - 100;
+        if(ewma.mgEwmaXS and ewma.mgEwmaU) ewma.mgEwmaTrendDiff = ((ewma.mgEwmaU * 100) / ewma.mgEwmaXS) - 100;
         calcTargetPos();
         wallet->calcTargetBasePos();
         client->send(mMatter::EWMAChart, chartStats());
         sqlite->insert(mMatter::EWMAChart, ewma);
-        sqlite->insert(mMatter::MarketDataLongTerm, fairValue96h.back(), false, "NULL", _Tstamp_ - 345600e+3);
+        sqlite->insert(mMatter::MarketDataLongTerm, fairValue96h);
       };
       void calcStatsEwmaProtection() {
         calcEwma(&ewma.mgEwmaP, qp.protectionEwmaPeriods, fairValue);
@@ -179,21 +178,15 @@ namespace K {
             {"ask", mgStdevAsk},
             {"askMean", mgStdevAskMean}
           }},
-          {"ewmaQuote", ewma.mgEwmaP},
-          {"ewmaWidth", ewma.mgEwmaW},
-          {"ewmaShort", ewma.mgEwmaS},
-          {"ewmaMedium", ewma.mgEwmaM},
-          {"ewmaLong", ewma.mgEwmaL},
-          {"ewmaVeryLong", ewma.mgEwmaVL},
-          {"ewmaTrendDiff", mgEwmaTrendDiff},
+          {"ewma", ewma},
+          {"fairValue", fairValue},
           {"tradesBuySize", takersBuySize60s},
-          {"tradesSellSize", takersSellSize60s},
-          {"fairValue", fairValue}
+          {"tradesSellSize", takersSellSize60s}
         };
       };
       void expireStdev() {
-        if (stdev.size() > qp.quotingStdevProtectionPeriods)
-          stdev.erase(stdev.begin(), stdev.end() - qp.quotingStdevProtectionPeriods);
+        if (stdev.size() > stdev.limit())
+          stdev.erase(stdev.begin(), stdev.end() - stdev.limit());
       };
       void calcStdev() {
         expireStdev();

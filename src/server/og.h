@@ -94,8 +94,6 @@ namespace K {
       };
     private:
       void hello_Trades(json *const welcome) {
-        for (mTrade &it : tradesHistory)
-          it.loadedFromDB = true;
         *welcome = tradesHistory;
       };
       void hello_Orders(json *const welcome) {
@@ -183,9 +181,12 @@ namespace K {
           if (it->Kqty < it->quantity) ++it;
           else {
             it->Kqty = -1;
-            client->send(mMatter::Trades, *it);
-            sqlite->insert(mMatter::Trades, {}, false, it->tradeId);
+            mTrade trade = *it;
             it = tradesHistory.erase(it);
+            tradesHistory.push_back(trade);
+            client->send(mMatter::Trades, trade);
+            sqlite->insert(mMatter::Trades, tradesHistory);
+            tradesHistory.pop_back();
           }
       };
       void cleanTrade(string k = "") {
@@ -194,9 +195,12 @@ namespace K {
           if (!all and it->tradeId != k) ++it;
           else {
             it->Kqty = -1;
-            client->send(mMatter::Trades, *it);
-            sqlite->insert(mMatter::Trades, {}, false, it->tradeId);
+            mTrade trade = *it;
             it = tradesHistory.erase(it);
+            tradesHistory.push_back(trade);
+            client->send(mMatter::Trades, trade);
+            sqlite->insert(mMatter::Trades, tradesHistory);
+            tradesHistory.pop_back();
             if (!all) break;
           }
       };
@@ -244,9 +248,9 @@ namespace K {
             (qp.pongAt == mPongAt::LongPingFair or qp.pongAt == mPongAt::LongPingAggressive) ? trade.side == mSide::Ask : trade.side == mSide::Bid
           );
         } else {
-          client->send(mMatter::Trades, trade);
-          sqlite->insert(mMatter::Trades, trade, false, trade.tradeId);
           tradesHistory.push_back(trade);
+          client->send(mMatter::Trades, trade);
+          sqlite->insert(mMatter::Trades, tradesHistory);
         }
         client->send(mMatter::TradesChart, {
           {"price", trade.price},
@@ -264,39 +268,45 @@ namespace K {
           if (!matchPong(it->second, &pong)) break;
         if (pong.quantity > 0) {
           bool eq = false;
-          for (mTrade &it : tradesHistory) {
-            if (it.price!=pong.price or it.side!=pong.side or it.quantity<=it.Kqty) continue;
+          for (mTrades::iterator it = tradesHistory.begin(); it != tradesHistory.end(); ++it) {
+            if (it->price!=pong.price or it->side!=pong.side or it->quantity<=it->Kqty) continue;
             eq = true;
-            it.time = pong.time;
-            it.quantity = it.quantity + pong.quantity;
-            it.value = it.value + pong.value;
-            it.loadedFromDB = false;
-            client->send(mMatter::Trades, it);
-            sqlite->insert(mMatter::Trades, it, false, it.tradeId);
+            it->time = pong.time;
+            it->quantity = it->quantity + pong.quantity;
+            it->value = it->value + pong.value;
+            it->loadedFromDB = false;
+            mTrade trade = *it;
+            it = tradesHistory.erase(it);
+            tradesHistory.push_back(trade);
+            client->send(mMatter::Trades, trade);
+            sqlite->insert(mMatter::Trades, tradesHistory);
             break;
           }
           if (!eq) {
-            client->send(mMatter::Trades, pong);
-            sqlite->insert(mMatter::Trades, pong, false, pong.tradeId);
             tradesHistory.push_back(pong);
+            client->send(mMatter::Trades, pong);
+            sqlite->insert(mMatter::Trades, tradesHistory);
           }
         }
       };
       bool matchPong(string match, mTrade* pong) {
-        for (mTrade &it : tradesHistory) {
-          if (it.tradeId != match) continue;
-          mAmount Kqty = fmin(pong->quantity, it.quantity - it.Kqty);
-          it.Ktime = pong->time;
-          it.Kprice = ((Kqty*pong->price) + (it.Kqty*it.Kprice)) / (it.Kqty+Kqty);
-          it.Kqty = it.Kqty + Kqty;
-          it.Kvalue = abs(it.Kqty*it.Kprice);
+        for (mTrades::iterator it = tradesHistory.begin(); it != tradesHistory.end(); ++it) {
+          if (it->tradeId != match) continue;
+          mAmount Kqty = fmin(pong->quantity, it->quantity - it->Kqty);
+          it->Ktime = pong->time;
+          it->Kprice = ((Kqty*pong->price) + (it->Kqty*it->Kprice)) / (it->Kqty+Kqty);
+          it->Kqty = it->Kqty + Kqty;
+          it->Kvalue = abs(it->Kqty*it->Kprice);
           pong->quantity = pong->quantity - Kqty;
           pong->value = abs(pong->price*pong->quantity);
-          if (it.quantity<=it.Kqty)
-            it.Kdiff = abs(it.quantity * it.price - it.Kqty * it.Kprice);
-          it.loadedFromDB = false;
-          client->send(mMatter::Trades, it);
-          sqlite->insert(mMatter::Trades, it, false, it.tradeId);
+          if (it->quantity<=it->Kqty)
+            it->Kdiff = abs(it->quantity * it->price - it->Kqty * it->Kprice);
+          it->loadedFromDB = false;
+          mTrade trade = *it;
+          it = tradesHistory.erase(it);
+          tradesHistory.push_back(trade);
+          client->send(mMatter::Trades, trade);
+          sqlite->insert(mMatter::Trades, tradesHistory);
           break;
         }
         return pong->quantity > 0;
@@ -306,9 +316,12 @@ namespace K {
         for (vector<mTrade>::iterator it = tradesHistory.begin(); it != tradesHistory.end();)
           if ((it->Ktime?:it->time) < pT_ and (qp.cleanPongsAuto < 0 or it->Kqty >= it->quantity)) {
             it->Kqty = -1;
-            client->send(mMatter::Trades, *it);
-            sqlite->insert(mMatter::Trades, {}, false, it->tradeId);
+            mTrade trade = *it;
             it = tradesHistory.erase(it);
+            tradesHistory.push_back(trade);
+            client->send(mMatter::Trades, trade);
+            sqlite->insert(mMatter::Trades, tradesHistory);
+            tradesHistory.pop_back();
           } else ++it;
       };
   };

@@ -85,18 +85,22 @@ export interface IStdev {
     askMean: number;
 }
 
+export interface IEwma {
+  ewmaVeryLong: number;
+  ewmaLong: number;
+  ewmaMedium: number;
+  ewmaShort: number;
+  ewmaQuote: number;
+  ewmaWidth: number;
+  ewmaTrendDiff: number;
+}
+
 export class EWMAChart {
     constructor(public stdevWidth: IStdev,
-                public ewmaQuote: number,
-                public ewmaWidth: number,
-                public ewmaShort: number,
-                public ewmaMedium: number,
-                public ewmaLong: number,
-                public ewmaVeryLong: number,
-                public ewmaTrendDiff: number,
+                public ewma: IEwma,
+                public fairValue: number,
                 public tradesBuySize: number,
-                public tradesSellSize: number,
-                public fairValue: number) {}
+                public tradesSellSize: number) {}
 }
 
 export class TradeChart {

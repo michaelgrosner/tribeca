@@ -280,11 +280,10 @@ namespace K {
       void calcProfit(mPosition *k) {
         mClock now = _Tstamp_;
         if (!profits.size() or profits.back().time + 21e+3 > now) return;
-        mProfit profit(k->baseValue, k->quoteValue, now);
-        sqlite->insert(mMatter::Position, profit, false, "NULL", now - (qp.profitHourInterval * 3600e+3));
-        profits.push_back(profit);
+        profits.push_back(mProfit(k->baseValue, k->quoteValue, now));
+        sqlite->insert(mMatter::Position, profits);
         for (vector<mProfit>::iterator it = profits.begin(); it != profits.end();)
-          if (it->time + (qp.profitHourInterval * 3600e+3) > now) ++it;
+          if (it->time + profits.lifetime() > now) ++it;
           else it = profits.erase(it);
         k->profitBase = ((k->baseValue - profits.begin()->baseValue) / k->baseValue) * 1e+2;
         k->profitQuote = ((k->quoteValue - profits.begin()->quoteValue) / k->quoteValue) * 1e+2;

@@ -54,7 +54,7 @@ namespace K {
 #define INTO ,&
 #define THEN ,
 #define WARN ,
-    virtual void insert(const mMatter&, const json&, const bool& = true, const string& = "NULL", const mClock& = 0) = 0;
+    virtual void insert(const mMatter&, const mFromDb&) = 0;
     function<unsigned int()> size = []() { return 0; };
   } *sqlite = nullptr;
 
@@ -92,8 +92,7 @@ namespace K {
            mgStdevBid = 0,
            mgStdevBidMean = 0,
            mgStdevAsk = 0,
-           mgStdevAskMean = 0,
-           mgEwmaTrendDiff = 0;
+           mgStdevAskMean = 0;
     map<mPrice, mAmount> filterBidOrders,
                          filterAskOrders;
     virtual void calcStats() = 0;
