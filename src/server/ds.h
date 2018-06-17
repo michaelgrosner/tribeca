@@ -639,10 +639,10 @@ namespace K {
            topAsk;
     mStdev():
       topBid(0), topAsk(0)
-    {};
+    { fv = 0; };
     mStdev(mPrice f, mPrice b, mPrice a):
       topBid(b), topAsk(a)
-    {};
+    { fv = f; };
   };
   static void to_json(json &j, const mStdev &k) {
     j = {
