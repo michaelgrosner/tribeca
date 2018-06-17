@@ -79,7 +79,7 @@ namespace K {
           position.profitQuote,
           mPair(gw->base, gw->quote)
         );
-        calcProfit(&pos);
+        calcPositionProfit(&pos);
         bool eq = true;
         if (!position.empty()) {
           eq = abs(pos.baseValue - position.baseValue) < 2e-6;
@@ -235,7 +235,7 @@ namespace K {
         skip();
       };
       void expire(map<mPrice, mTrade> *k) {
-        mClock now = _Tstamp_;
+        mClock now = Tstamp;
         for (map<mPrice, mTrade>::iterator it = k->begin(); it != k->end();)
           if (it->second.time + qp.tradeRateSeconds * 1e+3 > now) ++it;
           else it = k->erase(it);
@@ -277,16 +277,12 @@ namespace K {
           else if (mPDivMode::Switch == qp.positionDivergenceMode) target.positionDivergence = divCenter < 1e-1 ? pDivMin : pDiv;
         }
       };
-      void calcProfit(mPosition *k) {
-        mClock now = _Tstamp_;
-        if (!profits.size() or profits.back().time + 21e+3 > now) return;
-        profits.push_back(mProfit(k->baseValue, k->quoteValue, now));
+      void calcPositionProfit(mPosition *k) {
+        if (profits.ratelimit()) return;
+        profits.push_back(mProfit(k->baseValue, k->quoteValue));
         sqlite->insert(mMatter::Position, profits);
-        for (vector<mProfit>::iterator it = profits.begin(); it != profits.end();)
-          if (it->time + profits.lifetime() > now) ++it;
-          else it = profits.erase(it);
-        k->profitBase = ((k->baseValue - profits.begin()->baseValue) / k->baseValue) * 1e+2;
-        k->profitQuote = ((k->quoteValue - profits.begin()->quoteValue) / k->quoteValue) * 1e+2;
+        k->profitBase = profits.calcBase();
+        k->profitQuote = profits.calcQuote();
       };
       void applyMaxWallet() {
         mAmount maxWallet = args.maxWallet;
