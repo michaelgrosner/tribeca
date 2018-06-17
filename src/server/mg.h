@@ -52,6 +52,7 @@ namespace K {
           calcStatsTrades();
           calcStatsEwmaProtection();
           calcStatsEwmaPosition();
+          prepareEwmaHistory();
         } else if (mgT_60s == 60) mgT_60s = 0;
         calcStatsStdevProtection();
       };
@@ -106,10 +107,10 @@ namespace K {
         calcFairValue();
         engine->calcQuote();
         if (levelsDiff.empty() or levels.empty()
-          or mgT_369ms + max(369.0, qp.delayUI * 1e+3) > _Tstamp_
+          or mgT_369ms + max(369.0, qp.delayUI * 1e+3) > Tstamp
         ) return;
         client->send(mMatter::MarketData, levelsDiff.diff(levels));
-        mgT_369ms = _Tstamp_;
+        mgT_369ms = Tstamp;
       };
       void calcStatsStdevProtection() {
         if (levels.empty()) return;
@@ -145,9 +146,6 @@ namespace K {
         }
       };
       void calcStatsEwmaPosition() {
-        fairValue96h.push_back(mFairValue(fairValue));
-        if (fairValue96h.size() > fairValue96h.limit())
-          fairValue96h.erase(fairValue96h.begin(), fairValue96h.begin() + fairValue96h.size() - fairValue96h.limit());
         calcEwma(&ewma.mgEwmaVL, qp.veryLongEwmaPeriods, fairValue);
         calcEwma(&ewma.mgEwmaL, qp.longEwmaPeriods, fairValue);
         calcEwma(&ewma.mgEwmaM, qp.mediumEwmaPeriods, fairValue);
@@ -159,7 +157,6 @@ namespace K {
         wallet->calcTargetBasePos();
         client->send(mMatter::EWMAChart, chartStats());
         sqlite->insert(mMatter::EWMAChart, ewma);
-        sqlite->insert(mMatter::MarketDataLongTerm, fairValue96h);
       };
       void calcStatsEwmaProtection() {
         calcEwma(&ewma.mgEwmaP, qp.protectionEwmaPeriods, fairValue);
@@ -233,10 +230,14 @@ namespace K {
         double variance = sq_diff_sum / n;
         return sqrt(variance) * qp.quotingStdevProtectionFactor;
       };
+      void prepareEwmaHistory() {
+        fairValue96h.push_back(mFairValue(fairValue));
+        sqlite->insert(mMatter::MarketDataLongTerm, fairValue96h);
+      };
       void calcEwmaHistory(mPrice *mean, unsigned int periods, string name) {
         unsigned int n = fairValue96h.size();
         if (!n) return;
-        *mean = fairValue96h.front().fv;
+        *mean = fairValue96h.begin()->fv;
         while (n--) calcEwma(mean, periods, (fairValue96h.rbegin()+n)->fv);
         screen->log("MG", "reloaded " + to_string(*mean) + " EWMA " + name);
       };

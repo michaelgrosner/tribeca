@@ -7,6 +7,11 @@
 #define mRandId string
 #define mCoinId string
 
+#define Tclock  chrono::system_clock::now()
+#define Tstamp  chrono::duration_cast<chrono::milliseconds>( \
+                  Tclock.time_since_epoch()                  \
+                ).count()
+
 #ifndef M_PI_2
 #define M_PI_2 1.5707963267948965579989817342720925807952880859375
 #endif
@@ -67,12 +72,37 @@ namespace K {
     const char *inet = nullptr;
   } args;
   struct mFromDb {
-    virtual void select(const json &j) = 0;
-    virtual json dump() const = 0;
+    virtual   void select(const json &j) = 0;
+    virtual   json dump()      const = 0;
     virtual string increment() const { return "NULL"; };
-    virtual string explain() const = 0;
-    virtual double limit() const  { return 0; };
-    virtual mClock lifetime() const  { return 0; };
+    virtual string explain()   const = 0;
+    virtual double limit()     const { return 0; };
+    virtual mClock lifetime()  const { return 0; };
+  };
+  // template <typename mData> struct mStructFromDb: public mFromDb {
+  // };
+  template <typename mData> struct mVectorFromDb: public mFromDb {
+    vector<mData> rows;
+    typedef typename vector<mData>::iterator         iterator;
+    typedef typename vector<mData>::reverse_iterator reverse_iterator;
+    iterator          begin() { return rows.begin(); };
+    reverse_iterator rbegin() { return rows.rbegin(); };
+    size_t size() const { return rows.size(); };
+    virtual void expire() = 0;
+    void push_back(const mData &row) {
+      rows.push_back(row);
+      expire();
+    };
+    void select(const json &j) {
+      for (const json &it : j)
+        rows.push_back(it);
+    };
+    json dump() const {
+      return rows.back();
+    };
+    string explain() const {
+      return to_string(size());
+    };
   };
   static struct mQuotingParams: public mFromDb {
     mPrice            widthPing                       = 2.0;
@@ -360,8 +390,8 @@ namespace K {
     mProfit():
       baseValue(0), quoteValue(0), time(0)
     {};
-    mProfit(mAmount b, mAmount q, mClock t):
-      baseValue(b), quoteValue(q), time(t)
+    mProfit(mAmount b, mAmount q):
+      baseValue(b), quoteValue(q), time(Tstamp)
     {};
   };
   static void to_json(json &j, const mProfit &k) {
@@ -376,23 +406,35 @@ namespace K {
     k.quoteValue = j.value("quoteValue", 0.0);
     k.time       = j.value("time", (mClock)0);
   };
-  struct mProfits: public mFromDb,
-                   public vector<mProfit> {
-    void select(const json &j) {
-      for (const json &it : j)
-        push_back(it);
-    };
-    json dump() const {
-      return back();
-    };
-    string explain() const {
-      return to_string(size());
-    };
+  struct mProfits: public mVectorFromDb<mProfit> {
     double limit() const {
       return qp.profitHourInterval;
     };
     mClock lifetime() const {
       return 3600e+3 * limit();
+    };
+    void expire() {
+      for (vector<mProfit>::iterator it = rows.begin(); it != rows.end();)
+        if (it->time + lifetime() > Tstamp) ++it;
+        else it = rows.erase(it);
+    };
+    bool ratelimit() const {
+      return !rows.empty() and rows.rbegin()->time + 21e+3 > Tstamp;
+    };
+    double calcBase() {
+      return calcDiffPercent(
+        rows.begin()->baseValue,
+        rows.rbegin()->baseValue
+      );
+    };
+    double calcQuote() {
+      return calcDiffPercent(
+        rows.begin()->quoteValue,
+        rows.rbegin()->quoteValue
+      );
+    };
+    double calcDiffPercent(mAmount older, mAmount newer) {
+      return ((newer - older) / newer) * 100;
     };
   };
   struct mSafety {
@@ -431,8 +473,8 @@ namespace K {
             _baseTotal,
             _quoteTotal,
             baseValue,
-            quoteValue,
-            profitBase,
+            quoteValue;
+     double profitBase,
             profitQuote;
       mPair pair;
     mPosition():
@@ -557,23 +599,16 @@ namespace K {
   static void from_json(const json &j, mFairValue &k) {
     k.fv = j.value("fv", 0.0);
   };
-  struct mFairValues: public mFromDb,
-                      public vector<mFairValue> {
-    void select(const json &j) {
-      for (const json &it : j)
-        push_back(it);
-    };
-    json dump() const {
-      return back();
-    };
-    string explain() const {
-      return to_string(size());
-    };
+  struct mFairValues: public mVectorFromDb<mFairValue> {
     double limit() const {
       return 5760;
     };
     mClock lifetime() const {
       return 60e+3 * limit();
+    };
+    void expire() {
+      if (size() > limit())
+        rows.erase(rows.begin(), rows.begin() + size() - limit());
     };
   };
   struct mStdev: public mFairValue {
@@ -599,7 +634,7 @@ namespace K {
     k.topAsk = j.value("ask", 0.0);
   };
   struct mStdevs: public mFromDb,
-                  public vector<mStdev> {
+                  public /*sick*/ vector<mStdev> {
     void select(const json &j) {
       for (const json &it : j)
         push_back(it);
@@ -684,7 +719,7 @@ namespace K {
     k.loadedFromDB = true;
   };
   struct mTrades: public mFromDb,
-                  public vector<mTrade> {
+                  public /*sick*/ vector<mTrade> {
     void select(const json &j) {
       for (const json &it : j) push_back(it);
     };

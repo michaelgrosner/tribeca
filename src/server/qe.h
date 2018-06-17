@@ -94,7 +94,7 @@ namespace K {
         market->filterBidOrders.clear();
         market->filterAskOrders.clear();
         vector<mRandId> zombies;
-        mClock now = _Tstamp_;
+        mClock now = Tstamp;
         for (map<mRandId, mOrder>::value_type &it : broker->orders)
           if (it.second.orderStatus == mStatus::New) {
             if (now-10e+3>it.second.time) zombies.push_back(it.first);
@@ -471,7 +471,7 @@ namespace K {
         unsigned int n = 0;
         vector<mRandId> toCancel,
                         keepWorking;
-        mClock now = _Tstamp_;
+        mClock now = Tstamp;
         for (map<mRandId, mOrder>::value_type &it : broker->orders)
           if (it.second.side != side or !it.second.preferPostOnly) continue;
           else if (abs(it.second.price - q.price) < gw->minTick) return;

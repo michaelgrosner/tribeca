@@ -69,7 +69,7 @@ namespace K {
         hotkeys();
       };
       string stamp() {
-        chrono::system_clock::time_point clock = _Tclock_;
+        chrono::system_clock::time_point clock = Tclock;
         chrono::system_clock::duration t = clock.time_since_epoch();
         t -= chrono::duration_cast<chrono::seconds>(t);
         auto milliseconds = chrono::duration_cast<chrono::milliseconds>(t);

@@ -50,7 +50,7 @@ namespace K {
             ? "DELETE FROM " + schema(table) + (
               incr != "NULL"
                 ? " WHERE id = " + incr
-                : (limit ? " WHERE time < " + to_string(_Tstamp_ - lifetime) : "")
+                : (limit ? " WHERE time < " + to_string(Tstamp - lifetime) : "")
             ) + ";" : ""
         ) + (
           blob.is_null()
@@ -74,7 +74,7 @@ namespace K {
       };
       string truncate(const mMatter &table, const mClock &lifetime) {
         return lifetime
-          ? "DELETE FROM " + schema(table) + " WHERE time < " + to_string(_Tstamp_ - lifetime) + ";"
+          ? "DELETE FROM " + schema(table) + " WHERE time < " + to_string(Tstamp - lifetime) + ";"
           : "";
       };
       string explain(mFromDb *const data, string msg) {

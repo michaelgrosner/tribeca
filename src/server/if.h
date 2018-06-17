@@ -245,7 +245,7 @@ namespace K {
   static class Ending {
     public:
       Ending (/* KMxTWEpb9ig */) {
-        tracelog = "- roll-out: " + to_string(_Tstamp_) + '\n';
+        tracelog = "- roll-out: " + to_string(Tstamp) + '\n';
         signal(SIGINT, quit);
         signal(SIGABRT, wtf);
         signal(SIGSEGV, wtf);
@@ -292,7 +292,7 @@ namespace K {
             + "- exchange: " + args.exchange + '\n'
             + "- currency: " + args.currency + '\n'
             + rollout
-            + "- lastbeat: " + to_string(_Tstamp_) + '\n'
+            + "- lastbeat: " + to_string(Tstamp) + '\n'
             + "- binbuild: " + string(K_BUILD) + '\n'
 #ifndef _WIN32
             + "- os-uname: " + FN::output("uname -srvm")

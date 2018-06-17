@@ -5,12 +5,6 @@
                  "ABCDEFGHIJKLMNOPQRSTUVWXYZ" \
                  "abcdefghijklmnopqrstuvwxyz"
 
-#define _Tclock_ chrono::system_clock::now()
-
-#define _Tstamp_ chrono::duration_cast<chrono::milliseconds>( \
-                   _Tclock_.time_since_epoch()                \
-                 ).count()
-
 namespace K {
   class FN {
     public:

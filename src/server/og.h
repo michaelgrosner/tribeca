@@ -82,8 +82,8 @@ namespace K {
       void cancelOrder(const mRandId &orderId) {
         if (orderId.empty()) return;
         mOrder *o = &orders[orderId];
-        if (o->exchangeId.empty() or o->_waitingCancel + 3e+3 > _Tstamp_) return;
-        o->_waitingCancel = _Tstamp_;
+        if (o->exchangeId.empty() or o->_waitingCancel + 3e+3 > Tstamp) return;
+        o->_waitingCancel = Tstamp;
         DEBOG("cancel " + ((o->side == mSide::Bid ? "BID id " : "ASK id ") + o->orderId) + "::" + o->exchangeId);
         gw->cancel(o->orderId, o->exchangeId);
       };
@@ -154,9 +154,9 @@ namespace K {
         if (k.quantity) o->quantity = k.quantity;
         if (k.time) o->time = k.time;
         if (k.latency) o->latency = k.latency;
-        if (!o->time) o->time = _Tstamp_;
-        if (!o->latency and working) o->latency = _Tstamp_ - o->time;
-        if (o->latency) o->time = _Tstamp_;
+        if (!o->time) o->time = Tstamp;
+        if (!o->latency and working) o->latency = Tstamp - o->time;
+        if (o->latency) o->time = Tstamp;
         if (k.tradeQuantity) {
           toHistory(o, k.tradeQuantity);
           gw->refreshWallet = true;
@@ -215,7 +215,7 @@ namespace K {
       void toHistory(mOrder *o, double tradeQuantity) {
         mAmount fee = 0;
         mTrade trade(
-          to_string(_Tstamp_),
+          to_string(Tstamp),
           o->pair,
           o->price,
           tradeQuantity,
