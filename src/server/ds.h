@@ -87,10 +87,10 @@ namespace K {
       sqlite.insert();
     };
     virtual void select(const json &j) {
-      *((mData*)this) = j.at(0);
+      from_json(j.at(0), *(mData*)this);
     };
     virtual json dump() const {
-      return *((mData*)this);
+      return *(mData*)this;
     };
   };
   template <typename mData> struct mVectorFromDb: public mFromDb {
@@ -206,14 +206,10 @@ namespace K {
       _diffSEP = prev.shortEwmaPeriods != shortEwmaPeriods;
       _diffXSEP = prev.extraShortEwmaPeriods != extraShortEwmaPeriods;
       _diffUEP = prev.ultraShortEwmaPeriods != ultraShortEwmaPeriods;
-      equal(prev);
-    };
-    void equal(const mQuotingParams &prev) {
-      sqlite.insert = prev.sqlite.insert;
     };
     void push_diff(const json &j) {
       mQuotingParams prev = *this;
-      *this = j;
+      from_json(j, *this);
       diff(prev);
       push();
     };
