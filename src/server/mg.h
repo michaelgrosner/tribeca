@@ -119,7 +119,6 @@ namespace K {
           levels.bids.begin()->price,
           levels.asks.begin()->price
         ));
-        sqlite->insert(mMatter::MarketData, stdev);
         calcStdev();
       };
       void calcStatsTrades() {
@@ -156,7 +155,7 @@ namespace K {
         calcTargetPos();
         wallet->calcTargetBasePos();
         client->send(mMatter::EWMAChart, chartStats());
-        sqlite->insert(mMatter::EWMAChart, ewma);
+        ewma.push();
       };
       void calcStatsEwmaProtection() {
         calcEwma(&ewma.mgEwmaP, qp.protectionEwmaPeriods, fairValue);
@@ -181,18 +180,13 @@ namespace K {
           {"tradesSellSize", takersSellSize60s}
         };
       };
-      void expireStdev() {
-        if (stdev.size() > stdev.limit())
-          stdev.erase(stdev.begin(), stdev.end() - stdev.limit());
-      };
       void calcStdev() {
-        expireStdev();
         if (stdev.size() < 2) return;
         mgStdevFV = calcStdev(&mgStdevFVMean, "fv");
         mgStdevBid = calcStdev(&mgStdevBidMean, "bid");
         mgStdevAsk = calcStdev(&mgStdevAskMean, "ask");
         mgStdevTop = calcStdev(&mgStdevTopMean, "top");
-      };
+      }; // stdev.calc plz
       double calcStdev(mPrice *mean, string type) {
         unsigned int n = stdev.size() * (type == "top" ? 2 : 1);
         if (!n) return 0.0;
@@ -232,7 +226,6 @@ namespace K {
       };
       void prepareEwmaHistory() {
         fairValue96h.push_back(mFairValue(fairValue));
-        sqlite->insert(mMatter::MarketDataLongTerm, fairValue96h);
       };
       void calcEwmaHistory(mPrice *mean, unsigned int periods, string name) {
         unsigned int n = fairValue96h.size();

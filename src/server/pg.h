@@ -54,7 +54,7 @@ namespace K {
         sideAPRDiff = target.sideAPR;
         calcPDiv(baseValue);
         client->send(mMatter::TargetBasePosition, target);
-        sqlite->insert(mMatter::TargetBasePosition, target);
+        target.push();
         if (!args.debugWallet) return;
         screen->log("PG", "TBP: "
           + to_string((int)(target.targetBasePosition / baseValue * 1e+2)) + "% = " + FN::str8(target.targetBasePosition)
@@ -280,7 +280,6 @@ namespace K {
       void calcPositionProfit(mPosition *k) {
         if (profits.ratelimit()) return;
         profits.push_back(mProfit(k->baseValue, k->quoteValue));
-        sqlite->insert(mMatter::Position, profits);
         k->profitBase = profits.calcBase();
         k->profitQuote = profits.calcQuote();
       };

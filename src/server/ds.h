@@ -72,6 +72,9 @@ namespace K {
     const char *inet = nullptr;
   } args;
   struct mFromDb {
+    struct Sqlite {
+      function<void()> insert;
+    } sqlite;
     virtual   void select(const json &j) = 0;
     virtual   json dump()      const = 0;
     virtual string increment() const { return "NULL"; };
@@ -79,32 +82,46 @@ namespace K {
     virtual double limit()     const { return 0; };
     virtual mClock lifetime()  const { return 0; };
   };
-  // template <typename mData> struct mStructFromDb: public mFromDb {
-  // };
+  struct mStructFromDb: public mFromDb {
+    virtual void push() const {
+      sqlite.insert();
+    };
+  };
   template <typename mData> struct mVectorFromDb: public mFromDb {
     vector<mData> rows;
-    typedef typename vector<mData>::iterator         iterator;
-    typedef typename vector<mData>::reverse_iterator reverse_iterator;
-    iterator          begin() { return rows.begin(); };
-    reverse_iterator rbegin() { return rows.rbegin(); };
-    size_t size() const { return rows.size(); };
-    virtual void expire() = 0;
-    void push_back(const mData &row) {
-      rows.push_back(row);
-      expire();
+    typedef typename vector<mData>::iterator                             iterator;
+    typedef typename vector<mData>::const_iterator                 const_iterator;
+    typedef typename vector<mData>::reverse_iterator             reverse_iterator;
+    typedef typename vector<mData>::const_reverse_iterator const_reverse_iterator;
+    iterator                 begin()       { return rows.begin(); };
+    const_iterator          cbegin() const { return rows.cbegin(); };
+    iterator                   end()       { return rows.end(); };
+    reverse_iterator        rbegin()       { return rows.rbegin(); };
+    const_reverse_iterator crbegin() const { return rows.crbegin(); };
+    reverse_iterator          rend()       { return rows.rend(); };
+    bool                     empty() const { return rows.empty(); };
+    size_t                    size() const { return rows.size(); };
+    virtual void erase() {
+      if (size() > limit())
+        rows.erase(begin(), end() - limit());
     };
-    void select(const json &j) {
+    virtual void push_back(const mData &row) {
+      rows.push_back(row);
+      sqlite.insert();
+      erase();
+    };
+    virtual void select(const json &j) {
       for (const json &it : j)
         rows.push_back(it);
     };
-    json dump() const {
+    virtual json dump() const {
       return rows.back();
     };
-    string explain() const {
+    virtual string explain() const {
       return to_string(size());
     };
   };
-  static struct mQuotingParams: public mFromDb {
+  static struct mQuotingParams: public mStructFromDb {
     mPrice            widthPing                       = 2.0;
     double            widthPingPercentage             = 0.25;
     mPrice            widthPong                       = 2.0;
@@ -183,6 +200,16 @@ namespace K {
       _diffSEP = prev.shortEwmaPeriods != shortEwmaPeriods;
       _diffXSEP = prev.extraShortEwmaPeriods != extraShortEwmaPeriods;
       _diffUEP = prev.ultraShortEwmaPeriods != ultraShortEwmaPeriods;
+      equal(prev);
+    };
+    void equal(const mQuotingParams &prev) {
+      sqlite.insert = prev.sqlite.insert;
+    };
+    void push_diff(const json &j) {
+      mQuotingParams prev = *this;
+      *this = j;
+      diff(prev);
+      push();
     };
     void select(const json &j) {
       *this = j.at(0);
@@ -413,27 +440,27 @@ namespace K {
     mClock lifetime() const {
       return 3600e+3 * limit();
     };
-    void expire() {
-      for (vector<mProfit>::iterator it = rows.begin(); it != rows.end();)
+    void erase() {
+      for (vector<mProfit>::iterator it = begin(); it != end();)
         if (it->time + lifetime() > Tstamp) ++it;
         else it = rows.erase(it);
     };
     bool ratelimit() const {
-      return !rows.empty() and rows.rbegin()->time + 21e+3 > Tstamp;
+      return !empty() and crbegin()->time + 21e+3 > Tstamp;
     };
-    double calcBase() {
+    double calcBase() const {
       return calcDiffPercent(
-        rows.begin()->baseValue,
-        rows.rbegin()->baseValue
+        cbegin()->baseValue,
+        crbegin()->baseValue
       );
     };
-    double calcQuote() {
+    double calcQuote() const {
       return calcDiffPercent(
-        rows.begin()->quoteValue,
-        rows.rbegin()->quoteValue
+        cbegin()->quoteValue,
+        crbegin()->quoteValue
       );
     };
-    double calcDiffPercent(mAmount older, mAmount newer) {
+    double calcDiffPercent(mAmount older, mAmount newer) const {
       return ((newer - older) / newer) * 100;
     };
   };
@@ -500,7 +527,7 @@ namespace K {
       {           "pair", k.pair           }
     };
   };
-  struct mTarget: public mFromDb {
+  struct mTarget: public mStructFromDb {
     mAmount targetBasePosition,
             positionDivergence;
      string sideAPR;
@@ -529,7 +556,7 @@ namespace K {
     k.positionDivergence = j.value("pDiv", 0.0);
     k.sideAPR            = j.value("sideAPR", "");
   };
-  struct mEwma: public mFromDb {
+  struct mEwma: public mStructFromDb {
     mPrice mgEwmaVL,
            mgEwmaL,
            mgEwmaM,
@@ -606,10 +633,6 @@ namespace K {
     mClock lifetime() const {
       return 60e+3 * limit();
     };
-    void expire() {
-      if (size() > limit())
-        rows.erase(rows.begin(), rows.begin() + size() - limit());
-    };
   };
   struct mStdev: public mFairValue {
     mPrice topBid,
@@ -633,18 +656,7 @@ namespace K {
     k.topBid = j.value("bid", 0.0);
     k.topAsk = j.value("ask", 0.0);
   };
-  struct mStdevs: public mFromDb,
-                  public /*sick*/ vector<mStdev> {
-    void select(const json &j) {
-      for (const json &it : j)
-        push_back(it);
-    };
-    json dump() const {
-      return back();
-    };
-    string explain() const {
-      return to_string(size());
-    };
+  struct mStdevs: public mVectorFromDb<mStdev> {
     double limit() const {
       return qp.quotingStdevProtectionPeriods;
     };
@@ -718,20 +730,22 @@ namespace K {
     k.feeCharged   = j.value("feeCharged", 0.0);
     k.loadedFromDB = true;
   };
-  struct mTrades: public mFromDb,
-                  public /*sick*/ vector<mTrade> {
-    void select(const json &j) {
-      for (const json &it : j) push_back(it);
-    };
+  struct mTrades: public mVectorFromDb<mTrade> {
     json dump() const {
-      if (rbegin()->Kqty == -1) return nullptr;
-      else return back();
+      if (crbegin()->Kqty == -1) return nullptr;
+      else return mVectorFromDb::dump();
     };
     string increment() const {
-      return rbegin()->tradeId;
+      return crbegin()->tradeId;
     };
-    string explain() const {
-      return to_string(size());
+    void erase() {
+      if (crbegin()->Kqty == -1) rows.pop_back();
+    };
+    iterator push_erase(iterator it) {
+      mTrade row = *it;
+      it = rows.erase(it);
+      push_back(row);
+      return it;
     };
   };
   struct mOrder {

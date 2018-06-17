@@ -54,7 +54,7 @@ namespace K {
 #define INTO ,&
 #define THEN ,
 #define WARN ,
-    virtual void insert(const mMatter&, const mFromDb&) = 0;
+    virtual void insert(const mMatter&, mFromDb *const) = 0;
     function<unsigned int()> size = []() { return 0; };
   } *sqlite = nullptr;
 

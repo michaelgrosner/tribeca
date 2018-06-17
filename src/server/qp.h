@@ -21,11 +21,9 @@ namespace K {
         *welcome = { qp };
       };
       void kiss(const json &butterfly) {
-        mQuotingParams prev = qp;
-        (qp = butterfly).diff(prev);
+        qp.push_diff(butterfly);
         engine->calcQuoteAfterSavedParams();
         client->send(mMatter::QuotingParameters, qp);
-        sqlite->insert(mMatter::QuotingParameters, qp);
       };
   };
 }

@@ -94,7 +94,8 @@ namespace K {
       };
     private:
       void hello_Trades(json *const welcome) {
-        *welcome = tradesHistory;
+        for (mTrade &it : tradesHistory)
+          welcome->push_back(it);
       };
       void hello_Orders(json *const welcome) {
         for (map<mRandId, mOrder>::value_type &it : orders)
@@ -181,12 +182,8 @@ namespace K {
           if (it->Kqty < it->quantity) ++it;
           else {
             it->Kqty = -1;
-            mTrade trade = *it;
-            it = tradesHistory.erase(it);
-            tradesHistory.push_back(trade);
-            client->send(mMatter::Trades, trade);
-            sqlite->insert(mMatter::Trades, tradesHistory);
-            tradesHistory.pop_back();
+            client->send(mMatter::Trades, *it);
+            it = tradesHistory.push_erase(it);
           }
       };
       void cleanTrade(string k = "") {
@@ -195,12 +192,8 @@ namespace K {
           if (!all and it->tradeId != k) ++it;
           else {
             it->Kqty = -1;
-            mTrade trade = *it;
-            it = tradesHistory.erase(it);
-            tradesHistory.push_back(trade);
-            client->send(mMatter::Trades, trade);
-            sqlite->insert(mMatter::Trades, tradesHistory);
-            tradesHistory.pop_back();
+            client->send(mMatter::Trades, *it);
+            it = tradesHistory.push_erase(it);
             if (!all) break;
           }
       };
@@ -248,9 +241,8 @@ namespace K {
             (qp.pongAt == mPongAt::LongPingFair or qp.pongAt == mPongAt::LongPingAggressive) ? trade.side == mSide::Ask : trade.side == mSide::Bid
           );
         } else {
-          tradesHistory.push_back(trade);
           client->send(mMatter::Trades, trade);
-          sqlite->insert(mMatter::Trades, tradesHistory);
+          tradesHistory.push_back(trade);
         }
         client->send(mMatter::TradesChart, {
           {"price", trade.price},
@@ -275,17 +267,13 @@ namespace K {
             it->quantity = it->quantity + pong.quantity;
             it->value = it->value + pong.value;
             it->loadedFromDB = false;
-            mTrade trade = *it;
-            it = tradesHistory.erase(it);
-            tradesHistory.push_back(trade);
-            client->send(mMatter::Trades, trade);
-            sqlite->insert(mMatter::Trades, tradesHistory);
+            client->send(mMatter::Trades, *it);
+            it = tradesHistory.push_erase(it);
             break;
           }
           if (!eq) {
-            tradesHistory.push_back(pong);
             client->send(mMatter::Trades, pong);
-            sqlite->insert(mMatter::Trades, tradesHistory);
+            tradesHistory.push_back(pong);
           }
         }
       };
@@ -302,11 +290,8 @@ namespace K {
           if (it->quantity<=it->Kqty)
             it->Kdiff = abs(it->quantity * it->price - it->Kqty * it->Kprice);
           it->loadedFromDB = false;
-          mTrade trade = *it;
-          it = tradesHistory.erase(it);
-          tradesHistory.push_back(trade);
-          client->send(mMatter::Trades, trade);
-          sqlite->insert(mMatter::Trades, tradesHistory);
+          client->send(mMatter::Trades, *it);
+          it = tradesHistory.push_erase(it);
           break;
         }
         return pong->quantity > 0;
@@ -316,12 +301,8 @@ namespace K {
         for (vector<mTrade>::iterator it = tradesHistory.begin(); it != tradesHistory.end();)
           if ((it->Ktime?:it->time) < pT_ and (qp.cleanPongsAuto < 0 or it->Kqty >= it->quantity)) {
             it->Kqty = -1;
-            mTrade trade = *it;
-            it = tradesHistory.erase(it);
-            tradesHistory.push_back(trade);
-            client->send(mMatter::Trades, trade);
-            sqlite->insert(mMatter::Trades, tradesHistory);
-            tradesHistory.pop_back();
+            client->send(mMatter::Trades, *it);
+            it = tradesHistory.push_erase(it);
           } else ++it;
       };
   };

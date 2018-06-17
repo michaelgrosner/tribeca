@@ -39,12 +39,15 @@ namespace K {
           screen->log("DB", explain(data, ok));
         } else if (!ko.empty())
           screen->logWar("DB", explain(data, ko));
+        data->sqlite.insert = [this, table, data]() {
+          insert(table, data);
+        };
       };
-      void insert(const mMatter &table, const mFromDb &data) {
-        const json   blob  = data.dump();
-        const double limit = data.limit();
-        const mClock lifetime = data.lifetime();
-        const string incr = data.increment(),
+      void insert(const mMatter &table, mFromDb *const data) {
+        const json   blob  = data->dump();
+        const double limit = data->limit();
+        const mClock lifetime = data->lifetime();
+        const string incr = data->increment(),
                      sql  = (
           (incr != "NULL" or !limit or lifetime)
             ? "DELETE FROM " + schema(table) + (
