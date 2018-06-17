@@ -82,9 +82,15 @@ namespace K {
     virtual double limit()     const { return 0; };
     virtual mClock lifetime()  const { return 0; };
   };
-  struct mStructFromDb: public mFromDb {
+  template <typename mData> struct mStructFromDb: public mFromDb {
     virtual void push() const {
       sqlite.insert();
+    };
+    virtual void select(const json &j) {
+      *((mData*)this) = j.at(0);
+    };
+    virtual json dump() const {
+      return *((mData*)this);
     };
   };
   template <typename mData> struct mVectorFromDb: public mFromDb {
@@ -121,7 +127,7 @@ namespace K {
       return to_string(size());
     };
   };
-  static struct mQuotingParams: public mStructFromDb {
+  static struct mQuotingParams: public mStructFromDb<mQuotingParams> {
     mPrice            widthPing                       = 2.0;
     double            widthPingPercentage             = 0.25;
     mPrice            widthPong                       = 2.0;
@@ -210,12 +216,6 @@ namespace K {
       *this = j;
       diff(prev);
       push();
-    };
-    void select(const json &j) {
-      *this = j.at(0);
-    };
-    json dump() const {
-      return *this;
     };
     string explain() const {
       return "Quoting Parameters";
@@ -527,19 +527,13 @@ namespace K {
       {           "pair", k.pair           }
     };
   };
-  struct mTarget: public mStructFromDb {
+  struct mTarget: public mStructFromDb<mTarget> {
     mAmount targetBasePosition,
             positionDivergence;
      string sideAPR;
     mTarget():
       targetBasePosition(0), positionDivergence(0), sideAPR("")
     {};
-    void select(const json &j) {
-      *this = j.at(0);
-    };
-    json dump() const {
-      return *this;
-    };
     string explain() const {
       return to_string(targetBasePosition);
     };
@@ -556,7 +550,7 @@ namespace K {
     k.positionDivergence = j.value("pDiv", 0.0);
     k.sideAPR            = j.value("sideAPR", "");
   };
-  struct mEwma: public mStructFromDb {
+  struct mEwma: public mStructFromDb<mEwma> {
     mPrice mgEwmaVL,
            mgEwmaL,
            mgEwmaM,
@@ -569,12 +563,6 @@ namespace K {
     mEwma():
       mgEwmaVL(0), mgEwmaL(0), mgEwmaM(0), mgEwmaS(0), mgEwmaXS(0), mgEwmaU(0), mgEwmaP(0), mgEwmaW(0), mgEwmaTrendDiff(0)
     {};
-    void select(const json &j) {
-      *this = j.at(0);
-    };
-    json dump() const {
-      return *this;
-    };
     string explain() const {
       return "EWMA Values";
     };
