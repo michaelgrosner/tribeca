@@ -43,6 +43,7 @@ namespace K {
           insert(table, data);
         };
       };
+    private:
       void insert(const mMatter &table, mFromDb *const data) {
         const json   blob  = data->dump();
         const double limit = data->limit();
@@ -65,7 +66,6 @@ namespace K {
           exec(sql);
         });
       };
-    private:
       string schema(const mMatter &table) {
         return (table == mMatter::QuotingParameters ? qpdb : "main") + "." + (char)table;
       };
