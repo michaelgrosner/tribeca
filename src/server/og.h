@@ -6,7 +6,7 @@ namespace K {
             public Broker { public: OG() { broker = this; };
     protected:
       void load() {
-        sqlite->select(
+        sqlite->backup(
           FROM mMatter::Trades
           INTO tradesHistory
           THEN "loaded % historical Trades"

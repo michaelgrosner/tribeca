@@ -49,7 +49,7 @@ namespace K {
   } *events = nullptr;
 
   static struct Sqlite {
-    virtual void select(const mMatter&, mFromDb *const, const string&, const string& = "") = 0;
+    virtual void backup(const mMatter&, mFromDb *const, const string&, const string& = "") = 0;
 #define FROM
 #define INTO ,&
 #define THEN ,

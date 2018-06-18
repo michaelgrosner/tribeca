@@ -26,24 +26,26 @@ namespace K {
         };
       };
     public:
-      void select(const mMatter &table, mFromDb *const data, const string &ok, const string &ko = "") {
-        json result = json::array();
-        exec(
-          create(table)
-          + truncate(table, data->lifetime())
-          + "SELECT json FROM " + schema(table) + " ORDER BY time ASC;",
-          &result
-        );
-        if (!result.empty()) {
-          data->select(result);
+      void backup(const mMatter &table, mFromDb *const data, const string &ok, const string &ko = "") {
+        if (data->pull(select(table, data->lifetime())))
           screen->log("DB", explain(data, ok));
-        } else if (!ko.empty())
+        else if (!ko.empty())
           screen->logWar("DB", explain(data, ko));
-        data->sqlite.insert = [this, table, data]() {
+        data->push = [this, table, data]() {
           insert(table, data);
         };
       };
     private:
+      json select(const mMatter &table, const mClock &lifetime) {
+        json result = json::array();
+        exec(
+          create(table)
+          + truncate(table, lifetime)
+          + "SELECT json FROM " + schema(table) + " ORDER BY time ASC;",
+          &result
+        );
+        return result;
+      };
       void insert(const mMatter &table, mFromDb *const data) {
         const json   blob  = data->dump();
         const double limit = data->limit();

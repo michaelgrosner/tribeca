@@ -5,7 +5,7 @@ namespace K {
   class QP: public Klass {
     protected:
       void load() {
-        sqlite->select(
+        sqlite->backup(
           FROM mMatter::QuotingParameters
           INTO qp
           THEN "loaded last % OK"

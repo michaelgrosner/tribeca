@@ -18,18 +18,18 @@ namespace K {
       mLevelsDiff levelsDiff;
     protected:
       void load() {
-        sqlite->select(
+        sqlite->backup(
           FROM mMatter::MarketData
           INTO stdev
           THEN "loaded % STDEV Periods"
         );
         calcStdev();
-        sqlite->select(
+        sqlite->backup(
           FROM mMatter::MarketDataLongTerm
           INTO fairValue96h
           THEN "loaded % historical Fair Values"
         );
-        sqlite->select(
+        sqlite->backup(
           FROM mMatter::EWMAChart
           INTO ewma
           THEN "loaded last % OK"

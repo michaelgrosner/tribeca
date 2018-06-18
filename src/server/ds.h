@@ -72,10 +72,8 @@ namespace K {
     const char *inet = nullptr;
   } args;
   struct mFromDb {
-    struct Sqlite {
-      function<void()> insert;
-    } sqlite;
-    virtual   void select(const json &j) = 0;
+    function<void()> push;
+    virtual   bool pull(const json &j) = 0;
     virtual   json dump()      const = 0;
     virtual string increment() const { return "NULL"; };
     virtual string explain()   const = 0;
@@ -83,11 +81,10 @@ namespace K {
     virtual mClock lifetime()  const { return 0; };
   };
   template <typename mData> struct mStructFromDb: public mFromDb {
-    virtual void push() const {
-      sqlite.insert();
-    };
-    virtual void select(const json &j) {
+    virtual bool pull(const json &j) {
+      if (j.empty()) return false;
       from_json(j.at(0), *(mData*)this);
+      return true;
     };
     virtual json dump() const {
       return *(mData*)this;
@@ -113,12 +110,13 @@ namespace K {
     };
     virtual void push_back(const mData &row) {
       rows.push_back(row);
-      sqlite.insert();
+      push();
       erase();
     };
-    virtual void select(const json &j) {
+    virtual bool pull(const json &j) {
       for (const json &it : j)
         rows.push_back(it);
+      return !empty();
     };
     virtual json dump() const {
       return rows.back();

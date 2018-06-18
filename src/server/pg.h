@@ -12,12 +12,12 @@ namespace K {
       string sideAPRDiff = "!=";
     protected:
       void load() {
-        sqlite->select(
+        sqlite->backup(
           FROM mMatter::Position
           INTO profits
           THEN "loaded % historical Profits"
         );
-        sqlite->select(
+        sqlite->backup(
           FROM mMatter::TargetBasePosition
           INTO target
           THEN "loaded TBP = % " + gw->base
