@@ -37,25 +37,25 @@ namespace K {
       };
     private:
       json select(mFromDb *const data) {
-        const mMatter table = data->about();
+        const string table = schema(data->about());
         json result = json::array();
         exec(
           create(table)
           + truncate(table, data->lifetime())
-          + "SELECT json FROM " + schema(table) + " ORDER BY time ASC;",
+          + "SELECT json FROM " + table + " ORDER BY time ASC;",
           &result
         );
         return result;
       };
       void insert(mFromDb *const data) {
-        const mMatter table    = data->about();
+        const string  table    = schema(data->about());
         const json    blob     = data->dump();
         const double  limit    = data->limit();
         const mClock  lifetime = data->lifetime();
-        const string  incr     = data->increment(),
-                      sql      = (
+        const string  incr     = data->increment();
+        const string  sql      = (
           (incr != "NULL" or !limit or lifetime)
-            ? "DELETE FROM " + schema(table) + (
+            ? "DELETE FROM " + table + (
               incr != "NULL"
                 ? " WHERE id = " + incr
                 : (limit ? " WHERE time < " + to_string(Tstamp - lifetime) : "")
@@ -63,25 +63,25 @@ namespace K {
         ) + (
           blob.is_null()
             ? ""
-            : "INSERT INTO " + schema(table)
+            : "INSERT INTO " + table
               + " (id,json) VALUES(" + incr + ",'" + blob.dump() + "');"
         );
         events->deferred([this, sql]() {
           exec(sql);
         });
       };
-      string schema(const mMatter &table) {
-        return (table == mMatter::QuotingParameters ? qpdb : "main") + "." + (char)table;
+      string schema(const mMatter &type) {
+        return (type == mMatter::QuotingParameters ? qpdb : "main") + "." + (char)type;
       };
-      string create(const mMatter &table) {
-        return "CREATE TABLE IF NOT EXISTS " + schema(table) + "("
+      string create(const string &table) {
+        return "CREATE TABLE IF NOT EXISTS " + table + "("
           + "id    INTEGER   PRIMARY KEY AUTOINCREMENT                                           NOT NULL,"
           + "json  BLOB                                                                          NOT NULL,"
           + "time  TIMESTAMP DEFAULT (CAST((julianday('now') - 2440587.5)*86400000 AS INTEGER))  NOT NULL);";
       };
-      string truncate(const mMatter &table, const mClock &lifetime) {
+      string truncate(const string &table, const mClock &lifetime) {
         return lifetime
-          ? "DELETE FROM " + schema(table) + " WHERE time < " + to_string(Tstamp - lifetime) + ";"
+          ? "DELETE FROM " + table + " WHERE time < " + to_string(Tstamp - lifetime) + ";"
           : "";
       };
       string explain(mFromDb *const data, string msg) {

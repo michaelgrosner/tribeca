@@ -34,9 +34,9 @@ namespace K {
   enum class mAPR: unsigned int { Off, Size, SizeWidth };
   enum class mSOP: unsigned int { Off, Trades, Size, TradesSize };
   enum class mSTDEV: unsigned int { Off, OnFV, OnFVAPROff, OnTops, OnTopsAPROff, OnTop, OnTopAPROff };
-  
+
   enum class mHotkey: int { ESC = 27, Q = 81, q = 113 };
-  
+
   enum class mPortal: unsigned char { Hello = '=', Kiss = '-' };
   enum class mMatter: unsigned char {
     FairValue            = 'a', Quote                = 'b', ActiveSubscription = 'c', Connectivity       = 'd', MarketData       = 'e',
@@ -47,7 +47,7 @@ namespace K {
     CancelAllOrders      = 'x', CleanAllClosedTrades = 'y', CleanAllTrades     = 'z', CleanTrade         = 'A',
                                 WalletChart          = 'C', MarketChart        = 'D', Notepad            = 'E', MarketDataLongTerm = 'G'
   };
-  
+
   static          bool operator! (mConnectivity k_)                   { return !(unsigned int)k_; };
   static mConnectivity operator* (mConnectivity _k, mConnectivity k_) { return (mConnectivity)((unsigned int)_k * (unsigned int)k_); };
 
@@ -239,17 +239,17 @@ namespace K {
       _diffUEP = prev.ultraShortEwmaPeriods != ultraShortEwmaPeriods;
     };
     void send_push_diff(const json &j) {
-      mQuotingParams prev = *this;
+      mQuotingParams prev = *this; // just need to copy the 6 prev.* vars above, noob
       from_json(j, *this);
       diff(prev);
       push();
       send();
     };
-    string explain() const {
-      return "Quoting Parameters";
-    };
     mMatter about() const {
       return mMatter::QuotingParameters;
+    };
+    string explain() const {
+      return "Quoting Parameters";
     };
   } qp;
   static void to_json(json &j, const mQuotingParams &k) {
@@ -468,22 +468,8 @@ namespace K {
     k.time       = j.value("time", (mClock)0);
   };
   struct mProfits: public mVectorFromDb<mProfit> {
-    double limit() const {
-      return qp.profitHourInterval;
-    };
-    mClock lifetime() const {
-      return 3600e+3 * limit();
-    };
-    void erase() {
-      for (vector<mProfit>::iterator it = begin(); it != end();)
-        if (it->time + lifetime() > Tstamp) ++it;
-        else it = rows.erase(it);
-    };
     bool ratelimit() const {
       return !empty() and crbegin()->time + 21e+3 > Tstamp;
-    };
-    mMatter about() const {
-      return mMatter::Profit;
     };
     double calcBase() const {
       return calcDiffPercent(
@@ -499,6 +485,20 @@ namespace K {
     };
     double calcDiffPercent(mAmount older, mAmount newer) const {
       return ((newer - older) / newer) * 100;
+    };
+    mMatter about() const {
+      return mMatter::Profit;
+    };
+    double limit() const {
+      return qp.profitHourInterval;
+    };
+    mClock lifetime() const {
+      return 3600e+3 * limit();
+    };
+    void erase() {
+      for (vector<mProfit>::iterator it = begin(); it != end();)
+        if (it->time + lifetime() > Tstamp) ++it;
+        else it = rows.erase(it);
     };
   };
 
@@ -631,11 +631,11 @@ namespace K {
       push();
       send();
     };
-    string explain() const {
-      return to_string(targetBasePosition);
-    };
     mMatter about() const {
       return mMatter::TargetBasePosition;
+    };
+    string explain() const {
+      return to_string(targetBasePosition);
     };
   };
   static void to_json(json &j, const mTarget &k) {
@@ -664,6 +664,9 @@ namespace K {
     mEwma():
       mgEwmaVL(0), mgEwmaL(0), mgEwmaM(0), mgEwmaS(0), mgEwmaXS(0), mgEwmaU(0), mgEwmaP(0), mgEwmaW(0), mgEwmaTrendDiff(0)
     {};
+    mMatter about() const {
+      return mMatter::EWMAStats;
+    };
     string explain() const {
       return "EWMA Values";
     };
@@ -675,9 +678,6 @@ namespace K {
                      max(qp.extraShortEwmaPeriods,
                          qp.ultraShortEwmaPeriods
                      )))));
-    };
-    mMatter about() const {
-      return mMatter::EWMAStats;
     };
   };
   static void to_json(json &j, const mEwma &k) {
@@ -720,14 +720,14 @@ namespace K {
     k.fv = j.value("fv", 0.0);
   };
   struct mFairValues: public mVectorFromDb<mFairValue> {
+    mMatter about() const {
+      return mMatter::MarketDataLongTerm;
+    };
     double limit() const {
       return 5760;
     };
     mClock lifetime() const {
       return 60e+3 * limit();
-    };
-    mMatter about() const {
-      return mMatter::MarketDataLongTerm;
     };
   };
   struct mFairStats:  public mFairValue,
@@ -769,14 +769,14 @@ namespace K {
     k.topAsk = j.value("ask", 0.0);
   };
   struct mStdevs: public mVectorFromDb<mStdev> {
+    mMatter about() const {
+      return mMatter::STDEVStats;
+    };
     double limit() const {
       return qp.quotingStdevProtectionPeriods;
     };
     mClock lifetime() const {
       return 1e+3 * limit();
-    };
-    mMatter about() const {
-      return mMatter::STDEVStats;
     };
   };
 
@@ -848,16 +848,6 @@ namespace K {
   };
   struct mTrades: public mVectorFromDb<mTrade>,
                   public mJsonToClient<mTrade> {
-    json dump() const {
-      if (crbegin()->Kqty == -1) return nullptr;
-      else return mVectorFromDb::dump();
-    };
-    string increment() const {
-      return crbegin()->tradeId;
-    };
-    void erase() {
-      if (crbegin()->Kqty < 0) rows.pop_back();
-    };
     void send_push_back(const mTrade &row) {
       rows.push_back(row);
       push();
@@ -873,6 +863,16 @@ namespace K {
     };
     mMatter about() const {
       return mMatter::Trades;
+    };
+    json dump() const {
+      if (crbegin()->Kqty == -1) return nullptr;
+      else return mVectorFromDb::dump();
+    };
+    string increment() const {
+      return crbegin()->tradeId;
+    };
+    void erase() {
+      if (crbegin()->Kqty < 0) rows.pop_back();
     };
   };
   struct mTakers: public mJsonToClient<mTrade> {
@@ -892,15 +892,15 @@ namespace K {
         ) += it.quantity;
       trades.clear();
     };
-    json dump() const {
-      return trades.back();
-    };
     void send_push_back(const mTrade &row) {
       trades.push_back(row);
       send();
     };
     mMatter about() const {
       return mMatter::MarketTrade;
+    };
+    json dump() const {
+      return trades.back();
     };
   };
   static void to_json(json &j, const mTakers &k) {
@@ -962,11 +962,11 @@ namespace K {
           workingOrders.push_back(it.second);
       return workingOrders;
     };
-    json dump() const {
-      return working();
-    };
     mMatter about() const {
       return mMatter::OrderStatusReports;
+    };
+    json dump() const {
+      return working();
     };
   };
   static void to_json(json &j, const mOrders &k) {
@@ -1229,12 +1229,12 @@ namespace K {
     mNotepad():
       content("")
     {};
-    mMatter about() const {
-      return mMatter::Notepad;
-    };
     void edit(const json &j) {
       if (j.is_array() and j.size())
         content = j.at(0);
+    };
+    mMatter about() const {
+      return mMatter::Notepad;
     };
   };
   static void to_json(json &j, const mNotepad &k) {
