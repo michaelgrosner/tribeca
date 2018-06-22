@@ -2,7 +2,7 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
 PATCH    = 7
-BUILD    = 68
+BUILD    = 69
 CHOST   ?= $(shell $(MAKE) CHOST= chost -s)
 CARCH    = x86_64-linux-gnu arm-linux-gnueabihf aarch64-linux-gnu x86_64-apple-darwin17 x86_64-w64-mingw32
 KLOCAL  := build-$(CHOST)/local
@@ -326,9 +326,8 @@ css: src/www/sass
 	@echo Building clients CSS files..
 	rm -rf $(KLOCAL)/var/www/css
 	mkdir -p $(KLOCAL)/var/www/css
-	./node_modules/.bin/node-sass --output-style compressed --output $(KLOCAL)/var/www/css/ src/www/sass/                   \
-	&& cat $(KLOCAL)/var/www/css/ag-grid.css >> $(KLOCAL)/var/www/css/bootstrap.css && rm $(KLOCAL)/var/www/css/ag-grid.css \
-	&& ls -1 $$PWD/$(KLOCAL)/var/www/css/*[^\.min].css | sed -r 's/(.*)(\.css)$$/\1\2 \1\.min\2/' | xargs -I % sh -c 'mv %;'
+	ls -1 src/www/sass/*.scss | sed -r 's/(.*)(\.scss)$$/\1\2 \1\.min.css/' | xargs -I % sh -c './node_modules/.bin/sass %;' \
+	&& rm src/www/sass/*.min.css.map && mv src/www/sass/*.min.css $(KLOCAL)/var/www/css/ && cat ./node_modules/ag-grid/dist/styles/ag-grid.css >> $(KLOCAL)/var/www/css/bootstrap.min.css
 	@echo DONE
 
 bundle: clients www css node_modules/.bin/browserify node_modules/.bin/uglifyjs

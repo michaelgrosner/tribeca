@@ -34,7 +34,9 @@ namespace K {
   enum class mAPR: unsigned int { Off, Size, SizeWidth };
   enum class mSOP: unsigned int { Off, Trades, Size, TradesSize };
   enum class mSTDEV: unsigned int { Off, OnFV, OnFVAPROff, OnTops, OnTopsAPROff, OnTop, OnTopAPROff };
+  
   enum class mHotkey: int { ESC = 27, Q = 81, q = 113 };
+  
   enum class mPortal: unsigned char { Hello = '=', Kiss = '-' };
   enum class mMatter: unsigned char {
     FairValue            = 'a', Quote                = 'b', ActiveSubscription = 'c', Connectivity       = 'd', MarketData       = 'e',
@@ -45,6 +47,7 @@ namespace K {
     CancelAllOrders      = 'x', CleanAllClosedTrades = 'y', CleanAllTrades     = 'z', CleanTrade         = 'A',
                                 WalletChart          = 'C', MarketChart        = 'D', Notepad            = 'E', MarketDataLongTerm = 'G'
   };
+  
   static          bool operator! (mConnectivity k_)                   { return !(unsigned int)k_; };
   static mConnectivity operator* (mConnectivity _k, mConnectivity k_) { return (mConnectivity)((unsigned int)_k * (unsigned int)k_); };
 
