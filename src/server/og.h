@@ -4,13 +4,6 @@
 namespace K {
   class OG: public Klass,
             public Broker { public: OG() { broker = this; };
-    private:
-
-
-
-
-
-
     protected:
       void load() {
         sqlite->backup(
