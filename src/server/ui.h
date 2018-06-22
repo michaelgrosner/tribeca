@@ -153,18 +153,9 @@ namespace K {
       function<void(const mMatter &type, string msg)> broadcast = [](const mMatter &type, string msg) {};
       function<void(mToClient *const data)> send_nowhere = [](mToClient *const data) {};
       function<void(mToClient *const data)> send_somewhere = [&](mToClient *const data) {
-        const mMatter type = data->about();
-        if (!qp.delayUI or !delayed(type))
-          broadcast(type, data->dump().dump());
-        else queue[type] = data->dump().dump();
-      };
-      static bool delayed(const mMatter &type) {
-        return type == mMatter::FairValue
-            or type == mMatter::OrderStatusReports
-            or type == mMatter::QuoteStatus
-            or type == mMatter::Position
-            or type == mMatter::TargetBasePosition
-            or type == mMatter::MarketChart;
+        if (!qp.delayUI or !data->delayed())
+          broadcast(data->about(), data->dump().dump());
+        else queue[data->about()] = data->dump().dump();
       };
       void onConnection() {
         if (!connections++) send = send_somewhere;

@@ -8,7 +8,6 @@ namespace K {
       mStdevs stdev;
       vector<mPrice> mgSMA3;
       mFairValues fairValue96h;
-      mClock mgT_369ms = 0;
       unsigned int mgT_60s = 0,
                    averageCount = 0;
       mPrice averageWidth = 0;
@@ -97,11 +96,7 @@ namespace K {
         if (!filterAskOrders.empty()) filter(&levels.asks, filterAskOrders);
         calcFairValue();
         engine->calcQuote();
-        if (levelsDiff.empty() or levels.empty()
-          or mgT_369ms + max(369.0, qp.delayUI * 1e+3) > Tstamp
-        ) return;
         levelsDiff.send_diff(levels);
-        mgT_369ms = Tstamp;
       };
       void calcStatsStdevProtection() {
         if (levels.empty()) return;

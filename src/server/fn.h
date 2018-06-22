@@ -24,12 +24,8 @@ namespace K {
         static mt19937_64 gen(rd());
         return uniform_int_distribution<unsigned long long>()(gen);
       };
-      static string int45Id() {
-        return to_string(int64()).substr(0, 10);
-      };
-      static string int32Id() {
-        return to_string(int64()).substr(0, 8);
-      };
+      static string int45Id() { return to_string(int64()).substr(0, 10); };
+      static string int32Id() { return to_string(int64()).substr(0,  8); };
       static string char16Id() {
         char s[16];
         for (unsigned int i = 0; i < 16; ++i) s[i] = _numsAz_[int64() % (sizeof(_numsAz_) - 1)];

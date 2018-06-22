@@ -96,6 +96,9 @@ namespace K {
 
   struct mToClient: public mDump {
     function<void()> send;
+    virtual bool delayed() const {
+      return false;
+    };
   };
   template <typename mData> struct mJsonToClient: public mToClient {
     virtual json dump() const {
@@ -604,6 +607,9 @@ namespace K {
     mMatter about() const {
       return mMatter::Position;
     };
+    bool delayed() const {
+      return true;
+    };
   };
   static void to_json(json &j, const mPosition &k) {
     j = {
@@ -633,6 +639,9 @@ namespace K {
     };
     mMatter about() const {
       return mMatter::TargetBasePosition;
+    };
+    bool delayed() const {
+      return true;
     };
     string explain() const {
       return to_string(targetBasePosition);
@@ -738,6 +747,9 @@ namespace K {
     { fv = f; };
     mMatter about() const {
       return mMatter::FairValue;
+    };
+    bool delayed() const {
+      return true;
     };
   };
   static void to_json(json &j, const mFairStats &k) {
@@ -965,6 +977,9 @@ namespace K {
     mMatter about() const {
       return mMatter::OrderStatusReports;
     };
+    bool delayed() const {
+      return true;
+    };
     json dump() const {
       return working();
     };
@@ -1028,6 +1043,7 @@ namespace K {
   };
   struct mLevelsDiff: public mLevels,
                       public mJsonToClient<mLevelsDiff>  {
+    mClock T_369ms = 0;
     vector<mLevel> diff(const vector<mLevel> &from, vector<mLevel> to) {
       vector<mLevel> patch;
       for (const mLevel &it : from) {
@@ -1058,7 +1074,12 @@ namespace K {
       asks = from.asks;
       return from;
     };
+    bool ratelimit() const {
+      return empty() or T_369ms + max(369.0, qp.delayUI * 1e+3) > Tstamp;
+    };
     void send_diff(const mLevels &to) {
+      if (to.empty() or ratelimit()) return;
+      T_369ms = Tstamp;
       diff(to);
       send();
       reset(to);
@@ -1108,6 +1129,9 @@ namespace K {
     {};
     mMatter about() const {
       return mMatter::QuoteStatus;
+    };
+    bool delayed() const {
+      return true;
     };
   };
   static void to_json(json &j, const mQuoteStatus &k) {
@@ -1181,6 +1205,9 @@ namespace K {
     };
     mMatter about() const {
       return mMatter::MarketChart;
+    };
+    bool delayed() const {
+      return true;
     };
   };
   static void to_json(json &j, const mMarketStats &k) {
