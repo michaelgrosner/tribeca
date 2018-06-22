@@ -4,10 +4,16 @@
 namespace K {
   class OG: public Klass,
             public Broker { public: OG() { broker = this; };
+    private:
+
+
+
+
+
+
     protected:
       void load() {
         sqlite->backup(
-          FROM mMatter::Trades
           INTO tradesHistory
           THEN "loaded % historical Trades"
         );
@@ -16,14 +22,14 @@ namespace K {
         gw->WRITEME(mOrder, read);
       };
       void waitWebAdmin() {
-        client->WELCOME(mMatter::Trades,               hello_Trades);
-        client->WELCOME(mMatter::OrderStatusReports,   hello_Orders);
-        client->CLICKME(mMatter::SubmitNewOrder,       kiss_SubmitNewOrder);
-        client->CLICKME(mMatter::CancelOrder,          kiss_CancelOrder);
-        client->CLICKME(mMatter::CancelAllOrders,      kiss_CancelAllOrders);
-        client->CLICKME(mMatter::CleanAllClosedTrades, kiss_CleanAllClosedTrades);
-        client->CLICKME(mMatter::CleanAllTrades,       kiss_CleanAllTrades);
-        client->CLICKME(mMatter::CleanTrade,           kiss_CleanTrade);
+        client->WELCOME(tradesHistory,                          hello_Trades);
+        client->WELCOME(orders,                                 hello_Orders);
+        client->CLICKME(mButton(mMatter::SubmitNewOrder),       kiss_SubmitNewOrder);
+        client->CLICKME(mButton(mMatter::CancelOrder),          kiss_CancelOrder);
+        client->CLICKME(mButton(mMatter::CancelAllOrders),      kiss_CancelAllOrders);
+        client->CLICKME(mButton(mMatter::CleanAllClosedTrades), kiss_CleanAllClosedTrades);
+        client->CLICKME(mButton(mMatter::CleanAllTrades),       kiss_CleanAllTrades);
+        client->CLICKME(mButton(mMatter::CleanTrade),           kiss_CleanTrade);
       };
     public:
       void sendOrder(
@@ -43,10 +49,10 @@ namespace K {
           for (mRandId &it : toCancel) cancelOrder(it);
         }
         if (gw->replace and !replaceOrderId.empty()) {
-          if (!orders[replaceOrderId].exchangeId.empty()) {
+          if (!orders.orders[replaceOrderId].exchangeId.empty()) {
             DEBOG("update " + ((side == mSide::Bid ? "BID" : "ASK") + (" id " + replaceOrderId)) + ":  at price " + FN::str8(price) + " " + gw->quote);
-            orders[replaceOrderId].price = price;
-            gw->replace(orders[replaceOrderId].exchangeId, FN::str8(price));
+            orders.orders[replaceOrderId].price = price;
+            gw->replace(orders.orders[replaceOrderId].exchangeId, FN::str8(price));
           }
         } else {
           if (args.testChamber != 1) cancelOrder(replaceOrderId);
@@ -63,7 +69,7 @@ namespace K {
             mStatus::New,
             postOnly
           ));
-          mOrder *o = &orders[newOrderId];
+          mOrder *o = &orders.orders[newOrderId];
           DEBOG(" send  " + replaceOrderId + "> " + (o->side == mSide::Bid ? "BID" : "ASK") + " id " + o->orderId + ": " + FN::str8(o->quantity) + " " + o->pair.base + " at price " + FN::str8(o->price) + " " + o->pair.quote);
           gw->place(
             o->orderId,
@@ -81,7 +87,7 @@ namespace K {
       };
       void cancelOrder(const mRandId &orderId) {
         if (orderId.empty()) return;
-        mOrder *o = &orders[orderId];
+        mOrder *o = &orders.orders[orderId];
         if (o->exchangeId.empty() or o->_waitingCancel + 3e+3 > Tstamp) return;
         o->_waitingCancel = Tstamp;
         DEBOG("cancel " + ((o->side == mSide::Bid ? "BID id " : "ASK id ") + o->orderId) + "::" + o->exchangeId);
@@ -89,8 +95,8 @@ namespace K {
       };
       void cleanOrder(const mRandId &orderId) {
         DEBOG("remove " + orderId);
-        map<mRandId, mOrder>::iterator it = orders.find(orderId);
-        if (it != orders.end()) orders.erase(it);
+        map<mRandId, mOrder>::iterator it = orders.orders.find(orderId);
+        if (it != orders.orders.end()) orders.orders.erase(it);
       };
     private:
       void hello_Trades(json *const welcome) {
@@ -98,9 +104,8 @@ namespace K {
           welcome->push_back(it);
       };
       void hello_Orders(json *const welcome) {
-        for (map<mRandId, mOrder>::value_type &it : orders)
-          if (mStatus::Working == it.second.orderStatus)
-            welcome->push_back(it.second);
+        for (mOrder &it : orders.working())
+          welcome->push_back(it);
       };
       void kiss_CancelAllOrders(const json &butterfly) {
         cancelOpenOrders();
@@ -118,7 +123,7 @@ namespace K {
       void kiss_CancelOrder(const json &butterfly) {
         mRandId orderId = (butterfly.is_object() and butterfly["orderId"].is_string())
           ? butterfly["orderId"].get<mRandId>() : "";
-        if (orderId.empty() or orders.find(orderId) == orders.end()) return;
+        if (orderId.empty() or orders.orders.find(orderId) == orders.orders.end()) return;
         cancelOrder(orderId);
       };
       void kiss_SubmitNewOrder(const json &butterfly) {
@@ -140,15 +145,15 @@ namespace K {
       void updateOrderState(mOrder k) {
         bool saved = k.orderStatus != mStatus::New,
              working = k.orderStatus == mStatus::Working;
-        if (!saved) orders[k.orderId] = k;
+        if (!saved) orders.orders[k.orderId] = k;
         else if (k.orderId.empty() and !k.exchangeId.empty())
-          for (map<mRandId, mOrder>::value_type &it : orders)
+          for (map<mRandId, mOrder>::value_type &it : orders.orders)
             if (k.exchangeId == it.second.exchangeId) {
               k.orderId = it.first;
               break;
             }
-        if (k.orderId.empty() or orders.find(k.orderId) == orders.end()) return;
-        mOrder *o = &orders[k.orderId];
+        if (k.orderId.empty() or orders.orders.find(k.orderId) == orders.orders.end()) return;
+        mOrder *o = &orders.orders[k.orderId];
         o->orderStatus = k.orderStatus;
         if (!k.exchangeId.empty()) o->exchangeId = k.exchangeId;
         if (k.price) o->price = k.price;
@@ -166,14 +171,14 @@ namespace K {
         if (saved and !working)
           cleanOrder(o->orderId);
         else DEBOG(" saved " + ((o->side == mSide::Bid ? "BID id " : "ASK id ") + o->orderId) + "::" + o->exchangeId + " [" + to_string((int)o->orderStatus) + "]: " + FN::str8(o->quantity) + " " + o->pair.base + " at price " + FN::str8(o->price) + " " + o->pair.quote);
-        DEBOG("memory " + to_string(orders.size()));
+        DEBOG("memory " + to_string(orders.orders.size()));
         if (saved) {
           wallet->calcWalletAfterOrder(k.side);
           toClient(working);
         }
       };
       void cancelOpenOrders() {
-        for (map<mRandId, mOrder>::value_type &it : orders)
+        for (map<mRandId, mOrder>::value_type &it : orders.orders)
           if (mStatus::New == it.second.orderStatus or mStatus::Working == it.second.orderStatus)
             cancelOrder(it.first);
       };
@@ -182,8 +187,7 @@ namespace K {
           if (it->Kqty < it->quantity) ++it;
           else {
             it->Kqty = -1;
-            client->send(mMatter::Trades, *it);
-            it = tradesHistory.push_erase(it);
+            it = tradesHistory.send_push_erase(it);
           }
       };
       void cleanTrade(string k = "") {
@@ -192,18 +196,13 @@ namespace K {
           if (!all and it->tradeId != k) ++it;
           else {
             it->Kqty = -1;
-            client->send(mMatter::Trades, *it);
-            it = tradesHistory.push_erase(it);
+            it = tradesHistory.send_push_erase(it);
             if (!all) break;
           }
       };
       void toClient(bool working) {
-        screen->log(orders, working);
-        json k = json::array();
-        for (map<mRandId, mOrder>::value_type &it : orders)
-          if (it.second.orderStatus == mStatus::Working)
-            k.push_back(it.second);
-        client->send(mMatter::OrderStatusReports, k);
+        screen->log(orders.orders, working);
+        orders.send();
       };
       void toHistory(mOrder *o, double tradeQuantity) {
         mAmount fee = 0;
@@ -241,16 +240,8 @@ namespace K {
             (qp.pongAt == mPongAt::LongPingFair or qp.pongAt == mPongAt::LongPingAggressive) ? trade.side == mSide::Ask : trade.side == mSide::Bid
           );
         } else {
-          client->send(mMatter::Trades, trade);
-          tradesHistory.push_back(trade);
+          tradesHistory.send_push_back(trade);
         }
-        client->send(mMatter::TradesChart, {
-          {"price", trade.price},
-          {"side", trade.side},
-          {"quantity", trade.quantity},
-          {"value", trade.value},
-          {"pong", o->isPong}
-        });
         if (qp.cleanPongsAuto) cleanAuto(trade.time);
       };
       void matchPong(map<mPrice, string> matches, mTrade pong, bool reverse) {
@@ -267,13 +258,11 @@ namespace K {
             it->quantity = it->quantity + pong.quantity;
             it->value = it->value + pong.value;
             it->loadedFromDB = false;
-            client->send(mMatter::Trades, *it);
-            it = tradesHistory.push_erase(it);
+            it = tradesHistory.send_push_erase(it);
             break;
           }
           if (!eq) {
-            client->send(mMatter::Trades, pong);
-            tradesHistory.push_back(pong);
+            tradesHistory.send_push_back(pong);
           }
         }
       };
@@ -290,8 +279,7 @@ namespace K {
           if (it->quantity<=it->Kqty)
             it->Kdiff = abs(it->quantity * it->price - it->Kqty * it->Kprice);
           it->loadedFromDB = false;
-          client->send(mMatter::Trades, *it);
-          it = tradesHistory.push_erase(it);
+          it = tradesHistory.send_push_erase(it);
           break;
         }
         return pong->quantity > 0;
@@ -301,8 +289,7 @@ namespace K {
         for (vector<mTrade>::iterator it = tradesHistory.begin(); it != tradesHistory.end();)
           if ((it->Ktime?:it->time) < pT_ and (qp.cleanPongsAuto < 0 or it->Kqty >= it->quantity)) {
             it->Kqty = -1;
-            client->send(mMatter::Trades, *it);
-            it = tradesHistory.push_erase(it);
+            it = tradesHistory.send_push_erase(it);
           } else ++it;
       };
   };

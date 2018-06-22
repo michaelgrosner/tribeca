@@ -495,7 +495,7 @@ export class StatsComponent implements OnInit {
     this.positionData = o;
   }
 
-  @Input() set setEWMAChartData(o: Models.EWMAChart) {
+  @Input() set setMarketChartData(o: Models.MarketChart) {
     if (o === null) return;
     this.fairValue = o.fairValue;
     if (o.ewma) this.ewma = o.ewma;

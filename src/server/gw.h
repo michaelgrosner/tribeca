@@ -13,8 +13,8 @@ namespace K {
         gw->WRITEME(mConnectivity, read);
       };
       void waitWebAdmin() {
-        client->WELCOME(mMatter::Connectivity, hello);
-        client->CLICKME(mMatter::Connectivity, kiss);
+        client->WELCOME(engine->semaphore, hello);
+        client->CLICKME(engine->semaphore, kiss);
       };
       void waitSysAdmin() {
         screen->PRESSME(mHotkey::ESC, hotkiss);
@@ -28,7 +28,7 @@ namespace K {
       };
     private:
       void hello(json *const welcome) {
-        *welcome = { semaphore() };
+        *welcome = { engine->semaphore };
       };
       void kiss(const json &butterfly) {
         if (!butterfly.is_object() or !butterfly["state"].is_number()) return;
@@ -43,26 +43,20 @@ namespace K {
         gwSemaphore();
       };
       void read(const mConnectivity &rawdata) {
-        if (engine->greenGateway != rawdata) {
-          if (!(engine->greenGateway = rawdata))
-            market->levels.clear();
-          gwSemaphore();
-        }
+        if (engine->semaphore.greenGateway == rawdata) return;
+        if (!(engine->semaphore.greenGateway = rawdata))
+          market->levels.clear();
+        gwSemaphore();
       };
       void gwSemaphore() {
-        mConnectivity k = adminAgreement * engine->greenGateway;
-        if (engine->greenButton != k) {
-          engine->greenButton = k;
-          screen->log("GW " + gw->name, "Quoting state changed to", string(!engine->greenButton?"DIS":"") + "CONNECTED");
+        mConnectivity k = adminAgreement * engine->semaphore.greenGateway;
+        if (engine->semaphore.greenButton != k) {
+          engine->semaphore.greenButton = k;
+          screen->log("GW " + gw->name, "Quoting state changed to",
+            string(!engine->semaphore.greenButton?"DIS":"") + "CONNECTED");
         }
-        client->send(mMatter::Connectivity, semaphore());
+        engine->semaphore.send();
         screen->refresh();
-      };
-      json semaphore() {
-        return {
-          {"state", engine->greenButton},
-          {"status", engine->greenGateway}
-        };
       };
       void handshake() {
         json reply;

@@ -15,8 +15,10 @@ export var Topics = {
   OrderStatusReports: 'i',
   ProductAdvertisement: 'j',
   ApplicationState: 'k',
-  Notepad: 'l',
+  EWMAStats: 'l',
+  STDEVStats: 'm',
   Position: 'n',
+  Profit: 'o',
   SubmitNewOrder: 'p',
   CancelOrder: 'q',
   MarketTrade: 'r',
@@ -29,9 +31,9 @@ export var Topics = {
   CleanAllClosedTrades: 'y',
   CleanAllTrades: 'z',
   CleanTrade: 'A',
-  TradesChart: 'B',
   WalletChart: 'C',
-  EWMAChart: 'D',
+  MarketChart: 'D',
+  Notepad: 'E',
   MarketDataLongTerm: 'G'
 }
 
@@ -95,7 +97,7 @@ export interface IEwma {
   ewmaTrendDiff: number;
 }
 
-export class EWMAChart {
+export class MarketChart {
     constructor(public stdevWidth: IStdev,
                 public ewma: IEwma,
                 public fairValue: number,

@@ -577,7 +577,7 @@ class DisplayOrder {
                     </div>
 
                     <div [hidden]="!showStats" [ngClass]="showStats == 2 ? 'col-md-11 col-xs-12 absolute-charts' : 'col-md-11 col-xs-12 relative-charts'">
-                      <market-stats ondblclick="this.style.opacity=this.style.opacity<1?1:0.4" [setMarketWidth]="marketWidth" [setShowStats]="!!showStats" [product]="product" [setQuotingParameters]="pair.quotingParameters.display" [setTargetBasePosition]="TargetBasePosition" [setEWMAChartData]="EWMAChartData" [setTradesChartData]="TradesChartData" [setPosition]="Position" [setFairValue]="FairValue"></market-stats>
+                      <market-stats ondblclick="this.style.opacity=this.style.opacity<1?1:0.4" [setMarketWidth]="marketWidth" [setShowStats]="!!showStats" [product]="product" [setQuotingParameters]="pair.quotingParameters.display" [setTargetBasePosition]="TargetBasePosition" [setMarketChartData]="MarketChartData" [setTradesChartData]="TradesChartData" [setPosition]="Position" [setFairValue]="FairValue"></market-stats>
                     </div>
                     <div [hidden]="showStats === 1" class="col-md-{{ showTakers ? '9' : '11' }} col-xs-12" style="padding-left:0px;padding-bottom:0px;">
                       <div class="row">
@@ -597,7 +597,7 @@ class DisplayOrder {
                             </div>
                           </div>
                           <div class="row">
-                            <trade-list (onTradesLength)="onTradesLength($event)" [product]="product" [setQuotingParameters]="pair.quotingParameters.display" [setTrade]="Trade"></trade-list>
+                            <trade-list (onTradesChartData)="onTradesChartData($event)" (onTradesLength)="onTradesLength($event)" [product]="product" [setQuotingParameters]="pair.quotingParameters.display" [setTrade]="Trade"></trade-list>
                           </div>
                         </div>
                       </div>
@@ -680,7 +680,7 @@ class ClientComponent implements OnInit {
   public TargetBasePosition: Models.TargetBasePositionValue = null;
   public MarketData: Models.Market = null;
   public QuoteStatus: Models.TwoSidedQuoteStatus = null;
-  public EWMAChartData: Models.EWMAChart = null;
+  public MarketChartData: Models.MarketChart = null;
   public TradesChartData: Models.TradeChart = null;
   public cancelAllOrders = () => {};
   public cleanAllClosedOrders = () => {};
@@ -773,6 +773,7 @@ class ClientComponent implements OnInit {
   private user_theme: string = null;
   private system_theme: string = null;
   public tradeFreq: number = 0;
+  public tradesChart: Models.TradeChart = null;
   public tradesLength: number = 0;
   public bidsLength: number = 0;
   public asksLength: number = 0;
@@ -824,12 +825,8 @@ class ClientComponent implements OnInit {
       .registerSubscriber((o: Models.TargetBasePositionValue) => { this.TargetBasePosition = o; });
 
     this.subscriberFactory
-      .getSubscriber(this.zone, Models.Topics.EWMAChart)
-      .registerSubscriber((o: Models.EWMAChart) => { this.EWMAChartData = o; });
-
-    this.subscriberFactory
-      .getSubscriber(this.zone, Models.Topics.TradesChart)
-      .registerSubscriber((o: Models.TradeChart) => { this.TradesChartData = o; });
+      .getSubscriber(this.zone, Models.Topics.MarketChart)
+      .registerSubscriber((o: Models.MarketChart) => { this.MarketChartData = o; });
 
     this.cancelAllOrders = () => this.fireFactory
       .getFire(Models.Topics.CancelAllOrders)
@@ -882,6 +879,9 @@ class ClientComponent implements OnInit {
     this.notepad = notepad;
   }
 
+  public onTradesChartData(tradesChart: Models.TradeChart) {
+    this.TradesChartData = tradesChart;
+  }
   public onTradesLength(tradesLength: number) {
     this.tradesLength = tradesLength;
   }

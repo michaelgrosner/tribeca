@@ -49,9 +49,8 @@ namespace K {
   } *events = nullptr;
 
   static struct Sqlite {
-    virtual void backup(const mMatter&, mFromDb *const, const string&, const string& = "") = 0;
-#define FROM
-#define INTO ,&
+    virtual void backup(mFromDb *const, const string&, const string& = "") = 0;
+#define INTO &
 #define THEN ,
 #define WARN ,
     function<unsigned int()> size = []() { return 0; };
@@ -59,13 +58,13 @@ namespace K {
 
   static struct Client {
     uWS::Hub* socket = nullptr;
-    function<void(const mMatter&, const json&)> send;
+    function<void(mToClient *const)> send;
     virtual void timer_Xs() = 0;
     virtual void timer_60s() = 0;
-    virtual void welcome(const mMatter&, function<void(json *const)>) = 0;
-#define WELCOME(type, hello) welcome(type, [&](json *const welcome) { hello(welcome); })
-    virtual void clickme(const mMatter&, function<void(const json&)>) = 0;
-#define CLICKME(type, kiss) clickme(type, [&](const json &butterfly) { kiss(butterfly); })
+    virtual void welcome(mToClient *const, function<void(json *const)>) = 0;
+#define WELCOME(data, hello) welcome(&data, [&](json *const welcome) { hello(welcome); })
+    virtual void clickme(const mAbout&, function<void(const json&)>) = 0;
+#define CLICKME(data, kiss) clickme(data, [&](const json &butterfly) { kiss(butterfly); })
   } *client = nullptr;
 
   static struct Wallet {
@@ -81,17 +80,8 @@ namespace K {
 
   static struct Market {
     mLevels levels;
-    mPrice fairValue = 0;
-    mEwma ewma;
-    double targetPosition = 0,
-           mgStdevTop = 0,
-           mgStdevTopMean = 0,
-           mgStdevFV = 0,
-           mgStdevFVMean = 0,
-           mgStdevBid = 0,
-           mgStdevBidMean = 0,
-           mgStdevAsk = 0,
-           mgStdevAskMean = 0;
+    mMarketStats stats;
+    double targetPosition = 0;
     map<mPrice, mAmount> filterBidOrders,
                          filterAskOrders;
     virtual void calcStats() = 0;
@@ -100,7 +90,7 @@ namespace K {
   } *market = nullptr;
 
   static struct Broker {
-    map<mRandId, mOrder> orders;
+    mOrders orders;
     mTrades tradesHistory;
     virtual void cleanOrder(const mRandId&) = 0;
     virtual void cancelOrder(const mRandId&) = 0;
@@ -111,9 +101,8 @@ namespace K {
   } *broker = nullptr;
 
   static struct Engine {
+    mSemaphore semaphore;
     unsigned int orders_60s = 0;
-    mConnectivity greenButton  = mConnectivity::Disconnected,
-                  greenGateway = mConnectivity::Disconnected;
     virtual void timer_1s() = 0;
     virtual void calcQuote() = 0;
     virtual void calcQuoteAfterSavedParams() = 0;

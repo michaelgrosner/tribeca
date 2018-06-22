@@ -13,12 +13,10 @@ namespace K {
     protected:
       void load() {
         sqlite->backup(
-          FROM mMatter::Position
           INTO profits
           THEN "loaded % historical Profits"
         );
         sqlite->backup(
-          FROM mMatter::TargetBasePosition
           INTO target
           THEN "loaded TBP = % " + gw->base
         );
@@ -27,19 +25,14 @@ namespace K {
         gw->WRITEME(mWallets, read);
       };
       void waitWebAdmin() {
-        client->WELCOME(mMatter::Position,           hello_Position);
-        client->WELCOME(mMatter::TradeSafetyValue,   hello_Safety);
-        client->WELCOME(mMatter::TargetBasePosition, hello_TargetBasePos);
+        client->WELCOME(position, hello_Position);
+        client->WELCOME(safety,   hello_Safety);
+        client->WELCOME(target,   hello_TargetBasePos);
       };
     public:
       void calcSafety() {
-        if (position.empty() or !market->fairValue) return;
-        mSafety prev = safety;
-        safety = nextSafety();
-        if (prev.combined != safety.combined
-          or prev.buyPing != safety.buyPing
-          or prev.sellPing != safety.sellPing
-        ) client->send(mMatter::TradeSafetyValue, safety);
+        if (position.empty() or !market->stats.fairValue.fv) return;
+        safety.send_ratelimit(nextSafety());
       };
       void calcTargetBasePos() {                                    PRETTY_DEBUG
         if (position.empty()) return screen->logWar("PG", "Unable to calculate TBP, missing wallet data");
@@ -53,8 +46,7 @@ namespace K {
         target.targetBasePosition = next;
         sideAPRDiff = target.sideAPR;
         calcPDiv(baseValue);
-        client->send(mMatter::TargetBasePosition, target);
-        target.push();
+        target.send_push();
         if (!args.debugWallet) return;
         screen->log("PG", "TBP: "
           + to_string((int)(target.targetBasePosition / baseValue * 1e+2)) + "% = " + FN::str8(target.targetBasePosition)
@@ -63,40 +55,26 @@ namespace K {
           + " " + gw->base);
       };
       void calcWallet() {
-        if (balance.empty() or !market->fairValue) return;
+        if (balance.empty() or !market->stats.fairValue.fv) return;
         if (args.maxWallet) applyMaxWallet();
         mPosition pos(
           FN::d8(balance.base.amount),
           FN::d8(balance.quote.amount),
-          balance.quote.amount / market->fairValue,
+          balance.quote.amount / market->stats.fairValue.fv,
           FN::d8(balance.base.held),
           FN::d8(balance.quote.held),
           balance.base.amount + balance.base.held,
-          (balance.quote.amount + balance.quote.held) / market->fairValue,
-          FN::d8((balance.quote.amount + balance.quote.held) / market->fairValue + balance.base.amount + balance.base.held),
-          FN::d8((balance.base.amount + balance.base.held) * market->fairValue + balance.quote.amount + balance.quote.held),
+          (balance.quote.amount + balance.quote.held) / market->stats.fairValue.fv,
+          FN::d8((balance.quote.amount + balance.quote.held) / market->stats.fairValue.fv + balance.base.amount + balance.base.held),
+          FN::d8((balance.base.amount + balance.base.held) * market->stats.fairValue.fv + balance.quote.amount + balance.quote.held),
           position.profitBase,
           position.profitQuote,
           mPair(gw->base, gw->quote)
         );
         calcPositionProfit(&pos);
-        bool eq = true;
-        if (!position.empty()) {
-          eq = abs(pos.baseValue - position.baseValue) < 2e-6;
-          if(eq
-            and abs(pos.quoteValue - position.quoteValue) < 2e-2
-            and abs(pos.baseAmount - position.baseAmount) < 2e-6
-            and abs(pos.quoteAmount - position.quoteAmount) < 2e-2
-            and abs(pos.baseHeldAmount - position.baseHeldAmount) < 2e-6
-            and abs(pos.quoteHeldAmount - position.quoteHeldAmount) < 2e-2
-            and abs(pos.profitBase - position.profitBase) < 2e-2
-            and abs(pos.profitQuote - position.profitQuote) < 2e-2
-          ) return;
-        }
-        position = pos;
-        if (!eq) calcTargetBasePos();
-        client->send(mMatter::Position, pos);
+        position.send_ratelimit(pos);
         screen->log(pos);
+        calcTargetBasePos();
       };
       void calcWalletAfterOrder(const mSide &side) {
         if (position.empty()) return;
@@ -104,7 +82,7 @@ namespace K {
         mAmount amount = side == mSide::Ask
           ? position.baseAmount + position.baseHeldAmount
           : position.quoteAmount + position.quoteHeldAmount;
-        for (map<mRandId, mOrder>::value_type &it : broker->orders)
+        for (map<mRandId, mOrder>::value_type &it : broker->orders.orders)
           if (it.second.side == side and it.second.orderStatus == mStatus::Working) {
             mAmount held = it.second.quantity;
             if (it.second.side == mSide::Bid)
@@ -160,7 +138,7 @@ namespace K {
           if (qp.sellSizeMax) sellSize = fmax(sellSize, totalBasePosition - target.targetBasePosition);
         }
         mPrice widthPong = qp.widthPercentage
-          ? qp.widthPongPercentage * market->fairValue / 100
+          ? qp.widthPongPercentage * market->stats.fairValue.fv / 100
           : qp.widthPong;
         mPrice buyPing = 0,
                sellPing = 0;
@@ -208,10 +186,10 @@ namespace K {
       void matchPing(bool _near, bool _far, map<mPrice, mTrade> *trades, mPrice *ping, mAmount *qty, mAmount qtyMax, mPrice width, bool reverse = false) {
         int dir = width > 0 ? 1 : -1;
         if (reverse) for (map<mPrice, mTrade>::reverse_iterator it = trades->rbegin(); it != trades->rend(); ++it) {
-          if (matchPing(_near, _far, ping, qty, qtyMax, width, dir * market->fairValue, dir * it->second.price, it->second.quantity, it->second.price, it->second.Kqty, reverse))
+          if (matchPing(_near, _far, ping, qty, qtyMax, width, dir * market->stats.fairValue.fv, dir * it->second.price, it->second.quantity, it->second.price, it->second.Kqty, reverse))
             break;
         } else for (map<mPrice, mTrade>::iterator it = trades->begin(); it != trades->end(); ++it)
-          if (matchPing(_near, _far, ping, qty, qtyMax, width, dir * market->fairValue, dir * it->second.price, it->second.quantity, it->second.price, it->second.Kqty, reverse))
+          if (matchPing(_near, _far, ping, qty, qtyMax, width, dir * market->stats.fairValue.fv, dir * it->second.price, it->second.quantity, it->second.price, it->second.Kqty, reverse))
             break;
       };
       bool matchPing(bool _near, bool _far, mPrice *ping, mAmount *qty, mAmount qtyMax, mPrice width, mPrice fv, mPrice price, mAmount qtyTrade, mPrice priceTrade, mAmount KqtyTrade, bool reverse) {
@@ -285,11 +263,11 @@ namespace K {
       };
       void applyMaxWallet() {
         mAmount maxWallet = args.maxWallet;
-        maxWallet -= balance.quote.held / market->fairValue;
-        if (maxWallet > 0 and balance.quote.amount / market->fairValue > maxWallet) {
-          balance.quote.amount = maxWallet * market->fairValue;
+        maxWallet -= balance.quote.held / market->stats.fairValue.fv;
+        if (maxWallet > 0 and balance.quote.amount / market->stats.fairValue.fv > maxWallet) {
+          balance.quote.amount = maxWallet * market->stats.fairValue.fv;
           maxWallet = 0;
-        } else maxWallet -= balance.quote.amount / market->fairValue;
+        } else maxWallet -= balance.quote.amount / market->stats.fairValue.fv;
         maxWallet -= balance.base.held;
         if (maxWallet > 0 and balance.base.amount > maxWallet)
           balance.base.amount = maxWallet;

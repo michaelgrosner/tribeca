@@ -39,19 +39,21 @@ namespace K {
   enum class mMatter: unsigned char {
     FairValue            = 'a', Quote                = 'b', ActiveSubscription = 'c', Connectivity       = 'd', MarketData       = 'e',
     QuotingParameters    = 'f', SafetySettings       = 'g', Product            = 'h', OrderStatusReports = 'i',
-    ProductAdvertisement = 'j', ApplicationState     = 'k', Notepad            = 'l',
-    Position             = 'n',                             SubmitNewOrder     = 'p', CancelOrder        = 'q', MarketTrade      = 'r',
+    ProductAdvertisement = 'j', ApplicationState     = 'k', EWMAStats          = 'l', STDEVStats         = 'm',
+    Position             = 'n', Profit               = 'o', SubmitNewOrder     = 'p', CancelOrder        = 'q', MarketTrade      = 'r',
     Trades               = 's', ExternalValuation    = 't', QuoteStatus        = 'u', TargetBasePosition = 'v', TradeSafetyValue = 'w',
     CancelAllOrders      = 'x', CleanAllClosedTrades = 'y', CleanAllTrades     = 'z', CleanTrade         = 'A',
-    TradesChart          = 'B', WalletChart          = 'C', EWMAChart          = 'D', MarketDataLongTerm = 'G'
+                                WalletChart          = 'C', MarketChart        = 'D', Notepad            = 'E', MarketDataLongTerm = 'G'
   };
   static          bool operator! (mConnectivity k_)                   { return !(unsigned int)k_; };
   static mConnectivity operator* (mConnectivity _k, mConnectivity k_) { return (mConnectivity)((unsigned int)_k * (unsigned int)k_); };
+
   static char RBLACK[] = "\033[0;30m", RRED[]    = "\033[0;31m", RGREEN[] = "\033[0;32m", RYELLOW[] = "\033[0;33m",
               RBLUE[]  = "\033[0;34m", RPURPLE[] = "\033[0;35m", RCYAN[]  = "\033[0;36m", RWHITE[]  = "\033[0;37m",
               BBLACK[] = "\033[1;30m", BRED[]    = "\033[1;31m", BGREEN[] = "\033[1;32m", BYELLOW[] = "\033[1;33m",
               BBLUE[]  = "\033[1;34m", BPURPLE[] = "\033[1;35m", BCYAN[]  = "\033[1;36m", BWHITE[]  = "\033[1;37m",
               RRESET[] = "\033[0m";
+
   static struct mArgs {
         int port          = 3000,   colors      = 0, debug        = 0,
             debugSecret   = 0,      debugEvents = 0, debugOrders  = 0,
@@ -71,10 +73,36 @@ namespace K {
             whitelist     = "";
     const char *inet = nullptr;
   } args;
-  struct mFromDb {
+
+  struct mAbout {
+    virtual mMatter about() const = 0;
+  };
+  struct mDump: virtual public mAbout {
+    virtual json dump() const = 0;
+  };
+
+  struct mButton: public mAbout {
+    mMatter button;
+    mButton(mMatter b):
+      button(b)
+    {};
+    mMatter about() const {
+      return button;
+    };
+  };
+
+  struct mToClient: public mDump {
+    function<void()> send;
+  };
+  template <typename mData> struct mJsonToClient: public mToClient {
+    virtual json dump() const {
+      return *(mData*)this;
+    };
+  };
+
+  struct mFromDb: public mDump {
     function<void()> push;
     virtual   bool pull(const json &j) = 0;
-    virtual   json dump()      const = 0;
     virtual string increment() const { return "NULL"; };
     virtual string explain()   const = 0;
     virtual double limit()     const { return 0; };
@@ -125,7 +153,9 @@ namespace K {
       return to_string(size());
     };
   };
-  static struct mQuotingParams: public mStructFromDb<mQuotingParams> {
+
+  static struct mQuotingParams: public mStructFromDb<mQuotingParams>,
+                                public mJsonToClient<mQuotingParams> {
     mPrice            widthPing                       = 2.0;
     double            widthPingPercentage             = 0.25;
     mPrice            widthPong                       = 2.0;
@@ -205,14 +235,18 @@ namespace K {
       _diffXSEP = prev.extraShortEwmaPeriods != extraShortEwmaPeriods;
       _diffUEP = prev.ultraShortEwmaPeriods != ultraShortEwmaPeriods;
     };
-    void push_diff(const json &j) {
+    void send_push_diff(const json &j) {
       mQuotingParams prev = *this;
       from_json(j, *this);
       diff(prev);
       push();
+      send();
     };
     string explain() const {
       return "Quoting Parameters";
+    };
+    mMatter about() const {
+      return mMatter::QuotingParameters;
     };
   } qp;
   static void to_json(json &j, const mQuotingParams &k) {
@@ -339,6 +373,7 @@ namespace K {
     k.tidy();
     k.flag();
   };
+
   struct mPair {
     mCoinId base,
             quote;
@@ -359,6 +394,7 @@ namespace K {
     k.base  = j.value("base", "");
     k.quote = j.value("quote", "");
   };
+
   struct mWallet {
     mAmount amount,
             held;
@@ -404,6 +440,7 @@ namespace K {
       {"quote", k.quote}
     };
   };
+
   struct mProfit {
     mAmount baseValue,
             quoteValue;
@@ -442,6 +479,9 @@ namespace K {
     bool ratelimit() const {
       return !empty() and crbegin()->time + 21e+3 > Tstamp;
     };
+    mMatter about() const {
+      return mMatter::Profit;
+    };
     double calcBase() const {
       return calcDiffPercent(
         cbegin()->baseValue,
@@ -458,7 +498,8 @@ namespace K {
       return ((newer - older) / newer) * 100;
     };
   };
-  struct mSafety {
+
+  struct mSafety: public mJsonToClient<mSafety> {
     double buy,
            sell,
            combined;
@@ -475,6 +516,27 @@ namespace K {
     bool empty() const {
       return !buySize and !sellSize;
     };
+    bool ratelimit(const mSafety &next) const {
+      return (
+        combined == next.combined
+        and buyPing == next.buyPing
+        and sellPing == next.sellPing
+      );
+    };
+    void send_ratelimit(const mSafety &next) {
+      bool limited = ratelimit(next);
+      buy = next.buy;
+      sell = next.sell;
+      combined = next.combined;
+      buyPing = next.buyPing;
+      sellPing = next.sellPing;
+      buySize = next.buySize;
+      sellSize = next.sellSize;
+      if (!limited) send();
+    };
+    mMatter about() const {
+      return mMatter::TradeSafetyValue;
+    };
   };
   static void to_json(json &j, const mSafety &k) {
     j = {
@@ -485,7 +547,8 @@ namespace K {
       {"sellPing", fmax(0, k.sellPing)}
     };
   };
-  struct mPosition {
+
+  struct mPosition: public mJsonToClient<mPosition> {
     mAmount baseAmount,
             quoteAmount,
             _quoteAmountValue,
@@ -507,6 +570,37 @@ namespace K {
     bool empty() const {
       return !baseValue;
     };
+    bool ratelimit(const mPosition &next) const {
+      return (!next.empty()
+        and abs(baseValue - next.baseValue) < 2e-6
+        and abs(quoteValue - next.quoteValue) < 2e-2
+        and abs(baseAmount - next.baseAmount) < 2e-6
+        and abs(quoteAmount - next.quoteAmount) < 2e-2
+        and abs(baseHeldAmount - next.baseHeldAmount) < 2e-6
+        and abs(quoteHeldAmount - next.quoteHeldAmount) < 2e-2
+        and abs(profitBase - next.profitBase) < 2e-2
+        and abs(profitQuote - next.profitQuote) < 2e-2
+      );
+    };
+    void send_ratelimit(const mPosition &next) {
+      bool limited = ratelimit(next);
+      baseAmount = next.baseAmount;
+      quoteAmount = next.quoteAmount;
+      _quoteAmountValue = next._quoteAmountValue;
+      baseHeldAmount = next.baseHeldAmount;
+      quoteHeldAmount = next.quoteHeldAmount;
+      _baseTotal = next._baseTotal;
+      _quoteTotal = next._quoteTotal;
+      baseValue = next.baseValue;
+      quoteValue = next.quoteValue;
+      profitBase = next.profitBase;
+      profitQuote = next.profitQuote;
+      pair = next.pair;
+      if (!limited) send();
+    };
+    mMatter about() const {
+      return mMatter::Position;
+    };
   };
   static void to_json(json &j, const mPosition &k) {
     j = {
@@ -521,15 +615,24 @@ namespace K {
       {           "pair", k.pair           }
     };
   };
-  struct mTarget: public mStructFromDb<mTarget> {
+
+  struct mTarget: public mStructFromDb<mTarget>,
+                  public mJsonToClient<mTarget> {
     mAmount targetBasePosition,
             positionDivergence;
      string sideAPR;
     mTarget():
       targetBasePosition(0), positionDivergence(0), sideAPR("")
     {};
+    void send_push() const {
+      push();
+      send();
+    };
     string explain() const {
       return to_string(targetBasePosition);
+    };
+    mMatter about() const {
+      return mMatter::TargetBasePosition;
     };
   };
   static void to_json(json &j, const mTarget &k) {
@@ -544,6 +647,7 @@ namespace K {
     k.positionDivergence = j.value("pDiv", 0.0);
     k.sideAPR            = j.value("sideAPR", "");
   };
+
   struct mEwma: public mStructFromDb<mEwma> {
     mPrice mgEwmaVL,
            mgEwmaL,
@@ -569,6 +673,9 @@ namespace K {
                          qp.ultraShortEwmaPeriods
                      )))));
     };
+    mMatter about() const {
+      return mMatter::EWMAStats;
+    };
   };
   static void to_json(json &j, const mEwma &k) {
     j = {
@@ -591,6 +698,7 @@ namespace K {
     k.mgEwmaXS = j.value("ewmaExtraShort", 0.0);
     k.mgEwmaU  = j.value("ewmaUltraShort", 0.0);
   };
+
   struct mFairValue {
     mPrice fv;
     mFairValue():
@@ -615,7 +723,26 @@ namespace K {
     mClock lifetime() const {
       return 60e+3 * limit();
     };
+    mMatter about() const {
+      return mMatter::MarketDataLongTerm;
+    };
   };
+  struct mFairStats:  public mFairValue,
+                      public mJsonToClient<mFairStats> {
+    mFairStats()
+    { fv = 0; };
+    mFairStats(mPrice f)
+    { fv = f; };
+    mMatter about() const {
+      return mMatter::FairValue;
+    };
+  };
+  static void to_json(json &j, const mFairStats &k) {
+    j = {
+      {"price", k.fv}
+    };
+  };
+
   struct mStdev: public mFairValue {
     mPrice topBid,
            topAsk;
@@ -645,7 +772,11 @@ namespace K {
     mClock lifetime() const {
       return 1e+3 * limit();
     };
+    mMatter about() const {
+      return mMatter::STDEVStats;
+    };
   };
+
   struct mTrade {
      string tradeId;
       mSide side;
@@ -712,7 +843,8 @@ namespace K {
     k.feeCharged   = j.value("feeCharged", 0.0);
     k.loadedFromDB = true;
   };
-  struct mTrades: public mVectorFromDb<mTrade> {
+  struct mTrades: public mVectorFromDb<mTrade>,
+                  public mJsonToClient<mTrade> {
     json dump() const {
       if (crbegin()->Kqty == -1) return nullptr;
       else return mVectorFromDb::dump();
@@ -721,15 +853,57 @@ namespace K {
       return crbegin()->tradeId;
     };
     void erase() {
-      if (crbegin()->Kqty == -1) rows.pop_back();
+      if (crbegin()->Kqty < 0) rows.pop_back();
     };
-    iterator push_erase(iterator it) {
+    void send_push_back(const mTrade &row) {
+      rows.push_back(row);
+      push();
+      if (crbegin()->Kqty < 0) rbegin()->Kqty = -2;
+      send();
+    };
+    iterator send_push_erase(iterator it) {
       mTrade row = *it;
       it = rows.erase(it);
-      push_back(row);
+      send_push_back(row);
+      erase();
       return it;
     };
+    mMatter about() const {
+      return mMatter::Trades;
+    };
   };
+  struct mTakers: public mJsonToClient<mTrade> {
+    vector<mTrade> trades;
+    mAmount        takersBuySize60s,
+                   takersSellSize60s;
+    mTakers():
+      trades({}), takersBuySize60s(0), takersSellSize60s(0)
+    {};
+    void calcSize60s() {
+      takersSellSize60s = takersBuySize60s = 0;
+      if (trades.empty()) return;
+      for (mTrade &it : trades)
+        (it.side == mSide::Bid
+          ? takersSellSize60s
+          : takersBuySize60s
+        ) += it.quantity;
+      trades.clear();
+    };
+    json dump() const {
+      return trades.back();
+    };
+    void send_push_back(const mTrade &row) {
+      trades.push_back(row);
+      send();
+    };
+    mMatter about() const {
+      return mMatter::MarketTrade;
+    };
+  };
+  static void to_json(json &j, const mTakers &k) {
+    j = k.trades;
+  };
+
   struct mOrder {
          mRandId orderId,
                  exchangeId;
@@ -776,6 +950,26 @@ namespace K {
       {       "latency", k.latency       }
     };
   };
+  struct mOrders: public mJsonToClient<mOrders> {
+    map<mRandId, mOrder> orders;
+    vector<mOrder> working() const {
+      vector<mOrder> workingOrders;
+      for (const map<mRandId, mOrder>::value_type &it : orders)
+        if (mStatus::Working == it.second.orderStatus)
+          workingOrders.push_back(it.second);
+      return workingOrders;
+    };
+    json dump() const {
+      return working();
+    };
+    mMatter about() const {
+      return mMatter::OrderStatusReports;
+    };
+  };
+  static void to_json(json &j, const mOrders &k) {
+    j = k.orders;
+  };
+
   struct mLevel {
      mPrice price;
     mAmount size;
@@ -829,7 +1023,8 @@ namespace K {
       {"asks", k.asks}
     };
   };
-  struct mLevelsDiff: public mLevels {
+  struct mLevelsDiff: public mLevels,
+                      public mJsonToClient<mLevelsDiff>  {
     vector<mLevel> diff(const vector<mLevel> &from, vector<mLevel> to) {
       vector<mLevel> patch;
       for (const mLevel &it : from) {
@@ -854,14 +1049,19 @@ namespace K {
     json diff(const mLevels &to) {
       bids = diff(bids, to.bids);
       asks = diff(asks, to.asks);
-      json patch = *this;
-      reset(to);
-      return patch;
     };
     mLevels reset(const mLevels &from) {
       bids = from.bids;
       asks = from.asks;
       return from;
+    };
+    void send_diff(const mLevels &to) {
+      diff(to);
+      send();
+      reset(to);
+    };
+    mMatter about() const {
+      return mMatter::MarketData;
     };
   };
   static void to_json(json &j, const mLevelsDiff &k) {
@@ -871,6 +1071,7 @@ namespace K {
       {"diff", true}
     };
   };
+
   struct mQuote {
     mLevel bid,
            ask;
@@ -892,7 +1093,8 @@ namespace K {
       {"ask", k.ask}
     };
   };
-  struct mQuoteStatus {
+
+  struct mQuoteStatus: public mJsonToClient<mQuoteStatus> {
      mQuoteState bidStatus,
                  askStatus;
     unsigned int quotesInMemoryNew,
@@ -901,9 +1103,9 @@ namespace K {
     mQuoteStatus():
       bidStatus((mQuoteState)0), askStatus((mQuoteState)0), quotesInMemoryNew(0), quotesInMemoryWorking(0), quotesInMemoryDone(0)
     {};
-    mQuoteStatus(mQuoteState b, mQuoteState a, unsigned int n, unsigned int w, unsigned int d):
-      bidStatus(b), askStatus(a), quotesInMemoryNew(n), quotesInMemoryWorking(w), quotesInMemoryDone(d)
-    {};
+    mMatter about() const {
+      return mMatter::QuoteStatus;
+    };
   };
   static void to_json(json &j, const mQuoteStatus &k) {
     j = {
@@ -913,6 +1115,127 @@ namespace K {
       {"quotesInMemoryWorking", k.quotesInMemoryWorking},
       {   "quotesInMemoryDone", k.quotesInMemoryDone   }
     };
+  };
+
+  struct mSemaphore: public mJsonToClient<mSemaphore> {
+    mConnectivity greenButton,
+                  greenGateway;
+    mSemaphore():
+      greenButton((mConnectivity)0), greenGateway((mConnectivity)0)
+    {};
+    mMatter about() const {
+      return mMatter::Connectivity;
+    };
+  };
+  static void to_json(json &j, const mSemaphore &k) {
+    j = {
+      { "state", k.greenButton },
+      {"status", k.greenGateway}
+    };
+  };
+
+  struct mMonitor: public mJsonToClient<mMonitor> {
+          string a;
+    unsigned int freq,
+                 memory,
+                 dbsize;
+    mMonitor():
+       a(""), freq(0), memory(0), dbsize(0)
+    {};
+    mMatter about() const {
+      return mMatter::ApplicationState;
+    };
+  };
+  static void to_json(json &j, const mMonitor &k) {
+    j = {
+      {     "a", k.a                             },
+      {  "inet", string(args.inet ?: "")         },
+      {  "freq", k.freq                          },
+      { "theme", args.ignoreMoon + args.ignoreSun},
+      {"memory", k.memory                        },
+      {"dbsize", k.dbsize                        }
+    };
+  };
+
+  struct mMarketStats: public mJsonToClient<mMarketStats> {
+          mEwma ewma;
+     mFairStats fairValue;
+        mTakers takerTrades;
+         double mgStdevTop,
+                mgStdevTopMean,
+                mgStdevFV,
+                mgStdevFVMean,
+                mgStdevBid,
+                mgStdevBidMean,
+                mgStdevAsk,
+                mgStdevAskMean;
+    mMarketStats():
+       ewma(mEwma()), fairValue(mFairStats()), takerTrades(mTakers()), mgStdevTop(0), mgStdevTopMean(0), mgStdevFV(0), mgStdevFVMean(0), mgStdevBid(0), mgStdevBidMean(0), mgStdevAsk(0), mgStdevAskMean(0)
+    {};
+    void send_push() const {
+      ewma.push();
+      send();
+    };
+    mMatter about() const {
+      return mMatter::MarketChart;
+    };
+  };
+  static void to_json(json &j, const mMarketStats &k) {
+    j = {
+      {          "ewma", k.ewma                         },
+      {     "fairValue", k.fairValue.fv                 },
+      { "tradesBuySize", k.takerTrades.takersBuySize60s },
+      {"tradesSellSize", k.takerTrades.takersSellSize60s},
+      {    "stdevWidth", {
+                           {      "fv", k.mgStdevFV     },
+                           {  "fvMean", k.mgStdevFVMean },
+                           {    "tops", k.mgStdevTop    },
+                           {"topsMean", k.mgStdevTopMean},
+                           {     "bid", k.mgStdevBid    },
+                           { "bidMean", k.mgStdevBidMean},
+                           {     "ask", k.mgStdevAsk    },
+                           { "askMean", k.mgStdevAskMean}
+      }}
+    };
+  };
+
+  struct mProduct: public mJsonToClient<mProduct> {
+    mExchange exchange;
+        mPair pair;
+       mPrice minTick;
+    mProduct():
+      exchange((mExchange)0), pair(mPair()), minTick(0)
+    {};
+    mMatter about() const {
+      return mMatter::ProductAdvertisement;
+    };
+  };
+  static void to_json(json &j, const mProduct &k) {
+    j = {
+      {   "exchange", k.exchange                                    },
+      {       "pair", k.pair                                        },
+      {    "minTick", k.minTick                                     },
+      {"environment", args.title                                    },
+      { "matryoshka", args.matryoshka                               },
+      {   "homepage", "https://github.com/ctubio/Krypto-trading-bot"}
+    };
+  };
+
+  struct mNotepad: public mJsonToClient<mNotepad> {
+    string content;
+    mNotepad():
+      content("")
+    {};
+    mMatter about() const {
+      return mMatter::Notepad;
+    };
+    void edit(const json &j) {
+      if (j.is_array() and j.size())
+        content = j.at(0);
+    };
+  };
+  static void to_json(json &j, const mNotepad &k) {
+    j = k.content;
   };
 }
 

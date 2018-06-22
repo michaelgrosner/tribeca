@@ -12,11 +12,13 @@ namespace K {
             public Client { public: UI() { client = this; };
     private:
       int connections = 0;
-      string B64auth = "",
-             notepad = "";
+      string B64auth = "";
       map<char, function<void(json *const)>> hello;
       map<char, function<void(const json&)>> kisses;
       map<mMatter, string> queue;
+      mMonitor monitor;
+      mProduct product;
+      mNotepad notepad;
     protected:
       void load() {
         if (!socket
@@ -76,24 +78,27 @@ namespace K {
         };
       };
       void waitWebAdmin() {
-        WELCOME(mMatter::ApplicationState,     hello_Server);
-        WELCOME(mMatter::ProductAdvertisement, hello_Product);
-        WELCOME(mMatter::Notepad,              hello_Notes);
-        CLICKME(mMatter::Notepad,              kiss_Notes);
+        WELCOME(monitor, hello_Server);
+        WELCOME(product, hello_Product);
+        WELCOME(notepad, hello_Notes);
+        CLICKME(notepad, kiss_Notes);
       };
       void run() {
         send = send_nowhere;
       };
     public:
-      void welcome(const mMatter &type, function<void(json *const)> fn) {
-        if (hello.find((char)type) != hello.end())
-          exit(screen->error("UI", string("Too many handlers for \"") + (char)type + "\" welcome event"));
-        hello[(char)type] = fn;
+      void welcome(mToClient *const data, function<void(json *const)> fn) {
+        const char type = (char)data->about();
+        if (hello.find(type) != hello.end())
+          exit(screen->error("UI", string("Too many handlers for \"") + type + "\" welcome event"));
+        hello[type] = fn;
+        sendAsync(data);
       };
-      void clickme(const mMatter &type, function<void(const json&)> fn) {
-        if (kisses.find((char)type) != kisses.end())
-          exit(screen->error("UI", string("Too many handlers for \"") + (char)type + "\" clickme event"));
-        kisses[(char)type] = fn;
+      void clickme(const mAbout& data, function<void(const json&)> fn) {
+        const char type = (char)data.about();
+        if (kisses.find(type) != kisses.end())
+          exit(screen->error("UI", string("Too many handlers for \"") + type + "\" clickme event"));
+        kisses[type] = fn;
       };
       void timer_Xs() {
         for (map<mMatter, string>::value_type &it : queue)
@@ -101,29 +106,31 @@ namespace K {
         queue.clear();
       };
       void timer_60s() {
-        send(mMatter::ApplicationState, serverState());
+        serverState();
+        monitor.send();
         engine->orders_60s = 0;
       };
     private:
       void hello_Server(json *const welcome) {
-        *welcome = { serverState() };
+        serverState();
+        *welcome = { monitor };
       };
       void hello_Product(json *const welcome) {
-        *welcome = { {
-          {"exchange", gw->exchange},
-          {"pair", mPair(gw->base, gw->quote)},
-          {"minTick", gw->minTick},
-          {"environment", args.title},
-          {"matryoshka", args.matryoshka},
-          {"homepage", "https://github.com/ctubio/Krypto-trading-bot"}
-        } };
+        product.exchange = gw->exchange;
+        product.pair = mPair(gw->base, gw->quote);
+        product.minTick = gw->minTick;
+        *welcome = { product };
       };
       void hello_Notes(json *const welcome) {
         *welcome = { notepad };
       };
       void kiss_Notes(const json &butterfly) {
-        if (butterfly.is_array() and butterfly.size())
-          notepad = butterfly.at(0);
+        notepad.edit(butterfly);
+      };
+      bool sendAsync(mToClient *const data) {
+        data->send = [this, data]() {
+          send(data);
+        };
       };
       void listen() {
         if (!args.withoutSSL
@@ -143,20 +150,21 @@ namespace K {
           ));
         } else screen->logUI("HTTP");
       };
-      function<void(const mMatter&, string)> broadcast = [](const mMatter &type, string msg) {};
-      function<void(const mMatter&, const json&)> send_nowhere = [](const mMatter &type, const json &msg) {};
-      function<void(const mMatter&, const json&)> send_somewhere = [&](const mMatter &type, const json &msg) {
+      function<void(const mMatter &type, string msg)> broadcast = [](const mMatter &type, string msg) {};
+      function<void(mToClient *const data)> send_nowhere = [](mToClient *const data) {};
+      function<void(mToClient *const data)> send_somewhere = [&](mToClient *const data) {
+        const mMatter type = data->about();
         if (!qp.delayUI or !delayed(type))
-          broadcast(type, msg.dump());
-        else queue[type] = msg.dump();
+          broadcast(type, data->dump().dump());
+        else queue[type] = data->dump().dump();
       };
       static bool delayed(const mMatter &type) {
         return type == mMatter::FairValue
-          or type == mMatter::OrderStatusReports
-          or type == mMatter::QuoteStatus
-          or type == mMatter::Position
-          or type == mMatter::TargetBasePosition
-          or type == mMatter::EWMAChart;
+            or type == mMatter::OrderStatusReports
+            or type == mMatter::QuoteStatus
+            or type == mMatter::Position
+            or type == mMatter::TargetBasePosition
+            or type == mMatter::MarketChart;
       };
       void onConnection() {
         if (!connections++) send = send_somewhere;
@@ -254,15 +262,11 @@ namespace K {
         if (ps.empty()) ps = "0";
         return stoi(ps) * 1e+3;
       };
-      json serverState() {
-        return {
-          {"memory", memorySize()},
-          {"inet", string(args.inet ?: "")},
-          {"freq", engine->orders_60s},
-          {"theme", args.ignoreMoon + args.ignoreSun},
-          {"dbsize", sqlite->size()},
-          {"a", gw->A()}
-        };
+      void serverState() {
+        monitor.memory = memorySize();
+        monitor.freq   = engine->orders_60s;
+        monitor.dbsize = sqlite->size();
+        monitor.a      = gw->A();
       };
   };
 }

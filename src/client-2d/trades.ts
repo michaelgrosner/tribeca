@@ -47,6 +47,8 @@ export class TradesComponent implements OnInit {
 
   @Output() onTradesLength = new EventEmitter<number>();
 
+  @Output() onTradesChartData = new EventEmitter<Models.TradeChart>();
+
   constructor(
     @Inject(FireFactory) private fireFactory: FireFactory
   ) {}
@@ -126,10 +128,11 @@ export class TradesComponent implements OnInit {
       });
     } else {
       let exists: boolean = false;
+      let isPong: boolean = false;
       this.gridOptions.api.forEachNode((node: RowNode) => {
         if (!exists && node.data.tradeId==t.tradeId) {
           exists = true;
-          const merged = (node.data.quantity != t.quantity);
+          isPong = (node.data.quantity == t.quantity);
           if (t.Ktime && <any>t.Ktime=='Invalid date') t.Ktime = null;
           node.setData(Object.assign(node.data, {
             time: t.time,
@@ -149,7 +152,7 @@ export class TradesComponent implements OnInit {
               setTimeout(()=>{try{this.gridOptions.api.redrawRows();}catch(e){}},0);
             }, 269);
             if (this.audio) {
-              var audio = new Audio('/audio/'+(merged?'0':'1')+'.mp3');
+              var audio = new Audio('audio/'+(isPong?'1':'0')+'.mp3');
               audio.volume = 0.5;
               audio.play();
             }
@@ -179,6 +182,14 @@ export class TradesComponent implements OnInit {
           audio.play();
         }
       }
+      if (t.loadedFromDB === false)
+        this.onTradesChartData.emit(new Models.TradeChart(
+          isPong?t.Kprice:t.price,
+          isPong?(t.side === Models.Side.Ask ? Models.Side.Bid : Models.Side.Ask):t.side,
+          isPong?t.Kqty:t.quantity,
+          isPong?t.Kvalue:t.value,
+          isPong
+        ));
     }
 
     this.gridOptions.api.sizeColumnsToFit();

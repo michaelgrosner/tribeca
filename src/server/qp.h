@@ -6,24 +6,22 @@ namespace K {
     protected:
       void load() {
         sqlite->backup(
-          FROM mMatter::QuotingParameters
           INTO qp
           THEN "loaded last % OK"
           WARN "using default values for %"
         );
       };
       void waitWebAdmin() {
-        client->WELCOME(mMatter::QuotingParameters, hello);
-        client->CLICKME(mMatter::QuotingParameters, kiss);
+        client->WELCOME(qp, hello);
+        client->CLICKME(qp, kiss);
       };
     private:
       void hello(json *const welcome) {
         *welcome = { qp };
       };
       void kiss(const json &butterfly) {
-        qp.push_diff(butterfly);
+        qp.send_push_diff(butterfly);
         engine->calcQuoteAfterSavedParams();
-        client->send(mMatter::QuotingParameters, qp);
       };
   };
 }

@@ -26,32 +26,34 @@ namespace K {
         };
       };
     public:
-      void backup(const mMatter &table, mFromDb *const data, const string &ok, const string &ko = "") {
-        if (data->pull(select(table, data->lifetime())))
+      void backup(mFromDb *const data, const string &ok, const string &ko = "") {
+        if (data->pull(select(data)))
           screen->log("DB", explain(data, ok));
         else if (!ko.empty())
           screen->logWar("DB", explain(data, ko));
-        data->push = [this, table, data]() {
-          insert(table, data);
+        data->push = [this, data]() {
+          insert(data);
         };
       };
     private:
-      json select(const mMatter &table, const mClock &lifetime) {
+      json select(mFromDb *const data) {
+        const mMatter table = data->about();
         json result = json::array();
         exec(
           create(table)
-          + truncate(table, lifetime)
+          + truncate(table, data->lifetime())
           + "SELECT json FROM " + schema(table) + " ORDER BY time ASC;",
           &result
         );
         return result;
       };
-      void insert(const mMatter &table, mFromDb *const data) {
-        const json   blob  = data->dump();
-        const double limit = data->limit();
-        const mClock lifetime = data->lifetime();
-        const string incr = data->increment(),
-                     sql  = (
+      void insert(mFromDb *const data) {
+        const mMatter table    = data->about();
+        const json    blob     = data->dump();
+        const double  limit    = data->limit();
+        const mClock  lifetime = data->lifetime();
+        const string  incr     = data->increment(),
+                      sql      = (
           (incr != "NULL" or !limit or lifetime)
             ? "DELETE FROM " + schema(table) + (
               incr != "NULL"
