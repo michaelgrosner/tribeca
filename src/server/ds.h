@@ -1161,14 +1161,54 @@ namespace K {
     };
   };
 
+  static const struct mCommand {
+    string output(const string &cmd) const {
+      string data;
+      FILE *stream = popen((cmd + " 2>&1").data(), "r");
+      if (stream) {
+        const int max_buffer = 256;
+        char buffer[max_buffer];
+        while (!feof(stream))
+          if (fgets(buffer, max_buffer, stream) != NULL)
+            data += buffer;
+        pclose(stream);
+      }
+      return data;
+    };
+    string uname() const {
+      return output("uname -srvm");
+    };
+    string ps() const {
+      return output("ps -p" + to_string(::getpid()) + " -orss | tail -n1");
+    };
+    string netstat() const {
+      return output("netstat -anp 2>/dev/null | grep " + to_string(args.port));
+    };
+    void stunnel(const bool &reboot) const {
+      system("pkill stunnel || :");
+      if (reboot) system("stunnel etc/stunnel.conf");
+    };
+    string changelog() const {
+      return output("test -d .git && git --no-pager log --graph --oneline @..@{u}");
+    };
+    bool deprecated() const {
+      return output("test -d .git && git rev-parse @") != output("test -d .git && git rev-parse @{u}");
+    };
+  } cmd;
+
   static struct mMonitor: public mJsonToClient<mMonitor> {
           string a;
-    unsigned int orders_60s,
-                 memory;
+    unsigned int orders_60s;
     mMonitor():
-       a(""), orders_60s(0), memory(0)
+       a(""), orders_60s(0)
     {};
-    function<unsigned int()> dbsize = []() { return 0; };
+    function<unsigned int()> dbSize = []() { return 0; };
+    unsigned int memSize() const {
+      string ps = cmd.ps();
+      ps.erase(remove(ps.begin(), ps.end(), ' '), ps.end());
+      if (ps.empty()) ps = "0";
+      return stoi(ps) * 1e+3;
+    };
     void tick_orders() {
       orders_60s++;
     };
@@ -1186,8 +1226,8 @@ namespace K {
       {  "inet", string(args.inet ?: "")         },
       {  "freq", k.orders_60s                    },
       { "theme", args.ignoreMoon + args.ignoreSun},
-      {"memory", k.memory                        },
-      {"dbsize", k.dbsize()                      }
+      {"memory", k.memSize()                     },
+      {"dbsize", k.dbSize()                      }
     };
   };
 

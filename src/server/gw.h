@@ -21,10 +21,10 @@ namespace K {
       };
       void run() {                                                  PRETTY_DEBUG
         handshake();
-        if (gw->exchange == mExchange::Coinbase) FN::stunnel(true);
+        if (gw->exchange == mExchange::Coinbase) cmd.stunnel(true);
       };
       void end() {
-        if (gw->exchange == mExchange::Coinbase) FN::stunnel(false);
+        if (gw->exchange == mExchange::Coinbase) cmd.stunnel(false);
       };
     private:
       void hello(json *const welcome) {

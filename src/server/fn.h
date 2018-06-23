@@ -150,26 +150,6 @@ namespace K {
         for (unsigned int i = 0; i < SHA384_DIGEST_LENGTH; i++) sprintf(&k_[i*2], "%02x", (unsigned int)digest[i]);
         return k_;
       };
-      static string output(const string &cmd) {
-        string data;
-        FILE *stream = popen((cmd + " 2>&1").data(), "r");
-        if (stream) {
-          const int max_buffer = 256;
-          char buffer[max_buffer];
-          while (!feof(stream))
-            if (fgets(buffer, max_buffer, stream) != NULL)
-              data += buffer;
-          pclose(stream);
-        }
-        return data;
-      };
-      static string changelog() {
-        return output("test -d .git && git --no-pager log --graph --oneline @..@{u}");
-      };
-      static void stunnel(const bool &reboot) {
-        system("pkill stunnel || :");
-        if (reboot) system("stunnel etc/stunnel.conf");
-      };
       static json wJet(const string &url, long timeout = 13) {
         return curl_perform(url, [&](CURL *curl) {
           curl_easy_setopt(curl, CURLOPT_TIMEOUT, timeout);

@@ -142,7 +142,7 @@ namespace K {
           )
         ) screen->logUI("HTTPS");
         else if (!socket->listen(args.inet, args.port, nullptr, 0, &socket->getDefaultGroup<uWS::SERVER>())) {
-          const string netstat = FN::output("netstat -anp 2>/dev/null | grep " + to_string(args.port));
+          const string netstat = cmd.netstat();
           exit(screen->error("UI", "Unable to listen to UI port number " + to_string(args.port) + ", "
             + (netstat.empty() ? "try another network interface" : "seems already in use by:\n" + netstat)
           ));
@@ -245,14 +245,7 @@ namespace K {
         if (addr.length() < 7) addr.clear();
         return addr.empty() ? "unknown" : addr;
       };
-      unsigned int memorySize() {
-        string ps = FN::output("ps -p" + to_string(::getpid()) + " -orss | tail -n1");
-        ps.erase(remove(ps.begin(), ps.end(), ' '), ps.end());
-        if (ps.empty()) ps = "0";
-        return stoi(ps) * 1e+3;
-      };
       void serverState() {
-        monitor.memory = memorySize();
         monitor.a      = gw->A();
       };
   };

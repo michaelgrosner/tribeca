@@ -11,7 +11,7 @@ namespace K {
       int commits = -1;
       if (access(".git", F_OK) != -1) {
         system("git fetch");
-        changes = FN::changelog();
+        changes = cmd.changelog();
         commits = count(changes.begin(), changes.end(), '\n');
       }
       cout << BGREEN << K_0_DAY << RGREEN << ' ' << (commits == -1
@@ -266,11 +266,11 @@ namespace K {
           + strsignal(sig)
 #endif
           + ' ';
-        if (FN::output("test -d .git && git rev-parse @") != FN::output("test -d .git && git rev-parse @{u}"))
+        if (cmd.deprecated())
           tracelog += string("(deprecated K version found).") + '\n'
             + '\n' + string(BYELLOW) + "Hint!" + string(RYELLOW)
             + '\n' + "please upgrade to the latest commit; the encountered error may be already fixed at:"
-            + '\n' + FN::changelog()
+            + '\n' + cmd.changelog()
             + '\n' + "If you agree, consider to run \"make latest\" prior further executions."
             + '\n' + '\n';
         else {
@@ -281,7 +281,7 @@ namespace K {
             + "- lastbeat: " + to_string(Tstamp) + '\n'
             + "- binbuild: " + string(K_BUILD) + '\n'
 #ifndef _WIN32
-            + "- os-uname: " + FN::output("uname -srvm")
+            + "- os-uname: " + cmd.uname()
             + "- tracelog: " + '\n';
           void *k[69];
           size_t jumps = backtrace(k, 69);
