@@ -128,8 +128,10 @@ namespace K {
       void connect() {
         socket->connect(ws, nullptr, {}, 5e+3, &socket->getDefaultGroup<uWS::CLIENT>());
       };
+     string /*BTC unlock */A/*ddress*/;
       void run() {
         if (async) countdown = 1;
+        monitor.unlock = /*BTC unlock */A/*ddress*/;
         socket->run();
       };
       function<void(const mOrder&)>        write_mOrder;
@@ -163,7 +165,6 @@ namespace K {
       };
 //BO non-free gw library functions from build-*/local/lib/K-*.a (it just redefines all virtual gateway class members below).
 /**/  virtual bool ready() = 0;                                              // wait for exchange and maybe set async = true
-/**/  virtual string /*BTC unlock */A/*ddress*/() = 0;
 /**/  static Gw*config(mCoinId, mCoinId, string, int, string, string, string, string, string, string, int, int); // set args
 /**/  function<void(mRandId, string)> replace;                               // call         async orders data from exchange
 /**/  virtual void place(mRandId, mSide, string, string, mOrderType, mTimeInForce, bool, mClock) = 0, // same as above/below

@@ -1197,17 +1197,16 @@ namespace K {
   } cmd;
 
   static struct mMonitor: public mJsonToClient<mMonitor> {
-          string a;
     unsigned int orders_60s;
+          string unlock;
     mMonitor():
-       a(""), orders_60s(0)
+       orders_60s(0), unlock("")
     {};
     function<unsigned int()> dbSize = []() { return 0; };
     unsigned int memSize() const {
       string ps = cmd.ps();
       ps.erase(remove(ps.begin(), ps.end(), ' '), ps.end());
-      if (ps.empty()) ps = "0";
-      return stoi(ps) * 1e+3;
+      return ps.empty() ? 0 : stoi(ps) * 1e+3;
     };
     void tick_orders() {
       orders_60s++;
@@ -1222,7 +1221,7 @@ namespace K {
   } monitor;
   static void to_json(json &j, const mMonitor &k) {
     j = {
-      {     "a", k.a                             },
+      {     "a", k.unlock                        },
       {  "inet", string(args.inet ?: "")         },
       {  "freq", k.orders_60s                    },
       { "theme", args.ignoreMoon + args.ignoreSun},

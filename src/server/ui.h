@@ -105,12 +105,10 @@ namespace K {
         queue.clear();
       };
       void timer_60s() {
-        serverState();
         monitor.send_reset();
       };
     private:
       void hello_Server(json *const welcome) {
-        serverState();
         *welcome = { monitor };
       };
       void hello_Product(json *const welcome) {
@@ -244,9 +242,6 @@ namespace K {
         if (addr.length() > 7 and addr.substr(0, 7) == "::ffff:") addr = addr.substr(7);
         if (addr.length() < 7) addr.clear();
         return addr.empty() ? "unknown" : addr;
-      };
-      void serverState() {
-        monitor.a      = gw->A();
       };
   };
 }
