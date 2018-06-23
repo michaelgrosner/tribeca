@@ -1196,17 +1196,46 @@ namespace K {
     };
   } cmd;
 
+  struct mProduct: public mJsonToClient<mProduct> {
+    mExchange exchange;
+        mPair pair;
+       mPrice *minTick;
+    mProduct():
+      exchange((mExchange)0), pair(mPair()), minTick(nullptr)
+    {};
+    mMatter about() const {
+      return mMatter::ProductAdvertisement;
+    };
+  };
+  static void to_json(json &j, const mProduct &k) {
+    j = {
+      {   "exchange", k.exchange                                    },
+      {       "pair", k.pair                                        },
+      {    "minTick", *k.minTick                                    },
+      {"environment", args.title                                    },
+      { "matryoshka", args.matryoshka                               },
+      {   "homepage", "https://github.com/ctubio/Krypto-trading-bot"}
+    };
+  };
+
   static struct mMonitor: public mJsonToClient<mMonitor> {
-    unsigned int orders_60s;
-          string unlock;
-    mMonitor():
-       orders_60s(0), unlock("")
+    unsigned int /* L */ /* more */ orders_60s; /* ? */
+          string /* O */ unlock;
+        mProduct /* C */ /* this */ product;
+    mMonitor():  /* K */ /* thanks! <3 */
+       orders_60s(0), unlock(""), product(mProduct())
     {};
     function<unsigned int()> dbSize = []() { return 0; };
     unsigned int memSize() const {
       string ps = cmd.ps();
       ps.erase(remove(ps.begin(), ps.end(), ' '), ps.end());
       return ps.empty() ? 0 : stoi(ps) * 1e+3;
+    };
+    void fromGw(string /*BTC unlock */A/*ddress*/, mExchange exchange, mPair pair, mPrice *minTick) {
+      unlock = /*BTC unlock */A/*ddress*/;
+      product.exchange = exchange;
+      product.pair     = pair;
+      product.minTick  = minTick;
     };
     void tick_orders() {
       orders_60s++;
@@ -1272,28 +1301,6 @@ namespace K {
                            {     "ask", k.mgStdevAsk    },
                            { "askMean", k.mgStdevAskMean}
       }}
-    };
-  };
-
-  struct mProduct: public mJsonToClient<mProduct> {
-    mExchange exchange;
-        mPair pair;
-       mPrice minTick;
-    mProduct():
-      exchange((mExchange)0), pair(mPair()), minTick(0)
-    {};
-    mMatter about() const {
-      return mMatter::ProductAdvertisement;
-    };
-  };
-  static void to_json(json &j, const mProduct &k) {
-    j = {
-      {   "exchange", k.exchange                                    },
-      {       "pair", k.pair                                        },
-      {    "minTick", k.minTick                                     },
-      {"environment", args.title                                    },
-      { "matryoshka", args.matryoshka                               },
-      {   "homepage", "https://github.com/ctubio/Krypto-trading-bot"}
     };
   };
 

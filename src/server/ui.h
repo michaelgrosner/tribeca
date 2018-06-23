@@ -16,7 +16,6 @@ namespace K {
       map<char, function<void(json *const)>> hello;
       map<char, function<void(const json&)>> kisses;
       map<mMatter, string> queue;
-      mProduct product;
       mNotepad notepad;
     protected:
       void load() {
@@ -77,10 +76,10 @@ namespace K {
         };
       };
       void waitWebAdmin() {
-        WELCOME(monitor, hello_Server);
-        WELCOME(product, hello_Product);
-        WELCOME(notepad, hello_Notes);
-        CLICKME(notepad, kiss_Notes);
+        WELCOME(monitor,         hello_Server);
+        WELCOME(monitor.product, hello_Product);
+        WELCOME(notepad,         hello_Notes);
+        CLICKME(notepad,         kiss_Notes);
       };
       void run() {
         send = send_nowhere;
@@ -112,10 +111,7 @@ namespace K {
         *welcome = { monitor };
       };
       void hello_Product(json *const welcome) {
-        product.exchange = gw->exchange;
-        product.pair = mPair(gw->base, gw->quote);
-        product.minTick = gw->minTick;
-        *welcome = { product };
+        *welcome = { monitor.product };
       };
       void hello_Notes(json *const welcome) {
         *welcome = { notepad };
