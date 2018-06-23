@@ -14,12 +14,12 @@ namespace K {
         gw->WRITEME(mConnectivity, read);
       };
       void waitWebAdmin() {
-        client->WELCOME(gw->monitor,         hello_Server);
-        client->WELCOME(gw->monitor.product, hello_Product);
-        client->WELCOME(engine->semaphore,   hello_Semaphore);
-        client->CLICKME(engine->semaphore,   kiss_Semaphore);
-        client->WELCOME(notepad,             hello_AdminNotes);
-        client->CLICKME(notepad,             kiss_AdminNotes);
+        client->welcome(gw->monitor);
+        client->welcome(gw->monitor.product);
+        client->welcome(notepad);
+        client->CLICKME(notepad, kiss_AdminNotes);
+        client->welcome(engine->semaphore);
+        client->CLICKME(engine->semaphore, kiss_Semaphore);
       };
       void waitSysAdmin() {
         screen->PRESSME(mHotkey::ESC, hotkiss);
@@ -32,20 +32,8 @@ namespace K {
         if (gw->exchange == mExchange::Coinbase) cmd.stunnel(false);
       };
     private:
-      void hello_Server(json *const welcome) {
-        *welcome = { gw->monitor };
-      };
-      void hello_Product(json *const welcome) {
-        *welcome = { gw->monitor.product };
-      };
-      void hello_AdminNotes(json *const welcome) {
-        *welcome = { notepad };
-      };
       void kiss_AdminNotes(const json &butterfly) {
         notepad.edit(butterfly);
-      };
-      void hello_Semaphore(json *const welcome) {
-        *welcome = { engine->semaphore };
       };
       void kiss_Semaphore(const json &butterfly) {
         if (!butterfly.is_object() or !butterfly["state"].is_number()) return;

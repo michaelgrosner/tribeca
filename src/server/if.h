@@ -58,8 +58,7 @@ namespace K {
   static struct Client {
     uWS::Hub* socket = nullptr;
     virtual void timer_Xs() = 0;
-    virtual void welcome(mToClient *const, function<void(json *const)>) = 0;
-#define WELCOME(data, hello) welcome(&data, [&](json *const welcome) { hello(welcome); })
+    virtual void welcome(mToClient&) = 0;
     virtual void clickme(const mAbout&, function<void(const json&)>) = 0;
 #define CLICKME(data, kiss) clickme(data, [&](const json &butterfly) { kiss(butterfly); })
   } *client = nullptr;
@@ -76,7 +75,7 @@ namespace K {
   } *wallet = nullptr;
 
   static struct Market {
-    mLevels levels;
+    mLevelsFull levels;
     mMarketStats stats;
     double targetPosition = 0;
     map<mPrice, mAmount> filterBidOrders,

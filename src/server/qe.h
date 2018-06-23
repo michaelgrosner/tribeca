@@ -22,7 +22,7 @@ namespace K {
         findMode("loaded");
       };
       void waitWebAdmin() {
-        client->WELCOME(status, hello);
+        client->welcome(status);
       };
     public:
       void calcQuote() {                                            PRETTY_DEBUG
@@ -64,9 +64,6 @@ namespace K {
         } else screen->logWar("QE", "Unable to calculate quote, missing market data");
       };
     private:
-      void hello(json *const welcome) {
-        *welcome = { status };
-      };
       void findMode(const string &reason) {
         if (quotingMode.find(qp.mode) == quotingMode.end())
           exit(screen->error("QE", "Invalid quoting mode "

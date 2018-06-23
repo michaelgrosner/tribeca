@@ -15,8 +15,8 @@ namespace K {
         gw->WRITEME(mOrder, read);
       };
       void waitWebAdmin() {
-        client->WELCOME(tradesHistory,                          hello_Trades);
-        client->WELCOME(orders,                                 hello_Orders);
+        client->welcome(tradesHistory);
+        client->welcome(orders);
         client->CLICKME(mButton(mMatter::SubmitNewOrder),       kiss_SubmitNewOrder);
         client->CLICKME(mButton(mMatter::CancelOrder),          kiss_CancelOrder);
         client->CLICKME(mButton(mMatter::CancelAllOrders),      kiss_CancelAllOrders);
@@ -92,14 +92,6 @@ namespace K {
         if (it != orders.orders.end()) orders.orders.erase(it);
       };
     private:
-      void hello_Trades(json *const welcome) {
-        for (mTrade &it : tradesHistory)
-          welcome->push_back(it);
-      };
-      void hello_Orders(json *const welcome) {
-        for (mOrder &it : orders.working())
-          welcome->push_back(it);
-      };
       void kiss_CancelAllOrders(const json &butterfly) {
         cancelOpenOrders();
       };

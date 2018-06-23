@@ -96,6 +96,7 @@ namespace K {
 
   struct mToClient: public mDump {
     function<void()> send;
+    virtual json hello() = 0;
     virtual bool realtime() const {
       return true;
     };
@@ -103,6 +104,9 @@ namespace K {
   template <typename mData> struct mJsonToClient: public mToClient {
     virtual json dump() const {
       return *(mData*)this;
+    };
+    virtual json hello() {
+      return dump();
     };
   };
 
@@ -880,6 +884,9 @@ namespace K {
       if (crbegin()->Kqty == -1) return nullptr;
       else return mVectorFromDb::dump();
     };
+    json hello() {
+      return rows;
+    };
     string increment() const {
       return crbegin()->tradeId;
     };
@@ -913,6 +920,9 @@ namespace K {
     };
     json dump() const {
       return trades.back();
+    };
+    json hello() {
+      return trades;
     };
   };
   static void to_json(json &j, const mTakers &k) {
@@ -1043,7 +1053,11 @@ namespace K {
   };
   struct mLevelsDiff: public mLevels,
                       public mJsonToClient<mLevelsDiff>  {
-    mClock T_369ms = 0;
+    mClock T_369ms;
+    mLevels *current;
+    mLevelsDiff(mLevels *c = nullptr):
+      T_369ms(0), current(c)
+    {};
     vector<mLevel> diff(const vector<mLevel> &from, vector<mLevel> to) {
       vector<mLevel> patch;
       for (const mLevel &it : from) {
@@ -1065,27 +1079,30 @@ namespace K {
         patch.insert(patch.end(), to.begin(), to.end());
       return patch;
     };
-    json diff(const mLevels &to) {
-      bids = diff(bids, to.bids);
-      asks = diff(asks, to.asks);
+    json diff() {
+      bids = diff(bids, current->bids);
+      asks = diff(asks, current->asks);
     };
-    mLevels reset(const mLevels &from) {
-      bids = from.bids;
-      asks = from.asks;
-      return from;
+    void reset() {
+      bids = current->bids;
+      asks = current->asks;
     };
     bool ratelimit() const {
       return empty() or T_369ms + max(369.0, qp.delayUI * 1e+3) > Tstamp;
     };
-    void send_diff(const mLevels &to) {
-      if (to.empty() or ratelimit()) return;
+    void send_reset() {
+      if (current->empty() or ratelimit()) return;
       T_369ms = Tstamp;
-      diff(to);
+      diff();
       send();
-      reset(to);
+      reset();
     };
     mMatter about() const {
       return mMatter::MarketData;
+    };
+    json hello() {
+      reset();
+      return *current;
     };
   };
   static void to_json(json &j, const mLevelsDiff &k) {
@@ -1093,6 +1110,16 @@ namespace K {
       {"bids", k.bids},
       {"asks", k.asks},
       {"diff", true}
+    };
+  };
+  struct mLevelsFull: public mLevels {
+    mLevelsDiff diff;
+    mLevelsFull():
+      diff(mLevelsDiff(this))
+    {};
+    void reset(const mLevels &next) {
+      bids = next.bids;
+      asks = next.asks;
     };
   };
 

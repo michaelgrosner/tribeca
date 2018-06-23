@@ -78,11 +78,13 @@ namespace K {
         send = send_nowhere;
       };
     public:
-      void welcome(mToClient *const data, function<void(json *const)> fn) {
-        const char type = (char)data->about();
+      void welcome(mToClient &data) {
+        const char type = (char)data.about();
         if (hello.find(type) != hello.end())
           exit(screen->error("UI", string("Too many handlers for \"") + type + "\" welcome event"));
-        hello[type] = fn;
+        hello[type] = [&](json *const welcome) {
+          *welcome = data.hello();
+        };
         sendAsync(data);
       };
       void clickme(const mAbout& data, function<void(const json&)> fn) {
@@ -97,8 +99,8 @@ namespace K {
         queue.clear();
       };
     private:
-      void sendAsync(mToClient *const data) {
-        data->send = [this, data]() {
+      void sendAsync(mToClient &data) {
+        data.send = [&]() {
           send(data);
         };
       };
@@ -121,12 +123,12 @@ namespace K {
         } else screen->logUI("HTTP");
       };
       function<void(const mMatter &type, string msg)> broadcast = [](const mMatter &type, string msg) {};
-      function<void(mToClient *const)> send;
-      function<void(mToClient *const)> send_nowhere = [](mToClient *const data) {};
-      function<void(mToClient *const)> send_somewhere = [&](mToClient *const data) {
-        if (data->realtime())
-          broadcast(data->about(), data->dump().dump());
-        else queue[data->about()] = data->dump().dump();
+      function<void(const mToClient&)> send;
+      function<void(const mToClient&)> send_nowhere = [](const mToClient &data) {};
+      function<void(const mToClient&)> send_somewhere = [&](const mToClient &data) {
+        if (data.realtime())
+          broadcast(data.about(), data.dump().dump());
+        else queue[data.about()] = data.dump().dump();
       };
       void onConnection() {
         if (!connections++) send = send_somewhere;
@@ -199,8 +201,10 @@ namespace K {
         if (mPortal::Hello == (mPortal)message[0] and hello.find(message[1]) != hello.end()) {
           json reply;
           hello[message[1]](&reply);
-          if (!reply.is_null())
+          if (!reply.is_null()) {
+            if (!reply.is_array()) reply = { reply };
             return message.substr(0, 2) + reply.dump();
+          }
         } else if (mPortal::Kiss == (mPortal)message[0] and kisses.find(message[1]) != kisses.end()) {
           json butterfly = json::parse(
             (message.length() > 2 and (message[2] == '{' or message[2] == '['))

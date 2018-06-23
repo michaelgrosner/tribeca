@@ -11,7 +11,6 @@ namespace K {
       unsigned int mgT_60s = 0,
                    averageCount = 0;
       mPrice averageWidth = 0;
-      mLevelsDiff levelsDiff;
     protected:
       void load() {
         sqlite->backup(
@@ -34,10 +33,10 @@ namespace K {
         gw->WRITEME(mLevels, read_mLevels);
       };
       void waitWebAdmin() {
-        client->WELCOME(levelsDiff,        hello_Levels);
-        client->WELCOME(stats.takerTrades, hello_Trade);
-        client->WELCOME(stats.fairValue,   hello_Fair);
-        client->WELCOME(stats,             hello_Chart);
+        client->welcome(levels.diff);
+        client->welcome(stats.takerTrades);
+        client->welcome(stats.fairValue);
+        client->welcome(stats);
       };
     public:
       void calcStats() {
@@ -75,28 +74,16 @@ namespace K {
         if (FN::trueOnce(&qp._diffUEP)) calcEwmaHistory(&stats.ewma.mgEwmaU, qp.ultraShortEwmaPeriods, "UltraShort");
       };
     private:
-      void hello_Levels(json *const welcome) {
-        *welcome = { levelsDiff.reset(levels) };
-      };
-      void hello_Trade(json *const welcome) {
-        *welcome = stats.takerTrades;
-      };
-      void hello_Fair(json *const welcome) {
-        *welcome = { stats.fairValue };
-      };
-      void hello_Chart(json *const welcome) {
-        *welcome = { stats };
-      };
       void read_mTrade(const mTrade &rawdata) {                     PRETTY_DEBUG
         stats.takerTrades.send_push_back(rawdata);
       };
       void read_mLevels(const mLevels &rawdata) {                   PRETTY_DEBUG
-        levels = rawdata;
+        levels.reset(rawdata);
         if (!filterBidOrders.empty()) filter(&levels.bids, filterBidOrders);
         if (!filterAskOrders.empty()) filter(&levels.asks, filterAskOrders);
         calcFairValue();
         engine->calcQuote();
-        levelsDiff.send_diff(levels);
+        levels.diff.send_reset();
       };
       void calcStatsStdevProtection() {
         if (levels.empty()) return;

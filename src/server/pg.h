@@ -25,9 +25,9 @@ namespace K {
         gw->WRITEME(mWallets, read);
       };
       void waitWebAdmin() {
-        client->WELCOME(position, hello_Position);
-        client->WELCOME(safety,   hello_Safety);
-        client->WELCOME(target,   hello_TargetBasePos);
+        client->welcome(position);
+        client->welcome(safety);
+        client->welcome(target);
       };
     public:
       void calcSafety() {
@@ -105,15 +105,6 @@ namespace K {
         calcSafety();
       };
     private:
-      void hello_Position(json *const welcome) {
-        *welcome = { position };
-      };
-      void hello_Safety(json *const welcome) {
-        *welcome = { safety };
-      };
-      void hello_TargetBasePos(json *const welcome) {
-        *welcome = { target };
-      };
       void read(const mWallets &rawdata) {                          PRETTY_DEBUG
         if (!rawdata.empty()) balance = rawdata;
         calcWallet();

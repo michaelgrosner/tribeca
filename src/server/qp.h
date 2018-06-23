@@ -12,13 +12,10 @@ namespace K {
         );
       };
       void waitWebAdmin() {
-        client->WELCOME(qp, hello);
+        client->welcome(qp);
         client->CLICKME(qp, kiss);
       };
     private:
-      void hello(json *const welcome) {
-        *welcome = { qp };
-      };
       void kiss(const json &butterfly) {
         qp.send_push_diff(butterfly);
         engine->calcQuoteAfterSavedParams();
