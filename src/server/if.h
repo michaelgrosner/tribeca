@@ -57,9 +57,7 @@ namespace K {
 
   static struct Client {
     uWS::Hub* socket = nullptr;
-    function<void(mToClient *const)> send;
     virtual void timer_Xs() = 0;
-    virtual void timer_60s() = 0;
     virtual void welcome(mToClient *const, function<void(json *const)>) = 0;
 #define WELCOME(data, hello) welcome(&data, [&](json *const welcome) { hello(welcome); })
     virtual void clickme(const mAbout&, function<void(const json&)>) = 0;
@@ -110,6 +108,7 @@ namespace K {
     public:
       Screen   *screen = nullptr;
       uWS::Hub *socket = nullptr;
+      mMonitor monitor;
       mRandId (*randId)() = nullptr;
       unsigned int countdown = 0;
       mExchange exchange = (mExchange)0;
@@ -129,13 +128,8 @@ namespace K {
         socket->connect(ws, nullptr, {}, 5e+3, &socket->getDefaultGroup<uWS::CLIENT>());
       };
       void run() {
+        monitor.fromGw(exchange, mPair(base, quote), &minTick);
         if (async) countdown = 1;
-        monitor.fromGw(
-          /*BTC unlock */A/*ddress*/,
-          exchange,
-          mPair(base, quote),
-          &minTick
-        );
         socket->run();
       };
       function<void(const mOrder&)>        write_mOrder;

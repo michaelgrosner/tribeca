@@ -20,7 +20,7 @@ namespace K {
       void waitWebAdmin() {
         if (args.database == ":memory:") return;
         const char* path = args.database.data();
-        monitor.dbSize = [path]() {
+        gw->monitor.dbSize = [path]() {
           struct stat st;
           return stat(path, &st) ? 0 : st.st_size;
         };

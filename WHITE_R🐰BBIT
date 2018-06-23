@@ -113,9 +113,13 @@
 :  +-- Globals??                                                              :
 :                     args, screen, client, events, sqlite                    :
 :                    qp, wallet, market, broker, engine, gw                   :
+:                                     cmd                                     :
 :                                                                             :
 :  .. src/server/ds.h:  ----------------------------- aka. Data Structures -- :
-:      TODO                                                                   :
+:  :   TODO                                                                   :
+:  :                                                                          :
+:  +-- Whaaat??                                                               :
+:     cmd                                                                     :
 :                                                                             :
 :                                                                             :
 :  .. src/server/if.h:  ----------------------------- aka. Interfaces ------- :
@@ -151,6 +155,8 @@
 :  :   # Warning: write-only during execution, we read data only before boot. :
 :  :                                                                          :
 :  +-- Whaaat??                                                               :
+:     sqlite.backup                                                           :
+:       !before backup, consider twice if data must really survive reboots..! :
 :     sqlite.select()                                                         :
 :      returns always 1 json array, with 0 items in case no record exist yet. :
 :     sqlite.insert()                                                         :
@@ -161,7 +167,6 @@
 :       argument to a timestamp will delete all older before insert 1. Please :
 :       ensure the database is a golden image of the memory. Do not forget to :
 :       create or remove data always on both, memory and database, as if one. :
-:       !before insert, consider twice if data must really survive reboots..! :
 :                                                                             :
 :                                                                             :
 :  .. src/server/ui.h:  ----------------------------- aka. User Interface --- :

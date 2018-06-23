@@ -16,7 +16,6 @@ namespace K {
       map<char, function<void(json *const)>> hello;
       map<char, function<void(const json&)>> kisses;
       map<mMatter, string> queue;
-      mNotepad notepad;
     protected:
       void load() {
         if (!socket
@@ -75,12 +74,6 @@ namespace K {
           });
         };
       };
-      void waitWebAdmin() {
-        WELCOME(monitor,         hello_Server);
-        WELCOME(monitor.product, hello_Product);
-        WELCOME(notepad,         hello_Notes);
-        CLICKME(notepad,         kiss_Notes);
-      };
       void run() {
         send = send_nowhere;
       };
@@ -103,22 +96,7 @@ namespace K {
           broadcast(it.first, it.second);
         queue.clear();
       };
-      void timer_60s() {
-        monitor.send_reset();
-      };
     private:
-      void hello_Server(json *const welcome) {
-        *welcome = { monitor };
-      };
-      void hello_Product(json *const welcome) {
-        *welcome = { monitor.product };
-      };
-      void hello_Notes(json *const welcome) {
-        *welcome = { notepad };
-      };
-      void kiss_Notes(const json &butterfly) {
-        notepad.edit(butterfly);
-      };
       void sendAsync(mToClient *const data) {
         data->send = [this, data]() {
           send(data);
@@ -143,8 +121,9 @@ namespace K {
         } else screen->logUI("HTTP");
       };
       function<void(const mMatter &type, string msg)> broadcast = [](const mMatter &type, string msg) {};
-      function<void(mToClient *const data)> send_nowhere = [](mToClient *const data) {};
-      function<void(mToClient *const data)> send_somewhere = [&](mToClient *const data) {
+      function<void(mToClient *const)> send;
+      function<void(mToClient *const)> send_nowhere = [](mToClient *const data) {};
+      function<void(mToClient *const)> send_somewhere = [&](mToClient *const data) {
         if (data->realtime())
           broadcast(data->about(), data->dump().dump());
         else queue[data->about()] = data->dump().dump();

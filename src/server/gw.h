@@ -4,6 +4,7 @@
 namespace K {
   class GW: public Klass {
     private:
+      mNotepad notepad;
       mConnectivity adminAgreement = mConnectivity::Disconnected;
     protected:
       void load() {
@@ -13,8 +14,12 @@ namespace K {
         gw->WRITEME(mConnectivity, read);
       };
       void waitWebAdmin() {
-        client->WELCOME(engine->semaphore, hello);
-        client->CLICKME(engine->semaphore, kiss);
+        client->WELCOME(gw->monitor,         hello_Server);
+        client->WELCOME(gw->monitor.product, hello_Product);
+        client->WELCOME(engine->semaphore,   hello_Semaphore);
+        client->CLICKME(engine->semaphore,   kiss_Semaphore);
+        client->WELCOME(notepad,             hello_AdminNotes);
+        client->CLICKME(notepad,             kiss_AdminNotes);
       };
       void waitSysAdmin() {
         screen->PRESSME(mHotkey::ESC, hotkiss);
@@ -27,10 +32,22 @@ namespace K {
         if (gw->exchange == mExchange::Coinbase) cmd.stunnel(false);
       };
     private:
-      void hello(json *const welcome) {
+      void hello_Server(json *const welcome) {
+        *welcome = { gw->monitor };
+      };
+      void hello_Product(json *const welcome) {
+        *welcome = { gw->monitor.product };
+      };
+      void hello_AdminNotes(json *const welcome) {
+        *welcome = { notepad };
+      };
+      void kiss_AdminNotes(const json &butterfly) {
+        notepad.edit(butterfly);
+      };
+      void hello_Semaphore(json *const welcome) {
         *welcome = { engine->semaphore };
       };
-      void kiss(const json &butterfly) {
+      void kiss_Semaphore(const json &butterfly) {
         if (!butterfly.is_object() or !butterfly["state"].is_number()) return;
         mConnectivity k = butterfly["state"].get<mConnectivity>();
         if (adminAgreement != k) {
