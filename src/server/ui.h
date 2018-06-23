@@ -127,7 +127,7 @@ namespace K {
       void kiss_Notes(const json &butterfly) {
         notepad.edit(butterfly);
       };
-      bool sendAsync(mToClient *const data) {
+      void sendAsync(mToClient *const data) {
         data->send = [this, data]() {
           send(data);
         };
@@ -153,7 +153,7 @@ namespace K {
       function<void(const mMatter &type, string msg)> broadcast = [](const mMatter &type, string msg) {};
       function<void(mToClient *const data)> send_nowhere = [](mToClient *const data) {};
       function<void(mToClient *const data)> send_somewhere = [&](mToClient *const data) {
-        if (!qp.delayUI or !data->delayed())
+        if (data->realtime())
           broadcast(data->about(), data->dump().dump());
         else queue[data->about()] = data->dump().dump();
       };

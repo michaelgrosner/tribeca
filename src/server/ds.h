@@ -96,8 +96,8 @@ namespace K {
 
   struct mToClient: public mDump {
     function<void()> send;
-    virtual bool delayed() const {
-      return false;
+    virtual bool realtime() const {
+      return true;
     };
   };
   template <typename mData> struct mJsonToClient: public mToClient {
@@ -607,8 +607,8 @@ namespace K {
     mMatter about() const {
       return mMatter::Position;
     };
-    bool delayed() const {
-      return true;
+    bool realtime() const {
+      return !qp.delayUI;
     };
   };
   static void to_json(json &j, const mPosition &k) {
@@ -640,8 +640,8 @@ namespace K {
     mMatter about() const {
       return mMatter::TargetBasePosition;
     };
-    bool delayed() const {
-      return true;
+    bool realtime() const {
+      return !qp.delayUI;
     };
     string explain() const {
       return to_string(targetBasePosition);
@@ -748,8 +748,8 @@ namespace K {
     mMatter about() const {
       return mMatter::FairValue;
     };
-    bool delayed() const {
-      return true;
+    bool realtime() const {
+      return !qp.delayUI;
     };
   };
   static void to_json(json &j, const mFairStats &k) {
@@ -977,8 +977,8 @@ namespace K {
     mMatter about() const {
       return mMatter::OrderStatusReports;
     };
-    bool delayed() const {
-      return true;
+    bool realtime() const {
+      return !qp.delayUI;
     };
     json dump() const {
       return working();
@@ -1130,8 +1130,8 @@ namespace K {
     mMatter about() const {
       return mMatter::QuoteStatus;
     };
-    bool delayed() const {
-      return true;
+    bool realtime() const {
+      return !qp.delayUI;
     };
   };
   static void to_json(json &j, const mQuoteStatus &k) {
@@ -1206,8 +1206,8 @@ namespace K {
     mMatter about() const {
       return mMatter::MarketChart;
     };
-    bool delayed() const {
-      return true;
+    bool realtime() const {
+      return !qp.delayUI;
     };
   };
   static void to_json(json &j, const mMarketStats &k) {
