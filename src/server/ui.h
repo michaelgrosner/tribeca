@@ -16,7 +16,6 @@ namespace K {
       map<char, function<void(json *const)>> hello;
       map<char, function<void(const json&)>> kisses;
       map<mMatter, string> queue;
-      mMonitor monitor;
       mProduct product;
       mNotepad notepad;
     protected:
@@ -107,8 +106,7 @@ namespace K {
       };
       void timer_60s() {
         serverState();
-        monitor.send();
-        engine->orders_60s = 0;
+        monitor.send_reset();
       };
     private:
       void hello_Server(json *const welcome) {
@@ -255,8 +253,6 @@ namespace K {
       };
       void serverState() {
         monitor.memory = memorySize();
-        monitor.freq   = engine->orders_60s;
-        monitor.dbsize = sqlite->size();
         monitor.a      = gw->A();
       };
   };

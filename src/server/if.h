@@ -53,7 +53,6 @@ namespace K {
 #define INTO &
 #define THEN ,
 #define WARN ,
-    function<unsigned int()> size = []() { return 0; };
   } *sqlite = nullptr;
 
   static struct Client {
@@ -102,7 +101,6 @@ namespace K {
 
   static struct Engine {
     mSemaphore semaphore;
-    unsigned int orders_60s = 0;
     virtual void timer_1s() = 0;
     virtual void calcQuote() = 0;
     virtual void calcQuoteAfterSavedParams() = 0;

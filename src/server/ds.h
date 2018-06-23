@@ -1161,26 +1161,33 @@ namespace K {
     };
   };
 
-  struct mMonitor: public mJsonToClient<mMonitor> {
+  static struct mMonitor: public mJsonToClient<mMonitor> {
           string a;
-    unsigned int freq,
-                 memory,
-                 dbsize;
+    unsigned int orders_60s,
+                 memory;
     mMonitor():
-       a(""), freq(0), memory(0), dbsize(0)
+       a(""), orders_60s(0), memory(0)
     {};
+    function<unsigned int()> dbsize = []() { return 0; };
+    void tick_orders() {
+      orders_60s++;
+    };
+    void send_reset() {
+      send();
+      orders_60s = 0;
+    };
     mMatter about() const {
       return mMatter::ApplicationState;
     };
-  };
+  } monitor;
   static void to_json(json &j, const mMonitor &k) {
     j = {
       {     "a", k.a                             },
       {  "inet", string(args.inet ?: "")         },
-      {  "freq", k.freq                          },
+      {  "freq", k.orders_60s                    },
       { "theme", args.ignoreMoon + args.ignoreSun},
       {"memory", k.memory                        },
-      {"dbsize", k.dbsize                        }
+      {"dbsize", k.dbsize()                      }
     };
   };
 
