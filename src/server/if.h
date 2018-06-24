@@ -24,7 +24,6 @@ namespace K {
     };
     virtual void config() = 0;
     virtual void pressme(const mHotkey&, function<void()>) = 0;
-#define HOTKISS , [&]()
     virtual int error(string, string, bool = false) = 0;
     virtual void waitForUser() = 0;
     virtual string stamp() = 0;
@@ -137,7 +136,7 @@ namespace K {
       function<void(const mLevels&)>       write_mLevels;
       function<void(const mWallets&)>      write_mWallets;
       function<void(const mConnectivity&)> write_mConnectivity;
-#define WRITEME(mData, read) write_##mData = [&](const mData &rawdata) { read(rawdata); }
+#define RAWDATA_ENTRY_POINT(mData, read) write_##mData = [&](const mData &rawdata) read
       bool waitForData() {
         return (async
           ? false

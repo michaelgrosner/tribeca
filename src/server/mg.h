@@ -29,8 +29,17 @@ namespace K {
         );
       };
       void waitData() {
-        gw->WRITEME(mTrade,  read_mTrade);
-        gw->WRITEME(mLevels, read_mLevels);
+        gw->RAWDATA_ENTRY_POINT(mTrade,  {                          PRETTY_DEBUG
+          stats.takerTrades.send_push_back(rawdata);
+        });
+        gw->RAWDATA_ENTRY_POINT(mLevels, {                          PRETTY_DEBUG
+          levels.reset(rawdata);
+          if (!filterBidOrders.empty()) filter(&levels.bids, filterBidOrders);
+          if (!filterAskOrders.empty()) filter(&levels.asks, filterAskOrders);
+          calcFairValue();
+          engine->calcQuote();
+          levels.diff.send_reset();
+        });
       };
       void waitWebAdmin() {
         client->welcome(levels.diff);
@@ -74,17 +83,6 @@ namespace K {
         if (FN::trueOnce(&qp._diffUEP)) calcEwmaHistory(&stats.ewma.mgEwmaU, qp.ultraShortEwmaPeriods, "UltraShort");
       };
     private:
-      void read_mTrade(const mTrade &rawdata) {                     PRETTY_DEBUG
-        stats.takerTrades.send_push_back(rawdata);
-      };
-      void read_mLevels(const mLevels &rawdata) {                   PRETTY_DEBUG
-        levels.reset(rawdata);
-        if (!filterBidOrders.empty()) filter(&levels.bids, filterBidOrders);
-        if (!filterAskOrders.empty()) filter(&levels.asks, filterAskOrders);
-        calcFairValue();
-        engine->calcQuote();
-        levels.diff.send_reset();
-      };
       void calcStatsStdevProtection() {
         if (levels.empty()) return;
         stdev.push_back(mStdev(

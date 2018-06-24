@@ -19,7 +19,10 @@ namespace K {
         );
       };
       void waitData() {
-        gw->WRITEME(mOrder, read);
+        gw->RAWDATA_ENTRY_POINT(mOrder, {                           PRETTY_DEBUG
+          DEBOG("reply  " + rawdata.orderId + "::" + rawdata.exchangeId + " [" + to_string((int)rawdata.orderStatus) + "]: " + FN::str8(rawdata.quantity) + "/" + FN::str8(rawdata.tradeQuantity) + " at price " + FN::str8(rawdata.price));
+          updateOrderState(rawdata);
+        });
       };
       void waitWebAdmin() {
         client->welcome(tradesHistory);
@@ -132,10 +135,6 @@ namespace K {
         if (it != orders.orders.end()) orders.orders.erase(it);
       };
     private:
-      void read(const mOrder &rawdata) {                            PRETTY_DEBUG
-        DEBOG("reply  " + rawdata.orderId + "::" + rawdata.exchangeId + " [" + to_string((int)rawdata.orderStatus) + "]: " + FN::str8(rawdata.quantity) + "/" + FN::str8(rawdata.tradeQuantity) + " at price " + FN::str8(rawdata.price));
-        updateOrderState(rawdata);
-      };
       void updateOrderState(mOrder k) {
         bool saved = k.orderStatus != mStatus::New,
              working = k.orderStatus == mStatus::Working;

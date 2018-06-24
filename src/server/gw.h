@@ -12,7 +12,12 @@ namespace K {
         gw->monitor = &engine->monitor;
       };
       void waitData() {
-        gw->WRITEME(mConnectivity, read);
+        gw->RAWDATA_ENTRY_POINT(mConnectivity, {
+          if (engine->semaphore.greenGateway == rawdata) return;
+          if (!(engine->semaphore.greenGateway = rawdata))
+            market->levels.clear();
+          gwSemaphore();
+        });
       };
       void waitWebAdmin() {
         client->welcome(notepad);
@@ -30,7 +35,7 @@ namespace K {
         });
       };
       void waitSysAdmin() {
-        screen->pressme(mHotkey::ESC HOTKISS {
+        screen->pressme(mHotkey::ESC, [&]() {
           adminAgreement = (mConnectivity)!adminAgreement;
           gwSemaphore();
         });
@@ -43,12 +48,6 @@ namespace K {
         if (gw->exchange == mExchange::Coinbase) cmd.stunnel(false);
       };
     private:
-      void read(const mConnectivity &rawdata) {
-        if (engine->semaphore.greenGateway == rawdata) return;
-        if (!(engine->semaphore.greenGateway = rawdata))
-          market->levels.clear();
-        gwSemaphore();
-      };
       void gwSemaphore() {
         mConnectivity k = adminAgreement * engine->semaphore.greenGateway;
         if (engine->semaphore.greenButton != k) {

@@ -22,7 +22,10 @@ namespace K {
         );
       };
       void waitData() {
-        gw->WRITEME(mWallets, read);
+        gw->RAWDATA_ENTRY_POINT(mWallets, {                         PRETTY_DEBUG
+          if (!rawdata.empty()) balance = rawdata;
+          calcWallet();
+        });
       };
       void waitWebAdmin() {
         client->welcome(position);
@@ -105,10 +108,6 @@ namespace K {
         calcSafety();
       };
     private:
-      void read(const mWallets &rawdata) {                          PRETTY_DEBUG
-        if (!rawdata.empty()) balance = rawdata;
-        calcWallet();
-      };
       mSafety nextSafety() {
         mAmount buySize = qp.percentageValues
           ? qp.buySizePercentage * position.baseValue / 100
