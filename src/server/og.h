@@ -4,6 +4,13 @@
 namespace K {
   class OG: public Klass,
             public Broker { public: OG() { broker = this; };
+    private:
+      mButtonSubmitNewOrder       buttonSubmitNewOrder;
+      mButtonCancelOrder          buttonCancelOrder;
+      mButtonCancelAllOrders      buttonCancelAllOrders;
+      mButtonCleanAllClosedTrades buttonCleanAllClosedTrades;
+      mButtonCleanAllTrades       buttonCleanAllTrades;
+      mButtonCleanTrade           buttonCleanTrade;
     protected:
       void load() {
         sqlite->backup(
@@ -17,12 +24,45 @@ namespace K {
       void waitWebAdmin() {
         client->welcome(tradesHistory);
         client->welcome(orders);
-        client->CLICKME(mButton(mMatter::SubmitNewOrder),       kiss_SubmitNewOrder);
-        client->CLICKME(mButton(mMatter::CancelOrder),          kiss_CancelOrder);
-        client->CLICKME(mButton(mMatter::CancelAllOrders),      kiss_CancelAllOrders);
-        client->CLICKME(mButton(mMatter::CleanAllClosedTrades), kiss_CleanAllClosedTrades);
-        client->CLICKME(mButton(mMatter::CleanAllTrades),       kiss_CleanAllTrades);
-        client->CLICKME(mButton(mMatter::CleanTrade),           kiss_CleanTrade);
+        client->clickme(buttonCancelAllOrders KISS {
+          cancelOpenOrders();
+        });
+        client->clickme(buttonCleanAllClosedTrades KISS {
+          cleanClosedTrades();
+        });
+        client->clickme(buttonCleanAllTrades KISS {
+          cleanTrade();
+        });
+        client->clickme(buttonCleanTrade KISS {
+          if (!butterfly.is_string()) return;
+          cleanTrade(butterfly.get<string>());
+        });
+        client->clickme(buttonCancelOrder KISS {
+          if (!butterfly.is_string()) return;
+          mRandId orderId = butterfly.get<mRandId>();
+          if (orderId.empty() or orders.orders.find(orderId) == orders.orders.end()) return;
+          cancelOrder(orderId);
+        });
+        client->clickme(buttonSubmitNewOrder KISS {
+          if (!butterfly.is_object()) return;
+          sendOrder(
+            {},
+            butterfly.value("side", "") == "Bid" ? mSide::Bid : mSide::Ask,
+            butterfly.value("price", 0.0),
+            butterfly.value("quantity", 0.0),
+            butterfly.value("orderType", "") == "Limit"
+              ? mOrderType::Limit
+              : mOrderType::Market,
+            butterfly.value("timeInForce", "") == "GTC"
+              ? mTimeInForce::GTC
+              : (butterfly.value("timeInForce", "") == "FOK"
+                ? mTimeInForce::FOK
+                : mTimeInForce::IOC
+              ),
+            false,
+            false
+          );
+        });
       };
     public:
       void sendOrder(
@@ -92,37 +132,6 @@ namespace K {
         if (it != orders.orders.end()) orders.orders.erase(it);
       };
     private:
-      void kiss_CancelAllOrders(const json &butterfly) {
-        cancelOpenOrders();
-      };
-      void kiss_CleanAllClosedTrades(const json &butterfly) {
-        cleanClosedTrades();
-      };
-      void kiss_CleanAllTrades(const json &butterfly) {
-        cleanTrade();
-      };
-      void kiss_CleanTrade(const json &butterfly) {
-        if (butterfly.is_object() and butterfly["tradeId"].is_string())
-          cleanTrade(butterfly["tradeId"].get<string>());
-      };
-      void kiss_CancelOrder(const json &butterfly) {
-        mRandId orderId = (butterfly.is_object() and butterfly["orderId"].is_string())
-          ? butterfly["orderId"].get<mRandId>() : "";
-        if (orderId.empty() or orders.orders.find(orderId) == orders.orders.end()) return;
-        cancelOrder(orderId);
-      };
-      void kiss_SubmitNewOrder(const json &butterfly) {
-        sendOrder(
-          {},
-          butterfly.value("side", "") == "Bid" ? mSide::Bid : mSide::Ask,
-          butterfly.value("price", 0.0),
-          butterfly.value("quantity", 0.0),
-          butterfly.value("orderType", "") == "Limit" ? mOrderType::Limit : mOrderType::Market,
-          butterfly.value("timeInForce", "") == "GTC" ? mTimeInForce::GTC : (butterfly.value("timeInForce", "") == "FOK" ? mTimeInForce::FOK : mTimeInForce::IOC),
-          false,
-          false
-        );
-      };
       void read(const mOrder &rawdata) {                            PRETTY_DEBUG
         DEBOG("reply  " + rawdata.orderId + "::" + rawdata.exchangeId + " [" + to_string((int)rawdata.orderStatus) + "]: " + FN::str8(rawdata.quantity) + "/" + FN::str8(rawdata.tradeQuantity) + " at price " + FN::str8(rawdata.price));
         updateOrderState(rawdata);

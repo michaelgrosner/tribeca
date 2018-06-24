@@ -85,11 +85,13 @@ namespace K {
         hello[type] = [&]() { return data.hello(); };
         sendAsync(data);
       };
-      void clickme(const mAbout& data, function<void(const json&)> fn) {
+      void clickme(mFromClient& data, function<void(const json&)> fn) {
         const char type = (char)data.about();
         if (kisses.find(type) != kisses.end())
           exit(screen->error("UI", string("Too many handlers for \"") + type + "\" clickme event"));
-        kisses[type] = fn;
+        kisses[type] = [&data, fn](const json &butterfly) {
+          fn(data.kiss(butterfly));
+        };
       };
       void timer_Xs() {
         for (map<mMatter, string>::value_type &it : queue)

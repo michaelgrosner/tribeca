@@ -30,8 +30,8 @@ namespace K  {
         socket->createGroup<uWS::SERVER>(uWS::PERMESSAGE_DEFLATE);
       };
       void waitSysAdmin() {
-        screen->PRESSME(mHotkey::Q, hotkiss);
-        screen->PRESSME(mHotkey::q, hotkiss);
+        screen->pressme(mHotkey::Q HOTKISS { raise(SIGINT); });
+        screen->pressme(mHotkey::q HOTKISS { raise(SIGINT); });
       };
       void run() {
         loop = new uS::Async(socket->getLoop());
@@ -52,9 +52,6 @@ namespace K  {
         loop->send();
       };
     private:
-      void hotkiss() {
-        raise(SIGINT);
-      };
       void async(const function<bool()> &fn) {
         if (fn()) loop->send();
       };

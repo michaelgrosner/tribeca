@@ -84,17 +84,14 @@ namespace K {
     virtual json dump() const = 0;
   };
 
-  struct mButton: public mAbout {
-    mMatter button;
-    mButton(mMatter b):
-      button(b)
-    {};
-    mMatter about() const {
-      return button;
+  struct mFromClient: virtual public mAbout {
+    virtual json kiss(const json &j) {
+      return j;
     };
   };
 
-  struct mToClient: public mDump {
+  struct mToClient: public mDump,
+                    public mFromClient  {
     function<void()> send;
     virtual json hello() {
       return { dump() };
@@ -118,13 +115,13 @@ namespace K {
     virtual mClock lifetime()  const { return 0; };
   };
   template <typename mData> struct mStructFromDb: public mFromDb {
+    virtual json dump() const {
+      return *(mData*)this;
+    };
     virtual bool pull(const json &j) {
       if (j.empty()) return false;
       from_json(j.at(0), *(mData*)this);
       return true;
-    };
-    virtual json dump() const {
-      return *(mData*)this;
     };
   };
   template <typename mData> struct mVectorFromDb: public mFromDb {
@@ -244,12 +241,13 @@ namespace K {
       _diffXSEP = prev.extraShortEwmaPeriods != extraShortEwmaPeriods;
       _diffUEP = prev.ultraShortEwmaPeriods != ultraShortEwmaPeriods;
     };
-    void send_push_diff(const json &j) {
+    json kiss(const json &j) {
       mQuotingParams prev = *this; // just need to copy the 6 prev.* vars above, noob
       from_json(j, *this);
       diff(prev);
       push();
       send();
+      return mFromClient::kiss(j);
     };
     mMatter about() const {
       return mMatter::QuotingParameters;
@@ -928,6 +926,51 @@ namespace K {
     j = k.trades;
   };
 
+  struct mMarketStats: public mJsonToClient<mMarketStats> {
+          mEwma ewma;
+     mFairStats fairValue;
+        mTakers takerTrades;
+         double mgStdevTop,
+                mgStdevTopMean,
+                mgStdevFV,
+                mgStdevFVMean,
+                mgStdevBid,
+                mgStdevBidMean,
+                mgStdevAsk,
+                mgStdevAskMean;
+    mMarketStats():
+       ewma(mEwma()), fairValue(mFairStats()), takerTrades(mTakers()), mgStdevTop(0), mgStdevTopMean(0), mgStdevFV(0), mgStdevFVMean(0), mgStdevBid(0), mgStdevBidMean(0), mgStdevAsk(0), mgStdevAskMean(0)
+    {};
+    void send_push() const {
+      ewma.push();
+      send();
+    };
+    mMatter about() const {
+      return mMatter::MarketChart;
+    };
+    bool realtime() const {
+      return !qp.delayUI;
+    };
+  };
+  static void to_json(json &j, const mMarketStats &k) {
+    j = {
+      {          "ewma", k.ewma                         },
+      {     "fairValue", k.fairValue.fv                 },
+      { "tradesBuySize", k.takerTrades.takersBuySize60s },
+      {"tradesSellSize", k.takerTrades.takersSellSize60s},
+      {    "stdevWidth", {
+                           {      "fv", k.mgStdevFV     },
+                           {  "fvMean", k.mgStdevFVMean },
+                           {    "tops", k.mgStdevTop    },
+                           {"topsMean", k.mgStdevTopMean},
+                           {     "bid", k.mgStdevBid    },
+                           { "bidMean", k.mgStdevBidMean},
+                           {     "ask", k.mgStdevAsk    },
+                           { "askMean", k.mgStdevAskMean}
+      }}
+    };
+  };
+
   struct mOrder {
          mRandId orderId,
                  exchangeId;
@@ -1167,12 +1210,36 @@ namespace K {
     };
   };
 
+  struct mNotepad: public mJsonToClient<mNotepad> {
+    string content;
+    mNotepad():
+      content("")
+    {};
+    json kiss(const json &j) {
+      if (j.is_array() and j.size())
+        content = j.at(0);
+      return mFromClient::kiss(j);
+    };
+    mMatter about() const {
+      return mMatter::Notepad;
+    };
+  };
+  static void to_json(json &j, const mNotepad &k) {
+    j = k.content;
+  };
+
   struct mSemaphore: public mJsonToClient<mSemaphore> {
     mConnectivity greenButton,
                   greenGateway;
     mSemaphore():
       greenButton((mConnectivity)0), greenGateway((mConnectivity)0)
     {};
+    json kiss(const json &j) {
+      json butterfly;
+      if (j.is_object() and j["state"].is_number())
+        butterfly = j["state"];
+      return mFromClient::kiss(butterfly);
+    };
     mMatter about() const {
       return mMatter::Connectivity;
     };
@@ -1181,6 +1248,49 @@ namespace K {
     j = {
       { "state", k.greenButton },
       {"status", k.greenGateway}
+    };
+  };
+
+  struct mButtonSubmitNewOrder: public mFromClient {
+    mMatter about() const {
+      return mMatter::SubmitNewOrder;
+    };
+  };
+  struct mButtonCancelOrder: public mFromClient {
+    json kiss(const json &j) {
+      json butterfly;
+      if (j.is_object() and j["orderId"].is_string())
+        butterfly = j["orderId"];
+      return mFromClient::kiss(butterfly);
+    };
+    mMatter about() const {
+      return mMatter::CancelOrder;
+    };
+  };
+  struct mButtonCancelAllOrders: public mFromClient {
+    mMatter about() const {
+      return mMatter::CancelAllOrders;
+    };
+  };
+  struct mButtonCleanAllClosedTrades: public mFromClient {
+    mMatter about() const {
+      return mMatter::CleanAllClosedTrades;
+    };
+  };
+  struct mButtonCleanAllTrades: public mFromClient {
+    mMatter about() const {
+      return mMatter::CleanAllTrades;
+    };
+  };
+  struct mButtonCleanTrade: public mFromClient {
+    json kiss(const json &j) {
+      json butterfly;
+      if (j.is_object() and j["tradeId"].is_string())
+        butterfly = j["tradeId"];
+      return mFromClient::kiss(butterfly);
+    };
+    mMatter about() const {
+      return mMatter::CleanTrade;
     };
   };
 
@@ -1244,10 +1354,10 @@ namespace K {
   };
 
   struct mMonitor: public mJsonToClient<mMonitor> {
-    unsigned int /* L */ /* more */ orders_60s; /* ? */
-          string /* O */ unlock;
-        mProduct /* C */ /* this */ product;
-    mMonitor():  /* K */ /* thanks! <3 */
+    unsigned int /* ( | L | ) */ /* more */ orders_60s; /* ? */
+          string /*  )| O |(  */ unlock;
+        mProduct /* ( | C | ) */ /* this */ product;
+    mMonitor():  /*  )| K |(  */ /* thanks! <3 */
        orders_60s(0), unlock(""), product(mProduct())
     {};
     function<unsigned int()> dbSize = []() { return 0; };
@@ -1281,68 +1391,6 @@ namespace K {
       {"memory", k.memSize()                     },
       {"dbsize", k.dbSize()                      }
     };
-  };
-
-  struct mMarketStats: public mJsonToClient<mMarketStats> {
-          mEwma ewma;
-     mFairStats fairValue;
-        mTakers takerTrades;
-         double mgStdevTop,
-                mgStdevTopMean,
-                mgStdevFV,
-                mgStdevFVMean,
-                mgStdevBid,
-                mgStdevBidMean,
-                mgStdevAsk,
-                mgStdevAskMean;
-    mMarketStats():
-       ewma(mEwma()), fairValue(mFairStats()), takerTrades(mTakers()), mgStdevTop(0), mgStdevTopMean(0), mgStdevFV(0), mgStdevFVMean(0), mgStdevBid(0), mgStdevBidMean(0), mgStdevAsk(0), mgStdevAskMean(0)
-    {};
-    void send_push() const {
-      ewma.push();
-      send();
-    };
-    mMatter about() const {
-      return mMatter::MarketChart;
-    };
-    bool realtime() const {
-      return !qp.delayUI;
-    };
-  };
-  static void to_json(json &j, const mMarketStats &k) {
-    j = {
-      {          "ewma", k.ewma                         },
-      {     "fairValue", k.fairValue.fv                 },
-      { "tradesBuySize", k.takerTrades.takersBuySize60s },
-      {"tradesSellSize", k.takerTrades.takersSellSize60s},
-      {    "stdevWidth", {
-                           {      "fv", k.mgStdevFV     },
-                           {  "fvMean", k.mgStdevFVMean },
-                           {    "tops", k.mgStdevTop    },
-                           {"topsMean", k.mgStdevTopMean},
-                           {     "bid", k.mgStdevBid    },
-                           { "bidMean", k.mgStdevBidMean},
-                           {     "ask", k.mgStdevAsk    },
-                           { "askMean", k.mgStdevAskMean}
-      }}
-    };
-  };
-
-  struct mNotepad: public mJsonToClient<mNotepad> {
-    string content;
-    mNotepad():
-      content("")
-    {};
-    void edit(const json &j) {
-      if (j.is_array() and j.size())
-        content = j.at(0);
-    };
-    mMatter about() const {
-      return mMatter::Notepad;
-    };
-  };
-  static void to_json(json &j, const mNotepad &k) {
-    j = k.content;
   };
 }
 

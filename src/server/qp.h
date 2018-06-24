@@ -13,12 +13,9 @@ namespace K {
       };
       void waitWebAdmin() {
         client->welcome(qp);
-        client->CLICKME(qp, kiss);
-      };
-    private:
-      void kiss(const json &butterfly) {
-        qp.send_push_diff(butterfly);
-        engine->calcQuoteAfterSavedParams();
+        client->clickme(qp KISS {
+          engine->calcQuoteAfterSavedParams();
+        });
       };
   };
 }

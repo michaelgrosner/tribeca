@@ -24,7 +24,7 @@ namespace K {
     };
     virtual void config() = 0;
     virtual void pressme(const mHotkey&, function<void()>) = 0;
-#define PRESSME(ch, fn) pressme(ch, [&]() { fn(); })
+#define HOTKISS , [&]()
     virtual int error(string, string, bool = false) = 0;
     virtual void waitForUser() = 0;
     virtual string stamp() = 0;
@@ -59,8 +59,8 @@ namespace K {
     uWS::Hub* socket = nullptr;
     virtual void timer_Xs() = 0;
     virtual void welcome(mToClient&) = 0;
-    virtual void clickme(const mAbout&, function<void(const json&)>) = 0;
-#define CLICKME(data, kiss) clickme(data, [&](const json &butterfly) { kiss(butterfly); })
+    virtual void clickme(mFromClient&, function<void(const json&)> = [](const json &butterfly) {}) = 0;
+#define KISS , [&](const json &butterfly)
   } *client = nullptr;
 
   static struct Wallet {

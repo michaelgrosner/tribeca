@@ -16,14 +16,24 @@ namespace K {
       };
       void waitWebAdmin() {
         client->welcome(notepad);
-        client->CLICKME(notepad, kiss_AdminNotes);
+        client->clickme(notepad);
         client->welcome(engine->monitor);
         client->welcome(engine->monitor.product);
         client->welcome(engine->semaphore);
-        client->CLICKME(engine->semaphore, kiss_Semaphore);
+        client->clickme(engine->semaphore KISS {
+          if (!butterfly.is_number()) return;
+          mConnectivity k = butterfly.get<mConnectivity>();
+          if (adminAgreement != k) {
+            adminAgreement = k;
+            gwSemaphore();
+          }
+        });
       };
       void waitSysAdmin() {
-        screen->PRESSME(mHotkey::ESC, hotkiss);
+        screen->pressme(mHotkey::ESC HOTKISS {
+          adminAgreement = (mConnectivity)!adminAgreement;
+          gwSemaphore();
+        });
       };
       void run() {                                                  PRETTY_DEBUG
         handshake();
@@ -33,21 +43,6 @@ namespace K {
         if (gw->exchange == mExchange::Coinbase) cmd.stunnel(false);
       };
     private:
-      void kiss_AdminNotes(const json &butterfly) {
-        notepad.edit(butterfly);
-      };
-      void kiss_Semaphore(const json &butterfly) {
-        if (!butterfly.is_object() or !butterfly["state"].is_number()) return;
-        mConnectivity k = butterfly["state"].get<mConnectivity>();
-        if (adminAgreement != k) {
-          adminAgreement = k;
-          gwSemaphore();
-        }
-      };
-      void hotkiss() {
-        adminAgreement = (mConnectivity)!adminAgreement;
-        gwSemaphore();
-      };
       void read(const mConnectivity &rawdata) {
         if (engine->semaphore.greenGateway == rawdata) return;
         if (!(engine->semaphore.greenGateway = rawdata))
