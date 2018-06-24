@@ -9,15 +9,16 @@ namespace K {
     protected:
       void load() {
         adminAgreement = (mConnectivity)args.autobot;
+        gw->monitor = &engine->monitor;
       };
       void waitData() {
         gw->WRITEME(mConnectivity, read);
       };
       void waitWebAdmin() {
-        client->welcome(gw->monitor);
-        client->welcome(gw->monitor.product);
         client->welcome(notepad);
         client->CLICKME(notepad, kiss_AdminNotes);
+        client->welcome(engine->monitor);
+        client->welcome(engine->monitor.product);
         client->welcome(engine->semaphore);
         client->CLICKME(engine->semaphore, kiss_Semaphore);
       };

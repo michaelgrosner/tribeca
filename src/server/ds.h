@@ -96,7 +96,9 @@ namespace K {
 
   struct mToClient: public mDump {
     function<void()> send;
-    virtual json hello() = 0;
+    virtual json hello() {
+      return { dump() };
+    };
     virtual bool realtime() const {
       return true;
     };
@@ -104,9 +106,6 @@ namespace K {
   template <typename mData> struct mJsonToClient: public mToClient {
     virtual json dump() const {
       return *(mData*)this;
-    };
-    virtual json hello() {
-      return dump();
     };
   };
 
@@ -1015,15 +1014,10 @@ namespace K {
     };
   };
   static void to_json(json &j, const mLevel &k) {
-    if (k.size)
-      j = {
-        {"price", k.price},
-        { "size", k.size }
-      };
-    else
-      j = {
-        {"price", k.price}
-      };
+    j = {
+      {"price", k.price}
+    };
+    if (k.size) j["size"] = k.size;
   };
   struct mLevels {
     vector<mLevel> bids,
@@ -1052,11 +1046,12 @@ namespace K {
     };
   };
   struct mLevelsDiff: public mLevels,
-                      public mJsonToClient<mLevelsDiff>  {
-    mClock T_369ms;
+                      public mJsonToClient<mLevelsDiff> {
+     mClock T_369ms;
     mLevels *current;
+       bool patched;
     mLevelsDiff(mLevels *c = nullptr):
-      T_369ms(0), current(c)
+      T_369ms(0), current(c), patched(false)
     {};
     vector<mLevel> diff(const vector<mLevel> &from, vector<mLevel> to) {
       vector<mLevel> patch;
@@ -1082,16 +1077,19 @@ namespace K {
     json diff() {
       bids = diff(bids, current->bids);
       asks = diff(asks, current->asks);
+      patched = true;
     };
     void reset() {
       bids = current->bids;
       asks = current->asks;
+      patched = false;
     };
     bool ratelimit() const {
-      return empty() or T_369ms + max(369.0, qp.delayUI * 1e+3) > Tstamp;
+      return current->empty() or empty()
+        or T_369ms + max(369.0, qp.delayUI * 1e+3) > Tstamp;
     };
     void send_reset() {
-      if (current->empty() or ratelimit()) return;
+      if (ratelimit()) return;
       T_369ms = Tstamp;
       diff();
       send();
@@ -1102,15 +1100,13 @@ namespace K {
     };
     json hello() {
       reset();
-      return *current;
+      return mToClient::hello();
     };
   };
   static void to_json(json &j, const mLevelsDiff &k) {
-    j = {
-      {"bids", k.bids},
-      {"asks", k.asks},
-      {"diff", true}
-    };
+    to_json(j, (mLevels)k);
+    if (k.patched)
+      j["diff"] = true;
   };
   struct mLevelsFull: public mLevels {
     mLevelsDiff diff;

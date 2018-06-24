@@ -76,7 +76,7 @@ namespace K {
           );
           if (args.testChamber == 1) cancelOrder(replaceOrderId);
         }
-        gw->monitor.tick_orders();
+        engine->monitor.tick_orders();
       };
       void cancelOrder(const mRandId &orderId) {
         if (orderId.empty()) return;

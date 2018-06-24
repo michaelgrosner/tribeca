@@ -65,8 +65,8 @@ namespace K {
 
   static struct Wallet {
     mPosition position;
-    mTarget target;
-    mSafety safety;
+      mTarget target;
+      mSafety safety;
     virtual void calcWallet() = 0;
     virtual void calcSafety() = 0;
     virtual void calcTargetBasePos() = 0;
@@ -75,7 +75,7 @@ namespace K {
   } *wallet = nullptr;
 
   static struct Market {
-    mLevelsFull levels;
+     mLevelsFull levels;
     mMarketStats stats;
     double targetPosition = 0;
     map<mPrice, mAmount> filterBidOrders,
@@ -97,6 +97,7 @@ namespace K {
   } *broker = nullptr;
 
   static struct Engine {
+      mMonitor monitor;
     mSemaphore semaphore;
     virtual void timer_1s() = 0;
     virtual void calcQuote() = 0;
@@ -105,9 +106,9 @@ namespace K {
 
   static class Gw {
     public:
-      Screen   *screen = nullptr;
-      uWS::Hub *socket = nullptr;
-      mMonitor monitor;
+      Screen   *screen  = nullptr;
+      uWS::Hub *socket  = nullptr;
+      mMonitor *monitor = nullptr;
       mRandId (*randId)() = nullptr;
       unsigned int countdown = 0;
       mExchange exchange = (mExchange)0;
@@ -127,7 +128,7 @@ namespace K {
         socket->connect(ws, nullptr, {}, 5e+3, &socket->getDefaultGroup<uWS::CLIENT>());
       };
       void run() {
-        monitor.fromGw(exchange, mPair(base, quote), &minTick);
+        monitor->fromGw(exchange, mPair(base, quote), &minTick);
         if (async) countdown = 1;
         socket->run();
       };

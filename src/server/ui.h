@@ -13,7 +13,7 @@ namespace K {
     private:
       int connections = 0;
       string B64auth = "";
-      map<char, function<void(json *const)>> hello;
+      map<char, function<json()>> hello;
       map<char, function<void(const json&)>> kisses;
       map<mMatter, string> queue;
     protected:
@@ -82,9 +82,7 @@ namespace K {
         const char type = (char)data.about();
         if (hello.find(type) != hello.end())
           exit(screen->error("UI", string("Too many handlers for \"") + type + "\" welcome event"));
-        hello[type] = [&](json *const welcome) {
-          *welcome = data.hello();
-        };
+        hello[type] = [&]() { return data.hello(); };
         sendAsync(data);
       };
       void clickme(const mAbout& data, function<void(const json&)> fn) {
@@ -199,12 +197,9 @@ namespace K {
         if (addr != "unknown" and args.whitelist.find(addr) == string::npos)
           return string(&_www_gzip_bomb, _www_gzip_bomb_len);
         if (mPortal::Hello == (mPortal)message[0] and hello.find(message[1]) != hello.end()) {
-          json reply;
-          hello[message[1]](&reply);
-          if (!reply.is_null()) {
-            if (!reply.is_array()) reply = { reply };
+          json reply = hello[message[1]]();
+          if (!reply.is_null())
             return message.substr(0, 2) + reply.dump();
-          }
         } else if (mPortal::Kiss == (mPortal)message[0] and kisses.find(message[1]) != kisses.end()) {
           json butterfly = json::parse(
             (message.length() > 2 and (message[2] == '{' or message[2] == '['))
