@@ -2,7 +2,7 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
 PATCH    = 7
-BUILD    = 81
+BUILD    = 82
 CHOST   ?= $(shell $(MAKE) CHOST= chost -s)
 CARCH    = x86_64-linux-gnu arm-linux-gnueabihf aarch64-linux-gnu x86_64-apple-darwin17 x86_64-w64-mingw32
 KLOCAL  := build-$(CHOST)/local
@@ -362,18 +362,26 @@ test-cov:
 	@echo TODO
 
 test-c:
-	@echo "// This is an independent project of an individual developer. Dear PVS-Studio, please check it.\n// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com\n\n" > src/server/K.test.cxx
-	@cat src/server/K.cxx >> src/server/K.test.cxx
-	@pvs-studio-analyzer analyze --exclude-path $(KLOCAL)/include --source-file src/server/K.test.cxx --cl-params -I$(KLOCAL)/include src/server/K.test.cxx && \
-	plog-converter -a GA:1,2 -t tasklist -o report.tasks PVS-Studio.log
-	@cat report.tasks
-	@rm report.tasks PVS-Studio.log src/server/K.test.cxx
+	@pvs-studio-analyzer analyze --exclude-path $(KLOCAL)/include --source-file test/static_code_analysis.cxx --cl-params -I$(KLOCAL)/include test/static_code_analysis.cxx && \
+	(plog-converter -a GA:1,2 -t tasklist -o report.tasks PVS-Studio.log && cat report.tasks && rm report.tasks) || :
+	-@rm PVS-Studio.log
 
 send-cov:
 	lcov --directory . --capture --output-file coverage.info
 	lcov --remove coverage.info 'tests/*' '/usr/*' '*local/include/*' --output-file coverage.info
 	lcov --list coverage.info
 	coveralls-lcov --repo-token ${COVERALLS_TOKEN} coverage.info
+
+travis-gcc:
+	sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
+	sudo apt-get update
+	sudo apt-get install gcc-6
+	sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-6 50
+	sudo ln -f -s /usr/bin/gcc-6 /usr/bin/x86_64-linux-gnu-gcc
+	sudo apt-get install g++-6
+	sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-6 50
+	sudo ln -f -s /usr/bin/g++-6 /usr/bin/x86_64-linux-gnu-g++
+	$(MAKE) travis-dist
 
 travis-dist:
 	mkdir -p $(KLOCAL)
