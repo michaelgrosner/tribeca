@@ -101,6 +101,9 @@ namespace K {
     };
   };
   template <typename mData> struct mJsonToClient: public mToClient {
+    void send() const {
+      if (mToClient::send) mToClient::send();
+    };
     virtual json dump() const {
       return *(mData*)this;
     };
