@@ -122,7 +122,11 @@ else
 endif
 
 Linux:
-	$(CXX) -o $(KLOCAL)/bin/K-$(CHOST) -DHAVE_STD_UNIQUE_PTR -DUWS_THREADSAFE -static-libstdc++ -static-libgcc -rdynamic $(KARGS) -ldl
+ifdef KCOV
+	unset KCOV && $(MAKE) COVERAGE=--coverage $@
+else
+	$(CXX) $(COVERAGE) -o $(KLOCAL)/bin/K-$(CHOST) -DHAVE_STD_UNIQUE_PTR -DUWS_THREADSAFE -static-libstdc++ -static-libgcc -rdynamic $(KARGS) -ldl
+endif
 
 Darwin:
 	$(CXX) -o $(KLOCAL)/bin/K-$(CHOST) -DUSE_LIBUV $(KLOCAL)/lib/libuv.a -msse4.1 -maes -mpclmul -mmacosx-version-min=10.13 -nostartfiles -rdynamic $(KARGS) -ldl
@@ -353,8 +357,8 @@ test: node_modules/.bin/mocha
 	./node_modules/.bin/mocha --compilers ts:ts-node/register test/*.ts
 	$(MAKE) test-c
 
-test-cov: node_modules/.bin/ts-node node_modules/istanbul/lib/cli.js node_modules/.bin/_mocha
-	./node_modules/.bin/ts-node ./node_modules/istanbul/lib/cli.js cover --report lcovonly --dir test/coverage -e .ts ./node_modules/.bin/_mocha -- test/*.ts
+test-cov:
+	@echo TODO
 
 test-c:
 	@echo "// This is an independent project of an individual developer. Dear PVS-Studio, please check it.\n// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com\n\n" > src/server/K.test.cxx
@@ -364,8 +368,11 @@ test-c:
 	@cat report.tasks
 	@rm report.tasks PVS-Studio.log src/server/K.test.cxx
 
-send-cov: node_modules/.bin/codacy-coverage node_modules/.bin/istanbul-coveralls
-	cd test && cat coverage/lcov.info | ./node_modules/.bin/codacy-coverage && ./node_modules/.bin/istanbul-coveralls
+send-cov:
+	lcov --directory . --capture --output-file coverage.info
+	lcov --remove coverage.info 'tests/*' '/usr/*' '*local/include/*' --output-file coverage.info
+	lcov --list coverage.info
+	coveralls-lcov --repo-token ${COVERALLS_TOKEN} coverage.info
 
 travis-gcc:
 	sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
@@ -379,6 +386,8 @@ travis-gcc:
 travis-dist:
 	mkdir -p $(KLOCAL)
 	npm install
+	sudo apt-get install lcov
+	gem install coveralls-lcov
 
 png: etc/${PNG}.png etc/${PNG}.json
 	convert etc/${PNG}.png -set "K.conf" "`cat etc/${PNG}.json`" K: etc/${PNG}.png 2>/dev/null || :

@@ -23,13 +23,13 @@ before_install:
 install:
   - test $TRAVIS_OS_NAME == "linux" && (yes 1 | make install) || :;
   - test $TRAVIS_OS_NAME == "osx" && (yes 4 | make install) || :;
-  - ./K.sh --version
 
 script:
   - test $TRAVIS_OS_NAME == "linux" && make test-c || :;
+  - test $TRAVIS_OS_NAME == "linux" && (KCOV=1 make dist bundle K && ./K.sh --version) || :;
 #   - make test-cov
 
-# after_success: make send-cov
+after_success: make send-cov
 
 notifications:
   email:
