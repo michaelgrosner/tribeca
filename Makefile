@@ -379,8 +379,10 @@ travis-gcc:
 	sudo apt-get update
 	sudo apt-get install gcc-6
 	sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-6 50
+	sudo ln -f -s /usr/bin/gcc-6 /usr/bin/x86_64-linux-gnu-gcc
 	sudo apt-get install g++-6
 	sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-6 50
+	sudo ln -f -s /usr/bin/g++-6 /usr/bin/x86_64-linux-gnu-g++
 	$(MAKE) travis-dist pvs
 
 travis-dist:
