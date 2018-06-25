@@ -2,7 +2,7 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
 PATCH    = 7
-BUILD    = 79
+BUILD    = 80
 CHOST   ?= $(shell $(MAKE) CHOST= chost -s)
 CARCH    = x86_64-linux-gnu arm-linux-gnueabihf aarch64-linux-gnu x86_64-apple-darwin17 x86_64-w64-mingw32
 KLOCAL  := build-$(CHOST)/local
@@ -123,7 +123,7 @@ endif
 
 Linux:
 ifdef KCOV
-	unset KCOV && $(MAKE) COVERAGE=--coverage $@
+	unset KCOV && $(MAKE) COVERAGE="-v --coverage" $@
 else
 	$(CXX) $(COVERAGE) -o $(KLOCAL)/bin/K-$(CHOST) -DHAVE_STD_UNIQUE_PTR -DUWS_THREADSAFE -static-libstdc++ -static-libgcc -rdynamic $(KARGS) -ldl
 endif

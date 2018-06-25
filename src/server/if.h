@@ -9,8 +9,8 @@ namespace K {
            << ".\n";
       string changes;
       int commits = -1;
-      if (access(".git", F_OK) != -1) {
-        system("git fetch");
+      if (cmd.git()) {
+        cmd.fetch();
         changes = cmd.changelog();
         commits = count(changes.begin(), changes.end(), '\n');
       }

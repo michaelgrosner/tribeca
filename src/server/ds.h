@@ -1323,11 +1323,21 @@ namespace K {
         system("pkill stunnel || :");
         if (reboot) system("stunnel etc/stunnel.conf");
       };
+      bool git() const {
+        return access(".git", F_OK) != -1;
+      };
+      void fetch() const {
+        if (git()) system("git fetch");
+      };
       string changelog() const {
-        return output("test -d .git && git --no-pager log --graph --oneline @..@{u}");
+        return git()
+          ? output("git --no-pager log --graph --oneline @..@{u}")
+          : "";
       };
       bool deprecated() const {
-        return output("test -d .git && git rev-parse @") != output("test -d .git && git rev-parse @{u}");
+        return git()
+          ? output("git rev-parse @") != output("git rev-parse @{u}")
+          : false;
       };
   } cmd;
 
