@@ -20,7 +20,7 @@ V_UWS    = 0.14.7
 V_SQL    = 3230100
 V_QF     = 1.15.1
 V_UV     = 1.20.3
-V_PVS    = 6.23.25627.2229
+V_PVS    = 6.24.26497.168
 KARGS   := -I$(KLOCAL)/include -pthread -std=c++11 -O3   \
   $(KLOCAL)/lib/K-$(CHOST)-docroot.o src/server/K.cxx    \
   -DK_0_DAY='"v$(MAJOR).$(MINOR).$(PATCH)+$(BUILD)"'     \
