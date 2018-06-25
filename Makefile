@@ -2,7 +2,7 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
 PATCH    = 7
-BUILD    = 78
+BUILD    = 79
 CHOST   ?= $(shell $(MAKE) CHOST= chost -s)
 CARCH    = x86_64-linux-gnu arm-linux-gnueabihf aarch64-linux-gnu x86_64-apple-darwin17 x86_64-w64-mingw32
 KLOCAL  := build-$(CHOST)/local
@@ -383,7 +383,7 @@ travis-gcc:
 	sudo apt-get install g++-6
 	sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-6 50
 	sudo ln -f -s /usr/bin/g++-6 /usr/bin/x86_64-linux-gnu-g++
-	$(MAKE) travis-dist pvs
+	$(MAKE) travis-dist
 
 travis-dist:
 	mkdir -p $(KLOCAL)

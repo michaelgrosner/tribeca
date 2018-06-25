@@ -1117,7 +1117,7 @@ namespace K {
         patch.insert(patch.end(), to.begin(), to.end());
       return patch;
     };
-    json diff() {
+    void diff() {
       bids = diff(bids, current->bids);
       asks = diff(asks, current->asks);
       patched = true;

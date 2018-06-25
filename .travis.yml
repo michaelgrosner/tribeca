@@ -26,8 +26,8 @@ install:
 
 script:
   - test $TRAVIS_OS_NAME == "linux" && (KCOV=1 make dist bundle K && ./K.sh --version) || :;
-  - test $TRAVIS_OS_NAME == "linux" && make test-c || :;
-#   - make test-cov
+#  - test $TRAVIS_OS_NAME == "linux" && make test-c || :;
+#  - make test-cov
 
 after_success: make send-cov
 
