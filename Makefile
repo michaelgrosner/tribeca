@@ -2,7 +2,7 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
 PATCH    = 7
-BUILD    = 80
+BUILD    = 81
 CHOST   ?= $(shell $(MAKE) CHOST= chost -s)
 CARCH    = x86_64-linux-gnu arm-linux-gnueabihf aarch64-linux-gnu x86_64-apple-darwin17 x86_64-w64-mingw32
 KLOCAL  := build-$(CHOST)/local
@@ -21,8 +21,9 @@ V_SQL    = 3230100
 V_QF     = 1.15.1
 V_UV     = 1.20.3
 V_PVS    = 6.24.26497.168
-KARGS   := -I$(KLOCAL)/include -pthread -std=c++11 -O3   \
+KARGS   := -I$(KLOCAL)/include -pthread                  \
   $(KLOCAL)/lib/K-$(CHOST)-docroot.o src/server/K.cxx    \
+  -D_GLIBCXX_USE_CXX11_ABI=1 -std=c++11 -O3              \
   -DK_0_DAY='"v$(MAJOR).$(MINOR).$(PATCH)+$(BUILD)"'     \
   -DK_STAMP='"$(shell date "+%Y-%m-%d %H:%M:%S")"'       \
   -DK_BUILD='"$(CHOST)"'     $(KLOCAL)/include/uWS/*.cpp \
@@ -123,7 +124,7 @@ endif
 
 Linux:
 ifdef KCOV
-	unset KCOV && $(MAKE) COVERAGE="-v --coverage" $@
+	unset KCOV && $(MAKE) COVERAGE="--coverage" $@
 else
 	$(CXX) $(COVERAGE) -o $(KLOCAL)/bin/K-$(CHOST) -DHAVE_STD_UNIQUE_PTR -DUWS_THREADSAFE -static-libstdc++ -static-libgcc -rdynamic $(KARGS) -ldl
 endif
@@ -373,17 +374,6 @@ send-cov:
 	lcov --remove coverage.info 'tests/*' '/usr/*' '*local/include/*' --output-file coverage.info
 	lcov --list coverage.info
 	coveralls-lcov --repo-token ${COVERALLS_TOKEN} coverage.info
-
-travis-gcc:
-	sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
-	sudo apt-get update
-	sudo apt-get install gcc-6
-	sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-6 50
-	sudo ln -f -s /usr/bin/gcc-6 /usr/bin/x86_64-linux-gnu-gcc
-	sudo apt-get install g++-6
-	sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-6 50
-	sudo ln -f -s /usr/bin/g++-6 /usr/bin/x86_64-linux-gnu-g++
-	$(MAKE) travis-dist
 
 travis-dist:
 	mkdir -p $(KLOCAL)
