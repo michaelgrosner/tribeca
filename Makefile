@@ -2,7 +2,7 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
 PATCH    = 7
-BUILD    = 84
+BUILD    = 85
 CHOST   ?= $(shell $(MAKE) CHOST= chost -s)
 CARCH    = x86_64-linux-gnu arm-linux-gnueabihf aarch64-linux-gnu x86_64-apple-darwin17 x86_64-w64-mingw32
 KLOCAL  := build-$(CHOST)/local
@@ -21,9 +21,8 @@ V_SQL    = 3230100
 V_QF     = 1.15.1
 V_UV     = 1.20.3
 V_PVS    = 6.24.26497.168
-KARGS   := -I$(KLOCAL)/include -pthread                  \
+KARGS   := -I$(KLOCAL)/include -pthread -std=c++11 -O3   \
   $(KLOCAL)/lib/K-$(CHOST)-docroot.o src/server/K.cxx    \
-  -D_GLIBCXX_USE_CXX11_ABI=1 -std=c++11 -O3              \
   -DK_0_DAY='"v$(MAJOR).$(MINOR).$(PATCH)+$(BUILD)"'     \
   -DK_STAMP='"$(shell date "+%Y-%m-%d %H:%M:%S")"'       \
   -DK_BUILD='"$(CHOST)"'     $(KLOCAL)/include/uWS/*.cpp \
