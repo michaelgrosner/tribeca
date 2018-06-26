@@ -165,12 +165,12 @@ namespace K {
       void config() {
         screen->config();
         gw = Gw::config(
-          args.currency.substr(0, args.currency.find("/")),
-          args.currency.substr(1+ args.currency.find("/")),
-          args.exchange,  args.free,
-          args.apikey,    args.secret,
-          args.username,  args.passphrase,
-          args.http,      args.wss,
+          args.currency.substr(0, args.currency.find("/")).data(),
+          args.currency.substr(1+ args.currency.find("/")).data(),
+          args.exchange.data(),  args.free,
+          args.apikey.data(),    args.secret.data(),
+          args.username.data(),  args.passphrase.data(),
+          args.http.data(),      args.wss.data(),
           args.maxLevels, args.debugSecret
         );
         if (!gw)

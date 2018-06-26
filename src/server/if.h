@@ -163,7 +163,7 @@ namespace K {
 //BO non-free gw library functions from build-*/local/lib/K-*.a (it just redefines all virtual gateway class members below).
 /**/  string /*BTC unlock */A/*ddress*/;                                     // empty string if BTC payment already credited
 /**/  virtual bool ready() = 0;                                              // wait for exchange and maybe set async = true
-/**/  static Gw*config(mCoinId, mCoinId, string, int, string, string, string, string, string, string, int, int); // set args
+/**/  static Gw*config(const char*, const char*, const char*, int, const char*, const char*, const char*, const char*, const char*, const char*, int, int); // set args
 /**/  function<void(mRandId, string)> replace;                               // call         async orders data from exchange
 /**/  virtual void place(mRandId, mSide, string, string, mOrderType, mTimeInForce, bool, mClock) = 0, // same as above/below
 /**/               cancel(mRandId, mRandId) = 0,                             // call         async orders data from exchange

@@ -8,13 +8,16 @@ os:
   - linux
 #  - osx
 
-language: node_js
+language: cpp
 
 node_js:
   - node
 
 branches:
   only: master
+
+git:
+  depth: false
 
 before_install:
   - test $TRAVIS_OS_NAME == "osx" && brew install --with-default-names gnu-sed || :;
