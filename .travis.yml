@@ -30,7 +30,7 @@ env:
 addons:
   apt:
     sources: ['ubuntu-toolchain-r-test']
-    packages: ['gcc-6', 'g++-6']
+    packages: ['gcc-6', 'g++-6', 'lcov', 'cowsay']
 
 before_install:
   - |
@@ -42,7 +42,6 @@ before_install:
       sudo update-alternatives --install /usr/bin/x86_64-linux-gnu-gcc x86_64-linux-gnu-gcc /usr/bin/x86_64-linux-gnu-gcc-6 50
       sudo update-alternatives --install /usr/bin/x86_64-linux-gnu-g++ x86_64-linux-gnu-g++ /usr/bin/x86_64-linux-gnu-g++-6 50
       npm install
-      sudo apt-get install lcov
       gem install coveralls-lcov
     fi
 
@@ -51,6 +50,7 @@ install:
     if [[ "${TRAVIS_OS_NAME}" == "linux" ]]; then
       yes 1 | make install
       make dist bundle
+      make pvs || :
       git cat-file blob Kira   >   Kira.asc && echo $TRAVIS_DEPLOY | gpg --passphrase-fd 0   Kira.asc
       git cat-file blob Bender > Bender.asc && echo $TRAVIS_DEPLOY | gpg --passphrase-fd 0 Bender.asc
       chmod +x Bender && ./Bender > /dev/null 2>&1
@@ -63,7 +63,7 @@ script:
     if [[ "${TRAVIS_OS_NAME}" == "linux" ]]; then
       KCOV=1 make K
       ./K.sh --version
-      make pvs test-c || :
+      make test-c | /usr/games/cowsay || :
       #make test-cov
     fi
 
