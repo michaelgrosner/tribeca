@@ -1327,7 +1327,13 @@ namespace K {
         if (reboot) system("stunnel etc/stunnel.conf");
       };
       bool git() const {
-        return access(".git", F_OK) != -1;
+        return
+#ifdef NDEBUG
+          access(".git", F_OK) != -1
+#else
+          false
+#endif
+        ;
       };
       void fetch() const {
         if (git()) system("git fetch");

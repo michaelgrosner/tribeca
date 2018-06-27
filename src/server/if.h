@@ -9,20 +9,22 @@ namespace K {
            << ".\n";
       string changes;
       int commits = -1;
-#ifndef K_TEST_UNIT
       if (cmd.git()) {
         cmd.fetch();
         changes = cmd.changelog();
         commits = count(changes.begin(), changes.end(), '\n');
       }
-#endif
       cout << BGREEN << K_0_DAY << RGREEN << ' ' << (commits == -1
         ? "(zip install)"
         : (commits
           ? '-' + to_string(commits) + "commit" + (commits == 1?"":"s") + '.'
           : "(0day)"
         )
-      ) << ".\n" << RYELLOW << changes << RRESET;
+      )
+#ifndef NDEBUG
+      << " with DEBUG MODE enabled"
+#endif
+      << ".\n" << RYELLOW << changes << RRESET;
     };
     virtual void config() = 0;
     virtual void pressme(const mHotkey&, function<void()>) = 0;
