@@ -9,11 +9,13 @@ namespace K {
            << ".\n";
       string changes;
       int commits = -1;
+#ifndef K_TEST_UNIT
       if (cmd.git()) {
         cmd.fetch();
         changes = cmd.changelog();
         commits = count(changes.begin(), changes.end(), '\n');
       }
+#endif
       cout << BGREEN << K_0_DAY << RGREEN << ' ' << (commits == -1
         ? "(zip install)"
         : (commits

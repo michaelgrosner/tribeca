@@ -2,7 +2,7 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
 PATCH    = 7
-BUILD    = 85
+BUILD    = 86
 CHOST   ?= $(shell $(MAKE) CHOST= chost -s)
 CARCH    = x86_64-linux-gnu arm-linux-gnueabihf aarch64-linux-gnu x86_64-apple-darwin17 x86_64-w64-mingw32
 KLOCAL  := build-$(CHOST)/local
@@ -70,7 +70,6 @@ help:
 	#  make test         - run tests                   #
 	#  make test-cov     - run tests and coverage      #
 	#  make send-cov     - send coverage               #
-	#  make travis       - provide travis dev box      #
 	#                                                  #
 	#  make build        - download K src precompiled  #
 	#  make pvs          - download pvs src files      #
@@ -123,9 +122,9 @@ endif
 
 Linux:
 ifdef KCOV
-	unset KCOV && $(MAKE) COVERAGE="--coverage" $@
+	unset KCOV && $(MAKE) COVERAGE="--coverage -DK_TEST_UNIT" $@
 else
-	$(CXX) -v $(COVERAGE) -o $(KLOCAL)/bin/K-$(CHOST) -DHAVE_STD_UNIQUE_PTR -DUWS_THREADSAFE -static-libstdc++ -static-libgcc -rdynamic $(KARGS) -ldl
+	$(CXX) $(COVERAGE) -o $(KLOCAL)/bin/K-$(CHOST) -DHAVE_STD_UNIQUE_PTR -DUWS_THREADSAFE -static-libstdc++ -static-libgcc -rdynamic $(KARGS) -ldl
 endif
 
 Darwin:
@@ -371,23 +370,6 @@ send-cov:
 	lcov --list coverage.info
 	coveralls-lcov --repo-token ${COVERALLS_TOKEN} coverage.info
 
-travis-gcc:
-	sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
-	sudo apt-get update
-	sudo apt-get install gcc-6
-	sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-6 50
-	sudo ln -f -s /usr/bin/gcc-6 /usr/bin/x86_64-linux-gnu-gcc
-	sudo apt-get install g++-6
-	sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-6 50
-	sudo ln -f -s /usr/bin/g++-6 /usr/bin/x86_64-linux-gnu-g++
-	$(MAKE) travis-dist
-
-travis-dist:
-	mkdir -p $(KLOCAL)
-	npm install
-	sudo apt-get install lcov
-	gem install coveralls-lcov
-
 png: etc/${PNG}.png etc/${PNG}.json
 	convert etc/${PNG}.png -set "K.conf" "`cat etc/${PNG}.json`" K: etc/${PNG}.png 2>/dev/null || :
 	@$(MAKE) png-check -s
@@ -443,4 +425,4 @@ md5: src
 asandwich:
 	@test `whoami` = 'root' && echo OK || echo make it yourself!
 
-.PHONY: K chost dist link Linux Darwin Win32 build zlib openssl curl ncurses quickfix uws json pvs clean cleandb list screen start stop restart startall stopall restartall gdax packages install docker travis reinstall clients www bundle diff latest changelog test test-cov send-cov png png-check release md5 asandwich
+.PHONY: K chost dist link Linux Darwin Win32 build zlib openssl curl ncurses quickfix uws json pvs clean cleandb list screen start stop restart startall stopall restartall gdax packages install docker reinstall clients www bundle diff latest changelog test test-cov send-cov png png-check release md5 asandwich
