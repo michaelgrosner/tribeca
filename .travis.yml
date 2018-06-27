@@ -30,20 +30,19 @@ env:
 addons:
   apt:
     sources: ['ubuntu-toolchain-r-test']
-    packages: ['gcc-6', 'g++-6', 'lcov', 'cowsay']
+    packages: ['g++-6', 'lcov', 'cowsay']
 
 before_install:
   - |
     if [[ "${TRAVIS_OS_NAME}" == "osx" ]]; then
       brew install --with-default-names gnu-sed
     else
-      sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-6 50
       sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-6 50
-      sudo update-alternatives --install /usr/bin/x86_64-linux-gnu-gcc x86_64-linux-gnu-gcc /usr/bin/x86_64-linux-gnu-gcc-6 50
       sudo update-alternatives --install /usr/bin/x86_64-linux-gnu-g++ x86_64-linux-gnu-g++ /usr/bin/x86_64-linux-gnu-g++-6 50
-      npm install
-      gem install coveralls-lcov
     fi
+    npm install
+    gem install coveralls-lcov
+    npm install codacy-coverage
 
 install:
   - |
@@ -61,17 +60,13 @@ install:
 script:
   - |
     if [[ "${TRAVIS_OS_NAME}" == "linux" ]]; then
-      KCOV=1 make K
+      KCOV=1 make
       ./K.sh --version
       make test-c | /usr/games/cowsay || :
-      #make test-cov
+      make test
     fi
 
-after_success:
-  - |
-    if [[ "${TRAVIS_OS_NAME}" == "linux" ]]; then
-      make send-cov
-    fi
+after_success: test $TRAVIS_OS_NAME == "linux" && make send-cov || :;
 
 notifications:
   email:

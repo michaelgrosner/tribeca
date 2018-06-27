@@ -2,7 +2,7 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
 PATCH    = 7
-BUILD    = 86
+BUILD    = 87
 CHOST   ?= $(shell $(MAKE) CHOST= chost -s)
 CARCH    = x86_64-linux-gnu arm-linux-gnueabihf aarch64-linux-gnu x86_64-apple-darwin17 x86_64-w64-mingw32
 KLOCAL  := build-$(CHOST)/local
@@ -68,8 +68,7 @@ help:
 	#  make docroot      - compile K clients lib       #
 	#                                                  #
 	#  make test         - run tests                   #
-	#  make test-cov     - run tests and coverage      #
-	#  make send-cov     - send coverage               #
+	#  make send-cov     - send tests coverage         #
 	#                                                  #
 	#  make build        - download K src precompiled  #
 	#  make pvs          - download pvs src files      #
@@ -352,11 +351,7 @@ latest: .git diff
 changelog: .git
 	@_() { echo `git rev-parse $$1`; }; echo && git --no-pager log --graph --oneline @..@{u} && test `_ @` != `_ @{u}` || echo No need to upgrade, both versions are equal.
 
-test: node_modules/.bin/mocha
-	./node_modules/.bin/mocha --compilers ts:ts-node/register test/*.ts
-	$(MAKE) test-c
-
-test-cov:
+test:
 	@echo TODO
 
 test-c:
@@ -364,11 +359,12 @@ test-c:
 	(plog-converter -a GA:1,2 -t tasklist -o report.tasks PVS-Studio.log && cat report.tasks && rm report.tasks) || :
 	-@rm PVS-Studio.log
 
-send-cov:
+send-cov: ./node_modules/.bin/codacy-coverage
 	lcov --directory . --capture --output-file coverage.info
 	lcov --remove coverage.info 'tests/*' '/usr/*' '*local/include/*' --output-file coverage.info
 	lcov --list coverage.info
 	coveralls-lcov --repo-token ${COVERALLS_TOKEN} coverage.info
+	cat coverage.info | ./node_modules/.bin/codacy-coverage
 
 png: etc/${PNG}.png etc/${PNG}.json
 	convert etc/${PNG}.png -set "K.conf" "`cat etc/${PNG}.json`" K: etc/${PNG}.png 2>/dev/null || :
@@ -425,4 +421,4 @@ md5: src
 asandwich:
 	@test `whoami` = 'root' && echo OK || echo make it yourself!
 
-.PHONY: K chost dist link Linux Darwin Win32 build zlib openssl curl ncurses quickfix uws json pvs clean cleandb list screen start stop restart startall stopall restartall gdax packages install docker reinstall clients www bundle diff latest changelog test test-cov send-cov png png-check release md5 asandwich
+.PHONY: K chost dist link Linux Darwin Win32 build zlib openssl curl ncurses quickfix uws json pvs clean cleandb list screen start stop restart startall stopall restartall gdax packages install docker reinstall clients www bundle diff latest changelog test send-cov png png-check release md5 asandwich
