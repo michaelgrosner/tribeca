@@ -2,7 +2,7 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
 PATCH    = 7
-BUILD    = 89
+BUILD    = 90
 CHOST   ?= $(shell $(MAKE) CHOST= chost -s)
 CARCH    = x86_64-linux-gnu arm-linux-gnueabihf aarch64-linux-gnu x86_64-apple-darwin17 x86_64-w64-mingw32
 KLOCAL  := build-$(CHOST)/local
@@ -362,11 +362,11 @@ test-c:
 	-@rm PVS-Studio.log
 
 send-cov: ./node_modules/.bin/codacy-coverage
-	lcov --directory . --capture --output-file coverage.info
-	lcov --remove coverage.info 'tests/*' '/usr/*' '*local/include/*' --output-file coverage.info
-	lcov --list coverage.info
-	coveralls-lcov --repo-token ${COVERALLS_TOKEN} coverage.info
-	cat coverage.info | ./node_modules/.bin/codacy-coverage
+	@lcov --directory . --capture --output-file coverage.info                                      > /dev/null 2>&1
+	@lcov --remove coverage.info 'tests/*' '/usr/*' '*local/include/*' --output-file coverage.info > /dev/null 2>&1
+	@lcov --list coverage.info
+	@coveralls-lcov --repo-token ${COVERALLS_TOKEN} coverage.info                                  > /dev/null 2>&1
+	@cat coverage.info | ./node_modules/.bin/codacy-coverage                                       > /dev/null 2>&1
 
 png: etc/${PNG}.png etc/${PNG}.json
 	convert etc/${PNG}.png -set "K.conf" "`cat etc/${PNG}.json`" K: etc/${PNG}.png 2>/dev/null || :
