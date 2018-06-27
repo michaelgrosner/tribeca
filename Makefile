@@ -2,7 +2,7 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
 PATCH    = 7
-BUILD    = 88
+BUILD    = 89
 CHOST   ?= $(shell $(MAKE) CHOST= chost -s)
 CARCH    = x86_64-linux-gnu arm-linux-gnueabihf aarch64-linux-gnu x86_64-apple-darwin17 x86_64-w64-mingw32
 KLOCAL  := build-$(CHOST)/local
@@ -124,8 +124,9 @@ ifdef KCOV
 	@unset KCOV && $(MAKE) KTEST="--coverage" $@
 else ifndef KTEST
 	@$(MAKE) KTEST="-DNDEBUG" $@
-endif
+else
 	$(CXX) $(KTEST) -o $(KLOCAL)/bin/K-$(CHOST) -DHAVE_STD_UNIQUE_PTR -DUWS_THREADSAFE -static-libstdc++ -static-libgcc -rdynamic $(KARGS) -ldl
+endif
 
 Darwin:
 	$(CXX) -o $(KLOCAL)/bin/K-$(CHOST) -DUSE_LIBUV $(KLOCAL)/lib/libuv.a -msse4.1 -maes -mpclmul -mmacosx-version-min=10.13 -nostartfiles -rdynamic $(KARGS) -ldl
