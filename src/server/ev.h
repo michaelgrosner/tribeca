@@ -12,8 +12,8 @@ namespace K  {
       unsigned int tick = 0;
     protected:
       void load() {
-        gw->screen = screen;
         gw->socket = socket = new uWS::Hub(0, true);
+        gw->screen = screen;
       };
       void waitData() {
         socket->createGroup<uWS::CLIENT>();

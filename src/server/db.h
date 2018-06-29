@@ -26,14 +26,13 @@ namespace K {
         };
       };
     public:
-      void backup(mFromDb *const data, const string &ok, const string &ko = "") {
-        if (data->pull(select(data)))
-          screen->log("DB", explain(data, ok));
-        else if (!ko.empty())
-          screen->logWar("DB", explain(data, ko));
-        data->push = [this, data]() {
-          insert(data);
-        };
+      void backup(mFromDb *const data) {
+        const bool loaded = data->pull(select(data));
+        const string msg = data->explanation(loaded);
+        data->push = [this, data]() { insert(data); };
+        if (msg.empty()) return;
+        if (loaded) screen->log("DB", msg);
+        else screen->logWar("DB", msg);
       };
     private:
       json select(mFromDb *const data) {
@@ -83,12 +82,6 @@ namespace K {
         return lifetime
           ? "DELETE FROM " + table + " WHERE time < " + to_string(Tstamp - lifetime) + ";"
           : "";
-      };
-      string explain(mFromDb *const data, string msg) {
-        std::size_t token = msg.find("%");
-        if (token != string::npos)
-          msg.replace(token, 1, data->explain());
-        return msg;
       };
       void exec(const string &sql, json *const result = nullptr) {
         char* zErrMsg = 0;

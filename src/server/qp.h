@@ -5,11 +5,7 @@ namespace K {
   class QP: public Klass {
     protected:
       void load() {
-        sqlite->backup(
-          INTO qp
-          THEN "loaded last % OK"
-          WARN "using default values for %"
-        );
+        sqlite->backup(&qp);
       };
       void waitWebAdmin() {
         client->welcome(qp);

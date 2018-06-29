@@ -13,20 +13,10 @@ namespace K {
       mPrice averageWidth = 0;
     protected:
       void load() {
-        sqlite->backup(
-          INTO stdev
-          THEN "loaded % STDEV Periods"
-        );
+        sqlite->backup(&stdev);
         calcStdev();
-        sqlite->backup(
-          INTO fairValue96h
-          THEN "loaded % historical Fair Values"
-        );
-        sqlite->backup(
-          INTO stats.ewma
-          THEN "loaded last % OK"
-          WARN "consider to warm up some %"
-        );
+        sqlite->backup(&fairValue96h);
+        sqlite->backup(&stats.ewma);
       };
       void waitData() {
         gw->RAWDATA_ENTRY_POINT(mTrade,  {                          PRETTY_DEBUG

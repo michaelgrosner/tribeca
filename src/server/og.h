@@ -13,10 +13,7 @@ namespace K {
       mButtonCleanTrade           buttonCleanTrade;
     protected:
       void load() {
-        sqlite->backup(
-          INTO tradesHistory
-          THEN "loaded % historical Trades"
-        );
+        sqlite->backup(&tradesHistory);
       };
       void waitData() {
         gw->RAWDATA_ENTRY_POINT(mOrder, {                           PRETTY_DEBUG

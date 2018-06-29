@@ -52,10 +52,7 @@ namespace K {
   } *events = nullptr;
 
   static struct Sqlite {
-    virtual void backup(mFromDb *const, const string&, const string& = "") = 0;
-#define INTO &
-#define THEN ,
-#define WARN ,
+    virtual void backup(mFromDb *const) = 0;
   } *sqlite = nullptr;
 
   static struct Client {
@@ -109,8 +106,8 @@ namespace K {
 
   static class Gw {
     public:
-      Screen   *screen  = nullptr;
       uWS::Hub *socket  = nullptr;
+      Screen   *screen  = nullptr;
       mMonitor *monitor = nullptr;
       mRandId (*randId)() = nullptr;
       unsigned int countdown = 0;
@@ -223,14 +220,10 @@ namespace K {
   } *gw = nullptr;
 
   static string tracelog;
-
-  static vector<function<void()>> happyEndingFn, endingFn = {
-    [](){
-      screen->end();
-      cout << '\n' << screen->stamp() << tracelog;
-    }
-  };
-
+  static vector<function<void()>> happyEndingFn, endingFn = { []() {
+    screen->end();
+    cout << '\n' << screen->stamp() << tracelog;
+  } };
   static class Ending {
     public:
       Ending (/* KMxTWEpb9ig */) {

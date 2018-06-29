@@ -75,6 +75,58 @@ namespace K {
             database      = "",     diskdata    = "",
             whitelist     = "";
     const char *inet = nullptr;
+    void tidy() {
+      transform(exchange.begin(), exchange.end(), exchange.begin(), ::toupper);
+      transform(currency.begin(), currency.end(), currency.begin(), ::toupper);
+      if (debug)
+        debugSecret =
+        debugEvents =
+        debugOrders =
+        debugQuotes =
+        debugWallet = debug;
+      if (!colors)
+        RBLACK[0] = RRED[0]    = RGREEN[0] = RYELLOW[0] =
+        RBLUE[0]  = RPURPLE[0] = RCYAN[0]  = RWHITE[0]  =
+        BBLACK[0] = BRED[0]    = BGREEN[0] = BYELLOW[0] =
+        BBLUE[0]  = BPURPLE[0] = BCYAN[0]  = BWHITE[0]  = RRESET[0] = 0;
+      if (database.empty() or database == ":memory:")
+        (database == ":memory:"
+          ? diskdata
+          : database
+        ) = "/data/db/K"
+          + ('.' + exchange)
+          +  '.' + string(currency).replace(currency.find("/"), 1, ".")
+          +  '.' + "db";
+      maxLevels = max(15, maxLevels);
+      if (user == "NULL") user.clear();
+      if (pass == "NULL") pass.clear();
+      if (ignoreSun and ignoreMoon) ignoreMoon = 0;
+      if (headless) port = 0;
+      else if (!port or !maxAdmins) headless = 1;
+#ifdef _WIN32
+      naked = 1;
+#endif
+    };
+    string validate() {
+      if (currency.find("/") == string::npos or currency.length() < 3)
+        return "Invalid currency pair; must be in the format of BASE/QUOTE, like BTC/EUR";
+      if (exchange.empty())
+        return "Undefined exchange; the config file may have errors (there are extra spaces or double defined variables?)";
+      tidy();
+      return "";
+    };
+    vector<string> warnings() {
+      vector<string> msgs;
+      if (testChamber == 1) msgs.push_back("Test Chamber #1: send new orders before cancel old");
+      else if (testChamber) msgs.push_back("ignored Test Chamber #" + to_string(testChamber));
+      return msgs;
+    };
+    string base() const {
+      return currency.substr(0, currency.find("/"));
+    };
+    string quote() const {
+      return currency.substr(1 + currency.find("/"));
+    };
   } args;
 
   struct mAbout {
@@ -113,9 +165,20 @@ namespace K {
     function<void()> push;
     virtual   bool pull(const json &j) = 0;
     virtual string increment() const { return "NULL"; };
-    virtual string explain()   const = 0;
     virtual double limit()     const { return 0; };
     virtual mClock lifetime()  const { return 0; };
+    virtual string explain()   const = 0;
+    virtual string explainOK() const = 0;
+    virtual string explainKO() const { return ""; };
+    string explanation(const bool &loaded) {
+      string msg = loaded
+        ? explainOK()
+        : explainKO();
+      std::size_t token = msg.find("%");
+      if (token != string::npos)
+        msg.replace(token, 1, explain());
+      return msg;
+    };
   };
   template <typename mData> struct mStructFromDb: public mFromDb {
     virtual json dump() const {
@@ -125,6 +188,9 @@ namespace K {
       if (j.empty()) return false;
       from_json(j.at(0), *(mData*)this);
       return true;
+    };
+    virtual string explainOK() const {
+      return "loaded last % OK";
     };
   };
   template <typename mData> struct mVectorFromDb: public mFromDb {
@@ -257,6 +323,9 @@ namespace K {
     };
     string explain() const {
       return "Quoting Parameters";
+    };
+    string explainKO() const {
+      return "using default values for %";
     };
   } qp;
   static void to_json(json &j, const mQuotingParams &k) {
@@ -496,16 +565,19 @@ namespace K {
     mMatter about() const {
       return mMatter::Profit;
     };
+    void erase() {
+      for (vector<mProfit>::iterator it = begin(); it != end();)
+        if (it->time + lifetime() > Tstamp) ++it;
+        else it = rows.erase(it);
+    };
     double limit() const {
       return qp.profitHourInterval;
     };
     mClock lifetime() const {
       return 3600e+3 * limit();
     };
-    void erase() {
-      for (vector<mProfit>::iterator it = begin(); it != end();)
-        if (it->time + lifetime() > Tstamp) ++it;
-        else it = rows.erase(it);
+    string explainOK() const {
+      return "loaded % historical Profits";
     };
   };
 
@@ -634,18 +706,22 @@ namespace K {
     mAmount targetBasePosition,
             positionDivergence;
      string sideAPR;
+     string base;
     mTarget():
-      targetBasePosition(0), positionDivergence(0), sideAPR("")
+      targetBasePosition(0), positionDivergence(0), sideAPR(""), base("")
     {};
     void send_push() const {
       push();
       send();
     };
+    bool realtime() const {
+      return !qp.delayUI;
+    };
     mMatter about() const {
       return mMatter::TargetBasePosition;
     };
-    bool realtime() const {
-      return !qp.delayUI;
+    string explainOK() const {
+      return "loaded TBP = % " + args.base();
     };
     string explain() const {
       return to_string(targetBasePosition);
@@ -680,9 +756,6 @@ namespace K {
     mMatter about() const {
       return mMatter::EWMAStats;
     };
-    string explain() const {
-      return "EWMA Values";
-    };
     mClock lifetime() const {
       return 60e+3 * max(qp.veryLongEwmaPeriods,
                      max(qp.longEwmaPeriods,
@@ -691,6 +764,12 @@ namespace K {
                      max(qp.extraShortEwmaPeriods,
                          qp.ultraShortEwmaPeriods
                      )))));
+    };
+    string explain() const {
+      return "EWMA Values";
+    };
+    string explainKO() const {
+      return "consider to warm up some %";
     };
   };
   static void to_json(json &j, const mEwma &k) {
@@ -741,6 +820,9 @@ namespace K {
     };
     mClock lifetime() const {
       return 60e+3 * limit();
+    };
+    string explainOK() const {
+      return "loaded % historical Fair Values";
     };
   };
   struct mFairStats:  public mFairValue,
@@ -793,6 +875,9 @@ namespace K {
     };
     mClock lifetime() const {
       return 1e+3 * limit();
+    };
+    string explainOK() const {
+      return "loaded % STDEV Periods";
     };
   };
 
@@ -880,18 +965,21 @@ namespace K {
     mMatter about() const {
       return mMatter::Trades;
     };
+    void erase() {
+      if (crbegin()->Kqty < 0) rows.pop_back();
+    };
     json dump() const {
       if (crbegin()->Kqty == -1) return nullptr;
       else return mVectorFromDb::dump();
     };
-    json hello() {
-      return rows;
-    };
     string increment() const {
       return crbegin()->tradeId;
     };
-    void erase() {
-      if (crbegin()->Kqty < 0) rows.pop_back();
+    string explainOK() const {
+      return "loaded % historical Trades";
+    };
+    json hello() {
+      return rows;
     };
   };
   struct mTakers: public mJsonToClient<mTrade> {
@@ -1096,7 +1184,7 @@ namespace K {
      mClock T_369ms;
     mLevels *current;
        bool patched;
-    mLevelsDiff(mLevels *c = nullptr):
+    mLevelsDiff(mLevels *c):
       T_369ms(0), current(c), patched(false)
     {};
     vector<mLevel> diff(const vector<mLevel> &from, vector<mLevel> to) {
@@ -1385,7 +1473,7 @@ namespace K {
       ps.erase(remove(ps.begin(), ps.end(), ' '), ps.end());
       return ps.empty() ? 0 : stoi(ps) * 1e+3;
     };
-    void fromGw(mExchange exchange, mPair pair, mPrice *minTick) {
+    void fromGw(const mExchange &exchange, const mPair &pair, mPrice *const minTick) {
       product.exchange = exchange;
       product.pair     = pair;
       product.minTick  = minTick;

@@ -154,19 +154,19 @@ namespace K {
           while(optind < argc) argerr += string(" ") + argv[optind++];
           exit(screen->error("CF", "Invalid argument option:" + argerr));
         }
-        if (args.currency.find("/") == string::npos or args.currency.length() < 3)
-          exit(screen->error("CF", "Invalid currency pair; must be in the format of BASE/QUOTE, like BTC/EUR"));
-        if (args.exchange.empty())
-          exit(screen->error("CF", "Undefined exchange; the config file may have errors (there are extra spaces or double defined variables?)"));
-        tidy();
+        validate();
         config();
       };
     private:
+      void validate() {
+        const string msg = args.validate();
+        if (msg.empty()) return;
+        exit(screen->error("CF", msg));
+      };
       void config() {
         screen->config();
         gw = Gw::config(
-          args.currency.substr(0, args.currency.find("/")),
-          args.currency.substr(1+ args.currency.find("/")),
+          args.base(),    args.quote(),
           args.exchange,  args.free,
           args.apikey,    args.secret,
           args.username,  args.passphrase,
@@ -174,46 +174,12 @@ namespace K {
           args.maxLevels, args.debugSecret
         );
         if (!gw)
-          exit(screen->error("CF", "Unable to load a valid gateway using --exchange="
-            + args.exchange + " argument"));
+          exit(screen->error("CF", "Unable to configure a valid gateway using --exchange="
+          + args.exchange + " argument"));
         if (args.inet)
           screen->log("CF", "Network Interface for outgoing traffic is", args.inet);
-        if (args.testChamber == 1)
-          screen->logWar("CF", "Test Chamber #1: send new orders before cancel old");
-        else if (args.testChamber)
-          screen->logWar("CF", "ignored Test Chamber #" + to_string(args.testChamber));
-      };
-      void tidy() {
-        args.exchange = FN::strU(args.exchange);
-        args.currency = FN::strU(args.currency);
-        if (args.debug)
-          args.debugSecret =
-          args.debugEvents =
-          args.debugOrders =
-          args.debugQuotes =
-          args.debugWallet = args.debug;
-        if (!args.colors)
-          RBLACK[0] = RRED[0]    = RGREEN[0] = RYELLOW[0] =
-          RBLUE[0]  = RPURPLE[0] = RCYAN[0]  = RWHITE[0]  =
-          BBLACK[0] = BRED[0]    = BGREEN[0] = BYELLOW[0] =
-          BBLUE[0]  = BPURPLE[0] = BCYAN[0]  = BWHITE[0]  = RRESET[0] = 0;
-        if (args.database.empty() or args.database == ":memory:")
-          (args.database == ":memory:"
-            ? args.diskdata
-            : args.database
-          ) = "/data/db/K"
-            + ('.' + args.exchange)
-            +  '.' + string(args.currency).replace(args.currency.find("/"), 1, ".")
-            +  '.' + "db";
-        args.maxLevels = max(15, args.maxLevels);
-        if (args.user == "NULL") args.user.clear();
-        if (args.pass == "NULL") args.pass.clear();
-        if (args.ignoreSun and args.ignoreMoon) args.ignoreMoon = 0;
-        if (args.headless) args.port = 0;
-        else if (!args.port or !args.maxAdmins) args.headless = 1;
-#ifdef _WIN32
-        args.naked = 1;
-#endif
+        for (string &it : args.warnings())
+          screen->logWar("CF", it);
       };
   };
 }

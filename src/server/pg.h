@@ -12,14 +12,8 @@ namespace K {
       string sideAPRDiff = "!=";
     protected:
       void load() {
-        sqlite->backup(
-          INTO profits
-          THEN "loaded % historical Profits"
-        );
-        sqlite->backup(
-          INTO target
-          THEN "loaded TBP = % " + gw->base
-        );
+        sqlite->backup(&target);
+        sqlite->backup(&profits);
       };
       void waitData() {
         gw->RAWDATA_ENTRY_POINT(mWallets, {                         PRETTY_DEBUG
