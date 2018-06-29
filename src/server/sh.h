@@ -276,7 +276,7 @@ namespace K {
         }
         mvwvline(wBorder, 1, 1, ' ', y-1);
         mvwvline(wBorder, yMaxLog-1, 1, ' ', y-1);
-        for (map<mPrice, mOrder, greater<mPrice>>::value_type &it : openOrders) {
+        for (multimap<mPrice, mOrder, greater<mPrice>>::value_type &it : openOrders) {
           wattron(wBorder, COLOR_PAIR(it.second.side == mSide::Bid ? COLOR_CYAN : COLOR_MAGENTA));
           mvwaddstr(wBorder, ++yOrders, 1, (((it.second.side == mSide::Bid ? "BID" : "ASK") + (" > "
             + FN::str8(it.second.quantity))) + ' ' + it.second.pair.base + " at price "

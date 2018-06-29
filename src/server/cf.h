@@ -156,6 +156,7 @@ namespace K {
         }
         validate();
         config();
+        logs();
       };
     private:
       void validate() {
@@ -174,8 +175,12 @@ namespace K {
           args.maxLevels, args.debugSecret
         );
         if (!gw)
-          exit(screen->error("CF", "Unable to configure a valid gateway using --exchange="
-          + args.exchange + " argument"));
+          exit(screen->error("CF",
+            "Unable to configure a valid gateway using --exchange="
+              + args.exchange + " argument"
+          ));
+      };
+      void logs() {
         if (args.inet)
           screen->log("CF", "Network Interface for outgoing traffic is", args.inet);
         for (string &it : args.warnings())
