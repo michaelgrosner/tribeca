@@ -156,7 +156,7 @@ namespace K {
         }
         validate();
         config();
-        logs();
+        log();
       };
     private:
       void validate() {
@@ -180,7 +180,7 @@ namespace K {
               + args.exchange + " argument"
           ));
       };
-      void logs() {
+      void log() {
         if (args.inet)
           screen->log("CF", "Network Interface for outgoing traffic is", args.inet);
         for (string &it : args.warnings())

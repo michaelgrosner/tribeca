@@ -753,6 +753,12 @@ namespace K {
     mEwma():
       mgEwmaVL(0), mgEwmaL(0), mgEwmaM(0), mgEwmaS(0), mgEwmaXS(0), mgEwmaU(0), mgEwmaP(0), mgEwmaW(0), mgEwmaTrendDiff(0)
     {};
+    void calc(mPrice *const mean, const unsigned int &periods, const mPrice &value) {
+      if (*mean) {
+        double alpha = 2.0 / (periods + 1);
+        *mean = alpha * value + (1 - alpha) * *mean;
+      } else *mean = value;
+    };
     mMatter about() const {
       return mMatter::EWMAStats;
     };
@@ -867,6 +873,35 @@ namespace K {
     k.topAsk = j.value("ask", 0.0);
   };
   struct mStdevs: public mVectorFromDb<mStdev> {
+    double calc(mPrice *const mean, const string &type) const {
+      vector<mPrice> values;
+      for (const mStdev &it : rows)
+        if (type == "fv")
+          values.push_back(it.fv);
+        else if (type == "bid")
+          values.push_back(it.topBid);
+        else if (type == "ask")
+          values.push_back(it.topAsk);
+        else if (type == "top") {
+          values.push_back(it.topBid);
+          values.push_back(it.topAsk);
+        }
+      return calc(mean, qp.quotingStdevProtectionFactor, values);
+    };
+    double calc(mPrice *const mean, const double &factor, const vector<mPrice> &values) const {
+      unsigned int n = values.size();
+      if (!n) return 0;
+      double sum = 0;
+      for (const mPrice &it : values) sum += it;
+      *mean = sum / n;
+      double sq_diff_sum = 0;
+      for (const mPrice &it : values) {
+        mPrice diff = it - *mean;
+        sq_diff_sum += diff * diff;
+      }
+      double variance = sq_diff_sum / n;
+      return sqrt(variance) * factor;
+    };
     mMatter about() const {
       return mMatter::STDEVStats;
     };
@@ -1247,6 +1282,28 @@ namespace K {
     mLevelsFull():
       diff(mLevelsDiff(this))
     {};
+    // void filter(vector<mLevel> levels, map<mPrice, mAmount> orders) {
+      // for (vector<mLevel>::iterator it = levels.begin(); it != levels.end();) {
+        // for (map<mPrice, mAmount>::iterator it_ = orders.begin(); it_ != orders.end();)
+          // if (abs(it->price - it_->first) < gw->minTick) {
+            // it->size = it->size - it_->second;
+            // orders.erase(it_);
+            // break;
+          // } else ++it_;
+        // if (it->size < gw->minTick) it = levels.erase(it);
+        // else ++it;
+        // if (orders.empty()) break;
+      // }
+      // return levels;
+    // };
+    // void reset(const mLevels &next, const map<mPrice, mAmount> &filterBidOrders, const map<mPrice, mAmount> &filterAskOrders) {
+      // bids = filterBidOrders.empty()
+        // ? next.bids
+        // : filter(next.bids, filterBidOrders);
+      // asks = filterAskOrders.empty()
+        // ? next.asks
+        // : filter(next.asks, filterAskOrders);
+    // };
     void reset(const mLevels &next) {
       bids = next.bids;
       asks = next.asks;

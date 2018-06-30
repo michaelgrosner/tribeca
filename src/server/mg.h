@@ -23,6 +23,7 @@ namespace K {
           stats.takerTrades.send_push_back(rawdata);
         });
         gw->RAWDATA_ENTRY_POINT(mLevels, {                          PRETTY_DEBUG
+          // levels.reset(rawdata, filterBidOrders, filterAskOrders);
           levels.reset(rawdata);
           if (!filterBidOrders.empty()) filter(&levels.bids, filterBidOrders);
           if (!filterAskOrders.empty()) filter(&levels.asks, filterAskOrders);
@@ -73,18 +74,6 @@ namespace K {
         if (FN::trueOnce(&qp._diffUEP)) calcEwmaHistory(&stats.ewma.mgEwmaU, qp.ultraShortEwmaPeriods, "UltraShort");
       };
     private:
-      void calcStatsStdevProtection() {
-        if (levels.empty()) return;
-        stdev.push_back(mStdev(
-          stats.fairValue.fv,
-          levels.bids.begin()->price,
-          levels.asks.begin()->price
-        ));
-        calcStdev();
-      };
-      void calcStatsTakers() {
-        stats.takerTrades.calcSize60s();
-      };
       void filter(vector<mLevel> *k, map<mPrice, mAmount> o) {
         for (vector<mLevel>::iterator it = k->begin(); it != k->end();) {
           for (map<mPrice, mAmount>::iterator it_ = o.begin(); it_ != o.end();)
@@ -98,66 +87,41 @@ namespace K {
           if (o.empty()) break;
         }
       };
+      void calcStatsStdevProtection() {
+        if (levels.empty()) return;
+        stdev.push_back(mStdev(
+          stats.fairValue.fv,
+          levels.bids.begin()->price,
+          levels.asks.begin()->price
+        ));
+        calcStdev();
+      };
+      void calcStatsTakers() {
+        stats.takerTrades.calcSize60s();
+      };
+      void calcStdev() {
+        if (stdev.size() < 2) return;
+        stats.mgStdevFV = stdev.calc(&stats.mgStdevFVMean, "fv");
+        stats.mgStdevBid = stdev.calc(&stats.mgStdevBidMean, "bid");
+        stats.mgStdevAsk = stdev.calc(&stats.mgStdevAskMean, "ask");
+        stats.mgStdevTop = stdev.calc(&stats.mgStdevTopMean, "top");
+      };
+      void calcStatsEwmaProtection() {
+        stats.ewma.calc(&stats.ewma.mgEwmaP, qp.protectionEwmaPeriods, stats.fairValue.fv);
+        stats.ewma.calc(&stats.ewma.mgEwmaW, qp.protectionEwmaPeriods, averageWidth);
+        averageCount = 0;
+      };
       void calcStatsEwmaPosition() {
-        calcEwma(&stats.ewma.mgEwmaVL, qp.veryLongEwmaPeriods, stats.fairValue.fv);
-        calcEwma(&stats.ewma.mgEwmaL, qp.longEwmaPeriods, stats.fairValue.fv);
-        calcEwma(&stats.ewma.mgEwmaM, qp.mediumEwmaPeriods, stats.fairValue.fv);
-        calcEwma(&stats.ewma.mgEwmaS, qp.shortEwmaPeriods, stats.fairValue.fv);
-        calcEwma(&stats.ewma.mgEwmaXS, qp.extraShortEwmaPeriods, stats.fairValue.fv);
-        calcEwma(&stats.ewma.mgEwmaU, qp.ultraShortEwmaPeriods, stats.fairValue.fv);
+        stats.ewma.calc(&stats.ewma.mgEwmaVL, qp.veryLongEwmaPeriods, stats.fairValue.fv);
+        stats.ewma.calc(&stats.ewma.mgEwmaL, qp.longEwmaPeriods, stats.fairValue.fv);
+        stats.ewma.calc(&stats.ewma.mgEwmaM, qp.mediumEwmaPeriods, stats.fairValue.fv);
+        stats.ewma.calc(&stats.ewma.mgEwmaS, qp.shortEwmaPeriods, stats.fairValue.fv);
+        stats.ewma.calc(&stats.ewma.mgEwmaXS, qp.extraShortEwmaPeriods, stats.fairValue.fv);
+        stats.ewma.calc(&stats.ewma.mgEwmaU, qp.ultraShortEwmaPeriods, stats.fairValue.fv);
         if(stats.ewma.mgEwmaXS and stats.ewma.mgEwmaU) stats.ewma.mgEwmaTrendDiff = ((stats.ewma.mgEwmaU * 100) / stats.ewma.mgEwmaXS) - 100;
         calcTargetPos();
         wallet->calcTargetBasePos();
         stats.send_push();
-      };
-      void calcStatsEwmaProtection() {
-        calcEwma(&stats.ewma.mgEwmaP, qp.protectionEwmaPeriods, stats.fairValue.fv);
-        calcEwma(&stats.ewma.mgEwmaW, qp.protectionEwmaPeriods, averageWidth);
-        averageCount = 0;
-      };
-      void calcStdev() {
-        if (stdev.size() < 2) return;
-        stats.mgStdevFV = calcStdev(&stats.mgStdevFVMean, "fv");
-        stats.mgStdevBid = calcStdev(&stats.mgStdevBidMean, "bid");
-        stats.mgStdevAsk = calcStdev(&stats.mgStdevAskMean, "ask");
-        stats.mgStdevTop = calcStdev(&stats.mgStdevTopMean, "top");
-      }; // stdev.calc plz
-      double calcStdev(mPrice *mean, string type) {
-        unsigned int n = stdev.size() * (type == "top" ? 2 : 1);
-        if (!n) return 0.0;
-        double sum = 0;
-        for (mStdev &it : stdev)
-          if (type == "fv")
-            sum += it.fv;
-          else if (type == "bid")
-            sum += it.topBid;
-          else if (type == "ask")
-            sum += it.topAsk;
-          else if (type == "top") {
-            sum += it.topBid + it.topAsk;
-          }
-        *mean = sum / n;
-        double sq_diff_sum = 0;
-        for (mStdev &it : stdev) {
-          mPrice diff = 0;
-          if (type == "fv")
-            diff = it.fv;
-          else if (type == "bid")
-            diff = it.topBid;
-          else if (type == "ask")
-            diff = it.topAsk;
-          else if (type == "top") {
-            diff = it.topBid;
-          }
-          diff -= *mean;
-          sq_diff_sum += diff * diff;
-          if (type == "top") {
-            diff = it.topAsk - *mean;
-            sq_diff_sum += diff * diff;
-          }
-        }
-        double variance = sq_diff_sum / n;
-        return sqrt(variance) * qp.quotingStdevProtectionFactor;
       };
       void prepareEwmaHistory() {
         fairValue96h.push_back(mFairValue(stats.fairValue.fv));
@@ -166,14 +130,8 @@ namespace K {
         unsigned int n = fairValue96h.size();
         if (!n) return;
         *mean = fairValue96h.begin()->fv;
-        while (n--) calcEwma(mean, periods, (fairValue96h.rbegin()+n)->fv);
+        while (n--) stats.ewma.calc(mean, periods, (fairValue96h.rbegin()+n)->fv);
         screen->log("MG", "reloaded " + to_string(*mean) + " EWMA " + name);
-      };
-      void calcEwma(mPrice *mean, unsigned int periods, mPrice value) {
-        if (*mean) {
-          double alpha = 2.0 / (periods + 1);
-          *mean = alpha * value + (1 - alpha) * *mean;
-        } else *mean = value;
       };
       void calcTargetPos() {
         mgSMA3.push_back(stats.fairValue.fv);
