@@ -990,11 +990,11 @@ class ClientComponent implements OnInit {
     this.homepage = pa.homepage;
     this.product.fixed = Math.max(0, Math.floor(Math.log10(pa.minTick)) * -1);
     setTimeout(this.resizeMatryoshka, 5000);
-    console.log("%cK started "+(new Date().toISOString().slice(11, -1))+"\n%c"+this.homepage, "color:green;font-size:32px;", "color:red;font-size:16px;");
-    try {
-    if (!document.getElementsByClassName('chatbro_container').length && window.parent === window)
-      (function(chats,async) {async=!1!==async;var params={embedChatsParameters:chats instanceof Array?chats:[chats],lang:navigator.language||(<any>navigator).userLanguage,needLoadCode:'undefined'==typeof (<any>window).Chatbro,embedParamsVersion:localStorage.embedParamsVersion,chatbroScriptVersion:localStorage.chatbroScriptVersion},xhr=new XMLHttpRequest;xhr.withCredentials=!0,xhr.onload=function(){eval(xhr.responseText)},xhr.onerror=function(){console.error('Chatbro loading error')},xhr.open('GET','//www.chatbro.com/embed.js?'+btoa((<any>window).unescape(encodeURIComponent(JSON.stringify(params)))),async),xhr.send()})({encodedChatId: '9Wic'},false);
-    } catch(e) {}
+    console.log("%cK started "+(new Date().toISOString().slice(11, -1))+"  %c"+this.homepage, "color:green;font-size:32px;", "color:red;font-size:16px;");
+    // try {
+    // if (!document.getElementsByClassName('chatbro_container').length && window.parent === window)
+      // (function(chats,async) {async=!1!==async;var params={embedChatsParameters:chats instanceof Array?chats:[chats],lang:navigator.language||(<any>navigator).userLanguage,needLoadCode:'undefined'==typeof (<any>window).Chatbro,embedParamsVersion:localStorage.embedParamsVersion,chatbroScriptVersion:localStorage.chatbroScriptVersion},xhr=new XMLHttpRequest;xhr.withCredentials=!0,xhr.onload=function(){try{eval(xhr.responseText)}catch(e){}},xhr.onerror=function(){console.error('Chatbro loading error')},xhr.open('GET','//www.chatbro.com/embed.js?'+btoa((<any>window).unescape(encodeURIComponent(JSON.stringify(params)))),async),xhr.send()})({encodedChatId: '9Wic'},false);
+    // } catch(e) {}
   }
 }
 
