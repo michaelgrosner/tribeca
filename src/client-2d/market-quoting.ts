@@ -30,7 +30,7 @@ import * as Models from './models';
         <tr *ngIf="a" class="skip">
           <td><div class="text-danger text-center"><br /><br />To <a href="{{ product.advert.homepage }}/blob/master/README.md#unlock" target="_blank">unlock</a> all market levels<br />and to collaborate with the development..<br /><br />make an acceptable Pull Request on github,<br/>or send 0.01210000 BTC or more to:<br /><a href="https://www.blocktrail.com/BTC/address/{{ a }}" target="_blank">{{ a }}</a><br /><br />Wait 0 confirmations and restart this bot.<br /><br /><!-- you can remove this message, but obviously the missing market levels will not be displayed magically. the market levels will be only displayed if the also displayed address is credited with 0.01210000 BTC. Note that if you make a Pull Request i will credit the payment for you easy, just let me know in the description of the PR what is the BTC Address displayed in your bot.--></div></td>
         </tr>
-        <tr [ngClass]="orderPriceBids.indexOf(lvl.price)==-1?'active':'success buy'" *ngFor="let lvl of levels.bids; let i = index">
+        <tr [ngClass]="orderPriceBids.indexOf(lvl.price.toFixed(product.fixed))==-1?'active':'success buy'" *ngFor="let lvl of levels.bids; let i = index">
           <td>
             <div style="position:relative;" [ngClass]="'bids'+lvl.cssMod">
               <div class="bgSize" [ngStyle]="{'background': getBgSize(lvl, 'bids')}"></div>
@@ -46,7 +46,7 @@ import * as Models from './models';
       </table>
       <table class="marketQuoting table table-hover table-responsive text-center" style="width:50%;">
         <tr *ngIf="a" style="height:0px;" class="skip"><td></td></tr>
-        <tr [ngClass]="orderPriceAsks.indexOf(lvl.price)==-1?'active':'success sell'" *ngFor="let lvl of levels.asks; let i = index">
+        <tr [ngClass]="orderPriceAsks.indexOf(lvl.price.toFixed(product.fixed))==-1?'active':'success sell'" *ngFor="let lvl of levels.asks; let i = index">
           <td>
             <div [ngClass]="'asks'+(lvl.cssMod==2?2:0)">
               {{ lvl.price | number:'1.'+product.fixed+'-'+product.fixed }}
@@ -284,7 +284,7 @@ export class MarketQuotingComponent {
         price: o.price,
         quantity: o.quantity,
       });
-    this[orderPrice] = this[orderSide].map((a)=>a.price);
+    this[orderPrice] = this[orderSide].map((a)=>a.price.toFixed(this.product.fixed));
 
     if (this.orderBids.length) {
       var bid = this.orderBids.reduce((a,b)=>a.price>b.price?a:b);

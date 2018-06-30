@@ -78,8 +78,6 @@ namespace K {
      mLevelsFull levels;
     mMarketStats stats;
     double targetPosition = 0;
-    map<mPrice, mAmount> filterBidOrders,
-                         filterAskOrders;
     virtual void calcStats() = 0;
     virtual void calcFairValue() = 0;
     virtual void calcEwmaHistory() = 0;
@@ -162,7 +160,6 @@ namespace K {
         }
       };
 //BO non-free gw library functions from build-*/local/lib/K-*.a (it just redefines all virtual gateway class members below).
-/**/  string /*BTC unlock */A/*ddress*/;                                     // empty string if BTC payment already credited
 /**/  virtual bool ready() = 0;                                              // wait for exchange and maybe set async = true
 /**/  static Gw*config(mCoinId, mCoinId, string, int, string, string, string, string, string, string, int, int); // set args
 /**/  function<void(mRandId, string)> replace;                               // call         async orders data from exchange

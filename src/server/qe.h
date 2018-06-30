@@ -92,8 +92,8 @@ namespace K {
         status.send();
       };
       bool diffCounts(unsigned int *qNew, unsigned int *qWorking, unsigned int *qDone) {
-        market->filterBidOrders.clear();
-        market->filterAskOrders.clear();
+        market->levels.filterBidOrders.clear();
+        market->levels.filterAskOrders.clear();
         vector<mRandId> zombies;
         mClock now = Tstamp;
         for (map<mRandId, mOrder>::value_type &it : broker->orders.orders)
@@ -102,8 +102,8 @@ namespace K {
             (*qNew)++;
           } else if (it.second.orderStatus == mStatus::Working) {
             (mSide::Bid == it.second.side
-              ? market->filterBidOrders
-              : market->filterAskOrders
+              ? market->levels.filterBidOrders
+              : market->levels.filterAskOrders
             )[it.second.price] += it.second.quantity;
             (*qWorking)++;
           } else (*qDone)++;

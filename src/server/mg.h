@@ -23,10 +23,7 @@ namespace K {
           stats.takerTrades.send_push_back(rawdata);
         });
         gw->RAWDATA_ENTRY_POINT(mLevels, {                          PRETTY_DEBUG
-          // levels.reset(rawdata, filterBidOrders, filterAskOrders);
-          levels.reset(rawdata);
-          if (!filterBidOrders.empty()) filter(&levels.bids, filterBidOrders);
-          if (!filterAskOrders.empty()) filter(&levels.asks, filterAskOrders);
+          levels.reset_filter(rawdata);
           calcFairValue();
           engine->calcQuote();
           levels.diff.send_reset();
@@ -74,19 +71,6 @@ namespace K {
         if (FN::trueOnce(&qp._diffUEP)) calcEwmaHistory(&stats.ewma.mgEwmaU, qp.ultraShortEwmaPeriods, "UltraShort");
       };
     private:
-      void filter(vector<mLevel> *k, map<mPrice, mAmount> o) {
-        for (vector<mLevel>::iterator it = k->begin(); it != k->end();) {
-          for (map<mPrice, mAmount>::iterator it_ = o.begin(); it_ != o.end();)
-            if (abs(it->price - it_->first) < gw->minTick) {
-              it->size = it->size - it_->second;
-              o.erase(it_);
-              break;
-            } else ++it_;
-          if (it->size < gw->minTick) it = k->erase(it);
-          else ++it;
-          if (o.empty()) break;
-        }
-      };
       void calcStatsStdevProtection() {
         if (levels.empty()) return;
         stdev.push_back(mStdev(

@@ -1217,10 +1217,10 @@ namespace K {
   struct mLevelsDiff: public mLevels,
                       public mJsonToClient<mLevelsDiff> {
      mClock T_369ms;
-    mLevels *current;
+    mLevels *unfiltered;
        bool patched;
     mLevelsDiff(mLevels *c):
-      T_369ms(0), current(c), patched(false)
+      T_369ms(0), unfiltered(c), patched(false)
     {};
     vector<mLevel> diff(const vector<mLevel> &from, vector<mLevel> to) {
       vector<mLevel> patch;
@@ -1244,17 +1244,17 @@ namespace K {
       return patch;
     };
     void diff() {
-      bids = diff(bids, current->bids);
-      asks = diff(asks, current->asks);
+      bids = diff(bids, unfiltered->bids);
+      asks = diff(asks, unfiltered->asks);
       patched = true;
     };
     void reset() {
-      bids = current->bids;
-      asks = current->asks;
+      bids = unfiltered->bids;
+      asks = unfiltered->asks;
       patched = false;
     };
     bool ratelimit() const {
-      return current->empty() or empty()
+      return unfiltered->empty() or empty()
         or T_369ms + max(369.0, qp.delayUI * 1e+3) > Tstamp;
     };
     void send_reset() {
@@ -1278,35 +1278,34 @@ namespace K {
       j["diff"] = true;
   };
   struct mLevelsFull: public mLevels {
-    mLevelsDiff diff;
+                 mLevels unfiltered;
+             mLevelsDiff diff;
+    map<mPrice, mAmount> filterBidOrders,
+                         filterAskOrders;
     mLevelsFull():
-      diff(mLevelsDiff(this))
+      diff(mLevelsDiff(&unfiltered)), filterBidOrders({}), filterAskOrders({})
     {};
-    // void filter(vector<mLevel> levels, map<mPrice, mAmount> orders) {
-      // for (vector<mLevel>::iterator it = levels.begin(); it != levels.end();) {
-        // for (map<mPrice, mAmount>::iterator it_ = orders.begin(); it_ != orders.end();)
-          // if (abs(it->price - it_->first) < gw->minTick) {
-            // it->size = it->size - it_->second;
-            // orders.erase(it_);
-            // break;
-          // } else ++it_;
-        // if (it->size < gw->minTick) it = levels.erase(it);
-        // else ++it;
-        // if (orders.empty()) break;
-      // }
-      // return levels;
-    // };
-    // void reset(const mLevels &next, const map<mPrice, mAmount> &filterBidOrders, const map<mPrice, mAmount> &filterAskOrders) {
-      // bids = filterBidOrders.empty()
-        // ? next.bids
-        // : filter(next.bids, filterBidOrders);
-      // asks = filterAskOrders.empty()
-        // ? next.asks
-        // : filter(next.asks, filterAskOrders);
-    // };
     void reset(const mLevels &next) {
-      bids = next.bids;
-      asks = next.asks;
+      bids = unfiltered.bids = next.bids;
+      asks = unfiltered.asks = next.asks;
+    };
+    void filter(vector<mLevel> *const levels, map<mPrice, mAmount> orders) {
+      for (vector<mLevel>::iterator it = levels->begin(); it != levels->end();) {
+        for (map<mPrice, mAmount>::iterator it_ = orders.begin(); it_ != orders.end();)
+          if (it->price == it_->first) {
+            it->size -= it_->second;
+            orders.erase(it_);
+            break;
+          } else ++it_;
+        if (!it->size) it = levels->erase(it);
+        else ++it;
+        if (orders.empty()) break;
+      }
+    };
+    void reset_filter(const mLevels &next) {
+      reset(next);
+      if (!filterBidOrders.empty()) filter(&bids, filterBidOrders);
+      if (!filterAskOrders.empty()) filter(&asks, filterAskOrders);
     };
   };
 
