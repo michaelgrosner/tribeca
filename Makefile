@@ -2,7 +2,7 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
 PATCH    = 8
-BUILD    = 3
+BUILD    = 4
 CHOST   ?= $(shell $(MAKE) CHOST= chost -s)
 CARCH    = x86_64-linux-gnu arm-linux-gnueabihf aarch64-linux-gnu x86_64-apple-darwin17 x86_64-w64-mingw32
 KLOCAL  := build-$(CHOST)/local
@@ -68,7 +68,7 @@ help:
 	#  make docroot      - compile K clients lib       #
 	#                                                  #
 	#  make test         - run tests                   #
-	#  make send-cov     - send tests coverage         #
+	#  make test-c       - run static tests            #
 	#                                                  #
 	#  make build        - download K src precompiled  #
 	#  make pvs          - download pvs src files      #
@@ -361,13 +361,6 @@ test-c:
 	(plog-converter -a GA:1,2 -t tasklist -o report.tasks PVS-Studio.log && cat report.tasks && rm report.tasks) || :
 	-@rm PVS-Studio.log
 
-send-cov: ./node_modules/.bin/codacy-coverage
-	@lcov --directory . --capture --output-file coverage.info                                      > /dev/null 2>&1
-	@lcov --remove coverage.info 'tests/*' '/usr/*' '*local/include/*' --output-file coverage.info > /dev/null 2>&1
-	@lcov --list coverage.info
-	@coveralls-lcov --repo-token ${COVERALLS_TOKEN} coverage.info                                  > /dev/null 2>&1
-	@cat coverage.info | ./node_modules/.bin/codacy-coverage --language cpp                        > /dev/null 2>&1
-
 png: etc/${PNG}.png etc/${PNG}.json
 	convert etc/${PNG}.png -set "K.conf" "`cat etc/${PNG}.json`" K: etc/${PNG}.png 2>/dev/null || :
 	@$(MAKE) png-check -s
@@ -423,4 +416,4 @@ md5: src
 asandwich:
 	@test `whoami` = 'root' && echo OK || echo make it yourself!
 
-.PHONY: K chost dist link Linux Darwin Win32 build zlib openssl curl ncurses quickfix uws json pvs clean cleandb list screen start stop restart startall stopall restartall gdax packages install docker reinstall clients www bundle diff latest changelog test send-cov png png-check release md5 asandwich
+.PHONY: K chost dist link Linux Darwin Win32 build zlib openssl curl ncurses quickfix uws json pvs clean cleandb list screen start stop restart startall stopall restartall gdax packages install docker reinstall clients www bundle diff latest changelog test png png-check release md5 asandwich

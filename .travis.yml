@@ -42,7 +42,7 @@ before_install:
     fi
     npm install
     gem install coveralls-lcov
-    npm install codacy-coverage npm-check-updates
+    npm install -g codacy-coverage npm-check-updates
 
 install:
   - |
@@ -62,12 +62,20 @@ script:
     if [[ "${TRAVIS_OS_NAME}" == "linux" ]]; then
       KCOV=1 make
       ./K.sh --version
-      ncu | /usr/games/cowsay
+      ncu         | /usr/games/cowsay
       make test-c | /usr/games/cowsay || :
       make test
     fi
 
-after_success: test $TRAVIS_OS_NAME == "linux" && make send-cov || :;
+after_success:
+  - |
+    if [[ "${TRAVIS_OS_NAME}" == "linux" ]]; then
+      lcov --directory . --capture --output-file coverage.info                                      > /dev/null 2>&1
+      lcov --remove coverage.info 'tests/*' '/usr/*' '*local/include/*' --output-file coverage.info > /dev/null 2>&1
+      lcov --list coverage.info | /usr/games/cowsay
+      coveralls-lcov --repo-token ${COVERALLS_TOKEN} coverage.info                                  > /dev/null 2>&1
+      cat coverage.info | codacy-coverage --language cpp                                            > /dev/null 2>&1
+    fi
 
 notifications:
   email:
