@@ -115,7 +115,7 @@ namespace K {
       tidy();
       return "";
     };
-    vector<string> warnings() {
+    vector<string> warnings() const {
       vector<string> msgs;
       if (testChamber == 1) msgs.push_back("Test Chamber #1: send new orders before cancel old");
       else if (testChamber) msgs.push_back("ignored Test Chamber #" + to_string(testChamber));
@@ -720,11 +720,11 @@ namespace K {
     mMatter about() const {
       return mMatter::TargetBasePosition;
     };
-    string explainOK() const {
-      return "loaded TBP = % " + args.base();
-    };
     string explain() const {
       return to_string(targetBasePosition);
+    };
+    string explainOK() const {
+      return "loaded TBP = % " + args.base();
     };
   };
   static void to_json(json &j, const mTarget &k) {
@@ -842,6 +842,14 @@ namespace K {
     };
     bool realtime() const {
       return !qp.delayUI;
+    };
+    bool ratelimit(const mPrice &next) const {
+      return !next or fv == next;
+    };
+    void send_ratelimit(const mPrice &next) {
+      bool limited = ratelimit(next);
+      fv = next;
+      if (!limited) send();
     };
   };
   static void to_json(json &j, const mFairStats &k) {
@@ -1253,15 +1261,18 @@ namespace K {
       asks = unfiltered->asks;
       patched = false;
     };
+    bool empty() const {
+      return bids.empty() and asks.empty();
+    };
     bool ratelimit() const {
-      return unfiltered->empty() or empty()
+      return unfiltered->empty() or mLevels::empty()
         or T_369ms + max(369.0, qp.delayUI * 1e+3) > Tstamp;
     };
     void send_reset() {
       if (ratelimit()) return;
       T_369ms = Tstamp;
       diff();
-      send();
+      if (!empty()) send();
       reset();
     };
     mMatter about() const {
@@ -1282,9 +1293,36 @@ namespace K {
              mLevelsDiff diff;
     map<mPrice, mAmount> filterBidOrders,
                          filterAskOrders;
+            unsigned int averageCount;
+                  mPrice averageWidth;
     mLevelsFull():
-      diff(mLevelsDiff(&unfiltered)), filterBidOrders({}), filterAskOrders({})
+      diff(mLevelsDiff(&unfiltered)), filterBidOrders({}), filterAskOrders({}), averageCount(0), averageWidth(0)
     {};
+    mPrice calcFairValue() {
+      if (empty()) return 0;
+      calcAverageWidth();
+      if (qp.fvModel == mFairValueModel::BBO)
+        return (asks.cbegin()->price
+              + bids.cbegin()->price) / 2;
+      else return (
+        bids.cbegin()->price * bids.cbegin()->size
+      + asks.cbegin()->price * asks.cbegin()->size
+      ) / (asks.cbegin()->size
+         + bids.cbegin()->size
+      );
+    };
+    void calcAverageWidth() {
+      averageWidth = (
+        (averageWidth * averageCount)
+          + asks.cbegin()->price
+          - bids.cbegin()->price
+      );
+      averageWidth /= ++averageCount;
+    };
+    mPrice resetAverageWidth() {
+      averageCount = 0;
+      return averageWidth;
+    };
     void reset(const mLevels &next) {
       bids = unfiltered.bids = next.bids;
       asks = unfiltered.asks = next.asks;
@@ -1302,10 +1340,11 @@ namespace K {
         if (orders.empty()) break;
       }
     };
-    void reset_filter(const mLevels &next) {
+    void send_reset_filter(const mLevels &next) {
       reset(next);
       if (!filterBidOrders.empty()) filter(&bids, filterBidOrders);
       if (!filterAskOrders.empty()) filter(&asks, filterAskOrders);
+      diff.send_reset();
     };
   };
 

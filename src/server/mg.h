@@ -8,9 +8,7 @@ namespace K {
       mStdevs stdev;
       vector<mPrice> mgSMA3;
       mFairValues fairValue96h;
-      unsigned int mgT_60s = 0,
-                   averageCount = 0;
-      mPrice averageWidth = 0;
+      unsigned int mgT_60s = 0;
     protected:
       void load() {
         sqlite->backup(&stdev);
@@ -23,10 +21,9 @@ namespace K {
           stats.takerTrades.send_push_back(rawdata);
         });
         gw->RAWDATA_ENTRY_POINT(mLevels, {                          PRETTY_DEBUG
-          levels.reset_filter(rawdata);
+          levels.send_reset_filter(rawdata);
           calcFairValue();
           engine->calcQuote();
-          levels.diff.send_reset();
         });
       };
       void waitWebAdmin() {
@@ -46,21 +43,9 @@ namespace K {
         calcStatsStdevProtection();
       };
       void calcFairValue() {
-        if (levels.empty()) return;
-        mPrice prev  = stats.fairValue.fv,
-               topAskPrice = levels.asks.begin()->price,
-               topBidPrice = levels.bids.begin()->price;
-        mAmount topAskSize = levels.asks.begin()->size,
-                topBidSize = levels.bids.begin()->size;
-        stats.fairValue.fv = qp.fvModel == mFairValueModel::BBO
-          ? (topAskPrice + topBidPrice) / 2
-          : (topAskPrice * topBidSize + topBidPrice * topAskSize) / (topAskSize + topBidSize);
-        if (!stats.fairValue.fv or (prev and abs(stats.fairValue.fv - prev) < gw->minTick)) return;
+        stats.fairValue.send_ratelimit(levels.calcFairValue());
         wallet->calcWallet();
-        stats.fairValue.send();
         screen->log(stats.fairValue.fv);
-        averageWidth = ((averageWidth * averageCount) + topAskPrice - topBidPrice);
-        averageWidth /= ++averageCount;
       };
       void calcEwmaHistory() {
         if (FN::trueOnce(&qp._diffVLEP)) calcEwmaHistory(&stats.ewma.mgEwmaVL, qp.veryLongEwmaPeriods, "VeryLong");
@@ -92,8 +77,7 @@ namespace K {
       };
       void calcStatsEwmaProtection() {
         stats.ewma.calc(&stats.ewma.mgEwmaP, qp.protectionEwmaPeriods, stats.fairValue.fv);
-        stats.ewma.calc(&stats.ewma.mgEwmaW, qp.protectionEwmaPeriods, averageWidth);
-        averageCount = 0;
+        stats.ewma.calc(&stats.ewma.mgEwmaW, qp.protectionEwmaPeriods, levels.resetAverageWidth());
       };
       void calcStatsEwmaPosition() {
         stats.ewma.calc(&stats.ewma.mgEwmaVL, qp.veryLongEwmaPeriods, stats.fairValue.fv);
