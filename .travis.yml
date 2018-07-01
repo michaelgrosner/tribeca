@@ -61,10 +61,10 @@ script:
   - |
     if [[ "${TRAVIS_OS_NAME}" == "linux" ]]; then
       KCOV=1 make
-      ./K.sh --version
-      ncu         | /usr/games/cowsay
-      make test-c | /usr/games/cowsay || :
-      make test
+      ./K.sh --version | /usr/games/cowsay
+      ncu              | /usr/games/cowsay
+      make test-c 2>&1 | /usr/games/cowsay || :
+      make test        | /usr/games/cowsay
     fi
 
 after_success:
@@ -72,7 +72,7 @@ after_success:
     if [[ "${TRAVIS_OS_NAME}" == "linux" ]]; then
       lcov --directory . --capture --output-file coverage.info                                      > /dev/null 2>&1
       lcov --remove coverage.info 'tests/*' '/usr/*' '*local/include/*' --output-file coverage.info > /dev/null 2>&1
-      lcov --list coverage.info | /usr/games/cowsay
+      lcov --list coverage.info
       coveralls-lcov --repo-token ${COVERALLS_TOKEN} coverage.info                                  > /dev/null 2>&1
       cat coverage.info | codacy-coverage --language cpp                                            > /dev/null 2>&1
     fi
