@@ -139,9 +139,9 @@ In the web UI, there are three rows of panels with cryptic looking names and edi
 
 * `fv` - Sets the fair value calculation mode
 
-  * `BBO` - `FV = ([best bid price] + [best ask price])/2.0`
+  * `BBO` - `FV = ([topBid price] + [topAsk price]) / 2.0`
 
-  * `wBBO` - `FV = ([best bid price]*[best ask size] + [best ask price]*[best bid size])/([best ask size] + [best bid size])`
+  * `wBBO` - `FV = ([topBid price]*[topBid size] + [topAsk price]*[topAsk size]) / ([topAsk size] + [topBid size])`
 
 * `apMode`
 
