@@ -21,18 +21,24 @@ namespace K {
           calcWallet();
         });
       };
+      void waitSysAdmin() {
+        screen->printme(position);
+      };
       void waitWebAdmin() {
         client->welcome(position);
         client->welcome(safety);
         client->welcome(target);
       };
     public:
+      void timer_1s() {
+        calcSafety();
+      };
       void calcSafety() {
-        if (position.empty() or !market->stats.fairValue.fv) return;
+        if (position.empty() or !market->levels.fairValue) return;
         safety.send_ratelimit(nextSafety());
       };
       void calcTargetBasePos() {                                    PRETTY_DEBUG
-        if (position.empty()) return screen->logWar("PG", "Unable to calculate TBP, missing wallet data");
+        if (position.warn_empty()) return;
         mAmount baseValue = position.baseValue;
         mAmount next = qp.autoPositionMode == mAutoPositionMode::Manual
           ? (qp.percentageValues
@@ -52,25 +58,24 @@ namespace K {
           + " " + gw->base);
       };
       void calcWallet() {
-        if (balance.empty() or !market->stats.fairValue.fv) return;
+        if (balance.empty() or !market->levels.fairValue) return;
         if (args.maxWallet) applyMaxWallet();
         mPosition pos(
           FN::d8(balance.base.amount),
           FN::d8(balance.quote.amount),
-          balance.quote.amount / market->stats.fairValue.fv,
+          balance.quote.amount / market->levels.fairValue,
           FN::d8(balance.base.held),
           FN::d8(balance.quote.held),
           balance.base.amount + balance.base.held,
-          (balance.quote.amount + balance.quote.held) / market->stats.fairValue.fv,
-          FN::d8((balance.quote.amount + balance.quote.held) / market->stats.fairValue.fv + balance.base.amount + balance.base.held),
-          FN::d8((balance.base.amount + balance.base.held) * market->stats.fairValue.fv + balance.quote.amount + balance.quote.held),
+          (balance.quote.amount + balance.quote.held) / market->levels.fairValue,
+          FN::d8((balance.quote.amount + balance.quote.held) / market->levels.fairValue + balance.base.amount + balance.base.held),
+          FN::d8((balance.base.amount + balance.base.held) * market->levels.fairValue + balance.quote.amount + balance.quote.held),
           position.profitBase,
           position.profitQuote,
           mPair(gw->base, gw->quote)
         );
         calcPositionProfit(&pos);
         position.send_ratelimit(pos);
-        screen->log(pos);
         calcTargetBasePos();
       };
       void calcWalletAfterOrder(const mSide &side) {
@@ -122,7 +127,7 @@ namespace K {
           if (qp.sellSizeMax) sellSize = fmax(sellSize, totalBasePosition - target.targetBasePosition);
         }
         mPrice widthPong = qp.widthPercentage
-          ? qp.widthPongPercentage * market->stats.fairValue.fv / 100
+          ? qp.widthPongPercentage * market->levels.fairValue / 100
           : qp.widthPong;
         mPrice buyPing = 0,
                sellPing = 0;
@@ -170,10 +175,10 @@ namespace K {
       void matchPing(bool _near, bool _far, map<mPrice, mTrade> *trades, mPrice *ping, mAmount *qty, mAmount qtyMax, mPrice width, bool reverse = false) {
         int dir = width > 0 ? 1 : -1;
         if (reverse) for (map<mPrice, mTrade>::reverse_iterator it = trades->rbegin(); it != trades->rend(); ++it) {
-          if (matchPing(_near, _far, ping, qty, qtyMax, width, dir * market->stats.fairValue.fv, dir * it->second.price, it->second.quantity, it->second.price, it->second.Kqty, reverse))
+          if (matchPing(_near, _far, ping, qty, qtyMax, width, dir * market->levels.fairValue, dir * it->second.price, it->second.quantity, it->second.price, it->second.Kqty, reverse))
             break;
         } else for (map<mPrice, mTrade>::iterator it = trades->begin(); it != trades->end(); ++it)
-          if (matchPing(_near, _far, ping, qty, qtyMax, width, dir * market->stats.fairValue.fv, dir * it->second.price, it->second.quantity, it->second.price, it->second.Kqty, reverse))
+          if (matchPing(_near, _far, ping, qty, qtyMax, width, dir * market->levels.fairValue, dir * it->second.price, it->second.quantity, it->second.price, it->second.Kqty, reverse))
             break;
       };
       bool matchPing(bool _near, bool _far, mPrice *ping, mAmount *qty, mAmount qtyMax, mPrice width, mPrice fv, mPrice price, mAmount qtyTrade, mPrice priceTrade, mAmount KqtyTrade, bool reverse) {
@@ -247,11 +252,11 @@ namespace K {
       };
       void applyMaxWallet() {
         mAmount maxWallet = args.maxWallet;
-        maxWallet -= balance.quote.held / market->stats.fairValue.fv;
-        if (maxWallet > 0 and balance.quote.amount / market->stats.fairValue.fv > maxWallet) {
-          balance.quote.amount = maxWallet * market->stats.fairValue.fv;
+        maxWallet -= balance.quote.held / market->levels.fairValue;
+        if (maxWallet > 0 and balance.quote.amount / market->levels.fairValue > maxWallet) {
+          balance.quote.amount = maxWallet * market->levels.fairValue;
           maxWallet = 0;
-        } else maxWallet -= balance.quote.amount / market->stats.fairValue.fv;
+        } else maxWallet -= balance.quote.amount / market->levels.fairValue;
         maxWallet -= balance.base.held;
         if (maxWallet > 0 and balance.base.amount > maxWallet)
           balance.base.amount = maxWallet;

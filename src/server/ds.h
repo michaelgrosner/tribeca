@@ -16,6 +16,8 @@
 #define M_PI_2 1.5707963267948965579989817342720925807952880859375
 #endif
 
+#define TRUEONCE(k) k ? !(k = !k) : k
+
 namespace K {
   enum class mExchange: unsigned int { Null, HitBtc, OkCoin, Coinbase, Bitfinex, Ethfinex, Kraken, OkEx, Korbit, Poloniex };
   enum class mConnectivity: unsigned int { Disconnected, Connected };
@@ -28,7 +30,7 @@ namespace K {
   enum class mQuotingMode: unsigned int { Top, Mid, Join, InverseJoin, InverseTop, HamelinRat, Depth };
   enum class mQuotingSafety: unsigned int { Off, PingPong, Boomerang, AK47 };
   enum class mQuoteState: unsigned int { Live, Disconnected, DisabledQuotes, MissingData, UnknownHeld, TBPHeld, MaxTradesSeconds, WaitingPing, DepletedFunds, Crossed, UpTrendHeld, DownTrendHeld };
-  enum class mFairValueModel: unsigned int { BBO, wBBO };
+  enum class mFairValueModel: unsigned int { BBO, wBBO , rwBBO };
   enum class mAutoPositionMode: unsigned int { Manual, EWMA_LS, EWMA_LMS, EWMA_4 };
   enum class mPDivMode: unsigned int { Manual, Linear, Sine, SQRT, Switch};
   enum class mAPR: unsigned int { Off, Size, SizeWidth };
@@ -140,6 +142,12 @@ namespace K {
     virtual json kiss(const json &j) {
       return j;
     };
+  };
+
+  struct mToScreen {
+    function<void()> refresh;
+    function<void(const string&, const string&)> print;
+    function<void(const string&, const string&)> warn;
   };
 
   struct mToClient: public mDump,
@@ -630,7 +638,8 @@ namespace K {
     };
   };
 
-  struct mPosition: public mJsonToClient<mPosition> {
+  struct mPosition: public mToScreen,
+                    public mJsonToClient<mPosition> {
     mAmount baseAmount,
             quoteAmount,
             _quoteAmountValue,
@@ -651,6 +660,11 @@ namespace K {
     {};
     bool empty() const {
       return !baseValue;
+    };
+    bool warn_empty() const {
+      const bool err = empty();
+      if (err) warn("PG", "Unable to calculate TBP, missing wallet data");
+      return err;
     };
     bool ratelimit(const mPosition &next) const {
       return (!next.empty()
@@ -678,7 +692,10 @@ namespace K {
       profitBase = next.profitBase;
       profitQuote = next.profitQuote;
       pair = next.pair;
-      if (!limited) send();
+      if (!limited) {
+        send();
+        refresh();
+      }
     };
     mMatter about() const {
       return mMatter::Position;
@@ -740,66 +757,6 @@ namespace K {
     k.sideAPR            = j.value("sideAPR", "");
   };
 
-  struct mEwma: public mStructFromDb<mEwma> {
-    mPrice mgEwmaVL,
-           mgEwmaL,
-           mgEwmaM,
-           mgEwmaS,
-           mgEwmaXS,
-           mgEwmaU,
-           mgEwmaP,
-           mgEwmaW;
-    double mgEwmaTrendDiff;
-    mEwma():
-      mgEwmaVL(0), mgEwmaL(0), mgEwmaM(0), mgEwmaS(0), mgEwmaXS(0), mgEwmaU(0), mgEwmaP(0), mgEwmaW(0), mgEwmaTrendDiff(0)
-    {};
-    void calc(mPrice *const mean, const unsigned int &periods, const mPrice &value) {
-      if (*mean) {
-        double alpha = 2.0 / (periods + 1);
-        *mean = alpha * value + (1 - alpha) * *mean;
-      } else *mean = value;
-    };
-    mMatter about() const {
-      return mMatter::EWMAStats;
-    };
-    mClock lifetime() const {
-      return 60e+3 * max(qp.veryLongEwmaPeriods,
-                     max(qp.longEwmaPeriods,
-                     max(qp.mediumEwmaPeriods,
-                     max(qp.shortEwmaPeriods,
-                     max(qp.extraShortEwmaPeriods,
-                         qp.ultraShortEwmaPeriods
-                     )))));
-    };
-    string explain() const {
-      return "EWMA Values";
-    };
-    string explainKO() const {
-      return "consider to warm up some %";
-    };
-  };
-  static void to_json(json &j, const mEwma &k) {
-    j = {
-      {  "ewmaVeryLong", k.mgEwmaVL       },
-      {      "ewmaLong", k.mgEwmaL        },
-      {    "ewmaMedium", k.mgEwmaM        },
-      {     "ewmaShort", k.mgEwmaS        },
-      {"ewmaExtraShort", k.mgEwmaXS       },
-      {"ewmaUltraShort", k.mgEwmaU        },
-      {     "ewmaQuote", k.mgEwmaP        },
-      {     "ewmaWidth", k.mgEwmaW        },
-      { "ewmaTrendDiff", k.mgEwmaTrendDiff}
-    };
-  };
-  static void from_json(const json &j, mEwma &k) {
-    k.mgEwmaVL = j.value("ewmaVeryLong", 0.0);
-    k.mgEwmaL  = j.value("ewmaLong", 0.0);
-    k.mgEwmaM  = j.value("ewmaMedium", 0.0);
-    k.mgEwmaS  = j.value("ewmaShort", 0.0);
-    k.mgEwmaXS = j.value("ewmaExtraShort", 0.0);
-    k.mgEwmaU  = j.value("ewmaUltraShort", 0.0);
-  };
-
   struct mFairValue {
     mPrice fv;
     mFairValue():
@@ -817,7 +774,7 @@ namespace K {
   static void from_json(const json &j, mFairValue &k) {
     k.fv = j.value("fv", 0.0);
   };
-  struct mFairValues: public mVectorFromDb<mFairValue> {
+  struct mFairHistory: public mVectorFromDb<mFairValue> {
     mMatter about() const {
       return mMatter::MarketDataLongTerm;
     };
@@ -831,30 +788,30 @@ namespace K {
       return "loaded % historical Fair Values";
     };
   };
-  struct mFairStats:  public mFairValue,
-                      public mJsonToClient<mFairStats> {
-    mFairStats()
-    { fv = 0; };
-    mFairStats(mPrice f)
-    { fv = f; };
+  struct mFairLevelsPrice: public mToScreen,
+                           public mJsonToClient<mFairLevelsPrice> {
+    mPrice *fv;
+    mFairLevelsPrice(mPrice *f):
+      fv(f)
+    {};
     mMatter about() const {
       return mMatter::FairValue;
     };
     bool realtime() const {
       return !qp.delayUI;
     };
-    bool ratelimit(const mPrice &next) const {
-      return !next or fv == next;
+    bool ratelimit(const mPrice &prev) const {
+      return *fv == prev;
     };
-    void send_ratelimit(const mPrice &next) {
-      bool limited = ratelimit(next);
-      fv = next;
-      if (!limited) send();
+    void send_ratelimit(const mPrice &prev) const {
+      if (ratelimit(prev)) return;
+      send();
+      refresh();
     };
   };
-  static void to_json(json &j, const mFairStats &k) {
+  static void to_json(json &j, const mFairLevelsPrice &k) {
     j = {
-      {"price", k.fv}
+      {"price", *k.fv}
     };
   };
 
@@ -922,6 +879,86 @@ namespace K {
     string explainOK() const {
       return "loaded % STDEV Periods";
     };
+  };
+
+  struct mEwma: public mToScreen,
+                public mStructFromDb<mEwma> {
+    mFairHistory fairValue96h;
+          mPrice mgEwmaVL,
+                 mgEwmaL,
+                 mgEwmaM,
+                 mgEwmaS,
+                 mgEwmaXS,
+                 mgEwmaU,
+                 mgEwmaP,
+                 mgEwmaW;
+          double mgEwmaTrendDiff;
+    mEwma():
+      mgEwmaVL(0), mgEwmaL(0), mgEwmaM(0), mgEwmaS(0), mgEwmaXS(0), mgEwmaU(0), mgEwmaP(0), mgEwmaW(0), mgEwmaTrendDiff(0)
+    {};
+    void prepareHistory(const mPrice &fv) {
+      fairValue96h.push_back(mFairValue(fv));
+    };
+    void calc(mPrice *const mean, const unsigned int &periods, const mPrice &value) {
+      if (*mean) {
+        double alpha = 2.0 / (periods + 1);
+        *mean = alpha * value + (1 - alpha) * *mean;
+      } else *mean = value;
+    };
+    void calcFromHistory(mPrice *mean, unsigned int periods, const string &name) {
+      unsigned int n = fairValue96h.size();
+      if (!n) return;
+      *mean = fairValue96h.begin()->fv;
+      while (n--) calc(mean, periods, (fairValue96h.rbegin()+n)->fv);
+      print("MG", "reloaded " + to_string(*mean) + " EWMA " + name);
+    };
+    void calcFromHistory() {
+      if (TRUEONCE(qp._diffVLEP)) calcFromHistory(&mgEwmaVL, qp.veryLongEwmaPeriods,   "VeryLong");
+      if (TRUEONCE(qp._diffLEP))  calcFromHistory(&mgEwmaL,  qp.longEwmaPeriods,       "Long");
+      if (TRUEONCE(qp._diffMEP))  calcFromHistory(&mgEwmaM,  qp.mediumEwmaPeriods,     "Medium");
+      if (TRUEONCE(qp._diffSEP))  calcFromHistory(&mgEwmaS,  qp.shortEwmaPeriods,      "Short");
+      if (TRUEONCE(qp._diffXSEP)) calcFromHistory(&mgEwmaXS, qp.extraShortEwmaPeriods, "ExtraShort");
+      if (TRUEONCE(qp._diffUEP))  calcFromHistory(&mgEwmaU,  qp.ultraShortEwmaPeriods, "UltraShort");
+    };
+    mMatter about() const {
+      return mMatter::EWMAStats;
+    };
+    mClock lifetime() const {
+      return 60e+3 * max(qp.veryLongEwmaPeriods,
+                     max(qp.longEwmaPeriods,
+                     max(qp.mediumEwmaPeriods,
+                     max(qp.shortEwmaPeriods,
+                     max(qp.extraShortEwmaPeriods,
+                         qp.ultraShortEwmaPeriods
+                     )))));
+    };
+    string explain() const {
+      return "EWMA Values";
+    };
+    string explainKO() const {
+      return "consider to warm up some %";
+    };
+  };
+  static void to_json(json &j, const mEwma &k) {
+    j = {
+      {  "ewmaVeryLong", k.mgEwmaVL       },
+      {      "ewmaLong", k.mgEwmaL        },
+      {    "ewmaMedium", k.mgEwmaM        },
+      {     "ewmaShort", k.mgEwmaS        },
+      {"ewmaExtraShort", k.mgEwmaXS       },
+      {"ewmaUltraShort", k.mgEwmaU        },
+      {     "ewmaQuote", k.mgEwmaP        },
+      {     "ewmaWidth", k.mgEwmaW        },
+      { "ewmaTrendDiff", k.mgEwmaTrendDiff}
+    };
+  };
+  static void from_json(const json &j, mEwma &k) {
+    k.mgEwmaVL = j.value("ewmaVeryLong", 0.0);
+    k.mgEwmaL  = j.value("ewmaLong", 0.0);
+    k.mgEwmaM  = j.value("ewmaMedium", 0.0);
+    k.mgEwmaS  = j.value("ewmaShort", 0.0);
+    k.mgEwmaXS = j.value("ewmaExtraShort", 0.0);
+    k.mgEwmaU  = j.value("ewmaUltraShort", 0.0);
   };
 
   struct mTrade {
@@ -1061,20 +1098,23 @@ namespace K {
   };
 
   struct mMarketStats: public mJsonToClient<mMarketStats> {
-          mEwma ewma;
-     mFairStats fairValue;
-        mTakers takerTrades;
-         double mgStdevTop,
-                mgStdevTopMean,
-                mgStdevFV,
-                mgStdevFVMean,
-                mgStdevBid,
-                mgStdevBidMean,
-                mgStdevAsk,
-                mgStdevAskMean;
-    mMarketStats():
-       ewma(mEwma()), fairValue(mFairStats()), takerTrades(mTakers()), mgStdevTop(0), mgStdevTopMean(0), mgStdevFV(0), mgStdevFVMean(0), mgStdevBid(0), mgStdevBidMean(0), mgStdevAsk(0), mgStdevAskMean(0)
+               mEwma ewma;
+    mFairLevelsPrice fairPrice;
+             mTakers takerTrades;
+              double mgStdevTop,
+                     mgStdevTopMean,
+                     mgStdevFV,
+                     mgStdevFVMean,
+                     mgStdevBid,
+                     mgStdevBidMean,
+                     mgStdevAsk,
+                     mgStdevAskMean;
+    mMarketStats(mPrice *f):
+       ewma(mEwma()), fairPrice(mFairLevelsPrice(f)), takerTrades(mTakers()), mgStdevTop(0), mgStdevTopMean(0), mgStdevFV(0), mgStdevFVMean(0), mgStdevBid(0), mgStdevBidMean(0), mgStdevAsk(0), mgStdevAskMean(0)
     {};
+    void prepareEwmaHistory() {
+      ewma.prepareHistory(*fairPrice.fv);
+    };
     void send_push() const {
       ewma.push();
       send();
@@ -1089,7 +1129,7 @@ namespace K {
   static void to_json(json &j, const mMarketStats &k) {
     j = {
       {          "ewma", k.ewma                         },
-      {     "fairValue", k.fairValue.fv                 },
+      {     "fairValue", *k.fairPrice.fv                },
       { "tradesBuySize", k.takerTrades.takersBuySize60s },
       {"tradesSellSize", k.takerTrades.takersSellSize60s},
       {    "stdevWidth", {
@@ -1294,24 +1334,37 @@ namespace K {
     map<mPrice, mAmount> filterBidOrders,
                          filterAskOrders;
             unsigned int averageCount;
-                  mPrice averageWidth;
+                  mPrice averageWidth,
+                         fairValue;
+            mMarketStats stats;
     mLevelsFull():
-      diff(mLevelsDiff(&unfiltered)), filterBidOrders({}), filterAskOrders({}), averageCount(0), averageWidth(0)
+      diff(mLevelsDiff(&unfiltered)), filterBidOrders({}), filterAskOrders({}), averageCount(0), averageWidth(0), stats(mMarketStats(&fairValue))
     {};
-    mPrice calcFairValue() {
-      if (empty()) return 0;
-      calcAverageWidth();
-      if (qp.fvModel == mFairValueModel::BBO)
-        return (asks.cbegin()->price
-              + bids.cbegin()->price) / 2;
-      else return (
-        bids.cbegin()->price * bids.cbegin()->size
-      + asks.cbegin()->price * asks.cbegin()->size
-      ) / (asks.cbegin()->size
-         + bids.cbegin()->size
+     void calcFairValue() {
+      mPrice prev = fairValue;
+      if (empty())
+        fairValue = 0;
+      else if (qp.fvModel == mFairValueModel::BBO)
+        fairValue = (asks.cbegin()->price
+                   + bids.cbegin()->price) / 2;
+      else if (qp.fvModel == mFairValueModel::wBBO)
+        fairValue = (
+          bids.cbegin()->price * bids.cbegin()->size
+        + asks.cbegin()->price * asks.cbegin()->size
+        ) / (asks.cbegin()->size
+           + bids.cbegin()->size
       );
+      else
+        fairValue = (
+          bids.cbegin()->price * asks.cbegin()->size
+        + asks.cbegin()->price * bids.cbegin()->size
+        ) / (asks.cbegin()->size
+           + bids.cbegin()->size
+      );
+      stats.fairPrice.send_ratelimit(prev);
     };
     void calcAverageWidth() {
+      if (empty()) return;
       averageWidth = (
         (averageWidth * averageCount)
           + asks.cbegin()->price
@@ -1344,6 +1397,8 @@ namespace K {
       reset(next);
       if (!filterBidOrders.empty()) filter(&bids, filterBidOrders);
       if (!filterAskOrders.empty()) filter(&asks, filterAskOrders);
+      calcFairValue();
+      calcAverageWidth();
       diff.send_reset();
     };
   };

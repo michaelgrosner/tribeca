@@ -28,6 +28,7 @@ namespace K {
     };
     virtual void config() = 0;
     virtual void pressme(const mHotkey&, function<void()>) = 0;
+    virtual void printme(mToScreen&) = 0;
     virtual int error(string, string, bool = false) = 0;
     virtual void waitForUser() = 0;
     virtual string stamp() = 0;
@@ -41,8 +42,6 @@ namespace K {
 #define DEBUG(x)     if (args.debugQuotes) screen->log("DEBUG QE", x)
 #define DEBUQ(x, b, a, q) DEBUG("quote " x " " + to_string((int)b) + ":" + to_string((int)a) + " " + ((json)q).dump())
     virtual void log(const map<mRandId, mOrder>&, const bool&) = 0;
-    virtual void log(const mPosition&) = 0;
-    virtual void log(const mPrice&) = 0;
     virtual void refresh() = 0;
     virtual void end() = 0;
   } *screen = nullptr;
@@ -67,6 +66,7 @@ namespace K {
     mPosition position;
       mTarget target;
       mSafety safety;
+    virtual void timer_1s() = 0;
     virtual void calcWallet() = 0;
     virtual void calcSafety() = 0;
     virtual void calcTargetBasePos() = 0;
@@ -75,12 +75,10 @@ namespace K {
   } *wallet = nullptr;
 
   static struct Market {
-     mLevelsFull levels;
-    mMarketStats stats;
+    mLevelsFull levels;
     double targetPosition = 0;
-    virtual void calcStats() = 0;
-    virtual void calcFairValue() = 0;
-    virtual void calcEwmaHistory() = 0;
+    virtual void timer_1s() = 0;
+    virtual void timer_60s() = 0;
   } *market = nullptr;
 
   static struct Broker {
@@ -308,8 +306,9 @@ namespace K {
         load();
         waitData();
         waitTime();
-        if (!args.headless) waitWebAdmin();
-        if (!args.naked)    waitSysAdmin();
+        if (!args.headless)
+          waitWebAdmin();
+        waitSysAdmin();
         run();
         endingFn.push_back([&](){
           end();

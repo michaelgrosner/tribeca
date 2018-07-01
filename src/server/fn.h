@@ -18,7 +18,6 @@ namespace K {
       static double d8(const double &d) { return stod(str8(d)); };
       static string strL(string s) { transform(s.begin(), s.end(), s.begin(), ::tolower); return s; };
       static string strU(string s) { transform(s.begin(), s.end(), s.begin(), ::toupper); return s; };
-      static bool trueOnce(bool *const k) { return *k ? !(*k = !*k) : *k; };
       static unsigned long long int64() {
         static random_device rd;
         static mt19937_64 gen(rd());

@@ -143,6 +143,8 @@ In the web UI, there are three rows of panels with cryptic looking names and edi
 
   * `wBBO` - `FV = ([topBid price]*[topBid size] + [topAsk price]*[topAsk size]) / ([topAsk size] + [topBid size])`
 
+  * `rwBBO` - `FV = ([topBid price]*[topAsk size] + [topAsk price]*[topBid size]) / ([topAsk size] + [topBid size])`
+
 * `apMode`
 
   * `Manual` - **Krypto-trading-bot** will not try to automatically manage positions, instead you will need to manually set `tbp`.

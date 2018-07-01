@@ -65,9 +65,21 @@ namespace K  {
         screen->waitForUser();
       };
       void timer_1s() {
-        if (!gw->countdown)                  engine->timer_1s();
-        else if (gw->countdown-- == 1)       gw->connect();
-        if (FN::trueOnce(&gw->refreshWallet)
+        if (!gw->countdown) {
+          if (market->levels.fairValue) {
+                                             market->timer_1s();
+            if (!(tick % 60))                market->timer_60s();
+                                             wallet->timer_1s();
+                                             engine->timer_1s();
+          } else screen->logWar("QE",
+              "Unable to calculate quote,"
+              " missing market data"
+            );
+        } else if (gw->countdown-- == 1) {    gw->connect();
+          tick = 0;
+          return;
+        }
+        if (TRUEONCE(gw->refreshWallet)
           or !(tick % 15))                   async(gw->wallet);
         if (!gw->async) {
           if (!(tick % 2))                   async(gw->orders);

@@ -8,16 +8,9 @@ namespace K {
       map<mHotkey, function<void()>> hotFn;
       WINDOW *wBorder = nullptr,
              *wLog    = nullptr;
-      int cursor = 0,
-          spinOrders = 0,
-          baseAmount = 0,
-          baseHeld = 0,
-          quoteAmount = 0,
-          quoteHeld = 0;
-      string baseValue = "?",
-             quoteValue = "?",
-             fairValue = "?",
-             protocol = "?",
+      int cursor     = 0,
+          spinOrders = 0;
+      string protocol  = "?",
              wtfismyip = "";
       multimap<mPrice, mOrder, greater<mPrice>> openOrders;
     public:
@@ -54,6 +47,17 @@ namespace K {
         if (hotFn.find(ch) != hotFn.end())
           exit(error("SH", string("Too many handlers for \"") + (char)ch + "\" pressme event"));
         hotFn[ch] = fn;
+      };
+      void printme(mToScreen& data) {
+        data.print = [&](const string &type, const string &msg) {
+          log(type, msg);
+        };
+        data.warn = [&](const string &type, const string &msg) {
+          logWar(type, msg);
+        };
+        data.refresh = [&]() {
+          refresh();
+        };
       };
       int error(string k, string s, bool reboot = false) {
         end();
@@ -244,21 +248,6 @@ namespace K {
         if (working and ++spinOrders == 4) spinOrders = 0;
         refresh();
       };
-      void log(const mPosition &pos) {
-        if (!wBorder) return;
-        baseAmount = round(pos.baseAmount * 10 / pos.baseValue);
-        baseHeld = round(pos.baseHeldAmount * 10 / pos.baseValue);
-        quoteAmount = round(pos.quoteAmount * 10 / pos.quoteValue);
-        quoteHeld = round(pos.quoteHeldAmount * 10 / pos.quoteValue);
-        baseValue = FN::str8(pos.baseValue);
-        quoteValue = FN::str8(pos.quoteValue);
-        refresh();
-      };
-      void log(const mPrice &fv) {
-        if (!wBorder) return;
-        fairValue = FN::str8(fv);
-        refresh();
-      };
       void refresh() {
         if (!wBorder) return;
         int lastcursor = cursor,
@@ -318,6 +307,8 @@ namespace K {
         mvwhline(wBorder, 1, 8, ACS_HLINE, 4);
         mvwaddch(wBorder, 1, 12, ACS_RTEE);
         wattron(wBorder, COLOR_PAIR(COLOR_MAGENTA));
+        const string baseValue  = FN::str8(wallet->position.baseValue),
+                     quoteValue = FN::str8(wallet->position.quoteValue);
         wattron(wBorder, A_BOLD);
         waddstr(wBorder, (" " + baseValue + ' ').data());
         wattroff(wBorder, A_BOLD);
@@ -344,7 +335,11 @@ namespace K {
         mvwaddch(wBorder, 1, xMaxValue, ACS_LRCORNER);
         mvwhline(wBorder, 1, xLenValue, ACS_HLINE, xMaxValue - xLenValue);
         mvwaddch(wBorder, 1, xLenValue, ACS_LTEE);
-        int yPos = max(1, (y / 2) - 6);
+        const int yPos = max(1, (y / 2) - 6),
+                  baseAmount  = round(wallet->position.baseAmount      * 10 / wallet->position.baseValue),
+                  baseHeld    = round(wallet->position.baseHeldAmount  * 10 / wallet->position.baseValue),
+                  quoteAmount = round(wallet->position.quoteAmount     * 10 / wallet->position.quoteValue),
+                  quoteHeld   = round(wallet->position.quoteHeldAmount * 10 / wallet->position.quoteValue);
         mvwvline(wBorder, yPos+1, x-3, ' ', 10);
         mvwvline(wBorder, yPos+1, x-4, ' ', 10);
         wattron(wBorder, COLOR_PAIR(COLOR_CYAN));
@@ -394,7 +389,7 @@ namespace K {
           wattron(wBorder, COLOR_PAIR(COLOR_GREEN));
           waddstr(wBorder, (" 1 " + base + " = ").data());
           wattron(wBorder, A_BOLD);
-          waddstr(wBorder, fairValue.data());
+          waddstr(wBorder, FN::str8(market->levels.fairValue).data());
           wattroff(wBorder, A_BOLD);
           waddstr(wBorder, (" " + quote).data());
           wattroff(wBorder, COLOR_PAIR(COLOR_GREEN));
