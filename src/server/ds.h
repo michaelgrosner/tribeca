@@ -997,7 +997,7 @@ namespace K {
       calc(&mgEwmaS,  qp.shortEwmaPeriods,      lastFairValue());
       calc(&mgEwmaXS, qp.extraShortEwmaPeriods, lastFairValue());
       calc(&mgEwmaU,  qp.ultraShortEwmaPeriods, lastFairValue());
-      if(mgEwmaXS and mgEwmaU)
+      if (mgEwmaXS and mgEwmaU)
         mgEwmaTrendDiff = ((mgEwmaU * 1e+2) / mgEwmaXS) - 1e+2;
     };
     mMatter about() const {

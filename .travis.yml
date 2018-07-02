@@ -64,7 +64,7 @@ script:
     if [[ "${TRAVIS_OS_NAME}" == "linux" ]]; then
       KCOV=1 make
       ./K.sh --version
-      ncu              | /usr/games/cowsay
+      ncu | tail -n-3  | /usr/games/cowsay
       make test-c 2>&1 | /usr/games/cowsay || :
       make test        | /usr/games/cowsay
     else
