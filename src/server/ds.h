@@ -517,6 +517,17 @@ namespace K {
     mWallets(mWallet b, mWallet q):
       base(b), quote(q)
     {};
+    void calcMaxWallet(const mPrice &fv) {
+      mAmount maxWallet = args.maxWallet;
+      maxWallet -= quote.held / fv;
+      if (maxWallet > 0 and quote.amount / fv > maxWallet) {
+        quote.amount = maxWallet * fv;
+        maxWallet = 0;
+      } else maxWallet -= quote.amount / fv;
+      maxWallet -= base.held;
+      if (maxWallet > 0 and base.amount > maxWallet)
+        base.amount = maxWallet;
+    };
     bool empty() const {
       return base.empty() or quote.empty();
     };
@@ -568,7 +579,7 @@ namespace K {
       );
     };
     double calcDiffPercent(mAmount older, mAmount newer) const {
-      return ((newer - older) / newer) * 100;
+      return ((newer - older) / newer) * 1e+2;
     };
     mMatter about() const {
       return mMatter::Profit;
@@ -586,6 +597,89 @@ namespace K {
     };
     string explainOK() const {
       return "loaded % historical Profits";
+    };
+  };
+
+  struct mPosition: public mToScreen,
+                    public mJsonToClient<mPosition> {
+       mPair pair;
+    mProfits profits;
+     mAmount baseAmount,
+             quoteAmount,
+             _quoteAmountValue,
+             baseHeldAmount,
+             quoteHeldAmount,
+             _baseTotal,
+             _quoteTotal,
+             baseValue,
+             quoteValue;
+      double profitBase,
+             profitQuote;
+    mPosition():
+      pair(mPair()), profits(mProfits()), baseAmount(0), quoteAmount(0), _quoteAmountValue(0), baseHeldAmount(0), quoteHeldAmount(0), _baseTotal(0), _quoteTotal(0), baseValue(0), quoteValue(0), profitBase(0), profitQuote(0)
+    {};
+    mPosition(mPair p, mAmount bA, mAmount qA, mAmount qAV, mAmount bH, mAmount qH, mAmount bT, mAmount qT, mAmount bV, mAmount qV):
+      pair(p), baseAmount(bA), quoteAmount(qA), _quoteAmountValue(qAV), baseHeldAmount(bH), quoteHeldAmount(qH), _baseTotal(bT), _quoteTotal(qT), baseValue(bV), quoteValue(qV), profitBase(0), profitQuote(0)
+    {};
+    bool empty() const {
+      return !baseValue;
+    };
+    bool warn_empty() const {
+      const bool err = empty();
+      if (err) warn("PG", "Unable to calculate TBP, missing wallet data");
+      return err;
+    };
+    bool ratelimit(const mPosition &next) const {
+      return (!next.empty()
+        and abs(baseValue - next.baseValue) < 2e-6
+        and abs(quoteValue - next.quoteValue) < 2e-2
+        and abs(baseAmount - next.baseAmount) < 2e-6
+        and abs(quoteAmount - next.quoteAmount) < 2e-2
+        and abs(baseHeldAmount - next.baseHeldAmount) < 2e-6
+        and abs(quoteHeldAmount - next.quoteHeldAmount) < 2e-2
+        and abs(profitBase - next.profitBase) < 2e-2
+        and abs(profitQuote - next.profitQuote) < 2e-2
+      );
+    };
+    void send_ratelimit(const mPosition &next) {
+      bool limited = ratelimit(next);
+      pair = next.pair;
+      baseAmount = next.baseAmount;
+      quoteAmount = next.quoteAmount;
+      _quoteAmountValue = next._quoteAmountValue;
+      baseHeldAmount = next.baseHeldAmount;
+      quoteHeldAmount = next.quoteHeldAmount;
+      _baseTotal = next._baseTotal;
+      _quoteTotal = next._quoteTotal;
+      baseValue = next.baseValue;
+      quoteValue = next.quoteValue;
+      if (!profits.ratelimit())
+        profits.push_back(mProfit(baseValue, quoteValue));
+      profitBase = profits.calcBase();
+      profitQuote = profits.calcQuote();
+      if (!limited) {
+        send();
+        refresh();
+      }
+    };
+    mMatter about() const {
+      return mMatter::Position;
+    };
+    bool realtime() const {
+      return !qp.delayUI;
+    };
+  };
+  static void to_json(json &j, const mPosition &k) {
+    j = {
+      {     "baseAmount", k.baseAmount     },
+      {    "quoteAmount", k.quoteAmount    },
+      { "baseHeldAmount", k.baseHeldAmount },
+      {"quoteHeldAmount", k.quoteHeldAmount},
+      {      "baseValue", k.baseValue      },
+      {     "quoteValue", k.quoteValue     },
+      {     "profitBase", k.profitBase     },
+      {    "profitQuote", k.profitQuote    },
+      {           "pair", k.pair           }
     };
   };
 
@@ -638,86 +732,6 @@ namespace K {
     };
   };
 
-  struct mPosition: public mToScreen,
-                    public mJsonToClient<mPosition> {
-    mAmount baseAmount,
-            quoteAmount,
-            _quoteAmountValue,
-            baseHeldAmount,
-            quoteHeldAmount,
-            _baseTotal,
-            _quoteTotal,
-            baseValue,
-            quoteValue;
-     double profitBase,
-            profitQuote;
-      mPair pair;
-    mPosition():
-      baseAmount(0), quoteAmount(0), _quoteAmountValue(0), baseHeldAmount(0), quoteHeldAmount(0), _baseTotal(0), _quoteTotal(0), baseValue(0), quoteValue(0), profitBase(0), profitQuote(0), pair(mPair())
-    {};
-    mPosition(mAmount bA, mAmount qA, mAmount qAV, mAmount bH, mAmount qH, mAmount bT, mAmount qT, mAmount bV, mAmount qV, mAmount bP, mAmount qP, mPair p):
-      baseAmount(bA), quoteAmount(qA), _quoteAmountValue(qAV), baseHeldAmount(bH), quoteHeldAmount(qH), _baseTotal(bT), _quoteTotal(qT), baseValue(bV), quoteValue(qV), profitBase(bP), profitQuote(qP), pair(p)
-    {};
-    bool empty() const {
-      return !baseValue;
-    };
-    bool warn_empty() const {
-      const bool err = empty();
-      if (err) warn("PG", "Unable to calculate TBP, missing wallet data");
-      return err;
-    };
-    bool ratelimit(const mPosition &next) const {
-      return (!next.empty()
-        and abs(baseValue - next.baseValue) < 2e-6
-        and abs(quoteValue - next.quoteValue) < 2e-2
-        and abs(baseAmount - next.baseAmount) < 2e-6
-        and abs(quoteAmount - next.quoteAmount) < 2e-2
-        and abs(baseHeldAmount - next.baseHeldAmount) < 2e-6
-        and abs(quoteHeldAmount - next.quoteHeldAmount) < 2e-2
-        and abs(profitBase - next.profitBase) < 2e-2
-        and abs(profitQuote - next.profitQuote) < 2e-2
-      );
-    };
-    void send_ratelimit(const mPosition &next) {
-      bool limited = ratelimit(next);
-      baseAmount = next.baseAmount;
-      quoteAmount = next.quoteAmount;
-      _quoteAmountValue = next._quoteAmountValue;
-      baseHeldAmount = next.baseHeldAmount;
-      quoteHeldAmount = next.quoteHeldAmount;
-      _baseTotal = next._baseTotal;
-      _quoteTotal = next._quoteTotal;
-      baseValue = next.baseValue;
-      quoteValue = next.quoteValue;
-      profitBase = next.profitBase;
-      profitQuote = next.profitQuote;
-      pair = next.pair;
-      if (!limited) {
-        send();
-        refresh();
-      }
-    };
-    mMatter about() const {
-      return mMatter::Position;
-    };
-    bool realtime() const {
-      return !qp.delayUI;
-    };
-  };
-  static void to_json(json &j, const mPosition &k) {
-    j = {
-      {     "baseAmount", k.baseAmount     },
-      {    "quoteAmount", k.quoteAmount    },
-      { "baseHeldAmount", k.baseHeldAmount },
-      {"quoteHeldAmount", k.quoteHeldAmount},
-      {      "baseValue", k.baseValue      },
-      {     "quoteValue", k.quoteValue     },
-      {     "profitBase", k.profitBase     },
-      {    "profitQuote", k.profitQuote    },
-      {           "pair", k.pair           }
-    };
-  };
-
   struct mTarget: public mStructFromDb<mTarget>,
                   public mJsonToClient<mTarget> {
     mAmount targetBasePosition,
@@ -727,6 +741,23 @@ namespace K {
     mTarget():
       targetBasePosition(0), positionDivergence(0), sideAPR(""), base("")
     {};
+    void calcPDiv(const mAmount &baseValue) {
+      mAmount pDiv = qp.percentageValues
+        ? qp.positionDivergencePercentage * baseValue / 1e+2
+        : qp.positionDivergence;
+      if (qp.autoPositionMode == mAutoPositionMode::Manual or mPDivMode::Manual == qp.positionDivergenceMode)
+        positionDivergence = pDiv;
+      else {
+        mAmount pDivMin = qp.percentageValues
+          ? qp.positionDivergencePercentageMin * baseValue / 1e+2
+          : qp.positionDivergenceMin;
+        double divCenter = 1 - abs((targetBasePosition / baseValue * 2) - 1);
+        if (mPDivMode::Linear == qp.positionDivergenceMode)      positionDivergence = pDivMin + (divCenter * (pDiv - pDivMin));
+        else if (mPDivMode::Sine == qp.positionDivergenceMode)   positionDivergence = pDivMin + (sin(divCenter*M_PI_2) * (pDiv - pDivMin));
+        else if (mPDivMode::SQRT == qp.positionDivergenceMode)   positionDivergence = pDivMin + (sqrt(divCenter) * (pDiv - pDivMin));
+        else if (mPDivMode::Switch == qp.positionDivergenceMode) positionDivergence = divCenter < 1e-1 ? pDivMin : pDiv;
+      }
+    };
     void send_push() const {
       push();
       send();

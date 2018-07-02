@@ -21,8 +21,8 @@ namespace K {
         });
       };
       void waitSysAdmin() {
-        screen->printme(levels.stats.fairPrice);
-        screen->printme(levels.stats.ewma);
+        screen->printme(&levels.stats.fairPrice);
+        screen->printme(&levels.stats.ewma);
       };
       void waitWebAdmin() {
         client->welcome(levels.diff);

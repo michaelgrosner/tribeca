@@ -35,6 +35,7 @@ namespace K {
         });
       };
       void waitSysAdmin() {
+        screen->printme(gw);
         screen->pressme(mHotkey::ESC, [&]() {
           adminAgreement = (mConnectivity)!adminAgreement;
           gwSemaphore();

@@ -48,16 +48,10 @@ namespace K {
           exit(error("SH", string("Too many handlers for \"") + (char)ch + "\" pressme event"));
         hotFn[ch] = fn;
       };
-      void printme(mToScreen& data) {
-        data.print = [&](const string &type, const string &msg) {
-          log(type, msg);
-        };
-        data.warn = [&](const string &type, const string &msg) {
-          logWar(type, msg);
-        };
-        data.refresh = [&]() {
-          refresh();
-        };
+      void printme(mToScreen *const data) {
+        data->print   = [&](const string &prefix, const string &reason) { log(prefix, reason); };
+        data->warn    = [&](const string &prefix, const string &reason) { logWar(prefix, reason); };
+        data->refresh = [&]() { refresh(); };
       };
       int error(string k, string s, bool reboot = false) {
         end();

@@ -12,18 +12,11 @@ namespace K  {
       unsigned int tick = 0;
     protected:
       void load() {
-        gw->socket = socket = new uWS::Hub(0, true);
-        gw->screen = screen;
+        socket = new uWS::Hub(0, true);
       };
       void waitData() {
+        gw->socket = socket;
         socket->createGroup<uWS::CLIENT>();
-      };
-      void waitTime() {
-        timer = new uS::Timer(socket->getLoop());
-        timer->setData(this);
-        timer->start([](uS::Timer *timer) {
-          ((EV*)timer->getData())->timer_1s();
-        }, 0, 1e+3);
       };
       void waitWebAdmin() {
         client->socket = socket;
@@ -32,6 +25,13 @@ namespace K  {
       void waitSysAdmin() {
         screen->pressme(mHotkey::Q, [&]() { raise(SIGINT); });
         screen->pressme(mHotkey::q, [&]() { raise(SIGINT); });
+      };
+      void waitTime() {
+        timer = new uS::Timer(socket->getLoop());
+        timer->setData(this);
+        timer->start([](uS::Timer *timer) {
+          ((EV*)timer->getData())->timer_1s();
+        }, 0, 1e+3);
       };
       void run() {
         loop = new uS::Async(socket->getLoop());

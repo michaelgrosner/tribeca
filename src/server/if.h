@@ -28,7 +28,7 @@ namespace K {
     };
     virtual void config() = 0;
     virtual void pressme(const mHotkey&, function<void()>) = 0;
-    virtual void printme(mToScreen&) = 0;
+    virtual void printme(mToScreen *const) = 0;
     virtual int error(string, string, bool = false) = 0;
     virtual void waitForUser() = 0;
     virtual string stamp() = 0;
@@ -70,7 +70,6 @@ namespace K {
     virtual void timer_60s() = 0;
     virtual void calcWallet() = 0;
     virtual void calcSafety() = 0;
-    virtual void calcTargetBasePos() = 0;
     virtual void calcWalletAfterOrder(const mSide&) = 0;
     virtual void calcSafetyAfterTrade(const mTrade&) = 0;
   } *wallet = nullptr;
@@ -98,10 +97,9 @@ namespace K {
     virtual void calcQuoteAfterSavedParams() = 0;
   } *engine = nullptr;
 
-  static class Gw {
+  static class Gw: public mToScreen {
     public:
       uWS::Hub *socket  = nullptr;
-      Screen   *screen  = nullptr;
       mMonitor *monitor = nullptr;
       mRandId (*randId)() = nullptr;
       unsigned int countdown = 0;
@@ -148,11 +146,11 @@ namespace K {
       function<bool()> cancelAll = [&]() { return askFor(replyCancelAll, [&]() { return sync_cancelAll(); }); };
       void clear() {
         if (args.dustybot)
-          screen->log("GW " + name, "--dustybot is enabled, remember to cancel manually any open order.");
+          print("GW " + name, "--dustybot is enabled, remember to cancel manually any open order.");
         else if (write_mOrder) {
-          screen->log("GW " + name, "Attempting to cancel all open orders, please wait.");
+          print("GW " + name, "Attempting to cancel all open orders, please wait.");
           for (mOrder &it : sync_cancelAll()) write_mOrder(it);
-          screen->log("GW " + name, "cancel all open orders OK");
+          print("GW " + name, "cancel all open orders OK");
         }
       };
 //BO non-free gw library functions from build-*/local/lib/K-*.a (it just redefines all virtual gateway class members below).
@@ -172,16 +170,16 @@ namespace K {
 //EO non-free gw library functions from build-*/local/lib/K-*.a (it just redefines all virtual gateway class members above).
       void reconnect(const string &reason) {
         countdown = 7;
-        screen->log("GW " + name, "WS " + reason + ", reconnecting in " + to_string(countdown) + "s.");
+        print("GW " + name, "WS " + reason + ", reconnecting in " + to_string(countdown) + "s.");
       };
       void log(const string &reason) {
         const string prefix = string(
           reason.find(">>>") != reason.find("<<<")
             ? "DEBUG" : "GW"
         ) + ' ' + name;
-        if (reason.find("Error") != string::npos)
-          screen->logWar(prefix, reason);
-        else screen->log(prefix, reason);
+        if (reason.find("Error") == string::npos)
+          print(prefix, reason);
+        else warn(prefix, reason);
       };
       future<vector<mWallets>> replyWallets;
       future<vector<mLevels>> replyLevels;
@@ -303,10 +301,10 @@ namespace K {
       void wait() {
         load();
         waitData();
-        waitTime();
         if (!args.headless)
           waitWebAdmin();
         waitSysAdmin();
+        waitTime();
         run();
         endingFn.push_back([&](){
           end();

@@ -6,14 +6,13 @@ namespace K {
             public Wallet { public: PG() { wallet = this; };
     private:
       mWallets balance;
-      mProfits profits;
       map<mPrice, mTrade> buys,
                           sells;
       string sideAPRDiff = "!=";
     protected:
       void load() {
         sqlite->backup(&target);
-        sqlite->backup(&profits);
+        sqlite->backup(&position.profits);
       };
       void waitData() {
         gw->RAWDATA_ENTRY_POINT(mWallets, {                         PRETTY_DEBUG
@@ -22,7 +21,7 @@ namespace K {
         });
       };
       void waitSysAdmin() {
-        screen->printme(position);
+        screen->printme(&position);
       };
       void waitWebAdmin() {
         client->welcome(position);
@@ -40,31 +39,11 @@ namespace K {
         if (position.empty() or market->levels.empty()) return;
         safety.send_ratelimit(nextSafety());
       };
-      void calcTargetBasePos() {                                    PRETTY_DEBUG
-        if (position.warn_empty()) return;
-        mAmount baseValue = position.baseValue,
-                prev = target.targetBasePosition,
-                next = qp.autoPositionMode == mAutoPositionMode::Manual
-                         ? (qp.percentageValues
-                           ? qp.targetBasePositionPercentage * baseValue / 1e+2
-                           : qp.targetBasePosition)
-                         : market->levels.stats.ewma.targetPositionAutoPercentage * baseValue / 1e+2;
-        if (prev and abs(prev - next) < 1e-4 and sideAPRDiff == target.sideAPR) return;
-        target.targetBasePosition = next;
-        sideAPRDiff = target.sideAPR;
-        calcPDiv(baseValue);
-        target.send_push();
-        if (!args.debugWallet) return;
-        screen->log("PG", "TBP: "
-          + to_string((int)(target.targetBasePosition / baseValue * 1e+2)) + "% = " + FN::str8(target.targetBasePosition)
-          + " " + gw->base + ", pDiv: "
-          + to_string((int)(target.positionDivergence  / baseValue * 1e+2)) + "% = " + FN::str8(target.positionDivergence)
-          + " " + gw->base);
-      };
       void calcWallet() {
         if (balance.empty() or market->levels.empty()) return;
-        if (args.maxWallet) applyMaxWallet();
-        mPosition pos(
+        if (args.maxWallet) balance.calcMaxWallet(market->levels.fairValue);
+        position.send_ratelimit(mPosition(
+          mPair(gw->base, gw->quote),
           FN::d8(balance.base.amount),
           FN::d8(balance.quote.amount),
           balance.quote.amount / market->levels.fairValue,
@@ -73,13 +52,8 @@ namespace K {
           balance.base.amount + balance.base.held,
           (balance.quote.amount + balance.quote.held) / market->levels.fairValue,
           FN::d8((balance.quote.amount + balance.quote.held) / market->levels.fairValue + balance.base.amount + balance.base.held),
-          FN::d8((balance.base.amount + balance.base.held) * market->levels.fairValue + balance.quote.amount + balance.quote.held),
-          position.profitBase,
-          position.profitQuote,
-          mPair(gw->base, gw->quote)
-        );
-        calcPositionProfit(&pos);
-        position.send_ratelimit(pos);
+          FN::d8((balance.base.amount + balance.base.held) * market->levels.fairValue + balance.quote.amount + balance.quote.held)
+        ));
         calcTargetBasePos();
       };
       void calcWalletAfterOrder(const mSide &side) {
@@ -111,6 +85,27 @@ namespace K {
         calcSafety();
       };
     private:
+      void calcTargetBasePos() {                                    PRETTY_DEBUG
+        if (position.warn_empty()) return;
+        mAmount baseValue = position.baseValue,
+                prev = target.targetBasePosition,
+                next = qp.autoPositionMode == mAutoPositionMode::Manual
+                         ? (qp.percentageValues
+                           ? qp.targetBasePositionPercentage * baseValue / 1e+2
+                           : qp.targetBasePosition)
+                         : market->levels.stats.ewma.targetPositionAutoPercentage * baseValue / 1e+2;
+        if (prev and abs(prev - next) < 1e-4 and sideAPRDiff == target.sideAPR) return;
+        target.targetBasePosition = next;
+        sideAPRDiff = target.sideAPR;
+        target.calcPDiv(baseValue);
+        target.send_push();
+        if (!args.debugWallet) return;
+        screen->log("PG", "TBP: "
+          + to_string((int)(target.targetBasePosition / baseValue * 1e+2)) + "% = " + FN::str8(target.targetBasePosition)
+          + " " + gw->base + ", pDiv: "
+          + to_string((int)(target.positionDivergence  / baseValue * 1e+2)) + "% = " + FN::str8(target.positionDivergence)
+          + " " + gw->base);
+      };
       mSafety nextSafety() {
         mAmount buySize = qp.percentageValues
           ? qp.buySizePercentage * position.baseValue / 100
@@ -230,40 +225,6 @@ namespace K {
         for (map<mPrice, mTrade>::value_type &it : *k)
           sum += it.second.quantity;
         return sum;
-      };
-      void calcPDiv(mAmount baseValue) {
-        mAmount pDiv = qp.percentageValues
-          ? qp.positionDivergencePercentage * baseValue / 1e+2
-          : qp.positionDivergence;
-        if (qp.autoPositionMode == mAutoPositionMode::Manual or mPDivMode::Manual == qp.positionDivergenceMode)
-          target.positionDivergence = pDiv;
-        else {
-          mAmount pDivMin = qp.percentageValues
-            ? qp.positionDivergencePercentageMin * baseValue / 1e+2
-            : qp.positionDivergenceMin;
-          double divCenter = 1 - abs((target.targetBasePosition / baseValue * 2) - 1);
-          if (mPDivMode::Linear == qp.positionDivergenceMode) target.positionDivergence = pDivMin + (divCenter * (pDiv - pDivMin));
-          else if (mPDivMode::Sine == qp.positionDivergenceMode) target.positionDivergence = pDivMin + (sin(divCenter*M_PI_2) * (pDiv - pDivMin));
-          else if (mPDivMode::SQRT == qp.positionDivergenceMode) target.positionDivergence = pDivMin + (sqrt(divCenter) * (pDiv - pDivMin));
-          else if (mPDivMode::Switch == qp.positionDivergenceMode) target.positionDivergence = divCenter < 1e-1 ? pDivMin : pDiv;
-        }
-      };
-      void calcPositionProfit(mPosition *k) {
-        if (profits.ratelimit()) return;
-        profits.push_back(mProfit(k->baseValue, k->quoteValue));
-        k->profitBase = profits.calcBase();
-        k->profitQuote = profits.calcQuote();
-      };
-      void applyMaxWallet() {
-        mAmount maxWallet = args.maxWallet;
-        maxWallet -= balance.quote.held / market->levels.fairValue;
-        if (maxWallet > 0 and balance.quote.amount / market->levels.fairValue > maxWallet) {
-          balance.quote.amount = maxWallet * market->levels.fairValue;
-          maxWallet = 0;
-        } else maxWallet -= balance.quote.amount / market->levels.fairValue;
-        maxWallet -= balance.base.held;
-        if (maxWallet > 0 and balance.base.amount > maxWallet)
-          balance.base.amount = maxWallet;
       };
   };
 }
