@@ -66,16 +66,15 @@ namespace K  {
       };
       void timer_1s() {
         if (!gw->countdown) {
-          if (market->levels.fairValue) {
-                                             market->timer_1s();
-            if (!(tick % 60))                market->timer_60s();
+          if (!market->levels.warn_empty()) {
+                                             market->levels.timer_1s();
+            if (!(tick % 60)) {              market->levels.timer_60s();
+                                             wallet->timer_60s();
+            }
                                              wallet->timer_1s();
                                              engine->timer_1s();
-          } else screen->logWar("QE",
-              "Unable to calculate quote,"
-              " missing market data"
-            );
-        } else if (gw->countdown-- == 1) {    gw->connect();
+          }
+        } else if (gw->countdown-- == 1) {   gw->connect();
           tick = 0;
           return;
         }

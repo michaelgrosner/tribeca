@@ -31,8 +31,7 @@ namespace K {
         if (!semaphore.greenGateway) {
           bidStatus = mQuoteState::Disconnected;
           askStatus = mQuoteState::Disconnected;
-        } else if (market->levels.fairValue
-          and !market->levels.empty()
+        } else if (!market->levels.empty()
           and !wallet->position.empty()
           and !wallet->safety.empty()
         ) {
@@ -53,7 +52,6 @@ namespace K {
         market->levels.calcFairValue();
         market->levels.stats.ewma.calcFromHistory();
         wallet->calcWallet();
-        wallet->calcTargetBasePos();
         wallet->calcSafety();
         calcQuote();
       };
@@ -306,27 +304,27 @@ namespace K {
         if (++AK47inc > qp.bullets) AK47inc = 0;
       };
       void applyStdevProtection(mQuote *rawQuote) {
-        if (qp.quotingStdevProtection == mSTDEV::Off or !market->levels.stats.mgStdevFV) return;
+        if (qp.quotingStdevProtection == mSTDEV::Off or !market->levels.stats.stdev.fair) return;
         if (!rawQuote->ask.empty() and (qp.quotingStdevProtection == mSTDEV::OnFV or qp.quotingStdevProtection == mSTDEV::OnTops or qp.quotingStdevProtection == mSTDEV::OnTop or wallet->target.sideAPR != "Sell"))
           rawQuote->ask.price = fmax(
             (qp.quotingStdevBollingerBands
               ? (qp.quotingStdevProtection == mSTDEV::OnFV or qp.quotingStdevProtection == mSTDEV::OnFVAPROff)
-                ? market->levels.stats.mgStdevFVMean : ((qp.quotingStdevProtection == mSTDEV::OnTops or qp.quotingStdevProtection == mSTDEV::OnTopsAPROff)
-                  ? market->levels.stats.mgStdevTopMean : market->levels.stats.mgStdevAskMean )
+                ? market->levels.stats.stdev.fairMean : ((qp.quotingStdevProtection == mSTDEV::OnTops or qp.quotingStdevProtection == mSTDEV::OnTopsAPROff)
+                  ? market->levels.stats.stdev.topMean : market->levels.stats.stdev.askMean )
               : market->levels.fairValue) + ((qp.quotingStdevProtection == mSTDEV::OnFV or qp.quotingStdevProtection == mSTDEV::OnFVAPROff)
-                ? market->levels.stats.mgStdevFV : ((qp.quotingStdevProtection == mSTDEV::OnTops or qp.quotingStdevProtection == mSTDEV::OnTopsAPROff)
-                  ? market->levels.stats.mgStdevTop : market->levels.stats.mgStdevAsk )),
+                ? market->levels.stats.stdev.fair : ((qp.quotingStdevProtection == mSTDEV::OnTops or qp.quotingStdevProtection == mSTDEV::OnTopsAPROff)
+                  ? market->levels.stats.stdev.top : market->levels.stats.stdev.ask )),
             rawQuote->ask.price
           );
         if (!rawQuote->bid.empty() and (qp.quotingStdevProtection == mSTDEV::OnFV or qp.quotingStdevProtection == mSTDEV::OnTops or qp.quotingStdevProtection == mSTDEV::OnTop or wallet->target.sideAPR != "Buy"))
           rawQuote->bid.price = fmin(
             (qp.quotingStdevBollingerBands
               ? (qp.quotingStdevProtection == mSTDEV::OnFV or qp.quotingStdevProtection == mSTDEV::OnFVAPROff)
-                ? market->levels.stats.mgStdevFVMean : ((qp.quotingStdevProtection == mSTDEV::OnTops or qp.quotingStdevProtection == mSTDEV::OnTopsAPROff)
-                  ? market->levels.stats.mgStdevTopMean : market->levels.stats.mgStdevBidMean )
+                ? market->levels.stats.stdev.fairMean : ((qp.quotingStdevProtection == mSTDEV::OnTops or qp.quotingStdevProtection == mSTDEV::OnTopsAPROff)
+                  ? market->levels.stats.stdev.topMean : market->levels.stats.stdev.bidMean )
               : market->levels.fairValue) - ((qp.quotingStdevProtection == mSTDEV::OnFV or qp.quotingStdevProtection == mSTDEV::OnFVAPROff)
-                ? market->levels.stats.mgStdevFV : ((qp.quotingStdevProtection == mSTDEV::OnTops or qp.quotingStdevProtection == mSTDEV::OnTopsAPROff)
-                  ? market->levels.stats.mgStdevTop : market->levels.stats.mgStdevBid )),
+                ? market->levels.stats.stdev.fair : ((qp.quotingStdevProtection == mSTDEV::OnTops or qp.quotingStdevProtection == mSTDEV::OnTopsAPROff)
+                  ? market->levels.stats.stdev.top : market->levels.stats.stdev.bid )),
             rawQuote->bid.price
           );
       };

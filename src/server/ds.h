@@ -838,6 +838,29 @@ namespace K {
     k.topAsk = j.value("ask", 0.0);
   };
   struct mStdevs: public mVectorFromDb<mStdev> {
+    double top,  topMean,
+           fair, fairMean,
+           bid,  bidMean,
+           ask,  askMean;
+    mStdevs():
+      top(0), topMean(0), fair(0), fairMean(0), bid(0), bidMean(0), ask(0), askMean(0)
+    {};
+    bool pull(const json &j) {
+      const bool loaded = mVectorFromDb::pull(j);
+      if (loaded) calc();
+      return loaded;
+    };
+    void timer_1s(const mPrice &fv, const mPrice &topBid, const mPrice &topAsk) {
+      push_back(mStdev(fv, topBid, topAsk));
+      calc();
+    };
+    void calc() {
+      if (size() < 2) return;
+      fair = calc(&fairMean, "fv");
+      bid  = calc(&bidMean, "bid");
+      ask  = calc(&askMean, "ask");
+      top  = calc(&topMean, "top");
+    };
     double calc(mPrice *const mean, const string &type) const {
       vector<mPrice> values;
       for (const mStdev &it : rows)
@@ -880,6 +903,18 @@ namespace K {
       return "loaded % STDEV Periods";
     };
   };
+  static void to_json(json &j, const mStdevs &k) {
+    j = {
+      {      "fv", k.fair    },
+      {  "fvMean", k.fairMean},
+      {    "tops", k.top     },
+      {"topsMean", k.topMean },
+      {     "bid", k.bid     },
+      { "bidMean", k.bidMean },
+      {     "ask", k.ask     },
+      { "askMean", k.askMean }
+    };
+  };
 
   struct mEwma: public mToScreen,
                 public mStructFromDb<mEwma> {
@@ -892,10 +927,38 @@ namespace K {
                  mgEwmaU,
                  mgEwmaP,
                  mgEwmaW;
-          double mgEwmaTrendDiff;
+          double mgEwmaTrendDiff,
+                 targetPositionAutoPercentage;
     mEwma():
-      mgEwmaVL(0), mgEwmaL(0), mgEwmaM(0), mgEwmaS(0), mgEwmaXS(0), mgEwmaU(0), mgEwmaP(0), mgEwmaW(0), mgEwmaTrendDiff(0)
+      mgEwmaVL(0), mgEwmaL(0), mgEwmaM(0), mgEwmaS(0), mgEwmaXS(0), mgEwmaU(0), mgEwmaP(0), mgEwmaW(0), mgEwmaTrendDiff(0), targetPositionAutoPercentage(0)
     {};
+    void timer_60s(const mPrice &fv, const mPrice &averageWidth) {
+      prepareHistory(fv);
+      calcProtections(averageWidth);
+      calcPositions();
+      calcTargetPositionAutoPercentage();
+      push();
+    };
+    void calcTargetPositionAutoPercentage() {
+      unsigned int max3size = fairValue96h.size() > 3 ? 3 : fairValue96h.size();
+      mPrice SMA3 = accumulate(
+        fairValue96h.end() - max3size,
+        fairValue96h.end(),
+        0, [](mFairValue a, mFairValue b) { return a.fv + b.fv; }
+      ) / max3size;
+      double targetPosition = 0;
+      if (qp.autoPositionMode == mAutoPositionMode::EWMA_LMS) {
+        double newTrend = ((SMA3 * 1e+2 / mgEwmaL) - 1e+2);
+        double newEwmacrossing = ((mgEwmaS * 1e+2 / mgEwmaM) - 1e+2);
+        targetPosition = ((newTrend + newEwmacrossing) / 2) * (1 / qp.ewmaSensiblityPercentage);
+      } else if (qp.autoPositionMode == mAutoPositionMode::EWMA_LS)
+        targetPosition = ((mgEwmaS * 1e+2 / mgEwmaL) - 1e+2) * (1 / qp.ewmaSensiblityPercentage);
+      else if (qp.autoPositionMode == mAutoPositionMode::EWMA_4) {
+        if (mgEwmaL < mgEwmaVL) targetPosition = -1;
+        else targetPosition = ((mgEwmaS * 1e+2 / mgEwmaM) - 1e+2) * (1 / qp.ewmaSensiblityPercentage);
+      }
+      targetPositionAutoPercentage = ((1 + max(-1.0, min(1.0, targetPosition))) / 2) * 1e+2;
+    };
     void prepareHistory(const mPrice &fv) {
       fairValue96h.push_back(mFairValue(fv));
     };
@@ -919,6 +982,23 @@ namespace K {
       if (TRUEONCE(qp._diffSEP))  calcFromHistory(&mgEwmaS,  qp.shortEwmaPeriods,      "Short");
       if (TRUEONCE(qp._diffXSEP)) calcFromHistory(&mgEwmaXS, qp.extraShortEwmaPeriods, "ExtraShort");
       if (TRUEONCE(qp._diffUEP))  calcFromHistory(&mgEwmaU,  qp.ultraShortEwmaPeriods, "UltraShort");
+    };
+    mPrice lastFairValue() const {
+      return fairValue96h.crbegin()->fv;
+    };
+    void calcProtections(const mPrice &averageWidth) {
+      calc(&mgEwmaP, qp.protectionEwmaPeriods, lastFairValue());
+      calc(&mgEwmaW, qp.protectionEwmaPeriods, averageWidth);
+    };
+    void calcPositions() {
+      calc(&mgEwmaVL, qp.veryLongEwmaPeriods,   lastFairValue());
+      calc(&mgEwmaL,  qp.longEwmaPeriods,       lastFairValue());
+      calc(&mgEwmaM,  qp.mediumEwmaPeriods,     lastFairValue());
+      calc(&mgEwmaS,  qp.shortEwmaPeriods,      lastFairValue());
+      calc(&mgEwmaXS, qp.extraShortEwmaPeriods, lastFairValue());
+      calc(&mgEwmaU,  qp.ultraShortEwmaPeriods, lastFairValue());
+      if(mgEwmaXS and mgEwmaU)
+        mgEwmaTrendDiff = ((mgEwmaU * 1e+2) / mgEwmaXS) - 1e+2;
     };
     mMatter about() const {
       return mMatter::EWMAStats;
@@ -1069,7 +1149,7 @@ namespace K {
     mTakers():
       trades({}), takersBuySize60s(0), takersSellSize60s(0)
     {};
-    void calcSize60s() {
+    void timer_60s() {
       takersSellSize60s = takersBuySize60s = 0;
       if (trades.empty()) return;
       for (mTrade &it : trades)
@@ -1099,26 +1179,12 @@ namespace K {
 
   struct mMarketStats: public mJsonToClient<mMarketStats> {
                mEwma ewma;
+             mStdevs stdev;
     mFairLevelsPrice fairPrice;
              mTakers takerTrades;
-              double mgStdevTop,
-                     mgStdevTopMean,
-                     mgStdevFV,
-                     mgStdevFVMean,
-                     mgStdevBid,
-                     mgStdevBidMean,
-                     mgStdevAsk,
-                     mgStdevAskMean;
     mMarketStats(mPrice *f):
-       ewma(mEwma()), fairPrice(mFairLevelsPrice(f)), takerTrades(mTakers()), mgStdevTop(0), mgStdevTopMean(0), mgStdevFV(0), mgStdevFVMean(0), mgStdevBid(0), mgStdevBidMean(0), mgStdevAsk(0), mgStdevAskMean(0)
+       ewma(mEwma()), fairPrice(mFairLevelsPrice(f)), takerTrades(mTakers())
     {};
-    void prepareEwmaHistory() {
-      ewma.prepareHistory(*fairPrice.fv);
-    };
-    void send_push() const {
-      ewma.push();
-      send();
-    };
     mMatter about() const {
       return mMatter::MarketChart;
     };
@@ -1129,19 +1195,10 @@ namespace K {
   static void to_json(json &j, const mMarketStats &k) {
     j = {
       {          "ewma", k.ewma                         },
+      {    "stdevWidth", k.stdev                        },
       {     "fairValue", *k.fairPrice.fv                },
       { "tradesBuySize", k.takerTrades.takersBuySize60s },
-      {"tradesSellSize", k.takerTrades.takersSellSize60s},
-      {    "stdevWidth", {
-                           {      "fv", k.mgStdevFV     },
-                           {  "fvMean", k.mgStdevFVMean },
-                           {    "tops", k.mgStdevTop    },
-                           {"topsMean", k.mgStdevTopMean},
-                           {     "bid", k.mgStdevBid    },
-                           { "bidMean", k.mgStdevBidMean},
-                           {     "ask", k.mgStdevAsk    },
-                           { "askMean", k.mgStdevAskMean}
-      }}
+      {"tradesSellSize", k.takerTrades.takersSellSize60s}
     };
   };
 
@@ -1302,10 +1359,12 @@ namespace K {
       patched = false;
     };
     bool empty() const {
-      return bids.empty() and asks.empty();
+      return patched
+        ? bids.empty() and asks.empty()
+        : mLevels::empty();
     };
     bool ratelimit() const {
-      return unfiltered->empty() or mLevels::empty()
+      return unfiltered->empty() or empty()
         or T_369ms + max(369.0, qp.delayUI * 1e+3) > Tstamp;
     };
     void send_reset() {
@@ -1328,7 +1387,7 @@ namespace K {
     if (k.patched)
       j["diff"] = true;
   };
-  struct mLevelsFull: public mLevels {
+  struct mMarketLevels: public mLevels {
                  mLevels unfiltered;
              mLevelsDiff diff;
     map<mPrice, mAmount> filterBidOrders,
@@ -1337,10 +1396,23 @@ namespace K {
                   mPrice averageWidth,
                          fairValue;
             mMarketStats stats;
-    mLevelsFull():
+    mMarketLevels():
       diff(mLevelsDiff(&unfiltered)), filterBidOrders({}), filterAskOrders({}), averageCount(0), averageWidth(0), stats(mMarketStats(&fairValue))
     {};
-     void calcFairValue() {
+    void timer_1s() {
+      stats.stdev.timer_1s(fairValue, bids.cbegin()->price, asks.cbegin()->price);
+    };
+    void timer_60s() {
+      stats.takerTrades.timer_60s();
+      stats.ewma.timer_60s(fairValue, resetAverageWidth());
+      stats.send();
+    };
+    bool warn_empty() const {
+      const bool err = empty();
+      if (err) stats.fairPrice.warn("QE", "Unable to calculate quote, missing market data");
+      return err;
+    };
+    void calcFairValue() {
       mPrice prev = fairValue;
       if (empty())
         fairValue = 0;

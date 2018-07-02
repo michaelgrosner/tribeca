@@ -67,6 +67,7 @@ namespace K {
       mTarget target;
       mSafety safety;
     virtual void timer_1s() = 0;
+    virtual void timer_60s() = 0;
     virtual void calcWallet() = 0;
     virtual void calcSafety() = 0;
     virtual void calcTargetBasePos() = 0;
@@ -75,10 +76,7 @@ namespace K {
   } *wallet = nullptr;
 
   static struct Market {
-    mLevelsFull levels;
-    double targetPosition = 0;
-    virtual void timer_1s() = 0;
-    virtual void timer_60s() = 0;
+    mMarketLevels levels;
   } *market = nullptr;
 
   static struct Broker {

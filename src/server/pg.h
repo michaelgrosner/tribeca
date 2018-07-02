@@ -33,19 +33,23 @@ namespace K {
       void timer_1s() {
         calcSafety();
       };
+      void timer_60s() {
+        calcTargetBasePos();
+      };
       void calcSafety() {
-        if (position.empty() or !market->levels.fairValue) return;
+        if (position.empty() or market->levels.empty()) return;
         safety.send_ratelimit(nextSafety());
       };
       void calcTargetBasePos() {                                    PRETTY_DEBUG
         if (position.warn_empty()) return;
-        mAmount baseValue = position.baseValue;
-        mAmount next = qp.autoPositionMode == mAutoPositionMode::Manual
-          ? (qp.percentageValues
-            ? qp.targetBasePositionPercentage * baseValue / 1e+2
-            : qp.targetBasePosition)
-          : ((1 + market->targetPosition) / 2) * baseValue;
-        if (target.targetBasePosition and abs(target.targetBasePosition - next) < 1e-4 and sideAPRDiff == target.sideAPR) return;
+        mAmount baseValue = position.baseValue,
+                prev = target.targetBasePosition,
+                next = qp.autoPositionMode == mAutoPositionMode::Manual
+                         ? (qp.percentageValues
+                           ? qp.targetBasePositionPercentage * baseValue / 1e+2
+                           : qp.targetBasePosition)
+                         : market->levels.stats.ewma.targetPositionAutoPercentage * baseValue / 1e+2;
+        if (prev and abs(prev - next) < 1e-4 and sideAPRDiff == target.sideAPR) return;
         target.targetBasePosition = next;
         sideAPRDiff = target.sideAPR;
         calcPDiv(baseValue);
@@ -58,7 +62,7 @@ namespace K {
           + " " + gw->base);
       };
       void calcWallet() {
-        if (balance.empty() or !market->levels.fairValue) return;
+        if (balance.empty() or market->levels.empty()) return;
         if (args.maxWallet) applyMaxWallet();
         mPosition pos(
           FN::d8(balance.base.amount),
