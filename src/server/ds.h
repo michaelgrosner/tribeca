@@ -16,7 +16,7 @@
 #define M_PI_2 1.5707963267948965579989817342720925807952880859375
 #endif
 
-#define TRUEONCE(k) k ? !(k = !k) : k
+#define TRUEONCE(k) (k ? !(k = !k) : k)
 
 namespace K {
   enum class mExchange: unsigned int { Null, HitBtc, OkCoin, Coinbase, Bitfinex, Ethfinex, Kraken, OkEx, Korbit, Poloniex };
@@ -934,13 +934,51 @@ namespace K {
     {};
     void timer_60s(const mPrice &fv, const mPrice &averageWidth) {
       prepareHistory(fv);
-      calcProtections(averageWidth);
-      calcPositions();
+      calcProtections(fv, averageWidth);
+      calcPositions(fv);
       calcTargetPositionAutoPercentage();
       push();
     };
+    void prepareHistory(const mPrice &fv) {
+      fairValue96h.push_back(mFairValue(fv));
+    };
+    void calc(mPrice *const mean, const unsigned int &periods, const mPrice &value) {
+      if (*mean) {
+        double alpha = 2.0 / (periods + 1);
+        *mean = alpha * value + (1 - alpha) * *mean;
+      } else *mean = value;
+    };
+    void calcFromHistory(mPrice *mean, const unsigned int &periods, const string &name) {
+      unsigned int n = fairValue96h.size();
+      if (!n) return;
+      *mean = fairValue96h.begin()->fv;
+      while (n--) calc(mean, periods, (fairValue96h.rbegin()+n)->fv);
+      print("MG", "reloaded " + to_string(*mean) + " EWMA " + name);
+    };
+    void calcFromHistory() {
+      if (TRUEONCE(qp._diffVLEP)) calcFromHistory(&mgEwmaVL, qp.veryLongEwmaPeriods,   "VeryLong");
+      if (TRUEONCE(qp._diffLEP))  calcFromHistory(&mgEwmaL,  qp.longEwmaPeriods,       "Long");
+      if (TRUEONCE(qp._diffMEP))  calcFromHistory(&mgEwmaM,  qp.mediumEwmaPeriods,     "Medium");
+      if (TRUEONCE(qp._diffSEP))  calcFromHistory(&mgEwmaS,  qp.shortEwmaPeriods,      "Short");
+      if (TRUEONCE(qp._diffXSEP)) calcFromHistory(&mgEwmaXS, qp.extraShortEwmaPeriods, "ExtraShort");
+      if (TRUEONCE(qp._diffUEP))  calcFromHistory(&mgEwmaU,  qp.ultraShortEwmaPeriods, "UltraShort");
+    };
+    void calcProtections(const mPrice &fv, const mPrice &averageWidth) {
+      calc(&mgEwmaP, qp.protectionEwmaPeriods, fv);
+      calc(&mgEwmaW, qp.protectionEwmaPeriods, averageWidth);
+    };
+    void calcPositions(const mPrice &fv) {
+      calc(&mgEwmaVL, qp.veryLongEwmaPeriods,   fv);
+      calc(&mgEwmaL,  qp.longEwmaPeriods,       fv);
+      calc(&mgEwmaM,  qp.mediumEwmaPeriods,     fv);
+      calc(&mgEwmaS,  qp.shortEwmaPeriods,      fv);
+      calc(&mgEwmaXS, qp.extraShortEwmaPeriods, fv);
+      calc(&mgEwmaU,  qp.ultraShortEwmaPeriods, fv);
+      if (mgEwmaXS and mgEwmaU)
+        mgEwmaTrendDiff = ((mgEwmaU * 1e+2) / mgEwmaXS) - 1e+2;
+    };
     void calcTargetPositionAutoPercentage() {
-      unsigned int max3size = fairValue96h.size() > 3 ? 3 : fairValue96h.size();
+      unsigned int max3size = min((size_t)3, fairValue96h.size());
       mPrice SMA3 = accumulate(
         fairValue96h.end() - max3size,
         fairValue96h.end(),
@@ -958,47 +996,6 @@ namespace K {
         else targetPosition = ((mgEwmaS * 1e+2 / mgEwmaM) - 1e+2) * (1 / qp.ewmaSensiblityPercentage);
       }
       targetPositionAutoPercentage = ((1 + max(-1.0, min(1.0, targetPosition))) / 2) * 1e+2;
-    };
-    void prepareHistory(const mPrice &fv) {
-      fairValue96h.push_back(mFairValue(fv));
-    };
-    void calc(mPrice *const mean, const unsigned int &periods, const mPrice &value) {
-      if (*mean) {
-        double alpha = 2.0 / (periods + 1);
-        *mean = alpha * value + (1 - alpha) * *mean;
-      } else *mean = value;
-    };
-    void calcFromHistory(mPrice *mean, unsigned int periods, const string &name) {
-      unsigned int n = fairValue96h.size();
-      if (!n) return;
-      *mean = fairValue96h.begin()->fv;
-      while (n--) calc(mean, periods, (fairValue96h.rbegin()+n)->fv);
-      print("MG", "reloaded " + to_string(*mean) + " EWMA " + name);
-    };
-    void calcFromHistory() {
-      if (TRUEONCE(qp._diffVLEP)) calcFromHistory(&mgEwmaVL, qp.veryLongEwmaPeriods,   "VeryLong");
-      if (TRUEONCE(qp._diffLEP))  calcFromHistory(&mgEwmaL,  qp.longEwmaPeriods,       "Long");
-      if (TRUEONCE(qp._diffMEP))  calcFromHistory(&mgEwmaM,  qp.mediumEwmaPeriods,     "Medium");
-      if (TRUEONCE(qp._diffSEP))  calcFromHistory(&mgEwmaS,  qp.shortEwmaPeriods,      "Short");
-      if (TRUEONCE(qp._diffXSEP)) calcFromHistory(&mgEwmaXS, qp.extraShortEwmaPeriods, "ExtraShort");
-      if (TRUEONCE(qp._diffUEP))  calcFromHistory(&mgEwmaU,  qp.ultraShortEwmaPeriods, "UltraShort");
-    };
-    mPrice lastFairValue() const {
-      return fairValue96h.crbegin()->fv;
-    };
-    void calcProtections(const mPrice &averageWidth) {
-      calc(&mgEwmaP, qp.protectionEwmaPeriods, lastFairValue());
-      calc(&mgEwmaW, qp.protectionEwmaPeriods, averageWidth);
-    };
-    void calcPositions() {
-      calc(&mgEwmaVL, qp.veryLongEwmaPeriods,   lastFairValue());
-      calc(&mgEwmaL,  qp.longEwmaPeriods,       lastFairValue());
-      calc(&mgEwmaM,  qp.mediumEwmaPeriods,     lastFairValue());
-      calc(&mgEwmaS,  qp.shortEwmaPeriods,      lastFairValue());
-      calc(&mgEwmaXS, qp.extraShortEwmaPeriods, lastFairValue());
-      calc(&mgEwmaU,  qp.ultraShortEwmaPeriods, lastFairValue());
-      if (mgEwmaXS and mgEwmaU)
-        mgEwmaTrendDiff = ((mgEwmaU * 1e+2) / mgEwmaXS) - 1e+2;
     };
     mMatter about() const {
       return mMatter::EWMAStats;

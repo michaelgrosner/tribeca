@@ -11,7 +11,7 @@ namespace K {
         sqlite->backup(&levels.stats.stdev);
       };
       void waitData() {
-        gw->RAWDATA_ENTRY_POINT(mTrade,  {                          PRETTY_DEBUG
+        gw->RAWDATA_ENTRY_POINT(mTrade, {                           PRETTY_DEBUG
           levels.stats.takerTrades.send_push_back(rawdata);
         });
         gw->RAWDATA_ENTRY_POINT(mLevels, {                          PRETTY_DEBUG

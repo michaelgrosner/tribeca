@@ -43,6 +43,14 @@ using namespace std;
 
 using namespace nlohmann;
 
+#define PERMISSIVE_SOFTWARE_LICENSE                                        \
+                                                                           \
+       "This is free software: the quoting engine and UI are open source," \
+"\n"   "feel free to hack both as you need."                               \
+                                                                           \
+"\n"   "This is non-free software: the exchange integrations are licensed" \
+"\n"   "by and under the law of my grandma, feel free to crack all."
+
 #include "ds.h"
 #include "fn.h"
 #include "if.h"

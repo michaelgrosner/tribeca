@@ -73,10 +73,7 @@ namespace K {
             case 'i': args.inet         = strdup(optarg); break;
             case 'W': args.maxWallet    = stod(optarg);   break;
             case 'h': cout
-              << RGREEN << "This is free software: the quoting engine and UI are open source,"
-                        << '\n' << "feel free to hack both as you need." << '\n'
-              << RGREEN << "This is non-free software: the exchange integrations are licensed"
-                        << '\n' << "by and under the law of my grandma, feel free to crack all." << '\n'
+              << RGREEN << PERMISSIVE_SOFTWARE_LICENSE << '\n'
               << RGREEN << "  questions: " << RYELLOW << "https://earn.com/analpaper/" << '\n'
               << BGREEN << "K" << RGREEN << " bugkiller: " << RYELLOW << "https://github.com/ctubio/Krypto-trading-bot/issues/new" << '\n'
               << RGREEN << "  downloads: " << RYELLOW << "ssh://git@github.com/ctubio/Krypto-trading-bot" << '\n'
