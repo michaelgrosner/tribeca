@@ -8,15 +8,6 @@
 namespace K {
   class FN {
     public:
-      static string strX(const double &d, const unsigned int &X) {
-        stringstream ss;
-        ss << setprecision(X)
-           << fixed << d;
-        return ss.str();
-      };
-      static string str8(const double &d) { return strX(d, 8); };
-      static string strL(string s) { transform(s.begin(), s.end(), s.begin(), ::tolower); return s; };
-      static string strU(string s) { transform(s.begin(), s.end(), s.begin(), ::toupper); return s; };
       static unsigned long long int64() {
         static random_device rd;
         static mt19937_64 gen(rd());

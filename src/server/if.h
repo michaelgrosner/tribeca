@@ -64,7 +64,6 @@ namespace K {
 
   static struct Wallet {
     mPosition position;
-      mTarget target;
       mSafety safety;
     virtual void timer_1s() = 0;
     virtual void timer_60s() = 0;

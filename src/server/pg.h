@@ -6,7 +6,7 @@ namespace K {
             public Wallet { public: PG() { wallet = this; };
     protected:
       void load() {
-        sqlite->backup(&target);
+        sqlite->backup(&position.target);
         sqlite->backup(&position.profits);
       };
       void waitData() {
@@ -16,19 +16,19 @@ namespace K {
         });
       };
       void waitSysAdmin() {
-        screen->printme(&position);
+        screen->printme(&position.target);
       };
       void waitWebAdmin() {
+        client->welcome(position.target);
         client->welcome(position);
         client->welcome(safety);
-        client->welcome(target);
       };
     public:
       void timer_1s() {
         calcSafety();
       };
       void timer_60s() {
-        calcTargetBasePos();
+        position.target.calcTargetBasePos(market->levels.stats.ewma.targetPositionAutoPercentage);
       };
       void calcSafety() {
         if (position.empty() or market->levels.empty()) return;
@@ -38,30 +38,9 @@ namespace K {
         if (position.balance.empty() or market->levels.empty()) return;
         if (args.maxWallet) position.balance.calcMaxWallet(market->levels.fairValue);
         position.send_ratelimit(market->levels.fairValue);
-        calcTargetBasePos();
+        position.target.calcTargetBasePos(market->levels.stats.ewma.targetPositionAutoPercentage);
       };
     private:
-      void calcTargetBasePos() {                                    PRETTY_DEBUG
-        if (position.warn_empty()) return;
-        mAmount baseValue = position.baseValue,
-                prev = target.targetBasePosition,
-                next = qp.autoPositionMode == mAutoPositionMode::Manual
-                         ? (qp.percentageValues
-                           ? qp.targetBasePositionPercentage * baseValue / 1e+2
-                           : qp.targetBasePosition)
-                         : market->levels.stats.ewma.targetPositionAutoPercentage * baseValue / 1e+2;
-        if (prev and abs(prev - next) < 1e-4 and target.sideAPRDiff == target.sideAPR) return;
-        target.targetBasePosition = next;
-        target.sideAPRDiff = target.sideAPR;
-        target.calcPDiv(baseValue);
-        target.send_push();
-        if (!args.debugWallet) return;
-        screen->log("PG", "TBP: "
-          + to_string((int)(target.targetBasePosition / baseValue * 1e+2)) + "% = " + FN::str8(target.targetBasePosition)
-          + " " + gw->base + ", pDiv: "
-          + to_string((int)(target.positionDivergence  / baseValue * 1e+2)) + "% = " + FN::str8(target.positionDivergence)
-          + " " + gw->base);
-      };
       mSafety nextSafety() {
         mAmount buySize = qp.percentageValues
           ? qp.buySizePercentage * position.baseValue / 100
@@ -78,8 +57,8 @@ namespace K {
         }
         mAmount totalBasePosition = position.baseAmount + position.baseHeldAmount;
         if (qp.aggressivePositionRebalancing != mAPR::Off) {
-          if (qp.buySizeMax) buySize = fmax(buySize, target.targetBasePosition - totalBasePosition);
-          if (qp.sellSizeMax) sellSize = fmax(sellSize, totalBasePosition - target.targetBasePosition);
+          if (qp.buySizeMax) buySize = fmax(buySize, position.target.targetBasePosition - totalBasePosition);
+          if (qp.sellSizeMax) sellSize = fmax(sellSize, totalBasePosition - position.target.targetBasePosition);
         }
         mPrice widthPong = qp.widthPercentage
           ? qp.widthPongPercentage * market->levels.fairValue / 100

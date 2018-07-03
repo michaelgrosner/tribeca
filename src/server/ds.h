@@ -53,6 +53,11 @@ namespace K {
   static          bool operator! (mConnectivity k_)                   { return !(unsigned int)k_; };
   static mConnectivity operator* (mConnectivity _k, mConnectivity k_) { return (mConnectivity)((unsigned int)_k * (unsigned int)k_); };
 
+  static string strX(const double &d, const unsigned int &X) { stringstream ss; ss << setprecision(X) << fixed << d; return ss.str(); };
+  static string str8(const double &d) { return strX(d, 8); };
+  static string strL(string s) { transform(s.begin(), s.end(), s.begin(), ::tolower); return s; };
+  static string strU(string s) { transform(s.begin(), s.end(), s.begin(), ::toupper); return s; };
+
   static char RBLACK[] = "\033[0;30m", RRED[]    = "\033[0;31m", RGREEN[] = "\033[0;32m", RYELLOW[] = "\033[0;33m",
               RBLUE[]  = "\033[0;34m", RPURPLE[] = "\033[0;35m", RCYAN[]  = "\033[0;36m", RWHITE[]  = "\033[0;37m",
               BBLACK[] = "\033[1;30m", BRED[]    = "\033[1;31m", BGREEN[] = "\033[1;32m", BYELLOW[] = "\033[1;33m",
@@ -78,8 +83,8 @@ namespace K {
             whitelist     = "";
     const char *inet = nullptr;
     void tidy() {
-      transform(exchange.begin(), exchange.end(), exchange.begin(), ::toupper);
-      transform(currency.begin(), currency.end(), currency.begin(), ::toupper);
+      exchange = strU(exchange);
+      currency = strU(currency);
       if (debug)
         debugSecret =
         debugEvents =
@@ -684,9 +689,94 @@ namespace K {
     };
   };
 
-  struct mPosition: public mToScreen,
-                    public mJsonToClient<mPosition> {
+  struct mTarget: public mToScreen,
+                  public mStructFromDb<mTarget>,
+                  public mJsonToClient<mTarget> {
+    mAmount targetBasePosition,
+            positionDivergence;
+     string sideAPR,
+            sideAPRDiff;
+    mAmount *baseValue;
+    mTarget(mAmount *const b):
+      targetBasePosition(0), positionDivergence(0), sideAPR(""), sideAPRDiff("!="), baseValue(b)
+    {};
+    void calcPDiv() {
+      mAmount pDiv = qp.percentageValues
+        ? qp.positionDivergencePercentage * *baseValue / 1e+2
+        : qp.positionDivergence;
+      if (qp.autoPositionMode == mAutoPositionMode::Manual or mPDivMode::Manual == qp.positionDivergenceMode)
+        positionDivergence = pDiv;
+      else {
+        mAmount pDivMin = qp.percentageValues
+          ? qp.positionDivergencePercentageMin * *baseValue / 1e+2
+          : qp.positionDivergenceMin;
+        double divCenter = 1 - abs((targetBasePosition / *baseValue * 2) - 1);
+        if (mPDivMode::Linear == qp.positionDivergenceMode)      positionDivergence = pDivMin + (divCenter * (pDiv - pDivMin));
+        else if (mPDivMode::Sine == qp.positionDivergenceMode)   positionDivergence = pDivMin + (sin(divCenter*M_PI_2) * (pDiv - pDivMin));
+        else if (mPDivMode::SQRT == qp.positionDivergenceMode)   positionDivergence = pDivMin + (sqrt(divCenter) * (pDiv - pDivMin));
+        else if (mPDivMode::Switch == qp.positionDivergenceMode) positionDivergence = divCenter < 1e-1 ? pDivMin : pDiv;
+      }
+    };
+    bool ratelimit(const mAmount &next) const {
+      return (targetBasePosition and abs(targetBasePosition - next) < 1e-4 and sideAPR == sideAPRDiff);
+    };
+    void calcTargetBasePos(const double &targetPositionAutoPercentage) { // PRETTY_DEBUG plz
+      if (warn_empty()) return;
+      mAmount next = qp.autoPositionMode == mAutoPositionMode::Manual
+        ? (qp.percentageValues
+          ? qp.targetBasePositionPercentage * *baseValue / 1e+2
+          : qp.targetBasePosition)
+        : targetPositionAutoPercentage * *baseValue / 1e+2;
+      if (ratelimit(next)) return;
+      targetBasePosition = next;
+      sideAPRDiff = sideAPR;
+      calcPDiv();
+      push();
+      send();
+      if (args.debugWallet)
+        print("PG", "TBP: "
+          + to_string((int)(targetBasePosition / *baseValue * 1e+2)) + "% = " + str8(targetBasePosition)
+          + " " + args.base() + ", pDiv: "
+          + to_string((int)(positionDivergence / *baseValue * 1e+2)) + "% = " + str8(positionDivergence)
+          + " " + args.base());
+    };
+    bool warn_empty() const {
+      const bool err = empty();
+      if (err) warn("PG", "Unable to calculate TBP, missing wallet data");
+      return err;
+    };
+    bool empty() const {
+      return !baseValue or !*baseValue;
+    };
+    bool realtime() const {
+      return !qp.delayUI;
+    };
+    mMatter about() const {
+      return mMatter::TargetBasePosition;
+    };
+    string explain() const {
+      return to_string(targetBasePosition);
+    };
+    string explainOK() const {
+      return "loaded TBP = % " + args.base();
+    };
+  };
+  static void to_json(json &j, const mTarget &k) {
+    j = {
+      {    "tbp", k.targetBasePosition},
+      {   "pDiv", k.positionDivergence},
+      {"sideAPR", k.sideAPR           }
+    };
+  };
+  static void from_json(const json &j, mTarget &k) {
+    k.targetBasePosition = j.value("tbp", 0.0);
+    k.positionDivergence = j.value("pDiv", 0.0);
+    k.sideAPR            = j.value("sideAPR", "");
+  };
+
+  struct mPosition: public mJsonToClient<mPosition> {
     mWallets balance;
+     mTarget target;
     mProfits profits;
      mAmount baseAmount,
              quoteAmount,
@@ -700,10 +790,7 @@ namespace K {
       double profitBase,
              profitQuote;
     mPosition():
-      profits(mProfits()), baseAmount(0), quoteAmount(0), _quoteAmountValue(0), baseHeldAmount(0), quoteHeldAmount(0), _baseTotal(0), _quoteTotal(0), baseValue(0), quoteValue(0), profitBase(0), profitQuote(0)
-    {};
-    mPosition(mAmount bA, mAmount qA, mAmount qAV, mAmount bH, mAmount qH, mAmount bT, mAmount qT, mAmount bV, mAmount qV):
-      baseAmount(bA), quoteAmount(qA), _quoteAmountValue(qAV), baseHeldAmount(bH), quoteHeldAmount(qH), _baseTotal(bT), _quoteTotal(qT), baseValue(bV), quoteValue(qV), profitBase(0), profitQuote(0)
+      balance(mWallets()), target(mTarget(&baseValue)), profits(mProfits()), baseAmount(0), quoteAmount(0), _quoteAmountValue(0), baseHeldAmount(0), quoteHeldAmount(0), _baseTotal(0), _quoteTotal(0), baseValue(0), quoteValue(0), profitBase(0), profitQuote(0)
     {};
     void reset(const mSide &side, const mAmount &nextHeldAmount) {
       if (empty()) return;
@@ -717,11 +804,6 @@ namespace K {
     };
     bool empty() const {
       return !baseValue;
-    };
-    bool warn_empty() const {
-      const bool err = empty();
-      if (err) warn("PG", "Unable to calculate TBP, missing wallet data");
-      return err;
     };
     bool ratelimit(const mPosition &prev) const {
       return (!empty()
@@ -983,7 +1065,7 @@ namespace K {
     mSafety():
       buy(0), sell(0), combined(0), buyPing(0), sellPing(0), buySize(0), sellSize(0), recentTrades(mRecentTrades())
     {};
-    mSafety(double b, double s, double c, mPrice bP, mPrice sP, mPrice bS, mPrice sS):
+    mSafety(double b, double s, double c, mPrice bP, mPrice sP, mPrice bS, mPrice sS): // deleteme plz
       buy(b), sell(s), combined(c), buyPing(bP), sellPing(sP), buySize(bS), sellSize(sS), recentTrades(mRecentTrades())
     {};
     bool empty() const {
@@ -1021,62 +1103,6 @@ namespace K {
     };
   };
 
-  struct mTarget: public mStructFromDb<mTarget>,
-                  public mJsonToClient<mTarget> {
-    mAmount targetBasePosition,
-            positionDivergence;
-     string sideAPR,
-            sideAPRDiff;
-    mTarget():
-      targetBasePosition(0), positionDivergence(0), sideAPR(""), sideAPRDiff("!=")
-    {};
-    void calcPDiv(const mAmount &baseValue) {
-      mAmount pDiv = qp.percentageValues
-        ? qp.positionDivergencePercentage * baseValue / 1e+2
-        : qp.positionDivergence;
-      if (qp.autoPositionMode == mAutoPositionMode::Manual or mPDivMode::Manual == qp.positionDivergenceMode)
-        positionDivergence = pDiv;
-      else {
-        mAmount pDivMin = qp.percentageValues
-          ? qp.positionDivergencePercentageMin * baseValue / 1e+2
-          : qp.positionDivergenceMin;
-        double divCenter = 1 - abs((targetBasePosition / baseValue * 2) - 1);
-        if (mPDivMode::Linear == qp.positionDivergenceMode)      positionDivergence = pDivMin + (divCenter * (pDiv - pDivMin));
-        else if (mPDivMode::Sine == qp.positionDivergenceMode)   positionDivergence = pDivMin + (sin(divCenter*M_PI_2) * (pDiv - pDivMin));
-        else if (mPDivMode::SQRT == qp.positionDivergenceMode)   positionDivergence = pDivMin + (sqrt(divCenter) * (pDiv - pDivMin));
-        else if (mPDivMode::Switch == qp.positionDivergenceMode) positionDivergence = divCenter < 1e-1 ? pDivMin : pDiv;
-      }
-    };
-    void send_push() const {
-      push();
-      send();
-    };
-    bool realtime() const {
-      return !qp.delayUI;
-    };
-    mMatter about() const {
-      return mMatter::TargetBasePosition;
-    };
-    string explain() const {
-      return to_string(targetBasePosition);
-    };
-    string explainOK() const {
-      return "loaded TBP = % " + args.base();
-    };
-  };
-  static void to_json(json &j, const mTarget &k) {
-    j = {
-      {    "tbp", k.targetBasePosition},
-      {   "pDiv", k.positionDivergence},
-      {"sideAPR", k.sideAPR           }
-    };
-  };
-  static void from_json(const json &j, mTarget &k) {
-    k.targetBasePosition = j.value("tbp", 0.0);
-    k.positionDivergence = j.value("pDiv", 0.0);
-    k.sideAPR            = j.value("sideAPR", "");
-  };
-
   struct mFairValue {
     mPrice fv;
     mFairValue():
@@ -1111,7 +1137,7 @@ namespace K {
   struct mFairLevelsPrice: public mToScreen,
                            public mJsonToClient<mFairLevelsPrice> {
     mPrice *fv;
-    mFairLevelsPrice(mPrice *f):
+    mFairLevelsPrice(mPrice *const f):
       fv(f)
     {};
     mMatter about() const {
@@ -1268,7 +1294,7 @@ namespace K {
         *mean = alpha * value + (1 - alpha) * *mean;
       } else *mean = value;
     };
-    void calcFromHistory(mPrice *mean, const unsigned int &periods, const string &name) {
+    void calcFromHistory(mPrice *const mean, const unsigned int &periods, const string &name) {
       unsigned int n = fairValue96h.size();
       if (!n) return;
       *mean = fairValue96h.begin()->fv;
@@ -1363,7 +1389,7 @@ namespace K {
              mStdevs stdev;
     mFairLevelsPrice fairPrice;
              mTakers takerTrades;
-    mMarketStats(mPrice *f):
+    mMarketStats(mPrice *const f):
        ewma(mEwma()), fairPrice(mFairLevelsPrice(f)), takerTrades(mTakers())
     {};
     mMatter about() const {

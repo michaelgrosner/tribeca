@@ -119,7 +119,7 @@ namespace K {
           if (wtfismyip.empty())
             cout << "over " << RYELLOW << protocol << RWHITE << " on external port " << RYELLOW << to_string(args.port) << RWHITE << ".\n";
           else
-            cout << "at " << RYELLOW << FN::strL(protocol) << "://" << wtfismyip << ":" << to_string(args.port) << RWHITE << ".\n";
+            cout << "at " << RYELLOW << strL(protocol) << "://" << wtfismyip << ":" << to_string(args.port) << RWHITE << ".\n";
           return;
         }
         wmove(wLog, getmaxy(wLog)-1, 0);
@@ -145,7 +145,7 @@ namespace K {
           wprintw(wLog, "at ");
           wattroff(wLog, COLOR_PAIR(COLOR_WHITE));
           wattron(wLog, COLOR_PAIR(COLOR_YELLOW));
-          wprintw(wLog, FN::strL(protocol).data());
+          wprintw(wLog, strL(protocol).data());
           wprintw(wLog, "://");
           wprintw(wLog, wtfismyip.data());
           wprintw(wLog, ":");
@@ -185,7 +185,7 @@ namespace K {
       };
       void log(const mTrade &k, const bool &isPong) {
         if (!wBorder) {
-          cout << stamp() << "GW " << (k.side == mSide::Bid ? RCYAN : RPURPLE) << gw->name << (isPong?" PONG":" PING") << " TRADE " << (k.side == mSide::Bid ? BCYAN : BPURPLE) << (k.side == mSide::Bid ? "BUY  " : "SELL ") << FN::str8(k.quantity) << ' ' << k.pair.base << " at price " << k.price << ' ' << k.pair.quote << " (value " << k.value << ' ' << k.pair.quote << ").\n";
+          cout << stamp() << "GW " << (k.side == mSide::Bid ? RCYAN : RPURPLE) << gw->name << (isPong?" PONG":" PING") << " TRADE " << (k.side == mSide::Bid ? BCYAN : BPURPLE) << (k.side == mSide::Bid ? "BUY  " : "SELL ") << str8(k.quantity) << ' ' << k.pair.base << " at price " << k.price << ' ' << k.pair.quote << " (value " << k.value << ' ' << k.pair.quote << ").\n";
           return;
         }
         wmove(wLog, getmaxy(wLog)-1, 0);
@@ -198,9 +198,9 @@ namespace K {
         wprintw(wLog, (gw->name + (isPong?" PONG":" PING") + " TRADE ").data());
         wattroff(wLog, A_BOLD);
         wprintw(wLog, ((k.side == mSide::Bid ? "BUY  " : "SELL ")
-          + FN::str8(k.quantity) + ' ' + k.pair.base + " at price "
-          + FN::str8(k.price) + ' ' + k.pair.quote + " (value "
-          + FN::str8(k.value) + ' ' + k.pair.quote + ")"
+          + str8(k.quantity) + ' ' + k.pair.base + " at price "
+          + str8(k.price) + ' ' + k.pair.quote + " (value "
+          + str8(k.value) + ' ' + k.pair.quote + ")"
         ).data());
         wprintw(wLog, ".\n");
         wattroff(wLog, COLOR_PAIR(k.side == mSide::Bid ? COLOR_CYAN : COLOR_MAGENTA));
@@ -262,9 +262,9 @@ namespace K {
         for (multimap<mPrice, mOrder, greater<mPrice>>::value_type &it : openOrders) {
           wattron(wBorder, COLOR_PAIR(it.second.side == mSide::Bid ? COLOR_CYAN : COLOR_MAGENTA));
           mvwaddstr(wBorder, ++yOrders, 1, (((it.second.side == mSide::Bid ? "BID" : "ASK") + (" > "
-            + FN::str8(it.second.quantity))) + ' ' + it.second.pair.base + " at price "
-            + FN::str8(it.second.price) + ' ' + it.second.pair.quote + " (value "
-            + FN::str8(abs(it.second.price * it.second.quantity)) + ' ' + it.second.pair.quote + ")"
+            + str8(it.second.quantity))) + ' ' + it.second.pair.base + " at price "
+            + str8(it.second.price) + ' ' + it.second.pair.quote + " (value "
+            + str8(abs(it.second.price * it.second.quantity)) + ' ' + it.second.pair.quote + ")"
           ).data());
           wattroff(wBorder, COLOR_PAIR(it.second.side == mSide::Bid ? COLOR_CYAN : COLOR_MAGENTA));
         }
@@ -280,7 +280,7 @@ namespace K {
         string title2 = " " + (args.port
           ? "UI" + (wtfismyip.empty()
             ? " on " + protocol + " port " + to_string(args.port)
-            : " at " + FN::strL(protocol) + "://" + wtfismyip + ":" + to_string(args.port)
+            : " at " + strL(protocol) + "://" + wtfismyip + ":" + to_string(args.port)
           ) : "headless"
         )  + ' ';
         wattron(wBorder, A_BOLD);
@@ -301,8 +301,8 @@ namespace K {
         mvwhline(wBorder, 1, 8, ACS_HLINE, 4);
         mvwaddch(wBorder, 1, 12, ACS_RTEE);
         wattron(wBorder, COLOR_PAIR(COLOR_MAGENTA));
-        const string baseValue  = FN::str8(wallet->position.baseValue),
-                     quoteValue = FN::str8(wallet->position.quoteValue);
+        const string baseValue  = str8(wallet->position.baseValue),
+                     quoteValue = str8(wallet->position.quoteValue);
         wattron(wBorder, A_BOLD);
         waddstr(wBorder, (" " + baseValue + ' ').data());
         wattroff(wBorder, A_BOLD);
@@ -383,7 +383,7 @@ namespace K {
           wattron(wBorder, COLOR_PAIR(COLOR_GREEN));
           waddstr(wBorder, (" 1 " + base + " = ").data());
           wattron(wBorder, A_BOLD);
-          waddstr(wBorder, FN::str8(market->levels.fairValue).data());
+          waddstr(wBorder, str8(market->levels.fairValue).data());
           wattroff(wBorder, A_BOLD);
           waddstr(wBorder, (" " + quote).data());
           wattroff(wBorder, COLOR_PAIR(COLOR_GREEN));

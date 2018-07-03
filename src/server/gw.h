@@ -79,7 +79,7 @@ namespace K {
         }
         else if (gw->exchange == mExchange::Bitfinex or gw->exchange == mExchange::Ethfinex) {
           gw->randId = FN::int45Id;
-          gw->symbol = FN::strL(gw->base + gw->quote);
+          gw->symbol = strL(gw->base + gw->quote);
           reply = FN::wJet(gw->http + "/pubticker/" + gw->symbol);
           if (reply.find("last_price") != reply.end()) {
             stringstream price_;
@@ -98,7 +98,7 @@ namespace K {
         }
         else if (gw->exchange == mExchange::OkCoin or gw->exchange == mExchange::OkEx) {
           gw->randId = FN::char16Id;
-          gw->symbol = FN::strL(gw->base + "_" + gw->quote);
+          gw->symbol = strL(gw->base + "_" + gw->quote);
           gw->minTick = 0.0001;
           gw->minSize = 0.001;
         }
@@ -121,7 +121,7 @@ namespace K {
         }
         else if (gw->exchange == mExchange::Korbit) {
           gw->randId = FN::int45Id;
-          gw->symbol = FN::strL(gw->base + "_" + gw->quote);
+          gw->symbol = strL(gw->base + "_" + gw->quote);
           reply = FN::wJet(gw->http + "/constants");
           if (reply.find(gw->symbol.substr(0,3).append("TickSize")) != reply.end()) {
             gw->minTick = reply.value(gw->symbol.substr(0,3).append("TickSize"), 0.0);
@@ -157,10 +157,10 @@ namespace K {
         screen->log("GW " + gw->name + ":", string("\n")
           + "- autoBot: " + (!adminAgreement ? "no" : "yes") + '\n'
           + "- symbols: " + gw->symbol + '\n'
-          + "- minTick: " + FN::strX(gw->minTick, precision) + '\n'
-          + "- minSize: " + FN::strX(gw->minSize, precision) + '\n'
-          + "- makeFee: " + FN::strX(gw->makeFee, precision) + '\n'
-          + "- takeFee: " + FN::strX(gw->takeFee, precision));
+          + "- minTick: " + strX(gw->minTick, precision) + '\n'
+          + "- minSize: " + strX(gw->minSize, precision) + '\n'
+          + "- makeFee: " + strX(gw->makeFee, precision) + '\n'
+          + "- takeFee: " + strX(gw->takeFee, precision));
       };
   };
 }

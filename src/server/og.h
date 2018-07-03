@@ -17,7 +17,7 @@ namespace K {
       };
       void waitData() {
         gw->RAWDATA_ENTRY_POINT(mOrder, {                           PRETTY_DEBUG
-          DEBOG("reply  " + rawdata.orderId + "::" + rawdata.exchangeId + " [" + to_string((int)rawdata.orderStatus) + "]: " + FN::str8(rawdata.quantity) + "/" + FN::str8(rawdata.tradeQuantity) + " at price " + FN::str8(rawdata.price));
+          DEBOG("reply  " + rawdata.orderId + "::" + rawdata.exchangeId + " [" + to_string((int)rawdata.orderStatus) + "]: " + str8(rawdata.quantity) + "/" + str8(rawdata.tradeQuantity) + " at price " + str8(rawdata.price));
           updateOrderState(rawdata);
         });
       };
@@ -83,9 +83,9 @@ namespace K {
         }
         if (gw->replace and !replaceOrderId.empty()) {
           if (!orders.orders[replaceOrderId].exchangeId.empty()) {
-            DEBOG("update " + ((side == mSide::Bid ? "BID" : "ASK") + (" id " + replaceOrderId)) + ":  at price " + FN::str8(price) + " " + gw->quote);
+            DEBOG("update " + ((side == mSide::Bid ? "BID" : "ASK") + (" id " + replaceOrderId)) + ":  at price " + str8(price) + " " + gw->quote);
             orders.orders[replaceOrderId].price = price;
-            gw->replace(orders.orders[replaceOrderId].exchangeId, FN::str8(price));
+            gw->replace(orders.orders[replaceOrderId].exchangeId, str8(price));
           }
         } else {
           if (args.testChamber != 1) cancelOrder(replaceOrderId);
@@ -103,12 +103,12 @@ namespace K {
             postOnly
           ));
           mOrder *o = &orders.orders[newOrderId];
-          DEBOG(" send  " + replaceOrderId + "> " + (o->side == mSide::Bid ? "BID" : "ASK") + " id " + o->orderId + ": " + FN::str8(o->quantity) + " " + o->pair.base + " at price " + FN::str8(o->price) + " " + o->pair.quote);
+          DEBOG(" send  " + replaceOrderId + "> " + (o->side == mSide::Bid ? "BID" : "ASK") + " id " + o->orderId + ": " + str8(o->quantity) + " " + o->pair.base + " at price " + str8(o->price) + " " + o->pair.quote);
           gw->place(
             o->orderId,
             o->side,
-            FN::str8(o->price),
-            FN::str8(o->quantity),
+            str8(o->price),
+            str8(o->quantity),
             o->type,
             o->timeInForce,
             o->preferPostOnly,
@@ -160,7 +160,7 @@ namespace K {
         k.side = o->side;
         if (saved and !working)
           cleanOrder(o->orderId);
-        else DEBOG(" saved " + ((o->side == mSide::Bid ? "BID id " : "ASK id ") + o->orderId) + "::" + o->exchangeId + " [" + to_string((int)o->orderStatus) + "]: " + FN::str8(o->quantity) + " " + o->pair.base + " at price " + FN::str8(o->price) + " " + o->pair.quote);
+        else DEBOG(" saved " + ((o->side == mSide::Bid ? "BID id " : "ASK id ") + o->orderId) + "::" + o->exchangeId + " [" + to_string((int)o->orderStatus) + "]: " + str8(o->quantity) + " " + o->pair.base + " at price " + str8(o->price) + " " + o->pair.quote);
         DEBOG("memory " + to_string(orders.orders.size()));
         if (saved) {
           wallet->position.reset(k.side, orders.calcHeldAmount(k.side));
