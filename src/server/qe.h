@@ -158,21 +158,21 @@ namespace K {
       };
       void applyRoundSize(mQuote *rawQuote) {
         if (!rawQuote->ask.empty())
-          rawQuote->ask.size = FN::d8(fmax(
+          rawQuote->ask.size = floor(fmax(
             fmin(
               rawQuote->ask.size,
               wallet->position._baseTotal
             ),
             gw->minSize
-          ));
+          ) / 1e-8) * 1e-8;
         if (!rawQuote->bid.empty())
-          rawQuote->bid.size = FN::d8(fmax(
+          rawQuote->bid.size = floor(fmax(
             fmin(
               rawQuote->bid.size,
               wallet->position._quoteTotal
             ),
             gw->minSize
-          ));
+          ) / 1e-8) * 1e-8;
       };
       void applyDepleted(mQuote *rawQuote) {
         if (rawQuote->bid.size > wallet->position._quoteTotal) {

@@ -15,7 +15,6 @@ namespace K {
         return ss.str();
       };
       static string str8(const double &d) { return strX(d, 8); };
-      static double d8(const double &d) { return stod(str8(d)); };
       static string strL(string s) { transform(s.begin(), s.end(), s.begin(), ::tolower); return s; };
       static string strU(string s) { transform(s.begin(), s.end(), s.begin(), ::toupper); return s; };
       static unsigned long long int64() {
