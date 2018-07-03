@@ -774,7 +774,8 @@ namespace K {
     k.sideAPR            = j.value("sideAPR", "");
   };
 
-  struct mPosition: public mJsonToClient<mPosition> {
+  struct mPosition: public mToScreen,
+                    public mJsonToClient<mPosition> {
     mWallets balance;
      mTarget target;
     mProfits profits;

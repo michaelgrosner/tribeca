@@ -17,6 +17,7 @@ namespace K {
       };
       void waitSysAdmin() {
         screen->printme(&position.target);
+        screen->printme(&position);
       };
       void waitWebAdmin() {
         client->welcome(position.target);
