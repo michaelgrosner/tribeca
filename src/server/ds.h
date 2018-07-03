@@ -1527,7 +1527,13 @@ namespace K {
       if (err) stats.fairPrice.warn("QE", "Unable to calculate quote, missing market data");
       return err;
     };
-    void calcFairValue() {
+    static string strX(const double &d, const unsigned int &X) {
+      stringstream ss;
+      ss << setprecision(X)
+         << fixed << d;
+      return ss.str();
+    };
+    void calcFairValue(const mPrice &minTick) {
       mPrice prev = fairValue;
       if (empty())
         fairValue = 0;
@@ -1548,6 +1554,7 @@ namespace K {
         ) / (asks.cbegin()->size
            + bids.cbegin()->size
       );
+      if (fairValue) fairValue = stod(strX(fairValue, -1 * floor(log10(minTick))));
       stats.fairPrice.send_ratelimit(prev);
     };
     void calcAverageWidth() {
@@ -1580,11 +1587,11 @@ namespace K {
         if (orders.empty()) break;
       }
     };
-    void send_reset_filter(const mLevels &next) {
+    void send_reset_filter(const mLevels &next, const mPrice &minTick) {
       reset(next);
       if (!filterBidOrders.empty()) filter(&bids, filterBidOrders);
       if (!filterAskOrders.empty()) filter(&asks, filterAskOrders);
-      calcFairValue();
+      calcFairValue(minTick);
       calcAverageWidth();
       diff.send_reset();
     };

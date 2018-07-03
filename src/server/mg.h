@@ -15,7 +15,7 @@ namespace K {
           levels.stats.takerTrades.send_push_back(rawdata);
         });
         gw->RAWDATA_ENTRY_POINT(mLevels, {                          PRETTY_DEBUG
-          levels.send_reset_filter(rawdata);
+          levels.send_reset_filter(rawdata, gw->minTick);
           wallet->calcWallet();
           engine->calcQuote();
         });

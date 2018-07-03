@@ -49,7 +49,7 @@ namespace K {
       };
       void calcQuoteAfterSavedParams() {
         findMode("saved");
-        market->levels.calcFairValue();
+        market->levels.calcFairValue(gw->minTick);
         market->levels.stats.ewma.calcFromHistory();
         wallet->calcWallet();
         wallet->calcSafety();
