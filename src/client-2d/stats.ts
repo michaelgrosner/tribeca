@@ -467,6 +467,8 @@ export class StatsComponent implements OnInit {
   };
 
   @Input() product: Models.ProductState;
+  @Input() baseCurrency: string;
+  @Input() quoteCurrency: string;
 
   @Input() set setQuotingParameters(o: Models.QuotingParameters) {
     (<any>Highcharts).quotingParameters = o;
@@ -490,8 +492,8 @@ export class StatsComponent implements OnInit {
   @Input() set setPosition(o: Models.PositionReport) {
     if (o === null) return;
     let time = new Date().getTime();
-    if (!(<any>Highcharts).customBaseCurrency) (<any>Highcharts).customBaseCurrency = o.pair.base;
-    if (!(<any>Highcharts).customQuoteCurrency) (<any>Highcharts).customQuoteCurrency = o.pair.quote;
+    if (!(<any>Highcharts).customBaseCurrency) (<any>Highcharts).customBaseCurrency = this.baseCurrency;
+    if (!(<any>Highcharts).customQuoteCurrency) (<any>Highcharts).customQuoteCurrency = this.quoteCurrency;
     this.positionData = o;
   }
 

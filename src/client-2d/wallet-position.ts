@@ -17,9 +17,7 @@ import * as Models from './models';
 })
 export class WalletPositionComponent {
 
-  public baseCurrency: string;
   public basePosition: number;
-  public quoteCurrency: string;
   public quotePosition: number;
   public baseHeldPosition: number;
   public quoteHeldPosition: number;
@@ -29,11 +27,11 @@ export class WalletPositionComponent {
   private profitQuote: number = 0;
 
   @Input() product: Models.ProductState;
+  @Input() baseCurrency: string;
+  @Input() quoteCurrency: string;
 
   @Input() set setPosition(o: Models.PositionReport) {
     if (o === null) {
-      this.baseCurrency = null;
-      this.quoteCurrency = null;
       this.basePosition = null;
       this.quotePosition = null;
       this.baseHeldPosition = null;
@@ -51,8 +49,6 @@ export class WalletPositionComponent {
       this.quoteValue = o.quoteValue;
       this.profitBase = o.profitBase;
       this.profitQuote = o.profitQuote;
-      this.baseCurrency = o.pair.base;
-      this.quoteCurrency = o.pair.quote;
     }
   }
 }

@@ -126,13 +126,13 @@ class DisplayOrder {
                                                [(ngModel)]="pair.quotingParameters.display.bullets">
                                         </td>
                                         <td style="width:88px; border-bottom: 3px solid #DDE28B;" *ngIf="pair.quotingParameters.display.safety==3 && !pair.quotingParameters.display.percentageValues">
-                                            <input class="form-control input-sm" title="{{ pair_name[1] }}"
+                                            <input class="form-control input-sm" title="{{ quoteCurrency }}"
                                                type="number"
                                                onClick="this.select()"
                                                [(ngModel)]="pair.quotingParameters.display.range">
                                         </td>
                                         <td style="width:88px; border-bottom: 3px solid #DDE28B;" *ngIf="pair.quotingParameters.display.safety==3 && pair.quotingParameters.display.percentageValues">
-                                            <input class="form-control input-sm" title="{{ pair_name[1] }}"
+                                            <input class="form-control input-sm" title="{{ quoteCurrency }}"
                                                type="number" step="0.1" min="0" max="100"
                                                onClick="this.select()"
                                                [(ngModel)]="pair.quotingParameters.display.rangePercentage">
@@ -176,13 +176,13 @@ class DisplayOrder {
                                         </td>
                                         </ng-container>
                                         <td style="width:169px;border-bottom: 3px solid #D64A4A;" *ngIf="!pair.quotingParameters.display.percentageValues">
-                                            <input class="form-control input-sm" title="{{ pair_name[0] }}"
+                                            <input class="form-control input-sm" title="{{ baseCurrency }}"
                                                type="number" step="0.01" min="0.01"
                                                onClick="this.select()"
                                                [(ngModel)]="pair.quotingParameters.display.buySize">
                                         </td>
                                         <td style="width:169px;border-bottom: 3px solid #D64A4A;" *ngIf="pair.quotingParameters.display.percentageValues">
-                                            <input class="form-control input-sm" title="{{ pair_name[0] }}"
+                                            <input class="form-control input-sm" title="{{ baseCurrency }}"
                                                type="number" step="1" min="1" max="100"
                                                onClick="this.select()"
                                                [(ngModel)]="pair.quotingParameters.display.buySizePercentage">
@@ -192,13 +192,13 @@ class DisplayOrder {
                                                [(ngModel)]="pair.quotingParameters.display.buySizeMax">
                                         </td>
                                         <td style="width:169px;border-bottom: 3px solid #D64A4A;" *ngIf="!pair.quotingParameters.display.percentageValues">
-                                            <input class="form-control input-sm" title="{{ pair_name[0] }}"
+                                            <input class="form-control input-sm" title="{{ baseCurrency }}"
                                                type="number" step="0.01" min="0.01"
                                                onClick="this.select()"
                                                [(ngModel)]="pair.quotingParameters.display.sellSize">
                                         </td>
                                         <td style="width:169px;border-bottom: 3px solid #D64A4A;" *ngIf="pair.quotingParameters.display.percentageValues">
-                                            <input class="form-control input-sm" title="{{ pair_name[0] }}"
+                                            <input class="form-control input-sm" title="{{ baseCurrency }}"
                                                type="number" step="1" min="1" max="100"
                                                onClick="this.select()"
                                                [(ngModel)]="pair.quotingParameters.display.sellSizePercentage">
@@ -275,13 +275,13 @@ class DisplayOrder {
                                                [(ngModel)]="pair.quotingParameters.display.ewmaSensiblityPercentage">
                                         </td>
                                         <td style="width:88px;border-bottom: 3px solid #8BE296;" *ngIf="!pair.quotingParameters.display.percentageValues && pair.quotingParameters.display.autoPositionMode==0">
-                                            <input class="form-control input-sm" title="{{ pair_name[0] }}"
+                                            <input class="form-control input-sm" title="{{ baseCurrency }}"
                                                type="number" step="0.01" min="0"
                                                onClick="this.select()"
                                                [(ngModel)]="pair.quotingParameters.display.targetBasePosition">
                                         </td>
                                         <td style="width:88px;border-bottom: 3px solid #8BE296;" *ngIf="pair.quotingParameters.display.percentageValues && pair.quotingParameters.display.autoPositionMode==0">
-                                            <input class="form-control input-sm" title="{{ pair_name[0] }}"
+                                            <input class="form-control input-sm" title="{{ baseCurrency }}"
                                                type="number" step="1" min="0" max="100"
                                                onClick="this.select()"
                                                [(ngModel)]="pair.quotingParameters.display.targetBasePositionPercentage">
@@ -293,25 +293,25 @@ class DisplayOrder {
                                             </select>
                                         </td>
                                         <td style="width:88px;border-bottom: 3px solid #DDE28B;" *ngIf="!pair.quotingParameters.display.percentageValues">
-                                            <input class="form-control input-sm" title="{{ pair_name[0] }}"
+                                            <input class="form-control input-sm" title="{{ baseCurrency }}"
                                                type="number" step="0.01" min="0"
                                                onClick="this.select()"
                                                [(ngModel)]="pair.quotingParameters.display.positionDivergence">
                                         </td>
                                         <td style="width:88px;border-bottom: 3px solid #DDE28B;" *ngIf="pair.quotingParameters.display.percentageValues">
-                                            <input class="form-control input-sm" title="{{ pair_name[0] }}"
+                                            <input class="form-control input-sm" title="{{ baseCurrency }}"
                                                type="number" step="1" min="0" max="100"
                                                onClick="this.select()"
                                                [(ngModel)]="pair.quotingParameters.display.positionDivergencePercentage">
                                         </td>
                                         <td style="width:88px;border-bottom: 3px solid #DDE28B;" *ngIf="!pair.quotingParameters.display.percentageValues && pair.quotingParameters.display.autoPositionMode && pair.quotingParameters.display.positionDivergenceMode">
-                                            <input class="form-control input-sm" title="{{ pair_name[0] }}"
+                                            <input class="form-control input-sm" title="{{ baseCurrency }}"
                                                type="number" step="0.01" min="0"
                                                onClick="this.select()"
                                                [(ngModel)]="pair.quotingParameters.display.positionDivergenceMin">
                                         </td>
                                         <td style="width:88px;border-bottom: 3px solid #DDE28B;" *ngIf="pair.quotingParameters.display.percentageValues && pair.quotingParameters.display.autoPositionMode && pair.quotingParameters.display.positionDivergenceMode">
-                                            <input class="form-control input-sm" title="{{ pair_name[0] }}"
+                                            <input class="form-control input-sm" title="{{ baseCurrency }}"
                                                type="number" step="1" min="0" max="100"
                                                onClick="this.select()"
                                                [(ngModel)]="pair.quotingParameters.display.positionDivergencePercentageMin">
@@ -337,25 +337,25 @@ class DisplayOrder {
                                                [(ngModel)]="pair.quotingParameters.display.widthPercentage">
                                         </td>
                                         <td style="width:169px;border-bottom: 3px solid #8BE296;" *ngIf="!pair.quotingParameters.display.widthPercentage || [6].indexOf(pair.quotingParameters.display.mode)>-1">
-                                            <input class="width-option form-control input-sm" title="{{ pair_name[1] }}"
+                                            <input class="width-option form-control input-sm" title="{{ quoteCurrency }}"
                                                type="number" step="{{ product.advert.minTick}}" min="{{ product.advert.minTick}}"
                                                onClick="this.select()"
                                                [(ngModel)]="pair.quotingParameters.display.widthPing">
                                         </td>
                                         <td style="width:169px;border-bottom: 3px solid #8BE296;" *ngIf="pair.quotingParameters.display.widthPercentage && [6].indexOf(pair.quotingParameters.display.mode)==-1">
-                                            <input class="width-option form-control input-sm" title="{{ pair_name[1] }}"
+                                            <input class="width-option form-control input-sm" title="{{ quoteCurrency }}"
                                                type="number" step="0.001" min="0.001" max="100"
                                                onClick="this.select()"
                                                [(ngModel)]="pair.quotingParameters.display.widthPingPercentage">
                                         </td>
                                         <td style="width:169px;border-bottom: 3px solid #8BE296;" *ngIf="[1,2,3].indexOf(pair.quotingParameters.display.safety)>-1 && !pair.quotingParameters.display.widthPercentage">
-                                            <input class="width-option form-control input-sm" title="{{ pair_name[1] }}"
+                                            <input class="width-option form-control input-sm" title="{{ quoteCurrency }}"
                                                type="number" step="{{ product.advert.minTick}}" min="{{ product.advert.minTick}}"
                                                onClick="this.select()"
                                                [(ngModel)]="pair.quotingParameters.display.widthPong">
                                         </td>
                                         <td style="width:169px;border-bottom: 3px solid #8BE296;" *ngIf="[1,2,3].indexOf(pair.quotingParameters.display.safety)>-1 && pair.quotingParameters.display.widthPercentage">
-                                            <input class="width-option form-control input-sm" title="{{ pair_name[1] }}"
+                                            <input class="width-option form-control input-sm" title="{{ quoteCurrency }}"
                                                type="number" step="0.001" min="0.001" max="100"
                                                onClick="this.select()"
                                                [(ngModel)]="pair.quotingParameters.display.widthPongPercentage">
@@ -534,9 +534,9 @@ class DisplayOrder {
                         <div class="row img-rounded exchange">
                             <div *ngIf="pair.connectionMessage">{{ pair.connectionMessage }}</div>
                             <button style="font-size:16px;" class="col-md-12 col-xs-3" [ngClass]="pair.active.getClass()" (click)="pair.active.submit()">
-                                {{ exchange_name.replace('Margin', ' [M]') }}<br/>{{ pair_name.join('/') }}
+                                {{ exchange_name.replace('Margin', ' [M]') }}<br/>{{ baseCurrency+'/'+quoteCurrency }}
                             </button>
-                            <wallet-position [product]="product" [setPosition]="Position"></wallet-position>
+                            <wallet-position [baseCurrency]="baseCurrency" [quoteCurrency]="quoteCurrency" [product]="product" [setPosition]="Position"></wallet-position>
                             <div>
                               <a [hidden]="!exchange_market" href="{{ exchange_market }}" target="_blank">Market</a>, <a [hidden]="!exchange_orders" href="{{ exchange_orders }}" target="_blank">Orders</a>
                               <br/><br/><div>
@@ -568,7 +568,7 @@ class DisplayOrder {
                                           data-placement="bottom">{{ [1,2,3].indexOf(pair.quotingParameters.display.safety)>-1 ? 'Clean Pings' : 'Clean Trades' }}
                                   </button>
                               </div>
-                              <br [hidden]="exchange_name=='HitBtc'" /><a [hidden]="exchange_name=='HitBtc'" href="#" (click)="toggleWatch(exchange_name.toLowerCase(), this.pair_name.join('-').toLowerCase())">Watch</a><br [hidden]="exchange_name=='HitBtc'" />
+                              <br [hidden]="exchange_name=='HitBtc'" /><a [hidden]="exchange_name=='HitBtc'" href="#" (click)="toggleWatch(exchange_name.toLowerCase(), (baseCurrency+'-'+quoteCurrency).toLowerCase())">Watch</a><br [hidden]="exchange_name=='HitBtc'" />
                               <br/><a href="#" (click)="toggleTakers()">Takers</a>, <a href="#" (click)="toggleStats()">Stats</a>
                               <br/><a href="#" (click)="toggleSettings(showSettings = !showSettings)">Settings</a>
                               <br/><a href="#" (click)="changeTheme()">{{ system_theme ? 'Light' : 'Dark' }}</a>
@@ -646,7 +646,7 @@ class DisplayOrder {
     </div>
     <address class="text-center">
       <small>
-        <a href="{{ homepage }}/blob/master/README.md" target="_blank">README</a> - <a href="{{ homepage }}/blob/master/MANUAL.md" target="_blank">MANUAL</a> - <a href="{{ homepage }}" target="_blank">SOURCE</a> - <span [hidden]="!online"><span [hidden]="!inet"><span title="non-default Network Interface for outgoing traffic">{{ inet }}</span> - </span><span title="Server used RAM" style="margin-top: 6px;display: inline-block;">{{ server_memory }}</span> - <span title="Client used RAM" style="margin-top: 6px;display: inline-block;">{{ client_memory }}</span> - <span title="Database Size" style="margin-top: 6px;display: inline-block;">{{ db_size }}</span> - <span title="Pings in memory" style="margin-top: 6px;display: inline-block;">{{ tradesLength }}</span> - <span title="Market Levels in memory (bids|asks)" style="margin-top: 6px;display: inline-block;">{{ bidsLength }}|{{ asksLength }}</span> - </span><a href="#" (click)="openMatryoshka()">MATRYOSHKA</a> - <a href="{{ homepage }}/issues/new?title=%5Btopic%5D%20short%20and%20sweet%20description&body=description%0Aplease,%20consider%20to%20add%20all%20possible%20details%20%28if%20any%29%20about%20your%20new%20feature%20request%20or%20bug%20report%0A%0A%2D%2D%2D%0A%60%60%60%0Aapp%20exchange%3A%20{{ exchange_name }}/{{ pair_name.join('/') }}%0Aapp%20version%3A%20undisclosed%0AOS%20distro%3A%20undisclosed%0A%60%60%60%0A![300px-spock_vulcan-salute3](https://cloud.githubusercontent.com/assets/1634027/22077151/4110e73e-ddb3-11e6-9d84-358e9f133d34.png)" target="_blank">CREATE ISSUE</a> - <a href="https://earn.com/analpaper/" target="_blank">HELP</a> - <a title="irc://irc.freenode.net:6697/#tradingBot" href="irc://irc.freenode.net:6697/#tradingBot">IRC</a>|<a target="_blank" href="https://kiwiirc.com/client/irc.freenode.net:6697/?theme=cli#tradingBot" rel="nofollow">www</a>
+        <a href="{{ homepage }}/blob/master/README.md" target="_blank">README</a> - <a href="{{ homepage }}/blob/master/MANUAL.md" target="_blank">MANUAL</a> - <a href="{{ homepage }}" target="_blank">SOURCE</a> - <span [hidden]="!online"><span [hidden]="!inet"><span title="non-default Network Interface for outgoing traffic">{{ inet }}</span> - </span><span title="Server used RAM" style="margin-top: 6px;display: inline-block;">{{ server_memory }}</span> - <span title="Client used RAM" style="margin-top: 6px;display: inline-block;">{{ client_memory }}</span> - <span title="Database Size" style="margin-top: 6px;display: inline-block;">{{ db_size }}</span> - <span title="Pings in memory" style="margin-top: 6px;display: inline-block;">{{ tradesLength }}</span> - <span title="Market Levels in memory (bids|asks)" style="margin-top: 6px;display: inline-block;">{{ bidsLength }}|{{ asksLength }}</span> - </span><a href="#" (click)="openMatryoshka()">MATRYOSHKA</a> - <a href="{{ homepage }}/issues/new?title=%5Btopic%5D%20short%20and%20sweet%20description&body=description%0Aplease,%20consider%20to%20add%20all%20possible%20details%20%28if%20any%29%20about%20your%20new%20feature%20request%20or%20bug%20report%0A%0A%2D%2D%2D%0A%60%60%60%0Aapp%20exchange%3A%20{{ exchange_name }}/{{ baseCurrency+'/'+quoteCurrency }}%0Aapp%20version%3A%20undisclosed%0AOS%20distro%3A%20undisclosed%0A%60%60%60%0A![300px-spock_vulcan-salute3](https://cloud.githubusercontent.com/assets/1634027/22077151/4110e73e-ddb3-11e6-9d84-358e9f133d34.png)" target="_blank">CREATE ISSUE</a> - <a href="https://earn.com/analpaper/" target="_blank">HELP</a> - <a title="irc://irc.freenode.net:6697/#tradingBot" href="irc://irc.freenode.net:6697/#tradingBot">IRC</a>|<a target="_blank" href="https://kiwiirc.com/client/irc.freenode.net:6697/?theme=cli#tradingBot" rel="nofollow">www</a>
       </small>
     </address>
     <iframe id="matryoshka" style="margin:0px;padding:0px;border:0px;width:100%;height:0px;" src="about:blank"></iframe>
@@ -671,7 +671,6 @@ class ClientComponent implements OnInit {
   public exchange_name: string = "";
   public exchange_market: string;
   public exchange_orders: string;
-  public pair_name: string[];
   public orderList: any[] = [];
   public FairValue: Models.FairValue = null;
   public Trade: Models.Trade = null;
@@ -769,6 +768,8 @@ class ClientComponent implements OnInit {
     advert: new Models.ProductAdvertisement(null, null, null, null, null, .01),
     fixed: 2
   };
+  public baseCurrency: string = "?";
+  public quoteCurrency: string = "?";
 
   private user_theme: string = null;
   private system_theme: string = null;
@@ -897,7 +898,8 @@ class ClientComponent implements OnInit {
 
   private reset = (online: boolean) => {
     this.online = online;
-    this.pair_name = [null, null];
+    this.baseCurrency = "";
+    this.quoteCurrency = "";
     this.exchange_name = "";
     this.exchange_market = null;
     this.exchange_orders = null;
@@ -942,18 +944,19 @@ class ClientComponent implements OnInit {
     this.online = true;
     window.document.title = '['+pa.environment+']';
     this.matryoshka = pa.matryoshka;
-    this.pair_name = [pa.pair.base, pa.pair.quote];
+    this.baseCurrency = pa.pair.base;
+    this.quoteCurrency = pa.pair.quote;
     this.exchange_name = Models.Exchange[pa.exchange];
     this.exchange_market = this.exchange_name=='OkCoin'
       ? 'https://www.okcoin.'+(pa.pair.quote=='CNY'?'cn':'com')+'/market.html'
       : (this.exchange_name=='OkEx'
         ? 'https://www.okex.com/spot/market/index.do'
         : (this.exchange_name=='Coinbase'
-          ? 'https://gdax.com/trade/'+this.pair_name.join('-')
+          ? 'https://gdax.com/trade/'+this.baseCurrency+'-'+this.quoteCurrency
           : (this.exchange_name=='Bitfinex' || this.exchange_name=='BitfinexMargin'
-              ? 'https://www.bitfinex.com/trading/'+this.pair_name.join('')
+              ? 'https://www.bitfinex.com/trading/'+this.baseCurrency+this.quoteCurrency
               : (this.exchange_name=='HitBtc'
-                ? 'https://hitbtc.com/exchange/'+this.pair_name.join('-to-')
+                ? 'https://hitbtc.com/exchange/'+this.baseCurrency+'-to-'+this.quoteCurrency
                 : (this.exchange_name=='Kraken'
                   ? 'https://www.kraken.com/charts'
                   : (this.exchange_name=='Poloniex'
@@ -970,7 +973,7 @@ class ClientComponent implements OnInit {
       : (this.exchange_name=='OkEx'
         ? 'https://www.okex.com/spot/trade/spotEntrust.do'
         : (this.exchange_name=='Coinbase'
-          ? 'https://www.gdax.com/orders/'+this.pair_name.join('-')
+          ? 'https://www.gdax.com/orders/'+this.baseCurrency+'-'+this.quoteCurrency
           : (this.exchange_name=='Bitfinex' || this.exchange_name=='BitfinexMargin'
             ? 'https://www.bitfinex.com/reports/orders'
             : (this.exchange_name=='HitBtc'

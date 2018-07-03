@@ -686,7 +686,6 @@ namespace K {
 
   struct mPosition: public mToScreen,
                     public mJsonToClient<mPosition> {
-       mPair pair;
     mWallets balance;
     mProfits profits;
      mAmount baseAmount,
@@ -701,10 +700,10 @@ namespace K {
       double profitBase,
              profitQuote;
     mPosition():
-      pair(mPair()), profits(mProfits()), baseAmount(0), quoteAmount(0), _quoteAmountValue(0), baseHeldAmount(0), quoteHeldAmount(0), _baseTotal(0), _quoteTotal(0), baseValue(0), quoteValue(0), profitBase(0), profitQuote(0)
+      profits(mProfits()), baseAmount(0), quoteAmount(0), _quoteAmountValue(0), baseHeldAmount(0), quoteHeldAmount(0), _baseTotal(0), _quoteTotal(0), baseValue(0), quoteValue(0), profitBase(0), profitQuote(0)
     {};
-    mPosition(mPair p, mAmount bA, mAmount qA, mAmount qAV, mAmount bH, mAmount qH, mAmount bT, mAmount qT, mAmount bV, mAmount qV):
-      pair(p), baseAmount(bA), quoteAmount(qA), _quoteAmountValue(qAV), baseHeldAmount(bH), quoteHeldAmount(qH), _baseTotal(bT), _quoteTotal(qT), baseValue(bV), quoteValue(qV), profitBase(0), profitQuote(0)
+    mPosition(mAmount bA, mAmount qA, mAmount qAV, mAmount bH, mAmount qH, mAmount bT, mAmount qT, mAmount bV, mAmount qV):
+      baseAmount(bA), quoteAmount(qA), _quoteAmountValue(qAV), baseHeldAmount(bH), quoteHeldAmount(qH), _baseTotal(bT), _quoteTotal(qT), baseValue(bV), quoteValue(qV), profitBase(0), profitQuote(0)
     {};
     void reset(const mSide &side, const mAmount &nextHeldAmount) {
       if (empty()) return;
@@ -736,9 +735,8 @@ namespace K {
         and abs(profitQuote - prev.profitQuote) < 2e-2
       );
     };
-    void send_ratelimit(const mPrice &fv, const mPair &_pair) {
+    void send_ratelimit(const mPrice &fv) {
       mPosition prev = *this;
-      pair              = _pair;
       baseAmount        = balance.base.amount;
       quoteAmount       = balance.quote.amount;
       _quoteAmountValue = balance.quote.amount / fv;
@@ -773,8 +771,7 @@ namespace K {
       {      "baseValue", k.baseValue      },
       {     "quoteValue", k.quoteValue     },
       {     "profitBase", k.profitBase     },
-      {    "profitQuote", k.profitQuote    },
-      {           "pair", k.pair           }
+      {    "profitQuote", k.profitQuote    }
     };
   };
 

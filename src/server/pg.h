@@ -37,7 +37,7 @@ namespace K {
       void calcWallet() {
         if (position.balance.empty() or market->levels.empty()) return;
         if (args.maxWallet) position.balance.calcMaxWallet(market->levels.fairValue);
-        position.send_ratelimit(market->levels.fairValue, mPair(gw->base, gw->quote));
+        position.send_ratelimit(market->levels.fairValue);
         calcTargetBasePos();
       };
     private:

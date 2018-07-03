@@ -144,8 +144,7 @@ export class PositionReport {
                 public baseValue: number,
                 public quoteValue: number,
                 public profitBase: number,
-                public profitQuote: number,
-                public pair: CurrencyPair) {}
+                public profitQuote: number) {}
 }
 
 export class OrderRequestFromUI {
