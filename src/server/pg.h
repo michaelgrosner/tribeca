@@ -4,11 +4,6 @@
 namespace K {
   class PG: public Klass,
             public Wallet { public: PG() { wallet = this; };
-    private:
-      mWallets balance;
-      map<mPrice, mTrade> buys,
-                          sells;
-      string sideAPRDiff = "!=";
     protected:
       void load() {
         sqlite->backup(&target);
@@ -16,7 +11,7 @@ namespace K {
       };
       void waitData() {
         gw->RAWDATA_ENTRY_POINT(mWallets, {                         PRETTY_DEBUG
-          if (!rawdata.empty()) balance = rawdata;
+          position.balance.reset(rawdata);
           calcWallet();
         });
       };
@@ -40,49 +35,10 @@ namespace K {
         safety.send_ratelimit(nextSafety());
       };
       void calcWallet() {
-        if (balance.empty() or market->levels.empty()) return;
-        if (args.maxWallet) balance.calcMaxWallet(market->levels.fairValue);
-        position.send_ratelimit(mPosition(
-          mPair(gw->base, gw->quote),
-          FN::d8(balance.base.amount),
-          FN::d8(balance.quote.amount),
-          balance.quote.amount / market->levels.fairValue,
-          FN::d8(balance.base.held),
-          FN::d8(balance.quote.held),
-          balance.base.amount + balance.base.held,
-          (balance.quote.amount + balance.quote.held) / market->levels.fairValue,
-          FN::d8((balance.quote.amount + balance.quote.held) / market->levels.fairValue + balance.base.amount + balance.base.held),
-          FN::d8((balance.base.amount + balance.base.held) * market->levels.fairValue + balance.quote.amount + balance.quote.held)
-        ));
+        if (position.balance.empty() or market->levels.empty()) return;
+        if (args.maxWallet) position.balance.calcMaxWallet(market->levels.fairValue);
+        position.send_ratelimit(market->levels.fairValue, mPair(gw->base, gw->quote));
         calcTargetBasePos();
-      };
-      void calcWalletAfterOrder(const mSide &side) {
-        if (position.empty()) return;
-        mAmount heldAmount = 0;
-        mAmount amount = side == mSide::Ask
-          ? position.baseAmount + position.baseHeldAmount
-          : position.quoteAmount + position.quoteHeldAmount;
-        for (map<mRandId, mOrder>::value_type &it : broker->orders.orders)
-          if (it.second.side == side and it.second.orderStatus == mStatus::Working) {
-            mAmount held = it.second.quantity;
-            if (it.second.side == mSide::Bid)
-              held *= it.second.price;
-            if (amount >= held) {
-              amount -= held;
-              heldAmount += held;
-            }
-          }
-        (side == mSide::Ask
-          ? balance.base
-          : balance.quote
-        ).reset(amount, heldAmount);
-        calcWallet();
-      };
-      void calcSafetyAfterTrade(const mTrade &k) {
-        (k.side == mSide::Bid
-          ? buys : sells
-        )[k.price] = k;
-        calcSafety();
       };
     private:
       void calcTargetBasePos() {                                    PRETTY_DEBUG
@@ -94,9 +50,9 @@ namespace K {
                            ? qp.targetBasePositionPercentage * baseValue / 1e+2
                            : qp.targetBasePosition)
                          : market->levels.stats.ewma.targetPositionAutoPercentage * baseValue / 1e+2;
-        if (prev and abs(prev - next) < 1e-4 and sideAPRDiff == target.sideAPR) return;
+        if (prev and abs(prev - next) < 1e-4 and target.sideAPRDiff == target.sideAPR) return;
         target.targetBasePosition = next;
-        sideAPRDiff = target.sideAPR;
+        target.sideAPRDiff = target.sideAPR;
         target.calcPDiv(baseValue);
         target.send_push();
         if (!args.debugWallet) return;
@@ -146,13 +102,11 @@ namespace K {
         }
         if (buyQty) buyPing /= buyQty;
         if (sellQty) sellPing /= sellQty;
-        clean();
-        mAmount sumBuys = sum(&buys);
-        mAmount sumSells = sum(&sells);
+        safety.recentTrades.reset();
         return mSafety(
-          sumBuys / buySize,
-          sumSells / sellSize,
-          (sumBuys + sumSells) / (buySize + sellSize),
+          safety.recentTrades.sumBuys / buySize,
+          safety.recentTrades.sumSells / sellSize,
+          (safety.recentTrades.sumBuys + safety.recentTrades.sumSells) / (buySize + sellSize),
           buyPing,
           sellPing,
           buySize,
@@ -194,37 +148,6 @@ namespace K {
           *qty += qty_;
         }
         return *qty >= qtyMax and (_near or _far);
-      };
-      void clean() {
-        if (buys.size()) expire(&buys);
-        if (sells.size()) expire(&sells);
-        skip();
-      };
-      void expire(map<mPrice, mTrade> *k) {
-        mClock now = Tstamp;
-        for (map<mPrice, mTrade>::iterator it = k->begin(); it != k->end();)
-          if (it->second.time + qp.tradeRateSeconds * 1e+3 > now) ++it;
-          else it = k->erase(it);
-      };
-      void skip() {
-        while (buys.size() and sells.size()) {
-          mTrade buy = buys.rbegin()->second;
-          mTrade sell = sells.begin()->second;
-          if (sell.price < buy.price) break;
-          mAmount buyQty = buy.quantity;
-          buy.quantity = buyQty - sell.quantity;
-          sell.quantity = sell.quantity - buyQty;
-          if (buy.quantity < gw->minSize)
-            buys.erase(--buys.rbegin().base());
-          if (sell.quantity < gw->minSize)
-            sells.erase(sells.begin());
-        }
-      };
-      mAmount sum(map<mPrice, mTrade> *k) {
-        mAmount sum = 0;
-        for (map<mPrice, mTrade>::value_type &it : *k)
-          sum += it.second.quantity;
-        return sum;
       };
   };
 }

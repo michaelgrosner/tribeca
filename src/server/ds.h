@@ -482,6 +482,85 @@ namespace K {
     k.quote = j.value("quote", "");
   };
 
+  struct mOrder {
+         mRandId orderId,
+                 exchangeId;
+           mPair pair;
+           mSide side;
+          mPrice price;
+         mAmount quantity,
+                 tradeQuantity;
+      mOrderType type;
+    mTimeInForce timeInForce;
+         mStatus orderStatus;
+            bool isPong,
+                 preferPostOnly;
+          mClock time,
+                 latency,
+                 _waitingCancel;
+    mOrder():
+      orderId(""), exchangeId(""), pair(mPair()), side((mSide)0), quantity(0), type((mOrderType)0), isPong(false), price(0), timeInForce((mTimeInForce)0), orderStatus((mStatus)0), preferPostOnly(false), tradeQuantity(0), time(0), _waitingCancel(0), latency(0)
+    {};
+    mOrder(mRandId o, mStatus s):
+      orderId(o), exchangeId(""), pair(mPair()), side((mSide)0), quantity(0), type((mOrderType)0), isPong(false), price(0), timeInForce((mTimeInForce)0), orderStatus(s), preferPostOnly(false), tradeQuantity(0), time(0), _waitingCancel(0), latency(0)
+    {};
+    mOrder(mRandId o, mRandId e, mStatus s, mPrice p, mAmount q, mAmount Q):
+      orderId(o), exchangeId(e), pair(mPair()), side((mSide)0), quantity(q), type((mOrderType)0), isPong(false), price(p), timeInForce((mTimeInForce)0), orderStatus(s), preferPostOnly(false), tradeQuantity(Q), time(0), _waitingCancel(0), latency(0)
+    {};
+    mOrder(mRandId o, mPair P, mSide S, mAmount q, mOrderType t, bool i, mPrice p, mTimeInForce F, mStatus s, bool O):
+      orderId(o), exchangeId(""), pair(P), side(S), quantity(q), type(t), isPong(i), price(p), timeInForce(F), orderStatus(s), preferPostOnly(O), tradeQuantity(0), time(0), _waitingCancel(0), latency(0)
+    {};
+  };
+  static void to_json(json &j, const mOrder &k) {
+    j = {
+      {       "orderId", k.orderId       },
+      {    "exchangeId", k.exchangeId    },
+      {          "pair", k.pair          },
+      {          "side", k.side          },
+      {      "quantity", k.quantity      },
+      {          "type", k.type          },
+      {        "isPong", k.isPong        },
+      {         "price", k.price         },
+      {   "timeInForce", k.timeInForce   },
+      {   "orderStatus", k.orderStatus   },
+      {"preferPostOnly", k.preferPostOnly},
+      {          "time", k.time          },
+      {       "latency", k.latency       }
+    };
+  };
+  struct mOrders: public mJsonToClient<mOrders> {
+    map<mRandId, mOrder> orders;
+    vector<mOrder> working() const {
+      vector<mOrder> workingOrders;
+      for (const map<mRandId, mOrder>::value_type &it : orders)
+        if (mStatus::Working == it.second.orderStatus)
+          workingOrders.push_back(it.second);
+      return workingOrders;
+    };
+    mAmount calcHeldAmount(const mSide &side) const {
+      mAmount heldAmount = 0;
+      for (const map<mRandId, mOrder>::value_type &it : orders)
+        if (it.second.side == side and it.second.orderStatus == mStatus::Working)
+          heldAmount += (it.second.side == mSide::Ask
+            ? it.second.quantity
+            : it.second.quantity * it.second.price
+          );
+      return heldAmount;
+    };
+    mMatter about() const {
+      return mMatter::OrderStatusReports;
+    };
+    bool realtime() const {
+      return !qp.delayUI;
+    };
+    json dump() const {
+      return working();
+    };
+  };
+  static void to_json(json &j, const mOrders &k) {
+    j = k.orders;
+  };
+
   struct mWallet {
     mAmount amount,
             held;
@@ -517,6 +596,11 @@ namespace K {
     mWallets(mWallet b, mWallet q):
       base(b), quote(q)
     {};
+    void reset(const mWallets &next) {
+      if (next.empty()) return;
+      base = next.base;
+      quote = next.quote;
+    };
     void calcMaxWallet(const mPrice &fv) {
       mAmount maxWallet = args.maxWallet;
       maxWallet -= quote.held / fv;
@@ -603,6 +687,7 @@ namespace K {
   struct mPosition: public mToScreen,
                     public mJsonToClient<mPosition> {
        mPair pair;
+    mWallets balance;
     mProfits profits;
      mAmount baseAmount,
              quoteAmount,
@@ -621,6 +706,16 @@ namespace K {
     mPosition(mPair p, mAmount bA, mAmount qA, mAmount qAV, mAmount bH, mAmount qH, mAmount bT, mAmount qT, mAmount bV, mAmount qV):
       pair(p), baseAmount(bA), quoteAmount(qA), _quoteAmountValue(qAV), baseHeldAmount(bH), quoteHeldAmount(qH), _baseTotal(bT), _quoteTotal(qT), baseValue(bV), quoteValue(qV), profitBase(0), profitQuote(0)
     {};
+    void reset(const mSide &side, const mAmount &nextHeldAmount) {
+      if (empty()) return;
+      (side == mSide::Ask
+        ? balance.base
+        : balance.quote
+      ).reset((side == mSide::Ask
+        ? baseAmount + baseHeldAmount
+        : quoteAmount + quoteHeldAmount
+      ) - nextHeldAmount, nextHeldAmount);
+    };
     bool empty() const {
       return !baseValue;
     };
@@ -629,35 +724,35 @@ namespace K {
       if (err) warn("PG", "Unable to calculate TBP, missing wallet data");
       return err;
     };
-    bool ratelimit(const mPosition &next) const {
-      return (!next.empty()
-        and abs(baseValue - next.baseValue) < 2e-6
-        and abs(quoteValue - next.quoteValue) < 2e-2
-        and abs(baseAmount - next.baseAmount) < 2e-6
-        and abs(quoteAmount - next.quoteAmount) < 2e-2
-        and abs(baseHeldAmount - next.baseHeldAmount) < 2e-6
-        and abs(quoteHeldAmount - next.quoteHeldAmount) < 2e-2
-        and abs(profitBase - next.profitBase) < 2e-2
-        and abs(profitQuote - next.profitQuote) < 2e-2
+    bool ratelimit(const mPosition &prev) const {
+      return (!empty()
+        and abs(baseValue - prev.baseValue) < 2e-6
+        and abs(quoteValue - prev.quoteValue) < 2e-2
+        and abs(baseAmount - prev.baseAmount) < 2e-6
+        and abs(quoteAmount - prev.quoteAmount) < 2e-2
+        and abs(baseHeldAmount - prev.baseHeldAmount) < 2e-6
+        and abs(quoteHeldAmount - prev.quoteHeldAmount) < 2e-2
+        and abs(profitBase - prev.profitBase) < 2e-2
+        and abs(profitQuote - prev.profitQuote) < 2e-2
       );
     };
-    void send_ratelimit(const mPosition &next) {
-      bool limited = ratelimit(next);
-      pair = next.pair;
-      baseAmount = next.baseAmount;
-      quoteAmount = next.quoteAmount;
-      _quoteAmountValue = next._quoteAmountValue;
-      baseHeldAmount = next.baseHeldAmount;
-      quoteHeldAmount = next.quoteHeldAmount;
-      _baseTotal = next._baseTotal;
-      _quoteTotal = next._quoteTotal;
-      baseValue = next.baseValue;
-      quoteValue = next.quoteValue;
+    void send_ratelimit(const mPrice &fv, const mPair &_pair) {
+      mPosition prev = *this;
+      pair              = _pair;
+      baseAmount        = balance.base.amount;
+      quoteAmount       = balance.quote.amount;
+      _quoteAmountValue = balance.quote.amount / fv;
+      baseHeldAmount    = balance.base.held;
+      quoteHeldAmount   = balance.quote.held;
+      _baseTotal        = balance.base.amount + balance.base.held;
+      _quoteTotal       = (balance.quote.amount + balance.quote.held) / fv;
+      baseValue         = (balance.quote.amount + balance.quote.held) / fv + balance.base.amount + balance.base.held;
+      quoteValue        = (balance.base.amount + balance.base.held) * fv + balance.quote.amount + balance.quote.held;
       if (!profits.ratelimit())
         profits.push_back(mProfit(baseValue, quoteValue));
-      profitBase = profits.calcBase();
-      profitQuote = profits.calcQuote();
-      if (!limited) {
+      profitBase        = profits.calcBase();
+      profitQuote       = profits.calcQuote();
+      if (!ratelimit(prev)) {
         send();
         refresh();
       }
@@ -683,19 +778,216 @@ namespace K {
     };
   };
 
+  struct mTrade {
+     string tradeId;
+      mSide side;
+      mPair pair;
+     mPrice price,
+            Kprice;
+    mAmount quantity,
+            value,
+            Kqty,
+            Kvalue,
+            Kdiff,
+            feeCharged;
+     mClock time,
+            Ktime;
+       bool loadedFromDB;
+    mTrade():
+      tradeId(""), side((mSide)0), pair(mPair()), price(0), Kprice(0), quantity(0), value(0), Kqty(0), Kvalue(0), Kdiff(0), feeCharged(0), time(0), Ktime(0), loadedFromDB(false)
+    {};
+    mTrade(mPair P, mPrice p, mAmount q, mSide s, mClock t):
+      tradeId(""), side(s), pair(P), price(p), Kprice(0), quantity(q), value(0), Kqty(0), Kvalue(0), Kdiff(0), feeCharged(0), time(t), Ktime(0), loadedFromDB(false)
+    {};
+    mTrade(string i, mPair P, mPrice p, mAmount q, mSide S, mClock t, mAmount v, mClock Kt, mAmount Kq, mPrice Kp, mAmount Kv, mAmount Kd, mAmount f, bool l):
+      tradeId(i), side(S), pair(P), price(p), Kprice(Kp), quantity(q), value(v), Kqty(Kq), Kvalue(Kv), Kdiff(Kd), feeCharged(f), time(t), Ktime(Kt), loadedFromDB(l)
+    {};
+  };
+  static void to_json(json &j, const mTrade &k) {
+    if (k.tradeId.empty()) j = {
+      {    "time", k.time    },
+      {    "pair", k.pair    },
+      {   "price", k.price   },
+      {"quantity", k.quantity},
+      {    "side", k.side    }
+    };
+    else j = {
+      {     "tradeId", k.tradeId     },
+      {        "time", k.time        },
+      {        "pair", k.pair        },
+      {       "price", k.price       },
+      {    "quantity", k.quantity    },
+      {        "side", k.side        },
+      {       "value", k.value       },
+      {       "Ktime", k.Ktime       },
+      {        "Kqty", k.Kqty        },
+      {      "Kprice", k.Kprice      },
+      {      "Kvalue", k.Kvalue      },
+      {       "Kdiff", k.Kdiff       },
+      {  "feeCharged", k.feeCharged  },
+      {"loadedFromDB", k.loadedFromDB},
+    };
+  };
+  static void from_json(const json &j, mTrade &k) {
+    k.tradeId      = j.value("tradeId", "");
+    k.pair         = j.value("pair", json::object());
+    k.price        = j.value("price", 0.0);
+    k.quantity     = j.value("quantity", 0.0);
+    k.side         = j.value("side", (mSide)0);
+    k.time         = j.value("time", (mClock)0);
+    k.value        = j.value("value", 0.0);
+    k.Ktime        = j.value("Ktime", (mClock)0);
+    k.Kqty         = j.value("Kqty", 0.0);
+    k.Kprice       = j.value("Kprice", 0.0);
+    k.Kvalue       = j.value("Kvalue", 0.0);
+    k.Kdiff        = j.value("Kdiff", 0.0);
+    k.feeCharged   = j.value("feeCharged", 0.0);
+    k.loadedFromDB = true;
+  };
+  struct mTrades: public mVectorFromDb<mTrade>,
+                  public mJsonToClient<mTrade> {
+    void send_push_back(const mTrade &row) {
+      rows.push_back(row);
+      push();
+      if (crbegin()->Kqty < 0) rbegin()->Kqty = -2;
+      send();
+    };
+    iterator send_push_erase(iterator it) {
+      mTrade row = *it;
+      it = rows.erase(it);
+      send_push_back(row);
+      erase();
+      return it;
+    };
+    mMatter about() const {
+      return mMatter::Trades;
+    };
+    void erase() {
+      if (crbegin()->Kqty < 0) rows.pop_back();
+    };
+    json dump() const {
+      if (crbegin()->Kqty == -1) return nullptr;
+      else return mVectorFromDb::dump();
+    };
+    string increment() const {
+      return crbegin()->tradeId;
+    };
+    string explainOK() const {
+      return "loaded % historical Trades";
+    };
+    json hello() {
+      return rows;
+    };
+  };
+  struct mTakers: public mJsonToClient<mTrade> {
+    vector<mTrade> trades;
+    mAmount        takersBuySize60s,
+                   takersSellSize60s;
+    mTakers():
+      trades({}), takersBuySize60s(0), takersSellSize60s(0)
+    {};
+    void timer_60s() {
+      takersSellSize60s = takersBuySize60s = 0;
+      if (trades.empty()) return;
+      for (mTrade &it : trades)
+        (it.side == mSide::Bid
+          ? takersSellSize60s
+          : takersBuySize60s
+        ) += it.quantity;
+      trades.clear();
+    };
+    void send_push_back(const mTrade &row) {
+      trades.push_back(row);
+      send();
+    };
+    mMatter about() const {
+      return mMatter::MarketTrade;
+    };
+    json dump() const {
+      return trades.back();
+    };
+    json hello() {
+      return trades;
+    };
+  };
+  static void to_json(json &j, const mTakers &k) {
+    j = k.trades;
+  };
+
+  struct mRecentTrade {
+     mPrice price;
+    mAmount quantity;
+     mClock time;
+    mRecentTrade():
+      price(0), quantity(0), time(0)
+    {};
+    mRecentTrade(mPrice p, mAmount q):
+      price(p), quantity(q), time(Tstamp)
+    {};
+  };
+  struct mRecentTrades {
+    multimap<mPrice, mRecentTrade> buys,
+                                   sells;
+    mAmount sumBuys,
+            sumSells;
+    mRecentTrades():
+      buys({}), sells({}), sumBuys(0), sumSells(0)
+    {};
+    void insert(const mSide &side, const mPrice &price, const mAmount &quantity) {
+      (side == mSide::Bid
+        ? buys
+        : sells
+      ).insert(pair<mPrice, mRecentTrade>(price, mRecentTrade(price, quantity)));
+    };
+    void reset() {
+      if (buys.size()) expire(&buys);
+      if (sells.size()) expire(&sells);
+      skip();
+      sumBuys = sum(&buys);
+      sumSells = sum(&sells);
+    };
+    mAmount sum(multimap<mPrice, mRecentTrade> *const k) {
+      mAmount sum = 0;
+      for (multimap<mPrice, mRecentTrade>::value_type &it : *k)
+        sum += it.second.quantity;
+      return sum;
+    };
+    void expire(multimap<mPrice, mRecentTrade> *const k) {
+      mClock now = Tstamp;
+      for (multimap<mPrice, mRecentTrade>::iterator it = k->begin(); it != k->end();)
+        if (it->second.time + qp.tradeRateSeconds * 1e+3 > now) ++it;
+        else it = k->erase(it);
+    };
+    void skip() {
+      while (buys.size() and sells.size()) {
+        mRecentTrade &buy = buys.rbegin()->second;
+        mRecentTrade &sell = sells.begin()->second;
+        if (sell.price < buy.price) break;
+        const mAmount buyQty = buy.quantity;
+        buy.quantity -= sell.quantity;
+        sell.quantity -= buyQty;
+        if (buy.quantity <= 0)
+          buys.erase(buys.rbegin()->first);
+        if (sell.quantity <= 0)
+          sells.erase(sells.begin()->first);
+      }
+    };
+  };
+
   struct mSafety: public mJsonToClient<mSafety> {
-    double buy,
-           sell,
-           combined;
-    mPrice buyPing,
-           sellPing;
-    mAmount buySize,
-            sellSize;
+           double buy,
+                  sell,
+                  combined;
+           mPrice buyPing,
+                  sellPing;
+          mAmount buySize,
+                  sellSize;
+    mRecentTrades recentTrades;
     mSafety():
-      buy(0), sell(0), combined(0), buyPing(0), sellPing(0), buySize(0), sellSize(0)
+      buy(0), sell(0), combined(0), buyPing(0), sellPing(0), buySize(0), sellSize(0), recentTrades(mRecentTrades())
     {};
     mSafety(double b, double s, double c, mPrice bP, mPrice sP, mPrice bS, mPrice sS):
-      buy(b), sell(s), combined(c), buyPing(bP), sellPing(sP), buySize(bS), sellSize(sS)
+      buy(b), sell(s), combined(c), buyPing(bP), sellPing(sP), buySize(bS), sellSize(sS), recentTrades(mRecentTrades())
     {};
     bool empty() const {
       return !buySize and !sellSize;
@@ -736,10 +1028,10 @@ namespace K {
                   public mJsonToClient<mTarget> {
     mAmount targetBasePosition,
             positionDivergence;
-     string sideAPR;
-     string base;
+     string sideAPR,
+            sideAPRDiff;
     mTarget():
-      targetBasePosition(0), positionDivergence(0), sideAPR(""), base("")
+      targetBasePosition(0), positionDivergence(0), sideAPR(""), sideAPRDiff("!=")
     {};
     void calcPDiv(const mAmount &baseValue) {
       mAmount pDiv = qp.percentageValues
@@ -1069,142 +1361,6 @@ namespace K {
     k.mgEwmaU  = j.value("ewmaUltraShort", 0.0);
   };
 
-  struct mTrade {
-     string tradeId;
-      mSide side;
-      mPair pair;
-     mPrice price,
-            Kprice;
-    mAmount quantity,
-            value,
-            Kqty,
-            Kvalue,
-            Kdiff,
-            feeCharged;
-     mClock time,
-            Ktime;
-       bool loadedFromDB;
-    mTrade():
-      tradeId(""), pair(mPair()), price(0), quantity(0), side((mSide)0), time(0), value(0), Ktime(0), Kqty(0), Kprice(0), Kvalue(0), Kdiff(0), feeCharged(0), loadedFromDB(false)
-    {};
-    mTrade(mPair P, mPrice p, mAmount q, mSide s, mClock t):
-      tradeId(""), pair(P), price(p), quantity(q), side(s), time(t), value(0), Ktime(0), Kqty(0), Kprice(0), Kvalue(0), Kdiff(0), feeCharged(0), loadedFromDB(false)
-    {};
-    mTrade(string i, mPair P, mPrice p, mAmount q, mSide S, mClock t, mAmount v, mClock Kt, mAmount Kq, mPrice Kp, mAmount Kv, mAmount Kd, mAmount f, bool l):
-      tradeId(i), pair(P), price(p), quantity(q), side(S), time(t), value(v), Ktime(Kt), Kqty(Kq), Kprice(Kp), Kvalue(Kv), Kdiff(Kd), feeCharged(f), loadedFromDB(l)
-    {};
-  };
-  static void to_json(json &j, const mTrade &k) {
-    if (k.tradeId.empty()) j = {
-      {    "time", k.time    },
-      {    "pair", k.pair    },
-      {   "price", k.price   },
-      {"quantity", k.quantity},
-      {    "side", k.side    }
-    };
-    else j = {
-      {     "tradeId", k.tradeId     },
-      {        "time", k.time        },
-      {        "pair", k.pair        },
-      {       "price", k.price       },
-      {    "quantity", k.quantity    },
-      {        "side", k.side        },
-      {       "value", k.value       },
-      {       "Ktime", k.Ktime       },
-      {        "Kqty", k.Kqty        },
-      {      "Kprice", k.Kprice      },
-      {      "Kvalue", k.Kvalue      },
-      {       "Kdiff", k.Kdiff       },
-      {  "feeCharged", k.feeCharged  },
-      {"loadedFromDB", k.loadedFromDB},
-    };
-  };
-  static void from_json(const json &j, mTrade &k) {
-    k.tradeId      = j.value("tradeId", "");
-    k.pair         = j.value("pair", json::object());
-    k.price        = j.value("price", 0.0);
-    k.quantity     = j.value("quantity", 0.0);
-    k.side         = j.value("side", (mSide)0);
-    k.time         = j.value("time", (mClock)0);
-    k.value        = j.value("value", 0.0);
-    k.Ktime        = j.value("Ktime", (mClock)0);
-    k.Kqty         = j.value("Kqty", 0.0);
-    k.Kprice       = j.value("Kprice", 0.0);
-    k.Kvalue       = j.value("Kvalue", 0.0);
-    k.Kdiff        = j.value("Kdiff", 0.0);
-    k.feeCharged   = j.value("feeCharged", 0.0);
-    k.loadedFromDB = true;
-  };
-  struct mTrades: public mVectorFromDb<mTrade>,
-                  public mJsonToClient<mTrade> {
-    void send_push_back(const mTrade &row) {
-      rows.push_back(row);
-      push();
-      if (crbegin()->Kqty < 0) rbegin()->Kqty = -2;
-      send();
-    };
-    iterator send_push_erase(iterator it) {
-      mTrade row = *it;
-      it = rows.erase(it);
-      send_push_back(row);
-      erase();
-      return it;
-    };
-    mMatter about() const {
-      return mMatter::Trades;
-    };
-    void erase() {
-      if (crbegin()->Kqty < 0) rows.pop_back();
-    };
-    json dump() const {
-      if (crbegin()->Kqty == -1) return nullptr;
-      else return mVectorFromDb::dump();
-    };
-    string increment() const {
-      return crbegin()->tradeId;
-    };
-    string explainOK() const {
-      return "loaded % historical Trades";
-    };
-    json hello() {
-      return rows;
-    };
-  };
-  struct mTakers: public mJsonToClient<mTrade> {
-    vector<mTrade> trades;
-    mAmount        takersBuySize60s,
-                   takersSellSize60s;
-    mTakers():
-      trades({}), takersBuySize60s(0), takersSellSize60s(0)
-    {};
-    void timer_60s() {
-      takersSellSize60s = takersBuySize60s = 0;
-      if (trades.empty()) return;
-      for (mTrade &it : trades)
-        (it.side == mSide::Bid
-          ? takersSellSize60s
-          : takersBuySize60s
-        ) += it.quantity;
-      trades.clear();
-    };
-    void send_push_back(const mTrade &row) {
-      trades.push_back(row);
-      send();
-    };
-    mMatter about() const {
-      return mMatter::MarketTrade;
-    };
-    json dump() const {
-      return trades.back();
-    };
-    json hello() {
-      return trades;
-    };
-  };
-  static void to_json(json &j, const mTakers &k) {
-    j = k.trades;
-  };
-
   struct mMarketStats: public mJsonToClient<mMarketStats> {
                mEwma ewma;
              mStdevs stdev;
@@ -1228,75 +1384,6 @@ namespace K {
       { "tradesBuySize", k.takerTrades.takersBuySize60s },
       {"tradesSellSize", k.takerTrades.takersSellSize60s}
     };
-  };
-
-  struct mOrder {
-         mRandId orderId,
-                 exchangeId;
-           mPair pair;
-           mSide side;
-          mPrice price;
-         mAmount quantity,
-                 tradeQuantity;
-      mOrderType type;
-    mTimeInForce timeInForce;
-         mStatus orderStatus;
-            bool isPong,
-                 preferPostOnly;
-          mClock time,
-                 latency,
-                 _waitingCancel;
-    mOrder():
-      orderId(""), exchangeId(""), pair(mPair()), side((mSide)0), quantity(0), type((mOrderType)0), isPong(false), price(0), timeInForce((mTimeInForce)0), orderStatus((mStatus)0), preferPostOnly(false), tradeQuantity(0), time(0), _waitingCancel(0), latency(0)
-    {};
-    mOrder(mRandId o, mStatus s):
-      orderId(o), exchangeId(""), pair(mPair()), side((mSide)0), quantity(0), type((mOrderType)0), isPong(false), price(0), timeInForce((mTimeInForce)0), orderStatus(s), preferPostOnly(false), tradeQuantity(0), time(0), _waitingCancel(0), latency(0)
-    {};
-    mOrder(mRandId o, mRandId e, mStatus s, mPrice p, mAmount q, mAmount Q):
-      orderId(o), exchangeId(e), pair(mPair()), side((mSide)0), quantity(q), type((mOrderType)0), isPong(false), price(p), timeInForce((mTimeInForce)0), orderStatus(s), preferPostOnly(false), tradeQuantity(Q), time(0), _waitingCancel(0), latency(0)
-    {};
-    mOrder(mRandId o, mPair P, mSide S, mAmount q, mOrderType t, bool i, mPrice p, mTimeInForce F, mStatus s, bool O):
-      orderId(o), exchangeId(""), pair(P), side(S), quantity(q), type(t), isPong(i), price(p), timeInForce(F), orderStatus(s), preferPostOnly(O), tradeQuantity(0), time(0), _waitingCancel(0), latency(0)
-    {};
-  };
-  static void to_json(json &j, const mOrder &k) {
-    j = {
-      {       "orderId", k.orderId       },
-      {    "exchangeId", k.exchangeId    },
-      {          "pair", k.pair          },
-      {          "side", k.side          },
-      {      "quantity", k.quantity      },
-      {          "type", k.type          },
-      {        "isPong", k.isPong        },
-      {         "price", k.price         },
-      {   "timeInForce", k.timeInForce   },
-      {   "orderStatus", k.orderStatus   },
-      {"preferPostOnly", k.preferPostOnly},
-      {          "time", k.time          },
-      {       "latency", k.latency       }
-    };
-  };
-  struct mOrders: public mJsonToClient<mOrders> {
-    map<mRandId, mOrder> orders;
-    vector<mOrder> working() const {
-      vector<mOrder> workingOrders;
-      for (const map<mRandId, mOrder>::value_type &it : orders)
-        if (mStatus::Working == it.second.orderStatus)
-          workingOrders.push_back(it.second);
-      return workingOrders;
-    };
-    mMatter about() const {
-      return mMatter::OrderStatusReports;
-    };
-    bool realtime() const {
-      return !qp.delayUI;
-    };
-    json dump() const {
-      return working();
-    };
-  };
-  static void to_json(json &j, const mOrders &k) {
-    j = k.orders;
   };
 
   struct mLevel {

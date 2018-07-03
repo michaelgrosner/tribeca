@@ -163,7 +163,8 @@ namespace K {
         else DEBOG(" saved " + ((o->side == mSide::Bid ? "BID id " : "ASK id ") + o->orderId) + "::" + o->exchangeId + " [" + to_string((int)o->orderStatus) + "]: " + FN::str8(o->quantity) + " " + o->pair.base + " at price " + FN::str8(o->price) + " " + o->pair.quote);
         DEBOG("memory " + to_string(orders.orders.size()));
         if (saved) {
-          wallet->calcWalletAfterOrder(k.side);
+          wallet->position.reset(k.side, orders.calcHeldAmount(k.side));
+          wallet->calcWallet();
           toClient(working);
         }
       };
@@ -206,7 +207,8 @@ namespace K {
           abs(o->price * tradeQuantity),
           0, 0, 0, 0, 0, fee, false
         );
-        wallet->calcSafetyAfterTrade(trade);
+        wallet->safety.recentTrades.insert(o->side, o->price, tradeQuantity);
+        wallet->calcSafety();
         screen->log(trade, o->isPong);
         if (qp._matchPings) {
           mPrice widthPong = qp.widthPercentage

@@ -70,8 +70,6 @@ namespace K {
     virtual void timer_60s() = 0;
     virtual void calcWallet() = 0;
     virtual void calcSafety() = 0;
-    virtual void calcWalletAfterOrder(const mSide&) = 0;
-    virtual void calcSafetyAfterTrade(const mTrade&) = 0;
   } *wallet = nullptr;
 
   static struct Market {
