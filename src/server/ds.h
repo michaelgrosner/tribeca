@@ -1527,12 +1527,6 @@ namespace K {
       if (err) stats.fairPrice.warn("QE", "Unable to calculate quote, missing market data");
       return err;
     };
-    static string strX(const double &d, const unsigned int &X) {
-      stringstream ss;
-      ss << setprecision(X)
-         << fixed << d;
-      return ss.str();
-    };
     void calcFairValue(const mPrice &minTick) {
       mPrice prev = fairValue;
       if (empty())
@@ -1554,7 +1548,7 @@ namespace K {
         ) / (asks.cbegin()->size
            + bids.cbegin()->size
       );
-      if (fairValue) fairValue = stod(strX(fairValue, -1 * floor(log10(minTick))));
+      if (fairValue) fairValue = round(fairValue / minTick) * minTick;
       stats.fairPrice.send_ratelimit(prev);
     };
     void calcAverageWidth() {
