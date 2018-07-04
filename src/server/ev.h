@@ -68,9 +68,7 @@ namespace K  {
         if (!gw->countdown) {
           if (!market->levels.warn_empty()) {
                                              market->levels.timer_1s();
-            if (!(tick % 60)) {              market->levels.timer_60s();
-                                             wallet->timer_60s();
-            }
+            if (!(tick % 60))                market->levels.timer_60s();
                                              wallet->timer_1s();
                                              engine->timer_1s();
           }

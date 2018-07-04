@@ -12,12 +12,11 @@ namespace K {
       void waitData() {
         gw->RAWDATA_ENTRY_POINT(mWallets, {                         PRETTY_DEBUG
           position.balance.reset(rawdata);
-          calcWallet();
+          position.send_ratelimit(market->levels);
         });
       };
       void waitSysAdmin() {
         screen->printme(&position.target);
-        screen->printme(&position);
       };
       void waitWebAdmin() {
         client->welcome(position.target);
@@ -28,18 +27,9 @@ namespace K {
       void timer_1s() {
         calcSafety();
       };
-      void timer_60s() {
-        position.target.calcTargetBasePos(market->levels.stats.ewma.targetPositionAutoPercentage);
-      };
       void calcSafety() {
         if (position.empty() or market->levels.empty()) return;
         safety.send_ratelimit(nextSafety());
-      };
-      void calcWallet() {
-        if (position.balance.empty() or market->levels.empty()) return;
-        if (args.maxWallet) position.balance.calcMaxWallet(market->levels.fairValue);
-        position.send_ratelimit(market->levels.fairValue);
-        position.target.calcTargetBasePos(market->levels.stats.ewma.targetPositionAutoPercentage);
       };
     private:
       mSafety nextSafety() {

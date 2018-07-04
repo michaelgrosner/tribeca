@@ -51,7 +51,7 @@ namespace K {
         findMode("saved");
         market->levels.calcFairValue(gw->minTick);
         market->levels.stats.ewma.calcFromHistory();
-        wallet->calcWallet();
+        wallet->position.send_ratelimit(market->levels);
         wallet->calcSafety();
         calcQuote();
       };

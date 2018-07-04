@@ -164,7 +164,7 @@ namespace K {
         DEBOG("memory " + to_string(orders.orders.size()));
         if (saved) {
           wallet->position.reset(k.side, orders.calcHeldAmount(k.side));
-          wallet->calcWallet();
+          wallet->position.send_ratelimit(market->levels);
           toClient(working);
         }
       };
