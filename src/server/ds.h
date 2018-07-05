@@ -1564,10 +1564,10 @@ namespace K {
         ? qp.buySizePercentage * baseValue / 1e+2
         : qp.buySize;
       if (qp.safety == mQuotingSafety::PingPong) {
-        if (safety.recentTrades.lastSellSize)
-          safety.sellSize = safety.recentTrades.lastSellSize;
         if (safety.recentTrades.lastBuySize)
-          safety.buySize = safety.recentTrades.lastBuySize;
+          safety.sellSize = safety.recentTrades.lastBuySize;
+        if (safety.recentTrades.lastSellSize)
+          safety.buySize = safety.recentTrades.lastSellSize;
       }
       if (qp.aggressivePositionRebalancing != mAPR::Off) {
         mAmount totalBasePosition = baseAmount + baseHeldAmount;
