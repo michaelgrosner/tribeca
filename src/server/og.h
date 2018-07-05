@@ -13,7 +13,7 @@ namespace K {
       mButtonCleanTrade           buttonCleanTrade;
     protected:
       void load() {
-        sqlite->backup(&tradesHistory);
+        sqlite->backup(&orders.tradesHistory);
       };
       void waitData() {
         gw->RAWDATA_ENTRY_POINT(mOrder, {                           PRETTY_DEBUG
@@ -22,7 +22,7 @@ namespace K {
         });
       };
       void waitWebAdmin() {
-        client->welcome(tradesHistory);
+        client->welcome(orders.tradesHistory);
         client->welcome(orders);
         client->clickme(buttonCancelAllOrders KISS {
           cancelOpenOrders();
@@ -158,6 +158,7 @@ namespace K {
           gw->refreshWallet = true;
         }
         k.side = o->side;
+        k.price = o->price;
         if (saved and !working)
           cleanOrder(o->orderId);
         else DEBOG(" saved " + ((o->side == mSide::Bid ? "BID id " : "ASK id ") + o->orderId) + "::" + o->exchangeId + " [" + to_string((int)o->orderStatus) + "]: " + str8(o->quantity) + " " + o->pair.base + " at price " + str8(o->price) + " " + o->pair.quote);
@@ -165,6 +166,10 @@ namespace K {
         if (saved) {
           wallet->position.reset(k.side, orders.calcHeldAmount(k.side));
           wallet->position.send_ratelimit(market->levels);
+          if (k.tradeQuantity) {
+            wallet->position.safety.recentTrades.insert(k.side, k.price, k.tradeQuantity);
+            wallet->calcSafety();
+          }
           toClient(working);
         }
       };
@@ -174,20 +179,20 @@ namespace K {
             cancelOrder(it.first);
       };
       void cleanClosedTrades() {
-        for (vector<mTrade>::iterator it = tradesHistory.begin(); it != tradesHistory.end();)
+        for (vector<mTrade>::iterator it = orders.tradesHistory.begin(); it != orders.tradesHistory.end();)
           if (it->Kqty < it->quantity) ++it;
           else {
             it->Kqty = -1;
-            it = tradesHistory.send_push_erase(it);
+            it = orders.tradesHistory.send_push_erase(it);
           }
       };
       void cleanTrade(string k = "") {
         bool all = k.empty();
-        for (vector<mTrade>::iterator it = tradesHistory.begin(); it != tradesHistory.end();)
+        for (vector<mTrade>::iterator it = orders.tradesHistory.begin(); it != orders.tradesHistory.end();)
           if (!all and it->tradeId != k) ++it;
           else {
             it->Kqty = -1;
-            it = tradesHistory.send_push_erase(it);
+            it = orders.tradesHistory.send_push_erase(it);
             if (!all) break;
           }
       };
@@ -207,15 +212,13 @@ namespace K {
           abs(o->price * tradeQuantity),
           0, 0, 0, 0, 0, fee, false
         );
-        wallet->safety.recentTrades.insert(o->side, o->price, tradeQuantity);
-        wallet->calcSafety();
         screen->log(trade, o->isPong);
         if (qp._matchPings) {
           mPrice widthPong = qp.widthPercentage
             ? qp.widthPongPercentage * trade.price / 100
             : qp.widthPong;
           map<mPrice, string> matches;
-          for (mTrade &it : tradesHistory)
+          for (mTrade &it : orders.tradesHistory)
             if (it.quantity - it.Kqty > 0
               and it.side != trade.side
               and (qp.pongAt == mPongAt::AveragePingFair
@@ -232,7 +235,7 @@ namespace K {
             (qp.pongAt == mPongAt::LongPingFair or qp.pongAt == mPongAt::LongPingAggressive) ? trade.side == mSide::Ask : trade.side == mSide::Bid
           );
         } else {
-          tradesHistory.send_push_back(trade);
+          orders.tradesHistory.send_push_back(trade);
         }
         if (qp.cleanPongsAuto) cleanAuto(trade.time);
       };
@@ -243,23 +246,23 @@ namespace K {
           if (!matchPong(it->second, &pong)) break;
         if (pong.quantity > 0) {
           bool eq = false;
-          for (mTrades::iterator it = tradesHistory.begin(); it != tradesHistory.end(); ++it) {
+          for (mTrades::iterator it = orders.tradesHistory.begin(); it != orders.tradesHistory.end(); ++it) {
             if (it->price!=pong.price or it->side!=pong.side or it->quantity<=it->Kqty) continue;
             eq = true;
             it->time = pong.time;
             it->quantity = it->quantity + pong.quantity;
             it->value = it->value + pong.value;
             it->loadedFromDB = false;
-            it = tradesHistory.send_push_erase(it);
+            it = orders.tradesHistory.send_push_erase(it);
             break;
           }
           if (!eq) {
-            tradesHistory.send_push_back(pong);
+            orders.tradesHistory.send_push_back(pong);
           }
         }
       };
       bool matchPong(string match, mTrade* pong) {
-        for (mTrades::iterator it = tradesHistory.begin(); it != tradesHistory.end(); ++it) {
+        for (mTrades::iterator it = orders.tradesHistory.begin(); it != orders.tradesHistory.end(); ++it) {
           if (it->tradeId != match) continue;
           mAmount Kqty = fmin(pong->quantity, it->quantity - it->Kqty);
           it->Ktime = pong->time;
@@ -271,17 +274,17 @@ namespace K {
           if (it->quantity<=it->Kqty)
             it->Kdiff = abs(it->quantity * it->price - it->Kqty * it->Kprice);
           it->loadedFromDB = false;
-          it = tradesHistory.send_push_erase(it);
+          it = orders.tradesHistory.send_push_erase(it);
           break;
         }
         return pong->quantity > 0;
       };
       void cleanAuto(mClock now) {
         mClock pT_ = now - (abs(qp.cleanPongsAuto) * 86400e3);
-        for (vector<mTrade>::iterator it = tradesHistory.begin(); it != tradesHistory.end();)
+        for (vector<mTrade>::iterator it = orders.tradesHistory.begin(); it != orders.tradesHistory.end();)
           if ((it->Ktime?:it->time) < pT_ and (qp.cleanPongsAuto < 0 or it->Kqty >= it->quantity)) {
             it->Kqty = -1;
-            it = tradesHistory.send_push_erase(it);
+            it = orders.tradesHistory.send_push_erase(it);
           } else ++it;
       };
   };

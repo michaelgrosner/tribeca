@@ -64,7 +64,6 @@ namespace K {
 
   static struct Wallet {
     mPosition position;
-      mSafety safety;
     virtual void timer_1s() = 0;
     virtual void calcSafety() = 0;
   } *wallet = nullptr;
@@ -75,7 +74,6 @@ namespace K {
 
   static struct Broker {
     mOrders orders;
-    mTrades tradesHistory;
     virtual void cleanOrder(const mRandId&) = 0;
     virtual void cancelOrder(const mRandId&) = 0;
     virtual void sendOrder(

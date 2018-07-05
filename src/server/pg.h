@@ -20,8 +20,8 @@ namespace K {
       };
       void waitWebAdmin() {
         client->welcome(position.target);
+        client->welcome(position.safety);
         client->welcome(position);
-        client->welcome(safety);
       };
     public:
       void timer_1s() {
@@ -29,79 +29,64 @@ namespace K {
       };
       void calcSafety() {
         if (position.empty() or market->levels.empty()) return;
-        safety.send_ratelimit(nextSafety());
+        position.calcSafetySizes();
+        position.safety.send_ratelimit(nextSafety(market->levels.fairValue));
       };
     private:
-      mSafety nextSafety() {
-        mAmount buySize = qp.percentageValues
-          ? qp.buySizePercentage * position.baseValue / 100
-          : qp.buySize;
-        mAmount sellSize = qp.percentageValues
-          ? qp.sellSizePercentage * position.baseValue / 100
-          : qp.sellSize;
+      mSafety nextSafety(const mPrice &fv) {
         map<mPrice, mTrade> tradesBuy;
         map<mPrice, mTrade> tradesSell;
-        for (mTrade &it: broker->tradesHistory) {
+        for (mTrade &it: broker->orders.tradesHistory)
           (it.side == mSide::Bid ? tradesBuy : tradesSell)[it.price] = it;
-          if (qp.safety == mQuotingSafety::PingPong)
-            (it.side == mSide::Ask ? buySize : sellSize) = it.quantity;
-        }
-        mAmount totalBasePosition = position.baseAmount + position.baseHeldAmount;
-        if (qp.aggressivePositionRebalancing != mAPR::Off) {
-          if (qp.buySizeMax) buySize = fmax(buySize, position.target.targetBasePosition - totalBasePosition);
-          if (qp.sellSizeMax) sellSize = fmax(sellSize, totalBasePosition - position.target.targetBasePosition);
-        }
         mPrice widthPong = qp.widthPercentage
-          ? qp.widthPongPercentage * market->levels.fairValue / 100
+          ? qp.widthPongPercentage * fv / 100
           : qp.widthPong;
         mPrice buyPing = 0,
                sellPing = 0;
         mAmount buyQty = 0,
                 sellQty = 0;
         if (qp.pongAt == mPongAt::ShortPingFair or qp.pongAt == mPongAt::ShortPingAggressive) {
-          matchBestPing(&tradesBuy, &buyPing, &buyQty, sellSize, widthPong, true);
-          matchBestPing(&tradesSell, &sellPing, &sellQty, buySize, widthPong);
-          if (!buyQty) matchFirstPing(&tradesBuy, &buyPing, &buyQty, sellSize, widthPong*-1, true);
-          if (!sellQty) matchFirstPing(&tradesSell, &sellPing, &sellQty, buySize, widthPong*-1);
+          matchBestPing(fv, &tradesBuy, &buyPing, &buyQty, position.safety.sellSize, widthPong, true);
+          matchBestPing(fv, &tradesSell, &sellPing, &sellQty, position.safety.buySize, widthPong);
+          if (!buyQty) matchFirstPing(fv, &tradesBuy, &buyPing, &buyQty, position.safety.sellSize, widthPong*-1, true);
+          if (!sellQty) matchFirstPing(fv, &tradesSell, &sellPing, &sellQty, position.safety.buySize, widthPong*-1);
         } else if (qp.pongAt == mPongAt::LongPingFair or qp.pongAt == mPongAt::LongPingAggressive) {
-          matchLastPing(&tradesBuy, &buyPing, &buyQty, sellSize, widthPong);
-          matchLastPing(&tradesSell, &sellPing, &sellQty, buySize, widthPong, true);
+          matchLastPing(fv, &tradesBuy, &buyPing, &buyQty, position.safety.sellSize, widthPong);
+          matchLastPing(fv, &tradesSell, &sellPing, &sellQty, position.safety.buySize, widthPong, true);
         } else if (qp.pongAt == mPongAt::AveragePingFair or qp.pongAt == mPongAt::AveragePingAggressive) {
-          matchAllPing(&tradesBuy, &buyPing, &buyQty, sellSize, widthPong);
-          matchAllPing(&tradesSell, &sellPing, &sellQty, buySize, widthPong);
+          matchAllPing(fv, &tradesBuy, &buyPing, &buyQty, position.safety.sellSize, widthPong);
+          matchAllPing(fv, &tradesSell, &sellPing, &sellQty, position.safety.buySize, widthPong);
         }
         if (buyQty) buyPing /= buyQty;
         if (sellQty) sellPing /= sellQty;
-        safety.recentTrades.reset();
+        position.safety.recentTrades.reset();
         return mSafety(
-          safety.recentTrades.sumBuys / buySize,
-          safety.recentTrades.sumSells / sellSize,
-          (safety.recentTrades.sumBuys + safety.recentTrades.sumSells) / (buySize + sellSize),
+          position.safety.recentTrades.sumBuys / position.safety.buySize,
+          position.safety.recentTrades.sumSells / position.safety.sellSize,
+          (position.safety.recentTrades.sumBuys + position.safety.recentTrades.sumSells) / (position.safety.buySize + position.safety.sellSize),
           buyPing,
-          sellPing,
-          buySize,
-          sellSize
+          sellPing
         );
       };
-      void matchFirstPing(map<mPrice, mTrade> *trades, mPrice *ping, mAmount *qty, mAmount qtyMax, mPrice width, bool reverse = false) {
-        matchPing(true, true, trades, ping, qty, qtyMax, width, reverse);
+      void matchFirstPing(mPrice fv, map<mPrice, mTrade> *trades, mPrice *ping, mAmount *qty, mAmount qtyMax, mPrice width, bool reverse = false) {
+        matchPing(true, true, fv, trades, ping, qty, qtyMax, width, reverse);
       };
-      void matchBestPing(map<mPrice, mTrade> *trades, mPrice *ping, mAmount *qty, mAmount qtyMax, mPrice width, bool reverse = false) {
-        matchPing(true, false, trades, ping, qty, qtyMax, width, reverse);
+      void matchBestPing(mPrice fv, map<mPrice, mTrade> *trades, mPrice *ping, mAmount *qty, mAmount qtyMax, mPrice width, bool reverse = false) {
+        matchPing(true, false, fv, trades, ping, qty, qtyMax, width, reverse);
       };
-      void matchLastPing(map<mPrice, mTrade> *trades, mPrice *ping, mAmount *qty, mAmount qtyMax, mPrice width, bool reverse = false) {
-        matchPing(false, true, trades, ping, qty, qtyMax, width, reverse);
+      void matchLastPing(mPrice fv, map<mPrice, mTrade> *trades, mPrice *ping, mAmount *qty, mAmount qtyMax, mPrice width, bool reverse = false) {
+        matchPing(false, true, fv, trades, ping, qty, qtyMax, width, reverse);
       };
-      void matchAllPing(map<mPrice, mTrade> *trades, mPrice *ping, mAmount *qty, mAmount qtyMax, mPrice width) {
-        matchPing(false, false, trades, ping, qty, qtyMax, width);
+      void matchAllPing(mPrice fv, map<mPrice, mTrade> *trades, mPrice *ping, mAmount *qty, mAmount qtyMax, mPrice width) {
+        matchPing(false, false, fv, trades, ping, qty, qtyMax, width);
       };
-      void matchPing(bool _near, bool _far, map<mPrice, mTrade> *trades, mPrice *ping, mAmount *qty, mAmount qtyMax, mPrice width, bool reverse = false) {
+      void matchPing(bool _near, bool _far, mPrice fv, map<mPrice, mTrade> *trades, mPrice *ping, mAmount *qty, mAmount qtyMax, mPrice width, bool reverse = false) {
         int dir = width > 0 ? 1 : -1;
         if (reverse) for (map<mPrice, mTrade>::reverse_iterator it = trades->rbegin(); it != trades->rend(); ++it) {
-          if (matchPing(_near, _far, ping, qty, qtyMax, width, dir * market->levels.fairValue, dir * it->second.price, it->second.quantity, it->second.price, it->second.Kqty, reverse))
+          if (matchPing(_near, _far, ping, qty, qtyMax, width, dir * fv, dir * it->second.price, it->second.quantity, it->second.price, it->second.Kqty, reverse))
             break;
         } else for (map<mPrice, mTrade>::iterator it = trades->begin(); it != trades->end(); ++it)
-          if (matchPing(_near, _far, ping, qty, qtyMax, width, dir * market->levels.fairValue, dir * it->second.price, it->second.quantity, it->second.price, it->second.Kqty, reverse))
+          if (matchPing(_near, _far, ping, qty, qtyMax, width, dir * fv, dir * it->second.price, it->second.quantity, it->second.price, it->second.Kqty, reverse))
             break;
       };
       bool matchPing(bool _near, bool _far, mPrice *ping, mAmount *qty, mAmount qtyMax, mPrice width, mPrice fv, mPrice price, mAmount qtyTrade, mPrice priceTrade, mAmount KqtyTrade, bool reverse) {

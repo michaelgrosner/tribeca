@@ -33,7 +33,7 @@ namespace K {
           askStatus = mQuoteState::Disconnected;
         } else if (!market->levels.empty()
           and !wallet->position.empty()
-          and !wallet->safety.empty()
+          and !wallet->position.safety.empty()
         ) {
           if (!semaphore.greenButton) {
             bidStatus = mQuoteState::DisabledQuotes;
@@ -119,8 +119,8 @@ namespace K {
           widthPing = fmax(widthPing, market->levels.stats.ewma.mgEwmaW);
         mQuote rawQuote = (*quotingMode[qp.mode])(
           widthPing,
-          wallet->safety.buySize,
-          wallet->safety.sellSize
+          wallet->position.safety.buySize,
+          wallet->position.safety.sellSize
         );
         if (rawQuote.bid.price <= 0 or rawQuote.ask.price <= 0) {
           if (rawQuote.bid.price or rawQuote.ask.price)
@@ -210,7 +210,7 @@ namespace K {
         mPrice widthPong = qp.widthPercentage
           ? qp.widthPongPercentage * market->levels.fairValue / 100
           : qp.widthPong;
-        mPrice safetyBuyPing = wallet->safety.buyPing;
+        mPrice safetyBuyPing = wallet->position.safety.buyPing;
         if (!rawQuote->ask.empty() and safetyBuyPing) {
           if ((qp.aggressivePositionRebalancing == mAPR::SizeWidth and wallet->position.target.sideAPR == "Sell")
             or qp.pongAt == mPongAt::ShortPingAggressive
@@ -220,7 +220,7 @@ namespace K {
           ) rawQuote->ask.price = safetyBuyPing + widthPong;
           rawQuote->isAskPong = rawQuote->ask.price >= safetyBuyPing + widthPong;
         }
-        mPrice safetysellPing = wallet->safety.sellPing;
+        mPrice safetysellPing = wallet->position.safety.sellPing;
         if (!rawQuote->bid.empty() and safetysellPing) {
           if ((qp.aggressivePositionRebalancing == mAPR::SizeWidth and wallet->position.target.sideAPR == "Buy")
             or qp.pongAt == mPongAt::ShortPingAggressive
@@ -272,11 +272,11 @@ namespace K {
         else wallet->position.target.sideAPR = "Off";
       };
       void applyTradesPerMinute(mQuote *rawQuote, bool superTradesActive) {
-        if (wallet->safety.sell >= (qp.tradesPerMinute * (superTradesActive ? qp.sopWidthMultiplier : 1))) {
+        if (wallet->position.safety.sell >= (qp.tradesPerMinute * (superTradesActive ? qp.sopWidthMultiplier : 1))) {
           askStatus = mQuoteState::MaxTradesSeconds;
           rawQuote->ask.clear();
         }
-        if (wallet->safety.buy >= (qp.tradesPerMinute * (superTradesActive ? qp.sopWidthMultiplier : 1))) {
+        if (wallet->position.safety.buy >= (qp.tradesPerMinute * (superTradesActive ? qp.sopWidthMultiplier : 1))) {
           bidStatus = mQuoteState::MaxTradesSeconds;
           rawQuote->bid.clear();
         }
