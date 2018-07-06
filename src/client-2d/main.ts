@@ -90,7 +90,7 @@ class DisplayOrder {
                                         <th title="Minimum width between bullets in USD (ex. a value of .3 is 30 cents)." *ngIf="pair.quotingParameters.display.safety==3 && !pair.quotingParameters.display.percentageValues">range</th>
                                         <th title="Minimum width between bullets in USD (ex. a value of .3 is 30 cents)." *ngIf="pair.quotingParameters.display.safety==3 && pair.quotingParameters.display.percentageValues">range%</th>
                                         <th title="Pongs are always placed in both sides." *ngIf="[1,2,3].indexOf(pair.quotingParameters.display.safety)>-1">pingAt</th>
-                                        <th title="" *ngIf="[1,2,3].indexOf(pair.quotingParameters.display.safety)>-1">pongAt</th>
+                                        <th title="" *ngIf="[2,3].indexOf(pair.quotingParameters.display.safety)>-1">pongAt</th>
                                         <th title="Super opportunities, if enabled and if the market width is sopWidth times bigger than the width set, it multiplies sopTrades to trades and/or sopSize to size, in both sides at the same time.">sop</th>
                                         <ng-container *ngIf="pair.quotingParameters.display.superTrades">
                                         <th title="The value with the market width is multiplicated to define the activation point for Super opportunities.">sopWidth</th>
@@ -143,7 +143,7 @@ class DisplayOrder {
                                                <option *ngFor="let option of pair.quotingParameters.availablePingAt" [ngValue]="option.val">{{option.str}}</option>
                                             </select>
                                         </td>
-                                        <td style="border-bottom: 3px solid #8BE296;" *ngIf="[1,2,3].indexOf(pair.quotingParameters.display.safety)>-1">
+                                        <td style="border-bottom: 3px solid #8BE296;" *ngIf="[2,3].indexOf(pair.quotingParameters.display.safety)>-1">
                                             <select class="form-control input-sm"
                                                [(ngModel)]="pair.quotingParameters.display.pongAt">
                                                <option *ngFor="let option of pair.quotingParameters.availablePongAt" [ngValue]="option.val">{{option.str}}</option>

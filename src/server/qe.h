@@ -52,7 +52,7 @@ namespace K {
         market->levels.calcFairValue(gw->minTick);
         market->levels.stats.ewma.calcFromHistory();
         wallet->position.send_ratelimit(market->levels);
-        wallet->calcSafety();
+        wallet->position.calcSafety(market->levels, broker->orders.tradesHistory);
         calcQuote();
       };
       void timer_1s() {                                             PRETTY_DEBUG
@@ -206,27 +206,31 @@ namespace K {
         }
       };
       void applyAggressivePositionRebalancing(mQuote *rawQuote) {
-        if (!qp._matchPings) return;
+        if (qp.safety == mQuotingSafety::Off) return;
         mPrice widthPong = qp.widthPercentage
           ? qp.widthPongPercentage * market->levels.fairValue / 100
           : qp.widthPong;
-        mPrice safetyBuyPing = wallet->position.safety.buyPing;
+        mPrice &safetyBuyPing = wallet->position.safety.buyPing;
         if (!rawQuote->ask.empty() and safetyBuyPing) {
           if ((qp.aggressivePositionRebalancing == mAPR::SizeWidth and wallet->position.target.sideAPR == "Sell")
-            or qp.pongAt == mPongAt::ShortPingAggressive
-            or qp.pongAt == mPongAt::AveragePingAggressive
-            or qp.pongAt == mPongAt::LongPingAggressive
-            or rawQuote->ask.price < safetyBuyPing + widthPong
+            or (qp.safety == mQuotingSafety::PingPong
+              ? rawQuote->ask.price < safetyBuyPing + widthPong
+              : qp.pongAt == mPongAt::ShortPingAggressive
+                or qp.pongAt == mPongAt::AveragePingAggressive
+                or qp.pongAt == mPongAt::LongPingAggressive
+            )
           ) rawQuote->ask.price = safetyBuyPing + widthPong;
           rawQuote->isAskPong = rawQuote->ask.price >= safetyBuyPing + widthPong;
         }
-        mPrice safetysellPing = wallet->position.safety.sellPing;
+        mPrice &safetysellPing = wallet->position.safety.sellPing;
         if (!rawQuote->bid.empty() and safetysellPing) {
           if ((qp.aggressivePositionRebalancing == mAPR::SizeWidth and wallet->position.target.sideAPR == "Buy")
-            or qp.pongAt == mPongAt::ShortPingAggressive
-            or qp.pongAt == mPongAt::AveragePingAggressive
-            or qp.pongAt == mPongAt::LongPingAggressive
-            or rawQuote->bid.price > safetysellPing - widthPong
+            or (qp.safety == mQuotingSafety::PingPong
+              ? rawQuote->bid.price > safetysellPing - widthPong
+              : qp.pongAt == mPongAt::ShortPingAggressive
+                or qp.pongAt == mPongAt::AveragePingAggressive
+                or qp.pongAt == mPongAt::LongPingAggressive
+            )
           ) rawQuote->bid.price = safetysellPing - widthPong;
           rawQuote->isBidPong = rawQuote->bid.price <= safetysellPing - widthPong;
         }

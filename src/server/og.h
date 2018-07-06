@@ -168,7 +168,7 @@ namespace K {
           wallet->position.send_ratelimit(market->levels);
           if (k.tradeQuantity) {
             wallet->position.safety.recentTrades.insert(k.side, k.price, k.tradeQuantity);
-            wallet->calcSafety();
+            wallet->position.calcSafety(market->levels, orders.tradesHistory);
           }
           toClient(working);
         }

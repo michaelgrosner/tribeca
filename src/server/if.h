@@ -65,7 +65,6 @@ namespace K {
   static struct Wallet {
     mPosition position;
     virtual void timer_1s() = 0;
-    virtual void calcSafety() = 0;
   } *wallet = nullptr;
 
   static struct Market {

@@ -68,7 +68,7 @@ script:
       make test-c 2>&1 | /usr/games/cowsay || :
       make test        | /usr/games/cowsay
     else
-      ./K.sh --version | /usr/games/cowsay
+      ./K.sh --version
     fi
 
 after_success:

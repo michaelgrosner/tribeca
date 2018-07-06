@@ -187,7 +187,7 @@ namespace K {
       string msg = loaded
         ? explainOK()
         : explainKO();
-      std::size_t token = msg.find("%");
+      size_t token = msg.find("%");
       if (token != string::npos)
         msg.replace(token, 1, explain());
       return msg;
@@ -212,14 +212,16 @@ namespace K {
     typedef typename vector<mData>::const_iterator                 const_iterator;
     typedef typename vector<mData>::reverse_iterator             reverse_iterator;
     typedef typename vector<mData>::const_reverse_iterator const_reverse_iterator;
-    iterator                 begin()       { return rows.begin(); };
-    const_iterator          cbegin() const { return rows.cbegin(); };
-    iterator                   end()       { return rows.end(); };
-    reverse_iterator        rbegin()       { return rows.rbegin(); };
-    const_reverse_iterator crbegin() const { return rows.crbegin(); };
-    reverse_iterator          rend()       { return rows.rend(); };
-    bool                     empty() const { return rows.empty(); };
-    size_t                    size() const { return rows.size(); };
+    iterator                 begin()       noexcept { return rows.begin(); };
+    const_iterator           begin() const noexcept { return rows.begin(); };
+    const_iterator          cbegin() const noexcept { return rows.cbegin(); };
+    iterator                   end()       noexcept { return rows.end(); };
+    const_iterator             end() const noexcept { return rows.end(); };
+    reverse_iterator        rbegin()       noexcept { return rows.rbegin(); };
+    const_reverse_iterator crbegin() const noexcept { return rows.crbegin(); };
+    reverse_iterator          rend()       noexcept { return rows.rend(); };
+    bool                     empty() const noexcept { return rows.empty(); };
+    size_t                    size() const noexcept { return rows.size(); };
     virtual void erase() {
       if (size() > limit())
         rows.erase(begin(), end() - limit());
@@ -719,17 +721,17 @@ namespace K {
                                    sells;
                            mAmount sumBuys,
                                    sumSells;
-                            mPrice lastBuySize,
-                                   lastSellSize;
+                            mPrice lastBuyPrice,
+                                   lastSellPrice;
     mRecentTrades():
-      buys({}), sells({}), sumBuys(0), sumSells(0), lastBuySize(0), lastSellSize(0)
+      buys({}), sells({}), sumBuys(0), sumSells(0), lastBuyPrice(0), lastSellPrice(0)
     {};
     void insert(const mSide &side, const mPrice &price, const mAmount &quantity) {
       const bool bidORask = side == mSide::Bid;
       (bidORask
-        ? lastBuySize
-        : lastSellSize
-      ) = quantity;
+        ? lastBuyPrice
+        : lastSellPrice
+      ) = price;
       (bidORask
         ? buys
         : sells
@@ -782,27 +784,36 @@ namespace K {
     mSafety():
       buy(0), sell(0), combined(0), buyPing(0), sellPing(0), buySize(0), sellSize(0), recentTrades(mRecentTrades())
     {};
-    mSafety(double b, double s, double c, mPrice bP, mPrice sP): // deleteme plz
-      buy(b), sell(s), combined(c), buyPing(bP), sellPing(sP), buySize(0), sellSize(0), recentTrades(mRecentTrades())
-    {};
+    void reset(const mAmount &baseValue, const mAmount &totalBasePosition, const mAmount &targetBasePosition) {
+      recentTrades.reset();
+      calcSizes(baseValue, totalBasePosition, targetBasePosition);
+      buy  = recentTrades.sumBuys / buySize;
+      sell = recentTrades.sumSells / sellSize;
+      combined = (recentTrades.sumBuys + recentTrades.sumSells) / (buySize + sellSize);
+    };
+    void calcSizes(const mAmount &baseValue, const mAmount &totalBasePosition, const mAmount &targetBasePosition) {
+      sellSize = qp.percentageValues
+          ? qp.sellSizePercentage * baseValue / 1e+2
+          : qp.sellSize;
+      buySize = qp.percentageValues
+        ? qp.buySizePercentage * baseValue / 1e+2
+        : qp.buySize;
+      if (qp.aggressivePositionRebalancing == mAPR::Off) return;
+      if (qp.buySizeMax)
+        buySize = fmax(buySize, targetBasePosition - totalBasePosition);
+      if (qp.sellSizeMax)
+        sellSize = fmax(sellSize, totalBasePosition - targetBasePosition);
+    };
     bool empty() const {
       return !buySize and !sellSize;
     };
-    bool ratelimit(const mSafety &next) const {
-      return (
-        combined == next.combined
-        and buyPing == next.buyPing
-        and sellPing == next.sellPing
-      );
+    bool ratelimit(const mSafety &prev) const {
+      return combined == prev.combined
+        and buyPing == prev.buyPing
+        and sellPing == prev.sellPing;
     };
-    void send_ratelimit(const mSafety &next) {
-      bool limited = ratelimit(next);
-      buy = next.buy;
-      sell = next.sell;
-      combined = next.combined;
-      buyPing = next.buyPing;
-      sellPing = next.sellPing;
-      if (!limited) send();
+    void send_ratelimit(const mSafety &prev) {
+      if (!ratelimit(prev)) send();
     };
     mMatter about() const {
       return mMatter::TradeSafetyValue;
@@ -1556,24 +1567,82 @@ namespace K {
     mPosition():
       balance(mWallets()), target(mTarget(&baseValue)), profits(mProfits()), baseAmount(0), quoteAmount(0), _quoteAmountValue(0), baseHeldAmount(0), quoteHeldAmount(0), _baseTotal(0), _quoteTotal(0), baseValue(0), quoteValue(0), profitBase(0), profitQuote(0)
     {};
-    void calcSafetySizes() {
-      safety.sellSize = qp.percentageValues
-          ? qp.sellSizePercentage * baseValue / 1e+2
-          : qp.sellSize;
-      safety.buySize = qp.percentageValues
-        ? qp.buySizePercentage * baseValue / 1e+2
-        : qp.buySize;
+    void calcSafety(const mMarketLevels &levels, const mTrades &tradesHistory) {
+      if (empty() or levels.empty()) return;
+      mSafety prev = safety;
+      safety.reset(baseValue, _baseTotal, target.targetBasePosition);
+      nextSafety(levels.fairValue, tradesHistory);
+      safety.send_ratelimit(prev);
+    };
+    void nextSafety(const mPrice &fv, const mTrades &tradesHistory) {
       if (qp.safety == mQuotingSafety::PingPong) {
-        if (safety.recentTrades.lastBuySize)
-          safety.sellSize = safety.recentTrades.lastBuySize;
-        if (safety.recentTrades.lastSellSize)
-          safety.buySize = safety.recentTrades.lastSellSize;
+        safety.buyPing = safety.recentTrades.lastBuyPrice;
+        safety.sellPing = safety.recentTrades.lastSellPrice;
+      } else {
+        map<mPrice, mTrade> tradesBuy;
+        map<mPrice, mTrade> tradesSell;
+        for (const mTrade &it: tradesHistory)
+          (it.side == mSide::Bid ? tradesBuy : tradesSell)[it.price] = it;
+        mPrice widthPong = qp.widthPercentage
+          ? qp.widthPongPercentage * fv / 100
+          : qp.widthPong;
+        mPrice buyPing = 0,
+               sellPing = 0;
+        mAmount buyQty = 0,
+                sellQty = 0;
+        if (qp.pongAt == mPongAt::ShortPingFair or qp.pongAt == mPongAt::ShortPingAggressive) {
+          matchBestPing(fv, &tradesBuy, &buyPing, &buyQty, safety.sellSize, widthPong, true);
+          matchBestPing(fv, &tradesSell, &sellPing, &sellQty, safety.buySize, widthPong);
+          if (!buyQty) matchFirstPing(fv, &tradesBuy, &buyPing, &buyQty, safety.sellSize, widthPong*-1, true);
+          if (!sellQty) matchFirstPing(fv, &tradesSell, &sellPing, &sellQty, safety.buySize, widthPong*-1);
+        } else if (qp.pongAt == mPongAt::LongPingFair or qp.pongAt == mPongAt::LongPingAggressive) {
+          matchLastPing(fv, &tradesBuy, &buyPing, &buyQty, safety.sellSize, widthPong);
+          matchLastPing(fv, &tradesSell, &sellPing, &sellQty, safety.buySize, widthPong, true);
+        } else if (qp.pongAt == mPongAt::AveragePingFair or qp.pongAt == mPongAt::AveragePingAggressive) {
+          matchAllPing(fv, &tradesBuy, &buyPing, &buyQty, safety.sellSize, widthPong);
+          matchAllPing(fv, &tradesSell, &sellPing, &sellQty, safety.buySize, widthPong);
+        }
+        if (buyQty) buyPing /= buyQty;
+        if (sellQty) sellPing /= sellQty;
+        safety.buyPing = buyPing;
+        safety.sellPing = sellPing;
       }
-      if (qp.aggressivePositionRebalancing != mAPR::Off) {
-        mAmount totalBasePosition = baseAmount + baseHeldAmount;
-        if (qp.buySizeMax) safety.buySize = fmax(safety.buySize, target.targetBasePosition - totalBasePosition);
-        if (qp.sellSizeMax) safety.sellSize = fmax(safety.sellSize, totalBasePosition - target.targetBasePosition);
+    };
+    void matchFirstPing(mPrice fv, map<mPrice, mTrade> *trades, mPrice *ping, mAmount *qty, mAmount qtyMax, mPrice width, bool reverse = false) {
+      matchPing(true, true, fv, trades, ping, qty, qtyMax, width, reverse);
+    };
+    void matchBestPing(mPrice fv, map<mPrice, mTrade> *trades, mPrice *ping, mAmount *qty, mAmount qtyMax, mPrice width, bool reverse = false) {
+      matchPing(true, false, fv, trades, ping, qty, qtyMax, width, reverse);
+    };
+    void matchLastPing(mPrice fv, map<mPrice, mTrade> *trades, mPrice *ping, mAmount *qty, mAmount qtyMax, mPrice width, bool reverse = false) {
+      matchPing(false, true, fv, trades, ping, qty, qtyMax, width, reverse);
+    };
+    void matchAllPing(mPrice fv, map<mPrice, mTrade> *trades, mPrice *ping, mAmount *qty, mAmount qtyMax, mPrice width) {
+      matchPing(false, false, fv, trades, ping, qty, qtyMax, width);
+    };
+    void matchPing(bool _near, bool _far, mPrice fv, map<mPrice, mTrade> *trades, mPrice *ping, mAmount *qty, mAmount qtyMax, mPrice width, bool reverse = false) {
+      int dir = width > 0 ? 1 : -1;
+      if (reverse) for (map<mPrice, mTrade>::reverse_iterator it = trades->rbegin(); it != trades->rend(); ++it) {
+        if (matchPing(_near, _far, ping, qty, qtyMax, width, dir * fv, dir * it->second.price, it->second.quantity, it->second.price, it->second.Kqty, reverse))
+          break;
+      } else for (map<mPrice, mTrade>::iterator it = trades->begin(); it != trades->end(); ++it)
+        if (matchPing(_near, _far, ping, qty, qtyMax, width, dir * fv, dir * it->second.price, it->second.quantity, it->second.price, it->second.Kqty, reverse))
+          break;
+    };
+    bool matchPing(bool _near, bool _far, mPrice *ping, mAmount *qty, mAmount qtyMax, mPrice width, mPrice fv, mPrice price, mAmount qtyTrade, mPrice priceTrade, mAmount KqtyTrade, bool reverse) {
+      if (reverse) { fv *= -1; price *= -1; width *= -1; }
+      if (((!_near and !_far) or *qty < qtyMax)
+        and (_far ? fv > price : true)
+        and (_near ? (reverse ? fv - width : fv + width) < price : true)
+        and (!qp._matchPings or KqtyTrade < qtyTrade)
+      ) {
+        mAmount qty_ = qtyTrade;
+        if (_near or _far)
+          qty_ = fmin(qtyMax - *qty, qty_);
+        *ping += priceTrade * qty_;
+        *qty += qty_;
       }
+      return *qty >= qtyMax and (_near or _far);
     };
     void reset(const mSide &side, const mAmount &nextHeldAmount) {
       if (empty()) return;
@@ -1802,8 +1871,8 @@ namespace K {
         return output("netstat -anp 2>/dev/null | grep " + to_string(args.port));
       };
       void stunnel(const bool &reboot) const {
-        system("pkill stunnel || :");
-        if (reboot) system("stunnel etc/stunnel.conf");
+        int k = system("pkill stunnel || :");
+        if (reboot) k = system("stunnel etc/stunnel.conf");
       };
       bool git() const {
         return
@@ -1815,7 +1884,7 @@ namespace K {
         ;
       };
       void fetch() const {
-        if (git()) system("git fetch");
+        if (git()) int k = system("git fetch");
       };
       string changelog() const {
         return git()

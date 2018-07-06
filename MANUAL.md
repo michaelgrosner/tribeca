@@ -89,7 +89,7 @@ In the web UI, there are three rows of panels with cryptic looking names and edi
 
   * `PingPong` - Always respect the calculated `widthPong` from the last sold or bought `size`, if any.
 
-  * `Boomerang` - Same as `PingPong` but the calculated `widthPong` for new Pongs is based on any best matching previous sold or bought `size`, if any.
+  * `Boomerang` - Same as `PingPong` but the calculated `widthPong` for new Pongs is based on any best matching (using `pongAt`) previous sold or bought `size`, if any.
 
   * `AK-47` - Same as `Boomerang` but allows multiple orders at the same time in both sides. To avoid old trades, on every new trade **Krypto-trading-bot** will cancel all previous trades if those are worst.
 
@@ -113,7 +113,7 @@ In the web UI, there are three rows of panels with cryptic looking names and edi
 
   * `StopPings` - Only place new Pongs based on the history of Pings, without placing new Pings.
 
-* `pongAt` (only affects `PingPong`, `Boomerang` and `AK-47`)
+* `pongAt` (only affects `Boomerang` and `AK-47`)
 
   * `ShortPingFair` - Place new Pongs based on the lowest margin Ping in history respecting the `widthPong` from the `fair value`.
 
