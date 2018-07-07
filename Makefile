@@ -2,7 +2,7 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
 PATCH    = 8
-BUILD    = 21
+BUILD    = 22
 CHOST   ?= $(shell $(MAKE) CHOST= chost -s)
 CARCH    = x86_64-linux-gnu arm-linux-gnueabihf aarch64-linux-gnu x86_64-apple-darwin17 x86_64-w64-mingw32
 KLOCAL  := build-$(CHOST)/local
@@ -80,7 +80,7 @@ help:
 	#  make json         - download json src files     #
 	#  make uws          - download uws src files      #
 	#  make quickfix     - download quickfix src files #
-	#  make gdax         - download gdax ssl cert      #
+	#  make coinbase     - download coinbase ssl cert  #
 	#  make cabundle     - download ssl CA certs       #
 	#  make clean        - remove external src files   #
 	#  KALL=1 make clean - remove external src files   #
@@ -259,7 +259,7 @@ link:
 	test -n "`ls *.sh 2>/dev/null`" || (cp etc/K.sh.dist K.sh && chmod +x K.sh)
 	test -f etc/sslcert/server.crt || cp etc/sslcert/unsecure-sample.server.crt etc/sslcert/server.crt
 	test -f etc/sslcert/server.key || cp etc/sslcert/unsecure-sample.server.key etc/sslcert/server.key
-	@$(MAKE) gdax -s
+	@$(MAKE) coinbase -s
 
 reinstall: src
 	test -d .git && ((test -n "`git diff`" && (echo && echo !!Local changes will be lost!! press CTRL-C to abort. && echo && sleep 4) || :) \
@@ -309,7 +309,7 @@ screen:
 cabundle:
 	curl --time-cond etc/cabundle.pem https://curl.haxx.se/ca/cacert.pem -o etc/cabundle.pem
 
-gdax:
+coinbase:
 	@openssl s_client -showcerts -connect fix.gdax.com:4198 -CApath /etc/ssl/certs < /dev/null 2> /dev/null \
 	| openssl x509 -outform PEM > etc/sslcert/fix.gdax.com.pem
 
@@ -416,4 +416,4 @@ md5: src
 asandwich:
 	@test `whoami` = 'root' && echo OK || echo make it yourself!
 
-.PHONY: K chost dist link Linux Darwin Win32 build zlib openssl curl ncurses quickfix uws json pvs clean cleandb list screen start stop restart startall stopall restartall gdax packages install docker reinstall clients www bundle diff latest changelog test test-c png png-check release md5 asandwich
+.PHONY: K chost dist link Linux Darwin Win32 build zlib openssl curl ncurses quickfix uws json pvs clean cleandb list screen start stop restart startall stopall restartall coinbase packages install docker reinstall clients www bundle diff latest changelog test test-c png png-check release md5 asandwich

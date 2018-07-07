@@ -67,27 +67,30 @@ namespace K  {
       void timer_1s() {
         if (!gw->countdown) {
           if (!market->levels.warn_empty()) {
-                                             market->levels.timer_1s();
-            if (!(tick % 60))                market->levels.timer_60s();
-                                             wallet->timer_1s();
-                                             engine->timer_1s();
+                                              market->levels.timer_1s();
+            if (!(tick % 60))                 market->levels.timer_60s();
+                                              wallet->position.timer_1s(
+                                                market->levels,
+                                                broker->orders.tradesHistory
+                                              );
+                                              engine->timer_1s();
           }
-        } else if (gw->countdown-- == 1) {   gw->connect();
+        } else if (gw->countdown-- == 1) {    gw->connect();
           tick = 0;
           return;
         }
         if (TRUEONCE(gw->refreshWallet)
-          or !(tick % 15))                   async(gw->wallet);
+          or !(tick % 15))                    async(gw->wallet);
         if (!gw->async) {
-          if (!(tick % 2))                   async(gw->orders);
-          if (!(tick % 3))                   async(gw->levels);
-          if (!(tick % 60))                  async(gw->trades);
+          if (!(tick % 2))                    async(gw->orders);
+          if (!(tick % 3))                    async(gw->levels);
+          if (!(tick % 60))                   async(gw->trades);
         }
-        if (!(tick % 60))                    engine->monitor.timer_60s();
+        if (!(tick % 60))                     engine->monitor.timer_60s();
         if (client->socket and qp.delayUI
-          and !(tick % qp.delayUI))          client->timer_Xs();
+          and !(tick % qp.delayUI))           client->timer_Xs();
         if (!(++tick % 300)) {
-          if (qp.cancelOrdersAuto)           async(gw->cancelAll);
+          if (qp.cancelOrdersAuto)            async(gw->cancelAll);
           if (tick >= 300 * (qp.delayUI?:1))
             tick = 0;
         }

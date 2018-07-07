@@ -772,63 +772,6 @@ namespace K {
     };
   };
 
-  struct mSafety: public mJsonToClient<mSafety> {
-           double buy,
-                  sell,
-                  combined;
-           mPrice buyPing,
-                  sellPing;
-          mAmount buySize,
-                  sellSize;
-    mRecentTrades recentTrades;
-    mSafety():
-      buy(0), sell(0), combined(0), buyPing(0), sellPing(0), buySize(0), sellSize(0), recentTrades(mRecentTrades())
-    {};
-    void reset(const mAmount &baseValue, const mAmount &totalBasePosition, const mAmount &targetBasePosition) {
-      recentTrades.reset();
-      calcSizes(baseValue, totalBasePosition, targetBasePosition);
-      buy  = recentTrades.sumBuys / buySize;
-      sell = recentTrades.sumSells / sellSize;
-      combined = (recentTrades.sumBuys + recentTrades.sumSells) / (buySize + sellSize);
-    };
-    void calcSizes(const mAmount &baseValue, const mAmount &totalBasePosition, const mAmount &targetBasePosition) {
-      sellSize = qp.percentageValues
-          ? qp.sellSizePercentage * baseValue / 1e+2
-          : qp.sellSize;
-      buySize = qp.percentageValues
-        ? qp.buySizePercentage * baseValue / 1e+2
-        : qp.buySize;
-      if (qp.aggressivePositionRebalancing == mAPR::Off) return;
-      if (qp.buySizeMax)
-        buySize = fmax(buySize, targetBasePosition - totalBasePosition);
-      if (qp.sellSizeMax)
-        sellSize = fmax(sellSize, totalBasePosition - targetBasePosition);
-    };
-    bool empty() const {
-      return !buySize and !sellSize;
-    };
-    bool ratelimit(const mSafety &prev) const {
-      return combined == prev.combined
-        and buyPing == prev.buyPing
-        and sellPing == prev.sellPing;
-    };
-    void send_ratelimit(const mSafety &prev) {
-      if (!ratelimit(prev)) send();
-    };
-    mMatter about() const {
-      return mMatter::TradeSafetyValue;
-    };
-  };
-  static void to_json(json &j, const mSafety &k) {
-    j = {
-      {     "buy", k.buy              },
-      {    "sell", k.sell             },
-      {"combined", k.combined         },
-      { "buyPing", fmax(0, k.buyPing) },
-      {"sellPing", fmax(0, k.sellPing)}
-    };
-  };
-
   struct mFairValue {
     mPrice fv;
     mFairValue():
@@ -1548,37 +1491,24 @@ namespace K {
     k.sideAPR            = j.value("sideAPR", "");
   };
 
-  struct mPosition: public mJsonToClient<mPosition> {
-    mWallets balance;
-     mTarget target;
-     mSafety safety;
-    mProfits profits;
-     mAmount baseAmount,
-             quoteAmount,
-             _quoteAmountValue,
-             baseHeldAmount,
-             quoteHeldAmount,
-             _baseTotal,
-             _quoteTotal,
-             baseValue,
-             quoteValue;
-      double profitBase,
-             profitQuote;
-    mPosition():
-      balance(mWallets()), target(mTarget(&baseValue)), profits(mProfits()), baseAmount(0), quoteAmount(0), _quoteAmountValue(0), baseHeldAmount(0), quoteHeldAmount(0), _baseTotal(0), _quoteTotal(0), baseValue(0), quoteValue(0), profitBase(0), profitQuote(0)
+  struct mSafety: public mJsonToClient<mSafety> {
+           double buy,
+                  sell,
+                  combined;
+           mPrice buyPing,
+                  sellPing;
+          mAmount buySize,
+                  sellSize;
+    mRecentTrades recentTrades;
+    mSafety():
+      buy(0), sell(0), combined(0), buyPing(0), sellPing(0), buySize(0), sellSize(0), recentTrades(mRecentTrades())
     {};
-    void calcSafety(const mMarketLevels &levels, const mTrades &tradesHistory) {
-      if (empty() or levels.empty()) return;
-      mSafety prev = safety;
-      safety.reset(baseValue, _baseTotal, target.targetBasePosition);
-      nextSafety(levels.fairValue, tradesHistory);
-      safety.send_ratelimit(prev);
-    };
-    void nextSafety(const mPrice &fv, const mTrades &tradesHistory) {
+    void calcPrices(const mPrice &fv, const mTrades &tradesHistory) {
       if (qp.safety == mQuotingSafety::PingPong) {
-        safety.buyPing = safety.recentTrades.lastBuyPrice;
-        safety.sellPing = safety.recentTrades.lastSellPrice;
+        buyPing = recentTrades.lastBuyPrice;
+        sellPing = recentTrades.lastSellPrice;
       } else {
+        buyPing = sellPing = 0;
         map<mPrice, mTrade> tradesBuy;
         map<mPrice, mTrade> tradesSell;
         for (const mTrade &it: tradesHistory)
@@ -1586,26 +1516,22 @@ namespace K {
         mPrice widthPong = qp.widthPercentage
           ? qp.widthPongPercentage * fv / 100
           : qp.widthPong;
-        mPrice buyPing = 0,
-               sellPing = 0;
         mAmount buyQty = 0,
                 sellQty = 0;
         if (qp.pongAt == mPongAt::ShortPingFair or qp.pongAt == mPongAt::ShortPingAggressive) {
-          matchBestPing(fv, &tradesBuy, &buyPing, &buyQty, safety.sellSize, widthPong, true);
-          matchBestPing(fv, &tradesSell, &sellPing, &sellQty, safety.buySize, widthPong);
-          if (!buyQty) matchFirstPing(fv, &tradesBuy, &buyPing, &buyQty, safety.sellSize, widthPong*-1, true);
-          if (!sellQty) matchFirstPing(fv, &tradesSell, &sellPing, &sellQty, safety.buySize, widthPong*-1);
+          matchBestPing(fv, &tradesBuy, &buyPing, &buyQty, sellSize, widthPong, true);
+          matchBestPing(fv, &tradesSell, &sellPing, &sellQty, buySize, widthPong);
+          if (!buyQty) matchFirstPing(fv, &tradesBuy, &buyPing, &buyQty, sellSize, widthPong*-1, true);
+          if (!sellQty) matchFirstPing(fv, &tradesSell, &sellPing, &sellQty, buySize, widthPong*-1);
         } else if (qp.pongAt == mPongAt::LongPingFair or qp.pongAt == mPongAt::LongPingAggressive) {
-          matchLastPing(fv, &tradesBuy, &buyPing, &buyQty, safety.sellSize, widthPong);
-          matchLastPing(fv, &tradesSell, &sellPing, &sellQty, safety.buySize, widthPong, true);
+          matchLastPing(fv, &tradesBuy, &buyPing, &buyQty, sellSize, widthPong);
+          matchLastPing(fv, &tradesSell, &sellPing, &sellQty, buySize, widthPong, true);
         } else if (qp.pongAt == mPongAt::AveragePingFair or qp.pongAt == mPongAt::AveragePingAggressive) {
-          matchAllPing(fv, &tradesBuy, &buyPing, &buyQty, safety.sellSize, widthPong);
-          matchAllPing(fv, &tradesSell, &sellPing, &sellQty, safety.buySize, widthPong);
+          matchAllPing(fv, &tradesBuy, &buyPing, &buyQty, sellSize, widthPong);
+          matchAllPing(fv, &tradesSell, &sellPing, &sellQty, buySize, widthPong);
         }
         if (buyQty) buyPing /= buyQty;
         if (sellQty) sellPing /= sellQty;
-        safety.buyPing = buyPing;
-        safety.sellPing = sellPing;
       }
     };
     void matchFirstPing(mPrice fv, map<mPrice, mTrade> *trades, mPrice *ping, mAmount *qty, mAmount qtyMax, mPrice width, bool reverse = false) {
@@ -1643,6 +1569,80 @@ namespace K {
         *qty += qty_;
       }
       return *qty >= qtyMax and (_near or _far);
+    };
+    void send_reset(const mAmount &baseValue, const mAmount &totalBasePosition, const mAmount &targetBasePosition, const mPrice &fv, const mTrades &tradesHistory) {
+      double prev_combined = combined;
+      mPrice prev_buyPing  = buyPing,
+             prev_sellPing = sellPing;
+      calcSizes(baseValue, totalBasePosition, targetBasePosition);
+      calcPrices(fv, tradesHistory);
+      recentTrades.reset();
+      buy  = recentTrades.sumBuys / buySize;
+      sell = recentTrades.sumSells / sellSize;
+      combined = (recentTrades.sumBuys + recentTrades.sumSells) / (buySize + sellSize);
+      if (!ratelimit(prev_combined, prev_buyPing, prev_sellPing))
+        send();
+    };
+    void calcSizes(const mAmount &baseValue, const mAmount &totalBasePosition, const mAmount &targetBasePosition) {
+      sellSize = qp.percentageValues
+          ? qp.sellSizePercentage * baseValue / 1e+2
+          : qp.sellSize;
+      buySize = qp.percentageValues
+        ? qp.buySizePercentage * baseValue / 1e+2
+        : qp.buySize;
+      if (qp.aggressivePositionRebalancing == mAPR::Off) return;
+      if (qp.buySizeMax)
+        buySize = fmax(buySize, targetBasePosition - totalBasePosition);
+      if (qp.sellSizeMax)
+        sellSize = fmax(sellSize, totalBasePosition - targetBasePosition);
+    };
+    bool empty() const {
+      return !buySize and !sellSize;
+    };
+    bool ratelimit(const double &prev_combined, const mPrice &prev_buyPing, const mPrice &prev_sellPing) const {
+      return combined == prev_combined
+        and buyPing == prev_buyPing
+        and sellPing == prev_sellPing;
+    };
+    mMatter about() const {
+      return mMatter::TradeSafetyValue;
+    };
+  };
+  static void to_json(json &j, const mSafety &k) {
+    j = {
+      {     "buy", k.buy              },
+      {    "sell", k.sell             },
+      {"combined", k.combined         },
+      { "buyPing", fmax(0, k.buyPing) },
+      {"sellPing", fmax(0, k.sellPing)}
+    };
+  };
+
+  struct mPosition: public mJsonToClient<mPosition> {
+    mWallets balance;
+     mTarget target;
+     mSafety safety;
+    mProfits profits;
+     mAmount baseAmount,
+             quoteAmount,
+             _quoteAmountValue,
+             baseHeldAmount,
+             quoteHeldAmount,
+             _baseTotal,
+             _quoteTotal,
+             baseValue,
+             quoteValue;
+      double profitBase,
+             profitQuote;
+    mPosition():
+      balance(mWallets()), target(mTarget(&baseValue)), profits(mProfits()), baseAmount(0), quoteAmount(0), _quoteAmountValue(0), baseHeldAmount(0), quoteHeldAmount(0), _baseTotal(0), _quoteTotal(0), baseValue(0), quoteValue(0), profitBase(0), profitQuote(0)
+    {};
+    void timer_1s(const mMarketLevels &levels, const mTrades &tradesHistory) {
+      calcSafety(levels, tradesHistory);
+    };
+    void calcSafety(const mMarketLevels &levels, const mTrades &tradesHistory) {
+      if (empty() or levels.empty()) return;
+      safety.send_reset(baseValue, _baseTotal, target.targetBasePosition, levels.fairValue, tradesHistory);
     };
     void reset(const mSide &side, const mAmount &nextHeldAmount) {
       if (empty()) return;
@@ -1843,6 +1843,14 @@ namespace K {
     mMatter about() const {
       return mMatter::CleanTrade;
     };
+  };
+  struct mButtons {
+    mButtonSubmitNewOrder       submitNewOrder;
+    mButtonCancelOrder          cancelOrder;
+    mButtonCancelAllOrders      cancelAllOrders;
+    mButtonCleanAllClosedTrades cleanAllClosedTrades;
+    mButtonCleanAllTrades       cleanAllTrades;
+    mButtonCleanTrade           cleanTrade;
   };
 
   static const class mCommand {

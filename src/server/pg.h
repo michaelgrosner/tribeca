@@ -23,10 +23,6 @@ namespace K {
         client->welcome(position.safety);
         client->welcome(position);
       };
-    public:
-      void timer_1s() {
-        position.calcSafety(market->levels, broker->orders.tradesHistory);
-      };
   };
 }
 

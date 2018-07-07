@@ -36,12 +36,12 @@ namespace K {
     virtual void logUI(const string&) = 0;
     virtual void logUIsess(int, string) = 0;
     virtual void log(const mTrade&, const bool&) = 0;
+    virtual void log(const map<mRandId, mOrder>&, const bool&) = 0;
     virtual void log(const string&, const string&, const string& = "") = 0;
 #define PRETTY_DEBUG if (args.debugEvents) screen->log("DEBUG EV", __PRETTY_FUNCTION__);
 #define DEBOG(x)     if (args.debugOrders) screen->log("DEBUG OG", x)
 #define DEBUG(x)     if (args.debugQuotes) screen->log("DEBUG QE", x)
 #define DEBUQ(x, b, a, q) DEBUG("quote " x " " + to_string((int)b) + ":" + to_string((int)a) + " " + ((json)q).dump())
-    virtual void log(const map<mRandId, mOrder>&, const bool&) = 0;
     virtual void refresh() = 0;
     virtual void end() = 0;
   } *screen = nullptr;
@@ -64,7 +64,6 @@ namespace K {
 
   static struct Wallet {
     mPosition position;
-    virtual void timer_1s() = 0;
   } *wallet = nullptr;
 
   static struct Market {
