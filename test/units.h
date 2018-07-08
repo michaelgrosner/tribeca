@@ -46,7 +46,7 @@ namespace K {
       SECTION("assigned") {
         REQUIRE_NOTHROW(levels = mLevels(
           { mLevel(1234.56, 0.12345678) },
-          { mLevel(1234.57, 0.12345678) }
+          { mLevel(1234.57, 0.12345679) }
         ));
         SECTION("values") {
           REQUIRE(levels.spread() == Approx(0.01));
@@ -55,7 +55,7 @@ namespace K {
           REQUIRE_FALSE(levels.empty());
         }
         SECTION("to json") {
-          REQUIRE(((json)levels).dump() == "{\"asks\":[{\"price\":1234.57,\"size\":0.12345678}],\"bids\":[{\"price\":1234.56,\"size\":0.12345678}]}");
+          REQUIRE(((json)levels).dump() == "{\"asks\":[{\"price\":1234.57,\"size\":0.12345679}],\"bids\":[{\"price\":1234.56,\"size\":0.12345678}]}");
         }
         SECTION("clear") {
           REQUIRE_NOTHROW(levels.clear());
@@ -68,6 +68,22 @@ namespace K {
           SECTION("to json") {
             REQUIRE(((json)levels).dump() == "{\"asks\":[],\"bids\":[]}");
           }
+        }
+      }
+    }
+    SECTION("mMarketLevels") {
+      mMarketLevels levels;
+      SECTION("defaults") {
+        REQUIRE_NOTHROW(levels = mMarketLevels());
+      }
+      SECTION("assigned") {
+        REQUIRE_NOTHROW(levels.send_reset_filter(mLevels(
+          { mLevel(1234.50, 0.12345678) },
+          { mLevel(1234.60, 0.12345678) }
+        ), 0.01));
+        SECTION("values") {
+          REQUIRE_NOTHROW(levels.calcFairValue(0.01));
+          REQUIRE(levels.fairValue == 1234.55);
         }
       }
     }

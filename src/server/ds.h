@@ -150,14 +150,30 @@ namespace K {
   };
 
   struct mToScreen {
-    function<void()> refresh;
-    function<void(const string&, const string&)> print;
-    function<void(const string&, const string&)> warn;
+    function<void()> refresh
+#ifndef NDEBUG
+    = []() { INFO("screen refresh"); }
+#endif
+    ;
+    function<void(const string&, const string&)> print
+#ifndef NDEBUG
+    = [](const string &prefix, const string &reason) { INFO("screen print " << prefix << " " << reason); }
+#endif
+    ;
+    function<void(const string&, const string&)> warn
+#ifndef NDEBUG
+    = [](const string &prefix, const string &reason) { INFO("screen warn " << prefix << " " << reason); }
+#endif
+    ;
   };
 
   struct mToClient: public mDump,
                     public mFromClient  {
-    function<void()> send;
+    function<void()> send
+#ifndef NDEBUG
+    = [&]() { INFO("client dump " << dump().dump()); }
+#endif
+    ;
     virtual json hello() {
       return { dump() };
     };

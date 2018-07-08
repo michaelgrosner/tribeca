@@ -2,7 +2,7 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
 PATCH    = 8
-BUILD    = 26
+BUILD    = 27
 CHOST   ?= $(shell $(MAKE) CHOST= chost -s)
 CARCH    = x86_64-linux-gnu arm-linux-gnueabihf aarch64-linux-gnu x86_64-apple-darwin17 x86_64-w64-mingw32
 KLOCAL  := build-$(CHOST)/local
@@ -123,7 +123,7 @@ endif
 
 Linux:
 ifdef KUNITS
-	@unset KUNITS && $(MAKE) KTEST="--coverage -I." $@
+	@unset KUNITS && $(MAKE) KTEST="--coverage -I. test/unit_testing_framework.cxx" $@
 else ifndef KTEST
 	@$(MAKE) KTEST="-DNDEBUG" $@
 else

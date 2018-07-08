@@ -56,12 +56,9 @@ using namespace nlohmann;
 #ifdef NDEBUG
 #  define EXIT exit
 #else
-#  define CATCH_CONFIG_RUNNER
 #  include <catch.h>
 #  define EXIT catch_exit
-   void catch_exit(const int code) {
-     exit(code ?: Catch::Session().run());
-   };
+   void catch_exit(const int);
 #endif
 
 #include "ds.h"
