@@ -4,14 +4,15 @@
 namespace K {
   TEST_CASE("mMarketLevels") {
     SECTION("mLevel") {
+      mLevel level;
       SECTION("defaults") {
-        REQUIRE_NOTHROW(mLevel());
+        REQUIRE_NOTHROW(level = mLevel());
       }
       SECTION("assigned") {
-        mLevel level = mLevel(
+        REQUIRE_NOTHROW(level = mLevel(
           1234.56,
           0.12345678
-        );
+        ));
         SECTION("values") {
           REQUIRE(level.price == 1234.56);
           REQUIRE(level.size == 0.12345678);
@@ -38,14 +39,15 @@ namespace K {
       }
     }
     SECTION("mLevels") {
+      mLevels levels;
       SECTION("defaults") {
-        REQUIRE_NOTHROW(mLevels());
+        REQUIRE_NOTHROW(levels = mLevels());
       }
       SECTION("assigned") {
-        mLevels levels = mLevels(
+        REQUIRE_NOTHROW(levels = mLevels(
           { mLevel(1234.56, 0.12345678) },
           { mLevel(1234.57, 0.12345678) }
-        );
+        ));
         SECTION("values") {
           REQUIRE(levels.spread() == Approx(0.01));
         }

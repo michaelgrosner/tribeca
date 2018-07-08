@@ -72,7 +72,6 @@ after_success:
       coveralls-lcov --repo-token ${COVERALLS_TOKEN} coverage.info                                  > /dev/null 2>&1
       cat coverage.info | codacy-coverage --language cpp                                            > /dev/null 2>&1
       lcov --list coverage.info
-      lcov --summary coverage.info
     fi
 
 notifications:
