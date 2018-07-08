@@ -11,7 +11,7 @@
     "@angular/platform-browser": "^6.0.7",
     "@angular/platform-browser-dynamic": "^6.0.7",
     "@angular/router": "^6.0.7",
-    "ag-grid": "^18.1.0",
+    "ag-grid": "^18.1.1",
     "ag-grid-angular": "^18.1.0",
     "angular2-highcharts": "^0.5.5",
     "babel-core": "^6.26.3",
