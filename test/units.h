@@ -79,11 +79,22 @@ namespace K {
       SECTION("assigned") {
         REQUIRE_NOTHROW(levels.send_reset_filter(mLevels(
           { mLevel(1234.50, 0.12345678) },
-          { mLevel(1234.60, 0.12345678) }
+          { mLevel(1234.60, 1.23456789) }
         ), 0.01));
-        SECTION("values") {
+        SECTION("fair value") {
+          REQUIRE_NOTHROW(qp.fvModel = mFairValueModel::BBO);
           REQUIRE_NOTHROW(levels.calcFairValue(0.01));
           REQUIRE(levels.fairValue == 1234.55);
+        }
+        SECTION("fair value weight") {
+          REQUIRE_NOTHROW(qp.fvModel = mFairValueModel::wBBO);
+          REQUIRE_NOTHROW(levels.calcFairValue(0.01));
+          REQUIRE(levels.fairValue == 1234.59);
+        }
+        SECTION("fair value reversed weight") {
+          REQUIRE_NOTHROW(qp.fvModel = mFairValueModel::rwBBO);
+          REQUIRE_NOTHROW(levels.calcFairValue(0.01));
+          REQUIRE(levels.fairValue == 1234.51);
         }
       }
     }
