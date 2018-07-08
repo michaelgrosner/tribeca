@@ -234,6 +234,12 @@ Make sure your build machine has [node](https://nodejs.org/en/download/package-m
 
 To rebuild the application with your modifications, see `make help` and choose a target (`make bundle K` may be what you are looking for).
 
+Test units are executed before the application exits, only if the application was compiled with `KUNITS=1 make`.
+
+Otherwise, just `make` without the environment var `KUNITS` produces an application that simply exits on exit.
+
+A quick test runner therefore is `./K.sh --version` or the alias `make test` or all at once with `KUNITS=1 make K test`.
+
 To pipe the output to stdout, execute the application in the foreground with `./K.sh --naked`.
 
 To ignore the output, execute the application in the background with `screen -dmS K K.sh` or with the alias `make start` or simply `./K.sh`.
