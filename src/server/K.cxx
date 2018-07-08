@@ -53,6 +53,17 @@ using namespace nlohmann;
 "\n"   "are licensed by/under the law of my grandma (since last century)," \
 "\n"   "feel free to crack all."
 
+#ifdef NDEBUG
+#  define EXIT exit
+#else
+#  define CATCH_CONFIG_RUNNER
+#  include <catch.h>
+#  define EXIT catch_exit
+   void catch_exit(int code) {
+     exit(code ?: Catch::Session().run());
+   };
+#endif
+
 #include "ds.h"
 #include "fn.h"
 #include "if.h"

@@ -1,17 +1,6 @@
 #ifndef K_IF_H_
 #define K_IF_H_
 
-#ifdef NDEBUG
-#  define EXIT exit
-#else
-#  define CATCH_CONFIG_RUNNER
-#  include <catch.h>
-#  define EXIT catch_exit
-   void catch_exit(int code) {
-     exit(code ?: Catch::Session().run());
-   };
-#endif
-
 namespace K {
   static struct Screen {
     Screen() {

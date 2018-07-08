@@ -2,7 +2,7 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
 PATCH    = 8
-BUILD    = 24
+BUILD    = 25
 CHOST   ?= $(shell $(MAKE) CHOST= chost -s)
 CARCH    = x86_64-linux-gnu arm-linux-gnueabihf aarch64-linux-gnu x86_64-apple-darwin17 x86_64-w64-mingw32
 KLOCAL  := build-$(CHOST)/local
@@ -363,7 +363,7 @@ test:
 	./K.sh --version
 
 test-c:
-	@pvs-studio-analyzer analyze --exclude-path $(KLOCAL)/include --source-file test/static_code_analysis.cxx --cl-params -I$(KLOCAL)/include test/static_code_analysis.cxx && \
+	@pvs-studio-analyzer analyze --exclude-path $(KLOCAL)/include --source-file test/static_code_analysis.cxx --cl-params -I. -I$(KLOCAL)/include test/static_code_analysis.cxx && \
 	(plog-converter -a GA:1,2 -t tasklist -o report.tasks PVS-Studio.log && cat report.tasks && rm report.tasks) || :
 	-@rm PVS-Studio.log
 
