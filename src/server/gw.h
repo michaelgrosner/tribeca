@@ -145,9 +145,9 @@ namespace K {
           gw->minSize = 0.01;
         }
         if (!gw->randId or gw->symbol.empty())
-          exit(screen->error("GW", "Incomplete handshake aborted."));
+          EXIT(screen->error("GW", "Incomplete handshake aborted."));
         if (!gw->minTick or !gw->minSize)
-          exit(screen->error("GW", "Unable to fetch data from " + gw->name
+          EXIT(screen->error("GW", "Unable to fetch data from " + gw->name
             + " for symbol \"" + gw->symbol + "\", possible error message: "
             + reply.dump(),
           true));

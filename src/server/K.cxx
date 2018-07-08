@@ -17,8 +17,9 @@
 #include <iomanip>
 #include <vector>
 #include <map>
+
 #ifndef _WIN32
-#include <execinfo.h>
+#  include <execinfo.h>
 #endif
 
 using namespace std;
@@ -66,6 +67,10 @@ using namespace nlohmann;
 #include "pg.h"
 #include "qe.h"
 #include "gw.h"
+
+#ifndef NDEBUG
+#  include <test/units.h>
+#endif
 
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;;int main(int argc, char** argv) {;;

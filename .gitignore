@@ -1,6 +1,8 @@
 /*.sh
 /app
 /build*
+/*.gcno
+/*.gcda
 /node_modules
 /etc/sslcert/fix.gdax.com.pem
 /etc/sslcert/server.crt

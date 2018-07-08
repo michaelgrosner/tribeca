@@ -81,14 +81,14 @@ namespace K {
       void welcome(mToClient &data) {
         const char type = (char)data.about();
         if (hello.find(type) != hello.end())
-          exit(screen->error("UI", string("Too many handlers for \"") + type + "\" welcome event"));
+          EXIT(screen->error("UI", string("Too many handlers for \"") + type + "\" welcome event"));
         hello[type] = [&]() { return data.hello(); };
         sendAsync(data);
       };
       void clickme(mFromClient& data, function<void(const json&)> fn) {
         const char type = (char)data.about();
         if (kisses.find(type) != kisses.end())
-          exit(screen->error("UI", string("Too many handlers for \"") + type + "\" clickme event"));
+          EXIT(screen->error("UI", string("Too many handlers for \"") + type + "\" clickme event"));
         kisses[type] = [&data, fn](const json &butterfly) {
           fn(data.kiss(butterfly));
         };
@@ -117,7 +117,7 @@ namespace K {
         ) screen->logUI("HTTPS");
         else if (!socket->listen(args.inet, args.port, nullptr, 0, &socket->getDefaultGroup<uWS::SERVER>())) {
           const string netstat = cmd.netstat();
-          exit(screen->error("UI", "Unable to listen to UI port number " + to_string(args.port) + ", "
+          EXIT(screen->error("UI", "Unable to listen to UI port number " + to_string(args.port) + ", "
             + (netstat.empty() ? "try another network interface" : "seems already in use by:\n" + netstat)
           ));
         } else screen->logUI("HTTP");

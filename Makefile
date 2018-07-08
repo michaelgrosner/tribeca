@@ -2,7 +2,7 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
 PATCH    = 8
-BUILD    = 22
+BUILD    = 23
 CHOST   ?= $(shell $(MAKE) CHOST= chost -s)
 CARCH    = x86_64-linux-gnu arm-linux-gnueabihf aarch64-linux-gnu x86_64-apple-darwin17 x86_64-w64-mingw32
 KLOCAL  := build-$(CHOST)/local
@@ -15,11 +15,12 @@ V_ZLIB   = 1.2.11
 V_SSL    = 1.1.0h
 V_CURL   = 7.60.0
 V_NCUR   = 6.1
-V_JSON   = v3.1.2
+V_JSON   = 3.1.2
 V_UWS    = 0.14.7
 V_SQL    = 3230100
 V_QF     = 1.15.1
 V_UV     = 1.20.3
+V_CATCH  = 2.2.3
 V_PVS    = 6.24.26497.168
 KARGS   := -I$(KLOCAL)/include -pthread -std=c++11 -O3   \
   $(KLOCAL)/lib/K-$(CHOST)-docroot.o src/server/K.cxx    \
@@ -78,6 +79,7 @@ help:
 	#  make sqlite       - download sqlite src files   #
 	#  make openssl      - download openssl src files  #
 	#  make json         - download json src files     #
+	#  make catch        - download catch src files    #
 	#  make uws          - download uws src files      #
 	#  make quickfix     - download quickfix src files #
 	#  make coinbase     - download coinbase ssl cert  #
@@ -108,7 +110,7 @@ ifdef KALL
 else
 	@$(if $(shell sh -c 'test "`g++ -dumpversion | cut -d . -f1`" != $(V_CXX) || echo 1'),,$(warning $(ERR));$(error $(HINT)))
 	mkdir -p build-$(CHOST)
-	CHOST=$(CHOST) $(MAKE) zlib openssl curl sqlite ncurses json uws quickfix libuv
+	CHOST=$(CHOST) $(MAKE) zlib openssl curl sqlite ncurses json catch uws quickfix libuv
 	test -f /sbin/ldconfig && sudo ldconfig || :
 endif
 
@@ -120,8 +122,8 @@ else
 endif
 
 Linux:
-ifdef KCOV
-	@unset KCOV && $(MAKE) KTEST="--coverage" $@
+ifdef KUNITS
+	@unset KUNITS && $(MAKE) KTEST="--coverage -I." $@
 else ifndef KTEST
 	@$(MAKE) KTEST="-DNDEBUG" $@
 else
@@ -129,10 +131,10 @@ else
 endif
 
 Darwin:
-	$(CXX) -o $(KLOCAL)/bin/K-$(CHOST) -DUSE_LIBUV $(KLOCAL)/lib/libuv.a -msse4.1 -maes -mpclmul -mmacosx-version-min=10.13 -nostartfiles -rdynamic $(KARGS) -ldl
+	$(CXX) -DNDEBUG -o $(KLOCAL)/bin/K-$(CHOST) -DUSE_LIBUV $(KLOCAL)/lib/libuv.a -msse4.1 -maes -mpclmul -mmacosx-version-min=10.13 -nostartfiles -rdynamic $(KARGS) -ldl
 
 Win32:
-	$(CXX)-posix -o $(KLOCAL)/bin/K-$(CHOST).exe -DUSE_LIBUV $(KARGS) $(KLOCAL)/lib/libuv.dll.a $(KLOCAL)/lib/libssl.dll.a $(KLOCAL)/lib/libcrypto.dll.a -DCURL_STATICLIB -static -lstdc++ -lgcc -lwldap32 -lws2_32
+	$(CXX)-posix -DNDEBUG -o $(KLOCAL)/bin/K-$(CHOST).exe -DUSE_LIBUV $(KARGS) $(KLOCAL)/lib/libuv.dll.a $(KLOCAL)/lib/libssl.dll.a $(KLOCAL)/lib/libcrypto.dll.a -DCURL_STATICLIB -static -lstdc++ -lgcc -lwldap32 -lws2_32
 
 zlib:
 	test -d build-$(CHOST)/zlib-$(V_ZLIB) || (                                                  \
@@ -179,9 +181,14 @@ ncurses:
 	--with-fallbacks=linux,screen,vt100,xterm,xterm-256color,putty-256color && make && make install      )
 
 json:
-	test -f $(KLOCAL)/include/json.h || (mkdir -p $(KLOCAL)/include                  \
-	&& curl -L https://github.com/nlohmann/json/releases/download/$(V_JSON)/json.hpp \
-	-o $(KLOCAL)/include/json.h                                                      )
+	test -f $(KLOCAL)/include/json.h || (mkdir -p $(KLOCAL)/include                   \
+	&& curl -L https://github.com/nlohmann/json/releases/download/v$(V_JSON)/json.hpp \
+	-o $(KLOCAL)/include/json.h                                                       )
+
+catch:
+	test -f $(KLOCAL)/include/catch.h || (mkdir -p $(KLOCAL)/include                      \
+	&& curl -L https://github.com/catchorg/Catch2/releases/download/v$(V_CATCH)/catch.hpp \
+	-o $(KLOCAL)/include/catch.h                                                          )
 
 uws:
 	test -d build-$(CHOST)/uWebSockets-$(V_UWS)                                    \
@@ -354,7 +361,7 @@ changelog: .git
 	@_() { echo `git rev-parse $$1`; }; echo && git --no-pager log --graph --oneline @..@{u} && test `_ @` != `_ @{u}` || echo No need to upgrade, both versions are equal.
 
 test:
-	@echo TODO
+	./K.sh --version
 
 test-c:
 	@pvs-studio-analyzer analyze --exclude-path $(KLOCAL)/include --source-file test/static_code_analysis.cxx --cl-params -I$(KLOCAL)/include test/static_code_analysis.cxx && \
@@ -401,7 +408,7 @@ ifdef KALL
 else
 	@tar -cvzf v$(MAJOR).$(MINOR).$(PATCH).$(BUILD)-$(CHOST).tar.gz $(KLOCAL)/bin/K-$(CHOST)* $(KLOCAL)/lib/K-$(CHOST)*                   \
 	$(shell test -n "`echo $(CHOST) | grep mingw32`" && echo $(KLOCAL)/bin/*dll || :)                                                     \
-	LICENSE COPYING THANKS README.md MANUAL.md src etc Makefile WHITE_*                                                                   \
+	LICENSE COPYING THANKS README.md MANUAL.md src etc test Makefile WHITE_*                                                                   \
 	&& curl -s -n -H "Content-Type:application/octet-stream" -H "Authorization: token ${KRELEASE}"                                        \
 	--data-binary "@$(PWD)/v$(MAJOR).$(MINOR).$(PATCH).$(BUILD)-$(CHOST).tar.gz"                                                          \
 	"https://uploads.github.com/repos/ctubio/Krypto-trading-bot/releases/$(shell curl -s                                                  \
@@ -416,4 +423,4 @@ md5: src
 asandwich:
 	@test `whoami` = 'root' && echo OK || echo make it yourself!
 
-.PHONY: K chost dist link Linux Darwin Win32 build zlib openssl curl ncurses quickfix uws json pvs clean cleandb list screen start stop restart startall stopall restartall coinbase packages install docker reinstall clients www bundle diff latest changelog test test-c png png-check release md5 asandwich
+.PHONY: K chost dist link Linux Darwin Win32 build zlib openssl curl ncurses quickfix uws json catch pvs clean cleandb list screen start stop restart startall stopall restartall coinbase packages install docker reinstall clients www bundle diff latest changelog test test-c png png-check release md5 asandwich

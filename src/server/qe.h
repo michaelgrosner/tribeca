@@ -25,6 +25,9 @@ namespace K {
         client->welcome(status);
       };
     public:
+      void timer_1s() {                                             PRETTY_DEBUG
+        calcQuote();
+      };
       void calcQuote() {                                            PRETTY_DEBUG
         bidStatus = mQuoteState::MissingData;
         askStatus = mQuoteState::MissingData;
@@ -55,13 +58,10 @@ namespace K {
         wallet->position.calcSafety(market->levels, broker->orders.tradesHistory);
         calcQuote();
       };
-      void timer_1s() {                                             PRETTY_DEBUG
-        calcQuote();
-      };
     private:
       void findMode(const string &reason) {
         if (quotingMode.find(qp.mode) == quotingMode.end())
-          exit(screen->error("QE", "Invalid quoting mode "
+          EXIT(screen->error("QE", "Invalid quoting mode "
             + reason + ", consider to remove the database file"));
       };
       void sendQuoteToAPI() {

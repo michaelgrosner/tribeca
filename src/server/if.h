@@ -201,6 +201,17 @@ namespace K {
       };
   } *gw = nullptr;
 
+#ifdef NDEBUG
+#  define EXIT exit
+#else
+#  define CATCH_CONFIG_RUNNER
+#  include <catch.h>
+#  define EXIT catch_exit
+   void catch_exit(int code) {
+     exit(code ?: Catch::Session().run());
+   };
+#endif
+
   static string tracelog;
   static vector<function<void()>> happyEndingFn, endingFn = { []() {
     screen->end();
@@ -228,7 +239,7 @@ namespace K {
              << BGREEN << to_string(code)
              << RGREEN << '.'
              << RRESET << '\n';
-        exit(code);
+        EXIT(code);
       };
       static void quit(const int sig) {
         tracelog = "Excellent decision! "

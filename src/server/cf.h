@@ -143,13 +143,13 @@ namespace K {
               << RGREEN << "  home page: " << RYELLOW << "https://ca.rles-tub.io./trades" << '\n'
               << RRESET;
             case '?':
-            case 'v': exit(EXIT_SUCCESS);
+            case 'v': EXIT(EXIT_SUCCESS);
             default : abort();
           }
         if (optind < argc) {
           string argerr;
           while(optind < argc) argerr += string(" ") + argv[optind++];
-          exit(screen->error("CF", "Invalid argument option:" + argerr));
+          EXIT(screen->error("CF", "Invalid argument option:" + argerr));
         }
         validate();
         config();
@@ -159,7 +159,7 @@ namespace K {
       void validate() {
         const string msg = args.validate();
         if (msg.empty()) return;
-        exit(screen->error("CF", msg));
+        EXIT(screen->error("CF", msg));
       };
       void config() {
         screen->config();
@@ -172,7 +172,7 @@ namespace K {
           args.maxLevels, args.debugSecret
         );
         if (!gw)
-          exit(screen->error("CF",
+          EXIT(screen->error("CF",
             "Unable to configure a valid gateway using --exchange="
               + args.exchange + " argument"
           ));
