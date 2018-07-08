@@ -2,7 +2,7 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
 PATCH    = 8
-BUILD    = 23
+BUILD    = 24
 CHOST   ?= $(shell $(MAKE) CHOST= chost -s)
 CARCH    = x86_64-linux-gnu arm-linux-gnueabihf aarch64-linux-gnu x86_64-apple-darwin17 x86_64-w64-mingw32
 KLOCAL  := build-$(CHOST)/local
@@ -273,7 +273,6 @@ reinstall: src
 	&& git fetch && git merge FETCH_HEAD || (git reset FETCH_HEAD && git checkout .)) || curl https://raw.githubusercontent.com/ctubio/Krypto-trading-bot/master/Makefile > Makefile
 	rm -rf app
 	@$(MAKE) install
-	#@$(MAKE) test -s
 	#@$(MAKE) restartall
 	@echo && echo ..done! Please restart any running instance and also refresh the UI if is currently opened in your browser.
 
