@@ -152,17 +152,17 @@ namespace K {
   struct mToScreen {
     function<void()> refresh
 #ifndef NDEBUG
-    = []() { INFO("screen refresh"); }
+    = []() { WARN("Y U NO catch screen refresh?"); }
 #endif
     ;
     function<void(const string&, const string&)> print
 #ifndef NDEBUG
-    = [](const string &prefix, const string &reason) { INFO("screen print " << prefix << " " << reason); }
+    = [](const string &prefix, const string &reason) { WARN("Y U NO catch screen print?"); }
 #endif
     ;
     function<void(const string&, const string&)> warn
 #ifndef NDEBUG
-    = [](const string &prefix, const string &reason) { INFO("screen warn " << prefix << " " << reason); }
+    = [](const string &prefix, const string &reason) { WARN("Y U NO catch screen warn?"); }
 #endif
     ;
   };
@@ -171,7 +171,7 @@ namespace K {
                     public mFromClient  {
     function<void()> send
 #ifndef NDEBUG
-    = [&]() { INFO("client dump " << dump().dump()); }
+    = []() { WARN("Y U NO catch client send?"); }
 #endif
     ;
     virtual json hello() {
@@ -1220,7 +1220,7 @@ namespace K {
                          fairValue;
             mMarketStats stats;
     mMarketLevels():
-      diff(mLevelsDiff(&unfiltered)), filterBidOrders({}), filterAskOrders({}), averageCount(0), averageWidth(0), stats(mMarketStats(&fairValue))
+      diff(mLevelsDiff(&unfiltered)), filterBidOrders({}), filterAskOrders({}), averageCount(0), averageWidth(0), fairValue(0), stats(mMarketStats(&fairValue))
     {};
     void timer_1s() {
       stats.stdev.timer_1s(fairValue, bids.cbegin()->price, asks.cbegin()->price);
