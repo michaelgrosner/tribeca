@@ -140,8 +140,10 @@ namespace K {
           REQUIRE(levels.diff.hello().dump() == "[{\"asks\":[{\"price\":1234.6,\"size\":1.23456789}],\"bids\":[{\"price\":1234.5,\"size\":0.12345678}]}]");
           REQUIRE_FALSE(levels.diff.ratelimit());
           REQUIRE_FALSE(levels.diff.empty());
+          REQUIRE_FALSE(levels.diff.patched);
           SECTION("diff send") {
             REQUIRE_NOTHROW(levels.diff.mToClient::send = [&]() {
+              REQUIRE(levels.diff.patched);
               REQUIRE(((json)levels.diff).dump() == "{\"asks\":[],\"bids\":[{\"price\":1234.5},{\"price\":1234.4,\"size\":0.12345678}],\"diff\":true}");
             });
             REQUIRE_NOTHROW(levels.stats.fairPrice.mToClient::send = [&]() {
@@ -151,6 +153,7 @@ namespace K {
               { mLevel(1234.40, 0.12345678) },
               { mLevel(1234.60, 1.23456789) }
             ), 0.01));
+            REQUIRE_FALSE(levels.diff.patched);
             REQUIRE(((json)levels.diff).dump() == "{\"asks\":[{\"price\":1234.6,\"size\":1.23456789}],\"bids\":[{\"price\":1234.4,\"size\":0.12345678}]}");
           }
         }
