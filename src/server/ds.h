@@ -760,32 +760,33 @@ namespace K {
       sumBuys = sum(&buys);
       sumSells = sum(&sells);
     };
-    mAmount sum(multimap<mPrice, mRecentTrade> *const k) {
-      mAmount sum = 0;
-      for (multimap<mPrice, mRecentTrade>::value_type &it : *k)
-        sum += it.second.quantity;
-      return sum;
-    };
-    void expire(multimap<mPrice, mRecentTrade> *const k) {
-      mClock now = Tstamp;
-      for (multimap<mPrice, mRecentTrade>::iterator it = k->begin(); it != k->end();)
-        if (it->second.time + qp.tradeRateSeconds * 1e+3 > now) ++it;
-        else it = k->erase(it);
-    };
-    void skip() {
-      while (buys.size() and sells.size()) {
-        mRecentTrade &buy = buys.rbegin()->second;
-        mRecentTrade &sell = sells.begin()->second;
-        if (sell.price < buy.price) break;
-        const mAmount buyQty = buy.quantity;
-        buy.quantity -= sell.quantity;
-        sell.quantity -= buyQty;
-        if (buy.quantity <= 0)
-          buys.erase(buys.rbegin()->first);
-        if (sell.quantity <= 0)
-          sells.erase(sells.begin()->first);
-      }
-    };
+    private:
+      mAmount sum(multimap<mPrice, mRecentTrade> *const k) {
+        mAmount sum = 0;
+        for (multimap<mPrice, mRecentTrade>::value_type &it : *k)
+          sum += it.second.quantity;
+        return sum;
+      };
+      void expire(multimap<mPrice, mRecentTrade> *const k) {
+        mClock now = Tstamp;
+        for (multimap<mPrice, mRecentTrade>::iterator it = k->begin(); it != k->end();)
+          if (it->second.time + qp.tradeRateSeconds * 1e+3 > now) ++it;
+          else it = k->erase(it);
+      };
+      void skip() {
+        while (buys.size() and sells.size()) {
+          mRecentTrade &buy = buys.rbegin()->second;
+          mRecentTrade &sell = sells.begin()->second;
+          if (sell.price < buy.price) break;
+          const mAmount buyQty = buy.quantity;
+          buy.quantity -= sell.quantity;
+          sell.quantity -= buyQty;
+          if (buy.quantity <= 0)
+            buys.erase(buys.rbegin()->first);
+          if (sell.quantity <= 0)
+            sells.erase(sells.begin()->first);
+        }
+      };
   };
 
   struct mFairValue {
