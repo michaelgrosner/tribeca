@@ -2,6 +2,26 @@
 #define K_UNITS_H_
 
 namespace K {
+  TEST_CASE("mConnectivity") {
+    mConnectivity on;
+    SECTION("defaults") {
+      REQUIRE(!on);
+      REQUIRE(!(on * on));
+    }
+    SECTION("assigned") {
+      mConnectivity off;
+      REQUIRE_NOTHROW(on = mConnectivity::Connected);
+      REQUIRE_NOTHROW(off = mConnectivity::Disconnected);
+      SECTION("values") {
+        REQUIRE_FALSE(!on);
+        REQUIRE_FALSE(!(on * on));
+        REQUIRE(!off);
+        REQUIRE(!(on  * off));
+        REQUIRE(!(off * on));
+        REQUIRE(!(off * off));
+      }
+    }
+  }
   TEST_CASE("mMarketLevels") {
     SECTION("mLevel") {
       mLevel level;
