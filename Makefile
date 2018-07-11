@@ -2,7 +2,7 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
 PATCH    = 8
-BUILD    = 32
+BUILD    = 33
 CHOST   ?= $(shell $(MAKE) CHOST= chost -s)
 CARCH    = x86_64-linux-gnu arm-linux-gnueabihf aarch64-linux-gnu x86_64-apple-darwin17 x86_64-w64-mingw32
 KLOCAL  := build-$(CHOST)/local
@@ -16,7 +16,7 @@ V_SSL    = 1.1.0h
 V_CURL   = 7.60.0
 V_NCUR   = 6.1
 V_JSON   = 3.1.2
-V_UWS    = 0.14.7
+V_UWS    = 0.14.8
 V_SQL    = 3230100
 V_QF     = 1.15.1
 V_UV     = 1.20.3

@@ -10,10 +10,12 @@ namespace K {
       SECTION("values") {
         REQUIRE_FALSE(!on);
         REQUIRE(!off);
-        REQUIRE(on  * on  == on);
-        REQUIRE(on  * off == off);
-        REQUIRE(off * on  == off);
-        REQUIRE(off * off == off);
+        SECTION("combined") {
+          REQUIRE(on  * on  == on);
+          REQUIRE(on  * off == off);
+          REQUIRE(off * on  == off);
+          REQUIRE(off * off == off);
+        }
       }
     }
   }
@@ -181,6 +183,7 @@ namespace K {
       REQUIRE_NOTHROW(recentTrades = mRecentTrades());
     }
     SECTION("assigned") {
+      REQUIRE_NOTHROW(recentTrades.insert(mSide::Ask, 1234.57, 0.01234566));
       REQUIRE_NOTHROW(recentTrades.insert(mSide::Ask, 1234.58, 0.01234567));
       REQUIRE_NOTHROW(recentTrades.insert(mSide::Bid, 1234.56, 0.12345678));
       REQUIRE_NOTHROW(recentTrades.insert(mSide::Bid, 1234.50, 0.12345679));
@@ -189,18 +192,31 @@ namespace K {
         REQUIRE(recentTrades.lastBuyPrice == 1234.50);
         REQUIRE(recentTrades.lastSellPrice == 1234.60);
         REQUIRE(recentTrades.buys.size() == 2);
-        REQUIRE(recentTrades.sells.size() == 2);
+        REQUIRE(recentTrades.sells.size() == 3);
         REQUIRE_FALSE(recentTrades.sumBuys);
         REQUIRE_FALSE(recentTrades.sumSells);
-      }
-      SECTION("reset") {
-        REQUIRE_NOTHROW(recentTrades.reset());
-        REQUIRE(recentTrades.lastBuyPrice == 1234.50);
-        REQUIRE(recentTrades.lastSellPrice == 1234.60);
-        REQUIRE(recentTrades.buys.size() == 1);
-        REQUIRE_FALSE(recentTrades.sells.size());
-        REQUIRE(recentTrades.sumBuys == 0.11111112);
-        REQUIRE_FALSE(recentTrades.sumSells);
+        SECTION("reset") {
+          SECTION("skip") {
+            REQUIRE_NOTHROW(recentTrades.reset());
+            REQUIRE(recentTrades.lastBuyPrice == 1234.50);
+            REQUIRE(recentTrades.lastSellPrice == 1234.60);
+            REQUIRE(recentTrades.buys.size() == 1);
+            REQUIRE_FALSE(recentTrades.sells.size());
+            REQUIRE(recentTrades.sumBuys == 0.09876546);
+            REQUIRE_FALSE(recentTrades.sumSells);
+          }
+          SECTION("expired") {
+            this_thread::sleep_for(chrono::milliseconds(1001));
+            REQUIRE_NOTHROW(qp.tradeRateSeconds = 1);
+            REQUIRE_NOTHROW(recentTrades.reset());
+            REQUIRE(recentTrades.lastBuyPrice == 1234.50);
+            REQUIRE(recentTrades.lastSellPrice == 1234.60);
+            REQUIRE_FALSE(recentTrades.buys.size());
+            REQUIRE_FALSE(recentTrades.sells.size());
+            REQUIRE_FALSE(recentTrades.sumBuys);
+            REQUIRE_FALSE(recentTrades.sumSells);
+          }
+        }
       }
     }
   }

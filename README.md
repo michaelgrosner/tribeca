@@ -254,6 +254,8 @@ ws sandbox: [websocket.org](https://www.websocket.org/echo.html)
 
 ### Unreleased v0.4.x Changelog:
 
+Added test units.
+
 Added --interface=IP argument to bind outgoing traffic to a specific network interface.
 
 Added Ethfinex API.
