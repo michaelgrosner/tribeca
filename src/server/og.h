@@ -162,7 +162,7 @@ namespace K {
           wallet->balance.reset(k.side, orders.calcHeldAmount(k.side), market->levels);
           if (k.tradeQuantity) {
             wallet->balance.safety.recentTrades.insert(k.side, k.price, k.tradeQuantity);
-            wallet->balance.calcSafety(market->levels, orders.tradesHistory);
+            wallet->balance.safety.calc(market->levels, orders.tradesHistory);
           }
           toClient(working);
         }

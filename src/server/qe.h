@@ -52,7 +52,7 @@ namespace K {
         market->levels.calcFairValue(gw->minTick);
         market->levels.stats.ewma.calcFromHistory();
         wallet->balance.send_ratelimit(market->levels);
-        wallet->balance.calcSafety(market->levels, broker->orders.tradesHistory);
+        wallet->balance.safety.calc(market->levels, broker->orders.tradesHistory);
         calcQuote();
       };
     private:

@@ -1376,12 +1376,16 @@ namespace K {
     mSafety(mAmount *const b, mAmount *const t, mAmount *const p):
       buy(0), sell(0), combined(0), buyPing(0), sellPing(0), buySize(0), sellSize(0), recentTrades(mRecentTrades()), baseValue(b), totalBasePosition(t), targetBasePosition(p)
     {};
-    void send_reset(const mPrice &fv, const mTrades &tradesHistory) {
+    void timer_1s(const mMarketLevels &levels, const mTrades &tradesHistory) {
+      calc(levels, tradesHistory);
+    };
+    void calc(const mMarketLevels &levels, const mTrades &tradesHistory) {
+      if (!*baseValue or levels.empty()) return;
       double prev_combined = combined;
       mPrice prev_buyPing  = buyPing,
              prev_sellPing = sellPing;
       calcSizes();
-      calcPrices(fv, tradesHistory);
+      calcPrices(levels.fairValue, tradesHistory);
       recentTrades.reset();
       if (empty()) return;
       buy  = recentTrades.sumBuys / buySize;
@@ -1620,13 +1624,6 @@ namespace K {
     mWalletBalance():
       target(mTarget(&base.value)), safety(mSafety(&base.value, &base.total, &target.targetBasePosition)), profits(mProfits())
     {};
-    void timer_1s(const mMarketLevels &levels, const mTrades &tradesHistory) {
-      calcSafety(levels, tradesHistory);
-    };
-    void calcSafety(const mMarketLevels &levels, const mTrades &tradesHistory) {
-      if (!base.value or levels.empty()) return;
-      safety.send_reset(levels.fairValue, tradesHistory);
-    };
     void reset(const mWallets &next, const mMarketLevels &levels) {
       if (next.empty()) return;
       mWallet prevBase = base,

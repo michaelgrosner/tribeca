@@ -67,10 +67,10 @@ script: make test
 after_success:
   - |
     if [[ "${TRAVIS_OS_NAME}" == "linux" ]]; then
-      lcov --directory . --capture --output-file coverage.info                                     > /dev/null 2>&1
-      lcov --remove coverage.info 'test/*' '/usr/*' '*local/include/*' --output-file coverage.info > /dev/null 2>&1
-      coveralls-lcov --repo-token ${COVERALLS_TOKEN} coverage.info                                 > /dev/null 2>&1
-      cat coverage.info | codacy-coverage --language cpp                                           > /dev/null 2>&1
+      lcov --directory . --capture --output-file coverage.info                            > /dev/null 2>&1
+      lcov --remove coverage.info '/usr/*' '*local/include/*' --output-file coverage.info > /dev/null 2>&1
+      coveralls-lcov --repo-token ${COVERALLS_TOKEN} coverage.info                        > /dev/null 2>&1
+      cat coverage.info | codacy-coverage --language cpp                                  > /dev/null 2>&1
       lcov --list coverage.info
     fi
 
