@@ -159,11 +159,10 @@ namespace K {
         else DEBOG(" saved " + ((o->side == mSide::Bid ? "BID id " : "ASK id ") + o->orderId) + "::" + o->exchangeId + " [" + to_string((int)o->orderStatus) + "]: " + str8(o->quantity) + " " + o->pair.base + " at price " + str8(o->price) + " " + o->pair.quote);
         DEBOG("memory " + to_string(orders.orders.size()));
         if (saved) {
-          wallet->position.reset(k.side, orders.calcHeldAmount(k.side));
-          wallet->position.send_ratelimit(market->levels);
+          wallet->balance.reset(k.side, orders.calcHeldAmount(k.side), market->levels);
           if (k.tradeQuantity) {
-            wallet->position.safety.recentTrades.insert(k.side, k.price, k.tradeQuantity);
-            wallet->position.calcSafety(market->levels, orders.tradesHistory);
+            wallet->balance.safety.recentTrades.insert(k.side, k.price, k.tradeQuantity);
+            wallet->balance.calcSafety(market->levels, orders.tradesHistory);
           }
           toClient(working);
         }

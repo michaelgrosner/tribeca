@@ -63,7 +63,7 @@ namespace K {
   } *client = nullptr;
 
   static struct Wallet {
-    mPosition position;
+    mWalletBalance balance;
   } *wallet = nullptr;
 
   static struct Market {

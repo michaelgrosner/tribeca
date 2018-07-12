@@ -301,8 +301,8 @@ namespace K {
         mvwhline(wBorder, 1, 8, ACS_HLINE, 4);
         mvwaddch(wBorder, 1, 12, ACS_RTEE);
         wattron(wBorder, COLOR_PAIR(COLOR_MAGENTA));
-        const string baseValue  = str8(wallet->position.baseValue),
-                     quoteValue = str8(wallet->position.quoteValue);
+        const string baseValue  = str8(wallet->balance.base.value),
+                     quoteValue = str8(wallet->balance.quote.value);
         wattron(wBorder, A_BOLD);
         waddstr(wBorder, (" " + baseValue + ' ').data());
         wattroff(wBorder, A_BOLD);
@@ -330,10 +330,10 @@ namespace K {
         mvwhline(wBorder, 1, xLenValue, ACS_HLINE, xMaxValue - xLenValue);
         mvwaddch(wBorder, 1, xLenValue, ACS_LTEE);
         const int yPos = max(1, (y / 2) - 6),
-                  baseAmount  = round(wallet->position.baseAmount      * 10 / wallet->position.baseValue),
-                  baseHeld    = round(wallet->position.baseHeldAmount  * 10 / wallet->position.baseValue),
-                  quoteAmount = round(wallet->position.quoteAmount     * 10 / wallet->position.quoteValue),
-                  quoteHeld   = round(wallet->position.quoteHeldAmount * 10 / wallet->position.quoteValue);
+                  baseAmount  = round(wallet->balance.base.amount  * 10 / wallet->balance.base.value),
+                  baseHeld    = round(wallet->balance.base.held    * 10 / wallet->balance.base.value),
+                  quoteAmount = round(wallet->balance.quote.amount * 10 / wallet->balance.quote.value),
+                  quoteHeld   = round(wallet->balance.quote.held   * 10 / wallet->balance.quote.value);
         mvwvline(wBorder, yPos+1, x-3, ' ', 10);
         mvwvline(wBorder, yPos+1, x-4, ' ', 10);
         wattron(wBorder, COLOR_PAIR(COLOR_CYAN));

@@ -6,22 +6,21 @@ namespace K {
             public Wallet { public: PG() { wallet = this; };
     protected:
       void load() {
-        sqlite->backup(&position.target);
-        sqlite->backup(&position.profits);
+        sqlite->backup(&balance.target);
+        sqlite->backup(&balance.profits);
       };
       void waitData() {
         gw->RAWDATA_ENTRY_POINT(mWallets, {                         PRETTY_DEBUG
-          position.balance.reset(rawdata);
-          position.send_ratelimit(market->levels);
+          balance.reset(rawdata, market->levels);
         });
       };
       void waitSysAdmin() {
-        screen->printme(&position.target);
+        screen->printme(&balance.target);
       };
       void waitWebAdmin() {
-        client->welcome(position.target);
-        client->welcome(position.safety);
-        client->welcome(position);
+        client->welcome(balance.target);
+        client->welcome(balance.safety);
+        client->welcome(balance);
       };
   };
 }
