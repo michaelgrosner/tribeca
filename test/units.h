@@ -41,7 +41,10 @@ namespace K {
         REQUIRE_FALSE(level.empty());
       }
       SECTION("to json") {
-        REQUIRE(((json)level).dump() == "{\"price\":1234.56,\"size\":0.12345678}");
+        REQUIRE(((json)level).dump() == "{"
+          "\"price\":1234.56,"
+          "\"size\":0.12345678"
+        "}");
       }
       SECTION("clear") {
         REQUIRE_NOTHROW(level.clear());
@@ -78,7 +81,10 @@ namespace K {
         REQUIRE_FALSE(levels.empty());
       }
       SECTION("to json") {
-        REQUIRE(((json)levels).dump() == "{\"asks\":[{\"price\":1234.57,\"size\":0.12345679}],\"bids\":[{\"price\":1234.56,\"size\":0.12345678}]}");
+        REQUIRE(((json)levels).dump() == "{"
+          "\"asks\":[{\"price\":1234.57,\"size\":0.12345679}],"
+          "\"bids\":[{\"price\":1234.56,\"size\":0.12345678}]"
+        "}");
       }
       SECTION("clear") {
         REQUIRE_NOTHROW(levels.clear());
@@ -89,7 +95,10 @@ namespace K {
           REQUIRE(levels.empty());
         }
         SECTION("to json") {
-          REQUIRE(((json)levels).dump() == "{\"asks\":[],\"bids\":[]}");
+          REQUIRE(((json)levels).dump() == "{"
+            "\"asks\":[],"
+            "\"bids\":[]"
+          "}");
         }
       }
     }
@@ -120,9 +129,11 @@ namespace K {
       });
       REQUIRE_NOTHROW(qp.fvModel = mFairValueModel::BBO);
       REQUIRE_NOTHROW(levels.send_reset_filter(mLevels(
-        { mLevel(1234.50, 0.12345678) },
-        { mLevel(1234.60, 1.23456789) }
+        { mLevel(1234.50, 0.12345678), mLevel(1234.55, 0.01234567) },
+        { mLevel(1234.60, 1.23456789), mLevel(1234.69, 0.11234569) }
       ), 0.01));
+      REQUIRE_NOTHROW(levels.filterBidOrders[1234.55] += 0.01234567);
+      REQUIRE_NOTHROW(levels.filterAskOrders[1234.69] += 0.01234568);
       SECTION("fair value") {
         REQUIRE_NOTHROW(levels.stats.fairPrice.mToClient::send = []() {
           FAIL("send() while ratelimit() = true because val still is = val");
@@ -154,24 +165,34 @@ namespace K {
         REQUIRE(levels.diff.empty());
       }
       SECTION("diff reset") {
-        REQUIRE(levels.diff.hello().dump() == "[{\"asks\":[{\"price\":1234.6,\"size\":1.23456789}],\"bids\":[{\"price\":1234.5,\"size\":0.12345678}]}]");
+        REQUIRE(levels.diff.hello().dump() == "[{"
+          "\"asks\":[{\"price\":1234.6,\"size\":1.23456789},{\"price\":1234.69,\"size\":0.11234569}],"
+          "\"bids\":[{\"price\":1234.5,\"size\":0.12345678},{\"price\":1234.55,\"size\":0.01234567}]"
+        "}]");
         REQUIRE_FALSE(levels.diff.ratelimit());
         REQUIRE_FALSE(levels.diff.empty());
         REQUIRE_FALSE(levels.diff.patched);
         SECTION("diff send") {
           REQUIRE_NOTHROW(levels.diff.mToClient::send = [&]() {
             REQUIRE(levels.diff.patched);
-            REQUIRE(((json)levels.diff).dump() == "{\"asks\":[],\"bids\":[{\"price\":1234.5},{\"price\":1234.4,\"size\":0.12345678}],\"diff\":true}");
+            REQUIRE(((json)levels.diff).dump() == "{"
+              "\"asks\":[{\"price\":1234.69,\"size\":0.11234566}],"
+              "\"bids\":[{\"price\":1234.5},{\"price\":1234.4,\"size\":0.12345678}],"
+              "\"diff\":true"
+            "}");
           });
           REQUIRE_NOTHROW(levels.stats.fairPrice.mToClient::send = [&]() {
             REQUIRE(((json)levels.stats.fairPrice).dump() == "{\"price\":1234.5}");
           });
           REQUIRE_NOTHROW(levels.send_reset_filter(mLevels(
-            { mLevel(1234.40, 0.12345678) },
-            { mLevel(1234.60, 1.23456789) }
+            { mLevel(1234.40, 0.12345678), mLevel(1234.55, 0.01234567) },
+            { mLevel(1234.60, 1.23456789), mLevel(1234.69, 0.11234566) }
           ), 0.01));
           REQUIRE_FALSE(levels.diff.patched);
-          REQUIRE(((json)levels.diff).dump() == "{\"asks\":[{\"price\":1234.6,\"size\":1.23456789}],\"bids\":[{\"price\":1234.4,\"size\":0.12345678}]}");
+          REQUIRE(((json)levels.diff).dump() == "{"
+            "\"asks\":[{\"price\":1234.6,\"size\":1.23456789},{\"price\":1234.69,\"size\":0.11234566}],"
+            "\"bids\"::[{\"price\":1234.4,\"size\":0.12345678},{\"price\":1234.55,\"size\":0.01234567}]"
+          "}");
         }
       }
     }
