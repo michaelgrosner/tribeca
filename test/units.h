@@ -191,7 +191,7 @@ namespace K {
           REQUIRE_FALSE(levels.diff.patched);
           REQUIRE(((json)levels.diff).dump() == "{"
             "\"asks\":[{\"price\":1234.6,\"size\":1.23456789},{\"price\":1234.69,\"size\":0.11234566}],"
-            "\"bids\"::[{\"price\":1234.4,\"size\":0.12345678},{\"price\":1234.55,\"size\":0.01234567}]"
+            "\"bids\":[{\"price\":1234.4,\"size\":0.12345678},{\"price\":1234.55,\"size\":0.01234567}]"
           "}");
         }
       }
