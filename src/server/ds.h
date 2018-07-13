@@ -1684,10 +1684,11 @@ namespace K {
       if (maxWallet > 0 and base.amount > maxWallet)
         base.amount = maxWallet;
     };
-    void send_ratelimit(const mMarketLevels &levels, mWallet prevBase = mWallet(), mWallet prevQuote = mWallet()) {
+    void send_ratelimit(const mMarketLevels &levels) {
+      send_ratelimit(levels, base, quote);
+    };
+    void send_ratelimit(const mMarketLevels &levels, const mWallet &prevBase, const mWallet &prevQuote) {
       if (empty() or levels.empty()) return;
-      if (prevBase.empty()) prevBase = base;
-      if (prevQuote.empty()) prevQuote = quote;
       calcValues(levels.fairValue);
       if (!ratelimit(prevBase, prevQuote)) {
         T_369ms = Tstamp;
