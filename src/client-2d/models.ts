@@ -130,21 +130,16 @@ export class Trade {
                 public loadedFromDB: boolean) {}
 }
 
-export class CurrencyPosition {
+export class Wallet {
     constructor(public amount: number,
-                public heldAmount: number,
-                public currency: string) {}
+                public held: number,
+                public value: number,
+                public profit: number) {}
 }
 
 export class PositionReport {
-    constructor(public baseAmount: number,
-                public quoteAmount: number,
-                public baseHeldAmount: number,
-                public quoteHeldAmount: number,
-                public baseValue: number,
-                public quoteValue: number,
-                public profitBase: number,
-                public profitQuote: number) {}
+    constructor(public base: Wallet,
+                public quote: Wallet) {}
 }
 
 export class OrderRequestFromUI {

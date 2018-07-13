@@ -41,14 +41,14 @@ export class WalletPositionComponent {
       this.profitBase = 0;
       this.profitQuote = 0;
     } else {
-      this.basePosition = o.baseAmount;
-      this.quotePosition = o.quoteAmount;
-      this.baseHeldPosition = o.baseHeldAmount;
-      this.quoteHeldPosition = o.quoteHeldAmount;
-      this.baseValue = o.baseValue;
-      this.quoteValue = o.quoteValue;
-      this.profitBase = o.profitBase;
-      this.profitQuote = o.profitQuote;
+      this.basePosition = o.base.amount;
+      this.quotePosition = o.quote.amount;
+      this.baseHeldPosition = o.base.held;
+      this.quoteHeldPosition = o.quote.held;
+      this.baseValue = o.base.value;
+      this.quoteValue = o.quote.value;
+      this.profitBase = o.base.profit;
+      this.profitQuote = o.quote.profit;
     }
   }
 }

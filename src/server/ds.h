@@ -822,9 +822,10 @@ namespace K {
   };
   struct mFairLevelsPrice: public mToScreen,
                            public mJsonToClient<mFairLevelsPrice> {
+    mClock T_369ms;
     mPrice *fv;
     mFairLevelsPrice(mPrice *const f):
-      fv(f)
+      T_369ms(0), fv(f)
     {};
     mMatter about() const {
       return mMatter::FairValue;
@@ -833,10 +834,12 @@ namespace K {
       return !qp.delayUI;
     };
     bool ratelimit(const mPrice &prev) const {
-      return *fv == prev;
+      return *fv == prev
+        or T_369ms + 369 > Tstamp;
     };
-    void send_ratelimit(const mPrice &prev) const {
+    void send_ratelimit(const mPrice &prev) {
       if (ratelimit(prev)) return;
+      T_369ms = Tstamp;
       send();
       refresh();
     };
@@ -1603,6 +1606,14 @@ namespace K {
       return currency.empty();
     };
   };
+  static void to_json(json &j, const mWallet &k) {
+    j = {
+      {"amount", k.amount},
+      {  "held", k.held  },
+      { "value", k.value },
+      {"profit", k.profit}
+    };
+  };
   struct mWallets {
     mWallet base,
             quote;
@@ -1616,13 +1627,20 @@ namespace K {
       return base.empty() or quote.empty();
     };
   };
+  static void to_json(json &j, const mWallets &k) {
+    j = {
+      { "base", k.base },
+      {"quote", k.quote}
+    };
+  };
   struct mWalletBalance: public mWallets,
                          public mJsonToClient<mWalletBalance> {
+      mClock T_369ms;
      mTarget target;
      mSafety safety;
     mProfits profits;
     mWalletBalance():
-      target(mTarget(&base.value)), safety(mSafety(&base.value, &base.total, &target.targetBasePosition)), profits(mProfits())
+      T_369ms(0), target(mTarget(&base.value)), safety(mSafety(&base.value, &base.total, &target.targetBasePosition)), profits(mProfits())
     {};
     void reset(const mWallets &next, const mMarketLevels &levels) {
       if (next.empty()) return;
@@ -1672,13 +1690,15 @@ namespace K {
       if (prevQuote.empty()) prevQuote = quote;
       calcValues(levels.fairValue);
       if (!ratelimit(prevBase, prevQuote)) {
+        T_369ms = Tstamp;
         target.calcTargetBasePos(levels.stats.ewma.targetPositionAutoPercentage);
         target.refresh();
         send();
       }
     };
     bool ratelimit(const mWallet &prevBase, const mWallet &prevQuote) const {
-      return (abs(base.value - prevBase.value) < 2e-6
+      return (T_369ms + 369 > Tstamp or (
+        (base.value - prevBase.value) < 2e-6
         and abs(quote.value - prevQuote.value) < 2e-2
         and abs(base.amount - prevBase.amount) < 2e-6
         and abs(quote.amount - prevQuote.amount) < 2e-2
@@ -1686,31 +1706,13 @@ namespace K {
         and abs(quote.held - prevQuote.held) < 2e-2
         and abs(base.profit - prevBase.profit) < 2e-2
         and abs(quote.profit - prevQuote.profit) < 2e-2
-      );
+      ));
     };
     mMatter about() const {
       return mMatter::Position;
     };
     bool realtime() const {
       return !qp.delayUI;
-    };
-  };
-  // static void to_json(json &j, const mWalletBalance &k) {
-    // j = {
-      // { "base", k.base },
-      // {"quote", k.quote}
-    // };
-  // };
-  static void to_json(json &j, const mWalletBalance &k) {
-    j = {
-      {     "baseAmount", k.base.amount },
-      {    "quoteAmount", k.quote.amount},
-      { "baseHeldAmount", k.base.held   },
-      {"quoteHeldAmount", k.quote.held  },
-      {      "baseValue", k.base.value  },
-      {     "quoteValue", k.quote.value },
-      {     "profitBase", k.base.profit },
-      {    "profitQuote", k.quote.profit}
     };
   };
 
