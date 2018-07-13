@@ -128,12 +128,35 @@ namespace K {
         INFO("refresh()");
       });
       REQUIRE_NOTHROW(qp.fvModel = mFairValueModel::BBO);
+      REQUIRE_NOTHROW(levels.filterBidOrders[1234.52] += 0.23456789);
+      REQUIRE_NOTHROW(levels.filterBidOrders[1234.55] += 0.01234567);
+      REQUIRE_NOTHROW(levels.filterAskOrders[1234.69] += 0.01234568);
       REQUIRE_NOTHROW(levels.send_reset_filter(mLevels(
         { mLevel(1234.50, 0.12345678), mLevel(1234.55, 0.01234567) },
         { mLevel(1234.60, 1.23456789), mLevel(1234.69, 0.11234569) }
       ), 0.01));
-      REQUIRE_NOTHROW(levels.filterBidOrders[1234.55] += 0.01234567);
-      REQUIRE_NOTHROW(levels.filterAskOrders[1234.69] += 0.01234568);
+      SECTION("filters") {
+        REQUIRE(levels.filterBidOrders.size() == 2);
+        REQUIRE(levels.filterAskOrders.size() == 1);
+        REQUIRE(levels.bids.size() == 1);
+        REQUIRE(levels.bids[0].price == 1234.50);
+        REQUIRE(levels.bids[0].size  == 0.12345678);
+        REQUIRE(levels.asks.size() == 2);
+        REQUIRE(levels.asks[0].price == 1234.60);
+        REQUIRE(levels.asks[0].size  == 1.23456789);
+        REQUIRE(levels.asks[1].price == 1234.69);
+        REQUIRE(levels.asks[1].size  == 0.10000001);
+        REQUIRE(levels.unfiltered.bids.size() == 2);
+        REQUIRE(levels.unfiltered.bids[0].price == 1234.50);
+        REQUIRE(levels.unfiltered.bids[0].size  == 0.12345678);
+        REQUIRE(levels.unfiltered.bids[1].price == 1234.55);
+        REQUIRE(levels.unfiltered.bids[1].size  == 0.01234567);
+        REQUIRE(levels.unfiltered.asks.size() == 2);
+        REQUIRE(levels.unfiltered.asks[0].price == 1234.60);
+        REQUIRE(levels.unfiltered.asks[0].size  == 1.23456789);
+        REQUIRE(levels.unfiltered.asks[1].price == 1234.69);
+        REQUIRE(levels.unfiltered.asks[1].size  == 0.11234569);
+      }
       SECTION("fair value") {
         REQUIRE_NOTHROW(levels.stats.fairPrice.mToClient::send = []() {
           FAIL("send() while ratelimit() = true because val still is = val");
