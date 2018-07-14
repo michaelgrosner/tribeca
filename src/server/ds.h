@@ -1708,10 +1708,9 @@ namespace K {
     void send_ratelimit(const mMarketLevels &levels, const mWallet &prevBase, const mWallet &prevQuote) {
       if (empty() or levels.empty()) return;
       calcValues(levels.fairValue);
-      if (!ratelimit(prevBase, prevQuote)) {
-        target.calcTargetBasePos(levels.stats.ewma.targetPositionAutoPercentage);
+      target.calcTargetBasePos(levels.stats.ewma.targetPositionAutoPercentage);
+      if (!ratelimit(prevBase, prevQuote))
         send();
-      }
     };
     bool ratelimit(const mWallet &prevBase, const mWallet &prevQuote) const {
       return (abs(base.value - prevBase.value) < 2e-6
@@ -2093,11 +2092,16 @@ namespace K {
       static mt19937_64 gen(rd());
       return uniform_int_distribution<unsigned long long>()(gen);
     };
-    static string int45Id() { return to_string(int64()).substr(0, 10); };
-    static string int32Id() { return to_string(int64()).substr(0,  8); };
+    static string int45Id() {
+      return to_string(int64()).substr(0, 10);
+    };
+    static string int32Id() {
+      return to_string(int64()).substr(0,  8);
+    };
     static string char16Id() {
       char s[16];
-      for (unsigned int i = 0; i < 16; ++i) s[i] = numsAz[int64() % (sizeof(numsAz) - 1)];
+      for (unsigned int i = 0; i < 16; ++i)
+        s[i] = numsAz[int64() % (sizeof(numsAz) - 1)];
       return string(s, 16);
     };
     static string uuid36Id() {
