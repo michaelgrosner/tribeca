@@ -1560,7 +1560,6 @@ namespace K {
       calcPDiv();
       push();
       send();
-      refresh();
       if (args.debugWallet)
         print("PG", "TBP: "
           + to_string((int)(targetBasePosition / *baseValue * 1e+2)) + "% = " + str8(targetBasePosition)
