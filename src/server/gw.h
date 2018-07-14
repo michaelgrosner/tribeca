@@ -62,25 +62,25 @@ namespace K {
       void handshake() {
         json reply;
         if (gw->exchange == mExchange::Coinbase) {
-          gw->randId = FN::uuid36Id;
+          gw->randId = mRandom::uuid36Id;
           gw->symbol = gw->base + "-" + gw->quote;
-          reply = FN::wJet(gw->http + "/products/" + gw->symbol);
+          reply = mREST::xfer(gw->http + "/products/" + gw->symbol);
           gw->minTick = stod(reply.value("quote_increment", "0"));
           gw->minSize = stod(reply.value("base_min_size", "0"));
         }
         else if (gw->exchange == mExchange::HitBtc) {
-          gw->randId = FN::uuid32Id;
+          gw->randId = mRandom::uuid32Id;
           gw->symbol = gw->base + gw->quote;
-          reply = FN::wJet(gw->http + "/public/symbol/" + gw->symbol);
+          reply = mREST::xfer(gw->http + "/public/symbol/" + gw->symbol);
           gw->minTick = stod(reply.value("tickSize", "0"));
           gw->minSize = stod(reply.value("quantityIncrement", "0"));
           gw->base = reply.value("baseCurrency", gw->base);
           gw->quote = reply.value("quoteCurrency", gw->quote);
         }
         else if (gw->exchange == mExchange::Bitfinex or gw->exchange == mExchange::Ethfinex) {
-          gw->randId = FN::int45Id;
+          gw->randId = mRandom::int45Id;
           gw->symbol = strL(gw->base + gw->quote);
-          reply = FN::wJet(gw->http + "/pubticker/" + gw->symbol);
+          reply = mREST::xfer(gw->http + "/pubticker/" + gw->symbol);
           if (reply.find("last_price") != reply.end()) {
             stringstream price_;
             price_ << scientific << stod(reply.value("last_price", "0"));
@@ -90,22 +90,22 @@ namespace K {
             stringstream os("1e" + to_string(fmax(stod(_price_),-4)-4));
             os >> gw->minTick;
           }
-          reply = FN::wJet(gw->http + "/symbols_details");
+          reply = mREST::xfer(gw->http + "/symbols_details");
           if (reply.is_array())
             for (json::iterator it=reply.begin(); it!=reply.end();++it)
               if (it->find("pair") != it->end() and it->value("pair", "") == gw->symbol)
                 gw->minSize = stod(it->value("minimum_order_size", "0"));
         }
         else if (gw->exchange == mExchange::OkCoin or gw->exchange == mExchange::OkEx) {
-          gw->randId = FN::char16Id;
+          gw->randId = mRandom::char16Id;
           gw->symbol = strL(gw->base + "_" + gw->quote);
           gw->minTick = 0.0001;
           gw->minSize = 0.001;
         }
         else if (gw->exchange == mExchange::Kraken) {
-          gw->randId = FN::int32Id;
+          gw->randId = mRandom::int32Id;
           gw->symbol = gw->base + gw->quote;
-          reply = FN::wJet(gw->http + "/0/public/AssetPairs?pair=" + gw->symbol);
+          reply = mREST::xfer(gw->http + "/0/public/AssetPairs?pair=" + gw->symbol);
           if (reply.find("result") != reply.end())
             for (json::iterator it = reply["result"].begin(); it != reply["result"].end(); ++it)
               if (it.value().find("pair_decimals") != it.value().end()) {
@@ -120,18 +120,18 @@ namespace K {
               }
         }
         else if (gw->exchange == mExchange::Korbit) {
-          gw->randId = FN::int45Id;
+          gw->randId = mRandom::int45Id;
           gw->symbol = strL(gw->base + "_" + gw->quote);
-          reply = FN::wJet(gw->http + "/constants");
+          reply = mREST::xfer(gw->http + "/constants");
           if (reply.find(gw->symbol.substr(0,3).append("TickSize")) != reply.end()) {
             gw->minTick = reply.value(gw->symbol.substr(0,3).append("TickSize"), 0.0);
             gw->minSize = 0.015;
           }
         }
         else if (gw->exchange == mExchange::Poloniex) {
-          gw->randId = FN::int45Id;
+          gw->randId = mRandom::int45Id;
           gw->symbol = gw->quote + "_" + gw->base;
-          reply = FN::wJet(gw->http + "/public?command=returnTicker");
+          reply = mREST::xfer(gw->http + "/public?command=returnTicker");
           if (reply.find(gw->symbol) != reply.end()) {
             istringstream os("1e-" + to_string(6-reply[gw->symbol]["last"].get<string>().find(".")));
             os >> gw->minTick;
@@ -139,7 +139,7 @@ namespace K {
           }
         }
         else if (gw->exchange == mExchange::Null) {
-          gw->randId = FN::uuid36Id;
+          gw->randId = mRandom::uuid36Id;
           gw->symbol = gw->base + "_" + gw->quote;
           gw->minTick = 0.01;
           gw->minSize = 0.01;

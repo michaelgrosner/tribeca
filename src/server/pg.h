@@ -18,8 +18,8 @@ namespace K {
         screen->printme(&balance.target);
       };
       void waitWebAdmin() {
+        client->welcome(balance.target.safety);
         client->welcome(balance.target);
-        client->welcome(balance.safety);
         client->welcome(balance);
       };
   };

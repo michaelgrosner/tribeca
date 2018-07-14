@@ -86,10 +86,10 @@
 :       ____     Login    ____    Admin     ____                              :
 :      |gw.h# <<-------- |cf.h| -------->> |sh.h# K Shell                     :
 :       ¯¯¯¯#             ¯¯¯¯             |ui.h# K Client                    :
-:           #   Wallet    ____         ____ ¯¯¯¯| P                           :
-:           # -------->> |pg.h#       |ds.h|    V a                           :
-:         A #             ¯¯¯¯#       |if.h|____V r                           :
-:         P #   Trades        # <<->> |fn.h|qp.h| a                           :
+:           #   Wallet    ____              ¯¯¯¯| P                           :
+:           # -------->> |pg.h#        ____     V a                           :
+:         A #             ¯¯¯¯#       |ds.h|____V r                           :
+:         P #   Trades        # <<->> |if.h|qp.h| a                           :
 :         I #     &           # a D    ¯¯¯¯ ¯¯¯¯| m                           :
 :           #   Levels    ____# t               | e                           :
 :         E # -------->> |mg.h# a               | t                           :
@@ -123,10 +123,6 @@
 :                                                                             :
 :                                                                             :
 :  .. src/server/if.h:  ----------------------------- aka. Interfaces ------- :
-:      TODO                                                                   :
-:                                                                             :
-:                                                                             :
-:  .. src/server/fn.h:  ----------------------------- aka. Functions -------- :
 :      TODO                                                                   :
 :                                                                             :
 :                                                                             :

@@ -15,7 +15,7 @@ namespace K {
       multimap<mPrice, mOrder, greater<mPrice>> openOrders;
     public:
       void config() {
-        wtfismyip = FN::wJet("https://wtfismyip.com/json", 4L).value("/YourFuckingIPAddress"_json_pointer, "");
+        wtfismyip = mREST::xfer("https://wtfismyip.com/json", 4L).value("/YourFuckingIPAddress"_json_pointer, "");
         if (args.naked) return;
         if (!(wBorder = initscr())) {
           cout << "NCURSES" << RRED << " Errrror:" << BRED << " Unable to initialize ncurses, try to run in your terminal \"export TERM=xterm\", or use --naked argument." << '\n';

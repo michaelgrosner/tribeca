@@ -121,6 +121,9 @@ namespace K {
       }
     }
     SECTION("assigned") {
+      REQUIRE_NOTHROW(levels.diff.mToClient::send = [&]() {
+        FAIL("diff.send() before diff.hello()");
+      });
       REQUIRE_NOTHROW(levels.stats.fairPrice.mToClient::send = [&]() {
         REQUIRE(((json)levels.stats.fairPrice).dump() == "{\"price\":1234.55}");
       });
@@ -128,6 +131,7 @@ namespace K {
         INFO("refresh()");
       });
       REQUIRE_NOTHROW(qp.fvModel = mFairValueModel::BBO);
+      REQUIRE_NOTHROW(levels.filterBidOrders[1234.52] += 0.34567890);
       REQUIRE_NOTHROW(levels.filterBidOrders[1234.52] += 0.23456789);
       REQUIRE_NOTHROW(levels.filterBidOrders[1234.55] += 0.01234567);
       REQUIRE_NOTHROW(levels.filterAskOrders[1234.69] += 0.01234568);
@@ -183,21 +187,17 @@ namespace K {
         REQUIRE_NOTHROW(levels.calcFairValue(0.01));
         REQUIRE(levels.fairValue == 1234.51);
       }
-      SECTION("diff unset") {
-        REQUIRE(levels.diff.ratelimit());
+      SECTION("diff") {
         REQUIRE(levels.diff.empty());
-      }
-      SECTION("diff reset") {
         REQUIRE(levels.diff.hello().dump() == "[{"
           "\"asks\":[{\"price\":1234.6,\"size\":1.23456789},{\"price\":1234.69,\"size\":0.11234569}],"
           "\"bids\":[{\"price\":1234.5,\"size\":0.12345678},{\"price\":1234.55,\"size\":0.01234567}]"
         "}]");
-        REQUIRE_FALSE(levels.diff.ratelimit());
         REQUIRE_FALSE(levels.diff.empty());
-        REQUIRE_FALSE(levels.diff.patched);
-        SECTION("diff send") {
+        SECTION("send") {
+          REQUIRE_NOTHROW(qp.delayUI = 0);
+          this_thread::sleep_for(chrono::milliseconds(370));
           REQUIRE_NOTHROW(levels.diff.mToClient::send = [&]() {
-            REQUIRE(levels.diff.patched);
             REQUIRE(((json)levels.diff).dump() == "{"
               "\"asks\":[{\"price\":1234.69,\"size\":0.11234566}],"
               "\"bids\":[{\"price\":1234.5},{\"price\":1234.4,\"size\":0.12345678}],"
@@ -211,11 +211,10 @@ namespace K {
             { mLevel(1234.40, 0.12345678), mLevel(1234.55, 0.01234567) },
             { mLevel(1234.60, 1.23456789), mLevel(1234.69, 0.11234566) }
           ), 0.01));
-          REQUIRE_FALSE(levels.diff.patched);
-          REQUIRE(((json)levels.diff).dump() == "{"
+          REQUIRE(levels.diff.hello().dump() == "[{"
             "\"asks\":[{\"price\":1234.6,\"size\":1.23456789},{\"price\":1234.69,\"size\":0.11234566}],"
             "\"bids\":[{\"price\":1234.4,\"size\":0.12345678},{\"price\":1234.55,\"size\":0.01234567}]"
-          "}");
+          "}]");
         }
       }
     }

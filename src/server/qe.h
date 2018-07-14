@@ -34,7 +34,7 @@ namespace K {
         if (!semaphore.greenGateway) {
           bidStatus = mQuoteState::Disconnected;
           askStatus = mQuoteState::Disconnected;
-        } else if (!market->levels.empty() and !wallet->balance.safety.empty()) {
+        } else if (!market->levels.empty() and !wallet->balance.target.safety.empty()) {
           if (!semaphore.greenButton) {
             bidStatus = mQuoteState::DisabledQuotes;
             askStatus = mQuoteState::DisabledQuotes;
@@ -52,7 +52,7 @@ namespace K {
         market->levels.calcFairValue(gw->minTick);
         market->levels.stats.ewma.calcFromHistory();
         wallet->balance.send_ratelimit(market->levels);
-        wallet->balance.safety.calc(market->levels, broker->orders.tradesHistory);
+        wallet->balance.target.safety.calc(market->levels, broker->orders.tradesHistory);
         calcQuote();
       };
     private:
@@ -116,8 +116,8 @@ namespace K {
           widthPing = fmax(widthPing, market->levels.stats.ewma.mgEwmaW);
         mQuote rawQuote = (*quotingMode[qp.mode])(
           widthPing,
-          wallet->balance.safety.buySize,
-          wallet->balance.safety.sellSize
+          wallet->balance.target.safety.buySize,
+          wallet->balance.target.safety.sellSize
         );
         if (rawQuote.bid.price <= 0 or rawQuote.ask.price <= 0) {
           if (rawQuote.bid.price or rawQuote.ask.price)
@@ -207,7 +207,7 @@ namespace K {
         mPrice widthPong = qp.widthPercentage
           ? qp.widthPongPercentage * market->levels.fairValue / 100
           : qp.widthPong;
-        mPrice &safetyBuyPing = wallet->balance.safety.buyPing;
+        mPrice &safetyBuyPing = wallet->balance.target.safety.buyPing;
         if (!rawQuote->ask.empty() and safetyBuyPing) {
           if ((qp.aggressivePositionRebalancing == mAPR::SizeWidth and wallet->balance.target.sideAPR == "Sell")
             or (qp.safety == mQuotingSafety::PingPong
@@ -219,7 +219,7 @@ namespace K {
           ) rawQuote->ask.price = safetyBuyPing + widthPong;
           rawQuote->isAskPong = rawQuote->ask.price >= safetyBuyPing + widthPong;
         }
-        mPrice &safetysellPing = wallet->balance.safety.sellPing;
+        mPrice &safetysellPing = wallet->balance.target.safety.sellPing;
         if (!rawQuote->bid.empty() and safetysellPing) {
           if ((qp.aggressivePositionRebalancing == mAPR::SizeWidth and wallet->balance.target.sideAPR == "Buy")
             or (qp.safety == mQuotingSafety::PingPong
@@ -273,11 +273,11 @@ namespace K {
         else wallet->balance.target.sideAPR = "Off";
       };
       void applyTradesPerMinute(mQuote *rawQuote, bool superTradesActive) {
-        if (wallet->balance.safety.sell >= (qp.tradesPerMinute * (superTradesActive ? qp.sopWidthMultiplier : 1))) {
+        if (wallet->balance.target.safety.sell >= (qp.tradesPerMinute * (superTradesActive ? qp.sopWidthMultiplier : 1))) {
           askStatus = mQuoteState::MaxTradesSeconds;
           rawQuote->ask.clear();
         }
-        if (wallet->balance.safety.buy >= (qp.tradesPerMinute * (superTradesActive ? qp.sopWidthMultiplier : 1))) {
+        if (wallet->balance.target.safety.buy >= (qp.tradesPerMinute * (superTradesActive ? qp.sopWidthMultiplier : 1))) {
           bidStatus = mQuoteState::MaxTradesSeconds;
           rawQuote->bid.clear();
         }

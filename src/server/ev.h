@@ -69,7 +69,7 @@ namespace K  {
           if (!market->levels.warn_empty()) {
                                               market->levels.timer_1s();
             if (!(tick % 60))                 market->levels.timer_60s();
-                                              wallet->balance.safety.timer_1s(
+                                              wallet->balance.target.safety.timer_1s(
                                                 market->levels,
                                                 broker->orders.tradesHistory
                                               );

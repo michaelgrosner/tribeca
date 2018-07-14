@@ -63,7 +63,7 @@ namespace K {
   } *client = nullptr;
 
   static struct Wallet {
-    mWalletBalance balance;
+    mWalletPosition balance;
   } *wallet = nullptr;
 
   static struct Market {
@@ -232,7 +232,7 @@ namespace K {
       };
       static void quit(const int sig) {
         tracelog = "Excellent decision! "
-          + FN::wJet("https://api.icndb.com/jokes/random?escape=javascript&limitTo=[nerdy]", 4L)
+          + mREST::xfer("https://api.icndb.com/jokes/random?escape=javascript&limitTo=[nerdy]", 4L)
               .value("/value/joke"_json_pointer, "let's plant a tree instead..")
           + '\n';
         halt(EXIT_SUCCESS);

@@ -22,7 +22,7 @@ namespace K {
           or args.user.empty()
           or args.pass.empty()
         ) return;
-        B64auth = "Basic " + FN::oB64(args.user + ':' + args.pass);
+        B64auth = "Basic " + mText::oB64(args.user + ':' + args.pass);
       };
       void waitData() {
         if (!socket) return;
@@ -183,7 +183,7 @@ namespace K {
               content = string(&_www_mp3_audio_1, _www_mp3_audio_1_len);
           }
           if (content.empty())
-            if (FN::int64() % 21) {
+            if (mRandom::int64() % 21) {
               document = "HTTP/1.1 404 Not Found\r\n";
               content = "Today, is a beautiful day.";
             } else { // Humans! go to any random url to check your luck
