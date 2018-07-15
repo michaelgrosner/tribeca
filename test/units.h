@@ -125,7 +125,7 @@ namespace K {
         FAIL("diff.send() before diff.hello()");
       });
       REQUIRE_NOTHROW(levels.stats.fairPrice.mToClient::send = [&]() {
-        REQUIRE(((json)levels.stats.fairPrice).dump() == "{\"price\":1234.55}");
+        REQUIRE(levels.stats.fairPrice.dump().dump() == "{\"price\":1234.55}");
       });
       REQUIRE_NOTHROW(levels.stats.fairPrice.mToScreen::refresh = []() {
         INFO("refresh()");
@@ -174,7 +174,7 @@ namespace K {
       SECTION("fair value weight") {
         REQUIRE_NOTHROW(qp.fvModel = mFairValueModel::wBBO);
         REQUIRE_NOTHROW(levels.stats.fairPrice.mToClient::send = [&]() {
-          REQUIRE(((json)levels.stats.fairPrice).dump() == "{\"price\":1234.59}");
+          REQUIRE(levels.stats.fairPrice.dump().dump() == "{\"price\":1234.59}");
         });
         REQUIRE_NOTHROW(levels.calcFairValue(0.01));
         REQUIRE(levels.fairValue == 1234.59);
@@ -182,7 +182,7 @@ namespace K {
       SECTION("fair value reversed weight") {
         REQUIRE_NOTHROW(qp.fvModel = mFairValueModel::rwBBO);
         REQUIRE_NOTHROW(levels.stats.fairPrice.mToClient::send = [&]() {
-          REQUIRE(((json)levels.stats.fairPrice).dump() == "{\"price\":1234.51}");
+          REQUIRE(levels.stats.fairPrice.dump().dump() == "{\"price\":1234.51}");
         });
         REQUIRE_NOTHROW(levels.calcFairValue(0.01));
         REQUIRE(levels.fairValue == 1234.51);
@@ -198,14 +198,14 @@ namespace K {
           REQUIRE_NOTHROW(qp.delayUI = 0);
           this_thread::sleep_for(chrono::milliseconds(370));
           REQUIRE_NOTHROW(levels.diff.mToClient::send = [&]() {
-            REQUIRE(((json)levels.diff).dump() == "{"
+            REQUIRE(levels.diff.dump().dump() == "{"
               "\"asks\":[{\"price\":1234.69,\"size\":0.11234566}],"
               "\"bids\":[{\"price\":1234.5},{\"price\":1234.4,\"size\":0.12345678}],"
               "\"diff\":true"
             "}");
           });
           REQUIRE_NOTHROW(levels.stats.fairPrice.mToClient::send = [&]() {
-            REQUIRE(((json)levels.stats.fairPrice).dump() == "{\"price\":1234.5}");
+            REQUIRE(levels.stats.fairPrice.dump().dump() == "{\"price\":1234.5}");
           });
           REQUIRE_NOTHROW(levels.send_reset_filter(mLevels(
             { mLevel(1234.40, 0.12345678), mLevel(1234.55, 0.01234567) },
@@ -260,6 +260,41 @@ namespace K {
             REQUIRE_FALSE(recentTrades.sumSells);
           }
         }
+      }
+    }
+  }
+
+  TEST_CASE("mOrders") {
+    mOrders orders;
+    SECTION("assigned") {
+      vector<mRandId> randIds;
+      REQUIRE_NOTHROW(randIds.push_back("1" + mRandom::uuid36Id()));
+      REQUIRE_NOTHROW(orders.orders[randIds.back()] = mOrder(randIds.back(), mPair("BTC", "EUR"), mSide::Bid, 0.12345678, mOrderType::Limit, false, 1234.50, mTimeInForce::IOC, mStatus::Working, false));
+      REQUIRE_NOTHROW(randIds.push_back("2" + mRandom::uuid36Id()));
+      REQUIRE_NOTHROW(orders.orders[randIds.back()] = mOrder(randIds.back(), mPair("BTC", "EUR"), mSide::Bid, 0.12345679, mOrderType::Limit, false, 1234.51, mTimeInForce::IOC, mStatus::Working, false));
+      REQUIRE_NOTHROW(randIds.push_back("3" + mRandom::uuid36Id()));
+      REQUIRE_NOTHROW(orders.orders[randIds.back()] = mOrder(randIds.back(), mPair("BTC", "EUR"), mSide::Bid, 0.12345680, mOrderType::Limit, false, 1234.52, mTimeInForce::IOC, mStatus::Working, false));
+      REQUIRE_NOTHROW(randIds.push_back("4" + mRandom::uuid36Id()));
+      REQUIRE_NOTHROW(orders.orders[randIds.back()] = mOrder(randIds.back(), mPair("BTC", "EUR"), mSide::Ask, 0.12345678, mOrderType::Limit, false, 1234.50, mTimeInForce::IOC, mStatus::Working, false));
+      REQUIRE_NOTHROW(randIds.push_back("5" + mRandom::uuid36Id()));
+      REQUIRE_NOTHROW(orders.orders[randIds.back()] = mOrder(randIds.back(), mPair("BTC", "EUR"), mSide::Ask, 0.12345679, mOrderType::Limit, false, 1234.51, mTimeInForce::IOC, mStatus::Working, false));
+      REQUIRE_NOTHROW(randIds.push_back("6" + mRandom::uuid36Id()));
+      REQUIRE_NOTHROW(orders.orders[randIds.back()] = mOrder(randIds.back(), mPair("BTC", "EUR"), mSide::Ask, 0.12345680, mOrderType::Limit, false, 1234.52, mTimeInForce::IOC, mStatus::Working, false));
+      REQUIRE_NOTHROW(randIds.push_back("7" + mRandom::uuid36Id()));
+      REQUIRE_NOTHROW(orders.orders[randIds.back()] = mOrder(randIds.back(), mPair("BTC", "EUR"), mSide::Ask, 0.12345681, mOrderType::Limit, false, 1234.52, mTimeInForce::IOC, mStatus::New, false));
+      SECTION("held amont") {
+        REQUIRE(orders.calcHeldAmount(mSide::Bid) == Approx(457.22592546));
+        REQUIRE(orders.calcHeldAmount(mSide::Ask) == 0.37037037);
+      }
+      SECTION("to json") {
+        REQUIRE(orders.dump().dump() == "["
+          "{\"exchangeId\":\"\",\"isPong\":false,\"latency\":0,\"orderId\":\"" + randIds[0] + "\",\"orderStatus\":1,\"pair\":{\"base\":\"BTC\",\"quote\":\"EUR\"},\"preferPostOnly\":false,\"price\":1234.5,\"quantity\":0.12345678,\"side\":0,\"time\":0,\"timeInForce\":0,\"type\":0},"
+          "{\"exchangeId\":\"\",\"isPong\":false,\"latency\":0,\"orderId\":\"" + randIds[1] + "\",\"orderStatus\":1,\"pair\":{\"base\":\"BTC\",\"quote\":\"EUR\"},\"preferPostOnly\":false,\"price\":1234.51,\"quantity\":0.12345679,\"side\":0,\"time\":0,\"timeInForce\":0,\"type\":0},"
+          "{\"exchangeId\":\"\",\"isPong\":false,\"latency\":0,\"orderId\":\"" + randIds[2] + "\",\"orderStatus\":1,\"pair\":{\"base\":\"BTC\",\"quote\":\"EUR\"},\"preferPostOnly\":false,\"price\":1234.52,\"quantity\":0.1234568,\"side\":0,\"time\":0,\"timeInForce\":0,\"type\":0},"
+          "{\"exchangeId\":\"\",\"isPong\":false,\"latency\":0,\"orderId\":\"" + randIds[3] + "\",\"orderStatus\":1,\"pair\":{\"base\":\"BTC\",\"quote\":\"EUR\"},\"preferPostOnly\":false,\"price\":1234.5,\"quantity\":0.12345678,\"side\":1,\"time\":0,\"timeInForce\":0,\"type\":0},"
+          "{\"exchangeId\":\"\",\"isPong\":false,\"latency\":0,\"orderId\":\"" + randIds[4] + "\",\"orderStatus\":1,\"pair\":{\"base\":\"BTC\",\"quote\":\"EUR\"},\"preferPostOnly\":false,\"price\":1234.51,\"quantity\":0.12345679,\"side\":1,\"time\":0,\"timeInForce\":0,\"type\":0},"
+          "{\"exchangeId\":\"\",\"isPong\":false,\"latency\":0,\"orderId\":\"" + randIds[5] + "\",\"orderStatus\":1,\"pair\":{\"base\":\"BTC\",\"quote\":\"EUR\"},\"preferPostOnly\":false,\"price\":1234.52,\"quantity\":0.1234568,\"side\":1,\"time\":0,\"timeInForce\":0,\"type\":0}"
+        "]");
       }
     }
   }

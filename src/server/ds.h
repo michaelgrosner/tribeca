@@ -709,22 +709,17 @@ namespace K {
   struct mOrders: public mJsonToClient<mOrders> {
     map<mRandId, mOrder> orders;
                  mTrades tradesHistory;
-    vector<mOrder> working() const {
-      vector<mOrder> workingOrders;
-      for (const map<mRandId, mOrder>::value_type &it : orders)
-        if (mStatus::Working == it.second.orderStatus)
-          workingOrders.push_back(it.second);
-      return workingOrders;
-    };
     mAmount calcHeldAmount(const mSide &side) const {
-      mAmount heldAmount = 0;
-      for (const map<mRandId, mOrder>::value_type &it : orders)
-        if (it.second.side == side and it.second.orderStatus == mStatus::Working)
-          heldAmount += (it.second.side == mSide::Ask
-            ? it.second.quantity
-            : it.second.quantity * it.second.price
-          );
-      return heldAmount;
+      return accumulate(orders.begin(), orders.end(), mAmount(),
+        [&](mAmount held, const map<mRandId, mOrder>::value_type &it) {
+          if (it.second.side == side and it.second.orderStatus == mStatus::Working)
+            return held + (it.second.side == mSide::Ask
+              ? it.second.quantity
+              : it.second.quantity * it.second.price
+            );
+          else return held;
+        }
+      );
     };
     mMatter about() const {
       return mMatter::OrderStatusReports;
@@ -735,6 +730,14 @@ namespace K {
     json dump() const {
       return working();
     };
+    private:
+      vector<mOrder> working() const {
+        vector<mOrder> workingOrders;
+        for (const map<mRandId, mOrder>::value_type &it : orders)
+          if (mStatus::Working == it.second.orderStatus)
+            workingOrders.push_back(it.second);
+        return workingOrders;
+      };
   };
   static void to_json(json &j, const mOrders &k) {
     j = k.orders;
@@ -1033,10 +1036,8 @@ namespace K {
     };
     void calcTargetPositionAutoPercentage() {
       unsigned int max3size = min((size_t)3, fairValue96h.size());
-      mPrice SMA3 = accumulate(
-        fairValue96h.end() - max3size,
-        fairValue96h.end(),
-        0, [](mFairValue a, mFairValue b) { return a.fv + b.fv; }
+      mPrice SMA3 = accumulate(fairValue96h.end() - max3size, fairValue96h.end(), mPrice(),
+        [](mPrice sma3, const mFairValue &it) { return sma3 + it.fv; }
       ) / max3size;
       double targetPosition = 0;
       if (qp.autoPositionMode == mAutoPositionMode::EWMA_LMS) {
@@ -1510,11 +1511,11 @@ namespace K {
   };
   static void to_json(json &j, const mSafety &k) {
     j = {
-      {     "buy", k.buy              },
-      {    "sell", k.sell             },
-      {"combined", k.combined         },
-      { "buyPing", fmax(0, k.buyPing) },
-      {"sellPing", fmax(0, k.sellPing)}
+      {     "buy", k.buy     },
+      {    "sell", k.sell    },
+      {"combined", k.combined},
+      { "buyPing", k.buyPing },
+      {"sellPing", k.sellPing}
     };
   };
 
