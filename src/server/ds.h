@@ -740,7 +740,7 @@ namespace K {
       };
   };
   static void to_json(json &j, const mOrders &k) {
-    j = k.orders;
+    j = k.dump();
   };
 
   struct mRecentTrade {

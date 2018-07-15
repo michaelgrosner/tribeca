@@ -282,7 +282,7 @@ namespace K {
       REQUIRE_NOTHROW(orders.orders[randIds.back()] = mOrder(randIds.back(), mPair("BTC", "EUR"), mSide::Ask, 0.12345680, mOrderType::Limit, false, 1234.52, mTimeInForce::IOC, mStatus::Working, false));
       REQUIRE_NOTHROW(randIds.push_back("7" + mRandom::uuid36Id()));
       REQUIRE_NOTHROW(orders.orders[randIds.back()] = mOrder(randIds.back(), mPair("BTC", "EUR"), mSide::Ask, 0.12345681, mOrderType::Limit, false, 1234.52, mTimeInForce::IOC, mStatus::New, false));
-      SECTION("held amont") {
+      SECTION("held amount") {
         REQUIRE(orders.calcHeldAmount(mSide::Bid) == Approx(457.22592546));
         REQUIRE(orders.calcHeldAmount(mSide::Ask) == 0.37037037);
       }
