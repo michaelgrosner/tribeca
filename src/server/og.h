@@ -26,14 +26,14 @@ namespace K {
           cancelOpenOrders();
         });
         client->clickme(btn.cleanAllClosedTrades KISS {
-          cleanClosedTrades();
+          orders.tradesHistory.clearClosed();
         });
         client->clickme(btn.cleanAllTrades KISS {
-          cleanTrade();
+          orders.tradesHistory.clearAll();
         });
         client->clickme(btn.cleanTrade KISS {
           if (!butterfly.is_string()) return;
-          cleanTrade(butterfly.get<string>());
+          orders.tradesHistory.clearOne(butterfly.get<string>());
         });
         client->clickme(btn.cancelOrder KISS {
           if (!butterfly.is_string()) return;
@@ -176,24 +176,6 @@ namespace K {
           if (mStatus::New == it.second.orderStatus or mStatus::Working == it.second.orderStatus)
             cancelOrder(it.first);
       };
-      void cleanClosedTrades() {
-        for (vector<mTrade>::iterator it = orders.tradesHistory.begin(); it != orders.tradesHistory.end();)
-          if (it->Kqty < it->quantity) ++it;
-          else {
-            it->Kqty = -1;
-            it = orders.tradesHistory.send_push_erase(it);
-          }
-      };
-      void cleanTrade(string k = "") {
-        bool all = k.empty();
-        for (vector<mTrade>::iterator it = orders.tradesHistory.begin(); it != orders.tradesHistory.end();)
-          if (!all and it->tradeId != k) ++it;
-          else {
-            it->Kqty = -1;
-            it = orders.tradesHistory.send_push_erase(it);
-            if (!all) break;
-          }
-      };
       void toHistory(mOrder *o, double tradeQuantity) {
         mAmount fee = 0;
         mTrade trade(
@@ -231,7 +213,7 @@ namespace K {
         } else {
           orders.tradesHistory.send_push_back(trade);
         }
-        if (qp.cleanPongsAuto) cleanAuto(trade.time);
+        if (qp.cleanPongsAuto) orders.tradesHistory.clearPongsAuto();
       };
       void matchPong(map<mPrice, string> matches, mTrade pong, bool reverse) {
         if (reverse) for (map<mPrice, string>::reverse_iterator it = matches.rbegin(); it != matches.rend(); ++it) {
@@ -272,14 +254,6 @@ namespace K {
           break;
         }
         return pong->quantity > 0;
-      };
-      void cleanAuto(mClock now) {
-        mClock pT_ = now - (abs(qp.cleanPongsAuto) * 86400e3);
-        for (vector<mTrade>::iterator it = orders.tradesHistory.begin(); it != orders.tradesHistory.end();)
-          if ((it->Ktime?:it->time) < pT_ and (qp.cleanPongsAuto < 0 or it->Kqty >= it->quantity)) {
-            it->Kqty = -1;
-            it = orders.tradesHistory.send_push_erase(it);
-          } else ++it;
       };
   };
 }

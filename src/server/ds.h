@@ -592,6 +592,27 @@ namespace K {
   };
   struct mTrades: public mVectorFromDb<mTrade>,
                   public mJsonToClient<mTrade> {
+    void clearAll() {
+      clear_if([&](iterator it) {
+        return true;
+      });
+    };
+    void clearOne(const string &tradeId) {
+      clear_if([&](iterator it) {
+        return it->tradeId == tradeId;
+      }, true);
+    };
+    void clearClosed() {
+      clear_if([](iterator it) {
+        return it->Kqty >= it->quantity;
+      });
+    };
+    void clearPongsAuto() {
+      const mClock expire = Tstamp - (abs(qp.cleanPongsAuto) * 86400e3);
+      clear_if([&](iterator it) {
+        return (it->Ktime?:it->time) < expire and (qp.cleanPongsAuto < 0 or it->Kqty >= it->quantity);
+      });
+    };
     void send_push_back(const mTrade &row) {
       rows.push_back(row);
       push();
@@ -624,6 +645,15 @@ namespace K {
     json hello() {
       return rows;
     };
+    private:
+      void clear_if(const function<bool(iterator)> &fn, const bool &onlyOne = false) {
+        for (iterator it = begin(); it != end();)
+          if (fn(it)) {
+            it->Kqty = -1;
+            it = send_push_erase(it);
+            if (onlyOne) break;
+          } else ++it;
+      };
   };
   struct mTakers: public mJsonToClient<mTrade> {
     vector<mTrade> trades;

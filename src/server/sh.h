@@ -8,7 +8,7 @@ namespace K {
       map<mHotkey, function<void()>> hotFn;
       WINDOW *wBorder = nullptr,
              *wLog    = nullptr;
-      int cursor     = 0;
+      int cursor = 0;
       string protocol  = "?",
              wtfismyip = "";
     public:
