@@ -593,7 +593,7 @@ namespace K {
   struct mTrades: public mVectorFromDb<mTrade>,
                   public mJsonToClient<mTrade> {
     void clearAll() {
-      clear_if([&](iterator it) {
+      clear_if([](iterator it) {
         return true;
       });
     };
