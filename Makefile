@@ -2,7 +2,7 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
 PATCH    = 8
-BUILD    = 45
+BUILD    = 46
 CHOST   ?= $(shell $(MAKE) CHOST= chost -s)
 CARCH    = x86_64-linux-gnu arm-linux-gnueabihf aarch64-linux-gnu x86_64-apple-darwin17 x86_64-w64-mingw32
 KLOCAL  := build-$(CHOST)/local
@@ -222,9 +222,9 @@ pvs:
 ifndef V_PVS
 	$(MAKE) V_PVS=$(shell curl -s https://www.viva64.com/en/pvs-studio-download-linux/ | grep x86_64.tgz | sed 's/.*href=\"\(.*\)\" .*/\1/' | cut -d '-' -f3) $@
 else
-	test -d build-$(CHOST)/pvs-studio-${V_PVS}-x86_64 || (                     \
-	curl -L http://files.viva64.com/pvs-studio-${V_PVS}-x86_64.tgz             \
-	| tar xz -C build-$(CHOST) && cd build-$(CHOST)/pvs-studio-${V_PVS}-x86_64 \
+	test -d build-$(CHOST)/pvs-studio-$(V_PVS)-x86_64 || (                     \
+	curl -L http://files.viva64.com/pvs-studio-$(V_PVS)-x86_64.tgz             \
+	| tar xz -C build-$(CHOST) && cd build-$(CHOST)/pvs-studio-$(V_PVS)-x86_64 \
 	&& chmod +x install.sh && sudo ./install.sh                                )
 endif
 

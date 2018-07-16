@@ -8,11 +8,9 @@ namespace K {
       map<mHotkey, function<void()>> hotFn;
       WINDOW *wBorder = nullptr,
              *wLog    = nullptr;
-      int cursor     = 0,
-          spinOrders = 0;
+      int cursor     = 0;
       string protocol  = "?",
              wtfismyip = "";
-      multimap<mPrice, mOrder, greater<mPrice>> openOrders;
     public:
       void config() {
         wtfismyip = mREST::xfer("https://wtfismyip.com/json", 4L).value("/YourFuckingIPAddress"_json_pointer, "");
@@ -233,17 +231,9 @@ namespace K {
         wattroff(wLog, COLOR_PAIR(COLOR_WHITE));
         wrefresh(wLog);
       };
-      void log(const map<mRandId, mOrder> &orders, const bool &working) {
-        if (!wBorder) return;
-        openOrders.clear();
-        for (const map<mRandId, mOrder>::value_type &it : orders)
-          if (mStatus::Working == it.second.orderStatus)
-            openOrders.insert(pair<mPrice, mOrder>(it.second.price, it.second));
-        if (working and ++spinOrders == 4) spinOrders = 0;
-        refresh();
-      };
       void refresh() {
         if (!wBorder) return;
+        vector<mOrder> openOrders = broker->orders.working(true);
         int lastcursor = cursor,
             y = getmaxy(wBorder),
             x = getmaxx(wBorder),
@@ -259,14 +249,14 @@ namespace K {
         }
         mvwvline(wBorder, 1, 1, ' ', y-1);
         mvwvline(wBorder, yMaxLog-1, 1, ' ', y-1);
-        for (multimap<mPrice, mOrder, greater<mPrice>>::value_type &it : openOrders) {
-          wattron(wBorder, COLOR_PAIR(it.second.side == mSide::Bid ? COLOR_CYAN : COLOR_MAGENTA));
-          mvwaddstr(wBorder, ++yOrders, 1, (((it.second.side == mSide::Bid ? "BID" : "ASK") + (" > "
-            + str8(it.second.quantity))) + ' ' + it.second.pair.base + " at price "
-            + str8(it.second.price) + ' ' + it.second.pair.quote + " (value "
-            + str8(abs(it.second.price * it.second.quantity)) + ' ' + it.second.pair.quote + ")"
+        for (mOrder &it : openOrders) {
+          wattron(wBorder, COLOR_PAIR(it.side == mSide::Bid ? COLOR_CYAN : COLOR_MAGENTA));
+          mvwaddstr(wBorder, ++yOrders, 1, (((it.side == mSide::Bid ? "BID" : "ASK") + (" > "
+            + str8(it.quantity))) + ' ' + it.pair.base + " at price "
+            + str8(it.price) + ' ' + it.pair.quote + " (value "
+            + str8(abs(it.price * it.quantity)) + ' ' + it.pair.quote + ")"
           ).data());
-          wattroff(wBorder, COLOR_PAIR(it.second.side == mSide::Bid ? COLOR_CYAN : COLOR_MAGENTA));
+          wattroff(wBorder, COLOR_PAIR(it.side == mSide::Bid ? COLOR_CYAN : COLOR_MAGENTA));
         }
         mvwaddch(wBorder, 0, 0, ACS_ULCORNER);
         mvwhline(wBorder, 0, 1, ACS_HLINE, max(80, x));
@@ -390,7 +380,7 @@ namespace K {
           waddch(wBorder, !engine->semaphore.greenButton ? ' ' : ':');
         }
         mvwaddch(wBorder, y-1, 0, ACS_LLCORNER);
-        mvwaddstr(wBorder, 1, 2, string("|/-\\").substr(spinOrders, 1).data());
+        mvwaddstr(wBorder, 1, 2, string("|/-\\").substr(engine->monitor.orders_60s % 4, 1).data());
         move(yMaxLog-1, 2);
         wrefresh(wBorder);
         wrefresh(wLog);

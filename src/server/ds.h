@@ -706,7 +706,8 @@ namespace K {
       {       "latency", k.latency       }
     };
   };
-  struct mOrders: public mJsonToClient<mOrders> {
+  struct mOrders: public mToScreen,
+                  public mJsonToClient<mOrders> {
     map<mRandId, mOrder> orders;
                  mTrades tradesHistory;
     mAmount calcHeldAmount(const mSide &side) const {
@@ -721,6 +722,19 @@ namespace K {
         }
       );
     };
+    vector<mOrder> working(const bool &sorted = false) const {
+      vector<mOrder> workingOrders;
+      for (const map<mRandId, mOrder>::value_type &it : orders)
+        if (mStatus::Working == it.second.orderStatus)
+          workingOrders.push_back(it.second);
+      if (sorted)
+        sort(workingOrders.begin(), workingOrders.end(),
+          [](const mOrder &a, const mOrder &b) {
+            return a.price > b.price;
+          }
+        );
+      return workingOrders;
+    };
     mMatter about() const {
       return mMatter::OrderStatusReports;
     };
@@ -730,14 +744,6 @@ namespace K {
     json dump() const {
       return working();
     };
-    private:
-      vector<mOrder> working() const {
-        vector<mOrder> workingOrders;
-        for (const map<mRandId, mOrder>::value_type &it : orders)
-          if (mStatus::Working == it.second.orderStatus)
-            workingOrders.push_back(it.second);
-        return workingOrders;
-      };
   };
   static void to_json(json &j, const mOrders &k) {
     j = k.dump();

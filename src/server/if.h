@@ -36,7 +36,6 @@ namespace K {
     virtual void logUI(const string&) = 0;
     virtual void logUIsess(int, string) = 0;
     virtual void log(const mTrade&, const bool&) = 0;
-    virtual void log(const map<mRandId, mOrder>&, const bool&) = 0;
     virtual void log(const string&, const string&, const string& = "") = 0;
 #define PRETTY_DEBUG if (args.debugEvents) screen->log("DEBUG EV", __PRETTY_FUNCTION__);
 #define DEBOG(x)     if (args.debugOrders) screen->log("DEBUG OG", x)

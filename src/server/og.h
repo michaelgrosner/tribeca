@@ -16,6 +16,9 @@ namespace K {
           updateOrderState(rawdata);
         });
       };
+      void waitSysAdmin() {
+        screen->printme(&orders);
+      };
       void waitWebAdmin() {
         client->welcome(orders.tradesHistory);
         client->welcome(orders);
@@ -164,7 +167,8 @@ namespace K {
             wallet->balance.target.safety.recentTrades.insert(k.side, k.price, k.tradeQuantity);
             wallet->balance.target.safety.calc(market->levels, orders.tradesHistory);
           }
-          toClient(working);
+          orders.refresh();
+          orders.send();
         }
       };
       void cancelOpenOrders() {
@@ -189,10 +193,6 @@ namespace K {
             it = orders.tradesHistory.send_push_erase(it);
             if (!all) break;
           }
-      };
-      void toClient(bool working) {
-        screen->log(orders.orders, working);
-        orders.send();
       };
       void toHistory(mOrder *o, double tradeQuantity) {
         mAmount fee = 0;
