@@ -610,7 +610,10 @@ namespace K {
     void clearPongsAuto() {
       const mClock expire = Tstamp - (abs(qp.cleanPongsAuto) * 86400e3);
       clear_if([&](iterator it) {
-        return (it->Ktime?:it->time) < expire and (qp.cleanPongsAuto < 0 or it->Kqty >= it->quantity);
+        return (it->Ktime?:it->time) < expire and (
+          qp.cleanPongsAuto < 0
+          or it->Kqty >= it->quantity
+        );
       });
     };
     void send_push_back(const mTrade &row) {
