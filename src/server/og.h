@@ -123,17 +123,10 @@ namespace K {
       };
     private:
       void updateOrderState(mOrder k) {
+        mOrder *o = orders.find(k);
+        if (!o) return;
         bool saved = k.orderStatus != mStatus::New,
              working = k.orderStatus == mStatus::Working;
-        if (!saved) orders.orders[k.orderId] = k;
-        else if (k.orderId.empty() and !k.exchangeId.empty())
-          for (map<mRandId, mOrder>::value_type &it : orders.orders)
-            if (k.exchangeId == it.second.exchangeId) {
-              k.orderId = it.first;
-              break;
-            }
-        if (k.orderId.empty() or orders.orders.find(k.orderId) == orders.orders.end()) return;
-        mOrder *o = &orders.orders[k.orderId];
         o->orderStatus = k.orderStatus;
         if (!k.exchangeId.empty()) o->exchangeId = k.exchangeId;
         if (k.price) o->price = k.price;

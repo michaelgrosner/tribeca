@@ -830,6 +830,24 @@ namespace K {
     bool debug() const {
       return args.debugOrders;
     };
+    mOrder* find(mOrder raw) {
+      if (raw.orderStatus == mStatus::New)
+        orders[raw.orderId] = raw;
+      else if (raw.orderId.empty() and !raw.exchangeId.empty()) {
+        map<mRandId, mOrder>::iterator it = find_if(
+          orders.begin(), orders.end(),
+          [&](const pair<mRandId, mOrder> &it_) {
+            return raw.exchangeId == it_.second.exchangeId;
+          }
+        );
+        if (it != orders.end())
+          raw.orderId = it->first;
+      }
+      return (raw.orderId.empty()
+        or orders.find(raw.orderId) == orders.end()
+      ) ? nullptr
+        : &orders[raw.orderId];
+    };
     mOrder* cancel(const mRandId &orderId) {
       if (orderId.empty() or orders.find(orderId) == orders.end()) return nullptr;
       mOrder *order = &orders[orderId];
