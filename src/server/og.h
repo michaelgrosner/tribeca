@@ -17,14 +17,12 @@ namespace K {
         });
       };
       void waitSysAdmin() {
+        screen->printme(&orders.tradesHistory);
         screen->printme(&orders);
       };
       void waitWebAdmin() {
         client->welcome(orders.tradesHistory);
         client->welcome(orders);
-        client->clickme(btn.cancelAllOrders KISS {
-          cancelOpenOrders();
-        });
         client->clickme(btn.cleanAllClosedTrades KISS {
           orders.tradesHistory.clearClosed();
         });
@@ -35,11 +33,13 @@ namespace K {
           if (!butterfly.is_string()) return;
           orders.tradesHistory.clearOne(butterfly.get<string>());
         });
+        client->clickme(btn.cancelAllOrders KISS {
+          for (mOrder &it : orders.working())
+            cancelOrder(it.orderId);
+        });
         client->clickme(btn.cancelOrder KISS {
           if (!butterfly.is_string()) return;
-          mRandId orderId = butterfly.get<mRandId>();
-          if (orderId.empty() or orders.orders.find(orderId) == orders.orders.end()) return;
-          cancelOrder(orderId);
+          cancelOrder(butterfly.get<mRandId>());
         });
         client->clickme(btn.submitNewOrder KISS {
           if (!butterfly.is_object()) return;
@@ -117,17 +117,9 @@ namespace K {
         engine->monitor.tick_orders();
       };
       void cancelOrder(const mRandId &orderId) {
-        if (orderId.empty()) return;
-        mOrder *o = &orders.orders[orderId];
-        if (o->exchangeId.empty() or o->_waitingCancel + 3e+3 > Tstamp) return;
-        o->_waitingCancel = Tstamp;
-        DEBOG("cancel " + ((o->side == mSide::Bid ? "BID id " : "ASK id ") + o->orderId) + "::" + o->exchangeId);
-        gw->cancel(o->orderId, o->exchangeId);
-      };
-      void cleanOrder(const mRandId &orderId) {
-        DEBOG("remove " + orderId);
-        map<mRandId, mOrder>::iterator it = orders.orders.find(orderId);
-        if (it != orders.orders.end()) orders.orders.erase(it);
+        mOrder *orderWaitingCancel = orders.cancel(orderId);
+        if (orderWaitingCancel)
+          gw->cancel(orderWaitingCancel);
       };
     private:
       void updateOrderState(mOrder k) {
@@ -151,14 +143,12 @@ namespace K {
         if (!o->time) o->time = Tstamp;
         if (!o->latency and working) o->latency = Tstamp - o->time;
         if (o->latency) o->time = Tstamp;
-        if (k.tradeQuantity) {
-          toHistory(o, k.tradeQuantity);
-          gw->refreshWallet = true;
-        }
+        if (k.tradeQuantity)
+          orders.tradesHistory.insert(o, k.tradeQuantity);
         k.side = o->side;
         k.price = o->price;
         if (saved and !working)
-          cleanOrder(o->orderId);
+          orders.erase(o->orderId);
         else DEBOG(" saved " + ((o->side == mSide::Bid ? "BID id " : "ASK id ") + o->orderId) + "::" + o->exchangeId + " [" + to_string((int)o->orderStatus) + "]: " + str8(o->quantity) + " " + o->pair.base + " at price " + str8(o->price) + " " + o->pair.quote);
         DEBOG("memory " + to_string(orders.orders.size()));
         if (saved) {
@@ -166,94 +156,11 @@ namespace K {
           if (k.tradeQuantity) {
             wallet->balance.target.safety.recentTrades.insert(k.side, k.price, k.tradeQuantity);
             wallet->balance.target.safety.calc(market->levels, orders.tradesHistory);
+            gw->refreshWallet = true;
           }
           orders.refresh();
           orders.send();
         }
-      };
-      void cancelOpenOrders() {
-        for (map<mRandId, mOrder>::value_type &it : orders.orders)
-          if (mStatus::New == it.second.orderStatus or mStatus::Working == it.second.orderStatus)
-            cancelOrder(it.first);
-      };
-      void toHistory(mOrder *o, double tradeQuantity) {
-        mAmount fee = 0;
-        mTrade trade(
-          to_string(Tstamp),
-          o->pair,
-          o->price,
-          tradeQuantity,
-          o->side,
-          o->time,
-          abs(o->price * tradeQuantity),
-          0, 0, 0, 0, 0, fee, false
-        );
-        screen->log(trade, o->isPong);
-        if (qp._matchPings) {
-          mPrice widthPong = qp.widthPercentage
-            ? qp.widthPongPercentage * trade.price / 100
-            : qp.widthPong;
-          map<mPrice, string> matches;
-          for (mTrade &it : orders.tradesHistory)
-            if (it.quantity - it.Kqty > 0
-              and it.side != trade.side
-              and (qp.pongAt == mPongAt::AveragePingFair
-                or qp.pongAt == mPongAt::AveragePingAggressive
-                or (trade.side == mSide::Bid
-                  ? (it.price > trade.price + widthPong)
-                  : (it.price < trade.price - widthPong)
-                )
-              )
-            ) matches[it.price] = it.tradeId;
-          matchPong(
-            matches,
-            trade,
-            (qp.pongAt == mPongAt::LongPingFair or qp.pongAt == mPongAt::LongPingAggressive) ? trade.side == mSide::Ask : trade.side == mSide::Bid
-          );
-        } else {
-          orders.tradesHistory.send_push_back(trade);
-        }
-        if (qp.cleanPongsAuto) orders.tradesHistory.clearPongsAuto();
-      };
-      void matchPong(map<mPrice, string> matches, mTrade pong, bool reverse) {
-        if (reverse) for (map<mPrice, string>::reverse_iterator it = matches.rbegin(); it != matches.rend(); ++it) {
-          if (!matchPong(it->second, &pong)) break;
-        } else for (map<mPrice, string>::iterator it = matches.begin(); it != matches.end(); ++it)
-          if (!matchPong(it->second, &pong)) break;
-        if (pong.quantity > 0) {
-          bool eq = false;
-          for (mTrades::iterator it = orders.tradesHistory.begin(); it != orders.tradesHistory.end(); ++it) {
-            if (it->price!=pong.price or it->side!=pong.side or it->quantity<=it->Kqty) continue;
-            eq = true;
-            it->time = pong.time;
-            it->quantity = it->quantity + pong.quantity;
-            it->value = it->value + pong.value;
-            it->loadedFromDB = false;
-            it = orders.tradesHistory.send_push_erase(it);
-            break;
-          }
-          if (!eq) {
-            orders.tradesHistory.send_push_back(pong);
-          }
-        }
-      };
-      bool matchPong(string match, mTrade* pong) {
-        for (mTrades::iterator it = orders.tradesHistory.begin(); it != orders.tradesHistory.end(); ++it) {
-          if (it->tradeId != match) continue;
-          mAmount Kqty = fmin(pong->quantity, it->quantity - it->Kqty);
-          it->Ktime = pong->time;
-          it->Kprice = ((Kqty*pong->price) + (it->Kqty*it->Kprice)) / (it->Kqty+Kqty);
-          it->Kqty = it->Kqty + Kqty;
-          it->Kvalue = abs(it->Kqty*it->Kprice);
-          pong->quantity = pong->quantity - Kqty;
-          pong->value = abs(pong->price*pong->quantity);
-          if (it->quantity<=it->Kqty)
-            it->Kdiff = abs(it->quantity * it->price - it->Kqty * it->Kprice);
-          it->loadedFromDB = false;
-          it = orders.tradesHistory.send_push_erase(it);
-          break;
-        }
-        return pong->quantity > 0;
       };
   };
 }

@@ -99,7 +99,7 @@ namespace K {
             )[it.second.price] += it.second.quantity;
             (*qWorking)++;
           } else (*qDone)++;
-        for (mRandId &it : zombies) broker->cleanOrder(it);
+        for (mRandId &it : zombies) broker->orders.erase(it);
         return *qNew != status.quotesInMemoryNew
           or *qWorking != status.quotesInMemoryWorking
           or *qDone != status.quotesInMemoryDone;
@@ -182,7 +182,7 @@ namespace K {
         }
       };
       void applyWaitingPing(mQuote *rawQuote) {
-        if (!qp._matchPings and qp.safety != mQuotingSafety::PingPong) return;
+        if (qp.safety == mQuotingSafety::Off) return;
         if (!rawQuote->isAskPong and (
           (bidStatus != mQuoteState::DepletedFunds and (qp.pingAt == mPingAt::DepletedSide or qp.pingAt == mPingAt::DepletedBidSide))
           or qp.pingAt == mPingAt::StopPings

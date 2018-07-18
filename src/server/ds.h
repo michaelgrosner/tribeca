@@ -339,7 +339,6 @@ namespace K {
     double            profitHourInterval              = 0.5;
     bool              audio                           = false;
     unsigned int      delayUI                         = 7;
-    bool              _matchPings                     = true;
     bool              _diffVLEP                       = false;
     bool              _diffLEP                        = false;
     bool              _diffMEP                        = false;
@@ -348,9 +347,6 @@ namespace K {
     bool              _diffUEP                        = false;
     void tidy() {
       if (mode == mQuotingMode::Depth) widthPercentage = false;
-    };
-    void flag() {
-      _matchPings = safety == mQuotingSafety::Boomerang or safety == mQuotingSafety::AK47;
     };
     void diff(const mQuotingParams &prev) {
       _diffVLEP = prev.veryLongEwmaPeriods != veryLongEwmaPeriods;
@@ -500,7 +496,6 @@ namespace K {
     k.audio                           =                       j.value("audio", k.audio);
     k.delayUI                         = fmax(0,               j.value("delayUI", k.delayUI));
     k.tidy();
-    k.flag();
   };
 
   struct mPair {
@@ -522,6 +517,53 @@ namespace K {
   static void from_json(const json &j, mPair &k) {
     k.base  = j.value("base", "");
     k.quote = j.value("quote", "");
+  };
+
+  struct mOrder {
+         mRandId orderId,
+                 exchangeId;
+           mPair pair;
+           mSide side;
+          mPrice price;
+         mAmount quantity,
+                 tradeQuantity;
+      mOrderType type;
+    mTimeInForce timeInForce;
+         mStatus orderStatus;
+            bool isPong,
+                 preferPostOnly;
+          mClock time,
+                 latency,
+                 _waitingCancel;
+    mOrder():
+      orderId(""), exchangeId(""), pair(mPair()), side((mSide)0), quantity(0), type((mOrderType)0), isPong(false), price(0), timeInForce((mTimeInForce)0), orderStatus((mStatus)0), preferPostOnly(false), tradeQuantity(0), time(0), _waitingCancel(0), latency(0)
+    {};
+    mOrder(mRandId o, mStatus s):
+      orderId(o), exchangeId(""), pair(mPair()), side((mSide)0), quantity(0), type((mOrderType)0), isPong(false), price(0), timeInForce((mTimeInForce)0), orderStatus(s), preferPostOnly(false), tradeQuantity(0), time(0), _waitingCancel(0), latency(0)
+    {};
+    mOrder(mRandId o, mRandId e, mStatus s, mPrice p, mAmount q, mAmount Q):
+      orderId(o), exchangeId(e), pair(mPair()), side((mSide)0), quantity(q), type((mOrderType)0), isPong(false), price(p), timeInForce((mTimeInForce)0), orderStatus(s), preferPostOnly(false), tradeQuantity(Q), time(0), _waitingCancel(0), latency(0)
+    {};
+    mOrder(mRandId o, mPair P, mSide S, mAmount q, mOrderType t, bool i, mPrice p, mTimeInForce F, mStatus s, bool O):
+      orderId(o), exchangeId(""), pair(P), side(S), quantity(q), type(t), isPong(i), price(p), timeInForce(F), orderStatus(s), preferPostOnly(O), tradeQuantity(0), time(0), _waitingCancel(0), latency(0)
+    {};
+  };
+  static void to_json(json &j, const mOrder &k) {
+    j = {
+      {       "orderId", k.orderId       },
+      {    "exchangeId", k.exchangeId    },
+      {          "pair", k.pair          },
+      {          "side", k.side          },
+      {      "quantity", k.quantity      },
+      {          "type", k.type          },
+      {        "isPong", k.isPong        },
+      {         "price", k.price         },
+      {   "timeInForce", k.timeInForce   },
+      {   "orderStatus", k.orderStatus   },
+      {"preferPostOnly", k.preferPostOnly},
+      {          "time", k.time          },
+      {       "latency", k.latency       }
+    };
   };
 
   struct mTrade {
@@ -590,8 +632,43 @@ namespace K {
     k.feeCharged   = j.value("feeCharged", 0.0);
     k.loadedFromDB = true;
   };
-  struct mTrades: public mVectorFromDb<mTrade>,
-                  public mJsonToClient<mTrade> {
+  struct mMarketTakers: public mJsonToClient<mTrade> {
+    vector<mTrade> trades;
+    mAmount        takersBuySize60s,
+                   takersSellSize60s;
+    mMarketTakers():
+      trades({}), takersBuySize60s(0), takersSellSize60s(0)
+    {};
+    void timer_60s() {
+      takersSellSize60s = takersBuySize60s = 0;
+      if (trades.empty()) return;
+      for (mTrade &it : trades)
+        (it.side == mSide::Bid
+          ? takersSellSize60s
+          : takersBuySize60s
+        ) += it.quantity;
+      trades.clear();
+    };
+    void send_push_back(const mTrade &row) {
+      trades.push_back(row);
+      send();
+    };
+    mMatter about() const {
+      return mMatter::MarketTrade;
+    };
+    json dump() const {
+      return trades.back();
+    };
+    json hello() {
+      return trades;
+    };
+  };
+  static void to_json(json &j, const mMarketTakers &k) {
+    j = k.trades;
+  };
+  struct mTradesCompleted: public mToScreen,
+                           public mVectorFromDb<mTrade>,
+                           public mJsonToClient<mTrade> {
     void clearAll() {
       clear_if([](iterator it) {
         return true;
@@ -616,18 +693,52 @@ namespace K {
         );
       });
     };
-    void send_push_back(const mTrade &row) {
-      rows.push_back(row);
-      push();
-      if (crbegin()->Kqty < 0) rbegin()->Kqty = -2;
-      send();
-    };
-    iterator send_push_erase(iterator it) {
-      mTrade row = *it;
-      it = rows.erase(it);
-      send_push_back(row);
-      erase();
-      return it;
+    void insert(mOrder *const o, const double &tradeQuantity) {
+      mAmount fee = 0;
+      mTrade trade(
+        to_string(Tstamp),
+        o->pair,
+        o->price,
+        tradeQuantity,
+        o->side,
+        o->time,
+        abs(o->price * tradeQuantity),
+        0, 0, 0, 0, 0, fee, false
+      );
+      print("GW " + args.exchange, string(o->isPong?"PONG":"PING") + " TRADE "
+        + (trade.side == mSide::Bid ? "BUY  " : "SELL ")
+        + str8(trade.quantity) + ' ' + trade.pair.base + " at price "
+        + str8(trade.price) + ' ' + trade.pair.quote + " (value "
+        + str8(trade.value) + ' ' + trade.pair.quote + ")"
+      );
+      if (qp.safety == mQuotingSafety::Off or qp.safety == mQuotingSafety::PingPong)
+        send_push_back(trade);
+      else {
+        mPrice widthPong = qp.widthPercentage
+          ? qp.widthPongPercentage * trade.price / 100
+          : qp.widthPong;
+        map<mPrice, string> matches;
+        for (mTrade &it : rows)
+          if (it.quantity - it.Kqty > 0
+            and it.side != trade.side
+            and (qp.pongAt == mPongAt::AveragePingFair
+              or qp.pongAt == mPongAt::AveragePingAggressive
+              or (trade.side == mSide::Bid
+                ? (it.price > trade.price + widthPong)
+                : (it.price < trade.price - widthPong)
+              )
+            )
+          ) matches[it.price] = it.tradeId;
+        matchPong(
+          matches,
+          trade,
+          (qp.pongAt == mPongAt::LongPingFair or qp.pongAt == mPongAt::LongPingAggressive)
+            ? trade.side == mSide::Ask
+            : trade.side == mSide::Bid
+        );
+      }
+      if (qp.cleanPongsAuto)
+        clearPongsAuto();
     };
     mMatter about() const {
       return mMatter::Trades;
@@ -657,92 +768,86 @@ namespace K {
             if (onlyOne) break;
           } else ++it;
       };
-  };
-  struct mTakers: public mJsonToClient<mTrade> {
-    vector<mTrade> trades;
-    mAmount        takersBuySize60s,
-                   takersSellSize60s;
-    mTakers():
-      trades({}), takersBuySize60s(0), takersSellSize60s(0)
-    {};
-    void timer_60s() {
-      takersSellSize60s = takersBuySize60s = 0;
-      if (trades.empty()) return;
-      for (mTrade &it : trades)
-        (it.side == mSide::Bid
-          ? takersSellSize60s
-          : takersBuySize60s
-        ) += it.quantity;
-      trades.clear();
-    };
-    void send_push_back(const mTrade &row) {
-      trades.push_back(row);
-      send();
-    };
-    mMatter about() const {
-      return mMatter::MarketTrade;
-    };
-    json dump() const {
-      return trades.back();
-    };
-    json hello() {
-      return trades;
-    };
-  };
-  static void to_json(json &j, const mTakers &k) {
-    j = k.trades;
+      void matchPong(map<mPrice, string> matches, mTrade pong, bool reverse) {
+        if (reverse) for (map<mPrice, string>::reverse_iterator it = matches.rbegin(); it != matches.rend(); ++it) {
+          if (!matchPong(it->second, &pong)) break;
+        } else for (map<mPrice, string>::iterator it = matches.begin(); it != matches.end(); ++it)
+          if (!matchPong(it->second, &pong)) break;
+        if (pong.quantity > 0) {
+          bool eq = false;
+          for (iterator it = begin(); it != end(); ++it) {
+            if (it->price!=pong.price or it->side!=pong.side or it->quantity<=it->Kqty) continue;
+            eq = true;
+            it->time = pong.time;
+            it->quantity = it->quantity + pong.quantity;
+            it->value = it->value + pong.value;
+            it->loadedFromDB = false;
+            it = send_push_erase(it);
+            break;
+          }
+          if (!eq) {
+            send_push_back(pong);
+          }
+        }
+      };
+      bool matchPong(string match, mTrade* pong) {
+        for (iterator it = begin(); it != end(); ++it) {
+          if (it->tradeId != match) continue;
+          mAmount Kqty = fmin(pong->quantity, it->quantity - it->Kqty);
+          it->Ktime = pong->time;
+          it->Kprice = ((Kqty*pong->price) + (it->Kqty*it->Kprice)) / (it->Kqty+Kqty);
+          it->Kqty = it->Kqty + Kqty;
+          it->Kvalue = abs(it->Kqty*it->Kprice);
+          pong->quantity = pong->quantity - Kqty;
+          pong->value = abs(pong->price*pong->quantity);
+          if (it->quantity<=it->Kqty)
+            it->Kdiff = abs(it->quantity * it->price - it->Kqty * it->Kprice);
+          it->loadedFromDB = false;
+          it = send_push_erase(it);
+          break;
+        }
+        return pong->quantity > 0;
+      };
+      void send_push_back(const mTrade &row) {
+        rows.push_back(row);
+        push();
+        if (crbegin()->Kqty < 0) rbegin()->Kqty = -2;
+        send();
+      };
+      iterator send_push_erase(iterator it) {
+        mTrade row = *it;
+        it = rows.erase(it);
+        send_push_back(row);
+        erase();
+        return it;
+      };
   };
 
-  struct mOrder {
-         mRandId orderId,
-                 exchangeId;
-           mPair pair;
-           mSide side;
-          mPrice price;
-         mAmount quantity,
-                 tradeQuantity;
-      mOrderType type;
-    mTimeInForce timeInForce;
-         mStatus orderStatus;
-            bool isPong,
-                 preferPostOnly;
-          mClock time,
-                 latency,
-                 _waitingCancel;
-    mOrder():
-      orderId(""), exchangeId(""), pair(mPair()), side((mSide)0), quantity(0), type((mOrderType)0), isPong(false), price(0), timeInForce((mTimeInForce)0), orderStatus((mStatus)0), preferPostOnly(false), tradeQuantity(0), time(0), _waitingCancel(0), latency(0)
-    {};
-    mOrder(mRandId o, mStatus s):
-      orderId(o), exchangeId(""), pair(mPair()), side((mSide)0), quantity(0), type((mOrderType)0), isPong(false), price(0), timeInForce((mTimeInForce)0), orderStatus(s), preferPostOnly(false), tradeQuantity(0), time(0), _waitingCancel(0), latency(0)
-    {};
-    mOrder(mRandId o, mRandId e, mStatus s, mPrice p, mAmount q, mAmount Q):
-      orderId(o), exchangeId(e), pair(mPair()), side((mSide)0), quantity(q), type((mOrderType)0), isPong(false), price(p), timeInForce((mTimeInForce)0), orderStatus(s), preferPostOnly(false), tradeQuantity(Q), time(0), _waitingCancel(0), latency(0)
-    {};
-    mOrder(mRandId o, mPair P, mSide S, mAmount q, mOrderType t, bool i, mPrice p, mTimeInForce F, mStatus s, bool O):
-      orderId(o), exchangeId(""), pair(P), side(S), quantity(q), type(t), isPong(i), price(p), timeInForce(F), orderStatus(s), preferPostOnly(O), tradeQuantity(0), time(0), _waitingCancel(0), latency(0)
-    {};
-  };
-  static void to_json(json &j, const mOrder &k) {
-    j = {
-      {       "orderId", k.orderId       },
-      {    "exchangeId", k.exchangeId    },
-      {          "pair", k.pair          },
-      {          "side", k.side          },
-      {      "quantity", k.quantity      },
-      {          "type", k.type          },
-      {        "isPong", k.isPong        },
-      {         "price", k.price         },
-      {   "timeInForce", k.timeInForce   },
-      {   "orderStatus", k.orderStatus   },
-      {"preferPostOnly", k.preferPostOnly},
-      {          "time", k.time          },
-      {       "latency", k.latency       }
-    };
-  };
   struct mOrders: public mToScreen,
                   public mJsonToClient<mOrders> {
     map<mRandId, mOrder> orders;
-                 mTrades tradesHistory;
+        mTradesCompleted tradesHistory;
+    bool debug() const {
+      return args.debugOrders;
+    };
+    mOrder* cancel(const mRandId &orderId) {
+      if (orderId.empty() or orders.find(orderId) == orders.end()) return nullptr;
+      mOrder *order = &orders[orderId];
+      if (order->exchangeId.empty() or order->_waitingCancel + 3e+3 > Tstamp) return nullptr;
+      order->_waitingCancel = Tstamp;
+      if (debug()) print("DEBUG OG", "cancel " + (
+        (order->side == mSide::Bid ? "BID id " : "ASK id ")
+        + order->orderId
+      ) + "::"
+        + order->exchangeId
+      );
+      return order;
+    };
+    void erase(const mRandId &orderId) {
+      if (debug()) print("DEBUG OG", "remove " + orderId);
+      map<mRandId, mOrder>::iterator it = orders.find(orderId);
+      if (it != orders.end()) orders.erase(it);
+    };
     mAmount calcHeldAmount(const mSide &side) const {
       return accumulate(orders.begin(), orders.end(), mAmount(),
         [&](mAmount held, const map<mRandId, mOrder>::value_type &it) {
@@ -1136,9 +1241,9 @@ namespace K {
                mEwma ewma;
              mStdevs stdev;
     mFairLevelsPrice fairPrice;
-             mTakers takerTrades;
+       mMarketTakers takerTrades;
     mMarketStats(mPrice *const f):
-       ewma(mEwma()), fairPrice(mFairLevelsPrice(f)), takerTrades(mTakers())
+       ewma(mEwma()), fairPrice(mFairLevelsPrice(f)), takerTrades(mMarketTakers())
     {};
     mMatter about() const {
       return mMatter::MarketChart;
@@ -1437,10 +1542,10 @@ namespace K {
     mSafety(mAmount *const b, mAmount *const t, mAmount *const p):
       buy(0), sell(0), combined(0), buyPing(0), sellPing(0), buySize(0), sellSize(0), recentTrades(mRecentTrades()), baseValue(b), baseTotal(t), targetBasePosition(p)
     {};
-    void timer_1s(const mMarketLevels &levels, const mTrades &tradesHistory) {
+    void timer_1s(const mMarketLevels &levels, const mTradesCompleted &tradesHistory) {
       calc(levels, tradesHistory);
     };
-    void calc(const mMarketLevels &levels, const mTrades &tradesHistory) {
+    void calc(const mMarketLevels &levels, const mTradesCompleted &tradesHistory) {
       if (!*baseValue or levels.empty()) return;
       double prev_combined = combined;
       mPrice prev_buyPing  = buyPing,
@@ -1467,12 +1572,13 @@ namespace K {
       return mMatter::TradeSafetyValue;
     };
     private:
-      void calcPrices(const mPrice &fv, const mTrades &tradesHistory) {
+      void calcPrices(const mPrice &fv, const mTradesCompleted &tradesHistory) {
         if (qp.safety == mQuotingSafety::PingPong) {
           buyPing = recentTrades.lastBuyPrice;
           sellPing = recentTrades.lastSellPrice;
         } else {
           buyPing = sellPing = 0;
+          if (qp.safety == mQuotingSafety::Off) return;
           map<mPrice, mTrade> tradesBuy;
           map<mPrice, mTrade> tradesSell;
           for (const mTrade &it: tradesHistory)
@@ -1524,7 +1630,7 @@ namespace K {
         if (((!_near and !_far) or *qty < qtyMax)
           and (_far ? fv > price : true)
           and (_near ? (reverse ? fv - width : fv + width) < price : true)
-          and (!qp._matchPings or KqtyTrade < qtyTrade)
+          and KqtyTrade < qtyTrade
         ) {
           mAmount qty_ = qtyTrade;
           if (_near or _far)
@@ -1890,12 +1996,17 @@ namespace K {
     j = k.content;
   };
 
-  struct mSemaphore: public mJsonToClient<mSemaphore> {
+  struct mSemaphore: public mToScreen,
+                     public mJsonToClient<mSemaphore> {
     mConnectivity greenButton,
                   greenGateway;
     mSemaphore():
       greenButton((mConnectivity)0), greenGateway((mConnectivity)0)
     {};
+    void send_refresh() {
+      send();
+      refresh();
+    };
     json kiss(const json &j) {
       json butterfly;
       if (j.is_object() and j["state"].is_number())
@@ -2167,9 +2278,9 @@ namespace K {
     }
   };
 
-  static const class mCommand {
+  struct mCommand {
     private:
-      string output(const string &cmd) const {
+      static string output(const string &cmd) {
         string data;
         FILE *stream = popen((cmd + " 2>&1").data(), "r");
         if (stream) {
@@ -2183,20 +2294,20 @@ namespace K {
         return data;
       };
     public:
-      string uname() const {
+      static string uname() {
         return output("uname -srvm");
       };
-      string ps() const {
+      static string ps() {
         return output("ps -p" + to_string(::getpid()) + " -orss | tail -n1");
       };
-      string netstat() const {
+      static string netstat() {
         return output("netstat -anp 2>/dev/null | grep " + to_string(args.port));
       };
-      void stunnel(const bool &reboot) const {
+      static void stunnel(const bool &reboot) {
         int k = system("pkill stunnel || :");
         if (reboot) k = system("stunnel etc/stunnel.conf");
       };
-      bool git() const {
+      static bool git() {
         return
 #ifdef NDEBUG
           access(".git", F_OK) != -1
@@ -2205,20 +2316,20 @@ namespace K {
 #endif
         ;
       };
-      void fetch() const {
+      static void fetch() {
         if (git()) int k = system("git fetch");
       };
-      string changelog() const {
+      static string changelog() {
         return git()
           ? output("git --no-pager log --graph --oneline @..@{u}")
           : "";
       };
-      bool deprecated() const {
+      static bool deprecated() {
         return git()
           ? output("git rev-parse @") != output("git rev-parse @{u}")
           : false;
       };
-  } cmd;
+  };
 
   struct mProduct: public mJsonToClient<mProduct> {
     mExchange exchange;
@@ -2251,7 +2362,7 @@ namespace K {
     {};
     function<unsigned int()> dbSize = []() { return 0; };
     unsigned int memSize() const {
-      string ps = cmd.ps();
+      string ps = mCommand::ps();
       ps.erase(remove(ps.begin(), ps.end(), ' '), ps.end());
       return ps.empty() ? 0 : stoi(ps) * 1e+3;
     };

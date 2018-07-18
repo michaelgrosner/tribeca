@@ -36,6 +36,7 @@ namespace K {
       };
       void waitSysAdmin() {
         screen->printme(gw);
+        screen->printme(&engine->semaphore);
         screen->pressme(mHotkey::ESC, [&]() {
           adminAgreement = (mConnectivity)!adminAgreement;
           gwSemaphore();
@@ -43,10 +44,10 @@ namespace K {
       };
       void run() {                                                  PRETTY_DEBUG
         handshake();
-        if (gw->exchange == mExchange::Coinbase) cmd.stunnel(true);
+        if (gw->exchange == mExchange::Coinbase) mCommand::stunnel(true);
       };
       void end() {
-        if (gw->exchange == mExchange::Coinbase) cmd.stunnel(false);
+        if (gw->exchange == mExchange::Coinbase) mCommand::stunnel(false);
       };
     private:
       void gwSemaphore() {
@@ -56,8 +57,7 @@ namespace K {
           screen->log("GW " + gw->name, "Quoting state changed to",
             string(!engine->semaphore.greenButton?"DIS":"") + "CONNECTED");
         }
-        engine->semaphore.send();
-        screen->refresh();
+        engine->semaphore.send_refresh();
       };
       void handshake() {
         json reply;

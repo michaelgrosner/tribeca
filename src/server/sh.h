@@ -181,49 +181,41 @@ namespace K {
         wattroff(wLog, COLOR_PAIR(COLOR_WHITE));
         wrefresh(wLog);
       };
-      void log(const mTrade &k, const bool &isPong) {
-        if (!wBorder) {
-          cout << stamp() << "GW " << (k.side == mSide::Bid ? RCYAN : RPURPLE) << gw->name << (isPong?" PONG":" PING") << " TRADE " << (k.side == mSide::Bid ? BCYAN : BPURPLE) << (k.side == mSide::Bid ? "BUY  " : "SELL ") << str8(k.quantity) << ' ' << k.pair.base << " at price " << k.price << ' ' << k.pair.quote << " (value " << k.value << ' ' << k.pair.quote << ").\n";
-          return;
+      void log(const string &prefix, const string &reason, const string &highlight = "") {
+        unsigned int color = 0;
+        if (reason.find("NG TRADE") != string::npos) {
+          if (reason.find("BUY") != string::npos)
+            color = 1;
+          else if (reason.find("SELL") != string::npos)
+            color = -1;
         }
-        wmove(wLog, getmaxy(wLog)-1, 0);
-        stamp();
-        wattron(wLog, A_BOLD);
-        wattron(wLog, COLOR_PAIR(COLOR_WHITE));
-        wprintw(wLog, "GW ");
-        wattroff(wLog, COLOR_PAIR(COLOR_WHITE));
-        wattron(wLog, COLOR_PAIR(k.side == mSide::Bid ? COLOR_CYAN : COLOR_MAGENTA));
-        wprintw(wLog, (gw->name + (isPong?" PONG":" PING") + " TRADE ").data());
-        wattroff(wLog, A_BOLD);
-        wprintw(wLog, ((k.side == mSide::Bid ? "BUY  " : "SELL ")
-          + str8(k.quantity) + ' ' + k.pair.base + " at price "
-          + str8(k.price) + ' ' + k.pair.quote + " (value "
-          + str8(k.value) + ' ' + k.pair.quote + ")"
-        ).data());
-        wprintw(wLog, ".\n");
-        wattroff(wLog, COLOR_PAIR(k.side == mSide::Bid ? COLOR_CYAN : COLOR_MAGENTA));
-        wrefresh(wLog);
-      };
-      void log(const string &k, const string &s, const string &v = "") {
         if (!wBorder) {
-          cout << stamp() << k << RWHITE << ' ' << s;
-          if (!v.empty())
-            cout << ' ' << RYELLOW << v << RWHITE;
-          cout << ".\n";
+          cout << stamp() << prefix;
+          if (color == 1)       cout << RCYAN;
+          else if (color == -1) cout << RPURPLE;
+          else                  cout << RWHITE;
+          cout << ' ' << reason;
+          if (!highlight.empty())
+            cout << ' ' << RYELLOW << highlight;
+          cout << RWHITE << ".\n";
           return;
         }
         wmove(wLog, getmaxy(wLog)-1, 0);
         stamp();
         wattron(wLog, COLOR_PAIR(COLOR_WHITE));
         wattron(wLog, A_BOLD);
-        wprintw(wLog, k.data());
+        wprintw(wLog, prefix.data());
         wattroff(wLog, A_BOLD);
-        wprintw(wLog, (" " + s).data());
-        if (!v.empty()) {
+        if (color == 1)       wattron(wLog, COLOR_PAIR(COLOR_CYAN));
+        else if (color == -1) wattron(wLog, COLOR_PAIR(COLOR_MAGENTA));
+        wprintw(wLog, (" " + reason).data());
+        if (color == 1)       wattroff(wLog, COLOR_PAIR(COLOR_CYAN));
+        else if (color == -1) wattroff(wLog, COLOR_PAIR(COLOR_MAGENTA));
+        if (!highlight.empty()) {
           wprintw(wLog, " ");
           wattroff(wLog, COLOR_PAIR(COLOR_WHITE));
           wattron(wLog, COLOR_PAIR(COLOR_YELLOW));
-          wprintw(wLog, v.data());
+          wprintw(wLog, highlight.data());
           wattroff(wLog, COLOR_PAIR(COLOR_YELLOW));
           wattron(wLog, COLOR_PAIR(COLOR_WHITE));
         }
@@ -231,6 +223,32 @@ namespace K {
         wattroff(wLog, COLOR_PAIR(COLOR_WHITE));
         wrefresh(wLog);
       };
+      void end() {
+        if (!wBorder) return;
+        beep();
+        endwin();
+        wBorder = nullptr;
+      };
+    private:
+      void hotkeys() {
+        hotkey = ::async(launch::async, [&] { return (mHotkey)wgetch(wBorder); });
+      };
+#if CAN_RESIZE
+      function<void()> resize = [&]() {
+        struct winsize ws;
+        if (ioctl(0, TIOCGWINSZ, &ws) < 0
+          or (ws.ws_row == getmaxy(wBorder)
+          and ws.ws_col == getmaxx(wBorder))
+        ) return;
+        werase(wBorder);
+        werase(wLog);
+        if (ws.ws_row < 10) ws.ws_row = 10;
+        if (ws.ws_col < 30) ws.ws_col = 30;
+        wresize(wBorder, ws.ws_row, ws.ws_col);
+        resizeterm(ws.ws_row, ws.ws_col);
+        refresh();
+      };
+#endif
       void refresh() {
         if (!wBorder) return;
         vector<mOrder> openOrders = broker->orders.working(true);
@@ -385,32 +403,6 @@ namespace K {
         wrefresh(wBorder);
         wrefresh(wLog);
       };
-      void end() {
-        if (!wBorder) return;
-        beep();
-        endwin();
-        wBorder = nullptr;
-      };
-    private:
-      void hotkeys() {
-        hotkey = ::async(launch::async, [&] { return (mHotkey)wgetch(wBorder); });
-      };
-#if CAN_RESIZE
-      function<void()> resize = [&]() {
-        struct winsize ws;
-        if (ioctl(0, TIOCGWINSZ, &ws) < 0
-          or (ws.ws_row == getmaxy(wBorder)
-          and ws.ws_col == getmaxx(wBorder))
-        ) return;
-        werase(wBorder);
-        werase(wLog);
-        if (ws.ws_row < 10) ws.ws_row = 10;
-        if (ws.ws_col < 30) ws.ws_col = 30;
-        wresize(wBorder, ws.ws_row, ws.ws_col);
-        resizeterm(ws.ws_row, ws.ws_col);
-        refresh();
-      };
-#endif
   };
 }
 

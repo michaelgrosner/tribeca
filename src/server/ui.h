@@ -116,7 +116,7 @@ namespace K {
           )
         ) screen->logUI("HTTPS");
         else if (!socket->listen(args.inet, args.port, nullptr, 0, &socket->getDefaultGroup<uWS::SERVER>())) {
-          const string netstat = cmd.netstat();
+          const string netstat = mCommand::netstat();
           EXIT(screen->error("UI", "Unable to listen to UI port number " + to_string(args.port) + ", "
             + (netstat.empty() ? "try another network interface" : "seems already in use by:\n" + netstat)
           ));

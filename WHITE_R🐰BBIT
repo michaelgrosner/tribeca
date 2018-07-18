@@ -113,13 +113,11 @@
 :  +-- Globals??                                                              :
 :                     args, screen, client, events, sqlite                    :
 :                    qp, wallet, market, broker, engine, gw                   :
-:                                     cmd                                     :
 :                                                                             :
 :  .. src/server/ds.h:  ----------------------------- aka. Data Structures -- :
 :  :   TODO                                                                   :
 :  :                                                                          :
 :  +-- Whaaat??                                                               :
-:     cmd                                                                     :
 :                                                                             :
 :                                                                             :
 :  .. src/server/if.h:  ----------------------------- aka. Interfaces ------- :

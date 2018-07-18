@@ -9,9 +9,9 @@ namespace K {
            << ".\n";
       string changes;
       int commits = -1;
-      if (cmd.git()) {
-        cmd.fetch();
-        changes = cmd.changelog();
+      if (mCommand::git()) {
+        mCommand::fetch();
+        changes = mCommand::changelog();
         commits = count(changes.begin(), changes.end(), '\n');
       }
       cout << BGREEN << K_0_DAY << RGREEN << ' ' << (commits == -1
@@ -35,13 +35,11 @@ namespace K {
     virtual void logWar(string, string, string = " Warrrrning: ") = 0;
     virtual void logUI(const string&) = 0;
     virtual void logUIsess(int, string) = 0;
-    virtual void log(const mTrade&, const bool&) = 0;
     virtual void log(const string&, const string&, const string& = "") = 0;
 #define PRETTY_DEBUG if (args.debugEvents) screen->log("DEBUG EV", __PRETTY_FUNCTION__);
 #define DEBOG(x)     if (args.debugOrders) screen->log("DEBUG OG", x)
 #define DEBUG(x)     if (args.debugQuotes) screen->log("DEBUG QE", x)
 #define DEBUQ(x, b, a, q) DEBUG("quote " x " " + to_string((int)b) + ":" + to_string((int)a) + " " + ((json)q).dump())
-    virtual void refresh() = 0;
     virtual void end() = 0;
   } *screen = nullptr;
 
@@ -71,7 +69,6 @@ namespace K {
 
   static struct Broker {
     mOrders orders;
-    virtual void cleanOrder(const mRandId&) = 0;
     virtual void cancelOrder(const mRandId&) = 0;
     virtual void sendOrder(
       vector<mRandId>,   const mSide&,        const mPrice&, const mAmount&,
@@ -148,7 +145,7 @@ namespace K {
 /**/  static Gw*config(mCoinId, mCoinId, string, int, string, string, string, string, string, string, int, int); // set args
 /**/  function<void(mRandId, string)> replace;                               // call         async orders data from exchange
 /**/  virtual void place(mRandId, mSide, string, string, mOrderType, mTimeInForce, bool, mClock) = 0, // same as above/below
-/**/               cancel(mRandId, mRandId) = 0,                             // call         async orders data from exchange
+/**/               cancel(mOrder *const) = 0,                                // call         async orders data from exchange
 /**/               close() = 0;                                              // disconnect but without waiting for reconnect
 /**/  virtual vector<mOrder>   sync_cancelAll() = 0;                         // call and read sync orders data from exchange
 /**/protected:
@@ -243,11 +240,11 @@ namespace K {
           + strsignal(sig)
 #endif
           + ' ';
-        if (cmd.deprecated())
+        if (mCommand::deprecated())
           tracelog += string("(deprecated K version found).") + '\n'
             + '\n' + string(BYELLOW) + "Hint!" + string(RYELLOW)
             + '\n' + "please upgrade to the latest commit; the encountered error may be already fixed at:"
-            + '\n' + cmd.changelog()
+            + '\n' + mCommand::changelog()
             + '\n' + "If you agree, consider to run \"make latest\" prior further executions."
             + '\n' + '\n';
         else {
@@ -258,7 +255,7 @@ namespace K {
             + "- lastbeat: " + to_string(Tstamp) + '\n'
             + "- binbuild: " + string(K_BUILD) + '\n'
 #ifndef _WIN32
-            + "- os-uname: " + cmd.uname()
+            + "- os-uname: " + mCommand::uname()
             + "- tracelog: " + '\n';
           void *k[69];
           size_t jumps = backtrace(k, 69);
