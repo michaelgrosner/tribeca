@@ -57,7 +57,8 @@ namespace K {
           screen->log("GW " + gw->name, "Quoting state changed to",
             string(!engine->semaphore.greenButton?"DIS":"") + "CONNECTED");
         }
-        engine->semaphore.send_refresh();
+        engine->semaphore.send();
+        engine->semaphore.refresh();
       };
       void handshake() {
         json reply;

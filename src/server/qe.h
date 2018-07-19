@@ -482,7 +482,12 @@ namespace K {
           } else keepWorking.push_back(it.first);
         if (qp.safety == mQuotingSafety::AK47 and toCancel.empty() and !keepWorking.empty())
           toCancel.push_back(side == mSide::Bid ? keepWorking.front() : keepWorking.back());
-        broker->sendOrder(toCancel, side, q.price, q.size, mOrderType::Limit, mTimeInForce::GTC, isPong, true);
+        mRandId replaceOrderId;
+        if (!toCancel.empty()) {
+          replaceOrderId = side == mSide::Bid ? toCancel.back() : toCancel.front();
+          toCancel.erase(side == mSide::Bid ? toCancel.end()-1 : toCancel.begin());
+        }
+        broker->sendOrder(toCancel, replaceOrderId, side, q.price, q.size, mOrderType::Limit, mTimeInForce::GTC, isPong, true);
       };
       void stopAllQuotes(mSide side) {
         vector<mRandId> toCancel;

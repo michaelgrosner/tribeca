@@ -1869,24 +1869,21 @@ namespace K {
       return mMatter::CleanTrade;
     };
   };
+  struct mButtons {
+    mButtonSubmitNewOrder       submit;
+    mButtonCancelOrder          cancel;
+    mButtonCancelAllOrders      cancelAll;
+    mButtonCleanAllClosedTrades cleanTradesClosed;
+    mButtonCleanAllTrades       cleanTrades;
+    mButtonCleanTrade           cleanTrade;
+  };
   struct mOrders: public mToScreen,
                   public mJsonToClient<mOrders> {
+               mButtons  btn;
     map<mRandId, mOrder> orders;
         mTradesCompleted tradesHistory;
-    struct mButtons {
-      mButtonSubmitNewOrder       submit;
-      mButtonCancelOrder          cancel;
-      mButtonCancelAllOrders      cancelAll;
-      mButtonCleanAllClosedTrades cleanTradesClosed;
-      mButtonCleanAllTrades       cleanTrades;
-      mButtonCleanTrade           cleanTrade;
-    } btn;
     bool debug() const {
       return args.debugOrders;
-    };
-    void send_refresh() {
-      send();
-      refresh();
     };
     mOrder* upsert(mOrder raw) {
       mOrder *order = findsert(raw);
@@ -1899,14 +1896,16 @@ namespace K {
       return order;
     };
     void upsert(mOrder raw, mWalletPosition *const balance, const mMarketLevels &levels, bool *const refreshWallet) {
+      if (debug()) report(raw);
       mOrder *order = upsert(raw);
       if (!order) return;
       if (raw.tradeQuantity)
         tradesHistory.insert(order, raw.tradeQuantity);
       mSide  lastSide  = order->side;
       mPrice lastPrice = order->price;
-      if (order->orderStatus == mStatus::Cancelled or order->orderStatus == mStatus::Complete)
-        erase(order->orderId);
+      if (order->orderStatus == mStatus::Cancelled
+        or order->orderStatus == mStatus::Complete
+      ) erase(order->orderId);
       if (raw.orderStatus == mStatus::New) return;
       balance->reset(lastSide, calcHeldAmount(lastSide), levels);
       if (raw.tradeQuantity) {
@@ -1914,7 +1913,8 @@ namespace K {
         balance->target.safety.calc(levels, tradesHistory);
         *refreshWallet = true;
       }
-      send_refresh();
+      send();
+      refresh();
     };
     mOrder* findsert(mOrder raw) {
       if (raw.orderStatus == mStatus::New)
@@ -1933,6 +1933,14 @@ namespace K {
         or orders.find(raw.orderId) == orders.end()
       ) ? nullptr
         : &orders[raw.orderId];
+    };
+    bool replace(const mRandId &replaceOrderId, const mPrice &price) {
+      if (orders[replaceOrderId].exchangeId.empty()) return false;
+        if (debug()) print("DEBUG OG", "update "
+          + ((orders[replaceOrderId].side == mSide::Bid ? "BID" : "ASK")
+          + (" id " + replaceOrderId)) + ":  at price " + str8(price) + " " + args.quote());
+        orders[replaceOrderId].price = price;
+        return true;
     };
     mOrder* cancel(const mRandId &orderId) {
       if (orderId.empty() or orders.find(orderId) == orders.end()) return nullptr;
@@ -1995,6 +2003,12 @@ namespace K {
           + "::" + order->exchangeId + " [" + to_string((int)order->orderStatus) + "]: "
           + str8(order->quantity) + " " + order->pair.base + " at price "
           + str8(order->price) + " " + order->pair.quote);
+      };
+      void report(const mOrder &raw) const {
+        print("DEBUG OG", "reply  " + raw.orderId + "::" + raw.exchangeId
+          + " [" + to_string((int)raw.orderStatus) + "]: "
+          + str8(raw.quantity) + "/" + str8(raw.tradeQuantity) + " at price "
+          + str8(raw.price));
       };
       void report_size() const {
         print("DEBUG OG", "memory " + to_string(orders.size()));
@@ -2077,10 +2091,6 @@ namespace K {
     mSemaphore():
       greenButton((mConnectivity)0), greenGateway((mConnectivity)0)
     {};
-    void send_refresh() {
-      send();
-      refresh();
-    };
     json kiss(const json &j) {
       json butterfly;
       if (j.is_object() and j["state"].is_number())

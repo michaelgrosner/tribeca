@@ -10,7 +10,6 @@ namespace K {
       };
       void waitData() {
         gw->RAWDATA_ENTRY_POINT(mOrder, {                           PRETTY_DEBUG
-          DEBOG("reply  " + rawdata.orderId + "::" + rawdata.exchangeId + " [" + to_string((int)rawdata.orderStatus) + "]: " + str8(rawdata.quantity) + "/" + str8(rawdata.tradeQuantity) + " at price " + str8(rawdata.price));
           orders.upsert(rawdata, &wallet->balance, market->levels, &gw->refreshWallet);
         });
       };
@@ -42,7 +41,7 @@ namespace K {
         client->clickme(orders.btn.submit KISS {
           if (!butterfly.is_object()) return;
           sendOrder(
-            {},
+            {}, "",
             butterfly.value("side", "") == "Bid" ? mSide::Bid : mSide::Ask,
             butterfly.value("price", 0.0),
             butterfly.value("quantity", 0.0),
@@ -62,27 +61,25 @@ namespace K {
       };
     public:
       void sendOrder(
-              vector<mRandId>  toCancel,
-        const mSide           &side    ,
-        const mPrice          &price   ,
-        const mAmount         &qty     ,
-        const mOrderType      &type    ,
-        const mTimeInForce    &tif     ,
-        const bool            &isPong  ,
+        const vector<mRandId> &toCancel      ,
+        const mRandId         &replaceOrderId,
+        const mSide           &side          ,
+        const mPrice          &price         ,
+        const mAmount         &qty           ,
+        const mOrderType      &type          ,
+        const mTimeInForce    &tif           ,
+        const bool            &isPong        ,
         const bool            &postOnly
       ) {
-        mRandId replaceOrderId;
-        if (!toCancel.empty()) {
-          replaceOrderId = side == mSide::Bid ? toCancel.back() : toCancel.front();
-          toCancel.erase(side == mSide::Bid ? toCancel.end()-1 : toCancel.begin());
-          for (mRandId &it : toCancel) cancelOrder(it);
-        }
-        if (gw->replace and !replaceOrderId.empty()) {
-          if (!orders.orders[replaceOrderId].exchangeId.empty()) {
-            DEBOG("update " + ((side == mSide::Bid ? "BID" : "ASK") + (" id " + replaceOrderId)) + ":  at price " + str8(price) + " " + gw->quote);
-            orders.orders[replaceOrderId].price = price;
-            gw->replace(orders.orders[replaceOrderId].exchangeId, str8(price));
+        for_each(
+          toCancel.begin(), toCancel.end(),
+          [&](const mRandId &orderId) {
+            cancelOrder(orderId);
           }
+        );
+        if (gw->replace and !replaceOrderId.empty()) {
+          if (orders.replace(replaceOrderId, price))
+            gw->replace(orders.orders[replaceOrderId].exchangeId, str8(price));
         } else {
           if (args.testChamber != 1) cancelOrder(replaceOrderId);
           mOrder *o = orders.upsert(mOrder(
@@ -105,8 +102,7 @@ namespace K {
             str8(o->quantity),
             o->type,
             o->timeInForce,
-            o->preferPostOnly,
-            o->time
+            o->preferPostOnly
           );
           if (args.testChamber == 1) cancelOrder(replaceOrderId);
         }
@@ -115,7 +111,10 @@ namespace K {
       void cancelOrder(const mRandId &orderId) {
         mOrder *orderWaitingCancel = orders.cancel(orderId);
         if (orderWaitingCancel)
-          gw->cancel(orderWaitingCancel);
+          gw->cancel(
+            orderWaitingCancel->orderId,
+            orderWaitingCancel->exchangeId
+          );
       };
   };
 }

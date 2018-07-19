@@ -71,8 +71,15 @@ namespace K {
     mOrders orders;
     virtual void cancelOrder(const mRandId&) = 0;
     virtual void sendOrder(
-      vector<mRandId>,   const mSide&,        const mPrice&, const mAmount&,
-      const mOrderType&, const mTimeInForce&, const bool&,   const bool&
+      const vector<mRandId>&,
+      const mRandId&        ,
+      const mSide&          ,
+      const mPrice&         ,
+      const mAmount&        ,
+      const mOrderType&     ,
+      const mTimeInForce&   ,
+      const bool&           ,
+      const bool&
     ) = 0;
   } *broker = nullptr;
 
@@ -144,8 +151,8 @@ namespace K {
 /**/  virtual bool ready() = 0;                                              // wait for exchange and maybe set async = true
 /**/  static Gw*config(mCoinId, mCoinId, string, int, string, string, string, string, string, string, int, int); // set args
 /**/  function<void(mRandId, string)> replace;                               // call         async orders data from exchange
-/**/  virtual void place(mRandId, mSide, string, string, mOrderType, mTimeInForce, bool, mClock) = 0, // same as above/below
-/**/               cancel(mOrder *const) = 0,                                // call         async orders data from exchange
+/**/  virtual void place(mRandId, mSide, string, string, mOrderType, mTimeInForce, bool) = 0, // async orders as above/below
+/**/               cancel(mRandId, mRandId) = 0,                             // call         async orders data from exchange
 /**/               close() = 0;                                              // disconnect but without waiting for reconnect
 /**/  virtual vector<mOrder>   sync_cancelAll() = 0;                         // call and read sync orders data from exchange
 /**/protected:
