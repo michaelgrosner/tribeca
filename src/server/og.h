@@ -87,9 +87,8 @@ namespace K {
           }
         } else {
           if (args.testChamber != 1) cancelOrder(replaceOrderId);
-          mRandId newOrderId = gw->randId();
-          orders.upsert(mOrder(
-            newOrderId,
+          mOrder *o = orders.upsert(mOrder(
+            gw->randId(),
             mPair(gw->base, gw->quote),
             side,
             qty,
@@ -99,8 +98,7 @@ namespace K {
             tif,
             mStatus::New,
             postOnly
-          ), &wallet->balance, market->levels, &gw->refreshWallet);
-          mOrder *o = &orders.orders[newOrderId];
+          ));
           DEBOG(" send  " + replaceOrderId + "> " + (o->side == mSide::Bid ? "BID" : "ASK") + " id " + o->orderId + ": " + str8(o->quantity) + " " + o->pair.base + " at price " + str8(o->price) + " " + o->pair.quote);
           gw->place(
             o->orderId,

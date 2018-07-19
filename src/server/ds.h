@@ -1838,15 +1838,25 @@ namespace K {
       send();
       refresh();
     };
-    void upsert(mOrder raw, mWalletPosition *const balance, const mMarketLevels &levels, bool *const refreshWallet) {
+    mOrder* upsert(mOrder raw) {
       mOrder *order = findsert(raw);
-      if (!order) return;
+      if (!order) return nullptr;
       order->update(raw);
+      if (debug()) {
+        report(order);
+        report_size();
+      }
+      return order;
+    };
+    void upsert(mOrder raw, mWalletPosition *const balance, const mMarketLevels &levels, bool *const refreshWallet) {
+      mOrder *order = upsert(raw);
+      if (!order) return;
       if (raw.tradeQuantity)
         tradesHistory.insert(order, raw.tradeQuantity);
       mSide  lastSide  = order->side;
       mPrice lastPrice = order->price;
-      report_erase(order);
+      if (order->orderStatus == mStatus::Cancelled or order->orderStatus == mStatus::Complete)
+        erase(order->orderId);
       if (raw.orderStatus == mStatus::New) return;
       balance->reset(lastSide, calcHeldAmount(lastSide), levels);
       if (raw.tradeQuantity) {
@@ -1888,9 +1898,11 @@ namespace K {
       return order;
     };
     void erase(const mRandId &orderId) {
-      if (debug()) print("DEBUG OG", "remove " + orderId);
       map<mRandId, mOrder>::iterator it = orders.find(orderId);
       if (it != orders.end()) orders.erase(it);
+      if (!debug()) return;
+      print("DEBUG OG", "remove " + orderId);
+      report_size();
     };
     mAmount calcHeldAmount(const mSide &side) const {
       return accumulate(orders.begin(), orders.end(), mAmount(),
@@ -1927,18 +1939,15 @@ namespace K {
       return working();
     };
     private:
-      void report(mOrder *const order) {
+      void report(mOrder *const order) const {
         print("DEBUG OG", " saved "
           + ((order->side == mSide::Bid ? "BID id " : "ASK id ") + order->orderId)
           + "::" + order->exchangeId + " [" + to_string((int)order->orderStatus) + "]: "
           + str8(order->quantity) + " " + order->pair.base + " at price "
           + str8(order->price) + " " + order->pair.quote);
       };
-      void report_erase(mOrder *const order) {
-        if (order->orderStatus == mStatus::Cancelled or order->orderStatus == mStatus::Complete)
-          erase(order->orderId);
-        else if (debug()) report(order);
-        if (debug()) print("DEBUG OG", "memory " + to_string(orders.size()));
+      void report_size() const {
+        print("DEBUG OG", "memory " + to_string(orders.size()));
       };
   };
   static void to_json(json &j, const mOrders &k) {
