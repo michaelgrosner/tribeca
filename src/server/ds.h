@@ -1885,13 +1885,14 @@ namespace K {
     bool debug() const {
       return args.debugOrders;
     };
-    mOrder* upsert(mOrder raw) {
+    mOrder* upsert(mOrder raw, const bool &place = false) {
       mOrder *order = findsert(raw);
       if (!order) return nullptr;
       order->update(raw);
       if (debug()) {
         report(order);
         report_size();
+        if (place) report_place(order);
       }
       return order;
     };
@@ -1947,12 +1948,7 @@ namespace K {
       mOrder *order = &orders[orderId];
       if (order->exchangeId.empty() or order->_waitingCancel + 3e+3 > Tstamp) return nullptr;
       order->_waitingCancel = Tstamp;
-      if (debug()) print("DEBUG OG", "cancel " + (
-        (order->side == mSide::Bid ? "BID id " : "ASK id ")
-        + order->orderId
-      ) + "::"
-        + order->exchangeId
-      );
+      if (debug()) report_cancel(order);
       return order;
     };
     void erase(const mRandId &orderId) {
@@ -1997,6 +1993,20 @@ namespace K {
       return working();
     };
     private:
+      void report_cancel(mOrder *const order) const {
+        print("DEBUG OG", "cancel " + (
+          (order->side == mSide::Bid ? "BID id " : "ASK id ")
+          + order->orderId
+        ) + "::"
+          + order->exchangeId
+        );
+      };
+      void report_place(mOrder *const order) const {
+        print("DEBUG OG", " place "
+          + ((order->side == mSide::Bid ? "BID id " : "ASK id ") + order->orderId) + ": "
+          + str8(order->quantity) + " " + order->pair.base + " at price "
+          + str8(order->price) + " " + order->pair.quote);
+      };
       void report(mOrder *const order) const {
         print("DEBUG OG", " saved "
           + ((order->side == mSide::Bid ? "BID id " : "ASK id ") + order->orderId)

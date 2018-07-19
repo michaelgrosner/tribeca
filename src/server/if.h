@@ -37,7 +37,6 @@ namespace K {
     virtual void logUIsess(int, string) = 0;
     virtual void log(const string&, const string&, const string& = "") = 0;
 #define PRETTY_DEBUG if (args.debugEvents) screen->log("DEBUG EV", __PRETTY_FUNCTION__);
-#define DEBOG(x)     if (args.debugOrders) screen->log("DEBUG OG", x)
 #define DEBUG(x)     if (args.debugQuotes) screen->log("DEBUG QE", x)
 #define DEBUQ(x, b, a, q) DEBUG("quote " x " " + to_string((int)b) + ":" + to_string((int)a) + " " + ((json)q).dump())
     virtual void end() = 0;
@@ -70,8 +69,8 @@ namespace K {
   static struct Broker {
     mOrders orders;
     virtual void cancelOrder(const mRandId&) = 0;
+    virtual void cancelOrders(const vector<mRandId>&) = 0;
     virtual void sendOrder(
-      const vector<mRandId>&,
       const mRandId&        ,
       const mSide&          ,
       const mPrice&         ,

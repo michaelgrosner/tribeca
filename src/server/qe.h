@@ -487,7 +487,9 @@ namespace K {
           replaceOrderId = side == mSide::Bid ? toCancel.back() : toCancel.front();
           toCancel.erase(side == mSide::Bid ? toCancel.end()-1 : toCancel.begin());
         }
-        broker->sendOrder(toCancel, replaceOrderId, side, q.price, q.size, mOrderType::Limit, mTimeInForce::GTC, isPong, true);
+        broker->cancelOrders(toCancel);
+        broker->sendOrder(replaceOrderId, side, q.price, q.size, mOrderType::Limit, mTimeInForce::GTC, isPong, true);
+        monitor.tick_orders();
       };
       void stopAllQuotes(mSide side) {
         vector<mRandId> toCancel;
@@ -495,7 +497,7 @@ namespace K {
           if (it.second.orderStatus == mStatus::Working and (side == mSide::Both
               or (side == it.second.side and it.second.preferPostOnly)
           )) toCancel.push_back(it.first);
-        for (mRandId &it : toCancel) broker->cancelOrder(it);
+        broker->cancelOrders(toCancel);
       };
   };
 }

@@ -41,7 +41,7 @@ namespace K {
         client->clickme(orders.btn.submit KISS {
           if (!butterfly.is_object()) return;
           sendOrder(
-            {}, "",
+            "",
             butterfly.value("side", "") == "Bid" ? mSide::Bid : mSide::Ask,
             butterfly.value("price", 0.0),
             butterfly.value("quantity", 0.0),
@@ -61,7 +61,6 @@ namespace K {
       };
     public:
       void sendOrder(
-        const vector<mRandId> &toCancel      ,
         const mRandId         &replaceOrderId,
         const mSide           &side          ,
         const mPrice          &price         ,
@@ -71,12 +70,6 @@ namespace K {
         const bool            &isPong        ,
         const bool            &postOnly
       ) {
-        for_each(
-          toCancel.begin(), toCancel.end(),
-          [&](const mRandId &orderId) {
-            cancelOrder(orderId);
-          }
-        );
         if (gw->replace and !replaceOrderId.empty()) {
           if (orders.replace(replaceOrderId, price))
             gw->replace(orders.orders[replaceOrderId].exchangeId, str8(price));
@@ -93,8 +86,7 @@ namespace K {
             tif,
             mStatus::New,
             postOnly
-          ));
-          DEBOG(" send  " + replaceOrderId + "> " + (o->side == mSide::Bid ? "BID" : "ASK") + " id " + o->orderId + ": " + str8(o->quantity) + " " + o->pair.base + " at price " + str8(o->price) + " " + o->pair.quote);
+          ), true);
           gw->place(
             o->orderId,
             o->side,
@@ -106,7 +98,6 @@ namespace K {
           );
           if (args.testChamber == 1) cancelOrder(replaceOrderId);
         }
-        engine->monitor.tick_orders();
       };
       void cancelOrder(const mRandId &orderId) {
         mOrder *orderWaitingCancel = orders.cancel(orderId);
@@ -115,6 +106,14 @@ namespace K {
             orderWaitingCancel->orderId,
             orderWaitingCancel->exchangeId
           );
+      };
+      void cancelOrders(const vector<mRandId> &toCancel) {
+        for_each(
+          toCancel.begin(), toCancel.end(),
+          [&](const mRandId &orderId) {
+            cancelOrder(orderId);
+          }
+        );
       };
   };
 }
