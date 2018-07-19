@@ -547,6 +547,18 @@ namespace K {
     mOrder(mRandId o, mPair P, mSide S, mAmount q, mOrderType t, bool i, mPrice p, mTimeInForce F, mStatus s, bool O):
       orderId(o), exchangeId(""), pair(P), side(S), quantity(q), type(t), isPong(i), price(p), timeInForce(F), orderStatus(s), preferPostOnly(O), tradeQuantity(0), time(0), _waitingCancel(0), latency(0)
     {};
+    void update(const mOrder &raw) {
+      orderStatus = raw.orderStatus;
+      if (!raw.exchangeId.empty()) exchangeId = raw.exchangeId;
+      if (raw.price)               price      = raw.price;
+      if (raw.quantity)            quantity   = raw.quantity;
+      if (raw.time)                time       = raw.time;
+      if (raw.latency)             latency    = raw.latency;
+      if (!time)                   time       = Tstamp;
+      if (!latency and orderStatus == mStatus::Working)
+                                   latency    = Tstamp - time;
+      if (latency)                 time       = Tstamp;
+    };
   };
   static void to_json(json &j, const mOrder &k) {
     j = {
@@ -821,88 +833,6 @@ namespace K {
         erase();
         return it;
       };
-  };
-
-  struct mOrders: public mToScreen,
-                  public mJsonToClient<mOrders> {
-    map<mRandId, mOrder> orders;
-        mTradesCompleted tradesHistory;
-    bool debug() const {
-      return args.debugOrders;
-    };
-    mOrder* find(mOrder raw) {
-      if (raw.orderStatus == mStatus::New)
-        orders[raw.orderId] = raw;
-      else if (raw.orderId.empty() and !raw.exchangeId.empty()) {
-        map<mRandId, mOrder>::iterator it = find_if(
-          orders.begin(), orders.end(),
-          [&](const pair<mRandId, mOrder> &it_) {
-            return raw.exchangeId == it_.second.exchangeId;
-          }
-        );
-        if (it != orders.end())
-          raw.orderId = it->first;
-      }
-      return (raw.orderId.empty()
-        or orders.find(raw.orderId) == orders.end()
-      ) ? nullptr
-        : &orders[raw.orderId];
-    };
-    mOrder* cancel(const mRandId &orderId) {
-      if (orderId.empty() or orders.find(orderId) == orders.end()) return nullptr;
-      mOrder *order = &orders[orderId];
-      if (order->exchangeId.empty() or order->_waitingCancel + 3e+3 > Tstamp) return nullptr;
-      order->_waitingCancel = Tstamp;
-      if (debug()) print("DEBUG OG", "cancel " + (
-        (order->side == mSide::Bid ? "BID id " : "ASK id ")
-        + order->orderId
-      ) + "::"
-        + order->exchangeId
-      );
-      return order;
-    };
-    void erase(const mRandId &orderId) {
-      if (debug()) print("DEBUG OG", "remove " + orderId);
-      map<mRandId, mOrder>::iterator it = orders.find(orderId);
-      if (it != orders.end()) orders.erase(it);
-    };
-    mAmount calcHeldAmount(const mSide &side) const {
-      return accumulate(orders.begin(), orders.end(), mAmount(),
-        [&](mAmount held, const map<mRandId, mOrder>::value_type &it) {
-          if (it.second.side == side and it.second.orderStatus == mStatus::Working)
-            return held + (it.second.side == mSide::Ask
-              ? it.second.quantity
-              : it.second.quantity * it.second.price
-            );
-          else return held;
-        }
-      );
-    };
-    vector<mOrder> working(const bool &sorted = false) const {
-      vector<mOrder> workingOrders;
-      for (const map<mRandId, mOrder>::value_type &it : orders)
-        if (mStatus::Working == it.second.orderStatus)
-          workingOrders.push_back(it.second);
-      if (sorted)
-        sort(workingOrders.begin(), workingOrders.end(),
-          [](const mOrder &a, const mOrder &b) {
-            return a.price > b.price;
-          }
-        );
-      return workingOrders;
-    };
-    mMatter about() const {
-      return mMatter::OrderStatusReports;
-    };
-    bool realtime() const {
-      return !qp.delayUI;
-    };
-    json dump() const {
-      return working();
-    };
-  };
-  static void to_json(json &j, const mOrders &k) {
-    j = k.dump();
   };
 
   struct mRecentTrade {
@@ -1895,6 +1825,124 @@ namespace K {
     bool send_asap() const {
       return false;
     };
+  };
+
+  struct mOrders: public mToScreen,
+                  public mJsonToClient<mOrders> {
+    map<mRandId, mOrder> orders;
+        mTradesCompleted tradesHistory;
+    bool debug() const {
+      return args.debugOrders;
+    };
+    void send_refresh() {
+      send();
+      refresh();
+    };
+    void upsert(mOrder raw, mWalletPosition *const balance, const mMarketLevels &levels, bool *const refreshWallet) {
+      mOrder *order = findsert(raw);
+      if (!order) return;
+      order->update(raw);
+      if (raw.tradeQuantity)
+        tradesHistory.insert(order, raw.tradeQuantity);
+      mSide  lastSide  = order->side;
+      mPrice lastPrice = order->price;
+      report_erase(order);
+      if (raw.orderStatus == mStatus::New) return;
+      balance->reset(lastSide, calcHeldAmount(lastSide), levels);
+      if (raw.tradeQuantity) {
+        balance->target.safety.recentTrades.insert(lastSide, lastPrice, raw.tradeQuantity);
+        balance->target.safety.calc(levels, tradesHistory);
+        *refreshWallet = true;
+      }
+      send_refresh();
+    };
+    mOrder* findsert(mOrder raw) {
+      if (raw.orderStatus == mStatus::New)
+        orders[raw.orderId] = raw;
+      else if (raw.orderId.empty() and !raw.exchangeId.empty()) {
+        map<mRandId, mOrder>::iterator it = find_if(
+          orders.begin(), orders.end(),
+          [&](const pair<mRandId, mOrder> &it_) {
+            return raw.exchangeId == it_.second.exchangeId;
+          }
+        );
+        if (it != orders.end())
+          raw.orderId = it->first;
+      }
+      return (raw.orderId.empty()
+        or orders.find(raw.orderId) == orders.end()
+      ) ? nullptr
+        : &orders[raw.orderId];
+    };
+    mOrder* cancel(const mRandId &orderId) {
+      if (orderId.empty() or orders.find(orderId) == orders.end()) return nullptr;
+      mOrder *order = &orders[orderId];
+      if (order->exchangeId.empty() or order->_waitingCancel + 3e+3 > Tstamp) return nullptr;
+      order->_waitingCancel = Tstamp;
+      if (debug()) print("DEBUG OG", "cancel " + (
+        (order->side == mSide::Bid ? "BID id " : "ASK id ")
+        + order->orderId
+      ) + "::"
+        + order->exchangeId
+      );
+      return order;
+    };
+    void erase(const mRandId &orderId) {
+      if (debug()) print("DEBUG OG", "remove " + orderId);
+      map<mRandId, mOrder>::iterator it = orders.find(orderId);
+      if (it != orders.end()) orders.erase(it);
+    };
+    mAmount calcHeldAmount(const mSide &side) const {
+      return accumulate(orders.begin(), orders.end(), mAmount(),
+        [&](mAmount held, const map<mRandId, mOrder>::value_type &it) {
+          if (it.second.side == side and it.second.orderStatus == mStatus::Working)
+            return held + (it.second.side == mSide::Ask
+              ? it.second.quantity
+              : it.second.quantity * it.second.price
+            );
+          else return held;
+        }
+      );
+    };
+    vector<mOrder> working(const bool &sorted = false) const {
+      vector<mOrder> workingOrders;
+      for (const map<mRandId, mOrder>::value_type &it : orders)
+        if (mStatus::Working == it.second.orderStatus)
+          workingOrders.push_back(it.second);
+      if (sorted)
+        sort(workingOrders.begin(), workingOrders.end(),
+          [](const mOrder &a, const mOrder &b) {
+            return a.price > b.price;
+          }
+        );
+      return workingOrders;
+    };
+    mMatter about() const {
+      return mMatter::OrderStatusReports;
+    };
+    bool realtime() const {
+      return !qp.delayUI;
+    };
+    json dump() const {
+      return working();
+    };
+    private:
+      void report(mOrder *const order) {
+        print("DEBUG OG", " saved "
+          + ((order->side == mSide::Bid ? "BID id " : "ASK id ") + order->orderId)
+          + "::" + order->exchangeId + " [" + to_string((int)order->orderStatus) + "]: "
+          + str8(order->quantity) + " " + order->pair.base + " at price "
+          + str8(order->price) + " " + order->pair.quote);
+      };
+      void report_erase(mOrder *const order) {
+        if (order->orderStatus == mStatus::Cancelled or order->orderStatus == mStatus::Complete)
+          erase(order->orderId);
+        else if (debug()) report(order);
+        if (debug()) print("DEBUG OG", "memory " + to_string(orders.size()));
+      };
+  };
+  static void to_json(json &j, const mOrders &k) {
+    j = k.dump();
   };
 
   struct mQuote {

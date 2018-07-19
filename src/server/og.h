@@ -13,7 +13,7 @@ namespace K {
       void waitData() {
         gw->RAWDATA_ENTRY_POINT(mOrder, {                           PRETTY_DEBUG
           DEBOG("reply  " + rawdata.orderId + "::" + rawdata.exchangeId + " [" + to_string((int)rawdata.orderStatus) + "]: " + str8(rawdata.quantity) + "/" + str8(rawdata.tradeQuantity) + " at price " + str8(rawdata.price));
-          updateOrderState(rawdata);
+          orders.upsert(rawdata, &wallet->balance, market->levels, &gw->refreshWallet);
         });
       };
       void waitSysAdmin() {
@@ -88,7 +88,7 @@ namespace K {
         } else {
           if (args.testChamber != 1) cancelOrder(replaceOrderId);
           mRandId newOrderId = gw->randId();
-          updateOrderState(mOrder(
+          orders.upsert(mOrder(
             newOrderId,
             mPair(gw->base, gw->quote),
             side,
@@ -99,7 +99,7 @@ namespace K {
             tif,
             mStatus::New,
             postOnly
-          ));
+          ), &wallet->balance, market->levels, &gw->refreshWallet);
           mOrder *o = &orders.orders[newOrderId];
           DEBOG(" send  " + replaceOrderId + "> " + (o->side == mSide::Bid ? "BID" : "ASK") + " id " + o->orderId + ": " + str8(o->quantity) + " " + o->pair.base + " at price " + str8(o->price) + " " + o->pair.quote);
           gw->place(
@@ -120,40 +120,6 @@ namespace K {
         mOrder *orderWaitingCancel = orders.cancel(orderId);
         if (orderWaitingCancel)
           gw->cancel(orderWaitingCancel);
-      };
-    private:
-      void updateOrderState(mOrder k) {
-        mOrder *o = orders.find(k);
-        if (!o) return;
-        bool saved = k.orderStatus != mStatus::New,
-             working = k.orderStatus == mStatus::Working;
-        o->orderStatus = k.orderStatus;
-        if (!k.exchangeId.empty()) o->exchangeId = k.exchangeId;
-        if (k.price) o->price = k.price;
-        if (k.quantity) o->quantity = k.quantity;
-        if (k.time) o->time = k.time;
-        if (k.latency) o->latency = k.latency;
-        if (!o->time) o->time = Tstamp;
-        if (!o->latency and working) o->latency = Tstamp - o->time;
-        if (o->latency) o->time = Tstamp;
-        if (k.tradeQuantity)
-          orders.tradesHistory.insert(o, k.tradeQuantity);
-        k.side = o->side;
-        k.price = o->price;
-        if (saved and !working)
-          orders.erase(o->orderId);
-        else DEBOG(" saved " + ((o->side == mSide::Bid ? "BID id " : "ASK id ") + o->orderId) + "::" + o->exchangeId + " [" + to_string((int)o->orderStatus) + "]: " + str8(o->quantity) + " " + o->pair.base + " at price " + str8(o->price) + " " + o->pair.quote);
-        DEBOG("memory " + to_string(orders.orders.size()));
-        if (saved) {
-          wallet->balance.reset(k.side, orders.calcHeldAmount(k.side), market->levels);
-          if (k.tradeQuantity) {
-            wallet->balance.target.safety.recentTrades.insert(k.side, k.price, k.tradeQuantity);
-            wallet->balance.target.safety.calc(market->levels, orders.tradesHistory);
-            gw->refreshWallet = true;
-          }
-          orders.refresh();
-          orders.send();
-        }
       };
   };
 }
