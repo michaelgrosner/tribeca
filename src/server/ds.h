@@ -1827,10 +1827,60 @@ namespace K {
     };
   };
 
+  struct mButtonSubmitNewOrder: public mFromClient {
+    mMatter about() const {
+      return mMatter::SubmitNewOrder;
+    };
+  };
+  struct mButtonCancelOrder: public mFromClient {
+    json kiss(const json &j) {
+      json butterfly;
+      if (j.is_object() and j["orderId"].is_string())
+        butterfly = j["orderId"];
+      return mFromClient::kiss(butterfly);
+    };
+    mMatter about() const {
+      return mMatter::CancelOrder;
+    };
+  };
+  struct mButtonCancelAllOrders: public mFromClient {
+    mMatter about() const {
+      return mMatter::CancelAllOrders;
+    };
+  };
+  struct mButtonCleanAllClosedTrades: public mFromClient {
+    mMatter about() const {
+      return mMatter::CleanAllClosedTrades;
+    };
+  };
+  struct mButtonCleanAllTrades: public mFromClient {
+    mMatter about() const {
+      return mMatter::CleanAllTrades;
+    };
+  };
+  struct mButtonCleanTrade: public mFromClient {
+    json kiss(const json &j) {
+      json butterfly;
+      if (j.is_object() and j["tradeId"].is_string())
+        butterfly = j["tradeId"];
+      return mFromClient::kiss(butterfly);
+    };
+    mMatter about() const {
+      return mMatter::CleanTrade;
+    };
+  };
   struct mOrders: public mToScreen,
                   public mJsonToClient<mOrders> {
     map<mRandId, mOrder> orders;
         mTradesCompleted tradesHistory;
+    struct mButtons {
+      mButtonSubmitNewOrder       submit;
+      mButtonCancelOrder          cancel;
+      mButtonCancelAllOrders      cancelAll;
+      mButtonCleanAllClosedTrades cleanTradesClosed;
+      mButtonCleanAllTrades       cleanTrades;
+      mButtonCleanTrade           cleanTrade;
+    } btn;
     bool debug() const {
       return args.debugOrders;
     };
@@ -2000,57 +2050,6 @@ namespace K {
       {"quotesInMemoryWorking", k.quotesInMemoryWorking},
       {   "quotesInMemoryDone", k.quotesInMemoryDone   }
     };
-  };
-
-  struct mButtonSubmitNewOrder: public mFromClient {
-    mMatter about() const {
-      return mMatter::SubmitNewOrder;
-    };
-  };
-  struct mButtonCancelOrder: public mFromClient {
-    json kiss(const json &j) {
-      json butterfly;
-      if (j.is_object() and j["orderId"].is_string())
-        butterfly = j["orderId"];
-      return mFromClient::kiss(butterfly);
-    };
-    mMatter about() const {
-      return mMatter::CancelOrder;
-    };
-  };
-  struct mButtonCancelAllOrders: public mFromClient {
-    mMatter about() const {
-      return mMatter::CancelAllOrders;
-    };
-  };
-  struct mButtonCleanAllClosedTrades: public mFromClient {
-    mMatter about() const {
-      return mMatter::CleanAllClosedTrades;
-    };
-  };
-  struct mButtonCleanAllTrades: public mFromClient {
-    mMatter about() const {
-      return mMatter::CleanAllTrades;
-    };
-  };
-  struct mButtonCleanTrade: public mFromClient {
-    json kiss(const json &j) {
-      json butterfly;
-      if (j.is_object() and j["tradeId"].is_string())
-        butterfly = j["tradeId"];
-      return mFromClient::kiss(butterfly);
-    };
-    mMatter about() const {
-      return mMatter::CleanTrade;
-    };
-  };
-  struct mButtons {
-    mButtonSubmitNewOrder       submitNewOrder;
-    mButtonCancelOrder          cancelOrder;
-    mButtonCancelAllOrders      cancelAllOrders;
-    mButtonCleanAllClosedTrades cleanAllClosedTrades;
-    mButtonCleanAllTrades       cleanAllTrades;
-    mButtonCleanTrade           cleanTrade;
   };
 
   struct mNotepad: public mJsonToClient<mNotepad> {

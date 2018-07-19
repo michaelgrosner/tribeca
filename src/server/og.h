@@ -4,8 +4,6 @@
 namespace K {
   class OG: public Klass,
             public Broker { public: OG() { broker = this; };
-    private:
-      mButtons btn;
     protected:
       void load() {
         sqlite->backup(&orders.tradesHistory);
@@ -23,25 +21,25 @@ namespace K {
       void waitWebAdmin() {
         client->welcome(orders.tradesHistory);
         client->welcome(orders);
-        client->clickme(btn.cleanAllClosedTrades KISS {
+        client->clickme(orders.btn.cleanTradesClosed KISS {
           orders.tradesHistory.clearClosed();
         });
-        client->clickme(btn.cleanAllTrades KISS {
+        client->clickme(orders.btn.cleanTrades KISS {
           orders.tradesHistory.clearAll();
         });
-        client->clickme(btn.cleanTrade KISS {
+        client->clickme(orders.btn.cleanTrade KISS {
           if (!butterfly.is_string()) return;
           orders.tradesHistory.clearOne(butterfly.get<string>());
         });
-        client->clickme(btn.cancelAllOrders KISS {
+        client->clickme(orders.btn.cancelAll KISS {
           for (mOrder &it : orders.working())
             cancelOrder(it.orderId);
         });
-        client->clickme(btn.cancelOrder KISS {
+        client->clickme(orders.btn.cancel KISS {
           if (!butterfly.is_string()) return;
           cancelOrder(butterfly.get<mRandId>());
         });
-        client->clickme(btn.submitNewOrder KISS {
+        client->clickme(orders.btn.submit KISS {
           if (!butterfly.is_object()) return;
           sendOrder(
             {},
