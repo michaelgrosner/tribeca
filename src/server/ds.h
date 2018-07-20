@@ -1907,13 +1907,15 @@ namespace K {
       ) ? nullptr
         : &orders[raw.orderId];
     };
-    bool replace(const mRandId &replaceOrderId, const mPrice &price) {
-      if (orders[replaceOrderId].exchangeId.empty()) return false;
-        if (debug()) print("DEBUG OG", "update "
-          + ((orders[replaceOrderId].side == mSide::Bid ? "BID" : "ASK")
-          + (" id " + replaceOrderId)) + ":  at price " + str8(price) + " " + args.quote());
-        orders[replaceOrderId].price = price;
-        return true;
+    mRandId replace(const mRandId &replaceOrderId, const mPrice &price) {
+      if (orders.find(replaceOrderId) == orders.end()
+        or orders[replaceOrderId].exchangeId.empty()
+      ) return "";
+      if (debug()) print("DEBUG OG", "update "
+        + ((orders[replaceOrderId].side == mSide::Bid ? "BID" : "ASK")
+        + (" id " + replaceOrderId)) + ":  at price " + str8(price) + " " + args.quote());
+      orders[replaceOrderId].price = price;
+      return orders[replaceOrderId].exchangeId;
     };
     mOrder* cancel(const mRandId &orderId) {
       if (orderId.empty() or orders.find(orderId) == orders.end()) return nullptr;

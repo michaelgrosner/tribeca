@@ -71,8 +71,9 @@ namespace K {
         const bool         &postOnly
       ) {
         if (gw->replace and !replaceOrderId.empty()) {
-          if (orders.replace(replaceOrderId, price))
-            gw->replace(orders.orders[replaceOrderId].exchangeId, str8(price));
+          mRandId replaceExchangeId = orders.replace(replaceOrderId, price);
+          if (!replaceExchangeId.empty())
+            gw->replace(replaceExchangeId, str8(price));
         } else {
           if (args.testChamber != 1) cancelOrder(replaceOrderId);
           mOrder *o = orders.upsert(mOrder(
