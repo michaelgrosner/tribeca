@@ -489,7 +489,6 @@ namespace K {
         }
         broker->cancelOrders(toCancel);
         broker->sendOrder(replaceOrderId, side, q.price, q.size, mOrderType::Limit, mTimeInForce::GTC, isPong, true);
-        monitor.tick_orders();
       };
       void stopAllQuotes(mSide side) {
         vector<mRandId> toCancel;

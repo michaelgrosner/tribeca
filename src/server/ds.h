@@ -498,31 +498,9 @@ namespace K {
     k.tidy();
   };
 
-  struct mPair {
-    mCoinId base,
-            quote;
-    mPair():
-      base(""), quote("")
-    {};
-    mPair(mCoinId b, mCoinId q):
-      base(b), quote(q)
-    {};
-  };
-  static void to_json(json &j, const mPair &k) {
-    j = {
-      { "base", k.base },
-      {"quote", k.quote}
-    };
-  };
-  static void from_json(const json &j, mPair &k) {
-    k.base  = j.value("base", "");
-    k.quote = j.value("quote", "");
-  };
-
   struct mOrder {
          mRandId orderId,
                  exchangeId;
-           mPair pair;
            mSide side;
           mPrice price;
          mAmount quantity,
@@ -536,16 +514,16 @@ namespace K {
                  latency,
                  _waitingCancel;
     mOrder():
-      orderId(""), exchangeId(""), pair(mPair()), side((mSide)0), quantity(0), type((mOrderType)0), isPong(false), price(0), timeInForce((mTimeInForce)0), orderStatus((mStatus)0), preferPostOnly(false), tradeQuantity(0), time(0), _waitingCancel(0), latency(0)
+      orderId(""), exchangeId(""), side((mSide)0), quantity(0), type((mOrderType)0), isPong(false), price(0), timeInForce((mTimeInForce)0), orderStatus((mStatus)0), preferPostOnly(false), tradeQuantity(0), time(0), _waitingCancel(0), latency(0)
     {};
     mOrder(mRandId o, mStatus s):
-      orderId(o), exchangeId(""), pair(mPair()), side((mSide)0), quantity(0), type((mOrderType)0), isPong(false), price(0), timeInForce((mTimeInForce)0), orderStatus(s), preferPostOnly(false), tradeQuantity(0), time(0), _waitingCancel(0), latency(0)
+      orderId(o), exchangeId(""), side((mSide)0), quantity(0), type((mOrderType)0), isPong(false), price(0), timeInForce((mTimeInForce)0), orderStatus(s), preferPostOnly(false), tradeQuantity(0), time(0), _waitingCancel(0), latency(0)
     {};
     mOrder(mRandId o, mRandId e, mStatus s, mPrice p, mAmount q, mAmount Q):
-      orderId(o), exchangeId(e), pair(mPair()), side((mSide)0), quantity(q), type((mOrderType)0), isPong(false), price(p), timeInForce((mTimeInForce)0), orderStatus(s), preferPostOnly(false), tradeQuantity(Q), time(0), _waitingCancel(0), latency(0)
+      orderId(o), exchangeId(e), side((mSide)0), quantity(q), type((mOrderType)0), isPong(false), price(p), timeInForce((mTimeInForce)0), orderStatus(s), preferPostOnly(false), tradeQuantity(Q), time(0), _waitingCancel(0), latency(0)
     {};
-    mOrder(mRandId o, mPair P, mSide S, mAmount q, mOrderType t, bool i, mPrice p, mTimeInForce F, mStatus s, bool O):
-      orderId(o), exchangeId(""), pair(P), side(S), quantity(q), type(t), isPong(i), price(p), timeInForce(F), orderStatus(s), preferPostOnly(O), tradeQuantity(0), time(0), _waitingCancel(0), latency(0)
+    mOrder(mRandId o, mSide S, mAmount q, mOrderType t, bool i, mPrice p, mTimeInForce F, mStatus s, bool O):
+      orderId(o), exchangeId(""), side(S), quantity(q), type(t), isPong(i), price(p), timeInForce(F), orderStatus(s), preferPostOnly(O), tradeQuantity(0), time(0), _waitingCancel(0), latency(0)
     {};
     void update(const mOrder &raw) {
       orderStatus = raw.orderStatus;
@@ -564,7 +542,6 @@ namespace K {
     j = {
       {       "orderId", k.orderId       },
       {    "exchangeId", k.exchangeId    },
-      {          "pair", k.pair          },
       {          "side", k.side          },
       {      "quantity", k.quantity      },
       {          "type", k.type          },
@@ -581,7 +558,6 @@ namespace K {
   struct mTrade {
      string tradeId;
       mSide side;
-      mPair pair;
      mPrice price,
             Kprice;
     mAmount quantity,
@@ -594,19 +570,18 @@ namespace K {
             Ktime;
        bool loadedFromDB;
     mTrade():
-      tradeId(""), side((mSide)0), pair(mPair()), price(0), Kprice(0), quantity(0), value(0), Kqty(0), Kvalue(0), Kdiff(0), feeCharged(0), time(0), Ktime(0), loadedFromDB(false)
+      tradeId(""), side((mSide)0), price(0), Kprice(0), quantity(0), value(0), Kqty(0), Kvalue(0), Kdiff(0), feeCharged(0), time(0), Ktime(0), loadedFromDB(false)
     {};
-    mTrade(mPair P, mPrice p, mAmount q, mSide s, mClock t):
-      tradeId(""), side(s), pair(P), price(p), Kprice(0), quantity(q), value(0), Kqty(0), Kvalue(0), Kdiff(0), feeCharged(0), time(t), Ktime(0), loadedFromDB(false)
+    mTrade(mPrice p, mAmount q, mSide s, mClock t):
+      tradeId(""), side(s), price(p), Kprice(0), quantity(q), value(0), Kqty(0), Kvalue(0), Kdiff(0), feeCharged(0), time(t), Ktime(0), loadedFromDB(false)
     {};
-    mTrade(string i, mPair P, mPrice p, mAmount q, mSide S, mClock t, mAmount v, mClock Kt, mAmount Kq, mPrice Kp, mAmount Kv, mAmount Kd, mAmount f, bool l):
-      tradeId(i), side(S), pair(P), price(p), Kprice(Kp), quantity(q), value(v), Kqty(Kq), Kvalue(Kv), Kdiff(Kd), feeCharged(f), time(t), Ktime(Kt), loadedFromDB(l)
+    mTrade(string i, mPrice p, mAmount q, mSide S, mClock t, mAmount v, mClock Kt, mAmount Kq, mPrice Kp, mAmount Kv, mAmount Kd, mAmount f, bool l):
+      tradeId(i), side(S), price(p), Kprice(Kp), quantity(q), value(v), Kqty(Kq), Kvalue(Kv), Kdiff(Kd), feeCharged(f), time(t), Ktime(Kt), loadedFromDB(l)
     {};
   };
   static void to_json(json &j, const mTrade &k) {
     if (k.tradeId.empty()) j = {
       {    "time", k.time    },
-      {    "pair", k.pair    },
       {   "price", k.price   },
       {"quantity", k.quantity},
       {    "side", k.side    }
@@ -614,7 +589,6 @@ namespace K {
     else j = {
       {     "tradeId", k.tradeId     },
       {        "time", k.time        },
-      {        "pair", k.pair        },
       {       "price", k.price       },
       {    "quantity", k.quantity    },
       {        "side", k.side        },
@@ -630,7 +604,6 @@ namespace K {
   };
   static void from_json(const json &j, mTrade &k) {
     k.tradeId      = j.value("tradeId", "");
-    k.pair         = j.value("pair", json::object());
     k.price        = j.value("price", 0.0);
     k.quantity     = j.value("quantity", 0.0);
     k.side         = j.value("side", (mSide)0);
@@ -709,7 +682,6 @@ namespace K {
       mAmount fee = 0;
       mTrade trade(
         to_string(Tstamp),
-        o->pair,
         o->price,
         tradeQuantity,
         o->side,
@@ -719,9 +691,9 @@ namespace K {
       );
       print("GW " + args.exchange, string(o->isPong?"PONG":"PING") + " TRADE "
         + (trade.side == mSide::Bid ? "BUY  " : "SELL ")
-        + str8(trade.quantity) + ' ' + trade.pair.base + " at price "
-        + str8(trade.price) + ' ' + trade.pair.quote + " (value "
-        + str8(trade.value) + ' ' + trade.pair.quote + ")"
+        + str8(trade.quantity) + ' ' + args.base() + " at price "
+        + str8(trade.price) + ' ' + args.quote() + " (value "
+        + str8(trade.value) + ' ' + args.quote() + ")"
       );
       if (qp.safety == mQuotingSafety::Off or qp.safety == mQuotingSafety::PingPong)
         send_push_back(trade);
@@ -2004,15 +1976,15 @@ namespace K {
       void report_place(mOrder *const order) const {
         print("DEBUG OG", " place "
           + ((order->side == mSide::Bid ? "BID id " : "ASK id ") + order->orderId) + ": "
-          + str8(order->quantity) + " " + order->pair.base + " at price "
-          + str8(order->price) + " " + order->pair.quote);
+          + str8(order->quantity) + " " + args.base() + " at price "
+          + str8(order->price) + " " + args.quote());
       };
       void report(mOrder *const order) const {
         print("DEBUG OG", " saved "
           + ((order->side == mSide::Bid ? "BID id " : "ASK id ") + order->orderId)
           + "::" + order->exchangeId + " [" + to_string((int)order->orderStatus) + "]: "
-          + str8(order->quantity) + " " + order->pair.base + " at price "
-          + str8(order->price) + " " + order->pair.quote);
+          + str8(order->quantity) + " " + args.base() + " at price "
+          + str8(order->price) + " " + args.quote());
       };
       void report(const mOrder &raw) const {
         print("DEBUG OG", "reply  " + raw.orderId + "::" + raw.exchangeId
@@ -2425,6 +2397,26 @@ namespace K {
       };
   };
 
+  struct mPair {
+    mCoinId base,
+            quote;
+    mPair():
+      base(""), quote("")
+    {};
+    mPair(mCoinId b, mCoinId q):
+      base(b), quote(q)
+    {};
+  };
+  static void to_json(json &j, const mPair &k) {
+    j = {
+      { "base", k.base },
+      {"quote", k.quote}
+    };
+  };
+  static void from_json(const json &j, mPair &k) {
+    k.base  = j.value("base", "");
+    k.quote = j.value("quote", "");
+  };
   struct mProduct: public mJsonToClient<mProduct> {
     mExchange exchange;
         mPair pair;

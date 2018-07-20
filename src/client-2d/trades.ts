@@ -15,8 +15,6 @@ export class TradesComponent implements OnInit {
 
   private fireCxl: Subscribe.IFire<object>;
 
-  public exch: Models.Exchange;
-  public pair: Models.CurrencyPair;
   public audio: boolean;
 
   private sortTimeout: number;
@@ -120,7 +118,7 @@ export class TradesComponent implements OnInit {
   }
 
   private addRowData = (t: Models.Trade) => {
-    if (!this.gridOptions.api) return;
+    if (!this.gridOptions.api || this.product.advert.pair == null) return;
     if (t.Kqty<0) {
       this.gridOptions.api.forEachNode((node: RowNode) => {
         if (node.data.tradeId==t.tradeId)
@@ -173,7 +171,7 @@ export class TradesComponent implements OnInit {
           Kprice: t.Kprice ? t.Kprice : null,
           Kvalue: t.Kvalue ? t.Kvalue : null,
           Kdiff: t.Kdiff && t.Kdiff!=0 ? t.Kdiff : null,
-          quoteSymbol: t.pair.quote.substr(0,3).replace('USD','$').replace('EUR','€'),
+          quoteSymbol: this.product.advert.pair.quote,
           productFixed: this.product.fixed
         }]});
         if (t.loadedFromDB === false && this.audio) {

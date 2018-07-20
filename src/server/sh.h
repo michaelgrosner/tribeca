@@ -251,6 +251,12 @@ namespace K {
 #endif
       void refresh() {
         if (!wBorder) return;
+        string base = "?",
+               quote = "?";
+        if (gw) {
+          base = gw->base;
+          quote = gw->quote;
+        }
         vector<mOrder> openOrders = broker->orders.working(true);
         int lastcursor = cursor,
             y = getmaxy(wBorder),
@@ -270,9 +276,9 @@ namespace K {
         for (mOrder &it : openOrders) {
           wattron(wBorder, COLOR_PAIR(it.side == mSide::Bid ? COLOR_CYAN : COLOR_MAGENTA));
           mvwaddstr(wBorder, ++yOrders, 1, (((it.side == mSide::Bid ? "BID" : "ASK") + (" > "
-            + str8(it.quantity))) + ' ' + it.pair.base + " at price "
-            + str8(it.price) + ' ' + it.pair.quote + " (value "
-            + str8(abs(it.price * it.quantity)) + ' ' + it.pair.quote + ")"
+            + str8(it.quantity))) + ' ' + base + " at price "
+            + str8(it.price) + ' ' + quote + " (value "
+            + str8(abs(it.price * it.quantity)) + ' ' + quote + ")"
           ).data());
           wattroff(wBorder, COLOR_PAIR(it.side == mSide::Bid ? COLOR_CYAN : COLOR_MAGENTA));
         }
@@ -314,12 +320,6 @@ namespace K {
         wattron(wBorder, A_BOLD);
         waddstr(wBorder, (" " + baseValue + ' ').data());
         wattroff(wBorder, A_BOLD);
-        string base = "?",
-               quote = "?";
-        if (gw) {
-          base = gw->base;
-          quote = gw->quote;
-        }
         waddstr(wBorder, base.data());
         wattroff(wBorder, COLOR_PAIR(COLOR_MAGENTA));
         wattron(wBorder, COLOR_PAIR(COLOR_GREEN));

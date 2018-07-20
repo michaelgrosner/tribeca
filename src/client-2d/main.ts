@@ -790,6 +790,11 @@ class ClientComponent implements OnInit {
     this.pair = new Pair.DisplayPair(this.zone, this.subscriberFactory, this.fireFactory);
 
     this.subscriberFactory
+      .getSubscriber(this.zone, Models.Topics.ProductAdvertisement)
+      .registerSubscriber(this.onAdvert)
+      .registerDisconnectedHandler(() => this.reset(false));
+
+    this.subscriberFactory
       .getSubscriber(this.zone, Models.Topics.OrderStatusReports)
       .registerSubscriber((o: any[]) => { this.orderList = o; })
       .registerDisconnectedHandler(() => { this.orderList = []; });
@@ -861,11 +866,6 @@ class ClientComponent implements OnInit {
     this.reset(false);
 
     this.order = new DisplayOrder(this.fireFactory);
-
-    this.subscriberFactory
-      .getSubscriber(this.zone, Models.Topics.ProductAdvertisement)
-      .registerSubscriber(this.onAdvert)
-      .registerDisconnectedHandler(() => this.reset(false));
 
     this.subscriberFactory
       .getSubscriber(this.zone, Models.Topics.ApplicationState)

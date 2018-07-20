@@ -61,14 +61,14 @@ namespace K {
       };
     public:
       void sendOrder(
-        const mRandId         &replaceOrderId,
-        const mSide           &side          ,
-        const mPrice          &price         ,
-        const mAmount         &qty           ,
-        const mOrderType      &type          ,
-        const mTimeInForce    &tif           ,
-        const bool            &isPong        ,
-        const bool            &postOnly
+        const mRandId      &replaceOrderId,
+        const mSide        &side          ,
+        const mPrice       &price         ,
+        const mAmount      &qty           ,
+        const mOrderType   &type          ,
+        const mTimeInForce &tif           ,
+        const bool         &isPong        ,
+        const bool         &postOnly
       ) {
         if (gw->replace and !replaceOrderId.empty()) {
           if (orders.replace(replaceOrderId, price))
@@ -77,7 +77,6 @@ namespace K {
           if (args.testChamber != 1) cancelOrder(replaceOrderId);
           mOrder *o = orders.upsert(mOrder(
             gw->randId(),
-            mPair(gw->base, gw->quote),
             side,
             qty,
             type,
@@ -98,6 +97,7 @@ namespace K {
           );
           if (args.testChamber == 1) cancelOrder(replaceOrderId);
         }
+        engine->monitor.tick_orders();
       };
       void cancelOrder(const mRandId &orderId) {
         mOrder *orderWaitingCancel = orders.cancel(orderId);

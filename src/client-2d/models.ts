@@ -56,8 +56,7 @@ export class MarketStats {
 }
 
 export class MarketTrade {
-    constructor(public pair: CurrencyPair,
-                public price: number,
+    constructor(public price: number,
                 public quantity: number,
                 public time: number,
                 public side: Side) {}
@@ -116,7 +115,6 @@ export class TradeChart {
 export class Trade {
     constructor(public tradeId: string,
                 public time: number,
-                public pair: CurrencyPair,
                 public price: number,
                 public quantity: number,
                 public side: Side,

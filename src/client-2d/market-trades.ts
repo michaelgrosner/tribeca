@@ -61,7 +61,7 @@ export class MarketTradesComponent implements OnInit {
   }
 
   private addRowData = (trade: Models.MarketTrade) => {
-    if (!this.gridOptions.api) return;
+    if (!this.gridOptions.api || this.product.advert.pair == null) return;
     if (trade != null)
       this.gridOptions.api.updateRowData({add:[{
         price: trade.price,
@@ -69,7 +69,7 @@ export class MarketTradesComponent implements OnInit {
         time: trade.time,
         recent: true,
         side: Models.Side[trade.side],
-        quoteSymbol: trade.pair.quote,
+        quoteSymbol: this.product.advert.pair.quote,
         productFixed: this.product.fixed
       }]});
 
