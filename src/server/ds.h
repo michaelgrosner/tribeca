@@ -1857,8 +1857,8 @@ namespace K {
     bool debug() const {
       return args.debugOrders;
     };
-    mOrder* upsert(mOrder raw, const bool &place = false) {
-      mOrder *order = findsert(raw);
+    mOrder *const upsert(mOrder raw, const bool &place = false) {
+      mOrder *const order = findsert(raw);
       if (!order) return nullptr;
       order->update(raw);
       if (debug()) {
@@ -1870,7 +1870,7 @@ namespace K {
     };
     void upsert(mOrder raw, mWalletPosition *const balance, const mMarketLevels &levels, bool *const refreshWallet) {
       if (debug()) report(raw);
-      mOrder *order = upsert(raw);
+      mOrder *const order = upsert(raw);
       if (!order) return;
       if (raw.tradeQuantity)
         tradesHistory.insert(order, raw.tradeQuantity);
@@ -1889,7 +1889,7 @@ namespace K {
       send();
       refresh();
     };
-    mOrder* findsert(mOrder raw) {
+    mOrder *const findsert(mOrder raw) {
       if (raw.orderStatus == mStatus::New)
         orders[raw.orderId] = raw;
       else if (raw.orderId.empty() and !raw.exchangeId.empty()) {
@@ -1907,23 +1907,25 @@ namespace K {
       ) ? nullptr
         : &orders[raw.orderId];
     };
-    mRandId replace(const mRandId &replaceOrderId, const mPrice &price) {
-      if (orders.find(replaceOrderId) == orders.end()
-        or orders[replaceOrderId].exchangeId.empty()
-      ) return "";
+    bool replace(mOrder *const toReplace, const mPrice &price) {
+      if (!toReplace
+        or toReplace->exchangeId.empty()
+      ) return false;
+      toReplace->price = price;
       if (debug()) print("DEBUG OG", "update "
-        + ((orders[replaceOrderId].side == mSide::Bid ? "BID" : "ASK")
-        + (" id " + replaceOrderId)) + ":  at price " + str8(price) + " " + args.quote());
-      orders[replaceOrderId].price = price;
-      return orders[replaceOrderId].exchangeId;
+        + ((toReplace->side == mSide::Bid ? "BID" : "ASK")
+        + (" id " + toReplace->orderId)) + ":  at price "
+        + str8(toReplace->price) + " " + args.quote());
+      return true;
     };
-    mOrder* cancel(const mRandId &orderId) {
-      if (orderId.empty() or orders.find(orderId) == orders.end()) return nullptr;
-      mOrder *order = &orders[orderId];
-      if (order->exchangeId.empty() or order->_waitingCancel + 3e+3 > Tstamp) return nullptr;
-      order->_waitingCancel = Tstamp;
-      if (debug()) report_cancel(order);
-      return order;
+    bool cancel(mOrder *const toCancel) {
+      if (!toCancel
+        or toCancel->exchangeId.empty()
+        or toCancel->_waitingCancel + 3e+3 > Tstamp
+      ) return false;
+      toCancel->_waitingCancel = Tstamp;
+      if (debug()) report_cancel(toCancel);
+      return true;
     };
     void erase(const mRandId &orderId) {
       map<mRandId, mOrder>::iterator it = orders.find(orderId);
@@ -1944,7 +1946,15 @@ namespace K {
         }
       );
     };
-    vector<mOrder> working(const bool &sorted = false) const {
+    vector<mOrder*> working(const mSide &side = mSide::Both) {
+      vector<mOrder*> workingOrders;
+      for (map<mRandId, mOrder>::value_type &it : orders)
+        if (mStatus::Working == it.second.orderStatus and (side == mSide::Both
+          or (side == it.second.side and it.second.preferPostOnly)
+        )) workingOrders.push_back(&it.second);
+      return workingOrders;
+    };
+    const vector<mOrder> working(const bool &sorted = false) const {
       vector<mOrder> workingOrders;
       for (const map<mRandId, mOrder>::value_type &it : orders)
         if (mStatus::Working == it.second.orderStatus)

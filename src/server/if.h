@@ -68,18 +68,8 @@ namespace K {
 
   static struct Broker {
     mOrders orders;
-    virtual void cancelOrder(const mRandId&) = 0;
-    virtual void cancelOrders(const vector<mRandId>&) = 0;
-    virtual void sendOrder(
-      const mRandId&        ,
-      const mSide&          ,
-      const mPrice&         ,
-      const mAmount&        ,
-      const mOrderType&     ,
-      const mTimeInForce&   ,
-      const bool&           ,
-      const bool&
-    ) = 0;
+    virtual void sendAllQuotes(const vector<mOrder*>&, mOrder *const, const mLevel&, const mSide&, const bool&) = 0;
+    virtual void stopAllQuotes(const mSide &side) = 0;
   } *broker = nullptr;
 
   static struct Engine {

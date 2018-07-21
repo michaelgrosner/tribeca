@@ -38,7 +38,7 @@ namespace K {
           if (!semaphore.greenButton) {
             bidStatus = mQuoteState::DisabledQuotes;
             askStatus = mQuoteState::DisabledQuotes;
-            stopAllQuotes(mSide::Both);
+            broker->stopAllQuotes(mSide::Both);
           } else {
             bidStatus = mQuoteState::UnknownHeld;
             askStatus = mQuoteState::UnknownHeld;
@@ -66,9 +66,9 @@ namespace K {
         bidStatus = checkCrossedQuotes(mSide::Bid, &quote);
         askStatus = checkCrossedQuotes(mSide::Ask, &quote);
         if (askStatus == mQuoteState::Live) updateQuote(quote.ask, mSide::Ask, quote.isAskPong);
-        else stopAllQuotes(mSide::Ask);
+        else broker->stopAllQuotes(mSide::Ask);
         if (bidStatus == mQuoteState::Live) updateQuote(quote.bid, mSide::Bid, quote.isBidPong);
-        else stopAllQuotes(mSide::Bid);
+        else broker->stopAllQuotes(mSide::Bid);
       };
       void sendStatusToUI() {
         unsigned int quotesInMemoryNew = 0;
@@ -412,12 +412,12 @@ namespace K {
         mQuote k = quoteAtTopOfMarket();
         k.bid.size = 0;
         k.ask.size = 0;
-        for (mLevel &it : market->levels.bids)
+        for (const mLevel &it : market->levels.bids)
           if (k.bid.size < it.size and it.price <= k.bid.price) {
             k.bid.size = it.size;
             k.bid.price = it.price;
           }
-        for (mLevel &it : market->levels.asks)
+        for (const mLevel &it : market->levels.asks)
           if (k.ask.size < it.size and it.price >= k.ask.price) {
             k.ask.size = it.size;
             k.ask.price = it.price;
@@ -431,14 +431,14 @@ namespace K {
       function<mQuote(mAmount, mAmount, mAmount)> calcDepthOfMarket = [&](mAmount depth, mAmount bidSize, mAmount askSize) {
         mPrice bidPx = market->levels.bids.begin()->price;
         mAmount bidDepth = 0;
-        for (mLevel &it : market->levels.bids) {
+        for (const mLevel &it : market->levels.bids) {
           bidDepth += it.size;
           if (bidDepth >= depth) break;
           else bidPx = it.price;
         }
         mPrice askPx = market->levels.asks.begin()->price;
         mAmount askDepth = 0;
-        for (mLevel &it : market->levels.asks) {
+        for (const mLevel &it : market->levels.asks) {
           askDepth += it.size;
           if (askDepth >= depth) break;
           else askPx = it.price;
@@ -464,39 +464,34 @@ namespace K {
           return mQuoteState::Crossed;
         } else return mQuoteState::Live;
       };
-      void updateQuote(mLevel q, mSide side, bool isPong) {
+      void updateQuote(mLevel quote, mSide side, bool isPong) {
         unsigned int n = 0;
-        vector<mRandId> toCancel,
+        vector<mOrder*> toCancel,
                         keepWorking;
         mClock now = Tstamp;
         for (map<mRandId, mOrder>::value_type &it : broker->orders.orders)
           if (it.second.side != side or !it.second.preferPostOnly) continue;
-          else if (abs(it.second.price - q.price) < gw->minTick) return;
+          else if (abs(it.second.price - quote.price) < gw->minTick) return;
           else if (it.second.orderStatus == mStatus::New) {
             if (qp.safety != mQuotingSafety::AK47 or ++n >= qp.bullets) return;
           } else if (qp.safety != mQuotingSafety::AK47 or (
-            side == mSide::Bid ? q.price <= it.second.price : q.price >= it.second.price
+            side == mSide::Bid
+              ? quote.price <= it.second.price
+              : quote.price >= it.second.price
           )) {
             if (args.lifetime and it.second.time + args.lifetime > now) return;
-            toCancel.push_back(it.first);
-          } else keepWorking.push_back(it.first);
-        if (qp.safety == mQuotingSafety::AK47 and toCancel.empty() and !keepWorking.empty())
-          toCancel.push_back(side == mSide::Bid ? keepWorking.front() : keepWorking.back());
-        mRandId replaceOrderId;
+            toCancel.push_back(&it.second);
+          } else keepWorking.push_back(&it.second);
+        if (qp.safety == mQuotingSafety::AK47
+          and toCancel.empty()
+          and !keepWorking.empty()
+        ) toCancel.push_back(side == mSide::Bid ? keepWorking.front() : keepWorking.back());
+        mOrder *toReplace = nullptr;
         if (!toCancel.empty()) {
-          replaceOrderId = side == mSide::Bid ? toCancel.back() : toCancel.front();
+          toReplace = side == mSide::Bid ? toCancel.back() : toCancel.front();
           toCancel.erase(side == mSide::Bid ? toCancel.end()-1 : toCancel.begin());
         }
-        broker->cancelOrders(toCancel);
-        broker->sendOrder(replaceOrderId, side, q.price, q.size, mOrderType::Limit, mTimeInForce::GTC, isPong, true);
-      };
-      void stopAllQuotes(mSide side) {
-        vector<mRandId> toCancel;
-        for (map<mRandId, mOrder>::value_type &it : broker->orders.orders)
-          if (it.second.orderStatus == mStatus::Working and (side == mSide::Both
-              or (side == it.second.side and it.second.preferPostOnly)
-          )) toCancel.push_back(it.first);
-        broker->cancelOrders(toCancel);
+        broker->sendAllQuotes(toCancel, toReplace, quote, side, isPong);
       };
   };
 }
