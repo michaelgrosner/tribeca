@@ -35,9 +35,7 @@ namespace K {
         });
         client->clickme(orders.btn.cancel KISS {
           if (!butterfly.is_string()) return;
-          mRandId orderId = butterfly.get<mRandId>();
-          if (orderId.empty() or orders.orders.find(orderId) == orders.orders.end()) return;
-          cancelOrder(&orders.orders[orderId]);
+          cancelOrder(orders.find(butterfly.get<mRandId>()));
         });
         client->clickme(orders.btn.submit KISS {
           if (!butterfly.is_object()) return;
@@ -62,10 +60,12 @@ namespace K {
     public:
       void sendAllQuotes(const vector<mOrder*> &toCancel, mOrder *const toReplace, const mLevel &quote, const mSide &side, const bool &isPong) {
         cancelOrders(toCancel);
-        if (gw->replace and toReplace)
-          return replaceOrder(toReplace, quote.price);
-        if (args.testChamber != 1 and toReplace)
-          cancelOrder(toReplace);
+        if (toReplace) {
+          if (gw->replace)
+            return replaceOrder(toReplace, quote.price);
+          if (args.testChamber != 1)
+            cancelOrder(toReplace);
+        }
         sendOrder(side, quote.price, quote.size, mOrderType::Limit, mTimeInForce::GTC, isPong, true);
         if (args.testChamber == 1 and toReplace)
           cancelOrder(toReplace);
@@ -83,7 +83,7 @@ namespace K {
         const bool         &isPong  ,
         const bool         &postOnly
       ) {
-        mOrder *o = orders.upsert(mOrder(gw->randId(), side, qty, type, isPong, price,tif, mStatus::New, postOnly), true);
+        mOrder *const o = orders.upsert(mOrder(gw->randId(), side, qty, type, isPong, price,tif, mStatus::New, postOnly), true);
         gw->place(o->orderId, o->side, str8(o->price), str8(o->quantity), o->type, o->timeInForce, o->preferPostOnly);
         engine->monitor.tick_orders();
       };
@@ -95,18 +95,11 @@ namespace K {
       };
       void cancelOrder(mOrder *const toCancel) {
         if (orders.cancel(toCancel))
-          gw->cancel(
-            toCancel->orderId,
-            toCancel->exchangeId
-          );
+          gw->cancel(toCancel->orderId, toCancel->exchangeId);
       };
       void cancelOrders(const vector<mOrder*> &toCancel) {
-        for_each(
-          toCancel.begin(), toCancel.end(),
-          [&](mOrder *const it) {
-            cancelOrder(it);
-          }
-        );
+        for (mOrder *const it : toCancel)
+          cancelOrder(it);
       };
   };
 }

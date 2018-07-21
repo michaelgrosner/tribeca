@@ -273,18 +273,15 @@ namespace K {
         }
         mvwvline(wBorder, 1, 1, ' ', y-1);
         mvwvline(wBorder, yMaxLog-1, 1, ' ', y-1);
-        for_each(
-          openOrders.begin(), openOrders.end(),
-          [&](const mOrder &it) {
-            wattron(wBorder, COLOR_PAIR(it.side == mSide::Bid ? COLOR_CYAN : COLOR_MAGENTA));
-            mvwaddstr(wBorder, ++yOrders, 1, (((it.side == mSide::Bid ? "BID" : "ASK") + (" > "
-              + str8(it.quantity))) + ' ' + base + " at price "
-              + str8(it.price) + ' ' + quote + " (value "
-              + str8(abs(it.price * it.quantity)) + ' ' + quote + ")"
-            ).data());
-            wattroff(wBorder, COLOR_PAIR(it.side == mSide::Bid ? COLOR_CYAN : COLOR_MAGENTA));
-          }
-        );
+        for (const mOrder &it : openOrders) {
+          wattron(wBorder, COLOR_PAIR(it.side == mSide::Bid ? COLOR_CYAN : COLOR_MAGENTA));
+          mvwaddstr(wBorder, ++yOrders, 1, (((it.side == mSide::Bid ? "BID" : "ASK") + (" > "
+            + str8(it.quantity))) + ' ' + base + " at price "
+            + str8(it.price) + ' ' + quote + " (value "
+            + str8(abs(it.price * it.quantity)) + ' ' + quote + ")"
+          ).data());
+          wattroff(wBorder, COLOR_PAIR(it.side == mSide::Bid ? COLOR_CYAN : COLOR_MAGENTA));
+        }
         mvwaddch(wBorder, 0, 0, ACS_ULCORNER);
         mvwhline(wBorder, 0, 1, ACS_HLINE, max(80, x));
         mvwhline(wBorder, 1, 14, ' ', max(80, x)-14);

@@ -141,14 +141,14 @@ namespace K {
   } args;
 
   struct mAbout {
-    virtual mMatter about() const = 0;
+    virtual const mMatter about() const = 0;
   };
   struct mDump: virtual public mAbout {
-    virtual json dump() const = 0;
+    virtual const json dump() const = 0;
   };
 
   struct mFromClient: virtual public mAbout {
-    virtual json kiss(const json &j) {
+    virtual const json kiss(const json &j) {
       return j;
     };
   };
@@ -178,10 +178,10 @@ namespace K {
     = []() { WARN("Y U NO catch client send?"); }
 #endif
     ;
-    virtual json hello() {
+    virtual const json hello() {
       return { dump() };
     };
-    virtual bool realtime() const {
+    virtual const bool realtime() const {
       return true;
     };
   };
@@ -190,15 +190,15 @@ namespace K {
       if (send_asap() or send_soon())
         send_now();
     };
-    virtual json dump() const {
+    virtual const json dump() const {
       return *(mData*)this;
     };
     protected:
       mClock send_Tstamp = 0;
-      virtual bool send_asap() const {
+      virtual const bool send_asap() const {
         return true;
       };
-      bool send_soon(const int &delay = 0) {
+      const bool send_soon(const int &delay = 0) {
         if (send_Tstamp + max(369, delay) > Tstamp) return false;
         send_Tstamp = Tstamp;
         return true;
@@ -211,14 +211,14 @@ namespace K {
 
   struct mFromDb: public mDump {
     function<void()> push;
-    virtual   bool pull(const json &j) = 0;
-    virtual string increment() const { return "NULL"; };
-    virtual double limit()     const { return 0; };
-    virtual mClock lifetime()  const { return 0; };
-    virtual string explain()   const = 0;
-    virtual string explainOK() const = 0;
-    virtual string explainKO() const { return ""; };
-    string explanation(const bool &loaded) {
+    virtual const bool pull(const json &j) = 0;
+    virtual const string increment() const { return "NULL"; };
+    virtual const double limit()     const { return 0; };
+    virtual const mClock lifetime()  const { return 0; };
+    virtual const string explain()   const = 0;
+    virtual       string explainOK() const = 0;
+    virtual       string explainKO() const { return ""; };
+    const string explanation(const bool &loaded) const {
       string msg = loaded
         ? explainOK()
         : explainKO();
@@ -229,10 +229,10 @@ namespace K {
     };
   };
   template <typename mData> struct mStructFromDb: public mFromDb {
-    virtual json dump() const {
+    virtual const json dump() const {
       return *(mData*)this;
     };
-    virtual bool pull(const json &j) {
+    virtual const bool pull(const json &j) {
       if (j.empty()) return false;
       from_json(j.at(0), *(mData*)this);
       return true;
@@ -266,15 +266,15 @@ namespace K {
       push();
       erase();
     };
-    virtual bool pull(const json &j) {
+    virtual const bool pull(const json &j) {
       for (const json &it : j)
         rows.push_back(it);
       return !empty();
     };
-    virtual json dump() const {
+    virtual const json dump() const {
       return rows.back();
     };
-    virtual string explain() const {
+    virtual const string explain() const {
       return to_string(size());
     };
   };
@@ -356,7 +356,7 @@ namespace K {
       _diffXSEP = prev.extraShortEwmaPeriods != extraShortEwmaPeriods;
       _diffUEP = prev.ultraShortEwmaPeriods != ultraShortEwmaPeriods;
     };
-    json kiss(const json &j) {
+    const json kiss(const json &j) {
       mQuotingParams prev = *this; // just need to copy the 6 prev.* vars above, noob
       from_json(j, *this);
       diff(prev);
@@ -364,10 +364,10 @@ namespace K {
       send();
       return mFromClient::kiss(j);
     };
-    mMatter about() const {
+    const mMatter about() const {
       return mMatter::QuotingParameters;
     };
-    string explain() const {
+    const string explain() const {
       return "Quoting Parameters";
     };
     string explainKO() const {
@@ -638,13 +638,13 @@ namespace K {
       trades.push_back(row);
       send();
     };
-    mMatter about() const {
+    const mMatter about() const {
       return mMatter::MarketTrade;
     };
-    json dump() const {
+    const json dump() const {
       return trades.back();
     };
-    json hello() {
+    const json hello() {
       return trades;
     };
   };
@@ -724,27 +724,27 @@ namespace K {
       if (qp.cleanPongsAuto)
         clearPongsAuto();
     };
-    mMatter about() const {
+    const mMatter about() const {
       return mMatter::Trades;
     };
     void erase() {
       if (crbegin()->Kqty < 0) rows.pop_back();
     };
-    json dump() const {
+    const json dump() const {
       if (crbegin()->Kqty == -1) return nullptr;
       else return mVectorFromDb::dump();
     };
-    string increment() const {
+    const string increment() const {
       return crbegin()->tradeId;
     };
     string explainOK() const {
       return "loaded % historical Trades";
     };
-    json hello() {
+    const json hello() {
       return rows;
     };
     private:
-      void clear_if(const function<bool(iterator)> &fn, const bool &onlyOne = false) {
+      void clear_if(const function<const bool(iterator)> &fn, const bool &onlyOne = false) {
         for (iterator it = begin(); it != end();)
           if (fn(it)) {
             it->Kqty = -1;
@@ -847,7 +847,7 @@ namespace K {
       sumSells = sum(&sells);
     };
     private:
-      mAmount sum(multimap<mPrice, mRecentTrade> *const k) {
+      const mAmount sum(multimap<mPrice, mRecentTrade> *const k) const {
         mAmount sum = 0;
         for (multimap<mPrice, mRecentTrade>::value_type &it : *k)
           sum += it.second.quantity;
@@ -893,13 +893,13 @@ namespace K {
     k.fv = j.value("fv", 0.0);
   };
   struct mFairHistory: public mVectorFromDb<mFairValue> {
-    mMatter about() const {
+    const mMatter about() const {
       return mMatter::MarketDataLongTerm;
     };
-    double limit() const {
+    const double limit() const {
       return 5760;
     };
-    mClock lifetime() const {
+    const mClock lifetime() const {
       return 60e+3 * limit();
     };
     string explainOK() const {
@@ -912,13 +912,13 @@ namespace K {
     mFairLevelsPrice(mPrice *const f):
       fv(f)
     {};
-    mMatter about() const {
+    const mMatter about() const {
       return mMatter::FairValue;
     };
-    bool realtime() const {
+    const bool realtime() const {
       return !qp.delayUI;
     };
-    bool ratelimit(const mPrice &prev) const {
+    const bool ratelimit(const mPrice &prev) const {
       return *fv == prev;
     };
     void send_ratelimit(const mPrice &prev) {
@@ -926,7 +926,7 @@ namespace K {
       send();
       refresh();
     };
-    bool send_asap() const {
+    const bool send_asap() const {
       return false;
     };
   };
@@ -966,7 +966,7 @@ namespace K {
     mStdevs():
       top(0), topMean(0), fair(0), fairMean(0), bid(0), bidMean(0), ask(0), askMean(0)
     {};
-    bool pull(const json &j) {
+    const bool pull(const json &j) {
       const bool loaded = mVectorFromDb::pull(j);
       if (loaded) calc();
       return loaded;
@@ -1011,13 +1011,13 @@ namespace K {
       double variance = sq_diff_sum / n;
       return sqrt(variance) * factor;
     };
-    mMatter about() const {
+    const mMatter about() const {
       return mMatter::STDEVStats;
     };
-    double limit() const {
+    const double limit() const {
       return qp.quotingStdevProtectionPeriods;
     };
-    mClock lifetime() const {
+    const mClock lifetime() const {
       return 1e+3 * limit();
     };
     string explainOK() const {
@@ -1116,10 +1116,10 @@ namespace K {
       }
       targetPositionAutoPercentage = ((1 + max(-1.0, min(1.0, targetPosition))) / 2) * 1e+2;
     };
-    mMatter about() const {
+    const mMatter about() const {
       return mMatter::EWMAStats;
     };
-    mClock lifetime() const {
+    const mClock lifetime() const {
       return 60e+3 * max(qp.veryLongEwmaPeriods,
                      max(qp.longEwmaPeriods,
                      max(qp.mediumEwmaPeriods,
@@ -1128,7 +1128,7 @@ namespace K {
                          qp.ultraShortEwmaPeriods
                      )))));
     };
-    string explain() const {
+    const string explain() const {
       return "EWMA Values";
     };
     string explainKO() const {
@@ -1165,10 +1165,10 @@ namespace K {
     mMarketStats(mPrice *const f):
        ewma(mEwma()), fairPrice(mFairLevelsPrice(f)), takerTrades(mMarketTakers())
     {};
-    mMatter about() const {
+    const mMatter about() const {
       return mMatter::MarketChart;
     };
-    bool realtime() const {
+    const bool realtime() const {
       return !qp.delayUI;
     };
   };
@@ -1194,7 +1194,7 @@ namespace K {
     void clear() {
       price = size = 0;
     };
-    bool empty() const {
+    const bool empty() const {
       return !price or !size;
     };
   };
@@ -1216,7 +1216,7 @@ namespace K {
     mPrice spread() const {
       return empty() ? 0 : asks.begin()->price - bids.begin()->price;
     };
-    bool empty() const {
+    const bool empty() const {
       return bids.empty() or asks.empty();
     };
     void clear() {
@@ -1237,7 +1237,7 @@ namespace K {
     mLevelsDiff(mLevels *c):
       patched(false), unfiltered(c)
     {};
-    bool empty() const {
+    const bool empty() const {
       return patched
         ? bids.empty() and asks.empty()
         : mLevels::empty();
@@ -1248,15 +1248,15 @@ namespace K {
       if (!empty()) send_now();
       reset();
     };
-    mMatter about() const {
+    const mMatter about() const {
       return mMatter::MarketData;
     };
-    json hello() {
+    const json hello() {
       reset();
       return mToClient::hello();
     };
     private:
-      bool ratelimit() {
+      const bool ratelimit() {
         return unfiltered->empty() or empty()
           or !send_soon(qp.delayUI * 1e+3);
       };
@@ -1270,7 +1270,7 @@ namespace K {
         asks = diff(asks, unfiltered->asks);
         patched = true;
       };
-      vector<mLevel> diff(const vector<mLevel> &from, vector<mLevel> to) {
+      vector<mLevel> diff(const vector<mLevel> &from, vector<mLevel> to) const {
         vector<mLevel> patch;
         for (const mLevel &it : from) {
           vector<mLevel>::iterator it_ = find_if(
@@ -1317,7 +1317,7 @@ namespace K {
       stats.ewma.timer_60s(fairValue, resetAverageWidth());
       stats.send();
     };
-    bool warn_empty() const {
+    const bool warn_empty() const {
       const bool err = empty();
       if (err) stats.fairPrice.warn("QE", "Unable to calculate quote, missing market data");
       return err;
@@ -1355,7 +1355,7 @@ namespace K {
       );
       averageWidth /= ++averageCount;
     };
-    mPrice resetAverageWidth() {
+    const mPrice resetAverageWidth() {
       averageCount = 0;
       return averageWidth;
     };
@@ -1410,25 +1410,25 @@ namespace K {
     k.time       = j.value("time", (mClock)0);
   };
   struct mProfits: public mVectorFromDb<mProfit> {
-    bool ratelimit() const {
+    const bool ratelimit() const {
       return !empty() and crbegin()->time + 21e+3 > Tstamp;
     };
-    double calcBase() const {
+    const double calcBase() const {
       return calcDiffPercent(
         cbegin()->baseValue,
         crbegin()->baseValue
       );
     };
-    double calcQuote() const {
+    const double calcQuote() const {
       return calcDiffPercent(
         cbegin()->quoteValue,
         crbegin()->quoteValue
       );
     };
-    double calcDiffPercent(mAmount older, mAmount newer) const {
+    const double calcDiffPercent(mAmount older, mAmount newer) const {
       return ((newer - older) / newer) * 1e+2;
     };
-    mMatter about() const {
+    const mMatter about() const {
       return mMatter::Profit;
     };
     void erase() {
@@ -1436,10 +1436,10 @@ namespace K {
         if (it->time + lifetime() > Tstamp) ++it;
         else it = rows.erase(it);
     };
-    double limit() const {
+    const double limit() const {
       return qp.profitHourInterval;
     };
-    mClock lifetime() const {
+    const mClock lifetime() const {
       return 3600e+3 * limit();
     };
     string explainOK() const {
@@ -1480,15 +1480,15 @@ namespace K {
       if (!ratelimit(prev_combined, prev_buyPing, prev_sellPing))
         send();
     };
-    bool empty() const {
+    const bool empty() const {
       return !*baseValue or !buySize or !sellSize;
     };
-    bool ratelimit(const double &prev_combined, const mPrice &prev_buyPing, const mPrice &prev_sellPing) const {
+    const bool ratelimit(const double &prev_combined, const mPrice &prev_buyPing, const mPrice &prev_sellPing) const {
       return combined == prev_combined
         and buyPing == prev_buyPing
         and sellPing == prev_sellPing;
     };
-    mMatter about() const {
+    const mMatter about() const {
       return mMatter::TradeSafetyValue;
     };
     private:
@@ -1545,7 +1545,7 @@ namespace K {
           if (matchPing(_near, _far, ping, qty, qtyMax, width, dir * fv, dir * it->second.price, it->second.quantity, it->second.price, it->second.Kqty, reverse))
             break;
       };
-      bool matchPing(bool _near, bool _far, mPrice *ping, mAmount *qty, mAmount qtyMax, mPrice width, mPrice fv, mPrice price, mAmount qtyTrade, mPrice priceTrade, mAmount KqtyTrade, bool reverse) {
+      const bool matchPing(bool _near, bool _far, mPrice *ping, mAmount *qty, mAmount qtyMax, mPrice width, mPrice fv, mPrice price, mAmount qtyTrade, mPrice priceTrade, mAmount KqtyTrade, bool reverse) {
         if (reverse) { fv *= -1; price *= -1; width *= -1; }
         if (((!_near and !_far) or *qty < qtyMax)
           and (_far ? fv > price : true)
@@ -1633,24 +1633,24 @@ namespace K {
           + to_string((int)(positionDivergence / *baseValue * 1e+2)) + "% = " + str8(positionDivergence)
           + " " + args.base());
     };
-    bool ratelimit(const mAmount &next) const {
+    const bool ratelimit(const mAmount &next) const {
       return (targetBasePosition and abs(targetBasePosition - next) < 1e-4 and sideAPR == sideAPRDiff);
     };
-    bool warn_empty() const {
+    const bool warn_empty() const {
       const bool err = empty();
       if (err) warn("PG", "Unable to calculate TBP, missing wallet data");
       return err;
     };
-    bool empty() const {
+    const bool empty() const {
       return !baseValue or !*baseValue;
     };
-    bool realtime() const {
+    const bool realtime() const {
       return !qp.delayUI;
     };
-    mMatter about() const {
+    const mMatter about() const {
       return mMatter::TargetBasePosition;
     };
-    string explain() const {
+    const string explain() const {
       return to_string(targetBasePosition);
     };
     string explainOK() const {
@@ -1687,7 +1687,7 @@ namespace K {
       if (empty()) return;
       total = (amount = a) + (held = h);
     };
-    bool empty() const {
+    const bool empty() const {
       return currency.empty();
     };
   };
@@ -1708,7 +1708,7 @@ namespace K {
     mWallets(mWallet b, mWallet q):
       base(b), quote(q)
     {};
-    bool empty() const {
+    const bool empty() const {
       return base.empty() or quote.empty();
     };
   };
@@ -1777,7 +1777,7 @@ namespace K {
       if (!ratelimit(prevBase, prevQuote))
         send();
     };
-    bool ratelimit(const mWallet &prevBase, const mWallet &prevQuote) const {
+    const bool ratelimit(const mWallet &prevBase, const mWallet &prevQuote) const {
       return (abs(base.value - prevBase.value) < 2e-6
         and abs(quote.value - prevQuote.value) < 2e-2
         and abs(base.amount - prevBase.amount) < 2e-6
@@ -1788,56 +1788,56 @@ namespace K {
         and abs(quote.profit - prevQuote.profit) < 2e-2
       );
     };
-    mMatter about() const {
+    const mMatter about() const {
       return mMatter::Position;
     };
-    bool realtime() const {
+    const bool realtime() const {
       return !qp.delayUI;
     };
-    bool send_asap() const {
+    const bool send_asap() const {
       return false;
     };
   };
 
   struct mButtonSubmitNewOrder: public mFromClient {
-    mMatter about() const {
+    const mMatter about() const {
       return mMatter::SubmitNewOrder;
     };
   };
   struct mButtonCancelOrder: public mFromClient {
-    json kiss(const json &j) {
+    const json kiss(const json &j) {
       json butterfly;
       if (j.is_object() and j["orderId"].is_string())
         butterfly = j["orderId"];
       return mFromClient::kiss(butterfly);
     };
-    mMatter about() const {
+    const mMatter about() const {
       return mMatter::CancelOrder;
     };
   };
   struct mButtonCancelAllOrders: public mFromClient {
-    mMatter about() const {
+    const mMatter about() const {
       return mMatter::CancelAllOrders;
     };
   };
   struct mButtonCleanAllClosedTrades: public mFromClient {
-    mMatter about() const {
+    const mMatter about() const {
       return mMatter::CleanAllClosedTrades;
     };
   };
   struct mButtonCleanAllTrades: public mFromClient {
-    mMatter about() const {
+    const mMatter about() const {
       return mMatter::CleanAllTrades;
     };
   };
   struct mButtonCleanTrade: public mFromClient {
-    json kiss(const json &j) {
+    const json kiss(const json &j) {
       json butterfly;
       if (j.is_object() and j["tradeId"].is_string())
         butterfly = j["tradeId"];
       return mFromClient::kiss(butterfly);
     };
-    mMatter about() const {
+    const mMatter about() const {
       return mMatter::CleanTrade;
     };
   };
@@ -1851,13 +1851,34 @@ namespace K {
   };
   struct mOrders: public mToScreen,
                   public mJsonToClient<mOrders> {
-               mButtons  btn;
     map<mRandId, mOrder> orders;
         mTradesCompleted tradesHistory;
-    bool debug() const {
+                mButtons btn;
+    const bool debug() const {
       return args.debugOrders;
     };
-    mOrder *const upsert(mOrder raw, const bool &place = false) {
+    mOrder *const find(const mRandId &orderId) {
+      return (orderId.empty()
+        or orders.find(orderId) == orders.end()
+      ) ? nullptr
+        : &orders[orderId];
+    };
+    mOrder *const findsert(const mOrder &raw) {
+      if (raw.orderStatus == mStatus::New and !raw.orderId.empty())
+        return &(orders[raw.orderId] = raw);
+      if (raw.orderId.empty() and !raw.exchangeId.empty()) {
+        map<mRandId, mOrder>::iterator it = find_if(
+          orders.begin(), orders.end(),
+          [&](const pair<mRandId, mOrder> &it_) {
+            return raw.exchangeId == it_.second.exchangeId;
+          }
+        );
+        if (it != orders.end())
+          return &it->second;
+      }
+      return find(raw.orderId);
+    };
+    mOrder *const upsert(const mOrder &raw, const bool &place = false) {
       mOrder *const order = findsert(raw);
       if (!order) return nullptr;
       order->update(raw);
@@ -1868,7 +1889,7 @@ namespace K {
       }
       return order;
     };
-    void upsert(mOrder raw, mWalletPosition *const balance, const mMarketLevels &levels, bool *const refreshWallet) {
+    void upsert(const mOrder &raw, mWalletPosition *const balance, const mMarketLevels &levels, bool *const refreshWallet) {
       if (debug()) report(raw);
       mOrder *const order = upsert(raw);
       if (!order) return;
@@ -1889,36 +1910,15 @@ namespace K {
       send();
       refresh();
     };
-    mOrder *const findsert(mOrder raw) {
-      if (raw.orderStatus == mStatus::New)
-        orders[raw.orderId] = raw;
-      else if (raw.orderId.empty() and !raw.exchangeId.empty()) {
-        map<mRandId, mOrder>::iterator it = find_if(
-          orders.begin(), orders.end(),
-          [&](const pair<mRandId, mOrder> &it_) {
-            return raw.exchangeId == it_.second.exchangeId;
-          }
-        );
-        if (it != orders.end())
-          raw.orderId = it->first;
-      }
-      return (raw.orderId.empty()
-        or orders.find(raw.orderId) == orders.end()
-      ) ? nullptr
-        : &orders[raw.orderId];
-    };
-    bool replace(mOrder *const toReplace, const mPrice &price) {
+    const bool replace(mOrder *const toReplace, const mPrice &price) {
       if (!toReplace
         or toReplace->exchangeId.empty()
       ) return false;
       toReplace->price = price;
-      if (debug()) print("DEBUG OG", "update "
-        + ((toReplace->side == mSide::Bid ? "BID" : "ASK")
-        + (" id " + toReplace->orderId)) + ":  at price "
-        + str8(toReplace->price) + " " + args.quote());
+      if (debug()) report_replace(toReplace);
       return true;
     };
-    bool cancel(mOrder *const toCancel) {
+    const bool cancel(mOrder *const toCancel) {
       if (!toCancel
         or toCancel->exchangeId.empty()
         or toCancel->_waitingCancel + 3e+3 > Tstamp
@@ -1928,13 +1928,12 @@ namespace K {
       return true;
     };
     void erase(const mRandId &orderId) {
+      if (debug()) print("DEBUG OG", "remove " + orderId);
       map<mRandId, mOrder>::iterator it = orders.find(orderId);
       if (it != orders.end()) orders.erase(it);
-      if (!debug()) return;
-      print("DEBUG OG", "remove " + orderId);
-      report_size();
+      if (debug()) report_size();
     };
-    mAmount calcHeldAmount(const mSide &side) const {
+    const mAmount calcHeldAmount(const mSide &side) const {
       return accumulate(orders.begin(), orders.end(), mAmount(),
         [&](mAmount held, const map<mRandId, mOrder>::value_type &it) {
           if (it.second.side == side and it.second.orderStatus == mStatus::Working)
@@ -1967,16 +1966,25 @@ namespace K {
         );
       return workingOrders;
     };
-    mMatter about() const {
+    const mMatter about() const {
       return mMatter::OrderStatusReports;
     };
-    bool realtime() const {
+    const bool realtime() const {
       return !qp.delayUI;
     };
-    json dump() const {
+    const json dump() const {
       return working();
     };
     private:
+      void report_size() const {
+        print("DEBUG OG", "memory " + to_string(orders.size()));
+      };
+      void report_replace(mOrder *const order) const {
+        print("DEBUG OG", "update "
+          + ((order->side == mSide::Bid ? "BID" : "ASK")
+          + (" id " + order->orderId)) + ":  at price "
+          + str8(order->price) + " " + args.quote());
+      };
       void report_cancel(mOrder *const order) const {
         print("DEBUG OG", "cancel " + (
           (order->side == mSide::Bid ? "BID id " : "ASK id ")
@@ -2003,9 +2011,6 @@ namespace K {
           + " [" + to_string((int)raw.orderStatus) + "]: "
           + str8(raw.quantity) + "/" + str8(raw.tradeQuantity) + " at price "
           + str8(raw.price));
-      };
-      void report_size() const {
-        print("DEBUG OG", "memory " + to_string(orders.size()));
       };
   };
   static void to_json(json &j, const mOrders &k) {
@@ -2043,10 +2048,10 @@ namespace K {
     mQuoteStatus():
       bidStatus((mQuoteState)0), askStatus((mQuoteState)0), quotesInMemoryNew(0), quotesInMemoryWorking(0), quotesInMemoryDone(0)
     {};
-    mMatter about() const {
+    const mMatter about() const {
       return mMatter::QuoteStatus;
     };
-    bool realtime() const {
+    const bool realtime() const {
       return !qp.delayUI;
     };
   };
@@ -2065,12 +2070,12 @@ namespace K {
     mNotepad():
       content("")
     {};
-    json kiss(const json &j) {
+    const json kiss(const json &j) {
       if (j.is_array() and j.size())
         content = j.at(0);
       return mFromClient::kiss(j);
     };
-    mMatter about() const {
+    const mMatter about() const {
       return mMatter::Notepad;
     };
   };
@@ -2085,13 +2090,13 @@ namespace K {
     mSemaphore():
       greenButton((mConnectivity)0), greenGateway((mConnectivity)0)
     {};
-    json kiss(const json &j) {
+    const json kiss(const json &j) {
       json butterfly;
       if (j.is_object() and j["state"].is_number())
         butterfly = j["state"];
       return mFromClient::kiss(butterfly);
     };
-    mMatter about() const {
+    const mMatter about() const {
       return mMatter::Connectivity;
     };
   };
@@ -2436,7 +2441,7 @@ namespace K {
     mProduct():
       exchange((mExchange)0), pair(mPair()), minTick(nullptr)
     {};
-    mMatter about() const {
+    const mMatter about() const {
       return mMatter::ProductAdvertisement;
     };
   };
@@ -2458,8 +2463,8 @@ namespace K {
     mMonitor():  /*  )| K |(  */ /* thanks! <3 */
        orders_60s(0), unlock(""), product(mProduct())
     {};
-    function<unsigned int()> dbSize = []() { return 0; };
-    unsigned int memSize() const {
+    function<const unsigned int()> dbSize = []() { return 0; };
+    const unsigned int memSize() const {
       string ps = mCommand::ps();
       ps.erase(remove(ps.begin(), ps.end(), ' '), ps.end());
       return ps.empty() ? 0 : stoi(ps) * 1e+3;
@@ -2476,7 +2481,7 @@ namespace K {
       send();
       orders_60s = 0;
     };
-    mMatter about() const {
+    const mMatter about() const {
       return mMatter::ApplicationState;
     };
   };
