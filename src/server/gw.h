@@ -4,28 +4,26 @@
 namespace K {
   class GW: public Klass {
     private:
-      mNotepad notepad;
       mConnectivity adminAgreement = mConnectivity::Disconnected;
     protected:
       void load() {
         adminAgreement = (mConnectivity)args.autobot;
-        gw->monitor = &engine->monitor;
       };
       void waitData() {
         gw->RAWDATA_ENTRY_POINT(mConnectivity, {
-          if (engine->semaphore.greenGateway == rawdata) return;
-          if (!(engine->semaphore.greenGateway = rawdata))
-            market->levels.clear();
+          if (gw->semaphore.greenGateway == rawdata) return;
+          if (!(gw->semaphore.greenGateway = rawdata))
+            gw->levels.clear();
           gwSemaphore();
         });
       };
       void waitWebAdmin() {
-        client->welcome(notepad);
-        client->clickme(notepad);
-        client->welcome(engine->monitor);
-        client->welcome(engine->monitor.product);
-        client->welcome(engine->semaphore);
-        client->clickme(engine->semaphore KISS {
+        client->welcome(gw->notepad);
+        client->clickme(gw->notepad);
+        client->welcome(gw->monitor);
+        client->welcome(gw->monitor.product);
+        client->welcome(gw->semaphore);
+        client->clickme(gw->semaphore KISS {
           if (!butterfly.is_number()) return;
           mConnectivity k = butterfly.get<mConnectivity>();
           if (adminAgreement != k) {
@@ -36,7 +34,7 @@ namespace K {
       };
       void waitSysAdmin() {
         screen->printme(gw);
-        screen->printme(&engine->semaphore);
+        screen->printme(&gw->semaphore);
         screen->pressme(mHotkey::ESC, [&]() {
           adminAgreement = (mConnectivity)!adminAgreement;
           gwSemaphore();
@@ -51,14 +49,14 @@ namespace K {
       };
     private:
       void gwSemaphore() {
-        mConnectivity k = adminAgreement * engine->semaphore.greenGateway;
-        if (engine->semaphore.greenButton != k) {
-          engine->semaphore.greenButton = k;
+        mConnectivity k = adminAgreement * gw->semaphore.greenGateway;
+        if (gw->semaphore.greenButton != k) {
+          gw->semaphore.greenButton = k;
           screen->log("GW " + gw->name, "Quoting state changed to",
-            string(!engine->semaphore.greenButton?"DIS":"") + "CONNECTED");
+            string(!gw->semaphore.greenButton?"DIS":"") + "CONNECTED");
         }
-        engine->semaphore.send();
-        engine->semaphore.refresh();
+        gw->semaphore.send();
+        gw->semaphore.refresh();
       };
       void handshake() {
         json reply;

@@ -162,7 +162,6 @@ namespace K {
         EXIT(screen->error("CF", msg));
       };
       void config() {
-        screen->config();
         gw = Gw::config(
           args.base(),    args.quote(),
           args.exchange,  args.free,
@@ -176,6 +175,7 @@ namespace K {
             "Unable to configure a valid gateway using --exchange="
               + args.exchange + " argument"
           ));
+        screen->config();
       };
       void log() {
         if (args.inet)

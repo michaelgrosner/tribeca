@@ -112,7 +112,7 @@
 :  :                                                                          :
 :  +-- Globals??                                                              :
 :                     args, screen, client, events, sqlite                    :
-:                    qp, wallet, market, broker, engine, gw                   :
+:                               qp, engine, gw                                :
 :                                                                             :
 :  .. src/server/ds.h:  ----------------------------- aka. Data Structures -- :
 :  :   TODO                                                                   :
@@ -188,21 +188,21 @@
 :  :   TODO                                                                   :
 :  :                                                                          :
 :  +-- Whaaat??                                                               :
-:     broker                                                                  :
+:     gw->broker                                                              :
 :                                                                             :
 :                                                                             :
 :  .. src/server/mg.h:  ----------------------------- aka. Market Gateway --- :
 :  :   TODO                                                                   :
 :  :                                                                          :
 :  +-- Whaaat??                                                               :
-:     market                                                                  :
+:     gw->levels                                                              :
 :                                                                             :
 :                                                                             :
 :  .. src/server/pg.h:  ----------------------------- aka. Position Gateway - :
 :  :   TODO                                                                   :
 :  :                                                                          :
 :  +-- Whaaat??                                                               :
-:     wallet                                                                    :
+:     gw->wallet                                                              :
 :                                                                             :
 :                                                                             :
 :  .. src/server/gw.h:  ----------------------------- aka. Gateway ---------- :

@@ -2,25 +2,24 @@
 #define K_PG_H_
 
 namespace K {
-  class PG: public Klass,
-            public Wallet { public: PG() { wallet = this; };
+  class PG: public Klass {
     protected:
       void load() {
-        sqlite->backup(&balance.target);
-        sqlite->backup(&balance.profits);
+        sqlite->backup(&gw->wallet.target);
+        sqlite->backup(&gw->wallet.profits);
       };
       void waitData() {
         gw->RAWDATA_ENTRY_POINT(mWallets, {                         PRETTY_DEBUG
-          balance.reset(rawdata, market->levels);
+          gw->wallet.reset(rawdata, gw->levels);
         });
       };
       void waitSysAdmin() {
-        screen->printme(&balance.target);
+        screen->printme(&gw->wallet.target);
       };
       void waitWebAdmin() {
-        client->welcome(balance.target.safety);
-        client->welcome(balance.target);
-        client->welcome(balance);
+        client->welcome(gw->wallet.target.safety);
+        client->welcome(gw->wallet.target);
+        client->welcome(gw->wallet);
       };
   };
 }

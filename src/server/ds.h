@@ -1849,14 +1849,11 @@ namespace K {
     mButtonCleanAllTrades       cleanTrades;
     mButtonCleanTrade           cleanTrade;
   };
-  struct mOrders: public mToScreen,
-                  public mJsonToClient<mOrders> {
+  struct mBroker: public mToScreen,
+                  public mJsonToClient<mBroker> {
     map<mRandId, mOrder> orders;
         mTradesCompleted tradesHistory;
                 mButtons btn;
-    const bool debug() const {
-      return args.debugOrders;
-    };
     mOrder *const find(const mRandId &orderId) {
       return (orderId.empty()
         or orders.find(orderId) == orders.end()
@@ -1889,7 +1886,7 @@ namespace K {
       }
       return order;
     };
-    void upsert(const mOrder &raw, mWalletPosition *const balance, const mMarketLevels &levels, bool *const refreshWallet) {
+    void upsert(const mOrder &raw, mWalletPosition *const wallet, const mMarketLevels &levels, bool *const refreshWallet) {
       if (debug()) report(raw);
       mOrder *const order = upsert(raw);
       if (!order) return;
@@ -1901,10 +1898,10 @@ namespace K {
         or order->orderStatus == mStatus::Complete
       ) erase(order->orderId);
       if (raw.orderStatus == mStatus::New) return;
-      balance->reset(lastSide, calcHeldAmount(lastSide), levels);
+      wallet->reset(lastSide, calcHeldAmount(lastSide), levels);
       if (raw.tradeQuantity) {
-        balance->target.safety.recentTrades.insert(lastSide, lastPrice, raw.tradeQuantity);
-        balance->target.safety.calc(levels, tradesHistory);
+        wallet->target.safety.recentTrades.insert(lastSide, lastPrice, raw.tradeQuantity);
+        wallet->target.safety.calc(levels, tradesHistory);
         *refreshWallet = true;
       }
       send();
@@ -1976,6 +1973,9 @@ namespace K {
       return working();
     };
     private:
+      const bool debug() const {
+        return args.debugOrders;
+      };
       void report_size() const {
         print("DEBUG OG", "memory " + to_string(orders.size()));
       };
@@ -2013,7 +2013,7 @@ namespace K {
           + str8(raw.price));
       };
   };
-  static void to_json(json &j, const mOrders &k) {
+  static void to_json(json &j, const mBroker &k) {
     j = k.dump();
   };
 

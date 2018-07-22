@@ -275,30 +275,30 @@ namespace K {
       }
     }
 
-    GIVEN("mOrders") {
-      mOrders orders;
+    GIVEN("mBroker") {
+      mBroker broker;
       WHEN("assigned") {
         vector<mRandId> randIds;
         REQUIRE_NOTHROW(randIds.push_back("1" + mRandom::uuid36Id()));
-        REQUIRE_NOTHROW(orders.orders[randIds.back()] = mOrder(randIds.back(), mSide::Bid, 0.12345678, mOrderType::Limit, false, 1234.50, mTimeInForce::IOC, mStatus::Working, false));
+        REQUIRE_NOTHROW(broker.orders[randIds.back()] = mOrder(randIds.back(), mSide::Bid, 0.12345678, mOrderType::Limit, false, 1234.50, mTimeInForce::IOC, mStatus::Working, false));
         REQUIRE_NOTHROW(randIds.push_back("2" + mRandom::uuid36Id()));
-        REQUIRE_NOTHROW(orders.orders[randIds.back()] = mOrder(randIds.back(), mSide::Bid, 0.12345679, mOrderType::Limit, false, 1234.51, mTimeInForce::IOC, mStatus::Working, false));
+        REQUIRE_NOTHROW(broker.orders[randIds.back()] = mOrder(randIds.back(), mSide::Bid, 0.12345679, mOrderType::Limit, false, 1234.51, mTimeInForce::IOC, mStatus::Working, false));
         REQUIRE_NOTHROW(randIds.push_back("3" + mRandom::uuid36Id()));
-        REQUIRE_NOTHROW(orders.orders[randIds.back()] = mOrder(randIds.back(), mSide::Bid, 0.12345680, mOrderType::Limit, false, 1234.52, mTimeInForce::IOC, mStatus::Working, false));
+        REQUIRE_NOTHROW(broker.orders[randIds.back()] = mOrder(randIds.back(), mSide::Bid, 0.12345680, mOrderType::Limit, false, 1234.52, mTimeInForce::IOC, mStatus::Working, false));
         REQUIRE_NOTHROW(randIds.push_back("4" + mRandom::uuid36Id()));
-        REQUIRE_NOTHROW(orders.orders[randIds.back()] = mOrder(randIds.back(), mSide::Ask, 0.12345678, mOrderType::Limit, false, 1234.50, mTimeInForce::IOC, mStatus::Working, false));
+        REQUIRE_NOTHROW(broker.orders[randIds.back()] = mOrder(randIds.back(), mSide::Ask, 0.12345678, mOrderType::Limit, false, 1234.50, mTimeInForce::IOC, mStatus::Working, false));
         REQUIRE_NOTHROW(randIds.push_back("5" + mRandom::uuid36Id()));
-        REQUIRE_NOTHROW(orders.orders[randIds.back()] = mOrder(randIds.back(), mSide::Ask, 0.12345679, mOrderType::Limit, false, 1234.51, mTimeInForce::IOC, mStatus::Working, false));
+        REQUIRE_NOTHROW(broker.orders[randIds.back()] = mOrder(randIds.back(), mSide::Ask, 0.12345679, mOrderType::Limit, false, 1234.51, mTimeInForce::IOC, mStatus::Working, false));
         REQUIRE_NOTHROW(randIds.push_back("6" + mRandom::uuid36Id()));
-        REQUIRE_NOTHROW(orders.orders[randIds.back()] = mOrder(randIds.back(), mSide::Ask, 0.12345680, mOrderType::Limit, false, 1234.52, mTimeInForce::IOC, mStatus::Working, false));
+        REQUIRE_NOTHROW(broker.orders[randIds.back()] = mOrder(randIds.back(), mSide::Ask, 0.12345680, mOrderType::Limit, false, 1234.52, mTimeInForce::IOC, mStatus::Working, false));
         REQUIRE_NOTHROW(randIds.push_back("7" + mRandom::uuid36Id()));
-        REQUIRE_NOTHROW(orders.orders[randIds.back()] = mOrder(randIds.back(), mSide::Ask, 0.12345681, mOrderType::Limit, false, 1234.52, mTimeInForce::IOC, mStatus::New, false));
+        REQUIRE_NOTHROW(broker.orders[randIds.back()] = mOrder(randIds.back(), mSide::Ask, 0.12345681, mOrderType::Limit, false, 1234.52, mTimeInForce::IOC, mStatus::New, false));
         THEN("held amount") {
-          REQUIRE(orders.calcHeldAmount(mSide::Bid) == Approx(457.22592546));
-          REQUIRE(orders.calcHeldAmount(mSide::Ask) == 0.37037037);
+          REQUIRE(broker.calcHeldAmount(mSide::Bid) == Approx(457.22592546));
+          REQUIRE(broker.calcHeldAmount(mSide::Ask) == 0.37037037);
         }
         THEN("to json") {
-          REQUIRE(orders.dump().dump() == "["
+          REQUIRE(broker.dump().dump() == "["
             "{\"exchangeId\":\"\",\"isPong\":false,\"latency\":0,\"orderId\":\"" + randIds[0] + "\",\"orderStatus\":1,\"preferPostOnly\":false,\"price\":1234.5,\"quantity\":0.12345678,\"side\":0,\"time\":0,\"timeInForce\":0,\"type\":0},"
             "{\"exchangeId\":\"\",\"isPong\":false,\"latency\":0,\"orderId\":\"" + randIds[1] + "\",\"orderStatus\":1,\"preferPostOnly\":false,\"price\":1234.51,\"quantity\":0.12345679,\"side\":0,\"time\":0,\"timeInForce\":0,\"type\":0},"
             "{\"exchangeId\":\"\",\"isPong\":false,\"latency\":0,\"orderId\":\"" + randIds[2] + "\",\"orderStatus\":1,\"preferPostOnly\":false,\"price\":1234.52,\"quantity\":0.1234568,\"side\":0,\"time\":0,\"timeInForce\":0,\"type\":0},"

@@ -91,7 +91,7 @@ namespace K {
       };
       void logWar(string k, string s, string m = " Warrrrning: ") {
         if (!wBorder) {
-          cout << stamp() << k << RRED << m << BRED << s << ".\n";
+          cout << stamp() << k << RRED << m << BRED << s << RWHITE << ".\n";
           return;
         }
         wmove(wLog, getmaxy(wLog)-1, 0);
@@ -251,17 +251,11 @@ namespace K {
 #endif
       void refresh() {
         if (!wBorder) return;
-        string base = "?",
-               quote = "?";
-        if (gw) {
-          base = gw->base;
-          quote = gw->quote;
-        }
-        const vector<mOrder> openOrders = broker->orders.working(true);
+        const vector<mOrder> openOrders = gw->broker.working(true);
         int lastcursor = cursor,
             y = getmaxy(wBorder),
             x = getmaxx(wBorder),
-            yMaxLog = y - max((int)openOrders.size(), !engine->semaphore.greenButton ? 0 : 2) - 1,
+            yMaxLog = y - max((int)openOrders.size(), !gw->semaphore.greenButton ? 0 : 2) - 1,
             yOrders = yMaxLog;
         while (lastcursor<y) mvwhline(wBorder, lastcursor++, 1, ' ', x-1);
         if (yMaxLog!=cursor) {
@@ -276,9 +270,9 @@ namespace K {
         for (const mOrder &it : openOrders) {
           wattron(wBorder, COLOR_PAIR(it.side == mSide::Bid ? COLOR_CYAN : COLOR_MAGENTA));
           mvwaddstr(wBorder, ++yOrders, 1, (((it.side == mSide::Bid ? "BID" : "ASK") + (" > "
-            + str8(it.quantity))) + ' ' + base + " at price "
-            + str8(it.price) + ' ' + quote + " (value "
-            + str8(abs(it.price * it.quantity)) + ' ' + quote + ")"
+            + str8(it.quantity))) + ' ' + gw->base + " at price "
+            + str8(it.price) + ' ' + gw->quote + " (value "
+            + str8(abs(it.price * it.quantity)) + ' ' + gw->quote + ")"
           ).data());
           wattroff(wBorder, COLOR_PAIR(it.side == mSide::Bid ? COLOR_CYAN : COLOR_MAGENTA));
         }
@@ -305,7 +299,7 @@ namespace K {
         wattroff(wBorder, COLOR_PAIR(COLOR_GREEN));
         mvwaddch(wBorder, 0, 13+title1.length()+title2.length(), ACS_LTEE);
         mvwaddch(wBorder, 0, x-26, ACS_RTEE);
-        mvwaddstr(wBorder, 0, x-25, (string(" [   ]: ") + (!engine->semaphore.greenButton ? "Start" : "Stop?") + ", [ ]: Quit!").data());
+        mvwaddstr(wBorder, 0, x-25, (string(" [   ]: ") + (!gw->semaphore.greenButton ? "Start" : "Stop?") + ", [ ]: Quit!").data());
         mvwaddch(wBorder, 0, x-9, 'q' | A_BOLD);
         wattron(wBorder, A_BOLD);
         mvwaddstr(wBorder, 0, x-23, "ESC");
@@ -315,12 +309,12 @@ namespace K {
         mvwhline(wBorder, 1, 8, ACS_HLINE, 4);
         mvwaddch(wBorder, 1, 12, ACS_RTEE);
         wattron(wBorder, COLOR_PAIR(COLOR_MAGENTA));
-        const string baseValue  = str8(wallet->balance.base.value),
-                     quoteValue = str8(wallet->balance.quote.value);
+        const string baseValue  = str8(gw->wallet.base.value),
+                     quoteValue = str8(gw->wallet.quote.value);
         wattron(wBorder, A_BOLD);
         waddstr(wBorder, (" " + baseValue + ' ').data());
         wattroff(wBorder, A_BOLD);
-        waddstr(wBorder, base.data());
+        waddstr(wBorder, gw->base.data());
         wattroff(wBorder, COLOR_PAIR(COLOR_MAGENTA));
         wattron(wBorder, COLOR_PAIR(COLOR_GREEN));
         waddstr(wBorder, " or ");
@@ -329,19 +323,19 @@ namespace K {
         wattron(wBorder, A_BOLD);
         waddstr(wBorder, quoteValue.data());
         wattroff(wBorder, A_BOLD);
-        waddstr(wBorder, (" " + quote + ' ').data());
+        waddstr(wBorder, (" " + gw->quote + ' ').data());
         wattroff(wBorder, COLOR_PAIR(COLOR_CYAN));
-        size_t xLenValue = 14+baseValue.length()+quoteValue.length()+base.length()+quote.length()+7,
+        size_t xLenValue = 14+baseValue.length()+quoteValue.length()+gw->base.length()+gw->quote.length()+7,
                xMaxValue = max(xLenValue+1, 18+title1.length()+title2.length());
         mvwaddch(wBorder, 0, xMaxValue, ACS_TTEE);
         mvwaddch(wBorder, 1, xMaxValue, ACS_LRCORNER);
         mvwhline(wBorder, 1, xLenValue, ACS_HLINE, xMaxValue - xLenValue);
         mvwaddch(wBorder, 1, xLenValue, ACS_LTEE);
         const int yPos = max(1, (y / 2) - 6),
-                  baseAmount  = round(wallet->balance.base.amount  * 10 / wallet->balance.base.value),
-                  baseHeld    = round(wallet->balance.base.held    * 10 / wallet->balance.base.value),
-                  quoteAmount = round(wallet->balance.quote.amount * 10 / wallet->balance.quote.value),
-                  quoteHeld   = round(wallet->balance.quote.held   * 10 / wallet->balance.quote.value);
+                  baseAmount  = round(gw->wallet.base.amount  * 10 / gw->wallet.base.value),
+                  baseHeld    = round(gw->wallet.base.held    * 10 / gw->wallet.base.value),
+                  quoteAmount = round(gw->wallet.quote.amount * 10 / gw->wallet.quote.value),
+                  quoteHeld   = round(gw->wallet.quote.held   * 10 / gw->wallet.quote.value);
         mvwvline(wBorder, yPos+1, x-3, ' ', 10);
         mvwvline(wBorder, yPos+1, x-4, ' ', 10);
         wattron(wBorder, COLOR_PAIR(COLOR_CYAN));
@@ -366,7 +360,7 @@ namespace K {
         mvwhline(wBorder, yMaxLog, 1, ACS_HLINE, 3);
         mvwaddch(wBorder, yMaxLog, 4, ACS_RTEE);
         mvwaddstr(wBorder, yMaxLog, 5, "< (");
-        if (!engine->semaphore.greenGateway) {
+        if (!gw->semaphore.greenGateway) {
           wattron(wBorder, COLOR_PAIR(COLOR_RED));
           wattron(wBorder, A_BOLD);
           waddstr(wBorder, "DISCONNECTED");
@@ -374,7 +368,7 @@ namespace K {
           wattroff(wBorder, COLOR_PAIR(COLOR_RED));
           waddch(wBorder, ')');
         } else {
-          if (!engine->semaphore.greenButton) {
+          if (!gw->semaphore.greenButton) {
             wattron(wBorder, COLOR_PAIR(COLOR_YELLOW));
             wattron(wBorder, A_BLINK);
             waddstr(wBorder, "press START to trade");
@@ -389,16 +383,16 @@ namespace K {
           }
           waddstr(wBorder, " while");
           wattron(wBorder, COLOR_PAIR(COLOR_GREEN));
-          waddstr(wBorder, (" 1 " + base + " = ").data());
+          waddstr(wBorder, (" 1 " + gw->base + " = ").data());
           wattron(wBorder, A_BOLD);
-          waddstr(wBorder, str8(market->levels.fairValue).data());
+          waddstr(wBorder, str8(gw->levels.fairValue).data());
           wattroff(wBorder, A_BOLD);
-          waddstr(wBorder, (" " + quote).data());
+          waddstr(wBorder, (" " + gw->quote).data());
           wattroff(wBorder, COLOR_PAIR(COLOR_GREEN));
-          waddch(wBorder, !engine->semaphore.greenButton ? ' ' : ':');
+          waddch(wBorder, !gw->semaphore.greenButton ? ' ' : ':');
         }
         mvwaddch(wBorder, y-1, 0, ACS_LLCORNER);
-        mvwaddstr(wBorder, 1, 2, string("|/-\\").substr(engine->monitor.orders_60s % 4, 1).data());
+        mvwaddstr(wBorder, 1, 2, string("|/-\\").substr(gw->monitor.orders_60s % 4, 1).data());
         move(yMaxLog-1, 2);
         wrefresh(wBorder);
         wrefresh(wLog);
