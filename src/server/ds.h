@@ -568,15 +568,16 @@ namespace K {
             feeCharged;
      mClock time,
             Ktime;
-       bool loadedFromDB;
+       bool isPong,
+            loadedFromDB;
     mTrade():
-      tradeId(""), side((mSide)0), price(0), Kprice(0), quantity(0), value(0), Kqty(0), Kvalue(0), Kdiff(0), feeCharged(0), time(0), Ktime(0), loadedFromDB(false)
+      tradeId(""), side((mSide)0), price(0), Kprice(0), quantity(0), value(0), Kqty(0), Kvalue(0), Kdiff(0), feeCharged(0), time(0), Ktime(0), isPong(false), loadedFromDB(false)
     {};
     mTrade(mPrice p, mAmount q, mSide s, mClock t):
-      tradeId(""), side(s), price(p), Kprice(0), quantity(q), value(0), Kqty(0), Kvalue(0), Kdiff(0), feeCharged(0), time(t), Ktime(0), loadedFromDB(false)
+      tradeId(""), side(s), price(p), Kprice(0), quantity(q), value(0), Kqty(0), Kvalue(0), Kdiff(0), feeCharged(0), time(t), Ktime(0), isPong(false), loadedFromDB(false)
     {};
-    mTrade(string i, mPrice p, mAmount q, mSide S, mClock t, mAmount v, mClock Kt, mAmount Kq, mPrice Kp, mAmount Kv, mAmount Kd, mAmount f, bool l):
-      tradeId(i), side(S), price(p), Kprice(Kp), quantity(q), value(v), Kqty(Kq), Kvalue(Kv), Kdiff(Kd), feeCharged(f), time(t), Ktime(Kt), loadedFromDB(l)
+    mTrade(string i, mPrice p, mAmount q, mSide S, bool P, mClock t, mAmount v, mClock Kt, mAmount Kq, mPrice Kp, mAmount Kv, mAmount Kd, mAmount f, bool l):
+      tradeId(i), side(S), price(p), Kprice(Kp), quantity(q), value(v), Kqty(Kq), Kvalue(Kv), Kdiff(Kd), feeCharged(f), time(t), Ktime(Kt), isPong(P), loadedFromDB(l)
     {};
   };
   static void to_json(json &j, const mTrade &k) {
@@ -599,7 +600,8 @@ namespace K {
       {      "Kvalue", k.Kvalue      },
       {       "Kdiff", k.Kdiff       },
       {  "feeCharged", k.feeCharged  },
-      {"loadedFromDB", k.loadedFromDB},
+      {      "isPong", k.isPong      },
+      {"loadedFromDB", k.loadedFromDB}
     };
   };
   static void from_json(const json &j, mTrade &k) {
@@ -615,6 +617,7 @@ namespace K {
     k.Kvalue       = j.value("Kvalue", 0.0);
     k.Kdiff        = j.value("Kdiff", 0.0);
     k.feeCharged   = j.value("feeCharged", 0.0);
+    k.isPong       = j.value("isPong", false);
     k.loadedFromDB = true;
   };
   struct mMarketTakers: public mJsonToClient<mTrade> {
@@ -685,11 +688,12 @@ namespace K {
         o->price,
         tradeQuantity,
         o->side,
+        o->isPong,
         o->time,
         abs(o->price * tradeQuantity),
         0, 0, 0, 0, 0, fee, false
       );
-      print("GW " + args.exchange, string(o->isPong?"PONG":"PING") + " TRADE "
+      print("GW " + args.exchange, string(trade.isPong?"PONG":"PING") + " TRADE "
         + (trade.side == mSide::Bid ? "BUY  " : "SELL ")
         + str8(trade.quantity) + ' ' + args.base() + " at price "
         + str8(trade.price) + ' ' + args.quote() + " (value "
@@ -741,6 +745,8 @@ namespace K {
       return "loaded % historical Trades";
     };
     const json hello() {
+      for (mTrade &it : rows)
+        it.loadedFromDB = true;
       return rows;
     };
     private:
@@ -765,6 +771,7 @@ namespace K {
             it->time = pong.time;
             it->quantity = it->quantity + pong.quantity;
             it->value = it->value + pong.value;
+            it->isPong = false;
             it->loadedFromDB = false;
             it = send_push_erase(it);
             break;
@@ -786,6 +793,7 @@ namespace K {
           pong->value = abs(pong->price*pong->quantity);
           if (it->quantity<=it->Kqty)
             it->Kdiff = abs(it->quantity * it->price - it->Kqty * it->Kprice);
+          it->isPong = true;
           it->loadedFromDB = false;
           it = send_push_erase(it);
           break;
@@ -1894,8 +1902,8 @@ namespace K {
         tradesHistory.insert(order, raw.tradeQuantity);
       mSide  lastSide  = order->side;
       mPrice lastPrice = order->price;
-      if (order->orderStatus == mStatus::Cancelled
-        or order->orderStatus == mStatus::Complete
+      if (mStatus::Cancelled == order->orderStatus
+        or mStatus::Complete == order->orderStatus
       ) erase(order->orderId);
       if (raw.orderStatus == mStatus::New) return;
       wallet->reset(lastSide, calcHeldAmount(lastSide), levels);
@@ -1907,11 +1915,12 @@ namespace K {
       send();
       refresh();
     };
-    const bool replace(mOrder *const toReplace, const mPrice &price) {
+    const bool replace(mOrder *const toReplace, const mPrice &price, const bool &isPong) {
       if (!toReplace
         or toReplace->exchangeId.empty()
       ) return false;
-      toReplace->price = price;
+      toReplace->price  = price;
+      toReplace->isPong = isPong;
       if (debug()) report_replace(toReplace);
       return true;
     };

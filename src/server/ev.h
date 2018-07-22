@@ -80,7 +80,7 @@ namespace K  {
           return;
         }
         if (TRUEONCE(gw->refreshWallet)
-          or !(tick % 15))                    async(gw->askForBalance);
+          or !(tick % 15))                    async(gw->askForWallet);
         if (!gw->async) {
           if (!(tick % 2))                    async(gw->askForOrders);
           if (!(tick % 3))                    async(gw->askForLevels);

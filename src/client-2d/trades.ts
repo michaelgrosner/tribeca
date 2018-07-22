@@ -126,11 +126,9 @@ export class TradesComponent implements OnInit {
       });
     } else {
       let exists: boolean = false;
-      let isPong: boolean = false;
       this.gridOptions.api.forEachNode((node: RowNode) => {
         if (!exists && node.data.tradeId==t.tradeId) {
           exists = true;
-          isPong = (node.data.quantity == t.quantity);
           if (t.Ktime && <any>t.Ktime=='Invalid date') t.Ktime = null;
           node.setData(Object.assign(node.data, {
             time: t.time,
@@ -149,11 +147,6 @@ export class TradesComponent implements OnInit {
               this.gridOptions.api.setSortModel([{colId: 'time', sort: 'desc'}]);
               setTimeout(()=>{try{this.gridOptions.api.redrawRows();}catch(e){}},0);
             }, 269);
-            if (this.audio) {
-              var audio = new Audio('audio/'+(isPong?'1':'0')+'.mp3');
-              audio.volume = 0.5;
-              audio.play();
-            }
           }
         }
       });
@@ -171,23 +164,24 @@ export class TradesComponent implements OnInit {
           Kprice: t.Kprice ? t.Kprice : null,
           Kvalue: t.Kvalue ? t.Kvalue : null,
           Kdiff: t.Kdiff && t.Kdiff!=0 ? t.Kdiff : null,
-          quoteSymbol: this.product.advert.pair.quote,
+          quoteSymbol: this.product.advert.pair.quote.replace('EUR','€').replace('USD','$'),
           productFixed: this.product.fixed
         }]});
-        if (t.loadedFromDB === false && this.audio) {
-          var audio = new Audio('/audio/0.mp3');
+      }
+      if (t.loadedFromDB === false) {
+        if (this.audio) {
+          var audio = new Audio('audio/'+(t.isPong?'1':'0')+'.mp3');
           audio.volume = 0.5;
           audio.play();
         }
-      }
-      if (t.loadedFromDB === false)
         this.onTradesChartData.emit(new Models.TradeChart(
-          isPong?t.Kprice:t.price,
-          isPong?(t.side === Models.Side.Ask ? Models.Side.Bid : Models.Side.Ask):t.side,
-          isPong?t.Kqty:t.quantity,
-          isPong?t.Kvalue:t.value,
-          isPong
+          (t.isPong && t.Kprice)?t.Kprice:t.price,
+          (t.isPong && t.Kprice)?(t.side === Models.Side.Ask ? Models.Side.Bid : Models.Side.Ask):t.side,
+          (t.isPong && t.Kprice)?t.Kqty:t.quantity,
+          (t.isPong && t.Kprice)?t.Kvalue:t.value,
+          t.isPong
         ));
+      }
     }
 
     this.gridOptions.api.sizeColumnsToFit();

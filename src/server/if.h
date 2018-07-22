@@ -81,7 +81,7 @@ namespace K {
       ) | waitFor(replyWallets, write_mWallets)
         | waitFor(replyCancelAll, write_mOrder);
     };
-    function<bool()> askForBalance = [&]() { return !(async_balance() or !askFor(replyWallets, [&]() { return sync_balance(); })); };
+    function<bool()> askForWallet = [&]() { return !(async_wallet() or !askFor(replyWallets, [&]() { return sync_wallet(); })); };
     function<bool()> askForLevels = [&]() { return askFor(replyLevels, [&]() { return sync_levels(); }); };
     function<bool()> askForTrades = [&]() { return askFor(replyTrades, [&]() { return sync_trades(); }); };
     function<bool()> askForOrders = [&]() { return askFor(replyOrders, [&]() { return sync_orders(); }); };
@@ -94,8 +94,8 @@ namespace K {
 /**/             close() = 0;                                                // disconnect but without waiting for reconnect
 /**/virtual vector<mOrder>   sync_cancelAll() = 0;                           // call and read sync orders data from exchange
 /**/protected:
-/**/  virtual bool            async_balance() { return false; };             // call         async wallet data from exchange
-/**/  virtual vector<mWallets> sync_balance() { return {}; };                // call and read sync wallet data from exchange
+/**/  virtual bool            async_wallet() { return false; };              // call         async wallet data from exchange
+/**/  virtual vector<mWallets> sync_wallet() { return {}; };                 // call and read sync wallet data from exchange
 /**/  virtual vector<mLevels>  sync_levels()  { return {}; };                // call and read sync levels data from exchange
 /**/  virtual vector<mTrade>   sync_trades()  { return {}; };                // call and read sync trades data from exchange
 /**/  virtual vector<mOrder>   sync_orders()  { return {}; };                // call and read sync orders data from exchange
@@ -198,8 +198,8 @@ namespace K {
       mOrder *const o = broker.upsert(mOrder(randId(), side, qty, type, isPong, price, tif, mStatus::New, postOnly), true);
       place(o->orderId, o->side, str8(o->price), str8(o->quantity), o->type, o->timeInForce, o->preferPostOnly);
     };
-    void replaceOrder(mOrder *const toReplace, const mPrice &price) {
-      if (broker.replace(toReplace, price))
+    void replaceOrder(mOrder *const toReplace, const mPrice &price, const bool &isPong) {
+      if (broker.replace(toReplace, price, isPong))
         replace(toReplace->exchangeId, str8(toReplace->price));
     };
     void cancelOrder(mOrder *const toCancel) {

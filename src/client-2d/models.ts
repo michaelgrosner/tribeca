@@ -125,6 +125,7 @@ export class Trade {
                 public Kvalue: number,
                 public Kdiff: number,
                 public feeCharged: number,
+                public isPong: boolean,
                 public loadedFromDB: boolean) {}
 }
 

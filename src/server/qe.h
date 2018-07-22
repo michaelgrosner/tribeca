@@ -499,7 +499,7 @@ namespace K {
           gw->cancelOrder(it);
         if (toReplace) {
           if (gw->replace)
-            return gw->replaceOrder(toReplace, quote.price);
+            return gw->replaceOrder(toReplace, quote.price, isPong);
           if (args.testChamber != 1)
             gw->cancelOrder(toReplace);
         }

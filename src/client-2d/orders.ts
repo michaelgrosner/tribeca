@@ -135,6 +135,7 @@ export class OrdersComponent implements OnInit {
         quoteSymbol: this.product.advert.pair.quote,
         productFixed: this.product.fixed
       }]});
+
     this.gridOptions.api.sizeColumnsToFit();
   }
 }
