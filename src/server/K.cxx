@@ -64,7 +64,6 @@ using namespace nlohmann;
 #include "ds.h"
 #include "if.h"
 #include "sh.h"
-#include "cf.h"
 #include "ev.h"
 #include "db.h"
 #include "ui.h"
@@ -82,7 +81,6 @@ using namespace nlohmann;
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;;int main(int argc, char** argv) {;;
     ;;;;K::SH sh;;;;;;;;;;;;;;;;;;;;;;;;;
-    ;;;;K::CF cf;;;;;;;;;;;;;;;;;;;;;;;;;
     ;;;;K::EV ev;;;;;;;    ;;;;    ;;;;;;
     ;;;;K::DB db;;;;;;;    ;;    ;;;;;;;;
     ;;;;K::UI ui;;;;;;;        ;;;;;;;;;;
@@ -92,7 +90,7 @@ using namespace nlohmann;
 ;   ;;;;K::PG pg;;;;;;;    ;;;;    ;;;;;;           ;
 ;;  ;;;;K::QE qe;;;;;;;;;;;;;;;    ;;;;;;          ;;
 ;;;;;;;;K::GW gw;;;;;;;;;;;;;;;;;;;;;;;;;        ;;;;;;;; // youtu.be/dVlGmdl-g9Q
-;;;;;;;;cf.main(argc, argv);;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;sh.main(argc, argv);;;;;;;;;;;;;;;;;;;;;;;;;;
 ;   ;;  ev.wait(/*     Wherever you go..        */);;;;;; // youtu.be/DKSO5YlYbOg
     ;;  db.wait(/*     Whatever you do..        */);;
     ;;  ui.wait(/*     I will be right here     */);;;;;; // youtu.be/FornpYhezt4

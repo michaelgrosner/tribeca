@@ -86,58 +86,215 @@ namespace K {
             database      = "",     diskdata    = "",
             whitelist     = "";
     const char *inet = nullptr;
-    void tidy() {
-      exchange = strU(exchange);
-      currency = strU(currency);
-      if (debug)
-        debugSecret =
-        debugEvents =
-        debugOrders =
-        debugQuotes =
-        debugWallet = debug;
-      if (!colors)
-        RBLACK[0] = RRED[0]    = RGREEN[0] = RYELLOW[0] =
-        RBLUE[0]  = RPURPLE[0] = RCYAN[0]  = RWHITE[0]  =
-        BBLACK[0] = BRED[0]    = BGREEN[0] = BYELLOW[0] =
-        BBLUE[0]  = BPURPLE[0] = BCYAN[0]  = BWHITE[0]  = RRESET[0] = 0;
-      if (database.empty() or database == ":memory:")
-        (database == ":memory:"
-          ? diskdata
-          : database
-        ) = "/data/db/K"
-          + ('.' + exchange)
-          +  '.' + string(currency).replace(currency.find("/"), 1, ".")
-          +  '.' + "db";
-      maxLevels = max(15, maxLevels);
-      if (user == "NULL") user.clear();
-      if (pass == "NULL") pass.clear();
-      if (ignoreSun and ignoreMoon) ignoreMoon = 0;
-      if (headless) port = 0;
-      else if (!port or !maxAdmins) headless = 1;
-#ifdef _WIN32
-      naked = 1;
-#endif
+    const string main(int argc, char** argv) {
+      static const struct option opts[] = {
+        {"help",         no_argument,       0,               'h'},
+        {"colors",       no_argument,       &colors,           1},
+        {"debug",        no_argument,       &debug,            1},
+        {"debug-secret", no_argument,       &debugSecret,      1},
+        {"debug-events", no_argument,       &debugEvents,      1},
+        {"debug-orders", no_argument,       &debugOrders,      1},
+        {"debug-quotes", no_argument,       &debugQuotes,      1},
+        {"debug-wallet", no_argument,       &debugWallet,      1},
+        {"without-ssl",  no_argument,       &withoutSSL,       1},
+        {"ignore-sun",   no_argument,       &ignoreSun,        2},
+        {"ignore-moon",  no_argument,       &ignoreMoon,       1},
+        {"headless",     no_argument,       &headless,         1},
+        {"naked",        no_argument,       &naked,            1},
+        {"autobot",      no_argument,       &autobot,          1},
+        {"dustybot",     no_argument,       &dustybot,         1},
+        {"lifetime",     required_argument, 0,               'T'},
+        {"whitelist",    required_argument, 0,               'L'},
+        {"port",         required_argument, 0,               999},
+        {"user",         required_argument, 0,               998},
+        {"pass",         required_argument, 0,               997},
+        {"exchange",     required_argument, 0,               996},
+        {"currency",     required_argument, 0,               995},
+        {"apikey",       required_argument, 0,               994},
+        {"secret",       required_argument, 0,               993},
+        {"passphrase",   required_argument, 0,               992},
+        {"username",     required_argument, 0,               991},
+        {"http",         required_argument, 0,               990},
+        {"wss",          required_argument, 0,               989},
+        {"title",        required_argument, 0,               'K'},
+        {"matryoshka",   required_argument, 0,               'k'},
+        {"database",     required_argument, 0,               'd'},
+        {"wallet-limit", required_argument, 0,               'W'},
+        {"market-limit", required_argument, 0,               'M'},
+        {"client-limit", required_argument, 0,               'C'},
+        {"test-chamber", required_argument, 0,               'x'},
+        {"interface",    required_argument, 0,               'i'},
+        {"free-version", no_argument,       &free,             1},
+        {"version",      no_argument,       0,               'v'},
+        {0,              0,                 0,                 0}
+      };
+      const vector<string> stamp = {
+        " \\__/  \\__/ ", " | (   .    ",
+        " /  \\__/  \\ ", " |  `.  `.  ",
+        " \\__/  \\__/ ", " |    )   ) ",
+        " /  \\__/  \\ ", " |  ,'  ,'  "
+      };
+      const unsigned int x = Tstamp % 2;
+      int k = 0;
+      while (++k)
+        switch (k = getopt_long(argc, argv, "hvd:i:k:x:K:L:M:T:W:", opts, NULL)) {
+          case -1 :
+          case  0 : break;
+          case 'x': testChamber  = stoi(optarg);   break;
+          case 'M': maxLevels    = stoi(optarg);   break;
+          case 'C': maxAdmins    = stoi(optarg);   break;
+          case 'T': lifetime     = stoi(optarg);   break;
+          case 999: port         = stoi(optarg);   break;
+          case 998: user         = string(optarg); break;
+          case 997: pass         = string(optarg); break;
+          case 996: exchange     = string(optarg); break;
+          case 995: currency     = string(optarg); break;
+          case 994: apikey       = string(optarg); break;
+          case 993: secret       = string(optarg); break;
+          case 992: passphrase   = string(optarg); break;
+          case 991: username     = string(optarg); break;
+          case 990: http         = string(optarg); break;
+          case 989: wss          = string(optarg); break;
+          case 'd': database     = string(optarg); break;
+          case 'k': matryoshka   = string(optarg); break;
+          case 'K': title        = string(optarg); break;
+          case 'L': whitelist    = string(optarg); break;
+          case 'i': inet         = strdup(optarg); break;
+          case 'W': maxWallet    = stod(optarg);   break;
+          case '?':
+          case 'h': cout
+              << RGREEN << PERMISSIVE_ctubio_SOFTWARE_LICENSE << '\n'
+              << RGREEN << "  questions: " << RYELLOW << "https://earn.com/analpaper/" << '\n'
+              << BGREEN << "K" << RGREEN << " bugkiller: " << RYELLOW << "https://github.com/ctubio/Krypto-trading-bot/issues/new" << '\n'
+              << RGREEN << "  downloads: " << RYELLOW << "ssh://git@github.com/ctubio/Krypto-trading-bot" << '\n'
+              << BWHITE << stamp[0+x] << "Usage:" << BYELLOW << " ./K.sh [arguments]" << '\n'
+              << BWHITE << stamp[2+x] << "[arguments]:" << '\n'
+              << BWHITE << stamp[4+x] << RWHITE << "-h, --help                - show this help and quit." << '\n'
+              << BWHITE << stamp[6+x] << RWHITE << "    --autobot             - automatically start trading on boot." << '\n'
+              << BWHITE << stamp[0+x] << RWHITE << "    --dustybot            - do not automatically cancel all orders on exit." << '\n'
+              << BWHITE << stamp[2+x] << RWHITE << "    --naked               - do not display CLI, print output to stdout instead." << '\n'
+              << BWHITE << stamp[4+x] << RWHITE << "    --headless            - do not listen for UI connections," << '\n'
+              << BWHITE << stamp[6+x] << RWHITE << "                            all other UI related arguments will be ignored." << '\n'
+              << BWHITE << stamp[0+x] << RWHITE << "-C, --client-limit=NUMBER - set NUMBER of maximum concurrent UI connections." << '\n'
+              << BWHITE << stamp[2+x] << RWHITE << "    --without-ssl         - do not use HTTPS for UI connections (use HTTP only)." << '\n'
+              << BWHITE << stamp[4+x] << RWHITE << "-L, --whitelist=IP        - set IP or csv of IPs to allow UI connections," << '\n'
+              << BWHITE << stamp[6+x] << RWHITE << "                            alien IPs will get a zip-bomb instead." << '\n'
+              << BWHITE << stamp[0+x] << RWHITE << "    --port=NUMBER         - set NUMBER of an open port to listen for UI connections." << '\n'
+              << BWHITE << stamp[2+x] << RWHITE << "    --user=WORD           - set allowed WORD as username for UI connections," << '\n'
+              << BWHITE << stamp[4+x] << RWHITE << "                            mandatory but may be 'NULL'." << '\n'
+              << BWHITE << stamp[6+x] << RWHITE << "    --pass=WORD           - set allowed WORD as password for UI connections," << '\n'
+              << BWHITE << stamp[0+x] << RWHITE << "                            mandatory but may be 'NULL'." << '\n'
+              << BWHITE << stamp[2+x] << RWHITE << "    --exchange=NAME       - set exchange NAME for trading, mandatory one of:" << '\n'
+              << BWHITE << stamp[4+x] << RWHITE << "                            'COINBASE', 'BITFINEX',  'BITFINEX_MARGIN', 'HITBTC'," << '\n'
+              << BWHITE << stamp[6+x] << RWHITE << "                            'OKCOIN', 'OKEX', 'KORBIT', 'POLONIEX' or 'NULL'." << '\n'
+              << BWHITE << stamp[0+x] << RWHITE << "    --currency=PAIRS      - set currency pairs for trading (use format" << '\n'
+              << BWHITE << stamp[2+x] << RWHITE << "                            with '/' separator, like 'BTC/EUR')." << '\n'
+              << BWHITE << stamp[4+x] << RWHITE << "    --apikey=WORD         - set (never share!) WORD as api key for trading," << '\n'
+              << BWHITE << stamp[6+x] << RWHITE << "                            mandatory." << '\n'
+              << BWHITE << stamp[0+x] << RWHITE << "    --secret=WORD         - set (never share!) WORD as api secret for trading," << '\n'
+              << BWHITE << stamp[2+x] << RWHITE << "                            mandatory." << '\n'
+              << BWHITE << stamp[4+x] << RWHITE << "    --passphrase=WORD     - set (never share!) WORD as api passphrase for trading," << '\n'
+              << BWHITE << stamp[6+x] << RWHITE << "                            mandatory but may be 'NULL'." << '\n'
+              << BWHITE << stamp[0+x] << RWHITE << "    --username=WORD       - set (never share!) WORD as api username for trading," << '\n'
+              << BWHITE << stamp[2+x] << RWHITE << "                            mandatory but may be 'NULL'." << '\n'
+              << BWHITE << stamp[4+x] << RWHITE << "    --http=URL            - set URL of api HTTP/S endpoint for trading," << '\n'
+              << BWHITE << stamp[6+x] << RWHITE << "                            mandatory." << '\n'
+              << BWHITE << stamp[0+x] << RWHITE << "    --wss=URL             - set URL of api SECURE WS endpoint for trading," << '\n'
+              << BWHITE << stamp[2+x] << RWHITE << "                            mandatory." << '\n'
+              << BWHITE << stamp[4+x] << RWHITE << "-d, --database=PATH       - set alternative PATH to database filename," << '\n'
+              << BWHITE << stamp[6+x] << RWHITE << "                            default PATH is '/data/db/K.*.*.*.db'," << '\n'
+              << BWHITE << stamp[0+x] << RWHITE << "                            any route to a filename is valid," << '\n'
+              << BWHITE << stamp[2+x] << RWHITE << "                            or use ':memory:' (see sqlite.org/inmemorydb.html)." << '\n'
+              << BWHITE << stamp[4+x] << RWHITE << "    --wallet-limit=AMOUNT - set AMOUNT in base currency to limit the balance," << '\n'
+              << BWHITE << stamp[6+x] << RWHITE << "                            otherwise the full available balance can be used." << '\n'
+              << BWHITE << stamp[0+x] << RWHITE << "    --market-limit=NUMBER - set NUMBER of maximum price levels for the orderbook," << '\n'
+              << BWHITE << stamp[2+x] << RWHITE << "                            default NUMBER is '321' and the minimum is '15'." << '\n'
+              << BWHITE << stamp[4+x] << RWHITE << "                            locked bots smells like '--market-limit=3' spirit." << '\n'
+              << BWHITE << stamp[6+x] << RWHITE << "-T, --lifetime=NUMBER     - set NUMBER of minimum milliseconds to keep orders open," << '\n'
+              << BWHITE << stamp[0+x] << RWHITE << "                            otherwise open orders can be replaced anytime required." << '\n'
+              << BWHITE << stamp[2+x] << RWHITE << "    --debug-secret        - print (never share!) secret inputs and outputs." << '\n'
+              << BWHITE << stamp[4+x] << RWHITE << "    --debug-events        - print detailed output about event handlers." << '\n'
+              << BWHITE << stamp[6+x] << RWHITE << "    --debug-orders        - print detailed output about exchange messages." << '\n'
+              << BWHITE << stamp[0+x] << RWHITE << "    --debug-quotes        - print detailed output about quoting engine." << '\n'
+              << BWHITE << stamp[2+x] << RWHITE << "    --debug-wallet        - print detailed output about target base position." << '\n'
+              << BWHITE << stamp[4+x] << RWHITE << "    --debug               - print detailed output about all the (previous) things!" << '\n'
+              << BWHITE << stamp[6+x] << RWHITE << "    --colors              - print highlighted output." << '\n'
+              << BWHITE << stamp[0+x] << RWHITE << "    --ignore-sun          - do not switch UI to light theme on daylight." << '\n'
+              << BWHITE << stamp[2+x] << RWHITE << "    --ignore-moon         - do not switch UI to dark theme on moonlight." << '\n'
+              << BWHITE << stamp[4+x] << RWHITE << "-k, --matryoshka=URL      - set Matryoshka link URL of the next UI." << '\n'
+              << BWHITE << stamp[6+x] << RWHITE << "-K, --title=WORD          - set WORD as UI title to identify different bots." << '\n'
+              << BWHITE << stamp[0+x] << RWHITE << "-x, --test-chamber=NUMBER - set release candidate NUMBER to test (ask your developer)." << '\n'
+              << BWHITE << stamp[2+x] << RWHITE << "-i, --interface=IP        - set IP to bind as outgoing network interface," << '\n'
+              << BWHITE << stamp[4+x] << RWHITE << "                            default IP is the system default network interface." << '\n'
+              << BWHITE << stamp[6+x] << RWHITE << "    --free-version        - work with all market levels and enable the slow XMR miner." << '\n'
+              << BWHITE << stamp[0+x] << RWHITE << "-v, --version             - show current build version and quit." << '\n'
+              << RGREEN << "  more help: " << RYELLOW << "https://github.com/ctubio/Krypto-trading-bot/blob/master/MANUAL.md" << '\n'
+              << BGREEN << "K" << RGREEN << " questions: " << RYELLOW << "irc://irc.freenode.net:6667/#tradingBot" << '\n'
+              << RGREEN << "  home page: " << RYELLOW << "https://ca.rles-tub.io./trades" << '\n'
+              << RRESET;
+          case 'v': EXIT(EXIT_SUCCESS);
+          default : abort();
+        }
+      if (optind < argc) {
+        string argerr = "Invalid argument option:";
+        while(optind < argc) argerr += string(" ") + argv[optind++];
+        return argerr;
+      }
+      return validate();
     };
-    string validate() {
-      if (currency.find("/") == string::npos or currency.length() < 3)
-        return "Invalid currency pair; must be in the format of BASE/QUOTE, like BTC/EUR";
-      if (exchange.empty())
-        return "Undefined exchange; the config file may have errors (there are extra spaces or double defined variables?)";
-      tidy();
-      return "";
-    };
-    vector<string> warnings() const {
+    const vector<string> warnings() const {
       vector<string> msgs;
       if (testChamber == 1) msgs.push_back("Test Chamber #1: send new orders before cancel old");
       else if (testChamber) msgs.push_back("ignored Test Chamber #" + to_string(testChamber));
       return msgs;
     };
-    string base() const {
+    const string base() const {
       return currency.substr(0, currency.find("/"));
     };
-    string quote() const {
+    const string quote() const {
       return currency.substr(1 + currency.find("/"));
     };
+    private:
+      void tidy() {
+        exchange = strU(exchange);
+        currency = strU(currency);
+        if (debug)
+          debugSecret =
+          debugEvents =
+          debugOrders =
+          debugQuotes =
+          debugWallet = debug;
+        if (!colors)
+          RBLACK[0] = RRED[0]    = RGREEN[0] = RYELLOW[0] =
+          RBLUE[0]  = RPURPLE[0] = RCYAN[0]  = RWHITE[0]  =
+          BBLACK[0] = BRED[0]    = BGREEN[0] = BYELLOW[0] =
+          BBLUE[0]  = BPURPLE[0] = BCYAN[0]  = BWHITE[0]  = RRESET[0] = 0;
+        if (database.empty() or database == ":memory:")
+          (database == ":memory:"
+            ? diskdata
+            : database
+          ) = "/data/db/K"
+            + ('.' + exchange)
+            +  '.' + string(currency).replace(currency.find("/"), 1, ".")
+            +  '.' + "db";
+        maxLevels = max(15, maxLevels);
+        if (user == "NULL") user.clear();
+        if (pass == "NULL") pass.clear();
+        if (ignoreSun and ignoreMoon) ignoreMoon = 0;
+        if (headless) port = 0;
+        else if (!port or !maxAdmins) headless = 1;
+#ifdef _WIN32
+        naked = 1;
+#endif
+      };
+      const string validate() {
+        if (currency.find("/") == string::npos or currency.length() < 3)
+          return "Invalid currency pair; must be in the format of BASE/QUOTE, like BTC/EUR";
+        if (exchange.empty())
+          return "Undefined exchange; the config file may have errors (there are extra spaces or double defined variables?)";
+        tidy();
+        return "";
+      };
   } args;
 
   struct mAbout {

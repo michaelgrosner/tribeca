@@ -29,9 +29,9 @@ namespace K {
     virtual void config() = 0;
     virtual void pressme(const mHotkey&, function<void()>) = 0;
     virtual void printme(mToScreen *const) = 0;
-    virtual int error(string, string, bool = false) = 0;
+    virtual const int error(string, string, bool = false) = 0;
     virtual void waitForUser() = 0;
-    virtual string stamp() = 0;
+    virtual const string stamp() = 0;
     virtual void logWar(string, string, string = " Warrrrning: ") = 0;
     virtual void logUI(const string&) = 0;
     virtual void logUIsess(int, string) = 0;
@@ -74,7 +74,7 @@ namespace K {
 #define RAWDATA_ENTRY_POINT(mData, read) write_##mData = [&](const mData &rawdata) read
     bool waitForData() {
       return (async
-        ? false
+        ? 0
         : waitFor(replyOrders, write_mOrder)
           | waitFor(replyLevels, write_mLevels)
           | waitFor(replyTrades, write_mTrade)

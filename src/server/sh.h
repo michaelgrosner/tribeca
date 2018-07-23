@@ -12,13 +12,38 @@ namespace K {
       string protocol  = "?",
              wtfismyip = "";
     public:
+      void main(int argc, char** argv) {
+        const string msg = args.main(argc, argv);
+        if (!msg.empty())
+          EXIT(error("CF", msg));
+        config();
+        if (args.inet)
+          log("CF", "Network Interface for outgoing traffic is", args.inet);
+        for (const string &it : args.warnings())
+          logWar("CF", it);
+      };
       void config() {
-        wtfismyip = mREST::xfer("https://wtfismyip.com/json", 4L).value("/YourFuckingIPAddress"_json_pointer, "");
+        gw = Gw::config(
+          args.base(),    args.quote(),
+          args.exchange,  args.free,
+          args.apikey,    args.secret,
+          args.username,  args.passphrase,
+          args.http,      args.wss,
+          args.maxLevels, args.debugSecret
+        );
+        if (!gw)
+          EXIT(error("CF",
+            "Unable to configure a valid gateway using --exchange="
+              + args.exchange + " argument"
+          ));
+        wtfismyip = mREST::xfer("https://wtfismyip.com/json", 4L)
+                      .value("/YourFuckingIPAddress"_json_pointer, "");
         if (args.naked) return;
-        if (!(wBorder = initscr())) {
-          cout << "NCURSES" << RRED << " Errrror:" << BRED << " Unable to initialize ncurses, try to run in your terminal \"export TERM=xterm\", or use --naked argument." << '\n';
-          EXIT(EXIT_SUCCESS);
-        }
+        if (!(wBorder = initscr()))
+          EXIT(error("SH",
+            "Unable to initialize ncurses, try to run in your terminal"
+              "\"export TERM=xterm\", or use --naked argument"
+          ));
         if (args.colors) start_color();
         use_default_colors();
         cbreak();
@@ -51,7 +76,7 @@ namespace K {
         data->warn    = [&](const string &prefix, const string &reason) { logWar(prefix, reason); };
         data->refresh = [&]() { refresh(); };
       };
-      int error(string k, string s, bool reboot = false) {
+      const int error(string k, string s, bool reboot = false) {
         end();
         logWar(k, s, " Errrror: ");
         cout << RRESET;
@@ -64,7 +89,7 @@ namespace K {
           hotFn[ch]();
         hotkeys();
       };
-      string stamp() {
+      const string stamp() {
         chrono::system_clock::time_point clock = Tclock;
         chrono::system_clock::duration t = clock.time_since_epoch();
         t -= chrono::duration_cast<chrono::seconds>(t);

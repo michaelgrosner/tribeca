@@ -83,10 +83,10 @@
 :  :   # boooriiing docs at http://www.cplusplus.com                          :
 :  :                                                                          :
 :  +-- Whaaat??                                                               :
-:       ____     Login    ____    Admin     ____                              :
-:      |gw.h# <<-------- |cf.h| -------->> |sh.h# K Shell                     :
-:       ¯¯¯¯#             ¯¯¯¯             |ui.h# K Client                    :
-:           #   Wallet    ____              ¯¯¯¯| P                           :
+:       ____     Login    ____ ____  Admin  ____                              :
+:      |gw.h# <<-------- |sh.h|ev.h| --->> |ui.h# K Client                    :
+:       ¯¯¯¯#             ¯¯¯¯ ¯¯¯¯         ¯¯¯¯|                             :
+:           #   Wallet    ____                  | P                           :
 :           # -------->> |pg.h#        ____     V a                           :
 :         A #             ¯¯¯¯#       |ds.h|____V r                           :
 :         P #   Trades        # <<->> |if.h|qp.h| a                           :
@@ -97,9 +97,9 @@
 :         c #   Orders    ____#   Quotes    ____V r                           :
 :         h # <<------>> |og.h# <<------>> |qe.h| s                           :
 :         ange            ¯¯¯¯# K Server    ¯¯¯¯                              :
-:                         ____#____                                           :
-:                        |db.h|ev.h|                                          :
-:                         ¯¯¯¯ ¯¯¯¯                                           :
+:                            _#__                                             :
+:                           |db.h|                                            :
+:                            ¯¯¯¯                                             :
 :                                                                             :
 :  .. src/server/K.cxx: ----------------------------- aka. K Home ----------- :
 :  :   # Warning: my home is your home, if there are houses owned by someone. :
@@ -122,13 +122,6 @@
 :                                                                             :
 :  .. src/server/if.h:  ----------------------------- aka. Interfaces ------- :
 :      TODO                                                                   :
-:                                                                             :
-:                                                                             :
-:  .. src/server/cf.h:  ----------------------------- aka. Configurations --- :
-:  :   TODO                                                                   :
-:  :                                                                          :
-:  +-- Whaaat??                                                               :
-:     args                                                                    :
 :                                                                             :
 :                                                                             :
 :  .. src/server/sh.h:  ----------------------------- aka. Shell ------------ :
