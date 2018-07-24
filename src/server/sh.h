@@ -14,28 +14,19 @@ namespace K {
     public:
       void main(int argc, char** argv) {
         const string msg = args.main(argc, argv);
-        if (!msg.empty())
-          EXIT(error("CF", msg));
-        config();
-        if (args.inet)
-          log("CF", "Network Interface for outgoing traffic is", args.inet);
-        for (const string &it : args.warnings())
-          logWar("CF", it);
-      };
-      void config() {
-        gw = Gw::config(
-          args.base(),    args.quote(),
-          args.exchange,  args.free,
-          args.apikey,    args.secret,
-          args.username,  args.passphrase,
-          args.http,      args.wss,
-          args.maxLevels, args.debugSecret
-        );
-        if (!gw)
+        if (!msg.empty()) EXIT(error("CF", msg));
+        if (!(gw = Gw::new_Gw(args.exchange)))
           EXIT(error("CF",
             "Unable to configure a valid gateway using --exchange="
               + args.exchange + " argument"
           ));
+        gw->config_internals();
+        config();
+        if (args.inet) log("CF", "Network Interface for outgoing traffic is", args.inet);
+        if (args.testChamber == 1) logWar("CF", "Test Chamber #1: send new orders before cancel old");
+        else if (args.testChamber) logWar("CF", "ignored Test Chamber #" + to_string(args.testChamber));
+      };
+      void config() {
         wtfismyip = mREST::xfer("https://wtfismyip.com/json", 4L)
                       .value("/YourFuckingIPAddress"_json_pointer, "");
         if (args.naked) return;

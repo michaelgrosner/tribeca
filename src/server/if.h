@@ -131,10 +131,12 @@ namespace K {
 
   struct GwExchange: public GwExchangeData,
                      public mToScreen {
-    uWS::Hub *socket  = nullptr;
+    uWS::Hub *socket = nullptr;
     mNotepad notepad;
     mMonitor monitor;
     mSemaphore semaphore;
+    mRandId (*randId)() = nullptr;
+    bool refreshWallet = false;
     unsigned int countdown = 0;
     mExchange exchange = (mExchange)0;
           int version  = 0, maxLevel = 0,
@@ -147,8 +149,40 @@ namespace K {
               apikey   = "", secret  = "",
               user     = "", pass    = "",
               ws       = "", http    = "";
-    bool refreshWallet = false;
-    mRandId (*randId)() = nullptr;
+    void config_internals() {
+      base     = args.base();
+      quote    = args.quote();
+      name     = args.exchange;
+      version  = args.free;
+      apikey   = args.apikey;
+      secret   = args.secret;
+      user     = args.username;
+      pass     = args.passphrase;
+      http     = args.http;
+      ws       = args.wss;
+      maxLevel = args.maxLevels;
+      debug    = args.debugSecret;
+    };
+    const string config_externals() {
+      const json reply = handshake();
+      if (!randId or symbol.empty())
+        return "Incomplete handshake aborted.";
+      if (!minTick or !minSize)
+        return "Unable to fetch data from " + name
+          + " for symbol \"" + symbol + "\", possible error message: "
+          + reply.dump();
+      if (exchange != mExchange::Null)
+        print("GW " + name, "allows client IP");
+      unsigned int precision = minTick < 1e-8 ? 10 : 8;
+      print("GW " + name + ":", string("\n")
+        + "- autoBot: " + (!args.autobot ? "no" : "yes") + '\n'
+        + "- symbols: " + symbol + '\n'
+        + "- minTick: " + strX(minTick, precision) + '\n'
+        + "- minSize: " + strX(minSize, precision) + '\n'
+        + "- makeFee: " + strX(makeFee, precision) + '\n'
+        + "- takeFee: " + strX(takeFee, precision));
+      return "";
+    };
     void connect() {
       socket->connect(ws, nullptr, {}, 5e+3, &socket->getDefaultGroup<uWS::CLIENT>());
     };
@@ -167,6 +201,7 @@ namespace K {
       }
     };
     protected:
+      virtual const json handshake() { return nullptr; };
       void reconnect(const string &reason) {
         countdown = 7;
         print("GW " + name, "WS " + reason + ", reconnecting in " + to_string(countdown) + "s.");
@@ -206,10 +241,170 @@ namespace K {
       if (broker.cancel(toCancel))
         cancel(toCancel->orderId, toCancel->exchangeId);
     };
-//BO non-free gw library functions from build-*/local/lib/K-*.a (it just returns a derived gateway class based on arguments).
-/**/static Gw* config(mCoinId, mCoinId, string, int, string, string, string, string, string, string, int, int); // set args..
-//EO non-free gw library functions from build-*/local/lib/K-*.a (it just returns a derived gateway class based on arguments).
+//BO non-free gw library functions from build-*/local/lib/K-*.a (it just returns a derived gateway class based on argument).
+/**/static Gw* new_Gw(const string&); // it may return too a nullptr instead of a child gateway class, if string is unknown.
+//EO non-free gw library functions from build-*/local/lib/K-*.a (it just returns a derived gateway class based on argument).
   } *gw = nullptr;
+
+  class GwNull: public Gw {
+    public:
+      GwNull() {
+        exchange = mExchange::Null;
+      };
+    protected:
+      const json handshake() {
+        randId  = mRandom::uuid36Id;
+        symbol  = base + "_" + quote;
+        minTick = 0.01;
+        minSize = 0.01;
+        return nullptr;
+      };
+  };
+  class GwHitBtc: public Gw {
+    public:
+      GwHitBtc() {
+        exchange = mExchange::HitBtc;
+      };
+    protected:
+      const json handshake() {
+        randId = mRandom::uuid32Id;
+        symbol = base + quote;
+        json reply = mREST::xfer(http + "/public/symbol/" + symbol);
+        minTick = stod(reply.value("tickSize", "0"));
+        minSize = stod(reply.value("quantityIncrement", "0"));
+        base    = reply.value("baseCurrency", base);
+        quote   = reply.value("quoteCurrency", quote);
+        return reply;
+      };
+  };
+  class GwOkCoin: public Gw {
+    public:
+      GwOkCoin() {
+        exchange = mExchange::OkCoin;
+      };
+    protected:
+      const json handshake() {
+        randId = mRandom::char16Id;
+        symbol = strL(base + "_" + quote);
+        minTick = 0.0001;
+        minSize = 0.001;
+        return nullptr;
+      };
+  };
+  class GwOkEx: public GwOkCoin {
+    public:
+      GwOkEx() {
+        exchange = mExchange::OkEx;
+      };
+  };
+  class GwCoinbase: public Gw {
+    public:
+      GwCoinbase() {
+        exchange = mExchange::Coinbase;
+      };
+    protected:
+      const json handshake() {
+        randId = mRandom::uuid36Id;
+        symbol = base + "-" + quote;
+        json reply = mREST::xfer(http + "/products/" + symbol);
+        minTick = stod(reply.value("quote_increment", "0"));
+        minSize = stod(reply.value("base_min_size", "0"));
+        return reply;
+      };
+  };
+  class GwBitfinex: public Gw {
+    public:
+      GwBitfinex() {
+        exchange = mExchange::Bitfinex;
+      };
+    protected:
+      const json handshake() {
+        randId = mRandom::int45Id;
+        symbol = strL(base + quote);
+        json reply = mREST::xfer(http + "/pubticker/" + symbol);
+        if (reply.find("last_price") != reply.end()) {
+          stringstream price_;
+          price_ << scientific << stod(reply.value("last_price", "0"));
+          string _price_ = price_.str();
+          for (string::iterator it=_price_.begin(); it!=_price_.end();)
+            if (*it == '+' or *it == '-') break; else it = _price_.erase(it);
+          stringstream os("1e" + to_string(fmax(stod(_price_),-4)-4));
+          os >> minTick;
+        }
+        reply = mREST::xfer(http + "/symbols_details");
+        if (reply.is_array())
+          for (json::iterator it=reply.begin(); it!=reply.end();++it)
+            if (it->find("pair") != it->end() and it->value("pair", "") == symbol)
+              minSize = stod(it->value("minimum_order_size", "0"));
+        return reply;
+      };
+  };
+  class GwEthfinex: public GwBitfinex {
+    public:
+      GwEthfinex() {
+        exchange = mExchange::Ethfinex;
+      };
+  };
+  class GwKraken: public Gw {
+    public:
+      GwKraken() {
+        exchange = mExchange::Kraken;
+      };
+    protected:
+      const json handshake() {
+        randId = mRandom::int32Id;
+        symbol = base + quote;
+        json reply = mREST::xfer(http + "/0/public/AssetPairs?pair=" + symbol);
+        if (reply.find("result") != reply.end())
+          for (json::iterator it = reply["result"].begin(); it != reply["result"].end(); ++it)
+            if (it.value().find("pair_decimals") != it.value().end()) {
+              stringstream os("1e-" + to_string(it.value().value("pair_decimals", 0)));
+              os >> minTick;
+              os = stringstream("1e-" + to_string(it.value().value("lot_decimals", 0)));
+              os >> minSize;
+              symbol = it.key();
+              base = it.value().value("base", base);
+              quote = it.value().value("quote", quote);
+              break;
+            }
+        return reply;
+      };
+  };
+  class GwKorbit: public Gw {
+    public:
+      GwKorbit() {
+        exchange = mExchange::Korbit;
+      };
+    protected:
+      const json handshake() {
+        randId = mRandom::int45Id;
+        symbol = strL(base + "_" + quote);
+        json reply = mREST::xfer(http + "/constants");
+        if (reply.find(symbol.substr(0,3).append("TickSize")) != reply.end()) {
+          minTick = reply.value(symbol.substr(0,3).append("TickSize"), 0.0);
+          minSize = 0.015;
+        }
+        return reply;
+      };
+  };
+  class GwPoloniex: public Gw {
+    public:
+      GwPoloniex() {
+        exchange = mExchange::Poloniex;
+      };
+    protected:
+      const json handshake() {
+        randId = mRandom::int45Id;
+        symbol = quote + "_" + base;
+        json reply = mREST::xfer(http + "/public?command=returnTicker");
+        if (reply.find(symbol) != reply.end()) {
+          istringstream os("1e-" + to_string(6-reply[symbol]["last"].get<string>().find(".")));
+          os >> minTick;
+          minSize = 0.001;
+        }
+        return reply;
+      };
+  };
 
   static string tracelog;
   static vector<function<void()>> happyEndingFn, endingFn = { []() {
@@ -217,7 +412,7 @@ namespace K {
     cout << '\n' << screen->stamp() << tracelog;
   } };
   static struct Ending {
-    Ending (/* KMxTWEpb9ig */) {
+    Ending(/* KMxTWEpb9ig */) {
       tracelog = "- roll-out: " + to_string(Tstamp) + '\n';
       signal(SIGINT, quit);
       signal(SIGABRT, wtf);
