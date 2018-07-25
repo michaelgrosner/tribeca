@@ -9,7 +9,7 @@ namespace K {
       };
       void waitData() {
         gw->RAWDATA_ENTRY_POINT(mOrder, {                           PRETTY_DEBUG
-          gw->broker.upsert(rawdata, &gw->wallet, gw->levels, &gw->refreshWallet);
+          gw->broker.upsert(rawdata, &gw->wallet, gw->levels, &gw->askForFees);
         });
       };
       void waitSysAdmin() {

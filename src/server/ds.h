@@ -314,6 +314,11 @@ namespace K {
     = [](const string &prefix, const string &reason) { WARN("Y U NO catch screen print?"); }
 #endif
     ;
+    function<void(const string&, const string&, const string&)> focus
+#ifndef NDEBUG
+    = [](const string &prefix, const string &reason, const string &highlight) { WARN("Y U NO catch screen focus?"); }
+#endif
+    ;
     function<void(const string&, const string&)> warn
 #ifndef NDEBUG
     = [](const string &prefix, const string &reason) { WARN("Y U NO catch screen warn?"); }
@@ -2044,7 +2049,7 @@ namespace K {
       }
       return order;
     };
-    void upsert(const mOrder &raw, mWalletPosition *const wallet, const mMarketLevels &levels, bool *const refreshWallet) {
+    void upsert(const mOrder &raw, mWalletPosition *const wallet, const mMarketLevels &levels, bool *const askForFees) {
       if (debug()) report(raw);
       mOrder *const order = upsert(raw);
       if (!order) return;
@@ -2060,7 +2065,7 @@ namespace K {
       if (raw.tradeQuantity) {
         wallet->target.safety.recentTrades.insert(lastSide, lastPrice, raw.tradeQuantity);
         wallet->target.safety.calc(levels, tradesHistory);
-        *refreshWallet = true;
+        *askForFees = true;
       }
       send();
       refresh();
@@ -2244,20 +2249,46 @@ namespace K {
 
   struct mSemaphore: public mToScreen,
                      public mJsonToClient<mSemaphore> {
-    mConnectivity greenButton,
-                  greenGateway;
-    mSemaphore():
-      greenButton((mConnectivity)0), greenGateway((mConnectivity)0)
-    {};
+    mConnectivity adminAgreement = mConnectivity::Disconnected,
+                  greenButton    = mConnectivity::Disconnected,
+                  greenGateway   = mConnectivity::Disconnected;
     const json kiss(const json &j) {
       json butterfly;
       if (j.is_object() and j["state"].is_number())
         butterfly = j["state"];
       return mFromClient::kiss(butterfly);
     };
+    const bool online(const mConnectivity &raw) {
+      if (greenGateway != raw) {
+        greenGateway = raw;
+        send_refresh();
+      }
+      return !!greenGateway;
+    };
+    void agree(const mConnectivity &raw) {
+      if (adminAgreement != raw) {
+        adminAgreement = raw;
+        send_refresh();
+      }
+    };
+    void toggle() {
+      adminAgreement = (mConnectivity)!adminAgreement;
+      send_refresh();
+    };
     const mMatter about() const {
       return mMatter::Connectivity;
     };
+    private:
+      void send_refresh() {
+        const mConnectivity k = adminAgreement * greenGateway;
+        if (greenButton != k) {
+          greenButton = k;
+          focus("GW " + args.exchange, "Quoting state changed to",
+            string(!greenButton ? "DIS" : "") + "CONNECTED");
+        }
+        send();
+        refresh();
+      };
   };
   static void to_json(json &j, const mSemaphore &k) {
     j = {
@@ -2574,25 +2605,19 @@ namespace K {
   };
 
   struct mProduct: public mJsonToClient<mProduct> {
-    const mCoinId *const base,
-                  *const quote;
-    const string  *const exchange;
-    const mPrice  *const minTick;
-    mProduct():
-          base(nullptr),
-         quote(nullptr),
-      exchange(nullptr),
-       minTick(nullptr)
-    {};
+    const mCoinId *const base     = nullptr,
+                  *const quote    = nullptr;
+    const string  *const exchange = nullptr;
+    const mPrice  *const minTick  = nullptr;
     mProduct(
       const mCoinId *const b,
       const mCoinId *const q,
       const string  *const e,
       const mPrice  *const m):
-          base(b),
-         quote(q),
-      exchange(e),
-       minTick(m)
+            base(b),
+           quote(q),
+        exchange(e),
+         minTick(m)
     {};
     const mMatter about() const {
       return mMatter::ProductAdvertisement;
@@ -2617,21 +2642,12 @@ namespace K {
           string /*  )| O |(  */    unlock;
         mProduct /* ( | C | ) */ /* this */ product;
                  /*  )| K |(  */ /* thanks! <3 */
-    mMonitor():
-      orders_60s(0),
-          unlock(),
-         product()
+    mMonitor(const mProduct &p):
+      orders_60s(0), unlock(), product(p)
     {};
-    mMonitor(
-      const mCoinId *const base,
-      const mCoinId *const quote,
-      const string  *const exchange,
-      const mPrice  *const minTick):
-       orders_60s(0),
-           unlock(),
-          product(base, quote, exchange, minTick)
-    {};
-    function<const unsigned int()> dbSize = []() { return 0; };
+    function<const unsigned int()> dbSize = []() {
+      return 0;
+    };
     const unsigned int memSize() const {
       string ps = mCommand::ps();
       ps.erase(remove(ps.begin(), ps.end(), ' '), ps.end());

@@ -79,7 +79,7 @@ namespace K  {
           tick = 0;
           return;
         }
-        if (TRUEONCE(gw->refreshWallet)
+        if (TRUEONCE(gw->askForFees)
           or !(tick % 15))                    async(gw->askForWallet);
         if (!gw->async) {
           if (!(tick % 2))                    async(gw->askForOrders);

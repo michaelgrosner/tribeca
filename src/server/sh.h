@@ -63,9 +63,18 @@ namespace K {
         hotFn[ch] = fn;
       };
       void printme(mToScreen *const data) {
-        data->print   = [&](const string &prefix, const string &reason) { log(prefix, reason); };
-        data->warn    = [&](const string &prefix, const string &reason) { logWar(prefix, reason); };
-        data->refresh = [&]() { refresh(); };
+        data->print = [&](const string &prefix, const string &reason) {
+          log(prefix, reason);
+        };
+        data->focus = [&](const string &prefix, const string &reason, const string &highlight) {
+          log(prefix, reason, highlight);
+        };
+        data->warn = [&](const string &prefix, const string &reason) {
+          logWar(prefix, reason);
+        };
+        data->refresh = [&]() {
+          refresh();
+        };
       };
       const int error(string k, string s, bool reboot = false) {
         end();

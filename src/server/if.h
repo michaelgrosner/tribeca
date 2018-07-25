@@ -87,6 +87,7 @@ namespace K {
         ) | waitFor(replyWallets, write_mWallets)
           | waitFor(replyCancelAll, write_mOrder);
       };
+      bool askForFees = false;
       function<bool()> askForWallet = [&]() { return !(async_wallet() or !askFor(replyWallets, [&]() { return sync_wallet(); })); };
       function<bool()> askForLevels = [&]() { return askFor(replyLevels, [&]() { return sync_levels(); }); };
       function<bool()> askForTrades = [&]() { return askFor(replyTrades, [&]() { return sync_trades(); }); };
@@ -140,13 +141,12 @@ namespace K {
     public:
       mMonitor monitor;
       GwExchange():
-        monitor(&base, &quote, &exchange, &minTick)
+        monitor(mProduct(&base, &quote, &exchange, &minTick))
       {};
       uWS::Hub *socket = nullptr;
       mNotepad notepad;
       mSemaphore semaphore;
       mRandId (*randId)() = nullptr;
-      bool refreshWallet = false;
       unsigned int countdown = 0;
          string exchange = "", symbol  = "",
                 apikey   = "", secret  = "",
@@ -171,6 +171,7 @@ namespace K {
         ws       = args.wss;
         maxLevel = args.maxLevels;
         debug    = args.debugSecret;
+        semaphore.adminAgreement = (mConnectivity)args.autobot;
       };
       const string config_externals() {
         const json reply = handshake();

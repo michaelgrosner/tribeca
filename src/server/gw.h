@@ -3,18 +3,11 @@
 
 namespace K {
   class GW: public Klass {
-    private:
-      mConnectivity adminAgreement = mConnectivity::Disconnected;
     protected:
-      void load() {
-        adminAgreement = (mConnectivity)args.autobot;
-      };
       void waitData() {
         gw->RAWDATA_ENTRY_POINT(mConnectivity, {
-          if (gw->semaphore.greenGateway == rawdata) return;
-          if (!(gw->semaphore.greenGateway = rawdata))
+          if (!gw->semaphore.online(rawdata))
             gw->levels.clear();
-          gwSemaphore();
         });
       };
       void waitWebAdmin() {
@@ -25,36 +18,20 @@ namespace K {
         client->welcome(gw->semaphore);
         client->clickme(gw->semaphore KISS {
           if (!butterfly.is_number()) return;
-          mConnectivity k = butterfly.get<mConnectivity>();
-          if (adminAgreement != k) {
-            adminAgreement = k;
-            gwSemaphore();
-          }
+          gw->semaphore.agree(butterfly.get<mConnectivity>());
         });
       };
       void waitSysAdmin() {
         screen->printme(gw);
         screen->printme(&gw->semaphore);
         screen->pressme(mHotkey::ESC, [&]() {
-          adminAgreement = (mConnectivity)!adminAgreement;
-          gwSemaphore();
+          gw->semaphore.toggle();
         });
       };
       void run() {                                                  PRETTY_DEBUG
         const string msg = gw->config_externals();
         if (!msg.empty())
           EXIT(screen->error("GW", msg));
-      };
-    private:
-      void gwSemaphore() {
-        mConnectivity k = adminAgreement * gw->semaphore.greenGateway;
-        if (gw->semaphore.greenButton != k) {
-          gw->semaphore.greenButton = k;
-          screen->log("GW " + gw->exchange, "Quoting state changed to",
-            string(!gw->semaphore.greenButton?"DIS":"") + "CONNECTED");
-        }
-        gw->semaphore.send();
-        gw->semaphore.refresh();
       };
   };
 }
