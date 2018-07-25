@@ -138,9 +138,12 @@ namespace K {
   class GwExchange: public GwExchangeData,
                     public mToScreen {
     public:
+      mMonitor monitor;
+      GwExchange():
+        monitor(&base, &quote, &exchange, &minTick)
+      {};
       uWS::Hub *socket = nullptr;
       mNotepad notepad;
-      mMonitor monitor;
       mSemaphore semaphore;
       mRandId (*randId)() = nullptr;
       bool refreshWallet = false;
@@ -193,7 +196,6 @@ namespace K {
         socket->connect(ws, nullptr, {}, 5e+3, &socket->getDefaultGroup<uWS::CLIENT>());
       };
       virtual void run() {
-        monitor.fromGw(exchange, mPair(base, quote), &minTick);
         if (async) countdown = 1;
         socket->run();
       };

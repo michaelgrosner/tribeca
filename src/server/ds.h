@@ -664,16 +664,16 @@ namespace K {
                  latency,
                  _waitingCancel;
     mOrder():
-      orderId(""), exchangeId(""), side((mSide)0), quantity(0), type((mOrderType)0), isPong(false), price(0), timeInForce((mTimeInForce)0), orderStatus((mStatus)0), preferPostOnly(false), tradeQuantity(0), time(0), _waitingCancel(0), latency(0)
+      orderId(), exchangeId(), side((mSide)0), quantity(0), type((mOrderType)0), isPong(false), price(0), timeInForce((mTimeInForce)0), orderStatus((mStatus)0), preferPostOnly(false), tradeQuantity(0), time(0), _waitingCancel(0), latency(0)
     {};
     mOrder(mRandId o, mStatus s):
-      orderId(o), exchangeId(""), side((mSide)0), quantity(0), type((mOrderType)0), isPong(false), price(0), timeInForce((mTimeInForce)0), orderStatus(s), preferPostOnly(false), tradeQuantity(0), time(0), _waitingCancel(0), latency(0)
+      orderId(o), exchangeId(), side((mSide)0), quantity(0), type((mOrderType)0), isPong(false), price(0), timeInForce((mTimeInForce)0), orderStatus(s), preferPostOnly(false), tradeQuantity(0), time(0), _waitingCancel(0), latency(0)
     {};
     mOrder(mRandId o, mRandId e, mStatus s, mPrice p, mAmount q, mAmount Q):
       orderId(o), exchangeId(e), side((mSide)0), quantity(q), type((mOrderType)0), isPong(false), price(p), timeInForce((mTimeInForce)0), orderStatus(s), preferPostOnly(false), tradeQuantity(Q), time(0), _waitingCancel(0), latency(0)
     {};
     mOrder(mRandId o, mSide S, mAmount q, mOrderType t, bool i, mPrice p, mTimeInForce F, mStatus s, bool O):
-      orderId(o), exchangeId(""), side(S), quantity(q), type(t), isPong(i), price(p), timeInForce(F), orderStatus(s), preferPostOnly(O), tradeQuantity(0), time(0), _waitingCancel(0), latency(0)
+      orderId(o), exchangeId(), side(S), quantity(q), type(t), isPong(i), price(p), timeInForce(F), orderStatus(s), preferPostOnly(O), tradeQuantity(0), time(0), _waitingCancel(0), latency(0)
     {};
     void update(const mOrder &raw) {
       orderStatus = raw.orderStatus;
@@ -721,10 +721,10 @@ namespace K {
        bool isPong,
             loadedFromDB;
     mTrade():
-      tradeId(""), side((mSide)0), price(0), Kprice(0), quantity(0), value(0), Kqty(0), Kvalue(0), Kdiff(0), feeCharged(0), time(0), Ktime(0), isPong(false), loadedFromDB(false)
+      tradeId(), side((mSide)0), price(0), Kprice(0), quantity(0), value(0), Kqty(0), Kvalue(0), Kdiff(0), feeCharged(0), time(0), Ktime(0), isPong(false), loadedFromDB(false)
     {};
     mTrade(mPrice p, mAmount q, mSide s, mClock t):
-      tradeId(""), side(s), price(p), Kprice(0), quantity(q), value(0), Kqty(0), Kvalue(0), Kdiff(0), feeCharged(0), time(t), Ktime(0), isPong(false), loadedFromDB(false)
+      tradeId(), side(s), price(p), Kprice(0), quantity(q), value(0), Kqty(0), Kvalue(0), Kdiff(0), feeCharged(0), time(t), Ktime(0), isPong(false), loadedFromDB(false)
     {};
     mTrade(string i, mPrice p, mAmount q, mSide S, bool P, mClock t, mAmount v, mClock Kt, mAmount Kq, mPrice Kp, mAmount Kv, mAmount Kd, mAmount f, bool l):
       tradeId(i), side(S), price(p), Kprice(Kp), quantity(q), value(v), Kqty(Kq), Kvalue(Kv), Kdiff(Kd), feeCharged(f), time(t), Ktime(Kt), isPong(P), loadedFromDB(l)
@@ -775,7 +775,7 @@ namespace K {
     mAmount        takersBuySize60s,
                    takersSellSize60s;
     mMarketTakers():
-      trades({}), takersBuySize60s(0), takersSellSize60s(0)
+      trades(), takersBuySize60s(0), takersSellSize60s(0)
     {};
     void timer_60s() {
       takersSellSize60s = takersBuySize60s = 0;
@@ -984,7 +984,7 @@ namespace K {
                             mPrice lastBuyPrice,
                                    lastSellPrice;
     mRecentTrades():
-      buys({}), sells({}), sumBuys(0), sumSells(0), lastBuyPrice(0), lastSellPrice(0)
+      buys(), sells(), sumBuys(0), sumSells(0), lastBuyPrice(0), lastSellPrice(0)
     {};
     void insert(const mSide &side, const mPrice &price, const mAmount &quantity) {
       const bool bidORask = side == mSide::Bid;
@@ -1321,7 +1321,7 @@ namespace K {
     mFairLevelsPrice fairPrice;
        mMarketTakers takerTrades;
     mMarketStats(mPrice *const f):
-       ewma(mEwma()), fairPrice(mFairLevelsPrice(f)), takerTrades(mMarketTakers())
+       ewma(), fairPrice(f), takerTrades()
     {};
     const mMatter about() const {
       return mMatter::MarketChart;
@@ -1366,7 +1366,7 @@ namespace K {
     vector<mLevel> bids,
                    asks;
     mLevels():
-      bids({}), asks({})
+      bids(), asks()
     {};
     mLevels(vector<mLevel> b, vector<mLevel> a):
       bids(b), asks(a)
@@ -1465,7 +1465,7 @@ namespace K {
                          fairValue;
             mMarketStats stats;
     mMarketLevels():
-      diff(mLevelsDiff(&unfiltered)), filterBidOrders({}), filterAskOrders({}), averageCount(0), averageWidth(0), fairValue(0), stats(mMarketStats(&fairValue))
+      diff(&unfiltered), filterBidOrders(), filterAskOrders(), averageCount(0), averageWidth(0), fairValue(0), stats(&fairValue)
     {};
     void timer_1s() {
       stats.stdev.timer_1s(fairValue, bids.cbegin()->price, asks.cbegin()->price);
@@ -1618,7 +1618,7 @@ namespace K {
                   *baseTotal,
                   *targetBasePosition;
     mSafety(mAmount *const b, mAmount *const t, mAmount *const p):
-      buy(0), sell(0), combined(0), buyPing(0), sellPing(0), buySize(0), sellSize(0), recentTrades(mRecentTrades()), baseValue(b), baseTotal(t), targetBasePosition(p)
+      buy(0), sell(0), combined(0), buyPing(0), sellPing(0), buySize(0), sellSize(0), recentTrades(), baseValue(b), baseTotal(t), targetBasePosition(p)
     {};
     void timer_1s(const mMarketLevels &levels, const mTradesCompleted &tradesHistory) {
       calc(levels, tradesHistory);
@@ -1752,7 +1752,7 @@ namespace K {
     mSafety safety;
     mAmount *baseValue;
     mTarget(mAmount *const b, mAmount *const t):
-      targetBasePosition(0), positionDivergence(0), sideAPR(""), sideAPRDiff("!="), safety(mSafety(b, t, &targetBasePosition)), baseValue(b)
+      targetBasePosition(0), positionDivergence(0), sideAPR(), sideAPRDiff("!="), safety(b, t, &targetBasePosition), baseValue(b)
     {};
     void calcPDiv() {
       mAmount pDiv = qp.percentageValues
@@ -1836,7 +1836,7 @@ namespace K {
             profit;
     mCoinId currency;
     mWallet():
-      amount(0), held(0), total(0), value(0), profit(0), currency("")
+      amount(0), held(0), total(0), value(0), profit(0), currency()
     {};
     mWallet(mAmount a, mAmount h, mCoinId c):
       amount(a), held(h), total(0), value(0), profit(0), currency(c)
@@ -1861,7 +1861,7 @@ namespace K {
     mWallet base,
             quote;
     mWallets():
-      base(mWallet()), quote(mWallet())
+      base(), quote()
     {};
     mWallets(mWallet b, mWallet q):
       base(b), quote(q)
@@ -1881,7 +1881,7 @@ namespace K {
      mTarget target;
     mProfits profits;
     mWalletPosition():
-      target(mTarget(&base.value, &base.total)), profits(mProfits())
+      target(&base.value, &base.total), profits()
     {};
     void reset(const mWallets &next, const mMarketLevels &levels) {
       if (next.empty()) return;
@@ -2182,7 +2182,7 @@ namespace K {
       bool isBidPong,
            isAskPong;
     mQuote():
-      bid(mLevel()), ask(mLevel()), isBidPong(false), isAskPong(false)
+      bid(), ask(), isBidPong(false), isAskPong(false)
     {};
     mQuote(mLevel b, mLevel a):
       bid(b), ask(a), isBidPong(false), isAskPong(false)
@@ -2227,7 +2227,7 @@ namespace K {
   struct mNotepad: public mJsonToClient<mNotepad> {
     string content;
     mNotepad():
-      content("")
+      content()
     {};
     const json kiss(const json &j) {
       if (j.is_array() and j.size())
@@ -2573,32 +2573,26 @@ namespace K {
       };
   };
 
-  struct mPair {
-    mCoinId base,
-            quote;
-    mPair():
-      base(""), quote("")
-    {};
-    mPair(mCoinId b, mCoinId q):
-      base(b), quote(q)
-    {};
-  };
-  static void to_json(json &j, const mPair &k) {
-    j = {
-      { "base", k.base },
-      {"quote", k.quote}
-    };
-  };
-  static void from_json(const json &j, mPair &k) {
-    k.base  = j.value("base", "");
-    k.quote = j.value("quote", "");
-  };
   struct mProduct: public mJsonToClient<mProduct> {
-       string exchange;
-        mPair pair;
-       mPrice *minTick;
+    const mCoinId *const base,
+                  *const quote;
+    const string  *const exchange;
+    const mPrice  *const minTick;
     mProduct():
-      exchange(""), pair(mPair()), minTick(nullptr)
+          base(nullptr),
+         quote(nullptr),
+      exchange(nullptr),
+       minTick(nullptr)
+    {};
+    mProduct(
+      const mCoinId *const b,
+      const mCoinId *const q,
+      const string  *const e,
+      const mPrice  *const m):
+          base(b),
+         quote(q),
+      exchange(e),
+       minTick(m)
     {};
     const mMatter about() const {
       return mMatter::ProductAdvertisement;
@@ -2606,8 +2600,11 @@ namespace K {
   };
   static void to_json(json &j, const mProduct &k) {
     j = {
-      {   "exchange", k.exchange                                    },
-      {       "pair", k.pair                                        },
+      {   "exchange", *k.exchange                                   },
+      {       "pair", {
+                        { "base", *k.base },
+                        {"quote", *k.quote}
+                      }                                             },
       {    "minTick", *k.minTick                                    },
       {"environment", args.title                                    },
       { "matryoshka", args.matryoshka                               },
@@ -2617,21 +2614,28 @@ namespace K {
 
   struct mMonitor: public mJsonToClient<mMonitor> {
     unsigned int /* ( | L | ) */ /* more */ orders_60s; /* ? */
-          string /*  )| O |(  */ unlock;
+          string /*  )| O |(  */    unlock;
         mProduct /* ( | C | ) */ /* this */ product;
-    mMonitor():  /*  )| K |(  */ /* thanks! <3 */
-       orders_60s(0), unlock(""), product(mProduct())
+                 /*  )| K |(  */ /* thanks! <3 */
+    mMonitor():
+      orders_60s(0),
+          unlock(),
+         product()
+    {};
+    mMonitor(
+      const mCoinId *const base,
+      const mCoinId *const quote,
+      const string  *const exchange,
+      const mPrice  *const minTick):
+       orders_60s(0),
+           unlock(),
+          product(base, quote, exchange, minTick)
     {};
     function<const unsigned int()> dbSize = []() { return 0; };
     const unsigned int memSize() const {
       string ps = mCommand::ps();
       ps.erase(remove(ps.begin(), ps.end(), ' '), ps.end());
       return ps.empty() ? 0 : stoi(ps) * 1e+3;
-    };
-    void fromGw(const string &exchange, const mPair &pair, mPrice *const minTick) {
-      product.exchange = exchange;
-      product.pair     = pair;
-      product.minTick  = minTick;
     };
     void tick_orders() {
       orders_60s++;
