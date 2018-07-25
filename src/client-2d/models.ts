@@ -63,7 +63,6 @@ export class MarketTrade {
 }
 
 export enum Connectivity { Disconnected, Connected }
-export enum Exchange { Null, HitBtc, OkCoin, Coinbase, Bitfinex, Kraken, OkEx, BitfinexMargin, Korbit, Poloniex }
 export enum Side { Bid, Ask, Unknown }
 export enum OrderType { Limit, Market }
 export enum TimeInForce { IOC, FOK, GTC }
@@ -247,7 +246,7 @@ export interface QuotingParameters {
 }
 
 export class ProductAdvertisement {
-    constructor(public exchange: Exchange, public pair: CurrencyPair, public environment: string, public matryoshka: string, public homepage: string, public minTick: number) { }
+    constructor(public exchange: string, public pair: CurrencyPair, public environment: string, public matryoshka: string, public homepage: string, public minTick: number) { }
 }
 
 export class ApplicationState {

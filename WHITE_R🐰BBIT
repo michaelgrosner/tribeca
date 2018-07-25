@@ -142,7 +142,7 @@
 :  :   # Warning: write-only during execution, we read data only before boot. :
 :  :                                                                          :
 :  +-- Whaaat??                                                               :
-:     sqlite.backup                                                           :
+:     sqlite.backup()                                                         :
 :       !before backup, consider twice if data must really survive reboots..! :
 :     sqlite.select()                                                         :
 :      returns always 1 json array, with 0 items in case no record exist yet. :

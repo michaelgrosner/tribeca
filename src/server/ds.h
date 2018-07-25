@@ -23,7 +23,6 @@
 #define TRUEONCE(k) (k ? !(k = !k) : k)
 
 namespace K {
-  enum class mExchange: unsigned int { Null, HitBtc, OkCoin, Coinbase, Bitfinex, Ethfinex, Kraken, OkEx, Korbit, Poloniex };
   enum class mConnectivity: unsigned int { Disconnected, Connected };
   enum class mStatus: unsigned int { New, Working, Complete, Cancelled };
   enum class mSide: unsigned int { Bid, Ask, Both };
@@ -2595,11 +2594,11 @@ namespace K {
     k.quote = j.value("quote", "");
   };
   struct mProduct: public mJsonToClient<mProduct> {
-    mExchange exchange;
+       string exchange;
         mPair pair;
        mPrice *minTick;
     mProduct():
-      exchange((mExchange)0), pair(mPair()), minTick(nullptr)
+      exchange(""), pair(mPair()), minTick(nullptr)
     {};
     const mMatter about() const {
       return mMatter::ProductAdvertisement;
@@ -2629,7 +2628,7 @@ namespace K {
       ps.erase(remove(ps.begin(), ps.end(), ' '), ps.end());
       return ps.empty() ? 0 : stoi(ps) * 1e+3;
     };
-    void fromGw(const mExchange &exchange, const mPair &pair, mPrice *const minTick) {
+    void fromGw(const string &exchange, const mPair &pair, mPrice *const minTick) {
       product.exchange = exchange;
       product.pair     = pair;
       product.minTick  = minTick;

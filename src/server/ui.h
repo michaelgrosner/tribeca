@@ -209,7 +209,7 @@ namespace K {
               : "{}"
           );
           for (json::iterator it = butterfly.begin(); it != butterfly.end();)
-            if (it.value().is_null()) it = butterfly.erase(it); else it++;
+            if (it.value().is_null()) it = butterfly.erase(it); else ++it;
           kisses[message[1]](butterfly);
         }
         return "";

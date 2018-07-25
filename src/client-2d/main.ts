@@ -946,7 +946,7 @@ class ClientComponent implements OnInit {
     this.matryoshka = pa.matryoshka;
     this.baseCurrency = pa.pair.base;
     this.quoteCurrency = pa.pair.quote;
-    this.exchange_name = Models.Exchange[pa.exchange];
+    this.exchange_name = pa.exchange;
     this.exchange_market = this.exchange_name=='OkCoin'
       ? 'https://www.okcoin.'+(pa.pair.quote=='CNY'?'cn':'com')+'/market.html'
       : (this.exchange_name=='OkEx'

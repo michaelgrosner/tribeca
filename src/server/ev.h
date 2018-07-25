@@ -42,7 +42,7 @@ namespace K  {
         timer->stop();
         gw->close();
         socket->getDefaultGroup<uWS::CLIENT>().close();
-        gw->clear();
+        gw->end();
         walk(loop);
         socket->getDefaultGroup<uWS::SERVER>().close();
       };

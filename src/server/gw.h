@@ -44,17 +44,13 @@ namespace K {
         const string msg = gw->config_externals();
         if (!msg.empty())
           EXIT(screen->error("GW", msg));
-        if (gw->exchange == mExchange::Coinbase) mCommand::stunnel(true);
-      };
-      void end() {
-        if (gw->exchange == mExchange::Coinbase) mCommand::stunnel(false);
       };
     private:
       void gwSemaphore() {
         mConnectivity k = adminAgreement * gw->semaphore.greenGateway;
         if (gw->semaphore.greenButton != k) {
           gw->semaphore.greenButton = k;
-          screen->log("GW " + gw->name, "Quoting state changed to",
+          screen->log("GW " + gw->exchange, "Quoting state changed to",
             string(!gw->semaphore.greenButton?"DIS":"") + "CONNECTED");
         }
         gw->semaphore.send();
