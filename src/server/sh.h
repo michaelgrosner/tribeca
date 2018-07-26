@@ -116,7 +116,7 @@ namespace K {
       };
       void logWar(string k, string s, string m = " Warrrrning: ") {
         if (!wBorder) {
-          cout << stamp() << k << RRED << m << BRED << s << RWHITE << ".\n";
+          cout << stamp() << k << RRED << m << BRED << s << '.' << RWHITE << endl;
           return;
         }
         wmove(wLog, getmaxy(wLog)-1, 0);
@@ -129,9 +129,10 @@ namespace K {
         wprintw(wLog, m.data());
         wattroff(wLog, A_BOLD);
         wprintw(wLog, s.data());
+        wprintw(wLog, ".");
         wattroff(wLog, COLOR_PAIR(COLOR_RED));
         wattron(wLog, COLOR_PAIR(COLOR_WHITE));
-        wprintw(wLog, ".\n");
+        wprintw(wLog, "\n");
         wattroff(wLog, COLOR_PAIR(COLOR_WHITE));
         wrefresh(wLog);
       };

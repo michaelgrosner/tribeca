@@ -39,7 +39,7 @@ namespace K {
       virtual void log(const string&, const string&, const string& = "") = 0;
 #define PRETTY_DEBUG if (args.debugEvents) screen->log("DEBUG EV", __PRETTY_FUNCTION__);
 #define DEBUG(x)     if (args.debugQuotes) screen->log("DEBUG QE", x)
-#define DEBUQ(x, b, a, q) DEBUG("quote " x " " + to_string((int)b) + ":" + to_string((int)a) + " " + ((json*)q)->dump())
+#define DEBUQ(x, b, a, q) DEBUG("quote " x " " + to_string((int)b) + ":" + to_string((int)a) + " " + ((json)*q).dump())
       virtual void end() = 0;
   } *screen = nullptr;
 
@@ -336,6 +336,25 @@ namespace K {
       };
   };
   class GwEthfinex: public GwBitfinex {};
+  class GwFCoin: public Gw {
+    protected:
+      const json handshake() {
+        randId = mRandom::char16Id;
+        symbol = strL(base + quote);
+        json reply = mREST::xfer(http + "public/symbols");
+        if (reply.find("data") != reply.end() and reply.at("data").is_array())
+          for (json::iterator it=reply.at("data").begin(); it!=reply.at("data").end();++it)
+            if (it->find("name") != it->end() and it->value("name", "") == symbol) {
+              istringstream iss(
+                "1e-" + to_string(it->value("price_decimal", 0))
+                + " 1e-" + to_string(it->value("amount_decimal", 0))
+              );
+              iss >> minTick >> minSize;
+              break;
+            }
+        return reply;
+      };
+  };
   class GwKraken: public Gw {
     protected:
       const json handshake() {
@@ -345,10 +364,11 @@ namespace K {
         if (reply.find("result") != reply.end())
           for (json::iterator it = reply.at("result").begin(); it != reply.at("result").end(); ++it)
             if (it.value().find("pair_decimals") != it.value().end()) {
-              stringstream os("1e-" + to_string(it.value().value("pair_decimals", 0)));
-              os >> minTick;
-              os = stringstream("1e-" + to_string(it.value().value("lot_decimals", 0)));
-              os >> minSize;
+              istringstream iss(
+                "1e-" + to_string(it.value().value("pair_decimals", 0))
+                + " 1e-" + to_string(it.value().value("lot_decimals", 0))
+              );
+              iss >> minTick >> minSize;
               symbol = it.key();
               base = it.value().value("base", base);
               quote = it.value().value("quote", quote);
@@ -377,8 +397,8 @@ namespace K {
         symbol = quote + "_" + base;
         json reply = mREST::xfer(http + "/public?command=returnTicker");
         if (reply.find(symbol) != reply.end()) {
-          istringstream os("1e-" + to_string(6-reply.at(symbol).at("last").get<string>().find(".")));
-          os >> minTick;
+          istringstream iss("1e-" + to_string(6-reply.at(symbol).at("last").get<string>().find(".")));
+          iss >> minTick;
           minSize = 0.001;
         }
         return reply;
