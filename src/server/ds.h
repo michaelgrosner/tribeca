@@ -517,7 +517,7 @@ namespace K {
       diff(prev);
       push();
       send();
-      return mFromClient::kiss(j);
+      return j;
     };
     const mMatter about() const {
       return mMatter::QuotingParameters;
@@ -1972,7 +1972,7 @@ namespace K {
       json butterfly;
       if (j.is_object() and j["orderId"].is_string())
         butterfly = j["orderId"];
-      return mFromClient::kiss(butterfly);
+      return butterfly;
     };
     const mMatter about() const {
       return mMatter::CancelOrder;
@@ -1998,7 +1998,7 @@ namespace K {
       json butterfly;
       if (j.is_object() and j["tradeId"].is_string())
         butterfly = j["tradeId"];
-      return mFromClient::kiss(butterfly);
+      return butterfly;
     };
     const mMatter about() const {
       return mMatter::CleanTrade;
@@ -2237,7 +2237,7 @@ namespace K {
     const json kiss(const json &j) {
       if (j.is_array() and j.size())
         content = j.at(0);
-      return mFromClient::kiss(j);
+      return j;
     };
     const mMatter about() const {
       return mMatter::Notepad;
@@ -2253,10 +2253,9 @@ namespace K {
                   greenButton    = mConnectivity::Disconnected,
                   greenGateway   = mConnectivity::Disconnected;
     const json kiss(const json &j) {
-      json butterfly;
       if (j.is_object() and j["state"].is_number())
-        butterfly = j["state"];
-      return mFromClient::kiss(butterfly);
+        agree(j["state"].get<mConnectivity>());
+      return j;
     };
     const bool online(const mConnectivity &raw) {
       if (greenGateway != raw) {
@@ -2264,12 +2263,6 @@ namespace K {
         send_refresh();
       }
       return !!greenGateway;
-    };
-    void agree(const mConnectivity &raw) {
-      if (adminAgreement != raw) {
-        adminAgreement = raw;
-        send_refresh();
-      }
     };
     void toggle() {
       adminAgreement = (mConnectivity)!adminAgreement;
@@ -2279,6 +2272,12 @@ namespace K {
       return mMatter::Connectivity;
     };
     private:
+      void agree(const mConnectivity &raw) {
+        if (adminAgreement != raw) {
+          adminAgreement = raw;
+          send_refresh();
+        }
+      };
       void send_refresh() {
         const mConnectivity k = adminAgreement * greenGateway;
         if (greenButton != k) {

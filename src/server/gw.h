@@ -16,10 +16,7 @@ namespace K {
         client->welcome(gw->monitor);
         client->welcome(gw->monitor.product);
         client->welcome(gw->semaphore);
-        client->clickme(gw->semaphore KISS {
-          if (!butterfly.is_number()) return;
-          gw->semaphore.agree(butterfly.get<mConnectivity>());
-        });
+        client->clickme(gw->semaphore);
       };
       void waitSysAdmin() {
         screen->printme(gw);
