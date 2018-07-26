@@ -319,13 +319,13 @@ namespace K {
         symbol = strL(base + quote);
         json reply = mREST::xfer(http + "/pubticker/" + symbol);
         if (reply.find("last_price") != reply.end()) {
-          stringstream price_;
+          ostringstream price_;
           price_ << scientific << stod(reply.value("last_price", "0"));
           string _price_ = price_.str();
           for (string::iterator it=_price_.begin(); it!=_price_.end();)
             if (*it == '+' or *it == '-') break; else it = _price_.erase(it);
-          stringstream os("1e" + to_string(fmax(stod(_price_),-4)-4));
-          os >> minTick;
+          istringstream iss("1e" + to_string(fmax(stod(_price_),-4)-4));
+          iss >> minTick;
         }
         reply = mREST::xfer(http + "/symbols_details");
         if (reply.is_array())

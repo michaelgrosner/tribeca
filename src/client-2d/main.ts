@@ -947,19 +947,19 @@ class ClientComponent implements OnInit {
     this.baseCurrency = pa.pair.base;
     this.quoteCurrency = pa.pair.quote;
     this.exchange_name = pa.exchange;
-    this.exchange_market = this.exchange_name=='OkCoin'
+    this.exchange_market = this.exchange_name=='OKCOIN'
       ? 'https://www.okcoin.'+(pa.pair.quote=='CNY'?'cn':'com')+'/market.html'
-      : (this.exchange_name=='OkEx'
+      : (this.exchange_name=='OKEX'
         ? 'https://www.okex.com/spot/market/index.do'
-        : (this.exchange_name=='Coinbase'
+        : (this.exchange_name=='COINBASE'
           ? 'https://gdax.com/trade/'+this.baseCurrency+'-'+this.quoteCurrency
-          : (this.exchange_name=='Bitfinex' || this.exchange_name=='BitfinexMargin'
+          : (this.exchange_name=='BITFINEX' || this.exchange_name=='BitfinexMargin'
               ? 'https://www.bitfinex.com/trading/'+this.baseCurrency+this.quoteCurrency
-              : (this.exchange_name=='HitBtc'
+              : (this.exchange_name=='HITBTC'
                 ? 'https://hitbtc.com/exchange/'+this.baseCurrency+'-to-'+this.quoteCurrency
-                : (this.exchange_name=='Kraken'
+                : (this.exchange_name=='KRAKEN'
                   ? 'https://www.kraken.com/charts'
-                  : (this.exchange_name=='Poloniex'
+                  : (this.exchange_name=='POLONIEX'
                     ? 'https://poloniex.com/exchange'
                     : null
                   )
@@ -968,19 +968,19 @@ class ClientComponent implements OnInit {
             )
           )
       );
-    this.exchange_orders = this.exchange_name=='OkCoin'
+    this.exchange_orders = this.exchange_name=='OKCOIN'
       ? 'https://www.okcoin.'+(pa.pair.quote=='CNY'?'cn':'com')+'/trade/entrust.do'
-      : (this.exchange_name=='OkEx'
+      : (this.exchange_name=='OKEX'
         ? 'https://www.okex.com/spot/trade/spotEntrust.do'
-        : (this.exchange_name=='Coinbase'
+        : (this.exchange_name=='COINBASE'
           ? 'https://www.gdax.com/orders/'+this.baseCurrency+'-'+this.quoteCurrency
-          : (this.exchange_name=='Bitfinex' || this.exchange_name=='BitfinexMargin'
+          : (this.exchange_name=='BITFINEX' || this.exchange_name=='BitfinexMargin'
             ? 'https://www.bitfinex.com/reports/orders'
-            : (this.exchange_name=='HitBtc'
+            : (this.exchange_name=='HITBTC'
               ? 'https://hitbtc.com/reports/orders'
-              : (this.exchange_name=='Kraken'
+              : (this.exchange_name=='KRAKEN'
                 ? 'https://www.kraken.com/u/trade'
-                : (this.exchange_name=='Poloniex'
+                : (this.exchange_name=='POLONIEX'
                   ? 'https://poloniex.com/tradeHistory'
                   : null
                 )
