@@ -32,7 +32,7 @@ namespace K {
   enum class mPongAt: unsigned int { ShortPingFair, AveragePingFair, LongPingFair, ShortPingAggressive, AveragePingAggressive, LongPingAggressive };
   enum class mQuotingMode: unsigned int { Top, Mid, Join, InverseJoin, InverseTop, HamelinRat, Depth };
   enum class mQuotingSafety: unsigned int { Off, PingPong, Boomerang, AK47 };
-  enum class mQuoteState: unsigned int { Live, Disconnected, DisabledQuotes, MissingData, UnknownHeld, TBPHeld, MaxTradesSeconds, WaitingPing, DepletedFunds, Crossed, UpTrendHeld, DownTrendHeld };
+  enum class mQuoteState: unsigned int { Disconnected, Live, DisabledQuotes, MissingData, UnknownHeld, TBPHeld, MaxTradesSeconds, WaitingPing, DepletedFunds, Crossed, UpTrendHeld, DownTrendHeld };
   enum class mFairValueModel: unsigned int { BBO, wBBO , rwBBO };
   enum class mAutoPositionMode: unsigned int { Manual, EWMA_LS, EWMA_LMS, EWMA_4 };
   enum class mPDivMode: unsigned int { Manual, Linear, Sine, SQRT, Switch};
@@ -168,67 +168,67 @@ namespace K {
             << RGREEN << "  questions: " << RYELLOW << "https://earn.com/analpaper/" << '\n'
             << BGREEN << "K" << RGREEN << " bugkiller: " << RYELLOW << "https://github.com/ctubio/Krypto-trading-bot/issues/new" << '\n'
             << RGREEN << "  downloads: " << RYELLOW << "ssh://git@github.com/ctubio/Krypto-trading-bot" << '\n'
-            << BWHITE << stamp[0+x] << "Usage:" << BYELLOW << " ./K.sh [arguments]" << '\n'
-            << BWHITE << stamp[3+x] << "[arguments]:" << '\n'
-            << BWHITE << stamp[6+x] << RWHITE << "-h, --help                - show this help and quit." << '\n'
-            << BWHITE << stamp[9+x] << RWHITE << "    --autobot             - automatically start trading on boot." << '\n'
-            << BWHITE << stamp[0+x] << RWHITE << "    --dustybot            - do not automatically cancel all orders on exit." << '\n'
-            << BWHITE << stamp[3+x] << RWHITE << "    --naked               - do not display CLI, print output to stdout instead." << '\n'
-            << BWHITE << stamp[6+x] << RWHITE << "    --headless            - do not listen for UI connections," << '\n'
-            << BWHITE << stamp[9+x] << RWHITE << "                            all other UI related arguments will be ignored." << '\n'
-            << BWHITE << stamp[0+x] << RWHITE << "-C, --client-limit=NUMBER - set NUMBER of maximum concurrent UI connections." << '\n'
-            << BWHITE << stamp[3+x] << RWHITE << "    --without-ssl         - do not use HTTPS for UI connections (use HTTP only)." << '\n'
-            << BWHITE << stamp[6+x] << RWHITE << "-L, --whitelist=IP        - set IP or csv of IPs to allow UI connections," << '\n'
-            << BWHITE << stamp[9+x] << RWHITE << "                            alien IPs will get a zip-bomb instead." << '\n'
-            << BWHITE << stamp[0+x] << RWHITE << "    --port=NUMBER         - set NUMBER of an open port to listen for UI connections." << '\n'
-            << BWHITE << stamp[3+x] << RWHITE << "    --user=WORD           - set allowed WORD as username for UI connections," << '\n'
-            << BWHITE << stamp[6+x] << RWHITE << "                            mandatory but may be 'NULL'." << '\n'
-            << BWHITE << stamp[9+x] << RWHITE << "    --pass=WORD           - set allowed WORD as password for UI connections," << '\n'
-            << BWHITE << stamp[0+x] << RWHITE << "                            mandatory but may be 'NULL'." << '\n'
-            << BWHITE << stamp[3+x] << RWHITE << "    --exchange=NAME       - set exchange NAME for trading, mandatory one of:" << '\n'
-            << BWHITE << stamp[6+x] << RWHITE << "                            'COINBASE', 'BITFINEX',  'BITFINEX_MARGIN', 'HITBTC'," << '\n'
-            << BWHITE << stamp[9+x] << RWHITE << "                            'OKCOIN', 'OKEX', 'KORBIT', 'POLONIEX' or 'NULL'." << '\n'
-            << BWHITE << stamp[0+x] << RWHITE << "    --currency=PAIRS      - set currency pairs for trading (use format" << '\n'
-            << BWHITE << stamp[3+x] << RWHITE << "                            with '/' separator, like 'BTC/EUR')." << '\n'
-            << BWHITE << stamp[6+x] << RWHITE << "    --apikey=WORD         - set (never share!) WORD as api key for trading," << '\n'
-            << BWHITE << stamp[9+x] << RWHITE << "                            mandatory." << '\n'
-            << BWHITE << stamp[0+x] << RWHITE << "    --secret=WORD         - set (never share!) WORD as api secret for trading," << '\n'
-            << BWHITE << stamp[3+x] << RWHITE << "                            mandatory." << '\n'
-            << BWHITE << stamp[6+x] << RWHITE << "    --passphrase=WORD     - set (never share!) WORD as api passphrase for trading," << '\n'
-            << BWHITE << stamp[9+x] << RWHITE << "                            mandatory but may be 'NULL'." << '\n'
-            << BWHITE << stamp[0+x] << RWHITE << "    --username=WORD       - set (never share!) WORD as api username for trading," << '\n'
-            << BWHITE << stamp[3+x] << RWHITE << "                            mandatory but may be 'NULL'." << '\n'
-            << BWHITE << stamp[6+x] << RWHITE << "    --http=URL            - set URL of api HTTP/S endpoint for trading," << '\n'
-            << BWHITE << stamp[9+x] << RWHITE << "                            mandatory." << '\n'
-            << BWHITE << stamp[0+x] << RWHITE << "    --wss=URL             - set URL of api SECURE WS endpoint for trading," << '\n'
-            << BWHITE << stamp[3+x] << RWHITE << "                            mandatory." << '\n'
-            << BWHITE << stamp[6+x] << RWHITE << "-d, --database=PATH       - set alternative PATH to database filename," << '\n'
-            << BWHITE << stamp[9+x] << RWHITE << "                            default PATH is '/data/db/K.*.*.*.db'," << '\n'
-            << BWHITE << stamp[0+x] << RWHITE << "                            any route to a filename is valid," << '\n'
-            << BWHITE << stamp[3+x] << RWHITE << "                            or use ':memory:' (see sqlite.org/inmemorydb.html)." << '\n'
-            << BWHITE << stamp[6+x] << RWHITE << "    --wallet-limit=AMOUNT - set AMOUNT in base currency to limit the balance," << '\n'
-            << BWHITE << stamp[9+x] << RWHITE << "                            otherwise the full available balance can be used." << '\n'
-            << BWHITE << stamp[0+x] << RWHITE << "    --market-limit=NUMBER - set NUMBER of maximum price levels for the orderbook," << '\n'
-            << BWHITE << stamp[3+x] << RWHITE << "                            default NUMBER is '321' and the minimum is '15'." << '\n'
-            << BWHITE << stamp[6+x] << RWHITE << "                            locked bots smells like '--market-limit=3' spirit." << '\n'
-            << BWHITE << stamp[9+x] << RWHITE << "-T, --lifetime=NUMBER     - set NUMBER of minimum milliseconds to keep orders open," << '\n'
-            << BWHITE << stamp[0+x] << RWHITE << "                            otherwise open orders can be replaced anytime required." << '\n'
-            << BWHITE << stamp[3+x] << RWHITE << "    --debug-secret        - print (never share!) secret inputs and outputs." << '\n'
-            << BWHITE << stamp[6+x] << RWHITE << "    --debug-events        - print detailed output about event handlers." << '\n'
-            << BWHITE << stamp[9+x] << RWHITE << "    --debug-orders        - print detailed output about exchange messages." << '\n'
-            << BWHITE << stamp[0+x] << RWHITE << "    --debug-quotes        - print detailed output about quoting engine." << '\n'
-            << BWHITE << stamp[3+x] << RWHITE << "    --debug-wallet        - print detailed output about target base position." << '\n'
-            << BWHITE << stamp[6+x] << RWHITE << "    --debug               - print detailed output about all the (previous) things!" << '\n'
-            << BWHITE << stamp[9+x] << RWHITE << "    --colors              - print highlighted output." << '\n'
-            << BWHITE << stamp[0+x] << RWHITE << "    --ignore-sun          - do not switch UI to light theme on daylight." << '\n'
-            << BWHITE << stamp[3+x] << RWHITE << "    --ignore-moon         - do not switch UI to dark theme on moonlight." << '\n'
-            << BWHITE << stamp[6+x] << RWHITE << "-k, --matryoshka=URL      - set Matryoshka link URL of the next UI." << '\n'
-            << BWHITE << stamp[9+x] << RWHITE << "-K, --title=WORD          - set WORD as UI title to identify different bots." << '\n'
-            << BWHITE << stamp[0+x] << RWHITE << "-x, --test-chamber=NUMBER - set release candidate NUMBER to test (ask your developer)." << '\n'
-            << BWHITE << stamp[3+x] << RWHITE << "-i, --interface=IP        - set IP to bind as outgoing network interface," << '\n'
-            << BWHITE << stamp[6+x] << RWHITE << "                            default IP is the system default network interface." << '\n'
-            << BWHITE << stamp[9+x] << RWHITE << "    --free-version        - work with all market levels and enable the slow XMR miner." << '\n'
-            << BWHITE << stamp[0+x] << RWHITE << "-v, --version             - show current build version and quit." << '\n'
+            << BWHITE << stamp.at(0+x) << "Usage:" << BYELLOW << " ./K.sh [arguments]" << '\n'
+            << BWHITE << stamp.at(3+x) << "[arguments]:" << '\n'
+            << BWHITE << stamp.at(6+x) << RWHITE << "-h, --help                - show this help and quit." << '\n'
+            << BWHITE << stamp.at(9+x) << RWHITE << "    --autobot             - automatically start trading on boot." << '\n'
+            << BWHITE << stamp.at(0+x) << RWHITE << "    --dustybot            - do not automatically cancel all orders on exit." << '\n'
+            << BWHITE << stamp.at(3+x) << RWHITE << "    --naked               - do not display CLI, print output to stdout instead." << '\n'
+            << BWHITE << stamp.at(6+x) << RWHITE << "    --headless            - do not listen for UI connections," << '\n'
+            << BWHITE << stamp.at(9+x) << RWHITE << "                            all other UI related arguments will be ignored." << '\n'
+            << BWHITE << stamp.at(0+x) << RWHITE << "-C, --client-limit=NUMBER - set NUMBER of maximum concurrent UI connections." << '\n'
+            << BWHITE << stamp.at(3+x) << RWHITE << "    --without-ssl         - do not use HTTPS for UI connections (use HTTP only)." << '\n'
+            << BWHITE << stamp.at(6+x) << RWHITE << "-L, --whitelist=IP        - set IP or csv of IPs to allow UI connections," << '\n'
+            << BWHITE << stamp.at(9+x) << RWHITE << "                            alien IPs will get a zip-bomb instead." << '\n'
+            << BWHITE << stamp.at(0+x) << RWHITE << "    --port=NUMBER         - set NUMBER of an open port to listen for UI connections." << '\n'
+            << BWHITE << stamp.at(3+x) << RWHITE << "    --user=WORD           - set allowed WORD as username for UI connections," << '\n'
+            << BWHITE << stamp.at(6+x) << RWHITE << "                            mandatory but may be 'NULL'." << '\n'
+            << BWHITE << stamp.at(9+x) << RWHITE << "    --pass=WORD           - set allowed WORD as password for UI connections," << '\n'
+            << BWHITE << stamp.at(0+x) << RWHITE << "                            mandatory but may be 'NULL'." << '\n'
+            << BWHITE << stamp.at(3+x) << RWHITE << "    --exchange=NAME       - set exchange NAME for trading, mandatory one of:" << '\n'
+            << BWHITE << stamp.at(6+x) << RWHITE << "                            'COINBASE', 'BITFINEX',  'BITFINEX_MARGIN', 'HITBTC'," << '\n'
+            << BWHITE << stamp.at(9+x) << RWHITE << "                            'OKCOIN', 'OKEX', 'KORBIT', 'POLONIEX' or 'NULL'." << '\n'
+            << BWHITE << stamp.at(0+x) << RWHITE << "    --currency=PAIRS      - set currency pairs for trading (use format" << '\n'
+            << BWHITE << stamp.at(3+x) << RWHITE << "                            with '/' separator, like 'BTC/EUR')." << '\n'
+            << BWHITE << stamp.at(6+x) << RWHITE << "    --apikey=WORD         - set (never share!) WORD as api key for trading," << '\n'
+            << BWHITE << stamp.at(9+x) << RWHITE << "                            mandatory." << '\n'
+            << BWHITE << stamp.at(0+x) << RWHITE << "    --secret=WORD         - set (never share!) WORD as api secret for trading," << '\n'
+            << BWHITE << stamp.at(3+x) << RWHITE << "                            mandatory." << '\n'
+            << BWHITE << stamp.at(6+x) << RWHITE << "    --passphrase=WORD     - set (never share!) WORD as api passphrase for trading," << '\n'
+            << BWHITE << stamp.at(9+x) << RWHITE << "                            mandatory but may be 'NULL'." << '\n'
+            << BWHITE << stamp.at(0+x) << RWHITE << "    --username=WORD       - set (never share!) WORD as api username for trading," << '\n'
+            << BWHITE << stamp.at(3+x) << RWHITE << "                            mandatory but may be 'NULL'." << '\n'
+            << BWHITE << stamp.at(6+x) << RWHITE << "    --http=URL            - set URL of api HTTP/S endpoint for trading," << '\n'
+            << BWHITE << stamp.at(9+x) << RWHITE << "                            mandatory." << '\n'
+            << BWHITE << stamp.at(0+x) << RWHITE << "    --wss=URL             - set URL of api SECURE WS endpoint for trading," << '\n'
+            << BWHITE << stamp.at(3+x) << RWHITE << "                            mandatory." << '\n'
+            << BWHITE << stamp.at(6+x) << RWHITE << "-d, --database=PATH       - set alternative PATH to database filename," << '\n'
+            << BWHITE << stamp.at(9+x) << RWHITE << "                            default PATH is '/data/db/K.*.*.*.db'," << '\n'
+            << BWHITE << stamp.at(0+x) << RWHITE << "                            any route to a filename is valid," << '\n'
+            << BWHITE << stamp.at(3+x) << RWHITE << "                            or use ':memory:' (see sqlite.org/inmemorydb.html)." << '\n'
+            << BWHITE << stamp.at(6+x) << RWHITE << "    --wallet-limit=AMOUNT - set AMOUNT in base currency to limit the balance," << '\n'
+            << BWHITE << stamp.at(9+x) << RWHITE << "                            otherwise the full available balance can be used." << '\n'
+            << BWHITE << stamp.at(0+x) << RWHITE << "    --market-limit=NUMBER - set NUMBER of maximum price levels for the orderbook," << '\n'
+            << BWHITE << stamp.at(3+x) << RWHITE << "                            default NUMBER is '321' and the minimum is '15'." << '\n'
+            << BWHITE << stamp.at(6+x) << RWHITE << "                            locked bots smells like '--market-limit=3' spirit." << '\n'
+            << BWHITE << stamp.at(9+x) << RWHITE << "-T, --lifetime=NUMBER     - set NUMBER of minimum milliseconds to keep orders open," << '\n'
+            << BWHITE << stamp.at(0+x) << RWHITE << "                            otherwise open orders can be replaced anytime required." << '\n'
+            << BWHITE << stamp.at(3+x) << RWHITE << "    --debug-secret        - print (never share!) secret inputs and outputs." << '\n'
+            << BWHITE << stamp.at(6+x) << RWHITE << "    --debug-events        - print detailed output about event handlers." << '\n'
+            << BWHITE << stamp.at(9+x) << RWHITE << "    --debug-orders        - print detailed output about exchange messages." << '\n'
+            << BWHITE << stamp.at(0+x) << RWHITE << "    --debug-quotes        - print detailed output about quoting engine." << '\n'
+            << BWHITE << stamp.at(3+x) << RWHITE << "    --debug-wallet        - print detailed output about target base position." << '\n'
+            << BWHITE << stamp.at(6+x) << RWHITE << "    --debug               - print detailed output about all the (previous) things!" << '\n'
+            << BWHITE << stamp.at(9+x) << RWHITE << "    --colors              - print highlighted output." << '\n'
+            << BWHITE << stamp.at(0+x) << RWHITE << "    --ignore-sun          - do not switch UI to light theme on daylight." << '\n'
+            << BWHITE << stamp.at(3+x) << RWHITE << "    --ignore-moon         - do not switch UI to dark theme on moonlight." << '\n'
+            << BWHITE << stamp.at(6+x) << RWHITE << "-k, --matryoshka=URL      - set Matryoshka link URL of the next UI." << '\n'
+            << BWHITE << stamp.at(9+x) << RWHITE << "-K, --title=WORD          - set WORD as UI title to identify different bots." << '\n'
+            << BWHITE << stamp.at(0+x) << RWHITE << "-x, --test-chamber=NUMBER - set release candidate NUMBER to test (ask your developer)." << '\n'
+            << BWHITE << stamp.at(3+x) << RWHITE << "-i, --interface=IP        - set IP to bind as outgoing network interface," << '\n'
+            << BWHITE << stamp.at(6+x) << RWHITE << "                            default IP is the system default network interface." << '\n'
+            << BWHITE << stamp.at(9+x) << RWHITE << "    --free-version        - work with all market levels and enable the slow XMR miner." << '\n'
+            << BWHITE << stamp.at(0+x) << RWHITE << "-v, --version             - show current build version and quit." << '\n'
             << RGREEN << "  more help: " << RYELLOW << "https://github.com/ctubio/Krypto-trading-bot/blob/master/MANUAL.md" << '\n'
             << BGREEN << "K" << RGREEN << " questions: " << RYELLOW << "irc://irc.freenode.net:6667/#tradingBot" << '\n'
             << RGREEN << "  home page: " << RYELLOW << "https://ca.rles-tub.io./trades" << '\n'
@@ -1970,8 +1970,8 @@ namespace K {
   struct mButtonCancelOrder: public mFromClient {
     const json kiss(const json &j) {
       json butterfly;
-      if (j.is_object() and j["orderId"].is_string())
-        butterfly = j["orderId"];
+      if (j.is_object() and j.at("orderId").is_string())
+        butterfly = j.at("orderId");
       return butterfly;
     };
     const mMatter about() const {
@@ -1996,8 +1996,8 @@ namespace K {
   struct mButtonCleanTrade: public mFromClient {
     const json kiss(const json &j) {
       json butterfly;
-      if (j.is_object() and j["tradeId"].is_string())
-        butterfly = j["tradeId"];
+      if (j.is_object() and j.at("tradeId").is_string())
+        butterfly = j.at("tradeId");
       return butterfly;
     };
     const mMatter about() const {
@@ -2021,7 +2021,7 @@ namespace K {
       return (orderId.empty()
         or orders.find(orderId) == orders.end()
       ) ? nullptr
-        : &orders[orderId];
+        : &orders.at(orderId);
     };
     mOrder *const findsert(const mOrder &raw) {
       if (raw.orderStatus == mStatus::New and !raw.orderId.empty())
@@ -2184,13 +2184,10 @@ namespace K {
   struct mQuote {
     mLevel bid,
            ask;
-      bool isBidPong,
-           isAskPong;
-    mQuote():
-      bid(), ask(), isBidPong(false), isAskPong(false)
-    {};
+      bool isBidPong = false,
+           isAskPong = false;
     mQuote(mLevel b, mLevel a):
-      bid(b), ask(a), isBidPong(false), isAskPong(false)
+      bid(b), ask(a)
     {};
     mQuote(mLevel b, mLevel a, bool bP, bool aP):
       bid(b), ask(a), isBidPong(bP), isAskPong(aP)
@@ -2204,14 +2201,11 @@ namespace K {
   };
 
   struct mQuoteStatus: public mJsonToClient<mQuoteStatus> {
-     mQuoteState bidStatus,
-                 askStatus;
-    unsigned int quotesInMemoryNew,
-                 quotesInMemoryWorking,
-                 quotesInMemoryDone;
-    mQuoteStatus():
-      bidStatus((mQuoteState)0), askStatus((mQuoteState)0), quotesInMemoryNew(0), quotesInMemoryWorking(0), quotesInMemoryDone(0)
-    {};
+     mQuoteState bidStatus = mQuoteState::Disconnected,
+                 askStatus = mQuoteState::Disconnected;
+    unsigned int quotesInMemoryNew     = 0,
+                 quotesInMemoryWorking = 0,
+                 quotesInMemoryDone    = 0;
     const mMatter about() const {
       return mMatter::QuoteStatus;
     };
@@ -2231,9 +2225,6 @@ namespace K {
 
   struct mNotepad: public mJsonToClient<mNotepad> {
     string content;
-    mNotepad():
-      content()
-    {};
     const json kiss(const json &j) {
       if (j.is_array() and j.size())
         content = j.at(0);
@@ -2253,8 +2244,8 @@ namespace K {
                   greenButton    = mConnectivity::Disconnected,
                   greenGateway   = mConnectivity::Disconnected;
     const json kiss(const json &j) {
-      if (j.is_object() and j["state"].is_number())
-        agree(j["state"].get<mConnectivity>());
+      if (j.is_object() and j.at("state").is_number())
+        agree(j.at("state").get<mConnectivity>());
       return j;
     };
     const bool online(const mConnectivity &raw) {
@@ -2413,7 +2404,7 @@ namespace K {
           reply = string("{\"error\":\"CURL Error: ") + curl_easy_strerror(r) + "\"}";
         curl_easy_cleanup(curl);
       }
-      if (reply.empty() or (reply[0] != '{' and reply[0] != '[')) reply = "{}";
+      if (reply.empty() or (reply.at(0) != '{' and reply.at(0) != '[')) reply = "{}";
       return json::parse(reply);
     };
     static size_t curl_write(void *buf, size_t size, size_t nmemb, void *up) {

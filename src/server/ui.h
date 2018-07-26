@@ -198,19 +198,19 @@ namespace K {
       string onMessage(const string &message, const string &addr) {
         if (addr != "unknown" and args.whitelist.find(addr) == string::npos)
           return string(&_www_gzip_bomb, _www_gzip_bomb_len);
-        if (mPortal::Hello == (mPortal)message[0] and hello.find(message[1]) != hello.end()) {
-          json reply = hello[message[1]]();
+        if (mPortal::Hello == (mPortal)message.at(0) and hello.find(message.at(1)) != hello.end()) {
+          json reply = hello.at(message.at(1))();
           if (!reply.is_null())
             return message.substr(0, 2) + reply.dump();
-        } else if (mPortal::Kiss == (mPortal)message[0] and kisses.find(message[1]) != kisses.end()) {
+        } else if (mPortal::Kiss == (mPortal)message.at(0) and kisses.find(message.at(1)) != kisses.end()) {
           json butterfly = json::parse(
-            (message.length() > 2 and (message[2] == '{' or message[2] == '['))
+            (message.length() > 2 and (message.at(2) == '{' or message.at(2) == '['))
               ? message.substr(2)
               : "{}"
           );
           for (json::iterator it = butterfly.begin(); it != butterfly.end();)
             if (it.value().is_null()) it = butterfly.erase(it); else ++it;
-          kisses[message[1]](butterfly);
+          kisses.at(message.at(1))(butterfly);
         }
         return "";
       };

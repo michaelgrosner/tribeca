@@ -39,7 +39,7 @@ namespace K {
       virtual void log(const string&, const string&, const string& = "") = 0;
 #define PRETTY_DEBUG if (args.debugEvents) screen->log("DEBUG EV", __PRETTY_FUNCTION__);
 #define DEBUG(x)     if (args.debugQuotes) screen->log("DEBUG QE", x)
-#define DEBUQ(x, b, a, q) DEBUG("quote " x " " + to_string((int)b) + ":" + to_string((int)a) + " " + ((json)q).dump())
+#define DEBUQ(x, b, a, q) DEBUG("quote " x " " + to_string((int)b) + ":" + to_string((int)a) + " " + ((json*)q)->dump())
       virtual void end() = 0;
   } *screen = nullptr;
 
@@ -343,7 +343,7 @@ namespace K {
         symbol = base + quote;
         json reply = mREST::xfer(http + "/0/public/AssetPairs?pair=" + symbol);
         if (reply.find("result") != reply.end())
-          for (json::iterator it = reply["result"].begin(); it != reply["result"].end(); ++it)
+          for (json::iterator it = reply.at("result").begin(); it != reply.at("result").end(); ++it)
             if (it.value().find("pair_decimals") != it.value().end()) {
               stringstream os("1e-" + to_string(it.value().value("pair_decimals", 0)));
               os >> minTick;
@@ -377,7 +377,7 @@ namespace K {
         symbol = quote + "_" + base;
         json reply = mREST::xfer(http + "/public?command=returnTicker");
         if (reply.find(symbol) != reply.end()) {
-          istringstream os("1e-" + to_string(6-reply[symbol]["last"].get<string>().find(".")));
+          istringstream os("1e-" + to_string(6-reply.at(symbol).at("last").get<string>().find(".")));
           os >> minTick;
           minSize = 0.001;
         }

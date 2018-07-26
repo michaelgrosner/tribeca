@@ -5,7 +5,7 @@ namespace K {
   class QE: public Klass,
             public Engine { public: QE() { engine = this; };
     private:
-      map<mQuotingMode, function<mQuote(mPrice, mAmount, mAmount)>*> quotingMode;
+      map<mQuotingMode, function<mQuote(const mPrice&, const mAmount&, const mAmount&)>*> quotingMode;
       mQuoteState bidStatus = mQuoteState::MissingData,
                   askStatus = mQuoteState::MissingData;
       mQuoteStatus status;
@@ -60,9 +60,25 @@ namespace K {
         if (quotingMode.find(qp.mode) == quotingMode.end())
           EXIT(screen->error("QE", "Invalid quoting mode "
             + reason + ", consider to remove the database file"));
+        calcRawQuoteFromMarket = *quotingMode.at(qp.mode);
       };
       void sendQuoteToAPI() {
-        mQuote quote = nextQuote();
+        mPrice widthPing = qp.widthPercentage
+          ? qp.widthPingPercentage * gw->levels.fairValue / 100
+          : qp.widthPing;
+        if(qp.protectionEwmaWidthPing and gw->levels.stats.ewma.mgEwmaW)
+          widthPing = fmax(widthPing, gw->levels.stats.ewma.mgEwmaW);
+         mQuote quote = calcRawQuoteFromMarket(
+          widthPing,
+          gw->wallet.target.safety.buySize,
+          gw->wallet.target.safety.sellSize
+        );
+        if (quote.bid.price <= 0 or quote.ask.price <= 0) {
+          if (quote.bid.price or quote.ask.price)
+            screen->logWar("QP", "Negative price detected, widthPing must be smaller");
+          return;
+        }
+        applyQuotingParameters(widthPing, &quote);
         bidStatus = checkCrossedQuotes(mSide::Bid, &quote);
         askStatus = checkCrossedQuotes(mSide::Ask, &quote);
         if (askStatus == mQuoteState::Live) updateQuote(quote.ask, mSide::Ask, quote.isAskPong);
@@ -108,42 +124,26 @@ namespace K {
         return bidStatus != status.bidStatus
           or askStatus != status.askStatus;
       };
-      mQuote nextQuote() {
-        mPrice widthPing = qp.widthPercentage
-          ? qp.widthPingPercentage * gw->levels.fairValue / 100
-          : qp.widthPing;
-        if(qp.protectionEwmaWidthPing and gw->levels.stats.ewma.mgEwmaW)
-          widthPing = fmax(widthPing, gw->levels.stats.ewma.mgEwmaW);
-        mQuote rawQuote = (*quotingMode[qp.mode])(
-          widthPing,
-          gw->wallet.target.safety.buySize,
-          gw->wallet.target.safety.sellSize
-        );
-        if (rawQuote.bid.price <= 0 or rawQuote.ask.price <= 0) {
-          if (rawQuote.bid.price or rawQuote.ask.price)
-            screen->logWar("QP", "Negative price detected, widthPing must be smaller");
-          return mQuote();
-        }
+      void applyQuotingParameters(const mPrice &widthPing, mQuote *const rawQuote) {
         bool superTradesActive = false;
-        DEBUQ("?", bidStatus, askStatus, rawQuote); applySuperTrades(&rawQuote, &superTradesActive, widthPing);
-        DEBUQ("A", bidStatus, askStatus, rawQuote); applyEwmaProtection(&rawQuote);
-        DEBUQ("B", bidStatus, askStatus, rawQuote); applyTotalBasePosition(&rawQuote);
-        DEBUQ("C", bidStatus, askStatus, rawQuote); applyStdevProtection(&rawQuote);
-        DEBUQ("D", bidStatus, askStatus, rawQuote); applyAggressivePositionRebalancing(&rawQuote);
-        DEBUQ("E", bidStatus, askStatus, rawQuote); applyAK47Increment(&rawQuote);
-        DEBUQ("F", bidStatus, askStatus, rawQuote); applyBestWidth(&rawQuote);
-        DEBUQ("G", bidStatus, askStatus, rawQuote); applyTradesPerMinute(&rawQuote, superTradesActive);
-        DEBUQ("H", bidStatus, askStatus, rawQuote); applyRoundPrice(&rawQuote);
-        DEBUQ("I", bidStatus, askStatus, rawQuote); applyRoundSize(&rawQuote);
-        DEBUQ("J", bidStatus, askStatus, rawQuote); applyDepleted(&rawQuote);
-        DEBUQ("K", bidStatus, askStatus, rawQuote); applyWaitingPing(&rawQuote);
-        DEBUQ("L", bidStatus, askStatus, rawQuote); applyEwmaTrendProtection(&rawQuote);
+        DEBUQ("?", bidStatus, askStatus, rawQuote); applySuperTrades(rawQuote, &superTradesActive, widthPing);
+        DEBUQ("A", bidStatus, askStatus, rawQuote); applyEwmaProtection(rawQuote);
+        DEBUQ("B", bidStatus, askStatus, rawQuote); applyTotalBasePosition(rawQuote);
+        DEBUQ("C", bidStatus, askStatus, rawQuote); applyStdevProtection(rawQuote);
+        DEBUQ("D", bidStatus, askStatus, rawQuote); applyAggressivePositionRebalancing(rawQuote);
+        DEBUQ("E", bidStatus, askStatus, rawQuote); applyAK47Increment(rawQuote);
+        DEBUQ("F", bidStatus, askStatus, rawQuote); applyBestWidth(rawQuote);
+        DEBUQ("G", bidStatus, askStatus, rawQuote); applyTradesPerMinute(rawQuote, superTradesActive);
+        DEBUQ("H", bidStatus, askStatus, rawQuote); applyRoundPrice(rawQuote);
+        DEBUQ("I", bidStatus, askStatus, rawQuote); applyRoundSize(rawQuote);
+        DEBUQ("J", bidStatus, askStatus, rawQuote); applyDepleted(rawQuote);
+        DEBUQ("K", bidStatus, askStatus, rawQuote); applyWaitingPing(rawQuote);
+        DEBUQ("L", bidStatus, askStatus, rawQuote); applyEwmaTrendProtection(rawQuote);
         DEBUQ("!", bidStatus, askStatus, rawQuote);
         DEBUG("totals " + ("toAsk: " + to_string(gw->wallet.base.total))
                         + ", toBid: " + to_string(gw->wallet.quote.total / gw->levels.fairValue));
-        return rawQuote;
       };
-      void applyRoundPrice(mQuote *rawQuote) {
+      void applyRoundPrice(mQuote *const rawQuote) {
         if (!rawQuote->bid.empty()) {
           rawQuote->bid.price = floor(rawQuote->bid.price / gw->minTick) * gw->minTick;
           rawQuote->bid.price = fmax(0, rawQuote->bid.price);
@@ -153,7 +153,7 @@ namespace K {
           rawQuote->ask.price = fmax(rawQuote->bid.price + gw->minTick, rawQuote->ask.price);
         }
       };
-      void applyRoundSize(mQuote *rawQuote) {
+      void applyRoundSize(mQuote *const rawQuote) {
         if (!rawQuote->ask.empty())
           rawQuote->ask.size = floor(fmax(
             fmin(
@@ -171,7 +171,7 @@ namespace K {
             gw->minSize
           ) / 1e-8) * 1e-8;
       };
-      void applyDepleted(mQuote *rawQuote) {
+      void applyDepleted(mQuote *const rawQuote) {
         if (rawQuote->bid.size > gw->wallet.quote.total / gw->levels.fairValue) {
           bidStatus = mQuoteState::DepletedFunds;
           rawQuote->bid.clear();
@@ -181,7 +181,7 @@ namespace K {
           rawQuote->ask.clear();
         }
       };
-      void applyWaitingPing(mQuote *rawQuote) {
+      void applyWaitingPing(mQuote *const rawQuote) {
         if (qp.safety == mQuotingSafety::Off) return;
         if (!rawQuote->isAskPong and (
           (bidStatus != mQuoteState::DepletedFunds and (qp.pingAt == mPingAt::DepletedSide or qp.pingAt == mPingAt::DepletedBidSide))
@@ -202,7 +202,7 @@ namespace K {
           rawQuote->bid.clear();
         }
       };
-      void applyAggressivePositionRebalancing(mQuote *rawQuote) {
+      void applyAggressivePositionRebalancing(mQuote *const rawQuote) {
         if (qp.safety == mQuotingSafety::Off) return;
         mPrice widthPong = qp.widthPercentage
           ? qp.widthPongPercentage * gw->levels.fairValue / 100
@@ -232,7 +232,7 @@ namespace K {
           rawQuote->isBidPong = rawQuote->bid.price <= safetysellPing - widthPong;
         }
       };
-      void applyBestWidth(mQuote *rawQuote) {
+      void applyBestWidth(mQuote *const rawQuote) {
         if (!qp.bestWidth) return;
         if (!rawQuote->ask.empty())
           for (mLevel &it : gw->levels.asks)
@@ -253,7 +253,7 @@ namespace K {
               }
             }
       };
-      void applyTotalBasePosition(mQuote *rawQuote) {
+      void applyTotalBasePosition(mQuote *const rawQuote) {
         if (gw->wallet.base.total < gw->wallet.target.targetBasePosition - gw->wallet.target.positionDivergence) {
           askStatus = mQuoteState::TBPHeld;
           rawQuote->ask.clear();
@@ -272,7 +272,7 @@ namespace K {
         }
         else gw->wallet.target.sideAPR = "Off";
       };
-      void applyTradesPerMinute(mQuote *rawQuote, bool superTradesActive) {
+      void applyTradesPerMinute(mQuote *const rawQuote, const bool &superTradesActive) {
         if (gw->wallet.target.safety.sell >= (qp.tradesPerMinute * (superTradesActive ? qp.sopWidthMultiplier : 1))) {
           askStatus = mQuoteState::MaxTradesSeconds;
           rawQuote->ask.clear();
@@ -282,7 +282,7 @@ namespace K {
           rawQuote->bid.clear();
         }
       };
-      void applySuperTrades(mQuote *rawQuote, bool *superTradesActive, mPrice widthPing) {
+      void applySuperTrades(mQuote *const rawQuote, bool *const superTradesActive, const mPrice &widthPing) {
         if (qp.superTrades != mSOP::Off
           and widthPing * qp.sopWidthMultiplier < gw->levels.spread()
         ) {
@@ -293,7 +293,7 @@ namespace K {
           }
         }
       };
-      void applyAK47Increment(mQuote *rawQuote) {
+      void applyAK47Increment(mQuote *const rawQuote) {
         if (qp.safety != mQuotingSafety::AK47) return;
         mPrice range = qp.percentageValues
           ? qp.rangePercentage * gw->wallet.base.value / 100
@@ -304,7 +304,7 @@ namespace K {
           rawQuote->ask.price += AK47inc * range;
         if (++AK47inc > qp.bullets) AK47inc = 0;
       };
-      void applyStdevProtection(mQuote *rawQuote) {
+      void applyStdevProtection(mQuote *const rawQuote) {
         if (qp.quotingStdevProtection == mSTDEV::Off or !gw->levels.stats.stdev.fair) return;
         if (!rawQuote->ask.empty() and (qp.quotingStdevProtection == mSTDEV::OnFV or qp.quotingStdevProtection == mSTDEV::OnTops or qp.quotingStdevProtection == mSTDEV::OnTop or gw->wallet.target.sideAPR != "Sell"))
           rawQuote->ask.price = fmax(
@@ -329,12 +329,12 @@ namespace K {
             rawQuote->bid.price
           );
       };
-      void applyEwmaProtection(mQuote *rawQuote) {
+      void applyEwmaProtection(mQuote *const rawQuote) {
         if (!qp.protectionEwmaQuotePrice or !gw->levels.stats.ewma.mgEwmaP) return;
         rawQuote->ask.price = fmax(gw->levels.stats.ewma.mgEwmaP, rawQuote->ask.price);
         rawQuote->bid.price = fmin(gw->levels.stats.ewma.mgEwmaP, rawQuote->bid.price);
       };
-      void applyEwmaTrendProtection(mQuote *rawQuote) {
+      void applyEwmaTrendProtection(mQuote *const rawQuote) {
         if (!qp.quotingEwmaTrendProtection or !gw->levels.stats.ewma.mgEwmaTrendDiff) return;
         if (gw->levels.stats.ewma.mgEwmaTrendDiff > qp.quotingEwmaTrendThreshold){
           askStatus = mQuoteState::UpTrendHeld;
@@ -352,7 +352,8 @@ namespace K {
           ? gw->levels.asks.at(0) : gw->levels.asks.at(gw->levels.asks.size()>1?1:0);
         return mQuote(topBid, topAsk);
       };
-      function<mQuote(mPrice, mAmount, mAmount)> calcJoinMarket = [&](mPrice widthPing, mAmount bidSize, mAmount askSize) {
+      function<mQuote(const mPrice&, const mAmount&, const mAmount&)> calcRawQuoteFromMarket;
+      function<mQuote(const mPrice&, const mAmount&, const mAmount&)> calcJoinMarket = [&](const mPrice &widthPing, const mAmount &bidSize, const mAmount &askSize) {
         mQuote k = quoteAtTopOfMarket();
         k.bid.price = fmin(gw->levels.fairValue - widthPing / 2.0, k.bid.price);
         k.ask.price = fmax(gw->levels.fairValue + widthPing / 2.0, k.ask.price);
@@ -360,7 +361,7 @@ namespace K {
         k.ask.size = askSize;
         return k;
       };
-      function<mQuote(mPrice, mAmount, mAmount)> calcTopOfMarket = [&](mPrice widthPing, mAmount bidSize, mAmount askSize) {
+      function<mQuote(const mPrice&, const mAmount&, const mAmount&)> calcTopOfMarket = [&](const mPrice &widthPing, const mAmount &bidSize, const mAmount &askSize) {
         mQuote k = quoteAtTopOfMarket();
         k.bid.price = k.bid.price + gw->minTick;
         k.ask.price = k.ask.price - gw->minTick;
@@ -370,7 +371,7 @@ namespace K {
         k.ask.size = askSize;
         return k;
       };
-      function<mQuote(mPrice, mAmount, mAmount)> calcInverseJoinMarket = [&](mPrice widthPing, mAmount bidSize, mAmount askSize) {
+      function<mQuote(const mPrice&, const mAmount&, const mAmount&)> calcInverseJoinMarket = [&](const mPrice &widthPing, const mAmount &bidSize, const mAmount &askSize) {
         mQuote k = quoteAtTopOfMarket();
         mPrice mktWidth = abs(k.ask.price - k.bid.price);
         if (mktWidth > widthPing) {
@@ -385,7 +386,7 @@ namespace K {
         k.ask.size = askSize;
         return k;
       };
-      function<mQuote(mPrice, mAmount, mAmount)> calcInverseTopOfMarket = [&](mPrice widthPing, mAmount bidSize, mAmount askSize) {
+      function<mQuote(const mPrice&, const mAmount&, const mAmount&)> calcInverseTopOfMarket = [&](const mPrice &widthPing, const mAmount &bidSize, const mAmount &askSize) {
         mQuote k = quoteAtTopOfMarket();
         mPrice mktWidth = abs(k.ask.price - k.bid.price);
         if (mktWidth > widthPing) {
@@ -402,13 +403,13 @@ namespace K {
         k.ask.size = askSize;
         return k;
       };
-      function<mQuote(mPrice, mAmount, mAmount)> calcMidOfMarket = [&](mPrice widthPing, mAmount bidSize, mAmount askSize) {
+      function<mQuote(const mPrice&, const mAmount&, const mAmount&)> calcMidOfMarket = [&](const mPrice &widthPing, const mAmount &bidSize, const mAmount &askSize) {
         return mQuote(
           mLevel(fmax(gw->levels.fairValue - widthPing, 0), bidSize),
           mLevel(gw->levels.fairValue + widthPing, askSize)
         );
       };
-      function<mQuote(mPrice, mAmount, mAmount)> calcColossusOfMarket = [&](mPrice widthPing, mAmount bidSize, mAmount askSize) {
+      function<mQuote(const mPrice&, const mAmount&, const mAmount&)> calcColossusOfMarket = [&](const mPrice &widthPing, const mAmount &bidSize, const mAmount &askSize) {
         mQuote k = quoteAtTopOfMarket();
         k.bid.size = 0;
         k.ask.size = 0;
@@ -428,7 +429,7 @@ namespace K {
         k.ask.size = askSize;
         return k;
       };
-      function<mQuote(mAmount, mAmount, mAmount)> calcDepthOfMarket = [&](mAmount depth, mAmount bidSize, mAmount askSize) {
+      function<mQuote(const mAmount&, const mAmount&, const mAmount&)> calcDepthOfMarket = [&](const mAmount &depth, const mAmount &bidSize, const mAmount &askSize) {
         mPrice bidPx = gw->levels.bids.begin()->price;
         mAmount bidDepth = 0;
         for (const mLevel &it : gw->levels.bids) {
@@ -448,7 +449,7 @@ namespace K {
           mLevel(askPx, askSize)
         );
       };
-      mQuoteState checkCrossedQuotes(mSide side, mQuote *quote) {
+      mQuoteState checkCrossedQuotes(const mSide &side, mQuote *const quote) {
         bool cross = false;
         if (side == mSide::Bid) {
           if (quote->bid.empty()) return bidStatus;
@@ -464,7 +465,7 @@ namespace K {
           return mQuoteState::Crossed;
         } else return mQuoteState::Live;
       };
-      void updateQuote(mLevel quote, mSide side, bool isPong) {
+      void updateQuote(const mLevel &quote, const mSide &side, const bool &isPong) {
         unsigned int n = 0;
         vector<mOrder*> toCancel,
                         keepWorking;

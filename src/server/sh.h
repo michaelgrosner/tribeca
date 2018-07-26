@@ -86,7 +86,7 @@ namespace K {
         if (!hotkey.valid() or hotkey.wait_for(chrono::nanoseconds(0)) != future_status::ready) return;
         mHotkey ch = hotkey.get();
         if (hotFn.find(ch) != hotFn.end())
-          hotFn[ch]();
+          hotFn.at(ch)();
         hotkeys();
       };
       const string stamp() {
