@@ -212,17 +212,15 @@ namespace K {
       };
     private:
       void latency() {
-        chrono::high_resolution_clock::time_point tp1,
-                                                  tp2;
         focus("GW " + exchange, "latency check", "start");
-        tp1 = chrono::high_resolution_clock::now();
+        mClock Tstart = Tstamp;
         const string msg = load_externals();
-        tp2 = chrono::high_resolution_clock::now();
+        mClock Tstop  = Tstamp;
         focus("GW " + exchange, "latency check", "stop");
         if (!msg.empty()) warn("GW " + exchange, msg);
-        focus("GW " + exchange, "HTTP handshake took", to_string(
-          chrono::duration_cast<chrono::duration<double>>(tp2 - tp1).count()
-        ) + " seconds");
+        focus("GW " + exchange, "HTTP read/write handshake took", to_string(
+          Tstop - Tstart
+        ) + "ms of your time");
         raise(SIGINT);
       };
       const string validate(const json &reply) {

@@ -26,8 +26,9 @@ namespace K {
         else if (args.testChamber) logWar("CF", "ignored Test Chamber #" + to_string(args.testChamber));
       };
       void switchOn() {
-        wtfismyip = mREST::xfer("https://wtfismyip.com/json", 4L)
-                      .value("/YourFuckingIPAddress"_json_pointer, "");
+        if (!args.headless)
+          wtfismyip = mREST::xfer("https://wtfismyip.com/json", 4L)
+                        .value("/YourFuckingIPAddress"_json_pointer, "");
         if (args.naked) return;
         if (!(wBorder = initscr()))
           EXIT(error("SH",
