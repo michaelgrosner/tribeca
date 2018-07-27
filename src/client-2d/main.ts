@@ -954,19 +954,22 @@ class ClientComponent implements OnInit {
         : (this.exchange_name=='COINBASE'
           ? 'https://gdax.com/trade/'+this.baseCurrency+'-'+this.quoteCurrency
           : (this.exchange_name=='BITFINEX' || this.exchange_name=='BitfinexMargin'
-              ? 'https://www.bitfinex.com/trading/'+this.baseCurrency+this.quoteCurrency
-              : (this.exchange_name=='HITBTC'
-                ? 'https://hitbtc.com/exchange/'+this.baseCurrency+'-to-'+this.quoteCurrency
-                : (this.exchange_name=='KRAKEN'
-                  ? 'https://www.kraken.com/charts'
-                  : (this.exchange_name=='POLONIEX'
-                    ? 'https://poloniex.com/exchange'
+            ? 'https://www.bitfinex.com/trading/'+this.baseCurrency+this.quoteCurrency
+            : (this.exchange_name=='HITBTC'
+              ? 'https://hitbtc.com/exchange/'+this.baseCurrency+'-to-'+this.quoteCurrency
+              : (this.exchange_name=='KRAKEN'
+                ? 'https://www.kraken.com/charts'
+                : (this.exchange_name=='POLONIEX'
+                  ? 'https://poloniex.com/exchange'
+                  : (this.exchange_name=='FCOIN'
+                    ? 'https://exchange.fcoin.com/ex/main/'+this.baseCurrency + '-' + this.quoteCurrency
                     : null
                   )
                 )
               )
             )
           )
+        )
       );
     this.exchange_orders = this.exchange_name=='OKCOIN'
       ? 'https://www.okcoin.'+(pa.pair.quote=='CNY'?'cn':'com')+'/trade/entrust.do'
@@ -982,7 +985,10 @@ class ClientComponent implements OnInit {
                 ? 'https://www.kraken.com/u/trade'
                 : (this.exchange_name=='POLONIEX'
                   ? 'https://poloniex.com/tradeHistory'
-                  : null
+                  : (this.exchange_name=='FCOIN'
+                      ? 'https://exchange.fcoin.com/orders'
+                      : null
+                  )
                 )
               )
             )
