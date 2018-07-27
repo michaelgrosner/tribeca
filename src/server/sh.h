@@ -365,13 +365,13 @@ namespace K {
         mvwvline(wBorder, yPos+1, x-3, ' ', 10);
         mvwvline(wBorder, yPos+1, x-4, ' ', 10);
         wattron(wBorder, COLOR_PAIR(COLOR_CYAN));
-        mvwvline(wBorder, yPos+11-quoteAmount-quoteHeld, x-4, ACS_CKBOARD, quoteHeld);
+        mvwvline(wBorder, yPos+11-quoteAmount-quoteHeld, x-4, ACS_VLINE, quoteHeld);
         wattron(wBorder, A_BOLD);
         mvwvline(wBorder, yPos+11-quoteAmount, x-4, ' ' | A_REVERSE, quoteAmount);
         wattroff(wBorder, A_BOLD);
         wattroff(wBorder, COLOR_PAIR(COLOR_CYAN));
         wattron(wBorder, COLOR_PAIR(COLOR_MAGENTA));
-        mvwvline(wBorder, yPos+11-baseAmount-baseHeld, x-3, ACS_CKBOARD, baseHeld);
+        mvwvline(wBorder, yPos+11-baseAmount-baseHeld, x-3, ACS_VLINE, baseHeld);
         wattron(wBorder, A_BOLD);
         mvwvline(wBorder, yPos+11-baseAmount, x-3, ' ' | A_REVERSE, baseAmount);
         wattroff(wBorder, A_BOLD);
