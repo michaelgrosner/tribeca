@@ -19,14 +19,13 @@ namespace K {
         client->clickme(gw->semaphore);
       };
       void waitSysAdmin() {
-        screen->printme(gw);
         screen->printme(&gw->semaphore);
         screen->pressme(mHotkey::ESC, [&]() {
           gw->semaphore.toggle();
         });
       };
       void run() {                                                  PRETTY_DEBUG
-        const string msg = gw->config_externals();
+        const string msg = gw->load_externals();
         if (!msg.empty())
           EXIT(screen->error("GW", msg));
       };

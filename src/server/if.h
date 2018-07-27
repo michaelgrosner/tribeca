@@ -27,7 +27,6 @@ namespace K {
 #endif
         << ".\n" << RYELLOW << changes << RRESET;
       };
-      virtual void config() = 0;
       virtual void pressme(const mHotkey&, function<void()>) = 0;
       virtual void printme(mToScreen *const) = 0;
       virtual const int error(string, string, bool = false) = 0;
@@ -158,7 +157,7 @@ namespace K {
                 minSize  = 0;
             int version  = 0, maxLevel = 0,
                 debug    = 0;
-      void config_internals() {
+      void load_internals() {
         exchange = args.exchange;
         base     = args.base();
         quote    = args.quote();
@@ -172,26 +171,11 @@ namespace K {
         maxLevel = args.maxLevels;
         debug    = args.debugSecret;
         semaphore.adminAgreement = (mConnectivity)args.autobot;
+        if (args.latency)
+          latency();
       };
-      const string config_externals() {
-        const json reply = handshake();
-        if (!randId or symbol.empty())
-          return "Incomplete handshake aborted.";
-        if (!minTick or !minSize)
-          return "Unable to fetch data from " + exchange
-            + " for symbol \"" + symbol + "\", possible error message: "
-            + reply.dump();
-        if (exchange != "NULL")
-          print("GW " + exchange, "allows client IP");
-        unsigned int precision = minTick < 1e-8 ? 10 : 8;
-        print("GW " + exchange + ":", string("\n")
-          + "- autoBot: " + (!args.autobot ? "no" : "yes") + '\n'
-          + "- symbols: " + symbol + '\n'
-          + "- minTick: " + strX(minTick, precision) + '\n'
-          + "- minSize: " + strX(minSize, precision) + '\n'
-          + "- makeFee: " + strX(makeFee, precision) + '\n'
-          + "- takeFee: " + strX(takeFee, precision));
-        return "";
+      const string load_externals() {
+        return validate(handshake());
       };
       void connect() {
         socket->connect(ws, nullptr, {}, 5e+3, &socket->getDefaultGroup<uWS::CLIENT>());
@@ -225,6 +209,40 @@ namespace K {
         if (reason.find("Error") == string::npos)
           print(prefix, reason);
         else warn(prefix, reason);
+      };
+    private:
+      void latency() {
+        chrono::high_resolution_clock::time_point tp1,
+                                                  tp2;
+        focus("GW " + exchange, "latency check", "start");
+        tp1 = chrono::high_resolution_clock::now();
+        const string msg = load_externals();
+        tp2 = chrono::high_resolution_clock::now();
+        focus("GW " + exchange, "latency check", "stop");
+        if (!msg.empty()) warn("GW " + exchange, msg);
+        focus("GW " + exchange, "HTTP handshake took", to_string(
+          chrono::duration_cast<chrono::duration<double>>(tp2 - tp1).count()
+        ) + " seconds");
+        raise(SIGINT);
+      };
+      const string validate(const json &reply) {
+        if (!randId or symbol.empty())
+          return "Incomplete handshake aborted.";
+        if (!minTick or !minSize)
+          return "Unable to fetch data from " + exchange
+            + " for symbol \"" + symbol + "\", possible error message: "
+            + reply.dump();
+        if (exchange != "NULL")
+          print("GW " + exchange, "allows client IP");
+        unsigned int precision = minTick < 1e-8 ? 10 : 8;
+        print("GW " + exchange + ":", string("\n")
+          + "- autoBot: " + (!args.autobot ? "no" : "yes") + '\n'
+          + "- symbols: " + symbol + '\n'
+          + "- minTick: " + strX(minTick, precision) + '\n'
+          + "- minSize: " + strX(minSize, precision) + '\n'
+          + "- makeFee: " + strX(makeFee, precision) + '\n'
+          + "- takeFee: " + strX(takeFee, precision));
+        return "";
       };
   };
 
@@ -408,7 +426,7 @@ namespace K {
   static string tracelog;
   static vector<function<void()>> happyEndingFn, endingFn = { []() {
     screen->end();
-    cout << '\n' << screen->stamp() << tracelog;
+    cout << (args.latency?"":"\n") << screen->stamp() << tracelog;
   } };
   static class Ending {
     public:
@@ -435,10 +453,13 @@ namespace K {
         EXIT(code);
       };
       static void quit(const int sig) {
-        tracelog = "Excellent decision! "
-          + mREST::xfer("https://api.icndb.com/jokes/random?escape=javascript&limitTo=[nerdy]", 4L)
-              .value("/value/joke"_json_pointer, "let's plant a tree instead..")
-          + '\n';
+        tracelog = args.latency
+          ? "1 HTTP connection done"
+            + string(RWHITE) + " (consider to repeat a few times this check).\n"
+          : "Excellent decision! "
+            + mREST::xfer("https://api.icndb.com/jokes/random?escape=javascript&limitTo=[nerdy]", 4L)
+                .value("/value/joke"_json_pointer, "let's plant a tree instead..")
+            + '\n';
         halt(EXIT_SUCCESS);
       };
       static void wtf(const int sig) {

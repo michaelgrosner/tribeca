@@ -20,13 +20,12 @@ namespace K {
             "Unable to configure a valid gateway using --exchange="
               + args.exchange + " argument"
           ));
-        gw->config_internals();
-        config();
+        switchOn();
         if (args.inet) log("CF", "Network Interface for outgoing traffic is", args.inet);
         if (args.testChamber == 1) logWar("CF", "Test Chamber #1: send new orders before cancel old");
         else if (args.testChamber) logWar("CF", "ignored Test Chamber #" + to_string(args.testChamber));
       };
-      void config() {
+      void switchOn() {
         wtfismyip = mREST::xfer("https://wtfismyip.com/json", 4L)
                       .value("/YourFuckingIPAddress"_json_pointer, "");
         if (args.naked) return;
@@ -222,7 +221,7 @@ namespace K {
           else                  cout << RWHITE;
           cout << ' ' << reason;
           if (!highlight.empty())
-            cout << ' ' << RYELLOW << highlight;
+            cout << ' ' << BYELLOW << highlight;
           cout << RWHITE << ".\n";
           return;
         }
