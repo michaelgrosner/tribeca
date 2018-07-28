@@ -5,41 +5,41 @@ namespace K {
   class OG: public Klass {
     protected:
       void load() {
-        sqlite->backup(&gw->broker.tradesHistory);
+        sqlite->backup(&engine->broker.tradesHistory);
       };
       void waitData() {
         gw->RAWDATA_ENTRY_POINT(mOrder, {                           PRETTY_DEBUG
-          gw->broker.upsert(rawdata, &gw->wallet, gw->levels, &gw->askForFees);
+          engine->broker.upsert(rawdata, &engine->wallet, engine->levels, &gw->askForFees);
         });
       };
       void waitSysAdmin() {
-        screen->printme(&gw->broker.tradesHistory);
-        screen->printme(&gw->broker);
+        screen->printme(&engine->broker.tradesHistory);
+        screen->printme(&engine->broker);
       };
       void waitWebAdmin() {
-        client->welcome(gw->broker.tradesHistory);
-        client->welcome(gw->broker);
-        client->clickme(gw->broker.btn.cleanTradesClosed KISS {
-          gw->broker.tradesHistory.clearClosed();
+        client->welcome(engine->broker.tradesHistory);
+        client->welcome(engine->broker);
+        client->clickme(engine->broker.btn.cleanTradesClosed KISS {
+          engine->broker.tradesHistory.clearClosed();
         });
-        client->clickme(gw->broker.btn.cleanTrades KISS {
-          gw->broker.tradesHistory.clearAll();
+        client->clickme(engine->broker.btn.cleanTrades KISS {
+          engine->broker.tradesHistory.clearAll();
         });
-        client->clickme(gw->broker.btn.cleanTrade KISS {
+        client->clickme(engine->broker.btn.cleanTrade KISS {
           if (!butterfly.is_string()) return;
-          gw->broker.tradesHistory.clearOne(butterfly.get<string>());
+          engine->broker.tradesHistory.clearOne(butterfly.get<string>());
         });
-        client->clickme(gw->broker.btn.cancelAll KISS {
-          for (mOrder *const it : gw->broker.working())
-            gw->cancelOrder(it);
+        client->clickme(engine->broker.btn.cancelAll KISS {
+          for (mOrder *const it : engine->broker.working())
+            engine->cancelOrder(it);
         });
-        client->clickme(gw->broker.btn.cancel KISS {
+        client->clickme(engine->broker.btn.cancel KISS {
           if (!butterfly.is_string()) return;
-          gw->cancelOrder(gw->broker.find(butterfly.get<mRandId>()));
+          engine->cancelOrder(engine->broker.find(butterfly.get<mRandId>()));
         });
-        client->clickme(gw->broker.btn.submit KISS {
+        client->clickme(engine->broker.btn.submit KISS {
           if (!butterfly.is_object()) return;
-          gw->placeOrder(
+          engine->placeOrder(
             butterfly.value("side", "") == "Bid" ? mSide::Bid : mSide::Ask,
             butterfly.value("price", 0.0),
             butterfly.value("quantity", 0.0),

@@ -68,12 +68,12 @@ namespace K  {
       };
       void timer_1s() {
         if (!gw->countdown) {
-          if (!gw->levels.warn_empty()) {
-                                              gw->levels.timer_1s();
-            if (!(tick % 60))                 gw->levels.timer_60s();
-                                              gw->wallet.target.safety.timer_1s(
-                                                gw->levels,
-                                                gw->broker.tradesHistory
+          if (!engine->levels.warn_empty()) {
+                                              engine->levels.timer_1s();
+            if (!(tick % 60))                 engine->levels.timer_60s();
+                                              engine->wallet.target.safety.timer_1s(
+                                                engine->levels,
+                                                engine->broker.tradesHistory
                                               );
                                               engine->timer_1s();
           }

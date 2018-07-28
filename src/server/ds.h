@@ -660,29 +660,28 @@ namespace K {
   struct mOrder {
          mRandId orderId,
                  exchangeId;
-           mSide side;
-          mPrice price;
-         mAmount quantity,
-                 tradeQuantity;
-      mOrderType type;
-    mTimeInForce timeInForce;
-         mStatus orderStatus;
-            bool isPong,
-                 preferPostOnly;
-          mClock time,
-                 latency,
-                 _waitingCancel;
-    mOrder():
-      orderId(), exchangeId(), side((mSide)0), quantity(0), type((mOrderType)0), isPong(false), price(0), timeInForce((mTimeInForce)0), orderStatus((mStatus)0), preferPostOnly(false), tradeQuantity(0), time(0), _waitingCancel(0), latency(0)
+           mSide side           = (mSide)0;
+          mPrice price          = 0;
+         mAmount quantity       = 0,
+                 tradeQuantity  = 0;
+      mOrderType type           = (mOrderType)0;
+    mTimeInForce timeInForce    = (mTimeInForce)0;
+         mStatus orderStatus    = (mStatus)0;
+            bool isPong         = false,
+                 preferPostOnly = false;
+          mClock time           = 0,
+                 latency        = 0,
+                 _waitingCancel = 0;
+    mOrder()
     {};
     mOrder(mRandId o, mStatus s):
-      orderId(o), exchangeId(), side((mSide)0), quantity(0), type((mOrderType)0), isPong(false), price(0), timeInForce((mTimeInForce)0), orderStatus(s), preferPostOnly(false), tradeQuantity(0), time(0), _waitingCancel(0), latency(0)
+      orderId(o), orderStatus(s)
     {};
     mOrder(mRandId o, mRandId e, mStatus s, mPrice p, mAmount q, mAmount Q):
-      orderId(o), exchangeId(e), side((mSide)0), quantity(q), type((mOrderType)0), isPong(false), price(p), timeInForce((mTimeInForce)0), orderStatus(s), preferPostOnly(false), tradeQuantity(Q), time(0), _waitingCancel(0), latency(0)
+      orderId(o), exchangeId(e), quantity(q), price(p), orderStatus(s), tradeQuantity(Q)
     {};
     mOrder(mRandId o, mSide S, mAmount q, mOrderType t, bool i, mPrice p, mTimeInForce F, mStatus s, bool O):
-      orderId(o), exchangeId(), side(S), quantity(q), type(t), isPong(i), price(p), timeInForce(F), orderStatus(s), preferPostOnly(O), tradeQuantity(0), time(0), _waitingCancel(0), latency(0)
+      orderId(o), side(S), quantity(q), type(t), isPong(i), price(p), timeInForce(F), orderStatus(s), preferPostOnly(O)
     {};
     void update(const mOrder &raw) {
       orderStatus = raw.orderStatus;
@@ -716,24 +715,23 @@ namespace K {
 
   struct mTrade {
      string tradeId;
-      mSide side;
-     mPrice price,
-            Kprice;
-    mAmount quantity,
-            value,
-            Kqty,
-            Kvalue,
-            Kdiff,
-            feeCharged;
-     mClock time,
-            Ktime;
-       bool isPong,
-            loadedFromDB;
-    mTrade():
-      tradeId(), side((mSide)0), price(0), Kprice(0), quantity(0), value(0), Kqty(0), Kvalue(0), Kdiff(0), feeCharged(0), time(0), Ktime(0), isPong(false), loadedFromDB(false)
+      mSide side         = (mSide)0;
+     mPrice price        = 0,
+            Kprice       = 0;
+    mAmount quantity     = 0,
+            value        = 0,
+            Kqty         = 0,
+            Kvalue       = 0,
+            Kdiff        = 0,
+            feeCharged   = 0;
+     mClock time         = 0,
+            Ktime        = 0;
+       bool isPong       = false,
+            loadedFromDB = false;
+    mTrade()
     {};
     mTrade(mPrice p, mAmount q, mSide s, mClock t):
-      tradeId(), side(s), price(p), Kprice(0), quantity(q), value(0), Kqty(0), Kvalue(0), Kdiff(0), feeCharged(0), time(t), Ktime(0), isPong(false), loadedFromDB(false)
+      side(s), price(p), quantity(q), time(t)
     {};
     mTrade(string i, mPrice p, mAmount q, mSide S, bool P, mClock t, mAmount v, mClock Kt, mAmount Kq, mPrice Kp, mAmount Kv, mAmount Kd, mAmount f, bool l):
       tradeId(i), side(S), price(p), Kprice(Kp), quantity(q), value(v), Kqty(Kq), Kvalue(Kv), Kdiff(Kd), feeCharged(f), time(t), Ktime(Kt), isPong(P), loadedFromDB(l)
@@ -781,10 +779,9 @@ namespace K {
   };
   struct mMarketTakers: public mJsonToClient<mTrade> {
     vector<mTrade> trades;
-    mAmount        takersBuySize60s,
-                   takersSellSize60s;
-    mMarketTakers():
-      trades(), takersBuySize60s(0), takersSellSize60s(0)
+    mAmount        takersBuySize60s  = 0,
+                   takersSellSize60s = 0;
+    mMarketTakers()
     {};
     void timer_60s() {
       takersSellSize60s = takersBuySize60s = 0;
@@ -975,11 +972,10 @@ namespace K {
   };
 
   struct mRecentTrade {
-     mPrice price;
-    mAmount quantity;
-     mClock time;
-    mRecentTrade():
-      price(0), quantity(0), time(0)
+     mPrice price    = 0;
+    mAmount quantity = 0;
+     mClock time     = 0;
+    mRecentTrade()
     {};
     mRecentTrade(mPrice p, mAmount q):
       price(p), quantity(q), time(Tstamp)
@@ -988,12 +984,11 @@ namespace K {
   struct mRecentTrades {
     multimap<mPrice, mRecentTrade> buys,
                                    sells;
-                           mAmount sumBuys,
-                                   sumSells;
-                            mPrice lastBuyPrice,
-                                   lastSellPrice;
-    mRecentTrades():
-      buys(), sells(), sumBuys(0), sumSells(0), lastBuyPrice(0), lastSellPrice(0)
+                           mAmount sumBuys       = 0,
+                                   sumSells      = 0;
+                            mPrice lastBuyPrice  = 0,
+                                   lastSellPrice = 0;
+    mRecentTrades()
     {};
     void insert(const mSide &side, const mPrice &price, const mAmount &quantity) {
       const bool bidORask = side == mSide::Bid;
@@ -1043,9 +1038,8 @@ namespace K {
   };
 
   struct mFairValue {
-    mPrice fv;
-    mFairValue():
-      fv(0)
+    mPrice fv = 0;
+    mFairValue()
     {};
     mFairValue(mPrice f):
       fv(f)
@@ -1104,11 +1098,10 @@ namespace K {
   };
 
   struct mStdev: public mFairValue {
-    mPrice topBid,
-           topAsk;
-    mStdev():
-      topBid(0), topAsk(0)
-    { fv = 0; };
+    mPrice topBid = 0,
+           topAsk = 0;
+    mStdev()
+    {};
     mStdev(mPrice f, mPrice b, mPrice a):
       topBid(b), topAsk(a)
     { fv = f; };
@@ -1126,12 +1119,11 @@ namespace K {
     k.topAsk = j.value("ask", 0.0);
   };
   struct mStdevs: public mVectorFromDb<mStdev> {
-    double top,  topMean,
-           fair, fairMean,
-           bid,  bidMean,
-           ask,  askMean;
-    mStdevs():
-      top(0), topMean(0), fair(0), fairMean(0), bid(0), bidMean(0), ask(0), askMean(0)
+    double top  = 0,  topMean = 0,
+           fair = 0, fairMean = 0,
+           bid  = 0,  bidMean = 0,
+           ask  = 0,  askMean = 0;
+    mStdevs()
     {};
     const bool pull(const json &j) {
       const bool loaded = mVectorFromDb::pull(j);
@@ -1207,18 +1199,17 @@ namespace K {
   struct mEwma: public mToScreen,
                 public mStructFromDb<mEwma> {
     mFairHistory fairValue96h;
-          mPrice mgEwmaVL,
-                 mgEwmaL,
-                 mgEwmaM,
-                 mgEwmaS,
-                 mgEwmaXS,
-                 mgEwmaU,
-                 mgEwmaP,
-                 mgEwmaW;
-          double mgEwmaTrendDiff,
-                 targetPositionAutoPercentage;
-    mEwma():
-      mgEwmaVL(0), mgEwmaL(0), mgEwmaM(0), mgEwmaS(0), mgEwmaXS(0), mgEwmaU(0), mgEwmaP(0), mgEwmaW(0), mgEwmaTrendDiff(0), targetPositionAutoPercentage(0)
+          mPrice mgEwmaVL = 0,
+                 mgEwmaL  = 0,
+                 mgEwmaM  = 0,
+                 mgEwmaS  = 0,
+                 mgEwmaXS = 0,
+                 mgEwmaU  = 0,
+                 mgEwmaP  = 0,
+                 mgEwmaW  = 0;
+          double mgEwmaTrendDiff              = 0,
+                 targetPositionAutoPercentage = 0;
+    mEwma()
     {};
     void timer_60s(const mPrice &fv, const mPrice &averageWidth) {
       prepareHistory(fv);
@@ -1330,7 +1321,7 @@ namespace K {
     mFairLevelsPrice fairPrice;
        mMarketTakers takerTrades;
     mMarketStats(mPrice *const f):
-       ewma(), fairPrice(f), takerTrades()
+       fairPrice(f)
     {};
     const mMatter about() const {
       return mMatter::MarketChart;
@@ -1350,10 +1341,9 @@ namespace K {
   };
 
   struct mLevel {
-     mPrice price;
-    mAmount size;
-    mLevel():
-      price(0), size(0)
+     mPrice price = 0;
+    mAmount size  = 0;
+    mLevel()
     {};
     mLevel(mPrice p, mAmount s):
       price(p), size(s)
@@ -1374,8 +1364,7 @@ namespace K {
   struct mLevels {
     vector<mLevel> bids,
                    asks;
-    mLevels():
-      bids(), asks()
+    mLevels()
     {};
     mLevels(vector<mLevel> b, vector<mLevel> a):
       bids(b), asks(a)
@@ -1469,12 +1458,12 @@ namespace K {
              mLevelsDiff diff;
     map<mPrice, mAmount> filterBidOrders,
                          filterAskOrders;
-            unsigned int averageCount;
-                  mPrice averageWidth,
-                         fairValue;
+            unsigned int averageCount = 0;
+                  mPrice averageWidth = 0,
+                         fairValue    = 0;
             mMarketStats stats;
     mMarketLevels():
-      diff(&unfiltered), filterBidOrders(), filterAskOrders(), averageCount(0), averageWidth(0), fairValue(0), stats(&fairValue)
+      diff(&unfiltered), stats(&fairValue)
     {};
     void timer_1s() {
       stats.stdev.timer_1s(fairValue, bids.cbegin()->price, asks.cbegin()->price);
@@ -1554,11 +1543,10 @@ namespace K {
   };
 
   struct mProfit {
-    mAmount baseValue,
-            quoteValue;
-     mClock time;
-    mProfit():
-      baseValue(0), quoteValue(0), time(0)
+    mAmount baseValue  = 0,
+            quoteValue = 0;
+     mClock time       = 0;
+    mProfit()
     {};
     mProfit(mAmount b, mAmount q):
       baseValue(b), quoteValue(q), time(Tstamp)
@@ -1615,19 +1603,19 @@ namespace K {
   };
 
   struct mSafety: public mJsonToClient<mSafety> {
-           double buy,
-                  sell,
-                  combined;
-           mPrice buyPing,
-                  sellPing;
-          mAmount buySize,
-                  sellSize;
+           double buy      = 0,
+                  sell     = 0,
+                  combined = 0;
+           mPrice buyPing  = 0,
+                  sellPing = 0;
+          mAmount buySize  = 0,
+                  sellSize = 0;
     mRecentTrades recentTrades;
-          mAmount *baseValue,
-                  *baseTotal,
-                  *targetBasePosition;
+          mAmount *baseValue          = nullptr,
+                  *baseTotal          = nullptr,
+                  *targetBasePosition = nullptr;
     mSafety(mAmount *const b, mAmount *const t, mAmount *const p):
-      buy(0), sell(0), combined(0), buyPing(0), sellPing(0), buySize(0), sellSize(0), recentTrades(), baseValue(b), baseTotal(t), targetBasePosition(p)
+      baseValue(b), baseTotal(t), targetBasePosition(p)
     {};
     void timer_1s(const mMarketLevels &levels, const mTradesCompleted &tradesHistory) {
       calc(levels, tradesHistory);
@@ -1754,14 +1742,14 @@ namespace K {
   struct mTarget: public mToScreen,
                   public mStructFromDb<mTarget>,
                   public mJsonToClient<mTarget> {
-    mAmount targetBasePosition,
-            positionDivergence;
+    mAmount targetBasePosition = 0,
+            positionDivergence = 0;
      string sideAPR,
-            sideAPRDiff;
+            sideAPRDiff = "!=";
     mSafety safety;
-    mAmount *baseValue;
+    mAmount *baseValue = nullptr;
     mTarget(mAmount *const b, mAmount *const t):
-      targetBasePosition(0), positionDivergence(0), sideAPR(), sideAPRDiff("!="), safety(b, t, &targetBasePosition), baseValue(b)
+      safety(b, t, &targetBasePosition), baseValue(b)
     {};
     void calcPDiv() {
       mAmount pDiv = qp.percentageValues
@@ -1838,17 +1826,16 @@ namespace K {
   };
 
   struct mWallet {
-    mAmount amount,
-            held,
-            total,
-            value,
-            profit;
+    mAmount amount = 0,
+            held   = 0,
+            total  = 0,
+            value  = 0,
+            profit = 0;
     mCoinId currency;
-    mWallet():
-      amount(0), held(0), total(0), value(0), profit(0), currency()
+    mWallet()
     {};
     mWallet(mAmount a, mAmount h, mCoinId c):
-      amount(a), held(h), total(0), value(0), profit(0), currency(c)
+      amount(a), held(h), currency(c)
     {};
     void reset(const mAmount &a, const mAmount &h) {
       if (empty()) return;
@@ -1869,8 +1856,7 @@ namespace K {
   struct mWallets {
     mWallet base,
             quote;
-    mWallets():
-      base(), quote()
+    mWallets()
     {};
     mWallets(mWallet b, mWallet q):
       base(b), quote(q)
@@ -1890,7 +1876,7 @@ namespace K {
      mTarget target;
     mProfits profits;
     mWalletPosition():
-      target(&base.value, &base.total), profits()
+      target(&base.value, &base.total)
     {};
     void reset(const mWallets &next, const mMarketLevels &levels) {
       if (next.empty()) return;
@@ -2205,8 +2191,8 @@ namespace K {
   };
 
   struct mQuoteStatus: public mJsonToClient<mQuoteStatus> {
-     mQuoteState bidStatus = mQuoteState::Disconnected,
-                 askStatus = mQuoteState::Disconnected;
+     mQuoteState bidStatus             = mQuoteState::Disconnected,
+                 askStatus             = mQuoteState::Disconnected;
     unsigned int quotesInMemoryNew     = 0,
                  quotesInMemoryWorking = 0,
                  quotesInMemoryDone    = 0;
@@ -2244,7 +2230,7 @@ namespace K {
 
   struct mSemaphore: public mToScreen,
                      public mJsonToClient<mSemaphore> {
-    mConnectivity adminAgreement = mConnectivity::Disconnected,
+    mConnectivity adminAgreement = (mConnectivity)args.autobot,
                   greenButton    = mConnectivity::Disconnected,
                   greenGateway   = mConnectivity::Disconnected;
     const json kiss(const json &j) {
@@ -2392,6 +2378,19 @@ namespace K {
   };
 
   struct mREST {
+    static json xfer(const string &url, const long &timeout = 13) {
+      return curl_perform(url, [&](CURL *curl) {
+        curl_easy_setopt(curl, CURLOPT_TIMEOUT, timeout);
+      }, timeout == 13);
+    };
+    static json xfer(const string &url, const string &post) {
+      return curl_perform(url, [&](CURL *curl) {
+        struct curl_slist *h_ = NULL;
+        h_ = curl_slist_append(h_, "Content-Type: application/x-www-form-urlencoded");
+        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post.data());
+      });
+    };
     static json curl_perform(const string &url, function<void(CURL *curl)> curl_setopt, bool debug = true) {
       string reply;
       CURL *curl = curl_easy_init();
@@ -2411,96 +2410,11 @@ namespace K {
       if (reply.empty() or (reply.at(0) != '{' and reply.at(0) != '[')) reply = "{}";
       return json::parse(reply);
     };
-    static size_t curl_write(void *buf, size_t size, size_t nmemb, void *up) {
-      ((string*)up)->append((char*)buf, size * nmemb);
-      return size * nmemb;
-    };
-    static json xfer(const string &url, long timeout = 13) {
-      return curl_perform(url, [&](CURL *curl) {
-        curl_easy_setopt(curl, CURLOPT_TIMEOUT, timeout);
-      }, timeout == 13);
-    };
-    static json xfer(const string &url, string p) {
-      return curl_perform(url, [&](CURL *curl) {
-        struct curl_slist *h_ = NULL;
-        h_ = curl_slist_append(h_, "Content-Type: application/x-www-form-urlencoded");
-        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
-        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, p.data());
-      });
-    };
-    static json xfer(const string &url, string t, bool auth) {
-      return curl_perform(url, [&](CURL *curl) {
-        struct curl_slist *h_ = NULL;
-        if (!t.empty()) h_ = curl_slist_append(h_, ("Authorization: Bearer " + t).data());
-        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
-      });
-    };
-    static json xfer(const string &url, bool p, string a, string s, string n) {
-      return curl_perform(url, [&](CURL *curl) {
-        struct curl_slist *h_ = NULL;
-        h_ = curl_slist_append(h_, ("API-Key: " + a).data());
-        h_ = curl_slist_append(h_, ("API-Sign: " + s).data());
-        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
-        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, n.data());
-      });
-    };
-    static json xfer(const string &url, bool a, string p, string s) {
-      return curl_perform(url, [&](CURL *curl) {
-        if (a) {
-          curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
-          curl_easy_setopt(curl, CURLOPT_POSTFIELDS, s.data());
-        }
-        curl_easy_setopt(curl, CURLOPT_USERPWD, p.data());
-      });
-    };
-    static json xfer(const string &url, string p, string s, bool post) {
-      return curl_perform(url, [&](CURL *curl) {
-        struct curl_slist *h_ = NULL;
-        h_ = curl_slist_append(h_, ("X-Signature: " + s).data());
-        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
-        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, p.data());
-      });
-    };
-    static json xfer(const string &url, string p, string a, string s) {
-      return curl_perform(url, [&](CURL *curl) {
-        struct curl_slist *h_ = NULL;
-        h_ = curl_slist_append(h_, "Content-Type: application/x-www-form-urlencoded");
-        h_ = curl_slist_append(h_, ("Key: " + a).data());
-        h_ = curl_slist_append(h_, ("Sign: " + s).data());
-        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
-        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, p.data());
-      });
-    };
-    static json xfer(const string &url, string p, string a, string s, bool post) {
-      return curl_perform(url, [&](CURL *curl) {
-        struct curl_slist *h_ = NULL;
-        h_ = curl_slist_append(h_, ("X-BFX-APIKEY: " + a).data());
-        h_ = curl_slist_append(h_, ("X-BFX-PAYLOAD: " + p).data());
-        h_ = curl_slist_append(h_, ("X-BFX-SIGNATURE: " + s).data());
-        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
-        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, p.data());
-      });
-    };
-    static json xfer(const string &url, string p, string a, string s, bool post, bool auth) {
-      return curl_perform(url, [&](CURL *curl) {
-        struct curl_slist *h_ = NULL;
-        h_ = curl_slist_append(h_, "Content-Type: application/x-www-form-urlencoded");
-        if (!a.empty()) h_ = curl_slist_append(h_, ("Authorization: Bearer " + a).data());
-        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
-        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, p.data());
-      });
-    };
-    static json xfer(const string &url, string t, string a, string s, string p, bool d = false) {
-      return curl_perform(url, [&](CURL *curl) {
-        struct curl_slist *h_ = NULL;
-        h_ = curl_slist_append(h_, ("CB-ACCESS-KEY: " + a).data());
-        h_ = curl_slist_append(h_, ("CB-ACCESS-SIGN: " + s).data());
-        h_ = curl_slist_append(h_, ("CB-ACCESS-TIMESTAMP: " + t).data());
-        h_ = curl_slist_append(h_, ("CB-ACCESS-PASSPHRASE: " + p).data());
-        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
-        if (d) curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
-      });
-    };
+    private:
+      static size_t curl_write(void *buf, size_t size, size_t nmemb, void *up) {
+        ((string*)up)->append((char*)buf, size * nmemb);
+        return size * nmemb;
+      };
   };
 
   struct mRandom {
@@ -2637,7 +2551,7 @@ namespace K {
         mProduct /* ( | C | ) */ /* this */ product;
                  /*  )| K |(  */ /* thanks! <3 */
     mMonitor(const mProduct &p):
-      orders_60s(0), unlock(), product(p)
+      orders_60s(0), product(p)
     {};
     function<const unsigned int()> dbSize = []() {
       return 0;

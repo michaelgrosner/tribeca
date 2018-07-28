@@ -6,22 +6,22 @@ namespace K {
     protected:
       void waitData() {
         gw->RAWDATA_ENTRY_POINT(mConnectivity, {
-          if (!gw->semaphore.online(rawdata))
-            gw->levels.clear();
+          if (!engine->semaphore.online(rawdata))
+            engine->levels.clear();
         });
       };
       void waitWebAdmin() {
-        client->welcome(gw->notepad);
-        client->clickme(gw->notepad);
+        client->welcome(engine->notepad);
+        client->clickme(engine->notepad);
         client->welcome(gw->monitor);
         client->welcome(gw->monitor.product);
-        client->welcome(gw->semaphore);
-        client->clickme(gw->semaphore);
+        client->welcome(engine->semaphore);
+        client->clickme(engine->semaphore);
       };
       void waitSysAdmin() {
-        screen->printme(&gw->semaphore);
+        screen->printme(&engine->semaphore);
         screen->pressme(mHotkey::ESC, [&]() {
-          gw->semaphore.toggle();
+          engine->semaphore.toggle();
         });
       };
       void run() {                                                  PRETTY_DEBUG

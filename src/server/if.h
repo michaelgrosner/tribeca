@@ -61,13 +61,6 @@ namespace K {
 #define KISS , [&](const json &butterfly)
   } *client = nullptr;
 
-  static class Engine {
-    public:
-      virtual void timer_1s() = 0;
-      virtual void calcQuote() = 0;
-      virtual void calcQuoteAfterSavedParams() = 0;
-  } *engine = nullptr;
-
   class GwExchangeData {
     public:
       bool async = false;
@@ -143,8 +136,6 @@ namespace K {
         monitor(mProduct(&base, &quote, &exchange, &minTick))
       {};
       uWS::Hub *socket = nullptr;
-      mNotepad notepad;
-      mSemaphore semaphore;
       mRandId (*randId)() = nullptr;
       unsigned int countdown = 0;
          string exchange = "", symbol  = "",
@@ -170,7 +161,6 @@ namespace K {
         ws       = args.wss;
         maxLevel = args.maxLevels;
         debug    = args.debugSecret;
-        semaphore.adminAgreement = (mConnectivity)args.autobot;
         if (args.latency)
           latency();
       };
@@ -246,29 +236,6 @@ namespace K {
 
   static class Gw: public GwExchange {
     public:
-      mWalletPosition wallet;
-        mMarketLevels levels;
-              mBroker broker;
-      void placeOrder(
-        const mSide        &side    ,
-        const mPrice       &price   ,
-        const mAmount      &qty     ,
-        const mOrderType   &type    ,
-        const mTimeInForce &tif     ,
-        const bool         &isPong  ,
-        const bool         &postOnly
-      ) {
-        mOrder *const o = broker.upsert(mOrder(randId(), side, qty, type, isPong, price, tif, mStatus::New, postOnly), true);
-        place(o->orderId, o->side, str8(o->price), str8(o->quantity), o->type, o->timeInForce, o->preferPostOnly);
-      };
-      void replaceOrder(mOrder *const toReplace, const mPrice &price, const bool &isPong) {
-        if (broker.replace(toReplace, price, isPong))
-          replace(toReplace->exchangeId, str8(toReplace->price));
-      };
-      void cancelOrder(mOrder *const toCancel) {
-        if (broker.cancel(toCancel))
-          cancel(toCancel->orderId, toCancel->exchangeId);
-      };
 //BO non-free gw library functions from build-*/local/lib/K-*.a (it just returns a derived gateway class based on argument).
 /**/  static Gw* new_Gw(const string&); // may return too a nullptr instead of a child gateway class, if string is unknown..
 //EO non-free gw library functions from build-*/local/lib/K-*.a (it just returns a derived gateway class based on argument).
@@ -295,6 +262,13 @@ namespace K {
         base    = reply.value("baseCurrency", base);
         quote   = reply.value("quoteCurrency", quote);
         return reply;
+      };
+      static json xfer(const string &url, string auth, string post) {
+        return mREST::curl_perform(url, [&](CURL *curl) {
+          curl_easy_setopt(curl, CURLOPT_USERPWD, auth.data());
+          curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
+          curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post.data());
+        });
       };
   };
   class GwOkCoin: public Gw {
@@ -327,6 +301,17 @@ namespace K {
         minSize = stod(reply.value("base_min_size", "0"));
         return reply;
       };
+      static json xfer(const string &url, string h1, string h2, string h3, string h4, bool rm) {
+        return mREST::curl_perform(url, [&](CURL *curl) {
+          struct curl_slist *h_ = NULL;
+          h_ = curl_slist_append(h_, ("CB-ACCESS-KEY: " + h1).data());
+          h_ = curl_slist_append(h_, ("CB-ACCESS-SIGN: " + h2).data());
+          h_ = curl_slist_append(h_, ("CB-ACCESS-TIMESTAMP: " + h3).data());
+          h_ = curl_slist_append(h_, ("CB-ACCESS-PASSPHRASE: " + h4).data());
+          curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
+          if (rm) curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
+        });
+      };
   };
   class GwBitfinex: public Gw {
     protected:
@@ -349,6 +334,16 @@ namespace K {
             if (it->find("pair") != it->end() and it->value("pair", "") == symbol)
               minSize = stod(it->value("minimum_order_size", "0"));
         return reply;
+      };
+      static json xfer(const string &url, string post, string h1, string h2) {
+        return mREST::curl_perform(url, [&](CURL *curl) {
+          struct curl_slist *h_ = NULL;
+          h_ = curl_slist_append(h_, ("X-BFX-APIKEY: " + h1).data());
+          h_ = curl_slist_append(h_, ("X-BFX-PAYLOAD: " + post).data());
+          h_ = curl_slist_append(h_, ("X-BFX-SIGNATURE: " + h2).data());
+          curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
+          curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post.data());
+        });
       };
   };
   class GwEthfinex: public GwBitfinex {};
@@ -392,6 +387,15 @@ namespace K {
             }
         return reply;
       };
+      static json xfer(const string &url, string h1, string h2, string post) {
+        return mREST::curl_perform(url, [&](CURL *curl) {
+          struct curl_slist *h_ = NULL;
+          h_ = curl_slist_append(h_, ("API-Key: " + h1).data());
+          h_ = curl_slist_append(h_, ("API-Sign: " + h2).data());
+          curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
+          curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post.data());
+        });
+      };
   };
   class GwKorbit: public Gw {
     protected:
@@ -404,6 +408,17 @@ namespace K {
           minSize = 0.015;
         }
         return reply;
+      };
+      static json xfer(const string &url, const string &token, const string &post) {
+        return mREST::curl_perform(url, [&](CURL *curl) {
+          struct curl_slist *h_ = NULL;
+          if (!post.empty()) {
+            h_ = curl_slist_append(h_, "Content-Type: application/x-www-form-urlencoded");
+            curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post.data());
+          }
+          h_ = curl_slist_append(h_, ("Authorization: Bearer " + token).data());
+          curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
+        });
       };
   };
   class GwPoloniex: public Gw {
@@ -419,7 +434,49 @@ namespace K {
         }
         return reply;
       };
+      static json xfer(const string &url, string post, string h1, string h2) {
+        return mREST::curl_perform(url, [&](CURL *curl) {
+          struct curl_slist *h_ = NULL;
+          h_ = curl_slist_append(h_, "Content-Type: application/x-www-form-urlencoded");
+          h_ = curl_slist_append(h_, ("Key: " + h1).data());
+          h_ = curl_slist_append(h_, ("Sign: " + h2).data());
+          curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
+          curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post.data());
+        });
+      };
   };
+
+  static class Engine {
+    public:
+      mWalletPosition wallet;
+        mMarketLevels levels;
+              mBroker broker;
+             mNotepad notepad;
+           mSemaphore semaphore;
+      void placeOrder(
+        const mSide        &side    ,
+        const mPrice       &price   ,
+        const mAmount      &qty     ,
+        const mOrderType   &type    ,
+        const mTimeInForce &tif     ,
+        const bool         &isPong  ,
+        const bool         &postOnly
+      ) {
+        mOrder *const o = broker.upsert(mOrder(gw->randId(), side, qty, type, isPong, price, tif, mStatus::New, postOnly), true);
+        gw->place(o->orderId, o->side, str8(o->price), str8(o->quantity), o->type, o->timeInForce, o->preferPostOnly);
+      };
+      void replaceOrder(mOrder *const toReplace, const mPrice &price, const bool &isPong) {
+        if (broker.replace(toReplace, price, isPong))
+          gw->replace(toReplace->exchangeId, str8(toReplace->price));
+      };
+      void cancelOrder(mOrder *const toCancel) {
+        if (broker.cancel(toCancel))
+          gw->cancel(toCancel->orderId, toCancel->exchangeId);
+      };
+      virtual void timer_1s() = 0;
+      virtual void calcQuote() = 0;
+      virtual void calcQuoteAfterSavedParams() = 0;
+  } *engine = nullptr;
 
   static string tracelog;
   static vector<function<void()>> happyEndingFn, endingFn = { []() {
