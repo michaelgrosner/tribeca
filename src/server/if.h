@@ -58,7 +58,6 @@ namespace K {
       virtual void timer_Xs() = 0;
       virtual void welcome(mToClient&) = 0;
       virtual void clickme(mFromClient&, function<void(const json&)> = [](const json &butterfly) {}) = 0;
-#define KISS [&](const json &butterfly)
   } *client = nullptr;
 
   class GwExchangeData {
@@ -180,10 +179,11 @@ namespace K {
           print("GW " + exchange, "cancel all open orders OK");
         }
       };
-    protected:
-      virtual const json handshake() {
-        return nullptr;
+      void quit() const {
+        raise(SIGINT);
       };
+    protected:
+      virtual const json handshake() = 0;
       void reconnect(const string &reason) {
         countdown = 7;
         print("GW " + exchange, "WS " + reason + ", reconnecting in " + to_string(countdown) + "s.");
@@ -199,6 +199,7 @@ namespace K {
       };
     private:
       void latency() {
+        screen->printme(this);
         focus("GW " + exchange, "latency check", "start");
         mClock Tstart = Tstamp;
         const string msg = load_externals();
@@ -208,7 +209,7 @@ namespace K {
         focus("GW " + exchange, "HTTP read/write handshake took", to_string(
           Tstop - Tstart
         ) + "ms of your time");
-        raise(SIGINT);
+        quit();
       };
       const string validate(const json &reply) {
         if (!randId or symbol.empty())
@@ -444,35 +445,10 @@ namespace K {
   };
 
   static class Engine {
-    public:
-      mWalletPosition wallet;
-        mMarketLevels levels;
-              mBroker broker;
-             mNotepad notepad;
-             mMonitor monitor;
-           mSemaphore semaphore;
-      void placeOrder(
-        const mSide        &side    ,
-        const mPrice       &price   ,
-        const mAmount      &qty     ,
-        const mOrderType   &type    ,
-        const mTimeInForce &tif     ,
-        const bool         &isPong  ,
-        const bool         &postOnly
-      ) {
-        mOrder *const o = broker.upsert(mOrder(gw->randId(), side, qty, type, isPong, price, tif, mStatus::New, postOnly), true);
-        gw->place(o->orderId, o->side, str8(o->price), str8(o->quantity), o->type, o->timeInForce, o->preferPostOnly);
-      };
-      void replaceOrder(mOrder *const toReplace, const mPrice &price, const bool &isPong) {
-        if (broker.replace(toReplace, price, isPong))
-          gw->replace(toReplace->exchangeId, str8(toReplace->price));
-      };
-      void cancelOrder(mOrder *const toCancel) {
-        if (broker.cancel(toCancel))
-          gw->cancel(toCancel->orderId, toCancel->exchangeId);
-      };
-      virtual void timer_1s() = 0;
-#define SQLITE_BACKUP_CODE(data) sqlite->backup(&data);
+#define SQLITE_BACKUP                  \
+        SQLITE_BACKUP_LIST             \
+      ( SQLITE_BACKUP_CODE )
+#define SQLITE_BACKUP_CODE(data)       sqlite->backup(&data);
 #define SQLITE_BACKUP_LIST(code)       \
   code(qp)                             \
   code(wallet.target)                  \
@@ -482,6 +458,10 @@ namespace K {
   code(levels.stats.ewma)              \
   code(levels.stats.stdev)             \
   code(broker.tradesHistory)
+
+#define CLIENT_WELCOME            \
+        CLIENT_WELCOME_LIST       \
+      ( CLIENT_WELCOME_CODE )
 #define CLIENT_WELCOME_CODE(data) client->welcome(data);
 #define CLIENT_WELCOME_LIST(code) \
   code(qp)                        \
@@ -499,14 +479,96 @@ namespace K {
   code(levels.stats)              \
   code(broker.tradesHistory)      \
   code(broker)
+
+#define SCREEN_PRINTME            \
+        SCREEN_PRINTME_LIST       \
+      ( SCREEN_PRINTME_CODE )
 #define SCREEN_PRINTME_CODE(data) screen->printme(&data);
 #define SCREEN_PRINTME_LIST(code) \
+  code(*gw)                       \
   code(semaphore)                 \
   code(wallet.target)             \
   code(levels.stats.fairPrice)    \
   code(levels.stats.ewma)         \
   code(broker.tradesHistory)      \
   code(broker)
+
+#define SCREEN_PRESSME            \
+        SCREEN_PRESSME_LIST       \
+      ( SCREEN_PRESSME_CODE )
+#define SCREEN_PRESSME_CODE(key, fn) screen->pressme(mHotkey::key, [&]() { fn(); });
+#define SCREEN_PRESSME_LIST(code) \
+  code( Q , gw->quit)             \
+  code( q , gw->quit)             \
+  code(ESC, semaphore.toggle)
+
+#define CLIENT_CLICKME      \
+        CLIENT_CLICKME_LIST \
+      ( CLIENT_CLICKME_CODE )
+#define CLIENT_CLICKME_CODE(btn, fn, val) client->clickme(btn, [&](const json &butterfly) { fn(val); });
+#define CLIENT_CLICKME_LIST(code)                                          \
+  code(qp                   , calcQuoteAfterSavedParams       ,          ) \
+  code(notepad              , void                            ,          ) \
+  code(semaphore            , void                            ,          ) \
+  code(btn.submit           , placeOrder                      , butterfly) \
+  code(btn.cancel           , cancelOrder                     , butterfly) \
+  code(btn.cancelAll        , cancelOrders                    ,          ) \
+  code(btn.cleanTrade       , broker.tradesHistory.clearOne   , butterfly) \
+  code(btn.cleanTradesClosed, broker.tradesHistory.clearClosed,          ) \
+  code(btn.cleanTrades      , broker.tradesHistory.clearAll   ,          )
+    public:
+      mWalletPosition wallet;
+        mMarketLevels levels;
+              mBroker broker;
+             mButtons btn;
+             mNotepad notepad;
+             mMonitor monitor;
+           mSemaphore semaphore;
+      void replaceOrder(mOrder *const toReplace, const mPrice &price, const bool &isPong) {
+        if (broker.replace(toReplace, price, isPong))
+          gw->replace(toReplace->exchangeId, str8(toReplace->price));
+      };
+      void cancelOrder(mOrder *const toCancel) {
+        if (broker.cancel(toCancel))
+          gw->cancel(toCancel->orderId, toCancel->exchangeId);
+      };
+      void cancelOrders() {
+        for (mOrder *const it : broker.working())
+          cancelOrder(it);
+      };
+      void cancelOrder(const json &butterfly) {
+        if (!butterfly.is_string()) return;
+        cancelOrder(broker.find(butterfly.get<mRandId>()));
+      };
+      void placeOrder(const json &butterfly) {
+        if (!butterfly.is_object()) return;
+        placeOrder(broker.upsert(butterfly, false));
+      };
+      void placeOrder(
+        const mSide        &side    ,
+        const mPrice       &price   ,
+        const mAmount      &qty     ,
+        const mOrderType   &type    ,
+        const mTimeInForce &tif     ,
+        const bool         &isPong  ,
+        const bool         &postOnly
+      ) {
+        mOrder order(gw->randId(), side, qty, type, isPong, price, tif, mStatus::New, postOnly);
+        placeOrder(broker.upsert(order, true));
+      };
+      virtual void timer_1s() = 0;
+    private:
+      void placeOrder(mOrder *const order) {
+        gw->place(
+          order->orderId,
+          order->side,
+          str8(order->price),
+          str8(order->quantity),
+          order->type,
+          order->timeInForce,
+          order->preferPostOnly
+        );
+      };
   } *engine = nullptr;
 
   static string tracelog;

@@ -12,7 +12,7 @@ namespace K {
       unsigned int AK47inc = 0;
     protected:
       void load() {
-        SQLITE_BACKUP_LIST(SQLITE_BACKUP_CODE)
+        SQLITE_BACKUP
         quotingMode[mQuotingMode::Top]         = &calcTopOfMarket;
         quotingMode[mQuotingMode::Mid]         = &calcMidOfMarket;
         quotingMode[mQuotingMode::Join]        = &calcJoinMarket;
@@ -43,53 +43,12 @@ namespace K {
         });
       };
       void waitWebAdmin() {
-        CLIENT_WELCOME_LIST(CLIENT_WELCOME_CODE)
-        client->clickme(qp, KISS {
-          calcQuoteAfterSavedParams();
-        });
-        client->clickme(notepad);
-        client->clickme(semaphore);
-        client->clickme(broker.btn.cleanTradesClosed, KISS {
-          broker.tradesHistory.clearClosed();
-        });
-        client->clickme(broker.btn.cleanTrades, KISS {
-          broker.tradesHistory.clearAll();
-        });
-        client->clickme(broker.btn.cleanTrade, KISS {
-          if (!butterfly.is_string()) return;
-          broker.tradesHistory.clearOne(butterfly.get<string>());
-        });
-        client->clickme(broker.btn.cancelAll, KISS {
-          for (mOrder *const it : broker.working())
-            cancelOrder(it);
-        });
-        client->clickme(broker.btn.cancel, KISS {
-          if (!butterfly.is_string()) return;
-          cancelOrder(broker.find(butterfly.get<mRandId>()));
-        });
-        client->clickme(broker.btn.submit, KISS {
-          if (!butterfly.is_object()) return;
-          placeOrder(
-            butterfly.value("side", "") == "Bid" ? mSide::Bid : mSide::Ask,
-            butterfly.value("price", 0.0),
-            butterfly.value("quantity", 0.0),
-            butterfly.value("orderType", "") == "Limit"
-              ? mOrderType::Limit
-              : mOrderType::Market,
-            butterfly.value("timeInForce", "") == "GTC"
-              ? mTimeInForce::GTC
-              : (butterfly.value("timeInForce", "") == "FOK"
-                ? mTimeInForce::FOK
-                : mTimeInForce::IOC
-              ),
-            false,
-            false
-          );
-        });
+        CLIENT_WELCOME
+        CLIENT_CLICKME
       };
       void waitSysAdmin() {
-        SCREEN_PRINTME_LIST(SCREEN_PRINTME_CODE)
-        screen->pressme(mHotkey::ESC, semaphore.toggle);
+        SCREEN_PRINTME
+        SCREEN_PRESSME
       };
       void run() {                                                  PRETTY_DEBUG
         const string msg = gw->load_externals();

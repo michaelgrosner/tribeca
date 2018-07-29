@@ -22,11 +22,6 @@ namespace K  {
         client->socket = socket;
         socket->createGroup<uWS::SERVER>(uWS::PERMESSAGE_DEFLATE);
       };
-      void waitSysAdmin() {
-        screen->printme(gw);
-        screen->pressme(mHotkey::Q, [&]() { raise(SIGINT); });
-        screen->pressme(mHotkey::q, [&]() { raise(SIGINT); });
-      };
       void waitTime() {
         timer = new uS::Timer(socket->getLoop());
         timer->setData(this);
@@ -35,7 +30,6 @@ namespace K  {
         }, 0, 1e+3);
       };
       void run() {
-        gw->load_internals();
         loop = new uS::Async(socket->getLoop());
         loop->setData(this);
         loop->start(walk);

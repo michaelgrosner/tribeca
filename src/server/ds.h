@@ -167,7 +167,7 @@ namespace K {
             const unsigned int x = !(y % 2)
                                  + !(y % 21);
             cout
-              << RGREEN << PERMISSIVE_ctubio_SOFTWARE_LICENSE << '\n'
+              << RGREEN << PERMISSIVE_analpaper_SOFTWARE_LICENSE << '\n'
               << RGREEN << "  questions: " << RYELLOW << "https://earn.com/analpaper/" << '\n'
               << BGREEN << "K" << RGREEN << " bugkiller: " << RYELLOW << "https://github.com/ctubio/Krypto-trading-bot/issues/new" << '\n'
               << RGREEN << "  downloads: " << RYELLOW << "ssh://git@github.com/ctubio/Krypto-trading-bot" << '\n'
@@ -709,6 +709,22 @@ namespace K {
       {       "latency", k.latency       }
     };
   };
+  static void from_json(const json &j, mOrder &k) {
+      k.price        = j.value("price", 0.0);
+      k.quantity     = j.value("quantity", 0.0);
+      k.side         = j.value("side", "") == "Bid"
+                         ? mSide::Bid
+                         : mSide::Ask;
+      k.type         = j.value("orderType", "") == "Limit"
+                         ? mOrderType::Limit
+                         : mOrderType::Market;
+      k.timeInForce  = j.value("timeInForce", "") == "GTC"
+                         ? mTimeInForce::GTC
+                         : (j.value("timeInForce", "") == "FOK"
+                           ? mTimeInForce::FOK
+                           : mTimeInForce::IOC);
+      k.isPong       = false;
+    };
 
   struct mTrade {
      string tradeId;
@@ -815,7 +831,10 @@ namespace K {
         return true;
       });
     };
-    void clearOne(const string &tradeId) {
+    void clearOne(const json &butterfly) {
+      if (!butterfly.is_string()) return;
+      const string &tradeId = butterfly.get<string>();
+      if (tradeId.empty()) return;
       clear_if([&](iterator it) {
         return it->tradeId == tradeId;
       }, true);
@@ -1999,11 +2018,11 @@ namespace K {
     mButtonCleanAllTrades       cleanTrades;
     mButtonCleanTrade           cleanTrade;
   };
+
   struct mBroker: public mToScreen,
                   public mJsonToClient<mBroker> {
     map<mRandId, mOrder> orders;
         mTradesCompleted tradesHistory;
-                mButtons btn;
     mOrder *const find(const mRandId &orderId) {
       return (orderId.empty()
         or orders.find(orderId) == orders.end()
@@ -2242,7 +2261,7 @@ namespace K {
       }
       return !!greenGateway;
     };
-    function<void()> toggle = [&]() {
+    void toggle() {
       *adminAgreement = (mConnectivity)!*adminAgreement;
       send_refresh();
     };

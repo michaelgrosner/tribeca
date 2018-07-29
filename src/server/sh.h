@@ -21,6 +21,7 @@ namespace K {
               + args.exchange + " argument"
           ));
         gw->monitor = &engine->monitor;
+        gw->load_internals();
         switchOn();
         if (args.inet) log("CF", "Network Interface for outgoing traffic is", args.inet);
         if (args.testChamber == 1) logWar("CF", "Test Chamber #1: send new orders before cancel old");

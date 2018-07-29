@@ -44,7 +44,7 @@ using namespace std;
 
 using namespace nlohmann;
 
-#define PERMISSIVE_ctubio_SOFTWARE_LICENSE                                 \
+#define PERMISSIVE_analpaper_SOFTWARE_LICENSE                              \
                                                                            \
        "This is free software: the UI and quoting engine are open source," \
 "\n"   "feel free to hack both as you need."                               \
