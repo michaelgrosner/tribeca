@@ -58,7 +58,7 @@ namespace K {
       virtual void timer_Xs() = 0;
       virtual void welcome(mToClient&) = 0;
       virtual void clickme(mFromClient&, function<void(const json&)> = [](const json &butterfly) {}) = 0;
-#define KISS , [&](const json &butterfly)
+#define KISS [&](const json &butterfly)
   } *client = nullptr;
 
   class GwExchangeData {
@@ -472,6 +472,41 @@ namespace K {
           gw->cancel(toCancel->orderId, toCancel->exchangeId);
       };
       virtual void timer_1s() = 0;
+#define SQLITE_BACKUP_CODE(data) sqlite->backup(&data);
+#define SQLITE_BACKUP_LIST(code)       \
+  code(qp)                             \
+  code(wallet.target)                  \
+  code(wallet.profits)                 \
+  code(levels.stats.ewma.fairValue96h) \
+  code(levels.stats.ewma)              \
+  code(levels.stats.ewma)              \
+  code(levels.stats.stdev)             \
+  code(broker.tradesHistory)
+#define CLIENT_WELCOME_CODE(data) client->welcome(data);
+#define CLIENT_WELCOME_LIST(code) \
+  code(qp)                        \
+  code(status)                    \
+  code(notepad)                   \
+  code(monitor)                   \
+  code(monitor.product)           \
+  code(semaphore)                 \
+  code(wallet.target.safety)      \
+  code(wallet.target)             \
+  code(wallet)                    \
+  code(levels.diff)               \
+  code(levels.stats.takerTrades)  \
+  code(levels.stats.fairPrice)    \
+  code(levels.stats)              \
+  code(broker.tradesHistory)      \
+  code(broker)
+#define SCREEN_PRINTME_CODE(data) screen->printme(&data);
+#define SCREEN_PRINTME_LIST(code) \
+  code(semaphore)                 \
+  code(wallet.target)             \
+  code(levels.stats.fairPrice)    \
+  code(levels.stats.ewma)         \
+  code(broker.tradesHistory)      \
+  code(broker)
   } *engine = nullptr;
 
   static string tracelog;
