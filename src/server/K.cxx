@@ -67,12 +67,7 @@ using namespace nlohmann;
 #include "ev.h"
 #include "db.h"
 #include "ui.h"
-#include "qp.h"
-#include "og.h"
-#include "mg.h"
-#include "pg.h"
 #include "qe.h"
-#include "gw.h"
 
 #ifndef NDEBUG
 #  include <test/units.h>
@@ -84,25 +79,24 @@ using namespace nlohmann;
     ;;;;K::EV ev;;;;;;;    ;;;;    ;;;;;;
     ;;;;K::DB db;;;;;;;    ;;    ;;;;;;;;
     ;;;;K::UI ui;;;;;;;        ;;;;;;;;;;
-    ;;;;K::QP qp;;;;;;;        ;;;;;;;;;;
-    ;;;;K::OG og;;;;;;;    ;;    ;;;;;;;;
-    ;;;;K::MG mg;;;;;;;    ;;;;    ;;;;;;
-;   ;;;;K::PG pg;;;;;;;    ;;;;    ;;;;;;           ;
-;;  ;;;;K::QE qe;;;;;;;;;;;;;;;    ;;;;;;          ;;
-;;;;;;;;K::GW gw;;;;;;;;;;;;;;;;;;;;;;;;;        ;;;;;;;; // youtu.be/dVlGmdl-g9Q
-;;;;;;;;sh.main(argc, argv);;;;;;;;;;;;;;;;;;;;;;;;;;
-;   ;;  ev.wait(/*     Wherever you go..        */);;;;;; // youtu.be/DKSO5YlYbOg
-    ;;  db.wait(/*     Whatever you do..        */);;
-    ;;  ui.wait(/*     I will be right here     */);;;;;; // youtu.be/FornpYhezt4
-    ;;  qp.wait(/*      waiting for coins.      */);;
-    ;;  og.wait(/*     Whatever it takes..      */);;;;;; // youtu.be/Wd2fSSt4MDg
-    ;;  mg.wait(/*     Or how my OS breaks,     */);;
-    ;;  pg.wait(/*     I will be right here     */);;;;;; // youtu.be/02OHHWG1EQY
-    ;;  qe.wait(/*      waiting for coins.      */);;
-;   ;;  gw.wait(/*     Day after day.        :wq*/);;;;;; // youtu.be/AMCeEoOgSvc
-;;  ;;;;return EXIT_FAILURE;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;};;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; ;;;;;;; // youtu.be/dp5hsDgENLk
-;;  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;  ;;
+    ;;;;K::QE qe;;;;;;;        ;;;;;;;;;;
+    ;;/*|       */;;;;;    ;;    ;;;;;;;;
+;   ;;/*   o    */;;;;;    ;;;;    ;;;;;;           ;
+;;  ;;/*       |*/;;;;;    ;;;;    ;;;;;;          ;;
+;;;;;;/*        */;;;;;;;;;;;;;    ;;;;;;    ;;;;;;;; // youtu.be/dVlGmdl-g9Q
+;;;;;;;;sh.main(argc, argv);;;;;;;;;;;;;;;;;;;;;;
+;   ;;;;ev.wait(/*  Wherever you go..     */);;;;;;;; // youtu.be/DKSO5YlYbOg
+    ;;;;db.wait(/*  Whatever you do..     */);;;;
+    ;;;;ui.wait(/*  I will be right here  */);;;;;;;; // youtu.be/FornpYhezt4
+    ;;;;qe.wait(/*   waiting for coins.   */);;;;
+;   ;;/* .-""-._    Whatever it takes..   **/;;;;;;;; // youtu.be/Wd2fSSt4MDg
+;   ;;/*(  <>  )`-. Or how my OS breaks,  **/;;;;
+;   ;;/*|`-..-'|  | I will be right here  **/;;;;;;;; // youtu.be/02OHHWG1EQY
+;   ;;/*|     :|._/  waiting for coins.   **/;;;;
+;   ;;/*`.____;'    Day after day.     :wq**/;;;;;;;; // youtu.be/AMCeEoOgSvc
+;;  ;;;;return EXIT_FAILURE;;;;;;;;;;;;;;;;;;;;;
+;;;;;;};;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; // youtu.be/dp5hsDgENLk
+;;  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;   ;;
 ;                        /*K\*/                     ;
          /*    .        kKKKKK,       .         *
                        kKKKK  KK,
@@ -113,7 +107,7 @@ using namespace nlohmann;
 *    V   l   .   KK        KKKFIRE         .
      l    \       KK,     FKK  KKKKKK,
     /            KK l    IKK    RUN `K,
-                KK  l   RKK     K K, `K,            *
+                KK  l   RKK     K K, `K,          *
       .        KK      EKK      K  K, `l
                K        KK      V  `K   \
                V        RKK     l   V

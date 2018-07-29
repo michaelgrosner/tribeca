@@ -20,6 +20,7 @@ namespace K {
             "Unable to configure a valid gateway using --exchange="
               + args.exchange + " argument"
           ));
+        gw->monitor = &engine->monitor;
         switchOn();
         if (args.inet) log("CF", "Network Interface for outgoing traffic is", args.inet);
         if (args.testChamber == 1) logWar("CF", "Test Chamber #1: send new orders before cancel old");
@@ -418,7 +419,7 @@ namespace K {
           waddch(wBorder, !engine->semaphore.greenButton ? ' ' : ':');
         }
         mvwaddch(wBorder, y-1, 0, ACS_LLCORNER);
-        mvwaddstr(wBorder, 1, 2, string("|/-\\").substr(gw->monitor.orders_60s % 4, 1).data());
+        mvwaddstr(wBorder, 1, 2, string("|/-\\").substr(engine->monitor.orders_60s % 4, 1).data());
         move(yMaxLog-1, 2);
         wrefresh(wBorder);
         wrefresh(wLog);

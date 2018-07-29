@@ -12,6 +12,13 @@ namespace K {
       unsigned int AK47inc = 0;
     protected:
       void load() {
+        sqlite->backup(&qp);
+        sqlite->backup(&wallet.target);
+        sqlite->backup(&wallet.profits);
+        sqlite->backup(&levels.stats.ewma.fairValue96h);
+        sqlite->backup(&levels.stats.ewma);
+        sqlite->backup(&levels.stats.stdev);
+        sqlite->backup(&broker.tradesHistory);
         quotingMode[mQuotingMode::Top]         = &calcTopOfMarket;
         quotingMode[mQuotingMode::Mid]         = &calcMidOfMarket;
         quotingMode[mQuotingMode::Join]        = &calcJoinMarket;
@@ -21,8 +28,98 @@ namespace K {
         quotingMode[mQuotingMode::Depth]       = &calcDepthOfMarket;
         findMode("loaded");
       };
+      void waitData() {
+        gw->RAWDATA_ENTRY_POINT(mConnectivity, {
+          if (!semaphore.online(rawdata))
+            levels.clear();
+        });
+        gw->RAWDATA_ENTRY_POINT(mWallets, {                         PRETTY_DEBUG
+          wallet.reset(rawdata, levels);
+        });
+        gw->RAWDATA_ENTRY_POINT(mLevels, {                          PRETTY_DEBUG
+          levels.send_reset_filter(rawdata, gw->minTick);
+          wallet.send_ratelimit(levels);
+          calcQuote();
+        });
+        gw->RAWDATA_ENTRY_POINT(mOrder, {                           PRETTY_DEBUG
+          broker.upsert(rawdata, &wallet, levels, &gw->askForFees);
+        });
+        gw->RAWDATA_ENTRY_POINT(mTrade, {                           PRETTY_DEBUG
+          levels.stats.takerTrades.send_push_back(rawdata);
+        });
+      };
       void waitWebAdmin() {
+        client->welcome(qp);
+        client->clickme(qp KISS {
+          calcQuoteAfterSavedParams();
+        });
         client->welcome(status);
+        client->welcome(notepad);
+        client->clickme(notepad);
+        client->welcome(monitor);
+        client->welcome(monitor.product);
+        client->welcome(semaphore);
+        client->clickme(semaphore);
+        client->welcome(wallet.target.safety);
+        client->welcome(wallet.target);
+        client->welcome(wallet);
+        client->welcome(levels.diff);
+        client->welcome(levels.stats.takerTrades);
+        client->welcome(levels.stats.fairPrice);
+        client->welcome(levels.stats);
+        client->welcome(engine->broker.tradesHistory);
+        client->welcome(engine->broker);
+        client->clickme(engine->broker.btn.cleanTradesClosed KISS {
+          engine->broker.tradesHistory.clearClosed();
+        });
+        client->clickme(engine->broker.btn.cleanTrades KISS {
+          engine->broker.tradesHistory.clearAll();
+        });
+        client->clickme(engine->broker.btn.cleanTrade KISS {
+          if (!butterfly.is_string()) return;
+          engine->broker.tradesHistory.clearOne(butterfly.get<string>());
+        });
+        client->clickme(engine->broker.btn.cancelAll KISS {
+          for (mOrder *const it : engine->broker.working())
+            engine->cancelOrder(it);
+        });
+        client->clickme(engine->broker.btn.cancel KISS {
+          if (!butterfly.is_string()) return;
+          engine->cancelOrder(engine->broker.find(butterfly.get<mRandId>()));
+        });
+        client->clickme(engine->broker.btn.submit KISS {
+          if (!butterfly.is_object()) return;
+          engine->placeOrder(
+            butterfly.value("side", "") == "Bid" ? mSide::Bid : mSide::Ask,
+            butterfly.value("price", 0.0),
+            butterfly.value("quantity", 0.0),
+            butterfly.value("orderType", "") == "Limit"
+              ? mOrderType::Limit
+              : mOrderType::Market,
+            butterfly.value("timeInForce", "") == "GTC"
+              ? mTimeInForce::GTC
+              : (butterfly.value("timeInForce", "") == "FOK"
+                ? mTimeInForce::FOK
+                : mTimeInForce::IOC
+              ),
+            false,
+            false
+          );
+        });
+      };
+      void waitSysAdmin() {
+        screen->printme(&semaphore);
+        screen->pressme(mHotkey::ESC, semaphore.toggle);
+        screen->printme(&wallet.target);
+        screen->printme(&levels.stats.fairPrice);
+        screen->printme(&levels.stats.ewma);
+        screen->printme(&broker.tradesHistory);
+        screen->printme(&broker);
+      };
+      void run() {                                                  PRETTY_DEBUG
+        const string msg = gw->load_externals();
+        if (!msg.empty())
+          EXIT(screen->error("GW", msg));
       };
     public:
       void timer_1s() {                                             PRETTY_DEBUG
@@ -493,7 +590,7 @@ namespace K {
           toCancel.erase(side == mSide::Bid ? toCancel.end()-1 : toCancel.begin());
         }
         sendQuotes(toCancel, toReplace, quote, side, isPong);
-        gw->monitor.tick_orders();
+        monitor.tick_orders();
       };
       void sendQuotes(const vector<mOrder*> &toCancel, mOrder *const toReplace, const mLevel &quote, const mSide &side, const bool &isPong) {
         for (mOrder *const it : toCancel)

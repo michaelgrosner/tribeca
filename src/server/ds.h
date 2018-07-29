@@ -83,7 +83,8 @@ namespace K {
             username      = "NULL", passphrase  = "NULL",
             http          = "NULL", wss         = "NULL",
             database      = "",     diskdata    = "",
-            whitelist     = "";
+            whitelist     = "",
+            base          = "",     quote       = "";
     const char *inet = nullptr;
     const string main(int argc, char** argv) {
       static const struct option opts[] = {
@@ -252,16 +253,12 @@ namespace K {
       tidy();
       return "";
     };
-    const string base() const {
-      return currency.substr(0, currency.find("/"));
-    };
-    const string quote() const {
-      return currency.substr(1 + currency.find("/"));
-    };
     private:
       void tidy() {
         exchange = strU(exchange);
         currency = strU(currency);
+        base  = currency.substr(0, currency.find("/"));
+        quote = currency.substr(1+ currency.find("/"));
         if (debug)
           debugSecret =
           debugEvents =
@@ -851,9 +848,9 @@ namespace K {
       );
       print("GW " + args.exchange, string(trade.isPong?"PONG":"PING") + " TRADE "
         + (trade.side == mSide::Bid ? "BUY  " : "SELL ")
-        + str8(trade.quantity) + ' ' + args.base() + " at price "
-        + str8(trade.price) + ' ' + args.quote() + " (value "
-        + str8(trade.value) + ' ' + args.quote() + ")"
+        + str8(trade.quantity) + ' ' + args.base + " at price "
+        + str8(trade.price) + ' ' + args.quote + " (value "
+        + str8(trade.value) + ' ' + args.quote + ")"
       );
       if (qp.safety == mQuotingSafety::Off or qp.safety == mQuotingSafety::PingPong)
         send_push_back(trade);
@@ -1784,9 +1781,9 @@ namespace K {
       if (args.debugWallet)
         print("PG", "TBP: "
           + to_string((int)(targetBasePosition / *baseValue * 1e+2)) + "% = " + str8(targetBasePosition)
-          + " " + args.base() + ", pDiv: "
+          + " " + args.base + ", pDiv: "
           + to_string((int)(positionDivergence / *baseValue * 1e+2)) + "% = " + str8(positionDivergence)
-          + " " + args.base());
+          + " " + args.base);
     };
     const bool ratelimit(const mAmount &next) const {
       return (targetBasePosition and abs(targetBasePosition - next) < 1e-4 and sideAPR == sideAPRDiff);
@@ -1809,7 +1806,7 @@ namespace K {
       return to_string(targetBasePosition);
     };
     string explainOK() const {
-      return "loaded TBP = % " + args.base();
+      return "loaded TBP = % " + args.base;
     };
   };
   static void to_json(json &j, const mTarget &k) {
@@ -2137,7 +2134,7 @@ namespace K {
         print("DEBUG OG", "update "
           + ((order->side == mSide::Bid ? "BID" : "ASK")
           + (" id " + order->orderId)) + ":  at price "
-          + str8(order->price) + " " + args.quote());
+          + str8(order->price) + " " + args.quote);
       };
       void report_cancel(mOrder *const order) const {
         print("DEBUG OG", "cancel " + (
@@ -2150,15 +2147,15 @@ namespace K {
       void report_place(mOrder *const order) const {
         print("DEBUG OG", " place "
           + ((order->side == mSide::Bid ? "BID id " : "ASK id ") + order->orderId) + ": "
-          + str8(order->quantity) + " " + args.base() + " at price "
-          + str8(order->price) + " " + args.quote());
+          + str8(order->quantity) + " " + args.base + " at price "
+          + str8(order->price) + " " + args.quote);
       };
       void report(mOrder *const order) const {
         print("DEBUG OG", " saved "
           + ((order->side == mSide::Bid ? "BID id " : "ASK id ") + order->orderId)
           + "::" + order->exchangeId + " [" + to_string((int)order->orderStatus) + "]: "
-          + str8(order->quantity) + " " + args.base() + " at price "
-          + str8(order->price) + " " + args.quote());
+          + str8(order->quantity) + " " + args.base + " at price "
+          + str8(order->price) + " " + args.quote);
       };
       void report(const mOrder &raw) const {
         print("DEBUG OG", "reply  " + raw.orderId + "::" + raw.exchangeId
@@ -2230,9 +2227,9 @@ namespace K {
 
   struct mSemaphore: public mToScreen,
                      public mJsonToClient<mSemaphore> {
-    mConnectivity adminAgreement = (mConnectivity)args.autobot,
-                  greenButton    = mConnectivity::Disconnected,
-                  greenGateway   = mConnectivity::Disconnected;
+    mConnectivity *const adminAgreement = (mConnectivity*)&args.autobot;
+    mConnectivity greenButton           = mConnectivity::Disconnected,
+                  greenGateway          = mConnectivity::Disconnected;
     const json kiss(const json &j) {
       if (j.is_object() and j.at("state").is_number())
         agree(j.at("state").get<mConnectivity>());
@@ -2245,8 +2242,8 @@ namespace K {
       }
       return !!greenGateway;
     };
-    void toggle() {
-      adminAgreement = (mConnectivity)!adminAgreement;
+    function<void()> toggle = [&]() {
+      *adminAgreement = (mConnectivity)!*adminAgreement;
       send_refresh();
     };
     const mMatter about() const {
@@ -2254,13 +2251,13 @@ namespace K {
     };
     private:
       void agree(const mConnectivity &raw) {
-        if (adminAgreement != raw) {
-          adminAgreement = raw;
+        if (*adminAgreement != raw) {
+          *adminAgreement = raw;
           send_refresh();
         }
       };
       void send_refresh() {
-        const mConnectivity k = adminAgreement * greenGateway;
+        const mConnectivity k = *adminAgreement * greenGateway;
         if (greenButton != k) {
           greenButton = k;
           focus("GW " + args.exchange, "Quoting state changed to",
@@ -2513,19 +2510,8 @@ namespace K {
   };
 
   struct mProduct: public mJsonToClient<mProduct> {
-    const mCoinId *const base     = nullptr,
-                  *const quote    = nullptr;
-    const string  *const exchange = nullptr;
-    const mPrice  *const minTick  = nullptr;
-    mProduct(
-      const mCoinId *const b,
-      const mCoinId *const q,
-      const string  *const e,
-      const mPrice  *const m):
-            base(b),
-           quote(q),
-        exchange(e),
-         minTick(m)
+    const mPrice *minTick = nullptr;
+    mProduct()
     {};
     const mMatter about() const {
       return mMatter::ProductAdvertisement;
@@ -2533,10 +2519,10 @@ namespace K {
   };
   static void to_json(json &j, const mProduct &k) {
     j = {
-      {   "exchange", *k.exchange                                   },
+      {   "exchange", args.exchange                                 },
       {       "pair", {
-                        { "base", *k.base },
-                        {"quote", *k.quote}
+                        { "base", args.base },
+                        {"quote", args.quote}
                       }                                             },
       {    "minTick", *k.minTick                                    },
       {"environment", args.title                                    },
@@ -2550,8 +2536,8 @@ namespace K {
           string /*  )| O |(  */    unlock;
         mProduct /* ( | C | ) */ /* this */ product;
                  /*  )| K |(  */ /* thanks! <3 */
-    mMonitor(const mProduct &p):
-      orders_60s(0), product(p)
+    mMonitor():
+      orders_60s(0)
     {};
     function<const unsigned int()> dbSize = []() {
       return 0;

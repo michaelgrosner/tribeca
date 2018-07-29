@@ -88,7 +88,7 @@ namespace K  {
           if (!(tick % 3))                    async(gw->askForLevels);
           if (!(tick % 60))                   async(gw->askForTrades);
         }
-        if (!(tick % 60))                     gw->monitor.timer_60s();
+        if (!(tick % 60))                     engine->monitor.timer_60s();
         if (client->socket and qp.delayUI
           and !(tick % qp.delayUI))           client->timer_Xs();
         if (!(++tick % 300)) {

@@ -131,12 +131,8 @@ namespace K {
   class GwExchange: public GwExchangeData,
                     public mToScreen {
     public:
-      mMonitor monitor;
-      GwExchange():
-        monitor(mProduct(&base, &quote, &exchange, &minTick))
-      {};
-      uWS::Hub *socket = nullptr;
-      mRandId (*randId)() = nullptr;
+      uWS::Hub *socket  = nullptr;
+      mMonitor *monitor = nullptr;
       unsigned int countdown = 0;
          string exchange = "", symbol  = "",
                 apikey   = "", secret  = "",
@@ -148,10 +144,11 @@ namespace K {
                 minSize  = 0;
             int version  = 0, maxLevel = 0,
                 debug    = 0;
+      mRandId (*randId)() = nullptr;
       void load_internals() {
         exchange = args.exchange;
-        base     = args.base();
-        quote    = args.quote();
+        base     = args.base;
+        quote    = args.quote;
         version  = args.free;
         apikey   = args.apikey;
         secret   = args.secret;
@@ -452,6 +449,7 @@ namespace K {
         mMarketLevels levels;
               mBroker broker;
              mNotepad notepad;
+             mMonitor monitor;
            mSemaphore semaphore;
       void placeOrder(
         const mSide        &side    ,
@@ -474,8 +472,6 @@ namespace K {
           gw->cancel(toCancel->orderId, toCancel->exchangeId);
       };
       virtual void timer_1s() = 0;
-      virtual void calcQuote() = 0;
-      virtual void calcQuoteAfterSavedParams() = 0;
   } *engine = nullptr;
 
   static string tracelog;
