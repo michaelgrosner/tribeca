@@ -109,7 +109,6 @@ namespace K {
     GIVEN("mMarketLevels") {
       mMarketLevels levels;
       WHEN("defaults") {
-        REQUIRE_NOTHROW(levels = mMarketLevels());
         THEN("fair value") {
           REQUIRE_FALSE(levels.fairValue);
           REQUIRE(levels.stats.fairPrice.ratelimit(levels.fairValue));
