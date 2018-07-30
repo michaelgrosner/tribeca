@@ -46,7 +46,17 @@ namespace K {
         gw->load_externals();
       };
     public:
-      void timer_1s() {                                             PRETTY_DEBUG
+      void timer_1s(const unsigned int &tick) {                     PRETTY_DEBUG
+        if (levels.warn_empty()) return;
+        levels.timer_1s();
+        if (!(tick % 60)) {
+          levels.timer_60s();
+          monitor.timer_60s();
+        }
+        wallet.target.safety.timer_1s(
+          levels,
+          broker.tradesHistory
+        );
         calcQuote();
       };
       void calcQuote() {                                            PRETTY_DEBUG

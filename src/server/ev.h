@@ -61,17 +61,8 @@ namespace K  {
         screen->waitForUser();
       };
       void timer_1s() {
-        if (!gw->countdown) {
-          if (!engine->levels.warn_empty()) {
-                                              engine->levels.timer_1s();
-            if (!(tick % 60))                 engine->levels.timer_60s();
-                                              engine->wallet.target.safety.timer_1s(
-                                                engine->levels,
-                                                engine->broker.tradesHistory
-                                              );
-                                              engine->timer_1s();
-          }
-        } else if (gw->countdown-- == 1) {    gw->connect();
+        if (!gw->countdown)                   engine->timer_1s(tick);
+        else if (gw->countdown-- == 1) {      gw->connect();
           tick = 0;
           return;
         }
@@ -82,7 +73,6 @@ namespace K  {
           if (!(tick % 3))                    async(gw->askForLevels);
           if (!(tick % 60))                   async(gw->askForTrades);
         }
-        if (!(tick % 60))                     engine->monitor.timer_60s();
         if (client->socket and qp.delayUI
           and !(tick % qp.delayUI))           client->timer_Xs();
         if (!(++tick % 300)) {

@@ -562,7 +562,7 @@ namespace K {
         mOrder order(gw->randId(), side, qty, type, isPong, price, tif, mStatus::New, postOnly);
         placeOrder(broker.upsert(order, true));
       };
-      virtual void timer_1s() = 0;
+      virtual void timer_1s(const unsigned int&) = 0;
     private:
       void placeOrder(mOrder *const order) {
         gw->place(
