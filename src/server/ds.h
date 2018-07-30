@@ -682,8 +682,8 @@ namespace K {
     mOrder(mRandId o, mRandId e, mStatus s, mPrice p, mAmount q, mAmount Q):
       orderId(o), exchangeId(e), quantity(q), price(p), orderStatus(s), tradeQuantity(Q)
     {};
-    mOrder(mRandId o, mSide S, mAmount q, mOrderType t, bool i, mPrice p, mTimeInForce F, mStatus s, bool O):
-      orderId(o), side(S), quantity(q), type(t), isPong(i), price(p), timeInForce(F), orderStatus(s), preferPostOnly(O)
+    mOrder(mRandId o, mSide S, mPrice p, mAmount q, mOrderType t, bool i, mTimeInForce F):
+      orderId(o), side(S), price(p), quantity(q), type(t), isPong(i), timeInForce(F), orderStatus(mStatus::New), preferPostOnly(true)
     {};
     void update(const mOrder &raw) {
       orderStatus = raw.orderStatus;
@@ -715,20 +715,21 @@ namespace K {
     };
   };
   static void from_json(const json &j, mOrder &k) {
-    k.price       = j.value("price", 0.0);
-    k.quantity    = j.value("quantity", 0.0);
-    k.side        = j.value("side", "") == "Bid"
+    k.price          = j.value("price", 0.0);
+    k.quantity       = j.value("quantity", 0.0);
+    k.side           = j.value("side", "") == "Bid"
                        ? mSide::Bid
                        : mSide::Ask;
-    k.type        = j.value("orderType", "") == "Limit"
+    k.type           = j.value("orderType", "") == "Limit"
                        ? mOrderType::Limit
                        : mOrderType::Market;
-    k.timeInForce = j.value("timeInForce", "") == "GTC"
+    k.timeInForce    = j.value("timeInForce", "") == "GTC"
                        ? mTimeInForce::GTC
                        : (j.value("timeInForce", "") == "FOK"
                          ? mTimeInForce::FOK
                          : mTimeInForce::IOC);
-    k.isPong      = false;
+    k.isPong         = false;
+    k.preferPostOnly = false;
   };
 
   struct mTrade {
@@ -1435,6 +1436,7 @@ namespace K {
   };
   struct mDummyMarketMaker: public mToScreen {
     private:
+      mDummyMarketLevels levels;
       mQuote (*calcRawQuoteFromMarket)(
         const mDummyMarketLevels&,
         const mPrice&,
@@ -1442,7 +1444,6 @@ namespace K {
         const mAmount&,
         const mAmount&
       ) = nullptr;
-      mDummyMarketLevels levels;
     public:
       mDummyMarketMaker(const vector<mLevel> *const b, const vector<mLevel> *const a, const mPrice *const f):
         levels(b, a, f)
@@ -2211,7 +2212,7 @@ namespace K {
       }
       return find(raw.orderId);
     };
-    mOrder *const upsert(const mOrder &raw, const bool &place = false) {
+    mOrder *const upsert(const mOrder &raw, const bool &place = true) {
       mOrder *const order = findsert(raw);
       if (!order) return nullptr;
       order->update(raw);
@@ -2224,7 +2225,7 @@ namespace K {
     };
     void upsert(const mOrder &raw, mWalletPosition *const wallet, const mMarketLevels &levels, bool *const askForFees) {
       if (debug()) report(raw);
-      mOrder *const order = upsert(raw);
+      mOrder *const order = upsert(raw, false);
       if (!order) return;
       if (raw.tradeQuantity)
         tradesHistory.insert(order, raw.tradeQuantity);

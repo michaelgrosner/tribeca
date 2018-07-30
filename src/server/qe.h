@@ -69,7 +69,7 @@ namespace K {
           if (!semaphore.greenButton) {
             bidStatus = mQuoteState::DisabledQuotes;
             askStatus = mQuoteState::DisabledQuotes;
-            stopQuotes(mSide::Both);
+            cancelOrders(mSide::Both);
           } else {
             bidStatus = mQuoteState::UnknownHeld;
             askStatus = mQuoteState::UnknownHeld;
@@ -108,9 +108,9 @@ namespace K {
         bidStatus = checkCrossedQuotes(mSide::Bid, &quote);
         askStatus = checkCrossedQuotes(mSide::Ask, &quote);
         if (askStatus == mQuoteState::Live) updateQuote(quote.ask, mSide::Ask, quote.isAskPong);
-        else stopQuotes(mSide::Ask);
+        else cancelOrders(mSide::Ask);
         if (bidStatus == mQuoteState::Live) updateQuote(quote.bid, mSide::Bid, quote.isBidPong);
-        else stopQuotes(mSide::Bid);
+        else cancelOrders(mSide::Bid);
       };
       void sendStatusToUI() {
         unsigned int quotesInMemoryNew = 0;
@@ -414,25 +414,7 @@ namespace K {
           toReplace = side == mSide::Bid ? toCancel.back() : toCancel.front();
           toCancel.erase(side == mSide::Bid ? toCancel.end()-1 : toCancel.begin());
         }
-        sendQuotes(toCancel, toReplace, quote, side, isPong);
-        monitor.tick_orders();
-      };
-      void sendQuotes(const vector<mOrder*> &toCancel, mOrder *const toReplace, const mLevel &quote, const mSide &side, const bool &isPong) {
-        for (mOrder *const it : toCancel)
-          cancelOrder(it);
-        if (toReplace) {
-          if (gw->replace)
-            return replaceOrder(toReplace, quote.price, isPong);
-          if (args.testChamber != 1)
-            cancelOrder(toReplace);
-        }
-        placeOrder(side, quote.price, quote.size, mOrderType::Limit, mTimeInForce::GTC, isPong, true);
-        if (args.testChamber == 1 and toReplace)
-          cancelOrder(toReplace);
-      };
-      void stopQuotes(const mSide &side) {
-        for (mOrder *const it : broker.working(side))
-          cancelOrder(it);
+        sendOrders(toCancel, toReplace, quote, side, isPong);
       };
   };
 }

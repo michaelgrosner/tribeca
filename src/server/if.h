@@ -84,6 +84,17 @@ namespace K {
       function<bool()> askForTrades = [&]() { return askFor(replyTrades, [&]() { return sync_trades(); }); };
       function<bool()> askForOrders = [&]() { return askFor(replyOrders, [&]() { return sync_orders(); }); };
       function<bool()> askForCancelAll = [&]() { return askFor(replyCancelAll, [&]() { return sync_cancelAll(); }); };
+      void place(mOrder *const order) {
+        place(
+          order->orderId,
+          order->side,
+          str8(order->price),
+          str8(order->quantity),
+          order->type,
+          order->timeInForce,
+          order->preferPostOnly
+        );
+      };
 //BO non-free gw library functions from build-*/local/lib/K-*.a (it just redefines all virtual gateway class members below).
 /**/  virtual bool ready() = 0;                                              // wait for exchange and maybe set async = true
 /**/  function<void(mRandId, string)> replace;                               // call         async orders data from exchange
@@ -460,7 +471,6 @@ namespace K {
   code(wallet.profits)                 \
   code(levels.stats.ewma.fairValue96h) \
   code(levels.stats.ewma)              \
-  code(levels.stats.ewma)              \
   code(levels.stats.stdev)             \
   code(broker.tradesHistory)
 
@@ -530,50 +540,45 @@ namespace K {
              mNotepad notepad;
              mMonitor monitor;
            mSemaphore semaphore;
-      void replaceOrder(mOrder *const toReplace, const mPrice &price, const bool &isPong) {
-        if (broker.replace(toReplace, price, isPong))
-          gw->replace(toReplace->exchangeId, str8(toReplace->price));
+    public:
+      virtual void timer_1s(const unsigned int&) = 0;
+      void placeOrder(const json &butterfly) {
+        if (!butterfly.is_object()) return;
+        placeOrder((mOrder)butterfly);
       };
-      void cancelOrder(mOrder *const toCancel) {
-        if (broker.cancel(toCancel))
-          gw->cancel(toCancel->orderId, toCancel->exchangeId);
-      };
-      void cancelOrders() {
-        for (mOrder *const it : broker.working())
+      void sendOrders(const vector<mOrder*> &toCancel, mOrder *const toReplace, const mLevel &quote, const mSide &side, const bool &isPong) {
+        for (mOrder *const it : toCancel)
           cancelOrder(it);
+        if (toReplace and gw->replace) {
+          replaceOrder(toReplace, quote.price, isPong);
+        } else {
+          if (toReplace and args.testChamber != 1) cancelOrder(toReplace);
+          placeOrder(mOrder(
+            gw->randId(), side, quote.price, quote.size, mOrderType::Limit, isPong, mTimeInForce::GTC
+          ));
+          if (toReplace and args.testChamber == 1) cancelOrder(toReplace);
+        }
+        monitor.tick_orders();
       };
       void cancelOrder(const json &butterfly) {
         if (!butterfly.is_string()) return;
         cancelOrder(broker.find(butterfly.get<mRandId>()));
       };
-      void placeOrder(const json &butterfly) {
-        if (!butterfly.is_object()) return;
-        placeOrder(broker.upsert(butterfly, false));
+      void cancelOrders(const mSide &side = mSide::Both) {
+        for (mOrder *const it : broker.working(side))
+          cancelOrder(it);
       };
-      void placeOrder(
-        const mSide        &side    ,
-        const mPrice       &price   ,
-        const mAmount      &qty     ,
-        const mOrderType   &type    ,
-        const mTimeInForce &tif     ,
-        const bool         &isPong  ,
-        const bool         &postOnly
-      ) {
-        mOrder order(gw->randId(), side, qty, type, isPong, price, tif, mStatus::New, postOnly);
-        placeOrder(broker.upsert(order, true));
-      };
-      virtual void timer_1s(const unsigned int&) = 0;
     private:
-      void placeOrder(mOrder *const order) {
-        gw->place(
-          order->orderId,
-          order->side,
-          str8(order->price),
-          str8(order->quantity),
-          order->type,
-          order->timeInForce,
-          order->preferPostOnly
-        );
+      void placeOrder(const mOrder &order) {
+        gw->place(broker.upsert(order));
+      };
+      void replaceOrder(mOrder *const order, const mPrice &price, const bool &isPong) {
+        if (broker.replace(order, price, isPong))
+          gw->replace(order->exchangeId, str8(order->price));
+      };
+      void cancelOrder(mOrder *const order) {
+        if (broker.cancel(order))
+          gw->cancel(order->orderId, order->exchangeId);
       };
   } *engine = nullptr;
 
