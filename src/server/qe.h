@@ -5,7 +5,6 @@ namespace K {
   class QE: public Klass,
             public Engine { public: QE() { engine = this; };
     private:
-      map<mQuotingMode, function<mQuote(const mPrice&, const mAmount&, const mAmount&)>*> quotingMode;
       mQuoteState bidStatus = mQuoteState::MissingData,
                   askStatus = mQuoteState::MissingData;
       mQuoteStatus status;
@@ -13,14 +12,7 @@ namespace K {
     protected:
       void load() {
         SQLITE_BACKUP
-        quotingMode[mQuotingMode::Top]         = &calcTopOfMarket;
-        quotingMode[mQuotingMode::Mid]         = &calcMidOfMarket;
-        quotingMode[mQuotingMode::Join]        = &calcJoinMarket;
-        quotingMode[mQuotingMode::InverseJoin] = &calcInverseJoinMarket;
-        quotingMode[mQuotingMode::InverseTop]  = &calcInverseTopOfMarket;
-        quotingMode[mQuotingMode::HamelinRat]  = &calcColossusOfMarket;
-        quotingMode[mQuotingMode::Depth]       = &calcDepthOfMarket;
-        findMode("loaded");
+        levels.dummyMM.reset("loaded");
       };
       void waitData() {
         gw->RAWDATA_ENTRY_POINT(mConnectivity, {
@@ -51,9 +43,7 @@ namespace K {
         SCREEN_PRESSME
       };
       void run() {                                                  PRETTY_DEBUG
-        const string msg = gw->load_externals();
-        if (!msg.empty())
-          EXIT(screen->error("GW", msg));
+        gw->load_externals();
       };
     public:
       void timer_1s() {                                             PRETTY_DEBUG
@@ -79,7 +69,7 @@ namespace K {
         sendStatusToUI();
       };
       void calcQuoteAfterSavedParams() {
-        findMode("saved");
+        levels.dummyMM.reset("saved");
         levels.calcFairValue(gw->minTick);
         levels.stats.ewma.calcFromHistory();
         wallet.send_ratelimit(levels);
@@ -87,19 +77,14 @@ namespace K {
         calcQuote();
       };
     private:
-      void findMode(const string &reason) {
-        if (quotingMode.find(qp.mode) == quotingMode.end())
-          EXIT(screen->error("QE", "Invalid quoting mode "
-            + reason + ", consider to remove the database file"));
-        calcRawQuoteFromMarket = *quotingMode.at(qp.mode);
-      };
       void sendQuoteToAPI() {
         mPrice widthPing = qp.widthPercentage
           ? qp.widthPingPercentage * levels.fairValue / 100
           : qp.widthPing;
         if(qp.protectionEwmaWidthPing and levels.stats.ewma.mgEwmaW)
           widthPing = fmax(widthPing, levels.stats.ewma.mgEwmaW);
-         mQuote quote = calcRawQuoteFromMarket(
+         mQuote quote = levels.dummyMM.calcRawQuote(
+          gw->minTick,
           widthPing,
           wallet.target.safety.buySize,
           wallet.target.safety.sellSize
@@ -375,110 +360,6 @@ namespace K {
           bidStatus = mQuoteState::DownTrendHeld;
           rawQuote->bid.clear();
         }
-      };
-      mQuote quoteAtTopOfMarket() {
-        mLevel topBid = levels.bids.begin()->size > gw->minTick
-          ? levels.bids.at(0) : levels.bids.at(levels.bids.size()>1?1:0);
-        mLevel topAsk = levels.asks.begin()->size > gw->minTick
-          ? levels.asks.at(0) : levels.asks.at(levels.asks.size()>1?1:0);
-        return mQuote(topBid, topAsk);
-      };
-      function<mQuote(const mPrice&, const mAmount&, const mAmount&)> calcRawQuoteFromMarket;
-      function<mQuote(const mPrice&, const mAmount&, const mAmount&)> calcJoinMarket = [&](const mPrice &widthPing, const mAmount &bidSize, const mAmount &askSize) {
-        mQuote k = quoteAtTopOfMarket();
-        k.bid.price = fmin(levels.fairValue - widthPing / 2.0, k.bid.price);
-        k.ask.price = fmax(levels.fairValue + widthPing / 2.0, k.ask.price);
-        k.bid.size = bidSize;
-        k.ask.size = askSize;
-        return k;
-      };
-      function<mQuote(const mPrice&, const mAmount&, const mAmount&)> calcTopOfMarket = [&](const mPrice &widthPing, const mAmount &bidSize, const mAmount &askSize) {
-        mQuote k = quoteAtTopOfMarket();
-        k.bid.price = k.bid.price + gw->minTick;
-        k.ask.price = k.ask.price - gw->minTick;
-        k.bid.price = fmin(levels.fairValue - widthPing / 2.0, k.bid.price);
-        k.ask.price = fmax(levels.fairValue + widthPing / 2.0, k.ask.price);
-        k.bid.size = bidSize;
-        k.ask.size = askSize;
-        return k;
-      };
-      function<mQuote(const mPrice&, const mAmount&, const mAmount&)> calcInverseJoinMarket = [&](const mPrice &widthPing, const mAmount &bidSize, const mAmount &askSize) {
-        mQuote k = quoteAtTopOfMarket();
-        mPrice mktWidth = abs(k.ask.price - k.bid.price);
-        if (mktWidth > widthPing) {
-          k.ask.price = k.ask.price + widthPing;
-          k.bid.price = k.bid.price - widthPing;
-        }
-        if (mktWidth < (2.0 * widthPing / 3.0)) {
-          k.ask.price = k.ask.price + widthPing / 4.0;
-          k.bid.price = k.bid.price - widthPing / 4.0;
-        }
-        k.bid.size = bidSize;
-        k.ask.size = askSize;
-        return k;
-      };
-      function<mQuote(const mPrice&, const mAmount&, const mAmount&)> calcInverseTopOfMarket = [&](const mPrice &widthPing, const mAmount &bidSize, const mAmount &askSize) {
-        mQuote k = quoteAtTopOfMarket();
-        mPrice mktWidth = abs(k.ask.price - k.bid.price);
-        if (mktWidth > widthPing) {
-          k.ask.price = k.ask.price + widthPing;
-          k.bid.price = k.bid.price - widthPing;
-        }
-        k.bid.price = k.bid.price + gw->minTick;
-        k.ask.price = k.ask.price - gw->minTick;
-        if (mktWidth < (2.0 * widthPing / 3.0)) {
-          k.ask.price = k.ask.price + widthPing / 4.0;
-          k.bid.price = k.bid.price - widthPing / 4.0;
-        }
-        k.bid.size = bidSize;
-        k.ask.size = askSize;
-        return k;
-      };
-      function<mQuote(const mPrice&, const mAmount&, const mAmount&)> calcMidOfMarket = [&](const mPrice &widthPing, const mAmount &bidSize, const mAmount &askSize) {
-        return mQuote(
-          mLevel(fmax(levels.fairValue - widthPing, 0), bidSize),
-          mLevel(levels.fairValue + widthPing, askSize)
-        );
-      };
-      function<mQuote(const mPrice&, const mAmount&, const mAmount&)> calcColossusOfMarket = [&](const mPrice &widthPing, const mAmount &bidSize, const mAmount &askSize) {
-        mQuote k = quoteAtTopOfMarket();
-        k.bid.size = 0;
-        k.ask.size = 0;
-        for (const mLevel &it : levels.bids)
-          if (k.bid.size < it.size and it.price <= k.bid.price) {
-            k.bid.size = it.size;
-            k.bid.price = it.price;
-          }
-        for (const mLevel &it : levels.asks)
-          if (k.ask.size < it.size and it.price >= k.ask.price) {
-            k.ask.size = it.size;
-            k.ask.price = it.price;
-          }
-        if (k.bid.size) k.bid.price += gw->minTick;
-        if (k.ask.size) k.ask.price -= gw->minTick;
-        k.bid.size = bidSize;
-        k.ask.size = askSize;
-        return k;
-      };
-      function<mQuote(const mAmount&, const mAmount&, const mAmount&)> calcDepthOfMarket = [&](const mAmount &depth, const mAmount &bidSize, const mAmount &askSize) {
-        mPrice bidPx = levels.bids.begin()->price;
-        mAmount bidDepth = 0;
-        for (const mLevel &it : levels.bids) {
-          bidDepth += it.size;
-          if (bidDepth >= depth) break;
-          else bidPx = it.price;
-        }
-        mPrice askPx = levels.asks.begin()->price;
-        mAmount askDepth = 0;
-        for (const mLevel &it : levels.asks) {
-          askDepth += it.size;
-          if (askDepth >= depth) break;
-          else askPx = it.price;
-        }
-        return mQuote(
-          mLevel(bidPx, bidSize),
-          mLevel(askPx, askSize)
-        );
       };
       mQuoteState checkCrossedQuotes(const mSide &side, mQuote *const quote) {
         bool cross = false;

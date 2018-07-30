@@ -305,11 +305,6 @@ namespace K {
   };
 
   struct mToScreen {
-    function<void()> refresh
-#ifndef NDEBUG
-    = []() { WARN("Y U NO catch screen refresh?"); }
-#endif
-    ;
     function<void(const string&, const string&)> print
 #ifndef NDEBUG
     = [](const string &prefix, const string &reason) { WARN("Y U NO catch screen print?"); }
@@ -323,6 +318,16 @@ namespace K {
     function<void(const string&, const string&)> warn
 #ifndef NDEBUG
     = [](const string &prefix, const string &reason) { WARN("Y U NO catch screen warn?"); }
+#endif
+    ;
+    function<const int(const string&, const string&)> error
+#ifndef NDEBUG
+    = [](const string &prefix, const string &reason) { WARN("Y U NO catch screen error?"); return 0; }
+#endif
+    ;
+    function<void()> refresh
+#ifndef NDEBUG
+    = []() { WARN("Y U NO catch screen refresh?"); }
 #endif
     ;
   };
@@ -710,21 +715,21 @@ namespace K {
     };
   };
   static void from_json(const json &j, mOrder &k) {
-      k.price        = j.value("price", 0.0);
-      k.quantity     = j.value("quantity", 0.0);
-      k.side         = j.value("side", "") == "Bid"
-                         ? mSide::Bid
-                         : mSide::Ask;
-      k.type         = j.value("orderType", "") == "Limit"
-                         ? mOrderType::Limit
-                         : mOrderType::Market;
-      k.timeInForce  = j.value("timeInForce", "") == "GTC"
-                         ? mTimeInForce::GTC
-                         : (j.value("timeInForce", "") == "FOK"
-                           ? mTimeInForce::FOK
-                           : mTimeInForce::IOC);
-      k.isPong       = false;
-    };
+    k.price       = j.value("price", 0.0);
+    k.quantity    = j.value("quantity", 0.0);
+    k.side        = j.value("side", "") == "Bid"
+                       ? mSide::Bid
+                       : mSide::Ask;
+    k.type        = j.value("orderType", "") == "Limit"
+                       ? mOrderType::Limit
+                       : mOrderType::Market;
+    k.timeInForce = j.value("timeInForce", "") == "GTC"
+                       ? mTimeInForce::GTC
+                       : (j.value("timeInForce", "") == "FOK"
+                         ? mTimeInForce::FOK
+                         : mTimeInForce::IOC);
+    k.isPong      = false;
+  };
 
   struct mTrade {
      string tradeId;
@@ -1085,8 +1090,8 @@ namespace K {
   };
   struct mFairLevelsPrice: public mToScreen,
                            public mJsonToClient<mFairLevelsPrice> {
-    mPrice *fv;
-    mFairLevelsPrice(mPrice *const f):
+    const mPrice *const fv;
+    mFairLevelsPrice(const mPrice *const f):
       fv(f)
     {};
     const mMatter about() const {
@@ -1336,7 +1341,7 @@ namespace K {
              mStdevs stdev;
     mFairLevelsPrice fairPrice;
        mMarketTakers takerTrades;
-    mMarketStats(mPrice *const f):
+    mMarketStats(const mPrice *const f):
        fairPrice(f)
     {};
     const mMatter about() const {
@@ -1402,11 +1407,172 @@ namespace K {
       {"asks", k.asks}
     };
   };
+  struct mQuote {
+    mLevel bid,
+           ask;
+      bool isBidPong = false,
+           isAskPong = false;
+    mQuote(mLevel b, mLevel a):
+      bid(b), ask(a)
+    {};
+    mQuote(mLevel b, mLevel a, bool bP, bool aP):
+      bid(b), ask(a), isBidPong(bP), isAskPong(aP)
+    {};
+  };
+  static void to_json(json &j, const mQuote &k) {
+    j = {
+      {"bid", k.bid},
+      {"ask", k.ask}
+    };
+  };
+  struct mDummyMarketLevels: public mToScreen {
+    const vector<mLevel> *const bids      = nullptr,
+                         *const asks      = nullptr;
+            const mPrice *const fairValue = nullptr;
+    mDummyMarketLevels(const vector<mLevel> *const b, const vector<mLevel> *const a, const mPrice *const f):
+      bids(b), asks(a), fairValue(f)
+    {};
+  };
+  struct mDummyMarketMaker: public mToScreen {
+    private:
+      mQuote (*calcRawQuoteFromMarket)(
+        const mDummyMarketLevels&,
+        const mPrice&,
+        const mPrice&,
+        const mAmount&,
+        const mAmount&
+      ) = nullptr;
+      mDummyMarketLevels levels;
+    public:
+      mDummyMarketMaker(const vector<mLevel> *const b, const vector<mLevel> *const a, const mPrice *const f):
+        levels(b, a, f)
+      {};
+      void reset(const string &reason) {
+        if (qp.mode == mQuotingMode::Top)              calcRawQuoteFromMarket = calcTopOfMarket;
+        else if (qp.mode == mQuotingMode::Mid)         calcRawQuoteFromMarket = calcMidOfMarket;
+        else if (qp.mode == mQuotingMode::Join)        calcRawQuoteFromMarket = calcJoinMarket;
+        else if (qp.mode == mQuotingMode::InverseJoin) calcRawQuoteFromMarket = calcInverseJoinMarket;
+        else if (qp.mode == mQuotingMode::InverseTop)  calcRawQuoteFromMarket = calcInverseTopOfMarket;
+        else if (qp.mode == mQuotingMode::HamelinRat)  calcRawQuoteFromMarket = calcColossusOfMarket;
+        else if (qp.mode == mQuotingMode::Depth)       calcRawQuoteFromMarket = calcDepthOfMarket;
+        else EXIT(error("QE", "Invalid quoting mode "
+          + reason + ", consider to remove the database file"));
+      };
+      mQuote calcRawQuote(const mPrice &minTick, const mPrice &price, const mAmount &bidSize, const mAmount &askSize) {
+        return calcRawQuoteFromMarket(levels, minTick, price, bidSize, askSize);
+      };
+    private:
+      static mQuote quoteAtTopOfMarket(const mDummyMarketLevels &levels, const mPrice &minTick) {
+        mLevel topBid = levels.bids->begin()->size > minTick
+          ? levels.bids->at(0)
+          : levels.bids->at(levels.bids->size() > 1 ? 1 : 0);
+        mLevel topAsk = levels.asks->begin()->size > minTick
+          ? levels.asks->at(0)
+          : levels.asks->at(levels.asks->size() > 1 ? 1 : 0);
+        return mQuote(topBid, topAsk);
+      };
+      static mQuote calcJoinMarket(const mDummyMarketLevels &levels, const mPrice &minTick, const mPrice &widthPing, const mAmount &bidSize, const mAmount &askSize) {
+        mQuote k = quoteAtTopOfMarket(levels, minTick);
+        k.bid.price = fmin(*levels.fairValue - widthPing / 2.0, k.bid.price);
+        k.ask.price = fmax(*levels.fairValue + widthPing / 2.0, k.ask.price);
+        k.bid.size = bidSize;
+        k.ask.size = askSize;
+        return k;
+      };
+      static mQuote calcTopOfMarket(const mDummyMarketLevels &levels, const mPrice &minTick, const mPrice &widthPing, const mAmount &bidSize, const mAmount &askSize) {
+        mQuote k = quoteAtTopOfMarket(levels, minTick);
+        k.bid.price = k.bid.price + minTick;
+        k.ask.price = k.ask.price - minTick;
+        k.bid.price = fmin(*levels.fairValue - widthPing / 2.0, k.bid.price);
+        k.ask.price = fmax(*levels.fairValue + widthPing / 2.0, k.ask.price);
+        k.bid.size = bidSize;
+        k.ask.size = askSize;
+        return k;
+      };
+      static mQuote calcInverseJoinMarket(const mDummyMarketLevels &levels, const mPrice &minTick, const mPrice &widthPing, const mAmount &bidSize, const mAmount &askSize) {
+        mQuote k = quoteAtTopOfMarket(levels, minTick);
+        mPrice mktWidth = abs(k.ask.price - k.bid.price);
+        if (mktWidth > widthPing) {
+          k.ask.price = k.ask.price + widthPing;
+          k.bid.price = k.bid.price - widthPing;
+        }
+        if (mktWidth < (2.0 * widthPing / 3.0)) {
+          k.ask.price = k.ask.price + widthPing / 4.0;
+          k.bid.price = k.bid.price - widthPing / 4.0;
+        }
+        k.bid.size = bidSize;
+        k.ask.size = askSize;
+        return k;
+      };
+      static mQuote calcInverseTopOfMarket(const mDummyMarketLevels &levels, const mPrice &minTick, const mPrice &widthPing, const mAmount &bidSize, const mAmount &askSize) {
+        mQuote k = quoteAtTopOfMarket(levels, minTick);
+        mPrice mktWidth = abs(k.ask.price - k.bid.price);
+        if (mktWidth > widthPing) {
+          k.ask.price = k.ask.price + widthPing;
+          k.bid.price = k.bid.price - widthPing;
+        }
+        k.bid.price = k.bid.price + minTick;
+        k.ask.price = k.ask.price - minTick;
+        if (mktWidth < (2.0 * widthPing / 3.0)) {
+          k.ask.price = k.ask.price + widthPing / 4.0;
+          k.bid.price = k.bid.price - widthPing / 4.0;
+        }
+        k.bid.size = bidSize;
+        k.ask.size = askSize;
+        return k;
+      };
+      static mQuote calcMidOfMarket(const mDummyMarketLevels &levels, const mPrice &minTick, const mPrice &widthPing, const mAmount &bidSize, const mAmount &askSize) {
+        return mQuote(
+          mLevel(fmax(*levels.fairValue - widthPing, 0), bidSize),
+          mLevel(*levels.fairValue + widthPing, askSize)
+        );
+      };
+      static mQuote calcColossusOfMarket(const mDummyMarketLevels &levels, const mPrice &minTick, const mPrice &widthPing, const mAmount &bidSize, const mAmount &askSize) {
+        mQuote k = quoteAtTopOfMarket(levels, minTick);
+        k.bid.size = 0;
+        k.ask.size = 0;
+        for (const mLevel &it : *levels.bids)
+          if (k.bid.size < it.size and it.price <= k.bid.price) {
+            k.bid.size = it.size;
+            k.bid.price = it.price;
+          }
+        for (const mLevel &it : *levels.asks)
+          if (k.ask.size < it.size and it.price >= k.ask.price) {
+            k.ask.size = it.size;
+            k.ask.price = it.price;
+          }
+        if (k.bid.size) k.bid.price += minTick;
+        if (k.ask.size) k.ask.price -= minTick;
+        k.bid.size = bidSize;
+        k.ask.size = askSize;
+        return k;
+      };
+      static mQuote calcDepthOfMarket(const mDummyMarketLevels &levels, const mPrice &minTick, const mAmount &depth, const mAmount &bidSize, const mAmount &askSize) {
+        mPrice bidPx = levels.bids->begin()->price;
+        mAmount bidDepth = 0;
+        for (const mLevel &it : *levels.bids) {
+          bidDepth += it.size;
+          if (bidDepth >= depth) break;
+          else bidPx = it.price;
+        }
+        mPrice askPx = levels.asks->begin()->price;
+        mAmount askDepth = 0;
+        for (const mLevel &it : *levels.asks) {
+          askDepth += it.size;
+          if (askDepth >= depth) break;
+          else askPx = it.price;
+        }
+        return mQuote(
+          mLevel(bidPx, bidSize),
+          mLevel(askPx, askSize)
+        );
+      };
+  };
   struct mLevelsDiff: public mLevels,
                       public mJsonToClient<mLevelsDiff> {
-       bool patched;
-    mLevels *unfiltered;
-    mLevelsDiff(mLevels *c):
+                    bool patched;
+    const mLevels *const unfiltered;
+    mLevelsDiff(const mLevels *const c):
       patched(false), unfiltered(c)
     {};
     const bool empty() const {
@@ -1472,14 +1638,15 @@ namespace K {
   struct mMarketLevels: public mLevels {
                  mLevels unfiltered;
              mLevelsDiff diff;
+       mDummyMarketMaker dummyMM;
+            mMarketStats stats;
     map<mPrice, mAmount> filterBidOrders,
                          filterAskOrders;
             unsigned int averageCount = 0;
                   mPrice averageWidth = 0,
                          fairValue    = 0;
-            mMarketStats stats;
     mMarketLevels():
-      diff(&unfiltered), stats(&fairValue)
+      diff(&unfiltered), dummyMM(&bids, &asks, &fairValue), stats(&fairValue)
     {};
     void timer_1s() {
       stats.stdev.timer_1s(fairValue, bids.cbegin()->price, asks.cbegin()->price);
@@ -1627,10 +1794,10 @@ namespace K {
           mAmount buySize  = 0,
                   sellSize = 0;
     mRecentTrades recentTrades;
-          mAmount *baseValue          = nullptr,
-                  *baseTotal          = nullptr,
-                  *targetBasePosition = nullptr;
-    mSafety(mAmount *const b, mAmount *const t, mAmount *const p):
+    const mAmount *const baseValue          = nullptr,
+                  *const baseTotal          = nullptr,
+                  *const targetBasePosition = nullptr;
+    mSafety(const mAmount *const b, const mAmount *const t, const mAmount *const p):
       baseValue(b), baseTotal(t), targetBasePosition(p)
     {};
     void timer_1s(const mMarketLevels &levels, const mTradesCompleted &tradesHistory) {
@@ -1763,8 +1930,8 @@ namespace K {
      string sideAPR,
             sideAPRDiff = "!=";
     mSafety safety;
-    mAmount *baseValue = nullptr;
-    mTarget(mAmount *const b, mAmount *const t):
+    const mAmount *const baseValue = nullptr;
+    mTarget(const mAmount *const b, const mAmount *const t):
       safety(b, t, &targetBasePosition), baseValue(b)
     {};
     void calcPDiv() {
@@ -2187,25 +2354,6 @@ namespace K {
     j = k.dump();
   };
 
-  struct mQuote {
-    mLevel bid,
-           ask;
-      bool isBidPong = false,
-           isAskPong = false;
-    mQuote(mLevel b, mLevel a):
-      bid(b), ask(a)
-    {};
-    mQuote(mLevel b, mLevel a, bool bP, bool aP):
-      bid(b), ask(a), isBidPong(bP), isAskPong(aP)
-    {};
-  };
-  static void to_json(json &j, const mQuote &k) {
-    j = {
-      {"bid", k.bid},
-      {"ask", k.ask}
-    };
-  };
-
   struct mQuoteStatus: public mJsonToClient<mQuoteStatus> {
      mQuoteState bidStatus             = mQuoteState::Disconnected,
                  askStatus             = mQuoteState::Disconnected;
@@ -2551,7 +2699,7 @@ namespace K {
   };
 
   struct mMonitor: public mJsonToClient<mMonitor> {
-    unsigned int /* ( | L | ) */ /* more */ orders_60s; /* ? */
+    unsigned int /* ( | L | ) */ /* more */ orders_60s /* ? */;
           string /*  )| O |(  */    unlock;
         mProduct /* ( | C | ) */ /* this */ product;
                  /*  )| K |(  */ /* thanks! <3 */

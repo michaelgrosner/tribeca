@@ -29,7 +29,7 @@ namespace K {
       };
       virtual void pressme(const mHotkey&, function<void()>) = 0;
       virtual void printme(mToScreen *const) = 0;
-      virtual const int error(string, string, bool = false) = 0;
+      virtual const int error(const string&, const string&, const bool& = false) = 0;
       virtual void waitForUser() = 0;
       virtual const string stamp() = 0;
       virtual void logWar(string, string, string = " Warrrrning: ") = 0;
@@ -160,8 +160,8 @@ namespace K {
         if (args.latency)
           latency();
       };
-      const string load_externals() {
-        return validate(handshake());
+      void load_externals() {
+        validate(handshake());
       };
       void connect() {
         socket->connect(ws, nullptr, {}, 5e+3, &socket->getDefaultGroup<uWS::CLIENT>());
@@ -202,22 +202,28 @@ namespace K {
         screen->printme(this);
         focus("GW " + exchange, "latency check", "start");
         mClock Tstart = Tstamp;
-        const string msg = load_externals();
+        load_externals();
         mClock Tstop  = Tstamp;
         focus("GW " + exchange, "latency check", "stop");
-        if (!msg.empty()) warn("GW " + exchange, msg);
+        const unsigned int Tdiff = Tstop - Tstart;
         focus("GW " + exchange, "HTTP read/write handshake took", to_string(
-          Tstop - Tstart
+          Tdiff
         ) + "ms of your time");
+        string result = "very bad; move to another server/network";
+        if (Tdiff < 200) result = "very good; most trades don't enjoy such speed!";
+        else if (Tdiff < 500) result = "good; most traders get the same result";
+        else if (Tdiff < 700) result = "a bit bad; most trades get better results";
+        else if (Tdiff < 1000) result = "bad; is possible a move to another server/network?";
+        print("GW " + exchange, "This result is " + result);
         quit();
       };
-      const string validate(const json &reply) {
+      void validate(const json &reply) {
         if (!randId or symbol.empty())
-          return "Incomplete handshake aborted.";
+          EXIT(error("GW", "Incomplete handshake aborted."));
         if (!minTick or !minSize)
-          return "Unable to fetch data from " + exchange
+          EXIT(error("GW", "Unable to fetch data from " + exchange
             + " for symbol \"" + symbol + "\", possible error message: "
-            + reply.dump();
+            + reply.dump()));
         if (exchange != "NULL")
           print("GW " + exchange, "allows client IP");
         unsigned int precision = minTick < 1e-8 ? 10 : 8;
@@ -228,7 +234,6 @@ namespace K {
           + "- minSize: " + strX(minSize, precision) + '\n'
           + "- makeFee: " + strX(makeFee, precision) + '\n'
           + "- takeFee: " + strX(takeFee, precision));
-        return "";
       };
   };
 
@@ -459,6 +464,29 @@ namespace K {
   code(levels.stats.stdev)             \
   code(broker.tradesHistory)
 
+#define SCREEN_PRINTME            \
+        SCREEN_PRINTME_LIST       \
+      ( SCREEN_PRINTME_CODE )
+#define SCREEN_PRINTME_CODE(data) screen->printme(&data);
+#define SCREEN_PRINTME_LIST(code) \
+  code(*gw)                       \
+  code(semaphore)                 \
+  code(wallet.target)             \
+  code(levels.stats.fairPrice)    \
+  code(levels.stats.ewma)         \
+  code(levels.dummyMM)            \
+  code(broker.tradesHistory)      \
+  code(broker)
+
+#define SCREEN_PRESSME            \
+        SCREEN_PRESSME_LIST       \
+      ( SCREEN_PRESSME_CODE )
+#define SCREEN_PRESSME_CODE(key, fn) screen->pressme(mHotkey::key, [&]() { fn(); });
+#define SCREEN_PRESSME_LIST(code) \
+  code( Q , gw->quit)             \
+  code( q , gw->quit)             \
+  code(ESC, semaphore.toggle)
+
 #define CLIENT_WELCOME            \
         CLIENT_WELCOME_LIST       \
       ( CLIENT_WELCOME_CODE )
@@ -479,28 +507,6 @@ namespace K {
   code(levels.stats)              \
   code(broker.tradesHistory)      \
   code(broker)
-
-#define SCREEN_PRINTME            \
-        SCREEN_PRINTME_LIST       \
-      ( SCREEN_PRINTME_CODE )
-#define SCREEN_PRINTME_CODE(data) screen->printme(&data);
-#define SCREEN_PRINTME_LIST(code) \
-  code(*gw)                       \
-  code(semaphore)                 \
-  code(wallet.target)             \
-  code(levels.stats.fairPrice)    \
-  code(levels.stats.ewma)         \
-  code(broker.tradesHistory)      \
-  code(broker)
-
-#define SCREEN_PRESSME            \
-        SCREEN_PRESSME_LIST       \
-      ( SCREEN_PRESSME_CODE )
-#define SCREEN_PRESSME_CODE(key, fn) screen->pressme(mHotkey::key, [&]() { fn(); });
-#define SCREEN_PRESSME_LIST(code) \
-  code( Q , gw->quit)             \
-  code( q , gw->quit)             \
-  code(ESC, semaphore.toggle)
 
 #define CLIENT_CLICKME      \
         CLIENT_CLICKME_LIST \

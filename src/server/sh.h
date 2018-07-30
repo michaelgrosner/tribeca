@@ -74,13 +74,16 @@ namespace K {
         data->warn = [&](const string &prefix, const string &reason) {
           logWar(prefix, reason);
         };
+        data->error = [&](const string &prefix, const string &reason) {
+          return error(prefix, reason);
+        };
         data->refresh = [&]() {
           refresh();
         };
       };
-      const int error(string k, string s, bool reboot = false) {
+      const int error(const string &prefix, const string &reason, const bool &reboot = false) {
         end();
-        logWar(k, s, " Errrror: ");
+        logWar(prefix, reason, " Errrror: ");
         cout << RRESET;
         return reboot ? EXIT_FAILURE : EXIT_SUCCESS;
       };
