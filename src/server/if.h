@@ -277,7 +277,7 @@ namespace K {
         quote   = reply.value("quoteCurrency", quote);
         return reply;
       };
-      static json xfer(const string &url, string auth, string post) {
+      static json xfer(const string &url, const string &auth, const string &post) {
         return mREST::curl_perform(url, [&](CURL *curl) {
           curl_easy_setopt(curl, CURLOPT_USERPWD, auth.data());
           curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
@@ -315,7 +315,7 @@ namespace K {
         minSize = stod(reply.value("base_min_size", "0"));
         return reply;
       };
-      static json xfer(const string &url, string h1, string h2, string h3, string h4, bool rm) {
+      static json xfer(const string &url, const string &h1, const string &h2, const string &h3, const string &h4, const bool &rm) {
         return mREST::curl_perform(url, [&](CURL *curl) {
           struct curl_slist *h_ = NULL;
           h_ = curl_slist_append(h_, ("CB-ACCESS-KEY: " + h1).data());
@@ -349,7 +349,7 @@ namespace K {
               minSize = stod(it->value("minimum_order_size", "0"));
         return reply;
       };
-      static json xfer(const string &url, string post, string h1, string h2) {
+      static json xfer(const string &url, const string &post, const string &h1, const string &h2) {
         return mREST::curl_perform(url, [&](CURL *curl) {
           struct curl_slist *h_ = NULL;
           h_ = curl_slist_append(h_, ("X-BFX-APIKEY: " + h1).data());
@@ -379,6 +379,26 @@ namespace K {
             }
         return reply;
       };
+      static json xfer(const string &url, const string &h1, const string &h2, const string &h3) {
+        return mREST::curl_perform(url, [&](CURL *curl) {
+          struct curl_slist *h_ = NULL;
+          h_ = curl_slist_append(h_, ("FC-ACCESS-KEY: " + h1).data());
+          h_ = curl_slist_append(h_, ("FC-ACCESS-SIGNATURE: " + h2).data());
+          h_ = curl_slist_append(h_, ("FC-ACCESS-TIMESTAMP: " + h3).data());
+          curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
+        });
+      };
+      static json xfer(const string &url, const string &h1, const string &h2, const string &h3, const string &post) {
+        return mREST::curl_perform(url, [&](CURL *curl) {
+          struct curl_slist *h_ = NULL;
+          h_ = curl_slist_append(h_, ("FC-ACCESS-KEY: " + h1).data());
+          h_ = curl_slist_append(h_, ("FC-ACCESS-SIGNATURE: " + h2).data());
+          h_ = curl_slist_append(h_, ("FC-ACCESS-TIMESTAMP: " + h3).data());
+          h_ = curl_slist_append(h_, "Content-Type: application/json;charset=UTF-8");
+          curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
+          curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post.data());
+        });
+      };
   };
   class GwKraken: public Gw {
     protected:
@@ -401,7 +421,7 @@ namespace K {
             }
         return reply;
       };
-      static json xfer(const string &url, string h1, string h2, string post) {
+      static json xfer(const string &url, const string &h1, const string &h2, const string &post) {
         return mREST::curl_perform(url, [&](CURL *curl) {
           struct curl_slist *h_ = NULL;
           h_ = curl_slist_append(h_, ("API-Key: " + h1).data());
@@ -423,14 +443,14 @@ namespace K {
         }
         return reply;
       };
-      static json xfer(const string &url, const string &token, const string &post) {
+      static json xfer(const string &url, const string &h1, const string &post) {
         return mREST::curl_perform(url, [&](CURL *curl) {
           struct curl_slist *h_ = NULL;
           if (!post.empty()) {
             h_ = curl_slist_append(h_, "Content-Type: application/x-www-form-urlencoded");
             curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post.data());
           }
-          h_ = curl_slist_append(h_, ("Authorization: Bearer " + token).data());
+          h_ = curl_slist_append(h_, ("Authorization: Bearer " + h1).data());
           curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
         });
       };
@@ -448,7 +468,7 @@ namespace K {
         }
         return reply;
       };
-      static json xfer(const string &url, string post, string h1, string h2) {
+      static json xfer(const string &url, const string &post, const string &h1, const string &h2) {
         return mREST::curl_perform(url, [&](CURL *curl) {
           struct curl_slist *h_ = NULL;
           h_ = curl_slist_append(h_, "Content-Type: application/x-www-form-urlencoded");

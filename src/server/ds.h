@@ -2519,6 +2519,13 @@ namespace K {
       for (unsigned int i = 0; i < SHA512_DIGEST_LENGTH; i++) sprintf(&k_[i*2], "%02x", (unsigned int)digest[i]);
       return k_;
     };
+    static string oHmac1(string p, string s, bool hex = false) {
+      unsigned char* digest;
+      digest = HMAC(EVP_sha1(), s.data(), s.length(), (unsigned char*)p.data(), p.length(), NULL, NULL);
+      char k_[SHA_DIGEST_LENGTH*2+1];
+      for (unsigned int i = 0; i < SHA_DIGEST_LENGTH; i++) sprintf(&k_[i*2], "%02x", (unsigned int)digest[i]);
+      return hex ? oHex(k_) : k_;
+    };
     static string oHmac256(string p, string s, bool hex = false) {
       unsigned char* digest;
       digest = HMAC(EVP_sha256(), s.data(), s.length(), (unsigned char*)p.data(), p.length(), NULL, NULL);
@@ -2526,12 +2533,12 @@ namespace K {
       for (unsigned int i = 0; i < SHA256_DIGEST_LENGTH; i++) sprintf(&k_[i*2], "%02x", (unsigned int)digest[i]);
       return hex ? oHex(k_) : k_;
     };
-    static string oHmac512(string p, string s) {
+    static string oHmac512(string p, string s, bool hex = false) {
       unsigned char* digest;
       digest = HMAC(EVP_sha512(), s.data(), s.length(), (unsigned char*)p.data(), p.length(), NULL, NULL);
       char k_[SHA512_DIGEST_LENGTH*2+1];
       for (unsigned int i = 0; i < SHA512_DIGEST_LENGTH; i++) sprintf(&k_[i*2], "%02x", (unsigned int)digest[i]);
-      return k_;
+      return hex ? oHex(k_) : k_;
     };
     static string oHmac384(string p, string s) {
       unsigned char* digest;
