@@ -262,7 +262,7 @@ docker:
 	@$(MAKE) packages
 	mkdir -p app/server
 	@$(MAKE) build link
-	sed -i "/Usage/,+115d" K.sh
+	sed -i "/Usage/,+118d" K.sh
 
 link:
 	cd app/server && ln -f -s ../../$(KLOCAL)/bin/K-$(CHOST) K
