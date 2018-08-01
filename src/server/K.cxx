@@ -51,7 +51,7 @@ using namespace nlohmann;
                                                                            \
 "\n"   "This is non-free software: built-in gateway exchange integrations" \
 "\n"   "are licensed by/under the law of my grandma (since last century)," \
-"\n"   "feel free to crack all."
+"\n"   "feel free to crack all as you need."
 
 #ifdef NDEBUG
 #  define EXIT exit

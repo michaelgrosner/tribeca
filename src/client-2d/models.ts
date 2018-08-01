@@ -34,7 +34,7 @@ export var Topics = {
   WalletChart: 'C',
   MarketChart: 'D',
   Notepad: 'E',
-  MarketDataLongTerm: 'G'
+  MarketDataLongTerm: 'H'
 }
 
 export class MarketSide {

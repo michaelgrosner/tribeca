@@ -212,9 +212,9 @@ namespace K {
       void latency() {
         screen->printme(this);
         focus("GW " + exchange, "latency check", "start");
-        mClock Tstart = Tstamp;
+        const mClock Tstart = Tstamp;
         load_externals();
-        mClock Tstop  = Tstamp;
+        const mClock Tstop  = Tstamp;
         focus("GW " + exchange, "latency check", "stop");
         const unsigned int Tdiff = Tstop - Tstart;
         focus("GW " + exchange, "HTTP read/write handshake took", to_string(
@@ -481,77 +481,78 @@ namespace K {
   };
 
   static class Engine {
-#define SQLITE_BACKUP                  \
-        SQLITE_BACKUP_LIST             \
+#define SQLITE_BACKUP      \
+        SQLITE_BACKUP_LIST \
       ( SQLITE_BACKUP_CODE )
-#define SQLITE_BACKUP_CODE(data)       sqlite->backup(&data);
-#define SQLITE_BACKUP_LIST(code)       \
-  code(qp)                             \
-  code(wallet.target)                  \
-  code(wallet.profits)                 \
-  code(levels.stats.ewma.fairValue96h) \
-  code(levels.stats.ewma)              \
-  code(levels.stats.stdev)             \
-  code(broker.tradesHistory)
+#define SQLITE_BACKUP_CODE(data)         sqlite->backup(&data);
+#define SQLITE_BACKUP_LIST(code)         \
+  code( qp                             ) \
+  code( wallet.target                  ) \
+  code( wallet.profits                 ) \
+  code( levels.stats.ewma.fairValue96h ) \
+  code( levels.stats.ewma              ) \
+  code( levels.stats.stdev             ) \
+  code( broker.tradesHistory           )
 
-#define SCREEN_PRINTME            \
-        SCREEN_PRINTME_LIST       \
+#define SCREEN_PRINTME      \
+        SCREEN_PRINTME_LIST \
       ( SCREEN_PRINTME_CODE )
 #define SCREEN_PRINTME_CODE(data) screen->printme(&data);
 #define SCREEN_PRINTME_LIST(code) \
-  code(*gw)                       \
-  code(semaphore)                 \
-  code(wallet.target)             \
-  code(levels.stats.fairPrice)    \
-  code(levels.stats.ewma)         \
-  code(levels.dummyMM)            \
-  code(broker.tradesHistory)      \
-  code(broker)
+  code( *gw                    )  \
+  code( semaphore              )  \
+  code( wallet.target          )  \
+  code( levels.stats.fairPrice )  \
+  code( levels.stats.ewma      )  \
+  code( levels.dummyMM         )  \
+  code( broker.tradesHistory   )  \
+  code( broker                 )
 
-#define SCREEN_PRESSME            \
-        SCREEN_PRESSME_LIST       \
+#define SCREEN_PRESSME      \
+        SCREEN_PRESSME_LIST \
       ( SCREEN_PRESSME_CODE )
 #define SCREEN_PRESSME_CODE(key, fn) screen->pressme(mHotkey::key, [&]() { fn(); });
-#define SCREEN_PRESSME_LIST(code) \
-  code( Q , gw->quit)             \
-  code( q , gw->quit)             \
-  code(ESC, semaphore.toggle)
+#define SCREEN_PRESSME_LIST(code)    \
+  code(  Q  , gw->quit         )     \
+  code(  q  , gw->quit         )     \
+  code( ESC , semaphore.toggle )
 
-#define CLIENT_WELCOME            \
-        CLIENT_WELCOME_LIST       \
+#define CLIENT_WELCOME      \
+        CLIENT_WELCOME_LIST \
       ( CLIENT_WELCOME_CODE )
-#define CLIENT_WELCOME_CODE(data) client->welcome(data);
-#define CLIENT_WELCOME_LIST(code) \
-  code(qp)                        \
-  code(status)                    \
-  code(notepad)                   \
-  code(monitor)                   \
-  code(monitor.product)           \
-  code(semaphore)                 \
-  code(wallet.target.safety)      \
-  code(wallet.target)             \
-  code(wallet)                    \
-  code(levels.diff)               \
-  code(levels.stats.takerTrades)  \
-  code(levels.stats.fairPrice)    \
-  code(levels.stats)              \
-  code(broker.tradesHistory)      \
-  code(broker)
+#define CLIENT_WELCOME_CODE(data)  client->welcome(data);
+#define CLIENT_WELCOME_LIST(code)  \
+  code( qp                       ) \
+  code( status                   ) \
+  code( notepad                  ) \
+  code( monitor                  ) \
+  code( monitor.product          ) \
+  code( semaphore                ) \
+  code( wallet.target.safety     ) \
+  code( wallet.target            ) \
+  code( wallet                   ) \
+  code( levels.diff              ) \
+  code( levels.stats.takerTrades ) \
+  code( levels.stats.fairPrice   ) \
+  code( levels.stats             ) \
+  code( broker.tradesHistory     ) \
+  code( broker                   )
 
 #define CLIENT_CLICKME      \
         CLIENT_CLICKME_LIST \
       ( CLIENT_CLICKME_CODE )
-#define CLIENT_CLICKME_CODE(btn, fn, val) client->clickme(btn, [&](const json &butterfly) { fn(val); });
-#define CLIENT_CLICKME_LIST(code)                                          \
-  code(qp                   , calcQuoteAfterSavedParams       ,          ) \
-  code(notepad              , void                            ,          ) \
-  code(semaphore            , void                            ,          ) \
-  code(btn.submit           , placeOrder                      , butterfly) \
-  code(btn.cancel           , cancelOrder                     , butterfly) \
-  code(btn.cancelAll        , cancelOrders                    ,          ) \
-  code(btn.cleanTrade       , broker.tradesHistory.clearOne   , butterfly) \
-  code(btn.cleanTradesClosed, broker.tradesHistory.clearClosed,          ) \
-  code(btn.cleanTrades      , broker.tradesHistory.clearAll   ,          )
+#define CLIENT_CLICKME_CODE(btn, fn, val) \
+                  client->clickme(btn, [&](const json &butterfly) { fn(val); });
+#define CLIENT_CLICKME_LIST(code)                                              \
+  code( qp                    , calcQuoteAfterSavedParams        ,           ) \
+  code( notepad               , void                             ,           ) \
+  code( semaphore             , void                             ,           ) \
+  code( btn.submit            , placeOrder                       , butterfly ) \
+  code( btn.cancel            , cancelOrder                      , butterfly ) \
+  code( btn.cancelAll         , cancelOrders                     ,           ) \
+  code( btn.cleanTrade        , broker.tradesHistory.clearOne    , butterfly ) \
+  code( btn.cleanTradesClosed , broker.tradesHistory.clearClosed ,           ) \
+  code( btn.cleanTrades       , broker.tradesHistory.clearAll    ,           )
     public:
       mWalletPosition wallet;
         mMarketLevels levels;
@@ -563,8 +564,8 @@ namespace K {
     public:
       virtual void timer_1s(const unsigned int&) = 0;
       void placeOrder(const json &butterfly) {
-        if (!butterfly.is_object()) return;
-        placeOrder((mOrder)butterfly);
+        if (butterfly.is_object())
+          placeOrder((mOrder)butterfly);
       };
       void sendOrders(const vector<mOrder*> &toCancel, mOrder *const toReplace, const mLevel &quote, const mSide &side, const bool &isPong) {
         for (mOrder *const it : toCancel)
@@ -581,8 +582,8 @@ namespace K {
         monitor.tick_orders();
       };
       void cancelOrder(const json &butterfly) {
-        if (!butterfly.is_string()) return;
-        cancelOrder(broker.find(butterfly.get<mRandId>()));
+        if (butterfly.is_string())
+          cancelOrder(broker.find(butterfly.get<mRandId>()));
       };
       void cancelOrders(const mSide &side = mSide::Both) {
         for (mOrder *const it : broker.working(side))
