@@ -765,7 +765,7 @@ class ClientComponent implements OnInit {
     window.parent.postMessage('height='+document.getElementsByTagName('body')[0].getBoundingClientRect().height+'px', '*');
   };
   public product: Models.ProductState = {
-    advert: new Models.ProductAdvertisement(null, null, null, null, null, .01),
+    advert: new Models.ProductAdvertisement(null, null, null, null, null, null, .01),
     fixed: 2
   };
   public baseCurrency: string = "?";
@@ -944,11 +944,11 @@ class ClientComponent implements OnInit {
     this.online = true;
     window.document.title = '['+pa.environment+']';
     this.matryoshka = pa.matryoshka;
-    this.baseCurrency = pa.pair.base;
-    this.quoteCurrency = pa.pair.quote;
+    this.baseCurrency = pa.base;
+    this.quoteCurrency = pa.quote;
     this.exchange_name = pa.exchange;
     this.exchange_market = this.exchange_name=='OKCOIN'
-      ? 'https://www.okcoin.'+(pa.pair.quote=='CNY'?'cn':'com')+'/market.html'
+      ? 'https://www.okcoin.'+(pa.quote=='CNY'?'cn':'com')+'/market.html'
       : (this.exchange_name=='OKEX'
         ? 'https://www.okex.com/spot/market/index.do'
         : (this.exchange_name=='COINBASE'
@@ -972,7 +972,7 @@ class ClientComponent implements OnInit {
         )
       );
     this.exchange_orders = this.exchange_name=='OKCOIN'
-      ? 'https://www.okcoin.'+(pa.pair.quote=='CNY'?'cn':'com')+'/trade/entrust.do'
+      ? 'https://www.okcoin.'+(pa.quote=='CNY'?'cn':'com')+'/trade/entrust.do'
       : (this.exchange_name=='OKEX'
         ? 'https://www.okex.com/spot/trade/spotEntrust.do'
         : (this.exchange_name=='COINBASE'

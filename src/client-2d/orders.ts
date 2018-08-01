@@ -89,7 +89,7 @@ export class OrdersComponent implements OnInit {
   }
 
   private addRowData = (o) => {
-    if (!this.gridOptions.api || this.product.advert.pair == null) return;
+    if (!this.gridOptions.api || this.product.advert.base == null) return;
     if (!o || (typeof o.length == 'number' && !o.length)) {
       this.gridOptions.api.setRowData([]);
       return;
@@ -132,7 +132,7 @@ export class OrdersComponent implements OnInit {
         qty: o.quantity,
         pong: o.isPong,
         time: o.time,
-        quoteSymbol: this.product.advert.pair.quote,
+        quoteSymbol: this.product.advert.quote,
         productFixed: this.product.fixed
       }]});
 

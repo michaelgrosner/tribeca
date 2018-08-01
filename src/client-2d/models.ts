@@ -168,10 +168,6 @@ export class TwoSidedQuoteStatus {
     constructor(public bidStatus: QuoteStatus, public askStatus: QuoteStatus, public quotesInMemoryNew: number, public quotesInMemoryWorking: number, public quotesInMemoryDone: number) {}
 }
 
-export class CurrencyPair {
-    constructor(public base: string, public quote: string) {}
-}
-
 export enum QuotingMode { Top, Mid, Join, InverseJoin, InverseTop, HamelinRat, Depth }
 export enum QuotingSafety { Off, PingPong, Boomerang, AK47 }
 export enum FairValueModel { BBO, wBBO, rwBBO }
@@ -246,7 +242,7 @@ export interface QuotingParameters {
 }
 
 export class ProductAdvertisement {
-    constructor(public exchange: string, public pair: CurrencyPair, public environment: string, public matryoshka: string, public homepage: string, public minTick: number) { }
+    constructor(public exchange: string, public base: string, public quote: string, public environment: string, public matryoshka: string, public homepage: string, public minTick: number) { }
 }
 
 export class ApplicationState {

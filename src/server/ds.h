@@ -267,7 +267,8 @@ namespace K {
           debugEvents =
           debugOrders =
           debugQuotes =
-          debugWallet = debug;
+          debugWallet =
+          debugSqlite = debug;
         if (!colors)
           RBLACK[0] = RRED[0]    = RGREEN[0] = RYELLOW[0] =
           RBLUE[0]  = RPURPLE[0] = RCYAN[0]  = RWHITE[0]  =
@@ -2693,10 +2694,8 @@ namespace K {
   static void to_json(json &j, const mProduct &k) {
     j = {
       {   "exchange", args.exchange                                 },
-      {       "pair", {
-                        { "base", args.base },
-                        {"quote", args.quote}
-                      }                                             },
+      {       "base", args.base                                     },
+      {      "quote", args.quote                                    },
       {    "minTick", *k.minTick                                    },
       {"environment", args.title                                    },
       { "matryoshka", args.matryoshka                               },
