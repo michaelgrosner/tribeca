@@ -50,7 +50,7 @@ namespace K {
     Position             = 'n', Profit               = 'o', SubmitNewOrder     = 'p', CancelOrder        = 'q', MarketTrade      = 'r',
     Trades               = 's', ExternalValuation    = 't', QuoteStatus        = 'u', TargetBasePosition = 'v', TradeSafetyValue = 'w',
     CancelAllOrders      = 'x', CleanAllClosedTrades = 'y', CleanAllTrades     = 'z', CleanTrade         = 'A',
-                                WalletChart          = 'C', MarketChart        = 'D', Notepad            = 'E', MarketDataLongTerm = 'G'
+                                WalletChart          = 'C', MarketChart        = 'D', Notepad            = 'E', MarketDataLongTerm = 'H'
   };
 
   static          bool operator! (mConnectivity k_)                   { return !(unsigned int)k_; };
@@ -68,23 +68,24 @@ namespace K {
               RRESET[] = "\033[0m";
 
   static struct mArgs {
-        int port          = 3000,   colors      = 0, debug        = 0,
-            debugSecret   = 0,      debugEvents = 0, debugOrders  = 0,
-            debugQuotes   = 0,      debugWallet = 0, withoutSSL   = 0,
-            headless      = 0,      dustybot    = 0, lifetime     = 0,
-            autobot       = 0,      naked       = 0, free         = 0,
-            ignoreSun     = 0,      ignoreMoon  = 0, testChamber  = 0,
-            maxAdmins     = 7,      latency     = 0, maxLevels   = 321;
-    mAmount maxWallet     = 0;
-     string title         = "K.sh", matryoshka  = "https://www.example.com/",
-            user          = "NULL", pass        = "NULL",
-            exchange      = "NULL", currency    = "NULL",
-            apikey        = "NULL", secret      = "NULL",
-            username      = "NULL", passphrase  = "NULL",
-            http          = "NULL", wss         = "NULL",
-            database      = "",     diskdata    = "",
-            whitelist     = "",
-            base          = "",     quote       = "";
+        int port        = 3000,   colors      = 0, debug        = 0,
+            debugSecret = 0,      debugEvents = 0, debugOrders  = 0,
+            debugQuotes = 0,      debugWallet = 0, debugSqlite  = 0,
+            headless    = 0,      dustybot    = 0, lifetime     = 0,
+            autobot     = 0,      naked       = 0, free         = 0,
+            ignoreSun   = 0,      ignoreMoon  = 0, testChamber  = 0,
+            maxAdmins   = 7,      latency     = 0, maxLevels   = 321,
+            withoutSSL  = 0;
+    mAmount maxWallet   = 0;
+     string title       = "K.sh", matryoshka  = "https://www.example.com/",
+            user        = "NULL", pass        = "NULL",
+            exchange    = "NULL", currency    = "NULL",
+            apikey      = "NULL", secret      = "NULL",
+            username    = "NULL", passphrase  = "NULL",
+            http        = "NULL", wss         = "NULL",
+            database    = "",     diskdata    = "",
+            whitelist   = "",
+            base        = "",     quote       = "";
     const char *inet = nullptr;
     const string main(int argc, char** argv) {
       static const struct option opts[] = {
@@ -96,6 +97,7 @@ namespace K {
         {"debug-orders", no_argument,       &debugOrders,      1},
         {"debug-quotes", no_argument,       &debugQuotes,      1},
         {"debug-wallet", no_argument,       &debugWallet,      1},
+        {"debug-sqlite", no_argument,       &debugSqlite,      1},
         {"without-ssl",  no_argument,       &withoutSSL,       1},
         {"ignore-sun",   no_argument,       &ignoreSun,        2},
         {"ignore-moon",  no_argument,       &ignoreMoon,       1},
@@ -155,7 +157,6 @@ namespace K {
           case 'L': whitelist    = string(optarg); break;
           case 'i': inet         = strdup(optarg); break;
           case 'W': maxWallet    = stod(optarg);   break;
-          case '?':
           case 'h': {
             const vector<string> stamp = {
               " \\__/  \\__/ ", " | (   .    ", "   __   \\__/  ",
@@ -218,6 +219,7 @@ namespace K {
               << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "-T, --lifetime=NUMBER     - set NUMBER of minimum milliseconds to keep orders open," << '\n'
               << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "                            otherwise open orders can be replaced anytime required." << '\n'
               << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "    --debug-secret        - print (never share!) secret inputs and outputs." << '\n'
+              << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "    --debug-sqlite        - print detailed output about database queries." << '\n'
               << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "    --debug-events        - print detailed output about event handlers." << '\n'
               << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "    --debug-orders        - print detailed output about exchange messages." << '\n'
               << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "    --debug-quotes        - print detailed output about quoting engine." << '\n'
@@ -238,6 +240,7 @@ namespace K {
               << RGREEN << "  home page: " << RYELLOW << "https://ca.rles-tub.io./trades" << '\n'
               << RRESET;
           }
+          case '?':
           case 'v': EXIT(EXIT_SUCCESS);
           default : abort();
         }
@@ -404,6 +407,8 @@ namespace K {
   };
   template <typename mData> struct mVectorFromDb: public mFromDb {
     vector<mData> rows;
+    typedef typename vector<mData>::reference                           reference;
+    typedef typename vector<mData>::const_reference               const_reference;
     typedef typename vector<mData>::iterator                             iterator;
     typedef typename vector<mData>::const_iterator                 const_iterator;
     typedef typename vector<mData>::reverse_iterator             reverse_iterator;
@@ -418,6 +423,12 @@ namespace K {
     reverse_iterator          rend()       noexcept { return rows.rend(); };
     bool                     empty() const noexcept { return rows.empty(); };
     size_t                    size() const noexcept { return rows.size(); };
+    reference                front()                { return rows.front(); };
+    const_reference          front() const          { return rows.front(); };
+    reference                 back()                { return rows.back(); };
+    const_reference           back() const          { return rows.back(); };
+    reference                   at(size_t n)        { return rows.at(n); };
+    const_reference             at(size_t n) const  { return rows.at(n); };
     virtual void erase() {
       if (size() > limit())
         rows.erase(begin(), end() - limit());
@@ -433,7 +444,7 @@ namespace K {
       return !empty();
     };
     virtual const json dump() const {
-      return rows.back();
+      return back();
     };
     virtual const string explain() const {
       return to_string(size());
@@ -1059,36 +1070,6 @@ namespace K {
       };
   };
 
-  struct mFairValue {
-    mPrice fv = 0;
-    mFairValue()
-    {};
-    mFairValue(mPrice f):
-      fv(f)
-    {};
-  };
-  static void to_json(json &j, const mFairValue &k) {
-    j = {
-      {"fv", k.fv}
-    };
-  };
-  static void from_json(const json &j, mFairValue &k) {
-    k.fv = j.value("fv", 0.0);
-  };
-  struct mFairHistory: public mVectorFromDb<mFairValue> {
-    const mMatter about() const {
-      return mMatter::MarketDataLongTerm;
-    };
-    const double limit() const {
-      return 5760;
-    };
-    const mClock lifetime() const {
-      return 60e+3 * limit();
-    };
-    string explainOK() const {
-      return "loaded % historical Fair Values";
-    };
-  };
   struct mFairLevelsPrice: public mToScreen,
                            public mJsonToClient<mFairLevelsPrice> {
     const mPrice *const fv;
@@ -1119,14 +1100,15 @@ namespace K {
     };
   };
 
-  struct mStdev: public mFairValue {
-    mPrice topBid = 0,
+  struct mStdev {
+    mPrice fv     = 0,
+           topBid = 0,
            topAsk = 0;
     mStdev()
     {};
     mStdev(mPrice f, mPrice b, mPrice a):
-      topBid(b), topAsk(a)
-    { fv = f; };
+      fv(f), topBid(b), topAsk(a)
+    {};
   };
   static void to_json(json &j, const mStdev &k) {
     j = {
@@ -1218,6 +1200,21 @@ namespace K {
     };
   };
 
+  struct mFairHistory: public mVectorFromDb<mPrice> {
+    const mMatter about() const {
+      return mMatter::MarketDataLongTerm;
+    };
+    const double limit() const {
+      return 5760;
+    };
+    const mClock lifetime() const {
+      return 60e+3 * limit();
+    };
+    string explainOK() const {
+      return "loaded % historical Fair Values";
+    };
+  };
+
   struct mEwma: public mToScreen,
                 public mStructFromDb<mEwma> {
     mFairHistory fairValue96h;
@@ -1241,7 +1238,7 @@ namespace K {
       push();
     };
     void prepareHistory(const mPrice &fv) {
-      fairValue96h.push_back(mFairValue(fv));
+      fairValue96h.push_back(fv);
     };
     void calc(mPrice *const mean, const unsigned int &periods, const mPrice &value) {
       if (*mean) {
@@ -1252,8 +1249,9 @@ namespace K {
     void calcFromHistory(mPrice *const mean, const unsigned int &periods, const string &name) {
       unsigned int n = fairValue96h.size();
       if (!n) return;
-      *mean = fairValue96h.begin()->fv;
-      while (n--) calc(mean, periods, (fairValue96h.rbegin()+n)->fv);
+      unsigned int x = 0;
+      *mean = fairValue96h.front();
+      while (n--) calc(mean, periods, fairValue96h.at(++x));
       print("MG", "reloaded " + to_string(*mean) + " EWMA " + name);
     };
     void calcFromHistory() {
@@ -1281,7 +1279,7 @@ namespace K {
     void calcTargetPositionAutoPercentage() {
       unsigned int max3size = min((size_t)3, fairValue96h.size());
       mPrice SMA3 = accumulate(fairValue96h.end() - max3size, fairValue96h.end(), mPrice(),
-        [](mPrice sma3, const mFairValue &it) { return sma3 + it.fv; }
+        [](mPrice sma3, const mPrice &it) { return sma3 + it; }
       ) / max3size;
       double targetPosition = 0;
       if (qp.autoPositionMode == mAutoPositionMode::EWMA_LMS) {
