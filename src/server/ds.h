@@ -2188,8 +2188,8 @@ namespace K {
 
   struct mBroker: public mToScreen,
                   public mJsonToClient<mBroker> {
-    map<mRandId, mOrder> orders;
-        mTradesCompleted tradesHistory;
+    unordered_map<mRandId, mOrder> orders;
+                  mTradesCompleted tradesHistory;
     mOrder *const find(const mRandId &orderId) {
       return (orderId.empty()
         or orders.find(orderId) == orders.end()
@@ -2200,7 +2200,7 @@ namespace K {
       if (raw.orderStatus == mStatus::New and !raw.orderId.empty())
         return &(orders[raw.orderId] = raw);
       if (raw.orderId.empty() and !raw.exchangeId.empty()) {
-        map<mRandId, mOrder>::iterator it = find_if(
+        unordered_map<mRandId, mOrder>::iterator it = find_if(
           orders.begin(), orders.end(),
           [&](const pair<mRandId, mOrder> &it_) {
             return raw.exchangeId == it_.second.exchangeId;
@@ -2263,13 +2263,13 @@ namespace K {
     };
     void erase(const mRandId &orderId) {
       if (debug()) print("DEBUG OG", "remove " + orderId);
-      map<mRandId, mOrder>::iterator it = orders.find(orderId);
+      unordered_map<mRandId, mOrder>::iterator it = orders.find(orderId);
       if (it != orders.end()) orders.erase(it);
       if (debug()) report_size();
     };
     const mAmount calcHeldAmount(const mSide &side) const {
       return accumulate(orders.begin(), orders.end(), mAmount(),
-        [&](mAmount held, const map<mRandId, mOrder>::value_type &it) {
+        [&](mAmount held, const unordered_map<mRandId, mOrder>::value_type &it) {
           if (it.second.side == side and it.second.orderStatus == mStatus::Working)
             return held + (it.second.side == mSide::Ask
               ? it.second.quantity
@@ -2281,7 +2281,7 @@ namespace K {
     };
     vector<mOrder*> working(const mSide &side = mSide::Both) {
       vector<mOrder*> workingOrders;
-      for (map<mRandId, mOrder>::value_type &it : orders)
+      for (unordered_map<mRandId, mOrder>::value_type &it : orders)
         if (mStatus::Working == it.second.orderStatus and (side == mSide::Both
           or (side == it.second.side and it.second.preferPostOnly)
         )) workingOrders.push_back(&it.second);
@@ -2289,7 +2289,7 @@ namespace K {
     };
     const vector<mOrder> working(const bool &sorted = false) const {
       vector<mOrder> workingOrders;
-      for (const map<mRandId, mOrder>::value_type &it : orders)
+      for (const unordered_map<mRandId, mOrder>::value_type &it : orders)
         if (mStatus::Working == it.second.orderStatus)
           workingOrders.push_back(it.second);
       if (sorted)

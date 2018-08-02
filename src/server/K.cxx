@@ -1,7 +1,11 @@
 #include <stdlib.h>
 #include <iostream>
+#include <iomanip>
 #include <sstream>
 #include <string>
+#include <vector>
+#include <unordered_map>
+#include <map>
 #include <random>
 #include <thread>
 #include <mutex>
@@ -12,11 +16,8 @@
 #include <math.h>
 #include <getopt.h>
 #include <signal.h>
-#include <functional>
 #include <algorithm>
-#include <iomanip>
-#include <vector>
-#include <map>
+#include <functional>
 
 #ifndef _WIN32
 #  include <execinfo.h>

@@ -130,7 +130,7 @@ namespace K {
         levels.filterAskOrders.clear();
         vector<mRandId> zombies;
         mClock now = Tstamp;
-        for (map<mRandId, mOrder>::value_type &it : broker.orders)
+        for (unordered_map<mRandId, mOrder>::value_type &it : broker.orders)
           if (it.second.orderStatus == mStatus::New) {
             if (now-10e+3>it.second.time) zombies.push_back(it.first);
             (*qNew)++;
@@ -392,7 +392,7 @@ namespace K {
         vector<mOrder*> toCancel,
                         keepWorking;
         mClock now = Tstamp;
-        for (map<mRandId, mOrder>::value_type &it : broker.orders)
+        for (unordered_map<mRandId, mOrder>::value_type &it : broker.orders)
           if (it.second.side != side or !it.second.preferPostOnly) continue;
           else if (abs(it.second.price - quote.price) < gw->minTick) return;
           else if (it.second.orderStatus == mStatus::New) {

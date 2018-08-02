@@ -5,7 +5,7 @@ namespace K {
   class SH: public Screen { public: SH() { screen = this; };
     private:
       future<mHotkey> hotkey;
-      map<mHotkey, function<void()>> hotFn;
+      unordered_map<mHotkey, function<void()>> hotFn;
       WINDOW *wBorder = nullptr,
              *wLog    = nullptr;
       int cursor = 0;

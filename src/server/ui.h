@@ -13,9 +13,9 @@ namespace K {
     private:
       int connections = 0;
       string B64auth = "";
-      map<char, function<json()>> hello;
-      map<char, function<void(const json&)>> kisses;
-      map<mMatter, string> queue;
+      unordered_map<char, function<json()>> hello;
+      unordered_map<char, function<void(const json&)>> kisses;
+      unordered_map<mMatter, string> queue;
     protected:
       void load() {
         if (!socket
@@ -94,7 +94,7 @@ namespace K {
         };
       };
       void timer_Xs() {
-        for (map<mMatter, string>::value_type &it : queue)
+        for (unordered_map<mMatter, string>::value_type &it : queue)
           broadcast(it.first, it.second);
         queue.clear();
       };
