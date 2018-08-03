@@ -101,44 +101,31 @@ namespace K {
       future<vector<mTrade>> replyTrades;
       future<vector<mOrder>> replyOrders;
       future<vector<mOrder>> replyCancelAll;
-      const bool askForWallet() { return !(async_wallet() or !askFor(replyWallets, [&]() { return sync_wallet(); })); };
-      const bool askForLevels() { return askFor(replyLevels, [&]() { return sync_levels(); }); };
-      const bool askForTrades() { return askFor(replyTrades, [&]() { return sync_trades(); }); };
-      const bool askForOrders() { return askFor(replyOrders, [&]() { return sync_orders(); }); };
-      const bool askForCancelAll() { return askFor(replyCancelAll, [&]() { return sync_cancelAll(); }); };
       const bool askForNeverAsyncData(const unsigned int &tick) {
         bool waiting = false;
         if (TRUEONCE(askForFees)
-          or !(tick % 15))       waiting |= askForWallet();
+          or !(tick % 15))       waiting |= !(async_wallet() or !askFor(replyWallets, [&]() { return sync_wallet(); }));
         if (qp.cancelOrdersAuto
-          and !(tick % 300))     waiting |= askForCancelAll();
-        return waiting;
-      };
-      const bool askForSadlyNotAsyncData(const unsigned int &tick) {
-        bool waiting = false;
-        if (!(tick % 2))         waiting |= askForOrders();
-                                 waiting |= askForNeverAsyncData(tick);
+          and !(tick % 300))     waiting |= askFor(replyCancelAll, [&]() { return sync_cancelAll(); });
         return waiting;
       };
       const bool askForSyncData(const unsigned int &tick) {
         bool waiting = false;
-                                 waiting |= askForSadlyNotAsyncData(tick);
-        if (!(tick % 3))         waiting |= askForLevels();
-        if (!(tick % 60))        waiting |= askForTrades();
+        if (!(tick % 2))         waiting |= askFor(replyOrders, [&]() { return sync_orders(); });
+                                 waiting |= askForNeverAsyncData(tick);
+        if (!(tick % 3))         waiting |= askFor(replyLevels, [&]() { return sync_levels(); });
+        if (!(tick % 60))        waiting |= askFor(replyTrades, [&]() { return sync_trades(); });
         return waiting;
       };
       const bool waitForNeverAsyncData() {
-        return waitFor(replyWallets, write_mWallets)
+        return waitFor(replyWallets,   write_mWallets)
              | waitFor(replyCancelAll, write_mOrder);
       };
-      const bool waitForSadlyNotAsyncData() {
-        return waitFor(replyOrders, write_mOrder)
-             | waitForNeverAsyncData();
-      };
       const bool waitForSyncData() {
-        return waitForSadlyNotAsyncData()
-            | waitFor(replyLevels, write_mLevels)
-            | waitFor(replyTrades, write_mTrade);
+        return waitFor(replyOrders,    write_mOrder)
+             | waitForNeverAsyncData()
+             | waitFor(replyLevels,    write_mLevels)
+             | waitFor(replyTrades,    write_mTrade);
       };
       template<typename mData, typename syncFn> const bool askFor(
               future<vector<mData>> &reply,
@@ -300,15 +287,6 @@ namespace K {
         return waitForNeverAsyncData();
       };
   };
-  class GwApiWSlame: public GwApiWS {
-    public:
-      const bool askForData(const unsigned int &tick) {
-        return askForSadlyNotAsyncData(tick);
-      };
-      const bool waitForData() {
-        return waitForNeverAsyncData();
-      };
-  };
 
   class GwNull: public GwApiREST {
     protected:
@@ -416,7 +394,7 @@ namespace K {
       };
   };
   class GwEthfinex: public GwBitfinex {};
-  class GwFCoin: public GwApiWSlame {
+  class GwFCoin: public GwApiWS {
     protected:
       const json handshake() {
         randId = mRandom::char16Id;
