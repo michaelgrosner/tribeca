@@ -31,7 +31,7 @@ The web UI is compatible with most web browsers/devices/resolutions, but Firefox
 
 ||with Post-Only Orders support|without Post-Only|
 |---|---|---|
-|**without Maker fees**|[Coinbase GDAX](https://www.gdax.com/)<br> &#10239; _REST + WebSocket + FIX_|[HitBTC](https://hitbtc.com/)<br> &#10239; _REST + WebSocket_<br><br>|
+|**without Maker fees**|[Coinbase](https://pro.coinbase.com/)<br> &#10239; _REST + WebSocket + FIX_|[HitBTC](https://hitbtc.com/)<br> &#10239; _REST + WebSocket_<br><br>|
 |**with Maker and Taker fees**|[Bitfinex](https://www.bitfinex.com/)<br>[Ethfinex](https://www.ethfinex.com/)<br> &#10239; _REST + WebSocket_<br><br>[Kraken](https://www.kraken.com/)<br> &#10239; _REST_<br><br>[Poloniex](https://www.poloniex.com/)<br> &#10239; _REST_|[OKCoin.com](https://www.okcoin.com/)<br>[OKCoin.cn](https://www.okcoin.cn/)<br>[OKEx.com](https://www.okex.com/)<br> &#10239; _REST + WebSocket_<br><br>[Korbit](https://www.korbit.co.kr/)<br> &#10239; _REST_|
 
 All currency pairs are supported.
@@ -316,7 +316,7 @@ Updated OKCoin API (since https://www.okcoin.com/t-354.html).
 
 Updated Bitfinex API v2.
 
-Added GDAX FIX API with stunnel.
+Added Coinbase FIX API with stunnel.
 
 Added Korbit API.
 

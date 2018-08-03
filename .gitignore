@@ -4,7 +4,7 @@
 /*.gcno
 /*.gcda
 /node_modules
-/etc/sslcert/fix.gdax.com.pem
+/etc/sslcert/fix.pro.coinbase.com.pem
 /etc/sslcert/server.crt
 /etc/sslcert/server.key
 /Vagrantfile

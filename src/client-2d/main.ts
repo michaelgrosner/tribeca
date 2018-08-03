@@ -952,7 +952,7 @@ class ClientComponent implements OnInit {
       : (this.exchange_name=='OKEX'
         ? 'https://www.okex.com/spot/market/index.do'
         : (this.exchange_name=='COINBASE'
-          ? 'https://gdax.com/trade/'+this.baseCurrency+'-'+this.quoteCurrency
+          ? 'https://pro.coinbase.com/trade/'+this.baseCurrency+'-'+this.quoteCurrency
           : (this.exchange_name=='BITFINEX' || this.exchange_name=='BitfinexMargin'
             ? 'https://www.bitfinex.com/trading/'+this.baseCurrency+this.quoteCurrency
             : (this.exchange_name=='HITBTC'
@@ -976,7 +976,7 @@ class ClientComponent implements OnInit {
       : (this.exchange_name=='OKEX'
         ? 'https://www.okex.com/spot/trade/spotEntrust.do'
         : (this.exchange_name=='COINBASE'
-          ? 'https://www.gdax.com/orders/'+this.baseCurrency+'-'+this.quoteCurrency
+          ? 'https://pro.coinbase.com/orders/'+this.baseCurrency+'-'+this.quoteCurrency
           : (this.exchange_name=='BITFINEX' || this.exchange_name=='BitfinexMargin'
             ? 'https://www.bitfinex.com/reports/orders'
             : (this.exchange_name=='HITBTC'

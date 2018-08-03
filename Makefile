@@ -2,7 +2,7 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
 PATCH    = 9
-BUILD    = 13
+BUILD    = 14
 CHOST   ?= $(shell $(MAKE) CHOST= chost -s)
 CARCH    = x86_64-linux-gnu arm-linux-gnueabihf aarch64-linux-gnu x86_64-apple-darwin17 x86_64-w64-mingw32
 KLOCAL  := build-$(CHOST)/local
@@ -319,8 +319,8 @@ cabundle:
 	curl --time-cond etc/cabundle.pem https://curl.haxx.se/ca/cacert.pem -o etc/cabundle.pem
 
 coinbase:
-	@openssl s_client -showcerts -connect fix.gdax.com:4198 -CApath /etc/ssl/certs < /dev/null 2> /dev/null \
-	| openssl x509 -outform PEM > etc/sslcert/fix.gdax.com.pem
+	@openssl s_client -showcerts -connect fix.pro.coinbase.com:4198 -CApath /etc/ssl/certs < /dev/null 2> /dev/null \
+	| openssl x509 -outform PEM > etc/sslcert/fix.pro.coinbase.com.pem
 
 clients: src/client-2d
 	rm -rf $(KLOCAL)/var
