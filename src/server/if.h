@@ -69,6 +69,7 @@ namespace K {
       function<void(const mConnectivity&)> write_mConnectivity;
 #define RAWDATA_ENTRY_POINT(mData, read) write_##mData = [&](const mData &rawdata) read
       bool askForFees = false;
+      virtual const json handshake() = 0;
       virtual const bool askForData(const unsigned int &tick) = 0;
       virtual const bool waitForData() = 0;
       void place(mOrder *const order) {
@@ -206,7 +207,6 @@ namespace K {
         raise(SIGINT);
       };
     protected:
-      virtual const json handshake() = 0;
       void reconnect(const string &reason) {
         countdown = 7;
         print("GW " + exchange, "WS " + reason + ", reconnecting in " + to_string(countdown) + "s.");
@@ -329,7 +329,8 @@ namespace K {
       };
   };
   class GwOkEx: public GwOkCoin {};
-  class GwCoinbase: public GwApiWS {
+  class GwCoinbase: public GwApiWS,
+                    public FIX::NullApplication {
     public:
       void run() {
         mCommand::stunnel(true);
