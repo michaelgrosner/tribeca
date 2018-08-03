@@ -62,28 +62,15 @@ namespace K {
 
   class GwExchangeData {
     public:
-      bool async = false;
       function<void(const mOrder&)>        write_mOrder;
       function<void(const mTrade&)>        write_mTrade;
       function<void(const mLevels&)>       write_mLevels;
       function<void(const mWallets&)>      write_mWallets;
       function<void(const mConnectivity&)> write_mConnectivity;
 #define RAWDATA_ENTRY_POINT(mData, read) write_##mData = [&](const mData &rawdata) read
-      bool waitForData() {
-        return (async
-          ? 0
-          : waitFor(replyOrders, write_mOrder)
-            | waitFor(replyLevels, write_mLevels)
-            | waitFor(replyTrades, write_mTrade)
-        ) | waitFor(replyWallets, write_mWallets)
-          | waitFor(replyCancelAll, write_mOrder);
-      };
       bool askForFees = false;
-      function<bool()> askForWallet = [&]() { return !(async_wallet() or !askFor(replyWallets, [&]() { return sync_wallet(); })); };
-      function<bool()> askForLevels = [&]() { return askFor(replyLevels, [&]() { return sync_levels(); }); };
-      function<bool()> askForTrades = [&]() { return askFor(replyTrades, [&]() { return sync_trades(); }); };
-      function<bool()> askForOrders = [&]() { return askFor(replyOrders, [&]() { return sync_orders(); }); };
-      function<bool()> askForCancelAll = [&]() { return askFor(replyCancelAll, [&]() { return sync_cancelAll(); }); };
+      virtual const bool askForData(const unsigned int &tick) = 0;
+      virtual const bool waitForData() = 0;
       void place(mOrder *const order) {
         place(
           order->orderId,
@@ -96,25 +83,64 @@ namespace K {
         );
       };
 //BO non-free gw library functions from build-*/local/lib/K-*.a (it just redefines all virtual gateway class members below).
-/**/  virtual bool ready() = 0;                                              // wait for exchange and maybe set async = true
+/**/  virtual bool ready() = 0;                                              // wait for exchange and register data handlers
 /**/  function<void(mRandId, string)> replace;                               // call         async orders data from exchange
 /**/  virtual void place(mRandId, mSide, string, string, mOrderType, mTimeInForce, bool) = 0, // async orders as above/below
 /**/             cancel(mRandId, mRandId) = 0,                               // call         async orders data from exchange
 /**/             close() = 0;                                                // disconnect but without waiting for reconnect
-/**/  virtual vector<mOrder>   sync_cancelAll() = 0;                         // call and read sync orders data from exchange
 /**/protected:
 /**/  virtual bool            async_wallet() { return false; };              // call         async wallet data from exchange
 /**/  virtual vector<mWallets> sync_wallet() { return {}; };                 // call and read sync wallet data from exchange
 /**/  virtual vector<mLevels>  sync_levels()  { return {}; };                // call and read sync levels data from exchange
 /**/  virtual vector<mTrade>   sync_trades()  { return {}; };                // call and read sync trades data from exchange
 /**/  virtual vector<mOrder>   sync_orders()  { return {}; };                // call and read sync orders data from exchange
+/**/  virtual vector<mOrder>   sync_cancelAll() = 0;                         // call and read sync orders data from exchange
 //EO non-free gw library functions from build-*/local/lib/K-*.a (it just redefines all virtual gateway class members above).
       future<vector<mWallets>> replyWallets;
       future<vector<mLevels>> replyLevels;
       future<vector<mTrade>> replyTrades;
       future<vector<mOrder>> replyOrders;
       future<vector<mOrder>> replyCancelAll;
-      template<typename mData, typename syncFn> bool askFor(
+      const bool askForWallet() { return !(async_wallet() or !askFor(replyWallets, [&]() { return sync_wallet(); })); };
+      const bool askForLevels() { return askFor(replyLevels, [&]() { return sync_levels(); }); };
+      const bool askForTrades() { return askFor(replyTrades, [&]() { return sync_trades(); }); };
+      const bool askForOrders() { return askFor(replyOrders, [&]() { return sync_orders(); }); };
+      const bool askForCancelAll() { return askFor(replyCancelAll, [&]() { return sync_cancelAll(); }); };
+      const bool askForNeverAsyncData(const unsigned int &tick) {
+        bool waiting = false;
+        if (TRUEONCE(askForFees)
+          or !(tick % 15))       waiting |= askForWallet();
+        if (qp.cancelOrdersAuto
+          and !(tick % 300))     waiting |= askForCancelAll();
+        return waiting;
+      };
+      const bool askForSadlyNotAsyncData(const unsigned int &tick) {
+        bool waiting = false;
+        if (!(tick % 2))         waiting |= askForOrders();
+                                 waiting |= askForNeverAsyncData(tick);
+        return waiting;
+      };
+      const bool askForSyncData(const unsigned int &tick) {
+        bool waiting = false;
+                                 waiting |= askForSadlyNotAsyncData(tick);
+        if (!(tick % 3))         waiting |= askForLevels();
+        if (!(tick % 60))        waiting |= askForTrades();
+        return waiting;
+      };
+      const bool waitForNeverAsyncData() {
+        return waitFor(replyWallets, write_mWallets)
+             | waitFor(replyCancelAll, write_mOrder);
+      };
+      const bool waitForSadlyNotAsyncData() {
+        return waitFor(replyOrders, write_mOrder)
+             | waitForNeverAsyncData();
+      };
+      const bool waitForSyncData() {
+        return waitForSadlyNotAsyncData()
+            | waitFor(replyLevels, write_mLevels)
+            | waitFor(replyTrades, write_mTrade);
+      };
+      template<typename mData, typename syncFn> const bool askFor(
               future<vector<mData>> &reply,
         const syncFn                &read
       ) {
@@ -125,7 +151,7 @@ namespace K {
         }
         return waiting;
       };
-      template<typename mData> unsigned int waitFor(
+      template<typename mData> const unsigned int waitFor(
               future<vector<mData>>        &reply,
         const function<void(const mData&)> &write
       ) {
@@ -178,7 +204,6 @@ namespace K {
         socket->connect(ws, nullptr, {}, 5e+3, &socket->getDefaultGroup<uWS::CLIENT>());
       };
       virtual void run() {
-        if (async) countdown = 1;
         socket->run();
       };
       virtual void end() {
@@ -255,7 +280,37 @@ namespace K {
 //EO non-free gw library functions from build-*/local/lib/K-*.a (it just returns a derived gateway class based on argument).
   } *gw = nullptr;
 
-  class GwNull: public Gw {
+  class GwApiREST: public Gw {
+    public:
+      const bool askForData(const unsigned int &tick) {
+        return askForSyncData(tick);
+      };
+      const bool waitForData() {
+        return waitForSyncData();
+      };
+  };
+  class GwApiWS: public Gw {
+    public:
+      GwApiWS()
+      { countdown = 1; };
+      const bool askForData(const unsigned int &tick) {
+        return askForNeverAsyncData(tick);
+      };
+      const bool waitForData() {
+        return waitForNeverAsyncData();
+      };
+  };
+  class GwApiWSlame: public GwApiWS {
+    public:
+      const bool askForData(const unsigned int &tick) {
+        return askForSadlyNotAsyncData(tick);
+      };
+      const bool waitForData() {
+        return waitForNeverAsyncData();
+      };
+  };
+
+  class GwNull: public GwApiREST {
     protected:
       const json handshake() {
         randId  = mRandom::uuid36Id;
@@ -265,7 +320,7 @@ namespace K {
         return nullptr;
       };
   };
-  class GwHitBtc: public Gw {
+  class GwHitBtc: public GwApiWS {
     protected:
       const json handshake() {
         randId = mRandom::uuid32Id;
@@ -285,7 +340,7 @@ namespace K {
         });
       };
   };
-  class GwOkCoin: public Gw {
+  class GwOkCoin: public GwApiWS {
     protected:
       const json handshake() {
         randId = mRandom::char16Id;
@@ -296,7 +351,7 @@ namespace K {
       };
   };
   class GwOkEx: public GwOkCoin {};
-  class GwCoinbase: public Gw {
+  class GwCoinbase: public GwApiWS {
     public:
       void run() {
         mCommand::stunnel(true);
@@ -327,7 +382,7 @@ namespace K {
         });
       };
   };
-  class GwBitfinex: public Gw {
+  class GwBitfinex: public GwApiWS {
     protected:
       const json handshake() {
         randId = mRandom::int45Id;
@@ -361,7 +416,7 @@ namespace K {
       };
   };
   class GwEthfinex: public GwBitfinex {};
-  class GwFCoin: public Gw {
+  class GwFCoin: public GwApiWSlame {
     protected:
       const json handshake() {
         randId = mRandom::char16Id;
@@ -400,7 +455,7 @@ namespace K {
         });
       };
   };
-  class GwKraken: public Gw {
+  class GwKraken: public GwApiREST {
     protected:
       const json handshake() {
         randId = mRandom::int32Id;
@@ -431,7 +486,7 @@ namespace K {
         });
       };
   };
-  class GwKorbit: public Gw {
+  class GwKorbit: public GwApiREST {
     protected:
       const json handshake() {
         randId = mRandom::int45Id;
@@ -455,7 +510,7 @@ namespace K {
         });
       };
   };
-  class GwPoloniex: public Gw {
+  class GwPoloniex: public GwApiREST {
     protected:
       const json handshake() {
         randId = mRandom::int45Id;

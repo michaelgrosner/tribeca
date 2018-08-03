@@ -48,8 +48,8 @@ namespace K  {
         loop->send();
       };
     private:
-      void async(const function<bool()> &fn) {
-        if (fn()) loop->send();
+      void async(const bool &waiting) {
+        if (waiting) loop->send();
       };
       void (*walk)(uS::Async*) = [](uS::Async *const loop) {
         EV *k = (EV*)loop->getData();
@@ -66,20 +66,11 @@ namespace K  {
           tick = 0;
           return;
         }
-        if (TRUEONCE(gw->askForFees)
-          or !(tick % 15))                    async(gw->askForWallet);
-        if (!gw->async) {
-          if (!(tick % 2))                    async(gw->askForOrders);
-          if (!(tick % 3))                    async(gw->askForLevels);
-          if (!(tick % 60))                   async(gw->askForTrades);
-        }
+                                              async(gw->askForData(tick));
         if (client->socket and qp.delayUI
           and !(tick % qp.delayUI))           client->timer_Xs();
-        if (!(++tick % 300)) {
-          if (qp.cancelOrdersAuto)            async(gw->askForCancelAll);
-          if (tick >= 300 * (qp.delayUI?:1))
-            tick = 0;
-        }
+        if (++tick >= 300 * (qp.delayUI?:1))
+          tick = 0;
       };
   };
 }
