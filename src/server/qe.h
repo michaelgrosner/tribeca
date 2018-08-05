@@ -8,7 +8,6 @@ namespace K {
       mQuoteState bidStatus = mQuoteState::MissingData,
                   askStatus = mQuoteState::MissingData;
       mQuoteStatus status;
-      unsigned int AK47inc = 0;
     protected:
       void load() {
         SQLITE_BACKUP
@@ -46,19 +45,6 @@ namespace K {
         gw->load_externals();
       };
     public:
-      void timer_1s(const unsigned int &tick) {                     PRETTY_DEBUG
-        if (levels.warn_empty()) return;
-        levels.timer_1s();
-        if (!(tick % 60)) {
-          levels.timer_60s();
-          monitor.timer_60s();
-        }
-        wallet.target.safety.timer_1s(
-          levels,
-          broker.tradesHistory
-        );
-        calcQuote();
-      };
       void calcQuote() {                                            PRETTY_DEBUG
         bidStatus = mQuoteState::MissingData;
         askStatus = mQuoteState::MissingData;
@@ -69,7 +55,7 @@ namespace K {
           if (!semaphore.greenButton) {
             bidStatus = mQuoteState::DisabledQuotes;
             askStatus = mQuoteState::DisabledQuotes;
-            cancelOrders(mSide::Both);
+            cancelOrders();
           } else {
             bidStatus = mQuoteState::UnknownHeld;
             askStatus = mQuoteState::UnknownHeld;
@@ -77,14 +63,6 @@ namespace K {
           }
         }
         sendStatusToUI();
-      };
-      void calcQuoteAfterSavedParams() {
-        levels.dummyMM.reset("saved");
-        levels.calcFairValue(gw->minTick);
-        levels.stats.ewma.calcFromHistory();
-        wallet.send_ratelimit(levels);
-        wallet.target.safety.calc(levels, broker.tradesHistory);
-        calcQuote();
       };
     private:
       void sendQuoteToAPI() {
@@ -325,10 +303,10 @@ namespace K {
           ? qp.rangePercentage * wallet.base.value / 100
           : qp.range;
         if (!rawQuote->bid.empty())
-          rawQuote->bid.price -= AK47inc * range;
+          rawQuote->bid.price -= status.AK47inc * range;
         if (!rawQuote->ask.empty())
-          rawQuote->ask.price += AK47inc * range;
-        if (++AK47inc > qp.bullets) AK47inc = 0;
+          rawQuote->ask.price += status.AK47inc * range;
+        if (++status.AK47inc > qp.bullets) status.AK47inc = 0;
       };
       void applyStdevProtection(mQuote *const rawQuote) {
         if (qp.quotingStdevProtection == mSTDEV::Off or !levels.stats.stdev.fair) return;

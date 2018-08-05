@@ -303,9 +303,7 @@ namespace K {
   };
 
   struct mFromClient: virtual public mAbout {
-    virtual const json kiss(const json &j) {
-      return j;
-    };
+    virtual void kiss(json *const j) {};
   };
 
   struct mToScreen {
@@ -529,13 +527,12 @@ namespace K {
       _diffXSEP = prev.extraShortEwmaPeriods != extraShortEwmaPeriods;
       _diffUEP = prev.ultraShortEwmaPeriods != ultraShortEwmaPeriods;
     };
-    const json kiss(const json &j) {
+    void kiss(json *const j) {
       mQuotingParams prev = *this; // just need to copy the 6 prev.* vars above, noob
-      from_json(j, *this);
+      from_json(*j, *this);
       diff(prev);
       push();
       send();
-      return j;
     };
     const mMatter about() const {
       return mMatter::QuotingParameters;
@@ -732,7 +729,7 @@ namespace K {
     k.side           = j.value("side", "") == "Bid"
                        ? mSide::Bid
                        : mSide::Ask;
-    k.type           = j.value("orderType", "") == "Limit"
+    k.type           = j.value("type", "") == "Limit"
                        ? mOrderType::Limit
                        : mOrderType::Market;
     k.timeInForce    = j.value("timeInForce", "") == "GTC"
@@ -849,9 +846,7 @@ namespace K {
         return true;
       });
     };
-    void clearOne(const json &butterfly) {
-      if (!butterfly.is_string()) return;
-      const string &tradeId = butterfly.get<string>();
+    void clearOne(const string &tradeId) {
       if (tradeId.empty()) return;
       clear_if([&](iterator it) {
         return it->tradeId == tradeId;
@@ -1751,13 +1746,13 @@ namespace K {
     const bool ratelimit() const {
       return !empty() and crbegin()->time + 21e+3 > Tstamp;
     };
-    const double calcBase() const {
+    const double calcBaseDiff() const {
       return calcDiffPercent(
         cbegin()->baseValue,
         crbegin()->baseValue
       );
     };
-    const double calcQuote() const {
+    const double calcQuoteDiff() const {
       return calcDiffPercent(
         cbegin()->quoteValue,
         crbegin()->quoteValue
@@ -2089,8 +2084,8 @@ namespace K {
     void calcProfits() {
       if (!profits.ratelimit())
         profits.push_back(mProfit(base.value, quote.value));
-      base.profit  = profits.calcBase();
-      quote.profit = profits.calcQuote();
+      base.profit  = profits.calcBaseDiff();
+      quote.profit = profits.calcQuoteDiff();
     };
     void calcMaxWallet(const mPrice &fv) {
       mAmount maxWallet = args.maxWallet;
@@ -2136,16 +2131,19 @@ namespace K {
   };
 
   struct mButtonSubmitNewOrder: public mFromClient {
+    void kiss(json *const j) {
+      if (!j->is_object() or !j->value("price", 0.0) or !j->value("quantity", 0.0))
+        *j = nullptr;
+    };
     const mMatter about() const {
       return mMatter::SubmitNewOrder;
     };
   };
   struct mButtonCancelOrder: public mFromClient {
-    const json kiss(const json &j) {
-      json butterfly;
-      if (j.is_object() and j.at("orderId").is_string())
-        butterfly = j.at("orderId");
-      return butterfly;
+    void kiss(json *const j) {
+      *j = (j->is_object() and !j->value("orderId", "").empty())
+        ? j->at("orderId").get<mRandId>()
+        : nullptr;
     };
     const mMatter about() const {
       return mMatter::CancelOrder;
@@ -2167,11 +2165,10 @@ namespace K {
     };
   };
   struct mButtonCleanTrade: public mFromClient {
-    const json kiss(const json &j) {
-      json butterfly;
-      if (j.is_object() and j.at("tradeId").is_string())
-        butterfly = j.at("tradeId");
-      return butterfly;
+    void kiss(json *const j) {
+      *j = (j->is_object() and !j->value("tradeId", "").empty())
+        ? j->at("tradeId").get<string>()
+        : nullptr;
     };
     const mMatter about() const {
       return mMatter::CleanTrade;
@@ -2359,7 +2356,8 @@ namespace K {
                  askStatus             = mQuoteState::Disconnected;
     unsigned int quotesInMemoryNew     = 0,
                  quotesInMemoryWorking = 0,
-                 quotesInMemoryDone    = 0;
+                 quotesInMemoryDone    = 0,
+                 AK47inc               = 0;
     const mMatter about() const {
       return mMatter::QuoteStatus;
     };
@@ -2379,10 +2377,9 @@ namespace K {
 
   struct mNotepad: public mJsonToClient<mNotepad> {
     string content;
-    const json kiss(const json &j) {
-      if (j.is_array() and j.size())
-        content = j.at(0);
-      return j;
+    void kiss(json *const j) {
+      if (j->is_array() and j->size() and j->at(0).is_string())
+        content = j->at(0);
     };
     const mMatter about() const {
       return mMatter::Notepad;
@@ -2397,10 +2394,9 @@ namespace K {
     mConnectivity *const adminAgreement = (mConnectivity*)&args.autobot;
     mConnectivity greenButton           = mConnectivity::Disconnected,
                   greenGateway          = mConnectivity::Disconnected;
-    const json kiss(const json &j) {
-      if (j.is_object() and j.at("state").is_number())
-        agree(j.at("state").get<mConnectivity>());
-      return j;
+    void kiss(json *const j) {
+      if (j->is_object() and j->at("state").is_number())
+        agree(j->at("state").get<mConnectivity>());
     };
     const bool online(const mConnectivity &raw) {
       if (greenGateway != raw) {
@@ -2711,8 +2707,10 @@ namespace K {
     mMonitor():
       orders_60s(0)
     {};
-    function<const unsigned int()> dbSize = []() {
-      return 0;
+    const unsigned int dbSize() const {
+      if (args.database == ":memory:") return 0;
+      struct stat st;
+      return stat(args.database.data(), &st) ? 0 : st.st_size;
     };
     const unsigned int memSize() const {
       string ps = mCommand::ps();

@@ -14,7 +14,7 @@ namespace K {
       int connections = 0;
       string B64auth = "";
       unordered_map<char, function<json()>> hello;
-      unordered_map<char, function<void(const json&)>> kisses;
+      unordered_map<char, function<void(json&)>> kisses;
       unordered_map<mMatter, string> queue;
     protected:
       void load() {
@@ -85,12 +85,15 @@ namespace K {
         hello[type] = [&]() { return data.hello(); };
         sendAsync(data);
       };
-      void clickme(mFromClient& data, function<void(const json&)> fn) {
+      void clickme(mFromClient &data, function<void(const json&)> fn) {
         const char type = (char)data.about();
         if (kisses.find(type) != kisses.end())
           EXIT(screen->error("UI", string("Too many handlers for \"") + type + "\" clickme event"));
-        kisses[type] = [&data, fn](const json &butterfly) {
-          fn(data.kiss(butterfly));
+        kisses[type] = [&data, fn](json &butterfly) {
+          data.kiss(&butterfly);
+          if (!butterfly.is_null()) {
+            fn(butterfly);
+          }
         };
       };
       void timer_Xs() {

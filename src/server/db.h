@@ -17,14 +17,6 @@ namespace K {
         exec("ATTACH '" + args.diskdata + "' AS " + qpdb + ";");
         screen->log("DB", "loaded OK from", args.diskdata);
       };
-      void waitWebAdmin() {
-        if (args.database == ":memory:") return;
-        const char* path = args.database.data();
-        engine->monitor.dbSize = [path]() {
-          struct stat st;
-          return stat(path, &st) ? 0 : st.st_size;
-        };
-      };
     public:
       void backup(mFromDb *const data) {
         const bool loaded = data->pull(select(data));

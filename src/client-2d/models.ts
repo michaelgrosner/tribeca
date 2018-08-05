@@ -145,7 +145,7 @@ export class OrderRequestFromUI {
                 public price: number,
                 public quantity: number,
                 public timeInForce: string,
-                public orderType: string) {}
+                public type: string) {}
 }
 
 export class FairValue {

@@ -258,7 +258,7 @@ Added test units.
 
 Added --interface=IP argument to bind outgoing traffic to a specific network interface.
 
-Added Ethfinex API.
+Added Ethfinex and FCoin API.
 
 Added build-in document root to stop reading files from disk.
 

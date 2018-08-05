@@ -57,7 +57,7 @@ namespace K {
       uWS::Hub* socket = nullptr;
       virtual void timer_Xs() = 0;
       virtual void welcome(mToClient&) = 0;
-      virtual void clickme(mFromClient&, function<void(const json&)> = [](const json &butterfly) {}) = 0;
+      virtual void clickme(mFromClient&, function<void(const json&)>) = 0;
   } *client = nullptr;
 
   class GwExchangeData {
@@ -68,11 +68,12 @@ namespace K {
       function<void(const mWallets&)>      write_mWallets;
       function<void(const mConnectivity&)> write_mConnectivity;
 #define RAWDATA_ENTRY_POINT(mData, read) write_##mData = [&](const mData &rawdata) read
+      mRandId (*randId)() = nullptr;
       bool askForFees = false;
       virtual const json handshake() = 0;
       virtual const bool askForData(const unsigned int &tick) = 0;
       virtual const bool waitForData() = 0;
-      void place(mOrder *const order) {
+      void place(const mOrder *const order) {
         place(
           order->orderId,
           order->side,
@@ -168,7 +169,6 @@ namespace K {
                 minSize  = 0;
             int version  = 0, maxLevel = 0,
                 debug    = 0;
-      mRandId (*randId)() = nullptr;
       void load_internals() {
         exchange = args.exchange;
         base     = args.base;
@@ -182,6 +182,7 @@ namespace K {
         ws       = args.wss;
         maxLevel = args.maxLevels;
         debug    = args.debugSecret;
+        monitor->product.minTick = &minTick;
         if (args.latency)
           latency();
       };
@@ -581,8 +582,8 @@ namespace K {
   code( qp                    , calcQuoteAfterSavedParams        ,           ) \
   code( notepad               , void                             ,           ) \
   code( semaphore             , void                             ,           ) \
-  code( btn.submit            , placeOrder                       , butterfly ) \
-  code( btn.cancel            , cancelOrder                      , butterfly ) \
+  code( btn.submit            , manualSendOrder                  , butterfly ) \
+  code( btn.cancel            , manualCancelOrder                , butterfly ) \
   code( btn.cancelAll         , cancelOrders                     ,           ) \
   code( btn.cleanTrade        , broker.tradesHistory.clearOne    , butterfly ) \
   code( btn.cleanTradesClosed , broker.tradesHistory.clearClosed ,           ) \
@@ -595,18 +596,31 @@ namespace K {
              mNotepad notepad;
              mMonitor monitor;
            mSemaphore semaphore;
-    public:
-      virtual void timer_1s(const unsigned int&) = 0;
-      void placeOrder(const json &butterfly) {
-        if (butterfly.is_object())
-          placeOrder((mOrder)butterfly);
+      virtual void calcQuote() = 0;
+      void timer_1s(const unsigned int &tick) {                     PRETTY_DEBUG
+        if (levels.warn_empty()) return;
+        levels.timer_1s();
+        if (!(tick % 60)) {
+          levels.timer_60s();
+          monitor.timer_60s();
+        }
+        wallet.target.safety.timer_1s(levels, broker.tradesHistory);
+        calcQuote();
+      };
+      void calcQuoteAfterSavedParams() {
+        levels.dummyMM.reset("saved");
+        levels.calcFairValue(gw->minTick);
+        levels.stats.ewma.calcFromHistory();
+        wallet.send_ratelimit(levels);
+        wallet.target.safety.calc(levels, broker.tradesHistory);
+        calcQuote();
       };
       void sendOrders(const vector<mOrder*> &toCancel, mOrder *const toReplace, const mLevel &quote, const mSide &side, const bool &isPong) {
         for (mOrder *const it : toCancel)
           cancelOrder(it);
-        if (toReplace and gw->replace) {
+        if (toReplace and gw->replace)
           replaceOrder(toReplace, quote.price, isPong);
-        } else {
+        else {
           if (toReplace and args.testChamber != 1) cancelOrder(toReplace);
           placeOrder(mOrder(
             gw->randId(), side, quote.price, quote.size, mOrderType::Limit, isPong, mTimeInForce::GTC
@@ -615,21 +629,24 @@ namespace K {
         }
         monitor.tick_orders();
       };
-      void cancelOrder(const json &butterfly) {
-        if (butterfly.is_string())
-          cancelOrder(broker.find(butterfly.get<mRandId>()));
-      };
       void cancelOrders(const mSide &side = mSide::Both) {
         for (mOrder *const it : broker.working(side))
           cancelOrder(it);
+      };
+      void manualSendOrder(mOrder order) {
+        order.orderId = gw->randId();
+        placeOrder(order);
+      };
+      void manualCancelOrder(const mRandId &orderId) {
+        cancelOrder(broker.find(orderId));
       };
     private:
       void placeOrder(const mOrder &order) {
         gw->place(broker.upsert(order));
       };
-      void replaceOrder(mOrder *const order, const mPrice &price, const bool &isPong) {
-        if (broker.replace(order, price, isPong))
-          gw->replace(order->exchangeId, str8(order->price));
+      void replaceOrder(mOrder *const toReplace, const mPrice &price, const bool &isPong) {
+        if (broker.replace(toReplace, price, isPong))
+          gw->replace(toReplace->exchangeId, str8(toReplace->price));
       };
       void cancelOrder(mOrder *const order) {
         if (broker.cancel(order))

@@ -29,7 +29,7 @@ class DisplayOrder {
   price : number;
   quantity : number;
   timeInForce : string;
-  orderType : string;
+  type : string;
 
   availableSides : string[];
   availableTifs : string[];
@@ -55,13 +55,13 @@ class DisplayOrder {
     this.availableTifs = DisplayOrder.getNames(Models.TimeInForce);
     this.availableOrderTypes = DisplayOrder.getNames(Models.OrderType);
     this.timeInForce = this.availableTifs[2];
-    this.orderType = this.availableOrderTypes[0];
+    this.type = this.availableOrderTypes[0];
     this._fire = fireFactory.getFire(Models.Topics.SubmitNewOrder);
   }
 
   public submit = () => {
-    if (!this.side || !this.price || !this.quantity || !this.timeInForce || !this.orderType) return;
-    this._fire.fire(new Models.OrderRequestFromUI(this.side, this.price, this.quantity, this.timeInForce, this.orderType));
+    if (!this.side || !this.price || !this.quantity || !this.timeInForce || !this.type) return;
+    this._fire.fire(new Models.OrderRequestFromUI(this.side, this.price, this.quantity, this.timeInForce, this.type));
   };
 }
 
@@ -634,7 +634,7 @@ class DisplayOrder {
                           </tr>
                           <tr>
                               <td><label>Type:</label></td>
-                              <td style="padding-bottom:5px;"><select class="form-control input-sm" [(ngModel)]="order.orderType">
+                              <td style="padding-bottom:5px;"><select class="form-control input-sm" [(ngModel)]="order.type">
                                 <option *ngFor="let option of order.availableOrderTypes" [ngValue]="option">{{option}}</option>
                               </select></td>
                           </tr>
