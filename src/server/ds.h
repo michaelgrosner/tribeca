@@ -1635,8 +1635,8 @@ namespace K {
              mLevelsDiff diff;
        mDummyMarketMaker dummyMM;
             mMarketStats stats;
-    map<mPrice, mAmount> filterBidQuotes,
-                         filterAskQuotes;
+    unordered_map<mPrice, mAmount> filterBidOrders,
+                                   filterAskOrders;
             unsigned int averageCount = 0;
                   mPrice averageWidth = 0,
                          fairValue    = 0;
@@ -1697,9 +1697,9 @@ namespace K {
       bids = unfiltered.bids = next.bids;
       asks = unfiltered.asks = next.asks;
     };
-    void filter(vector<mLevel> *const levels, map<mPrice, mAmount> orders) {
+    void filter(vector<mLevel> *const levels, unordered_map<mPrice, mAmount> orders) {
       for (vector<mLevel>::iterator it = levels->begin(); it != levels->end();) {
-        for (map<mPrice, mAmount>::iterator it_ = orders.begin(); it_ != orders.end();)
+        for (unordered_map<mPrice, mAmount>::iterator it_ = orders.begin(); it_ != orders.end();)
           if (it->price == it_->first) {
             it->size -= it_->second;
             orders.erase(it_);
@@ -1712,8 +1712,8 @@ namespace K {
     };
     void send_reset_filter(const mLevels &next, const mPrice &minTick) {
       reset(next);
-      if (!filterBidQuotes.empty()) filter(&bids, filterBidQuotes);
-      if (!filterAskQuotes.empty()) filter(&asks, filterAskQuotes);
+      if (!filterBidOrders.empty()) filter(&bids, filterBidOrders);
+      if (!filterAskOrders.empty()) filter(&asks, filterAskOrders);
       calcFairValue(minTick);
       calcAverageWidth();
       diff.send_reset();

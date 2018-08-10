@@ -45,8 +45,8 @@ namespace K {
     public:
       void calcQuote() {                                            PRETTY_DEBUG
         quotes.clear();
-        levels.filterBidQuotes.clear();
-        levels.filterAskQuotes.clear();
+        levels.filterBidOrders.clear();
+        levels.filterAskOrders.clear();
         if (!semaphore.greenGateway) {
           quotes.bidStatus = mQuoteState::Disconnected;
           quotes.askStatus = mQuoteState::Disconnected;
@@ -84,9 +84,9 @@ namespace K {
         applyQuotingParameters(widthPing, &quote);
         quotes.bidStatus = checkCrossedQuotes(mSide::Bid, &quote);
         quotes.askStatus = checkCrossedQuotes(mSide::Ask, &quote);
-        if (quotes.askStatus == mQuoteState::Live) updateQuote(&quote.ask, mSide::Ask, quote.isAskPong);
+        if (quotes.askStatus == mQuoteState::Live) quote2order(&quote.ask, mSide::Ask, quote.isAskPong);
         else cancelOrders(mSide::Ask);
-        if (quotes.bidStatus == mQuoteState::Live) updateQuote(&quote.bid, mSide::Bid, quote.isBidPong);
+        if (quotes.bidStatus == mQuoteState::Live) quote2order(&quote.bid, mSide::Bid, quote.isBidPong);
         else cancelOrders(mSide::Bid);
       };
       void applyQuotingParameters(const mPrice &widthPing, mQuote *const rawQuote) {
@@ -326,7 +326,7 @@ namespace K {
           return mQuoteState::Crossed;
         } else return mQuoteState::Live;
       };
-      void updateQuote(mLevel *const quote, const mSide &side, const bool &isPong) {
+      void quote2order(mLevel *const quote, const mSide &side, const bool &isPong) {
         unsigned int n = 0;
         vector<mOrder*> toCancel,
                         keepWorking;
@@ -343,8 +343,8 @@ namespace K {
               quotes.quotesInMemoryNew++;
             } else if (it.second.orderStatus == mStatus::Working) {
               (mSide::Bid == it.second.side
-                ? levels.filterBidQuotes
-                : levels.filterAskQuotes
+                ? levels.filterBidOrders
+                : levels.filterAskOrders
               )[it.second.price] += it.second.quantity;
               quotes.quotesInMemoryWorking++;
             } else quotes.quotesInMemoryDone++;
