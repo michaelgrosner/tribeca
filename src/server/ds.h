@@ -1635,14 +1635,19 @@ namespace K {
              mLevelsDiff diff;
        mDummyMarketMaker dummyMM;
             mMarketStats stats;
-    map<mPrice, mAmount> filterBidOrders,
-                         filterAskOrders;
+    map<mPrice, mAmount> filterBidQuotes,
+                         filterAskQuotes;
             unsigned int averageCount = 0;
                   mPrice averageWidth = 0,
                          fairValue    = 0;
     mMarketLevels():
       diff(&unfiltered), dummyMM(&bids, &asks, &fairValue), stats(&fairValue)
     {};
+    const bool warn_empty() const {
+      const bool err = empty();
+      if (err) stats.fairPrice.warn("QE", "Unable to calculate quote, missing market data");
+      return err;
+    };
     void timer_1s() {
       stats.stdev.timer_1s(fairValue, bids.cbegin()->price, asks.cbegin()->price);
     };
@@ -1650,11 +1655,6 @@ namespace K {
       stats.takerTrades.timer_60s();
       stats.ewma.timer_60s(fairValue, resetAverageWidth());
       stats.send();
-    };
-    const bool warn_empty() const {
-      const bool err = empty();
-      if (err) stats.fairPrice.warn("QE", "Unable to calculate quote, missing market data");
-      return err;
     };
     void calcFairValue(const mPrice &minTick) {
       mPrice prev = fairValue;
@@ -1712,8 +1712,8 @@ namespace K {
     };
     void send_reset_filter(const mLevels &next, const mPrice &minTick) {
       reset(next);
-      if (!filterBidOrders.empty()) filter(&bids, filterBidOrders);
-      if (!filterAskOrders.empty()) filter(&asks, filterAskOrders);
+      if (!filterBidQuotes.empty()) filter(&bids, filterBidQuotes);
+      if (!filterAskQuotes.empty()) filter(&asks, filterAskQuotes);
       calcFairValue(minTick);
       calcAverageWidth();
       diff.send_reset();
@@ -1795,9 +1795,6 @@ namespace K {
     mSafety(const mAmount *const b, const mAmount *const t, const mAmount *const p):
       baseValue(b), baseTotal(t), targetBasePosition(p)
     {};
-    void timer_1s(const mMarketLevels &levels, const mTradesCompleted &tradesHistory) {
-      calc(levels, tradesHistory);
-    };
     void calc(const mMarketLevels &levels, const mTradesCompleted &tradesHistory) {
       if (!*baseValue or levels.empty()) return;
       double prev_combined = combined;
@@ -2351,13 +2348,35 @@ namespace K {
     j = k.dump();
   };
 
-  struct mQuoteStatus: public mJsonToClient<mQuoteStatus> {
-     mQuoteState bidStatus             = mQuoteState::Disconnected,
-                 askStatus             = mQuoteState::Disconnected;
+  struct mQuoteStates {
+    mQuoteState bidStatus = mQuoteState::Disconnected,
+                askStatus = mQuoteState::Disconnected;
     unsigned int quotesInMemoryNew     = 0,
                  quotesInMemoryWorking = 0,
-                 quotesInMemoryDone    = 0,
-                 AK47inc               = 0;
+                 quotesInMemoryDone    = 0;
+  };
+  struct mQuoteStatus: public mQuoteStates,
+                       public mJsonToClient<mQuoteStatus> {
+    const mQuoteStates *const current;
+    mQuoteStatus(const mQuoteStates *const c):
+      current(c)
+    {};
+    void send_ratelimit() {
+      if (ratelimit()) return;
+      bidStatus = current->bidStatus;
+      askStatus = current->askStatus;
+      quotesInMemoryNew     = current->quotesInMemoryNew;
+      quotesInMemoryWorking = current->quotesInMemoryWorking;
+      quotesInMemoryDone    = current->quotesInMemoryDone;
+      send();
+    };
+    const bool ratelimit() const {
+      return current->bidStatus == bidStatus
+        and current->askStatus == askStatus
+        and current->quotesInMemoryNew == quotesInMemoryNew
+        and current->quotesInMemoryWorking == quotesInMemoryWorking
+        and current->quotesInMemoryDone == quotesInMemoryDone;
+    };
     const mMatter about() const {
       return mMatter::QuoteStatus;
     };
@@ -2372,6 +2391,19 @@ namespace K {
       {    "quotesInMemoryNew", k.quotesInMemoryNew    },
       {"quotesInMemoryWorking", k.quotesInMemoryWorking},
       {   "quotesInMemoryDone", k.quotesInMemoryDone   }
+    };
+  };
+  struct mQuotes: public mQuoteStates {
+    mQuoteStatus status;
+    mQuotes():
+      status(this)
+    {};
+    void clear() {
+      bidStatus =
+      askStatus = mQuoteState::MissingData;
+      quotesInMemoryNew     =
+      quotesInMemoryWorking =
+      quotesInMemoryDone    = 0;
     };
   };
 

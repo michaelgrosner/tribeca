@@ -5,9 +5,7 @@ namespace K {
   class QE: public Klass,
             public Engine { public: QE() { engine = this; };
     private:
-      mQuoteState bidStatus = mQuoteState::MissingData,
-                  askStatus = mQuoteState::MissingData;
-      mQuoteStatus status;
+      unsigned int AK47inc = 0;
     protected:
       void load() {
         SQLITE_BACKUP
@@ -46,23 +44,24 @@ namespace K {
       };
     public:
       void calcQuote() {                                            PRETTY_DEBUG
-        bidStatus = mQuoteState::MissingData;
-        askStatus = mQuoteState::MissingData;
+        quotes.clear();
+        levels.filterBidQuotes.clear();
+        levels.filterAskQuotes.clear();
         if (!semaphore.greenGateway) {
-          bidStatus = mQuoteState::Disconnected;
-          askStatus = mQuoteState::Disconnected;
+          quotes.bidStatus = mQuoteState::Disconnected;
+          quotes.askStatus = mQuoteState::Disconnected;
         } else if (!levels.empty() and !wallet.target.safety.empty()) {
           if (!semaphore.greenButton) {
-            bidStatus = mQuoteState::DisabledQuotes;
-            askStatus = mQuoteState::DisabledQuotes;
+            quotes.bidStatus = mQuoteState::DisabledQuotes;
+            quotes.askStatus = mQuoteState::DisabledQuotes;
             cancelOrders();
           } else {
-            bidStatus = mQuoteState::UnknownHeld;
-            askStatus = mQuoteState::UnknownHeld;
+            quotes.bidStatus = mQuoteState::UnknownHeld;
+            quotes.askStatus = mQuoteState::UnknownHeld;
             sendQuoteToAPI();
           }
         }
-        sendStatusToUI();
+        quotes.status.send_ratelimit();
       };
     private:
       void sendQuoteToAPI() {
@@ -83,67 +82,29 @@ namespace K {
           return;
         }
         applyQuotingParameters(widthPing, &quote);
-        bidStatus = checkCrossedQuotes(mSide::Bid, &quote);
-        askStatus = checkCrossedQuotes(mSide::Ask, &quote);
-        if (askStatus == mQuoteState::Live) updateQuote(quote.ask, mSide::Ask, quote.isAskPong);
+        quotes.bidStatus = checkCrossedQuotes(mSide::Bid, &quote);
+        quotes.askStatus = checkCrossedQuotes(mSide::Ask, &quote);
+        if (quotes.askStatus == mQuoteState::Live) updateQuote(&quote.ask, mSide::Ask, quote.isAskPong);
         else cancelOrders(mSide::Ask);
-        if (bidStatus == mQuoteState::Live) updateQuote(quote.bid, mSide::Bid, quote.isBidPong);
+        if (quotes.bidStatus == mQuoteState::Live) updateQuote(&quote.bid, mSide::Bid, quote.isBidPong);
         else cancelOrders(mSide::Bid);
-      };
-      void sendStatusToUI() {
-        unsigned int quotesInMemoryNew = 0;
-        unsigned int quotesInMemoryWorking = 0;
-        unsigned int quotesInMemoryDone = 0;
-        bool k = diffCounts(&quotesInMemoryNew, &quotesInMemoryWorking, &quotesInMemoryDone);
-        if (!diffStatus() and !k) return;
-        status.bidStatus = bidStatus;
-        status.askStatus = askStatus;
-        status.quotesInMemoryNew = quotesInMemoryNew;
-        status.quotesInMemoryWorking = quotesInMemoryWorking;
-        status.quotesInMemoryDone = quotesInMemoryDone;
-        status.send();
-      };
-      bool diffCounts(unsigned int *qNew, unsigned int *qWorking, unsigned int *qDone) {
-        levels.filterBidOrders.clear();
-        levels.filterAskOrders.clear();
-        vector<mRandId> zombies;
-        mClock now = Tstamp;
-        for (unordered_map<mRandId, mOrder>::value_type &it : broker.orders)
-          if (it.second.orderStatus == mStatus::New) {
-            if (now-10e+3>it.second.time) zombies.push_back(it.first);
-            (*qNew)++;
-          } else if (it.second.orderStatus == mStatus::Working) {
-            (mSide::Bid == it.second.side
-              ? levels.filterBidOrders
-              : levels.filterAskOrders
-            )[it.second.price] += it.second.quantity;
-            (*qWorking)++;
-          } else (*qDone)++;
-        for (mRandId &it : zombies) broker.erase(it);
-        return *qNew != status.quotesInMemoryNew
-          or *qWorking != status.quotesInMemoryWorking
-          or *qDone != status.quotesInMemoryDone;
-      };
-      bool diffStatus() {
-        return bidStatus != status.bidStatus
-          or askStatus != status.askStatus;
       };
       void applyQuotingParameters(const mPrice &widthPing, mQuote *const rawQuote) {
         bool superTradesActive = false;
-        DEBUQ("?", bidStatus, askStatus, rawQuote); applySuperTrades(rawQuote, &superTradesActive, widthPing);
-        DEBUQ("A", bidStatus, askStatus, rawQuote); applyEwmaProtection(rawQuote);
-        DEBUQ("B", bidStatus, askStatus, rawQuote); applyTotalBasePosition(rawQuote);
-        DEBUQ("C", bidStatus, askStatus, rawQuote); applyStdevProtection(rawQuote);
-        DEBUQ("D", bidStatus, askStatus, rawQuote); applyAggressivePositionRebalancing(rawQuote);
-        DEBUQ("E", bidStatus, askStatus, rawQuote); applyAK47Increment(rawQuote);
-        DEBUQ("F", bidStatus, askStatus, rawQuote); applyBestWidth(rawQuote);
-        DEBUQ("G", bidStatus, askStatus, rawQuote); applyTradesPerMinute(rawQuote, superTradesActive);
-        DEBUQ("H", bidStatus, askStatus, rawQuote); applyRoundPrice(rawQuote);
-        DEBUQ("I", bidStatus, askStatus, rawQuote); applyRoundSize(rawQuote);
-        DEBUQ("J", bidStatus, askStatus, rawQuote); applyDepleted(rawQuote);
-        DEBUQ("K", bidStatus, askStatus, rawQuote); applyWaitingPing(rawQuote);
-        DEBUQ("L", bidStatus, askStatus, rawQuote); applyEwmaTrendProtection(rawQuote);
-        DEBUQ("!", bidStatus, askStatus, rawQuote);
+        DEBUQ("?", quotes.bidStatus, quotes.askStatus, rawQuote); applySuperTrades(rawQuote, &superTradesActive, widthPing);
+        DEBUQ("A", quotes.bidStatus, quotes.askStatus, rawQuote); applyEwmaProtection(rawQuote);
+        DEBUQ("B", quotes.bidStatus, quotes.askStatus, rawQuote); applyTotalBasePosition(rawQuote);
+        DEBUQ("C", quotes.bidStatus, quotes.askStatus, rawQuote); applyStdevProtection(rawQuote);
+        DEBUQ("D", quotes.bidStatus, quotes.askStatus, rawQuote); applyAggressivePositionRebalancing(rawQuote);
+        DEBUQ("E", quotes.bidStatus, quotes.askStatus, rawQuote); applyAK47Increment(rawQuote);
+        DEBUQ("F", quotes.bidStatus, quotes.askStatus, rawQuote); applyBestWidth(rawQuote);
+        DEBUQ("G", quotes.bidStatus, quotes.askStatus, rawQuote); applyTradesPerMinute(rawQuote, superTradesActive);
+        DEBUQ("H", quotes.bidStatus, quotes.askStatus, rawQuote); applyRoundPrice(rawQuote);
+        DEBUQ("I", quotes.bidStatus, quotes.askStatus, rawQuote); applyRoundSize(rawQuote);
+        DEBUQ("J", quotes.bidStatus, quotes.askStatus, rawQuote); applyDepleted(rawQuote);
+        DEBUQ("K", quotes.bidStatus, quotes.askStatus, rawQuote); applyWaitingPing(rawQuote);
+        DEBUQ("L", quotes.bidStatus, quotes.askStatus, rawQuote); applyEwmaTrendProtection(rawQuote);
+        DEBUQ("!", quotes.bidStatus, quotes.askStatus, rawQuote);
         DEBUG("totals " + ("toAsk: " + to_string(wallet.base.total))
                         + ", toBid: " + to_string(wallet.quote.total / levels.fairValue));
       };
@@ -177,32 +138,32 @@ namespace K {
       };
       void applyDepleted(mQuote *const rawQuote) {
         if (rawQuote->bid.size > wallet.quote.total / levels.fairValue) {
-          bidStatus = mQuoteState::DepletedFunds;
+          quotes.bidStatus = mQuoteState::DepletedFunds;
           rawQuote->bid.clear();
         }
         if (rawQuote->ask.size > wallet.base.total) {
-          askStatus = mQuoteState::DepletedFunds;
+          quotes.askStatus = mQuoteState::DepletedFunds;
           rawQuote->ask.clear();
         }
       };
       void applyWaitingPing(mQuote *const rawQuote) {
         if (qp.safety == mQuotingSafety::Off) return;
         if (!rawQuote->isAskPong and (
-          (bidStatus != mQuoteState::DepletedFunds and (qp.pingAt == mPingAt::DepletedSide or qp.pingAt == mPingAt::DepletedBidSide))
+          (quotes.bidStatus != mQuoteState::DepletedFunds and (qp.pingAt == mPingAt::DepletedSide or qp.pingAt == mPingAt::DepletedBidSide))
           or qp.pingAt == mPingAt::StopPings
           or qp.pingAt == mPingAt::BidSide
           or qp.pingAt == mPingAt::DepletedAskSide
         )) {
-          askStatus = mQuoteState::WaitingPing;
+          quotes.askStatus = mQuoteState::WaitingPing;
           rawQuote->ask.clear();
         }
         if (!rawQuote->isBidPong and (
-          (askStatus != mQuoteState::DepletedFunds and (qp.pingAt == mPingAt::DepletedSide or qp.pingAt == mPingAt::DepletedAskSide))
+          (quotes.askStatus != mQuoteState::DepletedFunds and (qp.pingAt == mPingAt::DepletedSide or qp.pingAt == mPingAt::DepletedAskSide))
           or qp.pingAt == mPingAt::StopPings
           or qp.pingAt == mPingAt::AskSide
           or qp.pingAt == mPingAt::DepletedBidSide
         )) {
-          bidStatus = mQuoteState::WaitingPing;
+          quotes.bidStatus = mQuoteState::WaitingPing;
           rawQuote->bid.clear();
         }
       };
@@ -259,7 +220,7 @@ namespace K {
       };
       void applyTotalBasePosition(mQuote *const rawQuote) {
         if (wallet.base.total < wallet.target.targetBasePosition - wallet.target.positionDivergence) {
-          askStatus = mQuoteState::TBPHeld;
+          quotes.askStatus = mQuoteState::TBPHeld;
           rawQuote->ask.clear();
           if (qp.aggressivePositionRebalancing != mAPR::Off) {
             wallet.target.sideAPR = "Buy";
@@ -267,7 +228,7 @@ namespace K {
           }
         }
         else if (wallet.base.total >= wallet.target.targetBasePosition + wallet.target.positionDivergence) {
-          bidStatus = mQuoteState::TBPHeld;
+          quotes.bidStatus = mQuoteState::TBPHeld;
           rawQuote->bid.clear();
           if (qp.aggressivePositionRebalancing != mAPR::Off) {
             wallet.target.sideAPR = "Sell";
@@ -278,11 +239,11 @@ namespace K {
       };
       void applyTradesPerMinute(mQuote *const rawQuote, const bool &superTradesActive) {
         if (wallet.target.safety.sell >= (qp.tradesPerMinute * (superTradesActive ? qp.sopWidthMultiplier : 1))) {
-          askStatus = mQuoteState::MaxTradesSeconds;
+          quotes.askStatus = mQuoteState::MaxTradesSeconds;
           rawQuote->ask.clear();
         }
         if (wallet.target.safety.buy >= (qp.tradesPerMinute * (superTradesActive ? qp.sopWidthMultiplier : 1))) {
-          bidStatus = mQuoteState::MaxTradesSeconds;
+          quotes.bidStatus = mQuoteState::MaxTradesSeconds;
           rawQuote->bid.clear();
         }
       };
@@ -303,10 +264,10 @@ namespace K {
           ? qp.rangePercentage * wallet.base.value / 100
           : qp.range;
         if (!rawQuote->bid.empty())
-          rawQuote->bid.price -= status.AK47inc * range;
+          rawQuote->bid.price -= AK47inc * range;
         if (!rawQuote->ask.empty())
-          rawQuote->ask.price += status.AK47inc * range;
-        if (++status.AK47inc > qp.bullets) status.AK47inc = 0;
+          rawQuote->ask.price += AK47inc * range;
+        if (++AK47inc > qp.bullets) AK47inc = 0;
       };
       void applyStdevProtection(mQuote *const rawQuote) {
         if (qp.quotingStdevProtection == mSTDEV::Off or !levels.stats.stdev.fair) return;
@@ -341,22 +302,22 @@ namespace K {
       void applyEwmaTrendProtection(mQuote *const rawQuote) {
         if (!qp.quotingEwmaTrendProtection or !levels.stats.ewma.mgEwmaTrendDiff) return;
         if (levels.stats.ewma.mgEwmaTrendDiff > qp.quotingEwmaTrendThreshold){
-          askStatus = mQuoteState::UpTrendHeld;
+          quotes.askStatus = mQuoteState::UpTrendHeld;
           rawQuote->ask.clear();
         }
         else if (levels.stats.ewma.mgEwmaTrendDiff < -qp.quotingEwmaTrendThreshold){
-          bidStatus = mQuoteState::DownTrendHeld;
+          quotes.bidStatus = mQuoteState::DownTrendHeld;
           rawQuote->bid.clear();
         }
       };
       mQuoteState checkCrossedQuotes(const mSide &side, mQuote *const quote) {
         bool cross = false;
         if (side == mSide::Bid) {
-          if (quote->bid.empty()) return bidStatus;
+          if (quote->bid.empty()) return quotes.bidStatus;
           if (quote->ask.empty()) return mQuoteState::Live;
           cross = quote->bid.price >= quote->ask.price;
         } else if (side == mSide::Ask) {
-          if (quote->ask.empty()) return askStatus;
+          if (quote->ask.empty()) return quotes.askStatus;
           if (quote->bid.empty()) return mQuoteState::Live;
           cross = quote->ask.price <= quote->bid.price;
         }
@@ -365,24 +326,43 @@ namespace K {
           return mQuoteState::Crossed;
         } else return mQuoteState::Live;
       };
-      void updateQuote(const mLevel &quote, const mSide &side, const bool &isPong) {
+      void updateQuote(mLevel *const quote, const mSide &side, const bool &isPong) {
         unsigned int n = 0;
         vector<mOrder*> toCancel,
                         keepWorking;
+        vector<mRandId> zombies;
         mClock now = Tstamp;
         for (unordered_map<mRandId, mOrder>::value_type &it : broker.orders)
-          if (it.second.side != side or !it.second.preferPostOnly) continue;
-          else if (abs(it.second.price - quote.price) < gw->minTick) return;
-          else if (it.second.orderStatus == mStatus::New) {
-            if (qp.safety != mQuotingSafety::AK47 or ++n >= qp.bullets) return;
-          } else if (qp.safety != mQuotingSafety::AK47 or (
-            side == mSide::Bid
-              ? quote.price <= it.second.price
-              : quote.price >= it.second.price
-          )) {
-            if (args.lifetime and it.second.time + args.lifetime > now) return;
-            toCancel.push_back(&it.second);
-          } else keepWorking.push_back(&it.second);
+          if (it.second.side != side) continue;
+          else {
+            if (it.second.orderStatus == mStatus::New) {
+              if (now - 10e+3 > it.second.time) {
+                zombies.push_back(it.first);
+                continue;
+              }
+              quotes.quotesInMemoryNew++;
+            } else if (it.second.orderStatus == mStatus::Working) {
+              (mSide::Bid == it.second.side
+                ? levels.filterBidQuotes
+                : levels.filterAskQuotes
+              )[it.second.price] += it.second.quantity;
+              quotes.quotesInMemoryWorking++;
+            } else quotes.quotesInMemoryDone++;
+            if (!it.second.preferPostOnly) continue;
+            if (abs(it.second.price - quote->price) < gw->minTick) quote->clear();
+            else if (it.second.orderStatus == mStatus::New) {
+              if (qp.safety != mQuotingSafety::AK47 or ++n >= qp.bullets) quote->clear();
+            } else if (qp.safety != mQuotingSafety::AK47 or (
+              side == mSide::Bid
+                ? quote->price <= it.second.price
+                : quote->price >= it.second.price
+            )) {
+              if (args.lifetime and it.second.time + args.lifetime > now) quote->clear();
+              else toCancel.push_back(&it.second);
+            } else keepWorking.push_back(&it.second);
+          }
+        for (mRandId &it : zombies) broker.erase(it);
+        if (quote->empty()) return;
         if (qp.safety == mQuotingSafety::AK47
           and toCancel.empty()
           and !keepWorking.empty()
@@ -392,7 +372,7 @@ namespace K {
           toReplace = side == mSide::Bid ? toCancel.back() : toCancel.front();
           toCancel.erase(side == mSide::Bid ? toCancel.end()-1 : toCancel.begin());
         }
-        sendOrders(toCancel, toReplace, quote, side, isPong);
+        sendOrders(toCancel, toReplace, quote->price, quote->size, side, isPong);
       };
   };
 }

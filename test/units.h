@@ -133,17 +133,17 @@ namespace K {
           INFO("refresh()");
         });
         REQUIRE_NOTHROW(qp.fvModel = mFairValueModel::BBO);
-        REQUIRE_NOTHROW(levels.filterBidOrders[1234.52] += 0.34567890);
-        REQUIRE_NOTHROW(levels.filterBidOrders[1234.52] += 0.23456789);
-        REQUIRE_NOTHROW(levels.filterBidOrders[1234.55] += 0.01234567);
-        REQUIRE_NOTHROW(levels.filterAskOrders[1234.69] += 0.01234568);
+        REQUIRE_NOTHROW(levels.filterBidQuotes[1234.52] += 0.34567890);
+        REQUIRE_NOTHROW(levels.filterBidQuotes[1234.52] += 0.23456789);
+        REQUIRE_NOTHROW(levels.filterBidQuotes[1234.55] += 0.01234567);
+        REQUIRE_NOTHROW(levels.filterAskQuotes[1234.69] += 0.01234568);
         REQUIRE_NOTHROW(levels.send_reset_filter(mLevels(
           { mLevel(1234.50, 0.12345678), mLevel(1234.55, 0.01234567) },
           { mLevel(1234.60, 1.23456789), mLevel(1234.69, 0.11234569) }
         ), 0.01));
         THEN("filters") {
-          REQUIRE(levels.filterBidOrders.size() == 2);
-          REQUIRE(levels.filterAskOrders.size() == 1);
+          REQUIRE(levels.filterBidQuotes.size() == 2);
+          REQUIRE(levels.filterAskQuotes.size() == 1);
           REQUIRE(levels.bids.size() == 1);
           REQUIRE(levels.bids[0].price == 1234.50);
           REQUIRE(levels.bids[0].size  == 0.12345678);

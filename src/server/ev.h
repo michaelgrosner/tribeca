@@ -48,27 +48,26 @@ namespace K  {
         loop->send();
       };
     private:
-      void async(const bool &waiting) {
-        if (waiting) loop->send();
+      void deferred() {
+        if (slowFn.empty()) return;
+        for (function<void()> &it : slowFn) it();
+        slowFn.clear();
       };
-      void (*walk)(uS::Async*) = [](uS::Async *const loop) {
-        EV *k = (EV*)loop->getData();
-        if (!k->slowFn.empty()) {
-          for (function<void()> &it : k->slowFn) it();
-          k->slowFn.clear();
-        }
+      void (*walk)(uS::Async *const) = [](uS::Async *const loop) {
+        ((EV*)loop->getData())->deferred();
         if (gw->waitForData()) loop->send();
         screen->waitForUser();
       };
       void timer_1s() {
-        if (!gw->countdown)                   engine->timer_1s(tick);
-        else if (gw->countdown-- == 1) {      gw->connect();
+        if (!gw->countdown)                  engine->timer_1s(tick);
+        else if (gw->countdown-- == 1) {     gw->connect();
           tick = 0;
           return;
         }
-                                              async(gw->askForData(tick));
+        if (                                 gw->askForData(tick)
+        ) loop->send();
         if (client->socket and qp.delayUI
-          and !(tick % qp.delayUI))           client->timer_Xs();
+          and !(tick % qp.delayUI))          client->timer_Xs();
         if (++tick >= 300 * (qp.delayUI?:1))
           tick = 0;
       };

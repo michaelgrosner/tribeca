@@ -91,9 +91,8 @@ namespace K {
           EXIT(screen->error("UI", string("Too many handlers for \"") + type + "\" clickme event"));
         kisses[type] = [&data, fn](json &butterfly) {
           data.kiss(&butterfly);
-          if (!butterfly.is_null()) {
+          if (!butterfly.is_null())
             fn(butterfly);
-          }
         };
       };
       void timer_Xs() {

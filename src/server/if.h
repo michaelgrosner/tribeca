@@ -29,8 +29,8 @@ namespace K {
       };
       virtual void pressme(const mHotkey&, function<void()>) = 0;
       virtual void printme(mToScreen *const) = 0;
-      virtual const int error(const string&, const string&, const bool& = false) = 0;
       virtual void waitForUser() = 0;
+      virtual const int error(const string&, const string&, const bool& = false) = 0;
       virtual const string stamp() = 0;
       virtual void logWar(string, string, string = " Warrrrning: ") = 0;
       virtual void logUI(const string&) = 0;
@@ -558,7 +558,7 @@ namespace K {
 #define CLIENT_WELCOME_CODE(data)  client->welcome(data);
 #define CLIENT_WELCOME_LIST(code)  \
   code( qp                       ) \
-  code( status                   ) \
+  code( quotes.status            ) \
   code( notepad                  ) \
   code( monitor                  ) \
   code( monitor.product          ) \
@@ -592,6 +592,7 @@ namespace K {
       mWalletPosition wallet;
         mMarketLevels levels;
               mBroker broker;
+              mQuotes quotes;
              mButtons btn;
              mNotepad notepad;
              mMonitor monitor;
@@ -604,7 +605,7 @@ namespace K {
           levels.timer_60s();
           monitor.timer_60s();
         }
-        wallet.target.safety.timer_1s(levels, broker.tradesHistory);
+        wallet.target.safety.calc(levels, broker.tradesHistory);
         calcQuote();
       };
       void calcQuoteAfterSavedParams() {
@@ -615,15 +616,15 @@ namespace K {
         wallet.target.safety.calc(levels, broker.tradesHistory);
         calcQuote();
       };
-      void sendOrders(const vector<mOrder*> &toCancel, mOrder *const toReplace, const mLevel &quote, const mSide &side, const bool &isPong) {
+      void sendOrders(const vector<mOrder*> &toCancel, mOrder *const toReplace, const mPrice &price, const mAmount &amount, const mSide &side, const bool &isPong) {
         for (mOrder *const it : toCancel)
           cancelOrder(it);
         if (toReplace and gw->replace)
-          replaceOrder(toReplace, quote.price, isPong);
+          replaceOrder(toReplace, price, isPong);
         else {
           if (toReplace and args.testChamber != 1) cancelOrder(toReplace);
           placeOrder(mOrder(
-            gw->randId(), side, quote.price, quote.size, mOrderType::Limit, isPong, mTimeInForce::GTC
+            gw->randId(), side, price, amount, mOrderType::Limit, isPong, mTimeInForce::GTC
           ));
           if (toReplace and args.testChamber == 1) cancelOrder(toReplace);
         }

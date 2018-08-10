@@ -81,18 +81,18 @@ namespace K {
           refresh();
         };
       };
-      const int error(const string &prefix, const string &reason, const bool &reboot = false) {
-        end();
-        logWar(prefix, reason, " Errrror: ");
-        cout << RRESET;
-        return reboot ? EXIT_FAILURE : EXIT_SUCCESS;
-      };
       void waitForUser() {
         if (!hotkey.valid() or hotkey.wait_for(chrono::nanoseconds(0)) != future_status::ready) return;
         mHotkey ch = hotkey.get();
         if (hotFn.find(ch) != hotFn.end())
           hotFn.at(ch)();
         hotkeys();
+      };
+      const int error(const string &prefix, const string &reason, const bool &reboot = false) {
+        end();
+        logWar(prefix, reason, " Errrror: ");
+        cout << RRESET;
+        return reboot ? EXIT_FAILURE : EXIT_SUCCESS;
       };
       const string stamp() {
         chrono::system_clock::time_point clock = Tclock;
