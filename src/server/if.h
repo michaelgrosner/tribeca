@@ -537,9 +537,9 @@ namespace K {
   code( wallet.target              )  \
   code( levels.stats.fairPrice     )  \
   code( levels.stats.ewma          )  \
-  code( levels.dummyMM             )  \
   code( broker.semaphore           )  \
   code( broker.calculon.nextQuotes )  \
+  code( broker.calculon.dummyMM    )  \
   code( broker.tradesHistory       )  \
   code( broker                     )
 
@@ -672,7 +672,7 @@ namespace K {
         calcQuotes();
       };
       void calcQuotesAfterSavedParams() {
-        levels.dummyMM.reset("saved");
+        broker.calculon.dummyMM.reset("saved");
         levels.calcFairValue(gw->minTick);
         levels.stats.ewma.calcFromHistory();
         wallet.send_ratelimit(levels);
