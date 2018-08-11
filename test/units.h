@@ -111,12 +111,11 @@ namespace K {
       WHEN("defaults") {
         THEN("fair value") {
           REQUIRE_FALSE(levels.fairValue);
-          REQUIRE(levels.stats.fairPrice.ratelimit(levels.fairValue));
           REQUIRE_NOTHROW(levels.stats.fairPrice.mToClient::send = [&]() {
-            FAIL("send() while ratelimit() = true because val still is = 0");
+            REQUIRE(levels.stats.fairPrice.blob().dump() == "{\"price\":0.0}");
           });
           REQUIRE_NOTHROW(levels.stats.fairPrice.mToScreen::refresh = []() {
-            FAIL("refresh() while ratelimit() = true because val still is = 0");
+            INFO("refresh()");
           });
           REQUIRE_NOTHROW(levels.calcFairValue(0.01));
           REQUIRE_FALSE(levels.fairValue);
@@ -127,7 +126,7 @@ namespace K {
           FAIL("diff.send() before diff.hello()");
         });
         REQUIRE_NOTHROW(levels.stats.fairPrice.mToClient::send = [&]() {
-          REQUIRE(levels.stats.fairPrice.dump().dump() == "{\"price\":1234.55}");
+          REQUIRE(levels.stats.fairPrice.blob().dump() == "{\"price\":1234.55}");
         });
         REQUIRE_NOTHROW(levels.stats.fairPrice.mToScreen::refresh = []() {
           INFO("refresh()");
@@ -176,7 +175,7 @@ namespace K {
         THEN("fair value weight") {
           REQUIRE_NOTHROW(qp.fvModel = mFairValueModel::wBBO);
           REQUIRE_NOTHROW(levels.stats.fairPrice.mToClient::send = [&]() {
-            REQUIRE(levels.stats.fairPrice.dump().dump() == "{\"price\":1234.59}");
+            REQUIRE(levels.stats.fairPrice.blob().dump() == "{\"price\":1234.59}");
           });
           REQUIRE_NOTHROW(levels.calcFairValue(0.01));
           REQUIRE(levels.fairValue == 1234.59);
@@ -184,7 +183,7 @@ namespace K {
         THEN("fair value reversed weight") {
           REQUIRE_NOTHROW(qp.fvModel = mFairValueModel::rwBBO);
           REQUIRE_NOTHROW(levels.stats.fairPrice.mToClient::send = [&]() {
-            REQUIRE(levels.stats.fairPrice.dump().dump() == "{\"price\":1234.51}");
+            REQUIRE(levels.stats.fairPrice.blob().dump() == "{\"price\":1234.51}");
           });
           REQUIRE_NOTHROW(levels.calcFairValue(0.01));
           REQUIRE(levels.fairValue == 1234.51);
@@ -200,14 +199,14 @@ namespace K {
             REQUIRE_NOTHROW(qp.delayUI = 0);
             this_thread::sleep_for(chrono::milliseconds(370));
             REQUIRE_NOTHROW(levels.diff.mToClient::send = [&]() {
-              REQUIRE(levels.diff.dump().dump() == "{"
+              REQUIRE(levels.diff.blob().dump() == "{"
                 "\"asks\":[{\"price\":1234.69,\"size\":0.11234566}],"
                 "\"bids\":[{\"price\":1234.5},{\"price\":1234.4,\"size\":0.12345678}],"
                 "\"diff\":true"
               "}");
             });
             REQUIRE_NOTHROW(levels.stats.fairPrice.mToClient::send = [&]() {
-              REQUIRE(levels.stats.fairPrice.dump().dump() == "{\"price\":1234.5}");
+              REQUIRE(levels.stats.fairPrice.blob().dump() == "{\"price\":1234.5}");
             });
             REQUIRE_NOTHROW(levels.send_reset_filter(mLevels(
               { mLevel(1234.40, 0.12345678), mLevel(1234.55, 0.01234567) },
@@ -275,7 +274,10 @@ namespace K {
     }
 
     GIVEN("mBroker") {
-      mBroker broker;
+      mProduct product;
+      mWalletPosition wallet;
+      mMarketLevels levels;
+      mBroker broker(&product, &wallet, &levels);
       WHEN("assigned") {
         vector<mRandId> randIds;
         REQUIRE_NOTHROW(randIds.push_back("1" + mRandom::uuid36Id()));
@@ -303,15 +305,15 @@ namespace K {
           REQUIRE(broker.calcHeldAmount(mSide::Ask) == 0.37037037);
         }
         THEN("to json") {
-          REQUIRE(string::npos == broker.dump().dump().find("\"orderStatus\":0"));
-          REQUIRE(string::npos == broker.dump().dump().find("\"orderStatus\":2"));
-          REQUIRE(string::npos == broker.dump().dump().find("\"orderStatus\":3"));
-          REQUIRE(string::npos != broker.dump().dump().find("{\"exchangeId\":\"\",\"isPong\":false,\"latency\":0,\"orderId\":\"" + randIds[0] + "\",\"orderStatus\":1,\"preferPostOnly\":true,\"price\":1234.5,\"quantity\":0.12345678,\"side\":0,\"time\":0,\"timeInForce\":0,\"type\":0}"));
-          REQUIRE(string::npos != broker.dump().dump().find("{\"exchangeId\":\"\",\"isPong\":false,\"latency\":0,\"orderId\":\"" + randIds[1] + "\",\"orderStatus\":1,\"preferPostOnly\":true,\"price\":1234.51,\"quantity\":0.12345679,\"side\":0,\"time\":0,\"timeInForce\":0,\"type\":0}"));
-          REQUIRE(string::npos != broker.dump().dump().find("{\"exchangeId\":\"\",\"isPong\":false,\"latency\":0,\"orderId\":\"" + randIds[2] + "\",\"orderStatus\":1,\"preferPostOnly\":true,\"price\":1234.52,\"quantity\":0.1234568,\"side\":0,\"time\":0,\"timeInForce\":0,\"type\":0}"));
-          REQUIRE(string::npos != broker.dump().dump().find("{\"exchangeId\":\"\",\"isPong\":false,\"latency\":0,\"orderId\":\"" + randIds[3] + "\",\"orderStatus\":1,\"preferPostOnly\":true,\"price\":1234.5,\"quantity\":0.12345678,\"side\":1,\"time\":0,\"timeInForce\":0,\"type\":0}"));
-          REQUIRE(string::npos != broker.dump().dump().find("{\"exchangeId\":\"\",\"isPong\":false,\"latency\":0,\"orderId\":\"" + randIds[4] + "\",\"orderStatus\":1,\"preferPostOnly\":true,\"price\":1234.51,\"quantity\":0.12345679,\"side\":1,\"time\":0,\"timeInForce\":0,\"type\":0}"));
-          REQUIRE(string::npos != broker.dump().dump().find("{\"exchangeId\":\"\",\"isPong\":false,\"latency\":0,\"orderId\":\"" + randIds[5] + "\",\"orderStatus\":1,\"preferPostOnly\":true,\"price\":1234.52,\"quantity\":0.1234568,\"side\":1,\"time\":0,\"timeInForce\":0,\"type\":0}"));
+          REQUIRE(string::npos == broker.blob().dump().find("\"orderStatus\":0"));
+          REQUIRE(string::npos == broker.blob().dump().find("\"orderStatus\":2"));
+          REQUIRE(string::npos == broker.blob().dump().find("\"orderStatus\":3"));
+          REQUIRE(string::npos != broker.blob().dump().find("{\"exchangeId\":\"\",\"isPong\":false,\"latency\":0,\"orderId\":\"" + randIds[0] + "\",\"orderStatus\":1,\"preferPostOnly\":true,\"price\":1234.5,\"quantity\":0.12345678,\"side\":0,\"time\":0,\"timeInForce\":0,\"type\":0}"));
+          REQUIRE(string::npos != broker.blob().dump().find("{\"exchangeId\":\"\",\"isPong\":false,\"latency\":0,\"orderId\":\"" + randIds[1] + "\",\"orderStatus\":1,\"preferPostOnly\":true,\"price\":1234.51,\"quantity\":0.12345679,\"side\":0,\"time\":0,\"timeInForce\":0,\"type\":0}"));
+          REQUIRE(string::npos != broker.blob().dump().find("{\"exchangeId\":\"\",\"isPong\":false,\"latency\":0,\"orderId\":\"" + randIds[2] + "\",\"orderStatus\":1,\"preferPostOnly\":true,\"price\":1234.52,\"quantity\":0.1234568,\"side\":0,\"time\":0,\"timeInForce\":0,\"type\":0}"));
+          REQUIRE(string::npos != broker.blob().dump().find("{\"exchangeId\":\"\",\"isPong\":false,\"latency\":0,\"orderId\":\"" + randIds[3] + "\",\"orderStatus\":1,\"preferPostOnly\":true,\"price\":1234.5,\"quantity\":0.12345678,\"side\":1,\"time\":0,\"timeInForce\":0,\"type\":0}"));
+          REQUIRE(string::npos != broker.blob().dump().find("{\"exchangeId\":\"\",\"isPong\":false,\"latency\":0,\"orderId\":\"" + randIds[4] + "\",\"orderStatus\":1,\"preferPostOnly\":true,\"price\":1234.51,\"quantity\":0.12345679,\"side\":1,\"time\":0,\"timeInForce\":0,\"type\":0}"));
+          REQUIRE(string::npos != broker.blob().dump().find("{\"exchangeId\":\"\",\"isPong\":false,\"latency\":0,\"orderId\":\"" + randIds[5] + "\",\"orderStatus\":1,\"preferPostOnly\":true,\"price\":1234.52,\"quantity\":0.1234568,\"side\":1,\"time\":0,\"timeInForce\":0,\"type\":0}"));
         }
       }
     }

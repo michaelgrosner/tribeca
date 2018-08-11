@@ -162,10 +162,15 @@ export class TwoSidedQuote {
     constructor(public bid: Quote, public ask: Quote) {}
 }
 
-export enum QuoteStatus { Disconnected, Live, DisabledQuotes, MissingData, UnknownHeld, TBPHeld, MaxTradesSeconds, WaitingPing, DepletedFunds, Crossed, UpTrendHeld, DownTrendHeld }
+export enum QuoteStatus { Disconnected, Live, DisabledQuotes, MissingData, UnknownHeld, WidthMustBeSmaller, TBPHeld, MaxTradesSeconds, WaitingPing, DepletedFunds, Crossed, UpTrendHeld, DownTrendHeld }
 
 export class TwoSidedQuoteStatus {
-    constructor(public bidStatus: QuoteStatus, public askStatus: QuoteStatus, public quotesInMemoryNew: number, public quotesInMemoryWorking: number, public quotesInMemoryDone: number) {}
+    constructor(public bidStatus: QuoteStatus,
+                public askStatus: QuoteStatus,
+                public sideAPR: string,
+                public quotesInMemoryNew: number,
+                public quotesInMemoryWorking: number,
+                public quotesInMemoryDone: number) {}
 }
 
 export enum QuotingMode { Top, Mid, Join, InverseJoin, InverseTop, HamelinRat, Depth }
@@ -262,7 +267,6 @@ export class TradeSafety {
 export class TargetBasePositionValue {
     constructor(
       public tbp: number,
-      public sideAPR: string,
       public pDiv: number
     ) {}
 }

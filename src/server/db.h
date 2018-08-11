@@ -40,7 +40,7 @@ namespace K {
       };
       void insert(mFromDb *const data) {
         const string  table    = schema(data->about());
-        const json    blob     = data->dump();
+        const json    blob     = data->blob();
         const double  limit    = data->limit();
         const mClock  lifetime = data->lifetime();
         const string  incr     = data->increment();

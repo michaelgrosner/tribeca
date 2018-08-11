@@ -111,25 +111,25 @@ export class MarketQuotingComponent {
   @Input() set setTargetBasePosition(o: Models.TargetBasePositionValue) {
     if (o == null) {
       this.targetBasePosition = null;
-      this.sideAPRSafety = null;
       this.positionDivergence = null;
     } else {
       this.targetBasePosition = o.tbp;
-      this.sideAPRSafety = o.sideAPR || 'Off';
       this.positionDivergence = o.pDiv;
     }
   }
 
-  @Input() set setQuoteStatus(o) {
+  @Input() set setQuoteStatus(o: Models.TwoSidedQuoteStatus) {
     if (o == null) {
-      this.bidStatus = Models.QuoteStatus[1];
-      this.askStatus = Models.QuoteStatus[1];
+      this.bidStatus = Models.QuoteStatus[0];
+      this.askStatus = Models.QuoteStatus[0];
+      this.sideAPRSafety = null;
       this.quotesInMemoryNew = 0;
       this.quotesInMemoryWorking = 0;
       this.quotesInMemoryDone = 0;
     } else {
       this.bidStatus = Models.QuoteStatus[o.bidStatus];
       this.askStatus = Models.QuoteStatus[o.askStatus];
+      this.sideAPRSafety = o.sideAPR;
       this.quotesInMemoryNew = o.quotesInMemoryNew;
       this.quotesInMemoryWorking = o.quotesInMemoryWorking;
       this.quotesInMemoryDone = o.quotesInMemoryDone;

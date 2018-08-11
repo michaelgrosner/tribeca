@@ -129,8 +129,8 @@ namespace K {
       function<void(const mToClient&)> send_nowhere = [](const mToClient &data) {};
       function<void(const mToClient&)> send_somewhere = [&](const mToClient &data) {
         if (data.realtime())
-          broadcast(data.about(), data.dump().dump());
-        else queue[data.about()] = data.dump().dump();
+          broadcast(data.about(), data.blob().dump());
+        else queue[data.about()] = data.blob().dump();
       };
       void onConnection() {
         if (!connections++) send = send_somewhere;

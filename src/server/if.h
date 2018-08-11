@@ -37,8 +37,6 @@ namespace K {
       virtual void logUIsess(int, string) = 0;
       virtual void log(const string&, const string&, const string& = "") = 0;
 #define PRETTY_DEBUG if (args.debugEvents) screen->log("DEBUG EV", __PRETTY_FUNCTION__);
-#define DEBUG(x)     if (args.debugQuotes) screen->log("DEBUG QE", x)
-#define DEBUQ(x, b, a, q) DEBUG("quote " x " " + to_string((int)b) + ":" + to_string((int)a) + " " + ((json)*q).dump())
       virtual void end() = 0;
   } *screen = nullptr;
 
@@ -183,6 +181,7 @@ namespace K {
         maxLevel = args.maxLevels;
         debug    = args.debugSecret;
         monitor->product.minTick = &minTick;
+        monitor->product.minSize = &minSize;
         if (args.latency)
           latency();
       };
@@ -532,25 +531,26 @@ namespace K {
 #define SCREEN_PRINTME      \
         SCREEN_PRINTME_LIST \
       ( SCREEN_PRINTME_CODE )
-#define SCREEN_PRINTME_CODE(data) screen->printme(&data);
-#define SCREEN_PRINTME_LIST(code) \
-  code( *gw                    )  \
-  code( semaphore              )  \
-  code( wallet.target          )  \
-  code( levels.stats.fairPrice )  \
-  code( levels.stats.ewma      )  \
-  code( levels.dummyMM         )  \
-  code( broker.tradesHistory   )  \
-  code( broker                 )
+#define SCREEN_PRINTME_CODE(data)     screen->printme(&data);
+#define SCREEN_PRINTME_LIST(code)     \
+  code( *gw                        )  \
+  code( wallet.target              )  \
+  code( levels.stats.fairPrice     )  \
+  code( levels.stats.ewma          )  \
+  code( levels.dummyMM             )  \
+  code( broker.semaphore           )  \
+  code( broker.calculon.nextQuotes )  \
+  code( broker.tradesHistory       )  \
+  code( broker                     )
 
 #define SCREEN_PRESSME      \
         SCREEN_PRESSME_LIST \
       ( SCREEN_PRESSME_CODE )
-#define SCREEN_PRESSME_CODE(key, fn) screen->pressme(mHotkey::key, [&]() { fn(); });
-#define SCREEN_PRESSME_LIST(code)    \
-  code(  Q  , gw->quit         )     \
-  code(  q  , gw->quit         )     \
-  code( ESC , semaphore.toggle )
+#define SCREEN_PRESSME_CODE(key, fn)    screen->pressme(mHotkey::key, [&]() { fn(); });
+#define SCREEN_PRESSME_LIST(code)       \
+  code(  Q  , gw->quit                ) \
+  code(  q  , gw->quit                ) \
+  code( ESC , broker.semaphore.toggle )
 
 #define CLIENT_WELCOME      \
         CLIENT_WELCOME_LIST \
@@ -558,11 +558,9 @@ namespace K {
 #define CLIENT_WELCOME_CODE(data)  client->welcome(data);
 #define CLIENT_WELCOME_LIST(code)  \
   code( qp                       ) \
-  code( quotes.status            ) \
   code( notepad                  ) \
   code( monitor                  ) \
   code( monitor.product          ) \
-  code( semaphore                ) \
   code( wallet.target.safety     ) \
   code( wallet.target            ) \
   code( wallet                   ) \
@@ -570,6 +568,8 @@ namespace K {
   code( levels.stats.takerTrades ) \
   code( levels.stats.fairPrice   ) \
   code( levels.stats             ) \
+  code( broker.semaphore         ) \
+  code( broker.calculon          ) \
   code( broker.tradesHistory     ) \
   code( broker                   )
 
@@ -579,9 +579,9 @@ namespace K {
 #define CLIENT_CLICKME_CODE(btn, fn, val) \
                   client->clickme(btn, [&](const json &butterfly) { fn(val); });
 #define CLIENT_CLICKME_LIST(code)                                              \
-  code( qp                    , calcQuoteAfterSavedParams        ,           ) \
+  code( qp                    , calcQuotesAfterSavedParams       ,           ) \
   code( notepad               , void                             ,           ) \
-  code( semaphore             , void                             ,           ) \
+  code( broker.semaphore      , void                             ,           ) \
   code( btn.submit            , manualSendOrder                  , butterfly ) \
   code( btn.cancel            , manualCancelOrder                , butterfly ) \
   code( btn.cancelAll         , cancelOrders                     ,           ) \
@@ -592,12 +592,75 @@ namespace K {
       mWalletPosition wallet;
         mMarketLevels levels;
               mBroker broker;
-              mQuotes quotes;
              mButtons btn;
              mNotepad notepad;
              mMonitor monitor;
-           mSemaphore semaphore;
-      virtual void calcQuote() = 0;
+      Engine()
+        : broker(&monitor.product, &wallet, &levels)
+      {};
+      void calcQuotes() {                                           PRETTY_DEBUG
+        broker.calculon.reset();
+        if (!broker.semaphore.greenGateway) {
+          broker.calculon.reset(mQuoteState::Disconnected);
+        } else if (!levels.empty() and !wallet.target.safety.empty()) {
+          if (!broker.semaphore.greenButton) {
+            broker.calculon.reset(mQuoteState::DisabledQuotes);
+            cancelOrders();
+          } else {
+            broker.calculon.reset(mQuoteState::UnknownHeld);
+            broker.calculon.calcQuotes();
+            levels.filterBidOrders.clear();
+            levels.filterAskOrders.clear();
+            if (broker.calculon.nextQuotes.ask.state == mQuoteState::Live)
+              quote2order(mSide::Ask, broker.calculon.nextQuotes.ask, &levels.filterBidOrders);
+            else cancelOrders(mSide::Ask);
+            if (broker.calculon.nextQuotes.bid.state == mQuoteState::Live)
+              quote2order(mSide::Bid, broker.calculon.nextQuotes.bid, &levels.filterAskOrders);
+            else cancelOrders(mSide::Bid);
+          }
+        }
+        broker.calculon.send();
+      };
+      void quote2order(const mSide &side, const mQuote &nextQuote, unordered_map<mPrice, mAmount> *const filter) {
+        unsigned int n = 0;
+        bool skipNextQuote = false;
+        vector<mOrder*> toCancel,
+                        keepWorking;
+        vector<mRandId> zombies;
+        mClock now = Tstamp;
+        for (unordered_map<mRandId, mOrder>::value_type &it : broker.orders)
+          if (it.second.side != side) continue;
+          else {
+            if (it.second.orderStatus == mStatus::New) {
+              if (now - 10e+3 > it.second.time) {
+                zombies.push_back(it.first);
+                continue;
+              }
+              broker.calculon.countNew++;
+            } else if (it.second.orderStatus == mStatus::Working) {
+              (*filter)[it.second.price] += it.second.quantity;
+              broker.calculon.countWorking++;
+            } else broker.calculon.countDone++;
+            if (!it.second.preferPostOnly) continue;
+            if (abs(it.second.price - nextQuote.price) < gw->minTick) skipNextQuote = true;
+            else if (it.second.orderStatus == mStatus::New) {
+              if (qp.safety != mQuotingSafety::AK47 or ++n >= qp.bullets) skipNextQuote = true;
+            } else if (qp.safety != mQuotingSafety::AK47 or (
+              mSide::Bid == side
+                ? nextQuote.price <= it.second.price
+                : nextQuote.price >= it.second.price
+            )) {
+              if (args.lifetime and it.second.time + args.lifetime > now) skipNextQuote = true;
+              else toCancel.push_back(&it.second);
+            } else keepWorking.push_back(&it.second);
+          }
+        for (mRandId &it : zombies) broker.erase(it);
+        if (qp.safety == mQuotingSafety::AK47
+          and toCancel.empty()
+          and !keepWorking.empty()
+        ) toCancel.push_back(keepWorking.back());
+        sendOrders(toCancel, skipNextQuote ? nullptr : &nextQuote, side);
+      };
       void timer_1s(const unsigned int &tick) {                     PRETTY_DEBUG
         if (levels.warn_empty()) return;
         levels.timer_1s();
@@ -606,25 +669,31 @@ namespace K {
           monitor.timer_60s();
         }
         wallet.target.safety.calc(levels, broker.tradesHistory);
-        calcQuote();
+        calcQuotes();
       };
-      void calcQuoteAfterSavedParams() {
+      void calcQuotesAfterSavedParams() {
         levels.dummyMM.reset("saved");
         levels.calcFairValue(gw->minTick);
         levels.stats.ewma.calcFromHistory();
         wallet.send_ratelimit(levels);
         wallet.target.safety.calc(levels, broker.tradesHistory);
-        calcQuote();
+        calcQuotes();
       };
-      void sendOrders(const vector<mOrder*> &toCancel, mOrder *const toReplace, const mPrice &price, const mAmount &amount, const mSide &side, const bool &isPong) {
+      void sendOrders(vector<mOrder*> toCancel, const mQuote *const nextQuote, const mSide &side) {
+        mOrder *toReplace = nullptr;
+        if (nextQuote and !toCancel.empty()) {
+          toReplace = toCancel.back();
+          toCancel.pop_back();
+        }
         for (mOrder *const it : toCancel)
           cancelOrder(it);
+        if (!nextQuote) return;
         if (toReplace and gw->replace)
-          replaceOrder(toReplace, price, isPong);
+          replaceOrder(toReplace, nextQuote->price, nextQuote->isPong);
         else {
           if (toReplace and args.testChamber != 1) cancelOrder(toReplace);
           placeOrder(mOrder(
-            gw->randId(), side, price, amount, mOrderType::Limit, isPong, mTimeInForce::GTC
+            gw->randId(), side, nextQuote->price, nextQuote->size, mOrderType::Limit, nextQuote->isPong, mTimeInForce::GTC
           ));
           if (toReplace and args.testChamber == 1) cancelOrder(toReplace);
         }
