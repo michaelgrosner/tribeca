@@ -171,7 +171,7 @@ sqlite:
 
 ncurses:
 	test -d build-$(CHOST)/ncurses-$(V_NCUR) || (                                                        \
-	curl -L http://ftp.gnu.org/pub/gnu/ncurses/ncurses-$(V_NCUR).tar.gz | tar xz -C build-$(CHOST)       \
+	curl -L http://gnu.askapache.com/ncurses/ncurses-$(V_NCUR).tar.gz | tar xz -C build-$(CHOST)         \
 	&& cd build-$(CHOST)/ncurses-$(V_NCUR) && CC=$(CC) AR=$(CHOST)-ar CXX=$(CXX) CPPFLAGS=-P ./configure \
 	--host=$(CHOST) --prefix=$(PWD)/$(KLOCAL) $(shell test -n "`echo $(CHOST) | grep mingw32`" && echo   \
 	--without-cxx-binding --without-ada --enable-reentrant --with-normal                                 \
