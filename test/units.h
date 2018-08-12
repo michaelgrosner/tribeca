@@ -107,7 +107,10 @@ namespace K {
       }
     }
     GIVEN("mMarketLevels") {
-      mMarketLevels levels;
+      mProduct product;
+      mPrice minTick = 0.01;
+      product.minTick = &minTick;
+      mMarketLevels levels(&product);
       WHEN("defaults") {
         THEN("fair value") {
           REQUIRE_FALSE(levels.fairValue);
@@ -117,7 +120,7 @@ namespace K {
           REQUIRE_NOTHROW(levels.stats.fairPrice.mToScreen::refresh = []() {
             INFO("refresh()");
           });
-          REQUIRE_NOTHROW(levels.calcFairValue(0.01));
+          REQUIRE_NOTHROW(levels.filter());
           REQUIRE_FALSE(levels.fairValue);
         }
       }
@@ -136,10 +139,10 @@ namespace K {
         REQUIRE_NOTHROW(levels.filterBidOrders[1234.52] += 0.23456789);
         REQUIRE_NOTHROW(levels.filterBidOrders[1234.55] += 0.01234567);
         REQUIRE_NOTHROW(levels.filterAskOrders[1234.69] += 0.01234568);
-        REQUIRE_NOTHROW(levels.send_reset_filter(mLevels(
+        REQUIRE_NOTHROW(levels.reset(mLevels(
           { mLevel(1234.50, 0.12345678), mLevel(1234.55, 0.01234567) },
           { mLevel(1234.60, 1.23456789), mLevel(1234.69, 0.11234569) }
-        ), 0.01));
+        )));
         THEN("filters") {
           REQUIRE(levels.filterBidOrders.size() == 2);
           REQUIRE(levels.filterAskOrders.size() == 1);
@@ -169,7 +172,7 @@ namespace K {
           REQUIRE_NOTHROW(levels.stats.fairPrice.mToScreen::refresh = []() {
             FAIL("refresh() while ratelimit() = true because val still is = val");
           });
-          REQUIRE_NOTHROW(levels.calcFairValue(0.01));
+          REQUIRE_NOTHROW(levels.filter());
           REQUIRE(levels.fairValue == 1234.55);
         }
         THEN("fair value weight") {
@@ -177,7 +180,7 @@ namespace K {
           REQUIRE_NOTHROW(levels.stats.fairPrice.mToClient::send = [&]() {
             REQUIRE(levels.stats.fairPrice.blob().dump() == "{\"price\":1234.59}");
           });
-          REQUIRE_NOTHROW(levels.calcFairValue(0.01));
+          REQUIRE_NOTHROW(levels.filter());
           REQUIRE(levels.fairValue == 1234.59);
         }
         THEN("fair value reversed weight") {
@@ -185,7 +188,7 @@ namespace K {
           REQUIRE_NOTHROW(levels.stats.fairPrice.mToClient::send = [&]() {
             REQUIRE(levels.stats.fairPrice.blob().dump() == "{\"price\":1234.51}");
           });
-          REQUIRE_NOTHROW(levels.calcFairValue(0.01));
+          REQUIRE_NOTHROW(levels.filter());
           REQUIRE(levels.fairValue == 1234.51);
         }
         WHEN("diff") {
@@ -208,10 +211,10 @@ namespace K {
             REQUIRE_NOTHROW(levels.stats.fairPrice.mToClient::send = [&]() {
               REQUIRE(levels.stats.fairPrice.blob().dump() == "{\"price\":1234.5}");
             });
-            REQUIRE_NOTHROW(levels.send_reset_filter(mLevels(
+            REQUIRE_NOTHROW(levels.reset(mLevels(
               { mLevel(1234.40, 0.12345678), mLevel(1234.55, 0.01234567) },
               { mLevel(1234.60, 1.23456789), mLevel(1234.69, 0.11234566) }
-            ), 0.01));
+            )));
             REQUIRE(levels.diff.hello().dump() == "[{"
               "\"asks\":[{\"price\":1234.6,\"size\":1.23456789},{\"price\":1234.69,\"size\":0.11234566}],"
               "\"bids\":[{\"price\":1234.4,\"size\":0.12345678},{\"price\":1234.55,\"size\":0.01234567}]"
@@ -275,8 +278,10 @@ namespace K {
 
     GIVEN("mBroker") {
       mProduct product;
+      mPrice minTick = 0.01;
+      product.minTick = &minTick;
+      mMarketLevels levels(&product);
       mWalletPosition wallet;
-      mMarketLevels levels;
       mBroker broker(&product, &wallet, &levels);
       WHEN("assigned") {
         vector<mRandId> randIds;

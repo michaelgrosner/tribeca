@@ -18,7 +18,7 @@ namespace K {
           wallet.reset(rawdata, levels);
         });
         gw->RAWDATA_ENTRY_POINT(mLevels, {                          PRETTY_DEBUG
-          levels.send_reset_filter(rawdata, gw->minTick);
+          levels.reset(rawdata);
           wallet.send_ratelimit(levels);
           calcQuotes();
         });

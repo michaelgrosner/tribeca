@@ -23,38 +23,86 @@
 #define TRUEONCE(k) (k ? !(k = !k) : k)
 
 namespace K {
-  enum class mConnectivity: unsigned int { Disconnected, Connected };
-  enum class mStatus: unsigned int { New, Working, Complete, Cancelled };
-  enum class mSide: unsigned int { Bid, Ask, Both };
-  enum class mTimeInForce: unsigned int { IOC, FOK, GTC };
-  enum class mOrderType: unsigned int { Limit, Market };
-  enum class mPingAt: unsigned int { BothSides, BidSide, AskSide, DepletedSide, DepletedBidSide, DepletedAskSide, StopPings };
-  enum class mPongAt: unsigned int { ShortPingFair, AveragePingFair, LongPingFair, ShortPingAggressive, AveragePingAggressive, LongPingAggressive };
-  enum class mQuotingMode: unsigned int { Top, Mid, Join, InverseJoin, InverseTop, HamelinRat, Depth };
-  enum class mQuotingSafety: unsigned int { Off, PingPong, Boomerang, AK47 };
-  enum class mQuoteState: unsigned int { Disconnected, Live, DisabledQuotes, MissingData, UnknownHeld, WidthMustBeSmaller, TBPHeld, MaxTradesSeconds, WaitingPing, DepletedFunds, Crossed, UpTrendHeld, DownTrendHeld };
-  enum class mFairValueModel: unsigned int { BBO, wBBO , rwBBO };
-  enum class mAutoPositionMode: unsigned int { Manual, EWMA_LS, EWMA_LMS, EWMA_4 };
-  enum class mPDivMode: unsigned int { Manual, Linear, Sine, SQRT, Switch};
-  enum class mAPR: unsigned int { Off, Size, SizeWidth };
-  enum class mSOP: unsigned int { Off, Trades, Size, TradesSize };
-  enum class mSTDEV: unsigned int { Off, OnFV, OnFVAPROff, OnTops, OnTopsAPROff, OnTop, OnTopAPROff };
-
-  enum class mHotkey: int { ESC = 27, Q = 81, q = 113 };
-
-  enum class mPortal: unsigned char { Hello = '=', Kiss = '-' };
-  enum class mMatter: unsigned char {
-    FairValue            = 'a', Quote                = 'b', ActiveSubscription = 'c', Connectivity       = 'd', MarketData       = 'e',
-    QuotingParameters    = 'f', SafetySettings       = 'g', Product            = 'h', OrderStatusReports = 'i',
-    ProductAdvertisement = 'j', ApplicationState     = 'k', EWMAStats          = 'l', STDEVStats         = 'm',
-    Position             = 'n', Profit               = 'o', SubmitNewOrder     = 'p', CancelOrder        = 'q', MarketTrade      = 'r',
-    Trades               = 's', ExternalValuation    = 't', QuoteStatus        = 'u', TargetBasePosition = 'v', TradeSafetyValue = 'w',
-    CancelAllOrders      = 'x', CleanAllClosedTrades = 'y', CleanAllTrades     = 'z', CleanTrade         = 'A',
-                                WalletChart          = 'C', MarketChart        = 'D', Notepad            = 'E', MarketDataLongTerm = 'H'
+  enum class mConnectivity: unsigned int {
+    Disconnected, Connected
+  };
+  enum class mStatus: unsigned int {
+    New, Working, Complete, Cancelled
+  };
+  enum class mSide: unsigned int {
+    Bid, Ask, Both
+  };
+  enum class mTimeInForce: unsigned int {
+    IOC, FOK, GTC
+  };
+  enum class mOrderType: unsigned int {
+    Limit, Market
+  };
+  enum class mQuotingMode: unsigned int {
+    Top, Mid, Join, InverseJoin, InverseTop, HamelinRat, Depth
+  };
+  enum class mQuotingSafety: unsigned int {
+    Off, PingPong, Boomerang, AK47
+  };
+  enum class mQuoteState: unsigned int {
+    Disconnected,  Live,             DisabledQuotes,
+    MissingData,   UnknownHeld,      WidthMustBeSmaller,
+    TBPHeld,       MaxTradesSeconds, WaitingPing,
+    DepletedFunds, Crossed,
+    UpTrendHeld,   DownTrendHeld
+  };
+  enum class mFairValueModel: unsigned int {
+    BBO, wBBO, rwBBO
+  };
+  enum class mAutoPositionMode: unsigned int {
+    Manual, EWMA_LS, EWMA_LMS, EWMA_4
+  };
+  enum class mPDivMode: unsigned int {
+    Manual, Linear, Sine, SQRT, Switch
+  };
+  enum class mAPR: unsigned int {
+    Off, Size, SizeWidth
+  };
+  enum class mSOP: unsigned int {
+    Off, Trades, Size, TradesSize
+  };
+  enum class mSTDEV: unsigned int {
+    Off, OnFV, OnFVAPROff, OnTops, OnTopsAPROff, OnTop, OnTopAPROff
+  };
+  enum class mPingAt: unsigned int {
+    BothSides,    BidSide,         AskSide,
+    DepletedSide, DepletedBidSide, DepletedAskSide,
+    StopPings
+  };
+  enum class mPongAt: unsigned int {
+    ShortPingFair,       AveragePingFair,       LongPingFair,
+    ShortPingAggressive, AveragePingAggressive, LongPingAggressive
   };
 
-  static          bool operator! (mConnectivity k_)                   { return !(unsigned int)k_; };
-  static mConnectivity operator* (mConnectivity _k, mConnectivity k_) { return (mConnectivity)((unsigned int)_k * (unsigned int)k_); };
+  enum class mHotkey: int {
+    ESC = 27,
+     Q  = 81,
+     q  = 113
+  };
+
+  enum class mPortal: unsigned char {
+    Hello = '=',
+    Kiss  = '-'
+  };
+  enum class mMatter: unsigned char {
+    FairValue            = 'a', Quote                = 'b', ActiveSubscription = 'c', Connectivity       = 'd',
+    MarketData           = 'e', QuotingParameters    = 'f', SafetySettings     = 'g', Product            = 'h',
+    OrderStatusReports   = 'i', ProductAdvertisement = 'j', ApplicationState   = 'k', EWMAStats          = 'l',
+    STDEVStats           = 'm', Position             = 'n', Profit             = 'o', SubmitNewOrder     = 'p',
+    CancelOrder          = 'q', MarketTrade          = 'r', Trades             = 's', ExternalValuation  = 't',
+    QuoteStatus          = 'u', TargetBasePosition   = 'v', TradeSafetyValue   = 'w', CancelAllOrders    = 'x',
+    CleanAllClosedTrades = 'y', CleanAllTrades       = 'z', CleanTrade         = 'A',
+    WalletChart          = 'C', MarketChart          = 'D', Notepad            = 'E',
+                                MarketDataLongTerm   = 'H'
+  };
+
+  static          bool operator ! (mConnectivity k_)                   { return !(unsigned int)k_; };
+  static mConnectivity operator * (mConnectivity _k, mConnectivity k_) { return (mConnectivity)((unsigned int)_k * (unsigned int)k_); };
 
   static string strX(const double &d, const unsigned int &X) { stringstream ss; ss << setprecision(X) << fixed << d; return ss.str(); };
   static string str8(const double &d) { return strX(d, 8); };
@@ -1403,6 +1451,27 @@ namespace K {
     };
   };
 
+  struct mProduct: public mJsonToClient<mProduct> {
+    const mPrice  *minTick = nullptr;
+    const mAmount *minSize = nullptr;
+    mProduct()
+    {};
+    const mMatter about() const {
+      return mMatter::ProductAdvertisement;
+    };
+  };
+  static void to_json(json &j, const mProduct &k) {
+    j = {
+      {   "exchange", args.exchange                                 },
+      {       "base", args.base                                     },
+      {      "quote", args.quote                                    },
+      {    "minTick", *k.minTick                                    },
+      {"environment", args.title                                    },
+      { "matryoshka", args.matryoshka                               },
+      {   "homepage", "https://github.com/ctubio/Krypto-trading-bot"}
+    };
+  };
+
   struct mLevel {
      mPrice price = 0;
     mAmount size  = 0;
@@ -1521,17 +1590,19 @@ namespace K {
       j["diff"] = true;
   };
   struct mMarketLevels: public mLevels {
-                 mLevels unfiltered;
-             mLevelsDiff diff;
-            mMarketStats stats;
+         mLevels unfiltered;
+     mLevelsDiff diff;
+    mMarketStats stats;
+    unsigned int averageCount = 0;
+          mPrice averageWidth = 0,
+                 fairValue    = 0;
     unordered_map<mPrice, mAmount> filterBidOrders,
                                    filterAskOrders;
-            unsigned int averageCount = 0;
-                  mPrice averageWidth = 0,
-                         fairValue    = 0;
-    mMarketLevels()
+    const mProduct *const product = nullptr;
+    mMarketLevels(const mProduct *const p)
       : diff(&unfiltered)
       , stats(&fairValue)
+      , product(p)
     {};
     const bool warn_empty() const {
       const bool err = empty();
@@ -1558,7 +1629,36 @@ namespace K {
       *superSpread = spread() > widthPing * qp.sopWidthMultiplier;
       return widthPing;
     };
-    void calcFairValue(const mPrice &minTick) {
+    const bool filter() {
+      bids = unfiltered.bids;
+      asks = unfiltered.asks;
+      if (!filterBidOrders.empty()) filter(&bids, filterBidOrders);
+      if (!filterAskOrders.empty()) filter(&asks, filterAskOrders);
+      calcFairValue();
+      calcAverageWidth();
+      diff.send_reset();
+      return !empty();
+    };
+    void reset(const mLevels &raw) {
+      unfiltered.bids = raw.bids;
+      unfiltered.asks = raw.asks;
+      filter();
+    };
+    private:
+      void calcAverageWidth() {
+        if (empty()) return;
+        averageWidth = (
+          (averageWidth * averageCount)
+            + asks.cbegin()->price
+            - bids.cbegin()->price
+        );
+        averageWidth /= ++averageCount;
+      };
+      const mPrice resetAverageWidth() {
+        averageCount = 0;
+        return averageWidth;
+      };
+    void calcFairValue() {
       if (empty())
         fairValue = 0;
       else if (qp.fvModel == mFairValueModel::BBO)
@@ -1578,46 +1678,22 @@ namespace K {
         ) / (asks.cbegin()->size
            + bids.cbegin()->size
       );
-      if (fairValue) fairValue = round(fairValue / minTick) * minTick;
+      if (fairValue) fairValue = round(fairValue / *product->minTick) * *product->minTick;
       stats.fairPrice.send_refresh();
     };
-    void calcAverageWidth() {
-      if (empty()) return;
-      averageWidth = (
-        (averageWidth * averageCount)
-          + asks.cbegin()->price
-          - bids.cbegin()->price
-      );
-      averageWidth /= ++averageCount;
-    };
-    const mPrice resetAverageWidth() {
-      return averageCount = 0;
-    };
-    void reset(const mLevels &next) {
-      bids = unfiltered.bids = next.bids;
-      asks = unfiltered.asks = next.asks;
-    };
-    void filter(vector<mLevel> *const levels, unordered_map<mPrice, mAmount> orders) {
-      for (vector<mLevel>::iterator it = levels->begin(); it != levels->end();) {
-        for (unordered_map<mPrice, mAmount>::iterator it_ = orders.begin(); it_ != orders.end();)
-          if (it->price == it_->first) {
-            it->size -= it_->second;
-            orders.erase(it_);
-            break;
-          } else ++it_;
-        if (!it->size) it = levels->erase(it);
-        else ++it;
-        if (orders.empty()) break;
-      }
-    };
-    void send_reset_filter(const mLevels &next, const mPrice &minTick) {
-      reset(next);
-      if (!filterBidOrders.empty()) filter(&bids, filterBidOrders);
-      if (!filterAskOrders.empty()) filter(&asks, filterAskOrders);
-      calcFairValue(minTick);
-      calcAverageWidth();
-      diff.send_reset();
-    };
+      void filter(vector<mLevel> *const levels, unordered_map<mPrice, mAmount> orders) {
+        for (vector<mLevel>::iterator it = levels->begin(); it != levels->end();) {
+          for (unordered_map<mPrice, mAmount>::iterator it_ = orders.begin(); it_ != orders.end();)
+            if (it->price == it_->first) {
+              it->size -= it_->second;
+              orders.erase(it_);
+              break;
+            } else ++it_;
+          if (!it->size) it = levels->erase(it);
+          else ++it;
+          if (orders.empty()) break;
+        }
+      };
   };
 
   struct mProfit {
@@ -2123,27 +2199,6 @@ namespace K {
     j = {
       { "state", k.greenButton },
       {"status", k.greenGateway}
-    };
-  };
-
-  struct mProduct: public mJsonToClient<mProduct> {
-    const mPrice  *minTick = nullptr;
-    const mAmount *minSize = nullptr;
-    mProduct()
-    {};
-    const mMatter about() const {
-      return mMatter::ProductAdvertisement;
-    };
-  };
-  static void to_json(json &j, const mProduct &k) {
-    j = {
-      {   "exchange", args.exchange                                 },
-      {       "base", args.base                                     },
-      {      "quote", args.quote                                    },
-      {    "minTick", *k.minTick                                    },
-      {"environment", args.title                                    },
-      { "matryoshka", args.matryoshka                               },
-      {   "homepage", "https://github.com/ctubio/Krypto-trading-bot"}
     };
   };
 

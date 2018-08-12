@@ -579,7 +579,7 @@ namespace K {
 #define CLIENT_CLICKME_CODE(btn, fn, val) \
                   client->clickme(btn, [&](const json &butterfly) { fn(val); });
 #define CLIENT_CLICKME_LIST(code)                                              \
-  code( qp                    , calcQuotesAfterSavedParams       ,           ) \
+  code( qp                    , savedQuotingParameters           ,           ) \
   code( notepad               , void                             ,           ) \
   code( broker.semaphore      , void                             ,           ) \
   code( btn.submit            , manualSendOrder                  , butterfly ) \
@@ -596,21 +596,20 @@ namespace K {
              mNotepad notepad;
              mMonitor monitor;
       Engine()
-        : broker(&monitor.product, &wallet, &levels)
+        : levels(&monitor.product)
+        , broker(&monitor.product, &wallet, &levels)
       {};
       void calcQuotes() {                                           PRETTY_DEBUG
         broker.calculon.reset();
         if (!broker.semaphore.greenGateway) {
           broker.calculon.reset(mQuoteState::Disconnected);
-        } else if (!levels.empty() and !wallet.target.safety.empty()) {
+        } else if (levels.filter() and !wallet.target.safety.empty()) {
           if (!broker.semaphore.greenButton) {
             broker.calculon.reset(mQuoteState::DisabledQuotes);
             cancelOrders();
           } else {
             broker.calculon.reset(mQuoteState::UnknownHeld);
             broker.calculon.calcQuotes();
-            levels.filterBidOrders.clear();
-            levels.filterAskOrders.clear();
             if (broker.calculon.nextQuotes.ask.state == mQuoteState::Live)
               quote2order(mSide::Ask, broker.calculon.nextQuotes.ask, &levels.filterBidOrders);
             else cancelOrders(mSide::Ask);
@@ -627,6 +626,7 @@ namespace K {
         vector<mOrder*> toCancel,
                         keepWorking;
         vector<mRandId> zombies;
+        filter->clear();
         mClock now = Tstamp;
         for (unordered_map<mRandId, mOrder>::value_type &it : broker.orders)
           if (it.second.side != side) continue;
@@ -671,13 +671,9 @@ namespace K {
         wallet.target.safety.calc(levels, broker.tradesHistory);
         calcQuotes();
       };
-      void calcQuotesAfterSavedParams() {
+      void savedQuotingParameters() {
         broker.calculon.dummyMM.reset("saved");
-        levels.calcFairValue(gw->minTick);
         levels.stats.ewma.calcFromHistory();
-        wallet.send_ratelimit(levels);
-        wallet.target.safety.calc(levels, broker.tradesHistory);
-        calcQuotes();
       };
       void sendOrders(vector<mOrder*> toCancel, const mQuote *const nextQuote, const mSide &side) {
         mOrder *toReplace = nullptr;
