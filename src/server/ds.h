@@ -2265,7 +2265,6 @@ namespace K {
 
   struct mDummyMarketMaker: public mToScreen {
     private:
-      const mMarketLevels *const levels = nullptr;
       void (*calcRawQuotesFromMarket)(
         const mMarketLevels *const,
         const mPrice&,
@@ -2274,9 +2273,16 @@ namespace K {
         const mAmount&,
         mQuotes *const nextQuotes
       ) = nullptr;
+      const mProduct        *const product    = nullptr;
+      const mWalletPosition *const wallet     = nullptr;
+      const mMarketLevels   *const levels     = nullptr;
+            mQuotes         *const nextQuotes = nullptr;
     public:
-      mDummyMarketMaker(const mMarketLevels *const l)
-        : levels(l)
+      mDummyMarketMaker(const mProduct *const p, const mWalletPosition *const w, const mMarketLevels *const l, mQuotes *const q)
+        : product(p)
+        , wallet(w)
+        , levels(l)
+        , nextQuotes(q)
       {};
       void reset(const string &reason) {
         if (qp.mode == mQuotingMode::Top)              calcRawQuotesFromMarket = calcTopOfMarket;
@@ -2289,13 +2295,13 @@ namespace K {
         else EXIT(error("QE", "Invalid quoting mode "
           + reason + ", consider to remove the database file"));
       };
-      void calcRawQuotes(const mPrice &minTick, const mAmount &bidSize, const mAmount &askSize, mQuotes *const nextQuotes) const  {
+      void calcRawQuotes() const  {
         calcRawQuotesFromMarket(
           levels,
-          minTick,
+          *product->minTick,
           levels->calcQuotesWidth(&nextQuotes->superSpread),
-          bidSize,
-          askSize,
+          wallet->target.safety.buySize,
+          wallet->target.safety.sellSize,
           nextQuotes
         );
         if (nextQuotes->bid.price <= 0 or nextQuotes->ask.price <= 0) {
@@ -2418,13 +2424,13 @@ namespace K {
       const mWalletPosition *const wallet  = nullptr;
       const mMarketLevels   *const levels  = nullptr;
     mAntonioCalculon(const mProduct *const p, const mWalletPosition *const w, const mMarketLevels *const l)
-      : dummyMM(l)
+      : dummyMM(p, w, l, &nextQuotes)
       , product(p)
       , wallet(w)
       , levels(l)
     {};
     void calcQuotes() {
-      calcDummyQuotes();
+      dummyMM.calcRawQuotes();
       applyQuotingParameters();
     };
     void reset(const mQuoteState &state) {
@@ -2447,14 +2453,6 @@ namespace K {
       return false;
     };
     private:
-      void calcDummyQuotes() {
-        dummyMM.calcRawQuotes(
-          *product->minTick,
-          wallet->target.safety.buySize,
-          wallet->target.safety.sellSize,
-          &nextQuotes
-        );
-      };
       void applyQuotingParameters() {
         nextQuotes.debuq("?"); applySuperTrades();
         nextQuotes.debuq("A"); applyEwmaProtection();
