@@ -598,7 +598,7 @@ namespace K {
              mNotepad notepad;
              mMonitor monitor;
       Engine()
-        : levels(&monitor.product)
+        : levels(&monitor.product, &broker.orders)
         , broker(&monitor.product, &wallet, &levels)
       {};
       void calcQuotes() {                                           PRETTY_DEBUG
@@ -612,23 +612,20 @@ namespace K {
           } else {
             broker.calculon.reset(mQuoteState::UnknownHeld);
             broker.calculon.calcQuotes();
-            if (broker.calculon.nextQuotes.ask.state == mQuoteState::Live)
-              quote2order(mSide::Ask, broker.calculon.nextQuotes.ask, &levels.filterBidOrders);
-            else cancelOrders(mSide::Ask);
-            if (broker.calculon.nextQuotes.bid.state == mQuoteState::Live)
-              quote2order(mSide::Bid, broker.calculon.nextQuotes.bid, &levels.filterAskOrders);
-            else cancelOrders(mSide::Bid);
+            quote2orders(mSide::Ask, broker.calculon.nextQuotes.ask);
+            quote2orders(mSide::Bid, broker.calculon.nextQuotes.bid);
           }
         }
         broker.calculon.send();
       };
-      void quote2order(const mSide &side, const mQuote &nextQuote, unordered_map<mPrice, mAmount> *const filter) {
+      void quote2orders(const mSide &side, const mQuote &nextQuote) {
+        if (nextQuote.state != mQuoteState::Live)
+          return cancelOrders(side);
         unsigned int n = 0;
         bool skipNextQuote = false;
         vector<mOrder*> toCancel,
                         keepWorking;
         vector<mRandId> zombies;
-        filter->clear();
         mClock now = Tstamp;
         for (unordered_map<mRandId, mOrder>::value_type &it : broker.orders)
           if (it.second.side != side) continue;
@@ -639,10 +636,9 @@ namespace K {
                 continue;
               }
               broker.calculon.countNew++;
-            } else if (it.second.orderStatus == mStatus::Working) {
-              (*filter)[it.second.price] += it.second.quantity;
+            } else if (it.second.orderStatus == mStatus::Working)
               broker.calculon.countWorking++;
-            } else broker.calculon.countDone++;
+            else broker.calculon.countDone++;
             if (!it.second.preferPostOnly) continue;
             if (it.second.price == nextQuote.price) skipNextQuote = true;
             else if (it.second.orderStatus == mStatus::New) {

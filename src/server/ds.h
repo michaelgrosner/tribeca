@@ -22,6 +22,8 @@
 
 #define TRUEONCE(k) (k ? !(k = !k) : k)
 
+#define ROUND(k, x) (round((k) / x) * x)
+
 namespace K {
   enum class mConnectivity: unsigned int {
     Disconnected, Connected
@@ -79,7 +81,7 @@ namespace K {
     ShortPingAggressive, AveragePingAggressive, LongPingAggressive
   };
 
-  enum class mHotkey: int {
+  enum class mHotkey: unsigned int {
     ESC = 27,
      Q  = 81,
      q  = 113
@@ -337,6 +339,12 @@ namespace K {
         if (latency) naked = headless = 1;
         if (headless) port = 0;
         else if (!port or !maxAdmins) headless = 1;
+        if (debugSecret
+          or debugEvents
+          or debugOrders
+          or debugQuotes
+          or debugSqlite
+        ) naked = 1;
 #ifdef _WIN32
         naked = 1;
 #endif
@@ -1596,54 +1604,64 @@ namespace K {
     unsigned int averageCount = 0;
           mPrice averageWidth = 0,
                  fairValue    = 0;
-    unordered_map<mPrice, mAmount> filterBidOrders,
-                                   filterAskOrders;
-    const mProduct *const product = nullptr;
-    mMarketLevels(const mProduct *const p)
-      : diff(&unfiltered)
-      , stats(&fairValue)
-      , product(p)
-    {};
-    const bool warn_empty() const {
-      const bool err = empty();
-      if (err) stats.fairPrice.warn("QE", "Unable to calculate quote, missing market data");
-      return err;
-    };
-    void timer_1s() {
-      stats.stdev.timer_1s(fairValue, bids.cbegin()->price, asks.cbegin()->price);
-    };
-    void timer_60s() {
-      stats.takerTrades.timer_60s();
-      stats.ewma.timer_60s(fairValue, resetAverageWidth());
-      stats.send();
-    };
-    const mPrice calcQuotesWidth(bool *const superSpread) const {
-      const mPrice widthPing = fmax(
-        qp.widthPercentage
-          ? qp.widthPingPercentage * fairValue / 100
-          : qp.widthPing,
-        qp.protectionEwmaWidthPing and stats.ewma.mgEwmaW
-          ? stats.ewma.mgEwmaW
-          : 0
-      );
-      *superSpread = spread() > widthPing * qp.sopWidthMultiplier;
-      return widthPing;
-    };
-    const bool filter() {
-      bids = unfiltered.bids;
-      asks = unfiltered.asks;
-      if (!filterBidOrders.empty()) filter(&bids, filterBidOrders);
-      if (!filterAskOrders.empty()) filter(&asks, filterAskOrders);
-      calcFairValue();
-      calcAverageWidth();
-      diff.send_reset();
-      return !empty();
-    };
-    void reset(const mLevels &raw) {
-      unfiltered.bids = raw.bids;
-      unfiltered.asks = raw.asks;
-      filter();
-    };
+    private:
+      unordered_map<mPrice, mAmount> filterBidOrders,
+                                     filterAskOrders;
+      const mProduct                       *const product = nullptr;
+      const unordered_map<mRandId, mOrder> *const orders  = nullptr;
+    public:
+      mMarketLevels(const mProduct *const p, const unordered_map<mRandId, mOrder> *const o)
+        : diff(&unfiltered)
+        , stats(&fairValue)
+        , product(p)
+        , orders(o)
+      {};
+      const bool warn_empty() const {
+        const bool err = empty();
+        if (err) stats.fairPrice.warn("QE", "Unable to calculate quote, missing market data");
+        return err;
+      };
+      void timer_1s() {
+        stats.stdev.timer_1s(fairValue, bids.cbegin()->price, asks.cbegin()->price);
+      };
+      void timer_60s() {
+        stats.takerTrades.timer_60s();
+        stats.ewma.timer_60s(fairValue, resetAverageWidth());
+        stats.send();
+      };
+      const mPrice calcQuotesWidth(bool *const superSpread) const {
+        const mPrice widthPing = fmax(
+          qp.widthPercentage
+            ? qp.widthPingPercentage * fairValue / 100
+            : qp.widthPing,
+          qp.protectionEwmaWidthPing and stats.ewma.mgEwmaW
+            ? stats.ewma.mgEwmaW
+            : 0
+        );
+        *superSpread = spread() > widthPing * qp.sopWidthMultiplier;
+        return widthPing;
+      };
+      const bool filter() {
+        filterBidOrders.clear();
+        filterAskOrders.clear();
+        for (const unordered_map<mRandId, mOrder>::value_type &it : *orders)
+          (it.second.side == mSide::Bid
+            ? filterBidOrders
+            : filterAskOrders
+          )[it.second.price] += it.second.quantity;
+        bids = filter(unfiltered.bids, &filterBidOrders);
+        asks = filter(unfiltered.asks, &filterAskOrders);
+        calcFairValue();
+        calcAverageWidth();
+        return !empty();
+      };
+      void reset(const mLevels &raw) {
+        unfiltered.bids = raw.bids;
+        unfiltered.asks = raw.asks;
+        filter();
+        stats.fairPrice.send_refresh();
+        diff.send_reset();
+      };
     private:
       void calcAverageWidth() {
         if (empty()) return;
@@ -1658,41 +1676,43 @@ namespace K {
         averageCount = 0;
         return averageWidth;
       };
-    void calcFairValue() {
-      if (empty())
-        fairValue = 0;
-      else if (qp.fvModel == mFairValueModel::BBO)
-        fairValue = (asks.cbegin()->price
-                   + bids.cbegin()->price) / 2;
-      else if (qp.fvModel == mFairValueModel::wBBO)
-        fairValue = (
-          bids.cbegin()->price * bids.cbegin()->size
-        + asks.cbegin()->price * asks.cbegin()->size
-        ) / (asks.cbegin()->size
-           + bids.cbegin()->size
-      );
-      else
-        fairValue = (
-          bids.cbegin()->price * asks.cbegin()->size
-        + asks.cbegin()->price * bids.cbegin()->size
-        ) / (asks.cbegin()->size
-           + bids.cbegin()->size
-      );
-      if (fairValue) fairValue = round(fairValue / *product->minTick) * *product->minTick;
-      stats.fairPrice.send_refresh();
-    };
-      void filter(vector<mLevel> *const levels, unordered_map<mPrice, mAmount> orders) {
-        for (vector<mLevel>::iterator it = levels->begin(); it != levels->end();) {
-          for (unordered_map<mPrice, mAmount>::iterator it_ = orders.begin(); it_ != orders.end();)
-            if (it->price == it_->first) {
-              it->size -= it_->second;
-              orders.erase(it_);
-              break;
-            } else ++it_;
-          if (!it->size) it = levels->erase(it);
-          else ++it;
-          if (orders.empty()) break;
-        }
+      void calcFairValue() {
+        if (empty())
+          fairValue = 0;
+        else if (qp.fvModel == mFairValueModel::BBO)
+          fairValue = (asks.cbegin()->price
+                     + bids.cbegin()->price) / 2;
+        else if (qp.fvModel == mFairValueModel::wBBO)
+          fairValue = (
+            bids.cbegin()->price * bids.cbegin()->size
+          + asks.cbegin()->price * asks.cbegin()->size
+          ) / (asks.cbegin()->size
+             + bids.cbegin()->size
+        );
+        else
+          fairValue = (
+            bids.cbegin()->price * asks.cbegin()->size
+          + asks.cbegin()->price * bids.cbegin()->size
+          ) / (asks.cbegin()->size
+             + bids.cbegin()->size
+        );
+        if (fairValue)
+          fairValue = ROUND(fairValue, *product->minTick);
+      };
+      const vector<mLevel> filter(vector<mLevel> levels, unordered_map<mPrice, mAmount> *const filterOrders) {
+        if (!filterOrders->empty())
+          for (vector<mLevel>::iterator it = levels.begin(); it != levels.end();) {
+            for (unordered_map<mPrice, mAmount>::iterator it_ = filterOrders->begin(); it_ != filterOrders->end();)
+              if (it->price == it_->first) {
+                it->size -= it_->second;
+                filterOrders->erase(it_);
+                break;
+              } else ++it_;
+            if (!it->size) it = levels.erase(it);
+            else ++it;
+            if (filterOrders->empty()) break;
+          }
+        return levels;
       };
   };
 
@@ -1737,7 +1757,7 @@ namespace K {
       );
     };
     const double calcDiffPercent(mAmount older, mAmount newer) const {
-      return round((((newer - older) / newer) * 1e+2) / 1e-2) * 1e-2;
+      return ROUND(((newer - older) / newer) * 1e+2, 1e-2);
     };
     const mMatter about() const {
       return mMatter::Profit;
@@ -1901,16 +1921,17 @@ namespace K {
     {};
     void calcTargetBasePos(const double &targetPositionAutoPercentage) { // PRETTY_DEBUG plz
       if (warn_empty()) return;
-      targetBasePosition = round((qp.autoPositionMode == mAutoPositionMode::Manual
+      targetBasePosition = ROUND(qp.autoPositionMode == mAutoPositionMode::Manual
         ? (qp.percentageValues
           ? qp.targetBasePositionPercentage * *baseValue / 1e+2
           : qp.targetBasePosition)
         : targetPositionAutoPercentage * *baseValue / 1e+2
-      ) / 1e-4) * 1e-4;
+      , 1e-4);
       calcPDiv();
       if (send()) {
         push();
-        debug();
+        if (debug())
+          report();
       }
     };
     const bool warn_empty() const {
@@ -1953,15 +1974,17 @@ namespace K {
           else if (mPDivMode::SQRT == qp.positionDivergenceMode)   positionDivergence = pDivMin + (sqrt(divCenter) * (pDiv - pDivMin));
           else if (mPDivMode::Switch == qp.positionDivergenceMode) positionDivergence = divCenter < 1e-1 ? pDivMin : pDiv;
         }
-        positionDivergence = round(positionDivergence / 1e-4) * 1e-4;
+        positionDivergence = ROUND(positionDivergence, 1e-4);
       };
-      void debug() const {
-        if (args.debugWallet)
-          print("PG", "TBP: "
-            + to_string((int)(targetBasePosition / *baseValue * 1e+2)) + "% = " + str8(targetBasePosition)
-            + " " + args.base + ", pDiv: "
-            + to_string((int)(positionDivergence / *baseValue * 1e+2)) + "% = " + str8(positionDivergence)
-            + " " + args.base);
+      void report() const {
+        print("PG", "TBP: "
+          + to_string((int)(targetBasePosition / *baseValue * 1e+2)) + "% = " + str8(targetBasePosition)
+          + " " + args.base + ", pDiv: "
+          + to_string((int)(positionDivergence / *baseValue * 1e+2)) + "% = " + str8(positionDivergence)
+          + " " + args.base);
+      };
+      const bool debug() const {
+        return args.debugWallet;
       };
   };
   static void to_json(json &j, const mTarget &k) {
@@ -1991,8 +2014,8 @@ namespace K {
     {};
     void reset(const mAmount &a, const mAmount &h) {
       if (empty()) return;
-      total = (amount = round((a / 1e-8) * 1e-8))
-            + (held   = round((h / 1e-8) * 1e-8));
+      total = (amount = ROUND(a, 1e-8))
+            + (held   = ROUND(h , 1e-8));
     };
     const bool empty() const {
       return currency.empty();
@@ -2049,8 +2072,8 @@ namespace K {
     void calcValues(const mPrice &fv) {
       if (!fv) return;
       if (args.maxWallet) calcMaxWallet(fv);
-      base.value = round((quote.total / fv + base.total) / 1e-8) * 1e-8;
-      quote.value = round((base.total * fv + quote.total) / 1e-8) * 1e-8;
+      base.value = ROUND(quote.total / fv + base.total, 1e-8);
+      quote.value = ROUND(base.total * fv + quote.total, 1e-8);
       calcProfits();
     };
     void calcProfits() {
@@ -2209,25 +2232,23 @@ namespace K {
       : bid(b)
       , ask(a)
     {};
+    void checkCrossedQuotes() {
+      bid.state = checkCrossedQuotes(mSide::Bid);
+      ask.state = checkCrossedQuotes(mSide::Ask);
+    };
     void debug(const string &reason) {
-      if (debug()) print("DEBUG QE", reason);
+      if (debug())
+        print("DEBUG QE", reason);
     };
     void debuq(const string &step) {
       if (debug())
-        debug("[" + step + "] "
+        print("DEBUG QE", "[" + step + "] "
           + to_string((int)bid.state) + ":"
           + to_string((int)ask.state) + " "
           + ((json*)this)->dump()
         );
     };
-    void checkCrossedQuotes() {
-      bid.state = checkCrossedQuotes(mSide::Bid);
-      ask.state = checkCrossedQuotes(mSide::Ask);
-    };
     private:
-      const bool debug() const {
-        return args.debugQuotes;
-      };
       mQuoteState checkCrossedQuotes(const mSide &side) {
         bool cross = false;
         if (side == mSide::Bid) {
@@ -2243,6 +2264,9 @@ namespace K {
           warn("QE", "Cross bid/ask quotes detected, that is.. unexpected");
           return mQuoteState::Crossed;
         } else return mQuoteState::Live;
+      };
+      const bool debug() const {
+        return args.debugQuotes;
       };
   };
   static void to_json(json &j, const mQuotes &k) {
@@ -2806,9 +2830,6 @@ namespace K {
       return working();
     };
     private:
-      const bool debug() const {
-        return args.debugOrders;
-      };
       void report_size() const {
         print("DEBUG OG", "memory " + to_string(orders.size()));
       };
@@ -2844,6 +2865,9 @@ namespace K {
           + " [" + to_string((int)raw.orderStatus) + "]: "
           + str8(raw.quantity) + "/" + str8(raw.tradeQuantity) + " at price "
           + str8(raw.price));
+      };
+      const bool debug() const {
+        return args.debugOrders;
       };
   };
   static void to_json(json &j, const mBroker &k) {
