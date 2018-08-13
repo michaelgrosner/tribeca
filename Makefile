@@ -2,7 +2,7 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
 PATCH    = 9
-BUILD    = 21
+BUILD    = 22
 CHOST   ?= $(shell $(MAKE) CHOST= chost -s)
 CARCH    = x86_64-linux-gnu arm-linux-gnueabihf aarch64-linux-gnu x86_64-apple-darwin17 x86_64-w64-mingw32
 KLOCAL  := build-$(CHOST)/local
@@ -171,7 +171,7 @@ sqlite:
 
 ncurses:
 	test -d build-$(CHOST)/ncurses-$(V_NCUR) || (                                                        \
-	curl -L http://gnu.askapache.com/ncurses/ncurses-$(V_NCUR).tar.gz | tar xz -C build-$(CHOST)         \
+	curl -L http://ftp.gnu.org/pub/gnu/ncurses/ncurses-$(V_NCUR).tar.gz | tar xz -C build-$(CHOST)       \
 	&& cd build-$(CHOST)/ncurses-$(V_NCUR) && CC=$(CC) AR=$(CHOST)-ar CXX=$(CXX) CPPFLAGS=-P ./configure \
 	--host=$(CHOST) --prefix=$(PWD)/$(KLOCAL) $(shell test -n "`echo $(CHOST) | grep mingw32`" && echo   \
 	--without-cxx-binding --without-ada --enable-reentrant --with-normal                                 \

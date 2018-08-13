@@ -1737,7 +1737,7 @@ namespace K {
       );
     };
     const double calcDiffPercent(mAmount older, mAmount newer) const {
-      return ((newer - older) / newer) * 1e+2;
+      return round((((newer - older) / newer) * 1e+2) / 1e-2) * 1e-2;
     };
     const mMatter about() const {
       return mMatter::Profit;
@@ -1899,45 +1899,19 @@ namespace K {
       : safety(b, t, &targetBasePosition)
       , baseValue(b)
     {};
-    void calcPDiv() {
-      mAmount pDiv = qp.percentageValues
-        ? qp.positionDivergencePercentage * *baseValue / 1e+2
-        : qp.positionDivergence;
-      if (qp.autoPositionMode == mAutoPositionMode::Manual or mPDivMode::Manual == qp.positionDivergenceMode)
-        positionDivergence = pDiv;
-      else {
-        mAmount pDivMin = qp.percentageValues
-          ? qp.positionDivergencePercentageMin * *baseValue / 1e+2
-          : qp.positionDivergenceMin;
-        double divCenter = 1 - abs((targetBasePosition / *baseValue * 2) - 1);
-        if (mPDivMode::Linear == qp.positionDivergenceMode)      positionDivergence = pDivMin + (divCenter * (pDiv - pDivMin));
-        else if (mPDivMode::Sine == qp.positionDivergenceMode)   positionDivergence = pDivMin + (sin(divCenter*M_PI_2) * (pDiv - pDivMin));
-        else if (mPDivMode::SQRT == qp.positionDivergenceMode)   positionDivergence = pDivMin + (sqrt(divCenter) * (pDiv - pDivMin));
-        else if (mPDivMode::Switch == qp.positionDivergenceMode) positionDivergence = divCenter < 1e-1 ? pDivMin : pDiv;
-      }
-    };
     void calcTargetBasePos(const double &targetPositionAutoPercentage) { // PRETTY_DEBUG plz
       if (warn_empty()) return;
-      mAmount next = qp.autoPositionMode == mAutoPositionMode::Manual
+      targetBasePosition = round((qp.autoPositionMode == mAutoPositionMode::Manual
         ? (qp.percentageValues
           ? qp.targetBasePositionPercentage * *baseValue / 1e+2
           : qp.targetBasePosition)
-        : targetPositionAutoPercentage * *baseValue / 1e+2;
-      if (ratelimit(next)) return;
-      targetBasePosition = next;
+        : targetPositionAutoPercentage * *baseValue / 1e+2
+      ) / 1e-4) * 1e-4;
       calcPDiv();
-      push();
-      send();
-      if (args.debugWallet)
-        print("PG", "TBP: "
-          + to_string((int)(targetBasePosition / *baseValue * 1e+2)) + "% = " + str8(targetBasePosition)
-          + " " + args.base + ", pDiv: "
-          + to_string((int)(positionDivergence / *baseValue * 1e+2)) + "% = " + str8(positionDivergence)
-          + " " + args.base);
-    };
-    const bool ratelimit(const mAmount &next) const {
-      return targetBasePosition
-         and abs(targetBasePosition - next) < 1e-4;
+      if (send()) {
+        push();
+        debug();
+      }
     };
     const bool warn_empty() const {
       const bool err = empty();
@@ -1959,6 +1933,36 @@ namespace K {
     string explainOK() const {
       return "loaded TBP = % " + args.base;
     };
+    const bool send_same_blob() const {
+      return false;
+    };
+    private:
+      void calcPDiv() {
+        mAmount pDiv = qp.percentageValues
+          ? qp.positionDivergencePercentage * *baseValue / 1e+2
+          : qp.positionDivergence;
+        if (qp.autoPositionMode == mAutoPositionMode::Manual or mPDivMode::Manual == qp.positionDivergenceMode)
+          positionDivergence = pDiv;
+        else {
+          mAmount pDivMin = qp.percentageValues
+            ? qp.positionDivergencePercentageMin * *baseValue / 1e+2
+            : qp.positionDivergenceMin;
+          double divCenter = 1 - abs((targetBasePosition / *baseValue * 2) - 1);
+          if (mPDivMode::Linear == qp.positionDivergenceMode)      positionDivergence = pDivMin + (divCenter * (pDiv - pDivMin));
+          else if (mPDivMode::Sine == qp.positionDivergenceMode)   positionDivergence = pDivMin + (sin(divCenter*M_PI_2) * (pDiv - pDivMin));
+          else if (mPDivMode::SQRT == qp.positionDivergenceMode)   positionDivergence = pDivMin + (sqrt(divCenter) * (pDiv - pDivMin));
+          else if (mPDivMode::Switch == qp.positionDivergenceMode) positionDivergence = divCenter < 1e-1 ? pDivMin : pDiv;
+        }
+        positionDivergence = round(positionDivergence / 1e-4) * 1e-4;
+      };
+      void debug() const {
+        if (args.debugWallet)
+          print("PG", "TBP: "
+            + to_string((int)(targetBasePosition / *baseValue * 1e+2)) + "% = " + str8(targetBasePosition)
+            + " " + args.base + ", pDiv: "
+            + to_string((int)(positionDivergence / *baseValue * 1e+2)) + "% = " + str8(positionDivergence)
+            + " " + args.base);
+      };
   };
   static void to_json(json &j, const mTarget &k) {
     j = {
@@ -1987,7 +1991,8 @@ namespace K {
     {};
     void reset(const mAmount &a, const mAmount &h) {
       if (empty()) return;
-      total = (amount = a) + (held = h);
+      total = (amount = round((a / 1e-8) * 1e-8))
+            + (held   = round((h / 1e-8) * 1e-8));
     };
     const bool empty() const {
       return currency.empty();
@@ -2027,29 +2032,25 @@ namespace K {
     mWalletPosition()
       : target(&base.value, &base.total)
     {};
-    void reset(const mWallets &next, const mMarketLevels &levels) {
-      if (next.empty()) return;
-      mWallet prevBase = base,
-              prevQuote = quote;
-      base.currency = next.base.currency;
-      quote.currency = next.quote.currency;
-      base.reset(next.base.amount, next.base.held);
-      quote.reset(next.quote.amount, next.quote.held);
-      send_ratelimit(levels, prevBase, prevQuote);
+    void reset(const mWallets &raw, const mMarketLevels &levels) {
+      if (raw.empty()) return;
+      base.currency = raw.base.currency;
+      quote.currency = raw.quote.currency;
+      base.reset(raw.base.amount, raw.base.held);
+      quote.reset(raw.quote.amount, raw.quote.held);
+      send_ratelimit(levels);
     };
     void reset(const mSide &side, const mAmount &nextHeldAmount, const mMarketLevels &levels) {
-      mWallet prevBase = base,
-              prevQuote = quote;
       if (side == mSide::Ask)
         base.reset(base.total - nextHeldAmount, nextHeldAmount);
       else quote.reset(quote.total - nextHeldAmount, nextHeldAmount);
-      send_ratelimit(levels, prevBase, prevQuote);
+      send_ratelimit(levels);
     };
     void calcValues(const mPrice &fv) {
       if (!fv) return;
       if (args.maxWallet) calcMaxWallet(fv);
-      base.value = quote.total / fv + base.total;
-      quote.value = base.total * fv + quote.total;
+      base.value = round((quote.total / fv + base.total) / 1e-8) * 1e-8;
+      quote.value = round((base.total * fv + quote.total) / 1e-8) * 1e-8;
       calcProfits();
     };
     void calcProfits() {
@@ -2070,25 +2071,10 @@ namespace K {
         base.amount = maxWallet;
     };
     void send_ratelimit(const mMarketLevels &levels) {
-      send_ratelimit(levels, base, quote);
-    };
-    void send_ratelimit(const mMarketLevels &levels, const mWallet &prevBase, const mWallet &prevQuote) {
       if (empty() or levels.empty()) return;
       calcValues(levels.fairValue);
       target.calcTargetBasePos(levels.stats.ewma.targetPositionAutoPercentage);
-      if (!ratelimit(prevBase, prevQuote))
-        send();
-    };
-    const bool ratelimit(const mWallet &prevBase, const mWallet &prevQuote) const {
-      return (abs(base.value - prevBase.value) < 2e-6
-        and abs(quote.value - prevQuote.value) < 2e-2
-        and abs(base.amount - prevBase.amount) < 2e-6
-        and abs(quote.amount - prevQuote.amount) < 2e-2
-        and abs(base.held - prevBase.held) < 2e-6
-        and abs(quote.held - prevQuote.held) < 2e-2
-        and abs(base.profit - prevBase.profit) < 2e-2
-        and abs(quote.profit - prevQuote.profit) < 2e-2
-      );
+      send();
     };
     const mMatter about() const {
       return mMatter::Position;
@@ -2097,6 +2083,9 @@ namespace K {
       return !qp.delayUI;
     };
     const bool send_asap() const {
+      return false;
+    };
+    const bool send_same_blob() const {
       return false;
     };
   };
@@ -3023,24 +3012,24 @@ namespace K {
   };
 
   struct mRandom {
-    static unsigned long long int64() {
+    static const unsigned long long int64() {
       static random_device rd;
       static mt19937_64 gen(rd());
       return uniform_int_distribution<unsigned long long>()(gen);
     };
-    static string int45Id() {
+    static const mRandId int45Id() {
       return to_string(int64()).substr(0, 10);
     };
-    static string int32Id() {
+    static const mRandId int32Id() {
       return to_string(int64()).substr(0,  8);
     };
-    static string char16Id() {
+    static const mRandId char16Id() {
       char s[16];
       for (unsigned int i = 0; i < 16; ++i)
         s[i] = numsAz[int64() % (sizeof(numsAz) - 1)];
       return string(s, 16);
     };
-    static string uuid36Id() {
+    static const mRandId uuid36Id() {
       string uuid = string(36, ' ');
       unsigned long long rnd = int64();
       unsigned long long rnd_ = int64();
@@ -3057,8 +3046,8 @@ namespace K {
         }
       return strL(uuid);
     };
-    static string uuid32Id() {
-      string uuid = uuid36Id();
+    static const mRandId uuid32Id() {
+      mRandId uuid = uuid36Id();
       uuid.erase(remove(uuid.begin(), uuid.end(), '-'), uuid.end());
       return uuid;
     }

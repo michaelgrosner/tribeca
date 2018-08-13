@@ -66,8 +66,9 @@ namespace K {
       function<void(const mWallets&)>      write_mWallets;
       function<void(const mConnectivity&)> write_mConnectivity;
 #define RAWDATA_ENTRY_POINT(mData, read) write_##mData = [&](const mData &rawdata) read
-      mRandId (*randId)() = nullptr;
       bool askForFees = false;
+      const bool *askForCancelAll = nullptr;
+      const mRandId (*randId)() = nullptr;
       virtual const json handshake() = 0;
       virtual const bool askForData(const unsigned int &tick) = 0;
       virtual const bool waitForData() = 0;
@@ -86,8 +87,8 @@ namespace K {
 /**/  virtual bool ready() = 0;                                              // wait for exchange and register data handlers
 /**/  function<void(mRandId, string)> replace;                               // call         async orders data from exchange
 /**/  virtual void place(mRandId, mSide, string, string, mOrderType, mTimeInForce, bool) = 0, // async orders as above/below
-/**/             cancel(mRandId, mRandId) = 0,                               // call         async orders data from exchange
-/**/             close() = 0;                                                // disconnect but without waiting for reconnect
+/**/               cancel(mRandId, mRandId) = 0,                             // call         async orders data from exchange
+/**/               close() = 0;                                              // disconnect but without waiting for reconnect
 /**/protected:
 /**/  virtual bool            async_wallet() { return false; };              // call         async wallet data from exchange
 /**/  virtual vector<mWallets> sync_wallet() { return {}; };                 // call and read sync wallet data from exchange
@@ -105,7 +106,7 @@ namespace K {
         bool waiting = false;
         if (TRUEONCE(askForFees)
           or !(tick % 15))       waiting |= !(async_wallet() or !askFor(replyWallets, [&]() { return sync_wallet(); }));
-        if (qp.cancelOrdersAuto
+        if (*askForCancelAll
           and !(tick % 300))     waiting |= askFor(replyCancelAll, [&]() { return sync_cancelAll(); });
         return waiting;
       };
@@ -180,6 +181,7 @@ namespace K {
         ws       = args.wss;
         maxLevel = args.maxLevels;
         debug    = args.debugSecret;
+        askForCancelAll = &qp.cancelOrdersAuto;
         monitor->product.minTick = &minTick;
         monitor->product.minSize = &minSize;
         if (args.latency)
@@ -642,7 +644,7 @@ namespace K {
               broker.calculon.countWorking++;
             } else broker.calculon.countDone++;
             if (!it.second.preferPostOnly) continue;
-            if (abs(it.second.price - nextQuote.price) < gw->minTick) skipNextQuote = true;
+            if (it.second.price == nextQuote.price) skipNextQuote = true;
             else if (it.second.orderStatus == mStatus::New) {
               if (qp.safety != mQuotingSafety::AK47 or ++n >= qp.bullets) skipNextQuote = true;
             } else if (qp.safety != mQuotingSafety::AK47 or (
