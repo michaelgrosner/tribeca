@@ -636,11 +636,12 @@ namespace K {
                 continue;
               }
               broker.calculon.countNew++;
-            } else if (it.second.orderStatus == mStatus::Working)
-              broker.calculon.countWorking++;
-            else broker.calculon.countDone++;
+            } else (it.second.orderStatus == mStatus::Working
+                ? broker.calculon.countWorking
+                : broker.calculon.countDone
+            )++;
             if (!it.second.preferPostOnly) continue;
-            if (it.second.price == nextQuote.price) skipNextQuote = true;
+            if (abs(it.second.price - nextQuote.price) < *monitor.product.minTick) skipNextQuote = true;
             else if (it.second.orderStatus == mStatus::New) {
               if (qp.safety != mQuotingSafety::AK47 or ++n >= qp.bullets) skipNextQuote = true;
             } else if (qp.safety != mQuotingSafety::AK47 or (

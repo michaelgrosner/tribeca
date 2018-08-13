@@ -2433,38 +2433,40 @@ namespace K {
                       countDone    = 0,
                       AK47inc      = 0;
                string sideAPR      = "Off";
+    private:
       const mProduct        *const product = nullptr;
       const mWalletPosition *const wallet  = nullptr;
       const mMarketLevels   *const levels  = nullptr;
-    mAntonioCalculon(const mProduct *const p, const mWalletPosition *const w, const mMarketLevels *const l)
-      : dummyMM(p, w, l, &nextQuotes)
-      , product(p)
-      , wallet(w)
-      , levels(l)
-    {};
-    void calcQuotes() {
-      dummyMM.calcRawQuotes();
-      applyQuotingParameters();
-    };
-    void reset(const mQuoteState &state) {
-      nextQuotes.bid.state =
-      nextQuotes.ask.state = state;
-    };
-    void reset() {
-      reset(mQuoteState::MissingData);
-      countNew     =
-      countWorking =
-      countDone    = 0;
-    };
-    const mMatter about() const {
-      return mMatter::QuoteStatus;
-    };
-    const bool realtime() const {
-      return !qp.delayUI;
-    };
-    const bool send_same_blob() const {
-      return false;
-    };
+    public:
+      mAntonioCalculon(const mProduct *const p, const mWalletPosition *const w, const mMarketLevels *const l)
+        : dummyMM(p, w, l, &nextQuotes)
+        , product(p)
+        , wallet(w)
+        , levels(l)
+      {};
+      void calcQuotes() {
+        dummyMM.calcRawQuotes();
+        applyQuotingParameters();
+      };
+      void reset(const mQuoteState &state) {
+        nextQuotes.bid.state =
+        nextQuotes.ask.state = state;
+      };
+      void reset() {
+        reset(mQuoteState::MissingData);
+        countNew     =
+        countWorking =
+        countDone    = 0;
+      };
+      const mMatter about() const {
+        return mMatter::QuoteStatus;
+      };
+      const bool realtime() const {
+        return !qp.delayUI;
+      };
+      const bool send_same_blob() const {
+        return false;
+      };
     private:
       void applyQuotingParameters() {
         nextQuotes.debuq("?"); applySuperTrades();
