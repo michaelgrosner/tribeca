@@ -108,9 +108,10 @@ namespace K {
     }
     GIVEN("mMarketLevels") {
       mProduct product;
-      mPrice minTick = 0.01;
+      const mPrice minTick = 0.01;
       product.minTick = &minTick;
-      mMarketLevels levels(&product);
+      unordered_map<mRandId, mOrder> orders;
+      mMarketLevels levels(&product, &orders);
       WHEN("defaults") {
         THEN("fair value") {
           REQUIRE_FALSE(levels.fairValue);
@@ -135,17 +136,24 @@ namespace K {
           INFO("refresh()");
         });
         REQUIRE_NOTHROW(qp.fvModel = mFairValueModel::BBO);
-        REQUIRE_NOTHROW(levels.filterBidOrders[1234.52] += 0.34567890);
-        REQUIRE_NOTHROW(levels.filterBidOrders[1234.52] += 0.23456789);
-        REQUIRE_NOTHROW(levels.filterBidOrders[1234.55] += 0.01234567);
-        REQUIRE_NOTHROW(levels.filterAskOrders[1234.69] += 0.01234568);
+        vector<mRandId> randIds;
+        REQUIRE_NOTHROW(randIds.push_back(mRandom::uuid36Id()));
+        REQUIRE_NOTHROW(orders[randIds.back()] = mOrder(randIds.back(), mSide::Bid, 1234.52, 0.34567890, mOrderType::Limit, false, mTimeInForce::IOC));
+        REQUIRE_NOTHROW(orders[randIds.back()].orderStatus = mStatus::Working);
+        REQUIRE_NOTHROW(randIds.push_back(mRandom::uuid36Id()));
+        REQUIRE_NOTHROW(orders[randIds.back()] = mOrder(randIds.back(), mSide::Bid, 1234.52, 0.23456789, mOrderType::Limit, false, mTimeInForce::IOC));
+        REQUIRE_NOTHROW(orders[randIds.back()].orderStatus = mStatus::Working);
+        REQUIRE_NOTHROW(randIds.push_back(mRandom::uuid36Id()));
+        REQUIRE_NOTHROW(orders[randIds.back()] = mOrder(randIds.back(), mSide::Bid, 1234.55, 0.01234567, mOrderType::Limit, false, mTimeInForce::IOC));
+        REQUIRE_NOTHROW(orders[randIds.back()].orderStatus = mStatus::Working);
+        REQUIRE_NOTHROW(randIds.push_back(mRandom::uuid36Id()));
+        REQUIRE_NOTHROW(orders[randIds.back()] = mOrder(randIds.back(), mSide::Ask, 1234.69, 0.01234568, mOrderType::Limit, false, mTimeInForce::IOC));
+        REQUIRE_NOTHROW(orders[randIds.back()].orderStatus = mStatus::Working);
         REQUIRE_NOTHROW(levels.reset(mLevels(
           { mLevel(1234.50, 0.12345678), mLevel(1234.55, 0.01234567) },
           { mLevel(1234.60, 1.23456789), mLevel(1234.69, 0.11234569) }
         )));
         THEN("filters") {
-          REQUIRE(levels.filterBidOrders.size() == 2);
-          REQUIRE(levels.filterAskOrders.size() == 1);
           REQUIRE(levels.bids.size() == 1);
           REQUIRE(levels.bids[0].price == 1234.50);
           REQUIRE(levels.bids[0].size  == 0.12345678);
@@ -167,10 +175,10 @@ namespace K {
         }
         THEN("fair value") {
           REQUIRE_NOTHROW(levels.stats.fairPrice.mToClient::send = []() {
-            FAIL("send() while ratelimit() = true because val still is = val");
+            FAIL("send() while filtering");
           });
           REQUIRE_NOTHROW(levels.stats.fairPrice.mToScreen::refresh = []() {
-            FAIL("refresh() while ratelimit() = true because val still is = val");
+            FAIL("refresh() while filtering");
           });
           REQUIRE_NOTHROW(levels.filter());
           REQUIRE(levels.fairValue == 1234.55);
@@ -178,7 +186,7 @@ namespace K {
         THEN("fair value weight") {
           REQUIRE_NOTHROW(qp.fvModel = mFairValueModel::wBBO);
           REQUIRE_NOTHROW(levels.stats.fairPrice.mToClient::send = [&]() {
-            REQUIRE(levels.stats.fairPrice.blob().dump() == "{\"price\":1234.59}");
+            FAIL("send() while filtering");
           });
           REQUIRE_NOTHROW(levels.filter());
           REQUIRE(levels.fairValue == 1234.59);
@@ -186,7 +194,7 @@ namespace K {
         THEN("fair value reversed weight") {
           REQUIRE_NOTHROW(qp.fvModel = mFairValueModel::rwBBO);
           REQUIRE_NOTHROW(levels.stats.fairPrice.mToClient::send = [&]() {
-            REQUIRE(levels.stats.fairPrice.blob().dump() == "{\"price\":1234.51}");
+            FAIL("send() while filtering");
           });
           REQUIRE_NOTHROW(levels.filter());
           REQUIRE(levels.fairValue == 1234.51);
@@ -278,32 +286,32 @@ namespace K {
 
     GIVEN("mBroker") {
       mProduct product;
-      mPrice minTick = 0.01;
+      const mPrice minTick = 0.01;
       product.minTick = &minTick;
-      mMarketLevels levels(&product);
+      mMarketLevels levels(&product, nullptr);
       mWalletPosition wallet;
       mBroker broker(&product, &wallet, &levels);
       WHEN("assigned") {
         vector<mRandId> randIds;
-        REQUIRE_NOTHROW(randIds.push_back("1" + mRandom::uuid36Id()));
+        REQUIRE_NOTHROW(randIds.push_back(mRandom::uuid36Id()));
         REQUIRE_NOTHROW(broker.orders[randIds.back()] = mOrder(randIds.back(), mSide::Bid, 1234.50, 0.12345678, mOrderType::Limit, false, mTimeInForce::IOC));
         REQUIRE_NOTHROW(broker.orders[randIds.back()].orderStatus = mStatus::Working);
-        REQUIRE_NOTHROW(randIds.push_back("2" + mRandom::uuid36Id()));
+        REQUIRE_NOTHROW(randIds.push_back(mRandom::uuid36Id()));
         REQUIRE_NOTHROW(broker.orders[randIds.back()] = mOrder(randIds.back(), mSide::Bid, 1234.51, 0.12345679, mOrderType::Limit, false, mTimeInForce::IOC));
         REQUIRE_NOTHROW(broker.orders[randIds.back()].orderStatus = mStatus::Working);
-        REQUIRE_NOTHROW(randIds.push_back("3" + mRandom::uuid36Id()));
+        REQUIRE_NOTHROW(randIds.push_back(mRandom::uuid36Id()));
         REQUIRE_NOTHROW(broker.orders[randIds.back()] = mOrder(randIds.back(), mSide::Bid, 1234.52, 0.12345680, mOrderType::Limit, false, mTimeInForce::IOC));
         REQUIRE_NOTHROW(broker.orders[randIds.back()].orderStatus = mStatus::Working);
-        REQUIRE_NOTHROW(randIds.push_back("4" + mRandom::uuid36Id()));
+        REQUIRE_NOTHROW(randIds.push_back(mRandom::uuid36Id()));
         REQUIRE_NOTHROW(broker.orders[randIds.back()] = mOrder(randIds.back(), mSide::Ask, 1234.50, 0.12345678, mOrderType::Limit, false, mTimeInForce::IOC));
         REQUIRE_NOTHROW(broker.orders[randIds.back()].orderStatus = mStatus::Working);
-        REQUIRE_NOTHROW(randIds.push_back("5" + mRandom::uuid36Id()));
+        REQUIRE_NOTHROW(randIds.push_back(mRandom::uuid36Id()));
         REQUIRE_NOTHROW(broker.orders[randIds.back()] = mOrder(randIds.back(), mSide::Ask, 1234.51, 0.12345679, mOrderType::Limit, false, mTimeInForce::IOC));
         REQUIRE_NOTHROW(broker.orders[randIds.back()].orderStatus = mStatus::Working);
-        REQUIRE_NOTHROW(randIds.push_back("6" + mRandom::uuid36Id()));
+        REQUIRE_NOTHROW(randIds.push_back(mRandom::uuid36Id()));
         REQUIRE_NOTHROW(broker.orders[randIds.back()] = mOrder(randIds.back(), mSide::Ask, 1234.52, 0.12345680, mOrderType::Limit, false, mTimeInForce::IOC));
         REQUIRE_NOTHROW(broker.orders[randIds.back()].orderStatus = mStatus::Working);
-        REQUIRE_NOTHROW(randIds.push_back("7" + mRandom::uuid36Id()));
+        REQUIRE_NOTHROW(randIds.push_back(mRandom::uuid36Id()));
         REQUIRE_NOTHROW(broker.orders[randIds.back()] = mOrder(randIds.back(), mSide::Ask, 1234.52, 0.12345681, mOrderType::Limit, false, mTimeInForce::IOC));
         THEN("held amount") {
           REQUIRE(broker.calcHeldAmount(mSide::Bid) == Approx(457.22592546));
