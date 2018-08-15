@@ -601,6 +601,20 @@ namespace K {
         : levels(&monitor.product, &broker.orders)
         , broker(&monitor.product, &wallet, &levels)
       {};
+      void savedQuotingParameters() {
+        broker.calculon.dummyMM.reset("saved");
+        levels.stats.ewma.calcFromHistory();
+      };
+      void timer_1s(const unsigned int &tick) {                     PRETTY_DEBUG
+        if (levels.warn_empty()) return;
+        levels.timer_1s();
+        if (!(tick % 60)) {
+          levels.timer_60s();
+          monitor.timer_60s();
+        }
+        wallet.target.safety.calc(levels, broker.tradesHistory);
+        calcQuotes();
+      };
       void calcQuotes() {                                           PRETTY_DEBUG
         broker.calculon.reset();
         if (!broker.semaphore.greenGateway) {
@@ -635,11 +649,11 @@ namespace K {
                 zombies.push_back(it.first);
                 continue;
               }
-              broker.calculon.countNew++;
-            } else (it.second.orderStatus == mStatus::Working
-                ? broker.calculon.countWorking
-                : broker.calculon.countDone
-            )++;
+              ++broker.calculon.countNew;
+            } else ++(it.second.orderStatus == mStatus::Working
+              ? broker.calculon.countWorking
+              : broker.calculon.countDone
+            );
             if (!it.second.preferPostOnly) continue;
             if (abs(it.second.price - nextQuote.price) < *monitor.product.minTick) skipNextQuote = true;
             else if (it.second.orderStatus == mStatus::New) {
@@ -659,20 +673,6 @@ namespace K {
           and !keepWorking.empty()
         ) toCancel.push_back(keepWorking.back());
         sendOrders(toCancel, skipNextQuote ? nullptr : &nextQuote, side);
-      };
-      void timer_1s(const unsigned int &tick) {                     PRETTY_DEBUG
-        if (levels.warn_empty()) return;
-        levels.timer_1s();
-        if (!(tick % 60)) {
-          levels.timer_60s();
-          monitor.timer_60s();
-        }
-        wallet.target.safety.calc(levels, broker.tradesHistory);
-        calcQuotes();
-      };
-      void savedQuotingParameters() {
-        broker.calculon.dummyMM.reset("saved");
-        levels.stats.ewma.calcFromHistory();
       };
       void sendOrders(vector<mOrder*> toCancel, const mQuote *const nextQuote, const mSide &side) {
         mOrder *toReplace = nullptr;
@@ -722,7 +722,7 @@ namespace K {
   static string tracelog;
   static vector<function<void()>> happyEndingFn, endingFn = { []() {
     screen->end();
-    cout << (args.latency?"":"\n") << screen->stamp() << tracelog;
+    cout << (args.latency ? "" : "\n") << screen->stamp() << tracelog;
   } };
   static class Ending {
     public:

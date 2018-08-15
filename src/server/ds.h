@@ -1642,13 +1642,7 @@ namespace K {
         return widthPing;
       };
       const bool filter() {
-        filterBidOrders.clear();
-        filterAskOrders.clear();
-        for (const unordered_map<mRandId, mOrder>::value_type &it : *orders)
-          (it.second.side == mSide::Bid
-            ? filterBidOrders
-            : filterAskOrders
-          )[it.second.price] += it.second.quantity;
+        calcFilterOrders();
         bids = filter(unfiltered.bids, &filterBidOrders);
         asks = filter(unfiltered.asks, &filterAskOrders);
         calcFairValue();
@@ -1699,16 +1693,25 @@ namespace K {
         if (fairValue)
           fairValue = ROUND(fairValue, *product->minTick);
       };
+      void calcFilterOrders() {
+        filterBidOrders.clear();
+        filterAskOrders.clear();
+        for (const unordered_map<mRandId, mOrder>::value_type &it : *orders)
+          (it.second.side == mSide::Bid
+            ? filterBidOrders
+            : filterAskOrders
+          )[it.second.price] += it.second.quantity;
+      };
       const vector<mLevel> filter(vector<mLevel> levels, unordered_map<mPrice, mAmount> *const filterOrders) {
         if (!filterOrders->empty())
           for (vector<mLevel>::iterator it = levels.begin(); it != levels.end();) {
             for (unordered_map<mPrice, mAmount>::iterator it_ = filterOrders->begin(); it_ != filterOrders->end();)
-              if (it->price == it_->first) {
+              if (abs(it->price - it_->first) < *product->minTick) {
                 it->size -= it_->second;
                 filterOrders->erase(it_);
                 break;
               } else ++it_;
-            if (!it->size) it = levels.erase(it);
+            if (it->size < *product->minSize) it = levels.erase(it);
             else ++it;
             if (filterOrders->empty()) break;
           }
@@ -2747,7 +2750,9 @@ namespace K {
     void upsert(const mOrder &raw, mWalletPosition *const wallet, const mMarketLevels &levels, bool *const askForFees) {
       if (debug()) report(raw);
       mOrder *const order = upsert(raw, false);
-      if (!order) return;
+      if (!order
+        or order->orderStatus == mStatus::New
+      ) return;
       if (raw.tradeQuantity)
         tradesHistory.insert(order, raw.tradeQuantity);
       mSide  lastSide  = order->side;
@@ -2755,7 +2760,6 @@ namespace K {
       if (mStatus::Cancelled == order->orderStatus
         or mStatus::Complete == order->orderStatus
       ) erase(order->orderId);
-      if (raw.orderStatus == mStatus::New) return;
       wallet->reset(lastSide, calcHeldAmount(lastSide), levels);
       if (raw.tradeQuantity) {
         wallet->target.safety.recentTrades.insert(lastSide, lastPrice, raw.tradeQuantity);
@@ -2765,28 +2769,27 @@ namespace K {
       send();
       refresh();
     };
-    const bool replace(mOrder *const toReplace, const mPrice &price, const bool &isPong) {
-      if (!toReplace
-        or toReplace->exchangeId.empty()
+    const bool replace(mOrder *const order, const mPrice &price, const bool &isPong) {
+      if (!order
+        or order->exchangeId.empty()
       ) return false;
-      toReplace->price  = price;
-      toReplace->isPong = isPong;
-      if (debug()) report_replace(toReplace);
+      order->price  = price;
+      order->isPong = isPong;
+      if (debug()) report_replace(order);
       return true;
     };
-    const bool cancel(mOrder *const toCancel) {
-      if (!toCancel
-        or toCancel->exchangeId.empty()
-        or toCancel->_waitingCancel + 3e+3 > Tstamp
+    const bool cancel(mOrder *const order) {
+      if (!order
+        or order->exchangeId.empty()
+        or order->_waitingCancel + 3e+3 > Tstamp
       ) return false;
-      toCancel->_waitingCancel = Tstamp;
-      if (debug()) report_cancel(toCancel);
+      order->_waitingCancel = Tstamp;
+      if (debug()) report_cancel(order);
       return true;
     };
     void erase(const mRandId &orderId) {
       if (debug()) print("DEBUG OG", "remove " + orderId);
-      unordered_map<mRandId, mOrder>::iterator it = orders.find(orderId);
-      if (it != orders.end()) orders.erase(it);
+      orders.erase(orderId);
       if (debug()) report_size();
     };
     const mAmount calcHeldAmount(const mSide &side) const {
