@@ -763,9 +763,9 @@ namespace K {
     mOrder(const mRandId &o, const mRandId &e, const mStatus &s, const mPrice &p, const mAmount &q, const mAmount &Q)
       : orderId(o)
       , exchangeId(e)
-      , quantity(q)
-      , price(p)
       , orderStatus(s)
+      , price(p)
+      , quantity(q)
       , tradeQuantity(Q)
     {};
     mOrder(const mRandId &o, const mSide &S, const mPrice &p, const mAmount &q, const mOrderType &t, const bool &i, const mTimeInForce &F)
@@ -779,7 +779,7 @@ namespace K {
       , orderStatus(mStatus::New)
       , preferPostOnly(true)
     {};
-    void update(const mOrder &raw) {
+    void reset(const mOrder &raw) {
       orderStatus = raw.orderStatus;
       if (!raw.exchangeId.empty()) exchangeId = raw.exchangeId;
       if (raw.price)               price      = raw.price;
@@ -2178,7 +2178,7 @@ namespace K {
       if (j->is_object() and j->at("state").is_number())
         agree(j->at("state").get<mConnectivity>());
     };
-    const bool online(const mConnectivity &raw) {
+    const bool reset(const mConnectivity &raw) {
       if (greenGateway != raw) {
         greenGateway = raw;
         send_refresh();
@@ -2739,7 +2739,7 @@ namespace K {
     mOrder *const upsert(const mOrder &raw, const bool &place = true) {
       mOrder *const order = findsert(raw);
       if (!order) return nullptr;
-      order->update(raw);
+      order->reset(raw);
       if (debug()) {
         report(order);
         report_size();
