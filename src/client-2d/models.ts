@@ -66,7 +66,7 @@ export enum Connectivity { Disconnected, Connected }
 export enum Side { Bid, Ask, Unknown }
 export enum OrderType { Limit, Market }
 export enum TimeInForce { IOC, FOK, GTC }
-export enum OrderStatus { New, Working, Complete, Cancelled }
+export enum OrderStatus { Waiting, Working, Terminated }
 export enum Liquidity { Make, Take }
 
 export interface ProductState {
@@ -168,9 +168,8 @@ export class TwoSidedQuoteStatus {
     constructor(public bidStatus: QuoteStatus,
                 public askStatus: QuoteStatus,
                 public sideAPR: string,
-                public quotesInMemoryNew: number,
-                public quotesInMemoryWorking: number,
-                public quotesInMemoryDone: number) {}
+                public quotesInMemoryWaiting: number,
+                public quotesInMemoryWorking: number) {}
 }
 
 export enum QuotingMode { Top, Mid, Join, InverseJoin, InverseTop, HamelinRat, Depth }

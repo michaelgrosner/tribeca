@@ -644,19 +644,17 @@ namespace K {
         for (unordered_map<mRandId, mOrder>::value_type &it : broker.orders)
           if (it.second.side != side) continue;
           else {
-            if (it.second.orderStatus == mStatus::New) {
+            if (it.second.orderStatus == mStatus::Waiting) {
               if (now - 10e+3 > it.second.time) {
                 zombies.push_back(it.first);
                 continue;
               }
-              ++broker.calculon.countNew;
-            } else ++(it.second.orderStatus == mStatus::Working
-              ? broker.calculon.countWorking
-              : broker.calculon.countDone
-            );
+              ++broker.calculon.countWaiting;
+            } else if (it.second.orderStatus == mStatus::Working)
+              ++broker.calculon.countWorking;
             if (!it.second.preferPostOnly) continue;
             if (abs(it.second.price - nextQuote.price) < *monitor.product.minTick) skipNextQuote = true;
-            else if (it.second.orderStatus == mStatus::New) {
+            else if (it.second.orderStatus == mStatus::Waiting) {
               if (qp.safety != mQuotingSafety::AK47 or ++n >= qp.bullets) skipNextQuote = true;
             } else if (qp.safety != mQuotingSafety::AK47 or (
               mSide::Bid == side

@@ -29,7 +29,7 @@ namespace K {
     Disconnected, Connected
   };
   enum class mStatus: unsigned int {
-    New, Working, Complete, Cancelled
+    Waiting, Working, Terminated
   };
   enum class mSide: unsigned int {
     Bid, Ask, Both
@@ -752,8 +752,7 @@ namespace K {
             bool isPong         = false,
                  preferPostOnly = false;
           mClock time           = 0,
-                 latency        = 0,
-                 _waitingCancel = 0;
+                 latency        = 0;
     mOrder()
     {};
     mOrder(const mRandId &o, const mStatus &s)
@@ -776,7 +775,7 @@ namespace K {
       , type(t)
       , isPong(i)
       , timeInForce(F)
-      , orderStatus(mStatus::New)
+      , orderStatus(mStatus::Waiting)
       , preferPostOnly(true)
     {};
     void reset(const mOrder &raw) {
@@ -822,6 +821,7 @@ namespace K {
                          : (j.value("timeInForce", "") == "FOK"
                            ? mTimeInForce::FOK
                            : mTimeInForce::IOC);
+    k.orderStatus    = mStatus::Waiting;
     k.isPong         = false;
     k.preferPostOnly = false;
   };
@@ -2431,9 +2431,8 @@ namespace K {
   struct mAntonioCalculon: public mJsonToClient<mAntonioCalculon> {
               mQuotes nextQuotes;
     mDummyMarketMaker dummyMM;
-         unsigned int countNew     = 0,
+         unsigned int countWaiting = 0,
                       countWorking = 0,
-                      countDone    = 0,
                       AK47inc      = 0;
                string sideAPR      = "Off";
     private:
@@ -2457,9 +2456,8 @@ namespace K {
       };
       void reset() {
         reset(mQuoteState::MissingData);
-        countNew     =
-        countWorking =
-        countDone    = 0;
+        countWaiting =
+        countWorking = 0;
       };
       const mMatter about() const {
         return mMatter::QuoteStatus;
@@ -2700,9 +2698,8 @@ namespace K {
       {            "bidStatus", k.nextQuotes.bid.state},
       {            "askStatus", k.nextQuotes.ask.state},
       {              "sideAPR", k.sideAPR             },
-      {    "quotesInMemoryNew", k.countNew            },
-      {"quotesInMemoryWorking", k.countWorking        },
-      {   "quotesInMemoryDone", k.countDone           }
+      {"quotesInMemoryWaiting", k.countWaiting        },
+      {"quotesInMemoryWorking", k.countWorking        }
     };
   };
 
@@ -2722,7 +2719,7 @@ namespace K {
         : &orders.at(orderId);
     };
     mOrder *const findsert(const mOrder &raw) {
-      if (raw.orderStatus == mStatus::New and !raw.orderId.empty())
+      if (raw.orderStatus == mStatus::Waiting and !raw.orderId.empty())
         return &(orders[raw.orderId] = raw);
       if (raw.orderId.empty() and !raw.exchangeId.empty()) {
         unordered_map<mRandId, mOrder>::iterator it = find_if(
@@ -2751,15 +2748,14 @@ namespace K {
       if (debug()) report(raw);
       mOrder *const order = upsert(raw, false);
       if (!order
-        or order->orderStatus == mStatus::New
+        or order->orderStatus == mStatus::Waiting
       ) return;
       if (raw.tradeQuantity)
         tradesHistory.insert(order, raw.tradeQuantity);
-      mSide  lastSide  = order->side;
-      mPrice lastPrice = order->price;
-      if (mStatus::Cancelled == order->orderStatus
-        or mStatus::Complete == order->orderStatus
-      ) erase(order->orderId);
+      const mSide  lastSide  = order->side;
+      const mPrice lastPrice = order->price;
+      if (order->orderStatus == mStatus::Terminated)
+        erase(order->orderId);
       wallet->reset(lastSide, calcHeldAmount(lastSide), levels);
       if (raw.tradeQuantity) {
         wallet->target.safety.recentTrades.insert(lastSide, lastPrice, raw.tradeQuantity);
@@ -2781,9 +2777,9 @@ namespace K {
     const bool cancel(mOrder *const order) {
       if (!order
         or order->exchangeId.empty()
-        or order->_waitingCancel + 3e+3 > Tstamp
+        or order->orderStatus == mStatus::Waiting
       ) return false;
-      order->_waitingCancel = Tstamp;
+      order->orderStatus = mStatus::Waiting;
       if (debug()) report_cancel(order);
       return true;
     };

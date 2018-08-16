@@ -6,7 +6,7 @@ import * as Models from './models';
   selector: 'market-quoting',
   template: `<div class="tradeSafety2" style="margin-top:-4px;padding-top:0px;padding-right:0px;"><div style="padding-top:0px;padding-right:0px;">
       Market Width: <span class="{{ marketWidth ? \'text-danger\' : \'text-muted\' }}">{{ marketWidth | number:'1.'+product.fixed+'-'+product.fixed }}</span>,
-      Quote Width: <span class="{{ ordersWidth ? \'text-danger\' : \'text-muted\' }}">{{ ordersWidth | number:'1.'+product.fixed+'-'+product.fixed }}</span>, Quotes: <span title="New Quotes in memory" class="{{ quotesInMemoryNew ? \'text-danger\' : \'text-muted\' }}">{{ quotesInMemoryNew }}</span>/<span title="Working Quotes in memory" class="{{ quotesInMemoryWorking ? \'text-danger\' : \'text-muted\' }}">{{ quotesInMemoryWorking }}</span>/<span title="Other Quotes in memory" class="{{ quotesInMemoryDone ? \'text-danger\' : \'text-muted\' }}">{{ quotesInMemoryDone }}</span>
+      Quote Width: <span class="{{ ordersWidth ? \'text-danger\' : \'text-muted\' }}">{{ ordersWidth | number:'1.'+product.fixed+'-'+product.fixed }}</span>, Quotes: <span title="Quotes in memory Waiting status update" class="{{ quotesInMemoryWaiting ? \'text-danger\' : \'text-muted\' }}">{{ quotesInMemoryWaiting }}</span>/<span title="Quotes in memory Working" class="{{ quotesInMemoryWorking ? \'text-danger\' : \'text-muted\' }}">{{ quotesInMemoryWorking }}</span>
       <div style="padding-left:0px;">Wallet TBP: <span class="text-danger">{{ targetBasePosition | number:'1.3-3' }}</span>, pDiv: <span class="text-danger">{{ positionDivergence | number:'1.3-3' }}</span>, APR: <span class="{{ sideAPRSafety!=\'Off\' ? \'text-danger\' : \'text-muted\' }}">{{ sideAPRSafety }}</span></div>
       </div></div><div style="padding-right:4px;padding-left:4px;padding-top:4px;">
       <table class="marketQuoting table table-hover table-responsive text-center">
@@ -80,9 +80,8 @@ export class MarketQuotingComponent {
   public orderPriceAsks: number[] = [];
   public bidStatus: string;
   public askStatus: string;
-  public quotesInMemoryNew: number;
+  public quotesInMemoryWaiting: number;
   public quotesInMemoryWorking: number;
-  public quotesInMemoryDone: number;
   public marketWidth: number;
   public ordersWidth: number;
   public noBidReason: string;
@@ -123,16 +122,14 @@ export class MarketQuotingComponent {
       this.bidStatus = Models.QuoteStatus[0];
       this.askStatus = Models.QuoteStatus[0];
       this.sideAPRSafety = null;
-      this.quotesInMemoryNew = 0;
+      this.quotesInMemoryWaiting = 0;
       this.quotesInMemoryWorking = 0;
-      this.quotesInMemoryDone = 0;
     } else {
       this.bidStatus = Models.QuoteStatus[o.bidStatus];
       this.askStatus = Models.QuoteStatus[o.askStatus];
       this.sideAPRSafety = o.sideAPR;
-      this.quotesInMemoryNew = o.quotesInMemoryNew;
+      this.quotesInMemoryWaiting = o.quotesInMemoryWaiting;
       this.quotesInMemoryWorking = o.quotesInMemoryWorking;
-      this.quotesInMemoryDone = o.quotesInMemoryDone;
     }
   }
 
@@ -274,9 +271,8 @@ export class MarketQuotingComponent {
 
     const orderSide = o.side === Models.Side.Bid ? 'orderBids' : 'orderAsks';
     const orderPrice = o.side === Models.Side.Bid ? 'orderPriceBids' : 'orderPriceAsks';
-    if (o.orderStatus == Models.OrderStatus.Cancelled
-      || o.orderStatus == Models.OrderStatus.Complete
-    ) this[orderSide] = this[orderSide].filter(x => x.orderId !== o.orderId);
+    if (o.orderStatus == Models.OrderStatus.Terminated)
+      this[orderSide] = this[orderSide].filter(x => x.orderId !== o.orderId);
     else if (!this[orderSide].filter(x => x.orderId === o.orderId).length)
       this[orderSide].push({
         orderId: o.orderId,

@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 #  █▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀█
 #  ▓ ████ ███ Usage? use current filename of THIS file: █
-#  ▒ ████ ███    $ ./K.sh --help                        █
+#  ▒ ████ ███    $ . K.sh --help                        █
 #    ▓███▀█▄  !Feel free to copy/rename/edit THIS file. █
 #  ▒ ▒▓██ ███ !Feel free to uncomment any examples, but █
 #  ▓ ░▒▓█ ███  do not define multiple times a variable. █

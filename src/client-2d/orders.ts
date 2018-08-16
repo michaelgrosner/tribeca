@@ -99,8 +99,7 @@ export class OrdersComponent implements OnInit {
     }
 
     let exists: boolean = false;
-    let isClosed: boolean = (o.orderStatus == Models.OrderStatus.Cancelled
-      || o.orderStatus == Models.OrderStatus.Complete);
+    let isClosed: boolean = (o.orderStatus == Models.OrderStatus.Terminated);
     this.gridOptions.api.forEachNode((node: RowNode) => {
       if (!exists && node.data.orderId==o.orderId) {
         exists = true;
