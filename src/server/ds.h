@@ -748,7 +748,7 @@ namespace K {
                  tradeQuantity  = 0;
       mOrderType type           = (mOrderType)0;
     mTimeInForce timeInForce    = (mTimeInForce)0;
-         mStatus orderStatus    = (mStatus)0;
+         mStatus orderStatus    = mStatus::Waiting;
             bool isPong         = false,
                  preferPostOnly = false;
           mClock time           = 0,
@@ -775,10 +775,9 @@ namespace K {
       , type(t)
       , isPong(i)
       , timeInForce(F)
-      , orderStatus(mStatus::Waiting)
       , preferPostOnly(true)
     {};
-    void reset(const mOrder &raw) {
+    void update(const mOrder &raw) {
       orderStatus = raw.orderStatus;
       if (!raw.exchangeId.empty()) exchangeId = raw.exchangeId;
       if (raw.price)               price      = raw.price;
@@ -821,7 +820,6 @@ namespace K {
                          : (j.value("timeInForce", "") == "FOK"
                            ? mTimeInForce::FOK
                            : mTimeInForce::IOC);
-    k.orderStatus    = mStatus::Waiting;
     k.isPong         = false;
     k.preferPostOnly = false;
   };
@@ -2736,7 +2734,7 @@ namespace K {
     mOrder *const upsert(const mOrder &raw, const bool &place = true) {
       mOrder *const order = findsert(raw);
       if (!order) return nullptr;
-      order->reset(raw);
+      order->update(raw);
       if (debug()) {
         report(order);
         report_size();
@@ -2780,6 +2778,7 @@ namespace K {
         or order->orderStatus == mStatus::Waiting
       ) return false;
       order->orderStatus = mStatus::Waiting;
+      order->time = Tstamp;
       if (debug()) report_cancel(order);
       return true;
     };
@@ -2865,7 +2864,7 @@ namespace K {
         print("DEBUG OG", "reply  " + raw.orderId + "::" + raw.exchangeId
           + " [" + to_string((int)raw.orderStatus) + "]: "
           + str8(raw.quantity) + "/" + str8(raw.tradeQuantity) + " at price "
-          + str8(raw.price));
+          + str8(raw.price) + " " + args.quote);
       };
       const bool debug() const {
         return args.debugOrders;

@@ -626,13 +626,13 @@ namespace K {
           } else {
             broker.calculon.reset(mQuoteState::UnknownHeld);
             broker.calculon.calcQuotes();
-            quote2orders(mSide::Ask, broker.calculon.nextQuotes.ask);
-            quote2orders(mSide::Bid, broker.calculon.nextQuotes.bid);
+            quote2orders(broker.calculon.nextQuotes.ask, mSide::Ask);
+            quote2orders(broker.calculon.nextQuotes.bid, mSide::Bid);
           }
         }
         broker.calculon.send();
       };
-      void quote2orders(const mSide &side, const mQuote &nextQuote) {
+      void quote2orders(const mQuote &nextQuote, const mSide &side) {
         if (nextQuote.state != mQuoteState::Live)
           return cancelOrders(side);
         unsigned int n = 0;
