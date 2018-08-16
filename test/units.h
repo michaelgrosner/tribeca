@@ -108,8 +108,10 @@ namespace K {
     }
     GIVEN("mMarketLevels") {
       mProduct product;
-      const mPrice minTick = 0.01;
+      const mPrice  minTick = 0.01;
+      const mAmount minSize = 0.001;
       product.minTick = &minTick;
+      product.minSize = &minSize;
       unordered_map<mRandId, mOrder> orders;
       mMarketLevels levels(&product, &orders);
       WHEN("defaults") {
