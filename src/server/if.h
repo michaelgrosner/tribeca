@@ -6,8 +6,7 @@ namespace K {
     public:
       Screen() {
         cout << BGREEN << "K"
-             << RGREEN << " build " << K_BUILD << ' ' << K_STAMP
-             << ".\n";
+             << RGREEN << " build " << K_BUILD << ' ' << K_STAMP << ".\n";
         string changes;
         int commits = -1;
         if (mCommand::git()) {
@@ -15,17 +14,18 @@ namespace K {
           changes = mCommand::changelog();
           commits = count(changes.begin(), changes.end(), '\n');
         }
-        cout << BGREEN << K_0_DAY << RGREEN << ' ' << (commits == -1
-          ? "(zip install)"
-          : (commits
-            ? '-' + to_string(commits) + "commit" + (commits == 1?"":"s") + '.'
-            : "(0day)"
-          )
-        )
+        cout << BGREEN << K_0_DAY << RGREEN << ' '
+             << (commits == -1
+               ? "(zip install)"
+               : (commits
+                 ? '-' + to_string(commits) + "commit" + string(commits != 1, 's') + '.'
+                 : "(0day)"
+               )
+             )
 #ifndef NDEBUG
-        << " with DEBUG MODE enabled"
+             << " with DEBUG MODE enabled"
 #endif
-        << ".\n" << RYELLOW << changes << RRESET;
+             << ".\n" << RYELLOW << changes << RRESET;
       };
       virtual void pressme(const mHotkey&, function<void()>) = 0;
       virtual void printme(mToScreen *const) = 0;
@@ -66,13 +66,14 @@ namespace K {
       function<void(const mWallets&)>      write_mWallets;
       function<void(const mConnectivity&)> write_mConnectivity;
 #define RAWDATA_ENTRY_POINT(mData, read) write_##mData = [&](const mData &rawdata) read
-      bool askForFees = false;
+      bool askForFees    = false,
+           askForReplace = false;
       const bool *askForCancelAll = nullptr;
       const mRandId (*randId)() = nullptr;
       virtual const json handshake() = 0;
       virtual const bool askForData(const unsigned int &tick) = 0;
       virtual const bool waitForData() = 0;
-      void place(const mOrder *const order) {
+      void place(mOrder *const order) {
         place(
           order->orderId,
           order->side,
@@ -83,9 +84,21 @@ namespace K {
           order->preferPostOnly
         );
       };
+      void replace(mOrder *const order) {
+        replace(
+          order->exchangeId,
+          str8(order->price)
+        );
+      };
+      void cancel(mOrder *const order) {
+        cancel(
+          order->orderId,
+          order->exchangeId
+        );
+      };
 //BO non-free gw library functions from build-*/local/lib/K-*.a (it just redefines all virtual gateway class members below).
 /**/  virtual bool ready() = 0;                                              // wait for exchange and register data handlers
-/**/  function<void(mRandId, string)> replace;                               // call         async orders data from exchange
+/**/  virtual void replace(mRandId, string) {};                              // call         async orders data from exchange
 /**/  virtual void place(mRandId, mSide, string, string, mOrderType, mTimeInForce, bool) = 0, // async orders as above/below
 /**/               cancel(mRandId, mRandId) = 0,                             // call         async orders data from exchange
 /**/               close() = 0;                                              // disconnect but without waiting for reconnect
@@ -235,9 +248,9 @@ namespace K {
           Tdiff
         ) + "ms of your time");
         string result = "very bad; move to another server/network";
-        if (Tdiff < 200) result = "very good; most trades don't enjoy such speed!";
+        if (Tdiff < 200) result = "very good; most traders don't enjoy such speed!";
         else if (Tdiff < 500) result = "good; most traders get the same result";
-        else if (Tdiff < 700) result = "a bit bad; most trades get better results";
+        else if (Tdiff < 700) result = "a bit bad; most traders get better results";
         else if (Tdiff < 1000) result = "bad; is possible a move to another server/network?";
         print("GW " + exchange, "This result is " + result);
         quit();
@@ -364,6 +377,9 @@ namespace K {
       };
   };
   class GwBitfinex: public GwApiWS {
+    public:
+      GwBitfinex()
+      { askForReplace = true; };
     protected:
       const json handshake() {
         randId = mRandom::int45Id;
@@ -628,6 +644,7 @@ namespace K {
             broker.calculon.calcQuotes();
             quote2orders(broker.calculon.nextQuotes.ask, mSide::Ask);
             quote2orders(broker.calculon.nextQuotes.bid, mSide::Bid);
+            broker.purge();
           }
         }
         broker.calculon.send();
@@ -635,41 +652,28 @@ namespace K {
       void quote2orders(const mQuote &nextQuote, const mSide &side) {
         if (nextQuote.state != mQuoteState::Live)
           return cancelOrders(side);
-        unsigned int n = 0;
+        unsigned int bullets = qp.bullets;
         bool skipNextQuote = false;
-        vector<mOrder*> toCancel,
-                        keepWorking;
-        vector<mRandId> zombies;
-        mClock now = Tstamp;
+        vector<mOrder*> toCancel;
         for (unordered_map<mRandId, mOrder>::value_type &it : broker.orders)
-          if (it.second.side != side) continue;
-          else {
-            if (it.second.orderStatus == mStatus::Waiting) {
-              if (now - 10e+3 > it.second.time) {
-                zombies.push_back(it.first);
-                continue;
-              }
-              ++broker.calculon.countWaiting;
-            } else if (it.second.orderStatus == mStatus::Working)
-              ++broker.calculon.countWorking;
-            if (!it.second.preferPostOnly) continue;
-            if (abs(it.second.price - nextQuote.price) < *monitor.product.minTick) skipNextQuote = true;
+          if (it.second.side == side
+            and broker.stillAlive(it.second)
+          ) {
+            if (abs(it.second.price - nextQuote.price) < *monitor.product.minTick)
+              skipNextQuote = true;
             else if (it.second.orderStatus == mStatus::Waiting) {
-              if (qp.safety != mQuotingSafety::AK47 or ++n >= qp.bullets) skipNextQuote = true;
-            } else if (qp.safety != mQuotingSafety::AK47 or (
+              if (qp.safety != mQuotingSafety::AK47 or !--bullets)
+                skipNextQuote = true;
+            } else if (qp.safety != mQuotingSafety::AK47 or toCancel.empty() or (
               mSide::Bid == side
                 ? nextQuote.price <= it.second.price
                 : nextQuote.price >= it.second.price
             )) {
-              if (args.lifetime and it.second.time + args.lifetime > now) skipNextQuote = true;
+              if (args.lifetime and it.second.time + args.lifetime > Tstamp)
+                skipNextQuote = true;
               else toCancel.push_back(&it.second);
-            } else keepWorking.push_back(&it.second);
+            }
           }
-        for (mRandId &it : zombies) broker.erase(it);
-        if (qp.safety == mQuotingSafety::AK47
-          and toCancel.empty()
-          and !keepWorking.empty()
-        ) toCancel.push_back(keepWorking.back());
         sendOrders(toCancel, skipNextQuote ? nullptr : &nextQuote, side);
       };
       void sendOrders(vector<mOrder*> toCancel, const mQuote *const nextQuote, const mSide &side) {
@@ -678,16 +682,13 @@ namespace K {
           toReplace = toCancel.back();
           toCancel.pop_back();
         }
-        for (mOrder *const it : toCancel)
-          cancelOrder(it);
+        for (mOrder *const it : toCancel) cancelOrder(it);
         if (!nextQuote) return;
-        if (toReplace and gw->replace)
-          replaceOrder(toReplace, nextQuote->price, nextQuote->isPong);
+        if (toReplace and gw->askForReplace)
+          replaceOrder(nextQuote->price, nextQuote->isPong, toReplace);
         else {
           if (toReplace and args.testChamber != 1) cancelOrder(toReplace);
-          placeOrder(mOrder(
-            gw->randId(), side, nextQuote->price, nextQuote->size, mOrderType::Limit, nextQuote->isPong, mTimeInForce::GTC
-          ));
+          placeOrder(mOrder(gw->randId(), side, nextQuote->price, nextQuote->size, nextQuote->isPong));
           if (toReplace and args.testChamber == 1) cancelOrder(toReplace);
         }
         monitor.tick_orders();
@@ -696,31 +697,33 @@ namespace K {
         for (mOrder *const it : broker.working(side))
           cancelOrder(it);
       };
-      void manualSendOrder(mOrder order) {
-        order.orderId = gw->randId();
-        placeOrder(order);
+      void manualSendOrder(mOrder raw) {
+        raw.orderId = gw->randId();
+        placeOrder(raw);
       };
       void manualCancelOrder(const mRandId &orderId) {
         cancelOrder(broker.find(orderId));
       };
     private:
-      void placeOrder(const mOrder &order) {
-        gw->place(broker.upsert(order));
+      void placeOrder(const mOrder &raw) {
+        gw->place(broker.upsert(raw));
       };
-      void replaceOrder(mOrder *const toReplace, const mPrice &price, const bool &isPong) {
-        if (broker.replace(toReplace, price, isPong))
-          gw->replace(toReplace->exchangeId, str8(toReplace->price));
+      void replaceOrder(const mPrice &price, const bool &isPong, mOrder *const order) {
+        if (broker.replace(price, isPong, order))
+          gw->replace(order);
       };
       void cancelOrder(mOrder *const order) {
         if (broker.cancel(order))
-          gw->cancel(order->orderId, order->exchangeId);
+          gw->cancel(order);
       };
   } *engine = nullptr;
 
   static string tracelog;
   static vector<function<void()>> happyEndingFn, endingFn = { []() {
     screen->end();
-    cout << (args.latency ? "" : "\n") << screen->stamp() << tracelog;
+    cout << string(!args.latency, '\n')
+         << screen->stamp()
+         << tracelog;
   } };
   static class Ending {
     public:

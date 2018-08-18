@@ -11,22 +11,22 @@ namespace K {
       };
       void waitData() {
         gw->RAWDATA_ENTRY_POINT(mConnectivity, {
-          if (!broker.semaphore.reset(rawdata))
+          if (!broker.semaphore.read_from_gw(rawdata))
             levels.clear();
         });
         gw->RAWDATA_ENTRY_POINT(mWallets, {                         PRETTY_DEBUG
-          wallet.reset(rawdata, levels);
+          wallet.read_from_gw(rawdata, levels);
         });
         gw->RAWDATA_ENTRY_POINT(mLevels, {                          PRETTY_DEBUG
-          levels.reset(rawdata);
+          levels.read_from_gw(rawdata);
           wallet.send_ratelimit(levels);
           calcQuotes();
         });
         gw->RAWDATA_ENTRY_POINT(mOrder, {                           PRETTY_DEBUG
-          broker.upsert(rawdata, &wallet, levels, &gw->askForFees);
+          broker.read_from_gw(rawdata, &wallet, levels, &gw->askForFees);
         });
         gw->RAWDATA_ENTRY_POINT(mTrade, {                           PRETTY_DEBUG
-          levels.stats.takerTrades.send_push_back(rawdata);
+          levels.stats.takerTrades.read_from_gw(rawdata);
         });
       };
       void waitWebAdmin() {

@@ -742,22 +742,18 @@ namespace K {
   struct mOrder {
          mRandId orderId,
                  exchangeId;
+         mStatus orderStatus    = mStatus::Waiting;
            mSide side           = (mSide)0;
           mPrice price          = 0;
          mAmount quantity       = 0,
                  tradeQuantity  = 0;
-      mOrderType type           = (mOrderType)0;
-    mTimeInForce timeInForce    = (mTimeInForce)0;
-         mStatus orderStatus    = mStatus::Waiting;
+      mOrderType type           = mOrderType::Limit;
+    mTimeInForce timeInForce    = mTimeInForce::GTC;
             bool isPong         = false,
-                 preferPostOnly = false;
+                 preferPostOnly = true;
           mClock time           = 0,
                  latency        = 0;
     mOrder()
-    {};
-    mOrder(const mRandId &o, const mStatus &s)
-      : orderId(o)
-      , orderStatus(s)
     {};
     mOrder(const mRandId &o, const mRandId &e, const mStatus &s, const mPrice &p, const mAmount &q, const mAmount &Q)
       : orderId(o)
@@ -766,28 +762,42 @@ namespace K {
       , price(p)
       , quantity(q)
       , tradeQuantity(Q)
+      , time(Tstamp)
     {};
-    mOrder(const mRandId &o, const mSide &S, const mPrice &p, const mAmount &q, const mOrderType &t, const bool &i, const mTimeInForce &F)
+    mOrder(const mRandId &o, const mSide &S, const mPrice &p, const mAmount &q, const bool &i)
       : orderId(o)
       , side(S)
       , price(p)
       , quantity(q)
-      , type(t)
       , isPong(i)
-      , timeInForce(F)
-      , preferPostOnly(true)
+      , time(Tstamp)
     {};
-    void update(const mOrder &raw) {
-      orderStatus = raw.orderStatus;
-      if (!raw.exchangeId.empty()) exchangeId = raw.exchangeId;
-      if (raw.price)               price      = raw.price;
-      if (raw.quantity)            quantity   = raw.quantity;
-      if (raw.time)                time       = raw.time;
-      if (raw.latency)             latency    = raw.latency;
-      if (!time)                   time       = Tstamp;
-      if (!latency and orderStatus == mStatus::Working)
-                                   latency    = Tstamp - time;
-      if (latency)                 time       = Tstamp;
+    static void update(const mOrder &raw, mOrder *const order) {
+      if (!order) return;
+      if ((                        order->orderStatus = raw.orderStatus
+      ) == mStatus::Working)       order->latency     = Tstamp - order->time;
+                                   order->time        = raw.time;
+      if (!raw.exchangeId.empty()) order->exchangeId  = raw.exchangeId;
+      if (raw.price)               order->price       = raw.price;
+      if (raw.quantity)            order->quantity    = raw.quantity;
+    };
+    static const bool replace(const mPrice &price, const bool &isPong, mOrder *const order) {
+      if (!order
+        or order->exchangeId.empty()
+      ) return false;
+      order->price  = price;
+      order->isPong = isPong;
+      order->time   = Tstamp;
+      return true;
+    };
+    static const bool cancel(mOrder *const order) {
+      if (!order
+        or order->exchangeId.empty()
+        or order->orderStatus == mStatus::Waiting
+      ) return false;
+      order->orderStatus = mStatus::Waiting;
+      order->time        = Tstamp;
+      return true;
     };
   };
   static void to_json(json &j, const mOrder &k) {
@@ -920,8 +930,8 @@ namespace K {
         ) += it.quantity;
       trades.clear();
     };
-    void send_push_back(const mTrade &row) {
-      trades.push_back(row);
+    void read_from_gw(const mTrade &raw) {
+      trades.push_back(raw);
       send();
     };
     const mMatter about() const {
@@ -1647,7 +1657,7 @@ namespace K {
         calcAverageWidth();
         return !empty();
       };
-      void reset(const mLevels &raw) {
+      void read_from_gw(const mLevels &raw) {
         unfiltered.bids = raw.bids;
         unfiltered.asks = raw.asks;
         filter();
@@ -2056,7 +2066,7 @@ namespace K {
     mWalletPosition()
       : target(&base.value, &base.total)
     {};
-    void reset(const mWallets &raw, const mMarketLevels &levels) {
+    void read_from_gw(const mWallets &raw, const mMarketLevels &levels) {
       if (raw.empty()) return;
       base.currency = raw.base.currency;
       quote.currency = raw.quote.currency;
@@ -2173,10 +2183,12 @@ namespace K {
     mConnectivity greenButton           = mConnectivity::Disconnected,
                   greenGateway          = mConnectivity::Disconnected;
     void kiss(json *const j) {
-      if (j->is_object() and j->at("state").is_number())
-        agree(j->at("state").get<mConnectivity>());
+      if (j->is_object()
+        and j->at("state").is_number()
+        and j->at("state").get<mConnectivity>() != *adminAgreement
+      ) toggle();
     };
-    const bool reset(const mConnectivity &raw) {
+    const bool read_from_gw(const mConnectivity &raw) {
       if (greenGateway != raw) {
         greenGateway = raw;
         send_refresh();
@@ -2191,12 +2203,6 @@ namespace K {
       return mMatter::Connectivity;
     };
     private:
-      void agree(const mConnectivity &raw) {
-        if (*adminAgreement != raw) {
-          *adminAgreement = raw;
-          send_refresh();
-        }
-      };
       void send_refresh() {
         const mConnectivity k = *adminAgreement * greenGateway;
         if (greenButton != k) {
@@ -2703,10 +2709,11 @@ namespace K {
 
   struct mBroker: public mToScreen,
                   public mJsonToClient<mBroker> {
+    unordered_map<mRandId, mOrder> orders;
+             vector<const mOrder*> zombies;
+                  mTradesCompleted tradesHistory;
                         mSemaphore semaphore;
                   mAntonioCalculon calculon;
-    unordered_map<mRandId, mOrder> orders;
-                  mTradesCompleted tradesHistory;
     mBroker(const mProduct *const product, const mWalletPosition *const wallet, const mMarketLevels *const levels)
       : calculon(product, wallet, levels)
     {};
@@ -2731,20 +2738,48 @@ namespace K {
       }
       return find(raw.orderId);
     };
-    mOrder *const upsert(const mOrder &raw, const bool &place = true) {
+    mOrder *const upsert(const mOrder &raw) {
       mOrder *const order = findsert(raw);
-      if (!order) return nullptr;
-      order->update(raw);
+      mOrder::update(raw, order);
       if (debug()) {
-        report(order);
+        report(order, " saved ");
         report_size();
-        if (place) report_place(order);
       }
       return order;
     };
-    void upsert(const mOrder &raw, mWalletPosition *const wallet, const mMarketLevels &levels, bool *const askForFees) {
-      if (debug()) report(raw);
-      mOrder *const order = upsert(raw, false);
+    const bool replace(const mPrice &price, const bool &isPong, mOrder *const order) {
+      const bool allowed = mOrder::replace(price, isPong, order);
+      if (debug()) report(order, "replace");
+      return allowed;
+    };
+    const bool cancel(mOrder *const order) {
+      const bool allowed = mOrder::cancel(order);
+      if (debug()) report(order, "cancel ");
+      return allowed;
+    };
+    void purge(const mOrder *const order) {
+      if (debug()) report(order, " purge ");
+      orders.erase(order->orderId);
+      if (debug()) report_size();
+    };
+    void purge() {
+      for (const mOrder *const it : zombies)
+        purge(it);
+      zombies.clear();
+    };
+    const bool stillAlive(const mOrder &order) {
+      if (order.orderStatus == mStatus::Waiting) {
+        if (Tstamp - 10e+3 > order.time) {
+          zombies.push_back(&order);
+          return false;
+        }
+        ++calculon.countWaiting;
+      } else ++calculon.countWorking;
+      return order.preferPostOnly;
+    };
+    void read_from_gw(const mOrder &raw, mWalletPosition *const wallet, const mMarketLevels &levels, bool *const askForFees) {
+      if (debug()) report(&raw, " reply ");
+      mOrder *const order = upsert(raw);
       if (!order
         or order->orderStatus == mStatus::Waiting
       ) return;
@@ -2753,7 +2788,7 @@ namespace K {
       const mSide  lastSide  = order->side;
       const mPrice lastPrice = order->price;
       if (order->orderStatus == mStatus::Terminated)
-        erase(order->orderId);
+        purge(order);
       wallet->reset(lastSide, calcHeldAmount(lastSide), levels);
       if (raw.tradeQuantity) {
         wallet->target.safety.recentTrades.insert(lastSide, lastPrice, raw.tradeQuantity);
@@ -2762,30 +2797,6 @@ namespace K {
       }
       send();
       refresh();
-    };
-    const bool replace(mOrder *const order, const mPrice &price, const bool &isPong) {
-      if (!order
-        or order->exchangeId.empty()
-      ) return false;
-      order->price  = price;
-      order->isPong = isPong;
-      if (debug()) report_replace(order);
-      return true;
-    };
-    const bool cancel(mOrder *const order) {
-      if (!order
-        or order->exchangeId.empty()
-        or order->orderStatus == mStatus::Waiting
-      ) return false;
-      order->orderStatus = mStatus::Waiting;
-      order->time = Tstamp;
-      if (debug()) report_cancel(order);
-      return true;
-    };
-    void erase(const mRandId &orderId) {
-      if (debug()) print("DEBUG OG", "remove " + orderId);
-      orders.erase(orderId);
-      if (debug()) report_size();
     };
     const mAmount calcHeldAmount(const mSide &side) const {
       return accumulate(orders.begin(), orders.end(), mAmount(),
@@ -2830,41 +2841,19 @@ namespace K {
       return working();
     };
     private:
+      void report(const mOrder *const order, const string &reason) const {
+        print("DEBUG OG", " " + reason + " " + (
+          order
+            ? (order->side == mSide::Bid ? "BID id " : "ASK id ")
+              + order->orderId + "::" + order->exchangeId
+              + " [" + to_string((int)order->orderStatus) + "]: "
+              + str8(order->quantity) + " " + args.base + " at price "
+              + str8(order->price) + " " + args.quote
+            : "not found"
+        ));
+      };
       void report_size() const {
         print("DEBUG OG", "memory " + to_string(orders.size()));
-      };
-      void report_replace(mOrder *const order) const {
-        print("DEBUG OG", "update "
-          + ((order->side == mSide::Bid ? "BID" : "ASK")
-          + (" id " + order->orderId)) + ":  at price "
-          + str8(order->price) + " " + args.quote);
-      };
-      void report_cancel(mOrder *const order) const {
-        print("DEBUG OG", "cancel " + (
-          (order->side == mSide::Bid ? "BID id " : "ASK id ")
-          + order->orderId
-        ) + "::"
-          + order->exchangeId
-        );
-      };
-      void report_place(mOrder *const order) const {
-        print("DEBUG OG", " place "
-          + ((order->side == mSide::Bid ? "BID id " : "ASK id ") + order->orderId) + ": "
-          + str8(order->quantity) + " " + args.base + " at price "
-          + str8(order->price) + " " + args.quote);
-      };
-      void report(mOrder *const order) const {
-        print("DEBUG OG", " saved "
-          + ((order->side == mSide::Bid ? "BID id " : "ASK id ") + order->orderId)
-          + "::" + order->exchangeId + " [" + to_string((int)order->orderStatus) + "]: "
-          + str8(order->quantity) + " " + args.base + " at price "
-          + str8(order->price) + " " + args.quote);
-      };
-      void report(const mOrder &raw) const {
-        print("DEBUG OG", "reply  " + raw.orderId + "::" + raw.exchangeId
-          + " [" + to_string((int)raw.orderStatus) + "]: "
-          + str8(raw.quantity) + "/" + str8(raw.tradeQuantity) + " at price "
-          + str8(raw.price) + " " + args.quote);
       };
       const bool debug() const {
         return args.debugOrders;
