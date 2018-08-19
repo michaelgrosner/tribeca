@@ -614,7 +614,7 @@ namespace K {
              mNotepad notepad;
              mMonitor monitor;
       Engine()
-        : wallet(levels.fairValue, levels.stats.ewma.targetPositionAutoPercentage)
+        : wallet(levels.fairValue, levels.stats.ewma.targetPositionAutoPercentage, broker.tradesHistory)
         , levels(monitor.product, broker.orders)
         , broker(monitor.product, wallet, levels)
       {};
@@ -629,7 +629,7 @@ namespace K {
           levels.timer_60s();
           monitor.timer_60s();
         }
-        wallet.target.safety.calc(broker.tradesHistory);
+        wallet.target.safety.calc();
         calcQuotes();
       };
       void calcQuotes() {                                           PRETTY_DEBUG

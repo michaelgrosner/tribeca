@@ -1812,21 +1812,23 @@ namespace K {
                   sellSize = 0;
     mRecentTrades recentTrades;
     private_ref:
-      const mPrice  &fairValue;
-      const mAmount &baseValue,
-                    &baseTotal,
-                    &targetBasePosition;
+      const mPrice           &fairValue;
+      const mTradesCompleted &tradesHistory;
+      const mAmount          &baseValue,
+                             &baseTotal,
+                             &targetBasePosition;
     public:
-      mSafety(const mPrice &f, const mAmount &v, const mAmount &t, const mAmount &p)
+      mSafety(const mPrice &f, const mTradesCompleted &h, const mAmount &v, const mAmount &t, const mAmount &p)
         : fairValue(f)
+        , tradesHistory(h)
         , baseValue(v)
         , baseTotal(t)
         , targetBasePosition(p)
       {};
-      void calc(const mTradesCompleted &tradesHistory) {
+      void calc() {
         if (!baseValue or !fairValue) return;
         calcSizes();
-        calcPrices(tradesHistory);
+        calcPrices();
         recentTrades.reset();
         if (empty()) return;
         buy  = recentTrades.sumBuys / buySize;
@@ -1844,7 +1846,7 @@ namespace K {
         return false;
       };
     private:
-      void calcPrices(const mTradesCompleted &tradesHistory) {
+      void calcPrices() {
         if (qp.safety == mQuotingSafety::PingPong) {
           buyPing = recentTrades.lastBuyPrice;
           sellPing = recentTrades.lastSellPrice;
@@ -1946,8 +1948,8 @@ namespace K {
       const double  &targetPositionAutoPercentage;
       const mAmount &baseValue;
     public:
-      mTarget(const mPrice &f, const double &p, const mAmount &v, const mAmount &t)
-        : safety(f, v, t, targetBasePosition)
+      mTarget(const mPrice &f, const double &p, const mTradesCompleted &h, const mAmount &v, const mAmount &t)
+        : safety(f, h, v, t, targetBasePosition)
         , targetPositionAutoPercentage(p)
         , baseValue(v)
       {};
@@ -2087,8 +2089,8 @@ namespace K {
     private_ref:
       const mPrice &fairValue;
     public:
-      mWalletPosition(const mPrice &f, const double &t)
-        : target(f, t, base.value, base.total)
+      mWalletPosition(const mPrice &f, const double &t, const mTradesCompleted &h)
+        : target(f, t, h, base.value, base.total)
         , fairValue(f)
       {};
       void read_from_gw(const mWallets &raw) {
@@ -2871,7 +2873,7 @@ namespace K {
       wallet->reset(lastSide, calcHeldAmount(lastSide));
       if (raw.tradeQuantity) {
         wallet->target.safety.recentTrades.insert(lastSide, lastPrice, raw.tradeQuantity);
-        wallet->target.safety.calc(tradesHistory);
+        wallet->target.safety.calc();
         *askForFees = true;
       }
       send();
