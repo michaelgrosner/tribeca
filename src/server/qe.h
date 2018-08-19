@@ -15,15 +15,15 @@ namespace K {
             levels.clear();
         });
         gw->RAWDATA_ENTRY_POINT(mWallets, {                         PRETTY_DEBUG
-          wallet.read_from_gw(rawdata, levels);
+          wallet.read_from_gw(rawdata);
         });
         gw->RAWDATA_ENTRY_POINT(mLevels, {                          PRETTY_DEBUG
           levels.read_from_gw(rawdata);
-          wallet.send_ratelimit(levels);
+          wallet.send_ratelimit();
           calcQuotes();
         });
         gw->RAWDATA_ENTRY_POINT(mOrder, {                           PRETTY_DEBUG
-          broker.read_from_gw(rawdata, &wallet, levels, &gw->askForFees);
+          broker.read_from_gw(rawdata, &wallet, &gw->askForFees);
         });
         gw->RAWDATA_ENTRY_POINT(mTrade, {                           PRETTY_DEBUG
           levels.stats.takerTrades.read_from_gw(rawdata);

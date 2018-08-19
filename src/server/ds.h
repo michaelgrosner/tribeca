@@ -1798,36 +1798,40 @@ namespace K {
           mAmount buySize  = 0,
                   sellSize = 0;
     mRecentTrades recentTrades;
-    const mAmount *const baseValue          = nullptr,
-                  *const baseTotal          = nullptr,
-                  *const targetBasePosition = nullptr;
-    mSafety(const mAmount *const b, const mAmount *const t, const mAmount *const p)
-      : baseValue(b)
-      , baseTotal(t)
-      , targetBasePosition(p)
-    {};
-    void calc(const mMarketLevels &levels, const mTradesCompleted &tradesHistory) {
-      if (!*baseValue or levels.empty()) return;
-      calcSizes();
-      calcPrices(levels.fairValue, tradesHistory);
-      recentTrades.reset();
-      if (empty()) return;
-      buy  = recentTrades.sumBuys / buySize;
-      sell = recentTrades.sumSells / sellSize;
-      combined = (recentTrades.sumBuys + recentTrades.sumSells) / (buySize + sellSize);
-      send();
-    };
-    const bool empty() const {
-      return !*baseValue or !buySize or !sellSize;
-    };
-    const mMatter about() const {
-      return mMatter::TradeSafetyValue;
-    };
-    const bool send_same_blob() const {
-      return false;
-    };
     private:
-      void calcPrices(const mPrice &fv, const mTradesCompleted &tradesHistory) {
+      const mPrice  *const fairValue          = nullptr;
+      const mAmount *const baseValue          = nullptr,
+                    *const baseTotal          = nullptr,
+                    *const targetBasePosition = nullptr;
+    public:
+      mSafety(const mPrice *const f, const mAmount *const v, const mAmount *const t, const mAmount *const p)
+        : fairValue(f)
+        , baseValue(v)
+        , baseTotal(t)
+        , targetBasePosition(p)
+      {};
+      void calc(const mTradesCompleted &tradesHistory) {
+        if (!*baseValue or !*fairValue) return;
+        calcSizes();
+        calcPrices(tradesHistory);
+        recentTrades.reset();
+        if (empty()) return;
+        buy  = recentTrades.sumBuys / buySize;
+        sell = recentTrades.sumSells / sellSize;
+        combined = (recentTrades.sumBuys + recentTrades.sumSells) / (buySize + sellSize);
+        send();
+      };
+      const bool empty() const {
+        return !*baseValue or !buySize or !sellSize;
+      };
+      const mMatter about() const {
+        return mMatter::TradeSafetyValue;
+      };
+      const bool send_same_blob() const {
+        return false;
+      };
+    private:
+      void calcPrices(const mTradesCompleted &tradesHistory) {
         if (qp.safety == mQuotingSafety::PingPong) {
           buyPing = recentTrades.lastBuyPrice;
           sellPing = recentTrades.lastSellPrice;
@@ -1839,45 +1843,45 @@ namespace K {
           for (const mTrade &it: tradesHistory)
             (it.side == mSide::Bid ? tradesBuy : tradesSell)[it.price] = it;
           mPrice widthPong = qp.widthPercentage
-            ? qp.widthPongPercentage * fv / 100
+            ? qp.widthPongPercentage * *fairValue / 100
             : qp.widthPong;
           mAmount buyQty = 0,
                   sellQty = 0;
           if (qp.pongAt == mPongAt::ShortPingFair or qp.pongAt == mPongAt::ShortPingAggressive) {
-            matchBestPing(fv, &tradesBuy, &buyPing, &buyQty, sellSize, widthPong, true);
-            matchBestPing(fv, &tradesSell, &sellPing, &sellQty, buySize, widthPong);
-            if (!buyQty) matchFirstPing(fv, &tradesBuy, &buyPing, &buyQty, sellSize, widthPong*-1, true);
-            if (!sellQty) matchFirstPing(fv, &tradesSell, &sellPing, &sellQty, buySize, widthPong*-1);
+            matchBestPing(&tradesBuy, &buyPing, &buyQty, sellSize, widthPong, true);
+            matchBestPing(&tradesSell, &sellPing, &sellQty, buySize, widthPong);
+            if (!buyQty) matchFirstPing(&tradesBuy, &buyPing, &buyQty, sellSize, widthPong*-1, true);
+            if (!sellQty) matchFirstPing(&tradesSell, &sellPing, &sellQty, buySize, widthPong*-1);
           } else if (qp.pongAt == mPongAt::LongPingFair or qp.pongAt == mPongAt::LongPingAggressive) {
-            matchLastPing(fv, &tradesBuy, &buyPing, &buyQty, sellSize, widthPong);
-            matchLastPing(fv, &tradesSell, &sellPing, &sellQty, buySize, widthPong, true);
+            matchLastPing(&tradesBuy, &buyPing, &buyQty, sellSize, widthPong);
+            matchLastPing(&tradesSell, &sellPing, &sellQty, buySize, widthPong, true);
           } else if (qp.pongAt == mPongAt::AveragePingFair or qp.pongAt == mPongAt::AveragePingAggressive) {
-            matchAllPing(fv, &tradesBuy, &buyPing, &buyQty, sellSize, widthPong);
-            matchAllPing(fv, &tradesSell, &sellPing, &sellQty, buySize, widthPong);
+            matchAllPing(&tradesBuy, &buyPing, &buyQty, sellSize, widthPong);
+            matchAllPing(&tradesSell, &sellPing, &sellQty, buySize, widthPong);
           }
           if (buyQty) buyPing /= buyQty;
           if (sellQty) sellPing /= sellQty;
         }
       };
-      void matchFirstPing(mPrice fv, map<mPrice, mTrade> *trades, mPrice *ping, mAmount *qty, mAmount qtyMax, mPrice width, bool reverse = false) {
-        matchPing(true, true, fv, trades, ping, qty, qtyMax, width, reverse);
+      void matchFirstPing(map<mPrice, mTrade> *trades, mPrice *ping, mAmount *qty, mAmount qtyMax, mPrice width, bool reverse = false) {
+        matchPing(true, true, trades, ping, qty, qtyMax, width, reverse);
       };
-      void matchBestPing(mPrice fv, map<mPrice, mTrade> *trades, mPrice *ping, mAmount *qty, mAmount qtyMax, mPrice width, bool reverse = false) {
-        matchPing(true, false, fv, trades, ping, qty, qtyMax, width, reverse);
+      void matchBestPing(map<mPrice, mTrade> *trades, mPrice *ping, mAmount *qty, mAmount qtyMax, mPrice width, bool reverse = false) {
+        matchPing(true, false, trades, ping, qty, qtyMax, width, reverse);
       };
-      void matchLastPing(mPrice fv, map<mPrice, mTrade> *trades, mPrice *ping, mAmount *qty, mAmount qtyMax, mPrice width, bool reverse = false) {
-        matchPing(false, true, fv, trades, ping, qty, qtyMax, width, reverse);
+      void matchLastPing(map<mPrice, mTrade> *trades, mPrice *ping, mAmount *qty, mAmount qtyMax, mPrice width, bool reverse = false) {
+        matchPing(false, true, trades, ping, qty, qtyMax, width, reverse);
       };
-      void matchAllPing(mPrice fv, map<mPrice, mTrade> *trades, mPrice *ping, mAmount *qty, mAmount qtyMax, mPrice width) {
-        matchPing(false, false, fv, trades, ping, qty, qtyMax, width);
+      void matchAllPing(map<mPrice, mTrade> *trades, mPrice *ping, mAmount *qty, mAmount qtyMax, mPrice width) {
+        matchPing(false, false, trades, ping, qty, qtyMax, width);
       };
-      void matchPing(bool _near, bool _far, mPrice fv, map<mPrice, mTrade> *trades, mPrice *ping, mAmount *qty, mAmount qtyMax, mPrice width, bool reverse = false) {
+      void matchPing(bool _near, bool _far, map<mPrice, mTrade> *trades, mPrice *ping, mAmount *qty, mAmount qtyMax, mPrice width, bool reverse = false) {
         int dir = width > 0 ? 1 : -1;
         if (reverse) for (map<mPrice, mTrade>::reverse_iterator it = trades->rbegin(); it != trades->rend(); ++it) {
-          if (matchPing(_near, _far, ping, qty, qtyMax, width, dir * fv, dir * it->second.price, it->second.quantity, it->second.price, it->second.Kqty, reverse))
+          if (matchPing(_near, _far, ping, qty, qtyMax, width, dir * *fairValue, dir * it->second.price, it->second.quantity, it->second.price, it->second.Kqty, reverse))
             break;
         } else for (map<mPrice, mTrade>::iterator it = trades->begin(); it != trades->end(); ++it)
-          if (matchPing(_near, _far, ping, qty, qtyMax, width, dir * fv, dir * it->second.price, it->second.quantity, it->second.price, it->second.Kqty, reverse))
+          if (matchPing(_near, _far, ping, qty, qtyMax, width, dir * *fairValue, dir * it->second.price, it->second.quantity, it->second.price, it->second.Kqty, reverse))
             break;
       };
       const bool matchPing(bool _near, bool _far, mPrice *ping, mAmount *qty, mAmount qtyMax, mPrice width, mPrice fv, mPrice price, mAmount qtyTrade, mPrice priceTrade, mAmount KqtyTrade, bool reverse) {
@@ -1925,49 +1929,53 @@ namespace K {
     mAmount targetBasePosition = 0,
             positionDivergence = 0;
     mSafety safety;
-    const mAmount *const baseValue = nullptr;
-    mTarget(const mAmount *const b, const mAmount *const t)
-      : safety(b, t, &targetBasePosition)
-      , baseValue(b)
-    {};
-    void calcTargetBasePos(const double &targetPositionAutoPercentage) { // PRETTY_DEBUG plz
-      if (warn_empty()) return;
-      targetBasePosition = ROUND(qp.autoPositionMode == mAutoPositionMode::Manual
-        ? (qp.percentageValues
-          ? qp.targetBasePositionPercentage * *baseValue / 1e+2
-          : qp.targetBasePosition)
-        : targetPositionAutoPercentage * *baseValue / 1e+2
-      , 1e-4);
-      calcPDiv();
-      if (send()) {
-        push();
-        if (debug())
-          report();
-      }
-    };
-    const bool warn_empty() const {
-      const bool err = empty();
-      if (err) warn("PG", "Unable to calculate TBP, missing wallet data");
-      return err;
-    };
-    const bool empty() const {
-      return !baseValue or !*baseValue;
-    };
-    const bool realtime() const {
-      return !qp.delayUI;
-    };
-    const mMatter about() const {
-      return mMatter::TargetBasePosition;
-    };
-    const string explain() const {
-      return to_string(targetBasePosition);
-    };
-    string explainOK() const {
-      return "loaded TBP = % " + args.base;
-    };
-    const bool send_same_blob() const {
-      return false;
-    };
+    private:
+      const double  *const targetPositionAutoPercentage = nullptr;
+      const mAmount *const baseValue                    = nullptr;
+    public:
+      mTarget(const mPrice *const f, const double *const p, const mAmount *const v, const mAmount *const t)
+        : safety(f, v, t, &targetBasePosition)
+        , targetPositionAutoPercentage(p)
+        , baseValue(v)
+      {};
+      void calcTargetBasePos() {                             // PRETTY_DEBUG plz
+        if (warn_empty()) return;
+        targetBasePosition = ROUND(qp.autoPositionMode == mAutoPositionMode::Manual
+          ? (qp.percentageValues
+            ? qp.targetBasePositionPercentage * *baseValue / 1e+2
+            : qp.targetBasePosition)
+          : *targetPositionAutoPercentage * *baseValue / 1e+2
+        , 1e-4);
+        calcPDiv();
+        if (send()) {
+          push();
+          if (debug())
+            report();
+        }
+      };
+      const bool warn_empty() const {
+        const bool err = empty();
+        if (err) warn("PG", "Unable to calculate TBP, missing wallet data");
+        return err;
+      };
+      const bool empty() const {
+        return !baseValue or !*baseValue;
+      };
+      const bool realtime() const {
+        return !qp.delayUI;
+      };
+      const mMatter about() const {
+        return mMatter::TargetBasePosition;
+      };
+      const string explain() const {
+        return to_string(targetBasePosition);
+      };
+      string explainOK() const {
+        return "loaded TBP = % " + args.base;
+      };
+      const bool send_same_blob() const {
+        return false;
+      };
     private:
       void calcPDiv() {
         mAmount pDiv = qp.percentageValues
@@ -2063,65 +2071,69 @@ namespace K {
                           public mJsonToClient<mWalletPosition> {
      mTarget target;
     mProfits profits;
-    mWalletPosition()
-      : target(&base.value, &base.total)
-    {};
-    void read_from_gw(const mWallets &raw, const mMarketLevels &levels) {
-      if (raw.empty()) return;
-      base.currency = raw.base.currency;
-      quote.currency = raw.quote.currency;
-      base.reset(raw.base.amount, raw.base.held);
-      quote.reset(raw.quote.amount, raw.quote.held);
-      send_ratelimit(levels);
-    };
-    void reset(const mSide &side, const mAmount &nextHeldAmount, const mMarketLevels &levels) {
-      if (side == mSide::Ask)
-        base.reset(base.total - nextHeldAmount, nextHeldAmount);
-      else quote.reset(quote.total - nextHeldAmount, nextHeldAmount);
-      send_ratelimit(levels);
-    };
-    void calcValues(const mPrice &fv) {
-      if (!fv) return;
-      if (args.maxWallet) calcMaxWallet(fv);
-      base.value = ROUND(quote.total / fv + base.total, 1e-8);
-      quote.value = ROUND(base.total * fv + quote.total, 1e-8);
-      calcProfits();
-    };
-    void calcProfits() {
-      if (!profits.ratelimit())
-        profits.push_back(mProfit(base.value, quote.value));
-      base.profit  = profits.calcBaseDiff();
-      quote.profit = profits.calcQuoteDiff();
-    };
-    void calcMaxWallet(const mPrice &fv) {
-      mAmount maxWallet = args.maxWallet;
-      maxWallet -= quote.held / fv;
-      if (maxWallet > 0 and quote.amount / fv > maxWallet) {
-        quote.amount = maxWallet * fv;
-        maxWallet = 0;
-      } else maxWallet -= quote.amount / fv;
-      maxWallet -= base.held;
-      if (maxWallet > 0 and base.amount > maxWallet)
-        base.amount = maxWallet;
-    };
-    void send_ratelimit(const mMarketLevels &levels) {
-      if (empty() or levels.empty()) return;
-      calcValues(levels.fairValue);
-      target.calcTargetBasePos(levels.stats.ewma.targetPositionAutoPercentage);
-      send();
-    };
-    const mMatter about() const {
-      return mMatter::Position;
-    };
-    const bool realtime() const {
-      return !qp.delayUI;
-    };
-    const bool send_asap() const {
-      return false;
-    };
-    const bool send_same_blob() const {
-      return false;
-    };
+    private:
+      const mPrice *const fairValue = nullptr;
+    public:
+      mWalletPosition(const mPrice *const f, const double *const t)
+        : target(f, t, &base.value, &base.total)
+        , fairValue(f)
+      {};
+      void read_from_gw(const mWallets &raw) {
+        if (raw.empty()) return;
+        base.currency = raw.base.currency;
+        quote.currency = raw.quote.currency;
+        base.reset(raw.base.amount, raw.base.held);
+        quote.reset(raw.quote.amount, raw.quote.held);
+        send_ratelimit();
+      };
+      void reset(const mSide &side, const mAmount &nextHeldAmount) {
+        if (side == mSide::Ask)
+          base.reset(base.total - nextHeldAmount, nextHeldAmount);
+        else quote.reset(quote.total - nextHeldAmount, nextHeldAmount);
+        send_ratelimit();
+      };
+      void send_ratelimit() {
+        if (empty() or !*fairValue) return;
+        calcValues();
+        target.calcTargetBasePos();
+        send();
+      };
+      const mMatter about() const {
+        return mMatter::Position;
+      };
+      const bool realtime() const {
+        return !qp.delayUI;
+      };
+      const bool send_asap() const {
+        return false;
+      };
+      const bool send_same_blob() const {
+        return false;
+      };
+    private:
+      void calcValues() {
+        if (args.maxWallet) calcMaxWallet();
+        base.value = ROUND(quote.total / *fairValue + base.total, 1e-8);
+        quote.value = ROUND(base.total * *fairValue + quote.total, 1e-8);
+        calcProfits();
+      };
+      void calcProfits() {
+        if (!profits.ratelimit())
+          profits.push_back(mProfit(base.value, quote.value));
+        base.profit  = profits.calcBaseDiff();
+        quote.profit = profits.calcQuoteDiff();
+      };
+      void calcMaxWallet() {
+        mAmount maxWallet = args.maxWallet;
+        maxWallet -= quote.held / *fairValue;
+        if (maxWallet > 0 and quote.amount / *fairValue > maxWallet) {
+          quote.amount = maxWallet * *fairValue;
+          maxWallet = 0;
+        } else maxWallet -= quote.amount / *fairValue;
+        maxWallet -= base.held;
+        if (maxWallet > 0 and base.amount > maxWallet)
+          base.amount = maxWallet;
+      };
   };
 
   struct mButtonSubmitNewOrder: public mFromClient {
@@ -2714,8 +2726,8 @@ namespace K {
                   mTradesCompleted tradesHistory;
                         mSemaphore semaphore;
                   mAntonioCalculon calculon;
-    mBroker(const mProduct *const product, const mWalletPosition *const wallet, const mMarketLevels *const levels)
-      : calculon(product, wallet, levels)
+    mBroker(const mProduct *const p, const mWalletPosition *const w, const mMarketLevels *const l)
+      : calculon(p, w, l)
     {};
     mOrder *const find(const mRandId &orderId) {
       return (orderId.empty()
@@ -2777,7 +2789,7 @@ namespace K {
       } else ++calculon.countWorking;
       return order.preferPostOnly;
     };
-    void read_from_gw(const mOrder &raw, mWalletPosition *const wallet, const mMarketLevels &levels, bool *const askForFees) {
+    void read_from_gw(const mOrder &raw, mWalletPosition *const wallet, bool *const askForFees) {
       if (debug()) report(&raw, " reply ");
       mOrder *const order = upsert(raw);
       if (!order
@@ -2789,10 +2801,10 @@ namespace K {
       const mPrice lastPrice = order->price;
       if (order->orderStatus == mStatus::Terminated)
         purge(order);
-      wallet->reset(lastSide, calcHeldAmount(lastSide), levels);
+      wallet->reset(lastSide, calcHeldAmount(lastSide));
       if (raw.tradeQuantity) {
         wallet->target.safety.recentTrades.insert(lastSide, lastPrice, raw.tradeQuantity);
-        wallet->target.safety.calc(levels, tradesHistory);
+        wallet->target.safety.calc(tradesHistory);
         *askForFees = true;
       }
       send();

@@ -73,7 +73,7 @@ namespace K {
       virtual const json handshake() = 0;
       virtual const bool askForData(const unsigned int &tick) = 0;
       virtual const bool waitForData() = 0;
-      void place(mOrder *const order) {
+      void place(const mOrder *const order) {
         place(
           order->orderId,
           order->side,
@@ -84,13 +84,13 @@ namespace K {
           order->preferPostOnly
         );
       };
-      void replace(mOrder *const order) {
+      void replace(const mOrder *const order) {
         replace(
           order->exchangeId,
           str8(order->price)
         );
       };
-      void cancel(mOrder *const order) {
+      void cancel(const mOrder *const order) {
         cancel(
           order->orderId,
           order->exchangeId
@@ -614,7 +614,8 @@ namespace K {
              mNotepad notepad;
              mMonitor monitor;
       Engine()
-        : levels(&monitor.product, &broker.orders)
+        : wallet(&levels.fairValue, &levels.stats.ewma.targetPositionAutoPercentage)
+        , levels(&monitor.product, &broker.orders)
         , broker(&monitor.product, &wallet, &levels)
       {};
       void savedQuotingParameters() {
@@ -628,7 +629,7 @@ namespace K {
           levels.timer_60s();
           monitor.timer_60s();
         }
-        wallet.target.safety.calc(levels, broker.tradesHistory);
+        wallet.target.safety.calc(broker.tradesHistory);
         calcQuotes();
       };
       void calcQuotes() {                                           PRETTY_DEBUG
