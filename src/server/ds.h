@@ -682,9 +682,9 @@ namespace K {
   };
   static void from_json(const json &j, mQuotingParams &k) {
     k.widthPing                       = fmax(1e-8,            j.value("widthPing", k.widthPing));
-    k.widthPingPercentage             = fmin(1e+2, fmax(1e-3, j.value("widthPingPercentage", k.widthPingPercentage)));
+    k.widthPingPercentage             = fmin(1e+5, fmax(1e-4, j.value("widthPingPercentage", k.widthPingPercentage)));
     k.widthPong                       = fmax(1e-8,            j.value("widthPong", k.widthPong));
-    k.widthPongPercentage             = fmin(1e+2, fmax(1e-3, j.value("widthPongPercentage", k.widthPongPercentage)));
+    k.widthPongPercentage             = fmin(1e+5, fmax(1e-4, j.value("widthPongPercentage", k.widthPongPercentage)));
     k.widthPercentage                 =                       j.value("widthPercentage", k.widthPercentage);
     k.bestWidth                       =                       j.value("bestWidth", k.bestWidth);
     k.buySize                         = fmax(1e-8,            j.value("buySize", k.buySize));
