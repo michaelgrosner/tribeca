@@ -291,7 +291,7 @@ namespace K {
       const mPrice minTick = 0.01;
       product.minTick = &minTick;
       mMarketLevels levels(&product, nullptr);
-      mWalletPosition wallet;
+      mWalletPosition wallet(nullptr, nullptr);
       mBroker broker(&product, &wallet, &levels);
       WHEN("assigned") {
         vector<mRandId> randIds;
