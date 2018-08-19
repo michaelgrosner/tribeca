@@ -2251,8 +2251,12 @@ namespace K {
   };
 
   struct mQuote: public mLevel {
-    mQuoteState state  = mQuoteState::MissingData;
-           bool isPong = false;
+     const mSide       side   = (mSide)0;
+           mQuoteState state  = mQuoteState::MissingData;
+           bool        isPong = false;
+    mQuote(const mSide &s)
+      : side(s)
+    {};
     void clear(const mQuoteState &reason) {
       mLevel::clear();
       state = reason;
@@ -2263,10 +2267,8 @@ namespace K {
            ask;
       bool superSpread = false;
     mQuotes()
-    {};
-    mQuotes(const mQuote &b, const mQuote &a)
-      : bid(b)
-      , ask(a)
+      : bid(mSide::Bid)
+      , ask(mSide::Ask)
     {};
     void checkCrossedQuotes() {
       bid.state = checkCrossedQuotes(mSide::Bid);

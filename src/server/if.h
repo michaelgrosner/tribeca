@@ -643,21 +643,21 @@ namespace K {
           } else {
             broker.calculon.reset(mQuoteState::UnknownHeld);
             broker.calculon.calcQuotes();
-            quote2orders(broker.calculon.nextQuotes.ask, mSide::Ask);
-            quote2orders(broker.calculon.nextQuotes.bid, mSide::Bid);
+            quote2orders(broker.calculon.nextQuotes.ask);
+            quote2orders(broker.calculon.nextQuotes.bid);
             broker.purge();
           }
         }
         broker.calculon.send();
       };
-      void quote2orders(const mQuote &nextQuote, const mSide &side) {
+      void quote2orders(const mQuote &nextQuote) {
         if (nextQuote.state != mQuoteState::Live)
-          return cancelOrders(side);
+          return cancelOrders(nextQuote.side);
         unsigned int bullets = qp.bullets;
         bool skipNextQuote = false;
         vector<mOrder*> toCancel;
         for (unordered_map<mRandId, mOrder>::value_type &it : broker.orders)
-          if (it.second.side == side
+          if (nextQuote.side == it.second.side
             and broker.stillAlive(it.second)
           ) {
             if (abs(it.second.price - nextQuote.price) < *monitor.product.minTick)
@@ -666,7 +666,7 @@ namespace K {
               if (qp.safety != mQuotingSafety::AK47 or !--bullets)
                 skipNextQuote = true;
             } else if (qp.safety != mQuotingSafety::AK47 or toCancel.empty() or (
-              mSide::Bid == side
+              nextQuote.side == mSide::Bid
                 ? nextQuote.price <= it.second.price
                 : nextQuote.price >= it.second.price
             )) {
@@ -675,9 +675,9 @@ namespace K {
               else toCancel.push_back(&it.second);
             }
           }
-        sendOrders(toCancel, skipNextQuote ? nullptr : &nextQuote, side);
+        sendOrders(toCancel, skipNextQuote ? nullptr : &nextQuote);
       };
-      void sendOrders(vector<mOrder*> toCancel, const mQuote *const nextQuote, const mSide &side) {
+      void sendOrders(vector<mOrder*> toCancel, const mQuote *const nextQuote) {
         mOrder *toReplace = nullptr;
         if (nextQuote and !toCancel.empty()) {
           toReplace = toCancel.back();
@@ -689,7 +689,7 @@ namespace K {
           replaceOrder(nextQuote->price, nextQuote->isPong, toReplace);
         else {
           if (toReplace and args.testChamber != 1) cancelOrder(toReplace);
-          placeOrder(mOrder(gw->randId(), side, nextQuote->price, nextQuote->size, nextQuote->isPong));
+          placeOrder(mOrder(gw->randId(), nextQuote->side, nextQuote->price, nextQuote->size, nextQuote->isPong));
           if (toReplace and args.testChamber == 1) cancelOrder(toReplace);
         }
         monitor.tick_orders();
