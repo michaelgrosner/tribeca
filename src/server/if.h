@@ -614,9 +614,9 @@ namespace K {
              mNotepad notepad;
              mMonitor monitor;
       Engine()
-        : wallet(&levels.fairValue, &levels.stats.ewma.targetPositionAutoPercentage)
-        , levels(&monitor.product, &broker.orders)
-        , broker(&monitor.product, &wallet, &levels)
+        : wallet(levels.fairValue, levels.stats.ewma.targetPositionAutoPercentage)
+        , levels(monitor.product, broker.orders)
+        , broker(monitor.product, wallet, levels)
       {};
       void savedQuotingParameters() {
         broker.calculon.dummyMM.reset("saved");

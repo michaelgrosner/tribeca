@@ -113,7 +113,7 @@ namespace K {
       product.minTick = &minTick;
       product.minSize = &minSize;
       unordered_map<mRandId, mOrder> orders;
-      mMarketLevels levels(&product, &orders);
+      mMarketLevels levels(product, orders);
       WHEN("defaults") {
         THEN("fair value") {
           REQUIRE_FALSE(levels.fairValue);
@@ -290,9 +290,12 @@ namespace K {
       mProduct product;
       const mPrice minTick = 0.01;
       product.minTick = &minTick;
-      mMarketLevels levels(&product, nullptr);
-      mWalletPosition wallet(nullptr, nullptr);
-      mBroker broker(&product, &wallet, &levels);
+      unordered_map<mRandId, mOrder> orders;
+      mMarketLevels levels(product, orders);
+      const mPrice fairValue = 0;
+      const double targetPositionAutoPercentage = 0;
+      mWalletPosition wallet(fairValue, targetPositionAutoPercentage);
+      mBroker broker(product, wallet, levels);
       WHEN("assigned") {
         vector<mRandId> randIds;
         mClock time = Tstamp;
