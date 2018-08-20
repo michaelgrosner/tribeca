@@ -650,46 +650,45 @@ namespace K {
         }
         broker.calculon.send();
       };
-      void quote2orders(const mQuote &nextQuote) {
+      void quote2orders(mQuote &nextQuote) {
         if (nextQuote.state != mQuoteState::Live)
           return cancelOrders(nextQuote.side);
         unsigned int bullets = qp.bullets;
-        bool skipNextQuote = false;
         vector<mOrder*> toCancel;
         for (unordered_map<mRandId, mOrder>::value_type &it : broker.orders)
           if (nextQuote.side == it.second.side
             and broker.stillAlive(it.second)
           ) {
             if (abs(it.second.price - nextQuote.price) < *monitor.product.minTick)
-              skipNextQuote = true;
+              nextQuote.skip();
             else if (it.second.orderStatus == mStatus::Waiting) {
               if (qp.safety != mQuotingSafety::AK47 or !--bullets)
-                skipNextQuote = true;
+                nextQuote.skip();
             } else if (qp.safety != mQuotingSafety::AK47 or toCancel.empty() or (
               nextQuote.side == mSide::Bid
                 ? nextQuote.price <= it.second.price
                 : nextQuote.price >= it.second.price
             )) {
               if (args.lifetime and it.second.time + args.lifetime > Tstamp)
-                skipNextQuote = true;
+                nextQuote.skip();
               else toCancel.push_back(&it.second);
             }
           }
-        sendOrders(toCancel, skipNextQuote ? nullptr : &nextQuote);
+        sendOrders(toCancel, nextQuote);
       };
-      void sendOrders(vector<mOrder*> toCancel, const mQuote *const nextQuote) {
+      void sendOrders(vector<mOrder*> toCancel, const mQuote &nextQuote) {
         mOrder *toReplace = nullptr;
-        if (nextQuote and !toCancel.empty()) {
+        if (!nextQuote.empty() and !toCancel.empty()) {
           toReplace = toCancel.back();
           toCancel.pop_back();
         }
         for (mOrder *const it : toCancel) cancelOrder(it);
-        if (!nextQuote) return;
+        if (nextQuote.empty()) return;
         if (toReplace and gw->askForReplace)
-          replaceOrder(nextQuote->price, nextQuote->isPong, toReplace);
+          replaceOrder(nextQuote.price, nextQuote.isPong, toReplace);
         else {
           if (toReplace and args.testChamber != 1) cancelOrder(toReplace);
-          placeOrder(mOrder(gw->randId(), nextQuote->side, nextQuote->price, nextQuote->size, nextQuote->isPong));
+          placeOrder(mOrder(gw->randId(), nextQuote.side, nextQuote.price, nextQuote.size, nextQuote.isPong));
           if (toReplace and args.testChamber == 1) cancelOrder(toReplace);
         }
         monitor.tick_orders();

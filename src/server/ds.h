@@ -860,8 +860,8 @@ namespace K {
       , quantity(q)
       , time(t)
     {};
-    mTrade(const string &i, const mPrice &p, const mAmount &q, const mSide &S, const bool &P, const mClock &t, const mAmount &v, const mClock &Kt, const mAmount &Kq, const mPrice &Kp, const mAmount &Kv, const mAmount &Kd, const mAmount &f, const bool &l)
-      : tradeId(i)
+    mTrade(const mPrice &p, const mAmount &q, const mSide &S, const bool &P, const mClock &t, const mAmount &v, const mClock &Kt, const mAmount &Kq, const mPrice &Kp, const mAmount &Kv, const mAmount &Kd, const mAmount &f, const bool &l)
+      : tradeId(to_string(t))
       , side(S)
       , price(p)
       , Kprice(Kp)
@@ -976,16 +976,15 @@ namespace K {
         );
       });
     };
-    void insert(mOrder *const o, const double &tradeQuantity) {
+    void insert(const double &tradeQuantity, const mPrice &price, const mSide &side, const bool &isPong) {
       mAmount fee = 0;
       mTrade trade(
-        to_string(Tstamp),
-        o->price,
+        price,
         tradeQuantity,
-        o->side,
-        o->isPong,
-        o->time,
-        abs(o->price * tradeQuantity),
+        side,
+        isPong,
+        Tstamp,
+        abs(price * tradeQuantity),
         0, 0, 0, 0, 0, fee, false
       );
       print("GW " + args.exchange, string(trade.isPong?"PONG":"PING") + " TRADE "
@@ -1511,7 +1510,7 @@ namespace K {
       price = size = 0;
     };
     const bool empty() const {
-      return !price or !size;
+      return !size or !price;
     };
   };
   static void to_json(json &j, const mLevel &k) {
@@ -1548,6 +1547,7 @@ namespace K {
       {"asks", k.asks}
     };
   };
+
   struct mLevelsDiff: public mLevels,
                       public mJsonToClient<mLevelsDiff> {
       bool patched = false;
@@ -2257,6 +2257,9 @@ namespace K {
     mQuote(const mSide &s)
       : side(s)
     {};
+    void skip() {
+      size = 0;
+    };
     void clear(const mQuoteState &reason) {
       mLevel::clear();
       state = reason;
@@ -2867,7 +2870,7 @@ namespace K {
         or order->orderStatus == mStatus::Waiting
       ) return;
       if (raw.tradeQuantity)
-        tradesHistory.insert(order, raw.tradeQuantity);
+        tradesHistory.insert(raw.tradeQuantity, order->price, order->side, order->isPong);
       const mSide  lastSide  = order->side;
       const mPrice lastPrice = order->price;
       if (order->orderStatus == mStatus::Terminated)
