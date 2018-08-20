@@ -948,230 +948,6 @@ namespace K {
   static void to_json(json &j, const mMarketTakers &k) {
     j = k.trades;
   };
-  struct mTradesCompleted: public mToScreen,
-                           public mVectorFromDb<mTrade>,
-                           public mJsonToClient<mTrade> {
-    void clearAll() {
-      clear_if([](iterator it) {
-        return true;
-      });
-    };
-    void clearOne(const string &tradeId) {
-      if (tradeId.empty()) return;
-      clear_if([&](iterator it) {
-        return it->tradeId == tradeId;
-      }, true);
-    };
-    void clearClosed() {
-      clear_if([](iterator it) {
-        return it->Kqty >= it->quantity;
-      });
-    };
-    void clearPongsAuto() {
-      const mClock expire = Tstamp - (abs(qp.cleanPongsAuto) * 86400e3);
-      clear_if([&](iterator it) {
-        return (it->Ktime?:it->time) < expire and (
-          qp.cleanPongsAuto < 0
-          or it->Kqty >= it->quantity
-        );
-      });
-    };
-    void insert(const double &tradeQuantity, const mPrice &price, const mSide &side, const bool &isPong) {
-      mAmount fee = 0;
-      mTrade trade(
-        price,
-        tradeQuantity,
-        side,
-        isPong,
-        Tstamp,
-        abs(price * tradeQuantity),
-        0, 0, 0, 0, 0, fee, false
-      );
-      print("GW " + args.exchange, string(trade.isPong?"PONG":"PING") + " TRADE "
-        + (trade.side == mSide::Bid ? "BUY  " : "SELL ")
-        + str8(trade.quantity) + ' ' + args.base + " at price "
-        + str8(trade.price) + ' ' + args.quote + " (value "
-        + str8(trade.value) + ' ' + args.quote + ")"
-      );
-      if (qp.safety == mQuotingSafety::Off or qp.safety == mQuotingSafety::PingPong)
-        send_push_back(trade);
-      else {
-        mPrice widthPong = qp.widthPercentage
-          ? qp.widthPongPercentage * trade.price / 100
-          : qp.widthPong;
-        map<mPrice, string> matches;
-        for (mTrade &it : rows)
-          if (it.quantity - it.Kqty > 0
-            and it.side != trade.side
-            and (qp.pongAt == mPongAt::AveragePingFair
-              or qp.pongAt == mPongAt::AveragePingAggressive
-              or (trade.side == mSide::Bid
-                ? (it.price > trade.price + widthPong)
-                : (it.price < trade.price - widthPong)
-              )
-            )
-          ) matches[it.price] = it.tradeId;
-        matchPong(
-          matches,
-          trade,
-          (qp.pongAt == mPongAt::LongPingFair or qp.pongAt == mPongAt::LongPingAggressive)
-            ? trade.side == mSide::Ask
-            : trade.side == mSide::Bid
-        );
-      }
-      if (qp.cleanPongsAuto)
-        clearPongsAuto();
-    };
-    const mMatter about() const {
-      return mMatter::Trades;
-    };
-    void erase() {
-      if (crbegin()->Kqty < 0) rows.pop_back();
-    };
-    const json blob() const {
-      if (crbegin()->Kqty == -1) return nullptr;
-      else return mVectorFromDb::blob();
-    };
-    const string increment() const {
-      return crbegin()->tradeId;
-    };
-    string explainOK() const {
-      return "loaded % historical Trades";
-    };
-    const json hello() {
-      for (mTrade &it : rows)
-        it.loadedFromDB = true;
-      return rows;
-    };
-    private:
-      void clear_if(const function<const bool(iterator)> &fn, const bool &onlyOne = false) {
-        for (iterator it = begin(); it != end();)
-          if (fn(it)) {
-            it->Kqty = -1;
-            it = send_push_erase(it);
-            if (onlyOne) break;
-          } else ++it;
-      };
-      void matchPong(map<mPrice, string> matches, mTrade pong, bool reverse) {
-        if (reverse) for (map<mPrice, string>::reverse_iterator it = matches.rbegin(); it != matches.rend(); ++it) {
-          if (!matchPong(it->second, &pong)) break;
-        } else for (map<mPrice, string>::iterator it = matches.begin(); it != matches.end(); ++it)
-          if (!matchPong(it->second, &pong)) break;
-        if (pong.quantity > 0) {
-          bool eq = false;
-          for (iterator it = begin(); it != end(); ++it) {
-            if (it->price!=pong.price or it->side!=pong.side or it->quantity<=it->Kqty) continue;
-            eq = true;
-            it->time = pong.time;
-            it->quantity = it->quantity + pong.quantity;
-            it->value = it->value + pong.value;
-            it->isPong = false;
-            it->loadedFromDB = false;
-            it = send_push_erase(it);
-            break;
-          }
-          if (!eq) {
-            send_push_back(pong);
-          }
-        }
-      };
-      bool matchPong(string match, mTrade* pong) {
-        for (iterator it = begin(); it != end(); ++it) {
-          if (it->tradeId != match) continue;
-          mAmount Kqty = fmin(pong->quantity, it->quantity - it->Kqty);
-          it->Ktime = pong->time;
-          it->Kprice = ((Kqty*pong->price) + (it->Kqty*it->Kprice)) / (it->Kqty+Kqty);
-          it->Kqty = it->Kqty + Kqty;
-          it->Kvalue = abs(it->Kqty*it->Kprice);
-          pong->quantity = pong->quantity - Kqty;
-          pong->value = abs(pong->price*pong->quantity);
-          if (it->quantity<=it->Kqty)
-            it->Kdiff = abs(it->quantity * it->price - it->Kqty * it->Kprice);
-          it->isPong = true;
-          it->loadedFromDB = false;
-          it = send_push_erase(it);
-          break;
-        }
-        return pong->quantity > 0;
-      };
-      void send_push_back(const mTrade &row) {
-        rows.push_back(row);
-        push();
-        if (crbegin()->Kqty < 0) rbegin()->Kqty = -2;
-        send();
-      };
-      iterator send_push_erase(iterator it) {
-        mTrade row = *it;
-        it = rows.erase(it);
-        send_push_back(row);
-        erase();
-        return it;
-      };
-  };
-
-  struct mRecentTrade {
-     mPrice price    = 0;
-    mAmount quantity = 0;
-     mClock time     = 0;
-    mRecentTrade(const mPrice &p, const mAmount &q)
-      : price(p)
-      , quantity(q)
-      , time(Tstamp)
-    {};
-  };
-  struct mRecentTrades {
-    multimap<mPrice, mRecentTrade> buys,
-                                   sells;
-                           mAmount sumBuys       = 0,
-                                   sumSells      = 0;
-                            mPrice lastBuyPrice  = 0,
-                                   lastSellPrice = 0;
-    void insert(const mSide &side, const mPrice &price, const mAmount &quantity) {
-      const bool bidORask = side == mSide::Bid;
-      (bidORask
-        ? lastBuyPrice
-        : lastSellPrice
-      ) = price;
-      (bidORask
-        ? buys
-        : sells
-      ).insert(pair<mPrice, mRecentTrade>(price, mRecentTrade(price, quantity)));
-    };
-    void reset() {
-      if (buys.size()) expire(&buys);
-      if (sells.size()) expire(&sells);
-      skip();
-      sumBuys = sum(&buys);
-      sumSells = sum(&sells);
-    };
-    private:
-      const mAmount sum(multimap<mPrice, mRecentTrade> *const k) const {
-        mAmount sum = 0;
-        for (multimap<mPrice, mRecentTrade>::value_type &it : *k)
-          sum += it.second.quantity;
-        return sum;
-      };
-      void expire(multimap<mPrice, mRecentTrade> *const k) {
-        mClock now = Tstamp;
-        for (multimap<mPrice, mRecentTrade>::iterator it = k->begin(); it != k->end();)
-          if (it->second.time + qp.tradeRateSeconds * 1e+3 > now) ++it;
-          else it = k->erase(it);
-      };
-      void skip() {
-        while (buys.size() and sells.size()) {
-          mRecentTrade &buy = buys.rbegin()->second;
-          mRecentTrade &sell = sells.begin()->second;
-          if (sell.price < buy.price) break;
-          const mAmount buyQty = buy.quantity;
-          buy.quantity -= sell.quantity;
-          sell.quantity -= buyQty;
-          if (buy.quantity <= 0)
-            buys.erase(buys.rbegin()->first);
-          if (sell.quantity <= 0)
-            sells.erase(sells.begin()->first);
-        }
-      };
-  };
 
   struct mFairLevelsPrice: public mToScreen,
                            public mJsonToClient<mFairLevelsPrice> {
@@ -1228,73 +1004,74 @@ namespace K {
     k.topAsk = j.value("ask", 0.0);
   };
   struct mStdevs: public mVectorFromDb<mStdev> {
+    double top  = 0,  topMean = 0,
+           fair = 0, fairMean = 0,
+           bid  = 0,  bidMean = 0,
+           ask  = 0,  askMean = 0;
     private_ref:
       const mPrice &fairValue;
     public:
       mStdevs(const mPrice &f)
         : fairValue(f)
       {};
-    double top  = 0,  topMean = 0,
-           fair = 0, fairMean = 0,
-           bid  = 0,  bidMean = 0,
-           ask  = 0,  askMean = 0;
-    const bool pull(const json &j) {
-      const bool loaded = mVectorFromDb::pull(j);
-      if (loaded) calc();
-      return loaded;
-    };
-    void timer_1s(const mPrice &topBid, const mPrice &topAsk) {
-      push_back(mStdev(fairValue, topBid, topAsk));
-      calc();
-    };
-    void calc() {
-      if (size() < 2) return;
-      fair = calc(&fairMean, "fv");
-      bid  = calc(&bidMean, "bid");
-      ask  = calc(&askMean, "ask");
-      top  = calc(&topMean, "top");
-    };
-    double calc(mPrice *const mean, const string &type) const {
-      vector<mPrice> values;
-      for (const mStdev &it : rows)
-        if (type == "fv")
-          values.push_back(it.fv);
-        else if (type == "bid")
-          values.push_back(it.topBid);
-        else if (type == "ask")
-          values.push_back(it.topAsk);
-        else if (type == "top") {
-          values.push_back(it.topBid);
-          values.push_back(it.topAsk);
+      const bool pull(const json &j) {
+        const bool loaded = mVectorFromDb::pull(j);
+        if (loaded) calc();
+        return loaded;
+      };
+      void timer_1s(const mPrice &topBid, const mPrice &topAsk) {
+        push_back(mStdev(fairValue, topBid, topAsk));
+        calc();
+      };
+      void calc() {
+        if (size() < 2) return;
+        fair = calc(&fairMean, "fv");
+        bid  = calc(&bidMean, "bid");
+        ask  = calc(&askMean, "ask");
+        top  = calc(&topMean, "top");
+      };
+      const mMatter about() const {
+        return mMatter::STDEVStats;
+      };
+      const double limit() const {
+        return qp.quotingStdevProtectionPeriods;
+      };
+      const mClock lifetime() const {
+        return 1e+3 * limit();
+      };
+      string explainOK() const {
+        return "loaded % STDEV Periods";
+      };
+    private:
+      double calc(mPrice *const mean, const string &type) const {
+        vector<mPrice> values;
+        for (const mStdev &it : rows)
+          if (type == "fv")
+            values.push_back(it.fv);
+          else if (type == "bid")
+            values.push_back(it.topBid);
+          else if (type == "ask")
+            values.push_back(it.topAsk);
+          else if (type == "top") {
+            values.push_back(it.topBid);
+            values.push_back(it.topAsk);
+          }
+        return calc(mean, qp.quotingStdevProtectionFactor, values);
+      };
+      double calc(mPrice *const mean, const double &factor, const vector<mPrice> &values) const {
+        unsigned int n = values.size();
+        if (!n) return 0;
+        double sum = 0;
+        for (const mPrice &it : values) sum += it;
+        *mean = sum / n;
+        double sq_diff_sum = 0;
+        for (const mPrice &it : values) {
+          mPrice diff = it - *mean;
+          sq_diff_sum += diff * diff;
         }
-      return calc(mean, qp.quotingStdevProtectionFactor, values);
-    };
-    double calc(mPrice *const mean, const double &factor, const vector<mPrice> &values) const {
-      unsigned int n = values.size();
-      if (!n) return 0;
-      double sum = 0;
-      for (const mPrice &it : values) sum += it;
-      *mean = sum / n;
-      double sq_diff_sum = 0;
-      for (const mPrice &it : values) {
-        mPrice diff = it - *mean;
-        sq_diff_sum += diff * diff;
-      }
-      double variance = sq_diff_sum / n;
-      return sqrt(variance) * factor;
-    };
-    const mMatter about() const {
-      return mMatter::STDEVStats;
-    };
-    const double limit() const {
-      return qp.quotingStdevProtectionPeriods;
-    };
-    const mClock lifetime() const {
-      return 1e+3 * limit();
-    };
-    string explainOK() const {
-      return "loaded % STDEV Periods";
-    };
+        double variance = sq_diff_sum / n;
+        return sqrt(variance) * factor;
+      };
   };
   static void to_json(json &j, const mStdevs &k) {
     j = {
@@ -1547,7 +1324,6 @@ namespace K {
       {"asks", k.asks}
     };
   };
-
   struct mLevelsDiff: public mLevels,
                       public mJsonToClient<mLevelsDiff> {
       bool patched = false;
@@ -1802,29 +1578,258 @@ namespace K {
     };
   };
 
+  struct mTradesHistory: public mToScreen,
+                         public mVectorFromDb<mTrade>,
+                         public mJsonToClient<mTrade> {
+    void clearAll() {
+      clear_if([](iterator it) {
+        return true;
+      });
+    };
+    void clearOne(const string &tradeId) {
+      if (tradeId.empty()) return;
+      clear_if([&](iterator it) {
+        return it->tradeId == tradeId;
+      }, true);
+    };
+    void clearClosed() {
+      clear_if([](iterator it) {
+        return it->Kqty >= it->quantity;
+      });
+    };
+    void clearPongsAuto() {
+      const mClock expire = Tstamp - (abs(qp.cleanPongsAuto) * 86400e3);
+      clear_if([&](iterator it) {
+        return (it->Ktime?:it->time) < expire and (
+          qp.cleanPongsAuto < 0
+          or it->Kqty >= it->quantity
+        );
+      });
+    };
+    void insert(const double &tradeQuantity, const mPrice &price, const mSide &side, const bool &isPong) {
+      mAmount fee = 0;
+      mTrade trade(
+        price,
+        tradeQuantity,
+        side,
+        isPong,
+        Tstamp,
+        abs(price * tradeQuantity),
+        0, 0, 0, 0, 0, fee, false
+      );
+      print("GW " + args.exchange, string(trade.isPong?"PONG":"PING") + " TRADE "
+        + (trade.side == mSide::Bid ? "BUY  " : "SELL ")
+        + str8(trade.quantity) + ' ' + args.base + " at price "
+        + str8(trade.price) + ' ' + args.quote + " (value "
+        + str8(trade.value) + ' ' + args.quote + ")"
+      );
+      if (qp.safety == mQuotingSafety::Off or qp.safety == mQuotingSafety::PingPong)
+        send_push_back(trade);
+      else {
+        mPrice widthPong = qp.widthPercentage
+          ? qp.widthPongPercentage * trade.price / 100
+          : qp.widthPong;
+        map<mPrice, string> matches;
+        for (mTrade &it : rows)
+          if (it.quantity - it.Kqty > 0
+            and it.side != trade.side
+            and (qp.pongAt == mPongAt::AveragePingFair
+              or qp.pongAt == mPongAt::AveragePingAggressive
+              or (trade.side == mSide::Bid
+                ? (it.price > trade.price + widthPong)
+                : (it.price < trade.price - widthPong)
+              )
+            )
+          ) matches[it.price] = it.tradeId;
+        matchPong(
+          matches,
+          trade,
+          (qp.pongAt == mPongAt::LongPingFair or qp.pongAt == mPongAt::LongPingAggressive)
+            ? trade.side == mSide::Ask
+            : trade.side == mSide::Bid
+        );
+      }
+      if (qp.cleanPongsAuto)
+        clearPongsAuto();
+    };
+    const mMatter about() const {
+      return mMatter::Trades;
+    };
+    void erase() {
+      if (crbegin()->Kqty < 0) rows.pop_back();
+    };
+    const json blob() const {
+      if (crbegin()->Kqty == -1) return nullptr;
+      else return mVectorFromDb::blob();
+    };
+    const string increment() const {
+      return crbegin()->tradeId;
+    };
+    string explainOK() const {
+      return "loaded % historical Trades";
+    };
+    const json hello() {
+      for (mTrade &it : rows)
+        it.loadedFromDB = true;
+      return rows;
+    };
+    private:
+      void clear_if(const function<const bool(iterator)> &fn, const bool &onlyOne = false) {
+        for (iterator it = begin(); it != end();)
+          if (fn(it)) {
+            it->Kqty = -1;
+            it = send_push_erase(it);
+            if (onlyOne) break;
+          } else ++it;
+      };
+      void matchPong(map<mPrice, string> matches, mTrade pong, bool reverse) {
+        if (reverse) for (map<mPrice, string>::reverse_iterator it = matches.rbegin(); it != matches.rend(); ++it) {
+          if (!matchPong(it->second, &pong)) break;
+        } else for (map<mPrice, string>::iterator it = matches.begin(); it != matches.end(); ++it)
+          if (!matchPong(it->second, &pong)) break;
+        if (pong.quantity > 0) {
+          bool eq = false;
+          for (iterator it = begin(); it != end(); ++it) {
+            if (it->price!=pong.price or it->side!=pong.side or it->quantity<=it->Kqty) continue;
+            eq = true;
+            it->time = pong.time;
+            it->quantity = it->quantity + pong.quantity;
+            it->value = it->value + pong.value;
+            it->isPong = false;
+            it->loadedFromDB = false;
+            it = send_push_erase(it);
+            break;
+          }
+          if (!eq) {
+            send_push_back(pong);
+          }
+        }
+      };
+      bool matchPong(string match, mTrade* pong) {
+        for (iterator it = begin(); it != end(); ++it) {
+          if (it->tradeId != match) continue;
+          mAmount Kqty = fmin(pong->quantity, it->quantity - it->Kqty);
+          it->Ktime = pong->time;
+          it->Kprice = ((Kqty*pong->price) + (it->Kqty*it->Kprice)) / (it->Kqty+Kqty);
+          it->Kqty = it->Kqty + Kqty;
+          it->Kvalue = abs(it->Kqty*it->Kprice);
+          pong->quantity = pong->quantity - Kqty;
+          pong->value = abs(pong->price*pong->quantity);
+          if (it->quantity<=it->Kqty)
+            it->Kdiff = abs(it->quantity * it->price - it->Kqty * it->Kprice);
+          it->isPong = true;
+          it->loadedFromDB = false;
+          it = send_push_erase(it);
+          break;
+        }
+        return pong->quantity > 0;
+      };
+      void send_push_back(const mTrade &row) {
+        rows.push_back(row);
+        push();
+        if (crbegin()->Kqty < 0) rbegin()->Kqty = -2;
+        send();
+      };
+      iterator send_push_erase(iterator it) {
+        mTrade row = *it;
+        it = rows.erase(it);
+        send_push_back(row);
+        erase();
+        return it;
+      };
+  };
+
+  struct mRecentTrade {
+     mPrice price    = 0;
+    mAmount quantity = 0;
+     mClock time     = 0;
+    mRecentTrade(const mPrice &p, const mAmount &q)
+      : price(p)
+      , quantity(q)
+      , time(Tstamp)
+    {};
+  };
+  struct mRecentTrades {
+    multimap<mPrice, mRecentTrade> buys,
+                                   sells;
+                           mAmount sumBuys       = 0,
+                                   sumSells      = 0;
+                            mPrice lastBuyPrice  = 0,
+                                   lastSellPrice = 0;
+    void insert(const mAmount &tradeQuantity, const mPrice &price, const mSide &side) {
+      const bool bidORask = side == mSide::Bid;
+      (bidORask
+        ? lastBuyPrice
+        : lastSellPrice
+      ) = price;
+      (bidORask
+        ? buys
+        : sells
+      ).insert(pair<mPrice, mRecentTrade>(price, mRecentTrade(price, tradeQuantity)));
+    };
+    void reset() {
+      if (buys.size()) expire(&buys);
+      if (sells.size()) expire(&sells);
+      skip();
+      sumBuys = sum(&buys);
+      sumSells = sum(&sells);
+    };
+    private:
+      const mAmount sum(multimap<mPrice, mRecentTrade> *const k) const {
+        mAmount sum = 0;
+        for (multimap<mPrice, mRecentTrade>::value_type &it : *k)
+          sum += it.second.quantity;
+        return sum;
+      };
+      void expire(multimap<mPrice, mRecentTrade> *const k) {
+        mClock now = Tstamp;
+        for (multimap<mPrice, mRecentTrade>::iterator it = k->begin(); it != k->end();)
+          if (it->second.time + qp.tradeRateSeconds * 1e+3 > now) ++it;
+          else it = k->erase(it);
+      };
+      void skip() {
+        while (buys.size() and sells.size()) {
+          mRecentTrade &buy = buys.rbegin()->second;
+          mRecentTrade &sell = sells.begin()->second;
+          if (sell.price < buy.price) break;
+          const mAmount buyQty = buy.quantity;
+          buy.quantity -= sell.quantity;
+          sell.quantity -= buyQty;
+          if (buy.quantity <= 0)
+            buys.erase(buys.rbegin()->first);
+          if (sell.quantity <= 0)
+            sells.erase(sells.begin()->first);
+        }
+      };
+  };
+
   struct mSafety: public mJsonToClient<mSafety> {
-           double buy      = 0,
-                  sell     = 0,
-                  combined = 0;
-           mPrice buyPing  = 0,
-                  sellPing = 0;
-          mAmount buySize  = 0,
-                  sellSize = 0;
-    mRecentTrades recentTrades;
+              double buy      = 0,
+                     sell     = 0,
+                     combined = 0;
+              mPrice buyPing  = 0,
+                     sellPing = 0;
+             mAmount buySize  = 0,
+                     sellSize = 0;
+       mRecentTrades recentTrades;
+      mTradesHistory trades;
     private_ref:
       const mPrice           &fairValue;
-      const mTradesCompleted &tradesHistory;
       const mAmount          &baseValue,
                              &baseTotal,
                              &targetBasePosition;
     public:
-      mSafety(const mPrice &f, const mTradesCompleted &h, const mAmount &v, const mAmount &t, const mAmount &p)
+      mSafety(const mPrice &f, const mAmount &v, const mAmount &t, const mAmount &p)
         : fairValue(f)
-        , tradesHistory(h)
         , baseValue(v)
         , baseTotal(t)
         , targetBasePosition(p)
       {};
+      void insertTrade(const double &tradeQuantity, const mPrice &price, const mSide &side, const bool &isPong) {
+        recentTrades.insert(tradeQuantity, price, side);
+        trades.insert(tradeQuantity, price, side, isPong);
+        calc();
+      };
       void calc() {
         if (!baseValue or !fairValue) return;
         calcSizes();
@@ -1855,7 +1860,7 @@ namespace K {
           if (qp.safety == mQuotingSafety::Off) return;
           map<mPrice, mTrade> tradesBuy;
           map<mPrice, mTrade> tradesSell;
-          for (const mTrade &it: tradesHistory)
+          for (const mTrade &it: trades)
             (it.side == mSide::Bid ? tradesBuy : tradesSell)[it.price] = it;
           mPrice widthPong = qp.widthPercentage
             ? qp.widthPongPercentage * fairValue / 100
@@ -1878,24 +1883,24 @@ namespace K {
           if (sellQty) sellPing /= sellQty;
         }
       };
-      void matchFirstPing(map<mPrice, mTrade> *trades, mPrice *ping, mAmount *qty, mAmount qtyMax, mPrice width, bool reverse = false) {
-        matchPing(true, true, trades, ping, qty, qtyMax, width, reverse);
+      void matchFirstPing(map<mPrice, mTrade> *tradesSide, mPrice *ping, mAmount *qty, mAmount qtyMax, mPrice width, bool reverse = false) {
+        matchPing(true, true, tradesSide, ping, qty, qtyMax, width, reverse);
       };
-      void matchBestPing(map<mPrice, mTrade> *trades, mPrice *ping, mAmount *qty, mAmount qtyMax, mPrice width, bool reverse = false) {
-        matchPing(true, false, trades, ping, qty, qtyMax, width, reverse);
+      void matchBestPing(map<mPrice, mTrade> *tradesSide, mPrice *ping, mAmount *qty, mAmount qtyMax, mPrice width, bool reverse = false) {
+        matchPing(true, false, tradesSide, ping, qty, qtyMax, width, reverse);
       };
-      void matchLastPing(map<mPrice, mTrade> *trades, mPrice *ping, mAmount *qty, mAmount qtyMax, mPrice width, bool reverse = false) {
-        matchPing(false, true, trades, ping, qty, qtyMax, width, reverse);
+      void matchLastPing(map<mPrice, mTrade> *tradesSide, mPrice *ping, mAmount *qty, mAmount qtyMax, mPrice width, bool reverse = false) {
+        matchPing(false, true, tradesSide, ping, qty, qtyMax, width, reverse);
       };
-      void matchAllPing(map<mPrice, mTrade> *trades, mPrice *ping, mAmount *qty, mAmount qtyMax, mPrice width) {
-        matchPing(false, false, trades, ping, qty, qtyMax, width);
+      void matchAllPing(map<mPrice, mTrade> *tradesSide, mPrice *ping, mAmount *qty, mAmount qtyMax, mPrice width) {
+        matchPing(false, false, tradesSide, ping, qty, qtyMax, width);
       };
-      void matchPing(bool _near, bool _far, map<mPrice, mTrade> *trades, mPrice *ping, mAmount *qty, mAmount qtyMax, mPrice width, bool reverse = false) {
+      void matchPing(bool _near, bool _far, map<mPrice, mTrade> *tradesSide, mPrice *ping, mAmount *qty, mAmount qtyMax, mPrice width, bool reverse = false) {
         int dir = width > 0 ? 1 : -1;
-        if (reverse) for (map<mPrice, mTrade>::reverse_iterator it = trades->rbegin(); it != trades->rend(); ++it) {
+        if (reverse) for (map<mPrice, mTrade>::reverse_iterator it = tradesSide->rbegin(); it != tradesSide->rend(); ++it) {
           if (matchPing(_near, _far, ping, qty, qtyMax, width, dir * fairValue, dir * it->second.price, it->second.quantity, it->second.price, it->second.Kqty, reverse))
             break;
-        } else for (map<mPrice, mTrade>::iterator it = trades->begin(); it != trades->end(); ++it)
+        } else for (map<mPrice, mTrade>::iterator it = tradesSide->begin(); it != tradesSide->end(); ++it)
           if (matchPing(_near, _far, ping, qty, qtyMax, width, dir * fairValue, dir * it->second.price, it->second.quantity, it->second.price, it->second.Kqty, reverse))
             break;
       };
@@ -1943,14 +1948,12 @@ namespace K {
                   public mJsonToClient<mTarget> {
     mAmount targetBasePosition = 0,
             positionDivergence = 0;
-    mSafety safety;
     private_ref:
       const double  &targetPositionAutoPercentage;
       const mAmount &baseValue;
     public:
-      mTarget(const mPrice &f, const double &p, const mTradesCompleted &h, const mAmount &v, const mAmount &t)
-        : safety(f, h, v, t, targetBasePosition)
-        , targetPositionAutoPercentage(p)
+      mTarget(const double &t, const mAmount &v)
+        : targetPositionAutoPercentage(t)
         , baseValue(v)
       {};
       void calcTargetBasePos() {                             // PRETTY_DEBUG plz
@@ -2085,12 +2088,14 @@ namespace K {
   struct mWalletPosition: public mWallets,
                           public mJsonToClient<mWalletPosition> {
      mTarget target;
+     mSafety safety;
     mProfits profits;
     private_ref:
       const mPrice &fairValue;
     public:
-      mWalletPosition(const mPrice &f, const double &t, const mTradesCompleted &h)
-        : target(f, t, h, base.value, base.total)
+      mWalletPosition(const double &t, const mPrice &f)
+        : target(t, base.value)
+        , safety(f, base.value, base.total, target.targetBasePosition)
         , fairValue(f)
       {};
       void read_from_gw(const mWallets &raw) {
@@ -2355,8 +2360,8 @@ namespace K {
           levels,
           *product.minTick,
           levels.calcQuotesWidth(&nextQuotes.superSpread),
-          wallet.target.safety.buySize,
-          wallet.target.safety.sellSize,
+          wallet.safety.buySize,
+          wallet.safety.sellSize,
           nextQuotes
         );
         if (nextQuotes.bid.price <= 0 or nextQuotes.ask.price <= 0) {
@@ -2655,7 +2660,7 @@ namespace K {
         const mPrice widthPong = qp.widthPercentage
           ? qp.widthPongPercentage * levels.fairValue / 100
           : qp.widthPong;
-        const mPrice &safetyBuyPing = wallet.target.safety.buyPing;
+        const mPrice &safetyBuyPing = wallet.safety.buyPing;
         if (!nextQuotes.ask.empty() and safetyBuyPing) {
           if ((qp.aggressivePositionRebalancing == mAPR::SizeWidth and sideAPR == "Sell")
             or (qp.safety == mQuotingSafety::PingPong
@@ -2667,7 +2672,7 @@ namespace K {
           ) nextQuotes.ask.price = safetyBuyPing + widthPong;
           nextQuotes.ask.isPong = nextQuotes.ask.price >= safetyBuyPing + widthPong;
         }
-        const mPrice &safetysellPing = wallet.target.safety.sellPing;
+        const mPrice &safetysellPing = wallet.safety.sellPing;
         if (!nextQuotes.bid.empty() and safetysellPing) {
           if ((qp.aggressivePositionRebalancing == mAPR::SizeWidth and sideAPR == "Buy")
             or (qp.safety == mQuotingSafety::PingPong
@@ -2717,9 +2722,9 @@ namespace K {
           qp.superTrades == mSOP::Trades or qp.superTrades == mSOP::TradesSize
         )) ? qp.sopWidthMultiplier
            : 1;
-        if (wallet.target.safety.sell >= qp.tradesPerMinute * factor)
+        if (wallet.safety.sell >= qp.tradesPerMinute * factor)
           nextQuotes.ask.clear(mQuoteState::MaxTradesSeconds);
-        if (wallet.target.safety.buy >= qp.tradesPerMinute * factor)
+        if (wallet.safety.buy >= qp.tradesPerMinute * factor)
           nextQuotes.bid.clear(mQuoteState::MaxTradesSeconds);
       };
       void applyRoundPrice() {
@@ -2795,7 +2800,6 @@ namespace K {
                   public mJsonToClient<mBroker> {
     unordered_map<mRandId, mOrder> orders;
              vector<const mOrder*> zombies;
-                  mTradesCompleted tradesHistory;
                         mSemaphore semaphore;
                   mAntonioCalculon calculon;
     mBroker(const mProduct &p, const mWalletPosition &w, const mMarketLevels &l)
@@ -2869,16 +2873,14 @@ namespace K {
       if (!order
         or order->orderStatus == mStatus::Waiting
       ) return;
-      if (raw.tradeQuantity)
-        tradesHistory.insert(raw.tradeQuantity, order->price, order->side, order->isPong);
-      const mSide  lastSide  = order->side;
-      const mPrice lastPrice = order->price;
+      const mPrice lastPrice  = order->price;
+      const mSide  lastSide   = order->side;
+      const bool   lastIsPong = order->isPong;
       if (order->orderStatus == mStatus::Terminated)
         purge(order);
       wallet->reset(lastSide, calcHeldAmount(lastSide));
       if (raw.tradeQuantity) {
-        wallet->target.safety.recentTrades.insert(lastSide, lastPrice, raw.tradeQuantity);
-        wallet->target.safety.calc();
+        wallet->safety.insertTrade(raw.tradeQuantity, lastPrice, lastSide, lastIsPong);
         *askForFees = true;
       }
       send();

@@ -247,12 +247,13 @@ namespace K {
         focus("GW " + exchange, "HTTP read/write handshake took", to_string(
           Tdiff
         ) + "ms of your time");
-        string result = "very bad; move to another server/network";
-        if (Tdiff < 200) result = "very good; most traders don't enjoy such speed!";
-        else if (Tdiff < 500) result = "good; most traders get the same result";
-        else if (Tdiff < 700) result = "a bit bad; most traders get better results";
-        else if (Tdiff < 1000) result = "bad; is possible a move to another server/network?";
-        print("GW " + exchange, "This result is " + result);
+        string result = "This result is ";
+        if      (Tdiff < 2e+2) result += "very good; most traders don't enjoy such speed!";
+        else if (Tdiff < 5e+2) result += "good; most traders get the same result";
+        else if (Tdiff < 7e+2) result += "a bit bad; most traders get better results";
+        else if (Tdiff < 1e+3) result += "bad; is possible a move to another server/network?";
+        else                   result += "very bad; move to another server/network";
+        print("GW " + exchange, result);
         quit();
       };
       void validate(const json &reply) {
@@ -540,11 +541,11 @@ namespace K {
 #define SQLITE_BACKUP_LIST(code)         \
   code( qp                             ) \
   code( wallet.target                  ) \
+  code( wallet.safety.trades           ) \
   code( wallet.profits                 ) \
   code( levels.stats.ewma.fairValue96h ) \
   code( levels.stats.ewma              ) \
-  code( levels.stats.stdev             ) \
-  code( broker.tradesHistory           )
+  code( levels.stats.stdev             )
 
 #define SCREEN_PRINTME      \
         SCREEN_PRINTME_LIST \
@@ -553,12 +554,12 @@ namespace K {
 #define SCREEN_PRINTME_LIST(code)     \
   code( *gw                        )  \
   code( wallet.target              )  \
+  code( wallet.safety.trades       )  \
   code( levels.stats.fairPrice     )  \
   code( levels.stats.ewma          )  \
   code( broker.semaphore           )  \
   code( broker.calculon.nextQuotes )  \
   code( broker.calculon.dummyMM    )  \
-  code( broker.tradesHistory       )  \
   code( broker                     )
 
 #define SCREEN_PRESSME      \
@@ -579,8 +580,9 @@ namespace K {
   code( notepad                  ) \
   code( monitor                  ) \
   code( monitor.product          ) \
-  code( wallet.target.safety     ) \
   code( wallet.target            ) \
+  code( wallet.safety            ) \
+  code( wallet.safety.trades     ) \
   code( wallet                   ) \
   code( levels.diff              ) \
   code( levels.stats.takerTrades ) \
@@ -588,7 +590,6 @@ namespace K {
   code( levels.stats             ) \
   code( broker.semaphore         ) \
   code( broker.calculon          ) \
-  code( broker.tradesHistory     ) \
   code( broker                   )
 
 #define CLIENT_CLICKME      \
@@ -603,9 +604,9 @@ namespace K {
   code( btn.submit            , manualSendOrder                  , butterfly ) \
   code( btn.cancel            , manualCancelOrder                , butterfly ) \
   code( btn.cancelAll         , cancelOrders                     ,           ) \
-  code( btn.cleanTrade        , broker.tradesHistory.clearOne    , butterfly ) \
-  code( btn.cleanTradesClosed , broker.tradesHistory.clearClosed ,           ) \
-  code( btn.cleanTrades       , broker.tradesHistory.clearAll    ,           )
+  code( btn.cleanTrade        , wallet.safety.trades.clearOne    , butterfly ) \
+  code( btn.cleanTradesClosed , wallet.safety.trades.clearClosed ,           ) \
+  code( btn.cleanTrades       , wallet.safety.trades.clearAll    ,           )
     public:
       mWalletPosition wallet;
         mMarketLevels levels;
@@ -614,7 +615,7 @@ namespace K {
              mNotepad notepad;
              mMonitor monitor;
       Engine()
-        : wallet(levels.fairValue, levels.stats.ewma.targetPositionAutoPercentage, broker.tradesHistory)
+        : wallet(levels.stats.ewma.targetPositionAutoPercentage, levels.fairValue)
         , levels(monitor.product, broker.orders)
         , broker(monitor.product, wallet, levels)
       {};
@@ -629,14 +630,14 @@ namespace K {
           levels.timer_60s();
           monitor.timer_60s();
         }
-        wallet.target.safety.calc();
+        wallet.safety.calc();
         calcQuotes();
       };
       void calcQuotes() {                                           PRETTY_DEBUG
         broker.calculon.reset();
         if (!broker.semaphore.greenGateway) {
           broker.calculon.reset(mQuoteState::Disconnected);
-        } else if (levels.filter() and !wallet.target.safety.empty()) {
+        } else if (levels.filter() and !wallet.safety.empty()) {
           if (!broker.semaphore.greenButton) {
             broker.calculon.reset(mQuoteState::DisabledQuotes);
             cancelOrders();
@@ -676,7 +677,7 @@ namespace K {
           }
         sendOrders(toCancel, nextQuote);
       };
-      void sendOrders(vector<mOrder*> toCancel, const mQuote &nextQuote) {
+      void sendOrders(vector<mOrder*> &toCancel, const mQuote &nextQuote) {
         mOrder *toReplace = nullptr;
         if (!nextQuote.empty() and !toCancel.empty()) {
           toReplace = toCancel.back();

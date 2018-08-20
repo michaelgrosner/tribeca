@@ -294,8 +294,7 @@ namespace K {
       mMarketLevels levels(product, orders);
       const mPrice fairValue = 0;
       const double targetPositionAutoPercentage = 0;
-      mTradesCompleted tradesHistory;
-      mWalletPosition wallet(fairValue, targetPositionAutoPercentage, tradesHistory);
+      mWalletPosition wallet(targetPositionAutoPercentage, fairValue);
       mBroker broker(product, wallet, levels);
       WHEN("assigned") {
         vector<mRandId> randIds;
