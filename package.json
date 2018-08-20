@@ -24,7 +24,7 @@
     "reflect-metadata": "^0.1.12",
     "rxjs": "6.2.2",
     "rxjs-compat": "^6.2.2",
-    "sass": "^1.12.0",
+    "sass": "^1.13.0",
     "typescript": "3.0.1",
     "uglify-es": "^3.3.9",
     "zone.js": "^0.8.26"
