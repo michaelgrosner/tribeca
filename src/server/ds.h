@@ -2238,12 +2238,17 @@ namespace K {
           and j->at("state").get<mConnectivity>() != adminAgreement
         ) toggle();
       };
-      const mConnectivity read_from_gw(const mConnectivity &raw) {
+      const bool paused() const {
+        return !greenButton;
+      };
+      const bool offline() const {
+        return !greenGateway;
+      };
+      const void read_from_gw(const mConnectivity &raw) {
         if (greenGateway != raw) {
           greenGateway = raw;
           send_refresh();
         }
-        return greenGateway;
       };
       void toggle() {
         adminAgreement = (mConnectivity)!adminAgreement;
@@ -2258,7 +2263,7 @@ namespace K {
         if (greenButton != k) {
           greenButton = k;
           focus("GW " + args.exchange, "Quoting state changed to",
-            string(!greenButton ? "DIS" : "") + "CONNECTED");
+            string(paused() ? "DIS" : "") + "CONNECTED");
         }
         send();
         refresh();
@@ -2540,11 +2545,11 @@ namespace K {
   struct mAntonioCalculon: public mJsonToClient<mAntonioCalculon> {
                   mQuotes nextQuotes;
         mDummyMarketMaker dummyMM;
+    vector<const mOrder*> zombies;
              unsigned int countWaiting = 0,
                           countWorking = 0,
                           AK47inc      = 0;
                    string sideAPR      = "Off";
-    vector<const mOrder*> zombies;
     private_ref:
       const mProduct        &product;
       const mWalletPosition &wallet;
@@ -2564,12 +2569,12 @@ namespace K {
         nextQuotes.bid.state =
         nextQuotes.ask.state = state;
       };
-      void reset() {
+      void clear() {
         send();
+        zombies.clear();
         reset(mQuoteState::MissingData);
         countWaiting =
         countWorking = 0;
-        zombies.clear();
       };
       const bool stillAlive(const mOrder &order) {
         if (order.orderStatus == mStatus::Waiting) {
@@ -2882,7 +2887,7 @@ namespace K {
     void purge() {
       for (const mOrder *const it : calculon.zombies)
         purge(it);
-      calculon.reset();
+      calculon.clear();
     };
     void read_from_gw(const mOrder &raw, mWalletPosition *const wallet, bool *const askForFees) {
       if (debug()) report(&raw, " reply ");

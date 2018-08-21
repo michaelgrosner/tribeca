@@ -633,10 +633,10 @@ namespace K {
         calcQuotes();
       };
       void calcQuotes() {                                           PRETTY_DEBUG
-        if (!broker.semaphore.greenGateway) {
+        if (broker.semaphore.offline()) {
           broker.calculon.reset(mQuoteState::Disconnected);
         } else if (levels.filter() and !wallet.safety.empty()) {
-          if (!broker.semaphore.greenButton) {
+          if (broker.semaphore.paused()) {
             broker.calculon.reset(mQuoteState::DisabledQuotes);
             cancelOrders();
           } else {

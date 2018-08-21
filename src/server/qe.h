@@ -11,7 +11,8 @@ namespace K {
       };
       void waitData() {
         gw->RAWDATA_ENTRY_POINT(mConnectivity, {
-          if (!broker.semaphore.read_from_gw(rawdata))
+          broker.semaphore.read_from_gw(rawdata);
+          if (broker.semaphore.offline())
             levels.clear();
         });
         gw->RAWDATA_ENTRY_POINT(mWallets, {                         PRETTY_DEBUG
