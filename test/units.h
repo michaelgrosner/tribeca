@@ -248,11 +248,11 @@ namespace K {
         }
       }
       WHEN("assigned") {
-        REQUIRE_NOTHROW(recentTrades.insert(mSide::Ask, 1234.57, 0.01234566));
-        REQUIRE_NOTHROW(recentTrades.insert(mSide::Ask, 1234.58, 0.01234567));
-        REQUIRE_NOTHROW(recentTrades.insert(mSide::Bid, 1234.56, 0.12345678));
-        REQUIRE_NOTHROW(recentTrades.insert(mSide::Bid, 1234.50, 0.12345679));
-        REQUIRE_NOTHROW(recentTrades.insert(mSide::Ask, 1234.60, 0.12345678));
+        REQUIRE_NOTHROW(recentTrades.insert(0.01234566, 1234.57, mSide::Ask));
+        REQUIRE_NOTHROW(recentTrades.insert(0.01234567, 1234.58, mSide::Ask));
+        REQUIRE_NOTHROW(recentTrades.insert(0.12345678, 1234.56, mSide::Bid));
+        REQUIRE_NOTHROW(recentTrades.insert(0.12345679, 1234.50, mSide::Bid));
+        REQUIRE_NOTHROW(recentTrades.insert(0.12345678, 1234.60, mSide::Ask));
         THEN("values") {
           REQUIRE(recentTrades.lastBuyPrice == 1234.50);
           REQUIRE(recentTrades.lastSellPrice == 1234.60);

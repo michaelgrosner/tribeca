@@ -6,7 +6,7 @@ import * as Models from './models';
   selector: 'market-quoting',
   template: `<div class="tradeSafety2" style="margin-top:-4px;padding-top:0px;padding-right:0px;"><div style="padding-top:0px;padding-right:0px;">
       Market Width: <span class="{{ marketWidth ? \'text-danger\' : \'text-muted\' }}">{{ marketWidth | number:'1.'+product.fixed+'-'+product.fixed }}</span>,
-      Quote Width: <span class="{{ ordersWidth ? \'text-danger\' : \'text-muted\' }}">{{ ordersWidth | number:'1.'+product.fixed+'-'+product.fixed }}</span>, Quotes: <span title="Quotes in memory Waiting status update" class="{{ quotesInMemoryWaiting ? \'text-danger\' : \'text-muted\' }}">{{ quotesInMemoryWaiting }}</span>/<span title="Quotes in memory Working" class="{{ quotesInMemoryWorking ? \'text-danger\' : \'text-muted\' }}">{{ quotesInMemoryWorking }}</span>
+      Quote Width: <span class="{{ ordersWidth ? \'text-danger\' : \'text-muted\' }}">{{ ordersWidth | number:'1.'+product.fixed+'-'+product.fixed }}</span>, Quotes: <span title="Quotes in memory Waiting status update" class="{{ quotesInMemoryWaiting ? \'text-danger\' : \'text-muted\' }}">{{ quotesInMemoryWaiting }}</span>/<span title="Quotes in memory Working" class="{{ quotesInMemoryWorking ? \'text-danger\' : \'text-muted\' }}">{{ quotesInMemoryWorking }}</span>/<span title="Quotes in memory Zombie" class="{{ quotesInMemoryZombies ? \'text-danger\' : \'text-muted\' }}">{{ quotesInMemoryZombies }}</span>
       <div style="padding-left:0px;">Wallet TBP: <span class="text-danger">{{ targetBasePosition | number:'1.3-3' }}</span>, pDiv: <span class="text-danger">{{ positionDivergence | number:'1.3-3' }}</span>, APR: <span class="{{ sideAPRSafety!=\'Off\' ? \'text-danger\' : \'text-muted\' }}">{{ sideAPRSafety }}</span></div>
       </div></div><div style="padding-right:4px;padding-left:4px;padding-top:4px;">
       <table class="marketQuoting table table-hover table-responsive text-center">
@@ -82,6 +82,7 @@ export class MarketQuotingComponent {
   public askStatus: string;
   public quotesInMemoryWaiting: number;
   public quotesInMemoryWorking: number;
+  public quotesInMemoryZombies: number;
   public marketWidth: number;
   public ordersWidth: number;
   public noBidReason: string;
@@ -124,12 +125,14 @@ export class MarketQuotingComponent {
       this.sideAPRSafety = null;
       this.quotesInMemoryWaiting = 0;
       this.quotesInMemoryWorking = 0;
+      this.quotesInMemoryZombies = 0;
     } else {
       this.bidStatus = Models.QuoteStatus[o.bidStatus];
       this.askStatus = Models.QuoteStatus[o.askStatus];
       this.sideAPRSafety = o.sideAPR;
       this.quotesInMemoryWaiting = o.quotesInMemoryWaiting;
       this.quotesInMemoryWorking = o.quotesInMemoryWorking;
+      this.quotesInMemoryZombies = o.quotesInMemoryZombies;
     }
   }
 

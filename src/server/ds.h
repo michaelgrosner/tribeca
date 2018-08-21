@@ -1588,7 +1588,7 @@ namespace K {
     };
     void clearOne(const string &tradeId) {
       if (tradeId.empty()) return;
-      clear_if([&](iterator it) {
+      clear_if([&tradeId](iterator it) {
         return it->tradeId == tradeId;
       }, true);
     };
@@ -1599,9 +1599,10 @@ namespace K {
     };
     void clearPongsAuto() {
       const mClock expire = Tstamp - (abs(qp.cleanPongsAuto) * 86400e3);
-      clear_if([&](iterator it) {
+      const bool forcedClean = qp.cleanPongsAuto < 0;
+      clear_if([&expire, &forcedClean](iterator it) {
         return (it->Ktime?:it->time) < expire and (
-          qp.cleanPongsAuto < 0
+          forcedClean
           or it->Kqty >= it->quantity
         );
       });
@@ -2200,7 +2201,22 @@ namespace K {
       return mMatter::CleanTrade;
     };
   };
+  struct mNotepad: public mJsonToClient<mNotepad> {
+    string content;
+    void kiss(json *const j) {
+      if (j->is_array() and j->size() and j->at(0).is_string())
+        content = j->at(0);
+    };
+    const mMatter about() const {
+      return mMatter::Notepad;
+    };
+  };
+  static void to_json(json &j, const mNotepad &k) {
+    j = k.content;
+  };
+
   struct mButtons {
+    mNotepad                    notepad;
     mButtonSubmitNewOrder       submit;
     mButtonCancelOrder          cancel;
     mButtonCancelAllOrders      cancelAll;
@@ -2222,12 +2238,12 @@ namespace K {
           and j->at("state").get<mConnectivity>() != adminAgreement
         ) toggle();
       };
-      const bool read_from_gw(const mConnectivity &raw) {
+      const mConnectivity read_from_gw(const mConnectivity &raw) {
         if (greenGateway != raw) {
           greenGateway = raw;
           send_refresh();
         }
-        return !!greenGateway;
+        return greenGateway;
       };
       void toggle() {
         adminAgreement = (mConnectivity)!adminAgreement;
@@ -2522,12 +2538,13 @@ namespace K {
   };
 
   struct mAntonioCalculon: public mJsonToClient<mAntonioCalculon> {
-              mQuotes nextQuotes;
-    mDummyMarketMaker dummyMM;
-         unsigned int countWaiting = 0,
-                      countWorking = 0,
-                      AK47inc      = 0;
-               string sideAPR      = "Off";
+                  mQuotes nextQuotes;
+        mDummyMarketMaker dummyMM;
+             unsigned int countWaiting = 0,
+                          countWorking = 0,
+                          AK47inc      = 0;
+                   string sideAPR      = "Off";
+    vector<const mOrder*> zombies;
     private_ref:
       const mProduct        &product;
       const mWalletPosition &wallet;
@@ -2548,9 +2565,21 @@ namespace K {
         nextQuotes.ask.state = state;
       };
       void reset() {
+        send();
         reset(mQuoteState::MissingData);
         countWaiting =
         countWorking = 0;
+        zombies.clear();
+      };
+      const bool stillAlive(const mOrder &order) {
+        if (order.orderStatus == mStatus::Waiting) {
+          if (Tstamp - 10e+3 > order.time) {
+            zombies.push_back(&order);
+            return false;
+          }
+          ++countWaiting;
+        } else ++countWorking;
+        return order.preferPostOnly;
       };
       const mMatter about() const {
         return mMatter::QuoteStatus;
@@ -2792,14 +2821,14 @@ namespace K {
       {            "askStatus", k.nextQuotes.ask.state},
       {              "sideAPR", k.sideAPR             },
       {"quotesInMemoryWaiting", k.countWaiting        },
-      {"quotesInMemoryWorking", k.countWorking        }
+      {"quotesInMemoryWorking", k.countWorking        },
+      {"quotesInMemoryZombies", k.zombies.size()      }
     };
   };
 
   struct mBroker: public mToScreen,
                   public mJsonToClient<mBroker> {
     unordered_map<mRandId, mOrder> orders;
-             vector<const mOrder*> zombies;
                         mSemaphore semaphore;
                   mAntonioCalculon calculon;
     mBroker(const mProduct &p, const mWalletPosition &w, const mMarketLevels &l)
@@ -2851,28 +2880,16 @@ namespace K {
       if (debug()) report_size();
     };
     void purge() {
-      for (const mOrder *const it : zombies)
+      for (const mOrder *const it : calculon.zombies)
         purge(it);
-      zombies.clear();
-    };
-    const bool stillAlive(const mOrder &order) {
-      if (order.orderStatus == mStatus::Waiting) {
-        if (Tstamp - 10e+3 > order.time) {
-          zombies.push_back(&order);
-          return false;
-        }
-        ++calculon.countWaiting;
-      } else ++calculon.countWorking;
-      return order.preferPostOnly;
+      calculon.reset();
     };
     void read_from_gw(const mOrder &raw, mWalletPosition *const wallet, bool *const askForFees) {
       if (debug()) report(&raw, " reply ");
       if (raw.orderStatus == mStatus::Waiting)
         EXIT(error("OG", "Dataflow error (exchanges do not send waiting status!)"));
       mOrder *const order = upsert(raw);
-      if (!order
-        or order->orderStatus == mStatus::Waiting
-      ) return;
+      if (!order) return;
       const mPrice lastPrice  = order->price;
       const mSide  lastSide   = order->side;
       const bool   lastIsPong = order->isPong;
@@ -2949,20 +2966,6 @@ namespace K {
   };
   static void to_json(json &j, const mBroker &k) {
     j = k.blob();
-  };
-
-  struct mNotepad: public mJsonToClient<mNotepad> {
-    string content;
-    void kiss(json *const j) {
-      if (j->is_array() and j->size() and j->at(0).is_string())
-        content = j->at(0);
-    };
-    const mMatter about() const {
-      return mMatter::Notepad;
-    };
-  };
-  static void to_json(json &j, const mNotepad &k) {
-    j = k.content;
   };
 
   struct mText {

@@ -169,7 +169,8 @@ export class TwoSidedQuoteStatus {
                 public askStatus: QuoteStatus,
                 public sideAPR: string,
                 public quotesInMemoryWaiting: number,
-                public quotesInMemoryWorking: number) {}
+                public quotesInMemoryWorking: number,
+                public quotesInMemoryZombies: number) {}
 }
 
 export enum QuotingMode { Top, Mid, Join, InverseJoin, InverseTop, HamelinRat, Depth }

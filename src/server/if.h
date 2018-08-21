@@ -577,7 +577,6 @@ namespace K {
 #define CLIENT_WELCOME_CODE(data)  client->welcome(data);
 #define CLIENT_WELCOME_LIST(code)  \
   code( qp                       ) \
-  code( notepad                  ) \
   code( monitor                  ) \
   code( monitor.product          ) \
   code( wallet.target            ) \
@@ -590,7 +589,8 @@ namespace K {
   code( levels.stats             ) \
   code( broker.semaphore         ) \
   code( broker.calculon          ) \
-  code( broker                   )
+  code( broker                   ) \
+  code( btn.notepad              )
 
 #define CLIENT_CLICKME      \
         CLIENT_CLICKME_LIST \
@@ -599,8 +599,8 @@ namespace K {
                   client->clickme(btn, [&](const json &butterfly) { fn(val); });
 #define CLIENT_CLICKME_LIST(code)                                              \
   code( qp                    , savedQuotingParameters           ,           ) \
-  code( notepad               , void                             ,           ) \
   code( broker.semaphore      , void                             ,           ) \
+  code( btn.notepad           , void                             ,           ) \
   code( btn.submit            , manualSendOrder                  , butterfly ) \
   code( btn.cancel            , manualCancelOrder                , butterfly ) \
   code( btn.cancelAll         , cancelOrders                     ,           ) \
@@ -612,7 +612,6 @@ namespace K {
         mMarketLevels levels;
               mBroker broker;
              mButtons btn;
-             mNotepad notepad;
              mMonitor monitor;
       Engine()
         : wallet(levels.stats.ewma.targetPositionAutoPercentage, levels.fairValue)
@@ -634,7 +633,6 @@ namespace K {
         calcQuotes();
       };
       void calcQuotes() {                                           PRETTY_DEBUG
-        broker.calculon.reset();
         if (!broker.semaphore.greenGateway) {
           broker.calculon.reset(mQuoteState::Disconnected);
         } else if (levels.filter() and !wallet.safety.empty()) {
@@ -646,10 +644,9 @@ namespace K {
             broker.calculon.calcQuotes();
             quote2orders(broker.calculon.nextQuotes.ask);
             quote2orders(broker.calculon.nextQuotes.bid);
-            broker.purge();
           }
         }
-        broker.calculon.send();
+        broker.purge();
       };
       void quote2orders(mQuote &nextQuote) {
         if (nextQuote.state != mQuoteState::Live)
@@ -658,7 +655,7 @@ namespace K {
         vector<mOrder*> toCancel;
         for (unordered_map<mRandId, mOrder>::value_type &it : broker.orders)
           if (nextQuote.side == it.second.side
-            and broker.stillAlive(it.second)
+            and broker.calculon.stillAlive(it.second)
           ) {
             if (abs(it.second.price - nextQuote.price) < *monitor.product.minTick)
               nextQuote.skip();
