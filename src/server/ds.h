@@ -2244,7 +2244,7 @@ namespace K {
       const bool offline() const {
         return !greenGateway;
       };
-      const void read_from_gw(const mConnectivity &raw) {
+      void read_from_gw(const mConnectivity &raw) {
         if (greenGateway != raw) {
           greenGateway = raw;
           send_refresh();
