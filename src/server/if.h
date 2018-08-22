@@ -662,11 +662,9 @@ namespace K {
             else if (it.second.orderStatus == mStatus::Waiting) {
               if (qp.safety != mQuotingSafety::AK47 or !--bullets)
                 nextQuote.skip();
-            } else if (qp.safety != mQuotingSafety::AK47 or toCancel.empty() or (
-              nextQuote.side == mSide::Bid
-                ? nextQuote.price <= it.second.price
-                : nextQuote.price >= it.second.price
-            )) {
+            } else if (qp.safety != mQuotingSafety::AK47
+              or nextQuote.deprecates(it.second.price)
+            ) {
               if (args.lifetime and it.second.time + args.lifetime > Tstamp)
                 nextQuote.skip();
               else toCancel.push_back(&it.second);

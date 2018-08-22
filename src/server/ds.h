@@ -2277,9 +2277,9 @@ namespace K {
   };
 
   struct mQuote: public mLevel {
-     const mSide       side   = (mSide)0;
-           mQuoteState state  = mQuoteState::MissingData;
-           bool        isPong = false;
+    const mSide       side   = (mSide)0;
+          mQuoteState state  = mQuoteState::MissingData;
+          bool        isPong = false;
     mQuote(const mSide &s)
       : side(s)
     {};
@@ -2290,18 +2290,43 @@ namespace K {
       mLevel::clear();
       state = reason;
     };
+    virtual const bool deprecates(const mPrice&) = 0;
+    const bool checkCrossed(const mQuote &opposite) {
+      if (empty()) return false;
+      if (opposite.empty() or deprecates(opposite.price)) {
+        state = mQuoteState::Live;
+        return false;
+      }
+      state = mQuoteState::Crossed;
+      return true;
+    };
+  };
+  struct mQuoteBid: public mQuote {
+    mQuoteBid()
+      : mQuote(mSide::Bid)
+    {};
+    const bool deprecates(const mPrice &higher) {
+      return price < higher;
+    };
+  };
+  struct mQuoteAsk: public mQuote {
+    mQuoteAsk()
+      : mQuote(mSide::Ask)
+    {};
+    const bool deprecates(const mPrice &lower) {
+      return price > lower;
+    };
   };
   struct mQuotes: public mToScreen {
-    mQuote bid,
-           ask;
-      bool superSpread = false;
+    mQuoteBid bid;
+    mQuoteAsk ask;
+         bool superSpread = false;
     mQuotes()
-      : bid(mSide::Bid)
-      , ask(mSide::Ask)
     {};
     void checkCrossedQuotes() {
-      bid.state = checkCrossedQuotes(mSide::Bid);
-      ask.state = checkCrossedQuotes(mSide::Ask);
+      if (bid.checkCrossed(ask)
+        | ask.checkCrossed(bid)
+      ) warn("QE", "Crossed bid/ask quotes detected, that is.. unexpected");
     };
     void debug(const string &reason) {
       if (debug())
@@ -2316,22 +2341,6 @@ namespace K {
         );
     };
     private:
-      mQuoteState checkCrossedQuotes(const mSide &side) {
-        bool cross = false;
-        if (side == mSide::Bid) {
-          if (bid.empty()) return bid.state;
-          if (ask.empty()) return mQuoteState::Live;
-          cross = bid.price >= ask.price;
-        } else {
-          if (ask.empty()) return ask.state;
-          if (bid.empty()) return mQuoteState::Live;
-          cross = ask.price <= bid.price;
-        }
-        if (cross) {
-          warn("QE", "Cross bid/ask quotes detected, that is.. unexpected");
-          return mQuoteState::Crossed;
-        } else return mQuoteState::Live;
-      };
       const bool debug() const {
         return args.debugQuotes;
       };
