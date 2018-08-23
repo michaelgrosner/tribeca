@@ -35,7 +35,7 @@ namespace K {
     Waiting, Working, Terminated
   };
   enum class mSide: unsigned int {
-    Bid, Ask, Both
+    Bid, Ask
   };
   enum class mTimeInForce: unsigned int {
     IOC, FOK, GTC
@@ -2290,7 +2290,7 @@ namespace K {
       mLevel::clear();
       state = reason;
     };
-    virtual const bool deprecates(const mPrice&) = 0;
+    virtual const bool deprecates(const mPrice&) const = 0;
     const bool checkCrossed(const mQuote &opposite) {
       if (empty()) return false;
       if (opposite.empty() or deprecates(opposite.price)) {
@@ -2305,7 +2305,7 @@ namespace K {
     mQuoteBid()
       : mQuote(mSide::Bid)
     {};
-    const bool deprecates(const mPrice &higher) {
+    const bool deprecates(const mPrice &higher) const {
       return price < higher;
     };
   };
@@ -2313,7 +2313,7 @@ namespace K {
     mQuoteAsk()
       : mQuote(mSide::Ask)
     {};
-    const bool deprecates(const mPrice &lower) {
+    const bool deprecates(const mPrice &lower) const {
       return price > lower;
     };
   };
@@ -2594,6 +2594,24 @@ namespace K {
           ++countWaiting;
         } else ++countWorking;
         return order.preferPostOnly;
+      };
+      const bool abandon(const mOrder &order, mQuote &nextQuote, unsigned int &bullets) {
+        if (stillAlive(order)) {
+          if (abs(order.price - nextQuote.price) < *product.minTick)
+            nextQuote.skip();
+          else if (order.orderStatus == mStatus::Waiting) {
+            if (qp.safety != mQuotingSafety::AK47
+              or !--bullets
+            ) nextQuote.skip();
+          } else if (qp.safety != mQuotingSafety::AK47
+            or nextQuote.deprecates(order.price)
+          ) {
+            if (args.lifetime and order.time + args.lifetime > Tstamp)
+              nextQuote.skip();
+            else return true;
+          }
+        }
+        return false;
       };
       const mMatter about() const {
         return mMatter::QuoteStatus;
@@ -2898,6 +2916,16 @@ namespace K {
         purge(it);
       calculon.clear();
     };
+    vector<mOrder*> abandon(mQuote &nextQuote) {
+      vector<mOrder*> toCancel;
+      unsigned int bullets = qp.bullets;
+      const bool all = nextQuote.state != mQuoteState::Live;
+      for (unordered_map<mRandId, mOrder>::value_type &it : orders)
+        if (nextQuote.side == it.second.side
+          and (all or calculon.abandon(it.second, nextQuote, bullets))
+        ) toCancel.push_back(&it.second);
+      return toCancel;
+    };
     void read_from_gw(const mOrder &raw, mWalletPosition *const wallet, bool *const askForFees) {
       if (debug()) report(&raw, " reply ");
       if (raw.orderStatus == mStatus::Waiting)
@@ -2929,12 +2957,12 @@ namespace K {
         }
       );
     };
-    vector<mOrder*> working(const mSide &side = mSide::Both) {
+    vector<mOrder*> working() {
       vector<mOrder*> workingOrders;
       for (unordered_map<mRandId, mOrder>::value_type &it : orders)
-        if (mStatus::Working == it.second.orderStatus and (side == mSide::Both
-          or (side == it.second.side and it.second.preferPostOnly)
-        )) workingOrders.push_back(&it.second);
+        if (mStatus::Working == it.second.orderStatus
+          and it.second.preferPostOnly
+        ) workingOrders.push_back(&it.second);
       return workingOrders;
     };
     const vector<mOrder> working(const bool &sorted = false) const {

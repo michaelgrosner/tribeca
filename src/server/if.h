@@ -649,30 +649,7 @@ namespace K {
         broker.purge();
       };
       void quote2orders(mQuote &nextQuote) {
-        if (nextQuote.state != mQuoteState::Live)
-          return cancelOrders(nextQuote.side);
-        unsigned int bullets = qp.bullets;
-        vector<mOrder*> toCancel;
-        for (unordered_map<mRandId, mOrder>::value_type &it : broker.orders)
-          if (nextQuote.side == it.second.side
-            and broker.calculon.stillAlive(it.second)
-          ) {
-            if (abs(it.second.price - nextQuote.price) < *monitor.product.minTick)
-              nextQuote.skip();
-            else if (it.second.orderStatus == mStatus::Waiting) {
-              if (qp.safety != mQuotingSafety::AK47 or !--bullets)
-                nextQuote.skip();
-            } else if (qp.safety != mQuotingSafety::AK47
-              or nextQuote.deprecates(it.second.price)
-            ) {
-              if (args.lifetime and it.second.time + args.lifetime > Tstamp)
-                nextQuote.skip();
-              else toCancel.push_back(&it.second);
-            }
-          }
-        sendOrders(toCancel, nextQuote);
-      };
-      void sendOrders(vector<mOrder*> &toCancel, const mQuote &nextQuote) {
+        vector<mOrder*> toCancel = broker.abandon(nextQuote);
         mOrder *toReplace = nullptr;
         if (!nextQuote.empty() and !toCancel.empty()) {
           toReplace = toCancel.back();
@@ -689,8 +666,8 @@ namespace K {
         }
         monitor.tick_orders();
       };
-      void cancelOrders(const mSide &side = mSide::Both) {
-        for (mOrder *const it : broker.working(side))
+      void cancelOrders() {
+        for (mOrder *const it : broker.working())
           cancelOrder(it);
       };
       void manualSendOrder(mOrder raw) {
