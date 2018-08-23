@@ -550,17 +550,17 @@ namespace K {
 #define SCREEN_PRINTME      \
         SCREEN_PRINTME_LIST \
       ( SCREEN_PRINTME_CODE )
-#define SCREEN_PRINTME_CODE(data)     screen->printme(&data);
-#define SCREEN_PRINTME_LIST(code)     \
-  code( *gw                        )  \
-  code( wallet.target              )  \
-  code( wallet.safety.trades       )  \
-  code( levels.stats.fairPrice     )  \
-  code( levels.stats.ewma          )  \
-  code( broker.semaphore           )  \
-  code( broker.calculon.nextQuotes )  \
-  code( broker.calculon.dummyMM    )  \
-  code( broker                     )
+#define SCREEN_PRINTME_CODE(data)  screen->printme(&data);
+#define SCREEN_PRINTME_LIST(code)  \
+  code( *gw                     )  \
+  code( wallet.target           )  \
+  code( wallet.safety.trades    )  \
+  code( levels.stats.fairPrice  )  \
+  code( levels.stats.ewma       )  \
+  code( broker.semaphore        )  \
+  code( broker.calculon.quotes  )  \
+  code( broker.calculon.dummyMM )  \
+  code( broker                  )
 
 #define SCREEN_PRESSME      \
         SCREEN_PRESSME_LIST \
@@ -642,27 +642,22 @@ namespace K {
           } else {
             broker.calculon.reset(mQuoteState::UnknownHeld);
             broker.calculon.calcQuotes();
-            quote2orders(broker.calculon.nextQuotes.ask);
-            quote2orders(broker.calculon.nextQuotes.bid);
+            quote2orders(broker.calculon.quotes.ask);
+            quote2orders(broker.calculon.quotes.bid);
           }
         }
         broker.purge();
       };
-      void quote2orders(mQuote &nextQuote) {
-        vector<mOrder*> toCancel = broker.abandon(nextQuote);
-        mOrder *toReplace = nullptr;
-        if (!nextQuote.empty() and !toCancel.empty()) {
-          toReplace = toCancel.back();
-          toCancel.pop_back();
-        }
-        for (mOrder *const it : toCancel) cancelOrder(it);
-        if (nextQuote.empty()) return;
-        if (toReplace and gw->askForReplace)
-          replaceOrder(nextQuote.price, nextQuote.isPong, toReplace);
+      void quote2orders(mQuote &quote) {
+        broker.abandon(quote);
+        for (mOrder *const it : broker.abandoned) cancelOrder(it);
+        if (quote.empty()) return;
+        if (broker.replaced and gw->askForReplace)
+          replaceOrder(quote.price, quote.isPong, broker.replaced);
         else {
-          if (toReplace and args.testChamber != 1) cancelOrder(toReplace);
-          placeOrder(mOrder(gw->randId(), nextQuote.side, nextQuote.price, nextQuote.size, nextQuote.isPong));
-          if (toReplace and args.testChamber == 1) cancelOrder(toReplace);
+          if (broker.replaced and args.testChamber != 1) cancelOrder(broker.replaced);
+          placeOrder(mOrder(gw->randId(), quote.side, quote.price, quote.size, quote.isPong));
+          if (broker.replaced and args.testChamber == 1) cancelOrder(broker.replaced);
         }
         monitor.tick_orders();
       };
