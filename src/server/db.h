@@ -76,6 +76,7 @@ namespace K {
           : "";
       };
       void exec(const string &sql, json *const result = nullptr) {
+        // screen->log("DB DEBUG", sql);
         char* zErrMsg = 0;
         sqlite3_exec(db, sql.data(), result ? write : nullptr, (void*)result, &zErrMsg);
         if (zErrMsg) screen->logWar("DB", "SQLite error: " + (zErrMsg + (" at " + sql)));
