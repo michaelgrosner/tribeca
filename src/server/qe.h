@@ -7,7 +7,7 @@ namespace K {
     protected:
       void load() {
         SQLITE_BACKUP
-        broker.calculon.dummyMM.reset("loaded");
+        broker.calculon.dummyMM.mode("loaded");
       };
       void waitData() {
         gw->RAWDATA_ENTRY_POINT(mConnectivity, {

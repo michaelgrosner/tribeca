@@ -170,14 +170,14 @@ namespace K {
       uWS::Hub *socket  = nullptr;
       mMonitor *monitor = nullptr;
       unsigned int countdown = 0;
-         string exchange = "", symbol  = "",
-                apikey   = "", secret  = "",
-                user     = "", pass    = "",
-                ws       = "", http    = "";
-        mCoinId base     = "", quote   = "";
+         string exchange, symbol,
+                apikey,   secret,
+                user,     pass,
+                http,     ws;
+        mCoinId base,     quote;
          mPrice minTick  = 0;
-        mAmount makeFee  = 0, takeFee  = 0,
-                minSize  = 0;
+        mAmount minSize  = 0,
+                makeFee  = 0, takeFee  = 0;
             int version  = 0, maxLevel = 0,
                 debug    = 0;
       void load_internals() {
@@ -618,7 +618,7 @@ namespace K {
         , broker(monitor.product, wallet, levels)
       {};
       void savedQuotingParameters() {
-        broker.calculon.dummyMM.reset("saved");
+        broker.calculon.dummyMM.mode("saved");
         levels.stats.ewma.calcFromHistory();
       };
       void timer_1s(const unsigned int &tick) {
@@ -628,18 +628,17 @@ namespace K {
           levels.timer_60s();
           monitor.timer_60s();
         }
-        wallet.safety.calc();
+        wallet.safety.timer_1s();
         calcQuotes();
       };
       void calcQuotes() {
         if (broker.semaphore.offline()) {
-          broker.calculon.reset(mQuoteState::Disconnected);
+          broker.calculon.offline();
         } else if (levels.filter() and !wallet.safety.empty()) {
           if (broker.semaphore.paused()) {
-            broker.calculon.reset(mQuoteState::DisabledQuotes);
+            broker.calculon.paused();
             cancelOrders();
           } else {
-            broker.calculon.reset(mQuoteState::UnknownHeld);
             broker.calculon.calcQuotes();
             quote2orders(broker.calculon.quotes.ask);
             quote2orders(broker.calculon.quotes.bid);

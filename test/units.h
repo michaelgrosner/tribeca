@@ -262,7 +262,7 @@ namespace K {
           REQUIRE_FALSE(recentTrades.sumSells);
           WHEN("reset") {
             THEN("skip") {
-              REQUIRE_NOTHROW(recentTrades.reset());
+              REQUIRE_NOTHROW(recentTrades.expire());
               REQUIRE(recentTrades.lastBuyPrice == 1234.50);
               REQUIRE(recentTrades.lastSellPrice == 1234.60);
               REQUIRE(recentTrades.buys.size() == 1);
@@ -273,7 +273,7 @@ namespace K {
             THEN("expired") {
               this_thread::sleep_for(chrono::milliseconds(1001));
               REQUIRE_NOTHROW(qp.tradeRateSeconds = 1);
-              REQUIRE_NOTHROW(recentTrades.reset());
+              REQUIRE_NOTHROW(recentTrades.expire());
               REQUIRE(recentTrades.lastBuyPrice == 1234.50);
               REQUIRE(recentTrades.lastSellPrice == 1234.60);
               REQUIRE_FALSE(recentTrades.buys.size());

@@ -1329,17 +1329,17 @@ namespace K {
           ? bids.empty() and asks.empty()
           : mLevels::empty();
       };
-      void send_reset() {
+      void send_patch() {
         if (ratelimit()) return;
         diff();
         if (!empty()) send_now();
-        reset();
+        unfilter();
       };
       const mMatter about() const {
         return mMatter::MarketData;
       };
       const json hello() {
-        reset();
+        unfilter();
         return mToClient::hello();
       };
     private:
@@ -1347,7 +1347,7 @@ namespace K {
         return unfiltered.empty() or empty()
           or !send_soon(qp.delayUI * 1e+3);
       };
-      void reset() {
+      void unfilter() {
         bids = unfiltered.bids;
         asks = unfiltered.asks;
         patched = false;
@@ -1442,7 +1442,7 @@ namespace K {
         unfiltered.asks = raw.asks;
         filter();
         stats.fairPrice.send_refresh();
-        diff.send_reset();
+        diff.send_patch();
       };
     private:
       void calcAverageWidth() {
@@ -1759,7 +1759,7 @@ namespace K {
         : sells
       ).insert(pair<mPrice, mRecentTrade>(price, mRecentTrade(price, tradeQuantity)));
     };
-    void reset() {
+    void expire() {
       if (buys.size()) expire(&buys);
       if (sells.size()) expire(&sells);
       skip();
@@ -1817,6 +1817,9 @@ namespace K {
         , baseTotal(t)
         , targetBasePosition(p)
       {};
+      void timer_1s() {
+        calc();
+      };
       void insertTrade(const double &tradeQuantity, const mPrice &price, const mSide &side, const bool &isPong) {
         recentTrades.insert(tradeQuantity, price, side);
         trades.insert(tradeQuantity, price, side, isPong);
@@ -1826,7 +1829,7 @@ namespace K {
         if (!baseValue or !fairValue) return;
         calcSizes();
         calcPrices();
-        recentTrades.reset();
+        recentTrades.expire();
         if (empty()) return;
         buy  = recentTrades.sumBuys / buySize;
         sell = recentTrades.sumSells / sellSize;
@@ -1959,8 +1962,7 @@ namespace K {
         calcPDiv();
         if (send()) {
           push();
-          if (debug())
-            report();
+          if (debug()) report();
         }
       };
       const bool warn_empty() const {
@@ -2044,7 +2046,7 @@ namespace K {
     void reset(const mAmount &a, const mAmount &h) {
       if (empty()) return;
       total = (amount = ROUND(a, 1e-8))
-            + (held   = ROUND(h , 1e-8));
+            + (held   = ROUND(h, 1e-8));
     };
     const bool empty() const {
       return currency.empty();
@@ -2365,7 +2367,7 @@ namespace K {
         , levels(l)
         , quotes(q)
       {};
-      void reset(const string &reason) {
+      void mode(const string &reason) {
         if (qp.mode == mQuotingMode::Top)              calcRawQuotesFromMarket = calcTopOfMarket;
         else if (qp.mode == mQuotingMode::Mid)         calcRawQuotesFromMarket = calcMidOfMarket;
         else if (qp.mode == mQuotingMode::Join)        calcRawQuotesFromMarket = calcJoinMarket;
@@ -2561,18 +2563,21 @@ namespace K {
         , wallet(w)
         , levels(l)
       {};
-      void reset(const mQuoteState &state) {
-        quotes.bid.state =
-        quotes.ask.state = state;
-      };
       void clear() {
         send();
         zombies.clear();
-        reset(mQuoteState::MissingData);
+        states(mQuoteState::MissingData);
         countWaiting =
         countWorking = 0;
       };
+      void offline() {
+        states(mQuoteState::Disconnected);
+      };
+      void paused() {
+        states(mQuoteState::DisabledQuotes);
+      };
       void calcQuotes() {
+        states(mQuoteState::UnknownHeld);
         dummyMM.calcRawQuotes();
         applyQuotingParameters();
       };
@@ -2604,6 +2609,10 @@ namespace K {
         return false;
       };
     private:
+      void states(const mQuoteState &state) {
+        quotes.bid.state =
+        quotes.ask.state = state;
+      };
       const bool stillAlive(const mOrder &order) {
         if (order.orderStatus == mStatus::Waiting) {
           if (Tstamp - 10e+3 > order.time) {
