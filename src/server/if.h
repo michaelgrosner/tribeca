@@ -36,7 +36,6 @@ namespace K {
       virtual void logUI(const string&) = 0;
       virtual void logUIsess(int, string) = 0;
       virtual void log(const string&, const string&, const string& = "") = 0;
-#define PRETTY_DEBUG if (args.debugEvents) screen->log("DEBUG EV", __PRETTY_FUNCTION__);
       virtual void end() = 0;
   } *screen = nullptr;
 
@@ -622,7 +621,7 @@ namespace K {
         broker.calculon.dummyMM.reset("saved");
         levels.stats.ewma.calcFromHistory();
       };
-      void timer_1s(const unsigned int &tick) {                     PRETTY_DEBUG
+      void timer_1s(const unsigned int &tick) {
         if (levels.warn_empty()) return;
         levels.timer_1s();
         if (!(tick % 60)) {
@@ -632,7 +631,7 @@ namespace K {
         wallet.safety.calc();
         calcQuotes();
       };
-      void calcQuotes() {                                           PRETTY_DEBUG
+      void calcQuotes() {
         if (broker.semaphore.offline()) {
           broker.calculon.reset(mQuoteState::Disconnected);
         } else if (levels.filter() and !wallet.safety.empty()) {

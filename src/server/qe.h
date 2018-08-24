@@ -15,18 +15,18 @@ namespace K {
           if (broker.semaphore.offline())
             levels.clear();
         });
-        gw->RAWDATA_ENTRY_POINT(mWallets, {                         PRETTY_DEBUG
+        gw->RAWDATA_ENTRY_POINT(mWallets, {
           wallet.read_from_gw(rawdata);
         });
-        gw->RAWDATA_ENTRY_POINT(mLevels, {                          PRETTY_DEBUG
+        gw->RAWDATA_ENTRY_POINT(mLevels, {
           levels.read_from_gw(rawdata);
           wallet.send_ratelimit();
           calcQuotes();
         });
-        gw->RAWDATA_ENTRY_POINT(mOrder, {                           PRETTY_DEBUG
+        gw->RAWDATA_ENTRY_POINT(mOrder, {
           broker.read_from_gw(rawdata, &wallet, &gw->askForFees);
         });
-        gw->RAWDATA_ENTRY_POINT(mTrade, {                           PRETTY_DEBUG
+        gw->RAWDATA_ENTRY_POINT(mTrade, {
           levels.stats.takerTrades.read_from_gw(rawdata);
         });
       };
@@ -38,7 +38,7 @@ namespace K {
         SCREEN_PRINTME
         SCREEN_PRESSME
       };
-      void run() {                                                  PRETTY_DEBUG
+      void run() {
         gw->load_externals();
       };
   };

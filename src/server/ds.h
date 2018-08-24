@@ -122,13 +122,12 @@ namespace K {
 
   static struct mArgs {
         int port        = 3000,   colors      = 0, debug        = 0,
-            debugSecret = 0,      debugEvents = 0, debugOrders  = 0,
-            debugQuotes = 0,      debugWallet = 0, debugSqlite  = 0,
+            latency     = 0,      withoutSSL  = 0, debugSecret  = 0,
+            debugOrders = 0,      debugQuotes = 0, debugWallet  = 0,
             headless    = 0,      dustybot    = 0, lifetime     = 0,
             autobot     = 0,      naked       = 0, free         = 0,
             ignoreSun   = 0,      ignoreMoon  = 0, testChamber  = 0,
-            maxAdmins   = 7,      latency     = 0, maxLevels   = 321,
-            withoutSSL  = 0;
+            maxAdmins   = 7,      maxLevels   = 321;
     mAmount maxWallet   = 0;
      string title       = "K.sh", matryoshka  = "https://www.example.com/",
             user        = "NULL", pass        = "NULL",
@@ -146,11 +145,9 @@ namespace K {
         {"colors",       no_argument,       &colors,           1},
         {"debug",        no_argument,       &debug,            1},
         {"debug-secret", no_argument,       &debugSecret,      1},
-        {"debug-events", no_argument,       &debugEvents,      1},
         {"debug-orders", no_argument,       &debugOrders,      1},
         {"debug-quotes", no_argument,       &debugQuotes,      1},
         {"debug-wallet", no_argument,       &debugWallet,      1},
-        {"debug-sqlite", no_argument,       &debugSqlite,      1},
         {"without-ssl",  no_argument,       &withoutSSL,       1},
         {"ignore-sun",   no_argument,       &ignoreSun,        2},
         {"ignore-moon",  no_argument,       &ignoreMoon,       1},
@@ -272,8 +269,6 @@ namespace K {
               << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "-T, --lifetime=NUMBER     - set NUMBER of minimum milliseconds to keep orders open," << '\n'
               << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "                            otherwise open orders can be replaced anytime required." << '\n'
               << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "    --debug-secret        - print (never share!) secret inputs and outputs." << '\n'
-              << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "    --debug-sqlite        - print detailed output about database queries." << '\n'
-              << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "    --debug-events        - print detailed output about event handlers." << '\n'
               << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "    --debug-orders        - print detailed output about exchange messages." << '\n'
               << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "    --debug-quotes        - print detailed output about quoting engine." << '\n'
               << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "    --debug-wallet        - print detailed output about target base position." << '\n'
@@ -317,11 +312,9 @@ namespace K {
         quote = currency.substr(1+ currency.find("/"));
         if (debug)
           debugSecret =
-          debugEvents =
           debugOrders =
           debugQuotes =
-          debugWallet =
-          debugSqlite = debug;
+          debugWallet = debug;
         if (!colors)
           RBLACK[0] = RRED[0]    = RGREEN[0] = RYELLOW[0] =
           RBLUE[0]  = RPURPLE[0] = RCYAN[0]  = RWHITE[0]  =
@@ -343,10 +336,8 @@ namespace K {
         if (headless) port = 0;
         else if (!port or !maxAdmins) headless = 1;
         if (debugSecret
-          or debugEvents
           or debugOrders
           or debugQuotes
-          or debugSqlite
         ) naked = 1;
 #ifdef _WIN32
         naked = 1;
@@ -1957,7 +1948,7 @@ namespace K {
         : targetPositionAutoPercentage(t)
         , baseValue(v)
       {};
-      void calcTargetBasePos() {                             // PRETTY_DEBUG plz
+      void calcTargetBasePos() {
         if (warn_empty()) return;
         targetBasePosition = ROUND(qp.autoPositionMode == mAutoPositionMode::Manual
           ? (qp.percentageValues

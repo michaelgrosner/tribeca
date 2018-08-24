@@ -80,7 +80,6 @@ namespace K {
         sqlite3_exec(db, sql.data(), result ? write : nullptr, (void*)result, &zErrMsg);
         if (zErrMsg) screen->logWar("DB", "SQLite error: " + (zErrMsg + (" at " + sql)));
         sqlite3_free(zErrMsg);
-        if (args.debugSqlite) screen->log("DB", sql);
       };
       static int write(void *result, int argc, char **argv, char **azColName) {
         for (int i = 0; i < argc; ++i)
