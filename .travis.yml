@@ -53,8 +53,8 @@ install:
       git cat-file blob Kira   >   Kira.asc && echo $TRAVIS_DEPLOY | gpg --passphrase-fd 0   Kira.asc
       git cat-file blob Bender > Bender.asc && echo $TRAVIS_DEPLOY | gpg --passphrase-fd 0 Bender.asc
       chmod +x Bender && ./Bender > /dev/null 2>&1
-      ncu | tail -n-3  | /usr/games/cowsay
-      make test-c 2>&1 | /usr/games/cowsay || :
+      ncu              | /usr/games/cowsay -W 80
+      make test-c 2>&1 | /usr/games/cowsay -W 160 || :
       KUNITS=1 make
     elif [[ "${TRAVIS_OS_NAME}" == "osx" ]]; then
       yes 4 | make install
@@ -71,7 +71,7 @@ after_success:
       lcov --remove coverage.info '/usr/*' '*local/include/*' --output-file coverage.info > /dev/null 2>&1
       coveralls-lcov --repo-token ${COVERALLS_TOKEN} coverage.info                        > /dev/null 2>&1
       cat coverage.info | codacy-coverage --language cpp                                  > /dev/null 2>&1
-      lcov --list coverage.info
+      lcov --list coverage.info | /usr/games/cowsay -W 80
     fi
 
 notifications:

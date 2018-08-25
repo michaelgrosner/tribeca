@@ -1385,12 +1385,12 @@ namespace K {
       j["diff"] = true;
   };
   struct mMarketLevels: public mLevels {
-         mLevels unfiltered;
-     mLevelsDiff diff;
-    mMarketStats stats;
     unsigned int averageCount = 0;
           mPrice averageWidth = 0,
                  fairValue    = 0;
+         mLevels unfiltered;
+     mLevelsDiff diff;
+    mMarketStats stats;
     private:
       unordered_map<mPrice, mAmount> filterBidOrders,
                                      filterAskOrders;
@@ -3209,7 +3209,7 @@ namespace K {
 
   struct mCommand {
     private:
-      static string output(const string &cmd) {
+      static const string output(const string &cmd) {
         string data;
         FILE *stream = popen((cmd + " 2>&1").data(), "r");
         if (stream) {
@@ -3223,37 +3223,31 @@ namespace K {
         return data;
       };
     public:
-      static string uname() {
+      static const string uname() {
         return output("uname -srvm");
       };
-      static string ps() {
+      static const string ps() {
         return output("ps -p" + to_string(::getpid()) + " -orss | tail -n1");
       };
-      static string netstat() {
+      static const string netstat() {
         return output("netstat -anp 2>/dev/null | grep " + to_string(args.port));
       };
       static void stunnel(const bool &reboot) {
         int k = system("pkill stunnel || :");
         if (reboot) k = system("stunnel etc/stunnel.conf");
       };
-      static bool git() {
-        return
-#ifdef NDEBUG
-          access(".git", F_OK) != -1
-#else
-          false
-#endif
-        ;
+      static const bool git() {
+        return access(".git", F_OK) != -1;
       };
       static void fetch() {
         if (git()) int k = system("git fetch");
       };
-      static string changelog() {
+      static const string changelog() {
         return git()
           ? output("git --no-pager log --graph --oneline @..@{u}")
           : "";
       };
-      static bool deprecated() {
+      static const bool deprecated() {
         return git()
           ? output("git rev-parse @") != output("git rev-parse @{u}")
           : false;

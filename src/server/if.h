@@ -607,11 +607,11 @@ namespace K {
   code( btn.cleanTradesClosed , wallet.safety.trades.clearClosed ,           ) \
   code( btn.cleanTrades       , wallet.safety.trades.clearAll    ,           )
     public:
-      mWalletPosition wallet;
+             mMonitor monitor;
         mMarketLevels levels;
+      mWalletPosition wallet;
               mBroker broker;
              mButtons btn;
-             mMonitor monitor;
       Engine()
         : wallet(levels.stats.ewma.targetPositionAutoPercentage, levels.fairValue)
         , levels(monitor.product, broker.orders)
@@ -687,7 +687,7 @@ namespace K {
   static string tracelog;
   static vector<function<void()>> happyEndingFn, endingFn = { []() {
     screen->end();
-    cout << string(!args.latency, '\n')
+    cout << string((unsigned int)!args.latency, '\n')
          << screen->stamp()
          << tracelog;
   } };
