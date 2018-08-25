@@ -749,9 +749,9 @@ namespace K {
                  latency        = 0;
     mOrder()
     {};
-    mOrder(const mRandId &o, const mSide &S, const mPrice &p, const mAmount &q, const bool &i)
+    mOrder(const mRandId &o, const mSide &s, const mPrice &p, const mAmount &q, const bool &i)
       : orderId(o)
-      , side(S)
+      , side(s)
       , price(p)
       , quantity(q)
       , isPong(i)
@@ -2098,18 +2098,16 @@ namespace K {
         quote.currency = raw.quote.currency;
         base.reset(raw.base.amount, raw.base.held);
         quote.reset(raw.quote.amount, raw.quote.held);
-        send_ratelimit();
+        calcFunds();
       };
-      void reset(const mSide &side, const mAmount &nextHeldAmount) {
+      void calcSideHeld(const mSide &side, const mAmount &nextHeldAmount) {
         if (side == mSide::Ask)
           base.reset(base.total - nextHeldAmount, nextHeldAmount);
         else quote.reset(quote.total - nextHeldAmount, nextHeldAmount);
-        send_ratelimit();
+        calcFundsSilent();
       };
-      void send_ratelimit() {
-        if (empty() or !fairValue) return;
-        calcValues();
-        target.calcTargetBasePos();
+      void calcFunds() {
+        calcFundsSilent();
         send();
       };
       const mMatter about() const {
@@ -2125,11 +2123,16 @@ namespace K {
         return false;
       };
     private:
-      void calcValues() {
+      void calcFundsSilent() {
+        if (empty() or !fairValue) return;
         if (args.maxWallet) calcMaxWallet();
+        calcValues();
+        calcProfits();
+        target.calcTargetBasePos();
+      };
+      void calcValues() {
         base.value = ROUND(quote.total / fairValue + base.total, 1e-8);
         quote.value = ROUND(base.total * fairValue + quote.total, 1e-8);
-        calcProfits();
       };
       void calcProfits() {
         if (!profits.ratelimit())
@@ -2942,7 +2945,7 @@ namespace K {
       const bool   lastIsPong = order->isPong;
       if (order->status == mStatus::Terminated)
         purge(order);
-      wallet->reset(lastSide, calcHeldAmount(lastSide));
+      wallet->calcSideHeld(lastSide, calcHeldAmount(lastSide));
       if (raw.tradeQuantity) {
         wallet->safety.insertTrade(raw.tradeQuantity, lastPrice, lastSide, lastIsPong);
         *askForFees = true;

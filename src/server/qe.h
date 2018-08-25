@@ -20,7 +20,7 @@ namespace K {
         });
         gw->RAWDATA_ENTRY_POINT(mLevels, {
           levels.read_from_gw(rawdata);
-          wallet.send_ratelimit();
+          wallet.calcFunds();
           calcQuotes();
         });
         gw->RAWDATA_ENTRY_POINT(mOrder, {
