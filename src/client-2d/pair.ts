@@ -53,12 +53,12 @@ class QuotingButtonViewModel extends FormViewModel<any> {
     sub: Subscribe.ISubscribe<any>,
     fire: Subscribe.IFire<any>
   ) {
-    super({state:0}, sub, fire, d => {return {state:Math.abs(d.state-1)};});
+    super({agree:0}, sub, fire, d => {return {agree:Math.abs(d.agree-1)};});
   }
 
   public getClass = () => {
     if (this.pending) return "btn btn-warning";
-    if (this.display.state) return "btn btn-success";
+    if (this.display.agree) return "btn btn-success";
     return "btn btn-danger";
   }
 }
@@ -180,7 +180,7 @@ export class DisplayPair {
 
   private setExchangeStatus = (cs) => {
       this.active.update(cs);
-      this.connectedToExchange = cs.status == Models.Connectivity.Connected;
+      this.connectedToExchange = cs.online == Models.Connectivity.Connected;
       this.setStatus();
   };
 

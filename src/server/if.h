@@ -694,7 +694,7 @@ namespace K {
   static class Ending {
     public:
       Ending(/* KMxTWEpb9ig */) {
-        tracelog = "- roll-out: " + to_string(Tstamp) + '\n';
+        tracelog = "- roll-out: " + to_string(Tstamp);
         signal(SIGINT, quit);
         signal(SIGABRT, wtf);
         signal(SIGSEGV, wtf);
@@ -743,7 +743,7 @@ namespace K {
           tracelog += string("(Three-Headed Monkey found):") + '\n'
             + "- exchange: " + args.exchange + '\n'
             + "- currency: " + args.currency + '\n'
-            + rollout
+            + rollout + '\n'
             + "- lastbeat: " + to_string(Tstamp) + '\n'
             + "- binbuild: " + string(K_BUILD) + '\n'
 #ifndef _WIN32
@@ -752,8 +752,7 @@ namespace K {
           void *k[69];
           size_t jumps = backtrace(k, 69);
           char **trace = backtrace_symbols(k, jumps);
-          size_t i;
-          for (i = 0; i < jumps; i++)
+          for (size_t i = 0; i < jumps; i++)
             tracelog += string(trace[i]) + '\n';
           free(trace)
 #endif

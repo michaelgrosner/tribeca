@@ -736,7 +736,7 @@ namespace K {
   struct mOrder {
          mRandId orderId,
                  exchangeId;
-         mStatus orderStatus    = mStatus::Waiting;
+         mStatus status         = mStatus::Waiting;
            mSide side           = (mSide)0;
           mPrice price          = 0;
          mAmount quantity       = 0,
@@ -760,7 +760,7 @@ namespace K {
     mOrder(const mRandId &o, const mRandId &e, const mStatus &s, const mPrice &p, const mAmount &q, const mAmount &Q)
       : orderId(o)
       , exchangeId(e)
-      , orderStatus(s)
+      , status(s)
       , price(p)
       , quantity(q)
       , tradeQuantity(Q)
@@ -768,12 +768,12 @@ namespace K {
     {};
     static void update(const mOrder &raw, mOrder *const order) {
       if (!order) return;
-      if ((                        order->orderStatus = raw.orderStatus
-      ) == mStatus::Working)       order->latency     = Tstamp - order->time;
-                                   order->time        = raw.time;
-      if (!raw.exchangeId.empty()) order->exchangeId  = raw.exchangeId;
-      if (raw.price)               order->price       = raw.price;
-      if (raw.quantity)            order->quantity    = raw.quantity;
+      if ((                        order->status     = raw.status
+      ) == mStatus::Working)       order->latency    = Tstamp - order->time;
+                                   order->time       = raw.time;
+      if (!raw.exchangeId.empty()) order->exchangeId = raw.exchangeId;
+      if (raw.price)               order->price      = raw.price;
+      if (raw.quantity)            order->quantity   = raw.quantity;
     };
     static const bool replace(const mPrice &price, const bool &isPong, mOrder *const order) {
       if (!order
@@ -787,10 +787,10 @@ namespace K {
     static const bool cancel(mOrder *const order) {
       if (!order
         or order->exchangeId.empty()
-        or order->orderStatus == mStatus::Waiting
+        or order->status == mStatus::Waiting
       ) return false;
-      order->orderStatus = mStatus::Waiting;
-      order->time        = Tstamp;
+      order->status = mStatus::Waiting;
+      order->time   = Tstamp;
       return true;
     };
   };
@@ -804,7 +804,7 @@ namespace K {
       {        "isPong", k.isPong        },
       {         "price", k.price         },
       {   "timeInForce", k.timeInForce   },
-      {   "orderStatus", k.orderStatus   },
+      {        "status", k.status        },
       {"preferPostOnly", k.preferPostOnly},
       {          "time", k.time          },
       {       "latency", k.latency       }
@@ -1846,6 +1846,19 @@ namespace K {
         return false;
       };
     private:
+      void calcSizes() {
+        sellSize = qp.percentageValues
+            ? qp.sellSizePercentage * baseValue / 1e+2
+            : qp.sellSize;
+        buySize = qp.percentageValues
+          ? qp.buySizePercentage * baseValue / 1e+2
+          : qp.buySize;
+        if (qp.aggressivePositionRebalancing == mAPR::Off) return;
+        if (qp.buySizeMax)
+          buySize = fmax(buySize, targetBasePosition - baseTotal);
+        if (qp.sellSizeMax)
+          sellSize = fmax(sellSize, baseTotal - targetBasePosition);
+      };
       void calcPrices() {
         if (qp.safety == mQuotingSafety::PingPong) {
           buyPing = recentTrades.lastBuyPrice;
@@ -1913,19 +1926,6 @@ namespace K {
           *qty += qty_;
         }
         return *qty >= qtyMax and (_near or _far);
-      };
-      void calcSizes() {
-        sellSize = qp.percentageValues
-            ? qp.sellSizePercentage * baseValue / 1e+2
-            : qp.sellSize;
-        buySize = qp.percentageValues
-          ? qp.buySizePercentage * baseValue / 1e+2
-          : qp.buySize;
-        if (qp.aggressivePositionRebalancing == mAPR::Off) return;
-        if (qp.buySizeMax)
-          buySize = fmax(buySize, targetBasePosition - baseTotal);
-        if (qp.sellSizeMax)
-          sellSize = fmax(sellSize, baseTotal - targetBasePosition);
       };
   };
   static void to_json(json &j, const mSafety &k) {
@@ -2227,8 +2227,8 @@ namespace K {
     public:
       void kiss(json *const j) {
         if (j->is_object()
-          and j->at("state").is_number()
-          and j->at("state").get<mConnectivity>() != adminAgreement
+          and j->at("agree").is_number()
+          and j->at("agree").get<mConnectivity>() != adminAgreement
         ) toggle();
       };
       const bool paused() const {
@@ -2264,8 +2264,8 @@ namespace K {
   };
   static void to_json(json &j, const mSemaphore &k) {
     j = {
-      { "state", k.greenButton },
-      {"status", k.greenGateway}
+      { "agree", k.greenButton },
+      {"online", k.greenGateway}
     };
   };
 
@@ -2585,7 +2585,7 @@ namespace K {
         if (stillAlive(order)) {
           if (abs(order.price - quote.price) < *product.minTick)
             quote.skip();
-          else if (order.orderStatus == mStatus::Waiting) {
+          else if (order.status == mStatus::Waiting) {
             if (qp.safety != mQuotingSafety::AK47
               or !--bullets
             ) quote.skip();
@@ -2614,7 +2614,7 @@ namespace K {
         quotes.ask.state = state;
       };
       const bool stillAlive(const mOrder &order) {
-        if (order.orderStatus == mStatus::Waiting) {
+        if (order.status == mStatus::Waiting) {
           if (Tstamp - 10e+3 > order.time) {
             zombies.push_back(&order);
             return false;
@@ -2875,7 +2875,7 @@ namespace K {
         : &orders.at(orderId);
     };
     mOrder *const findsert(const mOrder &raw) {
-      if (raw.orderStatus == mStatus::Waiting and !raw.orderId.empty())
+      if (raw.status == mStatus::Waiting and !raw.orderId.empty())
         return &(orders[raw.orderId] = raw);
       if (raw.orderId.empty() and !raw.exchangeId.empty()) {
         unordered_map<mRandId, mOrder>::iterator it = find_if(
@@ -2933,14 +2933,14 @@ namespace K {
     };
     void read_from_gw(const mOrder &raw, mWalletPosition *const wallet, bool *const askForFees) {
       if (debug()) report(&raw, " reply ");
-      if (raw.orderStatus == mStatus::Waiting)
+      if (raw.status == mStatus::Waiting)
         EXIT(error("OG", "Dataflow error (exchanges do not send waiting status!)"));
       mOrder *const order = upsert(raw);
       if (!order) return;
       const mPrice lastPrice  = order->price;
       const mSide  lastSide   = order->side;
       const bool   lastIsPong = order->isPong;
-      if (order->orderStatus == mStatus::Terminated)
+      if (order->status == mStatus::Terminated)
         purge(order);
       wallet->reset(lastSide, calcHeldAmount(lastSide));
       if (raw.tradeQuantity) {
@@ -2953,7 +2953,7 @@ namespace K {
     const mAmount calcHeldAmount(const mSide &side) const {
       return accumulate(orders.begin(), orders.end(), mAmount(),
         [&](mAmount held, const unordered_map<mRandId, mOrder>::value_type &it) {
-          if (it.second.side == side and it.second.orderStatus == mStatus::Working)
+          if (it.second.side == side and it.second.status == mStatus::Working)
             return held + (it.second.side == mSide::Ask
               ? it.second.quantity
               : it.second.quantity * it.second.price
@@ -2965,7 +2965,7 @@ namespace K {
     vector<mOrder*> working() {
       vector<mOrder*> workingOrders;
       for (unordered_map<mRandId, mOrder>::value_type &it : orders)
-        if (mStatus::Working == it.second.orderStatus
+        if (mStatus::Working == it.second.status
           and it.second.preferPostOnly
         ) workingOrders.push_back(&it.second);
       return workingOrders;
@@ -2973,7 +2973,7 @@ namespace K {
     const vector<mOrder> working(const bool &sorted = false) const {
       vector<mOrder> workingOrders;
       for (const unordered_map<mRandId, mOrder>::value_type &it : orders)
-        if (mStatus::Working == it.second.orderStatus)
+        if (mStatus::Working == it.second.status)
           workingOrders.push_back(it.second);
       if (sorted)
         sort(workingOrders.begin(), workingOrders.end(),
@@ -2998,7 +2998,7 @@ namespace K {
           order
             ? (order->side == mSide::Bid ? "BID id " : "ASK id ")
               + order->orderId + "::" + order->exchangeId
-              + " [" + to_string((int)order->orderStatus) + "]: "
+              + " [" + to_string((int)order->status) + "]: "
               + str8(order->quantity) + " " + args.base + " at price "
               + str8(order->price) + " " + args.quote
             : "not found"

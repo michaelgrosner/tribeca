@@ -17,8 +17,8 @@ export class OrdersComponent implements OnInit {
 
   @Input() product: Models.ProductState;
 
-  @Input() set online(online: boolean) {
-    if (online) return;
+  @Input() set agree(agree: boolean) {
+    if (agree) return;
     if (!this.gridOptions.api) return;
     this.gridOptions.api.setRowData([]);
     setTimeout(()=>{try{this.gridOptions.api.redrawRows();}catch(e){}},0);
@@ -99,7 +99,7 @@ export class OrdersComponent implements OnInit {
     }
 
     let exists: boolean = false;
-    let isClosed: boolean = (o.orderStatus == Models.OrderStatus.Terminated);
+    let isClosed: boolean = (o.status == Models.OrderStatus.Terminated);
     this.gridOptions.api.forEachNode((node: RowNode) => {
       if (!exists && node.data.orderId==o.orderId) {
         exists = true;

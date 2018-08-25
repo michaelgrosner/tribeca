@@ -95,8 +95,8 @@ export class MarketQuotingComponent {
 
   @Input() a: string;
 
-  @Input() set online(online: boolean) {
-    if (online) return;
+  @Input() set agree(agree: boolean) {
+    if (agree) return;
     this.clearQuote();
   }
 
@@ -274,7 +274,7 @@ export class MarketQuotingComponent {
 
     const orderSide = o.side === Models.Side.Bid ? 'orderBids' : 'orderAsks';
     const orderPrice = o.side === Models.Side.Bid ? 'orderPriceBids' : 'orderPriceAsks';
-    if (o.orderStatus == Models.OrderStatus.Terminated)
+    if (o.status == Models.OrderStatus.Terminated)
       this[orderSide] = this[orderSide].filter(x => x.orderId !== o.orderId);
     else if (!this[orderSide].filter(x => x.orderId === o.orderId).length)
       this[orderSide].push({
