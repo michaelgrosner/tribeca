@@ -2111,7 +2111,7 @@ namespace K {
       };
       void calcFunds(const mSide *const side = nullptr) {
         if (empty() or !fairValue) return;
-        if (side) calcHeldAmounts(*side);
+        if (side) calcHeldAmount(*side);
         if (args.maxWallet) calcMaxWallet();
         calcValues();
         calcProfits();
@@ -2131,7 +2131,7 @@ namespace K {
         return false;
       };
     private:
-      void calcHeldAmounts(const mSide &side) {
+      void calcHeldAmount(const mSide &side) {
         mWallet &sideWallet = (
           side == mSide::Ask
             ? base
@@ -2958,8 +2958,6 @@ namespace K {
       };
       void read_from_gw(const mOrder &raw, bool *const askForFees) {
         if (debug()) report(&raw, " reply ");
-        if (raw.status == mStatus::Waiting)
-          EXIT(error("OG", "Dataflow error (exchanges do not send waiting status!)"));
         mOrder *const order = upsert(raw);
         if (!order) return;
         const mPrice lastPrice  = order->price;
@@ -3237,13 +3235,13 @@ namespace K {
         return output("uname -srvm");
       };
       static const string ps() {
-        return output("ps -p" + to_string(::getpid()) + " -orss | tail -n1");
+        return output("(ps -p" + to_string(::getpid()) + " -orss | tail -n1)");
       };
       static const string netstat() {
         return output("netstat -anp 2>/dev/null | grep " + to_string(args.port));
       };
       static void stunnel(const bool &reboot) {
-        int k = system("pkill stunnel || :");
+        int k = system("(pkill stunnel || :)");
         if (reboot) k = system("stunnel etc/stunnel.conf");
       };
       static const bool git() {
@@ -3254,7 +3252,7 @@ namespace K {
       };
       static const string changelog() {
         return git()
-          ? output("git --no-pager log --graph --oneline @..@{u}")
+          ? output("(git --no-pager log --graph --oneline @..@{u} 2>/dev/null)")
           : "";
       };
       static const bool deprecated() {
