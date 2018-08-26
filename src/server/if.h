@@ -18,7 +18,8 @@ namespace K {
              << (commits == -1
                ? "(zip install)"
                : (commits
-                 ? '-' + to_string(commits) + "commit" + string(commits != 1, 's') + '.'
+                 ? '-' + to_string(commits) + "commit"
+                   + string(commits == 1 ? 0 : 1, 's') + '.'
                  : "(0day)"
                )
              )
@@ -69,7 +70,6 @@ namespace K {
            askForReplace = false;
       const bool *askForCancelAll = nullptr;
       const mRandId (*randId)() = nullptr;
-      virtual const json handshake() = 0;
       virtual const bool askForData(const unsigned int &tick) = 0;
       virtual const bool waitForData() = 0;
       void place(const mOrder *const order) {
@@ -234,7 +234,26 @@ namespace K {
           print(prefix, reason);
         else warn(prefix, reason);
       };
+      virtual const json handshake() = 0;
     private:
+      void validate(const json &reply) {
+        if (!randId or symbol.empty())
+          EXIT(error("GW", "Incomplete handshake aborted."));
+        if (!minTick or !minSize)
+          EXIT(error("GW", "Unable to fetch data from " + exchange
+            + " for symbol \"" + symbol + "\", possible error message: "
+            + reply.dump()));
+        if (exchange != "NULL")
+          print("GW " + exchange, "allows client IP");
+        unsigned int precision = minTick < 1e-8 ? 10 : 8;
+        print("GW " + exchange + ":", string("\n")
+          + "- autoBot: " + (!args.autobot ? "no" : "yes") + '\n'
+          + "- symbols: " + symbol + '\n'
+          + "- minTick: " + strX(minTick, precision) + '\n'
+          + "- minSize: " + strX(minSize, precision) + '\n'
+          + "- makeFee: " + strX(makeFee, precision) + '\n'
+          + "- takeFee: " + strX(takeFee, precision));
+      };
       void latency() {
         screen->printme(this);
         focus("GW " + exchange, "latency check", "start");
@@ -254,24 +273,6 @@ namespace K {
         else                   result += "very bad; move to another server/network";
         print("GW " + exchange, result);
         quit();
-      };
-      void validate(const json &reply) {
-        if (!randId or symbol.empty())
-          EXIT(error("GW", "Incomplete handshake aborted."));
-        if (!minTick or !minSize)
-          EXIT(error("GW", "Unable to fetch data from " + exchange
-            + " for symbol \"" + symbol + "\", possible error message: "
-            + reply.dump()));
-        if (exchange != "NULL")
-          print("GW " + exchange, "allows client IP");
-        unsigned int precision = minTick < 1e-8 ? 10 : 8;
-        print("GW " + exchange + ":", string("\n")
-          + "- autoBot: " + (!args.autobot ? "no" : "yes") + '\n'
-          + "- symbols: " + symbol + '\n'
-          + "- minTick: " + strX(minTick, precision) + '\n'
-          + "- minSize: " + strX(minSize, precision) + '\n'
-          + "- makeFee: " + strX(makeFee, precision) + '\n'
-          + "- takeFee: " + strX(takeFee, precision));
       };
   };
 
@@ -607,15 +608,16 @@ namespace K {
   code( btn.cleanTradesClosed , wallet.safety.trades.clearClosed ,           ) \
   code( btn.cleanTrades       , wallet.safety.trades.clearAll    ,           )
     public:
-             mMonitor monitor;
-        mMarketLevels levels;
-      mWalletPosition wallet;
-              mBroker broker;
-             mButtons btn;
+                            mButtons btn;
+                            mMonitor monitor;
+      unordered_map<mRandId, mOrder> orders;
+                       mMarketLevels levels;
+                     mWalletPosition wallet;
+                             mBroker broker;
       Engine()
-        : wallet(levels.stats.ewma.targetPositionAutoPercentage, levels.fairValue)
-        , levels(monitor.product, broker.orders)
-        , broker(monitor.product, wallet, levels)
+        : levels(orders, monitor.product)
+        , wallet(orders, levels.stats.ewma.targetPositionAutoPercentage, levels.fairValue)
+        , broker(orders, monitor.product, levels, wallet)
       {};
       void savedQuotingParameters() {
         broker.calculon.dummyMM.mode("saved");
@@ -687,7 +689,7 @@ namespace K {
   static string tracelog;
   static vector<function<void()>> happyEndingFn, endingFn = { []() {
     screen->end();
-    cout << string((unsigned int)!args.latency, '\n')
+    cout << string(args.latency ? 0 : 1, '\n')
          << screen->stamp()
          << tracelog;
   } };

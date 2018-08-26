@@ -438,7 +438,11 @@ namespace K {
   };
 
   struct mFromDb: public mBlob {
-    function<void()> push;
+    function<void()> push
+#ifndef NDEBUG
+    = []() { WARN("Y U NO catch sqlite push?"); }
+#endif
+    ;
     virtual const bool pull(const json &j) = 0;
     virtual const string increment() const { return "NULL"; };
     virtual const double limit()     const { return 0; };
@@ -1395,14 +1399,14 @@ namespace K {
       unordered_map<mPrice, mAmount> filterBidOrders,
                                      filterAskOrders;
     private_ref:
-      const mProduct                       &product;
       const unordered_map<mRandId, mOrder> &orders;
+      const mProduct                       &product;
     public:
-      mMarketLevels(const mProduct &p, const unordered_map<mRandId, mOrder> &o)
+      mMarketLevels(const unordered_map<mRandId, mOrder> &o, const mProduct &p)
         : diff(unfiltered)
         , stats(fairValue)
-        , product(p)
         , orders(o)
+        , product(p)
       {};
       const bool warn_empty() const {
         const bool err = empty();
@@ -2048,6 +2052,9 @@ namespace K {
       total = (amount = ROUND(a, 1e-8))
             + (held   = ROUND(h, 1e-8));
     };
+    void reset() {
+      reset(total - held, held);
+    };
     const bool empty() const {
       return currency.empty();
     };
@@ -2085,11 +2092,13 @@ namespace K {
      mSafety safety;
     mProfits profits;
     private_ref:
-      const mPrice &fairValue;
+      const unordered_map<mRandId, mOrder> &orders;
+      const mPrice                         &fairValue;
     public:
-      mWalletPosition(const double &t, const mPrice &f)
+      mWalletPosition(unordered_map<mRandId, mOrder> &o, const double &t, const mPrice &f)
         : target(t, base.value)
         , safety(f, base.value, base.total, target.targetBasePosition)
+        , orders(o)
         , fairValue(f)
       {};
       void read_from_gw(const mWallets &raw) {
@@ -2100,15 +2109,14 @@ namespace K {
         quote.reset(raw.quote.amount, raw.quote.held);
         calcFunds();
       };
-      void calcSideHeld(const mSide &side, const mAmount &nextHeldAmount) {
-        if (side == mSide::Ask)
-          base.reset(base.total - nextHeldAmount, nextHeldAmount);
-        else quote.reset(quote.total - nextHeldAmount, nextHeldAmount);
-        calcFundsSilent();
-      };
-      void calcFunds() {
-        calcFundsSilent();
-        send();
+      void calcFunds(const mSide *const side = nullptr) {
+        if (empty() or !fairValue) return;
+        if (side) calcHeldAmounts(*side);
+        if (args.maxWallet) calcMaxWallet();
+        calcValues();
+        calcProfits();
+        target.calcTargetBasePos();
+        if (!side) send();
       };
       const mMatter about() const {
         return mMatter::Position;
@@ -2123,12 +2131,21 @@ namespace K {
         return false;
       };
     private:
-      void calcFundsSilent() {
-        if (empty() or !fairValue) return;
-        if (args.maxWallet) calcMaxWallet();
-        calcValues();
-        calcProfits();
-        target.calcTargetBasePos();
+      void calcHeldAmounts(const mSide &side) {
+        mWallet &sideWallet = (
+          side == mSide::Ask
+            ? base
+            : quote
+        );
+        sideWallet.held = 0;
+        for (const unordered_map<mRandId, mOrder>::value_type &it : orders)
+          if (it.second.side == side)
+            sideWallet.held += (
+              side == mSide::Ask
+                ? it.second.quantity
+                : it.second.quantity * it.second.price
+            );
+        sideWallet.reset();
       };
       void calcValues() {
         base.value = ROUND(quote.total / fairValue + base.total, 1e-8);
@@ -2320,8 +2337,8 @@ namespace K {
     mQuotes()
     {};
     void checkCrossedQuotes() {
-      if (bid.checkCrossed(ask)
-        | ask.checkCrossed(bid)
+      if ((unsigned int)bid.checkCrossed(ask)
+        | (unsigned int)ask.checkCrossed(bid)
       ) warn("QE", "Crossed bid/ask quotes detected, that is.. unexpected");
     };
     void debug(const string &reason) {
@@ -2360,14 +2377,14 @@ namespace K {
       ) = nullptr;
     private_ref:
       const mProduct        &product;
-      const mWalletPosition &wallet;
       const mMarketLevels   &levels;
+      const mWalletPosition &wallet;
             mQuotes         &quotes;
     public:
-      mDummyMarketMaker(const mProduct &p, const mWalletPosition &w, const mMarketLevels &l, mQuotes &q)
+      mDummyMarketMaker(const mProduct &p, const mMarketLevels &l, const mWalletPosition &w, mQuotes &q)
         : product(p)
-        , wallet(w)
         , levels(l)
+        , wallet(w)
         , quotes(q)
       {};
       void mode(const string &reason) {
@@ -2557,14 +2574,14 @@ namespace K {
                    string sideAPR      = "Off";
     private_ref:
       const mProduct        &product;
-      const mWalletPosition &wallet;
       const mMarketLevels   &levels;
+      const mWalletPosition &wallet;
     public:
-      mAntonioCalculon(const mProduct &p, const mWalletPosition &w, const mMarketLevels &l)
-        : dummyMM(p, w, l, quotes)
+      mAntonioCalculon(const mProduct &p, const mMarketLevels &l, const mWalletPosition &w)
+        : dummyMM(p, l, w, quotes)
         , product(p)
-        , wallet(w)
         , levels(l)
+        , wallet(w)
       {};
       void clear() {
         send();
@@ -2865,136 +2882,129 @@ namespace K {
                   public mJsonToClient<mBroker> {
                         mSemaphore semaphore;
                   mAntonioCalculon calculon;
-    unordered_map<mRandId, mOrder> orders;
                    vector<mOrder*> abandoned;
                             mOrder *replaced = nullptr;
-    mBroker(const mProduct &p, const mWalletPosition &w, const mMarketLevels &l)
-      : calculon(p, w, l)
-    {};
-    mOrder *const find(const mRandId &orderId) {
-      return (orderId.empty()
-        or orders.find(orderId) == orders.end()
-      ) ? nullptr
-        : &orders.at(orderId);
-    };
-    mOrder *const findsert(const mOrder &raw) {
-      if (raw.status == mStatus::Waiting and !raw.orderId.empty())
-        return &(orders[raw.orderId] = raw);
-      if (raw.orderId.empty() and !raw.exchangeId.empty()) {
-        unordered_map<mRandId, mOrder>::iterator it = find_if(
-          orders.begin(), orders.end(),
-          [&](const pair<mRandId, mOrder> &it_) {
-            return raw.exchangeId == it_.second.exchangeId;
-          }
-        );
-        if (it != orders.end())
-          return &it->second;
-      }
-      return find(raw.orderId);
-    };
-    mOrder *const upsert(const mOrder &raw) {
-      mOrder *const order = findsert(raw);
-      mOrder::update(raw, order);
-      if (debug()) {
-        report(order, " saved ");
-        report_size();
-      }
-      return order;
-    };
-    const bool replace(const mPrice &price, const bool &isPong, mOrder *const order) {
-      const bool allowed = mOrder::replace(price, isPong, order);
-      if (debug()) report(order, "replace");
-      return allowed;
-    };
-    const bool cancel(mOrder *const order) {
-      const bool allowed = mOrder::cancel(order);
-      if (debug()) report(order, "cancel ");
-      return allowed;
-    };
-    void purge(const mOrder *const order) {
-      if (debug()) report(order, " purge ");
-      orders.erase(order->orderId);
-      if (debug()) report_size();
-    };
-    void purge() {
-      for (const mOrder *const it : calculon.zombies)
-        purge(it);
-      calculon.clear();
-    };
-    void abandon(mQuote &quote) {
-      abandoned.clear();
-      unsigned int bullets = qp.bullets;
-      const bool all = quote.state != mQuoteState::Live;
-      for (unordered_map<mRandId, mOrder>::value_type &it : orders)
-        if (quote.side == it.second.side
-          and (all or calculon.abandon(it.second, quote, bullets))
-        ) abandoned.push_back(&it.second);
-      if (replaced = (quote.empty() or abandoned.empty())
-        ? nullptr
-        : abandoned.back()
-      ) abandoned.pop_back();
-    };
-    void read_from_gw(const mOrder &raw, mWalletPosition *const wallet, bool *const askForFees) {
-      if (debug()) report(&raw, " reply ");
-      if (raw.status == mStatus::Waiting)
-        EXIT(error("OG", "Dataflow error (exchanges do not send waiting status!)"));
-      mOrder *const order = upsert(raw);
-      if (!order) return;
-      const mPrice lastPrice  = order->price;
-      const mSide  lastSide   = order->side;
-      const bool   lastIsPong = order->isPong;
-      if (order->status == mStatus::Terminated)
-        purge(order);
-      wallet->calcSideHeld(lastSide, calcHeldAmount(lastSide));
-      if (raw.tradeQuantity) {
-        wallet->safety.insertTrade(raw.tradeQuantity, lastPrice, lastSide, lastIsPong);
-        *askForFees = true;
-      }
-      send();
-      refresh();
-    };
-    const mAmount calcHeldAmount(const mSide &side) const {
-      return accumulate(orders.begin(), orders.end(), mAmount(),
-        [&](mAmount held, const unordered_map<mRandId, mOrder>::value_type &it) {
-          if (it.second.side == side and it.second.status == mStatus::Working)
-            return held + (it.second.side == mSide::Ask
-              ? it.second.quantity
-              : it.second.quantity * it.second.price
-            );
-          else return held;
+    private_ref:
+      unordered_map<mRandId, mOrder> &orders;
+                     mWalletPosition &wallet;
+    public:
+      mBroker(unordered_map<mRandId, mOrder> &o, const mProduct &p, const mMarketLevels &l, mWalletPosition &w)
+        : calculon(p, l, w)
+        , orders(o)
+        , wallet(w)
+      {};
+      mOrder *const find(const mRandId &orderId) {
+        return (orderId.empty()
+          or orders.find(orderId) == orders.end()
+        ) ? nullptr
+          : &orders.at(orderId);
+      };
+      mOrder *const findsert(const mOrder &raw) {
+        if (raw.status == mStatus::Waiting and !raw.orderId.empty())
+          return &(orders[raw.orderId] = raw);
+        if (raw.orderId.empty() and !raw.exchangeId.empty()) {
+          unordered_map<mRandId, mOrder>::iterator it = find_if(
+            orders.begin(), orders.end(),
+            [&](const pair<mRandId, mOrder> &it_) {
+              return raw.exchangeId == it_.second.exchangeId;
+            }
+          );
+          if (it != orders.end())
+            return &it->second;
         }
-      );
-    };
-    vector<mOrder*> working() {
-      vector<mOrder*> workingOrders;
-      for (unordered_map<mRandId, mOrder>::value_type &it : orders)
-        if (mStatus::Working == it.second.status
-          and it.second.preferPostOnly
-        ) workingOrders.push_back(&it.second);
-      return workingOrders;
-    };
-    const vector<mOrder> working(const bool &sorted = false) const {
-      vector<mOrder> workingOrders;
-      for (const unordered_map<mRandId, mOrder>::value_type &it : orders)
-        if (mStatus::Working == it.second.status)
-          workingOrders.push_back(it.second);
-      if (sorted)
-        sort(workingOrders.begin(), workingOrders.end(),
-          [](const mOrder &a, const mOrder &b) {
-            return a.price > b.price;
-          }
-        );
-      return workingOrders;
-    };
-    const mMatter about() const {
-      return mMatter::OrderStatusReports;
-    };
-    const bool realtime() const {
-      return !qp.delayUI;
-    };
-    const json blob() const {
-      return working();
-    };
+        return find(raw.orderId);
+      };
+      mOrder *const upsert(const mOrder &raw) {
+        mOrder *const order = findsert(raw);
+        mOrder::update(raw, order);
+        if (debug()) {
+          report(order, " saved ");
+          report_size();
+        }
+        return order;
+      };
+      const bool replace(const mPrice &price, const bool &isPong, mOrder *const order) {
+        const bool allowed = mOrder::replace(price, isPong, order);
+        if (debug()) report(order, "replace");
+        return allowed;
+      };
+      const bool cancel(mOrder *const order) {
+        const bool allowed = mOrder::cancel(order);
+        if (debug()) report(order, "cancel ");
+        return allowed;
+      };
+      void purge(const mOrder *const order) {
+        if (debug()) report(order, " purge ");
+        orders.erase(order->orderId);
+        if (debug()) report_size();
+      };
+      void purge() {
+        for (const mOrder *const it : calculon.zombies)
+          purge(it);
+        calculon.clear();
+      };
+      void abandon(mQuote &quote) {
+        abandoned.clear();
+        unsigned int bullets = qp.bullets;
+        const bool all = quote.state != mQuoteState::Live;
+        for (unordered_map<mRandId, mOrder>::value_type &it : orders)
+          if (quote.side == it.second.side
+            and (all or calculon.abandon(it.second, quote, bullets))
+          ) abandoned.push_back(&it.second);
+        if (replaced = (quote.empty() or abandoned.empty())
+          ? nullptr
+          : abandoned.back()
+        ) abandoned.pop_back();
+      };
+      void read_from_gw(const mOrder &raw, bool *const askForFees) {
+        if (debug()) report(&raw, " reply ");
+        if (raw.status == mStatus::Waiting)
+          EXIT(error("OG", "Dataflow error (exchanges do not send waiting status!)"));
+        mOrder *const order = upsert(raw);
+        if (!order) return;
+        const mPrice lastPrice  = order->price;
+        const mSide  lastSide   = order->side;
+        const bool   lastIsPong = order->isPong;
+        if (order->status == mStatus::Terminated)
+          purge(order);
+        wallet.calcFunds(&lastSide);
+        if (raw.tradeQuantity) {
+          wallet.safety.insertTrade(raw.tradeQuantity, lastPrice, lastSide, lastIsPong);
+          *askForFees = true;
+        }
+        send();
+        refresh();
+      };
+      vector<mOrder*> working() {
+        vector<mOrder*> workingOrders;
+        for (unordered_map<mRandId, mOrder>::value_type &it : orders)
+          if (mStatus::Working == it.second.status
+            and it.second.preferPostOnly
+          ) workingOrders.push_back(&it.second);
+        return workingOrders;
+      };
+      const vector<mOrder> working(const bool &sorted = false) const {
+        vector<mOrder> workingOrders;
+        for (const unordered_map<mRandId, mOrder>::value_type &it : orders)
+          if (mStatus::Working == it.second.status)
+            workingOrders.push_back(it.second);
+        if (sorted)
+          sort(workingOrders.begin(), workingOrders.end(),
+            [](const mOrder &a, const mOrder &b) {
+              return a.price > b.price;
+            }
+          );
+        return workingOrders;
+      };
+      const mMatter about() const {
+        return mMatter::OrderStatusReports;
+      };
+      const bool realtime() const {
+        return !qp.delayUI;
+      };
+      const json blob() const {
+        return working();
+      };
     private:
       void report(const mOrder *const order, const string &reason) const {
         print("DEBUG OG", " " + reason + " " + (
