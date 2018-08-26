@@ -330,8 +330,12 @@ namespace K {
           REQUIRE_NOTHROW(wallet.target.mToScreen::warn = [&](const string &prefix, const string &reason) {
             INFO("warn()");
           });
-          REQUIRE_NOTHROW(wallet.calcFunds(true));
+          mSide side;
+          REQUIRE_NOTHROW(side = mSide::Ask);
+          REQUIRE_NOTHROW(wallet.calcFunds(&side));
           REQUIRE(wallet.base.held == 0.37037037);
+          REQUIRE_NOTHROW(side = mSide::Bid);
+          REQUIRE_NOTHROW(wallet.calcFunds(&side));
           REQUIRE(wallet.quote.held == Approx(457.22592546));
         }
         THEN("to json") {
