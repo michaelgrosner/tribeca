@@ -771,8 +771,8 @@ namespace K {
     {};
     static void update(const mOrder &raw, mOrder *const order) {
       if (!order) return;
-      if ((                        order->status     = raw.status
-      ) == mStatus::Working)       order->latency    = Tstamp - order->time;
+      if (mStatus::Working == (    order->status     = raw.status
+      ) and !order->latency)       order->latency    = Tstamp - order->time;
                                    order->time       = raw.time;
       if (!raw.exchangeId.empty()) order->exchangeId = raw.exchangeId;
       if (raw.price)               order->price      = raw.price;
