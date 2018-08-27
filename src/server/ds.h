@@ -837,11 +837,11 @@ namespace K {
     bool    isPong         = false;
     mLastOrder()
     {};
-    mLastOrder(const mOrder *const o)
-      : price(o->price)
-      , tradeQuantity(o->tradeQuantity)
-      , side(o->side)
-      , isPong(o->isPong)
+    mLastOrder(const mOrder *const order, const mOrder &raw)
+      : price(order->price)
+      , tradeQuantity(raw.tradeQuantity)
+      , side(order->side)
+      , isPong(order->isPong)
     {};
   };
 
@@ -2987,7 +2987,7 @@ namespace K {
         if (debug()) report(&raw, " reply ");
         mOrder *const order = upsert(raw);
         if (!order) return;
-        updated = order;
+        updated = {order, raw};
         if (order->status == mStatus::Terminated)
           purge(order);
         send();

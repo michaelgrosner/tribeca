@@ -248,11 +248,25 @@ namespace K {
         }
       }
       WHEN("assigned") {
-        REQUIRE_NOTHROW(recentTrades.insert(0.01234566, 1234.57, mSide::Ask));
-        REQUIRE_NOTHROW(recentTrades.insert(0.01234567, 1234.58, mSide::Ask));
-        REQUIRE_NOTHROW(recentTrades.insert(0.12345678, 1234.56, mSide::Bid));
-        REQUIRE_NOTHROW(recentTrades.insert(0.12345679, 1234.50, mSide::Bid));
-        REQUIRE_NOTHROW(recentTrades.insert(0.12345678, 1234.60, mSide::Ask));
+        mLastOrder order;
+        REQUIRE_NOTHROW(order.price = 1234.57);
+        REQUIRE_NOTHROW(order.tradeQuantity = 0.01234566);
+        REQUIRE_NOTHROW(order.side = mSide::Ask);
+        REQUIRE_NOTHROW(recentTrades.insert(order));
+        REQUIRE_NOTHROW(order.price = 1234.58);
+        REQUIRE_NOTHROW(order.tradeQuantity = 0.01234567);
+        REQUIRE_NOTHROW(recentTrades.insert(order));
+        REQUIRE_NOTHROW(order.price = 1234.56);
+        REQUIRE_NOTHROW(order.tradeQuantity = 0.12345678);
+        REQUIRE_NOTHROW(order.side = mSide::Bid);
+        REQUIRE_NOTHROW(recentTrades.insert(order));
+        REQUIRE_NOTHROW(order.price = 1234.50);
+        REQUIRE_NOTHROW(order.tradeQuantity = 0.12345679);
+        REQUIRE_NOTHROW(recentTrades.insert(order));
+        REQUIRE_NOTHROW(order.price = 1234.60);
+        REQUIRE_NOTHROW(order.tradeQuantity = 0.12345678);
+        REQUIRE_NOTHROW(order.side = mSide::Ask);
+        REQUIRE_NOTHROW(recentTrades.insert(order));
         THEN("values") {
           REQUIRE(recentTrades.lastBuyPrice == 1234.50);
           REQUIRE(recentTrades.lastSellPrice == 1234.60);
@@ -330,12 +344,13 @@ namespace K {
           REQUIRE_NOTHROW(wallet.target.mToScreen::warn = [&](const string &prefix, const string &reason) {
             INFO("warn()");
           });
-          mSide side;
-          REQUIRE_NOTHROW(side = mSide::Ask);
-          REQUIRE_NOTHROW(wallet.calcFunds(&side));
+          bool askForFees = false;
+          mLastOrder order;
+          REQUIRE_NOTHROW(order.side = mSide::Ask);
+          REQUIRE_NOTHROW(wallet.calcFundsAfterOrder(order, &askForFees));
+          REQUIRE_NOTHROW(order.side = mSide::Bid);
+          REQUIRE_NOTHROW(wallet.calcFundsAfterOrder(order, &askForFees));
           REQUIRE(wallet.base.held == 0.37037037);
-          REQUIRE_NOTHROW(side = mSide::Bid);
-          REQUIRE_NOTHROW(wallet.calcFunds(&side));
           REQUIRE(wallet.quote.held == Approx(457.22592546));
         }
         THEN("to json") {
