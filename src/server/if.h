@@ -631,17 +631,14 @@ namespace K {
         calcQuotes();
       };
       void calcQuotes() {
-        if (broker.semaphore.offline()) {
-          broker.calculon.offline();
-        } else if (levels.filter() and !wallet.safety.empty()) {
-          if (broker.semaphore.paused()) {
-            broker.calculon.paused();
-            cancelOrders();
-          } else {
-            broker.calculon.calcQuotes();
+        if (broker.online()
+          and levels.filter()
+          and !wallet.safety.empty()
+        ) {
+          if (broker.calcQuotes()) {
             quote2orders(broker.calculon.quotes.ask);
             quote2orders(broker.calculon.quotes.bid);
-          }
+          } else cancelOrders();
         }
         broker.purge();
       };

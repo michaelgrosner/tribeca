@@ -1,4 +1,5 @@
 FROM node:8-stretch
+
 RUN apt-get update                                      \
  && apt-get install --no-install-recommends -y git sudo \
  && rm -rf /var/lib/apt/lists/*

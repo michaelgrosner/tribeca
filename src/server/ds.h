@@ -2921,6 +2921,34 @@ namespace K {
         : calculon(p, l, w)
         , orders(o)
       {};
+      const bool online() {
+        if (semaphore.offline()) {
+          calculon.offline();
+          return false;
+        }
+        return true;
+      };
+      const bool calcQuotes() {
+        if (semaphore.paused()) {
+          calculon.paused();
+          return false;
+        }
+        calculon.calcQuotes();
+        return true;
+      };
+      void abandon(mQuote &quote) {
+        abandoned.clear();
+        unsigned int bullets = qp.bullets;
+        const bool all = quote.state != mQuoteState::Live;
+        for (unordered_map<mRandId, mOrder>::value_type &it : orders)
+          if (quote.side == it.second.side
+            and (all or calculon.abandon(it.second, quote, bullets))
+          ) abandoned.push_back(&it.second);
+        if (replaced = (quote.empty() or abandoned.empty())
+          ? nullptr
+          : abandoned.back()
+        ) abandoned.pop_back();
+      };
       mOrder *const find(const mRandId &orderId) {
         return (orderId.empty()
           or orders.find(orderId) == orders.end()
@@ -2970,19 +2998,6 @@ namespace K {
         for (const mOrder *const it : calculon.zombies)
           purge(it);
         calculon.clear();
-      };
-      void abandon(mQuote &quote) {
-        abandoned.clear();
-        unsigned int bullets = qp.bullets;
-        const bool all = quote.state != mQuoteState::Live;
-        for (unordered_map<mRandId, mOrder>::value_type &it : orders)
-          if (quote.side == it.second.side
-            and (all or calculon.abandon(it.second, quote, bullets))
-          ) abandoned.push_back(&it.second);
-        if (replaced = (quote.empty() or abandoned.empty())
-          ? nullptr
-          : abandoned.back()
-        ) abandoned.pop_back();
       };
       void read_from_gw(const mOrder &raw) {
         if (debug()) report(&raw, " reply ");
