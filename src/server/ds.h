@@ -838,10 +838,10 @@ namespace K {
     mLastOrder()
     {};
     mLastOrder(const mOrder *const order, const mOrder &raw)
-      : price(order->price)
-      , tradeQuantity(raw.tradeQuantity)
-      , side(order->side)
-      , isPong(order->isPong)
+      : price(        order ? order->price      : 0       )
+      , tradeQuantity(order ? raw.tradeQuantity : 0       )
+      , side(         order ? order->side       : (mSide)0)
+      , isPong(       order ? order->isPong     : false   )
     {};
   };
 
@@ -2132,6 +2132,7 @@ namespace K {
         send();
       };
       void calcFundsAfterOrder(const mLastOrder &order, bool *const askForFees) {
+        if (!order.price) return;
         calcHeldAmount(order.side);
         calcFundsSilently();
         if (order.tradeQuantity) {
@@ -2986,8 +2987,8 @@ namespace K {
       void read_from_gw(const mOrder &raw) {
         if (debug()) report(&raw, " reply ");
         mOrder *const order = upsert(raw);
-        if (!order) return;
         updated = {order, raw};
+        if (!order) return;
         if (order->status == mStatus::Terminated)
           purge(order);
         send();
