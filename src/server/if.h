@@ -7,13 +7,10 @@ namespace K {
       Screen() {
         cout << BGREEN << "K"
              << RGREEN << " build " << K_BUILD << ' ' << K_STAMP << ".\n";
-        string changes;
-        int commits = -1;
-        if (mCommand::git()) {
-          mCommand::fetch();
-          changes = mCommand::changelog();
-          commits = count(changes.begin(), changes.end(), '\n');
-        }
+        const string changes = mCommand::changelog();
+        const int commits = mCommand::git()
+          ? count(changes.begin(), changes.end(), '\n')
+          : -1;
         cout << BGREEN << K_0_DAY << RGREEN << ' '
              << (commits == -1
                ? "(zip install)"

@@ -20,7 +20,6 @@
 #define M_PI_2 1.5707963267948965579989817342720925807952880859375
 #endif
 
-#define  public_ref public
 #define private_ref private
 
 #define TRUEONCE(k) (k ? !(k = !k) : k)
@@ -831,6 +830,20 @@ namespace K {
     k.isPong         = false;
     k.preferPostOnly = false;
   };
+  struct mLastOrder {
+    mPrice  price          = 0;
+    mAmount tradeQuantity  = 0;
+    mSide   side           = (mSide)0;
+    bool    isPong         = false;
+    mLastOrder()
+    {};
+    mLastOrder(const mOrder *const o)
+      : price(o->price)
+      , tradeQuantity(o->tradeQuantity)
+      , side(o->side)
+      , isPong(o->isPong)
+    {};
+  };
 
   struct mTrade {
      string tradeId;
@@ -946,12 +959,15 @@ namespace K {
 
   struct mFairLevelsPrice: public mToScreen,
                            public mJsonToClient<mFairLevelsPrice> {
-    public_ref:
+    private_ref:
       const mPrice &fairValue;
     public:
       mFairLevelsPrice(const mPrice &f)
         : fairValue(f)
       {};
+      const mPrice currentPrice() const {
+        return fairValue;
+      };
       const mMatter about() const {
         return mMatter::FairValue;
       };
@@ -970,7 +986,7 @@ namespace K {
   };
   static void to_json(json &j, const mFairLevelsPrice &k) {
     j = {
-      {"price", k.fairValue}
+      {"price", k.currentPrice()}
     };
   };
 
@@ -1242,7 +1258,7 @@ namespace K {
     j = {
       {          "ewma", k.ewma                         },
       {    "stdevWidth", k.stdev                        },
-      {     "fairValue", k.fairPrice.fairValue          },
+      {     "fairValue", k.fairPrice.currentPrice()     },
       { "tradesBuySize", k.takerTrades.takersBuySize60s },
       {"tradesSellSize", k.takerTrades.takersSellSize60s}
     };
@@ -1602,15 +1618,15 @@ namespace K {
         );
       });
     };
-    void insert(const double &tradeQuantity, const mPrice &price, const mSide &side, const bool &isPong) {
+    void insert(const mLastOrder &order) {
       mAmount fee = 0;
       mTrade trade(
-        price,
-        tradeQuantity,
-        side,
-        isPong,
+        order.price,
+        order.tradeQuantity,
+        order.side,
+        order.isPong,
         Tstamp,
-        abs(price * tradeQuantity),
+        abs(order.price * order.tradeQuantity),
         0, 0, 0, 0, 0, fee, false
       );
       print("GW " + args.exchange, string(trade.isPong?"PONG":"PING") + " TRADE "
@@ -1752,16 +1768,18 @@ namespace K {
                                    sumSells      = 0;
                             mPrice lastBuyPrice  = 0,
                                    lastSellPrice = 0;
-    void insert(const mAmount &tradeQuantity, const mPrice &price, const mSide &side) {
-      const bool bidORask = side == mSide::Bid;
-      (bidORask
+    void insert(const mLastOrder &order) {
+      (order.side == mSide::Bid
         ? lastBuyPrice
         : lastSellPrice
-      ) = price;
-      (bidORask
+      ) = order.price;
+      (order.side == mSide::Bid
         ? buys
         : sells
-      ).insert(pair<mPrice, mRecentTrade>(price, mRecentTrade(price, tradeQuantity)));
+      ).insert(pair<mPrice, mRecentTrade>(
+        order.price,
+        mRecentTrade(order.price, order.tradeQuantity)
+      ));
     };
     void expire() {
       if (buys.size()) expire(&buys);
@@ -1824,9 +1842,9 @@ namespace K {
       void timer_1s() {
         calc();
       };
-      void insertTrade(const double &tradeQuantity, const mPrice &price, const mSide &side, const bool &isPong) {
-        recentTrades.insert(tradeQuantity, price, side);
-        trades.insert(tradeQuantity, price, side, isPong);
+      void insertTrade(const mLastOrder &order) {
+        recentTrades.insert(order);
+        trades.insert(order);
         calc();
       };
       void calc() {
@@ -2109,14 +2127,17 @@ namespace K {
         quote.reset(raw.quote.amount, raw.quote.held);
         calcFunds();
       };
-      void calcFunds(const mSide *const side = nullptr) {
-        if (empty() or !fairValue) return;
-        if (side) calcHeldAmount(*side);
-        if (args.maxWallet) calcMaxWallet();
-        calcValues();
-        calcProfits();
-        target.calcTargetBasePos();
-        if (!side) send();
+      void calcFunds() {
+        calcFundsSilently();
+        send();
+      };
+      void calcFundsAfterOrder(const mLastOrder &order, bool *const askForFees) {
+        calcHeldAmount(order.side);
+        calcFundsSilently();
+        if (order.tradeQuantity) {
+          safety.insertTrade(order);
+          *askForFees = true;
+        }
       };
       const mMatter about() const {
         return mMatter::Position;
@@ -2131,6 +2152,13 @@ namespace K {
         return false;
       };
     private:
+      void calcFundsSilently() {
+        if (empty() or !fairValue) return;
+        if (args.maxWallet) calcMaxWallet();
+        calcValues();
+        calcProfits();
+        target.calcTargetBasePos();
+      };
       void calcHeldAmount(const mSide &side) {
         mWallet &sideWallet = (
           side == mSide::Ask
@@ -2141,7 +2169,7 @@ namespace K {
         for (const unordered_map<mRandId, mOrder>::value_type &it : orders)
           if (it.second.side == side)
             sideWallet.held += (
-              side == mSide::Ask
+              it.second.side == mSide::Ask
                 ? it.second.quantity
                 : it.second.quantity * it.second.price
             );
@@ -2880,18 +2908,17 @@ namespace K {
 
   struct mBroker: public mToScreen,
                   public mJsonToClient<mBroker> {
-                        mSemaphore semaphore;
-                  mAntonioCalculon calculon;
-                   vector<mOrder*> abandoned;
-                            mOrder *replaced = nullptr;
+          mSemaphore semaphore;
+    mAntonioCalculon calculon;
+          mLastOrder updated;
+     vector<mOrder*> abandoned;
+              mOrder *replaced = nullptr;
     private_ref:
       unordered_map<mRandId, mOrder> &orders;
-                     mWalletPosition &wallet;
     public:
-      mBroker(unordered_map<mRandId, mOrder> &o, const mProduct &p, const mMarketLevels &l, mWalletPosition &w)
+      mBroker(unordered_map<mRandId, mOrder> &o, const mProduct &p, const mMarketLevels &l, const mWalletPosition &w)
         : calculon(p, l, w)
         , orders(o)
-        , wallet(w)
       {};
       mOrder *const find(const mRandId &orderId) {
         return (orderId.empty()
@@ -2956,20 +2983,13 @@ namespace K {
           : abandoned.back()
         ) abandoned.pop_back();
       };
-      void read_from_gw(const mOrder &raw, bool *const askForFees) {
+      void read_from_gw(const mOrder &raw) {
         if (debug()) report(&raw, " reply ");
         mOrder *const order = upsert(raw);
         if (!order) return;
-        const mPrice lastPrice  = order->price;
-        const mSide  lastSide   = order->side;
-        const bool   lastIsPong = order->isPong;
+        updated = order;
         if (order->status == mStatus::Terminated)
           purge(order);
-        wallet.calcFunds(&lastSide);
-        if (raw.tradeQuantity) {
-          wallet.safety.insertTrade(raw.tradeQuantity, lastPrice, lastSide, lastIsPong);
-          *askForFees = true;
-        }
         send();
         refresh();
       };
@@ -3007,8 +3027,7 @@ namespace K {
       void report(const mOrder *const order, const string &reason) const {
         print("DEBUG OG", " " + reason + " " + (
           order
-            ? (order->side == mSide::Bid ? "BID id " : "ASK id ")
-              + order->orderId + "::" + order->exchangeId
+            ? order->orderId + "::" + order->exchangeId
               + " [" + to_string((int)order->status) + "]: "
               + str8(order->quantity) + " " + args.base + " at price "
               + str8(order->price) + " " + args.quote
@@ -3247,11 +3266,8 @@ namespace K {
       static const bool git() {
         return access(".git", F_OK) != -1;
       };
-      static void fetch() {
-        if (git()) int k = system("git fetch");
-      };
       static const string changelog() {
-        return git()
+        return git() and !system("git fetch 2>/dev/null")
           ? output("(git --no-pager log --graph --oneline @..@{u} 2>/dev/null)")
           : "";
       };

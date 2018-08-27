@@ -50,11 +50,12 @@ install:
       yes 1 | make install
       make dist bundle
       make pvs || :
-      git cat-file blob Kira   >   Kira.asc && echo $TRAVIS_DEPLOY | gpg --passphrase-fd 0   Kira.asc
-      git cat-file blob Bender > Bender.asc && echo $TRAVIS_DEPLOY | gpg --passphrase-fd 0 Bender.asc
-      chmod +x Bender && ./Bender > /dev/null 2>&1
-      ncu              | /usr/games/cowsay -nW80 -fduck
-      make test-c 2>&1 | /usr/games/cowsay -nW160 -felephant || :
+      _() { git cat-file blob $1 > $1.asc && echo $TRAVIS_DEPLOY | gpg --passphrase-fd 0 $1.asc; }
+      _ Kira
+      _ Bender
+      . Bender                                                                            > /dev/null 2>&1
+      ncu | sed '/^\s*$/d'                                                                | /usr/games/cowsay -nW80 -fduck
+      make test-c 2>&1 | sed '/Total messages/d' | sed '/Help: The documentation/d'       | /usr/games/cowsay -nW160 -felephant || :
       KUNITS=1 make
     elif [[ "${TRAVIS_OS_NAME}" == "osx" ]]; then
       yes 4 | make install
@@ -62,7 +63,7 @@ install:
       yes 5 | make install
     fi
 
-script: make test | /usr/games/cowsay -nW160 -fbud-frogs
+script: make test                                                                         | /usr/games/cowsay -nW160 -fbud-frogs
 
 after_success:
   - |
@@ -71,7 +72,7 @@ after_success:
       lcov --remove coverage.info '/usr/*' '*local/include/*' --output-file coverage.info > /dev/null 2>&1
       coveralls-lcov --repo-token ${COVERALLS_TOKEN} coverage.info                        > /dev/null 2>&1
       cat coverage.info | codacy-coverage --language cpp                                  > /dev/null 2>&1
-      lcov --list coverage.info | /usr/games/cowsay -nW80 -fdefault
+      lcov --list coverage.info                                                           | /usr/games/cowsay -nW80 -fdefault
     fi
 
 notifications:

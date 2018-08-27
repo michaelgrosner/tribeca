@@ -24,7 +24,8 @@ namespace K {
           calcQuotes();
         });
         gw->RAWDATA_ENTRY_POINT(mOrder, {
-          broker.read_from_gw(rawdata, &gw->askForFees);
+          broker.read_from_gw(rawdata);
+          wallet.calcFundsAfterOrder(broker.updated, &gw->askForFees);
         });
         gw->RAWDATA_ENTRY_POINT(mTrade, {
           levels.stats.takerTrades.read_from_gw(rawdata);
