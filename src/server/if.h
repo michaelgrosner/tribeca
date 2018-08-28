@@ -631,10 +631,7 @@ namespace K {
         calcQuotes();
       };
       void calcQuotes() {
-        if (broker.online()
-          and levels.filter()
-          and !wallet.safety.empty()
-        ) {
+        if (broker.ready() and levels.ready() and wallet.ready()) {
           if (broker.calcQuotes()) {
             quote2orders(broker.calculon.quotes.ask);
             quote2orders(broker.calculon.quotes.bid);

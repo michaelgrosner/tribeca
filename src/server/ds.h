@@ -1469,12 +1469,8 @@ namespace K {
         *superSpread = spread() > widthPing * qp.sopWidthMultiplier;
         return widthPing;
       };
-      const bool filter() {
-        calcFilterOrders();
-        bids = filter(unfiltered.bids, &filterBidOrders);
-        asks = filter(unfiltered.asks, &filterAskOrders);
-        calcFairValue();
-        calcAverageWidth();
+      const bool ready() {
+        filter();
         return !empty();
       };
       void read_from_gw(const mLevels &raw) {
@@ -1485,6 +1481,13 @@ namespace K {
         diff.send_patch();
       };
     private:
+      void filter() {
+        calcFilterOrders();
+        bids = filter(unfiltered.bids, &filterBidOrders);
+        asks = filter(unfiltered.asks, &filterAskOrders);
+        calcFairValue();
+        calcAverageWidth();
+      };
       void calcAverageWidth() {
         if (empty()) return;
         averageWidth = (
@@ -2139,6 +2142,9 @@ namespace K {
         , orders(o)
         , fairValue(f)
       {};
+      const bool ready() const {
+        return !safety.empty();
+      };
       void read_from_gw(const mWallets &raw) {
         if (raw.empty()) return;
         base.currency = raw.base.currency;
@@ -2941,7 +2947,7 @@ namespace K {
         : calculon(p, l, w)
         , orders(o)
       {};
-      const bool online() {
+      const bool ready() {
         if (semaphore.offline()) {
           calculon.offline();
           return false;
