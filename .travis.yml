@@ -63,7 +63,7 @@ install:
       yes 5 | make install
     fi
 
-script: result=`make test`                                                                && /usr/games/cowsay -nW160 -fbud-frogs "$result"
+script: make test                                                                         | /usr/games/cowsay -nW160 -fbud-frogs && test ${PIPESTATUS[0]} -eq 0
 
 after_success:
   - |

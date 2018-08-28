@@ -123,7 +123,7 @@ namespace K {
           REQUIRE_NOTHROW(levels.stats.fairPrice.mToScreen::refresh = []() {
             INFO("refresh()");
           });
-          REQUIRE(!levels.ready());
+          REQUIRE_FALSE(levels.ready());
           REQUIRE_FALSE(levels.fairValue);
         }
       }
