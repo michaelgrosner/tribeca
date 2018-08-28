@@ -346,6 +346,7 @@ namespace K {
           });
           bool askForFees = false;
           mLastOrder order;
+          REQUIRE_NOTHROW(order.price = 1);
           REQUIRE_NOTHROW(order.side = mSide::Ask);
           REQUIRE_NOTHROW(wallet.calcFundsAfterOrder(order, &askForFees));
           REQUIRE_NOTHROW(order.side = mSide::Bid);
