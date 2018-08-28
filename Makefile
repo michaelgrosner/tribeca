@@ -2,7 +2,7 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
 PATCH    = 9
-BUILD    = 59
+BUILD    = 60
 CHOST   ?= $(shell $(MAKE) CHOST= chost -s)
 CARCH    = x86_64-linux-gnu arm-linux-gnueabihf aarch64-linux-gnu x86_64-apple-darwin17 x86_64-w64-mingw32
 KLOCAL  := build-$(CHOST)/local
@@ -346,8 +346,8 @@ css: src/www/sass
 bundle: clients www css node_modules/.bin/browserify node_modules/.bin/uglifyjs
 	@echo Building clients bundle zip and docroot lib..
 	mkdir -p $(KLOCAL)/var/www/js/client
-	./node_modules/.bin/browserify -t [ babelify --presets [ babili env ] ] $(KLOCAL)/var/www/js/main.js $(KLOCAL)/var/www/js/lib/*.js | ./node_modules/.bin/uglifyjs | gzip > $(KLOCAL)/var/www/js/client/bundle.min.js
-	rm -rf $(KLOCAL)/var/www/js/lib $(KLOCAL)/var/www/js/*.js $(KLOCAL)/var/www/sass
+	./node_modules/.bin/browserify -t [ babelify --presets [ babili env ] ] $(KLOCAL)/var/www/js/main.js | ./node_modules/.bin/uglifyjs | gzip > $(KLOCAL)/var/www/js/client/bundle.min.js
+	rm -rf $(KLOCAL)/var/www/js/*.js $(KLOCAL)/var/www/sass
 	echo $(CARCH) | tr ' ' "\n" | xargs -I % echo % | grep -v $(CHOST) | xargs -I % sh -c 'if test -d build-%; then rm -rf build-%/local/var;mkdir -p build-%/local/var;cp -R $(KLOCAL)/var build-%/local; fi'
 	echo $(CARCH) | tr ' ' "\n" | xargs -I % echo % | xargs -I % sh -c 'if test -d build-%; then CHOST=% make docroot; fi'
 	@echo DONE
