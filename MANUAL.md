@@ -41,7 +41,7 @@ Gateways are ideally stateless (some state may be needed in order to perform exc
 
 Navigate to the Web UI as described in the install process. You should see a screen like:
 
-![](../../raw/master/etc/img/K.png)
+![](https://user-images.githubusercontent.com/1634027/44740610-2f302e00-aafb-11e8-8066-e4362320c62e.png)
 
 * Market Data and Quotes - this is perhaps the most important screen in the app.
 
