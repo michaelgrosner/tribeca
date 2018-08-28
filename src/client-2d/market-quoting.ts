@@ -233,7 +233,6 @@ export class MarketQuotingComponent {
           if (this.levels.asks[i].cssMod==2)
             this.levels.asks.splice(i, 1);
           else this.levels.asks[i].cssMod = 0;
-      // if (document.body.className != 'visible')
       this.dirtyBids = 0;
       this.dirtyAsks = 0;
       this.incrementMarketData(update.bids, 'bids');
