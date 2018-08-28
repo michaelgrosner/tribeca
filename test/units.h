@@ -123,7 +123,7 @@ namespace K {
           REQUIRE_NOTHROW(levels.stats.fairPrice.mToScreen::refresh = []() {
             INFO("refresh()");
           });
-          REQUIRE_NOTHROW(levels.filter());
+          REQUIRE(!levels.ready());
           REQUIRE_FALSE(levels.fairValue);
         }
       }
@@ -182,7 +182,7 @@ namespace K {
           REQUIRE_NOTHROW(levels.stats.fairPrice.mToScreen::refresh = []() {
             FAIL("refresh() while filtering");
           });
-          REQUIRE_NOTHROW(levels.filter());
+          REQUIRE(levels.ready());
           REQUIRE(levels.fairValue == 1234.55);
         }
         THEN("fair value weight") {
@@ -190,7 +190,7 @@ namespace K {
           REQUIRE_NOTHROW(levels.stats.fairPrice.mToClient::send = [&]() {
             FAIL("send() while filtering");
           });
-          REQUIRE_NOTHROW(levels.filter());
+          REQUIRE(levels.ready());
           REQUIRE(levels.fairValue == 1234.59);
         }
         THEN("fair value reversed weight") {
@@ -198,7 +198,7 @@ namespace K {
           REQUIRE_NOTHROW(levels.stats.fairPrice.mToClient::send = [&]() {
             FAIL("send() while filtering");
           });
-          REQUIRE_NOTHROW(levels.filter());
+          REQUIRE(levels.ready());
           REQUIRE(levels.fairValue == 1234.51);
         }
         WHEN("diff") {
