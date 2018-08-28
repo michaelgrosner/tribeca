@@ -252,7 +252,7 @@ js sandbox: [jsfiddle.net](https://jsfiddle.net)
 
 ws sandbox: [websocket.org](https://www.websocket.org/echo.html)
 
-### Unreleased v0.4.x Changelog:
+<details><summary><a id="unreleased-changelog"><b>Unreleased v0.4.x Changelog</b></a></summary>
 
 Added OOP everywhere.
 
@@ -271,8 +271,9 @@ Added build chain for win32.
 Updated OKEx websocket to binary data.
 
 Added build chain for OSX v10.13.
+</details>
 
-### Release v0.4.0 Changelog:
+<details><summary><b>Release v0.4.0 Changelog</b></summary>
 
 Updated HitBTC API v2.
 
@@ -295,8 +296,9 @@ Added built-in C++ WWW Server to replace expressjs and socketio.
 Added built-in SQLite C++ interface to replace external mongodb server.
 
 Added Poloniex API.
+</details>
 
-### Release v0.3.0 Changelog:
+<details><summary><b>Release v0.3.0 Changelog</b></summary>
 
 Updated application name to K because of Kira.
 
@@ -321,8 +323,9 @@ Updated Bitfinex API v2.
 Added Coinbase FIX API with stunnel.
 
 Added Korbit API.
+</details>
 
-### Release v0.2.0 Changelog:
+<details><summary><b>Release v0.2.0 Changelog</b></summary>
 
 Added new quoting styles PingPong, Boomerang, AK-47.
 
@@ -333,10 +336,12 @@ Added audio notices, realtime wallet display, and grafana integration.
 Added https, dark theme and new UI elements.
 
 Added a bit of love to Kira.
+</details>
 
-### Release v0.1.0 Changelog:
+<details><summary><b>Release v0.1.0 Changelog</b></summary>
 
 see the upstream project [michaelgrosner/tribeca](https://github.com/michaelgrosner/tribeca).
+</details>
 
 ### Unlock
 
