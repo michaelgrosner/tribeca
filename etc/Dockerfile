@@ -1,15 +1,14 @@
 FROM node:8-stretch
 
 RUN apt-get update                                      \
- && apt-get install --no-install-recommends -y git sudo \
- && rm -rf /var/lib/apt/lists/*
+ && apt-get install --no-install-recommends -y git sudo
 
 # Feel free to choose the branch you want to build:
 RUN git clone -b master https://github.com/ctubio/Krypto-trading-bot.git /K
 
 WORKDIR /K
 
-RUN make docker
+RUN make docker && rm -rf /var/lib/apt/lists/
 
 EXPOSE 3000 5000
 
