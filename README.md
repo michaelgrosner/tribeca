@@ -443,6 +443,5 @@ We have already enough policemen,<br />if you like adventures choose to be a <a 
 <img src="https://user-images.githubusercontent.com/1634027/32695988-22681724-c76b-11e7-8557-7f2b15b2686b.jpg" />
 <br /><br /><br /><br />Violence should not be the answer to those who<br />are asking for freedom.<br /><br /><br /><br /><br />
 <img src="https://user-images.githubusercontent.com/1634027/29746351-7478d556-8ad7-11e7-8b27-445eefa8f960.jpg" />
-<br /><br /><br /><br /><br /></p>
-<details><summary align="center"><img width="300" src="http://hits.dwyl.io/ctubio/Krypto-trading-bot.svg" /></summary>
-<p align="center"><img src="https://s01.flagcounter.com/countxl/E6Gs/bg_FFFFFF/txt_000000/border_FFFFFF/columns_8/maxflags_250/viewers_3/labels_0/pageviews_0/flags_0/percent_1/" border="0"></p></details>
+<br /><br /><br /><br /><br /><br /><br /><br /><br />
+<img width="300" src="http://hits.dwyl.io/ctubio/Krypto-trading-bot.svg" /></p>
