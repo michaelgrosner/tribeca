@@ -26,6 +26,14 @@
 
 #define ROUND(k, x) (round((k) / x) * x)
 
+#ifdef NDEBUG
+#  define EXIT exit
+#else
+#  include <catch.h>
+#  define EXIT catch_exit
+   void catch_exit(const int);
+#endif
+
 namespace K {
   enum class mConnectivity: unsigned int {
     Disconnected, Connected
@@ -125,7 +133,7 @@ namespace K {
             debugOrders = 0,      debugQuotes = 0, debugWallet  = 0,
             headless    = 0,      dustybot    = 0, lifetime     = 0,
             autobot     = 0,      naked       = 0, free         = 0,
-            ignoreSun   = 0,      ignoreMoon  = 0, testChamber  = 0,
+            ignoreSun   = 0,      ignoreMoon  = 0,
             maxAdmins   = 7,      maxLevels   = 321;
     mAmount maxWallet   = 0;
      string title       = "K.sh", matryoshka  = "https://www.example.com/",
@@ -174,7 +182,6 @@ namespace K {
         {"wallet-limit", required_argument, 0,               'W'},
         {"market-limit", required_argument, 0,               'M'},
         {"client-limit", required_argument, 0,               'C'},
-        {"test-chamber", required_argument, 0,               'x'},
         {"interface",    required_argument, 0,               'i'},
         {"free-version", no_argument,       &free,             1},
         {"version",      no_argument,       0,               'v'},
@@ -185,7 +192,6 @@ namespace K {
         switch (k = getopt_long(argc, argv, "hvd:i:k:x:K:L:M:T:W:", opts, NULL)) {
           case -1 :
           case  0 : break;
-          case 'x': testChamber  = stoi(optarg);   break;
           case 'M': maxLevels    = stoi(optarg);   break;
           case 'C': maxAdmins    = stoi(optarg);   break;
           case 'T': lifetime     = stoi(optarg);   break;
@@ -277,7 +283,6 @@ namespace K {
               << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "    --ignore-moon         - do not switch UI to dark theme on moonlight." << '\n'
               << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "-k, --matryoshka=URL      - set Matryoshka link URL of the next UI." << '\n'
               << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "-K, --title=WORD          - set WORD as UI title to identify different bots." << '\n'
-              << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "-x, --test-chamber=NUMBER - set release candidate NUMBER to test (ask your developer)." << '\n'
               << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "-i, --interface=IP        - set IP to bind as outgoing network interface," << '\n'
               << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "                            default IP is the system default network interface." << '\n'
               << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "    --free-version        - work with all market levels and enable the slow XMR miner." << '\n'
@@ -864,6 +869,148 @@ namespace K {
       , isPong(       order ? order->isPong     : false   )
     {};
   };
+  struct mOrders: public mToScreen,
+                  public mJsonToClient<mOrders> {
+    mLastOrder updated;
+    private:
+      unordered_map<mRandId, mOrder> orders;
+    public:
+      mOrder *const find(const mRandId &orderId) {
+        return (orderId.empty()
+          or orders.find(orderId) == orders.end()
+        ) ? nullptr
+          : &orders.at(orderId);
+      };
+      mOrder *const findsert(const mOrder &raw) {
+        if (raw.status == mStatus::Waiting and !raw.orderId.empty())
+          return &(orders[raw.orderId] = raw);
+        if (raw.orderId.empty() and !raw.exchangeId.empty()) {
+          unordered_map<mRandId, mOrder>::iterator it = find_if(
+            orders.begin(), orders.end(),
+            [&](const pair<mRandId, mOrder> &it_) {
+              return raw.exchangeId == it_.second.exchangeId;
+            }
+          );
+          if (it != orders.end())
+            return &it->second;
+        }
+        return find(raw.orderId);
+      };
+      const double heldAmount(const mSide &side) const {
+        double held = 0;
+        for (const unordered_map<mRandId, mOrder>::value_type &it : orders)
+          if (it.second.side == side)
+            held += (
+              it.second.side == mSide::Ask
+                ? it.second.quantity
+                : it.second.quantity * it.second.price
+            );
+        return held;
+      };
+      void resetFilters(
+        unordered_map<mPrice, mAmount> *const filterBidOrders,
+        unordered_map<mPrice, mAmount> *const filterAskOrders
+      ) const {
+        filterBidOrders->clear();
+        filterAskOrders->clear();
+        for (const unordered_map<mRandId, mOrder>::value_type &it : orders)
+          (it.second.side == mSide::Bid
+            ? *filterBidOrders
+            : *filterAskOrders
+          )[it.second.price] += it.second.quantity;
+      };
+      vector<mOrder*> at(const mSide &side) {
+        vector<mOrder*> sideOrders;
+        for (unordered_map<mRandId, mOrder>::value_type &it : orders)
+          if (side == it.second.side)
+             sideOrders.push_back(&it.second);
+        return sideOrders;
+      };
+      vector<mOrder*> working() {
+        vector<mOrder*> workingOrders;
+        for (unordered_map<mRandId, mOrder>::value_type &it : orders)
+          if (mStatus::Working == it.second.status
+            and it.second.preferPostOnly
+          ) workingOrders.push_back(&it.second);
+        return workingOrders;
+      };
+      const vector<mOrder> working(const bool &sorted = false) const {
+        vector<mOrder> workingOrders;
+        for (const unordered_map<mRandId, mOrder>::value_type &it : orders)
+          if (mStatus::Working == it.second.status)
+            workingOrders.push_back(it.second);
+        if (sorted)
+          sort(workingOrders.begin(), workingOrders.end(),
+            [](const mOrder &a, const mOrder &b) {
+              return a.price > b.price;
+            }
+          );
+        return workingOrders;
+      };
+      mOrder *const upsert(const mOrder &raw) {
+        mOrder *const order = findsert(raw);
+        mOrder::update(raw, order);
+        if (debug()) {
+          report(order, " saved ");
+          report_size();
+        }
+        return order;
+      };
+      const bool replace(const mPrice &price, const bool &isPong, mOrder *const order) {
+        const bool allowed = mOrder::replace(price, isPong, order);
+        if (debug()) report(order, "replace");
+        return allowed;
+      };
+      const bool cancel(mOrder *const order) {
+        const bool allowed = mOrder::cancel(order);
+        if (debug()) report(order, "cancel ");
+        return allowed;
+      };
+      void purge(const mOrder *const order) {
+        if (debug()) report(order, " purge ");
+        orders.erase(order->orderId);
+        if (debug()) report_size();
+      };
+      void read_from_gw(const mOrder &raw) {
+        if (debug()) report(&raw, " reply ");
+        mOrder *const order = upsert(raw);
+        updated = {order, raw};
+        if (!order) return;
+        if (order->status == mStatus::Terminated)
+          purge(order);
+        send();
+        refresh();
+      };
+      const mMatter about() const {
+        return mMatter::OrderStatusReports;
+      };
+      const bool realtime() const {
+        return !qp.delayUI;
+      };
+      const json blob() const {
+        return working();
+      };
+    private:
+      void report(const mOrder *const order, const string &reason) const {
+        print("DEBUG OG", " " + reason + " " + (
+          order
+            ? order->orderId + "::" + order->exchangeId
+              + " [" + to_string((int)order->status) + "]: "
+              + str8(order->quantity) + " " + args.base + " at price "
+              + str8(order->price) + " " + args.quote
+            : "not found"
+        ));
+      };
+      void report_size() const {
+        print("DEBUG OG", "memory " + to_string(orders.size()));
+      };
+      const bool debug() const {
+        return args.debugOrders;
+      };
+  };
+  static void to_json(json &j, const mOrders &k) {
+    j = k.blob();
+  };
 
   struct mTrade {
      string tradeId;
@@ -1435,10 +1582,10 @@ namespace K {
       unordered_map<mPrice, mAmount> filterBidOrders,
                                      filterAskOrders;
     private_ref:
-      const unordered_map<mRandId, mOrder> &orders;
-      const mProduct                       &product;
+      const mOrders  &orders;
+      const mProduct &product;
     public:
-      mMarketLevels(const unordered_map<mRandId, mOrder> &o, const mProduct &p)
+      mMarketLevels(const mOrders &o, const mProduct &p)
         : diff(unfiltered)
         , stats(fairValue)
         , orders(o)
@@ -1482,7 +1629,7 @@ namespace K {
       };
     private:
       void filter() {
-        calcFilterOrders();
+        orders.resetFilters(&filterBidOrders, &filterAskOrders);
         bids = filter(unfiltered.bids, &filterBidOrders);
         asks = filter(unfiltered.asks, &filterAskOrders);
         calcFairValue();
@@ -1523,15 +1670,6 @@ namespace K {
         );
         if (fairValue)
           fairValue = ROUND(fairValue, *product.minTick);
-      };
-      void calcFilterOrders() {
-        filterBidOrders.clear();
-        filterAskOrders.clear();
-        for (const unordered_map<mRandId, mOrder>::value_type &it : orders)
-          (it.second.side == mSide::Bid
-            ? filterBidOrders
-            : filterAskOrders
-          )[it.second.price] += it.second.quantity;
       };
       const vector<mLevel> filter(vector<mLevel> levels, unordered_map<mPrice, mAmount> *const filterOrders) {
         if (!filterOrders->empty())
@@ -2093,8 +2231,8 @@ namespace K {
       total = (amount = ROUND(a, 1e-8))
             + (held   = ROUND(h, 1e-8));
     };
-    void reset() {
-      reset(total - held, held);
+    void reset(const mAmount &h) {
+      reset(total - h, h);
     };
     const bool empty() const {
       return currency.empty();
@@ -2133,10 +2271,10 @@ namespace K {
      mSafety safety;
     mProfits profits;
     private_ref:
-      const unordered_map<mRandId, mOrder> &orders;
-      const mPrice                         &fairValue;
+      const mOrders &orders;
+      const mPrice  &fairValue;
     public:
-      mWalletPosition(unordered_map<mRandId, mOrder> &o, const double &t, const mPrice &f)
+      mWalletPosition(const mOrders &o, const double &t, const mPrice &f)
         : target(t, base.value)
         , safety(f, base.value, base.total, target.targetBasePosition)
         , orders(o)
@@ -2187,20 +2325,10 @@ namespace K {
         target.calcTargetBasePos();
       };
       void calcHeldAmount(const mSide &side) {
-        mWallet &sideWallet = (
-          side == mSide::Ask
-            ? base
-            : quote
-        );
-        sideWallet.held = 0;
-        for (const unordered_map<mRandId, mOrder>::value_type &it : orders)
-          if (it.second.side == side)
-            sideWallet.held += (
-              it.second.side == mSide::Ask
-                ? it.second.quantity
-                : it.second.quantity * it.second.price
-            );
-        sideWallet.reset();
+        (side == mSide::Ask
+          ? base
+          : quote
+        ).reset(orders.heldAmount(side));
       };
       void calcValues() {
         base.value = ROUND(quote.total / fairValue + base.total, 1e-8);
@@ -2638,12 +2766,16 @@ namespace K {
         , levels(l)
         , wallet(w)
       {};
-      void clear() {
+      vector<const mOrder*> clear() {
         send();
-        zombies.clear();
         states(mQuoteState::MissingData);
         countWaiting =
         countWorking = 0;
+        if (zombies.empty())
+          return zombies;
+        vector<const mOrder*> missing;
+        zombies.swap(missing);
+        return missing;
       };
       void offline() {
         states(mQuoteState::Disconnected);
@@ -2933,17 +3065,13 @@ namespace K {
     };
   };
 
-  struct mBroker: public mToScreen,
-                  public mJsonToClient<mBroker> {
+  struct mBroker {
           mSemaphore semaphore;
     mAntonioCalculon calculon;
-          mLastOrder updated;
-     vector<mOrder*> abandoned;
-              mOrder *replaced = nullptr;
     private_ref:
-      unordered_map<mRandId, mOrder> &orders;
+      mOrders &orders;
     public:
-      mBroker(unordered_map<mRandId, mOrder> &o, const mProduct &p, const mMarketLevels &l, const mWalletPosition &w)
+      mBroker(mOrders &o, const mProduct &p, const mMarketLevels &l, const mWalletPosition &w)
         : calculon(p, l, w)
         , orders(o)
       {};
@@ -2962,129 +3090,19 @@ namespace K {
         calculon.calcQuotes();
         return true;
       };
-      void abandon(mQuote &quote) {
-        abandoned.clear();
+      vector<mOrder*> abandon(mQuote &quote) {
+        vector<mOrder*> abandoned;
         unsigned int bullets = qp.bullets;
         const bool all = quote.state != mQuoteState::Live;
-        for (unordered_map<mRandId, mOrder>::value_type &it : orders)
-          if (quote.side == it.second.side
-            and (all or calculon.abandon(it.second, quote, bullets))
-          ) abandoned.push_back(&it.second);
-        if (replaced = (quote.empty() or abandoned.empty())
-          ? nullptr
-          : abandoned.back()
-        ) abandoned.pop_back();
+        for (mOrder *const it : orders.at(quote.side))
+          if (all or calculon.abandon(*it, quote, bullets))
+            abandoned.push_back(it);
+        return abandoned;
       };
-      mOrder *const find(const mRandId &orderId) {
-        return (orderId.empty()
-          or orders.find(orderId) == orders.end()
-        ) ? nullptr
-          : &orders.at(orderId);
+      void clear() {
+        for (const mOrder *const it : calculon.clear())
+          orders.purge(it);
       };
-      mOrder *const findsert(const mOrder &raw) {
-        if (raw.status == mStatus::Waiting and !raw.orderId.empty())
-          return &(orders[raw.orderId] = raw);
-        if (raw.orderId.empty() and !raw.exchangeId.empty()) {
-          unordered_map<mRandId, mOrder>::iterator it = find_if(
-            orders.begin(), orders.end(),
-            [&](const pair<mRandId, mOrder> &it_) {
-              return raw.exchangeId == it_.second.exchangeId;
-            }
-          );
-          if (it != orders.end())
-            return &it->second;
-        }
-        return find(raw.orderId);
-      };
-      mOrder *const upsert(const mOrder &raw) {
-        mOrder *const order = findsert(raw);
-        mOrder::update(raw, order);
-        if (debug()) {
-          report(order, " saved ");
-          report_size();
-        }
-        return order;
-      };
-      const bool replace(const mPrice &price, const bool &isPong, mOrder *const order) {
-        const bool allowed = mOrder::replace(price, isPong, order);
-        if (debug()) report(order, "replace");
-        return allowed;
-      };
-      const bool cancel(mOrder *const order) {
-        const bool allowed = mOrder::cancel(order);
-        if (debug()) report(order, "cancel ");
-        return allowed;
-      };
-      void purge(const mOrder *const order) {
-        if (debug()) report(order, " purge ");
-        orders.erase(order->orderId);
-        if (debug()) report_size();
-      };
-      void purge() {
-        for (const mOrder *const it : calculon.zombies)
-          purge(it);
-        calculon.clear();
-      };
-      void read_from_gw(const mOrder &raw) {
-        if (debug()) report(&raw, " reply ");
-        mOrder *const order = upsert(raw);
-        updated = {order, raw};
-        if (!order) return;
-        if (order->status == mStatus::Terminated)
-          purge(order);
-        send();
-        refresh();
-      };
-      vector<mOrder*> working() {
-        vector<mOrder*> workingOrders;
-        for (unordered_map<mRandId, mOrder>::value_type &it : orders)
-          if (mStatus::Working == it.second.status
-            and it.second.preferPostOnly
-          ) workingOrders.push_back(&it.second);
-        return workingOrders;
-      };
-      const vector<mOrder> working(const bool &sorted = false) const {
-        vector<mOrder> workingOrders;
-        for (const unordered_map<mRandId, mOrder>::value_type &it : orders)
-          if (mStatus::Working == it.second.status)
-            workingOrders.push_back(it.second);
-        if (sorted)
-          sort(workingOrders.begin(), workingOrders.end(),
-            [](const mOrder &a, const mOrder &b) {
-              return a.price > b.price;
-            }
-          );
-        return workingOrders;
-      };
-      const mMatter about() const {
-        return mMatter::OrderStatusReports;
-      };
-      const bool realtime() const {
-        return !qp.delayUI;
-      };
-      const json blob() const {
-        return working();
-      };
-    private:
-      void report(const mOrder *const order, const string &reason) const {
-        print("DEBUG OG", " " + reason + " " + (
-          order
-            ? order->orderId + "::" + order->exchangeId
-              + " [" + to_string((int)order->status) + "]: "
-              + str8(order->quantity) + " " + args.base + " at price "
-              + str8(order->price) + " " + args.quote
-            : "not found"
-        ));
-      };
-      void report_size() const {
-        print("DEBUG OG", "memory " + to_string(orders.size()));
-      };
-      const bool debug() const {
-        return args.debugOrders;
-      };
-  };
-  static void to_json(json &j, const mBroker &k) {
-    j = k.blob();
   };
 
   struct mText {
@@ -3360,5 +3378,9 @@ namespace K {
     };
   };
 }
+
+#ifndef NDEBUG
+#  include <test/units.h>
+#endif
 
 #endif

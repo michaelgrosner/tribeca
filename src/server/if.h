@@ -550,14 +550,14 @@ namespace K {
 #define SCREEN_PRINTME_CODE(data)  screen->printme(&data);
 #define SCREEN_PRINTME_LIST(code)  \
   code( *gw                     )  \
+  code( orders                  )  \
   code( wallet.target           )  \
   code( wallet.safety.trades    )  \
   code( levels.stats.fairPrice  )  \
   code( levels.stats.ewma       )  \
   code( broker.semaphore        )  \
   code( broker.calculon.quotes  )  \
-  code( broker.calculon.dummyMM )  \
-  code( broker                  )
+  code( broker.calculon.dummyMM )
 
 #define SCREEN_PRESSME      \
         SCREEN_PRESSME_LIST \
@@ -576,6 +576,7 @@ namespace K {
   code( qp                       ) \
   code( monitor                  ) \
   code( monitor.product          ) \
+  code( orders                   ) \
   code( wallet.target            ) \
   code( wallet.safety            ) \
   code( wallet.safety.trades     ) \
@@ -586,7 +587,6 @@ namespace K {
   code( levels.stats             ) \
   code( broker.semaphore         ) \
   code( broker.calculon          ) \
-  code( broker                   ) \
   code( btn.notepad              )
 
 #define CLIENT_CLICKME      \
@@ -605,12 +605,12 @@ namespace K {
   code( btn.cleanTradesClosed , wallet.safety.trades.clearClosed ,           ) \
   code( btn.cleanTrades       , wallet.safety.trades.clearAll    ,           )
     public:
-                            mButtons btn;
-                            mMonitor monitor;
-      unordered_map<mRandId, mOrder> orders;
-                       mMarketLevels levels;
-                     mWalletPosition wallet;
-                             mBroker broker;
+             mButtons btn;
+             mMonitor monitor;
+              mOrders orders;
+        mMarketLevels levels;
+      mWalletPosition wallet;
+              mBroker broker;
       Engine()
         : levels(orders, monitor.product)
         , wallet(orders, levels.stats.ewma.targetPositionAutoPercentage, levels.fairValue)
@@ -637,23 +637,29 @@ namespace K {
             quote2orders(broker.calculon.quotes.bid);
           } else cancelOrders();
         }
-        broker.purge();
+        broker.clear();
       };
       void quote2orders(mQuote &quote) {
-        broker.abandon(quote);
-        for (mOrder *const it : broker.abandoned) cancelOrder(it);
+        vector<mOrder*> abandoned = broker.abandon(quote);
+        const bool replace = gw->askForReplace
+          and !quote.empty()
+          and !abandoned.empty();
+        for_each(
+          abandoned.begin(), abandoned.end() - (replace ? 1 : 0),
+          [&](mOrder *const it) {
+            cancelOrder(it);
+          }
+        );
         if (quote.empty()) return;
-        if (broker.replaced and gw->askForReplace)
-          replaceOrder(quote.price, quote.isPong, broker.replaced);
-        else {
-          if (broker.replaced and args.testChamber != 1) cancelOrder(broker.replaced);
-          placeOrder(mOrder(gw->randId(), quote.side, quote.price, quote.size, quote.isPong));
-          if (broker.replaced and args.testChamber == 1) cancelOrder(broker.replaced);
-        }
+        if (replace)
+          replaceOrder(quote.price, quote.isPong, abandoned.back());
+        else placeOrder(mOrder(
+          gw->randId(), quote.side, quote.price, quote.size, quote.isPong
+        ));
         monitor.tick_orders();
       };
       void cancelOrders() {
-        for (mOrder *const it : broker.working())
+        for (mOrder *const it : orders.working())
           cancelOrder(it);
       };
       void manualSendOrder(mOrder raw) {
@@ -661,18 +667,18 @@ namespace K {
         placeOrder(raw);
       };
       void manualCancelOrder(const mRandId &orderId) {
-        cancelOrder(broker.find(orderId));
+        cancelOrder(orders.find(orderId));
       };
     private:
       void placeOrder(const mOrder &raw) {
-        gw->place(broker.upsert(raw));
+        gw->place(orders.upsert(raw));
       };
       void replaceOrder(const mPrice &price, const bool &isPong, mOrder *const order) {
-        if (broker.replace(price, isPong, order))
+        if (orders.replace(price, isPong, order))
           gw->replace(order);
       };
       void cancelOrder(mOrder *const order) {
-        if (broker.cancel(order))
+        if (orders.cancel(order))
           gw->cancel(order);
       };
   } *engine = nullptr;

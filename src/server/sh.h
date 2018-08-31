@@ -24,8 +24,6 @@ namespace K {
         gw->load_internals();
         switchOn();
         if (args.inet) log("CF", "Network Interface for outgoing traffic is", args.inet);
-        if (args.testChamber == 1) logWar("CF", "Test Chamber #1: send new orders before cancel old");
-        else if (args.testChamber) logWar("CF", "ignored Test Chamber #" + to_string(args.testChamber));
       };
       void switchOn() {
         if (!args.headless)
@@ -282,7 +280,7 @@ namespace K {
 #endif
       void refresh() {
         if (!wBorder) return;
-        const vector<mOrder> openOrders = engine->broker.working(true);
+        const vector<mOrder> openOrders = engine->orders.working(true);
         int lastcursor = cursor,
             y = getmaxy(wBorder),
             x = getmaxx(wBorder),

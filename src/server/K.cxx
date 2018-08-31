@@ -54,14 +54,6 @@ using namespace nlohmann;
 "\n"   "are licensed by/under the law of my grandma (since last century)," \
 "\n"   "feel free to crack all as you need."
 
-#ifdef NDEBUG
-#  define EXIT exit
-#else
-#  include <catch.h>
-#  define EXIT catch_exit
-   void catch_exit(const int);
-#endif
-
 #include "ds.h"
 #include "if.h"
 #include "sh.h"
@@ -69,10 +61,6 @@ using namespace nlohmann;
 #include "db.h"
 #include "ui.h"
 #include "qe.h"
-
-#ifndef NDEBUG
-#  include <test/units.h>
-#endif
 
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;;int main(int argc, char** argv) {;;
