@@ -45,6 +45,7 @@ help:
 	#  make dist         - compile K dependencies      #
 	#  KALL=1 make dist  - compile K dependencies      #
 	#  make packages     - provide K dependencies      #
+	#  make doc          - compile K documentation     #
 	#  make install      - install K application       #
 	#  make docker       - install K application       #
 	#  make reinstall    - upgrade K application       #
@@ -243,9 +244,9 @@ cleandb: /data/db/K*
 	rm -rf /data/db/K*.db
 
 packages:
-	test -n "`command -v apt-get`" && sudo apt-get -y install g++ build-essential automake autoconf libtool libxml2 libxml2-dev zlib1g-dev openssl stunnel python curl gzip screen \
+	test -n "`command -v apt-get`" && sudo apt-get -y install g++ build-essential automake autoconf libtool libxml2 libxml2-dev zlib1g-dev openssl stunnel python curl gzip screen doxygen graphviz \
 	|| (test -n "`command -v yum`" && sudo yum -y install gcc-c++ automake autoconf libtool libxml2 libxml2-devel openssl stunnel python curl gzip screen) \
-	|| (test -n "`command -v brew`" && (xcode-select --install || :) && (brew install automake autoconf libxml2 sqlite openssl zlib stunnel python curl gzip proctools || brew upgrade || :)) \
+	|| (test -n "`command -v brew`" && (xcode-select --install || :) && (brew install automake autoconf libxml2 sqlite openssl zlib stunnel python curl gzip proctools doxygen graphviz || brew upgrade || :)) \
 	|| (test -n "`command -v pacman`" && sudo pacman --noconfirm -S --needed base-devel libxml2 zlib sqlite curl libcurl-compat openssl stunnel python gzip screen)
 	sudo mkdir -p /data/db/
 	sudo chown $(shell id -u) /data/db
@@ -362,6 +363,9 @@ latest: .git diff
 changelog: .git
 	@_() { echo `git rev-parse $$1`; }; echo && git --no-pager log --graph --oneline @..@{u} && test `_ @` != `_ @{u}` || echo No need to upgrade, both versions are equal.
 
+doc:
+	@$(MAKE) -C $@
+
 test:
 	./K.sh --version
 ifndef TRAVIS_DEPLOY
@@ -373,16 +377,16 @@ test-c:
 	(plog-converter -a GA:1,2 -t tasklist -o report.tasks PVS-Studio.log && cat report.tasks && rm report.tasks) || :
 	@rm -f PVS-Studio.log
 
-png: etc/${PNG}.png etc/${PNG}.json
-	convert etc/${PNG}.png -set "K.conf" "`cat etc/${PNG}.json`" K: etc/${PNG}.png 2>/dev/null || :
-	@$(MAKE) png-check -s
+#png: etc/${PNG}.png etc/${PNG}.json
+#	convert etc/${PNG}.png -set "K.conf" "`cat etc/${PNG}.json`" K: etc/${PNG}.png 2>/dev/null || :
+#	@$(MAKE) png-check -s
 
-png-check: etc/${PNG}.png
-	@test -n "`identify -verbose etc/${PNG}.png | grep 'K\.conf'`" && echo Configuration injected into etc/${PNG}.png OK, feel free to remove etc/${PNG}.json anytime. || echo nope, injection failed.
+#png-check: etc/${PNG}.png
+#	@test -n "`identify -verbose etc/${PNG}.png | grep 'K\.conf'`" && echo Configuration injected into etc/${PNG}.png OK, feel free to remove etc/${PNG}.json anytime. || echo nope, injection failed.
 
 checkOK:
-	read -p "KMOD: " KMOD;date=`date`;git diff;git status && read ctrl_c    \
-	&& KALL=1 $(MAKE) K release && git add . && git commit -S -m "$${KMOD}" \
+	read -p "KMOD: " KMOD;date=`date`;git diff;git status && read ctrl_c        \
+	&& KALL=1 $(MAKE) K doc release && git add . && git commit -S -m "$${KMOD}" \
 	&& git push && echo $${date} && date
 
 MAJOR:
@@ -428,4 +432,4 @@ md5: src
 asandwich:
 	@test `whoami` = 'root' && echo OK || echo make it yourself!
 
-.PHONY: K chost dist link Linux Darwin Win32 build zlib openssl curl ncurses quickfix uws json catch pvs clean cleandb list screen start stop restart startall stopall restartall coinbase packages install docker reinstall clients www bundle diff latest changelog test test-c png png-check release md5 asandwich
+.PHONY: all K chost dist link Linux Darwin Win32 build zlib openssl curl ncurses quickfix uws json catch pvs clean cleandb list screen start stop restart startall stopall restartall coinbase packages install docker reinstall clients www bundle diff latest changelog test test-c doc release md5 asandwich

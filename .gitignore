@@ -1,5 +1,6 @@
 /*.sh
 /app
+/doc/html*
 /build*
 /*.gcno
 /*.gcda
