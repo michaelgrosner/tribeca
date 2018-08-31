@@ -2,7 +2,7 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
 PATCH    = 9
-BUILD    = 62
+BUILD    = 63
 CHOST   ?= $(shell $(MAKE) CHOST= chost -s)
 CARCH    = x86_64-linux-gnu arm-linux-gnueabihf aarch64-linux-gnu x86_64-apple-darwin17 x86_64-w64-mingw32
 KLOCAL  := build-$(CHOST)/local
@@ -417,7 +417,7 @@ ifdef KALL
 else
 	@tar -cvzf v$(MAJOR).$(MINOR).$(PATCH).$(BUILD)-$(CHOST).tar.gz $(KLOCAL)/bin/K-$(CHOST)* $(KLOCAL)/lib/K-$(CHOST)*                   \
 	$(shell test -n "`echo $(CHOST) | grep mingw32`" && echo $(KLOCAL)/bin/*dll || :)                                                     \
-	LICENSE COPYING THANKS README.md MANUAL.md src etc test Makefile WHITE_*                                                                   \
+	LICENSE COPYING THANKS README.md MANUAL.md src etc test Makefile WHITE_*                                                              \
 	&& curl -s -n -H "Content-Type:application/octet-stream" -H "Authorization: token ${KRELEASE}"                                        \
 	--data-binary "@$(PWD)/v$(MAJOR).$(MINOR).$(PATCH).$(BUILD)-$(CHOST).tar.gz"                                                          \
 	"https://uploads.github.com/repos/ctubio/Krypto-trading-bot/releases/$(shell curl -s                                                  \

@@ -1,4 +1,6 @@
-all: clean
+all: doc
+
+doc: clean
 	doxygen
 	@mv html html4
 	@test -d html.css || git clone git://github.com/mosra/m.css html.css
@@ -12,4 +14,4 @@ clean:
 CLEAN:
 	@rm -rf html*
 
-.PHONY: all clean CLEAN
+.PHONY: all doc clean CLEAN
