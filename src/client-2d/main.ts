@@ -568,7 +568,7 @@ class DisplayOrder {
                                           data-placement="bottom">{{ [1,2,3].indexOf(pair.quotingParameters.display.safety)>-1 ? 'Clean Pings' : 'Clean Trades' }}
                                   </button>
                               </div>
-                              <br [hidden]="exchange_name=='HitBtc'" /><a [hidden]="exchange_name=='HitBtc'" href="#" (click)="toggleWatch(exchange_name.toLowerCase(), (baseCurrency+'-'+quoteCurrency).toLowerCase())">Watch</a><br [hidden]="exchange_name=='HitBtc'" />
+                              <br [hidden]="exchange_name=='HITBTC'" /><a [hidden]="exchange_name=='HITBTC'" href="#" (click)="toggleWatch(exchange_name.toLowerCase(), (baseCurrency+'-'+quoteCurrency).toLowerCase())">Watch</a><br [hidden]="exchange_name=='HITBTC'" />
                               <br/><a href="#" (click)="toggleTakers()">Takers</a>, <a href="#" (click)="toggleStats()">Stats</a>
                               <br/><a href="#" (click)="toggleSettings(showSettings = !showSettings)">Settings</a>
                               <br/><a href="#" (click)="changeTheme()">{{ system_theme ? 'Light' : 'Dark' }}</a>
