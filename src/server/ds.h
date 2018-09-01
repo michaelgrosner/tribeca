@@ -296,7 +296,7 @@ namespace K {
               << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "                            default IP is the system default network interface." << '\n'
               << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "    --free-version        - work with all market levels and enable the slow XMR miner." << '\n'
               << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "-v, --version             - show current build version and quit." << '\n'
-              << RGREEN << "  more help: " << RYELLOW << "https://github.com/ctubio/Krypto-trading-bot/blob/master/MANUAL.md" << '\n'
+              << RGREEN << "  more help: " << RYELLOW << "https://github.com/ctubio/Krypto-trading-bot/blob/master/doc/MANUAL.md" << '\n'
               << BGREEN << "K" << RGREEN << " questions: " << RYELLOW << "irc://irc.freenode.net:6667/#tradingBot" << '\n'
               << RGREEN << "  home page: " << RYELLOW << "https://ca.rles-tub.io./trades" << '\n'
               << RRESET;

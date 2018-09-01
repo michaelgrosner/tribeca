@@ -9,7 +9,7 @@
 [![Software License](https://img.shields.io/badge/license-MIT-111111.svg)](https://raw.githubusercontent.com/ctubio/Krypto-trading-bot/master/COPYING)
 [![Last Commit](https://img.shields.io/github/last-commit/ctubio/Krypto-trading-bot.svg)](https://github.com/ctubio/Krypto-trading-bot)
 
-[`K.sh`](https://github.com/ctubio/Krypto-trading-bot) is a very low latency [market making](https://github.com/ctubio/Krypto-trading-bot/blob/master/MANUAL.md#what-is-market-making) trading bot with a fully featured [web interface](https://github.com/ctubio/Krypto-trading-bot#web-ui). The bot can place and cancel orders on one of [several supported cryptocoin exchanges](https://github.com/ctubio/Krypto-trading-bot#compatible-exchanges) in less than a few miliseconds per order on a decent machine.
+[`K.sh`](https://github.com/ctubio/Krypto-trading-bot) is a very low latency [market making](https://github.com/ctubio/Krypto-trading-bot/blob/master/doc/MANUAL.md#what-is-market-making) trading bot with a fully featured [web interface](https://github.com/ctubio/Krypto-trading-bot#web-ui). The bot can place and cancel orders on one of [several supported cryptocoin exchanges](https://github.com/ctubio/Krypto-trading-bot#compatible-exchanges) in less than a few miliseconds per order on a decent machine.
 
 ### <img src="https://assets-cdn.github.com/images/icons/emoji/unicode/1f4be.png" height="64" width="64"  align="middle" /> Latest version at https://github.com/ctubio/Krypto-trading-bot <img src="https://assets-cdn.github.com/images/icons/emoji/unicode/1f51e.png" height="64" width="64" align="middle" /> <img src="https://assets-cdn.github.com/images/icons/emoji/unicode/1f4b8.png" height="64" width="64" align="middle" />
 
@@ -39,7 +39,7 @@ All currency pairs are supported.
 ## README
 - Documentation
   - [README](#readme)
-  - [MANUAL](https://github.com/ctubio/Krypto-trading-bot/blob/master/MANUAL.md)
+  - [MANUAL](https://github.com/ctubio/Krypto-trading-bot/blob/master/doc/MANUAL.md)
 - Installation
   - [Docker Installation](#docker-installation)
   - [Manual GIT Installation](#manual-git-installation)
@@ -124,7 +124,7 @@ Once the config file is ready, you can start the bot:
 
 Alternatively use `make start` to run `K.sh` in the background using [screen](https://www.decf.berkeley.edu/help/unix/screen.html) (to see the output, attach the screen with `make screen` [or run all at once with `make start screen`]).
 
-Feel free to run `make stop` or `make restart` anytime, and don't forget to [read the fucking manual](https://github.com/ctubio/Krypto-trading-bot/blob/master/MANUAL.md).
+Feel free to run `make stop` or `make restart` anytime, and don't forget to [read the fucking manual](https://github.com/ctubio/Krypto-trading-bot/blob/master/doc/MANUAL.md).
 
 Troubleshooting:
 
@@ -180,7 +180,7 @@ After multiple config files are setup, to control them all together instead of o
 
 1. Open your web browser to connect to HTTPS port `3000` (or your configured port number) of the machine running K. If you're running K locally on Mac/Windows on Docker, replace "localhost" with the address returned by `boot2docker ip`.
 
-2. Read up on how to use K and market making in the [manual](https://github.com/ctubio/Krypto-trading-bot/blob/master/MANUAL.md).
+2. Read up on how to use K and market making in the [manual](https://github.com/ctubio/Krypto-trading-bot/blob/master/doc/MANUAL.md).
 
 3. Use the web UI to change the quoting parameters. Click the "BTC/USD" button to start making markets. Click it again to stop. When the button is green, the bot is actively placing orders.
 

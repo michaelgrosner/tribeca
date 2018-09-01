@@ -45,7 +45,6 @@ help:
 	#  make dist         - compile K dependencies      #
 	#  KALL=1 make dist  - compile K dependencies      #
 	#  make packages     - provide K dependencies      #
-	#  make doc          - compile K documentation     #
 	#  make install      - install K application       #
 	#  make docker       - install K application       #
 	#  make reinstall    - upgrade K application       #
@@ -68,6 +67,7 @@ help:
 	#  make bundle       - compile K clients bundle    #
 	#  make docroot      - compile K clients lib       #
 	#                                                  #
+	#  make doc          - compile K documentation     #
 	#  make test         - run tests                   #
 	#  make test-c       - run static tests            #
 	#                                                  #
@@ -364,13 +364,10 @@ changelog: .git
 	@_() { echo `git rev-parse $$1`; }; echo && git --no-pager log --graph --oneline @..@{u} && test `_ @` != `_ @{u}` || echo No need to upgrade, both versions are equal.
 
 doc:
-	@$(MAKE) -C $@
+	@$(MAKE) -sC $@
 
 test:
-	./K.sh --version
-ifndef TRAVIS_DEPLOY
-	@rm -f *.gcda *.gcno
-endif
+	@$(MAKE) -sC $@
 
 test-c:
 	@pvs-studio-analyzer analyze -e test/units.h -e $(KLOCAL)/include --source-file test/static_code_analysis.cxx --cl-params -I. -I$(KLOCAL)/include test/static_code_analysis.cxx && \
@@ -417,7 +414,7 @@ ifdef KALL
 else
 	@tar -cvzf v$(MAJOR).$(MINOR).$(PATCH).$(BUILD)-$(CHOST).tar.gz $(KLOCAL)/bin/K-$(CHOST)* $(KLOCAL)/lib/K-$(CHOST)*                   \
 	$(shell test -n "`echo $(CHOST) | grep mingw32`" && echo $(KLOCAL)/bin/*dll || :)                                                     \
-	LICENSE COPYING THANKS README.md MANUAL.md src etc test Makefile WHITE_*                                                              \
+	LICENSE COPYING README.md doc/[^html]* etc src test Makefile                                                                          \
 	&& curl -s -n -H "Content-Type:application/octet-stream" -H "Authorization: token ${KRELEASE}"                                        \
 	--data-binary "@$(PWD)/v$(MAJOR).$(MINOR).$(PATCH).$(BUILD)-$(CHOST).tar.gz"                                                          \
 	"https://uploads.github.com/repos/ctubio/Krypto-trading-bot/releases/$(shell curl -s                                                  \
