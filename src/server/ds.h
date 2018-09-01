@@ -40,7 +40,7 @@
 #else
 #  include <catch.h>
 #  define EXIT catch_exit
-   void catch_exit(const int);
+   static void catch_exit(const int);
 #endif
 
 namespace K {
@@ -928,14 +928,14 @@ namespace K {
             : *filterAskOrders
           )[it.second.price] += it.second.quantity;
       };
-      vector<mOrder*> at(const mSide &side) {
+      const vector<mOrder*> at(const mSide &side) {
         vector<mOrder*> sideOrders;
         for (unordered_map<mRandId, mOrder>::value_type &it : orders)
           if (side == it.second.side)
              sideOrders.push_back(&it.second);
         return sideOrders;
       };
-      vector<mOrder*> working() {
+      const vector<mOrder*> working() {
         vector<mOrder*> workingOrders;
         for (unordered_map<mRandId, mOrder>::value_type &it : orders)
           if (mStatus::Working == it.second.status
@@ -3099,7 +3099,7 @@ namespace K {
         calculon.calcQuotes();
         return true;
       };
-      vector<mOrder*> abandon(mQuote &quote) {
+      const vector<mOrder*> abandon(mQuote &quote) {
         vector<mOrder*> abandoned;
         unsigned int bullets = qp.bullets;
         const bool all = quote.state != mQuoteState::Live;

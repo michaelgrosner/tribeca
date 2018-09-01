@@ -640,7 +640,7 @@ namespace K {
         broker.clear();
       };
       void quote2orders(mQuote &quote) {
-        vector<mOrder*> abandoned = broker.abandon(quote);
+        const vector<mOrder*> abandoned = broker.abandon(quote);
         const bool replace = gw->askForReplace
           and !(quote.empty() or abandoned.empty());
         for_each(
