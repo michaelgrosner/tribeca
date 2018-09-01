@@ -33,6 +33,8 @@ KARGS   := -I$(KLOCAL)/include -pthread -std=c++11 -O3   \
 
 all: K
 
+hlep hepl: help
+
 help:
 	#                                                  #
 	# Available commands inside K top level directory: #
