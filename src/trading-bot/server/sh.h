@@ -14,9 +14,9 @@ namespace K {
     public:
       void main(int argc, char** argv) {
         const string msg = args.main(argc, argv);
-        if (!msg.empty()) EXIT(error("CF", msg));
+        if (!msg.empty()) exit(error("CF", msg));
         if (!(gw = Gw::new_Gw(args.exchange)))
-          EXIT(error("CF",
+          exit(error("CF",
             "Unable to configure a valid gateway using --exchange="
               + args.exchange + " argument"
           ));
@@ -52,7 +52,7 @@ namespace K {
                         .value("/YourFuckingIPAddress"_json_pointer, "");
         if (args.naked) return;
         if (!(wBorder = initscr()))
-          EXIT(error("SH",
+          exit(error("SH",
             "Unable to initialize ncurses, try to run in your terminal"
               "\"export TERM=xterm\", or use --naked argument"
           ));
@@ -80,7 +80,7 @@ namespace K {
       void pressme(const mHotkey &ch, function<void()> fn) {
         if (!wBorder) return;
         if (hotFn.find(ch) != hotFn.end())
-          EXIT(error("SH", string("Too many handlers for \"") + (char)ch + "\" pressme event"));
+          exit(error("SH", string("Too many handlers for \"") + (char)ch + "\" pressme event"));
         hotFn[ch] = fn;
       };
       void printme(mToScreen *const data) {

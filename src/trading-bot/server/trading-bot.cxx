@@ -1,62 +1,10 @@
-#include <stdlib.h>
-#include <iostream>
-#include <iomanip>
-#include <sstream>
-#include <string>
-#include <vector>
-#include <unordered_map>
-#include <map>
-#include <random>
-#include <thread>
-#include <mutex>
-#include <future>
-#include <chrono>
-#include <locale>
-#include <time.h>
-#include <math.h>
-#include <getopt.h>
-#include <signal.h>
-#include <algorithm>
-#include <functional>
-
-#ifndef _WIN32
-#  include <execinfo.h>
-#endif
-
-using namespace std;
-
-#include <json.h>
-#include <sqlite3.h>
-#include <uWS/uWS.h>
-#include <curl/curl.h>
-#include <openssl/md5.h>
-#include <openssl/bio.h>
-#include <openssl/evp.h>
-#include <openssl/sha.h>
-#include <openssl/hmac.h>
-#include <openssl/buffer.h>
-#include <ncurses/ncurses.h>
-#include <quickfix/NullStore.h>
-#include <quickfix/Application.h>
-#include <quickfix/SocketInitiator.h>
-#include <quickfix/SessionSettings.h>
-#include <quickfix/fix42/NewOrderSingle.h>
-#include <quickfix/fix42/OrderCancelRequest.h>
-
-using namespace nlohmann;
-
-#include "gw.h"
-#include "ds.h"
-#include "if.h"
-#include "sh.h"
-#include "ev.h"
-#include "db.h"
-#include "ui.h"
-#include "qe.h"
-
-#ifndef NDEBUG
-#  include <test/units.h>
-#endif
+#include "src/lib/K.h"
+#include "src/trading-bot/server/if.h"
+#include "src/trading-bot/server/sh.h"
+#include "src/trading-bot/server/ev.h"
+#include "src/trading-bot/server/db.h"
+#include "src/trading-bot/server/ui.h"
+#include "src/trading-bot/server/qe.h"
 
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;;int main(int argc, char** argv) {;;

@@ -21,14 +21,14 @@ V_SQL    = 3230100
 V_QF     = 1.15.1
 V_UV     = 1.20.3
 V_CATCH  = 2.2.3
-KARGS   := -I$(KLOCAL)/include -pthread -std=c++11 -O3   \
-  $(KLOCAL)/lib/K-$(CHOST)-docroot.o src/server/K.cxx    \
-  -DK_0_DAY='"v$(MAJOR).$(MINOR).$(PATCH)+$(BUILD)"'     \
-  -DK_STAMP='"$(shell date "+%Y-%m-%d %H:%M:%S")"'       \
-  -DK_BUILD='"$(CHOST)"'     $(KLOCAL)/include/uWS/*.cpp \
-  $(KLOCAL)/lib/K-$(CHOST).a $(KLOCAL)/lib/libquickfix.a \
-  $(KLOCAL)/lib/libsqlite3.a $(KLOCAL)/lib/libz.a        \
-  $(KLOCAL)/lib/libcurl.a    $(KLOCAL)/lib/libssl.a      \
+KARGS   := -I. -I$(KLOCAL)/include -pthread -std=c++11    \
+  -O3 $(KLOCAL)/lib/K-$(CHOST)-docroot.o src/trading-bot/server/trading-bot.cxx \
+  -DK_0_DAY='"v$(MAJOR).$(MINOR).$(PATCH)+$(BUILD)"'      \
+  -DK_STAMP='"$(shell date "+%Y-%m-%d %H:%M:%S")"'        \
+  -DK_BUILD='"$(CHOST)"'     $(KLOCAL)/include/uWS/*.cpp  \
+  $(KLOCAL)/lib/K-$(CHOST).a $(KLOCAL)/lib/libquickfix.a  \
+  $(KLOCAL)/lib/libsqlite3.a $(KLOCAL)/lib/libz.a         \
+  $(KLOCAL)/lib/libcurl.a    $(KLOCAL)/lib/libssl.a       \
   $(KLOCAL)/lib/libcrypto.a  $(KLOCAL)/lib/libncurses.a
 
 all: K
@@ -95,11 +95,11 @@ chost:
 	@echo -n $(shell (test -d .git && test -n "`command -v g++`") && \
 	g++ -dumpmachine || ls -1 . | grep build- | head -n1 | cut -d '/' -f1 | cut -d '-' -f2-)
 
-K: src/server/K.cxx
+K: src/trading-bot/server/trading-bot.cxx
 ifdef KALL
 	unset KALL && echo -n $(CARCH) | tr ' ' "\n" | xargs -I % $(MAKE) CHOST=% $@
 else
-	@$(if $(shell sh -c 'test "`g++ -dumpversion | cut -d . -f1`" != $(V_CXX) || echo 1'),,$(warning $(ERR));$(error $(HINT)))
+	@$(if $(shell sh -c 'test "`$(shell which "$(CXX)" 2> /dev/null) -dumpversion | cut -d . -f1`" != $(V_CXX) || echo 1'),,$(warning $(ERR));$(error $(HINT)))
 	@$(CXX) --version
 	mkdir -p $(KLOCAL)/bin
 	CHOST=$(CHOST) $(MAKE) $(shell test -n "`echo $(CHOST) | grep darwin`" && echo Darwin || (test -n "`echo $(CHOST) | grep mingw32`" && echo Win32 || uname -s))
@@ -110,7 +110,7 @@ dist:
 ifdef KALL
 	unset KALL && echo -n $(CARCH) | tr ' ' "\n" | xargs -I % $(MAKE) CHOST=% $@
 else
-	@$(if $(shell sh -c 'test "`g++ -dumpversion | cut -d . -f1`" != $(V_CXX) || echo 1'),,$(warning $(ERR));$(error $(HINT)))
+	@$(if $(shell sh -c 'test "`$(shell which "$(CXX)" 2> /dev/null) -dumpversion | cut -d . -f1`" != $(V_CXX) || echo 1'),,$(warning $(ERR));$(error $(HINT)))
 	mkdir -p build-$(CHOST)
 	CHOST=$(CHOST) $(MAKE) zlib openssl curl sqlite ncurses json catch uws quickfix libuv
 	test -f /sbin/ldconfig && sudo ldconfig || :
@@ -125,7 +125,7 @@ endif
 
 Linux:
 ifdef KUNITS
-	@unset KUNITS && $(MAKE) KTEST="--coverage -I. test/unit_testing_framework.cxx" $@
+	@unset KUNITS && $(MAKE) KTEST="--coverage test/unit_testing_framework.cxx" $@
 else ifndef KTEST
 	@$(MAKE) KTEST="-DNDEBUG" $@
 else
@@ -325,25 +325,25 @@ coinbase:
 	@openssl s_client -showcerts -connect fix.pro.coinbase.com:4198 -CApath /etc/ssl/certs < /dev/null 2> /dev/null \
 	| openssl x509 -outform PEM > etc/sslcert/fix.pro.coinbase.com.pem
 
-clients: src/client-2d
+clients: src/trading-bot/client-2d
 	rm -rf $(KLOCAL)/var
 	mkdir -p $(KLOCAL)/var/www
 	@echo Building clients dynamic files..
 	@npm install
-	./node_modules/.bin/tsc --alwaysStrict --experimentalDecorators -t ES2017 -m commonjs --outDir $(KLOCAL)/var/www/js src/client-2d/*.ts
+	./node_modules/.bin/tsc --alwaysStrict --experimentalDecorators -t ES2017 -m commonjs --outDir $(KLOCAL)/var/www/js src/trading-bot/client-2d/*.ts
 	@echo DONE
 
-www: src/www
+www: src/trading-bot/www
 	@echo Building clients static files..
-	cp -R src/www/* $(KLOCAL)/var/www/
+	cp -R src/trading-bot/www/* $(KLOCAL)/var/www/
 	@echo DONE
 
-css: src/www/sass
+css: src/trading-bot/www/sass
 	@echo Building clients CSS files..
 	rm -rf $(KLOCAL)/var/www/css
 	mkdir -p $(KLOCAL)/var/www/css
-	ls -1 src/www/sass/*.scss | sed -r 's/(.*)(\.scss)$$/\1\2 \1\.min.css/' | xargs -I % sh -c './node_modules/.bin/sass %;' \
-	&& rm src/www/sass/*.min.css.map && mv src/www/sass/*.min.css $(KLOCAL)/var/www/css/ && cat ./node_modules/ag-grid/dist/styles/ag-grid.css >> $(KLOCAL)/var/www/css/bootstrap.min.css
+	ls -1 src/trading-bot/www/sass/*.scss | sed -r 's/(.*)(\.scss)$$/\1\2 \1\.min.css/' | xargs -I % sh -c './node_modules/.bin/sass %;' \
+	&& rm src/trading-bot/www/sass/*.min.css.map && mv src/trading-bot/www/sass/*.min.css $(KLOCAL)/var/www/css/ && cat ./node_modules/ag-grid/dist/styles/ag-grid.css >> $(KLOCAL)/var/www/css/bootstrap.min.css
 	@echo DONE
 
 bundle: clients www css node_modules/.bin/browserify node_modules/.bin/uglifyjs

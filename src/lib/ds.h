@@ -1,21 +1,6 @@
 #ifndef K_DS_H_
 #define K_DS_H_
 
-#define PERMISSIVE_analpaper_SOFTWARE_LICENSE                              \
-                                                                           \
-       "This is free software: the UI and quoting engine are open source," \
-"\n"   "feel free to hack both as you need."                               \
-                                                                           \
-"\n"   "This is non-free software: built-in gateway exchange integrations" \
-"\n"   "are licensed by/under the law of my grandma (since last century)," \
-"\n"   "feel free to crack all as you need."
-
-#ifndef M_PI_2
-#define M_PI_2 1.5707963267948965579989817342720925807952880859375
-#endif
-
-#define private_ref private
-
 namespace K {
   enum class mQuotingMode: unsigned int {
     Top, Mid, Join, InverseJoin, InverseTop, HamelinRat, Depth
@@ -2233,7 +2218,7 @@ namespace K {
         else if (qp.mode == mQuotingMode::InverseTop)  calcRawQuotesFromMarket = calcInverseTopOfMarket;
         else if (qp.mode == mQuotingMode::HamelinRat)  calcRawQuotesFromMarket = calcColossusOfMarket;
         else if (qp.mode == mQuotingMode::Depth)       calcRawQuotesFromMarket = calcDepthOfMarket;
-        else EXIT(error("QE", "Invalid quoting mode "
+        else exit(error("QE", "Invalid quoting mode "
           + reason + ", consider to remove the database file"));
       };
       void calcRawQuotes() const  {

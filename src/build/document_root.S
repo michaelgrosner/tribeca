@@ -24,6 +24,6 @@ SYM(\var\()_len):
     .docroot   _www_css_light   , var/www/css/bootstrap-theme.min.css
     .docroot   _www_mp3_audio_0 , var/www/audio/0.mp3
     .docroot   _www_mp3_audio_1 , var/www/audio/1.mp3
-    .docroot   _www_gzip_bomb   , ../../src/www/.bomb.gzip
+    .docroot   _www_gzip_bomb   , ../../src/trading-bot/www/.bomb.gzip
 
     .end

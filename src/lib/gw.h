@@ -1,33 +1,6 @@
 #ifndef K_GW_H_
 #define K_GW_H_
 
-#define mClock  unsigned long long
-#define mPrice  double
-#define mAmount double
-#define mRandId string
-#define mCoinId string
-
-#define Tclock  chrono::system_clock::now()
-#define Tstamp  chrono::duration_cast<chrono::milliseconds>( \
-                  Tclock.time_since_epoch()                  \
-                ).count()
-
-#define numsAz "0123456789"                 \
-               "ABCDEFGHIJKLMNOPQRSTUVWXYZ" \
-               "abcdefghijklmnopqrstuvwxyz"
-
-#define TRUEONCE(k) (k ? !(k = !k) : k)
-
-#define ROUND(k, x) (round((k) / x) * x)
-
-#ifdef NDEBUG
-#  define EXIT exit
-#else
-#  include <catch.h>
-#  define EXIT catch_exit
-   void catch_exit(const int);
-#endif
-
 namespace K {
   enum class mConnectivity: unsigned int {
     Disconnected, Connected
@@ -780,9 +753,9 @@ namespace K {
     private:
       void validate(const json &reply) {
         if (!randId or symbol.empty())
-          EXIT(error("GW", "Incomplete handshake aborted."));
+          exit(error("GW", "Incomplete handshake aborted."));
         if (!minTick or !minSize)
-          EXIT(error("GW", "Unable to fetch data from " + exchange
+          exit(error("GW", "Unable to fetch data from " + exchange
             + " for symbol \"" + symbol + "\", possible error message: "
             + reply.dump()));
         if (exchange != "NULL")
