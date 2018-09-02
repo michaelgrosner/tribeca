@@ -2750,6 +2750,7 @@ namespace K {
                  /*  )| K |(  */ /* thanks! <3 */
     mMonitor()
       : orders_60s(0)
+      , unlock(nullptr)
     {};
     const unsigned int dbSize() const {
       if (args.database == ":memory:") return 0;
