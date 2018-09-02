@@ -111,14 +111,14 @@ namespace K {
           and (access("etc/sslcert/server.crt", F_OK) != -1)
           and (access("etc/sslcert/server.key", F_OK) != -1)
           and socket->listen(
-            args.inet.empty() ? nullptr : args.inet.data(), args.port,
+            mREST::inet, args.port,
             uS::TLS::createContext("etc/sslcert/server.crt",
                                    "etc/sslcert/server.key", ""),
             0, &socket->getDefaultGroup<uWS::SERVER>()
           )
         ) screen->logUI("HTTPS");
         else if (!socket->listen(
-            args.inet.empty() ? nullptr : args.inet.data(), args.port,
+            mREST::inet, args.port,
           nullptr,
           0, &socket->getDefaultGroup<uWS::SERVER>()
         )) {

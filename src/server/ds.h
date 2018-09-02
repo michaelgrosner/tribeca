@@ -1,6 +1,21 @@
 #ifndef K_DS_H_
 #define K_DS_H_
 
+#define PERMISSIVE_analpaper_SOFTWARE_LICENSE                              \
+                                                                           \
+       "This is free software: the UI and quoting engine are open source," \
+"\n"   "feel free to hack both as you need."                               \
+                                                                           \
+"\n"   "This is non-free software: built-in gateway exchange integrations" \
+"\n"   "are licensed by/under the law of my grandma (since last century)," \
+"\n"   "feel free to crack all as you need."
+
+#ifndef M_PI_2
+#define M_PI_2 1.5707963267948965579989817342720925807952880859375
+#endif
+
+#define private_ref private
+
 namespace K {
   enum class mQuotingMode: unsigned int {
     Top, Mid, Join, InverseJoin, InverseTop, HamelinRat, Depth
@@ -65,13 +80,15 @@ namespace K {
                                 MarketDataLongTerm   = 'H'
   };
 
-  static char RBLACK[] = "\033[0;30m", RRED[]    = "\033[0;31m", RGREEN[] = "\033[0;32m", RYELLOW[] = "\033[0;33m",
-              RBLUE[]  = "\033[0;34m", RPURPLE[] = "\033[0;35m", RCYAN[]  = "\033[0;36m", RWHITE[]  = "\033[0;37m",
-              BBLACK[] = "\033[1;30m", BRED[]    = "\033[1;31m", BGREEN[] = "\033[1;32m", BYELLOW[] = "\033[1;33m",
-              BBLUE[]  = "\033[1;34m", BPURPLE[] = "\033[1;35m", BCYAN[]  = "\033[1;36m", BWHITE[]  = "\033[1;37m",
-              RRESET[] = "\033[0m";
+  char RBLACK[] = "\033[0;30m", RRED[]    = "\033[0;31m", RGREEN[] = "\033[0;32m", RYELLOW[] = "\033[0;33m",
+       RBLUE[]  = "\033[0;34m", RPURPLE[] = "\033[0;35m", RCYAN[]  = "\033[0;36m", RWHITE[]  = "\033[0;37m",
+       BBLACK[] = "\033[1;30m", BRED[]    = "\033[1;31m", BGREEN[] = "\033[1;32m", BYELLOW[] = "\033[1;33m",
+       BBLUE[]  = "\033[1;34m", BPURPLE[] = "\033[1;35m", BCYAN[]  = "\033[1;36m", BWHITE[]  = "\033[1;37m",
+       RRESET[] = "\033[0m";
 
-  static struct mArgs {
+  const char *mREST::inet = nullptr;
+
+  struct mArgs {
         int port        = 3000,   colors      = 0, debug        = 0,
             latency     = 0,      withoutSSL  = 0, debugSecret  = 0,
             debugOrders = 0,      debugQuotes = 0, debugWallet  = 0,
@@ -86,9 +103,9 @@ namespace K {
             apikey      = "NULL", secret      = "NULL",
             username    = "NULL", passphrase  = "NULL",
             http        = "NULL", wss         = "NULL",
+            base,                 quote,
             database,             diskdata,
-            whitelist,            inet,
-            base,                 quote;
+            whitelist;
     const string main(int argc, char** argv) {
       static const struct option opts[] = {
         {"help",         no_argument,       0,               'h'},
@@ -153,7 +170,7 @@ namespace K {
           case 'k': matryoshka   = string(optarg); break;
           case 'K': title        = string(optarg); break;
           case 'L': whitelist    = string(optarg); break;
-          case 'i': inet         = string(optarg); break;
+          case 'i': mREST::inet  = strdup(optarg); break;
           case 'W': maxWallet    = stod(optarg);   break;
           case 'h': {
             const vector<string> stamp = {
@@ -438,8 +455,8 @@ namespace K {
     };
   };
 
-  static struct mQuotingParams: public mStructFromDb<mQuotingParams>,
-                                public mJsonToClient<mQuotingParams> {
+  struct mQuotingParams: public mStructFromDb<mQuotingParams>,
+                         public mJsonToClient<mQuotingParams> {
     mPrice            widthPing                       = 2.0;
     double            widthPingPercentage             = 0.25;
     mPrice            widthPong                       = 2.0;
@@ -2776,7 +2793,7 @@ namespace K {
   static void to_json(json &j, const mMonitor &k) {
     j = {
       {     "a", *k.unlock                       },
-      {  "inet", args.inet                       },
+      {  "inet", string(mREST::inet ?: "")       },
       {  "freq", k.orders_60s                    },
       { "theme", args.ignoreMoon + args.ignoreSun},
       {"memory", k.memSize()                     },

@@ -34,7 +34,6 @@ namespace K {
         gw->autobot  = args.autobot;
         gw->dustybot = args.dustybot;
         gw->debug    = args.debugSecret;
-        gw->inet     = args.inet;
         gw->askForCancelAll = &qp.cancelOrdersAuto;
         engine->monitor.unlock          = &gw->unlock;
         engine->monitor.product.minTick = &gw->minTick;
@@ -44,12 +43,12 @@ namespace K {
           gw->latency();
         }
         switchOn();
-        if (!args.inet.empty())
-          log("CF", "Network Interface for outgoing traffic is", args.inet);
+        if (mREST::inet)
+          log("CF", "Network Interface for outgoing traffic is", mREST::inet);
       };
       void switchOn() {
         if (!args.headless)
-          wtfismyip = mREST::xfer("https://wtfismyip.com/json", args.inet, 4L)
+          wtfismyip = mREST::xfer("https://wtfismyip.com/json", 4L)
                         .value("/YourFuckingIPAddress"_json_pointer, "");
         if (args.naked) return;
         if (!(wBorder = initscr()))

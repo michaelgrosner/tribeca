@@ -2,7 +2,7 @@
 #define K_IF_H_
 
 namespace K {
-  static class Screen {
+  class Screen {
     public:
       Screen() {
         cout << BGREEN << "K"
@@ -37,17 +37,17 @@ namespace K {
       virtual void end() = 0;
   } *screen = nullptr;
 
-  static class Events {
+  class Events {
     public:
       virtual void deferred(const function<void()>&) = 0;
   } *events = nullptr;
 
-  static class Sqlite {
+  class Sqlite {
     public:
       virtual void backup(mFromDb *const) = 0;
   } *sqlite = nullptr;
 
-  static class Client {
+  class Client {
     public:
       uWS::Hub* socket = nullptr;
       virtual void timer_Xs() = 0;
@@ -55,7 +55,7 @@ namespace K {
       virtual void clickme(mFromClient&, function<void(const json&)>) = 0;
   } *client = nullptr;
 
-  static class Engine {
+  class Engine {
 #define SQLITE_BACKUP      \
         SQLITE_BACKUP_LIST \
       ( SQLITE_BACKUP_CODE )
@@ -207,14 +207,14 @@ namespace K {
       };
   } *engine = nullptr;
 
-  static string tracelog;
-  static vector<function<void()>> happyEndingFn, endingFn = { []() {
+  string tracelog;
+  vector<function<void()>> happyEndingFn, endingFn = { []() {
     screen->end();
     cout << string(args.latency ? 0 : 1, '\n')
          << screen->stamp()
          << tracelog;
   } };
-  static class Ending {
+  class Ending {
     public:
       Ending(/* KMxTWEpb9ig */) {
         tracelog = "- roll-out: " + to_string(Tstamp);
@@ -243,7 +243,7 @@ namespace K {
           ? "1 HTTP connection done"
             + string(RWHITE) + " (consider to repeat a few times this check).\n"
           : "Excellent decision! "
-            + mREST::xfer("https://api.icndb.com/jokes/random?escape=javascript&limitTo=[nerdy]", args.inet, 4L)
+            + mREST::xfer("https://api.icndb.com/jokes/random?escape=javascript&limitTo=[nerdy]", 4L)
                 .value("/value/joke"_json_pointer, "let's plant a tree instead..")
             + '\n';
         halt(EXIT_SUCCESS);

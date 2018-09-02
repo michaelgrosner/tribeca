@@ -1,15 +1,6 @@
 #ifndef K_GW_H_
 #define K_GW_H_
 
-#define PERMISSIVE_analpaper_SOFTWARE_LICENSE                              \
-                                                                           \
-       "This is free software: the UI and quoting engine are open source," \
-"\n"   "feel free to hack both as you need."                               \
-                                                                           \
-"\n"   "This is non-free software: built-in gateway exchange integrations" \
-"\n"   "are licensed by/under the law of my grandma (since last century)," \
-"\n"   "feel free to crack all as you need."
-
 #define mClock  unsigned long long
 #define mPrice  double
 #define mAmount double
@@ -24,12 +15,6 @@
 #define numsAz "0123456789"                 \
                "ABCDEFGHIJKLMNOPQRSTUVWXYZ" \
                "abcdefghijklmnopqrstuvwxyz"
-
-#ifndef M_PI_2
-#define M_PI_2 1.5707963267948965579989817342720925807952880859375
-#endif
-
-#define private_ref private
 
 #define TRUEONCE(k) (k ? !(k = !k) : k)
 
@@ -395,27 +380,28 @@ namespace K {
 
   class mREST {
     public:
-      static json xfer(const string &url, const string &inet, const long &timeout = 13) {
-        return curl_perform(url, inet, [&](CURL *curl) {
+      static const char *inet;
+      static json xfer(const string &url, const long &timeout = 13) {
+        return curl_perform(url, [&](CURL *curl) {
           curl_easy_setopt(curl, CURLOPT_TIMEOUT, timeout);
         }, timeout == 13);
       };
-      static json xfer(const string &url, const string &inet, const string &post) {
-        return curl_perform(url, inet, [&](CURL *curl) {
+      static json xfer(const string &url, const string &post) {
+        return curl_perform(url, [&](CURL *curl) {
           struct curl_slist *h_ = NULL;
           h_ = curl_slist_append(h_, "Content-Type: application/x-www-form-urlencoded");
           curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
           curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post.data());
         });
       };
-      static json curl_perform(const string &url, const string &inet, function<void(CURL *curl)> curl_setopt, bool debug = true) {
+      static json curl_perform(const string &url, function<void(CURL *curl)> curl_setopt, bool debug = true) {
         string reply;
         CURL *curl = curl_easy_init();
         if (curl) {
           curl_setopt(curl);
           curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
           curl_easy_setopt(curl, CURLOPT_CAINFO, "etc/cabundle.pem");
-          if (!inet.empty()) curl_easy_setopt(curl, CURLOPT_INTERFACE, inet.data());
+          curl_easy_setopt(curl, CURLOPT_INTERFACE, mREST::inet);
           curl_easy_setopt(curl, CURLOPT_URL, url.data());
           curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &curl_write);
           curl_easy_setopt(curl, CURLOPT_WRITEDATA, &reply);
@@ -728,7 +714,7 @@ namespace K {
                 apikey,   secret,
                 user,     pass,
                 http,     ws,
-                inet,     unlock;
+                unlock;
         mCoinId base,     quote;
          mPrice minTick  = 0;
         mAmount minSize  = 0,
@@ -855,15 +841,15 @@ namespace K {
       const json handshake() {
         randId = mRandom::uuid32Id;
         symbol = base + quote;
-        json reply = mREST::xfer(http + "/public/symbol/" + symbol, inet);
+        json reply = mREST::xfer(http + "/public/symbol/" + symbol);
         minTick = stod(reply.value("tickSize", "0"));
         minSize = stod(reply.value("quantityIncrement", "0"));
         base    = reply.value("baseCurrency", base);
         quote   = reply.value("quoteCurrency", quote);
         return reply;
       };
-      static json xfer(const string &url, const string &inet, const string &auth, const string &post) {
-        return mREST::curl_perform(url, inet, [&](CURL *curl) {
+      static json xfer(const string &url, const string &auth, const string &post) {
+        return mREST::curl_perform(url, [&](CURL *curl) {
           curl_easy_setopt(curl, CURLOPT_USERPWD, auth.data());
           curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
           curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post.data());
@@ -896,13 +882,13 @@ namespace K {
       const json handshake() {
         randId = mRandom::uuid36Id;
         symbol = base + "-" + quote;
-        json reply = mREST::xfer(http + "/products/" + symbol, inet);
+        json reply = mREST::xfer(http + "/products/" + symbol);
         minTick = stod(reply.value("quote_increment", "0"));
         minSize = stod(reply.value("base_min_size", "0"));
         return reply;
       };
-      static json xfer(const string &url, const string &inet, const string &h1, const string &h2, const string &h3, const string &h4, const bool &rm) {
-        return mREST::curl_perform(url, inet, [&](CURL *curl) {
+      static json xfer(const string &url, const string &h1, const string &h2, const string &h3, const string &h4, const bool &rm) {
+        return mREST::curl_perform(url, [&](CURL *curl) {
           struct curl_slist *h_ = NULL;
           h_ = curl_slist_append(h_, ("CB-ACCESS-KEY: " + h1).data());
           h_ = curl_slist_append(h_, ("CB-ACCESS-SIGN: " + h2).data());
@@ -921,7 +907,7 @@ namespace K {
       const json handshake() {
         randId = mRandom::int45Id;
         symbol = strL(base + quote);
-        json reply = mREST::xfer(http + "/pubticker/" + symbol, inet);
+        json reply = mREST::xfer(http + "/pubticker/" + symbol);
         if (reply.find("last_price") != reply.end()) {
           ostringstream price_;
           price_ << scientific << stod(reply.value("last_price", "0"));
@@ -931,15 +917,15 @@ namespace K {
           istringstream iss("1e" + to_string(fmax(stod(_price_),-4)-4));
           iss >> minTick;
         }
-        reply = mREST::xfer(http + "/symbols_details", inet);
+        reply = mREST::xfer(http + "/symbols_details");
         if (reply.is_array())
           for (json::iterator it=reply.begin(); it!=reply.end();++it)
             if (it->find("pair") != it->end() and it->value("pair", "") == symbol)
               minSize = stod(it->value("minimum_order_size", "0"));
         return reply;
       };
-      static json xfer(const string &url, const string &inet, const string &post, const string &h1, const string &h2) {
-        return mREST::curl_perform(url, inet, [&](CURL *curl) {
+      static json xfer(const string &url, const string &post, const string &h1, const string &h2) {
+        return mREST::curl_perform(url, [&](CURL *curl) {
           struct curl_slist *h_ = NULL;
           h_ = curl_slist_append(h_, ("X-BFX-APIKEY: " + h1).data());
           h_ = curl_slist_append(h_, ("X-BFX-PAYLOAD: " + post).data());
@@ -955,7 +941,7 @@ namespace K {
       const json handshake() {
         randId = mRandom::char16Id;
         symbol = strL(base + quote);
-        json reply = mREST::xfer(http + "public/symbols", inet);
+        json reply = mREST::xfer(http + "public/symbols");
         if (reply.find("data") != reply.end() and reply.at("data").is_array())
           for (json::iterator it=reply.at("data").begin(); it!=reply.at("data").end();++it)
             if (it->find("name") != it->end() and it->value("name", "") == symbol) {
@@ -968,8 +954,8 @@ namespace K {
             }
         return reply;
       };
-      static json xfer(const string &url, const string &inet, const string &h1, const string &h2, const string &h3) {
-        return mREST::curl_perform(url, inet, [&](CURL *curl) {
+      static json xfer(const string &url, const string &h1, const string &h2, const string &h3) {
+        return mREST::curl_perform(url, [&](CURL *curl) {
           struct curl_slist *h_ = NULL;
           h_ = curl_slist_append(h_, ("FC-ACCESS-KEY: " + h1).data());
           h_ = curl_slist_append(h_, ("FC-ACCESS-SIGNATURE: " + h2).data());
@@ -977,8 +963,8 @@ namespace K {
           curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
         });
       };
-      static json xfer(const string &url, const string &inet, const string &h1, const string &h2, const string &h3, const string &post) {
-        return mREST::curl_perform(url, inet, [&](CURL *curl) {
+      static json xfer(const string &url, const string &h1, const string &h2, const string &h3, const string &post) {
+        return mREST::curl_perform(url, [&](CURL *curl) {
           struct curl_slist *h_ = NULL;
           h_ = curl_slist_append(h_, ("FC-ACCESS-KEY: " + h1).data());
           h_ = curl_slist_append(h_, ("FC-ACCESS-SIGNATURE: " + h2).data());
@@ -994,7 +980,7 @@ namespace K {
       const json handshake() {
         randId = mRandom::int32Id;
         symbol = base + quote;
-        json reply = mREST::xfer(http + "/0/public/AssetPairs?pair=" + symbol, inet);
+        json reply = mREST::xfer(http + "/0/public/AssetPairs?pair=" + symbol);
         if (reply.find("result") != reply.end())
           for (json::iterator it = reply.at("result").begin(); it != reply.at("result").end(); ++it)
             if (it.value().find("pair_decimals") != it.value().end()) {
@@ -1010,8 +996,8 @@ namespace K {
             }
         return reply;
       };
-      static json xfer(const string &url, const string &inet, const string &h1, const string &h2, const string &post) {
-        return mREST::curl_perform(url, inet, [&](CURL *curl) {
+      static json xfer(const string &url, const string &h1, const string &h2, const string &post) {
+        return mREST::curl_perform(url, [&](CURL *curl) {
           struct curl_slist *h_ = NULL;
           h_ = curl_slist_append(h_, ("API-Key: " + h1).data());
           h_ = curl_slist_append(h_, ("API-Sign: " + h2).data());
@@ -1025,15 +1011,15 @@ namespace K {
       const json handshake() {
         randId = mRandom::int45Id;
         symbol = strL(base + "_" + quote);
-        json reply = mREST::xfer(http + "/constants", inet);
+        json reply = mREST::xfer(http + "/constants");
         if (reply.find(symbol.substr(0,3).append("TickSize")) != reply.end()) {
           minTick = reply.value(symbol.substr(0,3).append("TickSize"), 0.0);
           minSize = 0.015;
         }
         return reply;
       };
-      static json xfer(const string &url, const string &inet, const string &h1, const string &post) {
-        return mREST::curl_perform(url, inet, [&](CURL *curl) {
+      static json xfer(const string &url, const string &h1, const string &post) {
+        return mREST::curl_perform(url, [&](CURL *curl) {
           struct curl_slist *h_ = NULL;
           if (!post.empty()) {
             h_ = curl_slist_append(h_, "Content-Type: application/x-www-form-urlencoded");
@@ -1049,7 +1035,7 @@ namespace K {
       const json handshake() {
         randId = mRandom::int45Id;
         symbol = quote + "_" + base;
-        json reply = mREST::xfer(http + "/public?command=returnTicker", inet);
+        json reply = mREST::xfer(http + "/public?command=returnTicker");
         if (reply.find(symbol) != reply.end()) {
           istringstream iss("1e-" + to_string(6-reply.at(symbol).at("last").get<string>().find(".")));
           iss >> minTick;
@@ -1057,8 +1043,8 @@ namespace K {
         }
         return reply;
       };
-      static json xfer(const string &url, const string &inet, const string &post, const string &h1, const string &h2) {
-        return mREST::curl_perform(url, inet, [&](CURL *curl) {
+      static json xfer(const string &url, const string &post, const string &h1, const string &h2) {
+        return mREST::curl_perform(url, [&](CURL *curl) {
           struct curl_slist *h_ = NULL;
           h_ = curl_slist_append(h_, "Content-Type: application/x-www-form-urlencoded");
           h_ = curl_slist_append(h_, ("Key: " + h1).data());
