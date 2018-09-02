@@ -20,14 +20,36 @@ namespace K {
             "Unable to configure a valid gateway using --exchange="
               + args.exchange + " argument"
           ));
-        gw->monitor = &engine->monitor;
-        gw->load_internals();
+        gw->exchange = args.exchange;
+        gw->base     = args.base;
+        gw->quote    = args.quote;
+        gw->version  = args.free;
+        gw->apikey   = args.apikey;
+        gw->secret   = args.secret;
+        gw->user     = args.username;
+        gw->pass     = args.passphrase;
+        gw->http     = args.http;
+        gw->ws       = args.wss;
+        gw->maxLevel = args.maxLevels;
+        gw->autobot  = args.autobot;
+        gw->dustybot = args.dustybot;
+        gw->debug    = args.debugSecret;
+        gw->inet     = args.inet;
+        gw->askForCancelAll = &qp.cancelOrdersAuto;
+        engine->monitor.unlock          = &gw->unlock;
+        engine->monitor.product.minTick = &gw->minTick;
+        engine->monitor.product.minSize = &gw->minSize;
+        if (args.latency) {
+          printme(gw);
+          gw->latency();
+        }
         switchOn();
-        if (args.inet) log("CF", "Network Interface for outgoing traffic is", args.inet);
+        if (!args.inet.empty())
+          log("CF", "Network Interface for outgoing traffic is", args.inet);
       };
       void switchOn() {
         if (!args.headless)
-          wtfismyip = mREST::xfer("https://wtfismyip.com/json", 4L)
+          wtfismyip = mREST::xfer("https://wtfismyip.com/json", args.inet, 4L)
                         .value("/YourFuckingIPAddress"_json_pointer, "");
         if (args.naked) return;
         if (!(wBorder = initscr()))

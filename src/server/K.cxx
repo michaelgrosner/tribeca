@@ -45,6 +45,7 @@ using namespace std;
 
 using namespace nlohmann;
 
+#include "gw.h"
 #include "ds.h"
 #include "if.h"
 #include "sh.h"
@@ -52,6 +53,10 @@ using namespace nlohmann;
 #include "db.h"
 #include "ui.h"
 #include "qe.h"
+
+#ifndef NDEBUG
+#  include <test/units.h>
+#endif
 
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;;int main(int argc, char** argv) {;;

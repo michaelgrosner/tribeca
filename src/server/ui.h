@@ -111,14 +111,18 @@ namespace K {
           and (access("etc/sslcert/server.crt", F_OK) != -1)
           and (access("etc/sslcert/server.key", F_OK) != -1)
           and socket->listen(
-            args.inet, args.port,
+            args.inet.data(), args.port,
             uS::TLS::createContext("etc/sslcert/server.crt",
                                    "etc/sslcert/server.key", ""),
             0, &socket->getDefaultGroup<uWS::SERVER>()
           )
         ) screen->logUI("HTTPS");
-        else if (!socket->listen(args.inet, args.port, nullptr, 0, &socket->getDefaultGroup<uWS::SERVER>())) {
-          const string netstat = mCommand::netstat();
+        else if (!socket->listen(
+          args.inet.data(), args.port,
+          nullptr,
+          0, &socket->getDefaultGroup<uWS::SERVER>()
+        )) {
+          const string netstat = mCommand::netstat(args.port);
           EXIT(screen->error("UI", "Unable to listen to UI port number " + to_string(args.port) + ", "
             + (netstat.empty() ? "try another network interface" : "seems already in use by:\n" + netstat)
           ));

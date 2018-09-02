@@ -25,4 +25,3 @@ INCLUDED_BY_GRAPH      = YES
 CALL_GRAPH             = YES
 CALLER_GRAPH           = YES
 GENERATE_LATEX         = NO
-

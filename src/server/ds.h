@@ -1,64 +1,7 @@
 #ifndef K_DS_H_
 #define K_DS_H_
 
-#define PERMISSIVE_analpaper_SOFTWARE_LICENSE                              \
-                                                                           \
-       "This is free software: the UI and quoting engine are open source," \
-"\n"   "feel free to hack both as you need."                               \
-                                                                           \
-"\n"   "This is non-free software: built-in gateway exchange integrations" \
-"\n"   "are licensed by/under the law of my grandma (since last century)," \
-"\n"   "feel free to crack all as you need."
-
-#define mClock  unsigned long long
-#define mPrice  double
-#define mAmount double
-#define mRandId string
-#define mCoinId string
-
-#define Tclock  chrono::system_clock::now()
-#define Tstamp  chrono::duration_cast<chrono::milliseconds>( \
-                  Tclock.time_since_epoch()                  \
-                ).count()
-
-#define numsAz "0123456789"                 \
-               "ABCDEFGHIJKLMNOPQRSTUVWXYZ" \
-               "abcdefghijklmnopqrstuvwxyz"
-
-#ifndef M_PI_2
-#define M_PI_2 1.5707963267948965579989817342720925807952880859375
-#endif
-
-#define private_ref private
-
-#define TRUEONCE(k) (k ? !(k = !k) : k)
-
-#define ROUND(k, x) (round((k) / x) * x)
-
-#ifdef NDEBUG
-#  define EXIT exit
-#else
-#  include <catch.h>
-#  define EXIT catch_exit
-   static void catch_exit(const int);
-#endif
-
 namespace K {
-  enum class mConnectivity: unsigned int {
-    Disconnected, Connected
-  };
-  enum class mStatus: unsigned int {
-    Waiting, Working, Terminated
-  };
-  enum class mSide: unsigned int {
-    Bid, Ask
-  };
-  enum class mTimeInForce: unsigned int {
-    IOC, FOK, GTC
-  };
-  enum class mOrderType: unsigned int {
-    Limit, Market
-  };
   enum class mQuotingMode: unsigned int {
     Top, Mid, Join, InverseJoin, InverseTop, HamelinRat, Depth
   };
@@ -122,14 +65,6 @@ namespace K {
                                 MarketDataLongTerm   = 'H'
   };
 
-  static          bool operator ! (mConnectivity k_)                   { return !(unsigned int)k_; };
-  static mConnectivity operator * (mConnectivity _k, mConnectivity k_) { return (mConnectivity)((unsigned int)_k * (unsigned int)k_); };
-
-  static string strX(const double &d, const unsigned int &X) { stringstream ss; ss << setprecision(X) << fixed << d; return ss.str(); };
-  static string str8(const double &d) { return strX(d, 8); };
-  static string strL(string s) { transform(s.begin(), s.end(), s.begin(), ::tolower); return s; };
-  static string strU(string s) { transform(s.begin(), s.end(), s.begin(), ::toupper); return s; };
-
   static char RBLACK[] = "\033[0;30m", RRED[]    = "\033[0;31m", RGREEN[] = "\033[0;32m", RYELLOW[] = "\033[0;33m",
               RBLUE[]  = "\033[0;34m", RPURPLE[] = "\033[0;35m", RCYAN[]  = "\033[0;36m", RWHITE[]  = "\033[0;37m",
               BBLACK[] = "\033[1;30m", BRED[]    = "\033[1;31m", BGREEN[] = "\033[1;32m", BYELLOW[] = "\033[1;33m",
@@ -151,10 +86,9 @@ namespace K {
             apikey      = "NULL", secret      = "NULL",
             username    = "NULL", passphrase  = "NULL",
             http        = "NULL", wss         = "NULL",
-            database    = "",     diskdata    = "",
-            whitelist   = "",
-            base        = "",     quote       = "";
-    const char *inet = nullptr;
+            database,             diskdata,
+            whitelist,            inet,
+            base,                 quote;
     const string main(int argc, char** argv) {
       static const struct option opts[] = {
         {"help",         no_argument,       0,               'h'},
@@ -219,7 +153,7 @@ namespace K {
           case 'k': matryoshka   = string(optarg); break;
           case 'K': title        = string(optarg); break;
           case 'L': whitelist    = string(optarg); break;
-          case 'i': inet         = strdup(optarg); break;
+          case 'i': inet         = string(optarg); break;
           case 'W': maxWallet    = stod(optarg);   break;
           case 'h': {
             const vector<string> stamp = {
@@ -367,34 +301,6 @@ namespace K {
 
   struct mFromClient: virtual public mAbout {
     virtual void kiss(json *const j) {};
-  };
-
-  struct mToScreen {
-    function<void(const string&, const string&)> print
-#ifndef NDEBUG
-    = [](const string &prefix, const string &reason) { WARN("Y U NO catch screen print?"); }
-#endif
-    ;
-    function<void(const string&, const string&, const string&)> focus
-#ifndef NDEBUG
-    = [](const string &prefix, const string &reason, const string &highlight) { WARN("Y U NO catch screen focus?"); }
-#endif
-    ;
-    function<void(const string&, const string&)> warn
-#ifndef NDEBUG
-    = [](const string &prefix, const string &reason) { WARN("Y U NO catch screen warn?"); }
-#endif
-    ;
-    function<const int(const string&, const string&)> error
-#ifndef NDEBUG
-    = [](const string &prefix, const string &reason) { WARN("Y U NO catch screen error?"); return 0; }
-#endif
-    ;
-    function<void()> refresh
-#ifndef NDEBUG
-    = []() { WARN("Y U NO catch screen refresh?"); }
-#endif
-    ;
   };
 
   struct mToClient: public mBlob,
@@ -598,16 +504,74 @@ namespace K {
     bool              _diffSEP                        = false;
     bool              _diffXSEP                       = false;
     bool              _diffUEP                        = false;
+    void from_json(const json &j) {
+      widthPing                       = fmax(1e-8,            j.value("widthPing", widthPing));
+      widthPingPercentage             = fmin(1e+5, fmax(1e-4, j.value("widthPingPercentage", widthPingPercentage)));
+      widthPong                       = fmax(1e-8,            j.value("widthPong", widthPong));
+      widthPongPercentage             = fmin(1e+5, fmax(1e-4, j.value("widthPongPercentage", widthPongPercentage)));
+      widthPercentage                 =                       j.value("widthPercentage", widthPercentage);
+      bestWidth                       =                       j.value("bestWidth", bestWidth);
+      buySize                         = fmax(1e-8,            j.value("buySize", buySize));
+      buySizePercentage               = fmin(1e+2, fmax(1,    j.value("buySizePercentage", buySizePercentage)));
+      buySizeMax                      =                       j.value("buySizeMax", buySizeMax);
+      sellSize                        = fmax(1e-8,            j.value("sellSize", sellSize));
+      sellSizePercentage              = fmin(1e+2, fmax(1,    j.value("sellSizePercentage", sellSizePercentage)));
+      sellSizeMax                     =                       j.value("sellSizeMax", sellSizeMax);
+      pingAt                          =                       j.value("pingAt", pingAt);
+      pongAt                          =                       j.value("pongAt", pongAt);
+      mode                            =                       j.value("mode", mode);
+      safety                          =                       j.value("safety", safety);
+      bullets                         = fmin(10, fmax(1,      j.value("bullets", bullets)));
+      range                           =                       j.value("range", range);
+      rangePercentage                 = fmin(1e+2, fmax(1e-3, j.value("rangePercentage", rangePercentage)));
+      fvModel                         =                       j.value("fvModel", fvModel);
+      targetBasePosition              =                       j.value("targetBasePosition", targetBasePosition);
+      targetBasePositionPercentage    = fmin(1e+2, fmax(0,    j.value("targetBasePositionPercentage", targetBasePositionPercentage)));
+      positionDivergenceMin           =                       j.value("positionDivergenceMin", positionDivergenceMin);
+      positionDivergenceMode          =                       j.value("positionDivergenceMode", positionDivergenceMode);
+      positionDivergence              =                       j.value("positionDivergence", positionDivergence);
+      positionDivergencePercentage    = fmin(1e+2, fmax(0,    j.value("positionDivergencePercentage", positionDivergencePercentage)));
+      positionDivergencePercentageMin = fmin(1e+2, fmax(0,    j.value("positionDivergencePercentageMin", positionDivergencePercentageMin)));
+      percentageValues                =                       j.value("percentageValues", percentageValues);
+      autoPositionMode                =                       j.value("autoPositionMode", autoPositionMode);
+      aggressivePositionRebalancing   =                       j.value("aggressivePositionRebalancing", aggressivePositionRebalancing);
+      superTrades                     =                       j.value("superTrades", superTrades);
+      tradesPerMinute                 =                       j.value("tradesPerMinute", tradesPerMinute);
+      tradeRateSeconds                = fmax(0,               j.value("tradeRateSeconds", tradeRateSeconds));
+      protectionEwmaWidthPing         =                       j.value("protectionEwmaWidthPing", protectionEwmaWidthPing);
+      protectionEwmaQuotePrice        =                       j.value("protectionEwmaQuotePrice", protectionEwmaQuotePrice);
+      protectionEwmaPeriods           = fmax(1,               j.value("protectionEwmaPeriods", protectionEwmaPeriods));
+      quotingStdevProtection          =                       j.value("quotingStdevProtection", quotingStdevProtection);
+      quotingStdevBollingerBands      =                       j.value("quotingStdevBollingerBands", quotingStdevBollingerBands);
+      quotingStdevProtectionFactor    =                       j.value("quotingStdevProtectionFactor", quotingStdevProtectionFactor);
+      quotingStdevProtectionPeriods   = fmax(1,               j.value("quotingStdevProtectionPeriods", quotingStdevProtectionPeriods));
+      ewmaSensiblityPercentage        =                       j.value("ewmaSensiblityPercentage", ewmaSensiblityPercentage);
+      quotingEwmaTrendProtection      =                       j.value("quotingEwmaTrendProtection", quotingEwmaTrendProtection);
+      quotingEwmaTrendThreshold       =                       j.value("quotingEwmaTrendThreshold", quotingEwmaTrendThreshold);
+      veryLongEwmaPeriods             = fmax(1,               j.value("veryLongEwmaPeriods", veryLongEwmaPeriods));
+      longEwmaPeriods                 = fmax(1,               j.value("longEwmaPeriods", longEwmaPeriods));
+      mediumEwmaPeriods               = fmax(1,               j.value("mediumEwmaPeriods", mediumEwmaPeriods));
+      shortEwmaPeriods                = fmax(1,               j.value("shortEwmaPeriods", shortEwmaPeriods));
+      extraShortEwmaPeriods           = fmax(1,               j.value("extraShortEwmaPeriods", extraShortEwmaPeriods));
+      ultraShortEwmaPeriods           = fmax(1,               j.value("ultraShortEwmaPeriods", ultraShortEwmaPeriods));
+      aprMultiplier                   =                       j.value("aprMultiplier", aprMultiplier);
+      sopWidthMultiplier              =                       j.value("sopWidthMultiplier", sopWidthMultiplier);
+      sopSizeMultiplier               =                       j.value("sopSizeMultiplier", sopSizeMultiplier);
+      sopTradesMultiplier             =                       j.value("sopTradesMultiplier", sopTradesMultiplier);
+      cancelOrdersAuto                =                       j.value("cancelOrdersAuto", cancelOrdersAuto);
+      cleanPongsAuto                  =                       j.value("cleanPongsAuto", cleanPongsAuto);
+      profitHourInterval              =                       j.value("profitHourInterval", profitHourInterval);
+      audio                           =                       j.value("audio", audio);
+      delayUI                         = fmax(0,               j.value("delayUI", delayUI));
+      if (mode == mQuotingMode::Depth)
+        widthPercentage = false;
+    };
     void kiss(json *const j) {
       previous = {this};
-      from_json(*j, *this);
+      from_json(*j);
       diff(previous);
       push();
       send();
-    };
-    void tidy() {
-      if (mode == mQuotingMode::Depth)
-        widthPercentage = false;
     };
     const mMatter about() const {
       return mMatter::QuotingParameters;
@@ -709,161 +673,9 @@ namespace K {
     };
   };
   static void from_json(const json &j, mQuotingParams &k) {
-    k.widthPing                       = fmax(1e-8,            j.value("widthPing", k.widthPing));
-    k.widthPingPercentage             = fmin(1e+5, fmax(1e-4, j.value("widthPingPercentage", k.widthPingPercentage)));
-    k.widthPong                       = fmax(1e-8,            j.value("widthPong", k.widthPong));
-    k.widthPongPercentage             = fmin(1e+5, fmax(1e-4, j.value("widthPongPercentage", k.widthPongPercentage)));
-    k.widthPercentage                 =                       j.value("widthPercentage", k.widthPercentage);
-    k.bestWidth                       =                       j.value("bestWidth", k.bestWidth);
-    k.buySize                         = fmax(1e-8,            j.value("buySize", k.buySize));
-    k.buySizePercentage               = fmin(1e+2, fmax(1,    j.value("buySizePercentage", k.buySizePercentage)));
-    k.buySizeMax                      =                       j.value("buySizeMax", k.buySizeMax);
-    k.sellSize                        = fmax(1e-8,            j.value("sellSize", k.sellSize));
-    k.sellSizePercentage              = fmin(1e+2, fmax(1,    j.value("sellSizePercentage", k.sellSizePercentage)));
-    k.sellSizeMax                     =                       j.value("sellSizeMax", k.sellSizeMax);
-    k.pingAt                          =                       j.value("pingAt", k.pingAt);
-    k.pongAt                          =                       j.value("pongAt", k.pongAt);
-    k.mode                            =                       j.value("mode", k.mode);
-    k.safety                          =                       j.value("safety", k.safety);
-    k.bullets                         = fmin(10, fmax(1,      j.value("bullets", k.bullets)));
-    k.range                           =                       j.value("range", k.range);
-    k.rangePercentage                 = fmin(1e+2, fmax(1e-3, j.value("rangePercentage", k.rangePercentage)));
-    k.fvModel                         =                       j.value("fvModel", k.fvModel);
-    k.targetBasePosition              =                       j.value("targetBasePosition", k.targetBasePosition);
-    k.targetBasePositionPercentage    = fmin(1e+2, fmax(0,    j.value("targetBasePositionPercentage", k.targetBasePositionPercentage)));
-    k.positionDivergenceMin           =                       j.value("positionDivergenceMin", k.positionDivergenceMin);
-    k.positionDivergenceMode          =                       j.value("positionDivergenceMode", k.positionDivergenceMode);
-    k.positionDivergence              =                       j.value("positionDivergence", k.positionDivergence);
-    k.positionDivergencePercentage    = fmin(1e+2, fmax(0,    j.value("positionDivergencePercentage", k.positionDivergencePercentage)));
-    k.positionDivergencePercentageMin = fmin(1e+2, fmax(0,    j.value("positionDivergencePercentageMin", k.positionDivergencePercentageMin)));
-    k.percentageValues                =                       j.value("percentageValues", k.percentageValues);
-    k.autoPositionMode                =                       j.value("autoPositionMode", k.autoPositionMode);
-    k.aggressivePositionRebalancing   =                       j.value("aggressivePositionRebalancing", k.aggressivePositionRebalancing);
-    k.superTrades                     =                       j.value("superTrades", k.superTrades);
-    k.tradesPerMinute                 =                       j.value("tradesPerMinute", k.tradesPerMinute);
-    k.tradeRateSeconds                = fmax(0,               j.value("tradeRateSeconds", k.tradeRateSeconds));
-    k.protectionEwmaWidthPing         =                       j.value("protectionEwmaWidthPing", k.protectionEwmaWidthPing);
-    k.protectionEwmaQuotePrice        =                       j.value("protectionEwmaQuotePrice", k.protectionEwmaQuotePrice);
-    k.protectionEwmaPeriods           = fmax(1,               j.value("protectionEwmaPeriods", k.protectionEwmaPeriods));
-    k.quotingStdevProtection          =                       j.value("quotingStdevProtection", k.quotingStdevProtection);
-    k.quotingStdevBollingerBands      =                       j.value("quotingStdevBollingerBands", k.quotingStdevBollingerBands);
-    k.quotingStdevProtectionFactor    =                       j.value("quotingStdevProtectionFactor", k.quotingStdevProtectionFactor);
-    k.quotingStdevProtectionPeriods   = fmax(1,               j.value("quotingStdevProtectionPeriods", k.quotingStdevProtectionPeriods));
-    k.ewmaSensiblityPercentage        =                       j.value("ewmaSensiblityPercentage", k.ewmaSensiblityPercentage);
-    k.quotingEwmaTrendProtection      =                       j.value("quotingEwmaTrendProtection", k.quotingEwmaTrendProtection);
-    k.quotingEwmaTrendThreshold       =                       j.value("quotingEwmaTrendThreshold", k.quotingEwmaTrendThreshold);
-    k.veryLongEwmaPeriods             = fmax(1,               j.value("veryLongEwmaPeriods", k.veryLongEwmaPeriods));
-    k.longEwmaPeriods                 = fmax(1,               j.value("longEwmaPeriods", k.longEwmaPeriods));
-    k.mediumEwmaPeriods               = fmax(1,               j.value("mediumEwmaPeriods", k.mediumEwmaPeriods));
-    k.shortEwmaPeriods                = fmax(1,               j.value("shortEwmaPeriods", k.shortEwmaPeriods));
-    k.extraShortEwmaPeriods           = fmax(1,               j.value("extraShortEwmaPeriods", k.extraShortEwmaPeriods));
-    k.ultraShortEwmaPeriods           = fmax(1,               j.value("ultraShortEwmaPeriods", k.ultraShortEwmaPeriods));
-    k.aprMultiplier                   =                       j.value("aprMultiplier", k.aprMultiplier);
-    k.sopWidthMultiplier              =                       j.value("sopWidthMultiplier", k.sopWidthMultiplier);
-    k.sopSizeMultiplier               =                       j.value("sopSizeMultiplier", k.sopSizeMultiplier);
-    k.sopTradesMultiplier             =                       j.value("sopTradesMultiplier", k.sopTradesMultiplier);
-    k.cancelOrdersAuto                =                       j.value("cancelOrdersAuto", k.cancelOrdersAuto);
-    k.cleanPongsAuto                  =                       j.value("cleanPongsAuto", k.cleanPongsAuto);
-    k.profitHourInterval              =                       j.value("profitHourInterval", k.profitHourInterval);
-    k.audio                           =                       j.value("audio", k.audio);
-    k.delayUI                         = fmax(0,               j.value("delayUI", k.delayUI));
-    k.tidy();
+    k.from_json(j);
   };
 
-  struct mOrder {
-         mRandId orderId,
-                 exchangeId;
-         mStatus status         = mStatus::Waiting;
-           mSide side           = (mSide)0;
-          mPrice price          = 0;
-         mAmount quantity       = 0,
-                 tradeQuantity  = 0;
-      mOrderType type           = mOrderType::Limit;
-    mTimeInForce timeInForce    = mTimeInForce::GTC;
-            bool isPong         = false,
-                 preferPostOnly = true;
-          mClock time           = 0,
-                 latency        = 0;
-    mOrder()
-    {};
-    mOrder(const mRandId &o, const mSide &s, const mPrice &p, const mAmount &q, const bool &i)
-      : orderId(o)
-      , side(s)
-      , price(p)
-      , quantity(q)
-      , isPong(i)
-      , time(Tstamp)
-    {};
-    mOrder(const mRandId &o, const mRandId &e, const mStatus &s, const mPrice &p, const mAmount &q, const mAmount &Q)
-      : orderId(o)
-      , exchangeId(e)
-      , status(s)
-      , price(p)
-      , quantity(q)
-      , tradeQuantity(Q)
-      , time(Tstamp)
-    {};
-    static void update(const mOrder &raw, mOrder *const order) {
-      if (!order) return;
-      if (mStatus::Working == (    order->status     = raw.status
-      ) and !order->latency)       order->latency    = Tstamp - order->time;
-                                   order->time       = raw.time;
-      if (!raw.exchangeId.empty()) order->exchangeId = raw.exchangeId;
-      if (raw.price)               order->price      = raw.price;
-      if (raw.quantity)            order->quantity   = raw.quantity;
-    };
-    static const bool replace(const mPrice &price, const bool &isPong, mOrder *const order) {
-      if (!order
-        or order->exchangeId.empty()
-      ) return false;
-      order->price  = price;
-      order->isPong = isPong;
-      order->time   = Tstamp;
-      return true;
-    };
-    static const bool cancel(mOrder *const order) {
-      if (!order
-        or order->exchangeId.empty()
-        or order->status == mStatus::Waiting
-      ) return false;
-      order->status = mStatus::Waiting;
-      order->time   = Tstamp;
-      return true;
-    };
-  };
-  static void to_json(json &j, const mOrder &k) {
-    j = {
-      {       "orderId", k.orderId       },
-      {    "exchangeId", k.exchangeId    },
-      {          "side", k.side          },
-      {      "quantity", k.quantity      },
-      {          "type", k.type          },
-      {        "isPong", k.isPong        },
-      {         "price", k.price         },
-      {   "timeInForce", k.timeInForce   },
-      {        "status", k.status        },
-      {"preferPostOnly", k.preferPostOnly},
-      {          "time", k.time          },
-      {       "latency", k.latency       }
-    };
-  };
-  static void from_json(const json &j, mOrder &k) {
-    k.price          = j.value("price", 0.0);
-    k.quantity       = j.value("quantity", 0.0);
-    k.side           = j.value("side", "") == "Bid"
-                         ? mSide::Bid
-                         : mSide::Ask;
-    k.type           = j.value("type", "") == "Limit"
-                         ? mOrderType::Limit
-                         : mOrderType::Market;
-    k.timeInForce    = j.value("timeInForce", "") == "GTC"
-                         ? mTimeInForce::GTC
-                         : (j.value("timeInForce", "") == "FOK"
-                           ? mTimeInForce::FOK
-                           : mTimeInForce::IOC);
-    k.isPong         = false;
-    k.preferPostOnly = false;
-  };
   struct mLastOrder {
     mPrice  price          = 0;
     mAmount tradeQuantity  = 0;
@@ -1021,86 +833,6 @@ namespace K {
     j = k.blob();
   };
 
-  struct mTrade {
-     string tradeId;
-      mSide side         = (mSide)0;
-     mPrice price        = 0,
-            Kprice       = 0;
-    mAmount quantity     = 0,
-            value        = 0,
-            Kqty         = 0,
-            Kvalue       = 0,
-            Kdiff        = 0,
-            feeCharged   = 0;
-     mClock time         = 0,
-            Ktime        = 0;
-       bool isPong       = false,
-            loadedFromDB = false;
-    mTrade()
-    {};
-    mTrade(const mPrice p, const mAmount q, const mSide s, const mClock t)
-      : side(s)
-      , price(p)
-      , quantity(q)
-      , time(t)
-    {};
-    mTrade(const mPrice &p, const mAmount &q, const mSide &S, const bool &P, const mClock &t, const mAmount &v, const mClock &Kt, const mAmount &Kq, const mPrice &Kp, const mAmount &Kv, const mAmount &Kd, const mAmount &f, const bool &l)
-      : tradeId(to_string(t))
-      , side(S)
-      , price(p)
-      , Kprice(Kp)
-      , quantity(q)
-      , value(v)
-      , Kqty(Kq)
-      , Kvalue(Kv)
-      , Kdiff(Kd)
-      , feeCharged(f)
-      , time(t)
-      , Ktime(Kt)
-      , isPong(P)
-      , loadedFromDB(l)
-    {};
-  };
-  static void to_json(json &j, const mTrade &k) {
-    if (k.tradeId.empty()) j = {
-      {    "time", k.time    },
-      {   "price", k.price   },
-      {"quantity", k.quantity},
-      {    "side", k.side    }
-    };
-    else j = {
-      {     "tradeId", k.tradeId     },
-      {        "time", k.time        },
-      {       "price", k.price       },
-      {    "quantity", k.quantity    },
-      {        "side", k.side        },
-      {       "value", k.value       },
-      {       "Ktime", k.Ktime       },
-      {        "Kqty", k.Kqty        },
-      {      "Kprice", k.Kprice      },
-      {      "Kvalue", k.Kvalue      },
-      {       "Kdiff", k.Kdiff       },
-      {  "feeCharged", k.feeCharged  },
-      {      "isPong", k.isPong      },
-      {"loadedFromDB", k.loadedFromDB}
-    };
-  };
-  static void from_json(const json &j, mTrade &k) {
-    k.tradeId      = j.value("tradeId", "");
-    k.price        = j.value("price", 0.0);
-    k.quantity     = j.value("quantity", 0.0);
-    k.side         = j.value("side", (mSide)0);
-    k.time         = j.value("time", (mClock)0);
-    k.value        = j.value("value", 0.0);
-    k.Ktime        = j.value("Ktime", (mClock)0);
-    k.Kqty         = j.value("Kqty", 0.0);
-    k.Kprice       = j.value("Kprice", 0.0);
-    k.Kvalue       = j.value("Kvalue", 0.0);
-    k.Kdiff        = j.value("Kdiff", 0.0);
-    k.feeCharged   = j.value("feeCharged", 0.0);
-    k.isPong       = j.value("isPong", false);
-    k.loadedFromDB = true;
-  };
   struct mMarketTakers: public mJsonToClient<mTrade> {
     vector<mTrade> trades;
     mAmount        takersBuySize60s  = 0,
@@ -1461,56 +1193,6 @@ namespace K {
     };
   };
 
-  struct mLevel {
-     mPrice price = 0;
-    mAmount size  = 0;
-    mLevel()
-    {};
-    mLevel(const mPrice &p, const mAmount &s)
-      : price(p)
-      , size(s)
-    {};
-    void clear() {
-      price = size = 0;
-    };
-    const bool empty() const {
-      return !size or !price;
-    };
-  };
-  static void to_json(json &j, const mLevel &k) {
-    j = {
-      {"price", k.price}
-    };
-    if (k.size) j["size"] = k.size;
-  };
-  struct mLevels {
-    vector<mLevel> bids,
-                   asks;
-    mLevels()
-    {};
-    mLevels(const vector<mLevel> &b, const vector<mLevel> &a)
-      : bids(b)
-      , asks(a)
-    {};
-    const mPrice spread() const {
-      return empty()
-        ? 0
-        : asks.cbegin()->price - bids.cbegin()->price;
-    };
-    const bool empty() const {
-      return bids.empty() or asks.empty();
-    };
-    void clear() {
-      bids.clear();
-      asks.clear();
-    };
-  };
-  static void to_json(json &j, const mLevels &k) {
-    j = {
-      {"bids", k.bids},
-      {"asks", k.asks}
-    };
-  };
   struct mLevelsDiff: public mLevels,
                       public mJsonToClient<mLevelsDiff> {
       bool patched = false;
@@ -2221,59 +1903,6 @@ namespace K {
     k.positionDivergence = j.value("pDiv", 0.0);
   };
 
-  struct mWallet {
-    mAmount amount = 0,
-            held   = 0,
-            total  = 0,
-            value  = 0,
-            profit = 0;
-    mCoinId currency;
-    mWallet()
-    {};
-    mWallet(const mAmount &a, const mAmount &h, const mCoinId &c)
-      : amount(a)
-      , held(h)
-      , currency(c)
-    {};
-    void reset(const mAmount &a, const mAmount &h) {
-      if (empty()) return;
-      total = (amount = ROUND(a, 1e-8))
-            + (held   = ROUND(h, 1e-8));
-    };
-    void reset(const mAmount &h) {
-      reset(total - h, h);
-    };
-    const bool empty() const {
-      return currency.empty();
-    };
-  };
-  static void to_json(json &j, const mWallet &k) {
-    j = {
-      {"amount", k.amount},
-      {  "held", k.held  },
-      { "value", k.value },
-      {"profit", k.profit}
-    };
-  };
-  struct mWallets {
-    mWallet base,
-            quote;
-    mWallets()
-    {};
-    mWallets(const mWallet &b, const mWallet &q)
-      : base(b)
-      , quote(q)
-    {};
-    const bool empty() const {
-      return base.empty() or quote.empty();
-    };
-  };
-  static void to_json(json &j, const mWallets &k) {
-    j = {
-      { "base", k.base },
-      {"quote", k.quote}
-    };
-  };
   struct mWalletPosition: public mWallets,
                           public mJsonToClient<mWalletPosition> {
      mTarget target;
@@ -3114,242 +2743,9 @@ namespace K {
       };
   };
 
-  struct mText {
-    static string oZip(string k) {
-      z_stream zs;
-      if (inflateInit2(&zs, -15) != Z_OK) return "";
-      zs.next_in = (Bytef*)k.data();
-      zs.avail_in = k.size();
-      int ret;
-      char outbuffer[32768];
-      string k_;
-      do {
-        zs.avail_out = 32768;
-        zs.next_out = (Bytef*)outbuffer;
-        ret = inflate(&zs, Z_SYNC_FLUSH);
-        if (k_.size() < zs.total_out)
-          k_.append(outbuffer, zs.total_out - k_.size());
-      } while (ret == Z_OK);
-      inflateEnd(&zs);
-      if (ret != Z_STREAM_END) return "";
-      return k_;
-    };
-    static string oHex(string k) {
-     unsigned int len = k.length();
-      string k_;
-      for (unsigned int i=0; i < len; i+=2) {
-        string byte = k.substr(i, 2);
-        char chr = (char)(int)strtol(byte.data(), NULL, 16);
-        k_.push_back(chr);
-      }
-      return k_;
-    };
-    static string oB64(string k) {
-      BIO *bio, *b64;
-      BUF_MEM *bufferPtr;
-      b64 = BIO_new(BIO_f_base64());
-      bio = BIO_new(BIO_s_mem());
-      bio = BIO_push(b64, bio);
-      BIO_set_flags(bio, BIO_FLAGS_BASE64_NO_NL);
-      BIO_write(bio, k.data(), k.length());
-      BIO_flush(bio);
-      BIO_get_mem_ptr(bio, &bufferPtr);
-      BIO_set_close(bio, BIO_NOCLOSE);
-      BIO_free_all(bio);
-      return string(bufferPtr->data, bufferPtr->length);
-    };
-    static string oB64decode(string k) {
-      BIO *bio, *b64;
-      char buffer[k.length()];
-      b64 = BIO_new(BIO_f_base64());
-      bio = BIO_new_mem_buf(k.data(), k.length());
-      bio = BIO_push(b64, bio);
-      BIO_set_flags(bio, BIO_FLAGS_BASE64_NO_NL);
-      BIO_set_close(bio, BIO_NOCLOSE);
-      int len = BIO_read(bio, buffer, k.length());
-      BIO_free_all(bio);
-      return string(buffer, len);
-    };
-    static string oMd5(string k) {
-      unsigned char digest[MD5_DIGEST_LENGTH];
-      MD5((unsigned char*)k.data(), k.length(), (unsigned char*)&digest);
-      char k_[16*2+1];
-      for (unsigned int i = 0; i < 16; i++) sprintf(&k_[i*2], "%02x", (unsigned int)digest[i]);
-      return strU(k_);
-    };
-    static string oSha256(string k) {
-      unsigned char digest[SHA256_DIGEST_LENGTH];
-      SHA256((unsigned char*)k.data(), k.length(), (unsigned char*)&digest);
-      char k_[SHA256_DIGEST_LENGTH*2+1];
-      for (unsigned int i = 0; i < SHA256_DIGEST_LENGTH; i++) sprintf(&k_[i*2], "%02x", (unsigned int)digest[i]);
-      return k_;
-    };
-    static string oSha512(string k) {
-      unsigned char digest[SHA512_DIGEST_LENGTH];
-      SHA512((unsigned char*)k.data(), k.length(), (unsigned char*)&digest);
-      char k_[SHA512_DIGEST_LENGTH*2+1];
-      for (unsigned int i = 0; i < SHA512_DIGEST_LENGTH; i++) sprintf(&k_[i*2], "%02x", (unsigned int)digest[i]);
-      return k_;
-    };
-    static string oHmac1(string p, string s, bool hex = false) {
-      unsigned char* digest;
-      digest = HMAC(EVP_sha1(), s.data(), s.length(), (unsigned char*)p.data(), p.length(), NULL, NULL);
-      char k_[SHA_DIGEST_LENGTH*2+1];
-      for (unsigned int i = 0; i < SHA_DIGEST_LENGTH; i++) sprintf(&k_[i*2], "%02x", (unsigned int)digest[i]);
-      return hex ? oHex(k_) : k_;
-    };
-    static string oHmac256(string p, string s, bool hex = false) {
-      unsigned char* digest;
-      digest = HMAC(EVP_sha256(), s.data(), s.length(), (unsigned char*)p.data(), p.length(), NULL, NULL);
-      char k_[SHA256_DIGEST_LENGTH*2+1];
-      for (unsigned int i = 0; i < SHA256_DIGEST_LENGTH; i++) sprintf(&k_[i*2], "%02x", (unsigned int)digest[i]);
-      return hex ? oHex(k_) : k_;
-    };
-    static string oHmac512(string p, string s, bool hex = false) {
-      unsigned char* digest;
-      digest = HMAC(EVP_sha512(), s.data(), s.length(), (unsigned char*)p.data(), p.length(), NULL, NULL);
-      char k_[SHA512_DIGEST_LENGTH*2+1];
-      for (unsigned int i = 0; i < SHA512_DIGEST_LENGTH; i++) sprintf(&k_[i*2], "%02x", (unsigned int)digest[i]);
-      return hex ? oHex(k_) : k_;
-    };
-    static string oHmac384(string p, string s) {
-      unsigned char* digest;
-      digest = HMAC(EVP_sha384(), s.data(), s.length(), (unsigned char*)p.data(), p.length(), NULL, NULL);
-      char k_[SHA384_DIGEST_LENGTH*2+1];
-      for (unsigned int i = 0; i < SHA384_DIGEST_LENGTH; i++) sprintf(&k_[i*2], "%02x", (unsigned int)digest[i]);
-      return k_;
-    };
-  };
-
-  struct mREST {
-    static json xfer(const string &url, const long &timeout = 13) {
-      return curl_perform(url, [&](CURL *curl) {
-        curl_easy_setopt(curl, CURLOPT_TIMEOUT, timeout);
-      }, timeout == 13);
-    };
-    static json xfer(const string &url, const string &post) {
-      return curl_perform(url, [&](CURL *curl) {
-        struct curl_slist *h_ = NULL;
-        h_ = curl_slist_append(h_, "Content-Type: application/x-www-form-urlencoded");
-        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
-        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post.data());
-      });
-    };
-    static json curl_perform(const string &url, function<void(CURL *curl)> curl_setopt, bool debug = true) {
-      string reply;
-      CURL *curl = curl_easy_init();
-      if (curl) {
-        curl_setopt(curl);
-        curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
-        curl_easy_setopt(curl, CURLOPT_CAINFO, "etc/cabundle.pem");
-        curl_easy_setopt(curl, CURLOPT_INTERFACE, args.inet);
-        curl_easy_setopt(curl, CURLOPT_URL, url.data());
-        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &curl_write);
-        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &reply);
-        CURLcode r = curl_easy_perform(curl);
-        if (debug and r != CURLE_OK)
-          reply = string("{\"error\":\"CURL Error: ") + curl_easy_strerror(r) + "\"}";
-        curl_easy_cleanup(curl);
-      }
-      if (reply.empty() or (reply.at(0) != '{' and reply.at(0) != '[')) reply = "{}";
-      return json::parse(reply);
-    };
-    private:
-      static size_t curl_write(void *buf, size_t size, size_t nmemb, void *up) {
-        ((string*)up)->append((char*)buf, size * nmemb);
-        return size * nmemb;
-      };
-  };
-
-  struct mRandom {
-    static const unsigned long long int64() {
-      static random_device rd;
-      static mt19937_64 gen(rd());
-      return uniform_int_distribution<unsigned long long>()(gen);
-    };
-    static const mRandId int45Id() {
-      return to_string(int64()).substr(0, 10);
-    };
-    static const mRandId int32Id() {
-      return to_string(int64()).substr(0,  8);
-    };
-    static const mRandId char16Id() {
-      char s[16];
-      for (unsigned int i = 0; i < 16; ++i)
-        s[i] = numsAz[int64() % (sizeof(numsAz) - 1)];
-      return string(s, 16);
-    };
-    static const mRandId uuid36Id() {
-      string uuid = string(36, ' ');
-      unsigned long long rnd = int64();
-      unsigned long long rnd_ = int64();
-      uuid[8] = '-';
-      uuid[13] = '-';
-      uuid[18] = '-';
-      uuid[23] = '-';
-      uuid[14] = '4';
-      for (unsigned int i=0;i<36;i++)
-        if (i != 8 && i != 13 && i != 18 && i != 14 && i != 23) {
-          if (rnd <= 0x02) rnd = 0x2000000 + (rnd_ * 0x1000000) | 0;
-          rnd >>= 4;
-          uuid[i] = numsAz[(i == 19) ? ((rnd & 0xf) & 0x3) | 0x8 : rnd & 0xf];
-        }
-      return strL(uuid);
-    };
-    static const mRandId uuid32Id() {
-      mRandId uuid = uuid36Id();
-      uuid.erase(remove(uuid.begin(), uuid.end(), '-'), uuid.end());
-      return uuid;
-    }
-  };
-
-  struct mCommand {
-    private:
-      static const string output(const string &cmd) {
-        string data;
-        FILE *stream = popen((cmd + " 2>&1").data(), "r");
-        if (stream) {
-          const int max_buffer = 256;
-          char buffer[max_buffer];
-          while (!feof(stream))
-            if (fgets(buffer, max_buffer, stream) != NULL)
-              data += buffer;
-          pclose(stream);
-        }
-        return data;
-      };
-    public:
-      static const string uname() {
-        return output("uname -srvm");
-      };
-      static const string ps() {
-        return output("(ps -p" + to_string(::getpid()) + " -orss | tail -n1)");
-      };
-      static const string netstat() {
-        return output("netstat -anp 2>/dev/null | grep " + to_string(args.port));
-      };
-      static void stunnel(const bool &reboot) {
-        int k = system("(pkill stunnel || :)");
-        if (reboot) k = system("stunnel etc/stunnel.conf");
-      };
-      static const bool git() {
-        return access(".git", F_OK) != -1;
-      };
-      static const string changelog() {
-        return git() and !system("git fetch 2>/dev/null")
-          ? output("(git --no-pager log --graph --oneline @..@{u} 2>/dev/null)")
-          : "";
-      };
-      static const bool deprecated() {
-        return git()
-          ? output("git rev-parse @") != output("git rev-parse @{u}")
-          : false;
-      };
-  };
-
   struct mMonitor: public mJsonToClient<mMonitor> {
     unsigned int /* ( | L | ) */ /* more */ orders_60s /* ? */;
-          string /*  )| O |(  */    unlock;
+    const string /*  )| O |(  */  * unlock;
         mProduct /* ( | C | ) */ /* this */ product;
                  /*  )| K |(  */ /* thanks! <3 */
     mMonitor()
@@ -3378,8 +2774,8 @@ namespace K {
   };
   static void to_json(json &j, const mMonitor &k) {
     j = {
-      {     "a", k.unlock                        },
-      {  "inet", string(args.inet ?: "")         },
+      {     "a", *k.unlock                       },
+      {  "inet", args.inet                       },
       {  "freq", k.orders_60s                    },
       { "theme", args.ignoreMoon + args.ignoreSun},
       {"memory", k.memSize()                     },
@@ -3387,9 +2783,5 @@ namespace K {
     };
   };
 }
-
-#ifndef NDEBUG
-#  include <test/units.h>
-#endif
 
 #endif
