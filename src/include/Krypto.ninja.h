@@ -23,7 +23,7 @@
 #include <Krypto.ninja-data.h>
 
 #ifndef NDEBUG
-#  include <test/units.h>
+#  include <../../test/units.h>
 #endif
 
 #endif

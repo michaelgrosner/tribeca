@@ -16,7 +16,6 @@
 [![Build Status](https://img.shields.io/travis/ctubio/Krypto-trading-bot/master.svg?label=test)](https://travis-ci.org/ctubio/Krypto-trading-bot)
 [![Coverage Status](https://img.shields.io/coveralls/ctubio/Krypto-trading-bot/master.svg)](https://coveralls.io/r/ctubio/Krypto-trading-bot?branch=master)
 [![Quality Status](https://img.shields.io/codacy/grade/d48a59c313504f7988e3df031665f90f/master.svg?label=review)](https://www.codacy.com/app/ctubio/Krypto-trading-bot)
-[![Dependency Status](https://img.shields.io/david/ctubio/Krypto-trading-bot.svg)](https://david-dm.org/ctubio/Krypto-trading-bot)
 [![Open Issues](https://img.shields.io/github/issues/ctubio/Krypto-trading-bot.svg)](https://github.com/ctubio/Krypto-trading-bot/issues)
 [![Open Issues](https://img.shields.io/github/issues/ctubio/tribeca.svg)](https://github.com/ctubio/tribeca/issues)
 [![Downloads Last 21 Commits](https://img.shields.io/github/downloads/ctubio/Krypto-trading-bot/total.svg?label=downloads%20last%2021%20commits)](https://github.com/ctubio/Krypto-trading-bot)
