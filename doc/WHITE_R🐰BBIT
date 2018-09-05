@@ -47,7 +47,7 @@ s: hurry! to get you started, a collection of redundant information to follow: :
 :      $ make                                                                 :
 :       TODO                                                                  :
 :                                                                             :
-:      $ make bundle                                                          :
+:      $ make trading-bot                                                     :
 :       TODO                                                                  :
 :                                                                             :
 :      $ make test-c                                                          :

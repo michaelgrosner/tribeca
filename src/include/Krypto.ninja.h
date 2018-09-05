@@ -18,9 +18,9 @@
    void catch_exit(const int);
 #endif
 
-#include <src/lib/df.h>
-#include <src/lib/gw.h>
-#include <src/lib/ds.h>
+#include <Krypto.ninja-lang.h>
+#include <Krypto.ninja-apis.h>
+#include <Krypto.ninja-data.h>
 
 #ifndef NDEBUG
 #  include <test/units.h>

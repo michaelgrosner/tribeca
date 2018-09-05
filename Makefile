@@ -2,7 +2,7 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
 PATCH    = 9
-BUILD    = 69
+BUILD    = 0
 CHOST   ?= $(shell $(MAKE) CHOST= chost -s)
 CARCH    = x86_64-linux-gnu arm-linux-gnueabihf aarch64-linux-gnu x86_64-apple-darwin17 x86_64-w64-mingw32
 KLOCAL  := build-$(CHOST)/local
@@ -21,21 +21,21 @@ V_SQL    = 3230100
 V_QF     = 1.15.1
 V_UV     = 1.20.3
 V_CATCH  = 2.2.3
-KARGS   := -I. -I$(KLOCAL)/include -pthread -std=c++11    \
-  -O3 $(KLOCAL)/lib/K-$(CHOST)-docroot.o src/trading-bot/server/trading-bot.cxx \
-  -DK_0_DAY='"v$(MAJOR).$(MINOR).$(PATCH)+$(BUILD)"'      \
-  -DK_STAMP='"$(shell date "+%Y-%m-%d %H:%M:%S")"'        \
-  -DK_BUILD='"$(CHOST)"'     $(KLOCAL)/include/uWS/*.cpp  \
-  $(KLOCAL)/lib/K-$(CHOST).a $(KLOCAL)/lib/libquickfix.a  \
-  $(KLOCAL)/lib/libsqlite3.a $(KLOCAL)/lib/libz.a         \
-  $(KLOCAL)/lib/libcurl.a    $(KLOCAL)/lib/libssl.a       \
+KARGS   :=  -pthread -std=c++11 -O3 -I$(KLOCAL)/include  \
+  -I$(abspath $(KLOCAL)/../../src/include)               \
+  -DK_0_DAY='"v$(MAJOR).$(MINOR).$(PATCH)+$(BUILD)"'     \
+  -DK_STAMP='"$(shell date "+%Y-%m-%d %H:%M:%S")"'       \
+  -DK_BUILD='"$(CHOST)"'     $(KLOCAL)/include/uWS/*.cpp \
+  $(KLOCAL)/lib/K-$(CHOST).a $(KLOCAL)/lib/libquickfix.a \
+  $(KLOCAL)/lib/libsqlite3.a $(KLOCAL)/lib/libz.a        \
+  $(KLOCAL)/lib/libcurl.a    $(KLOCAL)/lib/libssl.a      \
   $(KLOCAL)/lib/libcrypto.a  $(KLOCAL)/lib/libncurses.a
 
-all: K
+export CHOST CARCH
 
-hlep hepl: help
+all K: trading-bot
 
-help:
+hlep hepl help:
 	#                                                  #
 	# Available commands inside K top level directory: #
 	#  make help         - show this help              #
@@ -63,12 +63,6 @@ help:
 	#  make changelog    - show commits                #
 	#  make latest       - show commits and reinstall  #
 	#                                                  #
-	#  make clients      - compile K clients src       #
-	#  make www          - compile K clients src       #
-	#  make css          - compile K clients css       #
-	#  make bundle       - compile K clients bundle    #
-	#  make docroot      - compile K clients lib       #
-	#                                                  #
 	#  make doc          - compile K documentation     #
 	#  make test         - run tests                   #
 	#  make test-c       - run static tests            #
@@ -95,48 +89,72 @@ chost:
 	@echo -n $(shell (test -d .git && test -n "`command -v g++`") && \
 	g++ -dumpmachine || ls -1 . | grep build- | head -n1 | cut -d '/' -f1 | cut -d '-' -f2-)
 
-K: src/trading-bot/server/trading-bot.cxx
+doc:
+	@$(MAKE) -sC $@
+
+test:
+	@$(MAKE) -sC $@
+
+bundle:
+	@$(info make bundle is DEPRECATED! instead just use "make" to build the client/server.)
+	@sleep 2
+	@$(MAKE)
+
+trading-bot:
+	@$(MAKE) -C src/$@
+	@$(MAKE) src KSRC=$@
+
+src: src/$(KSRC)/$(KSRC).cxx
 ifdef KALL
 	unset KALL && echo -n $(CARCH) | tr ' ' "\n" | xargs -I % $(MAKE) CHOST=% $@
 else
-	@$(if $(shell sh -c 'test "`$(shell which "$(CXX)" 2> /dev/null) -dumpversion | cut -d . -f1`" != $(V_CXX) || echo 1'),,$(warning $(ERR));$(error $(HINT)))
+	@$(if $(shell test "`$(shell which "$(CXX)" 2> /dev/null) -dumpversion | cut -d . -f1`" != $(V_CXX) || echo 1),,$(warning $(ERR));$(error $(HINT)))
 	@$(CXX) --version
 	mkdir -p $(KLOCAL)/bin
-	CHOST=$(CHOST) $(MAKE) $(shell test -n "`echo $(CHOST) | grep darwin`" && echo Darwin || (test -n "`echo $(CHOST) | grep mingw32`" && echo Win32 || uname -s))
+	$(MAKE) $(shell test -n "`echo $(CHOST) | grep darwin`" && echo Darwin || (test -n "`echo $(CHOST) | grep mingw32`" && echo Win32 || uname -s)) CHOST=$(CHOST)
 	chmod +x $(KLOCAL)/bin/K-$(CHOST)$(shell test -n "`echo $(CHOST) | grep mingw32`" && echo .exe || :)
 endif
 
-dist:
-ifdef KALL
-	unset KALL && echo -n $(CARCH) | tr ' ' "\n" | xargs -I % $(MAKE) CHOST=% $@
-else
-	@$(if $(shell sh -c 'test "`$(shell which "$(CXX)" 2> /dev/null) -dumpversion | cut -d . -f1`" != $(V_CXX) || echo 1'),,$(warning $(ERR));$(error $(HINT)))
-	mkdir -p build-$(CHOST)
-	CHOST=$(CHOST) $(MAKE) zlib openssl curl sqlite ncurses json catch uws quickfix libuv
-	test -f /sbin/ldconfig && sudo ldconfig || :
-endif
-
-docroot:
-ifdef KALL
-	unset KALL && echo -n $(CARCH) | tr ' ' "\n" | xargs -I % $(MAKE) CHOST=% $@
-else
-	cd $(KLOCAL) && $(CXX) -c ../../src/build/document_root.S -o lib/K-$(CHOST)-docroot.o
-endif
-
-Linux:
+Linux: src/$(KSRC)/$(KSRC).cxx
 ifdef KUNITS
 	@unset KUNITS && $(MAKE) KTEST="--coverage test/unit_testing_framework.cxx" $@
 else ifndef KTEST
 	@$(MAKE) KTEST="-DNDEBUG" $@
 else
-	$(CXX) $(KTEST) -o $(KLOCAL)/bin/K-$(CHOST) -DHAVE_STD_UNIQUE_PTR -DUWS_THREADSAFE -static-libstdc++ -static-libgcc -rdynamic $(KARGS) -ldl
+	$(CXX) $(KTEST) -o $(KLOCAL)/bin/K-$(CHOST)     \
+		-DHAVE_STD_UNIQUE_PTR -DUWS_THREADSAFE        \
+		-static-libstdc++ -static-libgcc -rdynamic    \
+		$(realpath $(KLOCAL)/lib/K-$(CHOST)-incbin.o) \
+		src/$(KSRC)/$(KSRC).cxx                       \
+		$(KARGS) -ldl
 endif
 
-Darwin:
-	$(CXX) -DNDEBUG -o $(KLOCAL)/bin/K-$(CHOST) -DUSE_LIBUV $(KLOCAL)/lib/libuv.a -msse4.1 -maes -mpclmul -mmacosx-version-min=10.13 -nostartfiles -rdynamic $(KARGS) -ldl
+Darwin: src/$(KSRC)/$(KSRC).cxx
+	$(CXX) -DNDEBUG -o $(KLOCAL)/bin/K-$(CHOST)                                  \
+		-DUSE_LIBUV $(KLOCAL)/lib/libuv.a                                          \
+		-msse4.1 -maes -mpclmul -mmacosx-version-min=10.13 -nostartfiles -rdynamic \
+		$(realpath $(KLOCAL)/lib/K-$(CHOST)-incbin.o)                              \
+		src/$(KSRC)/$(KSRC).cxx                                                    \
+		$(KARGS) -ldl
 
-Win32:
-	$(CXX)-posix -DNDEBUG -o $(KLOCAL)/bin/K-$(CHOST).exe -DUSE_LIBUV $(KARGS) $(KLOCAL)/lib/libuv.dll.a $(KLOCAL)/lib/libssl.dll.a $(KLOCAL)/lib/libcrypto.dll.a -DCURL_STATICLIB -static -lstdc++ -lgcc -lwldap32 -lws2_32
+Win32: src/$(KSRC)/$(KSRC).cxx
+	$(CXX)-posix -DNDEBUG -o $(KLOCAL)/bin/K-$(CHOST).exe                                \
+		-DUSE_LIBUV                                                                        \
+		$(realpath $(KLOCAL)/lib/K-$(CHOST)-incbin.o)                                      \
+		src/$(KSRC)/$(KSRC).cxx                                                            \
+		$(KARGS)                                                                           \
+		$(KLOCAL)/lib/libuv.dll.a $(KLOCAL)/lib/libssl.dll.a $(KLOCAL)/lib/libcrypto.dll.a \
+		-DCURL_STATICLIB -static -lstdc++ -lgcc -lwldap32 -lws2_32
+
+dist:
+ifdef KALL
+	unset KALL && echo -n $(CARCH) | tr ' ' "\n" | xargs -I % $(MAKE) CHOST=% $@
+else
+	@$(if $(shell test "`$(shell which "$(CXX)" 2> /dev/null) -dumpversion | cut -d . -f1`" != $(V_CXX) || echo 1),,$(warning $(ERR));$(error $(HINT)))
+	mkdir -p build-$(CHOST)
+	$(MAKE) zlib openssl curl sqlite ncurses json catch uws quickfix libuv CHOST=$(CHOST)
+	test -f /sbin/ldconfig && sudo ldconfig || :
+endif
 
 zlib:
 	test -d build-$(CHOST)/zlib-$(V_ZLIB) || (                                                  \
@@ -325,36 +343,6 @@ coinbase:
 	@openssl s_client -showcerts -connect fix.pro.coinbase.com:4198 -CApath /etc/ssl/certs < /dev/null 2> /dev/null \
 	| openssl x509 -outform PEM > etc/sslcert/fix.pro.coinbase.com.pem
 
-clients: src/trading-bot/client-2d
-	rm -rf $(KLOCAL)/var
-	mkdir -p $(KLOCAL)/var/www
-	@echo Building clients dynamic files..
-	@npm install
-	./node_modules/.bin/tsc --alwaysStrict --experimentalDecorators -t ES2017 -m commonjs --outDir $(KLOCAL)/var/www/js src/trading-bot/client-2d/*.ts
-	@echo DONE
-
-www: src/trading-bot/www
-	@echo Building clients static files..
-	cp -R src/trading-bot/www/* $(KLOCAL)/var/www/
-	@echo DONE
-
-css: src/trading-bot/www/sass
-	@echo Building clients CSS files..
-	rm -rf $(KLOCAL)/var/www/css
-	mkdir -p $(KLOCAL)/var/www/css
-	ls -1 src/trading-bot/www/sass/*.scss | sed -r 's/(.*)(\.scss)$$/\1\2 \1\.min.css/' | xargs -I % sh -c './node_modules/.bin/sass %;' \
-	&& rm src/trading-bot/www/sass/*.min.css.map && mv src/trading-bot/www/sass/*.min.css $(KLOCAL)/var/www/css/ && cat ./node_modules/ag-grid/dist/styles/ag-grid.css >> $(KLOCAL)/var/www/css/bootstrap.min.css
-	@echo DONE
-
-bundle: clients www css node_modules/.bin/browserify node_modules/.bin/uglifyjs
-	@echo Building clients bundle zip and docroot lib..
-	mkdir -p $(KLOCAL)/var/www/js/client
-	./node_modules/.bin/browserify -t [ babelify --presets [ babili env ] ] $(KLOCAL)/var/www/js/main.js | ./node_modules/.bin/uglifyjs | gzip > $(KLOCAL)/var/www/js/client/bundle.min.js
-	rm -rf $(KLOCAL)/var/www/js/*.js $(KLOCAL)/var/www/sass
-	echo $(CARCH) | tr ' ' "\n" | xargs -I % echo % | grep -v $(CHOST) | xargs -I % sh -c 'if test -d build-%; then rm -rf build-%/local/var;mkdir -p build-%/local/var;cp -R $(KLOCAL)/var build-%/local; fi'
-	echo $(CARCH) | tr ' ' "\n" | xargs -I % echo % | xargs -I % sh -c 'if test -d build-%; then CHOST=% make docroot; fi'
-	@echo DONE
-
 diff: .git
 	@_() { echo $$2 $$3 version: `git rev-parse $$1`; }; git remote update && _ @ Local running && _ @{u} Latest remote
 	@$(MAKE) changelog -s
@@ -364,12 +352,6 @@ latest: .git diff
 
 changelog: .git
 	@_() { echo `git rev-parse $$1`; }; echo && git --no-pager log --graph --oneline @..@{u} && test `_ @` != `_ @{u}` || echo No need to upgrade, both versions are equal.
-
-doc:
-	@$(MAKE) -sC $@
-
-test:
-	@$(MAKE) -sC $@
 
 test-c:
 	@pvs-studio-analyzer analyze -e test/units.h -e $(KLOCAL)/include --source-file test/static_code_analysis.cxx --cl-params -I. -I$(KLOCAL)/include test/static_code_analysis.cxx && \
@@ -416,7 +398,7 @@ ifdef KALL
 else
 	@tar -cvzf v$(MAJOR).$(MINOR).$(PATCH).$(BUILD)-$(CHOST).tar.gz $(KLOCAL)/bin/K-$(CHOST)* $(KLOCAL)/lib/K-$(CHOST)*                   \
 	$(shell test -n "`echo $(CHOST) | grep mingw32`" && echo $(KLOCAL)/bin/*dll || :)                                                     \
-	LICENSE COPYING README.md doc/[^html]* etc src test Makefile                                                                          \
+	LICENSE COPYING README.md Makefile doc/[^html]* etc test --exclude src/*/node_modules src                                             \
 	&& curl -s -n -H "Content-Type:application/octet-stream" -H "Authorization: token ${KRELEASE}"                                        \
 	--data-binary "@$(PWD)/v$(MAJOR).$(MINOR).$(PATCH).$(BUILD)-$(CHOST).tar.gz"                                                          \
 	"https://uploads.github.com/repos/ctubio/Krypto-trading-bot/releases/$(shell curl -s                                                  \
@@ -431,4 +413,4 @@ md5: src
 asandwich:
 	@test `whoami` = 'root' && echo OK || echo make it yourself!
 
-.PHONY: all K chost dist link Linux Darwin Win32 build zlib openssl curl ncurses quickfix uws json catch pvs clean cleandb list screen start stop restart startall stopall restartall coinbase packages install docker reinstall clients www bundle diff latest changelog test test-c doc release md5 asandwich
+.PHONY: all K src chost dist link build zlib openssl curl ncurses quickfix uws json catch pvs clean cleandb list screen start stop restart startall stopall restartall coinbase packages install docker reinstall diff latest changelog test test-c doc release md5 asandwich

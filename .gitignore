@@ -2,12 +2,12 @@
 /app
 /doc/html*
 /build*
-/*.gcno
-/*.gcda
-/node_modules
+/src/*/node_modules
 /etc/sslcert/fix.pro.coinbase.com.pem
 /etc/sslcert/server.crt
 /etc/sslcert/server.key
 /Vagrantfile
+/*.gcno
+/*.gcda
 .DS_Store
 .idea

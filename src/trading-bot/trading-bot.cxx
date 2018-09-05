@@ -1,10 +1,5 @@
-#include "src/lib/K.h"
-#include "src/trading-bot/server/if.h"
-#include "src/trading-bot/server/sh.h"
-#include "src/trading-bot/server/ev.h"
-#include "src/trading-bot/server/db.h"
-#include "src/trading-bot/server/ui.h"
-#include "src/trading-bot/server/qe.h"
+#include "Krypto.ninja.h"
+#include "trading-bot.h"
 
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;;int main(int argc, char** argv) {;;

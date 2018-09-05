@@ -154,7 +154,7 @@ Feel free anytime to check if there are new modifications with `make diff`.
 
 Once you decide that is time to upgrade, execute `make latest` to download and install the latest modifications in your remote branch (or directly `make reinstall` to skip the validation of the new commit messages).
 
-If you only use `git` to pull the latest commits, you will still need to recompile using `make reinstall` (or using `make dist bundle K` if you have modified source files) and then `make restart` to start using the latest version.
+If you only use `git` to pull the latest commits, you will still need to recompile using `make reinstall` (or using `make dist K` or just `make` if you have modified source files) and then `make restart` to start using the latest version.
 
 ### Multiple instances party time
 
@@ -232,7 +232,7 @@ If you ask me, [<img height="20px" src="https://user-images.githubusercontent.co
 
 Make sure your build machine has [node](https://nodejs.org/en/download/package-manager/) installed, and also ensure `make dist` provides all dependencies without errors.
 
-To rebuild the application with your modifications, see `make help` and choose a target (`make bundle K` may be what you are looking for).
+To rebuild the application with your modifications, see `make help` and choose a target (just `make` may be what you are looking for).
 
 Test units are executed before the application exits, only if the application was compiled with `KUNITS=1 make`.
 

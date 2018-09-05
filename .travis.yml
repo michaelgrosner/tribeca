@@ -48,15 +48,15 @@ install:
   - |
     if [[ "${TRAVIS_OS_NAME}" == "linux" ]]; then
       yes 1 | make install
-      make dist bundle
+      make dist
       make pvs || :
       _() { git cat-file blob $1 > $1.asc && echo $TRAVIS_DEPLOY | gpg --passphrase-fd 0 $1.asc; }
       _ Kira
       _ Bender
       . Bender                                                                            > /dev/null 2>&1
-      ncu | sed '/^\s*$/d'                                                                | /usr/games/cowsay -nW80 -fduck
-      make test-c 2>&1 | sed '/Total messages/d' | sed '/Help: The documentation/d'       | /usr/games/cowsay -nW160 -felephant || :
       KUNITS=1 make
+      cd src/trading-bot && ncu | sed '/^\s*$/d'                                          | /usr/games/cowsay -nW80 -fduck
+      make test-c 2>&1 | sed '/Total messages/d' | sed '/Help: The documentation/d'       | /usr/games/cowsay -nW160 -felephant || :
     elif [[ "${TRAVIS_OS_NAME}" == "osx" ]]; then
       yes 4 | make install
     else
