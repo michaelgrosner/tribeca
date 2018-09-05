@@ -1,25 +1,24 @@
-ERR     := *** Unexpected MAKELEVEL
+ERR     := *** Unexpected MAKELEVEL = 0.
 HINT    := This Makefile can't be used directly, consider cd ../.. before try again
 $(if $(shell test ${MAKELEVEL} -eq 0 || echo 1),,$(warning $(ERR));$(error $(HINT)))
-ERR     := *** Unexpected MAKE_VERSION
-HINT    := This Makefile can't be used with make version < 4, consider to upgrade to make 4 before try again
+ERR     := *** Unexpected MAKE_VERSION < 4.
+HINT    := This Makefile can't be used with your make version, consider to upgrade before try again
 $(if $(shell test "`echo ${MAKE_VERSION} | cut -d. -f1`" -lt 4 || echo 1),,$(warning $(ERR));$(error $(HINT)))
 
-KLOCAL  := $(abspath ../../build-$(CHOST)/local)
-NPM     := $(abspath ./node_modules)
-PATH    := $(NPM)/.bin:$(PATH)
+KLOCAL    := $(abspath ../../build-$(CHOST)/local)
+NODE_PATH := $(abspath ./node_modules)
+PATH      := $(NODE_PATH)/.bin:$(PATH)
 
-STEP      = $(shell tput setaf 2;tput setab 0)[X/5]$(shell tput sgr0)
-STEP_1   := $(subst X,1,$(STEP)) Building npm packages..
-STEP_2   := $(subst X,2,$(STEP)) Building client dynamic files..
-STEP_3   := $(subst X,3,$(STEP)) Building client static files..
-STEP_4   := $(subst X,4,$(STEP)) Building client CSS files..
-STEP_5   := $(subst X,5,$(STEP)) Building client bundle zip and docroot lib..
+STEP      = $(shell tput setaf 2;tput setab 0)[step/4]$(shell tput sgr0)
+STEP_1   := $(subst step,1,$(STEP)) Building npm packages..
+STEP_2   := $(subst step,2,$(STEP)) Building client dynamic files..
+STEP_4   := $(subst step,3,$(STEP)) Building client CSS files..
+STEP_5   := $(subst step,4,$(STEP)) Building js bundle zip and document root lib..
 
-all trading-bot: bundle
+all trading-bot: client css js
 
-docroot:
-	cd $(KLOCAL) && $(CHOST)-g++ -c $(realpath trading-bot.S) -o $(KLOCAL)/lib/K-$(CHOST)-incbin.o
+assets:
+	$(CHOST)-g++ -Wa,-I$(realpath $(KLOCAL)/var),-I$(realpath ./) -c trading-bot.S -o $(KLOCAL)/lib/K-$(CHOST)-assets.o
 
 npm:
 	$(info $(STEP_1))
@@ -30,33 +29,31 @@ ifndef TRAVIS_DEPLOY
 endif
 
 client: npm client/main.ts
-	rm -rf $(KLOCAL)/var
-	mkdir -p $(KLOCAL)/var/www
 	$(info $(STEP_2))
+	rm -rf   $(KLOCAL)/var
+	mkdir -p $(KLOCAL)/var/www
 	tsc --alwaysStrict --experimentalDecorators -t ES2017 -m commonjs --outDir $(KLOCAL)/var/www/js client/*.ts
 
-www: www/index.html
-	$(info $(STEP_3))
-	cp -R www/* $(KLOCAL)/var/www
-
 css: www/sass/*.scss
-	$(info $(STEP_4))
-	rm -rf $(KLOCAL)/var/www/css
+	$(info $(STEP_3))
+	rm -rf   $(KLOCAL)/var/www/css
 	mkdir -p $(KLOCAL)/var/www/css
+	cp -R www/sass $(KLOCAL)/var/www
 	ls -1 www/sass/*.scss | sed -r 's/(.*)(\.scss)$$/\1\2 \1\.min.css/' | xargs -I % sh -c 'sass %;' \
-		&& rm www/sass/*.min.css.map && mv www/sass/*.min.css $(KLOCAL)/var/www/css/                   \
-		&& cat $(NPM)/ag-grid/dist/styles/ag-grid.css >> $(KLOCAL)/var/www/css/bootstrap.min.css
+	  && rm www/sass/*.min.css.map && mv www/sass/*.min.css $(KLOCAL)/var/www/css/                   \
+	  && cat $(NODE_PATH)/ag-grid/dist/styles/ag-grid.css >> $(KLOCAL)/var/www/css/bootstrap.min.css
+	rm -rf $(KLOCAL)/var/www/sass
 
-bundle: client www css
-	$(info $(STEP_5))
+js: $(NODE_PATH)/.bin
+	$(info $(STEP_4))
 	mkdir -p $(KLOCAL)/var/www/js/client
-	NODE_PATH=$(NPM) browserify -t [ babelify --presets [ babili env ] ] \
-		$(KLOCAL)/var/www/js/main.js | uglifyjs | gzip > $(KLOCAL)/var/www/js/client/bundle.min.js
-	rm -rf $(KLOCAL)/var/www/js/*.js $(KLOCAL)/var/www/sass
+	NODE_PATH=$(NODE_PATH) browserify -t [ babelify --presets [ babili env ] ] \
+	  $(KLOCAL)/var/www/js/main.js | uglifyjs | gzip > $(KLOCAL)/var/www/js/client/bundle.min.js
+	rm -rf $(KLOCAL)/var/www/js/*.js
 	echo $(CARCH) | tr ' ' "\n" | xargs -I % echo % | grep -v $(CHOST) \
-		| xargs -I % sh -c 'if test -d ../../build-%; then rm -rf ../../build-%/local/var;mkdir -p ../../build-%/local/var;cp -R $(KLOCAL)/var ../../build-%/local; fi'
+	  | xargs -I % sh -c 'if test -d ../../build-%; then rm -rf ../../build-%/local/var;mkdir -p ../../build-%/local/var;cp -R $(KLOCAL)/var ../../build-%/local; fi'
 	echo $(CARCH) | tr ' ' "\n" | xargs -I % echo % \
-		| xargs -I % sh -c 'if test -d ../../build-%; then CHOST=% $(MAKE) docroot; fi'
+	  | xargs -I % sh -c 'if test -d ../../build-%; then CHOST=% $(MAKE) assets; fi'
 
 export define PACKAGE_JSON
 {
@@ -113,4 +110,4 @@ endef
 package.json:
 	@echo "$$PACKAGE_JSON" > $@
 
-.PHONY: all trading-bot docroot client www css bundle npm package.json
+.PHONY: all trading-bot assets client css js npm package.json
