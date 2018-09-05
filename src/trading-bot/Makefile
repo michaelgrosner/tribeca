@@ -1,10 +1,13 @@
-ERR     := *** Unexpected MAKELEVEL=0
+ERR     := *** Unexpected MAKELEVEL
 HINT    := This Makefile can't be used directly, consider cd ../.. before try again
 $(if $(shell test ${MAKELEVEL} -eq 0 || echo 1),,$(warning $(ERR));$(error $(HINT)))
+ERR     := *** Unexpected MAKE_VERSION
+HINT    := This Makefile can't be used with make version < 4, consider to upgrade to make 4 before try again
+$(if $(shell test "`echo ${MAKE_VERSION} | cut -d. -f1`" -lt 4 || echo 1),,$(warning $(ERR));$(error $(HINT)))
 
+KLOCAL  := $(abspath ../../build-$(CHOST)/local)
 NPM     := $(abspath ./node_modules)
 PATH    := $(NPM)/.bin:$(PATH)
-KLOCAL  := $(abspath ../../build-$(CHOST)/local)
 
 STEP      = $(shell tput setaf 2;tput setab 0)[X/5]$(shell tput sgr0)
 STEP_1   := $(subst X,1,$(STEP)) Building npm packages..

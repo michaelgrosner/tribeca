@@ -1,5 +1,5 @@
-#ifndef K_GW_H_
-#define K_GW_H_
+#ifndef K_APIS_H_
+#define K_APIS_H_
 
 namespace K {
   enum class mConnectivity: unsigned int {

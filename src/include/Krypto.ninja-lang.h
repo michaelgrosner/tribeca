@@ -1,5 +1,5 @@
-#ifndef K_DF_H_
-#define K_DF_H_
+#ifndef K_LANG_H_
+#define K_LANG_H_
 
 #include <stdlib.h>
 #include <iostream>

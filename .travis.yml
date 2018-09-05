@@ -1,6 +1,6 @@
 sudo: required
 
-dist: trusty
+dist: xenial
 
 #osx_image: xcode7.3
 
@@ -29,7 +29,8 @@ env:
 
 addons:
   apt:
-    sources: ['ubuntu-toolchain-r-test']
+    sources:
+      - sourceline: "ppa:ubuntu-toolchain-r/test"
     packages: ['g++-6', 'lcov', 'cowsay']
 
 before_install:
@@ -37,7 +38,6 @@ before_install:
     if [[ "${TRAVIS_OS_NAME}" == "linux" ]]; then
       sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-6 50
       sudo update-alternatives --install /usr/bin/x86_64-linux-gnu-g++ x86_64-linux-gnu-g++ /usr/bin/x86_64-linux-gnu-g++-6 50
-      npm install
       gem install coveralls-lcov
       npm install -g codacy-coverage npm-check-updates
     elif [[ "${TRAVIS_OS_NAME}" == "osx" ]]; then
@@ -53,26 +53,26 @@ install:
       _() { git cat-file blob $1 > $1.asc && echo $TRAVIS_DEPLOY | gpg --passphrase-fd 0 $1.asc; }
       _ Kira
       _ Bender
-      . Bender                                                                            > /dev/null 2>&1
+      . Bender                                                                                  > /dev/null 2>&1
       KUNITS=1 make
-      cd src/trading-bot && ncu | sed '/^\s*$/d' && cd ../..                              | /usr/games/cowsay -nW80 -fduck
-      make test-c 2>&1 | sed '/Total messages/d' | sed '/Help: The documentation/d'       | /usr/games/cowsay -nW160 -felephant || :
+      cd src/trading-bot && ncu | sed '/^\s*$/d'                                                | /usr/games/cowsay -nW80 -fduck
+      cd ../.. && make test-c 2>&1 | sed '/Total messages/d' | sed '/Help: The documentation/d' | /usr/games/cowsay -nW160 -felephant || :
     elif [[ "${TRAVIS_OS_NAME}" == "osx" ]]; then
       yes 4 | make install
     else
       yes 5 | make install
     fi
 
-script: make test                                                                         | /usr/games/cowsay -nW160 -fbud-frogs && test ${PIPESTATUS[0]} -eq 0
+script: make test                                                                               | /usr/games/cowsay -nW160 -fbud-frogs && test ${PIPESTATUS[0]} -eq 0
 
 after_success:
   - |
     if [[ "${TRAVIS_OS_NAME}" == "linux" ]]; then
-      lcov --directory . --capture --output-file coverage.info                            > /dev/null 2>&1
-      lcov --remove coverage.info '/usr/*' '*local/include/*' --output-file coverage.info > /dev/null 2>&1
-      coveralls-lcov --repo-token ${COVERALLS_TOKEN} coverage.info                        > /dev/null 2>&1
-      cat coverage.info | codacy-coverage --language cpp                                  > /dev/null 2>&1
-      lcov --list coverage.info                                                           | /usr/games/cowsay -nW80 -fdefault
+      lcov --directory . --capture --output-file coverage.info                                  > /dev/null 2>&1
+      lcov --remove coverage.info '/usr/*' '*local/include/*' --output-file coverage.info       > /dev/null 2>&1
+      coveralls-lcov --repo-token ${COVERALLS_TOKEN} coverage.info                              > /dev/null 2>&1
+      cat coverage.info | codacy-coverage --language cpp                                        > /dev/null 2>&1
+      lcov --list coverage.info                                                                 | /usr/games/cowsay -nW80 -fdefault
     fi
 
 notifications:
