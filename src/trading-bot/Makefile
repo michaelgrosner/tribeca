@@ -5,15 +5,15 @@ ERR     := *** Unexpected MAKE_VERSION < 4.
 HINT    := This Makefile can't be used with your make version, consider to upgrade before try again
 $(if $(shell test "`echo ${MAKE_VERSION} | cut -d. -f1`" -lt 4 || echo 1),,$(warning $(ERR));$(error $(HINT)))
 
-KLOCAL    := $(abspath ../../build-$(CHOST)/local)
+KLOCAL    := $(realpath ../../build-$(CHOST)/local)
 NODE_PATH := $(abspath ./node_modules)
 PATH      := $(NODE_PATH)/.bin:$(PATH)
 
-STEP      = $(shell tput setaf 2;tput setab 0)[step/4]$(shell tput sgr0)
-STEP_1   := $(subst step,1,$(STEP)) Building npm packages..
-STEP_2   := $(subst step,2,$(STEP)) Building client dynamic files..
-STEP_4   := $(subst step,3,$(STEP)) Building client CSS files..
-STEP_5   := $(subst step,4,$(STEP)) Building js bundle zip and document root lib..
+STEP       = $(shell tput setaf 2;tput setab 0)[step/4]$(shell tput sgr0)
+STEP_1    := $(subst step,1,$(STEP)) Building npm packages..
+STEP_2    := $(subst step,2,$(STEP)) Building client dynamic files..
+STEP_4    := $(subst step,3,$(STEP)) Building client CSS files..
+STEP_5    := $(subst step,4,$(STEP)) Building js bundle zip and document root lib..
 
 all trading-bot: client css js
 
@@ -80,8 +80,8 @@ export define PACKAGE_JSON
     "highcharts": "^6.1.1",
     "ng4-popover": "^1.0.23",
     "reflect-metadata": "^0.1.12",
-    "rxjs": "6.3.1",
-    "rxjs-compat": "^6.3.1",
+    "rxjs": "6.3.2",
+    "rxjs-compat": "^6.3.2",
     "sass": "^1.13.1",
     "typescript": "3.0.3",
     "uglify-es": "^3.3.9",
