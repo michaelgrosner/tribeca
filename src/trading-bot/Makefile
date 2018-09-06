@@ -9,16 +9,17 @@ KLOCAL    := $(realpath ../../build-$(CHOST)/local)
 NODE_PATH := $(abspath ./node_modules)
 PATH      := $(NODE_PATH)/.bin:$(PATH)
 
-STEP       = $(shell tput setaf 2;tput setab 0)[step/4]$(shell tput sgr0)
-STEP_1    := $(subst step,1,$(STEP)) Building npm packages..
-STEP_2    := $(subst step,2,$(STEP)) Building client dynamic files..
-STEP_4    := $(subst step,3,$(STEP)) Building client CSS files..
-STEP_5    := $(subst step,4,$(STEP)) Building js bundle zip and document root lib..
+STEPS     := $(shell grep "call\ STEP" Makefile | wc -l)
+STEP       = $(shell tput setaf 2;tput setab 0)[$(1)/$(STEPS)]$(shell tput sgr0)
+STEP_1    := $(call STEP,1) Building npm packages..
+STEP_2    := $(call STEP,2) Building client dynamic files..
+STEP_3    := $(call STEP,3) Building client CSS files..
+STEP_4    := $(call STEP,4) Building js bundle zip and document root lib..
 
 all trading-bot: client css js
 
-assets:
-	$(CHOST)-g++ -Wa,-I$(realpath $(KLOCAL)/var),-I$(realpath ./) -c trading-bot.S -o $(KLOCAL)/lib/K-$(CHOST)-assets.o
+assets: trading-bot.S
+	$(CHOST)-g++ -Wa,-I$(realpath $(KLOCAL)/var),-I$(realpath ./) -c $^ -o $(KLOCAL)/lib/K-$(CHOST)-assets.o
 
 npm:
 	$(info $(STEP_1))

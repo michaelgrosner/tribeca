@@ -1,6 +1,4 @@
-all: test
-
-test: units clean
+all test: units clean
 
 units:
 	cd .. && ./K.sh --version

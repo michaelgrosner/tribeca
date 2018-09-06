@@ -1,6 +1,4 @@
-all: doc
-
-doc: clean
+all doc: clean
 	doxygen
 	@mv html html4
 	@test -d html.css || git clone git://github.com/mosra/m.css html.css
