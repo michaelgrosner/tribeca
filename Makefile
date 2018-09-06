@@ -2,7 +2,7 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
 PATCH    = 10
-BUILD    = 4
+BUILD    = 5
 CHOST   ?= $(shell $(MAKE) CHOST= chost -s)
 CARCH    = x86_64-linux-gnu arm-linux-gnueabihf aarch64-linux-gnu x86_64-apple-darwin17 x86_64-w64-mingw32
 KLOCAL  := build-$(CHOST)/local
@@ -21,7 +21,7 @@ V_SQL    = 3230100
 V_QF     = 1.15.1
 V_UV     = 1.20.3
 V_CATCH  = 2.2.3
-KARGS   :=  -pthread -std=c++11 -O3 -I$(KLOCAL)/include  \
+KARGS   := -pthread -std=c++11 -O3 -I$(KLOCAL)/include   \
   -I$(abspath $(KLOCAL)/../../src/include)               \
   -DK_0_DAY='"v$(MAJOR).$(MINOR).$(PATCH)+$(BUILD)"'     \
   -DK_STAMP='"$(shell date "+%Y-%m-%d %H:%M:%S")"'       \
@@ -29,7 +29,10 @@ KARGS   :=  -pthread -std=c++11 -O3 -I$(KLOCAL)/include  \
   $(KLOCAL)/lib/K-$(CHOST).a $(KLOCAL)/lib/libquickfix.a \
   $(KLOCAL)/lib/libsqlite3.a $(KLOCAL)/lib/libz.a        \
   $(KLOCAL)/lib/libcurl.a    $(KLOCAL)/lib/libssl.a      \
-  $(KLOCAL)/lib/libcrypto.a  $(KLOCAL)/lib/libncurses.a
+  $(KLOCAL)/lib/libcrypto.a  $(KLOCAL)/lib/libncurses.a  \
+  $(wildcard $(KLOCAL)/lib/lib*.dll.a)                   \
+  $(realpath $(KLOCAL)/lib/libuv.a)                      \
+  $(realpath $(KLOCAL)/lib/K-$(CHOST)-assets.o)
 
 export CHOST CARCH
 
@@ -121,30 +124,23 @@ ifdef KUNITS
 else ifndef KTEST
 	@$(MAKE) KTEST="-DNDEBUG" $@
 else
-	$(CXX) $(KTEST) -o $(KLOCAL)/bin/K-$(CHOST)     \
-		-DHAVE_STD_UNIQUE_PTR -DUWS_THREADSAFE        \
-		-static-libstdc++ -static-libgcc -rdynamic    \
-		$(realpath $(KLOCAL)/lib/K-$(CHOST)-assets.o) \
-		src/$(KSRC)/$(KSRC).cxx                       \
-		$(KARGS) -ldl
+	$(CXX) $(KTEST) -o $(KLOCAL)/bin/K-$(CHOST)  \
+	  -DHAVE_STD_UNIQUE_PTR -DUWS_THREADSAFE     \
+	  -static-libstdc++ -static-libgcc -rdynamic \
+	  $^ $(KARGS) -ldl
 endif
 
 Darwin: src/$(KSRC)/$(KSRC).cxx
 	$(CXX) -DNDEBUG -o $(KLOCAL)/bin/K-$(CHOST)                                  \
-		-DUSE_LIBUV $(KLOCAL)/lib/libuv.a                                          \
-		-msse4.1 -maes -mpclmul -mmacosx-version-min=10.13 -nostartfiles -rdynamic \
-		$(realpath $(KLOCAL)/lib/K-$(CHOST)-assets.o)                              \
-		src/$(KSRC)/$(KSRC).cxx                                                    \
-		$(KARGS) -ldl
+	  -DUSE_LIBUV                                                                \
+	  -msse4.1 -maes -mpclmul -mmacosx-version-min=10.13 -nostartfiles -rdynamic \
+	  $^ $(KARGS) -ldl
 
 Win32: src/$(KSRC)/$(KSRC).cxx
-	$(CXX)-posix -DNDEBUG -o $(KLOCAL)/bin/K-$(CHOST).exe                                \
-		-DUSE_LIBUV                                                                        \
-		$(realpath $(KLOCAL)/lib/K-$(CHOST)-assets.o)                                      \
-		src/$(KSRC)/$(KSRC).cxx                                                            \
-		$(KARGS)                                                                           \
-		$(KLOCAL)/lib/libuv.dll.a $(KLOCAL)/lib/libssl.dll.a $(KLOCAL)/lib/libcrypto.dll.a \
-		-DCURL_STATICLIB -static -lstdc++ -lgcc -lwldap32 -lws2_32
+	$(CXX)-posix -DNDEBUG -o $(KLOCAL)/bin/K-$(CHOST).exe        \
+	  -DUSE_LIBUV                                                \
+	  $^ $(KARGS)                                                \
+	  -DCURL_STATICLIB -static -lstdc++ -lgcc -lwldap32 -lws2_32
 
 dist:
 ifdef KALL
@@ -413,4 +409,4 @@ md5: src
 asandwich:
 	@test `whoami` = 'root' && echo OK || echo make it yourself!
 
-.PHONY: all K src chost dist link build zlib openssl curl ncurses quickfix uws json catch pvs clean cleandb list screen start stop restart startall stopall restartall coinbase packages install docker reinstall diff latest changelog test test-c doc release md5 asandwich
+.PHONY: all K trading-bot src chost dist link build zlib openssl curl ncurses quickfix uws json catch pvs clean cleandb list screen start stop restart startall stopall restartall coinbase packages install docker reinstall diff latest changelog test test-c doc release md5 asandwich
