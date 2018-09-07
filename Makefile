@@ -2,7 +2,7 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
 PATCH    = 10
-BUILD    = 6
+BUILD    = 7
 CHOST   ?= $(shell $(MAKE) CHOST= chost -s)
 CARCH    = x86_64-linux-gnu arm-linux-gnueabihf aarch64-linux-gnu x86_64-apple-darwin17 x86_64-w64-mingw32
 KLOCAL  := build-$(CHOST)/local
@@ -104,8 +104,10 @@ bundle:
 	@$(MAKE)
 
 trading-bot:
-	@$(MAKE) -C src/$@
-	@$(MAKE) src KSRC=$@
+	@$(MAKE) $(shell test -f src/$@/Makefile && echo assets) src KSRC=$@
+
+assets: src/$(KSRC)/Makefile
+	@$(MAKE) -C src/$(KSRC)
 
 src: src/$(KSRC)/$(KSRC).cxx
 ifdef KALL
@@ -288,7 +290,7 @@ link:
 	test -f etc/sslcert/server.key || cp etc/sslcert/unsecure-sample.server.key etc/sslcert/server.key
 	@$(MAKE) coinbase -s
 
-reinstall: src
+reinstall:
 	test -d .git && ((test -n "`git diff`" && (echo && echo !!Local changes will be lost!! press CTRL-C to abort. && echo && sleep 4) || :) \
 	&& git fetch && git merge FETCH_HEAD || (git reset FETCH_HEAD && git checkout .)) || curl https://raw.githubusercontent.com/ctubio/Krypto-trading-bot/master/Makefile > Makefile
 	rm -rf app
