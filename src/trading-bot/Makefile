@@ -53,8 +53,7 @@ js: $(NODE_PATH)/.bin
 	rm -rf $(KLOCAL)/var/www/js/*.js
 	echo $(CARCH) | tr ' ' "\n" | xargs -I % echo % | grep -v $(CHOST) \
 	  | xargs -I % sh -c 'if test -d ../../build-%; then rm -rf ../../build-%/local/var;mkdir -p ../../build-%/local/var;cp -R $(KLOCAL)/var ../../build-%/local; fi'
-	echo $(CARCH) | tr ' ' "\n" | xargs -I % echo % \
-	  | xargs -I % sh -c 'if test -d ../../build-%; then CHOST=% $(MAKE) assets; fi'
+	$(foreach chost,$(CARCH),test -d ../../build-$(chost) && CHOST=$(chost) $(MAKE) assets || :)
 
 export define PACKAGE_JSON
 {
