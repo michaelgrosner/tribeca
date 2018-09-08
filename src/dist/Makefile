@@ -5,20 +5,19 @@ $(if $(shell test ${MAKELEVEL} -eq 0 || echo 1),,$(warning $(ERR));$(error $(HIN
 V_ZLIB   = 1.2.11
 V_SSL    = 1.1.0h
 V_CURL   = 7.61.0
+V_SQL    = 3230100
 V_NCUR   = 6.1
 V_JSON   = 3.1.2
+V_CATCH  = 2.2.3
 V_UWS    = 0.14.8
-V_SQL    = 3230100
 V_QF     = 1.15.1
 V_UV     = 1.20.3
-V_CATCH  = 2.2.3
 
 KBUILD  := $(abspath ../../build-$(CHOST))
 
 all dist:
 	mkdir -p $(KBUILD)
 	$(MAKE) zlib openssl curl sqlite ncurses json catch uws quickfix libuv
-	test -f /sbin/ldconfig && sudo ldconfig || :
 
 clean:
 	rm -rf $(KBUILD)
