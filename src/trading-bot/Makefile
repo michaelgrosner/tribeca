@@ -20,13 +20,12 @@ STEP_5    := $(call STEP,5,document root assets lib)
 
 all trading-bot: js css
 	$(info $(STEP_5))
-	$(foreach chost,$(subst $(CHOST),,$(CARCH)),            \
-	  tmp=$(subst build-$(CHOST),build-$(chost),$(KTMP));   \
-    $(if $(shell test -d $$tmp/.. && echo 1),             \
-	    rm -rf   $$tmp;                                     \
-	    mkdir -p $$tmp;                                     \
-	    cp -R $(KTMP)/* $$tmp;                              \
-	  )                                                     \
+	$(foreach chost,$(subst $(CHOST),,$(CARCH)),          \
+	  tmp=$(subst build-$(CHOST),build-$(chost),$(KTMP)); \
+	  $(if $(shell test -d $$tmp/.. && echo 1),           \
+	    rm -rf $$tmp;                                     \
+	    cp -R $(KTMP) $$tmp;                              \
+	  )                                                   \
 	)
 	$(foreach chost,$(CARCH),! test -d ../../build-$(chost) \
 	  || CHOST=$(chost) $(MAKE) assets clean ;)
