@@ -100,10 +100,7 @@ chost:
 	@echo -n $(shell (test -d .git && test -n "`command -v g++`") && \
 	g++ -dumpmachine || ls -1 . | grep build- | head -n1 | cut -d '/' -f1 | cut -d '-' -f2-)
 
-doc:
-	@$(MAKE) -sC $@
-
-test:
+doc test:
 	@$(MAKE) -sC $@
 
 $(SOURCE):
