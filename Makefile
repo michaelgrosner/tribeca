@@ -2,10 +2,10 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
 PATCH    = 10
-BUILD    = 8
+BUILD    = 9
 SOURCE   = trading-bot
 CARCH    = x86_64-linux-gnu arm-linux-gnueabihf aarch64-linux-gnu x86_64-apple-darwin17 x86_64-w64-mingw32
-CHOST   ?= $(shell $(MAKE) CHOST= chost -s)
+CHOST   ?= $(shell $(MAKE) CHOST= chost --no-print-directory)
 KLOCAL  := build-$(CHOST)/local
 CXX     := $(CHOST)-g++
 CC      := $(CHOST)-gcc
@@ -22,7 +22,7 @@ V_SQL    = 3230100
 V_QF     = 1.15.1
 V_UV     = 1.20.3
 V_CATCH  = 2.2.3
-STEP     = $(shell tput setaf 2;tput setab 0)$(1)$(shell tput sgr0) $(2)
+STEP     = $(shell tput setaf 2;tput setab 0)Building $(1)..$(shell tput sgr0)
 KARGS   := -pthread -std=c++11 -O3 -I$(KLOCAL)/include   \
   -I$(realpath $(KLOCAL)/../../src/include)              \
   -DK_0_DAY='"v$(MAJOR).$(MINOR).$(PATCH)+$(BUILD)"'     \
@@ -32,16 +32,15 @@ KARGS   := -pthread -std=c++11 -O3 -I$(KLOCAL)/include   \
   $(KLOCAL)/lib/libsqlite3.a $(KLOCAL)/lib/libz.a        \
   $(KLOCAL)/lib/libcurl.a    $(KLOCAL)/lib/libssl.a      \
   $(KLOCAL)/lib/libcrypto.a  $(KLOCAL)/lib/libncurses.a  \
-  $(wildcard $(KLOCAL)/lib/lib*.dll.a)                   \
-  $(realpath $(KLOCAL)/lib/libuv.a)                      \
-  $(realpath $(KLOCAL)/lib/K-$(KSRC)-$(CHOST)-assets.o)
-
-export CHOST CARCH
+  $(wildcard                                             \
+    $(KLOCAL)/lib/lib*.dll.a $(KLOCAL)/lib/libuv.a       \
+    $(KLOCAL)/lib/K-$(KSRC)-$(CHOST)-assets.o            \
+  )
 
 all K: $(SOURCE)
 
 bundle:
-	$(info $(call STEP,make bundle is DEPRECATED! instead just use "make" to build the client/server.))
+	$(warning *** make bundle is DEPRECATED! instead just use "make" to build the client/server.)
 	@sleep 2
 	@$(MAKE)
 
@@ -104,18 +103,18 @@ doc test:
 	@$(MAKE) -sC $@
 
 $(SOURCE):
-	$(info $(call STEP,Building $@..))
+	$(info $(call STEP,$@))
 	$(MAKE) $(shell test -f src/$@/Makefile && echo assets) src KSRC=$@
 
 assets: src/$(KSRC)/Makefile
-	$(info $(call STEP,Building $(KSRC) $@..))
-	$(MAKE) -C src/$(KSRC)
+	$(info $(call STEP,$(KSRC) $@))
+	$(MAKE) -C src/$(KSRC) CHOST=$(CHOST) CARCH="$(CARCH)"
 
 src: src/$(KSRC)/$(KSRC).cxx
 ifdef KALL
 	unset KALL && echo -n $(CARCH) | tr ' ' "\n" | xargs -I % $(MAKE) CHOST=% $@
 else
-	$(info $(call STEP,Building $(KSRC) $@ $(CHOST)..))
+	$(info $(call STEP,$(KSRC) $@ $(CHOST)))
 	@$(if $(shell test "`$(shell which "$(CXX)" 2> /dev/null) -dumpversion | cut -d . -f1`" != $(V_CXX) || echo 1),,$(warning $(ERR));$(error $(HINT)))
 	@$(CXX) --version
 	mkdir -p $(KLOCAL)/bin
@@ -414,4 +413,4 @@ md5: src
 asandwich:
 	@test `whoami` = 'root' && echo OK || echo make it yourself!
 
-.PHONY: all K trading-bot src chost dist link build zlib openssl curl ncurses quickfix uws json catch pvs clean cleandb list screen start stop restart startall stopall restartall coinbase packages install docker reinstall diff latest changelog test test-c doc release md5 asandwich
+.PHONY: all K $(SOURCE) src chost dist link build zlib openssl curl ncurses quickfix uws json catch pvs clean cleandb list screen start stop restart startall stopall restartall coinbase packages install docker reinstall diff latest changelog test test-c doc release md5 asandwich

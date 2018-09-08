@@ -3,7 +3,7 @@ HINT    := This Makefile can't be used directly, consider cd ../.. before try ag
 $(if $(shell test ${MAKELEVEL} -eq 0 || echo 1),,$(warning $(ERR));$(error $(HINT)))
 ERR     := *** Unexpected MAKE_VERSION < 4.
 HINT    := This Makefile can't be used with your make version, consider to upgrade before try again
-$(if $(shell test "`echo ${MAKE_VERSION} | cut -d. -f1`" -lt 4 || echo 1),,$(warning $(ERR));$(error $(HINT)))
+$(if $(shell ver=${MAKE_VERSION} && test $${ver%%.*} -lt 4 || echo 1),,$(warning $(ERR));$(error $(HINT)))
 
 KLIB      := $(realpath ../../build-$(CHOST)/local/lib)
 KTMP      := $(abspath $(KLIB)/../tmp)
@@ -18,19 +18,18 @@ STEP_3    := $(call STEP,3,js zip file)
 STEP_4    := $(call STEP,4,css files)
 STEP_5    := $(call STEP,5,document root assets lib)
 
-all trading-bot: js css
+all $(KSRC): js css
 	$(info $(STEP_5))
-	$(foreach chost,$(subst $(CHOST),,$(CARCH)),          \
-	  tmp=$(subst build-$(CHOST),build-$(chost),$(KTMP)); \
-	  $(if $(shell test -d $$tmp/.. && echo 1),           \
-	    rm -rf $$tmp;                                     \
-	    cp -R $(KTMP) $$tmp;                              \
-	  )                                                   \
-	)
+	$(foreach chost,$(subst $(CHOST),,$(CARCH)),              \
+	  local=$(abspath $(subst $(CHOST),$(chost),$(KTMP))/..); \
+	  test -d $${local}                                       \
+	    && rm -rf $${local}/tmp                               \
+	    && cp -R $(KTMP) $${local}/tmp ||:                    \
+	;)
 	$(foreach chost,$(CARCH),! test -d ../../build-$(chost) \
-	  || CHOST=$(chost) $(MAKE) assets clean ;)
+	  || $(MAKE) assets clean CHOST=$(chost) ;)
 
-assets: trading-bot.S
+assets: $(KSRC).S
 	$(CHOST)-g++ $(addprefix -Wa$(,)-I,$(realpath ./ $(KTMP))) \
 	  -c $^ -o $(KLIB)/$(patsubst %.S,K-%-$(CHOST)-$@.o,$^)
 
@@ -114,4 +113,4 @@ endef
 package.json:
 	@echo "$$PACKAGE_JSON" > $@
 
-.PHONY: all trading-bot assets clean client css js npm package.json
+.PHONY: all $(KSRC) assets clean client css js npm package.json
