@@ -2,9 +2,10 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
 PATCH    = 10
-BUILD    = 7
-CHOST   ?= $(shell $(MAKE) CHOST= chost -s)
+BUILD    = 8
+SOURCE   = trading-bot
 CARCH    = x86_64-linux-gnu arm-linux-gnueabihf aarch64-linux-gnu x86_64-apple-darwin17 x86_64-w64-mingw32
+CHOST   ?= $(shell $(MAKE) CHOST= chost -s)
 KLOCAL  := build-$(CHOST)/local
 CXX     := $(CHOST)-g++
 CC      := $(CHOST)-gcc
@@ -21,6 +22,7 @@ V_SQL    = 3230100
 V_QF     = 1.15.1
 V_UV     = 1.20.3
 V_CATCH  = 2.2.3
+STEP     = $(shell tput setaf 2;tput setab 0)$(1)$(shell tput sgr0) $(2)
 KARGS   := -pthread -std=c++11 -O3 -I$(KLOCAL)/include   \
   -I$(realpath $(KLOCAL)/../../src/include)              \
   -DK_0_DAY='"v$(MAJOR).$(MINOR).$(PATCH)+$(BUILD)"'     \
@@ -32,11 +34,16 @@ KARGS   := -pthread -std=c++11 -O3 -I$(KLOCAL)/include   \
   $(KLOCAL)/lib/libcrypto.a  $(KLOCAL)/lib/libncurses.a  \
   $(wildcard $(KLOCAL)/lib/lib*.dll.a)                   \
   $(realpath $(KLOCAL)/lib/libuv.a)                      \
-  $(realpath $(KLOCAL)/lib/K-$(CHOST)-assets.o)
+  $(realpath $(KLOCAL)/lib/K-$(KSRC)-$(CHOST)-assets.o)
 
 export CHOST CARCH
 
-all K: trading-bot
+all K: $(SOURCE)
+
+bundle:
+	$(info $(call STEP,make bundle is DEPRECATED! instead just use "make" to build the client/server.))
+	@sleep 2
+	@$(MAKE)
 
 hlep hepl help:
 	#                                                  #
@@ -46,6 +53,7 @@ hlep hepl help:
 	#  make              - compile K sources           #
 	#  make K            - compile K sources           #
 	#  KALL=1 make K     - compile K sources           #
+	#  make trading-bot  - compile K sources           #
 	#                                                  #
 	#  make dist         - compile K dependencies      #
 	#  KALL=1 make dist  - compile K dependencies      #
@@ -98,21 +106,19 @@ doc:
 test:
 	@$(MAKE) -sC $@
 
-bundle:
-	@$(info make bundle is DEPRECATED! instead just use "make" to build the client/server.)
-	@sleep 2
-	@$(MAKE)
-
-trading-bot:
-	@$(MAKE) $(shell test -f src/$@/Makefile && echo assets) src KSRC=$@
+$(SOURCE):
+	$(info $(call STEP,Building $@..))
+	$(MAKE) $(shell test -f src/$@/Makefile && echo assets) src KSRC=$@
 
 assets: src/$(KSRC)/Makefile
-	@$(MAKE) -C src/$(KSRC)
+	$(info $(call STEP,Building $(KSRC) $@..))
+	$(MAKE) -C src/$(KSRC)
 
 src: src/$(KSRC)/$(KSRC).cxx
 ifdef KALL
 	unset KALL && echo -n $(CARCH) | tr ' ' "\n" | xargs -I % $(MAKE) CHOST=% $@
 else
+	$(info $(call STEP,Building $(KSRC) $@ $(CHOST)..))
 	@$(if $(shell test "`$(shell which "$(CXX)" 2> /dev/null) -dumpversion | cut -d . -f1`" != $(V_CXX) || echo 1),,$(warning $(ERR));$(error $(HINT)))
 	@$(CXX) --version
 	mkdir -p $(KLOCAL)/bin
@@ -291,7 +297,7 @@ link:
 	@$(MAKE) coinbase -s
 
 reinstall:
-	test -d .git && ((test -n "`git diff`" && (echo && echo !!Local changes will be lost!! press CTRL-C to abort. && echo && sleep 4) || :) \
+	test -d .git && ((test -n "`git diff`" && (echo && echo !!Local changes will be lost!! press CTRL-C to abort. && echo && sleep 5) || :) \
 	&& git fetch && git merge FETCH_HEAD || (git reset FETCH_HEAD && git checkout .)) || curl https://raw.githubusercontent.com/ctubio/Krypto-trading-bot/master/Makefile > Makefile
 	rm -rf app
 	@$(MAKE) install
@@ -394,7 +400,7 @@ release:
 ifdef KALL
 	unset KALL && echo -n $(CARCH) | tr ' ' "\n" | xargs -I % $(MAKE) CHOST=% $@
 else
-	@tar -cvzf v$(MAJOR).$(MINOR).$(PATCH).$(BUILD)-$(CHOST).tar.gz $(KLOCAL)/bin/K-$(CHOST)* $(KLOCAL)/lib/K-$(CHOST)*                   \
+	@tar -cvzf v$(MAJOR).$(MINOR).$(PATCH).$(BUILD)-$(CHOST).tar.gz $(KLOCAL)/bin/K-$(CHOST)* $(KLOCAL)/lib/K*-$(CHOST)*                  \
 	$(shell test -n "`echo $(CHOST) | grep mingw32`" && echo $(KLOCAL)/bin/*dll || :)                                                     \
 	LICENSE COPYING README.md Makefile doc/[^html]* etc test --exclude src/*/node_modules src                                             \
 	&& curl -s -n -H "Content-Type:application/octet-stream" -H "Authorization: token ${KRELEASE}"                                        \

@@ -18,7 +18,7 @@ SYM(\var\()_len):
 
     .docroot   _www_html_index  , www/index.html
     .docroot   _www_ico_favicon , www/favicon.ico
-    .docroot   _www_js_bundle   , www/js/client/bundle.min.js
+    .docroot   _www_js_client   , www/js/client.min.js
     .docroot   _www_css_base    , www/css/bootstrap.min.css
     .docroot   _www_css_dark    , www/css/bootstrap-theme-dark.min.css
     .docroot   _www_css_light   , www/css/bootstrap-theme.min.css

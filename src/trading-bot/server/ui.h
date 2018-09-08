@@ -3,10 +3,10 @@
 
 extern const char _www_html_index,     _www_ico_favicon,     _www_css_base,
                   _www_gzip_bomb,      _www_mp3_audio_0,     _www_css_light,
-                  _www_js_bundle,      _www_mp3_audio_1,     _www_css_dark;
+                  _www_js_client,      _www_mp3_audio_1,     _www_css_dark;
 extern const  int _www_html_index_len, _www_ico_favicon_len, _www_css_base_len,
                   _www_gzip_bomb_len,  _www_mp3_audio_0_len, _www_css_light_len,
-                  _www_js_bundle_len,  _www_mp3_audio_1_len, _www_css_dark_len;
+                  _www_js_client_len,  _www_mp3_audio_1_len, _www_css_dark_len;
 namespace K {
   class UI: public Klass,
             public Client { public: UI() { client = this; };
@@ -169,7 +169,7 @@ namespace K {
             }
           } else if (leaf == "js") {
             document += "Content-Type: application/javascript; charset=UTF-8\r\nContent-Encoding: gzip\r\n";
-            content = string(&_www_js_bundle, _www_js_bundle_len);
+            content = string(&_www_js_client, _www_js_client_len);
           } else if (leaf == "css") {
             document += "Content-Type: text/css; charset=UTF-8\r\n";
             if (path.find("css/bootstrap.min.css") != string::npos)
