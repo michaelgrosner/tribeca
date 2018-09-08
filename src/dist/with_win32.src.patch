@@ -1,5 +1,5 @@
---- build/quickfix-v.1.14.4/src/C++/Utility.cpp	2014-09-15 17:22:31.000000000 +0000
-+++ build/quickfix-v.1.14.4/src/C++/Utility.cpp	2018-02-10 21:58:54.053917023 +0000
+--- src/C++/Utility.cpp	2014-09-15 17:22:31.000000000 +0000
++++ src/C++/Utility.cpp	2018-02-10 21:58:54.053917023 +0000
 @@ -80,7 +80,7 @@ std::string string_strip( const std::str
 
  void socket_init()
@@ -164,8 +164,8 @@
        _mkdir( createPath.c_str() );
      #else
        // use umask to override rwx for all
---- build/quickfix-v.1.14.4/src/C++/Utility.h	2014-09-15 17:22:31.000000000 +0000
-+++ build/quickfix-v.1.14.4/src/C++/Utility.h	2018-02-10 21:58:54.057917041 +0000
+--- src/C++/Utility.h	2014-09-15 17:22:31.000000000 +0000
++++ src/C++/Utility.h	2018-02-10 21:58:54.057917041 +0000
 @@ -60,14 +60,14 @@
    #define ALLOCATOR std::allocator
  #endif
@@ -222,8 +222,8 @@
  typedef unsigned thread_id;
  #else
  typedef pthread_t thread_id;
---- build/quickfix-v.1.14.4/src/C++/SocketServer.cpp	2014-09-15 17:22:31.000000000 +0000
-+++ build/quickfix-v.1.14.4/src/C++/SocketServer.cpp	2018-02-10 21:58:54.001916791 +0000
+--- src/C++/SocketServer.cpp	2014-09-15 17:22:31.000000000 +0000
++++ src/C++/SocketServer.cpp	2018-02-10 21:58:54.001916791 +0000
 @@ -26,7 +26,7 @@
  #include "SocketServer.h"
  #include "Utility.h"
@@ -233,8 +233,8 @@
  #include <unistd.h>
  #include <sys/ioctl.h>
  #include <sys/types.h>
---- build/quickfix-v.1.14.4/src/C++/SocketConnector.cpp	2014-09-15 17:22:31.000000000 +0000
-+++ build/quickfix-v.1.14.4/src/C++/SocketConnector.cpp	2018-02-10 21:58:54.057917041 +0000
+--- src/C++/SocketConnector.cpp	2014-09-15 17:22:31.000000000 +0000
++++ src/C++/SocketConnector.cpp	2018-02-10 21:58:54.057917041 +0000
 @@ -25,7 +25,7 @@
 
  #include "SocketConnector.h"
@@ -244,8 +244,8 @@
  #include <unistd.h>
  #include <sys/ioctl.h>
  #include <sys/types.h>
---- build/quickfix-v.1.14.4/src/C++/SocketMonitor.h	2014-09-15 17:22:31.000000000 +0000
-+++ build/quickfix-v.1.14.4/src/C++/SocketMonitor.h	2018-02-10 21:58:54.057917041 +0000
+--- src/C++/SocketMonitor.h	2014-09-15 17:22:31.000000000 +0000
++++ src/C++/SocketMonitor.h	2018-02-10 21:58:54.057917041 +0000
 @@ -22,13 +22,13 @@
  #ifndef FIX_SOCKETMONITOR_H
  #define FIX_SOCKETMONITOR_H
@@ -264,8 +264,8 @@
  #else
  #include <sys/types.h>
  #include <sys/socket.h>
---- build/quickfix-v.1.14.4/src/C++/Mutex.h	2014-09-15 17:22:31.000000000 +0000
-+++ build/quickfix-v.1.14.4/src/C++/Mutex.h	2018-02-11 23:41:35.462110696 +0000
+--- src/C++/Mutex.h	2014-09-15 17:22:31.000000000 +0000
++++ src/C++/Mutex.h	2018-02-11 23:41:35.462110696 +0000
 @@ -32,7 +32,7 @@ class Mutex
  public:
    Mutex()

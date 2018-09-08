@@ -2,26 +2,20 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
 PATCH    = 10
-BUILD    = 9
+BUILD    = 10
 SOURCE   = trading-bot
-CARCH    = x86_64-linux-gnu arm-linux-gnueabihf aarch64-linux-gnu x86_64-apple-darwin17 x86_64-w64-mingw32
-CHOST   ?= $(shell $(MAKE) CHOST= chost --no-print-directory)
+CARCH    = x86_64-linux-gnu      \
+           arm-linux-gnueabihf   \
+           aarch64-linux-gnu     \
+           x86_64-apple-darwin17 \
+           x86_64-w64-mingw32
+CHOST   ?= $(shell (test -d .git && test -n "`command -v g++`") && g++ -dumpmachine \
+             || ls -1 . | grep build- | head -n1 | cut -d '/' -f1 | cut -d '-' -f2-)
 KLOCAL  := build-$(CHOST)/local
 CXX     := $(CHOST)-g++
-CC      := $(CHOST)-gcc
 V_CXX    = 6
 ERR     := *** K require g++ v$(V_CXX), but g++ v$(V_CXX) was not found at $(shell which "$(CXX)" 2> /dev/null).
-HINT    := consider to create a symlink at $(shell which "$(CXX)" 2> /dev/null) pointing to your g++-$(V_CXX) executable
-V_ZLIB   = 1.2.11
-V_SSL    = 1.1.0h
-V_CURL   = 7.61.0
-V_NCUR   = 6.1
-V_JSON   = 3.1.2
-V_UWS    = 0.14.8
-V_SQL    = 3230100
-V_QF     = 1.15.1
-V_UV     = 1.20.3
-V_CATCH  = 2.2.3
+HINT    := consider a symlink at $(shell which "$(CXX)" 2> /dev/null) pointing to your g++-$(V_CXX) executable
 STEP     = $(shell tput setaf 2;tput setab 0)Building $(1)..$(shell tput sgr0)
 KARGS   := -pthread -std=c++11 -O3 -I$(KLOCAL)/include   \
   -I$(realpath $(KLOCAL)/../../src/include)              \
@@ -60,6 +54,9 @@ hlep hepl help:
 	#  make install      - install K application       #
 	#  make docker       - install K application       #
 	#  make reinstall    - upgrade K application       #
+	#  make doc          - compile K documentation     #
+	#  make test         - run tests                   #
+	#  make test-c       - run static tests            #
 	#                                                  #
 	#  make list         - show K instances            #
 	#  make start        - start K instance            #
@@ -73,34 +70,24 @@ hlep hepl help:
 	#  make changelog    - show commits                #
 	#  make latest       - show commits and reinstall  #
 	#                                                  #
-	#  make doc          - compile K documentation     #
-	#  make test         - run tests                   #
-	#  make test-c       - run static tests            #
-	#                                                  #
 	#  make build        - download K src precompiled  #
 	#  make pvs          - download pvs src files      #
-	#  make zlib         - download zlib src files     #
-	#  make curl         - download curl src files     #
-	#  make ncurses      - download ncurses src files  #
-	#  make sqlite       - download sqlite src files   #
-	#  make openssl      - download openssl src files  #
-	#  make json         - download json src files     #
-	#  make catch        - download catch src files    #
-	#  make uws          - download uws src files      #
-	#  make quickfix     - download quickfix src files #
 	#  make coinbase     - download coinbase ssl cert  #
-	#  make cabundle     - download ssl CA certs       #
 	#  make clean        - remove external src files   #
 	#  KALL=1 make clean - remove external src files   #
 	#  make cleandb      - remove databases            #
 	#                                                  #
 
-chost:
-	@echo -n $(shell (test -d .git && test -n "`command -v g++`") && \
-	g++ -dumpmachine || ls -1 . | grep build- | head -n1 | cut -d '/' -f1 | cut -d '-' -f2-)
-
 doc test:
 	@$(MAKE) -sC $@
+
+clean dist:
+ifdef KALL
+	unset KALL $(foreach chost,$(CARCH),&& $(MAKE) $@ CHOST=$(chost))
+else
+	@$(if $(shell test "`$(shell which "$(CXX)" 2> /dev/null) -dumpversion | cut -d . -f1`" != $(V_CXX) || echo 1),,$(warning $(ERR));$(error $(HINT)))
+	@$(MAKE) -C src/dist $@ CHOST=$(CHOST)
+endif
 
 $(SOURCE):
 	$(info $(call STEP,$@))
@@ -112,7 +99,7 @@ assets: src/$(KSRC)/Makefile
 
 src: src/$(KSRC)/$(KSRC).cxx
 ifdef KALL
-	unset KALL && echo -n $(CARCH) | tr ' ' "\n" | xargs -I % $(MAKE) CHOST=% $@
+	unset KALL $(foreach chost,$(CARCH),&& $(MAKE) $@ CHOST=$(chost))
 else
 	$(info $(call STEP,$(KSRC) $@ $(CHOST)))
 	@$(if $(shell test "`$(shell which "$(CXX)" 2> /dev/null) -dumpversion | cut -d . -f1`" != $(V_CXX) || echo 1),,$(warning $(ERR));$(error $(HINT)))
@@ -146,99 +133,6 @@ Win32: src/$(KSRC)/$(KSRC).cxx
 	  $^ $(KARGS)                                                \
 	  -DCURL_STATICLIB -static -lstdc++ -lgcc -lwldap32 -lws2_32
 
-dist:
-ifdef KALL
-	unset KALL && echo -n $(CARCH) | tr ' ' "\n" | xargs -I % $(MAKE) CHOST=% $@
-else
-	@$(if $(shell test "`$(shell which "$(CXX)" 2> /dev/null) -dumpversion | cut -d . -f1`" != $(V_CXX) || echo 1),,$(warning $(ERR));$(error $(HINT)))
-	mkdir -p build-$(CHOST)
-	$(MAKE) zlib openssl curl sqlite ncurses json catch uws quickfix libuv CHOST=$(CHOST)
-	test -f /sbin/ldconfig && sudo ldconfig || :
-endif
-
-zlib:
-	test -d build-$(CHOST)/zlib-$(V_ZLIB) || (                                                  \
-	curl -L https://zlib.net/zlib-$(V_ZLIB).tar.gz | tar xz -C build-$(CHOST)                   \
-	&& cd build-$(CHOST)/zlib-$(V_ZLIB) && (test -n "`echo $(CHOST) | grep mingw32`" &&         \
-	(sed -i "s/^\(PREFIX =\).*$$/\1$(CHOST)-/" win32/Makefile.gcc && make -fwin32/Makefile.gcc  \
-	&& BINARY_PATH=$(PWD)/$(KLOCAL)/bin INCLUDE_PATH=$(PWD)/$(KLOCAL)/include                   \
-	LIBRARY_PATH=$(PWD)/$(KLOCAL)/lib make install -fwin32/Makefile.gcc)                        \
-	|| (CC=$(CC) ./configure --static --prefix=$(PWD)/$(KLOCAL) && make && make install))       )
-
-openssl:
-	test -d build-$(CHOST)/openssl-$(V_SSL) || (                                               \
-	curl -L https://www.openssl.org/source/openssl-$(V_SSL).tar.gz | tar xz -C build-$(CHOST)  \
-	&& cd build-$(CHOST)/openssl-$(V_SSL) && CC=gcc                                            \
-	./Configure $(shell test -n "`echo $(CHOST) | grep mingw32`" && echo mingw64 || echo dist) \
-	--cross-compile-prefix=$(CHOST)- --prefix=$(PWD)/$(KLOCAL)                                 \
-	--openssldir=$(PWD)/$(KLOCAL) && make && make install_sw install_ssldirs                   )
-
-curl:
-	test -d build-$(CHOST)/curl-$(V_CURL) || (                                                  \
-	curl -L https://curl.haxx.se/download/curl-$(V_CURL).tar.gz | tar xz -C build-$(CHOST)      \
-	&& cd build-$(CHOST)/curl-$(V_CURL) && CC=$(CC) ./configure --with-ca-path=/etc/ssl/certs   \
-	--host=$(CHOST) --target=$(CHOST) --build=$(shell g++ -dumpmachine) --disable-manual        \
-	--disable-shared --enable-static --prefix=$(PWD)/$(KLOCAL) --disable-ldap --without-libpsl  \
-	--without-libssh2 --without-nghttp2 --disable-sspi --without-librtmp --disable-ftp          \
-	--disable-file --disable-dict --disable-telnet --disable-tftp --disable-rtsp --disable-pop3 \
-	--disable-imap --disable-smtp --disable-gopher --disable-smb --without-libidn2              \
-	--with-zlib=$(PWD)/$(KLOCAL) --with-ssl=$(PWD)/$(KLOCAL) && make && make install            )
-
-sqlite:
-	test -d build-$(CHOST)/sqlite-autoconf-$(V_SQL) || (                                            \
-	curl -L https://sqlite.org/2018/sqlite-autoconf-$(V_SQL).tar.gz | tar xz -C build-$(CHOST)      \
-	&& cd build-$(CHOST)/sqlite-autoconf-$(V_SQL) && CC=$(CC) ./configure --prefix=$(PWD)/$(KLOCAL) \
-	--host=$(CHOST) --enable-static --disable-shared --enable-threadsafe && make && make install    )
-
-ncurses:
-	test -d build-$(CHOST)/ncurses-$(V_NCUR) || (                                                        \
-	curl -L http://ftp.gnu.org/pub/gnu/ncurses/ncurses-$(V_NCUR).tar.gz | tar xz -C build-$(CHOST)       \
-	&& cd build-$(CHOST)/ncurses-$(V_NCUR) && CC=$(CC) AR=$(CHOST)-ar CXX=$(CXX) CPPFLAGS=-P ./configure \
-	--host=$(CHOST) --prefix=$(PWD)/$(KLOCAL) $(shell test -n "`echo $(CHOST) | grep mingw32`" && echo   \
-	--without-cxx-binding --without-ada --enable-reentrant --with-normal                                 \
-	--disable-home-terminfo --enable-sp-funcs --enable-term-driver --enable-interop || :)                \
-	--disable-lib-suffixes --without-debug --without-progs --without-tests                               \
-	--with-fallbacks=linux,screen,vt100,xterm,xterm-256color,putty-256color && make && make install      )
-
-json:
-	test -f $(KLOCAL)/include/json.h || (mkdir -p $(KLOCAL)/include                   \
-	&& curl -L https://github.com/nlohmann/json/releases/download/v$(V_JSON)/json.hpp \
-	-o $(KLOCAL)/include/json.h                                                       )
-
-catch:
-	test -f $(KLOCAL)/include/catch.h || (mkdir -p $(KLOCAL)/include                      \
-	&& curl -L https://github.com/catchorg/Catch2/releases/download/v$(V_CATCH)/catch.hpp \
-	-o $(KLOCAL)/include/catch.h                                                          )
-
-uws:
-	test -d build-$(CHOST)/uWebSockets-$(V_UWS)                                    \
-	|| curl -L https://github.com/uNetworking/uWebSockets/archive/v$(V_UWS).tar.gz \
-	| tar xz -C build-$(CHOST) && mkdir -p $(KLOCAL)/include/uWS                   \
-	&& cp build-$(CHOST)/uWebSockets-$(V_UWS)/src/* $(KLOCAL)/include/uWS/         \
-	&& (test -n "`echo $(CHOST) | grep mingw32`" &&                                \
-	(sed -i "s/W\(s2tcpip\)/w\1/" $(KLOCAL)/include/uWS/Networking.h &&            \
-	sed -i "s/WinSock2/winsock2/" $(KLOCAL)/include/uWS/Networking.h) ||          :)
-
-quickfix:
-	test -d build-$(CHOST)/quickfix-$(V_QF) || (                                                    \
-	curl -L https://github.com/quickfix/quickfix/archive/v$(V_QF).tar.gz | tar xz -C build-$(CHOST) \
-	&& cd build-$(CHOST)/quickfix-$(V_QF) && ./bootstrap                                            \
-	&& (test -n "`echo $(CHOST) | grep darwin`" &&                                                  \
-	sed -i '' "s/bin spec test examples doc//" Makefile.am ||                                       \
-	sed -i "s/bin spec test examples doc//" Makefile.am)                                            \
-	&& (test -n "`echo $(CHOST) | grep darwin`" &&                                                  \
-	sed -i '' "s/SUBDIRS = test//" src/C++/Makefile.am ||                                           \
-	sed -i "s/SUBDIRS = test//" src/C++/Makefile.am) && (test -n "`echo $(CHOST) | grep mingw32`"   \
-	&& patch -p2 < ../../src/build/with_win32.src.patch || :)                                       \
-	&& CXX=$(CXX) AR=$(CHOST)-ar ./configure --prefix=$(PWD)/$(KLOCAL) --enable-shared=no           \
-	--enable-static=yes --host=$(CHOST) && cd src/C++ && CXX=$(CXX) make && make install            )
-
-libuv:
-	test -z "`echo $(CHOST) | grep darwin;echo $(CHOST) | grep mingw32`" || test -d build-$(CHOST)/libuv-$(V_UV) || ( \
-	curl -L https://github.com/libuv/libuv/archive/v$(V_UV).tar.gz | tar xz -C build-$(CHOST)                         \
-	&& cd build-$(CHOST)/libuv-$(V_UV) && sh autogen.sh && CC=$(CHOST)-clang ./configure --host=$(CHOST)              \
-	--prefix=$(PWD)/$(KLOCAL) && make && make install                                                                 )
-
 pvs:
 ifndef V_PVS
 	$(MAKE) V_PVS=$(shell curl -s https://www.viva64.com/en/pvs-studio-download-linux/ | grep x86_64.tgz | sed 's/.*href=\"\(.*\)\" .*/\1/' | cut -d '-' -f3) $@
@@ -252,13 +146,6 @@ endif
 build:
 	curl -L https://github.com/ctubio/Krypto-trading-bot/releases/download/$(MAJOR).$(MINOR).x/v$(MAJOR).$(MINOR).$(PATCH).$(BUILD)-$(CHOST).tar.gz \
 	| tar xz && chmod +x build-*/local/bin/K-$(CHOST)
-
-clean:
-ifdef KALL
-	unset KALL && echo -n $(CARCH) | tr ' ' "\n" | xargs -I % $(MAKE) CHOST=% $@
-else
-	rm -rf build-$(CHOST)
-endif
 
 cleandb: /data/db/K*
 	rm -rf /data/db/K*.db
@@ -336,9 +223,6 @@ screen:
 	echo Detach screen hotkey: holding CTRL hit A then D \
 	&& sleep 2 && screen -r $(K)) || screen -list || :
 
-cabundle:
-	curl --time-cond etc/cabundle.pem https://curl.haxx.se/ca/cacert.pem -o etc/cabundle.pem
-
 coinbase:
 	@openssl s_client -showcerts -connect fix.pro.coinbase.com:4198 -CApath /etc/ssl/certs < /dev/null 2> /dev/null \
 	| openssl x509 -outform PEM > etc/sslcert/fix.pro.coinbase.com.pem
@@ -394,7 +278,7 @@ BUILD:
 
 release:
 ifdef KALL
-	unset KALL && echo -n $(CARCH) | tr ' ' "\n" | xargs -I % $(MAKE) CHOST=% $@
+	unset KALL $(foreach chost,$(CARCH),&& $(MAKE) $@ CHOST=$(chost))
 else
 	@tar -cvzf v$(MAJOR).$(MINOR).$(PATCH).$(BUILD)-$(CHOST).tar.gz $(KLOCAL)/bin/K-$(CHOST)* $(KLOCAL)/lib/K*-$(CHOST)*                  \
 	$(shell test -n "`echo $(CHOST) | grep mingw32`" && echo $(KLOCAL)/bin/*dll || :)                                                     \
@@ -413,4 +297,4 @@ md5: src
 asandwich:
 	@test `whoami` = 'root' && echo OK || echo make it yourself!
 
-.PHONY: all K $(SOURCE) src chost dist link build zlib openssl curl ncurses quickfix uws json catch pvs clean cleandb list screen start stop restart startall stopall restartall coinbase packages install docker reinstall diff latest changelog test test-c doc release md5 asandwich
+.PHONY: all K $(SOURCE) doc test src dist link build pvs clean cleandb list screen start stop restart startall stopall restartall coinbase packages install docker reinstall diff latest changelog test-c release md5 asandwich

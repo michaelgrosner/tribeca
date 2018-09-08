@@ -373,7 +373,6 @@ namespace K {
         if (curl) {
           curl_setopt(curl);
           curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
-          curl_easy_setopt(curl, CURLOPT_CAINFO, "etc/cabundle.pem");
           curl_easy_setopt(curl, CURLOPT_INTERFACE, mREST::inet);
           curl_easy_setopt(curl, CURLOPT_URL, url.data());
           curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &curl_write);
