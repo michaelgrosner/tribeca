@@ -2,7 +2,7 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
 PATCH    = 10
-BUILD    = 18
+BUILD    = 19
 SOURCE   = trading-bot
 CARCH    = x86_64-linux-gnu      \
            arm-linux-gnueabihf   \
@@ -170,18 +170,15 @@ uninstall:
 	;)
 
 system_install:
-	$(info Checking sudo permission to install binaries into /usr/local/bin..)
-	$(info $(shell sudo echo sudo permission OK!))
+	$(info Checking sudo permission to install binaries into /usr/local/bin.. $(shell sudo echo OK))
+	$(info Checking if /usr/local/bin is already in your PATH.. $(if $(shell echo $$PATH | grep /usr/local/bin),OK))
+	$(if $(shell echo $$PATH | grep /usr/local/bin),,$(info $(subst ..,,$(subst Building ,,$(call STEP,Warning! you MUST add /usr/local/bin to your PATH!)))))
 	$(info )
 	$(info List of installed K binaries:)
-	@$(foreach bin,$(wildcard $(KLOCAL)/bin/K-$(KSRC)*),               \
-	  sudo cp $(bin) /usr/local/bin/$(notdir $(bin))                   \
-	  $(info $(shell ls -lah --color /usr/local/bin/$(notdir $(bin)))) \
-	;)
-	$(info )
-	$(info Checking if /usr/local/bin is already in your PATH..)
-	$(info $(subst ..,,$(subst Building ,,$(call STEP,$(if $(shell echo $$PATH | grep /usr/local/bin),all OK! /usr/local/bin is already in your PATH.,Warning! you MUST add /usr/local/bin to your PATH!)))))
-	$(info )
+	@$(foreach bin,$(wildcard $(KLOCAL)/bin/K-$(KSRC)*), \
+	  sudo cp $(bin) /usr/local/bin/$(notdir $(bin));   \
+	  ls -lah --color /usr/local/bin/$(notdir $(bin));  \
+	)
 
 install:
 	@$(MAKE) packages
