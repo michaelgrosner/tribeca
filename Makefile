@@ -2,7 +2,7 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
 PATCH    = 10
-BUILD    = 17
+BUILD    = 18
 SOURCE   = trading-bot
 CARCH    = x86_64-linux-gnu      \
            arm-linux-gnueabihf   \
@@ -192,6 +192,7 @@ install:
 
 docker:
 	@$(MAKE) packages
+	mkdir -p app/server
 	@$(MAKE) download
 	sed -i "/Usage/,+118d" K.sh
 
