@@ -1,6 +1,6 @@
 ERR     := *** Unexpected MAKELEVEL = 0.
 HINT    := This Makefile can't be used directly, consider cd ../.. before try again
-$(if $(shell test ${MAKELEVEL} -eq 0 || echo 1),,$(warning $(ERR));$(error $(HINT)))
+$(if $(subst 0,,${MAKELEVEL}),,$(warning $(ERR));$(error $(HINT)))
 
 V_ZLIB   = 1.2.11
 V_SSL    = 1.1.0h

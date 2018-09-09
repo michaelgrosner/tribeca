@@ -1,6 +1,6 @@
 ERR     := *** Unexpected MAKELEVEL = 0.
 HINT    := This Makefile can't be used directly, consider cd ../.. before try again
-$(if $(shell test ${MAKELEVEL} -eq 0 || echo 1),,$(warning $(ERR));$(error $(HINT)))
+$(if $(subst 0,,${MAKELEVEL}),,$(warning $(ERR));$(error $(HINT)))
 ERR     := *** Unexpected MAKE_VERSION < 4.
 HINT    := This Makefile can't be used with your make version, consider to upgrade before try again
 $(if $(shell ver=${MAKE_VERSION} && test $${ver%%.*} -lt 4 || echo 1),,$(warning $(ERR));$(error $(HINT)))
@@ -9,7 +9,7 @@ KLIB      := $(realpath ../../build-$(CHOST)/local/lib)
 KTMP      := $(abspath $(KLIB)/../tmp)
 NODE_PATH := $(abspath ./node_modules)
 PATH      := $(NODE_PATH)/.bin:$(PATH)
-,         := ,
+
 STEPS     := $(shell grep "call\ STEP" Makefile | wc -l)
 STEP       = $(shell tput setaf 2;tput setab 0)[$(1)/$(STEPS)]$(shell tput setaf 3;tput setab 0) Building client $(2)..$(shell tput sgr0)
 STEP_1    := $(call STEP,1,npm packages)
@@ -27,8 +27,7 @@ all $(KSRC): js css
 	;)
 
 assets: $(KSRC).S
-	$(CHOST)-g++ $(addprefix -Wa$(,)-I,$(realpath ./ $(KTMP))) \
-	  -c $^ -o $(KLIB)/$(patsubst %.S,K-%-$(CHOST)-$@.o,$^)
+	$(CHOST)-g++ -Wa,-I,$(KTMP),-I,. -c $^ -o $(KLIB)/K-$(basename $^)-$(CHOST)-$@.o
 
 clean:
 	@rm -rf $(KTMP)
