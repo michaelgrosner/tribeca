@@ -2,7 +2,7 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
 PATCH    = 10
-BUILD    = 13
+BUILD    = 14
 SOURCE   = trading-bot
 CARCH    = x86_64-linux-gnu      \
            arm-linux-gnueabihf   \
@@ -68,7 +68,7 @@ hlep hepl help:
 	#  make changelog    - show commits                #
 	#  make latest       - show commits and reinstall  #
 	#                                                  #
-	#  make build        - download K src precompiled  #
+	#  make download     - download K src precompiled  #
 	#  make pvs          - download pvs src files      #
 	#  make coinbase     - download coinbase ssl cert  #
 	#  make clean        - remove external src files   #
@@ -133,7 +133,7 @@ Win32: src/$(KSRC)/$(KSRC).cxx
 
 pvs:
 ifndef V_PVS
-	$(MAKE) V_PVS=$(shell curl -s https://www.viva64.com/en/pvs-studio-download-linux/ | grep x86_64.tgz | sed 's/.*href=\"\(.*\)\" .*/\1/' | cut -d '-' -f3) $@
+	$(MAKE) $@ V_PVS=$(shell curl -s https://www.viva64.com/en/pvs-studio-download-linux/ | grep x86_64.tgz | sed 's/.*href=\"\(.*\)\" .*/\1/' | cut -d '-' -f3)
 else
 	test -d build-$(CHOST)/pvs-studio-$(V_PVS)-x86_64 || (                     \
 	curl -L http://files.viva64.com/pvs-studio-$(V_PVS)-x86_64.tgz             \
@@ -141,9 +141,14 @@ else
 	&& chmod +x install.sh && sudo ./install.sh                                )
 endif
 
-build:
+download:
 	curl -L https://github.com/ctubio/Krypto-trading-bot/releases/download/$(MAJOR).$(MINOR).x/v$(MAJOR).$(MINOR).$(PATCH).$(BUILD)-$(CHOST).tar.gz \
-	| tar xz && chmod +x build-*/local/bin/K-$(CHOST)
+	| tar xz
+	cd app/server && ln -f -s ../../$(KLOCAL)/bin/K-$(CHOST) K
+	test -n "`ls *.sh 2>/dev/null`" || (cp etc/K.sh.dist K.sh && chmod +x K.sh)
+	test -f etc/sslcert/server.crt || cp etc/sslcert/unsecure-sample.server.crt etc/sslcert/server.crt
+	test -f etc/sslcert/server.key || cp etc/sslcert/unsecure-sample.server.key etc/sslcert/server.key
+	@$(MAKE) coinbase -s
 
 cleandb: /data/db/K*
 	rm -rf /data/db/K*.db
@@ -162,20 +167,13 @@ install:
 	@yes = | head -n`expr $(shell tput cols) / 2` | xargs echo && echo " _  __\n| |/ /\n| ' /   Select your (beloved) architecture\n| . \\   to download pre-compiled binaries:\n|_|\\_\\ \n"
 	@echo $(CARCH) | tr ' ' "\n" | cat -n && echo "\n(Hint! uname says \"`uname -sm`\", and win32 auto-install does not work yet)\n"
 	@read -p "[1/2/3/4/5]: " chost; \
-	CHOST=`echo $(CARCH) | cut -d ' ' -f$${chost}` $(MAKE) build link
+	CHOST=`echo $(CARCH) | cut -d ' ' -f$${chost}` $(MAKE) download
 
 docker:
 	@$(MAKE) packages
 	mkdir -p app/server
-	@$(MAKE) build link
+	@$(MAKE) download
 	sed -i "/Usage/,+118d" K.sh
-
-link:
-	cd app/server && ln -f -s ../../$(KLOCAL)/bin/K-$(CHOST) K
-	test -n "`ls *.sh 2>/dev/null`" || (cp etc/K.sh.dist K.sh && chmod +x K.sh)
-	test -f etc/sslcert/server.crt || cp etc/sslcert/unsecure-sample.server.crt etc/sslcert/server.crt
-	test -f etc/sslcert/server.key || cp etc/sslcert/unsecure-sample.server.key etc/sslcert/server.key
-	@$(MAKE) coinbase -s
 
 reinstall:
 	test -d .git && ((test -n "`git diff`" && (echo && echo !!Local changes will be lost!! press CTRL-C to abort. && echo && sleep 5) || :) \
@@ -295,4 +293,4 @@ md5: src
 asandwich:
 	@test `whoami` = 'root' && echo OK || echo make it yourself!
 
-.PHONY: all K $(SOURCE) doc test src dist link build pvs clean cleandb list screen start stop restart startall stopall restartall coinbase packages install docker reinstall diff latest changelog test-c release md5 asandwich
+.PHONY: all K $(SOURCE) hlep hepl help doc test src dist download pvs clean cleandb list screen start stop restart startall stopall restartall coinbase packages install docker reinstall diff latest changelog test-c release md5 asandwich
