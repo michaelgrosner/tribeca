@@ -32,12 +32,11 @@ assets: $(KSRC).S
 clean:
 	@rm -rf $(KTMP)
 
-npm:
+npm: package.json
 	$(info $(STEP_1))
-	@$(MAKE) package.json
 	@$@ install
 ifndef TRAVIS_DEPLOY
-	@rm package*.json
+	@rm $(basename $^)*
 endif
 
 client: npm clean client/main.ts
