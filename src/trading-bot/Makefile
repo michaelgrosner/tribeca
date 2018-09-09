@@ -20,14 +20,11 @@ STEP_5    := $(call STEP,5,document root assets lib)
 
 all $(KSRC): js css
 	$(info $(STEP_5))
-	$(foreach chost,$(subst $(CHOST),,$(CARCH)),              \
-	  local=$(abspath $(subst $(CHOST),$(chost),$(KTMP))/..); \
-	  test -d $${local}                                       \
-	    && rm -rf $${local}/tmp                               \
-	    && cp -R $(KTMP) $${local}/tmp ||:                    \
+	$(foreach chost,$(subst $(CHOST),,$(CARCH)) $(CHOST), \
+	  test -d ../../build-$(chost)/local/tmp              \
+	    || cp -R $(KTMP) ../../build-$(chost)/local/tmp   \
+	  && $(MAKE) assets clean CHOST=$(chost)              \
 	;)
-	$(foreach chost,$(CARCH),! test -d ../../build-$(chost) \
-	  || $(MAKE) assets clean CHOST=$(chost) ;)
 
 assets: $(KSRC).S
 	$(CHOST)-g++ $(addprefix -Wa$(,)-I,$(realpath ./ $(KTMP))) \
