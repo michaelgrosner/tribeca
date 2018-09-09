@@ -40,12 +40,12 @@ openssl:
 	--openssldir=$(KBUILD)/local && make && make install_sw install_ssldirs                    )
 
 curl:
-	curl --time-cond $(KBUILD)/local/certs/cabundle.pem https://curl.haxx.se/ca/cacert.pem \
-	  -o $(KBUILD)/local/certs/cabundle.pem
+#	curl --time-cond /etc/ssl/certs/ca-certificates.crt https://curl.haxx.se/ca/cacert.pem \
+#	  -o /etc/ssl/certs/ca-certificates.crt
 	test -d $(KBUILD)/curl-$(V_CURL) || (                                                   \
 	curl -L https://curl.haxx.se/download/curl-$(V_CURL).tar.gz | tar xz -C $(KBUILD)       \
 	&& cd $(KBUILD)/curl-$(V_CURL) && ./configure --host=$(CHOST) --disable-manual          \
-	--with-ca-bundle=$(KBUILD)/local/certs/cabundle.pem                                     \
+	--with-ca-bundle=/etc/ssl/certs/ca-certificates.crt                                     \
 	--prefix=$(KBUILD)/local --disable-imap --disable-file --disable-tftp --disable-smtp    \
 	--disable-pop3 --disable-smb --disable-ftp --disable-sspi --disable-ldap --disable-dict \
 	--without-libpsl --without-nghttp2 --without-libssh2 --disable-telnet --disable-rtsp    \
@@ -85,8 +85,7 @@ uws:
 	&& mkdir -p $(KBUILD)/local/include/uWS && cp $(KBUILD)/uWebSockets-$(V_UWS)/src/* \
 	$(KBUILD)/local/include/uWS/ && (test -n "`echo $(CHOST) | grep mingw32`"          \
 	&& (sed -i "s/W\(s2tcpip\)/w\1/" $(KBUILD)/local/include/uWS/Networking.h          \
-	&& sed -i "s/WinSock2/winsock2/" $(KBUILD)/local/include/uWS/Networking.h          \
-	) ||    :)
+	&& sed -i "s/WinSock2/winsock2/" $(KBUILD)/local/include/uWS/Networking.h) ||     :)
 
 quickfix:
 	test -d $(KBUILD)/quickfix-$(V_QF) || (                                                       \
