@@ -2,7 +2,7 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
 PATCH    = 10
-BUILD    = 16
+BUILD    = 17
 SOURCE   = trading-bot
 CARCH    = x86_64-linux-gnu      \
            arm-linux-gnueabihf   \
@@ -15,11 +15,12 @@ KLOCAL  := build-$(CHOST)/local
 ERR      = *** K require g++ v6, but it was not found.
 HINT    := consider a symlink at /usr/bin/$(CHOST)-g++ pointing to your g++-6 executable
 STEP     = $(shell tput setaf 2;tput setab 0)Building $(1)..$(shell tput sgr0)
-KARGS   := -pthread -std=c++11 -O3 -I$(KLOCAL)/include   \
-  -I$(realpath $(KLOCAL)/../../src/include)              \
-  -DK_0_DAY='"v$(MAJOR).$(MINOR).$(PATCH)+$(BUILD)"'     \
+KARGS   := -pthread -std=c++11 -O3                       \
+  -DK_BUILD='"$(KSRC) $(CHOST)"'                         \
   -DK_STAMP='"$(shell date "+%Y-%m-%d %H:%M:%S")"'       \
-  -DK_BUILD='"$(CHOST)"'     $(KLOCAL)/include/uWS/*.cpp \
+  -DK_0_DAY='"v$(MAJOR).$(MINOR).$(PATCH)+$(BUILD)"'     \
+  -I$(realpath $(KLOCAL)/../../src/include)              \
+  -I$(KLOCAL)/include        $(KLOCAL)/include/uWS/*.cpp \
   $(KLOCAL)/lib/K-$(CHOST).a $(KLOCAL)/lib/libquickfix.a \
   $(KLOCAL)/lib/libsqlite3.a $(KLOCAL)/lib/libz.a        \
   $(KLOCAL)/lib/libcurl.a    $(KLOCAL)/lib/libssl.a      \
@@ -74,6 +75,7 @@ hlep hepl help:
 	#  make clean        - remove external src files   #
 	#  KALL=1 make clean - remove external src files   #
 	#  make cleandb      - remove databases            #
+	#  make uninstall    - remove /usr/local/bin/K-*   #
 	#                                                  #
 
 doc test:
@@ -89,7 +91,7 @@ endif
 
 $(SOURCE):
 	$(info $(call STEP,$@))
-	$(MAKE) $(shell test -f src/$@/Makefile && echo assets) src KSRC=$@
+	$(MAKE) $(shell ! test -f src/$@/Makefile || echo assets) src KSRC=$@
 
 assets: src/$(KSRC)/Makefile
 	$(info $(call STEP,$(KSRC) $@))
@@ -104,7 +106,8 @@ else
 	@$(CHOST)-g++ --version
 	mkdir -p $(KLOCAL)/bin
 	$(MAKE) $(shell test -n "`echo $(CHOST) | grep darwin`" && echo Darwin || (test -n "`echo $(CHOST) | grep mingw32`" && echo Win32 || uname -s)) CHOST=$(CHOST)
-	chmod +x $(KLOCAL)/bin/K-$(CHOST)$(shell test -n "`echo $(CHOST) | grep mingw32`" && echo .exe || :)
+	chmod +x $(KLOCAL)/bin/K-$(KSRC)*
+	@$(MAKE) system_install -s
 endif
 
 Linux: src/$(KSRC)/$(KSRC).cxx
@@ -113,20 +116,20 @@ ifdef KUNITS
 else ifndef KTEST
 	@$(MAKE) KTEST="-DNDEBUG" $@
 else
-	$(CHOST)-g++ $(KTEST) -o $(KLOCAL)/bin/K-$(CHOST)  \
-	  -DHAVE_STD_UNIQUE_PTR -DUWS_THREADSAFE     \
-	  -static-libstdc++ -static-libgcc -rdynamic \
+	$(CHOST)-g++ $(KTEST) -o $(KLOCAL)/bin/K-$(KSRC) \
+	  -DHAVE_STD_UNIQUE_PTR -DUWS_THREADSAFE         \
+	  -static-libstdc++ -static-libgcc -rdynamic     \
 	  $^ $(KARGS) -ldl
 endif
 
 Darwin: src/$(KSRC)/$(KSRC).cxx
-	$(CHOST)-g++ -DNDEBUG -o $(KLOCAL)/bin/K-$(CHOST)                                  \
+	$(CHOST)-g++ -DNDEBUG -o $(KLOCAL)/bin/K-$(KSRC)                             \
 	  -DUSE_LIBUV                                                                \
 	  -msse4.1 -maes -mpclmul -mmacosx-version-min=10.13 -nostartfiles -rdynamic \
 	  $^ $(KARGS) -ldl
 
 Win32: src/$(KSRC)/$(KSRC).cxx
-	$(CHOST)-g++-posix -DNDEBUG -o $(KLOCAL)/bin/K-$(CHOST).exe        \
+	$(CHOST)-g++-posix -DNDEBUG -o $(KLOCAL)/bin/K-$(KSRC).exe   \
 	  -DUSE_LIBUV                                                \
 	  $^ $(KARGS)                                                \
 	  -DCURL_STATICLIB -static -lstdc++ -lgcc -lwldap32 -lws2_32
@@ -142,13 +145,12 @@ else
 endif
 
 download:
-	curl -L https://github.com/ctubio/Krypto-trading-bot/releases/download/$(MAJOR).$(MINOR).x/v$(MAJOR).$(MINOR).$(PATCH).$(BUILD)-$(CHOST).tar.gz \
-	| tar xz
-	cd app/server && ln -f -s ../../$(KLOCAL)/bin/K-$(CHOST) K
-	test -n "`ls *.sh 2>/dev/null`" || (cp etc/K.sh.dist K.sh && chmod +x K.sh)
-	test -f etc/sslcert/server.crt || cp etc/sslcert/unsecure-sample.server.crt etc/sslcert/server.crt
-	test -f etc/sslcert/server.key || cp etc/sslcert/unsecure-sample.server.key etc/sslcert/server.key
-	@$(MAKE) coinbase -s
+	curl -L https://github.com/ctubio/Krypto-trading-bot/releases/download/$(MAJOR).$(MINOR).x/v$(MAJOR).$(MINOR).$(PATCH).$(BUILD)-$(CHOST).tar.gz | tar xz
+	@$(MAKE) coinbase system_install -s
+	@ln -f -s /usr/local/bin/K-trading-bot app/server/K
+	@test -n "`ls *.sh 2>/dev/null`" || (cp etc/K.sh.dist K.sh && chmod +x K.sh)
+	@test -f etc/sslcert/server.crt || cp etc/sslcert/unsecure-sample.server.crt etc/sslcert/server.crt
+	@test -f etc/sslcert/server.key || cp etc/sslcert/unsecure-sample.server.key etc/sslcert/server.key
 
 cleandb: /data/db/K*
 	rm -rf /data/db/K*.db
@@ -158,20 +160,38 @@ packages:
 	|| (test -n "`command -v yum`" && sudo yum -y install gcc-c++ automake autoconf libtool libxml2 libxml2-devel openssl stunnel python curl gzip screen) \
 	|| (test -n "`command -v brew`" && (xcode-select --install || :) && (brew install automake autoconf libxml2 sqlite openssl zlib stunnel python curl gzip proctools doxygen graphviz || brew upgrade || :)) \
 	|| (test -n "`command -v pacman`" && sudo pacman --noconfirm -S --needed base-devel libxml2 zlib sqlite curl libcurl-compat openssl stunnel python gzip screen)
-	sudo mkdir -p /data/db/
+	sudo mkdir -p /data/db
 	sudo chown $(shell id -u) /data/db
+
+uninstall:
+	@$(foreach bin,$(wildcard $(KLOCAL)/bin/K-$(KSRC)*), \
+	  sudo rm /usr/local/bin/$(notdir $(bin))            \
+	  $(info Removed /usr/local/bin/$(notdir $(bin)))    \
+	;)
+
+system_install:
+	$(info Checking sudo permission to install binaries into /usr/local/bin..)
+	$(info $(shell sudo echo sudo permission OK!))
+	$(info )
+	$(info List of installed K binaries:)
+	@$(foreach bin,$(wildcard $(KLOCAL)/bin/K-$(KSRC)*),               \
+	  sudo cp $(bin) /usr/local/bin/$(notdir $(bin))                   \
+	  $(info $(shell ls -lah --color /usr/local/bin/$(notdir $(bin)))) \
+	;)
+	$(info )
+	$(info Checking if /usr/local/bin is already in your PATH..)
+	$(info $(subst ..,,$(subst Building ,,$(call STEP,$(if $(shell echo $$PATH | grep /usr/local/bin),all OK! /usr/local/bin is already in your PATH.,Warning! you MUST add /usr/local/bin to your PATH!)))))
+	$(info )
 
 install:
 	@$(MAKE) packages
 	mkdir -p app/server
 	@yes = | head -n`expr $(shell tput cols) / 2` | xargs echo && echo " _  __\n| |/ /\n| ' /   Select your (beloved) architecture\n| . \\   to download pre-compiled binaries:\n|_|\\_\\ \n"
 	@echo $(CARCH) | tr ' ' "\n" | cat -n && echo "\n(Hint! uname says \"`uname -sm`\", and win32 auto-install does not work yet)\n"
-	@read -p "[1/2/3/4/5]: " chost; \
-	CHOST=`echo $(CARCH) | cut -d ' ' -f$${chost}` $(MAKE) download
+	@read -p "[1/2/3/4/5]: " chost && $(MAKE) download CHOST=`echo $(CARCH) | cut -d ' ' -f$${chost}`
 
 docker:
 	@$(MAKE) packages
-	mkdir -p app/server
 	@$(MAKE) download
 	sed -i "/Usage/,+118d" K.sh
 
@@ -276,7 +296,7 @@ release:
 ifdef KALL
 	unset KALL $(foreach chost,$(CARCH),&& $(MAKE) $@ CHOST=$(chost))
 else
-	@tar -cvzf v$(MAJOR).$(MINOR).$(PATCH).$(BUILD)-$(CHOST).tar.gz $(KLOCAL)/bin/K-$(CHOST)* $(KLOCAL)/lib/K*-$(CHOST)*                  \
+	@tar -cvzf v$(MAJOR).$(MINOR).$(PATCH).$(BUILD)-$(CHOST).tar.gz $(KLOCAL)/bin/K-* $(KLOCAL)/lib/K-*                                   \
 	$(shell test -n "`echo $(CHOST) | grep mingw32`" && echo $(KLOCAL)/bin/*dll || :)                                                     \
 	LICENSE COPYING README.md Makefile doc/[^html]* etc test --exclude src/*/node_modules src                                             \
 	&& curl -s -n -H "Content-Type:application/octet-stream" -H "Authorization: token ${KRELEASE}"                                        \
@@ -293,4 +313,4 @@ md5: src
 asandwich:
 	@test `whoami` = 'root' && echo OK || echo make it yourself!
 
-.PHONY: all K $(SOURCE) hlep hepl help doc test src dist download pvs clean cleandb list screen start stop restart startall stopall restartall coinbase packages install docker reinstall diff latest changelog test-c release md5 asandwich
+.PHONY: all K $(SOURCE) hlep hepl help doc test src dist download pvs clean cleandb list screen start stop restart startall stopall restartall coinbase packages system_install uninstall install docker reinstall diff latest changelog test-c release md5 asandwich

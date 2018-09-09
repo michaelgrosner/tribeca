@@ -6,7 +6,7 @@ namespace K {
     public:
       Screen() {
         cout << BGREEN << "K"
-             << RGREEN << " build " << K_BUILD << ' ' << K_STAMP << ".\n";
+             << RGREEN << " " << K_BUILD << ' ' << K_STAMP << ".\n";
         const string changes = mCommand::changelog();
         const int commits = mCommand::git()
           ? count(changes.begin(), changes.end(), '\n')

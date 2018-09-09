@@ -2,18 +2,18 @@ ERR      = *** Unexpected MAKELEVEL = 0.
 HINT     = This Makefile can't be used directly, consider cd ../.. before try again
 $(if $(subst 0,,${MAKELEVEL}),,$(warning $(ERR));$(error $(HINT)))
 
-V_ZLIB   = 1.2.11
-V_SSL    = 1.1.0h
-V_CURL   = 7.61.0
-V_SQL    = 3230100
-V_NCUR   = 6.1
-V_JSON   = 3.1.2
-V_CATCH  = 2.2.3
-V_UWS    = 0.14.8
-V_QF     = 1.15.1
-V_UV     = 1.20.3
+V_ZLIB  = 1.2.11
+V_SSL   = 1.1.0h
+V_CURL  = 7.61.0
+V_SQL   = 3230100
+V_NCUR  = 6.1
+V_JSON  = 3.1.2
+V_CATCH = 2.2.3
+V_UWS   = 0.14.8
+V_QF    = 1.15.1
+V_UV    = 1.20.3
 
-KBUILD  := $(abspath ../../build-$(CHOST))
+KBUILD := $(abspath ../../build-$(CHOST))
 
 all dist:
 	mkdir -p $(KBUILD)
