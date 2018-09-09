@@ -2,7 +2,7 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
 PATCH    = 10
-BUILD    = 19
+BUILD    = 20
 SOURCE   = trading-bot
 CARCH    = x86_64-linux-gnu      \
            arm-linux-gnueabihf   \
@@ -27,7 +27,7 @@ KARGS   := -pthread -std=c++11 -O3                       \
   $(KLOCAL)/lib/libcrypto.a  $(KLOCAL)/lib/libncurses.a  \
   $(wildcard                                             \
     $(KLOCAL)/lib/lib*.dll.a $(KLOCAL)/lib/libuv.a       \
-    $(KLOCAL)/lib/K-$(KSRC)-$(CHOST)-assets.o            \
+    $(KLOCAL)/lib/K-$(KSRC)-assets.o                     \
   )
 
 all K: $(SOURCE)
@@ -179,6 +179,7 @@ system_install:
 	  sudo cp $(bin) /usr/local/bin/$(notdir $(bin));   \
 	  ls -lah --color /usr/local/bin/$(notdir $(bin));  \
 	)
+	@echo
 
 install:
 	@$(MAKE) packages

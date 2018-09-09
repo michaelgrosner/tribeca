@@ -27,7 +27,7 @@ all $(KSRC): js css
 	;)
 
 assets: $(KSRC).S
-	$(CHOST)-g++ -Wa,-I,$(KTMP),-I,. -c $^ -o $(KLIB)/K-$(basename $^)-$(CHOST)-$@.o
+	$(CHOST)-g++ -Wa,-I,$(KTMP),-I,. -c $^ -o $(KLIB)/K-$(basename $^)-$@.o
 
 clean:
 	@rm -rf $(KTMP)
