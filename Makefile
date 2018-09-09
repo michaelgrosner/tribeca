@@ -2,7 +2,7 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
 PATCH    = 10
-BUILD    = 12
+BUILD    = 13
 SOURCE   = trading-bot
 CARCH    = x86_64-linux-gnu      \
            arm-linux-gnueabihf   \
@@ -10,12 +10,10 @@ CARCH    = x86_64-linux-gnu      \
            x86_64-apple-darwin17 \
            x86_64-w64-mingw32
 CHOST   ?= $(shell (test -d .git && test -n "`command -v g++`") && g++ -dumpmachine \
-             || ls -1 . | grep build- | head -n1 | cut -d '/' -f1 | cut -d '-' -f2-)
+             || echo $(subst build-,,$(firstword $(wildcard build-*))))
 KLOCAL  := build-$(CHOST)/local
-CXX     := $(CHOST)-g++
-V_CXX    = 6
-ERR     := *** K require g++ v$(V_CXX), but g++ v$(V_CXX) was not found at $(shell which "$(CXX)" 2> /dev/null).
-HINT    := consider a symlink at $(shell which "$(CXX)" 2> /dev/null) pointing to your g++-$(V_CXX) executable
+ERR      = *** K require g++ v6, but it was not found.
+HINT    := consider a symlink at /usr/bin/$(CHOST)-g++ pointing to your g++-6 executable
 STEP     = $(shell tput setaf 2;tput setab 0)Building $(1)..$(shell tput sgr0)
 KARGS   := -pthread -std=c++11 -O3 -I$(KLOCAL)/include   \
   -I$(realpath $(KLOCAL)/../../src/include)              \
@@ -85,7 +83,7 @@ clean dist:
 ifdef KALL
 	unset KALL $(foreach chost,$(CARCH),&& $(MAKE) $@ CHOST=$(chost))
 else
-	@$(if $(shell test "`$(shell which "$(CXX)" 2> /dev/null) -dumpversion | cut -d . -f1`" != $(V_CXX) || echo 1),,$(warning $(ERR));$(error $(HINT)))
+	$(if $(subst 6,,$(shell $(CHOST)-g++ -dumpversion | cut -d. -f1)),$(warning $(ERR));$(error $(HINT)))
 	@$(MAKE) -C src/dist $@ CHOST=$(CHOST)
 endif
 
@@ -102,8 +100,8 @@ ifdef KALL
 	unset KALL $(foreach chost,$(CARCH),&& $(MAKE) $@ CHOST=$(chost))
 else
 	$(info $(call STEP,$(KSRC) $@ $(CHOST)))
-	@$(if $(shell test "`$(shell which "$(CXX)" 2> /dev/null) -dumpversion | cut -d . -f1`" != $(V_CXX) || echo 1),,$(warning $(ERR));$(error $(HINT)))
-	@$(CXX) --version
+	$(if $(subst 6,,$(shell $(CHOST)-g++ -dumpversion | cut -d. -f1)),$(warning $(ERR));$(error $(HINT)))
+	@$(CHOST)-g++ --version
 	mkdir -p $(KLOCAL)/bin
 	$(MAKE) $(shell test -n "`echo $(CHOST) | grep darwin`" && echo Darwin || (test -n "`echo $(CHOST) | grep mingw32`" && echo Win32 || uname -s)) CHOST=$(CHOST)
 	chmod +x $(KLOCAL)/bin/K-$(CHOST)$(shell test -n "`echo $(CHOST) | grep mingw32`" && echo .exe || :)
@@ -115,20 +113,20 @@ ifdef KUNITS
 else ifndef KTEST
 	@$(MAKE) KTEST="-DNDEBUG" $@
 else
-	$(CXX) $(KTEST) -o $(KLOCAL)/bin/K-$(CHOST)  \
+	$(CHOST)-g++ $(KTEST) -o $(KLOCAL)/bin/K-$(CHOST)  \
 	  -DHAVE_STD_UNIQUE_PTR -DUWS_THREADSAFE     \
 	  -static-libstdc++ -static-libgcc -rdynamic \
 	  $^ $(KARGS) -ldl
 endif
 
 Darwin: src/$(KSRC)/$(KSRC).cxx
-	$(CXX) -DNDEBUG -o $(KLOCAL)/bin/K-$(CHOST)                                  \
+	$(CHOST)-g++ -DNDEBUG -o $(KLOCAL)/bin/K-$(CHOST)                                  \
 	  -DUSE_LIBUV                                                                \
 	  -msse4.1 -maes -mpclmul -mmacosx-version-min=10.13 -nostartfiles -rdynamic \
 	  $^ $(KARGS) -ldl
 
 Win32: src/$(KSRC)/$(KSRC).cxx
-	$(CXX)-posix -DNDEBUG -o $(KLOCAL)/bin/K-$(CHOST).exe        \
+	$(CHOST)-g++-posix -DNDEBUG -o $(KLOCAL)/bin/K-$(CHOST).exe        \
 	  -DUSE_LIBUV                                                \
 	  $^ $(KARGS)                                                \
 	  -DCURL_STATICLIB -static -lstdc++ -lgcc -lwldap32 -lws2_32

@@ -1,5 +1,5 @@
-ERR     := *** Unexpected MAKELEVEL = 0.
-HINT    := This Makefile can't be used directly, consider cd ../.. before try again
+ERR      = *** Unexpected MAKELEVEL = 0.
+HINT     = This Makefile can't be used directly, consider cd ../.. before try again
 $(if $(subst 0,,${MAKELEVEL}),,$(warning $(ERR));$(error $(HINT)))
 
 V_ZLIB   = 1.2.11
