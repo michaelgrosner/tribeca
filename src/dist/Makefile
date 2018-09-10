@@ -40,8 +40,6 @@ openssl:
 	--openssldir=$(KBUILD)/local && make && make install_sw install_ssldirs                    )
 
 curl:
-#	curl --time-cond /etc/ssl/certs/ca-certificates.crt https://curl.haxx.se/ca/cacert.pem \
-#	  -o /etc/ssl/certs/ca-certificates.crt
 	test -d $(KBUILD)/curl-$(V_CURL) || (                                                   \
 	curl -L https://curl.haxx.se/download/curl-$(V_CURL).tar.gz | tar xz -C $(KBUILD)       \
 	&& cd $(KBUILD)/curl-$(V_CURL) && ./configure --host=$(CHOST) --disable-manual          \
