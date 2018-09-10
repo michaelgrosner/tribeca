@@ -9,11 +9,14 @@ CARCH    = x86_64-linux-gnu      \
            aarch64-linux-gnu     \
            x86_64-apple-darwin17 \
            x86_64-w64-mingw32
+
 CHOST   ?= $(shell (test -d .git && test -n "`command -v g++`") && g++ -dumpmachine \
              || echo $(subst build-,,$(firstword $(wildcard build-*))))
 KLOCAL  := build-$(CHOST)/local
+
 ERR      = *** K require g++ v6, but it was not found.
 HINT    := consider a symlink at /usr/bin/$(CHOST)-g++ pointing to your g++-6 executable
+
 STEP     = $(shell tput setaf 2;tput setab 0)Building $(1)..$(shell tput sgr0)
 KARGS   := -pthread -std=c++11 -O3                       \
   -DK_BUILD='"$(KSRC) $(CHOST)"'                         \
@@ -164,10 +167,7 @@ packages:
 	sudo chown $(shell id -u) /data/db
 
 uninstall:
-	@$(foreach bin,$(wildcard $(KLOCAL)/bin/K-$(KSRC)*), \
-	  sudo rm /usr/local/bin/$(notdir $(bin))            \
-	  $(info Removed /usr/local/bin/$(notdir $(bin)))    \
-	;)
+	@$(foreach bin,$(addprefix /usr/local/bin/,$(notdir $(wildcard $(KLOCAL)/bin/K-*))), sudo rm -v $(bin);)
 
 system_install:
 	$(info Checking sudo permission to install binaries into /usr/local/bin.. $(shell sudo echo OK))
@@ -176,8 +176,8 @@ system_install:
 	$(info )
 	$(info List of installed K binaries:)
 	@$(foreach bin,$(wildcard $(KLOCAL)/bin/K-$(KSRC)*), \
-	  sudo cp $(bin) /usr/local/bin/$(notdir $(bin));   \
-	  ls -lah --color /usr/local/bin/$(notdir $(bin));  \
+	  sudo cp $(bin) /usr/local/bin/$(notdir $(bin));    \
+	  ls -lah --color /usr/local/bin/$(notdir $(bin));   \
 	)
 	@echo
 
