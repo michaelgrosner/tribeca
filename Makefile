@@ -2,7 +2,7 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
 PATCH    = 10
-BUILD    = 21
+BUILD    = 22
 SOURCE   = trading-bot
 CARCH    = x86_64-linux-gnu      \
            arm-linux-gnueabihf   \
@@ -171,7 +171,7 @@ system_install:
 	$(info Checking sudo permission to install binaries into /usr/local/bin.. $(shell sudo echo OK))
 	$(info Checking if /usr/local/bin is already in your PATH.. $(if $(shell echo $$PATH | grep /usr/local/bin),OK))
 	$(if $(shell echo $$PATH | grep /usr/local/bin),,$(info $(subst ..,,$(subst Building ,,$(call STEP,Warning! you MUST add /usr/local/bin to your PATH!)))))
-	$(info Checking if /etc/ssl/certs is readable by curl.. $(shell (test -d /etc/ssl/certs && echo OK) || (sudo mkdir -p /etc/ssl/certs %% echo OK)))
+	$(info Checking if /etc/ssl/certs is readable by curl.. $(shell (test -d /etc/ssl/certs && echo OK) || (sudo mkdir -p /etc/ssl/certs && echo OK)))
 	$(info Checking if /data/db is writable by sqlite.. $(shell (test -d /data/db && echo OK) || (sudo mkdir -p /data/db && sudo chown $(shell id -u) /data/db && echo OK)))
 	$(info )
 	$(info List of installed K binaries:)
