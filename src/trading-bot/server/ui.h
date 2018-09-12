@@ -165,7 +165,10 @@ namespace K {
               screen->logWar("UI", "Unable to read custom .key file at " + args.pathSSLkey);
             if (SSL_CTX_use_certificate_chain_file(context, args.pathSSLcert.data()) != 1
               or SSL_CTX_use_RSAPrivateKey_file(context, args.pathSSLkey.data(), SSL_FILETYPE_PEM) != 1
-            ) context = nullptr;
+            ) {
+              context = nullptr;
+              screen->logWar("UI", "Unable to encrypt web clients, will fallback to plain HTTP");
+            }
           }
         }
         screen->logUI("HTTP" + string(context ? 1 : 0, 'S'));

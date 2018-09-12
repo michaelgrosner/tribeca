@@ -2,7 +2,7 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
 PATCH    = 10
-BUILD    = 26
+BUILD    = 27
 SOURCE   = trading-bot
 CARCH    = x86_64-linux-gnu      \
            arm-linux-gnueabihf   \

@@ -133,7 +133,7 @@ Troubleshooting:
 
  * See `./K.sh --help` and `make help`.
 
- * Replace the certificate at `etc/sslcert` folder with your own, see [web ui](https://github.com/ctubio/Krypto-trading-bot#web-ui) section. But, the certificate provided is a fully featured default openssl, that you may just need to authorise in your browser.
+ * Use your own SSL certificate with `--ssl-crt` and `--ssl-key`, see [web ui](https://github.com/ctubio/Krypto-trading-bot#web-ui) section. Otherwise, the unsecure built-in certificate is a fully featured default openssl, that you may just need to authorise in your browser.
 
 ### Configuration
 

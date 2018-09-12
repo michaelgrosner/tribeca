@@ -86,18 +86,25 @@ uws:
 	&& sed -i "s/WinSock2/winsock2/" $(KBUILD)/local/include/uWS/Networking.h) ||     :)
 
 quickfix:
-	test -d $(KBUILD)/quickfix-$(V_QF) || (                                                       \
-	curl -L https://github.com/quickfix/quickfix/archive/v$(V_QF).tar.gz | tar xz -C $(KBUILD)    \
-	&& cd $(KBUILD)/quickfix-$(V_QF) && ./bootstrap                                               \
-	&& (test -n "`echo $(CHOST) | grep darwin`" &&                                                \
-	sed -i '' "s/bin spec test examples doc//" Makefile.am ||                                     \
-	sed -i "s/bin spec test examples doc//" Makefile.am)                                          \
-	&& (test -n "`echo $(CHOST) | grep darwin`" &&                                                \
-	sed -i '' "s/SUBDIRS = test//" src/C++/Makefile.am ||                                         \
-	sed -i "s/SUBDIRS = test//" src/C++/Makefile.am) && (test -n "`echo $(CHOST) | grep mingw32`" \
-	&& patch -p0 < $(realpath with_win32.src.patch) || :)                                         \
-	&& ./configure --prefix=$(KBUILD)/local --enable-shared=no                                    \
-	--enable-static=yes --host=$(CHOST) && cd src/C++ && make && make install                     )
+	test -d $(KBUILD)/quickfix-$(V_QF) || (                                                    \
+	curl -L https://github.com/quickfix/quickfix/archive/v$(V_QF).tar.gz | tar xz -C $(KBUILD) \
+	&& cd $(KBUILD)/quickfix-$(V_QF) && ./bootstrap                                            \
+	&& sed -i "s/bin spec test examples doc//" Makefile.am                                     \
+	&& sed -i "s/SUBDIRS = test//" src/C++/Makefile.am                                         \
+	&& (test -n "`echo $(CHOST) | grep mingw32`"                                               \
+	&& (sed -i "s/Thread/ThreadId/" src/C++/Utility.cpp                                        \
+	&& sed -i "s/_MSC_VER/_WIN32/" src/C++/Utility.cpp src/C++/Utility.h                       \
+	&& sed -i "s/socklen_t/int/" src/C++/Utility.cpp                                           \
+	&& sed -i "s/INVALID_SOCKET/~0/" src/C++/Utility.cpp                                       \
+	&& sed -i "/host = socket_hostname/d" src/C++/Utility.cpp                          \
+	&& sed -i "s/_stdcall\( \*\)*//" src/C++/Utility.h                                         \
+	&& sed -i "s/\(typedef int\)/\/\/\1/" src/C++/SocketMonitor.h src/C++/Utility.h            \
+	&& sed -i "s/W\(insock2\)/w\1/" src/C++/SocketMonitor.h  src/C++/Utility.h                 \
+	&& sed -i "/pragma/d" src/C++/SocketMonitor.h src/C++/Utility.h                            \
+	&& sed -i "s/ifdef _MSC_VER/ifdef _WIN32/" src/C++/SocketMonitor.h src/C++/Mutex.h         \
+	&& sed -i "s/ifndef _MSC_VER/ifndef _WIN32/" src/C++/SocketConnector.cpp                   \
+	src/C++/SocketServer.cpp) || :) && ./configure --prefix=$(KBUILD)/local --enable-shared=no \
+	--enable-static=yes --host=$(CHOST) && cd src/C++ && make && make install                  )
 
 libuv:
 	test -z "`echo $(CHOST) | grep darwin;echo $(CHOST) | grep mingw32`" || test -d $(KBUILD)/libuv-$(V_UV) || ( \
