@@ -307,50 +307,6 @@ namespace K {
     };
   };
 
-  class mCommand {
-    private:
-      static const string output(const string &cmd) {
-        string data;
-        FILE *stream = popen((cmd + " 2>&1").data(), "r");
-        if (stream) {
-          const int max_buffer = 256;
-          char buffer[max_buffer];
-          while (!feof(stream))
-            if (fgets(buffer, max_buffer, stream) != NULL)
-              data += buffer;
-          pclose(stream);
-        }
-        return data;
-      };
-    public:
-      static const string uname() {
-        return output("uname -srvm");
-      };
-      static const string ps() {
-        return output("(ps -p" + to_string(::getpid()) + " -orss | tail -n1)");
-      };
-      static const string netstat(const int &port) {
-        return output("netstat -anp 2>/dev/null | grep " + to_string(port));
-      };
-      static void stunnel(const bool &reboot) {
-        int k = system("(pkill stunnel || :)");
-        if (reboot) k = system("stunnel etc/stunnel.conf");
-      };
-      static const bool git() {
-        return access(".git", F_OK) != -1;
-      };
-      static const string changelog() {
-        return git() and !system("git fetch 2>/dev/null")
-          ? output("(git --no-pager log --graph --oneline @..@{u} 2>/dev/null)")
-          : "";
-      };
-      static const bool deprecated() {
-        return git()
-          ? output("git rev-parse @") != output("git rev-parse @{u}")
-          : false;
-      };
-  };
-
   class mREST {
     public:
       static const char *inet;
@@ -389,6 +345,49 @@ namespace K {
       static size_t curl_write(void *buf, size_t size, size_t nmemb, void *up) {
         ((string*)up)->append((char*)buf, size * nmemb);
         return size * nmemb;
+      };
+  };
+
+  class mCommand {
+    private:
+      static const string output(const string &cmd) {
+        string data;
+        FILE *stream = popen((cmd + " 2>&1").data(), "r");
+        if (stream) {
+          const int max_buffer = 256;
+          char buffer[max_buffer];
+          while (!feof(stream))
+            if (fgets(buffer, max_buffer, stream) != NULL)
+              data += buffer;
+          pclose(stream);
+        }
+        return data;
+      };
+    public:
+      static const string uname() {
+        return output("uname -srvm");
+      };
+      static const string ps() {
+        return output("(ps -p" + to_string(::getpid()) + " -orss | tail -n1)");
+      };
+      static const string netstat(const int &port) {
+        return output("netstat -anp 2>/dev/null | grep " + to_string(port));
+      };
+      static void stunnel(const bool &reboot) {
+        int k = system("(pkill stunnel || :)");
+        if (reboot) k = system("stunnel etc/stunnel.conf");
+      };
+      static const string changelog() {
+        string mods;
+        json diff = mREST::xfer("https://api.github.com/repos/ctubio/Krypto-trading-bot/compare/" + string(K_0_GIT) + "...HEAD", 4L);
+        if (diff.value("ahead_by", 0)
+          and diff.find("commits") != diff.end()
+          and diff["commits"].is_array()
+        ) for (json::iterator it = diff["commits"].begin(); it != diff["commits"].end(); ++it) {
+          const string msg = it->value("/commit/message"_json_pointer, "");
+          mods += msg.substr(0, msg.find("\n\n") + 1);
+        }
+        return mods;
       };
   };
 

@@ -7,23 +7,18 @@ namespace K {
       Screen() {
         cout << BGREEN << "K"
              << RGREEN << " " << K_BUILD << ' ' << K_STAMP << ".\n";
-        const string changes = mCommand::changelog();
-        const int commits = mCommand::git()
-          ? count(changes.begin(), changes.end(), '\n')
-          : -1;
+        const string changelog = mCommand::changelog();
+        const int commits = count(changelog.begin(), changelog.end(), '\n');
         cout << BGREEN << K_0_DAY << RGREEN << ' '
-             << (commits == -1
-               ? "(zip install)"
-               : (commits
+             << (commits
                  ? '-' + to_string(commits) + "commit"
                    + string(commits == 1 ? 0 : 1, 's') + '.'
                  : "(0day)"
-               )
-             )
+                )
 #ifndef NDEBUG
              << " with DEBUG MODE enabled"
 #endif
-             << ".\n" << RYELLOW << changes << RRESET;
+             << ".\n" << RYELLOW << changelog << RRESET;
       };
       virtual void pressme(const mHotkey&, function<void()>) = 0;
       virtual void printme(mToScreen *const) = 0;
@@ -255,14 +250,8 @@ namespace K {
           + strsignal(sig)
 #endif
           + ' ';
-        if (mCommand::deprecated())
-          tracelog += string("(deprecated K version found).") + '\n'
-            + '\n' + string(BYELLOW) + "Hint!" + string(RYELLOW)
-            + '\n' + "please upgrade to the latest commit; the encountered error may be already fixed at:"
-            + '\n' + mCommand::changelog()
-            + '\n' + "If you agree, consider to run \"make latest\" prior further executions."
-            + '\n' + '\n';
-        else {
+        const string changelog = mCommand::changelog();
+        if (changelog.empty()) {
           tracelog += string("(Three-Headed Monkey found):") + '\n'
             + "- exchange: " + args.exchange + '\n'
             + "- currency: " + args.currency + '\n'
@@ -284,7 +273,13 @@ namespace K {
             + '\n' + "please copy and paste the error above into a new github issue (noworry for duplicates)."
             + '\n' + "If you agree, go to https://github.com/ctubio/Krypto-trading-bot/issues/new"
             + '\n' + '\n';
-        }
+        } else
+          tracelog += string("(deprecated K version found).") + '\n'
+            + '\n' + string(BYELLOW) + "Hint!" + string(RYELLOW)
+            + '\n' + "please upgrade to the latest commit; the encountered error may be already fixed at:"
+            + '\n' + changelog
+            + '\n' + "If you agree, consider to run \"make latest\" prior further executions."
+            + '\n' + '\n';
         halt(EXIT_FAILURE);
       };
   } ending;

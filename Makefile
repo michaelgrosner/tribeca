@@ -2,7 +2,7 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
 PATCH    = 10
-BUILD    = 23
+BUILD    = 24
 SOURCE   = trading-bot
 CARCH    = x86_64-linux-gnu      \
            arm-linux-gnueabihf   \
@@ -19,7 +19,8 @@ HINT    := consider a symlink at /usr/bin/$(CHOST)-g++ pointing to your g++-6 ex
 
 STEP     = $(shell tput setaf 2;tput setab 0)Building $(1)..$(shell tput sgr0)
 KARGS   := -pthread -std=c++11 -O3                       \
-  -DK_BUILD='"$(KSRC) $(CHOST)"'                         \
+  -DK_BUILD='"$(KSRC) $(CHOST)"' -DK_0_GIT='"$(shell     \
+  cat .git/refs/heads/master 2>/dev/null || echo HEAD)"' \
   -DK_STAMP='"$(shell date "+%Y-%m-%d %H:%M:%S")"'       \
   -DK_0_DAY='"v$(MAJOR).$(MINOR).$(PATCH)+$(BUILD)"'     \
   -I$(realpath $(KLOCAL)/../../src/include)              \
@@ -266,9 +267,10 @@ test-c:
 #	@test -n "`identify -verbose etc/${PNG}.png | grep 'K\.conf'`" && echo Configuration injected into etc/${PNG}.png OK, feel free to remove etc/${PNG}.json anytime. || echo nope, injection failed.
 
 checkOK:
-	read -p "KMOD: " KMOD;date=`date`;git diff;git status && read ctrl_c        \
-	&& KALL=1 $(MAKE) K doc release && git add . && git commit -S -m "$${KMOD}" \
-	&& git push && echo $${date} && date
+	date=`date` && git diff && git status && read -p "KMOD: " KMOD      \
+	&& git add . && git commit -S -m "$${KMOD}"                         \
+	&& ((KALL=1 $(MAKE) K doc release && git push) || git reset HEAD^1) \
+	&& echo $${date} && date
 
 MAJOR:
 	@sed -i "s/^\(MAJOR    =\).*$$/\1 $(shell expr $(MAJOR) + 1)/" Makefile
