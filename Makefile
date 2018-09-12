@@ -2,7 +2,7 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
 PATCH    = 10
-BUILD    = 24
+BUILD    = 25
 SOURCE   = trading-bot
 CARCH    = x86_64-linux-gnu      \
            arm-linux-gnueabihf   \
@@ -18,20 +18,20 @@ ERR      = *** K require g++ v6, but it was not found.
 HINT    := consider a symlink at /usr/bin/$(CHOST)-g++ pointing to your g++-6 executable
 
 STEP     = $(shell tput setaf 2;tput setab 0)Building $(1)..$(shell tput sgr0)
-KARGS   := -pthread -std=c++11 -O3                       \
-  -DK_BUILD='"$(KSRC) $(CHOST)"' -DK_0_GIT='"$(shell     \
-  cat .git/refs/heads/master 2>/dev/null || echo HEAD)"' \
-  -DK_STAMP='"$(shell date "+%Y-%m-%d %H:%M:%S")"'       \
-  -DK_0_DAY='"v$(MAJOR).$(MINOR).$(PATCH)+$(BUILD)"'     \
-  -I$(realpath $(KLOCAL)/../../src/include)              \
-  -I$(KLOCAL)/include        $(KLOCAL)/include/uWS/*.cpp \
-  $(KLOCAL)/lib/K-$(CHOST).a $(KLOCAL)/lib/libquickfix.a \
-  $(KLOCAL)/lib/libsqlite3.a $(KLOCAL)/lib/libz.a        \
-  $(KLOCAL)/lib/libcurl.a    $(KLOCAL)/lib/libssl.a      \
-  $(KLOCAL)/lib/libcrypto.a  $(KLOCAL)/lib/libncurses.a  \
-  $(wildcard                                             \
-    $(KLOCAL)/lib/lib*.dll.a $(KLOCAL)/lib/libuv.a       \
-    $(KLOCAL)/lib/K-$(KSRC)-assets.o                     \
+KARGS   := -pthread -std=c++11 -O3 -DK_SOURCE='"$(KSRC)"' \
+  -DK_BUILD='"$(CHOST)"' -DK_0_GIT='"$(shell              \
+  cat .git/refs/heads/master 2>/dev/null || echo HEAD)"'  \
+  -DK_STAMP='"$(shell date "+%Y-%m-%d %H:%M:%S")"'        \
+  -DK_0_DAY='"v$(MAJOR).$(MINOR).$(PATCH)+$(BUILD)"'      \
+  -I$(realpath $(KLOCAL)/../../src/include)               \
+  -I$(KLOCAL)/include        $(KLOCAL)/include/uWS/*.cpp  \
+  $(KLOCAL)/lib/K-$(CHOST).a $(KLOCAL)/lib/libquickfix.a  \
+  $(KLOCAL)/lib/libsqlite3.a $(KLOCAL)/lib/libz.a         \
+  $(KLOCAL)/lib/libcurl.a    $(KLOCAL)/lib/libssl.a       \
+  $(KLOCAL)/lib/libcrypto.a  $(KLOCAL)/lib/libncurses.a   \
+  $(wildcard                                              \
+    $(KLOCAL)/lib/lib*.dll.a $(KLOCAL)/lib/libuv.a        \
+    $(KLOCAL)/lib/K-$(KSRC)-assets.o                      \
   )
 
 all K: $(SOURCE)

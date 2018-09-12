@@ -5,8 +5,8 @@ namespace K {
   class Screen {
     public:
       Screen() {
-        cout << BGREEN << "K"
-             << RGREEN << " " << K_BUILD << ' ' << K_STAMP << ".\n";
+        cout << BGREEN << "K " << K_SOURCE
+             << RGREEN << ' ' << K_BUILD << ' ' << K_STAMP << ".\n";
         const string changelog = mCommand::changelog();
         const int commits = count(changelog.begin(), changelog.end(), '\n');
         cout << BGREEN << K_0_DAY << RGREEN << ' '
@@ -257,7 +257,7 @@ namespace K {
             + "- currency: " + args.currency + '\n'
             + rollout + '\n'
             + "- lastbeat: " + to_string(Tstamp) + '\n'
-            + "- binbuild: " + string(K_BUILD) + '\n'
+            + "- binbuild: " + string(K_SOURCE) + ' ' + string(K_BUILD) + '\n'
 #ifndef _WIN32
             + "- os-uname: " + mCommand::uname()
             + "- tracelog: " + '\n';
