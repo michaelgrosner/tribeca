@@ -5,7 +5,7 @@ namespace K {
   class Screen {
     public:
       Screen() {
-        cout << BGREEN << "K " << K_SOURCE
+        cout << BGREEN << "K-" << K_SOURCE
              << RGREEN << ' ' << K_BUILD << ' ' << K_STAMP << ".\n";
         const string changelog = mCommand::changelog();
         const int commits = count(changelog.begin(), changelog.end(), '\n');

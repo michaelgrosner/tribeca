@@ -379,14 +379,17 @@ namespace K {
       };
       static const string changelog() {
         string mods;
-        json diff = mREST::xfer("https://api.github.com/repos/ctubio/Krypto-trading-bot/compare/" + string(K_0_GIT) + "...HEAD", 4L);
+        const json diff = mREST::xfer("https://api.github.com/repos/ctubio/Krypto-trading-bot/compare/" + string(K_0_GIT) + "...HEAD", 4L);
         if (diff.value("ahead_by", 0)
           and diff.find("commits") != diff.end()
-          and diff["commits"].is_array()
-        ) for (json::iterator it = diff["commits"].begin(); it != diff["commits"].end(); ++it) {
-          const string msg = it->value("/commit/message"_json_pointer, "");
-          mods += msg.substr(0, msg.find("\n\n") + 1);
-        }
+          and diff.at("commits").is_array()
+        ) for (const json &it : diff.at("commits"))
+          mods += it.value("/commit/author/date"_json_pointer, "").substr(0, 10) + " "
+                + it.value("/commit/author/date"_json_pointer, "").substr(11, 8)
+                + " (" + it.value("sha", "").substr(0, 7) + ") "
+                + it.value("/commit/message"_json_pointer, "").substr(0,
+                  it.value("/commit/message"_json_pointer, "").find("\n\n") + 1
+                );
         return mods;
       };
   };
