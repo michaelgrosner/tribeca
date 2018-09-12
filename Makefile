@@ -164,6 +164,7 @@ packages:
 
 uninstall:
 	@$(foreach bin,$(addprefix /usr/local/bin/,$(notdir $(wildcard $(KLOCAL)/bin/K-*))), sudo rm -v $(bin);)
+	@sudo rm -v /etc/ssl/certs/fix.pro.coinbase.com.pem
 
 system_install:
 	$(info Checking sudo permission to install binaries into /usr/local/bin.. $(shell sudo echo OK))
