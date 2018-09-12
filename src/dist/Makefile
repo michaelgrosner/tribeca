@@ -16,11 +16,11 @@ V_UV    = 1.20.3
 KBUILD := $(abspath ../../build-$(CHOST))
 
 all dist:
-	mkdir -p $(KBUILD)
+	@mkdir -vp $(KBUILD)
 	$(MAKE) zlib openssl curl sqlite ncurses json catch uws quickfix libuv
 
 clean:
-	rm -rf $(KBUILD)
+	@rm -vrf $(KBUILD)
 
 zlib:
 	test -d $(KBUILD)/zlib-$(V_ZLIB) || (                                                    \

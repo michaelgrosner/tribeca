@@ -2,7 +2,7 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
 PATCH    = 10
-BUILD    = 22
+BUILD    = 23
 SOURCE   = trading-bot
 CARCH    = x86_64-linux-gnu      \
            arm-linux-gnueabihf   \
@@ -149,11 +149,9 @@ endif
 
 download:
 	curl -L https://github.com/ctubio/Krypto-trading-bot/releases/download/$(MAJOR).$(MINOR).x/v$(MAJOR).$(MINOR).$(PATCH).$(BUILD)-$(CHOST).tar.gz | tar xz
-	@$(MAKE) coinbase system_install -s
+	@$(MAKE) system_install coinbase -s
 	@ln -f -s /usr/local/bin/K-trading-bot app/server/K
 	@test -n "`ls *.sh 2>/dev/null`" || (cp etc/K.sh.dist K.sh && chmod +x K.sh)
-	@test -f etc/sslcert/server.crt || cp etc/sslcert/unsecure-sample.server.crt etc/sslcert/server.crt
-	@test -f etc/sslcert/server.key || cp etc/sslcert/unsecure-sample.server.key etc/sslcert/server.key
 
 cleandb: /data/db/K*
 	rm -rf /data/db/K*.db
@@ -242,7 +240,7 @@ screen:
 
 coinbase:
 	@openssl s_client -showcerts -connect fix.pro.coinbase.com:4198 -CApath /etc/ssl/certs < /dev/null 2> /dev/null \
-	| openssl x509 -outform PEM > etc/sslcert/fix.pro.coinbase.com.pem
+	  | openssl x509 -outform PEM > fix.pro.coinbase.com.pem && sudo mv fix.pro.coinbase.com.pem /etc/ssl/certs
 
 diff: .git
 	@_() { echo $$2 $$3 version: `git rev-parse $$1`; }; git remote update && _ @ Local running && _ @{u} Latest remote

@@ -3,9 +3,6 @@
 /doc/html*
 /build*
 /src/*/node_modules
-/etc/sslcert/fix.pro.coinbase.com.pem
-/etc/sslcert/server.crt
-/etc/sslcert/server.key
 /Vagrantfile
 /*.gcno
 /*.gcda

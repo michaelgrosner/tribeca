@@ -90,6 +90,7 @@ namespace K {
             http        = "NULL", wss         = "NULL",
             base,                 quote,
             database,             diskdata,
+            pathSSLcert,          pathSSLkey,
             whitelist;
     const string main(int argc, char** argv) {
       static const struct option opts[] = {
@@ -121,6 +122,8 @@ namespace K {
         {"username",     required_argument, 0,               991},
         {"http",         required_argument, 0,               990},
         {"wss",          required_argument, 0,               989},
+        {"ssl-crt",      required_argument, 0,               988},
+        {"ssl-key",      required_argument, 0,               987},
         {"title",        required_argument, 0,               'K'},
         {"matryoshka",   required_argument, 0,               'k'},
         {"database",     required_argument, 0,               'd'},
@@ -151,6 +154,8 @@ namespace K {
           case 991: username     = string(optarg); break;
           case 990: http         = string(optarg); break;
           case 989: wss          = string(optarg); break;
+          case 988: pathSSLcert  = string(optarg); break;
+          case 987: pathSSLkey   = string(optarg); break;
           case 'd': database     = string(optarg); break;
           case 'k': matryoshka   = string(optarg); break;
           case 'K': title        = string(optarg); break;
@@ -183,6 +188,10 @@ namespace K {
               << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "                            all other UI related arguments will be ignored." << '\n'
               << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "-C, --client-limit=NUMBER - set NUMBER of maximum concurrent UI connections." << '\n'
               << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "    --without-ssl         - do not use HTTPS for UI connections (use HTTP only)." << '\n'
+              << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "    --ssl-crt=PATH        - set PATH to custom SSL .crt file for HTTPS UI connections" << '\n'
+              << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "                            (see akadia.com/services/ssh_test_certificate.html)." << '\n'
+              << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "    --ssl-key=PATH        - set PATH to custom SSL .key file for HTTPS UI connections" << '\n'
+              << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "                            (the passphrase MUST be removed from the .key file!)." << '\n'
               << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "-L, --whitelist=IP        - set IP or csv of IPs to allow UI connections," << '\n'
               << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "                            alien IPs will get a zip-bomb instead." << '\n'
               << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "    --port=NUMBER         - set NUMBER of an open port to listen for UI connections." << '\n'

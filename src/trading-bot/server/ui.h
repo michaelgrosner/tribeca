@@ -26,7 +26,15 @@ namespace K {
       };
       void waitData() {
         if (!socket) return;
-        listen();
+        if (!socket->listen(
+          mREST::inet, args.port, uS::TLS::Context(sslContext()), 0,
+          &socket->getDefaultGroup<uWS::SERVER>()
+        )) {
+          const string netstat = mCommand::netstat(args.port);
+          exit(screen->error("UI", "Unable to listen to UI port number " + to_string(args.port) + ", "
+            + (netstat.empty() ? "try another network interface" : "seems already in use by:\n" + netstat)
+          ));
+        }
         auto client = &socket->getDefaultGroup<uWS::SERVER>();
         client->onConnection([&](uWS::WebSocket<uWS::SERVER> *webSocket, uWS::HttpRequest req) {
           onConnection();
@@ -106,27 +114,56 @@ namespace K {
           send(data);
         };
       };
-      void listen() {
-        if (!args.withoutSSL
-          and (access("etc/sslcert/server.crt", F_OK) != -1)
-          and (access("etc/sslcert/server.key", F_OK) != -1)
-          and socket->listen(
-            mREST::inet, args.port,
-            uS::TLS::createContext("etc/sslcert/server.crt",
-                                   "etc/sslcert/server.key", ""),
-            0, &socket->getDefaultGroup<uWS::SERVER>()
-          )
-        ) screen->logUI("HTTPS");
-        else if (!socket->listen(
-            mREST::inet, args.port,
-          nullptr,
-          0, &socket->getDefaultGroup<uWS::SERVER>()
-        )) {
-          const string netstat = mCommand::netstat(args.port);
-          exit(screen->error("UI", "Unable to listen to UI port number " + to_string(args.port) + ", "
-            + (netstat.empty() ? "try another network interface" : "seems already in use by:\n" + netstat)
-          ));
-        } else screen->logUI("HTTP");
+      SSL_CTX *sslContext() {
+        SSL_CTX *context = nullptr;
+        if (!args.withoutSSL and (context = SSL_CTX_new(SSLv23_server_method()))) {
+          SSL_CTX_set_options(context, SSL_OP_NO_SSLv3);
+          if (args.pathSSLcert.empty() or args.pathSSLkey.empty()) {
+            const char *cert = "-----BEGIN CERTIFICATE-----\n"
+                               "MIICATCCAWoCCQCiyDyPL5ov3zANBgkqhkiG9w0BAQsFADBFMQswCQYDVQQGEwJB\n"
+                               "VTETMBEGA1UECAwKU29tZS1TdGF0ZTEhMB8GA1UECgwYSW50ZXJuZXQgV2lkZ2l0\n"
+                               "cyBQdHkgTHRkMB4XDTE2MTIyMjIxMDMyNVoXDTE3MTIyMjIxMDMyNVowRTELMAkG\n"
+                               "A1UEBhMCQVUxEzARBgNVBAgMClNvbWUtU3RhdGUxITAfBgNVBAoMGEludGVybmV0\n"
+                               "IFdpZGdpdHMgUHR5IEx0ZDCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEAunyx\n"
+                               "1lNsHkMmCa24Ns9xgJAwV3A6/Jg/S5jPCETmjPRMXqAp89fShZxN2b/2FVtU7q/N\n"
+                               "EtNpPyEhfAhPwYrkHCtip/RmZ/b6qY2Cx6otFIsuwO8aUV27CetpoM8TAQSuufcS\n"
+                               "jcZD9pCAa9GM/yWeqc45su9qBBmLnAKYuYUeDQUCAwEAATANBgkqhkiG9w0BAQsF\n"
+                               "AAOBgQAeZo4zCfnq5/6gFzoNDKg8DayoMnCtbxM6RkJ8b/MIZT5p6P7OcKNJmi1o\n"
+                               "XD2evdxNrY0ObQ32dpiLqSS1JWL8bPqloGJBNkSPi3I+eBoJSE7/7HOroLNbp6nS\n"
+                               "aaec6n+OlGhhjxn0DzYiYsVBUsokKSEJmHzoLHo3ZestTTqUwg==\n"
+                               "-----END CERTIFICATE-----\n";
+            const char *pkey = "-----BEGIN RSA PRIVATE KEY-----\n"
+                               "MIICXAIBAAKBgQC6fLHWU2weQyYJrbg2z3GAkDBXcDr8mD9LmM8IROaM9ExeoCnz\n"
+                               "19KFnE3Zv/YVW1Tur80S02k/ISF8CE/BiuQcK2Kn9GZn9vqpjYLHqi0Uiy7A7xpR\n"
+                               "XbsJ62mgzxMBBK659xKNxkP2kIBr0Yz/JZ6pzjmy72oEGYucApi5hR4NBQIDAQAB\n"
+                               "AoGBAJi9OrbtOreKjeQNebzCqRcAgeeLz3RFiknzjVYbgK1gBhDWo6XJVe8C9yxq\n"
+                               "sjYJyQV5zcAmkaQYEaHR+OjvRiZ4UmXbItukOD+dnq7xs69n3w54FfANjkurdL2M\n"
+                               "fPAQm/GJT4TSBDIr7eJQPOrork9uxQStwADTqvklVlKm2YldAkEA80ZYaLrGOBbz\n"
+                               "5871ewKxtVJNCCmXdYUwq7nI/lqsLBZnB+wiwnQ+3tgfi4YoUoTnv0hIIwkyLYl9\n"
+                               "Z2wqensf6wJBAMQ96gUGnIcYJzknB5CYDNQalcvvTx7tLtgRXDf47bQJ3X/Q5k/t\n"
+                               "yDlByUBqvYVShXWs+d4ynNKLze/w18H8Os8CQBYFDAOOxFpXWYRl6zpTKBqtdGOE\n"
+                               "wDzW7WzdyB+dvW/QJ0tESHEpbHdnQJO0dPnjJcbemAjz0CLnCv7Nf5rOgjkCQE3Q\n"
+                               "izIw+/JptmvoOQyx7ixQ2mNCYmpN/Iw63gln0MHaQ5WCPUEmdYWWu3mqmbn7Deaq\n"
+                               "j233Pc4TF7b0FmnaXWsCQAVvyLVU3a9Yactb5MXaN+rEYjUW37GSo+Q1lXfm0OwF\n"
+                               "EJB7X66Bavwg4MCfpGykS71OxhTEfDu+y1gylPMCGHY=\n"
+                               "-----END RSA PRIVATE KEY-----\n";
+            BIO *cbio = BIO_new_mem_buf((void*)cert, -1),
+                *kbio = BIO_new_mem_buf((void*)pkey, -1);
+            if (SSL_CTX_use_certificate(context, PEM_read_bio_X509(cbio, NULL, 0, NULL)) != 1
+              or SSL_CTX_use_RSAPrivateKey(context, PEM_read_bio_RSAPrivateKey(kbio, NULL, 0, NULL)) != 1
+            ) context = nullptr;
+          } else {
+            if (access(args.pathSSLcert.data(), R_OK) == -1)
+              screen->logWar("UI", "Unable to read custom .crt file at " + args.pathSSLcert);
+            if (access(args.pathSSLkey.data(), R_OK) == -1)
+              screen->logWar("UI", "Unable to read custom .key file at " + args.pathSSLkey);
+            if (SSL_CTX_use_certificate_chain_file(context, args.pathSSLcert.data()) != 1
+              or SSL_CTX_use_RSAPrivateKey_file(context, args.pathSSLkey.data(), SSL_FILETYPE_PEM) != 1
+            ) context = nullptr;
+          }
+        }
+        screen->logUI("HTTP" + string(context ? 1 : 0, 'S'));
+        return context;
       };
       function<void(const mMatter &type, string msg)> broadcast = [](const mMatter &type, string msg) {};
       function<void(const mToClient&)> send;

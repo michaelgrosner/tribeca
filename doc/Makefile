@@ -7,9 +7,9 @@ all doc: clean
 	@rm -rf xml
 
 clean:
-	@rm -rf html4 html5
+	@rm -vrf html4 html5
 
 CLEAN:
-	@rm -rf html*
+	@rm -vrf html*
 
 .PHONY: all doc clean CLEAN
