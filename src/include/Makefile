@@ -13,11 +13,14 @@ V_UWS   = 0.14.8
 V_QF    = 1.15.1
 V_UV    = 1.20.3
 
-KBUILD := $(abspath ../build-$(CHOST))
+KBUILD := $(abspath ../../build-$(CHOST))
 
 all dist:
 	@mkdir -vp $(KBUILD)
 	$(MAKE) zlib openssl curl sqlite ncurses json catch uws quickfix libuv
+ifdef TRAVIS_DEPLOY
+	$(MAKE) pvs
+endif
 
 clean:
 	@rm -vrf $(KBUILD)
@@ -110,5 +113,15 @@ libuv:
 	curl -L https://github.com/libuv/libuv/archive/v$(V_UV).tar.gz | tar xz -C $(KBUILD)                         \
 	&& cd $(KBUILD)/libuv-$(V_UV) && sh autogen.sh && CC=$(CHOST)-clang ./configure --host=$(CHOST)              \
 	--prefix=$(KBUILD)/local && make && make install                                                             )
+
+pvs:
+ifndef V_PVS
+	$(MAKE) $@ V_PVS=$(shell curl -s https://www.viva64.com/en/pvs-studio-download-linux/ | grep x86_64.tgz | sed 's/.*href=\"\(.*\)\" .*/\1/' | cut -d '-' -f3)
+else
+	test -d $(KBUILD)/pvs-studio-$(V_PVS)-x86_64 || (                \
+	curl -L http://files.viva64.com/pvs-studio-$(V_PVS)-x86_64.tgz   \
+	| tar xz -C $(KBUILD) && cd $(KBUILD)/pvs-studio-$(V_PVS)-x86_64 \
+	&& chmod +x install.sh && sudo ./install.sh                      )
+endif
 
 .PHONY: all dist clean zlib openssl curl sqlite ncurses json catch uws quickfix libuv

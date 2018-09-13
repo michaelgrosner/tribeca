@@ -2,7 +2,7 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
 PATCH    = 10
-BUILD    = 28
+BUILD    = 29
 SOURCE   = trading-bot
 CARCH    = x86_64-linux-gnu      \
            arm-linux-gnueabihf   \
@@ -74,7 +74,6 @@ hlep hepl help:
 	#  make latest       - show commits and reinstall  #
 	#                                                  #
 	#  make download     - download K src precompiled  #
-	#  make pvs          - download pvs src files      #
 	#  make coinbase     - download coinbase ssl cert  #
 	#  make clean        - remove external src files   #
 	#  KALL=1 make clean - remove external src files   #
@@ -90,7 +89,7 @@ ifdef KALL
 	unset KALL $(foreach chost,$(CARCH),&& $(MAKE) $@ CHOST=$(chost))
 else
 	$(if $(subst 6,,$(shell $(CHOST)-g++ -dumpversion | cut -d. -f1)),$(warning $(ERR));$(error $(HINT)))
-	@$(MAKE) -C src $@ CHOST=$(CHOST)
+	@$(MAKE) -C src/include $@ CHOST=$(CHOST)
 endif
 
 $(SOURCE):
@@ -99,7 +98,17 @@ $(SOURCE):
 
 assets: src/$(KSRC)/Makefile
 	$(info $(call STEP,$(KSRC) $@))
-	$(MAKE) -C src/$(KSRC) CHOST=$(CHOST) CARCH="$(CARCH)"
+	$(MAKE) -C src/$(KSRC) CHOST=$(CHOST)
+	$(foreach chost,$(subst $(CHOST),,$(CARCH)) $(CHOST),     \
+	  test -d build-$(chost)/local/assets                     \
+	    || cp -R $(KLOCAL)/assets build-$(chost)/local/assets \
+	  && $(MAKE) assets-lib CHOST=$(chost)                    \
+	  && rm -rf build-$(chost)/local/assets                   \
+	;)
+
+assets-lib: src/$(KSRC)/$(KSRC).S
+	$(CHOST)-g++ -Wa,-I,$(KLOCAL)/assets,-I,src/$(KSRC) -c $^ \
+	  -o $(KLOCAL)/lib/K-$(notdir $(basename $^))-$@.o
 
 src: src/$(KSRC)/$(KSRC).cxx
 ifdef KALL
@@ -137,16 +146,6 @@ Win32: src/$(KSRC)/$(KSRC).cxx
 	  -DUSE_LIBUV                                                \
 	  $^ $(KARGS)                                                \
 	  -DCURL_STATICLIB -static -lstdc++ -lgcc -lwldap32 -lws2_32
-
-pvs:
-ifndef V_PVS
-	$(MAKE) $@ V_PVS=$(shell curl -s https://www.viva64.com/en/pvs-studio-download-linux/ | grep x86_64.tgz | sed 's/.*href=\"\(.*\)\" .*/\1/' | cut -d '-' -f3)
-else
-	test -d build-$(CHOST)/pvs-studio-$(V_PVS)-x86_64 || (                     \
-	curl -L http://files.viva64.com/pvs-studio-$(V_PVS)-x86_64.tgz             \
-	| tar xz -C build-$(CHOST) && cd build-$(CHOST)/pvs-studio-$(V_PVS)-x86_64 \
-	&& chmod +x install.sh && sudo ./install.sh                                )
-endif
 
 download:
 	curl -L https://github.com/ctubio/Krypto-trading-bot/releases/download/$(MAJOR).$(MINOR).x/v$(MAJOR).$(MINOR).$(PATCH).$(BUILD)-$(CHOST).tar.gz | tar xz
@@ -267,7 +266,7 @@ test-c:
 #	@test -n "`identify -verbose etc/${PNG}.png | grep 'K\.conf'`" && echo Configuration injected into etc/${PNG}.png OK, feel free to remove etc/${PNG}.json anytime. || echo nope, injection failed.
 
 checkOK:
-	date=`date` && git diff && git status && read -p "KMOD: " KMOD      \
+	@date=`date` && git diff && git status && read -p "KMOD: " KMOD     \
 	&& git add . && git commit -S -m "$${KMOD}"                         \
 	&& ((KALL=1 $(MAKE) K doc release && git push) || git reset HEAD^1) \
 	&& echo $${date} && date
@@ -277,22 +276,22 @@ MAJOR:
 	@sed -i "s/^\(MINOR    =\).*$$/\1 0/" Makefile
 	@sed -i "s/^\(PATCH    =\).*$$/\1 0/" Makefile
 	@sed -i "s/^\(BUILD    =\).*$$/\1 0/" Makefile
-	$(MAKE) checkOK
+	@$(MAKE) checkOK
 
 MINOR:
 	@sed -i "s/^\(MINOR    =\).*$$/\1 $(shell expr $(MINOR) + 1)/" Makefile
 	@sed -i "s/^\(PATCH    =\).*$$/\1 0/" Makefile
 	@sed -i "s/^\(BUILD    =\).*$$/\1 0/" Makefile
-	$(MAKE) checkOK
+	@$(MAKE) checkOK
 
 PATCH:
 	@sed -i "s/^\(PATCH    =\).*$$/\1 $(shell expr $(PATCH) + 1)/" Makefile
 	@sed -i "s/^\(BUILD    =\).*$$/\1 0/" Makefile
-	$(MAKE) checkOK
+	@$(MAKE) checkOK
 
 BUILD:
 	@sed -i "s/^\(BUILD    =\).*$$/\1 $(shell expr $(BUILD) + 1)/" Makefile
-	$(MAKE) checkOK
+	@$(MAKE) checkOK
 
 release:
 ifdef KALL
@@ -315,4 +314,4 @@ md5: src
 asandwich:
 	@test `whoami` = 'root' && echo OK || echo make it yourself!
 
-.PHONY: all K $(SOURCE) hlep hepl help doc test src dist download pvs clean cleandb list screen start stop restart startall stopall restartall coinbase packages system_install uninstall install docker reinstall diff latest changelog test-c release md5 asandwich
+.PHONY: all K $(SOURCE) hlep hepl help doc test src dist download clean cleandb list screen start stop restart startall stopall restartall coinbase packages system_install uninstall install docker reinstall diff latest changelog test-c release md5 asandwich

@@ -49,7 +49,6 @@ install:
     if [[ "${TRAVIS_OS_NAME}" == "linux" ]]; then
       yes 1 | make install
       make dist
-      make pvs || :
       _() { git cat-file blob $1 > $1.asc && echo $TRAVIS_DEPLOY | gpg --passphrase-fd 0 $1.asc; }
       _ Kira
       _ Bender

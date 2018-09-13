@@ -5,8 +5,7 @@ ERR        = *** Unexpected MAKE_VERSION < 4.
 HINT       = This Makefile can't be used with your make version, consider to upgrade before try again
 $(if $(shell ver=${MAKE_VERSION} && test $${ver%%.*} -lt 4 || echo 1),,$(warning $(ERR));$(error $(HINT)))
 
-KLIB      := $(realpath ../../build-$(CHOST)/local/lib)
-KTMP      := $(abspath $(KLIB)/../tmp)
+KASSETS   := $(abspath ../../build-$(CHOST)/local/assets)
 NODE_PATH := $(abspath ./node_modules)
 PATH      := $(NODE_PATH)/.bin:$(PATH)
 
@@ -16,21 +15,8 @@ STEP_1    := $(call STEP,1,npm packages)
 STEP_2    := $(call STEP,2,ts files)
 STEP_3    := $(call STEP,3,js zip file)
 STEP_4    := $(call STEP,4,css files)
-STEP_5    := $(call STEP,5,document root assets lib)
 
 all $(KSRC): js css
-	$(info $(STEP_5))
-	$(foreach chost,$(subst $(CHOST),,$(CARCH)) $(CHOST), \
-	  test -d ../../build-$(chost)/local/tmp              \
-	    || cp -R $(KTMP) ../../build-$(chost)/local/tmp   \
-	  && $(MAKE) assets clean CHOST=$(chost)              \
-	;)
-
-assets: $(KSRC).S
-	$(CHOST)-g++ -Wa,-I,$(KTMP),-I,. -c $^ -o $(KLIB)/K-$(basename $^)-$@.o
-
-clean:
-	@rm -rf $(KTMP)
 
 npm: package.json
 	$(info $(STEP_1))
@@ -39,20 +25,20 @@ ifndef TRAVIS_DEPLOY
 	@rm $(basename $^)*
 endif
 
-client: npm clean client/main.ts
+client: npm client/main.ts
 	$(info $(STEP_2))
-	tsc --alwaysStrict --experimentalDecorators -t ES2017 -m commonjs --outDir $(KTMP)/www/js client/*.ts
+	tsc --alwaysStrict --experimentalDecorators -t ES2017 -m commonjs --outDir $(KASSETS)/www/js client/*.ts
 
 js: client $(NODE_PATH)/.bin
 	$(info $(STEP_3))
 	NODE_PATH=$(NODE_PATH) browserify -t [ babelify --presets [ babili env ] ] \
-	  $(KTMP)/www/js/main.js | uglifyjs | gzip > $(KTMP)/www/js/client.min.js
+	  $(KASSETS)/www/js/main.js | uglifyjs | gzip > $(KASSETS)/www/js/client.min.js
 
 css: www/sass/*.scss
 	$(info $(STEP_4))
 	$(foreach scss,$(wildcard www/sass/*.scss), \
-	  sass $(scss) $(KTMP)/www/css/$(basename $(notdir $(scss))).min.css ;)
-	cat $(NODE_PATH)/ag-grid/dist/styles/ag-grid.css >> $(KTMP)/www/css/bootstrap.min.css
+	  sass $(scss) $(KASSETS)/www/css/$(basename $(notdir $(scss))).min.css ;)
+	cat $(NODE_PATH)/ag-grid/dist/styles/ag-grid.css >> $(KASSETS)/www/css/bootstrap.min.css
 
 export define PACKAGE_JSON
 {
@@ -108,4 +94,4 @@ endef
 package.json:
 	@echo "$$PACKAGE_JSON" > $@
 
-.PHONY: all $(KSRC) assets clean client css js npm package.json
+.PHONY: all $(KSRC) client css js npm package.json
