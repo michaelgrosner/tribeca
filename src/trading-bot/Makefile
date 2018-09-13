@@ -5,7 +5,6 @@ ERR        = *** Unexpected MAKE_VERSION < 4.
 HINT       = This Makefile can't be used with your make version, consider to upgrade before try again
 $(if $(shell ver=${MAKE_VERSION} && test $${ver%%.*} -lt 4 || echo 1),,$(warning $(ERR));$(error $(HINT)))
 
-KASSETS   := $(abspath ../../build-$(CHOST)/local/assets)
 NODE_PATH := $(abspath ./node_modules)
 PATH      := $(NODE_PATH)/.bin:$(PATH)
 

@@ -2,7 +2,7 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
 PATCH    = 10
-BUILD    = 29
+BUILD    = 30
 SOURCE   = trading-bot
 CARCH    = x86_64-linux-gnu      \
            arm-linux-gnueabihf   \
@@ -98,7 +98,7 @@ $(SOURCE):
 
 assets: src/$(KSRC)/Makefile
 	$(info $(call STEP,$(KSRC) $@))
-	$(MAKE) -C src/$(KSRC) CHOST=$(CHOST)
+	$(MAKE) -C src/$(KSRC) KASSETS=$(abspath $(KLOCAL)/assets)
 	$(foreach chost,$(subst $(CHOST),,$(CARCH)) $(CHOST),     \
 	  test -d build-$(chost)/local/assets                     \
 	    || cp -R $(KLOCAL)/assets build-$(chost)/local/assets \
