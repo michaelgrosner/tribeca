@@ -13,7 +13,7 @@ V_UWS   = 0.14.8
 V_QF    = 1.15.1
 V_UV    = 1.20.3
 
-KBUILD := $(abspath ../../build-$(CHOST))
+KBUILD := $(abspath ../build-$(CHOST))
 
 all dist:
 	@mkdir -vp $(KBUILD)
@@ -23,13 +23,12 @@ clean:
 	@rm -vrf $(KBUILD)
 
 zlib:
-	test -d $(KBUILD)/zlib-$(V_ZLIB) || (                                                    \
-	curl -L https://zlib.net/zlib-$(V_ZLIB).tar.gz | tar xz -C $(KBUILD)                     \
-	&& cd $(KBUILD)/zlib-$(V_ZLIB) && (test -n "`echo $(CHOST) | grep mingw32`" &&           \
-	(sed -i "s/^\(PREFIX =\).*$$/\1$(CHOST)-/" win32/Makefile.gcc && make win32/Makefile.gcc \
-	&& BINARY_PATH=$(KBUILD)/local/bin INCLUDE_PATH=$(KBUILD)/local/include                  \
-	LIBRARY_PATH=$(KBUILD)/local/lib make install -fwin32/Makefile.gcc)                      \
-	|| (./configure --static --prefix=$(KBUILD)/local && make && make install))              )
+	test -d $(KBUILD)/zlib-$(V_ZLIB) || (                                             \
+	curl -L https://zlib.net/zlib-$(V_ZLIB).tar.gz | tar xz -C $(KBUILD)              \
+	&& cd $(KBUILD)/zlib-$(V_ZLIB) && (test -n "`echo $(CHOST) | grep mingw32`"       \
+	&& DESTDIR=$(KBUILD)/local/ BINARY_PATH=bin INCLUDE_PATH=include LIBRARY_PATH=lib \
+	make all install -fwin32/Makefile.gcc PREFIX=$(CHOST)-                            \
+	|| (./configure --static --prefix=$(KBUILD)/local && make all install))           )
 
 openssl:
 	test -d $(KBUILD)/openssl-$(V_SSL) || (                                                    \
@@ -96,7 +95,7 @@ quickfix:
 	&& sed -i "s/_MSC_VER/_WIN32/" src/C++/Utility.cpp src/C++/Utility.h                       \
 	&& sed -i "s/socklen_t/int/" src/C++/Utility.cpp                                           \
 	&& sed -i "s/INVALID_SOCKET/~0/" src/C++/Utility.cpp                                       \
-	&& sed -i "/host = socket_hostname/d" src/C++/Utility.cpp                          \
+	&& sed -i "/host = socket_hostname/d" src/C++/Utility.cpp                                  \
 	&& sed -i "s/_stdcall\( \*\)*//" src/C++/Utility.h                                         \
 	&& sed -i "s/\(typedef int\)/\/\/\1/" src/C++/SocketMonitor.h src/C++/Utility.h            \
 	&& sed -i "s/W\(insock2\)/w\1/" src/C++/SocketMonitor.h  src/C++/Utility.h                 \

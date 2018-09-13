@@ -2,7 +2,7 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
 PATCH    = 10
-BUILD    = 27
+BUILD    = 28
 SOURCE   = trading-bot
 CARCH    = x86_64-linux-gnu      \
            arm-linux-gnueabihf   \
@@ -90,7 +90,7 @@ ifdef KALL
 	unset KALL $(foreach chost,$(CARCH),&& $(MAKE) $@ CHOST=$(chost))
 else
 	$(if $(subst 6,,$(shell $(CHOST)-g++ -dumpversion | cut -d. -f1)),$(warning $(ERR));$(error $(HINT)))
-	@$(MAKE) -C src/dist $@ CHOST=$(CHOST)
+	@$(MAKE) -C src $@ CHOST=$(CHOST)
 endif
 
 $(SOURCE):
