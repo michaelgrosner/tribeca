@@ -2,8 +2,9 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
 PATCH    = 10
-BUILD    = 31
-SOURCE   = trading-bot
+BUILD    = 32
+SOURCE   = hello-world \
+           trading-bot
 CARCH    = x86_64-linux-gnu      \
            arm-linux-gnueabihf   \
            aarch64-linux-gnu     \
@@ -175,10 +176,8 @@ system_install:
 	$(info Checking if /data/db is writable by sqlite.. $(shell (test -d /data/db && echo OK) || (sudo mkdir -p /data/db && sudo chown $(shell id -u) /data/db && echo OK)))
 	$(info )
 	$(info List of installed K binaries:)
-	@$(foreach bin,$(wildcard $(KLOCAL)/bin/K-$(KSRC)*), \
-	  sudo cp $(bin) /usr/local/bin/$(notdir $(bin));    \
-	  ls -lah --color /usr/local/bin/$(notdir $(bin));   \
-	)
+	@sudo cp $(wildcard $(KLOCAL)/bin/K-$(KSRC)*) /usr/local/bin
+	@ls -lah --color $(addprefix /usr/local/bin/,$(notdir $(wildcard $(KLOCAL)/bin/K-$(KSRC)*)))
 	@echo
 	@sudo curl -s --time-cond /etc/ssl/certs/ca-certificates.crt https://curl.haxx.se/ca/cacert.pem \
 	  -o /etc/ssl/certs/ca-certificates.crt
