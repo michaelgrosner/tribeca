@@ -816,7 +816,7 @@ namespace K {
       const json handshake() {
         randId = mRandom::uuid32Id;
         symbol = base + quote;
-        json reply = mREST::xfer(http + "/public/symbol/" + symbol);
+        const json reply = mREST::xfer(http + "/public/symbol/" + symbol);
         minTick = stod(reply.value("tickSize", "0"));
         minSize = stod(reply.value("quantityIncrement", "0"));
         base    = reply.value("baseCurrency", base);
@@ -857,7 +857,7 @@ namespace K {
       const json handshake() {
         randId = mRandom::uuid36Id;
         symbol = base + "-" + quote;
-        json reply = mREST::xfer(http + "/products/" + symbol);
+        const json reply = mREST::xfer(http + "/products/" + symbol);
         minTick = stod(reply.value("quote_increment", "0"));
         minSize = stod(reply.value("base_min_size", "0"));
         return reply;
@@ -882,22 +882,22 @@ namespace K {
       const json handshake() {
         randId = mRandom::int45Id;
         symbol = strL(base + quote);
-        json reply = mREST::xfer(http + "/pubticker/" + symbol);
-        if (reply.find("last_price") != reply.end()) {
+        const json reply1 = mREST::xfer(http + "/pubticker/" + symbol);
+        if (reply1.find("last_price") != reply1.end()) {
           ostringstream price_;
-          price_ << scientific << stod(reply.value("last_price", "0"));
+          price_ << scientific << stod(reply1.value("last_price", "0"));
           string _price_ = price_.str();
           for (string::iterator it=_price_.begin(); it!=_price_.end();)
             if (*it == '+' or *it == '-') break; else it = _price_.erase(it);
           istringstream iss("1e" + to_string(fmax(stod(_price_),-4)-4));
           iss >> minTick;
         }
-        reply = mREST::xfer(http + "/symbols_details");
-        if (reply.is_array())
-          for (json::iterator it=reply.begin(); it!=reply.end();++it)
+        const json reply2 = mREST::xfer(http + "/symbols_details");
+        if (reply2.is_array())
+          for (json::const_iterator it=reply2.cbegin(); it!=reply2.cend();++it)
             if (it->find("pair") != it->end() and it->value("pair", "") == symbol)
               minSize = stod(it->value("minimum_order_size", "0"));
-        return reply;
+        return { reply1, reply2 };
       };
       static const json xfer(const string &url, const string &post, const string &h1, const string &h2) {
         return mREST::curl_perform(url, [&](CURL *curl) {
@@ -916,9 +916,9 @@ namespace K {
       const json handshake() {
         randId = mRandom::char16Id;
         symbol = strL(base + quote);
-        json reply = mREST::xfer(http + "public/symbols");
+        const json reply = mREST::xfer(http + "public/symbols");
         if (reply.find("data") != reply.end() and reply.at("data").is_array())
-          for (json::iterator it=reply.at("data").begin(); it!=reply.at("data").end();++it)
+          for (json::const_iterator it=reply.at("data").cbegin(); it!=reply.at("data").cend();++it)
             if (it->find("name") != it->end() and it->value("name", "") == symbol) {
               istringstream iss(
                 "1e-" + to_string(it->value("price_decimal", 0))
@@ -955,9 +955,9 @@ namespace K {
       const json handshake() {
         randId = mRandom::int32Id;
         symbol = base + quote;
-        json reply = mREST::xfer(http + "/0/public/AssetPairs?pair=" + symbol);
+        const json reply = mREST::xfer(http + "/0/public/AssetPairs?pair=" + symbol);
         if (reply.find("result") != reply.end())
-          for (json::iterator it = reply.at("result").begin(); it != reply.at("result").end(); ++it)
+          for (json::const_iterator it = reply.at("result").cbegin(); it != reply.at("result").cend(); ++it)
             if (it.value().find("pair_decimals") != it.value().end()) {
               istringstream iss(
                 "1e-" + to_string(it.value().value("pair_decimals", 0))
@@ -986,7 +986,7 @@ namespace K {
       const json handshake() {
         randId = mRandom::int45Id;
         symbol = strL(base + "_" + quote);
-        json reply = mREST::xfer(http + "/constants");
+        const json reply = mREST::xfer(http + "/constants");
         if (reply.find(symbol.substr(0,3).append("TickSize")) != reply.end()) {
           minTick = reply.value(symbol.substr(0,3).append("TickSize"), 0.0);
           minSize = 0.015;
@@ -1010,7 +1010,7 @@ namespace K {
       const json handshake() {
         randId = mRandom::int45Id;
         symbol = quote + "_" + base;
-        json reply = mREST::xfer(http + "/public?command=returnTicker");
+        const json reply = mREST::xfer(http + "/public?command=returnTicker");
         if (reply.find(symbol) != reply.end()) {
           istringstream iss("1e-" + to_string(6-reply.at(symbol).at("last").get<string>().find(".")));
           iss >> minTick;
