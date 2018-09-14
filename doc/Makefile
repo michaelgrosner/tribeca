@@ -1,9 +1,7 @@
 all doc: clean
 	doxygen
-	@mv html html4
 	@test -d html.css || git clone git://github.com/mosra/m.css html.css
-	python3.6 html.css/doxygen/dox2html5.py Doxyfile-html5
-	@mv html html5
+	python3.6 html.css/doxygen/dox2html5.py Dopyfile
 	@rm -rf xml
 
 clean:
