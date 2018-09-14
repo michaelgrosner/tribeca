@@ -255,11 +255,9 @@ namespace K {
           if (!reply.is_null())
             return message.substr(0, 2) + reply.dump();
         } else if (mPortal::Kiss == (mPortal)message.at(0) and kisses.find(message.at(1)) != kisses.end()) {
-          json butterfly = json::parse(
-            (message.length() > 2 and (message.at(2) == '{' or message.at(2) == '['))
-              ? message.substr(2)
-              : "{}"
-          );
+          json butterfly = json::accept(message.substr(2))
+            ? json::parse(message.substr(2))
+            : json::object();
           for (json::iterator it = butterfly.begin(); it != butterfly.end();)
             if (it.value().is_null()) it = butterfly.erase(it); else ++it;
           kisses.at(message.at(1))(butterfly);
