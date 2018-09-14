@@ -310,12 +310,12 @@ namespace K {
   class mREST {
     public:
       static const char *inet;
-      static json xfer(const string &url, const long &timeout = 13) {
+      static const json xfer(const string &url, const long &timeout = 13) {
         return curl_perform(url, [&](CURL *curl) {
           curl_easy_setopt(curl, CURLOPT_TIMEOUT, timeout);
         }, timeout == 13);
       };
-      static json xfer(const string &url, const string &post) {
+      static const json xfer(const string &url, const string &post) {
         return curl_perform(url, [&](CURL *curl) {
           struct curl_slist *h_ = NULL;
           h_ = curl_slist_append(h_, "Content-Type: application/x-www-form-urlencoded");
@@ -323,7 +323,7 @@ namespace K {
           curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post.data());
         });
       };
-      static json curl_perform(const string &url, function<void(CURL *curl)> curl_setopt, bool debug = true) {
+      static const json curl_perform(const string &url, function<void(CURL *curl)> curl_setopt, bool debug = true) {
         string reply;
         CURL *curl = curl_easy_init();
         if (curl) {
@@ -338,8 +338,9 @@ namespace K {
             reply = string("{\"error\":\"CURL Error: ") + curl_easy_strerror(r) + "\"}";
           curl_easy_cleanup(curl);
         }
-        if (reply.empty() or (reply.at(0) != '{' and reply.at(0) != '[')) reply = "{}";
-        return json::parse(reply);
+        return json::accept(reply)
+          ? json::parse(reply)
+          : json::object();
       };
     private:
       static size_t curl_write(void *buf, size_t size, size_t nmemb, void *up) {
@@ -822,7 +823,7 @@ namespace K {
         quote   = reply.value("quoteCurrency", quote);
         return reply;
       };
-      static json xfer(const string &url, const string &auth, const string &post) {
+      static const json xfer(const string &url, const string &auth, const string &post) {
         return mREST::curl_perform(url, [&](CURL *curl) {
           curl_easy_setopt(curl, CURLOPT_USERPWD, auth.data());
           curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
@@ -861,7 +862,7 @@ namespace K {
         minSize = stod(reply.value("base_min_size", "0"));
         return reply;
       };
-      static json xfer(const string &url, const string &h1, const string &h2, const string &h3, const string &h4, const bool &rm) {
+      static const json xfer(const string &url, const string &h1, const string &h2, const string &h3, const string &h4, const bool &rm) {
         return mREST::curl_perform(url, [&](CURL *curl) {
           struct curl_slist *h_ = NULL;
           h_ = curl_slist_append(h_, ("CB-ACCESS-KEY: " + h1).data());
@@ -898,7 +899,7 @@ namespace K {
               minSize = stod(it->value("minimum_order_size", "0"));
         return reply;
       };
-      static json xfer(const string &url, const string &post, const string &h1, const string &h2) {
+      static const json xfer(const string &url, const string &post, const string &h1, const string &h2) {
         return mREST::curl_perform(url, [&](CURL *curl) {
           struct curl_slist *h_ = NULL;
           h_ = curl_slist_append(h_, ("X-BFX-APIKEY: " + h1).data());
@@ -928,7 +929,7 @@ namespace K {
             }
         return reply;
       };
-      static json xfer(const string &url, const string &h1, const string &h2, const string &h3) {
+      static const json xfer(const string &url, const string &h1, const string &h2, const string &h3) {
         return mREST::curl_perform(url, [&](CURL *curl) {
           struct curl_slist *h_ = NULL;
           h_ = curl_slist_append(h_, ("FC-ACCESS-KEY: " + h1).data());
@@ -937,7 +938,7 @@ namespace K {
           curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
         });
       };
-      static json xfer(const string &url, const string &h1, const string &h2, const string &h3, const string &post) {
+      static const json xfer(const string &url, const string &h1, const string &h2, const string &h3, const string &post) {
         return mREST::curl_perform(url, [&](CURL *curl) {
           struct curl_slist *h_ = NULL;
           h_ = curl_slist_append(h_, ("FC-ACCESS-KEY: " + h1).data());
@@ -970,7 +971,7 @@ namespace K {
             }
         return reply;
       };
-      static json xfer(const string &url, const string &h1, const string &h2, const string &post) {
+      static const json xfer(const string &url, const string &h1, const string &h2, const string &post) {
         return mREST::curl_perform(url, [&](CURL *curl) {
           struct curl_slist *h_ = NULL;
           h_ = curl_slist_append(h_, ("API-Key: " + h1).data());
@@ -992,7 +993,7 @@ namespace K {
         }
         return reply;
       };
-      static json xfer(const string &url, const string &h1, const string &post) {
+      static const json xfer(const string &url, const string &h1, const string &post) {
         return mREST::curl_perform(url, [&](CURL *curl) {
           struct curl_slist *h_ = NULL;
           if (!post.empty()) {
@@ -1017,7 +1018,7 @@ namespace K {
         }
         return reply;
       };
-      static json xfer(const string &url, const string &post, const string &h1, const string &h2) {
+      static const json xfer(const string &url, const string &post, const string &h1, const string &h2) {
         return mREST::curl_perform(url, [&](CURL *curl) {
           struct curl_slist *h_ = NULL;
           h_ = curl_slist_append(h_, "Content-Type: application/x-www-form-urlencoded");
