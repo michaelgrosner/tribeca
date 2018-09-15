@@ -21,12 +21,14 @@
 #include <signal.h>
 #include <algorithm>
 #include <functional>
-#ifndef _WIN32
+
+#ifdef _WIN32
+#define strsignal to_string
+#else
 #include <execinfo.h>
 #endif
 
 using namespace std;
-
 
 #include <json.h>
 #include <sqlite3.h>
@@ -72,11 +74,5 @@ using namespace nlohmann;
 #define ROUND(k, x) (round((k) / x) * x)
 
 #define private_ref private
-
-#ifdef _WIN32
-#define strsignal to_string
-#else
-#define strsignal strsignal
-#endif
 
 #endif
