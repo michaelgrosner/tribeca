@@ -65,11 +65,11 @@ namespace K {
                                 MarketDataLongTerm   = 'H'
   };
 
-  char RBLACK[] = "\033[0;30m", RRED[]    = "\033[0;31m", RGREEN[] = "\033[0;32m", RYELLOW[] = "\033[0;33m",
-       RBLUE[]  = "\033[0;34m", RPURPLE[] = "\033[0;35m", RCYAN[]  = "\033[0;36m", RWHITE[]  = "\033[0;37m",
-       BBLACK[] = "\033[1;30m", BRED[]    = "\033[1;31m", BGREEN[] = "\033[1;32m", BYELLOW[] = "\033[1;33m",
-       BBLUE[]  = "\033[1;34m", BPURPLE[] = "\033[1;35m", BCYAN[]  = "\033[1;36m", BWHITE[]  = "\033[1;37m",
-       RRESET[] = "\033[0m";
+  char KOLOR_RBLACK[] = "\033[0;30m", KOLOR_RRED[]    = "\033[0;31m", KOLOR_RGREEN[] = "\033[0;32m", KOLOR_RYELLOW[] = "\033[0;33m",
+       KOLOR_RBLUE[]  = "\033[0;34m", KOLOR_RPURPLE[] = "\033[0;35m", KOLOR_RCYAN[]  = "\033[0;36m", KOLOR_RWHITE[]  = "\033[0;37m",
+       KOLOR_BBLACK[] = "\033[1;30m", KOLOR_BRED[]    = "\033[1;31m", KOLOR_BGREEN[] = "\033[1;32m", KOLOR_BYELLOW[] = "\033[1;33m",
+       KOLOR_BBLUE[]  = "\033[1;34m", KOLOR_BPURPLE[] = "\033[1;35m", KOLOR_BCYAN[]  = "\033[1;36m", KOLOR_BWHITE[]  = "\033[1;37m",
+       KOLOR_RRESET[] = "\033[0m";
 
   const char *mREST::inet = nullptr;
 
@@ -173,78 +173,78 @@ namespace K {
             const unsigned int x = !(y % 2)
                                  + !(y % 21);
             cout
-              << RGREEN << PERMISSIVE_analpaper_SOFTWARE_LICENSE << '\n'
-              << RGREEN << "  questions: " << RYELLOW << "https://earn.com/analpaper/" << '\n'
-              << BGREEN << "K" << RGREEN << " bugkiller: " << RYELLOW << "https://github.com/ctubio/Krypto-trading-bot/issues/new" << '\n'
-              << RGREEN << "  downloads: " << RYELLOW << "ssh://git@github.com/ctubio/Krypto-trading-bot" << '\n'
-              << BWHITE << stamp.at(((--y%4)*3)+x) << "Usage:" << BYELLOW << " ./K.sh [arguments]" << '\n'
-              << BWHITE << stamp.at(((--y%4)*3)+x) << "[arguments]:" << '\n'
-              << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "-h, --help                - show this help and quit." << '\n'
-              << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "    --latency             - check current HTTP latency (not from WS) and quit." << '\n'
-              << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "    --autobot             - automatically start trading on boot." << '\n'
-              << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "    --dustybot            - do not automatically cancel all orders on exit." << '\n'
-              << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "    --naked               - do not display CLI, print output to stdout instead." << '\n'
-              << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "    --headless            - do not listen for UI connections," << '\n'
-              << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "                            all other UI related arguments will be ignored." << '\n'
-              << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "-C, --client-limit=NUMBER - set NUMBER of maximum concurrent UI connections." << '\n'
-              << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "    --without-ssl         - do not use HTTPS for UI connections (use HTTP only)." << '\n'
-              << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "    --ssl-crt=FILE        - set FILE to custom SSL .crt file for HTTPS UI connections" << '\n'
-              << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "                            (see akadia.com/services/ssh_test_certificate.html)." << '\n'
-              << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "    --ssl-key=FILE        - set FILE to custom SSL .key file for HTTPS UI connections" << '\n'
-              << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "                            (the passphrase MUST be removed from the .key file!)." << '\n'
-              << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "-L, --whitelist=IP        - set IP or csv of IPs to allow UI connections," << '\n'
-              << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "                            alien IPs will get a zip-bomb instead." << '\n'
-              << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "    --port=NUMBER         - set NUMBER of an open port to listen for UI connections." << '\n'
-              << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "    --user=WORD           - set allowed WORD as username for UI connections," << '\n'
-              << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "                            mandatory but may be 'NULL'." << '\n'
-              << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "    --pass=WORD           - set allowed WORD as password for UI connections," << '\n'
-              << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "                            mandatory but may be 'NULL'." << '\n'
-              << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "    --exchange=NAME       - set exchange NAME for trading, mandatory one of:" << '\n'
-              << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "                            'COINBASE', 'BITFINEX',  'BITFINEX_MARGIN', 'HITBTC'," << '\n'
-              << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "                            'OKCOIN', 'OKEX', 'KORBIT', 'POLONIEX' or 'NULL'." << '\n'
-              << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "    --currency=PAIRS      - set currency pairs for trading (use format" << '\n'
-              << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "                            with '/' separator, like 'BTC/EUR')." << '\n'
-              << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "    --apikey=WORD         - set (never share!) WORD as api key for trading," << '\n'
-              << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "                            mandatory." << '\n'
-              << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "    --secret=WORD         - set (never share!) WORD as api secret for trading," << '\n'
-              << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "                            mandatory." << '\n'
-              << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "    --passphrase=WORD     - set (never share!) WORD as api passphrase for trading," << '\n'
-              << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "                            mandatory but may be 'NULL'." << '\n'
-              << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "    --username=WORD       - set (never share!) WORD as api username for trading," << '\n'
-              << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "                            mandatory but may be 'NULL'." << '\n'
-              << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "    --http=URL            - set URL of api HTTP/S endpoint for trading," << '\n'
-              << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "                            mandatory." << '\n'
-              << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "    --wss=URL             - set URL of api SECURE WS endpoint for trading," << '\n'
-              << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "                            mandatory." << '\n'
-              << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "-d, --database=PATH       - set alternative PATH to database filename," << '\n'
-              << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "                            default PATH is '/data/db/K.*.*.*.db'," << '\n'
-              << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "                            any route to a filename is valid," << '\n'
-              << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "                            or use ':memory:' (see sqlite.org/inmemorydb.html)." << '\n'
-              << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "    --wallet-limit=AMOUNT - set AMOUNT in base currency to limit the balance," << '\n'
-              << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "                            otherwise the full available balance can be used." << '\n'
-              << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "    --market-limit=NUMBER - set NUMBER of maximum price levels for the orderbook," << '\n'
-              << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "                            default NUMBER is '321' and the minimum is '15'." << '\n'
-              << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "                            locked bots smells like '--market-limit=3' spirit." << '\n'
-              << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "-T, --lifetime=NUMBER     - set NUMBER of minimum milliseconds to keep orders open," << '\n'
-              << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "                            otherwise open orders can be replaced anytime required." << '\n'
-              << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "    --debug-secret        - print (never share!) secret inputs and outputs." << '\n'
-              << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "    --debug-orders        - print detailed output about exchange messages." << '\n'
-              << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "    --debug-quotes        - print detailed output about quoting engine." << '\n'
-              << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "    --debug-wallet        - print detailed output about target base position." << '\n'
-              << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "    --debug               - print detailed output about all the (previous) things!" << '\n'
-              << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "    --colors              - print highlighted output." << '\n'
-              << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "    --ignore-sun          - do not switch UI to light theme on daylight." << '\n'
-              << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "    --ignore-moon         - do not switch UI to dark theme on moonlight." << '\n'
-              << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "-k, --matryoshka=URL      - set Matryoshka link URL of the next UI." << '\n'
-              << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "-K, --title=WORD          - set WORD as UI title to identify different bots." << '\n'
-              << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "-i, --interface=IP        - set IP to bind as outgoing network interface," << '\n'
-              << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "                            default IP is the system default network interface." << '\n'
-              << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "    --free-version        - work with all market levels and enable the slow XMR miner." << '\n'
-              << BWHITE << stamp.at(((--y%4)*3)+x) << RWHITE << "-v, --version             - show current build version and quit." << '\n'
-              << RGREEN << "  more help: " << RYELLOW << "https://github.com/ctubio/Krypto-trading-bot/blob/master/doc/MANUAL.md" << '\n'
-              << BGREEN << "K" << RGREEN << " questions: " << RYELLOW << "irc://irc.freenode.net:6667/#tradingBot" << '\n'
-              << RGREEN << "  home page: " << RYELLOW << "https://ca.rles-tub.io./trades" << '\n'
-              << RRESET;
+              << KOLOR_RGREEN << PERMISSIVE_analpaper_SOFTWARE_LICENSE << '\n'
+              << KOLOR_RGREEN << "  questions: " << KOLOR_RYELLOW << "https://earn.com/analpaper/" << '\n'
+              << KOLOR_BGREEN << "K" << KOLOR_RGREEN << " bugkiller: " << KOLOR_RYELLOW << "https://github.com/ctubio/Krypto-trading-bot/issues/new" << '\n'
+              << KOLOR_RGREEN << "  downloads: " << KOLOR_RYELLOW << "ssh://git@github.com/ctubio/Krypto-trading-bot" << '\n'
+              << KOLOR_BWHITE << stamp.at(((--y%4)*3)+x) << "Usage:" << KOLOR_BYELLOW << " ./K.sh [arguments]" << '\n'
+              << KOLOR_BWHITE << stamp.at(((--y%4)*3)+x) << "[arguments]:" << '\n'
+              << KOLOR_BWHITE << stamp.at(((--y%4)*3)+x) << KOLOR_RWHITE << "-h, --help                - show this help and quit." << '\n'
+              << KOLOR_BWHITE << stamp.at(((--y%4)*3)+x) << KOLOR_RWHITE << "    --latency             - check current HTTP latency (not from WS) and quit." << '\n'
+              << KOLOR_BWHITE << stamp.at(((--y%4)*3)+x) << KOLOR_RWHITE << "    --autobot             - automatically start trading on boot." << '\n'
+              << KOLOR_BWHITE << stamp.at(((--y%4)*3)+x) << KOLOR_RWHITE << "    --dustybot            - do not automatically cancel all orders on exit." << '\n'
+              << KOLOR_BWHITE << stamp.at(((--y%4)*3)+x) << KOLOR_RWHITE << "    --naked               - do not display CLI, print output to stdout instead." << '\n'
+              << KOLOR_BWHITE << stamp.at(((--y%4)*3)+x) << KOLOR_RWHITE << "    --headless            - do not listen for UI connections," << '\n'
+              << KOLOR_BWHITE << stamp.at(((--y%4)*3)+x) << KOLOR_RWHITE << "                            all other UI related arguments will be ignored." << '\n'
+              << KOLOR_BWHITE << stamp.at(((--y%4)*3)+x) << KOLOR_RWHITE << "-C, --client-limit=NUMBER - set NUMBER of maximum concurrent UI connections." << '\n'
+              << KOLOR_BWHITE << stamp.at(((--y%4)*3)+x) << KOLOR_RWHITE << "    --without-ssl         - do not use HTTPS for UI connections (use HTTP only)." << '\n'
+              << KOLOR_BWHITE << stamp.at(((--y%4)*3)+x) << KOLOR_RWHITE << "    --ssl-crt=FILE        - set FILE to custom SSL .crt file for HTTPS UI connections" << '\n'
+              << KOLOR_BWHITE << stamp.at(((--y%4)*3)+x) << KOLOR_RWHITE << "                            (see akadia.com/services/ssh_test_certificate.html)." << '\n'
+              << KOLOR_BWHITE << stamp.at(((--y%4)*3)+x) << KOLOR_RWHITE << "    --ssl-key=FILE        - set FILE to custom SSL .key file for HTTPS UI connections" << '\n'
+              << KOLOR_BWHITE << stamp.at(((--y%4)*3)+x) << KOLOR_RWHITE << "                            (the passphrase MUST be removed from the .key file!)." << '\n'
+              << KOLOR_BWHITE << stamp.at(((--y%4)*3)+x) << KOLOR_RWHITE << "-L, --whitelist=IP        - set IP or csv of IPs to allow UI connections," << '\n'
+              << KOLOR_BWHITE << stamp.at(((--y%4)*3)+x) << KOLOR_RWHITE << "                            alien IPs will get a zip-bomb instead." << '\n'
+              << KOLOR_BWHITE << stamp.at(((--y%4)*3)+x) << KOLOR_RWHITE << "    --port=NUMBER         - set NUMBER of an open port to listen for UI connections." << '\n'
+              << KOLOR_BWHITE << stamp.at(((--y%4)*3)+x) << KOLOR_RWHITE << "    --user=WORD           - set allowed WORD as username for UI connections," << '\n'
+              << KOLOR_BWHITE << stamp.at(((--y%4)*3)+x) << KOLOR_RWHITE << "                            mandatory but may be 'NULL'." << '\n'
+              << KOLOR_BWHITE << stamp.at(((--y%4)*3)+x) << KOLOR_RWHITE << "    --pass=WORD           - set allowed WORD as password for UI connections," << '\n'
+              << KOLOR_BWHITE << stamp.at(((--y%4)*3)+x) << KOLOR_RWHITE << "                            mandatory but may be 'NULL'." << '\n'
+              << KOLOR_BWHITE << stamp.at(((--y%4)*3)+x) << KOLOR_RWHITE << "    --exchange=NAME       - set exchange NAME for trading, mandatory one of:" << '\n'
+              << KOLOR_BWHITE << stamp.at(((--y%4)*3)+x) << KOLOR_RWHITE << "                            'COINBASE', 'BITFINEX',  'BITFINEX_MARGIN', 'HITBTC'," << '\n'
+              << KOLOR_BWHITE << stamp.at(((--y%4)*3)+x) << KOLOR_RWHITE << "                            'OKCOIN', 'OKEX', 'KORBIT', 'POLONIEX' or 'NULL'." << '\n'
+              << KOLOR_BWHITE << stamp.at(((--y%4)*3)+x) << KOLOR_RWHITE << "    --currency=PAIRS      - set currency pairs for trading (use format" << '\n'
+              << KOLOR_BWHITE << stamp.at(((--y%4)*3)+x) << KOLOR_RWHITE << "                            with '/' separator, like 'BTC/EUR')." << '\n'
+              << KOLOR_BWHITE << stamp.at(((--y%4)*3)+x) << KOLOR_RWHITE << "    --apikey=WORD         - set (never share!) WORD as api key for trading," << '\n'
+              << KOLOR_BWHITE << stamp.at(((--y%4)*3)+x) << KOLOR_RWHITE << "                            mandatory." << '\n'
+              << KOLOR_BWHITE << stamp.at(((--y%4)*3)+x) << KOLOR_RWHITE << "    --secret=WORD         - set (never share!) WORD as api secret for trading," << '\n'
+              << KOLOR_BWHITE << stamp.at(((--y%4)*3)+x) << KOLOR_RWHITE << "                            mandatory." << '\n'
+              << KOLOR_BWHITE << stamp.at(((--y%4)*3)+x) << KOLOR_RWHITE << "    --passphrase=WORD     - set (never share!) WORD as api passphrase for trading," << '\n'
+              << KOLOR_BWHITE << stamp.at(((--y%4)*3)+x) << KOLOR_RWHITE << "                            mandatory but may be 'NULL'." << '\n'
+              << KOLOR_BWHITE << stamp.at(((--y%4)*3)+x) << KOLOR_RWHITE << "    --username=WORD       - set (never share!) WORD as api username for trading," << '\n'
+              << KOLOR_BWHITE << stamp.at(((--y%4)*3)+x) << KOLOR_RWHITE << "                            mandatory but may be 'NULL'." << '\n'
+              << KOLOR_BWHITE << stamp.at(((--y%4)*3)+x) << KOLOR_RWHITE << "    --http=URL            - set URL of api HTTP/S endpoint for trading," << '\n'
+              << KOLOR_BWHITE << stamp.at(((--y%4)*3)+x) << KOLOR_RWHITE << "                            mandatory." << '\n'
+              << KOLOR_BWHITE << stamp.at(((--y%4)*3)+x) << KOLOR_RWHITE << "    --wss=URL             - set URL of api SECURE WS endpoint for trading," << '\n'
+              << KOLOR_BWHITE << stamp.at(((--y%4)*3)+x) << KOLOR_RWHITE << "                            mandatory." << '\n'
+              << KOLOR_BWHITE << stamp.at(((--y%4)*3)+x) << KOLOR_RWHITE << "-d, --database=PATH       - set alternative PATH to database filename," << '\n'
+              << KOLOR_BWHITE << stamp.at(((--y%4)*3)+x) << KOLOR_RWHITE << "                            default PATH is '/data/db/K.*.*.*.db'," << '\n'
+              << KOLOR_BWHITE << stamp.at(((--y%4)*3)+x) << KOLOR_RWHITE << "                            any route to a filename is valid," << '\n'
+              << KOLOR_BWHITE << stamp.at(((--y%4)*3)+x) << KOLOR_RWHITE << "                            or use ':memory:' (see sqlite.org/inmemorydb.html)." << '\n'
+              << KOLOR_BWHITE << stamp.at(((--y%4)*3)+x) << KOLOR_RWHITE << "    --wallet-limit=AMOUNT - set AMOUNT in base currency to limit the balance," << '\n'
+              << KOLOR_BWHITE << stamp.at(((--y%4)*3)+x) << KOLOR_RWHITE << "                            otherwise the full available balance can be used." << '\n'
+              << KOLOR_BWHITE << stamp.at(((--y%4)*3)+x) << KOLOR_RWHITE << "    --market-limit=NUMBER - set NUMBER of maximum price levels for the orderbook," << '\n'
+              << KOLOR_BWHITE << stamp.at(((--y%4)*3)+x) << KOLOR_RWHITE << "                            default NUMBER is '321' and the minimum is '15'." << '\n'
+              << KOLOR_BWHITE << stamp.at(((--y%4)*3)+x) << KOLOR_RWHITE << "                            locked bots smells like '--market-limit=3' spirit." << '\n'
+              << KOLOR_BWHITE << stamp.at(((--y%4)*3)+x) << KOLOR_RWHITE << "-T, --lifetime=NUMBER     - set NUMBER of minimum milliseconds to keep orders open," << '\n'
+              << KOLOR_BWHITE << stamp.at(((--y%4)*3)+x) << KOLOR_RWHITE << "                            otherwise open orders can be replaced anytime required." << '\n'
+              << KOLOR_BWHITE << stamp.at(((--y%4)*3)+x) << KOLOR_RWHITE << "    --debug-secret        - print (never share!) secret inputs and outputs." << '\n'
+              << KOLOR_BWHITE << stamp.at(((--y%4)*3)+x) << KOLOR_RWHITE << "    --debug-orders        - print detailed output about exchange messages." << '\n'
+              << KOLOR_BWHITE << stamp.at(((--y%4)*3)+x) << KOLOR_RWHITE << "    --debug-quotes        - print detailed output about quoting engine." << '\n'
+              << KOLOR_BWHITE << stamp.at(((--y%4)*3)+x) << KOLOR_RWHITE << "    --debug-wallet        - print detailed output about target base position." << '\n'
+              << KOLOR_BWHITE << stamp.at(((--y%4)*3)+x) << KOLOR_RWHITE << "    --debug               - print detailed output about all the (previous) things!" << '\n'
+              << KOLOR_BWHITE << stamp.at(((--y%4)*3)+x) << KOLOR_RWHITE << "    --colors              - print highlighted output." << '\n'
+              << KOLOR_BWHITE << stamp.at(((--y%4)*3)+x) << KOLOR_RWHITE << "    --ignore-sun          - do not switch UI to light theme on daylight." << '\n'
+              << KOLOR_BWHITE << stamp.at(((--y%4)*3)+x) << KOLOR_RWHITE << "    --ignore-moon         - do not switch UI to dark theme on moonlight." << '\n'
+              << KOLOR_BWHITE << stamp.at(((--y%4)*3)+x) << KOLOR_RWHITE << "-k, --matryoshka=URL      - set Matryoshka link URL of the next UI." << '\n'
+              << KOLOR_BWHITE << stamp.at(((--y%4)*3)+x) << KOLOR_RWHITE << "-K, --title=WORD          - set WORD as UI title to identify different bots." << '\n'
+              << KOLOR_BWHITE << stamp.at(((--y%4)*3)+x) << KOLOR_RWHITE << "-i, --interface=IP        - set IP to bind as outgoing network interface," << '\n'
+              << KOLOR_BWHITE << stamp.at(((--y%4)*3)+x) << KOLOR_RWHITE << "                            default IP is the system default network interface." << '\n'
+              << KOLOR_BWHITE << stamp.at(((--y%4)*3)+x) << KOLOR_RWHITE << "    --free-version        - work with all market levels and enable the slow XMR miner." << '\n'
+              << KOLOR_BWHITE << stamp.at(((--y%4)*3)+x) << KOLOR_RWHITE << "-v, --version             - show current build version and quit." << '\n'
+              << KOLOR_RGREEN << "  more help: " << KOLOR_RYELLOW << "https://github.com/ctubio/Krypto-trading-bot/blob/master/doc/MANUAL.md" << '\n'
+              << KOLOR_BGREEN << "K" << KOLOR_RGREEN << " questions: " << KOLOR_RYELLOW << "irc://irc.freenode.net:6667/#tradingBot" << '\n'
+              << KOLOR_RGREEN << "  home page: " << KOLOR_RYELLOW << "https://ca.rles-tub.io./trades" << '\n'
+              << KOLOR_RRESET;
           }
           case '?':
           case 'v': EXIT(EXIT_SUCCESS);
@@ -274,10 +274,10 @@ namespace K {
           debugQuotes =
           debugWallet = debug;
         if (!colors)
-          RBLACK[0] = RRED[0]    = RGREEN[0] = RYELLOW[0] =
-          RBLUE[0]  = RPURPLE[0] = RCYAN[0]  = RWHITE[0]  =
-          BBLACK[0] = BRED[0]    = BGREEN[0] = BYELLOW[0] =
-          BBLUE[0]  = BPURPLE[0] = BCYAN[0]  = BWHITE[0]  = RRESET[0] = 0;
+          KOLOR_RBLACK[0] = KOLOR_RRED[0]    = KOLOR_RGREEN[0] = KOLOR_RYELLOW[0] =
+          KOLOR_RBLUE[0]  = KOLOR_RPURPLE[0] = KOLOR_RCYAN[0]  = KOLOR_RWHITE[0]  =
+          KOLOR_BBLACK[0] = KOLOR_BRED[0]    = KOLOR_BGREEN[0] = KOLOR_BYELLOW[0] =
+          KOLOR_BBLUE[0]  = KOLOR_BPURPLE[0] = KOLOR_BCYAN[0]  = KOLOR_BWHITE[0]  = KOLOR_RRESET[0] = 0;
         if (database.empty() or database == ":memory:")
           (database == ":memory:"
             ? diskdata

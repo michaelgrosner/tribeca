@@ -21,12 +21,12 @@
 #include <signal.h>
 #include <algorithm>
 #include <functional>
-
 #ifndef _WIN32
-#  include <execinfo.h>
+#include <execinfo.h>
 #endif
 
 using namespace std;
+
 
 #include <json.h>
 #include <sqlite3.h>
@@ -52,8 +52,6 @@ using namespace nlohmann;
 #define M_PI_2 1.5707963267948965579989817342720925807952880859375
 #endif
 
-#define private_ref private
-
 #define mClock  unsigned long long
 #define mPrice  double
 #define mAmount double
@@ -72,5 +70,13 @@ using namespace nlohmann;
 #define TRUEONCE(k) (k ? !(k = !k) : k)
 
 #define ROUND(k, x) (round((k) / x) * x)
+
+#define private_ref private
+
+#ifdef _WIN32
+#define strsignal to_string
+#else
+#define strsignal strsignal
+#endif
 
 #endif

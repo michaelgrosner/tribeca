@@ -13,6 +13,11 @@ namespace K {
              wtfismyip = "";
     public:
       void main(int argc, char** argv) {
+        endingFn.insert(endingFn.begin(), [&]() {
+          switchOff();
+          cout << string(args.latency ? 0 : 1, '\n')
+               << stamp();
+        });
         const string msg = args.main(argc, argv);
         if (!msg.empty()) exit(error("CF", msg));
         if (!(gw = Gw::new_Gw(args.exchange)))
@@ -39,12 +44,23 @@ namespace K {
         engine->monitor.product.minTick = &gw->minTick;
         engine->monitor.product.minSize = &gw->minSize;
         if (args.latency) {
+          endingMsg = "1 HTTP connection done"
+                    + string(KOLOR_RWHITE) + " (consider to repeat a few times this check).";
           printme(gw);
           gw->latency();
-        }
+        } else
+          endingMsg = "Excellent decision! "
+                    + mREST::xfer("https://api.icndb.com/jokes/random?escape=javascript&limitTo=[nerdy]", 4L)
+                        .value("/value/joke"_json_pointer, "let's plant a tree instead..");
         switchOn();
         if (mREST::inet)
           log("CF", "Network Interface for outgoing traffic is", mREST::inet);
+      };
+      void switchOff() {
+        if (!wBorder) return;
+        beep();
+        endwin();
+        wBorder = nullptr;
       };
       void switchOn() {
         if (!args.headless)
@@ -108,9 +124,9 @@ namespace K {
         hotkeys();
       };
       const int error(const string &prefix, const string &reason, const bool &reboot = false) {
-        end();
+        switchOff();
         logWar(prefix, reason, " Errrror: ");
-        cout << RRESET;
+        cout << KOLOR_RRESET;
         return reboot ? EXIT_FAILURE : EXIT_SUCCESS;
       };
       const string stamp() {
@@ -128,7 +144,7 @@ namespace K {
         int len = args.naked ? 15 : 9;
         char datetime[len];
         strftime(datetime, len, args.naked ? "%m/%d %T" : "%T", localtime(&tt));
-        if (!wBorder) return (BGREEN + (datetime + (RGREEN + microtime.str()))) + BWHITE + ' ';
+        if (!wBorder) return (KOLOR_BGREEN + (datetime + (KOLOR_RGREEN + microtime.str()))) + KOLOR_BWHITE + ' ';
         wattron(wLog, COLOR_PAIR(COLOR_GREEN));
         wattron(wLog, A_BOLD);
         wprintw(wLog, datetime);
@@ -140,7 +156,7 @@ namespace K {
       };
       void logWar(string k, string s, string m = " Warrrrning: ") {
         if (!wBorder) {
-          cout << stamp() << k << RRED << m << BRED << s << '.' << RWHITE << endl;
+          cout << stamp() << k << KOLOR_RRED << m << KOLOR_BRED << s << '.' << KOLOR_RWHITE << endl;
           return;
         }
         wmove(wLog, getmaxy(wLog)-1, 0);
@@ -163,11 +179,11 @@ namespace K {
       void logUI(const string &protocol_) {
         protocol = protocol_;
         if (!wBorder) {
-          cout << stamp() << "UI" << RWHITE << " ready ";
+          cout << stamp() << "UI" << KOLOR_RWHITE << " ready ";
           if (wtfismyip.empty())
-            cout << "over " << BYELLOW << protocol << RWHITE << " on external port " << BYELLOW << to_string(args.port) << RWHITE << ".\n";
+            cout << "over " << KOLOR_BYELLOW << protocol << KOLOR_RWHITE << " on external port " << KOLOR_BYELLOW << to_string(args.port) << KOLOR_RWHITE << ".\n";
           else
-            cout << "at " << BYELLOW << strL(protocol) << "://" << wtfismyip << ":" << to_string(args.port) << RWHITE << ".\n";
+            cout << "at " << KOLOR_BYELLOW << strL(protocol) << "://" << wtfismyip << ":" << to_string(args.port) << KOLOR_RWHITE << ".\n";
           return;
         }
         wmove(wLog, getmaxy(wLog)-1, 0);
@@ -207,7 +223,7 @@ namespace K {
       };
       void logUIsess(int k, string s) {
         if (!wBorder) {
-          cout << stamp() << "UI " << BYELLOW << to_string(k) << RWHITE << " currently connected, last connection was from " << BYELLOW << s << RWHITE << ".\n";
+          cout << stamp() << "UI " << KOLOR_BYELLOW << to_string(k) << KOLOR_RWHITE << " currently connected, last connection was from " << KOLOR_BYELLOW << s << KOLOR_RWHITE << ".\n";
           return;
         }
         wmove(wLog, getmaxy(wLog)-1, 0);
@@ -241,13 +257,13 @@ namespace K {
         }
         if (!wBorder) {
           cout << stamp() << prefix;
-          if (color == 1)       cout << RCYAN;
-          else if (color == -1) cout << RPURPLE;
-          else                  cout << RWHITE;
+          if (color == 1)       cout << KOLOR_RCYAN;
+          else if (color == -1) cout << KOLOR_RPURPLE;
+          else                  cout << KOLOR_RWHITE;
           cout << ' ' << reason;
           if (!highlight.empty())
-            cout << ' ' << BYELLOW << highlight;
-          cout << RWHITE << ".\n";
+            cout << ' ' << KOLOR_BYELLOW << highlight;
+          cout << KOLOR_RWHITE << ".\n";
           return;
         }
         wmove(wLog, getmaxy(wLog)-1, 0);
@@ -272,12 +288,6 @@ namespace K {
         wprintw(wLog, ".\n");
         wattroff(wLog, COLOR_PAIR(COLOR_WHITE));
         wrefresh(wLog);
-      };
-      void end() {
-        if (!wBorder) return;
-        beep();
-        endwin();
-        wBorder = nullptr;
       };
     private:
       void hotkeys() {

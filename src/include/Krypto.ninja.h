@@ -21,6 +21,7 @@
 #include <Krypto.ninja-lang.h>
 #include <Krypto.ninja-apis.h>
 #include <Krypto.ninja-data.h>
+#include <Krypto.ninja-bots.h>
 
 #ifndef NDEBUG
 #  include <../../test/units.h>
