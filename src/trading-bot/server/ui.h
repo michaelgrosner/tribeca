@@ -12,20 +12,11 @@ namespace K {
             public Client { public: UI() { client = this; };
     private:
       int connections = 0;
-      string B64auth = "";
       unordered_map<char, function<json()>> hello;
       unordered_map<char, function<void(json&)>> kisses;
       unordered_map<mMatter, string> queue;
     protected:
-      void load() {
-        if (!socket
-          or args.user.empty()
-          or args.pass.empty()
-        ) return;
-        B64auth = "Basic " + mText::oB64(args.user + ':' + args.pass);
-      };
-      void waitData() {
-        if (!socket) return;
+      void waitWebAdmin() {
         if (!socket->listen(
           mREST::inet, args.port, uS::TLS::Context(sslContext()), 0,
           &socket->getDefaultGroup<uWS::SERVER>()
@@ -50,9 +41,9 @@ namespace K {
           screen->logUIsess(connections, cleanAddress(webSocket->getAddress().address));
         });
         client->onHttpRequest([&](uWS::HttpResponse *res, uWS::HttpRequest req, char *data, size_t length, size_t remainingBytes) {
+          if (req.getMethod() != uWS::HttpMethod::METHOD_GET) return;
           const string response = onHttpRequest(
             req.getUrl().toString(),
-            req.getMethod() == uWS::HttpMethod::METHOD_GET,
             req.getHeader("authorization").toString(),
             cleanAddress(res->getHttpSocket()->getAddress().address)
           );
@@ -188,20 +179,20 @@ namespace K {
       void onDisconnection() {
         if (!--connections) send = send_nowhere;
       };
-      string onHttpRequest(const string &path, const bool &get, const string &auth, const string &addr) {
+      string onHttpRequest(const string &path, const string &auth, const string &addr) {
         string document,
                content;
         if (addr != "unknown" and !args.whitelist.empty() and args.whitelist.find(addr) == string::npos) {
           screen->log("UI", "dropping gzip bomb on", addr);
           document = "HTTP/1.1 200 OK\r\nConnection: keep-alive\r\nAccept-Ranges: bytes\r\nVary: Accept-Encoding\r\nCache-Control: public, max-age=0\r\nContent-Encoding: gzip\r\n";
           content = string(&_www_gzip_bomb, _www_gzip_bomb_len);
-        } else if (!B64auth.empty() and auth.empty()) {
+        } else if (!args.B64auth.empty() and auth.empty()) {
           screen->log("UI", "authorization attempt from", addr);
           document = "HTTP/1.1 401 Unauthorized\r\nWWW-Authenticate: Basic realm=\"Basic Authorization\"\r\nConnection: keep-alive\r\nAccept-Ranges: bytes\r\nVary: Accept-Encoding\r\nContent-Type:text/plain; charset=UTF-8\r\n";
-        } else if (!B64auth.empty() and auth != B64auth) {
+        } else if (!args.B64auth.empty() and auth != args.B64auth) {
           screen->log("UI", "authorization failed from", addr);
           document = "HTTP/1.1 403 Forbidden\r\nConnection: keep-alive\r\nAccept-Ranges: bytes\r\nVary: Accept-Encoding\r\nContent-Type:text/plain; charset=UTF-8\r\n";
-        } else if (get) {
+        } else {
           document = "HTTP/1.1 200 OK\r\nConnection: keep-alive\r\nAccept-Ranges: bytes\r\nVary: Accept-Encoding\r\nCache-Control: public, max-age=0\r\n";
           const string leaf = path.substr(path.find_last_of('.')+1);
           if (leaf == "/") {

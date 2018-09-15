@@ -91,7 +91,7 @@ namespace K {
             base,                 quote,
             database,             diskdata,
             pathSSLcert,          pathSSLkey,
-            whitelist;
+            B64auth,              whitelist;
     const string main(int argc, char** argv) {
       static const struct option opts[] = {
         {"help",         no_argument,       0,               'h'},
@@ -287,19 +287,16 @@ namespace K {
             +  '.' + string(currency).replace(currency.find("/"), 1, ".")
             +  '.' + "db";
         maxLevels = max(15, maxLevels);
-        if (user == "NULL") user.clear();
-        if (pass == "NULL") pass.clear();
         if (ignoreSun and ignoreMoon) ignoreMoon = 0;
-        if (latency) naked = headless = 1;
-        if (headless) port = 0;
-        else if (!port or !maxAdmins) headless = 1;
-        if (debugSecret
-          or debugOrders
-          or debugQuotes
-        ) naked = 1;
-#ifdef _WIN32
-        naked = 1;
+#ifndef _WIN32
+        if (latency or debugSecret or debugOrders or debugQuotes)
 #endif
+          naked = 1;
+        if (latency or !port or !maxAdmins) headless = 1;
+        if (!headless
+          and user != "NULL" and !user.empty()
+          and pass != "NULL" and !pass.empty()
+        ) B64auth = "Basic " + mText::oB64(user + ':' + pass);
       };
   } args;
 
