@@ -3,15 +3,15 @@ HINT     = This Makefile can't be used directly, consider cd ../.. before try ag
 $(if $(subst 0,,${MAKELEVEL}),,$(warning $(ERR));$(error $(HINT)))
 
 V_ZLIB  = 1.2.11
-V_SSL   = 1.1.0h
-V_CURL  = 7.61.0
-V_SQL   = 3230100
+V_SSL   = 1.1.1
+V_CURL  = 7.61.1
+V_SQL   = 3240000
 V_NCUR  = 6.1
-V_JSON  = 3.1.2
-V_CATCH = 2.2.3
+V_JSON  = 3.2.0
+V_CATCH = 2.4.0
 V_UWS   = 0.14.8
 V_QF    = 1.15.1
-V_UV    = 1.20.3
+V_UV    = 1.23.0
 
 KBUILD := $(abspath ../../build-$(CHOST))
 
@@ -39,7 +39,7 @@ openssl:
 	&& cd $(KBUILD)/openssl-$(V_SSL) && CC=gcc                                                 \
 	./Configure $(shell test -n "`echo $(CHOST) | grep mingw32`" && echo mingw64 || echo dist) \
 	--cross-compile-prefix=$(CHOST)- --prefix=$(KBUILD)/local                                  \
-	--openssldir=$(KBUILD)/local && make && make install_sw install_ssldirs                    )
+	--openssldir=$(KBUILD)/local && make all install_sw install_ssldirs                        )
 
 curl:
 	test -d $(KBUILD)/curl-$(V_CURL) || (                                                   \
@@ -50,13 +50,13 @@ curl:
 	--disable-pop3 --disable-smb --disable-ftp --disable-sspi --disable-ldap --disable-dict \
 	--without-libpsl --without-nghttp2 --without-libssh2 --disable-telnet --disable-rtsp    \
 	--disable-gopher --without-libidn2 --without-librtmp --disable-shared --enable-static   \
-	--with-zlib=$(KBUILD)/local --with-ssl=$(KBUILD)/local && make && make install          )
+	--with-zlib=$(KBUILD)/local --with-ssl=$(KBUILD)/local && make all install              )
 
 sqlite:
-	test -d $(KBUILD)/sqlite-autoconf-$(V_SQL) || (                                              \
-	curl -L https://sqlite.org/2018/sqlite-autoconf-$(V_SQL).tar.gz | tar xz -C $(KBUILD)        \
-	&& cd $(KBUILD)/sqlite-autoconf-$(V_SQL) && ./configure --prefix=$(KBUILD)/local             \
-	--host=$(CHOST) --enable-static --disable-shared --enable-threadsafe && make && make install )
+	test -d $(KBUILD)/sqlite-autoconf-$(V_SQL) || (                                          \
+	curl -L https://sqlite.org/2018/sqlite-autoconf-$(V_SQL).tar.gz | tar xz -C $(KBUILD)    \
+	&& cd $(KBUILD)/sqlite-autoconf-$(V_SQL) && ./configure --prefix=$(KBUILD)/local         \
+	--host=$(CHOST) --enable-static --disable-shared --enable-threadsafe && make all install )
 
 ncurses:
 	test -d $(KBUILD)/ncurses-$(V_NCUR) || (                                                          \
@@ -66,7 +66,7 @@ ncurses:
 	--without-cxx-binding --without-ada --enable-reentrant --with-normal                              \
 	--disable-home-terminfo --enable-sp-funcs --enable-term-driver --enable-interop || :)             \
 	--disable-lib-suffixes --without-debug --without-progs --without-tests                            \
-	--with-fallbacks=linux,screen,vt100,xterm,xterm-256color,putty-256color && make && make install   )
+	--with-fallbacks=linux,screen,vt100,xterm,xterm-256color,putty-256color && make all install       )
 
 json:
 	test -f $(KBUILD)/local/include/json.h || (mkdir -p $(KBUILD)/local/include       \
@@ -106,13 +106,13 @@ quickfix:
 	&& sed -i "s/ifdef _MSC_VER/ifdef _WIN32/" src/C++/SocketMonitor.h src/C++/Mutex.h         \
 	&& sed -i "s/ifndef _MSC_VER/ifndef _WIN32/" src/C++/SocketConnector.cpp                   \
 	src/C++/SocketServer.cpp) || :) && ./configure --prefix=$(KBUILD)/local --enable-shared=no \
-	--enable-static=yes --host=$(CHOST) && cd src/C++ && make && make install                  )
+	--enable-static=yes --host=$(CHOST) && cd src/C++ && make all install                      )
 
 libuv:
 	test -z "`echo $(CHOST) | grep darwin;echo $(CHOST) | grep mingw32`" || test -d $(KBUILD)/libuv-$(V_UV) || ( \
 	curl -L https://github.com/libuv/libuv/archive/v$(V_UV).tar.gz | tar xz -C $(KBUILD)                         \
 	&& cd $(KBUILD)/libuv-$(V_UV) && sh autogen.sh && CC=$(CHOST)-clang ./configure --host=$(CHOST)              \
-	--prefix=$(KBUILD)/local && make && make install                                                             )
+	--prefix=$(KBUILD)/local && make all install                                                                 )
 
 pvs:
 ifndef V_PVS
