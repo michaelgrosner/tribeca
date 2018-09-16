@@ -2522,14 +2522,22 @@ namespace K {
           quotes.ask.clear(mQuoteState::TBPHeld);
           if (!quotes.bid.empty() and qp.aggressivePositionRebalancing != mAPR::Off) {
             sideAPR = "Buy";
-            if (!qp.buySizeMax) quotes.bid.size = fmin(qp.aprMultiplier * quotes.bid.size, fmin(wallet.target.targetBasePosition - wallet.base.total, (wallet.quote.amount / levels.fairValue) / 2));
+            if (!qp.buySizeMax)
+              quotes.bid.size = fmin(
+                qp.aprMultiplier * quotes.bid.size,
+                wallet.target.targetBasePosition - wallet.base.total
+              );
           }
         }
         else if (wallet.base.total >= wallet.target.targetBasePosition + wallet.target.positionDivergence) {
           quotes.bid.clear(mQuoteState::TBPHeld);
           if (!quotes.ask.empty() and qp.aggressivePositionRebalancing != mAPR::Off) {
             sideAPR = "Sell";
-            if (!qp.sellSizeMax) quotes.ask.size = fmin(qp.aprMultiplier * quotes.ask.size, fmin(wallet.base.total - wallet.target.targetBasePosition, wallet.base.amount / 2));
+            if (!qp.sellSizeMax)
+              quotes.ask.size = fmin(
+                qp.aprMultiplier * quotes.ask.size,
+                wallet.base.total - wallet.target.targetBasePosition
+              );
           }
         }
         else sideAPR = "Off";
