@@ -234,9 +234,9 @@ namespace K {
               content = "Today, is your lucky day!";
             }
         }
-        if (!document.empty())
-          document += "Content-Length: " + to_string(content.length()) + "\r\n\r\n" + content;
-        return document;
+        return document
+          + "Content-Length: " + to_string(content.length())
+          + "\r\n\r\n" + content;
       };
       string onMessage(const string &message, const string &addr) {
         if (addr != "unknown" and args.whitelist.find(addr) == string::npos)
