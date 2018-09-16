@@ -254,9 +254,15 @@ changelog: .git
 	@_() { echo `git rev-parse $$1`; }; echo && git --no-pager log --graph --oneline @..@{u} && test `_ @` != `_ @{u}` || echo No need to upgrade, both versions are equal.
 
 test-c:
-	@pvs-studio-analyzer analyze -e test/units.h -e $(KLOCAL)/include --source-file test/static_code_analysis.cxx --cl-params -I. -Isrc/include -I$(KLOCAL)/include test/static_code_analysis.cxx && \
+	$(foreach src,$(SOURCE),$(MAKE) $@-src KSRC=$(src);)
+
+test-c-src: src/$(KSRC)/$(KSRC).cxx
+	$(info $(call STEP,test/static_code_analysis-$(KSRC).cxx))
+	@cp test/static_code_analysis.cxx test/static_code_analysis-$(KSRC).cxx
+	@sed -i "s/%/$(KSRC)/g" test/static_code_analysis-$(KSRC).cxx
+	@pvs-studio-analyzer analyze -e test/units.h -e $(KLOCAL)/include --source-file test/static_code_analysis-$(KSRC).cxx --cl-params -I. -Isrc/include -I$(KLOCAL)/include test/static_code_analysis-$(KSRC).cxx && \
 	(plog-converter -a GA:1,2 -t tasklist -o report.tasks PVS-Studio.log && cat report.tasks && rm report.tasks) || :
-	@rm -f PVS-Studio.log
+	@rm PVS-Studio.log test/static_code_analysis-$(KSRC).cxx
 
 #png: etc/${PNG}.png etc/${PNG}.json
 #	convert etc/${PNG}.png -set "K.conf" "`cat etc/${PNG}.json`" K: etc/${PNG}.png 2>/dev/null || :
