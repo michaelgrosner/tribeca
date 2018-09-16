@@ -2,7 +2,7 @@
 #define K_BOTS_H_
 
 namespace K {
-  string endingMsg, tracelog = to_string(Tstamp);
+  string epilogue, tracelog = to_string(Tstamp);
 
   vector<function<void()>> happyEndingFn, endingFn = { []() {
     clog << tracelog;
@@ -32,7 +32,7 @@ namespace K {
         EXIT(code);
       };
       static void quit(const int sig) {
-        tracelog = endingMsg + string(endingMsg.empty() ? 0 : 1, '\n');
+        tracelog = epilogue + string(epilogue.empty() ? 0 : 1, '\n');
         halt(EXIT_SUCCESS);
       };
       static void wtf(const int sig) {

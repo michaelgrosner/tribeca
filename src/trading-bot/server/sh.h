@@ -15,7 +15,7 @@ namespace K {
       void main(int argc, char** argv) {
         endingFn.insert(endingFn.begin(), [&]() {
           switchOff();
-          cout << string(args.latency ? 0 : 1, '\n')
+          clog << string(args.latency ? 0 : 1, '\n')
                << stamp();
         });
         const string msg = args.main(argc, argv);
@@ -44,14 +44,14 @@ namespace K {
         engine->monitor.product.minTick = &gw->minTick;
         engine->monitor.product.minSize = &gw->minSize;
         if (args.latency) {
-          endingMsg = "1 HTTP connection done"
-                    + string(KOLOR_RWHITE) + " (consider to repeat a few times this check).";
+          epilogue = "1 HTTP connection done"
+                   + string(KOLOR_RWHITE) + " (consider to repeat a few times this check).";
           printme(gw);
           gw->latency();
         } else
-          endingMsg = "Excellent decision! "
-                    + mREST::xfer("https://api.icndb.com/jokes/random?escape=javascript&limitTo=[nerdy]", 4L)
-                        .value("/value/joke"_json_pointer, "let's plant a tree instead..");
+          epilogue = "Excellent decision! "
+                   + mREST::xfer("https://api.icndb.com/jokes/random?escape=javascript&limitTo=[nerdy]", 4L)
+                       .value("/value/joke"_json_pointer, "let's plant a tree instead..");
         switchOn();
         if (mREST::inet)
           log("CF", "Network Interface for outgoing traffic is", mREST::inet);

@@ -1,8 +1,7 @@
 #include "Krypto.ninja.h"
+#include "hello-world.h"
 
-int main(int argc, char** argv) {
-  K::endingMsg = "Hello, World!";
-  cout << __FILE__ << endl;
-  raise(SIGINT);
+int main() {
+  K::hello_world(__FILE__);
   return EXIT_FAILURE;
 };
