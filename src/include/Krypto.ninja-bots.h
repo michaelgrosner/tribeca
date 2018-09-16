@@ -5,12 +5,12 @@ namespace K {
   string endingMsg, tracelog = to_string(Tstamp);
 
   vector<function<void()>> happyEndingFn, endingFn = { []() {
-    cout << tracelog;
+    clog << tracelog;
   } };
 
-  class Rollback {
+  class Ending {
     public:
-      Rollback() {
+      Ending() {
         signal(SIGINT, quit);
         signal(SIGABRT, wtf);
         signal(SIGSEGV, wtf);
@@ -24,7 +24,7 @@ namespace K {
         for (function<void()> &it : happyEndingFn) it();
         if (code == EXIT_FAILURE)
           this_thread::sleep_for(chrono::seconds(3));
-        cout << KOLOR_BGREEN << 'K'
+        clog << KOLOR_BGREEN << 'K'
              << KOLOR_RGREEN << " exit code "
              << KOLOR_BGREEN << to_string(code)
              << KOLOR_RGREEN << '.'
@@ -73,14 +73,14 @@ namespace K {
       };
   };
 
-  class Rollout: public Rollback {
+  class Rollout: public Ending {
     public:
       Rollout(/* KMxTWEpb9ig */) {
-        cout << KOLOR_BGREEN << "K-" << K_SOURCE
+        clog << KOLOR_BGREEN << "K-" << K_SOURCE
              << KOLOR_RGREEN << ' ' << K_BUILD << ' ' << K_STAMP << ".\n";
         const string changelog = mCommand::changelog();
         const int commits = count(changelog.begin(), changelog.end(), '\n');
-        cout << KOLOR_BGREEN << K_0_DAY << KOLOR_RGREEN << ' '
+        clog << KOLOR_BGREEN << K_0_DAY << KOLOR_RGREEN << ' '
              << (commits
                  ? '-' + to_string(commits) + "commit"
                    + string(commits == 1 ? 0 : 1, 's') + '.'
