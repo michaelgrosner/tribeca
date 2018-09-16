@@ -95,22 +95,22 @@ endif
 
 $(SOURCE):
 	$(info $(call STEP,$@))
-	$(MAKE) $(shell ! test -f src/$@/Makefile || echo src-assets) src KSRC=$@
+	$(MAKE) $(shell ! test -f src/$@/Makefile || echo assets) src KSRC=$@
 
-src-assets: src/$(KSRC)/Makefile
+assets: src/$(KSRC)/Makefile
 	$(info $(call STEP,$(KSRC) $@))
 	$(MAKE) -C src/$(KSRC) KASSETS=$(abspath $(KLOCAL)/assets)
 	$(foreach chost,$(subst $(CHOST),,$(CARCH)) $(CHOST),      \
 	  ! test -d build-$(chost)                                 \
 	  || ((test -d build-$(chost)/local/assets                 \
 	    || cp -R $(KLOCAL)/assets build-$(chost)/local/assets) \
-	  && $(MAKE) assets CHOST=$(chost)                     \
+	  && $(MAKE) assets.o CHOST=$(chost)                       \
 	  && rm -rf build-$(chost)/local/assets)                   \
 	;)
 
-assets: src/$(KSRC)/$(KSRC).S
+assets.o: src/$(KSRC)/$(KSRC).S
 	$(CHOST)-g++ -Wa,-I,$(KLOCAL)/assets,-I,src/$(KSRC) -c $^ \
-	  -o $(KLOCAL)/lib/K-$(notdir $(basename $^))-$@.o
+	  -o $(KLOCAL)/lib/K-$(notdir $(basename $^))-$@
 
 src: src/$(KSRC)/$(KSRC).cxx
 ifdef KALL
@@ -314,4 +314,4 @@ md5: src
 asandwich:
 	@test `whoami` = 'root' && echo OK || echo make it yourself!
 
-.PHONY: all K $(SOURCE) hlep hepl help doc test src src-assets assets dist download clean cleandb list screen start stop restart startall stopall restartall coinbase packages system_install uninstall install docker reinstall diff latest changelog test-c release md5 asandwich
+.PHONY: all K $(SOURCE) hlep hepl help doc test src assets assets.o dist download clean cleandb list screen start stop restart startall stopall restartall coinbase packages system_install uninstall install docker reinstall diff latest changelog test-c release md5 asandwich
