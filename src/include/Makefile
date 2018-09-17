@@ -93,11 +93,11 @@ quickfix:
 	&& cd $(KBUILD)/quickfix-$(V_QF) && ./bootstrap                                              \
 	&& sed -i "s/bin spec test examples doc//" Makefile.am                                       \
 	&& sed -i "s/SUBDIRS = test//" src/C++/Makefile.am                                           \
+	&& sed -i "/Certificate Verification: depth/,+2d" src/C++/UtilitySSL.cpp                     \
 	&& (test -n "`echo $(CHOST) | grep mingw32`"                                                 \
-	&& (sed -i "s/Thread/ThreadId/" src/C++/Utility.cpp src/C++/UtilitySSL.cpp                   \
-	&& sed -i "s/_MSC_VER/_WIN32/" src/C++/Utility.cpp src/C++/Utility.h src/C++/UtilitySSL.cpp  \
-	src/C++/UtilitySSL.h src/C++/SSLSocketInitiator.h                                            \
-	&& sed -i "s/stdafx/config/" src/C++/SSLSocketInitiator.cpp src/C++/Utility.cpp src/C++/UtilitySSL.cpp              \
+	&& (sed -i "s/Thread/ThreadId/" src/C++/Utility*.cpp                                         \
+	&& sed -i "s/_MSC_VER/_WIN32/" src/C++/Utility*.* src/C++/SSLSocketInitiator.h               \
+	&& sed -i "s/stdafx/config/" src/C++/SSLSocketInitiator.cpp src/C++/Utility*.cpp             \
 	&& sed -i "s/socklen_t/int/" src/C++/Utility.cpp                                             \
 	&& sed -i "s/INVALID_SOCKET/~0/" src/C++/Utility.cpp                                         \
 	&& sed -i "/host = socket_hostname/d" src/C++/Utility.cpp                                    \

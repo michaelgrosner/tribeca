@@ -2,7 +2,7 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
 PATCH    = 10
-BUILD    = 42
+BUILD    = 43
 SOURCE   = hello-world \
            trading-bot
 CARCH    = x86_64-linux-gnu      \
@@ -249,9 +249,8 @@ changelog: .git
 
 test-c:
 ifndef KSRC
-	$(foreach src,$(SOURCE),$(MAKE) $@ KSRC=$(src);)
+	@$(foreach src,$(SOURCE),$(MAKE) -s $@ KSRC=$(src);)
 else
-	$(info $(call STEP,test/static_code_analysis-$(KSRC).cxx))
 	@cp test/static_code_analysis.cxx test/static_code_analysis-$(KSRC).cxx
 	@sed -i "s/%/$(KSRC)/g" test/static_code_analysis-$(KSRC).cxx
 	@pvs-studio-analyzer analyze -e test/units.h -e $(KLOCAL)/include --source-file test/static_code_analysis-$(KSRC).cxx --cl-params -I. -Isrc/include -I$(KLOCAL)/include test/static_code_analysis-$(KSRC).cxx && \
