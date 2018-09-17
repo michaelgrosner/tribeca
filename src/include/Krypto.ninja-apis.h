@@ -349,52 +349,6 @@ namespace K {
       };
   };
 
-  class mCommand {
-    private:
-      static const string output(const string &cmd) {
-        string data;
-        FILE *stream = popen((cmd + " 2>&1").data(), "r");
-        if (stream) {
-          const int max_buffer = 256;
-          char buffer[max_buffer];
-          while (!feof(stream))
-            if (fgets(buffer, max_buffer, stream) != NULL)
-              data += buffer;
-          pclose(stream);
-        }
-        return data;
-      };
-    public:
-      static const string uname() {
-        return output("uname -srvm");
-      };
-      static const string ps() {
-        return output("(ps -p" + to_string(::getpid()) + " -orss | tail -n1)");
-      };
-      static const string netstat(const int &port) {
-        return output("netstat -anp 2>/dev/null | grep " + to_string(port));
-      };
-      static void stunnel(const bool &reboot) {
-        int k = system("(pkill stunnel || :)");
-        if (reboot) k = system("stunnel etc/stunnel.conf");
-      };
-      static const string changelog() {
-        string mods;
-        const json diff = mREST::xfer("https://api.github.com/repos/ctubio/Krypto-trading-bot/compare/" + string(K_0_GIT) + "...HEAD", 4L);
-        if (diff.value("ahead_by", 0)
-          and diff.find("commits") != diff.end()
-          and diff.at("commits").is_array()
-        ) for (const json &it : diff.at("commits"))
-          mods += it.value("/commit/author/date"_json_pointer, "").substr(0, 10) + " "
-                + it.value("/commit/author/date"_json_pointer, "").substr(11, 8)
-                + " (" + it.value("sha", "").substr(0, 7) + ") "
-                + it.value("/commit/message"_json_pointer, "").substr(0,
-                  it.value("/commit/message"_json_pointer, "").find("\n\n") + 1
-                );
-        return mods;
-      };
-  };
-
   class mRandom {
     public:
       static const unsigned long long int64() {
@@ -703,7 +657,7 @@ namespace K {
       void connect() {
         socket->connect(ws, nullptr, {}, 5e+3, &socket->getDefaultGroup<uWS::CLIENT>());
       };
-      virtual void run() {
+      void run() {
         socket->run();
       };
       void latency() {
@@ -725,7 +679,7 @@ namespace K {
         print("GW " + exchange, result);
         quit();
       };
-      virtual void end() {
+      void end() {
         if (dustybot)
           print("GW " + exchange, "--dustybot is enabled, remember to cancel manually any open order.");
         else if (write_mOrder) {
@@ -844,15 +798,6 @@ namespace K {
   class GwOkEx: public GwOkCoin {};
   class GwCoinbase: public GwApiWS,
                     public FIX::NullApplication {
-    public:
-      void run() {
-        mCommand::stunnel(true);
-        GwExchange::run();
-      };
-      void end() {
-        GwExchange::end();
-        mCommand::stunnel(false);
-      };
     protected:
       const json handshake() {
         randId = mRandom::uuid36Id;

@@ -43,8 +43,8 @@ using namespace std;
 #include <ncurses/ncurses.h>
 #include <quickfix/NullStore.h>
 #include <quickfix/Application.h>
-#include <quickfix/SocketInitiator.h>
 #include <quickfix/SessionSettings.h>
+#include <quickfix/SSLSocketInitiator.h>
 #include <quickfix/fix42/NewOrderSingle.h>
 #include <quickfix/fix42/OrderCancelRequest.h>
 

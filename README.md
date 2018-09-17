@@ -319,7 +319,7 @@ Updated OKCoin API (since https://www.okcoin.com/t-354.html).
 
 Updated Bitfinex API v2.
 
-Added Coinbase FIX API with stunnel.
+Added Coinbase FIX API.
 
 Added Korbit API.
 </details>

@@ -2759,6 +2759,48 @@ namespace K {
       };
   };
 
+  class mCommand {
+    private:
+      static const string output(const string &cmd) {
+        string data;
+        FILE *stream = popen((cmd + " 2>&1").data(), "r");
+        if (stream) {
+          const int max_buffer = 256;
+          char buffer[max_buffer];
+          while (!feof(stream))
+            if (fgets(buffer, max_buffer, stream) != NULL)
+              data += buffer;
+          pclose(stream);
+        }
+        return data;
+      };
+    public:
+      static const string uname() {
+        return output("uname -srvm");
+      };
+      static const string ps() {
+        return output("(ps -p" + to_string(::getpid()) + " -orss | tail -n1)");
+      };
+      static const string netstat(const int &port) {
+        return output("netstat -anp 2>/dev/null | grep " + to_string(port));
+      };
+      static const string changelog() {
+        string mods;
+        const json diff = mREST::xfer("https://api.github.com/repos/ctubio/Krypto-trading-bot/compare/" + string(K_0_GIT) + "...HEAD", 4L);
+        if (diff.value("ahead_by", 0)
+          and diff.find("commits") != diff.end()
+          and diff.at("commits").is_array()
+        ) for (const json &it : diff.at("commits"))
+          mods += it.value("/commit/author/date"_json_pointer, "").substr(0, 10) + " "
+                + it.value("/commit/author/date"_json_pointer, "").substr(11, 8)
+                + " (" + it.value("sha", "").substr(0, 7) + ") "
+                + it.value("/commit/message"_json_pointer, "").substr(0,
+                  it.value("/commit/message"_json_pointer, "").find("\n\n") + 1
+                );
+        return mods;
+      };
+  };
+
   struct mMonitor: public mJsonToClient<mMonitor> {
     unsigned int /* ( | L | ) */ /* more */ orders_60s /* ? */;
     const string /*  )| O |(  */  * unlock;

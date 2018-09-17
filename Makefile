@@ -2,7 +2,7 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
 PATCH    = 10
-BUILD    = 41
+BUILD    = 42
 SOURCE   = hello-world \
            trading-bot
 CARCH    = x86_64-linux-gnu      \
@@ -75,7 +75,6 @@ hlep hepl help:
 	#  make latest       - show commits and reinstall  #
 	#                                                  #
 	#  make download     - download K src precompiled  #
-	#  make coinbase     - download coinbase ssl cert  #
 	#  make clean        - remove external src files   #
 	#  KALL=1 make clean - remove external src files   #
 	#  make cleandb      - remove databases            #
@@ -151,7 +150,7 @@ Win32: src/$(KSRC)/$(KSRC).cxx
 
 download:
 	curl -L https://github.com/ctubio/Krypto-trading-bot/releases/download/$(MAJOR).$(MINOR).x/v$(MAJOR).$(MINOR).$(PATCH).$(BUILD)-$(CHOST).tar.gz | tar xz
-	@$(MAKE) system_install coinbase -s
+	@$(MAKE) system_install -s
 	@ln -f -s /usr/local/bin/K-trading-bot app/server/K
 	@test -n "`ls *.sh 2>/dev/null`" || (cp etc/K.sh.dist K.sh && chmod +x K.sh)
 
@@ -159,14 +158,13 @@ cleandb: /data/db/K*
 	rm -rf /data/db/K*.db
 
 packages:
-	test -n "`command -v apt-get`" && sudo apt-get -y install g++ build-essential automake autoconf libtool libxml2 libxml2-dev zlib1g-dev openssl stunnel python curl gzip screen doxygen graphviz \
-	|| (test -n "`command -v yum`" && sudo yum -y install gcc-c++ automake autoconf libtool libxml2 libxml2-devel openssl stunnel python curl gzip screen) \
-	|| (test -n "`command -v brew`" && (xcode-select --install || :) && (brew install automake autoconf libxml2 sqlite openssl zlib stunnel python curl gzip proctools doxygen graphviz || brew upgrade || :)) \
-	|| (test -n "`command -v pacman`" && sudo pacman --noconfirm -S --needed base-devel libxml2 zlib sqlite curl libcurl-compat openssl stunnel python gzip screen)
+	test -n "`command -v apt-get`" && sudo apt-get -y install g++ build-essential automake autoconf libtool libxml2 libxml2-dev zlib1g-dev openssl python curl gzip screen doxygen graphviz \
+	|| (test -n "`command -v yum`" && sudo yum -y install gcc-c++ automake autoconf libtool libxml2 libxml2-devel openssl python curl gzip screen) \
+	|| (test -n "`command -v brew`" && (xcode-select --install || :) && (brew install automake autoconf libxml2 sqlite openssl zlib python curl gzip proctools doxygen graphviz || brew upgrade || :)) \
+	|| (test -n "`command -v pacman`" && sudo pacman --noconfirm -S --needed base-devel libxml2 zlib sqlite curl libcurl-compat openssl python gzip screen)
 
 uninstall:
 	@$(foreach bin,$(addprefix /usr/local/bin/,$(notdir $(wildcard $(KLOCAL)/bin/K-*))), sudo rm -v $(bin);)
-	@sudo rm -v /etc/ssl/certs/fix.pro.coinbase.com.pem
 
 system_install:
 	$(info Checking sudo permission to install binaries into /usr/local/bin.. $(shell sudo echo OK))
@@ -238,10 +236,6 @@ screen:
 	@test -n "`screen -list | grep "\.$(K)	("`" && (    \
 	echo Detach screen hotkey: holding CTRL hit A then D \
 	&& sleep 2 && screen -r $(K)) || screen -list || :
-
-coinbase:
-	@openssl s_client -showcerts -connect fix.pro.coinbase.com:4198 -CApath /etc/ssl/certs < /dev/null 2> /dev/null \
-	  | openssl x509 -outform PEM > fix.pro.coinbase.com.pem && sudo mv fix.pro.coinbase.com.pem /etc/ssl/certs
 
 diff: .git
 	@_() { echo $$2 $$3 version: `git rev-parse $$1`; }; git remote update && _ @ Local running && _ @{u} Latest remote
@@ -321,4 +315,4 @@ md5: src
 asandwich:
 	@test `whoami` = 'root' && echo OK || echo make it yourself!
 
-.PHONY: all K $(SOURCE) hlep hepl help doc test src assets assets.o dist download clean cleandb list screen start stop restart startall stopall restartall coinbase packages system_install uninstall install docker reinstall diff latest changelog test-c release md5 asandwich
+.PHONY: all K $(SOURCE) hlep hepl help doc test src assets assets.o dist download clean cleandb list screen start stop restart startall stopall restartall packages system_install uninstall install docker reinstall diff latest changelog test-c release md5 asandwich

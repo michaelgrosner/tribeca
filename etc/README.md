@@ -31,8 +31,5 @@ See more info at [PR #425](https://github.com/ctubio/Krypto-trading-bot/pull/425
 ### K.sh.dist
 Used on install to initialize `./K.sh` file, feel free to add your own hardcoded arguments to your own `./K.sh` file after install.
 
-### stunnel.conf
-Used on boot (only for GDAX) to run [stunnel](https://www.stunnel.org/index.html) in the background to provide SSL encryption for [FIX API](https://docs.gdax.com/#ssl-tunnels); no need to edit.
-
-### ../src/www/.bomb.gzip
+### ../src/trading-bot/www/.bomb.gzip
 Used by `--whitelist` argument to attempt to crash UI clients from alien IPs not whitelisted; no need to open.
