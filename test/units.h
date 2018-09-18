@@ -300,6 +300,44 @@ namespace K {
       }
     }
 
+    GIVEN("mEwma") {
+      mPrice fairValue = 0;
+      mEwma ewma(fairValue);
+      WHEN("defaults") {
+        REQUIRE_FALSE(ewma.mgEwmaM);
+      }
+      WHEN("assigned") {
+        vector<mPrice> fairHistory = { 268.05, 258.73, 239.82, 250.21, 224.49, 242.53, 248.25, 270.58, 252.77, 273.55,
+                                       255.90, 226.10, 225.00, 263.12, 218.36, 254.73, 218.65, 252.40, 296.10, 222.20 };
+        REQUIRE_NOTHROW(ewma.mToScreen::print = [&](const string &prefix, const string &reason) {
+          INFO("print()");
+        });
+        REQUIRE_NOTHROW(ewma.fairValue96h.mFromDb::push = ewma.mFromDb::push = [&]() {
+          INFO("push()");
+        });
+        for (const mPrice &it : fairHistory) {
+          REQUIRE_NOTHROW(fairValue = it);
+          REQUIRE_NOTHROW(ewma.timer_60s(0));
+        };
+        REQUIRE_NOTHROW(qp.mediumEwmaPeriods = 20.0526);
+        REQUIRE_NOTHROW(qp._diffVLEP =
+                        qp._diffLEP  =
+                        qp._diffMEP  =
+                        qp._diffSEP  =
+                        qp._diffXSEP =
+                        qp._diffUEP  = true);
+        REQUIRE_NOTHROW(ewma.calcFromHistory());
+        THEN("values") {
+          REQUIRE(ewma.mgEwmaVL == Approx(266.1426832796));
+          REQUIRE(ewma.mgEwmaL == Approx(264.4045182289));
+          REQUIRE(ewma.mgEwmaM == Approx(249.885114711));
+          REQUIRE(ewma.mgEwmaS == Approx(256.7706209412));
+          REQUIRE(ewma.mgEwmaXS == Approx(247.5567169778));
+          REQUIRE(ewma.mgEwmaU == Approx(245.5969655991));
+        }
+      }
+    }
+
     GIVEN("mBroker") {
       mProduct product;
       const mPrice minTick = 0.01;

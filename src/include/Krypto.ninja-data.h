@@ -1092,7 +1092,7 @@ namespace K {
       };
       void calcFromHistory(mPrice *const mean, const unsigned int &periods, const string &name) {
         unsigned int n = fairValue96h.size();
-        if (!n) return;
+        if (!n--) return;
         unsigned int x = 0;
         *mean = fairValue96h.front();
         while (n--) calc(mean, periods, fairValue96h.at(++x));

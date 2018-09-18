@@ -60,7 +60,7 @@ namespace K  {
       };
       void timer_1s() {
         if (!gw->countdown)                  engine->timer_1s(tick);
-        else if (gw->countdown-- == 1) {     gw->connect();
+        else if (!--gw->countdown) {         gw->connect();
           tick = 0;
           return;
         }

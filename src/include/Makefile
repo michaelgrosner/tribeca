@@ -97,14 +97,14 @@ quickfix:
 	&& (test -n "`echo $(CHOST) | grep mingw32`"                                                 \
 	&& (sed -i "s/Thread/ThreadId/" src/C++/Utility*.cpp                                         \
 	&& sed -i "s/_MSC_VER/_WIN32/" src/C++/Utility*.* src/C++/SSLSocketInitiator.h               \
-	&& sed -i "s/stdafx/config/" src/C++/SSLSocketInitiator.cpp src/C++/Utility*.cpp             \
+	&& sed -i "s/stdafx/config/" src/C++/Utility*.cpp src/C++/SSLSocketInitiator.cpp             \
 	&& sed -i "s/socklen_t/int/" src/C++/Utility.cpp                                             \
 	&& sed -i "s/INVALID_SOCKET/~0/" src/C++/Utility.cpp                                         \
 	&& sed -i "/host = socket_hostname/d" src/C++/Utility.cpp                                    \
 	&& sed -i "s/_stdcall\( \*\)*//" src/C++/Utility.h                                           \
-	&& sed -i "s/\(typedef int\)/\/\/\1/" src/C++/SocketMonitor.h src/C++/Utility.h              \
-	&& sed -i "s/W\(insock2\)/w\1/" src/C++/SocketMonitor.h  src/C++/Utility.h                   \
-	&& sed -i "/pragma/d" src/C++/SocketMonitor.h src/C++/Utility.h src/C++/SSLSocketInitiator.h \
+	&& sed -i "s/\(typedef int\)/\/\/\1/" src/C++/Utility.h src/C++/SocketMonitor.h              \
+	&& sed -i "s/W\(insock2\)/w\1/" src/C++/Utility.h src/C++/SocketMonitor.h                    \
+	&& sed -i "/pragma/d" src/C++/Utility.h src/C++/SocketMonitor.h src/C++/SSLSocketInitiator.h \
 	&& sed -i "s/ifdef _MSC_VER/ifdef _WIN32/" src/C++/SocketMonitor.h src/C++/Mutex.h           \
 	&& sed -i "s/ifndef _MSC_VER/ifndef _WIN32/" src/C++/SocketConnector.cpp                     \
 	src/C++/SocketServer.cpp) || :) && ./configure --prefix=$(KBUILD)/local --enable-shared=no   \
