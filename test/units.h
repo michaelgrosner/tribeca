@@ -319,7 +319,7 @@ namespace K {
           REQUIRE_NOTHROW(fairValue = it);
           REQUIRE_NOTHROW(ewma.timer_60s(0));
         };
-        REQUIRE_NOTHROW(qp.mediumEwmaPeriods = 20.0526);
+        REQUIRE_NOTHROW(qp.mediumEwmaPeriods = 20);
         REQUIRE_NOTHROW(qp._diffVLEP =
                         qp._diffLEP  =
                         qp._diffMEP  =
@@ -334,6 +334,20 @@ namespace K {
           REQUIRE(ewma.mgEwmaS == Approx(256.7706209412));
           REQUIRE(ewma.mgEwmaXS == Approx(247.5567169778));
           REQUIRE(ewma.mgEwmaU == Approx(245.5969655991));
+          REQUIRE(ewma.lifetime() == 24000000);
+          THEN("to json") {
+            REQUIRE(((json)ewma).dump() == "{"
+              "\"ewmaExtraShort\":247.55671697778087,"
+              "\"ewmaLong\":264.40451822891674,"
+              "\"ewmaMedium\":249.88511471099878,"
+              "\"ewmaQuote\":264.40451822891674,"
+              "\"ewmaShort\":256.7706209412057,"
+              "\"ewmaTrendDiff\":-0.7916373276580089,"
+              "\"ewmaUltraShort\":245.59696559906004,"
+              "\"ewmaVeryLong\":266.142683279562,"
+              "\"ewmaWidth\":0.0"
+            "}");
+          }
         }
       }
     }
