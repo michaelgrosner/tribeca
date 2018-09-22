@@ -8,8 +8,7 @@ namespace K {
   };
 
   void hello_world(const string &file) {
-    epilogue = file + " executed " + greeting() + '.';
-    raise(SIGINT);
+    exit(file + " executed " + greeting() + '.');
   };
 }
 

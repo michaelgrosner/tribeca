@@ -7,13 +7,12 @@ namespace K {
       virtual void pressme(const mHotkey&, function<void()>) = 0;
       virtual void printme(mToScreen *const) = 0;
       virtual void waitForUser() = 0;
-      virtual const int error(const string&, const string&, const bool& = false) = 0;
+      virtual void error(const string&, const string&, const bool& = false) = 0;
       virtual const string stamp() = 0;
-      virtual void logWar(string, string, string = " Warrrrning: ") = 0;
+      virtual void logWar(const string&, const string&) = 0;
       virtual void logUI(const string&) = 0;
-      virtual void logUIsess(int, string) = 0;
+      virtual void logUIsess(const int&, const string&) = 0;
       virtual void log(const string&, const string&, const string& = "") = 0;
-      virtual void switchOff() = 0;
   } *screen = nullptr;
 
   class Events {
@@ -68,8 +67,8 @@ namespace K {
       ( SCREEN_PRESSME_CODE )
 #define SCREEN_PRESSME_CODE(key, fn)    screen->pressme(mHotkey::key, [&]() { fn(); });
 #define SCREEN_PRESSME_LIST(code)       \
-  code(  Q  , gw->quit                ) \
-  code(  q  , gw->quit                ) \
+  code(  Q  , exit                    ) \
+  code(  q  , exit                    ) \
   code( ESC , broker.semaphore.toggle )
 
 #define CLIENT_WELCOME      \

@@ -10,13 +10,22 @@
 "\n"   "are licensed by/under the law of my grandma (since last century)," \
 "\n"   "feel free to crack all as you need."
 
+//! \dir
+//! \brief namespace \ref K.
+
+//! \file
+//! \brief namespace \ref K.
+
 #ifdef NDEBUG
-#  define EXIT exit
+#  define EXIT ::exit
 #else
 #  include <catch.h>
 #  define EXIT catch_exit
    void catch_exit(const int);
 #endif
+
+//! \namespace K
+//! \brief     class \ref K::Klass, fn \ref K::exit.
 
 #include <Krypto.ninja-lang.h>
 #include <Krypto.ninja-apis.h>

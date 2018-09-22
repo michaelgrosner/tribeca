@@ -2,7 +2,7 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
 PATCH    = 10
-BUILD    = 46
+BUILD    = 47
 SOURCE   = hello-world \
            trading-bot
 CARCH    = x86_64-linux-gnu      \
@@ -144,7 +144,7 @@ Darwin: src/$(KSRC)/$(KSRC).cxx
 
 Win32: src/$(KSRC)/$(KSRC).cxx
 	$(CHOST)-g++-posix -DNDEBUG -o $(KLOCAL)/bin/K-$(KSRC).exe   \
-	  -DUSE_LIBUV                                                \
+	  -DUSE_LIBUV -D_POSIX                                       \
 	  $^ $(KARGS)                                                \
 	  -DCURL_STATICLIB -static -lstdc++ -lgcc -lwldap32 -lws2_32
 

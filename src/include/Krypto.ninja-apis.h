@@ -1,5 +1,7 @@
 #ifndef K_APIS_H_
 #define K_APIS_H_
+//! \file
+//! \brief External exchange API integrations.
 
 namespace K {
   enum class mConnectivity: unsigned int {
@@ -516,9 +518,9 @@ namespace K {
     = [](const string &prefix, const string &reason) { WARN("Y U NO catch screen warn?"); }
 #endif
     ;
-    function<const int(const string&, const string&)> error
+    function<void(const string&, const string&)> error
 #ifndef NDEBUG
-    = [](const string &prefix, const string &reason) { WARN("Y U NO catch screen error?"); return 0; }
+    = [](const string &prefix, const string &reason) { WARN("Y U NO catch screen error?"); }
 #endif
     ;
     function<void()> refresh
@@ -677,7 +679,6 @@ namespace K {
         else if (Tdiff < 1e+3) result += "bad; is possible a move to another server/network?";
         else                   result += "very bad; move to another server/network";
         print("GW " + exchange, result);
-        quit();
       };
       void end() {
         if (dustybot)
@@ -687,9 +688,6 @@ namespace K {
           for (mOrder &it : sync_cancelAll()) write_mOrder(it);
           print("GW " + exchange, "cancel all open orders OK");
         }
-      };
-      void quit() const {
-        raise(SIGINT);
       };
     protected:
       void reconnect(const string &reason) {
@@ -709,11 +707,11 @@ namespace K {
     private:
       void validate(const json &reply) {
         if (!randId or symbol.empty())
-          exit(error("GW", "Incomplete handshake aborted."));
+          error("GW", "Incomplete handshake aborted.");
         if (!minTick or !minSize)
-          exit(error("GW", "Unable to fetch data from " + exchange
+          error("GW", "Unable to fetch data from " + exchange
             + " for symbol \"" + symbol + "\", possible error message: "
-            + reply.dump()));
+            + reply.dump());
         if (exchange != "NULL")
           print("GW " + exchange, "allows client IP");
         unsigned int precision = minTick < 1e-8 ? 10 : 8;

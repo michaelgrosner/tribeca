@@ -1,5 +1,7 @@
 #ifndef K_LANG_H_
 #define K_LANG_H_
+//! \file
+//! \brief Available language interface.
 
 #include <stdlib.h>
 #include <iostream>
@@ -26,6 +28,7 @@
 #define strsignal to_string
 #else
 #include <execinfo.h>
+#include <sys/resource.h>
 #endif
 
 using namespace std;

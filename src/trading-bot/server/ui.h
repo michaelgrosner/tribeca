@@ -20,12 +20,9 @@ namespace K {
         if (!socket->listen(
           mREST::inet, args.port, uS::TLS::Context(sslContext()), 0,
           &socket->getDefaultGroup<uWS::SERVER>()
-        )) {
-          const string netstat = mCommand::netstat(args.port);
-          exit(screen->error("UI", "Unable to listen to UI port number " + to_string(args.port) + ", "
-            + (netstat.empty() ? "try another network interface" : "seems already in use by:\n" + netstat)
-          ));
-        }
+        )) screen->error("UI", "Unable to listen to UI port number " + to_string(args.port)
+             + ", may be already in use by another program"
+           );
         auto client = &socket->getDefaultGroup<uWS::SERVER>();
         client->onConnection([&](uWS::WebSocket<uWS::SERVER> *webSocket, uWS::HttpRequest req) {
           onConnection();
@@ -80,14 +77,14 @@ namespace K {
       void welcome(mToClient &data) {
         const char type = (char)data.about();
         if (hello.find(type) != hello.end())
-          exit(screen->error("UI", string("Too many handlers for \"") + type + "\" welcome event"));
+          screen->error("UI", string("Too many handlers for \"") + type + "\" welcome event");
         hello[type] = [&]() { return data.hello(); };
         sendAsync(data);
       };
       void clickme(mFromClient &data, function<void(const json&)> fn) {
         const char type = (char)data.about();
         if (kisses.find(type) != kisses.end())
-          exit(screen->error("UI", string("Too many handlers for \"") + type + "\" clickme event"));
+          screen->error("UI", string("Too many handlers for \"") + type + "\" clickme event");
         kisses[type] = [&data, fn](json &butterfly) {
           data.kiss(&butterfly);
           if (!butterfly.is_null())
