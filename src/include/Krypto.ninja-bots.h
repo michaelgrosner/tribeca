@@ -6,7 +6,7 @@
 namespace K {
   string epilogue;
 
-  //! \brief     Call all endingFn functions once.
+  //! \brief     Call all endingFn once and print a last log msg.
   //! \param[in] reason Allows any (colorful?) string.
   //! \param[in]  code  Must be EXIT_SUCCESS or EXIT_FAILURE.
   void exit(const string &reason = "", const int &code = EXIT_SUCCESS) {
@@ -19,7 +19,6 @@ namespace K {
   } };
 
   //! \brief Placeholder to avoid spaghetti codes.
-  //!
   //! - Walks through minimal runtime steps when wait() is called.
   //! - Adds end() into endingFn to be called on exit().
   //! - Connects to gateway when ready.
@@ -36,7 +35,7 @@ namespace K {
       void wait() {
         load();
         waitData();
-        if (!args.headless) waitWebAdmin();
+        waitWebAdmin();
         waitSysAdmin();
         waitTime();
         run();
@@ -47,16 +46,154 @@ namespace K {
       };
   };
 
+  class Ansi {
+    public:
+      static int colorful;
+      static const string reset() {
+          return colorful ? "\033[0m" : "";
+      };
+      static const string b(const int &color) {
+          return colorful ? "\033[1;3" + to_string(color) + 'm' : "";
+      };
+      static const string r(const int &color) {
+          return colorful ? "\033[0;3" + to_string(color) + 'm' : "";
+      };
+  };
+
+  int Ansi::colorful = 1;
+
+  void error(const string &prefix, const string &reason, const bool &reboot = false) {
+    if (reboot) this_thread::sleep_for(chrono::seconds(3));
+    exit(
+      prefix + string(Ansi::r(COLOR_RED)) + " Errrror: " + Ansi::b(COLOR_RED) + reason + '.',
+      reboot ? EXIT_FAILURE : EXIT_SUCCESS
+    );
+  };
+
+  const char *mREST::inet = nullptr;
+
+  class Arguments {
+    private:
+      vector<option> longopts = {
+        {"help",     no_argument,       0,                'h'},
+        {"version",  no_argument,       0,                'v'},
+        {"colors",   no_argument,       &Ansi::colorful,    1},
+        {"exchange", required_argument, 0,               1714},
+        {"currency", required_argument, 0,               1715},
+        {0,          0,                 0,                  0}
+      };
+    public:
+      unordered_map<string, int> optint;
+      unordered_map<string, string> optstr = {
+        {"exchange", "NULL"},
+        {"currency", "NULL"}
+      };
+      virtual void default_notempty_values() {};
+      virtual void tidy_values() {};
+      virtual const vector<option> custom_long_options() {
+        return {};
+      };
+      virtual const string custom_help(const function<string()> &stamp) {
+        return "";
+      };
+      void help() {
+        const vector<string> stamp = {
+          " \\__/  \\__/ ", " | (   .    ", "   __   \\__/  ",
+          " /  \\__/  \\ ", " |  `.  `.  ", "  /  \\        ",
+          " \\__/  \\__/ ", " |    )   ) ", "  \\__/   __   ",
+          " /  \\__/  \\ ", " |  ,'  ,'  ", "        /  \\  "
+        };
+              unsigned int y = Tstamp;
+        const unsigned int x = !(y % 2)
+                             + !(y % 21);
+        cout
+          << Ansi::r(COLOR_GREEN) << PERMISSIVE_analpaper_SOFTWARE_LICENSE << '\n'
+          << Ansi::r(COLOR_GREEN) << "  questions: " << Ansi::r(COLOR_YELLOW) << "https://earn.com/analpaper/" << '\n'
+          << Ansi::b(COLOR_GREEN) << "K" << Ansi::r(COLOR_GREEN) << " bugkiller: " << Ansi::r(COLOR_YELLOW) << "https://github.com/ctubio/Krypto-trading-bot/issues/new" << '\n'
+          << Ansi::r(COLOR_GREEN) << "  downloads: " << Ansi::r(COLOR_YELLOW) << "ssh://git@github.com/ctubio/Krypto-trading-bot" << '\n'
+          << Ansi::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << "Usage:" << Ansi::b(COLOR_YELLOW) << " ./K.sh [arguments]" << '\n'
+          << Ansi::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << "[arguments]:" << '\n'
+          << Ansi::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << Ansi::r(COLOR_WHITE) << "-h, --help                - show this help and quit." << '\n'
+          << Ansi::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << Ansi::r(COLOR_WHITE) << "    --colors              - print highlighted output." << '\n'
+          << Ansi::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << Ansi::r(COLOR_WHITE) << "    --exchange=NAME       - set exchange NAME for trading, mandatory one of:" << '\n'
+          << Ansi::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << Ansi::r(COLOR_WHITE) << "                            'COINBASE', 'BITFINEX',  'BITFINEX_MARGIN', 'HITBTC'," << '\n'
+          << Ansi::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << Ansi::r(COLOR_WHITE) << "                            'OKCOIN', 'OKEX', 'KORBIT', 'POLONIEX' or 'NULL'." << '\n'
+          << Ansi::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << Ansi::r(COLOR_WHITE) << "    --currency=PAIRS      - set currency pairs for trading (use format" << '\n'
+          << Ansi::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << Ansi::r(COLOR_WHITE) << "                            with '/' separator, like 'BTC/EUR')." << '\n'
+          << custom_help([&](){ return Ansi::b(COLOR_WHITE) + stamp.at(((--y%4)*3)+x) + Ansi::r(COLOR_WHITE); })
+          << Ansi::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << Ansi::r(COLOR_WHITE) << "-v, --version             - show current build version and quit." << '\n'
+          << Ansi::r(COLOR_GREEN) << "  more help: " << Ansi::r(COLOR_YELLOW) << "https://github.com/ctubio/Krypto-trading-bot/blob/master/doc/MANUAL.md" << '\n'
+          << Ansi::b(COLOR_GREEN) << "K" << Ansi::r(COLOR_GREEN) << " questions: " << Ansi::r(COLOR_YELLOW) << "irc://irc.freenode.net:6667/#tradingBot" << '\n'
+          << Ansi::r(COLOR_GREEN) << "  home page: " << Ansi::r(COLOR_YELLOW) << "https://ca.rles-tub.io./trades" << '\n'
+          << Ansi::reset();
+      };
+      void tidy() {
+        if (optstr["currency"].find("/") == string::npos or optstr["currency"].length() < 3)
+          error("CF", "Invalid currency pair; must be in the format of BASE/QUOTE, like BTC/EUR");
+        if (optstr["exchange"].empty())
+          error("CF", "Undefined exchange; the config file may have errors (there are extra spaces or double defined variables?)");
+        optstr["exchange"] = strU(optstr["exchange"]);
+        optstr["currency"] = strU(optstr["currency"]);
+        optstr["base"]  = optstr["currency"].substr(0, optstr["currency"].find("/"));
+        optstr["quote"] = optstr["currency"].substr(1+ optstr["currency"].find("/"));
+        tidy_values();
+      };
+      void main(int argc, char** argv) {
+        default_notempty_values();
+        const vector<option> long_options = custom_long_options();
+        longopts.insert(longopts.end()-1, long_options.begin(),
+                                          long_options.end());
+        int k = 0;
+        while (++k)
+          switch (k = getopt_long(argc, argv, "hv", (option*)&longopts[0], NULL)) {
+            case -1 :
+            case  0 : break;
+            case 1714: optstr["exchange"]   = string(optarg); break;
+            case 1715: optstr["currency"]   = string(optarg); break;
+            case 999: optint["port"]        = stoi(optarg);   break;
+            case 998: optstr["user"]        = string(optarg); break;
+            case 997: optstr["pass"]        = string(optarg); break;
+            case 996: mREST::inet           = strdup(optarg); break;
+            case 995: optstr["database"]    = string(optarg); break;
+            case 994: optstr["apikey"]      = string(optarg); break;
+            case 993: optstr["secret"]      = string(optarg); break;
+            case 992: optstr["passphrase"]  = string(optarg); break;
+            case 991: optstr["username"]    = string(optarg); break;
+            case 990: optstr["http"]        = string(optarg); break;
+            case 989: optstr["wss"]         = string(optarg); break;
+            case 988: optstr["pathSSLcert"] = string(optarg); break;
+            case 987: optstr["pathSSLkey"]  = string(optarg); break;
+            case 986: optstr["whitelist"]   = string(optarg); break;
+            case 985: optstr["title"]       = string(optarg); break;
+            case 984: optstr["matryoshka"]  = string(optarg); break;
+            case 983: optint["lifetime"]    = stoi(optarg);   break;
+            case 982: optstr["maxWallet"]   = string(optarg); break;
+            case 981: optint["maxLevels"]   = stoi(optarg);   break;
+            case 980: optint["maxAdmins"]   = stoi(optarg);   break;
+            case 'h': help();
+            case '?':
+            case 'v': EXIT(EXIT_SUCCESS);
+            default : EXIT(EXIT_FAILURE);
+          }
+        if (optind < argc) {
+          string argerr = "Invalid argument option:";
+          while(optind < argc) argerr += string(" ") + argv[optind++];
+          error("CF", argerr);
+        }
+        tidy();
+      };
+  } *args = nullptr;
+
   const mClock rollout = Tstamp;
 
   class Rollout {
     public:
       Rollout(/* KMxTWEpb9ig */) {
-        clog << mKolor::b(COLOR_GREEN) << "K-" << K_SOURCE
-             << mKolor::r(COLOR_GREEN) << ' ' << K_BUILD << ' ' << K_STAMP << ".\n";
+        clog << Ansi::b(COLOR_GREEN) << "K-" << K_SOURCE
+             << Ansi::r(COLOR_GREEN) << ' ' << K_BUILD << ' ' << K_STAMP << ".\n";
         const string mods = changelog();
         const int commits = count(mods.begin(), mods.end(), '\n');
-        clog << mKolor::b(COLOR_GREEN) << K_0_DAY << mKolor::r(COLOR_GREEN) << ' '
+        clog << Ansi::b(COLOR_GREEN) << K_0_DAY << Ansi::r(COLOR_GREEN) << ' '
              << (commits
                  ? '-' + to_string(commits) + "commit"
                    + string(commits == 1 ? 0 : 1, 's') + '.'
@@ -65,13 +202,14 @@ namespace K {
 #ifndef NDEBUG
             << " with DEBUG MODE enabled"
 #endif
-            << ".\n" << mKolor::r(COLOR_YELLOW) << mods << mKolor::reset();
-        mKolor::colorful = 0;
+            << ".\n" << Ansi::r(COLOR_YELLOW) << mods << Ansi::reset();
+        Ansi::colorful = 0;
       };
     protected:
       static const string changelog() {
         string mods;
-        const json diff = mREST::xfer("https://api.github.com/repos/ctubio/Krypto-trading-bot/compare/" + string(K_0_GIT) + "...HEAD", 4L);
+        const json diff = mREST::xfer("https://api.github.com/repos/ctubio/Krypto-trading-bot"
+                                      "/compare/" + string(K_0_GIT) + "...HEAD", 4L);
         if (diff.value("ahead_by", 0)
           and diff.find("commits") != diff.end()
           and diff.at("commits").is_array()
@@ -102,12 +240,12 @@ namespace K {
       static void halt(const int &code) {
         endingFn.swap(happyEndingFn);
         for (function<void()> &it : happyEndingFn) it();
-        mKolor::colorful = 1;
-        clog << mKolor::b(COLOR_GREEN) << 'K'
-             << mKolor::r(COLOR_GREEN) << " exit code "
-             << mKolor::b(COLOR_GREEN) << code
-             << mKolor::r(COLOR_GREEN) << '.'
-             << mKolor::reset() << '\n';
+        Ansi::colorful = 1;
+        clog << Ansi::b(COLOR_GREEN) << 'K'
+             << Ansi::r(COLOR_GREEN) << " exit code "
+             << Ansi::b(COLOR_GREEN) << code
+             << Ansi::r(COLOR_GREEN) << '.'
+             << Ansi::reset() << '\n';
         EXIT(code);
       };
       static void quit(const int sig) {
@@ -125,12 +263,12 @@ namespace K {
         halt(EXIT_FAILURE);
       };
       static void wtf(const int sig) {
-        epilogue = mKolor::r(COLOR_CYAN) + "Errrror: " + strsignal(sig) + ' ';
+        epilogue = Ansi::r(COLOR_CYAN) + "Errrror: " + strsignal(sig) + ' ';
         const string mods = changelog();
         if (mods.empty()) {
           epilogue += string("(Three-Headed Monkey found):") + '\n'
-            + "- exchange: " + args.exchange                 + '\n'
-            + "- currency: " + args.currency                 + '\n'
+            + "- exchange: " + args->optstr["exchange"]      + '\n'
+            + "- currency: " + args->optstr["currency"]      + '\n'
             + "- lastbeat: " + to_string(Tstamp - rollout)   + '\n'
             + "- binbuild: " + string(K_SOURCE)              + ' '
                              + string(K_BUILD)               + '\n'
@@ -144,13 +282,13 @@ namespace K {
           free(trace)
 #endif
           ;
-          epilogue += '\n' + mKolor::b(COLOR_RED) + "Yikes!" + mKolor::r(COLOR_RED)
+          epilogue += '\n' + Ansi::b(COLOR_RED) + "Yikes!" + Ansi::r(COLOR_RED)
             + '\n' + "please copy and paste the error above into a new github issue (noworry for duplicates)."
             + '\n' + "If you agree, go to https://github.com/ctubio/Krypto-trading-bot/issues/new"
             + '\n' + '\n';
         } else
           epilogue += string("(deprecated K version found).") + '\n'
-            + '\n' + mKolor::b(COLOR_YELLOW) + "Hint!" + mKolor::r(COLOR_YELLOW)
+            + '\n' + Ansi::b(COLOR_YELLOW) + "Hint!" + Ansi::r(COLOR_YELLOW)
             + '\n' + "please upgrade to the latest commit; the encountered error may be already fixed at:"
             + '\n' + mods
             + '\n' + "If you agree, consider to run \"make latest\" prior further executions."

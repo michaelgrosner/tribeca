@@ -67,246 +67,6 @@ namespace K {
                                 MarketDataLongTerm   = 'H'
   };
 
-  class mKolor {
-    public:
-      static int colorful;
-      static const string reset() {
-          return colorful ? "\033[0m" : "";
-      };
-      static const string b(const int &color) {
-          return colorful ? "\033[1;3" + to_string(color) + "m" : "";
-      };
-      static const string r(const int &color) {
-          return colorful ? "\033[0;3" + to_string(color) + "m" : "";
-      };
-  };
-
-  int mKolor::colorful = 1;
-
-  const char *mREST::inet = nullptr;
-
-  struct mArgs {
-        int port        = 3000,   naked       = 0, debug        = 0,
-            latency     = 0,      withoutSSL  = 0, debugSecret  = 0,
-            autobot     = 0,      dustybot    = 0, debugOrders  = 0,
-            headless    = 0,      lifetime    = 0, debugQuotes  = 0,
-            free        = 0,      ignoreMoon  = 0, debugWallet  = 0,
-            maxLevels   = 321,    ignoreSun   = 0,
-            maxAdmins   = 7;
-    mAmount maxWallet   = 0;
-     string title       = "K.sh", matryoshka  = "https://www.example.com/",
-            user        = "NULL", pass        = "NULL",
-            exchange    = "NULL", currency    = "NULL",
-            apikey      = "NULL", secret      = "NULL",
-            username    = "NULL", passphrase  = "NULL",
-            http        = "NULL", wss         = "NULL",
-            base,                 quote,
-            database,             diskdata,
-            pathSSLcert,          pathSSLkey,
-            B64auth,              whitelist;
-    const string main(int argc, char** argv) {
-      static const struct option opts[] = {
-        {"help",         no_argument,       0,               'h'},
-        {"colors",       no_argument,       &mKolor::colorful, 1},
-        {"debug",        no_argument,       &debug,            1},
-        {"debug-secret", no_argument,       &debugSecret,      1},
-        {"debug-orders", no_argument,       &debugOrders,      1},
-        {"debug-quotes", no_argument,       &debugQuotes,      1},
-        {"debug-wallet", no_argument,       &debugWallet,      1},
-        {"without-ssl",  no_argument,       &withoutSSL,       1},
-        {"ignore-sun",   no_argument,       &ignoreSun,        2},
-        {"ignore-moon",  no_argument,       &ignoreMoon,       1},
-        {"headless",     no_argument,       &headless,         1},
-        {"naked",        no_argument,       &naked,            1},
-        {"autobot",      no_argument,       &autobot,          1},
-        {"dustybot",     no_argument,       &dustybot,         1},
-        {"latency",      no_argument,       &latency,          1},
-        {"lifetime",     required_argument, 0,               'T'},
-        {"whitelist",    required_argument, 0,               'L'},
-        {"port",         required_argument, 0,               999},
-        {"user",         required_argument, 0,               998},
-        {"pass",         required_argument, 0,               997},
-        {"exchange",     required_argument, 0,               996},
-        {"currency",     required_argument, 0,               995},
-        {"apikey",       required_argument, 0,               994},
-        {"secret",       required_argument, 0,               993},
-        {"passphrase",   required_argument, 0,               992},
-        {"username",     required_argument, 0,               991},
-        {"http",         required_argument, 0,               990},
-        {"wss",          required_argument, 0,               989},
-        {"ssl-crt",      required_argument, 0,               988},
-        {"ssl-key",      required_argument, 0,               987},
-        {"title",        required_argument, 0,               'K'},
-        {"matryoshka",   required_argument, 0,               'k'},
-        {"database",     required_argument, 0,               'd'},
-        {"wallet-limit", required_argument, 0,               'W'},
-        {"market-limit", required_argument, 0,               'M'},
-        {"client-limit", required_argument, 0,               'C'},
-        {"interface",    required_argument, 0,               'i'},
-        {"free-version", no_argument,       &free,             1},
-        {"version",      no_argument,       0,               'v'},
-        {0,              0,                 0,                 0}
-      };
-      int k = 0;
-      while (++k)
-        switch (k = getopt_long(argc, argv, "hvd:i:k:x:K:L:M:T:W:", opts, NULL)) {
-          case -1 :
-          case  0 : break;
-          case 'M': maxLevels    = stoi(optarg);   break;
-          case 'C': maxAdmins    = stoi(optarg);   break;
-          case 'T': lifetime     = stoi(optarg);   break;
-          case 999: port         = stoi(optarg);   break;
-          case 998: user         = string(optarg); break;
-          case 997: pass         = string(optarg); break;
-          case 996: exchange     = string(optarg); break;
-          case 995: currency     = string(optarg); break;
-          case 994: apikey       = string(optarg); break;
-          case 993: secret       = string(optarg); break;
-          case 992: passphrase   = string(optarg); break;
-          case 991: username     = string(optarg); break;
-          case 990: http         = string(optarg); break;
-          case 989: wss          = string(optarg); break;
-          case 988: pathSSLcert  = string(optarg); break;
-          case 987: pathSSLkey   = string(optarg); break;
-          case 'd': database     = string(optarg); break;
-          case 'k': matryoshka   = string(optarg); break;
-          case 'K': title        = string(optarg); break;
-          case 'L': whitelist    = string(optarg); break;
-          case 'i': mREST::inet  = strdup(optarg); break;
-          case 'W': maxWallet    = stod(optarg);   break;
-          case 'h': {
-            const vector<string> stamp = {
-              " \\__/  \\__/ ", " | (   .    ", "   __   \\__/  ",
-              " /  \\__/  \\ ", " |  `.  `.  ", "  /  \\        ",
-              " \\__/  \\__/ ", " |    )   ) ", "  \\__/   __   ",
-              " /  \\__/  \\ ", " |  ,'  ,'  ", "        /  \\  "
-            };
-                  unsigned int y = Tstamp;
-            const unsigned int x = !(y % 2)
-                                 + !(y % 21);
-            cout
-              << mKolor::r(COLOR_GREEN) << PERMISSIVE_analpaper_SOFTWARE_LICENSE << '\n'
-              << mKolor::r(COLOR_GREEN) << "  questions: " << mKolor::r(COLOR_YELLOW) << "https://earn.com/analpaper/" << '\n'
-              << mKolor::b(COLOR_GREEN) << "K" << mKolor::r(COLOR_GREEN) << " bugkiller: " << mKolor::r(COLOR_YELLOW) << "https://github.com/ctubio/Krypto-trading-bot/issues/new" << '\n'
-              << mKolor::r(COLOR_GREEN) << "  downloads: " << mKolor::r(COLOR_YELLOW) << "ssh://git@github.com/ctubio/Krypto-trading-bot" << '\n'
-              << mKolor::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << "Usage:" << mKolor::b(COLOR_YELLOW) << " ./K.sh [arguments]" << '\n'
-              << mKolor::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << "[arguments]:" << '\n'
-              << mKolor::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << mKolor::r(COLOR_WHITE) << "-h, --help                - show this help and quit." << '\n'
-              << mKolor::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << mKolor::r(COLOR_WHITE) << "    --latency             - check current HTTP latency (not from WS) and quit." << '\n'
-              << mKolor::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << mKolor::r(COLOR_WHITE) << "    --autobot             - automatically start trading on boot." << '\n'
-              << mKolor::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << mKolor::r(COLOR_WHITE) << "    --dustybot            - do not automatically cancel all orders on exit." << '\n'
-              << mKolor::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << mKolor::r(COLOR_WHITE) << "    --naked               - do not display CLI, print output to stdout instead." << '\n'
-              << mKolor::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << mKolor::r(COLOR_WHITE) << "    --headless            - do not listen for UI connections," << '\n'
-              << mKolor::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << mKolor::r(COLOR_WHITE) << "                            all other UI related arguments will be ignored." << '\n'
-              << mKolor::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << mKolor::r(COLOR_WHITE) << "-C, --client-limit=NUMBER - set NUMBER of maximum concurrent UI connections." << '\n'
-              << mKolor::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << mKolor::r(COLOR_WHITE) << "    --without-ssl         - do not use HTTPS for UI connections (use HTTP only)." << '\n'
-              << mKolor::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << mKolor::r(COLOR_WHITE) << "    --ssl-crt=FILE        - set FILE to custom SSL .crt file for HTTPS UI connections" << '\n'
-              << mKolor::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << mKolor::r(COLOR_WHITE) << "                            (see akadia.com/services/ssh_test_certificate.html)." << '\n'
-              << mKolor::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << mKolor::r(COLOR_WHITE) << "    --ssl-key=FILE        - set FILE to custom SSL .key file for HTTPS UI connections" << '\n'
-              << mKolor::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << mKolor::r(COLOR_WHITE) << "                            (the passphrase MUST be removed from the .key file!)." << '\n'
-              << mKolor::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << mKolor::r(COLOR_WHITE) << "-L, --whitelist=IP        - set IP or csv of IPs to allow UI connections," << '\n'
-              << mKolor::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << mKolor::r(COLOR_WHITE) << "                            alien IPs will get a zip-bomb instead." << '\n'
-              << mKolor::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << mKolor::r(COLOR_WHITE) << "    --port=NUMBER         - set NUMBER of an open port to listen for UI connections." << '\n'
-              << mKolor::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << mKolor::r(COLOR_WHITE) << "    --user=WORD           - set allowed WORD as username for UI connections," << '\n'
-              << mKolor::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << mKolor::r(COLOR_WHITE) << "                            mandatory but may be 'NULL'." << '\n'
-              << mKolor::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << mKolor::r(COLOR_WHITE) << "    --pass=WORD           - set allowed WORD as password for UI connections," << '\n'
-              << mKolor::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << mKolor::r(COLOR_WHITE) << "                            mandatory but may be 'NULL'." << '\n'
-              << mKolor::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << mKolor::r(COLOR_WHITE) << "    --exchange=NAME       - set exchange NAME for trading, mandatory one of:" << '\n'
-              << mKolor::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << mKolor::r(COLOR_WHITE) << "                            'COINBASE', 'BITFINEX',  'BITFINEX_MARGIN', 'HITBTC'," << '\n'
-              << mKolor::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << mKolor::r(COLOR_WHITE) << "                            'OKCOIN', 'OKEX', 'KORBIT', 'POLONIEX' or 'NULL'." << '\n'
-              << mKolor::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << mKolor::r(COLOR_WHITE) << "    --currency=PAIRS      - set currency pairs for trading (use format" << '\n'
-              << mKolor::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << mKolor::r(COLOR_WHITE) << "                            with '/' separator, like 'BTC/EUR')." << '\n'
-              << mKolor::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << mKolor::r(COLOR_WHITE) << "    --apikey=WORD         - set (never share!) WORD as api key for trading," << '\n'
-              << mKolor::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << mKolor::r(COLOR_WHITE) << "                            mandatory." << '\n'
-              << mKolor::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << mKolor::r(COLOR_WHITE) << "    --secret=WORD         - set (never share!) WORD as api secret for trading," << '\n'
-              << mKolor::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << mKolor::r(COLOR_WHITE) << "                            mandatory." << '\n'
-              << mKolor::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << mKolor::r(COLOR_WHITE) << "    --passphrase=WORD     - set (never share!) WORD as api passphrase for trading," << '\n'
-              << mKolor::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << mKolor::r(COLOR_WHITE) << "                            mandatory but may be 'NULL'." << '\n'
-              << mKolor::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << mKolor::r(COLOR_WHITE) << "    --username=WORD       - set (never share!) WORD as api username for trading," << '\n'
-              << mKolor::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << mKolor::r(COLOR_WHITE) << "                            mandatory but may be 'NULL'." << '\n'
-              << mKolor::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << mKolor::r(COLOR_WHITE) << "    --http=URL            - set URL of api HTTP/S endpoint for trading," << '\n'
-              << mKolor::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << mKolor::r(COLOR_WHITE) << "                            mandatory." << '\n'
-              << mKolor::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << mKolor::r(COLOR_WHITE) << "    --wss=URL             - set URL of api SECURE WS endpoint for trading," << '\n'
-              << mKolor::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << mKolor::r(COLOR_WHITE) << "                            mandatory." << '\n'
-              << mKolor::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << mKolor::r(COLOR_WHITE) << "-d, --database=PATH       - set alternative PATH to database filename," << '\n'
-              << mKolor::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << mKolor::r(COLOR_WHITE) << "                            default PATH is '/data/db/K.*.*.*.db'," << '\n'
-              << mKolor::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << mKolor::r(COLOR_WHITE) << "                            any route to a filename is valid," << '\n'
-              << mKolor::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << mKolor::r(COLOR_WHITE) << "                            or use ':memory:' (see sqlite.org/inmemorydb.html)." << '\n'
-              << mKolor::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << mKolor::r(COLOR_WHITE) << "    --wallet-limit=AMOUNT - set AMOUNT in base currency to limit the balance," << '\n'
-              << mKolor::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << mKolor::r(COLOR_WHITE) << "                            otherwise the full available balance can be used." << '\n'
-              << mKolor::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << mKolor::r(COLOR_WHITE) << "    --market-limit=NUMBER - set NUMBER of maximum price levels for the orderbook," << '\n'
-              << mKolor::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << mKolor::r(COLOR_WHITE) << "                            default NUMBER is '321' and the minimum is '15'." << '\n'
-              << mKolor::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << mKolor::r(COLOR_WHITE) << "                            locked bots smells like '--market-limit=3' spirit." << '\n'
-              << mKolor::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << mKolor::r(COLOR_WHITE) << "-T, --lifetime=NUMBER     - set NUMBER of minimum milliseconds to keep orders open," << '\n'
-              << mKolor::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << mKolor::r(COLOR_WHITE) << "                            otherwise open orders can be replaced anytime required." << '\n'
-              << mKolor::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << mKolor::r(COLOR_WHITE) << "    --debug-secret        - print (never share!) secret inputs and outputs." << '\n'
-              << mKolor::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << mKolor::r(COLOR_WHITE) << "    --debug-orders        - print detailed output about exchange messages." << '\n'
-              << mKolor::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << mKolor::r(COLOR_WHITE) << "    --debug-quotes        - print detailed output about quoting engine." << '\n'
-              << mKolor::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << mKolor::r(COLOR_WHITE) << "    --debug-wallet        - print detailed output about target base position." << '\n'
-              << mKolor::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << mKolor::r(COLOR_WHITE) << "    --debug               - print detailed output about all the (previous) things!" << '\n'
-              << mKolor::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << mKolor::r(COLOR_WHITE) << "    --colors              - print highlighted output." << '\n'
-              << mKolor::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << mKolor::r(COLOR_WHITE) << "    --ignore-sun          - do not switch UI to light theme on daylight." << '\n'
-              << mKolor::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << mKolor::r(COLOR_WHITE) << "    --ignore-moon         - do not switch UI to dark theme on moonlight." << '\n'
-              << mKolor::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << mKolor::r(COLOR_WHITE) << "-k, --matryoshka=URL      - set Matryoshka link URL of the next UI." << '\n'
-              << mKolor::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << mKolor::r(COLOR_WHITE) << "-K, --title=WORD          - set WORD as UI title to identify different bots." << '\n'
-              << mKolor::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << mKolor::r(COLOR_WHITE) << "-i, --interface=IP        - set IP to bind as outgoing network interface," << '\n'
-              << mKolor::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << mKolor::r(COLOR_WHITE) << "                            default IP is the system default network interface." << '\n'
-              << mKolor::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << mKolor::r(COLOR_WHITE) << "    --free-version        - work with all market levels and enable the slow XMR miner." << '\n'
-              << mKolor::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << mKolor::r(COLOR_WHITE) << "-v, --version             - show current build version and quit." << '\n'
-              << mKolor::r(COLOR_GREEN) << "  more help: " << mKolor::r(COLOR_YELLOW) << "https://github.com/ctubio/Krypto-trading-bot/blob/master/doc/MANUAL.md" << '\n'
-              << mKolor::b(COLOR_GREEN) << "K" << mKolor::r(COLOR_GREEN) << " questions: " << mKolor::r(COLOR_YELLOW) << "irc://irc.freenode.net:6667/#tradingBot" << '\n'
-              << mKolor::r(COLOR_GREEN) << "  home page: " << mKolor::r(COLOR_YELLOW) << "https://ca.rles-tub.io./trades" << '\n'
-              << mKolor::reset();
-          }
-          case '?':
-          case 'v': EXIT(EXIT_SUCCESS);
-          default : EXIT(EXIT_FAILURE);
-        }
-      if (optind < argc) {
-        string argerr = "Invalid argument option:";
-        while(optind < argc) argerr += string(" ") + argv[optind++];
-        return argerr;
-      }
-      if (currency.find("/") == string::npos or currency.length() < 3)
-        return "Invalid currency pair; must be in the format of BASE/QUOTE, like BTC/EUR";
-      if (exchange.empty())
-        return "Undefined exchange; the config file may have errors (there are extra spaces or double defined variables?)";
-      tidy();
-      return "";
-    };
-    private:
-      void tidy() {
-        exchange = strU(exchange);
-        currency = strU(currency);
-        base  = currency.substr(0, currency.find("/"));
-        quote = currency.substr(1+ currency.find("/"));
-        if (debug)
-          debugSecret =
-          debugOrders =
-          debugQuotes =
-          debugWallet = debug;
-        if (database.empty() or database == ":memory:")
-          (database == ":memory:"
-            ? diskdata
-            : database
-          ) = "/data/db/K"
-            + ('.' + exchange)
-            +  '.' + string(currency).replace(currency.find("/"), 1, ".")
-            +  '.' + "db";
-        maxLevels = max(15, maxLevels);
-        if (ignoreSun and ignoreMoon) ignoreMoon = 0;
-#ifndef _WIN32
-        if (latency or debugSecret or debugOrders or debugQuotes)
-#endif
-          naked = 1;
-        if (latency or !port or !maxAdmins) headless = 1;
-        if (!headless
-          and user != "NULL" and !user.empty()
-          and pass != "NULL" and !pass.empty()
-        ) B64auth = "Basic " + mText::oB64(user + ':' + pass);
-      };
-  } args;
-
   struct mAbout {
     virtual const mMatter about() const = 0;
   };
@@ -832,8 +592,8 @@ namespace K {
           order
             ? order->orderId + "::" + order->exchangeId
               + " [" + to_string((int)order->status) + "]: "
-              + str8(order->quantity) + " " + args.base + " at price "
-              + str8(order->price) + " " + args.quote
+              + str8(order->quantity) + " " + args->optstr["base"] + " at price "
+              + str8(order->price) + " " + args->optstr["quote"]
             : "not found"
         ));
       };
@@ -841,7 +601,7 @@ namespace K {
         print("DEBUG OG", "memory " + to_string(orders.size()));
       };
       const bool debug() const {
-        return args.debugOrders;
+        return args->optint["debugOrders"];
       };
   };
   static void to_json(json &j, const mOrders &k) {
@@ -1198,12 +958,12 @@ namespace K {
   };
   static void to_json(json &j, const mProduct &k) {
     j = {
-      {   "exchange", args.exchange                                 },
-      {       "base", args.base                                     },
-      {      "quote", args.quote                                    },
+      {   "exchange", args->optstr["exchange"]                      },
+      {       "base", args->optstr["base"]                          },
+      {      "quote", args->optstr["quote"]                         },
       {    "minTick", *k.minTick                                    },
-      {"environment", args.title                                    },
-      { "matryoshka", args.matryoshka                               },
+      {"environment", args->optstr["title"]                         },
+      { "matryoshka", args->optstr["matryoshka"]                    },
       {   "homepage", "https://github.com/ctubio/Krypto-trading-bot"}
     };
   };
@@ -1496,11 +1256,11 @@ namespace K {
         abs(order.price * order.tradeQuantity),
         0, 0, 0, 0, 0, fee, false
       );
-      print("GW " + args.exchange, string(trade.isPong?"PONG":"PING") + " TRADE "
+      print("GW " + args->optstr["exchange"], string(trade.isPong?"PONG":"PING") + " TRADE "
         + (trade.side == mSide::Bid ? "BUY  " : "SELL ")
-        + str8(trade.quantity) + ' ' + args.base + " at price "
-        + str8(trade.price) + ' ' + args.quote + " (value "
-        + str8(trade.value) + ' ' + args.quote + ")"
+        + str8(trade.quantity) + ' ' + args->optstr["base"] + " at price "
+        + str8(trade.price) + ' ' + args->optstr["quote"] + " (value "
+        + str8(trade.value) + ' ' + args->optstr["quote"] + ")"
       );
       if (qp.safety == mQuotingSafety::Off or qp.safety == mQuotingSafety::PingPong)
         send_push_back(trade);
@@ -1872,7 +1632,7 @@ namespace K {
         return to_string(targetBasePosition);
       };
       string explainOK() const {
-        return "loaded TBP = % " + args.base;
+        return "loaded TBP = % " + args->optstr["base"];
       };
       const bool send_same_blob() const {
         return false;
@@ -1899,12 +1659,12 @@ namespace K {
       void report() const {
         print("PG", "TBP: "
           + to_string((int)(targetBasePosition / baseValue * 1e+2)) + "% = " + str8(targetBasePosition)
-          + " " + args.base + ", pDiv: "
+          + " " + args->optstr["base"] + ", pDiv: "
           + to_string((int)(positionDivergence / baseValue * 1e+2)) + "% = " + str8(positionDivergence)
-          + " " + args.base);
+          + " " + args->optstr["base"]);
       };
       const bool debug() const {
-        return args.debugWallet;
+        return args->optint["debugWallet"];
       };
   };
   static void to_json(json &j, const mTarget &k) {
@@ -1972,7 +1732,7 @@ namespace K {
     private:
       void calcFundsSilently() {
         if (empty() or !fairValue) return;
-        if (args.maxWallet) calcMaxWallet();
+        if (stod(args->optstr["maxWallet"])) calcMaxWallet();
         calcValues();
         calcProfits();
         target.calcTargetBasePos();
@@ -1994,7 +1754,7 @@ namespace K {
         quote.profit = profits.calcQuoteDiff();
       };
       void calcMaxWallet() {
-        mAmount maxWallet = args.maxWallet;
+        mAmount maxWallet = stod(args->optstr["maxWallet"]);
         maxWallet -= quote.held / fairValue;
         if (maxWallet > 0 and quote.amount / fairValue > maxWallet) {
           quote.amount = maxWallet * fairValue;
@@ -2078,13 +1838,11 @@ namespace K {
                      public mJsonToClient<mSemaphore> {
     mConnectivity greenButton           = mConnectivity::Disconnected,
                   greenGateway          = mConnectivity::Disconnected;
-    private_ref:
-      mConnectivity &adminAgreement = (mConnectivity&)args.autobot;
     public:
       void kiss(json *const j) {
         if (j->is_object()
           and j->at("agree").is_number()
-          and j->at("agree").get<mConnectivity>() != adminAgreement
+          and j->at("agree").get<int>() != args->optint["autobot"]
         ) toggle();
       };
       const bool paused() const {
@@ -2100,7 +1858,7 @@ namespace K {
         }
       };
       void toggle() {
-        adminAgreement = (mConnectivity)!adminAgreement;
+        args->optint["autobot"] = !args->optint["autobot"];
         send_refresh();
       };
       const mMatter about() const {
@@ -2108,10 +1866,10 @@ namespace K {
       };
     private:
       void send_refresh() {
-        const mConnectivity k = adminAgreement * greenGateway;
+        const mConnectivity k = greenGateway * (mConnectivity)args->optint["autobot"];
         if (greenButton != k) {
           greenButton = k;
-          focus("GW " + args.exchange, "Quoting state changed to",
+          focus("GW " + args->optstr["exchange"], "Quoting state changed to",
             string(paused() ? "DIS" : "") + "CONNECTED");
         }
         send();
@@ -2191,7 +1949,7 @@ namespace K {
     };
     private:
       const bool debug() const {
-        return args.debugQuotes;
+        return args->optint["debugQuotes"];
       };
   };
   static void to_json(json &j, const mQuotes &k) {
@@ -2451,7 +2209,7 @@ namespace K {
           } else if (qp.safety != mQuotingSafety::AK47
             or quote.deprecates(order.price)
           ) {
-            if (args.lifetime and order.time + args.lifetime > Tstamp)
+            if (args->optint["lifetime"] and order.time + args->optint["lifetime"] > Tstamp)
               quote.skip();
             else return true;
           }
@@ -2783,9 +2541,9 @@ namespace K {
 #endif
     };
     const unsigned int dbSize() const {
-      if (args.database == ":memory:") return 0;
+      if (args->optstr["database"] == ":memory:") return 0;
       struct stat st;
-      return stat(args.database.data(), &st) ? 0 : st.st_size;
+      return stat(args->optstr["database"].data(), &st) ? 0 : st.st_size;
     };
     void tick_orders() {
       orders_60s++;
@@ -2800,12 +2558,12 @@ namespace K {
   };
   static void to_json(json &j, const mMonitor &k) {
     j = {
-      {     "a", *k.unlock                       },
-      {  "inet", string(mREST::inet ?: "")       },
-      {  "freq", k.orders_60s                    },
-      { "theme", args.ignoreMoon + args.ignoreSun},
-      {"memory", k.memSize()                     },
-      {"dbsize", k.dbSize()                      }
+      {     "a", *k.unlock                                             },
+      {  "inet", string(mREST::inet ?: "")                             },
+      {  "freq", k.orders_60s                                          },
+      { "theme", args->optint["ignoreMoon"] + args->optint["ignoreSun"]},
+      {"memory", k.memSize()                                           },
+      {"dbsize", k.dbSize()                                            }
     };
   };
 }

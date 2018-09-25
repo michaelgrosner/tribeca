@@ -1,7 +1,10 @@
 #include "Krypto.ninja.h"
 #include "hello-world.h"
 
-int main() {
-  K::hello_world(__FILE__);
+using namespace K;
+
+int main(int argc, char** argv) {
+  (args = &options)->main(argc, argv);
+  hello_world(__FILE__);
   return EXIT_FAILURE;
 };

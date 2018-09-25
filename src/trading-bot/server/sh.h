@@ -17,35 +17,34 @@ namespace K {
           switchOff();
           clog << stamp();
         });
-        const string msg = args.main(argc, argv);
-        if (!msg.empty()) error("CF", msg);
-        if (!(gw = Gw::new_Gw(args.exchange)))
+        (args = &options)->main(argc, argv);
+        if (!(gw = Gw::new_Gw(args->optstr["exchange"])))
           error("CF",
             "Unable to configure a valid gateway using --exchange="
-              + args.exchange + " argument"
+              + args->optstr["exchange"] + " argument"
           );
-        gw->exchange = args.exchange;
-        gw->base     = args.base;
-        gw->quote    = args.quote;
-        gw->version  = args.free;
-        gw->apikey   = args.apikey;
-        gw->secret   = args.secret;
-        gw->user     = args.username;
-        gw->pass     = args.passphrase;
-        gw->http     = args.http;
-        gw->ws       = args.wss;
-        gw->maxLevel = args.maxLevels;
-        gw->autobot  = args.autobot;
-        gw->dustybot = args.dustybot;
-        gw->debug    = args.debugSecret;
+        gw->exchange = args->optstr["exchange"];
+        gw->base     = args->optstr["base"];
+        gw->quote    = args->optstr["quote"];
+        gw->version  = args->optint["free"];
+        gw->apikey   = args->optstr["apikey"];
+        gw->secret   = args->optstr["secret"];
+        gw->user     = args->optstr["username"];
+        gw->pass     = args->optstr["passphrase"];
+        gw->http     = args->optstr["http"];
+        gw->ws       = args->optstr["wss"];
+        gw->maxLevel = args->optint["maxLevels"];
+        gw->autobot  = args->optint["autobot"];
+        gw->dustybot = args->optint["dustybot"];
+        gw->debug    = args->optint["debugSecret"];
         gw->askForCancelAll = &qp.cancelOrdersAuto;
         engine->monitor.unlock          = &gw->unlock;
         engine->monitor.product.minTick = &gw->minTick;
         engine->monitor.product.minSize = &gw->minSize;
-        if (args.latency) {
+        if (args->optint["latency"]) {
           printme(gw);
           gw->latency();
-          exit("1 HTTP connection done" + mKolor::r(COLOR_WHITE) + " (consider to repeat a few times this check).");
+          exit("1 HTTP connection done" + Ansi::r(COLOR_WHITE) + " (consider to repeat a few times this check).");
         }
         switchOn();
         if (mREST::inet)
@@ -58,16 +57,16 @@ namespace K {
         wBorder = nullptr;
       };
       void switchOn() {
-        if (!args.headless)
+        if (!args->optint["headless"])
           wtfismyip = mREST::xfer("https://wtfismyip.com/json", 4L)
                         .value("/YourFuckingIPAddress"_json_pointer, "");
-        if (args.naked) return;
+        if (args->optint["naked"]) return;
         if (!(wBorder = initscr()))
           error("SH",
             "Unable to initialize ncurses, try to run in your terminal"
               "\"export TERM=xterm\", or use --naked argument"
           );
-        if (mKolor::colorful) start_color();
+        if (Ansi::colorful) start_color();
         use_default_colors();
         cbreak();
         noecho();
@@ -118,13 +117,6 @@ namespace K {
           hotFn.at(ch)();
         hotkeys();
       };
-      void error(const string &prefix, const string &reason, const bool &reboot = false) {
-        if (reboot) this_thread::sleep_for(chrono::seconds(3));
-        exit(
-          prefix + string(mKolor::r(COLOR_RED)) + " Errrror: " + mKolor::b(COLOR_RED) + reason + '.',
-          reboot ? EXIT_FAILURE : EXIT_SUCCESS
-        );
-      };
       const string stamp() {
         chrono::system_clock::time_point clock = Tclock;
         chrono::system_clock::duration t = clock.time_since_epoch();
@@ -137,10 +129,10 @@ namespace K {
           << setw(3) << milliseconds.count()
           << setw(3) << microseconds.count();
         time_t tt = chrono::system_clock::to_time_t(clock);
-        int len = args.naked ? 15 : 9;
+        int len = args->optint["naked"] ? 15 : 9;
         char datetime[len];
-        strftime(datetime, len, args.naked ? "%m/%d %T" : "%T", localtime(&tt));
-        if (!wBorder) return (mKolor::b(COLOR_GREEN) + (datetime + (mKolor::r(COLOR_GREEN) + microtime.str()))) + mKolor::b(COLOR_WHITE) + ' ';
+        strftime(datetime, len, args->optint["naked"] ? "%m/%d %T" : "%T", localtime(&tt));
+        if (!wBorder) return (Ansi::b(COLOR_GREEN) + (datetime + (Ansi::r(COLOR_GREEN) + microtime.str()))) + Ansi::b(COLOR_WHITE) + ' ';
         wattron(wLog, COLOR_PAIR(COLOR_GREEN));
         wattron(wLog, A_BOLD);
         wprintw(wLog, datetime);
@@ -152,7 +144,7 @@ namespace K {
       };
       void logWar(const string &k, const string &s) {
         if (!wBorder) {
-          cout << stamp() << k << mKolor::r(COLOR_RED) << " Warrrrning: " << mKolor::b(COLOR_RED) << s << '.' << mKolor::r(COLOR_WHITE) << endl;
+          cout << stamp() << k << Ansi::r(COLOR_RED) << " Warrrrning: " << Ansi::b(COLOR_RED) << s << '.' << Ansi::r(COLOR_WHITE) << endl;
           return;
         }
         wmove(wLog, getmaxy(wLog)-1, 0);
@@ -175,11 +167,11 @@ namespace K {
       void logUI(const string &protocol_) {
         protocol = protocol_;
         if (!wBorder) {
-          cout << stamp() << "UI" << mKolor::r(COLOR_WHITE) << " ready ";
+          cout << stamp() << "UI" << Ansi::r(COLOR_WHITE) << " ready ";
           if (wtfismyip.empty())
-            cout << "over " << mKolor::b(COLOR_YELLOW) << protocol << mKolor::r(COLOR_WHITE) << " on external port " << mKolor::b(COLOR_YELLOW) << to_string(args.port) << mKolor::r(COLOR_WHITE) << ".\n";
+            cout << "over " << Ansi::b(COLOR_YELLOW) << protocol << Ansi::r(COLOR_WHITE) << " on external port " << Ansi::b(COLOR_YELLOW) << to_string(args->optint["port"]) << Ansi::r(COLOR_WHITE) << ".\n";
           else
-            cout << "at " << mKolor::b(COLOR_YELLOW) << strL(protocol) << "://" << wtfismyip << ":" << to_string(args.port) << mKolor::r(COLOR_WHITE) << ".\n";
+            cout << "at " << Ansi::b(COLOR_YELLOW) << strL(protocol) << "://" << wtfismyip << ":" << to_string(args->optint["port"]) << Ansi::r(COLOR_WHITE) << ".\n";
           return;
         }
         wmove(wLog, getmaxy(wLog)-1, 0);
@@ -199,7 +191,7 @@ namespace K {
           wprintw(wLog, " on external port ");
           wattroff(wLog, COLOR_PAIR(COLOR_WHITE));
           wattron(wLog, COLOR_PAIR(COLOR_YELLOW));
-          wprintw(wLog, to_string(args.port).data());
+          wprintw(wLog, to_string(args->optint["port"]).data());
           wattroff(wLog, COLOR_PAIR(COLOR_YELLOW));
         } else {
           wprintw(wLog, "at ");
@@ -209,7 +201,7 @@ namespace K {
           wprintw(wLog, "://");
           wprintw(wLog, wtfismyip.data());
           wprintw(wLog, ":");
-          wprintw(wLog, to_string(args.port).data());
+          wprintw(wLog, to_string(args->optint["port"]).data());
           wattroff(wLog, COLOR_PAIR(COLOR_YELLOW));
         }
         wattron(wLog, COLOR_PAIR(COLOR_WHITE));
@@ -219,7 +211,7 @@ namespace K {
       };
       void logUIsess(const int &k, const string &s) {
         if (!wBorder) {
-          cout << stamp() << "UI " << mKolor::b(COLOR_YELLOW) << to_string(k) << mKolor::r(COLOR_WHITE) << " currently connected, last connection was from " << mKolor::b(COLOR_YELLOW) << s << mKolor::r(COLOR_WHITE) << ".\n";
+          cout << stamp() << "UI " << Ansi::b(COLOR_YELLOW) << to_string(k) << Ansi::r(COLOR_WHITE) << " currently connected, last connection was from " << Ansi::b(COLOR_YELLOW) << s << Ansi::r(COLOR_WHITE) << ".\n";
           return;
         }
         wmove(wLog, getmaxy(wLog)-1, 0);
@@ -253,13 +245,13 @@ namespace K {
         }
         if (!wBorder) {
           cout << stamp() << prefix;
-          if (color == 1)       cout << mKolor::r(COLOR_CYAN);
-          else if (color == -1) cout << mKolor::r(COLOR_MAGENTA);
-          else                  cout << mKolor::r(COLOR_WHITE);
+          if (color == 1)       cout << Ansi::r(COLOR_CYAN);
+          else if (color == -1) cout << Ansi::r(COLOR_MAGENTA);
+          else                  cout << Ansi::r(COLOR_WHITE);
           cout << ' ' << reason;
           if (!highlight.empty())
-            cout << ' ' << mKolor::b(COLOR_YELLOW) << highlight;
-          cout << mKolor::r(COLOR_WHITE) << ".\n";
+            cout << ' ' << Ansi::b(COLOR_YELLOW) << highlight;
+          cout << Ansi::r(COLOR_WHITE) << ".\n";
           return;
         }
         wmove(wLog, getmaxy(wLog)-1, 0);
@@ -340,11 +332,11 @@ namespace K {
         mvwaddch(wBorder, y, 0, ACS_BTEE);
         mvwaddch(wBorder, 0, 12, ACS_RTEE);
         wattron(wBorder, COLOR_PAIR(COLOR_GREEN));
-        string title1 = "   " + args.exchange;
-        string title2 = " " + (args.port
+        string title1 = "   " + args->optstr["exchange"];
+        string title2 = " " + (args->optint["port"]
           ? "UI" + (wtfismyip.empty()
-            ? " on " + protocol + " port " + to_string(args.port)
-            : " at " + strL(protocol) + "://" + wtfismyip + ":" + to_string(args.port)
+            ? " on " + protocol + " port " + to_string(args->optint["port"])
+            : " at " + strL(protocol) + "://" + wtfismyip + ":" + to_string(args->optint["port"])
           ) : "headless"
         )  + ' ';
         wattron(wBorder, A_BOLD);

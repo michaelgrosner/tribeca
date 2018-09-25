@@ -1,5 +1,10 @@
 #ifndef K_LIB_H_
 #define K_LIB_H_
+//! \dir
+//! \brief namespace \ref K.
+
+//! \file
+//! \brief namespace \ref K.
 
 #define PERMISSIVE_analpaper_SOFTWARE_LICENSE                              \
                                                                            \
@@ -9,12 +14,6 @@
 "\n"   "This is non-free software: built-in gateway exchange integrations" \
 "\n"   "are licensed by/under the law of my grandma (since last century)," \
 "\n"   "feel free to crack all as you need."
-
-//! \dir
-//! \brief namespace \ref K.
-
-//! \file
-//! \brief namespace \ref K.
 
 #ifdef NDEBUG
 #  define EXIT ::exit
@@ -29,8 +28,8 @@
 
 #include <Krypto.ninja-lang.h>
 #include <Krypto.ninja-apis.h>
-#include <Krypto.ninja-data.h>
 #include <Krypto.ninja-bots.h>
+#include <Krypto.ninja-data.h>
 
 #ifndef NDEBUG
 #  include <../../test/units.h>

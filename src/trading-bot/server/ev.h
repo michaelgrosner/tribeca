@@ -19,6 +19,7 @@ namespace K  {
         socket->createGroup<uWS::CLIENT>();
       };
       void waitWebAdmin() {
+        if (args->optint["headless"]) return;
         client->socket = socket;
         socket->createGroup<uWS::SERVER>(uWS::PERMESSAGE_DEFLATE);
       };
