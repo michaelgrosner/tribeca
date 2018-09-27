@@ -24,7 +24,7 @@
 #endif
 
 //! \namespace K
-//! \brief     class \ref K::Klass, fn \ref K::exit.
+//! \brief     class \ref K::Klass, fn \ref K::exit, fn \ref K::error.
 
 #include <Krypto.ninja-lang.h>
 #include <Krypto.ninja-apis.h>

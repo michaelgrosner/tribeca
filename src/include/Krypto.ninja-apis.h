@@ -518,17 +518,14 @@ namespace K {
     = [](const string &prefix, const string &reason) { WARN("Y U NO catch screen warn?"); }
 #endif
     ;
-    function<void(const string&, const string&)> error
-#ifndef NDEBUG
-    = [](const string &prefix, const string &reason) { WARN("Y U NO catch screen error?"); }
-#endif
-    ;
     function<void()> refresh
 #ifndef NDEBUG
     = []() { WARN("Y U NO catch screen refresh?"); }
 #endif
     ;
   };
+
+  void error(const string&, const string&, const bool&);
 
   class GwExchangeData {
     public:
@@ -707,20 +704,20 @@ namespace K {
     private:
       void validate(const json &reply) {
         if (!randId or symbol.empty())
-          error("GW", "Incomplete handshake aborted.");
+          error("GW", "Incomplete handshake aborted", false);
         if (!minTick or !minSize)
           error("GW", "Unable to fetch data from " + exchange
             + " for symbol \"" + symbol + "\", possible error message: "
-            + reply.dump());
+            + reply.dump(), false);
         if (exchange != "NULL")
           print("GW " + exchange, "allows client IP");
         unsigned int precision = minTick < 1e-8 ? 10 : 8;
         print("GW " + exchange + ":", string("\n")
           + "- autoBot: " + (!autobot ? "no" : "yes") + '\n'
-          + "- symbols: " + symbol + '\n'
-          + "- minTick: " + strX(minTick, precision) + '\n'
-          + "- minSize: " + strX(minSize, precision) + '\n'
-          + "- makeFee: " + strX(makeFee, precision) + '\n'
+          + "- symbols: " + symbol                    + '\n'
+          + "- minTick: " + strX(minTick, precision)  + '\n'
+          + "- minSize: " + strX(minSize, precision)  + '\n'
+          + "- makeFee: " + strX(makeFee, precision)  + '\n'
           + "- takeFee: " + strX(takeFee, precision));
       };
   };

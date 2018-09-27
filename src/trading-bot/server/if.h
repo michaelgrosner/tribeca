@@ -3,28 +3,29 @@
 
 namespace K {
   struct Options: public Arguments {
-    void default_notempty_values() {
-      optstr["title"]       = "K.sh";
-      optstr["matryoshka"]  = "https://www.example.com/";
-      optstr["user"]        = "NULL";
-      optstr["pass"]        = "NULL";
-      optstr["apikey"]      = "NULL";
-      optstr["secret"]      = "NULL";
-      optstr["username"]    = "NULL";
-      optstr["passphrase"]  = "NULL";
-      optstr["http"]        = "NULL";
-      optstr["wss"]         = "NULL";
-      optstr["maxWallet"]   = "0.0";
-      optint["port"]        = 3000;
-      optint["maxLevels"]   = 321;
-      optint["maxAdmins"]   = 7;
+    void default_values() {
+      optstr["title"]        = "K.sh";
+      optstr["matryoshka"]   = "https://www.example.com/";
+      optstr["user"]         = "NULL";
+      optstr["pass"]         = "NULL";
+      optstr["apikey"]       = "NULL";
+      optstr["secret"]       = "NULL";
+      optstr["username"]     = "NULL";
+      optstr["passphrase"]   = "NULL";
+      optstr["http"]         = "NULL";
+      optstr["wss"]          = "NULL";
+      optint["port"]         = 3000;
+      optint["lifetime"]     = 0;
+      optint["market-limit"] = 321;
+      optint["client-limit"] = 7;
+      optdob["wallet-limit"] = 0;
     };
     void tidy_values() {
       if (optint["debug"])
-        optint["debugSecret"] =
-        optint["debugOrders"] =
-        optint["debugQuotes"] =
-        optint["debugWallet"] = 1;
+        optint["debug-secret"] =
+        optint["debug-orders"] =
+        optint["debug-quotes"] =
+        optint["debug-wallet"] = 1;
       if (optstr["database"].empty() or optstr["database"] == ":memory:")
         (optstr["database"] == ":memory:"
           ? optstr["diskdata"]
@@ -34,13 +35,13 @@ namespace K {
           +  '.' + optstr["base"]
           +  '.' + optstr["quote"]
           +  '.' + "db";
-      optint["maxLevels"] = max(15, optint["maxLevels"]);
-      if (optint["ignoreSun"] and optint["ignoreMoon"]) optint["ignoreMoon"] = 0;
+      optint["market-limit"] = max(15, optint["market-limit"]);
+      if (optint["ignore-sun"] and optint["ignore-moon"]) optint["ignore-moon"] = 0;
   #ifndef _WIN32
-      if (optint["latency"] or optint["debugSecret"] or optint["debugOrders"] or optint["debugQuotes"])
+      if (optint["latency"] or optint["debug-secret"] or optint["debug-orders"] or optint["debug-quotes"])
   #endif
         optint["naked"] = 1;
-      if (optint["latency"] or !optint["port"] or !optint["maxAdmins"]) optint["headless"] = 1;
+      if (optint["latency"] or !optint["port"] or !optint["client-limit"]) optint["headless"] = 1;
       if (!optint["headless"]
         and optstr["user"] != "NULL" and !optstr["user"].empty()
         and optstr["pass"] != "NULL" and !optstr["pass"].empty()
@@ -48,40 +49,39 @@ namespace K {
     };
     const vector<option> custom_long_options() {
       return {
-        {"debug",        no_argument,       &optint["debug"],       1},
-        {"debug-secret", no_argument,       &optint["debugSecret"], 1},
-        {"debug-orders", no_argument,       &optint["debugOrders"], 1},
-        {"debug-quotes", no_argument,       &optint["debugQuotes"], 1},
-        {"debug-wallet", no_argument,       &optint["debugWallet"], 1},
-        {"without-ssl",  no_argument,       &optint["withoutSSL"],  1},
-        {"ignore-sun",   no_argument,       &optint["ignoreSun"],   2},
-        {"ignore-moon",  no_argument,       &optint["ignoreMoon"],  1},
-        {"headless",     no_argument,       &optint["headless"],    1},
-        {"naked",        no_argument,       &optint["naked"],       1},
-        {"autobot",      no_argument,       &optint["autobot"],     1},
-        {"dustybot",     no_argument,       &optint["dustybot"],    1},
-        {"latency",      no_argument,       &optint["latency"],     1},
-        {"free-version", no_argument,       &optint["free"],        1},
-        {"port",         required_argument, 0,                    999},
-        {"user",         required_argument, 0,                    998},
-        {"pass",         required_argument, 0,                    997},
-        {"interface",    required_argument, 0,                    996},
-        {"database",     required_argument, 0,                    995},
-        {"apikey",       required_argument, 0,                    994},
-        {"secret",       required_argument, 0,                    993},
-        {"passphrase",   required_argument, 0,                    992},
-        {"username",     required_argument, 0,                    991},
-        {"http",         required_argument, 0,                    990},
-        {"wss",          required_argument, 0,                    989},
-        {"ssl-crt",      required_argument, 0,                    988},
-        {"ssl-key",      required_argument, 0,                    987},
-        {"whitelist",    required_argument, 0,                    986},
-        {"title",        required_argument, 0,                    985},
-        {"matryoshka",   required_argument, 0,                    984},
-        {"lifetime",     required_argument, 0,                    983},
-        {"wallet-limit", required_argument, 0,                    982},
-        {"market-limit", required_argument, 0,                    981},
-        {"client-limit", required_argument, 0,                    980}
+        {"debug",        no_argument,       &optint["debug"],         1},
+        {"debug-secret", no_argument,       &optint["debug-secret"],  1},
+        {"debug-orders", no_argument,       &optint["debug-orders"],  1},
+        {"debug-quotes", no_argument,       &optint["debug-quotes"],  1},
+        {"debug-wallet", no_argument,       &optint["debug-wallet"],  1},
+        {"without-ssl",  no_argument,       &optint["without-ssl"],   1},
+        {"ignore-sun",   no_argument,       &optint["ignore-sun"],    2},
+        {"ignore-moon",  no_argument,       &optint["ignore-moon"],   1},
+        {"headless",     no_argument,       &optint["headless"],      1},
+        {"naked",        no_argument,       &optint["naked"],         1},
+        {"autobot",      no_argument,       &optint["autobot"],       1},
+        {"dustybot",     no_argument,       &optint["dustybot"],      1},
+        {"latency",      no_argument,       &optint["latency"],       1},
+        {"free-version", no_argument,       &optint["free-version"],  1},
+        {"port",         required_argument, 0,                      999},
+        {"user",         required_argument, 0,                      998},
+        {"pass",         required_argument, 0,                      997},
+        {"database",     required_argument, 0,                      995},
+        {"apikey",       required_argument, 0,                      994},
+        {"secret",       required_argument, 0,                      993},
+        {"passphrase",   required_argument, 0,                      992},
+        {"username",     required_argument, 0,                      991},
+        {"http",         required_argument, 0,                      990},
+        {"wss",          required_argument, 0,                      989},
+        {"ssl-crt",      required_argument, 0,                      988},
+        {"ssl-key",      required_argument, 0,                      987},
+        {"whitelist",    required_argument, 0,                      986},
+        {"title",        required_argument, 0,                      985},
+        {"matryoshka",   required_argument, 0,                      984},
+        {"lifetime",     required_argument, 0,                      983},
+        {"wallet-limit", required_argument, 0,                      982},
+        {"market-limit", required_argument, 0,                      981},
+        {"client-limit", required_argument, 0,                      980}
       };
     };
     const string custom_help(const function<string()> &stamp) {
@@ -136,8 +136,6 @@ namespace K {
            + stamp() + "    --ignore-moon         - do not switch UI to dark theme on moonlight." + '\n'
            + stamp() + "    --matryoshka=URL      - set Matryoshka link URL of the next UI." + '\n'
            + stamp() + "    --title=WORD          - set WORD as UI title to identify different bots." + '\n'
-           + stamp() + "    --interface=IP        - set IP to bind as outgoing network interface," + '\n'
-           + stamp() + "                            default IP is the system default network interface." + '\n'
            + stamp() + "    --free-version        - work with all market levels and enable the slow XMR miner." + '\n';
     };
   } options;

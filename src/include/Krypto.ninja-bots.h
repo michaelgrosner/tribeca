@@ -8,10 +8,10 @@ namespace K {
 
   //! \brief     Call all endingFn once and print a last log msg.
   //! \param[in] reason Allows any (colorful?) string.
-  //! \param[in]  code  Must be EXIT_SUCCESS or EXIT_FAILURE.
-  void exit(const string &reason = "", const int &code = EXIT_SUCCESS) {
+  //! \param[in] reboot Allows a reboot only because https://tldp.org/LDP/Bash-Beginners-Guide/html/sect_09_03.html.
+  void exit(const string &reason = "", const bool &reboot = false) {
     epilogue = reason;
-    raise(code == EXIT_SUCCESS ? SIGQUIT : SIGTERM);
+    raise(reboot ? SIGTERM : SIGQUIT);
   };
 
   vector<function<void()>> happyEndingFn, endingFn = { []() {
@@ -62,12 +62,13 @@ namespace K {
 
   int Ansi::colorful = 1;
 
+  //! \brief     Call all endingFn once and print a last error log msg.
+  //! \param[in] prefix Allows any string, if possible with a length of 2.
+  //! \param[in] reason Allows any (colorful?) string.
+  //! \param[in] reboot Allows a reboot only because https://tldp.org/LDP/Bash-Beginners-Guide/html/sect_09_03.html.
   void error(const string &prefix, const string &reason, const bool &reboot = false) {
     if (reboot) this_thread::sleep_for(chrono::seconds(3));
-    exit(
-      prefix + string(Ansi::r(COLOR_RED)) + " Errrror: " + Ansi::b(COLOR_RED) + reason + '.',
-      reboot ? EXIT_FAILURE : EXIT_SUCCESS
-    );
+    exit(prefix + Ansi::r(COLOR_RED) + " Errrror: " + Ansi::b(COLOR_RED) + reason + '.', reboot);
   };
 
   const char *mREST::inet = nullptr;
@@ -75,20 +76,22 @@ namespace K {
   class Arguments {
     private:
       vector<option> longopts = {
-        {"help",     no_argument,       0,                'h'},
-        {"version",  no_argument,       0,                'v'},
-        {"colors",   no_argument,       &Ansi::colorful,    1},
-        {"exchange", required_argument, 0,               1714},
-        {"currency", required_argument, 0,               1715},
-        {0,          0,                 0,                  0}
+        {"help",      no_argument,       0,                'h'},
+        {"version",   no_argument,       0,                'v'},
+        {"colors",    no_argument,       &Ansi::colorful,    1},
+        {"interface", required_argument, 0,               1714},
+        {"exchange",  required_argument, 0,               1715},
+        {"currency",  required_argument, 0,               1716},
+        {0,           0,                 0,                  0}
       };
     public:
       unordered_map<string, int> optint;
+      unordered_map<string, double> optdob;
       unordered_map<string, string> optstr = {
         {"exchange", "NULL"},
         {"currency", "NULL"}
       };
-      virtual void default_notempty_values() {};
+      virtual void default_values() {};
       virtual void tidy_values() {};
       virtual const vector<option> custom_long_options() {
         return {};
@@ -106,7 +109,7 @@ namespace K {
               unsigned int y = Tstamp;
         const unsigned int x = !(y % 2)
                              + !(y % 21);
-        cout
+        clog
           << Ansi::r(COLOR_GREEN) << PERMISSIVE_analpaper_SOFTWARE_LICENSE << '\n'
           << Ansi::r(COLOR_GREEN) << "  questions: " << Ansi::r(COLOR_YELLOW) << "https://earn.com/analpaper/" << '\n'
           << Ansi::b(COLOR_GREEN) << "K" << Ansi::r(COLOR_GREEN) << " bugkiller: " << Ansi::r(COLOR_YELLOW) << "https://github.com/ctubio/Krypto-trading-bot/issues/new" << '\n'
@@ -115,6 +118,8 @@ namespace K {
           << Ansi::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << "[arguments]:" << '\n'
           << Ansi::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << Ansi::r(COLOR_WHITE) << "-h, --help                - show this help and quit." << '\n'
           << Ansi::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << Ansi::r(COLOR_WHITE) << "    --colors              - print highlighted output." << '\n'
+           + Ansi::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << Ansi::r(COLOR_WHITE) << "    --interface=IP        - set IP to bind as outgoing network interface," << '\n'
+           + Ansi::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << Ansi::r(COLOR_WHITE) << "                            default IP is the system default network interface." << '\n'
           << Ansi::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << Ansi::r(COLOR_WHITE) << "    --exchange=NAME       - set exchange NAME for trading, mandatory one of:" << '\n'
           << Ansi::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << Ansi::r(COLOR_WHITE) << "                            'COINBASE', 'BITFINEX',  'BITFINEX_MARGIN', 'HITBTC'," << '\n'
           << Ansi::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << Ansi::r(COLOR_WHITE) << "                            'OKCOIN', 'OKEX', 'KORBIT', 'POLONIEX' or 'NULL'." << '\n'
@@ -129,9 +134,9 @@ namespace K {
       };
       void tidy() {
         if (optstr["currency"].find("/") == string::npos or optstr["currency"].length() < 3)
-          error("CF", "Invalid currency pair; must be in the format of BASE/QUOTE, like BTC/EUR");
+          error("CF", "Invalid --currency value; must be in the format of BASE/QUOTE, like BTC/EUR");
         if (optstr["exchange"].empty())
-          error("CF", "Undefined exchange; the config file may have errors (there are extra spaces or double defined variables?)");
+          error("CF", "Invalid --exchange value; the config file may have errors (there are extra spaces or double defined variables?)");
         optstr["exchange"] = strU(optstr["exchange"]);
         optstr["currency"] = strU(optstr["currency"]);
         optstr["base"]  = optstr["currency"].substr(0, optstr["currency"].find("/"));
@@ -139,41 +144,27 @@ namespace K {
         tidy_values();
       };
       void main(int argc, char** argv) {
-        default_notempty_values();
+        default_values();
         const vector<option> long_options = custom_long_options();
         longopts.insert(longopts.end()-1, long_options.begin(),
                                           long_options.end());
-        int k = 0;
+        int index, k = 0;
         while (++k)
-          switch (k = getopt_long(argc, argv, "hv", (option*)&longopts[0], NULL)) {
-            case -1 :
-            case  0 : break;
-            case 1714: optstr["exchange"]   = string(optarg); break;
-            case 1715: optstr["currency"]   = string(optarg); break;
-            case 999: optint["port"]        = stoi(optarg);   break;
-            case 998: optstr["user"]        = string(optarg); break;
-            case 997: optstr["pass"]        = string(optarg); break;
-            case 996: mREST::inet           = strdup(optarg); break;
-            case 995: optstr["database"]    = string(optarg); break;
-            case 994: optstr["apikey"]      = string(optarg); break;
-            case 993: optstr["secret"]      = string(optarg); break;
-            case 992: optstr["passphrase"]  = string(optarg); break;
-            case 991: optstr["username"]    = string(optarg); break;
-            case 990: optstr["http"]        = string(optarg); break;
-            case 989: optstr["wss"]         = string(optarg); break;
-            case 988: optstr["pathSSLcert"] = string(optarg); break;
-            case 987: optstr["pathSSLkey"]  = string(optarg); break;
-            case 986: optstr["whitelist"]   = string(optarg); break;
-            case 985: optstr["title"]       = string(optarg); break;
-            case 984: optstr["matryoshka"]  = string(optarg); break;
-            case 983: optint["lifetime"]    = stoi(optarg);   break;
-            case 982: optstr["maxWallet"]   = string(optarg); break;
-            case 981: optint["maxLevels"]   = stoi(optarg);   break;
-            case 980: optint["maxAdmins"]   = stoi(optarg);   break;
-            case 'h': help();
-            case '?':
-            case 'v': EXIT(EXIT_SUCCESS);
-            default : EXIT(EXIT_FAILURE);
+          switch (k = getopt_long(argc, argv, "hv", (option*)&longopts[0], &index)) {
+            case  -1 :
+            case   0 : break;
+            case 1714: mREST::inet = strdup(optarg); break;
+            case  'h': help();
+            case  '?':
+            case  'v': EXIT(EXIT_SUCCESS);
+            default  : {
+              const string name(longopts.at(index).name);
+              if (optint.find(name) != optint.end())
+                optint[name] = stoi(optarg);
+              else if (optdob.find(name) != optdob.end())
+                optdob[name] = stod(optarg);
+              else optstr[name] = string(optarg);
+            }
           }
         if (optind < argc) {
           string argerr = "Invalid argument option:";
@@ -260,6 +251,7 @@ namespace K {
         halt(EXIT_SUCCESS);
       };
       static void err(const int sig) {
+        if (epilogue.empty()) epilogue = "Unknown error, no joke.";
         halt(EXIT_FAILURE);
       };
       static void wtf(const int sig) {

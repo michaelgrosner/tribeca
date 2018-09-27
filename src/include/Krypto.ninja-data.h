@@ -601,7 +601,7 @@ namespace K {
         print("DEBUG OG", "memory " + to_string(orders.size()));
       };
       const bool debug() const {
-        return args->optint["debugOrders"];
+        return args->optint["debug-orders"];
       };
   };
   static void to_json(json &j, const mOrders &k) {
@@ -1664,7 +1664,7 @@ namespace K {
           + " " + args->optstr["base"]);
       };
       const bool debug() const {
-        return args->optint["debugWallet"];
+        return args->optint["debug-wallet"];
       };
   };
   static void to_json(json &j, const mTarget &k) {
@@ -1732,7 +1732,7 @@ namespace K {
     private:
       void calcFundsSilently() {
         if (empty() or !fairValue) return;
-        if (stod(args->optstr["maxWallet"])) calcMaxWallet();
+        if (args->optdob["wallet-limit"]) calcMaxWallet();
         calcValues();
         calcProfits();
         target.calcTargetBasePos();
@@ -1754,7 +1754,7 @@ namespace K {
         quote.profit = profits.calcQuoteDiff();
       };
       void calcMaxWallet() {
-        mAmount maxWallet = stod(args->optstr["maxWallet"]);
+        mAmount maxWallet = args->optdob["wallet-limit"];
         maxWallet -= quote.held / fairValue;
         if (maxWallet > 0 and quote.amount / fairValue > maxWallet) {
           quote.amount = maxWallet * fairValue;
@@ -1949,7 +1949,7 @@ namespace K {
     };
     private:
       const bool debug() const {
-        return args->optint["debugQuotes"];
+        return args->optint["debug-quotes"];
       };
   };
   static void to_json(json &j, const mQuotes &k) {
@@ -2558,12 +2558,12 @@ namespace K {
   };
   static void to_json(json &j, const mMonitor &k) {
     j = {
-      {     "a", *k.unlock                                             },
-      {  "inet", string(mREST::inet ?: "")                             },
-      {  "freq", k.orders_60s                                          },
-      { "theme", args->optint["ignoreMoon"] + args->optint["ignoreSun"]},
-      {"memory", k.memSize()                                           },
-      {"dbsize", k.dbSize()                                            }
+      {     "a", *k.unlock                                               },
+      {  "inet", string(mREST::inet ?: "")                               },
+      {  "freq", k.orders_60s                                            },
+      { "theme", args->optint["ignore-moon"] + args->optint["ignore-sun"]},
+      {"memory", k.memSize()                                             },
+      {"dbsize", k.dbSize()                                              }
     };
   };
 }

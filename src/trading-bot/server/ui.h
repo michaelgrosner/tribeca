@@ -29,8 +29,8 @@ namespace K {
           onConnection();
           const string addr = cleanAddress(webSocket->getAddress().address);
           screen->logUIsess(connections, addr);
-          if (connections > args->optint["maxAdmins"]) {
-            screen->log("UI", "--client-limit=" + to_string(args->optint["maxAdmins"]) + " reached by", addr);
+          if (connections > args->optint["client-limit"]) {
+            screen->log("UI", "--client-limit=" + to_string(args->optint["client-limit"]) + " reached by", addr);
             webSocket->close();
           }
         });
@@ -107,12 +107,12 @@ namespace K {
       };
       SSL_CTX *sslContext() {
         SSL_CTX *context = nullptr;
-        if (!args->optint["withoutSSL"] and (context = SSL_CTX_new(SSLv23_server_method()))) {
+        if (!args->optint["without-ssl"] and (context = SSL_CTX_new(SSLv23_server_method()))) {
           SSL_CTX_set_options(context, SSL_OP_NO_SSLv3);
-          if (args->optstr["pathSSLcert"].empty() or args->optstr["pathSSLkey"].empty()) {
-            if (!args->optstr["pathSSLcert"].empty())
+          if (args->optstr["ssl-crt"].empty() or args->optstr["ssl-key"].empty()) {
+            if (!args->optstr["ssl-crt"].empty())
               screen->logWar("UI", "Ignored --ssl-crt because --ssl-key is missing");
-            if (!args->optstr["pathSSLkey"].empty())
+            if (!args->optstr["ssl-key"].empty())
               screen->logWar("UI", "Ignored --ssl-key because --ssl-crt is missing");
             screen->logWar("UI", "Connected web clients will enjoy unsecure SSL encryption..\n"
               "(because the private key is visible in the source!), consider --ssl-crt and --ssl-key arguments");
@@ -150,12 +150,12 @@ namespace K {
               or SSL_CTX_use_RSAPrivateKey(context, PEM_read_bio_RSAPrivateKey(kbio, NULL, 0, NULL)) != 1
             ) context = nullptr;
           } else {
-            if (access(args->optstr["pathSSLcert"].data(), R_OK) == -1)
-              screen->logWar("UI", "Unable to read custom .crt file at " + args->optstr["pathSSLcert"]);
-            if (access(args->optstr["pathSSLkey"].data(), R_OK) == -1)
-              screen->logWar("UI", "Unable to read custom .key file at " + args->optstr["pathSSLkey"]);
-            if (SSL_CTX_use_certificate_chain_file(context, args->optstr["pathSSLcert"].data()) != 1
-              or SSL_CTX_use_RSAPrivateKey_file(context, args->optstr["pathSSLkey"].data(), SSL_FILETYPE_PEM) != 1
+            if (access(args->optstr["ssl-crt"].data(), R_OK) == -1)
+              screen->logWar("UI", "Unable to read custom .crt file at " + args->optstr["ssl-crt"]);
+            if (access(args->optstr["ssl-key"].data(), R_OK) == -1)
+              screen->logWar("UI", "Unable to read custom .key file at " + args->optstr["ssl-key"]);
+            if (SSL_CTX_use_certificate_chain_file(context, args->optstr["ssl-crt"].data()) != 1
+              or SSL_CTX_use_RSAPrivateKey_file(context, args->optstr["ssl-key"].data(), SSL_FILETYPE_PEM) != 1
             ) {
               context = nullptr;
               screen->logWar("UI", "Unable to encrypt web clients, will fallback to plain HTTP");
@@ -197,11 +197,11 @@ namespace K {
           const string leaf = path.substr(path.find_last_of('.')+1);
           if (leaf == "/") {
             document += "Content-Type: text/html; charset=UTF-8\r\n";
-            if (connections < args->optint["maxAdmins"]) {
+            if (connections < args->optint["client-limit"]) {
               screen->log("UI", "authorization success from", addr);
               content = string(&_www_html_index, _www_html_index_len);
             } else {
-              screen->log("UI", "--client-limit=" + to_string(args->optint["maxAdmins"]) + " reached by", addr);
+              screen->log("UI", "--client-limit=" + to_string(args->optint["client-limit"]) + " reached by", addr);
               content = "Thank you! but our princess is already in this castle!<br/>Refresh the page anytime to retry.";
             }
           } else if (leaf == "js") {

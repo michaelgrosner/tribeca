@@ -26,17 +26,17 @@ namespace K {
         gw->exchange = args->optstr["exchange"];
         gw->base     = args->optstr["base"];
         gw->quote    = args->optstr["quote"];
-        gw->version  = args->optint["free"];
+        gw->version  = args->optint["free-version"];
         gw->apikey   = args->optstr["apikey"];
         gw->secret   = args->optstr["secret"];
         gw->user     = args->optstr["username"];
         gw->pass     = args->optstr["passphrase"];
         gw->http     = args->optstr["http"];
         gw->ws       = args->optstr["wss"];
-        gw->maxLevel = args->optint["maxLevels"];
+        gw->maxLevel = args->optint["market-limit"];
         gw->autobot  = args->optint["autobot"];
         gw->dustybot = args->optint["dustybot"];
-        gw->debug    = args->optint["debugSecret"];
+        gw->debug    = args->optint["debug-secret"];
         gw->askForCancelAll = &qp.cancelOrdersAuto;
         engine->monitor.unlock          = &gw->unlock;
         engine->monitor.product.minTick = &gw->minTick;
@@ -102,9 +102,6 @@ namespace K {
         };
         data->warn = [&](const string &prefix, const string &reason) {
           logWar(prefix, reason);
-        };
-        data->error = [&](const string &prefix, const string &reason) {
-          error(prefix, reason);
         };
         data->refresh = [&]() {
           refresh();

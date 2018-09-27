@@ -3,7 +3,7 @@
 
 namespace K {
   struct Options: public Arguments {
-    void default_notempty_values() {
+    void default_values() {
       optstr["subject"] = "World";
     };
     void tidy_values() {
@@ -13,7 +13,7 @@ namespace K {
     };
     const vector<option> custom_long_options() {
       return {
-        {"subject", required_argument, 0, 9999}
+        {"subject", required_argument, 0, 999}
       };
     };
     const string custom_help(const function<string()> &stamp) {
