@@ -625,7 +625,7 @@ namespace K {
         const function<void(const mData&)> &write
       ) {
         bool waiting = reply.valid();
-        if (waiting and reply.wait_for(chrono::nanoseconds(0))==future_status::ready) {
+        if (waiting and reply.wait_for(chrono::nanoseconds(0)) == future_status::ready) {
           for (mData &it : reply.get()) write(it);
           waiting = false;
         }

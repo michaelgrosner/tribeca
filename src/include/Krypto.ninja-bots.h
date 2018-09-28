@@ -167,7 +167,7 @@ namespace K {
             }
           }
         if (optind < argc) {
-          string argerr = "Invalid argument option:";
+          string argerr = "Unhandled argument option(s):";
           while(optind < argc) argerr += string(" ") + argv[optind++];
           error("CF", argerr);
         }

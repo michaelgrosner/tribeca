@@ -2,7 +2,7 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
 PATCH    = 10
-BUILD    = 50
+BUILD    = 51
 SOURCE   = hello-world \
            trading-bot
 CARCH    = x86_64-linux-gnu      \
@@ -175,7 +175,7 @@ system_install:
 	$(info )
 	$(info List of installed K binaries:)
 	@sudo cp $(wildcard $(KLOCAL)/bin/K-$(KSRC)*) /usr/local/bin
-	@ls -lah --color $(addprefix /usr/local/bin/,$(notdir $(wildcard $(KLOCAL)/bin/K-$(KSRC)*)))
+	@ls -lah $(addprefix /usr/local/bin/,$(notdir $(wildcard $(KLOCAL)/bin/K-$(KSRC)*)))
 	@echo
 	@sudo curl -s --time-cond /etc/ssl/certs/ca-certificates.crt https://curl.haxx.se/ca/cacert.pem \
 	  -o /etc/ssl/certs/ca-certificates.crt
