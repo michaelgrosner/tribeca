@@ -8,7 +8,7 @@ namespace K {
     };
     void tidy_values() {
       if (optstr["subject"].empty())
-        error("CF", "Invalid empty --subject value.");
+        error("CF", "Invalid empty --subject value");
       else optstr["subject"] += "!";
     };
     const vector<option> custom_long_options() {

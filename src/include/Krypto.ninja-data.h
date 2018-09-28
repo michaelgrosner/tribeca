@@ -1732,7 +1732,7 @@ namespace K {
     private:
       void calcFundsSilently() {
         if (empty() or !fairValue) return;
-        if (args->optdob["wallet-limit"]) calcMaxWallet();
+        if (args->optdec["wallet-limit"]) calcMaxWallet();
         calcValues();
         calcProfits();
         target.calcTargetBasePos();
@@ -1754,7 +1754,7 @@ namespace K {
         quote.profit = profits.calcQuoteDiff();
       };
       void calcMaxWallet() {
-        mAmount maxWallet = args->optdob["wallet-limit"];
+        mAmount maxWallet = args->optdec["wallet-limit"];
         maxWallet -= quote.held / fairValue;
         if (maxWallet > 0 and quote.amount / fairValue > maxWallet) {
           quote.amount = maxWallet * fairValue;

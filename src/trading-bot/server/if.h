@@ -18,7 +18,7 @@ namespace K {
       optint["lifetime"]     = 0;
       optint["market-limit"] = 321;
       optint["client-limit"] = 7;
-      optdob["wallet-limit"] = 0;
+      optdec["wallet-limit"] = 0;
     };
     void tidy_values() {
       if (optint["debug"])

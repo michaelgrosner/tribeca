@@ -86,7 +86,7 @@ namespace K {
       };
     public:
       unordered_map<string, int> optint;
-      unordered_map<string, double> optdob;
+      unordered_map<string, double> optdec;
       unordered_map<string, string> optstr = {
         {"exchange", "NULL"},
         {"currency", "NULL"}
@@ -161,8 +161,8 @@ namespace K {
               const string name(longopts.at(index).name);
               if (optint.find(name) != optint.end())
                 optint[name] = stoi(optarg);
-              else if (optdob.find(name) != optdob.end())
-                optdob[name] = stod(optarg);
+              else if (optdec.find(name) != optdec.end())
+                optdec[name] = stod(optarg);
               else optstr[name] = string(optarg);
             }
           }
