@@ -6,6 +6,10 @@
 namespace K {
   string epilogue;
 
+  vector<function<void()>> happyEndingFn, endingFn = { []() {
+    clog << epilogue << string(epilogue.empty() ? 0 : 1, '\n');
+  } };
+
   //! \brief     Call all endingFn once and print a last log msg.
   //! \param[in] reason Allows any (colorful?) string.
   //! \param[in] reboot Allows a reboot only because https://tldp.org/LDP/Bash-Beginners-Guide/html/sect_09_03.html.
@@ -13,10 +17,6 @@ namespace K {
     epilogue = reason;
     raise(reboot ? SIGTERM : SIGQUIT);
   };
-
-  vector<function<void()>> happyEndingFn, endingFn = { []() {
-    clog << epilogue << string(epilogue.empty() ? 0 : 1, '\n');
-  } };
 
   //! \brief Placeholder to avoid spaghetti codes.
   //! - Walks through minimal runtime steps when wait() is called.
@@ -62,6 +62,8 @@ namespace K {
 
   int Ansi::colorful = 1;
 
+  const char *mREST::inet = nullptr;
+
   //! \brief     Call all endingFn once and print a last error log msg.
   //! \param[in] prefix Allows any string, if possible with a length of 2.
   //! \param[in] reason Allows any (colorful?) string.
@@ -70,27 +72,35 @@ namespace K {
     if (reboot) this_thread::sleep_for(chrono::seconds(3));
     exit(prefix + Ansi::r(COLOR_RED) + " Errrror: " + Ansi::b(COLOR_RED) + reason + '.', reboot);
   };
-
-  const char *mREST::inet = nullptr;
+           // struct option {
+               // const char *name;
+               // int         has_arg;
+               // int        *flag;
+               // int         val;
+           // };
 
   class Arguments {
-    private:
-      vector<option> longopts = {
-        {"help",      no_argument,       0,                'h'},
-        {"version",   no_argument,       0,                'v'},
-        {"colors",    no_argument,       &Ansi::colorful,    1},
-        {"interface", required_argument, 0,               1714},
-        {"exchange",  required_argument, 0,               1715},
-        {"currency",  required_argument, 0,               1716},
-        {0,           0,                 0,                  0}
-      };
     public:
-      unordered_map<string, int> optint;
+      unordered_map<string, int> optint = {
+        {"colors", 0}
+      };
       unordered_map<string, double> optdec;
       unordered_map<string, string> optstr = {
-        {"exchange", "NULL"},
-        {"currency", "NULL"}
+        {"interface",     ""},
+        {"exchange",  "NULL"},
+        {"currency",  "NULL"},
       };
+    private:
+      vector<option> longopts = {
+        {"help",      no_argument,       0,                  'h'},
+        {"version",   no_argument,       0,                  'v'},
+        {"colors",    no_argument,       &optint["colors"],    1},
+        {"interface", required_argument, 0,                 1714},
+        {"exchange",  required_argument, 0,                 1715},
+        {"currency",  required_argument, 0,                 1716},
+        {0,           0,                 0,                    0}
+      };
+    public:
       virtual void default_values() {};
       virtual void tidy_values() {};
       virtual const vector<option> custom_long_options() {
@@ -141,6 +151,9 @@ namespace K {
         optstr["currency"] = strU(optstr["currency"]);
         optstr["base"]  = optstr["currency"].substr(0, optstr["currency"].find("/"));
         optstr["quote"] = optstr["currency"].substr(1+ optstr["currency"].find("/"));
+        Ansi::colorful = optint["colors"];
+        if (!optstr["interface"].empty())
+          mREST::inet = optstr["interface"].data();
         tidy_values();
       };
       void main(int argc, char** argv) {
@@ -153,17 +166,14 @@ namespace K {
           switch (k = getopt_long(argc, argv, "hv", (option*)&longopts[0], &index)) {
             case  -1 :
             case   0 : break;
-            case 1714: mREST::inet = strdup(optarg); break;
             case  'h': help();
             case  '?':
             case  'v': EXIT(EXIT_SUCCESS);
             default  : {
               const string name(longopts.at(index).name);
-              if (optint.find(name) != optint.end())
-                optint[name] = stoi(optarg);
-              else if (optdec.find(name) != optdec.end())
-                optdec[name] = stod(optarg);
-              else optstr[name] = string(optarg);
+              if      (optint.find(name) != optint.end()) optint[name] = stoi(optarg);
+              else if (optdec.find(name) != optdec.end()) optdec[name] = stod(optarg);
+              else                                        optstr[name] = string(optarg);
             }
           }
         if (optind < argc) {
