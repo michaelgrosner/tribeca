@@ -2,7 +2,7 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
 PATCH    = 10
-BUILD    = 52
+BUILD    = 53
 SOURCE   = hello-world \
            trading-bot
 CARCH    = x86_64-linux-gnu      \
@@ -15,11 +15,11 @@ CHOST   ?= $(shell (test -d .git && test -n "`command -v g++`") && g++ -dumpmach
              || echo $(subst build-,,$(firstword $(wildcard build-*))))
 KLOCAL  := build-$(CHOST)/local
 
-ERR      = *** K require g++ v6, but it was not found.
-HINT    := consider a symlink at /usr/bin/$(CHOST)-g++ pointing to your g++-6 executable
+ERR      = *** K require g++ v7 or greater, but it was not found.
+HINT    := consider a symlink at /usr/bin/$(CHOST)-g++ pointing to your g++-7 or g++-8 executable
 
 STEP     = $(shell tput setaf 2;tput setab 0)Building $(1)..$(shell tput sgr0)
-KARGS   := -pthread -std=c++11 -O3 -DK_SOURCE='"$(KSRC)"' \
+KARGS   := -pthread -std=c++17 -O3 -DK_SOURCE='"$(KSRC)"' \
   -DK_BUILD='"$(CHOST)"' -DK_0_GIT='"$(shell              \
   cat .git/refs/heads/master 2>/dev/null || echo HEAD)"'  \
   -DK_STAMP='"$(shell date "+%Y-%m-%d %H:%M:%S")"'        \
@@ -88,7 +88,7 @@ clean dist:
 ifdef KALL
 	unset KALL $(foreach chost,$(CARCH),&& $(MAKE) $@ CHOST=$(chost))
 else
-	$(if $(subst 6,,$(shell $(CHOST)-g++ -dumpversion | cut -d. -f1)),$(warning $(ERR));$(error $(HINT)))
+	$(if $(subst 8,,$(subst 7,,$(shell $(CHOST)-g++ -dumpversion | cut -d. -f1))),$(warning $(ERR));$(error $(HINT)))
 	@$(MAKE) -C src/include $@ CHOST=$(CHOST)
 endif
 
@@ -116,7 +116,7 @@ ifdef KALL
 	unset KALL $(foreach chost,$(CARCH),&& $(MAKE) $@ CHOST=$(chost))
 else
 	$(info $(call STEP,$(KSRC) $@ $(CHOST)))
-	$(if $(subst 6,,$(shell $(CHOST)-g++ -dumpversion | cut -d. -f1)),$(warning $(ERR));$(error $(HINT)))
+	$(if $(subst 8,,$(subst 7,,$(shell $(CHOST)-g++ -dumpversion | cut -d. -f1))),$(warning $(ERR));$(error $(HINT)))
 	@$(CHOST)-g++ --version
 	mkdir -p $(KLOCAL)/bin
 	$(MAKE) $(shell test -n "`echo $(CHOST) | grep darwin`" && echo Darwin || (test -n "`echo $(CHOST) | grep mingw32`" && echo Win32 || uname -s)) CHOST=$(CHOST)

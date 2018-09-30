@@ -31,13 +31,13 @@ addons:
   apt:
     sources:
       - sourceline: "ppa:ubuntu-toolchain-r/test"
-    packages: ['g++-6', 'lcov', 'cowsay']
+    packages: ['g++-8', 'lcov', 'cowsay']
 
 before_install:
   - |
     if [[ "${TRAVIS_OS_NAME}" == "linux" ]]; then
-      sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-6 50
-      sudo update-alternatives --install /usr/bin/x86_64-linux-gnu-g++ x86_64-linux-gnu-g++ /usr/bin/x86_64-linux-gnu-g++-6 50
+      sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-8 50
+      sudo update-alternatives --install /usr/bin/x86_64-linux-gnu-g++ x86_64-linux-gnu-g++ /usr/bin/x86_64-linux-gnu-g++-8 50
       gem install coveralls-lcov
       npm install -g codacy-coverage npm-check-updates
     elif [[ "${TRAVIS_OS_NAME}" == "osx" ]]; then

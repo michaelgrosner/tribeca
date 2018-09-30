@@ -94,6 +94,10 @@ quickfix:
 	&& sed -i "s/bin spec test examples doc//" Makefile.am                                       \
 	&& sed -i "s/SUBDIRS = test//" src/C++/Makefile.am                                           \
 	&& sed -i "/Certificate Verification: depth/,+2d" src/C++/UtilitySSL.cpp                     \
+	&& sed -i "s/throw.\?( .* )//" src/C++/*.h src/C++/*.cpp                                     \
+	&& sed -i "/int r;/,+9d" src/C++/AtomicCount.h                                               \
+	&& sed -i "s/\/\/ \(\*\)/\1/" src/C++/AtomicCount.h                                          \
+	&& sed -i "s/\/\/ \(i\)/\1/" src/C++/AtomicCount.h                                           \
 	&& (test -n "`echo $(CHOST) | grep mingw32`"                                                 \
 	&& (sed -i "s/Thread/ThreadId/" src/C++/Utility*.cpp                                         \
 	&& sed -i "s/_MSC_VER/_WIN32/" src/C++/Utility*.* src/C++/SSLSocketInitiator.h               \
@@ -105,8 +109,8 @@ quickfix:
 	&& sed -i "s/\(typedef int\)/\/\/\1/" src/C++/Utility.h src/C++/SocketMonitor.h              \
 	&& sed -i "s/W\(insock2\)/w\1/" src/C++/Utility.h src/C++/SocketMonitor.h                    \
 	&& sed -i "/pragma/d" src/C++/Utility.h src/C++/SocketMonitor.h src/C++/SSLSocketInitiator.h \
-	&& sed -i "s/ifdef _MSC_VER/ifdef _WIN32/" src/C++/SocketMonitor.h src/C++/Mutex.h           \
-	&& sed -i "s/ifndef _MSC_VER/ifndef _WIN32/" src/C++/SocketConnector.cpp                     \
+	&& sed -i "s/\(ifdef\) _MSC_VER/\1 _WIN32/" src/C++/SocketMonitor.h src/C++/Mutex.h          \
+	&& sed -i "s/\(ifndef\) _MSC_VER/\1 _WIN32/" src/C++/SocketConnector.cpp                     \
 	src/C++/SocketServer.cpp) || :) && ./configure --prefix=$(KBUILD)/local --enable-shared=no   \
 	--enable-static=yes --host=$(CHOST) --with-openssl=$(KBUILD)/local                           \
 	&& cd src/C++ && make all install                                                            )

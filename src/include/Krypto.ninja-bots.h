@@ -143,6 +143,7 @@ namespace K {
           << Ansi::reset();
       };
       void tidy() {
+        Ansi::colorful = optint["colors"];
         if (optstr["currency"].find("/") == string::npos or optstr["currency"].length() < 3)
           error("CF", "Invalid --currency value; must be in the format of BASE/QUOTE, like BTC/EUR");
         if (optstr["exchange"].empty())
@@ -151,7 +152,6 @@ namespace K {
         optstr["currency"] = strU(optstr["currency"]);
         optstr["base"]  = optstr["currency"].substr(0, optstr["currency"].find("/"));
         optstr["quote"] = optstr["currency"].substr(1+ optstr["currency"].find("/"));
-        Ansi::colorful = optint["colors"];
         if (!optstr["interface"].empty())
           mREST::inet = optstr["interface"].data();
         tidy_values();
@@ -164,12 +164,12 @@ namespace K {
         int index, k = 0;
         while (++k)
           switch (k = getopt_long(argc, argv, "hv", (option*)&longopts[0], &index)) {
-            case  -1 :
-            case   0 : break;
-            case  'h': help();
-            case  '?':
-            case  'v': EXIT(EXIT_SUCCESS);
-            default  : {
+            case -1 :
+            case  0 : break;
+            case 'h': help();
+            case '?':
+            case 'v': EXIT(EXIT_SUCCESS);
+            default : {
               const string name(longopts.at(index).name);
               if      (optint.find(name) != optint.end()) optint[name] = stoi(optarg);
               else if (optdec.find(name) != optdec.end()) optdec[name] = stod(optarg);
