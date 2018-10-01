@@ -4,6 +4,7 @@ $(if $(subst 0,,${MAKELEVEL}),,$(warning $(ERR));$(error $(HINT)))
 
 V_ZLIB  = 1.2.11
 V_SSL   = 1.1.1
+V_ARES  = 1.14.0
 V_CURL  = 7.61.1
 V_SQL   = 3240000
 V_NCUR  = 6.1
@@ -17,7 +18,7 @@ KBUILD := $(abspath ../../build-$(CHOST))
 
 all dist:
 	@mkdir -vp $(KBUILD)
-	$(MAKE) zlib openssl curl sqlite ncurses json catch uws quickfix libuv
+	$(MAKE) zlib openssl ares curl sqlite ncurses json catch uws quickfix libuv
 ifdef TRAVIS_DEPLOY
 	$(MAKE) pvs
 endif
@@ -38,8 +39,14 @@ openssl:
 	curl -L https://www.openssl.org/source/openssl-$(V_SSL).tar.gz | tar xz -C $(KBUILD)       \
 	&& cd $(KBUILD)/openssl-$(V_SSL) && CC=gcc                                                 \
 	./Configure $(shell test -n "`echo $(CHOST) | grep mingw32`" && echo mingw64 || echo dist) \
-	--cross-compile-prefix=$(CHOST)- --prefix=$(KBUILD)/local                                  \
+	--api=1.1.0 --cross-compile-prefix=$(CHOST)- --prefix=$(KBUILD)/local                      \
 	--openssldir=$(KBUILD)/local && make all install_sw install_ssldirs                        )
+
+ares:
+	test -n "`echo $(CHOST) | grep mingw32`" || test -d $(KBUILD)/c-ares-$(V_ARES) || (   \
+	curl -L https://c-ares.haxx.se/download/c-ares-$(V_ARES).tar.gz | tar xz -C $(KBUILD) \
+	&& cd $(KBUILD)/c-ares-$(V_ARES) && ./configure --host=$(CHOST)                       \
+	--prefix=$(KBUILD)/local --disable-shared --enable-static && make all install         )
 
 curl:
 	test -d $(KBUILD)/curl-$(V_CURL) || (                                                   \
@@ -50,13 +57,16 @@ curl:
 	--disable-pop3 --disable-smb --disable-ftp --disable-sspi --disable-ldap --disable-dict \
 	--without-libpsl --without-nghttp2 --without-libssh2 --disable-telnet --disable-rtsp    \
 	--disable-gopher --without-libidn2 --without-librtmp --disable-shared --enable-static   \
-	--with-zlib=$(KBUILD)/local --with-ssl=$(KBUILD)/local && make all install              )
+	--with-zlib=$(KBUILD)/local --with-ssl=$(KBUILD)/local                                  \
+	$(shell test -z "`echo $(CHOST) | grep mingw32`" && echo --enable-ares=$(KBUILD)/local) \
+	&& sed -i "/HAVE_GETEUID/d" lib/curl_config.h && make all install                       )
 
 sqlite:
-	test -d $(KBUILD)/sqlite-autoconf-$(V_SQL) || (                                          \
-	curl -L https://sqlite.org/2018/sqlite-autoconf-$(V_SQL).tar.gz | tar xz -C $(KBUILD)    \
-	&& cd $(KBUILD)/sqlite-autoconf-$(V_SQL) && ./configure --prefix=$(KBUILD)/local         \
-	--host=$(CHOST) --enable-static --disable-shared --enable-threadsafe && make all install )
+	test -d $(KBUILD)/sqlite-autoconf-$(V_SQL) || (                                       \
+	curl -L https://sqlite.org/2018/sqlite-autoconf-$(V_SQL).tar.gz | tar xz -C $(KBUILD) \
+	&& cd $(KBUILD)/sqlite-autoconf-$(V_SQL) && ./configure --prefix=$(KBUILD)/local      \
+	--host=$(CHOST) --enable-static --disable-dynamic-extensions --disable-shared         \
+	--enable-threadsafe && make all install                                               )
 
 ncurses:
 	test -d $(KBUILD)/ncurses-$(V_NCUR) || (                                                          \
@@ -71,7 +81,8 @@ ncurses:
 json:
 	test -f $(KBUILD)/local/include/json.h || (mkdir -p $(KBUILD)/local/include       \
 	&& curl -L https://github.com/nlohmann/json/releases/download/v$(V_JSON)/json.hpp \
-	-o $(KBUILD)/local/include/json.h                                                 )
+	-o $(KBUILD)/local/include/json.h && (test -n "`echo $(CHOST) | grep mingw32`"    \
+	&& sed -i "s/\(#include <cstddef>\)/\/\/\1/" $(KBUILD)/local/include/json.h ||  :))
 
 catch:
 	test -f $(KBUILD)/local/include/catch.h || (mkdir -p $(KBUILD)/local/include          \
@@ -79,13 +90,15 @@ catch:
 	-o $(KBUILD)/local/include/catch.h                                                    )
 
 uws:
-	test -d $(KBUILD)/uWebSockets-$(V_UWS)                                             \
-	|| curl -L https://github.com/uNetworking/uWebSockets/archive/v$(V_UWS).tar.gz     \
-	| tar xz -C $(KBUILD) && rm -rf $(KBUILD)/local/include/uWS                        \
-	&& mkdir -p $(KBUILD)/local/include/uWS && cp $(KBUILD)/uWebSockets-$(V_UWS)/src/* \
-	$(KBUILD)/local/include/uWS/ && (test -n "`echo $(CHOST) | grep mingw32`"          \
-	&& (sed -i "s/W\(s2tcpip\)/w\1/" $(KBUILD)/local/include/uWS/Networking.h          \
-	&& sed -i "s/WinSock2/winsock2/" $(KBUILD)/local/include/uWS/Networking.h) ||     :)
+	test -d $(KBUILD)/uWebSockets-$(V_UWS)                                                   \
+	|| curl -L https://github.com/uNetworking/uWebSockets/archive/v$(V_UWS).tar.gz           \
+	| tar xz -C $(KBUILD) && rm -rf $(KBUILD)/local/include/uWS                              \
+	&& mkdir -p $(KBUILD)/local/include/uWS                                                  \
+	&& cp $(KBUILD)/uWebSockets-$(V_UWS)/src/* $(KBUILD)/local/include/uWS/                  \
+	&& sed -i "s/SSL_library_init()/OPENSSL_init_ssl(0, NULL)/"                              \
+	$(KBUILD)/local/include/uWS/Networking.cpp && (test -n "`echo $(CHOST) | grep mingw32`"  \
+	&& (sed -i "s/W\(s2tcpip\)/w\1/" $(KBUILD)/local/include/uWS/Networking.h                \
+	&& sed -i "s/WinSock2/winsock2/" $(KBUILD)/local/include/uWS/Networking.h) ||           :)
 
 quickfix:
 	test -d $(KBUILD)/quickfix-$(V_QF) || (                                                      \
@@ -98,6 +111,15 @@ quickfix:
 	&& sed -i "/int r;/,+9d" src/C++/AtomicCount.h                                               \
 	&& sed -i "s/\/\/ \(\*\)/\1/" src/C++/AtomicCount.h                                          \
 	&& sed -i "s/\/\/ \(i\)/\1/" src/C++/AtomicCount.h                                           \
+	&& sed -i "/CRYPTO_set_locking_callback/,+1d" src/C++/UtilitySSL.cpp                         \
+	&& sed -i "/CRYPTO_set_id_callback/d" src/C++/UtilitySSL.cpp                                 \
+	&& sed -i "s/CRYPTO_num_locks()/(1)/" src/C++/UtilitySSL.cpp                                 \
+	&& sed -i "s/CRYPTO_LOCK/1/" src/C++/UtilitySSL.cpp                                          \
+	&& sed -i "s/GETHOSTBYNAME_R_INPUTS_RESULT, 1/GETHOSTBYNAME_R_INPUTS_RESULT, 0/" *.ac        \
+	&& sed -i "s/OpenSSL_add_all_algorithms()/OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_CIPHERS | OPENSSL_INIT_ADD_ALL_DIGESTS | OPENSSL_INIT_LOAD_CONFIG, NULL)/" src/C++/UtilitySSL.cpp \
+	&& sed -i "s/SSL_load_error_strings()/OPENSSL_init_ssl(OPENSSL_INIT_LOAD_SSL_STRINGS | OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL)/" src/C++/UtilitySSL.cpp \
+	&& sed -i "s/SSL_library_init()/OPENSSL_init_ssl(0, NULL)/" configure m4/ax_lib_ssl.m4 src/C++/UtilitySSL.cpp \
+	&& sed -i "s/get_rfc/BN_get_rfc/g" src/C++/Utility*.cpp                                      \
 	&& (test -n "`echo $(CHOST) | grep mingw32`"                                                 \
 	&& (sed -i "s/Thread/ThreadId/" src/C++/Utility*.cpp                                         \
 	&& sed -i "s/_MSC_VER/_WIN32/" src/C++/Utility*.* src/C++/SSLSocketInitiator.h               \

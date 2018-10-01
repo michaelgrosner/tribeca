@@ -2,7 +2,7 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
 PATCH    = 10
-BUILD    = 53
+BUILD    = 54
 SOURCE   = hello-world \
            trading-bot
 CARCH    = x86_64-linux-gnu      \
@@ -31,7 +31,9 @@ KARGS   := -pthread -std=c++17 -O3 -DK_SOURCE='"$(KSRC)"' \
   $(KLOCAL)/lib/libcurl.a    $(KLOCAL)/lib/libssl.a       \
   $(KLOCAL)/lib/libcrypto.a  $(KLOCAL)/lib/libncurses.a   \
   $(wildcard                                              \
-    $(KLOCAL)/lib/lib*.dll.a $(KLOCAL)/lib/libuv.a        \
+    $(KLOCAL)/lib/lib*.dll.a                              \
+    $(KLOCAL)/lib/libcares.a                              \
+    $(KLOCAL)/lib/libuv.a                                 \
     $(KLOCAL)/lib/K-$(KSRC)-assets.o                      \
   )
 
