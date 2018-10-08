@@ -2,7 +2,7 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
 PATCH    = 10
-BUILD    = 54
+BUILD    = 55
 SOURCE   = hello-world \
            trading-bot
 CARCH    = x86_64-linux-gnu      \
@@ -146,9 +146,9 @@ Darwin: src/$(KSRC)/$(KSRC).cxx
 
 Win32: src/$(KSRC)/$(KSRC).cxx
 	$(CHOST)-g++-posix -DNDEBUG -o $(KLOCAL)/bin/K-$(KSRC).exe   \
-	  -DUSE_LIBUV -D_POSIX                                       \
+	  -DUSE_LIBUV -D_POSIX -DCURL_STATICLIB                      \
 	  $^ $(KARGS)                                                \
-	  -DCURL_STATICLIB -static -lstdc++ -lgcc -lwldap32 -lws2_32
+	  -static -lstdc++ -lgcc -lwldap32 -lws2_32
 
 download:
 	curl -L https://github.com/ctubio/Krypto-trading-bot/releases/download/$(MAJOR).$(MINOR).x/v$(MAJOR).$(MINOR).$(PATCH).$(BUILD)-$(CHOST).tar.gz | tar xz

@@ -43,23 +43,22 @@ openssl:
 	--openssldir=$(KBUILD)/local && make all install_sw install_ssldirs                        )
 
 ares:
-	test -n "`echo $(CHOST) | grep mingw32`" || test -d $(KBUILD)/c-ares-$(V_ARES) || (   \
-	curl -L https://c-ares.haxx.se/download/c-ares-$(V_ARES).tar.gz | tar xz -C $(KBUILD) \
-	&& cd $(KBUILD)/c-ares-$(V_ARES) && ./configure --host=$(CHOST)                       \
-	--prefix=$(KBUILD)/local --disable-shared --enable-static && make all install         )
+	test -d $(KBUILD)/c-ares-$(V_ARES) || (                                                  \
+	curl -L https://c-ares.haxx.se/download/c-ares-$(V_ARES).tar.gz | tar xz -C $(KBUILD)    \
+	&& cd $(KBUILD)/c-ares-$(V_ARES) && ./configure --host=$(CHOST) --prefix=$(KBUILD)/local \
+	--disable-shared --enable-static && make all install                                     )
 
 curl:
-	test -d $(KBUILD)/curl-$(V_CURL) || (                                                   \
-	curl -L https://curl.haxx.se/download/curl-$(V_CURL).tar.gz | tar xz -C $(KBUILD)       \
-	&& cd $(KBUILD)/curl-$(V_CURL) && ./configure --host=$(CHOST) --disable-manual          \
-	--with-ca-bundle=/etc/ssl/certs/ca-certificates.crt                                     \
-	--prefix=$(KBUILD)/local --disable-imap --disable-file --disable-tftp --disable-smtp    \
-	--disable-pop3 --disable-smb --disable-ftp --disable-sspi --disable-ldap --disable-dict \
-	--without-libpsl --without-nghttp2 --without-libssh2 --disable-telnet --disable-rtsp    \
-	--disable-gopher --without-libidn2 --without-librtmp --disable-shared --enable-static   \
-	--with-zlib=$(KBUILD)/local --with-ssl=$(KBUILD)/local                                  \
-	$(shell test -z "`echo $(CHOST) | grep mingw32`" && echo --enable-ares=$(KBUILD)/local) \
-	&& sed -i "/HAVE_GETEUID/d" lib/curl_config.h && make all install                       )
+	test -d $(KBUILD)/curl-$(V_CURL) || (                                                    \
+	curl -L https://curl.haxx.se/download/curl-$(V_CURL).tar.gz | tar xz -C $(KBUILD)        \
+	&& cd $(KBUILD)/curl-$(V_CURL) && CPPFLAGS=-DCARES_STATICLIB ./configure --host=$(CHOST) \
+	--with-ca-bundle=/etc/ssl/certs/ca-certificates.crt --prefix=$(KBUILD)/local             \
+	--with-zlib=$(KBUILD)/local --with-ssl=$(KBUILD)/local --enable-ares=$(KBUILD)/local     \
+	--disable-manual --disable-imap --disable-file --disable-tftp --disable-smtp             \
+	--disable-pop3 --disable-smb --disable-ftp --disable-sspi --disable-ldap --disable-dict  \
+	--without-libpsl --without-nghttp2 --without-libssh2 --disable-telnet --disable-rtsp     \
+	--disable-gopher --without-libidn2 --without-librtmp --disable-shared --enable-static    \
+	&& sed -i "/HAVE_GETEUID/d" lib/curl_config.h && make all install                        )
 
 sqlite:
 	test -d $(KBUILD)/sqlite-autoconf-$(V_SQL) || (                                       \
@@ -98,7 +97,9 @@ uws:
 	&& sed -i "s/SSL_library_init()/OPENSSL_init_ssl(0, NULL)/"                              \
 	$(KBUILD)/local/include/uWS/Networking.cpp && (test -n "`echo $(CHOST) | grep mingw32`"  \
 	&& (sed -i "s/W\(s2tcpip\)/w\1/" $(KBUILD)/local/include/uWS/Networking.h                \
-	&& sed -i "s/WinSock2/winsock2/" $(KBUILD)/local/include/uWS/Networking.h) ||           :)
+	&& sed -i "s/WinSock2/winsock2/" $(KBUILD)/local/include/uWS/Networking.h                \
+	&& sed -i "s/uv_.*/return {0, \"\", \"\"};/" $(KBUILD)/local/include/uWS/Socket.cpp      \
+	&& sed -i "/sockaddr_storage/,+16d" $(KBUILD)/local/include/uWS/Socket.cpp) ||          :)
 
 quickfix:
 	test -d $(KBUILD)/quickfix-$(V_QF) || (                                                      \
