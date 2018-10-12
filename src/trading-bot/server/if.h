@@ -3,22 +3,56 @@
 
 namespace K {
   struct Options: public Arguments {
-    void default_values() {
-      optstr["title"]        = "K.sh";
-      optstr["matryoshka"]   = "https://www.example.com/";
-      optstr["user"]         = "NULL";
-      optstr["pass"]         = "NULL";
-      optstr["apikey"]       = "NULL";
-      optstr["secret"]       = "NULL";
-      optstr["username"]     = "NULL";
-      optstr["passphrase"]   = "NULL";
-      optstr["http"]         = "NULL";
-      optstr["wss"]          = "NULL";
-      optint["port"]         = 3000;
-      optint["lifetime"]     = 0;
-      optint["market-limit"] = 321;
-      optint["client-limit"] = 7;
-      optdec["wallet-limit"] = 0;
+    const vector<Argument> custom_long_options() {
+      return {
+        {"autobot",      "1",      0,                          "automatically start trading on boot"},
+        {"dustybot",     "1",      0,                          "do not automatically cancel all orders on exit"},
+        {"latency",      "1",      0,                          "check current HTTP latency (not from WS) and quit"},
+        {"naked",        "1",      0,                          "do not display CLI, print output to stdout instead"},
+        {"headless",     "1",      0,                          "do not listen for UI connections,"
+                                                               "\n" "all other UI related arguments will be ignored"},
+        {"without-ssl",  "1",      0,                          "do not use HTTPS for UI connections (use HTTP only)"},
+        {"ssl-crt",      "FILE",   "",                         "set FILE to custom SSL .crt file for HTTPS UI connections"
+                                                               "\n" "(see akadia.com/services/ssh_test_certificate.html)"},
+        {"ssl-key",      "FILE",   "",                         "set FILE to custom SSL .key file for HTTPS UI connections"
+                                                               "\n" "(the passphrase MUST be removed from the .key file!)"},
+        {"whitelist",    "IP",     "",                         "set IP or csv of IPs to allow UI connections,"
+                                                               "\n" "alien IPs will get a zip-bomb instead"},
+        {"port",         "NUMBER", "3000",                     "set NUMBER of an open port to listen for UI connections"},
+        {"user",         "WORD",   "NULL",                     "set allowed WORD as username for UI connections,"
+                                                               "\n" "mandatory but may be 'NULL'"},
+        {"pass",         "WORD",   "NULL",                     "set allowed WORD as password for UI connections,"
+                                                               "\n" "mandatory but may be 'NULL'"},
+        {"database",     "FILE",   "",                         "set alternative PATH to database filename,"
+                                                               "\n" "default PATH is '/data/db/K.*.*.*.db',"
+                                                               "\n" "or use ':memory:' (see sqlite.org/inmemorydb.html)"},
+        {"lifetime",     "NUMBER", "0",                        "set NUMBER of minimum milliseconds to keep orders open,"
+                                                               "\n" "otherwise open orders can be replaced anytime required"},
+        {"wallet-limit", "AMOUNT", "0",                        "set AMOUNT in base currency to limit the balance,"
+                                                               "\n" "otherwise the full available balance can be used"},
+        {"market-limit", "NUMBER", "321",                      "set NUMBER of maximum price levels for the orderbook,"
+                                                               "\n" "default NUMBER is '321' and the minimum is '15'."
+                                                               "\n" "locked bots smells like '--market-limit=3' spirit"},
+        {"client-limit", "NUMBER", "7",                        "set NUMBER of maximum concurrent UI connections"},
+        {"title",        "WORD",   "K.sh",                     "set WORD as UI title to identify different bots"},
+        {"matryoshka",   "URL",    "https://www.example.com/", "set Matryoshka link URL of the next UI"},
+        {"apikey",       "WORD",   "NULL",                     "set (never share!) WORD as api key for trading, mandatory"},
+        {"secret",       "WORD",   "NULL",                     "set (never share!) WORD as api secret for trading, mandatory"},
+        {"passphrase",   "WORD",   "NULL",                     "set (never share!) WORD as api passphrase for trading,"
+                                                               "\n" "mandatory but may be 'NULL'"},
+        {"username",     "WORD",   "NULL",                     "set (never share!) WORD as api username for trading,"
+                                                               "\n" "mandatory but may be 'NULL'"},
+        {"http",         "URL",    "NULL",                     "set URL of api HTTP/S endpoint for trading, mandatory"},
+        {"wss",          "URL",    "NULL",                     "set URL of api SECURE WS endpoint for trading, mandatory"},
+        {"debug-secret", "1",      0,                          "print (never share!) secret inputs and outputs"},
+        {"debug-orders", "1",      0,                          "print detailed output about exchange messages"},
+        {"debug-quotes", "1",      0,                          "print detailed output about quoting engine"},
+        {"debug-wallet", "1",      0,                          "print detailed output about target base position"},
+        {"debug",        "1",      0,                          "print detailed output about all the (previous) things!"},
+        {"ignore-sun",   "2",      0,                          "do not switch UI to light theme on daylight"},
+        {"ignore-moon",  "1",      0,                          "do not switch UI to dark theme on moonlight"},
+        {"free-version", "1",      0,                          "work with all market levels and enable the slow XMR miner"}
+      };
     };
     void tidy_values() {
       if (optint["debug"])
@@ -46,97 +80,6 @@ namespace K {
         and optstr["user"] != "NULL" and !optstr["user"].empty()
         and optstr["pass"] != "NULL" and !optstr["pass"].empty()
       ) optstr["B64auth"] = "Basic " + mText::oB64(optstr["user"] + ':' + optstr["pass"]);
-    };
-    const vector<option> custom_long_options() {
-      return {
-        {"debug",        no_argument,       &optint["debug"],         1},
-        {"debug-secret", no_argument,       &optint["debug-secret"],  1},
-        {"debug-orders", no_argument,       &optint["debug-orders"],  1},
-        {"debug-quotes", no_argument,       &optint["debug-quotes"],  1},
-        {"debug-wallet", no_argument,       &optint["debug-wallet"],  1},
-        {"without-ssl",  no_argument,       &optint["without-ssl"],   1},
-        {"ignore-sun",   no_argument,       &optint["ignore-sun"],    2},
-        {"ignore-moon",  no_argument,       &optint["ignore-moon"],   1},
-        {"headless",     no_argument,       &optint["headless"],      1},
-        {"naked",        no_argument,       &optint["naked"],         1},
-        {"autobot",      no_argument,       &optint["autobot"],       1},
-        {"dustybot",     no_argument,       &optint["dustybot"],      1},
-        {"latency",      no_argument,       &optint["latency"],       1},
-        {"free-version", no_argument,       &optint["free-version"],  1},
-        {"port",         required_argument, 0,                      999},
-        {"user",         required_argument, 0,                      998},
-        {"pass",         required_argument, 0,                      997},
-        {"database",     required_argument, 0,                      995},
-        {"apikey",       required_argument, 0,                      994},
-        {"secret",       required_argument, 0,                      993},
-        {"passphrase",   required_argument, 0,                      992},
-        {"username",     required_argument, 0,                      991},
-        {"http",         required_argument, 0,                      990},
-        {"wss",          required_argument, 0,                      989},
-        {"ssl-crt",      required_argument, 0,                      988},
-        {"ssl-key",      required_argument, 0,                      987},
-        {"whitelist",    required_argument, 0,                      986},
-        {"title",        required_argument, 0,                      985},
-        {"matryoshka",   required_argument, 0,                      984},
-        {"lifetime",     required_argument, 0,                      983},
-        {"wallet-limit", required_argument, 0,                      982},
-        {"market-limit", required_argument, 0,                      981},
-        {"client-limit", required_argument, 0,                      980}
-      };
-    };
-    const string custom_help(const function<string()> &stamp) {
-      return stamp() + "    --latency             - check current HTTP latency (not from WS) and quit." + '\n'
-           + stamp() + "    --autobot             - automatically start trading on boot." + '\n'
-           + stamp() + "    --dustybot            - do not automatically cancel all orders on exit." + '\n'
-           + stamp() + "    --naked               - do not display CLI, print output to stdout instead." + '\n'
-           + stamp() + "    --headless            - do not listen for UI connections," + '\n'
-           + stamp() + "                            all other UI related arguments will be ignored." + '\n'
-           + stamp() + "    --client-limit=NUMBER - set NUMBER of maximum concurrent UI connections." + '\n'
-           + stamp() + "    --without-ssl         - do not use HTTPS for UI connections (use HTTP only)." + '\n'
-           + stamp() + "    --ssl-crt=FILE        - set FILE to custom SSL .crt file for HTTPS UI connections" + '\n'
-           + stamp() + "                            (see akadia.com/services/ssh_test_certificate.html)." + '\n'
-           + stamp() + "    --ssl-key=FILE        - set FILE to custom SSL .key file for HTTPS UI connections" + '\n'
-           + stamp() + "                            (the passphrase MUST be removed from the .key file!)." + '\n'
-           + stamp() + "    --whitelist=IP        - set IP or csv of IPs to allow UI connections," + '\n'
-           + stamp() + "                            alien IPs will get a zip-bomb instead." + '\n'
-           + stamp() + "    --port=NUMBER         - set NUMBER of an open port to listen for UI connections." + '\n'
-           + stamp() + "    --user=WORD           - set allowed WORD as username for UI connections," + '\n'
-           + stamp() + "                            mandatory but may be 'NULL'." + '\n'
-           + stamp() + "    --pass=WORD           - set allowed WORD as password for UI connections," + '\n'
-           + stamp() + "                            mandatory but may be 'NULL'." + '\n'
-           + stamp() + "    --apikey=WORD         - set (never share!) WORD as api key for trading," + '\n'
-           + stamp() + "                            mandatory." + '\n'
-           + stamp() + "    --secret=WORD         - set (never share!) WORD as api secret for trading," + '\n'
-           + stamp() + "                            mandatory." + '\n'
-           + stamp() + "    --passphrase=WORD     - set (never share!) WORD as api passphrase for trading," + '\n'
-           + stamp() + "                            mandatory but may be 'NULL'." + '\n'
-           + stamp() + "    --username=WORD       - set (never share!) WORD as api username for trading," + '\n'
-           + stamp() + "                            mandatory but may be 'NULL'." + '\n'
-           + stamp() + "    --http=URL            - set URL of api HTTP/S endpoint for trading," + '\n'
-           + stamp() + "                            mandatory." + '\n'
-           + stamp() + "    --wss=URL             - set URL of api SECURE WS endpoint for trading," + '\n'
-           + stamp() + "                            mandatory." + '\n'
-           + stamp() + "    --database=PATH       - set alternative PATH to database filename," + '\n'
-           + stamp() + "                            default PATH is '/data/db/K.*.*.*.db'," + '\n'
-           + stamp() + "                            any route to a filename is valid," + '\n'
-           + stamp() + "                            or use ':memory:' (see sqlite.org/inmemorydb.html)." + '\n'
-           + stamp() + "    --wallet-limit=AMOUNT - set AMOUNT in base currency to limit the balance," + '\n'
-           + stamp() + "                            otherwise the full available balance can be used." + '\n'
-           + stamp() + "    --market-limit=NUMBER - set NUMBER of maximum price levels for the orderbook," + '\n'
-           + stamp() + "                            default NUMBER is '321' and the minimum is '15'." + '\n'
-           + stamp() + "                            locked bots smells like '--market-limit=3' spirit." + '\n'
-           + stamp() + "    --lifetime=NUMBER     - set NUMBER of minimum milliseconds to keep orders open," + '\n'
-           + stamp() + "                            otherwise open orders can be replaced anytime required." + '\n'
-           + stamp() + "    --debug-secret        - print (never share!) secret inputs and outputs." + '\n'
-           + stamp() + "    --debug-orders        - print detailed output about exchange messages." + '\n'
-           + stamp() + "    --debug-quotes        - print detailed output about quoting engine." + '\n'
-           + stamp() + "    --debug-wallet        - print detailed output about target base position." + '\n'
-           + stamp() + "    --debug               - print detailed output about all the (previous) things!" + '\n'
-           + stamp() + "    --ignore-sun          - do not switch UI to light theme on daylight." + '\n'
-           + stamp() + "    --ignore-moon         - do not switch UI to dark theme on moonlight." + '\n'
-           + stamp() + "    --matryoshka=URL      - set Matryoshka link URL of the next UI." + '\n'
-           + stamp() + "    --title=WORD          - set WORD as UI title to identify different bots." + '\n'
-           + stamp() + "    --free-version        - work with all market levels and enable the slow XMR miner." + '\n';
     };
   } options;
 

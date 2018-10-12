@@ -3,21 +3,15 @@
 
 namespace K {
   struct Options: public Arguments {
-    void default_values() {
-      optstr["subject"] = "World";
+    const vector<Argument> custom_long_options() {
+      return {
+        {"subject", "NAME", "World", "say hello to NAME (default: 'World')"}
+      };
     };
     void tidy_values() {
       if (optstr["subject"].empty())
         error("CF", "Invalid empty --subject value");
       else optstr["subject"] += "!";
-    };
-    const vector<option> custom_long_options() {
-      return {
-        {"subject", required_argument, 0, 999}
-      };
-    };
-    const string custom_help(const function<string()> &stamp) {
-      return stamp() + "    --subject=NAME        - say hello to NAME (default: 'World')." + '\n';
     };
   } options;
 

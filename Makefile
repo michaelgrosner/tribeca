@@ -2,7 +2,7 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
 PATCH    = 10
-BUILD    = 55
+BUILD    = 56
 SOURCE   = hello-world \
            trading-bot
 CARCH    = x86_64-linux-gnu      \
@@ -120,9 +120,9 @@ else
 	$(info $(call STEP,$(KSRC) $@ $(CHOST)))
 	$(if $(subst 8,,$(subst 7,,$(shell $(CHOST)-g++ -dumpversion | cut -d. -f1))),$(warning $(ERR));$(error $(HINT)))
 	@$(CHOST)-g++ --version
-	mkdir -p $(KLOCAL)/bin
+	@mkdir -p $(KLOCAL)/bin
 	$(MAKE) $(shell test -n "`echo $(CHOST) | grep darwin`" && echo Darwin || (test -n "`echo $(CHOST) | grep mingw32`" && echo Win32 || uname -s)) CHOST=$(CHOST)
-	chmod +x $(KLOCAL)/bin/K-$(KSRC)*
+	@chmod +x $(KLOCAL)/bin/K-$(KSRC)*
 	@$(MAKE) system_install -s
 endif
 
@@ -177,7 +177,7 @@ system_install:
 	$(info )
 	$(info List of installed K binaries:)
 	@sudo cp -f $(wildcard $(KLOCAL)/bin/K-$(KSRC)*) /usr/local/bin
-	@ls -lah $(addprefix /usr/local/bin/,$(notdir $(wildcard $(KLOCAL)/bin/K-$(KSRC)*)))
+	@LS_COLORS="ex=40;92" CLICOLOR="Yes" ls $(shell ls --color > /dev/null 2>&1 && echo --color) -lah $(addprefix /usr/local/bin/,$(notdir $(wildcard $(KLOCAL)/bin/K-$(KSRC)*)))
 	@echo
 	@sudo curl -s --time-cond /etc/ssl/certs/ca-certificates.crt https://curl.haxx.se/ca/cacert.pem \
 	  -o /etc/ssl/certs/ca-certificates.crt

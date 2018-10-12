@@ -72,49 +72,42 @@ namespace K {
     if (reboot) this_thread::sleep_for(chrono::seconds(3));
     exit(prefix + Ansi::r(COLOR_RED) + " Errrror: " + Ansi::b(COLOR_RED) + reason + '.', reboot);
   };
-           // struct option {
-               // const char *name;
-               // int         has_arg;
-               // int        *flag;
-               // int         val;
-           // };
 
+  struct Argument {
+   const string  name;
+   const string  defined_value;
+   const char   *default_value;
+   const string  help;
+  };
   class Arguments {
     public:
-      unordered_map<string, int> optint = {
-        {"colors", 0}
-      };
+      unordered_map<string, int>    optint;
       unordered_map<string, double> optdec;
-      unordered_map<string, string> optstr = {
-        {"interface",     ""},
-        {"exchange",  "NULL"},
-        {"currency",  "NULL"},
-      };
+      unordered_map<string, string> optstr;
     private:
-      vector<option> longopts = {
-        {"help",      no_argument,       0,                  'h'},
-        {"version",   no_argument,       0,                  'v'},
-        {"colors",    no_argument,       &optint["colors"],    1},
-        {"interface", required_argument, 0,                 1714},
-        {"exchange",  required_argument, 0,                 1715},
-        {"currency",  required_argument, 0,                 1716},
-        {0,           0,                 0,                    0}
+      vector<Argument> long_options = {
+        {"help",      "h",    0,      "show this help and quit"},
+        {"version",   "v",    0,      "show current build version and quit"},
+        {"colors",    "1",    0,      "print highlighted output"},
+        {"interface", "IP",   "",     "set IP to bind as outgoing network interface"
+                                      "\n" "default IP is the system default network interface"},
+        {"exchange",  "NAME", "NULL", "set exchange NAME for trading, mandatory one of:"
+                                      "\n" "'COINBASE', 'BITFINEX',  'BITFINEX_MARGIN',"
+                                      "\n" "'HITBTC', 'OKCOIN', 'OKEX', 'KORBIT', 'POLONIEX' or 'NULL'"},
+        {"currency",  "PAIR", "NULL", "set currency PAIR for trading, use format"
+                                      "\n" "with '/' separator, like 'BTC/EUR'"}
       };
     public:
-      virtual void default_values() {};
       virtual void tidy_values() {};
-      virtual const vector<option> custom_long_options() {
+      virtual const vector<Argument> custom_long_options() {
         return {};
-      };
-      virtual const string custom_help(const function<string()> &stamp) {
-        return "";
       };
       void help() {
         const vector<string> stamp = {
-          " \\__/  \\__/ ", " | (   .    ", "   __   \\__/  ",
-          " /  \\__/  \\ ", " |  `.  `.  ", "  /  \\        ",
-          " \\__/  \\__/ ", " |    )   ) ", "  \\__/   __   ",
-          " /  \\__/  \\ ", " |  ,'  ,'  ", "        /  \\  "
+          " \\__/  \\__/ ", " | (   .    ", "  __   \\__/ ",
+          " /  \\__/  \\ ", " |  `.  `.  ", " /  \\       ",
+          " \\__/  \\__/ ", " |    )   ) ", " \\__/   __  ",
+          " /  \\__/  \\ ", " |  ,'  ,'  ", "       /  \\ "
         };
               unsigned int y = Tstamp;
         const unsigned int x = !(y % 2)
@@ -124,19 +117,26 @@ namespace K {
           << Ansi::r(COLOR_GREEN) << "  questions: " << Ansi::r(COLOR_YELLOW) << "https://earn.com/analpaper/" << '\n'
           << Ansi::b(COLOR_GREEN) << "K" << Ansi::r(COLOR_GREEN) << " bugkiller: " << Ansi::r(COLOR_YELLOW) << "https://github.com/ctubio/Krypto-trading-bot/issues/new" << '\n'
           << Ansi::r(COLOR_GREEN) << "  downloads: " << Ansi::r(COLOR_YELLOW) << "ssh://git@github.com/ctubio/Krypto-trading-bot" << '\n'
-          << Ansi::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << "Usage:" << Ansi::b(COLOR_YELLOW) << " ./K.sh [arguments]" << '\n'
-          << Ansi::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << "[arguments]:" << '\n'
-          << Ansi::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << Ansi::r(COLOR_WHITE) << "-h, --help                - show this help and quit." << '\n'
-          << Ansi::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << Ansi::r(COLOR_WHITE) << "    --colors              - print highlighted output." << '\n'
-           + Ansi::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << Ansi::r(COLOR_WHITE) << "    --interface=IP        - set IP to bind as outgoing network interface," << '\n'
-           + Ansi::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << Ansi::r(COLOR_WHITE) << "                            default IP is the system default network interface." << '\n'
-          << Ansi::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << Ansi::r(COLOR_WHITE) << "    --exchange=NAME       - set exchange NAME for trading, mandatory one of:" << '\n'
-          << Ansi::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << Ansi::r(COLOR_WHITE) << "                            'COINBASE', 'BITFINEX',  'BITFINEX_MARGIN', 'HITBTC'," << '\n'
-          << Ansi::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << Ansi::r(COLOR_WHITE) << "                            'OKCOIN', 'OKEX', 'KORBIT', 'POLONIEX' or 'NULL'." << '\n'
-          << Ansi::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << Ansi::r(COLOR_WHITE) << "    --currency=PAIRS      - set currency pairs for trading (use format" << '\n'
-          << Ansi::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << Ansi::r(COLOR_WHITE) << "                            with '/' separator, like 'BTC/EUR')." << '\n'
-          << custom_help([&](){ return Ansi::b(COLOR_WHITE) + stamp.at(((--y%4)*3)+x) + Ansi::r(COLOR_WHITE); })
-          << Ansi::b(COLOR_WHITE) << stamp.at(((--y%4)*3)+x) << Ansi::r(COLOR_WHITE) << "-v, --version             - show current build version and quit." << '\n'
+          << Ansi::b(COLOR_WHITE) << stamp.at(((++y%4)*3)+x) << "Usage:" << Ansi::b(COLOR_YELLOW) << " ./K.sh [arguments]" << '\n'
+          << Ansi::b(COLOR_WHITE) << stamp.at(((++y%4)*3)+x) << "[arguments]:";
+        for (const Argument &it : long_options) {
+          string comment = it.help;
+          string::size_type n = 0;
+          while ((n = comment.find('\n', n + 1)) != string::npos)
+            comment.insert(n + 1, 28, ' ');
+          const string example = "--" + it.name + (it.default_value ? "=" + it.defined_value : "");
+          comment = '\n' + (
+            (!it.default_value and it.defined_value.at(0) > '>')
+              ? "-" + it.defined_value + ", "
+              : "    "
+          ) + example + string(22 - example.length(), ' ')
+            + "- " + comment;
+          n = 0;
+          do comment.insert(n + 1, Ansi::b(COLOR_WHITE) + stamp.at(((++y%4)*3)+x) + Ansi::r(COLOR_WHITE));
+          while ((n = comment.find('\n', n + 1)) != string::npos);
+          clog << comment << '.';
+        }
+        clog << '\n'
           << Ansi::r(COLOR_GREEN) << "  more help: " << Ansi::r(COLOR_YELLOW) << "https://github.com/ctubio/Krypto-trading-bot/blob/master/doc/MANUAL.md" << '\n'
           << Ansi::b(COLOR_GREEN) << "K" << Ansi::r(COLOR_GREEN) << " questions: " << Ansi::r(COLOR_YELLOW) << "irc://irc.freenode.net:6667/#tradingBot" << '\n'
           << Ansi::r(COLOR_GREEN) << "  home page: " << Ansi::r(COLOR_YELLOW) << "https://ca.rles-tub.io./trades" << '\n'
@@ -157,11 +157,31 @@ namespace K {
         tidy_values();
       };
       void main(int argc, char** argv) {
-        default_values();
-        const vector<option> long_options = custom_long_options();
-        longopts.insert(longopts.end()-1, long_options.begin(),
-                                          long_options.end());
-        int index, k = 0;
+        for (const Argument &it : custom_long_options()) long_options.push_back(it);
+        int index = 1714;
+        vector<option> longopts = { {0, 0, 0, 0} };
+        for (const Argument &it : long_options) {
+          if     (!it.default_value)             optint[it.name] =    !!it.default_value;
+          else if (it.defined_value == "NUMBER") optint[it.name] = stoi(it.default_value);
+          else if (it.defined_value == "AMOUNT") optdec[it.name] = stod(it.default_value);
+          else                                   optstr[it.name] =      it.default_value;
+          longopts.insert(longopts.end()-1, {
+            it.name.data(),
+            it.default_value
+              ? required_argument
+              : no_argument,
+            it.default_value or it.defined_value.at(0) > '>'
+              ? nullptr
+              : &optint[it.name],
+            it.default_value
+              ? index++
+              : (it.defined_value.at(0) > '>'
+                ? (int)it.defined_value.at(0)
+                : stoi(it.defined_value)
+              )
+          });
+        }
+        int k = 0;
         while (++k)
           switch (k = getopt_long(argc, argv, "hv", (option*)&longopts[0], &index)) {
             case -1 :
@@ -171,8 +191,8 @@ namespace K {
             case 'v': EXIT(EXIT_SUCCESS);
             default : {
               const string name(longopts.at(index).name);
-              if      (optint.find(name) != optint.end()) optint[name] = stoi(optarg);
-              else if (optdec.find(name) != optdec.end()) optdec[name] = stod(optarg);
+              if      (optint.find(name) != optint.end()) optint[name] =   stoi(optarg);
+              else if (optdec.find(name) != optdec.end()) optdec[name] =   stod(optarg);
               else                                        optstr[name] = string(optarg);
             }
           }
@@ -204,7 +224,6 @@ namespace K {
             << " with DEBUG MODE enabled"
 #endif
             << ".\n" << Ansi::r(COLOR_YELLOW) << mods << Ansi::reset();
-        Ansi::colorful = 0;
       };
     protected:
       static const string changelog() {
