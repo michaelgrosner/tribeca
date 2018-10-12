@@ -16,7 +16,7 @@ namespace K {
   } options;
 
   const string greeting() {
-    cout << "Hello, " << args->optstr["subject"] << endl;
+    cout << "Hello, " << options.optstr["subject"] << endl;
     return "OK";
   };
 

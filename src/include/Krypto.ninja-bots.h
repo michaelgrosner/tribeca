@@ -89,7 +89,7 @@ namespace K {
         {"help",      "h",    0,      "show this help and quit"},
         {"version",   "v",    0,      "show current build version and quit"},
         {"colors",    "1",    0,      "print highlighted output"},
-        {"interface", "IP",   "",     "set IP to bind as outgoing network interface"
+        {"interface", "IP",   "",     "set IP to bind as outgoing network interface,"
                                       "\n" "default IP is the system default network interface"},
         {"exchange",  "NAME", "NULL", "set exchange NAME for trading, mandatory one of:"
                                       "\n" "'COINBASE', 'BITFINEX',  'BITFINEX_MARGIN',"
@@ -101,60 +101,6 @@ namespace K {
       virtual void tidy_values() {};
       virtual const vector<Argument> custom_long_options() {
         return {};
-      };
-      void help() {
-        const vector<string> stamp = {
-          " \\__/  \\__/ ", " | (   .    ", "  __   \\__/ ",
-          " /  \\__/  \\ ", " |  `.  `.  ", " /  \\       ",
-          " \\__/  \\__/ ", " |    )   ) ", " \\__/   __  ",
-          " /  \\__/  \\ ", " |  ,'  ,'  ", "       /  \\ "
-        };
-              unsigned int y = Tstamp;
-        const unsigned int x = !(y % 2)
-                             + !(y % 21);
-        clog
-          << Ansi::r(COLOR_GREEN) << PERMISSIVE_analpaper_SOFTWARE_LICENSE << '\n'
-          << Ansi::r(COLOR_GREEN) << "  questions: " << Ansi::r(COLOR_YELLOW) << "https://earn.com/analpaper/" << '\n'
-          << Ansi::b(COLOR_GREEN) << "K" << Ansi::r(COLOR_GREEN) << " bugkiller: " << Ansi::r(COLOR_YELLOW) << "https://github.com/ctubio/Krypto-trading-bot/issues/new" << '\n'
-          << Ansi::r(COLOR_GREEN) << "  downloads: " << Ansi::r(COLOR_YELLOW) << "ssh://git@github.com/ctubio/Krypto-trading-bot" << '\n'
-          << Ansi::b(COLOR_WHITE) << stamp.at(((++y%4)*3)+x) << "Usage:" << Ansi::b(COLOR_YELLOW) << " ./K.sh [arguments]" << '\n'
-          << Ansi::b(COLOR_WHITE) << stamp.at(((++y%4)*3)+x) << "[arguments]:";
-        for (const Argument &it : long_options) {
-          string comment = it.help;
-          string::size_type n = 0;
-          while ((n = comment.find('\n', n + 1)) != string::npos)
-            comment.insert(n + 1, 28, ' ');
-          const string example = "--" + it.name + (it.default_value ? "=" + it.defined_value : "");
-          comment = '\n' + (
-            (!it.default_value and it.defined_value.at(0) > '>')
-              ? "-" + it.defined_value + ", "
-              : "    "
-          ) + example + string(22 - example.length(), ' ')
-            + "- " + comment;
-          n = 0;
-          do comment.insert(n + 1, Ansi::b(COLOR_WHITE) + stamp.at(((++y%4)*3)+x) + Ansi::r(COLOR_WHITE));
-          while ((n = comment.find('\n', n + 1)) != string::npos);
-          clog << comment << '.';
-        }
-        clog << '\n'
-          << Ansi::r(COLOR_GREEN) << "  more help: " << Ansi::r(COLOR_YELLOW) << "https://github.com/ctubio/Krypto-trading-bot/blob/master/doc/MANUAL.md" << '\n'
-          << Ansi::b(COLOR_GREEN) << "K" << Ansi::r(COLOR_GREEN) << " questions: " << Ansi::r(COLOR_YELLOW) << "irc://irc.freenode.net:6667/#tradingBot" << '\n'
-          << Ansi::r(COLOR_GREEN) << "  home page: " << Ansi::r(COLOR_YELLOW) << "https://ca.rles-tub.io./trades" << '\n'
-          << Ansi::reset();
-      };
-      void tidy() {
-        Ansi::colorful = optint["colors"];
-        if (optstr["currency"].find("/") == string::npos or optstr["currency"].length() < 3)
-          error("CF", "Invalid --currency value; must be in the format of BASE/QUOTE, like BTC/EUR");
-        if (optstr["exchange"].empty())
-          error("CF", "Invalid --exchange value; the config file may have errors (there are extra spaces or double defined variables?)");
-        optstr["exchange"] = strU(optstr["exchange"]);
-        optstr["currency"] = strU(optstr["currency"]);
-        optstr["base"]  = optstr["currency"].substr(0, optstr["currency"].find("/"));
-        optstr["quote"] = optstr["currency"].substr(1+ optstr["currency"].find("/"));
-        if (!optstr["interface"].empty())
-          mREST::inet = optstr["interface"].data();
-        tidy_values();
       };
       void main(int argc, char** argv) {
         for (const Argument &it : custom_long_options()) long_options.push_back(it);
@@ -203,6 +149,61 @@ namespace K {
         }
         tidy();
       };
+    private:
+      void help() {
+        const vector<string> stamp = {
+          " \\__/  \\__/ ", " | (   .    ", "  __   \\__/ ",
+          " /  \\__/  \\ ", " |  `.  `.  ", " /  \\       ",
+          " \\__/  \\__/ ", " |    )   ) ", " \\__/   __  ",
+          " /  \\__/  \\ ", " |  ,'  ,'  ", "       /  \\ "
+        };
+              unsigned int y = Tstamp;
+        const unsigned int x = !(y % 2)
+                             + !(y % 21);
+        clog
+          << Ansi::r(COLOR_GREEN) << PERMISSIVE_analpaper_SOFTWARE_LICENSE << '\n'
+          << Ansi::r(COLOR_GREEN) << "  questions: " << Ansi::r(COLOR_YELLOW) << "https://earn.com/analpaper/" << '\n'
+          << Ansi::b(COLOR_GREEN) << "K" << Ansi::r(COLOR_GREEN) << " bugkiller: " << Ansi::r(COLOR_YELLOW) << "https://github.com/ctubio/Krypto-trading-bot/issues/new" << '\n'
+          << Ansi::r(COLOR_GREEN) << "  downloads: " << Ansi::r(COLOR_YELLOW) << "ssh://git@github.com/ctubio/Krypto-trading-bot" << '\n'
+          << Ansi::b(COLOR_WHITE) << stamp.at(((++y%4)*3)+x) << "Usage:" << Ansi::b(COLOR_YELLOW) << " " << K_SOURCE << " [arguments]" << '\n'
+          << Ansi::b(COLOR_WHITE) << stamp.at(((++y%4)*3)+x) << "[arguments]:";
+        for (const Argument &it : long_options) {
+          string comment = it.help;
+          string::size_type n = 0;
+          while ((n = comment.find('\n', n + 1)) != string::npos)
+            comment.insert(n + 1, 28, ' ');
+          const string example = "--" + it.name + (it.default_value ? "=" + it.defined_value : "");
+          comment = '\n' + (
+            (!it.default_value and it.defined_value.at(0) > '>')
+              ? "-" + it.defined_value + ", "
+              : "    "
+          ) + example + string(22 - example.length(), ' ')
+            + "- " + comment;
+          n = 0;
+          do comment.insert(n + 1, Ansi::b(COLOR_WHITE) + stamp.at(((++y%4)*3)+x) + Ansi::r(COLOR_WHITE));
+          while ((n = comment.find('\n', n + 1)) != string::npos);
+          clog << comment << '.';
+        }
+        clog << '\n'
+          << Ansi::r(COLOR_GREEN) << "  more help: " << Ansi::r(COLOR_YELLOW) << "https://github.com/ctubio/Krypto-trading-bot/blob/master/doc/MANUAL.md" << '\n'
+          << Ansi::b(COLOR_GREEN) << "K" << Ansi::r(COLOR_GREEN) << " questions: " << Ansi::r(COLOR_YELLOW) << "irc://irc.freenode.net:6667/#tradingBot" << '\n'
+          << Ansi::r(COLOR_GREEN) << "  home page: " << Ansi::r(COLOR_YELLOW) << "https://ca.rles-tub.io./trades" << '\n'
+          << Ansi::reset();
+      };
+      void tidy() {
+        if (optstr["currency"].find("/") == string::npos or optstr["currency"].length() < 3)
+          error("CF", "Invalid --currency value; must be in the format of BASE/QUOTE, like BTC/EUR");
+        if (optstr["exchange"].empty())
+          error("CF", "Invalid --exchange value; the config file may have errors (there are extra spaces or double defined variables?)");
+        optstr["exchange"] = strU(optstr["exchange"]);
+        optstr["currency"] = strU(optstr["currency"]);
+        optstr["base"]  = optstr["currency"].substr(0, optstr["currency"].find("/"));
+        optstr["quote"] = optstr["currency"].substr(1+ optstr["currency"].find("/"));
+        if (!optstr["interface"].empty())
+          mREST::inet = optstr["interface"].data();
+        tidy_values();
+        Ansi::colorful = optint["colors"];
+      };
   } *args = nullptr;
 
   const mClock rollout = Tstamp;
@@ -210,7 +211,7 @@ namespace K {
   class Rollout {
     public:
       Rollout(/* KMxTWEpb9ig */) {
-        clog << Ansi::b(COLOR_GREEN) << "K-" << K_SOURCE
+        clog << Ansi::b(COLOR_GREEN) << K_SOURCE
              << Ansi::r(COLOR_GREEN) << ' ' << K_BUILD << ' ' << K_STAMP << ".\n";
         const string mods = changelog();
         const int commits = count(mods.begin(), mods.end(), '\n');
