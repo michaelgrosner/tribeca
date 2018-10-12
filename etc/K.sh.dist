@@ -119,7 +119,12 @@ API_WSS_ENDPOINT=NULL
 #  ▌____                                                .
 #  ▌ IV ▐______________________________________________ .
 #  ▌¯¯¯¯                                                .
-until `#valgrind` `#gdb --args` ./app/server/K          \
+#  █ K_BINARY_FILE                                      .
+#  ██ - Allows one executable file from PATH.
+#  ██ - That's all. You can create multiple *.sh files ready to be executed anytime.
+#K_BINARY_FILE=K-hello-world
+K_BINARY_FILE=K-trading-bot
+until `#valgrind` `#gdb --args` $K_BINARY_FILE          \
     --title      ${0##*/}                               \
     --port       $UI_OPENPORT                           \
     --user       $UI_USERNAME                           \
