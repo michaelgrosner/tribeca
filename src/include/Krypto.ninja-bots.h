@@ -84,6 +84,7 @@ namespace K {
       vector<Argument> long_options = {
         {"help",      "h",    0,        "show this help and quit"},
         {"version",   "v",    0,        "show current build version and quit"},
+        {"debug",     "1",    0,        "print detailed output about all the (possible) things!"},
         {"colors",    "1",    0,        "print highlighted output"},
         {"title",     "WORD", K_SOURCE, "set WORD as UI title to identify different bots"},
         {"interface", "IP",   "",       "set IP to bind as outgoing network interface,"

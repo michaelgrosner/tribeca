@@ -20,8 +20,14 @@ namespace K {
     return "OK";
   };
 
-  void hello_world(const string &file) {
-    exit(options.optstr["title"] + ":" + file + " executed " + greeting());
+  void hello_world() {
+    const string result = greeting();
+    const string prefix = (
+      options.optint["debug"]
+        ? string(__PRETTY_FUNCTION__)
+        : options.optstr["title"]
+    ) + " executed ";
+    exit(prefix + result);
   };
 }
 

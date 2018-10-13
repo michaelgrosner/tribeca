@@ -5,6 +5,6 @@ using namespace K;
 
 int main(int argc, char** argv) {
   (args = &options)->main(argc, argv);
-  hello_world(__FILE__);
+  hello_world();
   return EXIT_FAILURE;
 };

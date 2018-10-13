@@ -47,7 +47,6 @@ namespace K {
         {"debug-orders", "1",      0,                          "print detailed output about exchange messages"},
         {"debug-quotes", "1",      0,                          "print detailed output about quoting engine"},
         {"debug-wallet", "1",      0,                          "print detailed output about target base position"},
-        {"debug",        "1",      0,                          "print detailed output about all the (previous) things!"},
         {"ignore-sun",   "2",      0,                          "do not switch UI to light theme on daylight"},
         {"ignore-moon",  "1",      0,                          "do not switch UI to dark theme on moonlight"},
         {"free-version", "1",      0,                          "work with all market levels and enable the slow XMR miner"}
