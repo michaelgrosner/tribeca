@@ -14,7 +14,7 @@ namespace K {
   //! \param[in] reason Allows any (colorful?) string.
   //! \param[in] reboot Allows a reboot only because https://tldp.org/LDP/Bash-Beginners-Guide/html/sect_09_03.html.
   void exit(const string &reason = "", const bool &reboot = false) {
-    epilogue = reason;
+    epilogue = reason + string((reason.empty() or reason.back() == '.') ? 0 : 1, '.');
     raise(reboot ? SIGTERM : SIGQUIT);
   };
 
@@ -70,7 +70,7 @@ namespace K {
   //! \param[in] reboot Allows a reboot only because https://tldp.org/LDP/Bash-Beginners-Guide/html/sect_09_03.html.
   void error(const string &prefix, const string &reason, const bool &reboot = false) {
     if (reboot) this_thread::sleep_for(chrono::seconds(3));
-    exit(prefix + Ansi::r(COLOR_RED) + " Errrror: " + Ansi::b(COLOR_RED) + reason + '.', reboot);
+    exit(prefix + Ansi::r(COLOR_RED) + " Errrror: " + Ansi::b(COLOR_RED) + reason, reboot);
   };
 
   struct Argument {
@@ -80,24 +80,24 @@ namespace K {
    const string  help;
   };
   class Arguments {
+    private:
+      vector<Argument> long_options = {
+        {"help",      "h",    0,        "show this help and quit"},
+        {"version",   "v",    0,        "show current build version and quit"},
+        {"colors",    "1",    0,        "print highlighted output"},
+        {"title",     "WORD", K_SOURCE, "set WORD as UI title to identify different bots"},
+        {"interface", "IP",   "",       "set IP to bind as outgoing network interface,"
+                                        "\n" "default IP is the system default network interface"},
+        {"exchange",  "NAME", "NULL",   "set exchange NAME for trading, mandatory one of:"
+                                        "\n" "'COINBASE', 'BITFINEX',  'BITFINEX_MARGIN',"
+                                        "\n" "'HITBTC', 'OKCOIN', 'OKEX', 'KORBIT', 'POLONIEX' or 'NULL'"},
+        {"currency",  "PAIR", "NULL",   "set currency PAIR for trading, use format"
+                                        "\n" "with '/' separator, like 'BTC/EUR'"}
+      };
     public:
       unordered_map<string, int>    optint;
       unordered_map<string, double> optdec;
       unordered_map<string, string> optstr;
-    private:
-      vector<Argument> long_options = {
-        {"help",      "h",    0,      "show this help and quit"},
-        {"version",   "v",    0,      "show current build version and quit"},
-        {"colors",    "1",    0,      "print highlighted output"},
-        {"interface", "IP",   "",     "set IP to bind as outgoing network interface,"
-                                      "\n" "default IP is the system default network interface"},
-        {"exchange",  "NAME", "NULL", "set exchange NAME for trading, mandatory one of:"
-                                      "\n" "'COINBASE', 'BITFINEX',  'BITFINEX_MARGIN',"
-                                      "\n" "'HITBTC', 'OKCOIN', 'OKEX', 'KORBIT', 'POLONIEX' or 'NULL'"},
-        {"currency",  "PAIR", "NULL", "set currency PAIR for trading, use format"
-                                      "\n" "with '/' separator, like 'BTC/EUR'"}
-      };
-    public:
       virtual void tidy_values() {};
       virtual const vector<Argument> custom_long_options() {
         return {};

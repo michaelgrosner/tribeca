@@ -21,7 +21,7 @@ namespace K {
   };
 
   void hello_world(const string &file) {
-    exit(file + " executed " + greeting() + '.');
+    exit(options.optstr["title"] + ":" + file + " executed " + greeting());
   };
 }
 

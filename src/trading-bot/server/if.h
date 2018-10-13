@@ -34,7 +34,6 @@ namespace K {
                                                                "\n" "default NUMBER is '321' and the minimum is '15'."
                                                                "\n" "locked bots smells like '--market-limit=3' spirit"},
         {"client-limit", "NUMBER", "7",                        "set NUMBER of maximum concurrent UI connections"},
-        {"title",        "WORD",   "K.sh",                     "set WORD as UI title to identify different bots"},
         {"matryoshka",   "URL",    "https://www.example.com/", "set Matryoshka link URL of the next UI"},
         {"apikey",       "WORD",   "NULL",                     "set (never share!) WORD as api key for trading, mandatory"},
         {"secret",       "WORD",   "NULL",                     "set (never share!) WORD as api secret for trading, mandatory"},
@@ -71,9 +70,9 @@ namespace K {
           +  '.' + "db";
       optint["market-limit"] = max(15, optint["market-limit"]);
       if (optint["ignore-sun"] and optint["ignore-moon"]) optint["ignore-moon"] = 0;
-  #ifndef _WIN32
+#ifndef _WIN32
       if (optint["latency"] or optint["debug-secret"] or optint["debug-orders"] or optint["debug-quotes"])
-  #endif
+#endif
         optint["naked"] = 1;
       if (optint["latency"] or !optint["port"] or !optint["client-limit"]) optint["headless"] = 1;
       if (!optint["headless"]

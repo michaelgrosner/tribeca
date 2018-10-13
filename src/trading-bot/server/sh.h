@@ -44,7 +44,7 @@ namespace K {
         if (args->optint["latency"]) {
           printme(gw);
           gw->latency();
-          exit("1 HTTP connection done" + Ansi::r(COLOR_WHITE) + " (consider to repeat a few times this check).");
+          exit("1 HTTP connection done" + Ansi::r(COLOR_WHITE) + " (consider to repeat a few times this check)");
         }
         switchOn();
         if (mREST::inet)
