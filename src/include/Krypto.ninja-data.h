@@ -592,8 +592,8 @@ namespace K {
           order
             ? order->orderId + "::" + order->exchangeId
               + " [" + to_string((int)order->status) + "]: "
-              + str8(order->quantity) + " " + args->optstr["base"] + " at price "
-              + str8(order->price) + " " + args->optstr["quote"]
+              + str8(order->quantity) + " " + args->str("base") + " at price "
+              + str8(order->price) + " " + args->str("quote")
             : "not found"
         ));
       };
@@ -601,7 +601,7 @@ namespace K {
         print("DEBUG OG", "memory " + to_string(orders.size()));
       };
       const bool debug() const {
-        return args->optint["debug-orders"];
+        return args->num("debug-orders");
       };
   };
   static void to_json(json &j, const mOrders &k) {
@@ -958,12 +958,12 @@ namespace K {
   };
   static void to_json(json &j, const mProduct &k) {
     j = {
-      {   "exchange", args->optstr["exchange"]                      },
-      {       "base", args->optstr["base"]                          },
-      {      "quote", args->optstr["quote"]                         },
+      {   "exchange", args->str("exchange")                         },
+      {       "base", args->str("base")                             },
+      {      "quote", args->str("quote")                            },
       {    "minTick", *k.minTick                                    },
-      {"environment", args->optstr["title"]                         },
-      { "matryoshka", args->optstr["matryoshka"]                    },
+      {"environment", args->str("title")                            },
+      { "matryoshka", args->str("matryoshka")                       },
       {   "homepage", "https://github.com/ctubio/Krypto-trading-bot"}
     };
   };
@@ -1256,11 +1256,11 @@ namespace K {
         abs(order.price * order.tradeQuantity),
         0, 0, 0, 0, 0, fee, false
       );
-      print("GW " + args->optstr["exchange"], string(trade.isPong?"PONG":"PING") + " TRADE "
+      print("GW " + args->str("exchange"), string(trade.isPong?"PONG":"PING") + " TRADE "
         + (trade.side == mSide::Bid ? "BUY  " : "SELL ")
-        + str8(trade.quantity) + ' ' + args->optstr["base"] + " at price "
-        + str8(trade.price) + ' ' + args->optstr["quote"] + " (value "
-        + str8(trade.value) + ' ' + args->optstr["quote"] + ")"
+        + str8(trade.quantity) + ' ' + args->str("base") + " at price "
+        + str8(trade.price) + ' ' + args->str("quote") + " (value "
+        + str8(trade.value) + ' ' + args->str("quote") + ")"
       );
       if (qp.safety == mQuotingSafety::Off or qp.safety == mQuotingSafety::PingPong)
         send_push_back(trade);
@@ -1632,7 +1632,7 @@ namespace K {
         return to_string(targetBasePosition);
       };
       string explainOK() const {
-        return "loaded TBP = % " + args->optstr["base"];
+        return "loaded TBP = % " + args->str("base");
       };
       const bool send_same_blob() const {
         return false;
@@ -1659,12 +1659,12 @@ namespace K {
       void report() const {
         print("PG", "TBP: "
           + to_string((int)(targetBasePosition / baseValue * 1e+2)) + "% = " + str8(targetBasePosition)
-          + " " + args->optstr["base"] + ", pDiv: "
+          + " " + args->str("base") + ", pDiv: "
           + to_string((int)(positionDivergence / baseValue * 1e+2)) + "% = " + str8(positionDivergence)
-          + " " + args->optstr["base"]);
+          + " " + args->str("base"));
       };
       const bool debug() const {
-        return args->optint["debug-wallet"];
+        return args->num("debug-wallet");
       };
   };
   static void to_json(json &j, const mTarget &k) {
@@ -1732,7 +1732,7 @@ namespace K {
     private:
       void calcFundsSilently() {
         if (empty() or !fairValue) return;
-        if (args->optdec["wallet-limit"]) calcMaxWallet();
+        if (args->dec("wallet-limit")) calcMaxWallet();
         calcValues();
         calcProfits();
         target.calcTargetBasePos();
@@ -1754,7 +1754,7 @@ namespace K {
         quote.profit = profits.calcQuoteDiff();
       };
       void calcMaxWallet() {
-        mAmount maxWallet = args->optdec["wallet-limit"];
+        mAmount maxWallet = args->dec("wallet-limit");
         maxWallet -= quote.held / fairValue;
         if (maxWallet > 0 and quote.amount / fairValue > maxWallet) {
           quote.amount = maxWallet * fairValue;
@@ -1836,13 +1836,14 @@ namespace K {
 
   struct mSemaphore: public mToScreen,
                      public mJsonToClient<mSemaphore> {
-    mConnectivity greenButton           = mConnectivity::Disconnected,
-                  greenGateway          = mConnectivity::Disconnected;
+    mConnectivity adminAgreement = mConnectivity::Disconnected,
+                  greenButton    = mConnectivity::Disconnected,
+                  greenGateway   = mConnectivity::Disconnected;
     public:
       void kiss(json *const j) {
         if (j->is_object()
           and j->at("agree").is_number()
-          and j->at("agree").get<int>() != args->optint["autobot"]
+          and j->at("agree").get<mConnectivity>() != adminAgreement
         ) toggle();
       };
       const bool paused() const {
@@ -1851,25 +1852,28 @@ namespace K {
       const bool offline() const {
         return !greenGateway;
       };
+      void agree() {
+        adminAgreement = (mConnectivity)args->num("autobot");
+      };
+      void toggle() {
+        adminAgreement = (mConnectivity)!adminAgreement;
+        send_refresh();
+      };
       void read_from_gw(const mConnectivity &raw) {
         if (greenGateway != raw) {
           greenGateway = raw;
           send_refresh();
         }
       };
-      void toggle() {
-        args->optint["autobot"] = !args->optint["autobot"];
-        send_refresh();
-      };
       const mMatter about() const {
         return mMatter::Connectivity;
       };
     private:
       void send_refresh() {
-        const mConnectivity k = greenGateway * (mConnectivity)args->optint["autobot"];
+        const mConnectivity k = greenGateway * adminAgreement;
         if (greenButton != k) {
           greenButton = k;
-          focus("GW " + args->optstr["exchange"], "Quoting state changed to",
+          focus("GW " + args->str("exchange"), "Quoting state changed to",
             string(paused() ? "DIS" : "") + "CONNECTED");
         }
         send();
@@ -1949,7 +1953,7 @@ namespace K {
     };
     private:
       const bool debug() const {
-        return args->optint["debug-quotes"];
+        return args->num("debug-quotes");
       };
   };
   static void to_json(json &j, const mQuotes &k) {
@@ -2209,7 +2213,7 @@ namespace K {
           } else if (qp.safety != mQuotingSafety::AK47
             or quote.deprecates(order.price)
           ) {
-            if (args->optint["lifetime"] and order.time + args->optint["lifetime"] > Tstamp)
+            if (args->num("lifetime") and order.time + args->num("lifetime") > Tstamp)
               quote.skip();
             else return true;
           }
@@ -2541,9 +2545,9 @@ namespace K {
 #endif
     };
     const unsigned int dbSize() const {
-      if (args->optstr["database"] == ":memory:") return 0;
+      if (args->str("database") == ":memory:") return 0;
       struct stat st;
-      return stat(args->optstr["database"].data(), &st) ? 0 : st.st_size;
+      return stat(args->str("database").data(), &st) ? 0 : st.st_size;
     };
     void tick_orders() {
       orders_60s++;
@@ -2558,12 +2562,12 @@ namespace K {
   };
   static void to_json(json &j, const mMonitor &k) {
     j = {
-      {     "a", *k.unlock                                               },
-      {  "inet", string(mREST::inet ?: "")                               },
-      {  "freq", k.orders_60s                                            },
-      { "theme", args->optint["ignore-moon"] + args->optint["ignore-sun"]},
-      {"memory", k.memSize()                                             },
-      {"dbsize", k.dbSize()                                              }
+      {     "a", *k.unlock                                         },
+      {  "inet", string(mREST::inet ?: "")                         },
+      {  "freq", k.orders_60s                                      },
+      { "theme", args->num("ignore-moon") + args->num("ignore-sun")},
+      {"memory", k.memSize()                                       },
+      {"dbsize", k.dbSize()                                        }
     };
   };
 }

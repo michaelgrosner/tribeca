@@ -81,6 +81,9 @@ namespace K {
   };
   class Arguments {
     private:
+      unordered_map<string, string> optstr;
+      unordered_map<string, int>    optint;
+      unordered_map<string, double> optdec;
       vector<Argument> long_options = {
         {"help",      "h",    0,        "show this help and quit"},
         {"version",   "v",    0,        "show current build version and quit"},
@@ -96,11 +99,26 @@ namespace K {
                                         "\n" "with '/' separator, like 'BTC/EUR'"}
       };
     public:
-      unordered_map<string, int>    optint;
-      unordered_map<string, double> optdec;
-      unordered_map<string, string> optstr;
-      virtual void tidy_values() {};
-      virtual const vector<Argument> custom_long_options() {
+      const string str(const string &name) const {
+        return optstr.find(name) != optstr.end()
+          ? optstr.at(name)
+          : (optint.find(name) != optint.end()
+              ? to_string(num(name))
+              : str8(dec(name))
+          );
+      };
+      const int num(const string &name) const {
+        return optint.at(name);
+      };
+      const double dec(const string &name) const {
+        return optdec.at(name);
+      };
+      virtual void tidy_values(
+        unordered_map<string, string> &str,
+        unordered_map<string, int>    &num,
+        unordered_map<string, double> &dec
+      ) {};
+      virtual const vector<Argument> custom_long_options() const {
         return {};
       };
       void main(int argc, char** argv) {
@@ -202,7 +220,11 @@ namespace K {
         optstr["quote"] = optstr["currency"].substr(1+ optstr["currency"].find("/"));
         if (!optstr["interface"].empty())
           mREST::inet = optstr["interface"].data();
-        tidy_values();
+        tidy_values(
+          optstr,
+          optint,
+          optdec
+        );
         Ansi::colorful = optint["colors"];
       };
   } *args = nullptr;
@@ -290,8 +312,8 @@ namespace K {
         const string mods = changelog();
         if (mods.empty()) {
           epilogue += string("(Three-Headed Monkey found):") + '\n'
-            + "- exchange: " + args->optstr["exchange"]      + '\n'
-            + "- currency: " + args->optstr["currency"]      + '\n'
+            + "- exchange: " + args->str("exchange")         + '\n'
+            + "- currency: " + args->str("currency")         + '\n'
             + "- lastbeat: " + to_string(Tstamp - rollout)   + '\n'
             + "- binbuild: " + string(K_SOURCE)              + ' '
                              + string(K_BUILD)               + '\n'

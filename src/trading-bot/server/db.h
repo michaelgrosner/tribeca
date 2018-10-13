@@ -9,13 +9,13 @@ namespace K {
       string qpdb = "main";
     protected:
       void load() {
-        if (sqlite3_open(args->optstr["database"].data(), &db))
+        if (sqlite3_open(options.str("database").data(), &db))
           error("DB", sqlite3_errmsg(db));
-        screen->log("DB", "loaded OK from", args->optstr["database"]);
-        if (args->optstr["diskdata"].empty()) return;
+        screen->log("DB", "loaded OK from", options.str("database"));
+        if (options.str("diskdata").empty()) return;
         qpdb = "qpdb";
-        exec("ATTACH '" + args->optstr["diskdata"] + "' AS " + qpdb + ";");
-        screen->log("DB", "loaded OK from", args->optstr["diskdata"]);
+        exec("ATTACH '" + options.str("diskdata") + "' AS " + qpdb + ";");
+        screen->log("DB", "loaded OK from", options.str("diskdata"));
       };
     public:
       void backup(mFromDb *const data) {

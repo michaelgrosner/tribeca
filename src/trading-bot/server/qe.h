@@ -8,6 +8,7 @@ namespace K {
       void load() {
         SQLITE_BACKUP
         broker.calculon.dummyMM.mode("loaded");
+        broker.semaphore.agree();
       };
       void waitData() {
         gw->RAWDATA_ENTRY_POINT(mConnectivity, {

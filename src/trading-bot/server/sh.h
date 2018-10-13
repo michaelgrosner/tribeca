@@ -18,30 +18,30 @@ namespace K {
           clog << stamp();
         });
         (args = &options)->main(argc, argv);
-        if (!(gw = Gw::new_Gw(args->optstr["exchange"])))
+        if (!(gw = Gw::new_Gw(options.str("exchange"))))
           error("CF",
             "Unable to configure a valid gateway using --exchange="
-              + args->optstr["exchange"] + " argument"
+              + options.str("exchange") + " argument"
           );
-        gw->exchange = args->optstr["exchange"];
-        gw->base     = args->optstr["base"];
-        gw->quote    = args->optstr["quote"];
-        gw->version  = args->optint["free-version"];
-        gw->apikey   = args->optstr["apikey"];
-        gw->secret   = args->optstr["secret"];
-        gw->user     = args->optstr["username"];
-        gw->pass     = args->optstr["passphrase"];
-        gw->http     = args->optstr["http"];
-        gw->ws       = args->optstr["wss"];
-        gw->maxLevel = args->optint["market-limit"];
-        gw->autobot  = args->optint["autobot"];
-        gw->dustybot = args->optint["dustybot"];
-        gw->debug    = args->optint["debug-secret"];
+        gw->exchange = options.str("exchange");
+        gw->base     = options.str("base");
+        gw->quote    = options.str("quote");
+        gw->version  = options.num("free-version");
+        gw->apikey   = options.str("apikey");
+        gw->secret   = options.str("secret");
+        gw->user     = options.str("username");
+        gw->pass     = options.str("passphrase");
+        gw->http     = options.str("http");
+        gw->ws       = options.str("wss");
+        gw->maxLevel = options.num("market-limit");
+        gw->autobot  = options.num("autobot");
+        gw->dustybot = options.num("dustybot");
+        gw->debug    = options.num("debug-secret");
         gw->askForCancelAll = &qp.cancelOrdersAuto;
         engine->monitor.unlock          = &gw->unlock;
         engine->monitor.product.minTick = &gw->minTick;
         engine->monitor.product.minSize = &gw->minSize;
-        if (args->optint["latency"]) {
+        if (options.num("latency")) {
           printme(gw);
           gw->latency();
           exit("1 HTTP connection done" + Ansi::r(COLOR_WHITE) + " (consider to repeat a few times this check)");
@@ -57,10 +57,10 @@ namespace K {
         wBorder = nullptr;
       };
       void switchOn() {
-        if (!args->optint["headless"])
+        if (!options.num("headless"))
           wtfismyip = mREST::xfer("https://wtfismyip.com/json", 4L)
                         .value("/YourFuckingIPAddress"_json_pointer, "");
-        if (args->optint["naked"]) return;
+        if (options.num("naked")) return;
         if (!(wBorder = initscr()))
           error("SH",
             "Unable to initialize ncurses, try to run in your terminal"
@@ -126,9 +126,9 @@ namespace K {
           << setw(3) << milliseconds.count()
           << setw(3) << microseconds.count();
         time_t tt = chrono::system_clock::to_time_t(clock);
-        int len = args->optint["naked"] ? 15 : 9;
+        int len = options.num("naked") ? 15 : 9;
         char datetime[len];
-        strftime(datetime, len, args->optint["naked"] ? "%m/%d %T" : "%T", localtime(&tt));
+        strftime(datetime, len, options.num("naked") ? "%m/%d %T" : "%T", localtime(&tt));
         if (!wBorder) return (Ansi::b(COLOR_GREEN) + (datetime + (Ansi::r(COLOR_GREEN) + microtime.str()))) + Ansi::b(COLOR_WHITE) + ' ';
         wattron(wLog, COLOR_PAIR(COLOR_GREEN));
         wattron(wLog, A_BOLD);
@@ -166,9 +166,9 @@ namespace K {
         if (!wBorder) {
           cout << stamp() << "UI" << Ansi::r(COLOR_WHITE) << " ready ";
           if (wtfismyip.empty())
-            cout << "over " << Ansi::b(COLOR_YELLOW) << protocol << Ansi::r(COLOR_WHITE) << " on external port " << Ansi::b(COLOR_YELLOW) << to_string(args->optint["port"]) << Ansi::r(COLOR_WHITE) << ".\n";
+            cout << "over " << Ansi::b(COLOR_YELLOW) << protocol << Ansi::r(COLOR_WHITE) << " on external port " << Ansi::b(COLOR_YELLOW) << options.str("port") << Ansi::r(COLOR_WHITE) << ".\n";
           else
-            cout << "at " << Ansi::b(COLOR_YELLOW) << strL(protocol) << "://" << wtfismyip << ":" << to_string(args->optint["port"]) << Ansi::r(COLOR_WHITE) << ".\n";
+            cout << "at " << Ansi::b(COLOR_YELLOW) << strL(protocol) << "://" << wtfismyip << ":" << options.str("port") << Ansi::r(COLOR_WHITE) << ".\n";
           return;
         }
         wmove(wLog, getmaxy(wLog)-1, 0);
@@ -188,7 +188,7 @@ namespace K {
           wprintw(wLog, " on external port ");
           wattroff(wLog, COLOR_PAIR(COLOR_WHITE));
           wattron(wLog, COLOR_PAIR(COLOR_YELLOW));
-          wprintw(wLog, to_string(args->optint["port"]).data());
+          wprintw(wLog, options.str("port").data());
           wattroff(wLog, COLOR_PAIR(COLOR_YELLOW));
         } else {
           wprintw(wLog, "at ");
@@ -198,7 +198,7 @@ namespace K {
           wprintw(wLog, "://");
           wprintw(wLog, wtfismyip.data());
           wprintw(wLog, ":");
-          wprintw(wLog, to_string(args->optint["port"]).data());
+          wprintw(wLog, options.str("port").data());
           wattroff(wLog, COLOR_PAIR(COLOR_YELLOW));
         }
         wattron(wLog, COLOR_PAIR(COLOR_WHITE));
@@ -329,11 +329,11 @@ namespace K {
         mvwaddch(wBorder, y, 0, ACS_BTEE);
         mvwaddch(wBorder, 0, 12, ACS_RTEE);
         wattron(wBorder, COLOR_PAIR(COLOR_GREEN));
-        string title1 = "   " + args->optstr["exchange"];
-        string title2 = " " + (args->optint["port"]
+        string title1 = "   " + options.str("exchange");
+        string title2 = " " + (options.num("port")
           ? "UI" + (wtfismyip.empty()
-            ? " on " + protocol + " port " + to_string(args->optint["port"])
-            : " at " + strL(protocol) + "://" + wtfismyip + ":" + to_string(args->optint["port"])
+            ? " on " + protocol + " port " + options.str("port")
+            : " at " + strL(protocol) + "://" + wtfismyip + ":" + options.str("port")
           ) : "headless"
         )  + ' ';
         wattron(wBorder, A_BOLD);

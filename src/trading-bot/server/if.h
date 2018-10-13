@@ -3,7 +3,7 @@
 
 namespace K {
   struct Options: public Arguments {
-    const vector<Argument> custom_long_options() {
+    const vector<Argument> custom_long_options() const {
       return {
         {"autobot",      "1",      0,                          "automatically start trading on boot"},
         {"dustybot",     "1",      0,                          "do not automatically cancel all orders on exit"},
@@ -52,32 +52,38 @@ namespace K {
         {"free-version", "1",      0,                          "work with all market levels and enable the slow XMR miner"}
       };
     };
-    void tidy_values() {
-      if (optint["debug"])
-        optint["debug-secret"] =
-        optint["debug-orders"] =
-        optint["debug-quotes"] =
-        optint["debug-wallet"] = 1;
-      if (optstr["database"].empty() or optstr["database"] == ":memory:")
-        (optstr["database"] == ":memory:"
-          ? optstr["diskdata"]
-          : optstr["database"]
-        ) = "/data/db/K"
-          + ('.' + optstr["exchange"])
-          +  '.' + optstr["base"]
-          +  '.' + optstr["quote"]
-          +  '.' + "db";
-      optint["market-limit"] = max(15, optint["market-limit"]);
-      if (optint["ignore-sun"] and optint["ignore-moon"]) optint["ignore-moon"] = 0;
+    void tidy_values(
+      unordered_map<string, string> &str,
+      unordered_map<string, int>    &num,
+      unordered_map<string, double> &dec
+    ) {
+      if (num["debug"])
+        num["debug-secret"] =
+        num["debug-orders"] =
+        num["debug-quotes"] =
+        num["debug-wallet"] = 1;
+      num["market-limit"] = max(15, num["market-limit"]);
+      if (num["ignore-sun"] and num["ignore-moon"]) num["ignore-moon"] = 0;
 #ifndef _WIN32
-      if (optint["latency"] or optint["debug-secret"] or optint["debug-orders"] or optint["debug-quotes"])
+      if (num["latency"] or num["debug-secret"] or num["debug-orders"] or num["debug-quotes"])
 #endif
-        optint["naked"] = 1;
-      if (optint["latency"] or !optint["port"] or !optint["client-limit"]) optint["headless"] = 1;
-      if (!optint["headless"]
-        and optstr["user"] != "NULL" and !optstr["user"].empty()
-        and optstr["pass"] != "NULL" and !optstr["pass"].empty()
-      ) optstr["B64auth"] = "Basic " + mText::oB64(optstr["user"] + ':' + optstr["pass"]);
+        num["naked"] = 1;
+      if (num["latency"] or !num["port"] or !num["client-limit"]) num["headless"] = 1;
+      str["B64auth"] = (!num["headless"]
+        and str["user"] != "NULL" and !str["user"].empty()
+        and str["pass"] != "NULL" and !str["pass"].empty()
+      ) ? "Basic " + mText::oB64(str["user"] + ':' + str["pass"])
+        : "";
+      str["diskdata"] = "";
+      if (str["database"].empty() or str["database"] == ":memory:")
+        (str["database"] == ":memory:"
+          ? str["diskdata"]
+          : str["database"]
+        ) = "/data/db/K"
+          + ('.' + str["exchange"])
+          +  '.' + str["base"]
+          +  '.' + str["quote"]
+          +  '.' + "db";
     };
   } options;
 
@@ -222,10 +228,11 @@ namespace K {
       };
       void quote2orders(mQuote &quote) {
         const vector<mOrder*> abandoned = broker.abandon(quote);
-        const bool replace = gw->askForReplace
-          and !(quote.empty() or abandoned.empty());
+        const unsigned int replace = gw->askForReplace and !(
+          quote.empty() or abandoned.empty()
+        );
         for_each(
-          abandoned.begin(), abandoned.end() - (replace ? 1 : 0),
+          abandoned.begin(), abandoned.end() - replace,
           [&](mOrder *const it) {
             cancelOrder(it);
           }
