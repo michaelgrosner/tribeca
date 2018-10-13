@@ -221,6 +221,7 @@ namespace K {
     double            widthPongPercentage             = 0.25;
     bool              widthPercentage                 = false;
     bool              bestWidth                       = true;
+    mAmount           bestWidthSize                   = 0;
     mAmount           buySize                         = 0.02;
     unsigned int      buySizePercentage               = 7;
     bool              buySizeMax                      = false;
@@ -286,6 +287,7 @@ namespace K {
       widthPongPercentage             = fmin(1e+5, fmax(1e-4, j.value("widthPongPercentage", widthPongPercentage)));
       widthPercentage                 =                       j.value("widthPercentage", widthPercentage);
       bestWidth                       =                       j.value("bestWidth", bestWidth);
+      bestWidthSize                   = fmax(0,               j.value("bestWidthSize", bestWidthSize));
       buySize                         = fmax(1e-8,            j.value("buySize", buySize));
       buySizePercentage               = fmin(1e+2, fmax(1,    j.value("buySizePercentage", buySizePercentage)));
       buySizeMax                      =                       j.value("buySizeMax", buySizeMax);
@@ -393,6 +395,7 @@ namespace K {
       {            "widthPongPercentage", k.widthPongPercentage            },
       {                "widthPercentage", k.widthPercentage                },
       {                      "bestWidth", k.bestWidth                      },
+      {                  "bestWidthSize", k.bestWidthSize                  },
       {                        "buySize", k.buySize                        },
       {              "buySizePercentage", k.buySizePercentage              },
       {                     "buySizeMax", k.buySizeMax                     },
@@ -2388,9 +2391,14 @@ namespace K {
       };
       void applyBestWidth() {
         if (!qp.bestWidth) return;
+        const mAmount bestWidthSize = qp.bestWidthSize;
+        mAmount bidDepth = 0;
+        mAmount askDepth = 0;
         if (!quotes.ask.empty())
           for (const mLevel &it : levels.asks)
             if (it.price > quotes.ask.price) {
+              askDepth += it.size;
+              if (askDepth < bestWidthSize) continue;
               const mPrice bestAsk = it.price - *product.minTick;
               if (bestAsk > levels.fairValue) {
                 quotes.ask.price = bestAsk;
@@ -2400,6 +2408,8 @@ namespace K {
         if (!quotes.bid.empty())
           for (const mLevel &it : levels.bids)
             if (it.price < quotes.bid.price) {
+              bidDepth += it.size;
+              if (bidDepth < bestWidthSize) continue;
               const mPrice bestBid = it.price + *product.minTick;
               if (bestBid < levels.fairValue) {
                 quotes.bid.price = bestBid;

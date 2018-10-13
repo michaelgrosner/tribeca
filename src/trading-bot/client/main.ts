@@ -230,6 +230,7 @@ class DisplayOrder {
                                         <th title="If you're in a state where Krypto-trading-bot has stopped sending orders because your position has diverged too far from Target Base Position, this setting will much more aggressively try to fix that discrepancy by placing orders much larger than size and at prices much more aggressive than width normally allows.">apr</th>
                                         <th title="Defines the value with which the size is multiplicated when apr is in functional state." *ngIf="pair.quotingParameters.display.aggressivePositionRebalancing">aprFactor</th>
                                         <th title="Enable Best Width to place orders avoiding hollows in the book, while accomodating new orders right near to existent orders in the book." >bw?</th>
+                                        <th title="Defines the size to ignore when looking for hollows in the book. The sum of orders up to this size will be ignored." >bwSize</th>
                                         <th title="The values of width or widthPing and widthPong will be a percentage related to the fair value; useful when calculating profits subtracting exchange's fees (that usually are percentages too)." *ngIf="[6].indexOf(pair.quotingParameters.display.mode)==-1">%w?</th>
                                         <th title="Minimum width (spread) of our quote in USD (ex. a value of .3 is 30 cents). With the exception for when apr is checked and the system is aggressively rebalancing positions after they get out of whack, width will always be respected." *ngIf="[1,2,3].indexOf(pair.quotingParameters.display.safety)==-1"><span *ngIf="[6].indexOf(pair.quotingParameters.display.mode)==-1">width</span><span *ngIf="[6].indexOf(pair.quotingParameters.display.mode)>-1">depth</span><span *ngIf="pair.quotingParameters.display.widthPercentage && [6].indexOf(pair.quotingParameters.display.mode)==-1">%</span></th>
                                         <th title="Minimum width (spread) of our quote in USD (ex. a value of .3 is 30 cents). With the exception for when apr is checked and the system is aggressively rebalancing positions after they get out of whack, width will always be respected." *ngIf="[1,2,3].indexOf(pair.quotingParameters.display.safety)>-1">pingWidth<span *ngIf="pair.quotingParameters.display.widthPercentage">%</span></th>
@@ -331,6 +332,12 @@ class DisplayOrder {
                                         <td style="width:25px;border-bottom: 3px solid #8BE296;">
                                             <input type="checkbox"
                                                [(ngModel)]="pair.quotingParameters.display.bestWidth">
+                                        </td>
+                                        <td style="width:90px;border-bottom: 3px solid #8BE296;">
+                                            <input type="number"
+                                               [(ngModel)]="pair.quotingParameters.display.bestWidthSize"
+                                               class="form-control input-sm" title="{{ baseCurrency }}"
+                                               type="number" step="{{ product.advert.minTick}}" min="0">
                                         </td>
                                         <td style="width:25px;border-bottom: 3px solid #8BE296;" *ngIf="[6].indexOf(pair.quotingParameters.display.mode)==-1">
                                             <input type="checkbox"
