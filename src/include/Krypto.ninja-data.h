@@ -2391,7 +2391,7 @@ namespace K {
       };
       void applyBestWidth() {
         if (!qp.bestWidth) return;
-        const mAmount bestWidthSize = qp.bestWidthSize;
+        const mAmount bestWidthSize = (sideAPR=="Off" ? qp.bestWidthSize : 0);
         mAmount bidDepth = 0;
         mAmount askDepth = 0;
         if (!quotes.ask.empty())
