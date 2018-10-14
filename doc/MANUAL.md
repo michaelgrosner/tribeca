@@ -125,6 +125,8 @@ In the web UI, there are three rows of panels with cryptic looking names and edi
 
 * `bw?` - Enable Best Width to place orders avoiding "hollows" in the book, while accomodating new orders right near to existent orders in the book, without leaving "hollows" in between.
 
+* `bwSize` - If Best Width is enabled, set the total size of trades in the book to ignore. Set to 0 to only ignore "hollows". Useful for ignoring very small trades in the book.
+
 * `%w?` - If enabled, the values of `width` or `widthPing` and `widthPong` will be a percentage related to the `fair value`; useful when calculating profits subtracting exchange's fees (that usually are percentages too).
 
 * `width` and `widthPing` - Minimum width (spread) of our quote in USD (ex. a value of .3 is 30 cents). With the exception for when `apr` is checked and the system is aggressively rebalancing positions after they get out of whack, `width` will always be respected.
