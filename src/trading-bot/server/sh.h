@@ -18,25 +18,6 @@ namespace K {
           clog << stamp();
         });
         (args = &options)->main(argc, argv);
-        if (!(gw = Gw::new_Gw(options.str("exchange"))))
-          error("CF",
-            "Unable to configure a valid gateway using --exchange="
-              + options.str("exchange") + " argument"
-          );
-        gw->exchange = options.str("exchange");
-        gw->base     = options.str("base");
-        gw->quote    = options.str("quote");
-        gw->version  = options.num("free-version");
-        gw->apikey   = options.str("apikey");
-        gw->secret   = options.str("secret");
-        gw->user     = options.str("username");
-        gw->pass     = options.str("passphrase");
-        gw->http     = options.str("http");
-        gw->ws       = options.str("wss");
-        gw->maxLevel = options.num("market-limit");
-        gw->autobot  = options.num("autobot");
-        gw->dustybot = options.num("dustybot");
-        gw->debug    = options.num("debug-secret");
         gw->askForCancelAll = &qp.cancelOrdersAuto;
         engine->monitor.unlock          = &gw->unlock;
         engine->monitor.product.minTick = &gw->minTick;

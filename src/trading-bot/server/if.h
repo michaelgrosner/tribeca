@@ -5,9 +5,9 @@ namespace K {
   struct Options: public Arguments {
     const vector<Argument> custom_long_options() const {
       return {
-        {"autobot",      "1",      0,                          "automatically start trading on boot"},
-        {"dustybot",     "1",      0,                          "do not automatically cancel all orders on exit"},
-        {"latency",      "1",      0,                          "check current HTTP latency (not from WS) and quit"},
+        {"wallet-limit", "AMOUNT", "0",                        "set AMOUNT in base currency to limit the balance,"
+                                                               "\n" "otherwise the full available balance can be used"},
+        {"client-limit", "NUMBER", "7",                        "set NUMBER of maximum concurrent UI connections"},
         {"naked",        "1",      0,                          "do not display CLI, print output to stdout instead"},
         {"headless",     "1",      0,                          "do not listen for UI connections,"
                                                                "\n" "all other UI related arguments will be ignored"},
@@ -28,28 +28,13 @@ namespace K {
                                                                "\n" "or use ':memory:' (see sqlite.org/inmemorydb.html)"},
         {"lifetime",     "NUMBER", "0",                        "set NUMBER of minimum milliseconds to keep orders open,"
                                                                "\n" "otherwise open orders can be replaced anytime required"},
-        {"wallet-limit", "AMOUNT", "0",                        "set AMOUNT in base currency to limit the balance,"
-                                                               "\n" "otherwise the full available balance can be used"},
-        {"market-limit", "NUMBER", "321",                      "set NUMBER of maximum price levels for the orderbook,"
-                                                               "\n" "default NUMBER is '321' and the minimum is '15'."
-                                                               "\n" "locked bots smells like '--market-limit=3' spirit"},
-        {"client-limit", "NUMBER", "7",                        "set NUMBER of maximum concurrent UI connections"},
         {"matryoshka",   "URL",    "https://www.example.com/", "set Matryoshka link URL of the next UI"},
-        {"apikey",       "WORD",   "NULL",                     "set (never share!) WORD as api key for trading, mandatory"},
-        {"secret",       "WORD",   "NULL",                     "set (never share!) WORD as api secret for trading, mandatory"},
-        {"passphrase",   "WORD",   "NULL",                     "set (never share!) WORD as api passphrase for trading,"
-                                                               "\n" "mandatory but may be 'NULL'"},
-        {"username",     "WORD",   "NULL",                     "set (never share!) WORD as api username for trading,"
-                                                               "\n" "mandatory but may be 'NULL'"},
-        {"http",         "URL",    "NULL",                     "set URL of api HTTP/S endpoint for trading, mandatory"},
-        {"wss",          "URL",    "NULL",                     "set URL of api SECURE WS endpoint for trading, mandatory"},
-        {"debug-secret", "1",      0,                          "print (never share!) secret inputs and outputs"},
-        {"debug-orders", "1",      0,                          "print detailed output about exchange messages"},
-        {"debug-quotes", "1",      0,                          "print detailed output about quoting engine"},
-        {"debug-wallet", "1",      0,                          "print detailed output about target base position"},
         {"ignore-sun",   "2",      0,                          "do not switch UI to light theme on daylight"},
         {"ignore-moon",  "1",      0,                          "do not switch UI to dark theme on moonlight"},
-        {"free-version", "1",      0,                          "work with all market levels and enable the slow XMR miner"}
+        {"latency",      "1",      0,                          "check current HTTP latency (not from WS) and quit"},
+        {"debug-orders", "1",      0,                          "print detailed output about exchange messages"},
+        {"debug-quotes", "1",      0,                          "print detailed output about quoting engine"},
+        {"debug-wallet", "1",      0,                          "print detailed output about target base position"}
       };
     };
     void tidy_values(
@@ -58,17 +43,15 @@ namespace K {
       unordered_map<string, double> &dec
     ) {
       if (num["debug"])
-        num["debug-secret"] =
         num["debug-orders"] =
         num["debug-quotes"] =
         num["debug-wallet"] = 1;
-      num["market-limit"] = max(15, num["market-limit"]);
-      if (num["ignore-sun"] and num["ignore-moon"]) num["ignore-moon"] = 0;
-#ifndef _WIN32
-      if (num["latency"] or num["debug-secret"] or num["debug-orders"] or num["debug-quotes"])
-#endif
+      if (num["ignore-moon"] and num["ignore-sun"])
+        num["ignore-moon"] = 0;
+      if (num["latency"] or num["debug-orders"] or num["debug-quotes"])
         num["naked"] = 1;
-      if (num["latency"] or !num["port"] or !num["client-limit"]) num["headless"] = 1;
+      if (num["latency"] or !num["port"] or !num["client-limit"])
+        num["headless"] = 1;
       str["B64auth"] = (!num["headless"]
         and str["user"] != "NULL" and !str["user"].empty()
         and str["pass"] != "NULL" and !str["pass"].empty()

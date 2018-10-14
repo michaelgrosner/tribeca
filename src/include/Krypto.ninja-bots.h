@@ -84,21 +84,15 @@ namespace K {
       unordered_map<string, string> optstr;
       unordered_map<string, int>    optint;
       unordered_map<string, double> optdec;
-      vector<Argument> long_options = {
-        {"help",      "h",    0,        "show this help and quit"},
-        {"version",   "v",    0,        "show current build version and quit"},
-        {"debug",     "1",    0,        "print detailed output about all the (possible) things!"},
-        {"colors",    "1",    0,        "print highlighted output"},
-        {"title",     "WORD", K_SOURCE, "set WORD as UI title to identify different bots"},
-        {"interface", "IP",   "",       "set IP to bind as outgoing network interface,"
-                                        "\n" "default IP is the system default network interface"},
-        {"exchange",  "NAME", "NULL",   "set exchange NAME for trading, mandatory one of:"
-                                        "\n" "'COINBASE', 'BITFINEX',  'BITFINEX_MARGIN',"
-                                        "\n" "'HITBTC', 'OKCOIN', 'OKEX', 'KORBIT', 'POLONIEX' or 'NULL'"},
-        {"currency",  "PAIR", "NULL",   "set currency PAIR for trading, use format"
-                                        "\n" "with '/' separator, like 'BTC/EUR'"}
-      };
     public:
+      virtual void tidy_values(
+        unordered_map<string, string> &str,
+        unordered_map<string, int>    &num,
+        unordered_map<string, double> &dec
+      ) {};
+      virtual const vector<Argument> custom_long_options() const {
+        return {};
+      };
       const string str(const string &name) const {
         return optstr.find(name) != optstr.end()
           ? optstr.at(name)
@@ -113,16 +107,39 @@ namespace K {
       const double dec(const string &name) const {
         return optdec.at(name);
       };
-      virtual void tidy_values(
-        unordered_map<string, string> &str,
-        unordered_map<string, int>    &num,
-        unordered_map<string, double> &dec
-      ) {};
-      virtual const vector<Argument> custom_long_options() const {
-        return {};
-      };
       void main(int argc, char** argv) {
+        vector<Argument> long_options = {
+          {"help",         "h",      0,        "show this help and quit"},
+          {"version",      "v",      0,        "show current build version and quit"},
+          {"autobot",      "1",      0,        "automatically start trading on boot"},
+          {"dustybot",     "1",      0,        "do not automatically cancel all orders on exit"},
+          {"interface",    "IP",     "",       "set IP to bind as outgoing network interface,"
+                                               "\n" "default IP is the system default network interface"},
+          {"exchange",     "NAME",   "NULL",   "set exchange NAME for trading, mandatory one of:"
+                                               "\n" "'COINBASE', 'BITFINEX',  'BITFINEX_MARGIN',"
+                                               "\n" "'HITBTC', 'OKCOIN', 'OKEX', 'KORBIT', 'POLONIEX' or 'NULL'"},
+          {"currency",     "PAIR",   "NULL",   "set currency PAIR for trading, use format"
+                                               "\n" "with '/' separator, like 'BTC/EUR'"},
+          {"apikey",       "WORD",   "NULL",   "set (never share!) WORD as api key for trading, mandatory"},
+          {"secret",       "WORD",   "NULL",   "set (never share!) WORD as api secret for trading, mandatory"},
+          {"passphrase",   "WORD",   "NULL",   "set (never share!) WORD as api passphrase for trading,"
+                                               "\n" "mandatory but may be 'NULL'"},
+          {"username",     "WORD",   "NULL",   "set (never share!) WORD as api username for trading,"
+                                               "\n" "mandatory but may be 'NULL'"},
+          {"http",         "URL",    "NULL",   "set URL of api HTTP/S endpoint for trading, mandatory"},
+          {"wss",          "URL",    "NULL",   "set URL of api SECURE WS endpoint for trading, mandatory"},
+          {"market-limit", "NUMBER", "321",    "set NUMBER of maximum price levels for the orderbook,"
+                                               "\n" "default NUMBER is '321' and the minimum is '15'."
+                                               "\n" "locked bots smells like '--market-limit=3' spirit"}
+        };
         for (const Argument &it : custom_long_options()) long_options.push_back(it);
+        for (const Argument &it : (vector<Argument>){
+          {"debug-secret", "1",      0,        "print (never share!) secret inputs and outputs"},
+          {"debug",        "1",      0,        "print detailed output about all the (previous) things!"},
+          {"colors",       "1",      0,        "print highlighted output"},
+          {"title",        "WORD",   K_SOURCE, "set WORD to allow admins to identify different bots"},
+          {"free-version", "1",      0,        "work with all market levels and enable the slow XMR miner"}
+        }) long_options.push_back(it);
         int index = 1714;
         vector<option> longopts = { {0, 0, 0, 0} };
         for (const Argument &it : long_options) {
@@ -151,7 +168,7 @@ namespace K {
           switch (k = getopt_long(argc, argv, "hv", (option*)&longopts[0], &index)) {
             case -1 :
             case  0 : break;
-            case 'h': help();
+            case 'h': help(long_options);
             case '?':
             case 'v': EXIT(EXIT_SUCCESS);
             default : {
@@ -167,9 +184,13 @@ namespace K {
           error("CF", argerr);
         }
         tidy();
+        gateway();
+        Ansi::colorful = num("colors");
+        if (!str("interface").empty())
+          mREST::inet = str("interface").data();
       };
     private:
-      void help() {
+      void help(const vector<Argument> &long_options) {
         const vector<string> stamp = {
           " \\__/  \\__/ ", " | (   .    ", "  __   \\__/ ",
           " /  \\__/  \\ ", " |  `.  `.  ", " /  \\       ",
@@ -187,21 +208,21 @@ namespace K {
           << Ansi::b(COLOR_WHITE) << stamp.at(((++y%4)*3)+x) << "Usage:" << Ansi::b(COLOR_YELLOW) << " " << K_SOURCE << " [arguments]" << '\n'
           << Ansi::b(COLOR_WHITE) << stamp.at(((++y%4)*3)+x) << "[arguments]:";
         for (const Argument &it : long_options) {
-          string comment = it.help;
+          string usage = it.help;
           string::size_type n = 0;
-          while ((n = comment.find('\n', n + 1)) != string::npos)
-            comment.insert(n + 1, 28, ' ');
+          while ((n = usage.find('\n', n + 1)) != string::npos)
+            usage.insert(n + 1, 28, ' ');
           const string example = "--" + it.name + (it.default_value ? "=" + it.defined_value : "");
-          comment = '\n' + (
+          usage = '\n' + (
             (!it.default_value and it.defined_value.at(0) > '>')
               ? "-" + it.defined_value + ", "
               : "    "
           ) + example + string(22 - example.length(), ' ')
-            + "- " + comment;
+            + "- " + usage;
           n = 0;
-          do comment.insert(n + 1, Ansi::b(COLOR_WHITE) + stamp.at(((++y%4)*3)+x) + Ansi::r(COLOR_WHITE));
-          while ((n = comment.find('\n', n + 1)) != string::npos);
-          clog << comment << '.';
+          do usage.insert(n + 1, Ansi::b(COLOR_WHITE) + stamp.at(((++y%4)*3)+x) + Ansi::r(COLOR_WHITE));
+          while ((n = usage.find('\n', n + 1)) != string::npos);
+          clog << usage << '.';
         }
         clog << '\n'
           << Ansi::r(COLOR_GREEN) << "  more help: " << Ansi::r(COLOR_YELLOW) << "https://github.com/ctubio/Krypto-trading-bot/blob/master/doc/MANUAL.md" << '\n'
@@ -218,14 +239,39 @@ namespace K {
         optstr["currency"] = strU(optstr["currency"]);
         optstr["base"]  = optstr["currency"].substr(0, optstr["currency"].find("/"));
         optstr["quote"] = optstr["currency"].substr(1+ optstr["currency"].find("/"));
-        if (!optstr["interface"].empty())
-          mREST::inet = optstr["interface"].data();
+        optint["market-limit"] = max(15, optint["market-limit"]);
+        if (optint["debug"])
+          optint["debug-secret"] = 1;
+#ifndef _WIN32
+        if (optint["debug-secret"])
+#endif
+          optint["naked"] = 1;
         tidy_values(
           optstr,
           optint,
           optdec
         );
-        Ansi::colorful = optint["colors"];
+      };
+      void gateway() {
+        if (!(gw = Gw::new_Gw(str("exchange"))))
+          error("CF",
+            "Unable to configure a valid gateway using --exchange "
+              + str("exchange") + " argument"
+          );
+        gw->exchange = str("exchange");
+        gw->base     = str("base");
+        gw->quote    = str("quote");
+        gw->apikey   = str("apikey");
+        gw->secret   = str("secret");
+        gw->user     = str("username");
+        gw->pass     = str("passphrase");
+        gw->http     = str("http");
+        gw->ws       = str("wss");
+        gw->autobot  = num("autobot");
+        gw->dustybot = num("dustybot");
+        gw->maxLevel = num("market-limit");
+        gw->debug    = num("debug-secret");
+        gw->version  = num("free-version");
       };
   } *args = nullptr;
 
