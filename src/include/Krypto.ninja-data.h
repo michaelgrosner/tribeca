@@ -2392,24 +2392,24 @@ namespace K {
       void applyBestWidth() {
         if (!qp.bestWidth) return;
         const mAmount bestWidthSize = (sideAPR=="Off" ? qp.bestWidthSize : 0);
-        mAmount bidDepth = 0;
-        mAmount askDepth = 0;
+        mAmount depth = 0;
         if (!quotes.ask.empty())
           for (const mLevel &it : levels.asks)
             if (it.price > quotes.ask.price) {
-              askDepth += it.size;
-              if (askDepth < bestWidthSize) continue;
+              depth += it.size;
+              if (depth < bestWidthSize) continue;
               const mPrice bestAsk = it.price - *product.minTick;
               if (bestAsk > levels.fairValue) {
                 quotes.ask.price = bestAsk;
                 break;
               }
             }
+        depth = 0;
         if (!quotes.bid.empty())
           for (const mLevel &it : levels.bids)
             if (it.price < quotes.bid.price) {
-              bidDepth += it.size;
-              if (bidDepth < bestWidthSize) continue;
+              depth += it.size;
+              if (depth < bestWidthSize) continue;
               const mPrice bestBid = it.price + *product.minTick;
               if (bestBid < levels.fairValue) {
                 quotes.bid.price = bestBid;
