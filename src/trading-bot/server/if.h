@@ -32,6 +32,7 @@ namespace K {
         {"ignore-sun",   "2",      0,                          "do not switch UI to light theme on daylight"},
         {"ignore-moon",  "1",      0,                          "do not switch UI to dark theme on moonlight"},
         {"autobot",      "1",      0,                          "automatically start trading on boot"},
+        {"dustybot",     "1",      0,                          "do not automatically cancel all orders on exit"},
         {"latency",      "1",      0,                          "check current HTTP latency (not from WS) and quit"},
         {"debug-orders", "1",      0,                          "print detailed output about exchange messages"},
         {"debug-quotes", "1",      0,                          "print detailed output about quoting engine"},

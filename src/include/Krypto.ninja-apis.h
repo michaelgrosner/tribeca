@@ -646,7 +646,7 @@ namespace K {
         mAmount minSize  = 0,
                 makeFee  = 0, takeFee  = 0;
             int version  = 0, maxLevel = 0,
-                dustybot = 0, debug    = 0;
+                debug    = 0;
       virtual const json handshake() = 0;
       void connect() {
         socket->connect(ws, nullptr, {}, 5e+3, &socket->getDefaultGroup<uWS::CLIENT>());
@@ -654,7 +654,7 @@ namespace K {
       void run() {
         socket->run();
       };
-      void end() {
+      void end(const bool &dustybot = false) {
         if (dustybot)
           log("--dustybot is enabled, remember to cancel manually any open order.");
         else if (write_mOrder) {
@@ -808,6 +808,8 @@ namespace K {
   };
   class GwBitfinex: public GwApiWS {
     public:
+      GwBitfinex()
+      { askForReplace = true; };
       const json handshake() {
         randId = mRandom::int45Id;
         symbol = strL(base + quote);
@@ -826,7 +828,6 @@ namespace K {
           for (json::const_iterator it=reply2.cbegin(); it!=reply2.cend();++it)
             if (it->find("pair") != it->end() and it->value("pair", "") == symbol)
               minSize = stod(it->value("minimum_order_size", "0"));
-        askForReplace = true;
         return { reply1, reply2 };
       };
     protected:

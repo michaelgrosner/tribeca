@@ -39,7 +39,7 @@ namespace K  {
         timer->stop();
         gw->close();
         socket->getDefaultGroup<uWS::CLIENT>().close();
-        gw->end();
+        gw->end(options.num("dustybot"));
         walk(loop);
         socket->getDefaultGroup<uWS::SERVER>().close();
       };

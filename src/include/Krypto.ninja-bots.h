@@ -111,7 +111,6 @@ namespace K {
         vector<Argument> long_options = {
           {"help",         "h",      0,        "show this help and quit"},
           {"version",      "v",      0,        "show current build version and quit"},
-          {"dustybot",     "1",      0,        "do not automatically cancel all orders on exit"},
           {"interface",    "IP",     "",       "set IP to bind as outgoing network interface,"
                                                "\n" "default IP is the system default network interface"},
           {"exchange",     "NAME",   "NULL",   "set exchange NAME for trading, mandatory one of:"
@@ -193,6 +192,28 @@ namespace K {
         gw->info(notes);
       };
     private:
+      void tidy() {
+        if (optstr["currency"].find("/") == string::npos or optstr["currency"].length() < 3)
+          error("CF", "Invalid --currency value; must be in the format of BASE/QUOTE, like BTC/EUR");
+        if (optstr["exchange"].empty())
+          error("CF", "Invalid --exchange value; the config file may have errors (there are extra spaces or double defined variables?)");
+        optstr["exchange"] = strU(optstr["exchange"]);
+        optstr["currency"] = strU(optstr["currency"]);
+        optstr["base"]  = optstr["currency"].substr(0, optstr["currency"].find("/"));
+        optstr["quote"] = optstr["currency"].substr(1+ optstr["currency"].find("/"));
+        optint["market-limit"] = max(15, optint["market-limit"]);
+        if (optint["debug"])
+          optint["debug-secret"] = 1;
+#ifndef _WIN32
+        if (optint["debug-secret"])
+#endif
+          optint["naked"] = 1;
+        tidy_values(
+          optstr,
+          optint,
+          optdec
+        );
+      };
       void gateway() {
         if (!(gw = Gw::new_Gw(str("exchange"))))
           error("CF",
@@ -208,7 +229,6 @@ namespace K {
         gw->pass     = str("passphrase");
         gw->http     = str("http");
         gw->ws       = str("wss");
-        gw->dustybot = num("dustybot");
         gw->maxLevel = num("market-limit");
         gw->debug    = num("debug-secret");
         gw->version  = num("free-version");
@@ -260,28 +280,6 @@ namespace K {
           << Ansi::b(COLOR_GREEN) << "K" << Ansi::r(COLOR_GREEN) << " questions: " << Ansi::r(COLOR_YELLOW) << "irc://irc.freenode.net:6667/#tradingBot" << '\n'
           << Ansi::r(COLOR_GREEN) << "  home page: " << Ansi::r(COLOR_YELLOW) << "https://ca.rles-tub.io./trades" << '\n'
           << Ansi::reset();
-      };
-      void tidy() {
-        if (optstr["currency"].find("/") == string::npos or optstr["currency"].length() < 3)
-          error("CF", "Invalid --currency value; must be in the format of BASE/QUOTE, like BTC/EUR");
-        if (optstr["exchange"].empty())
-          error("CF", "Invalid --exchange value; the config file may have errors (there are extra spaces or double defined variables?)");
-        optstr["exchange"] = strU(optstr["exchange"]);
-        optstr["currency"] = strU(optstr["currency"]);
-        optstr["base"]  = optstr["currency"].substr(0, optstr["currency"].find("/"));
-        optstr["quote"] = optstr["currency"].substr(1+ optstr["currency"].find("/"));
-        optint["market-limit"] = max(15, optint["market-limit"]);
-        if (optint["debug"])
-          optint["debug-secret"] = 1;
-#ifndef _WIN32
-        if (optint["debug-secret"])
-#endif
-          optint["naked"] = 1;
-        tidy_values(
-          optstr,
-          optint,
-          optdec
-        );
       };
   } *args = nullptr;
 
