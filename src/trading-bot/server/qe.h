@@ -8,7 +8,7 @@ namespace K {
       void load() {
         SQLITE_BACKUP
         broker.calculon.dummyMM.mode("loaded");
-        broker.semaphore.agree();
+        broker.semaphore.agree(options.num("autobot"));
       };
       void waitData() {
         gw->RAWDATA_ENTRY_POINT(mConnectivity, {
@@ -41,7 +41,9 @@ namespace K {
         SCREEN_PRESSME
       };
       void run() {
-        gw->load_externals();
+        options.handshake({
+          {"autoBot", options.num("autobot") ? "yes" : "no"}
+        });
       };
   };
 }

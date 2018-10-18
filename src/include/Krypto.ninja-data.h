@@ -1839,9 +1839,10 @@ namespace K {
 
   struct mSemaphore: public mToScreen,
                      public mJsonToClient<mSemaphore> {
-    mConnectivity adminAgreement = mConnectivity::Disconnected,
-                  greenButton    = mConnectivity::Disconnected,
-                  greenGateway   = mConnectivity::Disconnected;
+    mConnectivity greenButton  = mConnectivity::Disconnected,
+                  greenGateway = mConnectivity::Disconnected;
+    private:
+      mConnectivity adminAgreement = mConnectivity::Disconnected;
     public:
       void kiss(json *const j) {
         if (j->is_object()
@@ -1855,11 +1856,11 @@ namespace K {
       const bool offline() const {
         return !greenGateway;
       };
-      void agree() {
-        adminAgreement = (mConnectivity)args->num("autobot");
+      void agree(const bool &agreement) {
+        adminAgreement = (mConnectivity)agreement;
       };
       void toggle() {
-        adminAgreement = (mConnectivity)!adminAgreement;
+        agree(!adminAgreement);
         send_refresh();
       };
       void read_from_gw(const mConnectivity &raw) {
@@ -2188,11 +2189,9 @@ namespace K {
         states(mQuoteState::MissingData);
         countWaiting =
         countWorking = 0;
-        if (zombies.empty())
-          return zombies;
-        vector<const mOrder*> missing;
-        zombies.swap(missing);
-        return missing;
+        vector<const mOrder*> zombies_;
+        zombies.swap(zombies_);
+        return zombies_;
       };
       void offline() {
         states(mQuoteState::Disconnected);

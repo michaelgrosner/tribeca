@@ -24,8 +24,11 @@ namespace K {
         engine->monitor.product.minSize = &gw->minSize;
         if (options.num("latency")) {
           printme(gw);
-          gw->latency();
-          exit("1 HTTP connection done" + Ansi::r(COLOR_WHITE) + " (consider to repeat a few times this check)");
+          gw->latency("HTTP read/write handshake", []() {
+            options.handshake();
+          });
+          exit("1 HTTP connection done" + Ansi::r(COLOR_WHITE)
+            + " (consider to repeat a few times this check)");
         }
         switchOn();
         if (mREST::inet)

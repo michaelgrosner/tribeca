@@ -525,8 +525,6 @@ namespace K {
     ;
   };
 
-  void error(const string&, const string&, const bool&);
-
   class GwExchangeData {
     public:
       function<void(const mOrder&)>        write_mOrder;
@@ -648,77 +646,69 @@ namespace K {
         mAmount minSize  = 0,
                 makeFee  = 0, takeFee  = 0;
             int version  = 0, maxLevel = 0,
-                autobot  = 0, dustybot = 0,
-                debug    = 0;
-      void load_externals() {
-        validate(handshake());
-      };
+                dustybot = 0, debug    = 0;
+      virtual const json handshake() = 0;
       void connect() {
         socket->connect(ws, nullptr, {}, 5e+3, &socket->getDefaultGroup<uWS::CLIENT>());
       };
       void run() {
         socket->run();
       };
-      void latency() {
-        focus("GW " + exchange, "latency check", "start");
+      void end() {
+        if (dustybot)
+          log("--dustybot is enabled, remember to cancel manually any open order.");
+        else if (write_mOrder) {
+          log("Attempting to cancel all open orders, please wait.");
+          for (mOrder &it : sync_cancelAll()) write_mOrder(it);
+          log("cancel all open orders OK");
+        }
+      };
+      void info(vector<pair<string, string>> notes) {
+        if (exchange != "NULL") log("allows client IP");
+        unsigned int precision = minTick < 1e-8 ? 10 : 8;
+        for (pair<string, string> it : (vector<pair<string, string>>){
+          {"symbols", symbol                  },
+          {"minTick", strX(minTick, precision)},
+          {"minSize", strX(minSize, precision)},
+          {"makeFee", strX(makeFee, precision)},
+          {"takeFee", strX(takeFee, precision)}
+        }) notes.push_back(it);
+        string info = "setup:";
+        for (pair<string, string> &it : notes)
+          info += "\n- " + it.first + ": " + it.second;
+        log(info);
+      };
+      void latency(const string &reason, const function<void()> &fn) {
+        log("latency check", "start");
         const mClock Tstart = Tstamp;
-        load_externals();
+        fn();
         const mClock Tstop  = Tstamp;
-        focus("GW " + exchange, "latency check", "stop");
+        log("latency check", "stop");
         const unsigned int Tdiff = Tstop - Tstart;
-        focus("GW " + exchange, "HTTP read/write handshake took", to_string(
-          Tdiff
-        ) + "ms of your time");
+        log(reason + " took", to_string(Tdiff) + "ms of your time");
         string result = "This result is ";
         if      (Tdiff < 2e+2) result += "very good; most traders don't enjoy such speed!";
         else if (Tdiff < 5e+2) result += "good; most traders get the same result";
         else if (Tdiff < 7e+2) result += "a bit bad; most traders get better results";
         else if (Tdiff < 1e+3) result += "bad; is possible a move to another server/network?";
         else                   result += "very bad; move to another server/network";
-        print("GW " + exchange, result);
-      };
-      void end() {
-        if (dustybot)
-          print("GW " + exchange, "--dustybot is enabled, remember to cancel manually any open order.");
-        else if (write_mOrder) {
-          print("GW " + exchange, "Attempting to cancel all open orders, please wait.");
-          for (mOrder &it : sync_cancelAll()) write_mOrder(it);
-          print("GW " + exchange, "cancel all open orders OK");
-        }
+        log(result);
       };
     protected:
       void reconnect(const string &reason) {
         countdown = 7;
-        print("GW " + exchange, "WS " + reason + ", reconnecting in " + to_string(countdown) + "s.");
+        log("WS " + reason + ", reconnecting in " + to_string(countdown) + "s.");
       };
-      void log(const string &reason) {
+      void log(const string &reason, const string &highlight = "") {
         const string prefix = string(
           reason.find(">>>") != reason.find("<<<")
-            ? "DEBUG" : "GW"
-        ) + ' ' + exchange;
-        if (reason.find("Error") == string::npos)
-          print(prefix, reason);
-        else warn(prefix, reason);
-      };
-      virtual const json handshake() = 0;
-    private:
-      void validate(const json &reply) {
-        if (!randId or symbol.empty())
-          error("GW", "Incomplete handshake aborted", false);
-        if (!minTick or !minSize)
-          error("GW", "Unable to fetch data from " + exchange
-            + " for symbol \"" + symbol + "\", possible error message: "
-            + reply.dump(), false);
-        if (exchange != "NULL")
-          print("GW " + exchange, "allows client IP");
-        unsigned int precision = minTick < 1e-8 ? 10 : 8;
-        print("GW " + exchange + ":", string("\n")
-          + "- autoBot: " + (!autobot ? "no" : "yes") + '\n'
-          + "- symbols: " + symbol                    + '\n'
-          + "- minTick: " + strX(minTick, precision)  + '\n'
-          + "- minSize: " + strX(minSize, precision)  + '\n'
-          + "- makeFee: " + strX(makeFee, precision)  + '\n'
-          + "- takeFee: " + strX(takeFee, precision));
+            ? "DEBUG " : "GW "
+        ) + exchange;
+        if (highlight.empty()) {
+          if (reason.find("Error") == string::npos)
+            print(prefix, reason);
+          else warn(prefix, reason);
+        } else focus(prefix, reason, highlight);
       };
   };
 
@@ -751,7 +741,7 @@ namespace K {
   };
 
   class GwNull: public GwApiREST {
-    protected:
+    public:
       const json handshake() {
         randId  = mRandom::uuid36Id;
         symbol  = base + "_" + quote;
@@ -761,7 +751,7 @@ namespace K {
       };
   };
   class GwHitBtc: public GwApiWS {
-    protected:
+    public:
       const json handshake() {
         randId = mRandom::uuid32Id;
         symbol = base + quote;
@@ -772,6 +762,7 @@ namespace K {
         quote   = reply.value("quoteCurrency", quote);
         return reply;
       };
+    protected:
       static const json xfer(const string &url, const string &auth, const string &post) {
         return mREST::curl_perform(url, [&](CURL *curl) {
           curl_easy_setopt(curl, CURLOPT_USERPWD, auth.data());
@@ -781,7 +772,7 @@ namespace K {
       };
   };
   class GwOkCoin: public GwApiWS {
-    protected:
+    public:
       const json handshake() {
         randId = mRandom::char16Id;
         symbol = strL(base + "_" + quote);
@@ -793,7 +784,7 @@ namespace K {
   class GwOkEx: public GwOkCoin {};
   class GwCoinbase: public GwApiWS,
                     public FIX::NullApplication {
-    protected:
+    public:
       const json handshake() {
         randId = mRandom::uuid36Id;
         symbol = base + "-" + quote;
@@ -802,6 +793,7 @@ namespace K {
         minSize = stod(reply.value("base_min_size", "0"));
         return reply;
       };
+    protected:
       static const json xfer(const string &url, const string &h1, const string &h2, const string &h3, const string &h4, const bool &rm) {
         return mREST::curl_perform(url, [&](CURL *curl) {
           struct curl_slist *h_ = NULL;
@@ -816,9 +808,6 @@ namespace K {
   };
   class GwBitfinex: public GwApiWS {
     public:
-      GwBitfinex()
-      { askForReplace = true; };
-    protected:
       const json handshake() {
         randId = mRandom::int45Id;
         symbol = strL(base + quote);
@@ -837,8 +826,10 @@ namespace K {
           for (json::const_iterator it=reply2.cbegin(); it!=reply2.cend();++it)
             if (it->find("pair") != it->end() and it->value("pair", "") == symbol)
               minSize = stod(it->value("minimum_order_size", "0"));
+        askForReplace = true;
         return { reply1, reply2 };
       };
+    protected:
       static const json xfer(const string &url, const string &post, const string &h1, const string &h2) {
         return mREST::curl_perform(url, [&](CURL *curl) {
           struct curl_slist *h_ = NULL;
@@ -852,7 +843,7 @@ namespace K {
   };
   class GwEthfinex: public GwBitfinex {};
   class GwFCoin: public GwApiWS {
-    protected:
+    public:
       const json handshake() {
         randId = mRandom::char16Id;
         symbol = strL(base + quote);
@@ -869,6 +860,7 @@ namespace K {
             }
         return reply;
       };
+    protected:
       static const json xfer(const string &url, const string &h1, const string &h2, const string &h3) {
         return mREST::curl_perform(url, [&](CURL *curl) {
           struct curl_slist *h_ = NULL;
@@ -891,7 +883,7 @@ namespace K {
       };
   };
   class GwKraken: public GwApiREST {
-    protected:
+    public:
       const json handshake() {
         randId = mRandom::int32Id;
         symbol = base + quote;
@@ -911,6 +903,7 @@ namespace K {
             }
         return reply;
       };
+    protected:
       static const json xfer(const string &url, const string &h1, const string &h2, const string &post) {
         return mREST::curl_perform(url, [&](CURL *curl) {
           struct curl_slist *h_ = NULL;
@@ -922,7 +915,7 @@ namespace K {
       };
   };
   class GwKorbit: public GwApiREST {
-    protected:
+    public:
       const json handshake() {
         randId = mRandom::int45Id;
         symbol = strL(base + "_" + quote);
@@ -933,6 +926,7 @@ namespace K {
         }
         return reply;
       };
+    protected:
       static const json xfer(const string &url, const string &h1, const string &post) {
         return mREST::curl_perform(url, [&](CURL *curl) {
           struct curl_slist *h_ = NULL;
@@ -946,7 +940,7 @@ namespace K {
       };
   };
   class GwPoloniex: public GwApiREST {
-    protected:
+    public:
       const json handshake() {
         randId = mRandom::int45Id;
         symbol = quote + "_" + base;
@@ -958,6 +952,7 @@ namespace K {
         }
         return reply;
       };
+    protected:
       static const json xfer(const string &url, const string &post, const string &h1, const string &h2) {
         return mREST::curl_perform(url, [&](CURL *curl) {
           struct curl_slist *h_ = NULL;

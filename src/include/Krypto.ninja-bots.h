@@ -38,10 +38,10 @@ namespace K {
         waitWebAdmin();
         waitSysAdmin();
         waitTime();
-        run();
         endingFn.push_back([&](){
           end();
         });
+        run();
         if (gw->ready()) gw->run();
       };
   };
@@ -111,7 +111,6 @@ namespace K {
         vector<Argument> long_options = {
           {"help",         "h",      0,        "show this help and quit"},
           {"version",      "v",      0,        "show current build version and quit"},
-          {"autobot",      "1",      0,        "automatically start trading on boot"},
           {"dustybot",     "1",      0,        "do not automatically cancel all orders on exit"},
           {"interface",    "IP",     "",       "set IP to bind as outgoing network interface,"
                                                "\n" "default IP is the system default network interface"},
@@ -189,7 +188,39 @@ namespace K {
         if (!str("interface").empty())
           mREST::inet = str("interface").data();
       };
+      void handshake(const vector<pair<string, string>> &notes = {}) {
+        gateway(gw->handshake());
+        gw->info(notes);
+      };
     private:
+      void gateway() {
+        if (!(gw = Gw::new_Gw(str("exchange"))))
+          error("CF",
+            "Unable to configure a valid gateway using --exchange="
+              + str("exchange") + " argument"
+          );
+        gw->exchange = str("exchange");
+        gw->base     = str("base");
+        gw->quote    = str("quote");
+        gw->apikey   = str("apikey");
+        gw->secret   = str("secret");
+        gw->user     = str("username");
+        gw->pass     = str("passphrase");
+        gw->http     = str("http");
+        gw->ws       = str("wss");
+        gw->dustybot = num("dustybot");
+        gw->maxLevel = num("market-limit");
+        gw->debug    = num("debug-secret");
+        gw->version  = num("free-version");
+      };
+      void gateway(const json &reply) {
+        if (!gw->randId or gw->symbol.empty())
+          error("GW", "Incomplete handshake aborted");
+        if (!gw->minTick or !gw->minSize)
+          error("GW", "Unable to fetch data from " + gw->exchange
+            + " for symbol \"" + gw->symbol + "\", possible error message: "
+            + reply.dump());
+      };
       void help(const vector<Argument> &long_options) {
         const vector<string> stamp = {
           " \\__/  \\__/ ", " | (   .    ", "  __   \\__/ ",
@@ -251,27 +282,6 @@ namespace K {
           optint,
           optdec
         );
-      };
-      void gateway() {
-        if (!(gw = Gw::new_Gw(str("exchange"))))
-          error("CF",
-            "Unable to configure a valid gateway using --exchange "
-              + str("exchange") + " argument"
-          );
-        gw->exchange = str("exchange");
-        gw->base     = str("base");
-        gw->quote    = str("quote");
-        gw->apikey   = str("apikey");
-        gw->secret   = str("secret");
-        gw->user     = str("username");
-        gw->pass     = str("passphrase");
-        gw->http     = str("http");
-        gw->ws       = str("wss");
-        gw->autobot  = num("autobot");
-        gw->dustybot = num("dustybot");
-        gw->maxLevel = num("market-limit");
-        gw->debug    = num("debug-secret");
-        gw->version  = num("free-version");
       };
   } *args = nullptr;
 
