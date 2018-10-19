@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html ng-controller="uiCtrl" ng-app="projectApp">
+
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     <link rel="stylesheet" href="/css/bootstrap.min.css">
@@ -7,6 +8,7 @@
     <link rel="stylesheet" href="/css/ui-grid.min.css">
 
     <script src="/js/admin/bundle.min.js"></script>
+
 
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
@@ -31,6 +33,12 @@
             -webkit-appearance: none;
             margin: 0;
         }
+
+        #chart-container {
+            width: 100%;
+            height: 400px;
+        }
+
     </style>
 </head>
 
@@ -121,21 +129,28 @@
             </div>
             <div class="navbar-collapse collapse">
                 <ul class="nav navbar-nav navbar-right">
-                    <li><p class="navbar-text">Target Base Position: <target-base-position></target-base-position></p></li>
-                    <li><p class="navbar-text"><trade-safety></trade-safety></p></li>
                     <li>
-                        <button type="button"
-                                class="btn btn-primary navbar-btn"
-                                id="order_form"
-                                mypopover popover-template="order_form.html"
-                                data-placement="bottom">Submit order
+                        <p class="navbar-text">Target Base Position: <target-base-position></target-base-position>
+                        </p>
+                    </li>
+                    <li>
+                        <p class="navbar-text">
+                            <trade-safety></trade-safety>
+                        </p>
+                    </li>
+                    <li>
+                        <button type="button" class="btn btn-primary navbar-btn" id="order_form" mypopover
+                            popover-template="order_form.html" data-placement="bottom">Submit order
                         </button>
                     </li>
                     <li>
-                        <button type="button"
-                                class="btn btn-danger navbar-btn"
-                                ng-click="cancelAllOrders()"
-                                data-placement="bottom">Cancel All Open Orders
+                        <button type="button" class="btn btn-primary navbar-btn" id="initchart" mypopover
+                            popover-template="order_form.html" data-placement="bottom">Submit order
+                        </button>
+                    </li>
+                    <li>
+                        <button type="button" class="btn btn-danger navbar-btn" ng-click="cancelAllOrders()"
+                            data-placement="bottom">Cancel All Open Orders
                         </button>
                     </li>
                 </ul>
@@ -145,24 +160,27 @@
 
     <div class="container-fluid">
         <div>
+
             <div style="padding: 5px" ng-class="pair.connected ? 'bg-success img-rounded' : 'bg-danger img-rounded'">
                 <div class="row">
                     <div class="col-md-1 col-xs-12 text-center">
                         <div class="row">
-                            <button class="col-md-12 col-xs-3" ng-disabled="!pair.active.connected" ng-class="pair.active.getClass()" ng-click="pair.active.submit()">
+                            <button class="col-md-12 col-xs-3" ng-disabled="!pair.active.connected" ng-class="pair.active.getClass()"
+                                ng-click="pair.active.submit()">
                                 {{ pair_name }}
                             </button>
 
                             <div ng-if="pair.connectionMessage">
-                                <span class="glyphicon glyphicon-alert" aria-hidden="true"></span> {{ pair.connectionMessage }}
+                                <span class="glyphicon glyphicon-alert" aria-hidden="true"></span> {{
+                                pair.connectionMessage }}
                             </div>
 
                             <h4 style="font-size: 20px" class="col-md-12 col-xs-3">{{ exch_name }}</h4>
 
                             <position-grid></position-grid>
+
                         </div>
                     </div>
-
                     <div class="col-md-3 col-xs-12">
                         <market-quoting-grid></market-quoting-grid>
                         <messages-grid></messages-grid>
@@ -195,10 +213,12 @@
                                         <th>trds</th>
                                         <th>/sec</th>
                                         <th colspan="2">
-                                            <span ng-if="!pair.quotingParameters.pending && pair.quotingParameters.connected" class="text-success">
+                                            <span ng-if="!pair.quotingParameters.pending && pair.quotingParameters.connected"
+                                                class="text-success">
                                                 Applied
                                             </span>
-                                            <span ng-if="pair.quotingParameters.pending && pair.quotingParameters.connected" class="text-warning">
+                                            <span ng-if="pair.quotingParameters.pending && pair.quotingParameters.connected"
+                                                class="text-warning">
                                                 Pending
                                             </span>
                                             <span ng-if="!pair.quotingParameters.connected" class="text-danger">
@@ -210,77 +230,54 @@
                                 <tbody>
                                     <tr class="active">
                                         <td>
-                                            <select class="form-control input-sm"
-                                                ng-model="pair.quotingParameters.display.mode"
+                                            <select class="form-control input-sm" ng-model="pair.quotingParameters.display.mode"
                                                 ng-options="x.val as x.str for x in pair.quotingParameters.availableQuotingModes"></select>
                                         </td>
                                         <td>
-                                            <select class="form-control input-sm"
-                                                ng-model="pair.quotingParameters.display.fvModel"
+                                            <select class="form-control input-sm" ng-model="pair.quotingParameters.display.fvModel"
                                                 ng-options="x.val as x.str for x in pair.quotingParameters.availableFvModels"></select>
                                         </td>
                                         <td>
-                                            <select class="form-control input-sm"
-                                                ng-model="pair.quotingParameters.display.autoPositionMode"
+                                            <select class="form-control input-sm" ng-model="pair.quotingParameters.display.autoPositionMode"
                                                 ng-options="x.val as x.str for x in pair.quotingParameters.availableAutoPositionModes"></select>
                                         </td>
                                         <td>
-                                            <input class="form-control input-sm"
-                                                type="number"
-                                                onClick="this.select()"
+                                            <input class="form-control input-sm" type="number" onClick="this.select()"
                                                 ng-model="pair.quotingParameters.display.width">
                                         </td>
                                         <td>
-                                            <input class="form-control input-sm"
-                                                type="number"
-                                                onClick="this.select()"
+                                            <input class="form-control input-sm" type="number" onClick="this.select()"
                                                 ng-model="pair.quotingParameters.display.size">
                                         </td>
                                         <td>
-                                            <input class="form-control input-sm"
-                                                type="number"
-                                                onClick="this.select()"
+                                            <input class="form-control input-sm" type="number" onClick="this.select()"
                                                 ng-model="pair.quotingParameters.display.targetBasePosition">
                                         </td>
                                         <td>
-                                            <input class="form-control input-sm"
-                                                type="number"
-                                                onClick="this.select()"
+                                            <input class="form-control input-sm" type="number" onClick="this.select()"
                                                 ng-model="pair.quotingParameters.display.positionDivergence">
                                         </td>
                                         <td>
-                                            <input type="checkbox"
-                                                ng-model="pair.quotingParameters.display.ewmaProtection">
+                                            <input type="checkbox" ng-model="pair.quotingParameters.display.ewmaProtection">
                                         </td>
                                         <td>
-                                            <input type="checkbox"
-                                                ng-model="pair.quotingParameters.display.aggressivePositionRebalancing">
+                                            <input type="checkbox" ng-model="pair.quotingParameters.display.aggressivePositionRebalancing">
                                         </td>
                                         <td>
-                                            <input class="form-control input-sm"
-                                                type="number"
-                                                onClick="this.select()"
+                                            <input class="form-control input-sm" type="number" onClick="this.select()"
                                                 ng-model="pair.quotingParameters.display.tradesPerMinute">
                                         </td>
                                         <td>
-                                            <input class="form-control input-sm"
-                                                type="number"
-                                                onClick="this.select()"
+                                            <input class="form-control input-sm" type="number" onClick="this.select()"
                                                 ng-model="pair.quotingParameters.display.tradeRateSeconds">
                                         </td>
                                         <td>
-                                            <input class="btn btn-default btn col-md-1 col-xs-6"
-                                                style="width:55px"
-                                                type="button"
-                                                ng-click="pair.quotingParameters.reset()"
-                                                value="Reset" />
+                                            <input class="btn btn-default btn col-md-1 col-xs-6" style="width:55px"
+                                                type="button" ng-click="pair.quotingParameters.reset()" value="Reset" />
                                         </td>
                                         <td>
-                                            <input class="btn btn-default btn col-md-1 col-xs-6"
-                                                style="width:50px"
-                                                type="submit"
-                                                ng-click="pair.quotingParameters.submit()"
-                                                ng-disabled="!pair.quotingParameters.connected"
+                                            <input class="btn btn-default btn col-md-1 col-xs-6" style="width:50px"
+                                                type="submit" ng-click="pair.quotingParameters.submit()" ng-disabled="!pair.quotingParameters.connected"
                                                 value="Save" />
                                         </td>
                                     </tr>
@@ -295,10 +292,13 @@
                 <div class="row table-responsive">
                     <div class="col-md-12 col-xs-12">
                         <order-list></order-list>
+                        <div id="chart-container"></div>
                     </div>
                 </div>
+
             </div>
         </div>
     </div>
 </body>
+
 </html>

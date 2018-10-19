@@ -4,6 +4,7 @@ module.exports = function (grunt) {
     var commonFiles = "src/common/*.ts";
     var serviceFiles = ["src/service/**/*.ts", commonFiles];
     var adminFiles = ["src/admin/**/*.ts", commonFiles];
+    var cryptowatchFiles = ["./node_modules/cryptowatch-embed/dist/**/*.js"]
     var html = "src/static/**";
 
     grunt.initConfig({
@@ -20,18 +21,35 @@ module.exports = function (grunt) {
                 tasks: ['ts:admin', "copy", "browserify"]
             },
 
+            cryptowatch: {
+                files: cryptowatchFiles,
+                tasks: ["ts:compile", 'copy', "browserify"]
+            },
+
             static: {
                 files: html,
                 tasks: ['copy', "browserify"]
             }
+
         },
 
         ts: {
             options: {
                 sourceMap: true,
-                comments: false,               // same as !removeComments. [true | false (default)]
-                declaration: false,            // generate a declaration .d.ts file for every output js file. [true | false (default)]
-                fast: 'always'
+                comments: false, // same as !removeComments. [true | false (default)]
+                declaration: false, // generate a declaration .d.ts file for every output js file. [true | false (default)]
+                fast: 'always',
+
+            },
+
+            compile: {
+                src: cryptowatchFiles,
+                outDir: 'tribeca/service/admin/js',
+                options: {
+                    target: 'es6',
+                    module: 'commonjs',
+                    allowJs: true,
+                }
             },
 
             service: {
@@ -43,6 +61,7 @@ module.exports = function (grunt) {
                 }
             },
 
+
             admin: {
                 src: adminFiles,
                 outDir: 'tribeca/service/admin/js',
@@ -50,7 +69,9 @@ module.exports = function (grunt) {
                     target: 'es6',
                     module: 'commonjs'
                 }
-            }
+            },
+
+
         },
 
         copy: {
@@ -61,7 +82,7 @@ module.exports = function (grunt) {
                 dest: "tribeca/service/admin"
             }
         },
-        
+
         browserify: {
             dist: {
                 files: {

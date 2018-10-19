@@ -31,117 +31,141 @@ import Position = require("./position");
 import Tbp = require("./target-base-position");
 import TradeSafety = require("./trade-safety");
 
+import Embed = require("cryptowatch-embed");
+
 interface MainWindowScope extends ng.IScope {
-    env : string;
-    connected : boolean;
-    order : DisplayOrder;
-    pair : Pair.DisplayPair;
-    exch_name : string;
-    pair_name : string;
-    cancelAllOrders();
+  env: string;
+  connected: boolean;
+  order: DisplayOrder;
+  pair: Pair.DisplayPair;
+  exch_name: string;
+  pair_name: string;
+  cancelAllOrders();
+  cryptowatchInit();
 }
 
 class DisplayOrder {
-    side : string;
-    price : number;
-    quantity : number;
-    timeInForce : string;
-    orderType : string;
+  side: string;
+  price: number;
+  quantity: number;
+  timeInForce: string;
+  orderType: string;
 
-    availableSides : string[];
-    availableTifs : string[];
-    availableOrderTypes : string[];
+  availableSides: string[];
+  availableTifs: string[];
+  availableOrderTypes: string[];
 
-    private static getNames(enumObject : any) {
-        var names : string[] = [];
-        for (var mem in enumObject) {
-            if (!enumObject.hasOwnProperty(mem)) continue;
-            if (parseInt(mem, 10) >= 0) {
-              names.push(enumObject[mem]);
-            }
-        }
-        return names;
+  private static getNames(enumObject: any) {
+    var names: string[] = [];
+    for (var mem in enumObject) {
+      if (!enumObject.hasOwnProperty(mem)) continue;
+      if (parseInt(mem, 10) >= 0) {
+        names.push(enumObject[mem]);
+      }
     }
+    return names;
+  }
 
-    private _fire : Messaging.IFire<Models.OrderRequestFromUI>;
-    constructor(fireFactory : Shared.FireFactory, private _log : ng.ILogService) {
-        this.availableSides = DisplayOrder.getNames(Models.Side);
-        this.availableTifs = DisplayOrder.getNames(Models.TimeInForce);
-        this.availableOrderTypes = DisplayOrder.getNames(Models.OrderType);
+  private _fire: Messaging.IFire<Models.OrderRequestFromUI>;
+  constructor(fireFactory: Shared.FireFactory, private _log: ng.ILogService) {
+    this.availableSides = DisplayOrder.getNames(Models.Side);
+    this.availableTifs = DisplayOrder.getNames(Models.TimeInForce);
+    this.availableOrderTypes = DisplayOrder.getNames(Models.OrderType);
 
-        this._fire = fireFactory.getFire(Messaging.Topics.SubmitNewOrder);
-    }
+    this._fire = fireFactory.getFire(Messaging.Topics.SubmitNewOrder);
+  }
 
-    public submit = () => {
-        var msg = new Models.OrderRequestFromUI(this.side, this.price, this.quantity, this.timeInForce, this.orderType);
-        this._log.info("submitting order", msg);
-        this._fire.fire(msg);
-    };
+  public submit = () => {
+    var msg = new Models.OrderRequestFromUI(
+      this.side,
+      this.price,
+      this.quantity,
+      this.timeInForce,
+      this.orderType
+    );
+    this._log.info("submitting order", msg);
+    this._fire.fire(msg);
+  };
 }
 
-var uiCtrl = ($scope : MainWindowScope,
-              $timeout : ng.ITimeoutService,
-              $log : ng.ILogService,
-              subscriberFactory : Shared.SubscriberFactory,
-              fireFactory : Shared.FireFactory,
-              product: Shared.ProductState) => {
-    
-    var cancelAllFirer = fireFactory.getFire(Messaging.Topics.CancelAllOrders);
-    $scope.cancelAllOrders = () => cancelAllFirer.fire(new Models.CancelAllOrdersRequest());
-                  
-    $scope.order = new DisplayOrder(fireFactory, $log);
-    $scope.pair = null;
+var uiCtrl = (
+  $scope: MainWindowScope,
+  $timeout: ng.ITimeoutService,
+  $log: ng.ILogService,
+  subscriberFactory: Shared.SubscriberFactory,
+  fireFactory: Shared.FireFactory,
+  product: Shared.ProductState
+) => {
+  var cancelAllFirer = fireFactory.getFire(Messaging.Topics.CancelAllOrders);
+  $scope.cancelAllOrders = () =>
+    cancelAllFirer.fire(new Models.CancelAllOrdersRequest());
 
-    var onAdvert = (pa : Models.ProductAdvertisement) => {
-        $log.info("advert", pa);
-        $scope.connected = true;
-        $scope.env = pa.environment;
-        $scope.pair_name = Models.Currency[pa.pair.base] + "/" + Models.Currency[pa.pair.quote];
-        $scope.exch_name = Models.Exchange[pa.exchange];
-        $scope.pair = new Pair.DisplayPair($scope, subscriberFactory, fireFactory);
-        product.advert = pa;
-        product.fixed = -1*Math.floor(Math.log10(pa.minTick)); 
-    };
-
-    var reset = (reason : string, connected: boolean) => {
-        $log.info("reset", reason);
-        $scope.connected = connected;
-
-        if (connected) {
-            $scope.pair_name = null;
-            $scope.exch_name = null;
-
-            if ($scope.pair !== null)
-                $scope.pair.dispose();
-            $scope.pair = null;
-        }
-    };
-    reset("startup", false);
-
-    var sub = subscriberFactory.getSubscriber($scope, Messaging.Topics.ProductAdvertisement)
-        .registerSubscriber(onAdvert, a => a.forEach(onAdvert))
-        .registerConnectHandler(() => reset("connect", true))
-        .registerDisconnectedHandler(() => reset("disconnect", false));
-
-    $scope.$on('$destroy', () => {
-        sub.disconnect();
-        $log.info("destroy client");
+  $scope.cryptowatchInit = () => {
+    var chart = new Embed("bitfinex", "btcusd", {
+      timePeriod: "1d",
+      width: 650,
+      presetColorScheme: "epaper"
     });
+    
+    chart.mount("#chart-container");
+  };
 
-    $log.info("started client");
+  $scope.order = new DisplayOrder(fireFactory, $log);
+  $scope.pair = null;
+
+  var onAdvert = (pa: Models.ProductAdvertisement) => {
+    $log.info("advert", pa);
+    $scope.connected = true;
+    $scope.env = pa.environment;
+    $scope.pair_name =
+      Models.Currency[pa.pair.base] + "/" + Models.Currency[pa.pair.quote];
+    $scope.exch_name = Models.Exchange[pa.exchange];
+    $scope.pair = new Pair.DisplayPair($scope, subscriberFactory, fireFactory);
+    product.advert = pa;
+    product.fixed = -1 * Math.floor(Math.log10(pa.minTick));
+  };
+
+  var reset = (reason: string, connected: boolean) => {
+    $log.info("reset", reason);
+    $scope.connected = connected;
+
+    if (connected) {
+      $scope.pair_name = null;
+      $scope.exch_name = null;
+
+      if ($scope.pair !== null) $scope.pair.dispose();
+      $scope.pair = null;
+    }
+  };
+  reset("startup", false);
+
+  var sub = subscriberFactory
+    .getSubscriber($scope, Messaging.Topics.ProductAdvertisement)
+    .registerSubscriber(onAdvert, a => a.forEach(onAdvert))
+    .registerConnectHandler(() => reset("connect", true))
+    .registerDisconnectedHandler(() => reset("disconnect", false));
+
+  $scope.$on("$destroy", () => {
+    sub.disconnect();
+    $log.info("destroy client");
+  });
+
+  $log.info("started client");
 };
 
-var requires = ['ui.bootstrap',
-                'ui.grid',
-                OrderList.orderListDirective,
-                Trades.tradeListDirective,
-                MarketQuoting.marketQuotingDirective,
-                MarketTrades.marketTradeDirective,
-                Messages.messagesDirective, 
-                Position.positionDirective,
-                Tbp.targetBasePositionDirective,
-                TradeSafety.tradeSafetyDirective,
-                Shared.sharedDirectives];
+var requires = [
+  "ui.bootstrap",
+  "ui.grid",
+  OrderList.orderListDirective,
+  Trades.tradeListDirective,
+  MarketQuoting.marketQuotingDirective,
+  MarketTrades.marketTradeDirective,
+  Messages.messagesDirective,
+  Position.positionDirective,
+  Tbp.targetBasePositionDirective,
+  TradeSafety.tradeSafetyDirective,
+  Shared.sharedDirectives,
+  Embed
+];
 
-angular.module('projectApp', requires)
-       .controller('uiCtrl', uiCtrl);
+angular.module("projectApp", requires).controller("uiCtrl", uiCtrl);
