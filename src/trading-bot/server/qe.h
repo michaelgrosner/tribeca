@@ -42,7 +42,12 @@ namespace K {
       };
       void run() {
         options.handshake({
-          {"autoBot", options.num("autobot") ? "yes" : "no"}
+          {"gateway", gw->http               },
+          {"gateway", gw->ws                 },
+          {"gateway", gw->fix                },
+          {"autoBot", options.num("autobot")
+                        ? "yes"
+                        : "no"               }
         });
       };
   };

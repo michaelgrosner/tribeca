@@ -640,13 +640,15 @@ namespace K {
                 apikey,   secret,
                 user,     pass,
                 http,     ws,
-                unlock;
+                fix,      unlock;
         mCoinId base,     quote;
+            int version  = 0,
+                maxLevel = 0,
+                debug    = 0;
          mPrice minTick  = 0;
         mAmount minSize  = 0,
-                makeFee  = 0, takeFee  = 0;
-            int version  = 0, maxLevel = 0,
-                debug    = 0;
+                makeFee  = 0,
+                takeFee  = 0;
       virtual const json handshake() = 0;
       void connect() {
         socket->connect(ws, nullptr, {}, 5e+3, &socket->getDefaultGroup<uWS::CLIENT>());
@@ -675,7 +677,8 @@ namespace K {
         }) notes.push_back(it);
         string info = "setup:";
         for (pair<string, string> &it : notes)
-          info += "\n- " + it.first + ": " + it.second;
+          if (it.first != "gateway" or !it.second.empty())
+            info += "\n- " + it.first + ": " + it.second;
         log(info);
       };
       void latency(const string &reason, const function<void()> &fn) {
@@ -752,6 +755,11 @@ namespace K {
   };
   class GwHitBtc: public GwApiWS {
     public:
+      GwHitBtc()
+      {
+        http = "https://api.hitbtc.com/api/2";
+        ws   = "wss://api.hitbtc.com/api/2/ws";
+      };
       const json handshake() {
         randId = mRandom::uuid32Id;
         symbol = base + quote;
@@ -771,8 +779,13 @@ namespace K {
         });
       };
   };
-  class GwOkCoin: public GwApiWS {
+  class GwOkCoinCn: public GwApiWS {
     public:
+      GwOkCoinCn()
+      {
+        http = "https://www.okcoin.cn/api/v1/";
+        ws   = "wss://real.okcoin.cn:10440/websocket/okcoinapi";
+      };
       const json handshake() {
         randId = mRandom::char16Id;
         symbol = strL(base + "_" + quote);
@@ -781,10 +794,31 @@ namespace K {
         return nullptr;
       };
   };
-  class GwOkEx: public GwOkCoin {};
+  class GwOkCoinCom: virtual public GwOkCoinCn {
+    public:
+      GwOkCoinCom()
+      {
+        http = "https://www.okcoin.com/api/v1/";
+        ws   = "wss://real.okcoin.com:10440/websocket/okcoinapi";
+      };
+  };
+  class GwOkEx: virtual public GwOkCoinCn {
+    public:
+      GwOkEx()
+      {
+        http = "https://www.okex.com/api/v1/";
+        ws   = "wss://real.okex.com:10441/websocket";
+      };
+  };
   class GwCoinbase: public GwApiWS,
                     public FIX::NullApplication {
     public:
+      GwCoinbase()
+      {
+        http = "https://api.pro.coinbase.com";
+        ws   = "wss://ws-feed.pro.coinbase.com";
+        fix  = "fix.pro.coinbase.com:4198";
+      };
       const json handshake() {
         randId = mRandom::uuid36Id;
         symbol = base + "-" + quote;
@@ -809,7 +843,11 @@ namespace K {
   class GwBitfinex: public GwApiWS {
     public:
       GwBitfinex()
-      { askForReplace = true; };
+      {
+        http = "https://api.bitfinex.com/v1";
+        ws   = "wss://api.bitfinex.com/ws/2";
+        askForReplace = true;
+      };
       const json handshake() {
         randId = mRandom::int45Id;
         symbol = strL(base + quote);
@@ -842,9 +880,21 @@ namespace K {
         });
       };
   };
-  class GwEthfinex: public GwBitfinex {};
+  class GwEthfinex: virtual public GwBitfinex {
+    public:
+      GwEthfinex()
+      {
+        http = "https://api.ethfinex.com/v1";
+        ws   = "wss://api.ethfinex.com/ws/2";
+      };
+  };
   class GwFCoin: public GwApiWS {
     public:
+      GwFCoin()
+      {
+        http = "https://api.fcoin.com/v2/";
+        ws   = "wss://api.fcoin.com/v2/ws";
+      };
       const json handshake() {
         randId = mRandom::char16Id;
         symbol = strL(base + quote);
@@ -885,6 +935,10 @@ namespace K {
   };
   class GwKraken: public GwApiREST {
     public:
+      GwKraken()
+      {
+        http = "https://api.kraken.com";
+      };
       const json handshake() {
         randId = mRandom::int32Id;
         symbol = base + quote;
@@ -917,6 +971,10 @@ namespace K {
   };
   class GwKorbit: public GwApiREST {
     public:
+      GwKorbit()
+      {
+        http = "https://api.korbit.co.kr/v1";
+      };
       const json handshake() {
         randId = mRandom::int45Id;
         symbol = strL(base + "_" + quote);
@@ -942,6 +1000,10 @@ namespace K {
   };
   class GwPoloniex: public GwApiREST {
     public:
+      GwPoloniex()
+      {
+        http = "https://poloniex.com";
+      };
       const json handshake() {
         randId = mRandom::int45Id;
         symbol = quote + "_" + base;

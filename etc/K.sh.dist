@@ -50,7 +50,8 @@ UI_OPENPORT=3000
 #API_EXCHANGE=ETHFINEX
 #API_EXCHANGE=HITBTC
 #API_EXCHANGE=FCOIN
-#API_EXCHANGE=OKCOIN
+#API_EXCHANGE=OKCOINCN
+#API_EXCHANGE=OKCOINCOM
 #API_EXCHANGE=OKEX
 #API_EXCHANGE=KRAKEN
 #API_EXCHANGE=KORBIT
@@ -85,36 +86,6 @@ API_PASSPHRASE=NULL
 #  ██ - Only KORBIT exchange must have API USERNAME, other exchanges can be NULL.
 #API_USERNAME=exampleapiusername
 API_USERNAME=NULL
-#  ▌____________________________________________________.
-#  █ API_HTTP_ENDPOINT                                  .
-#  ██ - Allows one of the following urls (see the website of the exchange).
-#  ██ - All exchanges must have API_HTTP_ENDPOINT.
-#API_HTTP_ENDPOINT=https://api.pro.coinbase.com
-#API_HTTP_ENDPOINT=https://api.bitfinex.com/v1
-#API_HTTP_ENDPOINT=https://api.ethfinex.com/v1
-#API_HTTP_ENDPOINT=https://api.hitbtc.com/api/2
-#API_HTTP_ENDPOINT=https://api.fcoin.com/v2/
-#API_HTTP_ENDPOINT=https://www.okcoin.com/api/v1/
-#API_HTTP_ENDPOINT=https://www.okcoin.cn/api/v1/
-#API_HTTP_ENDPOINT=https://www.okex.com/api/v1/
-#API_HTTP_ENDPOINT=https://api.kraken.com
-#API_HTTP_ENDPOINT=https://api.korbit.co.kr/v1
-#API_HTTP_ENDPOINT=https://poloniex.com
-API_HTTP_ENDPOINT=NULL
-#  ▌____________________________________________________.
-#  █ API_WSS_ENDPOINT                                   .
-#  ██ - Allows one of the following urls (see the website of the exchange).
-#  ██ - Almost all exchanges must have API_WSS_ENDPOINT, only KRAKEN and KORBIT exchanges can be NULL.
-#API_WSS_ENDPOINT=wss://ws-feed.pro.coinbase.com
-#API_WSS_ENDPOINT=wss://api.bitfinex.com/ws/2
-#API_WSS_ENDPOINT=wss://api.ethfinex.com/ws/2
-#API_WSS_ENDPOINT=wss://api.hitbtc.com/api/2/ws
-#API_WSS_ENDPOINT=wss://api.fcoin.com/v2/ws
-#API_WSS_ENDPOINT=wss://real.okcoin.com:10440/websocket/okcoinapi
-#API_WSS_ENDPOINT=wss://real.okcoin.cn:10440/websocket/okcoinapi
-#API_WSS_ENDPOINT=wss://real.okex.com:10441/websocket
-#API_WSS_ENDPOINT=wss://api.poloniex.com
-API_WSS_ENDPOINT=NULL
 #  ██▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
 #  ▌____                                                .
 #  ▌ IV ▐______________________________________________ .
@@ -137,8 +108,6 @@ until `#valgrind` `#gdb --args` $K_BINARY_FILE          \
     --secret     $API_SECRET                            \
     --passphrase $API_PASSPHRASE                        \
     --username   $API_USERNAME                          \
-    --http       $API_HTTP_ENDPOINT                     \
-    --wss        $API_WSS_ENDPOINT                      \
                  $OPTIONAL_ARGUMENTS "$@"           ;   #
   do                                                # K #
     echo K crashed with exit code $?.. Respawning.. ;   #

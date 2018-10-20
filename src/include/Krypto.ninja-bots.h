@@ -124,8 +124,9 @@ namespace K {
                                                "\n" "mandatory but may be 'NULL'"},
           {"username",     "WORD",   "NULL",   "set (never share!) WORD as api username for trading,"
                                                "\n" "mandatory but may be 'NULL'"},
-          {"http",         "URL",    "NULL",   "set URL of api HTTP/S endpoint for trading, mandatory"},
-          {"wss",          "URL",    "NULL",   "set URL of api SECURE WS endpoint for trading, mandatory"},
+          {"http",         "URL",    "",       "set URL of alernative HTTPS api endpoint for trading"},
+          {"wss",          "URL",    "",       "set URL of alernative WSS api endpoint for trading"},
+          {"fix",          "URL",    "",       "set URL of alernative FIX api endpoint for trading"},
           {"market-limit", "NUMBER", "321",    "set NUMBER of maximum price levels for the orderbook,"
                                                "\n" "default NUMBER is '321' and the minimum is '15'."
                                                "\n" "locked bots smells like '--market-limit=3' spirit"}
@@ -220,6 +221,9 @@ namespace K {
             "Unable to configure a valid gateway using --exchange="
               + str("exchange") + " argument"
           );
+        if (!str("http").empty()) gw->http = str("http");
+        if (!str("wss").empty())  gw->ws   = str("wss");
+        if (!str("fix").empty())  gw->fix  = str("fix");
         gw->exchange = str("exchange");
         gw->base     = str("base");
         gw->quote    = str("quote");
@@ -227,8 +231,6 @@ namespace K {
         gw->secret   = str("secret");
         gw->user     = str("username");
         gw->pass     = str("passphrase");
-        gw->http     = str("http");
-        gw->ws       = str("wss");
         gw->maxLevel = num("market-limit");
         gw->debug    = num("debug-secret");
         gw->version  = num("free-version");
