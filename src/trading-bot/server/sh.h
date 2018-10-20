@@ -25,7 +25,9 @@ namespace K {
         if (options.num("latency")) {
           printme(gw);
           gw->latency("HTTP read/write handshake", []() {
-            options.handshake();
+            options.handshake({
+              {"gateway", gw->http}
+            });
           });
           exit("1 HTTP connection done" + Ansi::r(COLOR_WHITE)
             + " (consider to repeat a few times this check)");
