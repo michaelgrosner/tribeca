@@ -137,7 +137,7 @@ namespace K {
           {"debug",        "1",      0,        "print detailed output about all the (previous) things!"},
           {"colors",       "1",      0,        "print highlighted output"},
           {"title",        "WORD",   K_SOURCE, "set WORD to allow admins to identify different bots"},
-          {"free-version", "1",      0,        "work with all market levels and enable the slow XMR miner"}
+          {"free-version", "1",      0,        "work with all market levels but slowdown 7 seconds"}
         }) long_options.push_back(it);
         int index = 1714;
         vector<option> longopts = { {0, 0, 0, 0} };

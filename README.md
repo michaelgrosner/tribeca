@@ -280,8 +280,6 @@ Added ZIP installation steps for non-git-lovers.
 
 Added HamelinRat quoting mode and Trend safety thanks to b-seite and serzhiio contributions.
 
-Added XMR network ecosystem optional support.
-
 Added command-line arguments.
 
 Updated quoting engine and gateways without nodejs.
@@ -356,11 +354,9 @@ Otherwise if you choose to not support further development by ctubio, just keep 
 
 Use `--free-version` argument to anonymously unlock any API Key and avoid the payment.
 
-All market levels will be visible and usable but not in realtime, instead will be slowdown around 7 seconds doing [XMR mining calculations](https://github.com/monero-project/monero/blob/master/src/crypto/hash.c#L42).
+All market levels will be visible and usable but not in realtime, instead will be slowdown around 7 seconds doing nothing.
 
-If any hash meets the current XMR network target, it will be send to my XMR pool for my fun and profit.
-
-`--free-version` effectively slows down fun and profit for you and me. Please don't open issues asking how much % less the bot generates with `--free-version`; it is relative to your trading strategy, the market conditions, and the bot's performance. It is almost impossible to know.
+Please don't open issues asking how much % less the bot generates with `--free-version`; it is relative to your trading strategy, the market conditions, and the bot's performance.
 
 ### Donations
 

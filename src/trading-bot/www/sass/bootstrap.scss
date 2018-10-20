@@ -5724,9 +5724,6 @@ input:invalid {
 div.levels {
   overflow-y: auto;
   height: 430px;
-  &.a {
-    overflow-y: hidden;
-  }
 }
 table.marketQuoting {
   margin-bottom: 0px;
