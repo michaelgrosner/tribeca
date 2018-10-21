@@ -107,7 +107,7 @@ namespace K {
       const double dec(const string &name) const {
         return optdec.at(name);
       };
-      void main(int argc, char** argv) {
+      Arguments *const main(int argc, char** argv) {
         vector<Argument> long_options = {
           {"help",         "h",      0,        "show this help and quit"},
           {"version",      "v",      0,        "show current build version and quit"},
@@ -187,6 +187,7 @@ namespace K {
         Ansi::colorful = num("colors");
         if (!str("interface").empty())
           mREST::inet = str("interface").data();
+        return this;
       };
       void handshake(const vector<pair<string, string>> &notes = {}) {
         gateway(gw->handshake());

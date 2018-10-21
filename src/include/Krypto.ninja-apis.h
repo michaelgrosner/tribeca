@@ -585,7 +585,8 @@ namespace K {
         bool waiting = false;
         if (TRUEONCE(askForFees)
           or !(tick % 15))       waiting |= !(async_wallet() or !askFor(replyWallets, [&]() { return sync_wallet(); }));
-        if (*askForCancelAll
+        if (askForCancelAll
+          and *askForCancelAll
           and !(tick % 300))     waiting |= askFor(replyCancelAll, [&]() { return sync_cancelAll(); });
         return waiting;
       };
@@ -783,7 +784,7 @@ namespace K {
     public:
       GwOkCoinCn()
       {
-        http = "https://www.okcoin.cn/api/v1/";
+        http = "https://www.okcoin.cn/api/";
         ws   = "wss://real.okcoin.cn:10440/websocket/okcoinapi";
       };
       const json handshake() {
@@ -793,12 +794,25 @@ namespace K {
         minSize = 0.001;
         return nullptr;
       };
+    protected:
+      static const json xfer(const string &url, const string &h1, const string &h2, const string &h3, const string &h4, const string &post = "") {
+        return mREST::curl_perform(url, [&](CURL *curl) {
+          struct curl_slist *h_ = NULL;
+          h_ = curl_slist_append(h_, ("OK-ACCESS-KEY: " + h1).data());
+          h_ = curl_slist_append(h_, ("OK-ACCESS-SIGN: " + h2).data());
+          h_ = curl_slist_append(h_, ("OK-ACCESS-TIMESTAMP: " + h3).data());
+          h_ = curl_slist_append(h_, ("OK-ACCESS-PASSPHRASE: " + h4).data());
+          h_ = curl_slist_append(h_, "Content-Type: application/json;charset=UTF-8");
+          curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
+          if (!post.empty()) curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post.data());
+        });
+      };
   };
   class GwOkCoinCom: virtual public GwOkCoinCn {
     public:
       GwOkCoinCom()
       {
-        http = "https://www.okcoin.com/api/v1/";
+        http = "https://www.okcoin.com/api/";
         ws   = "wss://real.okcoin.com:10440/websocket/okcoinapi";
       };
   };
@@ -806,7 +820,7 @@ namespace K {
     public:
       GwOkEx()
       {
-        http = "https://www.okex.com/api/v1/";
+        http = "https://www.okex.com/api/";
         ws   = "wss://real.okex.com:10441/websocket";
       };
   };
@@ -912,24 +926,17 @@ namespace K {
         return reply;
       };
     protected:
-      static const json xfer(const string &url, const string &h1, const string &h2, const string &h3) {
+      static const json xfer(const string &url, const string &h1, const string &h2, const string &h3, const string &post = "") {
         return mREST::curl_perform(url, [&](CURL *curl) {
           struct curl_slist *h_ = NULL;
+          if (!post.empty()) {
+            curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post.data());
+            h_ = curl_slist_append(h_, "Content-Type: application/json;charset=UTF-8");
+          }
           h_ = curl_slist_append(h_, ("FC-ACCESS-KEY: " + h1).data());
           h_ = curl_slist_append(h_, ("FC-ACCESS-SIGNATURE: " + h2).data());
           h_ = curl_slist_append(h_, ("FC-ACCESS-TIMESTAMP: " + h3).data());
           curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
-        });
-      };
-      static const json xfer(const string &url, const string &h1, const string &h2, const string &h3, const string &post) {
-        return mREST::curl_perform(url, [&](CURL *curl) {
-          struct curl_slist *h_ = NULL;
-          h_ = curl_slist_append(h_, ("FC-ACCESS-KEY: " + h1).data());
-          h_ = curl_slist_append(h_, ("FC-ACCESS-SIGNATURE: " + h2).data());
-          h_ = curl_slist_append(h_, ("FC-ACCESS-TIMESTAMP: " + h3).data());
-          h_ = curl_slist_append(h_, "Content-Type: application/json;charset=UTF-8");
-          curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
-          curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post.data());
         });
       };
   };
