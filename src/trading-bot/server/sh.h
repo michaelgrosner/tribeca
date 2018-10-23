@@ -18,12 +18,14 @@ namespace K {
           clog << stamp();
         });
         (args = &options)->main(argc, argv);
-        gw->askForCancelAll = &qp.cancelOrdersAuto;
-        engine->monitor.unlock          = &gw->unlock;
-        engine->monitor.product.minTick = &gw->minTick;
-        engine->monitor.product.minSize = &gw->minSize;
+        gw->log([&](const string &prefix, const string &reason, const string &highlight) {
+          if (highlight.empty()) {
+            if (reason.find("Error") == string::npos)
+              log(prefix, reason);
+            else logWar(prefix, reason);
+          } else log(prefix, reason, highlight);
+        });
         if (options.num("latency")) {
-          printme(gw);
           gw->latency("HTTP read/write handshake", []() {
             options.handshake({
               {"gateway", gw->http}
@@ -32,6 +34,10 @@ namespace K {
           exit("1 HTTP connection done" + Ansi::r(COLOR_WHITE)
             + " (consider to repeat a few times this check)");
         }
+        gw->askForCancelAll = &qp.cancelOrdersAuto;
+        engine->monitor.unlock          = &gw->unlock;
+        engine->monitor.product.minTick = &gw->minTick;
+        engine->monitor.product.minSize = &gw->minSize;
         switchOn();
         if (mREST::inet)
           log("CF", "Network Interface for outgoing traffic is", mREST::inet);
@@ -45,7 +51,7 @@ namespace K {
       void switchOn() {
         if (!options.num("headless"))
           wtfismyip = mREST::xfer("https://wtfismyip.com/json", 4L)
-                        .value("/YourFuckingIPAddress"_json_pointer, "");
+                        .value("YourFuckingIPAddress", "");
         if (options.num("naked")) return;
         if (!(wBorder = initscr()))
           error("SH",

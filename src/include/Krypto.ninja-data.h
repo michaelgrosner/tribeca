@@ -67,6 +67,29 @@ namespace K {
                                 MarketDataLongTerm   = 'H'
   };
 
+  struct mToScreen {
+    function<void(const string&, const string&)> print
+#ifndef NDEBUG
+    = [](const string &prefix, const string &reason) { WARN("Y U NO catch screen print?"); }
+#endif
+    ;
+    function<void(const string&, const string&, const string&)> focus
+#ifndef NDEBUG
+    = [](const string &prefix, const string &reason, const string &highlight) { WARN("Y U NO catch screen focus?"); }
+#endif
+    ;
+    function<void(const string&, const string&)> warn
+#ifndef NDEBUG
+    = [](const string &prefix, const string &reason) { WARN("Y U NO catch screen warn?"); }
+#endif
+    ;
+    function<void()> refresh
+#ifndef NDEBUG
+    = []() { WARN("Y U NO catch screen refresh?"); }
+#endif
+    ;
+  };
+
   struct mAbout {
     virtual const mMatter about() const = 0;
   };
@@ -1952,7 +1975,7 @@ namespace K {
         print("DEBUG QE", "[" + step + "] "
           + to_string((int)bid.state) + ":"
           + to_string((int)ask.state) + " "
-          + ((json*)this)->dump()
+          + ((json)*this).dump()
         );
     };
     private:
@@ -2262,7 +2285,7 @@ namespace K {
         quotes.debuq("L"); applyEwmaTrendProtection();
         quotes.debuq("!");
         quotes.debug("totals " + ("toAsk: " + to_string(wallet.base.total))
-                                   + ",toBid: " + to_string(wallet.quote.total / levels.fairValue));
+                               + ",toBid: " + to_string(wallet.quote.total / levels.fairValue));
         quotes.checkCrossedQuotes();
       };
       void applySuperTrades() {

@@ -52,11 +52,11 @@ namespace K {
       static const string reset() {
           return colorful ? "\033[0m" : "";
       };
-      static const string b(const int &color) {
-          return colorful ? "\033[1;3" + to_string(color) + 'm' : "";
-      };
       static const string r(const int &color) {
           return colorful ? "\033[0;3" + to_string(color) + 'm' : "";
+      };
+      static const string b(const int &color) {
+          return colorful ? "\033[1;3" + to_string(color) + 'm' : "";
       };
   };
 

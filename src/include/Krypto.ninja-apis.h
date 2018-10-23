@@ -502,29 +502,6 @@ namespace K {
       };
   };
 
-  struct mToScreen {
-    function<void(const string&, const string&)> print
-#ifndef NDEBUG
-    = [](const string &prefix, const string &reason) { WARN("Y U NO catch screen print?"); }
-#endif
-    ;
-    function<void(const string&, const string&, const string&)> focus
-#ifndef NDEBUG
-    = [](const string &prefix, const string &reason, const string &highlight) { WARN("Y U NO catch screen focus?"); }
-#endif
-    ;
-    function<void(const string&, const string&)> warn
-#ifndef NDEBUG
-    = [](const string &prefix, const string &reason) { WARN("Y U NO catch screen warn?"); }
-#endif
-    ;
-    function<void()> refresh
-#ifndef NDEBUG
-    = []() { WARN("Y U NO catch screen refresh?"); }
-#endif
-    ;
-  };
-
   class GwExchangeData {
     public:
       function<void(const mOrder&)>        write_mOrder;
@@ -632,10 +609,9 @@ namespace K {
       };
   };
 
-  class GwExchange: public GwExchangeData,
-                    public mToScreen {
+  class GwExchange: public GwExchangeData {
     public:
-      uWS::Hub *socket  = nullptr;
+      uWS::Hub *socket = nullptr;
       unsigned int countdown = 0;
          string exchange, symbol,
                 apikey,   secret,
@@ -698,21 +674,24 @@ namespace K {
         else                   result += "very bad; move to another server/network";
         log(result);
       };
+      void log(function<void(const string&, const string&, const string&)> fn) {
+        logger = fn;
+      };
     protected:
+      function<void(const string&, const string&, const string&)> logger;
+      void log(const string &reason, const string &highlight = "") {
+        if (logger) logger(
+          string(reason.find(">>>") != reason.find("<<<")
+            ? "DEBUG "
+            : "GW "
+          ) + exchange,
+          reason,
+          highlight
+        );
+      };
       void reconnect(const string &reason) {
         countdown = 7;
         log("WS " + reason + ", reconnecting in " + to_string(countdown) + "s.");
-      };
-      void log(const string &reason, const string &highlight = "") {
-        const string prefix = string(
-          reason.find(">>>") != reason.find("<<<")
-            ? "DEBUG " : "GW "
-        ) + exchange;
-        if (highlight.empty()) {
-          if (reason.find("Error") == string::npos)
-            print(prefix, reason);
-          else warn(prefix, reason);
-        } else focus(prefix, reason, highlight);
       };
   };
 
@@ -780,12 +759,12 @@ namespace K {
         });
       };
   };
-  class GwOkCoinCn: public GwApiWS {
+  class GwOkEx: public GwApiWS {
     public:
-      GwOkCoinCn()
+      GwOkEx()
       {
-        http = "https://www.okcoin.cn/api/";
-        ws   = "wss://real.okcoin.cn:10440/websocket/okcoinapi";
+        http = "https://www.okex.com/api/";
+        ws   = "wss://real.okex.com:10441/websocket";
       };
       const json handshake() {
         randId = mRandom::char16Id;
@@ -808,20 +787,20 @@ namespace K {
         });
       };
   };
-  class GwOkCoinCom: virtual public GwOkCoinCn {
+  class GwOkCoinCn: virtual public GwOkEx {
+    public:
+      GwOkCoinCn()
+      {
+        http = "https://www.okcoin.cn/api/";
+        ws   = "wss://real.okcoin.cn:10440/websocket/okcoinapi";
+      };
+  };
+  class GwOkCoinCom: virtual public GwOkEx {
     public:
       GwOkCoinCom()
       {
         http = "https://www.okcoin.com/api/";
         ws   = "wss://real.okcoin.com:10440/websocket/okcoinapi";
-      };
-  };
-  class GwOkEx: virtual public GwOkCoinCn {
-    public:
-      GwOkEx()
-      {
-        http = "https://www.okex.com/api/";
-        ws   = "wss://real.okex.com:10441/websocket";
       };
   };
   class GwCoinbase: public GwApiWS,

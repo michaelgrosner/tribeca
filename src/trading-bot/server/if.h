@@ -121,7 +121,6 @@ namespace K {
       ( SCREEN_PRINTME_CODE )
 #define SCREEN_PRINTME_CODE(data)  screen->printme(&data);
 #define SCREEN_PRINTME_LIST(code)  \
-  code( *gw                     )  \
   code( orders                  )  \
   code( wallet.target           )  \
   code( wallet.safety.trades    )  \

@@ -139,7 +139,7 @@ Troubleshooting:
 
 See [etc/K.sh.dist](https://github.com/ctubio/Krypto-trading-bot/blob/master/etc/K.sh.dist) file or your own `./K.sh` file.
 
-It just contains a few variables with examples ready to be reused (the suggested urls will work). The very end of the file contains the code that starts the bot.
+It just contains a few variables with examples ready to be reused. The very end of the file contains the code that starts the bot.
 
 ### Upgrade to the latest commit
 
