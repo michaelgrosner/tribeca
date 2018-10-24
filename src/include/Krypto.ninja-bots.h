@@ -142,7 +142,7 @@ namespace K {
         int index = 1714;
         vector<option> longopts = { {0, 0, 0, 0} };
         for (const Argument &it : long_options) {
-          if     (!it.default_value)             optint[it.name] =    !!it.default_value;
+          if     (!it.default_value)             optint[it.name] = 0;
           else if (it.defined_value == "NUMBER") optint[it.name] = stoi(it.default_value);
           else if (it.defined_value == "AMOUNT") optdec[it.name] = stod(it.default_value);
           else                                   optstr[it.name] =      it.default_value;
