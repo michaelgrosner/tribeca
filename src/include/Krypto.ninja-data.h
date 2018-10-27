@@ -1884,19 +1884,19 @@ namespace K {
       };
       void toggle() {
         agree(!adminAgreement);
-        send_refresh();
+        switchFlag();
       };
       void read_from_gw(const mConnectivity &raw) {
         if (greenGateway != raw) {
           greenGateway = raw;
-          send_refresh();
+          switchFlag();
         }
       };
       const mMatter about() const {
         return mMatter::Connectivity;
       };
     private:
-      void send_refresh() {
+      void switchFlag() {
         const mConnectivity k = greenGateway * adminAgreement;
         if (greenButton != k) {
           greenButton = k;

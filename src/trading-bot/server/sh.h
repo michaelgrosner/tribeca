@@ -20,9 +20,9 @@ namespace K {
         (args = &options)->main(argc, argv);
         gw->log([&](const string &prefix, const string &reason, const string &highlight) {
           if (highlight.empty()) {
-            if (reason.find("Error") == string::npos)
-              log(prefix, reason);
-            else logWar(prefix, reason);
+            if (reason.find("Error") != string::npos)
+              logWar(prefix, reason);
+            else log(prefix, reason);
           } else log(prefix, reason, highlight);
         });
         if (options.num("latency")) {
@@ -38,52 +38,13 @@ namespace K {
         engine->monitor.unlock          = &gw->unlock;
         engine->monitor.product.minTick = &gw->minTick;
         engine->monitor.product.minSize = &gw->minSize;
-        switchOn();
-        if (mREST::inet)
-          log("CF", "Network Interface for outgoing traffic is", mREST::inet);
-      };
-      void switchOff() {
-        if (!wBorder) return;
-        beep();
-        endwin();
-        wBorder = nullptr;
-      };
-      void switchOn() {
         if (!options.num("headless"))
           wtfismyip = mREST::xfer("https://wtfismyip.com/json", 4L)
                         .value("YourFuckingIPAddress", "");
-        if (options.num("naked")) return;
-        if (!(wBorder = initscr()))
-          error("SH",
-            "Unable to initialize ncurses, try to run in your terminal"
-              "\"export TERM=xterm\", or use --naked argument"
-          );
-        if (Ansi::colorful) start_color();
-        use_default_colors();
-        cbreak();
-        noecho();
-        keypad(wBorder, true);
-        init_pair(COLOR_WHITE, COLOR_WHITE, COLOR_BLACK);
-        init_pair(COLOR_GREEN, COLOR_GREEN, COLOR_BLACK);
-        init_pair(COLOR_RED, COLOR_RED, COLOR_BLACK);
-        init_pair(COLOR_YELLOW, COLOR_YELLOW, COLOR_BLACK);
-        init_pair(COLOR_BLUE, COLOR_BLUE, COLOR_BLACK);
-        init_pair(COLOR_MAGENTA, COLOR_MAGENTA, COLOR_BLACK);
-        init_pair(COLOR_CYAN, COLOR_CYAN, COLOR_BLACK);
-        wLog = subwin(wBorder, getmaxy(wBorder)-4, getmaxx(wBorder)-2-6, 3, 2);
-        scrollok(wLog, true);
-        idlok(wLog, true);
-#if CAN_RESIZE
-        signal(SIGWINCH, resize);
-#endif
-        refresh();
-        hotkeys();
-      };
-      void pressme(const mHotkey &ch, function<void()> fn) {
-        if (!wBorder) return;
-        if (hotFn.find(ch) != hotFn.end())
-          error("SH", string("Too many handlers for \"") + (char)ch + "\" pressme event");
-        hotFn[ch] = fn;
+        if (!options.num("naked"))
+          switchOn();
+        if (mREST::inet)
+          log("CF", "Network Interface for outgoing traffic is", mREST::inet);
       };
       void printme(mToScreen *const data) {
         data->print = [&](const string &prefix, const string &reason) {
@@ -98,6 +59,12 @@ namespace K {
         data->refresh = [&]() {
           refresh();
         };
+      };
+      void pressme(const mHotkey &ch, function<void()> fn) {
+        if (!wBorder) return;
+        if (hotFn.find(ch) != hotFn.end())
+          error("SH", string("Too many handlers for \"") + (char)ch + "\" pressme event");
+        hotFn[ch] = fn;
       };
       void waitForUser() {
         if (!hotkey.valid() or hotkey.wait_for(chrono::nanoseconds(0)) != future_status::ready) return;
@@ -196,7 +163,6 @@ namespace K {
         wattron(wLog, COLOR_PAIR(COLOR_WHITE));
         wprintw(wLog, ".\n");
         wattroff(wLog, COLOR_PAIR(COLOR_WHITE));
-        refresh();
       };
       void logUIsess(const int &k, const string &s) {
         if (!wBorder) {
@@ -268,24 +234,56 @@ namespace K {
       };
     private:
       void hotkeys() {
-        hotkey = ::async(launch::async, [&] { return (mHotkey)wgetch(wBorder); });
+        hotkey = ::async(launch::async, [&] {
+          return (mHotkey)wgetch(wBorder);
+        });
       };
+      void switchOff() {
+        if (!wBorder) return;
+        beep();
+        endwin();
+        wBorder = nullptr;
+      };
+      void switchOn() {
+        if (!(wBorder = initscr()))
+          error("SH",
+            "Unable to initialize ncurses, try to run in your terminal"
+              "\"export TERM=xterm\", or use --naked argument"
+          );
+        if (Ansi::colorful) start_color();
+        use_default_colors();
+        cbreak();
+        noecho();
+        keypad(wBorder, true);
+        init_pair(COLOR_WHITE, COLOR_WHITE, COLOR_BLACK);
+        init_pair(COLOR_GREEN, COLOR_GREEN, COLOR_BLACK);
+        init_pair(COLOR_RED, COLOR_RED, COLOR_BLACK);
+        init_pair(COLOR_YELLOW, COLOR_YELLOW, COLOR_BLACK);
+        init_pair(COLOR_BLUE, COLOR_BLUE, COLOR_BLACK);
+        init_pair(COLOR_MAGENTA, COLOR_MAGENTA, COLOR_BLACK);
+        init_pair(COLOR_CYAN, COLOR_CYAN, COLOR_BLACK);
+        wLog = subwin(wBorder, getmaxy(wBorder)-4, getmaxx(wBorder)-2-6, 3, 2);
+        scrollok(wLog, true);
+        idlok(wLog, true);
 #if CAN_RESIZE
-      function<void()> resize = [&]() {
-        struct winsize ws;
-        if (ioctl(0, TIOCGWINSZ, &ws) < 0
-          or (ws.ws_row == getmaxy(wBorder)
-          and ws.ws_col == getmaxx(wBorder))
-        ) return;
-        werase(wBorder);
-        werase(wLog);
-        if (ws.ws_row < 10) ws.ws_row = 10;
-        if (ws.ws_col < 30) ws.ws_col = 30;
-        wresize(wBorder, ws.ws_row, ws.ws_col);
-        resizeterm(ws.ws_row, ws.ws_col);
-        refresh();
-      };
+        signal(SIGWINCH, [&]() {
+          struct winsize ws;
+          if (ioctl(0, TIOCGWINSZ, &ws) < 0
+            or (ws.ws_row == getmaxy(wBorder)
+            and ws.ws_col == getmaxx(wBorder))
+          ) return;
+          werase(wBorder);
+          werase(wLog);
+          if (ws.ws_row < 10) ws.ws_row = 10;
+          if (ws.ws_col < 30) ws.ws_col = 30;
+          wresize(wBorder, ws.ws_row, ws.ws_col);
+          resizeterm(ws.ws_row, ws.ws_col);
+          refresh();
+        });
 #endif
+        refresh();
+        hotkeys();
+      };
       void refresh() {
         if (!wBorder) return;
         const vector<mOrder> openOrders = engine->orders.working(true);

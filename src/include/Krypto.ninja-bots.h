@@ -328,7 +328,10 @@ namespace K {
   class Ending: public Rollout {
     public:
       Ending() {
-        signal(SIGINT, quit);
+        signal(SIGINT, [](const int sig) {
+          clog << '\n';
+          raise(SIGQUIT);
+        });
         signal(SIGQUIT, die);
         signal(SIGTERM, err);
         signal(SIGABRT, wtf);
@@ -348,10 +351,6 @@ namespace K {
              << Ansi::r(COLOR_GREEN) << '.'
              << Ansi::reset() << '\n';
         EXIT(code);
-      };
-      static void quit(const int sig) {
-        clog << '\n';
-        die(sig);
       };
       static void die(const int sig) {
         if (epilogue.empty())
