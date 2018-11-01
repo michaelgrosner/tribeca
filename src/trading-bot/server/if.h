@@ -72,7 +72,7 @@ namespace K {
     };
   } options;
 
-  class Screen {
+  class Screen: public Klass {
     public:
       virtual void pressme(const mHotkey&, function<void()>) = 0;
       virtual void printme(mToScreen *const) = 0;
@@ -84,17 +84,17 @@ namespace K {
       virtual void log(const string&, const string&, const string& = "") = 0;
   } *screen = nullptr;
 
-  class Events {
+  class Events: public Klass {
     public:
       virtual void deferred(const function<void()>&) = 0;
   } *events = nullptr;
 
-  class Sqlite {
+  class Sqlite: public Klass {
     public:
       virtual void backup(mFromDb *const) = 0;
   } *sqlite = nullptr;
 
-  class Client {
+  class Client: public Klass {
     public:
       uWS::Hub* socket = nullptr;
       virtual void timer_Xs() = 0;
@@ -102,7 +102,7 @@ namespace K {
       virtual void clickme(mFromClient&, function<void(const json&)>) = 0;
   } *client = nullptr;
 
-  class Engine {
+  class Engine: public Klass {
 #define SQLITE_BACKUP      \
         SQLITE_BACKUP_LIST \
       ( SQLITE_BACKUP_CODE )

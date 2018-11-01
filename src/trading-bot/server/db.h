@@ -2,8 +2,7 @@
 #define K_DB_H_
 
 namespace K {
-  class DB: public Klass,
-            public Sqlite { public: DB() { sqlite = this; };
+  class DB: public Sqlite {
     private:
       sqlite3 *db = nullptr;
       string qpdb = "main";
@@ -87,7 +86,7 @@ namespace K {
           ((json*)result)->push_back(json::parse(argv[i]));
         return 0;
       };
-  };
+  } db;
 }
 
 #endif

@@ -2,8 +2,7 @@
 #define K_EV_H_
 
 namespace K  {
-  class EV: public Klass,
-            public Events { public: EV() { events = this; };
+  class EV: public Events {
     private:
       uWS::Hub  *socket = nullptr;
       uS::Timer *timer  = nullptr;
@@ -72,7 +71,7 @@ namespace K  {
         if (++tick >= 300 * (qp.delayUI?:1))
           tick = 0;
       };
-  };
+  } ev;
 }
 
 #endif

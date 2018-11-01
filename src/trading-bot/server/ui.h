@@ -8,8 +8,7 @@ extern const  int _www_html_index_len, _www_ico_favicon_len, _www_css_base_len,
                   _www_gzip_bomb_len,  _www_mp3_audio_0_len, _www_css_light_len,
                   _www_js_client_len,  _www_mp3_audio_1_len, _www_css_dark_len;
 namespace K {
-  class UI: public Klass,
-            public Client { public: UI() { client = this; };
+  class UI: public Client {
     private:
       int connections = 0;
       unordered_map<char, function<json()>> hello;
@@ -260,7 +259,7 @@ namespace K {
         if (addr.length() < 7) addr.clear();
         return addr.empty() ? "unknown" : addr;
       };
-  };
+  } ui;
 }
 
 #endif

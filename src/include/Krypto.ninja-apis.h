@@ -674,11 +674,8 @@ namespace K {
         else                   result += "very bad; move to another server/network";
         log(result);
       };
-      void log(function<void(const string&, const string&, const string&)> fn) {
-        logger = fn;
-      };
-    protected:
       function<void(const string&, const string&, const string&)> logger;
+    protected:
       void log(const string &reason, const string &highlight = "") {
         if (logger) logger(
           string(reason.find(">>>") != reason.find("<<<")

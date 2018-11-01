@@ -2,7 +2,7 @@
 #define K_SH_H_
 
 namespace K {
-  class SH: public Screen { public: SH() { screen = this; };
+  class SH: public Screen {
     private:
       future<mHotkey> hotkey;
       unordered_map<mHotkey, function<void()>> hotFn;
@@ -11,41 +11,44 @@ namespace K {
       int cursor = 0;
       string protocol  = "?",
              wtfismyip = "";
-    public:
-      void main(int argc, char** argv) {
+    protected:
+      void load() {
         endingFn.insert(endingFn.begin(), [&]() {
           switchOff();
           clog << stamp();
         });
-        (args = &options)->main(argc, argv);
-        gw->log([&](const string &prefix, const string &reason, const string &highlight) {
-          if (highlight.empty()) {
-            if (reason.find("Error") != string::npos)
-              logWar(prefix, reason);
-            else log(prefix, reason);
-          } else log(prefix, reason, highlight);
-        });
-        if (options.num("latency")) {
-          gw->latency("HTTP read/write handshake", []() {
-            options.handshake({
-              {"gateway", gw->http}
-            });
+        gw->logger = [&](const string &prefix, const string &reason, const string &highlight) {
+          if (reason.find("Error") != string::npos)
+            logWar(prefix, reason);
+          else log(prefix, reason, highlight);
+        };
+      };
+      void waitData() {
+        if (!options.num("latency")) return;
+        gw->latency("HTTP read/write handshake", []() {
+          options.handshake({
+            {"gateway", gw->http}
           });
-          exit("1 HTTP connection done" + Ansi::r(COLOR_WHITE)
-            + " (consider to repeat a few times this check)");
-        }
+        });
+        exit("1 HTTP connection done" + Ansi::r(COLOR_WHITE)
+          + " (consider to repeat a few times this check)");
+      };
+      void waitWebAdmin() {
+        if (options.num("headless")) return;
+        wtfismyip = mREST::xfer("https://wtfismyip.com/json", 4L)
+                      .value("YourFuckingIPAddress", "");
+      };
+      void run() {
         gw->askForCancelAll = &qp.cancelOrdersAuto;
         engine->monitor.unlock          = &gw->unlock;
         engine->monitor.product.minTick = &gw->minTick;
         engine->monitor.product.minSize = &gw->minSize;
-        if (!options.num("headless"))
-          wtfismyip = mREST::xfer("https://wtfismyip.com/json", 4L)
-                        .value("YourFuckingIPAddress", "");
         if (!options.num("naked"))
           switchOn();
         if (mREST::inet)
           log("CF", "Network Interface for outgoing traffic is", mREST::inet);
       };
+    public:
       void printme(mToScreen *const data) {
         data->print = [&](const string &prefix, const string &reason) {
           log(prefix, reason);
@@ -432,7 +435,7 @@ namespace K {
         wrefresh(wBorder);
         wrefresh(wLog);
       };
-  };
+  } sh;
 }
 
 #endif

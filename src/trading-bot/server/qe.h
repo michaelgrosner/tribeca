@@ -2,8 +2,7 @@
 #define K_QE_H_
 
 namespace K {
-  class QE: public Klass,
-            public Engine { public: QE() { engine = this; };
+  class QE: public Engine {
     protected:
       void load() {
         SQLITE_BACKUP
@@ -50,7 +49,7 @@ namespace K {
                         : "no"              }
         });
       };
-  };
+  } qe;
 }
 
 #endif

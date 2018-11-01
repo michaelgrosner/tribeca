@@ -193,6 +193,9 @@ namespace K {
         gateway(gw->handshake());
         gw->info(notes);
       };
+      void wait(const vector<Klass*> &k) {
+        for (Klass *const it : k) it->wait();
+      };
     private:
       void tidy() {
         if (optstr["currency"].find("/") == string::npos or optstr["currency"].length() < 3)
@@ -328,10 +331,6 @@ namespace K {
   class Ending: public Rollout {
     public:
       Ending() {
-        signal(SIGINT, [](const int sig) {
-          clog << '\n';
-          raise(SIGQUIT);
-        });
         signal(SIGQUIT, die);
         signal(SIGTERM, err);
         signal(SIGABRT, wtf);
@@ -339,6 +338,10 @@ namespace K {
 #ifndef _WIN32
         signal(SIGUSR1, wtf);
 #endif
+        signal(SIGINT, [](const int sig) {
+          clog << '\n';
+          raise(SIGQUIT);
+        });
       };
     private:
       static void halt(const int &code) {
