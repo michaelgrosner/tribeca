@@ -84,7 +84,7 @@ namespace K {
       unordered_map<string, string> optstr;
       unordered_map<string, int>    optint;
       unordered_map<string, double> optdec;
-    public:
+    protected:
       virtual void tidy_values(
         unordered_map<string, string> &str,
         unordered_map<string, int>    &num,
@@ -93,6 +93,7 @@ namespace K {
       virtual const vector<Argument> custom_long_options() const {
         return {};
       };
+    public:
       const string str(const string &name) const {
         return optstr.find(name) != optstr.end()
           ? optstr.at(name)

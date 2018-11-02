@@ -2,25 +2,26 @@
 #define K_HELLO_WORLD_H_
 
 namespace K {
-  struct Options: public Arguments {
-    const vector<Argument> custom_long_options() const {
-      return {
-        {"subject", "NAME", "World", "say hello to NAME (default: 'World')"}
+  class Options: public Arguments {
+    protected:
+      const vector<Argument> custom_long_options() const {
+        return {
+          {"subject", "NAME", "World", "say hello to NAME (default: 'World')"}
+        };
       };
-    };
-    void tidy_values(
-      unordered_map<string, string> &str,
-      unordered_map<string, int>    &num,
-      unordered_map<string, double> &dec
-    ) {
-      if (str["subject"].empty())
-        error("CF", "Invalid empty --subject value");
-      else str["subject"] += "!";
-    };
+      void tidy_values(
+        unordered_map<string, string> &str,
+        unordered_map<string, int>    &num,
+        unordered_map<string, double> &dec
+      ) {
+        if (str["subject"].empty())
+          error("CF", "Invalid empty --subject value");
+        else str["subject"] += "!";
+      };
   } options;
 
   class HelloWorld: public Klass {
-    public:
+    protected:
       void run() {
         const string result = greeting();
         const string prefix = "Executed " + (

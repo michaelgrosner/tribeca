@@ -17,7 +17,6 @@
 [![Coverage Status](https://img.shields.io/coveralls/ctubio/Krypto-trading-bot/master.svg)](https://coveralls.io/r/ctubio/Krypto-trading-bot?branch=master)
 [![Quality Status](https://img.shields.io/codacy/grade/d48a59c313504f7988e3df031665f90f/master.svg?label=review)](https://www.codacy.com/app/ctubio/Krypto-trading-bot)
 [![Open Issues](https://img.shields.io/github/issues/ctubio/Krypto-trading-bot.svg)](https://github.com/ctubio/Krypto-trading-bot/issues)
-[![Open Issues](https://img.shields.io/github/issues/ctubio/tribeca.svg)](https://github.com/ctubio/tribeca/issues)
 [![Downloads Last 21 Commits](https://img.shields.io/github/downloads/ctubio/Krypto-trading-bot/total.svg?label=downloads%20last%2021%20commits)](https://github.com/ctubio/Krypto-trading-bot)
 
 Runs on unix-like systems. Persistence is achieved through a built-in server-less SQLite C++ interface. Installation via Docker is supported, but manual installation in a dedicated [Debian](https://cdimage.debian.org/cdimage/weekly-builds/amd64/iso-cd/)/[Raspbian](https://www.raspberrypi.org/downloads/raspbian/), [CentOS](https://wiki.centos.org/Download) or macOS instance is recommended.
