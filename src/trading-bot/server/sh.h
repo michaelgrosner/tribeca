@@ -167,32 +167,6 @@ namespace K {
         wprintw(wLog, ".\n");
         wattroff(wLog, COLOR_PAIR(COLOR_WHITE));
       };
-      void logUIsess(const int &k, const string &s) {
-        if (!wBorder) {
-          cout << stamp() << "UI " << Ansi::b(COLOR_YELLOW) << to_string(k) << Ansi::r(COLOR_WHITE) << " currently connected, last connection was from " << Ansi::b(COLOR_YELLOW) << s << Ansi::r(COLOR_WHITE) << ".\n";
-          return;
-        }
-        wmove(wLog, getmaxy(wLog)-1, 0);
-        stamp();
-        wattron(wLog, COLOR_PAIR(COLOR_WHITE));
-        wattron(wLog, A_BOLD);
-        wprintw(wLog, "UI ");
-        wattroff(wLog, A_BOLD);
-        wattroff(wLog, COLOR_PAIR(COLOR_WHITE));
-        wattron(wLog, COLOR_PAIR(COLOR_YELLOW));
-        wprintw(wLog, to_string(k).data());
-        wattroff(wLog, COLOR_PAIR(COLOR_YELLOW));
-        wattron(wLog, COLOR_PAIR(COLOR_WHITE));
-        wprintw(wLog, " currently connected, last connection was from ");
-        wattroff(wLog, COLOR_PAIR(COLOR_WHITE));
-        wattron(wLog, COLOR_PAIR(COLOR_YELLOW));
-        wprintw(wLog, s.data());
-        wattroff(wLog, COLOR_PAIR(COLOR_YELLOW));
-        wattron(wLog, COLOR_PAIR(COLOR_WHITE));
-        wprintw(wLog, ".\n");
-        wattroff(wLog, COLOR_PAIR(COLOR_WHITE));
-        wrefresh(wLog);
-      };
       void log(const string &prefix, const string &reason, const string &highlight = "") {
         unsigned int color = 0;
         if (reason.find("NG TRADE") != string::npos) {

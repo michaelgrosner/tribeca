@@ -81,7 +81,6 @@ namespace K {
       virtual const string stamp() = 0;
       virtual void logWar(const string&, const string&) = 0;
       virtual void logUI(const string&) = 0;
-      virtual void logUIsess(const int&, const string&) = 0;
       virtual void log(const string&, const string&, const string& = "") = 0;
   } *screen = nullptr;
 

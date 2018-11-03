@@ -27,7 +27,8 @@ namespace K {
         client->onConnection([&](uWS::WebSocket<uWS::SERVER> *webSocket, uWS::HttpRequest req) {
           onConnection();
           const string addr = cleanAddress(webSocket->getAddress().address);
-          screen->logUIsess(connections, addr);
+          screen->log("UI", to_string(connections) + " client" + string(connections == 1 ? 0 : 1, 's')
+                              + " connected, last connection was from", addr);
           if (connections > options.num("client-limit")) {
             screen->log("UI", "--client-limit=" + options.str("client-limit") + " reached by", addr);
             webSocket->close();
@@ -35,7 +36,8 @@ namespace K {
         });
         client->onDisconnection([&](uWS::WebSocket<uWS::SERVER> *webSocket, int code, char *message, size_t length) {
           onDisconnection();
-          screen->logUIsess(connections, cleanAddress(webSocket->getAddress().address));
+          screen->log("UI", to_string(connections) + " client" + string(connections == 1 ? 0 : 1, 's')
+                              + " connected, last disconnection was from", cleanAddress(webSocket->getAddress().address));
         });
         client->onHttpRequest([&](uWS::HttpResponse *res, uWS::HttpRequest req, char *data, size_t length, size_t remainingBytes) {
           if (req.getMethod() != uWS::HttpMethod::METHOD_GET) return;
