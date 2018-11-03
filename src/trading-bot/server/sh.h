@@ -9,8 +9,6 @@ namespace K {
       WINDOW *wBorder = nullptr,
              *wLog    = nullptr;
       int cursor = 0;
-      string protocol  = "?",
-             wtfismyip = "";
     protected:
       void load() {
         endingFn.insert(endingFn.begin(), [&]() {
@@ -32,11 +30,6 @@ namespace K {
         });
         exit("1 HTTP connection done" + Ansi::r(COLOR_WHITE)
           + " (consider to repeat a few times this check)");
-      };
-      void waitWebAdmin() {
-        if (options.num("headless")) return;
-        wtfismyip = mREST::xfer("https://wtfismyip.com/json", 4L)
-                      .value("YourFuckingIPAddress", "");
       };
       void run() {
         gw->askForCancelAll = &qp.cancelOrdersAuto;
@@ -123,14 +116,13 @@ namespace K {
         wattroff(wLog, COLOR_PAIR(COLOR_WHITE));
         wrefresh(wLog);
       };
-      void logUI(const string &protocol_) {
-        protocol = protocol_;
+      void logUI() {
         if (!wBorder) {
           cout << stamp() << "UI" << Ansi::r(COLOR_WHITE) << " ready ";
-          if (wtfismyip.empty())
-            cout << "over " << Ansi::b(COLOR_YELLOW) << protocol << Ansi::r(COLOR_WHITE) << " on external port " << Ansi::b(COLOR_YELLOW) << options.str("port") << Ansi::r(COLOR_WHITE) << ".\n";
+          if (client->wtfismyip.empty())
+            cout << "over " << Ansi::b(COLOR_YELLOW) << client->protocol << Ansi::r(COLOR_WHITE) << " on external port " << Ansi::b(COLOR_YELLOW) << options.str("port") << Ansi::r(COLOR_WHITE) << ".\n";
           else
-            cout << "at " << Ansi::b(COLOR_YELLOW) << strL(protocol) << "://" << wtfismyip << ":" << options.str("port") << Ansi::r(COLOR_WHITE) << ".\n";
+            cout << "at " << Ansi::b(COLOR_YELLOW) << strL(client->protocol) << "://" << client->wtfismyip << ":" << options.str("port") << Ansi::r(COLOR_WHITE) << ".\n";
           return;
         }
         wmove(wLog, getmaxy(wLog)-1, 0);
@@ -140,11 +132,11 @@ namespace K {
         wprintw(wLog, "UI");
         wattroff(wLog, A_BOLD);
         wprintw(wLog, " ready ");
-        if (wtfismyip.empty()) {
+        if (client->wtfismyip.empty()) {
           wprintw(wLog, "over ");
           wattroff(wLog, COLOR_PAIR(COLOR_WHITE));
           wattron(wLog, COLOR_PAIR(COLOR_YELLOW));
-          wprintw(wLog, protocol.data());
+          wprintw(wLog, client->protocol.data());
           wattroff(wLog, COLOR_PAIR(COLOR_YELLOW));
           wattron(wLog, COLOR_PAIR(COLOR_WHITE));
           wprintw(wLog, " on external port ");
@@ -156,9 +148,9 @@ namespace K {
           wprintw(wLog, "at ");
           wattroff(wLog, COLOR_PAIR(COLOR_WHITE));
           wattron(wLog, COLOR_PAIR(COLOR_YELLOW));
-          wprintw(wLog, strL(protocol).data());
+          wprintw(wLog, strL(client->protocol).data());
           wprintw(wLog, "://");
-          wprintw(wLog, wtfismyip.data());
+          wprintw(wLog, client->wtfismyip.data());
           wprintw(wLog, ":");
           wprintw(wLog, options.str("port").data());
           wattroff(wLog, COLOR_PAIR(COLOR_YELLOW));
@@ -298,9 +290,9 @@ namespace K {
         wattron(wBorder, COLOR_PAIR(COLOR_GREEN));
         string title1 = "   " + options.str("exchange");
         string title2 = " " + (options.num("port")
-          ? "UI" + (wtfismyip.empty()
-            ? " on " + protocol + " port " + options.str("port")
-            : " at " + strL(protocol) + "://" + wtfismyip + ":" + options.str("port")
+          ? "UI" + (client->wtfismyip.empty()
+            ? " on " + client->protocol + " port " + options.str("port")
+            : " at " + strL(client->protocol) + "://" + client->wtfismyip + ":" + options.str("port")
           ) : "headless"
         )  + ' ';
         wattron(wBorder, A_BOLD);

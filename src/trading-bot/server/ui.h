@@ -15,6 +15,11 @@ namespace K {
       unordered_map<char, function<void(json&)>> kisses;
       unordered_map<mMatter, string> queue;
     protected:
+      void load() {
+        if (!socket) return;
+        wtfismyip = mREST::xfer("https://wtfismyip.com/json", 4L)
+                      .value("YourFuckingIPAddress", "");
+      };
       void waitWebAdmin() {
         if (!socket) return;
         if (!socket->listen(
@@ -163,7 +168,8 @@ namespace K {
             }
           }
         }
-        screen->logUI("HTTP" + string(context ? 1 : 0, 'S'));
+        protocol = "HTTP" + string(context ? 1 : 0, 'S');
+        screen->logUI();
         return context;
       };
       function<void(const mMatter &type, string msg)> broadcast = [](const mMatter &type, string msg) {};
