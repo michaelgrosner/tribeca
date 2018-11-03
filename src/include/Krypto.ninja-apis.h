@@ -756,50 +756,6 @@ namespace K {
         });
       };
   };
-  class GwOkEx: public GwApiWS {
-    public:
-      GwOkEx()
-      {
-        http = "https://www.okex.com/api/";
-        ws   = "wss://real.okex.com:10441/websocket";
-      };
-      const json handshake() {
-        randId = mRandom::char16Id;
-        symbol = strL(base + "_" + quote);
-        minTick = 0.0001;
-        minSize = 0.001;
-        return nullptr;
-      };
-    protected:
-      static const json xfer(const string &url, const string &h1, const string &h2, const string &h3, const string &h4, const string &post = "") {
-        return mREST::curl_perform(url, [&](CURL *curl) {
-          struct curl_slist *h_ = NULL;
-          h_ = curl_slist_append(h_, ("OK-ACCESS-KEY: " + h1).data());
-          h_ = curl_slist_append(h_, ("OK-ACCESS-SIGN: " + h2).data());
-          h_ = curl_slist_append(h_, ("OK-ACCESS-TIMESTAMP: " + h3).data());
-          h_ = curl_slist_append(h_, ("OK-ACCESS-PASSPHRASE: " + h4).data());
-          h_ = curl_slist_append(h_, "Content-Type: application/json;charset=UTF-8");
-          curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
-          if (!post.empty()) curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post.data());
-        });
-      };
-  };
-  class GwOkCoinCn: virtual public GwOkEx {
-    public:
-      GwOkCoinCn()
-      {
-        http = "https://www.okcoin.cn/api/";
-        ws   = "wss://real.okcoin.cn:10440/websocket/okcoinapi";
-      };
-  };
-  class GwOkCoinCom: virtual public GwOkEx {
-    public:
-      GwOkCoinCom()
-      {
-        http = "https://www.okcoin.com/api/";
-        ws   = "wss://real.okcoin.com:10440/websocket/okcoinapi";
-      };
-  };
   class GwCoinbase: public GwApiWS,
                     public FIX::NullApplication {
     public:

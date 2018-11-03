@@ -1016,49 +1016,37 @@ class ClientComponent implements OnInit {
     this.baseCurrency = pa.base;
     this.quoteCurrency = pa.quote;
     this.exchange_name = pa.exchange;
-    this.exchange_market = this.exchange_name=='OKCOIN'
-      ? 'https://www.okcoin.'+(pa.quote=='CNY'?'cn':'com')+'/market.html'
-      : (this.exchange_name=='OKEX'
-        ? 'https://www.okex.com/spot/market/index.do'
-        : (this.exchange_name=='COINBASE'
-          ? 'https://pro.coinbase.com/trade/'+this.baseCurrency+'-'+this.quoteCurrency
-          : (this.exchange_name=='BITFINEX' || this.exchange_name=='BitfinexMargin'
-            ? 'https://www.bitfinex.com/trading/'+this.baseCurrency+this.quoteCurrency
-            : (this.exchange_name=='HITBTC'
-              ? 'https://hitbtc.com/exchange/'+this.baseCurrency+'-to-'+this.quoteCurrency
-              : (this.exchange_name=='KRAKEN'
-                ? 'https://www.kraken.com/charts'
-                : (this.exchange_name=='POLONIEX'
-                  ? 'https://poloniex.com/exchange'
-                  : (this.exchange_name=='FCOIN'
-                    ? 'https://exchange.fcoin.com/ex/main/'+this.baseCurrency + '-' + this.quoteCurrency
-                    : null
-                  )
-                )
+    this.exchange_market = this.exchange_name=='COINBASE'
+      ? 'https://pro.coinbase.com/trade/'+this.baseCurrency+'-'+this.quoteCurrency
+      : (this.exchange_name=='BITFINEX' || this.exchange_name=='BitfinexMargin'
+        ? 'https://www.bitfinex.com/trading/'+this.baseCurrency+this.quoteCurrency
+        : (this.exchange_name=='HITBTC'
+          ? 'https://hitbtc.com/exchange/'+this.baseCurrency+'-to-'+this.quoteCurrency
+          : (this.exchange_name=='KRAKEN'
+            ? 'https://www.kraken.com/charts'
+            : (this.exchange_name=='POLONIEX'
+              ? 'https://poloniex.com/exchange'
+              : (this.exchange_name=='FCOIN'
+                ? 'https://exchange.fcoin.com/ex/main/'+this.baseCurrency + '-' + this.quoteCurrency
+                : null
               )
             )
           )
         )
       );
-    this.exchange_orders = this.exchange_name=='OKCOIN'
-      ? 'https://www.okcoin.'+(pa.quote=='CNY'?'cn':'com')+'/trade/entrust.do'
-      : (this.exchange_name=='OKEX'
-        ? 'https://www.okex.com/spot/trade/spotEntrust.do'
-        : (this.exchange_name=='COINBASE'
-          ? 'https://pro.coinbase.com/orders/'+this.baseCurrency+'-'+this.quoteCurrency
-          : (this.exchange_name=='BITFINEX' || this.exchange_name=='BitfinexMargin'
-            ? 'https://www.bitfinex.com/reports/orders'
-            : (this.exchange_name=='HITBTC'
-              ? 'https://hitbtc.com/reports/orders'
-              : (this.exchange_name=='KRAKEN'
-                ? 'https://www.kraken.com/u/trade'
-                : (this.exchange_name=='POLONIEX'
-                  ? 'https://poloniex.com/tradeHistory'
-                  : (this.exchange_name=='FCOIN'
-                      ? 'https://exchange.fcoin.com/orders'
-                      : null
-                  )
-                )
+    this.exchange_orders = this.exchange_name=='COINBASE'
+      ? 'https://pro.coinbase.com/orders/'+this.baseCurrency+'-'+this.quoteCurrency
+      : (this.exchange_name=='BITFINEX' || this.exchange_name=='BitfinexMargin'
+        ? 'https://www.bitfinex.com/reports/orders'
+        : (this.exchange_name=='HITBTC'
+          ? 'https://hitbtc.com/reports/orders'
+          : (this.exchange_name=='KRAKEN'
+            ? 'https://www.kraken.com/u/trade'
+            : (this.exchange_name=='POLONIEX'
+              ? 'https://poloniex.com/tradeHistory'
+              : (this.exchange_name=='FCOIN'
+                  ? 'https://exchange.fcoin.com/orders'
+                  : null
               )
             )
           )

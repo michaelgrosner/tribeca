@@ -115,8 +115,8 @@ namespace K {
           {"interface",    "IP",     "",       "set IP to bind as outgoing network interface,"
                                                "\n" "default IP is the system default network interface"},
           {"exchange",     "NAME",   "NULL",   "set exchange NAME for trading, mandatory one of:"
-                                               "\n" "'COINBASE', 'BITFINEX',  'BITFINEX_MARGIN',"
-                                               "\n" "'HITBTC', 'OKCOIN', 'OKEX', 'KORBIT', 'POLONIEX' or 'NULL'"},
+                                               "\n" "'COINBASE', 'BITFINEX', 'ETHFINEX', 'HITBTC',"
+                                               "\n" "'KRAKEN', 'FCOIN', 'KORBIT' , 'POLONIEX' or 'NULL'"},
           {"currency",     "PAIR",   "NULL",   "set currency PAIR for trading, use format"
                                                "\n" "with '/' separator, like 'BTC/EUR'"},
           {"apikey",       "WORD",   "NULL",   "set (never share!) WORD as api key for trading, mandatory"},
