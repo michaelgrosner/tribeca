@@ -28,6 +28,7 @@ namespace K {
         )) error("UI", "Unable to listen to UI port number " + options.str("port")
              + ", may be already in use by another program"
            );
+        screen->log("UI", "ready at", strL(protocol) + "://" + wtfismyip + ":" + options.str("port"));
         auto client = &socket->getDefaultGroup<uWS::SERVER>();
         client->onConnection([&](uWS::WebSocket<uWS::SERVER> *webSocket, uWS::HttpRequest req) {
           onConnection();
@@ -168,8 +169,7 @@ namespace K {
             }
           }
         }
-        protocol = "HTTP" + string(context ? 1 : 0, 'S');
-        screen->logUI();
+        protocol += string(context ? 1 : 0, 'S');
         return context;
       };
       function<void(const mMatter &type, string msg)> broadcast = [](const mMatter &type, string msg) {};

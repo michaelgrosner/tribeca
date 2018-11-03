@@ -81,7 +81,6 @@ namespace K {
       virtual const string stamp() = 0;
       virtual void logWar(const string&, const string&) = 0;
       virtual void log(const string&, const string&, const string& = "") = 0;
-      virtual void logUI() = 0;
   } *screen = nullptr;
 
   class Events: public Klass {
@@ -97,8 +96,8 @@ namespace K {
   class Client: public Klass {
     public:
       uWS::Hub* socket = nullptr;
-      string protocol  = "?",
-             wtfismyip = "";
+      string protocol  = "HTTP",
+             wtfismyip = "localhost";
       virtual void timer_Xs() = 0;
       virtual void welcome(mToClient&) = 0;
       virtual void clickme(mFromClient&, function<void(const json&)>) = 0;

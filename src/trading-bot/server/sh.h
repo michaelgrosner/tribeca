@@ -116,49 +116,6 @@ namespace K {
         wattroff(wLog, COLOR_PAIR(COLOR_WHITE));
         wrefresh(wLog);
       };
-      void logUI() {
-        if (!wBorder) {
-          cout << stamp() << "UI" << Ansi::r(COLOR_WHITE) << " ready ";
-          if (client->wtfismyip.empty())
-            cout << "over " << Ansi::b(COLOR_YELLOW) << client->protocol << Ansi::r(COLOR_WHITE) << " on external port " << Ansi::b(COLOR_YELLOW) << options.str("port") << Ansi::r(COLOR_WHITE) << ".\n";
-          else
-            cout << "at " << Ansi::b(COLOR_YELLOW) << strL(client->protocol) << "://" << client->wtfismyip << ":" << options.str("port") << Ansi::r(COLOR_WHITE) << ".\n";
-          return;
-        }
-        wmove(wLog, getmaxy(wLog)-1, 0);
-        stamp();
-        wattron(wLog, COLOR_PAIR(COLOR_WHITE));
-        wattron(wLog, A_BOLD);
-        wprintw(wLog, "UI");
-        wattroff(wLog, A_BOLD);
-        wprintw(wLog, " ready ");
-        if (client->wtfismyip.empty()) {
-          wprintw(wLog, "over ");
-          wattroff(wLog, COLOR_PAIR(COLOR_WHITE));
-          wattron(wLog, COLOR_PAIR(COLOR_YELLOW));
-          wprintw(wLog, client->protocol.data());
-          wattroff(wLog, COLOR_PAIR(COLOR_YELLOW));
-          wattron(wLog, COLOR_PAIR(COLOR_WHITE));
-          wprintw(wLog, " on external port ");
-          wattroff(wLog, COLOR_PAIR(COLOR_WHITE));
-          wattron(wLog, COLOR_PAIR(COLOR_YELLOW));
-          wprintw(wLog, options.str("port").data());
-          wattroff(wLog, COLOR_PAIR(COLOR_YELLOW));
-        } else {
-          wprintw(wLog, "at ");
-          wattroff(wLog, COLOR_PAIR(COLOR_WHITE));
-          wattron(wLog, COLOR_PAIR(COLOR_YELLOW));
-          wprintw(wLog, strL(client->protocol).data());
-          wprintw(wLog, "://");
-          wprintw(wLog, client->wtfismyip.data());
-          wprintw(wLog, ":");
-          wprintw(wLog, options.str("port").data());
-          wattroff(wLog, COLOR_PAIR(COLOR_YELLOW));
-        }
-        wattron(wLog, COLOR_PAIR(COLOR_WHITE));
-        wprintw(wLog, ".\n");
-        wattroff(wLog, COLOR_PAIR(COLOR_WHITE));
-      };
       void log(const string &prefix, const string &reason, const string &highlight = "") {
         unsigned int color = 0;
         if (reason.find("NG TRADE") != string::npos) {
@@ -290,10 +247,8 @@ namespace K {
         wattron(wBorder, COLOR_PAIR(COLOR_GREEN));
         string title1 = "   " + options.str("exchange");
         string title2 = " " + (options.num("port")
-          ? "UI" + (client->wtfismyip.empty()
-            ? " on " + client->protocol + " port " + options.str("port")
-            : " at " + strL(client->protocol) + "://" + client->wtfismyip + ":" + options.str("port")
-          ) : "headless"
+          ? "UI at " + strL(client->protocol) + "://" + client->wtfismyip + ":" + options.str("port")
+          : "headless"
         )  + ' ';
         wattron(wBorder, A_BOLD);
         mvwaddstr(wBorder, 0, 13, title1.data());
