@@ -18,7 +18,7 @@ namespace K {
       void load() {
         if (!socket) return;
         wtfismyip = mREST::xfer("https://wtfismyip.com/json", 4L)
-                      .value("YourFuckingIPAddress", "");
+                      .value("YourFuckingIPAddress", wtfismyip);
       };
       void waitWebAdmin() {
         if (!socket) return;
