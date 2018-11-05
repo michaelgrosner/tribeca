@@ -1874,16 +1874,16 @@ namespace K {
         ) toggle();
       };
       const bool paused() const {
-        return !greenButton;
+        return !(bool)greenButton;
       };
       const bool offline() const {
-        return !greenGateway;
+        return !(bool)greenGateway;
       };
       void agree(const bool &agreement) {
         adminAgreement = (mConnectivity)agreement;
       };
       void toggle() {
-        agree(!adminAgreement);
+        agree(!(bool)adminAgreement);
         switchFlag();
       };
       void read_from_gw(const mConnectivity &raw) {
@@ -1897,7 +1897,9 @@ namespace K {
       };
     private:
       void switchFlag() {
-        const mConnectivity k = greenGateway * adminAgreement;
+        const mConnectivity k = (mConnectivity)(
+          (bool)greenGateway and (bool)adminAgreement
+        );
         if (greenButton != k) {
           greenButton = k;
           focus("GW " + args->str("exchange"), "Quoting state changed to",
