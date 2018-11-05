@@ -12,10 +12,10 @@ namespace K {
           REQUIRE_FALSE(!(bool)on);
           REQUIRE(!(bool)off);
           THEN("combined") {
-            REQUIRE((bool)on  and (bool)on);
-            REQUIRE_FALSE((bool)on  and (bool)off);
-            REQUIRE_FALSE((bool)off and (bool)on);
-            REQUIRE_FALSE((bool)off and (bool)off);
+            REQUIRE(((bool)on  and (bool)on));
+            REQUIRE_FALSE(((bool)on  and (bool)off));
+            REQUIRE_FALSE(((bool)off and (bool)on));
+            REQUIRE_FALSE(((bool)off and (bool)off));
           }
         }
       }
