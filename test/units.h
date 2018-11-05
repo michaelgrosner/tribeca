@@ -9,13 +9,13 @@ namespace K {
         REQUIRE_NOTHROW(on = mConnectivity::Connected);
         REQUIRE_NOTHROW(off = mConnectivity::Disconnected);
         THEN("values") {
-          REQUIRE_FALSE(!on);
-          REQUIRE(!off);
+          REQUIRE_FALSE(!(bool)on);
+          REQUIRE(!(bool)off);
           THEN("combined") {
-            REQUIRE(on  * on  == on);
-            REQUIRE(on  * off == off);
-            REQUIRE(off * on  == off);
-            REQUIRE(off * off == off);
+            REQUIRE((bool)on  and (bool)on);
+            REQUIRE_FALSE((bool)on  and (bool)off);
+            REQUIRE_FALSE((bool)off and (bool)on);
+            REQUIRE_FALSE((bool)off and (bool)off);
           }
         }
       }
