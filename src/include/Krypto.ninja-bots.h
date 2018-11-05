@@ -99,7 +99,7 @@ namespace K {
           ? optstr.at(name)
           : (optint.find(name) != optint.end()
               ? to_string(num(name))
-              : str8(dec(name))
+              : mText::str8(dec(name))
           );
       };
       const int num(const string &name) const {
@@ -203,8 +203,8 @@ namespace K {
           error("CF", "Invalid --currency value; must be in the format of BASE/QUOTE, like BTC/EUR");
         if (optstr["exchange"].empty())
           error("CF", "Invalid --exchange value; the config file may have errors (there are extra spaces or double defined variables?)");
-        optstr["exchange"] = strU(optstr["exchange"]);
-        optstr["currency"] = strU(optstr["currency"]);
+        optstr["exchange"] = mText::strU(optstr["exchange"]);
+        optstr["currency"] = mText::strU(optstr["currency"]);
         optstr["base"]  = optstr["currency"].substr(0, optstr["currency"].find("/"));
         optstr["quote"] = optstr["currency"].substr(1+ optstr["currency"].find("/"));
         optint["market-limit"] = max(15, optint["market-limit"]);

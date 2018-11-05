@@ -231,9 +231,9 @@ namespace K {
         for (const mOrder &it : openOrders) {
           wattron(wBorder, COLOR_PAIR(it.side == mSide::Bid ? COLOR_CYAN : COLOR_MAGENTA));
           mvwaddstr(wBorder, ++yOrders, 1, (((it.side == mSide::Bid ? "BID" : "ASK") + (" > "
-            + str8(it.quantity))) + ' ' + gw->base + " at price "
-            + str8(it.price) + ' ' + gw->quote + " (value "
-            + str8(abs(it.price * it.quantity)) + ' ' + gw->quote + ")"
+            + mText::str8(it.quantity))) + ' ' + gw->base + " at price "
+            + mText::str8(it.price) + ' ' + gw->quote + " (value "
+            + mText::str8(abs(it.price * it.quantity)) + ' ' + gw->quote + ")"
           ).data());
           wattroff(wBorder, COLOR_PAIR(it.side == mSide::Bid ? COLOR_CYAN : COLOR_MAGENTA));
         }
@@ -247,7 +247,7 @@ namespace K {
         wattron(wBorder, COLOR_PAIR(COLOR_GREEN));
         string title1 = "   " + options.str("exchange");
         string title2 = " " + (options.num("port")
-          ? "UI at " + strL(client->protocol) + "://" + client->wtfismyip + ":" + options.str("port")
+          ? "UI at " + mText::strL(client->protocol) + "://" + client->wtfismyip + ":" + options.str("port")
           : "headless"
         )  + ' ';
         wattron(wBorder, A_BOLD);
@@ -268,8 +268,8 @@ namespace K {
         mvwhline(wBorder, 1, 8, ACS_HLINE, 4);
         mvwaddch(wBorder, 1, 12, ACS_RTEE);
         wattron(wBorder, COLOR_PAIR(COLOR_MAGENTA));
-        const string baseValue  = str8(engine->wallet.base.value),
-                     quoteValue = str8(engine->wallet.quote.value);
+        const string baseValue  = mText::str8(engine->wallet.base.value),
+                     quoteValue = mText::str8(engine->wallet.quote.value);
         wattron(wBorder, A_BOLD);
         waddstr(wBorder, (" " + baseValue + ' ').data());
         wattroff(wBorder, A_BOLD);
@@ -344,7 +344,7 @@ namespace K {
           wattron(wBorder, COLOR_PAIR(COLOR_GREEN));
           waddstr(wBorder, (" 1 " + gw->base + " = ").data());
           wattron(wBorder, A_BOLD);
-          waddstr(wBorder, str8(engine->levels.fairValue).data());
+          waddstr(wBorder, mText::str8(engine->levels.fairValue).data());
           wattroff(wBorder, A_BOLD);
           waddstr(wBorder, (" " + gw->quote).data());
           wattroff(wBorder, COLOR_PAIR(COLOR_GREEN));

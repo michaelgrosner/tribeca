@@ -618,8 +618,8 @@ namespace K {
           order
             ? order->orderId + "::" + order->exchangeId
               + " [" + to_string((int)order->status) + "]: "
-              + str8(order->quantity) + " " + args->str("base") + " at price "
-              + str8(order->price) + " " + args->str("quote")
+              + mText::str8(order->quantity) + " " + args->str("base") + " at price "
+              + mText::str8(order->price) + " " + args->str("quote")
             : "not found"
         ));
       };
@@ -1284,9 +1284,9 @@ namespace K {
       );
       print("GW " + args->str("exchange"), string(trade.isPong?"PONG":"PING") + " TRADE "
         + (trade.side == mSide::Bid ? "BUY  " : "SELL ")
-        + str8(trade.quantity) + ' ' + args->str("base") + " at price "
-        + str8(trade.price) + ' ' + args->str("quote") + " (value "
-        + str8(trade.value) + ' ' + args->str("quote") + ")"
+        + mText::str8(trade.quantity) + ' ' + args->str("base") + " at price "
+        + mText::str8(trade.price) + ' ' + args->str("quote") + " (value "
+        + mText::str8(trade.value) + ' ' + args->str("quote") + ")"
       );
       if (qp.safety == mQuotingSafety::Off or qp.safety == mQuotingSafety::PingPong)
         send_push_back(trade);
@@ -1684,9 +1684,9 @@ namespace K {
       };
       void report() const {
         print("PG", "TBP: "
-          + to_string((int)(targetBasePosition / baseValue * 1e+2)) + "% = " + str8(targetBasePosition)
+          + to_string((int)(targetBasePosition / baseValue * 1e+2)) + "% = " + mText::str8(targetBasePosition)
           + " " + args->str("base") + ", pDiv: "
-          + to_string((int)(positionDivergence / baseValue * 1e+2)) + "% = " + str8(positionDivergence)
+          + to_string((int)(positionDivergence / baseValue * 1e+2)) + "% = " + mText::str8(positionDivergence)
           + " " + args->str("base"));
       };
       const bool debug() const {

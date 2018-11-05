@@ -28,7 +28,7 @@ namespace K {
         )) error("UI", "Unable to listen to UI port number " + options.str("port")
              + ", may be already in use by another program"
            );
-        screen->log("UI", "ready at", strL(protocol) + "://" + wtfismyip + ":" + options.str("port"));
+        screen->log("UI", "ready at", mText::strL(protocol) + "://" + wtfismyip + ":" + options.str("port"));
         auto client = &socket->getDefaultGroup<uWS::SERVER>();
         client->onConnection([&](uWS::WebSocket<uWS::SERVER> *webSocket, uWS::HttpRequest req) {
           onConnection();

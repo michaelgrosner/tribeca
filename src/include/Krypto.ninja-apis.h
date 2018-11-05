@@ -343,51 +343,24 @@ namespace K {
       };
   };
 
-  class mRandom {
-    public:
-      static const unsigned long long int64() {
-        static random_device rd;
-        static mt19937_64 gen(rd());
-        return uniform_int_distribution<unsigned long long>()(gen);
-      };
-      static const mRandId int45Id() {
-        return to_string(int64()).substr(0, 10);
-      };
-      static const mRandId int32Id() {
-        return to_string(int64()).substr(0,  8);
-      };
-      static const mRandId char16Id() {
-        char s[16];
-        for (unsigned int i = 0; i < 16; ++i)
-          s[i] = numsAz[int64() % (sizeof(numsAz) - 1)];
-        return string(s, 16);
-      };
-      static const mRandId uuid36Id() {
-        string uuid = string(36, ' ');
-        unsigned long long rnd = int64();
-        unsigned long long rnd_ = int64();
-        uuid[8] = '-';
-        uuid[13] = '-';
-        uuid[18] = '-';
-        uuid[23] = '-';
-        uuid[14] = '4';
-        for (unsigned int i=0;i<36;i++)
-          if (i != 8 && i != 13 && i != 18 && i != 14 && i != 23) {
-            if (rnd <= 0x02) rnd = 0x2000000 + (rnd_ * 0x1000000) | 0;
-            rnd >>= 4;
-            uuid[i] = numsAz[(i == 19) ? ((rnd & 0xf) & 0x3) | 0x8 : rnd & 0xf];
-          }
-        return strL(uuid);
-      };
-      static const mRandId uuid32Id() {
-        mRandId uuid = uuid36Id();
-        uuid.erase(remove(uuid.begin(), uuid.end(), '-'), uuid.end());
-        return uuid;
-      }
-  };
-
   class mText {
     public:
+      static string strX(const double &d, const unsigned int &X) {
+        stringstream ss;
+        ss << setprecision(X) << fixed << d;
+        return ss.str();
+      };
+      static string str8(const double &d) {
+        return strX(d, 8);
+      };
+      static string strL(string s) {
+        transform(s.begin(), s.end(), s.begin(), ::tolower);
+        return s;
+      };
+      static string strU(string s) {
+        transform(s.begin(), s.end(), s.begin(), ::toupper);
+        return s;
+      };
       static string oZip(string k) {
         z_stream zs;
         if (inflateInit2(&zs, -15) != Z_OK) return "";
@@ -494,6 +467,49 @@ namespace K {
       };
   };
 
+  class mRandom {
+    public:
+      static const unsigned long long int64() {
+        static random_device rd;
+        static mt19937_64 gen(rd());
+        return uniform_int_distribution<unsigned long long>()(gen);
+      };
+      static const mRandId int45Id() {
+        return to_string(int64()).substr(0, 10);
+      };
+      static const mRandId int32Id() {
+        return to_string(int64()).substr(0,  8);
+      };
+      static const mRandId char16Id() {
+        char s[16];
+        for (unsigned int i = 0; i < 16; ++i)
+          s[i] = numsAz[int64() % (sizeof(numsAz) - 1)];
+        return string(s, 16);
+      };
+      static const mRandId uuid36Id() {
+        string uuid = string(36, ' ');
+        unsigned long long rnd = int64();
+        unsigned long long rnd_ = int64();
+        uuid[8] = '-';
+        uuid[13] = '-';
+        uuid[18] = '-';
+        uuid[23] = '-';
+        uuid[14] = '4';
+        for (unsigned int i=0;i<36;i++)
+          if (i != 8 && i != 13 && i != 18 && i != 14 && i != 23) {
+            if (rnd <= 0x02) rnd = 0x2000000 + (rnd_ * 0x1000000) | 0;
+            rnd >>= 4;
+            uuid[i] = numsAz[(i == 19) ? ((rnd & 0xf) & 0x3) | 0x8 : rnd & 0xf];
+          }
+        return mText::strL(uuid);
+      };
+      static const mRandId uuid32Id() {
+        mRandId uuid = uuid36Id();
+        uuid.erase(remove(uuid.begin(), uuid.end(), '-'), uuid.end());
+        return uuid;
+      }
+  };
+
   class GwExchangeData {
     public:
       function<void(const mOrder&)>        write_mOrder;
@@ -512,8 +528,8 @@ namespace K {
         place(
           order->orderId,
           order->side,
-          str8(order->price),
-          str8(order->quantity),
+          mText::str8(order->price),
+          mText::str8(order->quantity),
           order->type,
           order->timeInForce,
           order->preferPostOnly
@@ -522,7 +538,7 @@ namespace K {
       void replace(const mOrder *const order) {
         replace(
           order->exchangeId,
-          str8(order->price)
+          mText::str8(order->price)
         );
       };
       void cancel(const mOrder *const order) {
@@ -639,10 +655,10 @@ namespace K {
         unsigned int precision = minTick < 1e-8 ? 10 : 8;
         for (pair<string, string> it : (vector<pair<string, string>>){
           {"symbols", symbol                  },
-          {"minTick", strX(minTick, precision)},
-          {"minSize", strX(minSize, precision)},
-          {"makeFee", strX(makeFee, precision)},
-          {"takeFee", strX(takeFee, precision)}
+          {"minTick", mText::strX(minTick, precision)},
+          {"minSize", mText::strX(minSize, precision)},
+          {"makeFee", mText::strX(makeFee, precision)},
+          {"takeFee", mText::strX(takeFee, precision)}
         }) notes.push_back(it);
         string info = "setup:";
         for (pair<string, string> &it : notes)
@@ -788,7 +804,7 @@ namespace K {
       };
       const json handshake() {
         randId = mRandom::int45Id;
-        symbol = strL(base + quote);
+        symbol = mText::strL(base + quote);
         const json reply1 = mREST::xfer(http + "/pubticker/" + symbol);
         if (reply1.find("last_price") != reply1.end()) {
           ostringstream price_;
@@ -835,7 +851,7 @@ namespace K {
       };
       const json handshake() {
         randId = mRandom::char16Id;
-        symbol = strL(base + quote);
+        symbol = mText::strL(base + quote);
         const json reply = mREST::xfer(http + "public/symbols");
         if (reply.find("data") != reply.end() and reply.at("data").is_array())
           for (json::const_iterator it=reply.at("data").cbegin(); it!=reply.at("data").cend();++it)
@@ -908,7 +924,7 @@ namespace K {
       };
       const json handshake() {
         randId = mRandom::int45Id;
-        symbol = strL(base + "_" + quote);
+        symbol = mText::strL(base + "_" + quote);
         const json reply = mREST::xfer(http + "/constants");
         if (reply.find(symbol.substr(0,3).append("TickSize")) != reply.end()) {
           minTick = reply.value(symbol.substr(0,3).append("TickSize"), 0.0);
