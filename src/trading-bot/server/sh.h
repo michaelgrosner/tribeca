@@ -38,7 +38,7 @@ namespace K {
         engine->monitor.product.minSize = &gw->minSize;
         if (!options.num("naked"))
           switchOn();
-        if (mREST::inet)
+        if (!mREST::inet.empty())
           log("CF", "Network Interface for outgoing traffic is", mREST::inet);
       };
     public:

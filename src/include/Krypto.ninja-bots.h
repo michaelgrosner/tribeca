@@ -62,7 +62,7 @@ namespace K {
 
   int Ansi::colorful = 1;
 
-  const char *mREST::inet = nullptr;
+  string mREST::inet;
 
   //! \brief     Call all endingFn once and print a last error log msg.
   //! \param[in] prefix Allows any string, if possible with a length of 2.
@@ -185,9 +185,8 @@ namespace K {
         }
         tidy();
         gateway();
+        mREST::inet = str("interface");
         Ansi::colorful = num("colors");
-        if (!str("interface").empty())
-          mREST::inet = str("interface").data();
         return this;
       };
       void handshake(const vector<pair<string, string>> &notes = {}) {

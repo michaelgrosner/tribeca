@@ -2597,7 +2597,7 @@ namespace K {
   static void to_json(json &j, const mMonitor &k) {
     j = {
       {     "a", *k.unlock                                         },
-      {  "inet", string(mREST::inet ?: "")                         },
+      {  "inet", mREST::inet                                       },
       {  "freq", k.orders_60s                                      },
       { "theme", args->num("ignore-moon") + args->num("ignore-sun")},
       {"memory", k.memSize()                                       },
