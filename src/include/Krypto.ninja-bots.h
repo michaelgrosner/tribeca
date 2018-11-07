@@ -85,14 +85,11 @@ namespace K {
       unordered_map<string, int>    optint;
       unordered_map<string, double> optdec;
     protected:
-      virtual void tidy_values(
-        unordered_map<string, string> &str,
-        unordered_map<string, int>    &num,
-        unordered_map<string, double> &dec
-      ) {};
-      virtual const vector<Argument> custom_long_options() const {
-        return {};
-      };
+      pair<vector<Argument>, function<void(
+        unordered_map<string, string> &,
+        unordered_map<string, int>    &,
+        unordered_map<string, double> &
+      )>> arguments;
     public:
       const string str(const string &name) const {
         return optstr.find(name) != optstr.end()
@@ -132,7 +129,9 @@ namespace K {
                                                "\n" "default NUMBER is '321' and the minimum is '15'."
                                                "\n" "locked bots smells like '--market-limit=3' spirit"}
         };
-        for (const Argument &it : custom_long_options()) long_options.push_back(it);
+        for (const Argument &it : arguments.first)
+          long_options.push_back(it);
+        arguments.first.clear();
         for (const Argument &it : (vector<Argument>){
           {"debug-secret", "1",      0,        "print (never share!) secret inputs and outputs"},
           {"debug",        "1",      0,        "print detailed output about all the (previous) things!"},
@@ -141,13 +140,13 @@ namespace K {
           {"free-version", "1",      0,        "work with all market levels but slowdown 7 seconds"}
         }) long_options.push_back(it);
         int index = 1714;
-        vector<option> longopts = { {0, 0, 0, 0} };
+        vector<option> opt_long = { {0, 0, 0, 0} };
         for (const Argument &it : long_options) {
           if     (!it.default_value)             optint[it.name] = 0;
           else if (it.defined_value == "NUMBER") optint[it.name] = stoi(it.default_value);
           else if (it.defined_value == "AMOUNT") optdec[it.name] = stod(it.default_value);
           else                                   optstr[it.name] =      it.default_value;
-          longopts.insert(longopts.end()-1, {
+          opt_long.insert(opt_long.end()-1, {
             it.name.data(),
             it.default_value
               ? required_argument
@@ -165,14 +164,14 @@ namespace K {
         }
         int k = 0;
         while (++k)
-          switch (k = getopt_long(argc, argv, "hv", (option*)&longopts[0], &index)) {
+          switch (k = getopt_long(argc, argv, "hv", (option*)&opt_long[0], &index)) {
             case -1 :
             case  0 : break;
             case 'h': help(long_options);
             case '?':
             case 'v': EXIT(EXIT_SUCCESS);
             default : {
-              const string name(longopts.at(index).name);
+              const string name(opt_long.at(index).name);
               if      (optint.find(name) != optint.end()) optint[name] =   stoi(optarg);
               else if (optdec.find(name) != optdec.end()) optdec[name] =   stod(optarg);
               else                                        optstr[name] = string(optarg);
@@ -213,11 +212,14 @@ namespace K {
         if (optint["debug-secret"])
 #endif
           optint["naked"] = 1;
-        tidy_values(
-          optstr,
-          optint,
-          optdec
-        );
+        if (arguments.second) {
+          arguments.second(
+            optstr,
+            optint,
+            optdec
+          );
+          arguments.second = nullptr;
+        }
       };
       void gateway() {
         if (!(gw = Gw::new_Gw(str("exchange"))))

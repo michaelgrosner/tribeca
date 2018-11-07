@@ -3,20 +3,20 @@
 
 namespace K {
   class Options: public Arguments {
-    protected:
-      const vector<Argument> custom_long_options() const {
-        return {
+    public:
+      Options()
+      {
+        arguments = { {
           {"subject", "NAME", "World", "say hello to NAME (default: 'World')"}
-        };
-      };
-      void tidy_values(
-        unordered_map<string, string> &str,
-        unordered_map<string, int>    &num,
-        unordered_map<string, double> &dec
-      ) {
-        if (str["subject"].empty())
-          error("CF", "Invalid empty --subject value");
-        else str["subject"] += "!";
+        }, [](
+          unordered_map<string, string> &str,
+          unordered_map<string, int>    &num,
+          unordered_map<string, double> &dec
+        ) {
+          if (str["subject"].empty())
+            error("CF", "Invalid empty --subject value");
+          else str["subject"] += "!";
+        } };
       };
   } options;
 

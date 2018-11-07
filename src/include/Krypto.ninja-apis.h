@@ -323,7 +323,7 @@ namespace K {
         if (curl) {
           curl_setopt(curl);
           curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
-          curl_easy_setopt(curl, CURLOPT_INTERFACE, inet.data());
+          curl_easy_setopt(curl, CURLOPT_INTERFACE, inet.empty() ? nullptr : inet.data());
           curl_easy_setopt(curl, CURLOPT_URL, url.data());
           curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &curl_write);
           curl_easy_setopt(curl, CURLOPT_WRITEDATA, &reply);

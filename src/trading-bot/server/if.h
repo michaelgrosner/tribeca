@@ -3,9 +3,10 @@
 
 namespace K {
   class Options: public Arguments {
-    protected:
-      const vector<Argument> custom_long_options() const {
-        return {
+    public:
+      Options()
+      {
+        arguments = { {
           {"wallet-limit", "AMOUNT", "0",                        "set AMOUNT in base currency to limit the balance,"
                                                                  "\n" "otherwise the full available balance can be used"},
           {"client-limit", "NUMBER", "7",                        "set NUMBER of maximum concurrent UI connections"},
@@ -38,38 +39,37 @@ namespace K {
           {"debug-orders", "1",      0,                          "print detailed output about exchange messages"},
           {"debug-quotes", "1",      0,                          "print detailed output about quoting engine"},
           {"debug-wallet", "1",      0,                          "print detailed output about target base position"}
-        };
-      };
-      void tidy_values(
-        unordered_map<string, string> &str,
-        unordered_map<string, int>    &num,
-        unordered_map<string, double> &dec
-      ) {
-        if (num["debug"])
-          num["debug-orders"] =
-          num["debug-quotes"] =
-          num["debug-wallet"] = 1;
-        if (num["ignore-moon"] and num["ignore-sun"])
-          num["ignore-moon"] = 0;
-        if (num["latency"] or num["debug-orders"] or num["debug-quotes"])
-          num["naked"] = 1;
-        if (num["latency"] or !num["port"] or !num["client-limit"])
-          num["headless"] = 1;
-        str["B64auth"] = (!num["headless"]
-          and str["user"] != "NULL" and !str["user"].empty()
-          and str["pass"] != "NULL" and !str["pass"].empty()
-        ) ? "Basic " + mText::oB64(str["user"] + ':' + str["pass"])
-          : "";
-        str["diskdata"] = "";
-        if (str["database"].empty() or str["database"] == ":memory:")
-          (str["database"] == ":memory:"
-            ? str["diskdata"]
-            : str["database"]
-          ) = "/data/db/K"
-            + ('.' + str["exchange"])
-            +  '.' + str["base"]
-            +  '.' + str["quote"]
-            +  '.' + "db";
+        }, [](
+          unordered_map<string, string> &str,
+          unordered_map<string, int>    &num,
+          unordered_map<string, double> &dec
+        ) {
+          if (num["debug"])
+            num["debug-orders"] =
+            num["debug-quotes"] =
+            num["debug-wallet"] = 1;
+          if (num["ignore-moon"] and num["ignore-sun"])
+            num["ignore-moon"] = 0;
+          if (num["latency"] or num["debug-orders"] or num["debug-quotes"])
+            num["naked"] = 1;
+          if (num["latency"] or !num["port"] or !num["client-limit"])
+            num["headless"] = 1;
+          str["B64auth"] = (!num["headless"]
+            and str["user"] != "NULL" and !str["user"].empty()
+            and str["pass"] != "NULL" and !str["pass"].empty()
+          ) ? "Basic " + mText::oB64(str["user"] + ':' + str["pass"])
+            : "";
+          str["diskdata"] = "";
+          if (str["database"].empty() or str["database"] == ":memory:")
+            (str["database"] == ":memory:"
+              ? str["diskdata"]
+              : str["database"]
+            ) = "/data/db/K"
+              + ('.' + str["exchange"])
+              +  '.' + str["base"]
+              +  '.' + str["quote"]
+              +  '.' + "db";
+        } };
       };
   } options;
 

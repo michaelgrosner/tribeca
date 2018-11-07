@@ -23,7 +23,10 @@ namespace K {
       void waitWebAdmin() {
         if (!socket) return;
         if (!socket->listen(
-          mREST::inet.data(), options.num("port"), uS::TLS::Context(sslContext()), 0,
+          mREST::inet.empty() ? nullptr : mREST::inet.data(),
+          options.num("port"),
+          uS::TLS::Context(sslContext()),
+          0,
           &socket->getDefaultGroup<uWS::SERVER>()
         )) error("UI", "Unable to listen to UI port number " + options.str("port")
              + ", may be already in use by another program"
