@@ -41,7 +41,8 @@ openssl:
 	./Configure $(shell test -n "`echo $(CHOST) | grep mingw32`" && echo mingw64 || echo dist) \
 	--api=1.1.0 --cross-compile-prefix=$(CHOST)- --prefix=$(KBUILD)/local                      \
 	--openssldir=$(KBUILD)/local && make all install_sw install_ssldirs                        \
-	&& sed -i "s/\(ui_st UI\)/\1_/" $(KBUILD)/local/include/openssl/ossl_typ.h                 )
+	&& sed -i "s/\(ui_st UI\)/\1_/" $(KBUILD)/local/include/openssl/ossl_typ.h                 \
+	&& sed -i "s/\(UI\) /\1_ /" $(KBUILD)/local/include/openssl/ui.h                           )
 
 ares:
 	test -d $(KBUILD)/c-ares-$(V_ARES) || (                                                  \
@@ -52,8 +53,9 @@ ares:
 curl:
 	test -d $(KBUILD)/curl-$(V_CURL) || (                                                    \
 	curl -L https://curl.haxx.se/download/curl-$(V_CURL).tar.gz | tar xz -C $(KBUILD)        \
-	&& cd $(KBUILD)/curl-$(V_CURL) && CPPFLAGS=-DCARES_STATICLIB ./configure --host=$(CHOST) \
-	--with-ca-bundle=/etc/ssl/certs/ca-certificates.crt --prefix=$(KBUILD)/local             \
+	&& cd $(KBUILD)/curl-$(V_CURL) && sed -i "s/\(UI\) /\1_ /" lib/vtls/openssl.c            \
+	&& CPPFLAGS=-DCARES_STATICLIB ./configure --host=$(CHOST) --prefix=$(KBUILD)/local       \
+	--with-ca-bundle=/etc/ssl/certs/ca-certificates.crt                                      \
 	--with-zlib=$(KBUILD)/local --with-ssl=$(KBUILD)/local --enable-ares=$(KBUILD)/local     \
 	--disable-manual --disable-imap --disable-file --disable-tftp --disable-smtp             \
 	--disable-pop3 --disable-smb --disable-ftp --disable-sspi --disable-ldap --disable-dict  \
