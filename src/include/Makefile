@@ -37,10 +37,11 @@ zlib:
 openssl:
 	test -d $(KBUILD)/openssl-$(V_SSL) || (                                                    \
 	curl -L https://www.openssl.org/source/openssl-$(V_SSL).tar.gz | tar xz -C $(KBUILD)       \
-	&& cd $(KBUILD)/openssl-$(V_SSL) && CC=gcc                                                 \
+	&& cd $(KBUILD)/openssl-$(V_SSL) && CC=gcc CPPFLAGS=-DIU=UI_                               \
 	./Configure $(shell test -n "`echo $(CHOST) | grep mingw32`" && echo mingw64 || echo dist) \
 	--api=1.1.0 --cross-compile-prefix=$(CHOST)- --prefix=$(KBUILD)/local                      \
-	--openssldir=$(KBUILD)/local && make all install_sw install_ssldirs                        )
+	--openssldir=$(KBUILD)/local && make all install_sw install_ssldirs                        \
+	&& sed -i "s/\(ui_st UI\)/\1_/" $(KBUILD)/local/include/openssl/ossl_typ.h                 )
 
 ares:
 	test -d $(KBUILD)/c-ares-$(V_ARES) || (                                                  \

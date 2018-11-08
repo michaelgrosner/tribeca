@@ -1111,14 +1111,14 @@ namespace K {
       unordered_map<mPrice, mAmount> filterBidOrders,
                                      filterAskOrders;
     private_ref:
-      const mOrders  &orders;
       const mProduct &product;
+      const mOrders  &orders;
     public:
-      mMarketLevels(const mOrders &o, const mProduct &p)
+      mMarketLevels(const mProduct &p, const mOrders &o)
         : diff(unfiltered)
         , stats(fairValue)
-        , orders(o)
         , product(p)
+        , orders(o)
       {};
       const bool warn_empty() const {
         const bool err = empty();
@@ -1749,15 +1749,15 @@ namespace K {
      mSafety safety;
     mProfits profits;
     private_ref:
-      const mOrders  &orders;
       const mProduct &product;
+      const mOrders  &orders;
       const mPrice   &fairValue;
     public:
-      mWalletPosition(const mOrders &o, const mProduct &p, const double &t, const mPrice &f)
+      mWalletPosition(const mProduct &p, const mOrders &o, const double &t, const mPrice &f)
         : target(t, p, base.value)
         , safety(f, base.value, base.total, target.targetBasePosition)
-        , orders(o)
         , product(p)
+        , orders(o)
         , fairValue(f)
       {};
       const bool ready() const {
@@ -2573,7 +2573,7 @@ namespace K {
     private_ref:
       mOrders &orders;
     public:
-      mBroker(mOrders &o, const mProduct &p, const mMarketLevels &l, const mWalletPosition &w)
+      mBroker(const mProduct &p, mOrders &o, const mMarketLevels &l, const mWalletPosition &w)
         : calculon(p, l, w)
         , orders(o)
       {};

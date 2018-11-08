@@ -2,7 +2,7 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
 PATCH    = 10
-BUILD    = 87
+BUILD    = 88
 SOURCE   = hello-world \
            trading-bot
 CARCH    = x86_64-linux-gnu      \
@@ -38,11 +38,6 @@ KARGS   := -pthread -std=c++17 -O3 -DK_BUILD='"$(CHOST)"' \
   )
 
 all K: $(SOURCE)
-
-bundle:
-	$(warning *** make bundle is DEPRECATED! instead just use "make" to build the client/server.)
-	@sleep 2
-	@$(MAKE)
 
 hlep hepl help:
 	#                                                  #

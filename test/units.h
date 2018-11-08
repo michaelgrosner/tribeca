@@ -114,7 +114,7 @@ namespace K {
       product.minTick = &minTick;
       product.minSize = &minSize;
       mOrders orders(product);
-      mMarketLevels levels(orders, product);
+      mMarketLevels levels(product, orders);
       WHEN("defaults") {
         THEN("fair value") {
           REQUIRE_FALSE(levels.fairValue);
@@ -359,13 +359,13 @@ namespace K {
       const mPrice minTick = 0.01;
       product.minTick = &minTick;
       mOrders orders(product);
-      mMarketLevels levels(orders, product);
+      mMarketLevels levels(product, orders);
       const mPrice fairValue = 500;
       const double targetPositionAutoPercentage = 0;
-      mWalletPosition wallet(orders, product, targetPositionAutoPercentage, fairValue);
+      mWalletPosition wallet(product, orders, targetPositionAutoPercentage, fairValue);
       wallet.base = mWallet(1, 0, "BTC");
       wallet.quote = mWallet(1000, 0, "EUR");
-      mBroker broker(orders, product, levels, wallet);
+      mBroker broker(product, orders, levels, wallet);
       WHEN("assigned") {
         vector<mRandId> randIds;
         mClock time = Tstamp;

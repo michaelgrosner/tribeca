@@ -1,5 +1,4 @@
 #include "Krypto.ninja.h"
-#include "trading-bot.h"
                                  /*                                 */ // youtu.be/dVlGmdl-g9Q
           ;;;;;;;;;;;;;;;;;;;;;;   /*         Wherever you go..     */
           ;;;;;    ;;;;    ;;;;;     /*       Whatever you do..     */ // youtu.be/DKSO5YlYbOg
@@ -12,7 +11,9 @@ using namespace    K;    ;;;;;;;/*(  <>  )`-. Or how my OS breaks,  */ // youtu.
           ;;;;;;;;;;;;;    ;;;;;/*`.____;'    Day after day.        */
           ;;;;;;;;;;;;;;;;;;;;;;/*                               :wq*/ // youtu.be/AMCeEoOgSvc
                               /*                                    */
-int main(int argc, char** argv) {                                      // youtu.be/dp5hsDgENLk
+#include "trading-bot.h"                                               // youtu.be/dp5hsDgENLk
+
+int main(int argc, char** argv) {
   options.main(argc, argv)->wait({
     screen = &sh,
     events = &ev,
