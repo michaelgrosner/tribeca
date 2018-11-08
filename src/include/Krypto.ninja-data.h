@@ -477,6 +477,58 @@ namespace K {
     k.from_json(j);
   };
 
+  struct mProduct: public mJsonToClient<mProduct> {
+    const mPrice  *minTick = nullptr;
+    const mAmount *minSize = nullptr;
+    private_ref:
+      const Arguments &args;
+    public:
+      mProduct(const Arguments &o)
+        : args(o)
+      {};
+      const string title() const {
+        return args.str("title");
+      };
+      const string matryoshka() const {
+        return args.str("matryoshka");
+      };
+      const unsigned int lifetime() const {
+        return args.num("lifetime");
+      };
+      const unsigned int debug(const string &k) const {
+        return
+#ifndef NDEBUG
+        0
+#else
+        args.num("debug-" + k)
+#endif
+        ;
+      };
+      const double maxWallet() const {
+        return
+#ifndef NDEBUG
+        0
+#else
+        args.dec("wallet-limit")
+#endif
+        ;
+      };
+      const mMatter about() const {
+        return mMatter::ProductAdvertisement;
+      };
+  };
+  static void to_json(json &j, const mProduct &k) {
+    j = {
+      {   "exchange", gw->exchange                                  },
+      {       "base", gw->base                                      },
+      {      "quote", gw->quote                                     },
+      {    "minTick", *k.minTick                                    },
+      {"environment", k.title()                                     },
+      { "matryoshka", k.matryoshka()                                },
+      {   "homepage", "https://github.com/ctubio/Krypto-trading-bot"}
+    };
+  };
+
   struct mLastOrder {
     mPrice  price          = 0;
     mAmount tradeQuantity  = 0;
@@ -496,6 +548,12 @@ namespace K {
     mLastOrder updated;
     private:
       unordered_map<mRandId, mOrder> orders;
+    private_ref:
+      const mProduct &product;
+    public:
+      mOrders(const mProduct &p)
+        : product(p)
+      {};
     public:
       mOrder *const find(const mRandId &orderId) {
         return (orderId.empty()
@@ -627,7 +685,7 @@ namespace K {
         print("DEBUG OG", "memory " + to_string(orders.size()));
       };
       const bool debug() const {
-        return args->num("debug-orders");
+        return product.debug("orders");
       };
   };
   static void to_json(json &j, const mOrders &k) {
@@ -970,37 +1028,6 @@ namespace K {
       {     "fairValue", k.fairPrice.currentPrice()     },
       { "tradesBuySize", k.takerTrades.takersBuySize60s },
       {"tradesSellSize", k.takerTrades.takersSellSize60s}
-    };
-  };
-
-  struct mProduct: public mJsonToClient<mProduct> {
-    const mPrice  *minTick = nullptr;
-    const mAmount *minSize = nullptr;
-    private_ref:
-      const Arguments &args;
-    public:
-      mProduct(const Arguments &o)
-        : args(o)
-      {};
-      const string title() const {
-        return args.str("title");
-      };
-      const string matryoshka() const {
-        return args.str("matryoshka");
-      };
-      const mMatter about() const {
-        return mMatter::ProductAdvertisement;
-      };
-  };
-  static void to_json(json &j, const mProduct &k) {
-    j = {
-      {   "exchange", gw->exchange                                  },
-      {       "base", gw->base                                      },
-      {      "quote", gw->quote                                     },
-      {    "minTick", *k.minTick                                    },
-      {"environment", k.title()                                     },
-      { "matryoshka", k.matryoshka()                                },
-      {   "homepage", "https://github.com/ctubio/Krypto-trading-bot"}
     };
   };
 
@@ -1629,11 +1656,13 @@ namespace K {
     mAmount targetBasePosition = 0,
             positionDivergence = 0;
     private_ref:
-      const double  &targetPositionAutoPercentage;
-      const mAmount &baseValue;
+      const double   &targetPositionAutoPercentage;
+      const mProduct &product;
+      const mAmount  &baseValue;
     public:
-      mTarget(const double &t, const mAmount &v)
+      mTarget(const double &t, const mProduct &p, const mAmount &v)
         : targetPositionAutoPercentage(t)
+        , product(p)
         , baseValue(v)
       {};
       void calcTargetBasePos() {
@@ -1700,7 +1729,7 @@ namespace K {
           + " " + gw->base);
       };
       const bool debug() const {
-        return args->num("debug-wallet");
+        return product.debug("wallet");
       };
   };
   static void to_json(json &j, const mTarget &k) {
@@ -1720,13 +1749,15 @@ namespace K {
      mSafety safety;
     mProfits profits;
     private_ref:
-      const mOrders &orders;
-      const mPrice  &fairValue;
+      const mOrders  &orders;
+      const mProduct &product;
+      const mPrice   &fairValue;
     public:
-      mWalletPosition(const mOrders &o, const double &t, const mPrice &f)
-        : target(t, base.value)
+      mWalletPosition(const mOrders &o, const mProduct &p, const double &t, const mPrice &f)
+        : target(t, p, base.value)
         , safety(f, base.value, base.total, target.targetBasePosition)
         , orders(o)
+        , product(p)
         , fairValue(f)
       {};
       const bool ready() const {
@@ -1768,7 +1799,7 @@ namespace K {
     private:
       void calcFundsSilently() {
         if (empty() or !fairValue) return;
-        if (args->dec("wallet-limit")) calcMaxWallet();
+        if (product.maxWallet()) calcMaxWallet();
         calcValues();
         calcProfits();
         target.calcTargetBasePos();
@@ -1790,7 +1821,7 @@ namespace K {
         quote.profit = profits.calcQuoteDiff();
       };
       void calcMaxWallet() {
-        mAmount maxWallet = args->dec("wallet-limit");
+        mAmount maxWallet = product.maxWallet();
         maxWallet -= quote.held / fairValue;
         if (maxWallet > 0 and quote.amount / fairValue > maxWallet) {
           quote.amount = maxWallet * fairValue;
@@ -1971,28 +2002,32 @@ namespace K {
     mQuoteBid bid;
     mQuoteAsk ask;
          bool superSpread = false;
-    mQuotes()
-    {};
-    void checkCrossedQuotes() {
-      if ((unsigned int)bid.checkCrossed(ask)
-        | (unsigned int)ask.checkCrossed(bid)
-      ) warn("QE", "Crossed bid/ask quotes detected, that is.. unexpected");
-    };
-    void debug(const string &reason) {
-      if (debug())
-        print("DEBUG QE", reason);
-    };
-    void debuq(const string &step) {
-      if (debug())
-        print("DEBUG QE", "[" + step + "] "
-          + to_string((int)bid.state) + ":"
-          + to_string((int)ask.state) + " "
-          + ((json)*this).dump()
-        );
-    };
+    private_ref:
+      const mProduct &product;
+    public:
+      mQuotes(const mProduct &p)
+        : product(p)
+      {};
+      void checkCrossedQuotes() {
+        if ((unsigned int)bid.checkCrossed(ask)
+          | (unsigned int)ask.checkCrossed(bid)
+        ) warn("QE", "Crossed bid/ask quotes detected, that is.. unexpected");
+      };
+      void debug(const string &reason) {
+        if (debug())
+          print("DEBUG QE", reason);
+      };
+      void debuq(const string &step) {
+        if (debug())
+          print("DEBUG QE", "[" + step + "] "
+            + to_string((int)bid.state) + ":"
+            + to_string((int)ask.state) + " "
+            + ((json)*this).dump()
+          );
+      };
     private:
       const bool debug() const {
-        return args->num("debug-quotes");
+        return product.debug("quotes");
       };
   };
   static void to_json(json &j, const mQuotes &k) {
@@ -2214,7 +2249,8 @@ namespace K {
       const mWalletPosition &wallet;
     public:
       mAntonioCalculon(const mProduct &p, const mMarketLevels &l, const mWalletPosition &w)
-        : dummyMM(p, l, w, quotes)
+        : quotes(p)
+        , dummyMM(p, l, w, quotes)
         , product(p)
         , levels(l)
         , wallet(w)
@@ -2250,7 +2286,7 @@ namespace K {
           } else if (qp.safety != mQuotingSafety::AK47
             or quote.deprecates(order.price)
           ) {
-            if (args->num("lifetime") and order.time + args->num("lifetime") > Tstamp)
+            if (product.lifetime() and order.time + product.lifetime() > Tstamp)
               quote.skip();
             else return true;
           }

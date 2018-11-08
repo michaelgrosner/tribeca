@@ -13,15 +13,13 @@ using namespace    K;    ;;;;;;;/*(  <>  )`-. Or how my OS breaks,  */ // youtu.
           ;;;;;;;;;;;;;;;;;;;;;;/*                               :wq*/ // youtu.be/AMCeEoOgSvc
                               /*                                    */
 int main(int argc, char** argv) {                                      // youtu.be/dp5hsDgENLk
-  (args = &options)
-    ->main(argc, argv)
-    ->wait({
-      screen = &sh,
-      events = &ev,
-      sqlite = &db,
-      client = &ui,
-      engine = &qe
-    });
+  options.main(argc, argv)->wait({
+    screen = &sh,
+    events = &ev,
+    sqlite = &db,
+    client = &ui,
+    engine = &qe
+  });
   return EXIT_FAILURE;
 };
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

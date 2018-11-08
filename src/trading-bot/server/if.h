@@ -185,8 +185,9 @@ namespace K {
               mBroker broker;
       Engine()
         : monitor(options)
+        , orders(monitor.product)
         , levels(orders, monitor.product)
-        , wallet(orders, levels.stats.ewma.targetPositionAutoPercentage, levels.fairValue)
+        , wallet(orders, monitor.product, levels.stats.ewma.targetPositionAutoPercentage, levels.fairValue)
         , broker(orders, monitor.product, levels, wallet)
       {};
       void savedQuotingParameters() {

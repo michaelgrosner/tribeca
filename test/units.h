@@ -107,12 +107,13 @@ namespace K {
       }
     }
     GIVEN("mMarketLevels") {
-      mProduct product;
+      Arguments args;
+      mProduct product(args);
       const mPrice  minTick = 0.01;
       const mAmount minSize = 0.001;
       product.minTick = &minTick;
       product.minSize = &minSize;
-      mOrders orders;
+      mOrders orders(product);
       mMarketLevels levels(orders, product);
       WHEN("defaults") {
         THEN("fair value") {
@@ -353,14 +354,15 @@ namespace K {
     }
 
     GIVEN("mBroker") {
-      mProduct product;
+      Arguments args;
+      mProduct product(args);
       const mPrice minTick = 0.01;
       product.minTick = &minTick;
-      mOrders orders;
+      mOrders orders(product);
       mMarketLevels levels(orders, product);
       const mPrice fairValue = 500;
       const double targetPositionAutoPercentage = 0;
-      mWalletPosition wallet(orders, targetPositionAutoPercentage, fairValue);
+      mWalletPosition wallet(orders, product, targetPositionAutoPercentage, fairValue);
       wallet.base = mWallet(1, 0, "BTC");
       wallet.quote = mWallet(1000, 0, "EUR");
       mBroker broker(orders, product, levels, wallet);

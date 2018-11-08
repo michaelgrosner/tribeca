@@ -289,7 +289,7 @@ namespace K {
           << Ansi::r(COLOR_GREEN) << "  home page: " << Ansi::r(COLOR_YELLOW) << "https://ca.rles-tub.io./trades" << '\n'
           << Ansi::reset();
       };
-  } *args = nullptr;
+  };
 
   const mClock rollout = Tstamp;
 
