@@ -184,7 +184,8 @@ namespace K {
       mWalletPosition wallet;
               mBroker broker;
       Engine()
-        : levels(orders, monitor.product)
+        : monitor(options)
+        , levels(orders, monitor.product)
         , wallet(orders, levels.stats.ewma.targetPositionAutoPercentage, levels.fairValue)
         , broker(orders, monitor.product, levels, wallet)
       {};

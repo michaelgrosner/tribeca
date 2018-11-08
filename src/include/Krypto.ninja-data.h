@@ -618,8 +618,8 @@ namespace K {
           order
             ? order->orderId + "::" + order->exchangeId
               + " [" + to_string((int)order->status) + "]: "
-              + mText::str8(order->quantity) + " " + args->str("base") + " at price "
-              + mText::str8(order->price) + " " + args->str("quote")
+              + mText::str8(order->quantity) + " " + gw->base + " at price "
+              + mText::str8(order->price) + " " + gw->quote
             : "not found"
         ));
       };
@@ -976,20 +976,30 @@ namespace K {
   struct mProduct: public mJsonToClient<mProduct> {
     const mPrice  *minTick = nullptr;
     const mAmount *minSize = nullptr;
-    mProduct()
-    {};
-    const mMatter about() const {
-      return mMatter::ProductAdvertisement;
-    };
+    private_ref:
+      const Arguments &args;
+    public:
+      mProduct(const Arguments &o)
+        : args(o)
+      {};
+      const string title() const {
+        return args.str("title");
+      };
+      const string matryoshka() const {
+        return args.str("matryoshka");
+      };
+      const mMatter about() const {
+        return mMatter::ProductAdvertisement;
+      };
   };
   static void to_json(json &j, const mProduct &k) {
     j = {
-      {   "exchange", args->str("exchange")                         },
-      {       "base", args->str("base")                             },
-      {      "quote", args->str("quote")                            },
+      {   "exchange", gw->exchange                                  },
+      {       "base", gw->base                                      },
+      {      "quote", gw->quote                                     },
       {    "minTick", *k.minTick                                    },
-      {"environment", args->str("title")                            },
-      { "matryoshka", args->str("matryoshka")                       },
+      {"environment", k.title()                                     },
+      { "matryoshka", k.matryoshka()                                },
       {   "homepage", "https://github.com/ctubio/Krypto-trading-bot"}
     };
   };
@@ -1282,11 +1292,11 @@ namespace K {
         abs(order.price * order.tradeQuantity),
         0, 0, 0, 0, 0, fee, false
       );
-      print("GW " + args->str("exchange"), string(trade.isPong?"PONG":"PING") + " TRADE "
+      print("GW " + gw->exchange, string(trade.isPong?"PONG":"PING") + " TRADE "
         + (trade.side == mSide::Bid ? "BUY  " : "SELL ")
-        + mText::str8(trade.quantity) + ' ' + args->str("base") + " at price "
-        + mText::str8(trade.price) + ' ' + args->str("quote") + " (value "
-        + mText::str8(trade.value) + ' ' + args->str("quote") + ")"
+        + mText::str8(trade.quantity) + ' ' + gw->base + " at price "
+        + mText::str8(trade.price) + ' ' + gw->quote + " (value "
+        + mText::str8(trade.value) + ' ' + gw->quote + ")"
       );
       if (qp.safety == mQuotingSafety::Off or qp.safety == mQuotingSafety::PingPong)
         send_push_back(trade);
@@ -1658,7 +1668,7 @@ namespace K {
         return to_string(targetBasePosition);
       };
       string explainOK() const {
-        return "loaded TBP = % " + args->str("base");
+        return "loaded TBP = % " + gw->base;
       };
       const bool send_same_blob() const {
         return false;
@@ -1685,9 +1695,9 @@ namespace K {
       void report() const {
         print("PG", "TBP: "
           + to_string((int)(targetBasePosition / baseValue * 1e+2)) + "% = " + mText::str8(targetBasePosition)
-          + " " + args->str("base") + ", pDiv: "
+          + " " + gw->base + ", pDiv: "
           + to_string((int)(positionDivergence / baseValue * 1e+2)) + "% = " + mText::str8(positionDivergence)
-          + " " + args->str("base"));
+          + " " + gw->base);
       };
       const bool debug() const {
         return args->num("debug-wallet");
@@ -1902,7 +1912,7 @@ namespace K {
         );
         if (greenButton != k) {
           greenButton = k;
-          focus("GW " + args->str("exchange"), "Quoting state changed to",
+          focus("GW " + gw->exchange, "Quoting state changed to",
             string(paused() ? "DIS" : "") + "CONNECTED");
         }
         send();
@@ -2566,42 +2576,50 @@ namespace K {
     const string /*  )| O |(  */  * unlock;
         mProduct /* ( | C | ) */ /* this */ product;
                  /*  )| K |(  */ /* thanks! <3 */
-    mMonitor()
-      : orders_60s(0)
-      , unlock(nullptr)
-    {};
-    const unsigned int memSize() const {
-#ifdef _WIN32
-      return 0;
-#else
-      struct rusage ru;
-      return getrusage(RUSAGE_SELF, &ru) ? 0 : ru.ru_maxrss * 1e+3;
-#endif
-    };
-    const unsigned int dbSize() const {
-      if (args->str("database") == ":memory:") return 0;
-      struct stat st;
-      return stat(args->str("database").data(), &st) ? 0 : st.st_size;
-    };
-    void tick_orders() {
-      orders_60s++;
-    };
-    void timer_60s() {
-      send();
-      orders_60s = 0;
-    };
-    const mMatter about() const {
-      return mMatter::ApplicationState;
-    };
+    private_ref:
+      const Arguments &args;
+    public:
+      mMonitor(const Arguments &o)
+        : orders_60s(0)
+        , unlock(nullptr)
+        , product(o)
+        , args(o)
+      {};
+      const unsigned int memSize() const {
+  #ifdef _WIN32
+        return 0;
+  #else
+        struct rusage ru;
+        return getrusage(RUSAGE_SELF, &ru) ? 0 : ru.ru_maxrss * 1e+3;
+  #endif
+      };
+      const unsigned int dbSize() const {
+        if (args.str("database") == ":memory:") return 0;
+        struct stat st;
+        return stat(args.str("database").data(), &st) ? 0 : st.st_size;
+      };
+      const unsigned int theme() const {
+        return args.num("ignore-moon") + args.num("ignore-sun");
+      };
+      void tick_orders() {
+        orders_60s++;
+      };
+      void timer_60s() {
+        send();
+        orders_60s = 0;
+      };
+      const mMatter about() const {
+        return mMatter::ApplicationState;
+      };
   };
   static void to_json(json &j, const mMonitor &k) {
     j = {
-      {     "a", *k.unlock                                         },
-      {  "inet", mREST::inet                                       },
-      {  "freq", k.orders_60s                                      },
-      { "theme", args->num("ignore-moon") + args->num("ignore-sun")},
-      {"memory", k.memSize()                                       },
-      {"dbsize", k.dbSize()                                        }
+      {     "a", *k.unlock   },
+      {  "inet", mREST::inet },
+      {  "freq", k.orders_60s},
+      { "theme", k.theme()   },
+      {"memory", k.memSize() },
+      {"dbsize", k.dbSize()  }
     };
   };
 }
