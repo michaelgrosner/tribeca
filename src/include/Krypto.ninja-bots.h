@@ -26,9 +26,9 @@ namespace K {
     protected:
       virtual void load        ()    {};
       virtual void waitData    ()   {};
+      virtual void waitWebAdmin()  {};
+      virtual void waitSysAdmin(){};
       virtual void waitTime    ()  {};
-      virtual void waitWebAdmin(){};
-      virtual void waitSysAdmin()  {};
       virtual void run         ()   {};
       virtual void end         ()   {};
     public:
@@ -372,12 +372,15 @@ namespace K {
         epilogue = Ansi::r(COLOR_CYAN) + "Errrror: " + strsignal(sig) + ' ';
         const string mods = changelog();
         if (mods.empty()) {
-          epilogue += string("(Three-Headed Monkey found):") + '\n'
-            + "- exchange: " + args->str("exchange")         + '\n'
-            + "- currency: " + args->str("currency")         + '\n'
-            + "- lastbeat: " + to_string(Tstamp - rollout)   + '\n'
-            + "- binbuild: " + string(K_SOURCE)              + ' '
-                             + string(K_BUILD)               + '\n'
+          epilogue += "(Three-Headed Monkey found):\n";
+          if (gw)
+            epilogue += "- exchange: " + gw->exchange              + '\n'
+                      + "- currency: " + (gw->symbol.empty()
+                                           ? gw->base + " .. " + gw->quote
+                                           : gw->symbol)           + '\n';
+          epilogue += "- lastbeat: " + to_string(Tstamp - rollout) + '\n'
+                    + "- binbuild: " + string(K_SOURCE)            + ' '
+                                     + string(K_BUILD)             + '\n'
 #ifndef _WIN32
             + "- tracelog: " + '\n';
           void *k[69];

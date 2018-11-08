@@ -1,5 +1,4 @@
 #include "Krypto.ninja.h"
-#include "hello-world.h"
 
           ;;;;;;;;;;;;;;;;;;;;;;
           ;;;;;    ;;;;    ;;;;;
@@ -11,6 +10,8 @@ using namespace    K;    ;;;;;;;
           ;;;;;    ;;;;    ;;;;;
           ;;;;;;;;;;;;;    ;;;;;
           ;;;;;;;;;;;;;;;;;;;;;;
+
+#include "hello-world.h"
 
 int main(int argc, char** argv) {
   (args = &options)
