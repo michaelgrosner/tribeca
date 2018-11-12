@@ -184,6 +184,7 @@ namespace K {
         }
         tidy();
         gateway();
+        curl_global_init(CURL_GLOBAL_ALL);
         mREST::inet = str("interface");
         Ansi::colorful = num("colors");
         return this;
