@@ -93,9 +93,9 @@ In the web UI, there are three rows of panels with cryptic looking names and edi
 
   * `AK-47` - Same as `Boomerang` but allows multiple orders at the same time in both sides. To avoid old trades, on every new trade **Krypto-trading-bot** will cancel all previous trades if those are worst.
 
-* `bullets` - Maximum amount of trades placed in each side (only affects `AK-47`).
+    * `bullets` - Maximum amount of trades placed in each side (only affects `AK-47`).
 
-* `range` - Minimum width between `bullets` in USD (ex. a value of .3 is 30 cents; only affects `AK-47`).
+    * `range` - Minimum width between `bullets` in USD (ex. a value of .3 is 30 cents; only affects `AK-47`).
 
 * `pingAt` (Pongs are always placed in both sides, only affects `PingPong`, `Boomerang` and `AK-47`)
 
@@ -133,9 +133,9 @@ In the web UI, there are three rows of panels with cryptic looking names and edi
 
 * `widthPong` - Minimum width (spread) of our quote in USD (ex. a value of .3 is 30 cents). Used only if previous Pings exists in the opposite side.
 
-* `bidSize` - Maximum bid size of our quote in BTC (ex. a value of 1.5 is 1.5 bitcoins). With the exception for when `apr` is checked and the system is aggressively rebalancing positions after they get out of whack.
+* `bidSize` - Maximum bid size of our quote in BTC (ex. a value of 1.5 is 1.5 bitcoins). If `%` is enabled, then this is the maximum bid size as a % of the total funds (available funds + held in both sides). For example, if 20% is set, and the total funds is $100, then the maximum bid size is $20. With the exception for when `apr` is checked and the system is aggressively rebalancing positions after they get out of whack.
 
-* `askSize` - Maximum ask size of our quote in BTC (ex. a value of 1.5 is 1.5 bitcoins). With the exception for when `apr` is checked and the system is aggressively rebalancing positions after they get out of whack.
+* `askSize` - Maximum ask size of our quote in BTC (ex. a value of 1.5 is 1.5 bitcoins). If `%` is enabled, then this is the maximum ask size as a % of the total funds (available funds + held in both sides). For example, if 20% is set, and the total funds is $100, then the maximum bid size is $20. With the exception for when `apr` is checked and the system is aggressively rebalancing positions after they get out of whack.
 
 * `maxBidSize?` and `maxAskSize?` - Use `bidSize` and `askSize` as minimums and automatically find the maximum possible `size` based on the current "Target Base Position" (just as having enabled `apr` on `Size` but even before your position diverges more than `pDiv`).
 
@@ -156,14 +156,11 @@ In the web UI, there are three rows of panels with cryptic looking names and edi
   * `EWMA_LMS` - **Krypto-trading-bot** will use a `long` minute, `medium` minute and `short` minute exponential weighted moving average calculation, together with the simple moving average of the last 3 `fair value` values, to buy up BTC when the `short` minute line crosses over the `long` minute line, and sell BTC when the reverse happens.
 
   * `EWMA_4` - **Krypto-trading-bot** will use a `medium` minute and `small` minute EWMA calculation to buy when the `small` minute line crosses over the `medium` minute line, and sell when the reverse happens. Additionally sets the `tbp` to 0% if the `verylong` EWMA minute line crosses over the `long` EWMA minute line.
-
-* `verylong` - Only used when `apMode` is `EWMA_4`. Sets the periods of EWMA VeryLong to automatically manage positions.
-
-* `long` - Only used when `apMode` is `EWMA`. Sets the periods of EWMA Long to automatically manage positions.
-
-* `medium` - Only used when `apMode` is `EWMA_LMS` or `EWMA_4`. Sets the periods of EWMA Medium to automatically manage positions.
-
-* `short` - Only used when `apMode` is `EWMA`. Sets the periods of EWMA Short to automatically manage positions.
+  
+  * `short` - Used when `apMode` is `EWMA_LS`, `EWMA_LMS` or `EWMA_4`. Sets the periods of EWMA Short to automatically manage positions.
+  * `medium` - Only used when `apMode` is `EWMA_LMS` or `EWMA_4`. Sets the periods of EWMA Medium to automatically manage positions.
+  * `long` - Used when `apMode` is `EWMA_LS`, `EWMA_LMS` or `EWMA_4`. Sets the periods of EWMA Long to automatically manage positions.
+  * `verylong` - Only used when `apMode` is `EWMA_4`. Sets the periods of EWMA VeryLong to automatically manage positions.
 
 * `sensibility` - Threshold removed from each period, affects EWMA Long, Medium and Short. The decimal value of `sensibility` must be betweem 0 and 1.
 
