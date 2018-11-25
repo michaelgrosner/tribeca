@@ -1,7 +1,7 @@
 #ifndef K_SH_H_
 #define K_SH_H_
 
-void (*Options::refresh)(WINDOW *const, int&) = [](WINDOW *const wLog, int &cursor) {
+void (*TradingBot::refresh)(WINDOW *const, int&) = [](WINDOW *const wLog, int &cursor) {
   const vector<mOrder> openOrders = engine->orders.working(true);
   int lastcursor = cursor,
       y = getmaxy(stdscr),

@@ -102,6 +102,7 @@ namespace ฿ {
      Q   = 81,
      q   = 113
   };
+
   class Hotkeys {
     private:
       future<Hotkey> hotkey;

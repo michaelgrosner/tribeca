@@ -1,9 +1,9 @@
 #ifndef K_IF_H_
 #define K_IF_H_
 
-class Options: public KryptoNinja {
+class TradingBot: public KryptoNinja {
   public:
-    Options()
+    TradingBot()
     {
       option.arguments = { {
         {"wallet-limit", "AMOUNT", "0",                        "set AMOUNT in base currency to limit the balance,"
