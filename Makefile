@@ -2,7 +2,7 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
 PATCH    = 11
-BUILD    = 0
+BUILD    = 1
 SOURCE   = hello-world \
            trading-bot
 CARCH    = x86_64-linux-gnu      \
@@ -116,9 +116,9 @@ else
 	$(if $(subst 8,,$(subst 7,,$(shell $(CHOST)-g++ -dumpversion | cut -d. -f1))),$(warning $(ERR));$(error $(HINT)))
 	@$(CHOST)-g++ --version
 	@mkdir -p $(KLOCAL)/bin
-	-@egrep ฿ src -lR --exclude-dir=node_modules | xargs sed -i 's/฿/\\u0E3F/'
+	-@egrep ฿ src test -lR --exclude-dir=node_modules | xargs sed -i 's/฿/\\u0E3F/'
 	$(MAKE) $(shell test -n "`echo $(CHOST) | grep darwin`" && echo Darwin || (test -n "`echo $(CHOST) | grep mingw32`" && echo Win32 || uname -s)) CHOST=$(CHOST)
-	-@egrep \\u0E3F src -lR --exclude-dir=node_modules | xargs sed -i 's/\\u0E3F/฿/'
+	-@egrep \\u0E3F src test -lR --exclude-dir=node_modules | xargs sed -i 's/\\u0E3F/฿/'
 	@chmod +x $(KLOCAL)/bin/K-$(KSRC)*
 	@$(MAKE) system_install -s
 endif

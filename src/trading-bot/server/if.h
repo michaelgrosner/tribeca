@@ -67,7 +67,7 @@ class Options: public KryptoNinja {
             +  '.' + str["quote"]
             +  '.' + "db";
       } };
-      screen.terminal = refresh;
+      screen.refresh = refresh;
     };
     static void (*refresh)(WINDOW *const, int&);
 } K;

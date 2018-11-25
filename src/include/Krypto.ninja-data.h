@@ -452,26 +452,26 @@ namespace ฿ {
     const mPrice  *minTick = nullptr;
     const mAmount *minSize = nullptr;
     private_ref:
-      const Arguments &args;
+      const Option &option;
     public:
-      mProduct(const Arguments &o)
-        : args(o)
+      mProduct(const Option &o)
+        : option(o)
       {};
       const string title() const {
-        return args.str("title");
+        return option.str("title");
       };
       const string matryoshka() const {
-        return args.str("matryoshka");
+        return option.str("matryoshka");
       };
       const unsigned int lifetime() const {
-        return args.num("lifetime");
+        return option.num("lifetime");
       };
       const unsigned int debug(const string &k) const {
         return
 #ifndef NDEBUG
         0
 #else
-        args.num("debug-" + k)
+        option.num("debug-" + k)
 #endif
         ;
       };
@@ -480,7 +480,7 @@ namespace ฿ {
 #ifndef NDEBUG
         0
 #else
-        args.dec("wallet-limit")
+        option.dec("wallet-limit")
 #endif
         ;
       };
@@ -630,7 +630,7 @@ namespace ฿ {
         if (order->status == mStatus::Terminated)
           purge(order);
         send();
-        refresh();
+        display();
       };
       const mMatter about() const {
         return mMatter::OrderStatusReports;
@@ -712,8 +712,8 @@ namespace ฿ {
       const bool realtime() const {
         return !qp.delayUI;
       };
-      void send_refresh() {
-        if (send()) refresh();
+      void send_display() {
+        if (send()) display();
       };
       const bool send_same_blob() const {
         return false;
@@ -1124,7 +1124,7 @@ namespace ฿ {
         unfiltered.bids = raw.bids;
         unfiltered.asks = raw.asks;
         filter();
-        stats.fairPrice.send_refresh();
+        stats.fairPrice.send_display();
         diff.send_patch();
       };
     private:
@@ -1918,7 +1918,7 @@ namespace ฿ {
             string(paused() ? "DIS" : "") + "CONNECTED");
         }
         send();
-        refresh();
+        display();
       };
   };
   static void to_json(json &j, const mSemaphore &k) {
@@ -2584,13 +2584,13 @@ namespace ฿ {
         mProduct /* ( | C | ) */ /* this */ product;
                  /*  )| K |(  */ /* thanks! <3 */
     private_ref:
-      const Arguments &args;
+      const Option &option;
     public:
-      mMonitor(const Arguments &o)
+      mMonitor(const Option &o)
         : orders_60s(0)
         , unlock(nullptr)
         , product(o)
-        , args(o)
+        , option(o)
       {};
       const unsigned int memSize() const {
   #ifdef _WIN32
@@ -2601,12 +2601,12 @@ namespace ฿ {
   #endif
       };
       const unsigned int dbSize() const {
-        if (args.str("database") == ":memory:") return 0;
+        if (option.str("database") == ":memory:") return 0;
         struct stat st;
-        return stat(args.str("database").data(), &st) ? 0 : st.st_size;
+        return stat(option.str("database").data(), &st) ? 0 : st.st_size;
       };
       const unsigned int theme() const {
-        return args.num("ignore-moon") + args.num("ignore-sun");
+        return option.num("ignore-moon") + option.num("ignore-sun");
       };
       void tick_orders() {
         orders_60s++;

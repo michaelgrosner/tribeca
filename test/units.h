@@ -1,7 +1,7 @@
 #ifndef K_UNITS_H_
 #define K_UNITS_H_
 
-namespace K {
+namespace ฿ {
   SCENARIO("general") {
     GIVEN("mConnectivity") {
       mConnectivity on, off;
@@ -107,8 +107,8 @@ namespace K {
       }
     }
     GIVEN("mMarketLevels") {
-      Arguments args;
-      mProduct product(args);
+      Option option;
+      mProduct product(option);
       const mPrice  minTick = 0.01;
       const mAmount minSize = 0.001;
       product.minTick = &minTick;
@@ -121,8 +121,8 @@ namespace K {
           REQUIRE_NOTHROW(levels.stats.fairPrice.mToClient::send = [&]() {
             REQUIRE(levels.stats.fairPrice.blob().dump() == "{\"price\":0.0}");
           });
-          REQUIRE_NOTHROW(levels.stats.fairPrice.mToScreen::refresh = []() {
-            INFO("refresh()");
+          REQUIRE_NOTHROW(levels.stats.fairPrice.mToScreen::display = []() {
+            INFO("display()");
           });
           REQUIRE_FALSE(levels.ready());
           REQUIRE_FALSE(levels.fairValue);
@@ -135,8 +135,8 @@ namespace K {
         REQUIRE_NOTHROW(levels.stats.fairPrice.mToClient::send = [&]() {
           REQUIRE(levels.stats.fairPrice.blob().dump() == "{\"price\":1234.55}");
         });
-        REQUIRE_NOTHROW(levels.stats.fairPrice.mToScreen::refresh = []() {
-          INFO("refresh()");
+        REQUIRE_NOTHROW(levels.stats.fairPrice.mToScreen::display = []() {
+          INFO("display()");
         });
         REQUIRE_NOTHROW(qp.fvModel = mFairValueModel::BBO);
         vector<mRandId> randIds;
@@ -180,8 +180,8 @@ namespace K {
           REQUIRE_NOTHROW(levels.stats.fairPrice.mToClient::send = []() {
             FAIL("send() while filtering");
           });
-          REQUIRE_NOTHROW(levels.stats.fairPrice.mToScreen::refresh = []() {
-            FAIL("refresh() while filtering");
+          REQUIRE_NOTHROW(levels.stats.fairPrice.mToScreen::display = []() {
+            FAIL("display() while filtering");
           });
           REQUIRE(levels.ready());
           REQUIRE(levels.fairValue == 1234.55);
@@ -354,8 +354,8 @@ namespace K {
     }
 
     GIVEN("mBroker") {
-      Arguments args;
-      mProduct product(args);
+      Option option;
+      mProduct product(option);
       const mPrice minTick = 0.01;
       product.minTick = &minTick;
       mOrders orders(product);

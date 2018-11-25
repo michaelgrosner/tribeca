@@ -89,9 +89,9 @@ namespace ฿ {
     = [](const string &prefix, const string &reason) { WARN("Y U NO catch screen warn?"); }
 #endif
     ;
-    function<void()> refresh
+    function<void()> display
 #ifndef NDEBUG
-    = []() { WARN("Y U NO catch screen refresh?"); }
+    = []() { WARN("Y U NO catch screen display?"); }
 #endif
     ;
   };
@@ -135,12 +135,12 @@ namespace ฿ {
       };
   };
 
-  class Terminal: public Hotkeys {
+  class Screen: public Hotkeys {
     private:
       int cursor = 0;
       WINDOW *wLog = nullptr;
     public:
-      void (*terminal)(WINDOW *const, int&) = nullptr;
+      void (*refresh)(WINDOW *const, int&) = nullptr;
       void switchOn(const int &naked) {
         endingFn.insert(endingFn.begin(), [&]() {
           switchOff();
@@ -151,8 +151,8 @@ namespace ฿ {
             logWar(prefix, reason);
           else log(prefix, reason, highlight);
         };
-        if (naked) terminal = nullptr;
-        else if (terminal) switchOn();
+        if (naked) refresh = nullptr;
+        else if (refresh) switchOn();
       };
       void printme(mToScreen *const data) {
         data->print = [&](const string &prefix, const string &reason) {
@@ -164,8 +164,8 @@ namespace ฿ {
         data->warn = [&](const string &prefix, const string &reason) {
           logWar(prefix, reason);
         };
-        data->refresh = [&]() {
-          refresh();
+        data->display = [&]() {
+          display();
         };
       };
       void log(const string &prefix, const string &reason, const string &highlight = "") {
@@ -176,7 +176,7 @@ namespace ฿ {
           else if (reason.find("SELL") != string::npos)
             color = -1;
         }
-        if (!terminal) {
+        if (!refresh) {
           cout << stamp() << prefix;
           if (color == 1)       cout << Ansi::r(COLOR_CYAN);
           else if (color == -1) cout << Ansi::r(COLOR_MAGENTA);
@@ -211,7 +211,7 @@ namespace ฿ {
         wrefresh(wLog);
       };
       void logWar(const string &k, const string &s) {
-        if (!terminal) {
+        if (!refresh) {
           cout << stamp() << k << Ansi::r(COLOR_RED) << " Warrrrning: " << Ansi::b(COLOR_RED) << s << '.' << Ansi::r(COLOR_WHITE) << endl;
           return;
         }
@@ -233,14 +233,14 @@ namespace ฿ {
         wrefresh(wLog);
       };
     private:
-      void refresh() {
-        if (terminal) terminal(wLog, cursor);
+      void display() {
+        if (refresh) refresh(wLog, cursor);
       };
       void switchOff() {
-        if (terminal) {
+        if (refresh) {
           beep();
           endwin();
-          terminal = nullptr;
+          refresh = nullptr;
         }
       };
       void switchOn() {
@@ -255,13 +255,13 @@ namespace ฿ {
         noecho();
         timeout(666);
         keypad(stdscr, true);
-        init_pair(COLOR_WHITE, COLOR_WHITE, COLOR_BLACK);
-        init_pair(COLOR_GREEN, COLOR_GREEN, COLOR_BLACK);
-        init_pair(COLOR_RED, COLOR_RED, COLOR_BLACK);
-        init_pair(COLOR_YELLOW, COLOR_YELLOW, COLOR_BLACK);
-        init_pair(COLOR_BLUE, COLOR_BLUE, COLOR_BLACK);
+        init_pair(COLOR_WHITE,   COLOR_WHITE,   COLOR_BLACK);
+        init_pair(COLOR_GREEN,   COLOR_GREEN,   COLOR_BLACK);
+        init_pair(COLOR_RED,     COLOR_RED,     COLOR_BLACK);
+        init_pair(COLOR_YELLOW,  COLOR_YELLOW,  COLOR_BLACK);
+        init_pair(COLOR_BLUE,    COLOR_BLUE,    COLOR_BLACK);
         init_pair(COLOR_MAGENTA, COLOR_MAGENTA, COLOR_BLACK);
-        init_pair(COLOR_CYAN, COLOR_CYAN, COLOR_BLACK);
+        init_pair(COLOR_CYAN,    COLOR_CYAN,    COLOR_BLACK);
         wLog = subwin(stdscr, getmaxy(stdscr)-4, getmaxx(stdscr)-2-6, 3, 2);
         scrollok(wLog, true);
         idlok(wLog, true);
@@ -278,10 +278,10 @@ namespace ฿ {
           if (ws.ws_col < 30) ws.ws_col = 30;
           wresize(stdscr, ws.ws_row, ws.ws_col);
           resizeterm(ws.ws_row, ws.ws_col);
-          refresh();
+          display();
         });
 #endif
-        refresh();
+        display();
         hotkeys();
       };
       const string stamp() {
@@ -298,7 +298,7 @@ namespace ฿ {
         time_t tt = chrono::system_clock::to_time_t(clock);
         char datetime[15];
         strftime(datetime, 15, "%m/%d %T", localtime(&tt));
-        if (!terminal) return Ansi::b(COLOR_GREEN) + datetime + Ansi::r(COLOR_GREEN) + microtime.str() + Ansi::b(COLOR_WHITE) + ' ';
+        if (!refresh) return Ansi::b(COLOR_GREEN) + datetime + Ansi::r(COLOR_GREEN) + microtime.str() + Ansi::b(COLOR_WHITE) + ' ';
         wattron(wLog, COLOR_PAIR(COLOR_GREEN));
         wattron(wLog, A_BOLD);
         wprintw(wLog, datetime);
@@ -316,7 +316,8 @@ namespace ฿ {
    const char   *default_value;
    const string  help;
   };
-  class Arguments {
+
+  class Option {
     public:
       pair<vector<Argument>, function<void(
         unordered_map<string, string> &,
@@ -641,12 +642,12 @@ namespace ฿ {
 
   class KryptoNinja: public Klass {
     public:
-      Ending    ending;
-      Arguments option;
-      Terminal  screen;
+      Ending ending;
+      Option option;
+      Screen screen;
     public:
       KryptoNinja *const main(int argc, char** argv) {
-        option.main(argc, argv, !screen.terminal);
+        option.main(argc, argv, !screen.refresh);
         screen.switchOn(option.num("naked"));
         if (option.num("latency")) {
           gw->latency("HTTP read/write handshake", [&]() {
