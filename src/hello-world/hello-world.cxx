@@ -5,7 +5,7 @@
           ;;;;;    ;;    ;;;;;;;
           ;;;;;        ;;;;;;;;;
           ;;;;;        ;;;;;;;;;
-using namespace    K;    ;;;;;;;
+using namespace    ฿;    ;;;;;;;
           ;;;;;    ;;;;    ;;;;;
           ;;;;;    ;;;;    ;;;;;
           ;;;;;;;;;;;;;    ;;;;;
@@ -14,8 +14,6 @@ using namespace    K;    ;;;;;;;
 #include "hello-world.h"
 
 int main(int argc, char** argv) {
-  options.main(argc, argv)->wait({
-    &hello_world
-  });
+  K.main(argc, argv)->wait();
   return EXIT_FAILURE;
 };

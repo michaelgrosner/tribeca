@@ -1,15 +1,14 @@
 #ifndef K_IF_H_
 #define K_IF_H_
 
-class Options: public Arguments {
+class Options: public KryptoNinja {
   public:
     Options()
     {
-      arguments = { {
+      option.arguments = { {
         {"wallet-limit", "AMOUNT", "0",                        "set AMOUNT in base currency to limit the balance,"
                                                                "\n" "otherwise the full available balance can be used"},
         {"client-limit", "NUMBER", "7",                        "set NUMBER of maximum concurrent UI connections"},
-        {"naked",        "1",      0,                          "do not display CLI, print output to stdout instead"},
         {"headless",     "1",      0,                          "do not listen for UI connections,"
                                                                "\n" "all other UI related arguments will be ignored"},
         {"without-ssl",  "1",      0,                          "do not use HTTPS for UI connections (use HTTP only)"},
@@ -34,7 +33,6 @@ class Options: public Arguments {
         {"ignore-moon",  "1",      0,                          "do not switch UI to dark theme on moonlight"},
         {"autobot",      "1",      0,                          "automatically start trading on boot"},
         {"dustybot",     "1",      0,                          "do not automatically cancel all orders on exit"},
-        {"latency",      "1",      0,                          "check current HTTP latency (not from WS) and quit"},
         {"debug-orders", "1",      0,                          "print detailed output about exchange messages"},
         {"debug-quotes", "1",      0,                          "print detailed output about quoting engine"},
         {"debug-wallet", "1",      0,                          "print detailed output about target base position"}
@@ -49,7 +47,7 @@ class Options: public Arguments {
           num["debug-wallet"] = 1;
         if (num["ignore-moon"] and num["ignore-sun"])
           num["ignore-moon"] = 0;
-        if (num["latency"] or num["debug-orders"] or num["debug-quotes"])
+        if (num["debug-orders"] or num["debug-quotes"])
           num["naked"] = 1;
         if (num["latency"] or !num["port"] or !num["client-limit"])
           num["headless"] = 1;
@@ -69,18 +67,10 @@ class Options: public Arguments {
             +  '.' + str["quote"]
             +  '.' + "db";
       } };
+      screen.terminal = refresh;
     };
-} options;
-
-class Screen: public Klass {
-  public:
-    virtual void pressme(const mHotkey&, function<void()>) = 0;
-    virtual void printme(mToScreen *const) = 0;
-    virtual void waitForUser() = 0;
-    virtual const string stamp() = 0;
-    virtual void logWar(const string&, const string&) = 0;
-    virtual void log(const string&, const string&, const string& = "") = 0;
-} *screen = nullptr;
+    static void (*refresh)(WINDOW *const, int&);
+} K;
 
 class Events: public Klass {
   public:
@@ -119,7 +109,7 @@ code( levels.stats.stdev             )
 #define SCREEN_PRINTME      \
       SCREEN_PRINTME_LIST \
     ( SCREEN_PRINTME_CODE )
-#define SCREEN_PRINTME_CODE(data)  screen->printme(&data);
+#define SCREEN_PRINTME_CODE(data)  K.screen.printme(&data);
 #define SCREEN_PRINTME_LIST(code)  \
 code( orders                  )  \
 code( wallet.target           )  \
@@ -133,7 +123,7 @@ code( broker.calculon.dummyMM )
 #define SCREEN_PRESSME      \
       SCREEN_PRESSME_LIST \
     ( SCREEN_PRESSME_CODE )
-#define SCREEN_PRESSME_CODE(key, fn)    screen->pressme(mHotkey::key, [&]() { fn(); });
+#define SCREEN_PRESSME_CODE(key, fn)    K.screen.pressme(Hotkey::key, [&]() { fn(); });
 #define SCREEN_PRESSME_LIST(code)       \
 code(  Q  , exit                    ) \
 code(  q  , exit                    ) \
@@ -183,7 +173,7 @@ code( btn.cleanTrades       , wallet.safety.trades.clearAll    ,           )
     mWalletPosition wallet;
             mBroker broker;
     Engine()
-      : monitor(options)
+      : monitor(K.option)
       , orders(monitor.product)
       , levels(monitor.product, orders)
       , wallet(monitor.product, orders, levels.stats.ewma.targetPositionAutoPercentage, levels.fairValue)

@@ -3,7 +3,7 @@
 //! \file
 //! \brief Minimal user application framework.
 
-namespace K {
+namespace ฿ {
   string epilogue;
 
   vector<function<void()>> happyEndingFn, endingFn = { []() {
@@ -38,7 +38,7 @@ namespace K {
         waitWebAdmin();
         waitSysAdmin();
         waitTime();
-        endingFn.push_back([&](){
+        endingFn.push_back([&]() {
           end();
         });
         run();
@@ -73,6 +73,243 @@ namespace K {
     exit(prefix + Ansi::r(COLOR_RED) + " Errrror: " + Ansi::b(COLOR_RED) + reason, reboot);
   };
 
+  struct mToScreen {
+    function<void(const string&, const string&)> print
+#ifndef NDEBUG
+    = [](const string &prefix, const string &reason) { WARN("Y U NO catch screen print?"); }
+#endif
+    ;
+    function<void(const string&, const string&, const string&)> focus
+#ifndef NDEBUG
+    = [](const string &prefix, const string &reason, const string &highlight) { WARN("Y U NO catch screen focus?"); }
+#endif
+    ;
+    function<void(const string&, const string&)> warn
+#ifndef NDEBUG
+    = [](const string &prefix, const string &reason) { WARN("Y U NO catch screen warn?"); }
+#endif
+    ;
+    function<void()> refresh
+#ifndef NDEBUG
+    = []() { WARN("Y U NO catch screen refresh?"); }
+#endif
+    ;
+  };
+
+  enum class Hotkey: unsigned int {
+   ENTER = 13,
+    ESC  = 27,
+     Q   = 81,
+     q   = 113
+  };
+  class Hotkeys {
+    private:
+      future<Hotkey> hotkey;
+      unordered_map<Hotkey, function<void()>> hotFn;
+    public:
+      void pressme(const Hotkey &ch, function<void()> fn) {
+        if (!hotkey.valid()) return;
+        if (hotFn.find(ch) != hotFn.end())
+          error("SH", string("Too many handlers for \"") + (char)ch + "\" pressme event");
+        hotFn[ch] = fn;
+      };
+      void waitForUser() {
+        if (!hotkey.valid()
+          or hotkey.wait_for(chrono::nanoseconds(0)) != future_status::ready
+        ) return;
+        Hotkey ch = hotkey.get();
+        if (hotFn.find(ch) != hotFn.end())
+          hotFn.at(ch)();
+        hotkeys();
+      };
+    protected:
+      void hotkeys() {
+        hotkey = ::async(launch::async, [&] {
+          int ch = ERR;
+          while (ch == ERR and !hotFn.empty())
+            ch = getch();
+          return ch == ERR
+            ? Hotkey::ENTER
+            : (Hotkey)ch;
+        });
+      };
+  };
+
+  class Terminal: public Hotkeys {
+    private:
+      int cursor = 0;
+      WINDOW *wLog = nullptr;
+    public:
+      void (*terminal)(WINDOW *const, int&) = nullptr;
+      void switchOn(const int &naked) {
+        endingFn.insert(endingFn.begin(), [&]() {
+          switchOff();
+          clog << stamp();
+        });
+        gw->logger = [&](const string &prefix, const string &reason, const string &highlight) {
+          if (reason.find("Error") != string::npos)
+            logWar(prefix, reason);
+          else log(prefix, reason, highlight);
+        };
+        if (naked) terminal = nullptr;
+        else if (terminal) switchOn();
+      };
+      void printme(mToScreen *const data) {
+        data->print = [&](const string &prefix, const string &reason) {
+          log(prefix, reason);
+        };
+        data->focus = [&](const string &prefix, const string &reason, const string &highlight) {
+          log(prefix, reason, highlight);
+        };
+        data->warn = [&](const string &prefix, const string &reason) {
+          logWar(prefix, reason);
+        };
+        data->refresh = [&]() {
+          refresh();
+        };
+      };
+      void log(const string &prefix, const string &reason, const string &highlight = "") {
+        unsigned int color = 0;
+        if (reason.find("NG TRADE") != string::npos) {
+          if (reason.find("BUY") != string::npos)
+            color = 1;
+          else if (reason.find("SELL") != string::npos)
+            color = -1;
+        }
+        if (!terminal) {
+          cout << stamp() << prefix;
+          if (color == 1)       cout << Ansi::r(COLOR_CYAN);
+          else if (color == -1) cout << Ansi::r(COLOR_MAGENTA);
+          else                  cout << Ansi::r(COLOR_WHITE);
+          cout << ' ' << reason;
+          if (!highlight.empty())
+            cout << ' ' << Ansi::b(COLOR_YELLOW) << highlight;
+          cout << Ansi::r(COLOR_WHITE) << ".\n";
+          return;
+        }
+        wmove(wLog, getmaxy(wLog)-1, 0);
+        stamp();
+        wattron(wLog, COLOR_PAIR(COLOR_WHITE));
+        wattron(wLog, A_BOLD);
+        wprintw(wLog, prefix.data());
+        wattroff(wLog, A_BOLD);
+        if (color == 1)       wattron(wLog, COLOR_PAIR(COLOR_CYAN));
+        else if (color == -1) wattron(wLog, COLOR_PAIR(COLOR_MAGENTA));
+        wprintw(wLog, (" " + reason).data());
+        if (color == 1)       wattroff(wLog, COLOR_PAIR(COLOR_CYAN));
+        else if (color == -1) wattroff(wLog, COLOR_PAIR(COLOR_MAGENTA));
+        if (!highlight.empty()) {
+          wprintw(wLog, " ");
+          wattroff(wLog, COLOR_PAIR(COLOR_WHITE));
+          wattron(wLog, COLOR_PAIR(COLOR_YELLOW));
+          wprintw(wLog, highlight.data());
+          wattroff(wLog, COLOR_PAIR(COLOR_YELLOW));
+          wattron(wLog, COLOR_PAIR(COLOR_WHITE));
+        }
+        wprintw(wLog, ".\n");
+        wattroff(wLog, COLOR_PAIR(COLOR_WHITE));
+        wrefresh(wLog);
+      };
+      void logWar(const string &k, const string &s) {
+        if (!terminal) {
+          cout << stamp() << k << Ansi::r(COLOR_RED) << " Warrrrning: " << Ansi::b(COLOR_RED) << s << '.' << Ansi::r(COLOR_WHITE) << endl;
+          return;
+        }
+        wmove(wLog, getmaxy(wLog)-1, 0);
+        stamp();
+        wattron(wLog, COLOR_PAIR(COLOR_WHITE));
+        wattron(wLog, A_BOLD);
+        wprintw(wLog, k.data());
+        wattroff(wLog, COLOR_PAIR(COLOR_WHITE));
+        wattron(wLog, COLOR_PAIR(COLOR_RED));
+        wprintw(wLog, " Warrrrning: ");
+        wattroff(wLog, A_BOLD);
+        wprintw(wLog, s.data());
+        wprintw(wLog, ".");
+        wattroff(wLog, COLOR_PAIR(COLOR_RED));
+        wattron(wLog, COLOR_PAIR(COLOR_WHITE));
+        wprintw(wLog, "\n");
+        wattroff(wLog, COLOR_PAIR(COLOR_WHITE));
+        wrefresh(wLog);
+      };
+    private:
+      void refresh() {
+        if (terminal) terminal(wLog, cursor);
+      };
+      void switchOff() {
+        if (terminal) {
+          beep();
+          endwin();
+          terminal = nullptr;
+        }
+      };
+      void switchOn() {
+        if (!initscr())
+          error("SH",
+            "Unable to initialize ncurses, try to run in your terminal"
+              "\"export TERM=xterm\", or use --naked argument"
+          );
+        if (Ansi::colorful) start_color();
+        use_default_colors();
+        cbreak();
+        noecho();
+        timeout(666);
+        keypad(stdscr, true);
+        init_pair(COLOR_WHITE, COLOR_WHITE, COLOR_BLACK);
+        init_pair(COLOR_GREEN, COLOR_GREEN, COLOR_BLACK);
+        init_pair(COLOR_RED, COLOR_RED, COLOR_BLACK);
+        init_pair(COLOR_YELLOW, COLOR_YELLOW, COLOR_BLACK);
+        init_pair(COLOR_BLUE, COLOR_BLUE, COLOR_BLACK);
+        init_pair(COLOR_MAGENTA, COLOR_MAGENTA, COLOR_BLACK);
+        init_pair(COLOR_CYAN, COLOR_CYAN, COLOR_BLACK);
+        wLog = subwin(stdscr, getmaxy(stdscr)-4, getmaxx(stdscr)-2-6, 3, 2);
+        scrollok(wLog, true);
+        idlok(wLog, true);
+#if CAN_RESIZE
+        signal(SIGWINCH, [&]() {
+          struct winsize ws;
+          if (ioctl(0, TIOCGWINSZ, &ws) < 0
+            or (ws.ws_row == getmaxy(stdscr)
+            and ws.ws_col == getmaxx(stdscr))
+          ) return;
+          werase(stdscr);
+          werase(wLog);
+          if (ws.ws_row < 10) ws.ws_row = 10;
+          if (ws.ws_col < 30) ws.ws_col = 30;
+          wresize(stdscr, ws.ws_row, ws.ws_col);
+          resizeterm(ws.ws_row, ws.ws_col);
+          refresh();
+        });
+#endif
+        refresh();
+        hotkeys();
+      };
+      const string stamp() {
+        chrono::system_clock::time_point clock = Tclock;
+        chrono::system_clock::duration t = clock.time_since_epoch();
+        t -= chrono::duration_cast<chrono::seconds>(t);
+        auto milliseconds = chrono::duration_cast<chrono::milliseconds>(t);
+        t -= milliseconds;
+        auto microseconds = chrono::duration_cast<chrono::microseconds>(t);
+        stringstream microtime;
+        microtime << setfill('0') << '.'
+          << setw(3) << milliseconds.count()
+          << setw(3) << microseconds.count();
+        time_t tt = chrono::system_clock::to_time_t(clock);
+        char datetime[15];
+        strftime(datetime, 15, "%m/%d %T", localtime(&tt));
+        if (!terminal) return Ansi::b(COLOR_GREEN) + datetime + Ansi::r(COLOR_GREEN) + microtime.str() + Ansi::b(COLOR_WHITE) + ' ';
+        wattron(wLog, COLOR_PAIR(COLOR_GREEN));
+        wattron(wLog, A_BOLD);
+        wprintw(wLog, datetime);
+        wattroff(wLog, A_BOLD);
+        wprintw(wLog, microtime.str().data());
+        wattroff(wLog, COLOR_PAIR(COLOR_GREEN));
+        wprintw(wLog, " ");
+        return "";
+      };
+  };
+
   struct Argument {
    const string  name;
    const string  defined_value;
@@ -80,16 +317,16 @@ namespace K {
    const string  help;
   };
   class Arguments {
-    private:
-      unordered_map<string, string> optstr;
-      unordered_map<string, int>    optint;
-      unordered_map<string, double> optdec;
-    protected:
+    public:
       pair<vector<Argument>, function<void(
         unordered_map<string, string> &,
         unordered_map<string, int>    &,
         unordered_map<string, double> &
       )>> arguments;
+    private:
+      unordered_map<string, string> optstr;
+      unordered_map<string, int>    optint;
+      unordered_map<string, double> optdec;
     public:
       const string str(const string &name) const {
         return optstr.find(name) != optstr.end()
@@ -105,10 +342,18 @@ namespace K {
       const double dec(const string &name) const {
         return optdec.at(name);
       };
-      Arguments *const main(int argc, char** argv) {
+      void main(int argc, char** argv, const bool &naked) {
+        optint["naked"] = naked;
         vector<Argument> long_options = {
           {"help",         "h",      0,        "show this help and quit"},
           {"version",      "v",      0,        "show current build version and quit"},
+          {"latency",      "1",      0,        "check current HTTP latency (not from WS) and quit"}
+        };
+        if (!naked)
+          long_options.push_back(
+            {"naked",        "1",      0,        "do not display CLI, print output to stdout instead"}
+          );
+        for (const Argument &it : (vector<Argument>){
           {"interface",    "IP",     "",       "set IP to bind as outgoing network interface,"
                                                "\n" "default IP is the system default network interface"},
           {"exchange",     "NAME",   "NULL",   "set exchange NAME for trading, mandatory one of:"
@@ -128,7 +373,7 @@ namespace K {
           {"market-limit", "NUMBER", "321",    "set NUMBER of maximum price levels for the orderbook,"
                                                "\n" "default NUMBER is '321' and the minimum is '15'."
                                                "\n" "locked bots smells like '--market-limit=3' spirit"}
-        };
+        }) long_options.push_back(it);
         for (const Argument &it : arguments.first)
           long_options.push_back(it);
         arguments.first.clear();
@@ -187,14 +432,6 @@ namespace K {
         curl_global_init(CURL_GLOBAL_ALL);
         mREST::inet = str("interface");
         Ansi::colorful = num("colors");
-        return this;
-      };
-      void handshake(const vector<pair<string, string>> &notes = {}) {
-        gateway(gw->handshake());
-        gw->info(notes);
-      };
-      void wait(const vector<Klass*> &k) {
-        for (Klass *const it : k) it->wait();
       };
     private:
       void tidy() {
@@ -210,7 +447,7 @@ namespace K {
         if (optint["debug"])
           optint["debug-secret"] = 1;
 #ifndef _WIN32
-        if (optint["debug-secret"])
+        if (optint["latency"] or optint["debug-secret"])
 #endif
           optint["naked"] = 1;
         if (arguments.second) {
@@ -241,14 +478,6 @@ namespace K {
         gw->maxLevel = num("market-limit");
         gw->debug    = num("debug-secret");
         gw->version  = num("free-version");
-      };
-      void gateway(const json &reply) {
-        if (!gw->randId or gw->symbol.empty())
-          error("GW", "Incomplete handshake aborted");
-        if (!gw->minTick or !gw->minSize)
-          error("GW", "Unable to fetch data from " + gw->exchange
-            + " for symbol \"" + gw->symbol + "\", possible error message: "
-            + reply.dump());
       };
       void help(const vector<Argument> &long_options) {
         const vector<string> stamp = {
@@ -334,6 +563,7 @@ namespace K {
   class Ending: public Rollout {
     public:
       Ending() {
+        signal(SIGINT, quit);
         signal(SIGQUIT, die);
         signal(SIGTERM, err);
         signal(SIGABRT, wtf);
@@ -341,15 +571,13 @@ namespace K {
 #ifndef _WIN32
         signal(SIGUSR1, wtf);
 #endif
-        signal(SIGINT, [](const int sig) {
-          clog << '\n';
-          raise(SIGQUIT);
-        });
       };
     private:
-      static void halt(const int &code) {
+      static void halt(int code) {
         endingFn.swap(happyEndingFn);
         for (function<void()> &it : happyEndingFn) it();
+        if (epilogue.find("Errrror") != string::npos)
+          code = EXIT_FAILURE;
         Ansi::colorful = 1;
         clog << Ansi::b(COLOR_GREEN) << 'K'
              << Ansi::r(COLOR_GREEN) << " exit code "
@@ -357,6 +585,10 @@ namespace K {
              << Ansi::r(COLOR_GREEN) << '.'
              << Ansi::reset() << '\n';
         EXIT(code);
+      };
+      static void quit(const int sig) {
+        clog << '\n';
+        die(sig);
       };
       static void die(const int sig) {
         if (epilogue.empty())
@@ -405,7 +637,43 @@ namespace K {
             + '\n' + '\n';
         halt(EXIT_FAILURE);
       };
-  } ____K__B_O_T____;
+  };
+
+  class KryptoNinja: public Klass {
+    public:
+      Ending    ending;
+      Arguments option;
+      Terminal  screen;
+    public:
+      KryptoNinja *const main(int argc, char** argv) {
+        option.main(argc, argv, !screen.terminal);
+        screen.switchOn(option.num("naked"));
+        if (option.num("latency")) {
+          gw->latency("HTTP read/write handshake", [&]() {
+            handshake({
+              {"gateway", gw->http}
+            });
+          });
+          exit("1 HTTP connection done" + Ansi::r(COLOR_WHITE)
+            + " (consider to repeat a few times this check)");
+        }
+        return this;
+      };
+      void wait(const vector<Klass*> &k = {}) {
+        if (k.empty()) Klass::wait();
+        else for (Klass *const it : k) it->wait();
+      };
+      void handshake(const vector<pair<string, string>> &notes = {}) {
+        const json reply = gw->handshake();
+        if (!gw->randId or gw->symbol.empty())
+          error("GW", "Incomplete handshake aborted");
+        if (!gw->minTick or !gw->minSize)
+          error("GW", "Unable to fetch data from " + gw->exchange
+            + " for symbol \"" + gw->symbol + "\", possible error message: "
+            + reply.dump());
+        gw->info(notes);
+      };
+  };
 }
 
 #endif

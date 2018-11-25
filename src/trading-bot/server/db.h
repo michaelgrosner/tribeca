@@ -1,19 +1,19 @@
 #ifndef K_DB_H_
 #define K_DB_H_
 
-class DB: public Sqlite {
+class DB: public Sqlite { public: DB() { sqlite = this; };
   private:
     sqlite3 *db = nullptr;
     string qpdb = "main";
   protected:
     void load() {
-      if (sqlite3_open(options.str("database").data(), &db))
+      if (sqlite3_open(K.option.str("database").data(), &db))
         error("DB", sqlite3_errmsg(db));
-      screen->log("DB", "loaded OK from", options.str("database"));
-      if (options.str("diskdata").empty()) return;
+      K.screen.log("DB", "loaded OK from", K.option.str("database"));
+      if (K.option.str("diskdata").empty()) return;
       qpdb = "qpdb";
-      exec("ATTACH '" + options.str("diskdata") + "' AS " + qpdb + ";");
-      screen->log("DB", "loaded OK from", options.str("diskdata"));
+      exec("ATTACH '" + K.option.str("diskdata") + "' AS " + qpdb + ";");
+      K.screen.log("DB", "loaded OK from", K.option.str("diskdata"));
     };
   public:
     void backup(mFromDb *const data) {
@@ -21,8 +21,8 @@ class DB: public Sqlite {
       const string msg = data->explanation(loaded);
       data->push = [this, data]() { insert(data); };
       if (msg.empty()) return;
-      if (loaded) screen->log("DB", msg);
-      else screen->logWar("DB", msg);
+      if (loaded) K.screen.log("DB", msg);
+      else K.screen.logWar("DB", msg);
     };
   private:
     json select(mFromDb *const data) {
@@ -74,10 +74,10 @@ class DB: public Sqlite {
         : "";
     };
     void exec(const string &sql, json *const result = nullptr) {
-      // screen->log("DB DEBUG", sql);
+      // K.screen.log("DB DEBUG", sql);
       char* zErrMsg = 0;
       sqlite3_exec(db, sql.data(), result ? write : nullptr, (void*)result, &zErrMsg);
-      if (zErrMsg) screen->logWar("DB", "SQLite error: " + (zErrMsg + (" at " + sql)));
+      if (zErrMsg) K.screen.logWar("DB", "SQLite error: " + (zErrMsg + (" at " + sql)));
       sqlite3_free(zErrMsg);
     };
     static int write(void *result, int argc, char **argv, char **azColName) {

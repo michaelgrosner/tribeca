@@ -1,11 +1,11 @@
 #ifndef K_HELLO_WORLD_H_
 #define K_HELLO_WORLD_H_
 
-class Options: public Arguments {
+class HelloWorld: public KryptoNinja {
   public:
-    Options()
+    HelloWorld()
     {
-      arguments = { {
+      option.arguments = { {
         {"subject", "NAME", "World", "say hello to NAME (default: 'World')"}
       }, [](
         unordered_map<string, string> &str,
@@ -17,24 +17,21 @@ class Options: public Arguments {
         else str["subject"] += "!";
       } };
     };
-} options;
-
-class HelloWorld: public Klass {
   protected:
     void run() {
       const string result = greeting();
       const string prefix = "Executed " + (
-        options.num("debug")
+        option.num("debug")
           ? string(__PRETTY_FUNCTION__)
-          : options.str("title")
+          : option.str("title")
       );
       exit(prefix + ' ' + result);
     };
   private:
     const string greeting() {
-      cout << "Hello, " << options.str("subject") << endl;
+      cout << "Hello, " << option.str("subject") << endl;
       return "OK";
     };
-} hello_world;
+} K;
 
 #endif

@@ -1,12 +1,16 @@
 #ifndef K_QE_H_
 #define K_QE_H_
 
-class QE: public Engine {
+class QE: public Engine { public: QE() { engine = this; };
   protected:
     void load() {
       SQLITE_BACKUP
+      gw->askForCancelAll = &qp.cancelOrdersAuto;
+      monitor.unlock          = &gw->unlock;
+      monitor.product.minTick = &gw->minTick;
+      monitor.product.minSize = &gw->minSize;
       broker.calculon.dummyMM.mode("loaded");
-      broker.semaphore.agree(options.num("autobot"));
+      broker.semaphore.agree(K.option.num("autobot"));
     };
     void waitData() {
       gw->RAWDATA_ENTRY_POINT(mConnectivity, {
@@ -39,13 +43,13 @@ class QE: public Engine {
       SCREEN_PRESSME
     };
     void run() {
-      options.handshake({
-        {"gateway", gw->http              },
-        {"gateway", gw->ws                },
-        {"gateway", gw->fix               },
-        {"autoBot", options.num("autobot")
+      K.handshake({
+        {"gateway", gw->http               },
+        {"gateway", gw->ws                 },
+        {"gateway", gw->fix                },
+        {"autoBot", K.option.num("autobot")
                       ? "yes"
-                      : "no"              }
+                      : "no"               }
       });
     };
 } qe;

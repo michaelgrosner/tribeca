@@ -3,7 +3,7 @@
 //! \file
 //! \brief External exchange API integrations.
 
-namespace K {
+namespace ฿ {
   enum class mConnectivity: unsigned int {
     Disconnected, Connected
   };

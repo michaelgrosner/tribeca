@@ -1,10 +1,10 @@
 #ifndef K_LIB_H_
 #define K_LIB_H_
 //! \dir
-//! \brief namespace \ref K.
+//! \brief namespace \ref ฿.
 
 //! \file
-//! \brief namespace \ref K.
+//! \brief namespace \ref ฿.
 
 #define PERMISSIVE_analpaper_SOFTWARE_LICENSE                              \
                                                                            \
@@ -23,8 +23,8 @@
    void catch_exit(const int);
 #endif
 
-//! \namespace K
-//! \brief     class \ref K::Klass, fn \ref K::exit, fn \ref K::error.
+//! \namespace ฿
+//! \brief     class \ref ฿::Klass, fn \ref \u0E3F::exit, fn \ref ฿::error.
 
 #include <Krypto.ninja-lang.h>
 #include <Krypto.ninja-apis.h>

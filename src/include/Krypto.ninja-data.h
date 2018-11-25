@@ -3,7 +3,7 @@
 //! \file
 //! \brief Internal data objects.
 
-namespace K {
+namespace ฿ {
   enum class mQuotingMode: unsigned int {
     Top, Mid, Join, InverseJoin, InverseTop, HamelinRat, Depth
   };
@@ -45,12 +45,6 @@ namespace K {
     ShortPingAggressive, AveragePingAggressive, LongPingAggressive
   };
 
-  enum class mHotkey: unsigned int {
-    ESC = 27,
-     Q  = 81,
-     q  = 113
-  };
-
   enum class mPortal: unsigned char {
     Hello = '=',
     Kiss  = '-'
@@ -65,29 +59,6 @@ namespace K {
     CleanAllClosedTrades = 'y', CleanAllTrades       = 'z', CleanTrade         = 'A',
     WalletChart          = 'C', MarketChart          = 'D', Notepad            = 'E',
                                 MarketDataLongTerm   = 'H'
-  };
-
-  struct mToScreen {
-    function<void(const string&, const string&)> print
-#ifndef NDEBUG
-    = [](const string &prefix, const string &reason) { WARN("Y U NO catch screen print?"); }
-#endif
-    ;
-    function<void(const string&, const string&, const string&)> focus
-#ifndef NDEBUG
-    = [](const string &prefix, const string &reason, const string &highlight) { WARN("Y U NO catch screen focus?"); }
-#endif
-    ;
-    function<void(const string&, const string&)> warn
-#ifndef NDEBUG
-    = [](const string &prefix, const string &reason) { WARN("Y U NO catch screen warn?"); }
-#endif
-    ;
-    function<void()> refresh
-#ifndef NDEBUG
-    = []() { WARN("Y U NO catch screen refresh?"); }
-#endif
-    ;
   };
 
   struct mAbout {

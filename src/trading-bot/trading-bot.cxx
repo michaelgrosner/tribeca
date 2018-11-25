@@ -5,7 +5,7 @@
           ;;;;;    ;;    ;;;;;;;       /*     I will be right here  */
           ;;;;;        ;;;;;;;;;         /*    waiting for coins.   */ // youtu.be/FornpYhezt4
           ;;;;;        ;;;;;;;;;/* .-""-._    Whatever it takes..   */
-using namespace    K;    ;;;;;;;/*(  <>  )`-. Or how my OS breaks,  */ // youtu.be/Wd2fSSt4MDg
+using namespace    ฿;    ;;;;;;;/*(  <>  )`-. Or how my OS breaks,  */ // youtu.be/Wd2fSSt4MDg
           ;;;;;    ;;;;    ;;;;;/*|`-..-'|  | I will be right here  */
           ;;;;;    ;;;;    ;;;;;/*|     :|._/  waiting for coins.   */ // youtu.be/02OHHWG1EQY
           ;;;;;;;;;;;;;    ;;;;;/*`.____;'    Day after day.        */
@@ -14,12 +14,8 @@ using namespace    K;    ;;;;;;;/*(  <>  )`-. Or how my OS breaks,  */ // youtu.
 #include "trading-bot.h"                                               // youtu.be/dp5hsDgENLk
 
 int main(int argc, char** argv) {
-  options.main(argc, argv)->wait({
-    screen = &sh,
-    events = &ev,
-    sqlite = &db,
-    client = &ui,
-    engine = &qe
+  K.main(argc, argv)->wait({
+    &ev, &db, &ui, &qe
   });
   return EXIT_FAILURE;
 };

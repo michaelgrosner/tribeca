@@ -1,7 +1,7 @@
 #ifndef K_EV_H_
 #define K_EV_H_
 
-class EV: public Events {
+class EV: public Events { public: EV() { events = this; };
   private:
     uWS::Hub  *socket = nullptr;
     uS::Timer *timer  = nullptr;
@@ -11,13 +11,17 @@ class EV: public Events {
   protected:
     void load() {
       socket = new uWS::Hub(0, true);
+      K.screen.log("CF", "Network Interface for outgoing traffic is",
+        client->wtfismyip = mREST::xfer("https://wtfismyip.com/json", 4L)
+                              .value("YourFuckingIPAddress", client->wtfismyip)
+      );
     };
     void waitData() {
       gw->socket = socket;
       socket->createGroup<uWS::CLIENT>();
     };
     void waitWebAdmin() {
-      if (options.num("headless")) return;
+      if (K.option.num("headless")) return;
       client->socket = socket;
       socket->createGroup<uWS::SERVER>(uWS::PERMESSAGE_DEFLATE);
     };
@@ -37,7 +41,7 @@ class EV: public Events {
       timer->stop();
       gw->close();
       socket->getDefaultGroup<uWS::CLIENT>().close();
-      gw->end(options.num("dustybot"));
+      gw->end(K.option.num("dustybot"));
       walk(loop);
       socket->getDefaultGroup<uWS::SERVER>().close();
     };
@@ -48,14 +52,13 @@ class EV: public Events {
     };
   private:
     void deferred() {
-      if (slowFn.empty()) return;
       for (function<void()> &it : slowFn) it();
       slowFn.clear();
     };
     void (*walk)(uS::Async *const) = [](uS::Async *const loop) {
       ((EV*)loop->getData())->deferred();
       if (gw->waitForData()) loop->send();
-      screen->waitForUser();
+      K.screen.waitForUser();
     };
     void timer_1s() {
       if (!gw->countdown)                  engine->timer_1s(tick);
