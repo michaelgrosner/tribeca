@@ -69,7 +69,7 @@ class TradingBot: public KryptoNinja {
       } };
       screen.refresh = refresh;
     };
-    static void (*refresh)(WINDOW *const, int&);
+    static void refresh(WINDOW *const, int&);
 } K;
 
 class Events: public Klass {

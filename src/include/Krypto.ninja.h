@@ -24,7 +24,7 @@
 #endif
 
 //! \namespace ฿
-//! \brief     class \ref ฿::Klass, fn \ref \u0E3F::exit, fn \ref ฿::error.
+//! \brief     class \ref ฿::Klass, fn \ref ฿::exit, fn \ref ฿::error.
 
 #include <Krypto.ninja-lang.h>
 #include <Krypto.ninja-apis.h>

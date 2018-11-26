@@ -2,7 +2,7 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
 PATCH    = 11
-BUILD    = 2
+BUILD    = 3
 SOURCE   = hello-world \
            trading-bot
 CARCH    = x86_64-linux-gnu      \
@@ -116,9 +116,9 @@ else
 	$(if $(subst 8,,$(subst 7,,$(shell $(CHOST)-g++ -dumpversion | cut -d. -f1))),$(warning $(ERR));$(error $(HINT)))
 	@$(CHOST)-g++ --version
 	@mkdir -p $(KLOCAL)/bin
-	-@egrep ฿ src test -lR --exclude-dir=node_modules | xargs sed -i 's/฿/\\u0E3F/'
+	-@egrep ฿ src test -lR --exclude-dir=node_modules | xargs sed -i 's/฿/\\u0E3F/g'
 	$(MAKE) $(shell test -n "`echo $(CHOST) | grep darwin`" && echo Darwin || (test -n "`echo $(CHOST) | grep mingw32`" && echo Win32 || uname -s)) CHOST=$(CHOST)
-	-@egrep \\u0E3F src test -lR --exclude-dir=node_modules | xargs sed -i 's/\\u0E3F/฿/'
+	-@egrep \\u0E3F src test -lR --exclude-dir=node_modules | xargs sed -i 's/\\u0E3F/฿/g'
 	@chmod +x $(KLOCAL)/bin/K-$(KSRC)*
 	@$(MAKE) system_install -s
 endif
@@ -136,12 +136,12 @@ else
 endif
 
 Darwin: src/$(KSRC)/$(KSRC).cxx
-	-@egrep \\u0E3F src -lR --exclude-dir=node_modules | xargs sed -i 's/\\\(u0E3F\)/\1/'
+	-@egrep \\u0E3F src -lR --exclude-dir=node_modules | xargs sed -i 's/\\\(u0E3F\)/\1/g'
 	$(CHOST)-g++ -DNDEBUG -o $(KLOCAL)/bin/K-$(KSRC)                             \
 	  -DUSE_LIBUV                                                                \
 	  -msse4.1 -maes -mpclmul -mmacosx-version-min=10.13 -nostartfiles -rdynamic \
 	  $^ $(KARGS) -ldl
-	-@egrep u0E3F src -lR --exclude-dir=node_modules | xargs sed -i 's/\(u0E3F\)/\\\1/'
+	-@egrep u0E3F src -lR --exclude-dir=node_modules | xargs sed -i 's/\(u0E3F\)/\\\1/g'
 
 Win32: src/$(KSRC)/$(KSRC).cxx
 	$(CHOST)-g++-posix -DNDEBUG -o $(KLOCAL)/bin/K-$(KSRC).exe   \

@@ -1,32 +1,32 @@
 #ifndef K_SH_H_
 #define K_SH_H_
 
-void (*TradingBot::refresh)(WINDOW *const, int&) = [](WINDOW *const wLog, int &cursor) {
+void TradingBot::refresh(WINDOW *const wLog, int &cursor) {
   const vector<mOrder> openOrders = engine->orders.working(true);
-  int lastcursor = cursor,
-      y = getmaxy(stdscr),
+  int y = getmaxy(stdscr),
       x = getmaxx(stdscr),
       yMaxLog = y - max((int)openOrders.size(), engine->broker.semaphore.paused() ? 0 : 2) - 1,
       yOrders = yMaxLog;
-  while (lastcursor < y) mvwhline(stdscr, lastcursor++, 1, ' ', x-1);
   if (yMaxLog != cursor) {
     if (yMaxLog < cursor) wscrl(wLog, cursor-yMaxLog);
     wresize(wLog, yMaxLog-3, x-2-6);
     if (yMaxLog > cursor) wscrl(wLog, cursor-yMaxLog);
-    wrefresh(wLog);
     cursor = yMaxLog;
   }
   mvwvline(stdscr, 1, 1, ' ', y-1);
   mvwvline(stdscr, yMaxLog-1, 1, ' ', y-1);
+  mvwhline(stdscr, yMaxLog,   1, ' ', x-1);
   for (const mOrder &it : openOrders) {
+    mvwhline(stdscr, ++yOrders, 1, ' ', x-1);
     wattron(stdscr, COLOR_PAIR(it.side == mSide::Bid ? COLOR_CYAN : COLOR_MAGENTA));
-    mvwaddstr(stdscr, ++yOrders, 1, (((it.side == mSide::Bid ? "BID" : "ASK") + (" > "
+    mvwaddstr(stdscr, yOrders, 1, (((it.side == mSide::Bid ? "BID" : "ASK") + (" > "
       + mText::str8(it.quantity))) + ' ' + gw->base + " at price "
       + mText::str8(it.price) + ' ' + gw->quote + " (value "
       + mText::str8(abs(it.price * it.quantity)) + ' ' + gw->quote + ")"
     ).data());
     wattroff(stdscr, COLOR_PAIR(it.side == mSide::Bid ? COLOR_CYAN : COLOR_MAGENTA));
   }
+  while (++yOrders < y) mvwhline(stdscr, yOrders, 1, ' ', x-1);
   mvwaddch(stdscr, 0, 0, ACS_ULCORNER);
   mvwhline(stdscr, 0, 1, ACS_HLINE, max(80, x));
   mvwhline(stdscr, 1, 14, ' ', max(80, x)-14);
