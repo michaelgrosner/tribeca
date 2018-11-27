@@ -94,8 +94,8 @@ class Client: public Klass {
 
 class Engine: public Klass {
 #define SQLITE_BACKUP      \
-      SQLITE_BACKUP_LIST \
-    ( SQLITE_BACKUP_CODE )
+        SQLITE_BACKUP_LIST \
+      ( SQLITE_BACKUP_CODE )
 #define SQLITE_BACKUP_CODE(data)         sqlite->backup(&data);
 #define SQLITE_BACKUP_LIST(code)         \
 code( qp                             ) \
@@ -107,8 +107,8 @@ code( levels.stats.ewma              ) \
 code( levels.stats.stdev             )
 
 #define SCREEN_PRINTME      \
-      SCREEN_PRINTME_LIST \
-    ( SCREEN_PRINTME_CODE )
+        SCREEN_PRINTME_LIST \
+      ( SCREEN_PRINTME_CODE )
 #define SCREEN_PRINTME_CODE(data)  K.screen.printme(&data);
 #define SCREEN_PRINTME_LIST(code)  \
 code( orders                  )  \
@@ -121,17 +121,17 @@ code( broker.calculon.quotes  )  \
 code( broker.calculon.dummyMM )
 
 #define SCREEN_PRESSME      \
-      SCREEN_PRESSME_LIST \
-    ( SCREEN_PRESSME_CODE )
-#define SCREEN_PRESSME_CODE(key, fn)    K.screen.pressme(Hotkey::key, [&]() { fn(); });
-#define SCREEN_PRESSME_LIST(code)       \
-code(  Q  , exit                    ) \
-code(  q  , exit                    ) \
-code( ESC , broker.semaphore.toggle )
+        SCREEN_PRESSME_LIST \
+      ( SCREEN_PRESSME_CODE )
+#define SCREEN_PRESSME_CODE(key, fn)   K.screen.pressme(key, [&]() { fn(); });
+#define SCREEN_PRESSME_LIST(code)      \
+code( 'Q'  , exit                    ) \
+code( 'q'  , exit                    ) \
+code( '\e' , broker.semaphore.toggle )
 
 #define CLIENT_WELCOME      \
-      CLIENT_WELCOME_LIST \
-    ( CLIENT_WELCOME_CODE )
+        CLIENT_WELCOME_LIST \
+      ( CLIENT_WELCOME_CODE )
 #define CLIENT_WELCOME_CODE(data)  client->welcome(data);
 #define CLIENT_WELCOME_LIST(code)  \
 code( qp                       ) \
@@ -151,8 +151,8 @@ code( broker.calculon          ) \
 code( btn.notepad              )
 
 #define CLIENT_CLICKME      \
-      CLIENT_CLICKME_LIST \
-    ( CLIENT_CLICKME_CODE )
+        CLIENT_CLICKME_LIST \
+      ( CLIENT_CLICKME_CODE )
 #define CLIENT_CLICKME_CODE(btn, fn, val) \
                 client->clickme(btn, [&](const json &butterfly) { fn(val); });
 #define CLIENT_CLICKME_LIST(code)                                              \

@@ -74,7 +74,6 @@ class DB: public Sqlite { public: DB() { sqlite = this; };
         : "";
     };
     void exec(const string &sql, json *const result = nullptr) {
-      // K.screen.log("DB DEBUG", sql);
       char* zErrMsg = 0;
       sqlite3_exec(db, sql.data(), result ? write : nullptr, (void*)result, &zErrMsg);
       if (zErrMsg) K.screen.logWar("DB", "SQLite error: " + (zErrMsg + (" at " + sql)));

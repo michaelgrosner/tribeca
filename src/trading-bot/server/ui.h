@@ -120,7 +120,7 @@ class UI: public Client { public: UI() { client = this; };
           if (!K.option.str("ssl-key").empty())
             K.screen.logWar("UI", "Ignored --ssl-key because --ssl-crt is missing");
           K.screen.logWar("UI", "Connected web clients will enjoy unsecure SSL encryption..\n"
-            "(because the private key is visible in the source!), consider --ssl-crt and --ssl-key arguments");
+            "(because the private key is visible in the source!) consider --ssl-crt and --ssl-key arguments");
           const char *cert = "-----BEGIN CERTIFICATE-----"                                      "\n"
                              "MIICATCCAWoCCQCiyDyPL5ov3zANBgkqhkiG9w0BAQsFADBFMQswCQYDVQQGEwJB" "\n"
                              "VTETMBEGA1UECAwKU29tZS1TdGF0ZTEhMB8GA1UECgwYSW50ZXJuZXQgV2lkZ2l0" "\n"

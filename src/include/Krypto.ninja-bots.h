@@ -96,42 +96,33 @@ namespace ฿ {
     ;
   };
 
-  enum class Hotkey: unsigned int {
-   ENTER = 13,
-    ESC  = 27,
-     Q   = 81,
-     q   = 113
-  };
-
   class Hotkeys {
     private:
-      future<Hotkey> hotkey;
-      unordered_map<Hotkey, function<void()>> hotFn;
+      future<char> hotkey;
+      unordered_map<char, function<void()>> hotFn;
     public:
-      void pressme(const Hotkey &ch, function<void()> fn) {
+      void pressme(const char &ch, function<void()> fn) {
         if (!hotkey.valid()) return;
         if (hotFn.find(ch) != hotFn.end())
-          error("SH", string("Too many handlers for \"") + (char)ch + "\" pressme event");
+          error("SH", string("Too many handlers for \"") + ch + "\" pressme event");
         hotFn[ch] = fn;
       };
       void waitForUser() {
         if (!hotkey.valid()
           or hotkey.wait_for(chrono::nanoseconds(0)) != future_status::ready
         ) return;
-        Hotkey ch = hotkey.get();
+        const char ch = hotkey.get();
         if (hotFn.find(ch) != hotFn.end())
           hotFn.at(ch)();
         hotkeys();
       };
     protected:
       void hotkeys() {
-        hotkey = ::async(launch::async, [&] {
+        hotkey = ::async(launch::async, [&]() {
           int ch = ERR;
           while (ch == ERR and !hotFn.empty())
             ch = getch();
-          return ch == ERR
-            ? Hotkey::ENTER
-            : (Hotkey)ch;
+          return ch == ERR ? '\r' : (char)ch;
         });
       };
   };
@@ -239,9 +230,9 @@ namespace ฿ {
       };
       void switchOff() {
         if (refresh) {
+          refresh = nullptr;
           beep();
           endwin();
-          refresh = nullptr;
         }
       };
       void switchOn() {
@@ -252,9 +243,8 @@ namespace ฿ {
           );
         if (Ansi::colorful) start_color();
         use_default_colors();
-        cbreak();
         noecho();
-        timeout(666);
+        halfdelay(5);
         keypad(stdscr, true);
         init_pair(COLOR_WHITE,   COLOR_WHITE,   COLOR_BLACK);
         init_pair(COLOR_GREEN,   COLOR_GREEN,   COLOR_BLACK);
@@ -565,7 +555,10 @@ namespace ฿ {
   class Ending: public Rollout {
     public:
       Ending() {
-        signal(SIGINT, quit);
+        signal(SIGINT, [](const int sig) {
+          clog << '\n';
+          raise(SIGQUIT);
+        });
         signal(SIGQUIT, die);
         signal(SIGTERM, err);
         signal(SIGABRT, wtf);
@@ -575,11 +568,9 @@ namespace ฿ {
 #endif
       };
     private:
-      static void halt(int code) {
+      static void halt(const int code) {
         endingFn.swap(happyEndingFn);
         for (function<void()> &it : happyEndingFn) it();
-        if (epilogue.find("Errrror") != string::npos)
-          code = EXIT_FAILURE;
         Ansi::colorful = 1;
         clog << Ansi::b(COLOR_GREEN) << 'K'
              << Ansi::r(COLOR_GREEN) << " exit code "
@@ -588,16 +579,16 @@ namespace ฿ {
              << Ansi::reset() << '\n';
         EXIT(code);
       };
-      static void quit(const int sig) {
-        clog << '\n';
-        die(sig);
-      };
       static void die(const int sig) {
         if (epilogue.empty())
           epilogue = "Excellent decision! "
                    + mREST::xfer("https://api.icndb.com/jokes/random?escape=javascript&limitTo=[nerdy]", 4L)
                        .value("/value/joke"_json_pointer, "let's plant a tree instead..");
-        halt(EXIT_SUCCESS);
+        halt(
+          epilogue.find("Errrror") == string::npos
+            ? EXIT_SUCCESS
+            : EXIT_FAILURE
+        );
       };
       static void err(const int sig) {
         if (epilogue.empty()) epilogue = "Unknown error, no joke.";
