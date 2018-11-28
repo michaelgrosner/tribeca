@@ -1,4 +1,4 @@
-FROM node:8-stretch
+FROM overlordq/8-buster
 
 RUN apt-get update \
  && apt-get install --no-install-recommends -y git sudo
@@ -29,5 +29,6 @@ ENV API_PASSPHRASE NULL
 ENV API_USERNAME NULL
 ENV API_HTTP_ENDPOINT NULL
 ENV API_WSS_ENDPOINT NULL
+ENV K_BINARY_FILE /K/app/server/K
 
 CMD ["./K.sh", "--naked", "--without-ssl"]
