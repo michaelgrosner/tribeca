@@ -67,9 +67,9 @@ class TradingBot: public KryptoNinja {
             +  '.' + str["quote"]
             +  '.' + "db";
       } };
-      screen.refresh = refresh;
+      screen.display = display;
     };
-    static void refresh(WINDOW *const, int&);
+    static void display(WINDOW *const, int&);
 } K;
 
 class Events: public Klass {
@@ -96,8 +96,8 @@ class Engine: public Klass {
 #define SQLITE_BACKUP      \
         SQLITE_BACKUP_LIST \
       ( SQLITE_BACKUP_CODE )
-#define SQLITE_BACKUP_CODE(data)         sqlite->backup(&data);
-#define SQLITE_BACKUP_LIST(code)         \
+#define SQLITE_BACKUP_CODE(data)       sqlite->backup(&data);
+#define SQLITE_BACKUP_LIST(code)       \
 code( qp                             ) \
 code( wallet.target                  ) \
 code( wallet.safety.trades           ) \
@@ -109,15 +109,15 @@ code( levels.stats.stdev             )
 #define SCREEN_PRINTME      \
         SCREEN_PRINTME_LIST \
       ( SCREEN_PRINTME_CODE )
-#define SCREEN_PRINTME_CODE(data)  K.screen.printme(&data);
-#define SCREEN_PRINTME_LIST(code)  \
-code( orders                  )  \
-code( wallet.target           )  \
-code( wallet.safety.trades    )  \
-code( levels.stats.fairPrice  )  \
-code( levels.stats.ewma       )  \
-code( broker.semaphore        )  \
-code( broker.calculon.quotes  )  \
+#define SCREEN_PRINTME_CODE(data) K.screen.printme(&data);
+#define SCREEN_PRINTME_LIST(code) \
+code( orders                  )   \
+code( wallet.target           )   \
+code( wallet.safety.trades    )   \
+code( levels.stats.fairPrice  )   \
+code( levels.stats.ewma       )   \
+code( broker.semaphore        )   \
+code( broker.calculon.quotes  )   \
 code( broker.calculon.dummyMM )
 
 #define SCREEN_PRESSME      \
@@ -132,22 +132,22 @@ code( '\e' , broker.semaphore.toggle )
 #define CLIENT_WELCOME      \
         CLIENT_WELCOME_LIST \
       ( CLIENT_WELCOME_CODE )
-#define CLIENT_WELCOME_CODE(data)  client->welcome(data);
-#define CLIENT_WELCOME_LIST(code)  \
-code( qp                       ) \
-code( monitor                  ) \
-code( monitor.product          ) \
-code( orders                   ) \
-code( wallet.target            ) \
-code( wallet.safety            ) \
-code( wallet.safety.trades     ) \
-code( wallet                   ) \
-code( levels.diff              ) \
-code( levels.stats.takerTrades ) \
-code( levels.stats.fairPrice   ) \
-code( levels.stats             ) \
-code( broker.semaphore         ) \
-code( broker.calculon          ) \
+#define CLIENT_WELCOME_CODE(data) client->welcome(data);
+#define CLIENT_WELCOME_LIST(code) \
+code( qp                       )  \
+code( monitor                  )  \
+code( monitor.product          )  \
+code( orders                   )  \
+code( wallet.target            )  \
+code( wallet.safety            )  \
+code( wallet.safety.trades     )  \
+code( wallet                   )  \
+code( levels.diff              )  \
+code( levels.stats.takerTrades )  \
+code( levels.stats.fairPrice   )  \
+code( levels.stats             )  \
+code( broker.semaphore         )  \
+code( broker.calculon          )  \
 code( btn.notepad              )
 
 #define CLIENT_CLICKME      \
@@ -155,7 +155,7 @@ code( btn.notepad              )
       ( CLIENT_CLICKME_CODE )
 #define CLIENT_CLICKME_CODE(btn, fn, val) \
                 client->clickme(btn, [&](const json &butterfly) { fn(val); });
-#define CLIENT_CLICKME_LIST(code)                                              \
+#define CLIENT_CLICKME_LIST(code)                                            \
 code( qp                    , savedQuotingParameters           ,           ) \
 code( broker.semaphore      , void                             ,           ) \
 code( btn.notepad           , void                             ,           ) \
@@ -163,8 +163,8 @@ code( btn.submit            , manualSendOrder                  , butterfly ) \
 code( btn.cancel            , manualCancelOrder                , butterfly ) \
 code( btn.cancelAll         , cancelOrders                     ,           ) \
 code( btn.cleanTrade        , wallet.safety.trades.clearOne    , butterfly ) \
-code( btn.cleanTradesClosed , wallet.safety.trades.clearClosed ,           ) \
-code( btn.cleanTrades       , wallet.safety.trades.clearAll    ,           )
+code( btn.cleanTrades       , wallet.safety.trades.clearAll    ,           ) \
+code( btn.cleanTradesClosed , wallet.safety.trades.clearClosed ,           )
   public:
            mButtons btn;
            mMonitor monitor;

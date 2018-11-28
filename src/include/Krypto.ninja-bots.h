@@ -132,7 +132,7 @@ namespace ฿ {
       int cursor = 0;
       WINDOW *wLog = nullptr;
     public:
-      void (*refresh)(WINDOW *const, int&) = nullptr;
+      void (*display)(WINDOW *const, int&) = nullptr;
       void switchOn(const int &naked) {
         endingFn.insert(endingFn.begin(), [&]() {
           switchOff();
@@ -143,8 +143,8 @@ namespace ฿ {
             logWar(prefix, reason);
           else log(prefix, reason, highlight);
         };
-        if (naked) refresh = nullptr;
-        else if (refresh) switchOn();
+        if (naked) display = nullptr;
+        else if (display) switchOn();
       };
       void printme(mToScreen *const data) {
         data->print = [&](const string &prefix, const string &reason) {
@@ -157,7 +157,7 @@ namespace ฿ {
           logWar(prefix, reason);
         };
         data->display = [&]() {
-          display();
+          repaint();
         };
       };
       void log(const string &prefix, const string &reason, const string &highlight = "") {
@@ -168,7 +168,7 @@ namespace ฿ {
           else if (reason.find("SELL") != string::npos)
             color = -1;
         }
-        if (!refresh) {
+        if (!display) {
           cout << stamp() << prefix;
           if (color == 1)       cout << Ansi::r(COLOR_CYAN);
           else if (color == -1) cout << Ansi::r(COLOR_MAGENTA);
@@ -203,7 +203,7 @@ namespace ฿ {
         wrefresh(wLog);
       };
       void logWar(const string &k, const string &s) {
-        if (!refresh) {
+        if (!display) {
           cout << stamp() << k << Ansi::r(COLOR_RED) << " Warrrrning: " << Ansi::b(COLOR_RED) << s << '.' << Ansi::r(COLOR_WHITE) << endl;
           return;
         }
@@ -225,12 +225,12 @@ namespace ฿ {
         wrefresh(wLog);
       };
     private:
-      void display() {
-        if (refresh) refresh(wLog, cursor);
+      void repaint() {
+        if (display) display(wLog, cursor);
       };
       void switchOff() {
-        if (refresh) {
-          refresh = nullptr;
+        if (display) {
+          display = nullptr;
           beep();
           endwin();
         }
@@ -269,10 +269,10 @@ namespace ฿ {
           if (ws.ws_col < 30) ws.ws_col = 30;
           wresize(stdscr, ws.ws_row, ws.ws_col);
           resizeterm(ws.ws_row, ws.ws_col);
-          display();
+          repaint();
         });
 #endif
-        display();
+        repaint();
         hotkeys();
       };
       const string stamp() {
@@ -289,7 +289,7 @@ namespace ฿ {
         time_t tt = chrono::system_clock::to_time_t(clock);
         char datetime[15];
         strftime(datetime, 15, "%m/%d %T", localtime(&tt));
-        if (!refresh) return Ansi::b(COLOR_GREEN) + datetime + Ansi::r(COLOR_GREEN) + microtime.str() + Ansi::b(COLOR_WHITE) + ' ';
+        if (!display) return Ansi::b(COLOR_GREEN) + datetime + Ansi::r(COLOR_GREEN) + microtime.str() + Ansi::b(COLOR_WHITE) + ' ';
         wattron(wLog, COLOR_PAIR(COLOR_GREEN));
         wattron(wLog, A_BOLD);
         wprintw(wLog, datetime);
@@ -639,7 +639,7 @@ namespace ฿ {
       Screen screen;
     public:
       KryptoNinja *const main(int argc, char** argv) {
-        option.main(argc, argv, !screen.refresh);
+        option.main(argc, argv, !screen.display);
         screen.switchOn(option.num("naked"));
         if (option.num("latency")) {
           gw->latency("HTTP read/write handshake", [&]() {

@@ -1,7 +1,7 @@
 #ifndef K_SH_H_
 #define K_SH_H_
 
-void TradingBot::refresh(WINDOW *const wLog, int &cursor) {
+void TradingBot::display(WINDOW *const wLog, int &cursor) {
   const vector<mOrder> openOrders = engine->orders.working(true);
   int y = getmaxy(stdscr),
       x = getmaxx(stdscr),
@@ -145,6 +145,7 @@ void TradingBot::refresh(WINDOW *const wLog, int &cursor) {
   move(yMaxLog-1, 2);
   wrefresh(stdscr);
   wrefresh(wLog);
+
 };
 
 #endif
