@@ -145,7 +145,6 @@ void TradingBot::display(WINDOW *const wLog, int &cursor) {
   move(yMaxLog-1, 2);
   wrefresh(stdscr);
   wrefresh(wLog);
-
 };
 
 #endif

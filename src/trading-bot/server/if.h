@@ -123,7 +123,7 @@ code( broker.calculon.dummyMM )
 #define SCREEN_PRESSME      \
         SCREEN_PRESSME_LIST \
       ( SCREEN_PRESSME_CODE )
-#define SCREEN_PRESSME_CODE(key, fn)   K.screen.pressme(key, [&]() { fn(); });
+#define SCREEN_PRESSME_CODE(key, fn)   K.screen.hotkey.pressme(key, [&]() { fn(); });
 #define SCREEN_PRESSME_LIST(code)      \
 code( 'Q'  , exit                    ) \
 code( 'q'  , exit                    ) \

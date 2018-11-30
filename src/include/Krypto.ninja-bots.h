@@ -96,28 +96,36 @@ namespace ฿ {
     ;
   };
 
-  class Hotkeys {
+  class Hotkey {
     private:
       future<char> hotkey;
       unordered_map<char, function<void()>> hotFn;
     public:
+      void keylogger() {
+        if (hotkey.valid())
+          error("SH", string("Unable to launch another \"keylogger\" thread"));
+        noecho();
+        halfdelay(5);
+        keypad(stdscr, true);
+        legitKeylogger();
+      };
       void pressme(const char &ch, function<void()> fn) {
         if (!hotkey.valid()) return;
         if (hotFn.find(ch) != hotFn.end())
           error("SH", string("Too many handlers for \"") + ch + "\" pressme event");
         hotFn[ch] = fn;
       };
-      void waitForUser() {
+      void waitForKeystroke() {
         if (!hotkey.valid()
           or hotkey.wait_for(chrono::nanoseconds(0)) != future_status::ready
         ) return;
         const char ch = hotkey.get();
         if (hotFn.find(ch) != hotFn.end())
           hotFn.at(ch)();
-        hotkeys();
+        legitKeylogger();
       };
-    protected:
-      void hotkeys() {
+    private:
+      void legitKeylogger() {
         hotkey = ::async(launch::async, [&]() {
           int ch = ERR;
           while (ch == ERR and !hotFn.empty())
@@ -127,7 +135,9 @@ namespace ฿ {
       };
   };
 
-  class Screen: public Hotkeys {
+  class Screen {
+    public:
+      Hotkey hotkey;
     private:
       int cursor = 0;
       WINDOW *wLog = nullptr;
@@ -243,9 +253,6 @@ namespace ฿ {
           );
         if (Ansi::colorful) start_color();
         use_default_colors();
-        noecho();
-        halfdelay(5);
-        keypad(stdscr, true);
         init_pair(COLOR_WHITE,   COLOR_WHITE,   COLOR_BLACK);
         init_pair(COLOR_GREEN,   COLOR_GREEN,   COLOR_BLACK);
         init_pair(COLOR_RED,     COLOR_RED,     COLOR_BLACK);
@@ -256,24 +263,13 @@ namespace ฿ {
         wLog = subwin(stdscr, getmaxy(stdscr)-4, getmaxx(stdscr)-2-6, 3, 2);
         scrollok(wLog, true);
         idlok(wLog, true);
-#if CAN_RESIZE
-        signal(SIGWINCH, [&]() {
-          struct winsize ws;
-          if (ioctl(0, TIOCGWINSZ, &ws) < 0
-            or (ws.ws_row == getmaxy(stdscr)
-            and ws.ws_col == getmaxx(stdscr))
-          ) return;
-          werase(stdscr);
-          werase(wLog);
-          if (ws.ws_row < 10) ws.ws_row = 10;
-          if (ws.ws_col < 30) ws.ws_col = 30;
-          wresize(stdscr, ws.ws_row, ws.ws_col);
-          resizeterm(ws.ws_row, ws.ws_col);
-          repaint();
+        signal(SIGWINCH, [](const int sig) {
+          endwin();
+          refresh();
+          clear();
         });
-#endif
         repaint();
-        hotkeys();
+        hotkey.keylogger();
       };
       const string stamp() {
         chrono::system_clock::time_point clock = Tclock;
