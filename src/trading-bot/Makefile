@@ -30,7 +30,7 @@ client: npm client/main.ts
 
 js: client $(NODE_PATH)/.bin
 	$(info $(STEP_3))
-	NODE_PATH=$(NODE_PATH) browserify -t [ babelify --presets [ babili env ] ] \
+	NODE_PATH=$(NODE_PATH) browserify -t [ babelify --presets [ @babel/preset-env ] ] \
 	  $(KASSETS)/www/js/main.js | uglifyjs | gzip > $(KASSETS)/www/js/client.min.js
 
 css: www/sass/*.scss
@@ -42,30 +42,29 @@ css: www/sass/*.scss
 export define PACKAGE_JSON
 {
   "dependencies": {
-    "@angular/common": "^6.1.9",
-    "@angular/compiler": "^6.1.9",
-    "@angular/core": "^6.1.9",
-    "@angular/forms": "^6.1.9",
-    "@angular/http": "^6.1.9",
-    "@angular/platform-browser": "^6.1.9",
-    "@angular/platform-browser-dynamic": "^6.1.9",
-    "@angular/router": "^6.1.9",
+    "@angular/common": "^7.1.1",
+    "@angular/compiler": "^7.1.1",
+    "@angular/core": "^7.1.1",
+    "@angular/forms": "^7.1.1",
+    "@angular/http": "^7.1.1",
+    "@angular/platform-browser": "^7.1.1",
+    "@angular/platform-browser-dynamic": "^7.1.1",
+    "@angular/router": "^7.1.1",
+    "@babel/core": "^7.1.6",
+    "@babel/preset-env": "^7.1.6",
     "ag-grid": "^18.1.2",
-    "ag-grid-angular": "^19.0.0",
-    "ag-grid-community": "^19.0.0",
+    "ag-grid-angular": "^19.1.2",
+    "ag-grid-community": "^19.1.4",
     "angular2-highcharts": "^0.5.5",
-    "babel-core": "^6.26.3",
-    "babel-preset-babili": "0.1.4",
-    "babel-preset-env": "^1.7.0",
-    "babelify": "^8.0.0",
+    "babelify": "^10.0.0",
     "browserify": "^16.2.3",
-    "highcharts": "^6.1.4",
+    "highcharts": "^6.2.0",
     "ng4-popover": "^1.0.23",
     "reflect-metadata": "^0.1.12",
     "rxjs": "6.3.3",
     "rxjs-compat": "^6.3.3",
-    "sass": "^1.14.1",
-    "typescript": "^3.1.1",
+    "sass": "^1.15.1",
+    "typescript": "^3.2.1",
     "uglify-es": "^3.3.9",
     "zone.js": "^0.8.26"
   },
