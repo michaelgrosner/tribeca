@@ -345,125 +345,108 @@ namespace ฿ {
 
   class mText {
     public:
-      static string strX(const double &d, const unsigned int &X) {
-        stringstream ss;
-        ss << setprecision(X) << fixed << d;
-        return ss.str();
+      static string strX(const double &input, const unsigned int &precision) {
+        stringstream output;
+        output << setprecision(precision) << fixed << input;
+        return output.str();
       };
-      static string str8(const double &d) {
-        return strX(d, 8);
+      static string str8(const double &input) {
+        return strX(input, 8);
       };
-      static string strL(string s) {
-        transform(s.begin(), s.end(), s.begin(), ::tolower);
-        return s;
+      static string strL(string input) {
+        transform(input.begin(), input.end(), input.begin(), ::tolower);
+        return input;
       };
-      static string strU(string s) {
-        transform(s.begin(), s.end(), s.begin(), ::toupper);
-        return s;
+      static string strU(string input) {
+        transform(input.begin(), input.end(), input.begin(), ::toupper);
+        return input;
       };
-      static string oZip(string k) {
-        z_stream zs;
-        if (inflateInit2(&zs, -15) != Z_OK) return "";
-        zs.next_in = (Bytef*)k.data();
-        zs.avail_in = k.size();
-        int ret;
-        char outbuffer[32768];
-        string k_;
-        do {
-          zs.avail_out = 32768;
-          zs.next_out = (Bytef*)outbuffer;
-          ret = inflate(&zs, Z_SYNC_FLUSH);
-          if (k_.size() < zs.total_out)
-            k_.append(outbuffer, zs.total_out - k_.size());
-        } while (ret == Z_OK);
-        inflateEnd(&zs);
-        if (ret != Z_STREAM_END) return "";
-        return k_;
-      };
-      static string oHex(string k) {
-       unsigned int len = k.length();
-        string k_;
-        for (unsigned int i=0; i < len; i+=2) {
-          string byte = k.substr(i, 2);
-          char chr = (char)(int)strtol(byte.data(), NULL, 16);
-          k_.push_back(chr);
-        }
-        return k_;
-      };
-      static string oB64(string k) {
+      static string B64(const string &input) {
         BIO *bio, *b64;
         BUF_MEM *bufferPtr;
         b64 = BIO_new(BIO_f_base64());
         bio = BIO_new(BIO_s_mem());
         bio = BIO_push(b64, bio);
         BIO_set_flags(bio, BIO_FLAGS_BASE64_NO_NL);
-        BIO_write(bio, k.data(), k.length());
+        BIO_write(bio, input.data(), input.length());
         BIO_flush(bio);
         BIO_get_mem_ptr(bio, &bufferPtr);
         BIO_set_close(bio, BIO_NOCLOSE);
         BIO_free_all(bio);
         return string(bufferPtr->data, bufferPtr->length);
       };
-      static string oB64decode(string k) {
+      static string B64_decode(const string &input) {
         BIO *bio, *b64;
-        char buffer[k.length()];
+        char buffer[input.length()];
         b64 = BIO_new(BIO_f_base64());
-        bio = BIO_new_mem_buf(k.data(), k.length());
+        bio = BIO_new_mem_buf(input.data(), input.length());
         bio = BIO_push(b64, bio);
         BIO_set_flags(bio, BIO_FLAGS_BASE64_NO_NL);
         BIO_set_close(bio, BIO_NOCLOSE);
-        int len = BIO_read(bio, buffer, k.length());
+        int len = BIO_read(bio, buffer, input.length());
         BIO_free_all(bio);
         return string(buffer, len);
       };
-      static string oMd5(string k) {
-        unsigned char digest[MD5_DIGEST_LENGTH];
-        MD5((unsigned char*)k.data(), k.length(), (unsigned char*)&digest);
-        char k_[16*2+1];
-        for (unsigned int i = 0; i < 16; i++) sprintf(&k_[i*2], "%02x", (unsigned int)digest[i]);
-        return strU(k_);
+      static string SHA256(const string &input, const bool &hex = false) {
+        return SHA(input, hex, ::SHA256, SHA256_DIGEST_LENGTH);
       };
-      static string oSha256(string k) {
-        unsigned char digest[SHA256_DIGEST_LENGTH];
-        SHA256((unsigned char*)k.data(), k.length(), (unsigned char*)&digest);
-        char k_[SHA256_DIGEST_LENGTH*2+1];
-        for (unsigned int i = 0; i < SHA256_DIGEST_LENGTH; i++) sprintf(&k_[i*2], "%02x", (unsigned int)digest[i]);
-        return k_;
+      static string SHA512(const string &input) {
+        return SHA(input, false, ::SHA512, SHA512_DIGEST_LENGTH);
       };
-      static string oSha512(string k) {
-        unsigned char digest[SHA512_DIGEST_LENGTH];
-        SHA512((unsigned char*)k.data(), k.length(), (unsigned char*)&digest);
-        char k_[SHA512_DIGEST_LENGTH*2+1];
-        for (unsigned int i = 0; i < SHA512_DIGEST_LENGTH; i++) sprintf(&k_[i*2], "%02x", (unsigned int)digest[i]);
-        return k_;
+      static string HMAC1(const string &key, const string &input, const bool &hex = false) {
+        return HMAC(key, input, hex, EVP_sha1, SHA_DIGEST_LENGTH);
       };
-      static string oHmac1(string p, string s, bool hex = false) {
+      static string HMAC256(const string &key, const string &input, const bool &hex = false) {
+        return HMAC(key, input, hex, EVP_sha256, SHA256_DIGEST_LENGTH);
+      };
+      static string HMAC512(const string &key, const string &input, const bool &hex = false) {
+        return HMAC(key, input, hex, EVP_sha512, SHA512_DIGEST_LENGTH);
+      };
+      static string HMAC384(const string &key, const string &input, const bool &hex = false) {
+        return HMAC(key, input, hex, EVP_sha384, SHA384_DIGEST_LENGTH);
+      };
+    private:
+      static string SHA(
+        const string  &input,
+        const bool    &hex,
+        unsigned char *(*md)(const unsigned char*, size_t, unsigned char*),
+        const int     &digest_len
+      ) {
+        unsigned char digest[digest_len];
+        md((unsigned char*)input.data(), input.length(), (unsigned char*)&digest);
+        char output[digest_len*2+1];
+        for (unsigned int i = 0; i < digest_len; i++)
+          sprintf(&output[i*2], "%02x", (unsigned int)digest[i]);
+        return hex ? strHex(output) : output;
+      };
+      static string HMAC(
+        const string &key,
+        const string &input,
+        const bool   &hex,
+        const EVP_MD *(evp_md)(),
+        const int    &digest_len
+      ) {
         unsigned char* digest;
-        digest = HMAC(EVP_sha1(), s.data(), s.length(), (unsigned char*)p.data(), p.length(), NULL, NULL);
-        char k_[SHA_DIGEST_LENGTH*2+1];
-        for (unsigned int i = 0; i < SHA_DIGEST_LENGTH; i++) sprintf(&k_[i*2], "%02x", (unsigned int)digest[i]);
-        return hex ? oHex(k_) : k_;
+        digest = ::HMAC(
+          evp_md(),
+          input.data(), input.length(),
+          (unsigned char*)key.data(), key.length(),
+          NULL, NULL
+        );
+        char output[digest_len*2+1];
+        for (unsigned int i = 0; i < digest_len; i++)
+          sprintf(&output[i*2], "%02x", (unsigned int)digest[i]);
+        return hex ? strHex(output) : output;
       };
-      static string oHmac256(string p, string s, bool hex = false) {
-        unsigned char* digest;
-        digest = HMAC(EVP_sha256(), s.data(), s.length(), (unsigned char*)p.data(), p.length(), NULL, NULL);
-        char k_[SHA256_DIGEST_LENGTH*2+1];
-        for (unsigned int i = 0; i < SHA256_DIGEST_LENGTH; i++) sprintf(&k_[i*2], "%02x", (unsigned int)digest[i]);
-        return hex ? oHex(k_) : k_;
-      };
-      static string oHmac512(string p, string s, bool hex = false) {
-        unsigned char* digest;
-        digest = HMAC(EVP_sha512(), s.data(), s.length(), (unsigned char*)p.data(), p.length(), NULL, NULL);
-        char k_[SHA512_DIGEST_LENGTH*2+1];
-        for (unsigned int i = 0; i < SHA512_DIGEST_LENGTH; i++) sprintf(&k_[i*2], "%02x", (unsigned int)digest[i]);
-        return hex ? oHex(k_) : k_;
-      };
-      static string oHmac384(string p, string s) {
-        unsigned char* digest;
-        digest = HMAC(EVP_sha384(), s.data(), s.length(), (unsigned char*)p.data(), p.length(), NULL, NULL);
-        char k_[SHA384_DIGEST_LENGTH*2+1];
-        for (unsigned int i = 0; i < SHA384_DIGEST_LENGTH; i++) sprintf(&k_[i*2], "%02x", (unsigned int)digest[i]);
-        return k_;
+      static string strHex(const string &input) {
+        const unsigned int len = input.length();
+        string output;
+        for (unsigned int i=0; i < len; i+=2) {
+          string byte = input.substr(i, 2);
+          char chr = (char)(int)strtol(byte.data(), NULL, 16);
+          output.push_back(chr);
+        }
+        return output;
       };
   };
 

@@ -54,7 +54,7 @@ class TradingBot: public KryptoNinja {
         str["B64auth"] = (!num["headless"]
           and str["user"] != "NULL" and !str["user"].empty()
           and str["pass"] != "NULL" and !str["pass"].empty()
-        ) ? "Basic " + mText::oB64(str["user"] + ':' + str["pass"])
+        ) ? "Basic " + mText::B64(str["user"] + ':' + str["pass"])
           : "";
         str["diskdata"] = "";
         if (str["database"].empty() or str["database"] == ":memory:")
