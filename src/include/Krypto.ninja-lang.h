@@ -37,7 +37,6 @@ using namespace std;
 #include <sqlite3.h>
 #include <uWS/uWS.h>
 #include <curl/curl.h>
-#include <openssl/md5.h>
 #include <openssl/bio.h>
 #include <openssl/evp.h>
 #include <openssl/sha.h>
