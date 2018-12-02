@@ -301,31 +301,31 @@ namespace ฿ {
     };
   };
 
-  class mREST {
+  class Curl {
     public:
       static string inet;
       static const json xfer(const string &url, const long &timeout = 13) {
-        return curl_perform(url, [&](CURL *curl) {
+        return perform(url, [&](CURL *curl) {
           curl_easy_setopt(curl, CURLOPT_TIMEOUT, timeout);
         }, timeout == 13);
       };
       static const json xfer(const string &url, const string &post) {
-        return curl_perform(url, [&](CURL *curl) {
+        return perform(url, [&](CURL *curl) {
           struct curl_slist *h_ = NULL;
           h_ = curl_slist_append(h_, "Content-Type: application/x-www-form-urlencoded");
           curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
           curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post.data());
         });
       };
-      static const json curl_perform(const string &url, function<void(CURL *curl)> curl_setopt, bool debug = true) {
+      static const json perform(const string &url, function<void(CURL *curl)> setopt, bool debug = true) {
         string reply;
         CURL *curl = curl_easy_init();
         if (curl) {
-          curl_setopt(curl);
+          setopt(curl);
           curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
           curl_easy_setopt(curl, CURLOPT_INTERFACE, inet.empty() ? nullptr : inet.data());
           curl_easy_setopt(curl, CURLOPT_URL, url.data());
-          curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &curl_write);
+          curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &write);
           curl_easy_setopt(curl, CURLOPT_WRITEDATA, &reply);
           CURLcode r = curl_easy_perform(curl);
           if (debug and r != CURLE_OK)
@@ -337,13 +337,13 @@ namespace ฿ {
           : json::object();
       };
     private:
-      static size_t curl_write(void *buf, size_t size, size_t nmemb, void *up) {
+      static size_t write(void *buf, size_t size, size_t nmemb, void *up) {
         ((string*)up)->append((char*)buf, size * nmemb);
         return size * nmemb;
       };
   };
 
-  class mText {
+  class Text {
     public:
       static string strX(const double &input, const unsigned int &precision) {
         stringstream output;
@@ -414,10 +414,10 @@ namespace ฿ {
       ) {
         unsigned char digest[digest_len];
         md((unsigned char*)input.data(), input.length(), (unsigned char*)&digest);
-        char output[digest_len*2+1];
+        char output[digest_len * 2 + 1];
         for (unsigned int i = 0; i < digest_len; i++)
-          sprintf(&output[i*2], "%02x", (unsigned int)digest[i]);
-        return hex ? strHex(output) : output;
+          sprintf(&output[i * 2], "%02x", (unsigned int)digest[i]);
+        return hex ? HEX(output) : output;
       };
       static string HMAC(
         const string &key,
@@ -433,15 +433,15 @@ namespace ฿ {
           (unsigned char*)key.data(), key.length(),
           NULL, NULL
         );
-        char output[digest_len*2+1];
+        char output[digest_len * 2 + 1];
         for (unsigned int i = 0; i < digest_len; i++)
-          sprintf(&output[i*2], "%02x", (unsigned int)digest[i]);
-        return hex ? strHex(output) : output;
+          sprintf(&output[i * 2], "%02x", (unsigned int)digest[i]);
+        return hex ? HEX(output) : output;
       };
-      static string strHex(const string &input) {
+      static string HEX(const string &input) {
         const unsigned int len = input.length();
         string output;
-        for (unsigned int i=0; i < len; i+=2) {
+        for (unsigned int i = 0; i < len; i += 2) {
           string byte = input.substr(i, 2);
           char chr = (char)(int)strtol(byte.data(), NULL, 16);
           output.push_back(chr);
@@ -450,7 +450,7 @@ namespace ฿ {
       };
   };
 
-  class mRandom {
+  class Random {
     public:
       static const unsigned long long int64() {
         static random_device rd;
@@ -484,7 +484,7 @@ namespace ฿ {
             rnd >>= 4;
             uuid[i] = numsAz[(i == 19) ? ((rnd & 0xf) & 0x3) | 0x8 : rnd & 0xf];
           }
-        return mText::strL(uuid);
+        return Text::strL(uuid);
       };
       static const mRandId uuid32Id() {
         mRandId uuid = uuid36Id();
@@ -511,8 +511,8 @@ namespace ฿ {
         place(
           order->orderId,
           order->side,
-          mText::str8(order->price),
-          mText::str8(order->quantity),
+          Text::str8(order->price),
+          Text::str8(order->quantity),
           order->type,
           order->timeInForce,
           order->preferPostOnly
@@ -521,7 +521,7 @@ namespace ฿ {
       void replace(const mOrder *const order) {
         replace(
           order->exchangeId,
-          mText::str8(order->price)
+          Text::str8(order->price)
         );
       };
       void cancel(const mOrder *const order) {
@@ -638,10 +638,10 @@ namespace ฿ {
         unsigned int precision = minTick < 1e-8 ? 10 : 8;
         for (pair<string, string> it : (vector<pair<string, string>>){
           {"symbols", symbol                  },
-          {"minTick", mText::strX(minTick, precision)},
-          {"minSize", mText::strX(minSize, precision)},
-          {"makeFee", mText::strX(makeFee, precision)},
-          {"takeFee", mText::strX(takeFee, precision)}
+          {"minTick", Text::strX(minTick, precision)},
+          {"minSize", Text::strX(minSize, precision)},
+          {"makeFee", Text::strX(makeFee, precision)},
+          {"takeFee", Text::strX(takeFee, precision)}
         }) notes.push_back(it);
         string info = "setup:";
         for (pair<string, string> &it : notes)
@@ -714,7 +714,7 @@ namespace ฿ {
   class GwNull: public GwApiREST {
     public:
       const json handshake() {
-        randId  = mRandom::uuid36Id;
+        randId  = Random::uuid36Id;
         symbol  = base + "_" + quote;
         minTick = 0.01;
         minSize = 0.01;
@@ -729,9 +729,9 @@ namespace ฿ {
         ws   = "wss://api.hitbtc.com/api/2/ws";
       };
       const json handshake() {
-        randId = mRandom::uuid32Id;
+        randId = Random::uuid32Id;
         symbol = base + quote;
-        const json reply = mREST::xfer(http + "/public/symbol/" + symbol);
+        const json reply = Curl::xfer(http + "/public/symbol/" + symbol);
         minTick = stod(reply.value("tickSize", "0"));
         minSize = stod(reply.value("quantityIncrement", "0"));
         base    = reply.value("baseCurrency", base);
@@ -740,7 +740,7 @@ namespace ฿ {
       };
     protected:
       static const json xfer(const string &url, const string &auth, const string &post) {
-        return mREST::curl_perform(url, [&](CURL *curl) {
+        return Curl::perform(url, [&](CURL *curl) {
           curl_easy_setopt(curl, CURLOPT_USERPWD, auth.data());
           curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
           curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post.data());
@@ -757,16 +757,16 @@ namespace ฿ {
         fix  = "fix.pro.coinbase.com:4198";
       };
       const json handshake() {
-        randId = mRandom::uuid36Id;
+        randId = Random::uuid36Id;
         symbol = base + "-" + quote;
-        const json reply = mREST::xfer(http + "/products/" + symbol);
+        const json reply = Curl::xfer(http + "/products/" + symbol);
         minTick = stod(reply.value("quote_increment", "0"));
         minSize = stod(reply.value("base_min_size", "0"));
         return reply;
       };
     protected:
       static const json xfer(const string &url, const string &h1, const string &h2, const string &h3, const string &h4, const bool &rm) {
-        return mREST::curl_perform(url, [&](CURL *curl) {
+        return Curl::perform(url, [&](CURL *curl) {
           struct curl_slist *h_ = NULL;
           h_ = curl_slist_append(h_, ("CB-ACCESS-KEY: " + h1).data());
           h_ = curl_slist_append(h_, ("CB-ACCESS-SIGN: " + h2).data());
@@ -786,9 +786,9 @@ namespace ฿ {
         askForReplace = true;
       };
       const json handshake() {
-        randId = mRandom::int45Id;
-        symbol = mText::strL(base + quote);
-        const json reply1 = mREST::xfer(http + "/pubticker/" + symbol);
+        randId = Random::int45Id;
+        symbol = Text::strL(base + quote);
+        const json reply1 = Curl::xfer(http + "/pubticker/" + symbol);
         if (reply1.find("last_price") != reply1.end()) {
           ostringstream price_;
           price_ << scientific << stod(reply1.value("last_price", "0"));
@@ -798,7 +798,7 @@ namespace ฿ {
           istringstream iss("1e" + to_string(fmax(stod(_price_),-4)-4));
           iss >> minTick;
         }
-        const json reply2 = mREST::xfer(http + "/symbols_details");
+        const json reply2 = Curl::xfer(http + "/symbols_details");
         if (reply2.is_array())
           for (json::const_iterator it=reply2.cbegin(); it!=reply2.cend();++it)
             if (it->find("pair") != it->end() and it->value("pair", "") == symbol)
@@ -807,7 +807,7 @@ namespace ฿ {
       };
     protected:
       static const json xfer(const string &url, const string &post, const string &h1, const string &h2) {
-        return mREST::curl_perform(url, [&](CURL *curl) {
+        return Curl::perform(url, [&](CURL *curl) {
           struct curl_slist *h_ = NULL;
           h_ = curl_slist_append(h_, ("X-BFX-APIKEY: " + h1).data());
           h_ = curl_slist_append(h_, ("X-BFX-PAYLOAD: " + post).data());
@@ -833,9 +833,9 @@ namespace ฿ {
         ws   = "wss://api.fcoin.com/v2/ws";
       };
       const json handshake() {
-        randId = mRandom::char16Id;
-        symbol = mText::strL(base + quote);
-        const json reply = mREST::xfer(http + "public/symbols");
+        randId = Random::char16Id;
+        symbol = Text::strL(base + quote);
+        const json reply = Curl::xfer(http + "public/symbols");
         if (reply.find("data") != reply.end() and reply.at("data").is_array())
           for (json::const_iterator it=reply.at("data").cbegin(); it!=reply.at("data").cend();++it)
             if (it->find("name") != it->end() and it->value("name", "") == symbol) {
@@ -850,7 +850,7 @@ namespace ฿ {
       };
     protected:
       static const json xfer(const string &url, const string &h1, const string &h2, const string &h3, const string &post = "") {
-        return mREST::curl_perform(url, [&](CURL *curl) {
+        return Curl::perform(url, [&](CURL *curl) {
           struct curl_slist *h_ = NULL;
           if (!post.empty()) {
             curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post.data());
@@ -870,9 +870,9 @@ namespace ฿ {
         http = "https://api.kraken.com";
       };
       const json handshake() {
-        randId = mRandom::int32Id;
+        randId = Random::int32Id;
         symbol = base + quote;
-        const json reply = mREST::xfer(http + "/0/public/AssetPairs?pair=" + symbol);
+        const json reply = Curl::xfer(http + "/0/public/AssetPairs?pair=" + symbol);
         if (reply.find("result") != reply.end())
           for (json::const_iterator it = reply.at("result").cbegin(); it != reply.at("result").cend(); ++it)
             if (it.value().find("pair_decimals") != it.value().end()) {
@@ -890,7 +890,7 @@ namespace ฿ {
       };
     protected:
       static const json xfer(const string &url, const string &h1, const string &h2, const string &post) {
-        return mREST::curl_perform(url, [&](CURL *curl) {
+        return Curl::perform(url, [&](CURL *curl) {
           struct curl_slist *h_ = NULL;
           h_ = curl_slist_append(h_, ("API-Key: " + h1).data());
           h_ = curl_slist_append(h_, ("API-Sign: " + h2).data());
@@ -906,9 +906,9 @@ namespace ฿ {
         http = "https://api.korbit.co.kr/v1";
       };
       const json handshake() {
-        randId = mRandom::int45Id;
-        symbol = mText::strL(base + "_" + quote);
-        const json reply = mREST::xfer(http + "/constants");
+        randId = Random::int45Id;
+        symbol = Text::strL(base + "_" + quote);
+        const json reply = Curl::xfer(http + "/constants");
         if (reply.find(symbol.substr(0,3).append("TickSize")) != reply.end()) {
           minTick = reply.value(symbol.substr(0,3).append("TickSize"), 0.0);
           minSize = 0.015;
@@ -917,7 +917,7 @@ namespace ฿ {
       };
     protected:
       static const json xfer(const string &url, const string &h1, const string &post) {
-        return mREST::curl_perform(url, [&](CURL *curl) {
+        return Curl::perform(url, [&](CURL *curl) {
           struct curl_slist *h_ = NULL;
           if (!post.empty()) {
             h_ = curl_slist_append(h_, "Content-Type: application/x-www-form-urlencoded");
@@ -935,9 +935,9 @@ namespace ฿ {
         http = "https://poloniex.com";
       };
       const json handshake() {
-        randId = mRandom::int45Id;
+        randId = Random::int45Id;
         symbol = quote + "_" + base;
-        const json reply = mREST::xfer(http + "/public?command=returnTicker");
+        const json reply = Curl::xfer(http + "/public?command=returnTicker");
         if (reply.find(symbol) != reply.end()) {
           istringstream iss("1e-" + to_string(6-reply.at(symbol).at("last").get<string>().find(".")));
           iss >> minTick;
@@ -947,7 +947,7 @@ namespace ฿ {
       };
     protected:
       static const json xfer(const string &url, const string &post, const string &h1, const string &h2) {
-        return mREST::curl_perform(url, [&](CURL *curl) {
+        return Curl::perform(url, [&](CURL *curl) {
           struct curl_slist *h_ = NULL;
           h_ = curl_slist_append(h_, "Content-Type: application/x-www-form-urlencoded");
           h_ = curl_slist_append(h_, ("Key: " + h1).data());

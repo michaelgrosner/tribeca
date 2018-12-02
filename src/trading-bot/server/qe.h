@@ -39,7 +39,6 @@ class QE: public Engine { public: QE() { engine = this; };
       CLIENT_CLICKME
     };
     void waitSysAdmin() {
-      SCREEN_PRINTME
       SCREEN_PRESSME
     };
     void run() {

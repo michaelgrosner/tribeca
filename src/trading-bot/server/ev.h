@@ -11,8 +11,8 @@ class EV: public Events { public: EV() { events = this; };
   protected:
     void load() {
       socket = new uWS::Hub(0, true);
-      K.screen.log("CF", "Network Interface for outgoing traffic is",
-        client->wtfismyip = mREST::xfer("https://wtfismyip.com/json", 4L)
+      Print::log("CF", "Network Interface for outgoing traffic is",
+        client->wtfismyip = Curl::xfer("https://wtfismyip.com/json", 4L)
                               .value("YourFuckingIPAddress", client->wtfismyip)
       );
     };

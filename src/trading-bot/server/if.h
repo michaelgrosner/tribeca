@@ -54,7 +54,7 @@ class TradingBot: public KryptoNinja {
         str["B64auth"] = (!num["headless"]
           and str["user"] != "NULL" and !str["user"].empty()
           and str["pass"] != "NULL" and !str["pass"].empty()
-        ) ? "Basic " + mText::B64(str["user"] + ':' + str["pass"])
+        ) ? "Basic " + Text::B64(str["user"] + ':' + str["pass"])
           : "";
         str["diskdata"] = "";
         if (str["database"].empty() or str["database"] == ":memory:")
@@ -67,9 +67,9 @@ class TradingBot: public KryptoNinja {
             +  '.' + str["quote"]
             +  '.' + "db";
       } };
-      screen.display = display;
+      Print::display = display;
     };
-    static void display(WINDOW *const, int&);
+    static void display();
 } K;
 
 class Events: public Klass {
@@ -105,20 +105,6 @@ code( wallet.profits                 ) \
 code( levels.stats.ewma.fairValue96h ) \
 code( levels.stats.ewma              ) \
 code( levels.stats.stdev             )
-
-#define SCREEN_PRINTME      \
-        SCREEN_PRINTME_LIST \
-      ( SCREEN_PRINTME_CODE )
-#define SCREEN_PRINTME_CODE(data) K.screen.printme(&data);
-#define SCREEN_PRINTME_LIST(code) \
-code( orders                  )   \
-code( wallet.target           )   \
-code( wallet.safety.trades    )   \
-code( levels.stats.fairPrice  )   \
-code( levels.stats.ewma       )   \
-code( broker.semaphore        )   \
-code( broker.calculon.quotes  )   \
-code( broker.calculon.dummyMM )
 
 #define SCREEN_PRESSME      \
         SCREEN_PRESSME_LIST \

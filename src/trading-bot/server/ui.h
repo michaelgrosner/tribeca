@@ -18,7 +18,7 @@ class UI: public Client { public: UI() { client = this; };
     void waitWebAdmin() {
       if (!socket) return;
       if (!socket->listen(
-        mREST::inet.empty() ? nullptr : mREST::inet.data(),
+        Curl::inet.empty() ? nullptr : Curl::inet.data(),
         K.option.num("port"),
         uS::TLS::Context(sslContext()),
         0,
@@ -26,22 +26,22 @@ class UI: public Client { public: UI() { client = this; };
       )) error("UI", "Unable to listen to UI port number " + K.option.str("port")
            + ", may be already in use by another program"
          );
-      K.screen.log("UI", "ready at", mText::strL(protocol) + "://" + wtfismyip + ":" + K.option.str("port"));
+      Print::log("UI", "ready at", Text::strL(protocol) + "://" + wtfismyip + ":" + K.option.str("port"));
       auto client = &socket->getDefaultGroup<uWS::SERVER>();
       client->onConnection([&](uWS::WebSocket<uWS::SERVER> *webSocket, uWS::HttpRequest req) {
         onConnection();
         const string addr = cleanAddress(webSocket->getAddress().address);
-        K.screen.log("UI", to_string(connections) + " client" + string(connections == 1 ? 0 : 1, 's')
-                            + " connected, last connection was from", addr);
+        Print::log("UI", to_string(connections) + " client" + string(connections == 1 ? 0 : 1, 's')
+                         + " connected, last connection was from", addr);
         if (connections > K.option.num("client-limit")) {
-          K.screen.log("UI", "--client-limit=" + K.option.str("client-limit") + " reached by", addr);
+          Print::log("UI", "--client-limit=" + K.option.str("client-limit") + " reached by", addr);
           webSocket->close();
         }
       });
       client->onDisconnection([&](uWS::WebSocket<uWS::SERVER> *webSocket, int code, char *message, size_t length) {
         onDisconnection();
-        K.screen.log("UI", to_string(connections) + " client" + string(connections == 1 ? 0 : 1, 's')
-                            + " connected, last disconnection was from", cleanAddress(webSocket->getAddress().address));
+        Print::log("UI", to_string(connections) + " client" + string(connections == 1 ? 0 : 1, 's')
+                         + " connected, last disconnection was from", cleanAddress(webSocket->getAddress().address));
       });
       client->onHttpRequest([&](uWS::HttpResponse *res, uWS::HttpRequest req, char *data, size_t length, size_t remainingBytes) {
         if (req.getMethod() != uWS::HttpMethod::METHOD_GET) return;
@@ -116,10 +116,10 @@ class UI: public Client { public: UI() { client = this; };
         SSL_CTX_set_options(context, SSL_OP_NO_SSLv3);
         if (K.option.str("ssl-crt").empty() or K.option.str("ssl-key").empty()) {
           if (!K.option.str("ssl-crt").empty())
-            K.screen.logWar("UI", "Ignored --ssl-crt because --ssl-key is missing");
+            Print::logWar("UI", "Ignored --ssl-crt because --ssl-key is missing");
           if (!K.option.str("ssl-key").empty())
-            K.screen.logWar("UI", "Ignored --ssl-key because --ssl-crt is missing");
-          K.screen.logWar("UI", "Connected web clients will enjoy unsecure SSL encryption..\n"
+            Print::logWar("UI", "Ignored --ssl-key because --ssl-crt is missing");
+          Print::logWar("UI", "Connected web clients will enjoy unsecure SSL encryption..\n"
             "(because the private key is visible in the source!) consider --ssl-crt and --ssl-key arguments");
           const char *cert = "-----BEGIN CERTIFICATE-----"                                      "\n"
                              "MIICATCCAWoCCQCiyDyPL5ov3zANBgkqhkiG9w0BAQsFADBFMQswCQYDVQQGEwJB" "\n"
@@ -156,14 +156,14 @@ class UI: public Client { public: UI() { client = this; };
           ) context = nullptr;
         } else {
           if (access(K.option.str("ssl-crt").data(), R_OK) == -1)
-            K.screen.logWar("UI", "Unable to read custom .crt file at " + K.option.str("ssl-crt"));
+            Print::logWar("UI", "Unable to read custom .crt file at " + K.option.str("ssl-crt"));
           if (access(K.option.str("ssl-key").data(), R_OK) == -1)
-            K.screen.logWar("UI", "Unable to read custom .key file at " + K.option.str("ssl-key"));
+            Print::logWar("UI", "Unable to read custom .key file at " + K.option.str("ssl-key"));
           if (SSL_CTX_use_certificate_chain_file(context, K.option.str("ssl-crt").data()) != 1
             or SSL_CTX_use_RSAPrivateKey_file(context, K.option.str("ssl-key").data(), SSL_FILETYPE_PEM) != 1
           ) {
             context = nullptr;
-            K.screen.logWar("UI", "Unable to encrypt web clients, will fallback to plain HTTP");
+            Print::logWar("UI", "Unable to encrypt web clients, will fallback to plain HTTP");
           }
         }
       }
@@ -188,14 +188,14 @@ class UI: public Client { public: UI() { client = this; };
       string document,
              content;
       if (addr != "unknown" and !K.option.str("whitelist").empty() and K.option.str("whitelist").find(addr) == string::npos) {
-        K.screen.log("UI", "dropping gzip bomb on", addr);
+        Print::log("UI", "dropping gzip bomb on", addr);
         document = "HTTP/1.1 200 OK\r\nConnection: keep-alive\r\nAccept-Ranges: bytes\r\nVary: Accept-Encoding\r\nCache-Control: public, max-age=0\r\nContent-Encoding: gzip\r\n";
         content = string(&_www_gzip_bomb, _www_gzip_bomb_len);
       } else if (!K.option.str("B64auth").empty() and auth.empty()) {
-        K.screen.log("UI", "authorization attempt from", addr);
+        Print::log("UI", "authorization attempt from", addr);
         document = "HTTP/1.1 401 Unauthorized\r\nWWW-Authenticate: Basic realm=\"Basic Authorization\"\r\nConnection: keep-alive\r\nAccept-Ranges: bytes\r\nVary: Accept-Encoding\r\nContent-Type:text/plain; charset=UTF-8\r\n";
       } else if (!K.option.str("B64auth").empty() and auth != K.option.str("B64auth")) {
-        K.screen.log("UI", "authorization failed from", addr);
+        Print::log("UI", "authorization failed from", addr);
         document = "HTTP/1.1 403 Forbidden\r\nConnection: keep-alive\r\nAccept-Ranges: bytes\r\nVary: Accept-Encoding\r\nContent-Type:text/plain; charset=UTF-8\r\n";
       } else {
         document = "HTTP/1.1 200 OK\r\nConnection: keep-alive\r\nAccept-Ranges: bytes\r\nVary: Accept-Encoding\r\nCache-Control: public, max-age=0\r\n";
@@ -203,10 +203,10 @@ class UI: public Client { public: UI() { client = this; };
         if (leaf == "/") {
           document += "Content-Type: text/html; charset=UTF-8\r\n";
           if (connections < K.option.num("client-limit")) {
-            K.screen.log("UI", "authorization success from", addr);
+            Print::log("UI", "authorization success from", addr);
             content = string(&_www_html_index, _www_html_index_len);
           } else {
-            K.screen.log("UI", "--client-limit=" + K.option.str("client-limit") + " reached by", addr);
+            Print::log("UI", "--client-limit=" + K.option.str("client-limit") + " reached by", addr);
             content = "Thank you! but our princess is already in this castle!<br/>Refresh the page anytime to retry.";
           }
         } else if (leaf == "js") {
@@ -231,7 +231,7 @@ class UI: public Client { public: UI() { client = this; };
             content = string(&_www_mp3_audio_1, _www_mp3_audio_1_len);
         }
         if (content.empty())
-          if (mRandom::int64() % 21) {
+          if (Random::int64() % 21) {
             document = "HTTP/1.1 404 Not Found\r\n";
             content = "Today, is a beautiful day.";
           } else { // Humans! go to any random url to check your luck

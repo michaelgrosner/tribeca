@@ -1,17 +1,18 @@
 #ifndef K_SH_H_
 #define K_SH_H_
 
-void TradingBot::display(WINDOW *const wLog, int &cursor) {
+void TradingBot::display() {
+  static int last_yMaxLog = 0;
   const vector<mOrder> openOrders = engine->orders.working(true);
   int y = getmaxy(stdscr),
       x = getmaxx(stdscr),
       yMaxLog = y - max((int)openOrders.size(), engine->broker.semaphore.paused() ? 0 : 2) - 1,
       yOrders = yMaxLog;
-  if (yMaxLog != cursor) {
-    if (yMaxLog < cursor) wscrl(wLog, cursor-yMaxLog);
-    wresize(wLog, yMaxLog-3, x-2-6);
-    if (yMaxLog > cursor) wscrl(wLog, cursor-yMaxLog);
-    cursor = yMaxLog;
+  if (yMaxLog != last_yMaxLog) {
+    if (yMaxLog < last_yMaxLog) wscrl(Print::stdlog, last_yMaxLog-yMaxLog);
+    wresize(Print::stdlog, yMaxLog-3, x-2-6);
+    if (yMaxLog > last_yMaxLog) wscrl(Print::stdlog, last_yMaxLog-yMaxLog);
+    last_yMaxLog = yMaxLog;
   }
   mvwvline(stdscr, 1, 1, ' ', y-1);
   mvwvline(stdscr, yMaxLog-1, 1, ' ', y-1);
@@ -20,9 +21,9 @@ void TradingBot::display(WINDOW *const wLog, int &cursor) {
     mvwhline(stdscr, ++yOrders, 1, ' ', x-1);
     wattron(stdscr, COLOR_PAIR(it.side == mSide::Bid ? COLOR_CYAN : COLOR_MAGENTA));
     mvwaddstr(stdscr, yOrders, 1, (((it.side == mSide::Bid ? "BID" : "ASK") + (" > "
-      + mText::str8(it.quantity))) + ' ' + gw->base + " at price "
-      + mText::str8(it.price) + ' ' + gw->quote + " (value "
-      + mText::str8(abs(it.price * it.quantity)) + ' ' + gw->quote + ")"
+      + Text::str8(it.quantity))) + ' ' + gw->base + " at price "
+      + Text::str8(it.price) + ' ' + gw->quote + " (value "
+      + Text::str8(abs(it.price * it.quantity)) + ' ' + gw->quote + ")"
     ).data());
     wattroff(stdscr, COLOR_PAIR(it.side == mSide::Bid ? COLOR_CYAN : COLOR_MAGENTA));
   }
@@ -37,7 +38,7 @@ void TradingBot::display(WINDOW *const wLog, int &cursor) {
   wattron(stdscr, COLOR_PAIR(COLOR_GREEN));
   string title1 = "   " + K.option.str("exchange");
   string title2 = " " + (K.option.num("port")
-    ? "UI at " + mText::strL(client->protocol) + "://" + client->wtfismyip + ":" + K.option.str("port")
+    ? "UI at " + Text::strL(client->protocol) + "://" + client->wtfismyip + ":" + K.option.str("port")
     : "headless"
   )  + ' ';
   wattron(stdscr, A_BOLD);
@@ -58,8 +59,8 @@ void TradingBot::display(WINDOW *const wLog, int &cursor) {
   mvwhline(stdscr, 1, 8, ACS_HLINE, 4);
   mvwaddch(stdscr, 1, 12, ACS_RTEE);
   wattron(stdscr, COLOR_PAIR(COLOR_MAGENTA));
-  const string baseValue  = mText::str8(engine->wallet.base.value),
-               quoteValue = mText::str8(engine->wallet.quote.value);
+  const string baseValue  = Text::str8(engine->wallet.base.value),
+               quoteValue = Text::str8(engine->wallet.quote.value);
   wattron(stdscr, A_BOLD);
   waddstr(stdscr, (" " + baseValue + ' ').data());
   wattroff(stdscr, A_BOLD);
@@ -134,7 +135,7 @@ void TradingBot::display(WINDOW *const wLog, int &cursor) {
     wattron(stdscr, COLOR_PAIR(COLOR_GREEN));
     waddstr(stdscr, (" 1 " + gw->base + " = ").data());
     wattron(stdscr, A_BOLD);
-    waddstr(stdscr, mText::str8(engine->levels.fairValue).data());
+    waddstr(stdscr, Text::str8(engine->levels.fairValue).data());
     wattroff(stdscr, A_BOLD);
     waddstr(stdscr, (" " + gw->quote).data());
     wattroff(stdscr, COLOR_PAIR(COLOR_GREEN));
@@ -144,7 +145,7 @@ void TradingBot::display(WINDOW *const wLog, int &cursor) {
   mvwaddstr(stdscr, 1, 2, string("|/-\\").substr(engine->monitor.orders_60s % 4, 1).data());
   move(yMaxLog-1, 2);
   wrefresh(stdscr);
-  wrefresh(wLog);
+  wrefresh(Print::stdlog);
 };
 
 #endif

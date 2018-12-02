@@ -58,11 +58,22 @@ namespace ฿ {
       static const string b(const int &color) {
           return colorful ? "\033[1;3" + to_string(color) + 'm' : "";
       };
+      static void default_colors() {
+        if (colorful) start_color();
+        use_default_colors();
+        init_pair(COLOR_WHITE,   COLOR_WHITE,   COLOR_BLACK);
+        init_pair(COLOR_GREEN,   COLOR_GREEN,   COLOR_BLACK);
+        init_pair(COLOR_RED,     COLOR_RED,     COLOR_BLACK);
+        init_pair(COLOR_YELLOW,  COLOR_YELLOW,  COLOR_BLACK);
+        init_pair(COLOR_BLUE,    COLOR_BLUE,    COLOR_BLACK);
+        init_pair(COLOR_MAGENTA, COLOR_MAGENTA, COLOR_BLACK);
+        init_pair(COLOR_CYAN,    COLOR_CYAN,    COLOR_BLACK);
+      };
   };
 
   int Ansi::colorful = 1;
 
-  string mREST::inet;
+  string Curl::inet;
 
   //! \brief     Call all endingFn once and print a last error log msg.
   //! \param[in] prefix Allows any string, if possible with a length of 2.
@@ -73,41 +84,18 @@ namespace ฿ {
     exit(prefix + Ansi::r(COLOR_RED) + " Errrror: " + Ansi::b(COLOR_RED) + reason, reboot);
   };
 
-  struct mToScreen {
-    function<void(const string&, const string&)> print
-#ifndef NDEBUG
-    = [](const string &prefix, const string &reason) { WARN("Y U NO catch screen print?"); }
-#endif
-    ;
-    function<void(const string&, const string&, const string&)> focus
-#ifndef NDEBUG
-    = [](const string &prefix, const string &reason, const string &highlight) { WARN("Y U NO catch screen focus?"); }
-#endif
-    ;
-    function<void(const string&, const string&)> warn
-#ifndef NDEBUG
-    = [](const string &prefix, const string &reason) { WARN("Y U NO catch screen warn?"); }
-#endif
-    ;
-    function<void()> display
-#ifndef NDEBUG
-    = []() { WARN("Y U NO catch screen display?"); }
-#endif
-    ;
-  };
-
   class Hotkey {
     private:
       future<char> hotkey;
       unordered_map<char, function<void()>> hotFn;
     public:
-      void keylogger() {
+      void legitKeylogger() {
         if (hotkey.valid())
           error("SH", string("Unable to launch another \"keylogger\" thread"));
         noecho();
         halfdelay(5);
         keypad(stdscr, true);
-        legitKeylogger();
+        keylogger();
       };
       void pressme(const char &ch, function<void()> fn) {
         if (!hotkey.valid()) return;
@@ -122,10 +110,10 @@ namespace ฿ {
         const char ch = hotkey.get();
         if (hotFn.find(ch) != hotFn.end())
           hotFn.at(ch)();
-        legitKeylogger();
+        keylogger();
       };
     private:
-      void legitKeylogger() {
+      void keylogger() {
         hotkey = ::async(launch::async, [&]() {
           int ch = ERR;
           while (ch == ERR and !hotFn.empty())
@@ -135,143 +123,22 @@ namespace ฿ {
       };
   };
 
-  class Screen {
+  class Print {
     public:
-      Hotkey hotkey;
-    private:
-      int cursor = 0;
-      WINDOW *wLog = nullptr;
-    public:
-      void (*display)(WINDOW *const, int&) = nullptr;
-      void switchOn(const int &naked) {
-        endingFn.insert(endingFn.begin(), [&]() {
-          switchOff();
-          clog << stamp();
-        });
-        gw->logger = [&](const string &prefix, const string &reason, const string &highlight) {
-          if (reason.find("Error") != string::npos)
-            logWar(prefix, reason);
-          else log(prefix, reason, highlight);
-        };
-        if (naked) display = nullptr;
-        else if (display) switchOn();
-      };
-      void printme(mToScreen *const data) {
-        data->print = [&](const string &prefix, const string &reason) {
-          log(prefix, reason);
-        };
-        data->focus = [&](const string &prefix, const string &reason, const string &highlight) {
-          log(prefix, reason, highlight);
-        };
-        data->warn = [&](const string &prefix, const string &reason) {
-          logWar(prefix, reason);
-        };
-        data->display = [&]() {
-          repaint();
-        };
-      };
-      void log(const string &prefix, const string &reason, const string &highlight = "") {
-        unsigned int color = 0;
-        if (reason.find("NG TRADE") != string::npos) {
-          if (reason.find("BUY") != string::npos)
-            color = 1;
-          else if (reason.find("SELL") != string::npos)
-            color = -1;
-        }
-        if (!display) {
-          cout << stamp() << prefix;
-          if (color == 1)       cout << Ansi::r(COLOR_CYAN);
-          else if (color == -1) cout << Ansi::r(COLOR_MAGENTA);
-          else                  cout << Ansi::r(COLOR_WHITE);
-          cout << ' ' << reason;
-          if (!highlight.empty())
-            cout << ' ' << Ansi::b(COLOR_YELLOW) << highlight;
-          cout << Ansi::r(COLOR_WHITE) << ".\n";
-          return;
-        }
-        wmove(wLog, getmaxy(wLog)-1, 0);
-        stamp();
-        wattron(wLog, COLOR_PAIR(COLOR_WHITE));
-        wattron(wLog, A_BOLD);
-        wprintw(wLog, prefix.data());
-        wattroff(wLog, A_BOLD);
-        if (color == 1)       wattron(wLog, COLOR_PAIR(COLOR_CYAN));
-        else if (color == -1) wattron(wLog, COLOR_PAIR(COLOR_MAGENTA));
-        wprintw(wLog, (" " + reason).data());
-        if (color == 1)       wattroff(wLog, COLOR_PAIR(COLOR_CYAN));
-        else if (color == -1) wattroff(wLog, COLOR_PAIR(COLOR_MAGENTA));
-        if (!highlight.empty()) {
-          wprintw(wLog, " ");
-          wattroff(wLog, COLOR_PAIR(COLOR_WHITE));
-          wattron(wLog, COLOR_PAIR(COLOR_YELLOW));
-          wprintw(wLog, highlight.data());
-          wattroff(wLog, COLOR_PAIR(COLOR_YELLOW));
-          wattron(wLog, COLOR_PAIR(COLOR_WHITE));
-        }
-        wprintw(wLog, ".\n");
-        wattroff(wLog, COLOR_PAIR(COLOR_WHITE));
-        wrefresh(wLog);
-      };
-      void logWar(const string &k, const string &s) {
-        if (!display) {
-          cout << stamp() << k << Ansi::r(COLOR_RED) << " Warrrrning: " << Ansi::b(COLOR_RED) << s << '.' << Ansi::r(COLOR_WHITE) << endl;
-          return;
-        }
-        wmove(wLog, getmaxy(wLog)-1, 0);
-        stamp();
-        wattron(wLog, COLOR_PAIR(COLOR_WHITE));
-        wattron(wLog, A_BOLD);
-        wprintw(wLog, k.data());
-        wattroff(wLog, COLOR_PAIR(COLOR_WHITE));
-        wattron(wLog, COLOR_PAIR(COLOR_RED));
-        wprintw(wLog, " Warrrrning: ");
-        wattroff(wLog, A_BOLD);
-        wprintw(wLog, s.data());
-        wprintw(wLog, ".");
-        wattroff(wLog, COLOR_PAIR(COLOR_RED));
-        wattron(wLog, COLOR_PAIR(COLOR_WHITE));
-        wprintw(wLog, "\n");
-        wattroff(wLog, COLOR_PAIR(COLOR_WHITE));
-        wrefresh(wLog);
-      };
-    private:
-      void repaint() {
-        if (display) display(wLog, cursor);
-      };
-      void switchOff() {
-        if (display) {
-          display = nullptr;
-          beep();
-          endwin();
-        }
-      };
-      void switchOn() {
-        if (!initscr())
-          error("SH",
-            "Unable to initialize ncurses, try to run in your terminal"
-              "\"export TERM=xterm\", or use --naked argument"
-          );
-        if (Ansi::colorful) start_color();
-        use_default_colors();
-        init_pair(COLOR_WHITE,   COLOR_WHITE,   COLOR_BLACK);
-        init_pair(COLOR_GREEN,   COLOR_GREEN,   COLOR_BLACK);
-        init_pair(COLOR_RED,     COLOR_RED,     COLOR_BLACK);
-        init_pair(COLOR_YELLOW,  COLOR_YELLOW,  COLOR_BLACK);
-        init_pair(COLOR_BLUE,    COLOR_BLUE,    COLOR_BLACK);
-        init_pair(COLOR_MAGENTA, COLOR_MAGENTA, COLOR_BLACK);
-        init_pair(COLOR_CYAN,    COLOR_CYAN,    COLOR_BLACK);
-        wLog = subwin(stdscr, getmaxy(stdscr)-4, getmaxx(stdscr)-2-6, 3, 2);
-        scrollok(wLog, true);
-        idlok(wLog, true);
-        signal(SIGWINCH, [](const int sig) {
-          endwin();
-          refresh();
-          clear();
-        });
+      static WINDOW *stdlog;
+      static void (*display)();
+      static void window() {
+        if (stdlog)
+          error("SH", "Unable to launch another \"stdlog\" window");
+        stdlog = subwin(stdscr, getmaxy(stdscr)-4, getmaxx(stdscr)-2-6, 3, 2);
+        scrollok(stdlog, true);
+        idlok(stdlog, true);
         repaint();
-        hotkey.keylogger();
       };
-      const string stamp() {
+      static void repaint() {
+        if (display) display();
+      };
+      static const string stamp() {
         chrono::system_clock::time_point clock = Tclock;
         chrono::system_clock::duration t = clock.time_since_epoch();
         t -= chrono::duration_cast<chrono::seconds>(t);
@@ -285,15 +152,125 @@ namespace ฿ {
         time_t tt = chrono::system_clock::to_time_t(clock);
         char datetime[15];
         strftime(datetime, 15, "%m/%d %T", localtime(&tt));
-        if (!display) return Ansi::b(COLOR_GREEN) + datetime + Ansi::r(COLOR_GREEN) + microtime.str() + Ansi::b(COLOR_WHITE) + ' ';
-        wattron(wLog, COLOR_PAIR(COLOR_GREEN));
-        wattron(wLog, A_BOLD);
-        wprintw(wLog, datetime);
-        wattroff(wLog, A_BOLD);
-        wprintw(wLog, microtime.str().data());
-        wattroff(wLog, COLOR_PAIR(COLOR_GREEN));
-        wprintw(wLog, " ");
+        if (!display) return Ansi::b(COLOR_GREEN) + datetime +
+                             Ansi::r(COLOR_GREEN) + microtime.str()+
+                             Ansi::b(COLOR_WHITE) + ' ';
+        wattron(stdlog, COLOR_PAIR(COLOR_GREEN));
+        wattron(stdlog, A_BOLD);
+        wprintw(stdlog, datetime);
+        wattroff(stdlog, A_BOLD);
+        wprintw(stdlog, microtime.str().data());
+        wattroff(stdlog, COLOR_PAIR(COLOR_GREEN));
+        wprintw(stdlog, " ");
         return "";
+      };
+      static void log(const string &prefix, const string &reason, const string &highlight = "") {
+        unsigned int color = 0;
+        if (reason.find("NG TRADE") != string::npos) {
+          if (reason.find("BUY") != string::npos)       color = 1;
+          else if (reason.find("SELL") != string::npos) color = -1;
+        }
+        if (!display) {
+          cout << stamp() << prefix;
+          if (color == 1)       cout << Ansi::r(COLOR_CYAN);
+          else if (color == -1) cout << Ansi::r(COLOR_MAGENTA);
+          else                  cout << Ansi::r(COLOR_WHITE);
+          cout << ' ' << reason;
+          if (!highlight.empty())
+            cout << ' ' << Ansi::b(COLOR_YELLOW) << highlight;
+          cout << Ansi::r(COLOR_WHITE) << ".\n";
+          return;
+        }
+        wmove(stdlog, getmaxy(stdlog)-1, 0);
+        stamp();
+        wattron(stdlog, COLOR_PAIR(COLOR_WHITE));
+        wattron(stdlog, A_BOLD);
+        wprintw(stdlog, prefix.data());
+        wattroff(stdlog, A_BOLD);
+        if (color == 1)       wattron(stdlog, COLOR_PAIR(COLOR_CYAN));
+        else if (color == -1) wattron(stdlog, COLOR_PAIR(COLOR_MAGENTA));
+        wprintw(stdlog, (" " + reason).data());
+        if (color == 1)       wattroff(stdlog, COLOR_PAIR(COLOR_CYAN));
+        else if (color == -1) wattroff(stdlog, COLOR_PAIR(COLOR_MAGENTA));
+        if (!highlight.empty()) {
+          wprintw(stdlog, " ");
+          wattroff(stdlog, COLOR_PAIR(COLOR_WHITE));
+          wattron(stdlog, COLOR_PAIR(COLOR_YELLOW));
+          wprintw(stdlog, highlight.data());
+          wattroff(stdlog, COLOR_PAIR(COLOR_YELLOW));
+          wattron(stdlog, COLOR_PAIR(COLOR_WHITE));
+        }
+        wprintw(stdlog, ".\n");
+        wattroff(stdlog, COLOR_PAIR(COLOR_WHITE));
+        wrefresh(stdlog);
+      };
+      static void logWar(const string &k, const string &s) {
+        if (!display) {
+          cout << stamp() << k << Ansi::r(COLOR_RED) << " Warrrrning: " << Ansi::b(COLOR_RED) << s << '.' << Ansi::r(COLOR_WHITE) << endl;
+          return;
+        }
+        wmove(stdlog, getmaxy(stdlog)-1, 0);
+        stamp();
+        wattron(stdlog, COLOR_PAIR(COLOR_WHITE));
+        wattron(stdlog, A_BOLD);
+        wprintw(stdlog, k.data());
+        wattroff(stdlog, COLOR_PAIR(COLOR_WHITE));
+        wattron(stdlog, COLOR_PAIR(COLOR_RED));
+        wprintw(stdlog, " Warrrrning: ");
+        wattroff(stdlog, A_BOLD);
+        wprintw(stdlog, s.data());
+        wprintw(stdlog, ".");
+        wattroff(stdlog, COLOR_PAIR(COLOR_RED));
+        wattron(stdlog, COLOR_PAIR(COLOR_WHITE));
+        wprintw(stdlog, "\n");
+        wattroff(stdlog, COLOR_PAIR(COLOR_WHITE));
+        wrefresh(stdlog);
+      };
+  };
+
+  void (*Print::display)() = nullptr;
+
+  WINDOW *Print::stdlog = nullptr;
+
+  class Screen {
+    public:
+      Hotkey hotkey;
+    public:
+      void switchOn(const int &naked) {
+        endingFn.insert(endingFn.begin(), [&]() {
+          switchOff();
+          clog << Print::stamp();
+        });
+        gw->logger = [&](const string &prefix, const string &reason, const string &highlight) {
+          if (reason.find("Error") != string::npos)
+            Print::logWar(prefix, reason);
+          else Print::log(prefix, reason, highlight);
+        };
+        if (naked) Print::display = nullptr;
+        else if (Print::display) switchOn();
+      };
+    private:
+      void switchOff() {
+        if (Print::display) {
+          Print::display = nullptr;
+          beep();
+          endwin();
+        }
+      };
+      void switchOn() {
+        if (!initscr())
+          error("SH",
+            "Unable to initialize ncurses, try to run in your terminal"
+              "\"export TERM=xterm\", or use --naked argument"
+          );
+        signal(SIGWINCH, [](const int sig) {
+          endwin();
+          refresh();
+          clear();
+        });
+        Ansi::default_colors();
+        Print::window();
+        hotkey.legitKeylogger();
       };
   };
 
@@ -321,7 +298,7 @@ namespace ฿ {
           ? optstr.at(name)
           : (optint.find(name) != optint.end()
               ? to_string(num(name))
-              : mText::str8(dec(name))
+              : Text::str8(dec(name))
           );
       };
       const int num(const string &name) const {
@@ -330,14 +307,14 @@ namespace ฿ {
       const double dec(const string &name) const {
         return optdec.at(name);
       };
-      void main(int argc, char** argv, const bool &naked) {
-        optint["naked"] = naked;
+      void main(int argc, char** argv) {
+        optint["naked"] = !Print::display;
         vector<Argument> long_options = {
           {"help",         "h",      0,        "show this help and quit"},
           {"version",      "v",      0,        "show current build version and quit"},
           {"latency",      "1",      0,        "check current HTTP latency (not from WS) and quit"}
         };
-        if (!naked)
+        if (Print::display)
           long_options.push_back(
             {"naked",        "1",      0,        "do not display CLI, print output to stdout instead"}
           );
@@ -418,7 +395,7 @@ namespace ฿ {
         tidy();
         gateway();
         curl_global_init(CURL_GLOBAL_ALL);
-        mREST::inet = str("interface");
+        Curl::inet = str("interface");
         Ansi::colorful = num("colors");
       };
     private:
@@ -427,8 +404,8 @@ namespace ฿ {
           error("CF", "Invalid --currency value; must be in the format of BASE/QUOTE, like BTC/EUR");
         if (optstr["exchange"].empty())
           error("CF", "Invalid --exchange value; the config file may have errors (there are extra spaces or double defined variables?)");
-        optstr["exchange"] = mText::strU(optstr["exchange"]);
-        optstr["currency"] = mText::strU(optstr["currency"]);
+        optstr["exchange"] = Text::strU(optstr["exchange"]);
+        optstr["currency"] = Text::strU(optstr["currency"]);
         optstr["base"]  = optstr["currency"].substr(0, optstr["currency"].find("/"));
         optstr["quote"] = optstr["currency"].substr(1+ optstr["currency"].find("/"));
         optint["market-limit"] = max(15, optint["market-limit"]);
@@ -532,7 +509,7 @@ namespace ฿ {
     protected:
       static const string changelog() {
         string mods;
-        const json diff = mREST::xfer("https://api.github.com/repos/ctubio/Krypto-trading-bot"
+        const json diff = Curl::xfer("https://api.github.com/repos/ctubio/Krypto-trading-bot"
                                       "/compare/" + string(K_0_GIT) + "...HEAD", 4L);
         if (diff.value("ahead_by", 0)
           and diff.find("commits") != diff.end()
@@ -578,7 +555,7 @@ namespace ฿ {
       static void die(const int sig) {
         if (epilogue.empty())
           epilogue = "Excellent decision! "
-                   + mREST::xfer("https://api.icndb.com/jokes/random?escape=javascript&limitTo=[nerdy]", 4L)
+                   + Curl::xfer("https://api.icndb.com/jokes/random?escape=javascript&limitTo=[nerdy]", 4L)
                        .value("/value/joke"_json_pointer, "let's plant a tree instead..");
         halt(
           epilogue.find("Errrror") == string::npos
@@ -635,7 +612,7 @@ namespace ฿ {
       Screen screen;
     public:
       KryptoNinja *const main(int argc, char** argv) {
-        option.main(argc, argv, !screen.display);
+        option.main(argc, argv);
         screen.switchOn(option.num("naked"));
         if (option.num("latency")) {
           gw->latency("HTTP read/write handshake", [&]() {

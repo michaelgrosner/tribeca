@@ -9,11 +9,11 @@ class DB: public Sqlite { public: DB() { sqlite = this; };
     void load() {
       if (sqlite3_open(K.option.str("database").data(), &db))
         error("DB", sqlite3_errmsg(db));
-      K.screen.log("DB", "loaded OK from", K.option.str("database"));
+      Print::log("DB", "loaded OK from", K.option.str("database"));
       if (K.option.str("diskdata").empty()) return;
       qpdb = "qpdb";
       exec("ATTACH '" + K.option.str("diskdata") + "' AS " + qpdb + ";");
-      K.screen.log("DB", "loaded OK from", K.option.str("diskdata"));
+      Print::log("DB", "loaded OK from", K.option.str("diskdata"));
     };
   public:
     void backup(mFromDb *const data) {
@@ -21,8 +21,8 @@ class DB: public Sqlite { public: DB() { sqlite = this; };
       const string msg = data->explanation(loaded);
       data->push = [this, data]() { insert(data); };
       if (msg.empty()) return;
-      if (loaded) K.screen.log("DB", msg);
-      else K.screen.logWar("DB", msg);
+      if (loaded) Print::log("DB", msg);
+      else Print::logWar("DB", msg);
     };
   private:
     json select(mFromDb *const data) {
@@ -73,10 +73,10 @@ class DB: public Sqlite { public: DB() { sqlite = this; };
         ? "DELETE FROM " + table + " WHERE time < " + to_string(Tstamp - lifetime) + ";"
         : "";
     };
-    void exec(const string &sql, json *const result = nullptr) {                // K.screen.log("DB DEBUG", sql);
+    void exec(const string &sql, json *const result = nullptr) {                // Print::log("DB DEBUG", sql);
       char* zErrMsg = 0;
       sqlite3_exec(db, sql.data(), result ? write : nullptr, (void*)result, &zErrMsg);
-      if (zErrMsg) K.screen.logWar("DB", "SQLite error: " + (zErrMsg + (" at " + sql)));
+      if (zErrMsg) Print::logWar("DB", "SQLite error: " + (zErrMsg + (" at " + sql)));
       sqlite3_free(zErrMsg);
     };
     static int write(void *result, int argc, char **argv, char **azColName) {

@@ -514,8 +514,7 @@ namespace ฿ {
       , isPong(       order ? order->isPong     : false   )
     {};
   };
-  struct mOrders: public mToScreen,
-                  public mJsonToClient<mOrders> {
+  struct mOrders: public mJsonToClient<mOrders> {
     mLastOrder updated;
     private:
       unordered_map<mRandId, mOrder> orders;
@@ -630,7 +629,7 @@ namespace ฿ {
         if (order->status == mStatus::Terminated)
           purge(order);
         send();
-        display();
+        Print::repaint();
       };
       const mMatter about() const {
         return mMatter::OrderStatusReports;
@@ -643,17 +642,17 @@ namespace ฿ {
       };
     private:
       void report(const mOrder *const order, const string &reason) const {
-        print("DEBUG OG", " " + reason + " " + (
+        Print::log("DEBUG OG", " " + reason + " " + (
           order
             ? order->orderId + "::" + order->exchangeId
               + " [" + to_string((int)order->status) + "]: "
-              + mText::str8(order->quantity) + " " + gw->base + " at price "
-              + mText::str8(order->price) + " " + gw->quote
+              + Text::str8(order->quantity) + " " + gw->base + " at price "
+              + Text::str8(order->price) + " " + gw->quote
             : "not found"
         ));
       };
       void report_size() const {
-        print("DEBUG OG", "memory " + to_string(orders.size()));
+        Print::log("DEBUG OG", "memory " + to_string(orders.size()));
       };
       const bool debug() const {
         return product.debug("orders");
@@ -695,8 +694,7 @@ namespace ฿ {
     j = k.trades;
   };
 
-  struct mFairLevelsPrice: public mToScreen,
-                           public mJsonToClient<mFairLevelsPrice> {
+  struct mFairLevelsPrice: public mJsonToClient<mFairLevelsPrice> {
     private_ref:
       const mPrice &fairValue;
     public:
@@ -712,8 +710,8 @@ namespace ฿ {
       const bool realtime() const {
         return !qp.delayUI;
       };
-      void send_display() {
-        if (send()) display();
+      void send_repaint() {
+        if (send()) Print::repaint();
       };
       const bool send_same_blob() const {
         return false;
@@ -850,8 +848,7 @@ namespace ฿ {
     };
   };
 
-  struct mEwma: public mToScreen,
-                public mStructFromDb<mEwma> {
+  struct mEwma: public mStructFromDb<mEwma> {
     mFairHistory fairValue96h;
           mPrice mgEwmaVL = 0,
                  mgEwmaL  = 0,
@@ -918,7 +915,7 @@ namespace ฿ {
         unsigned int x = 0;
         *mean = fairValue96h.front();
         while (n--) calc(mean, periods, fairValue96h.at(++x));
-        print("MG", "reloaded " + to_string(*mean) + " EWMA " + name);
+        Print::log("MG", "reloaded " + to_string(*mean) + " EWMA " + name);
       };
       void calcPositions() {
         calc(&mgEwmaVL, qp.veryLongEwmaPeriods,   fairValue);
@@ -1093,7 +1090,7 @@ namespace ฿ {
       {};
       const bool warn_empty() const {
         const bool err = empty();
-        if (err) stats.fairPrice.warn("QE", "Unable to calculate quote, missing market data");
+        if (err) Print::logWar("QE", "Unable to calculate quote, missing market data");
         return err;
       };
       void timer_1s() {
@@ -1124,7 +1121,7 @@ namespace ฿ {
         unfiltered.bids = raw.bids;
         unfiltered.asks = raw.asks;
         filter();
-        stats.fairPrice.send_display();
+        stats.fairPrice.send_repaint();
         diff.send_patch();
       };
     private:
@@ -1250,8 +1247,7 @@ namespace ฿ {
     };
   };
 
-  struct mTradesHistory: public mToScreen,
-                         public mVectorFromDb<mTrade>,
+  struct mTradesHistory: public mVectorFromDb<mTrade>,
                          public mJsonToClient<mTrade> {
     void clearAll() {
       clear_if([](iterator it) {
@@ -1290,11 +1286,11 @@ namespace ฿ {
         abs(order.price * order.tradeQuantity),
         0, 0, 0, 0, 0, fee, false
       );
-      print("GW " + gw->exchange, string(trade.isPong?"PONG":"PING") + " TRADE "
+      Print::log("GW " + gw->exchange, string(trade.isPong?"PONG":"PING") + " TRADE "
         + (trade.side == mSide::Bid ? "BUY  " : "SELL ")
-        + mText::str8(trade.quantity) + ' ' + gw->base + " at price "
-        + mText::str8(trade.price) + ' ' + gw->quote + " (value "
-        + mText::str8(trade.value) + ' ' + gw->quote + ")"
+        + Text::str8(trade.quantity) + ' ' + gw->base + " at price "
+        + Text::str8(trade.price) + ' ' + gw->quote + " (value "
+        + Text::str8(trade.value) + ' ' + gw->quote + ")"
       );
       if (qp.safety == mQuotingSafety::Off or qp.safety == mQuotingSafety::PingPong)
         send_push_back(trade);
@@ -1621,8 +1617,7 @@ namespace ฿ {
     };
   };
 
-  struct mTarget: public mToScreen,
-                  public mStructFromDb<mTarget>,
+  struct mTarget: public mStructFromDb<mTarget>,
                   public mJsonToClient<mTarget> {
     mAmount targetBasePosition = 0,
             positionDivergence = 0;
@@ -1652,7 +1647,7 @@ namespace ฿ {
       };
       const bool warn_empty() const {
         const bool err = empty();
-        if (err) warn("PG", "Unable to calculate TBP, missing wallet data");
+        if (err) Print::logWar("PG", "Unable to calculate TBP, missing wallet data");
         return err;
       };
       const bool empty() const {
@@ -1693,10 +1688,10 @@ namespace ฿ {
         positionDivergence = ROUND(positionDivergence, 1e-4);
       };
       void report() const {
-        print("PG", "TBP: "
-          + to_string((int)(targetBasePosition / baseValue * 1e+2)) + "% = " + mText::str8(targetBasePosition)
+        Print::log("PG", "TBP: "
+          + to_string((int)(targetBasePosition / baseValue * 1e+2)) + "% = " + Text::str8(targetBasePosition)
           + " " + gw->base + ", pDiv: "
-          + to_string((int)(positionDivergence / baseValue * 1e+2)) + "% = " + mText::str8(positionDivergence)
+          + to_string((int)(positionDivergence / baseValue * 1e+2)) + "% = " + Text::str8(positionDivergence)
           + " " + gw->base);
       };
       const bool debug() const {
@@ -1872,8 +1867,7 @@ namespace ฿ {
     mButtonCleanTrade           cleanTrade;
   };
 
-  struct mSemaphore: public mToScreen,
-                     public mJsonToClient<mSemaphore> {
+  struct mSemaphore: public mJsonToClient<mSemaphore> {
     mConnectivity greenButton  = mConnectivity::Disconnected,
                   greenGateway = mConnectivity::Disconnected;
     private:
@@ -1914,11 +1908,11 @@ namespace ฿ {
         );
         if (greenButton != k) {
           greenButton = k;
-          focus("GW " + gw->exchange, "Quoting state changed to",
+          Print::log("GW " + gw->exchange, "Quoting state changed to",
             string(paused() ? "DIS" : "") + "CONNECTED");
         }
         send();
-        display();
+        Print::repaint();
       };
   };
   static void to_json(json &j, const mSemaphore &k) {
@@ -1969,7 +1963,7 @@ namespace ฿ {
       return price > lower;
     };
   };
-  struct mQuotes: public mToScreen {
+  struct mQuotes {
     mQuoteBid bid;
     mQuoteAsk ask;
          bool superSpread = false;
@@ -1982,15 +1976,15 @@ namespace ฿ {
       void checkCrossedQuotes() {
         if ((unsigned int)bid.checkCrossed(ask)
           | (unsigned int)ask.checkCrossed(bid)
-        ) warn("QE", "Crossed bid/ask quotes detected, that is.. unexpected");
+        ) Print::logWar("QE", "Crossed bid/ask quotes detected, that is.. unexpected");
       };
       void debug(const string &reason) {
         if (debug())
-          print("DEBUG QE", reason);
+          Print::log("DEBUG QE", reason);
       };
       void debuq(const string &step) {
         if (debug())
-          print("DEBUG QE", "[" + step + "] "
+          Print::log("DEBUG QE", "[" + step + "] "
             + to_string((int)bid.state) + ":"
             + to_string((int)ask.state) + " "
             + ((json)*this).dump()
@@ -2008,7 +2002,7 @@ namespace ฿ {
     };
   };
 
-  struct mDummyMarketMaker: public mToScreen {
+  struct mDummyMarketMaker {
     private:
       void (*calcRawQuotesFromMarket)(
         const mMarketLevels&,
@@ -2052,7 +2046,7 @@ namespace ฿ {
         if (quotes.bid.price <= 0 or quotes.ask.price <= 0) {
           quotes.bid.clear(mQuoteState::WidthMustBeSmaller);
           quotes.ask.clear(mQuoteState::WidthMustBeSmaller);
-          warn("QP", "Negative price detected, widthPing must be smaller");
+          Print::logWar("QP", "Negative price detected, widthPing must be smaller");
         }
       };
     private:
@@ -2622,7 +2616,7 @@ namespace ฿ {
   static void to_json(json &j, const mMonitor &k) {
     j = {
       {     "a", *k.unlock   },
-      {  "inet", mREST::inet },
+      {  "inet", Curl::inet  },
       {  "freq", k.orders_60s},
       { "theme", k.theme()   },
       {"memory", k.memSize() },

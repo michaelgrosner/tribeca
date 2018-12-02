@@ -23,6 +23,7 @@ namespace ฿ {
   }
 
   SCENARIO("BTC/EUR") {
+    Print::display = nullptr;
     GIVEN("mLevel") {
       mLevel level;
       WHEN("defaults") {
@@ -121,9 +122,6 @@ namespace ฿ {
           REQUIRE_NOTHROW(levels.stats.fairPrice.mToClient::send = [&]() {
             REQUIRE(levels.stats.fairPrice.blob().dump() == "{\"price\":0.0}");
           });
-          REQUIRE_NOTHROW(levels.stats.fairPrice.mToScreen::display = []() {
-            INFO("display()");
-          });
           REQUIRE_FALSE(levels.ready());
           REQUIRE_FALSE(levels.fairValue);
         }
@@ -135,21 +133,18 @@ namespace ฿ {
         REQUIRE_NOTHROW(levels.stats.fairPrice.mToClient::send = [&]() {
           REQUIRE(levels.stats.fairPrice.blob().dump() == "{\"price\":1234.55}");
         });
-        REQUIRE_NOTHROW(levels.stats.fairPrice.mToScreen::display = []() {
-          INFO("display()");
-        });
         REQUIRE_NOTHROW(qp.fvModel = mFairValueModel::BBO);
         vector<mRandId> randIds;
-        REQUIRE_NOTHROW(randIds.push_back(mRandom::uuid36Id()));
+        REQUIRE_NOTHROW(randIds.push_back(Random::uuid36Id()));
         REQUIRE_NOTHROW(orders.upsert(mOrder(randIds.back(), mSide::Bid, 1234.52, 0.34567890, false)));
         REQUIRE_NOTHROW(orders.upsert(mOrder(randIds.back(), "", mStatus::Working, 0, 0, 0)));
-        REQUIRE_NOTHROW(randIds.push_back(mRandom::uuid36Id()));
+        REQUIRE_NOTHROW(randIds.push_back(Random::uuid36Id()));
         REQUIRE_NOTHROW(orders.upsert(mOrder(randIds.back(), mSide::Bid, 1234.52, 0.23456789, false)));
         REQUIRE_NOTHROW(orders.upsert(mOrder(randIds.back(), "", mStatus::Working, 0, 0, 0)));
-        REQUIRE_NOTHROW(randIds.push_back(mRandom::uuid36Id()));
+        REQUIRE_NOTHROW(randIds.push_back(Random::uuid36Id()));
         REQUIRE_NOTHROW(orders.upsert(mOrder(randIds.back(), mSide::Bid, 1234.55, 0.01234567, false)));
         REQUIRE_NOTHROW(orders.upsert(mOrder(randIds.back(), "", mStatus::Working, 0, 0, 0)));
-        REQUIRE_NOTHROW(randIds.push_back(mRandom::uuid36Id()));
+        REQUIRE_NOTHROW(randIds.push_back(Random::uuid36Id()));
         REQUIRE_NOTHROW(orders.upsert(mOrder(randIds.back(), mSide::Ask, 1234.69, 0.01234568, false)));
         REQUIRE_NOTHROW(orders.upsert(mOrder(randIds.back(), "", mStatus::Working, 0, 0, 0)));
         REQUIRE_NOTHROW(levels.read_from_gw(mLevels(
@@ -179,9 +174,6 @@ namespace ฿ {
         THEN("fair value") {
           REQUIRE_NOTHROW(levels.stats.fairPrice.mToClient::send = []() {
             FAIL("send() while filtering");
-          });
-          REQUIRE_NOTHROW(levels.stats.fairPrice.mToScreen::display = []() {
-            FAIL("display() while filtering");
           });
           REQUIRE(levels.ready());
           REQUIRE(levels.fairValue == 1234.55);
@@ -310,9 +302,6 @@ namespace ฿ {
       WHEN("assigned") {
         vector<mPrice> fairHistory = { 268.05, 258.73, 239.82, 250.21, 224.49, 242.53, 248.25, 270.58, 252.77, 273.55,
                                        255.90, 226.10, 225.00, 263.12, 218.36, 254.73, 218.65, 252.40, 296.10, 222.20 };
-        REQUIRE_NOTHROW(ewma.mToScreen::print = [&](const string &prefix, const string &reason) {
-          INFO("print()");
-        });
         REQUIRE_NOTHROW(ewma.fairValue96h.mFromDb::push = ewma.mFromDb::push = [&]() {
           INFO("push()");
         });
@@ -369,34 +358,31 @@ namespace ฿ {
       WHEN("assigned") {
         vector<mRandId> randIds;
         mClock time = Tstamp;
-        REQUIRE_NOTHROW(randIds.push_back(mRandom::uuid36Id()));
+        REQUIRE_NOTHROW(randIds.push_back(Random::uuid36Id()));
         REQUIRE_NOTHROW(orders.upsert(mOrder(randIds.back(), mSide::Bid, 1234.50, 0.12345678, false)));
         REQUIRE_NOTHROW(orders.upsert(mOrder(randIds.back(), "", mStatus::Working, 0, 0, 0)));
         REQUIRE_NOTHROW(orders.find(randIds.back())->time = time);
-        REQUIRE_NOTHROW(randIds.push_back(mRandom::uuid36Id()));
+        REQUIRE_NOTHROW(randIds.push_back(Random::uuid36Id()));
         REQUIRE_NOTHROW(orders.upsert(mOrder(randIds.back(), mSide::Bid, 1234.51, 0.12345679, false)));
         REQUIRE_NOTHROW(orders.upsert(mOrder(randIds.back(), "", mStatus::Working, 0, 0, 0)));
         REQUIRE_NOTHROW(orders.find(randIds.back())->time = time);
-        REQUIRE_NOTHROW(randIds.push_back(mRandom::uuid36Id()));
+        REQUIRE_NOTHROW(randIds.push_back(Random::uuid36Id()));
         REQUIRE_NOTHROW(orders.upsert(mOrder(randIds.back(), mSide::Bid, 1234.52, 0.12345680, false)));
         REQUIRE_NOTHROW(orders.upsert(mOrder(randIds.back(), "", mStatus::Working, 0, 0, 0)));
         REQUIRE_NOTHROW(orders.find(randIds.back())->time = time);
-        REQUIRE_NOTHROW(randIds.push_back(mRandom::uuid36Id()));
+        REQUIRE_NOTHROW(randIds.push_back(Random::uuid36Id()));
         REQUIRE_NOTHROW(orders.upsert(mOrder(randIds.back(), mSide::Ask, 1234.50, 0.12345678, false)));
         REQUIRE_NOTHROW(orders.upsert(mOrder(randIds.back(), "", mStatus::Working, 0, 0, 0)));
         REQUIRE_NOTHROW(orders.find(randIds.back())->time = time);
-        REQUIRE_NOTHROW(randIds.push_back(mRandom::uuid36Id()));
+        REQUIRE_NOTHROW(randIds.push_back(Random::uuid36Id()));
         REQUIRE_NOTHROW(orders.upsert(mOrder(randIds.back(), mSide::Ask, 1234.51, 0.12345679, false)));
         REQUIRE_NOTHROW(orders.upsert(mOrder(randIds.back(), "", mStatus::Working, 0, 0, 0)));
         REQUIRE_NOTHROW(orders.find(randIds.back())->time = time);
-        REQUIRE_NOTHROW(randIds.push_back(mRandom::uuid36Id()));
+        REQUIRE_NOTHROW(randIds.push_back(Random::uuid36Id()));
         REQUIRE_NOTHROW(orders.upsert(mOrder(randIds.back(), mSide::Ask, 1234.52, 0.12345680, false)));
         THEN("held amount") {
           REQUIRE_NOTHROW(wallet.profits.mFromDb::push = [&]() {
             INFO("push()");
-          });
-          REQUIRE_NOTHROW(wallet.target.mToScreen::warn = [&](const string &prefix, const string &reason) {
-            INFO("warn()");
           });
           bool askForFees = false;
           mLastOrder order;
