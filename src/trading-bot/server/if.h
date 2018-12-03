@@ -106,11 +106,11 @@ code( levels.stats.ewma.fairValue96h ) \
 code( levels.stats.ewma              ) \
 code( levels.stats.stdev             )
 
-#define SCREEN_PRESSME      \
-        SCREEN_PRESSME_LIST \
-      ( SCREEN_PRESSME_CODE )
-#define SCREEN_PRESSME_CODE(key, fn)   Hotkey::pressme(key, [&]() { fn(); });
-#define SCREEN_PRESSME_LIST(code)      \
+#define HOTKEYS      \
+        HOTKEYS_LIST \
+      ( HOTKEYS_CODE )
+#define HOTKEYS_CODE(key, fn)          K.hotkey(key, [&]() { fn(); });
+#define HOTKEYS_LIST(code)             \
 code( 'Q'  , exit                    ) \
 code( 'q'  , exit                    ) \
 code( '\e' , broker.semaphore.toggle )

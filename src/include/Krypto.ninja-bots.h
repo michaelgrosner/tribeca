@@ -54,24 +54,16 @@ namespace ฿ {
 
   class Hotkey {
     private:
-      static future<char> keylogger;
-      static unordered_map<char, function<void()>> hotFn;
+      future<char> keylogger;
+      unordered_map<char, function<void()>> hotFn;
     public:
-      static void legitKeylogger() {
-        if (keylogger.valid())
-          error("SH", string("Unable to launch another \"keylogger\" thread"));
-        noecho();
-        halfdelay(5);
-        keypad(stdscr, true);
-        launch_keylogger();
-      };
-      static void pressme(const char &ch, function<void()> fn) {
+      void hotkey(const char &ch, function<void()> fn) {
         if (!keylogger.valid()) return;
         if (hotFn.find(ch) != hotFn.end())
-          error("SH", string("Too many handlers for \"") + ch + "\" pressme event");
+          error("SH", string("Too many handlers for \"") + ch + "\" hotkey event");
         hotFn[ch] = fn;
       };
-      static void waitForKeystroke() {
+      void wait_for_hotkey() {
         if (!keylogger.valid()
           or keylogger.wait_for(chrono::nanoseconds(0)) != future_status::ready
         ) return;
@@ -80,8 +72,17 @@ namespace ฿ {
           hotFn.at(ch)();
         launch_keylogger();
       };
+    protected:
+      void legit_keylogger() {
+        if (keylogger.valid())
+          error("SH", string("Unable to launch another \"keylogger\" thread"));
+        noecho();
+        halfdelay(5);
+        keypad(stdscr, true);
+        launch_keylogger();
+      };
     private:
-      static void launch_keylogger() {
+      void launch_keylogger() {
         keylogger = ::async(launch::async, [&]() {
           int ch = ERR;
           while (ch == ERR and !hotFn.empty())
@@ -91,20 +92,27 @@ namespace ฿ {
       };
   };
 
-  future<char> Hotkey::keylogger;
-
-  unordered_map<char, function<void()>> Hotkey::hotFn;
-
   class Print {
     public:
       static WINDOW *stdlog;
       static void (*display)();
       static void window() {
         if (stdlog)
-          error("SH", "Unable to launch another \"stdlog\" window");
+          error("SH", "Unable to launch another window");
+        if (!initscr())
+          error("SH",
+            "Unable to initialize ncurses, try to run in your terminal"
+              "\"export TERM=xterm\", or use --naked argument"
+          );
+        Ansi::default_colors();
         stdlog = subwin(stdscr, getmaxy(stdscr)-4, getmaxx(stdscr)-2-6, 3, 2);
         scrollok(stdlog, true);
         idlok(stdlog, true);
+        signal(SIGWINCH, [](const int sig) {
+          endwin();
+          refresh();
+          clear();
+        });
         repaint();
       };
       static void repaint() {
@@ -207,6 +215,164 @@ namespace ฿ {
   void (*Print::display)() = nullptr;
 
   WINDOW *Print::stdlog = nullptr;
+
+  vector<function<void()>> happyEndingFn, endingFn = { []() {
+    if (Print::display) {
+      Print::display = nullptr;
+      beep();
+      endwin();
+    }
+    clog << Print::stamp()
+         << epilogue
+         << string(epilogue.empty() ? 0 : 1, '\n');
+  } };
+
+  const mClock rollout = Tstamp;
+
+  class Rollout {
+    public:
+      Rollout(/* KMxTWEpb9ig */) {
+        clog << Ansi::b(COLOR_GREEN) << K_SOURCE
+             << Ansi::r(COLOR_GREEN) << ' ' << K_BUILD << ' ' << K_STAMP << ".\n";
+        const string mods = changelog();
+        const int commits = count(mods.begin(), mods.end(), '\n');
+        clog << Ansi::b(COLOR_GREEN) << K_0_DAY << Ansi::r(COLOR_GREEN) << ' '
+             << (commits
+                 ? '-' + to_string(commits) + "commit"
+                   + string(commits == 1 ? 0 : 1, 's') + '.'
+                 : "(0day)"
+                )
+#ifndef NDEBUG
+            << " with DEBUG MODE enabled"
+#endif
+            << ".\n" << Ansi::r(COLOR_YELLOW) << mods << Ansi::reset();
+      };
+    protected:
+      static const string changelog() {
+        string mods;
+        const json diff = Curl::xfer("https://api.github.com/repos/ctubio/Krypto-trading-bot"
+                                      "/compare/" + string(K_0_GIT) + "...HEAD", 4L);
+        if (diff.value("ahead_by", 0)
+          and diff.find("commits") != diff.end()
+          and diff.at("commits").is_array()
+        ) for (const json &it : diff.at("commits"))
+          mods += it.value("/commit/author/date"_json_pointer, "").substr(0, 10) + " "
+                + it.value("/commit/author/date"_json_pointer, "").substr(11, 8)
+                + " (" + it.value("sha", "").substr(0, 7) + ") "
+                + it.value("/commit/message"_json_pointer, "").substr(0,
+                  it.value("/commit/message"_json_pointer, "").find("\n\n") + 1
+                );
+        return mods;
+      };
+  };
+
+  class Ending: public Rollout {
+    public:
+      Ending() {
+        signal(SIGINT, [](const int sig) {
+          clog << '\n';
+          raise(SIGQUIT);
+        });
+        signal(SIGQUIT, die);
+        signal(SIGTERM, err);
+        signal(SIGABRT, wtf);
+        signal(SIGSEGV, wtf);
+#ifndef _WIN32
+        signal(SIGUSR1, wtf);
+#endif
+      };
+    private:
+      static void halt(const int code) {
+        endingFn.swap(happyEndingFn);
+        for (function<void()> &it : happyEndingFn) it();
+        Ansi::colorful = 1;
+        clog << Ansi::b(COLOR_GREEN) << 'K'
+             << Ansi::r(COLOR_GREEN) << " exit code "
+             << Ansi::b(COLOR_GREEN) << code
+             << Ansi::r(COLOR_GREEN) << '.'
+             << Ansi::reset() << '\n';
+        EXIT(code);
+      };
+      static void die(const int sig) {
+        if (epilogue.empty())
+          epilogue = "Excellent decision! "
+                   + Curl::xfer("https://api.icndb.com/jokes/random?escape=javascript&limitTo=[nerdy]", 4L)
+                       .value("/value/joke"_json_pointer, "let's plant a tree instead..");
+        halt(
+          epilogue.find("Errrror") == string::npos
+            ? EXIT_SUCCESS
+            : EXIT_FAILURE
+        );
+      };
+      static void err(const int sig) {
+        if (epilogue.empty()) epilogue = "Unknown error, no joke.";
+        halt(EXIT_FAILURE);
+      };
+      static void wtf(const int sig) {
+        epilogue = Ansi::r(COLOR_CYAN) + "Errrror: " + strsignal(sig) + ' ';
+        const string mods = changelog();
+        if (mods.empty()) {
+          epilogue += "(Three-Headed Monkey found):\n";
+          if (gw)
+            epilogue += "- exchange: " + gw->exchange              + '\n'
+                      + "- currency: " + (gw->symbol.empty()
+                                           ? gw->base + " .. " + gw->quote
+                                           : gw->symbol)           + '\n';
+          epilogue += "- lastbeat: " + to_string(Tstamp - rollout) + '\n'
+                    + "- binbuild: " + string(K_SOURCE)            + ' '
+                                     + string(K_BUILD)             + '\n'
+#ifndef _WIN32
+            + "- tracelog: " + '\n';
+          void *k[69];
+          size_t jumps = backtrace(k, 69);
+          char **trace = backtrace_symbols(k, jumps);
+          for (size_t i = 0; i < jumps; i++)
+            epilogue += string(trace[i]) + '\n';
+          free(trace)
+#endif
+          ;
+          epilogue += '\n' + Ansi::b(COLOR_RED) + "Yikes!" + Ansi::r(COLOR_RED)
+            + '\n' + "please copy and paste the error above into a new github issue (noworry for duplicates)."
+            + '\n' + "If you agree, go to https://github.com/ctubio/Krypto-trading-bot/issues/new"
+            + '\n' + '\n';
+        } else
+          epilogue += string("(deprecated K version found).") + '\n'
+            + '\n' + Ansi::b(COLOR_YELLOW) + "Hint!" + Ansi::r(COLOR_YELLOW)
+            + '\n' + "please upgrade to the latest commit; the encountered error may be already fixed at:"
+            + '\n' + mods
+            + '\n' + "If you agree, consider to run \"make latest\" prior further executions."
+            + '\n' + '\n';
+        halt(EXIT_FAILURE);
+      };
+  };
+
+  //! \brief Placeholder to avoid spaghetti codes.
+  //! - Walks through minimal runtime steps when wait() is called.
+  //! - Adds end() into endingFn to be called on exit().
+  //! - Connects to gateway when ready.
+  class Klass {
+    protected:
+      virtual void load        ()    {};
+      virtual void waitData    ()   {};
+      virtual void waitWebAdmin()  {};
+      virtual void waitSysAdmin(){};
+      virtual void waitTime    ()  {};
+      virtual void run         ()   {};
+      virtual void end         ()   {};
+    public:
+      void wait() {
+        load();
+        waitData();
+        waitWebAdmin();
+        waitSysAdmin();
+        waitTime();
+        endingFn.push_back([&]() {
+          end();
+        });
+        run();
+        if (gw->ready()) gw->run();
+      };
+  };
 
   struct Argument {
    const string  name;
@@ -421,172 +587,18 @@ namespace ฿ {
       };
   };
 
-  const mClock rollout = Tstamp;
-
-  class Rollout {
+  class KryptoNinja: public Klass,
+                     public Ending,
+                     public Hotkey {
     public:
-      Rollout(/* KMxTWEpb9ig */) {
-        clog << Ansi::b(COLOR_GREEN) << K_SOURCE
-             << Ansi::r(COLOR_GREEN) << ' ' << K_BUILD << ' ' << K_STAMP << ".\n";
-        const string mods = changelog();
-        const int commits = count(mods.begin(), mods.end(), '\n');
-        clog << Ansi::b(COLOR_GREEN) << K_0_DAY << Ansi::r(COLOR_GREEN) << ' '
-             << (commits
-                 ? '-' + to_string(commits) + "commit"
-                   + string(commits == 1 ? 0 : 1, 's') + '.'
-                 : "(0day)"
-                )
-#ifndef NDEBUG
-            << " with DEBUG MODE enabled"
-#endif
-            << ".\n" << Ansi::r(COLOR_YELLOW) << mods << Ansi::reset();
-      };
-    protected:
-      static const string changelog() {
-        string mods;
-        const json diff = Curl::xfer("https://api.github.com/repos/ctubio/Krypto-trading-bot"
-                                      "/compare/" + string(K_0_GIT) + "...HEAD", 4L);
-        if (diff.value("ahead_by", 0)
-          and diff.find("commits") != diff.end()
-          and diff.at("commits").is_array()
-        ) for (const json &it : diff.at("commits"))
-          mods += it.value("/commit/author/date"_json_pointer, "").substr(0, 10) + " "
-                + it.value("/commit/author/date"_json_pointer, "").substr(11, 8)
-                + " (" + it.value("sha", "").substr(0, 7) + ") "
-                + it.value("/commit/message"_json_pointer, "").substr(0,
-                  it.value("/commit/message"_json_pointer, "").find("\n\n") + 1
-                );
-        return mods;
-      };
-  };
-
-  vector<function<void()>> happyEndingFn, endingFn = { []() {
-    if (Print::display) {
-      Print::display = nullptr;
-      beep();
-      endwin();
-    }
-    clog << Print::stamp()
-         << epilogue
-         << string(epilogue.empty() ? 0 : 1, '\n');
-  } };
-
-  class Ending: public Rollout {
-    public:
-      Ending() {
-        signal(SIGINT, [](const int sig) {
-          clog << '\n';
-          raise(SIGQUIT);
-        });
-        signal(SIGQUIT, die);
-        signal(SIGTERM, err);
-        signal(SIGABRT, wtf);
-        signal(SIGSEGV, wtf);
-#ifndef _WIN32
-        signal(SIGUSR1, wtf);
-#endif
-      };
-    private:
-      static void halt(const int code) {
-        endingFn.swap(happyEndingFn);
-        for (function<void()> &it : happyEndingFn) it();
-        Ansi::colorful = 1;
-        clog << Ansi::b(COLOR_GREEN) << 'K'
-             << Ansi::r(COLOR_GREEN) << " exit code "
-             << Ansi::b(COLOR_GREEN) << code
-             << Ansi::r(COLOR_GREEN) << '.'
-             << Ansi::reset() << '\n';
-        EXIT(code);
-      };
-      static void die(const int sig) {
-        if (epilogue.empty())
-          epilogue = "Excellent decision! "
-                   + Curl::xfer("https://api.icndb.com/jokes/random?escape=javascript&limitTo=[nerdy]", 4L)
-                       .value("/value/joke"_json_pointer, "let's plant a tree instead..");
-        halt(
-          epilogue.find("Errrror") == string::npos
-            ? EXIT_SUCCESS
-            : EXIT_FAILURE
-        );
-      };
-      static void err(const int sig) {
-        if (epilogue.empty()) epilogue = "Unknown error, no joke.";
-        halt(EXIT_FAILURE);
-      };
-      static void wtf(const int sig) {
-        epilogue = Ansi::r(COLOR_CYAN) + "Errrror: " + strsignal(sig) + ' ';
-        const string mods = changelog();
-        if (mods.empty()) {
-          epilogue += "(Three-Headed Monkey found):\n";
-          if (gw)
-            epilogue += "- exchange: " + gw->exchange              + '\n'
-                      + "- currency: " + (gw->symbol.empty()
-                                           ? gw->base + " .. " + gw->quote
-                                           : gw->symbol)           + '\n';
-          epilogue += "- lastbeat: " + to_string(Tstamp - rollout) + '\n'
-                    + "- binbuild: " + string(K_SOURCE)            + ' '
-                                     + string(K_BUILD)             + '\n'
-#ifndef _WIN32
-            + "- tracelog: " + '\n';
-          void *k[69];
-          size_t jumps = backtrace(k, 69);
-          char **trace = backtrace_symbols(k, jumps);
-          for (size_t i = 0; i < jumps; i++)
-            epilogue += string(trace[i]) + '\n';
-          free(trace)
-#endif
-          ;
-          epilogue += '\n' + Ansi::b(COLOR_RED) + "Yikes!" + Ansi::r(COLOR_RED)
-            + '\n' + "please copy and paste the error above into a new github issue (noworry for duplicates)."
-            + '\n' + "If you agree, go to https://github.com/ctubio/Krypto-trading-bot/issues/new"
-            + '\n' + '\n';
-        } else
-          epilogue += string("(deprecated K version found).") + '\n'
-            + '\n' + Ansi::b(COLOR_YELLOW) + "Hint!" + Ansi::r(COLOR_YELLOW)
-            + '\n' + "please upgrade to the latest commit; the encountered error may be already fixed at:"
-            + '\n' + mods
-            + '\n' + "If you agree, consider to run \"make latest\" prior further executions."
-            + '\n' + '\n';
-        halt(EXIT_FAILURE);
-      };
-  };
-
-  //! \brief Placeholder to avoid spaghetti codes.
-  //! - Walks through minimal runtime steps when wait() is called.
-  //! - Adds end() into endingFn to be called on exit().
-  //! - Connects to gateway when ready.
-  class Klass {
-    protected:
-      virtual void load        ()    {};
-      virtual void waitData    ()   {};
-      virtual void waitWebAdmin()  {};
-      virtual void waitSysAdmin(){};
-      virtual void waitTime    ()  {};
-      virtual void run         ()   {};
-      virtual void end         ()   {};
-    public:
-      void wait() {
-        load();
-        waitData();
-        waitWebAdmin();
-        waitSysAdmin();
-        waitTime();
-        endingFn.push_back([&]() {
-          end();
-        });
-        run();
-        if (gw->ready()) gw->run();
-      };
-  };
-
-  class KryptoNinja: public Klass {
-    public:
-      Ending ending;
       Option option;
     public:
       KryptoNinja *const main(int argc, char** argv) {
         option.main(argc, argv);
-        if (Print::display) switchOn();
+        if (Print::display) {
+          Print::window();
+          legit_keylogger();
+        }
         gw->logger = [&](const string &prefix, const string &reason, const string &highlight) {
           if (reason.find("Error") != string::npos)
             Print::logWar(prefix, reason);
@@ -616,22 +628,6 @@ namespace ฿ {
             + " for symbol \"" + gw->symbol + "\", possible error message: "
             + reply.dump());
         gw->info(notes);
-      };
-    private:
-      void switchOn() {
-        if (!initscr())
-          error("SH",
-            "Unable to initialize ncurses, try to run in your terminal"
-              "\"export TERM=xterm\", or use --naked argument"
-          );
-        signal(SIGWINCH, [](const int sig) {
-          endwin();
-          refresh();
-          clear();
-        });
-        Ansi::default_colors();
-        Print::window();
-        Hotkey::legitKeylogger();
       };
   };
 }

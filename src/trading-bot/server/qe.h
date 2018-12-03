@@ -39,7 +39,7 @@ class QE: public Engine { public: QE() { engine = this; };
       CLIENT_CLICKME
     };
     void waitSysAdmin() {
-      SCREEN_PRESSME
+      HOTKEYS
     };
     void run() {
       K.handshake({
