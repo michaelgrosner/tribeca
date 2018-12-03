@@ -710,9 +710,6 @@ namespace ฿ {
       const bool realtime() const {
         return !qp.delayUI;
       };
-      void send_repaint() {
-        if (send()) Print::repaint();
-      };
       const bool send_same_blob() const {
         return false;
       };
@@ -1121,7 +1118,7 @@ namespace ฿ {
         unfiltered.bids = raw.bids;
         unfiltered.asks = raw.asks;
         filter();
-        stats.fairPrice.send_repaint();
+        if (stats.fairPrice.send()) Print::repaint();
         diff.send_patch();
       };
     private:

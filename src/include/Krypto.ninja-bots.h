@@ -6,44 +6,12 @@
 namespace ฿ {
   string epilogue;
 
-  vector<function<void()>> happyEndingFn, endingFn = { []() {
-    clog << epilogue << string(epilogue.empty() ? 0 : 1, '\n');
-  } };
-
   //! \brief     Call all endingFn once and print a last log msg.
   //! \param[in] reason Allows any (colorful?) string.
   //! \param[in] reboot Allows a reboot only because https://tldp.org/LDP/Bash-Beginners-Guide/html/sect_09_03.html.
   void exit(const string &reason = "", const bool &reboot = false) {
     epilogue = reason + string((reason.empty() or reason.back() == '.') ? 0 : 1, '.');
     raise(reboot ? SIGTERM : SIGQUIT);
-  };
-
-  //! \brief Placeholder to avoid spaghetti codes.
-  //! - Walks through minimal runtime steps when wait() is called.
-  //! - Adds end() into endingFn to be called on exit().
-  //! - Connects to gateway when ready.
-  class Klass {
-    protected:
-      virtual void load        ()    {};
-      virtual void waitData    ()   {};
-      virtual void waitWebAdmin()  {};
-      virtual void waitSysAdmin(){};
-      virtual void waitTime    ()  {};
-      virtual void run         ()   {};
-      virtual void end         ()   {};
-    public:
-      void wait() {
-        load();
-        waitData();
-        waitWebAdmin();
-        waitSysAdmin();
-        waitTime();
-        endingFn.push_back([&]() {
-          end();
-        });
-        run();
-        if (gw->ready()) gw->run();
-      };
   };
 
   class Ansi {
@@ -86,35 +54,35 @@ namespace ฿ {
 
   class Hotkey {
     private:
-      future<char> hotkey;
-      unordered_map<char, function<void()>> hotFn;
+      static future<char> keylogger;
+      static unordered_map<char, function<void()>> hotFn;
     public:
-      void legitKeylogger() {
-        if (hotkey.valid())
+      static void legitKeylogger() {
+        if (keylogger.valid())
           error("SH", string("Unable to launch another \"keylogger\" thread"));
         noecho();
         halfdelay(5);
         keypad(stdscr, true);
-        keylogger();
+        launch_keylogger();
       };
-      void pressme(const char &ch, function<void()> fn) {
-        if (!hotkey.valid()) return;
+      static void pressme(const char &ch, function<void()> fn) {
+        if (!keylogger.valid()) return;
         if (hotFn.find(ch) != hotFn.end())
           error("SH", string("Too many handlers for \"") + ch + "\" pressme event");
         hotFn[ch] = fn;
       };
-      void waitForKeystroke() {
-        if (!hotkey.valid()
-          or hotkey.wait_for(chrono::nanoseconds(0)) != future_status::ready
+      static void waitForKeystroke() {
+        if (!keylogger.valid()
+          or keylogger.wait_for(chrono::nanoseconds(0)) != future_status::ready
         ) return;
-        const char ch = hotkey.get();
+        const char ch = keylogger.get();
         if (hotFn.find(ch) != hotFn.end())
           hotFn.at(ch)();
-        keylogger();
+        launch_keylogger();
       };
     private:
-      void keylogger() {
-        hotkey = ::async(launch::async, [&]() {
+      static void launch_keylogger() {
+        keylogger = ::async(launch::async, [&]() {
           int ch = ERR;
           while (ch == ERR and !hotFn.empty())
             ch = getch();
@@ -122,6 +90,10 @@ namespace ฿ {
         });
       };
   };
+
+  future<char> Hotkey::keylogger;
+
+  unordered_map<char, function<void()>> Hotkey::hotFn;
 
   class Print {
     public:
@@ -204,21 +176,25 @@ namespace ฿ {
         wattroff(stdlog, COLOR_PAIR(COLOR_WHITE));
         wrefresh(stdlog);
       };
-      static void logWar(const string &k, const string &s) {
+      static void logWar(const string &prefix, const string &reason) {
         if (!display) {
-          cout << stamp() << k << Ansi::r(COLOR_RED) << " Warrrrning: " << Ansi::b(COLOR_RED) << s << '.' << Ansi::r(COLOR_WHITE) << endl;
+          cout << stamp()
+               << prefix          << Ansi::r(COLOR_RED)
+               << " Warrrrning: " << Ansi::b(COLOR_RED)
+               << reason << '.'   << Ansi::r(COLOR_WHITE)
+               << endl;
           return;
         }
         wmove(stdlog, getmaxy(stdlog)-1, 0);
         stamp();
         wattron(stdlog, COLOR_PAIR(COLOR_WHITE));
         wattron(stdlog, A_BOLD);
-        wprintw(stdlog, k.data());
+        wprintw(stdlog, prefix.data());
         wattroff(stdlog, COLOR_PAIR(COLOR_WHITE));
         wattron(stdlog, COLOR_PAIR(COLOR_RED));
         wprintw(stdlog, " Warrrrning: ");
         wattroff(stdlog, A_BOLD);
-        wprintw(stdlog, s.data());
+        wprintw(stdlog, reason.data());
         wprintw(stdlog, ".");
         wattroff(stdlog, COLOR_PAIR(COLOR_RED));
         wattron(stdlog, COLOR_PAIR(COLOR_WHITE));
@@ -231,48 +207,6 @@ namespace ฿ {
   void (*Print::display)() = nullptr;
 
   WINDOW *Print::stdlog = nullptr;
-
-  class Screen {
-    public:
-      Hotkey hotkey;
-    public:
-      void switchOn(const int &naked) {
-        endingFn.insert(endingFn.begin(), [&]() {
-          switchOff();
-          clog << Print::stamp();
-        });
-        gw->logger = [&](const string &prefix, const string &reason, const string &highlight) {
-          if (reason.find("Error") != string::npos)
-            Print::logWar(prefix, reason);
-          else Print::log(prefix, reason, highlight);
-        };
-        if (naked) Print::display = nullptr;
-        else if (Print::display) switchOn();
-      };
-    private:
-      void switchOff() {
-        if (Print::display) {
-          Print::display = nullptr;
-          beep();
-          endwin();
-        }
-      };
-      void switchOn() {
-        if (!initscr())
-          error("SH",
-            "Unable to initialize ncurses, try to run in your terminal"
-              "\"export TERM=xterm\", or use --naked argument"
-          );
-        signal(SIGWINCH, [](const int sig) {
-          endwin();
-          refresh();
-          clear();
-        });
-        Ansi::default_colors();
-        Print::window();
-        hotkey.legitKeylogger();
-      };
-  };
 
   struct Argument {
    const string  name;
@@ -397,6 +331,7 @@ namespace ฿ {
         curl_global_init(CURL_GLOBAL_ALL);
         Curl::inet = str("interface");
         Ansi::colorful = num("colors");
+        if (num("naked")) Print::display = nullptr;
       };
     private:
       void tidy() {
@@ -525,6 +460,17 @@ namespace ฿ {
       };
   };
 
+  vector<function<void()>> happyEndingFn, endingFn = { []() {
+    if (Print::display) {
+      Print::display = nullptr;
+      beep();
+      endwin();
+    }
+    clog << Print::stamp()
+         << epilogue
+         << string(epilogue.empty() ? 0 : 1, '\n');
+  } };
+
   class Ending: public Rollout {
     public:
       Ending() {
@@ -605,15 +551,47 @@ namespace ฿ {
       };
   };
 
+  //! \brief Placeholder to avoid spaghetti codes.
+  //! - Walks through minimal runtime steps when wait() is called.
+  //! - Adds end() into endingFn to be called on exit().
+  //! - Connects to gateway when ready.
+  class Klass {
+    protected:
+      virtual void load        ()    {};
+      virtual void waitData    ()   {};
+      virtual void waitWebAdmin()  {};
+      virtual void waitSysAdmin(){};
+      virtual void waitTime    ()  {};
+      virtual void run         ()   {};
+      virtual void end         ()   {};
+    public:
+      void wait() {
+        load();
+        waitData();
+        waitWebAdmin();
+        waitSysAdmin();
+        waitTime();
+        endingFn.push_back([&]() {
+          end();
+        });
+        run();
+        if (gw->ready()) gw->run();
+      };
+  };
+
   class KryptoNinja: public Klass {
     public:
       Ending ending;
       Option option;
-      Screen screen;
     public:
       KryptoNinja *const main(int argc, char** argv) {
         option.main(argc, argv);
-        screen.switchOn(option.num("naked"));
+        if (Print::display) switchOn();
+        gw->logger = [&](const string &prefix, const string &reason, const string &highlight) {
+          if (reason.find("Error") != string::npos)
+            Print::logWar(prefix, reason);
+          else Print::log(prefix, reason, highlight);
+        };
         if (option.num("latency")) {
           gw->latency("HTTP read/write handshake", [&]() {
             handshake({
@@ -638,6 +616,22 @@ namespace ฿ {
             + " for symbol \"" + gw->symbol + "\", possible error message: "
             + reply.dump());
         gw->info(notes);
+      };
+    private:
+      void switchOn() {
+        if (!initscr())
+          error("SH",
+            "Unable to initialize ncurses, try to run in your terminal"
+              "\"export TERM=xterm\", or use --naked argument"
+          );
+        signal(SIGWINCH, [](const int sig) {
+          endwin();
+          refresh();
+          clear();
+        });
+        Ansi::default_colors();
+        Print::window();
+        Hotkey::legitKeylogger();
       };
   };
 }

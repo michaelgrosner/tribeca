@@ -58,7 +58,7 @@ class EV: public Events { public: EV() { events = this; };
     void (*walk)(uS::Async *const) = [](uS::Async *const loop) {
       ((EV*)loop->getData())->deferred();
       if (gw->waitForData()) loop->send();
-      K.screen.hotkey.waitForKeystroke();
+      Hotkey::waitForKeystroke();
     };
     void timer_1s() {
       if (!gw->countdown)                  engine->timer_1s(tick);
