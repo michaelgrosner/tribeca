@@ -665,10 +665,10 @@ namespace ฿ {
         else                   result += "very bad; move to another server/network";
         log(result);
       };
-      function<void(const string&, const string&, const string&)> logger;
+      function<void(const string&, const string&, const string&)> printer;
     protected:
       void log(const string &reason, const string &highlight = "") {
-        if (logger) logger(
+        if (printer) printer(
           string(reason.find(">>>") != reason.find("<<<")
             ? "DEBUG "
             : "GW "

@@ -96,7 +96,8 @@ namespace ฿ {
     public:
       static WINDOW *stdlog;
       static void (*display)();
-      static void window() {
+      static const bool windowed() {
+        if (!display) return false;
         if (stdlog)
           error("SH", "Unable to launch another window");
         if (!initscr())
@@ -114,6 +115,7 @@ namespace ฿ {
           clear();
         });
         repaint();
+        return true;
       };
       static void repaint() {
         if (display) display();
@@ -161,7 +163,6 @@ namespace ฿ {
           cout << Ansi::r(COLOR_WHITE) << ".\n";
           return;
         }
-        wmove(stdlog, getmaxy(stdlog)-1, 0);
         stamp();
         wattron(stdlog, COLOR_PAIR(COLOR_WHITE));
         wattron(stdlog, A_BOLD);
@@ -193,7 +194,6 @@ namespace ฿ {
                << endl;
           return;
         }
-        wmove(stdlog, getmaxy(stdlog)-1, 0);
         stamp();
         wattron(stdlog, COLOR_PAIR(COLOR_WHITE));
         wattron(stdlog, A_BOLD);
@@ -544,6 +544,11 @@ namespace ฿ {
         gw->maxLevel = num("market-limit");
         gw->debug    = num("debug-secret");
         gw->version  = num("free-version");
+        gw->printer = [&](const string &prefix, const string &reason, const string &highlight) {
+          if (reason.find("Error") != string::npos)
+            Print::logWar(prefix, reason);
+          else Print::log(prefix, reason, highlight);
+        };
       };
       void help(const vector<Argument> &long_options) {
         const vector<string> stamp = {
@@ -595,15 +600,7 @@ namespace ฿ {
     public:
       KryptoNinja *const main(int argc, char** argv) {
         option.main(argc, argv);
-        if (Print::display) {
-          Print::window();
-          legit_keylogger();
-        }
-        gw->logger = [&](const string &prefix, const string &reason, const string &highlight) {
-          if (reason.find("Error") != string::npos)
-            Print::logWar(prefix, reason);
-          else Print::log(prefix, reason, highlight);
-        };
+        if (Print::windowed()) legit_keylogger();
         if (option.num("latency")) {
           gw->latency("HTTP read/write handshake", [&]() {
             handshake({

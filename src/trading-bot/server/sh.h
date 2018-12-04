@@ -143,7 +143,7 @@ void TradingBot::display() {
   }
   mvwaddch(stdscr, y-1, 0, ACS_LLCORNER);
   mvwaddstr(stdscr, 1, 2, string("|/-\\").substr(engine->monitor.orders_60s % 4, 1).data());
-  move(yMaxLog-1, 2);
+  wmove(Print::stdlog, getmaxy(Print::stdlog)-1, 0);
   wrefresh(stdscr);
   wrefresh(Print::stdlog);
 };
