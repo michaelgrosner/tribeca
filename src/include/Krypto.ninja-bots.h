@@ -97,25 +97,26 @@ namespace ฿ {
       static WINDOW *stdlog;
       static void (*display)();
       static const bool windowed() {
-        if (!display) return false;
-        if (stdlog)
-          error("SH", "Unable to launch another window");
-        if (!initscr())
-          error("SH",
-            "Unable to initialize ncurses, try to run in your terminal"
-              "\"export TERM=xterm\", or use --naked argument"
-          );
-        Ansi::default_colors();
-        stdlog = subwin(stdscr, getmaxy(stdscr)-4, getmaxx(stdscr)-2-6, 3, 2);
-        scrollok(stdlog, true);
-        idlok(stdlog, true);
-        signal(SIGWINCH, [](const int sig) {
-          endwin();
-          refresh();
-          clear();
-        });
-        repaint();
-        return true;
+        if (display) {
+          if (stdlog)
+            error("SH", "Unable to launch another window");
+          if (!initscr())
+            error("SH",
+              "Unable to initialize ncurses, try to run in your terminal"
+                "\"export TERM=xterm\", or use --naked argument"
+            );
+          Ansi::default_colors();
+          stdlog = subwin(stdscr, getmaxy(stdscr)-4, getmaxx(stdscr)-2-6, 3, 2);
+          scrollok(stdlog, true);
+          idlok(stdlog, true);
+          signal(SIGWINCH, [](const int sig) {
+            endwin();
+            refresh();
+            clear();
+          });
+          repaint();
+        }
+        return display;
       };
       static void repaint() {
         if (display) display();

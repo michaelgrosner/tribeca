@@ -51,17 +51,17 @@ ares:
 	--disable-shared --enable-static && make all install                                     )
 
 curl:
-	test -d $(KBUILD)/curl-$(V_CURL) || (                                                    \
-	curl -L https://curl.haxx.se/download/curl-$(V_CURL).tar.gz | tar xz -C $(KBUILD)        \
-	&& cd $(KBUILD)/curl-$(V_CURL) && sed -i "s/\(UI\) /\1_ /" lib/vtls/openssl.c            \
-	&& CPPFLAGS=-DCARES_STATICLIB ./configure --host=$(CHOST) --prefix=$(KBUILD)/local       \
-	--with-ca-bundle=/etc/ssl/certs/ca-certificates.crt                                      \
-	--with-zlib=$(KBUILD)/local --with-ssl=$(KBUILD)/local --enable-ares=$(KBUILD)/local     \
-	--disable-manual --disable-imap --disable-file --disable-tftp --disable-smtp             \
-	--disable-pop3 --disable-smb --disable-ftp --disable-sspi --disable-ldap --disable-dict  \
-	--without-libpsl --without-nghttp2 --without-libssh2 --disable-telnet --disable-rtsp     \
-	--disable-gopher --without-libidn2 --without-librtmp --disable-shared --enable-static    \
-	&& sed -i "/HAVE_GETEUID/d" lib/curl_config.h && make all install                        )
+	test -d $(KBUILD)/curl-$(V_CURL) || (                                                   \
+	curl -L https://curl.haxx.se/download/curl-$(V_CURL).tar.gz | tar xz -C $(KBUILD)       \
+	&& cd $(KBUILD)/curl-$(V_CURL) && sed -i "s/\(UI\) /\1_ /" lib/vtls/openssl.c           \
+	&& CPPFLAGS=-DCARES_STATICLIB ./configure --host=$(CHOST) --prefix=$(KBUILD)/local      \
+	--with-ca-bundle=/etc/ssl/certs/ca-certificates.crt                                     \
+	--with-zlib=$(KBUILD)/local --with-ssl=$(KBUILD)/local --enable-ares=$(KBUILD)/local    \
+	--disable-manual --disable-imap --disable-file --disable-tftp --disable-smtp            \
+	--disable-pop3 --disable-smb --disable-ftp --disable-sspi --disable-ldap --disable-dict \
+	--without-libpsl --without-nghttp2 --without-libssh2 --disable-telnet --disable-rtsp    \
+	--disable-gopher --without-libidn2 --without-librtmp --disable-shared --enable-static   \
+	&& sed -i "/HAVE_GETEUID/d" lib/curl_config.h && make all install                       )
 
 sqlite:
 	test -d $(KBUILD)/sqlite-autoconf-$(V_SQL) || (                                       \
