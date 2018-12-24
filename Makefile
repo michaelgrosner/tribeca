@@ -2,7 +2,7 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
 PATCH    = 11
-BUILD    = 13
+BUILD    = 14
 SOURCE   = hello-world \
            trading-bot
 CARCH    = x86_64-linux-gnu      \
@@ -192,7 +192,7 @@ docker:
 	@$(MAKE) packages
 	mkdir -p app/server
 	@$(MAKE) download
-	sed -i "/Usage/,+92d" K.sh
+	sed -i "/Usage/,+94d" K.sh
 
 reinstall:
 	test -d .git && ((test -n "`git diff`" && (echo && echo !!Local changes will be lost!! press CTRL-C to abort. && echo && sleep 5) || :) \

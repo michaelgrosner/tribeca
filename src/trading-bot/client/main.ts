@@ -542,7 +542,7 @@ class DisplayOrder {
                         <div class="row img-rounded exchange">
                             <div *ngIf="pair.connectionMessage">{{ pair.connectionMessage }}</div>
                             <button style="font-size:16px;" class="col-md-12 col-xs-3" [ngClass]="pair.active.getClass()" (click)="pair.active.submit()">
-                                {{ exchange_name.replace('Margin', ' [M]') }}<br/>{{ baseCurrency+'/'+quoteCurrency }}
+                                {{ exchange_name.replace('_MARGIN', ' [M]') }}<br/>{{ baseCurrency+'/'+quoteCurrency }}
                             </button>
                             <wallet-position [baseCurrency]="baseCurrency" [quoteCurrency]="quoteCurrency" [product]="product" [setPosition]="Position"></wallet-position>
                             <div>
@@ -1019,17 +1019,20 @@ class ClientComponent implements OnInit {
     this.exchange_name = pa.exchange;
     this.exchange_market = this.exchange_name=='COINBASE'
       ? 'https://pro.coinbase.com/trade/'+this.baseCurrency+'-'+this.quoteCurrency
-      : (this.exchange_name=='BITFINEX' || this.exchange_name=='BitfinexMargin'
+      : (this.exchange_name=='BITFINEX' || this.exchange_name=='BITFINEX_MARGIN'
         ? 'https://www.bitfinex.com/trading/'+this.baseCurrency+this.quoteCurrency
-        : (this.exchange_name=='HITBTC'
-          ? 'https://hitbtc.com/exchange/'+this.baseCurrency+'-to-'+this.quoteCurrency
-          : (this.exchange_name=='KRAKEN'
-            ? 'https://www.kraken.com/charts'
-            : (this.exchange_name=='POLONIEX'
-              ? 'https://poloniex.com/exchange'
-              : (this.exchange_name=='FCOIN'
-                ? 'https://exchange.fcoin.com/ex/main/'+this.baseCurrency + '-' + this.quoteCurrency
-                : null
+        : (this.exchange_name=='ETHFINEX' || this.exchange_name=='ETHFINEX_MARGIN'
+          ? 'https://www.ethfinex.com/trading/'+this.baseCurrency+this.quoteCurrency
+          : (this.exchange_name=='HITBTC'
+            ? 'https://hitbtc.com/exchange/'+this.baseCurrency+'-to-'+this.quoteCurrency
+            : (this.exchange_name=='KRAKEN'
+              ? 'https://www.kraken.com/charts'
+              : (this.exchange_name=='POLONIEX'
+                ? 'https://poloniex.com/exchange'
+                : (this.exchange_name=='FCOIN'
+                  ? 'https://exchange.fcoin.com/ex/main/'+this.baseCurrency + '-' + this.quoteCurrency
+                  : null
+                )
               )
             )
           )
@@ -1037,17 +1040,20 @@ class ClientComponent implements OnInit {
       );
     this.exchange_orders = this.exchange_name=='COINBASE'
       ? 'https://pro.coinbase.com/orders/'+this.baseCurrency+'-'+this.quoteCurrency
-      : (this.exchange_name=='BITFINEX' || this.exchange_name=='BitfinexMargin'
+      : (this.exchange_name=='BITFINEX' || this.exchange_name=='BITFINEX_MARGIN'
         ? 'https://www.bitfinex.com/reports/orders'
-        : (this.exchange_name=='HITBTC'
-          ? 'https://hitbtc.com/reports/orders'
-          : (this.exchange_name=='KRAKEN'
-            ? 'https://www.kraken.com/u/trade'
-            : (this.exchange_name=='POLONIEX'
-              ? 'https://poloniex.com/tradeHistory'
-              : (this.exchange_name=='FCOIN'
-                  ? 'https://exchange.fcoin.com/orders'
-                  : null
+        : (this.exchange_name=='ETHFINEX' || this.exchange_name=='ETHFINEX_MARGIN'
+          ? 'https://www.ethfinex.com/reports/orders'
+          : (this.exchange_name=='HITBTC'
+            ? 'https://hitbtc.com/reports/orders'
+            : (this.exchange_name=='KRAKEN'
+              ? 'https://www.kraken.com/u/trade'
+              : (this.exchange_name=='POLONIEX'
+                ? 'https://poloniex.com/tradeHistory'
+                : (this.exchange_name=='FCOIN'
+                    ? 'https://exchange.fcoin.com/orders'
+                    : null
+                )
               )
             )
           )
