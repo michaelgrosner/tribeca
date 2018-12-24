@@ -56,6 +56,8 @@ using namespace nlohmann;
 #define M_PI_2 1.5707963267948965579989817342720925807952880859375
 #endif
 
+#define ANY_NUM 1714
+
 #define mClock  unsigned long long
 #define mPrice  double
 #define mAmount double

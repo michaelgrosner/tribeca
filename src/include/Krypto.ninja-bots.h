@@ -92,23 +92,39 @@ namespace ฿ {
       };
   };
 
+  struct Margin {
+    unsigned int top;
+    unsigned int right;
+    unsigned int bottom;
+    unsigned int left;
+  };
+
   class Print {
     public:
       static WINDOW *stdlog;
+      static Margin logs;
       static void (*display)();
       static const bool windowed() {
         if (display) {
           if (stdlog)
-            error("SH", "Unable to launch another window");
+            error("SH", "Unable to print another window");
           if (!initscr())
             error("SH",
               "Unable to initialize ncurses, try to run in your terminal"
                 "\"export TERM=xterm\", or use --naked argument"
             );
           Ansi::default_colors();
-          stdlog = subwin(stdscr, getmaxy(stdscr)-4, getmaxx(stdscr)-2-6, 3, 2);
-          scrollok(stdlog, true);
-          idlok(stdlog, true);
+          if (logs.top != ANY_NUM) {
+            stdlog = subwin(
+              stdscr,
+              getmaxy(stdscr) - logs.bottom - logs.top,
+              getmaxx(stdscr) - logs.left - logs.right,
+              logs.top,
+              logs.left
+            );
+            scrollok(stdlog, true);
+            idlok(stdlog, true);
+          }
           signal(SIGWINCH, [](const int sig) {
             endwin();
             refresh();
@@ -119,7 +135,14 @@ namespace ฿ {
         return display;
       };
       static void repaint() {
-        if (display) display();
+        if (display) {
+          display();
+          wrefresh(stdscr);
+          if (stdlog) {
+            wmove(stdlog, getmaxy(stdlog) - 1, 0);
+            wrefresh(stdlog);
+          }
+        }
       };
       static const string stamp() {
         chrono::system_clock::time_point clock = Tclock;
@@ -138,13 +161,15 @@ namespace ฿ {
         if (!display) return Ansi::b(COLOR_GREEN) + datetime +
                              Ansi::r(COLOR_GREEN) + microtime.str()+
                              Ansi::b(COLOR_WHITE) + ' ';
-        wattron(stdlog, COLOR_PAIR(COLOR_GREEN));
-        wattron(stdlog, A_BOLD);
-        wprintw(stdlog, datetime);
-        wattroff(stdlog, A_BOLD);
-        wprintw(stdlog, microtime.str().data());
-        wattroff(stdlog, COLOR_PAIR(COLOR_GREEN));
-        wprintw(stdlog, " ");
+        if (stdlog) {
+          wattron(stdlog, COLOR_PAIR(COLOR_GREEN));
+          wattron(stdlog, A_BOLD);
+          wprintw(stdlog, datetime);
+          wattroff(stdlog, A_BOLD);
+          wprintw(stdlog, microtime.str().data());
+          wattroff(stdlog, COLOR_PAIR(COLOR_GREEN));
+          wprintw(stdlog, " ");
+        }
         return "";
       };
       static void log(const string &prefix, const string &reason, const string &highlight = "") {
@@ -164,6 +189,7 @@ namespace ฿ {
           cout << Ansi::r(COLOR_WHITE) << ".\n";
           return;
         }
+        if (!stdlog) return;
         stamp();
         wattron(stdlog, COLOR_PAIR(COLOR_WHITE));
         wattron(stdlog, A_BOLD);
@@ -195,6 +221,7 @@ namespace ฿ {
                << endl;
           return;
         }
+        if (!stdlog) return;
         stamp();
         wattron(stdlog, COLOR_PAIR(COLOR_WHITE));
         wattron(stdlog, A_BOLD);
@@ -213,9 +240,11 @@ namespace ฿ {
       };
   };
 
-  void (*Print::display)() = nullptr;
-
   WINDOW *Print::stdlog = nullptr;
+
+  Margin Print::logs = {ANY_NUM, 0, 0, 0};
+
+  void (*Print::display)() = nullptr;
 
   vector<function<void()>> happyEndingFn, endingFn = { []() {
     if (Print::display) {
@@ -450,7 +479,7 @@ namespace ฿ {
           {"title",        "WORD",   K_SOURCE, "set WORD to allow admins to identify different bots"},
           {"free-version", "1",      0,        "work with all market levels but slowdown 7 seconds"}
         }) long_options.push_back(it);
-        int index = 1714;
+        int index = ANY_NUM;
         vector<option> opt_long = { {0, 0, 0, 0} };
         for (const Argument &it : long_options) {
           if     (!it.default_value)             optint[it.name] = 0;

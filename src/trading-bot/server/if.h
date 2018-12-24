@@ -13,7 +13,7 @@ class TradingBot: public KryptoNinja {
                                                                "\n" "all other UI related arguments will be ignored"},
         {"without-ssl",  "1",      0,                          "do not use HTTPS for UI connections (use HTTP only)"},
         {"ssl-crt",      "FILE",   "",                         "set FILE to custom SSL .crt file for HTTPS UI connections"
-                                                               "\n" "(see akadia.com/services/ssh_test_certificate.html)"},
+                                                               "\n" "(see www.akadia.com/services/ssh_test_certificate.html)"},
         {"ssl-key",      "FILE",   "",                         "set FILE to custom SSL .key file for HTTPS UI connections"
                                                                "\n" "(the passphrase MUST be removed from the .key file!)"},
         {"whitelist",    "IP",     "",                         "set IP or csv of IPs to allow UI connections,"
@@ -68,6 +68,7 @@ class TradingBot: public KryptoNinja {
             +  '.' + "db";
       } };
       Print::display = display;
+      Print::logs    = {3, 6, 2, 2};
     };
     static void display();
 } K;
