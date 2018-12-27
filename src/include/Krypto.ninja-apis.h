@@ -302,6 +302,8 @@ namespace ฿ {
   };
 
   class Curl {
+    private:
+      static mutex waiting_reply;
     public:
       static string inet;
       static const json xfer(const string &url, const long &timeout = 13) {
@@ -319,6 +321,7 @@ namespace ฿ {
       };
       static const json perform(const string &url, function<void(CURL *curl)> setopt, bool debug = true) {
         string reply;
+        lock_guard<mutex> lock(waiting_reply);
         CURL *curl = curl_easy_init();
         if (curl) {
           setopt(curl);

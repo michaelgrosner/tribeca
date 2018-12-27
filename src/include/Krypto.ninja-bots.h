@@ -14,6 +14,9 @@ namespace ฿ {
     raise(reboot ? SIGTERM : SIGQUIT);
   };
 
+  string Curl::inet;
+  mutex  Curl::waiting_reply;
+
   class Ansi {
     public:
       static int colorful;
@@ -40,8 +43,6 @@ namespace ฿ {
   };
 
   int Ansi::colorful = 1;
-
-  string Curl::inet;
 
   //! \brief     Call all endingFn once and print a last error log msg.
   //! \param[in] prefix Allows any string, if possible with a length of 2.
