@@ -89,7 +89,7 @@ In the web UI, there are three rows of panels with cryptic looking names and edi
 
   * `PingPong` - Always respect the calculated `widthPong` from the last sold or bought `size`, if any.
 
-  * `PingPoing` - Same as `PingPong` but do not respect always the `widthPong` to make new Pong trades, instead if the `fair value` has moved in a opposite `widthPong` direction, Ping trades will be restarted with 0 price as safety. For example if last buy was at 1000 and withpong is 10, last buy safety will be ignored/restarted if price becomes 90.
+  * `PingPoing` - Same as `PingPong` but do not respect always the `widthPong` to make new Pong trades, instead if the `fair value` has moved in a opposite `widthPong` direction, Ping trades will be restarted with 0 price as safety. For example if last buy was at 100 and withpong is 10, last buy safety will be ignored/restarted if price becomes 90.
 
   * `Boomerang` - Same as `PingPong` but the calculated `widthPong` for new Pongs is based on any best matching (using `pongAt`) previous sold or bought `size`, if any.
 
