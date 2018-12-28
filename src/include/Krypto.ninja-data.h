@@ -209,9 +209,9 @@ namespace ฿ {
 
   struct mQuotingParams: public mStructFromDb<mQuotingParams>,
                          public mJsonToClient<mQuotingParams> {
-    mPrice            widthPing                       = 2.0;
+    mPrice            widthPing                       = 300.0;
     double            widthPingPercentage             = 0.25;
-    mPrice            widthPong                       = 2.0;
+    mPrice            widthPong                       = 300.0;
     double            widthPongPercentage             = 0.25;
     bool              widthPercentage                 = false;
     bool              bestWidth                       = true;
@@ -225,7 +225,7 @@ namespace ฿ {
     mPingAt           pingAt                          = mPingAt::BothSides;
     mPongAt           pongAt                          = mPongAt::ShortPingFair;
     mQuotingMode      mode                            = mQuotingMode::Top;
-    mQuotingSafety    safety                          = mQuotingSafety::Boomerang;
+    mQuotingSafety    safety                          = mQuotingSafety::PingPong;
     unsigned int      bullets                         = 2;
     mPrice            range                           = 0.5;
     double            rangePercentage                 = 5.0;
