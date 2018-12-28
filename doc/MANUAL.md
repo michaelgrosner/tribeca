@@ -89,6 +89,8 @@ In the web UI, there are three rows of panels with cryptic looking names and edi
 
   * `PingPong` - Always respect the calculated `widthPong` from the last sold or bought `size`, if any.
 
+  * `PingPoing` - Same as `PingPong` but do not respect always the `widthPong` to make new Pong trades, instead if the `fair value` has moved in a opposite `widthPong` direction, Ping trades will be restarted with 0 price as safety. For example if last buy was at 1000 and withpong is 10, last buy safety will be ignored/restarted if price becomes 90.
+
   * `Boomerang` - Same as `PingPong` but the calculated `widthPong` for new Pongs is based on any best matching (using `pongAt`) previous sold or bought `size`, if any.
 
   * `AK-47` - Same as `Boomerang` but allows multiple orders at the same time in both sides. To avoid old trades, on every new trade **Krypto-trading-bot** will cancel all previous trades if those are worst.
@@ -156,7 +158,7 @@ In the web UI, there are three rows of panels with cryptic looking names and edi
   * `EWMA_LMS` - **Krypto-trading-bot** will use a `long` minute, `medium` minute and `short` minute exponential weighted moving average calculation, together with the simple moving average of the last 3 `fair value` values, to buy up BTC when the `short` minute line crosses over the `long` minute line, and sell BTC when the reverse happens.
 
   * `EWMA_4` - **Krypto-trading-bot** will use a `medium` minute and `small` minute EWMA calculation to buy when the `small` minute line crosses over the `medium` minute line, and sell when the reverse happens. Additionally sets the `tbp` to 0% if the `verylong` EWMA minute line crosses over the `long` EWMA minute line.
-  
+
   * `short` - Used when `apMode` is `EWMA_LS`, `EWMA_LMS` or `EWMA_4`. Sets the periods of EWMA Short to automatically manage positions.
   * `medium` - Only used when `apMode` is `EWMA_LMS` or `EWMA_4`. Sets the periods of EWMA Medium to automatically manage positions.
   * `long` - Used when `apMode` is `EWMA_LS`, `EWMA_LMS` or `EWMA_4`. Sets the periods of EWMA Long to automatically manage positions.

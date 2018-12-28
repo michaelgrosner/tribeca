@@ -86,11 +86,11 @@ class DisplayOrder {
                                         <th title="If enabled, the values of bidSize, askSize, tbp, pDiv and range will be a percentage related to the total funds.">%</th>
                                         <th title="Sets the quoting mode">mode</th>
                                         <th title="Sets a quoting Safety">safety</th>
-                                        <th title="Maximum amount of trades placed in each side." *ngIf="pair.quotingParameters.display.safety==3">bullets</th>
-                                        <th title="Minimum width between bullets in USD (ex. a value of .3 is 30 cents)." *ngIf="pair.quotingParameters.display.safety==3 && !pair.quotingParameters.display.percentageValues">range</th>
-                                        <th title="Minimum width between bullets in USD (ex. a value of .3 is 30 cents)." *ngIf="pair.quotingParameters.display.safety==3 && pair.quotingParameters.display.percentageValues">range%</th>
-                                        <th title="Pongs are always placed in both sides." *ngIf="[1,2,3].indexOf(pair.quotingParameters.display.safety)>-1">pingAt</th>
-                                        <th title="" *ngIf="[2,3].indexOf(pair.quotingParameters.display.safety)>-1">pongAt</th>
+                                        <th title="Maximum amount of trades placed in each side." *ngIf="pair.quotingParameters.display.safety==4">bullets</th>
+                                        <th title="Minimum width between bullets in USD (ex. a value of .3 is 30 cents)." *ngIf="pair.quotingParameters.display.safety==4 && !pair.quotingParameters.display.percentageValues">range</th>
+                                        <th title="Minimum width between bullets in USD (ex. a value of .3 is 30 cents)." *ngIf="pair.quotingParameters.display.safety==4 && pair.quotingParameters.display.percentageValues">range%</th>
+                                        <th title="Pongs are always placed in both sides." *ngIf="pair.quotingParameters.display.safety">pingAt</th>
+                                        <th title="" *ngIf="[3,4].indexOf(pair.quotingParameters.display.safety)>-1">pongAt</th>
                                         <th title="Super opportunities, if enabled and if the market width is sopWidth times bigger than the width set, it multiplies sopTrades to trades and/or sopSize to size, in both sides at the same time.">sop</th>
                                         <ng-container *ngIf="pair.quotingParameters.display.superTrades">
                                         <th title="The value with the market width is multiplicated to define the activation point for Super opportunities.">sopWidth</th>
@@ -119,31 +119,31 @@ class DisplayOrder {
                                               <option *ngFor="let option of pair.quotingParameters.availableQuotingSafeties" [ngValue]="option.val">{{option.str}}</option>
                                             </select>
                                         </td>
-                                        <td style="width:78px;border-bottom: 3px solid #DDE28B;" *ngIf="pair.quotingParameters.display.safety==3">
+                                        <td style="width:78px;border-bottom: 3px solid #DDE28B;" *ngIf="pair.quotingParameters.display.safety==4">
                                             <input class="form-control input-sm"
                                                type="number" step="1" min="1"
                                                onClick="this.select()"
                                                [(ngModel)]="pair.quotingParameters.display.bullets">
                                         </td>
-                                        <td style="width:88px; border-bottom: 3px solid #DDE28B;" *ngIf="pair.quotingParameters.display.safety==3 && !pair.quotingParameters.display.percentageValues">
+                                        <td style="width:88px; border-bottom: 3px solid #DDE28B;" *ngIf="pair.quotingParameters.display.safety==4 && !pair.quotingParameters.display.percentageValues">
                                             <input class="form-control input-sm" title="{{ quoteCurrency }}"
                                                type="number"
                                                onClick="this.select()"
                                                [(ngModel)]="pair.quotingParameters.display.range">
                                         </td>
-                                        <td style="width:88px; border-bottom: 3px solid #DDE28B;" *ngIf="pair.quotingParameters.display.safety==3 && pair.quotingParameters.display.percentageValues">
+                                        <td style="width:88px; border-bottom: 3px solid #DDE28B;" *ngIf="pair.quotingParameters.display.safety==4 && pair.quotingParameters.display.percentageValues">
                                             <input class="form-control input-sm" title="{{ quoteCurrency }}"
                                                type="number" step="0.1" min="0" max="100"
                                                onClick="this.select()"
                                                [(ngModel)]="pair.quotingParameters.display.rangePercentage">
                                         </td>
-                                        <td style="min-width:142px;border-bottom: 3px solid #8BE296;" *ngIf="[1,2,3].indexOf(pair.quotingParameters.display.safety)>-1">
+                                        <td style="min-width:142px;border-bottom: 3px solid #8BE296;" *ngIf="pair.quotingParameters.display.safety">
                                             <select class="form-control input-sm"
                                                [(ngModel)]="pair.quotingParameters.display.pingAt">
                                                <option *ngFor="let option of pair.quotingParameters.availablePingAt" [ngValue]="option.val">{{option.str}}</option>
                                             </select>
                                         </td>
-                                        <td style="border-bottom: 3px solid #8BE296;" *ngIf="[2,3].indexOf(pair.quotingParameters.display.safety)>-1">
+                                        <td style="border-bottom: 3px solid #8BE296;" *ngIf="[3,4].indexOf(pair.quotingParameters.display.safety)>-1">
                                             <select class="form-control input-sm"
                                                [(ngModel)]="pair.quotingParameters.display.pongAt">
                                                <option *ngFor="let option of pair.quotingParameters.availablePongAt" [ngValue]="option.val">{{option.str}}</option>
@@ -232,9 +232,9 @@ class DisplayOrder {
                                         <th title="Enable Best Width to place orders avoiding hollows in the book, while accomodating new orders right near to existent orders in the book." >bw?</th>
                                         <th title="Defines the size to ignore when looking for hollows in the book. The sum of orders up to this size will be ignored." *ngIf="pair.quotingParameters.display.bestWidth">bwSize</th>
                                         <th title="The values of width or widthPing and widthPong will be a percentage related to the fair value; useful when calculating profits subtracting exchange's fees (that usually are percentages too)." *ngIf="[6].indexOf(pair.quotingParameters.display.mode)==-1">%w?</th>
-                                        <th title="Minimum width (spread) of our quote in USD (ex. a value of .3 is 30 cents). With the exception for when apr is checked and the system is aggressively rebalancing positions after they get out of whack, width will always be respected." *ngIf="[1,2,3].indexOf(pair.quotingParameters.display.safety)==-1"><span *ngIf="[6].indexOf(pair.quotingParameters.display.mode)==-1">width</span><span *ngIf="[6].indexOf(pair.quotingParameters.display.mode)>-1">depth</span><span *ngIf="pair.quotingParameters.display.widthPercentage && [6].indexOf(pair.quotingParameters.display.mode)==-1">%</span></th>
-                                        <th title="Minimum width (spread) of our quote in USD (ex. a value of .3 is 30 cents). With the exception for when apr is checked and the system is aggressively rebalancing positions after they get out of whack, width will always be respected." *ngIf="[1,2,3].indexOf(pair.quotingParameters.display.safety)>-1">pingWidth<span *ngIf="pair.quotingParameters.display.widthPercentage">%</span></th>
-                                        <th title="Minimum width (spread) of our quote in USD (ex. a value of .3 is 30 cents). Used only if previous Pings exists in the opposite side." *ngIf="[1,2,3].indexOf(pair.quotingParameters.display.safety)>-1">pongWidth<span *ngIf="pair.quotingParameters.display.widthPercentage">%</span></th>
+                                        <th title="Minimum width (spread) of our quote in USD (ex. a value of .3 is 30 cents). With the exception for when apr is checked and the system is aggressively rebalancing positions after they get out of whack, width will always be respected." *ngIf="!pair.quotingParameters.display.safety"><span *ngIf="[6].indexOf(pair.quotingParameters.display.mode)==-1">width</span><span *ngIf="[6].indexOf(pair.quotingParameters.display.mode)>-1">depth</span><span *ngIf="pair.quotingParameters.display.widthPercentage && [6].indexOf(pair.quotingParameters.display.mode)==-1">%</span></th>
+                                        <th title="Minimum width (spread) of our quote in USD (ex. a value of .3 is 30 cents). With the exception for when apr is checked and the system is aggressively rebalancing positions after they get out of whack, width will always be respected." *ngIf="pair.quotingParameters.display.safety">pingWidth<span *ngIf="pair.quotingParameters.display.widthPercentage">%</span></th>
+                                        <th title="Minimum width (spread) of our quote in USD (ex. a value of .3 is 30 cents). Used only if previous Pings exists in the opposite side." *ngIf="pair.quotingParameters.display.safety">pongWidth<span *ngIf="pair.quotingParameters.display.widthPercentage">%</span></th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -356,13 +356,13 @@ class DisplayOrder {
                                                onClick="this.select()"
                                                [(ngModel)]="pair.quotingParameters.display.widthPingPercentage">
                                         </td>
-                                        <td style="width:169px;border-bottom: 3px solid #8BE296;" *ngIf="[1,2,3].indexOf(pair.quotingParameters.display.safety)>-1 && !pair.quotingParameters.display.widthPercentage">
+                                        <td style="width:169px;border-bottom: 3px solid #8BE296;" *ngIf="pair.quotingParameters.display.safety && !pair.quotingParameters.display.widthPercentage">
                                             <input class="width-option form-control input-sm" title="{{ quoteCurrency }}"
                                                type="number" step="{{ product.advert.minTick}}" min="{{ product.advert.minTick}}"
                                                onClick="this.select()"
                                                [(ngModel)]="pair.quotingParameters.display.widthPong">
                                         </td>
-                                        <td style="width:169px;border-bottom: 3px solid #8BE296;" *ngIf="[1,2,3].indexOf(pair.quotingParameters.display.safety)>-1 && pair.quotingParameters.display.widthPercentage">
+                                        <td style="width:169px;border-bottom: 3px solid #8BE296;" *ngIf="pair.quotingParameters.display.safety && pair.quotingParameters.display.widthPercentage">
                                             <input class="width-option form-control input-sm" title="{{ quoteCurrency }}"
                                                type="number" step="0.001" min="0.001" max="100"
                                                onClick="this.select()"
@@ -565,7 +565,7 @@ class DisplayOrder {
                                   <button type="button"
                                           class="btn btn-info navbar-btn"
                                           (click)="cleanAllClosedOrders()"
-                                          *ngIf="[1,2,3].indexOf(pair.quotingParameters.display.safety)>-1"
+                                          *ngIf="pair.quotingParameters.display.safety"
                                           data-placement="bottom">Clean Pongs
                                   </button>
                               </div>
@@ -573,7 +573,7 @@ class DisplayOrder {
                                   <button type="button"
                                           class="btn btn-xs btn-danger navbar-btn"
                                           (click)="cleanAllOrders()"
-                                          data-placement="bottom">{{ [1,2,3].indexOf(pair.quotingParameters.display.safety)>-1 ? 'Clean Pings' : 'Clean Trades' }}
+                                          data-placement="bottom">{{ pair.quotingParameters.display.safety ? 'Clean Pings' : 'Clean Trades' }}
                                   </button>
                               </div>
                               <br [hidden]="exchange_name=='HITBTC'" /><a [hidden]="exchange_name=='HITBTC'" href="#" (click)="toggleWatch(exchange_name.toLowerCase(), (baseCurrency+'-'+quoteCurrency).toLowerCase())">Watch</a><br [hidden]="exchange_name=='HITBTC'" />

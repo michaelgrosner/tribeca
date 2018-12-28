@@ -8,7 +8,7 @@ namespace ฿ {
     Top, Mid, Join, InverseJoin, InverseTop, HamelinRat, Depth
   };
   enum class mQuotingSafety: unsigned int {
-    Off, PingPong, Boomerang, AK47
+    Off, PingPong, PingPoing, Boomerang, AK47
   };
   enum class mQuoteState: unsigned int {
     Disconnected,  Live,             DisabledQuotes,
@@ -1289,7 +1289,7 @@ namespace ฿ {
         + Text::str8(trade.price) + ' ' + gw->quote + " (value "
         + Text::str8(trade.value) + ' ' + gw->quote + ")"
       );
-      if (qp.safety == mQuotingSafety::Off or qp.safety == mQuotingSafety::PingPong)
+      if (qp.safety == mQuotingSafety::Off or qp.safety == mQuotingSafety::PingPong or qp.safety == mQuotingSafety::PingPoing)
         send_push_back(trade);
       else {
         mPrice widthPong = qp.widthPercentage
@@ -1542,29 +1542,36 @@ namespace ฿ {
         } else {
           buyPing = sellPing = 0;
           if (qp.safety == mQuotingSafety::Off) return;
-          map<mPrice, mTrade> tradesBuy;
-          map<mPrice, mTrade> tradesSell;
-          for (const mTrade &it: trades)
-            (it.side == mSide::Bid ? tradesBuy : tradesSell)[it.price] = it;
           mPrice widthPong = qp.widthPercentage
             ? qp.widthPongPercentage * fairValue / 100
             : qp.widthPong;
-          mAmount buyQty = 0,
-                  sellQty = 0;
-          if (qp.pongAt == mPongAt::ShortPingFair or qp.pongAt == mPongAt::ShortPingAggressive) {
-            matchBestPing(&tradesBuy, &buyPing, &buyQty, sellSize, widthPong, true);
-            matchBestPing(&tradesSell, &sellPing, &sellQty, buySize, widthPong);
-            if (!buyQty) matchFirstPing(&tradesBuy, &buyPing, &buyQty, sellSize, widthPong*-1, true);
-            if (!sellQty) matchFirstPing(&tradesSell, &sellPing, &sellQty, buySize, widthPong*-1);
-          } else if (qp.pongAt == mPongAt::LongPingFair or qp.pongAt == mPongAt::LongPingAggressive) {
-            matchLastPing(&tradesBuy, &buyPing, &buyQty, sellSize, widthPong);
-            matchLastPing(&tradesSell, &sellPing, &sellQty, buySize, widthPong, true);
-          } else if (qp.pongAt == mPongAt::AveragePingFair or qp.pongAt == mPongAt::AveragePingAggressive) {
-            matchAllPing(&tradesBuy, &buyPing, &buyQty, sellSize, widthPong);
-            matchAllPing(&tradesSell, &sellPing, &sellQty, buySize, widthPong);
+          if (qp.safety == mQuotingSafety::PingPoing) {
+            if (recentTrades.lastBuyPrice and fairValue > recentTrades.lastBuyPrice - widthPong)
+              buyPing = recentTrades.lastBuyPrice;
+            if (recentTrades.lastSellPrice and fairValue < recentTrades.lastSellPrice + widthPong)
+              sellPing = recentTrades.lastSellPrice;
+          } else {
+            map<mPrice, mTrade> tradesBuy;
+            map<mPrice, mTrade> tradesSell;
+            for (const mTrade &it: trades)
+              (it.side == mSide::Bid ? tradesBuy : tradesSell)[it.price] = it;
+            mAmount buyQty = 0,
+                    sellQty = 0;
+            if (qp.pongAt == mPongAt::ShortPingFair or qp.pongAt == mPongAt::ShortPingAggressive) {
+              matchBestPing(&tradesBuy, &buyPing, &buyQty, sellSize, widthPong, true);
+              matchBestPing(&tradesSell, &sellPing, &sellQty, buySize, widthPong);
+              if (!buyQty) matchFirstPing(&tradesBuy, &buyPing, &buyQty, sellSize, widthPong*-1, true);
+              if (!sellQty) matchFirstPing(&tradesSell, &sellPing, &sellQty, buySize, widthPong*-1);
+            } else if (qp.pongAt == mPongAt::LongPingFair or qp.pongAt == mPongAt::LongPingAggressive) {
+              matchLastPing(&tradesBuy, &buyPing, &buyQty, sellSize, widthPong);
+              matchLastPing(&tradesSell, &sellPing, &sellQty, buySize, widthPong, true);
+            } else if (qp.pongAt == mPongAt::AveragePingFair or qp.pongAt == mPongAt::AveragePingAggressive) {
+              matchAllPing(&tradesBuy, &buyPing, &buyQty, sellSize, widthPong);
+              matchAllPing(&tradesSell, &sellPing, &sellQty, buySize, widthPong);
+            }
+            if (buyQty) buyPing /= buyQty;
+            if (sellQty) sellPing /= sellQty;
           }
-          if (buyQty) buyPing /= buyQty;
-          if (sellQty) sellPing /= sellQty;
         }
       };
       void matchFirstPing(map<mPrice, mTrade> *tradesSide, mPrice *ping, mAmount *qty, mAmount qtyMax, mPrice width, bool reverse = false) {
@@ -2385,29 +2392,27 @@ namespace ฿ {
         const mPrice widthPong = qp.widthPercentage
           ? qp.widthPongPercentage * levels.fairValue / 100
           : qp.widthPong;
-        const mPrice &safetyBuyPing = wallet.safety.buyPing;
-        if (!quotes.ask.empty() and safetyBuyPing) {
+        if (!quotes.ask.empty() and wallet.safety.buyPing) {
           if ((qp.aggressivePositionRebalancing == mAPR::SizeWidth and sideAPR == "Sell")
-            or (qp.safety == mQuotingSafety::PingPong
-              ? quotes.ask.price < safetyBuyPing + widthPong
+            or ((qp.safety == mQuotingSafety::PingPong or qp.safety == mQuotingSafety::PingPoing)
+              ? quotes.ask.price < wallet.safety.buyPing + widthPong
               : qp.pongAt == mPongAt::ShortPingAggressive
                 or qp.pongAt == mPongAt::AveragePingAggressive
                 or qp.pongAt == mPongAt::LongPingAggressive
             )
-          ) quotes.ask.price = safetyBuyPing + widthPong;
-          quotes.ask.isPong = quotes.ask.price >= safetyBuyPing + widthPong;
+          ) quotes.ask.price = wallet.safety.buyPing + widthPong;
+          quotes.ask.isPong = quotes.ask.price >= wallet.safety.buyPing + widthPong;
         }
-        const mPrice &safetysellPing = wallet.safety.sellPing;
-        if (!quotes.bid.empty() and safetysellPing) {
+        if (!quotes.bid.empty() and wallet.safety.sellPing) {
           if ((qp.aggressivePositionRebalancing == mAPR::SizeWidth and sideAPR == "Buy")
-            or (qp.safety == mQuotingSafety::PingPong
-              ? quotes.bid.price > safetysellPing - widthPong
+            or ((qp.safety == mQuotingSafety::PingPong or qp.safety == mQuotingSafety::PingPoing)
+              ? quotes.bid.price > wallet.safety.sellPing - widthPong
               : qp.pongAt == mPongAt::ShortPingAggressive
                 or qp.pongAt == mPongAt::AveragePingAggressive
                 or qp.pongAt == mPongAt::LongPingAggressive
             )
-          ) quotes.bid.price = safetysellPing - widthPong;
-          quotes.bid.isPong = quotes.bid.price <= safetysellPing - widthPong;
+          ) quotes.bid.price = wallet.safety.sellPing - widthPong;
+          quotes.bid.isPong = quotes.bid.price <= wallet.safety.sellPing - widthPong;
         }
       };
       void applyAK47Increment() {

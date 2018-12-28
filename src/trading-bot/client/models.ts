@@ -174,7 +174,7 @@ export class TwoSidedQuoteStatus {
 }
 
 export enum QuotingMode { Top, Mid, Join, InverseJoin, InverseTop, HamelinRat, Depth }
-export enum QuotingSafety { Off, PingPong, Boomerang, AK47 }
+export enum QuotingSafety { Off, PingPong, PingPoing, Boomerang, AK47 }
 export enum FairValueModel { BBO, wBBO, rwBBO }
 export enum AutoPositionMode { Manual, EWMA_LS, EWMA_LMS, EWMA_4 }
 export enum DynamicPDivMode { Manual, Linear, Sine, SQRT, Switch }
