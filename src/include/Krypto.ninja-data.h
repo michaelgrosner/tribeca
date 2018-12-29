@@ -1991,19 +1991,13 @@ namespace ฿ {
           Print::log("DEBUG QE", "[" + step + "] "
             + to_string((int)bid.state) + ":"
             + to_string((int)ask.state) + " "
-            + ((json)*this).dump()
+            + ((json){{"bid", bid}, {"ask", ask}}).dump()
           );
       };
     private:
       const bool debug() const {
         return product.debug("quotes");
       };
-  };
-  static void to_json(json &j, const mQuotes &k) {
-    j = {
-      {"bid", k.bid},
-      {"ask", k.ask}
-    };
   };
 
   struct mDummyMarketMaker {

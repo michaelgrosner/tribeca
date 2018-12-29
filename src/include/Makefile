@@ -3,16 +3,16 @@ HINT     = This Makefile can't be used directly, consider cd ../.. before try ag
 $(if $(subst 0,,${MAKELEVEL}),,$(warning $(ERR));$(error $(HINT)))
 
 V_ZLIB  = 1.2.11
-V_SSL   = 1.1.1
-V_ARES  = 1.14.0
-V_CURL  = 7.61.1
-V_SQL   = 3240000
+V_SSL   = 1.1.1a
+V_ARES  = 1.15.0
+V_CURL  = 7.63.0
+V_SQL   = 3260000
 V_NCUR  = 6.1
-V_JSON  = 3.2.0
-V_CATCH = 2.4.0
+V_JSON  = 3.5.0
+V_CATCH = 2.5.0
 V_UWS   = 0.14.8
 V_QF    = 1.15.1
-V_UV    = 1.23.0
+V_UV    = 1.24.1
 
 KBUILD := $(abspath ../../build-$(CHOST))
 
