@@ -2,7 +2,7 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
 PATCH    = 11
-BUILD    = 21
+BUILD    = 22
 SOURCE   = hello-world \
            trading-bot
 CARCH    = x86_64-linux-gnu      \
@@ -152,6 +152,7 @@ Win32: src/$(KSRC)/$(KSRC).cxx
 download:
 	curl -L https://github.com/ctubio/Krypto-trading-bot/releases/download/$(MAJOR).$(MINOR).x/v$(MAJOR).$(MINOR).$(PATCH).$(BUILD)-$(CHOST).tar.gz | tar xz
 	@$(MAKE) system_install -s
+	@rm -rf app && $(foreach conf,$(wildcard *.sh), test -n "`cat $(conf) | grep "app/server"`" && sed -i 's/\.\/app\/server\/K/K-trading-bot/' $(conf) && sed -i 's/app\/server\/K/K-trading-bot/' $(conf) || :;)
 	@test -n "`ls *.sh 2>/dev/null`" || (cp etc/K.sh.dist K.sh && chmod +x K.sh)
 
 cleandb: /data/db/K*
@@ -193,7 +194,6 @@ docker:
 reinstall:
 	test -d .git && ((test -n "`git diff`" && (echo && echo !!Local changes will be lost!! press CTRL-C to abort. && echo && sleep 5) || :) \
 	&& git fetch && git merge FETCH_HEAD || (git reset FETCH_HEAD && git checkout .)) || curl https://raw.githubusercontent.com/ctubio/Krypto-trading-bot/master/Makefile > Makefile
-	@rm -rf app && $(foreach conf,$(wildcard *.sh), test -n "`cat $(conf) | grep "app/server"`" && sed -i 's/\.\/app\/server\/K/K-trading-bot/' $(conf) && sed -i 's/app\/server\/K/K-trading-bot/' $(conf) || :;)
 	@$(MAKE) install
 	#@$(MAKE) restartall
 	@echo && echo ..done! Please restart any running instance and also refresh the UI if is currently opened in your browser.
