@@ -2,7 +2,7 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
 PATCH    = 11
-BUILD    = 20
+BUILD    = 21
 SOURCE   = hello-world \
            trading-bot
 CARCH    = x86_64-linux-gnu      \
@@ -152,7 +152,6 @@ Win32: src/$(KSRC)/$(KSRC).cxx
 download:
 	curl -L https://github.com/ctubio/Krypto-trading-bot/releases/download/$(MAJOR).$(MINOR).x/v$(MAJOR).$(MINOR).$(PATCH).$(BUILD)-$(CHOST).tar.gz | tar xz
 	@$(MAKE) system_install -s
-	@ln -f -s /usr/local/bin/K-trading-bot app/server/K
 	@test -n "`ls *.sh 2>/dev/null`" || (cp etc/K.sh.dist K.sh && chmod +x K.sh)
 
 cleandb: /data/db/K*
@@ -183,21 +182,18 @@ system_install:
 
 install:
 	@$(MAKE) packages
-	mkdir -p app/server
 	@yes = | head -n`expr $(shell tput cols) / 2` | xargs echo && echo " _  __\n| |/ /  v$(MAJOR).$(MINOR).$(PATCH)+$(BUILD)\n| ' /\n| . \\   Select your (beloved) architecture\n|_|\\_\\  to download pre-compiled binaries:\n"
 	@echo $(CARCH) | tr ' ' "\n" | cat -n && echo "\n(Hint! uname says \"`uname -sm`\", and win32 auto-install does not work yet)\n"
 	@read -p "[`echo -n $(CARCH) | tr ' ' "\n" | cat -n | tr "\t" ' ' | sed 's/ *\([0-9]\) .*/\1/' | tr "\n" '/'`]: " chost && $(MAKE) download CHOST=`echo $(CARCH) | cut -d ' ' -f$${chost}`
 
 docker:
-	@$(MAKE) packages
-	mkdir -p app/server
-	@$(MAKE) download
-	sed -i "/Usage/,+94d" K.sh
+	@$(MAKE) packages download
+	@sed -i "/Usage/,+94d" K.sh
 
 reinstall:
 	test -d .git && ((test -n "`git diff`" && (echo && echo !!Local changes will be lost!! press CTRL-C to abort. && echo && sleep 5) || :) \
 	&& git fetch && git merge FETCH_HEAD || (git reset FETCH_HEAD && git checkout .)) || curl https://raw.githubusercontent.com/ctubio/Krypto-trading-bot/master/Makefile > Makefile
-	rm -rf app
+	@rm -rf app && $(foreach conf,$(wildcard *.sh), test -n "`cat $(conf) | grep "app/server"`" && sed -i 's/\.\/app\/server\/K/K-trading-bot/' $(conf) && sed -i 's/app\/server\/K/K-trading-bot/' $(conf) || :;)
 	@$(MAKE) install
 	#@$(MAKE) restartall
 	@echo && echo ..done! Please restart any running instance and also refresh the UI if is currently opened in your browser.
@@ -228,7 +224,6 @@ stop:
 	@screen -XS $(K) quit && echo STOP $(K) DONE || :
 
 start:
-	@test -d app || $(MAKE) install
 	@test -n "`screen -list | grep "\.$(K)	("`"         \
 	&& (echo $(K) is already running.. && screen -list)  \
 	|| (screen -dmS $(K) ./$(K) && echo START $(K) DONE)
