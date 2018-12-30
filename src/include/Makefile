@@ -39,8 +39,8 @@ openssl:
 	curl -L https://www.openssl.org/source/openssl-$(V_SSL).tar.gz | tar xz -C $(KBUILD)       \
 	&& cd $(KBUILD)/openssl-$(V_SSL) && CC=gcc CPPFLAGS=-DIU=UI_                               \
 	./Configure $(shell test -n "`echo $(CHOST) | grep mingw32`" && echo mingw64 || echo dist) \
-	--api=1.1.0 --cross-compile-prefix=$(CHOST)- --prefix=$(KBUILD)/local                      \
-	--openssldir=$(KBUILD)/local && make all install_sw install_ssldirs                        \
+	--cross-compile-prefix=$(CHOST)- --prefix=$(KBUILD)/local --openssldir=$(KBUILD)/local     \
+	 && make all install_sw install_ssldirs                                                    \
 	&& sed -i "s/\(ui_st UI\)/\1_/" $(KBUILD)/local/include/openssl/ossl_typ.h                 \
 	&& sed -i "s/\(UI\) /\1_ /" $(KBUILD)/local/include/openssl/ui.h                           )
 
@@ -115,15 +115,6 @@ quickfix:
 	&& sed -i "/int r;/,+9d" src/C++/AtomicCount.h                                               \
 	&& sed -i "s/\/\/ \(\*\)/\1/" src/C++/AtomicCount.h                                          \
 	&& sed -i "s/\/\/ \(i\)/\1/" src/C++/AtomicCount.h                                           \
-	&& sed -i "/CRYPTO_set_locking_callback/,+1d" src/C++/UtilitySSL.cpp                         \
-	&& sed -i "/CRYPTO_set_id_callback/d" src/C++/UtilitySSL.cpp                                 \
-	&& sed -i "s/CRYPTO_num_locks()/(1)/" src/C++/UtilitySSL.cpp                                 \
-	&& sed -i "s/CRYPTO_LOCK/1/" src/C++/UtilitySSL.cpp                                          \
-	&& sed -i "s/GETHOSTBYNAME_R_INPUTS_RESULT, 1/GETHOSTBYNAME_R_INPUTS_RESULT, 0/" *.ac        \
-	&& sed -i "s/OpenSSL_add_all_algorithms()/OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_CIPHERS | OPENSSL_INIT_ADD_ALL_DIGESTS | OPENSSL_INIT_LOAD_CONFIG, NULL)/" src/C++/UtilitySSL.cpp \
-	&& sed -i "s/SSL_load_error_strings()/OPENSSL_init_ssl(OPENSSL_INIT_LOAD_SSL_STRINGS | OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL)/" src/C++/UtilitySSL.cpp \
-	&& sed -i "s/SSL_library_init()/OPENSSL_init_ssl(0, NULL)/" configure m4/ax_lib_ssl.m4 src/C++/UtilitySSL.cpp \
-	&& sed -i "s/get_rfc/BN_get_rfc/g" src/C++/Utility*.cpp                                      \
 	&& (test -n "`echo $(CHOST) | grep mingw32`"                                                 \
 	&& (sed -i "s/Thread/ThreadId/" src/C++/Utility*.cpp                                         \
 	&& sed -i "s/_MSC_VER/_WIN32/" src/C++/Utility*.* src/C++/SSLSocketInitiator.h               \
