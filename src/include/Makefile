@@ -40,7 +40,7 @@ openssl:
 	&& cd $(KBUILD)/openssl-$(V_SSL) && CC=gcc CPPFLAGS=-DIU=UI_                               \
 	./Configure $(shell test -n "`echo $(CHOST) | grep mingw32`" && echo mingw64 || echo dist) \
 	--cross-compile-prefix=$(CHOST)- --prefix=$(KBUILD)/local --openssldir=$(KBUILD)/local     \
-	 && make all install_sw install_ssldirs                                                    \
+	&& make all install_sw install_ssldirs                                                     \
 	&& sed -i "s/\(ui_st UI\)/\1_/" $(KBUILD)/local/include/openssl/ossl_typ.h                 \
 	&& sed -i "s/\(UI\) /\1_ /" $(KBUILD)/local/include/openssl/ui.h                           )
 
