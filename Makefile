@@ -152,8 +152,9 @@ Win32: src/$(KSRC)/$(KSRC).cxx
 download:
 	curl -L https://github.com/ctubio/Krypto-trading-bot/releases/download/$(MAJOR).$(MINOR).x/v$(MAJOR).$(MINOR).$(PATCH).$(BUILD)-$(CHOST).tar.gz | tar xz
 	@$(MAKE) system_install -s
-	@rm -rf app && $(foreach conf,$(wildcard *.sh), test -n "`cat $(conf) | grep "app/server"`" && sed -i 's/\.\/app\/server\/K/K-trading-bot/' $(conf) && sed -i 's/app\/server\/K/K-trading-bot/' $(conf) || :;)
 	@test -n "`ls *.sh 2>/dev/null`" || (cp etc/K.sh.dist K.sh && chmod +x K.sh)
+	-@rm -rf app
+	-@$(foreach conf,$(wildcard *.sh), test -n "`cat $(conf) | grep "app/server"`" && sed -i 's/\.\/app\/server\/K/K-trading-bot/' $(conf) && sed -i 's/app\/server\/K/K-trading-bot/' $(conf) || :;)
 
 cleandb: /data/db/K*
 	rm -rf /data/db/K*.db
