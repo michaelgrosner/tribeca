@@ -68,7 +68,7 @@ class TradingBot: public KryptoNinja {
             +  '.' + "db";
       } };
       Print::display = display;
-      Print::logs    = {3, 6, 2, 2};
+      Print::margin  = {3, 6, 1, 2};
     };
     static void display();
 } K;

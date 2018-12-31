@@ -103,7 +103,7 @@ namespace ₿ {
   class Print {
     public:
       static WINDOW *stdlog;
-      static Margin logs;
+      static Margin margin;
       static void (*display)();
       static const bool windowed() {
         if (display) {
@@ -115,13 +115,13 @@ namespace ₿ {
                 "\"export TERM=xterm\", or use --naked argument"
             );
           Ansi::default_colors();
-          if (logs.top != ANY_NUM) {
+          if (margin.top != ANY_NUM) {
             stdlog = subwin(
               stdscr,
-              getmaxy(stdscr) - logs.bottom - logs.top,
-              getmaxx(stdscr) - logs.left - logs.right,
-              logs.top,
-              logs.left
+              getmaxy(stdscr) - margin.bottom - margin.top,
+              getmaxx(stdscr) - margin.left - margin.right,
+              margin.top,
+              margin.left
             );
             scrollok(stdlog, true);
             idlok(stdlog, true);
@@ -243,7 +243,7 @@ namespace ₿ {
 
   WINDOW *Print::stdlog = nullptr;
 
-  Margin Print::logs = {ANY_NUM, 0, 0, 0};
+  Margin Print::margin = {ANY_NUM, 0, 0, 0};
 
   void (*Print::display)() = nullptr;
 

@@ -2,17 +2,21 @@
 #define K_SH_H_
 
 void TradingBot::display() {
-  static int last_yMaxLog = 0;
   const vector<mOrder> openOrders = engine->orders.working(true);
+  const unsigned int previous = Print::margin.bottom;
+  Print::margin.bottom = max((int)openOrders.size(), engine->broker.semaphore.paused() ? 0 : 2) + 1;
   int y = getmaxy(stdscr),
       x = getmaxx(stdscr),
-      yMaxLog = y - max((int)openOrders.size(), engine->broker.semaphore.paused() ? 0 : 2) - 1,
+      yMaxLog = y - Print::margin.bottom,
       yOrders = yMaxLog;
-  if (yMaxLog != last_yMaxLog) {
-    if (yMaxLog < last_yMaxLog) wscrl(Print::stdlog, last_yMaxLog-yMaxLog);
-    wresize(Print::stdlog, yMaxLog-3, x-2-6);
-    if (yMaxLog > last_yMaxLog) wscrl(Print::stdlog, last_yMaxLog-yMaxLog);
-    last_yMaxLog = yMaxLog;
+  if (Print::margin.bottom != previous) {
+    if (previous < Print::margin.bottom) wscrl(Print::stdlog, Print::margin.bottom - previous);
+    wresize(
+      Print::stdlog,
+      y - Print::margin.top - Print::margin.bottom,
+      x - Print::margin.left - Print::margin.right
+    );
+    if (previous > Print::margin.bottom) wscrl(Print::stdlog, Print::margin.bottom - previous);
   }
   mvwvline(stdscr, 1, 1, ' ', y-1);
   mvwvline(stdscr, yMaxLog-1, 1, ' ', y-1);
