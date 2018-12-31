@@ -3,7 +3,7 @@
 
 class QE: public Engine { public: QE() { engine = this; };
   protected:
-    void load() {
+    void load() override {
       SQLITE_BACKUP
       gw->askForCancelAll = &qp.cancelOrdersAuto;
       monitor.unlock          = &gw->unlock;
@@ -12,7 +12,7 @@ class QE: public Engine { public: QE() { engine = this; };
       broker.calculon.dummyMM.mode("loaded");
       broker.semaphore.agree(K.option.num("autobot"));
     };
-    void waitData() {
+    void waitData() override {
       gw->RAWDATA_ENTRY_POINT(mConnectivity, {
         broker.semaphore.read_from_gw(rawdata);
         if (broker.semaphore.offline())
@@ -34,14 +34,14 @@ class QE: public Engine { public: QE() { engine = this; };
         levels.stats.takerTrades.read_from_gw(rawdata);
       });
     };
-    void waitWebAdmin() {
+    void waitWebAdmin() override {
       CLIENT_WELCOME
       CLIENT_CLICKME
     };
-    void waitSysAdmin() {
+    void waitSysAdmin() override {
       HOTKEYS
     };
-    void run() {
+    void run() override {
       K.handshake({
         {"gateway", gw->http               },
         {"gateway", gw->ws                 },

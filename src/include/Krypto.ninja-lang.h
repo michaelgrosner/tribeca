@@ -3,7 +3,7 @@
 //! \file
 //! \brief Available language interface.
 
-#include <stdlib.h>
+#include <cstdlib>
 #include <iostream>
 #include <iomanip>
 #include <sstream>
@@ -11,18 +11,18 @@
 #include <vector>
 #include <unordered_map>
 #include <map>
-#include <random>
-#include <thread>
+#include <ctime>
+#include <cmath>
 #include <mutex>
+#include <thread>
 #include <future>
 #include <chrono>
+#include <random>
 #include <locale>
-#include <time.h>
-#include <math.h>
-#include <getopt.h>
-#include <signal.h>
+#include <csignal>
 #include <algorithm>
 #include <functional>
+#include <getopt.h>
 
 #ifdef _WIN32
 #define strsignal to_string

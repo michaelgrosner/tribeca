@@ -3,7 +3,7 @@
 //! \file
 //! \brief Internal data objects.
 
-namespace ฿ {
+namespace ₿ {
   enum class mQuotingMode: unsigned int {
     Top, Mid, Join, InverseJoin, InverseTop, HamelinRat, Depth
   };
@@ -96,7 +96,7 @@ namespace ฿ {
       }
       return false;
     };
-    virtual const json blob() const {
+    const json blob() const override {
       return *(mData*)this;
     };
     protected:
@@ -149,26 +149,26 @@ namespace ฿ {
     };
   };
   template <typename mData> struct mStructFromDb: public mFromDb {
-    virtual const json blob() const {
+    const json blob() const override {
       return *(mData*)this;
     };
-    virtual const bool pull(const json &j) {
+    const bool pull(const json &j) override {
       if (j.empty()) return false;
       from_json(j.at(0), *(mData*)this);
       return true;
     };
-    virtual string explainOK() const {
+    string explainOK() const override {
       return "loaded last % OK";
     };
   };
   template <typename mData> struct mVectorFromDb: public mFromDb {
     vector<mData> rows;
-    typedef typename vector<mData>::reference                           reference;
-    typedef typename vector<mData>::const_reference               const_reference;
-    typedef typename vector<mData>::iterator                             iterator;
-    typedef typename vector<mData>::const_iterator                 const_iterator;
-    typedef typename vector<mData>::reverse_iterator             reverse_iterator;
-    typedef typename vector<mData>::const_reverse_iterator const_reverse_iterator;
+    using reference              = typename vector<mData>::reference;
+    using const_reference        = typename vector<mData>::const_reference;
+    using iterator               = typename vector<mData>::iterator;
+    using const_iterator         = typename vector<mData>::const_iterator;
+    using reverse_iterator       = typename vector<mData>::reverse_iterator;
+    using const_reverse_iterator = typename vector<mData>::const_reverse_iterator;
     iterator                 begin()       noexcept { return rows.begin(); };
     const_iterator           begin() const noexcept { return rows.begin(); };
     const_iterator          cbegin() const noexcept { return rows.cbegin(); };
@@ -194,15 +194,15 @@ namespace ฿ {
       push();
       erase();
     };
-    virtual const bool pull(const json &j) {
+    const bool pull(const json &j) override {
       for (const json &it : j)
         rows.push_back(it);
       return !empty();
     };
-    virtual const json blob() const {
+    const json blob() const override {
       return back();
     };
-    virtual const string explain() const {
+    const string explain() const override {
       return to_string(size());
     };
   };
@@ -337,20 +337,20 @@ namespace ฿ {
       if (mode == mQuotingMode::Depth)
         widthPercentage = false;
     };
-    void kiss(json *const j) {
+    void kiss(json *const j) override {
       previous = {this};
       from_json(*j);
       diff(previous);
       push();
       send();
     };
-    const mMatter about() const {
+    const mMatter about() const override {
       return mMatter::QuotingParameters;
     };
-    const string explain() const {
+    const string explain() const override {
       return "Quoting Parameters";
     };
-    string explainKO() const {
+    string explainKO() const override {
       return "using default values for %";
     };
     private:
@@ -484,7 +484,7 @@ namespace ฿ {
 #endif
         ;
       };
-      const mMatter about() const {
+      const mMatter about() const override {
         return mMatter::ProductAdvertisement;
       };
   };
@@ -631,13 +631,13 @@ namespace ฿ {
         send();
         Print::repaint();
       };
-      const mMatter about() const {
+      const mMatter about() const override {
         return mMatter::OrderStatusReports;
       };
-      const bool realtime() const {
+      const bool realtime() const override {
         return !qp.delayUI;
       };
-      const json blob() const {
+      const json blob() const override {
         return working();
       };
     private:
@@ -680,13 +680,13 @@ namespace ฿ {
       trades.push_back(raw);
       send();
     };
-    const mMatter about() const {
+    const mMatter about() const override {
       return mMatter::MarketTrade;
     };
-    const json blob() const {
+    const json blob() const override {
       return trades.back();
     };
-    const json hello() {
+    const json hello() override {
       return trades;
     };
   };
@@ -704,16 +704,16 @@ namespace ฿ {
       const mPrice currentPrice() const {
         return fairValue;
       };
-      const mMatter about() const {
+      const mMatter about() const override {
         return mMatter::FairValue;
       };
-      const bool realtime() const {
+      const bool realtime() const override {
         return !qp.delayUI;
       };
-      const bool send_same_blob() const {
+      const bool send_same_blob() const override {
         return false;
       };
-      const bool send_asap() const {
+      const bool send_asap() const override {
         return false;
       };
   };
@@ -758,7 +758,7 @@ namespace ฿ {
       mStdevs(const mPrice &f)
         : fairValue(f)
       {};
-      const bool pull(const json &j) {
+      const bool pull(const json &j) override {
         const bool loaded = mVectorFromDb::pull(j);
         if (loaded) calc();
         return loaded;
@@ -774,16 +774,16 @@ namespace ฿ {
         ask  = calc(&askMean, "ask");
         top  = calc(&topMean, "top");
       };
-      const mMatter about() const {
+      const mMatter about() const override {
         return mMatter::STDEVStats;
       };
-      const double limit() const {
+      const double limit() const override {
         return qp.quotingStdevProtectionPeriods;
       };
-      const mClock lifetime() const {
+      const mClock lifetime() const override {
         return 1e+3 * limit();
       };
-      string explainOK() const {
+      string explainOK() const override {
         return "loaded % STDEV Periods";
       };
     private:
@@ -831,16 +831,16 @@ namespace ฿ {
   };
 
   struct mFairHistory: public mVectorFromDb<mPrice> {
-    const mMatter about() const {
+    const mMatter about() const override {
       return mMatter::MarketDataLongTerm;
     };
-    const double limit() const {
+    const double limit() const override {
       return 5760;
     };
-    const mClock lifetime() const {
+    const mClock lifetime() const override {
       return 60e+3 * limit();
     };
-    string explainOK() const {
+    string explainOK() const override {
       return "loaded % historical Fair Values";
     };
   };
@@ -878,10 +878,10 @@ namespace ฿ {
         if (TRUEONCE(qp._diffXSEP)) calcFromHistory(&mgEwmaXS, qp.extraShortEwmaPeriods, "ExtraShort");
         if (TRUEONCE(qp._diffUEP))  calcFromHistory(&mgEwmaU,  qp.ultraShortEwmaPeriods, "UltraShort");
       };
-      const mMatter about() const {
+      const mMatter about() const override {
         return mMatter::EWMAStats;
       };
-      const mClock lifetime() const {
+      const mClock lifetime() const override {
         return 60e+3 * max(qp.veryLongEwmaPeriods,
                        max(qp.longEwmaPeriods,
                        max(qp.mediumEwmaPeriods,
@@ -890,10 +890,10 @@ namespace ฿ {
                            qp.ultraShortEwmaPeriods
                        )))));
       };
-      const string explain() const {
+      const string explain() const override {
         return "EWMA Values";
       };
-      string explainKO() const {
+      string explainKO() const override {
         return "consider to warm up some %";
       };
     private:
@@ -979,10 +979,10 @@ namespace ฿ {
       , stdev(f)
       , fairPrice(f)
     {};
-    const mMatter about() const {
+    const mMatter about() const override {
       return mMatter::MarketChart;
     };
-    const bool realtime() const {
+    const bool realtime() const override {
       return !qp.delayUI;
     };
   };
@@ -1016,10 +1016,10 @@ namespace ฿ {
         if (!empty()) send_now();
         unfilter();
       };
-      const mMatter about() const {
+      const mMatter about() const override {
         return mMatter::MarketData;
       };
-      const json hello() {
+      const json hello() override {
         unfilter();
         return mToClient::hello();
       };
@@ -1225,21 +1225,21 @@ namespace ฿ {
     const double calcDiffPercent(mAmount older, mAmount newer) const {
       return ROUND(((newer - older) / newer) * 1e+2, 1e-2);
     };
-    const mMatter about() const {
+    const mMatter about() const override {
       return mMatter::Profit;
     };
-    void erase() {
+    void erase() override {
       for (vector<mProfit>::iterator it = begin(); it != end();)
         if (it->time + lifetime() > Tstamp) ++it;
         else it = rows.erase(it);
     };
-    const double limit() const {
+    const double limit() const override {
       return qp.profitHourInterval;
     };
-    const mClock lifetime() const {
+    const mClock lifetime() const override {
       return 3600e+3 * limit();
     };
-    string explainOK() const {
+    string explainOK() const override {
       return "loaded % historical Profits";
     };
   };
@@ -1318,23 +1318,23 @@ namespace ฿ {
       if (qp.cleanPongsAuto)
         clearPongsAuto();
     };
-    const mMatter about() const {
+    const mMatter about() const override {
       return mMatter::Trades;
     };
-    void erase() {
+    void erase() override {
       if (crbegin()->Kqty < 0) rows.pop_back();
     };
-    const json blob() const {
+    const json blob() const override {
       if (crbegin()->Kqty == -1) return nullptr;
       else return mVectorFromDb::blob();
     };
-    const string increment() const {
+    const string increment() const override {
       return crbegin()->tradeId;
     };
-    string explainOK() const {
+    string explainOK() const override {
       return "loaded % historical Trades";
     };
-    const json hello() {
+    const json hello() override {
       for (mTrade &it : rows)
         it.loadedFromDB = true;
       return rows;
@@ -1515,10 +1515,10 @@ namespace ฿ {
       const bool empty() const {
         return !baseValue or !buySize or !sellSize;
       };
-      const mMatter about() const {
+      const mMatter about() const override {
         return mMatter::TradeSafetyValue;
       };
-      const bool send_same_blob() const {
+      const bool send_same_blob() const override {
         return false;
       };
     private:
@@ -1657,19 +1657,19 @@ namespace ฿ {
       const bool empty() const {
         return !baseValue;
       };
-      const bool realtime() const {
+      const bool realtime() const override {
         return !qp.delayUI;
       };
-      const mMatter about() const {
+      const mMatter about() const override {
         return mMatter::TargetBasePosition;
       };
-      const string explain() const {
+      const string explain() const override {
         return to_string(targetBasePosition);
       };
-      string explainOK() const {
+      string explainOK() const override {
         return "loaded TBP = % " + gw->base;
       };
-      const bool send_same_blob() const {
+      const bool send_same_blob() const override {
         return false;
       };
     private:
@@ -1754,16 +1754,16 @@ namespace ฿ {
           *askForFees = true;
         }
       };
-      const mMatter about() const {
+      const mMatter about() const override {
         return mMatter::Position;
       };
-      const bool realtime() const {
+      const bool realtime() const override {
         return !qp.delayUI;
       };
-      const bool send_asap() const {
+      const bool send_asap() const override {
         return false;
       };
-      const bool send_same_blob() const {
+      const bool send_same_blob() const override {
         return false;
       };
     private:
@@ -1804,56 +1804,56 @@ namespace ฿ {
   };
 
   struct mButtonSubmitNewOrder: public mFromClient {
-    void kiss(json *const j) {
+    void kiss(json *const j) override {
       if (!j->is_object() or !j->value("price", 0.0) or !j->value("quantity", 0.0))
         *j = nullptr;
     };
-    const mMatter about() const {
+    const mMatter about() const override {
       return mMatter::SubmitNewOrder;
     };
   };
   struct mButtonCancelOrder: public mFromClient {
-    void kiss(json *const j) {
+    void kiss(json *const j) override {
       *j = (j->is_object() and !j->value("orderId", "").empty())
         ? j->at("orderId").get<mRandId>()
         : nullptr;
     };
-    const mMatter about() const {
+    const mMatter about() const override {
       return mMatter::CancelOrder;
     };
   };
   struct mButtonCancelAllOrders: public mFromClient {
-    const mMatter about() const {
+    const mMatter about() const override {
       return mMatter::CancelAllOrders;
     };
   };
   struct mButtonCleanAllClosedTrades: public mFromClient {
-    const mMatter about() const {
+    const mMatter about() const override {
       return mMatter::CleanAllClosedTrades;
     };
   };
   struct mButtonCleanAllTrades: public mFromClient {
-    const mMatter about() const {
+    const mMatter about() const override {
       return mMatter::CleanAllTrades;
     };
   };
   struct mButtonCleanTrade: public mFromClient {
-    void kiss(json *const j) {
+    void kiss(json *const j) override {
       *j = (j->is_object() and !j->value("tradeId", "").empty())
         ? j->at("tradeId").get<string>()
         : nullptr;
     };
-    const mMatter about() const {
+    const mMatter about() const override {
       return mMatter::CleanTrade;
     };
   };
   struct mNotepad: public mJsonToClient<mNotepad> {
     string content;
-    void kiss(json *const j) {
+    void kiss(json *const j) override {
       if (j->is_array() and j->size() and j->at(0).is_string())
         content = j->at(0);
     };
-    const mMatter about() const {
+    const mMatter about() const override {
       return mMatter::Notepad;
     };
   };
@@ -1877,7 +1877,7 @@ namespace ฿ {
     private:
       mConnectivity adminAgreement = mConnectivity::Disconnected;
     public:
-      void kiss(json *const j) {
+      void kiss(json *const j) override {
         if (j->is_object()
           and j->at("agree").is_number()
           and j->at("agree").get<mConnectivity>() != adminAgreement
@@ -1902,19 +1902,18 @@ namespace ฿ {
           switchFlag();
         }
       };
-      const mMatter about() const {
+      const mMatter about() const override {
         return mMatter::Connectivity;
       };
     private:
       void switchFlag() {
-        const mConnectivity k = (mConnectivity)(
+        const mConnectivity previous = greenButton;
+        greenButton = (mConnectivity)(
           (bool)greenGateway and (bool)adminAgreement
         );
-        if (greenButton != k) {
-          greenButton = k;
+        if (greenButton != previous)
           Print::log("GW " + gw->exchange, "Quoting state changed to",
             string(paused() ? "DIS" : "") + "CONNECTED");
-        }
         send();
         Print::repaint();
       };
@@ -1955,7 +1954,7 @@ namespace ฿ {
     mQuoteBid()
       : mQuote(mSide::Bid)
     {};
-    const bool deprecates(const mPrice &higher) const {
+    const bool deprecates(const mPrice &higher) const override {
       return price < higher;
     };
   };
@@ -1963,7 +1962,7 @@ namespace ฿ {
     mQuoteAsk()
       : mQuote(mSide::Ask)
     {};
-    const bool deprecates(const mPrice &lower) const {
+    const bool deprecates(const mPrice &lower) const override {
       return price > lower;
     };
   };
@@ -2256,13 +2255,13 @@ namespace ฿ {
         }
         return false;
       };
-      const mMatter about() const {
+      const mMatter about() const override {
         return mMatter::QuoteStatus;
       };
-      const bool realtime() const {
+      const bool realtime() const override {
         return !qp.delayUI;
       };
-      const bool send_same_blob() const {
+      const bool send_same_blob() const override {
         return false;
       };
     private:
@@ -2605,7 +2604,7 @@ namespace ฿ {
         send();
         orders_60s = 0;
       };
-      const mMatter about() const {
+      const mMatter about() const override {
         return mMatter::ApplicationState;
       };
   };

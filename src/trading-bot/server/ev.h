@@ -9,35 +9,35 @@ class EV: public Events { public: EV() { events = this; };
     vector<function<void()>> slowFn;
     unsigned int tick = 0;
   protected:
-    void load() {
+    void load() override {
       socket = new uWS::Hub(0, true);
       Print::log("CF", "Network Interface for outgoing traffic is",
         client->wtfismyip = Curl::xfer("https://wtfismyip.com/json", 4L)
                               .value("YourFuckingIPAddress", client->wtfismyip)
       );
     };
-    void waitData() {
+    void waitData() override {
       gw->socket = socket;
       socket->createGroup<uWS::CLIENT>();
     };
-    void waitWebAdmin() {
+    void waitWebAdmin() override {
       if (K.option.num("headless")) return;
       client->socket = socket;
       socket->createGroup<uWS::SERVER>(uWS::PERMESSAGE_DEFLATE);
     };
-    void waitTime() {
+    void waitTime() override {
       timer = new uS::Timer(socket->getLoop());
       timer->setData(this);
       timer->start([](uS::Timer *timer) {
         ((EV*)timer->getData())->timer_1s();
       }, 0, 1e+3);
     };
-    void run() {
+    void run() override {
       loop = new uS::Async(socket->getLoop());
       loop->setData(this);
       loop->start(walk);
     };
-    void end() {
+    void end() override {
       timer->stop();
       gw->close();
       socket->getDefaultGroup<uWS::CLIENT>().close();
@@ -46,7 +46,7 @@ class EV: public Events { public: EV() { events = this; };
       socket->getDefaultGroup<uWS::SERVER>().close();
     };
   public:
-    void deferred(const function<void()> &fn) {
+    void deferred(const function<void()> &fn) override {
       slowFn.push_back(fn);
       loop->send();
     };

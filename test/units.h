@@ -1,7 +1,7 @@
 #ifndef K_UNITS_H_
 #define K_UNITS_H_
 
-namespace ฿ {
+namespace ₿ {
   SCENARIO("general") {
     GIVEN("mConnectivity") {
       mConnectivity on, off;

@@ -3,7 +3,7 @@
 //! \file
 //! \brief Minimal user application framework.
 
-namespace ฿ {
+namespace ₿ {
   string epilogue;
 
   //! \brief     Call all endingFn once and print a last log msg.
@@ -441,13 +441,13 @@ namespace ฿ {
       void main(int argc, char** argv) {
         optint["naked"] = !Print::display;
         vector<Argument> long_options = {
-          {"help",         "h",      0,        "show this help and quit"},
-          {"version",      "v",      0,        "show current build version and quit"},
-          {"latency",      "1",      0,        "check current HTTP latency (not from WS) and quit"}
+          {"help",         "h",      nullptr,  "show this help and quit"},
+          {"version",      "v",      nullptr,  "show current build version and quit"},
+          {"latency",      "1",      nullptr,  "check current HTTP latency (not from WS) and quit"}
         };
         if (Print::display)
           long_options.push_back(
-            {"naked",        "1",      0,        "do not display CLI, print output to stdout instead"}
+            {"naked",         "1",      nullptr, "do not display CLI, print output to stdout instead"}
           );
         for (const Argument &it : (vector<Argument>){
           {"interface",    "IP",     "",       "set IP to bind as outgoing network interface,"
@@ -474,14 +474,14 @@ namespace ฿ {
           long_options.push_back(it);
         arguments.first.clear();
         for (const Argument &it : (vector<Argument>){
-          {"debug-secret", "1",      0,        "print (never share!) secret inputs and outputs"},
-          {"debug",        "1",      0,        "print detailed output about all the (previous) things!"},
-          {"colors",       "1",      0,        "print highlighted output"},
+          {"debug-secret", "1",      nullptr,  "print (never share!) secret inputs and outputs"},
+          {"debug",        "1",      nullptr,  "print detailed output about all the (previous) things!"},
+          {"colors",       "1",      nullptr,  "print highlighted output"},
           {"title",        "WORD",   K_SOURCE, "set WORD to allow admins to identify different bots"},
-          {"free-version", "1",      0,        "work with all market levels but slowdown 7 seconds"}
+          {"free-version", "1",      nullptr,  "work with all market levels but slowdown 7 seconds"}
         }) long_options.push_back(it);
         int index = ANY_NUM;
-        vector<option> opt_long = { {0, 0, 0, 0} };
+        vector<option> opt_long = { {nullptr, 0, nullptr, 0} };
         for (const Argument &it : long_options) {
           if     (!it.default_value)             optint[it.name] = 0;
           else if (it.defined_value == "NUMBER") optint[it.name] = stoi(it.default_value);
@@ -596,7 +596,8 @@ namespace ฿ {
           << Ansi::r(COLOR_GREEN) << "  questions: " << Ansi::r(COLOR_YELLOW) << "https://earn.com/analpaper/" << '\n'
           << Ansi::b(COLOR_GREEN) << "K" << Ansi::r(COLOR_GREEN) << " bugkiller: " << Ansi::r(COLOR_YELLOW) << "https://github.com/ctubio/Krypto-trading-bot/issues/new" << '\n'
           << Ansi::r(COLOR_GREEN) << "  downloads: " << Ansi::r(COLOR_YELLOW) << "ssh://git@github.com/ctubio/Krypto-trading-bot" << '\n'
-          << Ansi::b(COLOR_WHITE) << stamp.at(((++y%4)*3)+x) << "Usage:" << Ansi::b(COLOR_YELLOW) << " " << K_SOURCE << " [arguments]" << '\n'
+          << Ansi::b(COLOR_WHITE) << stamp.at(((++y%4)*3)+x) << "Usage:" << Ansi::b(COLOR_YELLOW) << " " << K_SOURCE << " [arguments]" << '\n';
+        clog
           << Ansi::b(COLOR_WHITE) << stamp.at(((++y%4)*3)+x) << "[arguments]:";
         for (const Argument &it : long_options) {
           string usage = it.help;

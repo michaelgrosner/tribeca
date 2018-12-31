@@ -9,9 +9,9 @@ class TradingBot: public KryptoNinja {
         {"wallet-limit", "AMOUNT", "0",                        "set AMOUNT in base currency to limit the balance,"
                                                                "\n" "otherwise the full available balance can be used"},
         {"client-limit", "NUMBER", "7",                        "set NUMBER of maximum concurrent UI connections"},
-        {"headless",     "1",      0,                          "do not listen for UI connections,"
+        {"headless",     "1",      nullptr,                    "do not listen for UI connections,"
                                                                "\n" "all other UI related arguments will be ignored"},
-        {"without-ssl",  "1",      0,                          "do not use HTTPS for UI connections (use HTTP only)"},
+        {"without-ssl",  "1",      nullptr,                    "do not use HTTPS for UI connections (use HTTP only)"},
         {"ssl-crt",      "FILE",   "",                         "set FILE to custom SSL .crt file for HTTPS UI connections"
                                                                "\n" "(see www.akadia.com/services/ssh_test_certificate.html)"},
         {"ssl-key",      "FILE",   "",                         "set FILE to custom SSL .key file for HTTPS UI connections"
@@ -29,13 +29,13 @@ class TradingBot: public KryptoNinja {
         {"lifetime",     "NUMBER", "0",                        "set NUMBER of minimum milliseconds to keep orders open,"
                                                                "\n" "otherwise open orders can be replaced anytime required"},
         {"matryoshka",   "URL",    "https://www.example.com/", "set Matryoshka link URL of the next UI"},
-        {"ignore-sun",   "2",      0,                          "do not switch UI to light theme on daylight"},
-        {"ignore-moon",  "1",      0,                          "do not switch UI to dark theme on moonlight"},
-        {"autobot",      "1",      0,                          "automatically start trading on boot"},
-        {"dustybot",     "1",      0,                          "do not automatically cancel all orders on exit"},
-        {"debug-orders", "1",      0,                          "print detailed output about exchange messages"},
-        {"debug-quotes", "1",      0,                          "print detailed output about quoting engine"},
-        {"debug-wallet", "1",      0,                          "print detailed output about target base position"}
+        {"ignore-sun",   "2",      nullptr,                    "do not switch UI to light theme on daylight"},
+        {"ignore-moon",  "1",      nullptr,                    "do not switch UI to dark theme on moonlight"},
+        {"autobot",      "1",      nullptr,                    "automatically start trading on boot"},
+        {"dustybot",     "1",      nullptr,                    "do not automatically cancel all orders on exit"},
+        {"debug-orders", "1",      nullptr,                    "print detailed output about exchange messages"},
+        {"debug-quotes", "1",      nullptr,                    "print detailed output about quoting engine"},
+        {"debug-wallet", "1",      nullptr,                    "print detailed output about target base position"}
       }, [](
         unordered_map<string, string> &str,
         unordered_map<string, int>    &num,

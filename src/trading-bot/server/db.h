@@ -6,7 +6,7 @@ class DB: public Sqlite { public: DB() { sqlite = this; };
     sqlite3 *db = nullptr;
     string qpdb = "main";
   protected:
-    void load() {
+    void load() override {
       if (sqlite3_open(K.option.str("database").data(), &db))
         error("DB", sqlite3_errmsg(db));
       Print::log("DB", "loaded OK from", K.option.str("database"));
@@ -16,7 +16,7 @@ class DB: public Sqlite { public: DB() { sqlite = this; };
       Print::log("DB", "loaded OK from", K.option.str("diskdata"));
     };
   public:
-    void backup(mFromDb *const data) {
+    void backup(mFromDb *const data) override {
       const bool loaded = data->pull(select(data));
       const string msg = data->explanation(loaded);
       data->push = [this, data]() { insert(data); };
@@ -74,7 +74,7 @@ class DB: public Sqlite { public: DB() { sqlite = this; };
         : "";
     };
     void exec(const string &sql, json *const result = nullptr) {                // Print::log("DB DEBUG", sql);
-      char* zErrMsg = 0;
+      char* zErrMsg = nullptr;
       sqlite3_exec(db, sql.data(), result ? write : nullptr, (void*)result, &zErrMsg);
       if (zErrMsg) Print::logWar("DB", "SQLite error: " + (zErrMsg + (" at " + sql)));
       sqlite3_free(zErrMsg);

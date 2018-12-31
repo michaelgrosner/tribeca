@@ -3,7 +3,7 @@
 //! \file
 //! \brief External exchange API integrations.
 
-namespace ฿ {
+namespace ₿ {
   enum class mConnectivity: unsigned int {
     Disconnected, Connected
   };
@@ -313,7 +313,7 @@ namespace ฿ {
       };
       static const json xfer(const string &url, const string &post) {
         return perform(url, [&](CURL *curl) {
-          struct curl_slist *h_ = NULL;
+          struct curl_slist *h_ = nullptr;
           h_ = curl_slist_append(h_, "Content-Type: application/x-www-form-urlencoded");
           curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
           curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post.data());
@@ -434,7 +434,7 @@ namespace ฿ {
           evp_md(),
           input.data(), input.length(),
           (unsigned char*)key.data(), key.length(),
-          NULL, NULL
+          nullptr, nullptr
         );
         char output[digest_len * 2 + 1];
         for (unsigned int i = 0; i < digest_len; i++)
@@ -444,11 +444,10 @@ namespace ฿ {
       static string HEX(const string &input) {
         const unsigned int len = input.length();
         string output;
-        for (unsigned int i = 0; i < len; i += 2) {
-          string byte = input.substr(i, 2);
-          char chr = (char)(int)strtol(byte.data(), NULL, 16);
-          output.push_back(chr);
-        }
+        for (unsigned int i = 0; i < len; i += 2)
+          output.push_back(
+            (char)(int)strtol(input.substr(i, 2).data(), nullptr, 16)
+          );
         return output;
       };
   };
@@ -467,10 +466,10 @@ namespace ฿ {
         return to_string(int64()).substr(0,  8);
       };
       static const mRandId char16Id() {
-        char s[16];
-        for (unsigned int i = 0; i < 16; ++i)
-          s[i] = numsAz[int64() % (sizeof(numsAz) - 1)];
-        return string(s, 16);
+        char ch[16];
+        for (char &it : ch)
+          it = numsAz[int64() % (sizeof(numsAz) - 1)];
+        return string(ch, 16);
       };
       static const mRandId uuid36Id() {
         string uuid = string(36, ' ');
@@ -695,10 +694,10 @@ namespace ฿ {
 
   class GwApiREST: public Gw {
     public:
-      const bool askForData(const unsigned int &tick) {
+      const bool askForData(const unsigned int &tick) override {
         return askForSyncData(tick);
       };
-      const bool waitForData() {
+      const bool waitForData() override {
         return waitForSyncData();
       };
   };
@@ -706,17 +705,17 @@ namespace ฿ {
     public:
       GwApiWS()
       { countdown = 1; };
-      const bool askForData(const unsigned int &tick) {
+      const bool askForData(const unsigned int &tick) override {
         return askForNeverAsyncData(tick);
       };
-      const bool waitForData() {
+      const bool waitForData() override {
         return waitForNeverAsyncData();
       };
   };
 
   class GwNull: public GwApiREST {
     public:
-      const json handshake() {
+      const json handshake() override {
         randId  = Random::uuid36Id;
         symbol  = base + "_" + quote;
         minTick = 0.01;
@@ -731,7 +730,7 @@ namespace ฿ {
         http = "https://api.hitbtc.com/api/2";
         ws   = "wss://api.hitbtc.com/api/2/ws";
       };
-      const json handshake() {
+      const json handshake() override {
         randId = Random::uuid32Id;
         symbol = base + quote;
         const json reply = Curl::xfer(http + "/public/symbol/" + symbol);
@@ -759,7 +758,7 @@ namespace ฿ {
         ws   = "wss://ws-feed.pro.coinbase.com";
         fix  = "fix.pro.coinbase.com:4198";
       };
-      const json handshake() {
+      const json handshake() override {
         randId = Random::uuid36Id;
         symbol = base + "-" + quote;
         const json reply = Curl::xfer(http + "/products/" + symbol);
@@ -770,7 +769,7 @@ namespace ฿ {
     protected:
       static const json xfer(const string &url, const string &h1, const string &h2, const string &h3, const string &h4, const bool &rm) {
         return Curl::perform(url, [&](CURL *curl) {
-          struct curl_slist *h_ = NULL;
+          struct curl_slist *h_ = nullptr;
           h_ = curl_slist_append(h_, ("CB-ACCESS-KEY: " + h1).data());
           h_ = curl_slist_append(h_, ("CB-ACCESS-SIGN: " + h2).data());
           h_ = curl_slist_append(h_, ("CB-ACCESS-TIMESTAMP: " + h3).data());
@@ -788,30 +787,33 @@ namespace ฿ {
         ws   = "wss://api.bitfinex.com/ws/2";
         askForReplace = true;
       };
-      const json handshake() {
+      const json handshake() override {
         randId = Random::int45Id;
         symbol = Text::strL(base + quote);
         const json reply1 = Curl::xfer(http + "/pubticker/" + symbol);
         if (reply1.find("last_price") != reply1.end()) {
           ostringstream price_;
           price_ << scientific << stod(reply1.value("last_price", "0"));
-          string _price_ = price_.str();
-          for (string::iterator it=_price_.begin(); it!=_price_.end();)
-            if (*it == '+' or *it == '-') break; else it = _price_.erase(it);
-          istringstream iss("1e" + to_string(fmax(stod(_price_),-4)-4));
+          string price = price_.str();
+          for (string::iterator it=price.begin(); it!=price.end();)
+            if (*it == '+' or *it == '-') break;
+            else it = price.erase(it);
+          istringstream iss("1e" + to_string(fmax(stod(price),-4)-4));
           iss >> minTick;
         }
         const json reply2 = Curl::xfer(http + "/symbols_details");
         if (reply2.is_array())
-          for (json::const_iterator it=reply2.cbegin(); it!=reply2.cend();++it)
-            if (it->find("pair") != it->end() and it->value("pair", "") == symbol)
-              minSize = stod(it->value("minimum_order_size", "0"));
+          for (const json &it : reply2)
+            if (it.find("pair") != it.end() and it.value("pair", "") == symbol) {
+              minSize = stod(it.value("minimum_order_size", "0"));
+              break;
+            }
         return { reply1, reply2 };
       };
     protected:
       static const json xfer(const string &url, const string &post, const string &h1, const string &h2) {
         return Curl::perform(url, [&](CURL *curl) {
-          struct curl_slist *h_ = NULL;
+          struct curl_slist *h_ = nullptr;
           h_ = curl_slist_append(h_, ("X-BFX-APIKEY: " + h1).data());
           h_ = curl_slist_append(h_, ("X-BFX-PAYLOAD: " + post).data());
           h_ = curl_slist_append(h_, ("X-BFX-SIGNATURE: " + h2).data());
@@ -835,16 +837,16 @@ namespace ฿ {
         http = "https://api.fcoin.com/v2/";
         ws   = "wss://api.fcoin.com/v2/ws";
       };
-      const json handshake() {
+      const json handshake() override {
         randId = Random::char16Id;
         symbol = Text::strL(base + quote);
         const json reply = Curl::xfer(http + "public/symbols");
         if (reply.find("data") != reply.end() and reply.at("data").is_array())
-          for (json::const_iterator it=reply.at("data").cbegin(); it!=reply.at("data").cend();++it)
-            if (it->find("name") != it->end() and it->value("name", "") == symbol) {
+          for (const json &it : reply.at("data"))
+            if (it.find("name") != it.end() and it.value("name", "") == symbol) {
               istringstream iss(
-                "1e-" + to_string(it->value("price_decimal", 0))
-                + " 1e-" + to_string(it->value("amount_decimal", 0))
+                "1e-" + to_string(it.value("price_decimal", 0))
+                + " 1e-" + to_string(it.value("amount_decimal", 0))
               );
               iss >> minTick >> minSize;
               break;
@@ -854,7 +856,7 @@ namespace ฿ {
     protected:
       static const json xfer(const string &url, const string &h1, const string &h2, const string &h3, const string &post = "") {
         return Curl::perform(url, [&](CURL *curl) {
-          struct curl_slist *h_ = NULL;
+          struct curl_slist *h_ = nullptr;
           if (!post.empty()) {
             curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post.data());
             h_ = curl_slist_append(h_, "Content-Type: application/json;charset=UTF-8");
@@ -872,7 +874,7 @@ namespace ฿ {
       {
         http = "https://api.kraken.com";
       };
-      const json handshake() {
+      const json handshake() override {
         randId = Random::int32Id;
         symbol = base + quote;
         const json reply = Curl::xfer(http + "/0/public/AssetPairs?pair=" + symbol);
@@ -894,7 +896,7 @@ namespace ฿ {
     protected:
       static const json xfer(const string &url, const string &h1, const string &h2, const string &post) {
         return Curl::perform(url, [&](CURL *curl) {
-          struct curl_slist *h_ = NULL;
+          struct curl_slist *h_ = nullptr;
           h_ = curl_slist_append(h_, ("API-Key: " + h1).data());
           h_ = curl_slist_append(h_, ("API-Sign: " + h2).data());
           curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
@@ -908,7 +910,7 @@ namespace ฿ {
       {
         http = "https://api.korbit.co.kr/v1";
       };
-      const json handshake() {
+      const json handshake() override {
         randId = Random::int45Id;
         symbol = Text::strL(base + "_" + quote);
         const json reply = Curl::xfer(http + "/constants");
@@ -921,7 +923,7 @@ namespace ฿ {
     protected:
       static const json xfer(const string &url, const string &h1, const string &post) {
         return Curl::perform(url, [&](CURL *curl) {
-          struct curl_slist *h_ = NULL;
+          struct curl_slist *h_ = nullptr;
           if (!post.empty()) {
             h_ = curl_slist_append(h_, "Content-Type: application/x-www-form-urlencoded");
             curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post.data());
@@ -937,7 +939,7 @@ namespace ฿ {
       {
         http = "https://poloniex.com";
       };
-      const json handshake() {
+      const json handshake() override {
         randId = Random::int45Id;
         symbol = quote + "_" + base;
         const json reply = Curl::xfer(http + "/public?command=returnTicker");
@@ -951,7 +953,7 @@ namespace ฿ {
     protected:
       static const json xfer(const string &url, const string &post, const string &h1, const string &h2) {
         return Curl::perform(url, [&](CURL *curl) {
-          struct curl_slist *h_ = NULL;
+          struct curl_slist *h_ = nullptr;
           h_ = curl_slist_append(h_, "Content-Type: application/x-www-form-urlencoded");
           h_ = curl_slist_append(h_, ("Key: " + h1).data());
           h_ = curl_slist_append(h_, ("Sign: " + h2).data());

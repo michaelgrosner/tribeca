@@ -11,11 +11,11 @@ extern const  int _www_html_index_len, _www_ico_favicon_len, _www_css_base_len,
 class UI: public Client { public: UI() { client = this; };
   private:
     int connections = 0;
-    unordered_map<char, function<json()>> hello;
-    unordered_map<char, function<void(json&)>> kisses;
+    unordered_map<mMatter, function<json()>> hello;
+    unordered_map<mMatter, function<void(json&)>> kisses;
     unordered_map<mMatter, string> queue;
   protected:
-    void waitWebAdmin() {
+    void waitWebAdmin() override {
       if (!socket) return;
       if (!socket->listen(
         Curl::inet.empty() ? nullptr : Curl::inet.data(),
@@ -76,30 +76,30 @@ class UI: public Client { public: UI() { client = this; };
         });
       };
     };
-    void run() {
+    void run() override {
       send = send_nowhere;
     };
   public:
-    void welcome(mToClient &data) {
+    void welcome(mToClient &data) override {
       if (!socket) return;
-      const char type = (char)data.about();
+      const mMatter type = data.about();
       if (hello.find(type) != hello.end())
-        error("UI", string("Too many handlers for \"") + type + "\" welcome event");
+        error("UI", string("Too many handlers for \"") + (char)type + "\" welcome event");
       hello[type] = [&]() { return data.hello(); };
       sendAsync(data);
     };
-    void clickme(mFromClient &data, function<void(const json&)> fn) {
+    void clickme(mFromClient &data, function<void(const json&)> fn) override {
       if (!socket) return;
-      const char type = (char)data.about();
+      const mMatter type = data.about();
       if (kisses.find(type) != kisses.end())
-        error("UI", string("Too many handlers for \"") + type + "\" clickme event");
+        error("UI", string("Too many handlers for \"") + (char)type + "\" clickme event");
       kisses[type] = [&data, fn](json &butterfly) {
         data.kiss(&butterfly);
         if (!butterfly.is_null())
           fn(butterfly);
       };
     };
-    void timer_Xs() {
+    void timer_Xs() override {
       for (unordered_map<mMatter, string>::value_type &it : queue)
         broadcast(it.first, it.second);
       queue.clear();
@@ -151,8 +151,8 @@ class UI: public Client { public: UI() { client = this; };
                              "-----END RSA PRIVATE KEY-----"                                    "\n";
           BIO *cbio = BIO_new_mem_buf((void*)cert, -1),
               *kbio = BIO_new_mem_buf((void*)pkey, -1);
-          if (SSL_CTX_use_certificate(context, PEM_read_bio_X509(cbio, NULL, 0, NULL)) != 1
-            or SSL_CTX_use_RSAPrivateKey(context, PEM_read_bio_RSAPrivateKey(kbio, NULL, 0, NULL)) != 1
+          if (SSL_CTX_use_certificate(context, PEM_read_bio_X509(cbio, nullptr, nullptr, nullptr)) != 1
+            or SSL_CTX_use_RSAPrivateKey(context, PEM_read_bio_RSAPrivateKey(kbio, nullptr, nullptr, nullptr)) != 1
           ) context = nullptr;
         } else {
           if (access(K.option.str("ssl-crt").data(), R_OK) == -1)
@@ -230,7 +230,7 @@ class UI: public Client { public: UI() { client = this; };
           else if (path.find("audio/1.mp3") != string::npos)
             content = string(&_www_mp3_audio_1, _www_mp3_audio_1_len);
         }
-        if (content.empty())
+        if (content.empty()) {
           if (Random::int64() % 21) {
             document = "HTTP/1.1 404 Not Found\r\n";
             content = "Today, is a beautiful day.";
@@ -238,6 +238,7 @@ class UI: public Client { public: UI() { client = this; };
             document = "HTTP/1.1 418 I'm a teapot\r\n";
             content = "Today, is your lucky day!";
           }
+        }
       }
       return document
         + "Content-Length: " + to_string(content.length())
@@ -246,17 +247,17 @@ class UI: public Client { public: UI() { client = this; };
     string onMessage(const string &message, const string &addr) {
       if (addr != "unknown" and K.option.str("whitelist").find(addr) == string::npos)
         return string(&_www_gzip_bomb, _www_gzip_bomb_len);
-      if (mPortal::Hello == (mPortal)message.at(0) and hello.find(message.at(1)) != hello.end()) {
-        json reply = hello.at(message.at(1))();
+      if (mPortal::Hello == (mPortal)message.at(0) and hello.find((mMatter)message.at(1)) != hello.end()) {
+        json reply = hello.at((mMatter)message.at(1))();
         if (!reply.is_null())
           return message.substr(0, 2) + reply.dump();
-      } else if (mPortal::Kiss == (mPortal)message.at(0) and kisses.find(message.at(1)) != kisses.end()) {
+      } else if (mPortal::Kiss == (mPortal)message.at(0) and kisses.find((mMatter)message.at(1)) != kisses.end()) {
         json butterfly = json::accept(message.substr(2))
           ? json::parse(message.substr(2))
           : json::object();
         for (json::iterator it = butterfly.begin(); it != butterfly.end();)
           if (it.value().is_null()) it = butterfly.erase(it); else ++it;
-        kisses.at(message.at(1))(butterfly);
+        kisses.at((mMatter)message.at(1))(butterfly);
       }
       return "";
     };

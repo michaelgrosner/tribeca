@@ -18,7 +18,7 @@ class HelloWorld: public KryptoNinja {
       } };
     };
   protected:
-    void run() {
+    void run() override {
       const string result = greeting();
       const string prefix = "Executed " + (
         option.num("debug")

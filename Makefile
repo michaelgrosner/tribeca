@@ -2,7 +2,7 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
 PATCH    = 11
-BUILD    = 22
+BUILD    = 23
 SOURCE   = hello-world \
            trading-bot
 CARCH    = x86_64-linux-gnu      \
@@ -116,9 +116,9 @@ else
 	$(if $(subst 8,,$(subst 7,,$(shell $(CHOST)-g++ -dumpversion | cut -d. -f1))),$(warning $(ERR));$(error $(HINT)))
 	@$(CHOST)-g++ --version
 	@mkdir -p $(KLOCAL)/bin
-	-@egrep ฿ src test -lR --exclude-dir=node_modules | xargs sed -i 's/฿/\\u0E3F/g'
+	-@egrep ₿ src test -lR --exclude-dir=node_modules | xargs sed -i 's/₿/\\u20BF/g'
 	$(MAKE) $(shell test -n "`echo $(CHOST) | grep darwin`" && echo Darwin || (test -n "`echo $(CHOST) | grep mingw32`" && echo Win32 || uname -s)) CHOST=$(CHOST)
-	-@egrep \\u0E3F src test -lR --exclude-dir=node_modules | xargs sed -i 's/\\u0E3F/฿/g'
+	-@egrep \\u20BF src test -lR --exclude-dir=node_modules | xargs sed -i 's/\\u20BF/₿/g'
 	@chmod +x $(KLOCAL)/bin/K-$(KSRC)*
 	@$(MAKE) system_install -s
 endif
@@ -136,12 +136,12 @@ else
 endif
 
 Darwin: src/$(KSRC)/$(KSRC).cxx
-	-@egrep \\u0E3F src -lR --exclude-dir=node_modules | xargs sed -i 's/\\\(u0E3F\)/\1/g'
+	-@egrep \\u20BF src -lR --exclude-dir=node_modules | xargs sed -i 's/\\\(u20BF\)/\1/g'
 	$(CHOST)-g++ -DNDEBUG -o $(KLOCAL)/bin/K-$(KSRC)                             \
 	  -DUSE_LIBUV                                                                \
 	  -msse4.1 -maes -mpclmul -mmacosx-version-min=10.13 -nostartfiles -rdynamic \
 	  $^ $(KARGS) -ldl
-	-@egrep u0E3F src -lR --exclude-dir=node_modules | xargs sed -i 's/\(u0E3F\)/\\\1/g'
+	-@egrep u20BF src -lR --exclude-dir=node_modules | xargs sed -i 's/\(u20BF\)/\\\1/g'
 
 Win32: src/$(KSRC)/$(KSRC).cxx
 	$(CHOST)-g++-posix -DNDEBUG -o $(KLOCAL)/bin/K-$(KSRC).exe   \
@@ -154,7 +154,7 @@ download:
 	@$(MAKE) system_install -s
 	@test -n "`ls *.sh 2>/dev/null`" || (cp etc/K.sh.dist K.sh && chmod +x K.sh)
 	-@rm -rf app
-	-@$(foreach conf,$(wildcard *.sh), test -n "`cat $(conf) | grep "app/server"`" && sed -i 's/\.\/app\/server\/K/K-trading-bot/' $(conf) && sed -i 's/app\/server\/K/K-trading-bot/' $(conf) || :;)
+	-@$(foreach conf,$(wildcard *.sh), test -n "`cat $(conf) | grep "app/server"`" && (sed -i 's/\.\/app\/server\/K/K-trading-bot/' $(conf) && sed -i 's/app\/server\/K/K-trading-bot/' $(conf)) || :;)
 
 cleandb: /data/db/K*
 	rm -rf /data/db/K*.db
