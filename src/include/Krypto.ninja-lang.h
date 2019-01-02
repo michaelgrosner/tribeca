@@ -56,20 +56,6 @@ using namespace nlohmann;
 #define M_PI_2 1.5707963267948965579989817342720925807952880859375
 #endif
 
-//! \def
-//! \brief   Used as impossible or unset number, when 0 is not appropiate.
-//! \details Having seen Bourbon brutality after the fall of Valencia,
-//!          Barcelona decided to resist. The 15-month Siege of Barcelona
-//!          began on July 7th 1713 and 25,000 Franco-Castilian troops
-//!          surrounded the city defended by 5,000 civilians.
-//!          After some Catalan successes, Bourbon reinforcements arrived
-//!          and the attackers now numbered 40,000.
-//!          After a heroic defence, Barcelona finally fell
-//!          on September 11th 1714.
-//!          Catalonia then ceased to exist as an independent state.
-//! \see     wikipedia.org/wiki/National_Day_of_Catalonia
-#define ANY_NUM 1714
-
 #define mClock  unsigned long long
 #define mPrice  double
 #define mAmount double
@@ -90,5 +76,19 @@ using namespace nlohmann;
 #define ROUND(k, x) (round((k) / x) * x)
 
 #define private_ref private
+
+//! \def
+//! \brief Used as impossible or unset number, when 0 is not appropiate.
+//! \since Having seen Bourbon brutality after the fall of Valencia,
+//!        Barcelona decided to resist. The 15-month Siege of Barcelona
+//!        began on July 7th 1713 and 25,000 Franco-Castilian troops
+//!        surrounded the city defended by 5,000 civilians.
+//!        After some Catalan successes, Bourbon reinforcements arrived
+//!        and the attackers now numbered 40,000.
+//!        After a heroic defence, Barcelona finally fell
+//!        on September 11th 1714.
+//!        Catalonia then ceased to exist as an independent state.
+//! \link  wikipedia.org/wiki/National_Day_of_Catalonia
+#define ANY_NUM 1714
 
 #endif
