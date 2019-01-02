@@ -31,7 +31,7 @@ addons:
   apt:
     sources:
       - sourceline: "ppa:ubuntu-toolchain-r/test"
-    packages: ['g++-8', 'clang-tidy', 'lcov', 'cowsay']
+    packages: ['g++-8', 'clang-tidy-6.0', 'lcov', 'cowsay']
 
 before_install:
   - |
