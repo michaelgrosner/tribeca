@@ -2,7 +2,7 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
 PATCH    = 11
-BUILD    = 27
+BUILD    = 28
 SOURCE   = hello-world \
            trading-bot
 CARCH    = x86_64-linux-gnu      \
@@ -250,10 +250,10 @@ ifndef KSRC
 else
 	@cp test/static_code_analysis.cxx test/static_code_analysis-$(KSRC).cxx
 	@sed -i "s/%/$(KSRC)/g" test/static_code_analysis-$(KSRC).cxx
-	@pvs-studio-analyzer analyze -e test/units.h -e $(KLOCAL)/include --source-file test/static_code_analysis-$(KSRC).cxx --cl-params -I. -Isrc/include -I$(KLOCAL)/include test/static_code_analysis-$(KSRC).cxx && \
-	  (plog-converter -a GA:1,2 -t tasklist -o report.tasks PVS-Studio.log && cat report.tasks && rm report.tasks) || :
-	@clang-tidy -quiet -header-filter=$(realpath src) -checks='modernize-deprecated-headers modernize-use-* -modernize-use-auto -modernize-use-emplace' test/static_code_analysis-$(KSRC).cxx -- $(KARGS)
-	-@rm PVS-Studio.log test/static_code_analysis-$(KSRC).cxx
+	# @pvs-studio-analyzer analyze -e test/units.h -e $(KLOCAL)/include --source-file test/static_code_analysis-$(KSRC).cxx --cl-params -I. -Isrc/include -I$(KLOCAL)/include test/static_code_analysis-$(KSRC).cxx && \
+	  # (plog-converter -a GA:1,2 -t tasklist -o report.tasks PVS-Studio.log && cat report.tasks && rm report.tasks) || :
+	@clang-tidy -quiet -header-filter=$(realpath src) -checks='modernize-*,-modernize-pass-by-value,-modernize-raw-string-literal,-modernize-use-auto' test/static_code_analysis-$(KSRC).cxx -- $(KARGS)
+	@rm -f PVS-Studio.log test/static_code_analysis-$(KSRC).cxx > /dev/null 2>&1
 endif
 
 #png: etc/${PNG}.png etc/${PNG}.json

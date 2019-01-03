@@ -361,8 +361,7 @@ namespace ₿ {
                      shortEwmaPeriods      = 0,
                      extraShortEwmaPeriods = 0,
                      ultraShortEwmaPeriods = 0;
-        mPreviousQParams()
-        {};
+        mPreviousQParams() = default;
         mPreviousQParams(const mQuotingParams *const prev)
           : veryLongEwmaPeriods(  prev->veryLongEwmaPeriods  )
           , longEwmaPeriods(      prev->longEwmaPeriods      )
@@ -505,8 +504,7 @@ namespace ₿ {
     mAmount tradeQuantity  = 0;
     mSide   side           = (mSide)0;
     bool    isPong         = false;
-    mLastOrder()
-    {};
+    mLastOrder() = default;
     mLastOrder(const mOrder *const order, const mOrder &raw)
       : price(        order ? order->price      : 0       )
       , tradeQuantity(order ? raw.tradeQuantity : 0       )
@@ -727,8 +725,7 @@ namespace ₿ {
     mPrice fv     = 0,
            topBid = 0,
            topAsk = 0;
-    mStdev()
-    {};
+    mStdev() = default;
     mStdev(const mPrice &f, const mPrice &b, const mPrice &a)
       : fv(f)
       , topBid(b)
@@ -1053,7 +1050,7 @@ namespace ₿ {
             to.erase(it_);
           }
           if (size != it.size)
-            patch.push_back(mLevel(it.price, size));
+            patch.emplace_back(it.price, size);
         }
         if (!to.empty())
           patch.insert(patch.end(), to.begin(), to.end());
@@ -1186,8 +1183,7 @@ namespace ₿ {
     mAmount baseValue  = 0,
             quoteValue = 0;
      mClock time       = 0;
-    mProfit()
-    {};
+    mProfit() = default;
     mProfit(mAmount b, mAmount q)
       : baseValue(b)
       , quoteValue(q)
@@ -1351,8 +1347,8 @@ namespace ₿ {
       void matchPong(map<mPrice, string> matches, mTrade pong, bool reverse) {
         if (reverse) for (map<mPrice, string>::reverse_iterator it = matches.rbegin(); it != matches.rend(); ++it) {
           if (!matchPong(it->second, &pong)) break;
-        } else for (map<mPrice, string>::iterator it = matches.begin(); it != matches.end(); ++it)
-          if (!matchPong(it->second, &pong)) break;
+        } else for (map<mPrice, string>::value_type &it : matches)
+          if (!matchPong(it.second, &pong)) break;
         if (pong.quantity > 0) {
           bool eq = false;
           for (iterator it = begin(); it != end(); ++it) {
@@ -1591,8 +1587,8 @@ namespace ₿ {
         if (reverse) for (map<mPrice, mTrade>::reverse_iterator it = tradesSide->rbegin(); it != tradesSide->rend(); ++it) {
           if (matchPing(_near, _far, ping, qty, qtyMax, width, dir * fairValue, dir * it->second.price, it->second.quantity, it->second.price, it->second.Kqty, reverse))
             break;
-        } else for (map<mPrice, mTrade>::iterator it = tradesSide->begin(); it != tradesSide->end(); ++it)
-          if (matchPing(_near, _far, ping, qty, qtyMax, width, dir * fairValue, dir * it->second.price, it->second.quantity, it->second.price, it->second.Kqty, reverse))
+        } else for (map<mPrice, mTrade>::value_type &it : *tradesSide)
+          if (matchPing(_near, _far, ping, qty, qtyMax, width, dir * fairValue, dir * it.second.price, it.second.quantity, it.second.price, it.second.Kqty, reverse))
             break;
       };
       const bool matchPing(bool _near, bool _far, mPrice *ping, mAmount *qty, mAmount qtyMax, mPrice width, mPrice fv, mPrice price, mAmount qtyTrade, mPrice priceTrade, mAmount KqtyTrade, bool reverse) {

@@ -397,7 +397,7 @@ namespace ₿ {
         waitWebAdmin();
         waitSysAdmin();
         waitTime();
-        endingFn.push_back([&]() {
+        endingFn.emplace_back([&]() {
           end();
         });
         run();

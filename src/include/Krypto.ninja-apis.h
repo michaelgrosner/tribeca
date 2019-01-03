@@ -34,8 +34,7 @@ namespace ₿ {
                  preferPostOnly = true;
           mClock time           = 0,
                  latency        = 0;
-    mOrder()
-    {};
+    mOrder() = default;
     mOrder(const mRandId &o, const mSide &s, const mPrice &p, const mAmount &q, const bool &i)
       : orderId(o)
       , side(s)
@@ -130,8 +129,7 @@ namespace ₿ {
             Ktime        = 0;
        bool isPong       = false,
             loadedFromDB = false;
-    mTrade()
-    {};
+    mTrade() = default;
     mTrade(const mPrice p, const mAmount q, const mSide s, const mClock t)
       : side(s)
       , price(p)
@@ -199,8 +197,7 @@ namespace ₿ {
   struct mLevel {
      mPrice price = 0;
     mAmount size  = 0;
-    mLevel()
-    {};
+    mLevel() = default;
     mLevel(const mPrice &p, const mAmount &s)
       : price(p)
       , size(s)
@@ -221,8 +218,7 @@ namespace ₿ {
   struct mLevels {
     vector<mLevel> bids,
                    asks;
-    mLevels()
-    {};
+    mLevels() = default;
     mLevels(const vector<mLevel> &b, const vector<mLevel> &a)
       : bids(b)
       , asks(a)
@@ -254,8 +250,7 @@ namespace ₿ {
             value  = 0,
             profit = 0;
     mCoinId currency;
-    mWallet()
-    {};
+    mWallet() = default;
     mWallet(const mAmount &a, const mAmount &h, const mCoinId &c)
       : amount(a)
       , held(h)
@@ -284,8 +279,7 @@ namespace ₿ {
   struct mWallets {
     mWallet base,
             quote;
-    mWallets()
-    {};
+    mWallets() = default;
     mWallets(const mWallet &b, const mWallet &q)
       : base(b)
       , quote(q)
