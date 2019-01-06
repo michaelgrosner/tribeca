@@ -2,7 +2,7 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
 PATCH    = 11
-BUILD    = 28
+BUILD    = 29
 SOURCE   = hello-world \
            trading-bot
 CARCH    = x86_64-linux-gnu      \
@@ -169,11 +169,11 @@ uninstall:
 	@$(foreach bin,$(addprefix /usr/local/bin/,$(notdir $(wildcard $(KLOCAL)/bin/K-*))), sudo rm -v $(bin);)
 
 system_install:
-	$(info Checking sudo permission to install binaries into /usr/local/bin.. $(shell sudo echo OK))
-	$(info Checking if /usr/local/bin is already in your PATH.. $(if $(shell echo $$PATH | grep /usr/local/bin),OK))
+	$(info Checking if sudo           is allowed  at /usr/local/bin.. $(shell sudo ls -ld /usr/local/bin > /dev/null 2>&1 && echo OK || echo ERROR))
+	$(info Checking if /usr/local/bin is already  in your PATH..      $(if $(shell echo $$PATH | grep /usr/local/bin),OK))
 	$(if $(shell echo $$PATH | grep /usr/local/bin),,$(info $(subst ..,,$(subst Building ,,$(call STEP,Warning! you MUST add /usr/local/bin to your PATH!)))))
-	$(info Checking if /etc/ssl/certs is readable by curl.. $(shell (test -d /etc/ssl/certs && echo OK) || (sudo mkdir -p /etc/ssl/certs && echo OK)))
-	$(info Checking if /data/db is writable by sqlite.. $(shell (test -d /data/db && echo OK) || (sudo mkdir -p /data/db && sudo chown $(shell id -u) /data/db && echo OK)))
+	$(info Checking if /etc/ssl/certs is readable by curl..           $(shell (test -d /etc/ssl/certs && echo OK) || (sudo mkdir -p /etc/ssl/certs && echo OK)))
+	$(info Checking if /data/db       is writable by sqlite..         $(shell (test -d /data/db && echo OK) || (sudo mkdir -p /data/db && sudo chown $(shell id -u) /data/db && echo OK)))
 	$(info )
 	$(info List of installed K binaries:)
 	@sudo cp -f $(wildcard $(KLOCAL)/bin/K-$(KSRC)*) /usr/local/bin
@@ -252,7 +252,7 @@ else
 	@sed -i "s/%/$(KSRC)/g" test/static_code_analysis-$(KSRC).cxx
 	# @pvs-studio-analyzer analyze -e test/units.h -e $(KLOCAL)/include --source-file test/static_code_analysis-$(KSRC).cxx --cl-params -I. -Isrc/include -I$(KLOCAL)/include test/static_code_analysis-$(KSRC).cxx && \
 	  # (plog-converter -a GA:1,2 -t tasklist -o report.tasks PVS-Studio.log && cat report.tasks && rm report.tasks) || :
-	@clang-tidy -quiet -header-filter=$(realpath src) -checks='modernize-*,-modernize-pass-by-value,-modernize-raw-string-literal,-modernize-use-auto' test/static_code_analysis-$(KSRC).cxx -- $(KARGS)
+	@clang-tidy -quiet -header-filter=$(realpath src) -checks='modernize-*,-modernize-pass-by-value,-modernize-use-auto' test/static_code_analysis-$(KSRC).cxx -- $(KARGS)
 	@rm -f PVS-Studio.log test/static_code_analysis-$(KSRC).cxx > /dev/null 2>&1
 endif
 

@@ -3,16 +3,16 @@
 
 namespace ₿ {
   SCENARIO("general") {
-    GIVEN("mConnectivity") {
-      mConnectivity on, off;
+    GIVEN("Connectivity") {
+      Connectivity on, off;
       WHEN("assigned") {
-        REQUIRE_NOTHROW(on = mConnectivity::Connected);
-        REQUIRE_NOTHROW(off = mConnectivity::Disconnected);
+        REQUIRE_NOTHROW(on  = Connectivity::Connected);
+        REQUIRE_NOTHROW(off = Connectivity::Disconnected);
         THEN("values") {
           REQUIRE_FALSE(!(bool)on);
           REQUIRE(!(bool)off);
           THEN("combined") {
-            REQUIRE(((bool)on  and (bool)on));
+            REQUIRE(      ((bool)on  and (bool)on));
             REQUIRE_FALSE(((bool)on  and (bool)off));
             REQUIRE_FALSE(((bool)off and (bool)on));
             REQUIRE_FALSE(((bool)off and (bool)off));
@@ -110,8 +110,8 @@ namespace ₿ {
     GIVEN("mMarketLevels") {
       Option option;
       mProduct product(option);
-      const mPrice  minTick = 0.01;
-      const mAmount minSize = 0.001;
+      const Price  minTick = 0.01;
+      const Amount minSize = 0.001;
       product.minTick = &minTick;
       product.minSize = &minSize;
       mOrders orders(product);
@@ -134,19 +134,19 @@ namespace ₿ {
           REQUIRE(levels.stats.fairPrice.blob().dump() == "{\"price\":1234.55}");
         });
         REQUIRE_NOTHROW(qp.fvModel = mFairValueModel::BBO);
-        vector<mRandId> randIds;
+        vector<RandId> randIds;
         REQUIRE_NOTHROW(randIds.push_back(Random::uuid36Id()));
-        REQUIRE_NOTHROW(orders.upsert(mOrder(randIds.back(), mSide::Bid, 1234.52, 0.34567890, false)));
-        REQUIRE_NOTHROW(orders.upsert(mOrder(randIds.back(), "", mStatus::Working, 0, 0, 0)));
+        REQUIRE_NOTHROW(orders.upsert(mOrder(randIds.back(), Side::Bid, 1234.52, 0.34567890, false)));
+        REQUIRE_NOTHROW(orders.upsert(mOrder(randIds.back(), "", Status::Working, 0, 0, 0)));
         REQUIRE_NOTHROW(randIds.push_back(Random::uuid36Id()));
-        REQUIRE_NOTHROW(orders.upsert(mOrder(randIds.back(), mSide::Bid, 1234.52, 0.23456789, false)));
-        REQUIRE_NOTHROW(orders.upsert(mOrder(randIds.back(), "", mStatus::Working, 0, 0, 0)));
+        REQUIRE_NOTHROW(orders.upsert(mOrder(randIds.back(), Side::Bid, 1234.52, 0.23456789, false)));
+        REQUIRE_NOTHROW(orders.upsert(mOrder(randIds.back(), "", Status::Working, 0, 0, 0)));
         REQUIRE_NOTHROW(randIds.push_back(Random::uuid36Id()));
-        REQUIRE_NOTHROW(orders.upsert(mOrder(randIds.back(), mSide::Bid, 1234.55, 0.01234567, false)));
-        REQUIRE_NOTHROW(orders.upsert(mOrder(randIds.back(), "", mStatus::Working, 0, 0, 0)));
+        REQUIRE_NOTHROW(orders.upsert(mOrder(randIds.back(), Side::Bid, 1234.55, 0.01234567, false)));
+        REQUIRE_NOTHROW(orders.upsert(mOrder(randIds.back(), "", Status::Working, 0, 0, 0)));
         REQUIRE_NOTHROW(randIds.push_back(Random::uuid36Id()));
-        REQUIRE_NOTHROW(orders.upsert(mOrder(randIds.back(), mSide::Ask, 1234.69, 0.01234568, false)));
-        REQUIRE_NOTHROW(orders.upsert(mOrder(randIds.back(), "", mStatus::Working, 0, 0, 0)));
+        REQUIRE_NOTHROW(orders.upsert(mOrder(randIds.back(), Side::Ask, 1234.69, 0.01234568, false)));
+        REQUIRE_NOTHROW(orders.upsert(mOrder(randIds.back(), "", Status::Working, 0, 0, 0)));
         REQUIRE_NOTHROW(levels.read_from_gw(mLevels(
           { mLevel(1234.50, 0.12345678), mLevel(1234.55, 0.01234567) },
           { mLevel(1234.60, 1.23456789), mLevel(1234.69, 0.11234569) }
@@ -244,21 +244,21 @@ namespace ₿ {
         mLastOrder order;
         REQUIRE_NOTHROW(order.price = 1234.57);
         REQUIRE_NOTHROW(order.tradeQuantity = 0.01234566);
-        REQUIRE_NOTHROW(order.side = mSide::Ask);
+        REQUIRE_NOTHROW(order.side = Side::Ask);
         REQUIRE_NOTHROW(recentTrades.insert(order));
         REQUIRE_NOTHROW(order.price = 1234.58);
         REQUIRE_NOTHROW(order.tradeQuantity = 0.01234567);
         REQUIRE_NOTHROW(recentTrades.insert(order));
         REQUIRE_NOTHROW(order.price = 1234.56);
         REQUIRE_NOTHROW(order.tradeQuantity = 0.12345678);
-        REQUIRE_NOTHROW(order.side = mSide::Bid);
+        REQUIRE_NOTHROW(order.side = Side::Bid);
         REQUIRE_NOTHROW(recentTrades.insert(order));
         REQUIRE_NOTHROW(order.price = 1234.50);
         REQUIRE_NOTHROW(order.tradeQuantity = 0.12345679);
         REQUIRE_NOTHROW(recentTrades.insert(order));
         REQUIRE_NOTHROW(order.price = 1234.60);
         REQUIRE_NOTHROW(order.tradeQuantity = 0.12345678);
-        REQUIRE_NOTHROW(order.side = mSide::Ask);
+        REQUIRE_NOTHROW(order.side = Side::Ask);
         REQUIRE_NOTHROW(recentTrades.insert(order));
         THEN("values") {
           REQUIRE(recentTrades.lastBuyPrice == 1234.50);
@@ -294,18 +294,18 @@ namespace ₿ {
     }
 
     GIVEN("mEwma") {
-      mPrice fairValue = 0;
+      Price fairValue = 0;
       mEwma ewma(fairValue);
       WHEN("defaults") {
         REQUIRE_FALSE(ewma.mgEwmaM);
       }
       WHEN("assigned") {
-        vector<mPrice> fairHistory = { 268.05, 258.73, 239.82, 250.21, 224.49, 242.53, 248.25, 270.58, 252.77, 273.55,
-                                       255.90, 226.10, 225.00, 263.12, 218.36, 254.73, 218.65, 252.40, 296.10, 222.20 };
+        vector<Price> fairHistory = { 268.05, 258.73, 239.82, 250.21, 224.49, 242.53, 248.25, 270.58, 252.77, 273.55,
+                                      255.90, 226.10, 225.00, 263.12, 218.36, 254.73, 218.65, 252.40, 296.10, 222.20 };
         REQUIRE_NOTHROW(ewma.fairValue96h.mFromDb::push = ewma.mFromDb::push = [&]() {
           INFO("push()");
         });
-        for (const mPrice &it : fairHistory) {
+        for (const Price &it : fairHistory) {
           REQUIRE_NOTHROW(fairValue = it);
           REQUIRE_NOTHROW(ewma.timer_60s(0));
         };
@@ -345,41 +345,41 @@ namespace ₿ {
     GIVEN("mBroker") {
       Option option;
       mProduct product(option);
-      const mPrice minTick = 0.01;
+      const Price minTick = 0.01;
       product.minTick = &minTick;
       mOrders orders(product);
       mMarketLevels levels(product, orders);
-      const mPrice fairValue = 500;
+      const Price fairValue = 500;
       const double targetPositionAutoPercentage = 0;
       mWalletPosition wallet(product, orders, targetPositionAutoPercentage, fairValue);
       wallet.base = mWallet(1, 0, "BTC");
       wallet.quote = mWallet(1000, 0, "EUR");
       mBroker broker(product, orders, levels, wallet);
       WHEN("assigned") {
-        vector<mRandId> randIds;
-        mClock time = Tstamp;
+        vector<RandId> randIds;
+        Clock time = Tstamp;
         REQUIRE_NOTHROW(randIds.push_back(Random::uuid36Id()));
-        REQUIRE_NOTHROW(orders.upsert(mOrder(randIds.back(), mSide::Bid, 1234.50, 0.12345678, false)));
-        REQUIRE_NOTHROW(orders.upsert(mOrder(randIds.back(), "", mStatus::Working, 0, 0, 0)));
+        REQUIRE_NOTHROW(orders.upsert(mOrder(randIds.back(), Side::Bid, 1234.50, 0.12345678, false)));
+        REQUIRE_NOTHROW(orders.upsert(mOrder(randIds.back(), "", Status::Working, 0, 0, 0)));
         REQUIRE_NOTHROW(orders.find(randIds.back())->time = time);
         REQUIRE_NOTHROW(randIds.push_back(Random::uuid36Id()));
-        REQUIRE_NOTHROW(orders.upsert(mOrder(randIds.back(), mSide::Bid, 1234.51, 0.12345679, false)));
-        REQUIRE_NOTHROW(orders.upsert(mOrder(randIds.back(), "", mStatus::Working, 0, 0, 0)));
+        REQUIRE_NOTHROW(orders.upsert(mOrder(randIds.back(), Side::Bid, 1234.51, 0.12345679, false)));
+        REQUIRE_NOTHROW(orders.upsert(mOrder(randIds.back(), "", Status::Working, 0, 0, 0)));
         REQUIRE_NOTHROW(orders.find(randIds.back())->time = time);
         REQUIRE_NOTHROW(randIds.push_back(Random::uuid36Id()));
-        REQUIRE_NOTHROW(orders.upsert(mOrder(randIds.back(), mSide::Bid, 1234.52, 0.12345680, false)));
-        REQUIRE_NOTHROW(orders.upsert(mOrder(randIds.back(), "", mStatus::Working, 0, 0, 0)));
+        REQUIRE_NOTHROW(orders.upsert(mOrder(randIds.back(), Side::Bid, 1234.52, 0.12345680, false)));
+        REQUIRE_NOTHROW(orders.upsert(mOrder(randIds.back(), "", Status::Working, 0, 0, 0)));
         REQUIRE_NOTHROW(orders.find(randIds.back())->time = time);
         REQUIRE_NOTHROW(randIds.push_back(Random::uuid36Id()));
-        REQUIRE_NOTHROW(orders.upsert(mOrder(randIds.back(), mSide::Ask, 1234.50, 0.12345678, false)));
-        REQUIRE_NOTHROW(orders.upsert(mOrder(randIds.back(), "", mStatus::Working, 0, 0, 0)));
+        REQUIRE_NOTHROW(orders.upsert(mOrder(randIds.back(), Side::Ask, 1234.50, 0.12345678, false)));
+        REQUIRE_NOTHROW(orders.upsert(mOrder(randIds.back(), "", Status::Working, 0, 0, 0)));
         REQUIRE_NOTHROW(orders.find(randIds.back())->time = time);
         REQUIRE_NOTHROW(randIds.push_back(Random::uuid36Id()));
-        REQUIRE_NOTHROW(orders.upsert(mOrder(randIds.back(), mSide::Ask, 1234.51, 0.12345679, false)));
-        REQUIRE_NOTHROW(orders.upsert(mOrder(randIds.back(), "", mStatus::Working, 0, 0, 0)));
+        REQUIRE_NOTHROW(orders.upsert(mOrder(randIds.back(), Side::Ask, 1234.51, 0.12345679, false)));
+        REQUIRE_NOTHROW(orders.upsert(mOrder(randIds.back(), "", Status::Working, 0, 0, 0)));
         REQUIRE_NOTHROW(orders.find(randIds.back())->time = time);
         REQUIRE_NOTHROW(randIds.push_back(Random::uuid36Id()));
-        REQUIRE_NOTHROW(orders.upsert(mOrder(randIds.back(), mSide::Ask, 1234.52, 0.12345680, false)));
+        REQUIRE_NOTHROW(orders.upsert(mOrder(randIds.back(), Side::Ask, 1234.52, 0.12345680, false)));
         THEN("held amount") {
           REQUIRE_NOTHROW(wallet.profits.mFromDb::push = [&]() {
             INFO("push()");
@@ -387,9 +387,9 @@ namespace ₿ {
           bool askForFees = false;
           mLastOrder order;
           REQUIRE_NOTHROW(order.price = 1);
-          REQUIRE_NOTHROW(order.side = mSide::Ask);
+          REQUIRE_NOTHROW(order.side = Side::Ask);
           REQUIRE_NOTHROW(wallet.calcFundsAfterOrder(order, &askForFees));
-          REQUIRE_NOTHROW(order.side = mSide::Bid);
+          REQUIRE_NOTHROW(order.side = Side::Bid);
           REQUIRE_NOTHROW(wallet.calcFundsAfterOrder(order, &askForFees));
           REQUIRE(wallet.base.held == 0.37037037);
           REQUIRE(wallet.quote.held == Approx(457.22592546));

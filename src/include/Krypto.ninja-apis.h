@@ -4,38 +4,38 @@
 //! \brief External exchange API integrations.
 
 namespace ₿ {
-  enum class mConnectivity: unsigned int {
+  enum class Connectivity: unsigned int {
     Disconnected, Connected
   };
-  enum class mStatus: unsigned int {
+  enum class Status: unsigned int {
     Waiting, Working, Terminated
   };
-  enum class mSide: unsigned int {
+  enum class Side: unsigned int {
     Bid, Ask
   };
-  enum class mTimeInForce: unsigned int {
+  enum class TimeInForce: unsigned int {
     IOC, FOK, GTC
   };
-  enum class mOrderType: unsigned int {
+  enum class OrderType: unsigned int {
     Limit, Market
   };
 
   struct mOrder {
-         mRandId orderId,
+          RandId orderId,
                  exchangeId;
-         mStatus status         = mStatus::Waiting;
-           mSide side           = (mSide)0;
-          mPrice price          = 0;
-         mAmount quantity       = 0,
+          Status status         = Status::Waiting;
+            Side side           = (Side)0;
+           Price price          = 0;
+          Amount quantity       = 0,
                  tradeQuantity  = 0;
-      mOrderType type           = mOrderType::Limit;
-    mTimeInForce timeInForce    = mTimeInForce::GTC;
+       OrderType type           = OrderType::Limit;
+     TimeInForce timeInForce    = TimeInForce::GTC;
             bool isPong         = false,
                  preferPostOnly = true;
-          mClock time           = 0,
+           Clock time           = 0,
                  latency        = 0;
     mOrder() = default;
-    mOrder(const mRandId &o, const mSide &s, const mPrice &p, const mAmount &q, const bool &i)
+    mOrder(const RandId &o, const Side &s, const Price &p, const Amount &q, const bool &i)
       : orderId(o)
       , side(s)
       , price(p)
@@ -43,7 +43,7 @@ namespace ₿ {
       , isPong(i)
       , time(Tstamp)
     {};
-    mOrder(const mRandId &o, const mRandId &e, const mStatus &s, const mPrice &p, const mAmount &q, const mAmount &Q)
+    mOrder(const RandId &o, const RandId &e, const Status &s, const Price &p, const Amount &q, const Amount &Q)
       : orderId(o)
       , exchangeId(e)
       , status(s)
@@ -54,14 +54,14 @@ namespace ₿ {
     {};
     static void update(const mOrder &raw, mOrder *const order) {
       if (!order) return;
-      if (mStatus::Working == (    order->status     = raw.status
+      if (Status::Working == (     order->status     = raw.status
       ) and !order->latency)       order->latency    = Tstamp - order->time;
                                    order->time       = raw.time;
       if (!raw.exchangeId.empty()) order->exchangeId = raw.exchangeId;
       if (raw.price)               order->price      = raw.price;
       if (raw.quantity)            order->quantity   = raw.quantity;
     };
-    static const bool replace(const mPrice &price, const bool &isPong, mOrder *const order) {
+    static const bool replace(const Price &price, const bool &isPong, mOrder *const order) {
       if (!order
         or order->exchangeId.empty()
       ) return false;
@@ -73,9 +73,9 @@ namespace ₿ {
     static const bool cancel(mOrder *const order) {
       if (!order
         or order->exchangeId.empty()
-        or order->status == mStatus::Waiting
+        or order->status == Status::Waiting
       ) return false;
-      order->status = mStatus::Waiting;
+      order->status = Status::Waiting;
       order->time   = Tstamp;
       return true;
     };
@@ -100,43 +100,44 @@ namespace ₿ {
     k.price          = j.value("price", 0.0);
     k.quantity       = j.value("quantity", 0.0);
     k.side           = j.value("side", "") == "Bid"
-                         ? mSide::Bid
-                         : mSide::Ask;
+                         ? Side::Bid
+                         : Side::Ask;
     k.type           = j.value("type", "") == "Limit"
-                         ? mOrderType::Limit
-                         : mOrderType::Market;
+                         ? OrderType::Limit
+                         : OrderType::Market;
     k.timeInForce    = j.value("timeInForce", "") == "GTC"
-                         ? mTimeInForce::GTC
+                         ? TimeInForce::GTC
                          : (j.value("timeInForce", "") == "FOK"
-                           ? mTimeInForce::FOK
-                           : mTimeInForce::IOC);
+                           ? TimeInForce::FOK
+                           : TimeInForce::IOC);
     k.isPong         = false;
     k.preferPostOnly = false;
   };
 
+
   struct mTrade {
      string tradeId;
-      mSide side         = (mSide)0;
-     mPrice price        = 0,
+       Side side         = (Side)0;
+      Price price        = 0,
             Kprice       = 0;
-    mAmount quantity     = 0,
+     Amount quantity     = 0,
             value        = 0,
             Kqty         = 0,
             Kvalue       = 0,
             Kdiff        = 0,
             feeCharged   = 0;
-     mClock time         = 0,
+      Clock time         = 0,
             Ktime        = 0;
        bool isPong       = false,
             loadedFromDB = false;
     mTrade() = default;
-    mTrade(const mPrice p, const mAmount q, const mSide s, const mClock t)
+    mTrade(const Price p, const Amount q, const Side s, const Clock t)
       : side(s)
       , price(p)
       , quantity(q)
       , time(t)
     {};
-    mTrade(const mPrice &p, const mAmount &q, const mSide &S, const bool &P, const mClock &t, const mAmount &v, const mClock &Kt, const mAmount &Kq, const mPrice &Kp, const mAmount &Kv, const mAmount &Kd, const mAmount &f, const bool &l)
+    mTrade(const Price &p, const Amount &q, const Side &S, const bool &P, const Clock &t, const Amount &v, const Clock &Kt, const Amount &Kq, const Price &Kp, const Amount &Kv, const Amount &Kd, const Amount &f, const bool &l)
       : tradeId(to_string(t))
       , side(S)
       , price(p)
@@ -178,27 +179,27 @@ namespace ₿ {
     };
   };
   static void from_json(const json &j, mTrade &k) {
-    k.tradeId      = j.value("tradeId", "");
-    k.price        = j.value("price", 0.0);
-    k.quantity     = j.value("quantity", 0.0);
-    k.side         = j.value("side", (mSide)0);
-    k.time         = j.value("time", (mClock)0);
-    k.value        = j.value("value", 0.0);
-    k.Ktime        = j.value("Ktime", (mClock)0);
-    k.Kqty         = j.value("Kqty", 0.0);
-    k.Kprice       = j.value("Kprice", 0.0);
-    k.Kvalue       = j.value("Kvalue", 0.0);
-    k.Kdiff        = j.value("Kdiff", 0.0);
+    k.tradeId      = j.value("tradeId",     "");
+    k.price        = j.value("price",      0.0);
+    k.quantity     = j.value("quantity",   0.0);
+    k.side         = j.value("side",   (Side)0);
+    k.time         = j.value("time",  (Clock)0);
+    k.value        = j.value("value",      0.0);
+    k.Ktime        = j.value("Ktime", (Clock)0);
+    k.Kqty         = j.value("Kqty",       0.0);
+    k.Kprice       = j.value("Kprice",     0.0);
+    k.Kvalue       = j.value("Kvalue",     0.0);
+    k.Kdiff        = j.value("Kdiff",      0.0);
     k.feeCharged   = j.value("feeCharged", 0.0);
-    k.isPong       = j.value("isPong", false);
+    k.isPong       = j.value("isPong",   false);
     k.loadedFromDB = true;
   };
 
   struct mLevel {
-     mPrice price = 0;
-    mAmount size  = 0;
+     Price price = 0;
+    Amount size  = 0;
     mLevel() = default;
-    mLevel(const mPrice &p, const mAmount &s)
+    mLevel(const Price &p, const Amount &s)
       : price(p)
       , size(s)
     {};
@@ -223,7 +224,7 @@ namespace ₿ {
       : bids(b)
       , asks(a)
     {};
-    const mPrice spread() const {
+    const Price spread() const {
       return empty()
         ? 0
         : asks.cbegin()->price - bids.cbegin()->price;
@@ -244,24 +245,24 @@ namespace ₿ {
   };
 
   struct mWallet {
-    mAmount amount = 0,
-            held   = 0,
-            total  = 0,
-            value  = 0,
-            profit = 0;
-    mCoinId currency;
+    Amount amount = 0,
+           held   = 0,
+           total  = 0,
+           value  = 0,
+           profit = 0;
+    CoinId currency;
     mWallet() = default;
-    mWallet(const mAmount &a, const mAmount &h, const mCoinId &c)
+    mWallet(const Amount &a, const Amount &h, const CoinId &c)
       : amount(a)
       , held(h)
       , currency(c)
     {};
-    void reset(const mAmount &a, const mAmount &h) {
+    void reset(const Amount &a, const Amount &h) {
       if (empty()) return;
       total = (amount = ROUND(a, 1e-8))
             + (held   = ROUND(h, 1e-8));
     };
-    void reset(const mAmount &h) {
+    void reset(const Amount &h) {
       reset(total - h, h);
     };
     const bool empty() const {
@@ -299,7 +300,7 @@ namespace ₿ {
     private:
       static mutex waiting_reply;
     public:
-      static string inet;
+      static const char *inet;
       static const json xfer(const string &url, const long &timeout = 13) {
         return perform(url, [&](CURL *curl) {
           curl_easy_setopt(curl, CURLOPT_TIMEOUT, timeout);
@@ -314,29 +315,31 @@ namespace ₿ {
         });
       };
       static const json perform(const string &url, function<void(CURL *curl)> setopt, bool debug = true) {
-        string reply;
         lock_guard<mutex> lock(waiting_reply);
+        string reply;
+        CURLcode res = CURLE_FAILED_INIT;
         CURL *curl = curl_easy_init();
         if (curl) {
           setopt(curl);
           curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
-          curl_easy_setopt(curl, CURLOPT_INTERFACE, inet.empty() ? nullptr : inet.data());
+          curl_easy_setopt(curl, CURLOPT_INTERFACE, inet);
           curl_easy_setopt(curl, CURLOPT_URL, url.data());
           curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &write);
           curl_easy_setopt(curl, CURLOPT_WRITEDATA, &reply);
-          CURLcode r = curl_easy_perform(curl);
-          if (debug and r != CURLE_OK)
-            reply = string("{\"error\":\"CURL Error: ") + curl_easy_strerror(r) + "\"}";
+          res = curl_easy_perform(curl);
           curl_easy_cleanup(curl);
         }
-        return json::accept(reply)
-          ? json::parse(reply)
-          : json::object();
+        return (debug and res != CURLE_OK)
+          ? (json){ {"error", string("CURL Error: ") + curl_easy_strerror(res)} }
+          : (json::accept(reply)
+              ? json::parse(reply)
+              : json::object()
+            );
       };
     private:
-      static size_t write(void *buf, size_t size, size_t nmemb, void *up) {
-        ((string*)up)->append((char*)buf, size * nmemb);
-        return size * nmemb;
+      static size_t write(void *buf, size_t size, size_t nmemb, void *reply) {
+        ((string*)reply)->append((char*)buf, size *= nmemb);
+        return size;
       };
   };
 
@@ -453,19 +456,19 @@ namespace ₿ {
         static mt19937_64 gen(rd());
         return uniform_int_distribution<unsigned long long>()(gen);
       };
-      static const mRandId int45Id() {
+      static const RandId int45Id() {
         return to_string(int64()).substr(0, 10);
       };
-      static const mRandId int32Id() {
+      static const RandId int32Id() {
         return to_string(int64()).substr(0,  8);
       };
-      static const mRandId char16Id() {
+      static const RandId char16Id() {
         char ch[16];
         for (char &it : ch)
-          it = numsAz[int64() % (sizeof(numsAz) - 1)];
+          it = NUM_Az[int64() % (sizeof(NUM_Az) - 1)];
         return string(ch, 16);
       };
-      static const mRandId uuid36Id() {
+      static const RandId uuid36Id() {
         string uuid = string(36, ' ');
         unsigned long long rnd = int64();
         unsigned long long rnd_ = int64();
@@ -478,12 +481,12 @@ namespace ₿ {
           if (i != 8 && i != 13 && i != 18 && i != 14 && i != 23) {
             if (rnd <= 0x02) rnd = 0x2000000 + (rnd_ * 0x1000000) | 0;
             rnd >>= 4;
-            uuid[i] = numsAz[(i == 19) ? ((rnd & 0xf) & 0x3) | 0x8 : rnd & 0xf];
+            uuid[i] = NUM_Az[(i == 19) ? ((rnd & 0xf) & 0x3) | 0x8 : rnd & 0xf];
           }
         return Text::strL(uuid);
       };
-      static const mRandId uuid32Id() {
-        mRandId uuid = uuid36Id();
+      static const RandId uuid32Id() {
+        RandId uuid = uuid36Id();
         uuid.erase(remove(uuid.begin(), uuid.end(), '-'), uuid.end());
         return uuid;
       }
@@ -495,12 +498,12 @@ namespace ₿ {
       function<void(const mTrade&)>        write_mTrade;
       function<void(const mLevels&)>       write_mLevels;
       function<void(const mWallets&)>      write_mWallets;
-      function<void(const mConnectivity&)> write_mConnectivity;
+      function<void(const Connectivity&)>  write_Connectivity;
 #define RAWDATA_ENTRY_POINT(mData, read) write_##mData = [&](const mData &rawdata) read
       bool askForFees    = false,
            askForReplace = false;
       const bool *askForCancelAll = nullptr;
-      const mRandId (*randId)() = nullptr;
+      const RandId (*randId)() = nullptr;
       virtual const bool askForData(const unsigned int &tick) = 0;
       virtual const bool waitForData() = 0;
       void place(const mOrder *const order) {
@@ -528,9 +531,9 @@ namespace ₿ {
       };
 //BO non-free gw library functions from build-*/local/lib/K-*.a (it just redefines all virtual gateway class members below).
 /**/  virtual bool ready() = 0;                                              // wait for exchange and register data handlers
-/**/  virtual void replace(mRandId, string) {};                              // call         async orders data from exchange
-/**/  virtual void place(mRandId, mSide, string, string, mOrderType, mTimeInForce, bool) = 0, // async orders as above/below
-/**/               cancel(mRandId, mRandId) = 0,                             // call         async orders data from exchange
+/**/  virtual void replace(RandId, string) {};                               // call         async orders data from exchange
+/**/  virtual void place(RandId, Side, string, string, OrderType, TimeInForce, bool) = 0,  // async orders, like above/below
+/**/               cancel(RandId, RandId) = 0,                               // call         async orders data from exchange
 /**/               close() = 0;                                              // disconnect but without waiting for reconnect
 /**/protected:
 /**/  virtual bool            async_wallet() { return false; };              // call         async wallet data from exchange
@@ -600,19 +603,19 @@ namespace ₿ {
     public:
       uWS::Hub *socket = nullptr;
       unsigned int countdown = 0;
-         string exchange, symbol,
-                apikey,   secret,
-                user,     pass,
-                http,     ws,
-                fix,      unlock;
-        mCoinId base,     quote;
-            int version  = 0,
-                maxLevel = 0,
-                debug    = 0;
-         mPrice minTick  = 0;
-        mAmount minSize  = 0,
-                makeFee  = 0,
-                takeFee  = 0;
+        string exchange, symbol,
+               apikey,   secret,
+               user,     pass,
+               http,     ws,
+               fix,      unlock;
+        CoinId base,     quote;
+           int version  = 0,
+               maxLevel = 0,
+               debug    = 0;
+         Price minTick  = 0;
+        Amount minSize  = 0,
+               makeFee  = 0,
+               takeFee  = 0;
       virtual const json handshake() = 0;
       void connect() {
         socket->connect(ws, nullptr, {}, 5e+3, &socket->getDefaultGroup<uWS::CLIENT>());
@@ -647,9 +650,9 @@ namespace ₿ {
       };
       void latency(const string &reason, const function<void()> &fn) {
         log("latency check", "start");
-        const mClock Tstart = Tstamp;
+        const Clock Tstart = Tstamp;
         fn();
-        const mClock Tstop  = Tstamp;
+        const Clock Tstop  = Tstamp;
         log("latency check", "stop");
         const unsigned int Tdiff = Tstop - Tstart;
         log(reason + " took", to_string(Tdiff) + "ms of your time");

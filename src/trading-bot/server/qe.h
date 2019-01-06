@@ -13,7 +13,7 @@ class QE: public Engine { public: QE() { engine = this; };
       broker.semaphore.agree(K.option.num("autobot"));
     };
     void waitData() override {
-      gw->RAWDATA_ENTRY_POINT(mConnectivity, {
+      gw->RAWDATA_ENTRY_POINT(Connectivity, {
         broker.semaphore.read_from_gw(rawdata);
         if (broker.semaphore.offline())
           levels.clear();

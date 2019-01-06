@@ -216,14 +216,14 @@ code( btn.cleanTradesClosed , wallet.safety.trades.clearClosed ,           )
       raw.orderId = gw->randId();
       placeOrder(raw);
     };
-    void manualCancelOrder(const mRandId &orderId) {
+    void manualCancelOrder(const RandId &orderId) {
       cancelOrder(orders.find(orderId));
     };
   private:
     void placeOrder(const mOrder &raw) {
       gw->place(orders.upsert(raw));
     };
-    void replaceOrder(const mPrice &price, const bool &isPong, mOrder *const order) {
+    void replaceOrder(const Price &price, const bool &isPong, mOrder *const order) {
       if (orders.replace(price, isPong, order))
         gw->replace(order);
     };

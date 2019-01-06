@@ -14,8 +14,8 @@ namespace ₿ {
     raise(reboot ? SIGTERM : SIGQUIT);
   };
 
-  string Curl::inet;
-  mutex  Curl::waiting_reply;
+  const char *Curl::inet = nullptr;
+  mutex Curl::waiting_reply;
 
   class Ansi {
     public:
@@ -146,7 +146,7 @@ namespace ₿ {
         }
       };
       static const string stamp() {
-        chrono::system_clock::time_point clock = Tclock;
+        chrono::system_clock::time_point clock = chrono::system_clock::now();
         chrono::system_clock::duration t = clock.time_since_epoch();
         t -= chrono::duration_cast<chrono::seconds>(t);
         auto milliseconds = chrono::duration_cast<chrono::milliseconds>(t);
@@ -258,7 +258,7 @@ namespace ₿ {
          << string(epilogue.empty() ? 0 : 1, '\n');
   } };
 
-  const mClock rollout = Tstamp;
+  const Clock rollout = Tstamp;
 
   class Rollout {
     public:
@@ -526,9 +526,10 @@ namespace ₿ {
         tidy();
         gateway();
         curl_global_init(CURL_GLOBAL_ALL);
-        Curl::inet = str("interface");
-        Ansi::colorful = num("colors");
+        if (!str("interface").empty())
+          Curl::inet = strdup(str("interface").data());
         if (num("naked")) Print::display = nullptr;
+        Ansi::colorful = num("colors");
       };
     private:
       void tidy() {

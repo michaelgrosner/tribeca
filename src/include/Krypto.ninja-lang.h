@@ -34,15 +34,21 @@
 using namespace std;
 
 #include <json.h>
+
 #include <sqlite3.h>
+
 #include <uWS/uWS.h>
+
 #include <curl/curl.h>
+
 #include <openssl/bio.h>
 #include <openssl/evp.h>
 #include <openssl/sha.h>
 #include <openssl/hmac.h>
 #include <openssl/buffer.h>
+
 #include <ncurses/ncurses.h>
+
 #include <quickfix/NullStore.h>
 #include <quickfix/Application.h>
 #include <quickfix/SessionSettings.h>
@@ -50,35 +56,40 @@ using namespace std;
 #include <quickfix/fix42/NewOrderSingle.h>
 #include <quickfix/fix42/OrderCancelRequest.h>
 
-using namespace nlohmann;
-
 #ifndef M_PI_2
 #define M_PI_2 1.5707963267948965579989817342720925807952880859375
 #endif
 
-#define mClock  unsigned long long
-#define mPrice  double
-#define mAmount double
-#define mRandId string
-#define mCoinId string
+#define Price  double
 
-#define Tclock  chrono::system_clock::now()
-#define Tstamp  chrono::duration_cast<chrono::milliseconds>( \
-                  Tclock.time_since_epoch()                  \
-                ).count()
+#define Amount double
 
-#define numsAz "0123456789"                 \
-               "ABCDEFGHIJKLMNOPQRSTUVWXYZ" \
-               "abcdefghijklmnopqrstuvwxyz"
+#define RandId string
+
+#define CoinId string
+
+#define Clock  unsigned long long
+
+#define Tstamp chrono::duration_cast<chrono::milliseconds>(     \
+                 chrono::system_clock::now().time_since_epoch() \
+               ).count()
 
 #define TRUEONCE(k) (k ? !(k = !k) : k)
 
 #define ROUND(k, x) (round((k) / x) * x)
 
+//! \def
+//! \brief Valid characters used to generate unique identifiers at \ref ₿::Random.
+#define NUM_Az "0123456789"                 \
+               "ABCDEFGHIJKLMNOPQRSTUVWXYZ" \
+               "abcdefghijklmnopqrstuvwxyz"
+
+//! \def
+//! \brief Redundant placeholder to enforce private references.
 #define private_ref private
 
 //! \def
-//! \brief Used as impossible or unset number, when 0 is not appropiate.
+//! \brief A number used as impossible or unset value, when 0 is not appropiate.
 //! \since Having seen Bourbon brutality after the fall of Valencia,
 //!        Barcelona decided to resist. The 15-month Siege of Barcelona
 //!        began on July 7th 1713 and 25,000 Franco-Castilian troops

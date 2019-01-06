@@ -23,13 +23,13 @@ void TradingBot::display() {
   mvwhline(stdscr, yMaxLog,   1, ' ', x-1);
   for (const mOrder &it : openOrders) {
     mvwhline(stdscr, ++yOrders, 1, ' ', x-1);
-    wattron(stdscr, COLOR_PAIR(it.side == mSide::Bid ? COLOR_CYAN : COLOR_MAGENTA));
-    mvwaddstr(stdscr, yOrders, 1, (((it.side == mSide::Bid ? "BID" : "ASK") + (" > "
+    wattron(stdscr, COLOR_PAIR(it.side == Side::Bid ? COLOR_CYAN : COLOR_MAGENTA));
+    mvwaddstr(stdscr, yOrders, 1, (((it.side == Side::Bid ? "BID" : "ASK") + (" > "
       + Text::str8(it.quantity))) + ' ' + gw->base + " at price "
       + Text::str8(it.price) + ' ' + gw->quote + " (value "
       + Text::str8(abs(it.price * it.quantity)) + ' ' + gw->quote + ")"
     ).data());
-    wattroff(stdscr, COLOR_PAIR(it.side == mSide::Bid ? COLOR_CYAN : COLOR_MAGENTA));
+    wattroff(stdscr, COLOR_PAIR(it.side == Side::Bid ? COLOR_CYAN : COLOR_MAGENTA));
   }
   while (++yOrders < y) mvwhline(stdscr, yOrders, 1, ' ', x-1);
   mvwaddch(stdscr, 0, 0, ACS_ULCORNER);

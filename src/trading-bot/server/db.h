@@ -40,7 +40,7 @@ class DB: public Sqlite { public: DB() { sqlite = this; };
       const string  table    = schema(data->about());
       const json    blob     = data->blob();
       const double  limit    = data->limit();
-      const mClock  lifetime = data->lifetime();
+      const Clock   lifetime = data->lifetime();
       const string  incr     = data->increment();
       const string  sql      = (
         (incr != "NULL" or !limit or lifetime)
@@ -68,7 +68,7 @@ class DB: public Sqlite { public: DB() { sqlite = this; };
         + "json  BLOB                                                                          NOT NULL,"
         + "time  TIMESTAMP DEFAULT (CAST((julianday('now') - 2440587.5)*86400000 AS INTEGER))  NOT NULL);";
     };
-    string truncate(const string &table, const mClock &lifetime) {
+    string truncate(const string &table, const Clock &lifetime) {
       return lifetime
         ? "DELETE FROM " + table + " WHERE time < " + to_string(Tstamp - lifetime) + ";"
         : "";

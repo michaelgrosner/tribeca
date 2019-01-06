@@ -18,7 +18,7 @@ class UI: public Client { public: UI() { client = this; };
     void waitWebAdmin() override {
       if (!socket) return;
       if (!socket->listen(
-        Curl::inet.empty() ? nullptr : Curl::inet.data(),
+        Curl::inet,
         K.option.num("port"),
         uS::TLS::Context(sslContext()),
         0,

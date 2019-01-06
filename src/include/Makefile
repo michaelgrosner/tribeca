@@ -83,8 +83,10 @@ ncurses:
 json:
 	test -f $(KBUILD)/local/include/json.h || (mkdir -p $(KBUILD)/local/include       \
 	&& curl -L https://github.com/nlohmann/json/releases/download/v$(V_JSON)/json.hpp \
-	-o $(KBUILD)/local/include/json.h && (test -n "`echo $(CHOST) | grep mingw32`"    \
-	&& sed -i "s/\(#include <cstddef>\)/\/\/\1/" $(KBUILD)/local/include/json.h ||  :))
+	-o $(KBUILD)/local/include/json.h &&                                              \
+	sed -i '$$iusing namespace nlohmann;' $(KBUILD)/local/include/json.h &&           \
+	(test -n "`echo $(CHOST) | grep mingw32`" &&                                      \
+	sed -i "s/\(#include <cstddef>\)/\/\/\1/" $(KBUILD)/local/include/json.h ||     :))
 
 catch:
 	test -f $(KBUILD)/local/include/catch.h || (mkdir -p $(KBUILD)/local/include          \
@@ -128,9 +130,9 @@ quickfix:
 	&& sed -i "/pragma/d" src/C++/Utility.h src/C++/SocketMonitor.h src/C++/SSLSocketInitiator.h \
 	&& sed -i "s/\(ifdef\) _MSC_VER/\1 _WIN32/" src/C++/SocketMonitor.h src/C++/Mutex.h          \
 	&& sed -i "s/\(ifndef\) _MSC_VER/\1 _WIN32/" src/C++/SocketConnector.cpp                     \
-	src/C++/SocketServer.cpp) || :) && ./configure --prefix=$(KBUILD)/local --enable-shared=no   \
-	--enable-static=yes --host=$(CHOST) --with-openssl=$(KBUILD)/local                           \
-	&& cd src/C++ && make all install                                                            )
+	src/C++/SocketServer.cpp) || :) &&                                                           \
+	./configure --prefix=$(KBUILD)/local --host=$(CHOST) --with-openssl=$(KBUILD)/local          \
+	--enable-shared=no --enable-static=yes && cd src/C++ && make all install                     )
 
 libuv:
 	test -z "`echo $(CHOST) | grep darwin;echo $(CHOST) | grep mingw32`" || test -d $(KBUILD)/libuv-$(V_UV) || ( \
