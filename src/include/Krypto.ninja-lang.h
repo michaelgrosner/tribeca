@@ -60,15 +60,15 @@ using namespace std;
 #define M_PI_2 1.5707963267948965579989817342720925807952880859375
 #endif
 
-#define Price  double
+typedef double Price;
 
-#define Amount double
+typedef double Amount;
 
-#define RandId string
+typedef string RandId;
 
-#define CoinId string
+typedef string CoinId;
 
-#define Clock  unsigned long long
+typedef unsigned long long Clock;
 
 #define Tstamp chrono::duration_cast<chrono::milliseconds>(     \
                  chrono::system_clock::now().time_since_epoch() \
@@ -80,7 +80,7 @@ using namespace std;
 
 //! \def
 //! \brief Valid characters used to generate unique identifiers at \ref ₿::Random.
-#define NUM_Az "0123456789"                 \
+#define numsAz "0123456789"                 \
                "ABCDEFGHIJKLMNOPQRSTUVWXYZ" \
                "abcdefghijklmnopqrstuvwxyz"
 

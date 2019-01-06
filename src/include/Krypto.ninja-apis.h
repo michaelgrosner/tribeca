@@ -465,7 +465,7 @@ namespace ₿ {
       static const RandId char16Id() {
         char ch[16];
         for (char &it : ch)
-          it = NUM_Az[int64() % (sizeof(NUM_Az) - 1)];
+          it = numsAz[int64() % (sizeof(numsAz) - 1)];
         return string(ch, 16);
       };
       static const RandId uuid36Id() {
@@ -481,7 +481,7 @@ namespace ₿ {
           if (i != 8 && i != 13 && i != 18 && i != 14 && i != 23) {
             if (rnd <= 0x02) rnd = 0x2000000 + (rnd_ * 0x1000000) | 0;
             rnd >>= 4;
-            uuid[i] = NUM_Az[(i == 19) ? ((rnd & 0xf) & 0x3) | 0x8 : rnd & 0xf];
+            uuid[i] = numsAz[(i == 19) ? ((rnd & 0xf) & 0x3) | 0x8 : rnd & 0xf];
           }
         return Text::strL(uuid);
       };
