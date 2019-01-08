@@ -5,7 +5,6 @@
 
 #include <cstdlib>
 #include <iostream>
-#include <iomanip>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -60,6 +59,8 @@ using namespace std;
 #define M_PI_2 1.5707963267948965579989817342720925807952880859375
 #endif
 
+#define TRUEONCE(k) (k ? !(k = !k) : k)
+
 typedef double Price;
 
 typedef double Amount;
@@ -69,8 +70,6 @@ typedef string RandId;
 typedef string CoinId;
 
 typedef unsigned long long Clock;
-
-#define TRUEONCE(k) (k ? !(k = !k) : k)
 
 //! \def
 //! \brief Number of ticks in milliseconds since Thu Jan  1 00:00:00 1970.

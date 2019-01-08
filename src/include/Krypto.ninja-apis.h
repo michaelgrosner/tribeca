@@ -497,13 +497,13 @@ namespace ₿ {
       const RandId (*randId)() = nullptr;
       virtual const bool askForData(const unsigned int &tick) = 0;
       virtual const bool waitForData() = 0;
-      double dec(const double &input, const unsigned int &precision = 0) {
+      const double dec(const double &input, const unsigned int &precision = 0) {
         const double points = pow(10, -1 * (precision ?: decimal.precision()));
         return round(input / points) * points;
       };
-      string str(const double &input) {
+      const string str(const double &input) {
         decimal.str("");
-        decimal << fixed << input;
+        decimal << input;
         return decimal.str();
       };
       void place(const mOrder *const order) {
@@ -635,6 +635,7 @@ namespace ₿ {
       };
       void info(vector<pair<string, string>> notes) {
         if (exchange != "NULL") log("allows client IP");
+        decimal << fixed;
         decimal.precision(minTick < 1e-8 ? 10 : 8);
         for (pair<string, string> it : (vector<pair<string, string>>){
           {"symbols", symbol      },

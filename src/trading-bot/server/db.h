@@ -17,12 +17,10 @@ class DB: public Sqlite { public: DB() { sqlite = this; };
     };
   public:
     void backup(mFromDb *const data) override {
-      const bool loaded = data->pull(select(data));
-      const string msg = data->explanation(loaded);
-      data->push = [this, data]() { insert(data); };
-      if (msg.empty()) return;
-      if (loaded) Print::log("DB", msg);
-      else Print::logWar("DB", msg);
+      data->pull(select(data));
+      data->push = [this, data]() {
+        insert(data);
+      };
     };
   private:
     json select(mFromDb *const data) {
@@ -37,12 +35,12 @@ class DB: public Sqlite { public: DB() { sqlite = this; };
       return result;
     };
     void insert(mFromDb *const data) {
-      const string  table    = schema(data->about());
-      const json    blob     = data->blob();
-      const double  limit    = data->limit();
-      const Clock   lifetime = data->lifetime();
-      const string  incr     = data->increment();
-      const string  sql      = (
+      const string table    = schema(data->about());
+      const json   blob     = data->blob();
+      const double limit    = data->limit();
+      const Clock  lifetime = data->lifetime();
+      const string incr     = data->increment();
+      const string sql      = (
         (incr != "NULL" or !limit or lifetime)
           ? "DELETE FROM " + table + (
             incr != "NULL"

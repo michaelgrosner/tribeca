@@ -125,86 +125,95 @@ namespace ₿ {
       };
   };
 
-  struct mFromDb: public mBlob {
-    function<void()> push
+  class mFromDb: public mBlob {
+    public:
+      function<void()> push
 #ifndef NDEBUG
-    = []() { WARN("Y U NO catch sqlite push?"); }
+      = []() { WARN("Y U NO catch sqlite push?"); }
 #endif
-    ;
-    virtual const bool pull(const json &j) = 0;
-    virtual const string increment() const { return "NULL"; };
-    virtual const double limit()     const { return 0; };
-    virtual const Clock  lifetime()  const { return 0; };
-    virtual const string explain()   const = 0;
-    virtual       string explainOK() const = 0;
-    virtual       string explainKO() const { return ""; };
-    const string explanation(const bool &loaded) const {
-      string msg = loaded
-        ? explainOK()
-        : explainKO();
-      size_t token = msg.find("%");
-      if (token != string::npos)
-        msg.replace(token, 1, explain());
-      return msg;
-    };
+      ;
+      virtual       void   pull(const json &j) = 0;
+      virtual const string increment() const { return "NULL"; };
+      virtual const double limit()     const { return 0; };
+      virtual const Clock  lifetime()  const { return 0; };
+    protected:
+      virtual const string explain()   const = 0;
+      virtual       string explainOK() const = 0;
+      virtual       string explainKO() const { return ""; };
+      void explanation(const bool &empty) const {
+        string msg = empty
+          ? explainKO()
+          : explainOK();
+        if (msg.empty()) return;
+        size_t token = msg.find("%");
+        if (token != string::npos)
+          msg.replace(token, 1, explain());
+        if (empty)
+          Print::logWar("DB", msg);
+        else Print::log("DB", msg);
+      };
   };
-  template <typename mData> struct mStructFromDb: public mFromDb {
-    const json blob() const override {
-      return *(mData*)this;
-    };
-    const bool pull(const json &j) override {
-      if (j.empty()) return false;
-      from_json(j.at(0), *(mData*)this);
-      return true;
-    };
-    string explainOK() const override {
-      return "loaded last % OK";
-    };
+  template <typename mData> class mStructFromDb: public mFromDb {
+    public:
+      const json blob() const override {
+        return *(mData*)this;
+      };
+      void pull(const json &j) override {
+        if (!j.empty())
+          from_json(j.at(0), *(mData*)this);
+        explanation(j.empty());
+      };
+    protected:
+      string explainOK() const override {
+        return "loaded last % OK";
+      };
   };
-  template <typename mData> struct mVectorFromDb: public mFromDb {
-    vector<mData> rows;
-    using reference              = typename vector<mData>::reference;
-    using const_reference        = typename vector<mData>::const_reference;
-    using iterator               = typename vector<mData>::iterator;
-    using const_iterator         = typename vector<mData>::const_iterator;
-    using reverse_iterator       = typename vector<mData>::reverse_iterator;
-    using const_reverse_iterator = typename vector<mData>::const_reverse_iterator;
-    iterator                 begin()       noexcept { return rows.begin(); };
-    const_iterator           begin() const noexcept { return rows.begin(); };
-    const_iterator          cbegin() const noexcept { return rows.cbegin(); };
-    iterator                   end()       noexcept { return rows.end(); };
-    const_iterator             end() const noexcept { return rows.end(); };
-    reverse_iterator        rbegin()       noexcept { return rows.rbegin(); };
-    const_reverse_iterator crbegin() const noexcept { return rows.crbegin(); };
-    reverse_iterator          rend()       noexcept { return rows.rend(); };
-    bool                     empty() const noexcept { return rows.empty(); };
-    size_t                    size() const noexcept { return rows.size(); };
-    reference                front()                { return rows.front(); };
-    const_reference          front() const          { return rows.front(); };
-    reference                 back()                { return rows.back(); };
-    const_reference           back() const          { return rows.back(); };
-    reference                   at(size_t n)        { return rows.at(n); };
-    const_reference             at(size_t n) const  { return rows.at(n); };
-    virtual void erase() {
-      if (size() > limit())
-        rows.erase(begin(), end() - limit());
-    };
-    virtual void push_back(const mData &row) {
-      rows.push_back(row);
-      push();
-      erase();
-    };
-    const bool pull(const json &j) override {
-      for (const json &it : j)
-        rows.push_back(it);
-      return !empty();
-    };
-    const json blob() const override {
-      return back();
-    };
-    const string explain() const override {
-      return to_string(size());
-    };
+  template <typename mData> class mVectorFromDb: public mFromDb {
+    public:
+      vector<mData> rows;
+      using reference              = typename vector<mData>::reference;
+      using const_reference        = typename vector<mData>::const_reference;
+      using iterator               = typename vector<mData>::iterator;
+      using const_iterator         = typename vector<mData>::const_iterator;
+      using reverse_iterator       = typename vector<mData>::reverse_iterator;
+      using const_reverse_iterator = typename vector<mData>::const_reverse_iterator;
+      iterator                 begin()       noexcept { return rows.begin(); };
+      const_iterator           begin() const noexcept { return rows.begin(); };
+      const_iterator          cbegin() const noexcept { return rows.cbegin(); };
+      iterator                   end()       noexcept { return rows.end(); };
+      const_iterator             end() const noexcept { return rows.end(); };
+      reverse_iterator        rbegin()       noexcept { return rows.rbegin(); };
+      const_reverse_iterator crbegin() const noexcept { return rows.crbegin(); };
+      reverse_iterator          rend()       noexcept { return rows.rend(); };
+      bool                     empty() const noexcept { return rows.empty(); };
+      size_t                    size() const noexcept { return rows.size(); };
+      reference                front()                { return rows.front(); };
+      const_reference          front() const          { return rows.front(); };
+      reference                 back()                { return rows.back(); };
+      const_reference           back() const          { return rows.back(); };
+      reference                   at(size_t n)        { return rows.at(n); };
+      const_reference             at(size_t n) const  { return rows.at(n); };
+      virtual void erase() {
+        if (size() > limit())
+          rows.erase(begin(), end() - limit());
+      };
+      virtual void push_back(const mData &row) {
+        rows.push_back(row);
+        push();
+        erase();
+      };
+      void pull(const json &j) override {
+        for (const json &it : j)
+          rows.push_back(it);
+        explanation(empty());
+      };
+      const json blob() const override {
+        return back();
+      };
+    protected:
+      const string explain() const override {
+        return to_string(size());
+      };
   };
 
   struct mQuotingParams: public mStructFromDb<mQuotingParams>,
@@ -347,12 +356,13 @@ namespace ₿ {
     const mMatter about() const override {
       return mMatter::QuotingParameters;
     };
-    const string explain() const override {
-      return "Quoting Parameters";
-    };
-    string explainKO() const override {
-      return "using default values for %";
-    };
+    protected:
+      const string explain() const override {
+        return "Quoting Parameters";
+      };
+      string explainKO() const override {
+        return "using default values for %";
+      };
     private:
       struct mPreviousQParams {
         unsigned int veryLongEwmaPeriods   = 0,
@@ -757,11 +767,6 @@ namespace ₿ {
       mStdevs(const Price &f)
         : fairValue(f)
       {};
-      const bool pull(const json &j) override {
-        const bool loaded = mVectorFromDb::pull(j);
-        if (loaded) calc();
-        return loaded;
-      };
       void timer_1s(const Price &topBid, const Price &topAsk) {
         push_back(mStdev(fairValue, topBid, topAsk));
         calc();
@@ -782,6 +787,7 @@ namespace ₿ {
       const Clock lifetime() const override {
         return 1e+3 * limit();
       };
+    protected:
       string explainOK() const override {
         return "loaded % STDEV Periods";
       };
@@ -839,9 +845,10 @@ namespace ₿ {
     const Clock lifetime() const override {
       return 60e+3 * limit();
     };
-    string explainOK() const override {
-      return "loaded % historical Fair Values";
-    };
+    protected:
+      string explainOK() const override {
+        return "loaded % historical Fair Values";
+      };
   };
 
   struct mEwma: public mStructFromDb<mEwma> {
@@ -889,6 +896,7 @@ namespace ₿ {
                            qp.ultraShortEwmaPeriods
                        )))));
       };
+    protected:
       const string explain() const override {
         return "EWMA Values";
       };
@@ -1237,9 +1245,10 @@ namespace ₿ {
     const Clock lifetime() const override {
       return 3600e+3 * limit();
     };
-    string explainOK() const override {
-      return "loaded % historical Profits";
-    };
+    protected:
+      string explainOK() const override {
+        return "loaded % historical Profits";
+      };
   };
 
   struct mTradesHistory: public mVectorFromDb<mTrade>,
@@ -1329,14 +1338,15 @@ namespace ₿ {
     const string increment() const override {
       return crbegin()->tradeId;
     };
-    string explainOK() const override {
-      return "loaded % historical Trades";
-    };
     const json hello() override {
       for (mTrade &it : rows)
         it.loadedFromDB = true;
       return rows;
     };
+    protected:
+      string explainOK() const override {
+        return "loaded % historical Trades";
+      };
     private:
       void clear_if(const function<const bool(iterator)> &fn, const bool &onlyOne = false) {
         for (iterator it = begin(); it != end();)
@@ -1661,14 +1671,15 @@ namespace ₿ {
       const mMatter about() const override {
         return mMatter::TargetBasePosition;
       };
+      const bool send_same_blob() const override {
+        return false;
+      };
+    protected:
       const string explain() const override {
         return to_string(targetBasePosition);
       };
       string explainOK() const override {
         return "loaded TBP = % " + gw->base;
-      };
-      const bool send_same_blob() const override {
-        return false;
       };
     private:
       void calcPDiv() {
@@ -1779,8 +1790,8 @@ namespace ₿ {
         ).reset(orders.heldAmount(side));
       };
       void calcValues() {
-        base.value = gw->dec(quote.total / fairValue + base.total);
-        quote.value = gw->dec(base.total * fairValue + quote.total);
+        base.value  = (quote.total / fairValue) + base.total;
+        quote.value = (base.total * fairValue) + quote.total;
       };
       void calcProfits() {
         if (!profits.ratelimit())
