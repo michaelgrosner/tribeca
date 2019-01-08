@@ -114,7 +114,6 @@ namespace ₿ {
     k.preferPostOnly = false;
   };
 
-
   struct mTrade {
      string tradeId;
        Side side         = (Side)0;
@@ -259,8 +258,8 @@ namespace ₿ {
     {};
     void reset(const Amount &a, const Amount &h) {
       if (empty()) return;
-      total = (amount = ROUND(a, 1e-8))
-            + (held   = ROUND(h, 1e-8));
+      total = (amount = a)
+            + (held   = h);
     };
     void reset(const Amount &h) {
       reset(total - h, h);
@@ -345,14 +344,6 @@ namespace ₿ {
 
   class Text {
     public:
-      static string strX(const double &input, const unsigned int &precision) {
-        stringstream output;
-        output << setprecision(precision) << fixed << input;
-        return output.str();
-      };
-      static string str8(const double &input) {
-        return strX(input, 8);
-      };
       static string strL(string input) {
         transform(input.begin(), input.end(), input.begin(), ::tolower);
         return input;
@@ -506,12 +497,21 @@ namespace ₿ {
       const RandId (*randId)() = nullptr;
       virtual const bool askForData(const unsigned int &tick) = 0;
       virtual const bool waitForData() = 0;
+      double dec(const double &input, const unsigned int &precision = 0) {
+        const double points = pow(10, -1 * (precision ?: decimal.precision()));
+        return round(input / points) * points;
+      };
+      string str(const double &input) {
+        decimal.str("");
+        decimal << fixed << input;
+        return decimal.str();
+      };
       void place(const mOrder *const order) {
         place(
           order->orderId,
           order->side,
-          Text::str8(order->price),
-          Text::str8(order->quantity),
+          str(order->price),
+          str(order->quantity),
           order->type,
           order->timeInForce,
           order->preferPostOnly
@@ -520,7 +520,7 @@ namespace ₿ {
       void replace(const mOrder *const order) {
         replace(
           order->exchangeId,
-          Text::str8(order->price)
+          str(order->price)
         );
       };
       void cancel(const mOrder *const order) {
@@ -597,6 +597,7 @@ namespace ₿ {
         }
         return waiting;
       };
+      stringstream decimal;
   };
 
   class GwExchange: public GwExchangeData {
@@ -634,15 +635,15 @@ namespace ₿ {
       };
       void info(vector<pair<string, string>> notes) {
         if (exchange != "NULL") log("allows client IP");
-        unsigned int precision = minTick < 1e-8 ? 10 : 8;
+        decimal.precision(minTick < 1e-8 ? 10 : 8);
         for (pair<string, string> it : (vector<pair<string, string>>){
-          {"symbols", symbol                  },
-          {"minTick", Text::strX(minTick, precision)},
-          {"minSize", Text::strX(minSize, precision)},
-          {"makeFee", Text::strX(makeFee, precision)},
-          {"takeFee", Text::strX(takeFee, precision)}
+          {"symbols", symbol      },
+          {"minTick", str(minTick)},
+          {"minSize", str(minSize)},
+          {"makeFee", str(makeFee)},
+          {"takeFee", str(takeFee)}
         }) notes.push_back(it);
-        string info = "setup:";
+        string info = "handshake:";
         for (pair<string, string> &it : notes)
           if (it.first != "gateway" or !it.second.empty())
             info += "\n- " + it.first + ": " + it.second;
@@ -660,7 +661,7 @@ namespace ₿ {
         if      (Tdiff < 2e+2) result += "very good; most traders don't enjoy such speed!";
         else if (Tdiff < 5e+2) result += "good; most traders get the same result";
         else if (Tdiff < 7e+2) result += "a bit bad; most traders get better results";
-        else if (Tdiff < 1e+3) result += "bad; is possible a move to another server/network?";
+        else if (Tdiff < 1e+3) result += "bad; consider moving to another server/network";
         else                   result += "very bad; move to another server/network";
         log(result);
       };

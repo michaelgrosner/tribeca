@@ -25,9 +25,9 @@ void TradingBot::display() {
     mvwhline(stdscr, ++yOrders, 1, ' ', x-1);
     wattron(stdscr, COLOR_PAIR(it.side == Side::Bid ? COLOR_CYAN : COLOR_MAGENTA));
     mvwaddstr(stdscr, yOrders, 1, (((it.side == Side::Bid ? "BID" : "ASK") + (" > "
-      + Text::str8(it.quantity))) + ' ' + gw->base + " at price "
-      + Text::str8(it.price) + ' ' + gw->quote + " (value "
-      + Text::str8(abs(it.price * it.quantity)) + ' ' + gw->quote + ")"
+      + gw->str(it.quantity))) + ' ' + gw->base + " at price "
+      + gw->str(it.price) + ' ' + gw->quote + " (value "
+      + gw->str(abs(it.price * it.quantity)) + ' ' + gw->quote + ")"
     ).data());
     wattroff(stdscr, COLOR_PAIR(it.side == Side::Bid ? COLOR_CYAN : COLOR_MAGENTA));
   }
@@ -63,8 +63,8 @@ void TradingBot::display() {
   mvwhline(stdscr, 1, 8, ACS_HLINE, 4);
   mvwaddch(stdscr, 1, 12, ACS_RTEE);
   wattron(stdscr, COLOR_PAIR(COLOR_MAGENTA));
-  const string baseValue  = Text::str8(engine->wallet.base.value),
-               quoteValue = Text::str8(engine->wallet.quote.value);
+  const string baseValue  = gw->str(engine->wallet.base.value),
+               quoteValue = gw->str(engine->wallet.quote.value);
   wattron(stdscr, A_BOLD);
   waddstr(stdscr, (" " + baseValue + ' ').data());
   wattroff(stdscr, A_BOLD);
@@ -139,7 +139,7 @@ void TradingBot::display() {
     wattron(stdscr, COLOR_PAIR(COLOR_GREEN));
     waddstr(stdscr, (" 1 " + gw->base + " = ").data());
     wattron(stdscr, A_BOLD);
-    waddstr(stdscr, Text::str8(engine->levels.fairValue).data());
+    waddstr(stdscr, gw->str(engine->levels.fairValue).data());
     wattroff(stdscr, A_BOLD);
     waddstr(stdscr, (" " + gw->quote).data());
     wattroff(stdscr, COLOR_PAIR(COLOR_GREEN));

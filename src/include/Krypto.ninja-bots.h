@@ -429,8 +429,8 @@ namespace ₿ {
           ? optstr.at(name)
           : (optint.find(name) != optint.end()
               ? to_string(num(name))
-              : Text::str8(dec(name))
-          );
+              : to_string(dec(name))
+            );
       };
       const int num(const string &name) const {
         return optint.at(name);

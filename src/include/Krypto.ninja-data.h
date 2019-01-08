@@ -643,8 +643,8 @@ namespace ₿ {
           order
             ? order->orderId + "::" + order->exchangeId
               + " [" + to_string((int)order->status) + "]: "
-              + Text::str8(order->quantity) + " " + gw->base + " at price "
-              + Text::str8(order->price) + " " + gw->quote
+              + gw->str(order->quantity) + " " + gw->base + " at price "
+              + gw->str(order->price) + " " + gw->quote
             : "not found"
         ));
       };
@@ -691,7 +691,6 @@ namespace ₿ {
   static void to_json(json &j, const mMarketTakers &k) {
     j = k.trades;
   };
-
 
   struct mFairLevelsPrice: public mJsonToClient<mFairLevelsPrice> {
     private_ref:
@@ -1163,7 +1162,7 @@ namespace ₿ {
              + bids.cbegin()->size
         );
         if (fairValue)
-          fairValue = ROUND(fairValue, *product.minTick);
+          fairValue = gw->dec(fairValue, abs(log10(*product.minTick)));
       };
       const vector<mLevel> filter(vector<mLevel> levels, unordered_map<Price, Amount> *const filterOrders) {
         if (!filterOrders->empty())
@@ -1222,7 +1221,7 @@ namespace ₿ {
       );
     };
     const double calcDiffPercent(Amount older, Amount newer) const {
-      return ROUND(((newer - older) / newer) * 1e+2, 1e-2);
+      return gw->dec(((newer - older) / newer) * 1e+2, 2);
     };
     const mMatter about() const override {
       return mMatter::Profit;
@@ -1284,9 +1283,9 @@ namespace ₿ {
       );
       Print::log("GW " + gw->exchange, string(trade.isPong?"PONG":"PING") + " TRADE "
         + (trade.side == Side::Bid ? "BUY  " : "SELL ")
-        + Text::str8(trade.quantity) + ' ' + gw->base + " at price "
-        + Text::str8(trade.price) + ' ' + gw->quote + " (value "
-        + Text::str8(trade.value) + ' ' + gw->quote + ")"
+        + gw->str(trade.quantity) + ' ' + gw->base + " at price "
+        + gw->str(trade.price) + ' ' + gw->quote + " (value "
+        + gw->str(trade.value) + ' ' + gw->quote + ")"
       );
       if (qp.safety == mQuotingSafety::Off or qp.safety == mQuotingSafety::PingPong or qp.safety == mQuotingSafety::PingPoing)
         send_push_back(trade);
@@ -1636,12 +1635,12 @@ namespace ₿ {
       {};
       void calcTargetBasePos() {
         if (warn_empty()) return;
-        targetBasePosition = ROUND(qp.autoPositionMode == mAutoPositionMode::Manual
+        targetBasePosition = gw->dec(qp.autoPositionMode == mAutoPositionMode::Manual
           ? (qp.percentageValues
             ? qp.targetBasePositionPercentage * baseValue / 1e+2
             : qp.targetBasePosition)
           : targetPositionAutoPercentage * baseValue / 1e+2
-        , 1e-4);
+        , 4);
         calcPDiv();
         if (send()) {
           push();
@@ -1688,13 +1687,13 @@ namespace ₿ {
           else if (mPDivMode::SQRT == qp.positionDivergenceMode)   positionDivergence = pDivMin + (sqrt(divCenter) * (pDiv - pDivMin));
           else if (mPDivMode::Switch == qp.positionDivergenceMode) positionDivergence = divCenter < 1e-1 ? pDivMin : pDiv;
         }
-        positionDivergence = ROUND(positionDivergence, 1e-4);
+        positionDivergence = gw->dec(positionDivergence, 4);
       };
       void report() const {
         Print::log("PG", "TBP: "
-          + to_string((int)(targetBasePosition / baseValue * 1e+2)) + "% = " + Text::str8(targetBasePosition)
+          + to_string((int)(targetBasePosition / baseValue * 1e+2)) + "% = " + gw->str(targetBasePosition)
           + " " + gw->base + ", pDiv: "
-          + to_string((int)(positionDivergence / baseValue * 1e+2)) + "% = " + Text::str8(positionDivergence)
+          + to_string((int)(positionDivergence / baseValue * 1e+2)) + "% = " + gw->str(positionDivergence)
           + " " + gw->base);
       };
       const bool debug() const {
@@ -1780,8 +1779,8 @@ namespace ₿ {
         ).reset(orders.heldAmount(side));
       };
       void calcValues() {
-        base.value = ROUND(quote.total / fairValue + base.total, 1e-8);
-        quote.value = ROUND(base.total * fairValue + quote.total, 1e-8);
+        base.value = gw->dec(quote.total / fairValue + base.total);
+        quote.value = gw->dec(base.total * fairValue + quote.total);
       };
       void calcProfits() {
         if (!profits.ratelimit())

@@ -70,13 +70,13 @@ typedef string CoinId;
 
 typedef unsigned long long Clock;
 
+#define TRUEONCE(k) (k ? !(k = !k) : k)
+
+//! \def
+//! \brief Number of ticks in milliseconds since Thu Jan  1 00:00:00 1970.
 #define Tstamp chrono::duration_cast<chrono::milliseconds>(     \
                  chrono::system_clock::now().time_since_epoch() \
                ).count()
-
-#define TRUEONCE(k) (k ? !(k = !k) : k)
-
-#define ROUND(k, x) (round((k) / x) * x)
 
 //! \def
 //! \brief Valid characters used to generate unique identifiers at \ref ₿::Random.
