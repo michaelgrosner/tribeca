@@ -61,27 +61,21 @@ using namespace std;
 
 #define TRUEONCE(k) (k ? !(k = !k) : k)
 
-typedef double Price;
+using Price  = double;
 
-typedef double Amount;
+using Amount = double;
 
-typedef string RandId;
+using RandId = string;
 
-typedef string CoinId;
+using CoinId = string;
 
-typedef unsigned long long Clock;
+using Clock  = unsigned long long;
 
 //! \def
 //! \brief Number of ticks in milliseconds since Thu Jan  1 00:00:00 1970.
 #define Tstamp chrono::duration_cast<chrono::milliseconds>(     \
                  chrono::system_clock::now().time_since_epoch() \
                ).count()
-
-//! \def
-//! \brief Valid characters used to generate unique identifiers at \ref ₿::Random.
-#define numsAz "0123456789"                 \
-               "ABCDEFGHIJKLMNOPQRSTUVWXYZ" \
-               "abcdefghijklmnopqrstuvwxyz"
 
 //! \def
 //! \brief Redundant placeholder to enforce private references.

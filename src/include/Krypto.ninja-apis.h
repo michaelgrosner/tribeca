@@ -454,27 +454,34 @@ namespace ₿ {
         return to_string(int64()).substr(0,  8);
       };
       static const RandId char16Id() {
-        char ch[16];
-        for (char &it : ch)
-          it = numsAz[int64() % (sizeof(numsAz) - 1)];
-        return string(ch, 16);
+        string id = string(16, ' ');
+        for (auto &it : id) {
+         const int offset = int64() % (26 + 26 + 10);
+         if (offset < 26)           it = 'a' + offset;
+         else if (offset < 26 + 26) it = 'A' + offset - 26;
+         else                       it = '0' + offset - 26 - 26;
+        }
+        return id;
       };
       static const RandId uuid36Id() {
         string uuid = string(36, ' ');
-        unsigned long long rnd = int64();
-        unsigned long long rnd_ = int64();
-        uuid[8] = '-';
+        uuid[8]  = '-';
         uuid[13] = '-';
         uuid[18] = '-';
         uuid[23] = '-';
         uuid[14] = '4';
-        for (unsigned int i=0;i<36;i++)
-          if (i != 8 && i != 13 && i != 18 && i != 14 && i != 23) {
-            if (rnd <= 0x02) rnd = 0x2000000 + (rnd_ * 0x1000000) | 0;
+        unsigned long long rnd = int64();
+        for (auto &it : uuid)
+          if (it == ' ') {
+            if (rnd <= 0x02) rnd = 0x2000000 + (int64() * 0x1000000) | 0;
             rnd >>= 4;
-            uuid[i] = numsAz[(i == 19) ? ((rnd & 0xf) & 0x3) | 0x8 : rnd & 0xf];
+            const int offset = (uuid[17] != ' ' and uuid[19] == ' ')
+              ? ((rnd & 0xf) & 0x3) | 0x8
+              : rnd & 0xf;
+            if (offset < 10) it = '0' + offset;
+            else             it = 'a' + offset - 10;
           }
-        return Text::strL(uuid);
+        return uuid;
       };
       static const RandId uuid32Id() {
         RandId uuid = uuid36Id();

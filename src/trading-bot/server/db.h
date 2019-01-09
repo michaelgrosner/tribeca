@@ -23,7 +23,7 @@ class DB: public Sqlite { public: DB() { sqlite = this; };
       };
     };
   private:
-    json select(mFromDb *const data) {
+    const json select(mFromDb *const data) {
       const string table = schema(data->about());
       json result = json::array();
       exec(
@@ -57,16 +57,16 @@ class DB: public Sqlite { public: DB() { sqlite = this; };
         exec(sql);
       });
     };
-    string schema(const mMatter &type) {
+    const string schema(const mMatter &type) const {
       return (type == mMatter::QuotingParameters ? qpdb : "main") + "." + (char)type;
     };
-    string create(const string &table) {
+    const string create(const string &table) const {
       return "CREATE TABLE IF NOT EXISTS " + table + "("
         + "id    INTEGER   PRIMARY KEY AUTOINCREMENT                                           NOT NULL,"
         + "json  BLOB                                                                          NOT NULL,"
         + "time  TIMESTAMP DEFAULT (CAST((julianday('now') - 2440587.5)*86400000 AS INTEGER))  NOT NULL);";
     };
-    string truncate(const string &table, const Clock &lifetime) {
+    const string truncate(const string &table, const Clock &lifetime) const {
       return lifetime
         ? "DELETE FROM " + table + " WHERE time < " + to_string(Tstamp - lifetime) + ";"
         : "";
