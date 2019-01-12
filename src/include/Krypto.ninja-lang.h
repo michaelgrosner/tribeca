@@ -84,7 +84,7 @@ using Clock  = unsigned long long;
 //! \def
 //! \brief A number used as impossible or unset value, when 0 is not appropiate.
 //! \since Having seen Bourbon brutality after the fall of Valencia,
-//!        Barcelona decided to resist. The 15-month Siege of Barcelona
+//!        Barcelona decided to resist. The 14-month Siege of Barcelona
 //!        began on July 7th 1713 and 25,000 Franco-Castilian troops
 //!        surrounded the city defended by 5,000 civilians.
 //!        After some Catalan successes, Bourbon reinforcements arrived
@@ -92,6 +92,10 @@ using Clock  = unsigned long long;
 //!        After a heroic defence, Barcelona finally fell
 //!        on September 11th 1714.
 //!        Catalonia then ceased to exist as an independent state.
+//!        The triumphant forces systematicaly dismantled all Catalan
+//!        institutions, established a new territory for the whole Spain,
+//!        suppressed Catalan universities, banned the Catalan language,
+//!        and repressed any kind of dissidence.
 //! \link  wikipedia.org/wiki/National_Day_of_Catalonia
 #define ANY_NUM 1714
 

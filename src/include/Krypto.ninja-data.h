@@ -1743,11 +1743,11 @@ namespace ₿ {
         return !safety.empty();
       };
       void read_from_gw(const mWallets &raw) {
-        if (raw.empty()) return;
+        if (raw.base.currency.empty() or raw.quote.currency.empty()) return;
         base.currency = raw.base.currency;
         quote.currency = raw.quote.currency;
-        base.reset(raw.base.amount, raw.base.held);
-        quote.reset(raw.quote.amount, raw.quote.held);
+        mWallet::reset(raw.base.amount, raw.base.held, &base);
+        mWallet::reset(raw.quote.amount, raw.quote.held, &quote);
         calcFunds();
       };
       void calcFunds() {
@@ -1777,17 +1777,18 @@ namespace ₿ {
       };
     private:
       void calcFundsSilently() {
-        if (empty() or !fairValue) return;
+        if (base.currency.empty() or quote.currency.empty() or !fairValue) return;
         if (product.maxWallet()) calcMaxWallet();
         calcValues();
         calcProfits();
         target.calcTargetBasePos();
       };
       void calcHeldAmount(const Side &side) {
-        (side == Side::Ask
-          ? base
-          : quote
-        ).reset(orders.heldAmount(side));
+        const Amount heldSide = orders.heldAmount(side);
+        if (side == Side::Ask and !base.currency.empty())
+          mWallet::reset(base.total - heldSide, heldSide, &base);
+        else if (side == Side::Bid and !quote.currency.empty())
+          mWallet::reset(quote.total - heldSide, heldSide, &quote);
       };
       void calcValues() {
         base.value  = (quote.total / fairValue) + base.total;

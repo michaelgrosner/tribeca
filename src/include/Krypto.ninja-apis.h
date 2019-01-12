@@ -21,19 +21,19 @@ namespace ₿ {
   };
 
   struct mOrder {
-          RandId orderId,
-                 exchangeId;
-          Status status         = Status::Waiting;
-            Side side           = (Side)0;
-           Price price          = 0;
-          Amount quantity       = 0,
-                 tradeQuantity  = 0;
-       OrderType type           = OrderType::Limit;
-     TimeInForce timeInForce    = TimeInForce::GTC;
-            bool isPong         = false,
-                 preferPostOnly = true;
-           Clock time           = 0,
-                 latency        = 0;
+         RandId orderId,
+                exchangeId;
+         Status status         = Status::Waiting;
+           Side side           = (Side)0;
+          Price price          = 0;
+         Amount quantity       = 0,
+                tradeQuantity  = 0;
+      OrderType type           = OrderType::Limit;
+    TimeInForce timeInForce    = TimeInForce::GTC;
+           bool isPong         = false,
+                preferPostOnly = true;
+          Clock time           = 0,
+                latency        = 0;
     mOrder() = default;
     mOrder(const RandId &o, const Side &s, const Price &p, const Amount &q, const bool &i)
       : orderId(o)
@@ -256,16 +256,9 @@ namespace ₿ {
       , held(h)
       , currency(c)
     {};
-    void reset(const Amount &a, const Amount &h) {
-      if (empty()) return;
-      total = (amount = a)
-            + (held   = h);
-    };
-    void reset(const Amount &h) {
-      reset(total - h, h);
-    };
-    const bool empty() const {
-      return currency.empty();
+    static void reset(const Amount &a, const Amount &h, mWallet *const wallet) {
+      wallet->total = (wallet->amount = a)
+                    + (wallet->held   = h);
     };
   };
   static void to_json(json &j, const mWallet &k) {
@@ -280,13 +273,6 @@ namespace ₿ {
     mWallet base,
             quote;
     mWallets() = default;
-    mWallets(const mWallet &b, const mWallet &q)
-      : base(b)
-      , quote(q)
-    {};
-    const bool empty() const {
-      return base.empty() or quote.empty();
-    };
   };
   static void to_json(json &j, const mWallets &k) {
     j = {
