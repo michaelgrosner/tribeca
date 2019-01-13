@@ -212,11 +212,6 @@ namespace ₿ {
   struct mLevels {
     vector<mLevel> bids,
                    asks;
-    mLevels() = default;
-    mLevels(const vector<mLevel> &b, const vector<mLevel> &a)
-      : bids(b)
-      , asks(a)
-    {};
   };
   static void to_json(json &j, const mLevels &k) {
     j = {

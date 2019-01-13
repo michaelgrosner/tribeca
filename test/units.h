@@ -74,10 +74,10 @@ namespace ₿ {
         }
       }
       WHEN("assigned") {
-        REQUIRE_NOTHROW(levels = mLevels(
-          { mLevel(1234.56, 0.12345678) },
-          { mLevel(1234.57, 0.12345679) }
-        ));
+        REQUIRE_NOTHROW(levels = {
+          { {1234.56, 0.12345678} },
+          { {1234.57, 0.12345679} }
+        });
         THEN("values") {
           REQUIRE(levels.asks.cbegin()->price - levels.bids.cbegin()->price == Approx(0.01));
         }
@@ -145,10 +145,10 @@ namespace ₿ {
         REQUIRE_NOTHROW(randIds.push_back(Random::uuid36Id()));
         REQUIRE_NOTHROW(orders.upsert(mOrder(randIds.back(), Side::Ask, 1234.69, 0.01234568, false)));
         REQUIRE_NOTHROW(orders.upsert(mOrder(randIds.back(), "", Status::Working, 0, 0, 0)));
-        REQUIRE_NOTHROW(levels.read_from_gw(mLevels(
-          { mLevel(1234.50, 0.12345678), mLevel(1234.55, 0.01234567) },
-          { mLevel(1234.60, 1.23456789), mLevel(1234.69, 0.11234569) }
-        )));
+        REQUIRE_NOTHROW(levels.read_from_gw({
+          { {1234.50, 0.12345678}, {1234.55, 0.01234567} },
+          { {1234.60, 1.23456789}, {1234.69, 0.11234569} }
+        }));
         THEN("filters") {
           REQUIRE(levels.bids.size() == 1);
           REQUIRE(levels.bids[0].price == 1234.50);
@@ -212,10 +212,10 @@ namespace ₿ {
             REQUIRE_NOTHROW(levels.stats.fairPrice.mToClient::send = [&]() {
               REQUIRE(levels.stats.fairPrice.blob().dump() == "{\"price\":1234.5}");
             });
-            REQUIRE_NOTHROW(levels.read_from_gw(mLevels(
-              { mLevel(1234.40, 0.12345678), mLevel(1234.55, 0.01234567) },
-              { mLevel(1234.60, 1.23456789), mLevel(1234.69, 0.11234566) }
-            )));
+            REQUIRE_NOTHROW(levels.read_from_gw({
+              { {1234.40, 0.12345678}, {1234.55, 0.01234567} },
+              { {1234.60, 1.23456789}, {1234.69, 0.11234566} }
+              }));
             REQUIRE(levels.diff.hello().dump() == "[{"
               "\"asks\":[{\"price\":1234.6,\"size\":1.23456789},{\"price\":1234.69,\"size\":0.11234566}],"
               "\"bids\":[{\"price\":1234.4,\"size\":0.12345678},{\"price\":1234.55,\"size\":0.01234567}]"
