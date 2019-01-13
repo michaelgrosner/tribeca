@@ -220,8 +220,8 @@ namespace ₿ {
     Amount amount,
            held,
            total,
-           value,
-           profit;
+           value;
+    double profit;
     static void reset(const Amount &a, const Amount &h, mWallet *const wallet) {
       wallet->total = (wallet->amount = a)
                     + (wallet->held   = h);
