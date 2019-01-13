@@ -254,7 +254,6 @@ namespace ₿ {
   struct mWallets {
     mWallet base,
             quote;
-    mWallets() = default;
   };
   static void to_json(json &j, const mWallets &k) {
     j = {
