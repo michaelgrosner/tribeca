@@ -195,13 +195,8 @@ namespace ₿ {
   };
 
   struct mLevel {
-     Price price = 0;
-    Amount size  = 0;
-    mLevel() = default;
-    mLevel(const Price &p, const Amount &s)
-      : price(p)
-      , size(s)
-    {};
+     Price price;
+    Amount size;
   };
   static void to_json(json &j, const mLevel &k) {
     j = {

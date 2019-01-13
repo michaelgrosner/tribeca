@@ -1060,7 +1060,7 @@ namespace ₿ {
             to.erase(it_);
           }
           if (size != it.size)
-            patch.emplace_back(it.price, size);
+            patch.push_back({it.price, size});
         }
         if (!to.empty())
           patch.insert(patch.end(), to.begin(), to.end());

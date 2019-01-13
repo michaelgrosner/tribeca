@@ -27,16 +27,16 @@ namespace ₿ {
     GIVEN("mLevel") {
       mLevel level;
       WHEN("defaults") {
-        REQUIRE_NOTHROW(level = mLevel());
+        REQUIRE_NOTHROW(level = {});
         THEN("empty") {
           REQUIRE((!level.size or !level.price));
         }
       }
       WHEN("assigned") {
-        REQUIRE_NOTHROW(level = mLevel(
+        REQUIRE_NOTHROW(level = {
           1234.56,
           0.12345678
-        ));
+        });
         THEN("values") {
           REQUIRE(level.price == 1234.56);
           REQUIRE(level.size == 0.12345678);
