@@ -1257,12 +1257,12 @@ namespace ₿ {
 
   struct mOrderFilled: public mTrade {
      string tradeId;
-      Price Kprice;
      Amount value,
+            feeCharged,
             Kqty,
             Kvalue,
-            Kdiff,
-            feeCharged;
+            Kdiff;
+      Price Kprice;
       Clock Ktime;
        bool isPong,
             loadedFromDB;

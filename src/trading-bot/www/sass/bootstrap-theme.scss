@@ -509,7 +509,7 @@
   top: -1px;
 }
 
-.ag-fresh {
+.ag-theme-fresh {
   line-height: 1.4;
   font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
   font-size: 14px;
@@ -721,7 +721,7 @@
   .ag-header-cell-menu-button:hover {
     border: 1px solid #808080;
   }
-  .ag-body, .ag-row-odd {
+  .ag-body-viewport, .ag-row-odd {
     background-color: #f6f6f6;
   }
   .ag-row-even {
@@ -742,7 +742,7 @@
   cursor: pointer;
 }
 
-.ag-fresh {
+.ag-theme-fresh {
   .ag-overlay-loading-center {
     background-color: #fff;
     border: 1px solid #808080;

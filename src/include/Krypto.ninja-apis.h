@@ -20,6 +20,21 @@ namespace ₿ {
     Limit, Market
   };
 
+  struct mTrade {
+      Side side;
+     Price price;
+    Amount quantity;
+     Clock time;
+  };
+  static void to_json(json &j, const mTrade &k) {
+    j = {
+      {    "side", k.side    },
+      {   "price", k.price   },
+      {"quantity", k.quantity},
+      {    "time", k.time    }
+    };
+  };
+
   struct mOrder {
          RandId orderId,
                 exchangeId;
@@ -112,21 +127,6 @@ namespace ₿ {
                            : TimeInForce::IOC);
     k.isPong         = false;
     k.preferPostOnly = false;
-  };
-
-  struct mTrade {
-      Side side;
-     Price price;
-    Amount quantity;
-     Clock time;
-  };
-  static void to_json(json &j, const mTrade &k) {
-    j = {
-      {    "side", k.side    },
-      {   "price", k.price   },
-      {"quantity", k.quantity},
-      {    "time", k.time    }
-    };
   };
 
   struct mLevel {

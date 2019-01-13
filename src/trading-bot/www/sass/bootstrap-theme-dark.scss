@@ -7183,7 +7183,7 @@ a {
   box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
-.ag-dark {
+.ag-theme-dark {
   /* this is for the rowGroupPanel, that appears along the top of the grid */
   /* this is for the column drops that appear in the toolPanel */
   img {
@@ -7383,7 +7383,7 @@ a {
   .ag-header-cell-menu-button:hover {
     border: 1px solid #808080;
   }
-  .ag-body, .ag-row-odd {
+  .ag-body-viewport, .ag-row-odd {
     background-color: #302e2e;
   }
   .ag-row-even {
@@ -7404,7 +7404,10 @@ a {
   cursor: pointer;
 }
 
-.ag-dark {
+.ag-theme-dark {
+  .ag-cell {
+    color: #fff;
+  }
   .ag-overlay-loading-center {
     background-color: #fff;
     border: 1px solid #808080;

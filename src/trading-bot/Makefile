@@ -37,24 +37,23 @@ css: www/sass/*.scss
 	$(info $(STEP_4))
 	$(foreach scss,$(wildcard www/sass/*.scss), \
 	  sass $(scss) $(KASSETS)/www/css/$(basename $(notdir $(scss))).min.css ;)
-	cat $(NODE_PATH)/ag-grid/dist/styles/ag-grid.css >> $(KASSETS)/www/css/bootstrap.min.css
+	cat $(NODE_PATH)/ag-grid-community/dist/styles/ag-grid.css >> $(KASSETS)/www/css/bootstrap.min.css
 
 export define PACKAGE_JSON
 {
   "dependencies": {
-    "@angular/common": "^7.1.1",
-    "@angular/compiler": "^7.1.1",
-    "@angular/core": "^7.1.1",
-    "@angular/forms": "^7.1.1",
-    "@angular/http": "^7.1.1",
-    "@angular/platform-browser": "^7.1.1",
-    "@angular/platform-browser-dynamic": "^7.1.1",
-    "@angular/router": "^7.1.1",
-    "@babel/core": "^7.1.6",
-    "@babel/preset-env": "^7.1.6",
-    "ag-grid": "^18.1.2",
-    "ag-grid-angular": "^19.1.2",
-    "ag-grid-community": "^19.1.4",
+    "@angular/common": "^7.2.0",
+    "@angular/compiler": "^7.2.0",
+    "@angular/core": "^7.2.0",
+    "@angular/forms": "^7.2.0",
+    "@angular/http": "^7.2.0",
+    "@angular/platform-browser": "^7.2.0",
+    "@angular/platform-browser-dynamic": "^7.2.0",
+    "@angular/router": "^7.2.0",
+    "@babel/core": "^7.2.2",
+    "@babel/preset-env": "^7.2.3",
+    "ag-grid-angular": "^20.0.0",
+    "ag-grid-community": "^20.0.0",
     "angular2-highcharts": "^0.5.5",
     "babelify": "^10.0.0",
     "browserify": "^16.2.3",
@@ -63,10 +62,10 @@ export define PACKAGE_JSON
     "reflect-metadata": "^0.1.12",
     "rxjs": "6.3.3",
     "rxjs-compat": "^6.3.3",
-    "sass": "^1.15.1",
-    "typescript": "^3.2.1",
+    "sass": "^1.16.0",
+    "typescript": "^3.2.2",
     "uglify-es": "^3.3.9",
-    "zone.js": "^0.8.26"
+    "zone.js": "^0.8.27"
   },
   "description": "K",
   "homepage": "https://github.com/ctubio/Krypto-trading-bot",
