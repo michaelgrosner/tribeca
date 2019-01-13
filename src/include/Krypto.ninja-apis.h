@@ -216,18 +216,12 @@ namespace ₿ {
   };
 
   struct mWallet {
-    Amount amount = 0,
-           held   = 0,
-           total  = 0,
-           value  = 0,
-           profit = 0;
     CoinId currency;
-    mWallet() = default;
-    mWallet(const Amount &a, const Amount &h, const CoinId &c)
-      : amount(a)
-      , held(h)
-      , currency(c)
-    {};
+    Amount amount,
+           held,
+           total,
+           value,
+           profit;
     static void reset(const Amount &a, const Amount &h, mWallet *const wallet) {
       wallet->total = (wallet->amount = a)
                     + (wallet->held   = h);

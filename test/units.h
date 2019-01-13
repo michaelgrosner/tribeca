@@ -350,8 +350,8 @@ namespace ₿ {
       const Price fairValue = 500;
       const double targetPositionAutoPercentage = 0;
       mWalletPosition wallet(product, orders, targetPositionAutoPercentage, fairValue);
-      wallet.base = mWallet(1, 0, "BTC");
-      wallet.quote = mWallet(1000, 0, "EUR");
+      wallet.base = {"BTC", 1, 0};
+      wallet.quote = {"EUR", 1000, 0};
       mBroker broker(product, orders, levels, wallet);
       WHEN("assigned") {
         vector<RandId> randIds;
