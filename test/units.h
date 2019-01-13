@@ -29,7 +29,7 @@ namespace ₿ {
       WHEN("defaults") {
         REQUIRE_NOTHROW(level = mLevel());
         THEN("empty") {
-          REQUIRE(level.empty());
+          REQUIRE((!level.size or !level.price));
         }
       }
       WHEN("assigned") {
@@ -42,7 +42,7 @@ namespace ₿ {
           REQUIRE(level.size == 0.12345678);
         }
         THEN("not empty") {
-          REQUIRE_FALSE(level.empty());
+          REQUIRE_FALSE((!level.size or !level.price));
         }
         THEN("to json") {
           REQUIRE(((json)level).dump() == "{"
@@ -51,13 +51,13 @@ namespace ₿ {
           "}");
         }
         WHEN("clear") {
-          REQUIRE_NOTHROW(level.clear());
+          REQUIRE_NOTHROW(level.price = level.size = 0);
           THEN("values") {
             REQUIRE_FALSE(level.price);
             REQUIRE_FALSE(level.size);
           }
           THEN("empty") {
-            REQUIRE(level.empty());
+            REQUIRE((!level.size or !level.price));
           }
           THEN("to json") {
             REQUIRE(((json)level).dump() == "{\"price\":0.0}");
@@ -70,7 +70,7 @@ namespace ₿ {
       WHEN("defaults") {
         REQUIRE_NOTHROW(levels = mLevels());
         THEN("empty") {
-          REQUIRE(levels.empty());
+          REQUIRE((levels.bids.empty() or levels.asks.empty()));
         }
       }
       WHEN("assigned") {
@@ -79,10 +79,10 @@ namespace ₿ {
           { mLevel(1234.57, 0.12345679) }
         ));
         THEN("values") {
-          REQUIRE(levels.spread() == Approx(0.01));
+          REQUIRE(levels.asks.cbegin()->price - levels.bids.cbegin()->price == Approx(0.01));
         }
         THEN("not empty") {
-          REQUIRE_FALSE(levels.empty());
+          REQUIRE_FALSE((levels.bids.empty() or levels.asks.empty()));
         }
         THEN("to json") {
           REQUIRE(((json)levels).dump() == "{"
@@ -91,12 +91,10 @@ namespace ₿ {
           "}");
         }
         WHEN("clear") {
-          REQUIRE_NOTHROW(levels.clear());
-          THEN("values") {
-            REQUIRE_FALSE(levels.spread());
-          }
+          REQUIRE_NOTHROW(levels.bids.clear());
+          REQUIRE_NOTHROW(levels.asks.clear());
           THEN("empty") {
-            REQUIRE(levels.empty());
+            REQUIRE((levels.bids.empty() or levels.asks.empty()));
           }
           THEN("to json") {
             REQUIRE(((json)levels).dump() == "{"

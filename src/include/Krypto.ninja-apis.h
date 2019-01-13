@@ -202,12 +202,6 @@ namespace ₿ {
       : price(p)
       , size(s)
     {};
-    void clear() {
-      price = size = 0;
-    };
-    const bool empty() const {
-      return !size or !price;
-    };
   };
   static void to_json(json &j, const mLevel &k) {
     j = {
@@ -223,18 +217,6 @@ namespace ₿ {
       : bids(b)
       , asks(a)
     {};
-    const Price spread() const {
-      return empty()
-        ? 0
-        : asks.cbegin()->price - bids.cbegin()->price;
-    };
-    const bool empty() const {
-      return bids.empty() or asks.empty();
-    };
-    void clear() {
-      bids.clear();
-      asks.clear();
-    };
   };
   static void to_json(json &j, const mLevels &k) {
     j = {

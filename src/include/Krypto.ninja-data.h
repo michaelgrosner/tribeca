@@ -1015,7 +1015,7 @@ namespace ₿ {
       const bool empty() const {
         return patched
           ? bids.empty() and asks.empty()
-          : mLevels::empty();
+          : bids.empty() or asks.empty();
       };
       void send_patch() {
         if (ratelimit()) return;
@@ -1032,7 +1032,7 @@ namespace ₿ {
       };
     private:
       const bool ratelimit() {
-        return unfiltered.empty() or empty()
+        return unfiltered.bids.empty() or unfiltered.asks.empty() or empty()
           or !send_soon(qp.delayUI * 1e+3);
       };
       void unfilter() {
@@ -1093,7 +1093,7 @@ namespace ₿ {
         , orders(o)
       {};
       const bool warn_empty() const {
-        const bool err = empty();
+        const bool err = bids.empty() or asks.empty();
         if (err) Print::logWar("QE", "Unable to calculate quote, missing market data");
         return err;
       };
@@ -1114,12 +1114,16 @@ namespace ₿ {
             ? stats.ewma.mgEwmaW
             : 0
         );
-        *superSpread = spread() > widthPing * qp.sopWidthMultiplier;
+        *superSpread = asks.cbegin()->price - bids.cbegin()->price > widthPing * qp.sopWidthMultiplier;
         return widthPing;
+      };
+      void clear() {
+        bids.clear();
+        asks.clear();
       };
       const bool ready() {
         filter();
-        return !empty();
+        return !(bids.empty() or asks.empty());
       };
       void read_from_gw(const mLevels &raw) {
         unfiltered.bids = raw.bids;
@@ -1137,7 +1141,7 @@ namespace ₿ {
         calcAverageWidth();
       };
       void calcAverageWidth() {
-        if (empty()) return;
+        if (bids.empty() or asks.empty()) return;
         averageWidth = (
           (averageWidth * averageCount)
             + asks.cbegin()->price
@@ -1150,7 +1154,7 @@ namespace ₿ {
         return averageWidth;
       };
       void calcFairValue() {
-        if (empty())
+        if (bids.empty() or asks.empty())
           fairValue = 0;
         else if (qp.fvModel == mFairValueModel::BBO)
           fairValue = (asks.cbegin()->price
@@ -1936,17 +1940,20 @@ namespace ₿ {
   };
 
   struct mQuote: public mLevel {
-    const Side       side   = (Side)0;
+    const Side        side   = (Side)0;
           mQuoteState state  = mQuoteState::MissingData;
           bool        isPong = false;
     mQuote(const Side &s)
       : side(s)
     {};
+    const bool empty() const {
+      return !size or !price;
+    };
     void skip() {
       size = 0;
     };
     void clear(const mQuoteState &reason) {
-      mLevel::clear();
+      price = size = 0;
       state = reason;
     };
     virtual const bool deprecates(const Price&) const = 0;
