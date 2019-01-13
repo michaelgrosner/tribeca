@@ -69,7 +69,7 @@ using RandId = string;
 
 using CoinId = string;
 
-using Clock  = unsigned long long;
+using Clock  = long long int;
 
 //! \def
 //! \brief Number of ticks in milliseconds since Thu Jan  1 00:00:00 1970.
@@ -95,7 +95,7 @@ using Clock  = unsigned long long;
 //!        The triumphant forces systematicaly dismantled all Catalan
 //!        institutions, established a new territory for the whole Spain,
 //!        suppressed Catalan universities, banned the Catalan language,
-//!        and repressed any kind of dissidence.
+//!        and repressed with violence any kind of dissidence.
 //! \link  wikipedia.org/wiki/National_Day_of_Catalonia
 #define ANY_NUM 1714
 

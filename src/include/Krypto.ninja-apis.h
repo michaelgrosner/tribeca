@@ -115,83 +115,18 @@ namespace ₿ {
   };
 
   struct mTrade {
-     string tradeId;
-       Side side         = (Side)0;
-      Price price        = 0,
-            Kprice       = 0;
-     Amount quantity     = 0,
-            value        = 0,
-            Kqty         = 0,
-            Kvalue       = 0,
-            Kdiff        = 0,
-            feeCharged   = 0;
-      Clock time         = 0,
-            Ktime        = 0;
-       bool isPong       = false,
-            loadedFromDB = false;
-    mTrade() = default;
-    mTrade(const Price p, const Amount q, const Side s, const Clock t)
-      : side(s)
-      , price(p)
-      , quantity(q)
-      , time(t)
-    {};
-    mTrade(const Price &p, const Amount &q, const Side &S, const bool &P, const Clock &t, const Amount &v, const Clock &Kt, const Amount &Kq, const Price &Kp, const Amount &Kv, const Amount &Kd, const Amount &f, const bool &l)
-      : tradeId(to_string(t))
-      , side(S)
-      , price(p)
-      , Kprice(Kp)
-      , quantity(q)
-      , value(v)
-      , Kqty(Kq)
-      , Kvalue(Kv)
-      , Kdiff(Kd)
-      , feeCharged(f)
-      , time(t)
-      , Ktime(Kt)
-      , isPong(P)
-      , loadedFromDB(l)
-    {};
+      Side side;
+     Price price;
+    Amount quantity;
+     Clock time;
   };
   static void to_json(json &j, const mTrade &k) {
-    if (k.tradeId.empty()) j = {
-      {    "time", k.time    },
+    j = {
+      {    "side", k.side    },
       {   "price", k.price   },
       {"quantity", k.quantity},
-      {    "side", k.side    }
+      {    "time", k.time    }
     };
-    else j = {
-      {     "tradeId", k.tradeId     },
-      {        "time", k.time        },
-      {       "price", k.price       },
-      {    "quantity", k.quantity    },
-      {        "side", k.side        },
-      {       "value", k.value       },
-      {       "Ktime", k.Ktime       },
-      {        "Kqty", k.Kqty        },
-      {      "Kprice", k.Kprice      },
-      {      "Kvalue", k.Kvalue      },
-      {       "Kdiff", k.Kdiff       },
-      {  "feeCharged", k.feeCharged  },
-      {      "isPong", k.isPong      },
-      {"loadedFromDB", k.loadedFromDB}
-    };
-  };
-  static void from_json(const json &j, mTrade &k) {
-    k.tradeId      = j.value("tradeId",     "");
-    k.price        = j.value("price",      0.0);
-    k.quantity     = j.value("quantity",   0.0);
-    k.side         = j.value("side",   (Side)0);
-    k.time         = j.value("time",  (Clock)0);
-    k.value        = j.value("value",      0.0);
-    k.Ktime        = j.value("Ktime", (Clock)0);
-    k.Kqty         = j.value("Kqty",       0.0);
-    k.Kprice       = j.value("Kprice",     0.0);
-    k.Kvalue       = j.value("Kvalue",     0.0);
-    k.Kdiff        = j.value("Kdiff",      0.0);
-    k.feeCharged   = j.value("feeCharged", 0.0);
-    k.isPong       = j.value("isPong",   false);
-    k.loadedFromDB = true;
   };
 
   struct mLevel {
