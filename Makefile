@@ -185,7 +185,7 @@ system_install:
 install: packages
 	@yes = | head -n`expr $(shell tput cols) / 2` | xargs echo && echo " _  __\n| |/ /  v$(MAJOR).$(MINOR).$(PATCH)+$(BUILD)\n| ' /\n| . \\   Select your (beloved) architecture\n|_|\\_\\  to download pre-compiled binaries:\n"
 	@echo $(CARCH) | tr ' ' "\n" | cat -n && echo "\n(Hint! uname says \"`uname -sm`\", and win32 auto-install does not work yet)\n"
-	@read -p "[`echo -n $(CARCH) | tr ' ' "\n" | cat -n | tr "\t" ' ' | sed 's/ *\([0-9]\) .*/\1/' | tr "\n" '/'`]: " chost && $(MAKE) download CHOST=`echo $(CARCH) | cut -d ' ' -f$${chost}`
+	@read -p "[`echo $(CARCH) | tr ' ' "\n" | cat -n | tr "\t" ' ' | sed 's/ *\([0-9]\) .*/\1/' | tr "\n" '/' | sed 's/^\(.*\)\/$$/\1/'`]: " chost && $(MAKE) download CHOST=`echo $(CARCH) | cut -d ' ' -f$${chost}`
 
 docker: packages download
 	@sed -i "/Usage/,+94d" K.sh
