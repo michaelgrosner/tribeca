@@ -24,7 +24,7 @@ class TradingBot: public KryptoNinja {
         {"pass",         "WORD",   "NULL",                     "set allowed WORD as password for UI connections,"
                                                                "\n" "mandatory but may be 'NULL'"},
         {"database",     "FILE",   "",                         "set alternative PATH to database filename,"
-                                                               "\n" "default PATH is '/data/db/K.*.*.*.db',"
+                                                               "\n" "default PATH is '/var/lib/K/db/K.*.*.*.db',"
                                                                "\n" "or use ':memory:' (see sqlite.org/inmemorydb.html)"},
         {"lifetime",     "NUMBER", "0",                        "set NUMBER of minimum milliseconds to keep orders open,"
                                                                "\n" "otherwise open orders can be replaced anytime required"},
@@ -61,7 +61,7 @@ class TradingBot: public KryptoNinja {
           (str["database"] == ":memory:"
             ? str["diskdata"]
             : str["database"]
-          ) = "/data/db/K"
+          ) = "/var/lib/K/db/K"
             + ('.' + str["exchange"])
             +  '.' + str["base"]
             +  '.' + str["quote"]

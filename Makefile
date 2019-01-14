@@ -153,11 +153,18 @@ download:
 	curl -L https://github.com/ctubio/Krypto-trading-bot/releases/download/$(MAJOR).$(MINOR).x/v$(MAJOR).$(MINOR).$(PATCH).$(BUILD)-$(CHOST).tar.gz | tar xz
 	@$(MAKE) system_install -s
 	@test -n "`ls *.sh 2>/dev/null`" || (cp etc/K.sh.dist K.sh && chmod +x K.sh)
-	-@rm -rf app
+	@$(MAKE) upgrade_old_installations -s
+
+upgrade_old_installations:
+	-@$(foreach db,$(wildcard /data/db/K*.db), mv $(db) /var/lib/K/db;)
+	-@test -d /data/db && sudo rmdir /data/db || :
+	-@test -d /data && sudo rmdir /data || :
+	-@test -d app && rm -rf app || :
 	-@$(foreach conf,$(wildcard *.sh), test -n "`cat $(conf) | grep "app/server"`" && (sed -i 's/\.\/app\/server\/K/K-trading-bot/' $(conf) && sed -i 's/app\/server\/K/K-trading-bot/' $(conf)) || :;)
 
-cleandb: /data/db/K*
-	rm -rf /data/db/K*.db
+
+cleandb: /var/lib/K/db/K*
+	rm -rf /var/lib/K/db/K*.db
 
 packages:
 	test -n "`command -v apt-get`" && sudo apt-get -y install g++ build-essential automake autoconf libtool libxml2 libxml2-dev zlib1g-dev openssl python curl gzip screen doxygen graphviz \
@@ -173,7 +180,7 @@ system_install:
 	$(info Checking if /usr/local/bin is already  in your PATH..      $(if $(shell echo $$PATH | grep /usr/local/bin),OK))
 	$(if $(shell echo $$PATH | grep /usr/local/bin),,$(info $(subst ..,,$(subst Building ,,$(call STEP,Warning! you MUST add /usr/local/bin to your PATH!)))))
 	$(info Checking if /etc/ssl/certs is readable by curl..           $(shell (test -d /etc/ssl/certs && echo OK) || (sudo mkdir -p /etc/ssl/certs && echo OK)))
-	$(info Checking if /data/db       is writable by sqlite..         $(shell (test -d /data/db && echo OK) || (sudo mkdir -p /data/db && sudo chown $(shell id -u) /data/db && echo OK)))
+	$(info Checking if /var/lib/K/db  is writable by sqlite..         $(shell (test -d /var/lib/K/db && echo OK) || (sudo mkdir -p /var/lib/K/db && sudo chown $(shell id -u) -R /var/lib/K && echo OK)))
 	$(info )
 	$(info List of installed K binaries:)
 	@sudo cp -f $(wildcard $(KLOCAL)/bin/K-$(KSRC)*) /usr/local/bin

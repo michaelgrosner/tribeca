@@ -194,7 +194,7 @@ In case you really want to use plain HTTP, use `--without-ssl` argument.
 
 Each currency pair of each exchange will use a different sqlite database file.
 
-All database files are located at `/data/db/K.*.db`. It is located outside the application path to survive reinstalls and wild `rm -rf path/to/K`.
+All database files are located at `/var/lib/K/db/K.*.db`. It is located outside the application path to survive reinstalls and wild `rm -rf path/to/K`.
 
 You can copy any `*.db` file to another machine when migrating or as a backup.
 
