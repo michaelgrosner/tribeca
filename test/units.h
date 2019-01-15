@@ -134,17 +134,17 @@ namespace ₿ {
         REQUIRE_NOTHROW(qp.fvModel = mFairValueModel::BBO);
         vector<RandId> randIds;
         REQUIRE_NOTHROW(randIds.push_back(Random::uuid36Id()));
-        REQUIRE_NOTHROW(orders.upsert(mOrder(randIds.back(), Side::Bid, 1234.52, 0.34567890, false)));
-        REQUIRE_NOTHROW(orders.upsert(mOrder(randIds.back(), "", Status::Working, 0, 0, 0)));
+        REQUIRE_NOTHROW(orders.upsert({Side::Bid, 1234.52, 0.34567890, Tstamp, false, randIds.back()}));
+      REQUIRE_NOTHROW(orders.upsert({(Side)0, 0, 0, Tstamp, false, randIds.back(), "", Status::Working, 0}));
         REQUIRE_NOTHROW(randIds.push_back(Random::uuid36Id()));
-        REQUIRE_NOTHROW(orders.upsert(mOrder(randIds.back(), Side::Bid, 1234.52, 0.23456789, false)));
-        REQUIRE_NOTHROW(orders.upsert(mOrder(randIds.back(), "", Status::Working, 0, 0, 0)));
+        REQUIRE_NOTHROW(orders.upsert({Side::Bid, 1234.52, 0.23456789, Tstamp, false, randIds.back()}));
+        REQUIRE_NOTHROW(orders.upsert({(Side)0, 0, 0, Tstamp, false, randIds.back(), "", Status::Working, 0}));
         REQUIRE_NOTHROW(randIds.push_back(Random::uuid36Id()));
-        REQUIRE_NOTHROW(orders.upsert(mOrder(randIds.back(), Side::Bid, 1234.55, 0.01234567, false)));
-        REQUIRE_NOTHROW(orders.upsert(mOrder(randIds.back(), "", Status::Working, 0, 0, 0)));
+        REQUIRE_NOTHROW(orders.upsert({Side::Bid, 1234.55, 0.01234567, Tstamp, false, randIds.back()}));
+        REQUIRE_NOTHROW(orders.upsert({(Side)0, 0, 0, Tstamp, false, randIds.back(), "", Status::Working, 0}));
         REQUIRE_NOTHROW(randIds.push_back(Random::uuid36Id()));
-        REQUIRE_NOTHROW(orders.upsert(mOrder(randIds.back(), Side::Ask, 1234.69, 0.01234568, false)));
-        REQUIRE_NOTHROW(orders.upsert(mOrder(randIds.back(), "", Status::Working, 0, 0, 0)));
+        REQUIRE_NOTHROW(orders.upsert({Side::Ask, 1234.69, 0.01234568, Tstamp, false, randIds.back()}));
+        REQUIRE_NOTHROW(orders.upsert({(Side)0, 0, 0, Tstamp, false, randIds.back(), "", Status::Working, 0}));
         REQUIRE_NOTHROW(levels.read_from_gw({
           { {1234.50, 0.12345678}, {1234.55, 0.01234567} },
           { {1234.60, 1.23456789}, {1234.69, 0.11234569} }
@@ -355,29 +355,24 @@ namespace ₿ {
       mBroker broker(product, orders, levels, wallet);
       WHEN("assigned") {
         vector<RandId> randIds;
-        Clock time = Tstamp;
+        const Clock time = Tstamp;
         REQUIRE_NOTHROW(randIds.push_back(Random::uuid36Id()));
-        REQUIRE_NOTHROW(orders.upsert(mOrder(randIds.back(), Side::Bid, 1234.50, 0.12345678, false)));
-        REQUIRE_NOTHROW(orders.upsert(mOrder(randIds.back(), "", Status::Working, 0, 0, 0)));
-        REQUIRE_NOTHROW(orders.find(randIds.back())->time = time);
+        REQUIRE_NOTHROW(orders.upsert({Side::Bid, 1234.50, 0.12345678, time-69, false, randIds.back()}));
+        REQUIRE_NOTHROW(orders.upsert({(Side)0, 0, 0, time, false, randIds.back(), "", Status::Working, 0}));
         REQUIRE_NOTHROW(randIds.push_back(Random::uuid36Id()));
-        REQUIRE_NOTHROW(orders.upsert(mOrder(randIds.back(), Side::Bid, 1234.51, 0.12345679, false)));
-        REQUIRE_NOTHROW(orders.upsert(mOrder(randIds.back(), "", Status::Working, 0, 0, 0)));
-        REQUIRE_NOTHROW(orders.find(randIds.back())->time = time);
+        REQUIRE_NOTHROW(orders.upsert({Side::Bid, 1234.51, 0.12345679, time-69, false, randIds.back()}));
+        REQUIRE_NOTHROW(orders.upsert({(Side)0, 0, 0, time, false, randIds.back(), "", Status::Working, 0}));
         REQUIRE_NOTHROW(randIds.push_back(Random::uuid36Id()));
-        REQUIRE_NOTHROW(orders.upsert(mOrder(randIds.back(), Side::Bid, 1234.52, 0.12345680, false)));
-        REQUIRE_NOTHROW(orders.upsert(mOrder(randIds.back(), "", Status::Working, 0, 0, 0)));
-        REQUIRE_NOTHROW(orders.find(randIds.back())->time = time);
+        REQUIRE_NOTHROW(orders.upsert({Side::Bid, 1234.52, 0.12345680, time-69, false, randIds.back()}));
+        REQUIRE_NOTHROW(orders.upsert({(Side)0, 0, 0, time, false, randIds.back(), "", Status::Working, 0}));
         REQUIRE_NOTHROW(randIds.push_back(Random::uuid36Id()));
-        REQUIRE_NOTHROW(orders.upsert(mOrder(randIds.back(), Side::Ask, 1234.50, 0.12345678, false)));
-        REQUIRE_NOTHROW(orders.upsert(mOrder(randIds.back(), "", Status::Working, 0, 0, 0)));
-        REQUIRE_NOTHROW(orders.find(randIds.back())->time = time);
+        REQUIRE_NOTHROW(orders.upsert({Side::Ask, 1234.50, 0.12345678, time-69, false, randIds.back()}));
+        REQUIRE_NOTHROW(orders.upsert({(Side)0, 0, 0, time, false, randIds.back(), "", Status::Working, 0}));
         REQUIRE_NOTHROW(randIds.push_back(Random::uuid36Id()));
-        REQUIRE_NOTHROW(orders.upsert(mOrder(randIds.back(), Side::Ask, 1234.51, 0.12345679, false)));
-        REQUIRE_NOTHROW(orders.upsert(mOrder(randIds.back(), "", Status::Working, 0, 0, 0)));
-        REQUIRE_NOTHROW(orders.find(randIds.back())->time = time);
+        REQUIRE_NOTHROW(orders.upsert({Side::Ask, 1234.51, 0.12345679, time-69, false, randIds.back()}));
+        REQUIRE_NOTHROW(orders.upsert({(Side)0, 0, 0, time, false, randIds.back(), "", Status::Working, 0}));
         REQUIRE_NOTHROW(randIds.push_back(Random::uuid36Id()));
-        REQUIRE_NOTHROW(orders.upsert(mOrder(randIds.back(), Side::Ask, 1234.52, 0.12345680, false)));
+        REQUIRE_NOTHROW(orders.upsert({Side::Ask, 1234.52, 0.12345680, time, false, randIds.back()}));
         THEN("held amount") {
           REQUIRE_NOTHROW(wallet.profits.mFromDb::push = [&]() {
             INFO("push()");
@@ -395,11 +390,11 @@ namespace ₿ {
         THEN("to json") {
           REQUIRE(string::npos == orders.blob().dump().find("\"status\":0"));
           REQUIRE(string::npos == orders.blob().dump().find("\"status\":2"));
-          REQUIRE(string::npos != orders.blob().dump().find("{\"exchangeId\":\"\",\"isPong\":false,\"latency\":0,\"orderId\":\"" + randIds[0] + "\",\"preferPostOnly\":true,\"price\":1234.5,\"quantity\":0.12345678,\"side\":0,\"status\":1,\"time\":" + to_string(time) + ",\"timeInForce\":2,\"type\":0}"));
-          REQUIRE(string::npos != orders.blob().dump().find("{\"exchangeId\":\"\",\"isPong\":false,\"latency\":0,\"orderId\":\"" + randIds[1] + "\",\"preferPostOnly\":true,\"price\":1234.51,\"quantity\":0.12345679,\"side\":0,\"status\":1,\"time\":" + to_string(time) + ",\"timeInForce\":2,\"type\":0}"));
-          REQUIRE(string::npos != orders.blob().dump().find("{\"exchangeId\":\"\",\"isPong\":false,\"latency\":0,\"orderId\":\"" + randIds[2] + "\",\"preferPostOnly\":true,\"price\":1234.52,\"quantity\":0.1234568,\"side\":0,\"status\":1,\"time\":" + to_string(time) + ",\"timeInForce\":2,\"type\":0}"));
-          REQUIRE(string::npos != orders.blob().dump().find("{\"exchangeId\":\"\",\"isPong\":false,\"latency\":0,\"orderId\":\"" + randIds[3] + "\",\"preferPostOnly\":true,\"price\":1234.5,\"quantity\":0.12345678,\"side\":1,\"status\":1,\"time\":" + to_string(time) + ",\"timeInForce\":2,\"type\":0}"));
-          REQUIRE(string::npos != orders.blob().dump().find("{\"exchangeId\":\"\",\"isPong\":false,\"latency\":0,\"orderId\":\"" + randIds[4] + "\",\"preferPostOnly\":true,\"price\":1234.51,\"quantity\":0.12345679,\"side\":1,\"status\":1,\"time\":" + to_string(time) + ",\"timeInForce\":2,\"type\":0}"));
+          REQUIRE(string::npos != orders.blob().dump().find("{\"disablePostOnly\":false,\"exchangeId\":\"\",\"isPong\":false,\"latency\":69,\"orderId\":\"" + randIds[0] + "\",\"price\":1234.5,\"quantity\":0.12345678,\"side\":0,\"status\":1,\"time\":" + to_string(time) + ",\"timeInForce\":0,\"type\":0}"));
+          REQUIRE(string::npos != orders.blob().dump().find("{\"disablePostOnly\":false,\"exchangeId\":\"\",\"isPong\":false,\"latency\":69,\"orderId\":\"" + randIds[1] + "\",\"price\":1234.51,\"quantity\":0.12345679,\"side\":0,\"status\":1,\"time\":" + to_string(time) + ",\"timeInForce\":0,\"type\":0}"));
+          REQUIRE(string::npos != orders.blob().dump().find("{\"disablePostOnly\":false,\"exchangeId\":\"\",\"isPong\":false,\"latency\":69,\"orderId\":\"" + randIds[2] + "\",\"price\":1234.52,\"quantity\":0.1234568,\"side\":0,\"status\":1,\"time\":" + to_string(time) + ",\"timeInForce\":0,\"type\":0}"));
+          REQUIRE(string::npos != orders.blob().dump().find("{\"disablePostOnly\":false,\"exchangeId\":\"\",\"isPong\":false,\"latency\":69,\"orderId\":\"" + randIds[3] + "\",\"price\":1234.5,\"quantity\":0.12345678,\"side\":1,\"status\":1,\"time\":" + to_string(time) + ",\"timeInForce\":0,\"type\":0}"));
+          REQUIRE(string::npos != orders.blob().dump().find("{\"disablePostOnly\":false,\"exchangeId\":\"\",\"isPong\":false,\"latency\":69,\"orderId\":\"" + randIds[4] + "\",\"price\":1234.51,\"quantity\":0.12345679,\"side\":1,\"status\":1,\"time\":" + to_string(time) + ",\"timeInForce\":0,\"type\":0}"));
         }
       }
     }

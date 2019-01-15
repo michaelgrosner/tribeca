@@ -203,9 +203,14 @@ code( btn.cleanTradesClosed , wallet.safety.trades.clearClosed ,           )
       if (quote.empty()) return;
       if (replace)
         replaceOrder(quote.price, quote.isPong, abandoned.back());
-      else placeOrder(mOrder(
-        gw->randId(), quote.side, quote.price, quote.size, quote.isPong
-      ));
+      else placeOrder({
+        quote.side,
+        quote.price,
+        quote.size,
+        Tstamp,
+        quote.isPong,
+        gw->randId()
+      });
       monitor.tick_orders();
     };
     void cancelOrders() {

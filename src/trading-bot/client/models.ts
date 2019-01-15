@@ -65,7 +65,7 @@ export class MarketTrade {
 export enum Connectivity { Disconnected, Connected }
 export enum Side { Bid, Ask, Unknown }
 export enum OrderType { Limit, Market }
-export enum TimeInForce { IOC, FOK, GTC }
+export enum TimeInForce { GTC, IOC, FOK }
 export enum OrderStatus { Waiting, Working, Terminated }
 export enum Liquidity { Make, Take }
 

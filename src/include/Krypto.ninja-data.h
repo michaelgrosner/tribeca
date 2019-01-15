@@ -587,7 +587,7 @@ namespace ₿ {
         vector<mOrder*> workingOrders;
         for (unordered_map<RandId, mOrder>::value_type &it : orders)
           if (Status::Working == it.second.status
-            and it.second.preferPostOnly
+            and !it.second.disablePostOnly
           ) workingOrders.push_back(&it.second);
         return workingOrders;
       };
@@ -2344,7 +2344,7 @@ namespace ₿ {
           }
           ++countWaiting;
         } else ++countWorking;
-        return order.preferPostOnly;
+        return !order.disablePostOnly;
       };
       void applyQuotingParameters() {
         quotes.debuq("?"); applySuperTrades();

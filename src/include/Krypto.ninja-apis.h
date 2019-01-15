@@ -14,119 +14,10 @@ namespace ₿ {
     Bid, Ask
   };
   enum class TimeInForce: unsigned int {
-    IOC, FOK, GTC
+    GTC, IOC, FOK
   };
   enum class OrderType: unsigned int {
     Limit, Market
-  };
-
-  struct mTrade {
-      Side side;
-     Price price;
-    Amount quantity;
-     Clock time;
-  };
-  static void to_json(json &j, const mTrade &k) {
-    j = {
-      {    "side", k.side    },
-      {   "price", k.price   },
-      {"quantity", k.quantity},
-      {    "time", k.time    }
-    };
-  };
-
-  struct mOrder {
-         RandId orderId,
-                exchangeId;
-         Status status         = Status::Waiting;
-           Side side           = (Side)0;
-          Price price          = 0;
-         Amount quantity       = 0,
-                tradeQuantity  = 0;
-      OrderType type           = OrderType::Limit;
-    TimeInForce timeInForce    = TimeInForce::GTC;
-           bool isPong         = false,
-                preferPostOnly = true;
-          Clock time           = 0,
-                latency        = 0;
-    mOrder() = default;
-    mOrder(const RandId &o, const Side &s, const Price &p, const Amount &q, const bool &i)
-      : orderId(o)
-      , side(s)
-      , price(p)
-      , quantity(q)
-      , isPong(i)
-      , time(Tstamp)
-    {};
-    mOrder(const RandId &o, const RandId &e, const Status &s, const Price &p, const Amount &q, const Amount &Q)
-      : orderId(o)
-      , exchangeId(e)
-      , status(s)
-      , price(p)
-      , quantity(q)
-      , tradeQuantity(Q)
-      , time(Tstamp)
-    {};
-    static void update(const mOrder &raw, mOrder *const order) {
-      if (!order) return;
-      if (Status::Working == (     order->status     = raw.status
-      ) and !order->latency)       order->latency    = Tstamp - order->time;
-                                   order->time       = raw.time;
-      if (!raw.exchangeId.empty()) order->exchangeId = raw.exchangeId;
-      if (raw.price)               order->price      = raw.price;
-      if (raw.quantity)            order->quantity   = raw.quantity;
-    };
-    static const bool replace(const Price &price, const bool &isPong, mOrder *const order) {
-      if (!order
-        or order->exchangeId.empty()
-      ) return false;
-      order->price  = price;
-      order->isPong = isPong;
-      order->time   = Tstamp;
-      return true;
-    };
-    static const bool cancel(mOrder *const order) {
-      if (!order
-        or order->exchangeId.empty()
-        or order->status == Status::Waiting
-      ) return false;
-      order->status = Status::Waiting;
-      order->time   = Tstamp;
-      return true;
-    };
-  };
-  static void to_json(json &j, const mOrder &k) {
-    j = {
-      {       "orderId", k.orderId       },
-      {    "exchangeId", k.exchangeId    },
-      {          "side", k.side          },
-      {      "quantity", k.quantity      },
-      {          "type", k.type          },
-      {        "isPong", k.isPong        },
-      {         "price", k.price         },
-      {   "timeInForce", k.timeInForce   },
-      {        "status", k.status        },
-      {"preferPostOnly", k.preferPostOnly},
-      {          "time", k.time          },
-      {       "latency", k.latency       }
-    };
-  };
-  static void from_json(const json &j, mOrder &k) {
-    k.price          = j.value("price", 0.0);
-    k.quantity       = j.value("quantity", 0.0);
-    k.side           = j.value("side", "") == "Bid"
-                         ? Side::Bid
-                         : Side::Ask;
-    k.type           = j.value("type", "") == "Limit"
-                         ? OrderType::Limit
-                         : OrderType::Market;
-    k.timeInForce    = j.value("timeInForce", "") == "GTC"
-                         ? TimeInForce::GTC
-                         : (j.value("timeInForce", "") == "FOK"
-                           ? TimeInForce::FOK
-                           : TimeInForce::IOC);
-    k.isPong         = false;
-    k.preferPostOnly = false;
   };
 
   struct mLevel {
@@ -179,6 +70,93 @@ namespace ₿ {
       { "base", k.base },
       {"quote", k.quote}
     };
+  };
+
+  struct mTrade {
+      Side side;
+     Price price;
+    Amount quantity;
+     Clock time;
+  };
+  static void to_json(json &j, const mTrade &k) {
+    j = {
+      {    "side", k.side    },
+      {   "price", k.price   },
+      {"quantity", k.quantity},
+      {    "time", k.time    }
+    };
+  };
+
+  struct mOrder: public mTrade {
+           bool isPong;
+         RandId orderId,
+                exchangeId;
+         Status status;
+         Amount tradeQuantity;
+      OrderType type;
+    TimeInForce timeInForce;
+           bool disablePostOnly;
+          Clock latency;
+    static void update(const mOrder &raw, mOrder *const order) {
+      if (!order) return;
+      if (Status::Working == (     order->status     = raw.status
+      ) and !order->latency)       order->latency    = raw.time - order->time;
+                                   order->time       = raw.time;
+      if (!raw.exchangeId.empty()) order->exchangeId = raw.exchangeId;
+      if (raw.price)               order->price      = raw.price;
+      if (raw.quantity)            order->quantity   = raw.quantity;
+    };
+    static const bool replace(const Price &price, const bool &isPong, mOrder *const order) {
+      if (!order
+        or order->exchangeId.empty()
+      ) return false;
+      order->price  = price;
+      order->isPong = isPong;
+      order->time   = Tstamp;
+      return true;
+    };
+    static const bool cancel(mOrder *const order) {
+      if (!order
+        or order->exchangeId.empty()
+        or order->status == Status::Waiting
+      ) return false;
+      order->status = Status::Waiting;
+      order->time   = Tstamp;
+      return true;
+    };
+  };
+  static void to_json(json &j, const mOrder &k) {
+    j = {
+      {        "orderId", k.orderId        },
+      {     "exchangeId", k.exchangeId     },
+      {           "side", k.side           },
+      {       "quantity", k.quantity       },
+      {           "type", k.type           },
+      {         "isPong", k.isPong         },
+      {          "price", k.price          },
+      {    "timeInForce", k.timeInForce    },
+      {         "status", k.status         },
+      {"disablePostOnly", k.disablePostOnly},
+      {           "time", k.time           },
+      {        "latency", k.latency        }
+    };
+  };
+  static void from_json(const json &j, mOrder &k) {
+    k.price           = j.value("price", 0.0);
+    k.quantity        = j.value("quantity", 0.0);
+    k.side            = j.value("side", "") == "Bid"
+                          ? Side::Bid
+                          : Side::Ask;
+    k.type            = j.value("type", "") == "Limit"
+                          ? OrderType::Limit
+                          : OrderType::Market;
+    k.timeInForce     = j.value("timeInForce", "") == "GTC"
+                          ? TimeInForce::GTC
+                          : (j.value("timeInForce", "") == "FOK"
+                            ? TimeInForce::FOK
+                            : TimeInForce::IOC);
+    k.isPong          = false;
+    k.disablePostOnly = true;
   };
 
   class Curl {
@@ -407,7 +385,7 @@ namespace ₿ {
           str(order->quantity),
           order->type,
           order->timeInForce,
-          order->preferPostOnly
+          order->disablePostOnly
         );
       };
       void replace(const mOrder *const order) {
