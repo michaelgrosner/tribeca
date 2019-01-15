@@ -135,7 +135,7 @@ namespace ₿ {
         vector<RandId> randIds;
         REQUIRE_NOTHROW(randIds.push_back(Random::uuid36Id()));
         REQUIRE_NOTHROW(orders.upsert({Side::Bid, 1234.52, 0.34567890, Tstamp, false, randIds.back()}));
-      REQUIRE_NOTHROW(orders.upsert({(Side)0, 0, 0, Tstamp, false, randIds.back(), "", Status::Working, 0}));
+        REQUIRE_NOTHROW(orders.upsert({(Side)0, 0, 0, Tstamp, false, randIds.back(), "", Status::Working, 0}));
         REQUIRE_NOTHROW(randIds.push_back(Random::uuid36Id()));
         REQUIRE_NOTHROW(orders.upsert({Side::Bid, 1234.52, 0.23456789, Tstamp, false, randIds.back()}));
         REQUIRE_NOTHROW(orders.upsert({(Side)0, 0, 0, Tstamp, false, randIds.back(), "", Status::Working, 0}));
