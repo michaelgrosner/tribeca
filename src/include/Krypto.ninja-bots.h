@@ -377,34 +377,6 @@ namespace ₿ {
       };
   };
 
-  //! \brief Placeholder to avoid spaghetti codes.
-  //! - Walks through minimal runtime steps when wait() is called.
-  //! - Adds end() into endingFn to be called on exit().
-  //! - Connects to gateway when ready.
-  class Klass {
-    protected:
-      virtual void load        ()    {};
-      virtual void waitData    ()   {};
-      virtual void waitWebAdmin()  {};
-      virtual void waitSysAdmin(){};
-      virtual void waitTime    ()  {};
-      virtual void run         ()   {};
-      virtual void end         ()   {};
-    public:
-      void wait() {
-        load();
-        waitData();
-        waitWebAdmin();
-        waitSysAdmin();
-        waitTime();
-        endingFn.emplace_back([&]() {
-          end();
-        });
-        run();
-        if (gw->ready()) gw->run();
-      };
-  };
-
   struct Argument {
    const string  name;
    const string  defined_value;
@@ -622,6 +594,34 @@ namespace ₿ {
           << Ansi::b(COLOR_GREEN) << "K" << Ansi::r(COLOR_GREEN) << " questions: " << Ansi::r(COLOR_YELLOW) << "irc://irc.freenode.net:6667/#tradingBot" << '\n'
           << Ansi::r(COLOR_GREEN) << "  home page: " << Ansi::r(COLOR_YELLOW) << "https://ca.rles-tub.io./trades" << '\n'
           << Ansi::reset();
+      };
+  };
+
+  //! \brief Placeholder to avoid spaghetti codes.
+  //! - Walks through minimal runtime steps when wait() is called.
+  //! - Adds end() into endingFn to be called on exit().
+  //! - Connects to gateway when ready.
+  class Klass {
+    protected:
+      virtual void load        ()    {};
+      virtual void waitData    ()   {};
+      virtual void waitWebAdmin()  {};
+      virtual void waitSysAdmin(){};
+      virtual void waitTime    ()  {};
+      virtual void run         ()   {};
+      virtual void end         ()   {};
+    public:
+      void wait() {
+        load();
+        waitData();
+        waitWebAdmin();
+        waitSysAdmin();
+        waitTime();
+        endingFn.emplace_back([&]() {
+          end();
+        });
+        run();
+        if (gw->ready()) gw->run();
       };
   };
 
