@@ -10,7 +10,7 @@ class QE: public Engine { public: QE() { engine = this; };
       monitor.product.minTick = &gw->minTick;
       monitor.product.minSize = &gw->minSize;
       broker.calculon.dummyMM.mode("loaded");
-      broker.semaphore.agree(K.option.num("autobot"));
+      broker.semaphore.agree(K.num("autobot"));
     };
     void waitData() override {
       gw->RAWDATA_ENTRY_POINT(Connectivity, {
@@ -43,12 +43,12 @@ class QE: public Engine { public: QE() { engine = this; };
     };
     void run() override {
       K.handshake({
-        {"gateway", gw->http               },
-        {"gateway", gw->ws                 },
-        {"gateway", gw->fix                },
-        {"autoBot", K.option.num("autobot")
+        {"gateway", gw->http        },
+        {"gateway", gw->ws          },
+        {"gateway", gw->fix         },
+        {"autoBot", K.num("autobot")
                       ? "yes"
-                      : "no"               }
+                      : "no"        }
       });
     };
 } qe;

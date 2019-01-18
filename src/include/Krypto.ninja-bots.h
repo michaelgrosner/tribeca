@@ -410,6 +410,7 @@ namespace ₿ {
       const double dec(const string &name) const {
         return optdec.at(name);
       };
+    protected:
       void main(int argc, char** argv) {
         optint["naked"] = !Print::display;
         vector<Argument> long_options = {
@@ -627,14 +628,13 @@ namespace ₿ {
 
   class KryptoNinja: public Klass,
                      public Ending,
-                     public Hotkey {
-    public:
-      Option option;
+                     public Hotkey,
+                     public Option {
     public:
       KryptoNinja *const main(int argc, char** argv) {
-        option.main(argc, argv);
+        Option::main(argc, argv);
         if (Print::windowed()) legit_keylogger();
-        if (option.num("latency")) {
+        if (num("latency")) {
           gw->latency("HTTP read/write handshake", [&]() {
             handshake({
               {"gateway", gw->http}

@@ -1650,7 +1650,7 @@ namespace ₿ {
       };
       void matchPing(bool _near, bool _far, map<Price, mOrderFilled> *tradesSide, Price *ping, Amount *qty, Amount qtyMax, Price width, bool reverse = false) {
         int dir = width > 0 ? 1 : -1;
-        if (reverse) for (auto it = tradesSide->rbegin(); it != tradesSide->rend(); ++it) {
+        if (reverse) for (auto it = tradesSide->crbegin(); it != tradesSide->crend(); ++it) {
           if (matchPing(_near, _far, ping, qty, qtyMax, width, dir * fairValue, dir * it->second.price, it->second.quantity, it->second.price, it->second.Kqty, reverse))
             break;
         } else for (const auto &it : *tradesSide)

@@ -5,7 +5,7 @@ class HelloWorld: public KryptoNinja {
   public:
     HelloWorld()
     {
-      option.arguments = { {
+      arguments = { {
         {"subject", "NAME", "World", "say hello to NAME (default: 'World')"}
       }, [](
         unordered_map<string, string> &str,
@@ -21,15 +21,15 @@ class HelloWorld: public KryptoNinja {
     void run() override {
       const string result = greeting();
       const string prefix = "Executed " + (
-        option.num("debug")
+        num("debug")
           ? string(__PRETTY_FUNCTION__)
-          : option.str("title")
+          : str("title")
       );
       exit(prefix + ' ' + result);
     };
   private:
     const string greeting() {
-      cout << "Hello, " << option.str("subject") << endl;
+      cout << "Hello, " << str("subject") << endl;
       return "OK";
     };
 } K;

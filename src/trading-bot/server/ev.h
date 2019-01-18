@@ -21,7 +21,7 @@ class EV: public Events { public: EV() { events = this; };
       socket->createGroup<uWS::CLIENT>();
     };
     void waitWebAdmin() override {
-      if (K.option.num("headless")) return;
+      if (K.num("headless")) return;
       client->socket = socket;
       socket->createGroup<uWS::SERVER>(uWS::PERMESSAGE_DEFLATE);
     };
@@ -41,7 +41,7 @@ class EV: public Events { public: EV() { events = this; };
       timer->stop();
       gw->close();
       socket->getDefaultGroup<uWS::CLIENT>().close();
-      gw->end(K.option.num("dustybot"));
+      gw->end(K.num("dustybot"));
       walk(loop);
       socket->getDefaultGroup<uWS::SERVER>().close();
     };

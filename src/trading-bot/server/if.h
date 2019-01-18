@@ -5,7 +5,7 @@ class TradingBot: public KryptoNinja {
   public:
     TradingBot()
     {
-      option.arguments = { {
+      arguments = { {
         {"wallet-limit", "AMOUNT", "0",                        "set AMOUNT in base currency to limit the balance,"
                                                                "\n" "otherwise the full available balance can be used"},
         {"client-limit", "NUMBER", "7",                        "set NUMBER of maximum concurrent UI connections"},
@@ -160,7 +160,7 @@ code( btn.cleanTradesClosed , wallet.safety.trades.clearClosed ,           )
     mWalletPosition wallet;
             mBroker broker;
     Engine()
-      : monitor(K.option)
+      : monitor(K)
       , orders(monitor.product)
       , levels(monitor.product, orders)
       , wallet(monitor.product, orders, levels.stats.ewma.targetPositionAutoPercentage, levels.fairValue)

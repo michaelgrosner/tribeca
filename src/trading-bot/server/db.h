@@ -7,13 +7,13 @@ class DB: public Sqlite { public: DB() { sqlite = this; };
     string qpdb = "main";
   protected:
     void load() override {
-      if (sqlite3_open(K.option.str("database").data(), &db))
+      if (sqlite3_open(K.str("database").data(), &db))
         error("DB", sqlite3_errmsg(db));
-      Print::log("DB", "loaded OK from", K.option.str("database"));
-      if (K.option.str("diskdata").empty()) return;
+      Print::log("DB", "loaded OK from", K.str("database"));
+      if (K.str("diskdata").empty()) return;
       qpdb = "qpdb";
-      exec("ATTACH '" + K.option.str("diskdata") + "' AS " + qpdb + ";");
-      Print::log("DB", "loaded OK from", K.option.str("diskdata"));
+      exec("ATTACH '" + K.str("diskdata") + "' AS " + qpdb + ";");
+      Print::log("DB", "loaded OK from", K.str("diskdata"));
     };
   public:
     void backup(mFromDb *const data) override {

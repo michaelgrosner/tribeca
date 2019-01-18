@@ -40,9 +40,9 @@ void TradingBot::display() {
   mvwaddch(stdscr, y, 0, ACS_BTEE);
   mvwaddch(stdscr, 0, 12, ACS_RTEE);
   wattron(stdscr, COLOR_PAIR(COLOR_GREEN));
-  string title1 = "   " + K.option.str("exchange");
-  string title2 = " " + (K.option.num("port")
-    ? "UI at " + Text::strL(client->protocol) + "://" + client->wtfismyip + ":" + K.option.str("port")
+  const string title1 = "   " + K.str("exchange");
+  const string title2 = " " + (K.num("port")
+    ? "UI at " + Text::strL(client->protocol) + "://" + client->wtfismyip + ":" + K.str("port")
     : "headless"
   )  + ' ';
   wattron(stdscr, A_BOLD);
