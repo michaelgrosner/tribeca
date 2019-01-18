@@ -89,10 +89,10 @@ using Clock  = long long int;
 //!        surrounded the city defended by 5,000 civilians.
 //!        After some Catalan successes, Bourbon reinforcements arrived
 //!        and the attackers now numbered 40,000.
-//!        After a heroic defence, Barcelona finally fell
+//!        After a heroic defence, Barcelona finally fell,
 //!        on September 11th 1714.
 //!        Catalonia then ceased to exist as an independent state.
-//!        The triumphant forces systematicaly dismantled all Catalan
+//!        The triumphant forces systematically dismantled all Catalan
 //!        institutions, established a new territory for the whole Spain,
 //!        suppressed Catalan universities, banned the Catalan language,
 //!        and repressed with violence any kind of dissidence.

@@ -542,7 +542,7 @@ namespace ₿ {
         if (raw.status == Status::Waiting and !raw.orderId.empty())
           return &(orders[raw.orderId] = raw);
         if (raw.orderId.empty() and !raw.exchangeId.empty()) {
-          unordered_map<RandId, mOrder>::iterator it = find_if(
+          auto it = find_if(
             orders.begin(), orders.end(),
             [&](const pair<RandId, mOrder> &it_) {
               return raw.exchangeId == it_.second.exchangeId;
@@ -555,7 +555,7 @@ namespace ₿ {
       };
       const double heldAmount(const Side &side) const {
         double held = 0;
-        for (const unordered_map<RandId, mOrder>::value_type &it : orders)
+        for (const auto &it : orders)
           if (it.second.side == side)
             held += (
               it.second.side == Side::Ask
@@ -570,7 +570,7 @@ namespace ₿ {
       ) const {
         filterBidOrders->clear();
         filterAskOrders->clear();
-        for (const unordered_map<RandId, mOrder>::value_type &it : orders)
+        for (const auto &it : orders)
           (it.second.side == Side::Bid
             ? *filterBidOrders
             : *filterAskOrders
@@ -578,14 +578,14 @@ namespace ₿ {
       };
       const vector<mOrder*> at(const Side &side) {
         vector<mOrder*> sideOrders;
-        for (unordered_map<RandId, mOrder>::value_type &it : orders)
+        for (auto &it : orders)
           if (side == it.second.side)
              sideOrders.push_back(&it.second);
         return sideOrders;
       };
       const vector<mOrder*> working() {
         vector<mOrder*> workingOrders;
-        for (unordered_map<RandId, mOrder>::value_type &it : orders)
+        for (auto &it : orders)
           if (Status::Working == it.second.status
             and !it.second.disablePostOnly
           ) workingOrders.push_back(&it.second);
@@ -593,7 +593,7 @@ namespace ₿ {
       };
       const vector<mOrder> working(const bool &sorted = false) const {
         vector<mOrder> workingOrders;
-        for (const unordered_map<RandId, mOrder>::value_type &it : orders)
+        for (const auto &it : orders)
           if (Status::Working == it.second.status)
             workingOrders.push_back(it.second);
         if (sorted)
@@ -1048,7 +1048,7 @@ namespace ₿ {
       vector<mLevel> diff(const vector<mLevel> &from, vector<mLevel> to) const {
         vector<mLevel> patch;
         for (const mLevel &it : from) {
-          vector<mLevel>::iterator it_ = find_if(
+          auto it_ = find_if(
             to.begin(), to.end(),
             [&](const mLevel &_it) {
               return it.price == _it.price;
@@ -1178,8 +1178,8 @@ namespace ₿ {
       };
       const vector<mLevel> filter(vector<mLevel> levels, unordered_map<Price, Amount> *const filterOrders) {
         if (!filterOrders->empty())
-          for (vector<mLevel>::iterator it = levels.begin(); it != levels.end();) {
-            for (unordered_map<Price, Amount>::iterator it_ = filterOrders->begin(); it_ != filterOrders->end();)
+          for (auto it = levels.begin(); it != levels.end();) {
+            for (auto it_ = filterOrders->begin(); it_ != filterOrders->end();)
               if (abs(it->price - it_->first) < *product.minTick) {
                 it->size -= it_->second;
                 filterOrders->erase(it_);
@@ -1239,7 +1239,7 @@ namespace ₿ {
       return mMatter::Profit;
     };
     void erase() override {
-      for (vector<mProfit>::iterator it = begin(); it != end();)
+      for (auto it = begin(); it != end();)
         if (it->time + lifetime() > Tstamp) ++it;
         else it = rows.erase(it);
     };
@@ -1403,7 +1403,7 @@ namespace ₿ {
       };
     private:
       void clear_if(const function<const bool(iterator)> &fn, const bool &onlyOne = false) {
-        for (iterator it = begin(); it != end();)
+        for (auto it = begin(); it != end();)
           if (fn(it)) {
             it->Kqty = -1;
             it = send_push_erase(it);
@@ -1411,13 +1411,13 @@ namespace ₿ {
           } else ++it;
       };
       void matchPong(const map<Price, string> &matches, mOrderFilled pong, const bool &reverse) {
-        if (reverse) for (map<Price, string>::const_reverse_iterator it = matches.crbegin(); it != matches.crend(); ++it) {
+        if (reverse) for (auto it = matches.crbegin(); it != matches.crend(); ++it) {
           if (!matchPong(it->second, &pong)) break;
-        } else for (const map<Price, string>::value_type &it : matches)
+        } else for (const auto &it : matches)
           if (!matchPong(it.second, &pong)) break;
         if (pong.quantity > 0) {
           bool eq = false;
-          for (iterator it = begin(); it != end(); ++it) {
+          for (auto it = begin(); it != end(); ++it) {
             if (it->price!=pong.price or it->side!=pong.side or it->quantity<=it->Kqty) continue;
             eq = true;
             it->time = pong.time;
@@ -1434,7 +1434,7 @@ namespace ₿ {
         }
       };
       bool matchPong(const string &match, mOrderFilled *const pong) {
-        for (iterator it = begin(); it != end(); ++it) {
+        for (auto it = begin(); it != end(); ++it) {
           if (it->tradeId != match) continue;
           Amount Kqty = fmin(pong->quantity, it->quantity - it->Kqty);
           it->Ktime = pong->time;
@@ -1507,13 +1507,13 @@ namespace ₿ {
     private:
       const Amount sum(multimap<Price, mRecentTrade> *const k) const {
         Amount sum = 0;
-        for (multimap<Price, mRecentTrade>::value_type &it : *k)
+        for (const auto &it : *k)
           sum += it.second.quantity;
         return sum;
       };
       void expire(multimap<Price, mRecentTrade> *const k) {
         Clock now = Tstamp;
-        for (multimap<Price, mRecentTrade>::iterator it = k->begin(); it != k->end();)
+        for (auto it = k->begin(); it != k->end();)
           if (it->second.time + qp.tradeRateSeconds * 1e+3 > now) ++it;
           else it = k->erase(it);
       };
@@ -1650,10 +1650,10 @@ namespace ₿ {
       };
       void matchPing(bool _near, bool _far, map<Price, mOrderFilled> *tradesSide, Price *ping, Amount *qty, Amount qtyMax, Price width, bool reverse = false) {
         int dir = width > 0 ? 1 : -1;
-        if (reverse) for (map<Price, mOrderFilled>::reverse_iterator it = tradesSide->rbegin(); it != tradesSide->rend(); ++it) {
+        if (reverse) for (auto it = tradesSide->rbegin(); it != tradesSide->rend(); ++it) {
           if (matchPing(_near, _far, ping, qty, qtyMax, width, dir * fairValue, dir * it->second.price, it->second.quantity, it->second.price, it->second.Kqty, reverse))
             break;
-        } else for (map<Price, mOrderFilled>::value_type &it : *tradesSide)
+        } else for (const auto &it : *tradesSide)
           if (matchPing(_near, _far, ping, qty, qtyMax, width, dir * fairValue, dir * it.second.price, it.second.quantity, it.second.price, it.second.Kqty, reverse))
             break;
       };

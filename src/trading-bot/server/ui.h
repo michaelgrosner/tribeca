@@ -100,7 +100,7 @@ class UI: public Client { public: UI() { client = this; };
       };
     };
     void timer_Xs() override {
-      for (unordered_map<mMatter, string>::value_type &it : queue)
+      for (const auto &it : queue)
         broadcast(it.first, it.second);
       queue.clear();
     };
