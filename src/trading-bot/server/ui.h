@@ -10,25 +10,19 @@ extern const  int _www_html_index_len, _www_ico_favicon_len, _www_css_base_len,
 
 class UI: public Client { public: UI() { client = this; };
   private:
+    uWS::Group<uWS::SERVER> *webui = nullptr;
     int connections = 0;
-    unordered_map<mMatter, function<json()>> hello;
+    unordered_map<mMatter, function<const json()>> hello;
     unordered_map<mMatter, function<void(json&)>> kisses;
     unordered_map<mMatter, string> queue;
   protected:
     void waitWebAdmin() override {
-      if (!socket) return;
-      if (!socket->listen(
-        Curl::inet,
-        K.num("port"),
-        uS::TLS::Context(sslContext()),
-        0,
-        &socket->getDefaultGroup<uWS::SERVER>()
-      )) error("UI", "Unable to listen to UI port number " + K.str("port")
-           + ", may be already in use by another program"
+      if (K.num("headless")) return;
+      if (!(webui = K.listen(K.num("port"), sslContext())))
+        error("UI", "Unable to listen to UI port number " + K.str("port")
+           + " (may be already in use by another program)"
          );
-      Print::log("UI", "ready at", Text::strL(protocol) + "://" + wtfismyip + ":" + K.str("port"));
-      auto client = &socket->getDefaultGroup<uWS::SERVER>();
-      client->onConnection([&](uWS::WebSocket<uWS::SERVER> *webSocket, uWS::HttpRequest req) {
+      webui->onConnection([&](uWS::WebSocket<uWS::SERVER> *webSocket, uWS::HttpRequest req) {
         onConnection();
         const string addr = cleanAddress(webSocket->getAddress().address);
         Print::log("UI", to_string(connections) + " client" + string(connections == 1 ? 0 : 1, 's')
@@ -38,12 +32,12 @@ class UI: public Client { public: UI() { client = this; };
           webSocket->close();
         }
       });
-      client->onDisconnection([&](uWS::WebSocket<uWS::SERVER> *webSocket, int code, char *message, size_t length) {
+      webui->onDisconnection([&](uWS::WebSocket<uWS::SERVER> *webSocket, int code, char *message, size_t length) {
         onDisconnection();
         Print::log("UI", to_string(connections) + " client" + string(connections == 1 ? 0 : 1, 's')
                          + " connected, last disconnection was from", cleanAddress(webSocket->getAddress().address));
       });
-      client->onHttpRequest([&](uWS::HttpResponse *res, uWS::HttpRequest req, char *data, size_t length, size_t remainingBytes) {
+      webui->onHttpRequest([&](uWS::HttpResponse *res, uWS::HttpRequest req, char *data, size_t length, size_t remainingBytes) {
         if (req.getMethod() != uWS::HttpMethod::METHOD_GET) return;
         const string response = onHttpRequest(
           req.getUrl().toString(),
@@ -52,7 +46,7 @@ class UI: public Client { public: UI() { client = this; };
         );
         if (!response.empty()) res->write(response.data(), response.length());
       });
-      client->onMessage([&](uWS::WebSocket<uWS::SERVER> *webSocket, const char *message, size_t length, uWS::OpCode opCode) {
+      webui->onMessage([&](uWS::WebSocket<uWS::SERVER> *webSocket, const char *message, size_t length, uWS::OpCode opCode) {
         if (length < 2) return;
         const string response = onMessage(
           string(message, length),
@@ -68,20 +62,28 @@ class UI: public Client { public: UI() { client = this; };
               : uWS::OpCode::TEXT
           );
       });
-      broadcast = [this, client](const mMatter &type, string msg) {
+      broadcast = [this](const mMatter &type, string msg) {
         msg.insert(msg.begin(), (char)type);
         msg.insert(msg.begin(), (char)mPortal::Kiss);
-        events->deferred([client, msg]() {
-          client->broadcast(msg.data(), msg.length(), uWS::OpCode::TEXT);
+        K.deferred_once([this, msg]() {
+          webui->broadcast(msg.data(), msg.length(), uWS::OpCode::TEXT);
         });
       };
+      K.timer_1s_always([&](const unsigned int &tick) {
+        if (qp.delayUI and !(tick % qp.delayUI)) {
+          for (const auto &it : queue)
+            broadcast(it.first, it.second);
+          queue.clear();
+        }
+      });
+      Print::log("UI", "ready at", Text::strL(protocol) + "://" + K.wtfismyip + ":" + K.str("port"));
     };
     void run() override {
       send = send_nowhere;
     };
   public:
     void welcome(mToClient &data) override {
-      if (!socket) return;
+      if (!webui) return;
       const mMatter type = data.about();
       if (hello.find(type) != hello.end())
         error("UI", string("Too many handlers for \"") + (char)type + "\" welcome event");
@@ -89,7 +91,7 @@ class UI: public Client { public: UI() { client = this; };
       sendAsync(data);
     };
     void clickme(mFromClient &data, function<void(const json&)> fn) override {
-      if (!socket) return;
+      if (!webui) return;
       const mMatter type = data.about();
       if (kisses.find(type) != kisses.end())
         error("UI", string("Too many handlers for \"") + (char)type + "\" clickme event");
@@ -98,11 +100,6 @@ class UI: public Client { public: UI() { client = this; };
         if (!butterfly.is_null())
           fn(butterfly);
       };
-    };
-    void timer_Xs() override {
-      for (const auto &it : queue)
-        broadcast(it.first, it.second);
-      queue.clear();
     };
   private:
     void sendAsync(mToClient &data) {
@@ -244,20 +241,23 @@ class UI: public Client { public: UI() { client = this; };
         + "Content-Length: " + to_string(content.length())
         + "\r\n\r\n" + content;
     };
-    string onMessage(const string &message, const string &addr) {
+    string onMessage(string message, const string &addr) {
       if (addr != "unknown" and K.str("whitelist").find(addr) == string::npos)
         return string(&_www_gzip_bomb, _www_gzip_bomb_len);
-      if (mPortal::Hello == (mPortal)message.at(0) and hello.find((mMatter)message.at(1)) != hello.end()) {
-        json reply = hello.at((mMatter)message.at(1))();
+      const mPortal portal = (mPortal)message.at(0);
+      const mMatter matter = (mMatter)message.at(1);
+      if (mPortal::Hello == portal and hello.find(matter) != hello.end()) {
+        const json reply = hello.at(matter)();
         if (!reply.is_null())
-          return message.substr(0, 2) + reply.dump();
-      } else if (mPortal::Kiss == (mPortal)message.at(0) and kisses.find((mMatter)message.at(1)) != kisses.end()) {
-        json butterfly = json::accept(message.substr(2))
-          ? json::parse(message.substr(2))
+          return (char)portal + ((char)matter + reply.dump());
+      } else if (mPortal::Kiss == portal and kisses.find(matter) != kisses.end()) {
+        message = message.substr(2);
+        json butterfly = json::accept(message)
+          ? json::parse(message)
           : json::object();
-        for (json::iterator it = butterfly.begin(); it != butterfly.end();)
+        for (auto it = butterfly.begin(); it != butterfly.end();)
           if (it.value().is_null()) it = butterfly.erase(it); else ++it;
-        kisses.at((mMatter)message.at(1))(butterfly);
+        kisses.at(matter)(butterfly);
       }
       return "";
     };

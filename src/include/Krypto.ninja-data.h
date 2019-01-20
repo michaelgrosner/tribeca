@@ -45,33 +45,9 @@ namespace ₿ {
     ShortPingAggressive, AveragePingAggressive, LongPingAggressive
   };
 
-  enum class mPortal: unsigned char {
-    Hello = '=',
-    Kiss  = '-'
-  };
-  enum class mMatter: unsigned char {
-    FairValue            = 'a', Quote                = 'b', ActiveSubscription = 'c', Connectivity       = 'd',
-    MarketData           = 'e', QuotingParameters    = 'f', SafetySettings     = 'g', Product            = 'h',
-    OrderStatusReports   = 'i', ProductAdvertisement = 'j', ApplicationState   = 'k', EWMAStats          = 'l',
-    STDEVStats           = 'm', Position             = 'n', Profit             = 'o', SubmitNewOrder     = 'p',
-    CancelOrder          = 'q', MarketTrade          = 'r', Trades             = 's', ExternalValuation  = 't',
-    QuoteStatus          = 'u', TargetBasePosition   = 'v', TradeSafetyValue   = 'w', CancelAllOrders    = 'x',
-    CleanAllClosedTrades = 'y', CleanAllTrades       = 'z', CleanTrade         = 'A',
-    WalletChart          = 'C', MarketChart          = 'D', Notepad            = 'E',
-                                MarketDataLongTerm   = 'H'
-  };
-
-  struct mAbout {
-    virtual const mMatter about() const = 0;
-  };
-  struct mBlob: virtual public mAbout {
-    virtual const json blob() const = 0;
-  };
-
   struct mFromClient: virtual public mAbout {
     virtual void kiss(json *const j) {};
   };
-
   struct mToClient: public mBlob,
                     public mFromClient {
     function<void()> send
@@ -125,34 +101,6 @@ namespace ₿ {
       };
   };
 
-  class mFromDb: public mBlob {
-    public:
-      function<void()> push
-#ifndef NDEBUG
-      = []() { WARN("Y U NO catch sqlite push?"); }
-#endif
-      ;
-      virtual       void   pull(const json &j) = 0;
-      virtual const string increment() const { return "NULL"; };
-      virtual const double limit()     const { return 0; };
-      virtual const Clock  lifetime()  const { return 0; };
-    protected:
-      virtual const string explain()   const = 0;
-      virtual       string explainOK() const = 0;
-      virtual       string explainKO() const { return ""; };
-      void explanation(const bool &empty) const {
-        string msg = empty
-          ? explainKO()
-          : explainOK();
-        if (msg.empty()) return;
-        size_t token = msg.find("%");
-        if (token != string::npos)
-          msg.replace(token, 1, explain());
-        if (empty)
-          Print::logWar("DB", msg);
-        else Print::log("DB", msg);
-      };
-  };
   template <typename mData> class mStructFromDb: public mFromDb {
     public:
       const json blob() const override {

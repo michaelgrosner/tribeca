@@ -6,6 +6,22 @@
 namespace ₿ {
   string epilogue;
 
+  enum class mPortal: unsigned char {
+    Hello = '=',
+    Kiss  = '-'
+  };
+  enum class mMatter: unsigned char {
+    FairValue            = 'a', Quote                = 'b', ActiveSubscription = 'c', Connectivity       = 'd',
+    MarketData           = 'e', QuotingParameters    = 'f', SafetySettings     = 'g', Product            = 'h',
+    OrderStatusReports   = 'i', ProductAdvertisement = 'j', ApplicationState   = 'k', EWMAStats          = 'l',
+    STDEVStats           = 'm', Position             = 'n', Profit             = 'o', SubmitNewOrder     = 'p',
+    CancelOrder          = 'q', MarketTrade          = 'r', Trades             = 's', ExternalValuation  = 't',
+    QuoteStatus          = 'u', TargetBasePosition   = 'v', TradeSafetyValue   = 'w', CancelAllOrders    = 'x',
+    CleanAllClosedTrades = 'y', CleanAllTrades       = 'z', CleanTrade         = 'A',
+    WalletChart          = 'C', MarketChart          = 'D', Notepad            = 'E',
+                                MarketDataLongTerm   = 'H'
+  };
+
   //! \brief     Call all endingFn once and print a last log msg.
   //! \param[in] reason Allows any (colorful?) string.
   //! \param[in] reboot Allows a reboot only because https://tldp.org/LDP/Bash-Beginners-Guide/html/sect_09_03.html.
@@ -64,7 +80,20 @@ namespace ₿ {
           error("SH", string("Too many handlers for \"") + ch + "\" hotkey event");
         hotFn[ch] = fn;
       };
-      void wait_for_hotkey() {
+    protected:
+      auto legit_keylogger() {
+        if (keylogger.valid())
+          error("SH", string("Unable to launch another \"keylogger\" thread"));
+        noecho();
+        halfdelay(5);
+        keypad(stdscr, true);
+        launch_keylogger();
+        return [&]() {
+          wait_for_keylog();
+        };
+      };
+    private:
+      void wait_for_keylog() {
         if (!keylogger.valid()
           or keylogger.wait_for(chrono::nanoseconds(0)) != future_status::ready
         ) return;
@@ -73,16 +102,6 @@ namespace ₿ {
           hotFn.at(ch)();
         launch_keylogger();
       };
-    protected:
-      void legit_keylogger() {
-        if (keylogger.valid())
-          error("SH", string("Unable to launch another \"keylogger\" thread"));
-        noecho();
-        halfdelay(5);
-        keypad(stdscr, true);
-        launch_keylogger();
-      };
-    private:
       void launch_keylogger() {
         keylogger = ::async(launch::async, [&]() {
           int ch = ERR;
@@ -315,7 +334,7 @@ namespace ₿ {
     private:
       static void halt(const int code) {
         endingFn.swap(happyEndingFn);
-        for (function<void()> &it : happyEndingFn) it();
+        for (auto &it : happyEndingFn) it();
         Ansi::colorful = 1;
         clog << Ansi::b(COLOR_GREEN) << 'K'
              << Ansi::r(COLOR_GREEN) << " exit code "
@@ -420,7 +439,7 @@ namespace ₿ {
         };
         if (Print::display)
           long_options.push_back(
-            {"naked",         "1",      nullptr, "do not display CLI, print output to stdout instead"}
+            {"naked",        "1",      nullptr,  "do not display CLI, print output to stdout instead"}
           );
         for (const Argument &it : (vector<Argument>){
           {"interface",    "IP",     "",       "set IP to bind as outgoing network interface,"
@@ -439,6 +458,10 @@ namespace ₿ {
           {"http",         "URL",    "",       "set URL of alernative HTTPS api endpoint for trading"},
           {"wss",          "URL",    "",       "set URL of alernative WSS api endpoint for trading"},
           {"fix",          "URL",    "",       "set URL of alernative FIX api endpoint for trading"},
+          {"dustybot",     "1",      nullptr,  "do not automatically cancel all orders on exit"},
+          {"database",     "FILE",   "",       "set alternative PATH to database filename,"
+                                               "\n" "default PATH is '/var/lib/K/db/K.*.*.*.db',"
+                                               "\n" "or use ':memory:' (see sqlite.org/inmemorydb.html)"},
           {"market-limit", "NUMBER", "321",    "set NUMBER of maximum price levels for the orderbook,"
                                                "\n" "default NUMBER is '321' and the minimum is '15'."
                                                "\n" "locked bots smells like '--market-limit=3' spirit"}
@@ -521,6 +544,16 @@ namespace ₿ {
         if (optint["latency"] or optint["debug-secret"])
 #endif
           optint["naked"] = 1;
+        optstr["diskdata"] = "";
+        if (optstr["database"].empty() or optstr["database"] == ":memory:")
+          (optstr["database"] == ":memory:"
+            ? optstr["diskdata"]
+            : optstr["database"]
+          ) = "/var/lib/K/db/K"
+            + ('.' + optstr["exchange"])
+            +  '.' + optstr["base"]
+            +  '.' + optstr["quote"]
+            +  '.' + "db";
         if (arguments.second) {
           arguments.second(
             optstr,
@@ -598,9 +631,219 @@ namespace ₿ {
       };
   };
 
+  class mAbout {
+    public:
+      virtual const mMatter about() const = 0;
+  };
+  class mBlob: virtual public mAbout {
+    public:
+      virtual const json blob() const = 0;
+  };
+
+  class mFromDb: public mBlob {
+    public:
+      function<void()> push
+#ifndef NDEBUG
+      = []() { WARN("Y U NO catch sqlite push?"); }
+#endif
+      ;
+      virtual       void   pull(const json &j) = 0;
+      virtual const string increment() const { return "NULL"; };
+      virtual const double limit()     const { return 0; };
+      virtual const Clock  lifetime()  const { return 0; };
+    protected:
+      virtual const string explain()   const = 0;
+      virtual       string explainOK() const = 0;
+      virtual       string explainKO() const { return ""; };
+      void explanation(const bool &empty) const {
+        string msg = empty
+          ? explainKO()
+          : explainOK();
+        if (msg.empty()) return;
+        size_t token = msg.find("%");
+        if (token != string::npos)
+          msg.replace(token, 1, explain());
+        if (empty)
+          Print::logWar("DB", msg);
+        else Print::log("DB", msg);
+      };
+  };
+
+  class Events {
+    private:
+      uWS::Hub  *socket = nullptr;
+      uS::Timer *timer  = nullptr;
+      uS::Async *loop   = nullptr;
+      unsigned int tick,
+                   ticks = 300;
+      vector<uWS::Group<uWS::CLIENT>*> gw_clients;
+      vector<uWS::Group<uWS::SERVER>*> ui_servers;
+      vector<function<void(const unsigned int&)>> onlineFn,
+                                                  alwaysFn;
+      vector<function<void()>> slowFn,
+                               waitFn;
+    public:
+      void timer_ticks_factor(const unsigned int &factor) {
+        ticks = 300 * (factor ?: 1);
+      };
+      void timer_1s_online(const function<void(const unsigned int&)> &fn) {
+        onlineFn.push_back(fn);
+      };
+      void timer_1s_always(const function<void(const unsigned int&)> &fn) {
+        alwaysFn.push_back(fn);
+      };
+      void deferred_once(const function<void()> &fn) {
+        slowFn.push_back(fn);
+        loop->send();
+      };
+      void deferred_always(const function<void()> &fn) {
+        waitFn.push_back(fn);
+      };
+      uWS::Group<uWS::SERVER> *listen(const int &port, SSL_CTX *ssl = nullptr) {
+        ui_servers.push_back(socket->createGroup<uWS::SERVER>(uWS::PERMESSAGE_DEFLATE));
+        return socket->listen(Curl::inet, port, uS::TLS::Context(ssl), 0, ui_servers.back())
+           ? ui_servers.back()
+           : nullptr;
+      };
+    protected:
+      void start() {
+        gw->socket = socket = new uWS::Hub(0, true);
+        gw_clients.push_back(gw->api = socket->createGroup<uWS::CLIENT>());
+        timer = new uS::Timer(socket->getLoop());
+        timer->setData(this);
+        timer->start([](uS::Timer *timer) {
+          ((Events*)timer->getData())->timer_1s();
+        }, 0, 1e+3);
+        loop = new uS::Async(socket->getLoop());
+        loop->setData(this);
+        loop->start(walk);
+      };
+      void stop(const bool &dustybot) {
+        timer->stop();
+        gw->close();
+        for (auto &it : gw_clients) it->close();
+        gw->end(dustybot);
+        walk(loop);
+        for (auto &it : ui_servers) it->close();
+      };
+    private:
+      void deferred() {
+        for (const auto &it : slowFn) it();
+        slowFn.clear();
+        if (gw->waitForData()) loop->send();
+        for (const auto &it : waitFn) it();
+      };
+      void (*walk)(uS::Async *const) = [](uS::Async *const loop) {
+        ((Events*)loop->getData())->deferred();
+      };
+      void timer_1s() {
+        if (!gw->countdown)
+          for (const auto &it : onlineFn)    it(tick);
+        else if (!--gw->countdown) {         gw->connect();
+          tick = 0;
+          return;
+        }
+        if (                                 gw->askForData(tick)
+        ) loop->send();
+        for (const auto &it : alwaysFn)      it(tick);
+        if (++tick >= ticks)
+          tick = 0;
+      };
+  };
+
+  class Sqlite {
+    private:
+      sqlite3 *db = nullptr;
+      string qpdb = "main";
+    private_ref:
+      Events &events;
+    public:
+      Sqlite(Events &e)
+        : events(e)
+      {};
+      void backup(mFromDb *const data) {
+        data->pull(select(data));
+        data->push = [this, data]() {
+          insert(data);
+        };
+      };
+    protected:
+      void open(const string &database, const string &diskdata) {
+        if (sqlite3_open(database.data(), &db))
+          error("DB", sqlite3_errmsg(db));
+        Print::log("DB", "loaded OK from", database);
+        if (diskdata.empty()) return;
+        exec("ATTACH '" + diskdata + "' AS " + (qpdb = "qpdb") + ";");
+        Print::log("DB", "loaded OK from", diskdata);
+      };
+    private:
+      const json select(mFromDb *const data) {
+        const string table = schema(data->about());
+        json result = json::array();
+        exec(
+          create(table)
+          + truncate(table, data->lifetime())
+          + "SELECT json FROM " + table + " ORDER BY time ASC;",
+          &result
+        );
+        return result;
+      };
+      void insert(mFromDb *const data) {
+        const string table    = schema(data->about());
+        const json   blob     = data->blob();
+        const double limit    = data->limit();
+        const Clock  lifetime = data->lifetime();
+        const string incr     = data->increment();
+        const string sql      = (
+          (incr != "NULL" or !limit or lifetime)
+            ? "DELETE FROM " + table + (
+              incr != "NULL"
+                ? " WHERE id = " + incr
+                : (limit ? " WHERE time < " + to_string(Tstamp - lifetime) : "")
+            ) + ";" : ""
+        ) + (
+          blob.is_null()
+            ? ""
+            : "INSERT INTO " + table
+              + " (id,json) VALUES(" + incr + ",'" + blob.dump() + "');"
+        );
+        events.deferred_once([this, sql]() {
+          exec(sql);
+        });
+      };
+      const string schema(const mMatter &type) const {
+        return (
+          type == mMatter::QuotingParameters
+            ? qpdb
+            : "main"
+        ) + "." + (char)type;
+      };
+      const string create(const string &table) const {
+        return "CREATE TABLE IF NOT EXISTS " + table + "("
+          + "id    INTEGER   PRIMARY KEY AUTOINCREMENT                                           NOT NULL,"
+          + "json  BLOB                                                                          NOT NULL,"
+          + "time  TIMESTAMP DEFAULT (CAST((julianday('now') - 2440587.5)*86400000 AS INTEGER))  NOT NULL);";
+      };
+      const string truncate(const string &table, const Clock &lifetime) const {
+        return lifetime
+          ? "DELETE FROM " + table + " WHERE time < " + to_string(Tstamp - lifetime) + ";"
+          : "";
+      };
+      void exec(const string &sql, json *const result = nullptr) {                // Print::log("DB DEBUG", sql);
+        char* zErrMsg = nullptr;
+        sqlite3_exec(db, sql.data(), result ? write : nullptr, (void*)result, &zErrMsg);
+        if (zErrMsg) Print::logWar("DB", "SQLite error: " + (zErrMsg + (" at " + sql)));
+        sqlite3_free(zErrMsg);
+      };
+      static int write(void *result, int argc, char **argv, char **azColName) {
+        for (int i = 0; i < argc; ++i)
+          ((json*)result)->push_back(json::parse(argv[i]));
+        return 0;
+      };
+  };
+
   //! \brief Placeholder to avoid spaghetti codes.
   //! - Walks through minimal runtime steps when wait() is called.
-  //! - Adds end() into endingFn to be called on exit().
   //! - Connects to gateway when ready.
   class Klass {
     protected:
@@ -610,7 +853,6 @@ namespace ₿ {
       virtual void waitSysAdmin(){};
       virtual void waitTime    ()  {};
       virtual void run         ()   {};
-      virtual void end         ()   {};
     public:
       void wait() {
         load();
@@ -618,9 +860,6 @@ namespace ₿ {
         waitWebAdmin();
         waitSysAdmin();
         waitTime();
-        endingFn.emplace_back([&]() {
-          end();
-        });
         run();
         if (gw->ready()) gw->run();
       };
@@ -629,11 +868,24 @@ namespace ₿ {
   class KryptoNinja: public Klass,
                      public Ending,
                      public Hotkey,
-                     public Option {
+                     public Option,
+                     public Events,
+                     public Sqlite {
     public:
+      const string wtfismyip;
+    public:
+      KryptoNinja()
+        : Sqlite((Events&)*this)
+        , wtfismyip(
+            Curl::xfer("https://wtfismyip.com/json", 4L)
+              .value("YourFuckingIPAddress", "localhost")
+          )
+      {};
       KryptoNinja *const main(int argc, char** argv) {
         Option::main(argc, argv);
-        if (Print::windowed()) legit_keylogger();
+        if (Print::windowed())
+          deferred_always(legit_keylogger());
+        Print::log("CF", "Internet Protocol outbound address is", wtfismyip);
         if (num("latency")) {
           gw->latency("HTTP read/write handshake", [&]() {
             handshake({
@@ -643,6 +895,11 @@ namespace ₿ {
           exit("1 HTTP connection done" + Ansi::r(COLOR_WHITE)
             + " (consider to repeat a few times this check)");
         }
+        start();
+        endingFn.emplace_back([&]() {
+          stop(num("dustybot"));
+        });
+        open(str("database"), str("diskdata"));
         return this;
       };
       void wait(const vector<Klass*> &k = {}) {

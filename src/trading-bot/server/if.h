@@ -23,16 +23,12 @@ class TradingBot: public KryptoNinja {
                                                                "\n" "mandatory but may be 'NULL'"},
         {"pass",         "WORD",   "NULL",                     "set allowed WORD as password for UI connections,"
                                                                "\n" "mandatory but may be 'NULL'"},
-        {"database",     "FILE",   "",                         "set alternative PATH to database filename,"
-                                                               "\n" "default PATH is '/var/lib/K/db/K.*.*.*.db',"
-                                                               "\n" "or use ':memory:' (see sqlite.org/inmemorydb.html)"},
         {"lifetime",     "NUMBER", "0",                        "set NUMBER of minimum milliseconds to keep orders open,"
                                                                "\n" "otherwise open orders can be replaced anytime required"},
         {"matryoshka",   "URL",    "https://www.example.com/", "set Matryoshka link URL of the next UI"},
         {"ignore-sun",   "2",      nullptr,                    "do not switch UI to light theme on daylight"},
         {"ignore-moon",  "1",      nullptr,                    "do not switch UI to dark theme on moonlight"},
         {"autobot",      "1",      nullptr,                    "automatically start trading on boot"},
-        {"dustybot",     "1",      nullptr,                    "do not automatically cancel all orders on exit"},
         {"debug-orders", "1",      nullptr,                    "print detailed output about exchange messages"},
         {"debug-quotes", "1",      nullptr,                    "print detailed output about quoting engine"},
         {"debug-wallet", "1",      nullptr,                    "print detailed output about target base position"}
@@ -56,16 +52,6 @@ class TradingBot: public KryptoNinja {
           and str["pass"] != "NULL" and !str["pass"].empty()
         ) ? "Basic " + Text::B64(str["user"] + ':' + str["pass"])
           : "";
-        str["diskdata"] = "";
-        if (str["database"].empty() or str["database"] == ":memory:")
-          (str["database"] == ":memory:"
-            ? str["diskdata"]
-            : str["database"]
-          ) = "/var/lib/K/db/K"
-            + ('.' + str["exchange"])
-            +  '.' + str["base"]
-            +  '.' + str["quote"]
-            +  '.' + "db";
       } };
       Print::display = display;
       Print::margin  = {3, 6, 1, 2};
@@ -73,22 +59,9 @@ class TradingBot: public KryptoNinja {
     static void display();
 } K;
 
-class Events: public Klass {
-  public:
-    virtual void deferred(const function<void()>&) = 0;
-} *events = nullptr;
-
-class Sqlite: public Klass {
-  public:
-    virtual void backup(mFromDb *const) = 0;
-} *sqlite = nullptr;
-
 class Client: public Klass {
   public:
-    uWS::Hub* socket = nullptr;
-    string protocol  = "HTTP",
-           wtfismyip = "localhost";
-    virtual void timer_Xs() = 0;
+    string protocol  = "HTTP";
     virtual void welcome(mToClient&) = 0;
     virtual void clickme(mFromClient&, function<void(const json&)>) = 0;
 } *client = nullptr;
@@ -97,7 +70,7 @@ class Engine: public Klass {
 #define SQLITE_BACKUP      \
         SQLITE_BACKUP_LIST \
       ( SQLITE_BACKUP_CODE )
-#define SQLITE_BACKUP_CODE(data)       sqlite->backup(&data);
+#define SQLITE_BACKUP_CODE(data)       K.backup(&data);
 #define SQLITE_BACKUP_LIST(code)       \
 code( qp                             ) \
 code( wallet.target                  ) \
@@ -167,18 +140,9 @@ code( btn.cleanTradesClosed , wallet.safety.trades.clearClosed ,           )
       , broker(monitor.product, orders, levels, wallet)
     {};
     void savedQuotingParameters() {
+      K.timer_ticks_factor(qp.delayUI);
       broker.calculon.dummyMM.mode("saved");
       levels.stats.ewma.calcFromHistory();
-    };
-    void timer_1s(const unsigned int &tick) {
-      if (levels.warn_empty()) return;
-      levels.timer_1s();
-      if (!(tick % 60)) {
-        levels.timer_60s();
-        monitor.timer_60s();
-      }
-      wallet.safety.timer_1s();
-      calcQuotes();
     };
     void calcQuotes() {
       if (broker.ready() and levels.ready() and wallet.ready()) {
@@ -223,6 +187,17 @@ code( btn.cleanTradesClosed , wallet.safety.trades.clearClosed ,           )
     };
     void manualCancelOrder(const RandId &orderId) {
       cancelOrder(orders.find(orderId));
+    };
+  protected:
+    void timer_1s(const unsigned int &tick) {
+      if (levels.warn_empty()) return;
+      levels.timer_1s();
+      if (!(tick % 60)) {
+        levels.timer_60s();
+        monitor.timer_60s();
+      }
+      wallet.safety.timer_1s();
+      calcQuotes();
     };
   private:
     void placeOrder(const mOrder &raw) {

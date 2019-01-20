@@ -3,8 +3,6 @@
 
 #include "server/if.h"
 #include "server/sh.h"
-#include "server/ev.h"
-#include "server/db.h"
 #include "server/ui.h"
 #include "server/qe.h"
 

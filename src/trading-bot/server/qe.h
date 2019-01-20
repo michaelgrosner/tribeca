@@ -11,6 +11,9 @@ class QE: public Engine { public: QE() { engine = this; };
       monitor.product.minSize = &gw->minSize;
       broker.calculon.dummyMM.mode("loaded");
       broker.semaphore.agree(K.num("autobot"));
+      K.timer_1s_online([&](const unsigned int &tick) {
+        timer_1s(tick);
+      });
     };
     void waitData() override {
       gw->RAWDATA_ENTRY_POINT(Connectivity, {
