@@ -590,7 +590,7 @@ namespace ₿ {
         return mMatter::OrderStatusReports;
       };
       const bool realtime() const override {
-        return !qp.delayUI;
+        return false;
       };
       const json blob() const override {
         return working();
@@ -664,7 +664,7 @@ namespace ₿ {
         return mMatter::FairValue;
       };
       const bool realtime() const override {
-        return !qp.delayUI;
+        return false;
       };
       const bool send_same_blob() const override {
         return false;
@@ -938,7 +938,7 @@ namespace ₿ {
       return mMatter::MarketChart;
     };
     const bool realtime() const override {
-      return !qp.delayUI;
+      return false;
     };
   };
   static void to_json(json &j, const mMarketStats &k) {
@@ -1668,7 +1668,7 @@ namespace ₿ {
         return !baseValue;
       };
       const bool realtime() const override {
-        return !qp.delayUI;
+        return false;
       };
       const mMatter about() const override {
         return mMatter::TargetBasePosition;
@@ -1769,7 +1769,7 @@ namespace ₿ {
         return mMatter::Position;
       };
       const bool realtime() const override {
-        return !qp.delayUI;
+        return false;
       };
       const bool send_asap() const override {
         return false;
@@ -2274,7 +2274,7 @@ namespace ₿ {
         return mMatter::QuoteStatus;
       };
       const bool realtime() const override {
-        return !qp.delayUI;
+        return false;
       };
       const bool send_same_blob() const override {
         return false;

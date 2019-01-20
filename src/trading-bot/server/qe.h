@@ -6,6 +6,7 @@ class QE: public Engine { public: QE() { engine = this; };
     void load() override {
       SQLITE_BACKUP
       gw->askForCancelAll = &qp.cancelOrdersAuto;
+      client->delay       = &qp.delayUI;
       monitor.unlock          = &gw->unlock;
       monitor.product.minTick = &gw->minTick;
       monitor.product.minSize = &gw->minSize;

@@ -61,6 +61,7 @@ class TradingBot: public KryptoNinja {
 
 class Client: public Klass {
   public:
+    const unsigned int *delay = nullptr;
     string protocol  = "HTTP";
     virtual void welcome(mToClient&) = 0;
     virtual void clickme(mFromClient&, function<void(const json&)>) = 0;

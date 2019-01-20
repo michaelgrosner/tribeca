@@ -65,12 +65,12 @@ class UI: public Client { public: UI() { client = this; };
       broadcast = [this](const mMatter &type, string msg) {
         msg.insert(msg.begin(), (char)type);
         msg.insert(msg.begin(), (char)mPortal::Kiss);
-        K.deferred_once([this, msg]() {
+        K.deferred([this, msg]() {
           webui->broadcast(msg.data(), msg.length(), uWS::OpCode::TEXT);
         });
       };
       K.timer_1s_always([&](const unsigned int &tick) {
-        if (qp.delayUI and !(tick % qp.delayUI)) {
+        if (delay and *delay and !(tick % *delay)) {
           for (const auto &it : queue)
             broadcast(it.first, it.second);
           queue.clear();
@@ -171,7 +171,7 @@ class UI: public Client { public: UI() { client = this; };
     function<void(const mToClient&)> send;
     function<void(const mToClient&)> send_nowhere = [](const mToClient &data) {};
     function<void(const mToClient&)> send_somewhere = [&](const mToClient &data) {
-      if (data.realtime())
+      if (data.realtime() or !delay or !*delay)
         broadcast(data.about(), data.blob().dump());
       else queue[data.about()] = data.blob().dump();
     };

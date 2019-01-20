@@ -89,18 +89,19 @@ namespace ₿ {
         keypad(stdscr, true);
         launch_keylogger();
         return [&]() {
-          wait_for_keylog();
+          return wait_for_keylog();
         };
       };
     private:
-      void wait_for_keylog() {
+      const bool wait_for_keylog() {
         if (!keylogger.valid()
           or keylogger.wait_for(chrono::nanoseconds(0)) != future_status::ready
-        ) return;
+        ) return false;
         const char ch = keylogger.get();
         if (hotFn.find(ch) != hotFn.end())
           hotFn.at(ch)();
         launch_keylogger();
+        return false;
       };
       void launch_keylogger() {
         keylogger = ::async(launch::async, [&]() {
@@ -266,20 +267,9 @@ namespace ₿ {
 
   void (*Print::display)() = nullptr;
 
-  vector<function<void()>> happyEndingFn, endingFn = { []() {
-    if (Print::display) {
-      Print::display = nullptr;
-      beep();
-      endwin();
-    }
-    clog << Print::stamp()
-         << epilogue
-         << string(epilogue.empty() ? 0 : 1, '\n');
-  } };
-
-  const Clock rollout = Tstamp;
-
   class Rollout {
+    protected:
+      static const Clock rollout;
     public:
       Rollout(/* KMxTWEpb9ig */) {
         clog << Ansi::b(COLOR_GREEN) << K_SOURCE
@@ -316,7 +306,11 @@ namespace ₿ {
       };
   };
 
+  const Clock Rollout::rollout = Tstamp;
+
   class Ending: public Rollout {
+    private:
+      static vector<function<void()>> endingFn;
     public:
       Ending() {
         signal(SIGINT, [](const int sig) {
@@ -331,8 +325,13 @@ namespace ₿ {
         signal(SIGUSR1, wtf);
 #endif
       };
+    protected:
+      void ending(const function<void()> &fn) {
+        endingFn.push_back(fn);
+      };
     private:
       static void halt(const int code) {
+        vector<function<void()>> happyEndingFn;
         endingFn.swap(happyEndingFn);
         for (auto &it : happyEndingFn) it();
         Ansi::colorful = 1;
@@ -395,6 +394,17 @@ namespace ₿ {
         halt(EXIT_FAILURE);
       };
   };
+
+  vector<function<void()>> Ending::endingFn = { []() {
+    if (Print::display) {
+      Print::display = nullptr;
+      beep();
+      endwin();
+    }
+    clog << Print::stamp()
+         << epilogue
+         << string(epilogue.empty() ? 0 : 1, '\n');
+  } };
 
   struct Argument {
    const string  name;
@@ -460,7 +470,7 @@ namespace ₿ {
           {"fix",          "URL",    "",       "set URL of alernative FIX api endpoint for trading"},
           {"dustybot",     "1",      nullptr,  "do not automatically cancel all orders on exit"},
           {"database",     "FILE",   "",       "set alternative PATH to database filename,"
-                                               "\n" "default PATH is '/var/lib/K/db/K.*.*.*.db',"
+                                               "\n" "default PATH is '/var/lib/K/db/K-*.db',"
                                                "\n" "or use ':memory:' (see sqlite.org/inmemorydb.html)"},
           {"market-limit", "NUMBER", "321",    "set NUMBER of maximum price levels for the orderbook,"
                                                "\n" "default NUMBER is '321' and the minimum is '15'."
@@ -636,14 +646,14 @@ namespace ₿ {
       uWS::Hub  *socket = nullptr;
       uS::Timer *timer  = nullptr;
       uS::Async *loop   = nullptr;
-      unsigned int tick,
+      unsigned int tick  = 0,
                    ticks = 300;
       vector<uWS::Group<uWS::CLIENT>*> gw_clients;
       vector<uWS::Group<uWS::SERVER>*> ui_servers;
       vector<function<void(const unsigned int&)>> onlineFn,
                                                   alwaysFn;
-      vector<function<void()>> slowFn,
-                               waitFn;
+      vector<function<void()>> slowFn;
+      vector<function<const bool()>> waitFn;
     public:
       void timer_ticks_factor(const unsigned int &factor) {
         ticks = 300 * (factor ?: 1);
@@ -654,21 +664,21 @@ namespace ₿ {
       void timer_1s_always(const function<void(const unsigned int&)> &fn) {
         alwaysFn.push_back(fn);
       };
-      void deferred_once(const function<void()> &fn) {
+      void deferred(const function<void()> &fn) {
         slowFn.push_back(fn);
         loop->send();
       };
-      void deferred_always(const function<void()> &fn) {
+      void wait_for(const function<const bool()> &fn) {
         waitFn.push_back(fn);
       };
       uWS::Group<uWS::SERVER> *listen(const int &port, SSL_CTX *ssl = nullptr) {
         ui_servers.push_back(socket->createGroup<uWS::SERVER>(uWS::PERMESSAGE_DEFLATE));
         return socket->listen(Curl::inet, port, uS::TLS::Context(ssl), 0, ui_servers.back())
-           ? ui_servers.back()
-           : nullptr;
+          ? ui_servers.back()
+          : nullptr;
       };
     protected:
-      void start() {
+      auto start() {
         gw->socket = socket = new uWS::Hub(0, true);
         gw_clients.push_back(gw->api = socket->createGroup<uWS::CLIENT>());
         timer = new uS::Timer(socket->getLoop());
@@ -679,21 +689,27 @@ namespace ₿ {
         loop = new uS::Async(socket->getLoop());
         loop->setData(this);
         loop->start(walk);
+        return []() {
+          return gw->waitForData();
+        };
       };
-      void stop(const bool &dustybot) {
-        timer->stop();
-        gw->close();
-        for (auto &it : gw_clients) it->close();
-        gw->end(dustybot);
-        walk(loop);
-        for (auto &it : ui_servers) it->close();
+      auto stop(const bool &dustybot) {
+        return [this, dustybot]() {
+          timer->stop();
+          gw->close();
+          for (auto &it : gw_clients) it->close();
+          gw->end(dustybot);
+          walk(loop);
+          for (auto &it : ui_servers) it->close();
+        };
       };
     private:
       void deferred() {
         for (const auto &it : slowFn) it();
         slowFn.clear();
-        if (gw->waitForData()) loop->send();
-        for (const auto &it : waitFn) it();
+        bool waiting = false;
+        for (const auto &it : waitFn) waiting |= it();
+        if (waiting) loop->send();
       };
       void (*walk)(uS::Async *const) = [](uS::Async *const loop) {
         ((Events*)loop->getData())->deferred();
@@ -807,7 +823,7 @@ namespace ₿ {
             : "INSERT INTO " + table
               + " (id,json) VALUES(" + incr + ",'" + blob.dump() + "');"
         );
-        events.deferred_once([this, sql]() {
+        events.deferred([this, sql]() {
           exec(sql);
         });
       };
@@ -884,8 +900,8 @@ namespace ₿ {
       KryptoNinja *const main(int argc, char** argv) {
         Option::main(argc, argv);
         if (Print::windowed())
-          deferred_always(legit_keylogger());
-        Print::log("CF", "Internet Protocol outbound address is", wtfismyip);
+          wait_for(legit_keylogger());
+        Print::log("CF", "Outbound IP address is", wtfismyip);
         if (num("latency")) {
           gw->latency("HTTP read/write handshake", [&]() {
             handshake({
@@ -895,10 +911,8 @@ namespace ₿ {
           exit("1 HTTP connection done" + Ansi::r(COLOR_WHITE)
             + " (consider to repeat a few times this check)");
         }
-        start();
-        endingFn.emplace_back([&]() {
-          stop(num("dustybot"));
-        });
+        wait_for(start());
+        ending(stop(num("dustybot")));
         open(str("database"), str("diskdata"));
         return this;
       };
