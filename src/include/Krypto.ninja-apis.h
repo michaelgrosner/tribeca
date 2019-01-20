@@ -356,11 +356,11 @@ namespace ₿ {
 
   class GwExchangeData {
     public:
-      function<void(const mOrder&)>        write_mOrder;
-      function<void(const mTrade&)>        write_mTrade;
-      function<void(const mLevels&)>       write_mLevels;
-      function<void(const mWallets&)>      write_mWallets;
-      function<void(const Connectivity&)>  write_Connectivity;
+      function<void(const mOrder&)>       write_mOrder;
+      function<void(const mTrade&)>       write_mTrade;
+      function<void(const mLevels&)>      write_mLevels;
+      function<void(const mWallets&)>     write_mWallets;
+      function<void(const Connectivity&)> write_Connectivity;
 #define RAWDATA_ENTRY_POINT(mData, read) write_##mData = [&](const mData &rawdata) read
       bool askForFees    = false,
            askForReplace = false;

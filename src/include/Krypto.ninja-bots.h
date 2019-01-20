@@ -549,7 +549,7 @@ namespace ₿ {
           (optstr["database"] == ":memory:"
             ? optstr["diskdata"]
             : optstr["database"]
-          ) = "/var/lib/K/db/K"
+          ) = ("/var/lib/K/db/" K_SOURCE)
             + ('.' + optstr["exchange"])
             +  '.' + optstr["base"]
             +  '.' + optstr["quote"]
@@ -631,44 +631,6 @@ namespace ₿ {
       };
   };
 
-  class mAbout {
-    public:
-      virtual const mMatter about() const = 0;
-  };
-  class mBlob: virtual public mAbout {
-    public:
-      virtual const json blob() const = 0;
-  };
-
-  class mFromDb: public mBlob {
-    public:
-      function<void()> push
-#ifndef NDEBUG
-      = []() { WARN("Y U NO catch sqlite push?"); }
-#endif
-      ;
-      virtual       void   pull(const json &j) = 0;
-      virtual const string increment() const { return "NULL"; };
-      virtual const double limit()     const { return 0; };
-      virtual const Clock  lifetime()  const { return 0; };
-    protected:
-      virtual const string explain()   const = 0;
-      virtual       string explainOK() const = 0;
-      virtual       string explainKO() const { return ""; };
-      void explanation(const bool &empty) const {
-        string msg = empty
-          ? explainKO()
-          : explainOK();
-        if (msg.empty()) return;
-        size_t token = msg.find("%");
-        if (token != string::npos)
-          msg.replace(token, 1, explain());
-        if (empty)
-          Print::logWar("DB", msg);
-        else Print::log("DB", msg);
-      };
-  };
-
   class Events {
     private:
       uWS::Hub  *socket = nullptr;
@@ -738,16 +700,54 @@ namespace ₿ {
       };
       void timer_1s() {
         if (!gw->countdown)
-          for (const auto &it : onlineFn)    it(tick);
-        else if (!--gw->countdown) {         gw->connect();
+          for (const auto &it : onlineFn) it(tick);
+        else if (!--gw->countdown) {      gw->connect();
           tick = 0;
           return;
         }
-        if (                                 gw->askForData(tick)
+        if (                              gw->askForData(tick)
         ) loop->send();
-        for (const auto &it : alwaysFn)      it(tick);
+        for (const auto &it : alwaysFn)   it(tick);
         if (++tick >= ticks)
           tick = 0;
+      };
+  };
+
+  class mAbout {
+    public:
+      virtual const mMatter about() const = 0;
+  };
+  class mBlob: virtual public mAbout {
+    public:
+      virtual const json blob() const = 0;
+  };
+
+  class mFromDb: public mBlob {
+    public:
+      function<void()> push
+#ifndef NDEBUG
+      = []() { WARN("Y U NO catch sqlite push?"); }
+#endif
+      ;
+      virtual       void   pull(const json &j) = 0;
+      virtual const string increment() const { return "NULL"; };
+      virtual const double limit()     const { return 0; };
+      virtual const Clock  lifetime()  const { return 0; };
+    protected:
+      virtual const string explain()   const = 0;
+      virtual       string explainOK() const = 0;
+      virtual       string explainKO() const { return ""; };
+      void explanation(const bool &empty) const {
+        string msg = empty
+          ? explainKO()
+          : explainOK();
+        if (msg.empty()) return;
+        size_t token = msg.find("%");
+        if (token != string::npos)
+          msg.replace(token, 1, explain());
+        if (empty)
+          Print::logWar("DB", msg);
+        else Print::log("DB", msg);
       };
   };
 
