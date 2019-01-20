@@ -9,6 +9,7 @@ class QE: public Engine { public: QE() { engine = this; };
       monitor.unlock          = &gw->unlock;
       monitor.product.minTick = &gw->minTick;
       monitor.product.minSize = &gw->minSize;
+      K.timer_ticks_factor(qp.delayUI);
       broker.calculon.dummyMM.mode("loaded");
       broker.semaphore.agree(K.num("autobot"));
       K.timer_1s_online([&](const unsigned int &tick) {

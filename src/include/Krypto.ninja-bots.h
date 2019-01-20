@@ -842,15 +842,15 @@ namespace ₿ {
       };
   };
 
-  //! \brief Placeholder to avoid spaghetti codes.
+  //! \brief Deprecated placeholder to avoid spaghetti codes.
   //! - Walks through minimal runtime steps when wait() is called.
   //! - Connects to gateway when ready.
   class Klass {
     protected:
       virtual void load        ()    {};
       virtual void waitData    ()   {};
-      virtual void waitWebAdmin()  {};
-      virtual void waitSysAdmin(){};
+      virtual void waitWebAdmin(){};
+      virtual void waitSysAdmin()  {};
       virtual void waitTime    ()  {};
       virtual void run         ()   {};
     public:
