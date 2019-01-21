@@ -4,7 +4,7 @@
 void TradingBot::terminal() {
   const vector<mOrder> openOrders = engine->orders.working(true);
   const unsigned int previous = margin.bottom;
-  margin.bottom = max((int)openOrders.size(), engine->broker.semaphore.paused() ? 1 : 3);
+  margin.bottom = max((int)openOrders.size(), engine->broker.semaphore.paused() ? 0 : 2) + 1;
   const int y = getmaxy(stdscr),
             x = getmaxx(stdscr),
             yMaxLog = y - margin.bottom;

@@ -113,7 +113,8 @@ namespace ₿ {
       product.minTick = &minTick;
       product.minSize = &minSize;
       mOrders orders(product);
-      mMarketLevels levels(product, orders);
+      mQuotingParams qp;
+      mMarketLevels levels(product, orders, qp);
       WHEN("defaults") {
         THEN("fair value") {
           REQUIRE_FALSE(levels.fairValue);
@@ -226,9 +227,9 @@ namespace ₿ {
     }
 
     GIVEN("mRecentTrades") {
-      mRecentTrades recentTrades;
+      mQuotingParams qp;
+      mRecentTrades recentTrades(qp);
       WHEN("defaults") {
-        REQUIRE_NOTHROW(recentTrades = mRecentTrades());
         THEN("empty") {
           REQUIRE_FALSE(recentTrades.lastBuyPrice);
           REQUIRE_FALSE(recentTrades.lastSellPrice);
@@ -293,7 +294,8 @@ namespace ₿ {
 
     GIVEN("mEwma") {
       Price fairValue = 0;
-      mEwma ewma(fairValue);
+      mQuotingParams qp;
+      mEwma ewma(fairValue, qp);
       WHEN("defaults") {
         REQUIRE_FALSE(ewma.mgEwmaM);
       }
@@ -308,13 +310,13 @@ namespace ₿ {
           REQUIRE_NOTHROW(ewma.timer_60s(0));
         };
         REQUIRE_NOTHROW(qp.mediumEwmaPeriods = 20);
-        REQUIRE_NOTHROW(qp._diffVLEP =
-                        qp._diffLEP  =
-                        qp._diffMEP  =
-                        qp._diffSEP  =
-                        qp._diffXSEP =
-                        qp._diffUEP  = true);
-        REQUIRE_NOTHROW(ewma.calcFromHistory());
+        REQUIRE_NOTHROW(qp._diffEwma |= 1 << 0);
+        REQUIRE_NOTHROW(qp._diffEwma |= 1 << 1);
+        REQUIRE_NOTHROW(qp._diffEwma |= 1 << 2);
+        REQUIRE_NOTHROW(qp._diffEwma |= 1 << 3);
+        REQUIRE_NOTHROW(qp._diffEwma |= 1 << 4);
+        REQUIRE_NOTHROW(qp._diffEwma |= 1 << 5);
+        REQUIRE_NOTHROW(ewma.calcFromHistory(qp._diffEwma));
         THEN("values") {
           REQUIRE(ewma.mgEwmaVL == Approx(266.1426832796));
           REQUIRE(ewma.mgEwmaL == Approx(264.4045182289));
@@ -346,13 +348,14 @@ namespace ₿ {
       const Price minTick = 0.01;
       product.minTick = &minTick;
       mOrders orders(product);
-      mMarketLevels levels(product, orders);
+      mQuotingParams qp;
+      mMarketLevels levels(product, orders, qp);
       const Price fairValue = 500;
       const double targetPositionAutoPercentage = 0;
-      mWalletPosition wallet(product, orders, targetPositionAutoPercentage, fairValue);
+      mWalletPosition wallet(product, orders, qp, targetPositionAutoPercentage, fairValue);
       wallet.base = {"BTC", 1, 0};
       wallet.quote = {"EUR", 1000, 0};
-      mBroker broker(product, orders, levels, wallet);
+      mBroker broker(product, orders, qp, levels, wallet);
       WHEN("assigned") {
         vector<RandId> randIds;
         const Clock time = Tstamp;
