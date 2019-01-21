@@ -290,9 +290,22 @@ namespace ₿ {
         widthPercentage = false;
     };
     void kiss(json *const j) override {
-      previous = {this};
+      const vector<unsigned int> previous = {
+        veryLongEwmaPeriods,
+        longEwmaPeriods,
+        mediumEwmaPeriods,
+        shortEwmaPeriods,
+        extraShortEwmaPeriods,
+        ultraShortEwmaPeriods
+      };
       from_json(*j);
-      diff(previous);
+      _diffEwma = 0;
+      _diffEwma |= (previous[0] != veryLongEwmaPeriods)   << 0;
+      _diffEwma |= (previous[1] != longEwmaPeriods)       << 1;
+      _diffEwma |= (previous[2] != mediumEwmaPeriods)     << 2;
+      _diffEwma |= (previous[3] != shortEwmaPeriods)      << 3;
+      _diffEwma |= (previous[4] != extraShortEwmaPeriods) << 4;
+      _diffEwma |= (previous[5] != ultraShortEwmaPeriods) << 5;
       push();
       send();
     };
@@ -305,33 +318,6 @@ namespace ₿ {
       };
       string explainKO() const override {
         return "using default values for %";
-      };
-    private:
-      struct mPreviousQParams {
-        unsigned int veryLongEwmaPeriods   = 0,
-                     longEwmaPeriods       = 0,
-                     mediumEwmaPeriods     = 0,
-                     shortEwmaPeriods      = 0,
-                     extraShortEwmaPeriods = 0,
-                     ultraShortEwmaPeriods = 0;
-        mPreviousQParams() = default;
-        mPreviousQParams(const mQuotingParams *const prev)
-          : veryLongEwmaPeriods(  prev->veryLongEwmaPeriods  )
-          , longEwmaPeriods(      prev->longEwmaPeriods      )
-          , mediumEwmaPeriods(    prev->mediumEwmaPeriods    )
-          , shortEwmaPeriods(     prev->shortEwmaPeriods     )
-          , extraShortEwmaPeriods(prev->extraShortEwmaPeriods)
-          , ultraShortEwmaPeriods(prev->ultraShortEwmaPeriods)
-        {};
-      } previous;
-      void diff(const mPreviousQParams &prev) {
-        _diffEwma = 0;
-        _diffEwma |= (prev.veryLongEwmaPeriods != veryLongEwmaPeriods)     << 0;
-        _diffEwma |= (prev.longEwmaPeriods != longEwmaPeriods)             << 1;
-        _diffEwma |= (prev.mediumEwmaPeriods != mediumEwmaPeriods)         << 2;
-        _diffEwma |= (prev.shortEwmaPeriods != shortEwmaPeriods)           << 3;
-        _diffEwma |= (prev.extraShortEwmaPeriods != extraShortEwmaPeriods) << 4;
-        _diffEwma |= (prev.ultraShortEwmaPeriods != ultraShortEwmaPeriods) << 5;
       };
   };
   static void to_json(json &j, const mQuotingParams &k) {
