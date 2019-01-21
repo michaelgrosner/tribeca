@@ -334,7 +334,7 @@ namespace ₿ {
       static void halt(const int code) {
         vector<function<void()>> happyEndingFn;
         endingFn.swap(happyEndingFn);
-        for (auto &it : happyEndingFn) it();
+        for (const auto &it : happyEndingFn) it();
         Ansi::colorful = 1;
         clog << Ansi::b(COLOR_GREEN) << 'K'
              << Ansi::r(COLOR_GREEN) << " exit code "
@@ -746,11 +746,11 @@ namespace ₿ {
 
   class mFromDb: public mBlob {
     public:
-      function<void()> push
+      function<void()> push = []() {
 #ifndef NDEBUG
-      = []() { WARN("Y U NO catch sqlite push?"); }
+        WARN("Y U NO catch sqlite push?");
 #endif
-      ;
+      };
       virtual       void   pull(const json &j) = 0;
       virtual const string increment() const { return "NULL"; };
       virtual const double limit()     const { return 0; };

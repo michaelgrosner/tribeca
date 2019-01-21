@@ -4,18 +4,23 @@
 class QE: public Engine { public: QE() { engine = this; };
   protected:
     void load() override {
-      SQLITE_BACKUP
-      gw->askForCancelAll = &qp.cancelOrdersAuto;
-      client->delay       = &qp.delayUI;
-      monitor.unlock          = &gw->unlock;
-      monitor.product.minTick = &gw->minTick;
-      monitor.product.minSize = &gw->minSize;
-      K.timer_ticks_factor(qp.delayUI);
-      broker.calculon.dummyMM.mode("loaded");
-      broker.semaphore.agree(K.num("autobot"));
-      K.timer_1s_online([&](const unsigned int &tick) {
-        timer_1s(tick);
-      });
+      {
+        SQLITE_BACKUP
+      } {
+        gw->askForCancelAll = &qp.cancelOrdersAuto;
+        client->delay       = &qp.delayUI;
+        monitor.unlock          = &gw->unlock;
+        monitor.product.minTick = &gw->minTick;
+        monitor.product.minSize = &gw->minSize;
+      } {
+        K.timer_ticks_factor(qp.delayUI);
+        broker.calculon.dummyMM.mode("loaded");
+      } {
+        broker.semaphore.agree(K.num("autobot"));
+        K.timer_1s_online([&](const unsigned int &tick) {
+          timer_1s(tick);
+        });
+      }
     };
     void waitData() override {
       gw->RAWDATA_ENTRY_POINT(Connectivity, {

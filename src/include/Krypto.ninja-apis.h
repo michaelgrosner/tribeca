@@ -421,7 +421,7 @@ namespace ₿ {
       future<vector<mOrder>> replyCancelAll;
       const bool askForNeverAsyncData(const unsigned int &tick) {
         bool waiting = false;
-        if (TRUEONCE(askForFees)
+        if ((askForFees ? !(askForFees = false) : false)
           or !(tick % 15))       waiting |= !(async_wallet() or !askFor(replyWallets, [&]() { return sync_wallet(); }));
         if (askForCancelAll
           and *askForCancelAll

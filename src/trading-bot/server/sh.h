@@ -1,14 +1,13 @@
 #ifndef K_SH_H_
 #define K_SH_H_
 
-void TradingBot::display() {
+void TradingBot::terminal() {
   const vector<mOrder> openOrders = engine->orders.working(true);
   const unsigned int previous = margin.bottom;
-  margin.bottom = max((int)openOrders.size(), engine->broker.semaphore.paused() ? 0 : 2) + 1;
-  int y = getmaxy(stdscr),
-      x = getmaxx(stdscr),
-      yMaxLog = y - margin.bottom,
-      yOrders = yMaxLog;
+  margin.bottom = max((int)openOrders.size(), engine->broker.semaphore.paused() ? 1 : 3);
+  const int y = getmaxy(stdscr),
+            x = getmaxx(stdscr),
+            yMaxLog = y - margin.bottom;
   if (margin.bottom != previous) {
     if (previous < margin.bottom) wscrl(stdlog, margin.bottom - previous);
     wresize(
@@ -21,7 +20,8 @@ void TradingBot::display() {
   mvwvline(stdscr, 1, 1, ' ', y-1);
   mvwvline(stdscr, yMaxLog-1, 1, ' ', y-1);
   mvwhline(stdscr, yMaxLog,   1, ' ', x-1);
-  for (const mOrder &it : openOrders) {
+  int yOrders = yMaxLog;
+  for (const auto &it : openOrders) {
     mvwhline(stdscr, ++yOrders, 1, ' ', x-1);
     wattron(stdscr, COLOR_PAIR(it.side == Side::Bid ? COLOR_CYAN : COLOR_MAGENTA));
     mvwaddstr(stdscr, yOrders, 1, (((it.side == Side::Bid ? "BID" : "ASK") + (" > "

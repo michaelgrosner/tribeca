@@ -225,12 +225,7 @@ namespace ₿ {
     double            profitHourInterval              = 0.5;
     bool              audio                           = false;
     unsigned int      delayUI                         = 7;
-    bool              _diffVLEP                       = false;
-    bool              _diffLEP                        = false;
-    bool              _diffMEP                        = false;
-    bool              _diffSEP                        = false;
-    bool              _diffXSEP                       = false;
-    bool              _diffUEP                        = false;
+    unsigned int      _diffEwma                       = 0;
     void from_json(const json &j) {
       widthPing                       = fmax(1e-8,            j.value("widthPing", widthPing));
       widthPingPercentage             = fmin(1e+5, fmax(1e-4, j.value("widthPingPercentage", widthPingPercentage)));
@@ -330,14 +325,15 @@ namespace ₿ {
         {};
       } previous;
       void diff(const mPreviousQParams &prev) {
-        _diffVLEP = prev.veryLongEwmaPeriods != veryLongEwmaPeriods;
-        _diffLEP  = prev.longEwmaPeriods != longEwmaPeriods;
-        _diffMEP  = prev.mediumEwmaPeriods != mediumEwmaPeriods;
-        _diffSEP  = prev.shortEwmaPeriods != shortEwmaPeriods;
-        _diffXSEP = prev.extraShortEwmaPeriods != extraShortEwmaPeriods;
-        _diffUEP  = prev.ultraShortEwmaPeriods != ultraShortEwmaPeriods;
+        _diffEwma = 0;
+        _diffEwma |= (prev.veryLongEwmaPeriods != veryLongEwmaPeriods)     << 0;
+        _diffEwma |= (prev.longEwmaPeriods != longEwmaPeriods)             << 1;
+        _diffEwma |= (prev.mediumEwmaPeriods != mediumEwmaPeriods)         << 2;
+        _diffEwma |= (prev.shortEwmaPeriods != shortEwmaPeriods)           << 3;
+        _diffEwma |= (prev.extraShortEwmaPeriods != extraShortEwmaPeriods) << 4;
+        _diffEwma |= (prev.ultraShortEwmaPeriods != ultraShortEwmaPeriods) << 5;
       };
-  } qp;
+  };
   static void to_json(json &j, const mQuotingParams &k) {
     j = {
       {                      "widthPing", k.widthPing                      },
@@ -710,10 +706,12 @@ namespace ₿ {
            bid  = 0,  bidMean = 0,
            ask  = 0,  askMean = 0;
     private_ref:
-      const Price &fairValue;
+      const Price          &fairValue;
+      const mQuotingParams &qp;
     public:
-      mStdevs(const Price &f)
+      mStdevs(const Price &f, const mQuotingParams &q)
         : fairValue(f)
+        , qp(q)
       {};
       void timer_1s(const Price &topBid, const Price &topAsk) {
         push_back(mStdev(fairValue, topBid, topAsk));
@@ -812,10 +810,12 @@ namespace ₿ {
           double mgEwmaTrendDiff              = 0,
                  targetPositionAutoPercentage = 0;
     private_ref:
-      const Price &fairValue;
+      const Price          &fairValue;
+      const mQuotingParams &qp;
     public:
-      mEwma(const Price &f)
+      mEwma(const Price &f, const mQuotingParams &q)
         : fairValue(f)
+        , qp(q)
       {};
       void timer_60s(const Price &averageWidth) {
         prepareHistory();
@@ -824,13 +824,14 @@ namespace ₿ {
         calcTargetPositionAutoPercentage();
         push();
       };
-      void calcFromHistory() {
-        if (TRUEONCE(qp._diffVLEP)) calcFromHistory(&mgEwmaVL, qp.veryLongEwmaPeriods,   "VeryLong");
-        if (TRUEONCE(qp._diffLEP))  calcFromHistory(&mgEwmaL,  qp.longEwmaPeriods,       "Long");
-        if (TRUEONCE(qp._diffMEP))  calcFromHistory(&mgEwmaM,  qp.mediumEwmaPeriods,     "Medium");
-        if (TRUEONCE(qp._diffSEP))  calcFromHistory(&mgEwmaS,  qp.shortEwmaPeriods,      "Short");
-        if (TRUEONCE(qp._diffXSEP)) calcFromHistory(&mgEwmaXS, qp.extraShortEwmaPeriods, "ExtraShort");
-        if (TRUEONCE(qp._diffUEP))  calcFromHistory(&mgEwmaU,  qp.ultraShortEwmaPeriods, "UltraShort");
+      void calcFromHistory(unsigned int &diff) {
+        if ((diff >> 0) & 1) calcFromHistory(&mgEwmaVL, qp.veryLongEwmaPeriods,   "VeryLong");
+        if ((diff >> 1) & 1) calcFromHistory(&mgEwmaL,  qp.longEwmaPeriods,       "Long");
+        if ((diff >> 2) & 1) calcFromHistory(&mgEwmaM,  qp.mediumEwmaPeriods,     "Medium");
+        if ((diff >> 3) & 1) calcFromHistory(&mgEwmaS,  qp.shortEwmaPeriods,      "Short");
+        if ((diff >> 4) & 1) calcFromHistory(&mgEwmaXS, qp.extraShortEwmaPeriods, "ExtraShort");
+        if ((diff >> 5) & 1) calcFromHistory(&mgEwmaU,  qp.ultraShortEwmaPeriods, "UltraShort");
+        diff = 0;
       };
       const mMatter about() const override {
         return mMatter::EWMAStats;
@@ -929,9 +930,9 @@ namespace ₿ {
              mStdevs stdev;
     mFairLevelsPrice fairPrice;
        mMarketTakers takerTrades;
-    mMarketStats(const Price &f)
-      : ewma(f)
-      , stdev(f)
+    mMarketStats(const Price &f, const mQuotingParams &q)
+      : ewma(f, q)
+      , stdev(f, q)
       , fairPrice(f)
     {};
     const mMatter about() const override {
@@ -955,10 +956,12 @@ namespace ₿ {
                       public mJsonToClient<mLevelsDiff> {
       bool patched = false;
     private_ref:
-      const mLevels &unfiltered;
+      const mLevels        &unfiltered;
+      const mQuotingParams &qp;
     public:
-      mLevelsDiff(const mLevels &u)
+      mLevelsDiff(const mLevels &u, const mQuotingParams &q)
         : unfiltered(u)
+        , qp(q)
       {};
       const bool empty() const {
         return patched
@@ -1031,14 +1034,16 @@ namespace ₿ {
       unordered_map<Price, Amount> filterBidOrders,
                                    filterAskOrders;
     private_ref:
-      const mProduct &product;
-      const mOrders  &orders;
+      const mProduct       &product;
+      const mOrders        &orders;
+      const mQuotingParams &qp;
     public:
-      mMarketLevels(const mProduct &p, const mOrders &o)
-        : diff(unfiltered)
-        , stats(fairValue)
+      mMarketLevels(const mProduct &p, const mOrders &o, const mQuotingParams &q)
+        : diff(unfiltered, q)
+        , stats(fairValue, q)
         , product(p)
         , orders(o)
+        , qp(q)
       {};
       const bool warn_empty() const {
         const bool err = bids.empty() or asks.empty();
@@ -1165,38 +1170,44 @@ namespace ₿ {
     k.time       = j.value("time",  (Clock)0);
   };
   struct mProfits: public mVectorFromDb<mProfit> {
-    const bool ratelimit() const {
-      return !empty() and crbegin()->time + 21e+3 > Tstamp;
-    };
-    const double calcBaseDiff() const {
-      return calcDiffPercent(
-        cbegin()->baseValue,
-        crbegin()->baseValue
-      );
-    };
-    const double calcQuoteDiff() const {
-      return calcDiffPercent(
-        cbegin()->quoteValue,
-        crbegin()->quoteValue
-      );
-    };
-    const double calcDiffPercent(Amount older, Amount newer) const {
-      return gw->dec(((newer - older) / newer) * 1e+2, 2);
-    };
-    const mMatter about() const override {
-      return mMatter::Profit;
-    };
-    void erase() override {
-      for (auto it = begin(); it != end();)
-        if (it->time + lifetime() > Tstamp) ++it;
-        else it = rows.erase(it);
-    };
-    const double limit() const override {
-      return qp.profitHourInterval;
-    };
-    const Clock lifetime() const override {
-      return 3600e+3 * limit();
-    };
+    private_ref:
+      const mQuotingParams &qp;
+    public:
+      mProfits(const mQuotingParams &q)
+        : qp(q)
+      {};
+      const bool ratelimit() const {
+        return !empty() and crbegin()->time + 21e+3 > Tstamp;
+      };
+      const double calcBaseDiff() const {
+        return calcDiffPercent(
+          cbegin()->baseValue,
+          crbegin()->baseValue
+        );
+      };
+      const double calcQuoteDiff() const {
+        return calcDiffPercent(
+          cbegin()->quoteValue,
+          crbegin()->quoteValue
+        );
+      };
+      const double calcDiffPercent(Amount older, Amount newer) const {
+        return gw->dec(((newer - older) / newer) * 1e+2, 2);
+      };
+      const mMatter about() const override {
+        return mMatter::Profit;
+      };
+      void erase() override {
+        for (auto it = begin(); it != end();)
+          if (it->time + lifetime() > Tstamp) ++it;
+          else it = rows.erase(it);
+      };
+      const double limit() const override {
+        return qp.profitHourInterval;
+      };
+      const Clock lifetime() const override {
+        return 3600e+3 * limit();
+      };
     protected:
       string explainOK() const override {
         return "loaded % historical Profits";
@@ -1252,6 +1263,12 @@ namespace ₿ {
 
   struct mTradesHistory: public mVectorFromDb<mOrderFilled>,
                          public mJsonToClient<mOrderFilled> {
+    private_ref:
+      const mQuotingParams &qp;
+    public:
+      mTradesHistory(const mQuotingParams &q)
+        : qp(q)
+      {};
     void clearAll() {
       clear_if([](iterator it) {
         return true;
@@ -1426,6 +1443,12 @@ namespace ₿ {
     {};
   };
   struct mRecentTrades {
+    private_ref:
+      const mQuotingParams &qp;
+    public:
+      mRecentTrades(const mQuotingParams &q)
+        : qp(q)
+      {};
     multimap<Price, mRecentTrade> buys,
                                   sells;
                            Amount sumBuys       = 0,
@@ -1492,13 +1515,17 @@ namespace ₿ {
        mRecentTrades recentTrades;
       mTradesHistory trades;
     private_ref:
+      const mQuotingParams &qp;
       const Price  &fairValue;
       const Amount &baseValue,
                    &baseTotal,
                    &targetBasePosition;
     public:
-      mSafety(const Price &f, const Amount &v, const Amount &t, const Amount &p)
-        : fairValue(f)
+      mSafety(const mQuotingParams &q, const Price &f, const Amount &v, const Amount &t, const Amount &p)
+        : recentTrades(q)
+        , trades(q)
+        , qp(q)
+        , fairValue(f)
         , baseValue(v)
         , baseTotal(t)
         , targetBasePosition(p)
@@ -1636,12 +1663,14 @@ namespace ₿ {
     Amount targetBasePosition = 0,
            positionDivergence = 0;
     private_ref:
-      const double   &targetPositionAutoPercentage;
-      const mProduct &product;
-      const Amount   &baseValue;
+      const mQuotingParams &qp;
+      const double         &targetPositionAutoPercentage;
+      const mProduct       &product;
+      const Amount         &baseValue;
     public:
-      mTarget(const double &t, const mProduct &p, const Amount &v)
-        : targetPositionAutoPercentage(t)
+      mTarget(const mQuotingParams &q, const double &t, const mProduct &p, const Amount &v)
+        : qp(q)
+        , targetPositionAutoPercentage(t)
         , product(p)
         , baseValue(v)
       {};
@@ -1732,11 +1761,12 @@ namespace ₿ {
     private_ref:
       const mProduct &product;
       const mOrders  &orders;
-      const Price   &fairValue;
+      const Price    &fairValue;
     public:
-      mWalletPosition(const mProduct &p, const mOrders &o, const double &t, const Price &f)
-        : target(t, p, base.value)
-        , safety(f, base.value, base.total, target.targetBasePosition)
+      mWalletPosition(const mProduct &p, const mOrders &o, const mQuotingParams &q, const double &t, const Price &f)
+        : target(q, t, p, base.value)
+        , safety(q, f, base.value, base.total, target.targetBasePosition)
+        , profits(q)
         , product(p)
         , orders(o)
         , fairValue(f)
@@ -2026,15 +2056,17 @@ namespace ₿ {
       ) = nullptr;
     private_ref:
       const mProduct        &product;
+      const mQuotingParams  &qp;
       const mMarketLevels   &levels;
       const mWalletPosition &wallet;
             mQuotes         &quotes;
     public:
-      mDummyMarketMaker(const mProduct &p, const mMarketLevels &l, const mWalletPosition &w, mQuotes &q)
+      mDummyMarketMaker(const mProduct &p, const mQuotingParams &q, const mMarketLevels &l, const mWalletPosition &w, mQuotes &Q)
         : product(p)
+        , qp(q)
         , levels(l)
         , wallet(w)
-        , quotes(q)
+        , quotes(Q)
       {};
       void mode(const string &reason) {
         if (qp.mode == mQuotingMode::Top)              calcRawQuotesFromMarket = calcTopOfMarket;
@@ -2222,13 +2254,15 @@ namespace ₿ {
                    string sideAPR      = "Off";
     private_ref:
       const mProduct        &product;
+      const mQuotingParams  &qp;
       const mMarketLevels   &levels;
       const mWalletPosition &wallet;
     public:
-      mAntonioCalculon(const mProduct &p, const mMarketLevels &l, const mWalletPosition &w)
+      mAntonioCalculon(const mProduct &p, const mQuotingParams &q, const mMarketLevels &l, const mWalletPosition &w)
         : quotes(p)
-        , dummyMM(p, l, w, quotes)
+        , dummyMM(p, q, l, w, quotes)
         , product(p)
+        , qp(q)
         , levels(l)
         , wallet(w)
       {};
@@ -2546,11 +2580,13 @@ namespace ₿ {
           mSemaphore semaphore;
     mAntonioCalculon calculon;
     private_ref:
-      mOrders &orders;
+            mOrders        &orders;
+      const mQuotingParams &qp;
     public:
-      mBroker(const mProduct &p, mOrders &o, const mMarketLevels &l, const mWalletPosition &w)
-        : calculon(p, l, w)
+      mBroker(const mProduct &p, mOrders &o, const mQuotingParams &q, const mMarketLevels &l, const mWalletPosition &w)
+        : calculon(p, q, l, w)
         , orders(o)
+        , qp(q)
       {};
       const bool ready() {
         if (semaphore.offline()) {

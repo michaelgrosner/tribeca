@@ -3,8 +3,11 @@
 
 class TradingBot: public KryptoNinja {
   public:
+    static void terminal();
     TradingBot()
     {
+      display   = terminal;
+      margin    = {3, 6, 1, 2};
       databases = true;
       arguments = { {
         {"wallet-limit", "AMOUNT", "0",                        "set AMOUNT in base currency to limit the balance,"
@@ -54,10 +57,7 @@ class TradingBot: public KryptoNinja {
         ) ? "Basic " + Text::B64(str["user"] + ':' + str["pass"])
           : "";
       } };
-      Print::display = display;
-      Print::margin  = {3, 6, 1, 2};
     };
-    static void display();
 } K;
 
 class Client: public Klass {
@@ -131,20 +131,21 @@ code( btn.cleanTradesClosed , wallet.safety.trades.clearClosed ,           )
            mButtons btn;
            mMonitor monitor;
             mOrders orders;
+     mQuotingParams qp;
       mMarketLevels levels;
     mWalletPosition wallet;
             mBroker broker;
     Engine()
       : monitor(K)
       , orders(monitor.product)
-      , levels(monitor.product, orders)
-      , wallet(monitor.product, orders, levels.stats.ewma.targetPositionAutoPercentage, levels.fairValue)
-      , broker(monitor.product, orders, levels, wallet)
+      , levels(monitor.product, orders, qp)
+      , wallet(monitor.product, orders, qp, levels.stats.ewma.targetPositionAutoPercentage, levels.fairValue)
+      , broker(monitor.product, orders, qp, levels, wallet)
     {};
     void savedQuotingParameters() {
       K.timer_ticks_factor(qp.delayUI);
       broker.calculon.dummyMM.mode("saved");
-      levels.stats.ewma.calcFromHistory();
+      levels.stats.ewma.calcFromHistory(qp._diffEwma);
     };
     void calcQuotes() {
       if (broker.ready() and levels.ready() and wallet.ready()) {
