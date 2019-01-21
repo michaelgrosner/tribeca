@@ -3,20 +3,20 @@
 
 void TradingBot::display() {
   const vector<mOrder> openOrders = engine->orders.working(true);
-  const unsigned int previous = Print::margin.bottom;
-  Print::margin.bottom = max((int)openOrders.size(), engine->broker.semaphore.paused() ? 0 : 2) + 1;
+  const unsigned int previous = margin.bottom;
+  margin.bottom = max((int)openOrders.size(), engine->broker.semaphore.paused() ? 0 : 2) + 1;
   int y = getmaxy(stdscr),
       x = getmaxx(stdscr),
-      yMaxLog = y - Print::margin.bottom,
+      yMaxLog = y - margin.bottom,
       yOrders = yMaxLog;
-  if (Print::margin.bottom != previous) {
-    if (previous < Print::margin.bottom) wscrl(Print::stdlog, Print::margin.bottom - previous);
+  if (margin.bottom != previous) {
+    if (previous < margin.bottom) wscrl(stdlog, margin.bottom - previous);
     wresize(
-      Print::stdlog,
-      y - Print::margin.top - Print::margin.bottom,
-      x - Print::margin.left - Print::margin.right
+      stdlog,
+      y - margin.top - margin.bottom,
+      x - margin.left - margin.right
     );
-    if (previous > Print::margin.bottom) wscrl(Print::stdlog, Print::margin.bottom - previous);
+    if (previous > margin.bottom) wscrl(stdlog, margin.bottom - previous);
   }
   mvwvline(stdscr, 1, 1, ' ', y-1);
   mvwvline(stdscr, yMaxLog-1, 1, ' ', y-1);

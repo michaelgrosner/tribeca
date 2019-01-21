@@ -5,6 +5,7 @@ class TradingBot: public KryptoNinja {
   public:
     TradingBot()
     {
+      databases = true;
       arguments = { {
         {"wallet-limit", "AMOUNT", "0",                        "set AMOUNT in base currency to limit the balance,"
                                                                "\n" "otherwise the full available balance can be used"},

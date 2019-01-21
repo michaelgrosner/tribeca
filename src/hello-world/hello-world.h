@@ -15,6 +15,7 @@ class HelloWorld: public KryptoNinja {
         if (str["subject"].empty())
           error("CF", "Invalid empty --subject value");
         else str["subject"] += "!";
+        log("CF", "arguments validated", "OK");
       } };
     };
   protected:

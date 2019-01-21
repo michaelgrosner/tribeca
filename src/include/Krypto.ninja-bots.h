@@ -94,13 +94,14 @@ namespace ₿ {
       };
     private:
       const bool wait_for_keylog() {
-        if (!keylogger.valid()
-          or keylogger.wait_for(chrono::nanoseconds(0)) != future_status::ready
-        ) return false;
-        const char ch = keylogger.get();
-        if (hotFn.find(ch) != hotFn.end())
-          hotFn.at(ch)();
-        launch_keylogger();
+        if (keylogger.valid()
+          and keylogger.wait_for(chrono::nanoseconds(0)) == future_status::ready
+        ) {
+          const char ch = keylogger.get();
+          if (hotFn.find(ch) != hotFn.end())
+            hotFn.at(ch)();
+          launch_keylogger();
+        }
         return false;
       };
       void launch_keylogger() {
@@ -200,14 +201,14 @@ namespace ₿ {
           else if (reason.find("SELL") != string::npos) color = -1;
         }
         if (!display) {
-          cout << stamp() << prefix;
-          if (color == 1)       cout << Ansi::r(COLOR_CYAN);
-          else if (color == -1) cout << Ansi::r(COLOR_MAGENTA);
-          else                  cout << Ansi::r(COLOR_WHITE);
-          cout << ' ' << reason;
+          clog << stamp() << prefix;
+          if (color == 1)       clog << Ansi::r(COLOR_CYAN);
+          else if (color == -1) clog << Ansi::r(COLOR_MAGENTA);
+          else                  clog << Ansi::r(COLOR_WHITE);
+          clog << ' ' << reason;
           if (!highlight.empty())
-            cout << ' ' << Ansi::b(COLOR_YELLOW) << highlight;
-          cout << Ansi::r(COLOR_WHITE) << ".\n";
+            clog << ' ' << Ansi::b(COLOR_YELLOW) << highlight;
+          clog << Ansi::r(COLOR_WHITE) << ".\n";
           return;
         }
         if (!stdlog) return;
@@ -235,7 +236,7 @@ namespace ₿ {
       };
       static void logWar(const string &prefix, const string &reason) {
         if (!display) {
-          cout << stamp()
+          clog << stamp()
                << prefix          << Ansi::r(COLOR_RED)
                << " Warrrrning: " << Ansi::b(COLOR_RED)
                << reason << '.'   << Ansi::r(COLOR_WHITE)
@@ -414,7 +415,8 @@ namespace ₿ {
   };
 
   class Option {
-    public:
+    protected:
+      bool databases = false;
       pair<vector<Argument>, function<void(
         unordered_map<string, string> &,
         unordered_map<string, int>    &,
@@ -447,10 +449,14 @@ namespace ₿ {
           {"version",      "v",      nullptr,  "show current build version and quit"},
           {"latency",      "1",      nullptr,  "check current HTTP latency (not from WS) and quit"}
         };
-        if (Print::display)
-          long_options.push_back(
-            {"naked",        "1",      nullptr,  "do not display CLI, print output to stdout instead"}
-          );
+        if (Print::display) long_options.push_back(
+          {"naked",        "1",      nullptr,  "do not display CLI, print output to stdout instead"}
+        );
+        if (databases) long_options.push_back(
+          {"database",     "FILE",   "",       "set alternative PATH to database filename,"
+                                               "\n" "default PATH is '/var/lib/K/db/K-*.db',"
+                                               "\n" "or use ':memory:' (see sqlite.org/inmemorydb.html)"}
+        );
         for (const Argument &it : (vector<Argument>){
           {"interface",    "IP",     "",       "set IP to bind as outgoing network interface,"
                                                "\n" "default IP is the system default network interface"},
@@ -469,9 +475,6 @@ namespace ₿ {
           {"wss",          "URL",    "",       "set URL of alernative WSS api endpoint for trading"},
           {"fix",          "URL",    "",       "set URL of alernative FIX api endpoint for trading"},
           {"dustybot",     "1",      nullptr,  "do not automatically cancel all orders on exit"},
-          {"database",     "FILE",   "",       "set alternative PATH to database filename,"
-                                               "\n" "default PATH is '/var/lib/K/db/K-*.db',"
-                                               "\n" "or use ':memory:' (see sqlite.org/inmemorydb.html)"},
           {"market-limit", "NUMBER", "321",    "set NUMBER of maximum price levels for the orderbook,"
                                                "\n" "default NUMBER is '321' and the minimum is '15'."
                                                "\n" "locked bots smells like '--market-limit=3' spirit"}
@@ -530,12 +533,20 @@ namespace ₿ {
           error("CF", argerr);
         }
         tidy();
-        gateway();
-        curl_global_init(CURL_GLOBAL_ALL);
         if (!str("interface").empty())
           Curl::inet = strdup(str("interface").data());
         if (num("naked")) Print::display = nullptr;
         Ansi::colorful = num("colors");
+        if (arguments.second) {
+          arguments.second(
+            optstr,
+            optint,
+            optdec
+          );
+          arguments.second = nullptr;
+        }
+        gateway();
+        curl_global_init(CURL_GLOBAL_ALL);
       };
     private:
       void tidy() {
@@ -554,23 +565,17 @@ namespace ₿ {
         if (optint["latency"] or optint["debug-secret"])
 #endif
           optint["naked"] = 1;
-        optstr["diskdata"] = "";
-        if (optstr["database"].empty() or optstr["database"] == ":memory:")
-          (optstr["database"] == ":memory:"
-            ? optstr["diskdata"]
-            : optstr["database"]
-          ) = ("/var/lib/K/db/" K_SOURCE)
-            + ('.' + optstr["exchange"])
-            +  '.' + optstr["base"]
-            +  '.' + optstr["quote"]
-            +  '.' + "db";
-        if (arguments.second) {
-          arguments.second(
-            optstr,
-            optint,
-            optdec
-          );
-          arguments.second = nullptr;
+        if (databases) {
+          optstr["diskdata"] = "";
+          if (optstr["database"].empty() or optstr["database"] == ":memory:")
+            (optstr["database"] == ":memory:"
+              ? optstr["diskdata"]
+              : optstr["database"]
+            ) = ("/var/lib/K/db/" K_SOURCE)
+              + ('.' + optstr["exchange"])
+              +  '.' + optstr["base"]
+              +  '.' + optstr["quote"]
+              +  '.' + "db";
         }
       };
       void gateway() {
@@ -592,7 +597,7 @@ namespace ₿ {
         gw->maxLevel = num("market-limit");
         gw->debug    = num("debug-secret");
         gw->version  = num("free-version");
-        gw->printer = [&](const string &prefix, const string &reason, const string &highlight) {
+        gw->printer  = [&](const string &prefix, const string &reason, const string &highlight) {
           if (reason.find("Error") != string::npos)
             Print::logWar(prefix, reason);
           else Print::log(prefix, reason, highlight);
@@ -704,15 +709,16 @@ namespace ₿ {
         };
       };
     private:
-      void deferred() {
+      const bool deferred() {
         for (const auto &it : slowFn) it();
         slowFn.clear();
         bool waiting = false;
         for (const auto &it : waitFn) waiting |= it();
-        if (waiting) loop->send();
+        return waiting;
       };
       void (*walk)(uS::Async *const) = [](uS::Async *const loop) {
-        ((Events*)loop->getData())->deferred();
+        if (((Events*)loop->getData())->deferred())
+          loop->send();
       };
       void timer_1s() {
         if (!gw->countdown)
@@ -778,6 +784,8 @@ namespace ₿ {
         : events(e)
       {};
       void backup(mFromDb *const data) {
+        if (!db)
+          error("DB", "did you miss databases = true; in your constructor?");
         data->pull(select(data));
         data->push = [this, data]() {
           insert(data);
@@ -882,38 +890,46 @@ namespace ₿ {
   };
 
   class KryptoNinja: public Klass,
+                     public Print,
                      public Ending,
                      public Hotkey,
                      public Option,
                      public Events,
                      public Sqlite {
     public:
-      const string wtfismyip;
+      string wtfismyip;
     public:
       KryptoNinja()
         : Sqlite((Events&)*this)
-        , wtfismyip(
-            Curl::xfer("https://wtfismyip.com/json", 4L)
-              .value("YourFuckingIPAddress", "localhost")
-          )
       {};
       KryptoNinja *const main(int argc, char** argv) {
-        Option::main(argc, argv);
-        if (Print::windowed())
-          wait_for(legit_keylogger());
-        Print::log("CF", "Outbound IP address is", wtfismyip);
-        if (num("latency")) {
-          gw->latency("HTTP read/write handshake", [&]() {
-            handshake({
-              {"gateway", gw->http}
+        {
+          Option::main(argc, argv);
+        } {
+          if (windowed())
+            wait_for(legit_keylogger());
+        } {
+          log("CF", "Outbound IP address is",
+            wtfismyip = Curl::xfer("https://wtfismyip.com/json", 4L)
+                          .value("YourFuckingIPAddress", "localhost")
+          );
+        } {
+          if (num("latency")) {
+            gw->latency("HTTP read/write handshake", [&]() {
+              handshake({
+                {"gateway", gw->http}
+              });
             });
-          });
-          exit("1 HTTP connection done" + Ansi::r(COLOR_WHITE)
-            + " (consider to repeat a few times this check)");
+            exit("1 HTTP connection done" + Ansi::r(COLOR_WHITE)
+              + " (consider to repeat a few times this check)");
+          }
+        } {
+          wait_for(start());
+          ending(stop(num("dustybot")));
+        } {
+          if (databases)
+            open(str("database"), str("diskdata"));
         }
-        wait_for(start());
-        ending(stop(num("dustybot")));
-        open(str("database"), str("diskdata"));
         return this;
       };
       void wait(const vector<Klass*> &k = {}) {
