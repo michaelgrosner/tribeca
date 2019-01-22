@@ -81,7 +81,7 @@ namespace ₿ {
         hotFn[ch] = fn;
       };
     protected:
-      auto legit_keylogger() {
+      function<const bool()> legit_keylogger() {
         if (keylogger.valid())
           error("SH", string("Unable to launch another \"keylogger\" thread"));
         noecho();
@@ -683,7 +683,7 @@ namespace ₿ {
           : nullptr;
       };
     protected:
-      auto start() {
+      function<const bool()> start() {
         gw->socket = socket = new uWS::Hub(0, true);
         gw_clients.push_back(gw->api = socket->createGroup<uWS::CLIENT>());
         timer = new uS::Timer(socket->getLoop());
