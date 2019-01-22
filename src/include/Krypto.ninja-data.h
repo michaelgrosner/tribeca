@@ -440,17 +440,10 @@ namespace ₿ {
   };
 
   struct mLastOrder {
-    Price   price         = 0;
-    Amount tradeQuantity  = 0;
-    Side    side          = (Side)0;
-    bool    isPong        = false;
-    mLastOrder() = default;
-    mLastOrder(const mOrder *const order, const mOrder &raw)
-      : price(        order ? order->price      : 0      )
-      , tradeQuantity(order ? raw.tradeQuantity : 0      )
-      , side(         order ? order->side       : (Side)0)
-      , isPong(       order ? order->isPong     : false  )
-    {};
+    Price  price;
+    Amount tradeQuantity;
+    Side   side;
+    bool   isPong;
   };
   struct mOrders: public mJsonToClient<mOrders> {
     mLastOrder updated;
@@ -561,8 +554,16 @@ namespace ₿ {
       void read_from_gw(const mOrder &raw) {
         if (debug()) report(&raw, " reply ");
         mOrder *const order = upsert(raw);
-        updated = {order, raw};
-        if (!order) return;
+        if (!order) {
+          updated = {};
+          return;
+        }
+        updated = {
+          order->price,
+          raw.tradeQuantity,
+          order->side,
+          order->isPong
+        };
         if (order->status == Status::Terminated)
           purge(order);
         send();

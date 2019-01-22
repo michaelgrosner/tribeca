@@ -310,12 +310,12 @@ namespace ₿ {
           REQUIRE_NOTHROW(ewma.timer_60s(0));
         };
         REQUIRE_NOTHROW(qp.mediumEwmaPeriods = 20);
-        REQUIRE_NOTHROW(qp._diffEwma |= 1 << 0);
-        REQUIRE_NOTHROW(qp._diffEwma |= 1 << 1);
-        REQUIRE_NOTHROW(qp._diffEwma |= 1 << 2);
-        REQUIRE_NOTHROW(qp._diffEwma |= 1 << 3);
-        REQUIRE_NOTHROW(qp._diffEwma |= 1 << 4);
-        REQUIRE_NOTHROW(qp._diffEwma |= 1 << 5);
+        REQUIRE_NOTHROW(qp._diffEwma |= true << 0);
+        REQUIRE_NOTHROW(qp._diffEwma |= true << 1);
+        REQUIRE_NOTHROW(qp._diffEwma |= true << 2);
+        REQUIRE_NOTHROW(qp._diffEwma |= true << 3);
+        REQUIRE_NOTHROW(qp._diffEwma |= true << 4);
+        REQUIRE_NOTHROW(qp._diffEwma |= true << 5);
         REQUIRE_NOTHROW(ewma.calcFromHistory(qp._diffEwma));
         THEN("values") {
           REQUIRE(ewma.mgEwmaVL == Approx(266.1426832796));
