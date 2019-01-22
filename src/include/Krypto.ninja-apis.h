@@ -421,19 +421,20 @@ namespace ₿ {
       future<vector<mOrder>> replyCancelAll;
       const bool askForNeverAsyncData(const unsigned int &tick) {
         bool waiting = false;
-        if ((askForFees ? !(askForFees = false) : false)
-          or !(tick % 15))       waiting |= !(async_wallet() or !askFor(replyWallets, [&]() { return sync_wallet(); }));
+        if ((askForFees
+          and !(askForFees = false)
+          ) or !(tick % 15)) waiting |= !(async_wallet() or !askFor(replyWallets, [&]() { return sync_wallet(); }));
         if (askForCancelAll
           and *askForCancelAll
-          and !(tick % 300))     waiting |= askFor(replyCancelAll, [&]() { return sync_cancelAll(); });
+          and !(tick % 300)) waiting |= askFor(replyCancelAll, [&]() { return sync_cancelAll(); });
         return waiting;
       };
       const bool askForSyncData(const unsigned int &tick) {
         bool waiting = false;
-        if (!(tick % 2))         waiting |= askFor(replyOrders, [&]() { return sync_orders(); });
-                                 waiting |= askForNeverAsyncData(tick);
-        if (!(tick % 3))         waiting |= askFor(replyLevels, [&]() { return sync_levels(); });
-        if (!(tick % 60))        waiting |= askFor(replyTrades, [&]() { return sync_trades(); });
+        if (!(tick % 2))     waiting |= askFor(replyOrders, [&]() { return sync_orders(); });
+                             waiting |= askForNeverAsyncData(tick);
+        if (!(tick % 3))     waiting |= askFor(replyLevels, [&]() { return sync_levels(); });
+        if (!(tick % 60))    waiting |= askFor(replyTrades, [&]() { return sync_trades(); });
         return waiting;
       };
       const bool waitForNeverAsyncData() {

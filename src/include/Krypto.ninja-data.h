@@ -453,7 +453,8 @@ namespace ₿ {
       const mProduct &product;
     public:
       mOrders(const mProduct &p)
-        : product(p)
+        : updated()
+        , product(p)
       {};
       mOrder *const find(const RandId &orderId) {
         return (orderId.empty()
@@ -664,15 +665,9 @@ namespace ₿ {
 
 
   struct mStdev {
-    Price fv     = 0,
-          topBid = 0,
-          topAsk = 0;
-    mStdev() = default;
-    mStdev(const Price &f, const Price &b, const Price &a)
-      : fv(f)
-      , topBid(b)
-      , topAsk(a)
-    {};
+    Price fv,
+          topBid,
+          topAsk;
   };
   static void to_json(json &j, const mStdev &k) {
     j = {
@@ -701,7 +696,7 @@ namespace ₿ {
         , qp(q)
       {};
       void timer_1s(const Price &topBid, const Price &topAsk) {
-        push_back(mStdev(fairValue, topBid, topAsk));
+        push_back({fairValue, topBid, topAsk});
         calc();
       };
       void calc() {
@@ -1134,15 +1129,9 @@ namespace ₿ {
   };
 
   struct mProfit {
-    Amount baseValue  = 0,
-           quoteValue = 0;
-     Clock time       = 0;
-    mProfit() = default;
-    mProfit(Amount b, Amount q)
-      : baseValue(b)
-      , quoteValue(q)
-      , time(Tstamp)
-    {};
+    Amount baseValue,
+           quoteValue;
+     Clock time;
   };
   static void to_json(json &j, const mProfit &k) {
     j = {
@@ -1815,7 +1804,7 @@ namespace ₿ {
       };
       void calcProfits() {
         if (!profits.ratelimit())
-          profits.push_back(mProfit(base.value, quote.value));
+          profits.push_back({base.value, quote.value, Tstamp});
         base.profit  = profits.calcBaseDiff();
         quote.profit = profits.calcQuoteDiff();
       };
