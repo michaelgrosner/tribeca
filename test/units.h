@@ -240,7 +240,7 @@ namespace ₿ {
         }
       }
       WHEN("assigned") {
-        mLastOrder order;
+        mLastOrder order = {};
         REQUIRE_NOTHROW(order.price = 1234.57);
         REQUIRE_NOTHROW(order.tradeQuantity = 0.01234566);
         REQUIRE_NOTHROW(order.side = Side::Ask);
@@ -381,7 +381,7 @@ namespace ₿ {
             INFO("push()");
           });
           bool askForFees = false;
-          mLastOrder order;
+          mLastOrder order = {};
           REQUIRE_NOTHROW(order.price = 1);
           REQUIRE_NOTHROW(order.side = Side::Ask);
           REQUIRE_NOTHROW(wallet.calcFundsAfterOrder(order, &askForFees));
