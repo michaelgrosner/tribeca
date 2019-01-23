@@ -1,8 +1,8 @@
 K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
-PATCH    = 11
-BUILD    = 56
+PATCH    = 12
+BUILD    = 0
 SOURCE   = hello-world \
            trading-bot
 CARCH    = x86_64-linux-gnu      \
@@ -13,27 +13,28 @@ CARCH    = x86_64-linux-gnu      \
 
 CHOST   ?= $(shell (test -d .git && test -n "`command -v g++`") && g++ -dumpmachine \
              || echo $(subst build-,,$(firstword $(wildcard build-*))))
-KLOCAL  := build-$(CHOST)/local
+KLOCAL  := build-$(shell echo $(CHOST) | cut -d- -f-2)/local
 
 ERR      = *** K require g++ v7 or greater, but it was not found.
 HINT    := consider a symlink at /usr/bin/$(CHOST)-g++ pointing to your g++-7 or g++-8 executable
 
 STEP     = $(shell tput setaf 2;tput setab 0)Building $(1)..$(shell tput sgr0)
-KARGS   := -pthread -std=c++17 -O3 -DK_BUILD='"$(CHOST)"' \
+KARGS   := -pthread -std=c++17 -O3                        \
+  -DK_BUILD='"$(shell echo $(CHOST) | cut -d- -f-2)"'     \
   -DK_SOURCE='"K-$(KSRC)"' -DK_0_GIT='"$(shell            \
   cat .git/refs/heads/master 2>/dev/null || echo HEAD)"'  \
   -DK_STAMP='"$(shell date "+%Y-%m-%d %H:%M:%S")"'        \
   -DK_0_DAY='"v$(MAJOR).$(MINOR).$(PATCH)+$(BUILD)"'      \
   -I$(realpath $(KLOCAL)/../../src/include)               \
-  -I$(KLOCAL)/include        $(KLOCAL)/include/uWS/*.cpp  \
-  $(KLOCAL)/lib/K-$(CHOST).a $(KLOCAL)/lib/libquickfix.a  \
-  $(KLOCAL)/lib/libsqlite3.a $(KLOCAL)/lib/libz.a         \
-  $(KLOCAL)/lib/libcurl.a    $(KLOCAL)/lib/libssl.a       \
-  $(KLOCAL)/lib/libcrypto.a  $(KLOCAL)/lib/libncurses.a   \
+  -I$(KLOCAL)/include         $(KLOCAL)/include/uWS/*.cpp \
+  $(KLOCAL)/lib/K-$(shell echo $(CHOST) | cut -d- -f-2).a \
+  $(KLOCAL)/lib/libquickfix.a $(KLOCAL)/lib/libsqlite3.a  \
+  $(KLOCAL)/lib/libz.a        $(KLOCAL)/lib/libcurl.a     \
+  $(KLOCAL)/lib/libssl.a      $(KLOCAL)/lib/libcrypto.a   \
+  $(KLOCAL)/lib/libncurses.a                              \
   $(wildcard                                              \
     $(KLOCAL)/lib/lib*.dll.a                              \
-    $(KLOCAL)/lib/libcares.a                              \
-    $(KLOCAL)/lib/libuv.a                                 \
+    $(KLOCAL)/lib/libcares.a  $(KLOCAL)/lib/libuv.a       \
     $(KLOCAL)/lib/K-$(KSRC)-assets.o                      \
   )
 
@@ -96,12 +97,11 @@ $(SOURCE):
 assets: src/$(KSRC)/Makefile
 	$(info $(call STEP,$(KSRC) $@))
 	$(MAKE) -C src/$(KSRC) KASSETS=$(abspath $(KLOCAL)/assets)
-	$(foreach chost,$(subst $(CHOST),,$(CARCH)) $(CHOST),      \
-	  ! test -d build-$(chost)                                 \
-	  || ((test -d build-$(chost)/local/assets                 \
-	    || cp -R $(KLOCAL)/assets build-$(chost)/local/assets) \
-	  && $(MAKE) assets.o CHOST=$(chost)                       \
-	  && rm -rf build-$(chost)/local/assets)                   \
+	$(foreach chost,$(subst $(CHOST),,$(CARCH)) $(CHOST), \
+	  assets=build-$(shell echo $(chost) | cut -d- -f-2)/local/assets  \
+	  && ! test -d $(abspath $${assets}/../..) || ((test -d $${assets} \
+	  || cp -R $(KLOCAL)/assets $${assets})                            \
+	  && $(MAKE) assets.o CHOST=$(chost) && rm -rf $${assets})         \
 	;)
 
 assets.o: src/$(KSRC)/$(KSRC).S
@@ -150,7 +150,7 @@ Win32: src/$(KSRC)/$(KSRC).cxx
 	  -static -lstdc++ -lgcc -lwldap32 -lws2_32
 
 download:
-	curl -L https://github.com/ctubio/Krypto-trading-bot/releases/download/$(MAJOR).$(MINOR).x/v$(MAJOR).$(MINOR).$(PATCH).$(BUILD)-$(CHOST).tar.gz | tar xz
+	curl -L https://github.com/ctubio/Krypto-trading-bot/releases/download/$(MAJOR).$(MINOR).x/K-$(MAJOR).$(MINOR).$(PATCH).$(BUILD)-$(shell echo $(CHOST) | cut -d- -f-2).tar.gz | tar xz
 	@$(MAKE) system_install -s
 	@test -n "`ls *.sh 2>/dev/null`" || (cp etc/K.sh.dist K.sh && chmod +x K.sh)
 	@$(MAKE) upgrade_old_installations -s
@@ -163,15 +163,14 @@ upgrade_old_installations:
 	-@test -d app && rm -rf app || :
 	-@$(foreach conf,$(wildcard *.sh), test -n "`cat $(conf) | grep "app/server"`" && (sed -i 's/\.\/app\/server\/K/K-trading-bot/' $(conf) && sed -i 's/app\/server\/K/K-trading-bot/' $(conf)) || :;)
 
-
 cleandb: /var/lib/K/db/K*
 	rm -rf /var/lib/K/db/K*.db
 
 packages:
-	test -n "`command -v apt-get`" && sudo apt-get -y install g++ build-essential automake autoconf libtool libxml2 libxml2-dev zlib1g-dev openssl python curl gzip screen doxygen graphviz \
-	|| (test -n "`command -v yum`" && sudo yum -y install gcc-c++ automake autoconf libtool libxml2 libxml2-devel openssl python curl gzip screen) \
-	|| (test -n "`command -v brew`" && (xcode-select --install || :) && (brew install automake autoconf libxml2 sqlite openssl zlib python curl gzip proctools doxygen graphviz || brew upgrade || :)) \
-	|| (test -n "`command -v pacman`" && sudo pacman --noconfirm -S --needed base-devel libxml2 zlib sqlite curl libcurl-compat openssl python gzip screen)
+	test -n "`command -v apt-get`" && sudo apt-get -y install g++ build-essential automake autoconf libtool libxml2 libxml2-dev zlib1g-dev python curl gzip screen doxygen graphviz \
+	|| (test -n "`command -v yum`" && sudo yum -y install gcc-c++ automake autoconf libtool libxml2 libxml2-devel python curl gzip screen) \
+	|| (test -n "`command -v brew`" && (xcode-select --install || :) && (brew install automake autoconf libxml2 zlib python curl gzip screen proctools doxygen graphviz || brew upgrade || :)) \
+	|| (test -n "`command -v pacman`" && sudo pacman --noconfirm -S --needed base-devel libxml2 zlib curl python gzip screen)
 
 uninstall:
 	@$(foreach bin,$(addprefix /usr/local/bin/,$(notdir $(wildcard $(KLOCAL)/bin/K-*))), sudo rm -v $(bin);)
@@ -300,16 +299,15 @@ BUILD:
 release:
 ifdef KALL
 	unset KALL $(foreach chost,$(CARCH),&& $(MAKE) $@ CHOST=$(chost))
+else ifndef KTARGZ
+	@$(MAKE) KTARGZ="K-$(MAJOR).$(MINOR).$(PATCH).$(BUILD)-$(shell echo $(CHOST) | cut -d- -f-2).tar.gz" $@
 else
-	@tar -cvzf v$(MAJOR).$(MINOR).$(PATCH).$(BUILD)-$(CHOST).tar.gz $(KLOCAL)/bin/K-* $(KLOCAL)/lib/K-*                                   \
-	$(shell test -n "`echo $(CHOST) | grep mingw32`" && echo $(KLOCAL)/bin/*dll || :)                                                     \
-	LICENSE COPYING README.md Makefile doc/[^html]* etc test --exclude src/*/node_modules src                                             \
-	&& curl -s -n -H "Content-Type:application/octet-stream" -H "Authorization: token ${KRELEASE}"                                        \
-	--data-binary "@$(PWD)/v$(MAJOR).$(MINOR).$(PATCH).$(BUILD)-$(CHOST).tar.gz"                                                          \
-	"https://uploads.github.com/repos/ctubio/Krypto-trading-bot/releases/$(shell curl -s                                                  \
-	https://api.github.com/repos/ctubio/Krypto-trading-bot/releases/latest | grep id | head -n1 | cut -d ' ' -f4 | cut -d ',' -f1         \
-	)/assets?name=v$(MAJOR).$(MINOR).$(PATCH).$(BUILD)-$(CHOST).tar.gz"                                                                   \
-	&& rm v$(MAJOR).$(MINOR).$(PATCH).$(BUILD)-$(CHOST).tar.gz && echo && echo DONE v$(MAJOR).$(MINOR).$(PATCH).$(BUILD)-$(CHOST).tar.gz
+	@tar -cvzf $(KTARGZ) $(KLOCAL)/bin/K-* $(KLOCAL)/lib/K-* LICENSE COPYING README.md Makefile doc/[^html]* etc test             \
+	$(shell test -n "`echo $(CHOST) | grep mingw32`" && echo $(KLOCAL)/bin/*dll || :) --exclude src/*/node_modules src            \
+	&& curl -s -n -H "Content-Type:application/octet-stream" -H "Authorization: token ${KRELEASE}"                                \
+	--data-binary "@$(PWD)/$(KTARGZ)" "https://uploads.github.com/repos/ctubio/Krypto-trading-bot/releases/$(shell curl -s        \
+	https://api.github.com/repos/ctubio/Krypto-trading-bot/releases/latest | grep id | head -n1 | cut -d ' ' -f4 | cut -d ',' -f1 \
+	)/assets?name=$(KTARGZ)" && rm -v $(KTARGZ)
 endif
 
 md5: src

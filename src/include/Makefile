@@ -14,7 +14,7 @@ V_UWS   = 0.14.8
 V_QF    = 1.15.1
 V_UV    = 1.24.1
 
-KBUILD := $(abspath ../../build-$(CHOST))
+KBUILD := $(abspath ../../build-$(shell echo $(CHOST) | cut -d- -f-2))
 
 all dist:
 	@mkdir -vp $(KBUILD)
