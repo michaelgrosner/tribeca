@@ -2,7 +2,7 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
 PATCH    = 12
-BUILD    = 0
+BUILD    = 1
 SOURCE   = hello-world \
            trading-bot
 CARCH    = x86_64-linux-gnu      \
@@ -180,7 +180,7 @@ system_install:
 	$(info Checking if /usr/local/bin is already  in your PATH..      $(if $(shell echo $$PATH | grep /usr/local/bin),OK))
 	$(if $(shell echo $$PATH | grep /usr/local/bin),,$(info $(subst ..,,$(subst Building ,,$(call STEP,Warning! you MUST add /usr/local/bin to your PATH!)))))
 	$(info Checking if /etc/ssl/certs is readable by curl..           $(shell (test -d /etc/ssl/certs && echo OK) || (sudo mkdir -p /etc/ssl/certs && echo OK)))
-	$(info Checking if /var/lib/K/db  is writable by sqlite..         $(shell (test -d /var/lib/K/db && echo OK) || (sudo mkdir -p /var/lib/K/db && sudo chown $(shell id -u) -R /var/lib/K && echo OK)))
+	$(info Checking if /var/lib/K/db  is writable by sqlite..         $(shell (test -d /var/lib/K/db && echo OK) || (sudo mkdir -p /var/lib/K/db && sudo chown -R $(shell id -u) /var/lib/K && echo OK)))
 	$(info )
 	$(info List of installed K binaries:)
 	@sudo cp -f $(wildcard $(KLOCAL)/bin/K-$(KSRC)*) /usr/local/bin
