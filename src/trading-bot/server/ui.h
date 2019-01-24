@@ -23,19 +23,10 @@ class UI: public Client { public: UI() { client = this; };
            + " (may be already in use by another program)"
          );
       webui->onConnection([&](uWS::WebSocket<uWS::SERVER> *webSocket, uWS::HttpRequest req) {
-        onConnection();
-        const string addr = cleanAddress(webSocket->getAddress().address);
-        Print::log("UI", to_string(connections) + " client" + string(connections == 1 ? 0 : 1, 's')
-                         + " connected, last connection was from", addr);
-        if (connections > K.num("client-limit")) {
-          Print::log("UI", "--client-limit=" + K.str("client-limit") + " reached by", addr);
-          webSocket->close();
-        }
+        wakeup(Connectivity::Connected, webSocket);
       });
       webui->onDisconnection([&](uWS::WebSocket<uWS::SERVER> *webSocket, int code, char *message, size_t length) {
-        onDisconnection();
-        Print::log("UI", to_string(connections) + " client" + string(connections == 1 ? 0 : 1, 's')
-                         + " connected, last disconnection was from", cleanAddress(webSocket->getAddress().address));
+        wakeup(Connectivity::Disconnected, webSocket);
       });
       webui->onHttpRequest([&](uWS::HttpResponse *res, uWS::HttpRequest req, char *data, size_t length, size_t remainingBytes) {
         if (req.getMethod() != uWS::HttpMethod::METHOD_GET) return;
@@ -44,15 +35,13 @@ class UI: public Client { public: UI() { client = this; };
           req.getHeader("authorization").toString(),
           cleanAddress(res->getHttpSocket()->getAddress().address)
         );
-        if (!response.empty()) res->write(response.data(), response.length());
+        res->write(response.data(), response.length());
       });
       webui->onMessage([&](uWS::WebSocket<uWS::SERVER> *webSocket, const char *message, size_t length, uWS::OpCode opCode) {
         if (length < 2) return;
         const string response = onMessage(
           string(message, length),
-          !K.str("whitelist").empty()
-            ? cleanAddress(webSocket->getAddress().address)
-            : "unknown"
+          cleanAddress(webSocket->getAddress().address)
         );
         if (!response.empty())
           webSocket->send(
@@ -62,13 +51,6 @@ class UI: public Client { public: UI() { client = this; };
               : uWS::OpCode::TEXT
           );
       });
-      broadcast = [this](const mMatter &type, string msg) {
-        msg.insert(msg.begin(), (char)type);
-        msg.insert(msg.begin(), (char)mPortal::Kiss);
-        K.deferred([this, msg]() {
-          webui->broadcast(msg.data(), msg.length(), uWS::OpCode::TEXT);
-        });
-      };
       K.timer_1s_always([&](const unsigned int &tick) {
         if (delay and *delay and !(tick % *delay)) {
           for (const auto &it : queue)
@@ -78,34 +60,57 @@ class UI: public Client { public: UI() { client = this; };
       });
       Print::log("UI", "ready at", Text::strL(protocol) + "://" + K.wtfismyip + ":" + K.str("port"));
     };
-    void run() override {
-      send = send_nowhere;
-    };
   public:
     void welcome(mToClient &data) override {
+      data.send = [&]() {
+        if (send) send(data);
+      };
       if (!webui) return;
-      const mMatter type = data.about();
-      if (hello.find(type) != hello.end())
-        error("UI", string("Too many handlers for \"") + (char)type + "\" welcome event");
-      hello[type] = [&]() { return data.hello(); };
-      sendAsync(data);
+      const mMatter matter = data.about();
+      if (hello.find(matter) != hello.end())
+        error("UI", string("Too many handlers for \"") + (char)matter + "\" welcome event");
+      hello[matter] = [&]() {
+        return data.hello();
+      };
     };
     void clickme(mFromClient &data, function<void(const json&)> fn) override {
       if (!webui) return;
-      const mMatter type = data.about();
-      if (kisses.find(type) != kisses.end())
-        error("UI", string("Too many handlers for \"") + (char)type + "\" clickme event");
-      kisses[type] = [&data, fn](json &butterfly) {
+      const mMatter matter = data.about();
+      if (kisses.find(matter) != kisses.end())
+        error("UI", string("Too many handlers for \"") + (char)matter + "\" clickme event");
+      kisses[matter] = [&data, fn](json &butterfly) {
         data.kiss(&butterfly);
         if (!butterfly.is_null())
           fn(butterfly);
       };
     };
   private:
-    void sendAsync(mToClient &data) {
-      data.send = [&]() {
-        send(data);
-      };
+    void broadcast(const mMatter &matter, string msg) {
+      msg = (char)mPortal::Kiss + ((char)matter + msg);
+      K.deferred([this, msg]() {
+        webui->broadcast(msg.data(), msg.length(), uWS::OpCode::TEXT);
+      });
+    };
+    function<void(const mToClient&)> send;
+    void wakeup(const Connectivity &state, uWS::WebSocket<uWS::SERVER> *const webSocket) {
+      if ((bool)state) {
+        if (!connections++)
+          send = [&](const mToClient &data) {
+            if (data.realtime() or !delay or !*delay)
+              broadcast(data.about(), data.blob().dump());
+            else queue[data.about()] = data.blob().dump();
+          };
+      } else if (!--connections) send = nullptr;
+      const string addr = cleanAddress(webSocket->getAddress().address);
+      Print::log("UI",
+        to_string(connections) + " client" + string(connections == 1 ? 0 : 1, 's')
+          + " connected, last connection was from",
+        addr
+      );
+      if (connections > K.num("client-limit")) {
+        Print::log("UI", "--client-limit=" + K.str("client-limit") + " reached by", addr);
+        webSocket->close();
+      }
     };
     SSL_CTX *sslContext() {
       SSL_CTX *context = nullptr;
@@ -167,24 +172,13 @@ class UI: public Client { public: UI() { client = this; };
       protocol += string(context ? 1 : 0, 'S');
       return context;
     };
-    function<void(const mMatter &type, string msg)> broadcast = [](const mMatter &type, string msg) {};
-    function<void(const mToClient&)> send;
-    function<void(const mToClient&)> send_nowhere = [](const mToClient &data) {};
-    function<void(const mToClient&)> send_somewhere = [&](const mToClient &data) {
-      if (data.realtime() or !delay or !*delay)
-        broadcast(data.about(), data.blob().dump());
-      else queue[data.about()] = data.blob().dump();
-    };
-    void onConnection() {
-      if (!connections++) send = send_somewhere;
-    };
-    void onDisconnection() {
-      if (!--connections) send = send_nowhere;
-    };
     string onHttpRequest(const string &path, const string &auth, const string &addr) {
       string document,
              content;
-      if (addr != "unknown" and !K.str("whitelist").empty() and K.str("whitelist").find(addr) == string::npos) {
+      if (addr != "unknown"
+        and !K.str("whitelist").empty()
+        and K.str("whitelist").find(addr) == string::npos
+      ) {
         Print::log("UI", "dropping gzip bomb on", addr);
         document = "HTTP/1.1 200 OK\r\nConnection: keep-alive\r\nAccept-Ranges: bytes\r\nVary: Accept-Encoding\r\nCache-Control: public, max-age=0\r\nContent-Encoding: gzip\r\n";
         content = string(&_www_gzip_bomb, _www_gzip_bomb_len);
@@ -242,8 +236,10 @@ class UI: public Client { public: UI() { client = this; };
         + "\r\n\r\n" + content;
     };
     string onMessage(string message, const string &addr) {
-      if (addr != "unknown" and K.str("whitelist").find(addr) == string::npos)
-        return string(&_www_gzip_bomb, _www_gzip_bomb_len);
+      if (addr != "unknown"
+        and !K.str("whitelist").empty()
+        and K.str("whitelist").find(addr) == string::npos
+      ) return string(&_www_gzip_bomb, _www_gzip_bomb_len);
       const mPortal portal = (mPortal)message.at(0);
       const mMatter matter = (mMatter)message.at(1);
       if (mPortal::Hello == portal and hello.find(matter) != hello.end()) {
@@ -261,7 +257,7 @@ class UI: public Client { public: UI() { client = this; };
       }
       return "";
     };
-    static string cleanAddress(string addr) {
+    static const string cleanAddress(string addr) {
       if (addr.length() > 7 and addr.substr(0, 7) == "::ffff:") addr = addr.substr(7);
       if (addr.length() < 7) addr.clear();
       return addr.empty() ? "unknown" : addr;

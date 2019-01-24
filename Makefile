@@ -2,7 +2,7 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
 PATCH    = 12
-BUILD    = 1
+BUILD    = 2
 SOURCE   = hello-world \
            trading-bot
 CARCH    = x86_64-linux-gnu      \
@@ -186,8 +186,7 @@ system_install:
 	@sudo cp -f $(wildcard $(KLOCAL)/bin/K-$(KSRC)*) /usr/local/bin
 	@LS_COLORS="ex=40;92" CLICOLOR="Yes" ls $(shell ls --color > /dev/null 2>&1 && echo --color) -lah $(addprefix /usr/local/bin/,$(notdir $(wildcard $(KLOCAL)/bin/K-$(KSRC)*)))
 	@echo
-	@sudo curl -s --time-cond /etc/ssl/certs/ca-certificates.crt https://curl.haxx.se/ca/cacert.pem \
-	  -o /etc/ssl/certs/ca-certificates.crt
+	@sudo curl -s --time-cond /etc/ssl/certs/ca-certificates.crt https://curl.haxx.se/ca/cacert.pem -o /etc/ssl/certs/ca-certificates.crt
 
 install: packages
 	@yes = | head -n`expr $(shell tput cols) / 2` | xargs echo && echo " _  __\n| |/ /  v$(MAJOR).$(MINOR).$(PATCH)+$(BUILD)\n| ' /\n| . \\   Select your (beloved) architecture\n|_|\\_\\  to download pre-compiled binaries:\n"

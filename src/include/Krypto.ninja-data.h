@@ -67,7 +67,7 @@ namespace ₿ {
       if ((send_asap() or send_soon())
         and (send_same_blob() or diff_blob())
       ) {
-        send_now();
+        mToClient::send();
         return true;
       }
       return false;
@@ -94,10 +94,6 @@ namespace ₿ {
           return false;
         send_last_Tstamp = now;
         return true;
-      };
-      void send_now() const {
-        if (mToClient::send)
-          mToClient::send();
       };
   };
 
@@ -953,7 +949,7 @@ namespace ₿ {
       void send_patch() {
         if (ratelimit()) return;
         diff();
-        if (!empty()) send_now();
+        if (!empty()) mToClient::send();
         unfilter();
       };
       const mMatter about() const override {

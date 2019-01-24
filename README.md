@@ -76,7 +76,7 @@ See [etc/Dockerfile](https://github.com/ctubio/Krypto-trading-bot/tree/master/et
 
 1. Ensure your target machine has `git`, `make` and `vim` installed.
 
-2. Install it wherever you want (feel free to customize the suggested folder name K):
+2. Download it wherever you want (feel free to customize the suggested folder name K) and execute the installer:
 ```
  $ git clone ssh://git@github.com/ctubio/Krypto-trading-bot K
  $ cd K
@@ -96,7 +96,7 @@ To upgrade anytime see [Upgrade to the latest commit](#upgrade-to-the-latest-com
 
 1. Ensure your target machine has `curl`, `make` and `vim` installed.
 
-2. Install it wherever you want (feel free to customize the suggested folder name K):
+2. Download it wherever you want (feel free to customize the suggested folder name K) and execute the installer:
 ```
  $ mkdir K
  $ cd K
@@ -194,7 +194,7 @@ In case you really want to use plain HTTP, use `--without-ssl` argument.
 
 Each currency pair of each exchange will use a different sqlite database file.
 
-All database files are located at `/var/lib/K/db/K-*.db`. It is located outside the application path to survive reinstalls and wild `rm -rf path/to/K`.
+All database files are located at `/var/lib/K/db/K-*.db`. It is located outside the download folder to survive reinstalls and wild `rm -rf path/to/K`.
 
 You can copy any `*.db` file to another machine when migrating or as a backup.
 
@@ -202,7 +202,7 @@ If a database file does not exist, the application will create it on boot; other
 
 To explore each database file you can use https://github.com/sqlitebrowser/sqlitebrowser or a similar tool.
 
-To set a different database path or to set an [in-memory database](https://sqlite.org/inmemorydb.html), use `--database=PATH` argument (see `--help`).
+To set a different database filename or to set an [in-memory database](https://sqlite.org/inmemorydb.html), use `--database=PATH` argument (see `--help`).
 
 Even if using an in-memory database, the quoting parameters are always loaded from and saved into the disk file database.
 

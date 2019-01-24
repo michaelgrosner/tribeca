@@ -127,43 +127,41 @@ namespace ₿ {
       static Margin margin;
       static void (*display)();
       static const bool windowed() {
-        if (display) {
-          if (stdlog)
-            error("SH", "Unable to print another window");
-          if (!initscr())
-            error("SH",
-              "Unable to initialize ncurses, try to run in your terminal"
-                "\"export TERM=xterm\", or use --naked argument"
-            );
-          Ansi::default_colors();
-          if (margin.top != ANY_NUM) {
-            stdlog = subwin(
-              stdscr,
-              getmaxy(stdscr) - margin.bottom - margin.top,
-              getmaxx(stdscr) - margin.left - margin.right,
-              margin.top,
-              margin.left
-            );
-            scrollok(stdlog, true);
-            idlok(stdlog, true);
-          }
-          signal(SIGWINCH, [](const int sig) {
-            endwin();
-            refresh();
-            clear();
-          });
-          repaint();
+        if (!display) return false;
+        if (stdlog)
+          error("SH", "Unable to print another window");
+        if (!initscr())
+          error("SH",
+            "Unable to initialize ncurses, try to run in your terminal"
+              "\"export TERM=xterm\", or use --naked argument"
+          );
+        Ansi::default_colors();
+        if (margin.top != ANY_NUM) {
+          stdlog = subwin(
+            stdscr,
+            getmaxy(stdscr) - margin.bottom - margin.top,
+            getmaxx(stdscr) - margin.left - margin.right,
+            margin.top,
+            margin.left
+          );
+          scrollok(stdlog, true);
+          idlok(stdlog, true);
         }
-        return display;
+        signal(SIGWINCH, [](const int sig) {
+          endwin();
+          refresh();
+          clear();
+        });
+        repaint();
+        return true;
       };
       static void repaint() {
-        if (display) {
-          display();
-          wrefresh(stdscr);
-          if (stdlog) {
-            wmove(stdlog, getmaxy(stdlog) - 1, 0);
-            wrefresh(stdlog);
-          }
+        if (!display) return;
+        display();
+        wrefresh(stdscr);
+        if (stdlog) {
+          wmove(stdlog, getmaxy(stdlog) - 1, 0);
+          wrefresh(stdlog);
         }
       };
       static const string stamp() {
@@ -698,7 +696,7 @@ namespace ₿ {
           return gw->waitForData();
         };
       };
-      auto stop(const bool &dustybot) {
+      function<void()> stop(const bool &dustybot) {
         return [this, dustybot]() {
           timer->stop();
           gw->close();
