@@ -644,15 +644,93 @@ namespace ₿ {
       };
   };
 
-  class Events {
+  class Network {
+    protected:
+      uWS::Hub *socket;
+      vector<uWS::Group<uWS::CLIENT>*> gw_clients;
+      vector<uWS::Group<uWS::SERVER>*> ui_servers;
+    public:
+      uWS::Group<uWS::SERVER> *listen(
+        const     int &port,
+              SSL_CTX *ssl        = nullptr,
+        const function<const string(
+          const string&,
+          const string&,
+          const string&
+        )>            &httpServer = nullptr,
+        const function<const bool(
+          const Connectivity&,
+          const string&
+        )>            &wsServer   = nullptr,
+        const function<const string(
+                string,
+          const string&
+        )>            &wsMessage  = nullptr
+      ) {
+        auto ui_server = socket->createGroup<uWS::SERVER>(uWS::PERMESSAGE_DEFLATE);
+        if (!socket->listen(Curl::inet, port, uS::TLS::Context(ssl), 0, ui_server))
+          return nullptr;
+        if (httpServer)
+          ui_server->onHttpRequest([&](uWS::HttpResponse *res, uWS::HttpRequest req, char *data, size_t length, size_t remainingBytes) {
+            if (req.getMethod() != uWS::HttpMethod::METHOD_GET) return;
+            const string response = httpServer(
+              req.getUrl().toString(),
+              req.getHeader("authorization").toString(),
+              cleanAddress(res->getHttpSocket()->getAddress().address)
+            );
+            if (!response.empty())
+              res->write(response.data(), response.length());
+          });
+        if (wsServer) {
+          ui_server->onConnection([&](uWS::WebSocket<uWS::SERVER> *webSocket, uWS::HttpRequest req) {
+            if (!wsServer(Connectivity::Connected, cleanAddress(webSocket->getAddress().address)))
+              webSocket->close();
+          });
+          ui_server->onDisconnection([&](uWS::WebSocket<uWS::SERVER> *webSocket, int code, char *message, size_t length) {
+            wsServer(Connectivity::Disconnected, cleanAddress(webSocket->getAddress().address));
+          });
+        }
+        if (wsMessage)
+          ui_server->onMessage([&](uWS::WebSocket<uWS::SERVER> *webSocket, const char *message, size_t length, uWS::OpCode opCode) {
+            if (length < 2) return;
+            const string response = wsMessage(
+              string(message, length),
+              cleanAddress(webSocket->getAddress().address)
+            );
+            if (!response.empty())
+              webSocket->send(response.data(), response.substr(0, 2) == "PK"
+                                                 ? uWS::OpCode::BINARY
+                                                 : uWS::OpCode::TEXT);
+          });
+        ui_servers.push_back(ui_server);
+        return ui_server;
+      };
+    protected:
+      function<const bool()> connect() {
+        gw->socket = socket = new uWS::Hub(0, true);
+        gw->api = connection();
+        return []() {
+          return gw->waitForData();
+        };
+      };
     private:
-      uWS::Hub  *socket = nullptr;
+      uWS::Group<uWS::CLIENT> *connection() {
+        gw_clients.push_back(socket->createGroup<uWS::CLIENT>());
+        return gw_clients.back();
+      };
+      static const string cleanAddress(string addr) {
+        if (addr.length() > 7 and addr.substr(0, 7) == "::ffff:") addr = addr.substr(7);
+        if (addr.length() < 7) addr.clear();
+        return addr.empty() ? "unknown" : addr;
+      };
+  };
+
+  class Events: public Network {
+    private:
       uS::Timer *timer  = nullptr;
       uS::Async *loop   = nullptr;
       unsigned int tick  = 0,
                    ticks = 300;
-      vector<uWS::Group<uWS::CLIENT>*> gw_clients;
-      vector<uWS::Group<uWS::SERVER>*> ui_servers;
       vector<function<void(const unsigned int&)>> onlineFn,
                                                   alwaysFn;
       vector<function<void()>> slowFn;
@@ -674,16 +752,8 @@ namespace ₿ {
       void wait_for(const function<const bool()> &fn) {
         waitFn.push_back(fn);
       };
-      uWS::Group<uWS::SERVER> *listen(const int &port, SSL_CTX *ssl = nullptr) {
-        ui_servers.push_back(socket->createGroup<uWS::SERVER>(uWS::PERMESSAGE_DEFLATE));
-        return socket->listen(Curl::inet, port, uS::TLS::Context(ssl), 0, ui_servers.back())
-          ? ui_servers.back()
-          : nullptr;
-      };
     protected:
-      function<const bool()> start() {
-        gw->socket = socket = new uWS::Hub(0, true);
-        gw_clients.push_back(gw->api = socket->createGroup<uWS::CLIENT>());
+      void start() {
         timer = new uS::Timer(socket->getLoop());
         timer->setData(this);
         timer->start([](uS::Timer *timer) {
@@ -692,9 +762,6 @@ namespace ₿ {
         loop = new uS::Async(socket->getLoop());
         loop->setData(this);
         loop->start(walk);
-        return []() {
-          return gw->waitForData();
-        };
       };
       function<void()> stop(const bool &dustybot) {
         return [this, dustybot]() {
@@ -922,7 +989,8 @@ namespace ₿ {
               + " (consider to repeat a few times this check)");
           }
         } {
-          wait_for(start());
+          wait_for(connect());
+          start();
           ending(stop(num("dustybot")));
         } {
           if (databases)

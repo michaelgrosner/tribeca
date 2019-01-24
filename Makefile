@@ -2,7 +2,7 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
 PATCH    = 12
-BUILD    = 2
+BUILD    = 3
 SOURCE   = hello-world \
            trading-bot
 CARCH    = x86_64-linux-gnu      \

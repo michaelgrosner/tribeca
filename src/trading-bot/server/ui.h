@@ -18,39 +18,10 @@ class UI: public Client { public: UI() { client = this; };
   protected:
     void waitWebAdmin() override {
       if (K.num("headless")) return;
-      if (!(webui = K.listen(K.num("port"), sslContext())))
+      if (!(webui = K.listen(K.num("port"), sslContext(), httpServer, wsServer, wsMessage)))
         error("UI", "Unable to listen to UI port number " + K.str("port")
            + " (may be already in use by another program)"
          );
-      webui->onConnection([&](uWS::WebSocket<uWS::SERVER> *webSocket, uWS::HttpRequest req) {
-        wakeup(Connectivity::Connected, webSocket);
-      });
-      webui->onDisconnection([&](uWS::WebSocket<uWS::SERVER> *webSocket, int code, char *message, size_t length) {
-        wakeup(Connectivity::Disconnected, webSocket);
-      });
-      webui->onHttpRequest([&](uWS::HttpResponse *res, uWS::HttpRequest req, char *data, size_t length, size_t remainingBytes) {
-        if (req.getMethod() != uWS::HttpMethod::METHOD_GET) return;
-        const string response = onHttpRequest(
-          req.getUrl().toString(),
-          req.getHeader("authorization").toString(),
-          cleanAddress(res->getHttpSocket()->getAddress().address)
-        );
-        res->write(response.data(), response.length());
-      });
-      webui->onMessage([&](uWS::WebSocket<uWS::SERVER> *webSocket, const char *message, size_t length, uWS::OpCode opCode) {
-        if (length < 2) return;
-        const string response = onMessage(
-          string(message, length),
-          cleanAddress(webSocket->getAddress().address)
-        );
-        if (!response.empty())
-          webSocket->send(
-            response.data(),
-            response.substr(0, 2) == "PK"
-              ? uWS::OpCode::BINARY
-              : uWS::OpCode::TEXT
-          );
-      });
       K.timer_1s_always([&](const unsigned int &tick) {
         if (!delay or !*delay or (tick % *delay) or queue.empty())
           return;
@@ -91,19 +62,21 @@ class UI: public Client { public: UI() { client = this; };
     };
   private:
     function<void(const mToClient&)> send;
-    void wakeup(const Connectivity &connected, uWS::WebSocket<uWS::SERVER> *const webSocket) {
-      if ((bool)connected) {
-        if (!connections++)
-          send = [&](const mToClient &data) {
-            if (data.realtime() or !delay or !*delay) {
-              const string msg = (char)mPortal::Kiss + ((char)data.about() + data.blob().dump());
-              K.deferred([this, msg]() {
-                webui->broadcast(msg.data(), msg.length(), uWS::OpCode::TEXT);
-              });
-            } else queue[data.about()] = data.blob().dump();
-          };
-      } else if (!--connections) send = nullptr;
-      const string addr = cleanAddress(webSocket->getAddress().address);
+    function<const bool(const Connectivity&, const string&)> wsServer = [&](
+      const Connectivity &connected,
+      const       string &addr
+    ) {
+      if (!(bool)connected) {
+        if (!--connections) send = nullptr;
+      } else if (!connections++)
+        send = [&](const mToClient &data) {
+          if (data.realtime() or !delay or !*delay) {
+            const string msg = (char)mPortal::Kiss + ((char)data.about() + data.blob().dump());
+            K.deferred([this, msg]() {
+              webui->broadcast(msg.data(), msg.length(), uWS::OpCode::TEXT);
+            });
+          } else queue[data.about()] = data.blob().dump();
+        };
       Print::log("UI",
         to_string(connections) + " client" + string(connections == 1 ? 0 : 1, 's')
           + " connected, last connection was from",
@@ -111,72 +84,15 @@ class UI: public Client { public: UI() { client = this; };
       );
       if (connections > K.num("client-limit")) {
         Print::log("UI", "--client-limit=" + K.str("client-limit") + " reached by", addr);
-        webSocket->close();
+        return false;
       }
+      return true;
     };
-    SSL_CTX *sslContext() {
-      SSL_CTX *ctx = nullptr;
-      if (!K.num("without-ssl") and (ctx = SSL_CTX_new(SSLv23_server_method()))) {
-        SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv3);
-        if (K.str("ssl-crt").empty() or K.str("ssl-key").empty()) {
-          if (!K.str("ssl-crt").empty())
-            Print::logWar("UI", "Ignored --ssl-crt because --ssl-key is missing");
-          if (!K.str("ssl-key").empty())
-            Print::logWar("UI", "Ignored --ssl-key because --ssl-crt is missing");
-          Print::logWar("UI", "Connected web clients will enjoy unsecure SSL encryption..\n"
-            "(because the private key is visible in the source!) consider --ssl-crt and --ssl-key arguments");
-          if (!SSL_CTX_use_certificate(ctx,
-            PEM_read_bio_X509(BIO_new_mem_buf((void*)
-              "-----BEGIN CERTIFICATE-----"                                      "\n"
-              "MIICATCCAWoCCQCiyDyPL5ov3zANBgkqhkiG9w0BAQsFADBFMQswCQYDVQQGEwJB" "\n"
-              "VTETMBEGA1UECAwKU29tZS1TdGF0ZTEhMB8GA1UECgwYSW50ZXJuZXQgV2lkZ2l0" "\n"
-              "cyBQdHkgTHRkMB4XDTE2MTIyMjIxMDMyNVoXDTE3MTIyMjIxMDMyNVowRTELMAkG" "\n"
-              "A1UEBhMCQVUxEzARBgNVBAgMClNvbWUtU3RhdGUxITAfBgNVBAoMGEludGVybmV0" "\n"
-              "IFdpZGdpdHMgUHR5IEx0ZDCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEAunyx" "\n"
-              "1lNsHkMmCa24Ns9xgJAwV3A6/Jg/S5jPCETmjPRMXqAp89fShZxN2b/2FVtU7q/N" "\n"
-              "EtNpPyEhfAhPwYrkHCtip/RmZ/b6qY2Cx6otFIsuwO8aUV27CetpoM8TAQSuufcS" "\n"
-              "jcZD9pCAa9GM/yWeqc45su9qBBmLnAKYuYUeDQUCAwEAATANBgkqhkiG9w0BAQsF" "\n"
-              "AAOBgQAeZo4zCfnq5/6gFzoNDKg8DayoMnCtbxM6RkJ8b/MIZT5p6P7OcKNJmi1o" "\n"
-              "XD2evdxNrY0ObQ32dpiLqSS1JWL8bPqloGJBNkSPi3I+eBoJSE7/7HOroLNbp6nS" "\n"
-              "aaec6n+OlGhhjxn0DzYiYsVBUsokKSEJmHzoLHo3ZestTTqUwg=="             "\n"
-              "-----END CERTIFICATE-----"                                        "\n"
-            , -1), nullptr, nullptr, nullptr
-          )) or !SSL_CTX_use_RSAPrivateKey(ctx,
-            PEM_read_bio_RSAPrivateKey(BIO_new_mem_buf((void*)
-              "-----BEGIN RSA PRIVATE KEY-----"                                  "\n"
-              "MIICXAIBAAKBgQC6fLHWU2weQyYJrbg2z3GAkDBXcDr8mD9LmM8IROaM9ExeoCnz" "\n"
-              "19KFnE3Zv/YVW1Tur80S02k/ISF8CE/BiuQcK2Kn9GZn9vqpjYLHqi0Uiy7A7xpR" "\n"
-              "XbsJ62mgzxMBBK659xKNxkP2kIBr0Yz/JZ6pzjmy72oEGYucApi5hR4NBQIDAQAB" "\n"
-              "AoGBAJi9OrbtOreKjeQNebzCqRcAgeeLz3RFiknzjVYbgK1gBhDWo6XJVe8C9yxq" "\n"
-              "sjYJyQV5zcAmkaQYEaHR+OjvRiZ4UmXbItukOD+dnq7xs69n3w54FfANjkurdL2M" "\n"
-              "fPAQm/GJT4TSBDIr7eJQPOrork9uxQStwADTqvklVlKm2YldAkEA80ZYaLrGOBbz" "\n"
-              "5871ewKxtVJNCCmXdYUwq7nI/lqsLBZnB+wiwnQ+3tgfi4YoUoTnv0hIIwkyLYl9" "\n"
-              "Z2wqensf6wJBAMQ96gUGnIcYJzknB5CYDNQalcvvTx7tLtgRXDf47bQJ3X/Q5k/t" "\n"
-              "yDlByUBqvYVShXWs+d4ynNKLze/w18H8Os8CQBYFDAOOxFpXWYRl6zpTKBqtdGOE" "\n"
-              "wDzW7WzdyB+dvW/QJ0tESHEpbHdnQJO0dPnjJcbemAjz0CLnCv7Nf5rOgjkCQE3Q" "\n"
-              "izIw+/JptmvoOQyx7ixQ2mNCYmpN/Iw63gln0MHaQ5WCPUEmdYWWu3mqmbn7Deaq" "\n"
-              "j233Pc4TF7b0FmnaXWsCQAVvyLVU3a9Yactb5MXaN+rEYjUW37GSo+Q1lXfm0OwF" "\n"
-              "EJB7X66Bavwg4MCfpGykS71OxhTEfDu+y1gylPMCGHY="                     "\n"
-              "-----END RSA PRIVATE KEY-----"                                    "\n"
-            , -1), nullptr, nullptr, nullptr)
-          )) ctx = nullptr;
-        } else {
-          if (access(K.str("ssl-crt").data(), R_OK) == -1)
-            Print::logWar("UI", "Unable to read custom .crt file at " + K.str("ssl-crt"));
-          if (access(K.str("ssl-key").data(), R_OK) == -1)
-            Print::logWar("UI", "Unable to read custom .key file at " + K.str("ssl-key"));
-          if (!SSL_CTX_use_certificate_chain_file(ctx, K.str("ssl-crt").data())
-            or !SSL_CTX_use_RSAPrivateKey_file(ctx, K.str("ssl-key").data(), SSL_FILETYPE_PEM)
-          ) {
-            ctx = nullptr;
-            Print::logWar("UI", "Unable to encrypt web clients, will fallback to plain HTTP");
-          }
-        }
-      }
-      protocol = "HTTP" + string(ctx ? 1 : 0, 'S');
-      return ctx;
-    };
-    string onHttpRequest(const string &path, const string &auth, const string &addr) {
+    function<const string(const string&, const string&, const string&)> httpServer = [&](
+      const string &path,
+      const string &auth,
+      const string &addr
+    ) {
       string document,
              content;
       if (addr != "unknown"
@@ -239,7 +155,10 @@ class UI: public Client { public: UI() { client = this; };
         + "Content-Length: " + to_string(content.length())
         + "\r\n\r\n" + content;
     };
-    string onMessage(string message, const string &addr) {
+    function<const string(string, const string&)> wsMessage = [&](
+            string message,
+      const string &addr
+    ) {
       if (addr != "unknown"
         and !K.str("whitelist").empty()
         and K.str("whitelist").find(addr) == string::npos
@@ -259,12 +178,69 @@ class UI: public Client { public: UI() { client = this; };
           if (it.value().is_null()) it = butterfly.erase(it); else ++it;
         kisses.at(matter)(butterfly);
       }
-      return "";
+      return string();
     };
-    static const string cleanAddress(string addr) {
-      if (addr.length() > 7 and addr.substr(0, 7) == "::ffff:") addr = addr.substr(7);
-      if (addr.length() < 7) addr.clear();
-      return addr.empty() ? "unknown" : addr;
+    SSL_CTX *sslContext() {
+      SSL_CTX *ctx = nullptr;
+      if (!K.num("without-ssl") and (ctx = SSL_CTX_new(SSLv23_server_method()))) {
+        SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv3);
+        if (K.str("ssl-crt").empty() or K.str("ssl-key").empty()) {
+          if (!K.str("ssl-crt").empty())
+            Print::logWar("UI", "Ignored --ssl-crt because --ssl-key is missing");
+          if (!K.str("ssl-key").empty())
+            Print::logWar("UI", "Ignored --ssl-key because --ssl-crt is missing");
+          Print::logWar("UI", "Connected web clients will enjoy unsecure SSL encryption..\n"
+            "(because the private key is visible in the source!) consider --ssl-crt and --ssl-key arguments");
+          if (!SSL_CTX_use_certificate(ctx,
+            PEM_read_bio_X509(BIO_new_mem_buf((void*)
+              "-----BEGIN CERTIFICATE-----"                                      "\n"
+              "MIICATCCAWoCCQCiyDyPL5ov3zANBgkqhkiG9w0BAQsFADBFMQswCQYDVQQGEwJB" "\n"
+              "VTETMBEGA1UECAwKU29tZS1TdGF0ZTEhMB8GA1UECgwYSW50ZXJuZXQgV2lkZ2l0" "\n"
+              "cyBQdHkgTHRkMB4XDTE2MTIyMjIxMDMyNVoXDTE3MTIyMjIxMDMyNVowRTELMAkG" "\n"
+              "A1UEBhMCQVUxEzARBgNVBAgMClNvbWUtU3RhdGUxITAfBgNVBAoMGEludGVybmV0" "\n"
+              "IFdpZGdpdHMgUHR5IEx0ZDCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEAunyx" "\n"
+              "1lNsHkMmCa24Ns9xgJAwV3A6/Jg/S5jPCETmjPRMXqAp89fShZxN2b/2FVtU7q/N" "\n"
+              "EtNpPyEhfAhPwYrkHCtip/RmZ/b6qY2Cx6otFIsuwO8aUV27CetpoM8TAQSuufcS" "\n"
+              "jcZD9pCAa9GM/yWeqc45su9qBBmLnAKYuYUeDQUCAwEAATANBgkqhkiG9w0BAQsF" "\n"
+              "AAOBgQAeZo4zCfnq5/6gFzoNDKg8DayoMnCtbxM6RkJ8b/MIZT5p6P7OcKNJmi1o" "\n"
+              "XD2evdxNrY0ObQ32dpiLqSS1JWL8bPqloGJBNkSPi3I+eBoJSE7/7HOroLNbp6nS" "\n"
+              "aaec6n+OlGhhjxn0DzYiYsVBUsokKSEJmHzoLHo3ZestTTqUwg=="             "\n"
+              "-----END CERTIFICATE-----"                                        "\n"
+            , -1), nullptr, nullptr, nullptr
+          )) or !SSL_CTX_use_RSAPrivateKey(ctx,
+            PEM_read_bio_RSAPrivateKey(BIO_new_mem_buf((void*)
+              "-----BEGIN RSA PRIVATE KEY-----"                                  "\n"
+              "MIICXAIBAAKBgQC6fLHWU2weQyYJrbg2z3GAkDBXcDr8mD9LmM8IROaM9ExeoCnz" "\n"
+              "19KFnE3Zv/YVW1Tur80S02k/ISF8CE/BiuQcK2Kn9GZn9vqpjYLHqi0Uiy7A7xpR" "\n"
+              "XbsJ62mgzxMBBK659xKNxkP2kIBr0Yz/JZ6pzjmy72oEGYucApi5hR4NBQIDAQAB" "\n"
+              "AoGBAJi9OrbtOreKjeQNebzCqRcAgeeLz3RFiknzjVYbgK1gBhDWo6XJVe8C9yxq" "\n"
+              "sjYJyQV5zcAmkaQYEaHR+OjvRiZ4UmXbItukOD+dnq7xs69n3w54FfANjkurdL2M" "\n"
+              "fPAQm/GJT4TSBDIr7eJQPOrork9uxQStwADTqvklVlKm2YldAkEA80ZYaLrGOBbz" "\n"
+              "5871ewKxtVJNCCmXdYUwq7nI/lqsLBZnB+wiwnQ+3tgfi4YoUoTnv0hIIwkyLYl9" "\n"
+              "Z2wqensf6wJBAMQ96gUGnIcYJzknB5CYDNQalcvvTx7tLtgRXDf47bQJ3X/Q5k/t" "\n"
+              "yDlByUBqvYVShXWs+d4ynNKLze/w18H8Os8CQBYFDAOOxFpXWYRl6zpTKBqtdGOE" "\n"
+              "wDzW7WzdyB+dvW/QJ0tESHEpbHdnQJO0dPnjJcbemAjz0CLnCv7Nf5rOgjkCQE3Q" "\n"
+              "izIw+/JptmvoOQyx7ixQ2mNCYmpN/Iw63gln0MHaQ5WCPUEmdYWWu3mqmbn7Deaq" "\n"
+              "j233Pc4TF7b0FmnaXWsCQAVvyLVU3a9Yactb5MXaN+rEYjUW37GSo+Q1lXfm0OwF" "\n"
+              "EJB7X66Bavwg4MCfpGykS71OxhTEfDu+y1gylPMCGHY="                     "\n"
+              "-----END RSA PRIVATE KEY-----"                                    "\n"
+            , -1), nullptr, nullptr, nullptr)
+          )) ctx = nullptr;
+        } else {
+          if (access(K.str("ssl-crt").data(), R_OK) == -1)
+            Print::logWar("UI", "Unable to read custom .crt file at " + K.str("ssl-crt"));
+          if (access(K.str("ssl-key").data(), R_OK) == -1)
+            Print::logWar("UI", "Unable to read custom .key file at " + K.str("ssl-key"));
+          if (!SSL_CTX_use_certificate_chain_file(ctx, K.str("ssl-crt").data())
+            or !SSL_CTX_use_RSAPrivateKey_file(ctx, K.str("ssl-key").data(), SSL_FILETYPE_PEM)
+          ) {
+            ctx = nullptr;
+            Print::logWar("UI", "Unable to encrypt web clients, will fallback to plain HTTP");
+          }
+        }
+      }
+      protocol = "HTTP" + string(ctx ? 1 : 0, 'S');
+      return ctx;
     };
 } ui;
 
