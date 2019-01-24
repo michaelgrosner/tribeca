@@ -52,11 +52,16 @@ class UI: public Client { public: UI() { client = this; };
           );
       });
       K.timer_1s_always([&](const unsigned int &tick) {
-        if (delay and *delay and !(tick % *delay)) {
-          for (const auto &it : queue)
-            broadcast(it.first, it.second);
-          queue.clear();
-        }
+        if (!delay or !*delay or (tick % *delay) or queue.empty())
+          return;
+        vector<string> msgs;
+        for (const auto &it : queue)
+          msgs.push_back((char)mPortal::Kiss + ((char)it.first + it.second));
+        queue.clear();
+        K.deferred([this, msgs]() {
+          for (const auto &it : msgs)
+            webui->broadcast(it.data(), it.length(), uWS::OpCode::TEXT);
+        });
       });
       Print::log("UI", "ready at", Text::strL(protocol) + "://" + K.wtfismyip + ":" + K.str("port"));
     };
@@ -85,20 +90,17 @@ class UI: public Client { public: UI() { client = this; };
       };
     };
   private:
-    void broadcast(const mMatter &matter, string msg) {
-      msg = (char)mPortal::Kiss + ((char)matter + msg);
-      K.deferred([this, msg]() {
-        webui->broadcast(msg.data(), msg.length(), uWS::OpCode::TEXT);
-      });
-    };
     function<void(const mToClient&)> send;
-    void wakeup(const Connectivity &state, uWS::WebSocket<uWS::SERVER> *const webSocket) {
-      if ((bool)state) {
+    void wakeup(const Connectivity &connected, uWS::WebSocket<uWS::SERVER> *const webSocket) {
+      if ((bool)connected) {
         if (!connections++)
           send = [&](const mToClient &data) {
-            if (data.realtime() or !delay or !*delay)
-              broadcast(data.about(), data.blob().dump());
-            else queue[data.about()] = data.blob().dump();
+            if (data.realtime() or !delay or !*delay) {
+              const string msg = (char)mPortal::Kiss + ((char)data.about() + data.blob().dump());
+              K.deferred([this, msg]() {
+                webui->broadcast(msg.data(), msg.length(), uWS::OpCode::TEXT);
+              });
+            } else queue[data.about()] = data.blob().dump();
           };
       } else if (!--connections) send = nullptr;
       const string addr = cleanAddress(webSocket->getAddress().address);
@@ -113,9 +115,9 @@ class UI: public Client { public: UI() { client = this; };
       }
     };
     SSL_CTX *sslContext() {
-      SSL_CTX *context = nullptr;
-      if (!K.num("without-ssl") and (context = SSL_CTX_new(SSLv23_server_method()))) {
-        SSL_CTX_set_options(context, SSL_OP_NO_SSLv3);
+      SSL_CTX *ctx = nullptr;
+      if (!K.num("without-ssl") and (ctx = SSL_CTX_new(SSLv23_server_method()))) {
+        SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv3);
         if (K.str("ssl-crt").empty() or K.str("ssl-key").empty()) {
           if (!K.str("ssl-crt").empty())
             Print::logWar("UI", "Ignored --ssl-crt because --ssl-key is missing");
@@ -123,54 +125,56 @@ class UI: public Client { public: UI() { client = this; };
             Print::logWar("UI", "Ignored --ssl-key because --ssl-crt is missing");
           Print::logWar("UI", "Connected web clients will enjoy unsecure SSL encryption..\n"
             "(because the private key is visible in the source!) consider --ssl-crt and --ssl-key arguments");
-          const char *cert = "-----BEGIN CERTIFICATE-----"                                      "\n"
-                             "MIICATCCAWoCCQCiyDyPL5ov3zANBgkqhkiG9w0BAQsFADBFMQswCQYDVQQGEwJB" "\n"
-                             "VTETMBEGA1UECAwKU29tZS1TdGF0ZTEhMB8GA1UECgwYSW50ZXJuZXQgV2lkZ2l0" "\n"
-                             "cyBQdHkgTHRkMB4XDTE2MTIyMjIxMDMyNVoXDTE3MTIyMjIxMDMyNVowRTELMAkG" "\n"
-                             "A1UEBhMCQVUxEzARBgNVBAgMClNvbWUtU3RhdGUxITAfBgNVBAoMGEludGVybmV0" "\n"
-                             "IFdpZGdpdHMgUHR5IEx0ZDCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEAunyx" "\n"
-                             "1lNsHkMmCa24Ns9xgJAwV3A6/Jg/S5jPCETmjPRMXqAp89fShZxN2b/2FVtU7q/N" "\n"
-                             "EtNpPyEhfAhPwYrkHCtip/RmZ/b6qY2Cx6otFIsuwO8aUV27CetpoM8TAQSuufcS" "\n"
-                             "jcZD9pCAa9GM/yWeqc45su9qBBmLnAKYuYUeDQUCAwEAATANBgkqhkiG9w0BAQsF" "\n"
-                             "AAOBgQAeZo4zCfnq5/6gFzoNDKg8DayoMnCtbxM6RkJ8b/MIZT5p6P7OcKNJmi1o" "\n"
-                             "XD2evdxNrY0ObQ32dpiLqSS1JWL8bPqloGJBNkSPi3I+eBoJSE7/7HOroLNbp6nS" "\n"
-                             "aaec6n+OlGhhjxn0DzYiYsVBUsokKSEJmHzoLHo3ZestTTqUwg=="             "\n"
-                             "-----END CERTIFICATE-----"                                        "\n";
-          const char *pkey = "-----BEGIN RSA PRIVATE KEY-----"                                  "\n"
-                             "MIICXAIBAAKBgQC6fLHWU2weQyYJrbg2z3GAkDBXcDr8mD9LmM8IROaM9ExeoCnz" "\n"
-                             "19KFnE3Zv/YVW1Tur80S02k/ISF8CE/BiuQcK2Kn9GZn9vqpjYLHqi0Uiy7A7xpR" "\n"
-                             "XbsJ62mgzxMBBK659xKNxkP2kIBr0Yz/JZ6pzjmy72oEGYucApi5hR4NBQIDAQAB" "\n"
-                             "AoGBAJi9OrbtOreKjeQNebzCqRcAgeeLz3RFiknzjVYbgK1gBhDWo6XJVe8C9yxq" "\n"
-                             "sjYJyQV5zcAmkaQYEaHR+OjvRiZ4UmXbItukOD+dnq7xs69n3w54FfANjkurdL2M" "\n"
-                             "fPAQm/GJT4TSBDIr7eJQPOrork9uxQStwADTqvklVlKm2YldAkEA80ZYaLrGOBbz" "\n"
-                             "5871ewKxtVJNCCmXdYUwq7nI/lqsLBZnB+wiwnQ+3tgfi4YoUoTnv0hIIwkyLYl9" "\n"
-                             "Z2wqensf6wJBAMQ96gUGnIcYJzknB5CYDNQalcvvTx7tLtgRXDf47bQJ3X/Q5k/t" "\n"
-                             "yDlByUBqvYVShXWs+d4ynNKLze/w18H8Os8CQBYFDAOOxFpXWYRl6zpTKBqtdGOE" "\n"
-                             "wDzW7WzdyB+dvW/QJ0tESHEpbHdnQJO0dPnjJcbemAjz0CLnCv7Nf5rOgjkCQE3Q" "\n"
-                             "izIw+/JptmvoOQyx7ixQ2mNCYmpN/Iw63gln0MHaQ5WCPUEmdYWWu3mqmbn7Deaq" "\n"
-                             "j233Pc4TF7b0FmnaXWsCQAVvyLVU3a9Yactb5MXaN+rEYjUW37GSo+Q1lXfm0OwF" "\n"
-                             "EJB7X66Bavwg4MCfpGykS71OxhTEfDu+y1gylPMCGHY="                     "\n"
-                             "-----END RSA PRIVATE KEY-----"                                    "\n";
-          BIO *cbio = BIO_new_mem_buf((void*)cert, -1),
-              *kbio = BIO_new_mem_buf((void*)pkey, -1);
-          if (SSL_CTX_use_certificate(context, PEM_read_bio_X509(cbio, nullptr, nullptr, nullptr)) != 1
-            or SSL_CTX_use_RSAPrivateKey(context, PEM_read_bio_RSAPrivateKey(kbio, nullptr, nullptr, nullptr)) != 1
-          ) context = nullptr;
+          if (!SSL_CTX_use_certificate(ctx,
+            PEM_read_bio_X509(BIO_new_mem_buf((void*)
+              "-----BEGIN CERTIFICATE-----"                                      "\n"
+              "MIICATCCAWoCCQCiyDyPL5ov3zANBgkqhkiG9w0BAQsFADBFMQswCQYDVQQGEwJB" "\n"
+              "VTETMBEGA1UECAwKU29tZS1TdGF0ZTEhMB8GA1UECgwYSW50ZXJuZXQgV2lkZ2l0" "\n"
+              "cyBQdHkgTHRkMB4XDTE2MTIyMjIxMDMyNVoXDTE3MTIyMjIxMDMyNVowRTELMAkG" "\n"
+              "A1UEBhMCQVUxEzARBgNVBAgMClNvbWUtU3RhdGUxITAfBgNVBAoMGEludGVybmV0" "\n"
+              "IFdpZGdpdHMgUHR5IEx0ZDCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEAunyx" "\n"
+              "1lNsHkMmCa24Ns9xgJAwV3A6/Jg/S5jPCETmjPRMXqAp89fShZxN2b/2FVtU7q/N" "\n"
+              "EtNpPyEhfAhPwYrkHCtip/RmZ/b6qY2Cx6otFIsuwO8aUV27CetpoM8TAQSuufcS" "\n"
+              "jcZD9pCAa9GM/yWeqc45su9qBBmLnAKYuYUeDQUCAwEAATANBgkqhkiG9w0BAQsF" "\n"
+              "AAOBgQAeZo4zCfnq5/6gFzoNDKg8DayoMnCtbxM6RkJ8b/MIZT5p6P7OcKNJmi1o" "\n"
+              "XD2evdxNrY0ObQ32dpiLqSS1JWL8bPqloGJBNkSPi3I+eBoJSE7/7HOroLNbp6nS" "\n"
+              "aaec6n+OlGhhjxn0DzYiYsVBUsokKSEJmHzoLHo3ZestTTqUwg=="             "\n"
+              "-----END CERTIFICATE-----"                                        "\n"
+            , -1), nullptr, nullptr, nullptr
+          )) or !SSL_CTX_use_RSAPrivateKey(ctx,
+            PEM_read_bio_RSAPrivateKey(BIO_new_mem_buf((void*)
+              "-----BEGIN RSA PRIVATE KEY-----"                                  "\n"
+              "MIICXAIBAAKBgQC6fLHWU2weQyYJrbg2z3GAkDBXcDr8mD9LmM8IROaM9ExeoCnz" "\n"
+              "19KFnE3Zv/YVW1Tur80S02k/ISF8CE/BiuQcK2Kn9GZn9vqpjYLHqi0Uiy7A7xpR" "\n"
+              "XbsJ62mgzxMBBK659xKNxkP2kIBr0Yz/JZ6pzjmy72oEGYucApi5hR4NBQIDAQAB" "\n"
+              "AoGBAJi9OrbtOreKjeQNebzCqRcAgeeLz3RFiknzjVYbgK1gBhDWo6XJVe8C9yxq" "\n"
+              "sjYJyQV5zcAmkaQYEaHR+OjvRiZ4UmXbItukOD+dnq7xs69n3w54FfANjkurdL2M" "\n"
+              "fPAQm/GJT4TSBDIr7eJQPOrork9uxQStwADTqvklVlKm2YldAkEA80ZYaLrGOBbz" "\n"
+              "5871ewKxtVJNCCmXdYUwq7nI/lqsLBZnB+wiwnQ+3tgfi4YoUoTnv0hIIwkyLYl9" "\n"
+              "Z2wqensf6wJBAMQ96gUGnIcYJzknB5CYDNQalcvvTx7tLtgRXDf47bQJ3X/Q5k/t" "\n"
+              "yDlByUBqvYVShXWs+d4ynNKLze/w18H8Os8CQBYFDAOOxFpXWYRl6zpTKBqtdGOE" "\n"
+              "wDzW7WzdyB+dvW/QJ0tESHEpbHdnQJO0dPnjJcbemAjz0CLnCv7Nf5rOgjkCQE3Q" "\n"
+              "izIw+/JptmvoOQyx7ixQ2mNCYmpN/Iw63gln0MHaQ5WCPUEmdYWWu3mqmbn7Deaq" "\n"
+              "j233Pc4TF7b0FmnaXWsCQAVvyLVU3a9Yactb5MXaN+rEYjUW37GSo+Q1lXfm0OwF" "\n"
+              "EJB7X66Bavwg4MCfpGykS71OxhTEfDu+y1gylPMCGHY="                     "\n"
+              "-----END RSA PRIVATE KEY-----"                                    "\n"
+            , -1), nullptr, nullptr, nullptr)
+          )) ctx = nullptr;
         } else {
           if (access(K.str("ssl-crt").data(), R_OK) == -1)
             Print::logWar("UI", "Unable to read custom .crt file at " + K.str("ssl-crt"));
           if (access(K.str("ssl-key").data(), R_OK) == -1)
             Print::logWar("UI", "Unable to read custom .key file at " + K.str("ssl-key"));
-          if (SSL_CTX_use_certificate_chain_file(context, K.str("ssl-crt").data()) != 1
-            or SSL_CTX_use_RSAPrivateKey_file(context, K.str("ssl-key").data(), SSL_FILETYPE_PEM) != 1
+          if (!SSL_CTX_use_certificate_chain_file(ctx, K.str("ssl-crt").data())
+            or !SSL_CTX_use_RSAPrivateKey_file(ctx, K.str("ssl-key").data(), SSL_FILETYPE_PEM)
           ) {
-            context = nullptr;
+            ctx = nullptr;
             Print::logWar("UI", "Unable to encrypt web clients, will fallback to plain HTTP");
           }
         }
       }
-      protocol += string(context ? 1 : 0, 'S');
-      return context;
+      protocol = "HTTP" + string(ctx ? 1 : 0, 'S');
+      return ctx;
     };
     string onHttpRequest(const string &path, const string &auth, const string &addr) {
       string document,

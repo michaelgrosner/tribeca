@@ -202,7 +202,7 @@ If a database file does not exist, the application will create it on boot; other
 
 To explore each database file you can use https://github.com/sqlitebrowser/sqlitebrowser or a similar tool.
 
-To set a different database filename or to set an [in-memory database](https://sqlite.org/inmemorydb.html), use `--database=PATH` argument (see `--help`).
+To set a different database filename or to set an [in-memory database](https://sqlite.org/inmemorydb.html), use `--database=FILE` argument (see `--help`).
 
 Even if using an in-memory database, the quoting parameters are always loaded from and saved into the disk file database.
 
