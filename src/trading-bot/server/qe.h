@@ -17,8 +17,9 @@ class QE: public Engine { public: QE() { engine = this; };
         broker.calculon.dummyMM.mode("loaded");
       } {
         broker.semaphore.agree(K.num("autobot"));
-        K.timer_1s_online([&](const unsigned int &tick) {
-          timer_1s(tick);
+        K.timer_1s([&](const unsigned int &tick) {
+          if (!gw->countdown) timer_1s(tick);
+          return false;
         });
       }
     };

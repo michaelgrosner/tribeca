@@ -2,7 +2,7 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
 PATCH    = 12
-BUILD    = 3
+BUILD    = 4
 SOURCE   = hello-world \
            trading-bot
 CARCH    = x86_64-linux-gnu      \
@@ -160,8 +160,6 @@ upgrade_old_installations:
 	-@$(foreach db,$(wildcard /var/lib/K/db/K.*), mv $(db) $(shell echo $(db) | sed 's/\(.*\/K\/db\/\)K\.\(.*\)/\1K-trading-bot\.\2/');)
 	-@test -d /data/db && sudo rmdir /data/db || :
 	-@test -d /data && sudo rmdir /data || :
-	-@test -d app && rm -rf app || :
-	-@$(foreach conf,$(wildcard *.sh), test -n "`cat $(conf) | grep "app/server"`" && (sed -i 's/\.\/app\/server\/K/K-trading-bot/' $(conf) && sed -i 's/app\/server\/K/K-trading-bot/' $(conf)) || :;)
 
 cleandb: /var/lib/K/db/K*
 	rm -rf /var/lib/K/db/K*.db

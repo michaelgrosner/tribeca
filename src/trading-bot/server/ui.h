@@ -22,9 +22,9 @@ class UI: public Client { public: UI() { client = this; };
         error("UI", "Unable to listen to UI port number " + K.str("port")
            + " (may be already in use by another program)"
          );
-      K.timer_1s_always([&](const unsigned int &tick) {
+      K.timer_1s([&](const unsigned int &tick) {
         if (!delay or !*delay or (tick % *delay) or queue.empty())
-          return;
+          return false;
         vector<string> msgs;
         for (const auto &it : queue)
           msgs.push_back((char)mPortal::Kiss + ((char)it.first + it.second));
@@ -33,6 +33,7 @@ class UI: public Client { public: UI() { client = this; };
           for (const auto &it : msgs)
             webui->broadcast(it.data(), it.length(), uWS::OpCode::TEXT);
         });
+        return false;
       });
       Print::log("UI", "ready at", Text::strL(protocol) + "://" + K.wtfismyip + ":" + K.str("port"));
     };

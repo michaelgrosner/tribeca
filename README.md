@@ -252,7 +252,9 @@ ws sandbox: [websocket.org](https://www.websocket.org/echo.html)
 
 <details><summary><a id="unreleased-changelog"><b>Unreleased v0.4.x Changelog</b></a></summary>
 
-Added OOP everywhere.
+Added main KryptoNinja class derived from all other classes and ready to be extended.
+
+Added C++ OOP everywhere.
 
 Added test units.
 
@@ -262,11 +264,9 @@ Added Ethfinex and FCoin API.
 
 Added build-in document root to stop reading files from disk.
 
-Added --test-chamber=NUMBER argument to easy deploy multiple release candidate versions.
-
 Added build chain for win32.
 
-Updated OKEx websocket to binary data.
+~~Updated OKEx websocket to binary data.~~
 
 Added build chain for OSX v10.13.
 </details>

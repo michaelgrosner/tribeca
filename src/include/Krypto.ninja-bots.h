@@ -706,12 +706,9 @@ namespace ₿ {
         return ui_server;
       };
     protected:
-      function<const bool()> connect() {
+      void connect() {
         gw->socket = socket = new uWS::Hub(0, true);
-        gw->api = connection();
-        return []() {
-          return gw->waitForData();
-        };
+        gw->api    = connection();
       };
     private:
       uWS::Group<uWS::CLIENT> *connection() {
@@ -731,29 +728,26 @@ namespace ₿ {
       uS::Async *loop   = nullptr;
       unsigned int tick  = 0,
                    ticks = 300;
-      vector<function<void(const unsigned int&)>> onlineFn,
-                                                  alwaysFn;
-      vector<function<void()>> slowFn;
+      vector<function<const bool(const unsigned int&)>> timeFn;
       vector<function<const bool()>> waitFn;
+      vector<function<void()>> slowFn;
     public:
       void timer_ticks_factor(const unsigned int &factor) {
         ticks = 300 * (factor ?: 1);
       };
-      void timer_1s_online(const function<void(const unsigned int&)> &fn) {
-        onlineFn.push_back(fn);
+      void timer_1s(const function<const bool(const unsigned int&)> &fn) {
+        timeFn.push_back(fn);
       };
-      void timer_1s_always(const function<void(const unsigned int&)> &fn) {
-        alwaysFn.push_back(fn);
+      void wait_for(const function<const bool()> &fn) {
+        waitFn.push_back(fn);
       };
       void deferred(const function<void()> &fn) {
         slowFn.push_back(fn);
         loop->send();
       };
-      void wait_for(const function<const bool()> &fn) {
-        waitFn.push_back(fn);
-      };
     protected:
       void start() {
+        connect();
         timer = new uS::Timer(socket->getLoop());
         timer->setData(this);
         timer->start([](uS::Timer *timer) {
@@ -774,29 +768,22 @@ namespace ₿ {
         };
       };
     private:
-      const bool deferred() {
+      void deferred() {
         for (const auto &it : slowFn) it();
         slowFn.clear();
         bool waiting = false;
         for (const auto &it : waitFn) waiting |= it();
-        return waiting;
+        if (waiting) loop->send();
       };
       void (*walk)(uS::Async *const) = [](uS::Async *const loop) {
-        if (((Events*)loop->getData())->deferred())
-          loop->send();
+        ((Events*)loop->getData())->deferred();
       };
       void timer_1s() {
-        if (!gw->countdown)
-          for (const auto &it : onlineFn) it(tick);
-        else if (!--gw->countdown) {      gw->connect();
-          tick = 0;
-          return;
-        }
-        if (                              gw->askForData(tick)
-        ) loop->send();
-        for (const auto &it : alwaysFn)   it(tick);
-        if (++tick >= ticks)
-          tick = 0;
+        if (gw->countdown and !--gw->countdown) gw->connect();
+        bool waiting = false;
+        for (const auto &it : timeFn) waiting |= it(tick);
+        if (waiting) loop->send();
+        if (++tick >= ticks) tick = 0;
       };
   };
 
@@ -989,8 +976,13 @@ namespace ₿ {
               + " (consider to repeat a few times this check)");
           }
         } {
-          wait_for(connect());
           start();
+          wait_for([]() {
+            return gw->waitForData();
+          });
+          timer_1s([](const unsigned int &tick) {
+            return gw->countdown ? false : gw->askForData(tick);
+          });
           ending(stop(num("dustybot")));
         } {
           if (databases)
