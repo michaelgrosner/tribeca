@@ -1,5 +1,5 @@
 ERR        = *** Unexpected MAKELEVEL = 0.
-HINT       = This Makefile can't be used directly, consider cd ../.. before try again
+HINT       = This Makefile can't be used directly, consider cd ../../.. before try again
 $(if $(subst 0,,${MAKELEVEL}),,$(warning $(ERR));$(error $(HINT)))
 ERR        = *** Unexpected MAKE_VERSION < 4.
 HINT       = This Makefile can't be used with your make version, consider to upgrade before try again

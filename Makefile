@@ -2,9 +2,8 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
 PATCH    = 12
-BUILD    = 5
-SOURCE   = hello-world \
-           trading-bot
+BUILD    = 6
+SOURCE  := $(notdir $(wildcard src/bin/*))
 CARCH    = x86_64-linux-gnu      \
            arm-linux-gnueabihf   \
            aarch64-linux-gnu     \
@@ -19,13 +18,12 @@ ERR      = *** K require g++ v7 or greater, but it was not found.
 HINT    := consider a symlink at /usr/bin/$(CHOST)-g++ pointing to your g++-7 or g++-8 executable
 
 STEP     = $(shell tput setaf 2;tput setab 0)Building $(1)..$(shell tput sgr0)
-KARGS   := -pthread -std=c++17 -O3                        \
+KARGS   := -pthread -std=c++17 -O3 -I$(realpath src/lib)  \
   -DK_BUILD='"$(shell echo $(CHOST) | cut -d- -f-2)"'     \
   -DK_SOURCE='"K-$(KSRC)"' -DK_0_GIT='"$(shell            \
   cat .git/refs/heads/master 2>/dev/null || echo HEAD)"'  \
   -DK_STAMP='"$(shell date "+%Y-%m-%d %H:%M:%S")"'        \
   -DK_0_DAY='"v$(MAJOR).$(MINOR).$(PATCH)+$(BUILD)"'      \
-  -I$(realpath $(KLOCAL)/../../src/include)               \
   -I$(KLOCAL)/include         $(KLOCAL)/include/uWS/*.cpp \
   $(KLOCAL)/lib/K-$(shell echo $(CHOST) | cut -d- -f-2).a \
   $(KLOCAL)/lib/libquickfix.a $(KLOCAL)/lib/libsqlite3.a  \
@@ -87,16 +85,16 @@ ifdef KALL
 	unset KALL $(foreach chost,$(CARCH),&& $(MAKE) $@ CHOST=$(chost))
 else
 	$(if $(subst 8,,$(subst 7,,$(shell $(CHOST)-g++ -dumpversion | cut -d. -f1))),$(warning $(ERR));$(error $(HINT)))
-	@$(MAKE) -C src/include $@ CHOST=$(CHOST)
+	@$(MAKE) -C src/lib $@ CHOST=$(CHOST)
 endif
 
 $(SOURCE):
 	$(info $(call STEP,$@))
-	$(MAKE) $(shell ! test -f src/$@/Makefile || echo assets) src KSRC=$@
+	$(MAKE) $(shell ! test -f src/bin/$@/Makefile || echo assets) src KSRC=$@
 
-assets: src/$(KSRC)/Makefile
+assets: src/bin/$(KSRC)/Makefile
 	$(info $(call STEP,$(KSRC) $@))
-	$(MAKE) -C src/$(KSRC) KASSETS=$(abspath $(KLOCAL)/assets)
+	$(MAKE) -C src/bin/$(KSRC) KASSETS=$(abspath $(KLOCAL)/assets)
 	$(foreach chost,$(subst $(CHOST),,$(CARCH)) $(CHOST), \
 	  assets=build-$(shell echo $(chost) | cut -d- -f-2)/local/assets  \
 	  && ! test -d $(abspath $${assets}/../..) || ((test -d $${assets} \
@@ -104,11 +102,11 @@ assets: src/$(KSRC)/Makefile
 	  && $(MAKE) assets.o CHOST=$(chost) && rm -rf $${assets})         \
 	;)
 
-assets.o: src/$(KSRC)/$(KSRC).S
-	$(CHOST)-g++ -Wa,-I,$(KLOCAL)/assets,-I,src/$(KSRC) -c $^ \
+assets.o: src/bin/$(KSRC)/$(KSRC).S
+	$(CHOST)-g++ -Wa,-I,$(KLOCAL)/assets,-I,src/bin/$(KSRC) -c $^ \
 	  -o $(KLOCAL)/lib/K-$(notdir $(basename $^))-$@
 
-src: src/$(KSRC)/$(KSRC).cxx
+src: src/bin/$(KSRC)/$(KSRC).cxx
 ifdef KALL
 	unset KALL $(foreach chost,$(CARCH),&& $(MAKE) $@ CHOST=$(chost))
 else
@@ -123,7 +121,7 @@ else
 	@$(MAKE) system_install -s
 endif
 
-Linux: src/$(KSRC)/$(KSRC).cxx
+Linux: src/bin/$(KSRC)/$(KSRC).cxx
 ifdef KUNITS
 	@unset KUNITS && $(MAKE) KTEST="--coverage test/unit_testing_framework.cxx" $@
 else ifndef KTEST
@@ -135,7 +133,7 @@ else
 	  $^ $(KARGS) -ldl
 endif
 
-Darwin: src/$(KSRC)/$(KSRC).cxx
+Darwin: src/bin/$(KSRC)/$(KSRC).cxx
 	-@egrep \\u20BF src -lR --exclude-dir=node_modules | xargs sed -i 's/\\\(u20BF\)/\1/g'
 	$(CHOST)-g++ -DNDEBUG -o $(KLOCAL)/bin/K-$(KSRC)                             \
 	  -DUSE_LIBUV                                                                \
@@ -143,7 +141,7 @@ Darwin: src/$(KSRC)/$(KSRC).cxx
 	  $^ $(KARGS) -ldl
 	-@egrep u20BF src -lR --exclude-dir=node_modules | xargs sed -i 's/\(u20BF\)/\\\1/g'
 
-Win32: src/$(KSRC)/$(KSRC).cxx
+Win32: src/bin/$(KSRC)/$(KSRC).cxx
 	$(CHOST)-g++-posix -DNDEBUG -o $(KLOCAL)/bin/K-$(KSRC).exe   \
 	  -DUSE_LIBUV -D_POSIX -DCURL_STATICLIB                      \
 	  $^ $(KARGS)                                                \
@@ -252,7 +250,7 @@ ifndef KSRC
 else
 	@cp test/static_code_analysis.cxx test/static_code_analysis-$(KSRC).cxx
 	@sed -i "s/%/$(KSRC)/g" test/static_code_analysis-$(KSRC).cxx
-	@pvs-studio-analyzer analyze -e test/units.h -e $(KLOCAL)/include --source-file test/static_code_analysis-$(KSRC).cxx --cl-params -I. -Isrc/include -I$(KLOCAL)/include test/static_code_analysis-$(KSRC).cxx && \
+	@pvs-studio-analyzer analyze -e test/units.h -e $(KLOCAL)/include --source-file test/static_code_analysis-$(KSRC).cxx --cl-params -I. -Isrc/lib -I$(KLOCAL)/include test/static_code_analysis-$(KSRC).cxx && \
 	  (plog-converter -a GA:1,2 -t tasklist -o report.tasks PVS-Studio.log && cat report.tasks && rm report.tasks) || :
 	@clang-tidy -quiet -header-filter=$(realpath src) -checks='modernize-*' test/static_code_analysis-$(KSRC).cxx -- $(KARGS)
 	@rm -f PVS-Studio.log test/static_code_analysis-$(KSRC).cxx > /dev/null 2>&1
@@ -266,9 +264,9 @@ endif
 #	@test -n "`identify -verbose etc/${PNG}.png | grep 'K\.conf'`" && echo Configuration injected into etc/${PNG}.png OK, feel free to remove etc/${PNG}.json anytime. || echo nope, injection failed.
 
 checkOK:
-	@date=`date` && git diff && git status && read -p "KMOD: " KMOD     \
-	&& git add . && git commit -S -m "$${KMOD}"                         \
-	&& ((KALL=1 $(MAKE) K doc release && git push) || git reset HEAD^1) \
+	@date=`date` && (git diff || :) && git status && read -p "KMOD: " KMOD \
+	&& git add . && git commit -S -m "$${KMOD}"                            \
+	&& ((KALL=1 $(MAKE) K doc release && git push) || git reset HEAD^1)    \
 	&& echo $${date} && date
 
 MAJOR:
@@ -300,7 +298,7 @@ else ifndef KTARGZ
 	@$(MAKE) KTARGZ="K-$(MAJOR).$(MINOR).$(PATCH).$(BUILD)-$(shell echo $(CHOST) | cut -d- -f-2).tar.gz" $@
 else
 	@tar -cvzf $(KTARGZ) $(KLOCAL)/bin/K-* $(KLOCAL)/lib/K-* LICENSE COPYING README.md Makefile doc/[^html]* etc test             \
-	$(shell test -n "`echo $(CHOST) | grep mingw32`" && echo $(KLOCAL)/bin/*dll || :) --exclude src/*/node_modules src            \
+	$(shell test -n "`echo $(CHOST) | grep mingw32`" && echo $(KLOCAL)/bin/*dll || :) --exclude src/bin/*/node_modules src            \
 	&& curl -s -n -H "Content-Type:application/octet-stream" -H "Authorization: token ${KRELEASE}"                                \
 	--data-binary "@$(PWD)/$(KTARGZ)" "https://uploads.github.com/repos/ctubio/Krypto-trading-bot/releases/$(shell curl -s        \
 	https://api.github.com/repos/ctubio/Krypto-trading-bot/releases/latest | grep id | head -n1 | cut -d ' ' -f4 | cut -d ',' -f1 \
@@ -308,7 +306,7 @@ else
 endif
 
 md5: src
-	find src -type f -exec md5sum "{}" + > src.md5
+	find src/lib -type f -exec md5sum "{}" + > src/lib.md5
 
 asandwich:
 	@test `whoami` = 'root' && echo OK || echo make it yourself!

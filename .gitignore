@@ -2,7 +2,7 @@
 /app
 /doc/html*
 /build*
-/src/*/node_modules
+/src/bin/*/node_modules
 /Vagrantfile
 /*.gcno
 /*.gcda
