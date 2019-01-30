@@ -21,7 +21,7 @@ npm: package.json
 	$(info $(STEP_1))
 	@cd $(abspath $(NODE_PATH)/..) && $@ install
 ifndef TRAVIS_DEPLOY
-	@rm $(abspath $(NODE_PATH)/..)/$(basename $^)*
+	rm $(abspath $(NODE_PATH)/..)/$(basename $^)*
 endif
 
 client: npm client/main.ts
@@ -90,6 +90,6 @@ export define PACKAGE_JSON
 endef
 
 package.json:
-	@echo "$$PACKAGE_JSON" > $(abspath $(NODE_PATH)/..)/$@
+	@echo "$$PACKAGE_JSON" > $(abspath $(NODE_PATH)/../$@)
 
 .PHONY: all $(KSRC) client css js npm package.json

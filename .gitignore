@@ -1,5 +1,4 @@
 /*.sh
-/app
 /doc/html*
 /build*
 /Vagrantfile
