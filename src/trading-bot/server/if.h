@@ -98,7 +98,7 @@ code( '\e' , broker.semaphore.toggle )
 #define CLIENT_WELCOME_LIST(code) \
 code( qp                       )  \
 code( monitor                  )  \
-code( monitor.product          )  \
+code( product                  )  \
 code( orders                   )  \
 code( wallet.target            )  \
 code( wallet.safety            )  \
@@ -130,6 +130,7 @@ code( btn.cleanTradesClosed , wallet.safety.trades.clearClosed ,           )
   public:
            mButtons btn;
            mMonitor monitor;
+           mProduct product;
             mOrders orders;
      mQuotingParams qp;
       mMarketLevels levels;
@@ -137,10 +138,11 @@ code( btn.cleanTradesClosed , wallet.safety.trades.clearClosed ,           )
             mBroker broker;
     Engine()
       : monitor(K)
-      , orders(monitor.product)
-      , levels(monitor.product, orders, qp)
-      , wallet(monitor.product, orders, qp, levels.stats.ewma.targetPositionAutoPercentage, levels.fairValue)
-      , broker(monitor.product, orders, qp, levels, wallet)
+      , product(K)
+      , orders(K)
+      , levels(K, orders, qp)
+      , wallet(K, orders, qp, levels.stats.ewma.targetPositionAutoPercentage, levels.fairValue)
+      , broker(K, orders, qp, levels, wallet)
     {};
     void savedQuotingParameters() {
       K.timer_ticks_factor(qp.delayUI);
@@ -158,7 +160,7 @@ code( btn.cleanTradesClosed , wallet.safety.trades.clearClosed ,           )
     };
     void quote2orders(mQuote &quote) {
       const vector<mOrder*> abandoned = broker.abandon(quote);
-      const unsigned int replace = gw->askForReplace and !(
+      const unsigned int replace = K.gateway->askForReplace and !(
         quote.empty() or abandoned.empty()
       );
       for_each(
@@ -176,7 +178,7 @@ code( btn.cleanTradesClosed , wallet.safety.trades.clearClosed ,           )
         quote.size,
         Tstamp,
         quote.isPong,
-        gw->randId()
+        K.gateway->randId()
       });
       monitor.tick_orders();
     };
@@ -185,7 +187,7 @@ code( btn.cleanTradesClosed , wallet.safety.trades.clearClosed ,           )
         cancelOrder(it);
     };
     void manualSendOrder(mOrder raw) {
-      raw.orderId = gw->randId();
+      raw.orderId = K.gateway->randId();
       placeOrder(raw);
     };
     void manualCancelOrder(const RandId &orderId) {
@@ -204,15 +206,15 @@ code( btn.cleanTradesClosed , wallet.safety.trades.clearClosed ,           )
     };
   private:
     void placeOrder(const mOrder &raw) {
-      gw->place(orders.upsert(raw));
+      K.gateway->place(orders.upsert(raw));
     };
     void replaceOrder(const Price &price, const bool &isPong, mOrder *const order) {
       if (orders.replace(price, isPong, order))
-        gw->replace(order);
+        K.gateway->replace(order);
     };
     void cancelOrder(mOrder *const order) {
       if (orders.cancel(order))
-        gw->cancel(order);
+        K.gateway->cancel(order);
     };
 } *engine = nullptr;
 

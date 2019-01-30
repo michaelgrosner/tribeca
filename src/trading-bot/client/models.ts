@@ -247,7 +247,7 @@ export interface QuotingParameters {
 }
 
 export class ProductAdvertisement {
-    constructor(public exchange: string, public base: string, public quote: string, public environment: string, public matryoshka: string, public homepage: string, public minTick: number) { }
+    constructor(public exchange: string, public base: string, public quote: string, public environment: string, public matryoshka: string, public minTick: number) { }
 }
 
 export class ApplicationState {

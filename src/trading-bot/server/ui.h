@@ -35,6 +35,9 @@ class UI: public Client { public: UI() { client = this; };
         });
         return false;
       });
+      K.ending([&]() {
+        webui->close();
+      });
       Print::log("UI", "ready at", Text::strL(protocol) + "://" + K.wtfismyip + ":" + K.str("port"));
     };
   public:

@@ -383,58 +383,6 @@ namespace ₿ {
     k.from_json(j);
   };
 
-  struct mProduct: public mJsonToClient<mProduct> {
-    const Price  *minTick = nullptr;
-    const Amount *minSize = nullptr;
-    private_ref:
-      const Option &option;
-    public:
-      mProduct(const Option &o)
-        : option(o)
-      {};
-      const string title() const {
-        return option.str("title");
-      };
-      const string matryoshka() const {
-        return option.str("matryoshka");
-      };
-      const unsigned int lifetime() const {
-        return option.num("lifetime");
-      };
-      const unsigned int debug(const string &k) const {
-        return
-#ifndef NDEBUG
-        0
-#else
-        option.num("debug-" + k)
-#endif
-        ;
-      };
-      const double maxWallet() const {
-        return
-#ifndef NDEBUG
-        0
-#else
-        option.dec("wallet-limit")
-#endif
-        ;
-      };
-      const mMatter about() const override {
-        return mMatter::ProductAdvertisement;
-      };
-  };
-  static void to_json(json &j, const mProduct &k) {
-    j = {
-      {   "exchange", gw->exchange                                  },
-      {       "base", gw->base                                      },
-      {      "quote", gw->quote                                     },
-      {    "minTick", *k.minTick                                    },
-      {"environment", k.title()                                     },
-      { "matryoshka", k.matryoshka()                                },
-      {   "homepage", "https://github.com/ctubio/Krypto-trading-bot"}
-    };
-  };
-
   struct mLastOrder {
     Price  price;
     Amount tradeQuantity;
@@ -446,11 +394,11 @@ namespace ₿ {
     private:
       unordered_map<RandId, mOrder> orders;
     private_ref:
-      const mProduct &product;
+      const KryptoNinja &bot;
     public:
-      mOrders(const mProduct &p)
+      mOrders(const KryptoNinja &k)
         : updated()
-        , product(p)
+        , bot(k)
       {};
       mOrder *const find(const RandId &orderId) {
         return (orderId.empty()
@@ -527,7 +475,7 @@ namespace ₿ {
       mOrder *const upsert(const mOrder &raw) {
         mOrder *const order = findsert(raw);
         mOrder::update(raw, order);
-        if (debug()) {
+        if (bot.num("debug-orders")) {
           report(order, " saved ");
           report_size();
         }
@@ -535,21 +483,21 @@ namespace ₿ {
       };
       const bool replace(const Price &price, const bool &isPong, mOrder *const order) {
         const bool allowed = mOrder::replace(price, isPong, order);
-        if (debug()) report(order, "replace");
+        if (bot.num("debug-orders")) report(order, "replace");
         return allowed;
       };
       const bool cancel(mOrder *const order) {
         const bool allowed = mOrder::cancel(order);
-        if (debug()) report(order, "cancel ");
+        if (bot.num("debug-orders")) report(order, "cancel ");
         return allowed;
       };
       void purge(const mOrder *const order) {
-        if (debug()) report(order, " purge ");
+        if (bot.num("debug-orders")) report(order, " purge ");
         orders.erase(order->orderId);
-        if (debug()) report_size();
+        if (bot.num("debug-orders")) report_size();
       };
       void read_from_gw(const mOrder &raw) {
-        if (debug()) report(&raw, " reply ");
+        if (bot.num("debug-orders")) report(&raw, " reply ");
         mOrder *const order = upsert(raw);
         if (!order) {
           updated = {};
@@ -581,22 +529,18 @@ namespace ₿ {
           order
             ? order->orderId + "::" + order->exchangeId
               + " [" + to_string((int)order->status) + "]: "
-              + gw->str(order->quantity) + " " + gw->base + " at price "
-              + gw->str(order->price) + " " + gw->quote
+              + bot.gateway->str(order->quantity) + " " + bot.gateway->base + " at price "
+              + bot.gateway->str(order->price) + " " + bot.gateway->quote
             : "not found"
         ));
       };
       void report_size() const {
         Print::log("DEBUG OG", "memory " + to_string(orders.size()));
       };
-      const bool debug() const {
-        return product.debug("orders");
-      };
   };
   static void to_json(json &j, const mOrders &k) {
     j = k.blob();
   };
-
 
   struct mMarketTakers: public mJsonToClient<mTrade> {
     vector<mTrade> trades;
@@ -658,7 +602,6 @@ namespace ₿ {
       {"price", k.currentPrice()}
     };
   };
-
 
   struct mStdev {
     Price fv,
@@ -1012,14 +955,14 @@ namespace ₿ {
       unordered_map<Price, Amount> filterBidOrders,
                                    filterAskOrders;
     private_ref:
-      const mProduct       &product;
+      const KryptoNinja    &bot;
       const mOrders        &orders;
       const mQuotingParams &qp;
     public:
-      mMarketLevels(const mProduct &p, const mOrders &o, const mQuotingParams &q)
+      mMarketLevels(const KryptoNinja &k, const mOrders &o, const mQuotingParams &q)
         : diff(unfiltered, q)
         , stats(fairValue, q)
-        , product(p)
+        , bot(k)
         , orders(o)
         , qp(q)
       {};
@@ -1105,18 +1048,18 @@ namespace ₿ {
              + bids.cbegin()->size
         );
         if (fairValue)
-          fairValue = gw->dec(fairValue, abs(log10(*product.minTick)));
+          fairValue = bot.gateway->dec(fairValue, abs(log10(bot.gateway->minTick)));
       };
       const vector<mLevel> filter(vector<mLevel> levels, unordered_map<Price, Amount> *const filterOrders) {
         if (!filterOrders->empty())
           for (auto it = levels.begin(); it != levels.end();) {
             for (auto it_ = filterOrders->begin(); it_ != filterOrders->end();)
-              if (abs(it->price - it_->first) < *product.minTick) {
+              if (abs(it->price - it_->first) < bot.gateway->minTick) {
                 it->size -= it_->second;
                 filterOrders->erase(it_);
                 break;
               } else ++it_;
-            if (it->size < *product.minSize) it = levels.erase(it);
+            if (it->size < bot.gateway->minSize) it = levels.erase(it);
             else ++it;
             if (filterOrders->empty()) break;
           }
@@ -1143,10 +1086,12 @@ namespace ₿ {
   };
   struct mProfits: public mVectorFromDb<mProfit> {
     private_ref:
+      const KryptoNinja    &bot;
       const mQuotingParams &qp;
     public:
-      mProfits(const mQuotingParams &q)
-        : qp(q)
+      mProfits(const KryptoNinja &k, const mQuotingParams &q)
+        : bot(k)
+        , qp(q)
       {};
       const bool ratelimit() const {
         return !empty() and crbegin()->time + 21e+3 > Tstamp;
@@ -1164,7 +1109,7 @@ namespace ₿ {
         );
       };
       const double calcDiffPercent(Amount older, Amount newer) const {
-        return gw->dec(((newer - older) / newer) * 1e+2, 2);
+        return bot.gateway->dec(((newer - older) / newer) * 1e+2, 2);
       };
       const mMatter about() const override {
         return mMatter::Profit;
@@ -1236,10 +1181,12 @@ namespace ₿ {
   struct mTradesHistory: public mVectorFromDb<mOrderFilled>,
                          public mJsonToClient<mOrderFilled> {
     private_ref:
+      const KryptoNinja    &bot;
       const mQuotingParams &qp;
     public:
-      mTradesHistory(const mQuotingParams &q)
-        : qp(q)
+      mTradesHistory(const KryptoNinja &k, const mQuotingParams &q)
+        : bot(k)
+        , qp(q)
       {};
     void clearAll() {
       clear_if([](iterator it) {
@@ -1281,11 +1228,11 @@ namespace ₿ {
         order.isPong,
         false
       };
-      Print::log("GW " + gw->exchange, string(filled.isPong?"PONG":"PING") + " TRADE "
+      Print::log("GW " + bot.gateway->exchange, string(filled.isPong?"PONG":"PING") + " TRADE "
         + (filled.side == Side::Bid ? "BUY  " : "SELL ")
-        + gw->str(filled.quantity) + ' ' + gw->base + " at price "
-        + gw->str(filled.price) + ' ' + gw->quote + " (value "
-        + gw->str(filled.value) + ' ' + gw->quote + ")"
+        + bot.gateway->str(filled.quantity) + ' ' + bot.gateway->base + " at price "
+        + bot.gateway->str(filled.price) + ' ' + bot.gateway->quote + " (value "
+        + bot.gateway->str(filled.value) + ' ' + bot.gateway->quote + ")"
       );
       if (qp.safety == mQuotingSafety::Off or qp.safety == mQuotingSafety::PingPong or qp.safety == mQuotingSafety::PingPoing)
         send_push_back(filled);
@@ -1484,18 +1431,18 @@ namespace ₿ {
                      sellPing = 0;
               Amount buySize  = 0,
                      sellSize = 0;
-       mRecentTrades recentTrades;
       mTradesHistory trades;
+       mRecentTrades recentTrades;
     private_ref:
       const mQuotingParams &qp;
-      const Price  &fairValue;
-      const Amount &baseValue,
-                   &baseTotal,
-                   &targetBasePosition;
+      const Price          &fairValue;
+      const Amount         &baseValue,
+                           &baseTotal,
+                           &targetBasePosition;
     public:
-      mSafety(const mQuotingParams &q, const Price &f, const Amount &v, const Amount &t, const Amount &p)
-        : recentTrades(q)
-        , trades(q)
+      mSafety(const KryptoNinja &k, const mQuotingParams &q, const Price &f, const Amount &v, const Amount &t, const Amount &p)
+        : trades(k, q)
+        , recentTrades(q)
         , qp(q)
         , fairValue(f)
         , baseValue(v)
@@ -1635,20 +1582,20 @@ namespace ₿ {
     Amount targetBasePosition = 0,
            positionDivergence = 0;
     private_ref:
+      const KryptoNinja    &bot;
       const mQuotingParams &qp;
       const double         &targetPositionAutoPercentage;
-      const mProduct       &product;
       const Amount         &baseValue;
     public:
-      mTarget(const mQuotingParams &q, const double &t, const mProduct &p, const Amount &v)
-        : qp(q)
+      mTarget(const KryptoNinja &k, const mQuotingParams &q, const double &t, const Amount &v)
+        : bot(k)
+        , qp(q)
         , targetPositionAutoPercentage(t)
-        , product(p)
         , baseValue(v)
       {};
       void calcTargetBasePos() {
         if (warn_empty()) return;
-        targetBasePosition = gw->dec(qp.autoPositionMode == mAutoPositionMode::Manual
+        targetBasePosition = bot.gateway->dec(qp.autoPositionMode == mAutoPositionMode::Manual
           ? (qp.percentageValues
             ? qp.targetBasePositionPercentage * baseValue / 1e+2
             : qp.targetBasePosition)
@@ -1657,7 +1604,7 @@ namespace ₿ {
         calcPDiv();
         if (send()) {
           push();
-          if (debug()) report();
+          if (bot.num("debug-wallet")) report();
         }
       };
       const bool warn_empty() const {
@@ -1682,7 +1629,7 @@ namespace ₿ {
         return to_string(targetBasePosition);
       };
       string explainOK() const override {
-        return "loaded TBP = % " + gw->base;
+        return "loaded TBP = % " + bot.gateway->base;
       };
     private:
       void calcPDiv() {
@@ -1701,17 +1648,14 @@ namespace ₿ {
           else if (mPDivMode::SQRT == qp.positionDivergenceMode)   positionDivergence = pDivMin + (sqrt(divCenter) * (pDiv - pDivMin));
           else if (mPDivMode::Switch == qp.positionDivergenceMode) positionDivergence = divCenter < 1e-1 ? pDivMin : pDiv;
         }
-        positionDivergence = gw->dec(positionDivergence, 4);
+        positionDivergence = bot.gateway->dec(positionDivergence, 4);
       };
       void report() const {
         Print::log("PG", "TBP: "
-          + to_string((int)(targetBasePosition / baseValue * 1e+2)) + "% = " + gw->str(targetBasePosition)
-          + " " + gw->base + ", pDiv: "
-          + to_string((int)(positionDivergence / baseValue * 1e+2)) + "% = " + gw->str(positionDivergence)
-          + " " + gw->base);
-      };
-      const bool debug() const {
-        return product.debug("wallet");
+          + to_string((int)(targetBasePosition / baseValue * 1e+2)) + "% = " + bot.gateway->str(targetBasePosition)
+          + " " + bot.gateway->base + ", pDiv: "
+          + to_string((int)(positionDivergence / baseValue * 1e+2)) + "% = " + bot.gateway->str(positionDivergence)
+          + " " + bot.gateway->base);
       };
   };
   static void to_json(json &j, const mTarget &k) {
@@ -1731,15 +1675,15 @@ namespace ₿ {
      mSafety safety;
     mProfits profits;
     private_ref:
-      const mProduct &product;
-      const mOrders  &orders;
-      const Price    &fairValue;
+      const KryptoNinja &bot;
+      const mOrders     &orders;
+      const Price       &fairValue;
     public:
-      mWalletPosition(const mProduct &p, const mOrders &o, const mQuotingParams &q, const double &t, const Price &f)
-        : target(q, t, p, base.value)
-        , safety(q, f, base.value, base.total, target.targetBasePosition)
-        , profits(q)
-        , product(p)
+      mWalletPosition(const KryptoNinja &k, const mOrders &o, const mQuotingParams &q, const double &t, const Price &f)
+        : target(k, q, t, base.value)
+        , safety(k, q, f, base.value, base.total, target.targetBasePosition)
+        , profits(k, q)
+        , bot(k)
         , orders(o)
         , fairValue(f)
       {};
@@ -1782,7 +1726,8 @@ namespace ₿ {
     private:
       void calcFundsSilently() {
         if (base.currency.empty() or quote.currency.empty() or !fairValue) return;
-        if (product.maxWallet()) calcMaxWallet();
+        if (bot.dec("wallet-limit"))
+          calcMaxWallet(bot.dec("wallet-limit"));
         calcValues();
         calcProfits();
         target.calcTargetBasePos();
@@ -1804,8 +1749,7 @@ namespace ₿ {
         base.profit  = profits.calcBaseDiff();
         quote.profit = profits.calcQuoteDiff();
       };
-      void calcMaxWallet() {
-        Amount maxWallet = product.maxWallet();
+      void calcMaxWallet(Amount maxWallet) {
         maxWallet -= quote.held / fairValue;
         if (maxWallet > 0 and quote.amount / fairValue > maxWallet) {
           quote.amount = maxWallet * fairValue;
@@ -1890,7 +1834,12 @@ namespace ₿ {
                  greenGateway = Connectivity::Disconnected;
     private:
       Connectivity adminAgreement = Connectivity::Disconnected;
+    private_ref:
+      const KryptoNinja &bot;
     public:
+      mSemaphore(const KryptoNinja &k)
+        : bot(k)
+      {};
       void kiss(json *const j) override {
         if (j->is_object()
           and j->at("agree").is_number()
@@ -1926,7 +1875,7 @@ namespace ₿ {
           (bool)greenGateway and (bool)adminAgreement
         );
         if (greenButton != previous)
-          Print::log("GW " + gw->exchange, "Quoting state changed to",
+          Print::log("GW " + bot.gateway->exchange, "Quoting state changed to",
             string(paused() ? "DIS" : "") + "CONNECTED");
         send();
         Print::repaint();
@@ -1988,10 +1937,10 @@ namespace ₿ {
     mQuoteAsk ask;
          bool superSpread = false;
     private_ref:
-      const mProduct &product;
+      const KryptoNinja &bot;
     public:
-      mQuotes(const mProduct &p)
-        : product(p)
+      mQuotes(const KryptoNinja &k)
+        : bot(k)
       {};
       void checkCrossedQuotes() {
         if ((unsigned int)bid.checkCrossed(ask)
@@ -1999,20 +1948,16 @@ namespace ₿ {
         ) Print::logWar("QE", "Crossed bid/ask quotes detected, that is.. unexpected");
       };
       void debug(const string &reason) {
-        if (debug())
+        if (bot.num("debug-quotes"))
           Print::log("DEBUG QE", reason);
       };
       void debuq(const string &step) {
-        if (debug())
+        if (bot.num("debug-quotes"))
           Print::log("DEBUG QE", "[" + step + "] "
             + to_string((int)bid.state) + ":"
             + to_string((int)ask.state) + " "
             + ((json){{"bid", bid}, {"ask", ask}}).dump()
           );
-      };
-    private:
-      const bool debug() const {
-        return product.debug("quotes");
       };
   };
 
@@ -2027,14 +1972,14 @@ namespace ₿ {
               mQuotes&
       ) = nullptr;
     private_ref:
-      const mProduct        &product;
+      const KryptoNinja     &bot;
       const mQuotingParams  &qp;
       const mMarketLevels   &levels;
       const mWalletPosition &wallet;
             mQuotes         &quotes;
     public:
-      mDummyMarketMaker(const mProduct &p, const mQuotingParams &q, const mMarketLevels &l, const mWalletPosition &w, mQuotes &Q)
-        : product(p)
+      mDummyMarketMaker(const KryptoNinja &k, const mQuotingParams &q, const mMarketLevels &l, const mWalletPosition &w, mQuotes &Q)
+        : bot(k)
         , qp(q)
         , levels(l)
         , wallet(w)
@@ -2053,7 +1998,7 @@ namespace ₿ {
       void calcRawQuotes() const  {
         calcRawQuotesFromMarket(
           levels,
-          *product.minTick,
+          bot.gateway->minTick,
           levels.calcQuotesWidth(&quotes.superSpread),
           wallet.safety.buySize,
           wallet.safety.sellSize,
@@ -2225,15 +2170,15 @@ namespace ₿ {
                           AK47inc      = 0;
                    string sideAPR      = "Off";
     private_ref:
-      const mProduct        &product;
+      const KryptoNinja     &bot;
       const mQuotingParams  &qp;
       const mMarketLevels   &levels;
       const mWalletPosition &wallet;
     public:
-      mAntonioCalculon(const mProduct &p, const mQuotingParams &q, const mMarketLevels &l, const mWalletPosition &w)
-        : quotes(p)
-        , dummyMM(p, q, l, w, quotes)
-        , product(p)
+      mAntonioCalculon(const KryptoNinja &k, const mQuotingParams &q, const mMarketLevels &l, const mWalletPosition &w)
+        : quotes(k)
+        , dummyMM(k, q, l, w, quotes)
+        , bot(k)
         , qp(q)
         , levels(l)
         , wallet(w)
@@ -2260,7 +2205,7 @@ namespace ₿ {
       };
       const bool abandon(const mOrder &order, mQuote &quote, unsigned int &bullets) {
         if (stillAlive(order)) {
-          if (abs(order.price - quote.price) < *product.minTick)
+          if (abs(order.price - quote.price) < bot.gateway->minTick)
             quote.skip();
           else if (order.status == Status::Waiting) {
             if (qp.safety != mQuotingSafety::AK47
@@ -2269,7 +2214,7 @@ namespace ₿ {
           } else if (qp.safety != mQuotingSafety::AK47
             or quote.deprecates(order.price)
           ) {
-            if (product.lifetime() and order.time + product.lifetime() > Tstamp)
+            if (bot.num("lifetime") and order.time + bot.num("lifetime") > Tstamp)
               quote.skip();
             else return true;
           }
@@ -2449,7 +2394,7 @@ namespace ₿ {
             if (it.price > quotes.ask.price) {
               depth += it.size;
               if (depth < bestWidthSize) continue;
-              const Price bestAsk = it.price - *product.minTick;
+              const Price bestAsk = it.price - bot.gateway->minTick;
               if (bestAsk > levels.fairValue) {
                 quotes.ask.price = bestAsk;
                 break;
@@ -2461,7 +2406,7 @@ namespace ₿ {
             if (it.price < quotes.bid.price) {
               depth += it.size;
               if (depth < bestWidthSize) continue;
-              const Price bestBid = it.price + *product.minTick;
+              const Price bestBid = it.price + bot.gateway->minTick;
               if (bestBid < levels.fairValue) {
                 quotes.bid.price = bestBid;
                 break;
@@ -2482,12 +2427,12 @@ namespace ₿ {
         if (!quotes.bid.empty())
           quotes.bid.price = fmax(
             0,
-            floor(quotes.bid.price / *product.minTick) * *product.minTick
+            floor(quotes.bid.price / bot.gateway->minTick) * bot.gateway->minTick
           );
         if (!quotes.ask.empty())
           quotes.ask.price = fmax(
-            quotes.bid.price + *product.minTick,
-            ceil(quotes.ask.price / *product.minTick) * *product.minTick
+            quotes.bid.price + bot.gateway->minTick,
+            ceil(quotes.ask.price / bot.gateway->minTick) * bot.gateway->minTick
           );
       };
       void applyRoundSize() {
@@ -2497,7 +2442,7 @@ namespace ₿ {
               quotes.ask.size,
               wallet.base.total
             ),
-            *product.minSize
+            bot.gateway->minSize
           ) / 1e-8) * 1e-8;
         if (!quotes.bid.empty())
           quotes.bid.size = floor(fmax(
@@ -2505,7 +2450,7 @@ namespace ₿ {
               quotes.bid.size,
               wallet.quote.total / levels.fairValue
             ),
-            *product.minSize
+            bot.gateway->minSize
           ) / 1e-8) * 1e-8;
       };
       void applyDepleted() {
@@ -2555,8 +2500,9 @@ namespace ₿ {
             mOrders        &orders;
       const mQuotingParams &qp;
     public:
-      mBroker(const mProduct &p, mOrders &o, const mQuotingParams &q, const mMarketLevels &l, const mWalletPosition &w)
-        : calculon(p, q, l, w)
+      mBroker(const KryptoNinja &k, mOrders &o, const mQuotingParams &q, const mMarketLevels &l, const mWalletPosition &w)
+        : semaphore(k)
+        , calculon(k, q, l, w)
         , orders(o)
         , qp(q)
       {};
@@ -2590,36 +2536,40 @@ namespace ₿ {
       };
   };
 
-  struct mMonitor: public mJsonToClient<mMonitor> {
-    unsigned int /* ( | L | ) */ /* more */ orders_60s /* ? */;
-    const string /*  )| O |(  */  * unlock;
-        mProduct /* ( | C | ) */ /* this */ product;
-                 /*  )| K |(  */ /* thanks! <3 */
+  class mProduct: public mJsonToClient<mProduct> {
     private_ref:
-      const Option &option;
+      const KryptoNinja &bot;
     public:
-      mMonitor(const Option &o)
-        : orders_60s(0)
-        , unlock(nullptr)
-        , product(o)
-        , option(o)
+      mProduct(const KryptoNinja &k)
+        : bot(k)
       {};
-      const unsigned int memSize() const {
-  #ifdef _WIN32
-        return 0;
-  #else
-        struct rusage ru;
-        return getrusage(RUSAGE_SELF, &ru) ? 0 : ru.ru_maxrss * 1e+3;
-  #endif
+      const json to_json() const {
+        return {
+          {   "exchange", bot.gateway->exchange},
+          {       "base", bot.gateway->base    },
+          {      "quote", bot.gateway->quote   },
+          {    "minTick", bot.gateway->minTick },
+          {"environment", bot.str("title")     },
+          { "matryoshka", bot.str("matryoshka")}
+        };
       };
-      const unsigned int dbSize() const {
-        if (option.str("database") == ":memory:") return 0;
-        struct stat st;
-        return stat(option.str("database").data(), &st) ? 0 : st.st_size;
+      const mMatter about() const override {
+        return mMatter::ProductAdvertisement;
       };
-      const unsigned int theme() const {
-        return option.num("ignore-moon") + option.num("ignore-sun");
-      };
+  };
+  static void to_json(json &j, const mProduct &k) {
+    j = k.to_json();
+  };
+
+  class mMonitor: public mJsonToClient<mMonitor> {
+    public:
+      unsigned int orders_60s;
+    private_ref:
+      const KryptoNinja &bot;
+    public:
+      mMonitor(const KryptoNinja &k)
+        : bot(k)
+      {};
       void tick_orders() {
         orders_60s++;
       };
@@ -2627,21 +2577,23 @@ namespace ₿ {
         send();
         orders_60s = 0;
       };
+      const json to_json() const {
+        return {
+          {     "a", bot.gateway->unlock      },
+          {  "inet", string(Curl::inet ?: "") },
+          {  "freq", orders_60s               },
+          { "theme", bot.num("ignore-moon")
+                       + bot.num("ignore-sun")},
+          {"memory", bot.memSize()            },
+          {"dbsize", bot.dbSize()             }
+        };
+      };
       const mMatter about() const override {
         return mMatter::ApplicationState;
       };
   };
   static void to_json(json &j, const mMonitor &k) {
-    j = {
-      {     "a", *k.unlock             },
-      {  "inet", Curl::inet
-                   ? string(Curl::inet)
-                   : ""                },
-      {  "freq", k.orders_60s          },
-      { "theme", k.theme()             },
-      {"memory", k.memSize()           },
-      {"dbsize", k.dbSize()            }
-    };
+    j = k.to_json();
   };
 }
 

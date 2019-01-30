@@ -361,7 +361,6 @@ namespace ₿ {
       function<void(const mLevels&)>      write_mLevels;
       function<void(const mWallets&)>     write_mWallets;
       function<void(const Connectivity&)> write_Connectivity;
-#define RAWDATA_ENTRY_POINT(mData, read) write_##mData = [&](const mData &rawdata) read
       bool askForFees    = false,
            askForReplace = false;
       const bool *askForCancelAll = nullptr;
@@ -400,7 +399,7 @@ namespace ₿ {
           order->exchangeId
         );
       };
-//BO non-free gw library functions from build-*/local/lib/K-*.a (it just redefines all virtual gateway class members below).
+//BO non-free Gw library functions from build-*/local/lib/K-*.a (it just redefines all virtual gateway class members below).
 /**/  virtual bool ready() = 0;                                              // wait for exchange and register data handlers
 /**/  virtual void replace(RandId, string) {};                               // call         async orders data from exchange
 /**/  virtual void place(RandId, Side, string, string, OrderType, TimeInForce, bool) = 0,  // async orders, like above/below
@@ -413,7 +412,7 @@ namespace ₿ {
 /**/  virtual vector<mTrade>   sync_trades()  { return {}; };                // call and read sync trades data from exchange
 /**/  virtual vector<mOrder>   sync_orders()  { return {}; };                // call and read sync orders data from exchange
 /**/  virtual vector<mOrder>   sync_cancelAll() = 0;                         // call and read sync orders data from exchange
-//EO non-free gw library functions from build-*/local/lib/K-*.a (it just redefines all virtual gateway class members above).
+//EO non-free Gw library functions from build-*/local/lib/K-*.a (it just redefines all virtual gateway class members above).
       future<vector<mWallets>> replyWallets;
       future<vector<mLevels>> replyLevels;
       future<vector<mTrade>> replyTrades;
@@ -557,12 +556,12 @@ namespace ₿ {
       };
   };
 
-  static class Gw: public GwExchange {
+  class Gw: public GwExchange {
     public:
-//BO non-free gw library functions from build-*/local/lib/K-*.a (it just returns a derived gateway class based on argument).
+//BO non-free Gw library functions from build-*/local/lib/K-*.a (it just returns a derived gateway class based on argument).
 /**/  static Gw* new_Gw(const string&); // may return too a nullptr instead of a child gateway class, if string is unknown..
-//EO non-free gw library functions from build-*/local/lib/K-*.a (it just returns a derived gateway class based on argument).
-  } *gw = nullptr;
+//EO non-free Gw library functions from build-*/local/lib/K-*.a (it just returns a derived gateway class based on argument).
+  };
 
   class GwApiREST: public Gw {
     public:

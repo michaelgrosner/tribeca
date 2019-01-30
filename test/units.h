@@ -106,15 +106,13 @@ namespace ₿ {
       }
     }
     GIVEN("mMarketLevels") {
-      Option option;
-      mProduct product(option);
-      const Price  minTick = 0.01;
-      const Amount minSize = 0.001;
-      product.minTick = &minTick;
-      product.minSize = &minSize;
-      mOrders orders(product);
+      KryptoNinja K;
+      K.gateway = Gw::new_Gw("NULL");
+      K.gateway->minTick = 0.01;
+      K.gateway->minSize = 0.001;
+      mOrders orders(K);
       mQuotingParams qp;
-      mMarketLevels levels(product, orders, qp);
+      mMarketLevels levels(K, orders, qp);
       WHEN("defaults") {
         THEN("fair value") {
           REQUIRE_FALSE(levels.fairValue);
@@ -343,19 +341,18 @@ namespace ₿ {
     }
 
     GIVEN("mBroker") {
-      Option option;
-      mProduct product(option);
-      const Price minTick = 0.01;
-      product.minTick = &minTick;
-      mOrders orders(product);
+      KryptoNinja K;
+      K.gateway = Gw::new_Gw("NULL");
+      K.gateway->minTick = 0.01;
+      mOrders orders(K);
       mQuotingParams qp;
-      mMarketLevels levels(product, orders, qp);
+      mMarketLevels levels(K, orders, qp);
       const Price fairValue = 500;
       const double targetPositionAutoPercentage = 0;
-      mWalletPosition wallet(product, orders, qp, targetPositionAutoPercentage, fairValue);
+      mWalletPosition wallet(K, orders, qp, targetPositionAutoPercentage, fairValue);
       wallet.base = {"BTC", 1, 0};
       wallet.quote = {"EUR", 1000, 0};
-      mBroker broker(product, orders, qp, levels, wallet);
+      mBroker broker(K, orders, qp, levels, wallet);
       WHEN("assigned") {
         vector<RandId> randIds;
         const Clock time = Tstamp;

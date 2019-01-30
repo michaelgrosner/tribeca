@@ -4,7 +4,7 @@
 //! \brief Minimal user application framework.
 
 namespace ₿ {
-  string epilogue;
+  string epilogue, epitaph;
 
   enum class mPortal: unsigned char {
     Hello = '=',
@@ -324,7 +324,6 @@ namespace ₿ {
         signal(SIGUSR1, wtf);
 #endif
       };
-    protected:
       void ending(const function<void()> &fn) {
         endingFn.push_back(fn);
       };
@@ -360,15 +359,10 @@ namespace ₿ {
         epilogue = Ansi::r(COLOR_CYAN) + "Errrror: " + strsignal(sig) + ' ';
         const string mods = changelog();
         if (mods.empty()) {
-          epilogue += "(Three-Headed Monkey found):\n";
-          if (gw)
-            epilogue += "- exchange: " + gw->exchange              + '\n'
-                      + "- currency: " + (gw->symbol.empty()
-                                           ? gw->base + " .. " + gw->quote
-                                           : gw->symbol)           + '\n';
-          epilogue += "- lastbeat: " + to_string(Tstamp - rollout) + '\n'
-                    + "- binbuild: " + string(K_SOURCE)            + ' '
-                                     + string(K_BUILD)             + '\n'
+          epilogue += "(Three-Headed Monkey found):\n"     + epitaph
+            + "- lastbeat: " + to_string(Tstamp - rollout) + '\n'
+            + "- binbuild: " + string(K_SOURCE)            + ' '
+                             + string(K_BUILD)             + '\n'
 #ifndef _WIN32
             + "- tracelog: " + '\n';
           void *k[69];
@@ -434,10 +428,29 @@ namespace ₿ {
             );
       };
       const int num(const string &name) const {
+#ifndef NDEBUG
+        if (optint.find(name) == optint.end()) return 0;
+#endif
         return optint.at(name);
       };
       const double dec(const string &name) const {
+#ifndef NDEBUG
+        if (optdec.find(name) == optdec.end()) return 0;
+#endif
         return optdec.at(name);
+      };
+      const unsigned int memSize() const {
+#ifdef _WIN32
+        return 0;
+#else
+        struct rusage ru;
+        return getrusage(RUSAGE_SELF, &ru) ? 0 : ru.ru_maxrss * 1e+3;
+#endif
+      };
+      const unsigned int dbSize() const {
+        if (!databases or str("database") == ":memory:") return 0;
+        struct stat st;
+        return stat(str("database").data(), &st) ? 0 : st.st_size;
       };
     protected:
       void main(int argc, char** argv) {
@@ -543,8 +556,6 @@ namespace ₿ {
           );
           arguments.second = nullptr;
         }
-        gateway();
-        curl_global_init(CURL_GLOBAL_ALL);
       };
     private:
       void tidy() {
@@ -575,31 +586,6 @@ namespace ₿ {
               +  '.' + optstr["quote"]
               +  '.' + "db";
         }
-      };
-      void gateway() {
-        if (!(gw = Gw::new_Gw(str("exchange"))))
-          error("CF",
-            "Unable to configure a valid gateway using --exchange="
-              + str("exchange") + " argument"
-          );
-        if (!str("http").empty()) gw->http = str("http");
-        if (!str("wss").empty())  gw->ws   = str("wss");
-        if (!str("fix").empty())  gw->fix  = str("fix");
-        gw->exchange = str("exchange");
-        gw->base     = str("base");
-        gw->quote    = str("quote");
-        gw->apikey   = str("apikey");
-        gw->secret   = str("secret");
-        gw->user     = str("username");
-        gw->pass     = str("passphrase");
-        gw->maxLevel = num("market-limit");
-        gw->debug    = num("debug-secret");
-        gw->version  = num("free-version");
-        gw->printer  = [&](const string &prefix, const string &reason, const string &highlight) {
-          if (reason.find("Error") != string::npos)
-            Print::logWar(prefix, reason);
-          else Print::log(prefix, reason, highlight);
-        };
       };
       void help(const vector<Argument> &long_options) {
         const vector<string> stamp = {
@@ -644,7 +630,7 @@ namespace ₿ {
       };
   };
 
-  class Network {
+  class Socket {
     protected:
       uWS::Hub *socket;
       vector<uWS::Group<uWS::CLIENT>*> gw_clients;
@@ -706,15 +692,11 @@ namespace ₿ {
         return ui_server;
       };
     protected:
-      void connect() {
-        gw->socket = socket = new uWS::Hub(0, true);
-        gw->api    = connection();
-      };
-    private:
-      uWS::Group<uWS::CLIENT> *connection() {
+      uWS::Group<uWS::CLIENT> *bind() {
         gw_clients.push_back(socket->createGroup<uWS::CLIENT>());
         return gw_clients.back();
       };
+    private:
       static const string cleanAddress(string addr) {
         if (addr.length() > 7 and addr.substr(0, 7) == "::ffff:") addr = addr.substr(7);
         if (addr.length() < 7) addr.clear();
@@ -722,7 +704,7 @@ namespace ₿ {
       };
   };
 
-  class Events: public Network {
+  class Events {
     private:
       uS::Timer *timer  = nullptr;
       uS::Async *loop   = nullptr;
@@ -746,25 +728,22 @@ namespace ₿ {
         loop->send();
       };
     protected:
-      void start() {
-        connect();
-        timer = new uS::Timer(socket->getLoop());
+      void start(uS::Loop *const poll) {
+        timer = new uS::Timer(poll);
         timer->setData(this);
         timer->start([](uS::Timer *timer) {
           ((Events*)timer->getData())->timer_1s();
         }, 0, 1e+3);
-        loop = new uS::Async(socket->getLoop());
+        loop = new uS::Async(poll);
         loop->setData(this);
-        loop->start(walk);
+        loop->start([](uS::Async *const loop) {
+          ((Events*)loop->getData())->deferred();
+        });
       };
-      function<void()> stop(const bool &dustybot) {
-        return [this, dustybot]() {
+      function<void()> stop() {
+        return [&]() {
           timer->stop();
-          gw->close();
-          for (auto &it : gw_clients) it->close();
-          gw->end(dustybot);
-          walk(loop);
-          for (auto &it : ui_servers) it->close();
+          deferred();
         };
       };
     private:
@@ -775,11 +754,7 @@ namespace ₿ {
         for (const auto &it : waitFn) waiting |= it();
         if (waiting) loop->send();
       };
-      void (*walk)(uS::Async *const) = [](uS::Async *const loop) {
-        ((Events*)loop->getData())->deferred();
-      };
       void timer_1s() {
-        if (gw->countdown and !--gw->countdown) gw->connect();
         bool waiting = false;
         for (const auto &it : timeFn) waiting |= it(tick);
         if (waiting) loop->send();
@@ -920,7 +895,6 @@ namespace ₿ {
 
   //! \brief Deprecated placeholder to avoid spaghetti codes.
   //! - Walks through minimal runtime steps when wait() is called.
-  //! - Connects to gateway when ready.
   class Klass {
     protected:
       virtual void load        ()    {};
@@ -937,7 +911,6 @@ namespace ₿ {
         waitSysAdmin();
         waitTime();
         run();
-        if (gw->ready()) gw->run();
       };
   };
 
@@ -946,9 +919,11 @@ namespace ₿ {
                      public Ending,
                      public Hotkey,
                      public Option,
+                     public Socket,
                      public Events,
                      public Sqlite {
     public:
+      Gw *gateway = nullptr;
       string wtfismyip;
     public:
       KryptoNinja()
@@ -957,6 +932,8 @@ namespace ₿ {
       KryptoNinja *const main(int argc, char** argv) {
         {
           Option::main(argc, argv);
+          setup();
+          curl_global_init(CURL_GLOBAL_ALL);
         } {
           if (windowed())
             wait_for(legit_keylogger());
@@ -967,23 +944,31 @@ namespace ₿ {
           );
         } {
           if (num("latency")) {
-            gw->latency("HTTP read/write handshake", [&]() {
+            gateway->latency("HTTP read/write handshake", [&]() {
               handshake({
-                {"gateway", gw->http}
+                {"gateway", gateway->http}
               });
             });
             exit("1 HTTP connection done" + Ansi::r(COLOR_WHITE)
               + " (consider to repeat a few times this check)");
           }
         } {
-          start();
-          wait_for([]() {
-            return gw->waitForData();
+          gateway->socket = socket = new uWS::Hub(0, true);
+          gateway->api    = bind();
+          start(socket->getLoop());
+          ending([&]() {
+            gateway->close();
+            gateway->api->close();
+            gateway->end(num("dustybot"));
+            stop();
           });
-          timer_1s([](const unsigned int &tick) {
-            return gw->countdown ? false : gw->askForData(tick);
+          wait_for([&]() {
+            return gateway->waitForData();
           });
-          ending(stop(num("dustybot")));
+          timer_1s([&](const unsigned int &tick) {
+            if (gateway->countdown and !--gateway->countdown) gateway->connect();
+            return gateway->countdown ? false : gateway->askForData(tick);
+          });
         } {
           if (databases)
             open(str("database"), str("diskdata"));
@@ -993,16 +978,43 @@ namespace ₿ {
       void wait(const vector<Klass*> &k = {}) {
         if (k.empty()) Klass::wait();
         else for (Klass *const it : k) it->wait();
+        if (gateway->ready()) gateway->run();
       };
       void handshake(const vector<pair<string, string>> &notes = {}) {
-        const json reply = gw->handshake();
-        if (!gw->randId or gw->symbol.empty())
+        const json reply = gateway->handshake();
+        if (!gateway->randId or gateway->symbol.empty())
           error("GW", "Incomplete handshake aborted");
-        if (!gw->minTick or !gw->minSize)
-          error("GW", "Unable to fetch data from " + gw->exchange
-            + " for symbol \"" + gw->symbol + "\", possible error message: "
+        if (!gateway->minTick or !gateway->minSize)
+          error("GW", "Unable to fetch data from " + gateway->exchange
+            + " for symbol \"" + gateway->symbol + "\", possible error message: "
             + reply.dump());
-        gw->info(notes);
+        gateway->info(notes);
+      };
+    private:
+      void setup() {
+        if (!(gateway = Gw::new_Gw(str("exchange"))))
+          error("CF",
+            "Unable to configure a valid gateway using --exchange="
+              + str("exchange") + " argument"
+          );
+        if (!str("http").empty()) gateway->http = str("http");
+        if (!str("wss").empty())  gateway->ws   = str("wss");
+        if (!str("fix").empty())  gateway->fix  = str("fix");
+        epitaph = "- exchange: " + (gateway->exchange = str("exchange")) + '\n'
+                + "- currency: " + (gateway->base     = str("base"))     + " .. "
+                                 + (gateway->quote    = str("quote"))    + '\n';
+        gateway->apikey   = str("apikey");
+        gateway->secret   = str("secret");
+        gateway->user     = str("username");
+        gateway->pass     = str("passphrase");
+        gateway->maxLevel = num("market-limit");
+        gateway->debug    = num("debug-secret");
+        gateway->version  = num("free-version");
+        gateway->printer  = [&](const string &prefix, const string &reason, const string &highlight) {
+          if (reason.find("Error") != string::npos)
+            Print::logWar(prefix, reason);
+          else Print::log(prefix, reason, highlight);
+        };
       };
   };
 }

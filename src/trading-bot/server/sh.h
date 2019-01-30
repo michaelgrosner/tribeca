@@ -25,9 +25,9 @@ void TradingBot::terminal() {
     mvwhline(stdscr, ++yOrders, 1, ' ', x-1);
     wattron(stdscr, COLOR_PAIR(it.side == Side::Bid ? COLOR_CYAN : COLOR_MAGENTA));
     mvwaddstr(stdscr, yOrders, 1, (((it.side == Side::Bid ? "BID" : "ASK") + (" > "
-      + gw->str(it.quantity))) + ' ' + gw->base + " at price "
-      + gw->str(it.price) + ' ' + gw->quote + " (value "
-      + gw->str(abs(it.price * it.quantity)) + ' ' + gw->quote + ")"
+      + K.gateway->str(it.quantity))) + ' ' + K.gateway->base + " at price "
+      + K.gateway->str(it.price) + ' ' + K.gateway->quote + " (value "
+      + K.gateway->str(abs(it.price * it.quantity)) + ' ' + K.gateway->quote + ")"
     ).data());
     wattroff(stdscr, COLOR_PAIR(it.side == Side::Bid ? COLOR_CYAN : COLOR_MAGENTA));
   }
@@ -63,12 +63,12 @@ void TradingBot::terminal() {
   mvwhline(stdscr, 1, 8, ACS_HLINE, 4);
   mvwaddch(stdscr, 1, 12, ACS_RTEE);
   wattron(stdscr, COLOR_PAIR(COLOR_MAGENTA));
-  const string baseValue  = gw->str(engine->wallet.base.value),
-               quoteValue = gw->str(engine->wallet.quote.value);
+  const string baseValue  = K.gateway->str(engine->wallet.base.value),
+               quoteValue = K.gateway->str(engine->wallet.quote.value);
   wattron(stdscr, A_BOLD);
   waddstr(stdscr, (" " + baseValue + ' ').data());
   wattroff(stdscr, A_BOLD);
-  waddstr(stdscr, gw->base.data());
+  waddstr(stdscr, K.gateway->base.data());
   wattroff(stdscr, COLOR_PAIR(COLOR_MAGENTA));
   wattron(stdscr, COLOR_PAIR(COLOR_GREEN));
   waddstr(stdscr, " or ");
@@ -77,9 +77,9 @@ void TradingBot::terminal() {
   wattron(stdscr, A_BOLD);
   waddstr(stdscr, quoteValue.data());
   wattroff(stdscr, A_BOLD);
-  waddstr(stdscr, (" " + gw->quote + ' ').data());
+  waddstr(stdscr, (" " + K.gateway->quote + ' ').data());
   wattroff(stdscr, COLOR_PAIR(COLOR_CYAN));
-  size_t xLenValue = 14+baseValue.length()+quoteValue.length()+gw->base.length()+gw->quote.length()+7,
+  size_t xLenValue = 14+baseValue.length()+quoteValue.length()+K.gateway->base.length()+K.gateway->quote.length()+7,
          xMaxValue = max(xLenValue+1, 18+title1.length()+title2.length());
   mvwaddch(stdscr, 0, xMaxValue, ACS_TTEE);
   mvwaddch(stdscr, 1, xMaxValue, ACS_LRCORNER);
@@ -137,11 +137,11 @@ void TradingBot::terminal() {
     }
     waddstr(stdscr, " while");
     wattron(stdscr, COLOR_PAIR(COLOR_GREEN));
-    waddstr(stdscr, (" 1 " + gw->base + " = ").data());
+    waddstr(stdscr, (" 1 " + K.gateway->base + " = ").data());
     wattron(stdscr, A_BOLD);
-    waddstr(stdscr, gw->str(engine->levels.fairValue).data());
+    waddstr(stdscr, K.gateway->str(engine->levels.fairValue).data());
     wattroff(stdscr, A_BOLD);
-    waddstr(stdscr, (" " + gw->quote).data());
+    waddstr(stdscr, (" " + K.gateway->quote).data());
     wattroff(stdscr, COLOR_PAIR(COLOR_GREEN));
     waddch(stdscr, engine->broker.semaphore.paused() ? ' ' : ':');
   }

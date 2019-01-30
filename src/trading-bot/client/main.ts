@@ -663,7 +663,7 @@ class DisplayOrder {
 class ClientComponent implements OnInit {
 
   public A: string;
-  public homepage: string;
+  public homepage: string = "https://github.com/ctubio/Krypto-trading-bot";
   public matryoshka: string;
   public server_memory: string;
   public client_memory: string;
@@ -774,7 +774,7 @@ class ClientComponent implements OnInit {
     window.parent.postMessage('height='+document.getElementsByTagName('body')[0].getBoundingClientRect().height+'px', '*');
   };
   public product: Models.ProductState = {
-    advert: new Models.ProductAdvertisement(null, null, null, null, null, null, .01),
+    advert: new Models.ProductAdvertisement(null, null, null, null, null, .01),
     fixed: 2
   };
   public baseCurrency: string = "?";
@@ -1060,7 +1060,6 @@ class ClientComponent implements OnInit {
         )
       );
     this.product.advert = pa;
-    this.homepage = pa.homepage;
     this.product.fixed = Math.max(0, Math.floor(Math.log10(pa.minTick)) * -1);
     setTimeout(this.resizeMatryoshka, 5000);
     console.log("%cK started "+(new Date().toISOString().slice(11, -1))+"  %c"+this.homepage, "color:green;font-size:32px;", "color:red;font-size:16px;");
