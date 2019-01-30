@@ -2563,7 +2563,7 @@ namespace ₿ {
 
   class mMonitor: public mJsonToClient<mMonitor> {
     public:
-      unsigned int orders_60s;
+      unsigned int orders_60s = 0;
     private_ref:
       const KryptoNinja &bot;
     public:

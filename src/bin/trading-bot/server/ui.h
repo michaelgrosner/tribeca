@@ -1,13 +1,6 @@
 #ifndef K_UI_H_
 #define K_UI_H_
 
-extern const char _www_html_index,     _www_ico_favicon,     _www_css_base,
-                  _www_gzip_bomb,      _www_mp3_audio_0,     _www_css_light,
-                  _www_js_client,      _www_mp3_audio_1,     _www_css_dark;
-extern const  int _www_html_index_len, _www_ico_favicon_len, _www_css_base_len,
-                  _www_gzip_bomb_len,  _www_mp3_audio_0_len, _www_css_light_len,
-                  _www_js_client_len,  _www_mp3_audio_1_len, _www_css_dark_len;
-
 class UI: public Client { public: UI() { client = this; };
   private:
     uWS::Group<uWS::SERVER> *webui = nullptr;
@@ -23,16 +16,16 @@ class UI: public Client { public: UI() { client = this; };
            + " (may be already in use by another program)"
          );
       K.timer_1s([&](const unsigned int &tick) {
-        if (!delay or !*delay or (tick % *delay) or queue.empty())
-          return false;
-        vector<string> msgs;
-        for (const auto &it : queue)
-          msgs.push_back((char)mPortal::Kiss + ((char)it.first + it.second));
-        queue.clear();
-        K.deferred([this, msgs]() {
-          for (const auto &it : msgs)
-            webui->broadcast(it.data(), it.length(), uWS::OpCode::TEXT);
-        });
+        if (delay and *delay and !(tick % *delay) and !queue.empty()) {
+          vector<string> msgs;
+          for (const auto &it : queue)
+            msgs.push_back((char)mPortal::Kiss + ((char)it.first + it.second));
+          queue.clear();
+          K.deferred([this, msgs]() {
+            for (const auto &it : msgs)
+              webui->broadcast(it.data(), it.length(), uWS::OpCode::TEXT);
+          });
+        }
         return false;
       });
       K.ending([&]() {
