@@ -5,7 +5,7 @@ ERR        = *** Unexpected MAKE_VERSION < 4.
 HINT       = This Makefile can't be used with your make version, consider to upgrade before try again
 $(if $(shell ver=${MAKE_VERSION} && test $${ver%%.*} -lt 4 || echo 1),,$(warning $(ERR));$(error $(HINT)))
 
-NODE_PATH := $(abspath ./node_modules)
+NODE_PATH := /var/lib/K/node_modules
 PATH      := $(NODE_PATH)/.bin:$(PATH)
 
 STEPS     := $(shell grep "call\ STEP" Makefile | wc -l)
@@ -19,18 +19,18 @@ all $(KSRC): js css
 
 npm: package.json
 	$(info $(STEP_1))
-	@$@ install
+	@cd $(abspath $(NODE_PATH)/..) && $@ install
 ifndef TRAVIS_DEPLOY
-	@rm $(basename $^)*
+	@rm $(abspath $(NODE_PATH)/..)/$(basename $^)*
 endif
 
 client: npm client/main.ts
 	$(info $(STEP_2))
-	tsc --alwaysStrict --experimentalDecorators -t ES2017 -m commonjs --outDir $(KASSETS)/www/js client/*.ts
+	NODE_PATH=$(NODE_PATH) tsc --baseUrl $(NODE_PATH) --alwaysStrict --experimentalDecorators -t ES2017 -m commonjs --outDir $(KASSETS)/www/js client/*.ts
 
 js: client $(NODE_PATH)/.bin
 	$(info $(STEP_3))
-	NODE_PATH=$(NODE_PATH) browserify -t [ babelify --presets [ @babel/preset-env ] ] \
+	NODE_PATH=$(NODE_PATH) browserify -t [ $(NODE_PATH)/babelify --presets [ $(NODE_PATH)/@babel/preset-env ] ] \
 	  $(KASSETS)/www/js/main.js | uglifyjs | gzip > $(KASSETS)/www/js/client.min.js
 
 css: www/sass/*.scss
@@ -90,6 +90,6 @@ export define PACKAGE_JSON
 endef
 
 package.json:
-	@echo "$$PACKAGE_JSON" > $@
+	@echo "$$PACKAGE_JSON" > $(abspath $(NODE_PATH)/..)/$@
 
 .PHONY: all $(KSRC) client css js npm package.json

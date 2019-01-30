@@ -2,7 +2,7 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
 PATCH    = 12
-BUILD    = 6
+BUILD    = 7
 SOURCE  := $(notdir $(wildcard src/bin/*))
 CARCH    = x86_64-linux-gnu      \
            arm-linux-gnueabihf   \
@@ -114,9 +114,9 @@ else
 	$(if $(subst 8,,$(subst 7,,$(shell $(CHOST)-g++ -dumpversion | cut -d. -f1))),$(warning $(ERR));$(error $(HINT)))
 	@$(CHOST)-g++ --version
 	@mkdir -p $(KLOCAL)/bin
-	-@egrep ₿ src test -lR --exclude-dir=node_modules | xargs sed -i 's/₿/\\u20BF/g'
+	-@egrep ₿ src test -lR | xargs sed -i 's/₿/\\u20BF/g'
 	$(MAKE) $(shell test -n "`echo $(CHOST) | grep darwin`" && echo Darwin || (test -n "`echo $(CHOST) | grep mingw32`" && echo Win32 || uname -s)) CHOST=$(CHOST)
-	-@egrep \\u20BF src test -lR --exclude-dir=node_modules | xargs sed -i 's/\\u20BF/₿/g'
+	-@egrep \\u20BF src test -lR | xargs sed -i 's/\\u20BF/₿/g'
 	@chmod +x $(KLOCAL)/bin/K-$(KSRC)*
 	@$(MAKE) system_install -s
 endif
@@ -134,12 +134,12 @@ else
 endif
 
 Darwin: src/bin/$(KSRC)/$(KSRC).cxx
-	-@egrep \\u20BF src -lR --exclude-dir=node_modules | xargs sed -i 's/\\\(u20BF\)/\1/g'
+	-@egrep \\u20BF src -lR | xargs sed -i 's/\\\(u20BF\)/\1/g'
 	$(CHOST)-g++ -DNDEBUG -o $(KLOCAL)/bin/K-$(KSRC)                             \
 	  -DUSE_LIBUV                                                                \
 	  -msse4.1 -maes -mpclmul -mmacosx-version-min=10.13 -nostartfiles -rdynamic \
 	  $^ $(KARGS) -ldl
-	-@egrep u20BF src -lR --exclude-dir=node_modules | xargs sed -i 's/\(u20BF\)/\\\1/g'
+	-@egrep u20BF src -lR | xargs sed -i 's/\(u20BF\)/\\\1/g'
 
 Win32: src/bin/$(KSRC)/$(KSRC).cxx
 	$(CHOST)-g++-posix -DNDEBUG -o $(KLOCAL)/bin/K-$(KSRC).exe   \
@@ -298,7 +298,7 @@ else ifndef KTARGZ
 	@$(MAKE) KTARGZ="K-$(MAJOR).$(MINOR).$(PATCH).$(BUILD)-$(shell echo $(CHOST) | cut -d- -f-2).tar.gz" $@
 else
 	@tar -cvzf $(KTARGZ) $(KLOCAL)/bin/K-* $(KLOCAL)/lib/K-* LICENSE COPYING README.md Makefile doc/[^html]* etc test             \
-	$(shell test -n "`echo $(CHOST) | grep mingw32`" && echo $(KLOCAL)/bin/*dll || :) --exclude src/bin/*/node_modules src            \
+	$(shell test -n "`echo $(CHOST) | grep mingw32`" && echo $(KLOCAL)/bin/*dll || :) src                                         \
 	&& curl -s -n -H "Content-Type:application/octet-stream" -H "Authorization: token ${KRELEASE}"                                \
 	--data-binary "@$(PWD)/$(KTARGZ)" "https://uploads.github.com/repos/ctubio/Krypto-trading-bot/releases/$(shell curl -s        \
 	https://api.github.com/repos/ctubio/Krypto-trading-bot/releases/latest | grep id | head -n1 | cut -d ' ' -f4 | cut -d ',' -f1 \
