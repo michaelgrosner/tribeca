@@ -2570,16 +2570,13 @@ namespace ₿ {
       mMonitor(const KryptoNinja &k)
         : bot(k)
       {};
-      void tick_orders() {
-        orders_60s++;
-      };
       void timer_60s() {
         send();
         orders_60s = 0;
       };
       const json to_json() const {
         return {
-          {     "a", bot.gateway->unlock      },
+          {  "addr", bot.gateway->unlock      },
           {  "inet", string(Curl::inet ?: "") },
           {  "freq", orders_60s               },
           { "theme", bot.num("ignore-moon")

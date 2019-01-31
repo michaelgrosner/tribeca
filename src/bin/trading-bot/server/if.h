@@ -121,7 +121,7 @@ code( btn.cleanTradesClosed , wallet.safety.trades.clearClosed ,           )
         quote.isPong,
         K.gateway->randId()
       });
-      monitor.tick_orders();
+      monitor.orders_60s++;
     };
     void cancelOrders() {
       for (mOrder *const it : orders.working())

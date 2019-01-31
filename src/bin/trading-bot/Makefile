@@ -21,7 +21,7 @@ npm: package.json
 	$(info $(STEP_1))
 	@cd $(abspath $(NODE_PATH)/..) && $@ install
 ifndef TRAVIS_DEPLOY
-	rm $(abspath $(NODE_PATH)/..)/$(basename $^)*
+	@rm $(abspath $(NODE_PATH)/..)/$(basename $^)*
 endif
 
 client: npm client/main.ts

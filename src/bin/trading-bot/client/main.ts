@@ -593,7 +593,7 @@ class DisplayOrder {
                       </div>
                       <div class="row" style="padding-top:0px;">
                         <div class="col-md-4 col-xs-12" style="padding-left:0px;padding-top:0px;padding-right:0px;">
-                            <market-quoting (onBidsLength)="onBidsLength($event)" (onAsksLength)="onAsksLength($event)" (onMarketWidth)="onMarketWidth($event)" [agree]="!!pair.active.display.agree" [product]="product" [a]="A" [setQuoteStatus]="QuoteStatus" [setMarketData]="MarketData" [setOrderList]="orderList" [setTargetBasePosition]="TargetBasePosition"></market-quoting>
+                            <market-quoting (onBidsLength)="onBidsLength($event)" (onAsksLength)="onAsksLength($event)" (onMarketWidth)="onMarketWidth($event)" [agree]="!!pair.active.display.agree" [product]="product" [addr]="addr" [setQuoteStatus]="QuoteStatus" [setMarketData]="MarketData" [setOrderList]="orderList" [setTargetBasePosition]="TargetBasePosition"></market-quoting>
                         </div>
                         <div class="col-md-8 col-xs-12" style="padding-left:0px;padding-right:0px;padding-top:0px;">
                           <div class="row">
@@ -662,7 +662,7 @@ class DisplayOrder {
 })
 class ClientComponent implements OnInit {
 
-  public A: string;
+  public addr: string;
   public homepage: string = "https://github.com/ctubio/Krypto-trading-bot";
   public matryoshka: string;
   public server_memory: string;
@@ -933,7 +933,7 @@ class ClientComponent implements OnInit {
     this.user_theme = this.user_theme!==null ? this.user_theme : (o.theme==1 ? '' : (o.theme==2 ? '-dark' : this.user_theme));
     this.system_theme = this.getTheme((new Date).getHours());
     this.setTheme();
-    this.A = (<any>o).a;
+    this.addr = o.addr;
   }
 
   private setTheme = () => {

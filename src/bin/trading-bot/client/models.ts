@@ -251,7 +251,7 @@ export class ProductAdvertisement {
 }
 
 export class ApplicationState {
-    constructor(public memory: number, public inet: string, public freq: number, public theme: number, public dbsize: number) { }
+    constructor(public addr: string, public inet: string, public freq: number, public theme: number, public memory: number, public dbsize: number) { }
 }
 
 export class TradeSafety {

@@ -25,9 +25,9 @@ import * as Models from './models';
           <th *ngIf="askStatus != 'Live'" colspan="2" class="text-danger" title="Ask Quote Status">{{ askStatus }}</th>
         </tr>
       </table>
-    <div *ngIf="levels != null" [ngClass]="(a?'a ':'')+'levels'">
+    <div *ngIf="levels != null" [ngClass]="(addr?'addr ':'')+'levels'">
       <table class="marketQuoting table table-hover table-responsive text-center" style="width:50%;float:left;">
-        <tr *ngIf="a" class="skip">
+        <tr *ngIf="addr" class="skip">
           <td><div class="text-danger text-center"><br /><br />To <a href="https://github.com/ctubio/Krypto-trading-bot/blob/master/README.md#unlock" target="_blank">unlock</a> all market levels<br />and to collaborate with the development..<br /><br />make an acceptable Pull Request on github,<br/>or send 0.01210000 BTC or more to:<br /><a href="https://www.blocktrail.com/BTC/address/{{ a }}" target="_blank">{{ a }}</a><br /><br />Wait 0 confirmations and restart this bot.<br /><br /><!-- you can remove this message, but obviously the missing market levels will not be displayed magically. the market levels will be only displayed if the also displayed address is credited with 0.01210000 BTC. Note that if you make a Pull Request i will credit the payment for you easy, just let me know in the description of the PR what is the BTC Address displayed in your bot.--></div></td>
         </tr>
         <tr [ngClass]="orderPriceBids.indexOf(lvl.price.toFixed(product.fixed))==-1?'active':'success buy'" *ngFor="let lvl of levels.bids; let i = index">
@@ -45,7 +45,7 @@ import * as Models from './models';
         </tr>
       </table>
       <table class="marketQuoting table table-hover table-responsive text-center" style="width:50%;">
-        <tr *ngIf="a" style="height:0px;" class="skip"><td></td></tr>
+        <tr *ngIf="addr" style="height:0px;" class="skip"><td></td></tr>
         <tr [ngClass]="orderPriceAsks.indexOf(lvl.price.toFixed(product.fixed))==-1?'active':'success sell'" *ngFor="let lvl of levels.asks; let i = index">
           <td>
             <div [ngClass]="'asks'+(lvl.cssMod==2?2:0)">
@@ -93,7 +93,7 @@ export class MarketQuotingComponent {
 
   @Input() product: Models.ProductState;
 
-  @Input() a: string;
+  @Input() addr: string;
 
   @Input() set agree(agree: boolean) {
     if (agree) return;
