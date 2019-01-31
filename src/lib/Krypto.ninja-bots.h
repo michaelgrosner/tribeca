@@ -631,14 +631,19 @@ namespace ₿ {
   };
 
   class Socket {
+    public:
+      string wtfismyip = "localhost";
     protected:
       uWS::Hub *socket;
       vector<uWS::Group<uWS::CLIENT>*> gw_clients;
       vector<uWS::Group<uWS::SERVER>*> ui_servers;
     public:
       uWS::Group<uWS::SERVER> *listen(
+               string &protocol,
         const     int &port,
-              SSL_CTX *ssl        = nullptr,
+        const    bool &ssl,
+        const  string &crt,
+        const  string &key,
         const function<const string(
           const string&,
           const string&,
@@ -654,8 +659,11 @@ namespace ₿ {
         )>            &wsMessage  = nullptr
       ) {
         auto ui_server = socket->createGroup<uWS::SERVER>(uWS::PERMESSAGE_DEFLATE);
-        if (!socket->listen(Curl::inet, port, uS::TLS::Context(ssl), 0, ui_server))
+        if (!ui_server) return nullptr;
+        SSL_CTX *ctx = sslContext(ssl, crt, key);
+        if (!socket->listen(Curl::inet, port, uS::TLS::Context(ctx), 0, ui_server))
           return nullptr;
+        protocol += string(ctx ? 1 : 0, 'S');
         if (httpServer)
           ui_server->onHttpRequest([&](uWS::HttpResponse *res, uWS::HttpRequest req, char *data, size_t length, size_t remainingBytes) {
             if (req.getMethod() != uWS::HttpMethod::METHOD_GET) return;
@@ -688,6 +696,7 @@ namespace ₿ {
                                                  ? uWS::OpCode::BINARY
                                                  : uWS::OpCode::TEXT);
           });
+        Print::log("UI", "ready at", Text::strL(protocol) + "://" + wtfismyip + ":" + to_string(port));
         ui_servers.push_back(ui_server);
         return ui_server;
       };
@@ -697,6 +706,67 @@ namespace ₿ {
         return gw_clients.back();
       };
     private:
+      SSL_CTX *sslContext(const bool &ssl, const string &crt, const string &key) {
+        SSL_CTX *ctx = nullptr;
+        if (ssl and (ctx = SSL_CTX_new(SSLv23_server_method()))) {
+          SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv3);
+          if (crt.empty() or key.empty()) {
+            if (!crt.empty())
+              Print::logWar("UI", "Ignored --ssl-crt because --ssl-key is missing");
+            if (!key.empty())
+              Print::logWar("UI", "Ignored --ssl-key because --ssl-crt is missing");
+            Print::logWar("UI", "Connected web clients will enjoy unsecure SSL encryption..\n"
+              "(because the private key is visible in the source!) consider --ssl-crt and --ssl-key arguments");
+            if (!SSL_CTX_use_certificate(ctx,
+              PEM_read_bio_X509(BIO_new_mem_buf((void*)
+                "-----BEGIN CERTIFICATE-----"                                      "\n"
+                "MIICATCCAWoCCQCiyDyPL5ov3zANBgkqhkiG9w0BAQsFADBFMQswCQYDVQQGEwJB" "\n"
+                "VTETMBEGA1UECAwKU29tZS1TdGF0ZTEhMB8GA1UECgwYSW50ZXJuZXQgV2lkZ2l0" "\n"
+                "cyBQdHkgTHRkMB4XDTE2MTIyMjIxMDMyNVoXDTE3MTIyMjIxMDMyNVowRTELMAkG" "\n"
+                "A1UEBhMCQVUxEzARBgNVBAgMClNvbWUtU3RhdGUxITAfBgNVBAoMGEludGVybmV0" "\n"
+                "IFdpZGdpdHMgUHR5IEx0ZDCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEAunyx" "\n"
+                "1lNsHkMmCa24Ns9xgJAwV3A6/Jg/S5jPCETmjPRMXqAp89fShZxN2b/2FVtU7q/N" "\n"
+                "EtNpPyEhfAhPwYrkHCtip/RmZ/b6qY2Cx6otFIsuwO8aUV27CetpoM8TAQSuufcS" "\n"
+                "jcZD9pCAa9GM/yWeqc45su9qBBmLnAKYuYUeDQUCAwEAATANBgkqhkiG9w0BAQsF" "\n"
+                "AAOBgQAeZo4zCfnq5/6gFzoNDKg8DayoMnCtbxM6RkJ8b/MIZT5p6P7OcKNJmi1o" "\n"
+                "XD2evdxNrY0ObQ32dpiLqSS1JWL8bPqloGJBNkSPi3I+eBoJSE7/7HOroLNbp6nS" "\n"
+                "aaec6n+OlGhhjxn0DzYiYsVBUsokKSEJmHzoLHo3ZestTTqUwg=="             "\n"
+                "-----END CERTIFICATE-----"                                        "\n"
+              , -1), nullptr, nullptr, nullptr
+            )) or !SSL_CTX_use_RSAPrivateKey(ctx,
+              PEM_read_bio_RSAPrivateKey(BIO_new_mem_buf((void*)
+                "-----BEGIN RSA PRIVATE KEY-----"                                  "\n"
+                "MIICXAIBAAKBgQC6fLHWU2weQyYJrbg2z3GAkDBXcDr8mD9LmM8IROaM9ExeoCnz" "\n"
+                "19KFnE3Zv/YVW1Tur80S02k/ISF8CE/BiuQcK2Kn9GZn9vqpjYLHqi0Uiy7A7xpR" "\n"
+                "XbsJ62mgzxMBBK659xKNxkP2kIBr0Yz/JZ6pzjmy72oEGYucApi5hR4NBQIDAQAB" "\n"
+                "AoGBAJi9OrbtOreKjeQNebzCqRcAgeeLz3RFiknzjVYbgK1gBhDWo6XJVe8C9yxq" "\n"
+                "sjYJyQV5zcAmkaQYEaHR+OjvRiZ4UmXbItukOD+dnq7xs69n3w54FfANjkurdL2M" "\n"
+                "fPAQm/GJT4TSBDIr7eJQPOrork9uxQStwADTqvklVlKm2YldAkEA80ZYaLrGOBbz" "\n"
+                "5871ewKxtVJNCCmXdYUwq7nI/lqsLBZnB+wiwnQ+3tgfi4YoUoTnv0hIIwkyLYl9" "\n"
+                "Z2wqensf6wJBAMQ96gUGnIcYJzknB5CYDNQalcvvTx7tLtgRXDf47bQJ3X/Q5k/t" "\n"
+                "yDlByUBqvYVShXWs+d4ynNKLze/w18H8Os8CQBYFDAOOxFpXWYRl6zpTKBqtdGOE" "\n"
+                "wDzW7WzdyB+dvW/QJ0tESHEpbHdnQJO0dPnjJcbemAjz0CLnCv7Nf5rOgjkCQE3Q" "\n"
+                "izIw+/JptmvoOQyx7ixQ2mNCYmpN/Iw63gln0MHaQ5WCPUEmdYWWu3mqmbn7Deaq" "\n"
+                "j233Pc4TF7b0FmnaXWsCQAVvyLVU3a9Yactb5MXaN+rEYjUW37GSo+Q1lXfm0OwF" "\n"
+                "EJB7X66Bavwg4MCfpGykS71OxhTEfDu+y1gylPMCGHY="                     "\n"
+                "-----END RSA PRIVATE KEY-----"                                    "\n"
+              , -1), nullptr, nullptr, nullptr)
+            )) ctx = nullptr;
+          } else {
+            if (access(crt.data(), R_OK) == -1)
+              Print::logWar("UI", "Unable to read custom .crt file at " + crt);
+            if (access(key.data(), R_OK) == -1)
+              Print::logWar("UI", "Unable to read custom .key file at " + key);
+            if (!SSL_CTX_use_certificate_chain_file(ctx, crt.data())
+              or !SSL_CTX_use_RSAPrivateKey_file(ctx, key.data(), SSL_FILETYPE_PEM)
+            ) {
+              ctx = nullptr;
+              Print::logWar("UI", "Unable to encrypt web clients, will fallback to plain HTTP");
+            }
+          }
+        }
+        return ctx;
+      };
       static const string cleanAddress(string addr) {
         if (addr.length() > 7 and addr.substr(0, 7) == "::ffff:") addr = addr.substr(7);
         if (addr.length() < 7) addr.clear();
@@ -924,7 +994,6 @@ namespace ₿ {
                      public Sqlite {
     public:
       Gw *gateway = nullptr;
-      string wtfismyip;
     public:
       KryptoNinja()
         : Sqlite((Events&)*this)
@@ -940,7 +1009,7 @@ namespace ₿ {
         } {
           log("CF", "Outbound IP address is",
             wtfismyip = Curl::xfer("https://wtfismyip.com/json", 4L)
-                          .value("YourFuckingIPAddress", "localhost")
+                          .value("YourFuckingIPAddress", wtfismyip)
           );
         } {
           if (num("latency")) {
