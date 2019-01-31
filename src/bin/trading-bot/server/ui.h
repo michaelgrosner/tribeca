@@ -78,6 +78,31 @@ class UI: public Client { public: UI() { client = this; };
       }
       return true;
     };
+    function<const string(string, const string&)> wsMessage = [&](
+            string message,
+      const string &addr
+    ) {
+      if (addr != "unknown"
+        and !K.str("whitelist").empty()
+        and K.str("whitelist").find(addr) == string::npos
+      ) return string(&_www_gzip_bomb, _www_gzip_bomb_len);
+      const mPortal portal = (mPortal)message.at(0);
+      const mMatter matter = (mMatter)message.at(1);
+      if (mPortal::Hello == portal and hello.find(matter) != hello.end()) {
+        const json reply = hello.at(matter)();
+        if (!reply.is_null())
+          return (char)portal + ((char)matter + reply.dump());
+      } else if (mPortal::Kiss == portal and kisses.find(matter) != kisses.end()) {
+        message = message.substr(2);
+        json butterfly = json::accept(message)
+          ? json::parse(message)
+          : json::object();
+        for (auto it = butterfly.begin(); it != butterfly.end();)
+          if (it.value().is_null()) it = butterfly.erase(it); else ++it;
+        kisses.at(matter)(butterfly);
+      }
+      return string();
+    };
     function<const string(const string&, const string&, const string&)> httpServer = [&](
       const string &path,
       const string &auth,
@@ -144,31 +169,6 @@ class UI: public Client { public: UI() { client = this; };
       return document
         + "Content-Length: " + to_string(content.length())
         + "\r\n\r\n" + content;
-    };
-    function<const string(string, const string&)> wsMessage = [&](
-            string message,
-      const string &addr
-    ) {
-      if (addr != "unknown"
-        and !K.str("whitelist").empty()
-        and K.str("whitelist").find(addr) == string::npos
-      ) return string(&_www_gzip_bomb, _www_gzip_bomb_len);
-      const mPortal portal = (mPortal)message.at(0);
-      const mMatter matter = (mMatter)message.at(1);
-      if (mPortal::Hello == portal and hello.find(matter) != hello.end()) {
-        const json reply = hello.at(matter)();
-        if (!reply.is_null())
-          return (char)portal + ((char)matter + reply.dump());
-      } else if (mPortal::Kiss == portal and kisses.find(matter) != kisses.end()) {
-        message = message.substr(2);
-        json butterfly = json::accept(message)
-          ? json::parse(message)
-          : json::object();
-        for (auto it = butterfly.begin(); it != butterfly.end();)
-          if (it.value().is_null()) it = butterfly.erase(it); else ++it;
-        kisses.at(matter)(butterfly);
-      }
-      return string();
     };
 } ui;
 

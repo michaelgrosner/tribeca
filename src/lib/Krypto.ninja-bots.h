@@ -630,7 +630,7 @@ namespace ₿ {
     public:
       string wtfismyip = "localhost";
     protected:
-      uWS::Hub *socket;
+      uWS::Hub *socket = nullptr;
       vector<uWS::Group<uWS::CLIENT>*> gw_clients;
       vector<uWS::Group<uWS::SERVER>*> ui_servers;
     public:
