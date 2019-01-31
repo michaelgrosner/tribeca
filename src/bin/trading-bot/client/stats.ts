@@ -539,21 +539,21 @@ export class StatsComponent implements OnInit {
       callback.call(window, array[i]);
   }
 
-  private extend = (out) => {
-    out = out || {};
+  // private extend = (out) => {
+    // out = out || {};
 
-    for (var i = 1; i < arguments.length; i++) {
-      if (!arguments[i])
-        continue;
+    // for (var i = 1; i < arguments.length; i++) {
+      // if (!arguments[i])
+        // continue;
 
-      for (var key in arguments[i]) {
-        if (arguments[i].hasOwnProperty(key))
-          out[key] = arguments[i][key];
-      }
-    }
+      // for (var key in arguments[i]) {
+        // if (arguments[i].hasOwnProperty(key))
+          // out[key] = arguments[i][key];
+      // }
+    // }
 
-    return out;
-  }
+    // return out;
+  // }
 
   ngOnInit() {
     (<any>Highcharts).customBaseCurrency = '';
