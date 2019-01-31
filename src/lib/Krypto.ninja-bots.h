@@ -646,7 +646,7 @@ namespace ₿ {
           const string&
         )>            &httpServer = nullptr,
         const function<const bool(
-          const Connectivity&,
+          const   bool&,
           const string&
         )>            &wsServer   = nullptr,
         const function<const string(
@@ -673,11 +673,11 @@ namespace ₿ {
           });
         if (wsServer) {
           ui_server->onConnection([&](uWS::WebSocket<uWS::SERVER> *webSocket, uWS::HttpRequest req) {
-            if (!wsServer(Connectivity::Connected, cleanAddress(webSocket->getAddress().address)))
+            if (!wsServer(true, cleanAddress(webSocket->getAddress().address)))
               webSocket->close();
           });
           ui_server->onDisconnection([&](uWS::WebSocket<uWS::SERVER> *webSocket, int code, char *message, size_t length) {
-            wsServer(Connectivity::Disconnected, cleanAddress(webSocket->getAddress().address));
+            wsServer(false, cleanAddress(webSocket->getAddress().address));
           });
         }
         if (wsMessage)

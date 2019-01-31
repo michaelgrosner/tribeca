@@ -35,7 +35,7 @@ class UI: public Client { public: UI() { client = this; };
   public:
     void welcome(mToClient &data) override {
       data.send = [&]() {
-        if (send) send(data);
+        if (connections) send(data);
       };
       if (!webui) return;
       const mMatter matter = data.about();
@@ -57,22 +57,19 @@ class UI: public Client { public: UI() { client = this; };
       };
     };
   private:
-    function<void(const mToClient&)> send;
-    function<const bool(const Connectivity&, const string&)> wsServer = [&](
-      const Connectivity &connected,
-      const       string &addr
+    void send(const mToClient &data) {
+      if (data.realtime() or !delay or !*delay) {
+        const string msg = (char)mPortal::Kiss + ((char)data.about() + data.blob().dump());
+        K.deferred([this, msg]() {
+          webui->broadcast(msg.data(), msg.length(), uWS::OpCode::TEXT);
+        });
+      } else queue[data.about()] = data.blob().dump();
+    };
+    function<const bool(const bool&, const string&)> wsServer = [&](
+      const   bool &connection,
+      const string &addr
     ) {
-      if (!(bool)connected) {
-        if (!--connections) send = nullptr;
-      } else if (!connections++)
-        send = [&](const mToClient &data) {
-          if (data.realtime() or !delay or !*delay) {
-            const string msg = (char)mPortal::Kiss + ((char)data.about() + data.blob().dump());
-            K.deferred([this, msg]() {
-              webui->broadcast(msg.data(), msg.length(), uWS::OpCode::TEXT);
-            });
-          } else queue[data.about()] = data.blob().dump();
-        };
+      connections += connection ?: -1;
       Print::log("UI", to_string(connections) + " client" + string(connections == 1 ? 0 : 1, 's')
         + " connected, last connection was from", addr);
       if (connections > K.num("client-limit")) {
