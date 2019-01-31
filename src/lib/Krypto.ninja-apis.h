@@ -446,9 +446,9 @@ namespace ₿ {
              | waitFor(replyLevels,    write_mLevels)
              | waitFor(replyTrades,    write_mTrade);
       };
-      template<typename mData, typename syncFn> const bool askFor(
-              future<vector<mData>> &reply,
-        const syncFn                &read
+      template<typename T, typename syncFn> const bool askFor(
+              future<vector<T>> &reply,
+        const syncFn            &read
       ) {
         bool waiting = reply.valid();
         if (!waiting) {
@@ -457,13 +457,13 @@ namespace ₿ {
         }
         return waiting;
       };
-      template<typename mData> const unsigned int waitFor(
-              future<vector<mData>>        &reply,
-        const function<void(const mData&)> &write
+      template<typename T> const unsigned int waitFor(
+              future<vector<T>>        &reply,
+        const function<void(const T&)> &write
       ) {
         bool waiting = reply.valid();
         if (waiting and reply.wait_for(chrono::nanoseconds(0)) == future_status::ready) {
-          for (mData &it : reply.get()) write(it);
+          for (T &it : reply.get()) write(it);
           waiting = false;
         }
         return waiting;

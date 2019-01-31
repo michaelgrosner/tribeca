@@ -62,7 +62,7 @@ namespace ₿ {
       return true;
     };
   };
-  template <typename mData> struct mJsonToClient: public mToClient {
+  template <typename T> struct mJsonToClient: public mToClient {
     virtual const bool send() {
       if ((send_asap() or send_soon())
         and (send_same_blob() or diff_blob())
@@ -73,7 +73,7 @@ namespace ₿ {
       return false;
     };
     const json blob() const override {
-      return *(mData*)this;
+      return *(T*)this;
     };
     protected:
       Clock send_last_Tstamp = 0;
@@ -97,14 +97,14 @@ namespace ₿ {
       };
   };
 
-  template <typename mData> class mStructFromDb: public mFromDb {
+  template <typename T> class mStructFromDb: public mFromDb {
     public:
       const json blob() const override {
-        return *(mData*)this;
+        return *(T*)this;
       };
       void pull(const json &j) override {
         if (!j.empty())
-          from_json(j.at(0), *(mData*)this);
+          from_json(j.at(0), *(T*)this);
         explanation(j.empty());
       };
     protected:
@@ -112,15 +112,15 @@ namespace ₿ {
         return "loaded last % OK";
       };
   };
-  template <typename mData> class mVectorFromDb: public mFromDb {
+  template <typename T> class mVectorFromDb: public mFromDb {
     public:
-      vector<mData> rows;
-      using reference              = typename vector<mData>::reference;
-      using const_reference        = typename vector<mData>::const_reference;
-      using iterator               = typename vector<mData>::iterator;
-      using const_iterator         = typename vector<mData>::const_iterator;
-      using reverse_iterator       = typename vector<mData>::reverse_iterator;
-      using const_reverse_iterator = typename vector<mData>::const_reverse_iterator;
+      vector<T> rows;
+      using reference              = typename vector<T>::reference;
+      using const_reference        = typename vector<T>::const_reference;
+      using iterator               = typename vector<T>::iterator;
+      using const_iterator         = typename vector<T>::const_iterator;
+      using reverse_iterator       = typename vector<T>::reverse_iterator;
+      using const_reverse_iterator = typename vector<T>::const_reverse_iterator;
       iterator                 begin()       noexcept { return rows.begin(); };
       const_iterator           begin() const noexcept { return rows.begin(); };
       const_iterator          cbegin() const noexcept { return rows.cbegin(); };
@@ -141,7 +141,7 @@ namespace ₿ {
         if (size() > limit())
           rows.erase(begin(), end() - limit());
       };
-      virtual void push_back(const mData &row) {
+      virtual void push_back(const T &row) {
         rows.push_back(row);
         push();
         erase();
