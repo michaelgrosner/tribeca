@@ -267,8 +267,6 @@ namespace ₿ {
   void (*Print::display)() = nullptr;
 
   class Rollout {
-    protected:
-      static const Clock rollout;
     public:
       Rollout(/* KMxTWEpb9ig */) {
         clog << Ansi::b(COLOR_GREEN) << K_SOURCE
@@ -304,8 +302,6 @@ namespace ₿ {
         return mods;
       };
   };
-
-  const Clock Rollout::rollout = Tstamp;
 
   class Ending: public Rollout {
     private:
@@ -359,10 +355,10 @@ namespace ₿ {
         epilogue = Ansi::r(COLOR_CYAN) + "Errrror: " + strsignal(sig) + ' ';
         const string mods = changelog();
         if (mods.empty()) {
-          epilogue += "(Three-Headed Monkey found):\n"     + epitaph
-            + "- lastbeat: " + to_string(Tstamp - rollout) + '\n'
-            + "- binbuild: " + string(K_SOURCE)            + ' '
-                             + string(K_BUILD)             + '\n'
+          epilogue += "(Three-Headed Monkey found):\n"                  + epitaph
+            + "- lastbeat: " + to_string((float)clock()/CLOCKS_PER_SEC) + '\n'
+            + "- binbuild: " + string(K_SOURCE)                         + ' '
+                             + string(K_BUILD)                          + '\n'
 #ifndef _WIN32
             + "- tracelog: " + '\n';
           void *k[69];
