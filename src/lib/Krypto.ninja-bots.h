@@ -712,11 +712,11 @@ namespace ₿ {
           SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv3);
           if (crt.empty() or key.empty()) {
             if (!crt.empty())
-              Print::logWar("UI", "Ignored --ssl-crt because --ssl-key is missing");
+              Print::logWar("UI", "Ignored .crt file because .key file is missing");
             if (!key.empty())
-              Print::logWar("UI", "Ignored --ssl-key because --ssl-crt is missing");
+              Print::logWar("UI", "Ignored .key file because .crt file is missing");
             Print::logWar("UI", "Connected web clients will enjoy unsecure SSL encryption..\n"
-              "(because the private key is visible in the source!) consider --ssl-crt and --ssl-key arguments");
+              "(because the private key is visible in the source!). See --help argument to setup your own SSL");
             if (!SSL_CTX_use_certificate(ctx,
               PEM_read_bio_X509(BIO_new_mem_buf((void*)
                 "-----BEGIN CERTIFICATE-----"                                      "\n"
@@ -754,9 +754,9 @@ namespace ₿ {
             )) ctx = nullptr;
           } else {
             if (access(crt.data(), R_OK) == -1)
-              Print::logWar("UI", "Unable to read custom .crt file at " + crt);
+              Print::logWar("UI", "Unable to read SSL .crt file at " + crt);
             if (access(key.data(), R_OK) == -1)
-              Print::logWar("UI", "Unable to read custom .key file at " + key);
+              Print::logWar("UI", "Unable to read SSL .key file at " + key);
             if (!SSL_CTX_use_certificate_chain_file(ctx, crt.data())
               or !SSL_CTX_use_RSAPrivateKey_file(ctx, key.data(), SSL_FILETYPE_PEM)
             ) {
