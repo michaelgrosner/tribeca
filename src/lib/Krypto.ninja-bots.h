@@ -708,8 +708,8 @@ namespace ₿ {
       };
     private:
       SSL_CTX *sslContext(const string &crt, const string &key) {
-        SSL_CTX *ctx = nullptr;
-        if (ctx = SSL_CTX_new(SSLv23_server_method())) {
+        SSL_CTX *ctx = SSL_CTX_new(SSLv23_server_method());
+        if (ctx) {
           SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv3);
           if (crt.empty() or key.empty()) {
             if (!crt.empty())
