@@ -655,11 +655,15 @@ namespace ₿ {
         )>            &wsMessage  = nullptr
       ) {
         auto ui_server = socket->createGroup<uWS::SERVER>(uWS::PERMESSAGE_DEFLATE);
-        if (!ui_server) return nullptr;
-        SSL_CTX *ctx = sslContext(ssl, crt, key);
-        if (!socket->listen(Curl::inet, port, uS::TLS::Context(ctx), 0, ui_server))
-          return nullptr;
-        protocol += string(ctx ? 1 : 0, 'S');
+        if (ui_server) {
+          SSL_CTX *ctx = ssl ? sslContext(crt, key) : nullptr;
+          protocol += string(ctx ? 1 : 0, 'S');
+          if (!socket->listen(Curl::inet, port, uS::TLS::Context(ctx), 0, ui_server))
+            ui_server = nullptr;
+        }
+        if (!ui_server)
+          error("UI", "Unable to listen at port number " + to_string(port)
+            + " (may be already in use by another program)");
         if (httpServer)
           ui_server->onHttpRequest([&](uWS::HttpResponse *res, uWS::HttpRequest req, char *data, size_t length, size_t remainingBytes) {
             if (req.getMethod() != uWS::HttpMethod::METHOD_GET) return;
@@ -702,9 +706,9 @@ namespace ₿ {
         return gw_clients.back();
       };
     private:
-      SSL_CTX *sslContext(const bool &ssl, const string &crt, const string &key) {
+      SSL_CTX *sslContext(const string &crt, const string &key) {
         SSL_CTX *ctx = nullptr;
-        if (ssl and (ctx = SSL_CTX_new(SSLv23_server_method()))) {
+        if (ctx = SSL_CTX_new(SSLv23_server_method())) {
           SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv3);
           if (crt.empty() or key.empty()) {
             if (!crt.empty())

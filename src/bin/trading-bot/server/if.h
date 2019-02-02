@@ -18,10 +18,11 @@ class WorldWideWeb {
     {};
     void listen() {
       if (K.num("headless")) return;
-      if (!(webui = K.listen(protocol, K.num("port"), !K.num("without-ssl"),
-        K.str("ssl-crt"), K.str("ssl-key"), httpServer, wsServer, wsMessage
-      ))) error("UI", "Unable to listen to UI port number " + K.str("port")
-            + " (may be already in use by another program)");
+      webui = K.listen(
+        protocol, K.num("port"),
+        !K.num("without-ssl"), K.str("ssl-crt"), K.str("ssl-key"),
+        httpServer, wsServer, wsMessage
+      );
       K.timer_1s([&](const unsigned int &tick) {
         if (delay and !(tick % delay) and !queue.empty()) {
           vector<string> msgs;
