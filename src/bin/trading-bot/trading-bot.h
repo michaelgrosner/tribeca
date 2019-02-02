@@ -70,7 +70,5 @@ class TradingBot: public KryptoNinja {
 
 #include "server/if.h"
 #include "server/sh.h"
-#include "server/ui.h"
-#include "server/qe.h"
 
 #endif

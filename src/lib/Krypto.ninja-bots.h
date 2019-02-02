@@ -963,19 +963,15 @@ namespace ₿ {
   //! - Walks through minimal runtime steps when wait() is called.
   class Klass {
     protected:
-      virtual void load        ()    {};
-      virtual void waitData    ()   {};
-      virtual void waitWebAdmin(){};
-      virtual void waitSysAdmin()  {};
-      virtual void waitTime    ()  {};
-      virtual void run         ()   {};
+      virtual void load     ()  {};
+      virtual void waitData () {};
+      virtual void waitAdmin(){};
+      virtual void run      () {};
     public:
       void wait() {
         load();
         waitData();
-        waitWebAdmin();
-        waitSysAdmin();
-        waitTime();
+        waitAdmin();
         run();
       };
   };
