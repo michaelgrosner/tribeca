@@ -220,7 +220,7 @@ namespace ₿ {
     double            cleanPongsAuto                  = 0.0;
     double            profitHourInterval              = 0.5;
     bool              audio                           = false;
-    unsigned int      delayUI                         = 7;
+    unsigned int      delayUI                         = 3;
     unsigned int      _diffEwma                       = 0;
     void from_json(const json &j) {
       widthPing                       = fmax(1e-8,            j.value("widthPing", widthPing));

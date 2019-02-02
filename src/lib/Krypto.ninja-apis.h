@@ -473,7 +473,7 @@ namespace ₿ {
 
   class GwExchange: public GwExchangeData {
     public:
-      uWS::Hub *socket = nullptr;
+      uS::Loop *poll = nullptr;
       uWS::Group<uWS::CLIENT>* api = nullptr;
       unsigned int countdown = 0;
         string exchange, symbol,
@@ -490,12 +490,6 @@ namespace ₿ {
                makeFee  = 0,
                takeFee  = 0;
       virtual const json handshake() = 0;
-      void connect() {
-        socket->connect(ws, nullptr, {}, 5e+3, api);
-      };
-      void run() {
-        socket->run();
-      };
       void end(const bool &dustybot = false) {
         if (dustybot)
           log("--dustybot is enabled, remember to cancel manually any open order.");

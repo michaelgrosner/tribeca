@@ -702,6 +702,7 @@ namespace ₿ {
       };
     protected:
       uWS::Group<uWS::CLIENT> *bind() {
+        if (!socket) socket = new uWS::Hub(0, true);
         gw_clients.push_back(socket->createGroup<uWS::CLIENT>());
         return gw_clients.back();
       };
@@ -963,12 +964,12 @@ namespace ₿ {
       };
   };
 
-  //! \brief Deprecated placeholder to avoid spaghetti codes.
+  //! \brief Placeholder to avoid spaghetti codes.
   //! - Walks through minimal runtime steps when wait() is called.
   class Klass {
     protected:
       virtual void load     ()  {};
-      virtual void waitData () {};
+      virtual void waitData (){};
       virtual void waitAdmin(){};
       virtual void run      () {};
     public:
@@ -1018,8 +1019,8 @@ namespace ₿ {
               + " (consider to repeat a few times this check)");
           }
         } {
-          gateway->socket = socket = new uWS::Hub(0, true);
-          gateway->api    = bind();
+          gateway->api  = bind();
+          gateway->poll = socket->getLoop();
           start(socket->getLoop());
           ending([&]() {
             gateway->close();
@@ -1031,7 +1032,8 @@ namespace ₿ {
             return gateway->waitForData();
           });
           timer_1s([&](const unsigned int &tick) {
-            if (gateway->countdown and !--gateway->countdown) gateway->connect();
+            if (gateway->countdown and !--gateway->countdown)
+              socket->connect(gateway->ws, nullptr, {}, 5e+3, gateway->api);
             return gateway->countdown ? false : gateway->askForData(tick);
           });
         } {
@@ -1040,10 +1042,10 @@ namespace ₿ {
         }
         return this;
       };
-      void wait(const vector<Klass*> &k = {}) {
-        if (k.empty()) Klass::wait();
-        else for (Klass *const it : k) it->wait();
-        if (gateway->ready()) gateway->run();
+      void wait(Klass *const k = nullptr) {
+        if (k) k->wait();
+        else Klass::wait();
+        if (gateway->ready()) socket->run();
       };
       void handshake(const vector<pair<string, string>> &notes = {}) {
         const json reply = gateway->handshake();

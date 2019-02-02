@@ -14,9 +14,7 @@ using namespace    ₿;    ;;;;;;;/*(  <>  )`-. Or how my OS breaks,  */ // yout
 #include "trading-bot.h"                                               // youtu.be/dp5hsDgENLk
 
 int main(int argc, char** argv) {
-  K.main(argc, argv)->wait({
-    &engine
-  });
+  K.main(argc, argv)->wait(&engine);
   return EXIT_FAILURE;
 };
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
