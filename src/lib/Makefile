@@ -37,12 +37,10 @@ zlib:
 openssl:
 	test -d $(KBUILD)/openssl-$(V_SSL) || (                                                    \
 	curl -L https://www.openssl.org/source/openssl-$(V_SSL).tar.gz | tar xz -C $(KBUILD)       \
-	&& cd $(KBUILD)/openssl-$(V_SSL) && CC=gcc CPPFLAGS=-DIU=UI_                               \
+	&& cd $(KBUILD)/openssl-$(V_SSL) && CC=gcc                                                 \
 	./Configure $(shell test -n "`echo $(CHOST) | grep mingw32`" && echo mingw64 || echo dist) \
 	--cross-compile-prefix=$(CHOST)- --prefix=$(KBUILD)/local --openssldir=$(KBUILD)/local     \
-	&& make all install_sw install_ssldirs                                                     \
-	&& sed -i "s/\(ui_st UI\)/\1_/" $(KBUILD)/local/include/openssl/ossl_typ.h                 \
-	&& sed -i "s/\(UI\) /\1_ /" $(KBUILD)/local/include/openssl/ui.h                           )
+	&& make all install_sw install_ssldirs                                                     )
 
 ares:
 	test -d $(KBUILD)/c-ares-$(V_ARES) || (                                                  \
@@ -53,7 +51,7 @@ ares:
 curl:
 	test -d $(KBUILD)/curl-$(V_CURL) || (                                                   \
 	curl -L https://curl.haxx.se/download/curl-$(V_CURL).tar.gz | tar xz -C $(KBUILD)       \
-	&& cd $(KBUILD)/curl-$(V_CURL) && sed -i "s/\(UI\) /\1_ /" lib/vtls/openssl.c           \
+	&& cd $(KBUILD)/curl-$(V_CURL)                                                          \
 	&& CPPFLAGS=-DCARES_STATICLIB ./configure --host=$(CHOST) --prefix=$(KBUILD)/local      \
 	--with-ca-bundle=/etc/ssl/certs/ca-certificates.crt                                     \
 	--with-zlib=$(KBUILD)/local --with-ssl=$(KBUILD)/local --enable-ares=$(KBUILD)/local    \
