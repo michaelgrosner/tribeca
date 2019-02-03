@@ -356,6 +356,7 @@ namespace ₿ {
 
   class GwExchangeData {
     public:
+      uWS::Group<uWS::CLIENT> *api = nullptr;
       function<void(const mOrder&)>       write_mOrder;
       function<void(const mTrade&)>       write_mTrade;
       function<void(const mLevels&)>      write_mLevels;
@@ -400,7 +401,7 @@ namespace ₿ {
         );
       };
 //BO non-free Gw library functions from build-*/local/lib/K-*.a (it just redefines all virtual gateway class members below).
-/**/  virtual bool ready() = 0;                                              // wait for exchange and register data handlers
+/**/  virtual bool ready(uS::Loop *const) = 0;                               // wait for exchange and register data handlers
 /**/  virtual void replace(RandId, string) {};                               // call         async orders data from exchange
 /**/  virtual void place(RandId, Side, string, string, OrderType, TimeInForce, bool) = 0,  // async orders, like above/below
 /**/               cancel(RandId, RandId) = 0,                               // call         async orders data from exchange
@@ -408,9 +409,9 @@ namespace ₿ {
 /**/protected:
 /**/  virtual bool            async_wallet() { return false; };              // call         async wallet data from exchange
 /**/  virtual vector<mWallets> sync_wallet() { return {}; };                 // call and read sync wallet data from exchange
-/**/  virtual vector<mLevels>  sync_levels()  { return {}; };                // call and read sync levels data from exchange
-/**/  virtual vector<mTrade>   sync_trades()  { return {}; };                // call and read sync trades data from exchange
-/**/  virtual vector<mOrder>   sync_orders()  { return {}; };                // call and read sync orders data from exchange
+/**/  virtual vector<mLevels>  sync_levels() { return {}; };                 // call and read sync levels data from exchange
+/**/  virtual vector<mTrade>   sync_trades() { return {}; };                 // call and read sync trades data from exchange
+/**/  virtual vector<mOrder>   sync_orders() { return {}; };                 // call and read sync orders data from exchange
 /**/  virtual vector<mOrder>   sync_cancelAll() = 0;                         // call and read sync orders data from exchange
 //EO non-free Gw library functions from build-*/local/lib/K-*.a (it just redefines all virtual gateway class members above).
       future<vector<mWallets>> replyWallets;
@@ -446,9 +447,9 @@ namespace ₿ {
              | waitFor(replyLevels,    write_mLevels)
              | waitFor(replyTrades,    write_mTrade);
       };
-      template<typename T, typename syncFn> const bool askFor(
-              future<vector<T>> &reply,
-        const syncFn            &read
+      template<typename T1, typename T2> const bool askFor(
+              future<vector<T1>> &reply,
+        const T2                 &read
       ) {
         bool waiting = reply.valid();
         if (!waiting) {
@@ -473,8 +474,6 @@ namespace ₿ {
 
   class GwExchange: public GwExchangeData {
     public:
-      uS::Loop *poll = nullptr;
-      uWS::Group<uWS::CLIENT>* api = nullptr;
       unsigned int countdown = 0;
         string exchange, symbol,
                apikey,   secret,

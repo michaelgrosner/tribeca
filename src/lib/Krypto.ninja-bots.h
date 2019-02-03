@@ -1019,8 +1019,7 @@ namespace ₿ {
               + " (consider to repeat a few times this check)");
           }
         } {
-          gateway->api  = bind();
-          gateway->poll = socket->getLoop();
+          gateway->api = bind();
           start(socket->getLoop());
           ending([&]() {
             gateway->close();
@@ -1045,7 +1044,8 @@ namespace ₿ {
       void wait(Klass *const k = nullptr) {
         if (k) k->wait();
         else Klass::wait();
-        if (gateway->ready()) socket->run();
+        if (gateway->ready(socket->getLoop()))
+          socket->run();
       };
       void handshake(const vector<pair<string, string>> &notes = {}) {
         const json reply = gateway->handshake();
