@@ -2,7 +2,7 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
 PATCH    = 12
-BUILD    = 14
+BUILD    = 13
 SOURCE  := $(notdir $(wildcard src/bin/*))
 CARCH    = x86_64-linux-gnu      \
            arm-linux-gnueabihf   \
@@ -12,20 +12,22 @@ CARCH    = x86_64-linux-gnu      \
 
 CHOST   ?= $(shell (test -d .git && test -n "`command -v g++`") && g++ -dumpmachine \
              || echo $(subst build-,,$(firstword $(wildcard build-*))))
-KLOCAL  := build-$(shell echo $(CHOST) | cut -d- -f-2)/local
+
+KHOST   := $(shell echo $(CHOST) | sed 's/\([a-z_0-9]*\)-\([a-z_0-9]*\)-.*/\2-\1/' | sed 's/^w64/win64/')
+KLOCAL  := build-$(KHOST)/local
 
 ERR      = *** K require g++ v7 or greater, but it was not found.
 HINT    := consider a symlink at /usr/bin/$(CHOST)-g++ pointing to your g++-7 or g++-8 executable
 
 STEP     = $(shell tput setaf 2;tput setab 0)Building $(1)..$(shell tput sgr0)
 KARGS   := -pthread -std=c++17 -O3 -I$(realpath src/lib)  \
-  -DK_BUILD='"$(shell echo $(CHOST) | cut -d- -f-2)"'     \
+  -DK_BUILD='"$(KHOST)"'                                  \
   -DK_SOURCE='"K-$(KSRC)"' -DK_0_GIT='"$(shell            \
   cat .git/refs/heads/master 2>/dev/null || echo HEAD)"'  \
   -DK_STAMP='"$(shell date "+%Y-%m-%d %H:%M:%S")"'        \
   -DK_0_DAY='"v$(MAJOR).$(MINOR).$(PATCH)+$(BUILD)"'      \
   -I$(KLOCAL)/include         $(KLOCAL)/include/uWS/*.cpp \
-  $(KLOCAL)/lib/K-$(shell echo $(CHOST) | cut -d- -f-2).a \
+  $(KLOCAL)/lib/K-$(KHOST).a                              \
   $(KLOCAL)/lib/libquickfix.a $(KLOCAL)/lib/libsqlite3.a  \
   $(KLOCAL)/lib/libz.a        $(KLOCAL)/lib/libcurl.a     \
   $(KLOCAL)/lib/libssl.a      $(KLOCAL)/lib/libcrypto.a   \
@@ -85,7 +87,7 @@ ifdef KALL
 	unset KALL $(foreach chost,$(CARCH),&& $(MAKE) $@ CHOST=$(chost))
 else
 	$(if $(subst 8,,$(subst 7,,$(shell $(CHOST)-g++ -dumpversion | cut -d. -f1))),$(warning $(ERR));$(error $(HINT)))
-	@$(MAKE) -C src/lib $@ CHOST=$(CHOST)
+	@$(MAKE) -C src/lib $@ CHOST=$(CHOST) KHOST=$(KHOST)
 endif
 
 $(SOURCE):
@@ -96,7 +98,7 @@ assets: src/bin/$(KSRC)/Makefile
 	$(info $(call STEP,$(KSRC) $@))
 	$(MAKE) -C src/bin/$(KSRC) KASSETS=$(abspath $(KLOCAL)/assets)
 	$(foreach chost,$(subst $(CHOST),,$(CARCH)) $(CHOST), \
-	  assets=build-$(shell echo $(chost) | cut -d- -f-2)/local/assets  \
+	  assets=build-$(shell echo $(chost) | sed 's/\([a-z_0-9]*\)-\([a-z_0-9]*\)-.*/\2-\1/' | sed 's/^w64/win64/')/local/assets  \
 	  && ! test -d $(abspath $${assets}/../..) || ((test -d $${assets} \
 	  || cp -R $(KLOCAL)/assets $${assets})                            \
 	  && $(MAKE) assets.o CHOST=$(chost) && rm -rf $${assets})         \
@@ -148,7 +150,7 @@ Win32: src/bin/$(KSRC)/$(KSRC).cxx
 	  -static -lstdc++ -lgcc -lwldap32 -lws2_32
 
 download:
-	curl -L https://github.com/ctubio/Krypto-trading-bot/releases/download/$(MAJOR).$(MINOR).x/K-$(MAJOR).$(MINOR).$(PATCH).$(BUILD)-$(shell echo $(CHOST) | cut -d- -f-2).tar.gz | tar xz
+	curl -L https://github.com/ctubio/Krypto-trading-bot/releases/download/$(MAJOR).$(MINOR).x/K-$(MAJOR).$(MINOR).$(PATCH).$(BUILD)-$(KHOST).tar.gz | tar xz
 	@$(MAKE) system_install -s
 	@test -n "`ls *.sh 2>/dev/null`" || (cp etc/K.sh.dist K.sh && chmod +x K.sh)
 	@$(MAKE) upgrade_old_installations -s
@@ -295,7 +297,7 @@ release:
 ifdef KALL
 	unset KALL $(foreach chost,$(CARCH),&& $(MAKE) $@ CHOST=$(chost))
 else ifndef KTARGZ
-	@$(MAKE) KTARGZ="K-$(MAJOR).$(MINOR).$(PATCH).$(BUILD)-$(shell echo $(CHOST) | cut -d- -f-2).tar.gz" $@
+	@$(MAKE) KTARGZ="K-$(MAJOR).$(MINOR).$(PATCH).$(BUILD)-$(KHOST).tar.gz" $@
 else
 	@tar -cvzf $(KTARGZ) $(KLOCAL)/bin/K-* $(KLOCAL)/lib/K-* LICENSE COPYING README.md Makefile doc/[^html]* etc test             \
 	$(shell test -n "`echo $(CHOST) | grep mingw32`" && echo $(KLOCAL)/bin/*dll || :) src                                         \
