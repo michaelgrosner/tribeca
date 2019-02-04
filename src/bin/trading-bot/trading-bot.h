@@ -40,7 +40,6 @@ class TradingBot: public KryptoNinja {
         {"matryoshka",   "URL",    "https://example.com/", "set Matryoshka link URL of the next UI"},
         {"ignore-sun",   "2",      nullptr,                "do not switch UI to light theme on daylight"},
         {"ignore-moon",  "1",      nullptr,                "do not switch UI to dark theme on moonlight"},
-        {"autobot",      "1",      nullptr,                "automatically start trading on boot"},
         {"debug-orders", "1",      nullptr,                "print detailed output about exchange messages"},
         {"debug-quotes", "1",      nullptr,                "print detailed output about quoting engine"},
         {"debug-wallet", "1",      nullptr,                "print detailed output about target base position"}
@@ -84,7 +83,6 @@ class WorldWideWeb {
       : delay(d)
     {};
     void listen() {
-      if (K.num("headless")) return;
       webui = K.listen(
         protocol, K.num("port"),
         !K.num("without-ssl"), K.str("ssl-crt"), K.str("ssl-key"),
@@ -365,30 +363,6 @@ code( broker.semaphore      , void                             ,           )
       cancelOrder(orders.find(orderId));
     };
   protected:
-    void load() override {
-      {
-        SQLITE_BACKUP
-      } {
-        K.timer_ticks_factor(qp.delayUI);
-        broker.calculon.dummyMM.mode("loaded");
-      } {
-        broker.semaphore.agree(K.num("autobot"));
-        K.timer_1s([&](const unsigned int &tick) {
-          if (!K.gateway->countdown and !levels.warn_empty()) {
-            levels.timer_1s();
-            if (!(tick % 60)) {
-              levels.timer_60s();
-              monitor.timer_60s();
-            }
-            wallet.safety.timer_1s();
-            calcQuotes();
-          }
-          return false;
-        });
-        client.listen();
-        K.gateway->askForCancelAll = &qp.cancelOrdersAuto;
-      }
-    };
     void waitData() override {
       K.gateway->write_Connectivity = [&](const Connectivity &rawdata) {
         broker.semaphore.read_from_gw(rawdata);
@@ -410,21 +384,34 @@ code( broker.semaphore      , void                             ,           )
       K.gateway->write_mTrade = [&](const mTrade &rawdata) {
         levels.stats.takerTrades.read_from_gw(rawdata);
       };
+      SQLITE_BACKUP
     };
     void waitAdmin() override {
+      if (!K.num("headless")) client.listen();
       CLIENT_WELCOME
       CLIENT_CLICKME
       HOTKEYS
     };
     void run() override {
-      K.handshake({
-        {"gateway", K.gateway->http },
-        {"gateway", K.gateway->ws   },
-        {"gateway", K.gateway->fix  },
-        {"autoBot", K.num("autobot")
-                      ? "yes"
-                      : "no"        }
-      });
+      {
+        K.timer_ticks_factor(qp.delayUI);
+        broker.calculon.dummyMM.mode("loaded");
+      } {
+        broker.semaphore.agree(K.num("autobot"));
+        K.timer_1s([&](const unsigned int &tick) {
+          if (!K.gateway->countdown and !levels.warn_empty()) {
+            levels.timer_1s();
+            if (!(tick % 60)) {
+              levels.timer_60s();
+              monitor.timer_60s();
+            }
+            wallet.safety.timer_1s();
+            calcQuotes();
+          }
+          return false;
+        });
+        K.gateway->askForCancelAll = &qp.cancelOrdersAuto;
+      }
     };
   private:
     void calcQuotes() {

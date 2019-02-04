@@ -5,6 +5,7 @@ class HelloWorld: public KryptoNinja {
   public:
     HelloWorld()
     {
+      autobot   = true;
       arguments = { {
         {"subject", "NAME", "World", "say hello to NAME (default: 'World')"}
       }, [](

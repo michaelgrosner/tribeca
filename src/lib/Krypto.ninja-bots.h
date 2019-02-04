@@ -404,6 +404,7 @@ namespace ₿ {
 
   class Option {
     protected:
+      bool autobot   = false;
       bool databases = false;
       pair<vector<Argument>, function<void(
         unordered_map<string, string> &,
@@ -450,12 +451,16 @@ namespace ₿ {
       };
     protected:
       void main(int argc, char** argv) {
-        optint["naked"] = !Print::display;
+        optint["autobot"] = autobot;
+        optint["naked"]   = !Print::display;
         vector<Argument> long_options = {
           {"help",         "h",      nullptr,  "show this help and quit"},
           {"version",      "v",      nullptr,  "show current build version and quit"},
           {"latency",      "1",      nullptr,  "check current HTTP latency (not from WS) and quit"}
         };
+        if (!autobot) long_options.push_back(
+          {"autobot",      "1",      nullptr,  "automatically start trading on boot"}
+        );;
         if (Print::display) long_options.push_back(
           {"naked",        "1",      nullptr,  "do not display CLI, print output to stdout instead"}
         );
@@ -968,13 +973,11 @@ namespace ₿ {
   //! - Walks through minimal runtime steps when wait() is called.
   class Klass {
     protected:
-      virtual void load     ()  {};
-      virtual void waitData (){};
+      virtual void waitData () {};
       virtual void waitAdmin(){};
       virtual void run      () {};
     public:
       void wait() {
-        load();
         waitData();
         waitAdmin();
         run();
@@ -1034,6 +1037,15 @@ namespace ₿ {
             if (gateway->countdown and !--gateway->countdown)
               socket->connect(gateway->ws, nullptr, {}, 5e+3, gateway->api);
             return gateway->countdown ? false : gateway->askForData(tick);
+          });
+        } {
+          handshake({
+            {"gateway", gateway->http },
+            {"gateway", gateway->ws   },
+            {"gateway", gateway->fix  },
+            {"autoBot", num("autobot")
+                          ? "yes"
+                          : "no"      }
           });
         } {
           if (databases)
