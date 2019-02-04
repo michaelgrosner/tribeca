@@ -280,7 +280,8 @@ class Engine: public Klass {
             mBroker broker;
   public:
     Engine()
-      : client(qp.delayUI)
+      : qp(K)
+      , client(qp.delayUI)
       , monitor(K)
       , product(K)
       , orders(K)

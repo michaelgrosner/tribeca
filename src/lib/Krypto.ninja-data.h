@@ -103,8 +103,7 @@ namespace ₿ {
         return *(T*)this;
       };
       void pull(const json &j) override {
-        if (!j.empty())
-          from_json(j.at(0), *(T*)this);
+        from_json(j.empty() ? blob() : j.at(0), *(T*)this);
         explanation(j.empty());
       };
     protected:
@@ -162,152 +161,158 @@ namespace ₿ {
 
   struct mQuotingParams: public mStructFromDb<mQuotingParams>,
                          public mJsonToClient<mQuotingParams> {
-    Price             widthPing                       = 300.0;
-    double            widthPingPercentage             = 0.25;
-    Price             widthPong                       = 300.0;
-    double            widthPongPercentage             = 0.25;
-    bool              widthPercentage                 = false;
-    bool              bestWidth                       = true;
-    Amount            bestWidthSize                   = 0;
-    Amount            buySize                         = 0.02;
-    unsigned int      buySizePercentage               = 7;
-    bool              buySizeMax                      = false;
-    Amount            sellSize                        = 0.01;
-    unsigned int      sellSizePercentage              = 7;
-    bool              sellSizeMax                     = false;
-    mPingAt           pingAt                          = mPingAt::BothSides;
-    mPongAt           pongAt                          = mPongAt::ShortPingFair;
-    mQuotingMode      mode                            = mQuotingMode::Top;
-    mQuotingSafety    safety                          = mQuotingSafety::PingPong;
-    unsigned int      bullets                         = 2;
-    Price             range                           = 0.5;
-    double            rangePercentage                 = 5.0;
-    mFairValueModel   fvModel                         = mFairValueModel::BBO;
-    Amount            targetBasePosition              = 1.0;
-    unsigned int      targetBasePositionPercentage    = 50;
-    Amount            positionDivergence              = 0.9;
-    Amount            positionDivergenceMin           = 0.4;
-    unsigned int      positionDivergencePercentage    = 21;
-    unsigned int      positionDivergencePercentageMin = 10;
-    mPDivMode         positionDivergenceMode          = mPDivMode::Manual;
-    bool              percentageValues                = false;
-    mAutoPositionMode autoPositionMode                = mAutoPositionMode::EWMA_LS;
-    mAPR              aggressivePositionRebalancing   = mAPR::Off;
-    mSOP              superTrades                     = mSOP::Off;
-    double            tradesPerMinute                 = 0.9;
-    unsigned int      tradeRateSeconds                = 3;
-    bool              protectionEwmaWidthPing         = false;
-    bool              protectionEwmaQuotePrice        = true;
-    unsigned int      protectionEwmaPeriods           = 200;
-    mSTDEV            quotingStdevProtection          = mSTDEV::Off;
-    bool              quotingStdevBollingerBands      = false;
-    double            quotingStdevProtectionFactor    = 1.0;
-    unsigned int      quotingStdevProtectionPeriods   = 1200;
-    double            ewmaSensiblityPercentage        = 0.5;
-    bool              quotingEwmaTrendProtection      = false;
-    double            quotingEwmaTrendThreshold       = 2.0;
-    unsigned int      veryLongEwmaPeriods             = 400;
-    unsigned int      longEwmaPeriods                 = 200;
-    unsigned int      mediumEwmaPeriods               = 100;
-    unsigned int      shortEwmaPeriods                = 50;
-    unsigned int      extraShortEwmaPeriods           = 12;
-    unsigned int      ultraShortEwmaPeriods           = 3;
-    double            aprMultiplier                   = 2;
-    double            sopWidthMultiplier              = 2;
-    double            sopSizeMultiplier               = 2;
-    double            sopTradesMultiplier             = 2;
-    bool              cancelOrdersAuto                = false;
-    double            cleanPongsAuto                  = 0.0;
-    double            profitHourInterval              = 0.5;
-    bool              audio                           = false;
-    unsigned int      delayUI                         = 3;
-    unsigned int      _diffEwma                       = 0;
-    void from_json(const json &j) {
-      widthPing                       = fmax(1e-8,            j.value("widthPing", widthPing));
-      widthPingPercentage             = fmin(1e+5, fmax(1e-4, j.value("widthPingPercentage", widthPingPercentage)));
-      widthPong                       = fmax(1e-8,            j.value("widthPong", widthPong));
-      widthPongPercentage             = fmin(1e+5, fmax(1e-4, j.value("widthPongPercentage", widthPongPercentage)));
-      widthPercentage                 =                       j.value("widthPercentage", widthPercentage);
-      bestWidth                       =                       j.value("bestWidth", bestWidth);
-      bestWidthSize                   = fmax(0,               j.value("bestWidthSize", bestWidthSize));
-      buySize                         = fmax(1e-8,            j.value("buySize", buySize));
-      buySizePercentage               = fmin(1e+2, fmax(1,    j.value("buySizePercentage", buySizePercentage)));
-      buySizeMax                      =                       j.value("buySizeMax", buySizeMax);
-      sellSize                        = fmax(1e-8,            j.value("sellSize", sellSize));
-      sellSizePercentage              = fmin(1e+2, fmax(1,    j.value("sellSizePercentage", sellSizePercentage)));
-      sellSizeMax                     =                       j.value("sellSizeMax", sellSizeMax);
-      pingAt                          =                       j.value("pingAt", pingAt);
-      pongAt                          =                       j.value("pongAt", pongAt);
-      mode                            =                       j.value("mode", mode);
-      safety                          =                       j.value("safety", safety);
-      bullets                         = fmin(10, fmax(1,      j.value("bullets", bullets)));
-      range                           =                       j.value("range", range);
-      rangePercentage                 = fmin(1e+2, fmax(1e-3, j.value("rangePercentage", rangePercentage)));
-      fvModel                         =                       j.value("fvModel", fvModel);
-      targetBasePosition              =                       j.value("targetBasePosition", targetBasePosition);
-      targetBasePositionPercentage    = fmin(1e+2, fmax(0,    j.value("targetBasePositionPercentage", targetBasePositionPercentage)));
-      positionDivergenceMin           =                       j.value("positionDivergenceMin", positionDivergenceMin);
-      positionDivergenceMode          =                       j.value("positionDivergenceMode", positionDivergenceMode);
-      positionDivergence              =                       j.value("positionDivergence", positionDivergence);
-      positionDivergencePercentage    = fmin(1e+2, fmax(0,    j.value("positionDivergencePercentage", positionDivergencePercentage)));
-      positionDivergencePercentageMin = fmin(1e+2, fmax(0,    j.value("positionDivergencePercentageMin", positionDivergencePercentageMin)));
-      percentageValues                =                       j.value("percentageValues", percentageValues);
-      autoPositionMode                =                       j.value("autoPositionMode", autoPositionMode);
-      aggressivePositionRebalancing   =                       j.value("aggressivePositionRebalancing", aggressivePositionRebalancing);
-      superTrades                     =                       j.value("superTrades", superTrades);
-      tradesPerMinute                 =                       j.value("tradesPerMinute", tradesPerMinute);
-      tradeRateSeconds                = fmax(0,               j.value("tradeRateSeconds", tradeRateSeconds));
-      protectionEwmaWidthPing         =                       j.value("protectionEwmaWidthPing", protectionEwmaWidthPing);
-      protectionEwmaQuotePrice        =                       j.value("protectionEwmaQuotePrice", protectionEwmaQuotePrice);
-      protectionEwmaPeriods           = fmax(1,               j.value("protectionEwmaPeriods", protectionEwmaPeriods));
-      quotingStdevProtection          =                       j.value("quotingStdevProtection", quotingStdevProtection);
-      quotingStdevBollingerBands      =                       j.value("quotingStdevBollingerBands", quotingStdevBollingerBands);
-      quotingStdevProtectionFactor    =                       j.value("quotingStdevProtectionFactor", quotingStdevProtectionFactor);
-      quotingStdevProtectionPeriods   = fmax(1,               j.value("quotingStdevProtectionPeriods", quotingStdevProtectionPeriods));
-      ewmaSensiblityPercentage        =                       j.value("ewmaSensiblityPercentage", ewmaSensiblityPercentage);
-      quotingEwmaTrendProtection      =                       j.value("quotingEwmaTrendProtection", quotingEwmaTrendProtection);
-      quotingEwmaTrendThreshold       =                       j.value("quotingEwmaTrendThreshold", quotingEwmaTrendThreshold);
-      veryLongEwmaPeriods             = fmax(1,               j.value("veryLongEwmaPeriods", veryLongEwmaPeriods));
-      longEwmaPeriods                 = fmax(1,               j.value("longEwmaPeriods", longEwmaPeriods));
-      mediumEwmaPeriods               = fmax(1,               j.value("mediumEwmaPeriods", mediumEwmaPeriods));
-      shortEwmaPeriods                = fmax(1,               j.value("shortEwmaPeriods", shortEwmaPeriods));
-      extraShortEwmaPeriods           = fmax(1,               j.value("extraShortEwmaPeriods", extraShortEwmaPeriods));
-      ultraShortEwmaPeriods           = fmax(1,               j.value("ultraShortEwmaPeriods", ultraShortEwmaPeriods));
-      aprMultiplier                   =                       j.value("aprMultiplier", aprMultiplier);
-      sopWidthMultiplier              =                       j.value("sopWidthMultiplier", sopWidthMultiplier);
-      sopSizeMultiplier               =                       j.value("sopSizeMultiplier", sopSizeMultiplier);
-      sopTradesMultiplier             =                       j.value("sopTradesMultiplier", sopTradesMultiplier);
-      cancelOrdersAuto                =                       j.value("cancelOrdersAuto", cancelOrdersAuto);
-      cleanPongsAuto                  =                       j.value("cleanPongsAuto", cleanPongsAuto);
-      profitHourInterval              =                       j.value("profitHourInterval", profitHourInterval);
-      audio                           =                       j.value("audio", audio);
-      delayUI                         = fmax(0,               j.value("delayUI", delayUI));
-      if (mode == mQuotingMode::Depth)
-        widthPercentage = false;
-    };
-    void kiss(json *const j) override {
-      const vector<unsigned int> previous = {
-        veryLongEwmaPeriods,
-        longEwmaPeriods,
-        mediumEwmaPeriods,
-        shortEwmaPeriods,
-        extraShortEwmaPeriods,
-        ultraShortEwmaPeriods
+    private_ref:
+      const KryptoNinja &bot;
+    public:
+      mQuotingParams(const KryptoNinja &k)
+        : bot(k)
+      {};
+      Price             widthPing                       = 300.0;
+      double            widthPingPercentage             = 0.25;
+      Price             widthPong                       = 300.0;
+      double            widthPongPercentage             = 0.25;
+      bool              widthPercentage                 = false;
+      bool              bestWidth                       = true;
+      Amount            bestWidthSize                   = 0;
+      Amount            buySize                         = 0.02;
+      unsigned int      buySizePercentage               = 7;
+      bool              buySizeMax                      = false;
+      Amount            sellSize                        = 0.01;
+      unsigned int      sellSizePercentage              = 7;
+      bool              sellSizeMax                     = false;
+      mPingAt           pingAt                          = mPingAt::BothSides;
+      mPongAt           pongAt                          = mPongAt::ShortPingFair;
+      mQuotingMode      mode                            = mQuotingMode::Top;
+      mQuotingSafety    safety                          = mQuotingSafety::PingPong;
+      unsigned int      bullets                         = 2;
+      Price             range                           = 0.5;
+      double            rangePercentage                 = 5.0;
+      mFairValueModel   fvModel                         = mFairValueModel::BBO;
+      Amount            targetBasePosition              = 1.0;
+      unsigned int      targetBasePositionPercentage    = 50;
+      Amount            positionDivergence              = 0.9;
+      Amount            positionDivergenceMin           = 0.4;
+      unsigned int      positionDivergencePercentage    = 21;
+      unsigned int      positionDivergencePercentageMin = 10;
+      mPDivMode         positionDivergenceMode          = mPDivMode::Manual;
+      bool              percentageValues                = false;
+      mAutoPositionMode autoPositionMode                = mAutoPositionMode::EWMA_LS;
+      mAPR              aggressivePositionRebalancing   = mAPR::Off;
+      mSOP              superTrades                     = mSOP::Off;
+      double            tradesPerMinute                 = 0.9;
+      unsigned int      tradeRateSeconds                = 3;
+      bool              protectionEwmaWidthPing         = false;
+      bool              protectionEwmaQuotePrice        = true;
+      unsigned int      protectionEwmaPeriods           = 200;
+      mSTDEV            quotingStdevProtection          = mSTDEV::Off;
+      bool              quotingStdevBollingerBands      = false;
+      double            quotingStdevProtectionFactor    = 1.0;
+      unsigned int      quotingStdevProtectionPeriods   = 1200;
+      double            ewmaSensiblityPercentage        = 0.5;
+      bool              quotingEwmaTrendProtection      = false;
+      double            quotingEwmaTrendThreshold       = 2.0;
+      unsigned int      veryLongEwmaPeriods             = 400;
+      unsigned int      longEwmaPeriods                 = 200;
+      unsigned int      mediumEwmaPeriods               = 100;
+      unsigned int      shortEwmaPeriods                = 50;
+      unsigned int      extraShortEwmaPeriods           = 12;
+      unsigned int      ultraShortEwmaPeriods           = 3;
+      double            aprMultiplier                   = 2;
+      double            sopWidthMultiplier              = 2;
+      double            sopSizeMultiplier               = 2;
+      double            sopTradesMultiplier             = 2;
+      bool              cancelOrdersAuto                = false;
+      double            cleanPongsAuto                  = 0.0;
+      double            profitHourInterval              = 0.5;
+      bool              audio                           = false;
+      unsigned int      delayUI                         = 3;
+      unsigned int      _diffEwma                       = 0;
+      void from_json(const json &j) {
+        widthPing                       = fmax(bot.gateway->minTick, j.value("widthPing", widthPing));
+        widthPingPercentage             = fmin(1e+5, fmax(1e-4,      j.value("widthPingPercentage", widthPingPercentage)));
+        widthPong                       = fmax(bot.gateway->minTick, j.value("widthPong", widthPong));
+        widthPongPercentage             = fmin(1e+5, fmax(1e-4,      j.value("widthPongPercentage", widthPongPercentage)));
+        widthPercentage                 =                            j.value("widthPercentage", widthPercentage);
+        bestWidth                       =                            j.value("bestWidth", bestWidth);
+        bestWidthSize                   = fmax(0,                    j.value("bestWidthSize", bestWidthSize));
+        buySize                         = fmax(bot.gateway->minSize, j.value("buySize", buySize));
+        buySizePercentage               = fmin(1e+2, fmax(1,         j.value("buySizePercentage", buySizePercentage)));
+        buySizeMax                      =                            j.value("buySizeMax", buySizeMax);
+        sellSize                        = fmax(bot.gateway->minSize, j.value("sellSize", sellSize));
+        sellSizePercentage              = fmin(1e+2, fmax(1,         j.value("sellSizePercentage", sellSizePercentage)));
+        sellSizeMax                     =                            j.value("sellSizeMax", sellSizeMax);
+        pingAt                          =                            j.value("pingAt", pingAt);
+        pongAt                          =                            j.value("pongAt", pongAt);
+        mode                            =                            j.value("mode", mode);
+        safety                          =                            j.value("safety", safety);
+        bullets                         = fmin(10, fmax(1,           j.value("bullets", bullets)));
+        range                           =                            j.value("range", range);
+        rangePercentage                 = fmin(1e+2, fmax(1e-3,      j.value("rangePercentage", rangePercentage)));
+        fvModel                         =                            j.value("fvModel", fvModel);
+        targetBasePosition              =                            j.value("targetBasePosition", targetBasePosition);
+        targetBasePositionPercentage    = fmin(1e+2, fmax(0,         j.value("targetBasePositionPercentage", targetBasePositionPercentage)));
+        positionDivergenceMin           =                            j.value("positionDivergenceMin", positionDivergenceMin);
+        positionDivergenceMode          =                            j.value("positionDivergenceMode", positionDivergenceMode);
+        positionDivergence              =                            j.value("positionDivergence", positionDivergence);
+        positionDivergencePercentage    = fmin(1e+2, fmax(0,         j.value("positionDivergencePercentage", positionDivergencePercentage)));
+        positionDivergencePercentageMin = fmin(1e+2, fmax(0,         j.value("positionDivergencePercentageMin", positionDivergencePercentageMin)));
+        percentageValues                =                            j.value("percentageValues", percentageValues);
+        autoPositionMode                =                            j.value("autoPositionMode", autoPositionMode);
+        aggressivePositionRebalancing   =                            j.value("aggressivePositionRebalancing", aggressivePositionRebalancing);
+        superTrades                     =                            j.value("superTrades", superTrades);
+        tradesPerMinute                 =                            j.value("tradesPerMinute", tradesPerMinute);
+        tradeRateSeconds                = fmax(0,                    j.value("tradeRateSeconds", tradeRateSeconds));
+        protectionEwmaWidthPing         =                            j.value("protectionEwmaWidthPing", protectionEwmaWidthPing);
+        protectionEwmaQuotePrice        =                            j.value("protectionEwmaQuotePrice", protectionEwmaQuotePrice);
+        protectionEwmaPeriods           = fmax(1,                    j.value("protectionEwmaPeriods", protectionEwmaPeriods));
+        quotingStdevProtection          =                            j.value("quotingStdevProtection", quotingStdevProtection);
+        quotingStdevBollingerBands      =                            j.value("quotingStdevBollingerBands", quotingStdevBollingerBands);
+        quotingStdevProtectionFactor    =                            j.value("quotingStdevProtectionFactor", quotingStdevProtectionFactor);
+        quotingStdevProtectionPeriods   = fmax(1,                    j.value("quotingStdevProtectionPeriods", quotingStdevProtectionPeriods));
+        ewmaSensiblityPercentage        =                            j.value("ewmaSensiblityPercentage", ewmaSensiblityPercentage);
+        quotingEwmaTrendProtection      =                            j.value("quotingEwmaTrendProtection", quotingEwmaTrendProtection);
+        quotingEwmaTrendThreshold       =                            j.value("quotingEwmaTrendThreshold", quotingEwmaTrendThreshold);
+        veryLongEwmaPeriods             = fmax(1,                    j.value("veryLongEwmaPeriods", veryLongEwmaPeriods));
+        longEwmaPeriods                 = fmax(1,                    j.value("longEwmaPeriods", longEwmaPeriods));
+        mediumEwmaPeriods               = fmax(1,                    j.value("mediumEwmaPeriods", mediumEwmaPeriods));
+        shortEwmaPeriods                = fmax(1,                    j.value("shortEwmaPeriods", shortEwmaPeriods));
+        extraShortEwmaPeriods           = fmax(1,                    j.value("extraShortEwmaPeriods", extraShortEwmaPeriods));
+        ultraShortEwmaPeriods           = fmax(1,                    j.value("ultraShortEwmaPeriods", ultraShortEwmaPeriods));
+        aprMultiplier                   =                            j.value("aprMultiplier", aprMultiplier);
+        sopWidthMultiplier              =                            j.value("sopWidthMultiplier", sopWidthMultiplier);
+        sopSizeMultiplier               =                            j.value("sopSizeMultiplier", sopSizeMultiplier);
+        sopTradesMultiplier             =                            j.value("sopTradesMultiplier", sopTradesMultiplier);
+        cancelOrdersAuto                =                            j.value("cancelOrdersAuto", cancelOrdersAuto);
+        cleanPongsAuto                  =                            j.value("cleanPongsAuto", cleanPongsAuto);
+        profitHourInterval              =                            j.value("profitHourInterval", profitHourInterval);
+        audio                           =                            j.value("audio", audio);
+        delayUI                         = fmax(0,                    j.value("delayUI", delayUI));
+        if (mode == mQuotingMode::Depth)
+          widthPercentage = false;
       };
-      from_json(*j);
-      _diffEwma = 0;
-      _diffEwma |= (previous[0] != veryLongEwmaPeriods)   << 0;
-      _diffEwma |= (previous[1] != longEwmaPeriods)       << 1;
-      _diffEwma |= (previous[2] != mediumEwmaPeriods)     << 2;
-      _diffEwma |= (previous[3] != shortEwmaPeriods)      << 3;
-      _diffEwma |= (previous[4] != extraShortEwmaPeriods) << 4;
-      _diffEwma |= (previous[5] != ultraShortEwmaPeriods) << 5;
-      push();
-      send();
-    };
-    const mMatter about() const override {
-      return mMatter::QuotingParameters;
-    };
+      void kiss(json *const j) override {
+        const vector<unsigned int> previous = {
+          veryLongEwmaPeriods,
+          longEwmaPeriods,
+          mediumEwmaPeriods,
+          shortEwmaPeriods,
+          extraShortEwmaPeriods,
+          ultraShortEwmaPeriods
+        };
+        from_json(*j);
+        _diffEwma = 0;
+        _diffEwma |= (previous[0] != veryLongEwmaPeriods)   << 0;
+        _diffEwma |= (previous[1] != longEwmaPeriods)       << 1;
+        _diffEwma |= (previous[2] != mediumEwmaPeriods)     << 2;
+        _diffEwma |= (previous[3] != shortEwmaPeriods)      << 3;
+        _diffEwma |= (previous[4] != extraShortEwmaPeriods) << 4;
+        _diffEwma |= (previous[5] != ultraShortEwmaPeriods) << 5;
+        push();
+        send();
+      };
+      const mMatter about() const override {
+        return mMatter::QuotingParameters;
+      };
     protected:
       const string explain() const override {
         return "Quoting Parameters";
@@ -2443,7 +2448,7 @@ namespace ₿ {
               wallet.base.total
             ),
             bot.gateway->minSize
-          ) / 1e-8) * 1e-8;
+          ) / bot.gateway->minSize) * bot.gateway->minSize;
         if (!quotes.bid.empty())
           quotes.bid.size = floor(fmax(
             fmin(
@@ -2451,7 +2456,7 @@ namespace ₿ {
               wallet.quote.total / levels.fairValue
             ),
             bot.gateway->minSize
-          ) / 1e-8) * 1e-8;
+          ) / bot.gateway->minSize) * bot.gateway->minSize;
       };
       void applyDepleted() {
         if (quotes.bid.size > wallet.quote.total / levels.fairValue)

@@ -111,7 +111,7 @@ namespace ₿ {
       K.gateway->minTick = 0.01;
       K.gateway->minSize = 0.001;
       mOrders orders(K);
-      mQuotingParams qp;
+      mQuotingParams qp(K);
       mMarketLevels levels(K, orders, qp);
       WHEN("defaults") {
         THEN("fair value") {
@@ -225,7 +225,11 @@ namespace ₿ {
     }
 
     GIVEN("mRecentTrades") {
-      mQuotingParams qp;
+      KryptoNinja K;
+      K.gateway = Gw::new_Gw("NULL");
+      K.gateway->minTick = 0.01;
+      K.gateway->minSize = 0.001;
+      mQuotingParams qp(K);
       mRecentTrades recentTrades(qp);
       WHEN("defaults") {
         THEN("empty") {
@@ -291,8 +295,12 @@ namespace ₿ {
     }
 
     GIVEN("mEwma") {
+      KryptoNinja K;
+      K.gateway = Gw::new_Gw("NULL");
+      K.gateway->minTick = 0.01;
+      K.gateway->minSize = 0.001;
+      mQuotingParams qp(K);
       Price fairValue = 0;
-      mQuotingParams qp;
       mEwma ewma(fairValue, qp);
       WHEN("defaults") {
         REQUIRE_FALSE(ewma.mgEwmaM);
@@ -345,7 +353,7 @@ namespace ₿ {
       K.gateway = Gw::new_Gw("NULL");
       K.gateway->minTick = 0.01;
       mOrders orders(K);
-      mQuotingParams qp;
+      mQuotingParams qp(K);
       mMarketLevels levels(K, orders, qp);
       const Price fairValue = 500;
       const double targetPositionAutoPercentage = 0;
