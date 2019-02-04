@@ -229,9 +229,9 @@ namespace ₿ {
       unsigned int      _diffEwma                       = 0;
       void from_json(const json &j) {
         widthPing                       = fmax(bot.gateway->minTick, j.value("widthPing", widthPing));
-        widthPingPercentage             = fmin(1e+5, fmax(1e-4,      j.value("widthPingPercentage", widthPingPercentage)));
+        widthPingPercentage             = fmin(1e+2, fmax(1e-3,      j.value("widthPingPercentage", widthPingPercentage)));
         widthPong                       = fmax(bot.gateway->minTick, j.value("widthPong", widthPong));
-        widthPongPercentage             = fmin(1e+5, fmax(1e-4,      j.value("widthPongPercentage", widthPongPercentage)));
+        widthPongPercentage             = fmin(1e+2, fmax(1e-3,      j.value("widthPongPercentage", widthPongPercentage)));
         widthPercentage                 =                            j.value("widthPercentage", widthPercentage);
         bestWidth                       =                            j.value("bestWidth", bestWidth);
         bestWidthSize                   = fmax(0,                    j.value("bestWidthSize", bestWidthSize));
@@ -2442,7 +2442,7 @@ namespace ₿ {
       };
       void applyRoundSize() {
         if (!quotes.ask.empty())
-          quotes.ask.size = floor(fmax(
+          quotes.ask.size = round(fmax(
             fmin(
               quotes.ask.size,
               wallet.base.total
@@ -2450,7 +2450,7 @@ namespace ₿ {
             bot.gateway->minSize
           ) / bot.gateway->minSize) * bot.gateway->minSize;
         if (!quotes.bid.empty())
-          quotes.bid.size = floor(fmax(
+          quotes.bid.size = round(fmax(
             fmin(
               quotes.bid.size,
               wallet.quote.total / levels.fairValue
