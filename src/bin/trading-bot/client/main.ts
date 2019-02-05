@@ -183,7 +183,7 @@ class DisplayOrder {
                                         </td>
                                         <td style="width:169px;border-bottom: 3px solid #D64A4A;" *ngIf="pair.quotingParameters.display.percentageValues">
                                             <input class="form-control input-sm" title="{{ baseCurrency }}"
-                                               type="number" step="1" min="1" max="100"
+                                               type="number" step="0.001" min="0.001" max="100"
                                                onClick="this.select()"
                                                [(ngModel)]="pair.quotingParameters.display.buySizePercentage">
                                         </td>
@@ -199,7 +199,7 @@ class DisplayOrder {
                                         </td>
                                         <td style="width:169px;border-bottom: 3px solid #D64A4A;" *ngIf="pair.quotingParameters.display.percentageValues">
                                             <input class="form-control input-sm" title="{{ baseCurrency }}"
-                                               type="number" step="1" min="1" max="100"
+                                               type="number" step="0.001" min="0.001" max="100"
                                                onClick="this.select()"
                                                [(ngModel)]="pair.quotingParameters.display.sellSizePercentage">
                                         </td>

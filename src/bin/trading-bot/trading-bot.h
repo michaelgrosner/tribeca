@@ -336,7 +336,7 @@ code( broker.calculon          )
         CLIENT_CLICKME_LIST \
       ( CLIENT_CLICKME_CODE )
 #define CLIENT_CLICKME_CODE(btn, fn, val) \
-                client.clickme(btn, [&](const json &butterfly) { fn(val); });
+                 client.clickme(btn, [&](const json &butterfly) { fn(val); });
 #define CLIENT_CLICKME_LIST(code)                                            \
 code( btn.notepad           , void                             ,           ) \
 code( btn.submit            , manualSendOrder                  , butterfly ) \

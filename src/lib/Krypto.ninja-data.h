@@ -175,10 +175,10 @@ namespace ₿ {
       bool              bestWidth                       = true;
       Amount            bestWidthSize                   = 0;
       Amount            buySize                         = 0.02;
-      unsigned int      buySizePercentage               = 7;
+      double            buySizePercentage               = 7.0;
       bool              buySizeMax                      = false;
       Amount            sellSize                        = 0.01;
-      unsigned int      sellSizePercentage              = 7;
+      double            sellSizePercentage              = 7.0;
       bool              sellSizeMax                     = false;
       mPingAt           pingAt                          = mPingAt::BothSides;
       mPongAt           pongAt                          = mPongAt::ShortPingFair;
@@ -236,10 +236,10 @@ namespace ₿ {
         bestWidth                       =                            j.value("bestWidth", bestWidth);
         bestWidthSize                   = fmax(0,                    j.value("bestWidthSize", bestWidthSize));
         buySize                         = fmax(bot.gateway->minSize, j.value("buySize", buySize));
-        buySizePercentage               = fmin(1e+2, fmax(1,         j.value("buySizePercentage", buySizePercentage)));
+        buySizePercentage               = fmin(1e+2, fmax(1e-3,      j.value("buySizePercentage", buySizePercentage)));
         buySizeMax                      =                            j.value("buySizeMax", buySizeMax);
         sellSize                        = fmax(bot.gateway->minSize, j.value("sellSize", sellSize));
-        sellSizePercentage              = fmin(1e+2, fmax(1,         j.value("sellSizePercentage", sellSizePercentage)));
+        sellSizePercentage              = fmin(1e+2, fmax(1e-3,      j.value("sellSizePercentage", sellSizePercentage)));
         sellSizeMax                     =                            j.value("sellSizeMax", sellSizeMax);
         pingAt                          =                            j.value("pingAt", pingAt);
         pongAt                          =                            j.value("pongAt", pongAt);
@@ -1834,65 +1834,6 @@ namespace ₿ {
     mButtonCleanTrade           cleanTrade;
   };
 
-  struct mSemaphore: public mJsonToClient<mSemaphore> {
-    Connectivity greenButton  = Connectivity::Disconnected,
-                 greenGateway = Connectivity::Disconnected;
-    private:
-      Connectivity adminAgreement = Connectivity::Disconnected;
-    private_ref:
-      const KryptoNinja &bot;
-    public:
-      mSemaphore(const KryptoNinja &k)
-        : bot(k)
-      {};
-      void kiss(json *const j) override {
-        if (j->is_object()
-          and j->at("agree").is_number()
-          and j->at("agree").get<Connectivity>() != adminAgreement
-        ) toggle();
-      };
-      const bool paused() const {
-        return !(bool)greenButton;
-      };
-      const bool offline() const {
-        return !(bool)greenGateway;
-      };
-      void agree(const bool &agreement) {
-        adminAgreement = (Connectivity)agreement;
-      };
-      void toggle() {
-        agree(!(bool)adminAgreement);
-        switchFlag();
-      };
-      void read_from_gw(const Connectivity &raw) {
-        if (greenGateway != raw) {
-          greenGateway = raw;
-          switchFlag();
-        }
-      };
-      const mMatter about() const override {
-        return mMatter::Connectivity;
-      };
-    private:
-      void switchFlag() {
-        const Connectivity previous = greenButton;
-        greenButton = (Connectivity)(
-          (bool)greenGateway and (bool)adminAgreement
-        );
-        if (greenButton != previous)
-          Print::log("GW " + bot.gateway->exchange, "Quoting state changed to",
-            string(paused() ? "DIS" : "") + "CONNECTED");
-        send();
-        Print::repaint();
-      };
-  };
-  static void to_json(json &j, const mSemaphore &k) {
-    j = {
-      { "agree", k.greenButton },
-      {"online", k.greenGateway}
-    };
-  };
-
   struct mQuote: public mLevel {
     const Side        side   = (Side)0;
           mQuoteState state  = mQuoteState::MissingData;
@@ -2495,6 +2436,65 @@ namespace ₿ {
       {"quotesInMemoryWaiting", k.countWaiting    },
       {"quotesInMemoryWorking", k.countWorking    },
       {"quotesInMemoryZombies", k.zombies.size()  }
+    };
+  };
+
+  struct mSemaphore: public mJsonToClient<mSemaphore> {
+    Connectivity greenButton  = Connectivity::Disconnected,
+                 greenGateway = Connectivity::Disconnected;
+    private:
+      Connectivity adminAgreement = Connectivity::Disconnected;
+    private_ref:
+      const KryptoNinja &bot;
+    public:
+      mSemaphore(const KryptoNinja &k)
+        : bot(k)
+      {};
+      void kiss(json *const j) override {
+        if (j->is_object()
+          and j->at("agree").is_number()
+          and j->at("agree").get<Connectivity>() != adminAgreement
+        ) toggle();
+      };
+      const bool paused() const {
+        return !(bool)greenButton;
+      };
+      const bool offline() const {
+        return !(bool)greenGateway;
+      };
+      void agree(const bool &agreement) {
+        adminAgreement = (Connectivity)agreement;
+      };
+      void toggle() {
+        agree(!(bool)adminAgreement);
+        switchFlag();
+      };
+      void read_from_gw(const Connectivity &raw) {
+        if (greenGateway != raw) {
+          greenGateway = raw;
+          switchFlag();
+        }
+      };
+      const mMatter about() const override {
+        return mMatter::Connectivity;
+      };
+    private:
+      void switchFlag() {
+        const Connectivity previous = greenButton;
+        greenButton = (Connectivity)(
+          (bool)greenGateway and (bool)adminAgreement
+        );
+        if (greenButton != previous)
+          Print::log("GW " + bot.gateway->exchange, "Quoting state changed to",
+            string(paused() ? "DIS" : "") + "CONNECTED");
+        send();
+        Print::repaint();
+      };
+  };
+  static void to_json(json &j, const mSemaphore &k) {
+    j = {
+      { "agree", k.greenButton },
+      {"online", k.greenGateway}
     };
   };
 
