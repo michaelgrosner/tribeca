@@ -78,7 +78,7 @@ s: hurry! to get you started, a collection of redundant information to follow: :
 :       see https://www.ecosia.org/search?q=node+install+from+package+manager :
 :                                                                             :
 :_____________________________________________________________________________:
-:                                                                             :
+:                              DEPRECATED                                     :
 :  .. src/server: ----------------------------------- aka. K Server --------- :
 :  :   # boooriiing docs at http://www.cplusplus.com                          :
 :  :                                                                          :
