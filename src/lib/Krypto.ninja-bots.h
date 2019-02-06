@@ -877,6 +877,8 @@ namespace ₿ {
   };
 
   class Sqlite {
+    public:
+      mutable vector<mFromDb*> tables;
     private:
       sqlite3 *db = nullptr;
       string qpdb = "main";
@@ -886,22 +888,27 @@ namespace ₿ {
       Sqlite(Events &e)
         : events(e)
       {};
-      void backup(mFromDb *const data) {
-        if (!db)
-          error("DB", "did you miss databases = true; in your constructor?");
-        data->pull(select(data));
-        data->push = [this, data]() {
-          insert(data);
-        };
-      };
     protected:
+      void blackhole() {
+        for (auto &it : tables)
+          it->push = []() {};
+        tables.clear();
+      };
       void open(const string &database, const string &diskdata) {
         if (sqlite3_open(database.data(), &db))
           error("DB", sqlite3_errmsg(db));
         Print::log("DB", "loaded OK from", database);
-        if (diskdata.empty()) return;
-        exec("ATTACH '" + diskdata + "' AS " + (qpdb = "qpdb") + ";");
-        Print::log("DB", "loaded OK from", diskdata);
+        if (!diskdata.empty()) {
+          exec("ATTACH '" + diskdata + "' AS " + (qpdb = "qpdb") + ";");
+          Print::log("DB", "loaded OK from", diskdata);
+        }
+        for (auto &it : tables) {
+          it->pull(select(it));
+          it->push = [this, it]() {
+            insert(it);
+          };
+        }
+        tables.clear();
       };
     private:
       const json select(mFromDb *const data) {
@@ -966,6 +973,14 @@ namespace ₿ {
         for (int i = 0; i < argc; ++i)
           ((json*)result)->push_back(json::parse(argv[i]));
         return 0;
+      };
+  };
+
+  class mBackupFromDb: public mFromDb {
+    public:
+      mBackupFromDb(const Sqlite &sqlite)
+      {
+        sqlite.tables.push_back(this);
       };
   };
 
@@ -1050,6 +1065,7 @@ namespace ₿ {
         } {
           if (databases)
             open(str("database"), str("diskdata"));
+          else blackhole();
         }
         return this;
       };

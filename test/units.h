@@ -301,7 +301,7 @@ namespace ₿ {
       K.gateway->minSize = 0.001;
       mQuotingParams qp(K);
       Price fairValue = 0;
-      mEwma ewma(fairValue, qp);
+      mEwma ewma(K, fairValue, qp);
       WHEN("defaults") {
         REQUIRE_FALSE(ewma.mgEwmaM);
       }

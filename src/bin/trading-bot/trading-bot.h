@@ -289,19 +289,6 @@ class Engine: public Klass {
       , wallet(K, orders, qp, levels.stats.ewma.targetPositionAutoPercentage, levels.fairValue)
       , broker(K, orders, qp, levels, wallet)
     {};
-#define SQLITE_BACKUP      \
-        SQLITE_BACKUP_LIST \
-      ( SQLITE_BACKUP_CODE )
-#define SQLITE_BACKUP_CODE(data)       K.backup(&data);
-#define SQLITE_BACKUP_LIST(code)       \
-code( qp                             ) \
-code( levels.stats.ewma.fairValue96h ) \
-code( levels.stats.ewma              ) \
-code( levels.stats.stdev             ) \
-code( wallet.target                  ) \
-code( wallet.safety.trades           ) \
-code( wallet.profits                 )
-
 #define HOTKEYS      \
         HOTKEYS_LIST \
       ( HOTKEYS_CODE )
@@ -347,22 +334,6 @@ code( btn.cleanTrades       , wallet.safety.trades.clearAll    ,           ) \
 code( btn.cleanTradesClosed , wallet.safety.trades.clearClosed ,           ) \
 code( qp                    , savedQuotingParameters           ,           ) \
 code( broker.semaphore      , void                             ,           )
-    void savedQuotingParameters() {
-      K.timer_ticks_factor(qp.delayUI);
-      broker.calculon.dummyMM.mode("saved");
-      levels.stats.ewma.calcFromHistory(qp._diffEwma);
-    };
-    void cancelOrders() {
-      for (mOrder *const it : orders.working())
-        cancelOrder(it);
-    };
-    void manualSendOrder(mOrder raw) {
-      raw.orderId = K.gateway->randId();
-      placeOrder(raw);
-    };
-    void manualCancelOrder(const RandId &orderId) {
-      cancelOrder(orders.find(orderId));
-    };
   protected:
     void waitData() override {
       K.gateway->write_Connectivity = [&](const Connectivity &rawdata) {
@@ -385,7 +356,6 @@ code( broker.semaphore      , void                             ,           )
       K.gateway->write_mTrade = [&](const mTrade &rawdata) {
         levels.stats.takerTrades.read_from_gw(rawdata);
       };
-      SQLITE_BACKUP
     };
     void waitAdmin() override {
       if (!K.num("headless")) client.listen();
@@ -415,6 +385,22 @@ code( broker.semaphore      , void                             ,           )
       }
     };
   private:
+    void savedQuotingParameters() {
+      K.timer_ticks_factor(qp.delayUI);
+      broker.calculon.dummyMM.mode("saved");
+      levels.stats.ewma.calcFromHistory(qp._diffEwma);
+    };
+    void cancelOrders() {
+      for (mOrder *const it : orders.working())
+        cancelOrder(it);
+    };
+    void manualSendOrder(mOrder raw) {
+      raw.orderId = K.gateway->randId();
+      placeOrder(raw);
+    };
+    void manualCancelOrder(const RandId &orderId) {
+      cancelOrder(orders.find(orderId));
+    };
     void calcQuotes() {
       if (broker.ready() and levels.ready() and wallet.ready()) {
         if (broker.calcQuotes()) {
