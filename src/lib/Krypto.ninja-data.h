@@ -126,29 +126,29 @@ namespace ₿ {
       using const_iterator         = typename vector<T>::const_iterator;
       using reverse_iterator       = typename vector<T>::reverse_iterator;
       using const_reverse_iterator = typename vector<T>::const_reverse_iterator;
-      iterator                 begin()       noexcept { return rows.begin(); };
-      const_iterator           begin() const noexcept { return rows.begin(); };
-      const_iterator          cbegin() const noexcept { return rows.cbegin(); };
-      iterator                   end()       noexcept { return rows.end(); };
-      const_iterator             end() const noexcept { return rows.end(); };
-      reverse_iterator        rbegin()       noexcept { return rows.rbegin(); };
+      iterator                 begin()       noexcept { return rows.begin();   };
+      const_iterator           begin() const noexcept { return rows.begin();   };
+      const_iterator          cbegin() const noexcept { return rows.cbegin();  };
+      iterator                   end()       noexcept { return rows.end();     };
+      const_iterator             end() const noexcept { return rows.end();     };
+      reverse_iterator        rbegin()       noexcept { return rows.rbegin();  };
       const_reverse_iterator crbegin() const noexcept { return rows.crbegin(); };
-      reverse_iterator          rend()       noexcept { return rows.rend(); };
-      bool                     empty() const noexcept { return rows.empty(); };
-      size_t                    size() const noexcept { return rows.size(); };
-      reference                front()                { return rows.front(); };
-      const_reference          front() const          { return rows.front(); };
-      reference                 back()                { return rows.back(); };
-      const_reference           back() const          { return rows.back(); };
-      reference                   at(size_t n)        { return rows.at(n); };
-      const_reference             at(size_t n) const  { return rows.at(n); };
+      reverse_iterator          rend()       noexcept { return rows.rend();    };
+      bool                     empty() const noexcept { return rows.empty();   };
+      size_t                    size() const noexcept { return rows.size();    };
+      reference                front()                { return rows.front();   };
+      const_reference          front() const          { return rows.front();   };
+      reference                 back()                { return rows.back();    };
+      const_reference           back() const          { return rows.back();    };
+      reference                   at(size_t n)        { return rows.at(n);     };
+      const_reference             at(size_t n) const  { return rows.at(n);     };
       virtual void erase() {
         if (size() > limit())
           rows.erase(begin(), end() - limit());
       };
       virtual void push_back(const T &row) {
         rows.push_back(row);
-        push();
+        backup();
         erase();
       };
       void pull(const json &j) override {
@@ -314,7 +314,7 @@ namespace ₿ {
         _diffEwma |= (previous[3] != shortEwmaPeriods)      << 3;
         _diffEwma |= (previous[4] != extraShortEwmaPeriods) << 4;
         _diffEwma |= (previous[5] != ultraShortEwmaPeriods) << 5;
-        push();
+        backup();
         send();
       };
       const mMatter about() const override {
@@ -761,7 +761,7 @@ namespace ₿ {
         calcProtections(averageWidth);
         calcPositions();
         calcTargetPositionAutoPercentage();
-        push();
+        backup();
       };
       void calcFromHistory(unsigned int &diff) {
         if ((diff >> 0) & 1) calcFromHistory(&mgEwmaVL, qp.veryLongEwmaPeriods,   "VeryLong");
@@ -1332,9 +1332,7 @@ namespace ₿ {
             it = send_push_erase(it);
             break;
           }
-          if (!eq) {
-            send_push_back(pong);
-          }
+          if (!eq) send_push_back(pong);
         }
       };
       bool matchPong(const string &match, mOrderFilled *const pong) {
@@ -1358,7 +1356,7 @@ namespace ₿ {
       };
       void send_push_back(const mOrderFilled &row) {
         rows.push_back(row);
-        push();
+        backup();
         if (crbegin()->Kqty < 0) rbegin()->Kqty = -2;
         send();
       };
@@ -1624,7 +1622,7 @@ namespace ₿ {
         , 4);
         calcPDiv();
         if (send()) {
-          push();
+          backup();
           if (K.num("debug-wallet")) report();
         }
       };
@@ -2597,13 +2595,13 @@ namespace ₿ {
       };
       const json to_json() const {
         return {
-          {  "addr", K.gateway->unlock      },
-          {  "inet", string(Curl::inet ?: "") },
-          {  "freq", orders_60s               },
+          {  "addr", K.gateway->unlock       },
+          {  "inet", string(Curl::inet ?: "")},
+          {  "freq", orders_60s              },
           { "theme", K.num("ignore-moon")
-                       + K.num("ignore-sun")},
-          {"memory", K.memSize()            },
-          {"dbsize", K.dbSize()             }
+                       + K.num("ignore-sun") },
+          {"memory", K.memSize()             },
+          {"dbsize", K.dbSize()              }
         };
       };
       const mMatter about() const override {

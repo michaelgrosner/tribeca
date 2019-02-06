@@ -403,7 +403,7 @@ namespace ₿ {
 //BO non-free Gw library functions from build-*/local/lib/K-*.a (it just redefines all virtual gateway class members below).
 /**/  virtual bool ready(uS::Loop *const) = 0;                               // wait for exchange and register data handlers
 /**/  virtual void replace(RandId, string) {};                               // call         async orders data from exchange
-/**/  virtual void place(RandId, Side, string, string, OrderType, TimeInForce, bool) = 0,  // async orders, like above/below
+/**/  virtual void place(RandId, Side, string, string, OrderType, TimeInForce, bool) = 0, // async orders like above / below
 /**/               cancel(RandId, RandId) = 0,                               // call         async orders data from exchange
 /**/               close() = 0;                                              // disconnect but without waiting for reconnect
 /**/protected:

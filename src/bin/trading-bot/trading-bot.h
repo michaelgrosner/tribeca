@@ -289,6 +289,29 @@ class Engine: public Klass {
       , wallet(K, orders, qp, levels.stats.ewma.targetPositionAutoPercentage, levels.fairValue)
       , broker(K, orders, qp, levels, wallet)
     {};
+  protected:
+    void waitData() override {
+      K.gateway->write_Connectivity = [&](const Connectivity &rawdata) {
+        broker.semaphore.read_from_gw(rawdata);
+        if (broker.semaphore.offline())
+          levels.clear();
+      };
+      K.gateway->write_mWallets = [&](const mWallets &rawdata) {
+        wallet.read_from_gw(rawdata);
+      };
+      K.gateway->write_mLevels = [&](const mLevels &rawdata) {
+        levels.read_from_gw(rawdata);
+        wallet.calcFunds();
+        calcQuotes();
+      };
+      K.gateway->write_mOrder = [&](const mOrder &rawdata) {
+        orders.read_from_gw(rawdata);
+        wallet.calcFundsAfterOrder(orders.updated, &K.gateway->askForFees);
+      };
+      K.gateway->write_mTrade = [&](const mTrade &rawdata) {
+        levels.stats.takerTrades.read_from_gw(rawdata);
+      };
+    };
 #define HOTKEYS      \
         HOTKEYS_LIST \
       ( HOTKEYS_CODE )
@@ -334,34 +357,11 @@ code( btn.cleanTrades       , wallet.safety.trades.clearAll    ,           ) \
 code( btn.cleanTradesClosed , wallet.safety.trades.clearClosed ,           ) \
 code( qp                    , savedQuotingParameters           ,           ) \
 code( broker.semaphore      , void                             ,           )
-  protected:
-    void waitData() override {
-      K.gateway->write_Connectivity = [&](const Connectivity &rawdata) {
-        broker.semaphore.read_from_gw(rawdata);
-        if (broker.semaphore.offline())
-          levels.clear();
-      };
-      K.gateway->write_mWallets = [&](const mWallets &rawdata) {
-        wallet.read_from_gw(rawdata);
-      };
-      K.gateway->write_mLevels = [&](const mLevels &rawdata) {
-        levels.read_from_gw(rawdata);
-        wallet.calcFunds();
-        calcQuotes();
-      };
-      K.gateway->write_mOrder = [&](const mOrder &rawdata) {
-        orders.read_from_gw(rawdata);
-        wallet.calcFundsAfterOrder(orders.updated, &K.gateway->askForFees);
-      };
-      K.gateway->write_mTrade = [&](const mTrade &rawdata) {
-        levels.stats.takerTrades.read_from_gw(rawdata);
-      };
-    };
     void waitAdmin() override {
+      HOTKEYS
       if (!K.num("headless")) client.listen();
       CLIENT_WELCOME
       CLIENT_CLICKME
-      HOTKEYS
     };
     void run() override {
       {

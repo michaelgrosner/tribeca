@@ -75,7 +75,8 @@ namespace ₿ {
       unordered_map<char, function<void()>> hotFn;
     public:
       void hotkey(const char &ch, function<void()> fn) {
-        if (!keylogger.valid()) return;
+        if (!keylogger.valid())
+          error("SH", string("Unable to set \"hotkey\" handler because display is a nullptr"));
         if (hotFn.find(ch) != hotFn.end())
           error("SH", string("Too many handlers for \"") + ch + "\" hotkey event");
         hotFn[ch] = fn;
@@ -849,11 +850,14 @@ namespace ₿ {
 
   class mFromDb: public mBlob {
     public:
-      function<void()> push = []() {
-#ifndef NDEBUG
-        WARN("Y U NO catch sqlite push?");
-#endif
+      void backup() {
+        if (push) push();
       };
+      function<void()> push
+#ifndef NDEBUG
+        = []() { WARN("Y U NO catch sqlite push?"); }
+#endif
+      ;
       virtual       void   pull(const json &j) = 0;
       virtual const string increment() const { return "NULL"; };
       virtual const double limit()     const { return 0; };
@@ -889,12 +893,7 @@ namespace ₿ {
         : events(e)
       {};
     protected:
-      void blackhole() {
-        for (auto &it : tables)
-          it->push = []() {};
-        tables.clear();
-      };
-      void open(const string &database, const string &diskdata) {
+      void backups(const string &database, const string &diskdata) {
         if (sqlite3_open(database.data(), &db))
           error("DB", sqlite3_errmsg(db));
         Print::log("DB", "loaded OK from", database);
@@ -908,6 +907,11 @@ namespace ₿ {
             insert(it);
           };
         }
+        tables.clear();
+      };
+      void blackhole() {
+        for (auto &it : tables)
+          it->push = nullptr;
         tables.clear();
       };
     private:
@@ -1063,8 +1067,7 @@ namespace ₿ {
                           : "no"      }
           });
         } {
-          if (databases)
-            open(str("database"), str("diskdata"));
+          if (databases) backups(str("database"), str("diskdata"));
           else blackhole();
         }
         return this;
