@@ -180,44 +180,29 @@ class WorldWideWeb {
       const string &auth,
       const string &addr
     ) {
-      string document,
-             content;
+      string content,
+             type;
+      unsigned int code = 404;
+      bool gzip = false;
       if (addr != "unknown"
         and !K.str("whitelist").empty()
         and K.str("whitelist").find(addr) == string::npos
       ) {
         Print::log("UI", "dropping gzip bomb on", addr);
-        document = "HTTP/1.1 200 OK"
-                   "\r\n" "Connection: keep-alive"
-                   "\r\n" "Accept-Ranges: bytes"
-                   "\r\n" "Vary: Accept-Encoding"
-                   "\r\n" "Cache-Control: public, max-age=0"
-                   "\r\n" "Content-Encoding: gzip";
+        code = 200;
+        gzip = true;
         content = string(&_www_gzip_bomb, _www_gzip_bomb_len);
       } else if (!K.str("B64auth").empty() and auth.empty()) {
         Print::log("UI", "authorization attempt from", addr);
-        document = "HTTP/1.1 401 Unauthorized"
-                   "\r\n" "WWW-Authenticate: Basic realm=\"Basic Authorization\""
-                   "\r\n" "Connection: keep-alive"
-                   "\r\n" "Accept-Ranges: bytes"
-                   "\r\n" "Vary: Accept-Encoding"
-                   "\r\n" "Content-Type: text/plain; charset=UTF-8";
+        code = 401;
       } else if (!K.str("B64auth").empty() and auth != K.str("B64auth")) {
         Print::log("UI", "authorization failed from", addr);
-        document = "HTTP/1.1 403 Forbidden"
-                   "\r\n" "Connection: keep-alive"
-                   "\r\n" "Accept-Ranges: bytes"
-                   "\r\n" "Vary: Accept-Encoding"
-                   "\r\n" "Content-Type: text/plain; charset=UTF-8";
+        code = 403;
       } else {
-        document = "HTTP/1.1 200 OK"
-                   "\r\n" "Connection: keep-alive"
-                   "\r\n" "Accept-Ranges: bytes"
-                   "\r\n" "Vary: Accept-Encoding"
-                   "\r\n" "Cache-Control: public, max-age=0";
-        const string leaf = path.substr(path.find_last_of('.')+1);
+        code = 200;
+        const string leaf = path.substr(path.find_last_of('.') + 1);
         if (leaf == "/") {
-          document +=  "\r\n" "Content-Type: text/html; charset=UTF-8";
+          type = "text/html; charset=UTF-8";
           if (connections < K.num("client-limit")) {
             Print::log("UI", "authorization success from", addr);
             content = string(&_www_html_index, _www_html_index_len);
@@ -227,11 +212,11 @@ class WorldWideWeb {
                       "<br/>" "Refresh the page anytime to retry.";
           }
         } else if (leaf == "js") {
-          document += "\r\n" "Content-Type: application/javascript; charset=UTF-8"
-                      "\r\n" "Content-Encoding: gzip";
+          gzip = true;
+          type = "application/javascript; charset=UTF-8";
           content = string(&_www_js_client, _www_js_client_len);
         } else if (leaf == "css") {
-          document += "\r\n" "Content-Type: text/css; charset=UTF-8";
+          type = "text/css; charset=UTF-8";
           if (path.find("css/bootstrap.min.css") != string::npos)
             content = string(&_www_css_base, _www_css_base_len);
           else if (path.find("css/bootstrap-theme-dark.min.css") != string::npos)
@@ -239,31 +224,17 @@ class WorldWideWeb {
           else if (path.find("css/bootstrap-theme.min.css") != string::npos)
             content = string(&_www_css_light, _www_css_light_len);
         } else if (leaf == "ico") {
-          document += "\r\n" "Content-Type: image/x-icon";
+          type = "image/x-icon";
           content = string(&_www_ico_favicon, _www_ico_favicon_len);
         } else if (leaf == "mp3") {
-          document += "\r\n" "Content-Type: audio/mpeg";
+          type = "audio/mpeg";
           if (path.find("audio/0.mp3") != string::npos)
             content = string(&_www_mp3_audio_0, _www_mp3_audio_0_len);
           else if (path.find("audio/1.mp3") != string::npos)
             content = string(&_www_mp3_audio_1, _www_mp3_audio_1_len);
         }
-        if (content.empty()) {
-          content = "Today, is ";
-          if (Random::int64() % 21) {
-            document = "HTTP/1.1 404 Not Found";
-            content += "a beautiful day.";
-          } else { // Humans! go to any random url to check your luck
-            document = "HTTP/1.1 418 I'm a teapot";
-            content += "your lucky day!";
-          }
-        }
       }
-      return document
-        + "\r\n" "Content-Length: " + to_string(content.length())
-        + "\r\n"
-          "\r\n"
-        + content;
+      return K.document(content, code, type, gzip);
     };
 };
 

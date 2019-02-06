@@ -639,7 +639,46 @@ namespace ₿ {
       uWS::Hub *socket = nullptr;
       vector<uWS::Group<uWS::CLIENT>*> gw_clients;
       vector<uWS::Group<uWS::SERVER>*> ui_servers;
+    private:
+      unordered_map<unsigned int, string> headers = {
+        {200, "HTTP/1.1 200 OK"
+              "\r\n" "Connection: keep-alive"
+              "\r\n" "Accept-Ranges: bytes"
+              "\r\n" "Vary: Accept-Encoding"
+              "\r\n" "Cache-Control: public, max-age=0"},
+        {401, "HTTP/1.1 401 Unauthorized"
+              "\r\n" "WWW-Authenticate: Basic realm=\"Basic Authorization\""
+              "\r\n" "Connection: keep-alive"
+              "\r\n" "Accept-Ranges: bytes"
+              "\r\n" "Vary: Accept-Encoding"
+              "\r\n" "Content-Type: text/plain; charset=UTF-8"},
+        {403, "HTTP/1.1 403 Forbidden"
+              "\r\n" "Connection: keep-alive"
+              "\r\n" "Accept-Ranges: bytes"
+              "\r\n" "Vary: Accept-Encoding"
+              "\r\n" "Content-Type: text/plain; charset=UTF-8"},
+        {404, "HTTP/1.1 404 Not Found"},
+        {418, "HTTP/1.1 418 I'm a teapot"},
+      };
     public:
+      const string document(
+        const       string &content,
+        const unsigned int &code,
+        const       string &type = "",
+        const         bool &gzip = false
+      ) const {
+        if (content.empty() and code == 200) // Humans!
+          return (Random::int64() % 21)      // go to any random url to check your luck
+            ? document("Today, is a beautiful day.", 404)
+            : document("Today, is your lucky day!", 418);
+        return headers.at(code)
+         + (type.empty() ? "" : "\r\n" "Content-Type: " + type)
+         + (gzip ? "\r\n" "Content-Encoding: gzip" : "")
+         + "\r\n" "Content-Length: " + to_string(content.length())
+         + "\r\n"
+           "\r\n"
+         + content;;
+      };
       uWS::Group<uWS::SERVER> *listen(
                string &protocol,
         const     int &port,
@@ -850,7 +889,7 @@ namespace ₿ {
 
   class mFromDb: public mBlob {
     public:
-      void backup() {
+      void backup() const {
         if (push) push();
       };
       function<void()> push
