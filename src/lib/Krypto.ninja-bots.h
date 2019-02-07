@@ -75,8 +75,7 @@ namespace ₿ {
       unordered_map<char, function<void()>> hotFn;
     public:
       void hotkey(const char &ch, function<void()> fn) {
-        if (!keylogger.valid())
-          error("SH", string("Unable to set \"hotkey\" handler because display is a nullptr"));
+        if (!keylogger.valid()) return;
         if (hotFn.find(ch) != hotFn.end())
           error("SH", string("Too many handlers for \"") + ch + "\" hotkey event");
         hotFn[ch] = fn;
@@ -640,7 +639,7 @@ namespace ₿ {
       vector<uWS::Group<uWS::CLIENT>*> gw_clients;
       vector<uWS::Group<uWS::SERVER>*> ui_servers;
     private:
-      unordered_map<unsigned int, string> headers = {
+      const unordered_map<unsigned int, string> headers = {
         {200, "HTTP/1.1 200 OK"
               "\r\n" "Connection: keep-alive"
               "\r\n" "Accept-Ranges: bytes"
@@ -677,7 +676,7 @@ namespace ₿ {
          + "\r\n" "Content-Length: " + to_string(content.length())
          + "\r\n"
            "\r\n"
-         + content;;
+         + content;
       };
       uWS::Group<uWS::SERVER> *listen(
                string &protocol,
