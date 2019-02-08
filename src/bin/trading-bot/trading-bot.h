@@ -17,24 +17,20 @@ class TradingBot: public KryptoNinja {
       display   = terminal;
       margin    = {3, 6, 1, 2};
       databases = true;
+      documents = {
+        {"",                                  {&_www_gzip_bomb,   _www_gzip_bomb_len  }},
+        {"/",                                 {&_www_html_index,  _www_html_index_len }},
+        {"/js/client.min.js",                 {&_www_js_client,   _www_js_client_len  }},
+        {"/css/bootstrap.min.css",            {&_www_css_base,    _www_css_base_len   }},
+        {"/css/bootstrap-theme-dark.min.css", {&_www_css_dark,    _www_css_dark_len   }},
+        {"/css/bootstrap-theme.min.css",      {&_www_css_light,   _www_css_light_len  }},
+        {"/favicon.ico",                      {&_www_ico_favicon, _www_ico_favicon_len}},
+        {"/audio/0.mp3",                      {&_www_mp3_audio_0, _www_mp3_audio_0_len}},
+        {"/audio/1.mp3",                      {&_www_mp3_audio_1, _www_mp3_audio_1_len}}
+      };
       arguments = { {
         {"wallet-limit", "AMOUNT", "0",                    "set AMOUNT in base currency to limit the balance,"
                                                            "\n" "otherwise the full available balance can be used"},
-        {"client-limit", "NUMBER", "7",                    "set NUMBER of maximum concurrent UI connections"},
-        {"headless",     "1",      nullptr,                "do not listen for UI connections,"
-                                                           "\n" "all other UI related arguments will be ignored"},
-        {"without-ssl",  "1",      nullptr,                "do not use HTTPS for UI connections (use HTTP only)"},
-        {"ssl-crt",      "FILE",   "",                     "set FILE to custom SSL .crt file for HTTPS UI connections"
-                                                           "\n" "(see www.akadia.com/services/ssh_test_certificate.html)"},
-        {"ssl-key",      "FILE",   "",                     "set FILE to custom SSL .key file for HTTPS UI connections"
-                                                           "\n" "(the passphrase MUST be removed from the .key file!)"},
-        {"whitelist",    "IP",     "",                     "set IP or csv of IPs to allow UI connections,"
-                                                           "\n" "alien IPs will get a zip-bomb instead"},
-        {"port",         "NUMBER", "3000",                 "set NUMBER of an open port to listen for UI connections"},
-        {"user",         "WORD",   "NULL",                 "set allowed WORD as username for UI connections,"
-                                                           "\n" "mandatory but may be 'NULL'"},
-        {"pass",         "WORD",   "NULL",                 "set allowed WORD as password for UI connections,"
-                                                           "\n" "mandatory but may be 'NULL'"},
         {"lifetime",     "NUMBER", "0",                    "set NUMBER of minimum milliseconds to keep orders open,"
                                                            "\n" "otherwise open orders can be replaced anytime required"},
         {"matryoshka",   "URL",    "https://example.com/", "set Matryoshka link URL of the next UI"},
@@ -56,13 +52,6 @@ class TradingBot: public KryptoNinja {
           num["ignore-moon"] = 0;
         if (num["debug-orders"] or num["debug-quotes"])
           num["naked"] = 1;
-        if (num["latency"] or !num["port"] or !num["client-limit"])
-          num["headless"] = 1;
-        str["B64auth"] = (!num["headless"]
-          and str["user"] != "NULL" and !str["user"].empty()
-          and str["pass"] != "NULL" and !str["pass"].empty()
-        ) ? "Basic " + Text::B64(str["user"] + ':' + str["pass"])
-          : "";
       } };
     };
 } K;
@@ -72,7 +61,6 @@ class WorldWideWeb {
     string protocol = "HTTP";
   private:
     uWS::Group<uWS::SERVER> *webui = nullptr;
-    int connections = 0;
     unordered_map<mMatter, function<const json()>> hello;
     unordered_map<mMatter, function<void(json&)>> kisses;
     unordered_map<mMatter, string> queue;
@@ -86,7 +74,7 @@ class WorldWideWeb {
       webui = K.listen(
         protocol, K.num("port"),
         !K.num("without-ssl"), K.str("ssl-crt"), K.str("ssl-key"),
-        httpServer, wsServer, wsMessage
+        wsMessage
       );
       K.timer_1s([&](const unsigned int &tick) {
         if (delay and !(tick % delay) and !queue.empty()) {
@@ -107,7 +95,7 @@ class WorldWideWeb {
     };
     void welcome(mToClient &data) {
       data.send = [&]() {
-        if (connections) send(data);
+        if (K.connections) send(data);
       };
       if (!webui) return;
       const mMatter matter = data.about();
@@ -137,19 +125,6 @@ class WorldWideWeb {
         });
       } else queue[data.about()] = data.blob().dump();
     };
-    function<const bool(const bool&, const string&)> wsServer = [&](
-      const   bool &connection,
-      const string &addr
-    ) {
-      connections += connection ?: -1;
-      Print::log("UI", to_string(connections) + " client" + string(connections == 1 ? 0 : 1, 's')
-        + " connected, last connection was from", addr);
-      if (connections > K.num("client-limit")) {
-        Print::log("UI", "--client-limit=" + K.str("client-limit") + " reached by", addr);
-        return false;
-      }
-      return true;
-    };
     function<const string(string, const string&)> wsMessage = [&](
             string message,
       const string &addr
@@ -174,67 +149,6 @@ class WorldWideWeb {
         kisses.at(matter)(butterfly);
       }
       return string();
-    };
-    function<const string(const string&, const string&, const string&)> httpServer = [&](
-      const string &path,
-      const string &auth,
-      const string &addr
-    ) {
-      string content,
-             type;
-      unsigned int code = 404;
-      bool gzip = false;
-      if (addr != "unknown"
-        and !K.str("whitelist").empty()
-        and K.str("whitelist").find(addr) == string::npos
-      ) {
-        Print::log("UI", "dropping gzip bomb on", addr);
-        code = 200;
-        gzip = true;
-        content = string(&_www_gzip_bomb, _www_gzip_bomb_len);
-      } else if (!K.str("B64auth").empty() and auth.empty()) {
-        Print::log("UI", "authorization attempt from", addr);
-        code = 401;
-      } else if (!K.str("B64auth").empty() and auth != K.str("B64auth")) {
-        Print::log("UI", "authorization failed from", addr);
-        code = 403;
-      } else {
-        code = 200;
-        const string leaf = path.substr(path.find_last_of('.') + 1);
-        if (leaf == "/") {
-          type = "text/html; charset=UTF-8";
-          if (connections < K.num("client-limit")) {
-            Print::log("UI", "authorization success from", addr);
-            content = string(&_www_html_index, _www_html_index_len);
-          } else {
-            Print::log("UI", "--client-limit=" + K.str("client-limit") + " reached by", addr);
-            content = "Thank you! but our princess is already in this castle!"
-                      "<br/>" "Refresh the page anytime to retry.";
-          }
-        } else if (leaf == "js") {
-          gzip = true;
-          type = "application/javascript; charset=UTF-8";
-          content = string(&_www_js_client, _www_js_client_len);
-        } else if (leaf == "css") {
-          type = "text/css; charset=UTF-8";
-          if (path.find("css/bootstrap.min.css") != string::npos)
-            content = string(&_www_css_base, _www_css_base_len);
-          else if (path.find("css/bootstrap-theme-dark.min.css") != string::npos)
-            content = string(&_www_css_dark, _www_css_dark_len);
-          else if (path.find("css/bootstrap-theme.min.css") != string::npos)
-            content = string(&_www_css_light, _www_css_light_len);
-        } else if (leaf == "ico") {
-          type = "image/x-icon";
-          content = string(&_www_ico_favicon, _www_ico_favicon_len);
-        } else if (leaf == "mp3") {
-          type = "audio/mpeg";
-          if (path.find("audio/0.mp3") != string::npos)
-            content = string(&_www_mp3_audio_0, _www_mp3_audio_0_len);
-          else if (path.find("audio/1.mp3") != string::npos)
-            content = string(&_www_mp3_audio_1, _www_mp3_audio_1_len);
-        }
-      }
-      return K.document(content, code, type, gzip);
     };
 };
 

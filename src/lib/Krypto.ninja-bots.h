@@ -403,6 +403,8 @@ namespace ₿ {
   };
 
   class Option {
+    public:
+      unordered_map<string, pair<const char*, const int>> documents;
     protected:
       bool autobot   = false;
       bool databases = false;
@@ -451,17 +453,18 @@ namespace ₿ {
       };
     protected:
       void main(int argc, char** argv) {
-        optint["autobot"] = autobot;
-        optint["naked"]   = !Print::display;
+        optint["autobot"]  = autobot;
+        optint["headless"] = documents.empty();
+        optint["naked"]    = !Print::display;
         vector<Argument> long_options = {
           {"help",         "h",      nullptr,  "show this help and quit"},
           {"version",      "v",      nullptr,  "show current build version and quit"},
           {"latency",      "1",      nullptr,  "check current HTTP latency (not from WS) and quit"}
         };
-        if (!autobot) long_options.push_back(
+        if (!optint["autobot"]) long_options.push_back(
           {"autobot",      "1",      nullptr,  "automatically start trading on boot"}
         );;
-        if (Print::display) long_options.push_back(
+        if (!optint["naked"]) long_options.push_back(
           {"naked",        "1",      nullptr,  "do not display CLI, print output to stdout instead"}
         );
         if (databases) long_options.push_back(
@@ -469,6 +472,23 @@ namespace ₿ {
                                                "\n" "default PATH is '/var/lib/K/db/K-*.db',"
                                                "\n" "or use ':memory:' (see sqlite.org/inmemorydb.html)"}
         );
+        if (!optint["headless"]) for (const Argument &it : (vector<Argument>){
+          {"headless",     "1",      nullptr,  "do not listen for UI connections,"
+                                               "\n" "all other UI related arguments will be ignored"},
+          {"without-ssl",  "1",      nullptr,  "do not use HTTPS for UI connections (use HTTP only)"},
+          {"whitelist",    "IP",     "",       "set IP or csv of IPs to allow UI connections,"
+                                               "\n" "alien IPs will get a zip-bomb instead"},
+          {"client-limit", "NUMBER", "7",      "set NUMBER of maximum concurrent UI connections"},
+          {"port",         "NUMBER", "3000",   "set NUMBER of an open port to listen for UI connections"},
+          {"user",         "WORD",   "NULL",   "set allowed WORD as username for UI connections,"
+                                               "\n" "mandatory but may be 'NULL'"},
+          {"pass",         "WORD",   "NULL",   "set allowed WORD as password for UI connections,"
+                                               "\n" "mandatory but may be 'NULL'"},
+          {"ssl-crt",      "FILE",   "",       "set FILE to custom SSL .crt file for HTTPS UI connections"
+                                               "\n" "(see www.akadia.com/services/ssh_test_certificate.html)"},
+          {"ssl-key",      "FILE",   "",       "set FILE to custom SSL .key file for HTTPS UI connections"
+                                               "\n" "(the passphrase MUST be removed from the .key file!)"}
+        }) long_options.push_back(it);
         for (const Argument &it : (vector<Argument>){
           {"interface",    "IP",     "",       "set IP to bind as outgoing network interface,"
                                                "\n" "default IP is the system default network interface"},
@@ -587,6 +607,16 @@ namespace ₿ {
               +  '.' + optstr["quote"]
               +  '.' + "db";
         }
+        if (!optint["headless"]) {
+          if (optint["latency"] or !optint["port"] or !optint["client-limit"])
+            optint["headless"] = 1;
+          optstr["B64auth"] = (!optint["headless"]
+            and optstr["user"] != "NULL" and !optstr["user"].empty()
+            and optstr["pass"] != "NULL" and !optstr["pass"].empty()
+          ) ? "Basic " + Text::B64(optstr["user"] + ':' + optstr["pass"])
+            : "";
+        }
+        if (optint["headless"]) documents.clear();
       };
       void help(const vector<Argument> &long_options) {
         const vector<string> stamp = {
@@ -631,13 +661,35 @@ namespace ₿ {
       };
   };
 
-  class Socket {
+  class WebSocket {
     public:
-      string wtfismyip = "localhost";
-    protected:
-      uWS::Hub *socket = nullptr;
-      vector<uWS::Group<uWS::CLIENT>*> gw_clients;
-      vector<uWS::Group<uWS::SERVER>*> ui_servers;
+      int connections = 0;
+    private_ref:
+      Option &option;
+    public:
+      WebSocket(Option &o)
+        : option(o)
+      {};
+      const bool wsServer(const bool &connection, const string &addr) {
+        connections += connection ?: -1;
+        Print::log("UI", to_string(connections) + " client" + string(connections == 1 ? 0 : 1, 's')
+          + " connected, last connection was from", addr);
+        if (connections > option.num("client-limit")) {
+          Print::log("UI", "--client-limit=" + option.str("client-limit") + " reached by", addr);
+          return false;
+        }
+        return true;
+      };
+  };
+
+  class WebPage: public WebSocket {
+    private_ref:
+      Option &option;
+    public:
+      WebPage(Option &o)
+        : WebSocket(o)
+        , option(o)
+      {};
     private:
       const unordered_map<unsigned int, string> headers = {
         {200, "HTTP/1.1 200 OK"
@@ -659,17 +711,66 @@ namespace ₿ {
         {404, "HTTP/1.1 404 Not Found"},
         {418, "HTTP/1.1 418 I'm a teapot"},
       };
-    public:
+    protected:
+      const string httpServer(string url, const string &auth, const string &addr) {
+              string content,
+                     type;
+        unsigned int code = 200;
+                bool gzip = false;
+        if (alien(addr)) {
+          Print::log("UI", "dropping gzip bomb on", addr);
+          url.clear();
+        }
+        if (!url.empty()
+          and !option.str("B64auth").empty()
+          and auth.empty()
+        ) {
+          Print::log("UI", "authorization attempt from", addr);
+          code = 401;
+        } else if (!url.empty()
+          and !option.str("B64auth").empty()
+          and auth != option.str("B64auth")
+        ) {
+          Print::log("UI", "authorization failed from", addr);
+          code = 403;
+        } else if (option.documents.find(url) != option.documents.end()) {
+          content = string(option.documents.at(url).first, option.documents.at(url).second);
+          const string leaf = url.substr(url.find_last_of('.') + 1);
+          if (leaf.empty())       gzip = true;
+          else if (leaf == "js")  gzip = true, type = "application/javascript; charset=UTF-8";
+          else if (leaf == "css") type = "text/css; charset=UTF-8";
+          else if (leaf == "ico") type = "image/x-icon";
+          else if (leaf == "mp3") type = "audio/mpeg";
+          else if (leaf == "/") { type = "text/html; charset=UTF-8";
+            if (connections < option.num("client-limit"))
+              Print::log("UI", "authorization success from", addr);
+            else {
+              Print::log("UI", "--client-limit=" + option.str("client-limit") + " reached by", addr);
+              content = "Thank you! but our princess is already in this castle!"
+                        "<br/>" "Refresh the page anytime to retry.";
+            }
+          }
+        }
+        if (content.empty() and code == 200) {
+          if (Random::int64() % 21)
+            code = 404, content = "Today, is a beautiful day.";
+          else // Humans! go to any random url to check your luck
+            code = 418, content = "Today, is your lucky day!";
+        }
+        return document(content, code, type, gzip);
+      };
+    private:
+      const bool alien(const string &addr) {
+        return addr != "unknown"
+          and !option.str("whitelist").empty()
+          and option.str("whitelist").find(addr) == string::npos;
+      };
       const string document(
         const       string &content,
         const unsigned int &code,
         const       string &type = "",
         const         bool &gzip = false
       ) const {
-        if (content.empty() and code == 200) // Humans!
-          return (Random::int64() % 21)      // go to any random url to check your luck
-            ? document("Today, is a beautiful day.", 404)
-            : document("Today, is your lucky day!", 418);
         return headers.at(code)
          + (type.empty() ? "" : "\r\n" "Content-Type: " + type)
          + (gzip ? "\r\n" "Content-Encoding: gzip" : "")
@@ -678,21 +779,28 @@ namespace ₿ {
            "\r\n"
          + content;
       };
+  };
+
+  class Socket: public WebPage {
+    public:
+      string wtfismyip = "localhost";
+    protected:
+      uWS::Hub *socket = nullptr;
+      vector<uWS::Group<uWS::CLIENT>*> gw_clients;
+      vector<uWS::Group<uWS::SERVER>*> ui_servers;
+    private_ref:
+      Option &option;
+    public:
+      Socket(Option &o)
+        : WebPage(o)
+        , option(o)
+      {};
       uWS::Group<uWS::SERVER> *listen(
                string &protocol,
         const     int &port,
         const    bool &ssl,
         const  string &crt,
         const  string &key,
-        const function<const string(
-          const string&,
-          const string&,
-          const string&
-        )>            &httpServer = nullptr,
-        const function<const bool(
-          const   bool&,
-          const string&
-        )>            &wsServer   = nullptr,
         const function<const string(
                 string,
           const string&
@@ -708,18 +816,19 @@ namespace ₿ {
         if (!ui_server)
           error("UI", "Unable to listen at port number " + to_string(port)
             + " (may be already in use by another program)");
-        if (httpServer)
+        if (!option.documents.empty())
           ui_server->onHttpRequest([&](uWS::HttpResponse *res, uWS::HttpRequest req, char *data, size_t length, size_t remainingBytes) {
             if (req.getMethod() != uWS::HttpMethod::METHOD_GET) return;
+            const string url = req.getUrl().toString();
             const string response = httpServer(
-              req.getUrl().toString(),
+              url.substr(url.find_last_of("/", url.find_last_of("/") - 1)),
               req.getHeader("authorization").toString(),
               cleanAddress(res->getHttpSocket()->getAddress().address)
             );
             if (!response.empty())
               res->write(response.data(), response.length());
           });
-        if (wsServer) {
+        // if (wsServer) {
           ui_server->onConnection([&](uWS::WebSocket<uWS::SERVER> *webSocket, uWS::HttpRequest req) {
             if (!wsServer(true, cleanAddress(webSocket->getAddress().address)))
               webSocket->close();
@@ -727,7 +836,7 @@ namespace ₿ {
           ui_server->onDisconnection([&](uWS::WebSocket<uWS::SERVER> *webSocket, int code, char *message, size_t length) {
             wsServer(false, cleanAddress(webSocket->getAddress().address));
           });
-        }
+        // }
         if (wsMessage)
           ui_server->onMessage([&](uWS::WebSocket<uWS::SERVER> *webSocket, const char *message, size_t length, uWS::OpCode opCode) {
             if (length < 2) return;
@@ -806,7 +915,7 @@ namespace ₿ {
               or !SSL_CTX_use_RSAPrivateKey_file(ctx, key.data(), SSL_FILETYPE_PEM)
             ) {
               ctx = nullptr;
-              Print::logWar("UI", "Unable to encrypt web clients, will fallback to plain HTTP");
+              Print::logWar("UI", "Unable to encrypt web clients, will fallback to plain text");
             }
           }
         }
@@ -821,13 +930,13 @@ namespace ₿ {
 
   class Events {
     private:
-      uS::Timer *timer  = nullptr;
-      uS::Async *loop   = nullptr;
+      uS::Timer *timer = nullptr;
+      uS::Async *loop  = nullptr;
       unsigned int tick  = 0,
                    ticks = 300;
       vector<function<const bool(const unsigned int&)>> timeFn;
-      vector<function<const bool()>> waitFn;
-      vector<function<void()>> slowFn;
+      vector<function<const bool()>>                    waitFn;
+      vector<function<void()>>                          slowFn;
     public:
       void timer_ticks_factor(const unsigned int &factor) {
         ticks = 300 * (factor ?: 1);
@@ -1053,7 +1162,8 @@ namespace ₿ {
       Gw *gateway = nullptr;
     public:
       KryptoNinja()
-        : Sqlite((Events&)*this)
+        : Socket((Option&)*this)
+        , Sqlite((Events&)*this)
       {};
       KryptoNinja *const main(int argc, char** argv) {
         {
