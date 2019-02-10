@@ -56,107 +56,10 @@ class TradingBot: public KryptoNinja {
     };
 } K;
 
-class WorldWideWeb {
-  public:
-    string protocol = "HTTP";
-  private:
-    uWS::Group<uWS::SERVER> *webui = nullptr;
-    unordered_map<mMatter, function<const json()>> hello;
-    unordered_map<mMatter, function<void(json&)>> kisses;
-    unordered_map<mMatter, string> queue;
-  private_ref:
-    const unsigned int &delay;
-  public:
-    WorldWideWeb(const unsigned int &d)
-      : delay(d)
-    {};
-    void listen() {
-      webui = K.listen(
-        protocol, K.num("port"),
-        !K.num("without-ssl"), K.str("ssl-crt"), K.str("ssl-key"),
-        wsMessage
-      );
-      K.timer_1s([&](const unsigned int &tick) {
-        if (delay and !(tick % delay) and !queue.empty()) {
-          vector<string> msgs;
-          for (const auto &it : queue)
-            msgs.push_back((char)mPortal::Kiss + ((char)it.first + it.second));
-          queue.clear();
-          K.deferred([this, msgs]() {
-            for (const auto &it : msgs)
-              webui->broadcast(it.data(), it.length(), uWS::OpCode::TEXT);
-          });
-        }
-        return false;
-      });
-      K.ending([&]() {
-        webui->close();
-      });
-    };
-    void welcome(mToClient &data) {
-      data.send = [&]() {
-        if (K.connections) send(data);
-      };
-      if (!webui) return;
-      const mMatter matter = data.about();
-      if (hello.find(matter) != hello.end())
-        error("UI", string("Too many handlers for \"") + (char)matter + "\" welcome event");
-      hello[matter] = [&]() {
-        return data.hello();
-      };
-    };
-    void clickme(mFromClient &data, function<void(const json&)> fn) {
-      if (!webui) return;
-      const mMatter matter = data.about();
-      if (kisses.find(matter) != kisses.end())
-        error("UI", string("Too many handlers for \"") + (char)matter + "\" clickme event");
-      kisses[matter] = [&data, fn](json &butterfly) {
-        data.kiss(&butterfly);
-        if (!butterfly.is_null())
-          fn(butterfly);
-      };
-    };
-  private:
-    void send(const mToClient &data) {
-      if (data.realtime() or !delay) {
-        const string msg = (char)mPortal::Kiss + ((char)data.about() + data.blob().dump());
-        K.deferred([this, msg]() {
-          webui->broadcast(msg.data(), msg.length(), uWS::OpCode::TEXT);
-        });
-      } else queue[data.about()] = data.blob().dump();
-    };
-    function<const string(string, const string&)> wsMessage = [&](
-            string message,
-      const string &addr
-    ) {
-      if (addr != "unknown"
-        and !K.str("whitelist").empty()
-        and K.str("whitelist").find(addr) == string::npos
-      ) return string(&_www_gzip_bomb, _www_gzip_bomb_len);
-      const mPortal portal = (mPortal)message.at(0);
-      const mMatter matter = (mMatter)message.at(1);
-      if (mPortal::Hello == portal and hello.find(matter) != hello.end()) {
-        const json reply = hello.at(matter)();
-        if (!reply.is_null())
-          return (char)portal + ((char)matter + reply.dump());
-      } else if (mPortal::Kiss == portal and kisses.find(matter) != kisses.end()) {
-        message = message.substr(2);
-        json butterfly = json::accept(message)
-          ? json::parse(message)
-          : json::object();
-        for (auto it = butterfly.begin(); it != butterfly.end();)
-          if (it.value().is_null()) it = butterfly.erase(it); else ++it;
-        kisses.at(matter)(butterfly);
-      }
-      return string();
-    };
-};
-
 class Engine: public Klass {
   public:
            mButtons btn;
      mQuotingParams qp;
-       WorldWideWeb client;
            mMonitor monitor;
            mProduct product;
             mOrders orders;
@@ -165,8 +68,8 @@ class Engine: public Klass {
             mBroker broker;
   public:
     Engine()
-      : qp(K)
-      , client(qp.delayUI)
+      : btn(K)
+      , qp(K)
       , monitor(K)
       , product(K)
       , orders(K)
@@ -206,33 +109,12 @@ code( 'Q'  , exit                    ) \
 code( 'q'  , exit                    ) \
 code( '\e' , broker.semaphore.toggle )
 
-#define CLIENT_WELCOME      \
-        CLIENT_WELCOME_LIST \
-      ( CLIENT_WELCOME_CODE )
-#define CLIENT_WELCOME_CODE(data) client.welcome(data);
-#define CLIENT_WELCOME_LIST(code) \
-code( btn.notepad              )  \
-code( qp                       )  \
-code( monitor                  )  \
-code( product                  )  \
-code( orders                   )  \
-code( levels.diff              )  \
-code( levels.stats.takerTrades )  \
-code( levels.stats.fairPrice   )  \
-code( levels.stats             )  \
-code( wallet.target            )  \
-code( wallet.safety            )  \
-code( wallet.safety.trades     )  \
-code( wallet                   )  \
-code( broker.semaphore         )  \
-code( broker.calculon          )
-
-#define CLIENT_CLICKME      \
-        CLIENT_CLICKME_LIST \
-      ( CLIENT_CLICKME_CODE )
-#define CLIENT_CLICKME_CODE(btn, fn, val) \
-                 client.clickme(btn, [&](const json &butterfly) { fn(val); });
-#define CLIENT_CLICKME_LIST(code)                                            \
+#define CLICKME      \
+        CLICKME_LIST \
+      ( CLICKME_CODE )
+#define CLICKME_CODE(btn, fn, val) \
+                      K.clickme(btn, [&](const json &butterfly) { fn(val); });
+#define CLICKME_LIST(code)                                                   \
 code( btn.notepad           , void                             ,           ) \
 code( btn.submit            , manualSendOrder                  , butterfly ) \
 code( btn.cancel            , manualCancelOrder                , butterfly ) \
@@ -244,13 +126,12 @@ code( qp                    , savedQuotingParameters           ,           ) \
 code( broker.semaphore      , void                             ,           )
     void waitAdmin() override {
       HOTKEYS
-      if (!K.num("headless")) client.listen();
-      CLIENT_WELCOME
-      CLIENT_CLICKME
+      CLICKME
     };
     void run() override {
       {
         K.timer_ticks_factor(qp.delayUI);
+        K.client_queue_delay(qp.delayUI);
         broker.calculon.dummyMM.mode("loaded");
       } {
         broker.semaphore.agree(K.num("autobot"));
@@ -272,6 +153,7 @@ code( broker.semaphore      , void                             ,           )
   private:
     void savedQuotingParameters() {
       K.timer_ticks_factor(qp.delayUI);
+      K.client_queue_delay(qp.delayUI);
       broker.calculon.dummyMM.mode("saved");
       levels.stats.ewma.calcFromHistory(qp._diffEwma);
     };
@@ -374,7 +256,7 @@ void TradingBot::terminal() {
   const string title1 = "   " + K.str("exchange");
   const string title2 = " " + (K.num("headless")
     ? "headless"
-    : "UI at " + Text::strL(engine.client.protocol) + "://" + K.wtfismyip + ":" + K.str("port")
+    : "UI at " + Text::strL(K.protocol) + "://" + K.wtfismyip + ":" + K.str("port")
   )  + ' ';
   wattron(stdscr, A_BOLD);
   mvwaddstr(stdscr, 0, 13, title1.data());

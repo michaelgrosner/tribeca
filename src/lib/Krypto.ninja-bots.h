@@ -661,146 +661,29 @@ namespace ₿ {
       };
   };
 
-  class WebSocket {
-    public:
-      int connections = 0;
-    private_ref:
-      Option &option;
-    public:
-      WebSocket(Option &o)
-        : option(o)
-      {};
-      const bool wsServer(const bool &connection, const string &addr) {
-        connections += connection ?: -1;
-        Print::log("UI", to_string(connections) + " client" + string(connections == 1 ? 0 : 1, 's')
-          + " connected, last connection was from", addr);
-        if (connections > option.num("client-limit")) {
-          Print::log("UI", "--client-limit=" + option.str("client-limit") + " reached by", addr);
-          return false;
-        }
-        return true;
-      };
-  };
-
-  class WebPage: public WebSocket {
-    private_ref:
-      Option &option;
-    public:
-      WebPage(Option &o)
-        : WebSocket(o)
-        , option(o)
-      {};
-    private:
-      const unordered_map<unsigned int, string> headers = {
-        {200, "HTTP/1.1 200 OK"
-              "\r\n" "Connection: keep-alive"
-              "\r\n" "Accept-Ranges: bytes"
-              "\r\n" "Vary: Accept-Encoding"
-              "\r\n" "Cache-Control: public, max-age=0"},
-        {401, "HTTP/1.1 401 Unauthorized"
-              "\r\n" "WWW-Authenticate: Basic realm=\"Basic Authorization\""
-              "\r\n" "Connection: keep-alive"
-              "\r\n" "Accept-Ranges: bytes"
-              "\r\n" "Vary: Accept-Encoding"
-              "\r\n" "Content-Type: text/plain; charset=UTF-8"},
-        {403, "HTTP/1.1 403 Forbidden"
-              "\r\n" "Connection: keep-alive"
-              "\r\n" "Accept-Ranges: bytes"
-              "\r\n" "Vary: Accept-Encoding"
-              "\r\n" "Content-Type: text/plain; charset=UTF-8"},
-        {404, "HTTP/1.1 404 Not Found"},
-        {418, "HTTP/1.1 418 I'm a teapot"},
-      };
-    protected:
-      const string httpServer(string url, const string &auth, const string &addr) {
-              string content,
-                     type;
-        unsigned int code = 200;
-                bool gzip = false;
-        if (alien(addr)) {
-          Print::log("UI", "dropping gzip bomb on", addr);
-          url.clear();
-        }
-        if (!url.empty()
-          and !option.str("B64auth").empty()
-          and auth.empty()
-        ) {
-          Print::log("UI", "authorization attempt from", addr);
-          code = 401;
-        } else if (!url.empty()
-          and !option.str("B64auth").empty()
-          and auth != option.str("B64auth")
-        ) {
-          Print::log("UI", "authorization failed from", addr);
-          code = 403;
-        } else if (option.documents.find(url) != option.documents.end()) {
-          content = string(option.documents.at(url).first, option.documents.at(url).second);
-          const string leaf = url.substr(url.find_last_of('.') + 1);
-          if (leaf.empty())       gzip = true;
-          else if (leaf == "js")  gzip = true, type = "application/javascript; charset=UTF-8";
-          else if (leaf == "css") type = "text/css; charset=UTF-8";
-          else if (leaf == "ico") type = "image/x-icon";
-          else if (leaf == "mp3") type = "audio/mpeg";
-          else if (leaf == "/") { type = "text/html; charset=UTF-8";
-            if (connections < option.num("client-limit"))
-              Print::log("UI", "authorization success from", addr);
-            else {
-              Print::log("UI", "--client-limit=" + option.str("client-limit") + " reached by", addr);
-              content = "Thank you! but our princess is already in this castle!"
-                        "<br/>" "Refresh the page anytime to retry.";
-            }
-          }
-        }
-        if (content.empty() and code == 200) {
-          if (Random::int64() % 21)
-            code = 404, content = "Today, is a beautiful day.";
-          else // Humans! go to any random url to check your luck
-            code = 418, content = "Today, is your lucky day!";
-        }
-        return document(content, code, type, gzip);
-      };
-    private:
-      const bool alien(const string &addr) {
-        return addr != "unknown"
-          and !option.str("whitelist").empty()
-          and option.str("whitelist").find(addr) == string::npos;
-      };
-      const string document(
-        const       string &content,
-        const unsigned int &code,
-        const       string &type = "",
-        const         bool &gzip = false
-      ) const {
-        return headers.at(code)
-         + (type.empty() ? "" : "\r\n" "Content-Type: " + type)
-         + (gzip ? "\r\n" "Content-Encoding: gzip" : "")
-         + "\r\n" "Content-Length: " + to_string(content.length())
-         + "\r\n"
-           "\r\n"
-         + content;
-      };
-  };
-
-  class Socket: public WebPage {
+  class Socket {
     public:
       string wtfismyip = "localhost";
     protected:
       uWS::Hub *socket = nullptr;
       vector<uWS::Group<uWS::CLIENT>*> gw_clients;
       vector<uWS::Group<uWS::SERVER>*> ui_servers;
-    private_ref:
-      Option &option;
     public:
-      Socket(Option &o)
-        : WebPage(o)
-        , option(o)
-      {};
       uWS::Group<uWS::SERVER> *listen(
                string &protocol,
         const     int &port,
         const    bool &ssl,
         const  string &crt,
         const  string &key,
+        const function<const string(
+                string,
+          const string&,
+          const string&
+        )>            &httpServer = nullptr,
+        const function<const bool(
+          const   bool&,
+          const string&
+        )>            &wsServer   = nullptr,
         const function<const string(
                 string,
           const string&
@@ -816,7 +699,7 @@ namespace ₿ {
         if (!ui_server)
           error("UI", "Unable to listen at port number " + to_string(port)
             + " (may be already in use by another program)");
-        if (!option.documents.empty())
+        if (httpServer)
           ui_server->onHttpRequest([&](uWS::HttpResponse *res, uWS::HttpRequest req, char *data, size_t length, size_t remainingBytes) {
             if (req.getMethod() != uWS::HttpMethod::METHOD_GET) return;
             const string url = req.getUrl().toString();
@@ -828,7 +711,7 @@ namespace ₿ {
             if (!response.empty())
               res->write(response.data(), response.length());
           });
-        // if (wsServer) {
+        if (wsServer) {
           ui_server->onConnection([&](uWS::WebSocket<uWS::SERVER> *webSocket, uWS::HttpRequest req) {
             if (!wsServer(true, cleanAddress(webSocket->getAddress().address)))
               webSocket->close();
@@ -836,7 +719,7 @@ namespace ₿ {
           ui_server->onDisconnection([&](uWS::WebSocket<uWS::SERVER> *webSocket, int code, char *message, size_t length) {
             wsServer(false, cleanAddress(webSocket->getAddress().address));
           });
-        // }
+        }
         if (wsMessage)
           ui_server->onMessage([&](uWS::WebSocket<uWS::SERVER> *webSocket, const char *message, size_t length, uWS::OpCode opCode) {
             if (length < 2) return;
@@ -990,9 +873,31 @@ namespace ₿ {
     public:
       virtual const mMatter about() const = 0;
   };
+
   class mBlob: virtual public mAbout {
     public:
       virtual const json blob() const = 0;
+  };
+
+  class mFromClient: virtual public mAbout {
+    public:
+      virtual void kiss(json *const j) {};
+  };
+
+  class mToClient: public mBlob,
+                   public mFromClient {
+    public:
+      function<void()> send
+#ifndef NDEBUG
+      = []() { WARN("Y U NO catch client send?"); }
+#endif
+      ;
+      virtual const json hello() {
+        return { blob() };
+      };
+      virtual const bool realtime() const {
+        return true;
+      };
   };
 
   class mFromDb: public mBlob {
@@ -1129,9 +1034,316 @@ namespace ₿ {
 
   class mBackupFromDb: public mFromDb {
     public:
-      mBackupFromDb(const Sqlite &sqlite)
+      mBackupFromDb(const Sqlite &s)
       {
-        sqlite.tables.push_back(this);
+        s.tables.push_back(this);
+      };
+  };
+
+  template <typename T> class mStructFromDb: public mBackupFromDb {
+    public:
+      mStructFromDb(const Sqlite &s)
+        : mBackupFromDb(s)
+      {};
+      const json blob() const override {
+        return *(T*)this;
+      };
+      void pull(const json &j) override {
+        from_json(j.empty() ? blob() : j.at(0), *(T*)this);
+        explanation(j.empty());
+      };
+    protected:
+      string explainOK() const override {
+        return "loaded last % OK";
+      };
+  };
+  template <typename T> class mVectorFromDb: public mBackupFromDb {
+    public:
+      mVectorFromDb(const Sqlite &s)
+        : mBackupFromDb(s)
+      {};
+      vector<T> rows;
+      using reference              = typename vector<T>::reference;
+      using const_reference        = typename vector<T>::const_reference;
+      using iterator               = typename vector<T>::iterator;
+      using const_iterator         = typename vector<T>::const_iterator;
+      using reverse_iterator       = typename vector<T>::reverse_iterator;
+      using const_reverse_iterator = typename vector<T>::const_reverse_iterator;
+      iterator                 begin()       noexcept { return rows.begin();   };
+      const_iterator           begin() const noexcept { return rows.begin();   };
+      const_iterator          cbegin() const noexcept { return rows.cbegin();  };
+      iterator                   end()       noexcept { return rows.end();     };
+      const_iterator             end() const noexcept { return rows.end();     };
+      reverse_iterator        rbegin()       noexcept { return rows.rbegin();  };
+      const_reverse_iterator crbegin() const noexcept { return rows.crbegin(); };
+      reverse_iterator          rend()       noexcept { return rows.rend();    };
+      bool                     empty() const noexcept { return rows.empty();   };
+      size_t                    size() const noexcept { return rows.size();    };
+      reference                front()                { return rows.front();   };
+      const_reference          front() const          { return rows.front();   };
+      reference                 back()                { return rows.back();    };
+      const_reference           back() const          { return rows.back();    };
+      reference                   at(size_t n)        { return rows.at(n);     };
+      const_reference             at(size_t n) const  { return rows.at(n);     };
+      virtual void erase() {
+        if (size() > limit())
+          rows.erase(begin(), end() - limit());
+      };
+      virtual void push_back(const T &row) {
+        rows.push_back(row);
+        backup();
+        erase();
+      };
+      void pull(const json &j) override {
+        for (const json &it : j)
+          rows.push_back(it);
+        explanation(empty());
+      };
+      const json blob() const override {
+        return back();
+      };
+    protected:
+      const string explain() const override {
+        return to_string(size());
+      };
+  };
+
+  class Client {
+    public:
+      int connections = 0;
+      string protocol = "HTTP";
+      unsigned int delay = 0;
+      mutable vector<mToClient*> elements;
+    protected:
+      uWS::Group<uWS::SERVER> *webui = nullptr;
+    private:
+      unordered_map<mMatter, function<const json()>> hello;
+      unordered_map<mMatter, function<void(json&)>> kisses;
+      unordered_map<mMatter, string> queue;
+      const unordered_map<unsigned int, string> headers = {
+        {200, "HTTP/1.1 200 OK"
+              "\r\n" "Connection: keep-alive"
+              "\r\n" "Accept-Ranges: bytes"
+              "\r\n" "Vary: Accept-Encoding"
+              "\r\n" "Cache-Control: public, max-age=0"},
+        {401, "HTTP/1.1 401 Unauthorized"
+              "\r\n" "Connection: keep-alive"
+              "\r\n" "Accept-Ranges: bytes"
+              "\r\n" "Vary: Accept-Encoding"
+              "\r\n" "WWW-Authenticate: Basic realm=\"Basic Authorization\""},
+        {403, "HTTP/1.1 403 Forbidden"
+              "\r\n" "Connection: keep-alive"
+              "\r\n" "Accept-Ranges: bytes"
+              "\r\n" "Vary: Accept-Encoding"},
+        {404, "HTTP/1.1 404 Not Found"},
+        {418, "HTTP/1.1 418 I'm a teapot"},
+      };
+    private_ref:
+      Option &option;
+      Events &events;
+    public:
+      Client(Option &o, Events &e)
+        : option(o)
+        , events(e)
+      {};
+      void client_queue_delay(const unsigned int &d) {
+        delay = d;
+      };
+      void broadcast(const unsigned int &tick) {
+        if (delay and !(tick % delay)) broadcast();
+      };
+      void welcome() {
+        for (auto &it : elements) {
+          it->send = [&]() {
+            if (connections) {
+              queue[it->about()] = it->blob().dump();
+              if (it->realtime() or !delay) broadcast();
+            }
+          };
+          if (hello.find(it->about()) != hello.end())
+            error("UI", string("Too many handlers for \"") + (char)it->about() + "\" welcome event");
+          hello[it->about()] = [&]() {
+            return it->hello();
+          };
+        }
+        elements.clear();
+      };
+      void headless() {
+        for (auto &it : elements)
+          it->send = nullptr;
+        elements.clear();
+      };
+      void clickme(mFromClient &data, function<void(const json&)> fn) {
+        if (!webui) return;
+        const mMatter matter = data.about();
+        if (kisses.find(matter) != kisses.end())
+          error("UI", string("Too many handlers for \"") + (char)matter + "\" clickme event");
+        kisses[matter] = [&data, fn](json &butterfly) {
+          data.kiss(&butterfly);
+          if (!butterfly.is_null())
+            fn(butterfly);
+        };
+      };
+      function<const bool(const bool&, const string&)> wsServer = [&](
+        const   bool &connection,
+        const string &addr
+      ) {
+        connections += connection ?: -1;
+        Print::log("UI", to_string(connections) + " client" + string(connections == 1 ? 0 : 1, 's')
+          + " connected, last connection was from", addr);
+        if (connections > option.num("client-limit")) {
+          Print::log("UI", "--client-limit=" + option.str("client-limit") + " reached by", addr);
+          return false;
+        }
+        return true;
+      };
+      function<const string(string, const string&)> wsMessage = [&](
+              string message,
+        const string &addr
+      ) {
+        if (alien(addr))
+          return string(option.documents.at("").first, option.documents.at("").second);
+        const mPortal portal = (mPortal)message.at(0);
+        const mMatter matter = (mMatter)message.at(1);
+        if (mPortal::Hello == portal and hello.find(matter) != hello.end()) {
+          const json reply = hello.at(matter)();
+          if (!reply.is_null())
+            return (char)portal + ((char)matter + reply.dump());
+        } else if (mPortal::Kiss == portal and kisses.find(matter) != kisses.end()) {
+          message = message.substr(2);
+          json butterfly = json::accept(message)
+            ? json::parse(message)
+            : json::object();
+          for (auto it = butterfly.begin(); it != butterfly.end();)
+            if (it.value().is_null()) it = butterfly.erase(it); else ++it;
+          kisses.at(matter)(butterfly);
+        }
+        return string();
+      };
+      function<const string(string, const string&, const string&)> httpServer = [&](
+              string path,
+        const string &auth,
+        const string &addr
+      ) {
+        if (alien(addr))
+          path.clear();
+        const bool papersplease = !(
+          path.empty() or option.str("B64auth").empty()
+        );
+        string content,
+               type = "text/html; charset=UTF-8";
+        unsigned int code = 200;
+        if (papersplease and auth.empty()) {
+          Print::log("UI", "authorization attempt from", addr);
+          code = 401;
+        } else if (papersplease and auth != option.str("B64auth")) {
+          Print::log("UI", "authorization failed from", addr);
+          code = 403;
+        } else {
+          if (connections < option.num("client-limit")) {
+            const string leaf = path.substr(path.find_last_of('.') + 1);
+            if (leaf == "/") {
+              path = leaf;
+              Print::log("UI", "authorization success from", addr);
+            } else if (leaf == "ico")
+              path = path.substr(path.find_last_of("/"));
+            if (option.documents.find(path) != option.documents.end()) {
+              content = string(option.documents.at(path).first,
+                               option.documents.at(path).second);
+              if (leaf == "js")       type = "application/javascript; charset=UTF-8";
+              else if (leaf == "css") type = "text/css; charset=UTF-8";
+              else if (leaf == "ico") type = "image/x-icon";
+              else if (leaf == "mp3") type = "audio/mpeg";
+            } else {
+              if (Random::int64() % 21)
+                code = 404, content = "Today, is a beautiful day.";
+              else // Humans! go to any random path to check your luck
+                code = 418, content = "Today, is your lucky day!";
+            }
+          } else {
+            Print::log("UI", "--client-limit=" + option.str("client-limit") + " reached by", addr);
+            content = "Thank you! but our princess is already in this castle!"
+                      "<br/>" "Refresh the page anytime to retry.";
+          }
+        }
+        return document(content, code, type);
+      };
+    private:
+      void broadcast() {
+        if (queue.empty()) return;
+        vector<string> msgs;
+        for (const auto &it : queue)
+          msgs.push_back((char)mPortal::Kiss + ((char)it.first + it.second));
+        queue.clear();
+        events.deferred([this, msgs]() {
+          for (const auto &it : msgs)
+            webui->broadcast(it.data(), it.length(), uWS::OpCode::TEXT);
+        });
+      };
+      const bool alien(const string &addr) {
+        if (addr != "unknown"
+          and !option.str("whitelist").empty()
+          and option.str("whitelist").find(addr) == string::npos
+        ) {
+          Print::log("UI", "dropping gzip bomb on", addr);
+          return true;
+        }
+        return false;
+      };
+      const string document(
+        const       string &content,
+        const unsigned int &code,
+        const       string &type = ""
+      ) const {
+        return headers.at(code)
+         + (type.empty() ? "" : "\r\n" "Content-Type: " + type)
+         + ((content.length() > 2 and (content.substr(0, 2) == "PK" or (
+             content.at(0) == '\x1F' and content.at(1) == '\x8B'
+           ))) ? "\r\n" "Content-Encoding: gzip" : "")
+         + "\r\n" "Content-Length: " + to_string(content.length())
+         + "\r\n"
+           "\r\n"
+         + content;
+      };
+  };
+
+  template <typename T> class mJsonToClient: public mToClient {
+    public:
+      mJsonToClient(const Client &c)
+      {
+        c.elements.push_back(this);
+      };
+      virtual const bool send() {
+        if ((send_asap() or send_soon())
+          and (send_same_blob() or diff_blob())
+        ) {
+          if (mToClient::send) mToClient::send();
+          return true;
+        }
+        return false;
+      };
+      const json blob() const override {
+        return *(T*)this;
+      };
+    protected:
+      Clock send_last_Tstamp = 0;
+      string send_last_blob;
+      virtual const bool send_same_blob() const {
+        return true;
+      };
+      const bool diff_blob() {
+        const string last_blob = send_last_blob;
+        return (send_last_blob = blob().dump()) != last_blob;
+      };
+      virtual const bool send_asap() const {
+        return true;
+      };
+      const bool send_soon(const int &delay = 0) {
+        const Clock now = Tstamp;
+        if (send_last_Tstamp + max(369, delay) > now)
+          return false;
+        send_last_Tstamp = now;
+        return true;
       };
   };
 
@@ -1157,13 +1369,14 @@ namespace ₿ {
                      public Option,
                      public Socket,
                      public Events,
-                     public Sqlite {
+                     public Sqlite,
+                     public Client {
     public:
       Gw *gateway = nullptr;
     public:
       KryptoNinja()
-        : Socket((Option&)*this)
-        , Sqlite((Events&)*this)
+        : Sqlite((Events&)*this)
+        , Client((Option&)*this, (Events&)*this)
       {};
       KryptoNinja *const main(int argc, char** argv) {
         {
@@ -1205,7 +1418,6 @@ namespace ₿ {
               socket->connect(gateway->ws, nullptr, {}, 5e+3, gateway->api);
             return gateway->countdown ? false : gateway->askForData(tick);
           });
-        } {
           handshake({
             {"gateway", gateway->http },
             {"gateway", gateway->ws   },
@@ -1217,6 +1429,23 @@ namespace ₿ {
         } {
           if (databases) backups(str("database"), str("diskdata"));
           else blackhole();
+        } {
+          if (num("headless")) headless();
+          else {
+            webui = listen(
+              protocol, num("port"),
+              !num("without-ssl"), str("ssl-crt"), str("ssl-key"),
+              httpServer, wsServer, wsMessage
+            );
+            timer_1s([&](const unsigned int &tick) {
+              broadcast(tick);
+              return false;
+            });
+            ending([&]() {
+              webui->close();
+            });
+            welcome();
+          }
         }
         return this;
       };

@@ -45,126 +45,6 @@ namespace ₿ {
     ShortPingAggressive, AveragePingAggressive, LongPingAggressive
   };
 
-  struct mFromClient: virtual public mAbout {
-    virtual void kiss(json *const j) {};
-  };
-  struct mToClient: public mBlob,
-                    public mFromClient {
-    function<void()> send
-#ifndef NDEBUG
-    = []() { WARN("Y U NO catch client send?"); }
-#endif
-    ;
-    virtual const json hello() {
-      return { blob() };
-    };
-    virtual const bool realtime() const {
-      return true;
-    };
-  };
-  template <typename T> struct mJsonToClient: public mToClient {
-    virtual const bool send() {
-      if ((send_asap() or send_soon())
-        and (send_same_blob() or diff_blob())
-      ) {
-        mToClient::send();
-        return true;
-      }
-      return false;
-    };
-    const json blob() const override {
-      return *(T*)this;
-    };
-    protected:
-      Clock send_last_Tstamp = 0;
-      string send_last_blob;
-      virtual const bool send_same_blob() const {
-        return true;
-      };
-      const bool diff_blob() {
-        const string last_blob = send_last_blob;
-        return (send_last_blob = blob().dump()) != last_blob;
-      };
-      virtual const bool send_asap() const {
-        return true;
-      };
-      const bool send_soon(const int &delay = 0) {
-        const Clock now = Tstamp;
-        if (send_last_Tstamp + max(369, delay) > now)
-          return false;
-        send_last_Tstamp = now;
-        return true;
-      };
-  };
-
-  template <typename T> class mStructFromDb: public mBackupFromDb {
-    public:
-      mStructFromDb(const KryptoNinja &bot)
-        : mBackupFromDb(bot)
-      {};
-      const json blob() const override {
-        return *(T*)this;
-      };
-      void pull(const json &j) override {
-        from_json(j.empty() ? blob() : j.at(0), *(T*)this);
-        explanation(j.empty());
-      };
-    protected:
-      string explainOK() const override {
-        return "loaded last % OK";
-      };
-  };
-  template <typename T> class mVectorFromDb: public mBackupFromDb {
-    public:
-      mVectorFromDb(const KryptoNinja &bot)
-        : mBackupFromDb(bot)
-      {};
-      vector<T> rows;
-      using reference              = typename vector<T>::reference;
-      using const_reference        = typename vector<T>::const_reference;
-      using iterator               = typename vector<T>::iterator;
-      using const_iterator         = typename vector<T>::const_iterator;
-      using reverse_iterator       = typename vector<T>::reverse_iterator;
-      using const_reverse_iterator = typename vector<T>::const_reverse_iterator;
-      iterator                 begin()       noexcept { return rows.begin();   };
-      const_iterator           begin() const noexcept { return rows.begin();   };
-      const_iterator          cbegin() const noexcept { return rows.cbegin();  };
-      iterator                   end()       noexcept { return rows.end();     };
-      const_iterator             end() const noexcept { return rows.end();     };
-      reverse_iterator        rbegin()       noexcept { return rows.rbegin();  };
-      const_reverse_iterator crbegin() const noexcept { return rows.crbegin(); };
-      reverse_iterator          rend()       noexcept { return rows.rend();    };
-      bool                     empty() const noexcept { return rows.empty();   };
-      size_t                    size() const noexcept { return rows.size();    };
-      reference                front()                { return rows.front();   };
-      const_reference          front() const          { return rows.front();   };
-      reference                 back()                { return rows.back();    };
-      const_reference           back() const          { return rows.back();    };
-      reference                   at(size_t n)        { return rows.at(n);     };
-      const_reference             at(size_t n) const  { return rows.at(n);     };
-      virtual void erase() {
-        if (size() > limit())
-          rows.erase(begin(), end() - limit());
-      };
-      virtual void push_back(const T &row) {
-        rows.push_back(row);
-        backup();
-        erase();
-      };
-      void pull(const json &j) override {
-        for (const json &it : j)
-          rows.push_back(it);
-        explanation(empty());
-      };
-      const json blob() const override {
-        return back();
-      };
-    protected:
-      const string explain() const override {
-        return to_string(size());
-      };
-  };
-
   struct mQuotingParams: public mStructFromDb<mQuotingParams>,
                          public mJsonToClient<mQuotingParams> {
     Price             widthPing                       = 300.0;
@@ -232,6 +112,7 @@ namespace ₿ {
     public:
       mQuotingParams(const KryptoNinja &bot)
         : mStructFromDb(bot)
+        , mJsonToClient(bot)
         , K(bot)
       {};
       void from_json(const json &j) {
@@ -409,7 +290,8 @@ namespace ₿ {
       const KryptoNinja &K;
     public:
       mOrders(const KryptoNinja &bot)
-        : updated()
+        : mJsonToClient(bot)
+        , updated()
         , K(bot)
       {};
       mOrder *const find(const RandId &orderId) {
@@ -555,32 +437,36 @@ namespace ₿ {
   };
 
   struct mMarketTakers: public mJsonToClient<mTrade> {
-    vector<mTrade> trades;
-            Amount takersBuySize60s  = 0,
-                   takersSellSize60s = 0;
-    void timer_60s() {
-      takersSellSize60s = takersBuySize60s = 0;
-      if (trades.empty()) return;
-      for (mTrade &it : trades)
-        (it.side == Side::Bid
-          ? takersSellSize60s
-          : takersBuySize60s
-        ) += it.quantity;
-      trades.clear();
-    };
-    void read_from_gw(const mTrade &raw) {
-      trades.push_back(raw);
-      send();
-    };
-    const mMatter about() const override {
-      return mMatter::MarketTrade;
-    };
-    const json blob() const override {
-      return trades.back();
-    };
-    const json hello() override {
-      return trades;
-    };
+    public:
+      vector<mTrade> trades;
+              Amount takersBuySize60s  = 0,
+                     takersSellSize60s = 0;
+      mMarketTakers(const KryptoNinja &bot)
+        : mJsonToClient(bot)
+      {};
+      void timer_60s() {
+        takersSellSize60s = takersBuySize60s = 0;
+        if (trades.empty()) return;
+        for (mTrade &it : trades)
+          (it.side == Side::Bid
+            ? takersSellSize60s
+            : takersBuySize60s
+          ) += it.quantity;
+        trades.clear();
+      };
+      void read_from_gw(const mTrade &raw) {
+        trades.push_back(raw);
+        send();
+      };
+      const mMatter about() const override {
+        return mMatter::MarketTrade;
+      };
+      const json blob() const override {
+        return trades.back();
+      };
+      const json hello() override {
+        return trades;
+      };
   };
   static void to_json(json &j, const mMarketTakers &k) {
     j = k.trades;
@@ -590,8 +476,9 @@ namespace ₿ {
     private_ref:
       const Price &fairValue;
     public:
-      mFairLevelsPrice(const Price &f)
-        : fairValue(f)
+      mFairLevelsPrice(const KryptoNinja &bot, const Price &f)
+        : mJsonToClient(bot)
+        , fairValue(f)
       {};
       const Price currentPrice() const {
         return fairValue;
@@ -870,9 +757,11 @@ namespace ₿ {
     mFairLevelsPrice fairPrice;
        mMarketTakers takerTrades;
     mMarketStats(const KryptoNinja &bot, const Price &f, const mQuotingParams &q)
-      : ewma(bot, f, q)
+      : mJsonToClient(bot)
+      , ewma(bot, f, q)
       , stdev(bot, f, q)
-      , fairPrice(f)
+      , fairPrice(bot, f)
+      , takerTrades(bot)
     {};
     const mMatter about() const override {
       return mMatter::MarketChart;
@@ -898,8 +787,9 @@ namespace ₿ {
       const mLevels        &unfiltered;
       const mQuotingParams &qp;
     public:
-      mLevelsDiff(const mLevels &u, const mQuotingParams &q)
-        : unfiltered(u)
+      mLevelsDiff(const KryptoNinja &bot, const mLevels &u, const mQuotingParams &q)
+        : mJsonToClient(bot)
+        , unfiltered(u)
         , qp(q)
       {};
       const bool empty() const {
@@ -910,7 +800,7 @@ namespace ₿ {
       void send_patch() {
         if (ratelimit()) return;
         diff();
-        if (!empty()) mToClient::send();
+        if (!empty() and mToClient::send) mToClient::send();
         unfilter();
       };
       const mMatter about() const override {
@@ -978,7 +868,7 @@ namespace ₿ {
       const mQuotingParams &qp;
     public:
       mMarketLevels(const KryptoNinja &bot, const mOrders &o, const mQuotingParams &q)
-        : diff(unfiltered, q)
+        : diff(bot, unfiltered, q)
         , stats(bot, fairValue, q)
         , K(bot)
         , orders(o)
@@ -1205,6 +1095,7 @@ namespace ₿ {
     public:
       mTradesHistory(const KryptoNinja &bot, const mQuotingParams &q)
         : mVectorFromDb(bot)
+        , mJsonToClient(bot)
         , K(bot)
         , qp(q)
       {};
@@ -1459,7 +1350,8 @@ namespace ₿ {
                            &targetBasePosition;
     public:
       mSafety(const KryptoNinja &bot, const mQuotingParams &q, const Price &f, const Amount &v, const Amount &t, const Amount &p)
-        : trades(bot, q)
+        : mJsonToClient(bot)
+        , trades(bot, q)
         , recentTrades(q)
         , qp(q)
         , fairValue(f)
@@ -1607,6 +1499,7 @@ namespace ₿ {
     public:
       mTarget(const KryptoNinja &bot, const mQuotingParams &q, const double &t, const Amount &v)
         : mStructFromDb(bot)
+        , mJsonToClient(bot)
         , K(bot)
         , qp(q)
         , targetPositionAutoPercentage(t)
@@ -1699,7 +1592,8 @@ namespace ₿ {
       const Price       &fairValue;
     public:
       mWalletPosition(const KryptoNinja &bot, const mOrders &o, const mQuotingParams &q, const double &t, const Price &f)
-        : target(bot, q, t, base.value)
+        : mJsonToClient(bot)
+        , target(bot, q, t, base.value)
         , safety(bot, q, f, base.value, base.total, target.targetBasePosition)
         , profits(bot, q)
         , K(bot)
@@ -1826,6 +1720,9 @@ namespace ₿ {
   };
   struct mNotepad: public mJsonToClient<mNotepad> {
     string content;
+    mNotepad(const KryptoNinja &bot)
+      : mJsonToClient(bot)
+    {};
     void kiss(json *const j) override {
       if (j->is_array() and j->size() and j->at(0).is_string())
        content = j->at(0);
@@ -1846,6 +1743,9 @@ namespace ₿ {
     mButtonCleanAllClosedTrades cleanTradesClosed;
     mButtonCleanAllTrades       cleanTrades;
     mButtonCleanTrade           cleanTrade;
+    mButtons(const KryptoNinja &bot)
+      : notepad(bot)
+    {};
   };
 
   struct mQuote: public mLevel {
@@ -2136,7 +2036,8 @@ namespace ₿ {
       const mWalletPosition &wallet;
     public:
       mAntonioCalculon(const KryptoNinja &bot, const mQuotingParams &q, const mMarketLevels &l, const mWalletPosition &w)
-        : quotes(bot)
+        : mJsonToClient(bot)
+        , quotes(bot)
         , dummyMM(bot, q, l, w, quotes)
         , K(bot)
         , qp(q)
@@ -2462,7 +2363,8 @@ namespace ₿ {
       const KryptoNinja &K;
     public:
       mSemaphore(const KryptoNinja &bot)
-        : K(bot)
+        : mJsonToClient(bot)
+        , K(bot)
       {};
       void kiss(json *const j) override {
         if (j->is_object()
@@ -2560,7 +2462,8 @@ namespace ₿ {
       const KryptoNinja &K;
     public:
       mProduct(const KryptoNinja &bot)
-        : K(bot)
+        : mJsonToClient(bot)
+        , K(bot)
       {};
       const json to_json() const {
         return {
@@ -2587,7 +2490,8 @@ namespace ₿ {
       const KryptoNinja &K;
     public:
       mMonitor(const KryptoNinja &bot)
-        : K(bot)
+        : mJsonToClient(bot)
+        , K(bot)
       {};
       void timer_60s() {
         send();
