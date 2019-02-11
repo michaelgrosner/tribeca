@@ -74,9 +74,13 @@ class Engine: public Klass {
       , product(K)
       , orders(K)
       , levels(K, orders, qp)
-      , wallet(K, orders, qp, levels.stats.ewma.targetPositionAutoPercentage, levels.fairValue)
+      , wallet(K, orders, qp, btn, levels.stats.ewma.targetPositionAutoPercentage, levels.fairValue)
       , broker(K, orders, qp, levels, wallet)
-    {};
+    {
+      K.edited(&btn.submit, [&](const json &j) { manualSendOrder(j); });
+      K.edited(&btn.cancel, [&](const json &j) { manualCancelOrder(j); });
+      K.edited(&btn.cancelAll, [&]() { cancelOrders(); });
+    };
   protected:
     void waitData() override {
       K.gateway->write_Connectivity = [&](const Connectivity &rawdata) {
@@ -100,6 +104,7 @@ class Engine: public Klass {
         levels.stats.takerTrades.read_from_gw(rawdata);
       };
     };
+    void waitAdmin() override {
 #define HOTKEYS      \
         HOTKEYS_LIST \
       ( HOTKEYS_CODE )
@@ -108,55 +113,25 @@ class Engine: public Klass {
 code( 'Q'  , exit                    ) \
 code( 'q'  , exit                    ) \
 code( '\e' , broker.semaphore.toggle )
-
-#define CLICKME      \
-        CLICKME_LIST \
-      ( CLICKME_CODE )
-#define CLICKME_CODE(btn, fn, val) \
-                      K.clickme(btn, [&](const json &butterfly) { fn(val); });
-#define CLICKME_LIST(code)                                                   \
-code( btn.notepad           , void                             ,           ) \
-code( btn.submit            , manualSendOrder                  , butterfly ) \
-code( btn.cancel            , manualCancelOrder                , butterfly ) \
-code( btn.cancelAll         , cancelOrders                     ,           ) \
-code( btn.cleanTrade        , wallet.safety.trades.clearOne    , butterfly ) \
-code( btn.cleanTrades       , wallet.safety.trades.clearAll    ,           ) \
-code( btn.cleanTradesClosed , wallet.safety.trades.clearClosed ,           ) \
-code( qp                    , savedQuotingParameters           ,           ) \
-code( broker.semaphore      , void                             ,           )
-    void waitAdmin() override {
       HOTKEYS
-      CLICKME
     };
     void run() override {
-      {
-        K.timer_ticks_factor(qp.delayUI);
-        K.client_queue_delay(qp.delayUI);
-        broker.calculon.dummyMM.mode("loaded");
-      } {
-        broker.semaphore.agree(K.num("autobot"));
-        K.timer_1s([&](const unsigned int &tick) {
-          if (!K.gateway->countdown and !levels.warn_empty()) {
-            levels.timer_1s();
-            if (!(tick % 60)) {
-              levels.timer_60s();
-              monitor.timer_60s();
-            }
-            wallet.safety.timer_1s();
-            calcQuotes();
+      broker.semaphore.agree(K.num("autobot"));
+      K.timer_1s([&](const unsigned int &tick) {
+        if (!K.gateway->countdown and !levels.warn_empty()) {
+          levels.timer_1s();
+          if (!(tick % 60)) {
+            levels.timer_60s();
+            monitor.timer_60s();
           }
-          return false;
-        });
-        K.gateway->askForCancelAll = &qp.cancelOrdersAuto;
-      }
+          wallet.safety.timer_1s();
+          calcQuotes();
+        }
+        return false;
+      });
+      K.gateway->askForCancelAll = &qp.cancelOrdersAuto;
     };
   private:
-    void savedQuotingParameters() {
-      K.timer_ticks_factor(qp.delayUI);
-      K.client_queue_delay(qp.delayUI);
-      broker.calculon.dummyMM.mode("saved");
-      levels.stats.ewma.calcFromHistory(qp._diffEwma);
-    };
     void cancelOrders() {
       for (mOrder *const it : orders.working())
         cancelOrder(it);

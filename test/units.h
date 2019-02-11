@@ -322,7 +322,7 @@ namespace ₿ {
         REQUIRE_NOTHROW(qp._diffEwma |= true << 3);
         REQUIRE_NOTHROW(qp._diffEwma |= true << 4);
         REQUIRE_NOTHROW(qp._diffEwma |= true << 5);
-        REQUIRE_NOTHROW(ewma.calcFromHistory(qp._diffEwma));
+        REQUIRE_NOTHROW(ewma.calcFromHistory());
         THEN("values") {
           REQUIRE(ewma.mgEwmaVL == Approx(266.1426832796));
           REQUIRE(ewma.mgEwmaL == Approx(264.4045182289));
@@ -352,12 +352,13 @@ namespace ₿ {
       KryptoNinja K;
       K.gateway = Gw::new_Gw("NULL");
       K.gateway->minTick = 0.01;
+      mButtons btn(K);
       mOrders orders(K);
       mQuotingParams qp(K);
       mMarketLevels levels(K, orders, qp);
       const Price fairValue = 500;
       const double targetPositionAutoPercentage = 0;
-      mWalletPosition wallet(K, orders, qp, targetPositionAutoPercentage, fairValue);
+      mWalletPosition wallet(K, orders, qp, btn, targetPositionAutoPercentage, fairValue);
       wallet.base = {"BTC", 1, 0};
       wallet.quote = {"EUR", 1000, 0};
       mBroker broker(K, orders, qp, levels, wallet);

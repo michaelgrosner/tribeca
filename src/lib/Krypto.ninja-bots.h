@@ -702,9 +702,8 @@ namespace ₿ {
         if (httpServer)
           ui_server->onHttpRequest([&](uWS::HttpResponse *res, uWS::HttpRequest req, char *data, size_t length, size_t remainingBytes) {
             if (req.getMethod() != uWS::HttpMethod::METHOD_GET) return;
-            const string url = req.getUrl().toString();
             const string response = httpServer(
-              url.substr(url.find_last_of("/", url.find_last_of("/") - 1)),
+              req.getUrl().toString(),
               req.getHeader("authorization").toString(),
               cleanAddress(res->getHttpSocket()->getAddress().address)
             );
@@ -811,17 +810,43 @@ namespace ₿ {
       };
   };
 
+  class mAbout {
+    public:
+      virtual const mMatter about() const = 0;
+  };
+
+  class mBlob: virtual public mAbout {
+    public:
+      virtual const json blob() const = 0;
+  };
+
+  class mFromClient: virtual public mAbout {
+    public:
+      virtual void edit(const json&) = 0;
+  };
+
   class Events {
     private:
       uS::Timer *timer = nullptr;
       uS::Async *loop  = nullptr;
-      unsigned int tick  = 0,
-                   ticks = 300;
+              unsigned int tick  = 0;
+      mutable unsigned int ticks = 300;
+      mutable unordered_map<const mFromClient*, vector<function<void(const json&)>>> editFn;
       vector<function<const bool(const unsigned int&)>> timeFn;
-      vector<function<const bool()>>                    waitFn;
-      vector<function<void()>>                          slowFn;
+      vector<function<const bool()>> waitFn;
+      vector<function<void()>> slowFn;
     public:
-      void timer_ticks_factor(const unsigned int &factor) {
+      void edited(const mFromClient *data, const function<void(const json&)> &fn) const {
+        editFn[data].push_back(fn);
+      };
+      void edited(const mFromClient *data, const function<void()> &fn) const {
+        edited(data, [fn](const json &j) { fn(); });
+      };
+      void edited(const mFromClient *data, const json &j = nullptr) const {
+        if (editFn.find(data) != editFn.end())
+          for (const auto &it : editFn.at(data)) it(j);
+      };
+      void timer_ticks_factor(const unsigned int &factor) const {
         ticks = 300 * (factor ?: 1);
       };
       void timer_1s(const function<const bool(const unsigned int&)> &fn) {
@@ -869,23 +894,7 @@ namespace ₿ {
       };
   };
 
-  class mAbout {
-    public:
-      virtual const mMatter about() const = 0;
-  };
-
-  class mBlob: virtual public mAbout {
-    public:
-      virtual const json blob() const = 0;
-  };
-
-  class mFromClient: virtual public mAbout {
-    public:
-      virtual void kiss(json *const j) {};
-  };
-
-  class mToClient: public mBlob,
-                   public mFromClient {
+  class mToClient: public mBlob {
     public:
       function<void()> send
 #ifndef NDEBUG
@@ -1110,15 +1119,16 @@ namespace ₿ {
 
   class Client {
     public:
-      int connections = 0;
-      string protocol = "HTTP";
-      unsigned int delay = 0;
-      mutable vector<mToClient*> elements;
+              int connections = 0;
+              string protocol = "HTTP";
+      mutable unsigned int delay = 0;
+      mutable vector<mToClient*>   readable;
+      mutable vector<mFromClient*> editable;
     protected:
       uWS::Group<uWS::SERVER> *webui = nullptr;
     private:
       unordered_map<mMatter, function<const json()>> hello;
-      unordered_map<mMatter, function<void(json&)>> kisses;
+      unordered_map<mMatter, function<void(const json&)>> kisses;
       unordered_map<mMatter, string> queue;
       const unordered_map<unsigned int, string> headers = {
         {200, "HTTP/1.1 200 OK"
@@ -1146,43 +1156,37 @@ namespace ₿ {
         : option(o)
         , events(e)
       {};
-      void client_queue_delay(const unsigned int &d) {
+      void client_queue_delay(const unsigned int &d) const {
         delay = d;
       };
       void broadcast(const unsigned int &tick) {
         if (delay and !(tick % delay)) broadcast();
       };
       void welcome() {
-        for (auto &it : elements) {
+        for (auto &it : readable) {
           it->send = [&]() {
             if (connections) {
               queue[it->about()] = it->blob().dump();
               if (it->realtime() or !delay) broadcast();
             }
           };
-          if (hello.find(it->about()) != hello.end())
-            error("UI", string("Too many handlers for \"") + (char)it->about() + "\" welcome event");
           hello[it->about()] = [&]() {
             return it->hello();
           };
         }
-        elements.clear();
+        readable.clear();
+        for (auto &it : editable) {
+          kisses[it->about()] = [&](const json &butterfly) {
+            it->edit(butterfly);
+          };
+        }
+        editable.clear();
       };
       void headless() {
-        for (auto &it : elements)
+        for (auto &it : readable)
           it->send = nullptr;
-        elements.clear();
-      };
-      void clickme(mFromClient &data, function<void(const json&)> fn) {
-        if (!webui) return;
-        const mMatter matter = data.about();
-        if (kisses.find(matter) != kisses.end())
-          error("UI", string("Too many handlers for \"") + (char)matter + "\" clickme event");
-        kisses[matter] = [&data, fn](json &butterfly) {
-          data.kiss(&butterfly);
-          if (!butterfly.is_null())
-            fn(butterfly);
-        };
+        readable.clear();
+        editable.clear();
       };
       function<const bool(const bool&, const string&)> wsServer = [&](
         const   bool &connection,
@@ -1239,32 +1243,30 @@ namespace ₿ {
         } else if (papersplease and auth != option.str("B64auth")) {
           Print::log("UI", "authorization failed from", addr);
           code = 403;
-        } else {
-          if (connections < option.num("client-limit")) {
+        } else if (connections < option.num("client-limit")) {
+          if (option.documents.find(path) == option.documents.end())
+            path = path.substr(path.find_last_of("/", path.find_last_of("/") - 1));
+          if (option.documents.find(path) == option.documents.end())
+            path = path.substr(path.find_last_of("/"));
+          if (option.documents.find(path) != option.documents.end()) {
+            content = string(option.documents.at(path).first,
+                             option.documents.at(path).second);
             const string leaf = path.substr(path.find_last_of('.') + 1);
-            if (leaf == "/") {
-              path = leaf;
-              Print::log("UI", "authorization success from", addr);
-            } else if (leaf == "ico")
-              path = path.substr(path.find_last_of("/"));
-            if (option.documents.find(path) != option.documents.end()) {
-              content = string(option.documents.at(path).first,
-                               option.documents.at(path).second);
-              if (leaf == "js")       type = "application/javascript; charset=UTF-8";
-              else if (leaf == "css") type = "text/css; charset=UTF-8";
-              else if (leaf == "ico") type = "image/x-icon";
-              else if (leaf == "mp3") type = "audio/mpeg";
-            } else {
-              if (Random::int64() % 21)
-                code = 404, content = "Today, is a beautiful day.";
-              else // Humans! go to any random path to check your luck
-                code = 418, content = "Today, is your lucky day!";
-            }
+            if (leaf == "/") Print::log("UI", "authorization success from", addr);
+            else if (leaf == "js")  type = "application/javascript; charset=UTF-8";
+            else if (leaf == "css") type = "text/css; charset=UTF-8";
+            else if (leaf == "ico") type = "image/x-icon";
+            else if (leaf == "mp3") type = "audio/mpeg";
           } else {
-            Print::log("UI", "--client-limit=" + option.str("client-limit") + " reached by", addr);
-            content = "Thank you! but our princess is already in this castle!"
-                      "<br/>" "Refresh the page anytime to retry.";
+            if (Random::int64() % 21)
+              code = 404, content = "Today, is a beautiful day.";
+            else // Humans! go to any random path to check your luck
+              code = 418, content = "Today, is your lucky day!";
           }
+        } else {
+          Print::log("UI", "--client-limit=" + option.str("client-limit") + " reached by", addr);
+          content = "Thank you! but our princess is already in this castle!"
+                    "<br/>" "Refresh the page anytime to retry.";
         }
         return document(content, code, type);
       };
@@ -1307,11 +1309,19 @@ namespace ₿ {
       };
   };
 
+  class mJsonFromClient: public mFromClient {
+    public:
+      mJsonFromClient(const Client &c)
+      {
+        c.editable.push_back(this);
+      };
+  };
+
   template <typename T> class mJsonToClient: public mToClient {
     public:
       mJsonToClient(const Client &c)
       {
-        c.elements.push_back(this);
+        c.readable.push_back(this);
       };
       virtual const bool send() {
         if ((send_asap() or send_soon())

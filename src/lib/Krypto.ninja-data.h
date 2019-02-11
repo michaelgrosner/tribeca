@@ -46,7 +46,8 @@ namespace ₿ {
   };
 
   struct mQuotingParams: public mStructFromDb<mQuotingParams>,
-                         public mJsonToClient<mQuotingParams> {
+                         public mJsonToClient<mQuotingParams>,
+                         public mJsonFromClient {
     Price             widthPing                       = 300.0;
     double            widthPingPercentage             = 0.25;
     Price             widthPong                       = 300.0;
@@ -106,16 +107,25 @@ namespace ₿ {
     double            profitHourInterval              = 0.5;
     bool              audio                           = false;
     unsigned int      delayUI                         = 3;
-    unsigned int      _diffEwma                       = 0;
+    int               _diffEwma                       = -1;
     private_ref:
       const KryptoNinja &K;
     public:
       mQuotingParams(const KryptoNinja &bot)
         : mStructFromDb(bot)
         , mJsonToClient(bot)
+        , mJsonFromClient(bot)
         , K(bot)
       {};
       void from_json(const json &j) {
+        const vector<unsigned int> previous = {
+          veryLongEwmaPeriods,
+          longEwmaPeriods,
+          mediumEwmaPeriods,
+          shortEwmaPeriods,
+          extraShortEwmaPeriods,
+          ultraShortEwmaPeriods
+        };
         widthPing                       = fmax(K.gateway->minTick, j.value("widthPing", widthPing));
         widthPingPercentage             = fmin(1e+2, fmax(1e-3,    j.value("widthPingPercentage", widthPingPercentage)));
         widthPong                       = fmax(K.gateway->minTick, j.value("widthPong", widthPong));
@@ -177,24 +187,23 @@ namespace ₿ {
         delayUI                         = fmax(0,                  j.value("delayUI", delayUI));
         if (mode == mQuotingMode::Depth)
           widthPercentage = false;
-      };
-      void kiss(json *const j) override {
-        const vector<unsigned int> previous = {
-          veryLongEwmaPeriods,
-          longEwmaPeriods,
-          mediumEwmaPeriods,
-          shortEwmaPeriods,
-          extraShortEwmaPeriods,
-          ultraShortEwmaPeriods
-        };
-        from_json(*j);
+        K.timer_ticks_factor(delayUI);
+        K.client_queue_delay(delayUI);
+        if (_diffEwma == -1)
+          _diffEwma = 0;
+        else {
+          _diffEwma |= (previous[0] != veryLongEwmaPeriods)   << 0;
+          _diffEwma |= (previous[1] != longEwmaPeriods)       << 1;
+          _diffEwma |= (previous[2] != mediumEwmaPeriods)     << 2;
+          _diffEwma |= (previous[3] != shortEwmaPeriods)      << 3;
+          _diffEwma |= (previous[4] != extraShortEwmaPeriods) << 4;
+          _diffEwma |= (previous[5] != ultraShortEwmaPeriods) << 5;
+        }
+        K.edited(this);
         _diffEwma = 0;
-        _diffEwma |= (previous[0] != veryLongEwmaPeriods)   << 0;
-        _diffEwma |= (previous[1] != longEwmaPeriods)       << 1;
-        _diffEwma |= (previous[2] != mediumEwmaPeriods)     << 2;
-        _diffEwma |= (previous[3] != shortEwmaPeriods)      << 3;
-        _diffEwma |= (previous[4] != extraShortEwmaPeriods) << 4;
-        _diffEwma |= (previous[5] != ultraShortEwmaPeriods) << 5;
+      };
+      void edit(const json &j) override {
+        from_json(j);
         backup();
         send();
       };
@@ -642,7 +651,9 @@ namespace ₿ {
         , fairValue96h(bot)
         , fairValue(f)
         , qp(q)
-      {};
+      {
+        bot.edited(&qp, [&]() { calcFromHistory(); });
+      };
       void timer_60s(const Price &averageWidth) {
         prepareHistory();
         calcProtections(averageWidth);
@@ -650,14 +661,13 @@ namespace ₿ {
         calcTargetPositionAutoPercentage();
         backup();
       };
-      void calcFromHistory(unsigned int &diff) {
-        if ((diff >> 0) & 1) calcFromHistory(&mgEwmaVL, qp.veryLongEwmaPeriods,   "VeryLong");
-        if ((diff >> 1) & 1) calcFromHistory(&mgEwmaL,  qp.longEwmaPeriods,       "Long");
-        if ((diff >> 2) & 1) calcFromHistory(&mgEwmaM,  qp.mediumEwmaPeriods,     "Medium");
-        if ((diff >> 3) & 1) calcFromHistory(&mgEwmaS,  qp.shortEwmaPeriods,      "Short");
-        if ((diff >> 4) & 1) calcFromHistory(&mgEwmaXS, qp.extraShortEwmaPeriods, "ExtraShort");
-        if ((diff >> 5) & 1) calcFromHistory(&mgEwmaU,  qp.ultraShortEwmaPeriods, "UltraShort");
-        diff = 0;
+      void calcFromHistory() {
+        if ((qp._diffEwma >> 0) & 1) calcFromHistory(&mgEwmaVL, qp.veryLongEwmaPeriods,   "VeryLong");
+        if ((qp._diffEwma >> 1) & 1) calcFromHistory(&mgEwmaL,  qp.longEwmaPeriods,       "Long");
+        if ((qp._diffEwma >> 2) & 1) calcFromHistory(&mgEwmaM,  qp.mediumEwmaPeriods,     "Medium");
+        if ((qp._diffEwma >> 3) & 1) calcFromHistory(&mgEwmaS,  qp.shortEwmaPeriods,      "Short");
+        if ((qp._diffEwma >> 4) & 1) calcFromHistory(&mgEwmaXS, qp.extraShortEwmaPeriods, "ExtraShort");
+        if ((qp._diffEwma >> 5) & 1) calcFromHistory(&mgEwmaU,  qp.ultraShortEwmaPeriods, "UltraShort");
       };
       const mMatter about() const override {
         return mMatter::EWMAStats;
@@ -1087,18 +1097,153 @@ namespace ₿ {
     k.loadedFromDB = true;
   };
 
+  struct mButtonSubmitNewOrder: public mJsonFromClient {
+    private_ref:
+      const KryptoNinja &K;
+    public:
+      mButtonSubmitNewOrder(const KryptoNinja &bot)
+        : mJsonFromClient(bot)
+        , K(bot)
+      {};
+      void edit(const json &j) override {
+        if (j.is_object() and j.value("price", 0.0) and j.value("quantity", 0.0))
+          K.edited(this, j);
+      };
+      const mMatter about() const override {
+        return mMatter::SubmitNewOrder;
+      };
+  };
+  struct mButtonCancelOrder: public mJsonFromClient {
+    private_ref:
+      const KryptoNinja &K;
+    public:
+      mButtonCancelOrder(const KryptoNinja &bot)
+        : mJsonFromClient(bot)
+        , K(bot)
+      {};
+      void edit(const json &j) override {
+        if ((j.is_object() and !j.value("orderId", "").empty()))
+          K.edited(this, j.at("orderId").get<RandId>());
+      };
+      const mMatter about() const override {
+        return mMatter::CancelOrder;
+      };
+  };
+  struct mButtonCancelAllOrders: public mJsonFromClient {
+    private_ref:
+      const KryptoNinja &K;
+    public:
+      mButtonCancelAllOrders(const KryptoNinja &bot)
+        : mJsonFromClient(bot)
+        , K(bot)
+      {};
+      void edit(const json &j) override {
+        K.edited(this);
+      };
+      const mMatter about() const override {
+        return mMatter::CancelAllOrders;
+      };
+  };
+  struct mButtonCleanAllClosedTrades: public mJsonFromClient {
+    private_ref:
+      const KryptoNinja &K;
+    public:
+      mButtonCleanAllClosedTrades(const KryptoNinja &bot)
+        : mJsonFromClient(bot)
+        , K(bot)
+      {};
+      void edit(const json &j) override {
+        K.edited(this);
+      };
+      const mMatter about() const override {
+        return mMatter::CleanAllClosedTrades;
+      };
+  };
+  struct mButtonCleanAllTrades: public mJsonFromClient {
+    private_ref:
+      const KryptoNinja &K;
+    public:
+      mButtonCleanAllTrades(const KryptoNinja &bot)
+        : mJsonFromClient(bot)
+        , K(bot)
+      {};
+      void edit(const json &j) override {
+        K.edited(this);
+      };
+      const mMatter about() const override {
+        return mMatter::CleanAllTrades;
+      };
+  };
+  struct mButtonCleanTrade: public mJsonFromClient {
+    private_ref:
+      const KryptoNinja &K;
+    public:
+      mButtonCleanTrade(const KryptoNinja &bot)
+        : mJsonFromClient(bot)
+        , K(bot)
+      {};
+      void edit(const json &j) override {
+        if ((j.is_object() and !j.value("tradeId", "").empty()))
+          K.edited(this, j.at("tradeId").get<string>());
+      };
+      const mMatter about() const override {
+        return mMatter::CleanTrade;
+      };
+  };
+  struct mNotepad: public mJsonToClient<mNotepad>,
+                   public mJsonFromClient {
+    string content;
+    mNotepad(const KryptoNinja &bot)
+      : mJsonToClient(bot)
+      , mJsonFromClient(bot)
+    {};
+    void edit(const json &j) override {
+      if (j.is_array() and j.size() and j.at(0).is_string())
+       content = j.at(0);
+    };
+    const mMatter about() const override {
+      return mMatter::Notepad;
+    };
+  };
+  static void to_json(json &j, const mNotepad &k) {
+    j = k.content;
+  };
+
+  struct mButtons {
+    mNotepad                    notepad;
+    mButtonSubmitNewOrder       submit;
+    mButtonCancelOrder          cancel;
+    mButtonCancelAllOrders      cancelAll;
+    mButtonCleanAllClosedTrades cleanTradesClosed;
+    mButtonCleanAllTrades       cleanTrades;
+    mButtonCleanTrade           cleanTrade;
+    mButtons(const KryptoNinja &bot)
+      : notepad(bot)
+      , submit(bot)
+      , cancel(bot)
+      , cancelAll(bot)
+      , cleanTradesClosed(bot)
+      , cleanTrades(bot)
+      , cleanTrade(bot)
+    {};
+  };
+
   struct mTradesHistory: public mVectorFromDb<mOrderFilled>,
                          public mJsonToClient<mOrderFilled> {
     private_ref:
       const KryptoNinja    &K;
       const mQuotingParams &qp;
     public:
-      mTradesHistory(const KryptoNinja &bot, const mQuotingParams &q)
+      mTradesHistory(const KryptoNinja &bot, const mQuotingParams &q, const mButtons &b)
         : mVectorFromDb(bot)
         , mJsonToClient(bot)
         , K(bot)
         , qp(q)
-      {};
+      {
+        K.edited(&b.cleanTrade, [&](const json &j) { clearOne(j); });
+        K.edited(&b.cleanTrades, [&]() { clearAll(); });
+        K.edited(&b.cleanTradesClosed, [&]() { clearClosed(); });
+      };
     void clearAll() {
       clear_if([](iterator it) {
         return true;
@@ -1349,9 +1494,9 @@ namespace ₿ {
                            &baseTotal,
                            &targetBasePosition;
     public:
-      mSafety(const KryptoNinja &bot, const mQuotingParams &q, const Price &f, const Amount &v, const Amount &t, const Amount &p)
+      mSafety(const KryptoNinja &bot, const mQuotingParams &q, const mButtons &b, const Price &f, const Amount &v, const Amount &t, const Amount &p)
         : mJsonToClient(bot)
-        , trades(bot, q)
+        , trades(bot, q, b)
         , recentTrades(q)
         , qp(q)
         , fairValue(f)
@@ -1591,10 +1736,10 @@ namespace ₿ {
       const mOrders     &orders;
       const Price       &fairValue;
     public:
-      mWalletPosition(const KryptoNinja &bot, const mOrders &o, const mQuotingParams &q, const double &t, const Price &f)
+      mWalletPosition(const KryptoNinja &bot, const mOrders &o, const mQuotingParams &q, const mButtons &b, const double &t, const Price &f)
         : mJsonToClient(bot)
         , target(bot, q, t, base.value)
-        , safety(bot, q, f, base.value, base.total, target.targetBasePosition)
+        , safety(bot, q, b, f, base.value, base.total, target.targetBasePosition)
         , profits(bot, q)
         , K(bot)
         , orders(o)
@@ -1672,80 +1817,6 @@ namespace ₿ {
         if (maxWallet > 0 and base.amount > maxWallet)
           base.amount = maxWallet;
       };
-  };
-
-  struct mButtonSubmitNewOrder: public mFromClient {
-    void kiss(json *const j) override {
-      if (!j->is_object() or !j->value("price", 0.0) or !j->value("quantity", 0.0))
-        *j = nullptr;
-    };
-    const mMatter about() const override {
-      return mMatter::SubmitNewOrder;
-    };
-  };
-  struct mButtonCancelOrder: public mFromClient {
-    void kiss(json *const j) override {
-      *j = (j->is_object() and !j->value("orderId", "").empty())
-        ? j->at("orderId").get<RandId>()
-        : nullptr;
-    };
-    const mMatter about() const override {
-      return mMatter::CancelOrder;
-    };
-  };
-  struct mButtonCancelAllOrders: public mFromClient {
-    const mMatter about() const override {
-      return mMatter::CancelAllOrders;
-    };
-  };
-  struct mButtonCleanAllClosedTrades: public mFromClient {
-    const mMatter about() const override {
-      return mMatter::CleanAllClosedTrades;
-    };
-  };
-  struct mButtonCleanAllTrades: public mFromClient {
-    const mMatter about() const override {
-      return mMatter::CleanAllTrades;
-    };
-  };
-  struct mButtonCleanTrade: public mFromClient {
-    void kiss(json *const j) override {
-      *j = (j->is_object() and !j->value("tradeId", "").empty())
-        ? j->at("tradeId").get<string>()
-        : nullptr;
-    };
-    const mMatter about() const override {
-      return mMatter::CleanTrade;
-    };
-  };
-  struct mNotepad: public mJsonToClient<mNotepad> {
-    string content;
-    mNotepad(const KryptoNinja &bot)
-      : mJsonToClient(bot)
-    {};
-    void kiss(json *const j) override {
-      if (j->is_array() and j->size() and j->at(0).is_string())
-       content = j->at(0);
-    };
-    const mMatter about() const override {
-      return mMatter::Notepad;
-    };
-  };
-  static void to_json(json &j, const mNotepad &k) {
-    j = k.content;
-  };
-
-  struct mButtons {
-    mNotepad                    notepad;
-    mButtonSubmitNewOrder       submit;
-    mButtonCancelOrder          cancel;
-    mButtonCancelAllOrders      cancelAll;
-    mButtonCleanAllClosedTrades cleanTradesClosed;
-    mButtonCleanAllTrades       cleanTrades;
-    mButtonCleanTrade           cleanTrade;
-    mButtons(const KryptoNinja &bot)
-      : notepad(bot)
-    {};
   };
 
   struct mQuote: public mLevel {
@@ -1844,8 +1915,10 @@ namespace ₿ {
         , levels(l)
         , wallet(w)
         , quotes(Q)
-      {};
-      void mode(const string &reason) {
+      {
+        K.edited(&qp, [&]() { mode(); });
+      };
+      void mode() {
         if (qp.mode == mQuotingMode::Top)              calcRawQuotesFromMarket = calcTopOfMarket;
         else if (qp.mode == mQuotingMode::Mid)         calcRawQuotesFromMarket = calcMidOfMarket;
         else if (qp.mode == mQuotingMode::Join)        calcRawQuotesFromMarket = calcJoinMarket;
@@ -1853,7 +1926,7 @@ namespace ₿ {
         else if (qp.mode == mQuotingMode::InverseTop)  calcRawQuotesFromMarket = calcInverseTopOfMarket;
         else if (qp.mode == mQuotingMode::HamelinRat)  calcRawQuotesFromMarket = calcColossusOfMarket;
         else if (qp.mode == mQuotingMode::Depth)       calcRawQuotesFromMarket = calcDepthOfMarket;
-        else error("QE", "Invalid quoting mode " + reason + ", consider to remove the database file");
+        else error("QE", "Invalid quoting mode saved, consider to remove the database file");
       };
       void calcRawQuotes() const  {
         calcRawQuotesFromMarket(
@@ -2354,7 +2427,8 @@ namespace ₿ {
     };
   };
 
-  struct mSemaphore: public mJsonToClient<mSemaphore> {
+  struct mSemaphore: public mJsonToClient<mSemaphore>,
+                     public mJsonFromClient {
     Connectivity greenButton  = Connectivity::Disconnected,
                  greenGateway = Connectivity::Disconnected;
     private:
@@ -2364,12 +2438,13 @@ namespace ₿ {
     public:
       mSemaphore(const KryptoNinja &bot)
         : mJsonToClient(bot)
+        , mJsonFromClient(bot)
         , K(bot)
       {};
-      void kiss(json *const j) override {
-        if (j->is_object()
-          and j->at("agree").is_number()
-          and j->at("agree").get<Connectivity>() != adminAgreement
+      void edit(const json &j) override {
+        if (j.is_object()
+          and j.at("agree").is_number()
+          and j.at("agree").get<Connectivity>() != adminAgreement
         ) toggle();
       };
       const bool paused() const {
