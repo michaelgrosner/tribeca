@@ -409,34 +409,16 @@ namespace ₿ {
       bool autobot   = false;
       bool databases = false;
       pair<vector<Argument>, function<void(
-        unordered_map<string, string> &,
-        unordered_map<string, int>    &,
-        unordered_map<string, double> &
+        unordered_map<string, variant<string, int, double>>&
       )>> arguments;
     private:
-      unordered_map<string, string> optstr;
-      unordered_map<string, int>    optint;
-      unordered_map<string, double> optdec;
+      unordered_map<string, variant<string, int, double>> args;
     public:
-      const string str(const string &name) const {
-        return optstr.find(name) != optstr.end()
-          ? optstr.at(name)
-          : (optint.find(name) != optint.end()
-              ? to_string(num(name))
-              : to_string(dec(name))
-            );
-      };
-      const int num(const string &name) const {
+      template <typename T> const T arg(const string &name) const {
 #ifndef NDEBUG
-        if (optint.find(name) == optint.end()) return 0;
+        if (args.find(name) == args.end()) return T();
 #endif
-        return optint.at(name);
-      };
-      const double dec(const string &name) const {
-#ifndef NDEBUG
-        if (optdec.find(name) == optdec.end()) return 0;
-#endif
-        return optdec.at(name);
+        return get<T>(args.at(name));
       };
       const unsigned int memSize() const {
 #ifdef _WIN32
@@ -447,24 +429,24 @@ namespace ₿ {
 #endif
       };
       const unsigned int dbSize() const {
-        if (!databases or str("database") == ":memory:") return 0;
+        if (!databases or arg<string>("database") == ":memory:") return 0;
         struct stat st;
-        return stat(str("database").data(), &st) ? 0 : st.st_size;
+        return stat(arg<string>("database").data(), &st) ? 0 : st.st_size;
       };
     protected:
       void main(int argc, char** argv) {
-        optint["autobot"]  = autobot;
-        optint["headless"] = documents.empty();
-        optint["naked"]    = !Print::display;
+        args["autobot"]  = autobot;
+        args["headless"] = documents.empty();
+        args["naked"]    = !Print::display;
         vector<Argument> long_options = {
           {"help",         "h",      nullptr,  "show this help and quit"},
           {"version",      "v",      nullptr,  "show current build version and quit"},
           {"latency",      "1",      nullptr,  "check current HTTP latency (not from WS) and quit"}
         };
-        if (!optint["autobot"]) long_options.push_back(
+        if (!arg<int>("autobot")) long_options.push_back(
           {"autobot",      "1",      nullptr,  "automatically start trading on boot"}
         );;
-        if (!optint["naked"]) long_options.push_back(
+        if (!arg<int>("naked")) long_options.push_back(
           {"naked",        "1",      nullptr,  "do not display CLI, print output to stdout instead"}
         );
         if (databases) long_options.push_back(
@@ -472,7 +454,7 @@ namespace ₿ {
                                                "\n" "default PATH is '/var/lib/K/db/K-*.db',"
                                                "\n" "or use ':memory:' (see sqlite.org/inmemorydb.html)"}
         );
-        if (!optint["headless"]) for (const Argument &it : (vector<Argument>){
+        if (!arg<int>("headless")) for (const Argument &it : (vector<Argument>){
           {"headless",     "1",      nullptr,  "do not listen for UI connections,"
                                                "\n" "all other UI related arguments will be ignored"},
           {"without-ssl",  "1",      nullptr,  "do not use HTTPS for UI connections (use HTTP only)"},
@@ -524,10 +506,10 @@ namespace ₿ {
         int index = ANY_NUM;
         vector<option> opt_long = { {nullptr, 0, nullptr, 0} };
         for (const Argument &it : long_options) {
-          if     (!it.default_value)             optint[it.name] = 0;
-          else if (it.defined_value == "NUMBER") optint[it.name] = stoi(it.default_value);
-          else if (it.defined_value == "AMOUNT") optdec[it.name] = stod(it.default_value);
-          else                                   optstr[it.name] =      it.default_value;
+          if     (!it.default_value)             args[it.name] = 0;
+          else if (it.defined_value == "NUMBER") args[it.name] = stoi(it.default_value);
+          else if (it.defined_value == "AMOUNT") args[it.name] = stod(it.default_value);
+          else                                   args[it.name] =      it.default_value;
           opt_long.insert(opt_long.end()-1, {
             it.name.data(),
             it.default_value
@@ -535,7 +517,7 @@ namespace ₿ {
               : no_argument,
             it.default_value or it.defined_value.at(0) > '>'
               ? nullptr
-              : &optint[it.name],
+              : get_if<int>(&args.at(it.name)),
             it.default_value
               ? index++
               : (it.defined_value.at(0) > '>'
@@ -554,9 +536,9 @@ namespace ₿ {
             case 'v': EXIT(EXIT_SUCCESS);
             default : {
               const string name(opt_long.at(index).name);
-              if      (optint.find(name) != optint.end()) optint[name] =   stoi(optarg);
-              else if (optdec.find(name) != optdec.end()) optdec[name] =   stod(optarg);
-              else                                        optstr[name] = string(optarg);
+              if      (holds_alternative<int>(args[name]))    args[name] =   stoi(optarg);
+              else if (holds_alternative<double>(args[name])) args[name] =   stod(optarg);
+              else if (holds_alternative<string>(args[name])) args[name] = string(optarg);
             }
           }
         if (optind < argc) {
@@ -565,58 +547,55 @@ namespace ₿ {
           error("CF", argerr);
         }
         tidy();
-        if (!str("interface").empty())
-          Curl::inet = strdup(str("interface").data());
-        if (num("naked")) Print::display = nullptr;
-        Ansi::colorful = num("colors");
+        if (!arg<string>("interface").empty())
+          Curl::inet = strdup(arg<string>("interface").data());
+        if (arg<int>("naked"))
+          Print::display = nullptr;
+        Ansi::colorful = arg<int>("colors");
         if (arguments.second) {
-          arguments.second(
-            optstr,
-            optint,
-            optdec
-          );
+          arguments.second(args);
           arguments.second = nullptr;
         }
       };
     private:
       void tidy() {
-        if (optstr["currency"].find("/") == string::npos or optstr["currency"].length() < 3)
+        if (arg<string>("currency").find("/") == string::npos or arg<string>("currency").length() < 3)
           error("CF", "Invalid --currency value; must be in the format of BASE/QUOTE, like BTC/EUR");
-        if (optstr["exchange"].empty())
+        if (arg<string>("exchange").empty())
           error("CF", "Invalid --exchange value; the config file may have errors (there are extra spaces or double defined variables?)");
-        optstr["exchange"] = Text::strU(optstr["exchange"]);
-        optstr["currency"] = Text::strU(optstr["currency"]);
-        optstr["base"]  = optstr["currency"].substr(0, optstr["currency"].find("/"));
-        optstr["quote"] = optstr["currency"].substr(1+ optstr["currency"].find("/"));
-        optint["market-limit"] = max(15, optint["market-limit"]);
-        if (optint["debug"])
-          optint["debug-secret"] = 1;
+        args["exchange"] = Text::strU(arg<string>("exchange"));
+        args["currency"] = Text::strU(arg<string>("currency"));
+        args["base"]  = arg<string>("currency").substr(0, arg<string>("currency").find("/"));
+        args["quote"] = arg<string>("currency").substr(1+ arg<string>("currency").find("/"));
+        args["market-limit"] = max(15, arg<int>("market-limit"));
+        if (arg<int>("debug"))
+          args["debug-secret"] = 1;
 #ifndef _WIN32
-        if (optint["latency"] or optint["debug-secret"])
+        if (arg<int>("latency") or arg<int>("debug-secret"))
 #endif
-          optint["naked"] = 1;
+          args["naked"] = 1;
         if (databases) {
-          optstr["diskdata"] = "";
-          if (optstr["database"].empty() or optstr["database"] == ":memory:")
-            (optstr["database"] == ":memory:"
-              ? optstr["diskdata"]
-              : optstr["database"]
+          args["diskdata"] = "";
+          if (arg<string>("database").empty() or arg<string>("database") == ":memory:")
+            (arg<string>("database") == ":memory:"
+              ? args["diskdata"]
+              : args["database"]
             ) = ("/var/lib/K/db/" K_SOURCE)
-              + ('.' + optstr["exchange"])
-              +  '.' + optstr["base"]
-              +  '.' + optstr["quote"]
+              + ('.' + arg<string>("exchange"))
+              +  '.' + arg<string>("base")
+              +  '.' + arg<string>("quote")
               +  '.' + "db";
         }
-        if (!optint["headless"]) {
-          if (optint["latency"] or !optint["port"] or !optint["client-limit"])
-            optint["headless"] = 1;
-          optstr["B64auth"] = (!optint["headless"]
-            and optstr["user"] != "NULL" and !optstr["user"].empty()
-            and optstr["pass"] != "NULL" and !optstr["pass"].empty()
-          ) ? "Basic " + Text::B64(optstr["user"] + ':' + optstr["pass"])
+        if (!arg<int>("headless")) {
+          if (arg<int>("latency") or !arg<int>("port") or !arg<int>("client-limit"))
+            args["headless"] = 1;
+          args["B64auth"] = (!arg<int>("headless")
+            and arg<string>("user") != "NULL" and !arg<string>("user").empty()
+            and arg<string>("pass") != "NULL" and !arg<string>("pass").empty()
+          ) ? "Basic " + Text::B64(arg<string>("user") + ':' + arg<string>("pass"))
             : "";
         }
-        if (optint["headless"]) documents.clear();
+        if (arg<int>("headless")) documents.clear();
       };
       void help(const vector<Argument> &long_options) {
         const vector<string> stamp = {
@@ -825,80 +804,11 @@ namespace ₿ {
       virtual void edit(const json&) = 0;
   };
 
-  class Events {
-    private:
-      uS::Timer *timer = nullptr;
-      uS::Async *loop  = nullptr;
-              unsigned int tick  = 0;
-      mutable unsigned int ticks = 300;
-      mutable unordered_map<const mFromClient*, vector<function<void(const json&)>>> editFn;
-      vector<function<const bool(const unsigned int&)>> timeFn;
-      vector<function<const bool()>> waitFn;
-      vector<function<void()>> slowFn;
-    public:
-      void edited(const mFromClient *data, const function<void(const json&)> &fn) const {
-        editFn[data].push_back(fn);
-      };
-      void edited(const mFromClient *data, const function<void()> &fn) const {
-        edited(data, [fn](const json &j) { fn(); });
-      };
-      void edited(const mFromClient *data, const json &j = nullptr) const {
-        if (editFn.find(data) != editFn.end())
-          for (const auto &it : editFn.at(data)) it(j);
-      };
-      void timer_ticks_factor(const unsigned int &factor) const {
-        ticks = 300 * (factor ?: 1);
-      };
-      void timer_1s(const function<const bool(const unsigned int&)> &fn) {
-        timeFn.push_back(fn);
-      };
-      void wait_for(const function<const bool()> &fn) {
-        waitFn.push_back(fn);
-      };
-      void deferred(const function<void()> &fn) {
-        slowFn.push_back(fn);
-        loop->send();
-      };
-    protected:
-      void start(uS::Loop *const poll) {
-        timer = new uS::Timer(poll);
-        timer->setData(this);
-        timer->start([](uS::Timer *timer) {
-          ((Events*)timer->getData())->timer_1s();
-        }, 0, 1e+3);
-        loop = new uS::Async(poll);
-        loop->setData(this);
-        loop->start([](uS::Async *const loop) {
-          ((Events*)loop->getData())->deferred();
-        });
-      };
-      function<void()> stop() {
-        return [&]() {
-          timer->stop();
-          deferred();
-        };
-      };
-    private:
-      void deferred() {
-        for (const auto &it : slowFn) it();
-        slowFn.clear();
-        bool waiting = false;
-        for (const auto &it : waitFn) waiting |= it();
-        if (waiting) loop->send();
-      };
-      void timer_1s() {
-        bool waiting = false;
-        for (const auto &it : timeFn) waiting |= it(tick);
-        if (waiting) loop->send();
-        if (++tick >= ticks) tick = 0;
-      };
-  };
-
   class mToClient: public mBlob {
     public:
-      function<void()> send
+      function<void()> broadcast
 #ifndef NDEBUG
-      = []() { WARN("Y U NO catch client send?"); }
+      = []() { WARN("Y U NO catch client broadcast?"); }
 #endif
       ;
       virtual const json hello() {
@@ -941,6 +851,75 @@ namespace ₿ {
       };
   };
 
+  class Events {
+    private:
+      uS::Timer *timer = nullptr;
+      uS::Async *loop  = nullptr;
+              unsigned int tick  = 0;
+      mutable unsigned int ticks = 300;
+      mutable unordered_map<const mFromClient*, vector<function<void(const json&)>>> editFn;
+      vector<function<const bool(const unsigned int&)>> timeFn;
+      vector<function<const bool()>> waitFn;
+      mutable vector<function<void()>> slowFn;
+    public:
+      void edited(const mFromClient *data, const function<void(const json&)> &fn) const {
+        editFn[data].push_back(fn);
+      };
+      void edited(const mFromClient *data, const function<void()> &fn) const {
+        edited(data, [fn](const json &j) { fn(); });
+      };
+      void edited(const mFromClient *data, const json &j = nullptr) const {
+        if (editFn.find(data) != editFn.end())
+          for (const auto &it : editFn.at(data)) it(j);
+      };
+      void timer_ticks_factor(const unsigned int &factor) const {
+        ticks = 300 * (factor ?: 1);
+      };
+      void timer_1s(const function<const bool(const unsigned int&)> &fn) {
+        timeFn.push_back(fn);
+      };
+      void wait_for(const function<const bool()> &fn) {
+        waitFn.push_back(fn);
+      };
+      void deferred(const function<void()> &fn) const {
+        slowFn.push_back(fn);
+        loop->send();
+      };
+    protected:
+      void start(uS::Loop *const poll) {
+        timer = new uS::Timer(poll);
+        timer->setData(this);
+        timer->start([](uS::Timer *timer) {
+          ((Events*)timer->getData())->timer_1s();
+        }, 0, 1e+3);
+        loop = new uS::Async(poll);
+        loop->setData(this);
+        loop->start([](uS::Async *const loop) {
+          ((Events*)loop->getData())->deferred();
+        });
+      };
+      function<void()> stop() {
+        return [&]() {
+          timer->stop();
+          deferred();
+        };
+      };
+    private:
+      void deferred() {
+        for (const auto &it : slowFn) it();
+        slowFn.clear();
+        bool waiting = false;
+        for (const auto &it : waitFn) waiting |= it();
+        if (waiting) loop->send();
+      };
+      void timer_1s() {
+        bool waiting = false;
+        for (const auto &it : timeFn) waiting |= it(tick);
+        if (waiting) loop->send();
+        if (++tick >= ticks) tick = 0;
+      };
+  };
+
   class Sqlite {
     public:
       mutable vector<mFromDb*> tables;
@@ -948,9 +927,9 @@ namespace ₿ {
       sqlite3 *db = nullptr;
       string qpdb = "main";
     private_ref:
-      Events &events;
+      const Events &events;
     public:
-      Sqlite(Events &e)
+      Sqlite(const Events &e)
         : events(e)
       {};
     protected:
@@ -1049,6 +1028,198 @@ namespace ₿ {
       };
   };
 
+  class Client {
+    public:
+              int connections = 0;
+              string protocol = "HTTP";
+      mutable unsigned int delay = 0;
+      mutable vector<mToClient*>   readable;
+      mutable vector<mFromClient*> editable;
+    protected:
+      uWS::Group<uWS::SERVER> *webui = nullptr;
+    private:
+      unordered_map<mMatter, function<const json()>> hello;
+      unordered_map<mMatter, function<void(const json&)>> kisses;
+      unordered_map<mMatter, string> queue;
+      const unordered_map<unsigned int, string> headers = {
+        {200, "HTTP/1.1 200 OK"
+              "\r\n" "Connection: keep-alive"
+              "\r\n" "Accept-Ranges: bytes"
+              "\r\n" "Vary: Accept-Encoding"
+              "\r\n" "Cache-Control: public, max-age=0"},
+        {401, "HTTP/1.1 401 Unauthorized"
+              "\r\n" "Connection: keep-alive"
+              "\r\n" "Accept-Ranges: bytes"
+              "\r\n" "Vary: Accept-Encoding"
+              "\r\n" "WWW-Authenticate: Basic realm=\"Basic Authorization\""},
+        {403, "HTTP/1.1 403 Forbidden"
+              "\r\n" "Connection: keep-alive"
+              "\r\n" "Accept-Ranges: bytes"
+              "\r\n" "Vary: Accept-Encoding"},
+        {404, "HTTP/1.1 404 Not Found"},
+        {418, "HTTP/1.1 418 I'm a teapot"},
+      };
+    private_ref:
+      const Option &option;
+      const Events &events;
+    public:
+      Client(const Option &o, const Events &e)
+        : option(o)
+        , events(e)
+      {};
+      void client_queue_delay(const unsigned int &d) const {
+        delay = d;
+      };
+      void broadcast(const unsigned int &tick) {
+        if (delay and !(tick % delay)) broadcast();
+      };
+      void welcome() {
+        for (auto &it : readable) {
+          it->broadcast = [&]() {
+            if (connections) {
+              queue[it->about()] = it->blob().dump();
+              if (it->realtime() or !delay) broadcast();
+            }
+          };
+          hello[it->about()] = [&]() {
+            return it->hello();
+          };
+        }
+        readable.clear();
+        for (auto &it : editable) {
+          kisses[it->about()] = [&](const json &butterfly) {
+            it->edit(butterfly);
+          };
+        }
+        editable.clear();
+      };
+      void headless() {
+        for (auto &it : readable)
+          it->broadcast = nullptr;
+        readable.clear();
+        editable.clear();
+      };
+      function<const bool(const bool&, const string&)> wsServer = [&](
+        const   bool &connection,
+        const string &addr
+      ) {
+        connections += connection ?: -1;
+        Print::log("UI", to_string(connections) + " client" + string(connections == 1 ? 0 : 1, 's')
+          + " connected, last connection was from", addr);
+        if (connections > option.arg<int>("client-limit")) {
+          Print::log("UI", "--client-limit=" + to_string(option.arg<int>("client-limit")) + " reached by", addr);
+          return false;
+        }
+        return true;
+      };
+      function<const string(string, const string&)> wsMessage = [&](
+              string message,
+        const string &addr
+      ) {
+        if (alien(addr))
+          return string(option.documents.at("").first, option.documents.at("").second);
+        const mPortal portal = (mPortal)message.at(0);
+        const mMatter matter = (mMatter)message.at(1);
+        if (mPortal::Hello == portal and hello.find(matter) != hello.end()) {
+          const json reply = hello.at(matter)();
+          if (!reply.is_null())
+            return (char)portal + ((char)matter + reply.dump());
+        } else if (mPortal::Kiss == portal and kisses.find(matter) != kisses.end()) {
+          message = message.substr(2);
+          json butterfly = json::accept(message)
+            ? json::parse(message)
+            : json::object();
+          for (auto it = butterfly.begin(); it != butterfly.end();)
+            if (it.value().is_null()) it = butterfly.erase(it); else ++it;
+          kisses.at(matter)(butterfly);
+        }
+        return string();
+      };
+      function<const string(string, const string&, const string&)> httpServer = [&](
+              string path,
+        const string &auth,
+        const string &addr
+      ) {
+        if (alien(addr))
+          path.clear();
+        const bool papersplease = !(
+          path.empty() or option.arg<string>("B64auth").empty()
+        );
+        string content,
+               type = "text/html; charset=UTF-8";
+        unsigned int code = 200;
+        if (papersplease and auth.empty()) {
+          Print::log("UI", "authorization attempt from", addr);
+          code = 401;
+        } else if (papersplease and auth != option.arg<string>("B64auth")) {
+          Print::log("UI", "authorization failed from", addr);
+          code = 403;
+        } else if (connections < option.arg<int>("client-limit")) {
+          if (option.documents.find(path) == option.documents.end())
+            path = path.substr(path.find_last_of("/", path.find_last_of("/") - 1));
+          if (option.documents.find(path) == option.documents.end())
+            path = path.substr(path.find_last_of("/"));
+          if (option.documents.find(path) != option.documents.end()) {
+            content = string(option.documents.at(path).first,
+                             option.documents.at(path).second);
+            const string leaf = path.substr(path.find_last_of('.') + 1);
+            if (leaf == "/") Print::log("UI", "authorization success from", addr);
+            else if (leaf == "js")  type = "application/javascript; charset=UTF-8";
+            else if (leaf == "css") type = "text/css; charset=UTF-8";
+            else if (leaf == "ico") type = "image/x-icon";
+            else if (leaf == "mp3") type = "audio/mpeg";
+          } else {
+            if (Random::int64() % 21)
+              code = 404, content = "Today, is a beautiful day.";
+            else // Humans! go to any random path to check your luck
+              code = 418, content = "Today, is your lucky day!";
+          }
+        } else {
+          Print::log("UI", "--client-limit=" + to_string(option.arg<int>("client-limit")) + " reached by", addr);
+          content = "Thank you! but our princess is already in this castle!"
+                    "<br/>" "Refresh the page anytime to retry.";
+        }
+        return document(content, code, type);
+      };
+    private:
+      void broadcast() {
+        if (queue.empty()) return;
+        vector<string> msgs;
+        for (const auto &it : queue)
+          msgs.push_back((char)mPortal::Kiss + ((char)it.first + it.second));
+        queue.clear();
+        events.deferred([this, msgs]() {
+          for (const auto &it : msgs)
+            webui->broadcast(it.data(), it.length(), uWS::OpCode::TEXT);
+        });
+      };
+      const bool alien(const string &addr) {
+        if (addr != "unknown"
+          and !option.arg<string>("whitelist").empty()
+          and option.arg<string>("whitelist").find(addr) == string::npos
+        ) {
+          Print::log("UI", "dropping gzip bomb on", addr);
+          return true;
+        }
+        return false;
+      };
+      const string document(
+        const       string &content,
+        const unsigned int &code,
+        const       string &type
+      ) const {
+        return headers.at(code)
+         + ((content.length() > 2 and (content.substr(0, 2) == "PK" or (
+             content.at(0) == '\x1F' and content.at(1) == '\x8B'
+           ))) ? "\r\n" "Content-Encoding: gzip" : "")
+         + "\r\n" "Content-Type: "   + type
+         + "\r\n" "Content-Length: " + to_string(content.length())
+         + "\r\n"
+           "\r\n"
+         + content;
+      };
+  };
+
   template <typename T> class mStructFromDb: public mBackupFromDb {
     public:
       mStructFromDb(const Sqlite &s)
@@ -1066,6 +1237,7 @@ namespace ₿ {
         return "loaded last % OK";
       };
   };
+
   template <typename T> class mVectorFromDb: public mBackupFromDb {
     public:
       mVectorFromDb(const Sqlite &s)
@@ -1117,198 +1289,6 @@ namespace ₿ {
       };
   };
 
-  class Client {
-    public:
-              int connections = 0;
-              string protocol = "HTTP";
-      mutable unsigned int delay = 0;
-      mutable vector<mToClient*>   readable;
-      mutable vector<mFromClient*> editable;
-    protected:
-      uWS::Group<uWS::SERVER> *webui = nullptr;
-    private:
-      unordered_map<mMatter, function<const json()>> hello;
-      unordered_map<mMatter, function<void(const json&)>> kisses;
-      unordered_map<mMatter, string> queue;
-      const unordered_map<unsigned int, string> headers = {
-        {200, "HTTP/1.1 200 OK"
-              "\r\n" "Connection: keep-alive"
-              "\r\n" "Accept-Ranges: bytes"
-              "\r\n" "Vary: Accept-Encoding"
-              "\r\n" "Cache-Control: public, max-age=0"},
-        {401, "HTTP/1.1 401 Unauthorized"
-              "\r\n" "Connection: keep-alive"
-              "\r\n" "Accept-Ranges: bytes"
-              "\r\n" "Vary: Accept-Encoding"
-              "\r\n" "WWW-Authenticate: Basic realm=\"Basic Authorization\""},
-        {403, "HTTP/1.1 403 Forbidden"
-              "\r\n" "Connection: keep-alive"
-              "\r\n" "Accept-Ranges: bytes"
-              "\r\n" "Vary: Accept-Encoding"},
-        {404, "HTTP/1.1 404 Not Found"},
-        {418, "HTTP/1.1 418 I'm a teapot"},
-      };
-    private_ref:
-      Option &option;
-      Events &events;
-    public:
-      Client(Option &o, Events &e)
-        : option(o)
-        , events(e)
-      {};
-      void client_queue_delay(const unsigned int &d) const {
-        delay = d;
-      };
-      void broadcast(const unsigned int &tick) {
-        if (delay and !(tick % delay)) broadcast();
-      };
-      void welcome() {
-        for (auto &it : readable) {
-          it->send = [&]() {
-            if (connections) {
-              queue[it->about()] = it->blob().dump();
-              if (it->realtime() or !delay) broadcast();
-            }
-          };
-          hello[it->about()] = [&]() {
-            return it->hello();
-          };
-        }
-        readable.clear();
-        for (auto &it : editable) {
-          kisses[it->about()] = [&](const json &butterfly) {
-            it->edit(butterfly);
-          };
-        }
-        editable.clear();
-      };
-      void headless() {
-        for (auto &it : readable)
-          it->send = nullptr;
-        readable.clear();
-        editable.clear();
-      };
-      function<const bool(const bool&, const string&)> wsServer = [&](
-        const   bool &connection,
-        const string &addr
-      ) {
-        connections += connection ?: -1;
-        Print::log("UI", to_string(connections) + " client" + string(connections == 1 ? 0 : 1, 's')
-          + " connected, last connection was from", addr);
-        if (connections > option.num("client-limit")) {
-          Print::log("UI", "--client-limit=" + option.str("client-limit") + " reached by", addr);
-          return false;
-        }
-        return true;
-      };
-      function<const string(string, const string&)> wsMessage = [&](
-              string message,
-        const string &addr
-      ) {
-        if (alien(addr))
-          return string(option.documents.at("").first, option.documents.at("").second);
-        const mPortal portal = (mPortal)message.at(0);
-        const mMatter matter = (mMatter)message.at(1);
-        if (mPortal::Hello == portal and hello.find(matter) != hello.end()) {
-          const json reply = hello.at(matter)();
-          if (!reply.is_null())
-            return (char)portal + ((char)matter + reply.dump());
-        } else if (mPortal::Kiss == portal and kisses.find(matter) != kisses.end()) {
-          message = message.substr(2);
-          json butterfly = json::accept(message)
-            ? json::parse(message)
-            : json::object();
-          for (auto it = butterfly.begin(); it != butterfly.end();)
-            if (it.value().is_null()) it = butterfly.erase(it); else ++it;
-          kisses.at(matter)(butterfly);
-        }
-        return string();
-      };
-      function<const string(string, const string&, const string&)> httpServer = [&](
-              string path,
-        const string &auth,
-        const string &addr
-      ) {
-        if (alien(addr))
-          path.clear();
-        const bool papersplease = !(
-          path.empty() or option.str("B64auth").empty()
-        );
-        string content,
-               type = "text/html; charset=UTF-8";
-        unsigned int code = 200;
-        if (papersplease and auth.empty()) {
-          Print::log("UI", "authorization attempt from", addr);
-          code = 401;
-        } else if (papersplease and auth != option.str("B64auth")) {
-          Print::log("UI", "authorization failed from", addr);
-          code = 403;
-        } else if (connections < option.num("client-limit")) {
-          if (option.documents.find(path) == option.documents.end())
-            path = path.substr(path.find_last_of("/", path.find_last_of("/") - 1));
-          if (option.documents.find(path) == option.documents.end())
-            path = path.substr(path.find_last_of("/"));
-          if (option.documents.find(path) != option.documents.end()) {
-            content = string(option.documents.at(path).first,
-                             option.documents.at(path).second);
-            const string leaf = path.substr(path.find_last_of('.') + 1);
-            if (leaf == "/") Print::log("UI", "authorization success from", addr);
-            else if (leaf == "js")  type = "application/javascript; charset=UTF-8";
-            else if (leaf == "css") type = "text/css; charset=UTF-8";
-            else if (leaf == "ico") type = "image/x-icon";
-            else if (leaf == "mp3") type = "audio/mpeg";
-          } else {
-            if (Random::int64() % 21)
-              code = 404, content = "Today, is a beautiful day.";
-            else // Humans! go to any random path to check your luck
-              code = 418, content = "Today, is your lucky day!";
-          }
-        } else {
-          Print::log("UI", "--client-limit=" + option.str("client-limit") + " reached by", addr);
-          content = "Thank you! but our princess is already in this castle!"
-                    "<br/>" "Refresh the page anytime to retry.";
-        }
-        return document(content, code, type);
-      };
-    private:
-      void broadcast() {
-        if (queue.empty()) return;
-        vector<string> msgs;
-        for (const auto &it : queue)
-          msgs.push_back((char)mPortal::Kiss + ((char)it.first + it.second));
-        queue.clear();
-        events.deferred([this, msgs]() {
-          for (const auto &it : msgs)
-            webui->broadcast(it.data(), it.length(), uWS::OpCode::TEXT);
-        });
-      };
-      const bool alien(const string &addr) {
-        if (addr != "unknown"
-          and !option.str("whitelist").empty()
-          and option.str("whitelist").find(addr) == string::npos
-        ) {
-          Print::log("UI", "dropping gzip bomb on", addr);
-          return true;
-        }
-        return false;
-      };
-      const string document(
-        const       string &content,
-        const unsigned int &code,
-        const       string &type = ""
-      ) const {
-        return headers.at(code)
-         + (type.empty() ? "" : "\r\n" "Content-Type: " + type)
-         + ((content.length() > 2 and (content.substr(0, 2) == "PK" or (
-             content.at(0) == '\x1F' and content.at(1) == '\x8B'
-           ))) ? "\r\n" "Content-Encoding: gzip" : "")
-         + "\r\n" "Content-Length: " + to_string(content.length())
-         + "\r\n"
-           "\r\n"
-         + content;
-      };
-  };
-
   class mJsonFromClient: public mFromClient {
     public:
       mJsonFromClient(const Client &c)
@@ -1323,11 +1303,11 @@ namespace ₿ {
       {
         c.readable.push_back(this);
       };
-      virtual const bool send() {
+      virtual const bool broadcast() {
         if ((send_asap() or send_soon())
           and (send_same_blob() or diff_blob())
         ) {
-          if (mToClient::send) mToClient::send();
+          if (mToClient::broadcast) mToClient::broadcast();
           return true;
         }
         return false;
@@ -1402,7 +1382,7 @@ namespace ₿ {
                           .value("YourFuckingIPAddress", wtfismyip)
           );
         } {
-          if (num("latency")) {
+          if (arg<int>("latency")) {
             gateway->latency("HTTP read/write handshake", [&]() {
               handshake({
                 {"gateway", gateway->http}
@@ -1417,7 +1397,7 @@ namespace ₿ {
           ending([&]() {
             gateway->close();
             gateway->api->close();
-            gateway->end(num("dustybot"));
+            gateway->end(arg<int>("dustybot"));
             stop();
           });
           wait_for([&]() {
@@ -1429,22 +1409,22 @@ namespace ₿ {
             return gateway->countdown ? false : gateway->askForData(tick);
           });
           handshake({
-            {"gateway", gateway->http },
-            {"gateway", gateway->ws   },
-            {"gateway", gateway->fix  },
-            {"autoBot", num("autobot")
+            {"gateway", gateway->http      },
+            {"gateway", gateway->ws        },
+            {"gateway", gateway->fix       },
+            {"autoBot", arg<int>("autobot")
                           ? "yes"
-                          : "no"      }
+                          : "no"           }
           });
         } {
-          if (databases) backups(str("database"), str("diskdata"));
+          if (databases) backups(arg<string>("database"), arg<string>("diskdata"));
           else blackhole();
         } {
-          if (num("headless")) headless();
+          if (arg<int>("headless")) headless();
           else {
             webui = listen(
-              protocol, num("port"),
-              !num("without-ssl"), str("ssl-crt"), str("ssl-key"),
+              protocol, arg<int>("port"),
+              !arg<int>("without-ssl"), arg<string>("ssl-crt"), arg<string>("ssl-key"),
               httpServer, wsServer, wsMessage
             );
             timer_1s([&](const unsigned int &tick) {
@@ -1477,24 +1457,24 @@ namespace ₿ {
       };
     private:
       void setup() {
-        if (!(gateway = Gw::new_Gw(str("exchange"))))
+        if (!(gateway = Gw::new_Gw(arg<string>("exchange"))))
           error("CF",
             "Unable to configure a valid gateway using --exchange="
-              + str("exchange") + " argument"
+              + arg<string>("exchange") + " argument"
           );
-        if (!str("http").empty()) gateway->http = str("http");
-        if (!str("wss").empty())  gateway->ws   = str("wss");
-        if (!str("fix").empty())  gateway->fix  = str("fix");
-        epitaph = "- exchange: " + (gateway->exchange = str("exchange")) + '\n'
-                + "- currency: " + (gateway->base     = str("base"))     + " .. "
-                                 + (gateway->quote    = str("quote"))    + '\n';
-        gateway->apikey   = str("apikey");
-        gateway->secret   = str("secret");
-        gateway->user     = str("username");
-        gateway->pass     = str("passphrase");
-        gateway->maxLevel = num("market-limit");
-        gateway->debug    = num("debug-secret");
-        gateway->version  = num("free-version");
+        if (!arg<string>("http").empty()) gateway->http = arg<string>("http");
+        if (!arg<string>("wss").empty())  gateway->ws   = arg<string>("wss");
+        if (!arg<string>("fix").empty())  gateway->fix  = arg<string>("fix");
+        epitaph = "- exchange: " + (gateway->exchange = arg<string>("exchange")) + '\n'
+                + "- currency: " + (gateway->base     = arg<string>("base"))     + " .. "
+                                 + (gateway->quote    = arg<string>("quote"))    + '\n';
+        gateway->apikey   = arg<string>("apikey");
+        gateway->secret   = arg<string>("secret");
+        gateway->user     = arg<string>("username");
+        gateway->pass     = arg<string>("passphrase");
+        gateway->maxLevel = arg<int>("market-limit");
+        gateway->debug    = arg<int>("debug-secret");
+        gateway->version  = arg<int>("free-version");
         gateway->printer  = [&](const string &prefix, const string &reason, const string &highlight) {
           if (reason.find("Error") != string::npos)
             Print::logWar(prefix, reason);

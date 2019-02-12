@@ -39,19 +39,15 @@ class TradingBot: public KryptoNinja {
         {"debug-orders", "1",      nullptr,                "print detailed output about exchange messages"},
         {"debug-quotes", "1",      nullptr,                "print detailed output about quoting engine"},
         {"debug-wallet", "1",      nullptr,                "print detailed output about target base position"}
-      }, [](
-        unordered_map<string, string> &str,
-        unordered_map<string, int>    &num,
-        unordered_map<string, double> &dec
-      ) {
-        if (num["debug"])
-          num["debug-orders"] =
-          num["debug-quotes"] =
-          num["debug-wallet"] = 1;
-        if (num["ignore-moon"] and num["ignore-sun"])
-          num["ignore-moon"] = 0;
-        if (num["debug-orders"] or num["debug-quotes"])
-          num["naked"] = 1;
+      }, [&](unordered_map<string, variant<string, int, double>> &args) {
+        if (arg<int>("debug"))
+          args["debug-orders"] =
+          args["debug-quotes"] =
+          args["debug-wallet"] = 1;
+        if (arg<int>("ignore-moon") and arg<int>("ignore-sun"))
+          args["ignore-moon"] = 0;
+        if (arg<int>("debug-orders") or arg<int>("debug-quotes"))
+          args["naked"] = 1;
       } };
     };
 } K;
@@ -116,7 +112,7 @@ code( '\e' , broker.semaphore.toggle )
       HOTKEYS
     };
     void run() override {
-      broker.semaphore.agree(K.num("autobot"));
+      broker.semaphore.agree(K.arg<int>("autobot"));
       K.timer_1s([&](const unsigned int &tick) {
         if (!K.gateway->countdown and !levels.warn_empty()) {
           levels.timer_1s();
@@ -228,10 +224,10 @@ void TradingBot::terminal() {
   mvwaddch(stdscr, y, 0, ACS_BTEE);
   mvwaddch(stdscr, 0, 12, ACS_RTEE);
   wattron(stdscr, COLOR_PAIR(COLOR_GREEN));
-  const string title1 = "   " + K.str("exchange");
-  const string title2 = " " + (K.num("headless")
+  const string title1 = "   " + K.arg<string>("exchange");
+  const string title2 = " " + (K.arg<int>("headless")
     ? "headless"
-    : "UI at " + Text::strL(K.protocol) + "://" + K.wtfismyip + ":" + K.str("port")
+    : "UI at " + Text::strL(K.protocol) + "://" + K.wtfismyip + ":" + to_string(K.arg<int>("port"))
   )  + ' ';
   wattron(stdscr, A_BOLD);
   mvwaddstr(stdscr, 0, 13, title1.data());

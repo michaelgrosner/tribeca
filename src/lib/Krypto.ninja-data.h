@@ -205,7 +205,7 @@ namespace ₿ {
       void edit(const json &j) override {
         from_json(j);
         backup();
-        send();
+        broadcast();
       };
       const mMatter about() const override {
         return mMatter::QuotingParameters;
@@ -378,7 +378,7 @@ namespace ₿ {
       mOrder *const upsert(const mOrder &raw) {
         mOrder *const order = findsert(raw);
         mOrder::update(raw, order);
-        if (K.num("debug-orders")) {
+        if (K.arg<int>("debug-orders")) {
           report(order, " saved ");
           report_size();
         }
@@ -386,21 +386,21 @@ namespace ₿ {
       };
       const bool replace(const Price &price, const bool &isPong, mOrder *const order) {
         const bool allowed = mOrder::replace(price, isPong, order);
-        if (K.num("debug-orders")) report(order, "replace");
+        if (K.arg<int>("debug-orders")) report(order, "replace");
         return allowed;
       };
       const bool cancel(mOrder *const order) {
         const bool allowed = mOrder::cancel(order);
-        if (K.num("debug-orders")) report(order, "cancel ");
+        if (K.arg<int>("debug-orders")) report(order, "cancel ");
         return allowed;
       };
       void purge(const mOrder *const order) {
-        if (K.num("debug-orders")) report(order, " purge ");
+        if (K.arg<int>("debug-orders")) report(order, " purge ");
         orders.erase(order->orderId);
-        if (K.num("debug-orders")) report_size();
+        if (K.arg<int>("debug-orders")) report_size();
       };
       void read_from_gw(const mOrder &raw) {
-        if (K.num("debug-orders")) report(&raw, " reply ");
+        if (K.arg<int>("debug-orders")) report(&raw, " reply ");
         mOrder *const order = upsert(raw);
         if (!order) {
           updated = {};
@@ -414,7 +414,7 @@ namespace ₿ {
         };
         if (order->status == Status::Terminated)
           purge(order);
-        send();
+        broadcast();
         Print::repaint();
       };
       const mMatter about() const override {
@@ -465,7 +465,7 @@ namespace ₿ {
       };
       void read_from_gw(const mTrade &raw) {
         trades.push_back(raw);
-        send();
+        broadcast();
       };
       const mMatter about() const override {
         return mMatter::MarketTrade;
@@ -810,7 +810,7 @@ namespace ₿ {
       void send_patch() {
         if (ratelimit()) return;
         diff();
-        if (!empty() and mToClient::send) mToClient::send();
+        if (!empty() and mToClient::broadcast) mToClient::broadcast();
         unfilter();
       };
       const mMatter about() const override {
@@ -895,7 +895,7 @@ namespace ₿ {
       void timer_60s() {
         stats.takerTrades.timer_60s();
         stats.ewma.timer_60s(resetAverageWidth());
-        stats.send();
+        stats.broadcast();
       };
       const Price calcQuotesWidth(bool *const superSpread) const {
         const Price widthPing = fmax(
@@ -921,7 +921,7 @@ namespace ₿ {
         unfiltered.bids = raw.bids;
         unfiltered.asks = raw.asks;
         filter();
-        if (stats.fairPrice.send()) Print::repaint();
+        if (stats.fairPrice.broadcast()) Print::repaint();
         diff.send_patch();
       };
     private:
@@ -1291,7 +1291,7 @@ namespace ₿ {
         + K.gateway->str(filled.value) + ' ' + K.gateway->quote + ")"
       );
       if (qp.safety == mQuotingSafety::Off or qp.safety == mQuotingSafety::PingPong or qp.safety == mQuotingSafety::PingPoing)
-        send_push_back(filled);
+        broadcast_push_back(filled);
       else {
         Price widthPong = qp.widthPercentage
           ? qp.widthPongPercentage * filled.price / 100
@@ -1368,7 +1368,7 @@ namespace ₿ {
             it = send_push_erase(it);
             break;
           }
-          if (!eq) send_push_back(pong);
+          if (!eq) broadcast_push_back(pong);
         }
       };
       bool matchPong(const string &match, mOrderFilled *const pong) {
@@ -1390,16 +1390,16 @@ namespace ₿ {
         }
         return pong->quantity > 0;
       };
-      void send_push_back(const mOrderFilled &row) {
+      void broadcast_push_back(const mOrderFilled &row) {
         rows.push_back(row);
         backup();
         if (crbegin()->Kqty < 0) rbegin()->Kqty = -2;
-        send();
+        broadcast();
       };
       iterator send_push_erase(iterator it) {
         mOrderFilled row = *it;
         it = rows.erase(it);
-        send_push_back(row);
+        broadcast_push_back(row);
         erase();
         return it;
       };
@@ -1521,7 +1521,7 @@ namespace ₿ {
         buy  = recentTrades.sumBuys / buySize;
         sell = recentTrades.sumSells / sellSize;
         combined = (recentTrades.sumBuys + recentTrades.sumSells) / (buySize + sellSize);
-        send();
+        broadcast();
       };
       const bool empty() const {
         return !baseValue or !buySize or !sellSize;
@@ -1659,9 +1659,9 @@ namespace ₿ {
           : targetPositionAutoPercentage * baseValue / 1e+2
         , 4);
         calcPDiv();
-        if (send()) {
+        if (broadcast()) {
           backup();
-          if (K.num("debug-wallet")) report();
+          if (K.arg<int>("debug-wallet")) report();
         }
       };
       const bool warn_empty() const {
@@ -1758,7 +1758,7 @@ namespace ₿ {
       };
       void calcFunds() {
         calcFundsSilently();
-        send();
+        broadcast();
       };
       void calcFundsAfterOrder(const mLastOrder &order, bool *const askForFees) {
         if (!order.price) return;
@@ -1784,8 +1784,8 @@ namespace ₿ {
     private:
       void calcFundsSilently() {
         if (base.currency.empty() or quote.currency.empty() or !fairValue) return;
-        if (K.dec("wallet-limit"))
-          calcMaxWallet(K.dec("wallet-limit"));
+        if (K.arg<double>("wallet-limit"))
+          calcMaxWallet(K.arg<double>("wallet-limit"));
         calcValues();
         calcProfits();
         target.calcTargetBasePos();
@@ -1879,11 +1879,11 @@ namespace ₿ {
         ) Print::logWar("QE", "Crossed bid/ask quotes detected, that is.. unexpected");
       };
       void debug(const string &reason) {
-        if (K.num("debug-quotes"))
+        if (K.arg<int>("debug-quotes"))
           Print::log("DEBUG QE", reason);
       };
       void debuq(const string &step) {
-        if (K.num("debug-quotes"))
+        if (K.arg<int>("debug-quotes"))
           Print::log("DEBUG QE", "[" + step + "] "
             + to_string((int)bid.state) + ":"
             + to_string((int)ask.state) + " "
@@ -2118,7 +2118,7 @@ namespace ₿ {
         , wallet(w)
       {};
       vector<const mOrder*> clear() {
-        send();
+        broadcast();
         states(mQuoteState::MissingData);
         countWaiting =
         countWorking = 0;
@@ -2148,7 +2148,7 @@ namespace ₿ {
           } else if (qp.safety != mQuotingSafety::AK47
             or quote.deprecates(order.price)
           ) {
-            if (K.num("lifetime") and order.time + K.num("lifetime") > Tstamp)
+            if (K.arg<int>("lifetime") and order.time + K.arg<int>("lifetime") > Tstamp)
               quote.skip();
             else return true;
           }
@@ -2478,7 +2478,7 @@ namespace ₿ {
         if (greenButton != previous)
           Print::log("GW " + K.gateway->exchange, "Quoting state changed to",
             string(paused() ? "DIS" : "") + "CONNECTED");
-        send();
+        broadcast();
         Print::repaint();
       };
   };
@@ -2542,12 +2542,13 @@ namespace ₿ {
       {};
       const json to_json() const {
         return {
-          {   "exchange", K.gateway->exchange},
-          {       "base", K.gateway->base    },
-          {      "quote", K.gateway->quote   },
-          {    "minTick", K.gateway->minTick },
-          {"environment", K.str("title")     },
-          { "matryoshka", K.str("matryoshka")}
+          {   "exchange", K.gateway->exchange        },
+          {       "base", K.gateway->base            },
+          {      "quote", K.gateway->quote           },
+          {    "minTick", K.gateway->minTick         },
+          {       "inet", string(Curl::inet ?: "")   },
+          {"environment", K.arg<string>("title")     },
+          { "matryoshka", K.arg<string>("matryoshka")}
         };
       };
       const mMatter about() const override {
@@ -2569,18 +2570,17 @@ namespace ₿ {
         , K(bot)
       {};
       void timer_60s() {
-        send();
+        broadcast();
         orders_60s = 0;
       };
       const json to_json() const {
         return {
-          {  "addr", K.gateway->unlock       },
-          {  "inet", string(Curl::inet ?: "")},
-          {  "freq", orders_60s              },
-          { "theme", K.num("ignore-moon")
-                       + K.num("ignore-sun") },
-          {"memory", K.memSize()             },
-          {"dbsize", K.dbSize()              }
+          {  "addr", K.gateway->unlock           },
+          {  "freq", orders_60s                  },
+          { "theme", K.arg<int>("ignore-moon")
+                       + K.arg<int>("ignore-sun")},
+          {"memory", K.memSize()                 },
+          {"dbsize", K.dbSize()                  }
         };
       };
       const mMatter about() const override {

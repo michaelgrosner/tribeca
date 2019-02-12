@@ -8,14 +8,10 @@ class HelloWorld: public KryptoNinja {
       autobot   = true;
       arguments = { {
         {"subject", "NAME", "World", "say hello to NAME (default: 'World')"}
-      }, [](
-        unordered_map<string, string> &str,
-        unordered_map<string, int>    &num,
-        unordered_map<string, double> &dec
-      ) {
-        if (str["subject"].empty())
+      }, [&](unordered_map<string, variant<string, int, double>> &args) {
+        if (arg<string>("subject").empty())
           error("CF", "Invalid empty --subject value");
-        else str["subject"] += "!";
+        else args["subject"] = Text::strU(arg<string>("subject")) + "!";
         log("CF", "arguments validated", "OK");
       } };
     };
@@ -23,15 +19,15 @@ class HelloWorld: public KryptoNinja {
     void run() override {
       const string result = greeting();
       const string prefix = "Executed " + (
-        num("debug")
+        arg<int>("debug")
           ? string(__PRETTY_FUNCTION__)
-          : str("title")
+          : arg<string>("title")
       );
       exit(prefix + ' ' + result);
     };
   private:
     const string greeting() {
-      cout << "Hello, " << str("subject") << endl;
+      cout << "Hello, " << arg<string>("subject") << endl;
       return "OK";
     };
 } K;

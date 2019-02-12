@@ -19,6 +19,7 @@
 #include <random>
 #include <locale>
 #include <csignal>
+#include <variant>
 #include <algorithm>
 #include <functional>
 #include <getopt.h>

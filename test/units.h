@@ -116,7 +116,7 @@ namespace ₿ {
       WHEN("defaults") {
         THEN("fair value") {
           REQUIRE_FALSE(levels.fairValue);
-          REQUIRE_NOTHROW(levels.stats.fairPrice.mToClient::send = [&]() {
+          REQUIRE_NOTHROW(levels.stats.fairPrice.mToClient::broadcast = [&]() {
             REQUIRE(levels.stats.fairPrice.blob().dump() == "{\"price\":0.0}");
           });
           REQUIRE_FALSE(levels.ready());
@@ -124,10 +124,10 @@ namespace ₿ {
         }
       }
       WHEN("assigned") {
-        REQUIRE_NOTHROW(levels.diff.mToClient::send = [&]() {
-          FAIL("diff.send() before diff.hello()");
+        REQUIRE_NOTHROW(levels.diff.mToClient::broadcast = [&]() {
+          FAIL("diff.broadcast() before diff.hello()");
         });
-        REQUIRE_NOTHROW(levels.stats.fairPrice.mToClient::send = [&]() {
+        REQUIRE_NOTHROW(levels.stats.fairPrice.mToClient::broadcast = [&]() {
           REQUIRE(levels.stats.fairPrice.blob().dump() == "{\"price\":1234.55}");
         });
         REQUIRE_NOTHROW(qp.fvModel = mFairValueModel::BBO);
@@ -169,24 +169,24 @@ namespace ₿ {
           REQUIRE(levels.unfiltered.asks[1].size  == 0.11234569);
         }
         THEN("fair value") {
-          REQUIRE_NOTHROW(levels.stats.fairPrice.mToClient::send = []() {
-            FAIL("send() while filtering");
+          REQUIRE_NOTHROW(levels.stats.fairPrice.mToClient::broadcast = []() {
+            FAIL("broadcast() while filtering");
           });
           REQUIRE(levels.ready());
           REQUIRE(levels.fairValue == 1234.55);
         }
         THEN("fair value weight") {
           REQUIRE_NOTHROW(qp.fvModel = mFairValueModel::wBBO);
-          REQUIRE_NOTHROW(levels.stats.fairPrice.mToClient::send = [&]() {
-            FAIL("send() while filtering");
+          REQUIRE_NOTHROW(levels.stats.fairPrice.mToClient::broadcast = [&]() {
+            FAIL("broadcast() while filtering");
           });
           REQUIRE(levels.ready());
           REQUIRE(levels.fairValue == 1234.59);
         }
         THEN("fair value reversed weight") {
           REQUIRE_NOTHROW(qp.fvModel = mFairValueModel::rwBBO);
-          REQUIRE_NOTHROW(levels.stats.fairPrice.mToClient::send = [&]() {
-            FAIL("send() while filtering");
+          REQUIRE_NOTHROW(levels.stats.fairPrice.mToClient::broadcast = [&]() {
+            FAIL("broadcast() while filtering");
           });
           REQUIRE(levels.ready());
           REQUIRE(levels.fairValue == 1234.51);
@@ -198,17 +198,17 @@ namespace ₿ {
             "\"bids\":[{\"price\":1234.5,\"size\":0.12345678},{\"price\":1234.55,\"size\":0.01234567}]"
           "}]");
           REQUIRE_FALSE(levels.diff.empty());
-          THEN("send") {
+          THEN("broadcast") {
             REQUIRE_NOTHROW(qp.delayUI = 0);
             this_thread::sleep_for(chrono::milliseconds(370));
-            REQUIRE_NOTHROW(levels.diff.mToClient::send = [&]() {
+            REQUIRE_NOTHROW(levels.diff.mToClient::broadcast = [&]() {
               REQUIRE(levels.diff.blob().dump() == "{"
                 "\"asks\":[{\"price\":1234.69,\"size\":0.11234566}],"
                 "\"bids\":[{\"price\":1234.5},{\"price\":1234.4,\"size\":0.12345678}],"
                 "\"diff\":true"
               "}");
             });
-            REQUIRE_NOTHROW(levels.stats.fairPrice.mToClient::send = [&]() {
+            REQUIRE_NOTHROW(levels.stats.fairPrice.mToClient::broadcast = [&]() {
               REQUIRE(levels.stats.fairPrice.blob().dump() == "{\"price\":1234.5}");
             });
             REQUIRE_NOTHROW(levels.read_from_gw({

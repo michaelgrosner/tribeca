@@ -774,7 +774,7 @@ class ClientComponent implements OnInit {
     window.parent.postMessage('height='+document.getElementsByTagName('body')[0].getBoundingClientRect().height+'px', '*');
   };
   public product: Models.ProductState = {
-    advert: new Models.ProductAdvertisement(null, null, null, null, null, .01),
+    advert: new Models.ProductAdvertisement(null, null, null, null, null, null, .01),
     fixed: 2
   };
   public baseCurrency: string = "?";
@@ -925,7 +925,6 @@ class ClientComponent implements OnInit {
   }
 
   private onAppState = (o : Models.ApplicationState) => {
-    this.inet = o.inet;
     this.server_memory = this.bytesToSize(o.memory, 0);
     this.client_memory = this.bytesToSize((<any>window.performance).memory ? (<any>window.performance).memory.usedJSHeapSize : 1, 0);
     this.db_size = this.bytesToSize(o.dbsize, 0);
@@ -1013,6 +1012,7 @@ class ClientComponent implements OnInit {
   private onAdvert = (pa : Models.ProductAdvertisement) => {
     this.ready = true;
     window.document.title = '['+pa.environment+']';
+    this.inet = pa.inet;
     this.matryoshka = pa.matryoshka;
     this.baseCurrency = pa.base;
     this.quoteCurrency = pa.quote;
