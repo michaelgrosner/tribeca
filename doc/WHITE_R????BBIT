@@ -1,0 +1,210 @@
+: hurry! to get you started, a collection of redundant information to follow: :
+:      !                  /                                        because o! :
+:      .                h/\lf           k     &                    f reasons! :
+:      .               _/  \           .K.                                  . :
+:      .                   HUMAN      .KKK.       FAMILY                    . :
+:                              WORK  .KKKKK.   WORK                         . :
+:      .                            .KKKKKKK.                                 :
+:                       ²KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK² ...               . :
+:                .        "²KKKKKKKKKKKKKKKKKKKKKKKKK²"   : :   .             :
+:                :    ...   "²KKKKKKKKKKKKKKKKKKK²"       : :   :             :
+:                :    : :   ... "²KKFEELKFREEKK²" ......... :   :             :
+. . .... ........+..... :   :    .KKKKKKKKKKKKK.            :...+...... ... . .
+:                :      .....   .KKKKKKKKKKKKKKK.               :             :
+:                :             .KKKKKKK3²3KKKKKKK.              :             :
+:                .            .KKKKKK²" ! "²KKKKKK.                           :
+:                            .KKKK²"  SLEEP  "²KKKK.                          :
+:                .          .KK²" REPEAT REPEAT "²KK.                         :
+: w                         ²"    _\\___|___//_    "²                       w :
+: ww                               //   :   \\                             ww :
+: www <<<<<<<<<< tinyurl.com/no-mistake : youtu.be/7nPvfqn2hhI >>>>>>>>>> www :
+:_____________________________________________________________________________:
+:                                                                             :
+:  .. Makefile: ------------------------------------- aka. noautoconf ------- :
+:  :  # boooriiing docs at https://www.gnu.org/software/make/manual/make.html :
+:  :                                                                          :
+:  :  # a target without env vars is OK but cross compilation is viable with: :
+:  :  - set CHOST env var as any target triplet (on redhats, ubuntus, macos). :
+:  :  - set KALL=1 env var to make all the supported targets at once, lovely. :
+:  :                                                                          :
+:  +-- Whaaat??                                                               :
+:     One-time targets: (one-time means everytime new versions are available) :
+:      $ make packages                                                        :
+:       forget about this, is executed by "make install" every. single. time. :
+:                                                                             :
+:      $ make dist                                                            :
+:       once upon a time, there was vast empty build folders but not anymore. :
+:        all includes (see Makefile and src/server/K.cxx) will be downloaded. :
+:        no errors or warnings expected, unless by happy libquickfix; ignore. :
+:        when done, rebuild anytime K Server with "make" (but do some mods!). :
+:        !will never be done! unless "make install" is: in advance! executed. :
+:                                                                             :
+:      $ make clean                                                           :
+:       after some time, the youth goes away and I will leave a world behind. :
+:        don't be sad life is life and this world will never forget our time. :
+:                                                                             :
+:     Devel targets: (an excuse to refill a glass of milk no matter the boss) :
+:      $ make                                                                 :
+:       TODO                                                                  :
+:                                                                             :
+:      $ make trading-bot                                                     :
+:       TODO                                                                  :
+:                                                                             :
+:      $ make test-c                                                          :
+:       TODO                                                                  :
+:                                                                             :
+:     User targets: (oh my dog! command-line commands! lets see what happens) :
+:      $ make install                                                         :
+:       what happens here is mandatory. This is the very first step. Not only :
+:        the last public version will be downloaded but also the private lib. :
+:        K only runs and only can be recompiled if "make install" goes first. :
+:                                                                             :
+:      $ make reinstall                                                       :
+:       TODO                                                                  :
+:                                                                             :
+:      $ make latest                                                          :
+:       TODO                                                                  :
+:                                                                             :
+:     Private targets: (!no trespassing! move along, nothing to execute here) :
+:      $ make release                                                         :
+:       TODO                                                                  :
+:                                                                             :
+:     Encrypted targets: (here! im here!! crack me! i have been always here!) :
+:      $ make enc                                                             :
+:       not sure but.. is nice that github shows +2 releases, dont you think? :
+:                                                                             :
+:     Missing targets: (let's plant a tree instead, or better two nice trees) :
+:      $ make onestep-install-for-node-and-node-friend-npm                    :
+:       see https://www.ecosia.org/search?q=node+install+from+package+manager :
+:                                                                             :
+:_____________________________________________________________________________:
+:                                 DEPRECATED                                  :
+:  .. src/server: ----------------------------------- aka. K Server --------- :
+:  :   # boooriiing docs at http://www.cplusplus.com                          :
+:  :                                                                          :
+:  +-- Whaaat??                                                               :
+:                Login    ____ ____  Admin  ____                              :
+:           # <<-------- |sh.h|ev.h| --->> |ui.h# K Client                    :
+:           #             ¯¯¯¯ ¯¯¯¯         ¯¯¯¯|                             :
+:           #   Wallet                          | P                           :
+:           # -------------->>#        ____     V a                           :
+:         A #                 #       |db.h|____V r                           :
+:         P #   Trades        # --->> |ds.h|if.h| a                           :
+:         I #     &           # a D    ¯¯¯¯ ¯¯¯¯| m                           :
+:           #   Levels        # t               | e                           :
+:         E # -------------->># a               | t                           :
+:         x #                 #                 V e                           :
+:         c #   Orders        #   Quotes    ____V r                           :
+:         h # <<------------>># <<------>> |qe.h| s                           :
+:         ange                # K Server    ¯¯¯¯                              :
+:                                                                             :
+:                                                                             :
+:                                                                             :
+:                                                                             :
+:  .. src/server/K.cxx: ----------------------------- aka. K Home ----------- :
+:  :   # Warning: my home is your home, if there are houses owned by someone. :
+:  :                                                                          :
+:  +-- Whaaat??                                                               :
+:  :  external sources and namespaces are defined here, our home from now on. :
+:  :  internal sources are just collections of static classes and global vars :
+:  :   without any includes. There is no functional programming in our home.. :
+:  :   K Server is proudly non-stop changing states and mutating global data. :
+:  :                                                                          :
+:  +-- Globals??                                                              :
+:                     args, screen, client, events, sqlite                    :
+:                               qp, engine, gw                                :
+:                                                                             :
+:  .. src/server/ds.h:  ----------------------------- aka. Data Structures -- :
+:  :   TODO                                                                   :
+:  :                                                                          :
+:  +-- Whaaat??                                                               :
+:                                                                             :
+:                                                                             :
+:  .. src/server/if.h:  ----------------------------- aka. Interfaces ------- :
+:      TODO                                                                   :
+:                                                                             :
+:                                                                             :
+:  .. src/server/sh.h:  ----------------------------- aka. Shell ------------ :
+:  :   TODO                                                                   :
+:  :                                                                          :
+:  +-- Whaaat??                                                               :
+:     screen                                                                  :
+:                                                                             :
+:                                                                             :
+:  .. src/server/ev.h:  ----------------------------- aka. Events ----------- :
+:  :   TODO                                                                   :
+:  :                                                                          :
+:  +-- Whaaat??                                                               :
+:     events                                                                  :
+:                                                                             :
+:                                                                             :
+:  .. src/server/db.h:  ----------------------------- aka. Database --------- :
+:  :   # Warning: write-only during execution, we read data only before boot. :
+:  :                                                                          :
+:  +-- Whaaat??                                                               :
+:     sqlite.backup()                                                         :
+:       !before backup, consider twice if data must really survive reboots..! :
+:     sqlite.select()                                                         :
+:      returns always 1 json array, with 0 items in case no record exist yet. :
+:     sqlite.insert()                                                         :
+:      callme with data that can not be lost after quick reboots (reinstall). :
+:       the same call must also clean out of date records; setting rm flag to :
+:       true will delete all before insert 1, setting id argument will delete :
+:       only the matching record with same id before insert 1, setting expire :
+:       argument to a timestamp will delete all older before insert 1. Please :
+:       ensure the database is a golden image of the memory. Do not forget to :
+:       create or remove data always on both, memory and database, as if one. :
+:                                                                             :
+:                                                                             :
+:  .. src/server/ui.h:  ----------------------------- aka. User Interface --- :
+:  :   TODO                                                                   :
+:  :                                                                          :
+:  +-- Whaaat??                                                               :
+:     client                                                                  :
+:                                                                             :
+:                                                                             :
+:  .. src/server/qe.h:  ----------------------------- aka. Quoting Engine --- :
+:  :   TODO                                                                   :
+:  :                                                                          :
+:  +-- Whaaat??                                                               :
+:     engine->broker                                                          :
+:     engine->levels                                                          :
+:     engine->wallet                                                          :
+:                                                                             :
+:_____________________________________________________________________________:
+:                                                                             :
+:  .. src/client-2d: -------------------------------- aka. K 2D Legacy Client :
+:      boooriiing docs at https://angular.io/api                              :
+:      boooriiing docs at https://www.typescriptlang.org/docs/home.html       :
+:      boooriiing docs at https://www.ag-grid.com/javascript-grid-api/        :
+:                                                                             :
+:_____________________________________________________________________________:
+:                                                                             :
+:  .. src/www: -------------------------------------- aka. K Static Files --- :
+:      TODO                                                                   :
+:                                                                             :
+:_____________________________________________________________________________:
+:                                                                             :
+:                                                                             :
+:                                                                             :
+:                                                                             :
+:              ^^                  KKKKKKKKKK                                 :
+:         ^^       ^^            KKKKKKKKKKKKKK                               :
+:            |DD               KKKKKKKKKKKKKKKKKK              ^^             :
+:          __|DD              KKKKKKKKKKKKKKKKKKKK                            :
+~~~~ ~~~~ ~\___/~~ ~~~~~~~ ~~ kkkkkkkkkkkkkkkkkkkk ~~ ~~~~~~~ ~~~~~ ~~ ~~~~ :wq
+    ~         ~~   ~  ~       ~~~~~~~~~~~~~~~~~~~~ ~       ~~     ~~ ~
+      ~      ~~      ~~ ~~ ~~  ~~~~~~~~~~~~~ ~~~~  ~     ~~~    ~|DD ~~~  ~ ~~
+      ~  ~~     ~         ~      ~~~~~~  ~~ ~~~       ~~ ~ ~~ ___|DD_
+    ~  ~       ~ ~      ~           ~~ ~~~~~~  ~      ~~  ~   \_____/    ~~
+          ~             ~        ~      ~      ~~   ~             ~
+
+   youtu.be/aeyTr43cEYw       youtu.be/fnb8CQ9X-YM       youtu.be/pxxovTZRJic
+       youtu.be/_vsCx6VnOnI   youtu.be/SQM4qbwyxCM   youtu.be/eb6UyUibREU
+
+                                   WELCOME TO
+                              THE CATALAN REPUBLIC
+                          freedom, democracy and peace
+
+                       free hands, free arms, free hearts
+                       free seas, free rivers, free towns
