@@ -2374,7 +2374,7 @@ namespace ₿ {
           quotes.ask.size = round(fmax(
             fmin(
               quotes.ask.size,
-              wallet.base.total
+              floor(wallet.base.total / K.gateway->minSize) * K.gateway->minSize
             ),
             K.gateway->minSize
           ) / K.gateway->minSize) * K.gateway->minSize;
@@ -2382,7 +2382,7 @@ namespace ₿ {
           quotes.bid.size = round(fmax(
             fmin(
               quotes.bid.size,
-              wallet.quote.total / levels.fairValue
+              floor(wallet.quote.total / levels.fairValue / K.gateway->minSize) * K.gateway->minSize
             ),
             K.gateway->minSize
           ) / K.gateway->minSize) * K.gateway->minSize;
