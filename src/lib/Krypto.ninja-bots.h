@@ -420,19 +420,6 @@ namespace ₿ {
 #endif
         return get<T>(args.at(name));
       };
-      const unsigned int memSize() const {
-#ifdef _WIN32
-        return 0;
-#else
-        struct rusage ru;
-        return getrusage(RUSAGE_SELF, &ru) ? 0 : ru.ru_maxrss * 1e+3;
-#endif
-      };
-      const unsigned int dbSize() const {
-        if (!databases or arg<string>("database") == ":memory:") return 0;
-        struct stat st;
-        return stat(arg<string>("database").data(), &st) ? 0 : st.st_size;
-      };
     protected:
       void main(int argc, char** argv) {
         args["autobot"]  = autobot;
@@ -549,13 +536,13 @@ namespace ₿ {
         tidy();
         if (!arg<string>("interface").empty())
           Curl::inet = strdup(arg<string>("interface").data());
-        if (arg<int>("naked"))
-          Print::display = nullptr;
         Ansi::colorful = arg<int>("colors");
         if (arguments.second) {
           arguments.second(args);
           arguments.second = nullptr;
         }
+        if (arg<int>("naked"))
+          Print::display = nullptr;
       };
     private:
       void tidy() {
@@ -1020,14 +1007,6 @@ namespace ₿ {
       };
   };
 
-  class mBackupFromDb: public mFromDb {
-    public:
-      mBackupFromDb(const Sqlite &s)
-      {
-        s.tables.push_back(this);
-      };
-  };
-
   class Client {
     public:
               int connections = 0;
@@ -1217,6 +1196,14 @@ namespace ₿ {
          + "\r\n"
            "\r\n"
          + content;
+      };
+  };
+
+  class mBackupFromDb: public mFromDb {
+    public:
+      mBackupFromDb(const Sqlite &s)
+      {
+        s.tables.push_back(this);
       };
   };
 
@@ -1454,6 +1441,19 @@ namespace ₿ {
             + " for symbol \"" + gateway->symbol + "\", possible error message: "
             + reply.dump());
         gateway->info(notes);
+      };
+      const unsigned int memSize() const {
+#ifdef _WIN32
+        return 0;
+#else
+        struct rusage ru;
+        return getrusage(RUSAGE_SELF, &ru) ? 0 : ru.ru_maxrss * 1e+3;
+#endif
+      };
+      const unsigned int dbSize() const {
+        if (!databases or arg<string>("database") == ":memory:") return 0;
+        struct stat st;
+        return stat(arg<string>("database").data(), &st) ? 0 : st.st_size;
       };
     private:
       void setup() {

@@ -52,26 +52,26 @@ install:
       _() { git cat-file blob $1 > $1.asc && echo $TRAVIS_DEPLOY | gpg --passphrase-fd 0 $1.asc; }
       _ Kira
       _ Bender
-      . Bender                                                                                  > /dev/null 2>&1
+      . Bender                                                                            > /dev/null 2>&1
       KUNITS=1 make
-      (cd /var/lib/K && ncu)                                                   | sed '/^\s*$/d' | /usr/games/cowsay -nW80 -fduck
-      make test-c             2>&1 | sed '/Total messages/d' | sed '/Help: The documentation/d' | /usr/games/cowsay -nW160 -felephant || :
+      (cd /var/lib/K && ncu)                                             | sed '/^\s*$/d' | /usr/games/cowsay -nW80 -fduck
+      make test-c       2>&1 | sed '/Total messages/d' | sed '/Help: The documentation/d' | /usr/games/cowsay -nW160 -felephant || :
     elif [[ "${TRAVIS_OS_NAME}" == "osx" ]]; then
       yes 4 | make install
     else
       yes 5 | make install
     fi
 
-script: make test                                              | sed '/^\s*$/d' | sed '/====/d' | /usr/games/cowsay -nW160 -fbud-frogs && test ${PIPESTATUS[0]} -eq 0
+script: make test                                        | sed '/^\s*$/d' | sed '/====/d' | /usr/games/cowsay -nW160 -fbud-frogs && test ${PIPESTATUS[0]} -eq 0
 
 after_success:
   - |
     if [[ "${TRAVIS_OS_NAME}" == "linux" ]]; then
-      lcov --directory . --capture --output-file coverage.info                                  > /dev/null 2>&1
-      lcov --remove coverage.info '/usr/*' '*local/include/*' --output-file coverage.info       > /dev/null 2>&1
-      coveralls-lcov --repo-token ${COVERALLS_TOKEN} coverage.info                              > /dev/null 2>&1
-      cat coverage.info | codacy-coverage --language cpp                                        > /dev/null 2>&1
-      lcov --list coverage.info                                                                 | /usr/games/cowsay -nW80 -fdefault
+      lcov --directory . --capture --output-file coverage.info                            > /dev/null 2>&1
+      lcov --remove coverage.info '/usr/*' '*local/include/*' --output-file coverage.info > /dev/null 2>&1
+      coveralls-lcov --repo-token ${COVERALLS_TOKEN} coverage.info                        > /dev/null 2>&1
+      cat coverage.info | codacy-coverage --language cpp                                  > /dev/null 2>&1
+      lcov --list coverage.info                                                           | /usr/games/cowsay -nW80 -fdefault
     fi
 
 notifications:
