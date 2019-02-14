@@ -403,11 +403,8 @@ namespace ₿ {
   };
 
   class Option {
-    public:
-      unordered_map<string, pair<const char*, const int>> documents;
     protected:
-      bool autobot   = false;
-      bool databases = false;
+      bool autobot = false;
       pair<vector<Argument>, function<void(
         unordered_map<string, variant<string, int, double>>&
       )>> arguments;
@@ -421,9 +418,9 @@ namespace ₿ {
         return get<T>(args.at(name));
       };
     protected:
-      void main(int argc, char** argv) {
+      void main(int argc, char** argv, const bool &databases, const bool &headless) {
         args["autobot"]  = autobot;
-        args["headless"] = documents.empty();
+        args["headless"] = headless;
         args["naked"]    = !Print::display;
         vector<Argument> long_options = {
           {"help",         "h",      nullptr,  "show this help and quit"},
@@ -561,7 +558,7 @@ namespace ₿ {
         if (arg<int>("latency") or arg<int>("debug-secret"))
 #endif
           args["naked"] = 1;
-        if (databases) {
+        if (args.find("database") != args.end()) {
           args["diskdata"] = "";
           if (arg<string>("database").empty() or arg<string>("database") == ":memory:")
             (arg<string>("database") == ":memory:"
@@ -582,7 +579,6 @@ namespace ₿ {
           ) ? "Basic " + Text::B64(arg<string>("user") + ':' + arg<string>("pass"))
             : "";
         }
-        if (arg<int>("headless")) documents.clear();
       };
       void help(const vector<Argument> &long_options) {
         const vector<string> stamp = {
@@ -910,6 +906,8 @@ namespace ₿ {
   class Sqlite {
     public:
       mutable vector<mFromDb*> tables;
+    protected:
+      bool databases = false;
     private:
       sqlite3 *db = nullptr;
       string qpdb = "main";
@@ -1009,13 +1007,14 @@ namespace ₿ {
 
   class Client {
     public:
-              int connections = 0;
-              string protocol = "HTTP";
+      string protocol = "HTTP";
+      int connections = 0;
       mutable unsigned int delay = 0;
       mutable vector<mToClient*>   readable;
       mutable vector<mFromClient*> editable;
     protected:
       uWS::Group<uWS::SERVER> *webui = nullptr;
+      unordered_map<string, pair<const char*, const int>> documents;
     private:
       unordered_map<mMatter, function<const json()>> hello;
       unordered_map<mMatter, function<void(const json&)>> kisses;
@@ -1077,6 +1076,7 @@ namespace ₿ {
           it->broadcast = nullptr;
         readable.clear();
         editable.clear();
+        documents.clear();
       };
       function<const bool(const bool&, const string&)> wsServer = [&](
         const   bool &connection,
@@ -1096,7 +1096,7 @@ namespace ₿ {
         const string &addr
       ) {
         if (alien(addr))
-          return string(option.documents.at("").first, option.documents.at("").second);
+          return string(documents.at("").first, documents.at("").second);
         const mPortal portal = (mPortal)message.at(0);
         const mMatter matter = (mMatter)message.at(1);
         if (mPortal::Hello == portal and hello.find(matter) != hello.end()) {
@@ -1134,13 +1134,13 @@ namespace ₿ {
           Print::log("UI", "authorization failed from", addr);
           code = 403;
         } else if (connections < option.arg<int>("client-limit")) {
-          if (option.documents.find(path) == option.documents.end())
+          if (documents.find(path) == documents.end())
             path = path.substr(path.find_last_of("/", path.find_last_of("/") - 1));
-          if (option.documents.find(path) == option.documents.end())
+          if (documents.find(path) == documents.end())
             path = path.substr(path.find_last_of("/"));
-          if (option.documents.find(path) != option.documents.end()) {
-            content = string(option.documents.at(path).first,
-                             option.documents.at(path).second);
+          if (documents.find(path) != documents.end()) {
+            content = string(documents.at(path).first,
+                             documents.at(path).second);
             const string leaf = path.substr(path.find_last_of('.') + 1);
             if (leaf == "/") Print::log("UI", "authorization success from", addr);
             else if (leaf == "js")  type = "application/javascript; charset=UTF-8";
@@ -1357,7 +1357,7 @@ namespace ₿ {
       {};
       KryptoNinja *const main(int argc, char** argv) {
         {
-          Option::main(argc, argv);
+          Option::main(argc, argv, databases, documents.empty());
           setup();
           curl_global_init(CURL_GLOBAL_ALL);
         } {
