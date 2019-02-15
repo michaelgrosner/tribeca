@@ -54,8 +54,8 @@ class TradingBot: public KryptoNinja {
 
 class Engine: public Klass {
   public:
-           mButtons btn;
      mQuotingParams qp;
+           mButtons button;
            mMonitor monitor;
            mProduct product;
             mOrders orders;
@@ -64,14 +64,14 @@ class Engine: public Klass {
             mBroker broker;
   public:
     Engine()
-      : btn(K)
-      , qp(K)
+      : qp(K)
+      , button(K)
       , monitor(K)
       , product(K)
       , orders(K)
       , levels(K, orders, qp)
-      , wallet(K, orders, qp, btn, levels.stats.ewma.targetPositionAutoPercentage, levels.fairValue)
-      , broker(K, orders, qp, btn, levels, wallet)
+      , wallet(K, orders, qp, button, levels.stats.ewma.targetPositionAutoPercentage, levels.fairValue)
+      , broker(K, orders, qp, button, levels, wallet)
     {};
   protected:
     void waitData() override {

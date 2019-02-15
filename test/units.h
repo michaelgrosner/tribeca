@@ -352,16 +352,16 @@ namespace ₿ {
       KryptoNinja K;
       K.gateway = Gw::new_Gw("NULL");
       K.gateway->minTick = 0.01;
-      mButtons btn(K);
+      mButtons button(K);
       mOrders orders(K);
       mQuotingParams qp(K);
       mMarketLevels levels(K, orders, qp);
       const Price fairValue = 500;
       const double targetPositionAutoPercentage = 0;
-      mWalletPosition wallet(K, orders, qp, btn, targetPositionAutoPercentage, fairValue);
+      mWalletPosition wallet(K, orders, qp, button, targetPositionAutoPercentage, fairValue);
       wallet.base = {"BTC", 1, 0};
       wallet.quote = {"EUR", 1000, 0};
-      mBroker broker(K, orders, qp, btn, levels, wallet);
+      mBroker broker(K, orders, qp, button, levels, wallet);
       WHEN("assigned") {
         vector<RandId> randIds;
         const Clock time = Tstamp;

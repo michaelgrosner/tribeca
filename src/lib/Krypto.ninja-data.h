@@ -888,7 +888,8 @@ namespace ₿ {
       {};
       const bool warn_empty() const {
         const bool err = bids.empty() or asks.empty();
-        if (err) Print::logWar("QE", "Unable to calculate quote, missing market data");
+        if (err and (float)clock()/CLOCKS_PER_SEC > 3.0)
+          Print::logWar("QE", "Unable to calculate quote, missing market data");
         return err;
       };
       void timer_1s() {
@@ -1673,7 +1674,8 @@ namespace ₿ {
       };
       const bool warn_empty() const {
         const bool err = empty();
-        if (err) Print::logWar("PG", "Unable to calculate TBP, missing wallet data");
+        if (err and (float)clock()/CLOCKS_PER_SEC > 3.0)
+          Print::logWar("PG", "Unable to calculate TBP, missing wallet data");
         return err;
       };
       const bool empty() const {

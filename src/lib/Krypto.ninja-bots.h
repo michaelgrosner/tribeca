@@ -1283,14 +1283,17 @@ namespace ₿ {
 
   class mCatchEdits {
     public:
-      mCatchEdits(const Events &e, vector<pair<const mFromClient*, variant<function<void()>, function<void(const json&)>>>> edited)
+      mCatchEdits(const Events &e, const vector<pair<const mFromClient*, variant<
+        const function<void()>,
+        const function<void(const json&)>
+      >>> &edited)
       {
         for (const auto &it : edited)
           e.edited(
             it.first,
-            holds_alternative<function<void()>>(it.second)
-              ? [it](const json &j) { get<function<void()>>(it.second)(); }
-              : get<function<void(const json&)>>(it.second)
+            holds_alternative<const function<void()>>(it.second)
+              ? [it](const json &j) { get<const function<void()>>(it.second)(); }
+              : get<const function<void(const json&)>>(it.second)
           );
       };
   };
