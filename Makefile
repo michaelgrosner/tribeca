@@ -20,22 +20,20 @@ ERR      = *** K require g++ v7 or greater, but it was not found.
 HINT    := consider a symlink at /usr/bin/$(CHOST)-g++ pointing to your g++-7 or g++-8 executable
 
 STEP     = $(shell tput setaf 2;tput setab 0)Building $(1)..$(shell tput sgr0)
-KARGS   := -pthread -std=c++17 -O3 -I$(realpath src/lib)  \
-  -DK_BUILD='"$(KHOST)"'                                  \
-  -DK_SOURCE='"K-$(KSRC)"' -DK_0_GIT='"$(shell            \
-  cat .git/refs/heads/master 2>/dev/null || echo HEAD)"'  \
-  -DK_STAMP='"$(shell date "+%Y-%m-%d %H:%M:%S")"'        \
-  -DK_0_DAY='"v$(MAJOR).$(MINOR).$(PATCH)+$(BUILD)"'      \
-  -I$(KLOCAL)/include         $(KLOCAL)/include/uWS/*.cpp \
-  $(KLOCAL)/lib/K-$(KHOST).a                              \
-  $(KLOCAL)/lib/libquickfix.a $(KLOCAL)/lib/libsqlite3.a  \
-  $(KLOCAL)/lib/libz.a        $(KLOCAL)/lib/libcurl.a     \
-  $(KLOCAL)/lib/libssl.a      $(KLOCAL)/lib/libcrypto.a   \
-  $(KLOCAL)/lib/libncurses.a                              \
-  $(wildcard                                              \
-    $(KLOCAL)/lib/lib*.dll.a                              \
-    $(KLOCAL)/lib/libcares.a  $(KLOCAL)/lib/libuv.a       \
-    $(KLOCAL)/lib/K-$(KSRC)-assets.o                      \
+KARGS   := -std=c++17 -O3 -pthread -DK_0_GIT='"$(shell  \
+  cat .git/refs/heads/master 2>/dev/null || echo HEAD)"'\
+  -DK_STAMP='"$(shell date "+%Y-%m-%d %H:%M:%S")"'      \
+  -DK_0_DAY='"v$(MAJOR).$(MINOR).$(PATCH)+$(BUILD)"'    \
+  -DK_BUILD='"$(KHOST)"'      -DK_SOURCE='"K-$(KSRC)"'  \
+  -I$(KLOCAL)/include         -I$(realpath src/lib)     \
+  $(KLOCAL)/include/uWS/*.cpp $(KLOCAL)/lib/K-$(KHOST).a\
+  $(KLOCAL)/lib/libsqlite3.a  $(KLOCAL)/lib/libncurses.a\
+  $(KLOCAL)/lib/libquickfix.a $(KLOCAL)/lib/libz.a      \
+  $(KLOCAL)/lib/libcurl.a     $(KLOCAL)/lib/libssl.a    \
+  $(KLOCAL)/lib/libcrypto.a   $(wildcard                \
+    $(KLOCAL)/lib/lib*.dll.a                            \
+    $(KLOCAL)/lib/libcares.a  $(KLOCAL)/lib/libuv.a     \
+    $(KLOCAL)/lib/K-$(KSRC)-assets.o                    \
   )
 
 all K: $(SOURCE)

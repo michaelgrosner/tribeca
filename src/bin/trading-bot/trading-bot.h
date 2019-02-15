@@ -65,13 +65,13 @@ class Engine: public Klass {
   public:
     Engine()
       : qp(K)
-      , button(K)
       , monitor(K)
       , product(K)
       , orders(K)
-      , levels(K, orders, qp)
-      , wallet(K, orders, qp, button, levels.stats.ewma.targetPositionAutoPercentage, levels.fairValue)
-      , broker(K, orders, qp, button, levels, wallet)
+      , button(K)
+      , levels(K, qp, orders)
+      , wallet(K, qp, orders, button, levels)
+      , broker(K, qp, orders, button, levels, wallet)
     {};
   protected:
     void waitData() override {

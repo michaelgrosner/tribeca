@@ -876,15 +876,15 @@ namespace ₿ {
                                    filterAskOrders;
     private_ref:
       const KryptoNinja    &K;
-      const mOrders        &orders;
       const mQuotingParams &qp;
+      const mOrders        &orders;
     public:
-      mMarketLevels(const KryptoNinja &bot, const mOrders &o, const mQuotingParams &q)
+      mMarketLevels(const KryptoNinja &bot, const mQuotingParams &q, const mOrders &o)
         : diff(bot, unfiltered, q)
         , stats(bot, fairValue, q)
         , K(bot)
-        , orders(o)
         , qp(q)
+        , orders(o)
       {};
       const bool warn_empty() const {
         const bool err = bids.empty() or asks.empty();
@@ -1745,14 +1745,14 @@ namespace ₿ {
       const mOrders     &orders;
       const Price       &fairValue;
     public:
-      mWalletPosition(const KryptoNinja &bot, const mOrders &o, const mQuotingParams &q, const mButtons &b, const double &t, const Price &f)
+      mWalletPosition(const KryptoNinja &bot, const mQuotingParams &q, const mOrders &o, const mButtons &b, const mMarketLevels &l)
         : mJsonToClient(bot)
-        , target(bot, q, t, base.value)
-        , safety(bot, q, b, f, base.value, base.total, target.targetBasePosition)
+        , target(bot, q, l.stats.ewma.targetPositionAutoPercentage, base.value)
+        , safety(bot, q, b, l.fairValue, base.value, base.total, target.targetBasePosition)
         , profits(bot, q)
         , K(bot)
         , orders(o)
-        , fairValue(f)
+        , fairValue(l.fairValue)
       {};
       const bool ready() const {
         return !safety.empty();
@@ -2504,10 +2504,10 @@ namespace ₿ {
     mAntonioCalculon calculon;
     private_ref:
       const KryptoNinja    &K;
-            mOrders        &orders;
       const mQuotingParams &qp;
+            mOrders        &orders;
     public:
-      mBroker(const KryptoNinja &bot, mOrders &o, const mQuotingParams &q, const mButtons &b, const mMarketLevels &l, const mWalletPosition &w)
+      mBroker(const KryptoNinja &bot, const mQuotingParams &q, mOrders &o, const mButtons &b, const mMarketLevels &l, const mWalletPosition &w)
         : mCatchEdits(bot, {
             {&b.submit, [&](const json &j) { placeOrder(j); }},
             {&b.cancel, [&](const json &j) { cancelOrder(orders.find(j)); }},
@@ -2516,8 +2516,8 @@ namespace ₿ {
         , semaphore(bot)
         , calculon(bot, q, l, w)
         , K(bot)
-        , orders(o)
         , qp(q)
+        , orders(o)
       {};
       const bool ready() {
         if (semaphore.offline()) {

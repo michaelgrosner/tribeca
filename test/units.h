@@ -112,7 +112,7 @@ namespace ₿ {
       K.gateway->minSize = 0.001;
       mOrders orders(K);
       mQuotingParams qp(K);
-      mMarketLevels levels(K, orders, qp);
+      mMarketLevels levels(K, qp, orders);
       WHEN("defaults") {
         THEN("fair value") {
           REQUIRE_FALSE(levels.fairValue);
@@ -355,13 +355,13 @@ namespace ₿ {
       mButtons button(K);
       mOrders orders(K);
       mQuotingParams qp(K);
-      mMarketLevels levels(K, orders, qp);
-      const Price fairValue = 500;
+      mMarketLevels levels(K, qp, orders);
+      levels.fairValue = 500;
       const double targetPositionAutoPercentage = 0;
-      mWalletPosition wallet(K, orders, qp, button, targetPositionAutoPercentage, fairValue);
+      mWalletPosition wallet(K, qp, orders, button, targetPositionAutoPercentage);
       wallet.base = {"BTC", 1, 0};
       wallet.quote = {"EUR", 1000, 0};
-      mBroker broker(K, orders, qp, button, levels, wallet);
+      mBroker broker(K, qp, orders, button, levels, wallet);
       WHEN("assigned") {
         vector<RandId> randIds;
         const Clock time = Tstamp;
