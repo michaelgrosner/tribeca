@@ -71,12 +71,8 @@ class Engine: public Klass {
       , orders(K)
       , levels(K, orders, qp)
       , wallet(K, orders, qp, btn, levels.stats.ewma.targetPositionAutoPercentage, levels.fairValue)
-      , broker(K, orders, qp, levels, wallet)
-    {
-      K.edited(&btn.submit, [&](const json &j) { manualSendOrder(j); });
-      K.edited(&btn.cancel, [&](const json &j) { manualCancelOrder(j); });
-      K.edited(&btn.cancelAll, [&]() { cancelOrders(); });
-    };
+      , broker(K, orders, qp, btn, levels, wallet)
+    {};
   protected:
     void waitData() override {
       K.gateway->write_Connectivity = [&](const Connectivity &rawdata) {
@@ -128,23 +124,12 @@ code( '\e' , broker.semaphore.toggle )
       K.gateway->askForCancelAll = &qp.cancelOrdersAuto;
     };
   private:
-    void cancelOrders() {
-      for (mOrder *const it : orders.working())
-        cancelOrder(it);
-    };
-    void manualSendOrder(mOrder raw) {
-      raw.orderId = K.gateway->randId();
-      placeOrder(raw);
-    };
-    void manualCancelOrder(const RandId &orderId) {
-      cancelOrder(orders.find(orderId));
-    };
     void calcQuotes() {
       if (broker.ready() and levels.ready() and wallet.ready()) {
         if (broker.calcQuotes()) {
           quote2orders(broker.calculon.quotes.ask);
           quote2orders(broker.calculon.quotes.bid);
-        } else cancelOrders();
+        } else broker.cancelOrders();
       }
       broker.clear();
     };
@@ -156,13 +141,13 @@ code( '\e' , broker.semaphore.toggle )
       for_each(
         abandoned.begin(), abandoned.end() - replace,
         [&](mOrder *const it) {
-          cancelOrder(it);
+          broker.cancelOrder(it);
         }
       );
       if (quote.empty()) return;
       if (replace)
-        replaceOrder(quote.price, quote.isPong, abandoned.back());
-      else placeOrder({
+        broker.replaceOrder(quote.price, quote.isPong, abandoned.back());
+      else broker.placeOrder({
         quote.side,
         quote.price,
         quote.size,
@@ -171,17 +156,6 @@ code( '\e' , broker.semaphore.toggle )
         K.gateway->randId()
       });
       monitor.orders_60s++;
-    };
-    void placeOrder(const mOrder &raw) {
-      K.gateway->place(orders.upsert(raw));
-    };
-    void replaceOrder(const Price &price, const bool &isPong, mOrder *const order) {
-      if (orders.replace(price, isPong, order))
-        K.gateway->replace(order);
-    };
-    void cancelOrder(mOrder *const order) {
-      if (orders.cancel(order))
-        K.gateway->cancel(order);
     };
 } engine;
 

@@ -630,7 +630,8 @@ namespace ₿ {
       };
   };
 
-  struct mEwma: public mStructFromDb<mEwma> {
+  struct mEwma: public mStructFromDb<mEwma>,
+                public mCatchEdits  {
     mFairHistory fairValue96h;
            Price mgEwmaVL = 0,
                  mgEwmaL  = 0,
@@ -648,12 +649,13 @@ namespace ₿ {
     public:
       mEwma(const KryptoNinja &bot, const Price &f, const mQuotingParams &q)
         : mStructFromDb(bot)
+        , mCatchEdits(bot, {
+            {&q, [&]() { calcFromHistory(); }}
+          })
         , fairValue96h(bot)
         , fairValue(f)
         , qp(q)
-      {
-        bot.edited(&qp, [&]() { calcFromHistory(); });
-      };
+      {};
       void timer_60s(const Price &averageWidth) {
         prepareHistory();
         calcProtections(averageWidth);
@@ -1106,8 +1108,11 @@ namespace ₿ {
         , K(bot)
       {};
       void edit(const json &j) override {
-        if (j.is_object() and j.value("price", 0.0) and j.value("quantity", 0.0))
-          K.edited(this, j);
+        if (j.is_object() and j.value("price", 0.0) and j.value("quantity", 0.0)) {
+          json order = j;
+          order["orderId"] = K.gateway->randId();
+          K.edited(this, order);
+        }
       };
       const mMatter about() const override {
         return mMatter::SubmitNewOrder;
@@ -1229,7 +1234,8 @@ namespace ₿ {
   };
 
   struct mTradesHistory: public mVectorFromDb<mOrderFilled>,
-                         public mJsonToClient<mOrderFilled> {
+                         public mJsonToClient<mOrderFilled>,
+                         public mCatchEdits {
     private_ref:
       const KryptoNinja    &K;
       const mQuotingParams &qp;
@@ -1237,13 +1243,14 @@ namespace ₿ {
       mTradesHistory(const KryptoNinja &bot, const mQuotingParams &q, const mButtons &b)
         : mVectorFromDb(bot)
         , mJsonToClient(bot)
+        , mCatchEdits(bot, {
+            {&b.cleanTrade, [&](const json &j) { clearOne(j); }},
+            {&b.cleanTrades, [&]() { clearAll(); }},
+            {&b.cleanTradesClosed, [&]() { clearClosed(); }}
+          })
         , K(bot)
         , qp(q)
-      {
-        K.edited(&b.cleanTrade, [&](const json &j) { clearOne(j); });
-        K.edited(&b.cleanTrades, [&]() { clearAll(); });
-        K.edited(&b.cleanTradesClosed, [&]() { clearClosed(); });
-      };
+      {};
     void clearAll() {
       clear_if([](iterator it) {
         return true;
@@ -1892,7 +1899,7 @@ namespace ₿ {
       };
   };
 
-  struct mDummyMarketMaker {
+  struct mDummyMarketMaker: public mCatchEdits {
     private:
       void (*calcRawQuotesFromMarket)(
         const mMarketLevels&,
@@ -1910,14 +1917,15 @@ namespace ₿ {
             mQuotes         &quotes;
     public:
       mDummyMarketMaker(const KryptoNinja &bot, const mQuotingParams &q, const mMarketLevels &l, const mWalletPosition &w, mQuotes &Q)
-        : K(bot)
+        : mCatchEdits(bot, {
+            {&q, [&]() { mode(); }}
+          })
+        , K(bot)
         , qp(q)
         , levels(l)
         , wallet(w)
         , quotes(Q)
-      {
-        K.edited(&qp, [&]() { mode(); });
-      };
+      {};
       void mode() {
         if (qp.mode == mQuotingMode::Top)              calcRawQuotesFromMarket = calcTopOfMarket;
         else if (qp.mode == mQuotingMode::Mid)         calcRawQuotesFromMarket = calcMidOfMarket;
@@ -2489,16 +2497,23 @@ namespace ₿ {
     };
   };
 
-  struct mBroker {
+  struct mBroker: public mCatchEdits {
           mSemaphore semaphore;
     mAntonioCalculon calculon;
     private_ref:
+      const KryptoNinja    &K;
             mOrders        &orders;
       const mQuotingParams &qp;
     public:
-      mBroker(const KryptoNinja &bot, mOrders &o, const mQuotingParams &q, const mMarketLevels &l, const mWalletPosition &w)
-        : semaphore(bot)
+      mBroker(const KryptoNinja &bot, mOrders &o, const mQuotingParams &q, const mButtons &b, const mMarketLevels &l, const mWalletPosition &w)
+        : mCatchEdits(bot, {
+            {&b.submit, [&](const json &j) { placeOrder(j); }},
+            {&b.cancel, [&](const json &j) { cancelOrder(orders.find(j)); }},
+            {&b.cancelAll, [&]() { cancelOrders(); }}
+          })
+        , semaphore(bot)
         , calculon(bot, q, l, w)
+        , K(bot)
         , orders(o)
         , qp(q)
       {};
@@ -2529,6 +2544,21 @@ namespace ₿ {
       void clear() {
         for (const mOrder *const it : calculon.clear())
           orders.purge(it);
+      };
+      void placeOrder(const mOrder &raw) {
+        K.gateway->place(orders.upsert(raw));
+      };
+      void replaceOrder(const Price &price, const bool &isPong, mOrder *const order) {
+        if (orders.replace(price, isPong, order))
+          K.gateway->replace(order);
+      };
+      void cancelOrder(mOrder *const order) {
+        if (orders.cancel(order))
+          K.gateway->cancel(order);
+      };
+      void cancelOrders() {
+        for (mOrder *const it : orders.working())
+          cancelOrder(it);
       };
   };
 

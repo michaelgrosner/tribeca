@@ -361,7 +361,7 @@ namespace ₿ {
       mWalletPosition wallet(K, orders, qp, btn, targetPositionAutoPercentage, fairValue);
       wallet.base = {"BTC", 1, 0};
       wallet.quote = {"EUR", 1000, 0};
-      mBroker broker(K, orders, qp, levels, wallet);
+      mBroker broker(K, orders, qp, btn, levels, wallet);
       WHEN("assigned") {
         vector<RandId> randIds;
         const Clock time = Tstamp;

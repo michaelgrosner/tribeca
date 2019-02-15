@@ -848,9 +848,6 @@ namespace ₿ {
       void edited(const mFromClient *data, const function<void(const json&)> &fn) const {
         editFn[data].push_back(fn);
       };
-      void edited(const mFromClient *data, const function<void()> &fn) const {
-        edited(data, [fn](const json &j) { fn(); });
-      };
       void edited(const mFromClient *data, const json &j = nullptr) const {
         if (editFn.find(data) != editFn.end())
           for (const auto &it : editFn.at(data)) it(j);
@@ -1281,6 +1278,20 @@ namespace ₿ {
       mJsonFromClient(const Client &c)
       {
         c.editable.push_back(this);
+      };
+  };
+
+  class mCatchEdits {
+    public:
+      mCatchEdits(const Events &e, vector<pair<const mFromClient*, variant<function<void()>, function<void(const json&)>>>> edited)
+      {
+        for (const auto &it : edited)
+          e.edited(
+            it.first,
+            holds_alternative<function<void()>>(it.second)
+              ? [it](const json &j) { get<function<void()>>(it.second)(); }
+              : get<function<void(const json&)>>(it.second)
+          );
       };
   };
 
