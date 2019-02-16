@@ -475,9 +475,8 @@ namespace ₿ {
   class GwExchange: public GwExchangeData {
     public:
       unsigned int countdown = 0;
-        string exchange, symbol,
-               apikey,   secret,
-               user,     pass,
+        string exchange, apikey,
+               secret,   pass,
                http,     ws,
                fix,      unlock;
         CoinId base,     quote;
@@ -503,11 +502,11 @@ namespace ₿ {
         decimal << fixed;
         decimal.precision(minTick < 1e-8 ? 10 : 8);
         for (pair<string, string> it : (vector<pair<string, string>>){
-          {"symbols", symbol      },
-          {"minTick", str(minTick)},
-          {"minSize", str(minSize)},
-          {"makeFee", str(makeFee)},
-          {"takeFee", str(takeFee)}
+          {"symbols", base + "/" + quote},
+          {"minTick", str(minTick)      },
+          {"minSize", str(minSize)      },
+          {"makeFee", str(makeFee)      },
+          {"takeFee", str(takeFee)      }
         }) notes.push_back(it);
         string info = "handshake:";
         for (pair<string, string> &it : notes)
@@ -581,7 +580,6 @@ namespace ₿ {
     public:
       const json handshake() override {
         randId  = Random::uuid36Id;
-        symbol  = base + "_" + quote;
         minTick = 0.01;
         minSize = 0.01;
         return nullptr;
@@ -596,8 +594,7 @@ namespace ₿ {
       };
       const json handshake() override {
         randId = Random::uuid32Id;
-        symbol = base + quote;
-        const json reply = Curl::xfer(http + "/public/symbol/" + symbol);
+        const json reply = Curl::xfer(http + "/public/symbol/" + base + quote);
         minTick = stod(reply.value("tickSize", "0"));
         minSize = stod(reply.value("quantityIncrement", "0"));
         base    = reply.value("baseCurrency", base);
@@ -624,8 +621,7 @@ namespace ₿ {
       };
       const json handshake() override {
         randId = Random::uuid36Id;
-        symbol = base + "-" + quote;
-        const json reply = Curl::xfer(http + "/products/" + symbol);
+        const json reply = Curl::xfer(http + "/products/" + base + "-" + quote);
         minTick = stod(reply.value("quote_increment", "0"));
         minSize = stod(reply.value("base_min_size", "0"));
         return reply;
@@ -653,8 +649,7 @@ namespace ₿ {
       };
       const json handshake() override {
         randId = Random::int45Id;
-        symbol = Text::strL(base + quote);
-        const json reply1 = Curl::xfer(http + "/pubticker/" + symbol);
+        const json reply1 = Curl::xfer(http + "/pubticker/" + base + quote);
         if (reply1.find("last_price") != reply1.end()) {
           ostringstream price_;
           price_ << scientific << stod(reply1.value("last_price", "0"));
@@ -668,7 +663,7 @@ namespace ₿ {
         const json reply2 = Curl::xfer(http + "/symbols_details");
         if (reply2.is_array())
           for (const json &it : reply2)
-            if (it.find("pair") != it.end() and it.value("pair", "") == symbol) {
+            if (it.find("pair") != it.end() and it.value("pair", "") == Text::strL(base + quote)) {
               minSize = stod(it.value("minimum_order_size", "0"));
               break;
             }
@@ -703,11 +698,10 @@ namespace ₿ {
       };
       const json handshake() override {
         randId = Random::char16Id;
-        symbol = Text::strL(base + quote);
         const json reply = Curl::xfer(http + "public/symbols");
         if (reply.find("data") != reply.end() and reply.at("data").is_array())
           for (const json &it : reply.at("data"))
-            if (it.find("name") != it.end() and it.value("name", "") == symbol) {
+            if (it.find("name") != it.end() and it.value("name", "") == Text::strL(base + quote)) {
               istringstream iss(
                 "1e-" + to_string(it.value("price_decimal", 0))
                 + " 1e-" + to_string(it.value("amount_decimal", 0))
@@ -740,8 +734,7 @@ namespace ₿ {
       };
       const json handshake() override {
         randId = Random::int32Id;
-        symbol = base + quote;
-        const json reply = Curl::xfer(http + "/0/public/AssetPairs?pair=" + symbol);
+        const json reply = Curl::xfer(http + "/0/public/AssetPairs?pair=" + base + quote);
         if (reply.find("result") != reply.end())
           for (json::const_iterator it = reply.at("result").cbegin(); it != reply.at("result").cend(); ++it)
             if (it.value().find("pair_decimals") != it.value().end()) {
@@ -750,7 +743,6 @@ namespace ₿ {
                 + " 1e-" + to_string(it.value().value("lot_decimals", 0))
               );
               iss >> minTick >> minSize;
-              symbol = it.key();
               base = it.value().value("base", base);
               quote = it.value().value("quote", quote);
               break;
@@ -768,35 +760,6 @@ namespace ₿ {
         });
       };
   };
-  class GwKorbit: public GwApiREST {
-    public:
-      GwKorbit()
-      {
-        http = "https://api.korbit.co.kr/v1";
-      };
-      const json handshake() override {
-        randId = Random::int45Id;
-        symbol = Text::strL(base + "_" + quote);
-        const json reply = Curl::xfer(http + "/constants");
-        if (reply.find(symbol.substr(0,3).append("TickSize")) != reply.end()) {
-          minTick = reply.value(symbol.substr(0,3).append("TickSize"), 0.0);
-          minSize = 0.015;
-        }
-        return reply;
-      };
-    protected:
-      static const json xfer(const string &url, const string &h1, const string &post) {
-        return Curl::perform(url, [&](CURL *curl) {
-          struct curl_slist *h_ = nullptr;
-          if (!post.empty()) {
-            h_ = curl_slist_append(h_, "Content-Type: application/x-www-form-urlencoded");
-            curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post.data());
-          }
-          h_ = curl_slist_append(h_, ("Authorization: Bearer " + h1).data());
-          curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
-        });
-      };
-  };
   class GwPoloniex: public GwApiREST {
     public:
       GwPoloniex()
@@ -805,10 +768,9 @@ namespace ₿ {
       };
       const json handshake() override {
         randId = Random::int45Id;
-        symbol = quote + "_" + base;
         const json reply = Curl::xfer(http + "/public?command=returnTicker");
-        if (reply.find(symbol) != reply.end()) {
-          istringstream iss("1e-" + to_string(6-reply.at(symbol).at("last").get<string>().find(".")));
+        if (reply.find(quote + "_" + base) != reply.end()) {
+          istringstream iss("1e-" + to_string(6-reply.at(quote + "_" + base).at("last").get<string>().find(".")));
           iss >> minTick;
           minSize = 0.001;
         }

@@ -53,7 +53,6 @@ UI_OPENPORT=3000
 #API_EXCHANGE=HITBTC
 #API_EXCHANGE=FCOIN
 #API_EXCHANGE=KRAKEN
-#API_EXCHANGE=KORBIT
 #API_EXCHANGE=POLONIEX
 API_EXCHANGE=NULL
 #  ▌____________________________________________________.
@@ -76,15 +75,9 @@ API_SECRET=NULL
 #  ▌____________________________________________________.
 #  █ API_PASSPHRASE                                     .
 #  ██ - Allows any valid API PASSPHRASE (see the website of the exchange).
-#  ██ - Only COINBASE and KORBIT exchanges must have API PASSPHRASE, other exchanges can be NULL.
+#  ██ - Only COINBASE exchanges must have API PASSPHRASE, other exchanges can be NULL.
 #API_PASSPHRASE=exampleapipassphrase
 API_PASSPHRASE=NULL
-#  ▌____________________________________________________.
-#  █ API_USERNAME                                       .
-#  ██ - Allows any valid API USERNAME (see the website of the exchange).
-#  ██ - Only KORBIT exchange must have API USERNAME, other exchanges can be NULL.
-#API_USERNAME=exampleapiusername
-API_USERNAME=NULL
 #  ██▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
 #  ▌____                                                .
 #  ▌ IV ▐______________________________________________ .
@@ -106,7 +99,6 @@ until `#valgrind` `#gdb --args` $K_BINARY_FILE          \
     --apikey     $API_KEY                               \
     --secret     $API_SECRET                            \
     --passphrase $API_PASSPHRASE                        \
-    --username   $API_USERNAME                          \
                  $OPTIONAL_ARGUMENTS "$@"           ;   #
   do                                                # K #
     echo K crashed with exit code $?.. Respawning.. ;   #

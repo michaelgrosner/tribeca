@@ -2,7 +2,7 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
 PATCH    = 12
-BUILD    = 25
+BUILD    = 26
 SOURCE  := $(notdir $(wildcard src/bin/*))
 CARCH    = x86_64-linux-gnu      \
            arm-linux-gnueabihf   \
@@ -158,6 +158,7 @@ upgrade_old_installations:
 	-@$(foreach db,$(wildcard /var/lib/K/db/K.*), mv $(db) $(shell echo $(db) | sed 's/\(.*\/K\/db\/\)K\.\(.*\)/\1K-trading-bot\.\2/');)
 	-@test -d /data/db && sudo rmdir /data/db || :
 	-@test -d /data && sudo rmdir /data || :
+	-@$(foreach sh,$(wildcard *.sh), sed -i "/API_USERNAME/d" $(sh) || :;)
 
 cleandb: /var/lib/K/db/K*
 	rm -rf /var/lib/K/db/K*.db
@@ -190,7 +191,7 @@ install: packages
 	@read -p "[`echo $(CARCH) | tr ' ' "\n" | cat -n | tr "\t" ' ' | sed 's/ *\([0-9]\) .*/\1/' | tr "\n" '/' | sed 's/^\(.*\)\/$$/\1/'`]: " chost && $(MAKE) download CHOST=`echo $(CARCH) | cut -d ' ' -f$${chost}`
 
 docker: packages download
-	@sed -i "/Usage/,+94d" K.sh
+	@sed -i "/Usage/,+86d" K.sh
 
 reinstall:
 	test -d .git && ((test -n "`git diff`" && (echo && echo !!Local changes will be lost!! press CTRL-C to abort. && echo && sleep 5) || :) \

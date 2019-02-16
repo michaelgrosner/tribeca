@@ -467,8 +467,6 @@ namespace ₿ {
           {"secret",       "WORD",   "NULL",   "set (never share!) WORD as api secret for trading, mandatory"},
           {"passphrase",   "WORD",   "NULL",   "set (never share!) WORD as api passphrase for trading,"
                                                "\n" "mandatory but may be 'NULL'"},
-          {"username",     "WORD",   "NULL",   "set (never share!) WORD as api username for trading,"
-                                               "\n" "mandatory but may be 'NULL'"},
           {"http",         "URL",    "",       "set URL of alernative HTTPS api endpoint for trading"},
           {"wss",          "URL",    "",       "set URL of alernative WSS api endpoint for trading"},
           {"fix",          "URL",    "",       "set URL of alernative FIX api endpoint for trading"},
@@ -549,8 +547,8 @@ namespace ₿ {
           error("CF", "Invalid --exchange value; the config file may have errors (there are extra spaces or double defined variables?)");
         args["exchange"] = Text::strU(arg<string>("exchange"));
         args["currency"] = Text::strU(arg<string>("currency"));
-        args["base"]  = arg<string>("currency").substr(0, arg<string>("currency").find("/"));
-        args["quote"] = arg<string>("currency").substr(1+ arg<string>("currency").find("/"));
+        args["base"]  = Text::strU(arg<string>("currency").substr(0, arg<string>("currency").find("/")));
+        args["quote"] = Text::strU(arg<string>("currency").substr(1+ arg<string>("currency").find("/")));
         args["market-limit"] = max(15, arg<int>("market-limit"));
         if (arg<int>("debug"))
           args["debug-secret"] = 1;
@@ -1448,12 +1446,12 @@ namespace ₿ {
       };
       void handshake(const vector<pair<string, string>> &notes = {}) {
         const json reply = gateway->handshake();
-        if (!gateway->randId or gateway->symbol.empty())
+        if (!gateway->randId)
           error("GW", "Incomplete handshake aborted");
         if (!gateway->minTick or !gateway->minSize)
           error("GW", "Unable to fetch data from " + gateway->exchange
-            + " for symbol \"" + gateway->symbol + "\", possible error message: "
-            + reply.dump());
+            + " for symbols " + gateway->base + "/" + gateway->quote
+            + ", possible error message: " + reply.dump());
         gateway->info(notes);
       };
       const unsigned int memSize() const {
@@ -1484,7 +1482,6 @@ namespace ₿ {
                                  + (gateway->quote    = arg<string>("quote"))    + '\n';
         gateway->apikey   = arg<string>("apikey");
         gateway->secret   = arg<string>("secret");
-        gateway->user     = arg<string>("username");
         gateway->pass     = arg<string>("passphrase");
         gateway->maxLevel = arg<int>("market-limit");
         gateway->debug    = arg<int>("debug-secret");
