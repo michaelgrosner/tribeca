@@ -357,8 +357,7 @@ namespace ₿ {
       mQuotingParams qp(K);
       mMarketLevels levels(K, qp, orders);
       levels.fairValue = 500;
-      const double targetPositionAutoPercentage = 0;
-      mWalletPosition wallet(K, qp, orders, button, targetPositionAutoPercentage);
+      mWalletPosition wallet(K, qp, orders, button, levels);
       wallet.base = {"BTC", 1, 0};
       wallet.quote = {"EUR", 1000, 0};
       mBroker broker(K, qp, orders, button, levels, wallet);
