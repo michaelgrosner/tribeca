@@ -30,7 +30,7 @@ The web UI is compatible with most web browsers/devices/resolutions, but Firefox
 ||with Post-Only Orders support|without Post-Only|
 |---|---|---|
 |**without Maker fees**|[Coinbase](https://pro.coinbase.com/)<br> &#10239; _REST + WebSocket + FIX_<br><br>[HitBTC](https://hitbtc.com/)<br> &#10239; _REST + WebSocket_||
-|**with Maker and Taker fees**|[Bitfinex](https://www.bitfinex.com/)<br>[Ethfinex](https://www.ethfinex.com/)<br> &#10239; _REST + WebSocket_<br><br>[Kraken](https://www.kraken.com/)<br> &#10239; _REST_<br><br>[Poloniex](https://www.poloniex.com/)<br> &#10239; _REST_|[FCoin](https://fcoin.com/)<br> &#10239; _REST + WebSocket_<br><br>[Korbit](https://www.korbit.co.kr/)<br> &#10239; _REST_|
+|**with Maker and Taker fees**|[Bitfinex](https://www.bitfinex.com/)<br>[Ethfinex](https://www.ethfinex.com/)<br> &#10239; _REST + WebSocket_<br><br>[Kraken](https://www.kraken.com/)<br> &#10239; _REST_<br><br>[Poloniex](https://www.poloniex.com/)<br> &#10239; _REST_|[FCoin](https://fcoin.com/)<br> &#10239; _REST + WebSocket_|
 
 All currency pairs are supported.
 
@@ -64,7 +64,6 @@ All currency pairs are supported.
   - [General Discussion](#general-discussion)
   - [Help](#help)
   - [Issues](#issues)
-  - [Votes](#votes)
 
 ### Docker Installation
 
@@ -318,7 +317,7 @@ Updated Bitfinex API v2.
 
 Added Coinbase FIX API.
 
-Added Korbit API.
+~~Added Korbit API.~~
 </details>
 
 <details><summary><b>Release v0.2.0 Changelog</b></summary>
@@ -396,17 +395,6 @@ To report errors open a [new issue](https://github.com/ctubio/Krypto-trading-bot
 
 Pull Requests are welcome, but adhere to the Contributor License Agreement:
 - Your biological and technological distinctiveness will be added to our own. Resistance is futile.
-
-### Votes
-
-What exchange you don't want to be deleted from the bot?
-
-[![](https://m131jyck4m.execute-api.us-west-2.amazonaws.com/prod/poll/01BPF861CD0EVTZHPF0JJ7TZQJ/GDAX)](https://m131jyck4m.execute-api.us-west-2.amazonaws.com/prod/poll/01BPF861CD0EVTZHPF0JJ7TZQJ/GDAX/vote)
-[![](https://m131jyck4m.execute-api.us-west-2.amazonaws.com/prod/poll/01BPF861CD0EVTZHPF0JJ7TZQJ/Bitfinex)](https://m131jyck4m.execute-api.us-west-2.amazonaws.com/prod/poll/01BPF861CD0EVTZHPF0JJ7TZQJ/Bitfinex/vote)
-[![](https://m131jyck4m.execute-api.us-west-2.amazonaws.com/prod/poll/01BPF861CD0EVTZHPF0JJ7TZQJ/HitBTC)](https://m131jyck4m.execute-api.us-west-2.amazonaws.com/prod/poll/01BPF861CD0EVTZHPF0JJ7TZQJ/HitBTC/vote)
-[![](https://m131jyck4m.execute-api.us-west-2.amazonaws.com/prod/poll/01BPF861CD0EVTZHPF0JJ7TZQJ/Korbit)](https://m131jyck4m.execute-api.us-west-2.amazonaws.com/prod/poll/01BPF861CD0EVTZHPF0JJ7TZQJ/Korbit/vote)
-[![](https://m131jyck4m.execute-api.us-west-2.amazonaws.com/prod/poll/01BPF861CD0EVTZHPF0JJ7TZQJ/Poloniex)](https://m131jyck4m.execute-api.us-west-2.amazonaws.com/prod/poll/01BPF861CD0EVTZHPF0JJ7TZQJ/Poloniex/vote)
-[![](https://m131jyck4m.execute-api.us-west-2.amazonaws.com/prod/poll/01BPF861CD0EVTZHPF0JJ7TZQJ/Delete%20all%2C%20my%20exchange%20is%20none%20of%20these.)](https://m131jyck4m.execute-api.us-west-2.amazonaws.com/prod/poll/01BPF861CD0EVTZHPF0JJ7TZQJ/Delete%20all%2C%20my%20exchange%20is%20none%20of%20these./vote)
 
 ### like yesterday, since 0day and ∞
 
