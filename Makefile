@@ -2,7 +2,7 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
 PATCH    = 12
-BUILD    = 26
+BUILD    = 27
 SOURCE  := $(notdir $(wildcard src/bin/*))
 CARCH    = x86_64-linux-gnu      \
            arm-linux-gnueabihf   \
@@ -170,6 +170,7 @@ packages:
 	|| (test -n "`command -v pacman`" && sudo pacman --noconfirm -S --needed base-devel libxml2 zlib curl python gzip screen)
 
 uninstall:
+	rm -vrf /var/lib/K/cache /var/lib/K/node_modules
 	@$(foreach bin,$(addprefix /usr/local/bin/,$(notdir $(wildcard $(KLOCAL)/bin/K-*))), sudo rm -v $(bin);)
 
 system_install:
@@ -184,6 +185,7 @@ system_install:
 	@LS_COLORS="ex=40;92" CLICOLOR="Yes" ls $(shell ls --color > /dev/null 2>&1 && echo --color) -lah $(addprefix /usr/local/bin/,$(notdir $(wildcard $(KLOCAL)/bin/K-$(KSRC)*)))
 	@echo
 	@sudo curl -s --time-cond /etc/ssl/certs/ca-certificates.crt https://curl.haxx.se/ca/cacert.pem -o /etc/ssl/certs/ca-certificates.crt
+	@mkdir -p /var/lib/K/cache
 
 install: packages
 	@yes = | head -n`expr $(shell tput cols) / 2` | xargs echo && echo " _  __\n| |/ /  v$(MAJOR).$(MINOR).$(PATCH)+$(BUILD)\n| ' /\n| . \\   Select your (beloved) architecture\n|_|\\_\\  to download pre-compiled binaries:\n"

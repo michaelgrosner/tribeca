@@ -425,7 +425,8 @@ namespace ₿ {
         vector<Argument> long_options = {
           {"help",         "h",      nullptr,  "show this help and quit"},
           {"version",      "v",      nullptr,  "show current build version and quit"},
-          {"latency",      "1",      nullptr,  "check current HTTP latency (not from WS) and quit"}
+          {"latency",      "1",      nullptr,  "check current HTTP latency (not from WS) and quit"},
+          {"nocache",      "1",      nullptr,  "do not cache handshakes on boot at /var/lib/K/cache"}
         };
         if (!arg<int>("autobot")) long_options.push_back(
           {"autobot",      "1",      nullptr,  "automatically start trading on boot"}
@@ -552,6 +553,8 @@ namespace ₿ {
         args["market-limit"] = max(15, arg<int>("market-limit"));
         if (arg<int>("debug"))
           args["debug-secret"] = 1;
+        if (arg<int>("latency"))
+          args["nocache"] = 1;
 #ifndef _WIN32
         if (arg<int>("latency") or arg<int>("debug-secret"))
 #endif
@@ -1444,15 +1447,14 @@ namespace ₿ {
         if (gateway->ready(socket->getLoop()))
           socket->run();
       };
-      void handshake(const vector<pair<string, string>> &notes = {}) {
-        const json reply = gateway->handshake();
-        if (!gateway->randId)
-          error("GW", "Incomplete handshake aborted");
+      void handshake(vector<pair<string, string>> settings = {}) {
+        const json reply = gateway->handshake(arg<int>("nocache"));
+        settings.insert(settings.begin(), {"nocache", arg<int>("nocache") ? "yes" : "no"});
         if (!gateway->minTick or !gateway->minSize)
           error("GW", "Unable to fetch data from " + gateway->exchange
             + " for symbols " + gateway->base + "/" + gateway->quote
             + ", possible error message: " + reply.dump());
-        gateway->info(notes);
+        gateway->info(settings);
       };
       const unsigned int memSize() const {
 #ifdef _WIN32

@@ -75,7 +75,7 @@ API_SECRET=NULL
 #  ▌____________________________________________________.
 #  █ API_PASSPHRASE                                     .
 #  ██ - Allows any valid API PASSPHRASE (see the website of the exchange).
-#  ██ - Only COINBASE exchanges must have API PASSPHRASE, other exchanges can be NULL.
+#  ██ - Only COINBASE exchange must have API PASSPHRASE, other exchanges can be NULL.
 #API_PASSPHRASE=exampleapipassphrase
 API_PASSPHRASE=NULL
 #  ██▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄

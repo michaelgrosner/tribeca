@@ -488,6 +488,33 @@ namespace ₿ {
                makeFee  = 0,
                takeFee  = 0;
       virtual const json handshake() = 0;
+      const json handshake(const bool &nocache) {
+        json reply;
+        const string cache = "/var/lib/K/cache/handshake"
+              + ('.' + exchange)
+              +  '.' + base
+              +  '.' + quote
+              +  '.' + "json";
+        fstream file;
+        struct stat st;
+        if (!nocache
+          and access(cache.data(), R_OK) != -1
+          and !stat(cache.data(), &st)
+          and Tstamp - 25200e+3 < st.st_mtime * 1e+3
+        ) {
+          file.open(cache, fstream::in);
+          reply = json::parse(file);
+        } else
+          reply = handshake();
+        minTick = reply.value("minTick", 0.0);
+        minSize = reply.value("minSize", 0.0);
+        if (!file.is_open() and minTick and minSize) {
+          file.open(cache, fstream::out | fstream::trunc);
+          file << reply.dump();
+        }
+        if (file.is_open()) file.close();
+        return reply.value("reply", json::object());
+      };
       void end(const bool &dustybot = false) {
         if (dustybot)
           log("--dustybot is enabled, remember to cancel manually any open order.");
@@ -510,7 +537,7 @@ namespace ₿ {
         }) notes.push_back(it);
         string info = "handshake:";
         for (pair<string, string> &it : notes)
-          if (it.first != "gateway" or !it.second.empty())
+          if (!it.second.empty())
             info += "\n- " + it.first + ": " + it.second;
         log(info);
       };
@@ -578,28 +605,34 @@ namespace ₿ {
 
   class GwNull: public GwApiREST {
     public:
+      GwNull()
+      {
+        randId = Random::uuid36Id;
+      };
+    public:
       const json handshake() override {
-        randId  = Random::uuid36Id;
-        minTick = 0.01;
-        minSize = 0.01;
-        return nullptr;
+        return {
+          {"minTick", 0.01   },
+          {"minSize", 0.01   },
+          {  "reply", nullptr}
+        };
       };
   };
   class GwHitBtc: public GwApiWS {
     public:
       GwHitBtc()
       {
-        http = "https://api.hitbtc.com/api/2";
-        ws   = "wss://api.hitbtc.com/api/2/ws";
+        http   = "https://api.hitbtc.com/api/2";
+        ws     = "wss://api.hitbtc.com/api/2/ws";
+        randId = Random::uuid32Id;
       };
       const json handshake() override {
-        randId = Random::uuid32Id;
         const json reply = Curl::xfer(http + "/public/symbol/" + base + quote);
-        minTick = stod(reply.value("tickSize", "0"));
-        minSize = stod(reply.value("quantityIncrement", "0"));
-        base    = reply.value("baseCurrency", base);
-        quote   = reply.value("quoteCurrency", quote);
-        return reply;
+        return {
+          {"minTick", stod(reply.value("tickSize", "0"))         },
+          {"minSize", stod(reply.value("quantityIncrement", "0"))},
+          {  "reply", reply                                      }
+        };
       };
     protected:
       static const json xfer(const string &url, const string &auth, const string &post) {
@@ -615,16 +648,18 @@ namespace ₿ {
     public:
       GwCoinbase()
       {
-        http = "https://api.pro.coinbase.com";
-        ws   = "wss://ws-feed.pro.coinbase.com";
-        fix  = "fix.pro.coinbase.com:4198";
+        http   = "https://api.pro.coinbase.com";
+        ws     = "wss://ws-feed.pro.coinbase.com";
+        fix    = "fix.pro.coinbase.com:4198";
+        randId = Random::uuid36Id;
       };
       const json handshake() override {
-        randId = Random::uuid36Id;
         const json reply = Curl::xfer(http + "/products/" + base + "-" + quote);
-        minTick = stod(reply.value("quote_increment", "0"));
-        minSize = stod(reply.value("base_min_size", "0"));
-        return reply;
+        return {
+          {"minTick", stod(reply.value("quote_increment", "0"))},
+          {"minSize", stod(reply.value("base_min_size", "0"))  },
+          {  "reply", reply                                    }
+        };
       };
     protected:
       static const json xfer(const string &url, const string &h1, const string &h2, const string &h3, const string &h4, const bool &rm) {
@@ -643,13 +678,15 @@ namespace ₿ {
     public:
       GwBitfinex()
       {
-        http = "https://api.bitfinex.com/v1";
-        ws   = "wss://api.bitfinex.com/ws/2";
+        http   = "https://api.bitfinex.com/v1";
+        ws     = "wss://api.bitfinex.com/ws/2";
+        randId = Random::int45Id;
         askForReplace = true;
       };
       const json handshake() override {
-        randId = Random::int45Id;
         const json reply1 = Curl::xfer(http + "/pubticker/" + base + quote);
+        Price minTick = 0,
+              minSize = 0;
         if (reply1.find("last_price") != reply1.end()) {
           ostringstream price_;
           price_ << scientific << stod(reply1.value("last_price", "0"));
@@ -667,7 +704,11 @@ namespace ₿ {
               minSize = stod(it.value("minimum_order_size", "0"));
               break;
             }
-        return { reply1, reply2 };
+        return {
+          {"minTick", minTick          },
+          {"minSize", minSize          },
+          {  "reply", {reply1, reply2 }}
+        };
       };
     protected:
       static const json xfer(const string &url, const string &post, const string &h1, const string &h2) {
@@ -693,12 +734,14 @@ namespace ₿ {
     public:
       GwFCoin()
       {
-        http = "https://api.fcoin.com/v2/";
-        ws   = "wss://api.fcoin.com/v2/ws";
+        http   = "https://api.fcoin.com/v2/";
+        ws     = "wss://api.fcoin.com/v2/ws";
+        randId = Random::char16Id;
       };
       const json handshake() override {
-        randId = Random::char16Id;
         const json reply = Curl::xfer(http + "public/symbols");
+        Price minTick = 0,
+              minSize = 0;
         if (reply.find("data") != reply.end() and reply.at("data").is_array())
           for (const json &it : reply.at("data"))
             if (it.find("name") != it.end() and it.value("name", "") == Text::strL(base + quote)) {
@@ -709,7 +752,11 @@ namespace ₿ {
               iss >> minTick >> minSize;
               break;
             }
-        return reply;
+        return {
+          {"minTick", minTick},
+          {"minSize", minSize},
+          {  "reply", reply  }
+        };
       };
     protected:
       static const json xfer(const string &url, const string &h1, const string &h2, const string &h3, const string &post = "") {
@@ -730,11 +777,13 @@ namespace ₿ {
     public:
       GwKraken()
       {
-        http = "https://api.kraken.com";
+        http   = "https://api.kraken.com";
+        randId = Random::int32Id;
       };
       const json handshake() override {
-        randId = Random::int32Id;
         const json reply = Curl::xfer(http + "/0/public/AssetPairs?pair=" + base + quote);
+        Price minTick = 0,
+              minSize = 0;
         if (reply.find("result") != reply.end())
           for (json::const_iterator it = reply.at("result").cbegin(); it != reply.at("result").cend(); ++it)
             if (it.value().find("pair_decimals") != it.value().end()) {
@@ -743,11 +792,13 @@ namespace ₿ {
                 + " 1e-" + to_string(it.value().value("lot_decimals", 0))
               );
               iss >> minTick >> minSize;
-              base = it.value().value("base", base);
-              quote = it.value().value("quote", quote);
               break;
             }
-        return reply;
+        return {
+          {"minTick", minTick},
+          {"minSize", minSize},
+          {  "reply", reply  }
+        };
       };
     protected:
       static const json xfer(const string &url, const string &h1, const string &h2, const string &post) {
@@ -764,17 +815,21 @@ namespace ₿ {
     public:
       GwPoloniex()
       {
-        http = "https://poloniex.com";
+        http   = "https://poloniex.com";
+        randId = Random::int45Id;
       };
       const json handshake() override {
-        randId = Random::int45Id;
         const json reply = Curl::xfer(http + "/public?command=returnTicker");
+        Price minTick = 0;
         if (reply.find(quote + "_" + base) != reply.end()) {
           istringstream iss("1e-" + to_string(6-reply.at(quote + "_" + base).at("last").get<string>().find(".")));
           iss >> minTick;
-          minSize = 0.001;
         }
-        return reply;
+        return {
+          {"minTick", minTick},
+          {"minSize", 0.001  },
+          {  "reply", reply  }
+        };
       };
     protected:
       static const json xfer(const string &url, const string &post, const string &h1, const string &h2) {
