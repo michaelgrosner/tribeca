@@ -524,7 +524,7 @@ namespace ₿ {
           log("cancel all open orders OK");
         }
       };
-      void info(vector<pair<string, string>> notes) {
+      void info(vector<pair<string, string>> notes, const bool &nocache) {
         if (exchange != "NULL") log("allows client IP");
         decimal << fixed;
         decimal.precision(minTick < 1e-8 ? 10 : 8);
@@ -539,7 +539,7 @@ namespace ₿ {
         for (pair<string, string> &it : notes)
           if (!it.second.empty())
             info += "\n- " + it.first + ": " + it.second;
-        log(info);
+        log((nocache ? "" : "cached ") + info);
       };
       void latency(const string &reason, const function<void()> &fn) {
         log("latency check", "start");

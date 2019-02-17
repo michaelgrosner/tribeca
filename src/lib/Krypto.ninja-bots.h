@@ -426,7 +426,7 @@ namespace ₿ {
           {"help",         "h",      nullptr,  "show this help and quit"},
           {"version",      "v",      nullptr,  "show current build version and quit"},
           {"latency",      "1",      nullptr,  "check current HTTP latency (not from WS) and quit"},
-          {"nocache",      "1",      nullptr,  "do not cache handshakes on boot at /var/lib/K/cache"}
+          {"nocache",      "1",      nullptr,  "do not cache handshakes 7 hours at /var/lib/K/cache"}
         };
         if (!arg<int>("autobot")) long_options.push_back(
           {"autobot",      "1",      nullptr,  "automatically start trading on boot"}
@@ -1447,14 +1447,13 @@ namespace ₿ {
         if (gateway->ready(socket->getLoop()))
           socket->run();
       };
-      void handshake(vector<pair<string, string>> settings = {}) {
+      void handshake(const vector<pair<string, string>> &notes = {}) {
         const json reply = gateway->handshake(arg<int>("nocache"));
-        settings.insert(settings.begin(), {"nocache", arg<int>("nocache") ? "yes" : "no"});
         if (!gateway->minTick or !gateway->minSize)
           error("GW", "Unable to fetch data from " + gateway->exchange
             + " for symbols " + gateway->base + "/" + gateway->quote
             + ", possible error message: " + reply.dump());
-        gateway->info(settings);
+        gateway->info(notes, arg<int>("nocache"));
       };
       const unsigned int memSize() const {
 #ifdef _WIN32
