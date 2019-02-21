@@ -63,7 +63,7 @@ export class OrdersComponent implements OnInit {
         sort: 'desc',  cellClass: (params) => {
         return (params.data.side === 'Ask') ? "sell" : "buy";
       }, cellRendererFramework: QuoteCurrencyCellComponent},
-      { width: 60, suppressSizeToFit: true, field: 'qty', headerName: 'qty', cellClass: (params) => {
+      { width: 70, suppressSizeToFit: true, field: 'qty', headerName: 'qty', cellClass: (params) => {
         return (params.data.side === 'Ask') ? "sell" : "buy";
       }, cellRendererFramework: BaseCurrencyCellComponent},
       { width: 74, field: 'value', headerName: 'value', cellClass: (params) => {
@@ -72,7 +72,7 @@ export class OrdersComponent implements OnInit {
       { width: 45, suppressSizeToFit: true, field: 'type', headerName: 'type' },
       { width: 40, field: 'tif', headerName: 'tif' },
       { width: 45, field: 'lat', headerName: 'lat'},
-      { width: 90, suppressSizeToFit: true, field: 'exchangeId', headerName: 'openOrderId', cellRenderer:(params) => {
+      { width: 110, suppressSizeToFit: true, field: 'exchangeId', headerName: 'openOrderId', cellRenderer:(params) => {
         return (params.value) ? params.value.toString().split('-')[0] : '';
       }}
     ];
@@ -131,7 +131,8 @@ export class OrdersComponent implements OnInit {
         pong: o.isPong,
         time: o.time,
         quoteSymbol: this.product.advert.quote,
-        productFixed: this.product.fixed
+        productFixedPrice: this.product.fixedPrice,
+        productFixedSize: this.product.fixedSize
       }]});
 
     this.gridOptions.api.sizeColumnsToFit();

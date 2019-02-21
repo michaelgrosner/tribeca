@@ -165,7 +165,8 @@ export class TradesComponent implements OnInit {
           Kvalue: t.Kvalue ? t.Kvalue : null,
           Kdiff: t.Kdiff && t.Kdiff!=0 ? t.Kdiff : null,
           quoteSymbol: this.product.advert.quote.replace('EUR','€').replace('USD','$'),
-          productFixed: this.product.fixed
+          productFixedPrice: this.product.fixedPrice,
+          productFixedSize: this.product.fixedSize
         }]});
       }
       if (t.loadedFromDB === false) {

@@ -558,7 +558,7 @@ export class StatsComponent implements OnInit {
   ngOnInit() {
     (<any>Highcharts).customBaseCurrency = '';
     (<any>Highcharts).customQuoteCurrency = '';
-    (<any>Highcharts).customProductFixed = this.product.fixed;
+    (<any>Highcharts).customProductFixed = this.product.fixedPrice;
     (<any>Highcharts).customSymbols = {'circle': '●','diamond': '♦','square': '■','triangle': '▲','triangle-down': '▼'};
     Highcharts.setOptions({global: {getTimezoneOffset: function () {return new Date().getTimezoneOffset(); }}});
     /*this.forEach(document.getElementsByTagName('chart'), function (el) {

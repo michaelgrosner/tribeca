@@ -46,13 +46,16 @@ class EvalAsyncSubscriber<T> implements Subscribe.ISubscribe<T> {
 
 @Component({
     selector: 'base-currency-cell',
-    template: `{{ params.value | number:'1.4-4' }}`
+    template: `{{ params.value | number:'1.'+productFixedSize+'-'+productFixedSize }}`
 })
 export class BaseCurrencyCellComponent implements AgRendererComponent {
   private params:any;
+  private productFixedSize:number = 8;
 
   agInit(params:any):void {
     this.params = params;
+    if ('productFixedSize' in params.node.data)
+      this.productFixedSize = params.node.data.productFixedSize;
   }
 
   refresh(): boolean {
@@ -62,19 +65,19 @@ export class BaseCurrencyCellComponent implements AgRendererComponent {
 
 @Component({
     selector: 'quote-currency-cell',
-    template: `{{ params.value | currency:quoteSymbol:'symbol':'1.'+productFixed+'-'+productFixed }}`
+    template: `{{ params.value | currency:quoteSymbol:'symbol':'1.'+productFixedPrice+'-'+productFixedPrice }}`
 })
 export class QuoteCurrencyCellComponent implements AgRendererComponent {
   private params:any;
   private quoteSymbol:string = 'USD';
-  private productFixed:number = 8;
+  private productFixedPrice:number = 8;
 
   agInit(params:any):void {
     this.params = params;
     if ('quoteSymbol' in params.node.data)
       this.quoteSymbol = params.node.data.quoteSymbol.substr(0,3);
-    if ('productFixed' in params.node.data)
-      this.productFixed = params.node.data.productFixed;
+    if ('productFixedPrice' in params.node.data)
+      this.productFixedPrice = params.node.data.productFixedPrice;
   }
 
   refresh(): boolean {

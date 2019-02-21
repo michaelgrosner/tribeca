@@ -69,7 +69,8 @@ export class MarketTradesComponent implements OnInit {
         recent: true,
         side: Models.Side[trade.side],
         quoteSymbol: this.product.advert.quote,
-        productFixed: this.product.fixed
+        productFixedPrice: this.product.fixedPrice,
+        productFixedSize: this.product.fixedSize
       }]});
 
     this.gridOptions.api.forEachNode((node: RowNode) => {

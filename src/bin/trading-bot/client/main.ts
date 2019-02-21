@@ -774,8 +774,9 @@ class ClientComponent implements OnInit {
     window.parent.postMessage('height='+document.getElementsByTagName('body')[0].getBoundingClientRect().height+'px', '*');
   };
   public product: Models.ProductState = {
-    advert: new Models.ProductAdvertisement(null, null, null, null, null, null, .01),
-    fixed: 2
+    advert: new Models.ProductAdvertisement(null, null, null, null, null, null, null, .01),
+    fixedPrice: 8,
+    fixedSize: 8
   };
   public baseCurrency: string = "?";
   public quoteCurrency: string = "?";
@@ -1060,7 +1061,8 @@ class ClientComponent implements OnInit {
         )
       );
     this.product.advert = pa;
-    this.product.fixed = Math.max(0, Math.floor(Math.log10(pa.minTick)) * -1);
+    this.product.fixedPrice = Math.max(0, Math.floor(Math.log10(pa.minTick)) * -1);
+    this.product.fixedSize  = Math.max(0, Math.floor(Math.log10(pa.minSize)) * -1);
     setTimeout(this.resizeMatryoshka, 5000);
     console.log("%cK started "+(new Date().toISOString().slice(11, -1))+"  %c"+this.homepage, "color:green;font-size:32px;", "color:red;font-size:16px;");
   }

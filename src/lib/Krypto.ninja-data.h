@@ -29,6 +29,9 @@ namespace ₿ {
   enum class mAPR: unsigned int {
     Off, Size, SizeWidth
   };
+  enum class mSideAPR: unsigned int {
+    Off, Buy, Sell
+  };
   enum class mSOP: unsigned int {
     Off, Trades, Size, TradesSize
   };
@@ -1888,11 +1891,7 @@ namespace ₿ {
           | (unsigned int)ask.checkCrossed(bid)
         ) Print::logWar("QE", "Crossed bid/ask quotes detected, that is.. unexpected");
       };
-      void debug(const string &reason) {
-        if (K.arg<int>("debug-quotes"))
-          Print::log("DEBUG QE", reason);
-      };
-      void debuq(const string &step) {
+      void debug(const string &step) {
         if (K.arg<int>("debug-quotes"))
           Print::log("DEBUG QE", "[" + step + "] "
             + to_string((int)bid.state) + ":"
@@ -2112,7 +2111,7 @@ namespace ₿ {
              unsigned int countWaiting = 0,
                           countWorking = 0,
                           AK47inc      = 0;
-                   string sideAPR      = "Off";
+                 mSideAPR sideAPR      = mSideAPR::Off;
     private_ref:
       const KryptoNinja     &K;
       const mQuotingParams  &qp;
@@ -2191,22 +2190,20 @@ namespace ₿ {
         return !order.disablePostOnly;
       };
       void applyQuotingParameters() {
-        quotes.debuq("?"); applySuperTrades();
-        quotes.debuq("A"); applyEwmaProtection();
-        quotes.debuq("B"); applyTotalBasePosition();
-        quotes.debuq("C"); applyStdevProtection();
-        quotes.debuq("D"); applyAggressivePositionRebalancing();
-        quotes.debuq("E"); applyAK47Increment();
-        quotes.debuq("F"); applyBestWidth();
-        quotes.debuq("G"); applyTradesPerMinute();
-        quotes.debuq("H"); applyRoundPrice();
-        quotes.debuq("I"); applyRoundSize();
-        quotes.debuq("J"); applyDepleted();
-        quotes.debuq("K"); applyWaitingPing();
-        quotes.debuq("L"); applyEwmaTrendProtection();
-        quotes.debuq("!");
-        quotes.debug("totals " + ("toAsk: " + to_string(wallet.base.total))
-                               + ",toBid: " + to_string(wallet.quote.total / levels.fairValue));
+        quotes.debug("?"); applySuperTrades();
+        quotes.debug("A"); applyEwmaProtection();
+        quotes.debug("B"); applyTotalBasePosition();
+        quotes.debug("C"); applyStdevProtection();
+        quotes.debug("D"); applyAggressivePositionRebalancing();
+        quotes.debug("E"); applyAK47Increment();
+        quotes.debug("F"); applyBestWidth();
+        quotes.debug("G"); applyTradesPerMinute();
+        quotes.debug("H"); applyRoundPrice();
+        quotes.debug("I"); applyRoundSize();
+        quotes.debug("J"); applyDepleted();
+        quotes.debug("K"); applyWaitingPing();
+        quotes.debug("L"); applyEwmaTrendProtection();
+        quotes.debug("!");
         quotes.checkCrossedQuotes();
       };
       void applySuperTrades() {
@@ -2216,7 +2213,7 @@ namespace ₿ {
         if (!qp.buySizeMax and !quotes.bid.empty())
           quotes.bid.size = fmin(
             qp.sopSizeMultiplier * quotes.bid.size,
-            (wallet.quote.amount / levels.fairValue) / 2
+            (wallet.quote.amount / quotes.bid.price) / 2
           );
         if (!qp.sellSizeMax and !quotes.ask.empty())
           quotes.ask.size = fmin(
@@ -2235,7 +2232,7 @@ namespace ₿ {
         if (wallet.base.total < wallet.target.targetBasePosition - wallet.target.positionDivergence) {
           quotes.ask.clear(mQuoteState::TBPHeld);
           if (!quotes.bid.empty() and qp.aggressivePositionRebalancing != mAPR::Off) {
-            sideAPR = "Buy";
+            sideAPR = mSideAPR::Buy;
             if (!qp.buySizeMax)
               quotes.bid.size = fmin(
                 qp.aprMultiplier * quotes.bid.size,
@@ -2246,7 +2243,7 @@ namespace ₿ {
         else if (wallet.base.total >= wallet.target.targetBasePosition + wallet.target.positionDivergence) {
           quotes.bid.clear(mQuoteState::TBPHeld);
           if (!quotes.ask.empty() and qp.aggressivePositionRebalancing != mAPR::Off) {
-            sideAPR = "Sell";
+            sideAPR = mSideAPR::Sell;
             if (!qp.sellSizeMax)
               quotes.ask.size = fmin(
                 qp.aprMultiplier * quotes.ask.size,
@@ -2254,7 +2251,7 @@ namespace ₿ {
               );
           }
         }
-        else sideAPR = "Off";
+        else sideAPR = mSideAPR::Off;
       };
       void applyStdevProtection() {
         if (qp.quotingStdevProtection == mSTDEV::Off or !levels.stats.stdev.fair) return;
@@ -2262,32 +2259,42 @@ namespace ₿ {
           qp.quotingStdevProtection == mSTDEV::OnFV
           or qp.quotingStdevProtection == mSTDEV::OnTops
           or qp.quotingStdevProtection == mSTDEV::OnTop
-          or sideAPR != "Sell"
+          or sideAPR != mSideAPR::Sell
         ))
           quotes.ask.price = fmax(
             (qp.quotingStdevBollingerBands
               ? (qp.quotingStdevProtection == mSTDEV::OnFV or qp.quotingStdevProtection == mSTDEV::OnFVAPROff)
-                ? levels.stats.stdev.fairMean : ((qp.quotingStdevProtection == mSTDEV::OnTops or qp.quotingStdevProtection == mSTDEV::OnTopsAPROff)
-                  ? levels.stats.stdev.topMean : levels.stats.stdev.askMean )
-              : levels.fairValue) + ((qp.quotingStdevProtection == mSTDEV::OnFV or qp.quotingStdevProtection == mSTDEV::OnFVAPROff)
-                ? levels.stats.stdev.fair : ((qp.quotingStdevProtection == mSTDEV::OnTops or qp.quotingStdevProtection == mSTDEV::OnTopsAPROff)
-                  ? levels.stats.stdev.top : levels.stats.stdev.ask )),
+                ? levels.stats.stdev.fairMean
+                : ((qp.quotingStdevProtection == mSTDEV::OnTops or qp.quotingStdevProtection == mSTDEV::OnTopsAPROff)
+                  ? levels.stats.stdev.topMean
+                  : levels.stats.stdev.askMean)
+              : levels.fairValue
+            ) + ((qp.quotingStdevProtection == mSTDEV::OnFV or qp.quotingStdevProtection == mSTDEV::OnFVAPROff)
+              ? levels.stats.stdev.fair
+              : ((qp.quotingStdevProtection == mSTDEV::OnTops or qp.quotingStdevProtection == mSTDEV::OnTopsAPROff)
+                ? levels.stats.stdev.top
+                : levels.stats.stdev.ask)),
             quotes.ask.price
           );
         if (!quotes.bid.empty() and (
           qp.quotingStdevProtection == mSTDEV::OnFV
           or qp.quotingStdevProtection == mSTDEV::OnTops
           or qp.quotingStdevProtection == mSTDEV::OnTop
-          or sideAPR != "Buy"
+          or sideAPR != mSideAPR::Buy
         ))
           quotes.bid.price = fmin(
             (qp.quotingStdevBollingerBands
               ? (qp.quotingStdevProtection == mSTDEV::OnFV or qp.quotingStdevProtection == mSTDEV::OnFVAPROff)
-                ? levels.stats.stdev.fairMean : ((qp.quotingStdevProtection == mSTDEV::OnTops or qp.quotingStdevProtection == mSTDEV::OnTopsAPROff)
-                  ? levels.stats.stdev.topMean : levels.stats.stdev.bidMean )
-              : levels.fairValue) - ((qp.quotingStdevProtection == mSTDEV::OnFV or qp.quotingStdevProtection == mSTDEV::OnFVAPROff)
-                ? levels.stats.stdev.fair : ((qp.quotingStdevProtection == mSTDEV::OnTops or qp.quotingStdevProtection == mSTDEV::OnTopsAPROff)
-                  ? levels.stats.stdev.top : levels.stats.stdev.bid )),
+                ? levels.stats.stdev.fairMean
+                : ((qp.quotingStdevProtection == mSTDEV::OnTops or qp.quotingStdevProtection == mSTDEV::OnTopsAPROff)
+                  ? levels.stats.stdev.topMean
+                  : levels.stats.stdev.bidMean)
+              : levels.fairValue
+            ) - ((qp.quotingStdevProtection == mSTDEV::OnFV or qp.quotingStdevProtection == mSTDEV::OnFVAPROff)
+              ? levels.stats.stdev.fair
+              : ((qp.quotingStdevProtection == mSTDEV::OnTops or qp.quotingStdevProtection == mSTDEV::OnTopsAPROff)
+                ? levels.stats.stdev.top
+                : levels.stats.stdev.bid)),
             quotes.bid.price
           );
       };
@@ -2297,7 +2304,7 @@ namespace ₿ {
           ? qp.widthPongPercentage * levels.fairValue / 100
           : qp.widthPong;
         if (!quotes.ask.empty() and wallet.safety.buyPing) {
-          if ((qp.aggressivePositionRebalancing == mAPR::SizeWidth and sideAPR == "Sell")
+          if ((qp.aggressivePositionRebalancing == mAPR::SizeWidth and sideAPR == mSideAPR::Sell)
             or ((qp.safety == mQuotingSafety::PingPong or qp.safety == mQuotingSafety::PingPoing)
               ? quotes.ask.price < wallet.safety.buyPing + widthPong
               : qp.pongAt == mPongAt::ShortPingAggressive
@@ -2308,7 +2315,7 @@ namespace ₿ {
           quotes.ask.isPong = quotes.ask.price >= wallet.safety.buyPing + widthPong;
         }
         if (!quotes.bid.empty() and wallet.safety.sellPing) {
-          if ((qp.aggressivePositionRebalancing == mAPR::SizeWidth and sideAPR == "Buy")
+          if ((qp.aggressivePositionRebalancing == mAPR::SizeWidth and sideAPR == mSideAPR::Buy)
             or ((qp.safety == mQuotingSafety::PingPong or qp.safety == mQuotingSafety::PingPoing)
               ? quotes.bid.price > wallet.safety.sellPing - widthPong
               : qp.pongAt == mPongAt::ShortPingAggressive
@@ -2332,7 +2339,7 @@ namespace ₿ {
       };
       void applyBestWidth() {
         if (!qp.bestWidth) return;
-        const Amount bestWidthSize = (sideAPR=="Off" ? qp.bestWidthSize : 0);
+        const Amount bestWidthSize = (sideAPR == mSideAPR::Off ? qp.bestWidthSize : 0);
         Amount depth = 0;
         if (!quotes.ask.empty())
           for (const mLevel &it : levels.asks)
@@ -2340,7 +2347,7 @@ namespace ₿ {
               depth += it.size;
               if (depth < bestWidthSize) continue;
               const Price bestAsk = it.price - K.gateway->minTick;
-              if (bestAsk > levels.fairValue) {
+              if (bestAsk > quotes.ask.price) {
                 quotes.ask.price = bestAsk;
                 break;
               }
@@ -2352,7 +2359,7 @@ namespace ₿ {
               depth += it.size;
               if (depth < bestWidthSize) continue;
               const Price bestBid = it.price + K.gateway->minTick;
-              if (bestBid < levels.fairValue) {
+              if (bestBid < quotes.bid.price) {
                 quotes.bid.price = bestBid;
                 break;
               }
@@ -2393,16 +2400,18 @@ namespace ₿ {
           quotes.bid.size = round(fmax(
             fmin(
               quotes.bid.size,
-              floor(wallet.quote.total / levels.fairValue / K.gateway->minSize) * K.gateway->minSize
+              floor((wallet.quote.total / quotes.bid.price) / K.gateway->minSize) * K.gateway->minSize
             ),
             K.gateway->minSize
           ) / K.gateway->minSize) * K.gateway->minSize;
       };
       void applyDepleted() {
-        if (quotes.bid.size > wallet.quote.total / levels.fairValue)
-          quotes.bid.clear(mQuoteState::DepletedFunds);
-        if (quotes.ask.size > wallet.base.total)
-          quotes.ask.clear(mQuoteState::DepletedFunds);
+        if (!quotes.bid.empty()
+          and quotes.bid.size > wallet.quote.total / quotes.bid.price
+        ) quotes.bid.clear(mQuoteState::DepletedFunds);
+        if (!quotes.ask.empty()
+          and quotes.ask.size > wallet.base.total
+        ) quotes.ask.clear(mQuoteState::DepletedFunds);
       };
       void applyWaitingPing() {
         if (qp.safety == mQuotingSafety::Off) return;
@@ -2585,6 +2594,7 @@ namespace ₿ {
           {       "base", K.gateway->base            },
           {      "quote", K.gateway->quote           },
           {    "minTick", K.gateway->minTick         },
+          {    "minSize", K.gateway->minSize         },
           {       "inet", string(Curl::inet ?: "")   },
           {"environment", K.arg<string>("title")     },
           { "matryoshka", K.arg<string>("matryoshka")}
