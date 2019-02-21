@@ -873,6 +873,7 @@ namespace ₿ {
       };
     protected:
       void legit_keylogger() {
+        if (hotFn.empty()) return;
         if (keylogger.valid())
           error("SH", string("Unable to launch another \"keylogger\" thread"));
         noecho();
