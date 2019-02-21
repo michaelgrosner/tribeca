@@ -5,13 +5,9 @@ export var Prefixes = {
 
 export var Topics = {
   FairValue: 'a',
-  Quote: 'b',
-  ActiveSubscription: 'c',
   Connectivity: 'd',
   MarketData: 'e',
   QuotingParametersChange: 'f',
-  SafetySettings: 'g',
-  Product: 'h',
   OrderStatusReports: 'i',
   ProductAdvertisement: 'j',
   ApplicationState: 'k',
@@ -23,7 +19,6 @@ export var Topics = {
   CancelOrder: 'q',
   MarketTrade: 'r',
   Trades: 's',
-  ExternalValuation: 't',
   QuoteStatus: 'u',
   TargetBasePosition: 'v',
   TradeSafetyValue: 'w',
@@ -31,7 +26,6 @@ export var Topics = {
   CleanAllClosedTrades: 'y',
   CleanAllTrades: 'z',
   CleanTrade: 'A',
-  WalletChart: 'C',
   MarketChart: 'D',
   Notepad: 'E',
   MarketDataLongTerm: 'H'

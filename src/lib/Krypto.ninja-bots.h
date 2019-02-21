@@ -6,22 +6,6 @@
 namespace ₿ {
   string epilogue, epitaph;
 
-  enum class mPortal: unsigned char {
-    Hello = '=',
-    Kiss  = '-'
-  };
-  enum class mMatter: unsigned char {
-    FairValue            = 'a', Quote                = 'b', ActiveSubscription = 'c', Connectivity       = 'd',
-    MarketData           = 'e', QuotingParameters    = 'f', SafetySettings     = 'g', Product            = 'h',
-    OrderStatusReports   = 'i', ProductAdvertisement = 'j', ApplicationState   = 'k', EWMAStats          = 'l',
-    STDEVStats           = 'm', Position             = 'n', Profit             = 'o', SubmitNewOrder     = 'p',
-    CancelOrder          = 'q', MarketTrade          = 'r', Trades             = 's', ExternalValuation  = 't',
-    QuoteStatus          = 'u', TargetBasePosition   = 'v', TradeSafetyValue   = 'w', CancelAllOrders    = 'x',
-    CleanAllClosedTrades = 'y', CleanAllTrades       = 'z', CleanTrade         = 'A',
-    WalletChart          = 'C', MarketChart          = 'D', Notepad            = 'E',
-                                MarketDataLongTerm   = 'H'
-  };
-
   //! \brief     Call all endingFn once and print a last log msg.
   //! \param[in] reason Allows any (colorful?) string.
   //! \param[in] reboot Allows a reboot only because https://tldp.org/LDP/Bash-Beginners-Guide/html/sect_09_03.html.
@@ -67,51 +51,6 @@ namespace ₿ {
   void error(const string &prefix, const string &reason, const bool &reboot = false) {
     if (reboot) this_thread::sleep_for(chrono::seconds(3));
     exit(prefix + Ansi::r(COLOR_RED) + " Errrror: " + Ansi::b(COLOR_RED) + reason, reboot);
-  };
-
-  class Hotkey {
-    private:
-      future<char> keylogger;
-      unordered_map<char, function<void()>> hotFn;
-    public:
-      void hotkey(const char &ch, function<void()> fn) {
-        if (!keylogger.valid()) return;
-        if (hotFn.find(ch) != hotFn.end())
-          error("SH", string("Too many handlers for \"") + ch + "\" hotkey event");
-        hotFn[ch] = fn;
-      };
-    protected:
-      function<const bool()> legit_keylogger() {
-        if (keylogger.valid())
-          error("SH", string("Unable to launch another \"keylogger\" thread"));
-        noecho();
-        halfdelay(5);
-        keypad(stdscr, true);
-        launch_keylogger();
-        return [&]() {
-          return wait_for_keylog();
-        };
-      };
-    private:
-      const bool wait_for_keylog() {
-        if (keylogger.valid()
-          and keylogger.wait_for(chrono::nanoseconds(0)) == future_status::ready
-        ) {
-          const char ch = keylogger.get();
-          if (hotFn.find(ch) != hotFn.end())
-            hotFn.at(ch)();
-          launch_keylogger();
-        }
-        return false;
-      };
-      void launch_keylogger() {
-        keylogger = ::async(launch::async, [&]() {
-          int ch = ERR;
-          while (ch == ERR and !hotFn.empty())
-            ch = getch();
-          return ch == ERR ? '\r' : (char)ch;
-        });
-      };
   };
 
   struct Margin {
@@ -775,7 +714,22 @@ namespace ₿ {
 
   class mAbout {
     public:
+      enum class mMatter: char {
+        FairValue            = 'a',                                                       Connectivity       = 'd',
+        MarketData           = 'e', QuotingParameters    = 'f',
+        OrderStatusReports   = 'i', ProductAdvertisement = 'j', ApplicationState   = 'k', EWMAStats          = 'l',
+        STDEVStats           = 'm', Position             = 'n', Profit             = 'o', SubmitNewOrder     = 'p',
+        CancelOrder          = 'q', MarketTrade          = 'r', Trades             = 's',
+        QuoteStatus          = 'u', TargetBasePosition   = 'v', TradeSafetyValue   = 'w', CancelAllOrders    = 'x',
+        CleanAllClosedTrades = 'y', CleanAllTrades       = 'z', CleanTrade         = 'A',
+                                    MarketChart          = 'D', Notepad            = 'E',
+                                    MarketDataLongTerm   = 'H'
+      };
+    public:
       virtual const mMatter about() const = 0;
+      const bool persist() const {
+        return about() == mMatter::QuotingParameters;
+      };
   };
 
   class mBlob: virtual public mAbout {
@@ -843,7 +797,7 @@ namespace ₿ {
       mutable unsigned int ticks = 300;
       mutable unordered_map<const mFromClient*, vector<function<void(const json&)>>> editFn;
       vector<function<const bool(const unsigned int&)>> timeFn;
-      vector<function<const bool()>> waitFn;
+      mutable vector<function<const bool()>> waitFn;
       mutable vector<function<void()>> slowFn;
     public:
       void edited(const mFromClient *data, const function<void(const json&)> &fn) const {
@@ -859,7 +813,7 @@ namespace ₿ {
       void timer_1s(const function<const bool(const unsigned int&)> &fn) {
         timeFn.push_back(fn);
       };
-      void wait_for(const function<const bool()> &fn) {
+      void wait_for(const function<const bool()> &fn) const {
         waitFn.push_back(fn);
       };
       void deferred(const function<void()> &fn) const {
@@ -901,6 +855,56 @@ namespace ₿ {
       };
   };
 
+  class Hotkey {
+    private_ref:
+      const Events &events;
+    public:
+      Hotkey(const Events &e)
+        : events(e)
+      {};
+    private:
+      future<char> keylogger;
+      mutable unordered_map<char, function<void()>> hotFn;
+    public:
+      void hotkey(const char &ch, function<void()> fn) const {
+        if (hotFn.find(ch) != hotFn.end())
+          error("SH", string("Too many handlers for \"") + ch + "\" hotkey event");
+        hotFn[ch] = fn;
+      };
+    protected:
+      void legit_keylogger() {
+        if (keylogger.valid())
+          error("SH", string("Unable to launch another \"keylogger\" thread"));
+        noecho();
+        halfdelay(5);
+        keypad(stdscr, true);
+        launch_keylogger();
+        events.wait_for([&]() {
+          return wait_for_keylog();
+        });
+      };
+    private:
+      const bool wait_for_keylog() {
+        if (keylogger.valid()
+          and keylogger.wait_for(chrono::nanoseconds(0)) == future_status::ready
+        ) {
+          const char ch = keylogger.get();
+          if (hotFn.find(ch) != hotFn.end())
+            hotFn.at(ch)();
+          launch_keylogger();
+        }
+        return false;
+      };
+      void launch_keylogger() {
+        keylogger = ::async(launch::async, [&]() {
+          int ch = ERR;
+          while (ch == ERR and !hotFn.empty())
+            ch = getch();
+          return ch == ERR ? '\r' : (char)ch;
+        });
+      };
+  };
+
   class Sqlite {
     public:
       mutable vector<mFromDb*> tables;
@@ -908,7 +912,7 @@ namespace ₿ {
       bool databases = false;
     private:
       sqlite3 *db = nullptr;
-      string qpdb = "main";
+      string disk = "main";
     private_ref:
       const Events &events;
     public:
@@ -921,7 +925,7 @@ namespace ₿ {
           error("DB", sqlite3_errmsg(db));
         Print::log("DB", "loaded OK from", database);
         if (!diskdata.empty()) {
-          exec("ATTACH '" + diskdata + "' AS " + (qpdb = "qpdb") + ";");
+          exec("ATTACH '" + diskdata + "' AS " + (disk = "disk") + ";");
           Print::log("DB", "loaded OK from", diskdata);
         }
         for (auto &it : tables) {
@@ -939,7 +943,7 @@ namespace ₿ {
       };
     private:
       const json select(mFromDb *const data) {
-        const string table = schema(data->about());
+        const string table = schema(data);
         json result = json::array();
         exec(
           create(table)
@@ -950,7 +954,7 @@ namespace ₿ {
         return result;
       };
       void insert(mFromDb *const data) {
-        const string table    = schema(data->about());
+        const string table    = schema(data);
         const json   blob     = data->blob();
         const double limit    = data->limit();
         const Clock  lifetime = data->lifetime();
@@ -972,12 +976,12 @@ namespace ₿ {
           exec(sql);
         });
       };
-      const string schema(const mMatter &type) const {
+      const string schema(mFromDb *const data) const {
         return (
-          type == mMatter::QuotingParameters
-            ? qpdb
+          data->persist()
+            ? disk
             : "main"
-        ) + "." + (char)type;
+        ) + "." + (char)data->about();
       };
       const string create(const string &table) const {
         return "CREATE TABLE IF NOT EXISTS " + table + "("
@@ -990,7 +994,7 @@ namespace ₿ {
           ? "DELETE FROM " + table + " WHERE time < " + to_string(Tstamp - lifetime) + ";"
           : "";
       };
-      void exec(const string &sql, json *const result = nullptr) {                // Print::log("DB DEBUG", sql);
+      void exec(const string &sql, json *const result = nullptr) {              // Print::log("DB DEBUG", sql);
         char* zErrMsg = nullptr;
         sqlite3_exec(db, sql.data(), result ? write : nullptr, (void*)result, &zErrMsg);
         if (zErrMsg) Print::logWar("DB", "SQLite error: " + (zErrMsg + (" at " + sql)));
@@ -1014,10 +1018,11 @@ namespace ₿ {
       uWS::Group<uWS::SERVER> *webui = nullptr;
       unordered_map<string, pair<const char*, const int>> documents;
     private:
-      unordered_map<mMatter, function<const json()>> hello;
-      unordered_map<mMatter, function<void(const json&)>> kisses;
-      unordered_map<mMatter, string> queue;
-      const unordered_map<unsigned int, string> headers = {
+      const pair<char, char> portal = {'=', '-'};
+      unordered_map<char, function<const json()>> hello;
+      unordered_map<char, function<void(const json&)>> kisses;
+      unordered_map<char, string> queue;
+      const unordered_map<unsigned int, const char*> headers = {
         {200, "HTTP/1.1 200 OK"
               "\r\n" "Connection: keep-alive"
               "\r\n" "Accept-Ranges: bytes"
@@ -1053,17 +1058,17 @@ namespace ₿ {
         for (auto &it : readable) {
           it->broadcast = [&]() {
             if (connections) {
-              queue[it->about()] = it->blob().dump();
+              queue[(char)it->about()] = it->blob().dump();
               if (it->realtime() or !delay) broadcast();
             }
           };
-          hello[it->about()] = [&]() {
+          hello[(char)it->about()] = [&]() {
             return it->hello();
           };
         }
         readable.clear();
         for (auto &it : editable) {
-          kisses[it->about()] = [&](const json &butterfly) {
+          kisses[(char)it->about()] = [&](const json &butterfly) {
             it->edit(butterfly);
           };
         }
@@ -1095,13 +1100,14 @@ namespace ₿ {
       ) {
         if (alien(addr))
           return string(documents.at("").first, documents.at("").second);
-        const mPortal portal = (mPortal)message.at(0);
-        const mMatter matter = (mMatter)message.at(1);
-        if (mPortal::Hello == portal and hello.find(matter) != hello.end()) {
-          const json reply = hello.at(matter)();
-          if (!reply.is_null())
-            return (char)portal + ((char)matter + reply.dump());
-        } else if (mPortal::Kiss == portal and kisses.find(matter) != kisses.end()) {
+        const char matter = message.at(1);
+        if (portal.first == message.at(0)) {
+          if (hello.find(matter) != hello.end()) {
+            const json reply = hello.at(matter)();
+            if (!reply.is_null())
+              return portal.first + (matter + reply.dump());
+          }
+        } else if (portal.second == message.at(0) and kisses.find(matter) != kisses.end()) {
           message = message.substr(2);
           json butterfly = json::accept(message)
             ? json::parse(message)
@@ -1163,7 +1169,7 @@ namespace ₿ {
         if (queue.empty()) return;
         vector<string> msgs;
         for (const auto &it : queue)
-          msgs.push_back((char)mPortal::Kiss + ((char)it.first + it.second));
+          msgs.push_back(portal.second + (it.first + it.second));
         queue.clear();
         events.deferred([this, msgs]() {
           for (const auto &it : msgs)
@@ -1186,7 +1192,7 @@ namespace ₿ {
         const       string &type
       ) const {
         return headers.at(code)
-         + ((content.length() > 2 and (content.substr(0, 2) == "PK" or (
+         + string((content.length() > 2 and (content.substr(0, 2) == "PK" or (
              content.at(0) == '\x1F' and content.at(1) == '\x8B'
            ))) ? "\r\n" "Content-Encoding: gzip" : "")
          + "\r\n" "Content-Type: "   + type
@@ -1282,6 +1288,15 @@ namespace ₿ {
       };
   };
 
+  class mCatchHotkeys {
+    public:
+      mCatchHotkeys(const Hotkey &h, const vector<pair<const char, const function<void()>>> &hotkey)
+      {
+        for (const auto &it : hotkey)
+          h.hotkey(it.first, it.second);
+      };
+  };
+
   class mCatchEdits {
     public:
       mCatchEdits(const Events &e, const vector<pair<const mFromClient*, variant<
@@ -1305,7 +1320,7 @@ namespace ₿ {
       {
         c.readable.push_back(this);
       };
-      virtual const bool broadcast() {
+      const bool broadcast() {
         if ((send_asap() or send_soon())
           and (send_same_blob() or diff_blob())
         ) {
@@ -1357,17 +1372,18 @@ namespace ₿ {
   class KryptoNinja: public Klass,
                      public Print,
                      public Ending,
-                     public Hotkey,
                      public Option,
                      public Socket,
                      public Events,
+                     public Hotkey,
                      public Sqlite,
                      public Client {
     public:
       Gw *gateway = nullptr;
     public:
       KryptoNinja()
-        : Sqlite((Events&)*this)
+        : Hotkey((Events&)*this)
+        , Sqlite((Events&)*this)
         , Client((Option&)*this, (Events&)*this)
       {};
       KryptoNinja *const main(int argc, char** argv) {
@@ -1376,8 +1392,7 @@ namespace ₿ {
           setup();
           curl_global_init(CURL_GLOBAL_ALL);
         } {
-          if (windowed())
-            wait_for(legit_keylogger());
+          if (windowed()) legit_keylogger();
         } {
           log("CF", "Outbound IP address is",
             wtfismyip = Curl::xfer("https://wtfismyip.com/json", 4L)

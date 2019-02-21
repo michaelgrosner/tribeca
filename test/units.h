@@ -322,7 +322,7 @@ namespace ₿ {
         REQUIRE_NOTHROW(qp._diffEwma |= true << 3);
         REQUIRE_NOTHROW(qp._diffEwma |= true << 4);
         REQUIRE_NOTHROW(qp._diffEwma |= true << 5);
-        REQUIRE_NOTHROW(ewma.calcFromHistory());
+        REQUIRE_NOTHROW(K.edited(&qp));
         THEN("values") {
           REQUIRE(ewma.mgEwmaVL == Approx(266.1426832796));
           REQUIRE(ewma.mgEwmaL == Approx(264.4045182289));

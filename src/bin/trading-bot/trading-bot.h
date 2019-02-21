@@ -55,23 +55,21 @@ class TradingBot: public KryptoNinja {
 class Engine: public Klass {
   public:
      mQuotingParams qp;
-           mButtons button;
-           mMonitor monitor;
-           mProduct product;
             mOrders orders;
+           mButtons button;
       mMarketLevels levels;
     mWalletPosition wallet;
             mBroker broker;
+            mMemory memory;
   public:
     Engine()
       : qp(K)
-      , monitor(K)
-      , product(K)
       , orders(K)
       , button(K)
       , levels(K, qp, orders)
       , wallet(K, qp, orders, button, levels)
       , broker(K, qp, orders, button, levels, wallet)
+      , memory(K)
     {};
   protected:
     void waitData() override {
@@ -97,24 +95,15 @@ class Engine: public Klass {
       };
     };
     void waitAdmin() override {
-#define HOTKEYS      \
-        HOTKEYS_LIST \
-      ( HOTKEYS_CODE )
-#define HOTKEYS_CODE(key, fn)          K.hotkey(key, [&]() { fn(); });
-#define HOTKEYS_LIST(code)             \
-code( 'Q'  , exit                    ) \
-code( 'q'  , exit                    ) \
-code( '\e' , broker.semaphore.toggle )
-      HOTKEYS
+      broker.semaphore.agree(K.arg<int>("autobot"));
     };
     void run() override {
-      broker.semaphore.agree(K.arg<int>("autobot"));
       K.timer_1s([&](const unsigned int &tick) {
         if (!K.gateway->countdown and !levels.warn_empty()) {
           levels.timer_1s();
           if (!(tick % 60)) {
             levels.timer_60s();
-            monitor.timer_60s();
+            memory.timer_60s();
           }
           wallet.safety.timer_1s();
           calcQuotes();
@@ -155,7 +144,7 @@ code( '\e' , broker.semaphore.toggle )
         quote.isPong,
         K.gateway->randId()
       });
-      monitor.orders_60s++;
+      memory.orders_60s++;
     };
 } engine;
 
@@ -304,7 +293,7 @@ void TradingBot::terminal() {
     waddch(stdscr, engine.broker.semaphore.paused() ? ' ' : ':');
   }
   mvwaddch(stdscr, y-1, 0, ACS_LLCORNER);
-  mvwaddstr(stdscr, 1, 2, string("|/-\\").substr(engine.monitor.orders_60s % 4, 1).data());
+  mvwaddstr(stdscr, 1, 2, string("|/-\\").substr(engine.memory.orders_60s % 4, 1).data());
 };
 
 #endif

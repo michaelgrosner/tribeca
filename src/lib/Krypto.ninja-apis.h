@@ -4,21 +4,11 @@
 //! \brief External exchange API integrations.
 
 namespace ₿ {
-  enum class Connectivity: unsigned int {
-    Disconnected, Connected
-  };
-  enum class Status: unsigned int {
-    Waiting, Working, Terminated
-  };
-  enum class Side: unsigned int {
-    Bid, Ask
-  };
-  enum class TimeInForce: unsigned int {
-    GTC, IOC, FOK
-  };
-  enum class OrderType: unsigned int {
-    Limit, Market
-  };
+  enum class Connectivity: unsigned int { Disconnected, Connected };
+  enum class       Status: unsigned int { Waiting, Working, Terminated };
+  enum class         Side: unsigned int { Bid, Ask };
+  enum class  TimeInForce: unsigned int { GTC, IOC, FOK };
+  enum class    OrderType: unsigned int { Limit, Market };
 
   struct mLevel {
      Price price;

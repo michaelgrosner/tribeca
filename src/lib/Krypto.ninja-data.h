@@ -189,8 +189,7 @@ namespace ₿ {
           widthPercentage = false;
         K.timer_ticks_factor(delayUI);
         K.client_queue_delay(delayUI);
-        if (_diffEwma == -1)
-          _diffEwma = 0;
+        if (_diffEwma == -1) _diffEwma++;
         else {
           _diffEwma |= (previous[0] != veryLongEwmaPeriods)   << 0;
           _diffEwma |= (previous[1] != longEwmaPeriods)       << 1;
@@ -663,14 +662,6 @@ namespace ₿ {
         calcTargetPositionAutoPercentage();
         backup();
       };
-      void calcFromHistory() {
-        if ((qp._diffEwma >> 0) & 1) calcFromHistory(&mgEwmaVL, qp.veryLongEwmaPeriods,   "VeryLong");
-        if ((qp._diffEwma >> 1) & 1) calcFromHistory(&mgEwmaL,  qp.longEwmaPeriods,       "Long");
-        if ((qp._diffEwma >> 2) & 1) calcFromHistory(&mgEwmaM,  qp.mediumEwmaPeriods,     "Medium");
-        if ((qp._diffEwma >> 3) & 1) calcFromHistory(&mgEwmaS,  qp.shortEwmaPeriods,      "Short");
-        if ((qp._diffEwma >> 4) & 1) calcFromHistory(&mgEwmaXS, qp.extraShortEwmaPeriods, "ExtraShort");
-        if ((qp._diffEwma >> 5) & 1) calcFromHistory(&mgEwmaU,  qp.ultraShortEwmaPeriods, "UltraShort");
-      };
       const mMatter about() const override {
         return mMatter::EWMAStats;
       };
@@ -691,6 +682,14 @@ namespace ₿ {
         return "consider to warm up some %";
       };
     private:
+      void calcFromHistory() {
+        if ((qp._diffEwma >> 0) & 1) calcFromHistory(&mgEwmaVL, qp.veryLongEwmaPeriods,   "VeryLong");
+        if ((qp._diffEwma >> 1) & 1) calcFromHistory(&mgEwmaL,  qp.longEwmaPeriods,       "Long");
+        if ((qp._diffEwma >> 2) & 1) calcFromHistory(&mgEwmaM,  qp.mediumEwmaPeriods,     "Medium");
+        if ((qp._diffEwma >> 3) & 1) calcFromHistory(&mgEwmaS,  qp.shortEwmaPeriods,      "Short");
+        if ((qp._diffEwma >> 4) & 1) calcFromHistory(&mgEwmaXS, qp.extraShortEwmaPeriods, "ExtraShort");
+        if ((qp._diffEwma >> 5) & 1) calcFromHistory(&mgEwmaU,  qp.ultraShortEwmaPeriods, "UltraShort");
+      };
       void calc(Price *const mean, const unsigned int &periods, const Price &value) {
         if (*mean) {
           double alpha = 2.0 / (periods + 1);
@@ -1198,18 +1197,20 @@ namespace ₿ {
   };
   struct mNotepad: public mJsonToClient<mNotepad>,
                    public mJsonFromClient {
-    string content;
-    mNotepad(const KryptoNinja &bot)
-      : mJsonToClient(bot)
-      , mJsonFromClient(bot)
-    {};
-    void edit(const json &j) override {
-      if (j.is_array() and j.size() and j.at(0).is_string())
-       content = j.at(0);
-    };
-    const mMatter about() const override {
-      return mMatter::Notepad;
-    };
+    public:
+      string content;
+    public:
+      mNotepad(const KryptoNinja &bot)
+        : mJsonToClient(bot)
+        , mJsonFromClient(bot)
+      {};
+      void edit(const json &j) override {
+        if (j.is_array() and j.size() and j.at(0).is_string())
+         content = j.at(0);
+      };
+      const mMatter about() const override {
+        return mMatter::Notepad;
+      };
   };
   static void to_json(json &j, const mNotepad &k) {
     j = k.content;
@@ -1252,104 +1253,104 @@ namespace ₿ {
         , K(bot)
         , qp(q)
       {};
-    void clearAll() {
-      clear_if([](iterator it) {
-        return true;
-      });
-    };
-    void clearOne(const string &tradeId) {
-      clear_if([&tradeId](iterator it) {
-        return it->tradeId == tradeId;
-      }, true);
-    };
-    void clearClosed() {
-      clear_if([](iterator it) {
-        return it->Kqty >= it->quantity;
-      });
-    };
-    void clearPongsAuto() {
-      const Clock expire = Tstamp - (abs(qp.cleanPongsAuto) * 86400e3);
-      const bool forcedClean = qp.cleanPongsAuto < 0;
-      clear_if([&expire, &forcedClean](iterator it) {
-        return (it->Ktime?:it->time) < expire and (
-          forcedClean
-          or it->Kqty >= it->quantity
+      void insert(const mLastOrder &order) {
+        const Amount fee = 0;
+        const Clock time = Tstamp;
+        mOrderFilled filled = {
+          order.side,
+          order.price,
+          order.tradeQuantity,
+          time,
+          to_string(time),
+          abs(order.price * order.tradeQuantity),
+          fee,
+          0, 0, 0, 0, 0,
+          order.isPong,
+          false
+        };
+        Print::log("GW " + K.gateway->exchange, string(filled.isPong?"PONG":"PING") + " TRADE "
+          + (filled.side == Side::Bid ? "BUY  " : "SELL ")
+          + K.gateway->str(filled.quantity) + ' ' + K.gateway->base + " at price "
+          + K.gateway->str(filled.price) + ' ' + K.gateway->quote + " (value "
+          + K.gateway->str(filled.value) + ' ' + K.gateway->quote + ")"
         );
-      });
-    };
-    void insert(const mLastOrder &order) {
-      const Amount fee = 0;
-      const Clock time = Tstamp;
-      mOrderFilled filled = {
-        order.side,
-        order.price,
-        order.tradeQuantity,
-        time,
-        to_string(time),
-        abs(order.price * order.tradeQuantity),
-        fee,
-        0, 0, 0, 0, 0,
-        order.isPong,
-        false
-      };
-      Print::log("GW " + K.gateway->exchange, string(filled.isPong?"PONG":"PING") + " TRADE "
-        + (filled.side == Side::Bid ? "BUY  " : "SELL ")
-        + K.gateway->str(filled.quantity) + ' ' + K.gateway->base + " at price "
-        + K.gateway->str(filled.price) + ' ' + K.gateway->quote + " (value "
-        + K.gateway->str(filled.value) + ' ' + K.gateway->quote + ")"
-      );
-      if (qp.safety == mQuotingSafety::Off or qp.safety == mQuotingSafety::PingPong or qp.safety == mQuotingSafety::PingPoing)
-        broadcast_push_back(filled);
-      else {
-        Price widthPong = qp.widthPercentage
-          ? qp.widthPongPercentage * filled.price / 100
-          : qp.widthPong;
-        map<Price, string> matches;
-        for (mOrderFilled &it : rows)
-          if (it.quantity - it.Kqty > 0
-            and it.side != filled.side
-            and (qp.pongAt == mPongAt::AveragePingFair
-              or qp.pongAt == mPongAt::AveragePingAggressive
-              or (filled.side == Side::Bid
-                ? (it.price > filled.price + widthPong)
-                : (it.price < filled.price - widthPong)
+        if (qp.safety == mQuotingSafety::Off or qp.safety == mQuotingSafety::PingPong or qp.safety == mQuotingSafety::PingPoing)
+          broadcast_push_back(filled);
+        else {
+          Price widthPong = qp.widthPercentage
+            ? qp.widthPongPercentage * filled.price / 100
+            : qp.widthPong;
+          map<Price, string> matches;
+          for (mOrderFilled &it : rows)
+            if (it.quantity - it.Kqty > 0
+              and it.side != filled.side
+              and (qp.pongAt == mPongAt::AveragePingFair
+                or qp.pongAt == mPongAt::AveragePingAggressive
+                or (filled.side == Side::Bid
+                  ? (it.price > filled.price + widthPong)
+                  : (it.price < filled.price - widthPong)
+                )
               )
-            )
-          ) matches[it.price] = it.tradeId;
-        matchPong(
-          matches,
-          filled,
-          (qp.pongAt == mPongAt::LongPingFair or qp.pongAt == mPongAt::LongPingAggressive)
-            ? filled.side == Side::Ask
-            : filled.side == Side::Bid
-        );
-      }
-      if (qp.cleanPongsAuto)
-        clearPongsAuto();
-    };
-    const mMatter about() const override {
-      return mMatter::Trades;
-    };
-    void erase() override {
-      if (crbegin()->Kqty < 0) rows.pop_back();
-    };
-    const json blob() const override {
-      if (crbegin()->Kqty == -1) return nullptr;
-      else return mVectorFromDb::blob();
-    };
-    const string increment() const override {
-      return crbegin()->tradeId;
-    };
-    const json hello() override {
-      for (mOrderFilled &it : rows)
-        it.loadedFromDB = true;
-      return rows;
-    };
+            ) matches[it.price] = it.tradeId;
+          matchPong(
+            matches,
+            filled,
+            (qp.pongAt == mPongAt::LongPingFair or qp.pongAt == mPongAt::LongPingAggressive)
+              ? filled.side == Side::Ask
+              : filled.side == Side::Bid
+          );
+        }
+        if (qp.cleanPongsAuto)
+          clearPongsAuto();
+      };
+      const mMatter about() const override {
+        return mMatter::Trades;
+      };
+      void erase() override {
+        if (crbegin()->Kqty < 0) rows.pop_back();
+      };
+      const json blob() const override {
+        if (crbegin()->Kqty == -1) return nullptr;
+        else return mVectorFromDb::blob();
+      };
+      const string increment() const override {
+        return crbegin()->tradeId;
+      };
+      const json hello() override {
+        for (mOrderFilled &it : rows)
+          it.loadedFromDB = true;
+        return rows;
+      };
     protected:
       string explainOK() const override {
         return "loaded % historical Trades";
       };
     private:
+      void clearAll() {
+        clear_if([](iterator it) {
+          return true;
+        });
+      };
+      void clearOne(const string &tradeId) {
+        clear_if([&tradeId](iterator it) {
+          return it->tradeId == tradeId;
+        }, true);
+      };
+      void clearClosed() {
+        clear_if([](iterator it) {
+          return it->Kqty >= it->quantity;
+        });
+      };
+      void clearPongsAuto() {
+        const Clock expire = Tstamp - (abs(qp.cleanPongsAuto) * 86400e3);
+        const bool forcedClean = qp.cleanPongsAuto < 0;
+        clear_if([&expire, &forcedClean](iterator it) {
+          return (it->Ktime?:it->time) < expire and (
+            forcedClean
+            or it->Kqty >= it->quantity
+          );
+        });
+      };
       void clear_if(const function<const bool(iterator)> &fn, const bool &onlyOne = false) {
         for (auto it = begin(); it != end();)
           if (fn(it)) {
@@ -1928,16 +1929,6 @@ namespace ₿ {
         , wallet(w)
         , quotes(Q)
       {};
-      void mode() {
-        if (qp.mode == mQuotingMode::Top)              calcRawQuotesFromMarket = calcTopOfMarket;
-        else if (qp.mode == mQuotingMode::Mid)         calcRawQuotesFromMarket = calcMidOfMarket;
-        else if (qp.mode == mQuotingMode::Join)        calcRawQuotesFromMarket = calcJoinMarket;
-        else if (qp.mode == mQuotingMode::InverseJoin) calcRawQuotesFromMarket = calcInverseJoinMarket;
-        else if (qp.mode == mQuotingMode::InverseTop)  calcRawQuotesFromMarket = calcInverseTopOfMarket;
-        else if (qp.mode == mQuotingMode::HamelinRat)  calcRawQuotesFromMarket = calcColossusOfMarket;
-        else if (qp.mode == mQuotingMode::Depth)       calcRawQuotesFromMarket = calcDepthOfMarket;
-        else error("QE", "Invalid quoting mode saved, consider to remove the database file");
-      };
       void calcRawQuotes() const  {
         calcRawQuotesFromMarket(
           levels,
@@ -1954,6 +1945,16 @@ namespace ₿ {
         }
       };
     private:
+      void mode() {
+        if (qp.mode == mQuotingMode::Top)              calcRawQuotesFromMarket = calcTopOfMarket;
+        else if (qp.mode == mQuotingMode::Mid)         calcRawQuotesFromMarket = calcMidOfMarket;
+        else if (qp.mode == mQuotingMode::Join)        calcRawQuotesFromMarket = calcJoinMarket;
+        else if (qp.mode == mQuotingMode::InverseJoin) calcRawQuotesFromMarket = calcInverseJoinMarket;
+        else if (qp.mode == mQuotingMode::InverseTop)  calcRawQuotesFromMarket = calcInverseTopOfMarket;
+        else if (qp.mode == mQuotingMode::HamelinRat)  calcRawQuotesFromMarket = calcColossusOfMarket;
+        else if (qp.mode == mQuotingMode::Depth)       calcRawQuotesFromMarket = calcDepthOfMarket;
+        else error("QE", "Invalid quoting mode saved, consider to remove the database file");
+      };
       static void quoteAtTopOfMarket(const mMarketLevels &levels, const Price &minTick, mQuotes &quotes) {
         const mLevel &topBid = levels.bids.begin()->size > minTick
           ? levels.bids.at(0)
@@ -2438,7 +2439,8 @@ namespace ₿ {
   };
 
   struct mSemaphore: public mJsonToClient<mSemaphore>,
-                     public mJsonFromClient {
+                     public mJsonFromClient,
+                     public mCatchHotkeys {
     Connectivity greenButton  = Connectivity::Disconnected,
                  greenGateway = Connectivity::Disconnected;
     private:
@@ -2449,6 +2451,11 @@ namespace ₿ {
       mSemaphore(const KryptoNinja &bot)
         : mJsonToClient(bot)
         , mJsonFromClient(bot)
+        , mCatchHotkeys(bot, {
+            {'Q', [&]() { exit(); }},
+            {'q', [&]() { exit(); }},
+            {'\e', [&]() { toggle(); }}
+          })
         , K(bot)
       {};
       void edit(const json &j) override {
@@ -2466,10 +2473,6 @@ namespace ₿ {
       void agree(const bool &agreement) {
         adminAgreement = (Connectivity)agreement;
       };
-      void toggle() {
-        agree(!(bool)adminAgreement);
-        switchFlag();
-      };
       void read_from_gw(const Connectivity &raw) {
         if (greenGateway != raw) {
           greenGateway = raw;
@@ -2480,6 +2483,10 @@ namespace ₿ {
         return mMatter::Connectivity;
       };
     private:
+      void toggle() {
+        agree(!(bool)adminAgreement);
+        switchFlag();
+      };
       void switchFlag() {
         const Connectivity previous = greenButton;
         greenButton = (Connectivity)(
@@ -2591,14 +2598,17 @@ namespace ₿ {
     j = k.to_json();
   };
 
-  class mMonitor: public mJsonToClient<mMonitor> {
+  class mMemory: public mJsonToClient<mMemory> {
     public:
       unsigned int orders_60s = 0;
+    private:
+      mProduct product;
     private_ref:
       const KryptoNinja &K;
     public:
-      mMonitor(const KryptoNinja &bot)
+      mMemory(const KryptoNinja &bot)
         : mJsonToClient(bot)
+        , product(bot)
         , K(bot)
       {};
       void timer_60s() {
@@ -2619,7 +2629,7 @@ namespace ₿ {
         return mMatter::ApplicationState;
       };
   };
-  static void to_json(json &j, const mMonitor &k) {
+  static void to_json(json &j, const mMemory &k) {
     j = k.to_json();
   };
 }
