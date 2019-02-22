@@ -2347,7 +2347,7 @@ namespace ₿ {
               depth += it.size;
               if (depth < bestWidthSize) continue;
               const Price bestAsk = it.price - K.gateway->minTick;
-              if (bestAsk > quotes.ask.price) {
+              if (bestAsk >= quotes.ask.price) {
                 quotes.ask.price = bestAsk;
                 break;
               }
@@ -2359,7 +2359,7 @@ namespace ₿ {
               depth += it.size;
               if (depth < bestWidthSize) continue;
               const Price bestBid = it.price + K.gateway->minTick;
-              if (bestBid < quotes.bid.price) {
+              if (bestBid <= quotes.bid.price) {
                 quotes.bid.price = bestBid;
                 break;
               }
