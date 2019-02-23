@@ -77,7 +77,7 @@ namespace ₿ {
     Amount            positionDivergence              = 0.9;
     Amount            positionDivergenceMin           = 0.4;
     double            positionDivergencePercentage    = 21.0;
-    double            positionDivergencePercentageMin = 10;
+    double            positionDivergencePercentageMin = 10.0;
     mPDivMode         positionDivergenceMode          = mPDivMode::Manual;
     bool              percentageValues                = false;
     mAutoPositionMode autoPositionMode                = mAutoPositionMode::EWMA_LS;
