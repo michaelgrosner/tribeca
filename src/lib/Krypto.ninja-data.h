@@ -73,11 +73,11 @@ namespace ₿ {
     double            rangePercentage                 = 5.0;
     mFairValueModel   fvModel                         = mFairValueModel::BBO;
     Amount            targetBasePosition              = 1.0;
-    unsigned int      targetBasePositionPercentage    = 50;
+    double            targetBasePositionPercentage    = 50.0;
     Amount            positionDivergence              = 0.9;
     Amount            positionDivergenceMin           = 0.4;
-    unsigned int      positionDivergencePercentage    = 21;
-    unsigned int      positionDivergencePercentageMin = 10;
+    double            positionDivergencePercentage    = 21.0;
+    double            positionDivergencePercentageMin = 10;
     mPDivMode         positionDivergenceMode          = mPDivMode::Manual;
     bool              percentageValues                = false;
     mAutoPositionMode autoPositionMode                = mAutoPositionMode::EWMA_LS;
