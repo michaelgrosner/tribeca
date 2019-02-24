@@ -512,6 +512,8 @@ namespace ₿ {
           for (mOrder &it : sync_cancelAll()) write_mOrder(it);
           log("cancel all open orders OK");
         }
+        close();
+        api->close();
       };
       void info(vector<pair<string, string>> notes, const bool &nocache) {
         if (exchange != "NULL") log("allows client IP");

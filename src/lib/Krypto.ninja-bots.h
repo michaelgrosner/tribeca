@@ -1413,8 +1413,6 @@ namespace ₿ {
           gateway->api = bind();
           start(socket->getLoop());
           ending([&]() {
-            gateway->close();
-            gateway->api->close();
             gateway->end(arg<int>("dustybot"));
             stop();
           });
