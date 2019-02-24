@@ -213,7 +213,7 @@ namespace ₿ {
       const mMatter about() const override {
         return mMatter::QuotingParameters;
       };
-    protected:
+    private:
       const string explain() const override {
         return "Quoting Parameters";
       };
@@ -566,10 +566,6 @@ namespace ₿ {
       const Clock lifetime() const override {
         return 1e+3 * limit();
       };
-    protected:
-      string explainOK() const override {
-        return "loaded % STDEV Periods";
-      };
     private:
       double calc(Price *const mean, const string &type) const {
         vector<Price> values;
@@ -600,6 +596,9 @@ namespace ₿ {
         double variance = sq_diff_sum / n;
         return sqrt(variance) * factor;
       };
+      string explainOK() const override {
+        return "loaded % STDEV Periods";
+      };
   };
   static void to_json(json &j, const mStdevs &k) {
     j = {
@@ -615,19 +614,20 @@ namespace ₿ {
   };
 
   struct mFairHistory: public mVectorFromDb<Price> {
-    mFairHistory(const KryptoNinja &bot)
-      : mVectorFromDb(bot)
-    {};
-    const mMatter about() const override {
-      return mMatter::MarketDataLongTerm;
-    };
-    const double limit() const override {
-      return 5760;
-    };
-    const Clock lifetime() const override {
-      return 60e+3 * limit();
-    };
-    protected:
+    public:
+      mFairHistory(const KryptoNinja &bot)
+        : mVectorFromDb(bot)
+      {};
+      const mMatter about() const override {
+        return mMatter::MarketDataLongTerm;
+      };
+      const double limit() const override {
+        return 5760;
+      };
+      const Clock lifetime() const override {
+        return 60e+3 * limit();
+      };
+    private:
       string explainOK() const override {
         return "loaded % historical Fair Values";
       };
@@ -677,13 +677,6 @@ namespace ₿ {
                        max(qp.extraShortEwmaPeriods,
                            qp.ultraShortEwmaPeriods
                        )))));
-      };
-    protected:
-      const string explain() const override {
-        return "EWMA Values";
-      };
-      string explainKO() const override {
-        return "consider to warm up some %";
       };
     private:
       void calcFromHistory() {
@@ -742,6 +735,12 @@ namespace ₿ {
           else targetPosition = ((mgEwmaS * 1e+2 / mgEwmaM) - 1e+2) * (1 / qp.ewmaSensiblityPercentage);
         }
         targetPositionAutoPercentage = ((1 + max(-1.0, min(1.0, targetPosition))) / 2) * 1e+2;
+      };
+      const string explain() const override {
+        return "EWMA Values";
+      };
+      string explainKO() const override {
+        return "consider to warm up some %";
       };
   };
   static void to_json(json &j, const mEwma &k) {
@@ -1050,7 +1049,7 @@ namespace ₿ {
       const Clock lifetime() const override {
         return 3600e+3 * limit();
       };
-    protected:
+    private:
       string explainOK() const override {
         return "loaded % historical Profits";
       };
@@ -1325,10 +1324,6 @@ namespace ₿ {
           it.loadedFromDB = true;
         return rows;
       };
-    protected:
-      string explainOK() const override {
-        return "loaded % historical Trades";
-      };
     private:
       void clearAll() {
         clear_if([](iterator it) {
@@ -1415,6 +1410,9 @@ namespace ₿ {
         broadcast_push_back(row);
         erase();
         return it;
+      };
+      string explainOK() const override {
+        return "loaded % historical Trades";
       };
   };
 
@@ -1695,13 +1693,6 @@ namespace ₿ {
       const bool send_same_blob() const override {
         return false;
       };
-    protected:
-      const string explain() const override {
-        return to_string(targetBasePosition);
-      };
-      string explainOK() const override {
-        return "loaded TBP = % " + K.gateway->base;
-      };
     private:
       void calcPDiv() {
         Amount pDiv = qp.percentageValues
@@ -1727,6 +1718,12 @@ namespace ₿ {
           + " " + K.gateway->base + ", pDiv: "
           + to_string((int)(positionDivergence / baseValue * 1e+2)) + "% = " + K.gateway->str(positionDivergence)
           + " " + K.gateway->base);
+      };
+      const string explain() const override {
+        return to_string(targetBasePosition);
+      };
+      string explainOK() const override {
+        return "loaded TBP = % " + K.gateway->base;
       };
   };
   static void to_json(json &j, const mTarget &k) {

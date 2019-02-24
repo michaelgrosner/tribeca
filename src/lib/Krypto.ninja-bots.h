@@ -772,21 +772,22 @@ namespace ₿ {
       virtual const double limit()     const { return 0; };
       virtual const Clock  lifetime()  const { return 0; };
     protected:
-      virtual const string explain()   const = 0;
-      virtual       string explainOK() const = 0;
-      virtual       string explainKO() const { return ""; };
-      void explanation(const bool &empty) const {
+      void log(const bool &empty) const {
         string msg = empty
           ? explainKO()
           : explainOK();
         if (msg.empty()) return;
-        size_t token = msg.find("%");
+        const size_t token = msg.find("%");
         if (token != string::npos)
           msg.replace(token, 1, explain());
         if (empty)
           Print::logWar("DB", msg);
         else Print::log("DB", msg);
       };
+    private:
+      virtual const string explain()   const = 0;
+      virtual       string explainOK() const = 0;
+      virtual       string explainKO() const { return ""; };
   };
 
   class Events {
@@ -1222,9 +1223,9 @@ namespace ₿ {
       };
       void pull(const json &j) override {
         from_json(j.empty() ? blob() : j.at(0), *(T*)this);
-        explanation(j.empty());
+        log(j.empty());
       };
-    protected:
+    private:
       string explainOK() const override {
         return "loaded last % OK";
       };
@@ -1270,12 +1271,12 @@ namespace ₿ {
       void pull(const json &j) override {
         for (const json &it : j)
           rows.push_back(it);
-        explanation(empty());
+        log(empty());
       };
       const json blob() const override {
         return back();
       };
-    protected:
+    private:
       const string explain() const override {
         return to_string(size());
       };
