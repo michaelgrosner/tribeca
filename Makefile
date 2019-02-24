@@ -2,7 +2,7 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
 PATCH    = 12
-BUILD    = 33
+BUILD    = 34
 SOURCE  := $(notdir $(wildcard src/bin/*))
 CARCH    = x86_64-linux-gnu      \
            arm-linux-gnueabihf   \
@@ -10,7 +10,7 @@ CARCH    = x86_64-linux-gnu      \
            x86_64-apple-darwin17 \
            x86_64-w64-mingw32
 
-CHOST   ?= $(shell (test -d .git && test -n "`command -v g++`") && g++ -dumpmachine \
+CHOST   ?= $(shell test -n "`command -v g++`" && g++ -dumpmachine \
              || echo $(subst build-,,$(firstword $(wildcard build-*))))
 
 KHOST   := $(shell echo $(CHOST) | sed 's/\([a-z_0-9]*\)-\([a-z_0-9]*\)-.*/\2-\1/' | sed 's/^w64/win64/')
