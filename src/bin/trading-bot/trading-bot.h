@@ -110,7 +110,6 @@ class Engine: public Klass {
         }
         return false;
       });
-      K.gateway->askForCancelAll = &qp.cancelOrdersAuto;
     };
   private:
     void calcQuotes() {

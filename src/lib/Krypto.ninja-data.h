@@ -190,6 +190,7 @@ namespace ₿ {
         delayUI                         = fmax(0,                  j.value("delayUI", delayUI));
         if (mode == mQuotingMode::Depth)
           widthPercentage = false;
+        K.gateway->askForCancelAll = cancelOrdersAuto;
         K.timer_ticks_factor(delayUI);
         K.client_queue_delay(delayUI);
         if (_diffEwma == -1) _diffEwma++;

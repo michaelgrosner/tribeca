@@ -352,9 +352,9 @@ namespace ₿ {
       function<void(const mLevels&)>      write_mLevels;
       function<void(const mWallets&)>     write_mWallets;
       function<void(const Connectivity&)> write_Connectivity;
-      bool askForFees    = false,
-           askForReplace = false;
-      const bool *askForCancelAll = nullptr;
+      bool askForFees      = false,
+           askForReplace   = false,
+           askForCancelAll = false;
       const RandId (*randId)() = nullptr;
       virtual const bool askForData(const unsigned int &tick) = 0;
       virtual const bool waitForData() = 0;
@@ -415,7 +415,6 @@ namespace ₿ {
           and !(askForFees = false)
           ) or !(tick % 15)) waiting |= !(async_wallet() or !askFor(replyWallets, [&]() { return sync_wallet(); }));
         if (askForCancelAll
-          and *askForCancelAll
           and !(tick % 300)) waiting |= askFor(replyCancelAll, [&]() { return sync_cancelAll(); });
         return waiting;
       };
