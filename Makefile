@@ -1,8 +1,8 @@
 K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
-PATCH    = 12
-BUILD    = 35
+PATCH    = 13
+BUILD    = 0
 SOURCE  := $(notdir $(wildcard src/bin/*))
 CARCH    = x86_64-linux-gnu      \
            arm-linux-gnueabihf   \
@@ -159,6 +159,7 @@ upgrade_old_installations:
 	-@test -d /data/db && sudo rmdir /data/db || :
 	-@test -d /data && sudo rmdir /data || :
 	-@$(foreach sh,$(wildcard *.sh), sed -i "/API_USERNAME/d" $(sh) || :;)
+	-@$(foreach json,$(wildcard /var/lib/K/cache/handshake.*), rm $(json) || :;)
 
 cleandb: /var/lib/K/db/K*
 	rm -rf /var/lib/K/db/K*.db

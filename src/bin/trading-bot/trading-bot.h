@@ -171,9 +171,9 @@ void TradingBot::terminal() {
     mvwhline(stdscr, ++yOrders, 1, ' ', x-1);
     wattron(stdscr, COLOR_PAIR(it.side == Side::Bid ? COLOR_CYAN : COLOR_MAGENTA));
     mvwaddstr(stdscr, yOrders, 1, (((it.side == Side::Bid ? "BID" : "ASK") + (" > "
-      + K.gateway->str(it.quantity))) + ' ' + K.gateway->base + " at price "
-      + K.gateway->str(it.price) + ' ' + K.gateway->quote + " (value "
-      + K.gateway->str(abs(it.price * it.quantity)) + ' ' + K.gateway->quote + ")"
+      + K.gateway->decimal.amount.str(it.quantity))) + ' ' + K.gateway->base + " at price "
+      + K.gateway->decimal.price.str(it.price) + ' ' + K.gateway->quote + " (value "
+      + K.gateway->decimal.price.str(abs(it.price * it.quantity)) + ' ' + K.gateway->quote + ")"
     ).data());
     wattroff(stdscr, COLOR_PAIR(it.side == Side::Bid ? COLOR_CYAN : COLOR_MAGENTA));
   }
@@ -209,8 +209,8 @@ void TradingBot::terminal() {
   mvwhline(stdscr, 1, 8, ACS_HLINE, 4);
   mvwaddch(stdscr, 1, 12, ACS_RTEE);
   wattron(stdscr, COLOR_PAIR(COLOR_MAGENTA));
-  const string baseValue  = K.gateway->str(engine.wallet.base.value),
-               quoteValue = K.gateway->str(engine.wallet.quote.value);
+  const string baseValue  = K.gateway->decimal.amount.str(engine.wallet.base.value),
+               quoteValue = K.gateway->decimal.price.str(engine.wallet.quote.value);
   wattron(stdscr, A_BOLD);
   waddstr(stdscr, (" " + baseValue + ' ').data());
   wattroff(stdscr, A_BOLD);
@@ -285,7 +285,7 @@ void TradingBot::terminal() {
     wattron(stdscr, COLOR_PAIR(COLOR_GREEN));
     waddstr(stdscr, (" 1 " + K.gateway->base + " = ").data());
     wattron(stdscr, A_BOLD);
-    waddstr(stdscr, K.gateway->str(engine.levels.fairValue).data());
+    waddstr(stdscr, K.gateway->decimal.price.str(engine.levels.fairValue).data());
     wattroff(stdscr, A_BOLD);
     waddstr(stdscr, (" " + K.gateway->quote).data());
     wattroff(stdscr, COLOR_PAIR(COLOR_GREEN));

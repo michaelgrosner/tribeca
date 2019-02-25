@@ -435,8 +435,8 @@ namespace ₿ {
           order
             ? order->orderId + "::" + order->exchangeId
               + " [" + to_string((int)order->status) + "]: "
-              + K.gateway->str(order->quantity) + " " + K.gateway->base + " at price "
-              + K.gateway->str(order->price) + " " + K.gateway->quote
+              + K.gateway->decimal.amount.str(order->quantity) + " " + K.gateway->base + " at price "
+              + K.gateway->decimal.price.str(order->price) + " " + K.gateway->quote
             : "not found"
         ));
       };
@@ -971,7 +971,7 @@ namespace ₿ {
              + bids.cbegin()->size
         );
         if (fairValue)
-          fairValue = K.gateway->dec(fairValue, abs(log10(K.gateway->minTick)));
+          fairValue = K.gateway->decimal.price.truncate(fairValue);
       };
       const vector<mLevel> filter(vector<mLevel> levels, unordered_map<Price, Amount> *const filterOrders) {
         if (!filterOrders->empty())
@@ -1033,7 +1033,7 @@ namespace ₿ {
         );
       };
       const double calcDiffPercent(Amount older, Amount newer) const {
-        return K.gateway->dec(((newer - older) / newer) * 1e+2, 2);
+        return K.gateway->decimal.percent.truncate(((newer - older) / newer) * 1e+2);
       };
       const mMatter about() const override {
         return mMatter::Profit;
@@ -1273,9 +1273,9 @@ namespace ₿ {
         };
         Print::log("GW " + K.gateway->exchange, string(filled.isPong?"PONG":"PING") + " TRADE "
           + (filled.side == Side::Bid ? "BUY  " : "SELL ")
-          + K.gateway->str(filled.quantity) + ' ' + K.gateway->base + " at price "
-          + K.gateway->str(filled.price) + ' ' + K.gateway->quote + " (value "
-          + K.gateway->str(filled.value) + ' ' + K.gateway->quote + ")"
+          + K.gateway->decimal.amount.str(filled.quantity) + ' ' + K.gateway->base + " at price "
+          + K.gateway->decimal.price.str(filled.price) + ' ' + K.gateway->quote + " (value "
+          + K.gateway->decimal.price.str(filled.value) + ' ' + K.gateway->quote + ")"
         );
         if (qp.safety == mQuotingSafety::Off or qp.safety == mQuotingSafety::PingPong or qp.safety == mQuotingSafety::PingPoing)
           broadcast_push_back(filled);
@@ -1663,12 +1663,13 @@ namespace ₿ {
       {};
       void calcTargetBasePos() {
         if (warn_empty()) return;
-        targetBasePosition = K.gateway->dec(qp.autoPositionMode == mAutoPositionMode::Manual
-          ? (qp.percentageValues
-            ? qp.targetBasePositionPercentage * baseValue / 1e+2
-            : qp.targetBasePosition)
-          : targetPositionAutoPercentage * baseValue / 1e+2
-        , 4);
+        targetBasePosition = K.gateway->decimal.amount.truncate(
+          qp.autoPositionMode == mAutoPositionMode::Manual
+            ? (qp.percentageValues
+              ? qp.targetBasePositionPercentage * baseValue / 1e+2
+              : qp.targetBasePosition)
+            : targetPositionAutoPercentage * baseValue / 1e+2
+        );
         calcPDiv();
         if (broadcast()) {
           backup();
@@ -1710,13 +1711,13 @@ namespace ₿ {
           else if (mPDivMode::SQRT == qp.positionDivergenceMode)   positionDivergence = pDivMin + (sqrt(divCenter) * (pDiv - pDivMin));
           else if (mPDivMode::Switch == qp.positionDivergenceMode) positionDivergence = divCenter < 1e-1 ? pDivMin : pDiv;
         }
-        positionDivergence = K.gateway->dec(positionDivergence, 4);
+        positionDivergence = K.gateway->decimal.amount.truncate(positionDivergence);
       };
       void report() const {
         Print::log("PG", "TBP: "
-          + to_string((int)(targetBasePosition / baseValue * 1e+2)) + "% = " + K.gateway->str(targetBasePosition)
+          + to_string((int)(targetBasePosition / baseValue * 1e+2)) + "% = " + K.gateway->decimal.amount.str(targetBasePosition)
           + " " + K.gateway->base + ", pDiv: "
-          + to_string((int)(positionDivergence / baseValue * 1e+2)) + "% = " + K.gateway->str(positionDivergence)
+          + to_string((int)(positionDivergence / baseValue * 1e+2)) + "% = " + K.gateway->decimal.amount.str(positionDivergence)
           + " " + K.gateway->base);
       };
       const string explain() const override {
@@ -2386,28 +2387,29 @@ namespace ₿ {
           );
       };
       void applyRoundSize() {
-        if (!quotes.ask.empty())
-          quotes.ask.size = round(fmax(
-            fmin(
-              quotes.ask.size,
-              floor(wallet.base.total / K.gateway->minSize) * K.gateway->minSize
-            ),
-            K.gateway->minSize
-          ) / K.gateway->minSize) * K.gateway->minSize;
         if (!quotes.bid.empty())
-          quotes.bid.size = round(fmax(
-            fmin(
+          quotes.bid.size = K.gateway->decimal.amount.truncate(
+            fmax(K.gateway->minSize, fmin(
               quotes.bid.size,
-              floor((wallet.quote.total / quotes.bid.price) / K.gateway->minSize) * K.gateway->minSize
-            ),
-            K.gateway->minSize
-          ) / K.gateway->minSize) * K.gateway->minSize;
+              (K.gateway->decimal.price.truncate(wallet.quote.total) * (1 - K.gateway->takeFee)) / quotes.bid.price
+            ))
+          );
+        if (!quotes.ask.empty())
+          quotes.ask.size = K.gateway->decimal.amount.truncate(
+            fmax(K.gateway->minSize, fmin(
+              quotes.ask.size,
+              wallet.base.total
+            ))
+          );
       };
       void applyDepleted() {
+        const double epsilon = pow(10, -1 * K.gateway->decimal.amount.stream.precision());
         if (!quotes.bid.empty()
-          and quotes.bid.size > wallet.quote.total / quotes.bid.price
+          and abs(quotes.bid.size - (K.gateway->decimal.price.truncate(wallet.quote.total) / quotes.bid.price)) > epsilon
+          and quotes.bid.size > K.gateway->decimal.price.truncate(wallet.quote.total) / quotes.bid.price
         ) quotes.bid.clear(mQuoteState::DepletedFunds);
         if (!quotes.ask.empty()
+          and abs(quotes.ask.size - wallet.base.total) > epsilon
           and quotes.ask.size > wallet.base.total
         ) quotes.ask.clear(mQuoteState::DepletedFunds);
       };
@@ -2592,7 +2594,6 @@ namespace ₿ {
           {       "base", K.gateway->base            },
           {      "quote", K.gateway->quote           },
           {    "minTick", K.gateway->minTick         },
-          {    "minSize", K.gateway->minSize         },
           {       "inet", string(Curl::inet ?: "")   },
           {"environment", K.arg<string>("title")     },
           { "matryoshka", K.arg<string>("matryoshka")}

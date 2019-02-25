@@ -63,7 +63,7 @@ export class OrdersComponent implements OnInit {
         sort: 'desc',  cellClass: (params) => {
         return (params.data.side === 'Ask') ? "sell" : "buy";
       }, cellRendererFramework: QuoteCurrencyCellComponent},
-      { width: 70, suppressSizeToFit: true, field: 'qty', headerName: 'qty', cellClass: (params) => {
+      { width: 85, suppressSizeToFit: true, field: 'qty', headerName: 'qty', cellClass: (params) => {
         return (params.data.side === 'Ask') ? "sell" : "buy";
       }, cellRendererFramework: BaseCurrencyCellComponent},
       { width: 74, field: 'value', headerName: 'value', cellClass: (params) => {

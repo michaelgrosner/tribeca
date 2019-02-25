@@ -344,8 +344,32 @@ namespace ₿ {
       }
   };
 
+  class Decimal {
+    public:
+      stringstream stream;
+    public:
+      Decimal()
+      {
+        stream << fixed;
+      };
+      const double truncate(const double &input) const {
+        const double points = pow(10, -1 * stream.precision());
+        return floor(input / points) * points;
+      };
+      const string str(const double &input) {
+        stream.str("");
+        stream << truncate(input);
+        return stream.str();
+      };
+  };
+
   class GwExchangeData {
     public:
+      struct {
+        Decimal price;
+        Decimal amount;
+        Decimal percent;
+      } decimal;
       uWS::Group<uWS::CLIENT> *api = nullptr;
       function<void(const mOrder&)>       write_mOrder;
       function<void(const mTrade&)>       write_mTrade;
@@ -358,21 +382,12 @@ namespace ₿ {
       const RandId (*randId)() = nullptr;
       virtual const bool askForData(const unsigned int &tick) = 0;
       virtual const bool waitForData() = 0;
-      const double dec(const double &input, const unsigned int &precision = 0) {
-        const double points = pow(10, -1 * (precision ?: decimal.precision()));
-        return round(input / points) * points;
-      };
-      const string str(const double &input) {
-        decimal.str("");
-        decimal << input;
-        return decimal.str();
-      };
       void place(const mOrder *const order) {
         place(
           order->orderId,
           order->side,
-          str(order->price),
-          str(order->quantity),
+          decimal.price.str(order->price),
+          decimal.amount.str(order->quantity),
           order->type,
           order->timeInForce,
           order->disablePostOnly
@@ -381,7 +396,7 @@ namespace ₿ {
       void replace(const mOrder *const order) {
         replace(
           order->exchangeId,
-          str(order->price)
+          decimal.price.str(order->price)
         );
       };
       void cancel(const mOrder *const order) {
@@ -458,7 +473,6 @@ namespace ₿ {
         }
         return waiting;
       };
-      stringstream decimal;
   };
 
   class GwExchange: public GwExchangeData {
@@ -497,6 +511,8 @@ namespace ₿ {
           reply = handshake();
         minTick = reply.value("minTick", 0.0);
         minSize = reply.value("minSize", 0.0);
+        makeFee = reply.value("makeFee", 0.0);
+        takeFee = reply.value("takeFee", 0.0);
         if (!file.is_open() and minTick and minSize) {
           file.open(cache, fstream::out | fstream::trunc);
           file << reply.dump();
@@ -516,15 +532,15 @@ namespace ₿ {
         api->close();
       };
       void info(vector<pair<string, string>> notes, const bool &nocache) {
-        if (exchange != "NULL") log("allows client IP");
-        decimal << fixed;
-        decimal.precision(minTick < 1e-8 ? 10 : 8);
+        decimal.price.stream.precision(abs(log10(minTick)));
+        decimal.amount.stream.precision(minTick < 1e-8 ? 10 : 8);
+        decimal.percent.stream.precision(2);
         for (pair<string, string> it : (vector<pair<string, string>>){
           {"symbols", base + "/" + quote},
-          {"minTick", str(minTick)      },
-          {"minSize", str(minSize)      },
-          {"makeFee", str(makeFee)      },
-          {"takeFee", str(takeFee)      }
+          {"minTick", decimal.amount.str(minTick)              },
+          {"minSize", decimal.amount.str(minSize)              },
+          {"makeFee", decimal.percent.str(makeFee * 1e+2) + "%"},
+          {"takeFee", decimal.percent.str(takeFee * 1e+2) + "%"}
         }) notes.push_back(it);
         string info = "handshake:";
         for (pair<string, string> &it : notes)
@@ -605,6 +621,8 @@ namespace ₿ {
         return {
           {"minTick", 0.01   },
           {"minSize", 0.01   },
+          {"makeFee", 0.0    },
+          {"takeFee", 0.0    },
           {  "reply", nullptr}
         };
       };
@@ -620,9 +638,11 @@ namespace ₿ {
       const json handshake() override {
         const json reply = Curl::xfer(http + "/public/symbol/" + base + quote);
         return {
-          {"minTick", stod(reply.value("tickSize", "0"))         },
-          {"minSize", stod(reply.value("quantityIncrement", "0"))},
-          {  "reply", reply                                      }
+          {"minTick", stod(reply.value("tickSize", "0"))            },
+          {"minSize", stod(reply.value("quantityIncrement", "0"))   },
+          {"makeFee", stod(reply.value("provideLiquidityRate", "0"))},
+          {"takeFee", stod(reply.value("takeLiquidityRate", "0"))   },
+          {  "reply", reply                                         }
         };
       };
     protected:
@@ -649,6 +669,8 @@ namespace ₿ {
         return {
           {"minTick", stod(reply.value("quote_increment", "0"))},
           {"minSize", stod(reply.value("base_min_size", "0"))  },
+          {"makeFee", 0.0                                      },
+          {"takeFee", 0.0                                      },
           {  "reply", reply                                    }
         };
       };
@@ -698,6 +720,8 @@ namespace ₿ {
         return {
           {"minTick", minTick          },
           {"minSize", minSize          },
+          {"makeFee", 0.0              },
+          {"takeFee", 0.0              },
           {  "reply", {reply1, reply2 }}
         };
       };
@@ -746,6 +770,8 @@ namespace ₿ {
         return {
           {"minTick", minTick},
           {"minSize", minSize},
+          {"makeFee", 0.0    },
+          {"takeFee", 0.0    },
           {  "reply", reply  }
         };
       };
@@ -788,6 +814,8 @@ namespace ₿ {
         return {
           {"minTick", minTick},
           {"minSize", minSize},
+          {"makeFee", 0.0    },
+          {"takeFee", 0.0    },
           {  "reply", reply  }
         };
       };
@@ -819,6 +847,8 @@ namespace ₿ {
         return {
           {"minTick", minTick},
           {"minSize", 0.001  },
+          {"makeFee", 0.0    },
+          {"takeFee", 0.0    },
           {  "reply", reply  }
         };
       };

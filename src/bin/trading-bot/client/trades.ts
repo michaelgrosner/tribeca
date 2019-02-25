@@ -87,7 +87,7 @@ export class TradesComponent implements OnInit {
       {width: 80, field:'price', headerValueGetter:(params) => { return 'px' + this.headerNameMod; }, cellClass: (params) => {
         if (params.data.side === 'K') return (params.data.price > params.data.Kprice) ? "sell" : "buy"; else return params.data.side === 'Sell' ? "sell" : "buy";
       }, cellRendererFramework: QuoteCurrencyCellComponent},
-      {width: 65, suppressSizeToFit: true, field:'quantity', headerValueGetter:(params) => { return 'qty' + this.headerNameMod; }, cellClass: (params) => {
+      {width: 85, suppressSizeToFit: true, field:'quantity', headerValueGetter:(params) => { return 'qty' + this.headerNameMod; }, cellClass: (params) => {
         if (params.data.side === 'K') return (params.data.price > params.data.Kprice) ? "sell" : "buy"; else return params.data.side === 'Sell' ? "sell" : "buy";
       }, cellRendererFramework: BaseCurrencyCellComponent},
       {width: 69, field:'value', headerValueGetter:(params) => { return 'val' + this.headerNameMod; }, cellClass: (params) => {
@@ -96,7 +96,7 @@ export class TradesComponent implements OnInit {
       {width: 75, field:'Kvalue', headerName:'valPong', hide:true, cellClass: (params) => {
         if (params.data.side === 'K') return (params.data.price < params.data.Kprice) ? "sell" : "buy"; else return params.data.Kqty ? ((params.data.price < params.data.Kprice) ? "sell" : "buy") : "";
       }, cellRendererFramework: QuoteCurrencyCellComponent},
-      {width: 65, suppressSizeToFit: true, field:'Kqty', headerName:'qtyPong', hide:true, cellClass: (params) => {
+      {width: 85, suppressSizeToFit: true, field:'Kqty', headerName:'qtyPong', hide:true, cellClass: (params) => {
         if (params.data.side === 'K') return (params.data.price < params.data.Kprice) ? "sell" : "buy"; else return params.data.Kqty ? ((params.data.price < params.data.Kprice) ? "sell" : "buy") : "";
       }, cellRendererFramework: BaseCurrencyCellComponent},
       {width: 80, field:'Kprice', headerName:'pxPong', hide:true, cellClass: (params) => {
