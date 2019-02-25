@@ -971,7 +971,7 @@ namespace ₿ {
              + bids.cbegin()->size
         );
         if (fairValue)
-          fairValue = K.gateway->decimal.price.truncate(fairValue);
+          fairValue = round(fairValue / K.gateway->minTick) * K.gateway->minTick;
       };
       const vector<mLevel> filter(vector<mLevel> levels, unordered_map<Price, Amount> *const filterOrders) {
         if (!filterOrders->empty())
