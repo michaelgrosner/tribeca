@@ -366,9 +366,9 @@ namespace ₿ {
   class GwExchangeData {
     public:
       struct {
-        Decimal price;
-        Decimal amount;
-        Decimal percent;
+        Decimal price,
+                amount,
+                percent;
       } decimal;
       uWS::Group<uWS::CLIENT> *api = nullptr;
       function<void(const mOrder&)>       write_mOrder;

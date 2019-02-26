@@ -1,13 +1,16 @@
+KDOC = /var/lib/K/doc
+
 all doc: clean
+	@mkdir -p $(KDOC)
 	doxygen
-	@test -d html.css || git clone git://github.com/mosra/m.css html.css
-	python3.6 html.css/doxygen/dox2html5.py Dopyfile
+	@test -d $(KDOC)/html.css || git clone git://github.com/mosra/m.css $(KDOC)/html.css
+	python3.6 $(KDOC)/html.css/doxygen/dox2html5.py Dopyfile
 	@rm -rf xml
 
 clean:
-	@rm -vrf html4 html5
+	@rm -vrf $(KDOC)/html{4,5}
 
 CLEAN:
-	@rm -vrf html*
+	@rm -vrf $(KDOC)/html*
 
 .PHONY: all doc clean CLEAN

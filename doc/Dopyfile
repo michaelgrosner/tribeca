@@ -1,5 +1,5 @@
 @INCLUDE               = Doxyfile
-HTML_OUTPUT            = html5
+HTML_OUTPUT            = /var/lib/K/doc/html5
 GENERATE_HTML          = NO
 GENERATE_XML           = YES
 XML_PROGRAMLISTING     = NO
