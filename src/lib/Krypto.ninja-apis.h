@@ -621,8 +621,6 @@ namespace ₿ {
         return {
           {"minTick", 0.01   },
           {"minSize", 0.01   },
-          {"makeFee", 0.0    },
-          {"takeFee", 0.0    },
           {  "reply", nullptr}
         };
       };
@@ -669,8 +667,6 @@ namespace ₿ {
         return {
           {"minTick", stod(reply.value("quote_increment", "0"))},
           {"minSize", stod(reply.value("base_min_size", "0"))  },
-          {"makeFee", 0.0                                      },
-          {"takeFee", 0.0                                      },
           {  "reply", reply                                    }
         };
       };
@@ -720,8 +716,6 @@ namespace ₿ {
         return {
           {"minTick", minTick          },
           {"minSize", minSize          },
-          {"makeFee", 0.0              },
-          {"takeFee", 0.0              },
           {  "reply", {reply1, reply2 }}
         };
       };
@@ -770,8 +764,6 @@ namespace ₿ {
         return {
           {"minTick", minTick},
           {"minSize", minSize},
-          {"makeFee", 0.0    },
-          {"takeFee", 0.0    },
           {  "reply", reply  }
         };
       };
@@ -814,8 +806,6 @@ namespace ₿ {
         return {
           {"minTick", minTick},
           {"minSize", minSize},
-          {"makeFee", 0.0    },
-          {"takeFee", 0.0    },
           {  "reply", reply  }
         };
       };
@@ -847,8 +837,6 @@ namespace ₿ {
         return {
           {"minTick", minTick},
           {"minSize", 0.001  },
-          {"makeFee", 0.0    },
-          {"takeFee", 0.0    },
           {  "reply", reply  }
         };
       };
