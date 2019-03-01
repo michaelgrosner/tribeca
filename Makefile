@@ -154,11 +154,6 @@ download:
 	@$(MAKE) upgrade_old_installations -s
 
 upgrade_old_installations:
-	-@$(foreach db,$(wildcard /data/db/K*.db), mv $(db) /var/lib/K/db;)
-	-@$(foreach db,$(wildcard /var/lib/K/db/K.*), mv $(db) $(shell echo $(db) | sed 's/\(.*\/K\/db\/\)K\.\(.*\)/\1K-trading-bot\.\2/');)
-	-@test -d /data/db && sudo rmdir /data/db || :
-	-@test -d /data && sudo rmdir /data || :
-	-@$(foreach sh,$(wildcard *.sh), sed -i "/API_USERNAME/d" $(sh) || :;)
 	-@$(foreach json,$(wildcard /var/lib/K/cache/handshake.*), rm $(json) || :;)
 
 cleandb: /var/lib/K/db/K*
@@ -191,7 +186,7 @@ system_install:
 install: packages
 	@yes = | head -n`expr $(shell tput cols) / 2` | xargs echo && echo " _  __\n| |/ /  v$(MAJOR).$(MINOR).$(PATCH)+$(BUILD)\n| ' /\n| . \\   Select your (beloved) architecture\n|_|\\_\\  to download pre-compiled binaries:\n"
 	@echo $(CARCH) | tr ' ' "\n" | cat -n && echo "\n(Hint! uname says \"`uname -sm`\", and win32 auto-install does not work yet)\n"
-	@read -p "[`echo $(CARCH) | tr ' ' "\n" | cat -n | tr "\t" ' ' | sed 's/ *\([0-9]\) .*/\1/' | tr "\n" '/' | sed 's/^\(.*\)\/$$/\1/'`]: " chost && $(MAKE) download CHOST=`echo $(CARCH) | cut -d ' ' -f$${chost}`
+	@read -p "[$(shell seq -s / `echo $(CARCH) | tr ' ' "\n" | wc -l`)]: " chost && $(MAKE) download CHOST=`echo $(CARCH) | cut -d ' ' -f$${chost}`
 
 docker: packages download
 	@sed -i "/Usage/,+86d" K.sh
