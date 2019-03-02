@@ -1765,8 +1765,7 @@ namespace ₿ {
         if (raw.base.currency.empty() or raw.quote.currency.empty()) return;
         base.currency = raw.base.currency;
         quote.currency = raw.quote.currency;
-        mWallet::reset(raw.base.amount, raw.base.held, &base);
-        mWallet::reset(raw.quote.amount, raw.quote.held, &quote);
+        calcMaxFunds(raw, K.arg<double>("wallet-limit"));
         calcFunds();
       };
       void calcFunds() {
@@ -1797,8 +1796,6 @@ namespace ₿ {
     private:
       void calcFundsSilently() {
         if (base.currency.empty() or quote.currency.empty() or !fairValue) return;
-        if (K.arg<double>("wallet-limit"))
-          calcMaxWallet(K.arg<double>("wallet-limit"));
         calcValues();
         calcProfits();
         target.calcTargetBasePos();
@@ -1820,15 +1817,19 @@ namespace ₿ {
         base.profit  = profits.calcBaseDiff();
         quote.profit = profits.calcQuoteDiff();
       };
-      void calcMaxWallet(Amount maxWallet) {
-        maxWallet -= quote.held / fairValue;
-        if (maxWallet > 0 and quote.amount / fairValue > maxWallet) {
-          quote.amount = maxWallet * fairValue;
-          maxWallet = 0;
-        } else maxWallet -= quote.amount / fairValue;
-        maxWallet -= base.held;
-        if (maxWallet > 0 and base.amount > maxWallet)
-          base.amount = maxWallet;
+      void calcMaxFunds(mWallets raw, Amount limit) {
+        if (limit) {
+          limit -= raw.quote.held / fairValue;
+          if (limit > 0 and raw.quote.amount / fairValue > limit) {
+            raw.quote.amount = limit * fairValue;
+            raw.base.amount = limit = 0;
+          } else limit -= raw.quote.amount / fairValue;
+          limit -= raw.base.held;
+          if (limit > 0 and raw.base.amount > limit)
+            raw.base.amount = limit;
+        }
+        mWallet::reset(raw.base.amount, raw.base.held, &base);
+        mWallet::reset(raw.quote.amount, raw.quote.held, &quote);
       };
   };
 
