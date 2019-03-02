@@ -531,7 +531,7 @@ namespace ₿ {
         close();
         api->close();
       };
-      void info(vector<pair<string, string>> notes, const bool &nocache) {
+      void report(vector<pair<string, string>> notes, const bool &nocache) {
         decimal.price.stream.precision(abs(log10(minTick)));
         decimal.amount.stream.precision(minTick < 1e-8 ? 10 : 8);
         decimal.percent.stream.precision(2);
@@ -542,11 +542,11 @@ namespace ₿ {
           {"makeFee", decimal.percent.str(makeFee * 1e+2) + "%"},
           {"takeFee", decimal.percent.str(takeFee * 1e+2) + "%"}
         }) notes.push_back(it);
-        string info = "handshake:";
+        string note = "handshake:";
         for (pair<string, string> &it : notes)
           if (!it.second.empty())
-            info += "\n- " + it.first + ": " + it.second;
-        log((nocache ? "" : "cached ") + info);
+            note += "\n- " + it.first + ": " + it.second;
+        log((nocache ? "" : "cached ") + note);
       };
       void latency(const string &reason, const function<void()> &fn) {
         log("latency check", "start");

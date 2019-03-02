@@ -759,6 +759,7 @@ namespace ₿ {
 
   class mFromDb: public mBlob {
     public:
+      using Report = pair<bool, string>;
       void backup() const {
         if (push) push();
       };
@@ -767,22 +768,19 @@ namespace ₿ {
         = []() { WARN("Y U NO catch sqlite push?"); }
 #endif
       ;
-      virtual       void   pull(const json &j) = 0;
+      virtual const Report pull(const json &j) = 0;
       virtual const string increment() const { return "NULL"; };
       virtual const double limit()     const { return 0; };
       virtual const Clock  lifetime()  const { return 0; };
     protected:
-      void log(const bool &empty) const {
+      const Report report(const bool &empty) const {
         string msg = empty
           ? explainKO()
           : explainOK();
-        if (msg.empty()) return;
         const size_t token = msg.find("%");
         if (token != string::npos)
           msg.replace(token, 1, explain());
-        if (empty)
-          Print::logWar("DB", msg);
-        else Print::log("DB", msg);
+        return {empty, msg};
       };
     private:
       virtual const string explain()   const = 0;
@@ -931,7 +929,7 @@ namespace ₿ {
           Print::log("DB", "loaded OK from", diskdata);
         }
         for (auto &it : tables) {
-          it->pull(select(it));
+          report(it->pull(select(it)));
           it->push = [this, it]() {
             insert(it);
           };
@@ -944,6 +942,11 @@ namespace ₿ {
         tables.clear();
       };
     private:
+      void report(const mFromDb::Report note) const {
+        if (note.first)
+          Print::logWar("DB", note.second);
+        else Print::log("DB", note.second);
+      };
       const json select(mFromDb *const data) {
         const string table = schema(data);
         json result = json::array();
@@ -1221,9 +1224,9 @@ namespace ₿ {
       const json blob() const override {
         return *(T*)this;
       };
-      void pull(const json &j) override {
+      const Report pull(const json &j) override {
         from_json(j.empty() ? blob() : j.at(0), *(T*)this);
-        log(j.empty());
+        return report(j.empty());
       };
     private:
       string explainOK() const override {
@@ -1268,10 +1271,10 @@ namespace ₿ {
         backup();
         erase();
       };
-      void pull(const json &j) override {
+      const Report pull(const json &j) override {
         for (const json &it : j)
           rows.push_back(it);
-        log(empty());
+        return report(empty());
       };
       const json blob() const override {
         return back();
@@ -1468,7 +1471,7 @@ namespace ₿ {
           error("GW", "Unable to fetch data from " + gateway->exchange
             + " for symbols " + gateway->base + "/" + gateway->quote
             + ", possible error message: " + reply.dump());
-        gateway->info(notes, arg<int>("nocache"));
+        gateway->report(notes, arg<int>("nocache"));
       };
       const unsigned int memSize() const {
 #ifdef _WIN32

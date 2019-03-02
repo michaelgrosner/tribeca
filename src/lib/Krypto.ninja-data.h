@@ -1039,8 +1039,9 @@ namespace ₿ {
         return mMatter::Profit;
       };
       void erase() override {
+        const Clock now = Tstamp;
         for (auto it = begin(); it != end();)
-          if (it->time + lifetime() > Tstamp) ++it;
+          if (it->time + lifetime() > now) ++it;
           else it = rows.erase(it);
       };
       const double limit() const override {
