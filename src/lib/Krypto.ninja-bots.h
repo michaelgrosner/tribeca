@@ -712,100 +712,16 @@ namespace ₿ {
       };
   };
 
-  class mAbout {
-    public:
-      enum class mMatter: char {
-        FairValue            = 'a',                                                       Connectivity       = 'd',
-        MarketData           = 'e', QuotingParameters    = 'f',
-        OrderStatusReports   = 'i', ProductAdvertisement = 'j', ApplicationState   = 'k', EWMAStats          = 'l',
-        STDEVStats           = 'm', Position             = 'n', Profit             = 'o', SubmitNewOrder     = 'p',
-        CancelOrder          = 'q', MarketTrade          = 'r', Trades             = 's',
-        QuoteStatus          = 'u', TargetBasePosition   = 'v', TradeSafetyValue   = 'w', CancelAllOrders    = 'x',
-        CleanAllClosedTrades = 'y', CleanAllTrades       = 'z', CleanTrade         = 'A',
-                                    MarketChart          = 'D', Notepad            = 'E',
-                                    MarketDataLongTerm   = 'H'
-      };
-    public:
-      virtual const mMatter about() const = 0;
-      const bool persist() const {
-        return about() == mMatter::QuotingParameters;
-      };
-  };
-
-  class mBlob: virtual public mAbout {
-    public:
-      virtual const json blob() const = 0;
-  };
-
-  class mFromClient: virtual public mAbout {
-    public:
-      virtual void edit(const json&) = 0;
-  };
-
-  class mToClient: public mBlob {
-    public:
-      function<void()> broadcast
-#ifndef NDEBUG
-      = []() { WARN("Y U NO catch client broadcast?"); }
-#endif
-      ;
-      virtual const json hello() {
-        return { blob() };
-      };
-      virtual const bool realtime() const {
-        return true;
-      };
-  };
-
-  class mFromDb: public mBlob {
-    public:
-      using Report = pair<bool, string>;
-      void backup() const {
-        if (push) push();
-      };
-      function<void()> push
-#ifndef NDEBUG
-        = []() { WARN("Y U NO catch sqlite push?"); }
-#endif
-      ;
-      virtual const Report pull(const json &j) = 0;
-      virtual const string increment() const { return "NULL"; };
-      virtual const double limit()     const { return 0; };
-      virtual const Clock  lifetime()  const { return 0; };
-    protected:
-      const Report report(const bool &empty) const {
-        string msg = empty
-          ? explainKO()
-          : explainOK();
-        const size_t token = msg.find("%");
-        if (token != string::npos)
-          msg.replace(token, 1, explain());
-        return {empty, msg};
-      };
-    private:
-      virtual const string explain()   const = 0;
-      virtual       string explainOK() const = 0;
-      virtual       string explainKO() const { return ""; };
-  };
-
   class Events {
     private:
       uS::Timer *timer = nullptr;
       uS::Async *loop  = nullptr;
               unsigned int tick  = 0;
       mutable unsigned int ticks = 300;
-      mutable unordered_map<const mFromClient*, vector<function<void(const json&)>>> editFn;
       vector<function<const bool(const unsigned int&)>> timeFn;
       mutable vector<function<const bool()>> waitFn;
       mutable vector<function<void()>> slowFn;
     public:
-      void edited(const mFromClient *data, const function<void(const json&)> &fn) const {
-        editFn[data].push_back(fn);
-      };
-      void edited(const mFromClient *data, const json &j = nullptr) const {
-        if (editFn.find(data) != editFn.end())
-          for (const auto &it : editFn.at(data)) it(j);
-      };
       void timer_ticks_factor(const unsigned int &factor) const {
         ticks = 300 * (factor ?: 1);
       };
@@ -854,7 +770,20 @@ namespace ₿ {
       };
   };
 
-  class Hotkey {
+  class Clicks: public CatchClicks::Glue {
+    private:
+      mutable unordered_map<const Clickable*, vector<function<void(const json&)>>> clickFn;
+    public:
+      void clicked(const Clickable *data, const function<void(const json&)> &fn) const {
+        clickFn[data].push_back(fn);
+      };
+      void clicked(const Clickable *data, const json &j = nullptr) const {
+        if (clickFn.find(data) != clickFn.end())
+          for (const auto &it : clickFn.at(data)) it(j);
+      };
+  };
+
+  class Hotkey: public CatchHotkey::Glue {
     private_ref:
       const Events &events;
     public:
@@ -905,9 +834,7 @@ namespace ₿ {
       };
   };
 
-  class Sqlite {
-    public:
-      mutable vector<mFromDb*> tables;
+  class Sqlite: public Backup::Glue {
     protected:
       bool databases = false;
     private:
@@ -942,12 +869,13 @@ namespace ₿ {
         tables.clear();
       };
     private:
-      void report(const mFromDb::Report note) const {
+      void report(const Backup::Report note) const {
+        if (note.second.empty()) return;
         if (note.first)
           Print::logWar("DB", note.second);
         else Print::log("DB", note.second);
       };
-      const json select(mFromDb *const data) {
+      const json select(Backup *const data) {
         const string table = schema(data);
         json result = json::array();
         exec(
@@ -958,7 +886,7 @@ namespace ₿ {
         );
         return result;
       };
-      void insert(mFromDb *const data) {
+      void insert(Backup *const data) {
         const string table    = schema(data);
         const json   blob     = data->blob();
         const double limit    = data->limit();
@@ -981,7 +909,7 @@ namespace ₿ {
           exec(sql);
         });
       };
-      const string schema(mFromDb *const data) const {
+      const string schema(Backup *const data) const {
         return (
           data->persist()
             ? disk
@@ -1012,13 +940,12 @@ namespace ₿ {
       };
   };
 
-  class Client {
+  class Client: public Readable::Glue,
+                public Clickable::Glue {
     public:
       string protocol = "HTTP";
       int connections = 0;
       mutable unsigned int delay = 0;
-      mutable vector<mToClient*>   readable;
-      mutable vector<mFromClient*> editable;
     protected:
       uWS::Group<uWS::SERVER> *webui = nullptr;
       unordered_map<string, pair<const char*, const int>> documents;
@@ -1061,7 +988,7 @@ namespace ₿ {
       };
       void welcome() {
         for (auto &it : readable) {
-          it->broadcast = [&]() {
+          it->read = [&]() {
             if (connections) {
               queue[(char)it->about()] = it->blob().dump();
               if (it->realtime() or !delay) broadcast();
@@ -1072,18 +999,18 @@ namespace ₿ {
           };
         }
         readable.clear();
-        for (auto &it : editable) {
+        for (auto &it : clickable) {
           kisses[(char)it->about()] = [&](const json &butterfly) {
-            it->edit(butterfly);
+            it->click(butterfly);
           };
         }
-        editable.clear();
+        clickable.clear();
       };
       void headless() {
         for (auto &it : readable)
-          it->broadcast = nullptr;
+          it->read = nullptr;
         readable.clear();
-        editable.clear();
+        clickable.clear();
         documents.clear();
       };
       function<const bool(const bool&, const string&)> wsServer = [&](
@@ -1208,157 +1135,6 @@ namespace ₿ {
       };
   };
 
-  class mBackupFromDb: public mFromDb {
-    public:
-      mBackupFromDb(const Sqlite &s)
-      {
-        s.tables.push_back(this);
-      };
-  };
-
-  template <typename T> class mStructFromDb: public mBackupFromDb {
-    public:
-      mStructFromDb(const Sqlite &s)
-        : mBackupFromDb(s)
-      {};
-      const json blob() const override {
-        return *(T*)this;
-      };
-      const Report pull(const json &j) override {
-        from_json(j.empty() ? blob() : j.at(0), *(T*)this);
-        return report(j.empty());
-      };
-    private:
-      string explainOK() const override {
-        return "loaded last % OK";
-      };
-  };
-
-  template <typename T> class mVectorFromDb: public mBackupFromDb {
-    public:
-      mVectorFromDb(const Sqlite &s)
-        : mBackupFromDb(s)
-      {};
-      vector<T> rows;
-      using reference              = typename vector<T>::reference;
-      using const_reference        = typename vector<T>::const_reference;
-      using iterator               = typename vector<T>::iterator;
-      using const_iterator         = typename vector<T>::const_iterator;
-      using reverse_iterator       = typename vector<T>::reverse_iterator;
-      using const_reverse_iterator = typename vector<T>::const_reverse_iterator;
-      iterator                 begin()       noexcept { return rows.begin();   };
-      const_iterator           begin() const noexcept { return rows.begin();   };
-      const_iterator          cbegin() const noexcept { return rows.cbegin();  };
-      iterator                   end()       noexcept { return rows.end();     };
-      const_iterator             end() const noexcept { return rows.end();     };
-      reverse_iterator        rbegin()       noexcept { return rows.rbegin();  };
-      const_reverse_iterator crbegin() const noexcept { return rows.crbegin(); };
-      reverse_iterator          rend()       noexcept { return rows.rend();    };
-      bool                     empty() const noexcept { return rows.empty();   };
-      size_t                    size() const noexcept { return rows.size();    };
-      reference                front()                { return rows.front();   };
-      const_reference          front() const          { return rows.front();   };
-      reference                 back()                { return rows.back();    };
-      const_reference           back() const          { return rows.back();    };
-      reference                   at(size_t n)        { return rows.at(n);     };
-      const_reference             at(size_t n) const  { return rows.at(n);     };
-      virtual void erase() {
-        if (size() > limit())
-          rows.erase(begin(), end() - limit());
-      };
-      virtual void push_back(const T &row) {
-        rows.push_back(row);
-        backup();
-        erase();
-      };
-      const Report pull(const json &j) override {
-        for (const json &it : j)
-          rows.push_back(it);
-        return report(empty());
-      };
-      const json blob() const override {
-        return back();
-      };
-    private:
-      const string explain() const override {
-        return to_string(size());
-      };
-  };
-
-  class mJsonFromClient: public mFromClient {
-    public:
-      mJsonFromClient(const Client &c)
-      {
-        c.editable.push_back(this);
-      };
-  };
-
-  class mCatchHotkeys {
-    public:
-      mCatchHotkeys(const Hotkey &h, const vector<pair<const char, const function<void()>>> &hotkey)
-      {
-        for (const auto &it : hotkey)
-          h.hotkey(it.first, it.second);
-      };
-  };
-
-  class mCatchEdits {
-    public:
-      mCatchEdits(const Events &e, const vector<pair<const mFromClient*, variant<
-        const function<void()>,
-        const function<void(const json&)>
-      >>> &edited)
-      {
-        for (const auto &it : edited)
-          e.edited(
-            it.first,
-            holds_alternative<const function<void()>>(it.second)
-              ? [it](const json &j) { get<const function<void()>>(it.second)(); }
-              : get<const function<void(const json&)>>(it.second)
-          );
-      };
-  };
-
-  template <typename T> class mJsonToClient: public mToClient {
-    public:
-      mJsonToClient(const Client &c)
-      {
-        c.readable.push_back(this);
-      };
-      const bool broadcast() {
-        if ((send_asap() or send_soon())
-          and (send_same_blob() or diff_blob())
-        ) {
-          if (mToClient::broadcast) mToClient::broadcast();
-          return true;
-        }
-        return false;
-      };
-      const json blob() const override {
-        return *(T*)this;
-      };
-    protected:
-      Clock send_last_Tstamp = 0;
-      string send_last_blob;
-      virtual const bool send_same_blob() const {
-        return true;
-      };
-      const bool diff_blob() {
-        const string last_blob = send_last_blob;
-        return (send_last_blob = blob().dump()) != last_blob;
-      };
-      virtual const bool send_asap() const {
-        return true;
-      };
-      const bool send_soon(const int &delay = 0) {
-        const Clock now = Tstamp;
-        if (send_last_Tstamp + max(369, delay) > now)
-          return false;
-        send_last_Tstamp = now;
-        return true;
-      };
-  };
-
   //! \brief Placeholder to avoid spaghetti codes.
   //! - Walks through minimal runtime steps when wait() is called.
   class Klass {
@@ -1380,6 +1156,7 @@ namespace ₿ {
                      public Option,
                      public Socket,
                      public Events,
+                     public Clicks,
                      public Hotkey,
                      public Sqlite,
                      public Client {

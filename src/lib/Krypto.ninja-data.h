@@ -48,9 +48,9 @@ namespace ₿ {
     ShortPingAggressive, AveragePingAggressive, LongPingAggressive
   };
 
-  struct mQuotingParams: public mStructFromDb<mQuotingParams>,
-                         public mJsonToClient<mQuotingParams>,
-                         public mJsonFromClient {
+  struct mQuotingParams: public StructBackup<mQuotingParams>,
+                         public Broadcast<mQuotingParams>,
+                         public Clickable {
     Price             widthPing                       = 300.0;
     double            widthPingPercentage             = 0.25;
     Price             widthPong                       = 300.0;
@@ -115,9 +115,9 @@ namespace ₿ {
       const KryptoNinja &K;
     public:
       mQuotingParams(const KryptoNinja &bot)
-        : mStructFromDb(bot)
-        , mJsonToClient(bot)
-        , mJsonFromClient(bot)
+        : StructBackup(bot)
+        , Broadcast(bot)
+        , Clickable(bot)
         , K(bot)
       {};
       void from_json(const json &j) {
@@ -202,10 +202,10 @@ namespace ₿ {
           _diffEwma |= (previous[4] != extraShortEwmaPeriods) << 4;
           _diffEwma |= (previous[5] != ultraShortEwmaPeriods) << 5;
         }
-        K.edited(this);
+        K.clicked(this);
         _diffEwma = 0;
       };
-      void edit(const json &j) override {
+      void click(const json &j) override {
         from_json(j);
         backup();
         broadcast();
@@ -294,7 +294,7 @@ namespace ₿ {
     Side   side;
     bool   isPong;
   };
-  struct mOrders: public mJsonToClient<mOrders> {
+  struct mOrders: public Broadcast<mOrders> {
     mLastOrder updated;
     private:
       unordered_map<RandId, mOrder> orders;
@@ -302,7 +302,7 @@ namespace ₿ {
       const KryptoNinja &K;
     public:
       mOrders(const KryptoNinja &bot)
-        : mJsonToClient(bot)
+        : Broadcast(bot)
         , updated()
         , K(bot)
       {};
@@ -448,13 +448,13 @@ namespace ₿ {
     j = k.blob();
   };
 
-  struct mMarketTakers: public mJsonToClient<mTrade> {
+  struct mMarketTakers: public Broadcast<mTrade> {
     public:
       vector<mTrade> trades;
               Amount takersBuySize60s  = 0,
                      takersSellSize60s = 0;
       mMarketTakers(const KryptoNinja &bot)
-        : mJsonToClient(bot)
+        : Broadcast(bot)
       {};
       void timer_60s() {
         takersSellSize60s = takersBuySize60s = 0;
@@ -484,12 +484,12 @@ namespace ₿ {
     j = k.trades;
   };
 
-  struct mFairLevelsPrice: public mJsonToClient<mFairLevelsPrice> {
+  struct mFairLevelsPrice: public Broadcast<mFairLevelsPrice> {
     private_ref:
       const Price &fairValue;
     public:
       mFairLevelsPrice(const KryptoNinja &bot, const Price &f)
-        : mJsonToClient(bot)
+        : Broadcast(bot)
         , fairValue(f)
       {};
       const Price currentPrice() const {
@@ -501,10 +501,10 @@ namespace ₿ {
       const bool realtime() const override {
         return false;
       };
-      const bool send_same_blob() const override {
+      const bool read_same_blob() const override {
         return false;
       };
-      const bool send_asap() const override {
+      const bool read_asap() const override {
         return false;
       };
   };
@@ -532,7 +532,7 @@ namespace ₿ {
     k.topAsk = j.value("ask", 0.0);
   };
 
-  struct mStdevs: public mVectorFromDb<mStdev> {
+  struct mStdevs: public VectorBackup<mStdev> {
     double top  = 0,  topMean = 0,
            fair = 0, fairMean = 0,
            bid  = 0,  bidMean = 0,
@@ -542,7 +542,7 @@ namespace ₿ {
       const mQuotingParams &qp;
     public:
       mStdevs(const KryptoNinja &bot, const Price &f, const mQuotingParams &q)
-        : mVectorFromDb(bot)
+        : VectorBackup(bot)
         , fairValue(f)
         , qp(q)
       {};
@@ -613,10 +613,10 @@ namespace ₿ {
     };
   };
 
-  struct mFairHistory: public mVectorFromDb<Price> {
+  struct mFairHistory: public VectorBackup<Price> {
     public:
       mFairHistory(const KryptoNinja &bot)
-        : mVectorFromDb(bot)
+        : VectorBackup(bot)
       {};
       const mMatter about() const override {
         return mMatter::MarketDataLongTerm;
@@ -633,8 +633,8 @@ namespace ₿ {
       };
   };
 
-  struct mEwma: public mStructFromDb<mEwma>,
-                public mCatchEdits  {
+  struct mEwma: public StructBackup<mEwma>,
+                public CatchClicks {
     mFairHistory fairValue96h;
            Price mgEwmaVL = 0,
                  mgEwmaL  = 0,
@@ -651,8 +651,8 @@ namespace ₿ {
       const mQuotingParams &qp;
     public:
       mEwma(const KryptoNinja &bot, const Price &f, const mQuotingParams &q)
-        : mStructFromDb(bot)
-        , mCatchEdits(bot, {
+        : StructBackup(bot)
+        , CatchClicks(bot, {
             {&q, [&]() { calcFromHistory(); }}
           })
         , fairValue96h(bot)
@@ -765,13 +765,13 @@ namespace ₿ {
     k.mgEwmaU  = j.value("ewmaUltraShort", 0.0);
   };
 
-  struct mMarketStats: public mJsonToClient<mMarketStats> {
+  struct mMarketStats: public Broadcast<mMarketStats> {
                mEwma ewma;
              mStdevs stdev;
     mFairLevelsPrice fairPrice;
        mMarketTakers takerTrades;
     mMarketStats(const KryptoNinja &bot, const Price &f, const mQuotingParams &q)
-      : mJsonToClient(bot)
+      : Broadcast(bot)
       , ewma(bot, f, q)
       , stdev(bot, f, q)
       , fairPrice(bot, f)
@@ -795,14 +795,14 @@ namespace ₿ {
   };
 
   struct mLevelsDiff: public mLevels,
-                      public mJsonToClient<mLevelsDiff> {
+                      public Broadcast<mLevelsDiff> {
       bool patched = false;
     private_ref:
       const mLevels        &unfiltered;
       const mQuotingParams &qp;
     public:
       mLevelsDiff(const KryptoNinja &bot, const mLevels &u, const mQuotingParams &q)
-        : mJsonToClient(bot)
+        : Broadcast(bot)
         , unfiltered(u)
         , qp(q)
       {};
@@ -814,7 +814,7 @@ namespace ₿ {
       void send_patch() {
         if (ratelimit()) return;
         diff();
-        if (!empty() and mToClient::broadcast) mToClient::broadcast();
+        if (!empty() and read) read();
         unfilter();
       };
       const mMatter about() const override {
@@ -822,12 +822,12 @@ namespace ₿ {
       };
       const json hello() override {
         unfilter();
-        return mToClient::hello();
+        return Readable::hello();
       };
     private:
       const bool ratelimit() {
         return unfiltered.bids.empty() or unfiltered.asks.empty() or empty()
-          or !send_soon(qp.delayUI * 1e+3);
+          or !read_soon(qp.delayUI * 1e+3);
       };
       void unfilter() {
         bids = unfiltered.bids;
@@ -1007,13 +1007,13 @@ namespace ₿ {
     k.quoteValue = j.value("quoteValue", 0.0);
     k.time       = j.value("time",  (Clock)0);
   };
-  struct mProfits: public mVectorFromDb<mProfit> {
+  struct mProfits: public VectorBackup<mProfit> {
     private_ref:
       const KryptoNinja    &K;
       const mQuotingParams &qp;
     public:
       mProfits(const KryptoNinja &bot, const mQuotingParams &q)
-        : mVectorFromDb(bot)
+        : VectorBackup(bot)
         , K(bot)
         , qp(q)
       {};
@@ -1103,112 +1103,112 @@ namespace ₿ {
     k.loadedFromDB = true;
   };
 
-  struct mButtonSubmitNewOrder: public mJsonFromClient {
+  struct mButtonSubmitNewOrder: public Clickable {
     private_ref:
       const KryptoNinja &K;
     public:
       mButtonSubmitNewOrder(const KryptoNinja &bot)
-        : mJsonFromClient(bot)
+        : Clickable(bot)
         , K(bot)
       {};
-      void edit(const json &j) override {
+      void click(const json &j) override {
         if (j.is_object() and j.value("price", 0.0) and j.value("quantity", 0.0)) {
           json order = j;
           order["orderId"] = K.gateway->randId();
-          K.edited(this, order);
+          K.clicked(this, order);
         }
       };
       const mMatter about() const override {
         return mMatter::SubmitNewOrder;
       };
   };
-  struct mButtonCancelOrder: public mJsonFromClient {
+  struct mButtonCancelOrder: public Clickable {
     private_ref:
       const KryptoNinja &K;
     public:
       mButtonCancelOrder(const KryptoNinja &bot)
-        : mJsonFromClient(bot)
+        : Clickable(bot)
         , K(bot)
       {};
-      void edit(const json &j) override {
+      void click(const json &j) override {
         if ((j.is_object() and !j.value("orderId", "").empty()))
-          K.edited(this, j.at("orderId").get<RandId>());
+          K.clicked(this, j.at("orderId").get<RandId>());
       };
       const mMatter about() const override {
         return mMatter::CancelOrder;
       };
   };
-  struct mButtonCancelAllOrders: public mJsonFromClient {
+  struct mButtonCancelAllOrders: public Clickable {
     private_ref:
       const KryptoNinja &K;
     public:
       mButtonCancelAllOrders(const KryptoNinja &bot)
-        : mJsonFromClient(bot)
+        : Clickable(bot)
         , K(bot)
       {};
-      void edit(const json &j) override {
-        K.edited(this);
+      void click(const json &j) override {
+        K.clicked(this);
       };
       const mMatter about() const override {
         return mMatter::CancelAllOrders;
       };
   };
-  struct mButtonCleanAllClosedTrades: public mJsonFromClient {
+  struct mButtonCleanAllClosedTrades: public Clickable {
     private_ref:
       const KryptoNinja &K;
     public:
       mButtonCleanAllClosedTrades(const KryptoNinja &bot)
-        : mJsonFromClient(bot)
+        : Clickable(bot)
         , K(bot)
       {};
-      void edit(const json &j) override {
-        K.edited(this);
+      void click(const json &j) override {
+        K.clicked(this);
       };
       const mMatter about() const override {
         return mMatter::CleanAllClosedTrades;
       };
   };
-  struct mButtonCleanAllTrades: public mJsonFromClient {
+  struct mButtonCleanAllTrades: public Clickable {
     private_ref:
       const KryptoNinja &K;
     public:
       mButtonCleanAllTrades(const KryptoNinja &bot)
-        : mJsonFromClient(bot)
+        : Clickable(bot)
         , K(bot)
       {};
-      void edit(const json &j) override {
-        K.edited(this);
+      void click(const json &j) override {
+        K.clicked(this);
       };
       const mMatter about() const override {
         return mMatter::CleanAllTrades;
       };
   };
-  struct mButtonCleanTrade: public mJsonFromClient {
+  struct mButtonCleanTrade: public Clickable {
     private_ref:
       const KryptoNinja &K;
     public:
       mButtonCleanTrade(const KryptoNinja &bot)
-        : mJsonFromClient(bot)
+        : Clickable(bot)
         , K(bot)
       {};
-      void edit(const json &j) override {
+      void click(const json &j) override {
         if ((j.is_object() and !j.value("tradeId", "").empty()))
-          K.edited(this, j.at("tradeId").get<string>());
+          K.clicked(this, j.at("tradeId").get<string>());
       };
       const mMatter about() const override {
         return mMatter::CleanTrade;
       };
   };
-  struct mNotepad: public mJsonToClient<mNotepad>,
-                   public mJsonFromClient {
+  struct mNotepad: public Broadcast<mNotepad>,
+                   public Clickable {
     public:
       string content;
     public:
       mNotepad(const KryptoNinja &bot)
-        : mJsonToClient(bot)
-        , mJsonFromClient(bot)
+        : Broadcast(bot)
+        , Clickable(bot)
       {};
-      void edit(const json &j) override {
+      void click(const json &j) override {
         if (j.is_array() and j.size() and j.at(0).is_string())
          content = j.at(0);
       };
@@ -1239,17 +1239,17 @@ namespace ₿ {
     {};
   };
 
-  struct mTradesHistory: public mVectorFromDb<mOrderFilled>,
-                         public mJsonToClient<mOrderFilled>,
-                         public mCatchEdits {
+  struct mTradesHistory: public VectorBackup<mOrderFilled>,
+                         public Broadcast<mOrderFilled>,
+                         public CatchClicks {
     private_ref:
       const KryptoNinja    &K;
       const mQuotingParams &qp;
     public:
       mTradesHistory(const KryptoNinja &bot, const mQuotingParams &q, const mButtons &b)
-        : mVectorFromDb(bot)
-        , mJsonToClient(bot)
-        , mCatchEdits(bot, {
+        : VectorBackup(bot)
+        , Broadcast(bot)
+        , CatchClicks(bot, {
             {&b.cleanTrade, [&](const json &j) { clearOne(j); }},
             {&b.cleanTrades, [&]() { clearAll(); }},
             {&b.cleanTradesClosed, [&]() { clearClosed(); }}
@@ -1315,7 +1315,7 @@ namespace ₿ {
       };
       const json blob() const override {
         if (crbegin()->Kqty == -1) return nullptr;
-        else return mVectorFromDb::blob();
+        else return VectorBackup::blob();
       };
       const string increment() const override {
         return crbegin()->tradeId;
@@ -1489,7 +1489,7 @@ namespace ₿ {
       };
   };
 
-  struct mSafety: public mJsonToClient<mSafety> {
+  struct mSafety: public Broadcast<mSafety> {
               double buy      = 0,
                      sell     = 0,
                      combined = 0;
@@ -1507,7 +1507,7 @@ namespace ₿ {
                            &targetBasePosition;
     public:
       mSafety(const KryptoNinja &bot, const mQuotingParams &q, const mButtons &b, const Price &f, const Amount &v, const Amount &t, const Amount &p)
-        : mJsonToClient(bot)
+        : Broadcast(bot)
         , trades(bot, q, b)
         , recentTrades(q)
         , qp(q)
@@ -1541,7 +1541,7 @@ namespace ₿ {
       const mMatter about() const override {
         return mMatter::TradeSafetyValue;
       };
-      const bool send_same_blob() const override {
+      const bool read_same_blob() const override {
         return false;
       };
     private:
@@ -1644,8 +1644,8 @@ namespace ₿ {
     };
   };
 
-  struct mTarget: public mStructFromDb<mTarget>,
-                  public mJsonToClient<mTarget> {
+  struct mTarget: public StructBackup<mTarget>,
+                  public Broadcast<mTarget> {
     Amount targetBasePosition = 0,
            positionDivergence = 0;
     private_ref:
@@ -1655,8 +1655,8 @@ namespace ₿ {
       const Amount         &baseValue;
     public:
       mTarget(const KryptoNinja &bot, const mQuotingParams &q, const double &t, const Amount &v)
-        : mStructFromDb(bot)
-        , mJsonToClient(bot)
+        : StructBackup(bot)
+        , Broadcast(bot)
         , K(bot)
         , qp(q)
         , targetPositionAutoPercentage(t)
@@ -1692,7 +1692,7 @@ namespace ₿ {
       const mMatter about() const override {
         return mMatter::TargetBasePosition;
       };
-      const bool send_same_blob() const override {
+      const bool read_same_blob() const override {
         return false;
       };
     private:
@@ -1740,7 +1740,7 @@ namespace ₿ {
   };
 
   struct mWalletPosition: public mWallets,
-                          public mJsonToClient<mWalletPosition> {
+                          public Broadcast<mWalletPosition> {
      mTarget target;
      mSafety safety;
     mProfits profits;
@@ -1750,7 +1750,7 @@ namespace ₿ {
       const Price       &fairValue;
     public:
       mWalletPosition(const KryptoNinja &bot, const mQuotingParams &q, const mOrders &o, const mButtons &b, const mMarketLevels &l)
-        : mJsonToClient(bot)
+        : Broadcast(bot)
         , target(bot, q, l.stats.ewma.targetPositionAutoPercentage, base.value)
         , safety(bot, q, b, l.fairValue, base.value, base.total, target.targetBasePosition)
         , profits(bot, q)
@@ -1788,10 +1788,10 @@ namespace ₿ {
       const bool realtime() const override {
         return false;
       };
-      const bool send_asap() const override {
+      const bool read_asap() const override {
         return false;
       };
-      const bool send_same_blob() const override {
+      const bool read_same_blob() const override {
         return false;
       };
     private:
@@ -1901,7 +1901,7 @@ namespace ₿ {
       };
   };
 
-  struct mDummyMarketMaker: public mCatchEdits {
+  struct mDummyMarketMaker: public CatchClicks {
     private:
       void (*calcRawQuotesFromMarket)(
         const mMarketLevels&,
@@ -1919,7 +1919,7 @@ namespace ₿ {
             mQuotes         &quotes;
     public:
       mDummyMarketMaker(const KryptoNinja &bot, const mQuotingParams &q, const mMarketLevels &l, const mWalletPosition &w, mQuotes &Q)
-        : mCatchEdits(bot, {
+        : CatchClicks(bot, {
             {&q, [&]() { mode(); }}
           })
         , K(bot)
@@ -2104,7 +2104,7 @@ namespace ₿ {
       };
   };
 
-  struct mAntonioCalculon: public mJsonToClient<mAntonioCalculon> {
+  struct mAntonioCalculon: public Broadcast<mAntonioCalculon> {
                   mQuotes quotes;
         mDummyMarketMaker dummyMM;
     vector<const mOrder*> zombies;
@@ -2119,7 +2119,7 @@ namespace ₿ {
       const mWalletPosition &wallet;
     public:
       mAntonioCalculon(const KryptoNinja &bot, const mQuotingParams &q, const mMarketLevels &l, const mWalletPosition &w)
-        : mJsonToClient(bot)
+        : Broadcast(bot)
         , quotes(bot)
         , dummyMM(bot, q, l, w, quotes)
         , K(bot)
@@ -2171,7 +2171,7 @@ namespace ₿ {
       const bool realtime() const override {
         return false;
       };
-      const bool send_same_blob() const override {
+      const bool read_same_blob() const override {
         return false;
       };
     private:
@@ -2448,9 +2448,9 @@ namespace ₿ {
     };
   };
 
-  struct mSemaphore: public mJsonToClient<mSemaphore>,
-                     public mJsonFromClient,
-                     public mCatchHotkeys {
+  struct mSemaphore: public Broadcast<mSemaphore>,
+                     public Clickable,
+                     public CatchHotkey {
     Connectivity greenButton  = Connectivity::Disconnected,
                  greenGateway = Connectivity::Disconnected;
     private:
@@ -2459,16 +2459,16 @@ namespace ₿ {
       const KryptoNinja &K;
     public:
       mSemaphore(const KryptoNinja &bot)
-        : mJsonToClient(bot)
-        , mJsonFromClient(bot)
-        , mCatchHotkeys(bot, {
+        : Broadcast(bot)
+        , Clickable(bot)
+        , CatchHotkey(bot, {
             {'Q', [&]() { exit(); }},
             {'q', [&]() { exit(); }},
             {'\e', [&]() { toggle(); }}
           })
         , K(bot)
       {};
-      void edit(const json &j) override {
+      void click(const json &j) override {
         if (j.is_object()
           and j.at("agree").is_number()
           and j.at("agree").get<Connectivity>() != adminAgreement
@@ -2516,7 +2516,7 @@ namespace ₿ {
     };
   };
 
-  struct mBroker: public mCatchEdits {
+  struct mBroker: public CatchClicks {
           mSemaphore semaphore;
     mAntonioCalculon calculon;
     private_ref:
@@ -2525,7 +2525,7 @@ namespace ₿ {
             mOrders        &orders;
     public:
       mBroker(const KryptoNinja &bot, const mQuotingParams &q, mOrders &o, const mButtons &b, const mMarketLevels &l, const mWalletPosition &w)
-        : mCatchEdits(bot, {
+        : CatchClicks(bot, {
             {&b.submit, [&](const json &j) { placeOrder(j); }},
             {&b.cancel, [&](const json &j) { cancelOrder(orders.find(j)); }},
             {&b.cancelAll, [&]() { cancelOrders(); }}
@@ -2581,12 +2581,12 @@ namespace ₿ {
       };
   };
 
-  class mProduct: public mJsonToClient<mProduct> {
+  class mProduct: public Broadcast<mProduct> {
     private_ref:
       const KryptoNinja &K;
     public:
       mProduct(const KryptoNinja &bot)
-        : mJsonToClient(bot)
+        : Broadcast(bot)
         , K(bot)
       {};
       const json to_json() const {
@@ -2608,7 +2608,7 @@ namespace ₿ {
     j = k.to_json();
   };
 
-  class mMemory: public mJsonToClient<mMemory> {
+  class mMemory: public Broadcast<mMemory> {
     public:
       unsigned int orders_60s = 0;
     private:
@@ -2617,7 +2617,7 @@ namespace ₿ {
       const KryptoNinja &K;
     public:
       mMemory(const KryptoNinja &bot)
-        : mJsonToClient(bot)
+        : Broadcast(bot)
         , product(bot)
         , K(bot)
       {};

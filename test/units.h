@@ -116,7 +116,7 @@ namespace ₿ {
       WHEN("defaults") {
         THEN("fair value") {
           REQUIRE_FALSE(levels.fairValue);
-          REQUIRE_NOTHROW(levels.stats.fairPrice.mToClient::broadcast = [&]() {
+          REQUIRE_NOTHROW(levels.stats.fairPrice.read = [&]() {
             REQUIRE(levels.stats.fairPrice.blob().dump() == "{\"price\":0.0}");
           });
           REQUIRE_FALSE(levels.ready());
@@ -124,10 +124,10 @@ namespace ₿ {
         }
       }
       WHEN("assigned") {
-        REQUIRE_NOTHROW(levels.diff.mToClient::broadcast = [&]() {
+        REQUIRE_NOTHROW(levels.diff.read = [&]() {
           FAIL("diff.broadcast() before diff.hello()");
         });
-        REQUIRE_NOTHROW(levels.stats.fairPrice.mToClient::broadcast = [&]() {
+        REQUIRE_NOTHROW(levels.stats.fairPrice.read = [&]() {
           REQUIRE(levels.stats.fairPrice.blob().dump() == "{\"price\":1234.55}");
         });
         REQUIRE_NOTHROW(qp.fvModel = mFairValueModel::BBO);
@@ -169,7 +169,7 @@ namespace ₿ {
           REQUIRE(levels.unfiltered.asks[1].size  == 0.11234569);
         }
         THEN("fair value") {
-          REQUIRE_NOTHROW(levels.stats.fairPrice.mToClient::broadcast = []() {
+          REQUIRE_NOTHROW(levels.stats.fairPrice.read = []() {
             FAIL("broadcast() while filtering");
           });
           REQUIRE(levels.ready());
@@ -177,7 +177,7 @@ namespace ₿ {
         }
         THEN("fair value weight") {
           REQUIRE_NOTHROW(qp.fvModel = mFairValueModel::wBBO);
-          REQUIRE_NOTHROW(levels.stats.fairPrice.mToClient::broadcast = [&]() {
+          REQUIRE_NOTHROW(levels.stats.fairPrice.read = [&]() {
             FAIL("broadcast() while filtering");
           });
           REQUIRE(levels.ready());
@@ -185,7 +185,7 @@ namespace ₿ {
         }
         THEN("fair value reversed weight") {
           REQUIRE_NOTHROW(qp.fvModel = mFairValueModel::rwBBO);
-          REQUIRE_NOTHROW(levels.stats.fairPrice.mToClient::broadcast = [&]() {
+          REQUIRE_NOTHROW(levels.stats.fairPrice.read = [&]() {
             FAIL("broadcast() while filtering");
           });
           REQUIRE(levels.ready());
@@ -201,14 +201,14 @@ namespace ₿ {
           THEN("broadcast") {
             REQUIRE_NOTHROW(qp.delayUI = 0);
             this_thread::sleep_for(chrono::milliseconds(370));
-            REQUIRE_NOTHROW(levels.diff.mToClient::broadcast = [&]() {
+            REQUIRE_NOTHROW(levels.diff.read = [&]() {
               REQUIRE(levels.diff.blob().dump() == "{"
                 "\"asks\":[{\"price\":1234.69,\"size\":0.11234566}],"
                 "\"bids\":[{\"price\":1234.5},{\"price\":1234.4,\"size\":0.12345678}],"
                 "\"diff\":true"
               "}");
             });
-            REQUIRE_NOTHROW(levels.stats.fairPrice.mToClient::broadcast = [&]() {
+            REQUIRE_NOTHROW(levels.stats.fairPrice.read = [&]() {
               REQUIRE(levels.stats.fairPrice.blob().dump() == "{\"price\":1234.5}");
             });
             REQUIRE_NOTHROW(levels.read_from_gw({
@@ -308,7 +308,7 @@ namespace ₿ {
       WHEN("assigned") {
         vector<Price> fairHistory = { 268.05, 258.73, 239.82, 250.21, 224.49, 242.53, 248.25, 270.58, 252.77, 273.55,
                                       255.90, 226.10, 225.00, 263.12, 218.36, 254.73, 218.65, 252.40, 296.10, 222.20 };
-        REQUIRE_NOTHROW(ewma.fairValue96h.mFromDb::push = ewma.mFromDb::push = [&]() {
+        REQUIRE_NOTHROW(ewma.fairValue96h.Backup::push = ewma.Backup::push = [&]() {
           INFO("push()");
         });
         for (const Price &it : fairHistory) {
@@ -382,7 +382,7 @@ namespace ₿ {
         REQUIRE_NOTHROW(randIds.push_back(Random::uuid36Id()));
         REQUIRE_NOTHROW(orders.upsert({Side::Ask, 1234.52, 0.12345680, time, false, randIds.back()}));
         THEN("held amount") {
-          REQUIRE_NOTHROW(wallet.profits.mFromDb::push = [&]() {
+          REQUIRE_NOTHROW(wallet.profits.Backup::push = [&]() {
             INFO("push()");
           });
           bool askForFees = false;
