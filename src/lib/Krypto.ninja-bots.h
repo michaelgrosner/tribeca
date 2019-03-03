@@ -777,7 +777,7 @@ namespace ₿ {
           Catch(const Hotkey &hotkey, const vector<pair<const char, const function<void()>>> &hotkeys)
           {
             for (const auto &it : hotkeys)
-              hotkey.hotkey(it.first, it.second);
+              hotkey.keymap(it.first, it.second);
           };
       };
     private_ref:
@@ -803,7 +803,7 @@ namespace ₿ {
         });
       };
     private:
-      void hotkey(const char &ch, function<void()> fn) const {
+      void keymap(const char &ch, function<void()> fn) const {
         if (hotFn.find(ch) != hotFn.end())
           error("SH", string("Too many handlers for \"") + ch + "\" hotkey event");
         hotFn[ch] = fn;
@@ -1131,7 +1131,7 @@ namespace ₿ {
           };
           virtual void click(const json&) = 0;
       };
-      class Click {
+      class Clicked {
         public_friend:
           class Catch {
             public:

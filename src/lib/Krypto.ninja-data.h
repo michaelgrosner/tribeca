@@ -634,7 +634,7 @@ namespace ₿ {
   };
 
   struct mEwma: public Sqlite::StructBackup<mEwma>,
-                public Client::Click::Catch {
+                public Client::Clicked::Catch {
     mFairHistory fairValue96h;
            Price mgEwmaVL = 0,
                  mgEwmaL  = 0,
@@ -1241,7 +1241,7 @@ namespace ₿ {
 
   struct mTradesHistory: public Sqlite::VectorBackup<mOrderFilled>,
                          public Client::Broadcast<mOrderFilled>,
-                         public Client::Click::Catch {
+                         public Client::Clicked::Catch {
     private_ref:
       const KryptoNinja    &K;
       const mQuotingParams &qp;
@@ -1762,7 +1762,7 @@ namespace ₿ {
         return !safety.empty();
       };
       void read_from_gw(const mWallets &raw) {
-        if (raw.base.currency.empty() or raw.quote.currency.empty()) return;
+        if (raw.base.currency.empty() or raw.quote.currency.empty() or !fairValue) return;
         base.currency = raw.base.currency;
         quote.currency = raw.quote.currency;
         calcMaxFunds(raw, K.arg<double>("wallet-limit"));
@@ -1902,7 +1902,7 @@ namespace ₿ {
       };
   };
 
-  struct mDummyMarketMaker: public Client::Click::Catch {
+  struct mDummyMarketMaker: public Client::Clicked::Catch {
     private:
       void (*calcRawQuotesFromMarket)(
         const mMarketLevels&,
@@ -2517,7 +2517,7 @@ namespace ₿ {
     };
   };
 
-  struct mBroker: public Client::Click::Catch {
+  struct mBroker: public Client::Clicked::Catch {
           mSemaphore semaphore;
     mAntonioCalculon calculon;
     private_ref:
