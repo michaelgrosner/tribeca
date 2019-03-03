@@ -1152,12 +1152,12 @@ namespace ₿ {
       };
     public:
       string protocol = "HTTP";
-      int connections = 0;
-      mutable unsigned int delay = 0;
     protected:
       uWS::Group<uWS::SERVER> *webui = nullptr;
       unordered_map<string, pair<const char*, const int>> documents;
     private:
+      int connections = 0;
+      mutable unsigned int delay = 0;
       mutable vector<Readable*> readable;
       mutable vector<Clickable*> clickable;
       mutable unordered_map<const Clickable*, vector<function<void(const json&)>>> clickFn;
