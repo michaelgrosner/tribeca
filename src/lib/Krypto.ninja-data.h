@@ -48,9 +48,9 @@ namespace ₿ {
     ShortPingAggressive, AveragePingAggressive, LongPingAggressive
   };
 
-  struct mQuotingParams: public StructBackup<mQuotingParams>,
-                         public Broadcast<mQuotingParams>,
-                         public Clickable {
+  struct mQuotingParams: public Sqlite::StructBackup<mQuotingParams>,
+                         public Client::Broadcast<mQuotingParams>,
+                         public Client::Clickable {
     Price             widthPing                       = 300.0;
     double            widthPingPercentage             = 0.25;
     Price             widthPong                       = 300.0;
@@ -115,9 +115,9 @@ namespace ₿ {
       const KryptoNinja &K;
     public:
       mQuotingParams(const KryptoNinja &bot)
-        : StructBackup(bot)
-        , Broadcast(bot)
-        , Clickable(bot)
+        : Sqlite::StructBackup<mQuotingParams>(bot)
+        , Client::Broadcast<mQuotingParams>(bot)
+        , Client::Clickable(bot)
         , K(bot)
       {};
       void from_json(const json &j) {
@@ -294,7 +294,7 @@ namespace ₿ {
     Side   side;
     bool   isPong;
   };
-  struct mOrders: public Broadcast<mOrders> {
+  struct mOrders: public Client::Broadcast<mOrders> {
     mLastOrder updated;
     private:
       unordered_map<RandId, mOrder> orders;
@@ -302,7 +302,7 @@ namespace ₿ {
       const KryptoNinja &K;
     public:
       mOrders(const KryptoNinja &bot)
-        : Broadcast(bot)
+        : Client::Broadcast<mOrders>(bot)
         , updated()
         , K(bot)
       {};
@@ -448,13 +448,13 @@ namespace ₿ {
     j = k.blob();
   };
 
-  struct mMarketTakers: public Broadcast<mTrade> {
+  struct mMarketTakers: public Client::Broadcast<mTrade> {
     public:
       vector<mTrade> trades;
               Amount takersBuySize60s  = 0,
                      takersSellSize60s = 0;
       mMarketTakers(const KryptoNinja &bot)
-        : Broadcast(bot)
+        : Client::Broadcast<mTrade>(bot)
       {};
       void timer_60s() {
         takersSellSize60s = takersBuySize60s = 0;
@@ -484,12 +484,12 @@ namespace ₿ {
     j = k.trades;
   };
 
-  struct mFairLevelsPrice: public Broadcast<mFairLevelsPrice> {
+  struct mFairLevelsPrice: public Client::Broadcast<mFairLevelsPrice> {
     private_ref:
       const Price &fairValue;
     public:
       mFairLevelsPrice(const KryptoNinja &bot, const Price &f)
-        : Broadcast(bot)
+        : Client::Broadcast<mFairLevelsPrice>(bot)
         , fairValue(f)
       {};
       const Price currentPrice() const {
@@ -532,7 +532,7 @@ namespace ₿ {
     k.topAsk = j.value("ask", 0.0);
   };
 
-  struct mStdevs: public VectorBackup<mStdev> {
+  struct mStdevs: public Sqlite::VectorBackup<mStdev> {
     double top  = 0,  topMean = 0,
            fair = 0, fairMean = 0,
            bid  = 0,  bidMean = 0,
@@ -542,7 +542,7 @@ namespace ₿ {
       const mQuotingParams &qp;
     public:
       mStdevs(const KryptoNinja &bot, const Price &f, const mQuotingParams &q)
-        : VectorBackup(bot)
+        : Sqlite::VectorBackup<mStdev>(bot)
         , fairValue(f)
         , qp(q)
       {};
@@ -613,10 +613,10 @@ namespace ₿ {
     };
   };
 
-  struct mFairHistory: public VectorBackup<Price> {
+  struct mFairHistory: public Sqlite::VectorBackup<Price> {
     public:
       mFairHistory(const KryptoNinja &bot)
-        : VectorBackup(bot)
+        : Sqlite::VectorBackup<Price>(bot)
       {};
       const mMatter about() const override {
         return mMatter::MarketDataLongTerm;
@@ -633,8 +633,8 @@ namespace ₿ {
       };
   };
 
-  struct mEwma: public StructBackup<mEwma>,
-                public CatchClicks {
+  struct mEwma: public Sqlite::StructBackup<mEwma>,
+                public Client::Click::Catch {
     mFairHistory fairValue96h;
            Price mgEwmaVL = 0,
                  mgEwmaL  = 0,
@@ -651,8 +651,8 @@ namespace ₿ {
       const mQuotingParams &qp;
     public:
       mEwma(const KryptoNinja &bot, const Price &f, const mQuotingParams &q)
-        : StructBackup(bot)
-        , CatchClicks(bot, {
+        : Sqlite::StructBackup<mEwma>(bot)
+        , Client::Click::Catch(bot, {
             {&q, [&]() { calcFromHistory(); }}
           })
         , fairValue96h(bot)
@@ -765,13 +765,13 @@ namespace ₿ {
     k.mgEwmaU  = j.value("ewmaUltraShort", 0.0);
   };
 
-  struct mMarketStats: public Broadcast<mMarketStats> {
+  struct mMarketStats: public Client::Broadcast<mMarketStats> {
                mEwma ewma;
              mStdevs stdev;
     mFairLevelsPrice fairPrice;
        mMarketTakers takerTrades;
     mMarketStats(const KryptoNinja &bot, const Price &f, const mQuotingParams &q)
-      : Broadcast(bot)
+      : Client::Broadcast<mMarketStats>(bot)
       , ewma(bot, f, q)
       , stdev(bot, f, q)
       , fairPrice(bot, f)
@@ -795,14 +795,14 @@ namespace ₿ {
   };
 
   struct mLevelsDiff: public mLevels,
-                      public Broadcast<mLevelsDiff> {
+                      public Client::Broadcast<mLevelsDiff> {
       bool patched = false;
     private_ref:
       const mLevels        &unfiltered;
       const mQuotingParams &qp;
     public:
       mLevelsDiff(const KryptoNinja &bot, const mLevels &u, const mQuotingParams &q)
-        : Broadcast(bot)
+        : Client::Broadcast<mLevelsDiff>(bot)
         , unfiltered(u)
         , qp(q)
       {};
@@ -1007,13 +1007,13 @@ namespace ₿ {
     k.quoteValue = j.value("quoteValue", 0.0);
     k.time       = j.value("time",  (Clock)0);
   };
-  struct mProfits: public VectorBackup<mProfit> {
+  struct mProfits: public Sqlite::VectorBackup<mProfit> {
     private_ref:
       const KryptoNinja    &K;
       const mQuotingParams &qp;
     public:
       mProfits(const KryptoNinja &bot, const mQuotingParams &q)
-        : VectorBackup(bot)
+        : Sqlite::VectorBackup<mProfit>(bot)
         , K(bot)
         , qp(q)
       {};
@@ -1103,12 +1103,12 @@ namespace ₿ {
     k.loadedFromDB = true;
   };
 
-  struct mButtonSubmitNewOrder: public Clickable {
+  struct mButtonSubmitNewOrder: public Client::Clickable {
     private_ref:
       const KryptoNinja &K;
     public:
       mButtonSubmitNewOrder(const KryptoNinja &bot)
-        : Clickable(bot)
+        : Client::Clickable(bot)
         , K(bot)
       {};
       void click(const json &j) override {
@@ -1122,12 +1122,12 @@ namespace ₿ {
         return mMatter::SubmitNewOrder;
       };
   };
-  struct mButtonCancelOrder: public Clickable {
+  struct mButtonCancelOrder: public Client::Clickable {
     private_ref:
       const KryptoNinja &K;
     public:
       mButtonCancelOrder(const KryptoNinja &bot)
-        : Clickable(bot)
+        : Client::Clickable(bot)
         , K(bot)
       {};
       void click(const json &j) override {
@@ -1138,12 +1138,12 @@ namespace ₿ {
         return mMatter::CancelOrder;
       };
   };
-  struct mButtonCancelAllOrders: public Clickable {
+  struct mButtonCancelAllOrders: public Client::Clickable {
     private_ref:
       const KryptoNinja &K;
     public:
       mButtonCancelAllOrders(const KryptoNinja &bot)
-        : Clickable(bot)
+        : Client::Clickable(bot)
         , K(bot)
       {};
       void click(const json &j) override {
@@ -1153,12 +1153,12 @@ namespace ₿ {
         return mMatter::CancelAllOrders;
       };
   };
-  struct mButtonCleanAllClosedTrades: public Clickable {
+  struct mButtonCleanAllClosedTrades: public Client::Clickable {
     private_ref:
       const KryptoNinja &K;
     public:
       mButtonCleanAllClosedTrades(const KryptoNinja &bot)
-        : Clickable(bot)
+        : Client::Clickable(bot)
         , K(bot)
       {};
       void click(const json &j) override {
@@ -1168,12 +1168,12 @@ namespace ₿ {
         return mMatter::CleanAllClosedTrades;
       };
   };
-  struct mButtonCleanAllTrades: public Clickable {
+  struct mButtonCleanAllTrades: public Client::Clickable {
     private_ref:
       const KryptoNinja &K;
     public:
       mButtonCleanAllTrades(const KryptoNinja &bot)
-        : Clickable(bot)
+        : Client::Clickable(bot)
         , K(bot)
       {};
       void click(const json &j) override {
@@ -1183,12 +1183,12 @@ namespace ₿ {
         return mMatter::CleanAllTrades;
       };
   };
-  struct mButtonCleanTrade: public Clickable {
+  struct mButtonCleanTrade: public Client::Clickable {
     private_ref:
       const KryptoNinja &K;
     public:
       mButtonCleanTrade(const KryptoNinja &bot)
-        : Clickable(bot)
+        : Client::Clickable(bot)
         , K(bot)
       {};
       void click(const json &j) override {
@@ -1199,14 +1199,14 @@ namespace ₿ {
         return mMatter::CleanTrade;
       };
   };
-  struct mNotepad: public Broadcast<mNotepad>,
-                   public Clickable {
+  struct mNotepad: public Client::Broadcast<mNotepad>,
+                   public Client::Clickable {
     public:
       string content;
     public:
       mNotepad(const KryptoNinja &bot)
-        : Broadcast(bot)
-        , Clickable(bot)
+        : Client::Broadcast<mNotepad>(bot)
+        , Client::Clickable(bot)
       {};
       void click(const json &j) override {
         if (j.is_array() and j.size() and j.at(0).is_string())
@@ -1239,17 +1239,17 @@ namespace ₿ {
     {};
   };
 
-  struct mTradesHistory: public VectorBackup<mOrderFilled>,
-                         public Broadcast<mOrderFilled>,
-                         public CatchClicks {
+  struct mTradesHistory: public Sqlite::VectorBackup<mOrderFilled>,
+                         public Client::Broadcast<mOrderFilled>,
+                         public Client::Click::Catch {
     private_ref:
       const KryptoNinja    &K;
       const mQuotingParams &qp;
     public:
       mTradesHistory(const KryptoNinja &bot, const mQuotingParams &q, const mButtons &b)
-        : VectorBackup(bot)
-        , Broadcast(bot)
-        , CatchClicks(bot, {
+        : Sqlite::VectorBackup<mOrderFilled>(bot)
+        , Client::Broadcast<mOrderFilled>(bot)
+        , Client::Click::Catch(bot, {
             {&b.cleanTrade, [&](const json &j) { clearOne(j); }},
             {&b.cleanTrades, [&]() { clearAll(); }},
             {&b.cleanTradesClosed, [&]() { clearClosed(); }}
@@ -1489,7 +1489,7 @@ namespace ₿ {
       };
   };
 
-  struct mSafety: public Broadcast<mSafety> {
+  struct mSafety: public Client::Broadcast<mSafety> {
               double buy      = 0,
                      sell     = 0,
                      combined = 0;
@@ -1507,7 +1507,7 @@ namespace ₿ {
                            &targetBasePosition;
     public:
       mSafety(const KryptoNinja &bot, const mQuotingParams &q, const mButtons &b, const Price &f, const Amount &v, const Amount &t, const Amount &p)
-        : Broadcast(bot)
+        : Client::Broadcast<mSafety>(bot)
         , trades(bot, q, b)
         , recentTrades(q)
         , qp(q)
@@ -1644,8 +1644,8 @@ namespace ₿ {
     };
   };
 
-  struct mTarget: public StructBackup<mTarget>,
-                  public Broadcast<mTarget> {
+  struct mTarget: public Sqlite::StructBackup<mTarget>,
+                  public Client::Broadcast<mTarget> {
     Amount targetBasePosition = 0,
            positionDivergence = 0;
     private_ref:
@@ -1655,8 +1655,8 @@ namespace ₿ {
       const Amount         &baseValue;
     public:
       mTarget(const KryptoNinja &bot, const mQuotingParams &q, const double &t, const Amount &v)
-        : StructBackup(bot)
-        , Broadcast(bot)
+        : Sqlite::StructBackup<mTarget>(bot)
+        , Client::Broadcast<mTarget>(bot)
         , K(bot)
         , qp(q)
         , targetPositionAutoPercentage(t)
@@ -1740,7 +1740,7 @@ namespace ₿ {
   };
 
   struct mWalletPosition: public mWallets,
-                          public Broadcast<mWalletPosition> {
+                          public Client::Broadcast<mWalletPosition> {
      mTarget target;
      mSafety safety;
     mProfits profits;
@@ -1750,7 +1750,7 @@ namespace ₿ {
       const Price       &fairValue;
     public:
       mWalletPosition(const KryptoNinja &bot, const mQuotingParams &q, const mOrders &o, const mButtons &b, const mMarketLevels &l)
-        : Broadcast(bot)
+        : Client::Broadcast<mWalletPosition>(bot)
         , target(bot, q, l.stats.ewma.targetPositionAutoPercentage, base.value)
         , safety(bot, q, b, l.fairValue, base.value, base.total, target.targetBasePosition)
         , profits(bot, q)
@@ -1902,7 +1902,7 @@ namespace ₿ {
       };
   };
 
-  struct mDummyMarketMaker: public CatchClicks {
+  struct mDummyMarketMaker: public Client::Click::Catch {
     private:
       void (*calcRawQuotesFromMarket)(
         const mMarketLevels&,
@@ -1920,7 +1920,7 @@ namespace ₿ {
             mQuotes         &quotes;
     public:
       mDummyMarketMaker(const KryptoNinja &bot, const mQuotingParams &q, const mMarketLevels &l, const mWalletPosition &w, mQuotes &Q)
-        : CatchClicks(bot, {
+        : Client::Click::Catch(bot, {
             {&q, [&]() { mode(); }}
           })
         , K(bot)
@@ -2105,7 +2105,7 @@ namespace ₿ {
       };
   };
 
-  struct mAntonioCalculon: public Broadcast<mAntonioCalculon> {
+  struct mAntonioCalculon: public Client::Broadcast<mAntonioCalculon> {
                   mQuotes quotes;
         mDummyMarketMaker dummyMM;
     vector<const mOrder*> zombies;
@@ -2120,7 +2120,7 @@ namespace ₿ {
       const mWalletPosition &wallet;
     public:
       mAntonioCalculon(const KryptoNinja &bot, const mQuotingParams &q, const mMarketLevels &l, const mWalletPosition &w)
-        : Broadcast(bot)
+        : Client::Broadcast<mAntonioCalculon>(bot)
         , quotes(bot)
         , dummyMM(bot, q, l, w, quotes)
         , K(bot)
@@ -2449,9 +2449,9 @@ namespace ₿ {
     };
   };
 
-  struct mSemaphore: public Broadcast<mSemaphore>,
-                     public Clickable,
-                     public CatchHotkey {
+  struct mSemaphore: public Client::Broadcast<mSemaphore>,
+                     public Client::Clickable,
+                     public Hotkey::Catch {
     Connectivity greenButton  = Connectivity::Disconnected,
                  greenGateway = Connectivity::Disconnected;
     private:
@@ -2460,9 +2460,9 @@ namespace ₿ {
       const KryptoNinja &K;
     public:
       mSemaphore(const KryptoNinja &bot)
-        : Broadcast(bot)
-        , Clickable(bot)
-        , CatchHotkey(bot, {
+        : Client::Broadcast<mSemaphore>(bot)
+        , Client::Clickable(bot)
+        , Hotkey::Catch(bot, {
             {'Q', [&]() { exit(); }},
             {'q', [&]() { exit(); }},
             {'\e', [&]() { toggle(); }}
@@ -2517,7 +2517,7 @@ namespace ₿ {
     };
   };
 
-  struct mBroker: public CatchClicks {
+  struct mBroker: public Client::Click::Catch {
           mSemaphore semaphore;
     mAntonioCalculon calculon;
     private_ref:
@@ -2526,7 +2526,7 @@ namespace ₿ {
             mOrders        &orders;
     public:
       mBroker(const KryptoNinja &bot, const mQuotingParams &q, mOrders &o, const mButtons &b, const mMarketLevels &l, const mWalletPosition &w)
-        : CatchClicks(bot, {
+        : Client::Click::Catch(bot, {
             {&b.submit, [&](const json &j) { placeOrder(j); }},
             {&b.cancel, [&](const json &j) { cancelOrder(orders.find(j)); }},
             {&b.cancelAll, [&]() { cancelOrders(); }}
@@ -2582,12 +2582,12 @@ namespace ₿ {
       };
   };
 
-  class mProduct: public Broadcast<mProduct> {
+  class mProduct: public Client::Broadcast<mProduct> {
     private_ref:
       const KryptoNinja &K;
     public:
       mProduct(const KryptoNinja &bot)
-        : Broadcast(bot)
+        : Client::Broadcast<mProduct>(bot)
         , K(bot)
       {};
       const json to_json() const {
@@ -2609,7 +2609,7 @@ namespace ₿ {
     j = k.to_json();
   };
 
-  class mMemory: public Broadcast<mMemory> {
+  class mMemory: public Client::Broadcast<mMemory> {
     public:
       unsigned int orders_60s = 0;
     private:
@@ -2618,7 +2618,7 @@ namespace ₿ {
       const KryptoNinja &K;
     public:
       mMemory(const KryptoNinja &bot)
-        : Broadcast(bot)
+        : Client::Broadcast<mMemory>(bot)
         , product(bot)
         , K(bot)
       {};

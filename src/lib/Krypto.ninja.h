@@ -28,7 +28,6 @@
 
 #include <Krypto.ninja-lang.h>
 #include <Krypto.ninja-apis.h>
-#include <Krypto.ninja-glue.h>
 #include <Krypto.ninja-bots.h>
 #include <Krypto.ninja-data.h>
 
