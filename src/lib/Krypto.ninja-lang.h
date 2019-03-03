@@ -82,6 +82,10 @@ using Clock  = long long int;
 #define private_ref private
 
 //! \def
+//! \brief Redundant placeholder to enforce public nested classes.
+#define public_friend public
+
+//! \def
 //! \brief A number used as impossible or unset value, when 0 is not appropiate.
 //! \since Having seen Bourbon brutality after the fall of Valencia,
 //!        Barcelona decided to resist. The 14-month Siege of Barcelona

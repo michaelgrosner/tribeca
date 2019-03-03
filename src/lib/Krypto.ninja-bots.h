@@ -771,7 +771,7 @@ namespace ₿ {
   };
 
   class Hotkey {
-    public:
+    public_friend:
       class Catch {
         public:
           Catch(const Hotkey &hotkey, const vector<pair<const char, const function<void()>>> &hotkeys)
@@ -789,12 +789,6 @@ namespace ₿ {
     private:
       future<char> keylogger;
       mutable unordered_map<char, function<void()>> hotFn;
-    public:
-      void hotkey(const char &ch, function<void()> fn) const {
-        if (hotFn.find(ch) != hotFn.end())
-          error("SH", string("Too many handlers for \"") + ch + "\" hotkey event");
-        hotFn[ch] = fn;
-      };
     protected:
       void legit_keylogger() {
         if (hotFn.empty()) return;
@@ -809,6 +803,11 @@ namespace ₿ {
         });
       };
     private:
+      void hotkey(const char &ch, function<void()> fn) const {
+        if (hotFn.find(ch) != hotFn.end())
+          error("SH", string("Too many handlers for \"") + ch + "\" hotkey event");
+        hotFn[ch] = fn;
+      };
       const bool wait_for_keylog() {
         if (keylogger.valid()
           and keylogger.wait_for(chrono::nanoseconds(0)) == future_status::ready
@@ -856,7 +855,7 @@ namespace ₿ {
   };
 
   class Sqlite {
-    public:
+    public_friend:
       class Backup: public Blob {
         public:
           using Report = pair<bool, string>;
@@ -959,13 +958,12 @@ namespace ₿ {
             return to_string(size());
           };
       };
-    public:
-      mutable vector<Backup*> tables;
     protected:
       bool databases = false;
     private:
       sqlite3 *db = nullptr;
       string disk = "main";
+      mutable vector<Backup*> tables;
     private_ref:
       const Events &events;
     public:
@@ -1067,7 +1065,7 @@ namespace ₿ {
   };
 
   class Client {
-    public:
+    public_friend:
       class Readable: public Blob {
         public:
           function<void()> read
@@ -1134,7 +1132,7 @@ namespace ₿ {
           virtual void click(const json&) = 0;
       };
       class Click {
-        public:
+        public_friend:
           class Catch {
             public:
               Catch(const Client &client, const vector<pair<const Clickable*, variant<
@@ -1156,12 +1154,12 @@ namespace ₿ {
       string protocol = "HTTP";
       int connections = 0;
       mutable unsigned int delay = 0;
-      mutable vector<Readable*> readable;
-      mutable vector<Clickable*> clickable;
     protected:
       uWS::Group<uWS::SERVER> *webui = nullptr;
       unordered_map<string, pair<const char*, const int>> documents;
     private:
+      mutable vector<Readable*> readable;
+      mutable vector<Clickable*> clickable;
       mutable unordered_map<const Clickable*, vector<function<void(const json&)>>> clickFn;
       const pair<char, char> portal = {'=', '-'};
       unordered_map<char, function<const json()>> hello;
@@ -1193,9 +1191,6 @@ namespace ₿ {
         : option(o)
         , events(e)
       {};
-      void clicked(const Clickable *data, const function<void(const json&)> &fn) const {
-        clickFn[data].push_back(fn);
-      };
       void clicked(const Clickable *data, const json &j = nullptr) const {
         if (clickFn.find(data) != clickFn.end())
           for (const auto &it : clickFn.at(data)) it(j);
@@ -1317,6 +1312,9 @@ namespace ₿ {
         return document(content, code, type);
       };
     private:
+      void clicked(const Clickable *data, const function<void(const json&)> &fn) const {
+        clickFn[data].push_back(fn);
+      };
       void broadcast() {
         if (queue.empty()) return;
         vector<string> msgs;
