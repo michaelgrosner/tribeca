@@ -652,6 +652,14 @@ namespace ₿ {
         });
       };
   };
+  class GwBequant: virtual public GwHitBtc {
+    public:
+      GwBequant()
+      {
+        http = "https://api.bequant.io/api/2";
+        ws   = "wss://api.bequant.io/api/2/ws";
+      };
+  };
   class GwCoinbase: public GwApiWS,
                     public FIX::NullApplication {
     public:
