@@ -30,8 +30,8 @@ The web UI is compatible with most web browsers/devices/resolutions, but Firefox
 
 ||with Post-Only Orders support|without Post-Only|
 |---|---|---|
-|**without Maker fees**|[Coinbase](https://pro.coinbase.com/)<br> &#10239; _REST + WebSocket + FIX_<br><br>[HitBTC](https://hitbtc.com/)<br> &#10239; _REST + WebSocket_||
-|**with Maker and Taker fees**|[Bitfinex](https://www.bitfinex.com/)<br>[Ethfinex](https://www.ethfinex.com/)<br> &#10239; _REST + WebSocket_<br><br>[Kraken](https://www.kraken.com/)<br> &#10239; _REST_<br><br>[Poloniex](https://www.poloniex.com/)<br> &#10239; _REST_|[FCoin](https://fcoin.com/)<br> &#10239; _REST + WebSocket_|
+|**without Maker fees**|[Coinbase](https://pro.coinbase.com/) <sub>([fees](https://pro.coinbase.com/orders/fees))</sub><br> &#10239; _REST + WebSocket + FIX_<br><br>[HitBTC](https://hitbtc.com/) <sub>([fees](https://hitbtc.com/fee-tier))</sub><br>[Bequant](https://bequant.io/) <sub>([fees](https://bequant.io/fees-and-limits))</sub><br> &#10239; _REST + WebSocket_||
+|**with Maker and Taker fees**|[Bitfinex](https://www.bitfinex.com/) <sub>([fees](https://www.bitfinex.com/fees))</sub><br>[Ethfinex](https://www.ethfinex.com/) <sub>([fees](https://www.ethfinex.com/fees))</sub><br> &#10239; _REST + WebSocket_<br><br>[Kraken](https://www.kraken.com/) <sub>([fees](https://www.kraken.com/features/fee-schedule))</sub><br> &#10239; _REST_<br><br>[Poloniex](https://www.poloniex.com/) <sub>([fees](https://poloniex.com/fees/))</sub><br> &#10239; _REST_|[FCoin](https://fcoin.com/) <sub>([fees](https://support.fcoin.com/hc/en-us/articles/360003715514))</sub><br> &#10239; _REST + WebSocket_|
 
 All currency pairs are supported.
 
