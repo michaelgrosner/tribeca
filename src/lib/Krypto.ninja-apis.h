@@ -344,26 +344,26 @@ namespace ₿ {
       }
   };
 
-  class Decimal {
-    public:
-      stringstream stream;
-    public:
-      Decimal()
-      {
-        stream << fixed;
-      };
-      const double truncate(const double &input) const {
-        const double points = pow(10, -1 * stream.precision());
-        return floor(input / points) * points;
-      };
-      const string str(const double &input) {
-        stream.str("");
-        stream << truncate(input);
-        return stream.str();
-      };
-  };
-
   class GwExchangeData {
+    public_friend:
+      class Decimal {
+        public:
+          stringstream stream;
+        public:
+          Decimal()
+          {
+            stream << fixed;
+          };
+          const double truncate(const double &input) const {
+            const double points = pow(10, -1 * stream.precision());
+            return floor(input / points) * points;
+          };
+          const string str(const double &input) {
+            stream.str("");
+            stream << truncate(input);
+            return stream.str();
+          };
+      };
     public:
       struct {
         Decimal price,

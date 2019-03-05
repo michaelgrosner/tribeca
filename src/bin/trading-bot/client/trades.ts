@@ -17,6 +17,8 @@ export class TradesComponent implements OnInit {
 
   public audio: boolean;
 
+  public hasPongs: boolean;
+
   public headerNameMod: string = "";
 
   private sortTimeout: number;
@@ -26,14 +28,15 @@ export class TradesComponent implements OnInit {
   @Input() set setQuotingParameters(o: Models.QuotingParameters) {
     this.audio = o.audio;
     if (!this.gridOptions.api) return;
-    var isK = (o.safety === Models.QuotingSafety.Boomerang || o.safety === Models.QuotingSafety.AK47);
-    this.headerNameMod = isK ? "Ping" : "";
+    this.hasPongs = (o.safety === Models.QuotingSafety.Boomerang || o.safety === Models.QuotingSafety.AK47);
+    this.headerNameMod = this.hasPongs ? "Ping" : "";
     this.gridOptions.columnDefs.map((r: ColDef) => {
       if (['Kqty','Kprice','Kvalue','Kdiff','Ktime'].indexOf(r.field) > -1)
-        this.gridOptions.columnApi.setColumnVisible(r.field, isK);
+        this.gridOptions.columnApi.setColumnVisible(r.field, this.hasPongs);
       return r;
     });
     this.gridOptions.api.refreshHeader();
+    this.emitLengths();
   }
 
   @Input() set setTrade(o: Models.Trade) {
@@ -45,6 +48,8 @@ export class TradesComponent implements OnInit {
   }
 
   @Output() onTradesLength = new EventEmitter<number>();
+
+  @Output() onTradesMatchedLength = new EventEmitter<number>();
 
   @Output() onTradesChartData = new EventEmitter<Models.TradeChart>();
 
@@ -186,6 +191,17 @@ export class TradesComponent implements OnInit {
     }
 
     this.gridOptions.api.sizeColumnsToFit();
+    this.emitLengths();
+  }
+
+  private emitLengths = () => {
     this.onTradesLength.emit(this.gridOptions.api.getModel().getRowCount());
+    var tradesMatched: number = 0;
+    if (this.hasPongs) {
+      this.gridOptions.api.forEachNode((node: RowNode) => {
+        if (node.data.Kqty) tradesMatched++;
+      });
+    } else tradesMatched = -1;
+    this.onTradesMatchedLength.emit(tradesMatched);
   }
 }
