@@ -327,8 +327,8 @@ namespace ₿ {
         }
         return find(raw.orderId);
       };
-      const double heldAmount(const Side &side) const {
-        double held = 0;
+      const Amount heldAmount(const Side &side) const {
+        Amount held = 0;
         for (const auto &it : orders)
           if (it.second.side == side)
             held += (

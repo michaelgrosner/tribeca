@@ -2,7 +2,7 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
 PATCH    = 13
-BUILD    = 9
+BUILD    = 10
 SOURCE  := $(notdir $(wildcard src/bin/*))
 CARCH    = x86_64-linux-gnu      \
            arm-linux-gnueabihf   \
@@ -13,27 +13,30 @@ CARCH    = x86_64-linux-gnu      \
 CHOST   ?= $(shell test -n "`command -v g++`" && g++ -dumpmachine \
              || echo $(subst build-,,$(firstword $(wildcard build-*))))
 
-KHOST   := $(shell echo $(CHOST) | sed 's/\([a-z_0-9]*\)-\([a-z_0-9]*\)-.*/\2-\1/' | sed 's/^w64/win64/')
+KHOST   := $(shell echo $(CHOST)                               \
+             | sed 's/-\([a-z_0-9]*\)-\(linux\)$$/-\2-\1/'     \
+             | sed 's/\([a-z_0-9]*\)-\([a-z_0-9]*\)-.*/\2-\1/' \
+             | sed 's/^w64/win64/'                             )
 KLOCAL  := build-$(KHOST)/local
 
 ERR      = *** K require g++ v7 or greater, but it was not found.
 HINT    := consider a symlink at /usr/bin/$(CHOST)-g++ pointing to your g++-7 or g++-8 executable
 
 STEP     = $(shell tput setaf 2;tput setab 0)Building $(1)..$(shell tput sgr0)
-KARGS   := -std=c++17 -O3 -pthread -DK_0_GIT='"$(shell  \
-  cat .git/refs/heads/master 2>/dev/null || echo HEAD)"'\
-  -DK_STAMP='"$(shell date "+%Y-%m-%d %H:%M:%S")"'      \
-  -DK_0_DAY='"v$(MAJOR).$(MINOR).$(PATCH)+$(BUILD)"'    \
-  -DK_BUILD='"$(KHOST)"'      -DK_SOURCE='"K-$(KSRC)"'  \
-  -I$(KLOCAL)/include         -I$(realpath src/lib)     \
-  $(KLOCAL)/include/uWS/*.cpp $(KLOCAL)/lib/K-$(KHOST).a\
-  $(KLOCAL)/lib/libsqlite3.a  $(KLOCAL)/lib/libncurses.a\
-  $(KLOCAL)/lib/libquickfix.a $(KLOCAL)/lib/libz.a      \
-  $(KLOCAL)/lib/libcurl.a     $(KLOCAL)/lib/libssl.a    \
-  $(KLOCAL)/lib/libcrypto.a   $(wildcard                \
-    $(KLOCAL)/lib/lib*.dll.a                            \
-    $(KLOCAL)/lib/libcares.a  $(KLOCAL)/lib/libuv.a     \
-    $(KLOCAL)/lib/K-$(KSRC)-assets.o                    \
+KARGS   := -std=c++17 -O3 -pthread -DK_0_GIT='"$(shell   \
+  cat .git/refs/heads/master 2>/dev/null || echo HEAD)"' \
+  -DK_STAMP='"$(shell date "+%Y-%m-%d %H:%M:%S")"'       \
+  -DK_0_DAY='"v$(MAJOR).$(MINOR).$(PATCH)+$(BUILD)"'     \
+  -DK_BUILD='"$(KHOST)"'      -DK_SOURCE='"K-$(KSRC)"'   \
+  -I$(KLOCAL)/include         -I$(realpath src/lib)      \
+  $(KLOCAL)/include/uWS/*.cpp $(KLOCAL)/lib/K-$(KHOST).a \
+  $(KLOCAL)/lib/libsqlite3.a  $(KLOCAL)/lib/libncurses.a \
+  $(KLOCAL)/lib/libquickfix.a $(KLOCAL)/lib/libz.a       \
+  $(KLOCAL)/lib/libcurl.a     $(KLOCAL)/lib/libssl.a     \
+  $(KLOCAL)/lib/libcrypto.a   $(wildcard                 \
+    $(KLOCAL)/lib/lib*.dll.a                             \
+    $(KLOCAL)/lib/libcares.a  $(KLOCAL)/lib/libuv.a      \
+    $(KLOCAL)/lib/K-$(KSRC)-assets.o                     \
   )
 
 all K: $(SOURCE)
@@ -94,16 +97,18 @@ $(SOURCE):
 
 assets: src/bin/$(KSRC)/Makefile
 	$(info $(call STEP,$(KSRC) $@))
-	$(MAKE) -C src/bin/$(KSRC) KASSETS=$(abspath $(KLOCAL)/assets)
-	$(foreach chost,$(subst $(CHOST),,$(CARCH)) $(CHOST), \
-	  assets=build-$(shell echo $(chost) | sed 's/\([a-z_0-9]*\)-\([a-z_0-9]*\)-.*/\2-\1/' | sed 's/^w64/win64/')/local/assets  \
+	$(MAKE) -C src/bin/$(KSRC)
+	$(foreach chost,$(CHOST), \
+	  assets=build-$(shell echo $(chost) | sed 's/-\([a-z_0-9]*\)-\(linux\)$$/-\2-\1/' | sed 's/\([a-z_0-9]*\)-\([a-z_0-9]*\)-.*/\2-\1/' | sed 's/^w64/win64/')/local/assets  \
 	  && ! test -d $(abspath $${assets}/../..) || ((test -d $${assets} \
-	  || cp -R $(KLOCAL)/assets $${assets})                            \
-	  && $(MAKE) assets.o CHOST=$(chost) && rm -rf $${assets})         \
+	  || cp -R /var/lib/K/assets $${assets})                           \
+	  && $(MAKE) assets.o CHOST=$(chost) chost=$(shell test -n "`command -v $(chost)-g++`" && echo $(chost)- || :) \
+	  && rm -rf $${assets}) \
 	;)
+	rm -rf /var/lib/K/assets
 
 assets.o: src/bin/$(KSRC)/$(KSRC).S
-	$(CHOST)-g++ -Wa,-I,$(KLOCAL)/assets,-I,src/bin/$(KSRC) -c $^ \
+	$(chost)g++ -Wa,-I,$(KLOCAL)/assets,-I,src/bin/$(KSRC) -c $^ \
 	  -o $(KLOCAL)/lib/K-$(notdir $(basename $^))-$@
 
 src: src/bin/$(KSRC)/$(KSRC).cxx

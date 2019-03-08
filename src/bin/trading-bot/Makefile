@@ -5,7 +5,8 @@ ERR        = *** Unexpected MAKE_VERSION < 4.
 HINT       = This Makefile can't be used with your make version, consider to upgrade before try again
 $(if $(shell ver=${MAKE_VERSION} && test $${ver%%.*} -lt 4 || echo 1),,$(warning $(ERR));$(error $(HINT)))
 
-NODE_PATH := /var/lib/K/node_modules
+KASSETS    = /var/lib/K/assets
+NODE_PATH  = /var/lib/K/node_modules
 PATH      := $(NODE_PATH)/.bin:$(PATH)
 
 STEPS     := $(shell grep "call\ STEP" Makefile | wc -l)

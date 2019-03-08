@@ -1487,12 +1487,15 @@ namespace ₿ {
             "Unable to configure a valid gateway using --exchange="
               + arg<string>("exchange") + " argument"
           );
-        if (!arg<string>("http").empty()) gateway->http = arg<string>("http");
-        if (!arg<string>("wss").empty())  gateway->ws   = arg<string>("wss");
-        if (!arg<string>("fix").empty())  gateway->fix  = arg<string>("fix");
         epitaph = "- exchange: " + (gateway->exchange = arg<string>("exchange")) + '\n'
                 + "- currency: " + (gateway->base     = arg<string>("base"))     + " .. "
                                  + (gateway->quote    = arg<string>("quote"))    + '\n';
+        if (!gateway->http.empty() and !arg<string>("http").empty())
+          gateway->http   = arg<string>("http");
+        if (!gateway->ws.empty() and !arg<string>("wss").empty())
+          gateway->ws     = arg<string>("wss");
+        if (!gateway->fix.empty() and !arg<string>("fix").empty())
+          gateway->fix    = arg<string>("fix");
         gateway->apikey   = arg<string>("apikey");
         gateway->secret   = arg<string>("secret");
         gateway->pass     = arg<string>("passphrase");
