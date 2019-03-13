@@ -2,7 +2,7 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
 PATCH    = 13
-BUILD    = 11
+BUILD    = 12
 SOURCE  := $(notdir $(wildcard src/bin/*))
 CARCH    = x86_64-linux-gnu      \
            arm-linux-gnueabihf   \
@@ -21,7 +21,7 @@ KLOCAL  := build-$(KHOST)/local
 
 ERR      = *** K require g++ v7 or greater, but it was not found.
 HINT    := consider a symlink at /usr/bin/$(CHOST)-g++ pointing to your g++-7 or g++-8 executable
-ABI     := $(shell test "`echo $(shell ldd --version | head -n1 | tr ' ' '\n' | tail -n1) 2.25 | tr ' ' '\n' | sort -V | head -n1`" = "2.25" 	|| echo .0)
+ABI     := $(shell test "`echo $(shell ldd --version | head -n1 | tr ' ' '\n' | tail -n1) 2.25 | tr ' ' '\n' | sort -V | head -n1`" = "2.25" || echo .0)
 
 STEP     = $(shell tput setaf 2;tput setab 0)Building $(1)..$(shell tput sgr0)
 KARGS   := -std=c++17 -O3 -pthread -DK_0_GIT='"$(shell         \
@@ -161,7 +161,10 @@ download:
 
 upgrade_old_installations:
 	-@$(foreach json,$(wildcard /var/lib/K/cache/handshake.*), rm $(json) || :;)
-	-@test -z "$(ABI)" || (echo && echo This app will crash because was compiled for GLIBC greater than or equal to 2.25. && echo To fix this issue, please recompile the app in your own system with: make dist K)
+	-@test -z "$(ABI)" || (echo \
+	&& echo This app will crash because was compiled for GLIBC greater than or equal to 2.25. \
+	&& echo A temporary solution is to recompile the app in your own system with: make dist K \
+	&& echo A permanent solution is to upgrade your OS to a newer version.)
 
 cleandb: /var/lib/K/db/K*
 	rm -rf /var/lib/K/db/K*.db
