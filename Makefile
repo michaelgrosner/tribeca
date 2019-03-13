@@ -2,7 +2,7 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
 PATCH    = 13
-BUILD    = 10
+BUILD    = 11
 SOURCE  := $(notdir $(wildcard src/bin/*))
 CARCH    = x86_64-linux-gnu      \
            arm-linux-gnueabihf   \
@@ -21,22 +21,23 @@ KLOCAL  := build-$(KHOST)/local
 
 ERR      = *** K require g++ v7 or greater, but it was not found.
 HINT    := consider a symlink at /usr/bin/$(CHOST)-g++ pointing to your g++-7 or g++-8 executable
+ABI     := $(shell test "`echo $(shell ldd --version | head -n1 | tr ' ' '\n' | tail -n1) 2.25 | tr ' ' '\n' | sort -V | head -n1`" = "2.25" 	|| echo .0)
 
 STEP     = $(shell tput setaf 2;tput setab 0)Building $(1)..$(shell tput sgr0)
-KARGS   := -std=c++17 -O3 -pthread -DK_0_GIT='"$(shell   \
-  cat .git/refs/heads/master 2>/dev/null || echo HEAD)"' \
-  -DK_STAMP='"$(shell date "+%Y-%m-%d %H:%M:%S")"'       \
-  -DK_0_DAY='"v$(MAJOR).$(MINOR).$(PATCH)+$(BUILD)"'     \
-  -DK_BUILD='"$(KHOST)"'      -DK_SOURCE='"K-$(KSRC)"'   \
-  -I$(KLOCAL)/include         -I$(realpath src/lib)      \
-  $(KLOCAL)/include/uWS/*.cpp $(KLOCAL)/lib/K-$(KHOST).a \
-  $(KLOCAL)/lib/libsqlite3.a  $(KLOCAL)/lib/libncurses.a \
-  $(KLOCAL)/lib/libquickfix.a $(KLOCAL)/lib/libz.a       \
-  $(KLOCAL)/lib/libcurl.a     $(KLOCAL)/lib/libssl.a     \
-  $(KLOCAL)/lib/libcrypto.a   $(wildcard                 \
-    $(KLOCAL)/lib/lib*.dll.a                             \
-    $(KLOCAL)/lib/libcares.a  $(KLOCAL)/lib/libuv.a      \
-    $(KLOCAL)/lib/K-$(KSRC)-assets.o                     \
+KARGS   := -std=c++17 -O3 -pthread -DK_0_GIT='"$(shell         \
+  cat .git/refs/heads/master 2>/dev/null || echo HEAD)"'       \
+  -DK_STAMP='"$(shell date "+%Y-%m-%d %H:%M:%S")"'             \
+  -DK_0_DAY='"v$(MAJOR).$(MINOR).$(PATCH)+$(BUILD)"'           \
+  -DK_BUILD='"$(KHOST)"'      -DK_SOURCE='"K-$(KSRC)"'         \
+  -I$(KLOCAL)/include         -I$(realpath src/lib)            \
+  $(KLOCAL)/include/uWS/*.cpp $(KLOCAL)/lib/K-$(KHOST)$(ABI).a \
+  $(KLOCAL)/lib/libsqlite3.a  $(KLOCAL)/lib/libncurses.a       \
+  $(KLOCAL)/lib/libquickfix.a $(KLOCAL)/lib/libz.a             \
+  $(KLOCAL)/lib/libcurl.a     $(KLOCAL)/lib/libssl.a           \
+  $(KLOCAL)/lib/libcrypto.a   $(wildcard                       \
+    $(KLOCAL)/lib/lib*.dll.a                                   \
+    $(KLOCAL)/lib/libcares.a  $(KLOCAL)/lib/libuv.a            \
+    $(KLOCAL)/lib/K-$(KSRC)-assets.o                           \
   )
 
 all K: $(SOURCE)
@@ -160,6 +161,7 @@ download:
 
 upgrade_old_installations:
 	-@$(foreach json,$(wildcard /var/lib/K/cache/handshake.*), rm $(json) || :;)
+	-@test -z "$(ABI)" || (echo && echo This app will crash because was compiled for GLIBC greater than or equal to 2.25. && echo To fix this issue, please recompile the app in your own system with: make dist K)
 
 cleandb: /var/lib/K/db/K*
 	rm -rf /var/lib/K/db/K*.db
