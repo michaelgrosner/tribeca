@@ -4,7 +4,7 @@ units:
 	cd .. && ./K.sh --version
 
 clean:
-ifndef TRAVIS_DEPLOY
+ifndef TRAVIS_OS_NAME
 	@cd .. && rm -f *.gcda *.gcno
 endif
 

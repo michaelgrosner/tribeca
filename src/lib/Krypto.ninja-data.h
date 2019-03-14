@@ -458,8 +458,7 @@ namespace ₿ {
       {};
       void timer_60s() {
         takersSellSize60s = takersBuySize60s = 0;
-        if (trades.empty()) return;
-        for (mTrade &it : trades)
+        for (const auto &it : trades)
           (it.side == Side::Bid
             ? takersSellSize60s
             : takersBuySize60s

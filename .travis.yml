@@ -46,7 +46,7 @@ before_install:
 install:
   - |
     if [[ "${TRAVIS_OS_NAME}" == "linux" ]]; then
-      yes 1 | ABI= KUNITS=1 make install dist K
+      yes 1 | KUNITS=1 make install dist K
       (cd /var/lib/K && ncu)                                             | sed '/^\s*$/d' | /usr/games/cowsay -nW80 -fduck
       make test-c       2>&1 | sed '/Total messages/d' | sed '/Help: The documentation/d' | /usr/games/cowsay -nW160 -felephant || :
     elif [[ "${TRAVIS_OS_NAME}" == "osx" ]]; then
