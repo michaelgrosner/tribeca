@@ -2,7 +2,7 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
 PATCH    = 13
-BUILD    = 15
+BUILD    = 16
 SOURCE  := $(notdir $(wildcard src/bin/*))
 CARCH    = x86_64-linux-gnu      \
            arm-linux-gnueabihf   \
@@ -12,6 +12,8 @@ CARCH    = x86_64-linux-gnu      \
 
 CHOST   ?= $(shell test -n "`command -v g++`" && g++ -dumpmachine \
              || echo $(subst build-,,$(firstword $(wildcard build-*))))
+ABI     ?= $(shell ldd="`ldd --version | head -n1 | tr ' ' '\n' | tail -n1`\n" \
+             && test "2.25" = "`echo $${ldd}2.25 | sort -V | head -n1`" || echo .0)
 
 KHOST   := $(shell echo $(CHOST)                               \
              | sed 's/-\([a-z_0-9]*\)-\(linux\)$$/-\2-\1/'     \
@@ -21,7 +23,6 @@ KLOCAL  := build-$(KHOST)/local
 
 ERR      = *** K require g++ v7 or greater, but it was not found.
 HINT    := consider a symlink at /usr/bin/$(CHOST)-g++ pointing to your g++-7 or g++-8 executable
-ABI     ?= $(shell test "`echo $(shell ldd --version | head -n1 | tr ' ' '\n' | tail -n1) 2.25 | tr ' ' '\n' | sort -V | head -n1`" = "2.25" || echo .0)
 
 STEP     = $(shell tput setaf 2;tput setab 0)Building $(1)..$(shell tput sgr0)
 KARGS   := -std=c++17 -O3 -pthread -DK_0_GIT='"$(shell         \
