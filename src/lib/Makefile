@@ -19,7 +19,7 @@ KBUILD := $(abspath ../../build-$(KHOST))
 all dist:
 	@mkdir -vp $(KBUILD)
 	$(MAKE) zlib openssl ares curl sqlite ncurses json catch uws quickfix libuv
-ifdef TRAVIS_DEPLOY
+ifdef TRAVIS_OS_NAME
 	$(MAKE) pvs
 endif
 
