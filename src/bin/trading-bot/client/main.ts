@@ -133,7 +133,7 @@ class DisplayOrder {
                                         </td>
                                         <td style="width:88px; border-bottom: 3px solid #DDE28B;" *ngIf="pair.quotingParameters.display.safety==4 && pair.quotingParameters.display.percentageValues">
                                             <input class="form-control input-sm" title="{{ quoteCurrency }}"
-                                               type="number" step="0.1" min="0" max="100"
+                                               type="number" step="0.001" min="0" max="100"
                                                onClick="this.select()"
                                                [(ngModel)]="pair.quotingParameters.display.rangePercentage">
                                         </td>

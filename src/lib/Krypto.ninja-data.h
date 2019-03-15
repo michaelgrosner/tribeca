@@ -2329,7 +2329,7 @@ namespace ₿ {
       void applyAK47Increment() {
         if (qp.safety != mQuotingSafety::AK47) return;
         const Price range = qp.percentageValues
-          ? qp.rangePercentage * wallet.base.value / 100
+          ? qp.rangePercentage * levels.fairValue / 100
           : qp.range;
         if (!quotes.bid.empty())
           quotes.bid.price -= AK47inc * range;
