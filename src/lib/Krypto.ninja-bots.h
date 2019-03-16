@@ -978,6 +978,9 @@ namespace ₿ {
         if (!diskdata.empty()) {
           exec("ATTACH '" + diskdata + "' AS " + (disk = "disk") + ";");
           Print::log("DB", "loaded OK from", diskdata);
+        } else {
+          exec("PRAGMA journal_mode = WAL;");
+          exec("PRAGMA synchronous = NORMAL;");
         }
         for (auto &it : tables) {
           report(it->pull(select(it)));
