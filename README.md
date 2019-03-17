@@ -192,7 +192,7 @@ In case you really want to use plain HTTP, use `--without-ssl` argument.
 
 ### Databases
 
-Each currency pair of each exchange will use a different sqlite database file.
+Each currency pair of each exchange will use a different sqlite database file with [WAL mode](https://www.sqlite.org/wal.html) enabled.
 
 All database files are located at `/var/lib/K/db/K-*.db`. It is located outside the download folder to survive reinstalls and wild `rm -rf path/to/K`.
 
