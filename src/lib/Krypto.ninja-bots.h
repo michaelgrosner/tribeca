@@ -978,10 +978,9 @@ namespace ₿ {
         if (!diskdata.empty()) {
           exec("ATTACH '" + diskdata + "' AS " + (disk = "disk") + ";");
           Print::log("DB", "loaded OK from", diskdata);
-        } else {
-          exec("PRAGMA journal_mode = WAL;");
-          exec("PRAGMA synchronous = NORMAL;");
         }
+        exec("PRAGMA " + disk + ".journal_mode = WAL;"
+             "PRAGMA " + disk + ".synchronous = NORMAL;");
         for (auto &it : tables) {
           report(it->pull(select(it)));
           it->push = [this, it]() {
@@ -1434,7 +1433,11 @@ namespace ₿ {
                           : "no"           }
           });
         } {
-          if (databases) backups(arg<string>("database"), arg<string>("diskdata"));
+          if (databases)
+            backups(
+              arg<string>("database"),
+              arg<string>("diskdata")
+            );
           else blackhole();
         } {
           if (arg<int>("headless")) headless();
