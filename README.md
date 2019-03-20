@@ -194,13 +194,13 @@ In case you really want to use plain HTTP, use `--without-ssl` argument.
 
 Each currency pair of each exchange will use a different sqlite database file with [WAL mode](https://www.sqlite.org/wal.html) enabled.
 
-All database files are located at `/var/lib/K/db/K-*.db`. It is located outside the download folder to survive reinstalls and wild `rm -rf path/to/K`.
+All database files are located at `/var/lib/K/db/K-*.db*`. Are outside the download folder to survive reinstalls and wild `rm -rf path/to/K`.
 
-You can copy any `*.db` file to another machine when migrating or as a backup.
+You can copy any group of `*.db*` files to another machine when migrating or as a backup.
 
-If a database file does not exist, the application will create it on boot; otherwise, it will use the existing one.
+If a database does not exist, the application will create it on boot; otherwise, it will use the existing one.
 
-To explore each database file you can use https://github.com/sqlitebrowser/sqlitebrowser or a similar tool.
+To explore each database you can use https://github.com/sqlitebrowser/sqlitebrowser or a similar tool.
 
 To set a different database filename or to set an [in-memory database](https://sqlite.org/inmemorydb.html), use `--database=FILE` argument (see `--help`).
 

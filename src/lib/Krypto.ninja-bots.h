@@ -1465,7 +1465,7 @@ namespace ₿ {
         if (gateway->ready(socket->getLoop()))
           socket->run();
       };
-      void handshake(const vector<pair<string, string>> &notes = {}) {
+      void handshake(const GwExchange::Report &notes = {}) {
         const json reply = gateway->handshake(arg<int>("nocache"));
         if (!gateway->minTick or !gateway->minSize)
           error("GW", "Unable to fetch data from " + gateway->exchange

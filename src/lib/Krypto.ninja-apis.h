@@ -477,6 +477,7 @@ namespace ₿ {
 
   class GwExchange: public GwExchangeData {
     public:
+      using Report = vector<pair<string, string>>;
       unsigned int countdown = 0;
         string exchange, apikey,
                secret,   pass,
@@ -531,11 +532,11 @@ namespace ₿ {
         close();
         api->close();
       };
-      void report(vector<pair<string, string>> notes, const bool &nocache) {
+      void report(Report notes, const bool &nocache) {
         decimal.price.stream.precision(abs(log10(minTick)));
         decimal.amount.stream.precision(minTick < 1e-8 ? 10 : 8);
         decimal.percent.stream.precision(2);
-        for (pair<string, string> it : (vector<pair<string, string>>){
+        for (auto it : (Report){
           {"symbols", base + "/" + quote},
           {"minTick", decimal.amount.str(minTick)              },
           {"minSize", decimal.amount.str(minSize)              },
@@ -543,7 +544,7 @@ namespace ₿ {
           {"takeFee", decimal.percent.str(takeFee * 1e+2) + "%"}
         }) notes.push_back(it);
         string note = "handshake:";
-        for (pair<string, string> &it : notes)
+        for (auto &it : notes)
           if (!it.second.empty())
             note += "\n- " + it.first + ": " + it.second;
         log((nocache ? "" : "cached ") + note);
