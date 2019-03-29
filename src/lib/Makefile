@@ -3,16 +3,16 @@ HINT     = This Makefile can't be used directly, consider cd ../.. before try ag
 $(if $(subst 0,,${MAKELEVEL}),,$(warning $(ERR));$(error $(HINT)))
 
 V_ZLIB  = 1.2.11
-V_SSL   = 1.1.1a
+V_SSL   = 1.1.1b
 V_ARES  = 1.15.0
-V_CURL  = 7.63.0
-V_SQL   = 3260000
+V_CURL  = 7.64.1
+V_SQL   = 3270200
 V_NCUR  = 6.1
-V_JSON  = 3.5.0
-V_CATCH = 2.5.0
+V_JSON  = 3.6.1
+V_CATCH = 2.7.0
 V_UWS   = 0.14.8
 V_QF    = 1.15.1
-V_UV    = 1.24.1
+V_UV    = 1.27.0
 
 KBUILD := $(abspath ../../build-$(KHOST))
 
@@ -35,12 +35,12 @@ zlib:
 	|| (./configure --static --prefix=$(KBUILD)/local && make all install))           )
 
 openssl:
-	test -d $(KBUILD)/openssl-$(V_SSL) || (                                                    \
-	curl -L https://www.openssl.org/source/openssl-$(V_SSL).tar.gz | tar xz -C $(KBUILD)       \
-	&& cd $(KBUILD)/openssl-$(V_SSL) && CC=gcc                                                 \
-	./Configure $(shell test -n "`echo $(CHOST) | grep mingw32`" && echo mingw64 || echo dist) \
-	--cross-compile-prefix=$(CHOST)- --prefix=$(KBUILD)/local --openssldir=$(KBUILD)/local     \
-	&& make all install_sw install_ssldirs                                                     )
+	test -d $(KBUILD)/openssl-$(V_SSL) || (                                                   \
+	curl -L https://www.openssl.org/source/openssl-$(V_SSL).tar.gz | tar xz -C $(KBUILD)      \
+	&& cd $(KBUILD)/openssl-$(V_SSL) && CC=gcc                                                \
+	./Configure $(shell test -n "`echo $(CHOST) | grep mingw32`" && echo mingw64 || echo gcc) \
+	--cross-compile-prefix=$(CHOST)- --prefix=$(KBUILD)/local --openssldir=$(KBUILD)/local    \
+	&& make all install_sw install_ssldirs                                                    )
 
 ares:
 	test -d $(KBUILD)/c-ares-$(V_ARES) || (                                                  \
@@ -63,7 +63,7 @@ curl:
 
 sqlite:
 	test -d $(KBUILD)/sqlite-autoconf-$(V_SQL) || (                                       \
-	curl -L https://sqlite.org/2018/sqlite-autoconf-$(V_SQL).tar.gz | tar xz -C $(KBUILD) \
+	curl -L https://sqlite.org/2019/sqlite-autoconf-$(V_SQL).tar.gz | tar xz -C $(KBUILD) \
 	&& cd $(KBUILD)/sqlite-autoconf-$(V_SQL) && ./configure --prefix=$(KBUILD)/local      \
 	--host=$(CHOST) --enable-static --disable-dynamic-extensions --disable-shared         \
 	--enable-threadsafe && make all install                                               )
@@ -148,4 +148,4 @@ else
 	&& chmod +x install.sh && sudo ./install.sh                      )
 endif
 
-.PHONY: all dist clean zlib openssl curl sqlite ncurses json catch uws quickfix libuv
+.PHONY: all dist clean zlib openssl curl sqlite ncurses json catch uws quickfix libuv pvs

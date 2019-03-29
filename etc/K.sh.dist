@@ -2,8 +2,8 @@
 #  █▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀█
 #  ▓ ████ ███ Usage? use current filename of THIS file: █
 #  ▒ ████ ███    $ ./K.sh --help                        █
-#    ▓███▀█▄  !Feel free to copy/rename/edit THIS file. █
-#  ▒ ▒▓██ ███ !Feel free to uncomment any examples, but █
+#    ▓███▀█▄  !Feel free to copy/move/rename THIS file. █
+#  ▒ ▒▓██ ███ !Feel free to un/comment any examples but █
 #  ▓ ░▒▓█ ███  do not define multiple times a variable. █
 #  █ configurable! executable! K.sh initialization file █
 #  █▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▀▄▄██▄▌ ▌▐ ▐▄██▄▄▀▄▄▄▄▄▄▄▄▄▄▄▄▄▄█

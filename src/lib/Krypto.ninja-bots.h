@@ -21,24 +21,42 @@ namespace ₿ {
     public:
       static int colorful;
       static const string reset() {
-          return colorful ? "\033[0m" : "";
+          return paint(0, -1);
       };
       static const string r(const int &color) {
-          return colorful ? "\033[0;3" + to_string(color) + 'm' : "";
+          return paint(0, color);
       };
       static const string b(const int &color) {
-          return colorful ? "\033[1;3" + to_string(color) + 'm' : "";
+          return paint(1, color);
       };
       static void default_colors() {
         if (colorful) start_color();
         use_default_colors();
-        init_pair(COLOR_WHITE,   COLOR_WHITE,   COLOR_BLACK);
-        init_pair(COLOR_GREEN,   COLOR_GREEN,   COLOR_BLACK);
-        init_pair(COLOR_RED,     COLOR_RED,     COLOR_BLACK);
-        init_pair(COLOR_YELLOW,  COLOR_YELLOW,  COLOR_BLACK);
-        init_pair(COLOR_BLUE,    COLOR_BLUE,    COLOR_BLACK);
-        init_pair(COLOR_MAGENTA, COLOR_MAGENTA, COLOR_BLACK);
-        init_pair(COLOR_CYAN,    COLOR_CYAN,    COLOR_BLACK);
+        for (const auto &color : {
+          COLOR_BLACK,
+          COLOR_RED,
+          COLOR_GREEN,
+          COLOR_YELLOW,
+          COLOR_BLUE,
+          COLOR_MAGENTA,
+          COLOR_CYAN,
+          COLOR_WHITE
+        }) init_pair(color, color,
+          color
+            ? COLOR_BLACK
+            : COLOR_WHITE
+        );
+      };
+    private:
+      static const string paint(const int &style, const int &color) {
+        return colorful
+          ? "\033["
+            + to_string(style)
+            + (color == -1
+              ? ""
+              : ";3" + to_string(color)
+            ) + 'm'
+          : "";
       };
   };
 
@@ -565,6 +583,9 @@ namespace ₿ {
 
   class Socket {
     public:
+      using HTTPServer = function<const string(string, const string&, const string&)>;
+      using WSServer   = function<const bool(const bool&, const string&)>;
+      using WSMessage  = function<const string(string, const string&)>;
       string wtfismyip = "localhost";
     protected:
       uWS::Hub *socket = nullptr;
@@ -572,24 +593,14 @@ namespace ₿ {
       vector<uWS::Group<uWS::SERVER>*> ui_servers;
     public:
       uWS::Group<uWS::SERVER> *listen(
-               string &protocol,
-        const     int &port,
-        const    bool &ssl,
-        const  string &crt,
-        const  string &key,
-        const function<const string(
-                string,
-          const string&,
-          const string&
-        )>            &httpServer = nullptr,
-        const function<const bool(
-          const   bool&,
-          const string&
-        )>            &wsServer   = nullptr,
-        const function<const string(
-                string,
-          const string&
-        )>            &wsMessage  = nullptr
+                  string &protocol,
+        const        int &port,
+        const       bool &ssl,
+        const     string &crt,
+        const     string &key,
+        const HTTPServer &httpServer = nullptr,
+        const   WSServer &wsServer   = nullptr,
+        const  WSMessage &wsMessage  = nullptr
       ) {
         auto ui_server = socket->createGroup<uWS::SERVER>(uWS::PERMESSAGE_DEFLATE);
         if (ui_server) {
@@ -1230,10 +1241,7 @@ namespace ₿ {
         clickable.clear();
         documents.clear();
       };
-      function<const bool(const bool&, const string&)> wsServer = [&](
-        const   bool &connection,
-        const string &addr
-      ) {
+      Socket::WSServer wsServer = [&](const bool &connection, const string &addr) {
         connections += connection ?: -1;
         Print::log("UI", to_string(connections) + " client" + string(connections == 1 ? 0 : 1, 's')
           + " connected, last connection was from", addr);
@@ -1243,10 +1251,7 @@ namespace ₿ {
         }
         return true;
       };
-      function<const string(string, const string&)> wsMessage = [&](
-              string message,
-        const string &addr
-      ) {
+      Socket::WSMessage wsMessage = [&](string message, const string &addr) {
         if (alien(addr))
           return string(documents.at("").first, documents.at("").second);
         const char matter = message.at(1);
@@ -1267,11 +1272,7 @@ namespace ₿ {
         }
         return string();
       };
-      function<const string(string, const string&, const string&)> httpServer = [&](
-              string path,
-        const string &auth,
-        const string &addr
-      ) {
+      Socket::HTTPServer httpServer = [&](string path, const string &auth, const string &addr) {
         if (alien(addr))
           path.clear();
         const bool papersplease = !(

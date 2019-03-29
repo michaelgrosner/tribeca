@@ -212,25 +212,26 @@ namespace ₿ {
         b64 = BIO_new(BIO_f_base64());
         bio = BIO_new(BIO_s_mem());
         bio = BIO_push(b64, bio);
+        BIO_set_close(bio, BIO_CLOSE);
         BIO_set_flags(bio, BIO_FLAGS_BASE64_NO_NL);
         BIO_write(bio, input.data(), input.length());
         BIO_flush(bio);
         BIO_get_mem_ptr(bio, &bufferPtr);
-        BIO_set_close(bio, BIO_NOCLOSE);
+        const string output(bufferPtr->data, bufferPtr->length);
         BIO_free_all(bio);
-        return string(bufferPtr->data, bufferPtr->length);
+        return output;
       };
       static string B64_decode(const string &input) {
         BIO *bio, *b64;
-        char buffer[input.length()];
+        char output[input.length()];
         b64 = BIO_new(BIO_f_base64());
         bio = BIO_new_mem_buf(input.data(), input.length());
         bio = BIO_push(b64, bio);
+        BIO_set_close(bio, BIO_CLOSE);
         BIO_set_flags(bio, BIO_FLAGS_BASE64_NO_NL);
-        BIO_set_close(bio, BIO_NOCLOSE);
-        int len = BIO_read(bio, buffer, input.length());
+        int len = BIO_read(bio, output, input.length());
         BIO_free_all(bio);
-        return string(buffer, len);
+        return string(output, len);
       };
       static string SHA256(const string &input, const bool &hex = false) {
         return SHA(input, hex, ::SHA256, SHA256_DIGEST_LENGTH);
@@ -319,9 +320,9 @@ namespace ₿ {
       };
       static const RandId uuid36Id() {
         string uuid = string(36, ' ');
-        uuid[8]  = '-';
-        uuid[13] = '-';
-        uuid[18] = '-';
+        uuid[8]  =
+        uuid[13] =
+        uuid[18] =
         uuid[23] = '-';
         uuid[14] = '4';
         unsigned long long rnd = int64();
@@ -723,9 +724,9 @@ namespace ₿ {
               break;
             }
         return {
-          {"minTick", minTick          },
-          {"minSize", minSize          },
-          {  "reply", {reply1, reply2 }}
+          {"minTick", minTick         },
+          {"minSize", minSize         },
+          {  "reply", {reply1, reply2}}
         };
       };
     protected:

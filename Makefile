@@ -2,7 +2,7 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
 PATCH    = 13
-BUILD    = 19
+BUILD    = 20
 SOURCE  := $(notdir $(wildcard src/bin/*))
 CARCH    = x86_64-linux-gnu      \
            arm-linux-gnueabihf   \
@@ -102,7 +102,7 @@ $(SOURCE):
 assets: src/bin/$(KSRC)/Makefile
 	$(info $(call STEP,$(KSRC) $@))
 	$(MAKE) -C src/bin/$(KSRC)
-	$(foreach chost,$(CHOST), \
+	$(foreach chost,$(CARCH), \
 	  assets=build-$(shell echo $(chost) | sed 's/-\([a-z_0-9]*\)-\(linux\)$$/-\2-\1/' | sed 's/\([a-z_0-9]*\)-\([a-z_0-9]*\)-.*/\2-\1/' | sed 's/^w64/win64/')/local/assets  \
 	  && ! test -d $(abspath $${assets}/../..) || ((test -d $${assets} \
 	  || cp -R /var/lib/K/assets $${assets})                           \
@@ -164,10 +164,10 @@ download:
 
 upgrade_old_installations:
 	-@$(foreach json,$(wildcard /var/lib/K/cache/handshake.*), rm $(json) || :;)
-	-@test "1" = "$(ABI)" || (echo \
+	-@test "1" = "$(ABI)" || (echo                                                            \
 	&& echo This app will crash because was compiled with CXX11 ABI, missing in your system.. \
 	&& echo A temporary solution is to recompile the app in your own system with: make dist K \
-	&& echo A permanent solution is to upgrade your OS to a newer version.)
+	&& echo A permanent solution is to upgrade your OS to a newer version.                    )
 
 cleandb: /var/lib/K/db/K*
 	rm -rf /var/lib/K/db/K*.db
