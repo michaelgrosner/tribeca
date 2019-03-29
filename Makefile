@@ -103,11 +103,11 @@ assets: src/bin/$(KSRC)/Makefile
 	$(info $(call STEP,$(KSRC) $@))
 	$(MAKE) -C src/bin/$(KSRC)
 	$(foreach chost,$(CARCH), \
-	  assets=build-$(shell echo $(chost) | sed 's/-\([a-z_0-9]*\)-\(linux\)$$/-\2-\1/' | sed 's/\([a-z_0-9]*\)-\([a-z_0-9]*\)-.*/\2-\1/' | sed 's/^w64/win64/')/local/assets  \
-	  && ! test -d $(abspath $${assets}/../..) || ((test -d $${assets} \
-	  || cp -R /var/lib/K/assets $${assets})                           \
+	  build=build-$(shell echo $(chost) | sed 's/-\([a-z_0-9]*\)-\(linux\)$$/-\2-\1/' | sed 's/\([a-z_0-9]*\)-\([a-z_0-9]*\)-.*/\2-\1/' | sed 's/^w64/win64/') \
+	  && ! test -d $${build} || ((test -d $${build}/local/assets \
+	  || cp -R /var/lib/K/assets $${build}/local/assets)         \
 	  && $(MAKE) assets.o CHOST=$(chost) chost=$(shell test -n "`command -v $(chost)-g++`" && echo $(chost)- || :) \
-	  && rm -rf $${assets}) \
+	  && rm -rf $${build}/local/assets) \
 	;)
 	rm -rf /var/lib/K/assets
 
