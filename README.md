@@ -30,7 +30,7 @@ The web UI is compatible with most web browsers/devices/resolutions, but Firefox
 
 ||with Post-Only Orders support|without Post-Only|
 |---|---|---|
-|**without Maker fees**|||
+|**without Maker fees**|*none*|*none*|
 |**with Maker and Taker fees**|[Coinbase](https://pro.coinbase.com/) <sub>([fees](https://pro.coinbase.com/orders/fees))</sub><br> &#10239; _REST + WebSocket + FIX_<br><br>[HitBTC](https://hitbtc.com/) <sub>([fees](https://hitbtc.com/fee-tier))</sub><br>[Bequant](https://bequant.io/) <sub>([fees](https://bequant.io/fees-and-limits))</sub><br> &#10239; _REST + WebSocket_<br><br>[Bitfinex](https://www.bitfinex.com/) <sub>([fees](https://www.bitfinex.com/fees))</sub><br>[Ethfinex](https://www.ethfinex.com/) <sub>([fees](https://www.ethfinex.com/fees))</sub><br> &#10239; _REST + WebSocket_<br><br>[Kraken](https://www.kraken.com/) <sub>([fees](https://www.kraken.com/features/fee-schedule))</sub><br> &#10239; _REST_<br><br>[Poloniex](https://www.poloniex.com/) <sub>([fees](https://poloniex.com/fees/))</sub><br> &#10239; _REST_|[FCoin](https://fcoin.com/) <sub>([fees](https://support.fcoin.com/hc/en-us/articles/360003715514))</sub><br> &#10239; _REST + WebSocket_|
 
 All currency pairs are supported.
@@ -194,7 +194,7 @@ In case you really want to use plain HTTP, use `--without-ssl` argument.
 
 Each currency pair of each exchange will use a different sqlite database file with [WAL mode](https://www.sqlite.org/wal.html) enabled.
 
-All database files are located at `/var/lib/K/db/K-*.db*`. Are outside the download folder to survive reinstalls and wild `rm -rf path/to/K`.
+All database files are located at `/var/lib/K/db/K-*.db*`, outside the download folder to survive wild `rm -rf path/to/K` or reinstalls.
 
 You can copy any group of `*.db*` files to another machine when migrating or as a backup.
 
