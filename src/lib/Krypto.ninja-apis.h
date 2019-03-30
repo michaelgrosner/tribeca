@@ -621,8 +621,8 @@ namespace ₿ {
     public:
       const json handshake() override {
         return {
-          {"minTick", 0.01   },
-          {"minSize", 0.01   },
+          {"minTick", 1e-2   },
+          {"minSize", 1e-2   },
           {  "reply", nullptr}
         };
       };
@@ -838,16 +838,10 @@ namespace ₿ {
         randId = Random::int45Id;
       };
       const json handshake() override {
-        const json reply = Curl::xfer(http + "/public?command=returnTicker");
-        Price minTick = 0;
-        if (reply.find(quote + "_" + base) != reply.end()) {
-          istringstream iss("1e-" + to_string(6-reply.at(quote + "_" + base).at("last").get<string>().find(".")));
-          iss >> minTick;
-        }
         return {
-          {"minTick", minTick},
-          {"minSize", 0.001  },
-          {  "reply", reply  }
+          {"minTick", 1e-8   },
+          {"minSize", 1e-3   },
+          {  "reply", nullptr}
         };
       };
     protected:
