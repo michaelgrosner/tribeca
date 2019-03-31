@@ -838,10 +838,14 @@ namespace ₿ {
         randId = Random::int45Id;
       };
       const json handshake() override {
+        const json reply = Curl::xfer(http + "/public?command=returnTicker")
+                             .value(quote + "_" + base, json::object());
         return {
-          {"minTick", 1e-8   },
-          {"minSize", 1e-3   },
-          {  "reply", nullptr}
+          {"minTick", reply.empty()
+                        ? 0
+                        : 1e-8     },
+          {"minSize", 1e-3         },
+          {  "reply", reply        }
         };
       };
     protected:
