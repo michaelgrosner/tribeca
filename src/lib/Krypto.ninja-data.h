@@ -2345,24 +2345,24 @@ namespace ₿ {
           for (const mLevel &it : levels.asks)
             if (it.price > quotes.ask.price) {
               depth += it.size;
-              if (depth < bestWidthSize) continue;
+              if (depth <= bestWidthSize) continue;
               const Price bestAsk = it.price - K.gateway->minTick;
               if (bestAsk >= quotes.ask.price) {
                 quotes.ask.price = bestAsk;
-                break;
               }
+              break;
             }
         depth = 0;
         if (!quotes.bid.empty())
           for (const mLevel &it : levels.bids)
             if (it.price < quotes.bid.price) {
               depth += it.size;
-              if (depth < bestWidthSize) continue;
+              if (depth <= bestWidthSize) continue;
               const Price bestBid = it.price + K.gateway->minTick;
               if (bestBid <= quotes.bid.price) {
                 quotes.bid.price = bestBid;
-                break;
               }
+              break;
             }
       };
       void applyTradesPerMinute() {
