@@ -2311,7 +2311,7 @@ namespace ₿ {
                 or qp.pongAt == mPongAt::AveragePingAggressive
                 or qp.pongAt == mPongAt::LongPingAggressive
             )
-          ) quotes.ask.price = wallet.safety.buyPing + widthPong;
+          ) quotes.ask.price = max(levels.bids.at(0).price + K.gateway->minTick, wallet.safety.buyPing + widthPong);
           quotes.ask.isPong = quotes.ask.price >= wallet.safety.buyPing + widthPong;
         }
         if (!quotes.bid.empty() and wallet.safety.sellPing) {
@@ -2322,7 +2322,7 @@ namespace ₿ {
                 or qp.pongAt == mPongAt::AveragePingAggressive
                 or qp.pongAt == mPongAt::LongPingAggressive
             )
-          ) quotes.bid.price = wallet.safety.sellPing - widthPong;
+          ) quotes.bid.price = min(levels.asks.at(0).price - K.gateway->minTick, wallet.safety.sellPing - widthPong);
           quotes.bid.isPong = quotes.bid.price <= wallet.safety.sellPing - widthPong;
         }
       };
