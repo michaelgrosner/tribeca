@@ -759,11 +759,9 @@ namespace ₿ {
           ((Events*)loop->getData())->deferred();
         });
       };
-      function<void()> stop() {
-        return [&]() {
-          timer->stop();
-          deferred();
-        };
+      void stop() {
+        timer->stop();
+        deferred();
       };
     private:
       void deferred() {
