@@ -20,7 +20,7 @@ all dist:
 	@mkdir -vp $(KBUILD)
 	$(MAKE) zlib openssl ares curl sqlite ncurses json catch uws quickfix libuv
 ifdef TRAVIS_OS_NAME
-	$(MAKE) pvs
+	$(MAKE) lcov pvs
 endif
 
 clean:
@@ -148,4 +148,13 @@ else
 	&& chmod +x install.sh && sudo ./install.sh                      )
 endif
 
-.PHONY: all dist clean zlib openssl curl sqlite ncurses json catch uws quickfix libuv pvs
+lcov:
+ifndef V_LCOV
+	$(MAKE) $@ V_LCOV=$(shell curl -s https://api.github.com/repos/linux-test-project/lcov/releases/latest | grep name | grep -v 'tag\|lcov' | cut -d '"' -f4)
+else
+	test -d $(KBUILD)/lcov-$(V_LCOV) || (                                                                 \
+	curl -L https://github.com/linux-test-project/lcov/releases/download/v$(V_LCOV)/lcov-$(V_LCOV).tar.gz \
+	| tar xz -C $(KBUILD) && cd $(KBUILD)/lcov-$(V_LCOV) && sudo make install                             )
+endif
+
+.PHONY: all dist clean zlib openssl curl sqlite ncurses json catch uws quickfix libuv lcov pvs
