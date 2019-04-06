@@ -421,6 +421,8 @@ namespace ₿ {
                                                "\n" "'KRAKEN', 'FCOIN', 'KORBIT' , 'POLONIEX' or 'NULL'"},
           {"currency",     "PAIR",   "NULL",   "set currency PAIR for trading, use format"
                                                "\n" "with '/' separator, like 'BTC/EUR'"},
+          {"make-fee",     "AMOUNT", "0",      "set a custom maker fee to respect, like '0.1%'"},
+          {"take-fee",     "AMOUNT", "0",      "set a custom taker fee to respect, like '0.1%' (unused)"},
           {"apikey",       "WORD",   "NULL",   "set (never share!) WORD as api key for trading, mandatory"},
           {"secret",       "WORD",   "NULL",   "set (never share!) WORD as api secret for trading, mandatory"},
           {"passphrase",   "WORD",   "NULL",   "set (never share!) WORD as api passphrase for trading,"
@@ -1470,6 +1472,10 @@ namespace ₿ {
           error("GW", "Unable to fetch data from " + gateway->exchange
             + " for symbols " + gateway->base + "/" + gateway->quote
             + ", possible error message: " + reply.dump());
+        if (arg<double>("take-fee"))
+          gateway->takeFee = arg<double>("take-fee") / 100.0;
+        if (arg<double>("make-fee"))
+          gateway->makeFee = arg<double>("make-fee") / 100.0;
         gateway->report(notes, arg<int>("nocache"));
       };
       const unsigned int memSize() const {
