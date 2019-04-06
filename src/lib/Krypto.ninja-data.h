@@ -1389,8 +1389,9 @@ namespace ₿ {
           it->Kvalue = abs(it->Kqty*it->Kprice);
           pong->quantity = pong->quantity - Kqty;
           pong->value = abs(pong->price*pong->quantity);
-          if (it->quantity<=it->Kqty)
-            it->Kdiff = abs(it->quantity * it->price - it->Kqty * it->Kprice);
+          if (it->quantity <= it->Kqty)
+            it->Kdiff = ((it->quantity * it->price) - (it->Kqty * it->Kprice))
+                      * (it->side == Side::Ask ? 1 : -1);
           it->isPong = true;
           it->loadedFromDB = false;
           it = send_push_erase(it);
