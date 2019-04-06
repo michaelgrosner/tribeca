@@ -90,22 +90,22 @@ export class TradesComponent implements OnInit {
         else return "unknown";
       }},
       {width: 80, field:'price', headerValueGetter:(params) => { return 'px' + this.headerNameMod; }, cellClass: (params) => {
-        if (params.data.side === 'K') return (params.data.price > params.data.Kprice) ? "sell" : "buy"; else return params.data.side === 'Sell' ? "sell" : "buy";
+        return params.data.pingSide;
       }, cellRendererFramework: QuoteCurrencyCellComponent},
       {width: 85, suppressSizeToFit: true, field:'quantity', headerValueGetter:(params) => { return 'qty' + this.headerNameMod; }, cellClass: (params) => {
-        if (params.data.side === 'K') return (params.data.price > params.data.Kprice) ? "sell" : "buy"; else return params.data.side === 'Sell' ? "sell" : "buy";
+        return params.data.pingSide;
       }, cellRendererFramework: BaseCurrencyCellComponent},
       {width: 69, field:'value', headerValueGetter:(params) => { return 'val' + this.headerNameMod; }, cellClass: (params) => {
-        if (params.data.side === 'K') return (params.data.price > params.data.Kprice) ? "sell" : "buy"; else return params.data.side === 'Sell' ? "sell" : "buy";
+        return params.data.pingSide;
       }, cellRendererFramework: QuoteCurrencyCellComponent},
       {width: 75, field:'Kvalue', headerName:'valPong', hide:true, cellClass: (params) => {
-        if (params.data.side === 'K') return (params.data.price < params.data.Kprice) ? "sell" : "buy"; else return params.data.Kqty ? ((params.data.price < params.data.Kprice) ? "sell" : "buy") : "";
+        return params.data.pongSide;
       }, cellRendererFramework: QuoteCurrencyCellComponent},
       {width: 85, suppressSizeToFit: true, field:'Kqty', headerName:'qtyPong', hide:true, cellClass: (params) => {
-        if (params.data.side === 'K') return (params.data.price < params.data.Kprice) ? "sell" : "buy"; else return params.data.Kqty ? ((params.data.price < params.data.Kprice) ? "sell" : "buy") : "";
+        return params.data.pongSide;
       }, cellRendererFramework: BaseCurrencyCellComponent},
       {width: 80, field:'Kprice', headerName:'pxPong', hide:true, cellClass: (params) => {
-        if (params.data.side === 'K') return (params.data.price < params.data.Kprice) ? "sell" : "buy"; else return params.data.Kqty ? ((params.data.price < params.data.Kprice) ? "sell" : "buy") : "";
+        return params.data.pongSide;
       }, cellRendererFramework: QuoteCurrencyCellComponent},
       {width: 65, field:'Kdiff', headerName:'Kdiff', hide:true, cellClass: (params) => {
         if (params.data.side === 'K') return "kira"; else return "";
@@ -144,7 +144,9 @@ export class TradesComponent implements OnInit {
             Kprice: t.Kprice ? t.Kprice : null,
             Kvalue: t.Kvalue ? t.Kvalue : null,
             Kdiff: t.Kdiff?t.Kdiff:null,
-            side: t.Kqty >= t.quantity ? 'K' : (t.side === Models.Side.Ask ? "Sell" : "Buy")
+            side: t.Kqty >= t.quantity ? 'K' : (t.side === Models.Side.Ask ? "Sell" : "Buy"),
+            pingSide: t.side == Models.Side.Ask ? "sell" : "buy",
+            pongSide: t.side == Models.Side.Ask ? "buy" : "sell"
           }));
           if (t.loadedFromDB === false) {
             if (this.sortTimeout) window.clearTimeout(this.sortTimeout);
@@ -163,6 +165,8 @@ export class TradesComponent implements OnInit {
           price: t.price,
           quantity: t.quantity,
           side: t.Kqty >= t.quantity ? 'K' : (t.side === Models.Side.Ask ? "Sell" : "Buy"),
+          pingSide: t.side == Models.Side.Ask ? "sell" : "buy",
+          pongSide: t.side == Models.Side.Ask ? "buy" : "sell",
           value: t.value,
           Ktime: t.Ktime || 0,
           Kqty: t.Kqty ? t.Kqty : null,
