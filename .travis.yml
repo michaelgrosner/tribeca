@@ -21,11 +21,6 @@ branches:
 git:
   depth: false
 
-env:
-  global:
-   - secure: "IT/yrxrotW+NYPYN9AZ0StBU2gCkX63hhmhmfj4fmo3hOLOI9itmnbRm70u/EmFgOAKMUynNp+HZjn0kMH8MOFfGoMoalQ86OEH28BU9itPevTf35cMApb4yGfhXrsAZOChVgEKg3jvxQyLfa281KoiOCfwz3rS5RXGCNZeQtRUdIIKgTfWoBquLccblCfZHo4icFCAJknbvr93phvam2owabJ7FSOKI4MgWyQPV6GQakeDbH6N5jPEIZC/h2wVUS5/BM0iWY8mMCQda3zLj551PFxv1pcTcNH29UHP7u87n+jD6RoWoI38fIrfHsnLLtgckrQauHduKe4m/17TdXaYpmlLFv72xujyHrMJ/3uPltvwUc8Vt0oVSo5IC2M6dc1F4+A20owTwA5YBR9vWi/C+MxfsSE7L/lyFzWACZCTZOgeGGai8smMxLTbhOL5oJeQfsO7UbM4uGiKSeEU9lqFBuDHQI+dSqvflVrAmCGH6sDBrZ0kECewVqK6i5GVRzFkIVtDZ7MJVnM+gtc6ORjLrepBykeG2YFH+X9d7zn9wxVA7bPa+73/62qrdQcTfmvjcJetwXwzu7sUiOVR2lh+bfiJ1X/KPEFffR6vfjYaPdXOER/Rcopa0vf7w7+DrXZe32Qw9WkSEbCmwBzUnzHALo3PQxTfRDrlOiu6BDpI="
-   - secure: "xtNyYGBGhXoi96YuBLMawCTJNNfUkj++Jre+W6OWHQ/7JytqJK77OTifKd5zxF5Y56NRJDawqkpFww4B137ocGWCqLdVN0788VPjvgW7aF3Lg8r8KX07SLBdiG7XHueJcbYDkUeM+0POBGScknJ7lov268YIcepHHnTTcwZRFwA1UbpoZAe1rMAh/Nue2qknXLBcF3X5lCiFSr93XnuHqF7boabKAs4K0Vk36Zpq46PzYxl6rlR7agf6c3Kt0geTlO1uL0HQWKE5m8CcOqraZFLpzDBME7EWNf+Ty5Nez/euVmNQZEcK1HC5K+82oXLjtLGQmpAP9CwBC7JTewqS2ejeApMZcCwemfwXWjY5+GvRBQpe1lT2Ib861l780IfA5XK/tmqlPZi5mSUTKWONXDbbf7xOcyYMUVuigkjE0wRUWbKo+I9MPI0scto4poXyhCp8GgvaC6a8pcvYCHjlIM3ocZ3Yv8fhcpraupKXEklYEYHXuUs0Yr3zcDynedHsGAKUrhJuUfCVISm7+fW+RjbeanqIe5wONRtdRsTjnrK6mkHDPuBs6p3zNzVyQ1Y9TQ9yvy/o8MHBAokOsDXTG35CxndF9JpI6LoZsQR5wus6tpS2zOgoeVCfiwVsndWxAaSLi519S6VsYjtvZT/kv2KVz+hHJRMG80GNsx7tdjY="
-
 addons:
   apt:
     sources:
@@ -63,7 +58,7 @@ after_success:
       lcov -o cov.info -c -d . --gcov-tool /usr/bin/gcov-8     > /dev/null 2>&1
       lcov -o cov.info -r cov.info '/usr/*' '*local/include/*' > /dev/null 2>&1
       lcov -l cov.info                                         | /usr/games/cowsay -nW80 -fdefault
-      coveralls-lcov --repo-token ${COVERALLS_TOKEN} cov.info  > /dev/null 2>&1
+      coveralls-lcov cov.info                                  > /dev/null 2>&1
       cat cov.info | codacy-coverage --language cpp            > /dev/null 2>&1
     fi
 
