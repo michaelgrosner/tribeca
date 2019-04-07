@@ -131,8 +131,10 @@ else
 endif
 
 Linux: src/bin/$(KSRC)/$(KSRC).cxx
-ifdef KUNITS
-	@unset KUNITS && $(MAKE) KTEST="--coverage test/unit_testing_framework.cxx" $@
+ifdef TRAVIS_OS_NAME
+	@unset TRAVIS_OS_NAME && $(MAKE) KCOV="--coverage" $@
+else ifdef KUNITS
+	@unset KUNITS && $(MAKE) KTEST="$(KCOV) -DCATCH_CONFIG_FAST_COMPILE test/unit_testing_framework.cxx" $@
 else ifndef KTEST
 	@$(MAKE) KTEST="-DNDEBUG" $@
 else
