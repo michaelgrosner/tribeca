@@ -47,24 +47,24 @@ install:
   - |
     if [[ "${TRAVIS_OS_NAME}" == "linux" ]]; then
       yes 1 | KUNITS=1 make install dist K
-      (cd /var/lib/K && ncu)                                             | sed '/^\s*$/d' | /usr/games/cowsay -nW80 -fduck
-      make test-c       2>&1 | sed '/Total messages/d' | sed '/Help: The documentation/d' | /usr/games/cowsay -nW160 -felephant || :
+      (cd /var/lib/K && ncu)                  | sed '/^\s*$/d' | /usr/games/cowsay -nW80 -fduck
+      make test-c                                              | /usr/games/cowsay -nW160 -felephant || :
     elif [[ "${TRAVIS_OS_NAME}" == "osx" ]]; then
       yes 4 | make install
     else
       yes 5 | make install
     fi
 
-script: make test                                        | sed '/^\s*$/d' | sed '/====/d' | /usr/games/cowsay -nW160 -fbud-frogs && test ${PIPESTATUS[0]} -eq 0
+script: make test             | sed '/^\s*$/d' | sed '/====/d' | /usr/games/cowsay -nW160 -fbud-frogs && test ${PIPESTATUS[0]} -eq 0
 
 after_success:
   - |
     if [[ "${TRAVIS_OS_NAME}" == "linux" ]]; then
-      lcov --gcov-tool /usr/bin/gcov-8 -d . -c -o coverage.info                           > /dev/null 2>&1
-      lcov --remove coverage.info '/usr/*' '*local/include/*' --output-file coverage.info > /dev/null 2>&1
-      coveralls-lcov --repo-token ${COVERALLS_TOKEN} coverage.info                        > /dev/null 2>&1
-      cat coverage.info | codacy-coverage --language cpp                                  > /dev/null 2>&1
-      lcov --list coverage.info                                                           | /usr/games/cowsay -nW80 -fdefault
+      lcov -o cov.info -c -d . --gcov-tool /usr/bin/gcov-8     > /dev/null 2>&1
+      lcov -o cov.info -r cov.info '/usr/*' '*local/include/*' > /dev/null 2>&1
+      lcov -l cov.info                                         | /usr/games/cowsay -nW80 -fdefault
+      coveralls-lcov --repo-token ${COVERALLS_TOKEN} cov.info  > /dev/null 2>&1
+      cat cov.info | codacy-coverage --language cpp            > /dev/null 2>&1
     fi
 
 notifications:
