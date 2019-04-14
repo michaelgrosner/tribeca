@@ -14,8 +14,9 @@ namespace ₿ {
     raise(reboot ? SIGTERM : SIGQUIT);
   };
 
-  const char *Curl::inet = nullptr;
-  mutex Curl::waiting_reply;
+  function<void(CURL*)> Curl::global_setopt = [](CURL *curl) {
+    curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
+  };
 
   class Ansi {
     public:
@@ -41,7 +42,9 @@ namespace ₿ {
           COLOR_MAGENTA,
           COLOR_CYAN,
           COLOR_WHITE
-        }) init_pair(color, color,
+        }) init_pair(
+          color,
+          color,
           color
             ? COLOR_BLACK
             : COLOR_WHITE
@@ -226,6 +229,15 @@ namespace ₿ {
   class Rollout {
     public:
       Rollout(/* KMxTWEpb9ig */) {
+#ifdef NDEBUG
+        version();
+#else
+        static once_flag test_instance;
+        call_once(test_instance, version);
+#endif
+      };
+    protected:
+      static void version() {
         clog << Ansi::b(COLOR_GREEN) << K_SOURCE
              << Ansi::r(COLOR_GREEN) << ' ' << K_BUILD << ' ' << K_STAMP << ".\n";
         const string mods = changelog();
@@ -241,11 +253,16 @@ namespace ₿ {
 #endif
             << ".\n" << Ansi::r(COLOR_YELLOW) << mods << Ansi::reset();
       };
-    protected:
       static const string changelog() {
         string mods;
-        const json diff = Curl::xfer("https://api.github.com/repos/ctubio/Krypto-trading-bot"
-                                      "/compare/" + string(K_0_GIT) + "...HEAD", 4L);
+        const json diff =
+#ifdef NDEBUG
+          Curl::xfer("https://api.github.com/repos/ctubio/Krypto-trading-bot"
+            "/compare/" + string(K_0_GIT) + "...HEAD", 4L)
+#else
+          json::object()
+#endif
+        ;
         if (diff.value("ahead_by", 0)
           and diff.find("commits") != diff.end()
           and diff.at("commits").is_array()
@@ -416,6 +433,7 @@ namespace ₿ {
         for (const Argument &it : (vector<Argument>){
           {"interface",    "IP",     "",       "set IP to bind as outgoing network interface,"
                                                "\n" "default IP is the system default network interface"},
+          {"ipv6",         "1",      nullptr,  "use IPv6 when possible"},
           {"exchange",     "NAME",   "NULL",   "set exchange NAME for trading, mandatory one of:"
                                                "\n" "'COINBASE', 'BITFINEX', 'ETHFINEX', 'HITBTC',"
                                                "\n" "'KRAKEN', 'FCOIN', 'KORBIT' , 'POLONIEX' or 'NULL'"},
@@ -487,8 +505,6 @@ namespace ₿ {
           error("CF", argerr);
         }
         tidy();
-        if (!arg<string>("interface").empty())
-          Curl::inet = strdup(arg<string>("interface").data());
         Ansi::colorful = arg<int>("colors");
         if (arguments.second) {
           arguments.second(args);
@@ -496,6 +512,14 @@ namespace ₿ {
         }
         if (arg<int>("naked"))
           Print::display = nullptr;
+        curl_global_init(CURL_GLOBAL_ALL);
+        Curl::global_setopt = [&](CURL *curl) {
+          curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
+          if (!arg<string>("interface").empty())
+            curl_easy_setopt(curl, CURLOPT_INTERFACE, arg<string>("interface").data());
+          if (!arg<int>("ipv6"))
+            curl_easy_setopt(curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
+        };
       };
     private:
       void tidy() {
@@ -594,6 +618,7 @@ namespace ₿ {
     public:
       uWS::Group<uWS::SERVER> *listen(
                   string &protocol,
+        const     string &inet,
         const        int &port,
         const       bool &ssl,
         const     string &crt,
@@ -606,8 +631,10 @@ namespace ₿ {
         if (ui_server) {
           SSL_CTX *ctx = ssl ? sslContext(crt, key) : nullptr;
           protocol += string(ctx ? 1 : 0, 'S');
-          if (!socket->listen(Curl::inet, port, uS::TLS::Context(ctx), 0, ui_server))
-            ui_server = nullptr;
+          if (!socket->listen(
+            inet.empty() ? nullptr : inet.data(),
+            port, uS::TLS::Context(ctx), 0, ui_server
+          )) ui_server = nullptr;
         }
         if (!ui_server)
           error("UI", "Unable to listen at port number " + to_string(port)
@@ -870,7 +897,7 @@ namespace ₿ {
           using Report = pair<bool, string>;
           function<void()> push
 #ifndef NDEBUG
-            = []() { WARN("Y U NO catch sqlite push?"); }
+            = [this]() { WARN("Y U NO catch " << (char)about() << " sqlite push?"); }
 #endif
           ;
         public:
@@ -1081,7 +1108,7 @@ namespace ₿ {
         public:
           function<void()> read
 #ifndef NDEBUG
-          = []() { WARN("Y U NO catch read?"); }
+          = [this]() { WARN("Y U NO catch " << (char)about() << " read?"); }
 #endif
           ;
         public:
@@ -1390,7 +1417,6 @@ namespace ₿ {
         {
           Option::main(argc, argv, databases, documents.empty());
           setup();
-          curl_global_init(CURL_GLOBAL_ALL);
         } {
           if (windowed()) legit_keylogger();
         } {
@@ -1442,7 +1468,7 @@ namespace ₿ {
           if (arg<int>("headless")) headless();
           else {
             webui = listen(
-              protocol, arg<int>("port"),
+              protocol, arg<string>("interface"), arg<int>("port"),
               !arg<int>("without-ssl"), arg<string>("ssl-crt"), arg<string>("ssl-key"),
               httpServer, wsServer, wsMessage
             );

@@ -150,10 +150,8 @@ namespace ₿ {
   };
 
   class Curl {
-    private:
-      static mutex waiting_reply;
     public:
-      static const char *inet;
+      static function<void(CURL*)> global_setopt;
       static const json xfer(const string &url, const long &timeout = 13) {
         return perform(url, [&](CURL *curl) {
           curl_easy_setopt(curl, CURLOPT_TIMEOUT, timeout);
@@ -167,15 +165,15 @@ namespace ₿ {
           curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post.data());
         });
       };
-      static const json perform(const string &url, function<void(CURL *curl)> setopt, bool debug = true) {
+      static const json perform(const string &url, const function<void(CURL*)> custom_setopt, const bool debug = true) {
+        static mutex waiting_reply;
         lock_guard<mutex> lock(waiting_reply);
         string reply;
         CURLcode res = CURLE_FAILED_INIT;
         CURL *curl = curl_easy_init();
         if (curl) {
-          setopt(curl);
-          curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
-          curl_easy_setopt(curl, CURLOPT_INTERFACE, inet);
+          custom_setopt(curl);
+          global_setopt(curl);
           curl_easy_setopt(curl, CURLOPT_URL, url.data());
           curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &write);
           curl_easy_setopt(curl, CURLOPT_WRITEDATA, &reply);
