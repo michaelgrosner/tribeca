@@ -622,16 +622,13 @@ namespace ₿ {
       Amount expectedBaseDelta = 0;
       Amount expectedQuoteDelta = 0;
       Amount baseSign;
-      Clock lastTime = Tstamp;
       WHEN("cumulated cross pongs") {
         for (mLastOrder const &order : loglines) {
           baseSign = (order.side == Side::Bid) ? 1 : -1;
           expectedBaseDelta += baseSign * order.tradeQuantity;
           expectedQuoteDelta -= baseSign * order.tradeQuantity * order.price;
-          Clock time;
           this_thread::sleep_for(chrono::milliseconds(2));
           wallet.safety.trades.insert(order);
-          lastTime = time;
           Amount actualBaseDelta = 0;
           Amount actualQuoteDelta = 0;
           Amount expectedDiff = 0;
