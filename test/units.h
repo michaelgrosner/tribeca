@@ -1,5 +1,9 @@
 #ifndef K_UNITS_H_
 #define K_UNITS_H_
+//! \file
+//! \brief Collection of test units.
+//! \note  Test units about benchmarks are removed after a while,
+//!        but if you need some examples, see https://github.com/catchorg/Catch2/blob/master/projects/SelfTest/UsageTests/Benchmark.tests.cpp
 
 namespace ₿ {
   SCENARIO("general") {
