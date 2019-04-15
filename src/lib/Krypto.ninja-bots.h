@@ -404,7 +404,7 @@ namespace ₿ {
         };
         if (!arg<int>("autobot")) long_options.push_back(
           {"autobot",      "1",      nullptr,  "automatically start trading on boot"}
-        );;
+        );
         if (!arg<int>("naked")) long_options.push_back(
           {"naked",        "1",      nullptr,  "do not display CLI, print output to stdout instead"}
         );
@@ -439,8 +439,8 @@ namespace ₿ {
                                                "\n" "'KRAKEN', 'FCOIN', 'KORBIT' , 'POLONIEX' or 'NULL'"},
           {"currency",     "PAIR",   "NULL",   "set currency PAIR for trading, use format"
                                                "\n" "with '/' separator, like 'BTC/EUR'"},
-          {"make-fee",     "AMOUNT", "0",      "set a custom maker fee to respect, like '0.1%'"},
-          {"take-fee",     "AMOUNT", "0",      "set a custom taker fee to respect, like '0.1%' (unused)"},
+          {"maker-fee",    "AMOUNT", "0",      "set percentage of custom maker fee, like '0.1'"},
+          {"taker-fee",    "AMOUNT", "0",      "set percentage of custom taker fee, like '0.1'"},
           {"apikey",       "WORD",   "NULL",   "set (never share!) WORD as api key for trading, mandatory"},
           {"secret",       "WORD",   "NULL",   "set (never share!) WORD as api secret for trading, mandatory"},
           {"passphrase",   "WORD",   "NULL",   "set (never share!) WORD as api passphrase for trading,"
@@ -1498,10 +1498,6 @@ namespace ₿ {
           error("GW", "Unable to fetch data from " + gateway->exchange
             + " for symbols " + gateway->base + "/" + gateway->quote
             + ", possible error message: " + reply.dump());
-        if (arg<double>("take-fee"))
-          gateway->takeFee = arg<double>("take-fee") / 100.0;
-        if (arg<double>("make-fee"))
-          gateway->makeFee = arg<double>("make-fee") / 100.0;
         gateway->report(notes, arg<int>("nocache"));
       };
       const unsigned int memSize() const {
@@ -1528,18 +1524,22 @@ namespace ₿ {
                 + "- currency: " + (gateway->base     = arg<string>("base"))     + " .. "
                                  + (gateway->quote    = arg<string>("quote"))    + '\n';
         if (!gateway->http.empty() and !arg<string>("http").empty())
-          gateway->http   = arg<string>("http");
+          gateway->http    = arg<string>("http");
         if (!gateway->ws.empty() and !arg<string>("wss").empty())
-          gateway->ws     = arg<string>("wss");
+          gateway->ws      = arg<string>("wss");
         if (!gateway->fix.empty() and !arg<string>("fix").empty())
-          gateway->fix    = arg<string>("fix");
-        gateway->apikey   = arg<string>("apikey");
-        gateway->secret   = arg<string>("secret");
-        gateway->pass     = arg<string>("passphrase");
-        gateway->maxLevel = arg<int>("market-limit");
-        gateway->debug    = arg<int>("debug-secret");
-        gateway->version  = arg<int>("free-version");
-        gateway->printer  = [&](const string &prefix, const string &reason, const string &highlight) {
+          gateway->fix     = arg<string>("fix");
+        if (arg<double>("taker-fee"))
+          gateway->takeFee = arg<double>("taker-fee") / 1e+2;
+        if (arg<double>("maker-fee"))
+          gateway->makeFee = arg<double>("maker-fee") / 1e+2;
+        gateway->apikey    = arg<string>("apikey");
+        gateway->secret    = arg<string>("secret");
+        gateway->pass      = arg<string>("passphrase");
+        gateway->maxLevel  = arg<int>("market-limit");
+        gateway->debug     = arg<int>("debug-secret");
+        gateway->version   = arg<int>("free-version");
+        gateway->printer   = [&](const string &prefix, const string &reason, const string &highlight) {
           if (reason.find("Error") != string::npos)
             Print::logWar(prefix, reason);
           else Print::log(prefix, reason, highlight);
