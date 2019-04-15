@@ -420,6 +420,8 @@ Consequently, Pull Requests are welcome, but adhere to the Contributor License A
  - https://www.youtube.com/watch?v=4Ois3zB7SJ4
  - https://www.youtube.com/watch?v=_wGDcWD1E1A
  - https://www.youtube.com/watch?v=DVg2EJvvlF8
+ - https://www.youtube.com/watch?v=1iZdJNH3Z1o
+ - https://www.youtube.com/watch?v=hS78vyLezkc
  - add your song here (please open a [new issue](https://github.com/ctubio/Krypto-trading-bot/issues/new?title=Today,%20I%20sing) to share your link)
 <p align="center"><img src="https://user-images.githubusercontent.com/1634027/32134633-642bb47a-bbf1-11e7-809c-f2d4d57678e0.jpg" />
 <br /><br />
