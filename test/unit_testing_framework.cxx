@@ -2,7 +2,7 @@
 //! \brief Configure and run our session of test units.
 
 //! \def
-//! \link  https://github.com/catchorg/Catch2/blob/master/docs/own-main.md
+//! \link https://github.com/catchorg/Catch2/blob/master/docs/own-main.md
 #define CATCH_CONFIG_RUNNER
 #include <catch.h>
 

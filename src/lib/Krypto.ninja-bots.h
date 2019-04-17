@@ -431,20 +431,17 @@ namespace ₿ {
                                                "\n" "(the passphrase MUST be removed from the .key file!)"}
         }) long_options.push_back(it);
         for (const Argument &it : (vector<Argument>){
-          {"interface",    "IP",     "",       "set IP to bind as outgoing network interface,"
-                                               "\n" "default IP is the system default network interface"},
+          {"interface",    "IP",     "",       "set IP to bind as outgoing network interface"},
           {"ipv6",         "1",      nullptr,  "use IPv6 when possible"},
-          {"exchange",     "NAME",   "NULL",   "set exchange NAME for trading, mandatory one of:"
-                                               "\n" "'COINBASE', 'BITFINEX', 'ETHFINEX', 'HITBTC',"
-                                               "\n" "'KRAKEN', 'FCOIN', 'KORBIT' , 'POLONIEX' or 'NULL'"},
+          {"exchange",     "NAME",   "NULL",   "set exchange NAME for trading, mandatory"},
           {"currency",     "PAIR",   "NULL",   "set currency PAIR for trading, use format"
                                                "\n" "with '/' separator, like 'BTC/EUR'"},
-          {"maker-fee",    "AMOUNT", "0",      "set percentage of custom maker fee, like '0.1'"},
-          {"taker-fee",    "AMOUNT", "0",      "set percentage of custom taker fee, like '0.1'"},
           {"apikey",       "WORD",   "NULL",   "set (never share!) WORD as api key for trading, mandatory"},
           {"secret",       "WORD",   "NULL",   "set (never share!) WORD as api secret for trading, mandatory"},
           {"passphrase",   "WORD",   "NULL",   "set (never share!) WORD as api passphrase for trading,"
                                                "\n" "mandatory but may be 'NULL'"},
+          {"maker-fee",    "AMOUNT", "0",      "set percentage of custom maker fee, like '0.1'"},
+          {"taker-fee",    "AMOUNT", "0",      "set percentage of custom taker fee, like '0.1'"},
           {"http",         "URL",    "",       "set URL of alernative HTTPS api endpoint for trading"},
           {"wss",          "URL",    "",       "set URL of alernative WSS api endpoint for trading"},
           {"fix",          "URL",    "",       "set URL of alernative FIX api endpoint for trading"},
@@ -538,7 +535,7 @@ namespace ₿ {
           args["debug-secret"] = 1;
         if (arg<int>("latency"))
           args["nocache"] = 1;
-#ifndef _WIN32
+#if !defined(_WIN32) and defined(NDEBUG)
         if (arg<int>("latency") or arg<int>("debug-secret"))
 #endif
           args["naked"] = 1;
