@@ -2,7 +2,7 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 4
 PATCH    = 13
-BUILD    = 30
+BUILD    = 36
 SOURCE  := $(notdir $(wildcard src/bin/*))
 CARCH    = x86_64-linux-gnu      \
            arm-linux-gnueabihf   \
@@ -131,8 +131,10 @@ else
 endif
 
 Linux: src/bin/$(KSRC)/$(KSRC).cxx
-ifdef KUNITS
-	@unset KUNITS && $(MAKE) KTEST="--coverage test/unit_testing_framework.cxx" $@
+ifdef TRAVIS_OS_NAME
+	@unset TRAVIS_OS_NAME && $(MAKE) KCOV="--coverage" $@
+else ifdef KUNITS
+	@unset KUNITS && $(MAKE) KTEST="$(KCOV) -DCATCH_CONFIG_FAST_COMPILE test/unit_testing_framework.cxx" $@
 else ifndef KTEST
 	@$(MAKE) KTEST="-DNDEBUG" $@
 else
@@ -263,8 +265,8 @@ else
 	@cp test/static_code_analysis.cxx test/static_code_analysis-$(KSRC).cxx
 	@sed -i "s/%/$(KSRC)/g" test/static_code_analysis-$(KSRC).cxx
 	@pvs-studio-analyzer analyze -e test/units.h -e $(KLOCAL)/include --source-file test/static_code_analysis-$(KSRC).cxx --cl-params -I. -Isrc/lib -I$(KLOCAL)/include test/static_code_analysis-$(KSRC).cxx && \
-	  (plog-converter -a GA:1,2 -t tasklist -o report.tasks PVS-Studio.log && cat report.tasks && rm report.tasks) || :
-	@clang-tidy -quiet -header-filter=$(realpath src) -checks='modernize-*' test/static_code_analysis-$(KSRC).cxx -- $(KARGS)
+	  (echo $(KSRC) `plog-converter -a GA:1,2 -t tasklist -o report.tasks PVS-Studio.log | tail -n+8 | sed '/Total messages/d'` && cat report.tasks | sed '/Help: The documentation/d' && rm report.tasks) || :
+	@clang-tidy -header-filter=$(realpath src) -checks='modernize-*' test/static_code_analysis-$(KSRC).cxx -- $(KARGS) 2> /dev/null
 	@rm -f PVS-Studio.log test/static_code_analysis-$(KSRC).cxx > /dev/null 2>&1
 endif
 

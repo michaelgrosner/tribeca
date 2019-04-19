@@ -14,8 +14,9 @@ namespace ₿ {
     raise(reboot ? SIGTERM : SIGQUIT);
   };
 
-  const char *Curl::inet = nullptr;
-  mutex Curl::waiting_reply;
+  function<void(CURL*)> Curl::global_setopt = [](CURL *curl) {
+    curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
+  };
 
   class Ansi {
     public:
@@ -41,7 +42,9 @@ namespace ₿ {
           COLOR_MAGENTA,
           COLOR_CYAN,
           COLOR_WHITE
-        }) init_pair(color, color,
+        }) init_pair(
+          color,
+          color,
           color
             ? COLOR_BLACK
             : COLOR_WHITE
@@ -226,6 +229,15 @@ namespace ₿ {
   class Rollout {
     public:
       Rollout(/* KMxTWEpb9ig */) {
+#ifdef NDEBUG
+        version();
+#else
+        static once_flag test_instance;
+        call_once(test_instance, version);
+#endif
+      };
+    protected:
+      static void version() {
         clog << Ansi::b(COLOR_GREEN) << K_SOURCE
              << Ansi::r(COLOR_GREEN) << ' ' << K_BUILD << ' ' << K_STAMP << ".\n";
         const string mods = changelog();
@@ -241,11 +253,16 @@ namespace ₿ {
 #endif
             << ".\n" << Ansi::r(COLOR_YELLOW) << mods << Ansi::reset();
       };
-    protected:
       static const string changelog() {
         string mods;
-        const json diff = Curl::xfer("https://api.github.com/repos/ctubio/Krypto-trading-bot"
-                                      "/compare/" + string(K_0_GIT) + "...HEAD", 4L);
+        const json diff =
+#ifdef NDEBUG
+          Curl::xfer("https://api.github.com/repos/ctubio/Krypto-trading-bot"
+            "/compare/" + string(K_0_GIT) + "...HEAD", 4L)
+#else
+          json::object()
+#endif
+        ;
         if (diff.value("ahead_by", 0)
           and diff.find("commits") != diff.end()
           and diff.at("commits").is_array()
@@ -387,7 +404,7 @@ namespace ₿ {
         };
         if (!arg<int>("autobot")) long_options.push_back(
           {"autobot",      "1",      nullptr,  "automatically start trading on boot"}
-        );;
+        );
         if (!arg<int>("naked")) long_options.push_back(
           {"naked",        "1",      nullptr,  "do not display CLI, print output to stdout instead"}
         );
@@ -414,17 +431,17 @@ namespace ₿ {
                                                "\n" "(the passphrase MUST be removed from the .key file!)"}
         }) long_options.push_back(it);
         for (const Argument &it : (vector<Argument>){
-          {"interface",    "IP",     "",       "set IP to bind as outgoing network interface,"
-                                               "\n" "default IP is the system default network interface"},
-          {"exchange",     "NAME",   "NULL",   "set exchange NAME for trading, mandatory one of:"
-                                               "\n" "'COINBASE', 'BITFINEX', 'ETHFINEX', 'HITBTC',"
-                                               "\n" "'KRAKEN', 'FCOIN', 'KORBIT' , 'POLONIEX' or 'NULL'"},
+          {"interface",    "IP",     "",       "set IP to bind as outgoing network interface"},
+          {"ipv6",         "1",      nullptr,  "use IPv6 when possible"},
+          {"exchange",     "NAME",   "NULL",   "set exchange NAME for trading, mandatory"},
           {"currency",     "PAIR",   "NULL",   "set currency PAIR for trading, use format"
                                                "\n" "with '/' separator, like 'BTC/EUR'"},
           {"apikey",       "WORD",   "NULL",   "set (never share!) WORD as api key for trading, mandatory"},
           {"secret",       "WORD",   "NULL",   "set (never share!) WORD as api secret for trading, mandatory"},
           {"passphrase",   "WORD",   "NULL",   "set (never share!) WORD as api passphrase for trading,"
                                                "\n" "mandatory but may be 'NULL'"},
+          {"maker-fee",    "AMOUNT", "0",      "set percentage of custom maker fee, like '0.1'"},
+          {"taker-fee",    "AMOUNT", "0",      "set percentage of custom taker fee, like '0.1'"},
           {"http",         "URL",    "",       "set URL of alernative HTTPS api endpoint for trading"},
           {"wss",          "URL",    "",       "set URL of alernative WSS api endpoint for trading"},
           {"fix",          "URL",    "",       "set URL of alernative FIX api endpoint for trading"},
@@ -487,8 +504,6 @@ namespace ₿ {
           error("CF", argerr);
         }
         tidy();
-        if (!arg<string>("interface").empty())
-          Curl::inet = strdup(arg<string>("interface").data());
         Ansi::colorful = arg<int>("colors");
         if (arguments.second) {
           arguments.second(args);
@@ -496,6 +511,14 @@ namespace ₿ {
         }
         if (arg<int>("naked"))
           Print::display = nullptr;
+        curl_global_init(CURL_GLOBAL_ALL);
+        Curl::global_setopt = [&](CURL *curl) {
+          curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
+          if (!arg<string>("interface").empty())
+            curl_easy_setopt(curl, CURLOPT_INTERFACE, arg<string>("interface").data());
+          if (!arg<int>("ipv6"))
+            curl_easy_setopt(curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
+        };
       };
     private:
       void tidy() {
@@ -512,7 +535,7 @@ namespace ₿ {
           args["debug-secret"] = 1;
         if (arg<int>("latency"))
           args["nocache"] = 1;
-#ifndef _WIN32
+#if !defined(_WIN32) and defined(NDEBUG)
         if (arg<int>("latency") or arg<int>("debug-secret"))
 #endif
           args["naked"] = 1;
@@ -594,6 +617,7 @@ namespace ₿ {
     public:
       uWS::Group<uWS::SERVER> *listen(
                   string &protocol,
+        const     string &inet,
         const        int &port,
         const       bool &ssl,
         const     string &crt,
@@ -606,8 +630,10 @@ namespace ₿ {
         if (ui_server) {
           SSL_CTX *ctx = ssl ? sslContext(crt, key) : nullptr;
           protocol += string(ctx ? 1 : 0, 'S');
-          if (!socket->listen(Curl::inet, port, uS::TLS::Context(ctx), 0, ui_server))
-            ui_server = nullptr;
+          if (!socket->listen(
+            inet.empty() ? nullptr : inet.data(),
+            port, uS::TLS::Context(ctx), 0, ui_server
+          )) ui_server = nullptr;
         }
         if (!ui_server)
           error("UI", "Unable to listen at port number " + to_string(port)
@@ -870,7 +896,7 @@ namespace ₿ {
           using Report = pair<bool, string>;
           function<void()> push
 #ifndef NDEBUG
-            = []() { WARN("Y U NO catch sqlite push?"); }
+            = [this]() { WARN("Y U NO catch " << (char)about() << " sqlite push?"); }
 #endif
           ;
         public:
@@ -1081,7 +1107,7 @@ namespace ₿ {
         public:
           function<void()> read
 #ifndef NDEBUG
-          = []() { WARN("Y U NO catch read?"); }
+          = [this]() { WARN("Y U NO catch " << (char)about() << " read?"); }
 #endif
           ;
         public:
@@ -1390,7 +1416,6 @@ namespace ₿ {
         {
           Option::main(argc, argv, databases, documents.empty());
           setup();
-          curl_global_init(CURL_GLOBAL_ALL);
         } {
           if (windowed()) legit_keylogger();
         } {
@@ -1442,7 +1467,7 @@ namespace ₿ {
           if (arg<int>("headless")) headless();
           else {
             webui = listen(
-              protocol, arg<int>("port"),
+              protocol, arg<string>("interface"), arg<int>("port"),
               !arg<int>("without-ssl"), arg<string>("ssl-crt"), arg<string>("ssl-key"),
               httpServer, wsServer, wsMessage
             );
@@ -1496,18 +1521,22 @@ namespace ₿ {
                 + "- currency: " + (gateway->base     = arg<string>("base"))     + " .. "
                                  + (gateway->quote    = arg<string>("quote"))    + '\n';
         if (!gateway->http.empty() and !arg<string>("http").empty())
-          gateway->http   = arg<string>("http");
+          gateway->http    = arg<string>("http");
         if (!gateway->ws.empty() and !arg<string>("wss").empty())
-          gateway->ws     = arg<string>("wss");
+          gateway->ws      = arg<string>("wss");
         if (!gateway->fix.empty() and !arg<string>("fix").empty())
-          gateway->fix    = arg<string>("fix");
-        gateway->apikey   = arg<string>("apikey");
-        gateway->secret   = arg<string>("secret");
-        gateway->pass     = arg<string>("passphrase");
-        gateway->maxLevel = arg<int>("market-limit");
-        gateway->debug    = arg<int>("debug-secret");
-        gateway->version  = arg<int>("free-version");
-        gateway->printer  = [&](const string &prefix, const string &reason, const string &highlight) {
+          gateway->fix     = arg<string>("fix");
+        if (arg<double>("taker-fee"))
+          gateway->takeFee = arg<double>("taker-fee") / 1e+2;
+        if (arg<double>("maker-fee"))
+          gateway->makeFee = arg<double>("maker-fee") / 1e+2;
+        gateway->apikey    = arg<string>("apikey");
+        gateway->secret    = arg<string>("secret");
+        gateway->pass      = arg<string>("passphrase");
+        gateway->maxLevel  = arg<int>("market-limit");
+        gateway->debug     = arg<int>("debug-secret");
+        gateway->version   = arg<int>("free-version");
+        gateway->printer   = [&](const string &prefix, const string &reason, const string &highlight) {
           if (reason.find("Error") != string::npos)
             Print::logWar(prefix, reason);
           else Print::log(prefix, reason, highlight);
