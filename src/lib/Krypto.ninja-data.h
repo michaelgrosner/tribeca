@@ -2391,24 +2391,24 @@ namespace ₿ {
           quotes.bid.size = K.gateway->decimal.amount.round(
             fmax(K.gateway->minSize, fmin(
               quotes.bid.size,
-              wallet.quote.amount / (quotes.bid.price * (1.0 + K.gateway->makeFee))
+              wallet.quote.total / (quotes.bid.price * (1.0 + K.gateway->makeFee))
             ))
           );
         if (!quotes.ask.empty())
           quotes.ask.size = K.gateway->decimal.amount.round(
             fmax(K.gateway->minSize, fmin(
               quotes.ask.size,
-              wallet.base.amount / (1.0 + K.gateway->makeFee)
+              wallet.base.total / (1.0 + K.gateway->makeFee)
             ))
           );
       };
       void applyDepleted() {
         const double epsilon = pow(10, -1 * K.gateway->decimal.amount.stream.precision());
         if (!quotes.bid.empty()
-          and wallet.quote.amount - quotes.bid.size * quotes.bid.price * (1.0 + K.gateway->makeFee) < epsilon
+          and wallet.quote.total - quotes.bid.size * quotes.bid.price * (1.0 + K.gateway->makeFee) < epsilon
         ) quotes.bid.clear(mQuoteState::DepletedFunds);
         if (!quotes.ask.empty()
-          and wallet.base.amount - quotes.ask.size * (1.0 + K.gateway->makeFee) < epsilon
+          and wallet.base.total - quotes.ask.size * (1.0 + K.gateway->makeFee) < epsilon
         ) quotes.ask.clear(mQuoteState::DepletedFunds);
       };
       void applyWaitingPing() {
