@@ -511,16 +511,28 @@ namespace ₿ {
         }
         if (arg<int>("naked"))
           Print::display = nullptr;
-        curl_global_init(CURL_GLOBAL_ALL);
-        Curl::global_setopt = [&](CURL *curl) {
-          curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
-          if (!arg<string>("interface").empty())
-            curl_easy_setopt(curl, CURLOPT_INTERFACE, arg<string>("interface").data());
-          if (!arg<int>("ipv6"))
-            curl_easy_setopt(curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
-        };
+        curl_setopt();
       };
     private:
+      void curl_setopt() {
+        curl_global_init(CURL_GLOBAL_ALL);
+        if (!arg<string>("interface").empty() and !arg<int>("ipv6"))
+          Curl::global_setopt = [&](CURL *curl) {
+            curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
+            curl_easy_setopt(curl, CURLOPT_INTERFACE, arg<string>("interface").data());
+            curl_easy_setopt(curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
+          };
+        else if (!arg<string>("interface").empty())
+          Curl::global_setopt = [&](CURL *curl) {
+            curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
+            curl_easy_setopt(curl, CURLOPT_INTERFACE, arg<string>("interface").data());
+          };
+        else if (!arg<int>("ipv6"))
+          Curl::global_setopt = [&](CURL *curl) {
+            curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
+            curl_easy_setopt(curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
+          };
+      };
       void tidy() {
         if (arg<string>("currency").find("/") == string::npos or arg<string>("currency").length() < 3)
           error("CF", "Invalid --currency value; must be in the format of BASE/QUOTE, like BTC/EUR");
