@@ -357,6 +357,10 @@ namespace ₿ {
             const double points = pow(10, -1 * stream.precision());
             return ::round(input / points) * points;
           };
+          const double floor(const double &input) const {
+            const double points = pow(10, -1 * stream.precision());
+            return ::floor(input / points) * points;
+          }
           const string str(const double &input) {
             stream.str("");
             stream << round(input);
