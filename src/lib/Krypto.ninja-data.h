@@ -2408,7 +2408,7 @@ namespace ₿ {
       };
       void applyDepleted() {
         if (!quotes.bid.empty()
-          and wallet.quote.total < K.gateway->minSize * (1.0 + K.gateway->makeFee)
+          and wallet.quote.total / quotes.bid.price < K.gateway->minSize * (1.0 + K.gateway->makeFee)
         ) quotes.bid.clear(mQuoteState::DepletedFunds);
         if (!quotes.ask.empty()
           and wallet.base.total < K.gateway->minSize * (1.0 + K.gateway->makeFee)
