@@ -2401,7 +2401,7 @@ namespace ₿ {
             fmax(K.gateway->minSize, fmin(
               quotes.ask.size,
               K.gateway->decimal.amount.floor(
-                wallet.base.total / (1.0 + K.gateway->makeFee)
+                wallet.base.total
               )
             ))
           );
