@@ -2305,26 +2305,28 @@ namespace ₿ {
           ? qp.widthPongPercentage * levels.fairValue / 100
           : qp.widthPong;
         if (!quotes.ask.empty() and wallet.safety.buyPing) {
+          const Price sellPong = (wallet.safety.buyPing * (1 + K.gateway->makeFee) + widthPong) / (1 - K.gateway->makeFee);
           if ((qp.aggressivePositionRebalancing == mAPR::SizeWidth and sideAPR == mSideAPR::Sell)
             or ((qp.safety == mQuotingSafety::PingPong or qp.safety == mQuotingSafety::PingPoing)
-              ? quotes.ask.price < wallet.safety.buyPing + widthPong
+              ? quotes.ask.price < sellPong
               : qp.pongAt == mPongAt::ShortPingAggressive
                 or qp.pongAt == mPongAt::AveragePingAggressive
                 or qp.pongAt == mPongAt::LongPingAggressive
             )
-          ) quotes.ask.price = max(levels.bids.at(0).price + K.gateway->minTick, wallet.safety.buyPing + widthPong);
-          quotes.ask.isPong = quotes.ask.price >= wallet.safety.buyPing + widthPong;
+          ) quotes.ask.price = max(levels.bids.at(0).price + K.gateway->minTick, sellPong);
+          quotes.ask.isPong = quotes.ask.price >= sellPong;
         }
         if (!quotes.bid.empty() and wallet.safety.sellPing) {
+          const Price buyPong = (wallet.safety.sellPing * (1 - K.gateway->makeFee) - widthPong) / (1 + K.gateway->makeFee);
           if ((qp.aggressivePositionRebalancing == mAPR::SizeWidth and sideAPR == mSideAPR::Buy)
             or ((qp.safety == mQuotingSafety::PingPong or qp.safety == mQuotingSafety::PingPoing)
-              ? quotes.bid.price > wallet.safety.sellPing - widthPong
+              ? quotes.bid.price > buyPong
               : qp.pongAt == mPongAt::ShortPingAggressive
                 or qp.pongAt == mPongAt::AveragePingAggressive
                 or qp.pongAt == mPongAt::LongPingAggressive
             )
-          ) quotes.bid.price = min(levels.asks.at(0).price - K.gateway->minTick, wallet.safety.sellPing - widthPong);
-          quotes.bid.isPong = quotes.bid.price <= wallet.safety.sellPing - widthPong;
+          ) quotes.bid.price = min(levels.asks.at(0).price - K.gateway->minTick, buyPong);
+          quotes.bid.isPong = quotes.bid.price <= buyPong;
         }
       };
       void applyAK47Increment() {
