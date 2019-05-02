@@ -1284,17 +1284,17 @@ namespace ₿ {
             ? qp.widthPongPercentage * filled.price / 100
             : qp.widthPong;
           map<Price, string> matches;
-          for (mOrderFilled &it : rows)
+          for (mOrderFilled &it : rows) {
             if (it.quantity - it.Kqty > 0
               and it.side != filled.side
-              and (qp.pongAt == mPongAt::AveragePingFair
-                or qp.pongAt == mPongAt::AveragePingAggressive
-                or (filled.side == Side::Bid
-                  ? (it.price > filled.price + widthPong)
-                  : (it.price < filled.price - widthPong)
-                )
-              )
-            ) matches[it.price] = it.tradeId;
+            ) {
+              Price combinedFee = K.gateway->makeFee * (it.price + filled.price);
+              if (filled.side == Side::Bid
+                  ? (it.price > filled.price + widthPong + combinedFee)
+                  : (it.price < filled.price - widthPong - combinedFee)
+              ) matches[it.price] = it.tradeId;
+            }
+          }
           matchPong(
             matches,
             filled,
