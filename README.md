@@ -405,8 +405,8 @@ Consequently, Pull Requests are welcome, but adhere to the Contributor License A
 
 #### every new day we sing:
 
-<p>If love is so nice, tell me why are you so sad?<br>If love is so nice, tell me, oh tell me why are you hurt so bad?<br>One Love, get ready!</p>
-<p>Now feel this drumbeat as it beats within,<br>Playin' a riddim, resisting against the system:</p>
+<p>If love is so nice, tell me why are you so sad?<br>If love is so nice, tell me, oh tell me why are you hurt so bad?<br>One Love! get ready!</p>
+<p>Now feel this drumbeat as it beats within,<br>playin' a riddim, resisting against the system:</p>
 
  - https://www.youtube.com/watch?v=g--fsK6aLf8
  - https://www.youtube.com/watch?v=BncXzyjdREc
