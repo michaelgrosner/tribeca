@@ -1284,17 +1284,14 @@ namespace ₿ {
             ? qp.widthPongPercentage * filled.price / 100
             : qp.widthPong;
           map<Price, string> matches;
-          for (mOrderFilled &it : rows) {
-            if (it.quantity - it.Kqty > 0
-              and it.side != filled.side
-            ) {
-              Price combinedFee = K.gateway->makeFee * (it.price + filled.price);
+          for (mOrderFilled &it : rows)
+            if (it.quantity - it.Kqty > 0 and it.side != filled.side) {
+              const Price combinedFee = K.gateway->makeFee * (it.price + filled.price);
               if (filled.side == Side::Bid
                   ? (it.price > filled.price + widthPong + combinedFee)
                   : (it.price < filled.price - widthPong - combinedFee)
               ) matches[it.price] = it.tradeId;
             }
-          }
           matchPong(
             matches,
             filled,
