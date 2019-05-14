@@ -442,6 +442,7 @@ namespace ₿ {
                                                "\n" "mandatory but may be 'NULL'"},
           {"maker-fee",    "AMOUNT", "0",      "set percentage of custom maker fee, like '0.1'"},
           {"taker-fee",    "AMOUNT", "0",      "set percentage of custom taker fee, like '0.1'"},
+          {"min-size",     "AMOUNT", "0",      "set custom minimum order size, like '0.01'"},
           {"http",         "URL",    "",       "set URL of alernative HTTPS api endpoint for trading"},
           {"wss",          "URL",    "",       "set URL of alernative WSS api endpoint for trading"},
           {"fix",          "URL",    "",       "set URL of alernative FIX api endpoint for trading"},
@@ -1542,6 +1543,8 @@ namespace ₿ {
           gateway->takeFee = arg<double>("taker-fee") / 1e+2;
         if (arg<double>("maker-fee"))
           gateway->makeFee = arg<double>("maker-fee") / 1e+2;
+        if (arg<double>("min-size"))
+          gateway->minSize = arg<double>("min-size");
         gateway->apikey    = arg<string>("apikey");
         gateway->secret    = arg<string>("secret");
         gateway->pass      = arg<string>("passphrase");

@@ -514,7 +514,7 @@ namespace ₿ {
         } else
           reply = handshake();
         minTick = reply.value("minTick", 0.0);
-        minSize = reply.value("minSize", 0.0);
+        if (!minSize) minSize = reply.value("minSize", 0.0);
         if (!makeFee) makeFee = reply.value("makeFee", 0.0);
         if (!takeFee) takeFee = reply.value("takeFee", 0.0);
         if (!file.is_open() and minTick and minSize) {
