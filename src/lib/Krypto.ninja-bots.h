@@ -440,8 +440,8 @@ namespace ₿ {
           {"secret",       "WORD",   "NULL",   "set (never share!) WORD as api secret for trading, mandatory"},
           {"passphrase",   "WORD",   "NULL",   "set (never share!) WORD as api passphrase for trading,"
                                                "\n" "mandatory but may be 'NULL'"},
-          {"maker-fee",    "AMOUNT", "0",      "set percentage of custom maker fee, like '0.1'"},
-          {"taker-fee",    "AMOUNT", "0",      "set percentage of custom taker fee, like '0.1'"},
+          {"maker-fee",    "AMOUNT", "0",      "set custom percentage of maker fee, like '0.1'"},
+          {"taker-fee",    "AMOUNT", "0",      "set custom percentage of taker fee, like '0.1'"},
           {"min-size",     "AMOUNT", "0",      "set custom minimum order size, like '0.01'"},
           {"http",         "URL",    "",       "set URL of alernative HTTPS api endpoint for trading"},
           {"wss",          "URL",    "",       "set URL of alernative WSS api endpoint for trading"},
