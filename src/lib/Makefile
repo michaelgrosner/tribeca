@@ -97,8 +97,7 @@ uws:
 	| tar xz -C $(KBUILD) && rm -rf $(KBUILD)/local/include/uWS                             \
 	&& mkdir -p $(KBUILD)/local/include/uWS                                                 \
 	&& cp $(KBUILD)/uWebSockets-$(V_UWS)/src/* $(KBUILD)/local/include/uWS/                 \
-	&& sed -i "s/SSL_library_init()/OPENSSL_init_ssl(0, NULL)/"                             \
-	$(KBUILD)/local/include/uWS/Networking.cpp && (test -n "`echo $(CHOST) | grep mingw32`" \
+	&& (test -n "`echo $(CHOST) | grep mingw32`"                                            \
 	&& (sed -i "s/W\(s2tcpip\)/w\1/" $(KBUILD)/local/include/uWS/Networking.h               \
 	&& sed -i "s/WinSock2/winsock2/" $(KBUILD)/local/include/uWS/Networking.h               \
 	&& sed -i "s/uv_.*/return {0, \"\", \"\"};/" $(KBUILD)/local/include/uWS/Socket.cpp     \
