@@ -250,7 +250,13 @@ js sandbox: [jsfiddle.net](https://jsfiddle.net)
 
 ws sandbox: [websocket.org](https://www.websocket.org/echo.html)
 
-<details><summary><a id="unreleased-changelog"><b>Unreleased v0.4.x Changelog</b></a></summary>
+<details><summary><a id="unreleased-changelog"><b>Release v0.5.x Changelog</b></a></summary>
+
+Updated exchange integrations as simple libcurl wrappers.
+
+</details>
+
+<details><summary><b>Release v0.4.x Changelog</b></summary>
 
 Added main KryptoNinja class derived from all other classes and ready to be extended.
 
@@ -271,7 +277,7 @@ Added build chain for win32.
 Added build chain for OSX v10.13.
 </details>
 
-<details><summary><b>Release v0.4.0 Changelog</b></summary>
+<details><summary><b>Release v0.3.x Changelog</b></summary>
 
 Updated HitBTC API v2.
 
@@ -294,7 +300,7 @@ Added built-in SQLite C++ interface to replace external mongodb server.
 Added Poloniex API.
 </details>
 
-<details><summary><b>Release v0.3.0 Changelog</b></summary>
+<details><summary><b>Release v0.2.x Changelog</b></summary>
 
 Updated application name to K because of Kira.
 
@@ -319,9 +325,6 @@ Updated Bitfinex API v2.
 Added Coinbase FIX API.
 
 ~~Added Korbit API.~~
-</details>
-
-<details><summary><b>Release v0.2.0 Changelog</b></summary>
 
 Added new quoting styles PingPong, Boomerang, AK-47.
 
