@@ -429,9 +429,11 @@ namespace ₿ {
            and !countdown;
       };
     protected:
-      virtual void subscribe() = 0;
-      virtual void unsubscribe() = 0;
-      virtual void consume(json&) = 0;
+//BO non-free Gw library functions from build-*/local/lib/K-*.a (it just redefines all virtual gateway class members below).
+/**/  virtual void subscribe()    = 0;                                        // send subcription messages to remote server.
+/**/  virtual void unsubscribe()  = 0;                                        // unless closing, reconnect to remote server.
+/**/  virtual void consume(json&) = 0;                                        // read message one by one from remote server.
+//EO non-free Gw library functions from build-*/local/lib/K-*.a (it just redefines all virtual gateway class members above).
       void broadcast(const string &msg) {
         CURLcode rc;
         if (CURLE_OK != (rc = Curl::broadcast(curl, sockfd, msg)))
