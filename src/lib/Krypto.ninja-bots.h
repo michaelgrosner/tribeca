@@ -512,11 +512,6 @@ namespace ₿ {
         }
         if (arg<int>("naked"))
           Print::display = nullptr;
-        curl_setopt();
-      };
-    private:
-      void curl_setopt() {
-        curl_global_init(CURL_GLOBAL_ALL);
         if (!arg<string>("interface").empty() and !arg<int>("ipv6"))
           Curl::global_setopt = [&](CURL *curl) {
             curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
@@ -534,6 +529,7 @@ namespace ₿ {
             curl_easy_setopt(curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
           };
       };
+    private:
       void tidy() {
         if (arg<string>("currency").find("/") == string::npos or arg<string>("currency").length() < 3)
           error("CF", "Invalid --currency value; must be in the format of BASE/QUOTE, like BTC/EUR");
@@ -624,8 +620,7 @@ namespace ₿ {
       using WSMessage  = function<const string(string, const string&)>;
       string wtfismyip = "localhost";
     protected:
-      uWS::Hub *socket = nullptr;
-      vector<uWS::Group<uWS::CLIENT>*> gw_clients;
+      uWS::Hub *hub = nullptr;
       vector<uWS::Group<uWS::SERVER>*> ui_servers;
     public:
       uWS::Group<uWS::SERVER> *listen(
@@ -639,11 +634,11 @@ namespace ₿ {
         const   WSServer &wsServer   = nullptr,
         const  WSMessage &wsMessage  = nullptr
       ) {
-        auto ui_server = socket->createGroup<uWS::SERVER>(uWS::PERMESSAGE_DEFLATE);
+        auto ui_server = hub->createGroup<uWS::SERVER>(uWS::PERMESSAGE_DEFLATE);
         if (ui_server) {
           SSL_CTX *ctx = ssl ? sslContext(crt, key) : nullptr;
           protocol += string(ctx ? 1 : 0, 'S');
-          if (!socket->listen(
+          if (!hub->listen(
             inet.empty() ? nullptr : inet.data(),
             port, uS::TLS::Context(ctx), 0, ui_server
           )) ui_server = nullptr;
@@ -686,12 +681,6 @@ namespace ₿ {
         Print::log("UI", "ready at", Text::strL(protocol) + "://" + wtfismyip + ":" + to_string(port));
         ui_servers.push_back(ui_server);
         return ui_server;
-      };
-    protected:
-      uWS::Group<uWS::CLIENT> *bind() {
-        if (!socket) socket = new uWS::Hub(0, true);
-        gw_clients.push_back(socket->createGroup<uWS::CLIENT>());
-        return gw_clients.back();
       };
     private:
       SSL_CTX *sslContext(const string &crt, const string &key) {
@@ -1427,6 +1416,7 @@ namespace ₿ {
       {};
       KryptoNinja *const main(int argc, char** argv) {
         {
+          curl_global_init(CURL_GLOBAL_ALL);
           Option::main(argc, argv, databases, documents.empty());
           setup();
         } {
@@ -1447,19 +1437,18 @@ namespace ₿ {
               + " (consider to repeat a few times this check)");
           }
         } {
-          gateway->api = bind();
-          start(socket->getLoop());
+          hub = new uWS::Hub(0, true);
+          start(hub->getLoop());
           ending([&]() {
             gateway->end(arg<int>("dustybot"));
             stop();
+            curl_global_cleanup();
           });
           wait_for([&]() {
             return gateway->waitForData();
           });
           timer_1s([&](const unsigned int &tick) {
-            if (gateway->countdown and !--gateway->countdown)
-              socket->connect(gateway->ws, nullptr, {}, 5e+3, gateway->api);
-            return gateway->countdown ? false : gateway->askForData(tick);
+            return gateway->askForData(tick);
           });
           handshake({
             {"gateway", gateway->http      },
@@ -1499,8 +1488,8 @@ namespace ₿ {
       void wait(Klass *const k = nullptr) {
         if (k) k->wait();
         else Klass::wait();
-        if (gateway->ready(socket->getLoop()))
-          socket->run();
+        if (gateway->ready(hub->getLoop()))
+          hub->run();
       };
       void handshake(const GwExchange::Report &notes = {}) {
         const json reply = gateway->handshake(arg<int>("nocache"));

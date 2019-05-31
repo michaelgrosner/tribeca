@@ -27,9 +27,10 @@
 //! \brief     class \ref ₿::Klass, fn \ref ₿::exit, fn \ref ₿::error.
 
 #include <Krypto.ninja-lang.h>
+#include <Krypto.ninja-data.h>
 #include <Krypto.ninja-apis.h>
 #include <Krypto.ninja-bots.h>
-#include <Krypto.ninja-data.h>
+#include <Krypto.ninja-user.h>
 
 #ifndef NDEBUG
 #  include <../../test/units.h>
