@@ -101,23 +101,21 @@ namespace ₿ {
       static void unframe(CURL *&curl, curl_socket_t &sockfd, string &data, string &msg) {
         const size_t max = data.length();
         if (max < 2) return;
-        const unsigned int mask = (data[1] >> 7) & 0x01 ? 4 : 0;
         unsigned int pos = 2,
                      len = 0;
         if      (data[1] <= 0x7D) len =    data[1];
-        else if (data[1] == 0x7E) len = (((data[2] & 0xFF) << 8)
-                                      |   (data[3] & 0xFF)),
-                                  pos += 2;
+        else if (data[1] == 0x7E) len = (((data[2] & 0xFF) <<  8)
+                                      |   (data[3] & 0xFF)       ), pos += 2;
         else if (data[1] == 0x7F) len = (((data[6] & 0xFF) << 24)
                                       |  ((data[7] & 0xFF) << 16)
                                       |  ((data[8] & 0xFF) <<  8)
-                                      |   (data[9] & 0xFF)),
-                                  pos += 8;
-        pos += mask;
+                                      |   (data[9] & 0xFF)       ), pos += 8;
+        const unsigned int key = (data[1] >> 7) & 0x01 ? 4 : 0;
+        pos += key;
         if (max < pos + len) return;
-        if (mask)
+        if (key)
           for (int i = 0; i < len; i++)
-            data.at(pos + i) ^= data.at(pos - mask + (i % mask));
+            data.at(pos + i) ^= data.at(pos - key + (i % key));
         const unsigned char opcode = data[0] & 0x0F;
         if (opcode == 0x2 or opcode == 0xA or opcode == 0x8
           or ((opcode == 0x0 or opcode == 0x1) and !((data[0] >> 7) & 0x01))
@@ -135,25 +133,24 @@ namespace ₿ {
         return size;
       };
       static const string frame(string data, const int &opcode) {
-        const int mask = rand();
+        const int key = rand();
         unsigned int pos = 0,
                      len = data.length();
-                                data.insert(pos     , 1,  opcode      | 0x80);
-        if      (len <= 0x7D)   data.insert(pos += 1, 1,  len         | 0x80);
-        else if (len <= 0xFFFF) data.insert(pos += 1, 1,  0x7E        | 0x80)
-                                    .insert(pos += 1, 1, (len  >>  8) & 0xFF)
-                                    .insert(pos += 1, 1,  len         & 0xFF);
-        else                    data.insert(pos += 1, 1,  0x7F        | 0x80)
-                                    .insert(pos += 1, 4,                   0)
-                                    .insert(pos += 4, 1, (len  >> 24) & 0xFF)
-                                    .insert(pos += 1, 1, (len  >> 16) & 0xFF)
-                                    .insert(pos += 1, 1, (len  >>  8) & 0xFF)
-                                    .insert(pos += 1, 1,  len         & 0xFF);
-                                data.insert(pos += 1, 1, (mask >> 24) & 0xFF)
-                                    .insert(pos += 1, 1, (mask >> 16) & 0xFF)
-                                    .insert(pos += 1, 1, (mask >>  8) & 0xFF)
-                                    .insert(pos += 1, 1,  mask        & 0xFF);
-        pos++;
+                                data.insert(pos++  , 1,  opcode     | 0x80 );
+        if      (len <= 0x7D)   data.insert(pos++  , 1,  len        | 0x80 );
+        else if (len <= 0xFFFF) data.insert(pos    , 1, (char)(0x7E | 0x80))
+                                    .insert(pos + 1, 1, (len >>  8) & 0xFF )
+                                    .insert(pos + 2, 1,  len        & 0xFF ), pos += 3;
+        else                    data.insert(pos    , 1, (char)(0x7F | 0x80))
+                                    .insert(pos + 1, 4,                  0 )
+                                    .insert(pos + 5, 1, (len >> 24) & 0xFF )
+                                    .insert(pos + 6, 1, (len >> 16) & 0xFF )
+                                    .insert(pos + 7, 1, (len >>  8) & 0xFF )
+                                    .insert(pos + 8, 1,  len        & 0xFF ), pos += 9;
+                                data.insert(pos    , 1, (key >> 24) & 0xFF )
+                                    .insert(pos + 1, 1, (key >> 16) & 0xFF )
+                                    .insert(pos + 2, 1, (key >>  8) & 0xFF )
+                                    .insert(pos + 3, 1,  key        & 0xFF ); pos += 4;
         for (int i = 0; i < len; i++)
           data.at(pos + i) ^= data.at(pos - 4 + (i % 4));
         return data;
@@ -211,8 +208,7 @@ namespace ₿ {
                outfd;
         FD_ZERO(&infd);
         FD_ZERO(&outfd);
-        if (io) FD_SET(sockfd, &infd);
-        else    FD_SET(sockfd, &outfd);
+        FD_SET(sockfd, io ? &infd : &outfd);
         return select(sockfd + 1, &infd, &outfd, nullptr, &tv);
       };
   };

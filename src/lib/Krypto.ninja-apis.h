@@ -437,7 +437,7 @@ namespace ₿ {
       void send(const string &msg) {
         CURLcode rc;
         if (CURLE_OK != (rc = Curl::emit(curl, sockfd, msg, 0x01)))
-          log(string("CURL send Error: ") + curl_easy_strerror(rc));
+          GwExchange::log(string("CURL send Error: ") + curl_easy_strerror(rc));
       };
       void disconnect() {
         Curl::emit(curl, sockfd, "", 0x08);
@@ -445,7 +445,7 @@ namespace ₿ {
       };
       void reconnect(const string &reason) {
         countdown = 7;
-        log("WS " + reason + ", reconnecting in " + to_string(countdown) + "s.");
+        GwExchange::log("WS " + reason + ", reconnecting in " + to_string(countdown) + "s.");
       };
     private:
       void waitForAsyncData() {
@@ -465,14 +465,14 @@ namespace ₿ {
         if (countdown and !--countdown) {
           CURLcode rc;
           if (CURLE_OK != (rc = Curl::connect(curl, sockfd, buffer, ws)))
-            log(string("CURL connect Error: ") + curl_easy_strerror(rc));
+            GwExchange::log(string("CURL connect Error: ") + curl_easy_strerror(rc));
         }
         return waiting();
       };
       const bool received() {
         CURLcode rc;
         if (CURLE_OK != (rc = Curl::receive(curl, sockfd, buffer)))
-          log(string("CURL recv Error: ") + curl_easy_strerror(rc));
+          GwExchange::log(string("CURL recv Error: ") + curl_easy_strerror(rc));
         return !buffer.empty();
       };
       const bool subscribed() {
