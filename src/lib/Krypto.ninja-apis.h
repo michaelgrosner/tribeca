@@ -430,16 +430,17 @@ namespace ₿ {
       };
     protected:
 //BO non-free Gw library functions from build-*/local/lib/K-*.a (it just redefines all virtual gateway class members below).
-/**/  virtual void subscribe()    = 0;                                        // send subcription messages to remote server.
-/**/  virtual void unsubscribe()  = 0;                                        // unless closing, reconnect to remote server.
-/**/  virtual void consume(json&) = 0;                                        // read message one by one from remote server.
+/**/  virtual void subscribe()   = 0;                                         // send subcription messages to remote server.
+/**/  virtual void unsubscribe() = 0;                                         // unless closing, reconnect to remote server.
+/**/  virtual void consume(json) = 0;                                         // read message one by one from remote server.
 //EO non-free Gw library functions from build-*/local/lib/K-*.a (it just redefines all virtual gateway class members above).
-      void broadcast(const string &msg) {
+      void send(const string &msg) {
         CURLcode rc;
-        if (CURLE_OK != (rc = Curl::broadcast(curl, sockfd, msg)))
+        if (CURLE_OK != (rc = Curl::emit(curl, sockfd, msg, 0x01)))
           log(string("CURL send Error: ") + curl_easy_strerror(rc));
       };
       void disconnect() {
+        Curl::emit(curl, sockfd, "", 0x08);
         Curl::cleanup(curl, sockfd);
       };
       void reconnect(const string &reason) {
@@ -453,10 +454,11 @@ namespace ₿ {
             string msg;
             Curl::unframe(curl, sockfd, buffer, msg);
             if (msg.empty()) break;
-            json j = json::accept(msg)
-                   ? json::parse(msg)
-                   : (json){ {"error", "CURL Error: Unsupported frame data format"} };
-            consume(j);
+            consume(
+              json::accept(msg)
+                ? json::parse(msg)
+                : (json){ {"error", "CURL Error: Unsupported frame data format"} }
+            );
           }
       };
       const bool connected() {

@@ -49,15 +49,14 @@ namespace ₿ {
         curl_url_cleanup(url);
         return rc;
       };
-      static const CURLcode broadcast(CURL *&curl, curl_socket_t &sockfd, const string &data, const int &opcode = 0x1) {
-        CURLcode rc = CURLE_RECV_ERROR;
+      static const CURLcode emit(CURL *&curl, curl_socket_t &sockfd, const string &data, const int &opcode) {
+        CURLcode rc;
         if (CURLE_OK != (rc = send(curl, sockfd, frame(data, opcode))))
           cleanup(curl, sockfd);
         return rc;
       };
       static const CURLcode receive(CURL *&curl, curl_socket_t &sockfd, string &buffer) {
         CURLcode rc;
-        vector<json> messages;
         if (CURLE_OPERATION_TIMEDOUT == (rc = recv(curl, sockfd, buffer, 0)))
           rc = CURLE_OK;
         if (rc != CURLE_OK)
@@ -126,7 +125,7 @@ namespace ₿ {
           if (opcode == 0x8)
             cleanup(curl, sockfd);
         } else if (opcode == 0x9)
-          broadcast(curl, sockfd, data.substr(pos, len), 0xA);
+          emit(curl, sockfd, data.substr(pos, len), 0xA);
         else msg = data.substr(pos, len);
         data = data.substr(pos + len);
       };
@@ -207,17 +206,14 @@ namespace ₿ {
       static const int wait(const curl_socket_t &sockfd, const bool &io, const int &timeout) {
         struct timeval tv;
         tv.tv_sec  = timeout;
-        tv.tv_usec = 0;
+        tv.tv_usec = 10000;
         fd_set infd,
-               outfd,
-               errfd;
+               outfd;
         FD_ZERO(&infd);
         FD_ZERO(&outfd);
-        FD_ZERO(&errfd);
         if (io) FD_SET(sockfd, &infd);
         else    FD_SET(sockfd, &outfd);
-                FD_SET(sockfd, &errfd);
-        return select(sockfd + 1, &infd, &outfd, &errfd, &tv);
+        return select(sockfd + 1, &infd, &outfd, nullptr, &tv);
       };
   };
 
