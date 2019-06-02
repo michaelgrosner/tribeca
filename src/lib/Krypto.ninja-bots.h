@@ -257,7 +257,7 @@ namespace ₿ {
         string mods;
         const json diff =
 #ifdef NDEBUG
-          Curl::xfer("https://api.github.com/repos/ctubio/Krypto-trading-bot"
+          Curl::Http::xfer("https://api.github.com/repos/ctubio/Krypto-trading-bot"
             "/compare/" + string(K_0_GIT) + "...HEAD", 4L)
 #else
           json::object()
@@ -313,7 +313,7 @@ namespace ₿ {
       static void die(const int sig) {
         if (epilogue.empty())
           epilogue = "Excellent decision! "
-                   + Curl::xfer("https://api.icndb.com/jokes/random?escape=javascript&limitTo=[nerdy]", 4L)
+                   + Curl::Http::xfer("https://api.icndb.com/jokes/random?escape=javascript&limitTo=[nerdy]", 4L)
                        .value("/value/joke"_json_pointer, "let's plant a tree instead..");
         halt(
           epilogue.find("Errrror") == string::npos
@@ -1423,7 +1423,7 @@ namespace ₿ {
           if (windowed()) legit_keylogger();
         } {
           log("CF", "Outbound IP address is",
-            wtfismyip = Curl::xfer("https://wtfismyip.com/json", 4L)
+            wtfismyip = Curl::Http::xfer("https://wtfismyip.com/json", 4L)
                           .value("YourFuckingIPAddress", wtfismyip)
           );
         } {
