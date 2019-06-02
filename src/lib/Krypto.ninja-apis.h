@@ -190,6 +190,10 @@ namespace ₿ {
       const RandId (*randId)() = nullptr;
       virtual const bool askForData(const unsigned int &tick) = 0;
       virtual const bool waitForData() = 0;
+      void online(const Connectivity &connectivity = Connectivity::Connected) {
+        if (write_Connectivity)
+          write_Connectivity(connectivity);
+      };
       void place(const mOrder *const order) {
         place(
           order->orderId,
@@ -216,9 +220,8 @@ namespace ₿ {
 //BO non-free Gw library functions from build-*/local/lib/K-*.a (it just redefines all virtual gateway class members below).
 /**/  virtual bool ready(uS::Loop *const) = 0;                               // wait for exchange and register data handlers
 /**/  virtual void replace(RandId, string) {};                               // call         async orders data from exchange
-/**/  virtual void place(RandId, Side, string, string, OrderType, TimeInForce, bool) = 0, // async orders like above / below
-/**/               cancel(RandId, RandId) = 0,                               // call         async orders data from exchange
-/**/               close() = 0;                                              // disconnect but without waiting for reconnect
+/**/  virtual void place(RandId, Side, string, string, OrderType, TimeInForce, bool) = 0; // async orders like above / below
+/**/  virtual void cancel(RandId, RandId) = 0;                               // call         async orders data from exchange
 /**/protected:
 /**/  virtual bool            async_wallet() { return false; };              // call         async wallet data from exchange
 /**/  virtual vector<mWallets> sync_wallet() { return {}; };                 // call and read sync wallet data from exchange
@@ -300,6 +303,9 @@ namespace ₿ {
                takeFee  = 0;
       virtual const bool waiting() {
         return true;
+      };
+      virtual void close() {
+        online(Connectivity::Disconnected);
       };
       virtual const json handshake() = 0;
       const json handshake(const bool &nocache) {
@@ -430,20 +436,29 @@ namespace ₿ {
       };
     protected:
 //BO non-free Gw library functions from build-*/local/lib/K-*.a (it just redefines all virtual gateway class members below).
-/**/  virtual void subscribe()   = 0;                                         // send subcription messages to remote server.
-/**/  virtual void unsubscribe() = 0;                                         // unless closing, reconnect to remote server.
 /**/  virtual void consume(json) = 0;                                         // read message one by one from remote server.
+/**/  virtual void subscribe()   = 0;                                         // send subcription messages to remote server.
 //EO non-free Gw library functions from build-*/local/lib/K-*.a (it just redefines all virtual gateway class members above).
+      void unsubscribe() {
+        GwExchange::close();
+        reconnect("Disconnected");
+      };
       void send(const string &msg) {
         CURLcode rc;
         if (CURLE_OK != (rc = Curl::emit(curl, sockfd, msg, 0x01)))
-          GwExchange::log(string("CURL send Error: ") + curl_easy_strerror(rc));
+          reconnect(string("CURL send Error: ") + curl_easy_strerror(rc));
       };
       void disconnect() {
         Curl::emit(curl, sockfd, "", 0x08);
         Curl::cleanup(curl, sockfd);
       };
+      void close() override {
+        GwExchange::close();
+        countdown = ANY_NUM;
+        disconnect();
+      };
       void reconnect(const string &reason) {
+        if (countdown == ANY_NUM) return;
         countdown = 7;
         GwExchange::log("WS " + reason + ", reconnecting in " + to_string(countdown) + "s.");
       };
@@ -465,14 +480,14 @@ namespace ₿ {
         if (countdown and !--countdown) {
           CURLcode rc;
           if (CURLE_OK != (rc = Curl::connect(curl, sockfd, buffer, ws)))
-            GwExchange::log(string("CURL connect Error: ") + curl_easy_strerror(rc));
+            reconnect(string("CURL connect Error: ") + curl_easy_strerror(rc));
         }
         return waiting();
       };
       const bool received() {
         CURLcode rc;
         if (CURLE_OK != (rc = Curl::receive(curl, sockfd, buffer)))
-          GwExchange::log(string("CURL recv Error: ") + curl_easy_strerror(rc));
+          reconnect(string("CURL recv Error: ") + curl_easy_strerror(rc));
         return !buffer.empty();
       };
       const bool subscribed() {

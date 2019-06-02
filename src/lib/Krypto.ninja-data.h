@@ -44,7 +44,7 @@ namespace ₿ {
             if (rc == CURLE_OK)
               rc = CURLE_WEIRD_SERVER_REPLY;
             cleanup(curl, sockfd);
-          } else buffer = buffer.substr(buffer.find("\r\n\r\n") + 4);
+          } else buffer = buffer.substr(buffer.rfind("\r\n\r\n") + 4);
         }
         curl_url_cleanup(url);
         return rc;
