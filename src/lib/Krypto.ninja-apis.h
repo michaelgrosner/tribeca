@@ -301,12 +301,7 @@ namespace ₿ {
         Amount minSize  = 0,
                makeFee  = 0,
                takeFee  = 0;
-      virtual const bool waiting() {
-        return true;
-      };
-      virtual void close() {
-        online(Connectivity::Disconnected);
-      };
+      virtual const bool network()   = 0;
       virtual const json handshake() = 0;
       const json handshake(const bool &nocache) {
         json reply;
@@ -336,6 +331,9 @@ namespace ₿ {
         }
         if (file.is_open()) file.close();
         return reply.value("reply", json::object());
+      };
+      virtual void close() {
+        online(Connectivity::Disconnected);
       };
       void end(const bool &dustybot = false) {
         if (dustybot)
@@ -403,6 +401,9 @@ namespace ₿ {
 
   class GwApiREST: public Gw {
     public:
+      const bool network() override {
+        return true;
+      };
       const bool askForData(const unsigned int &tick) override {
         return askForSyncData(tick);
       };
@@ -418,6 +419,10 @@ namespace ₿ {
        unsigned int  countdown = 1;
                bool  subscription = false;
     public:
+      const bool network() override {
+        return sockfd
+           and !countdown;
+      };
       const bool askForData(const unsigned int &tick) override {
         if (connected() and subscribed())
           askForNeverAsyncData(tick);
@@ -429,10 +434,6 @@ namespace ₿ {
           waitForNeverAsyncData();
         }
         return true;
-      };
-      const bool waiting() override {
-        return sockfd
-           and !countdown;
       };
     protected:
 //BO non-free Gw library functions from build-*/local/lib/K-*.a (it just redefines all virtual gateway class members below).
@@ -482,7 +483,7 @@ namespace ₿ {
           if (CURLE_OK != (rc = Curl::Ws::connect(curl, sockfd, buffer, ws)))
             reconnect(string("CURL connect Error: ") + curl_easy_strerror(rc));
         }
-        return waiting();
+        return network();
       };
       const bool received() {
         CURLcode rc;
@@ -491,7 +492,7 @@ namespace ₿ {
         return !buffer.empty();
       };
       const bool subscribed() {
-        if (subscription != waiting()) {
+        if (subscription != network()) {
           subscription = !subscription;
           if (subscription) subscribe();
           else unsubscribe();
