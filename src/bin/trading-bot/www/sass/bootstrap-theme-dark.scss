@@ -7680,9 +7680,11 @@ a {
 .marketQuoting .success {
   &.sell {
     color: red;
+    background-color: #cfcfcf!important;
   }
   &.buy {
     color: blue;
+    background-color: #cfcfcf!important;
   }
 }
 
