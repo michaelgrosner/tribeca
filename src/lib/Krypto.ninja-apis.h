@@ -447,7 +447,7 @@ namespace ₿ {
       void send(const string &msg) {
         CURLcode rc;
         if (CURLE_OK != (rc = Curl::Ws::emit(curl, sockfd, msg, 0x01)))
-          reconnect(string("CURL send Error: ") + curl_easy_strerror(rc));
+          GwExchange::log(string("CURL send Error: ") + curl_easy_strerror(rc));
       };
       void disconnect() {
         Curl::Ws::emit(curl, sockfd, "", 0x08);
@@ -488,7 +488,7 @@ namespace ₿ {
       const bool received() {
         CURLcode rc;
         if (CURLE_OK != (rc = Curl::Ws::receive(curl, sockfd, buffer)))
-          reconnect(string("CURL recv Error: ") + curl_easy_strerror(rc));
+          GwExchange::log(string("CURL recv Error: ") + curl_easy_strerror(rc));
         return !buffer.empty();
       };
       const bool subscribed() {

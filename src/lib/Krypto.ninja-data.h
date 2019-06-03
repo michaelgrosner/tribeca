@@ -96,14 +96,14 @@ namespace ₿ {
             return rc;
           };
           static const CURLcode emit(CURL *&curl, curl_socket_t &sockfd, const string &data, const int &opcode) {
-            CURLcode rc;
-            if (CURLE_OK != (rc = send(curl, sockfd, frame(data, opcode))))
+            CURLcode rc = CURLE_COULDNT_CONNECT;
+            if (!curl or !sockfd or CURLE_OK != (rc = send(curl, sockfd, frame(data, opcode))))
               cleanup(curl, sockfd);
             return rc;
           };
           static const CURLcode receive(CURL *&curl, curl_socket_t &sockfd, string &buffer) {
-            CURLcode rc;
-            if (CURLE_OPERATION_TIMEDOUT == (rc = recv(curl, sockfd, buffer, 0)))
+            CURLcode rc = CURLE_COULDNT_CONNECT;
+            if (curl and sockfd and CURLE_OPERATION_TIMEDOUT == (rc = recv(curl, sockfd, buffer, 0)))
               rc = CURLE_OK;
             if (rc != CURLE_OK)
               cleanup(curl, sockfd);
@@ -207,9 +207,7 @@ namespace ₿ {
             return rc;
           };
           static const int wait(const curl_socket_t &sockfd, const bool &io, const int &timeout) {
-            struct timeval tv;
-            tv.tv_sec  = timeout;
-            tv.tv_usec = 10000;
+            struct timeval tv = {timeout, 10000};
             fd_set infd,
                    outfd;
             FD_ZERO(&infd);
