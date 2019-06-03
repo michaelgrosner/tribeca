@@ -112,17 +112,20 @@ namespace ₿ {
           static void unframe(CURL *&curl, curl_socket_t &sockfd, string &data, string &msg) {
             const size_t max = data.length();
             if (max < 2) return;
-            unsigned int pos = 2,
+            const unsigned int key = (data[1] >> 7) & 0x01 ? 4 : 0;
+            unsigned int pos = 2 + key,
                          len = 0;
             if      (data[1] <= 0x7D) len =    data[1];
+            else if (max < 3)
+              return;
             else if (data[1] == 0x7E) len = (((data[2] & 0xFF) <<  8)
                                           |   (data[3] & 0xFF)       ), pos += 2;
+            else if (max < 9)
+              return;
             else if (data[1] == 0x7F) len = (((data[6] & 0xFF) << 24)
                                           |  ((data[7] & 0xFF) << 16)
                                           |  ((data[8] & 0xFF) <<  8)
                                           |   (data[9] & 0xFF)       ), pos += 8;
-            const unsigned int key = (data[1] >> 7) & 0x01 ? 4 : 0;
-            pos += key;
             if (max < pos + len) return;
             if (key)
               for (int i = 0; i < len; i++)
@@ -215,7 +218,6 @@ namespace ₿ {
             FD_SET(sockfd, io ? &infd : &outfd);
             return select(sockfd + 1, &infd, &outfd, nullptr, &tv);
           };
-
       };
   };
 
