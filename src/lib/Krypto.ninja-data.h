@@ -59,6 +59,7 @@ namespace ₿ {
             sockfd = 0;
           };
           static const CURLcode connect(CURL *&curl, curl_socket_t &sockfd, string &buffer, const string &wss) {
+            buffer.clear();
             CURLcode rc = CURLE_URL_MALFORMAT;
             CURLU *url = curl_url();
             char *host,
@@ -126,6 +127,10 @@ namespace ₿ {
                                           |  ((data[7] & 0xFF) << 16)
                                           |  ((data[8] & 0xFF) <<  8)
                                           |   (data[9] & 0xFF)       ), pos += 8;
+            else {
+              cleanup(curl, sockfd);
+              return;
+            }
             if (max < pos + len) return;
             if (key)
               for (int i = 0; i < len; i++)

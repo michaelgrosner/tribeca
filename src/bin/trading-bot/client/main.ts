@@ -183,7 +183,7 @@ class DisplayOrder {
                                         </ng-container>
                                         <td style="width:169px;border-bottom: 3px solid #D64A4A;" *ngIf="!pair.quotingParameters.display.percentageValues">
                                             <input class="form-control input-sm" title="{{ baseCurrency }}"
-                                               type="number" step="0.01" min="0.01"
+                                               type="number" step="{{ product.advert.tickSize}}" min="{{ product.advert.minSize}}"
                                                onClick="this.select()"
                                                [(ngModel)]="pair.quotingParameters.display.buySize">
                                         </td>
@@ -199,7 +199,7 @@ class DisplayOrder {
                                         </td>
                                         <td style="width:169px;border-bottom: 3px solid #D64A4A;" *ngIf="!pair.quotingParameters.display.percentageValues">
                                             <input class="form-control input-sm" title="{{ baseCurrency }}"
-                                               type="number" step="0.01" min="0.01"
+                                               type="number" step="{{ product.advert.tickSize}}" min="{{ product.advert.minSize}}"
                                                onClick="this.select()"
                                                [(ngModel)]="pair.quotingParameters.display.sellSize">
                                         </td>
@@ -343,7 +343,7 @@ class DisplayOrder {
                                             <input type="number"
                                                [(ngModel)]="pair.quotingParameters.display.bestWidthSize"
                                                class="form-control input-sm" title="{{ baseCurrency }}"
-                                               type="number" step="{{ product.advert.minTick}}" min="0"
+                                               type="number" step="{{ product.advert.tickPrice}}" min="0"
                                                onClick="this.select()">
                                         </td>
                                         <td style="width:25px;border-bottom: 3px solid #8BE296;" *ngIf="[6].indexOf(pair.quotingParameters.display.mode)==-1">
@@ -352,7 +352,7 @@ class DisplayOrder {
                                         </td>
                                         <td style="width:169px;border-bottom: 3px solid #8BE296;" *ngIf="!pair.quotingParameters.display.widthPercentage || [6].indexOf(pair.quotingParameters.display.mode)>-1">
                                             <input class="width-option form-control input-sm" title="{{ quoteCurrency }}"
-                                               type="number" step="{{ product.advert.minTick}}" min="{{ product.advert.minTick}}"
+                                               type="number" step="{{ product.advert.tickPrice}}" min="{{ product.advert.tickPrice}}"
                                                onClick="this.select()"
                                                [(ngModel)]="pair.quotingParameters.display.widthPing">
                                         </td>
@@ -364,7 +364,7 @@ class DisplayOrder {
                                         </td>
                                         <td style="width:169px;border-bottom: 3px solid #8BE296;" *ngIf="pair.quotingParameters.display.safety && !pair.quotingParameters.display.widthPercentage">
                                             <input class="width-option form-control input-sm" title="{{ quoteCurrency }}"
-                                               type="number" step="{{ product.advert.minTick}}" min="{{ product.advert.minTick}}"
+                                               type="number" step="{{ product.advert.tickPrice}}" min="{{ product.advert.tickPrice}}"
                                                onClick="this.select()"
                                                [(ngModel)]="pair.quotingParameters.display.widthPong">
                                         </td>
@@ -634,7 +634,7 @@ class DisplayOrder {
                           </tr>
                           <tr>
                               <td><label (click)="insertBidAskPrice()" style="text-decoration:underline;cursor:pointer;padding-right:5px">Price:</label></td>
-                              <td style="padding-bottom:5px;"><input id="orderPriceInput" class="form-control input-sm" type="number" step="{{ product.advert.minTick}}" [(ngModel)]="order.price" /></td>
+                              <td style="padding-bottom:5px;"><input id="orderPriceInput" class="form-control input-sm" type="number" step="{{ product.advert.tickPrice}}" [(ngModel)]="order.price" /></td>
                           </tr>
                           <tr>
                               <td><label (click)="insertBidAskSize()" style="text-decoration:underline;cursor:pointer">Size:</label></td>
@@ -780,7 +780,7 @@ class ClientComponent implements OnInit {
     window.parent.postMessage('height='+document.getElementsByTagName('body')[0].getBoundingClientRect().height+'px', '*');
   };
   public product: Models.ProductState = {
-    advert: new Models.ProductAdvertisement(null, null, null, null, null, null, .01),
+    advert: new Models.ProductAdvertisement(null, null, null, null, null, null, .01, .01, .01),
     fixedPrice: 8,
     fixedSize: 8
   };
@@ -1071,8 +1071,8 @@ class ClientComponent implements OnInit {
         )
       );
     this.product.advert = pa;
-    this.product.fixedPrice = Math.max(0, Math.floor(Math.log10(pa.minTick)) * -1);
-    this.product.fixedSize  = pa.minTick < 1e-8 ? 10 : 8;
+    this.product.fixedPrice = Math.abs(Math.log10(pa.tickPrice));
+    this.product.fixedSize  = Math.abs(Math.log10(pa.tickSize));
     setTimeout(this.resizeMatryoshka, 5000);
     console.log("%cK started "+(new Date().toISOString().slice(11, -1))+"  %c"+this.homepage, "color:green;font-size:32px;", "color:red;font-size:16px;");
   }

@@ -1,8 +1,8 @@
 K       ?= K.sh
 MAJOR    = 0
 MINOR    = 5
-PATCH    = 0
-BUILD    = 8
+PATCH    = 1
+BUILD    = 0
 SOURCE  := $(notdir $(wildcard src/bin/*))
 CARCH    = x86_64-linux-gnu      \
            arm-linux-gnueabihf   \

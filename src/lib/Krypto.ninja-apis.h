@@ -294,14 +294,15 @@ namespace ₿ {
                http,     ws,
                fix,      unlock;
         CoinId base,     quote;
-           int version  = 0,
-               maxLevel = 0,
-               debug    = 0;
-         Price minTick  = 0;
-        Amount minSize  = 0,
-               makeFee  = 0,
-               takeFee  = 0;
-      virtual const bool network()   = 0;
+           int version   = 0,
+               maxLevel  = 0,
+               debug     = 0;
+         Price tickPrice = 0;
+        Amount tickSize  = 0,
+               minSize   = 0,
+               makeFee   = 0,
+               takeFee   = 0;
+      virtual const bool connected()   = 0;
       virtual const json handshake() = 0;
       const json handshake(const bool &nocache) {
         json reply;
@@ -321,18 +322,19 @@ namespace ₿ {
           reply = json::parse(file);
         } else
           reply = handshake();
-        minTick = reply.value("minTick", 0.0);
+        tickPrice = reply.value("tickPrice", 0.0);
+        tickSize  = reply.value("tickSize", 0.0);
         if (!minSize) minSize = reply.value("minSize", 0.0);
         if (!makeFee) makeFee = reply.value("makeFee", 0.0);
         if (!takeFee) takeFee = reply.value("takeFee", 0.0);
-        if (!file.is_open() and minTick and minSize) {
+        if (!file.is_open() and tickPrice and tickSize and minSize) {
           file.open(cache, fstream::out | fstream::trunc);
           file << reply.dump();
         }
         if (file.is_open()) file.close();
         return reply.value("reply", json::object());
       };
-      virtual void close() {
+      virtual void offline() {
         online(Connectivity::Disconnected);
       };
       void end(const bool &dustybot = false) {
@@ -343,16 +345,17 @@ namespace ₿ {
           for (mOrder &it : sync_cancelAll()) write_mOrder(it);
           log("cancel all open orders OK");
         }
-        close();
+        offline();
       };
       void report(Report notes, const bool &nocache) {
-        decimal.price.stream.precision(abs(log10(minTick)));
-        decimal.amount.stream.precision(minTick < 1e-8 ? 10 : 8);
+        decimal.price.stream.precision(abs(log10(tickPrice)));
+        decimal.amount.stream.precision(abs(log10(tickSize)));
         decimal.percent.stream.precision(2);
         for (auto it : (Report){
-          {"symbols", base + "/" + quote},
-          {"minTick", decimal.amount.str(minTick)              },
-          {"minSize", decimal.amount.str(minSize)              },
+          {"symbols", base + "/" + quote + " ("
+                      + decimal.amount.str(tickSize) + "/"
+                      + decimal.price.str(tickPrice) + ")"     },
+          {"minSize", decimal.amount.str(minSize) + " " + base },
           {"makeFee", decimal.percent.str(makeFee * 1e+2) + "%"},
           {"takeFee", decimal.percent.str(takeFee * 1e+2) + "%"}
         }) notes.push_back(it);
@@ -401,7 +404,7 @@ namespace ₿ {
 
   class GwApiREST: public Gw {
     public:
-      const bool network() override {
+      const bool connected() override {
         return true;
       };
       const bool askForData(const unsigned int &tick) override {
@@ -419,11 +422,16 @@ namespace ₿ {
        unsigned int  countdown = 1;
                bool  subscription = false;
     public:
-      const bool network() override {
+      const bool connected() override {
         return sockfd
            and !countdown;
       };
       const bool askForData(const unsigned int &tick) override {
+        if (countdown and !--countdown) {
+          CURLcode rc;
+          if (CURLE_OK != (rc = Curl::Ws::connect(curl, sockfd, buffer, ws)))
+            reconnect(string("CURL connect Error: ") + curl_easy_strerror(rc));
+        }
         if (connected() and subscribed())
           askForNeverAsyncData(tick);
         return true;
@@ -437,31 +445,27 @@ namespace ₿ {
       };
     protected:
 //BO non-free Gw library functions from build-*/local/lib/K-*.a (it just redefines all virtual gateway class members below).
-/**/  virtual void consume(json) = 0;                                         // read message one by one from remote server.
 /**/  virtual void subscribe()   = 0;                                         // send subcription messages to remote server.
+/**/  virtual void consume(json) = 0;                                         // read message one by one from remote server.
 //EO non-free Gw library functions from build-*/local/lib/K-*.a (it just redefines all virtual gateway class members above).
-      void unsubscribe() {
-        GwExchange::close();
-        reconnect("Disconnected");
-      };
       void send(const string &msg) {
         CURLcode rc;
         if (CURLE_OK != (rc = Curl::Ws::emit(curl, sockfd, msg, 0x01)))
-          GwExchange::log(string("CURL send Error: ") + curl_easy_strerror(rc));
+          log(string("CURL send Error: ") + curl_easy_strerror(rc));
       };
       void disconnect() {
         Curl::Ws::emit(curl, sockfd, "", 0x08);
         Curl::Ws::cleanup(curl, sockfd);
       };
-      void close() override {
-        GwExchange::close();
+      void offline() override {
+        GwExchange::offline();
         countdown = ANY_NUM;
         disconnect();
       };
       void reconnect(const string &reason) {
         if (countdown == ANY_NUM) return;
         countdown = 7;
-        GwExchange::log("WS " + reason + ", reconnecting in " + to_string(countdown) + "s.");
+        log("WS " + reason + ", reconnecting in " + to_string(countdown) + "s.");
       };
     private:
       void waitForAsyncData() {
@@ -477,25 +481,20 @@ namespace ₿ {
             );
           }
       };
-      const bool connected() {
-        if (countdown and !--countdown) {
-          CURLcode rc;
-          if (CURLE_OK != (rc = Curl::Ws::connect(curl, sockfd, buffer, ws)))
-            reconnect(string("CURL connect Error: ") + curl_easy_strerror(rc));
-        }
-        return network();
-      };
       const bool received() {
         CURLcode rc;
         if (CURLE_OK != (rc = Curl::Ws::receive(curl, sockfd, buffer)))
-          GwExchange::log(string("CURL recv Error: ") + curl_easy_strerror(rc));
+          log(string("CURL recv Error: ") + curl_easy_strerror(rc));
         return !buffer.empty();
       };
       const bool subscribed() {
-        if (subscription != network()) {
+        if (subscription != connected()) {
           subscription = !subscription;
           if (subscription) subscribe();
-          else unsubscribe();
+          else {
+            GwExchange::offline();
+            reconnect("Disconnected");
+          };
         }
         return subscription;
       };
@@ -510,9 +509,10 @@ namespace ₿ {
     public:
       const json handshake() override {
         return {
-          {"minTick", 1e-2   },
-          {"minSize", 1e-2   },
-          {  "reply", nullptr}
+          {"tickPrice", 1e-2   },
+          { "tickSize", 1e-2   },
+          {  "minSize", 1e-2   },
+          {    "reply", nullptr}
         };
       };
   };
@@ -527,11 +527,12 @@ namespace ₿ {
       const json handshake() override {
         const json reply = Curl::Http::xfer(http + "/public/symbol/" + base + quote);
         return {
-          {"minTick", stod(reply.value("tickSize", "0"))            },
-          {"minSize", stod(reply.value("quantityIncrement", "0"))   },
-          {"makeFee", stod(reply.value("provideLiquidityRate", "0"))},
-          {"takeFee", stod(reply.value("takeLiquidityRate", "0"))   },
-          {  "reply", reply                                         }
+          {"tickPrice", stod(reply.value("tickSize", "0"))            },
+          { "tickSize", stod(reply.value("quantityIncrement", "0"))   },
+          {  "minSize", stod(reply.value("quantityIncrement", "0"))   },
+          {  "makeFee", stod(reply.value("provideLiquidityRate", "0"))},
+          {  "takeFee", stod(reply.value("takeLiquidityRate", "0"))   },
+          {    "reply", reply                                         }
         };
       };
     protected:
@@ -564,9 +565,10 @@ namespace ₿ {
       const json handshake() override {
         const json reply = Curl::Http::xfer(http + "/products/" + base + "-" + quote);
         return {
-          {"minTick", stod(reply.value("quote_increment", "0"))},
-          {"minSize", stod(reply.value("base_min_size", "0"))  },
-          {  "reply", reply                                    }
+          {"tickPrice", stod(reply.value("quote_increment", "0"))},
+          { "tickSize", stod(reply.value("base_increment", "0")) },
+          {  "minSize", stod(reply.value("base_min_size", "0"))  },
+          {    "reply", reply                                    }
         };
       };
     protected:
@@ -593,8 +595,8 @@ namespace ₿ {
       };
       const json handshake() override {
         const json reply1 = Curl::Http::xfer(http + "/pubticker/" + base + quote);
-        Price minTick = 0,
-              minSize = 0;
+        Price tickPrice = 0,
+              minSize   = 0;
         if (reply1.find("last_price") != reply1.end()) {
           ostringstream price_;
           price_ << scientific << stod(reply1.value("last_price", "0"));
@@ -603,7 +605,7 @@ namespace ₿ {
             if (*it == '+' or *it == '-') break;
             else it = price.erase(it);
           istringstream iss("1e" + to_string(fmax(stod(price),-4)-4));
-          iss >> minTick;
+          iss >> tickPrice;
         }
         const json reply2 = Curl::Http::xfer(http + "/symbols_details");
         if (reply2.is_array())
@@ -613,9 +615,12 @@ namespace ₿ {
               break;
             }
         return {
-          {"minTick", minTick         },
-          {"minSize", minSize         },
-          {  "reply", {reply1, reply2}}
+          {"tickPrice", tickPrice       },
+          { "tickSize", tickPrice < 1e-8
+                         ? 10
+                         : 8            },
+          {  "minSize", minSize         },
+          {    "reply", {reply1, reply2}}
         };
       };
     protected:
@@ -648,8 +653,8 @@ namespace ₿ {
       };
       const json handshake() override {
         const json reply = Curl::Http::xfer(http + "public/symbols");
-        Price minTick = 0,
-              minSize = 0;
+        Price tickPrice = 0,
+              minSize   = 0;
         if (reply.find("data") != reply.end() and reply.at("data").is_array())
           for (const json &it : reply.at("data"))
             if (it.find("name") != it.end() and it.value("name", "") == Text::strL(base + quote)) {
@@ -657,13 +662,16 @@ namespace ₿ {
                 "1e-" + to_string(it.value("price_decimal", 0))
                 + " 1e-" + to_string(it.value("amount_decimal", 0))
               );
-              iss >> minTick >> minSize;
+              iss >> tickPrice >> minSize;
               break;
             }
         return {
-          {"minTick", minTick},
-          {"minSize", minSize},
-          {  "reply", reply  }
+          {"tickPrice", tickPrice       },
+          { "tickSize", tickPrice < 1e-8
+                         ? 10
+                         : 8            },
+          {  "minSize", minSize         },
+          {    "reply", reply           }
         };
       };
     protected:
@@ -690,8 +698,8 @@ namespace ₿ {
       };
       const json handshake() override {
         const json reply = Curl::Http::xfer(http + "/0/public/AssetPairs?pair=" + base + quote);
-        Price minTick = 0,
-              minSize = 0;
+        Price tickPrice = 0,
+              minSize   = 0;
         if (reply.find("result") != reply.end())
           for (json::const_iterator it = reply.at("result").cbegin(); it != reply.at("result").cend(); ++it)
             if (it.value().find("pair_decimals") != it.value().end()) {
@@ -699,13 +707,16 @@ namespace ₿ {
                 "1e-" + to_string(it.value().value("pair_decimals", 0))
                 + " 1e-" + to_string(it.value().value("lot_decimals", 0))
               );
-              iss >> minTick >> minSize;
+              iss >> tickPrice >> minSize;
               break;
             }
         return {
-          {"minTick", minTick},
-          {"minSize", minSize},
-          {  "reply", reply  }
+          {"tickPrice", tickPrice       },
+          { "tickSize", tickPrice < 1e-8
+                         ? 10
+                         : 8            },
+          {  "minSize", minSize         },
+          {    "reply", reply           }
         };
       };
     protected:
@@ -729,12 +740,16 @@ namespace ₿ {
       const json handshake() override {
         const json reply = Curl::Http::xfer(http + "/public?command=returnTicker")
                              .value(quote + "_" + base, json::object());
+        const Price tickPrice = reply.empty()
+                                  ? 0
+                                  : 1e-8;
         return {
-          {"minTick", reply.empty()
-                        ? 0
-                        : 1e-8     },
-          {"minSize", 1e-3         },
-          {  "reply", reply        }
+          {"tickPrice", tickPrice       },
+          { "tickSize", tickPrice < 1e-8
+                          ? 10
+                          : 8           },
+          {  "minSize", 1e-3            },
+          {    "reply", reply           }
         };
       };
     protected:
