@@ -353,11 +353,13 @@ namespace ₿ {
         decimal.percent.stream.precision(2);
         for (auto it : (Report){
           {"symbols", base + "/" + quote + " ("
-                      + decimal.amount.str(tickSize) + "/"
-                      + decimal.price.str(tickPrice) + ")"     },
-          {"minSize", decimal.amount.str(minSize) + " " + base },
-          {"makeFee", decimal.percent.str(makeFee * 1e+2) + "%"},
-          {"takeFee", decimal.percent.str(takeFee * 1e+2) + "%"}
+                        + decimal.amount.str(tickSize) + "/"
+                        + decimal.price.str(tickPrice) + ")"                    },
+          {"minSize", decimal.amount.str(minSize) + " " + base                  },
+          {"makeFee", decimal.percent.str(makeFee * 1e+2) + "%"
+                        + (makeFee ? "" : " (please use --maker-fee argument!)")},
+          {"takeFee", decimal.percent.str(takeFee * 1e+2) + "%"
+                        + (takeFee ? "" : " (please use --taker-fee argument!)")}
         }) notes.push_back(it);
         string note = "handshake:";
         for (auto &it : notes)
