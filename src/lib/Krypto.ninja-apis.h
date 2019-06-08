@@ -425,8 +425,7 @@ namespace ₿ {
                bool  subscription = false;
     public:
       const bool connected() override {
-        return sockfd
-           and !countdown;
+        return sockfd;
       };
       const bool askForData(const unsigned int &tick) override {
         if (countdown and !--countdown) {
