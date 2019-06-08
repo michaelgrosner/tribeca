@@ -789,15 +789,19 @@ namespace ₿ {
       };
       void stop() {
         timer->stop();
+        loop->close();
+        loop = nullptr;
         deferred();
       };
     private:
       void deferred() {
         for (const auto &it : slowFn) it();
         slowFn.clear();
-        bool waiting = false;
-        for (const auto &it : waitFn) waiting |= it();
-        if (waiting) loop->send();
+        if (loop) {
+          bool waiting = false;
+          for (const auto &it : waitFn) waiting |= it();
+          if (waiting) loop->send();
+        }
       };
       void timer_1s() {
         bool waiting = false;

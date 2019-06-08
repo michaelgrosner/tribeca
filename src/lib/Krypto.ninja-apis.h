@@ -190,10 +190,6 @@ namespace ₿ {
       const RandId (*randId)() = nullptr;
       virtual const bool askForData(const unsigned int &tick) = 0;
       virtual const bool waitForData() = 0;
-      void online(const Connectivity &connectivity = Connectivity::Connected) {
-        if (write_Connectivity)
-          write_Connectivity(connectivity);
-      };
       void place(const mOrder *const order) {
         place(
           order->orderId,
@@ -230,6 +226,10 @@ namespace ₿ {
 /**/  virtual vector<mOrder>   sync_orders() { return {}; };                 // call and read sync orders data from exchange
 /**/  virtual vector<mOrder>   sync_cancelAll() = 0;                         // call and read sync orders data from exchange
 //EO non-free Gw library functions from build-*/local/lib/K-*.a (it just redefines all virtual gateway class members above).
+      void online(const Connectivity &connectivity = Connectivity::Connected) {
+        if (write_Connectivity)
+          write_Connectivity(connectivity);
+      };
       future<vector<mWallets>> replyWallets;
       future<vector<mLevels>> replyLevels;
       future<vector<mTrade>> replyTrades;
@@ -302,7 +302,8 @@ namespace ₿ {
                minSize   = 0,
                makeFee   = 0,
                takeFee   = 0;
-      virtual const bool connected()   = 0;
+      virtual const bool connected() { return true; };
+      virtual void disconnect() {};
       virtual const json handshake() = 0;
       const json handshake(const bool &nocache) {
         json reply;
@@ -334,9 +335,6 @@ namespace ₿ {
         if (file.is_open()) file.close();
         return reply.value("reply", json::object());
       };
-      virtual void offline() {
-        online(Connectivity::Disconnected);
-      };
       void end(const bool &dustybot = false) {
         if (dustybot)
           log("--dustybot is enabled, remember to cancel manually any open order.");
@@ -345,7 +343,8 @@ namespace ₿ {
           for (mOrder &it : sync_cancelAll()) write_mOrder(it);
           log("cancel all open orders OK");
         }
-        offline();
+        online(Connectivity::Disconnected);
+        disconnect();
       };
       void report(Report notes, const bool &nocache) {
         decimal.price.stream.precision(abs(log10(tickPrice)));
@@ -406,9 +405,6 @@ namespace ₿ {
 
   class GwApiREST: public Gw {
     public:
-      const bool connected() override {
-        return true;
-      };
       const bool askForData(const unsigned int &tick) override {
         return askForSyncData(tick);
       };
@@ -454,19 +450,9 @@ namespace ₿ {
         if (CURLE_OK != (rc = Curl::Ws::emit(curl, sockfd, msg, 0x01)))
           log(string("CURL send Error: ") + curl_easy_strerror(rc));
       };
-      void disconnect() {
+      void disconnect() override {
         Curl::Ws::emit(curl, sockfd, "", 0x08);
         Curl::Ws::cleanup(curl, sockfd);
-      };
-      void offline() override {
-        GwExchange::offline();
-        countdown = ANY_NUM;
-        disconnect();
-      };
-      void reconnect(const string &reason) {
-        if (countdown == ANY_NUM) return;
-        countdown = 7;
-        log("WS " + reason + ", reconnecting in " + to_string(countdown) + "s.");
       };
     private:
       void waitForAsyncData() {
@@ -493,11 +479,15 @@ namespace ₿ {
           subscription = !subscription;
           if (subscription) subscribe();
           else {
-            GwExchange::offline();
+            online(Connectivity::Disconnected);
             reconnect("Disconnected");
           };
         }
         return subscription;
+      };
+      void reconnect(const string &reason) {
+        countdown = 7;
+        log("WS " + reason + ", reconnecting in " + to_string(countdown) + "s.");
       };
   };
 
