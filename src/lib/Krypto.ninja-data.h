@@ -417,7 +417,7 @@ namespace ₿ {
         string id = string(16, ' ');
         for (auto &it : id) {
          const int offset = int64() % (26 + 26 + 10);
-         if (offset < 26)           it = 'a' + offset;
+         if      (offset < 26)      it = 'a' + offset;
          else if (offset < 26 + 26) it = 'A' + offset - 26;
          else                       it = '0' + offset - 26 - 26;
         }

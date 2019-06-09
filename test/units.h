@@ -473,7 +473,7 @@ namespace ₿ {
         REQUIRE_NOTHROW(broker.clear());
         REQUIRE(broker.calculon.quotes.bid.state == mQuoteState::MissingData);
         REQUIRE(broker.calculon.quotes.ask.state == mQuoteState::MissingData);
-        REQUIRE_NOTHROW(K.gateway->ready(nullptr));
+        REQUIRE_NOTHROW(K.gateway->ready());
         REQUIRE(broker.ready());
         REQUIRE_FALSE(levels.ready());
         REQUIRE_NOTHROW(levels.read_from_gw({ {
