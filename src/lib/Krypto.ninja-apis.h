@@ -507,7 +507,7 @@ namespace ₿ {
 //BO non-free Gw library functions from build-*/local/lib/K-*.a (it just redefines all virtual gateway class members below).
 /**/  virtual const string logon() = 0;                                                             // return logon message.
 //EO non-free Gw library functions from build-*/local/lib/K-*.a (it just redefines all virtual gateway class members above).
-      void connect() {
+      void connect() override {
         GwApiWs::connect();
         if (GwApiWs::connected()) {
           CURLcode rc;
@@ -523,7 +523,7 @@ namespace ₿ {
         Curl::Fix::cleanup(curl, sockfd);
         GwApiWs::disconnect();
       };
-      void emit(const string &msg) {
+      void emit(const string &msg) override {
         GwApiWs::emit(msg);
       };
       void emit(const string &msg, const string &type) {
