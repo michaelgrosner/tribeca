@@ -181,42 +181,39 @@ namespace ₿ {
             frame(data, opcode);
             return Sock::emit(curl, sockfd, data);
           };
-          static void unframe(CURL *&curl, curl_socket_t &sockfd, string &data, string &msg) {
+          static const string unframe(CURL *&curl, curl_socket_t &sockfd, string &data) {
+            string msg;
             const size_t max = data.length();
-            if (max < 2) return;
-            const size_t key = (data[1] >> 7) & 0x01 ? 4 : 0;
-            size_t pos = 2 + key,
-                   len = 0;
-            if      (data[1] <= 0x7D) len =    data[1];
-            else if (max < 3)
-              return;
-            else if (data[1] == 0x7E) len = (((data[2] & 0xFF) <<  8)
-                                          |   (data[3] & 0xFF)       ), pos += 2;
-            else if (max < 9)
-              return;
-            else if (data[1] == 0x7F) len = (((data[6] & 0xFF) << 24)
-                                          |  ((data[7] & 0xFF) << 16)
-                                          |  ((data[8] & 0xFF) <<  8)
-                                          |   (data[9] & 0xFF)       ), pos += 8;
-            else {
-              cleanup(curl, sockfd);
-              return;
+            if (max > 1) {
+              const size_t key = (data[1] >> 7) & 0x01 ? 4 : 0;
+              size_t pos = key,
+                     len = 0;
+              if      (            data[1] <= 0x7D) len =    data[1]                , pos += 2;
+              else if (max > 2 and data[1] == 0x7E) len = (((data[2] & 0xFF) <<  8)
+                                                        |   (data[3] & 0xFF)       ), pos += 4;
+              else if (max > 8 and data[1] == 0x7F) len = (((data[6] & 0xFF) << 24)
+                                                        |  ((data[7] & 0xFF) << 16)
+                                                        |  ((data[8] & 0xFF) <<  8)
+                                                        |   (data[9] & 0xFF)       ), pos += 10;
+              if (pos == key) cleanup(curl, sockfd);
+              else if (max >= pos + len) {
+                if (key)
+                  for (size_t i = 0; i < len; i++)
+                    data.at(pos + i) ^= data.at(pos - key + (i % key));
+                const unsigned char opcode = data[0] & 0x0F;
+                if (opcode == 0x9)
+                  emit(curl, sockfd, data.substr(pos, len), 0xA);
+                else if (opcode == 0x2 or opcode == 0xA or opcode == 0x8
+                  or ((opcode == 0x0 or opcode == 0x1) and !((data[0] >> 7) & 0x01))
+                ) {
+                  if (opcode == 0x8)
+                    cleanup(curl, sockfd);
+                } else
+                  msg = data.substr(pos, len);
+                data = data.substr(pos + len);
+              }
             }
-            if (max < pos + len) return;
-            if (key)
-              for (size_t i = 0; i < len; i++)
-                data.at(pos + i) ^= data.at(pos - key + (i % key));
-            const unsigned char opcode = data[0] & 0x0F;
-            if (opcode == 0x9)
-              emit(curl, sockfd, data.substr(pos, len), 0xA);
-            else if (opcode == 0x2 or opcode == 0xA or opcode == 0x8
-              or ((opcode == 0x0 or opcode == 0x1) and !((data[0] >> 7) & 0x01))
-            ) {
-              if (opcode == 0x8)
-                cleanup(curl, sockfd);
-            } else
-              msg = data.substr(pos, len);
-            data = data.substr(pos + len);
+            return msg;
           };
         private:
           static void frame(string &data, const int &opcode) {
@@ -244,7 +241,7 @@ namespace ₿ {
       };
       class Fix: public Sock {
         public:
-          static const CURLcode connect(CURL *&curl, curl_socket_t &sockfd, string &buffer, const string &uri, unsigned long &sequence, const string &apikey, const string &target, string data) {
+          static const CURLcode connect(CURL *&curl, curl_socket_t &sockfd, string &buffer, const string &uri, string data, unsigned long &sequence, const string &apikey, const string &target) {
             frame(data, sequence = 1, "A", apikey, target);
             CURLcode rc;
             if (CURLE_OK == (rc = Sock::connect(curl, sockfd, buffer,
@@ -255,30 +252,34 @@ namespace ₿ {
             ))) buffer = buffer.substr(buffer.rfind("\u0001" "10=") + 8);
             return rc;
           };
-          static const CURLcode emit(CURL *&curl, curl_socket_t &sockfd, string data, unsigned long &sequence, const string &type, const string &apikey, const string &target) {
+          static const CURLcode emit(CURL *&curl, curl_socket_t &sockfd, string data, const string &type, unsigned long &sequence, const string &apikey, const string &target) {
             frame(data, ++sequence, type, apikey, target);
             return Sock::emit(curl, sockfd, data);
           };
-          static void unframe(CURL *&curl, curl_socket_t &sockfd, string &data, string &msg, unsigned long &sequence, const string &apikey, const string &target) {
-            if (data.find("\u0001" "10=") == string::npos)
-              return;
-            string raw = data.substr(0, data.find("\u0001" "10=") + 8);
-            data = data.substr(raw.length());
-            if (raw.find("\u0001" "35=0" "\u0001") != string::npos
-              or raw.find("\u0001" "35=1" "\u0001") != string::npos
-            ) emit(curl, sockfd, "", sequence, "0", apikey, target);
-            else if (raw.find("\u0001" "35=5" "\u0001") != string::npos) {
-              emit(curl, sockfd, "", sequence, "5", apikey, target);
-              cleanup(curl, sockfd);
-            } else {
-              while (raw.find("\u0001") != string::npos) {
-                raw.replace(raw.find("="), 1, "\":\"");
-                msg += "\"" + raw.substr(0, raw.find("\u0001")) + "\",";
-                raw = raw.substr(raw.find("\u0001") + 1);
+          static const string unframe(CURL *&curl, curl_socket_t &sockfd, string &data, unsigned long &sequence, const string &apikey, const string &target) {
+            string msg;
+            const size_t end = data.find("\u0001" "10=");
+            if (end != string::npos and data.length() > end + 7) {
+              string raw = data.substr(0, end + 8);
+              data = data.substr(raw.length());
+              if (raw.find("\u0001" "35=0" "\u0001") != string::npos
+                or raw.find("\u0001" "35=1" "\u0001") != string::npos
+              ) emit(curl, sockfd, "", "0", sequence, apikey, target);
+              else if (raw.find("\u0001" "35=5" "\u0001") != string::npos) {
+                emit(curl, sockfd, "", "5", sequence, apikey, target);
+                cleanup(curl, sockfd);
+              } else {
+                size_t tok;
+                while ((tok = raw.find("\u0001")) != string::npos) {
+                  raw.replace(raw.find("="), 1, "\":\"");
+                  msg += "\"" + raw.substr(0, tok + 2) + "\",";
+                  raw = raw.substr(tok + 3);
+                }
+                msg.pop_back();
+                msg = "{" + msg + "}";
               }
-              if (!msg.empty()) msg.pop_back();
-              msg = "{" + msg + "}";
             }
+            return msg;
           };
         private:
           static void frame(string &data, const unsigned long &sequence, const string &type, const string &apikey, const string &target) {

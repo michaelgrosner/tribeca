@@ -447,7 +447,7 @@ namespace ₿ {
         if (CURLE_OK != (rc = Curl::Ws::connect(curl, sockfd, buffer, ws)))
           reconnect(string("CURL connect Error: ") + curl_easy_strerror(rc));
       };
-      virtual void emit(const string &msg) {
+      void emit(const string &msg) {
         CURLcode rc;
         if (CURLE_OK != (rc = Curl::Ws::emit(curl, sockfd, msg, 0x01)))
           log(string("CURL send Error: ") + curl_easy_strerror(rc));
@@ -467,8 +467,7 @@ namespace ₿ {
           log(string("CURL recv Error: ") + curl_easy_strerror(rc));
         if (buffer.empty()) return;
         for (;;) {
-          string msg;
-          Curl::Ws::unframe(curl, sockfd, buffer, msg);
+          const string msg = Curl::Ws::unframe(curl, sockfd, buffer);
           if (msg.empty()) break;
           consume(
             json::accept(msg)
@@ -511,24 +510,20 @@ namespace ₿ {
         GwApiWs::connect();
         if (GwApiWs::connected()) {
           CURLcode rc;
-          if (CURLE_OK != (rc = Curl::Fix::connect(curl, sockfd, buffer, fix, sequence, apikey, target, logon()))) {
-            disconnect();
+          if (CURLE_OK != (rc = Curl::Fix::connect(curl, sockfd, buffer, fix+"2", logon(), sequence, apikey, target)))
             reconnect(string("CURL connect FIX Error: ") + curl_easy_strerror(rc));
-          } else log("FIX success Logon, streaming orders");
+          else log("FIX success Logon, streaming orders");
         }
       };
       void disconnect() override {
         if (sockfd) log("FIX Logout");
-        Curl::Fix::emit(curl, sockfd, "", sequence, "5", apikey, target);
+        Curl::Fix::emit(curl, sockfd, "5", "", sequence, apikey, target);
         Curl::Fix::cleanup(curl, sockfd);
         GwApiWs::disconnect();
       };
-      void emit(const string &msg) override {
-        GwApiWs::emit(msg);
-      };
-      void emit(const string &msg, const string &type) {
+      void beam(const string &msg, const string &type) {
         CURLcode rc;
-        if (CURLE_OK != (rc = Curl::Fix::emit(curl, sockfd, msg, sequence, type, apikey, target)))
+        if (CURLE_OK != (rc = Curl::Fix::emit(curl, sockfd, msg, type, sequence, apikey, target)))
           log(string("CURL send FIX Error: ") + curl_easy_strerror(rc));
       };
       void waitForAsyncData() override {
@@ -537,8 +532,7 @@ namespace ₿ {
           log(string("CURL recv FIX Error: ") + curl_easy_strerror(rc));
         if (!buffer.empty())
           for (;;) {
-            string msg;
-            Curl::Fix::unframe(curl, sockfd, buffer, msg, sequence, apikey, target);
+            const string msg = Curl::Fix::unframe(curl, sockfd, buffer, sequence, apikey, target);
             if (msg.empty()) break;
             consume(
               json::accept(msg)
