@@ -242,7 +242,7 @@ namespace ₿ {
       class Fix: public Sock {
         public:
           static const CURLcode connect(CURL *&curl, curl_socket_t &sockfd, string &buffer, const string &uri, string data, unsigned long &sequence, const string &apikey, const string &target) {
-            frame(data, sequence = 1, "A", apikey, target);
+            frame(data, "A", sequence = 1, apikey, target);
             CURLcode rc;
             if (CURLE_OK == (rc = Sock::connect(curl, sockfd, buffer,
               "https://" + uri,
@@ -253,7 +253,7 @@ namespace ₿ {
             return rc;
           };
           static const CURLcode emit(CURL *&curl, curl_socket_t &sockfd, string data, const string &type, unsigned long &sequence, const string &apikey, const string &target) {
-            frame(data, ++sequence, type, apikey, target);
+            frame(data, type, ++sequence, apikey, target);
             return Sock::emit(curl, sockfd, data);
           };
           static const string unframe(CURL *&curl, curl_socket_t &sockfd, string &data, unsigned long &sequence, const string &apikey, const string &target) {
@@ -282,7 +282,7 @@ namespace ₿ {
             return msg;
           };
         private:
-          static void frame(string &data, const unsigned long &sequence, const string &type, const string &apikey, const string &target) {
+          static void frame(string &data, const string &type, const unsigned long &sequence, const string &apikey, const string &target) {
             data = "35=" + type                     + "\u0001"
                    "49=" + apikey                   + "\u0001"
                    "56=" + target                   + "\u0001"

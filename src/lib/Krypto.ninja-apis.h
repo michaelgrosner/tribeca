@@ -466,15 +466,17 @@ namespace ₿ {
         if (CURLE_OK != (rc = Curl::Ws::receive(curl, sockfd, buffer)))
           log(string("CURL recv Error: ") + curl_easy_strerror(rc));
         if (buffer.empty()) return;
-        for (;;) {
-          const string msg = Curl::Ws::unframe(curl, sockfd, buffer);
-          if (msg.empty()) break;
-          consume(
-            json::accept(msg)
-              ? json::parse(msg)
-              : (json){ {"error", "CURL Error: Unsupported frame data format"} }
-          );
-        }
+        for (;;)
+          if (consumed(Curl::Ws::unframe(curl, sockfd, buffer)))
+            break;
+      };
+      const bool consumed(const string &msg) {
+        const bool empty = msg.empty();
+        if (!empty)
+          if (json::accept(msg))
+            consume(json::parse(msg));
+          else log("CURL Error: Unsupported data format");
+        return empty;
       };
     private:
       const bool subscribed() {
@@ -494,9 +496,9 @@ namespace ₿ {
                CURL *curl   = nullptr;
       curl_socket_t  sockfd = 0;
              string  buffer;
+      unsigned long  sequence = 0;
     protected:
       string target;
-      unsigned long sequence = 0;
     public:
       const bool connected() override {
         return sockfd
@@ -510,7 +512,7 @@ namespace ₿ {
         GwApiWs::connect();
         if (GwApiWs::connected()) {
           CURLcode rc;
-          if (CURLE_OK != (rc = Curl::Fix::connect(curl, sockfd, buffer, fix+"2", logon(), sequence, apikey, target)))
+          if (CURLE_OK != (rc = Curl::Fix::connect(curl, sockfd, buffer, fix, logon(), sequence, apikey, target)))
             reconnect(string("CURL connect FIX Error: ") + curl_easy_strerror(rc));
           else log("FIX success Logon, streaming orders");
         }
@@ -521,25 +523,20 @@ namespace ₿ {
         Curl::Fix::cleanup(curl, sockfd);
         GwApiWs::disconnect();
       };
-      void beam(const string &msg, const string &type) {
+      const unsigned long beam(const string &msg, const string &type) {
         CURLcode rc;
         if (CURLE_OK != (rc = Curl::Fix::emit(curl, sockfd, msg, type, sequence, apikey, target)))
           log(string("CURL send FIX Error: ") + curl_easy_strerror(rc));
+        return sequence;
       };
       void waitForAsyncData() override {
         CURLcode rc;
         if (CURLE_OK != (rc = Curl::Fix::receive(curl, sockfd, buffer)))
           log(string("CURL recv FIX Error: ") + curl_easy_strerror(rc));
         if (!buffer.empty())
-          for (;;) {
-            const string msg = Curl::Fix::unframe(curl, sockfd, buffer, sequence, apikey, target);
-            if (msg.empty()) break;
-            consume(
-              json::accept(msg)
-                ? json::parse(msg)
-                : (json){ {"error", "CURL FIX Error: Unsupported frame data format"} }
-            );
-          }
+          for (;;)
+            if (consumed(Curl::Fix::unframe(curl, sockfd, buffer, sequence, apikey, target)))
+              break;
         GwApiWs::waitForAsyncData();
       };
   };
