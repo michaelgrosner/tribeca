@@ -5,6 +5,7 @@
 
 #include <cstdlib>
 #include <iostream>
+#include <iomanip>
 #include <fstream>
 #include <sstream>
 #include <string>
@@ -23,6 +24,8 @@
 #include <variant>
 #include <algorithm>
 #include <functional>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <getopt.h>
 
 #ifdef _WIN32
@@ -49,13 +52,6 @@ using namespace std;
 #include <openssl/buffer.h>
 
 #include <ncurses/ncurses.h>
-
-#include <quickfix/NullStore.h>
-#include <quickfix/Application.h>
-#include <quickfix/SessionSettings.h>
-#include <quickfix/SSLSocketInitiator.h>
-#include <quickfix/fix42/NewOrderSingle.h>
-#include <quickfix/fix42/OrderCancelRequest.h>
 
 #ifndef M_PI_2
 #define M_PI_2 1.5707963267948965579989817342720925807952880859375

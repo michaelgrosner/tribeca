@@ -214,7 +214,7 @@ namespace ₿ {
         );
       };
 //BO non-free Gw library functions from build-*/local/lib/K-*.a (it just redefines all virtual gateway class members below).
-/**/  virtual bool ready(uS::Loop *const) = 0;                               // wait for exchange and register data handlers
+/**/  virtual bool ready() = 0;                                              // wait for exchange and register data handlers
 /**/  virtual void replace(RandId, string) {};                               // call         async orders data from exchange
 /**/  virtual void place(RandId, Side, string, string, OrderType, TimeInForce, bool) = 0; // async orders like above / below
 /**/  virtual void cancel(RandId, RandId) = 0;                               // call         async orders data from exchange
@@ -412,7 +412,7 @@ namespace ₿ {
         return waitForSyncData();
       };
   };
-  class GwApiWS: public Gw {
+  class GwApiWs: public Gw {
     private:
                CURL *curl   = nullptr;
       curl_socket_t  sockfd = 0;
@@ -424,11 +424,8 @@ namespace ₿ {
         return sockfd;
       };
       const bool askForData(const unsigned int &tick) override {
-        if (countdown and !--countdown) {
-          CURLcode rc;
-          if (CURLE_OK != (rc = Curl::Ws::connect(curl, sockfd, buffer, ws)))
-            reconnect(string("CURL connect Error: ") + curl_easy_strerror(rc));
-        }
+        if (countdown and !--countdown)
+          connect();
         if (connected() and subscribed())
           askForNeverAsyncData(tick);
         return true;
@@ -445,7 +442,12 @@ namespace ₿ {
 /**/  virtual void subscribe()   = 0;                                         // send subcription messages to remote server.
 /**/  virtual void consume(json) = 0;                                         // read message one by one from remote server.
 //EO non-free Gw library functions from build-*/local/lib/K-*.a (it just redefines all virtual gateway class members above).
-      void send(const string &msg) {
+      virtual void connect() {
+        CURLcode rc;
+        if (CURLE_OK != (rc = Curl::Ws::connect(curl, sockfd, buffer, ws)))
+          reconnect(string("CURL connect Error: ") + curl_easy_strerror(rc));
+      };
+      virtual void emit(const string &msg) {
         CURLcode rc;
         if (CURLE_OK != (rc = Curl::Ws::emit(curl, sockfd, msg, 0x01)))
           log(string("CURL send Error: ") + curl_easy_strerror(rc));
@@ -454,26 +456,28 @@ namespace ₿ {
         Curl::Ws::emit(curl, sockfd, "", 0x08);
         Curl::Ws::cleanup(curl, sockfd);
       };
-    private:
-      void waitForAsyncData() {
-        if (received())
-          for (;;) {
-            string msg;
-            Curl::Ws::unframe(curl, sockfd, buffer, msg);
-            if (msg.empty()) break;
-            consume(
-              json::accept(msg)
-                ? json::parse(msg)
-                : (json){ {"error", "CURL Error: Unsupported frame data format"} }
-            );
-          }
+      void reconnect(const string &reason) {
+        disconnect();
+        countdown = 7;
+        log("WS " + reason + ", reconnecting in " + to_string(countdown) + "s.");
       };
-      const bool received() {
+      virtual void waitForAsyncData() {
         CURLcode rc;
         if (CURLE_OK != (rc = Curl::Ws::receive(curl, sockfd, buffer)))
           log(string("CURL recv Error: ") + curl_easy_strerror(rc));
-        return !buffer.empty();
+        if (buffer.empty()) return;
+        for (;;) {
+          string msg;
+          Curl::Ws::unframe(curl, sockfd, buffer, msg);
+          if (msg.empty()) break;
+          consume(
+            json::accept(msg)
+              ? json::parse(msg)
+              : (json){ {"error", "CURL Error: Unsupported frame data format"} }
+          );
+        }
       };
+    private:
       const bool subscribed() {
         if (subscription != connected()) {
           subscription = !subscription;
@@ -485,9 +489,64 @@ namespace ₿ {
         }
         return subscription;
       };
-      void reconnect(const string &reason) {
-        countdown = 7;
-        log("WS " + reason + ", reconnecting in " + to_string(countdown) + "s.");
+  };
+  class GwApiFix: public GwApiWs {
+    private:
+               CURL *curl   = nullptr;
+      curl_socket_t  sockfd = 0;
+             string  buffer;
+    protected:
+      string target;
+      unsigned long sequence = 0;
+    public:
+      const bool connected() override {
+        return sockfd
+           and GwApiWs::connected();
+      };
+    protected:
+//BO non-free Gw library functions from build-*/local/lib/K-*.a (it just redefines all virtual gateway class members below).
+/**/  virtual const string logon() = 0;                                                             // return logon message.
+//EO non-free Gw library functions from build-*/local/lib/K-*.a (it just redefines all virtual gateway class members above).
+      void connect() {
+        GwApiWs::connect();
+        if (GwApiWs::connected()) {
+          CURLcode rc;
+          if (CURLE_OK != (rc = Curl::Fix::connect(curl, sockfd, buffer, fix, sequence, apikey, target, logon()))) {
+            disconnect();
+            reconnect(string("CURL connect FIX Error: ") + curl_easy_strerror(rc));
+          } else log("FIX success Logon, streaming orders");
+        }
+      };
+      void disconnect() override {
+        if (sockfd) log("FIX Logout");
+        Curl::Fix::emit(curl, sockfd, "", sequence, "5", apikey, target);
+        Curl::Fix::cleanup(curl, sockfd);
+        GwApiWs::disconnect();
+      };
+      void emit(const string &msg) {
+        GwApiWs::emit(msg);
+      };
+      void emit(const string &msg, const string &type) {
+        CURLcode rc;
+        if (CURLE_OK != (rc = Curl::Fix::emit(curl, sockfd, msg, sequence, type, apikey, target)))
+          log(string("CURL send FIX Error: ") + curl_easy_strerror(rc));
+      };
+      void waitForAsyncData() override {
+        CURLcode rc;
+        if (CURLE_OK != (rc = Curl::Fix::receive(curl, sockfd, buffer)))
+          log(string("CURL recv FIX Error: ") + curl_easy_strerror(rc));
+        if (!buffer.empty())
+          for (;;) {
+            string msg;
+            Curl::Fix::unframe(curl, sockfd, buffer, msg, sequence, apikey, target);
+            if (msg.empty()) break;
+            consume(
+              json::accept(msg)
+                ? json::parse(msg)
+                : (json){ {"error", "CURL FIX Error: Unsupported frame data format"} }
+            );
+          }
+        GwApiWs::waitForAsyncData();
       };
   };
 
@@ -507,7 +566,7 @@ namespace ₿ {
         };
       };
   };
-  class GwHitBtc: public GwApiWS {
+  class GwHitBtc: public GwApiWs {
     public:
       GwHitBtc()
       {
@@ -543,14 +602,14 @@ namespace ₿ {
         ws   = "wss://api.bequant.io/api/2/ws";
       };
   };
-  class GwCoinbase: public GwApiWS,
-                    public FIX::NullApplication {
+  class GwCoinbase: public GwApiFix {
     public:
       GwCoinbase()
       {
         http   = "https://api.pro.coinbase.com";
         ws     = "wss://ws-feed.pro.coinbase.com";
         fix    = "fix.pro.coinbase.com:4198";
+        target = "Coinbase";
         randId = Random::uuid36Id;
       };
       const json handshake() override {
@@ -575,7 +634,7 @@ namespace ₿ {
         });
       };
   };
-  class GwBitfinex: public GwApiWS {
+  class GwBitfinex: public GwApiWs {
     public:
       GwBitfinex()
       {
@@ -634,7 +693,7 @@ namespace ₿ {
         ws   = "wss://api.ethfinex.com/ws/2";
       };
   };
-  class GwFCoin: public GwApiWS {
+  class GwFCoin: public GwApiWs {
     public:
       GwFCoin()
       {

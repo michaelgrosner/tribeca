@@ -11,14 +11,13 @@ V_NCUR  = 6.1
 V_JSON  = 3.6.1
 V_CATCH = 2.8.0
 V_UWS   = 0.14.8
-V_QF    = 1.15.1
 V_UV    = 1.29.1
 
 KBUILD := $(abspath ../../build-$(KHOST))
 
 all dist:
 	@mkdir -vp $(KBUILD)
-	$(MAKE) zlib openssl ares curl sqlite ncurses json catch uws quickfix libuv
+	$(MAKE) zlib openssl ares curl sqlite ncurses json catch uws libuv
 ifdef TRAVIS_OS_NAME
 	$(MAKE) lcov pvs
 endif
@@ -103,34 +102,6 @@ uws:
 	&& sed -i "s/uv_.*/return {0, \"\", \"\"};/" $(KBUILD)/local/include/uWS/Socket.cpp     \
 	&& sed -i "/sockaddr_storage/,+16d" $(KBUILD)/local/include/uWS/Socket.cpp) ||         :)
 
-quickfix:
-	test -d $(KBUILD)/quickfix-$(V_QF) || (                                                      \
-	curl -L https://github.com/quickfix/quickfix/archive/v$(V_QF).tar.gz | tar xz -C $(KBUILD)   \
-	&& cd $(KBUILD)/quickfix-$(V_QF) && ./bootstrap                                              \
-	&& sed -i "s/bin spec test examples doc//" Makefile.am                                       \
-	&& sed -i "s/SUBDIRS = test//" src/C++/Makefile.am                                           \
-	&& sed -i "/Certificate Verification: depth/,+2d" src/C++/UtilitySSL.cpp                     \
-	&& sed -i "s/throw.\?( .* )//" src/C++/*.h src/C++/*.cpp                                     \
-	&& sed -i "/int r;/,+9d" src/C++/AtomicCount.h                                               \
-	&& sed -i "s/\/\/ \(\*\)/\1/" src/C++/AtomicCount.h                                          \
-	&& sed -i "s/\/\/ \(i\)/\1/" src/C++/AtomicCount.h                                           \
-	&& (test -n "`echo $(CHOST) | grep mingw32`"                                                 \
-	&& (sed -i "s/Thread/ThreadId/" src/C++/Utility*.cpp                                         \
-	&& sed -i "s/_MSC_VER/_WIN32/" src/C++/Utility*.* src/C++/SSLSocketInitiator.h               \
-	&& sed -i "s/stdafx/config/" src/C++/Utility*.cpp src/C++/SSLSocketInitiator.cpp             \
-	&& sed -i "s/socklen_t/int/" src/C++/Utility.cpp                                             \
-	&& sed -i "s/INVALID_SOCKET/~0/" src/C++/Utility.cpp                                         \
-	&& sed -i "/host = socket_hostname/d" src/C++/Utility.cpp                                    \
-	&& sed -i "s/_stdcall\( \*\)*//" src/C++/Utility.h                                           \
-	&& sed -i "s/\(typedef int\)/\/\/\1/" src/C++/Utility.h src/C++/SocketMonitor.h              \
-	&& sed -i "s/W\(insock2\)/w\1/" src/C++/Utility.h src/C++/SocketMonitor.h                    \
-	&& sed -i "/pragma/d" src/C++/Utility.h src/C++/SocketMonitor.h src/C++/SSLSocketInitiator.h \
-	&& sed -i "s/\(ifdef\) _MSC_VER/\1 _WIN32/" src/C++/SocketMonitor.h src/C++/Mutex.h          \
-	&& sed -i "s/\(ifndef\) _MSC_VER/\1 _WIN32/" src/C++/SocketConnector.cpp                     \
-	src/C++/SocketServer.cpp) || :) &&                                                           \
-	./configure --prefix=$(KBUILD)/local --host=$(CHOST) --with-openssl=$(KBUILD)/local          \
-	--enable-shared=no --enable-static=yes && cd src/C++ && make all install                     )
-
 libuv:
 	test -z "`echo $(CHOST) | grep darwin;echo $(CHOST) | grep mingw32`" || test -d $(KBUILD)/libuv-$(V_UV) || ( \
 	curl -L https://github.com/libuv/libuv/archive/v$(V_UV).tar.gz | tar xz -C $(KBUILD)                         \
@@ -156,4 +127,4 @@ else
 	| tar xz -C $(KBUILD) && cd $(KBUILD)/lcov-$(V_LCOV) && sudo make install                             )
 endif
 
-.PHONY: all dist clean zlib openssl curl sqlite ncurses json catch uws quickfix libuv lcov pvs
+.PHONY: all dist clean zlib openssl curl sqlite ncurses json catch uws libuv lcov pvs

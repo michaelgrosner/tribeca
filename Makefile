@@ -1,8 +1,8 @@
 K       ?= K.sh
 MAJOR    = 0
 MINOR    = 5
-PATCH    = 1
-BUILD    = 2
+PATCH    = 2
+BUILD    = 0
 SOURCE  := $(notdir $(wildcard src/bin/*))
 CARCH    = x86_64-linux-gnu      \
            arm-linux-gnueabihf   \
@@ -35,12 +35,11 @@ KARGS   := -std=c++17 -O3 -pthread -DK_0_GIT='"$(shell          \
   -I$(KLOCAL)/include         -I$(realpath src/lib)             \
   $(KLOCAL)/include/uWS/*.cpp $(KLOCAL)/lib/K-$(KHOST).$(ABI).a \
   $(KLOCAL)/lib/libsqlite3.a  $(KLOCAL)/lib/libncurses.a        \
-  $(KLOCAL)/lib/libquickfix.a $(KLOCAL)/lib/libz.a              \
-  $(KLOCAL)/lib/libcurl.a     $(KLOCAL)/lib/libssl.a            \
-  $(KLOCAL)/lib/libcrypto.a   $(wildcard                        \
-    $(KLOCAL)/lib/lib*.dll.a                                    \
-    $(KLOCAL)/lib/libcares.a  $(KLOCAL)/lib/libuv.a             \
-    $(KLOCAL)/lib/K-$(KSRC)-assets.o                            \
+  $(KLOCAL)/lib/libz.a        $(KLOCAL)/lib/libcurl.a           \
+  $(KLOCAL)/lib/libssl.a      $(KLOCAL)/lib/libcrypto.a         \
+  $(wildcard                                                    \
+    $(KLOCAL)/lib/lib*.dll.a  $(KLOCAL)/lib/libcares.a          \
+    $(KLOCAL)/lib/libuv.a     $(KLOCAL)/lib/K-$(KSRC)-assets.o  \
   )
 
 all K: $(SOURCE)

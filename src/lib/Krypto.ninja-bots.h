@@ -138,9 +138,9 @@ namespace ₿ {
         time_t tt = chrono::system_clock::to_time_t(clock);
         char datetime[15];
         strftime(datetime, 15, "%m/%d %T", localtime(&tt));
-        if (!display) return Ansi::b(COLOR_GREEN) + datetime +
-                             Ansi::r(COLOR_GREEN) + microtime.str()+
-                             Ansi::b(COLOR_WHITE) + ' ';
+        if (!display) return Ansi::b(COLOR_GREEN) + datetime
+                           + Ansi::r(COLOR_GREEN) + microtime.str()
+                           + Ansi::b(COLOR_WHITE) + ' ';
         if (stdlog) {
           wattron(stdlog, COLOR_PAIR(COLOR_GREEN));
           wattron(stdlog, A_BOLD);
@@ -1492,7 +1492,7 @@ namespace ₿ {
       void wait(Klass *const k = nullptr) {
         if (k) k->wait();
         else Klass::wait();
-        if (gateway->ready(hub->getLoop()))
+        if (gateway->ready())
           hub->run();
       };
       void handshake(const GwExchange::Report &notes = {}) {

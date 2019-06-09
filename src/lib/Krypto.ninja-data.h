@@ -7,6 +7,104 @@ namespace ₿ {
   class Curl {
     public:
       static function<void(CURL*)> global_setopt;
+    private:
+      class Sock {
+        public:
+          static void cleanup(CURL *&curl, curl_socket_t &sockfd) {
+            if (curl) curl_easy_cleanup(curl);
+            curl   = nullptr;
+            sockfd = 0;
+          };
+          static const CURLcode receive(CURL *&curl, curl_socket_t &sockfd, string &buffer) {
+            CURLcode rc = CURLE_COULDNT_CONNECT;
+            if (curl and sockfd and CURLE_OPERATION_TIMEDOUT == (rc = recv(curl, sockfd, buffer, 0)))
+              rc = CURLE_OK;
+            if (rc != CURLE_OK)
+              cleanup(curl, sockfd);
+            return rc;
+          };
+        protected:
+          static const CURLcode connect(CURL *&curl, curl_socket_t &sockfd, string &buffer, const string &url, const string &header, const string &res1, const string &res2) {
+            buffer.clear();
+            CURLcode rc;
+            if (CURLE_OK == (rc = init(curl, sockfd))) {
+              global_setopt(curl);
+              curl_easy_setopt(curl, CURLOPT_URL, url.data());
+              curl_easy_setopt(curl, CURLOPT_CONNECT_ONLY, 1L);
+              if ( CURLE_OK != (rc = curl_easy_perform(curl))
+                or CURLE_OK != (rc = curl_easy_getinfo(curl, CURLINFO_ACTIVESOCKET, &sockfd))
+                or CURLE_OK != (rc = send(curl, sockfd, header))
+                or CURLE_OK != (rc = recv(curl, sockfd, buffer, 5))
+                or string::npos == buffer.find(res1)
+                or string::npos == buffer.find(res2)
+              ) {
+                if (rc == CURLE_OK)
+                  rc = CURLE_WEIRD_SERVER_REPLY;
+                cleanup(curl, sockfd);
+              }
+            }
+            return rc;
+          };
+          static const CURLcode emit(CURL *&curl, curl_socket_t &sockfd, const string &data) {
+            CURLcode rc = CURLE_COULDNT_CONNECT;
+            if (!curl or !sockfd or CURLE_OK != (rc = send(curl, sockfd, data)))
+              cleanup(curl, sockfd);
+            return rc;
+          };
+        private:
+          static const CURLcode init(CURL *&curl, curl_socket_t &sockfd) {
+            if (!curl) curl = curl_easy_init();
+            else curl_easy_reset(curl);
+            sockfd = 0;
+            return curl
+              ? CURLE_OK
+              : CURLE_FAILED_INIT;
+          };
+          static const CURLcode send(CURL *curl, const curl_socket_t &sockfd, const string &data) {
+            CURLcode rc;
+            size_t len  = data.length(),
+                   sent = 0;
+            do {
+              do {
+                size_t n = 0;
+                rc = curl_easy_send(curl, data.substr(sent).data(), len - sent, &n);
+                sent += n;
+                if (rc == CURLE_AGAIN and !wait(sockfd, false, 5))
+                  return CURLE_OPERATION_TIMEDOUT;
+              } while (rc == CURLE_AGAIN);
+              if (rc != CURLE_OK) break;
+            } while (sent < len);
+            return rc;
+          };
+          static const CURLcode recv(CURL *curl, curl_socket_t &sockfd, string &buffer, const int &timeout) {
+            CURLcode rc;
+            for(;;) {
+              char data[524288];
+              size_t n;
+              do {
+                n = 0;
+                rc = curl_easy_recv(curl, data, sizeof(data), &n);
+                buffer.append(data, n);
+                if (rc == CURLE_AGAIN and !wait(sockfd, true, timeout))
+                  return CURLE_OPERATION_TIMEDOUT;
+              } while (rc == CURLE_AGAIN);
+              if ((timeout and buffer.find("\r\n\r\n") != buffer.find("\u0001" "10="))
+                or rc != CURLE_OK
+                or n == 0
+              ) break;
+            }
+            return rc;
+          };
+          static const int wait(const curl_socket_t &sockfd, const bool &io, const int &timeout) {
+            struct timeval tv = {timeout, 10000};
+            fd_set infd,
+                   outfd;
+            FD_ZERO(&infd);
+            FD_ZERO(&outfd);
+            FD_SET(sockfd, io ? &infd : &outfd);
+            return select(sockfd + 1, &infd, &outfd, nullptr, &tv);
+          };
+      };
     public_friend:
       class Http {
         public:
@@ -51,71 +149,44 @@ namespace ₿ {
             return size;
           };
       };
-      class Ws {
+      class Ws: public Sock {
         public:
-          static void cleanup(CURL *&curl, curl_socket_t &sockfd) {
-            if (curl) curl_easy_cleanup(curl);
-            curl   = nullptr;
-            sockfd = 0;
-          };
-          static const CURLcode connect(CURL *&curl, curl_socket_t &sockfd, string &buffer, const string &wss) {
-            buffer.clear();
+          static const CURLcode connect(CURL *&curl, curl_socket_t &sockfd, string &buffer, const string &uri) {
             CURLcode rc = CURLE_URL_MALFORMAT;
             CURLU *url = curl_url();
             char *host,
                  *port,
                  *path;
-            if (  !curl_url_set(url, CURLUPART_URL, ("http" + wss.substr(2)).data(), 0)
+            if (  !curl_url_set(url, CURLUPART_URL, ("http" + uri.substr(2)).data(), 0)
               and !curl_url_get(url, CURLUPART_HOST, &host, 0)
               and !curl_url_get(url, CURLUPART_PORT, &port, CURLU_DEFAULT_PORT)
               and !curl_url_get(url, CURLUPART_PATH, &path, 0)
-              and CURLE_OK == (rc = init(curl, sockfd))
-            ) {
-              global_setopt(curl);
-              curl_easy_setopt(curl, CURLOPT_URL, ("http" + wss.substr(2)).data());
-              curl_easy_setopt(curl, CURLOPT_CONNECT_ONLY, 1L);
-              if ( CURLE_OK != (rc = curl_easy_perform(curl))
-                or CURLE_OK != (rc = curl_easy_getinfo(curl, CURLINFO_ACTIVESOCKET, &sockfd))
-                or CURLE_OK != (rc = send(curl, sockfd, "GET " + string(path) + " HTTP/1.1"
-                                                        "\r\n" "Host: " + string(host) + ":" + string(port) +
-                                                        "\r\n" "Upgrade: websocket"
-                                                        "\r\n" "Connection: Upgrade"
-                                                        "\r\n" "Sec-WebSocket-Key: x3JJHMbDL1EzLkh9GBhXDw=="
-                                                        "\r\n" "Sec-WebSocket-Version: 13"
-                                                        "\r\n"
-                                                        "\r\n"))
-                or CURLE_OK != (rc = recv(curl, sockfd, buffer, 5))
-                or string::npos == buffer.find("HTTP/1.1 101 Switching Protocols")
-                or string::npos == buffer.find("HSmrc0sMlYUkAGmm5OPpG2HaGWk=")
-              ) {
-                if (rc == CURLE_OK)
-                  rc = CURLE_WEIRD_SERVER_REPLY;
-                cleanup(curl, sockfd);
-              } else buffer = buffer.substr(buffer.rfind("\r\n\r\n") + 4);
-            }
+              and CURLE_OK == (rc = Sock::connect(curl, sockfd, buffer,
+                "http" + uri.substr(2),
+                "GET " + string(path) + " HTTP/1.1"
+                  "\r\n" "Host: " + string(host) + ":" + string(port) +
+                  "\r\n" "Upgrade: websocket"
+                  "\r\n" "Connection: Upgrade"
+                  "\r\n" "Sec-WebSocket-Key: x3JJHMbDL1EzLkh9GBhXDw=="
+                  "\r\n" "Sec-WebSocket-Version: 13"
+                  "\r\n"
+                  "\r\n",
+                "HTTP/1.1 101 Switching Protocols",
+                "HSmrc0sMlYUkAGmm5OPpG2HaGWk="
+            ))) buffer = buffer.substr(buffer.rfind("\r\n\r\n") + 4);
             curl_url_cleanup(url);
             return rc;
           };
-          static const CURLcode emit(CURL *&curl, curl_socket_t &sockfd, const string &data, const int &opcode) {
-            CURLcode rc = CURLE_COULDNT_CONNECT;
-            if (!curl or !sockfd or CURLE_OK != (rc = send(curl, sockfd, frame(data, opcode))))
-              cleanup(curl, sockfd);
-            return rc;
-          };
-          static const CURLcode receive(CURL *&curl, curl_socket_t &sockfd, string &buffer) {
-            CURLcode rc = CURLE_COULDNT_CONNECT;
-            if (curl and sockfd and CURLE_OPERATION_TIMEDOUT == (rc = recv(curl, sockfd, buffer, 0)))
-              rc = CURLE_OK;
-            if (rc != CURLE_OK)
-              cleanup(curl, sockfd);
-            return rc;
+          static const CURLcode emit(CURL *&curl, curl_socket_t &sockfd, string data, const int &opcode) {
+            frame(data, opcode);
+            return Sock::emit(curl, sockfd, data);
           };
           static void unframe(CURL *&curl, curl_socket_t &sockfd, string &data, string &msg) {
             const size_t max = data.length();
             if (max < 2) return;
-            const unsigned int key = (data[1] >> 7) & 0x01 ? 4 : 0;
-            unsigned int pos = 2 + key,
-                         len = 0;
+            const size_t key = (data[1] >> 7) & 0x01 ? 4 : 0;
+            size_t pos = 2 + key,
+                   len = 0;
             if      (data[1] <= 0x7D) len =    data[1];
             else if (max < 3)
               return;
@@ -133,7 +204,7 @@ namespace ₿ {
             }
             if (max < pos + len) return;
             if (key)
-              for (int i = 0; i < len; i++)
+              for (size_t i = 0; i < len; i++)
                 data.at(pos + i) ^= data.at(pos - key + (i % key));
             const unsigned char opcode = data[0] & 0x0F;
             if (opcode == 0x9)
@@ -148,10 +219,10 @@ namespace ₿ {
             data = data.substr(pos + len);
           };
         private:
-          static const string frame(string data, const int &opcode) {
+          static void frame(string &data, const int &opcode) {
             const int key = rand();
-            unsigned int pos = 0,
-                         len = data.length();
+            size_t pos = 0,
+                   len = data.length();
                                     data.insert(pos++  , 1,  opcode     | 0x80 );
             if      (len <= 0x7D)   data.insert(pos++  , 1,  len        | 0x80 );
             else if (len <= 0xFFFF) data.insert(pos    , 1, (char)(0x7E | 0x80))
@@ -167,61 +238,65 @@ namespace ₿ {
                                         .insert(pos + 1, 1, (key >> 16) & 0xFF )
                                         .insert(pos + 2, 1, (key >>  8) & 0xFF )
                                         .insert(pos + 3, 1,  key        & 0xFF ); pos += 4;
-            for (int i = 0; i < len; i++)
+            for (size_t i = 0; i < len; i++)
               data.at(pos + i) ^= data.at(pos - 4 + (i % 4));
-            return data;
           };
-          static const CURLcode init(CURL *&curl, curl_socket_t &sockfd) {
-            if (!curl) curl = curl_easy_init();
-            else curl_easy_reset(curl);
-            sockfd = 0;
-            return curl
-              ? CURLE_OK
-              : CURLE_FAILED_INIT;
-          };
-          static const CURLcode send(CURL *curl, const curl_socket_t &sockfd, const string &data) {
+      };
+      class Fix: public Sock {
+        public:
+          static const CURLcode connect(CURL *&curl, curl_socket_t &sockfd, string &buffer, const string &uri, unsigned long &sequence, const string &apikey, const string &target, string data) {
+            frame(data, sequence = 1, "A", apikey, target);
             CURLcode rc;
-            size_t len  = data.length(),
-                   sent = 0;
-            do {
-              do {
-                size_t n = 0;
-                rc = curl_easy_send(curl, data.substr(sent).data(), len - sent, &n);
-                sent += n;
-                if (rc == CURLE_AGAIN and !wait(sockfd, false, 5))
-                  return CURLE_OPERATION_TIMEDOUT;
-              } while (rc == CURLE_AGAIN);
-              if (rc != CURLE_OK) break;
-            } while (sent < len);
+            if (CURLE_OK == (rc = Sock::connect(curl, sockfd, buffer,
+              "https://" + uri,
+              data,
+              "8=FIX.4.2" "\u0001",
+              "\u0001" "35=A" "\u0001"
+            ))) buffer = buffer.substr(buffer.rfind("\u0001" "10=") + 8);
             return rc;
           };
-          static const CURLcode recv(CURL *curl, curl_socket_t &sockfd, string &buffer, const int &timeout) {
-            CURLcode rc;
-            for(;;) {
-              char data[524288];
-              size_t n;
-              do {
-                n = 0;
-                rc = curl_easy_recv(curl, data, sizeof(data), &n);
-                buffer.append(data, n);
-                if (rc == CURLE_AGAIN and !wait(sockfd, true, timeout))
-                  return CURLE_OPERATION_TIMEDOUT;
-              } while (rc == CURLE_AGAIN);
-              if ((timeout and buffer.find("\r\n\r\n") != string::npos)
-                or rc != CURLE_OK
-                or n == 0
-              ) break;
+          static const CURLcode emit(CURL *&curl, curl_socket_t &sockfd, string data, unsigned long &sequence, const string &type, const string &apikey, const string &target) {
+            frame(data, ++sequence, type, apikey, target);
+            return Sock::emit(curl, sockfd, data);
+          };
+          static void unframe(CURL *&curl, curl_socket_t &sockfd, string &data, string &msg, unsigned long &sequence, const string &apikey, const string &target) {
+            if (data.find("\u0001" "10=") == string::npos)
+              return;
+            string raw = data.substr(0, data.find("\u0001" "10=") + 8);
+            data = data.substr(raw.length());
+            if (raw.find("\u0001" "35=0" "\u0001") != string::npos
+              or raw.find("\u0001" "35=1" "\u0001") != string::npos
+            ) emit(curl, sockfd, "", sequence, "0", apikey, target);
+            else if (raw.find("\u0001" "35=5" "\u0001") != string::npos) {
+              emit(curl, sockfd, "", sequence, "5", apikey, target);
+              cleanup(curl, sockfd);
+            } else {
+              while (raw.find("\u0001") != string::npos) {
+                raw.replace(raw.find("="), 1, "\":\"");
+                msg += "\"" + raw.substr(0, raw.find("\u0001")) + "\",";
+                raw = raw.substr(raw.find("\u0001") + 1);
+              }
+              if (!msg.empty()) msg.pop_back();
+              msg = "{" + msg + "}";
             }
-            return rc;
           };
-          static const int wait(const curl_socket_t &sockfd, const bool &io, const int &timeout) {
-            struct timeval tv = {timeout, 10000};
-            fd_set infd,
-                   outfd;
-            FD_ZERO(&infd);
-            FD_ZERO(&outfd);
-            FD_SET(sockfd, io ? &infd : &outfd);
-            return select(sockfd + 1, &infd, &outfd, nullptr, &tv);
+        private:
+          static void frame(string &data, const unsigned long &sequence, const string &type, const string &apikey, const string &target) {
+            data = "35=" + type                     + "\u0001"
+                   "49=" + apikey                   + "\u0001"
+                   "56=" + target                   + "\u0001"
+                   "34=" + to_string(sequence)      + "\u0001"
+                 + data;
+            data = "8=FIX.4.2"                        "\u0001"
+                   "9="  + to_string(data.length()) + "\u0001"
+                 + data;
+            char ch = 0;
+            for (size_t i = data.length(); i --> 0; ch += data.at(i));
+            stringstream sum;
+            sum << setfill('0')
+                << setw(3)
+                << (ch & 0xFF);
+            data += "10=" + sum.str()               + "\u0001";
           };
       };
   };
