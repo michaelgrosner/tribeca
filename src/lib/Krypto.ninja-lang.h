@@ -35,8 +35,6 @@
 #include <sys/resource.h>
 #endif
 
-using namespace std;
-
 #include <json.h>
 
 #include <sqlite3.h>
@@ -53,9 +51,7 @@ using namespace std;
 
 #include <ncurses/ncurses.h>
 
-#ifndef M_PI_2
-#define M_PI_2 1.5707963267948965579989817342720925807952880859375
-#endif
+using namespace std;
 
 using Price  = double;
 
@@ -68,10 +64,17 @@ using CoinId = string;
 using Clock  = long long int;
 
 //! \def
-//! \brief Number of ticks in milliseconds since Thu Jan  1 00:00:00 1970.
+//! \brief Number of ticks in milliseconds, since Thu Jan  1 00:00:00 1970.
 #define Tstamp chrono::duration_cast<chrono::milliseconds>(     \
                  chrono::system_clock::now().time_since_epoch() \
                ).count()
+
+
+//! \def
+//! \brief Archimedes of Syracuse was here, since two millenniums ago.
+#ifndef M_PI_2
+#define M_PI_2 1.5707963267948965579989817342720925807952880859375
+#endif
 
 //! \def
 //! \brief Redundant placeholder to enforce private references.

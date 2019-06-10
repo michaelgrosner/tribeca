@@ -302,7 +302,7 @@ namespace ₿ {
                minSize   = 0,
                makeFee   = 0,
                takeFee   = 0;
-      virtual const bool connected() { return true; };
+      virtual const bool connected() const { return true; };
       virtual void disconnect() {};
       virtual const json handshake() = 0;
       const json handshake(const bool &nocache) {
@@ -420,7 +420,7 @@ namespace ₿ {
        unsigned int  countdown = 1;
                bool  subscription = false;
     public:
-      const bool connected() override {
+      const bool connected() const override {
         return sockfd;
       };
       const bool askForData(const unsigned int &tick) override {
@@ -500,7 +500,7 @@ namespace ₿ {
     protected:
       string target;
     public:
-      const bool connected() override {
+      const bool connected() const override {
         return sockfd
            and GwApiWs::connected();
       };
@@ -519,7 +519,7 @@ namespace ₿ {
       };
       void disconnect() override {
         if (sockfd) log("FIX Logout");
-        Curl::Fix::emit(curl, sockfd, "5", "", sequence, apikey, target);
+        Curl::Fix::emit(curl, sockfd, "", "5", sequence, apikey, target);
         Curl::Fix::cleanup(curl, sockfd);
         GwApiWs::disconnect();
       };
