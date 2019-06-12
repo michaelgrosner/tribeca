@@ -339,6 +339,9 @@ namespace ₿ {
         BIO_free_all(bio);
         return string(output, len);
       };
+      static string SHA1(const string &input, const bool &hex = false) {
+        return SHA(input, hex, ::SHA1, SHA_DIGEST_LENGTH);
+      };
       static string SHA256(const string &input, const bool &hex = false) {
         return SHA(input, hex, ::SHA256, SHA256_DIGEST_LENGTH);
       };
