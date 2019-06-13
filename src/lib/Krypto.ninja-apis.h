@@ -695,24 +695,22 @@ namespace ₿ {
       const json handshake() override {
         const json reply = Curl::Http::xfer(http + "public/symbols");
         Price  tickPrice = 0;
-        Amount tickSize  = 0,
-               minSize   = 0;
+        Amount tickSize  = 0;
         if (reply.find("data") != reply.end() and reply.at("data").is_array())
           for (const json &it : reply.at("data"))
             if (it.find("name") != it.end() and it.value("name", "") == Text::strL(base + quote)) {
               istringstream iss(
                 "1e-" + to_string(it.value("price_decimal", 0))
                 + " 1e-" + to_string(it.value("amount_decimal", 0))
-                + " 1e-" + to_string(it.value("amount_decimal", 0))
               );
-              iss >> tickPrice >> minSize >> tickSize;
+              iss >> tickPrice >> tickSize;
               break;
             }
         return {
-          {"tickPrice", tickPrice       },
-          { "tickSize", tickSize        },
-          {  "minSize", minSize         },
-          {    "reply", reply           }
+          {"tickPrice", tickPrice},
+          { "tickSize", tickSize },
+          {  "minSize", tickSize },
+          {    "reply", reply    }
         };
       };
     protected:
