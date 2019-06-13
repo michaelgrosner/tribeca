@@ -34,12 +34,13 @@ KARGS   := -std=c++17 -O3 -pthread -DK_0_GIT='"$(shell          \
   -DK_BUILD='"$(KHOST)"'      -DK_SOURCE='"K-$(KSRC)"'          \
   -I$(KLOCAL)/include         -I$(realpath src/lib)             \
   $(KLOCAL)/include/uWS/*.cpp $(KLOCAL)/lib/K-$(KHOST).$(ABI).a \
-  $(KLOCAL)/lib/libsqlite3.a  $(KLOCAL)/lib/libncurses.a        \
-  $(KLOCAL)/lib/libz.a        $(KLOCAL)/lib/libcurl.a           \
+  $(KLOCAL)/lib/libz.a        $(KLOCAL)/lib/libsqlite3.a        \
+  $(KLOCAL)/lib/libcurl.a     $(KLOCAL)/lib/libcares.a          \
   $(KLOCAL)/lib/libssl.a      $(KLOCAL)/lib/libcrypto.a         \
+  $(KLOCAL)/lib/libncurses.a                                    \
   $(wildcard                                                    \
-    $(KLOCAL)/lib/lib*.dll.a  $(KLOCAL)/lib/libcares.a          \
-    $(KLOCAL)/lib/libuv.a     $(KLOCAL)/lib/K-$(KSRC)-assets.o  \
+    $(KLOCAL)/lib/libuv.dll.a $(KLOCAL)/lib/K-$(KSRC)-assets.o  \
+    $(KLOCAL)/lib/libuv.a                                       \
   )
 
 all K: $(SOURCE)
