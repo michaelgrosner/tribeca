@@ -804,6 +804,8 @@ class ClientComponent implements OnInit {
   ) {}
 
   ngOnInit() {
+    new Subscribe.KSocket();
+
     this.buildDialogs(window, document);
 
     this.pair = new Pair.DisplayPair(this.zone, this.subscriberFactory, this.fireFactory);

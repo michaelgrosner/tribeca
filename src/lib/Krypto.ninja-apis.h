@@ -337,11 +337,11 @@ namespace ₿ {
       };
       void end(const bool &dustybot = false) {
         if (dustybot)
-          log("--dustybot is enabled, remember to cancel manually any open order.");
+          print("--dustybot is enabled, remember to cancel manually any open order.");
         else if (write_mOrder) {
-          log("Attempting to cancel all open orders, please wait.");
+          print("Attempting to cancel all open orders, please wait.");
           for (mOrder &it : sync_cancelAll()) write_mOrder(it);
-          log("cancel all open orders OK");
+          print("cancel all open orders OK");
         }
         online(Connectivity::Disconnected);
         disconnect();
@@ -364,27 +364,27 @@ namespace ₿ {
         for (auto &it : notes)
           if (!it.second.empty())
             note += "\n- " + it.first + ": " + it.second;
-        log((nocache ? "" : "cached ") + note);
+        print((nocache ? "" : "cached ") + note);
       };
       void latency(const string &reason, const function<void()> &fn) {
-        log("latency check", "start");
+        print("latency check", "start");
         const Clock Tstart = Tstamp;
         fn();
         const Clock Tstop  = Tstamp;
-        log("latency check", "stop");
+        print("latency check", "stop");
         const unsigned int Tdiff = Tstop - Tstart;
-        log(reason + " took", to_string(Tdiff) + "ms of your time");
+        print(reason + " took", to_string(Tdiff) + "ms of your time");
         string result = "This result is ";
         if      (Tdiff < 2e+2) result += "very good; most traders don't enjoy such speed!";
         else if (Tdiff < 5e+2) result += "good; most traders get the same result";
         else if (Tdiff < 7e+2) result += "a bit bad; most traders get better results";
         else if (Tdiff < 1e+3) result += "bad; consider moving to another server/network";
         else                   result += "very bad; move to another server/network";
-        log(result);
+        print(result);
       };
       function<void(const string&, const string&, const string&)> printer;
     protected:
-      void log(const string &reason, const string &highlight = "") {
+      void print(const string &reason, const string &highlight = "") {
         if (printer) printer(
           string(reason.find(">>>") != reason.find("<<<")
             ? "DEBUG "
@@ -444,38 +444,39 @@ namespace ₿ {
 //EO non-free Gw library functions from build-*/local/lib/K-*.a (it just redefines all virtual gateway class members above).
       virtual void connect() {
         CURLcode rc;
-        if (CURLE_OK != (rc = Curl::Ws::connect(curl, sockfd, buffer, ws)))
+        if (CURLE_OK != (rc = Curl::WebSocket::connect(curl, sockfd, buffer, ws)))
           reconnect(string("CURL connect Error: ") + curl_easy_strerror(rc));
       };
       void emit(const string &msg) {
         CURLcode rc;
-        if (CURLE_OK != (rc = Curl::Ws::emit(curl, sockfd, msg, 0x01)))
-          log(string("CURL send Error: ") + curl_easy_strerror(rc));
+        if (CURLE_OK != (rc = Curl::WebSocket::emit(curl, sockfd, msg, 0x01)))
+          print(string("CURL send Error: ") + curl_easy_strerror(rc));
       };
       void disconnect() override {
-        Curl::Ws::emit(curl, sockfd, "", 0x08);
-        Curl::Ws::cleanup(curl, sockfd);
+        Curl::WebSocket::emit(curl, sockfd, "", 0x08);
+        Curl::WebSocket::cleanup(curl, sockfd);
       };
       void reconnect(const string &reason) {
         disconnect();
         countdown = 7;
-        log("WS " + reason + ", reconnecting in " + to_string(countdown) + "s.");
+        print("WS " + reason + ", reconnecting in " + to_string(countdown) + "s.");
       };
       virtual void waitForAsyncData() {
         CURLcode rc;
-        if (CURLE_OK != (rc = Curl::Ws::receive(curl, sockfd, buffer)))
-          log(string("CURL recv Error: ") + curl_easy_strerror(rc));
+        if (CURLE_OK != (rc = Curl::WebSocket::receive(curl, sockfd, buffer)))
+          print(string("CURL recv Error: ") + curl_easy_strerror(rc));
         if (buffer.empty()) return;
         for (;;)
-          if (consumed(Curl::Ws::unframe(curl, sockfd, buffer)))
+          if (consumed(Curl::WebSocket::unframe(curl, sockfd, buffer)))
             break;
       };
       const bool consumed(const string &msg) {
         const bool empty = msg.empty();
-        if (!empty)
+        if (!empty) {
           if (json::accept(msg))
             consume(json::parse(msg));
-          else log("CURL Error: Unsupported data format");
+          else print("CURL Error: Unsupported data format");
+        }
         return empty;
       };
     private:
@@ -512,30 +513,30 @@ namespace ₿ {
         GwApiWs::connect();
         if (GwApiWs::connected()) {
           CURLcode rc;
-          if (CURLE_OK != (rc = Curl::Fix::connect(curl, sockfd, buffer, fix, logon(), sequence, apikey, target)))
+          if (CURLE_OK != (rc = Curl::FixSocket::connect(curl, sockfd, buffer, fix, logon(), sequence, apikey, target)))
             reconnect(string("CURL connect FIX Error: ") + curl_easy_strerror(rc));
-          else log("FIX success Logon, streaming orders");
+          else print("FIX success Logon, streaming orders");
         }
       };
       void disconnect() override {
-        if (sockfd) log("FIX Logout");
-        Curl::Fix::emit(curl, sockfd, "", "5", sequence, apikey, target);
-        Curl::Fix::cleanup(curl, sockfd);
+        if (sockfd) print("FIX Logout");
+        Curl::FixSocket::emit(curl, sockfd, "", "5", sequence, apikey, target);
+        Curl::FixSocket::cleanup(curl, sockfd);
         GwApiWs::disconnect();
       };
       const unsigned long beam(const string &msg, const string &type) {
         CURLcode rc;
-        if (CURLE_OK != (rc = Curl::Fix::emit(curl, sockfd, msg, type, sequence, apikey, target)))
-          log(string("CURL send FIX Error: ") + curl_easy_strerror(rc));
+        if (CURLE_OK != (rc = Curl::FixSocket::emit(curl, sockfd, msg, type, sequence, apikey, target)))
+          print(string("CURL send FIX Error: ") + curl_easy_strerror(rc));
         return sequence;
       };
       void waitForAsyncData() override {
         CURLcode rc;
-        if (CURLE_OK != (rc = Curl::Fix::receive(curl, sockfd, buffer)))
-          log(string("CURL recv FIX Error: ") + curl_easy_strerror(rc));
+        if (CURLE_OK != (rc = Curl::FixSocket::receive(curl, sockfd, buffer)))
+          print(string("CURL recv FIX Error: ") + curl_easy_strerror(rc));
         if (!buffer.empty())
           for (;;)
-            if (consumed(Curl::Fix::unframe(curl, sockfd, buffer, sequence, apikey, target)))
+            if (consumed(Curl::FixSocket::unframe(curl, sockfd, buffer, sequence, apikey, target)))
               break;
         GwApiWs::waitForAsyncData();
       };
@@ -566,7 +567,7 @@ namespace ₿ {
         randId = Random::uuid32Id;
       };
       const json handshake() override {
-        const json reply = Curl::Http::xfer(http + "/public/symbol/" + base + quote);
+        const json reply = Curl::Web::xfer(http + "/public/symbol/" + base + quote);
         return {
           {"tickPrice", stod(reply.value("tickSize", "0"))            },
           { "tickSize", stod(reply.value("quantityIncrement", "0"))   },
@@ -578,7 +579,7 @@ namespace ₿ {
       };
     protected:
       static const json xfer(const string &url, const string &auth, const string &post) {
-        return Curl::Http::request(url, [&](CURL *curl) {
+        return Curl::Web::request(url, [&](CURL *curl) {
           curl_easy_setopt(curl, CURLOPT_USERPWD, auth.data());
           curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
           curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post.data());
@@ -604,7 +605,7 @@ namespace ₿ {
         randId = Random::uuid36Id;
       };
       const json handshake() override {
-        const json reply = Curl::Http::xfer(http + "/products/" + base + "-" + quote);
+        const json reply = Curl::Web::xfer(http + "/products/" + base + "-" + quote);
         return {
           {"tickPrice", stod(reply.value("quote_increment", "0"))},
           { "tickSize", stod(reply.value("base_increment", "0")) },
@@ -614,7 +615,7 @@ namespace ₿ {
       };
     protected:
       static const json xfer(const string &url, const string &h1, const string &h2, const string &h3, const string &h4, const bool &rm) {
-        return Curl::Http::request(url, [&](CURL *curl) {
+        return Curl::Web::request(url, [&](CURL *curl) {
           struct curl_slist *h_ = nullptr;
           h_ = curl_slist_append(h_, ("CB-ACCESS-KEY: " + h1).data());
           h_ = curl_slist_append(h_, ("CB-ACCESS-SIGN: " + h2).data());
@@ -635,7 +636,7 @@ namespace ₿ {
         askForReplace = true;
       };
       const json handshake() override {
-        const json reply1 = Curl::Http::xfer(http + "/pubticker/" + base + quote);
+        const json reply1 = Curl::Web::xfer(http + "/pubticker/" + base + quote);
         Price tickPrice = 0,
               minSize   = 0;
         if (reply1.find("last_price") != reply1.end()) {
@@ -648,7 +649,7 @@ namespace ₿ {
           istringstream iss("1e" + to_string(fmax(stod(price),-4)-4));
           iss >> tickPrice;
         }
-        const json reply2 = Curl::Http::xfer(http + "/symbols_details");
+        const json reply2 = Curl::Web::xfer(http + "/symbols_details");
         if (reply2.is_array())
           for (const json &it : reply2)
             if (it.find("pair") != it.end() and it.value("pair", "") == Text::strL(base + quote)) {
@@ -666,7 +667,7 @@ namespace ₿ {
       };
     protected:
       static const json xfer(const string &url, const string &post, const string &h1, const string &h2) {
-        return Curl::Http::request(url, [&](CURL *curl) {
+        return Curl::Web::request(url, [&](CURL *curl) {
           struct curl_slist *h_ = nullptr;
           h_ = curl_slist_append(h_, ("X-BFX-APIKEY: " + h1).data());
           h_ = curl_slist_append(h_, ("X-BFX-PAYLOAD: " + post).data());
@@ -693,7 +694,7 @@ namespace ₿ {
         randId = Random::char16Id;
       };
       const json handshake() override {
-        const json reply = Curl::Http::xfer(http + "public/symbols");
+        const json reply = Curl::Web::xfer(http + "public/symbols");
         Price  tickPrice = 0;
         Amount tickSize  = 0;
         if (reply.find("data") != reply.end() and reply.at("data").is_array())
@@ -715,7 +716,7 @@ namespace ₿ {
       };
     protected:
       static const json xfer(const string &url, const string &h1, const string &h2, const string &h3, const string &post = "") {
-        return Curl::Http::request(url, [&](CURL *curl) {
+        return Curl::Web::request(url, [&](CURL *curl) {
           struct curl_slist *h_ = nullptr;
           if (!post.empty()) {
             curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post.data());
@@ -736,7 +737,7 @@ namespace ₿ {
         randId = Random::int32Id;
       };
       const json handshake() override {
-        const json reply = Curl::Http::xfer(http + "/0/public/AssetPairs?pair=" + base + quote);
+        const json reply = Curl::Web::xfer(http + "/0/public/AssetPairs?pair=" + base + quote);
         Price tickPrice = 0,
               minSize   = 0;
         if (reply.find("result") != reply.end())
@@ -760,7 +761,7 @@ namespace ₿ {
       };
     protected:
       static const json xfer(const string &url, const string &h1, const string &h2, const string &post) {
-        return Curl::Http::request(url, [&](CURL *curl) {
+        return Curl::Web::request(url, [&](CURL *curl) {
           struct curl_slist *h_ = nullptr;
           h_ = curl_slist_append(h_, ("API-Key: " + h1).data());
           h_ = curl_slist_append(h_, ("API-Sign: " + h2).data());
@@ -777,7 +778,7 @@ namespace ₿ {
         randId = Random::int45Id;
       };
       const json handshake() override {
-        const json reply = Curl::Http::xfer(http + "/public?command=returnTicker")
+        const json reply = Curl::Web::xfer(http + "/public?command=returnTicker")
                              .value(quote + "_" + base, json::object());
         const Price tickPrice = reply.empty()
                                   ? 0
@@ -793,7 +794,7 @@ namespace ₿ {
       };
     protected:
       static const json xfer(const string &url, const string &post, const string &h1, const string &h2) {
-        return Curl::Http::request(url, [&](CURL *curl) {
+        return Curl::Web::request(url, [&](CURL *curl) {
           struct curl_slist *h_ = nullptr;
           h_ = curl_slist_append(h_, "Content-Type: application/x-www-form-urlencoded");
           h_ = curl_slist_append(h_, ("Key: " + h1).data());

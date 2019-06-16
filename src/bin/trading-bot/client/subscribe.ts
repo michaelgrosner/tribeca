@@ -2,13 +2,17 @@ import { Observable } from 'rxjs/Observable';
 
 import * as Models from './models';
 
-class KSocket {
+var events = {};
+var socket;
+
+export class KSocket {
   public ws;
   constructor() {
+    socket = this;
     this.ws = new WebSocket(location.origin.replace('http', 'ws'));
     for (const ev in events) events[ev].forEach(cb => this.ws.addEventListener(ev, cb));
     this.ws.addEventListener('close', () => {
-      setTimeout(() => { socket = new KSocket(); }, 5000);
+      setTimeout(() => { new KSocket(); }, 5000);
     });
   }
   public setEventListener = (ev, cb) => {
@@ -18,8 +22,6 @@ class KSocket {
   }
 }
 
-var events = {};
-var socket = new KSocket();
 
 export interface ISubscribe<T> {
   registerSubscriber: (incrementalHandler: (msg: T) => void) => ISubscribe<T>;

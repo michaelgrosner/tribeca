@@ -257,7 +257,7 @@ namespace ₿ {
         string mods;
         const json diff =
 #ifdef NDEBUG
-          Curl::Http::xfer("https://api.github.com/repos/ctubio/Krypto-trading-bot"
+          Curl::Web::xfer("https://api.github.com/repos/ctubio/Krypto-trading-bot"
             "/compare/" + string(K_0_GIT) + "...HEAD", 4L)
 #else
           json::object()
@@ -313,7 +313,7 @@ namespace ₿ {
       static void die(const int sig) {
         if (epilogue.empty())
           epilogue = "Excellent decision! "
-                   + Curl::Http::xfer("https://api.icndb.com/jokes/random?escape=javascript&limitTo=[nerdy]", 4L)
+                   + Curl::Web::xfer("https://api.icndb.com/jokes/random?escape=javascript&limitTo=[nerdy]", 4L)
                        .value("/value/joke"_json_pointer, "let's plant a tree instead..");
         halt(
           epilogue.find("Errrror") == string::npos
@@ -566,7 +566,7 @@ namespace ₿ {
           args["B64auth"] = (!arg<int>("headless")
             and arg<string>("user") != "NULL" and !arg<string>("user").empty()
             and arg<string>("pass") != "NULL" and !arg<string>("pass").empty()
-          ) ? "Basic " + Text::B64(arg<string>("user") + ':' + arg<string>("pass"))
+          ) ? Text::B64(arg<string>("user") + ':' + arg<string>("pass"))
             : "";
         }
       };
@@ -610,144 +610,6 @@ namespace ₿ {
           << Ansi::b(COLOR_GREEN) << "K" << Ansi::r(COLOR_GREEN) << " questions: " << Ansi::r(COLOR_YELLOW) << "irc://irc.freenode.net:6667/#tradingBot" << '\n'
           << Ansi::r(COLOR_GREEN) << "  home page: " << Ansi::r(COLOR_YELLOW) << "https://ca.rles-tub.io./trades" << '\n'
           << Ansi::reset();
-      };
-  };
-
-  class Socket {
-    public:
-      using HTTPServer = function<const string(string, const string&, const string&)>;
-      using WSServer   = function<const bool(const bool&, const string&)>;
-      using WSMessage  = function<const string(string, const string&)>;
-      string wtfismyip = "localhost";
-    protected:
-      uWS::Hub *hub = nullptr;
-      vector<uWS::Group<uWS::SERVER>*> ui_servers;
-    public:
-      uWS::Group<uWS::SERVER> *listen(
-                  string &protocol,
-        const     string &inet,
-        const        int &port,
-        const       bool &ssl,
-        const     string &crt,
-        const     string &key,
-        const HTTPServer &httpServer = nullptr,
-        const   WSServer &wsServer   = nullptr,
-        const  WSMessage &wsMessage  = nullptr
-      ) {
-        auto ui_server = hub->createGroup<uWS::SERVER>(uWS::PERMESSAGE_DEFLATE);
-        if (ui_server) {
-          SSL_CTX *ctx = ssl ? sslContext(crt, key) : nullptr;
-          protocol += string(ctx ? 1 : 0, 'S');
-          if (!hub->listen(
-            inet.empty() ? nullptr : inet.data(),
-            port, uS::TLS::Context(ctx), 0, ui_server
-          )) ui_server = nullptr;
-        }
-        if (!ui_server)
-          error("UI", "Unable to listen at port number " + to_string(port)
-            + " (may be already in use by another program)");
-        if (httpServer)
-          ui_server->onHttpRequest([&](uWS::HttpResponse *res, uWS::HttpRequest req, char *data, size_t length, size_t remainingBytes) {
-            if (req.getMethod() != uWS::HttpMethod::METHOD_GET) return;
-            const string response = httpServer(
-              req.getUrl().toString(),
-              req.getHeader("authorization").toString(),
-              cleanAddress(res->getHttpSocket()->getAddress().address)
-            );
-            if (!response.empty())
-              res->write(response.data(), response.length());
-          });
-        if (wsServer) {
-          ui_server->onConnection([&](uWS::WebSocket<uWS::SERVER> *webSocket, uWS::HttpRequest req) {
-            if (!wsServer(true, cleanAddress(webSocket->getAddress().address)))
-              webSocket->close();
-          });
-          ui_server->onDisconnection([&](uWS::WebSocket<uWS::SERVER> *webSocket, int code, char *message, size_t length) {
-            wsServer(false, cleanAddress(webSocket->getAddress().address));
-          });
-        }
-        if (wsMessage)
-          ui_server->onMessage([&](uWS::WebSocket<uWS::SERVER> *webSocket, const char *message, size_t length, uWS::OpCode opCode) {
-            if (length < 2) return;
-            const string response = wsMessage(
-              string(message, length),
-              cleanAddress(webSocket->getAddress().address)
-            );
-            if (!response.empty())
-              webSocket->send(response.data(), response.substr(0, 2) == "PK"
-                                                 ? uWS::OpCode::BINARY
-                                                 : uWS::OpCode::TEXT);
-          });
-        Print::log("UI", "ready at", Text::strL(protocol) + "://" + wtfismyip + ":" + to_string(port));
-        ui_servers.push_back(ui_server);
-        return ui_server;
-      };
-    private:
-      SSL_CTX *sslContext(const string &crt, const string &key) {
-        SSL_CTX *ctx = SSL_CTX_new(SSLv23_server_method());
-        if (ctx) {
-          SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv3);
-          if (crt.empty() or key.empty()) {
-            if (!crt.empty())
-              Print::logWar("UI", "Ignored .crt file because .key file is missing");
-            if (!key.empty())
-              Print::logWar("UI", "Ignored .key file because .crt file is missing");
-            Print::logWar("UI", "Connected web clients will enjoy unsecure SSL encryption..\n"
-              "(because the private key is visible in the source!). See --help argument to setup your own SSL");
-            if (!SSL_CTX_use_certificate(ctx,
-              PEM_read_bio_X509(BIO_new_mem_buf((void*)
-                "-----BEGIN CERTIFICATE-----"                                      "\n"
-                "MIICATCCAWoCCQCiyDyPL5ov3zANBgkqhkiG9w0BAQsFADBFMQswCQYDVQQGEwJB" "\n"
-                "VTETMBEGA1UECAwKU29tZS1TdGF0ZTEhMB8GA1UECgwYSW50ZXJuZXQgV2lkZ2l0" "\n"
-                "cyBQdHkgTHRkMB4XDTE2MTIyMjIxMDMyNVoXDTE3MTIyMjIxMDMyNVowRTELMAkG" "\n"
-                "A1UEBhMCQVUxEzARBgNVBAgMClNvbWUtU3RhdGUxITAfBgNVBAoMGEludGVybmV0" "\n"
-                "IFdpZGdpdHMgUHR5IEx0ZDCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEAunyx" "\n"
-                "1lNsHkMmCa24Ns9xgJAwV3A6/Jg/S5jPCETmjPRMXqAp89fShZxN2b/2FVtU7q/N" "\n"
-                "EtNpPyEhfAhPwYrkHCtip/RmZ/b6qY2Cx6otFIsuwO8aUV27CetpoM8TAQSuufcS" "\n"
-                "jcZD9pCAa9GM/yWeqc45su9qBBmLnAKYuYUeDQUCAwEAATANBgkqhkiG9w0BAQsF" "\n"
-                "AAOBgQAeZo4zCfnq5/6gFzoNDKg8DayoMnCtbxM6RkJ8b/MIZT5p6P7OcKNJmi1o" "\n"
-                "XD2evdxNrY0ObQ32dpiLqSS1JWL8bPqloGJBNkSPi3I+eBoJSE7/7HOroLNbp6nS" "\n"
-                "aaec6n+OlGhhjxn0DzYiYsVBUsokKSEJmHzoLHo3ZestTTqUwg=="             "\n"
-                "-----END CERTIFICATE-----"                                        "\n"
-              , -1), nullptr, nullptr, nullptr
-            )) or !SSL_CTX_use_RSAPrivateKey(ctx,
-              PEM_read_bio_RSAPrivateKey(BIO_new_mem_buf((void*)
-                "-----BEGIN RSA PRIVATE KEY-----"                                  "\n"
-                "MIICXAIBAAKBgQC6fLHWU2weQyYJrbg2z3GAkDBXcDr8mD9LmM8IROaM9ExeoCnz" "\n"
-                "19KFnE3Zv/YVW1Tur80S02k/ISF8CE/BiuQcK2Kn9GZn9vqpjYLHqi0Uiy7A7xpR" "\n"
-                "XbsJ62mgzxMBBK659xKNxkP2kIBr0Yz/JZ6pzjmy72oEGYucApi5hR4NBQIDAQAB" "\n"
-                "AoGBAJi9OrbtOreKjeQNebzCqRcAgeeLz3RFiknzjVYbgK1gBhDWo6XJVe8C9yxq" "\n"
-                "sjYJyQV5zcAmkaQYEaHR+OjvRiZ4UmXbItukOD+dnq7xs69n3w54FfANjkurdL2M" "\n"
-                "fPAQm/GJT4TSBDIr7eJQPOrork9uxQStwADTqvklVlKm2YldAkEA80ZYaLrGOBbz" "\n"
-                "5871ewKxtVJNCCmXdYUwq7nI/lqsLBZnB+wiwnQ+3tgfi4YoUoTnv0hIIwkyLYl9" "\n"
-                "Z2wqensf6wJBAMQ96gUGnIcYJzknB5CYDNQalcvvTx7tLtgRXDf47bQJ3X/Q5k/t" "\n"
-                "yDlByUBqvYVShXWs+d4ynNKLze/w18H8Os8CQBYFDAOOxFpXWYRl6zpTKBqtdGOE" "\n"
-                "wDzW7WzdyB+dvW/QJ0tESHEpbHdnQJO0dPnjJcbemAjz0CLnCv7Nf5rOgjkCQE3Q" "\n"
-                "izIw+/JptmvoOQyx7ixQ2mNCYmpN/Iw63gln0MHaQ5WCPUEmdYWWu3mqmbn7Deaq" "\n"
-                "j233Pc4TF7b0FmnaXWsCQAVvyLVU3a9Yactb5MXaN+rEYjUW37GSo+Q1lXfm0OwF" "\n"
-                "EJB7X66Bavwg4MCfpGykS71OxhTEfDu+y1gylPMCGHY="                     "\n"
-                "-----END RSA PRIVATE KEY-----"                                    "\n"
-              , -1), nullptr, nullptr, nullptr)
-            )) ctx = nullptr;
-          } else {
-            if (access(crt.data(), R_OK) == -1)
-              Print::logWar("UI", "Unable to read SSL .crt file at " + crt);
-            if (access(key.data(), R_OK) == -1)
-              Print::logWar("UI", "Unable to read SSL .key file at " + key);
-            if (!SSL_CTX_use_certificate_chain_file(ctx, crt.data())
-              or !SSL_CTX_use_RSAPrivateKey_file(ctx, key.data(), SSL_FILETYPE_PEM)
-            ) {
-              ctx = nullptr;
-              Print::logWar("UI", "Unable to encrypt web clients, will fallback to plain text");
-            }
-          }
-        }
-        return ctx;
-      };
-      static const string cleanAddress(string addr) {
-        if (addr.length() > 7 and addr.substr(0, 7) == "::ffff:") addr = addr.substr(7);
-        if (addr.length() < 7) addr.clear();
-        return addr.empty() ? "unknown" : addr;
       };
   };
 
@@ -1107,7 +969,7 @@ namespace ₿ {
       };
   };
 
-  class Client {
+  class Client: public WebServer {
     public_friend:
       class Readable: public Blob {
         public:
@@ -1194,12 +1056,15 @@ namespace ₿ {
           };
       };
     public:
-      string protocol = "HTTP";
+      string protocol  = "HTTP";
+      string wtfismyip = "localhost";
     protected:
-      uWS::Group<uWS::SERVER> *webui = nullptr;
       unordered_map<string, pair<const char*, const int>> documents;
     private:
-      int connections = 0;
+      SSL_CTX *ctx = nullptr;
+      curl_socket_t sockfd = 0;
+      vector<Frontend> requests,
+                       sockets;
       mutable unsigned int delay = 0;
       mutable vector<Readable*> readable;
       mutable vector<Clickable*> clickable;
@@ -1208,32 +1073,29 @@ namespace ₿ {
       unordered_map<char, function<const json()>> hello;
       unordered_map<char, function<void(const json&)>> kisses;
       unordered_map<char, string> queue;
-      const unordered_map<unsigned int, const char*> headers = {
-        {200, "HTTP/1.1 200 OK"
-              "\r\n" "Connection: keep-alive"
-              "\r\n" "Accept-Ranges: bytes"
-              "\r\n" "Vary: Accept-Encoding"
-              "\r\n" "Cache-Control: public, max-age=0"},
-        {401, "HTTP/1.1 401 Unauthorized"
-              "\r\n" "Connection: keep-alive"
-              "\r\n" "Accept-Ranges: bytes"
-              "\r\n" "Vary: Accept-Encoding"
-              "\r\n" "WWW-Authenticate: Basic realm=\"Basic Authorization\""},
-        {403, "HTTP/1.1 403 Forbidden"
-              "\r\n" "Connection: keep-alive"
-              "\r\n" "Accept-Ranges: bytes"
-              "\r\n" "Vary: Accept-Encoding"},
-        {404, "HTTP/1.1 404 Not Found"},
-        {418, "HTTP/1.1 418 I'm a teapot"},
-      };
     private_ref:
       const Option &option;
-      const Events &events;
     public:
-      Client(const Option &o, const Events &e)
+      Client(const Option &o)
         : option(o)
-        , events(e)
       {};
+      void listen() {
+        if (!(sockfd = WebServer::listen(
+          option.arg<string>("interface"),
+          option.arg<int>("port"),
+          option.arg<int>("ipv6")
+        ))) error("UI", "Unable to listen at port number " + to_string(option.arg<int>("port"))
+              + " (may be already in use by another program)");
+        if (!option.arg<int>("without-ssl")) {
+          for (const auto &it : ssl_context(
+            option.arg<string>("ssl-crt"),
+            option.arg<string>("ssl-key"),
+            ctx
+          )) Print::logWar("UI", it);
+          protocol += string(ctx ? 1 : 0, 'S');
+        }
+        Print::log("UI", "ready at", Text::strL(protocol) + "://" + wtfismyip + ":" + to_string(option.arg<int>("port")));
+      };
       void clicked(const Clickable *data, const json &j = nullptr) const {
         if (clickFn.find(data) != clickFn.end())
           for (const auto &it : clickFn.at(data)) it(j);
@@ -1247,7 +1109,7 @@ namespace ₿ {
       void welcome() {
         for (auto &it : readable) {
           it->read = [&]() {
-            if (connections) {
+            if (sockets.size()) {
               queue[(char)it->about()] = it->blob().dump();
               if (it->realtime() or !delay) broadcast();
             }
@@ -1271,17 +1133,130 @@ namespace ₿ {
         clickable.clear();
         documents.clear();
       };
-      Socket::WSServer wsServer = [&](const bool &connection, const string &addr) {
-        connections += connection ?: -1;
-        Print::log("UI", to_string(connections) + " client" + string(connections == 1 ? 0 : 1, 's')
-          + " connected, last connection was from", addr);
-        if (connections > option.arg<int>("client-limit")) {
-          Print::log("UI", "--client-limit=" + to_string(option.arg<int>("client-limit")) + " reached by", addr);
-          return false;
+      const int clients() {
+        while (accept_requests(sockfd, ctx, requests));
+        for (auto it = requests.begin(); it != requests.end();) {
+          if (Tstamp > it->time + 21e+3)
+            shutdown(it->sockfd, it->ssl);
+          else io(it->sockfd, it->ssl, it->in, it->out, false);
+          if (it->sockfd
+            and it->out.empty()
+            and it->in.length() > 5
+            and it->in.substr(0, 5) == "GET /"
+            and it->in.find("\r\n\r\n") != string::npos
+          ) {
+            const string path   = it->in.substr(4, it->in.find(" HTTP/1.1") - 4);
+            const string addr   = address(it->sockfd);
+            const size_t papers = it->in.find("Authorization: Basic ");
+            string auth;
+            if (papers != string::npos) {
+              auth = it->in.substr(papers + 21);
+              auth = auth.substr(0, auth.find("\r\n"));
+            }
+            const size_t key = it->in.find("Sec-WebSocket-Key: ");
+            int allowed = 1;
+            if (key == string::npos) {
+              it->out = httpResponse(path, auth, addr);
+              if (it->out.empty())
+                shutdown(it->sockfd, it->ssl);
+            } else if ((option.arg<string>("B64auth").empty() or auth == option.arg<string>("B64auth"))
+              and it->in.find("Upgrade: websocket" "\r\n") != string::npos
+              and it->in.find("Connection: Upgrade" "\r\n") != string::npos
+              and it->in.find("Sec-WebSocket-Version: 13" "\r\n") != string::npos
+              and (allowed = httpUpgrade(allowed, addr))
+            ) {
+              sockets.push_back({
+                it->sockfd,
+                it->ssl,
+                Tstamp,
+                addr,
+                "HTTP/1.1 101 Switching Protocols"
+                "\r\n" "Connection: Upgrade"
+                "\r\n" "Upgrade: websocket"
+                "\r\n" "Sec-WebSocket-Version: 13"
+                "\r\n" "Sec-WebSocket-Accept: "
+                         + Text::B64(Text::SHA1(
+                           it->in.substr(key + 19, it->in.substr(key + 19).find("\r\n"))
+                             + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11",
+                           true
+                         )) +
+                "\r\n"
+                "\r\n"
+              });
+              it->sockfd = 0;
+            } else {
+              if (!allowed) httpUpgrade(allowed, addr);
+              shutdown(it->sockfd, it->ssl);
+            }
+            it->in.clear();
+          }
+          if (!it->sockfd)
+            it = requests.erase(it);
+          else ++it;
         }
-        return true;
+        for (auto it = sockets.begin(); it != sockets.end();) {
+          io(it->sockfd, it->ssl, it->in, it->out, true);
+          if (it->sockfd and !it->in.empty()) {
+            const string msg = unframe(it->sockfd, it->ssl, it->in, it->out);
+            if (!msg.empty()) {
+              string reply = httpMessage(msg, it->addr);
+              if (!reply.empty())
+                it->out += frame(reply, reply.substr(0, 2) == "PK" ? 0x02 : 0x01, false);
+            }
+          }
+          if (!it->sockfd) {
+            httpUpgrade(-1, it->addr);
+            it = sockets.erase(it);
+          } else ++it;
+        }
+        return requests.size()
+             + sockets.size();
       };
-      Socket::WSMessage wsMessage = [&](string message, const string &addr) {
+      void withoutGoodbye() {
+        for (auto &it : requests)
+          shutdown(it.sockfd, it.ssl);
+        int i = 0;
+        for (auto &it : sockets) {
+          httpUpgrade(--i, it.addr);
+          shutdown(it.sockfd, it.ssl);
+        }
+        shutdown(sockfd);
+      };
+    private:
+      void clicked(const Clickable *data, const function<void(const json&)> &fn) const {
+        clickFn[data].push_back(fn);
+      };
+      void broadcast() {
+        if (!sockets.empty() and !queue.empty()) {
+          string msgs;
+          for (const auto &it : queue)
+            msgs += frame(portal.second + (it.first + it.second), 0x01, false);
+          for (auto &it : sockets)
+            it.out += msgs;
+        }
+        queue.clear();
+      };
+      const bool alien(const string &addr) {
+        if (addr != "unknown"
+          and !option.arg<string>("whitelist").empty()
+          and option.arg<string>("whitelist").find(addr) == string::npos
+        ) {
+          Print::log("UI", "dropping gzip bomb on", addr);
+          return true;
+        }
+        return false;
+      };
+      const int httpUpgrade(const int &sum, const string &addr) {
+        const int tentative = sockets.size() + sum;
+        Print::log("UI", to_string(tentative) + " client" + string(tentative == 1 ? 0 : 1, 's')
+          + (tentative > 0 ? "" : " remain") + " connected, last connection was from", addr);
+        if (tentative > option.arg<int>("client-limit")) {
+          Print::log("UI", "--client-limit=" + to_string(option.arg<int>("client-limit")) + " reached by", addr);
+          return 0;
+        }
+        return sum;
+      };
+      const string httpMessage(string message, const string &addr) {
         if (alien(addr))
           return string(documents.at("").first, documents.at("").second);
         const char matter = message.at(1);
@@ -1302,7 +1277,7 @@ namespace ₿ {
         }
         return string();
       };
-      Socket::HTTPServer httpServer = [&](string path, const string &auth, const string &addr) {
+      const string httpResponse(string path, const string &auth, const string &addr) {
         if (alien(addr))
           path.clear();
         const bool papersplease = !(
@@ -1311,13 +1286,14 @@ namespace ₿ {
         string content,
                type = "text/html; charset=UTF-8";
         unsigned int code = 200;
+        const string leaf = path.substr(path.find_last_of('.') + 1);
         if (papersplease and auth.empty()) {
           Print::log("UI", "authorization attempt from", addr);
           code = 401;
         } else if (papersplease and auth != option.arg<string>("B64auth")) {
           Print::log("UI", "authorization failed from", addr);
           code = 403;
-        } else if (connections < option.arg<int>("client-limit")) {
+        } else if (leaf != "/" or sockets.size() < option.arg<int>("client-limit")) {
           if (documents.find(path) == documents.end())
             path = path.substr(path.find_last_of("/", path.find_last_of("/") - 1));
           if (documents.find(path) == documents.end())
@@ -1325,7 +1301,6 @@ namespace ₿ {
           if (documents.find(path) != documents.end()) {
             content = string(documents.at(path).first,
                              documents.at(path).second);
-            const string leaf = path.substr(path.find_last_of('.') + 1);
             if (leaf == "/") Print::log("UI", "authorization success from", addr);
             else if (leaf == "js")  type = "application/javascript; charset=UTF-8";
             else if (leaf == "css") type = "text/css; charset=UTF-8";
@@ -1343,46 +1318,6 @@ namespace ₿ {
                     "<br/>" "Refresh the page anytime to retry.";
         }
         return document(content, code, type);
-      };
-    private:
-      void clicked(const Clickable *data, const function<void(const json&)> &fn) const {
-        clickFn[data].push_back(fn);
-      };
-      void broadcast() {
-        if (queue.empty()) return;
-        vector<string> msgs;
-        for (const auto &it : queue)
-          msgs.push_back(portal.second + (it.first + it.second));
-        queue.clear();
-        events.deferred([this, msgs]() {
-          for (const auto &it : msgs)
-            webui->broadcast(it.data(), it.length(), uWS::OpCode::TEXT);
-        });
-      };
-      const bool alien(const string &addr) {
-        if (addr != "unknown"
-          and !option.arg<string>("whitelist").empty()
-          and option.arg<string>("whitelist").find(addr) == string::npos
-        ) {
-          Print::log("UI", "dropping gzip bomb on", addr);
-          return true;
-        }
-        return false;
-      };
-      const string document(
-        const       string &content,
-        const unsigned int &code,
-        const       string &type
-      ) const {
-        return headers.at(code)
-         + string((content.length() > 2 and (content.substr(0, 2) == "PK" or (
-             content.at(0) == '\x1F' and content.at(1) == '\x8B'
-           ))) ? "\r\n" "Content-Encoding: gzip" : "")
-         + "\r\n" "Content-Type: "   + type
-         + "\r\n" "Content-Length: " + to_string(content.length())
-         + "\r\n"
-           "\r\n"
-         + content;
       };
   };
 
@@ -1405,18 +1340,19 @@ namespace ₿ {
                      public Print,
                      public Ending,
                      public Option,
-                     public Socket,
                      public Events,
                      public Hotkey,
                      public Sqlite,
                      public Client {
     public:
       Gw *gateway = nullptr;
+    private:
+      uWS::Hub *hub = nullptr;
     public:
       KryptoNinja()
         : Hotkey((Events&)*this)
         , Sqlite((Events&)*this)
-        , Client((Option&)*this, (Events&)*this)
+        , Client((Option&)*this)
       {};
       KryptoNinja *const main(int argc, char** argv) {
         {
@@ -1427,7 +1363,7 @@ namespace ₿ {
           if (windowed()) legit_keylogger();
         } {
           log("CF", "Outbound IP address is",
-            wtfismyip = Curl::Http::xfer("https://wtfismyip.com/json", 4L)
+            wtfismyip = Curl::Web::xfer("https://wtfismyip.com/json", 4L)
                           .value("YourFuckingIPAddress", wtfismyip)
           );
         } {
@@ -1472,17 +1408,16 @@ namespace ₿ {
         } {
           if (arg<int>("headless")) headless();
           else {
-            webui = listen(
-              protocol, arg<string>("interface"), arg<int>("port"),
-              !arg<int>("without-ssl"), arg<string>("ssl-crt"), arg<string>("ssl-key"),
-              httpServer, wsServer, wsMessage
-            );
+            listen();
             timer_1s([&](const unsigned int &tick) {
               broadcast(tick);
-              return false;
+              return clients();
+            });
+            wait_for([&]() {
+              return clients();
             });
             ending([&]() {
-              webui->close();
+              withoutGoodbye();
             });
             welcome();
           }
