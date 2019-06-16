@@ -621,7 +621,6 @@ namespace ₿ {
       mutable unsigned int ticks = 300;
       vector<function<const bool(const unsigned int&)>> timeFn;
       mutable vector<function<const bool()>> waitFn;
-      mutable vector<function<void()>> slowFn;
     public:
       void timer_ticks_factor(const unsigned int &factor) const {
         ticks = 300 * (factor ?: 1);
@@ -631,10 +630,6 @@ namespace ₿ {
       };
       void wait_for(const function<const bool()> &fn) const {
         waitFn.push_back(fn);
-      };
-      void deferred(const function<void()> &fn) const {
-        slowFn.push_back(fn);
-        loop->send();
       };
     protected:
       void start(uS::Loop *const poll) {
@@ -646,24 +641,18 @@ namespace ₿ {
         loop = new uS::Async(poll);
         loop->setData(this);
         loop->start([](uS::Async *const loop) {
-          ((Events*)loop->getData())->deferred();
+          ((Events*)loop->getData())->async();
         });
       };
       void stop() {
         timer->stop();
         loop->close();
-        loop = nullptr;
-        deferred();
       };
     private:
-      void deferred() {
-        for (const auto &it : slowFn) it();
-        slowFn.clear();
-        if (loop) {
-          bool waiting = false;
-          for (const auto &it : waitFn) waiting |= it();
-          if (waiting) loop->send();
-        }
+      void async() {
+        bool waiting = false;
+        for (const auto &it : waitFn) waiting |= it();
+        if (waiting) loop->send();
       };
       void timer_1s() {
         bool waiting = false;
@@ -683,12 +672,6 @@ namespace ₿ {
               hotkey.keymap(it.first, it.second);
           };
       };
-    private_ref:
-      const Events &events;
-    public:
-      Hotkey(const Events &e)
-        : events(e)
-      {};
     private:
       future<char> keylogger;
       mutable unordered_map<char, function<void()>> hotFn;
@@ -701,17 +684,8 @@ namespace ₿ {
         halfdelay(5);
         keypad(stdscr, true);
         launch_keylogger();
-        events.wait_for([&]() {
-          return wait_for_keylog();
-        });
       };
-    private:
-      void keymap(const char &ch, function<void()> fn) const {
-        if (hotFn.find(ch) != hotFn.end())
-          error("SH", string("Too many handlers for \"") + ch + "\" hotkey event");
-        hotFn[ch] = fn;
-      };
-      const bool wait_for_keylog() {
+      const bool keylog() {
         if (keylogger.valid()
           and keylogger.wait_for(chrono::nanoseconds(0)) == future_status::ready
         ) {
@@ -721,6 +695,12 @@ namespace ₿ {
           launch_keylogger();
         }
         return false;
+      };
+    private:
+      void keymap(const char &ch, function<void()> fn) const {
+        if (hotFn.find(ch) != hotFn.end())
+          error("SH", string("Too many handlers for \"") + ch + "\" hotkey event");
+        hotFn[ch] = fn;
       };
       void launch_keylogger() {
         keylogger = ::async(launch::async, [&]() {
@@ -867,12 +847,6 @@ namespace ₿ {
       sqlite3 *db = nullptr;
       string disk = "main";
       mutable vector<Backup*> tables;
-    private_ref:
-      const Events &events;
-    public:
-      Sqlite(const Events &e)
-        : events(e)
-      {};
     protected:
       void backups(const string &database, const string &diskdata) {
         if (sqlite3_open(database.data(), &db))
@@ -934,9 +908,7 @@ namespace ₿ {
             : "INSERT INTO " + table
               + " (id,json) VALUES(" + incr + ",'" + blob.dump() + "');"
         );
-        events.deferred([this, sql]() {
-          exec(sql);
-        });
+        exec(sql);
       };
       const string schema(Backup *const data) const {
         return (
@@ -1350,9 +1322,7 @@ namespace ₿ {
       uWS::Hub *hub = nullptr;
     public:
       KryptoNinja()
-        : Hotkey((Events&)*this)
-        , Sqlite((Events&)*this)
-        , Client((Option&)*this)
+        : Client((Option&)*this)
       {};
       KryptoNinja *const main(int argc, char** argv) {
         {
@@ -1360,7 +1330,12 @@ namespace ₿ {
           Option::main(argc, argv, databases, documents.empty());
           setup();
         } {
-          if (windowed()) legit_keylogger();
+          if (windowed()) {
+            legit_keylogger();
+            wait_for([&]() {
+              return keylog();
+            });
+          }
         } {
           log("CF", "Outbound IP address is",
             wtfismyip = Curl::Web::xfer("https://wtfismyip.com/json", 4L)

@@ -35,12 +35,11 @@ namespace ₿ {
         string msg;
         const size_t max = data.length();
         if (max > 1) {
-          const bool flat = (data[0] & 0x40) != 0x40;
-          const bool mask = (data[1] & 0x80) == 0x80;
+          const bool flat = (data[0] & 0x40) != 0x40,
+                     mask = (data[1] & 0x80) == 0x80;
           const size_t key = mask ? 4 : 0;
-          size_t pos = key,
-                 len = data[1] & 0x7F;
-          if      (            len <= 0x7D) pos += 2;
+          size_t                            len =    data[1] & 0x7F,          pos = key;
+          if      (            len <= 0x7D)                                   pos += 2;
           else if (max > 2 and len == 0x7E) len = (((data[2] & 0xFF) <<  8)
                                                 |   (data[3] & 0xFF)       ), pos += 4;
           else if (max > 8 and len == 0x7F) len = (((data[6] & 0xFF) << 24)
@@ -49,7 +48,7 @@ namespace ₿ {
                                                 |   (data[9] & 0xFF)       ), pos += 10;
           if (!flat or pos == key) drop();
           else if (max >= pos + len) {
-            if (key)
+            if (mask)
               for (size_t i = 0; i < len; i++)
                 data.at(pos + i) ^= data.at(pos - key + (i % key));
             const unsigned char opcode = data[0] & 0x0F;
