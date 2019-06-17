@@ -415,14 +415,11 @@ namespace ₿ {
   class GwApiWs: public Gw,
                  public Curl::WebSocket {
     private:
-               CURL *curl   = nullptr;
-      curl_socket_t  sockfd = 0;
-             string  buffer;
-       unsigned int  countdown = 1;
-               bool  subscription = false;
+       unsigned int countdown    = 1;
+               bool subscription = false;
     public:
       const bool connected() const override {
-        return sockfd;
+        return WebSocket::connected();
       };
       const bool askForData(const unsigned int &tick) override {
         if (countdown and !--countdown)
@@ -445,17 +442,17 @@ namespace ₿ {
 //EO non-free Gw library functions from build-*/local/lib/K-*.a (it just redefines all virtual gateway class members above).
       virtual void connect() {
         CURLcode rc;
-        if (CURLE_OK != (rc = WebSocket::connect(curl, sockfd, buffer, ws)))
+        if (CURLE_OK != (rc = WebSocket::connect(ws)))
           reconnect(string("CURL connect Error: ") + curl_easy_strerror(rc));
       };
       void emit(const string &msg) {
         CURLcode rc;
-        if (CURLE_OK != (rc = WebSocket::emit(curl, sockfd, msg, 0x01)))
+        if (CURLE_OK != (rc = WebSocket::emit(msg, 0x01)))
           print(string("CURL send Error: ") + curl_easy_strerror(rc));
       };
       void disconnect() override {
-        WebSocket::emit(curl, sockfd, "", 0x08);
-        WebSocket::cleanup(curl, sockfd);
+        WebSocket::emit("", 0x08);
+        WebSocket::cleanup();
       };
       void reconnect(const string &reason) {
         disconnect();
@@ -464,21 +461,18 @@ namespace ₿ {
       };
       virtual void waitForAsyncData() {
         CURLcode rc;
-        if (CURLE_OK != (rc = WebSocket::receive(curl, sockfd, buffer)))
+        if (CURLE_OK != (rc = WebSocket::receive()))
           print(string("CURL recv Error: ") + curl_easy_strerror(rc));
-        if (buffer.empty()) return;
-        for (;;)
-          if (consumed(WebSocket::unframe(curl, sockfd, buffer)))
-            break;
+        while (accept_msg(WebSocket::unframe()));
       };
-      const bool consumed(const string &msg) {
-        const bool empty = msg.empty();
-        if (!empty) {
+      const bool accept_msg(const string &msg) {
+        const bool next = !msg.empty();
+        if (next) {
           if (json::accept(msg))
             consume(json::parse(msg));
           else print("CURL Error: Unsupported data format");
         }
-        return empty;
+        return next;
       };
     private:
       const bool subscribed() {
@@ -496,16 +490,13 @@ namespace ₿ {
   class GwApiFix: public GwApiWs,
                   public Curl::FixSocket {
     private:
-               CURL *curl   = nullptr;
-      curl_socket_t  sockfd = 0;
-             string  buffer;
-      unsigned long  sequence = 0;
+      unsigned long sequence = 0;
     protected:
       string target;
     public:
       const bool connected() const override {
-        return sockfd
-           and GwApiWs::connected();
+        return WebSocket::connected()
+           and FixSocket::connected();
       };
     protected:
 //BO non-free Gw library functions from build-*/local/lib/K-*.a (it just redefines all virtual gateway class members below).
@@ -515,31 +506,28 @@ namespace ₿ {
         GwApiWs::connect();
         if (GwApiWs::connected()) {
           CURLcode rc;
-          if (CURLE_OK != (rc = FixSocket::connect(curl, sockfd, buffer, fix, logon(), sequence, apikey, target)))
+          if (CURLE_OK != (rc = FixSocket::connect(fix, logon(), sequence, apikey, target)))
             reconnect(string("CURL connect FIX Error: ") + curl_easy_strerror(rc));
           else print("FIX success Logon, streaming orders");
         }
       };
       void disconnect() override {
-        if (sockfd) print("FIX Logout");
-        FixSocket::emit(curl, sockfd, "", "5", sequence, apikey, target);
-        FixSocket::cleanup(curl, sockfd);
+        if (FixSocket::connected()) print("FIX Logout");
+        FixSocket::emit("", "5", sequence, apikey, target);
+        FixSocket::cleanup();
         GwApiWs::disconnect();
       };
       const unsigned long beam(const string &msg, const string &type) {
         CURLcode rc;
-        if (CURLE_OK != (rc = FixSocket::emit(curl, sockfd, msg, type, sequence, apikey, target)))
+        if (CURLE_OK != (rc = FixSocket::emit(msg, type, sequence, apikey, target)))
           print(string("CURL send FIX Error: ") + curl_easy_strerror(rc));
         return sequence;
       };
       void waitForAsyncData() override {
         CURLcode rc;
-        if (CURLE_OK != (rc = FixSocket::receive(curl, sockfd, buffer)))
+        if (CURLE_OK != (rc = FixSocket::receive()))
           print(string("CURL recv FIX Error: ") + curl_easy_strerror(rc));
-        if (!buffer.empty())
-          for (;;)
-            if (consumed(FixSocket::unframe(curl, sockfd, buffer, sequence, apikey, target)))
-              break;
+        while (accept_msg(FixSocket::unframe(sequence, apikey, target)));
         GwApiWs::waitForAsyncData();
       };
   };

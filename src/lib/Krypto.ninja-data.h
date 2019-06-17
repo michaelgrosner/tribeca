@@ -119,50 +119,62 @@ namespace ₿ {
       static function<void(CURL*)> global_setopt;
     private:
       class Easy {
+        private:
+                   CURL *curl   = nullptr;
+          curl_socket_t  sockfd = 0;
+        private_ref:
+          string &buffer;
         public:
-          void cleanup(CURL *&curl, curl_socket_t &sockfd) {
-            if (curl) curl_easy_cleanup(curl);
-            curl   = nullptr;
-            sockfd = 0;
-          };
-          const CURLcode receive(CURL *&curl, curl_socket_t &sockfd, string &buffer) {
-            CURLcode rc = CURLE_COULDNT_CONNECT;
-            if (curl and sockfd and CURLE_OPERATION_TIMEDOUT == (rc = recv(curl, sockfd, buffer, 0)))
-              rc = CURLE_OK;
-            if (rc != CURLE_OK)
-              cleanup(curl, sockfd);
-            return rc;
+          Easy(string &b)
+            : buffer(b)
+          {};
+          const bool connected() const {
+            return sockfd;
           };
         protected:
-          const CURLcode connect(CURL *&curl, curl_socket_t &sockfd, string &buffer, const string &url, const string &header, const string &res1, const string &res2) {
+          const CURLcode connect(const string &url, const string &header, const string &res1, const string &res2) {
             buffer.clear();
             CURLcode rc;
-            if (CURLE_OK == (rc = init(curl, sockfd))) {
+            if (CURLE_OK == (rc = init())) {
               global_setopt(curl);
               curl_easy_setopt(curl, CURLOPT_URL, url.data());
               curl_easy_setopt(curl, CURLOPT_CONNECT_ONLY, 1L);
               if ( CURLE_OK != (rc = curl_easy_perform(curl))
                 or CURLE_OK != (rc = curl_easy_getinfo(curl, CURLINFO_ACTIVESOCKET, &sockfd))
-                or CURLE_OK != (rc = send(curl, sockfd, header))
-                or CURLE_OK != (rc = recv(curl, sockfd, buffer, 5))
+                or CURLE_OK != (rc = send(header))
+                or CURLE_OK != (rc = recv(5))
                 or string::npos == buffer.find(res1)
                 or string::npos == buffer.find(res2)
               ) {
                 if (rc == CURLE_OK)
                   rc = CURLE_WEIRD_SERVER_REPLY;
-                cleanup(curl, sockfd);
+                cleanup();
               }
+              buffer.clear();
             }
             return rc;
           };
-          const CURLcode emit(CURL *&curl, curl_socket_t &sockfd, const string &data) {
+          const CURLcode receive() {
             CURLcode rc = CURLE_COULDNT_CONNECT;
-            if (!curl or !sockfd or CURLE_OK != (rc = send(curl, sockfd, data)))
-              cleanup(curl, sockfd);
+            if (curl and sockfd and CURLE_OPERATION_TIMEDOUT == (rc = recv(0)))
+              rc = CURLE_OK;
+            if (rc != CURLE_OK)
+              cleanup();
             return rc;
           };
+          const CURLcode emit(const string &data) {
+            CURLcode rc = CURLE_COULDNT_CONNECT;
+            if (!curl or !sockfd or CURLE_OK != (rc = send(data)))
+              cleanup();
+            return rc;
+          };
+          void cleanup() {
+            if (curl) curl_easy_cleanup(curl);
+            curl   = nullptr;
+            sockfd = 0;
+          };
         private:
-          const CURLcode init(CURL *&curl, curl_socket_t &sockfd) {
+          const CURLcode init() {
             if (!curl) curl = curl_easy_init();
             else curl_easy_reset(curl);
             sockfd = 0;
@@ -170,7 +182,7 @@ namespace ₿ {
               ? CURLE_OK
               : CURLE_FAILED_INIT;
           };
-          const CURLcode send(CURL *curl, const curl_socket_t &sockfd, const string &data) {
+          const CURLcode send(const string &data) {
             CURLcode rc;
             size_t len  = data.length(),
                    sent = 0;
@@ -179,14 +191,14 @@ namespace ₿ {
                 size_t n = 0;
                 rc = curl_easy_send(curl, data.substr(sent).data(), len - sent, &n);
                 sent += n;
-                if (rc == CURLE_AGAIN and !wait(sockfd, false, 5))
+                if (rc == CURLE_AGAIN and !wait(false, 5))
                   return CURLE_OPERATION_TIMEDOUT;
               } while (rc == CURLE_AGAIN);
               if (rc != CURLE_OK) break;
             } while (sent < len);
             return rc;
           };
-          const CURLcode recv(CURL *curl, curl_socket_t &sockfd, string &buffer, const int &timeout) {
+          const CURLcode recv(const int &timeout) {
             CURLcode rc;
             for(;;) {
               char data[524288];
@@ -195,7 +207,7 @@ namespace ₿ {
                 n = 0;
                 rc = curl_easy_recv(curl, data, sizeof(data), &n);
                 buffer.append(data, n);
-                if (rc == CURLE_AGAIN and !wait(sockfd, true, timeout))
+                if (rc == CURLE_AGAIN and !wait(true, timeout))
                   return CURLE_OPERATION_TIMEDOUT;
               } while (rc == CURLE_AGAIN);
               if ((timeout and buffer.find("\r\n\r\n") != buffer.find("\u0001" "10="))
@@ -205,7 +217,7 @@ namespace ₿ {
             }
             return rc;
           };
-          const int wait(const curl_socket_t &sockfd, const bool &io, const int &timeout) {
+          const int wait(const bool &io, const int &timeout) const {
             struct timeval tv = {timeout, 10000};
             fd_set infd,
                    outfd;
@@ -261,8 +273,14 @@ namespace ₿ {
       };
       class WebSocket: public Easy,
                        public WebSocketFrames {
+        private:
+           string buffer;
         public:
-          const CURLcode connect(CURL *&curl, curl_socket_t &sockfd, string &buffer, const string &uri) {
+          WebSocket()
+            : Easy(buffer)
+          {};
+        protected:
+          const CURLcode connect(const string &uri) {
             CURLcode rc = CURLE_URL_MALFORMAT;
             CURLU *url = curl_url();
             char *host,
@@ -272,61 +290,65 @@ namespace ₿ {
               and !curl_url_get(url, CURLUPART_HOST, &host, 0)
               and !curl_url_get(url, CURLUPART_PORT, &port, CURLU_DEFAULT_PORT)
               and !curl_url_get(url, CURLUPART_PATH, &path, 0)
-              and CURLE_OK == (rc = Easy::connect(curl, sockfd, buffer,
-                "http" + uri.substr(2),
-                "GET " + string(path) + " HTTP/1.1"
-                  "\r\n" "Host: " + string(host) + ":" + string(port) +
-                  "\r\n" "Upgrade: websocket"
-                  "\r\n" "Connection: Upgrade"
-                  "\r\n" "Sec-WebSocket-Key: x3JJHMbDL1EzLkh9GBhXDw=="
-                  "\r\n" "Sec-WebSocket-Version: 13"
-                  "\r\n"
-                  "\r\n",
-                "HTTP/1.1 101 Switching Protocols",
-                "HSmrc0sMlYUkAGmm5OPpG2HaGWk="
-            ))) buffer = buffer.substr(buffer.rfind("\r\n\r\n") + 4);
+            ) rc = CURLE_OK;
             curl_url_cleanup(url);
-            return rc;
+            return rc ?: Easy::connect(
+              "http" + uri.substr(2),
+              "GET " + string(path) + " HTTP/1.1"
+                "\r\n" "Host: " + string(host) + ":" + string(port) +
+                "\r\n" "Upgrade: websocket"
+                "\r\n" "Connection: Upgrade"
+                "\r\n" "Sec-WebSocket-Key: x3JJHMbDL1EzLkh9GBhXDw=="
+                "\r\n" "Sec-WebSocket-Version: 13"
+                "\r\n"
+                "\r\n",
+              "HTTP/1.1 101 Switching Protocols",
+              "HSmrc0sMlYUkAGmm5OPpG2HaGWk="
+            );
           };
-          const CURLcode emit(CURL *&curl, curl_socket_t &sockfd, const string &data, const int &opcode) {
-            return Easy::emit(curl, sockfd, frame(data, opcode, true));
+          const CURLcode emit(const string &data, const int &opcode) {
+            return Easy::emit(frame(data, opcode, true));
           };
-          const string unframe(CURL *&curl, curl_socket_t &sockfd, string &data) {
+          const string unframe() {
             return WebSocketFrames::unframe(
-              data,
+              buffer,
               [&](const string &pong) {
-                Easy::emit(curl, sockfd, pong);
+                Easy::emit(pong);
               },
               [&]() {
-                cleanup(curl, sockfd);
+                cleanup();
               }
             );
           };
       };
       class FixSocket: public Easy,
                        public FixFrames {
+        private:
+           string buffer;
         public:
-          const CURLcode connect(CURL *&curl, curl_socket_t &sockfd, string &buffer, const string &uri, string data, unsigned long &sequence, const string &apikey, const string &target) {
-            CURLcode rc;
-            if (CURLE_OK == (rc = Easy::connect(curl, sockfd, buffer,
+          FixSocket()
+            : Easy(buffer)
+          {};
+        protected:
+          const CURLcode connect(const string &uri, string data, unsigned long &sequence, const string &apikey, const string &target) {
+            return Easy::connect(
               "https://" + uri,
               frame(data, "A", sequence = 1, apikey, target),
               "8=FIX.4.2" "\u0001",
               "\u0001" "35=A" "\u0001"
-            ))) buffer = buffer.substr(buffer.rfind("\u0001" "10=") + 8);
-            return rc;
+            );
           };
-          const CURLcode emit(CURL *&curl, curl_socket_t &sockfd, const string &data, const string &type, unsigned long &sequence, const string &apikey, const string &target) {
-            return Easy::emit(curl, sockfd, frame(data, type, ++sequence, apikey, target));
+          const CURLcode emit(const string &data, const string &type, unsigned long &sequence, const string &apikey, const string &target) {
+            return Easy::emit(frame(data, type, ++sequence, apikey, target));
           };
-          const string unframe(CURL *&curl, curl_socket_t &sockfd, string &data, unsigned long &sequence, const string &apikey, const string &target) {
+          const string unframe(unsigned long &sequence, const string &apikey, const string &target) {
             return FixFrames::unframe(
-              data,
+              buffer,
               [&](const string &pong) {
-                emit(curl, sockfd, "", pong, sequence, apikey, target);
+                emit("", pong, sequence, apikey, target);
               },
               [&]() {
-                cleanup(curl, sockfd);
+                cleanup();
               }
             );
           };
@@ -560,7 +582,6 @@ namespace ₿ {
 #else
             clientfd = accept(sockfd, nullptr, nullptr);
 #endif
-
 #ifdef __APPLE__
             if (clientfd != -1) {
                 int noSigpipe = 1;
