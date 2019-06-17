@@ -1033,10 +1033,7 @@ namespace ₿ {
     protected:
       unordered_map<string, pair<const char*, const int>> documents;
     private:
-      SSL_CTX *ctx = nullptr;
-      curl_socket_t sockfd = 0;
-      vector<Frontend> requests,
-                       sockets;
+      Backend server;
       mutable unsigned int delay = 0;
       mutable vector<Readable*> readable;
       mutable vector<Clickable*> clickable;
@@ -1052,19 +1049,18 @@ namespace ₿ {
         : option(o)
       {};
       void listen() {
-        if (!(sockfd = WebServer::listen(
+        if (!server.listen(
           option.arg<string>("interface"),
           option.arg<int>("port"),
           option.arg<int>("ipv6")
-        ))) error("UI", "Unable to listen at port number " + to_string(option.arg<int>("port"))
-              + " (may be already in use by another program)");
+        )) error("UI", "Unable to listen at port number " + to_string(option.arg<int>("port"))
+             + " (may be already in use by another program)");
         if (!option.arg<int>("without-ssl")) {
-          for (const auto &it : ssl_context(
+          for (const auto &it : server.ssl_context(
             option.arg<string>("ssl-crt"),
-            option.arg<string>("ssl-key"),
-            ctx
+            option.arg<string>("ssl-key")
           )) Print::logWar("UI", it);
-          protocol += string(ctx ? 1 : 0, 'S');
+          protocol += string(server.ctx ? 1 : 0, 'S');
         }
         Print::log("UI", "ready at", Text::strL(protocol) + "://" + wtfismyip + ":" + to_string(option.arg<int>("port")));
       };
@@ -1081,7 +1077,7 @@ namespace ₿ {
       void welcome() {
         for (auto &it : readable) {
           it->read = [&]() {
-            if (sockets.size()) {
+            if (server.sockets.size()) {
               queue[(char)it->about()] = it->blob().dump();
               if (it->realtime() or !delay) broadcast();
             }
@@ -1106,19 +1102,19 @@ namespace ₿ {
         documents.clear();
       };
       const int clients() {
-        while (accept_requests(sockfd, ctx, requests));
-        for (auto it = requests.begin(); it != requests.end();) {
+        while (server.accept_requests());
+        for (auto it = server.requests.begin(); it != server.requests.end();) {
           if (Tstamp > it->time + 21e+3)
-            shutdown(it->sockfd, it->ssl);
-          else io(it->sockfd, it->ssl, it->in, it->out, false);
+            it->shutdown();
+          else it->io();
           if (it->sockfd
             and it->out.empty()
             and it->in.length() > 5
             and it->in.substr(0, 5) == "GET /"
             and it->in.find("\r\n\r\n") != string::npos
           ) {
-            const string path   = it->in.substr(4, it->in.find(" HTTP/1.1") - 4);
-            const string addr   = address(it->sockfd);
+            const string addr   = it->address(),
+                         path   = it->in.substr(4, it->in.find(" HTTP/1.1") - 4);
             const size_t papers = it->in.find("Authorization: Basic ");
             string auth;
             if (papers != string::npos) {
@@ -1130,46 +1126,43 @@ namespace ₿ {
             if (key == string::npos) {
               it->out = httpResponse(path, auth, addr);
               if (it->out.empty())
-                shutdown(it->sockfd, it->ssl);
+                it->shutdown();
             } else if ((option.arg<string>("B64auth").empty() or auth == option.arg<string>("B64auth"))
               and it->in.find("Upgrade: websocket" "\r\n") != string::npos
               and it->in.find("Connection: Upgrade" "\r\n") != string::npos
               and it->in.find("Sec-WebSocket-Version: 13" "\r\n") != string::npos
               and (allowed = httpUpgrade(allowed, addr))
             ) {
-              sockets.push_back({
-                it->sockfd,
-                it->ssl,
-                Tstamp,
-                addr,
-                "HTTP/1.1 101 Switching Protocols"
-                "\r\n" "Connection: Upgrade"
-                "\r\n" "Upgrade: websocket"
-                "\r\n" "Sec-WebSocket-Version: 13"
-                "\r\n" "Sec-WebSocket-Accept: "
-                         + Text::B64(Text::SHA1(
-                           it->in.substr(key + 19, it->in.substr(key + 19).find("\r\n"))
-                             + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11",
-                           true
-                         )) +
-                "\r\n"
-                "\r\n"
-              });
+              it->time = 0;
+              it->addr = addr;
+              it->out = "HTTP/1.1 101 Switching Protocols"
+                        "\r\n" "Connection: Upgrade"
+                        "\r\n" "Upgrade: websocket"
+                        "\r\n" "Sec-WebSocket-Version: 13"
+                        "\r\n" "Sec-WebSocket-Accept: "
+                                 + Text::B64(Text::SHA1(
+                                   it->in.substr(key + 19, it->in.substr(key + 19).find("\r\n"))
+                                     + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11",
+                                   true
+                                 )) +
+                        "\r\n"
+                        "\r\n";
+              it->in.clear();
+              server.sockets.push_back(*it);
               it->sockfd = 0;
             } else {
               if (!allowed) httpUpgrade(allowed, addr);
-              shutdown(it->sockfd, it->ssl);
+              it->shutdown();
             }
-            it->in.clear();
           }
           if (!it->sockfd)
-            it = requests.erase(it);
+            it = server.requests.erase(it);
           else ++it;
         }
-        for (auto it = sockets.begin(); it != sockets.end();) {
-          io(it->sockfd, it->ssl, it->in, it->out, true);
+        for (auto it = server.sockets.begin(); it != server.sockets.end();) {
+          it->io();
           if (it->sockfd and !it->in.empty()) {
-            const string msg = unframe(it->sockfd, it->ssl, it->in, it->out);
+            const string msg = unframe(*it);
             if (!msg.empty()) {
               string reply = httpMessage(msg, it->addr);
               if (!reply.empty())
@@ -1178,32 +1171,32 @@ namespace ₿ {
           }
           if (!it->sockfd) {
             httpUpgrade(-1, it->addr);
-            it = sockets.erase(it);
+            it = server.sockets.erase(it);
           } else ++it;
         }
-        return requests.size()
-             + sockets.size();
+        return server.requests.size()
+             + server.sockets.size();
       };
       void withoutGoodbye() {
-        for (auto &it : requests)
-          shutdown(it.sockfd, it.ssl);
+        for (auto &it : server.requests)
+          it.shutdown();
         int i = 0;
-        for (auto &it : sockets) {
+        for (auto &it : server.sockets) {
           httpUpgrade(--i, it.addr);
-          shutdown(it.sockfd, it.ssl);
+          it.shutdown();
         }
-        shutdown(sockfd);
+        server.shutdown();
       };
     private:
       void clicked(const Clickable *data, const function<void(const json&)> &fn) const {
         clickFn[data].push_back(fn);
       };
       void broadcast() {
-        if (!sockets.empty() and !queue.empty()) {
+        if (!server.sockets.empty() and !queue.empty()) {
           string msgs;
           for (const auto &it : queue)
             msgs += frame(portal.second + (it.first + it.second), 0x01, false);
-          for (auto &it : sockets)
+          for (auto &it : server.sockets)
             it.out += msgs;
         }
         queue.clear();
@@ -1219,7 +1212,7 @@ namespace ₿ {
         return false;
       };
       const int httpUpgrade(const int &sum, const string &addr) {
-        const int tentative = sockets.size() + sum;
+        const int tentative = server.sockets.size() + sum;
         Print::log("UI", to_string(tentative) + " client" + string(tentative == 1 ? 0 : 1, 's')
           + (tentative > 0 ? "" : " remain") + " connected, last connection was from", addr);
         if (tentative > option.arg<int>("client-limit")) {
@@ -1265,7 +1258,7 @@ namespace ₿ {
         } else if (papersplease and auth != option.arg<string>("B64auth")) {
           Print::log("UI", "authorization failed from", addr);
           code = 403;
-        } else if (leaf != "/" or sockets.size() < option.arg<int>("client-limit")) {
+        } else if (leaf != "/" or server.sockets.size() < option.arg<int>("client-limit")) {
           if (documents.find(path) == documents.end())
             path = path.substr(path.find_last_of("/", path.find_last_of("/") - 1));
           if (documents.find(path) == documents.end())

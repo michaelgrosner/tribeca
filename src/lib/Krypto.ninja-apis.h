@@ -412,7 +412,8 @@ namespace ₿ {
         return waitForSyncData();
       };
   };
-  class GwApiWs: public Gw {
+  class GwApiWs: public Gw,
+                 public Curl::WebSocket {
     private:
                CURL *curl   = nullptr;
       curl_socket_t  sockfd = 0;
@@ -444,17 +445,17 @@ namespace ₿ {
 //EO non-free Gw library functions from build-*/local/lib/K-*.a (it just redefines all virtual gateway class members above).
       virtual void connect() {
         CURLcode rc;
-        if (CURLE_OK != (rc = Curl::WebSocket::connect(curl, sockfd, buffer, ws)))
+        if (CURLE_OK != (rc = WebSocket::connect(curl, sockfd, buffer, ws)))
           reconnect(string("CURL connect Error: ") + curl_easy_strerror(rc));
       };
       void emit(const string &msg) {
         CURLcode rc;
-        if (CURLE_OK != (rc = Curl::WebSocket::emit(curl, sockfd, msg, 0x01)))
+        if (CURLE_OK != (rc = WebSocket::emit(curl, sockfd, msg, 0x01)))
           print(string("CURL send Error: ") + curl_easy_strerror(rc));
       };
       void disconnect() override {
-        Curl::WebSocket::emit(curl, sockfd, "", 0x08);
-        Curl::WebSocket::cleanup(curl, sockfd);
+        WebSocket::emit(curl, sockfd, "", 0x08);
+        WebSocket::cleanup(curl, sockfd);
       };
       void reconnect(const string &reason) {
         disconnect();
@@ -463,11 +464,11 @@ namespace ₿ {
       };
       virtual void waitForAsyncData() {
         CURLcode rc;
-        if (CURLE_OK != (rc = Curl::WebSocket::receive(curl, sockfd, buffer)))
+        if (CURLE_OK != (rc = WebSocket::receive(curl, sockfd, buffer)))
           print(string("CURL recv Error: ") + curl_easy_strerror(rc));
         if (buffer.empty()) return;
         for (;;)
-          if (consumed(Curl::WebSocket::unframe(curl, sockfd, buffer)))
+          if (consumed(WebSocket::unframe(curl, sockfd, buffer)))
             break;
       };
       const bool consumed(const string &msg) {
@@ -492,7 +493,8 @@ namespace ₿ {
         return subscription;
       };
   };
-  class GwApiFix: public GwApiWs {
+  class GwApiFix: public GwApiWs,
+                  public Curl::FixSocket {
     private:
                CURL *curl   = nullptr;
       curl_socket_t  sockfd = 0;
@@ -513,30 +515,30 @@ namespace ₿ {
         GwApiWs::connect();
         if (GwApiWs::connected()) {
           CURLcode rc;
-          if (CURLE_OK != (rc = Curl::FixSocket::connect(curl, sockfd, buffer, fix, logon(), sequence, apikey, target)))
+          if (CURLE_OK != (rc = FixSocket::connect(curl, sockfd, buffer, fix, logon(), sequence, apikey, target)))
             reconnect(string("CURL connect FIX Error: ") + curl_easy_strerror(rc));
           else print("FIX success Logon, streaming orders");
         }
       };
       void disconnect() override {
         if (sockfd) print("FIX Logout");
-        Curl::FixSocket::emit(curl, sockfd, "", "5", sequence, apikey, target);
-        Curl::FixSocket::cleanup(curl, sockfd);
+        FixSocket::emit(curl, sockfd, "", "5", sequence, apikey, target);
+        FixSocket::cleanup(curl, sockfd);
         GwApiWs::disconnect();
       };
       const unsigned long beam(const string &msg, const string &type) {
         CURLcode rc;
-        if (CURLE_OK != (rc = Curl::FixSocket::emit(curl, sockfd, msg, type, sequence, apikey, target)))
+        if (CURLE_OK != (rc = FixSocket::emit(curl, sockfd, msg, type, sequence, apikey, target)))
           print(string("CURL send FIX Error: ") + curl_easy_strerror(rc));
         return sequence;
       };
       void waitForAsyncData() override {
         CURLcode rc;
-        if (CURLE_OK != (rc = Curl::FixSocket::receive(curl, sockfd, buffer)))
+        if (CURLE_OK != (rc = FixSocket::receive(curl, sockfd, buffer)))
           print(string("CURL recv FIX Error: ") + curl_easy_strerror(rc));
         if (!buffer.empty())
           for (;;)
-            if (consumed(Curl::FixSocket::unframe(curl, sockfd, buffer, sequence, apikey, target)))
+            if (consumed(FixSocket::unframe(curl, sockfd, buffer, sequence, apikey, target)))
               break;
         GwApiWs::waitForAsyncData();
       };
