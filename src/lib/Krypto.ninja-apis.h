@@ -504,7 +504,7 @@ namespace ₿ {
 //EO non-free Gw library functions from build-*/local/lib/K-*.a (it just redefines all virtual gateway class members above).
       void connect() override {
         GwApiWs::connect();
-        if (GwApiWs::connected()) {
+        if (WebSocket::connected()) {
           CURLcode rc;
           if (CURLE_OK != (rc = FixSocket::connect(fix, logon(), sequence, apikey, target)))
             reconnect(string("CURL connect FIX Error: ") + curl_easy_strerror(rc));

@@ -31,7 +31,7 @@ namespace ₿ {
         }
         return data;
       };
-      const string unframe(string &data, const function<void(const string&)> &pong, const function<void()> &drop) const {
+      const string unframe(string &data, string &pong, bool &drop) const {
         string msg;
         const size_t max = data.length();
         if (max > 1) {
@@ -46,19 +46,22 @@ namespace ₿ {
                                                 |  ((data[7] & 0xFF) << 16)
                                                 |  ((data[8] & 0xFF) <<  8)
                                                 |   (data[9] & 0xFF)       ), pos += 10;
-          if (!flat or pos == key) drop();
+          if (!flat or pos == key)
+            drop = true;
           else if (max >= pos + len) {
             if (mask)
               for (size_t i = 0; i < len; i++)
                 data.at(pos + i) ^= data.at(pos - key + (i % key));
             const unsigned char opcode = data[0] & 0x0F;
             if (opcode == 0x09)
-              pong(frame(data.substr(pos, len), 0x0A, !mask));
-            else if (opcode == 0x02 or opcode == 0x0A or opcode == 0x08
-              or ((data[0] & 0x80) != 0x80 and (opcode == 0x00 or opcode == 0x01))
-            ) {
-              if (opcode == 0x08) drop();
-            } else
+              pong += frame(data.substr(pos, len), 0x0A, !mask);
+            else if (opcode == 0x02
+                  or opcode == 0x08
+                  or opcode == 0x0A
+                  or ((data[0] & 0x80) != 0x80 and (opcode == 0x00
+                                                 or opcode == 0x01))
+            ) drop = opcode == 0x08;
+            else
               msg = data.substr(pos, len);
             data = data.substr(pos + len);
           }
@@ -87,7 +90,7 @@ namespace ₿ {
         data += "10=" + sum.str()               + "\u0001";
         return data;
       };
-      const string unframe(string &data, const function<void(const string&)> &pong, const function<void()> &drop) const {
+      const string unframe(string &data, string &pong, bool &drop) const {
         string msg;
         const size_t end = data.find("\u0001" "10=");
         if (end != string::npos and data.length() > end + 7) {
@@ -95,10 +98,10 @@ namespace ₿ {
           data = data.substr(raw.length());
           if (raw.find("\u0001" "35=0" "\u0001") != string::npos
             or raw.find("\u0001" "35=1" "\u0001") != string::npos
-          ) pong("0");
+          ) pong = "0";
           else if (raw.find("\u0001" "35=5" "\u0001") != string::npos) {
-            pong("5");
-            drop();
+            pong = "5";
+            drop = true;
           } else {
             size_t tok;
             while ((tok = raw.find("\u0001")) != string::npos) {
@@ -310,15 +313,12 @@ namespace ₿ {
             return Easy::emit(frame(data, opcode, true));
           };
           const string unframe() {
-            return WebSocketFrames::unframe(
-              buffer,
-              [&](const string &pong) {
-                Easy::emit(pong);
-              },
-              [&]() {
-                cleanup();
-              }
-            );
+            string pong;
+            bool drop = false;
+            const string msg = WebSocketFrames::unframe(buffer, pong, drop);
+            if (!pong.empty()) Easy::emit(pong);
+            if (drop) cleanup();
+            return msg;
           };
       };
       class FixSocket: public Easy,
@@ -342,15 +342,12 @@ namespace ₿ {
             return Easy::emit(frame(data, type, ++sequence, apikey, target));
           };
           const string unframe(unsigned long &sequence, const string &apikey, const string &target) {
-            return FixFrames::unframe(
-              buffer,
-              [&](const string &pong) {
-                emit("", pong, sequence, apikey, target);
-              },
-              [&]() {
-                cleanup();
-              }
-            );
+            string pong;
+            bool drop = false;
+            const string msg = FixFrames::unframe(buffer, pong, drop);
+            if (!pong.empty()) emit("", pong, sequence, apikey, target);
+            if (drop) cleanup();
+            return msg;
           };
       };
   };
@@ -621,15 +618,10 @@ namespace ₿ {
       };
     protected:
       const string unframe(Frontend &client) {
-        return WebSocketFrames::unframe(
-          client.in,
-          [&](const string &pong) {
-            client.out += pong;
-          },
-          [&]() {
-            client.shutdown();
-          }
-        );
+        bool drop = false;
+        const string msg = WebSocketFrames::unframe(client.in, client.out, drop);
+        if (drop) client.shutdown();
+        return msg;
       };
       const string document(const string &content, const unsigned int &code, const string &type) const {
         string headers;
