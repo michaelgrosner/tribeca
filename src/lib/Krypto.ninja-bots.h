@@ -616,7 +616,7 @@ namespace ₿ {
   class Events {
     private:
       uS::Timer *timer = nullptr;
-      uS::Async *loop  = nullptr;
+      uS::Async *poll  = nullptr;
               unsigned int tick  = 0;
       mutable unsigned int ticks = 300;
       vector<function<const bool(const unsigned int&)>> timeFn;
@@ -632,32 +632,32 @@ namespace ₿ {
         waitFn.push_back(fn);
       };
     protected:
-      void start(uS::Loop *const poll) {
-        timer = new uS::Timer(poll);
+      void start(uS::Loop *const loop) {
+        timer = new uS::Timer(loop);
         timer->setData(this);
         timer->start([](uS::Timer *timer) {
           ((Events*)timer->getData())->timer_1s();
         }, 0, 1e+3);
-        loop = new uS::Async(poll);
-        loop->setData(this);
-        loop->start([](uS::Async *const loop) {
-          ((Events*)loop->getData())->async();
+        poll = new uS::Async(loop);
+        poll->setData(this);
+        poll->start([](uS::Async *const poll) {
+          ((Events*)poll->getData())->async();
         });
       };
       void stop() {
         timer->stop();
-        loop->close();
+        poll->close();
       };
     private:
       void async() {
         bool waiting = false;
         for (const auto &it : waitFn) waiting |= it();
-        if (waiting) loop->send();
+        if (waiting) poll->send();
       };
       void timer_1s() {
         bool waiting = false;
         for (const auto &it : timeFn) waiting |= it(tick);
-        if (waiting) loop->send();
+        if (waiting) poll->send();
         if (++tick >= ticks) tick = 0;
       };
   };
@@ -1312,7 +1312,7 @@ namespace ₿ {
     public:
       Gw *gateway = nullptr;
     private:
-      uWS::Hub *hub = nullptr;
+      uS::Loop *loop = nullptr;
     public:
       KryptoNinja()
         : Client((Option&)*this)
@@ -1345,8 +1345,8 @@ namespace ₿ {
               + " (consider to repeat a few times this check)");
           }
         } {
-          hub = new uWS::Hub(0, true);
-          start(hub->getLoop());
+          loop = uS::Loop::createLoop(true);
+          start(loop);
           ending([&]() {
             gateway->end(arg<int>("dustybot"));
             stop();
@@ -1396,7 +1396,7 @@ namespace ₿ {
         if (k) k->wait();
         else Klass::wait();
         if (gateway->ready())
-          hub->run();
+          loop->run();
       };
       void handshake(const GwExchange::Report &notes = {}) {
         const json reply = gateway->handshake(arg<int>("nocache"));

@@ -74,9 +74,9 @@ namespace ₿ {
     protected:
       const string frame(string data, const string &type, const unsigned long &sequence, const string &sender, const string &target) const {
         data = "35=" + type                     + "\u0001"
+               "34=" + to_string(sequence)      + "\u0001"
                "49=" + sender                   + "\u0001"
                "56=" + target                   + "\u0001"
-               "34=" + to_string(sequence)      + "\u0001"
              + data;
         data = "8=FIX.4.2"                        "\u0001"
                "9="  + to_string(data.length()) + "\u0001"
@@ -131,10 +131,15 @@ namespace ₿ {
           Easy(string &b)
             : buffer(b)
           {};
+        protected:
+          void cleanup() {
+            if (curl) curl_easy_cleanup(curl);
+            curl   = nullptr;
+            sockfd = 0;
+          };
           const bool connected() const {
             return sockfd;
           };
-        protected:
           const CURLcode connect(const string &url, const string &header, const string &res1, const string &res2) {
             buffer.clear();
             CURLcode rc;
@@ -170,11 +175,6 @@ namespace ₿ {
             if (!curl or !sockfd or CURLE_OK != (rc = send(data)))
               cleanup();
             return rc;
-          };
-          void cleanup() {
-            if (curl) curl_easy_cleanup(curl);
-            curl   = nullptr;
-            sockfd = 0;
           };
         private:
           const CURLcode init() {
@@ -336,7 +336,7 @@ namespace ₿ {
             , target(t)
           {};
         protected:
-          const CURLcode connect(const string &uri, string logon) {
+          const CURLcode connect(const string &uri, const string &logon) {
             return Easy::connect(
               "https://" + uri,
               frame(logon, "A", sequence = 1, sender, target),
@@ -434,13 +434,10 @@ namespace ₿ {
                 cork(1);
                 int n = SSL_write(ssl, out.data(), (int)out.length());
                 switch (SSL_get_error(ssl, n)) {
-                  case SSL_ERROR_NONE:        out = out.substr(n);
-                  case SSL_ERROR_ZERO_RETURN: if (time) {
-                                                shutdown();
-                                                return;
-                                              }
                   case SSL_ERROR_WANT_READ:
                   case SSL_ERROR_WANT_WRITE:  break;
+                  case SSL_ERROR_NONE:        out = out.substr(n);
+                  case SSL_ERROR_ZERO_RETURN: if (!time) break;
                   default:                    shutdown();
                                               return;
                 }
@@ -451,11 +448,11 @@ namespace ₿ {
                 int n = SSL_read(ssl, data, sizeof(data));
                 switch (SSL_get_error(ssl, n)) {
                   case SSL_ERROR_NONE:        in.append(data, n);
-                  case SSL_ERROR_ZERO_RETURN:
                   case SSL_ERROR_WANT_READ:
-                  case SSL_ERROR_WANT_WRITE:  break;
-                  default:                    if (time)
-                                                shutdown();
+                  case SSL_ERROR_WANT_WRITE:
+                  case SSL_ERROR_ZERO_RETURN: break;
+                  default:                    if (!time) break;
+                                              shutdown();
                                               return;
                 }
               } while (SSL_pending(ssl));
@@ -464,12 +461,9 @@ namespace ₿ {
                 cork(1);
                 ssize_t n = ::send(sockfd, out.data(), out.length(), MSG_NOSIGNAL);
                 if (n > 0) out = out.substr(n);
-                if (!time) {
-                  if (n < 0)  {
-                    shutdown();
-                    return;
-                  }
-                } else if (out.empty()) {
+                if ((!time and n < 0)
+                  or (time and out.empty())
+                ) {
                   shutdown();
                   return;
                 }

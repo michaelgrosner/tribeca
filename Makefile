@@ -2,7 +2,7 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 5
 PATCH    = 3
-BUILD    = 5
+BUILD    = 6
 SOURCE  := $(notdir $(wildcard src/bin/*))
 CARCH    = x86_64-linux-gnu      \
            arm-linux-gnueabihf   \
@@ -139,7 +139,6 @@ else ifndef KTEST
 	@$(MAKE) KTEST="-DNDEBUG" $@
 else
 	$(CHOST)-g++ $(KTEST) -o $(KLOCAL)/bin/K-$(KSRC) \
-	  -DHAVE_STD_UNIQUE_PTR -DUWS_THREADSAFE         \
 	  -static-libstdc++ -static-libgcc -rdynamic     \
 	  $^ $(KARGS) -ldl
 endif
