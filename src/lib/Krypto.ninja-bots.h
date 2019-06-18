@@ -1102,7 +1102,7 @@ namespace ₿ {
         documents.clear();
       };
       const int clients() {
-        while (server.accept_requests());
+        while (server.accept_request());
         for (auto it = server.requests.begin(); it != server.requests.end();) {
           if (Tstamp > it->time + 21e+3)
             it->shutdown();

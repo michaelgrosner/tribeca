@@ -489,11 +489,12 @@ namespace ₿ {
   };
   class GwApiFix: public GwApiWs,
                   public Curl::FixSocket {
-    private:
-      unsigned long sequence = 0;
     protected:
       string target;
     public:
+      GwApiFix()
+        : FixSocket(apikey, target)
+      {};
       const bool connected() const override {
         return WebSocket::connected()
            and FixSocket::connected();
@@ -506,28 +507,27 @@ namespace ₿ {
         GwApiWs::connect();
         if (WebSocket::connected()) {
           CURLcode rc;
-          if (CURLE_OK != (rc = FixSocket::connect(fix, logon(), sequence, apikey, target)))
+          if (CURLE_OK != (rc = FixSocket::connect(fix, logon())))
             reconnect(string("CURL connect FIX Error: ") + curl_easy_strerror(rc));
           else print("FIX success Logon, streaming orders");
         }
       };
       void disconnect() override {
         if (FixSocket::connected()) print("FIX Logout");
-        FixSocket::emit("", "5", sequence, apikey, target);
+        FixSocket::emit("", "5");
         FixSocket::cleanup();
         GwApiWs::disconnect();
       };
-      const unsigned long beam(const string &msg, const string &type) {
+      void beam(const string &msg, const string &type) {
         CURLcode rc;
-        if (CURLE_OK != (rc = FixSocket::emit(msg, type, sequence, apikey, target)))
+        if (CURLE_OK != (rc = FixSocket::emit(msg, type)))
           print(string("CURL send FIX Error: ") + curl_easy_strerror(rc));
-        return sequence;
       };
       void waitForAsyncData() override {
         CURLcode rc;
         if (CURLE_OK != (rc = FixSocket::receive()))
           print(string("CURL recv FIX Error: ") + curl_easy_strerror(rc));
-        while (accept_msg(FixSocket::unframe(sequence, apikey, target)));
+        while (accept_msg(FixSocket::unframe()));
         GwApiWs::waitForAsyncData();
       };
   };

@@ -72,9 +72,9 @@ namespace ₿ {
 
   class FixFrames {
     protected:
-      const string frame(string data, const string &type, const unsigned long &sequence, const string &apikey, const string &target) const {
+      const string frame(string data, const string &type, const unsigned long &sequence, const string &sender, const string &target) const {
         data = "35=" + type                     + "\u0001"
-               "49=" + apikey                   + "\u0001"
+               "49=" + sender                   + "\u0001"
                "56=" + target                   + "\u0001"
                "34=" + to_string(sequence)      + "\u0001"
              + data;
@@ -277,7 +277,7 @@ namespace ₿ {
       class WebSocket: public Easy,
                        public WebSocketFrames {
         private:
-           string buffer;
+          string buffer;
         public:
           WebSocket()
             : Easy(buffer)
@@ -324,30 +324,39 @@ namespace ₿ {
       class FixSocket: public Easy,
                        public FixFrames {
         private:
-           string buffer;
+          string buffer;
+          unsigned long sequence = 0;
+        private_ref:
+          const string &sender,
+                       &target;
         public:
-          FixSocket()
+          FixSocket(const string &s, const string &t)
             : Easy(buffer)
+            , sender(s)
+            , target(t)
           {};
         protected:
-          const CURLcode connect(const string &uri, string data, unsigned long &sequence, const string &apikey, const string &target) {
+          const CURLcode connect(const string &uri, string logon) {
             return Easy::connect(
               "https://" + uri,
-              frame(data, "A", sequence = 1, apikey, target),
+              frame(logon, "A", sequence = 1, sender, target),
               "8=FIX.4.2" "\u0001",
               "\u0001" "35=A" "\u0001"
             );
           };
-          const CURLcode emit(const string &data, const string &type, unsigned long &sequence, const string &apikey, const string &target) {
-            return Easy::emit(frame(data, type, ++sequence, apikey, target));
+          const CURLcode emit(const string &data, const string &type) {
+            return Easy::emit(frame(data, type, ++sequence, sender, target));
           };
-          const string unframe(unsigned long &sequence, const string &apikey, const string &target) {
+          const string unframe() {
             string pong;
             bool drop = false;
             const string msg = FixFrames::unframe(buffer, pong, drop);
-            if (!pong.empty()) emit("", pong, sequence, apikey, target);
+            if (!pong.empty()) emit("", pong);
             if (drop) cleanup();
             return msg;
+          };
+          const unsigned long last() const {
+            return sequence;
           };
       };
   };
@@ -572,7 +581,7 @@ namespace ₿ {
             }
             return warn;
           };
-          const bool accept_requests() {
+          const bool accept_request() {
             curl_socket_t clientfd;
 #if defined(SOCK_CLOEXEC) && defined(SOCK_NONBLOCK)
             clientfd = accept4(sockfd, nullptr, nullptr, SOCK_CLOEXEC | SOCK_NONBLOCK);
