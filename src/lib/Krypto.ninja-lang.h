@@ -27,22 +27,25 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <getopt.h>
+#include <unistd.h>
 
-#ifdef _WIN32
-#define strsignal to_string
-#else
+#ifndef _WIN32
 #include <execinfo.h>
 #include <sys/resource.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <netdb.h>
 #endif
 
 #include <json.h>
 
 #include <sqlite3.h>
 
-#include <uWS/uWS.h>
-
 #include <curl/curl.h>
 
+#include <openssl/ssl.h>
 #include <openssl/bio.h>
 #include <openssl/evp.h>
 #include <openssl/sha.h>
@@ -69,11 +72,66 @@ using Clock  = long long int;
                  chrono::system_clock::now().time_since_epoch() \
                ).count()
 
-
 //! \def
 //! \brief Archimedes of Syracuse was here, since two millenniums ago.
 #ifndef M_PI_2
 #define M_PI_2 1.5707963267948965579989817342720925807952880859375
+#endif
+
+//! \def
+//! \brief Do like if we care about winy.
+#ifndef strsignal
+#define strsignal to_string
+#endif
+
+//! \def
+//! \brief Do like if we care about winy.
+#ifndef SIGUSR1
+#define SIGUSR1 SIGABRT
+#endif
+
+//! \def
+//! \brief Do like if we care about macos.
+#ifndef TCP_CORK
+#define TCP_CORK TCP_NOPUSH
+#endif
+
+//! \def
+//! \brief Do like if we care about macos or winy.
+#ifndef MSG_NOSIGNAL
+#define MSG_NOSIGNAL  0
+#endif
+
+//! \def
+//! \brief Do like if we care about macos or winy.
+#ifndef SOCK_CLOEXEC
+#define SOCK_CLOEXEC  0
+#endif
+
+//! \def
+//! \brief Do like if we care about macos or winy.
+#ifndef SOCK_NONBLOCK
+#define SOCK_NONBLOCK 0
+#endif
+
+//! \def
+//! \brief Do like if we care about macos or winy.
+#ifndef accept4
+#define accept4(a, b, c, d) accept(a, b, c)
+#endif
+
+//! \def
+//! \brief Do like if we care about winy.
+#ifndef closesocket
+#define closesocket close
+#endif
+
+//! \def
+//! \brief Do like if we care about winy.
+#ifdef _WIN32
+#define OPTVAL const char
+#else
+#define OPTVAL const int
 #endif
 
 //! \def

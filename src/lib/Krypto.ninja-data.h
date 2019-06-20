@@ -371,18 +371,14 @@ namespace ₿ {
             : sockfd(s)
           {};
           void shutdown() {
-#ifdef _WIN32
             closesocket(sockfd);
-#else
-            close(sockfd);
-#endif
             sockfd = 0;
           };
           void cork(const int &enable) const {
-#if defined(TCP_CORK)
+#ifndef _WIN32
             setsockopt(sockfd, IPPROTO_TCP, TCP_CORK, &enable, sizeof(int));
-#elif defined(TCP_NOPUSH)
-            setsockopt(sockfd, IPPROTO_TCP, TCP_NOPUSH, &enable, sizeof(int));
+#endif
+#ifdef __APPLE__
             if (!enable) ::send(sockfd, "", 0, MSG_NOSIGNAL);
 #endif
           };
@@ -504,8 +500,8 @@ namespace ₿ {
                   if (rp->ai_family == AF_INET)
                     socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
               if (sockfd) {
-                int enabled = 1;
-                setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &enabled, sizeof(int));
+                const int enabled = 1;
+                setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, (OPTVAL*)&enabled, sizeof(int));
                 if (::bind(sockfd, rp->ai_addr, rp->ai_addrlen) || ::listen(sockfd, 512))
                   shutdown();
               }
@@ -576,16 +572,11 @@ namespace ₿ {
             return warn;
           };
           const bool accept_request() {
-            curl_socket_t clientfd;
-#if defined(SOCK_CLOEXEC) && defined(SOCK_NONBLOCK)
-            clientfd = accept4(sockfd, nullptr, nullptr, SOCK_CLOEXEC | SOCK_NONBLOCK);
-#else
-            clientfd = accept(sockfd, nullptr, nullptr);
-#endif
+            curl_socket_t clientfd = accept4(sockfd, nullptr, nullptr, SOCK_CLOEXEC | SOCK_NONBLOCK);
 #ifdef __APPLE__
             if (clientfd != -1) {
-                int noSigpipe = 1;
-                setsockopt(clientfd, SOL_SOCKET, SO_NOSIGPIPE, &noSigpipe, sizeof(int));
+              const int noSigpipe = 1;
+              setsockopt(clientfd, SOL_SOCKET, SO_NOSIGPIPE, &noSigpipe, sizeof(int));
             }
 #endif
             if (clientfd != -1) {
@@ -602,20 +593,13 @@ namespace ₿ {
           };
         private:
           void socket(const int &domain, const int &type, const int &protocol) {
-            const int flags =
-    #if defined(SOCK_CLOEXEC) and defined(SOCK_NONBLOCK)
-            SOCK_CLOEXEC | SOCK_NONBLOCK;
-    #else
-            0
-    #endif
-            ;
-            sockfd = ::socket(domain, type | flags, protocol);
-    #ifdef __APPLE__
+            sockfd = ::socket(domain, type | SOCK_CLOEXEC | SOCK_NONBLOCK, protocol);
+#ifdef __APPLE__
             if (sockfd != -1) {
-              int noSigpipe = 1;
+              const int noSigpipe = 1;
               setsockopt(sockfd, SOL_SOCKET, SO_NOSIGPIPE, &noSigpipe, sizeof(int));
             }
-    #endif
+#endif
             if (sockfd == -1) sockfd = 0;
           };
       };

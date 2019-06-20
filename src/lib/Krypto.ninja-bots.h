@@ -290,9 +290,7 @@ namespace ₿ {
         signal(SIGTERM, err);
         signal(SIGABRT, wtf);
         signal(SIGSEGV, wtf);
-#ifndef _WIN32
         signal(SIGUSR1, wtf);
-#endif
       };
       void ending(const function<void()> &fn) {
         endingFn.push_back(fn);
@@ -544,7 +542,7 @@ namespace ₿ {
           args["debug-secret"] = 1;
         if (arg<int>("latency"))
           args["nocache"] = 1;
-#if !defined(_WIN32) and defined(NDEBUG)
+#if !defined _WIN32 and defined NDEBUG
         if (arg<int>("latency") or arg<int>("debug-secret"))
 #endif
           args["naked"] = 1;
