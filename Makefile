@@ -2,7 +2,7 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 5
 PATCH    = 3
-BUILD    = 6
+BUILD    = 7
 SOURCE  := $(notdir $(wildcard src/bin/*))
 CARCH    = x86_64-linux-gnu      \
            arm-linux-gnueabihf   \
@@ -27,20 +27,21 @@ ERR      = *** K require g++ v7 or greater, but it was not found.
 HINT    := consider a symlink at /usr/bin/$(CHOST)-g++ pointing to your g++-7 or g++-8 executable
 
 STEP     = $(shell tput setaf 2;tput setab 0)Building $(1)..$(shell tput sgr0)
-KARGS   := -std=c++17 -O3 -pthread -DK_0_GIT='"$(shell          \
-  cat .git/refs/heads/master 2>/dev/null || echo HEAD)"'        \
-  -DK_STAMP='"$(shell date "+%Y-%m-%d %H:%M:%S")"'              \
-  -DK_0_DAY='"v$(MAJOR).$(MINOR).$(PATCH)+$(BUILD)"'            \
-  -DK_BUILD='"$(KHOST)"'      -DK_SOURCE='"K-$(KSRC)"'          \
-  -I$(KLOCAL)/include         -I$(realpath src/lib)             \
-  $(KLOCAL)/include/uWS/*.cpp $(KLOCAL)/lib/K-$(KHOST).$(ABI).a \
-  $(KLOCAL)/lib/libz.a        $(KLOCAL)/lib/libsqlite3.a        \
-  $(KLOCAL)/lib/libcurl.a     $(KLOCAL)/lib/libcares.a          \
-  $(KLOCAL)/lib/libssl.a      $(KLOCAL)/lib/libcrypto.a         \
-  $(KLOCAL)/lib/libncurses.a                                    \
-  $(wildcard                                                    \
-    $(KLOCAL)/lib/libuv.dll.a $(KLOCAL)/lib/K-$(KSRC)-assets.o  \
-    $(KLOCAL)/lib/libuv.a                                       \
+KARGS   := -std=c++17 -O3 -pthread -DK_0_GIT='"$(shell   \
+  cat .git/refs/heads/master 2>/dev/null || echo HEAD)"' \
+  -DK_STAMP='"$(shell date "+%Y-%m-%d %H:%M:%S")"'       \
+  -DK_0_DAY='"v$(MAJOR).$(MINOR).$(PATCH)+$(BUILD)"'     \
+  -DK_BUILD='"$(KHOST)"'      -I$(KLOCAL)/include        \
+  -DK_SOURCE='"K-$(KSRC)"'    -I$(realpath src/lib)      \
+  $(KLOCAL)/lib/K-$(KHOST).$(ABI).a                      \
+  $(KLOCAL)/lib/libncurses.a  $(KLOCAL)/lib/libsqlite3.a \
+  $(KLOCAL)/lib/libcurl.a     $(KLOCAL)/lib/libcares.a   \
+  $(KLOCAL)/lib/libssl.a      $(KLOCAL)/lib/libcrypto.a  \
+  $(KLOCAL)/lib/libz.a                                   \
+  $(wildcard                                             \
+    $(KLOCAL)/lib/K-$(KSRC)-assets.o                     \
+    $(KLOCAL)/lib/libuv.dll.a                            \
+    $(KLOCAL)/lib/libuv.a                                \
   )
 
 all K: $(SOURCE)
@@ -146,15 +147,14 @@ endif
 Darwin: src/bin/$(KSRC)/$(KSRC).cxx
 	-@egrep \\u20BF src -lR | xargs sed -i 's/\\\(u20BF\)/\1/g'
 	$(CHOST)-g++ -DNDEBUG -o $(KLOCAL)/bin/K-$(KSRC)                             \
-	  -DUSE_LIBUV                                                                \
 	  -msse4.1 -maes -mpclmul -mmacosx-version-min=10.13 -nostartfiles -rdynamic \
 	  $^ $(KARGS) -ldl
 	-@egrep u20BF src -lR | xargs sed -i 's/\(u20BF\)/\\\1/g'
 
 Win32: src/bin/$(KSRC)/$(KSRC).cxx
-	$(CHOST)-g++-posix -DNDEBUG -o $(KLOCAL)/bin/K-$(KSRC).exe   \
-	  -DUSE_LIBUV -D_POSIX -DCURL_STATICLIB                      \
-	  $^ $(KARGS)                                                \
+	$(CHOST)-g++-posix -DNDEBUG -o $(KLOCAL)/bin/K-$(KSRC).exe \
+	  -D_POSIX -DCURL_STATICLIB                                \
+	  $^ $(KARGS)                                              \
 	  -static -lstdc++ -lgcc -lwldap32 -lws2_32
 
 download:

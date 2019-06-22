@@ -10,14 +10,13 @@ V_SQL   = 3280000
 V_NCUR  = 6.1
 V_JSON  = 3.6.1
 V_CATCH = 2.8.0
-V_UWS   = 0.14.8
 V_UV    = 1.29.1
 
 KBUILD := $(abspath ../../build-$(KHOST))
 
 all dist:
 	@mkdir -vp $(KBUILD)
-	$(MAKE) zlib openssl ares curl sqlite ncurses json catch uws libuv
+	$(MAKE) zlib openssl ares curl sqlite ncurses json catch libuv
 ifdef TRAVIS_OS_NAME
 	$(MAKE) lcov pvs
 endif
@@ -92,18 +91,6 @@ catch:
 	&& curl -L https://github.com/catchorg/Catch2/releases/download/v$(V_CATCH)/catch.hpp \
 	-o $(KBUILD)/local/include/catch.h                                                    )
 
-uws:
-	test -d $(KBUILD)/uWebSockets-$(V_UWS)                                                  \
-	|| curl -L https://github.com/uNetworking/uWebSockets/archive/v$(V_UWS).tar.gz          \
-	| tar xz -C $(KBUILD) && rm -rf $(KBUILD)/local/include/uWS                             \
-	&& mkdir -p $(KBUILD)/local/include/uWS                                                 \
-	&& cp $(KBUILD)/uWebSockets-$(V_UWS)/src/* $(KBUILD)/local/include/uWS/                 \
-	&& (test -n "`echo $(CHOST) | grep mingw32`"                                            \
-	&& (sed -i "s/W\(s2tcpip\)/w\1/" $(KBUILD)/local/include/uWS/Networking.h               \
-	&& sed -i "s/WinSock2/winsock2/" $(KBUILD)/local/include/uWS/Networking.h               \
-	&& sed -i "s/uv_.*/return {0, \"\", \"\"};/" $(KBUILD)/local/include/uWS/Socket.cpp     \
-	&& sed -i "/sockaddr_storage/,+16d" $(KBUILD)/local/include/uWS/Socket.cpp) ||         :)
-
 libuv:
 	test -z "`echo $(CHOST) | grep darwin;echo $(CHOST) | grep mingw32`" || test -d $(KBUILD)/libuv-$(V_UV) || ( \
 	curl -L https://github.com/libuv/libuv/archive/v$(V_UV).tar.gz | tar xz -C $(KBUILD)                         \
@@ -129,4 +116,4 @@ else
 	| tar xz -C $(KBUILD) && cd $(KBUILD)/lcov-$(V_LCOV) && sudo make install                             )
 endif
 
-.PHONY: all dist clean zlib openssl curl sqlite ncurses json catch uws libuv lcov pvs
+.PHONY: all dist clean zlib openssl curl sqlite ncurses json catch libuv lcov pvs

@@ -31,13 +31,25 @@
 
 #ifndef _WIN32
 #include <execinfo.h>
-#include <sys/resource.h>
 #include <sys/socket.h>
+#include <sys/resource.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <netdb.h>
 #endif
+
+#if defined _WIN32 or defined __APPLE__
+#define LIB_LOOP Libuv
+#include <uv.h>
+#else
+#define LIB_LOOP Epoll
+#include <fcntl.h>
+#include <sys/epoll.h>
+#include <sys/eventfd.h>
+#endif
+
+#include <zlib.h>
 
 #include <json.h>
 
@@ -80,58 +92,23 @@ using Clock  = long long int;
 
 //! \def
 //! \brief Do like if we care about winy.
-#ifndef strsignal
-#define strsignal to_string
-#endif
-
-//! \def
-//! \brief Do like if we care about winy.
 #ifndef SIGUSR1
 #define SIGUSR1 SIGABRT
+#define strsignal to_string
+#define SOCK_OPTVAL char
+#else
+#define closesocket close
+#define SOCK_OPTVAL int
 #endif
 
 //! \def
-//! \brief Do like if we care about macos.
+//! \brief Do like if we care about macos or winy.
 #ifndef TCP_CORK
 #define TCP_CORK TCP_NOPUSH
-#endif
-
-//! \def
-//! \brief Do like if we care about macos or winy.
-#ifndef MSG_NOSIGNAL
 #define MSG_NOSIGNAL  0
-#endif
-
-//! \def
-//! \brief Do like if we care about macos or winy.
-#ifndef SOCK_CLOEXEC
 #define SOCK_CLOEXEC  0
-#endif
-
-//! \def
-//! \brief Do like if we care about macos or winy.
-#ifndef SOCK_NONBLOCK
 #define SOCK_NONBLOCK 0
-#endif
-
-//! \def
-//! \brief Do like if we care about macos or winy.
-#ifndef accept4
 #define accept4(a, b, c, d) accept(a, b, c)
-#endif
-
-//! \def
-//! \brief Do like if we care about winy.
-#ifndef closesocket
-#define closesocket close
-#endif
-
-//! \def
-//! \brief Do like if we care about winy.
-#ifdef _WIN32
-#define OPTVAL const char
-#else
-#define OPTVAL const int
 #endif
 
 //! \def

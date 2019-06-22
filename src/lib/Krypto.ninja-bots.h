@@ -611,10 +611,138 @@ namespace ₿ {
       };
   };
 
-  class Events {
+  class Loop {
+    public_friend:
+      class Event {
+        public:
+          virtual void timer_1s() = 0;
+          virtual void async()    = 0;
+      };
+    public:
+      virtual void spawn(void *data)  = 0;
+      virtual void run()    = 0;
+      virtual void wakeup() = 0;
+      virtual void stop()   = 0;
+  };
+#if defined _WIN32 or defined __APPLE__
+  class Libuv: public Loop {
     private:
-      uS::Timer *timer = nullptr;
-      uS::Async *poll  = nullptr;
+      uv_timer_t timer;
+      uv_async_t async;
+    public:
+      void spawn(void *data) override {
+        uv_timer_init(async.loop = uv_default_loop(), &timer);
+        timer.data =
+        async.data = data;
+        uv_timer_start(&timer, [](uv_timer_t *timer) {
+          ((Event*)timer->data)->timer_1s();
+        }, 0, 1e+3);
+        uv_async_init(async.loop, &async, [](uv_async_t *async) {
+          ((Event*)async->data)->async();
+        });
+      };
+      void run() override {
+        uv_run(uv_default_loop(), UV_RUN_DEFAULT);
+      };
+      void wakeup() override {
+        uv_async_send(&async);
+      };
+      void stop() override {
+        uv_timer_stop(&timer);
+        uv_close((uv_handle_t*)&timer, [](uv_handle_t* timer){});
+        uv_close((uv_handle_t*)&async, [](uv_handle_t* async){});
+      };
+  };
+#else
+  class Epoll: public Loop {
+    private:
+      curl_socket_t sockfd = 0;
+      epoll_event ready[1024];
+    private:
+      class Timer {
+        public:
+          Event *data = nullptr;
+          chrono::system_clock::time_point next;
+          void (*cb)(Timer*) = nullptr;
+        public:
+          void start() {
+            next = chrono::system_clock::now();
+            cb = [](Timer *timer) {
+              timer->data->timer_1s();
+              timer->next = chrono::system_clock::now()
+                          + std::chrono::seconds(1);
+            };
+          };
+      } timer;
+      class Async {
+        public:
+          Event *data = nullptr;
+          curl_socket_t sockfd = 0;
+          void (*cb)(Async*) = nullptr;
+        public:
+         void start(const curl_socket_t &loopfd) {
+            sockfd = ::eventfd(0, EFD_CLOEXEC);
+            fcntl(sockfd, F_SETFL, fcntl(sockfd, F_GETFL, 0) | O_NONBLOCK);
+            cb = [](Async *async) {
+              uint64_t val;
+              if (::read(async->sockfd, &val, 8) == 8)
+                async->data->async();
+            };
+            epoll_event event;
+            event.events = EPOLLIN;
+            event.data.ptr = this;
+            epoll_ctl(loopfd, EPOLL_CTL_ADD, sockfd, &event);
+          };
+          void wakeup() {
+            uint64_t enable = 1;
+            ::write(sockfd, &enable, 8);
+          };
+          void stop(const curl_socket_t &loopfd) {
+            epoll_event event;
+            epoll_ctl(loopfd, EPOLL_CTL_DEL, sockfd, &event);
+            ::close(sockfd);
+            sockfd = 0;
+          };
+      } async;
+    public:
+      void spawn(void *data) override {
+        if ((sockfd = epoll_create1(EPOLL_CLOEXEC)) == -1)
+          sockfd = 0;
+        else {
+          timer.data =
+          async.data = (Event*)data;
+          timer.start();
+          async.start(sockfd);
+        }
+      };
+      void run() override {
+        while (sockfd) {
+          for (
+            int i = epoll_wait(sockfd, ready, 1024, 0);
+            i --> 0;
+            ((Async*)ready[i].data.ptr)->cb((Async*)ready[i].data.ptr)
+          );
+          if (timer.next < chrono::system_clock::now())
+            timer.cb(&timer);
+        }
+      };
+      void wakeup() override {
+        async.wakeup();
+      };
+      void stop() override {
+        if (sockfd) {
+          async.stop(sockfd);
+          ::close(sockfd);
+          sockfd = 0;
+        }
+      };
+  };
+#endif
+
+  class Events: public Loop::Event {
+    protected:
+      LIB_LOOP loop;
+    private:
               unsigned int tick  = 0;
       mutable unsigned int ticks = 300;
       vector<function<const bool(const unsigned int&)>> timeFn;
@@ -629,33 +757,15 @@ namespace ₿ {
       void wait_for(const function<const bool()> &fn) const {
         waitFn.push_back(fn);
       };
-    protected:
-      void start(uS::Loop *const loop) {
-        timer = new uS::Timer(loop);
-        timer->setData(this);
-        timer->start([](uS::Timer *timer) {
-          ((Events*)timer->getData())->timer_1s();
-        }, 0, 1e+3);
-        poll = new uS::Async(loop);
-        poll->setData(this);
-        poll->start([](uS::Async *const poll) {
-          ((Events*)poll->getData())->async();
-        });
-      };
-      void stop() {
-        timer->stop();
-        poll->close();
-      };
-    private:
       void async() {
         bool waiting = false;
         for (const auto &it : waitFn) waiting |= it();
-        if (waiting) poll->send();
+        if (waiting) loop.wakeup();
       };
       void timer_1s() {
         bool waiting = false;
         for (const auto &it : timeFn) waiting |= it(tick);
-        if (waiting) poll->send();
+        if (waiting) loop.wakeup();
         if (++tick >= ticks) tick = 0;
       };
   };
@@ -1309,8 +1419,6 @@ namespace ₿ {
                      public Client {
     public:
       Gw *gateway = nullptr;
-    private:
-      uS::Loop *loop = nullptr;
     public:
       KryptoNinja()
         : Client((Option&)*this)
@@ -1343,11 +1451,10 @@ namespace ₿ {
               + " (consider to repeat a few times this check)");
           }
         } {
-          loop = uS::Loop::createLoop(true);
-          start(loop);
+          loop.spawn((Events*)this);
           ending([&]() {
             gateway->end(arg<int>("dustybot"));
-            stop();
+            loop.stop();
             curl_global_cleanup();
           });
           wait_for([&]() {
@@ -1394,7 +1501,7 @@ namespace ₿ {
         if (k) k->wait();
         else Klass::wait();
         if (gateway->ready())
-          loop->run();
+          loop.run();
       };
       void handshake(const GwExchange::Report &notes = {}) {
         const json reply = gateway->handshake(arg<int>("nocache"));

@@ -371,7 +371,7 @@ namespace ₿ {
             : sockfd(s)
           {};
           void shutdown() {
-            closesocket(sockfd);
+            ::closesocket(sockfd);
             sockfd = 0;
           };
           void cork(const int &enable) const {
@@ -501,7 +501,7 @@ namespace ₿ {
                     socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
               if (sockfd) {
                 const int enabled = 1;
-                setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, (OPTVAL*)&enabled, sizeof(int));
+                setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, (SOCK_OPTVAL*)&enabled, sizeof(int));
                 if (::bind(sockfd, rp->ai_addr, rp->ai_addrlen) || ::listen(sockfd, 512))
                   shutdown();
               }
