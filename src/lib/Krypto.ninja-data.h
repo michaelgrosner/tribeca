@@ -286,28 +286,41 @@ namespace ₿ {
           const CURLcode connect(const string &uri) {
             CURLcode rc = CURLE_URL_MALFORMAT;
             CURLU *url = curl_url();
-            char *host,
-                 *port,
-                 *path;
-            if (  !curl_url_set(url, CURLUPART_URL, ("http" + uri.substr(2)).data(), 0)
-              and !curl_url_get(url, CURLUPART_HOST, &host, 0)
-              and !curl_url_get(url, CURLUPART_PORT, &port, CURLU_DEFAULT_PORT)
-              and !curl_url_get(url, CURLUPART_PATH, &path, 0)
-            ) rc = CURLE_OK;
+            char *host_,
+                 *port_,
+                 *path_;
+            string header;
+            if (!curl_url_set(url, CURLUPART_URL, ("http" + uri.substr(2)).data(), 0)) {
+              if (!curl_url_get(url, CURLUPART_HOST, &host_, 0)) {
+                header = string(host_);
+                curl_free(host_);
+                if (!curl_url_get(url, CURLUPART_PORT, &port_, CURLU_DEFAULT_PORT)) {
+                  header += ":" + string(port_);
+                  curl_free(port_);
+                  if (!curl_url_get(url, CURLUPART_PATH, &path_, 0)) {
+                    header = "GET " + string(path_) + " HTTP/1.1"
+                             "\r\n" "Host: " + header +
+                             "\r\n" "Upgrade: websocket"
+                             "\r\n" "Connection: Upgrade"
+                             "\r\n" "Sec-WebSocket-Key: x3JJHMbDL1EzLkh9GBhXDw=="
+                             "\r\n" "Sec-WebSocket-Version: 13"
+                             "\r\n"
+                             "\r\n";
+                    curl_free(path_);
+                    rc = CURLE_OK;
+                  }
+                }
+              }
+            }
             curl_url_cleanup(url);
-            return rc ?: Easy::connect(
-              "http" + uri.substr(2),
-              "GET " + string(path) + " HTTP/1.1"
-                "\r\n" "Host: " + string(host) + ":" + string(port) +
-                "\r\n" "Upgrade: websocket"
-                "\r\n" "Connection: Upgrade"
-                "\r\n" "Sec-WebSocket-Key: x3JJHMbDL1EzLkh9GBhXDw=="
-                "\r\n" "Sec-WebSocket-Version: 13"
-                "\r\n"
-                "\r\n",
-              "HTTP/1.1 101 Switching Protocols",
-              "HSmrc0sMlYUkAGmm5OPpG2HaGWk="
-            );
+            return rc != CURLE_OK
+                 ? rc
+                 : Easy::connect(
+                     "http" + uri.substr(2),
+                     header,
+                     "HTTP/1.1 101 Switching Protocols",
+                     "HSmrc0sMlYUkAGmm5OPpG2HaGWk="
+                   );
           };
           const CURLcode emit(const string &data, const int &opcode) {
             return Easy::emit(frame(data, opcode, true));
@@ -587,7 +600,7 @@ namespace ₿ {
                 SSL_set_fd(ssl, clientfd);
                 SSL_set_mode(ssl, SSL_MODE_RELEASE_BUFFERS);
               }
-              requests.push_back(Frontend(clientfd, ssl));
+              requests.emplace_back(clientfd, ssl);
             }
             return clientfd > 0;
           };
@@ -639,6 +652,139 @@ namespace ₿ {
              + content;
       };
   };
+
+  class Loop {
+    public_friend:
+      class Event {
+        public:
+          virtual void timer_1s() = 0;
+      };
+      class Async {
+        public:
+          virtual void wakeup() = 0;
+      };
+    public:
+      virtual void spawn(void *data) = 0;
+      virtual Async *poll(const function<void()> &data) = 0;
+      virtual void run()             = 0;
+      virtual void stop()            = 0;
+  };
+#if defined _WIN32 or defined __APPLE__
+  class Libuv: public Loop {
+    public_friend:
+      class Async: public Loop::Async {
+        public:
+          uv_async_t event;
+          function<void()> callback = nullptr;
+        public:
+          Async()
+          : event()
+          {
+            event.loop = uv_default_loop();
+            event.data = this;
+          };
+          void wakeup() override {
+            uv_async_send(&event);
+          };
+      };
+    private:
+          uv_timer_t timer;
+      vector<Async*> async;
+    public:
+      Libuv()
+      : timer()
+      {};
+      void spawn(void *data) override {
+        uv_timer_init(uv_default_loop(), &timer);
+        timer.data = data;
+        uv_timer_start(&timer, [](uv_timer_t *timer) {
+          ((Event*)timer->data)->timer_1s();
+        }, 0, 1e+3);
+      };
+      Loop::Async *poll(const function<void()> &data) override {
+        async.push_back(new Async());
+        async.back()->callback = data;
+        uv_async_init(async.back()->event.loop, &async.back()->event, [](uv_async_t *event) {
+          ((Async*)event->data)->callback();
+        });
+        return async.back();
+      };
+      void run() override {
+        uv_run(uv_default_loop(), UV_RUN_DEFAULT);
+      };
+      void stop() override {
+        uv_timer_stop(&timer);
+        uv_close((uv_handle_t*)&timer, [](uv_handle_t* event){});
+        for (auto &it : async)
+          uv_close((uv_handle_t*)&it->event, [](uv_handle_t* event){});
+      };
+  };
+#else
+  class Epoll: public Loop {
+    public_friend:
+      class Async: public Loop::Async {
+        public:
+          curl_socket_t sockfd = 0;
+          function<void()> callback = nullptr;
+        public:
+          Async(const curl_socket_t &loopfd)
+          {
+            sockfd = ::eventfd(0, EFD_CLOEXEC);
+            fcntl(sockfd, F_SETFL, fcntl(sockfd, F_GETFL, 0) | O_NONBLOCK);
+            epoll_event event;
+            event.events = EPOLLIN;
+            event.data.ptr = this;
+            epoll_ctl(loopfd, EPOLL_CTL_ADD, sockfd, &event);
+          };
+          void wakeup() override {
+            uint64_t enable = 1;
+            ::write(sockfd, &enable, 8);
+          };
+      };
+    private:
+      curl_socket_t sockfd = 0;
+      epoll_event ready[1024] = {};
+      Event *data = nullptr;
+      chrono::system_clock::time_point timer = chrono::system_clock::now();
+      vector<Async*> async;
+    public:
+      void spawn(void *d) override {
+        data = (Event*)d;
+        if ((sockfd = epoll_create1(EPOLL_CLOEXEC)) == -1)
+          sockfd = 0;
+      };
+      Loop::Async *poll(const function<void()> &data) override {
+        async.push_back(new Async(sockfd));
+        async.back()->callback = data;
+        return async.back();
+      };
+      void run() override {
+        while (sockfd) {
+          const int events = epoll_wait(sockfd, ready, 1024, 0);
+          for (int i = 0; i < events; i++) {
+            uint64_t val;
+            if (::read(((Async*)ready[i].data.ptr)->sockfd, &val, 8) == 8)
+              ((Async*)ready[i].data.ptr)->callback();
+          }
+          if (timer < chrono::system_clock::now()) {
+            data->timer_1s();
+            timer = chrono::system_clock::now()
+                  + std::chrono::seconds(1);
+          }
+        }
+      };
+      void stop() override {
+        for (auto &it : async) {
+          epoll_event event;
+          epoll_ctl(sockfd, EPOLL_CTL_DEL, it->sockfd, &event);
+          ::close(it->sockfd);
+          it->sockfd = 0;
+        }
+        ::close(sockfd);
+        sockfd = 0;
+      };
+  };
+#endif
 
   class Text {
     public:

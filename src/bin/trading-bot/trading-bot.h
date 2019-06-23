@@ -108,7 +108,6 @@ class Engine: public Klass {
           wallet.safety.timer_1s();
           calcQuotes();
         }
-        return false;
       });
     };
   private:

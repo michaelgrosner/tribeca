@@ -179,6 +179,7 @@ namespace ₿ {
                 amount,
                 percent;
       } decimal;
+      Loop::Async* event = nullptr;
       function<void(const mOrder&)>       write_mOrder;
       function<void(const mTrade&)>       write_mTrade;
       function<void(const mLevels&)>      write_mLevels;
@@ -188,8 +189,8 @@ namespace ₿ {
            askForReplace   = false,
            askForCancelAll = false;
       const RandId (*randId)() = nullptr;
-      virtual const bool askForData(const unsigned int &tick) = 0;
-      virtual const bool waitForData() = 0;
+      virtual void askForData(const unsigned int &tick) = 0;
+      virtual void waitForData() = 0;
       void place(const mOrder *const order) {
         place(
           order->orderId,
@@ -235,54 +236,45 @@ namespace ₿ {
       future<vector<mTrade>> replyTrades;
       future<vector<mOrder>> replyOrders;
       future<vector<mOrder>> replyCancelAll;
-      const bool askForNeverAsyncData(const unsigned int &tick) {
-        bool waiting = false;
-        if ((askForFees
-          and !(askForFees = false)
-          ) or !(tick % 15)) waiting |= !(async_wallet() or !askFor(replyWallets, [&]() { return sync_wallet(); }));
+      void askForNeverAsyncData(const unsigned int &tick) {
+        if (((askForFees and !(askForFees = false))
+          or !(tick % 15))
+          and !async_wallet()) askFor(replyWallets,   [&]() { auto reply = sync_wallet();    event->wakeup(); return reply; });
         if (askForCancelAll
-          and !(tick % 300)) waiting |= askFor(replyCancelAll, [&]() { return sync_cancelAll(); });
-        return waiting;
+          and !(tick % 300))   askFor(replyCancelAll, [&]() { auto reply = sync_cancelAll(); event->wakeup(); return reply; });
       };
-      const bool askForSyncData(const unsigned int &tick) {
-        bool waiting = false;
-        if (!(tick % 2))     waiting |= askFor(replyOrders, [&]() { return sync_orders(); });
-                             waiting |= askForNeverAsyncData(tick);
-        if (!(tick % 3))     waiting |= askFor(replyLevels, [&]() { return sync_levels(); });
-        if (!(tick % 60))    waiting |= askFor(replyTrades, [&]() { return sync_trades(); });
-        return waiting;
+      void askForSyncData(const unsigned int &tick) {
+        if (!(tick % 2))       askFor(replyOrders,    [&]() { auto reply = sync_orders();    event->wakeup(); return reply; });
+                               askForNeverAsyncData(tick);
+        if (!(tick % 3))       askFor(replyLevels,    [&]() { auto reply = sync_levels();    event->wakeup(); return reply; });
+        if (!(tick % 60))      askFor(replyTrades,    [&]() { auto reply = sync_trades();    event->wakeup(); return reply; });
       };
-      const bool waitForNeverAsyncData() {
-        return waitFor(replyWallets,   write_mWallets)
-             | waitFor(replyCancelAll, write_mOrder);
+      void waitForNeverAsyncData() {
+        waitFor(replyWallets,   write_mWallets);
+        waitFor(replyCancelAll, write_mOrder);
       };
-      const bool waitForSyncData() {
-        return waitFor(replyOrders,    write_mOrder)
-             | waitForNeverAsyncData()
-             | waitFor(replyLevels,    write_mLevels)
-             | waitFor(replyTrades,    write_mTrade);
+      void waitForSyncData() {
+        waitFor(replyOrders,    write_mOrder);
+        waitForNeverAsyncData();
+        waitFor(replyLevels,    write_mLevels);
+        waitFor(replyTrades,    write_mTrade);
       };
-      template<typename T1, typename T2> const bool askFor(
+      template<typename T1, typename T2> void askFor(
               future<vector<T1>> &reply,
         const T2                 &read
       ) {
-        bool waiting = reply.valid();
-        if (!waiting) {
+        if (!reply.valid())
           reply = ::async(launch::async, read);
-          waiting = true;
-        }
-        return waiting;
       };
-      template<typename T> const unsigned int waitFor(
+      template<typename T> void waitFor(
               future<vector<T>>        &reply,
         const function<void(const T&)> &write
       ) {
-        bool waiting = reply.valid();
-        if (waiting and reply.wait_for(chrono::nanoseconds(0)) == future_status::ready) {
-          for (T &it : reply.get()) write(it);
-          waiting = false;
+        if (reply.valid()) {
+          if (reply.wait_for(chrono::nanoseconds(0)) == future_status::ready) {
+            for (T &it : reply.get()) write(it);
+          } else event->wakeup();
         }
-        return waiting;
       };
   };
 
@@ -405,11 +397,11 @@ namespace ₿ {
 
   class GwApiREST: public Gw {
     public:
-      const bool askForData(const unsigned int &tick) override {
-        return askForSyncData(tick);
+      void askForData(const unsigned int &tick) override {
+        askForSyncData(tick);
       };
-      const bool waitForData() override {
-        return waitForSyncData();
+      void waitForData() override {
+        waitForSyncData();
       };
   };
   class GwApiWs: public Gw,
@@ -421,19 +413,20 @@ namespace ₿ {
       const bool connected() const override {
         return WebSocket::connected();
       };
-      const bool askForData(const unsigned int &tick) override {
-        if (countdown and !--countdown)
+      void askForData(const unsigned int &tick) override {
+        if (countdown and !--countdown) {
           connect();
+          event->wakeup();
+        }
         if (connected() and subscribed())
           askForNeverAsyncData(tick);
-        return true;
       };
-      const bool waitForData() override {
+      void waitForData() override {
         if (subscribed()) {
           waitForAsyncData();
+          event->wakeup();
           waitForNeverAsyncData();
         }
-        return true;
       };
     protected:
 //BO non-free Gw library functions from build-*/local/lib/K-*.a (it just redefines all virtual gateway class members below).

@@ -38,8 +38,8 @@ openssl:
 	&& cd $(KBUILD)/openssl-$(V_SSL) && CC=gcc                                                \
 	./Configure $(shell test -n "`echo $(CHOST) | grep mingw32`" && echo mingw64 || echo gcc) \
 	--cross-compile-prefix=$(CHOST)- --prefix=$(KBUILD)/local --openssldir=$(KBUILD)/local    \
-	&& sed -i "/getentropy /d" crypto/rand/rand_unix.c                                        \
-	&& sed -i "/ getentropy/d" crypto/rand/rand_unix.c                                        \
+	&& sed -i "/extern int getentrop/,+4d" crypto/rand/rand_unix.c                            \
+	&& sed -i "s/^\(\#.*if\).*__ELF__.*$$/\1 1/" crypto/rand/rand_unix.c                      \
 	&& make all install_sw install_ssldirs                                                    )
 
 ares:

@@ -228,7 +228,7 @@ namespace ₿ {
 
   class Rollout {
     public:
-      Rollout(/* KMxTWEpb9ig */) {
+      void rollout(/* KMxTWEpb9ig */) {
 #ifdef NDEBUG
         version();
 #else
@@ -328,16 +328,18 @@ namespace ₿ {
         const string mods = changelog();
         if (mods.empty()) {
           epilogue += "(Three-Headed Monkey found):\n"                  + epitaph
-            + "- lastbeat: " + to_string((float)clock()/CLOCKS_PER_SEC) + '\n'
             + "- binbuild: " + string(K_SOURCE)                         + ' '
                              + string(K_BUILD)                          + '\n'
+            + "- lastbeat: " + to_string((float)clock()/CLOCKS_PER_SEC) + '\n'
 #ifndef _WIN32
             + "- tracelog: " + '\n';
           void *k[69];
           size_t jumps = backtrace(k, 69);
           char **trace = backtrace_symbols(k, jumps);
-          for (size_t i = 0; i < jumps; i++)
-            epilogue += string(trace[i]) + '\n';
+          for (;
+            jumps --> 0;
+            epilogue += "  " + to_string(jumps) + ": " + string(trace[jumps]) + '\n'
+          );
           free(trace)
 #endif
           ;
@@ -611,161 +613,25 @@ namespace ₿ {
       };
   };
 
-  class Loop {
-    public_friend:
-      class Event {
-        public:
-          virtual void timer_1s() = 0;
-          virtual void async()    = 0;
-      };
-    public:
-      virtual void spawn(void *data)  = 0;
-      virtual void run()    = 0;
-      virtual void wakeup() = 0;
-      virtual void stop()   = 0;
-  };
-#if defined _WIN32 or defined __APPLE__
-  class Libuv: public Loop {
-    private:
-      uv_timer_t timer;
-      uv_async_t async;
-    public:
-      void spawn(void *data) override {
-        uv_timer_init(async.loop = uv_default_loop(), &timer);
-        timer.data =
-        async.data = data;
-        uv_timer_start(&timer, [](uv_timer_t *timer) {
-          ((Event*)timer->data)->timer_1s();
-        }, 0, 1e+3);
-        uv_async_init(async.loop, &async, [](uv_async_t *async) {
-          ((Event*)async->data)->async();
-        });
-      };
-      void run() override {
-        uv_run(uv_default_loop(), UV_RUN_DEFAULT);
-      };
-      void wakeup() override {
-        uv_async_send(&async);
-      };
-      void stop() override {
-        uv_timer_stop(&timer);
-        uv_close((uv_handle_t*)&timer, [](uv_handle_t* timer){});
-        uv_close((uv_handle_t*)&async, [](uv_handle_t* async){});
-      };
-  };
-#else
-  class Epoll: public Loop {
-    private:
-      curl_socket_t sockfd = 0;
-      epoll_event ready[1024];
-    private:
-      class Timer {
-        public:
-          Event *data = nullptr;
-          chrono::system_clock::time_point next;
-          void (*cb)(Timer*) = nullptr;
-        public:
-          void start() {
-            next = chrono::system_clock::now();
-            cb = [](Timer *timer) {
-              timer->data->timer_1s();
-              timer->next = chrono::system_clock::now()
-                          + std::chrono::seconds(1);
-            };
-          };
-      } timer;
-      class Async {
-        public:
-          Event *data = nullptr;
-          curl_socket_t sockfd = 0;
-          void (*cb)(Async*) = nullptr;
-        public:
-         void start(const curl_socket_t &loopfd) {
-            sockfd = ::eventfd(0, EFD_CLOEXEC);
-            fcntl(sockfd, F_SETFL, fcntl(sockfd, F_GETFL, 0) | O_NONBLOCK);
-            cb = [](Async *async) {
-              uint64_t val;
-              if (::read(async->sockfd, &val, 8) == 8)
-                async->data->async();
-            };
-            epoll_event event;
-            event.events = EPOLLIN;
-            event.data.ptr = this;
-            epoll_ctl(loopfd, EPOLL_CTL_ADD, sockfd, &event);
-          };
-          void wakeup() {
-            uint64_t enable = 1;
-            ::write(sockfd, &enable, 8);
-          };
-          void stop(const curl_socket_t &loopfd) {
-            epoll_event event;
-            epoll_ctl(loopfd, EPOLL_CTL_DEL, sockfd, &event);
-            ::close(sockfd);
-            sockfd = 0;
-          };
-      } async;
-    public:
-      void spawn(void *data) override {
-        if ((sockfd = epoll_create1(EPOLL_CLOEXEC)) == -1)
-          sockfd = 0;
-        else {
-          timer.data =
-          async.data = (Event*)data;
-          timer.start();
-          async.start(sockfd);
-        }
-      };
-      void run() override {
-        while (sockfd) {
-          for (
-            int i = epoll_wait(sockfd, ready, 1024, 0);
-            i --> 0;
-            ((Async*)ready[i].data.ptr)->cb((Async*)ready[i].data.ptr)
-          );
-          if (timer.next < chrono::system_clock::now())
-            timer.cb(&timer);
-        }
-      };
-      void wakeup() override {
-        async.wakeup();
-      };
-      void stop() override {
-        if (sockfd) {
-          async.stop(sockfd);
-          ::close(sockfd);
-          sockfd = 0;
-        }
-      };
-  };
-#endif
-
   class Events: public Loop::Event {
     protected:
       LIB_LOOP loop;
     private:
               unsigned int tick  = 0;
       mutable unsigned int ticks = 300;
-      vector<function<const bool(const unsigned int&)>> timeFn;
-      mutable vector<function<const bool()>> waitFn;
+      vector<function<void(const unsigned int&)>> timeFn;
     public:
       void timer_ticks_factor(const unsigned int &factor) const {
         ticks = 300 * (factor ?: 1);
       };
-      void timer_1s(const function<const bool(const unsigned int&)> &fn) {
+      void timer_1s(const function<void(const unsigned int&)> &fn) {
         timeFn.push_back(fn);
       };
-      void wait_for(const function<const bool()> &fn) const {
-        waitFn.push_back(fn);
+      Loop::Async *wait_for(const function<void()> &fn) {
+        return loop.poll(fn);
       };
-      void async() {
-        bool waiting = false;
-        for (const auto &it : waitFn) waiting |= it();
-        if (waiting) loop.wakeup();
-      };
-      void timer_1s() {
-        bool waiting = false;
-        for (const auto &it : timeFn) waiting |= it(tick);
-        if (waiting) loop.wakeup();
+      void timer_1s() override {
+        for (const auto &it : timeFn) it(tick);
         if (++tick >= ticks) tick = 0;
       };
   };
@@ -781,10 +647,12 @@ namespace ₿ {
           };
       };
     private:
+      Loop::Async* event = nullptr;
       future<char> keylogger;
       mutable unordered_map<char, function<void()>> hotFn;
     protected:
-      void legit_keylogger() {
+      void legit_keylogger(Loop::Async *e) {
+        event = e;
         if (hotFn.empty()) return;
         if (keylogger.valid())
           error("SH", string("Unable to launch another \"keylogger\" thread"));
@@ -793,16 +661,13 @@ namespace ₿ {
         keypad(stdscr, true);
         launch_keylogger();
       };
-      const bool keylog() {
-        if (keylogger.valid()
-          and keylogger.wait_for(chrono::nanoseconds(0)) == future_status::ready
-        ) {
+      void keylog() {
+        if (keylogger.valid()) {
           const char ch = keylogger.get();
           if (hotFn.find(ch) != hotFn.end())
             hotFn.at(ch)();
           launch_keylogger();
         }
-        return false;
       };
     private:
       void keymap(const char &ch, function<void()> fn) const {
@@ -815,6 +680,7 @@ namespace ₿ {
           int ch = ERR;
           while (ch == ERR and !hotFn.empty())
             ch = getch();
+          event->wakeup();
           return ch == ERR ? '\r' : (char)ch;
         });
       };
@@ -1141,6 +1007,7 @@ namespace ₿ {
     protected:
       unordered_map<string, pair<const char*, const int>> documents;
     private:
+      Loop::Async* event = nullptr;
       Backend server;
       mutable unsigned int delay = 0;
       mutable vector<Readable*> readable;
@@ -1156,7 +1023,8 @@ namespace ₿ {
       Client(const Option &o)
         : option(o)
       {};
-      void listen() {
+      void listen(Loop::Async *e) {
+        event = e;
         if (!server.listen(
           option.arg<string>("interface"),
           option.arg<int>("port"),
@@ -1209,7 +1077,7 @@ namespace ₿ {
         clickable.clear();
         documents.clear();
       };
-      const int clients() {
+      void clients() {
         while (server.accept_request());
         for (auto it = server.requests.begin(); it != server.requests.end();) {
           if (Tstamp > it->time + 21e+3)
@@ -1282,8 +1150,8 @@ namespace ₿ {
             it = server.sockets.erase(it);
           } else ++it;
         }
-        return server.requests.size()
-             + server.sockets.size();
+        if (!(server.requests.empty() and server.sockets.empty()))
+          event->wakeup();
       };
       void withoutGoodbye() {
         for (auto &it : server.requests)
@@ -1426,14 +1294,15 @@ namespace ₿ {
       KryptoNinja *const main(int argc, char** argv) {
         {
           curl_global_init(CURL_GLOBAL_ALL);
+          rollout();
           Option::main(argc, argv, databases, documents.empty());
           setup();
+          loop.spawn((Events*)this);
         } {
           if (windowed()) {
-            legit_keylogger();
-            wait_for([&]() {
-              return keylog();
-            });
+            legit_keylogger(wait_for([&]() {
+              keylog();
+            }));
           }
         } {
           log("CF", "Outbound IP address is",
@@ -1451,17 +1320,16 @@ namespace ₿ {
               + " (consider to repeat a few times this check)");
           }
         } {
-          loop.spawn((Events*)this);
           ending([&]() {
             gateway->end(arg<int>("dustybot"));
             loop.stop();
             curl_global_cleanup();
           });
-          wait_for([&]() {
-            return gateway->waitForData();
+          gateway->event = wait_for([&]() {
+            gateway->waitForData();
           });
           timer_1s([&](const unsigned int &tick) {
-            return gateway->askForData(tick);
+            gateway->askForData(tick);
           });
           handshake({
             {"gateway", gateway->http      },
@@ -1481,13 +1349,12 @@ namespace ₿ {
         } {
           if (arg<int>("headless")) headless();
           else {
-            listen();
+            listen(wait_for([&]() {
+              clients();
+            }));
             timer_1s([&](const unsigned int &tick) {
               broadcast(tick);
-              return clients();
-            });
-            wait_for([&]() {
-              return clients();
+              clients();
             });
             ending([&]() {
               withoutGoodbye();

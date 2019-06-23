@@ -49,8 +49,6 @@
 #include <sys/eventfd.h>
 #endif
 
-#include <zlib.h>
-
 #include <json.h>
 
 #include <sqlite3.h>
