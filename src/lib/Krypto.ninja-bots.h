@@ -291,6 +291,7 @@ namespace ₿ {
         signal(SIGABRT, wtf);
         signal(SIGSEGV, wtf);
         signal(SIGUSR1, wtf);
+        signal(SIGPIPE, SIG_IGN);
       };
       void ending(const function<void()> &fn) {
         endingFn.push_back(fn);
@@ -613,26 +614,18 @@ namespace ₿ {
       };
   };
 
-  class Events: public Loop::Event {
+  class Events {
     protected:
       LIB_LOOP loop;
-    private:
-              unsigned int tick  = 0;
-      mutable unsigned int ticks = 300;
-      vector<function<void(const unsigned int&)>> timeFn;
     public:
       void timer_ticks_factor(const unsigned int &factor) const {
-        ticks = 300 * (factor ?: 1);
+        loop.ticks(factor);
       };
       void timer_1s(const function<void(const unsigned int&)> &fn) {
-        timeFn.push_back(fn);
+        loop.spawn(fn);
       };
       Loop::Async *wait_for(const function<void()> &fn) {
-        return loop.poll(fn);
-      };
-      void timer_1s() override {
-        for (const auto &it : timeFn) it(tick);
-        if (++tick >= ticks) tick = 0;
+        return loop.spawn(fn);
       };
   };
 
@@ -1297,7 +1290,6 @@ namespace ₿ {
           rollout();
           Option::main(argc, argv, databases, documents.empty());
           setup();
-          loop.spawn((Events*)this);
         } {
           if (windowed()) {
             legit_keylogger(wait_for([&]() {
@@ -1322,7 +1314,7 @@ namespace ₿ {
         } {
           ending([&]() {
             gateway->end(arg<int>("dustybot"));
-            loop.stop();
+            loop.end();
             curl_global_cleanup();
           });
           gateway->event = wait_for([&]() {

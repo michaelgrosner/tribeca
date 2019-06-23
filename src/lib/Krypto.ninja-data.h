@@ -1,7 +1,7 @@
 #ifndef K_DATA_H_
 #define K_DATA_H_
 //! \file
-//! \brief Data transfer/transform helpers.
+//! \brief Data transport/transform helpers.
 
 namespace ₿ {
   class WebSocketFrames {
@@ -655,66 +655,89 @@ namespace ₿ {
 
   class Loop {
     public_friend:
-      class Event {
+      class Timer {
         public:
-          virtual void timer_1s() = 0;
+                  unsigned int tick  = 0;
+          mutable unsigned int ticks = 300;
+          vector<function<void(const unsigned int&)>> callbacks;
+        public:
+          void timer_1s() {
+            for (const auto &it : callbacks) it(tick);
+            if (++tick >= ticks) tick = 0;
+          };
+          void ticks_factor(const unsigned int &factor) const {
+            ticks = 300 * (factor ?: 1);
+          };
       };
       class Async {
         public:
+          function<void()> callback = nullptr;
+        public:
+          Async(const function<void()> &data)
+          : callback(data)
+          {};
           virtual void wakeup() = 0;
       };
     public:
-      virtual void spawn(void *data) = 0;
-      virtual Async *poll(const function<void()> &data) = 0;
-      virtual void run()             = 0;
-      virtual void stop()            = 0;
+      virtual  void  spawn(const function<void(const unsigned int&)>&) = 0;
+      virtual Async *spawn(const function<void()>&)                    = 0;
+      virtual  void  run()                                             = 0;
+      virtual  void  end()                                             = 0;
   };
 #if defined _WIN32 or defined __APPLE__
   class Libuv: public Loop {
     public_friend:
+      class Timer: public Loop::Timer {
+        public:
+          uv_timer_t event;
+        public:
+          Timer()
+          : event()
+          {
+            event.data = this;
+            uv_timer_init(uv_default_loop(), &event);
+            uv_timer_start(&event, [](uv_timer_t *event) {
+              ((Timer*)event->data)->timer_1s();
+            }, 0, 1e+3);
+          };
+      };
       class Async: public Loop::Async {
         public:
           uv_async_t event;
-          function<void()> callback = nullptr;
         public:
-          Async()
-          : event()
+          Async(const function<void()> &data)
+          : Loop::Async(data)
+          , event()
           {
-            event.loop = uv_default_loop();
             event.data = this;
+            uv_async_init(uv_default_loop(), &event, [](uv_async_t *event) {
+              ((Async*)event->data)->callback();
+            });
           };
           void wakeup() override {
             uv_async_send(&event);
           };
       };
     private:
-          uv_timer_t timer;
+               Timer timer;
       vector<Async*> async;
     public:
-      Libuv()
-      : timer()
-      {};
-      void spawn(void *data) override {
-        uv_timer_init(uv_default_loop(), &timer);
-        timer.data = data;
-        uv_timer_start(&timer, [](uv_timer_t *timer) {
-          ((Event*)timer->data)->timer_1s();
-        }, 0, 1e+3);
+      void ticks(const unsigned int &factor) const {
+        timer.ticks_factor(factor);
       };
-      Loop::Async *poll(const function<void()> &data) override {
-        async.push_back(new Async());
-        async.back()->callback = data;
-        uv_async_init(async.back()->event.loop, &async.back()->event, [](uv_async_t *event) {
-          ((Async*)event->data)->callback();
-        });
+      void spawn(const function<void(const unsigned int&)> &data) override {
+        timer.callbacks.push_back(data);
+      };
+      Loop::Async *spawn(const function<void()> &data) override {
+        async.push_back(new Async(data));
         return async.back();
       };
       void run() override {
         uv_run(uv_default_loop(), UV_RUN_DEFAULT);
       };
-      void stop() override {
-        uv_timer_stop(&timer);
-        uv_close((uv_handle_t*)&timer, [](uv_handle_t* event){});
+      void end() override {
+        uv_timer_stop(&timer.event);
+        uv_close((uv_handle_t*)&timer.event, [](uv_handle_t* event){});
         for (auto &it : async)
           uv_close((uv_handle_t*)&it->event, [](uv_handle_t* event){});
       };
@@ -722,12 +745,16 @@ namespace ₿ {
 #else
   class Epoll: public Loop {
     public_friend:
+      class Timer: public Loop::Timer {
+        public:
+          chrono::system_clock::time_point next = chrono::system_clock::now();
+      };
       class Async: public Loop::Async {
         public:
           curl_socket_t sockfd = 0;
-          function<void()> callback = nullptr;
         public:
-          Async(const curl_socket_t &loopfd)
+          Async(const curl_socket_t &loopfd, const function<void()> &data)
+          : Loop::Async(data)
           {
             sockfd = ::eventfd(0, EFD_CLOEXEC);
             fcntl(sockfd, F_SETFL, fcntl(sockfd, F_GETFL, 0) | O_NONBLOCK);
@@ -742,20 +769,24 @@ namespace ₿ {
           };
       };
     private:
+               Timer timer;
+      vector<Async*> async;
       curl_socket_t sockfd = 0;
       epoll_event ready[1024] = {};
-      Event *data = nullptr;
-      chrono::system_clock::time_point timer = chrono::system_clock::now();
-      vector<Async*> async;
     public:
-      void spawn(void *d) override {
-        data = (Event*)d;
+      Epoll()
+      {
         if ((sockfd = epoll_create1(EPOLL_CLOEXEC)) == -1)
           sockfd = 0;
       };
-      Loop::Async *poll(const function<void()> &data) override {
-        async.push_back(new Async(sockfd));
-        async.back()->callback = data;
+      void ticks(const unsigned int &factor) const {
+        timer.ticks_factor(factor);
+      };
+      void spawn(const function<void(const unsigned int&)> &data) override {
+        timer.callbacks.push_back(data);
+      };
+      Loop::Async *spawn(const function<void()> &data) override {
+        async.push_back(new Async(sockfd, data));
         return async.back();
       };
       void run() override {
@@ -766,14 +797,16 @@ namespace ₿ {
             if (::read(((Async*)ready[i].data.ptr)->sockfd, &val, 8) == 8)
               ((Async*)ready[i].data.ptr)->callback();
           }
-          if (timer < chrono::system_clock::now()) {
-            data->timer_1s();
-            timer = chrono::system_clock::now()
-                  + std::chrono::seconds(1);
+          if (timer.next < chrono::system_clock::now()) {
+            timer.timer_1s();
+            timer.next = chrono::system_clock::now()
+                       + chrono::seconds(1);
           }
         }
       };
-      void stop() override {
+      void end() override {
+        timer.next = chrono::system_clock::now()
+                   + chrono::seconds(ANY_NUM);
         for (auto &it : async) {
           epoll_event event;
           epoll_ctl(sockfd, EPOLL_CTL_DEL, it->sockfd, &event);

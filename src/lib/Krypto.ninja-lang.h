@@ -91,21 +91,21 @@ using Clock  = long long int;
 //! \def
 //! \brief Do like if we care about winy.
 #ifndef SIGUSR1
-#define SIGUSR1 SIGABRT
-#define strsignal to_string
+#define SIGUSR1     SIGABRT
+#define strsignal   to_string
 #define SOCK_OPTVAL char
 #else
-#define closesocket close
 #define SOCK_OPTVAL int
+#define closesocket close
 #endif
 
 //! \def
 //! \brief Do like if we care about macos or winy.
 #ifndef TCP_CORK
-#define TCP_CORK TCP_NOPUSH
-#define MSG_NOSIGNAL  0
-#define SOCK_CLOEXEC  0
-#define SOCK_NONBLOCK 0
+#define TCP_CORK            TCP_NOPUSH
+#define MSG_NOSIGNAL        0
+#define SOCK_CLOEXEC        0
+#define SOCK_NONBLOCK       0
 #define accept4(a, b, c, d) accept(a, b, c)
 #endif
 

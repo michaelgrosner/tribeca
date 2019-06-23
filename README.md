@@ -1,3 +1,5 @@
+<p align="center"><a href="http://www.catalannews.com/catalan-trial/item/jailed-leaders-share-closing-remarks-on-final-day-of-catalan-trial">There are not enough prisons to lock up our desire for freedom!<br /><br />We will suffer again,<br/>we will fight again and we will win again!<br /><br /><img src="https://user-images.githubusercontent.com/1634027/59567942-1128bf80-9074-11e9-8794-f708fc331e96.jpg"  width="310" /><br /><br />Lluís Companys (1882 - 1940)<br />(exiled, captured, jailed and executed by firing squad)<br />ALWAYS ANTIFASCIST</a></p><br /><br /><br /><br />
+
 <img align="left" src="https://user-images.githubusercontent.com/1634027/36237231-e611590e-11fa-11e8-8486-6675078501dc.jpg" /><p align="right">self reminder:<br><b>patience is the mother of science</b></p><br><a href="http://ciutatrefugi.barcelona/en/welcome-barcelona">\*\*\* REFUGEES WELCOME! \*\*\*</a><br/>&thinsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="http://missingmigrants.iom.int/">\*\*\* FATAL ROUTES? \*\*\*</a>
 <br clear="left">
 
