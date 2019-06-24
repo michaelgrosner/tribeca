@@ -650,7 +650,7 @@ namespace ₿ {
         if (keylogger.valid())
           error("SH", string("Unable to launch another \"keylogger\" thread"));
         noecho();
-        halfdelay(5);
+        nodelay(stdscr, false);
         keypad(stdscr, true);
         launch_keylogger();
       };
@@ -670,11 +670,11 @@ namespace ₿ {
       };
       void launch_keylogger() {
         keylogger = ::async(launch::async, [&]() {
-          int ch = ERR;
-          while (ch == ERR and !hotFn.empty())
-            ch = getch();
+          const int ch = getch();
           event->wakeup();
-          return ch == ERR ? '\r' : (char)ch;
+          return ch == ERR
+               ? '\r'
+               : (char)ch;
         });
       };
   };

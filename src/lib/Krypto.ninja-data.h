@@ -812,8 +812,6 @@ namespace ₿ {
         }
       };
       void end() override {
-        timer.next = chrono::system_clock::now()
-                   + chrono::seconds(ANY_NUM);
         for (auto &it : async) {
           epoll_event event;
           epoll_ctl(sockfd, EPOLL_CTL_DEL, it->sockfd, &event);
