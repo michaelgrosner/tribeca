@@ -656,27 +656,33 @@ namespace ₿ {
   class Loop {
     public_friend:
       class Timer {
-        public:
+        private:
                   unsigned int tick  = 0;
           mutable unsigned int ticks = 300;
           vector<function<void(const unsigned int&)>> callbacks;
         public:
+          void ticks_factor(const unsigned int &factor) const {
+            ticks = 300 * (factor ?: 1);
+          };
           void timer_1s() {
             for (const auto &it : callbacks) it(tick);
             if (++tick >= ticks) tick = 0;
           };
-          void ticks_factor(const unsigned int &factor) const {
-            ticks = 300 * (factor ?: 1);
+          void push_back(const function<void(const unsigned int&)> &data) {
+            callbacks.push_back(data);
           };
       };
       class Async {
-        public:
+        private:
           function<void()> callback = nullptr;
         public:
-          Async(const function<void()> &data)
+          Async(const function<void()> data)
           : callback(data)
           {};
           virtual void wakeup() = 0;
+          void ready() const {
+            callback();
+          };
       };
     public:
       virtual  void  spawn(const function<void(const unsigned int&)>&) = 0;
@@ -711,7 +717,7 @@ namespace ₿ {
           {
             event.data = this;
             uv_async_init(uv_default_loop(), &event, [](uv_async_t *event) {
-              ((Async*)event->data)->callback();
+              ((Async*)event->data)->ready();
             });
           };
           void wakeup() override {
@@ -726,7 +732,7 @@ namespace ₿ {
         timer.ticks_factor(factor);
       };
       void spawn(const function<void(const unsigned int&)> &data) override {
-        timer.callbacks.push_back(data);
+        timer.push_back(data);
       };
       Loop::Async *spawn(const function<void()> &data) override {
         async.push_back(new Async(data));
@@ -752,6 +758,8 @@ namespace ₿ {
       class Async: public Loop::Async {
         public:
           curl_socket_t sockfd = 0;
+        private:
+          const uint64_t again = 1;
         public:
           Async(const curl_socket_t &loopfd, const function<void()> &data)
           : Loop::Async(data)
@@ -764,13 +772,13 @@ namespace ₿ {
             epoll_ctl(loopfd, EPOLL_CTL_ADD, sockfd, &event);
           };
           void wakeup() override {
-            uint64_t enable = 1;
-            ::write(sockfd, &enable, 8);
+            if (::write(sockfd, &again, 8) == 8);
           };
       };
     private:
                Timer timer;
       vector<Async*> async;
+            uint64_t again  = 0;
        curl_socket_t sockfd = 0;
          epoll_event ready[1024] = {};
     public:
@@ -783,7 +791,7 @@ namespace ₿ {
         timer.ticks_factor(factor);
       };
       void spawn(const function<void(const unsigned int&)> &data) override {
-        timer.callbacks.push_back(data);
+        timer.push_back(data);
       };
       Loop::Async *spawn(const function<void()> &data) override {
         async.push_back(new Async(sockfd, data));
@@ -791,12 +799,11 @@ namespace ₿ {
       };
       void run() override {
         while (sockfd) {
-          const int events = epoll_wait(sockfd, ready, 1024, 0);
-          for (int i = 0; i < events; i++) {
-            uint64_t val;
-            if (::read(((Async*)ready[i].data.ptr)->sockfd, &val, 8) == 8)
-              ((Async*)ready[i].data.ptr)->callback();
-          }
+          for (
+            int i = epoll_wait(sockfd, ready, 1024, 0);
+            i --> 0 and ::read(((Async*)ready[i].data.ptr)->sockfd, &again, 8) == 8;
+            ((Async*)ready[i].data.ptr)->ready()
+          );
           if (timer.next < chrono::system_clock::now()) {
             timer.timer_1s();
             timer.next = chrono::system_clock::now()
