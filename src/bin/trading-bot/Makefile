@@ -43,14 +43,14 @@ css: www/sass/*.scss
 export define PACKAGE_JSON
 {
   "dependencies": {
-    "@angular/common": "^8.0.0",
-    "@angular/compiler": "^8.0.0",
-    "@angular/core": "^8.0.0",
-    "@angular/forms": "^8.0.0",
+    "@angular/common": "^8.0.2",
+    "@angular/compiler": "^8.0.2",
+    "@angular/core": "^8.0.2",
+    "@angular/forms": "^8.0.2",
     "@angular/http": "^7.2.15",
-    "@angular/platform-browser": "^8.0.0",
-    "@angular/platform-browser-dynamic": "^8.0.0",
-    "@angular/router": "^8.0.0",
+    "@angular/platform-browser": "^8.0.2",
+    "@angular/platform-browser-dynamic": "^8.0.2",
+    "@angular/router": "^8.0.2",
     "@babel/core": "^7.4.5",
     "@babel/preset-env": "^7.4.5",
     "ag-grid-angular": "^21.0.1",
@@ -64,7 +64,7 @@ export define PACKAGE_JSON
     "rxjs": "6.5.2",
     "rxjs-compat": "^6.5.2",
     "sass": "^1.21.0",
-    "typescript": "^3.5.1",
+    "typescript": "^3.5.2",
     "uglify-es": "^3.3.9",
     "zone.js": "^0.9.1"
   },
