@@ -771,8 +771,8 @@ namespace ₿ {
     private:
                Timer timer;
       vector<Async*> async;
-      curl_socket_t sockfd = 0;
-      epoll_event ready[1024] = {};
+       curl_socket_t sockfd = 0;
+         epoll_event ready[1024] = {};
     public:
       Epoll()
       {
