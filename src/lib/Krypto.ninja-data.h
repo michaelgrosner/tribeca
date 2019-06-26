@@ -626,11 +626,11 @@ namespace ₿ {
           {
             event.data = this;
           };
-          void start(const curl_socket_t&, const int &events, const function<void()> &data) {
+          void start(const curl_socket_t&, const int &events, const function<void()> &data) override {
             uv_poll_init_socket(uv_default_loop(), &event, sockfd);
             change(events, data);
           };
-          void change(const int &events, const function<void()> &data = nullptr) {
+          void change(const int &events, const function<void()> &data = nullptr) override {
             if (data) link(data);
             if (!uv_is_closing((uv_handle_t*)&event))
               uv_poll_start(&event, events, [](uv_poll_t *event, int status, int events) {
@@ -656,7 +656,7 @@ namespace ₿ {
         async.push_back(new Async(data));
         return async.back();
       };
-      const curl_socket_t spawn() {
+      const curl_socket_t spawn() override {
         return 0;
       };
       void run() override {
@@ -683,7 +683,7 @@ namespace ₿ {
           Poll(const curl_socket_t &s)
             : Loop::Poll(s)
           {};
-          void start(const curl_socket_t &l, const int &events, const function<void()> &data) {
+          void start(const curl_socket_t &l, const int &events, const function<void()> &data) override {
             loopfd = l;
             fcntl(sockfd, F_SETFL, fcntl(sockfd, F_GETFL, 0) | O_NONBLOCK);
             epoll_event event;
@@ -692,7 +692,7 @@ namespace ₿ {
             link(data);
             epoll_ctl(loopfd, EPOLL_CTL_ADD, sockfd, &event);
           };
-          void change(const int &events, const function<void()> &data = nullptr) {
+          void change(const int &events, const function<void()> &data = nullptr) override {
             epoll_event event;
             event.events = events;
             event.data.ptr = this;
@@ -718,7 +718,8 @@ namespace ₿ {
             });
           };
           void wakeup() override {
-            if (::write(sockfd, &again, 8) == 8);
+            if (::write(sockfd, &again, 8) == 8)
+              ;
           };
       };
     private:
@@ -742,7 +743,7 @@ namespace ₿ {
         async.push_back(new Async(sockfd, data));
         return async.back();
       };
-      const curl_socket_t spawn() {
+      const curl_socket_t spawn() override {
         return sockfd;
       };
       void run() override {
@@ -861,9 +862,10 @@ namespace ₿ {
               const string msg = unframe();
               if (!msg.empty()) {
                 string reply = session.httpMessage(msg, addr);
-                if (!reply.empty())
+                if (!reply.empty()) {
                   out += frame(reply, reply.substr(0, 2) == "PK" ? 0x02 : 0x01, false);
                   change(EPOLLIN | EPOLLOUT);
+                }
               }
             }
           };
