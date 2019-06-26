@@ -1118,7 +1118,7 @@ namespace ₿ {
       const int httpUpgrade(const int &sum, const string &addr) {
         const int tentative = server.sockets.size() + sum;
         Print::log("UI", to_string(tentative) + " client" + string(tentative == 1 ? 0 : 1, 's')
-          + (tentative > 0 ? "" : " remain") + " connected, last connection was from", addr);
+          + (sum > 0 ? "" : " remain") + " connected, last connection was from", addr);
         if (tentative > option.arg<int>("client-limit")) {
           Print::log("UI", "--client-limit=" + to_string(option.arg<int>("client-limit")) + " reached by", addr);
           return 0;

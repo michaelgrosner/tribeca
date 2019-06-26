@@ -804,7 +804,6 @@ namespace ₿ {
         public:
              SSL *ssl  = nullptr;
            Clock  time = 0;
-            bool upgraded = false;
           string  addr,
                   out,
                   in;
@@ -812,14 +811,14 @@ namespace ₿ {
           const Session &session;
           const function<void(Frontend*)> &upgrade;
         public:
-          Frontend(const curl_socket_t &s, const curl_socket_t &l, SSL *S, const Session &d, const function<void(Frontend*)> &u)
+          Frontend(const curl_socket_t &s, const curl_socket_t &loopfd, SSL *S, const Session &d, const function<void(Frontend*)> &u)
             : Socket(s)
             , ssl(S)
             , time(Tstamp)
             , session(d)
             , upgrade(u)
           {
-            start(l, EPOLLIN, ioHttp);
+            start(loopfd, EPOLLIN, ioHttp);
           };
           void shutdown() {
             if (ssl) {
@@ -990,17 +989,18 @@ namespace ₿ {
             sockets.push_back(client);
           };
           void purge() {
-            int i = 0;
+            if (sockets.size()) {
+              sockets.back()->shutdown();
+              delete sockets.back();
+              sockets.pop_back();
+              purge();
+              return;
+            }
             for (auto &it : requests) {
               it->shutdown();
               delete it;
             }
             requests.clear();
-            for (auto &it : sockets) {
-              it->shutdown();
-              delete it;
-            }
-            sockets.clear();
             shutdown();
           };
           void timeouts() {
