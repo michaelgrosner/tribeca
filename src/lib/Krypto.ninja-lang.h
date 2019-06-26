@@ -41,6 +41,8 @@
 
 #if defined _WIN32 or defined __APPLE__
 #define LIB_LOOP Libuv
+#define EPOLLIN  UV_READABLE
+#define EPOLLOUT UV_WRITABLE
 #include <uv.h>
 #else
 #define LIB_LOOP Epoll

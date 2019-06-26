@@ -624,8 +624,11 @@ namespace ₿ {
       void timer_1s(const function<void(const unsigned int&)> &fn) {
         loop.spawn(fn);
       };
-      Loop::Async *wait_for(const function<void()> &fn) {
+      Loop::Async *async(const function<void()> &fn) {
         return loop.spawn(fn);
+      };
+      const curl_socket_t poll() {
+        return loop.spawn();
       };
   };
 
@@ -908,7 +911,7 @@ namespace ₿ {
       };
   };
 
-  class Client: public WebServer {
+  class Client {
     public_friend:
       class Readable: public Blob {
         public:
@@ -1000,8 +1003,7 @@ namespace ₿ {
     protected:
       unordered_map<string, pair<const char*, const int>> documents;
     private:
-      Loop::Async* event = nullptr;
-      Backend server;
+      WebServer::Backend server;
       mutable unsigned int delay = 0;
       mutable vector<Readable*> readable;
       mutable vector<Clickable*> clickable;
@@ -1016,12 +1018,24 @@ namespace ₿ {
       Client(const Option &o)
         : option(o)
       {};
-      void listen(Loop::Async *e) {
-        event = e;
+      void listen(const curl_socket_t &loopfd) {
         if (!server.listen(
+          loopfd,
           option.arg<string>("interface"),
           option.arg<int>("port"),
-          option.arg<int>("ipv6")
+          option.arg<int>("ipv6"),
+          {
+            option.arg<string>("B64auth"),
+            [&](const int &sum, const string &addr) {
+              return httpUpgrade(sum, addr);
+            },
+            [&](string path, const string &auth, const string &addr) {
+              return httpResponse(path, auth, addr);
+            },
+            [&](string msg, const string &addr) {
+              return httpMessage(msg, addr);
+            }
+          }
         )) error("UI", "Unable to listen at port number " + to_string(option.arg<int>("port"))
              + " (may be already in use by another program)");
         if (!option.arg<int>("without-ssl")) {
@@ -1041,7 +1055,9 @@ namespace ₿ {
         delay = d;
       };
       void broadcast(const unsigned int &tick) {
-        if (delay and !(tick % delay)) broadcast();
+        if (delay and !(tick % delay))
+          broadcast();
+        server.timeouts();
       };
       void welcome() {
         for (auto &it : readable) {
@@ -1070,91 +1086,8 @@ namespace ₿ {
         clickable.clear();
         documents.clear();
       };
-      void clients() {
-        while (server.accept_request());
-        for (auto it = server.requests.begin(); it != server.requests.end();) {
-          if (Tstamp > it->time + 21e+3)
-            it->shutdown();
-          else it->io();
-          if (it->sockfd
-            and it->out.empty()
-            and it->in.length() > 5
-            and it->in.substr(0, 5) == "GET /"
-            and it->in.find("\r\n\r\n") != string::npos
-          ) {
-            const string addr   = it->address(),
-                         path   = it->in.substr(4, it->in.find(" HTTP/1.1") - 4);
-            const size_t papers = it->in.find("Authorization: Basic ");
-            string auth;
-            if (papers != string::npos) {
-              auth = it->in.substr(papers + 21);
-              auth = auth.substr(0, auth.find("\r\n"));
-            }
-            const size_t key = it->in.find("Sec-WebSocket-Key: ");
-            int allowed = 1;
-            if (key == string::npos) {
-              it->out = httpResponse(path, auth, addr);
-              if (it->out.empty())
-                it->shutdown();
-            } else if ((option.arg<string>("B64auth").empty() or auth == option.arg<string>("B64auth"))
-              and it->in.find("Upgrade: websocket" "\r\n") != string::npos
-              and it->in.find("Connection: Upgrade" "\r\n") != string::npos
-              and it->in.find("Sec-WebSocket-Version: 13" "\r\n") != string::npos
-              and (allowed = httpUpgrade(allowed, addr))
-            ) {
-              it->time = 0;
-              it->addr = addr;
-              it->out = "HTTP/1.1 101 Switching Protocols"
-                        "\r\n" "Connection: Upgrade"
-                        "\r\n" "Upgrade: websocket"
-                        "\r\n" "Sec-WebSocket-Version: 13"
-                        "\r\n" "Sec-WebSocket-Accept: "
-                                 + Text::B64(Text::SHA1(
-                                   it->in.substr(key + 19, it->in.substr(key + 19).find("\r\n"))
-                                     + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11",
-                                   true
-                                 )) +
-                        "\r\n"
-                        "\r\n";
-              it->in.clear();
-              server.sockets.push_back(*it);
-              it->sockfd = 0;
-            } else {
-              if (!allowed) httpUpgrade(allowed, addr);
-              it->shutdown();
-            }
-          }
-          if (!it->sockfd)
-            it = server.requests.erase(it);
-          else ++it;
-        }
-        for (auto it = server.sockets.begin(); it != server.sockets.end();) {
-          it->io();
-          if (it->sockfd and !it->in.empty()) {
-            const string msg = unframe(*it);
-            if (!msg.empty()) {
-              string reply = httpMessage(msg, it->addr);
-              if (!reply.empty())
-                it->out += frame(reply, reply.substr(0, 2) == "PK" ? 0x02 : 0x01, false);
-            }
-          }
-          if (!it->sockfd) {
-            httpUpgrade(-1, it->addr);
-            it = server.sockets.erase(it);
-          } else ++it;
-        }
-        if (!(server.requests.empty() and server.sockets.empty()))
-          event->wakeup();
-      };
       void withoutGoodbye() {
-        for (auto &it : server.requests)
-          it.shutdown();
-        int i = 0;
-        for (auto &it : server.sockets) {
-          httpUpgrade(--i, it.addr);
-          it.shutdown();
-        }
-        server.shutdown();
+        server.purge();
       };
     private:
       void clicked(const Clickable *data, const function<void(const json&)> &fn) const {
@@ -1164,9 +1097,11 @@ namespace ₿ {
         if (!server.sockets.empty() and !queue.empty()) {
           string msgs;
           for (const auto &it : queue)
-            msgs += frame(portal.second + (it.first + it.second), 0x01, false);
-          for (auto &it : server.sockets)
-            it.out += msgs;
+            msgs += server.sockets.front()->frame(portal.second + (it.first + it.second), 0x01, false);
+          for (auto &it : server.sockets) {
+            it->out += msgs;
+            it->change(EPOLLIN | EPOLLOUT);
+          }
         }
         queue.clear();
       };
@@ -1251,7 +1186,7 @@ namespace ₿ {
           content = "Thank you! but our princess is already in this castle!"
                     "<br/>" "Refresh the page anytime to retry.";
         }
-        return document(content, code, type);
+        return server.document(content, code, type);
       };
   };
 
@@ -1291,11 +1226,10 @@ namespace ₿ {
           Option::main(argc, argv, databases, documents.empty());
           setup();
         } {
-          if (windowed()) {
-            legit_keylogger(wait_for([&]() {
+          if (windowed())
+            legit_keylogger(async([&]() {
               keylog();
             }));
-          }
         } {
           log("CF", "Outbound IP address is",
             wtfismyip = Curl::Web::xfer("https://wtfismyip.com/json", 4L)
@@ -1317,7 +1251,7 @@ namespace ₿ {
             loop.end();
             curl_global_cleanup();
           });
-          gateway->event = wait_for([&]() {
+          gateway->event = async([&]() {
             gateway->waitForData();
           });
           timer_1s([&](const unsigned int &tick) {
@@ -1341,12 +1275,9 @@ namespace ₿ {
         } {
           if (arg<int>("headless")) headless();
           else {
-            listen(wait_for([&]() {
-              clients();
-            }));
+            listen(poll());
             timer_1s([&](const unsigned int &tick) {
               broadcast(tick);
-              clients();
             });
             ending([&]() {
               withoutGoodbye();

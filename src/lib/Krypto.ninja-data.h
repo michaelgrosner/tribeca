@@ -4,8 +4,160 @@
 //! \brief Data transport/transform helpers.
 
 namespace ₿ {
+  class Text {
+    public:
+      static string strL(string input) {
+        transform(input.begin(), input.end(), input.begin(), ::tolower);
+        return input;
+      };
+      static string strU(string input) {
+        transform(input.begin(), input.end(), input.begin(), ::toupper);
+        return input;
+      };
+      static string B64(const string &input) {
+        BIO *bio, *b64;
+        BUF_MEM *bufferPtr;
+        b64 = BIO_new(BIO_f_base64());
+        bio = BIO_new(BIO_s_mem());
+        bio = BIO_push(b64, bio);
+        BIO_set_close(bio, BIO_CLOSE);
+        BIO_set_flags(bio, BIO_FLAGS_BASE64_NO_NL);
+        BIO_write(bio, input.data(), input.length());
+        BIO_flush(bio);
+        BIO_get_mem_ptr(bio, &bufferPtr);
+        const string output(bufferPtr->data, bufferPtr->length);
+        BIO_free_all(bio);
+        return output;
+      };
+      static string B64_decode(const string &input) {
+        BIO *bio, *b64;
+        char output[input.length()];
+        b64 = BIO_new(BIO_f_base64());
+        bio = BIO_new_mem_buf(input.data(), input.length());
+        bio = BIO_push(b64, bio);
+        BIO_set_close(bio, BIO_CLOSE);
+        BIO_set_flags(bio, BIO_FLAGS_BASE64_NO_NL);
+        int len = BIO_read(bio, output, input.length());
+        BIO_free_all(bio);
+        return string(output, len);
+      };
+      static string SHA1(const string &input, const bool &hex = false) {
+        return SHA(input, hex, ::SHA1, SHA_DIGEST_LENGTH);
+      };
+      static string SHA256(const string &input, const bool &hex = false) {
+        return SHA(input, hex, ::SHA256, SHA256_DIGEST_LENGTH);
+      };
+      static string SHA512(const string &input) {
+        return SHA(input, false, ::SHA512, SHA512_DIGEST_LENGTH);
+      };
+      static string HMAC1(const string &key, const string &input, const bool &hex = false) {
+        return HMAC(key, input, hex, EVP_sha1, SHA_DIGEST_LENGTH);
+      };
+      static string HMAC256(const string &key, const string &input, const bool &hex = false) {
+        return HMAC(key, input, hex, EVP_sha256, SHA256_DIGEST_LENGTH);
+      };
+      static string HMAC512(const string &key, const string &input, const bool &hex = false) {
+        return HMAC(key, input, hex, EVP_sha512, SHA512_DIGEST_LENGTH);
+      };
+      static string HMAC384(const string &key, const string &input, const bool &hex = false) {
+        return HMAC(key, input, hex, EVP_sha384, SHA384_DIGEST_LENGTH);
+      };
+    private:
+      static string SHA(
+        const string  &input,
+        const bool    &hex,
+        unsigned char *(*md)(const unsigned char*, size_t, unsigned char*),
+        const int     &digest_len
+      ) {
+        unsigned char digest[digest_len];
+        md((unsigned char*)input.data(), input.length(), (unsigned char*)&digest);
+        char output[digest_len * 2 + 1];
+        for (unsigned int i = 0; i < digest_len; i++)
+          sprintf(&output[i * 2], "%02x", (unsigned int)digest[i]);
+        return hex ? HEX(output) : output;
+      };
+      static string HMAC(
+        const string &key,
+        const string &input,
+        const bool   &hex,
+        const EVP_MD *(evp_md)(),
+        const int    &digest_len
+      ) {
+        unsigned char* digest;
+        digest = ::HMAC(
+          evp_md(),
+          input.data(), input.length(),
+          (unsigned char*)key.data(), key.length(),
+          nullptr, nullptr
+        );
+        char output[digest_len * 2 + 1];
+        for (unsigned int i = 0; i < digest_len; i++)
+          sprintf(&output[i * 2], "%02x", (unsigned int)digest[i]);
+        return hex ? HEX(output) : output;
+      };
+      static string HEX(const string &input) {
+        const unsigned int len = input.length();
+        string output;
+        for (unsigned int i = 0; i < len; i += 2)
+          output.push_back(
+            (char)(int)strtol(input.substr(i, 2).data(), nullptr, 16)
+          );
+        return output;
+      };
+  };
+
+  class Random {
+    public:
+      static const unsigned long long int64() {
+        static random_device rd;
+        static mt19937_64 gen(rd());
+        return uniform_int_distribution<unsigned long long>()(gen);
+      };
+      static const RandId int45Id() {
+        return to_string(int64()).substr(0, 10);
+      };
+      static const RandId int32Id() {
+        return to_string(int64()).substr(0,  8);
+      };
+      static const RandId char16Id() {
+        string id = string(16, ' ');
+        for (auto &it : id) {
+         const int offset = int64() % (26 + 26 + 10);
+         if      (offset < 26)      it = 'a' + offset;
+         else if (offset < 26 + 26) it = 'A' + offset - 26;
+         else                       it = '0' + offset - 26 - 26;
+        }
+        return id;
+      };
+      static const RandId uuid36Id() {
+        string uuid = string(36, ' ');
+        uuid[8]  =
+        uuid[13] =
+        uuid[18] =
+        uuid[23] = '-';
+        uuid[14] = '4';
+        unsigned long long rnd = int64();
+        for (auto &it : uuid)
+          if (it == ' ') {
+            if (rnd <= 0x02) rnd = 0x2000000 + (int64() * 0x1000000) | 0;
+            rnd >>= 4;
+            const int offset = (uuid[17] != ' ' and uuid[19] == ' ')
+              ? ((rnd & 0xf) & 0x3) | 0x8
+              : rnd & 0xf;
+            if (offset < 10) it = '0' + offset;
+            else             it = 'a' + offset - 10;
+          }
+        return uuid;
+      };
+      static const RandId uuid32Id() {
+        RandId uuid = uuid36Id();
+        uuid.erase(remove(uuid.begin(), uuid.end(), '-'), uuid.end());
+        return uuid;
+      }
+  };
+
   class WebSocketFrames {
-    protected:
+    public:
       const string frame(string data, const int &opcode, const bool &mask) const {
         const int key = mask ? rand() : 0;
         const int bit = mask ? 0x80   : 0;
@@ -31,6 +183,7 @@ namespace ₿ {
         }
         return data;
       };
+    protected:
       const string unframe(string &data, string &pong, bool &drop) const {
         string msg;
         const size_t max = data.length();
@@ -374,16 +527,266 @@ namespace ₿ {
       };
   };
 
-  class WebServer: public WebSocketFrames {
-    private:
-      class Socket {
+  class Loop {
+    public_friend:
+      class Timer {
+        private:
+                  unsigned int tick  = 0;
+          mutable unsigned int ticks = 300;
+          vector<function<void(const unsigned int&)>> callbacks;
+        public:
+          void ticks_factor(const unsigned int &factor) const {
+            ticks = 300 * (factor ?: 1);
+          };
+          void timer_1s() {
+            for (const auto &it : callbacks) it(tick);
+            if (++tick >= ticks) tick = 0;
+          };
+          void push_back(const function<void(const unsigned int&)> &data) {
+            callbacks.push_back(data);
+          };
+      };
+      class Async {
+        private:
+          function<void()> callback = nullptr;
+        public:
+          Async(const function<void()> data)
+            : callback(data)
+          {};
+          virtual void wakeup() {};
+          void ready() {
+            callback();
+          };
+          void link(const function<void()> &data) {
+            callback = data;
+          };
+      };
+      class Poll: public Async {
         public:
           curl_socket_t sockfd = 0;
         public:
+          Poll(const curl_socket_t &s)
+            : Async(nullptr)
+            , sockfd(s)
+          {};
+          virtual void start(const curl_socket_t&, const int&, const function<void()>&) = 0;
+          virtual void change(const int&, const function<void()>& = nullptr) = 0;
+          virtual void close() = 0;
+      };
+    public:
+      virtual                void  spawn(const function<void(const unsigned int&)>&) = 0;
+      virtual               Async *spawn(const function<void()>&)                    = 0;
+      virtual const curl_socket_t  spawn() {
+        return 0;
+      };
+      virtual                void  run()                                             = 0;
+      virtual                void  end()                                             = 0;
+  };
+#if defined _WIN32 or defined __APPLE__
+  class Libuv: public Loop {
+    public_friend:
+      class Timer: public Loop::Timer {
+        public:
+          uv_timer_t event;
+        public:
+          Timer()
+            : event()
+          {
+            event.data = this;
+            uv_timer_init(uv_default_loop(), &event);
+            uv_timer_start(&event, [](uv_timer_t *event) {
+              ((Timer*)event->data)->timer_1s();
+            }, 0, 1e+3);
+          };
+      };
+      class Async: public Loop::Async {
+        public:
+          uv_async_t event;
+        public:
+          Async(const function<void()> &data)
+            : Loop::Async(data)
+            , event()
+          {
+            event.data = this;
+            uv_async_init(uv_default_loop(), &event, [](uv_async_t *event) {
+              ((Async*)event->data)->ready();
+            });
+          };
+          void wakeup() override {
+            uv_async_send(&event);
+          };
+      };
+      class Poll: public Loop::Poll {
+        public:
+          uv_poll_t event;
+        public:
+          Poll(const curl_socket_t &s)
+            : Loop::Poll(s)
+            , event()
+          {
+            event.data = this;
+          };
+          void start(const curl_socket_t&, const int &events, const function<void()> &data) {
+            uv_poll_init_socket(uv_default_loop(), &event, sockfd);
+            change(events, data);
+          };
+          void change(const int &events, const function<void()> &data = nullptr) {
+            if (data) link(data);
+            if (!uv_is_closing((uv_handle_t*)&event))
+              uv_poll_start(&event, events, [](uv_poll_t *event, int status, int events) {
+                ((Poll*)event->data)->ready();
+              });
+          };
+          void close() override {
+            uv_poll_stop(&event);
+            uv_close((uv_handle_t*)&event, [](uv_handle_t *event) { });
+          };
+      };
+    private:
+               Timer timer;
+      vector<Async*> async;
+    public:
+      void ticks(const unsigned int &factor) const {
+        timer.ticks_factor(factor);
+      };
+      void spawn(const function<void(const unsigned int&)> &data) override {
+        timer.push_back(data);
+      };
+      Loop::Async *spawn(const function<void()> &data) override {
+        async.push_back(new Async(data));
+        return async.back();
+      };
+      const curl_socket_t spawn() {
+        return 0;
+      };
+      void run() override {
+        uv_run(uv_default_loop(), UV_RUN_DEFAULT);
+      };
+      void end() override {
+        uv_timer_stop(&timer.event);
+        uv_close((uv_handle_t*)&timer.event, [](uv_handle_t* event){ });
+        for (auto &it : async)
+          uv_close((uv_handle_t*)&it->event, [](uv_handle_t* event){ });
+      };
+  };
+#else
+  class Epoll: public Loop {
+    public_friend:
+      class Timer: public Loop::Timer {
+        public:
+          chrono::system_clock::time_point next = chrono::system_clock::now();
+      };
+      class Poll: public Loop::Poll {
+        private:
+          curl_socket_t loopfd = 0;
+        public:
+          Poll(const curl_socket_t &s)
+            : Loop::Poll(s)
+          {};
+          void start(const curl_socket_t &l, const int &events, const function<void()> &data) {
+            loopfd = l;
+            fcntl(sockfd, F_SETFL, fcntl(sockfd, F_GETFL, 0) | O_NONBLOCK);
+            epoll_event event;
+            event.events = events;
+            event.data.ptr = this;
+            link(data);
+            epoll_ctl(loopfd, EPOLL_CTL_ADD, sockfd, &event);
+          };
+          void change(const int &events, const function<void()> &data = nullptr) {
+            epoll_event event;
+            event.events = events;
+            event.data.ptr = this;
+            if (data) link(data);
+            epoll_ctl(loopfd, EPOLL_CTL_MOD, sockfd, &event);
+          };
+          void close() override {
+            epoll_event event;
+            epoll_ctl(loopfd, EPOLL_CTL_DEL, sockfd, &event);
+          };
+      };
+      class Async: public Poll {
+        private:
+          const uint64_t again = 1;
+        public:
+          Async(const curl_socket_t &loopfd, const function<void()> &data)
+            : Poll(::eventfd(0, EFD_CLOEXEC))
+          {
+            Poll::start(loopfd, EPOLLIN, [this, data]() {
+              uint64_t again = 0;
+              if (::read(sockfd, &again, 8) == 8)
+                data();
+            });
+          };
+          void wakeup() override {
+            if (::write(sockfd, &again, 8) == 8);
+          };
+      };
+    private:
+               Timer timer;
+      vector<Async*> async;
+       curl_socket_t sockfd = 0;
+         epoll_event ready[1024] = {};
+    public:
+      Epoll()
+      {
+        if ((sockfd = epoll_create1(EPOLL_CLOEXEC)) == -1)
+          sockfd = 0;
+      };
+      void ticks(const unsigned int &factor) const {
+        timer.ticks_factor(factor);
+      };
+      void spawn(const function<void(const unsigned int&)> &data) override {
+        timer.push_back(data);
+      };
+      Loop::Async *spawn(const function<void()> &data) override {
+        async.push_back(new Async(sockfd, data));
+        return async.back();
+      };
+      const curl_socket_t spawn() {
+        return sockfd;
+      };
+      void run() override {
+        while (sockfd) {
+          for (
+            int i = epoll_wait(sockfd, ready, 1024, 0);
+            i --> 0;
+            ((Poll*)ready[i].data.ptr)->ready()
+          );
+          if (timer.next < chrono::system_clock::now()) {
+            timer.timer_1s();
+            timer.next = chrono::system_clock::now()
+                       + chrono::seconds(1);
+          }
+        }
+      };
+      void end() override {
+        for (auto &it : async) {
+          epoll_event event;
+          epoll_ctl(sockfd, EPOLL_CTL_DEL, it->sockfd, &event);
+          ::close(it->sockfd);
+          it->sockfd = 0;
+        }
+        ::close(sockfd);
+        sockfd = 0;
+      };
+  };
+#endif
+
+  class WebServer {
+    private:
+      struct Session {
+        string httpB64auth;
+        function<int(const int&, const string&)> httpUpgrade = nullptr;
+        function<string(string, const string&, const string&)> httpResponse = nullptr;
+        function<string(string, const string&)> httpMessage = nullptr;
+      };
+      class Socket: public LIB_LOOP::Poll {
+        public:
           Socket(const curl_socket_t &s)
-            : sockfd(s)
+            : Poll(s)
           {};
           void shutdown() {
+            Poll::close();
             ::closesocket(sockfd);
             sockfd = 0;
           };
@@ -396,25 +799,41 @@ namespace ₿ {
 #endif
           };
       };
-      class Frontend: public Socket {
+      class Frontend: public Socket,
+                      public WebSocketFrames {
         public:
              SSL *ssl  = nullptr;
            Clock  time = 0;
+            bool upgraded = false;
           string  addr,
                   out,
                   in;
+        private_ref:
+          const Session &session;
+          const function<void(Frontend*)> &upgrade;
         public:
-          Frontend(const curl_socket_t &s, SSL *l)
+          Frontend(const curl_socket_t &s, const curl_socket_t &l, SSL *S, const Session &d, const function<void(Frontend*)> &u)
             : Socket(s)
-            , ssl(l)
+            , ssl(S)
             , time(Tstamp)
-          {};
+            , session(d)
+            , upgrade(u)
+          {
+            start(l, EPOLLIN, ioHttp);
+          };
           void shutdown() {
             if (ssl) {
               SSL_shutdown(ssl);
               SSL_free(ssl);
             }
             Socket::shutdown();
+            if (!time) session.httpUpgrade(-1, addr);
+          };
+          const string unframe() {
+            bool drop = false;
+            const string msg = WebSocketFrames::unframe(in, out, drop);
+            if (drop) shutdown();
+            return msg;
           };
           const string address() const {
             string addr;
@@ -437,6 +856,70 @@ namespace ₿ {
 #endif
             return addr.empty() ? "unknown" : addr;
           };
+          function<void()> ioWs = [&]() {
+            io();
+            if (sockfd and !in.empty()) {
+              const string msg = unframe();
+              if (!msg.empty()) {
+                string reply = session.httpMessage(msg, addr);
+                if (!reply.empty())
+                  out += frame(reply, reply.substr(0, 2) == "PK" ? 0x02 : 0x01, false);
+                  change(EPOLLIN | EPOLLOUT);
+              }
+            }
+          };
+          function<void()> ioHttp = [&]() {
+            io();
+            if (sockfd
+              and out.empty()
+              and in.length() > 5
+              and in.substr(0, 5) == "GET /"
+              and in.find("\r\n\r\n") != string::npos
+            ) {
+              if (addr.empty())
+                addr = address();
+              const string path   = in.substr(4, in.find(" HTTP/1.1") - 4);
+              const size_t papers = in.find("Authorization: Basic ");
+              string auth;
+              if (papers != string::npos) {
+                auth = in.substr(papers + 21);
+                auth = auth.substr(0, auth.find("\r\n"));
+              }
+              const size_t key = in.find("Sec-WebSocket-Key: ");
+              int allowed = 1;
+              if (key == string::npos) {
+                out = session.httpResponse(path, auth, addr);
+                if (out.empty())
+                  shutdown();
+                else change(EPOLLIN | EPOLLOUT);
+              } else if ((session.httpB64auth.empty() or auth == session.httpB64auth)
+                and in.find("Upgrade: websocket" "\r\n") != string::npos
+                and in.find("Connection: Upgrade" "\r\n") != string::npos
+                and in.find("Sec-WebSocket-Version: 13" "\r\n") != string::npos
+                and (allowed = session.httpUpgrade(allowed, addr))
+              ) {
+                time = 0;
+                out = "HTTP/1.1 101 Switching Protocols"
+                      "\r\n" "Connection: Upgrade"
+                      "\r\n" "Upgrade: websocket"
+                      "\r\n" "Sec-WebSocket-Version: 13"
+                      "\r\n" "Sec-WebSocket-Accept: "
+                               + Text::B64(Text::SHA1(
+                                 in.substr(key + 19, in.substr(key + 19).find("\r\n"))
+                                   + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11",
+                                 true
+                               )) +
+                      "\r\n"
+                      "\r\n";
+                in.clear();
+                upgrade(this);
+                change(EPOLLIN | EPOLLOUT, ioWs);
+              } else {
+                if (!allowed) session.httpUpgrade(allowed, addr);
+                shutdown();
+              }
+            }
+          };
           void io() {
             if (ssl) {
               if (!out.empty()) {
@@ -451,6 +934,7 @@ namespace ₿ {
                                               return;
                 }
                 cork(0);
+                if (out.empty()) change(EPOLLIN);
               }
               do {
                 char data[1024];
@@ -477,6 +961,7 @@ namespace ₿ {
                   return;
                 }
                 cork(0);
+                if (out.empty()) change(EPOLLIN);
               }
               char data[1024];
               ssize_t n = ::recv(sockfd, data, sizeof(data), 0);
@@ -488,13 +973,52 @@ namespace ₿ {
       class Backend: public Socket {
         public:
                    SSL_CTX *ctx = nullptr;
-          vector<Frontend>  requests,
-                            sockets;
+          vector<Frontend*> sockets;
+        private:
+          vector<Frontend*> requests;
+          Session session;
         public:
           Backend()
             : Socket(0)
           {};
-          const bool listen(const string &inet, const int &port, const bool &ipv6) {
+          function<void(Frontend*)> upgrade = [&](Frontend *const client) {
+            for (auto it = requests.begin(); it != requests.end();)
+              if (*it == client) {
+                requests.erase(it);
+                break;
+              } else ++it;
+            sockets.push_back(client);
+          };
+          void purge() {
+            int i = 0;
+            for (auto &it : requests) {
+              it->shutdown();
+              delete it;
+            }
+            requests.clear();
+            for (auto &it : sockets) {
+              it->shutdown();
+              delete it;
+            }
+            sockets.clear();
+            shutdown();
+          };
+          void timeouts() {
+            for (auto it = requests.begin(); it != requests.end();) {
+              if ((*it)->sockfd and Tstamp > (*it)->time + 21e+3)
+                (*it)->shutdown();
+              if (!(*it)->sockfd) {
+                delete *it;
+                it = requests.erase(it);
+              } else ++it;
+            }
+            for (auto it = sockets.begin(); it != sockets.end();)
+              if (!(*it)->sockfd) {
+                delete *it;
+                it = sockets.erase(it);
+              } else ++it;
+          };
+          const bool listen(const curl_socket_t &loopfd, const string &inet, const int &port, const bool &ipv6, const Session &data) {
             if (sockfd) return false;
             struct addrinfo  hints,
                             *result,
@@ -515,8 +1039,14 @@ namespace ₿ {
               if (sockfd) {
                 const int enabled = 1;
                 setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, (SOCK_OPTVAL*)&enabled, sizeof(int));
-                if (::bind(sockfd, rp->ai_addr, rp->ai_addrlen) || ::listen(sockfd, 512))
+                if (::bind(sockfd, rp->ai_addr, rp->ai_addrlen) or ::listen(sockfd, 512))
                   shutdown();
+                else {
+                  session = data;
+                  start(loopfd, EPOLLIN, [this, loopfd]() {
+                    accept_request(loopfd);
+                  });
+                }
               }
               freeaddrinfo(result);
             }
@@ -584,7 +1114,7 @@ namespace ₿ {
             }
             return warn;
           };
-          const bool accept_request() {
+          const bool accept_request(const curl_socket_t &loopfd) {
             curl_socket_t clientfd = accept4(sockfd, nullptr, nullptr, SOCK_CLOEXEC | SOCK_NONBLOCK);
 #ifdef __APPLE__
             if (clientfd != -1) {
@@ -600,9 +1130,37 @@ namespace ₿ {
                 SSL_set_fd(ssl, clientfd);
                 SSL_set_mode(ssl, SSL_MODE_RELEASE_BUFFERS);
               }
-              requests.emplace_back(clientfd, ssl);
+              requests.push_back(new Frontend(clientfd, loopfd, ssl, session, upgrade));
             }
             return clientfd > 0;
+          };
+          const string document(const string &content, const unsigned int &code, const string &type) const {
+            string headers;
+            if      (code == 200) headers = "HTTP/1.1 200 OK"
+                                            "\r\n" "Connection: keep-alive"
+                                            "\r\n" "Accept-Ranges: bytes"
+                                            "\r\n" "Vary: Accept-Encoding"
+                                            "\r\n" "Cache-Control: public, max-age=0";
+            else if (code == 401) headers = "HTTP/1.1 401 Unauthorized"
+                                            "\r\n" "Connection: keep-alive"
+                                            "\r\n" "Accept-Ranges: bytes"
+                                            "\r\n" "Vary: Accept-Encoding"
+                                            "\r\n" "WWW-Authenticate: Basic realm=\"Basic Authorization\"";
+            else if (code == 403) headers = "HTTP/1.1 403 Forbidden"
+                                            "\r\n" "Connection: keep-alive"
+                                            "\r\n" "Accept-Ranges: bytes"
+                                            "\r\n" "Vary: Accept-Encoding";
+            else if (code == 418) headers = "HTTP/1.1 418 I'm a teapot";
+            else                  headers = "HTTP/1.1 404 Not Found";
+            return headers
+                 + string((content.length() > 2 and (content.substr(0, 2) == "PK" or (
+                     content.at(0) == '\x1F' and content.at(1) == '\x8B'
+                 ))) ? "\r\n" "Content-Encoding: gzip" : "")
+                 + "\r\n" "Content-Type: "   + type
+                 + "\r\n" "Content-Length: " + to_string(content.length())
+                 + "\r\n"
+                   "\r\n"
+                 + content;
           };
         private:
           void socket(const int &domain, const int &type, const int &protocol) {
@@ -616,364 +1174,6 @@ namespace ₿ {
             if (sockfd == -1) sockfd = 0;
           };
       };
-    protected:
-      const string unframe(Frontend &client) {
-        bool drop = false;
-        const string msg = WebSocketFrames::unframe(client.in, client.out, drop);
-        if (drop) client.shutdown();
-        return msg;
-      };
-      const string document(const string &content, const unsigned int &code, const string &type) const {
-        string headers;
-        if      (code == 200) headers = "HTTP/1.1 200 OK"
-                                        "\r\n" "Connection: keep-alive"
-                                        "\r\n" "Accept-Ranges: bytes"
-                                        "\r\n" "Vary: Accept-Encoding"
-                                        "\r\n" "Cache-Control: public, max-age=0";
-        else if (code == 401) headers = "HTTP/1.1 401 Unauthorized"
-                                        "\r\n" "Connection: keep-alive"
-                                        "\r\n" "Accept-Ranges: bytes"
-                                        "\r\n" "Vary: Accept-Encoding"
-                                        "\r\n" "WWW-Authenticate: Basic realm=\"Basic Authorization\"";
-        else if (code == 403) headers = "HTTP/1.1 403 Forbidden"
-                                        "\r\n" "Connection: keep-alive"
-                                        "\r\n" "Accept-Ranges: bytes"
-                                        "\r\n" "Vary: Accept-Encoding";
-        else if (code == 418) headers = "HTTP/1.1 418 I'm a teapot";
-        else                  headers = "HTTP/1.1 404 Not Found";
-        return headers
-             + string((content.length() > 2 and (content.substr(0, 2) == "PK" or (
-                 content.at(0) == '\x1F' and content.at(1) == '\x8B'
-             ))) ? "\r\n" "Content-Encoding: gzip" : "")
-             + "\r\n" "Content-Type: "   + type
-             + "\r\n" "Content-Length: " + to_string(content.length())
-             + "\r\n"
-               "\r\n"
-             + content;
-      };
-  };
-
-  class Loop {
-    public_friend:
-      class Timer {
-        private:
-                  unsigned int tick  = 0;
-          mutable unsigned int ticks = 300;
-          vector<function<void(const unsigned int&)>> callbacks;
-        public:
-          void ticks_factor(const unsigned int &factor) const {
-            ticks = 300 * (factor ?: 1);
-          };
-          void timer_1s() {
-            for (const auto &it : callbacks) it(tick);
-            if (++tick >= ticks) tick = 0;
-          };
-          void push_back(const function<void(const unsigned int&)> &data) {
-            callbacks.push_back(data);
-          };
-      };
-      class Async {
-        private:
-          function<void()> callback = nullptr;
-        public:
-          Async(const function<void()> data)
-          : callback(data)
-          {};
-          virtual void wakeup() = 0;
-          void ready() const {
-            callback();
-          };
-      };
-    public:
-      virtual  void  spawn(const function<void(const unsigned int&)>&) = 0;
-      virtual Async *spawn(const function<void()>&)                    = 0;
-      virtual  void  run()                                             = 0;
-      virtual  void  end()                                             = 0;
-  };
-#if defined _WIN32 or defined __APPLE__
-  class Libuv: public Loop {
-    public_friend:
-      class Timer: public Loop::Timer {
-        public:
-          uv_timer_t event;
-        public:
-          Timer()
-          : event()
-          {
-            event.data = this;
-            uv_timer_init(uv_default_loop(), &event);
-            uv_timer_start(&event, [](uv_timer_t *event) {
-              ((Timer*)event->data)->timer_1s();
-            }, 0, 1e+3);
-          };
-      };
-      class Async: public Loop::Async {
-        public:
-          uv_async_t event;
-        public:
-          Async(const function<void()> &data)
-          : Loop::Async(data)
-          , event()
-          {
-            event.data = this;
-            uv_async_init(uv_default_loop(), &event, [](uv_async_t *event) {
-              ((Async*)event->data)->ready();
-            });
-          };
-          void wakeup() override {
-            uv_async_send(&event);
-          };
-      };
-    private:
-               Timer timer;
-      vector<Async*> async;
-    public:
-      void ticks(const unsigned int &factor) const {
-        timer.ticks_factor(factor);
-      };
-      void spawn(const function<void(const unsigned int&)> &data) override {
-        timer.push_back(data);
-      };
-      Loop::Async *spawn(const function<void()> &data) override {
-        async.push_back(new Async(data));
-        return async.back();
-      };
-      void run() override {
-        uv_run(uv_default_loop(), UV_RUN_DEFAULT);
-      };
-      void end() override {
-        uv_timer_stop(&timer.event);
-        uv_close((uv_handle_t*)&timer.event, [](uv_handle_t* event){});
-        for (auto &it : async)
-          uv_close((uv_handle_t*)&it->event, [](uv_handle_t* event){});
-      };
-  };
-#else
-  class Epoll: public Loop {
-    public_friend:
-      class Timer: public Loop::Timer {
-        public:
-          chrono::system_clock::time_point next = chrono::system_clock::now();
-      };
-      class Async: public Loop::Async {
-        public:
-          curl_socket_t sockfd = 0;
-        private:
-          const uint64_t again = 1;
-        public:
-          Async(const curl_socket_t &loopfd, const function<void()> &data)
-          : Loop::Async(data)
-          {
-            sockfd = ::eventfd(0, EFD_CLOEXEC);
-            fcntl(sockfd, F_SETFL, fcntl(sockfd, F_GETFL, 0) | O_NONBLOCK);
-            epoll_event event;
-            event.events = EPOLLIN;
-            event.data.ptr = this;
-            epoll_ctl(loopfd, EPOLL_CTL_ADD, sockfd, &event);
-          };
-          void wakeup() override {
-            if (::write(sockfd, &again, 8) == 8);
-          };
-      };
-    private:
-               Timer timer;
-      vector<Async*> async;
-            uint64_t again  = 0;
-       curl_socket_t sockfd = 0;
-         epoll_event ready[1024] = {};
-    public:
-      Epoll()
-      {
-        if ((sockfd = epoll_create1(EPOLL_CLOEXEC)) == -1)
-          sockfd = 0;
-      };
-      void ticks(const unsigned int &factor) const {
-        timer.ticks_factor(factor);
-      };
-      void spawn(const function<void(const unsigned int&)> &data) override {
-        timer.push_back(data);
-      };
-      Loop::Async *spawn(const function<void()> &data) override {
-        async.push_back(new Async(sockfd, data));
-        return async.back();
-      };
-      void run() override {
-        while (sockfd) {
-          for (
-            int i = epoll_wait(sockfd, ready, 1024, 0);
-            i --> 0 and ::read(((Async*)ready[i].data.ptr)->sockfd, &again, 8) == 8;
-            ((Async*)ready[i].data.ptr)->ready()
-          );
-          if (timer.next < chrono::system_clock::now()) {
-            timer.timer_1s();
-            timer.next = chrono::system_clock::now()
-                       + chrono::seconds(1);
-          }
-        }
-      };
-      void end() override {
-        for (auto &it : async) {
-          epoll_event event;
-          epoll_ctl(sockfd, EPOLL_CTL_DEL, it->sockfd, &event);
-          ::close(it->sockfd);
-          it->sockfd = 0;
-        }
-        ::close(sockfd);
-        sockfd = 0;
-      };
-  };
-#endif
-
-  class Text {
-    public:
-      static string strL(string input) {
-        transform(input.begin(), input.end(), input.begin(), ::tolower);
-        return input;
-      };
-      static string strU(string input) {
-        transform(input.begin(), input.end(), input.begin(), ::toupper);
-        return input;
-      };
-      static string B64(const string &input) {
-        BIO *bio, *b64;
-        BUF_MEM *bufferPtr;
-        b64 = BIO_new(BIO_f_base64());
-        bio = BIO_new(BIO_s_mem());
-        bio = BIO_push(b64, bio);
-        BIO_set_close(bio, BIO_CLOSE);
-        BIO_set_flags(bio, BIO_FLAGS_BASE64_NO_NL);
-        BIO_write(bio, input.data(), input.length());
-        BIO_flush(bio);
-        BIO_get_mem_ptr(bio, &bufferPtr);
-        const string output(bufferPtr->data, bufferPtr->length);
-        BIO_free_all(bio);
-        return output;
-      };
-      static string B64_decode(const string &input) {
-        BIO *bio, *b64;
-        char output[input.length()];
-        b64 = BIO_new(BIO_f_base64());
-        bio = BIO_new_mem_buf(input.data(), input.length());
-        bio = BIO_push(b64, bio);
-        BIO_set_close(bio, BIO_CLOSE);
-        BIO_set_flags(bio, BIO_FLAGS_BASE64_NO_NL);
-        int len = BIO_read(bio, output, input.length());
-        BIO_free_all(bio);
-        return string(output, len);
-      };
-      static string SHA1(const string &input, const bool &hex = false) {
-        return SHA(input, hex, ::SHA1, SHA_DIGEST_LENGTH);
-      };
-      static string SHA256(const string &input, const bool &hex = false) {
-        return SHA(input, hex, ::SHA256, SHA256_DIGEST_LENGTH);
-      };
-      static string SHA512(const string &input) {
-        return SHA(input, false, ::SHA512, SHA512_DIGEST_LENGTH);
-      };
-      static string HMAC1(const string &key, const string &input, const bool &hex = false) {
-        return HMAC(key, input, hex, EVP_sha1, SHA_DIGEST_LENGTH);
-      };
-      static string HMAC256(const string &key, const string &input, const bool &hex = false) {
-        return HMAC(key, input, hex, EVP_sha256, SHA256_DIGEST_LENGTH);
-      };
-      static string HMAC512(const string &key, const string &input, const bool &hex = false) {
-        return HMAC(key, input, hex, EVP_sha512, SHA512_DIGEST_LENGTH);
-      };
-      static string HMAC384(const string &key, const string &input, const bool &hex = false) {
-        return HMAC(key, input, hex, EVP_sha384, SHA384_DIGEST_LENGTH);
-      };
-    private:
-      static string SHA(
-        const string  &input,
-        const bool    &hex,
-        unsigned char *(*md)(const unsigned char*, size_t, unsigned char*),
-        const int     &digest_len
-      ) {
-        unsigned char digest[digest_len];
-        md((unsigned char*)input.data(), input.length(), (unsigned char*)&digest);
-        char output[digest_len * 2 + 1];
-        for (unsigned int i = 0; i < digest_len; i++)
-          sprintf(&output[i * 2], "%02x", (unsigned int)digest[i]);
-        return hex ? HEX(output) : output;
-      };
-      static string HMAC(
-        const string &key,
-        const string &input,
-        const bool   &hex,
-        const EVP_MD *(evp_md)(),
-        const int    &digest_len
-      ) {
-        unsigned char* digest;
-        digest = ::HMAC(
-          evp_md(),
-          input.data(), input.length(),
-          (unsigned char*)key.data(), key.length(),
-          nullptr, nullptr
-        );
-        char output[digest_len * 2 + 1];
-        for (unsigned int i = 0; i < digest_len; i++)
-          sprintf(&output[i * 2], "%02x", (unsigned int)digest[i]);
-        return hex ? HEX(output) : output;
-      };
-      static string HEX(const string &input) {
-        const unsigned int len = input.length();
-        string output;
-        for (unsigned int i = 0; i < len; i += 2)
-          output.push_back(
-            (char)(int)strtol(input.substr(i, 2).data(), nullptr, 16)
-          );
-        return output;
-      };
-  };
-
-  class Random {
-    public:
-      static const unsigned long long int64() {
-        static random_device rd;
-        static mt19937_64 gen(rd());
-        return uniform_int_distribution<unsigned long long>()(gen);
-      };
-      static const RandId int45Id() {
-        return to_string(int64()).substr(0, 10);
-      };
-      static const RandId int32Id() {
-        return to_string(int64()).substr(0,  8);
-      };
-      static const RandId char16Id() {
-        string id = string(16, ' ');
-        for (auto &it : id) {
-         const int offset = int64() % (26 + 26 + 10);
-         if      (offset < 26)      it = 'a' + offset;
-         else if (offset < 26 + 26) it = 'A' + offset - 26;
-         else                       it = '0' + offset - 26 - 26;
-        }
-        return id;
-      };
-      static const RandId uuid36Id() {
-        string uuid = string(36, ' ');
-        uuid[8]  =
-        uuid[13] =
-        uuid[18] =
-        uuid[23] = '-';
-        uuid[14] = '4';
-        unsigned long long rnd = int64();
-        for (auto &it : uuid)
-          if (it == ' ') {
-            if (rnd <= 0x02) rnd = 0x2000000 + (int64() * 0x1000000) | 0;
-            rnd >>= 4;
-            const int offset = (uuid[17] != ' ' and uuid[19] == ' ')
-              ? ((rnd & 0xf) & 0x3) | 0x8
-              : rnd & 0xf;
-            if (offset < 10) it = '0' + offset;
-            else             it = 'a' + offset - 10;
-          }
-        return uuid;
-      };
-      static const RandId uuid32Id() {
-        RandId uuid = uuid36Id();
-        uuid.erase(remove(uuid.begin(), uuid.end(), '-'), uuid.end());
-        return uuid;
-      }
   };
 }
 
