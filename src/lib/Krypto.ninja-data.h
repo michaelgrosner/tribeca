@@ -4,158 +4,6 @@
 //! \brief Data transport/transform helpers.
 
 namespace ₿ {
-  class Text {
-    public:
-      static string strL(string input) {
-        transform(input.begin(), input.end(), input.begin(), ::tolower);
-        return input;
-      };
-      static string strU(string input) {
-        transform(input.begin(), input.end(), input.begin(), ::toupper);
-        return input;
-      };
-      static string B64(const string &input) {
-        BIO *bio, *b64;
-        BUF_MEM *bufferPtr;
-        b64 = BIO_new(BIO_f_base64());
-        bio = BIO_new(BIO_s_mem());
-        bio = BIO_push(b64, bio);
-        BIO_set_close(bio, BIO_CLOSE);
-        BIO_set_flags(bio, BIO_FLAGS_BASE64_NO_NL);
-        BIO_write(bio, input.data(), input.length());
-        BIO_flush(bio);
-        BIO_get_mem_ptr(bio, &bufferPtr);
-        const string output(bufferPtr->data, bufferPtr->length);
-        BIO_free_all(bio);
-        return output;
-      };
-      static string B64_decode(const string &input) {
-        BIO *bio, *b64;
-        char output[input.length()];
-        b64 = BIO_new(BIO_f_base64());
-        bio = BIO_new_mem_buf(input.data(), input.length());
-        bio = BIO_push(b64, bio);
-        BIO_set_close(bio, BIO_CLOSE);
-        BIO_set_flags(bio, BIO_FLAGS_BASE64_NO_NL);
-        int len = BIO_read(bio, output, input.length());
-        BIO_free_all(bio);
-        return string(output, len);
-      };
-      static string SHA1(const string &input, const bool &hex = false) {
-        return SHA(input, hex, ::SHA1, SHA_DIGEST_LENGTH);
-      };
-      static string SHA256(const string &input, const bool &hex = false) {
-        return SHA(input, hex, ::SHA256, SHA256_DIGEST_LENGTH);
-      };
-      static string SHA512(const string &input) {
-        return SHA(input, false, ::SHA512, SHA512_DIGEST_LENGTH);
-      };
-      static string HMAC1(const string &key, const string &input, const bool &hex = false) {
-        return HMAC(key, input, hex, EVP_sha1, SHA_DIGEST_LENGTH);
-      };
-      static string HMAC256(const string &key, const string &input, const bool &hex = false) {
-        return HMAC(key, input, hex, EVP_sha256, SHA256_DIGEST_LENGTH);
-      };
-      static string HMAC512(const string &key, const string &input, const bool &hex = false) {
-        return HMAC(key, input, hex, EVP_sha512, SHA512_DIGEST_LENGTH);
-      };
-      static string HMAC384(const string &key, const string &input, const bool &hex = false) {
-        return HMAC(key, input, hex, EVP_sha384, SHA384_DIGEST_LENGTH);
-      };
-    private:
-      static string SHA(
-        const string  &input,
-        const bool    &hex,
-        unsigned char *(*md)(const unsigned char*, size_t, unsigned char*),
-        const int     &digest_len
-      ) {
-        unsigned char digest[digest_len];
-        md((unsigned char*)input.data(), input.length(), (unsigned char*)&digest);
-        char output[digest_len * 2 + 1];
-        for (unsigned int i = 0; i < digest_len; i++)
-          sprintf(&output[i * 2], "%02x", (unsigned int)digest[i]);
-        return hex ? HEX(output) : output;
-      };
-      static string HMAC(
-        const string &key,
-        const string &input,
-        const bool   &hex,
-        const EVP_MD *(evp_md)(),
-        const int    &digest_len
-      ) {
-        unsigned char* digest;
-        digest = ::HMAC(
-          evp_md(),
-          input.data(), input.length(),
-          (unsigned char*)key.data(), key.length(),
-          nullptr, nullptr
-        );
-        char output[digest_len * 2 + 1];
-        for (unsigned int i = 0; i < digest_len; i++)
-          sprintf(&output[i * 2], "%02x", (unsigned int)digest[i]);
-        return hex ? HEX(output) : output;
-      };
-      static string HEX(const string &input) {
-        const unsigned int len = input.length();
-        string output;
-        for (unsigned int i = 0; i < len; i += 2)
-          output.push_back(
-            (char)(int)strtol(input.substr(i, 2).data(), nullptr, 16)
-          );
-        return output;
-      };
-  };
-
-  class Random {
-    public:
-      static const unsigned long long int64() {
-        static random_device rd;
-        static mt19937_64 gen(rd());
-        return uniform_int_distribution<unsigned long long>()(gen);
-      };
-      static const RandId int45Id() {
-        return to_string(int64()).substr(0, 10);
-      };
-      static const RandId int32Id() {
-        return to_string(int64()).substr(0,  8);
-      };
-      static const RandId char16Id() {
-        string id = string(16, ' ');
-        for (auto &it : id) {
-         const int offset = int64() % (26 + 26 + 10);
-         if      (offset < 26)      it = 'a' + offset;
-         else if (offset < 26 + 26) it = 'A' + offset - 26;
-         else                       it = '0' + offset - 26 - 26;
-        }
-        return id;
-      };
-      static const RandId uuid36Id() {
-        string uuid = string(36, ' ');
-        uuid[8]  =
-        uuid[13] =
-        uuid[18] =
-        uuid[23] = '-';
-        uuid[14] = '4';
-        unsigned long long rnd = int64();
-        for (auto &it : uuid)
-          if (it == ' ') {
-            if (rnd <= 0x02) rnd = 0x2000000 + (int64() * 0x1000000) | 0;
-            rnd >>= 4;
-            const int offset = (uuid[17] != ' ' and uuid[19] == ' ')
-              ? ((rnd & 0xf) & 0x3) | 0x8
-              : rnd & 0xf;
-            if (offset < 10) it = '0' + offset;
-            else             it = 'a' + offset - 10;
-          }
-        return uuid;
-      };
-      static const RandId uuid32Id() {
-        RandId uuid = uuid36Id();
-        uuid.erase(remove(uuid.begin(), uuid.end(), '-'), uuid.end());
-        return uuid;
-      }
-  };
-
   class WebSocketFrames {
     public:
       const string frame(string data, const int &opcode, const bool &mask) const {
@@ -773,13 +621,115 @@ namespace ₿ {
   };
 #endif
 
+  class Text {
+    public:
+      static string strL(string input) {
+        transform(input.begin(), input.end(), input.begin(), ::tolower);
+        return input;
+      };
+      static string strU(string input) {
+        transform(input.begin(), input.end(), input.begin(), ::toupper);
+        return input;
+      };
+      static string B64(const string &input) {
+        BIO *bio, *b64;
+        BUF_MEM *bufferPtr;
+        b64 = BIO_new(BIO_f_base64());
+        bio = BIO_new(BIO_s_mem());
+        bio = BIO_push(b64, bio);
+        BIO_set_close(bio, BIO_CLOSE);
+        BIO_set_flags(bio, BIO_FLAGS_BASE64_NO_NL);
+        BIO_write(bio, input.data(), input.length());
+        BIO_flush(bio);
+        BIO_get_mem_ptr(bio, &bufferPtr);
+        const string output(bufferPtr->data, bufferPtr->length);
+        BIO_free_all(bio);
+        return output;
+      };
+      static string B64_decode(const string &input) {
+        BIO *bio, *b64;
+        char output[input.length()];
+        b64 = BIO_new(BIO_f_base64());
+        bio = BIO_new_mem_buf(input.data(), input.length());
+        bio = BIO_push(b64, bio);
+        BIO_set_close(bio, BIO_CLOSE);
+        BIO_set_flags(bio, BIO_FLAGS_BASE64_NO_NL);
+        int len = BIO_read(bio, output, input.length());
+        BIO_free_all(bio);
+        return string(output, len);
+      };
+      static string SHA1(const string &input, const bool &hex = false) {
+        return SHA(input, hex, ::SHA1, SHA_DIGEST_LENGTH);
+      };
+      static string SHA256(const string &input, const bool &hex = false) {
+        return SHA(input, hex, ::SHA256, SHA256_DIGEST_LENGTH);
+      };
+      static string SHA512(const string &input) {
+        return SHA(input, false, ::SHA512, SHA512_DIGEST_LENGTH);
+      };
+      static string HMAC1(const string &key, const string &input, const bool &hex = false) {
+        return HMAC(key, input, hex, EVP_sha1, SHA_DIGEST_LENGTH);
+      };
+      static string HMAC256(const string &key, const string &input, const bool &hex = false) {
+        return HMAC(key, input, hex, EVP_sha256, SHA256_DIGEST_LENGTH);
+      };
+      static string HMAC512(const string &key, const string &input, const bool &hex = false) {
+        return HMAC(key, input, hex, EVP_sha512, SHA512_DIGEST_LENGTH);
+      };
+      static string HMAC384(const string &key, const string &input, const bool &hex = false) {
+        return HMAC(key, input, hex, EVP_sha384, SHA384_DIGEST_LENGTH);
+      };
+    private:
+      static string SHA(
+        const string  &input,
+        const bool    &hex,
+        unsigned char *(*md)(const unsigned char*, size_t, unsigned char*),
+        const int     &digest_len
+      ) {
+        unsigned char digest[digest_len];
+        md((unsigned char*)input.data(), input.length(), (unsigned char*)&digest);
+        char output[digest_len * 2 + 1];
+        for (unsigned int i = 0; i < digest_len; i++)
+          sprintf(&output[i * 2], "%02x", (unsigned int)digest[i]);
+        return hex ? HEX(output) : output;
+      };
+      static string HMAC(
+        const string &key,
+        const string &input,
+        const bool   &hex,
+        const EVP_MD *(evp_md)(),
+        const int    &digest_len
+      ) {
+        unsigned char* digest;
+        digest = ::HMAC(
+          evp_md(),
+          input.data(), input.length(),
+          (unsigned char*)key.data(), key.length(),
+          nullptr, nullptr
+        );
+        char output[digest_len * 2 + 1];
+        for (unsigned int i = 0; i < digest_len; i++)
+          sprintf(&output[i * 2], "%02x", (unsigned int)digest[i]);
+        return hex ? HEX(output) : output;
+      };
+      static string HEX(const string &input) {
+        const unsigned int len = input.length();
+        string output;
+        for (unsigned int i = 0; i < len; i += 2)
+          output.push_back(
+            (char)(int)strtol(input.substr(i, 2).data(), nullptr, 16)
+          );
+        return output;
+      };
+  };
+
   class WebServer {
     private:
       struct Session {
         string httpB64auth;
-        function<int(const int&, const string&)> httpUpgrade = nullptr;
-        function<string(string, const string&, const string&)> httpResponse = nullptr;
-        function<string(string, const string&)> httpMessage = nullptr;
+        function<const int(const int&, const string&)> httpUpgrade = nullptr;
+        function<const string(string, const string&, const string&)> httpResponse = nullptr;
+        function<const string(string, const string&)> httpMessage = nullptr;
       };
       class Socket: public LIB_LOOP::Poll {
         public:
@@ -991,7 +941,7 @@ namespace ₿ {
             sockets.push_back(client);
           };
           void purge() {
-            if (sockets.size()) {
+            if (!sockets.empty()) {
               sockets.back()->shutdown();
               delete sockets.back();
               sockets.pop_back();
@@ -1176,6 +1126,56 @@ namespace ₿ {
             if (sockfd == -1) sockfd = 0;
           };
       };
+  };
+
+  class Random {
+    public:
+      static const unsigned long long int64() {
+        static random_device rd;
+        static mt19937_64 gen(rd());
+        return uniform_int_distribution<unsigned long long>()(gen);
+      };
+      static const RandId int45Id() {
+        return to_string(int64()).substr(0, 10);
+      };
+      static const RandId int32Id() {
+        return to_string(int64()).substr(0,  8);
+      };
+      static const RandId char16Id() {
+        string id = string(16, ' ');
+        for (auto &it : id) {
+         const int offset = int64() % (26 + 26 + 10);
+         if      (offset < 26)      it = 'a' + offset;
+         else if (offset < 26 + 26) it = 'A' + offset - 26;
+         else                       it = '0' + offset - 26 - 26;
+        }
+        return id;
+      };
+      static const RandId uuid36Id() {
+        string uuid = string(36, ' ');
+        uuid[8]  =
+        uuid[13] =
+        uuid[18] =
+        uuid[23] = '-';
+        uuid[14] = '4';
+        unsigned long long rnd = int64();
+        for (auto &it : uuid)
+          if (it == ' ') {
+            if (rnd <= 0x02) rnd = 0x2000000 + (int64() * 0x1000000) | 0;
+            rnd >>= 4;
+            const int offset = (uuid[17] != ' ' and uuid[19] == ' ')
+              ? ((rnd & 0xf) & 0x3) | 0x8
+              : rnd & 0xf;
+            if (offset < 10) it = '0' + offset;
+            else             it = 'a' + offset - 10;
+          }
+        return uuid;
+      };
+      static const RandId uuid32Id() {
+        RandId uuid = uuid36Id();
+        uuid.erase(remove(uuid.begin(), uuid.end(), '-'), uuid.end());
+        return uuid;
+      }
   };
 }
 

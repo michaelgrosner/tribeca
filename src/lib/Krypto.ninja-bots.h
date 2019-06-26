@@ -1026,15 +1026,9 @@ namespace ₿ {
           option.arg<int>("ipv6"),
           {
             option.arg<string>("B64auth"),
-            [&](const int &sum, const string &addr) {
-              return httpUpgrade(sum, addr);
-            },
-            [&](string path, const string &auth, const string &addr) {
-              return httpResponse(path, auth, addr);
-            },
-            [&](string msg, const string &addr) {
-              return httpMessage(msg, addr);
-            }
+            httpUpgrade,
+            httpResponse,
+            httpMessage
           }
         )) error("UI", "Unable to listen at port number " + to_string(option.arg<int>("port"))
              + " (may be already in use by another program)");
@@ -1115,7 +1109,7 @@ namespace ₿ {
         }
         return false;
       };
-      const int httpUpgrade(const int &sum, const string &addr) {
+      function<const int(const int&, const string&)> httpUpgrade = [&](const int &sum, const string &addr) {
         const int tentative = server.sockets.size() + sum;
         Print::log("UI", to_string(tentative) + " client" + string(tentative == 1 ? 0 : 1, 's')
           + (sum > 0 ? "" : " remain") + " connected, last connection was from", addr);
@@ -1125,28 +1119,7 @@ namespace ₿ {
         }
         return sum;
       };
-      const string httpMessage(string message, const string &addr) {
-        if (alien(addr))
-          return string(documents.at("").first, documents.at("").second);
-        const char matter = message.at(1);
-        if (portal.first == message.at(0)) {
-          if (hello.find(matter) != hello.end()) {
-            const json reply = hello.at(matter)();
-            if (!reply.is_null())
-              return portal.first + (matter + reply.dump());
-          }
-        } else if (portal.second == message.at(0) and kisses.find(matter) != kisses.end()) {
-          message = message.substr(2);
-          json butterfly = json::accept(message)
-            ? json::parse(message)
-            : json::object();
-          for (auto it = butterfly.begin(); it != butterfly.end();)
-            if (it.value().is_null()) it = butterfly.erase(it); else ++it;
-          kisses.at(matter)(butterfly);
-        }
-        return string();
-      };
-      const string httpResponse(string path, const string &auth, const string &addr) {
+      function<const string(string, const string&, const string&)> httpResponse = [&](string path, const string &auth, const string &addr) {
         if (alien(addr))
           path.clear();
         const bool papersplease = !(
@@ -1187,6 +1160,27 @@ namespace ₿ {
                     "<br/>" "Refresh the page anytime to retry.";
         }
         return server.document(content, code, type);
+      };
+      function<const string(string, const string&)> httpMessage = [&](string message, const string &addr) {
+        if (alien(addr))
+          return string(documents.at("").first, documents.at("").second);
+        const char matter = message.at(1);
+        if (portal.first == message.at(0)) {
+          if (hello.find(matter) != hello.end()) {
+            const json reply = hello.at(matter)();
+            if (!reply.is_null())
+              return portal.first + (matter + reply.dump());
+          }
+        } else if (portal.second == message.at(0) and kisses.find(matter) != kisses.end()) {
+          message = message.substr(2);
+          json butterfly = json::accept(message)
+            ? json::parse(message)
+            : json::object();
+          for (auto it = butterfly.begin(); it != butterfly.end();)
+            if (it.value().is_null()) it = butterfly.erase(it); else ++it;
+          kisses.at(matter)(butterfly);
+        }
+        return string();
       };
   };
 
