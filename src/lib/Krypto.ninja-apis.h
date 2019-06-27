@@ -240,15 +240,15 @@ namespace ₿ {
       void askForNeverAsyncData(const unsigned int &tick) {
         if (((askForFees and !(askForFees = false))
           or !(tick % 15))
-          and !async_wallet()) askFor(replyWallets,   [&]() { auto reply = sync_wallet();    event->wakeup(); return reply; });
+          and !async_wallet()) askFor(replyWallets,   [&]() { return sync_wallet(); });
         if (askForCancelAll
-          and !(tick % 300))   askFor(replyCancelAll, [&]() { auto reply = sync_cancelAll(); event->wakeup(); return reply; });
+          and !(tick % 300))   askFor(replyCancelAll, [&]() { return sync_cancelAll(); });
       };
       void askForSyncData(const unsigned int &tick) {
-        if (!(tick % 2))       askFor(replyOrders,    [&]() { auto reply = sync_orders();    event->wakeup(); return reply; });
+        if (!(tick % 2))       askFor(replyOrders,    [&]() { return sync_orders(); });
                                askForNeverAsyncData(tick);
-        if (!(tick % 3))       askFor(replyLevels,    [&]() { auto reply = sync_levels();    event->wakeup(); return reply; });
-        if (!(tick % 60))      askFor(replyTrades,    [&]() { auto reply = sync_trades();    event->wakeup(); return reply; });
+        if (!(tick % 3))       askFor(replyLevels,    [&]() { return sync_levels(); });
+        if (!(tick % 60))      askFor(replyTrades,    [&]() { return sync_trades(); });
       };
       void waitForNeverAsyncData() {
         waitFor(replyWallets,   write_mWallets);
@@ -265,7 +265,11 @@ namespace ₿ {
         const T2                 &read
       ) {
         if (!reply.valid())
-          reply = ::async(launch::async, read);
+          reply = ::async(launch::async, [this, read]() {
+            vector<T1> reply = read();
+            event->wakeup();
+            return reply;
+          });
       };
       template<typename T> void waitFor(
               future<vector<T>>        &reply,

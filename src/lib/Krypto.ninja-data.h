@@ -162,7 +162,7 @@ namespace ₿ {
           {};
           virtual void start(const curl_socket_t&, const int&, const function<void()>&) = 0;
           virtual void change(const int&, const function<void()>& = nullptr) = 0;
-          virtual void close() = 0;
+          virtual void stop() = 0;
       };
     public:
       virtual                void  spawn(const function<void(const unsigned int&)>&) = 0;
@@ -228,7 +228,7 @@ namespace ₿ {
                 ((Poll*)event->data)->ready();
               });
           };
-          void close() override {
+          void stop() override {
             uv_poll_stop(&event);
             uv_close((uv_handle_t*)&event, [](uv_handle_t *event) { });
           };
@@ -276,23 +276,23 @@ namespace ₿ {
           {};
           void start(const curl_socket_t &l, const int &events, const function<void()> &data) override {
             loopfd = l;
-            fcntl(sockfd, F_SETFL, fcntl(sockfd, F_GETFL, 0) | O_NONBLOCK);
-            epoll_event event;
-            event.events = events;
-            event.data.ptr = this;
             link(data);
-            epoll_ctl(loopfd, EPOLL_CTL_ADD, sockfd, &event);
+            fcntl(sockfd, F_SETFL, fcntl(sockfd, F_GETFL, 0) | O_NONBLOCK);
+            ctl(events, EPOLL_CTL_ADD);
           };
           void change(const int &events, const function<void()> &data = nullptr) override {
+            if (data) link(data);
+            ctl(events, EPOLL_CTL_MOD);
+          };
+          void stop() override {
+            ctl(0, EPOLL_CTL_DEL);
+          };
+        private:
+          void ctl(const int &events, const int &opcode) {
             epoll_event event;
             event.events = events;
             event.data.ptr = this;
-            if (data) link(data);
-            epoll_ctl(loopfd, EPOLL_CTL_MOD, sockfd, &event);
-          };
-          void close() override {
-            epoll_event event;
-            epoll_ctl(loopfd, EPOLL_CTL_DEL, sockfd, &event);
+            epoll_ctl(loopfd, opcode, sockfd, &event);
           };
       };
       class Async: public Poll {
@@ -302,7 +302,7 @@ namespace ₿ {
           Async(const curl_socket_t &loopfd, const function<void()> &data)
             : Poll(::eventfd(0, EFD_CLOEXEC))
           {
-            Poll::start(loopfd, EPOLLIN, [this, data]() {
+            start(loopfd, EPOLLIN, [this, data]() {
               uint64_t again = 0;
               if (::read(sockfd, &again, 8) == 8)
                 data();
@@ -317,7 +317,7 @@ namespace ₿ {
                Timer timer;
       vector<Async*> async;
        curl_socket_t sockfd = 0;
-         epoll_event ready[1024] = {};
+         epoll_event ready[64] = {};
     public:
       Epoll()
       {
@@ -340,11 +340,7 @@ namespace ₿ {
       void run() override {
         while (sockfd) {
           for (
-            int i = epoll_wait(sockfd, ready, 1024,
-              max(0, (int)chrono::duration_cast<chrono::milliseconds>(
-                timer.next - chrono::system_clock::now()
-              ).count())
-            );
+            int i = epoll_wait(sockfd, ready, 1024, next());
             i --> 0;
             ((Poll*)ready[i].data.ptr)->ready()
           );
@@ -357,13 +353,18 @@ namespace ₿ {
       };
       void end() override {
         for (auto &it : async) {
-          epoll_event event;
-          epoll_ctl(sockfd, EPOLL_CTL_DEL, it->sockfd, &event);
+          it->stop();
           ::close(it->sockfd);
           it->sockfd = 0;
         }
         ::close(sockfd);
         sockfd = 0;
+      };
+    private:
+      const int next() const {
+        return max<int>(0, chrono::duration_cast<chrono::milliseconds>(
+          timer.next - chrono::system_clock::now()
+        ).count());
       };
   };
 #endif
@@ -387,7 +388,7 @@ namespace ₿ {
           void cleanup() {
             if (curl) {
               curl_easy_cleanup(curl);
-              close();
+              stop();
             }
             curl   = nullptr;
             sockfd = 0;
@@ -402,6 +403,7 @@ namespace ₿ {
             if (CURLE_OK == (rc = init())) {
               global_setopt(curl);
               curl_easy_setopt(curl, CURLOPT_URL, url.data());
+              curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1L);
               curl_easy_setopt(curl, CURLOPT_CONNECT_ONLY, 1L);
               if ( CURLE_OK != (rc = curl_easy_perform(curl))
                 or CURLE_OK != (rc = curl_easy_getinfo(curl, CURLINFO_ACTIVESOCKET, &sockfd))
@@ -451,20 +453,17 @@ namespace ₿ {
           };
           const CURLcode send() {
             CURLcode rc;
-            size_t len  = out.length(),
-                   sent = 0;
             do {
               do {
                 size_t n = 0;
-                rc = curl_easy_send(curl, out.substr(sent).data(), len - sent, &n);
-                sent += n;
+                rc = curl_easy_send(curl, out.data(), out.length(), &n);
+                out = out.substr(n);
                 if (rc == CURLE_AGAIN and !wait(false, 5))
                   return CURLE_OPERATION_TIMEDOUT;
               } while (rc == CURLE_AGAIN);
               if (rc != CURLE_OK) break;
-            } while (sent < len);
-            out.clear();
-            change(EPOLLIN);
+            } while (!out.empty());
+            if (out.empty()) change(EPOLLIN);
             return rc;
           };
           const CURLcode recv(const int &timeout) {
@@ -756,7 +755,7 @@ namespace ₿ {
             : Poll(s)
           {};
           void shutdown() {
-            Poll::close();
+            stop();
             ::closesocket(sockfd);
             sockfd = 0;
           };
