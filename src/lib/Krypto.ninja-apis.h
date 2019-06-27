@@ -179,6 +179,7 @@ namespace ₿ {
                 amount,
                 percent;
       } decimal;
+      curl_socket_t loopfd = 0;
       Loop::Async* event = nullptr;
       function<void(const mOrder&)>       write_mOrder;
       function<void(const mTrade&)>       write_mTrade;
@@ -281,19 +282,19 @@ namespace ₿ {
   class GwExchange: public GwExchangeData {
     public:
       using Report = vector<pair<string, string>>;
-        string exchange, apikey,
-               secret,   pass,
-               http,     ws,
-               fix,      unlock;
-        CoinId base,     quote;
-           int version   = 0,
-               maxLevel  = 0,
-               debug     = 0;
-         Price tickPrice = 0;
-        Amount tickSize  = 0,
-               minSize   = 0,
-               makeFee   = 0,
-               takeFee   = 0;
+      string exchange, apikey,
+             secret,   pass,
+             http,     ws,
+             fix,      unlock;
+      CoinId base,     quote;
+         int version   = 0,
+             maxLevel  = 0,
+             debug     = 0;
+       Price tickPrice = 0;
+      Amount tickSize  = 0,
+             minSize   = 0,
+             makeFee   = 0,
+             takeFee   = 0;
       virtual const bool connected() const { return true; };
       virtual void disconnect() {};
       virtual const json handshake() = 0;
@@ -414,19 +415,14 @@ namespace ₿ {
         return WebSocket::connected();
       };
       void askForData(const unsigned int &tick) override {
-        if (countdown and !--countdown) {
+        if (countdown and !--countdown)
           connect();
-          event->wakeup();
-        }
         if (connected() and subscribed())
           askForNeverAsyncData(tick);
       };
       void waitForData() override {
-        if (subscribed()) {
-          waitForAsyncData();
-          event->wakeup();
+        if (subscribed())
           waitForNeverAsyncData();
-        }
       };
     protected:
 //BO non-free Gw library functions from build-*/local/lib/K-*.a (it just redefines all virtual gateway class members below).
@@ -435,8 +431,11 @@ namespace ₿ {
 //EO non-free Gw library functions from build-*/local/lib/K-*.a (it just redefines all virtual gateway class members above).
       virtual void connect() {
         CURLcode rc;
-        if (CURLE_OK != (rc = WebSocket::connect(ws)))
-          reconnect(string("CURL connect Error: ") + curl_easy_strerror(rc));
+        if (CURLE_OK == (rc = WebSocket::connect(ws)))
+          WebSocket::start(GwExchangeData::loopfd, EPOLLIN, [&]() {
+            waitForAsyncData();
+          });
+        else reconnect(string("CURL connect Error: ") + curl_easy_strerror(rc));
       };
       void emit(const string &msg) {
         CURLcode rc;
@@ -452,12 +451,6 @@ namespace ₿ {
         countdown = 7;
         print("WS " + reason + ", reconnecting in " + to_string(countdown) + "s.");
       };
-      virtual void waitForAsyncData() {
-        CURLcode rc;
-        if (CURLE_OK != (rc = WebSocket::receive()))
-          print(string("CURL recv Error: ") + curl_easy_strerror(rc));
-        while (accept_msg(WebSocket::unframe()));
-      };
       const bool accept_msg(const string &msg) {
         const bool next = !msg.empty();
         if (next) {
@@ -468,6 +461,12 @@ namespace ₿ {
         return next;
       };
     private:
+      void waitForAsyncData() {
+        CURLcode rc;
+        if (CURLE_OK != (rc = WebSocket::send_recv()))
+          print(string("CURL recv Error: ") + curl_easy_strerror(rc));
+        while (accept_msg(WebSocket::unframe()));
+      };
       const bool subscribed() {
         if (subscription != connected()) {
           subscription = !subscription;
@@ -500,9 +499,12 @@ namespace ₿ {
         GwApiWs::connect();
         if (WebSocket::connected()) {
           CURLcode rc;
-          if (CURLE_OK != (rc = FixSocket::connect(fix, logon())))
-            reconnect(string("CURL connect FIX Error: ") + curl_easy_strerror(rc));
-          else print("FIX success Logon, streaming orders");
+          if (CURLE_OK == (rc = FixSocket::connect(fix, logon()))) {
+            FixSocket::start(GwExchangeData::loopfd, EPOLLIN, [&]() {
+              waitForAsyncData();
+            });
+            print("FIX success Logon, streaming orders");
+          } else reconnect(string("CURL connect FIX Error: ") + curl_easy_strerror(rc));
         }
       };
       void disconnect() override {
@@ -516,12 +518,12 @@ namespace ₿ {
         if (CURLE_OK != (rc = FixSocket::emit(msg, type)))
           print(string("CURL send FIX Error: ") + curl_easy_strerror(rc));
       };
-      void waitForAsyncData() override {
+    private:
+      void waitForAsyncData() {
         CURLcode rc;
-        if (CURLE_OK != (rc = FixSocket::receive()))
+        if (CURLE_OK != (rc = FixSocket::send_recv()))
           print(string("CURL recv FIX Error: ") + curl_easy_strerror(rc));
         while (accept_msg(FixSocket::unframe()));
-        GwApiWs::waitForAsyncData();
       };
   };
 

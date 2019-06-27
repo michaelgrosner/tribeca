@@ -1240,16 +1240,16 @@ namespace ₿ {
               + " (consider to repeat a few times this check)");
           }
         } {
-          ending([&]() {
-            gateway->end(arg<int>("dustybot"));
-            loop.end();
-            curl_global_cleanup();
-          });
           gateway->event = async([&]() {
             gateway->waitForData();
           });
           timer_1s([&](const unsigned int &tick) {
             gateway->askForData(tick);
+          });
+          ending([&]() {
+            gateway->end(arg<int>("dustybot"));
+            loop.end();
+            curl_global_cleanup();
           });
           handshake({
             {"gateway", gateway->http      },
@@ -1336,6 +1336,7 @@ namespace ₿ {
         gateway->maxLevel  = arg<int>("market-limit");
         gateway->debug     = arg<int>("debug-secret");
         gateway->version   = arg<int>("free-version");
+        gateway->loopfd    = poll();
         gateway->printer   = [&](const string &prefix, const string &reason, const string &highlight) {
           if (reason.find("Error") != string::npos)
             Print::logWar(prefix, reason);

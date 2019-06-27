@@ -118,263 +118,6 @@ namespace ₿ {
       };
   };
 
-  class Curl {
-    public:
-      static function<void(CURL*)> global_setopt;
-    private:
-      class Easy {
-        private:
-                   CURL *curl   = nullptr;
-          curl_socket_t  sockfd = 0;
-        private_ref:
-          string &buffer;
-        public:
-          Easy(string &b)
-            : buffer(b)
-          {};
-        protected:
-          void cleanup() {
-            if (curl) curl_easy_cleanup(curl);
-            curl   = nullptr;
-            sockfd = 0;
-          };
-          const bool connected() const {
-            return sockfd;
-          };
-          const CURLcode connect(const string &url, const string &header, const string &res1, const string &res2) {
-            buffer.clear();
-            CURLcode rc;
-            if (CURLE_OK == (rc = init())) {
-              global_setopt(curl);
-              curl_easy_setopt(curl, CURLOPT_URL, url.data());
-              curl_easy_setopt(curl, CURLOPT_CONNECT_ONLY, 1L);
-              if ( CURLE_OK != (rc = curl_easy_perform(curl))
-                or CURLE_OK != (rc = curl_easy_getinfo(curl, CURLINFO_ACTIVESOCKET, &sockfd))
-                or CURLE_OK != (rc = send(header))
-                or CURLE_OK != (rc = recv(5))
-                or string::npos == buffer.find(res1)
-                or string::npos == buffer.find(res2)
-              ) {
-                if (rc == CURLE_OK)
-                  rc = CURLE_WEIRD_SERVER_REPLY;
-                cleanup();
-              }
-              buffer.clear();
-            }
-            return rc;
-          };
-          const CURLcode receive() {
-            CURLcode rc = CURLE_COULDNT_CONNECT;
-            if (curl and sockfd and CURLE_OPERATION_TIMEDOUT == (rc = recv(0)))
-              rc = CURLE_OK;
-            if (rc != CURLE_OK)
-              cleanup();
-            return rc;
-          };
-          const CURLcode emit(const string &data) {
-            CURLcode rc = CURLE_COULDNT_CONNECT;
-            if (!curl or !sockfd or CURLE_OK != (rc = send(data)))
-              cleanup();
-            return rc;
-          };
-        private:
-          const CURLcode init() {
-            if (!curl) curl = curl_easy_init();
-            else curl_easy_reset(curl);
-            sockfd = 0;
-            return curl
-              ? CURLE_OK
-              : CURLE_FAILED_INIT;
-          };
-          const CURLcode send(const string &data) {
-            CURLcode rc;
-            size_t len  = data.length(),
-                   sent = 0;
-            do {
-              do {
-                size_t n = 0;
-                rc = curl_easy_send(curl, data.substr(sent).data(), len - sent, &n);
-                sent += n;
-                if (rc == CURLE_AGAIN and !wait(false, 5))
-                  return CURLE_OPERATION_TIMEDOUT;
-              } while (rc == CURLE_AGAIN);
-              if (rc != CURLE_OK) break;
-            } while (sent < len);
-            return rc;
-          };
-          const CURLcode recv(const int &timeout) {
-            CURLcode rc;
-            for(;;) {
-              char data[524288];
-              size_t n;
-              do {
-                n = 0;
-                rc = curl_easy_recv(curl, data, sizeof(data), &n);
-                buffer.append(data, n);
-                if (rc == CURLE_AGAIN and !wait(true, timeout))
-                  return CURLE_OPERATION_TIMEDOUT;
-              } while (rc == CURLE_AGAIN);
-              if ((timeout and buffer.find("\r\n\r\n") != buffer.find("\u0001" "10="))
-                or rc != CURLE_OK
-                or n == 0
-              ) break;
-            }
-            return rc;
-          };
-          const int wait(const bool &io, const int &timeout) const {
-            struct timeval tv = {timeout, 10000};
-            fd_set infd,
-                   outfd;
-            FD_ZERO(&infd);
-            FD_ZERO(&outfd);
-            FD_SET(sockfd, io ? &infd : &outfd);
-            return select(sockfd + 1, &infd, &outfd, nullptr, &tv);
-          };
-      };
-    public_friend:
-      class Web {
-        public:
-          static const json xfer(const string &url, const long &timeout = 13) {
-            return request(url, [&](CURL *curl) {
-              curl_easy_setopt(curl, CURLOPT_TIMEOUT, timeout);
-            });
-          };
-          static const json xfer(const string &url, const string &post) {
-            return request(url, [&](CURL *curl) {
-              struct curl_slist *h_ = nullptr;
-              h_ = curl_slist_append(h_, "Content-Type: application/x-www-form-urlencoded");
-              curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
-              curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post.data());
-            });
-          };
-          static const json request(const string &url, const function<void(CURL*)> custom_setopt) {
-            static mutex waiting_reply;
-            lock_guard<mutex> lock(waiting_reply);
-            string reply;
-            CURLcode rc = CURLE_FAILED_INIT;
-            CURL *curl = curl_easy_init();
-            if (curl) {
-              custom_setopt(curl);
-              global_setopt(curl);
-              curl_easy_setopt(curl, CURLOPT_URL, url.data());
-              curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &write);
-              curl_easy_setopt(curl, CURLOPT_WRITEDATA, &reply);
-              rc = curl_easy_perform(curl);
-              curl_easy_cleanup(curl);
-            }
-            return rc == CURLE_OK
-              ? (json::accept(reply)
-                  ? json::parse(reply)
-                  : json::object()
-                )
-              : (json){ {"error", string("CURL Request Error: ") + curl_easy_strerror(rc)} };
-          };
-        private:
-          static size_t write(void *buf, size_t size, size_t nmemb, void *reply) {
-            ((string*)reply)->append((char*)buf, size *= nmemb);
-            return size;
-          };
-      };
-      class WebSocket: public Easy,
-                       public WebSocketFrames {
-        private:
-          string buffer;
-        public:
-          WebSocket()
-            : Easy(buffer)
-          {};
-        protected:
-          const CURLcode connect(const string &uri) {
-            CURLcode rc = CURLE_URL_MALFORMAT;
-            CURLU *url = curl_url();
-            char *host_,
-                 *port_,
-                 *path_;
-            string header;
-            if (!curl_url_set(url, CURLUPART_URL, ("http" + uri.substr(2)).data(), 0)) {
-              if (!curl_url_get(url, CURLUPART_HOST, &host_, 0)) {
-                header = string(host_);
-                curl_free(host_);
-                if (!curl_url_get(url, CURLUPART_PORT, &port_, CURLU_DEFAULT_PORT)) {
-                  header += ":" + string(port_);
-                  curl_free(port_);
-                  if (!curl_url_get(url, CURLUPART_PATH, &path_, 0)) {
-                    header = "GET " + string(path_) + " HTTP/1.1"
-                             "\r\n" "Host: " + header +
-                             "\r\n" "Upgrade: websocket"
-                             "\r\n" "Connection: Upgrade"
-                             "\r\n" "Sec-WebSocket-Key: x3JJHMbDL1EzLkh9GBhXDw=="
-                             "\r\n" "Sec-WebSocket-Version: 13"
-                             "\r\n"
-                             "\r\n";
-                    curl_free(path_);
-                    rc = CURLE_OK;
-                  }
-                }
-              }
-            }
-            curl_url_cleanup(url);
-            return rc != CURLE_OK
-                 ? rc
-                 : Easy::connect(
-                     "http" + uri.substr(2),
-                     header,
-                     "HTTP/1.1 101 Switching Protocols",
-                     "HSmrc0sMlYUkAGmm5OPpG2HaGWk="
-                   );
-          };
-          const CURLcode emit(const string &data, const int &opcode) {
-            return Easy::emit(frame(data, opcode, true));
-          };
-          const string unframe() {
-            string pong;
-            bool drop = false;
-            const string msg = WebSocketFrames::unframe(buffer, pong, drop);
-            if (!pong.empty()) Easy::emit(pong);
-            if (drop) cleanup();
-            return msg;
-          };
-      };
-      class FixSocket: public Easy,
-                       public FixFrames {
-        private:
-          string buffer;
-          unsigned long sequence = 0;
-        private_ref:
-          const string &sender,
-                       &target;
-        public:
-          FixSocket(const string &s, const string &t)
-            : Easy(buffer)
-            , sender(s)
-            , target(t)
-          {};
-        protected:
-          const CURLcode connect(const string &uri, const string &logon) {
-            return Easy::connect(
-              "https://" + uri,
-              frame(logon, "A", sequence = 1, sender, target),
-              "8=FIX.4.2" "\u0001",
-              "\u0001" "35=A" "\u0001"
-            );
-          };
-          const CURLcode emit(const string &data, const string &type) {
-            return Easy::emit(frame(data, type, ++sequence, sender, target));
-          };
-          const string unframe() {
-            string pong;
-            bool drop = false;
-            const string msg = FixFrames::unframe(buffer, pong, drop);
-            if (!pong.empty()) emit("", pong);
-            if (drop) cleanup();
-            return msg;
-          };
-          const unsigned long last() const {
-            return sequence;
-          };
-      };
-  };
-
   class Loop {
     public_friend:
       class Timer {
@@ -597,7 +340,11 @@ namespace ₿ {
       void run() override {
         while (sockfd) {
           for (
-            int i = epoll_wait(sockfd, ready, 1024, 0);
+            int i = epoll_wait(sockfd, ready, 1024,
+              max(0, (int)chrono::duration_cast<chrono::milliseconds>(
+                timer.next - chrono::system_clock::now()
+              ).count())
+            );
             i --> 0;
             ((Poll*)ready[i].data.ptr)->ready()
           );
@@ -620,6 +367,278 @@ namespace ₿ {
       };
   };
 #endif
+
+  class Curl {
+    public:
+      static function<void(CURL*)> global_setopt;
+    private:
+      class Easy: public LIB_LOOP::Poll {
+        private:
+          CURL *curl = nullptr;
+          string out;
+        private_ref:
+          string &in;
+        public:
+          Easy(string &i)
+            : Poll(0)
+            , in(i)
+          {};
+        protected:
+          void cleanup() {
+            if (curl) {
+              curl_easy_cleanup(curl);
+              close();
+            }
+            curl   = nullptr;
+            sockfd = 0;
+          };
+          const bool connected() const {
+            return sockfd;
+          };
+          const CURLcode connect(const string &url, const string &header, const string &res1, const string &res2) {
+            out = header;
+            in.clear();
+            CURLcode rc;
+            if (CURLE_OK == (rc = init())) {
+              global_setopt(curl);
+              curl_easy_setopt(curl, CURLOPT_URL, url.data());
+              curl_easy_setopt(curl, CURLOPT_CONNECT_ONLY, 1L);
+              if ( CURLE_OK != (rc = curl_easy_perform(curl))
+                or CURLE_OK != (rc = curl_easy_getinfo(curl, CURLINFO_ACTIVESOCKET, &sockfd))
+                or CURLE_OK != (rc = send())
+                or CURLE_OK != (rc = recv(5))
+                or string::npos == in.find(res1)
+                or string::npos == in.find(res2)
+              ) {
+                if (rc == CURLE_OK)
+                  rc = CURLE_WEIRD_SERVER_REPLY;
+                cleanup();
+              }
+              in.clear();
+            }
+            return rc;
+          };
+          const CURLcode send_recv() {
+            CURLcode rc = CURLE_COULDNT_CONNECT;
+            if (curl
+              and sockfd
+              and (out.empty() or CURLE_OK == (rc = send()))
+              and CURLE_OPERATION_TIMEDOUT == (rc = recv(0))
+            ) rc = CURLE_OK;
+            if (rc != CURLE_OK)
+              cleanup();
+            return rc;
+          };
+          const CURLcode emit(const string &data) {
+            CURLcode rc = CURLE_OK;
+            if (curl and sockfd) {
+              out += data;
+              change(EPOLLIN | EPOLLOUT);
+            } else {
+              rc = CURLE_COULDNT_CONNECT;
+              cleanup();
+            }
+            return rc;
+          };
+        private:
+          const CURLcode init() {
+            if (!curl) curl = curl_easy_init();
+            else curl_easy_reset(curl);
+            sockfd = 0;
+            return curl
+              ? CURLE_OK
+              : CURLE_FAILED_INIT;
+          };
+          const CURLcode send() {
+            CURLcode rc;
+            size_t len  = out.length(),
+                   sent = 0;
+            do {
+              do {
+                size_t n = 0;
+                rc = curl_easy_send(curl, out.substr(sent).data(), len - sent, &n);
+                sent += n;
+                if (rc == CURLE_AGAIN and !wait(false, 5))
+                  return CURLE_OPERATION_TIMEDOUT;
+              } while (rc == CURLE_AGAIN);
+              if (rc != CURLE_OK) break;
+            } while (sent < len);
+            out.clear();
+            change(EPOLLIN);
+            return rc;
+          };
+          const CURLcode recv(const int &timeout) {
+            CURLcode rc;
+            for(;;) {
+              char data[524288];
+              size_t n;
+              do {
+                n = 0;
+                rc = curl_easy_recv(curl, data, sizeof(data), &n);
+                in.append(data, n);
+                if (rc == CURLE_AGAIN and !wait(true, timeout))
+                  return CURLE_OPERATION_TIMEDOUT;
+              } while (rc == CURLE_AGAIN);
+              if ((timeout and in.find("\r\n\r\n") != in.find("\u0001" "10="))
+                or rc != CURLE_OK
+                or n == 0
+              ) break;
+            }
+            return rc;
+          };
+          const int wait(const bool &io, const int &timeout) const {
+            struct timeval tv = {timeout, 0};
+            fd_set infd,
+                   outfd;
+            FD_ZERO(&infd);
+            FD_ZERO(&outfd);
+            FD_SET(sockfd, io ? &infd : &outfd);
+            return select(sockfd + 1, &infd, &outfd, nullptr, &tv);
+          };
+      };
+    public_friend:
+      class Web {
+        public:
+          static const json xfer(const string &url, const long &timeout = 13) {
+            return request(url, [&](CURL *curl) {
+              curl_easy_setopt(curl, CURLOPT_TIMEOUT, timeout);
+            });
+          };
+          static const json xfer(const string &url, const string &post) {
+            return request(url, [&](CURL *curl) {
+              struct curl_slist *h_ = nullptr;
+              h_ = curl_slist_append(h_, "Content-Type: application/x-www-form-urlencoded");
+              curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
+              curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post.data());
+            });
+          };
+          static const json request(const string &url, const function<void(CURL*)> custom_setopt) {
+            static mutex waiting_reply;
+            lock_guard<mutex> lock(waiting_reply);
+            string reply;
+            CURLcode rc = CURLE_FAILED_INIT;
+            CURL *curl = curl_easy_init();
+            if (curl) {
+              custom_setopt(curl);
+              global_setopt(curl);
+              curl_easy_setopt(curl, CURLOPT_URL, url.data());
+              curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &write);
+              curl_easy_setopt(curl, CURLOPT_WRITEDATA, &reply);
+              rc = curl_easy_perform(curl);
+              curl_easy_cleanup(curl);
+            }
+            return rc == CURLE_OK
+              ? (json::accept(reply)
+                  ? json::parse(reply)
+                  : json::object()
+                )
+              : (json){ {"error", string("CURL Request Error: ") + curl_easy_strerror(rc)} };
+          };
+        private:
+          static size_t write(void *buf, size_t size, size_t nmemb, void *reply) {
+            ((string*)reply)->append((char*)buf, size *= nmemb);
+            return size;
+          };
+      };
+      class WebSocket: public Easy,
+                       public WebSocketFrames {
+        private:
+          string in;
+        public:
+          WebSocket()
+            : Easy(in)
+          {};
+        protected:
+          const CURLcode connect(const string &uri) {
+            CURLcode rc = CURLE_URL_MALFORMAT;
+            CURLU *url = curl_url();
+            char *host_,
+                 *port_,
+                 *path_;
+            string header;
+            if (!curl_url_set(url, CURLUPART_URL, ("http" + uri.substr(2)).data(), 0)) {
+              if (!curl_url_get(url, CURLUPART_HOST, &host_, 0)) {
+                header = string(host_);
+                curl_free(host_);
+                if (!curl_url_get(url, CURLUPART_PORT, &port_, CURLU_DEFAULT_PORT)) {
+                  header += ":" + string(port_);
+                  curl_free(port_);
+                  if (!curl_url_get(url, CURLUPART_PATH, &path_, 0)) {
+                    header = "GET " + string(path_) + " HTTP/1.1"
+                             "\r\n" "Host: " + header +
+                             "\r\n" "Upgrade: websocket"
+                             "\r\n" "Connection: Upgrade"
+                             "\r\n" "Sec-WebSocket-Key: x3JJHMbDL1EzLkh9GBhXDw=="
+                             "\r\n" "Sec-WebSocket-Version: 13"
+                             "\r\n"
+                             "\r\n";
+                    curl_free(path_);
+                    rc = CURLE_OK;
+                  }
+                }
+              }
+            }
+            curl_url_cleanup(url);
+            return rc != CURLE_OK
+                 ? rc
+                 : Easy::connect(
+                     "http" + uri.substr(2),
+                     header,
+                     "HTTP/1.1 101 Switching Protocols",
+                     "HSmrc0sMlYUkAGmm5OPpG2HaGWk="
+                   );
+          };
+          const CURLcode emit(const string &data, const int &opcode) {
+            return Easy::emit(frame(data, opcode, true));
+          };
+          const string unframe() {
+            string pong;
+            bool drop = false;
+            const string msg = WebSocketFrames::unframe(in, pong, drop);
+            if (!pong.empty()) Easy::emit(pong);
+            if (drop) cleanup();
+            return msg;
+          };
+      };
+      class FixSocket: public Easy,
+                       public FixFrames {
+        private:
+          string in;
+          unsigned long sequence = 0;
+        private_ref:
+          const string &sender,
+                       &target;
+        public:
+          FixSocket(const string &s, const string &t)
+            : Easy(in)
+            , sender(s)
+            , target(t)
+          {};
+        protected:
+          const CURLcode connect(const string &uri, const string &logon) {
+            return Easy::connect(
+              "https://" + uri,
+              frame(logon, "A", sequence = 1, sender, target),
+              "8=FIX.4.2" "\u0001",
+              "\u0001" "35=A" "\u0001"
+            );
+          };
+          const CURLcode emit(const string &data, const string &type) {
+            return Easy::emit(frame(data, type, ++sequence, sender, target));
+          };
+          const string unframe() {
+            string pong;
+            bool drop = false;
+            const string msg = FixFrames::unframe(in, pong, drop);
+            if (!pong.empty()) emit("", pong);
+            if (drop) cleanup();
+            return msg;
+          };
+          const unsigned long last() const {
+            return sequence;
+          };
+      };
+  };
 
   class Text {
     public:
