@@ -421,7 +421,7 @@ namespace ₿ {
       void askForData(const unsigned int &tick) override {
         if (countdown and !--countdown)
           connect();
-        if (connected() and subscribed())
+        if (subscribed())
           askForNeverAsyncData(tick);
       };
       void waitForData() override {

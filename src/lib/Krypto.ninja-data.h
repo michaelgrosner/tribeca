@@ -167,9 +167,7 @@ namespace ₿ {
     public:
       virtual                void  spawn(const function<void(const unsigned int&)>&) = 0;
       virtual               Async *spawn(const function<void()>&)                    = 0;
-      virtual const curl_socket_t  spawn() {
-        return 0;
-      };
+      virtual const curl_socket_t  spawn()                                           = 0;
       virtual                void  run()                                             = 0;
       virtual                void  end()                                             = 0;
   };
@@ -387,6 +385,7 @@ namespace ₿ {
         protected:
           void cleanup() {
             if (curl) {
+              if (!out.empty()) send();
               curl_easy_cleanup(curl);
               stop();
             }
