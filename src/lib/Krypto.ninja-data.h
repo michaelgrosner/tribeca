@@ -338,7 +338,7 @@ namespace ₿ {
       void run() override {
         while (sockfd) {
           for (
-            int i = epoll_wait(sockfd, ready, 1024, next());
+            int i = epoll_wait(sockfd, ready, 64, next());
             i --> 0;
             ((Poll*)ready[i].data.ptr)->ready()
           );

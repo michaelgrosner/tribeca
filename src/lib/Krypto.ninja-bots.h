@@ -1058,7 +1058,7 @@ namespace ₿ {
       void welcome() {
         for (auto &it : readable) {
           it->read = [&]() {
-            if (server.sockets.size()) {
+            if (!server.sockets.empty()) {
               queue[(char)it->about()] = it->blob().dump();
               if (it->realtime() or !delay) broadcast();
             }
@@ -1068,11 +1068,10 @@ namespace ₿ {
           };
         }
         readable.clear();
-        for (auto &it : clickable) {
+        for (auto &it : clickable)
           kisses[(char)it->about()] = [&](const json &butterfly) {
             it->click(butterfly);
           };
-        }
         clickable.clear();
       };
       void headless() {
@@ -1090,7 +1089,7 @@ namespace ₿ {
         clickFn[data].push_back(fn);
       };
       void broadcast() {
-        if (!server.sockets.empty() and !queue.empty()) {
+        if (!(server.sockets.empty() or queue.empty())) {
           string msgs;
           for (const auto &it : queue)
             msgs += server.sockets.front()->frame(portal.second + (it.first + it.second), 0x01, false);
@@ -1242,9 +1241,7 @@ namespace ₿ {
               + " (consider to repeat a few times this check)");
           }
         } {
-          gateway->event = async([&]() {
-            gateway->waitForData();
-          });
+          gateway->waitForData(loop);
           timer_1s([&](const unsigned int &tick) {
             gateway->askForData(tick);
           });
@@ -1338,7 +1335,6 @@ namespace ₿ {
         gateway->maxLevel  = arg<int>("market-limit");
         gateway->debug     = arg<int>("debug-secret");
         gateway->version   = arg<int>("free-version");
-        gateway->loopfd    = poll();
         gateway->printer   = [&](const string &prefix, const string &reason, const string &highlight) {
           if (reason.find("Error") != string::npos)
             Print::logWar(prefix, reason);

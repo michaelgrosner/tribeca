@@ -179,8 +179,6 @@ namespace ₿ {
                 amount,
                 percent;
       } decimal;
-      curl_socket_t loopfd = 0;
-      Loop::Async* event = nullptr;
       function<void(const mOrder&)>       write_mOrder;
       function<void(const mTrade&)>       write_mTrade;
       function<void(const mLevels&)>      write_mLevels;
@@ -191,7 +189,7 @@ namespace ₿ {
            askForCancelAll = false;
       const RandId (*randId)() = nullptr;
       virtual void askForData(const unsigned int &tick) = 0;
-      virtual void waitForData() = 0;
+      virtual void waitForData(Loop &loop) = 0;
       void place(const mOrder *const order) {
         place(
           order->orderId,
@@ -232,6 +230,12 @@ namespace ₿ {
         if (write_Connectivity)
           write_Connectivity(connectivity);
       };
+      curl_socket_t loopfd = 0;
+      Loop::Async* eventWallets   = nullptr;
+      Loop::Async* eventLevels    = nullptr;
+      Loop::Async* eventTrades    = nullptr;
+      Loop::Async* eventOrders    = nullptr;
+      Loop::Async* eventCancelAll = nullptr;
       future<vector<mWallets>> replyWallets;
       future<vector<mLevels>> replyLevels;
       future<vector<mTrade>> replyTrades;
@@ -240,46 +244,46 @@ namespace ₿ {
       void askForNeverAsyncData(const unsigned int &tick) {
         if (((askForFees and !(askForFees = false))
           or !(tick % 15))
-          and !async_wallet()) askFor(replyWallets,   [&]() { return sync_wallet(); });
+          and !async_wallet()) askFor(replyWallets,   eventWallets,   [&]() { return sync_wallet(); });
         if (askForCancelAll
-          and !(tick % 300))   askFor(replyCancelAll, [&]() { return sync_cancelAll(); });
+          and !(tick % 300))   askFor(replyCancelAll, eventCancelAll, [&]() { return sync_cancelAll(); });
       };
       void askForSyncData(const unsigned int &tick) {
-        if (!(tick % 2))       askFor(replyOrders,    [&]() { return sync_orders(); });
+        if (!(tick % 2))       askFor(replyOrders,    eventOrders,    [&]() { return sync_orders(); });
                                askForNeverAsyncData(tick);
-        if (!(tick % 3))       askFor(replyLevels,    [&]() { return sync_levels(); });
-        if (!(tick % 60))      askFor(replyTrades,    [&]() { return sync_trades(); });
+        if (!(tick % 3))       askFor(replyLevels,    eventLevels,    [&]() { return sync_levels(); });
+        if (!(tick % 60))      askFor(replyTrades,    eventTrades,    [&]() { return sync_trades(); });
       };
-      void waitForNeverAsyncData() {
-        waitFor(replyWallets,   write_mWallets);
-        waitFor(replyCancelAll, write_mOrder);
+      void waitForNeverAsyncData(Loop &loop) {
+        loopfd = loop.spawn();
+        eventWallets   = loop.spawn([&]() { waitFor(replyWallets,   write_mWallets); });
+        eventCancelAll = loop.spawn([&]() { waitFor(replyCancelAll, write_mOrder); });
       };
-      void waitForSyncData() {
-        waitFor(replyOrders,    write_mOrder);
-        waitForNeverAsyncData();
-        waitFor(replyLevels,    write_mLevels);
-        waitFor(replyTrades,    write_mTrade);
+      void waitForSyncData(Loop &loop) {
+        eventOrders    = loop.spawn([&]() { waitFor(replyOrders,    write_mOrder); });
+        waitForNeverAsyncData(loop);
+        eventLevels    = loop.spawn([&]() { waitFor(replyLevels,    write_mLevels); });
+        eventTrades    = loop.spawn([&]() { waitFor(replyTrades,    write_mTrade); });
+
       };
       template<typename T1, typename T2> void askFor(
               future<vector<T1>> &reply,
-        const T2                 &read
+                     Loop::Async *event,
+        const                 T2 &read
       ) {
         if (!reply.valid())
-          reply = ::async(launch::async, [this, read]() {
+          reply = ::async(launch::async, [this, event, read]() {
             vector<T1> reply = read();
             event->wakeup();
             return reply;
           });
       };
       template<typename T> void waitFor(
-              future<vector<T>>        &reply,
+                     future<vector<T>> &reply,
         const function<void(const T&)> &write
       ) {
-        if (reply.valid()) {
-          if (reply.wait_for(chrono::nanoseconds(0)) == future_status::ready) {
-            for (T &it : reply.get()) write(it);
-          } else event->wakeup();
-        }
+        if (reply.valid())
+          for (T &it : reply.get()) write(it);
       };
   };
 
@@ -299,8 +303,8 @@ namespace ₿ {
              minSize   = 0,
              makeFee   = 0,
              takeFee   = 0;
-      virtual const bool connected() const { return true; };
       virtual void disconnect() {};
+      virtual const bool connected() const { return true; };
       virtual const json handshake() = 0;
       const json handshake(const bool &nocache) {
         json reply;
@@ -405,8 +409,8 @@ namespace ₿ {
       void askForData(const unsigned int &tick) override {
         askForSyncData(tick);
       };
-      void waitForData() override {
-        waitForSyncData();
+      void waitForData(Loop &loop) override {
+        waitForSyncData(loop);
       };
   };
   class GwApiWs: public Gw,
@@ -424,9 +428,8 @@ namespace ₿ {
         if (subscribed())
           askForNeverAsyncData(tick);
       };
-      void waitForData() override {
-        if (subscribed())
-          waitForNeverAsyncData();
+      void waitForData(Loop &loop) override {
+        waitForNeverAsyncData(loop);
       };
     protected:
 //BO non-free Gw library functions from build-*/local/lib/K-*.a (it just redefines all virtual gateway class members below).
@@ -464,13 +467,6 @@ namespace ₿ {
         }
         return next;
       };
-    private:
-      void waitForAsyncData() {
-        CURLcode rc;
-        if (CURLE_OK != (rc = WebSocket::send_recv()))
-          print(string("CURL recv Error: ") + curl_easy_strerror(rc));
-        while (accept_msg(WebSocket::unframe()));
-      };
       const bool subscribed() {
         if (subscription != connected()) {
           subscription = !subscription;
@@ -481,6 +477,13 @@ namespace ₿ {
           };
         }
         return subscription;
+      };
+    private:
+      void waitForAsyncData() {
+        CURLcode rc;
+        if (CURLE_OK != (rc = WebSocket::send_recv()))
+          print(string("CURL recv Error: ") + curl_easy_strerror(rc));
+        while (accept_msg(WebSocket::unframe()));
       };
   };
   class GwApiFix: public GwApiWs,
