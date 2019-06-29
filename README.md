@@ -74,7 +74,7 @@ See [etc/Dockerfile](https://github.com/ctubio/Krypto-trading-bot/tree/master/et
 
 ### Manual GIT Installation
 
-0. Ensure you agree to install collaborative non-free software (see [Unlock](#unlock) section).
+0. Ensure you agree to install collaborative non-free and <a href="https://spanishpolice.github.io/">non-violent</a> software (see [Unlock](#unlock) section).
 
 1. Ensure your target machine has `git`, `make` and `vim` installed.
 
@@ -94,7 +94,7 @@ To upgrade anytime see [Upgrade to the latest commit](#upgrade-to-the-latest-com
 
 ### Manual ZIP Installation
 
-0. Ensure you agree to install collaborative non-free software (see [Unlock](#unlock) section).
+0. Ensure you agree to install collaborative non-free and <a href="https://spanishpolice.github.io/">non-violent</a> software (see [Unlock](#unlock) section).
 
 1. Ensure your target machine has `curl`, `make` and `vim` installed.
 
