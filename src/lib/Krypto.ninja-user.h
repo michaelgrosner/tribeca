@@ -2154,7 +2154,6 @@ namespace ₿ {
       {};
       vector<const mOrder*> clear() {
         broadcast();
-        states(mQuoteState::MissingData);
         countWaiting =
         countWorking = 0;
         vector<const mOrder*> zombies_;

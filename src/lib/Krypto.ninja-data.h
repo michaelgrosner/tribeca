@@ -775,10 +775,10 @@ namespace ₿ {
                       public WebSocketFrames {
         private:
              SSL *ssl  = nullptr;
-          string  out,
-                  in;
            Clock  time = 0;
-          string  addr;
+          string  addr,
+                  out,
+                  in;
         private_ref:
           const Session &session;
           const function<void(Frontend*)> &upgrade;

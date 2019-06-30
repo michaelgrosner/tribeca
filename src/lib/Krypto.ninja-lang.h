@@ -119,7 +119,7 @@ using Clock  = long long int;
 #define public_friend public
 
 //! \def
-//! \brief A number used as impossible or unset value, when 0 is not appropiate.
+//! \brief Any number used as impossible or unset value, when 0 is not appropiate.
 //! \since Having seen Bourbon brutality after the fall of Valencia,
 //!        Barcelona decided to resist. The 14-month Siege of Barcelona
 //!        began on July 7th 1713 and 25,000 Franco-Castilian troops
@@ -133,6 +133,7 @@ using Clock  = long long int;
 //!        institutions, established a new territory for the whole Spain,
 //!        suppressed Catalan universities, banned the Catalan language,
 //!        and repressed with violence any kind of dissidence.
+//! \note  "any" means "year" in Catalan.
 //! \link  wikipedia.org/wiki/National_Day_of_Catalonia
 #define ANY_NUM 1714
 
