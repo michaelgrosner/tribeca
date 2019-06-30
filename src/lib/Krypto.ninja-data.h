@@ -165,11 +165,12 @@ namespace ₿ {
           virtual void stop() = 0;
       };
     public:
-      virtual                void  spawn(const function<void(const unsigned int&)>&) = 0;
-      virtual               Async *spawn(const function<void()>&)                    = 0;
-      virtual const curl_socket_t  spawn()                                           = 0;
-      virtual                void  run()                                             = 0;
-      virtual                void  end()                                             = 0;
+      virtual                void  timer_ticks_factor(const unsigned int&) const        = 0;
+      virtual                void  timer_1s(const function<void(const unsigned int&)>&) = 0;
+      virtual               Async *async(const function<void()>&)                       = 0;
+      virtual const curl_socket_t  poll()                                               = 0;
+      virtual                void  walk()                                               = 0;
+      virtual                void  end()                                                = 0;
   };
 #if defined _WIN32 or defined __APPLE__
   class Libuv: public Loop {
@@ -222,40 +223,40 @@ namespace ₿ {
           void change(const int &events, const function<void()> &data = nullptr) override {
             if (data) link(data);
             if (!uv_is_closing((uv_handle_t*)&event))
-              uv_poll_start(&event, events, [](uv_poll_t *event, int status, int events) {
+              uv_poll_start(&event, events, [](uv_poll_t *event, int, int) {
                 ((Poll*)event->data)->ready();
               });
           };
           void stop() override {
             uv_poll_stop(&event);
-            uv_close((uv_handle_t*)&event, [](uv_handle_t *event) { });
+            uv_close((uv_handle_t*)&event, [](uv_handle_t*) { });
           };
       };
     private:
                Timer timer;
-      vector<Async*> async;
+      vector<Async*> events;
     public:
-      void ticks(const unsigned int &factor) const {
+      void timer_ticks_factor(const unsigned int &factor) const override {
         timer.ticks_factor(factor);
       };
-      void spawn(const function<void(const unsigned int&)> &data) override {
+      void timer_1s(const function<void(const unsigned int&)> &data) override {
         timer.push_back(data);
       };
-      Loop::Async *spawn(const function<void()> &data) override {
-        async.push_back(new Async(data));
-        return async.back();
+      Loop::Async *async(const function<void()> &data) override {
+        events.push_back(new Async(data));
+        return events.back();
       };
-      const curl_socket_t spawn() override {
+      const curl_socket_t poll() override {
         return 0;
       };
-      void run() override {
+      void walk() override {
         uv_run(uv_default_loop(), UV_RUN_DEFAULT);
       };
       void end() override {
         uv_timer_stop(&timer.event);
-        uv_close((uv_handle_t*)&timer.event, [](uv_handle_t* event){ });
-        for (auto &it : async)
-          uv_close((uv_handle_t*)&it->event, [](uv_handle_t* event){ });
+        uv_close((uv_handle_t*)&timer.event, [](uv_handle_t*){ });
+        for (auto &it : events)
+          uv_close((uv_handle_t*)&it->event, [](uv_handle_t*){ });
       };
   };
 #else
@@ -313,7 +314,7 @@ namespace ₿ {
       };
     private:
                Timer timer;
-      vector<Async*> async;
+      vector<Async*> events;
        curl_socket_t sockfd = 0;
          epoll_event ready[64] = {};
     public:
@@ -322,20 +323,20 @@ namespace ₿ {
         if ((sockfd = epoll_create1(EPOLL_CLOEXEC)) == -1)
           sockfd = 0;
       };
-      void ticks(const unsigned int &factor) const {
+      void timer_ticks_factor(const unsigned int &factor) const override {
         timer.ticks_factor(factor);
       };
-      void spawn(const function<void(const unsigned int&)> &data) override {
+      void timer_1s(const function<void(const unsigned int&)> &data) override {
         timer.push_back(data);
       };
-      Loop::Async *spawn(const function<void()> &data) override {
-        async.push_back(new Async(sockfd, data));
-        return async.back();
+      Loop::Async *async(const function<void()> &data) override {
+        events.push_back(new Async(sockfd, data));
+        return events.back();
       };
-      const curl_socket_t spawn() override {
+      const curl_socket_t poll() override {
         return sockfd;
       };
-      void run() override {
+      void walk() override {
         while (sockfd) {
           for (
             int i = epoll_wait(sockfd, ready, 64, next());
@@ -350,7 +351,7 @@ namespace ₿ {
         }
       };
       void end() override {
-        for (auto &it : async) {
+        for (auto &it : events) {
           it->stop();
           ::close(it->sockfd);
           it->sockfd = 0;
@@ -371,7 +372,7 @@ namespace ₿ {
     public:
       static function<void(CURL*)> global_setopt;
     private:
-      class Easy: public LIB_LOOP::Poll {
+      class Easy: public Epoll::Poll {
         private:
           CURL *curl = nullptr;
           string out;
@@ -748,7 +749,7 @@ namespace ₿ {
         function<const string(string, const string&, const string&)> httpResponse = nullptr;
         function<const string(string, const string&)> httpMessage = nullptr;
       };
-      class Socket: public LIB_LOOP::Poll {
+      class Socket: public Epoll::Poll {
         public:
           Socket(const curl_socket_t &s)
             : Poll(s)

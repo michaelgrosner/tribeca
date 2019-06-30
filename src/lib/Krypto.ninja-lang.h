@@ -40,12 +40,11 @@
 #endif
 
 #if defined _WIN32 or defined __APPLE__
-#define LIB_LOOP Libuv
+#define Epoll    Libuv
 #define EPOLLIN  UV_READABLE
 #define EPOLLOUT UV_WRITABLE
 #include <uv.h>
 #else
-#define LIB_LOOP Epoll
 #include <fcntl.h>
 #include <sys/epoll.h>
 #include <sys/eventfd.h>

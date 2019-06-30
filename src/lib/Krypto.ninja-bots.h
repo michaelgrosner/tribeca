@@ -614,24 +614,6 @@ namespace ₿ {
       };
   };
 
-  class Events {
-    protected:
-      LIB_LOOP loop;
-    public:
-      void timer_ticks_factor(const unsigned int &factor) const {
-        loop.ticks(factor);
-      };
-      void timer_1s(const function<void(const unsigned int&)> &fn) {
-        loop.spawn(fn);
-      };
-      Loop::Async *async(const function<void()> &fn) {
-        return loop.spawn(fn);
-      };
-      const curl_socket_t poll() {
-        return loop.spawn();
-      };
-  };
-
   class Hotkey {
     public_friend:
       class Catch {
@@ -1202,9 +1184,9 @@ namespace ₿ {
 
   class KryptoNinja: public Klass,
                      public Print,
+                     public Epoll,
                      public Ending,
                      public Option,
-                     public Events,
                      public Hotkey,
                      public Sqlite,
                      public Client {
@@ -1241,13 +1223,13 @@ namespace ₿ {
               + " (consider to repeat a few times this check)");
           }
         } {
-          gateway->waitForData(loop);
+          gateway->waitForData((Loop*)this);
           timer_1s([&](const unsigned int &tick) {
             gateway->askForData(tick);
           });
           ending([&]() {
             gateway->end(arg<int>("dustybot"));
-            loop.end();
+            end();
             curl_global_cleanup();
           });
           handshake({
@@ -1284,7 +1266,7 @@ namespace ₿ {
         if (k) k->wait();
         else Klass::wait();
         if (gateway->ready())
-          loop.run();
+          walk();
       };
       void handshake(const GwExchange::Report &notes = {}) {
         const json reply = gateway->handshake(arg<int>("nocache"));
@@ -1335,6 +1317,7 @@ namespace ₿ {
         gateway->maxLevel  = arg<int>("market-limit");
         gateway->debug     = arg<int>("debug-secret");
         gateway->version   = arg<int>("free-version");
+        gateway->loopfd    = poll();
         gateway->printer   = [&](const string &prefix, const string &reason, const string &highlight) {
           if (reason.find("Error") != string::npos)
             Print::logWar(prefix, reason);

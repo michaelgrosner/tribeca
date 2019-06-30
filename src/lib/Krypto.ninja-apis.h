@@ -179,6 +179,7 @@ namespace ₿ {
                 amount,
                 percent;
       } decimal;
+      curl_socket_t loopfd = 0;
       function<void(const mOrder&)>       write_mOrder;
       function<void(const mTrade&)>       write_mTrade;
       function<void(const mLevels&)>      write_mLevels;
@@ -189,7 +190,7 @@ namespace ₿ {
            askForCancelAll = false;
       const RandId (*randId)() = nullptr;
       virtual void askForData(const unsigned int &tick) = 0;
-      virtual void waitForData(Loop &loop) = 0;
+      virtual void waitForData(Loop *const loop) = 0;
       void place(const mOrder *const order) {
         place(
           order->orderId,
@@ -230,7 +231,6 @@ namespace ₿ {
         if (write_Connectivity)
           write_Connectivity(connectivity);
       };
-      curl_socket_t loopfd = 0;
       Loop::Async* eventWallets   = nullptr;
       Loop::Async* eventLevels    = nullptr;
       Loop::Async* eventTrades    = nullptr;
@@ -254,16 +254,15 @@ namespace ₿ {
         if (!(tick % 3))       askFor(replyLevels,    eventLevels,    [&]() { return sync_levels(); });
         if (!(tick % 60))      askFor(replyTrades,    eventTrades,    [&]() { return sync_trades(); });
       };
-      void waitForNeverAsyncData(Loop &loop) {
-        loopfd = loop.spawn();
-        eventWallets   = loop.spawn([&]() { waitFor(replyWallets,   write_mWallets); });
-        eventCancelAll = loop.spawn([&]() { waitFor(replyCancelAll, write_mOrder); });
+      void waitForNeverAsyncData(Loop *const loop) {
+        eventWallets   = loop->async([&]() { waitFor(replyWallets,   write_mWallets); });
+        eventCancelAll = loop->async([&]() { waitFor(replyCancelAll, write_mOrder); });
       };
-      void waitForSyncData(Loop &loop) {
-        eventOrders    = loop.spawn([&]() { waitFor(replyOrders,    write_mOrder); });
+      void waitForSyncData(Loop *const loop) {
+        eventOrders    = loop->async([&]() { waitFor(replyOrders,    write_mOrder); });
         waitForNeverAsyncData(loop);
-        eventLevels    = loop.spawn([&]() { waitFor(replyLevels,    write_mLevels); });
-        eventTrades    = loop.spawn([&]() { waitFor(replyTrades,    write_mTrade); });
+        eventLevels    = loop->async([&]() { waitFor(replyLevels,    write_mLevels); });
+        eventTrades    = loop->async([&]() { waitFor(replyTrades,    write_mTrade); });
 
       };
       template<typename T1, typename T2> void askFor(
@@ -409,7 +408,7 @@ namespace ₿ {
       void askForData(const unsigned int &tick) override {
         askForSyncData(tick);
       };
-      void waitForData(Loop &loop) override {
+      void waitForData(Loop *const loop) override {
         waitForSyncData(loop);
       };
   };
@@ -428,7 +427,7 @@ namespace ₿ {
         if (subscribed())
           askForNeverAsyncData(tick);
       };
-      void waitForData(Loop &loop) override {
+      void waitForData(Loop *const loop) override {
         waitForNeverAsyncData(loop);
       };
     protected:
