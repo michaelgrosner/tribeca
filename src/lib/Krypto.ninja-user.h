@@ -74,6 +74,10 @@ namespace ₿ {
     mFairValueModel   fvModel                         = mFairValueModel::BBO;
     Amount            targetBasePosition              = 1.0;
     double            targetBasePositionPercentage    = 50.0;
+    Amount            targetBasePositionMinimum       = 0.1;
+    double            targetBasePositionPercentageMinimum    = 10.0;
+    Amount            targetBasePositionMaximum       = 1;
+    double            targetBasePositionPercentageMaximum    = 90.0;
     Amount            positionDivergence              = 0.9;
     Amount            positionDivergenceMin           = 0.4;
     double            positionDivergencePercentage    = 21.0;
@@ -152,6 +156,10 @@ namespace ₿ {
         fvModel                         =                            j.value("fvModel", fvModel);
         targetBasePosition              =                            j.value("targetBasePosition", targetBasePosition);
         targetBasePositionPercentage    = fmin(1e+2, fmax(0,         j.value("targetBasePositionPercentage", targetBasePositionPercentage)));
+        targetBasePositionMinimum              =                            j.value("targetBasePositionMinimum", targetBasePositionMinimum);
+        targetBasePositionPercentageMinimum    = fmin(1e+2, fmax(0,         j.value("targetBasePositionPercentageMinimum", targetBasePositionPercentageMinimum)));
+        targetBasePositionMaximum              =                            j.value("targetBasePositionMaximum", targetBasePositionMaximum);
+        targetBasePositionPercentageMaximum    = fmin(1e+2, fmax(0,         j.value("targetBasePositionPercentageMaximum", targetBasePositionPercentageMaximum)));
         positionDivergenceMin           =                            j.value("positionDivergenceMin", positionDivergenceMin);
         positionDivergenceMode          =                            j.value("positionDivergenceMode", positionDivergenceMode);
         positionDivergence              =                            j.value("positionDivergence", positionDivergence);
@@ -246,6 +254,10 @@ namespace ₿ {
       {                        "fvModel", k.fvModel                        },
       {             "targetBasePosition", k.targetBasePosition             },
       {   "targetBasePositionPercentage", k.targetBasePositionPercentage   },
+      {             "targetBasePositionMinimum", k.targetBasePositionMinimum             },
+      {   "targetBasePositionPercentageMinimum", k.targetBasePositionPercentageMinimum   },
+      {             "targetBasePositionMaximum", k.targetBasePositionMaximum             },
+      {   "targetBasePositionPercentageMaximum", k.targetBasePositionPercentageMaximum   },
       {             "positionDivergence", k.positionDivergence             },
       {   "positionDivergencePercentage", k.positionDivergencePercentage   },
       {          "positionDivergenceMin", k.positionDivergenceMin          },
@@ -1666,7 +1678,9 @@ namespace ₿ {
             ? (qp.percentageValues
               ? qp.targetBasePositionPercentage * baseValue / 1e+2
               : qp.targetBasePosition)
-            : targetPositionAutoPercentage * baseValue / 1e+2
+            : (qp.percentageValues
+              ? fmin( fmax( targetPositionAutoPercentage , qp.targetBasePositionPercentageMinimum ) , qp.targetBasePositionPercentageMaximum ) * baseValue / 1e+2
+              : fmin( fmax( targetPositionAutoPercentage * baseValue / 1e+2 , qp.targetBasePositionPercentageMinimum ) , qp.targetBasePositionPercentageMaximum ) )
         );
         calcPDiv();
         if (broadcast()) {

@@ -230,6 +230,8 @@ class DisplayOrder {
                                         <th title="Sets the periods of EWMA Short to automatically manage positions." *ngIf="pair.quotingParameters.display.autoPositionMode">short</th>
                                         <th title="Threshold removed from each period, affects EWMA Long, Medium and Short. The decimal value must be betweem 0 and 1." *ngIf="pair.quotingParameters.display.autoPositionMode">sensibility</th>
                                         <th title="Sets a static Target Base Position for Krypto-trading-bot to stay near. Krypto-trading-bot will still try to respect pDiv and not make your position fluctuate by more than that value." *ngIf="!pair.quotingParameters.display.autoPositionMode">tbp<span *ngIf="pair.quotingParameters.display.percentageValues">%</span></th>
+                                        <th title="Sets a static minimum Target Base Position for Krypto-trading-bot. Krypto-trading-bot will still try to respect pDiv and not make your position reduce below that value." *ngIf="pair.quotingParameters.display.autoPositionMode>0">tbpmin<span *ngIf="pair.quotingParameters.display.percentageValues">%</span></th>
+                                        <th title="Sets a static maximum Target Base Position for Krypto-trading-bot. Krypto-trading-bot will still try to respect pDiv and not make your position increase beyond that value." *ngIf="pair.quotingParameters.display.autoPositionMode>0">tbpmax<span *ngIf="pair.quotingParameters.display.percentageValues">%</span></th>
                                         <th title="Sets the strategy of dynamically adjusting the pDiv depending on the divergence from 50% of Base Value." *ngIf="pair.quotingParameters.display.autoPositionMode">pDivMode</th>
                                         <th title="If your Target Base Position diverges more from this value, Krypto-trading-bot will stop sending orders to stop too much directional trading.">pDiv<span *ngIf="pair.quotingParameters.display.percentageValues">%</span></th>
                                         <th title="It defines the minimal pDiv for the dynamic positon divergence." *ngIf="pair.quotingParameters.display.autoPositionMode && pair.quotingParameters.display.positionDivergenceMode">pDivMin<span *ngIf="pair.quotingParameters.display.percentageValues">%</span></th>
@@ -292,6 +294,30 @@ class DisplayOrder {
                                                type="number" step="0.1" min="0" max="100"
                                                onClick="this.select()"
                                                [(ngModel)]="pair.quotingParameters.display.targetBasePositionPercentage">
+                                        </td>
+                                        <td style="width:88px;border-bottom: 3px solid #8BE296;" *ngIf="!pair.quotingParameters.display.percentageValues && pair.quotingParameters.display.autoPositionMode">
+                                            <input class="form-control input-sm" title="{{ baseCurrency }}"
+                                               type="number" step="0.01" min="0"
+                                               onClick="this.select()"
+                                               [(ngModel)]="pair.quotingParameters.display.targetBasePositionMinimum">
+                                        </td>
+                                        <td style="width:88px;border-bottom: 3px solid #8BE296;" *ngIf="pair.quotingParameters.display.percentageValues && pair.quotingParameters.display.autoPositionMode">
+                                            <input class="form-control input-sm" title="{{ baseCurrency }}"
+                                               type="number" step="0.1" min="0" max="100"
+                                               onClick="this.select()"
+                                               [(ngModel)]="pair.quotingParameters.display.targetBasePositionPercentageMinimum">
+                                        </td>
+                                        <td style="width:88px;border-bottom: 3px solid #8BE296;" *ngIf="!pair.quotingParameters.display.percentageValues && pair.quotingParameters.display.autoPositionMode">
+                                            <input class="form-control input-sm" title="{{ baseCurrency }}"
+                                               type="number" step="0.01" min="0"
+                                               onClick="this.select()"
+                                               [(ngModel)]="pair.quotingParameters.display.targetBasePositionMaximum">
+                                        </td>
+                                        <td style="width:88px;border-bottom: 3px solid #8BE296;" *ngIf="pair.quotingParameters.display.percentageValues && pair.quotingParameters.display.autoPositionMode">
+                                            <input class="form-control input-sm" title="{{ baseCurrency }}"
+                                               type="number" step="0.1" min="0" max="100"
+                                               onClick="this.select()"
+                                               [(ngModel)]="pair.quotingParameters.display.targetBasePositionPercentageMaximum">
                                         </td>
                                         <td style="min-width:121px;border-bottom: 3px solid #DDE28B;" *ngIf="pair.quotingParameters.display.autoPositionMode">
                                             <select class="form-control input-sm"
