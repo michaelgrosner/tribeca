@@ -299,25 +299,25 @@ class DisplayOrder {
                                             <input class="form-control input-sm" title="{{ baseCurrency }}"
                                                type="number" step="0.01" min="0"
                                                onClick="this.select()"
-                                               [(ngModel)]="pair.quotingParameters.display.targetBasePositionMinimum">
+                                               [(ngModel)]="pair.quotingParameters.display.targetBasePositionMin">
                                         </td>
                                         <td style="width:88px;border-bottom: 3px solid #8BE296;" *ngIf="pair.quotingParameters.display.percentageValues && pair.quotingParameters.display.autoPositionMode">
                                             <input class="form-control input-sm" title="{{ baseCurrency }}"
                                                type="number" step="0.1" min="0" max="100"
                                                onClick="this.select()"
-                                               [(ngModel)]="pair.quotingParameters.display.targetBasePositionPercentageMinimum">
+                                               [(ngModel)]="pair.quotingParameters.display.targetBasePositionPercentageMin">
                                         </td>
                                         <td style="width:88px;border-bottom: 3px solid #8BE296;" *ngIf="!pair.quotingParameters.display.percentageValues && pair.quotingParameters.display.autoPositionMode">
                                             <input class="form-control input-sm" title="{{ baseCurrency }}"
                                                type="number" step="0.01" min="0"
                                                onClick="this.select()"
-                                               [(ngModel)]="pair.quotingParameters.display.targetBasePositionMaximum">
+                                               [(ngModel)]="pair.quotingParameters.display.targetBasePositionMax">
                                         </td>
                                         <td style="width:88px;border-bottom: 3px solid #8BE296;" *ngIf="pair.quotingParameters.display.percentageValues && pair.quotingParameters.display.autoPositionMode">
                                             <input class="form-control input-sm" title="{{ baseCurrency }}"
                                                type="number" step="0.1" min="0" max="100"
                                                onClick="this.select()"
-                                               [(ngModel)]="pair.quotingParameters.display.targetBasePositionPercentageMaximum">
+                                               [(ngModel)]="pair.quotingParameters.display.targetBasePositionPercentageMax">
                                         </td>
                                         <td style="min-width:121px;border-bottom: 3px solid #DDE28B;" *ngIf="pair.quotingParameters.display.autoPositionMode">
                                             <select class="form-control input-sm"

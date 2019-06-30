@@ -161,8 +161,9 @@ namespace ₿ {
             , sockfd(s)
           {};
           virtual void start(const curl_socket_t&, const int&, const function<void()>&) = 0;
-          virtual void change(const int&, const function<void()>& = nullptr) = 0;
           virtual void stop() = 0;
+        protected:
+          virtual void change(const int&, const function<void()>& = nullptr) = 0;
       };
     public:
       virtual                void  timer_ticks_factor(const unsigned int&) const        = 0;
@@ -220,16 +221,17 @@ namespace ₿ {
             uv_poll_init_socket(uv_default_loop(), &event, sockfd);
             change(events, data);
           };
+          void stop() override {
+            uv_poll_stop(&event);
+            uv_close((uv_handle_t*)&event, [](uv_handle_t*) { });
+          };
+        protected:
           void change(const int &events, const function<void()> &data = nullptr) override {
             if (data) link(data);
             if (!uv_is_closing((uv_handle_t*)&event))
               uv_poll_start(&event, events, [](uv_poll_t *event, int, int) {
                 ((Poll*)event->data)->ready();
               });
-          };
-          void stop() override {
-            uv_poll_stop(&event);
-            uv_close((uv_handle_t*)&event, [](uv_handle_t*) { });
           };
       };
     private:
@@ -279,12 +281,13 @@ namespace ₿ {
             fcntl(sockfd, F_SETFL, fcntl(sockfd, F_GETFL, 0) | O_NONBLOCK);
             ctl(events, EPOLL_CTL_ADD);
           };
+          void stop() override {
+            ctl(0, EPOLL_CTL_DEL);
+          };
+        protected:
           void change(const int &events, const function<void()> &data = nullptr) override {
             if (data) link(data);
             ctl(events, EPOLL_CTL_MOD);
-          };
-          void stop() override {
-            ctl(0, EPOLL_CTL_DEL);
           };
         private:
           void ctl(const int &events, const int &opcode) {
@@ -770,12 +773,12 @@ namespace ₿ {
       };
       class Frontend: public Socket,
                       public WebSocketFrames {
-        public:
+        private:
              SSL *ssl  = nullptr;
-           Clock  time = 0;
-          string  addr,
-                  out,
+          string  out,
                   in;
+           Clock  time = 0;
+          string  addr;
         private_ref:
           const Session &session;
           const function<void(Frontend*)> &upgrade;
@@ -797,33 +800,22 @@ namespace ₿ {
             Socket::shutdown();
             if (!time) session.httpUpgrade(-1, addr);
           };
+          void send(const string &data) {
+            out += data;
+            change(EPOLLIN | EPOLLOUT);
+          };
+          const bool stale() const {
+            return sockfd
+               and Tstamp > time + 21e+3;
+          };
+        protected:
           const string unframe() {
             bool drop = false;
             const string msg = WebSocketFrames::unframe(in, out, drop);
             if (drop) shutdown();
             return msg;
           };
-          const string address() const {
-            string addr;
-#ifndef _WIN32
-            sockaddr_storage ss;
-            socklen_t len = sizeof(ss);
-            if (getpeername(sockfd, (sockaddr*)&ss, &len) != -1) {
-              char buf[INET6_ADDRSTRLEN];
-              if (ss.ss_family == AF_INET) {
-                auto *ipv4 = (sockaddr_in*)&ss;
-                inet_ntop(AF_INET, &ipv4->sin_addr, buf, sizeof(buf));
-              } else {
-                auto *ipv6 = (sockaddr_in6*)&ss;                                //-V641
-                inet_ntop(AF_INET6, &ipv6->sin6_addr, buf, sizeof(buf));
-              }
-              addr = string(buf);
-              if (addr.length() > 7 and addr.substr(0, 7) == "::ffff:") addr = addr.substr(7);
-              if (addr.length() < 7) addr.clear();
-            }
-#endif
-            return addr.empty() ? "unknown" : addr;
-          };
+        private:
           function<void()> ioWs = [&]() {
             io();
             if (sockfd and !in.empty()) {
@@ -888,6 +880,27 @@ namespace ₿ {
                 shutdown();
               }
             }
+          };
+          const string address() const {
+            string addr;
+#ifndef _WIN32
+            sockaddr_storage ss;
+            socklen_t len = sizeof(ss);
+            if (getpeername(sockfd, (sockaddr*)&ss, &len) != -1) {
+              char buf[INET6_ADDRSTRLEN];
+              if (ss.ss_family == AF_INET) {
+                auto *ipv4 = (sockaddr_in*)&ss;
+                inet_ntop(AF_INET, &ipv4->sin_addr, buf, sizeof(buf));
+              } else {
+                auto *ipv6 = (sockaddr_in6*)&ss;                                //-V641
+                inet_ntop(AF_INET6, &ipv6->sin6_addr, buf, sizeof(buf));
+              }
+              addr = string(buf);
+              if (addr.length() > 7 and addr.substr(0, 7) == "::ffff:") addr = addr.substr(7);
+              if (addr.length() < 7) addr.clear();
+            }
+#endif
+            return addr.empty() ? "unknown" : addr;
           };
           void io() {
             if (ssl) {
@@ -978,14 +991,12 @@ namespace ₿ {
             string msgs;
             for (const auto &it : queue)
               msgs += sockets.front()->frame(portal + (it.first + it.second), 0x01, false);
-            for (auto &it : sockets) {
-              it->out += msgs;
-              it->change(EPOLLIN | EPOLLOUT);
-            }
+            for (auto &it : sockets)
+              it->send(msgs);
           };
           void timeouts() {
             for (auto it = requests.begin(); it != requests.end();) {
-              if ((*it)->sockfd and Tstamp > (*it)->time + 21e+3)
+              if ((*it)->stale())
                 (*it)->shutdown();
               if (!(*it)->sockfd) {
                 delete *it;
@@ -1094,26 +1105,6 @@ namespace ₿ {
             }
             return warn;
           };
-          const bool accept_request(const curl_socket_t &loopfd) {
-            curl_socket_t clientfd = accept4(sockfd, nullptr, nullptr, SOCK_CLOEXEC | SOCK_NONBLOCK);
-#ifdef __APPLE__
-            if (clientfd != -1) {
-              const int noSigpipe = 1;
-              setsockopt(clientfd, SOL_SOCKET, SO_NOSIGPIPE, &noSigpipe, sizeof(int));
-            }
-#endif
-            if (clientfd != -1) {
-              SSL *ssl = nullptr;
-              if (ctx) {
-                ssl = SSL_new(ctx);
-                SSL_set_accept_state(ssl);
-                SSL_set_fd(ssl, clientfd);
-                SSL_set_mode(ssl, SSL_MODE_RELEASE_BUFFERS);
-              }
-              requests.push_back(new Frontend(clientfd, loopfd, ssl, session, upgrade));
-            }
-            return clientfd > 0;
-          };
           const string document(const string &content, const unsigned int &code, const string &type) const {
             string headers;
             if      (code == 200) headers = "HTTP/1.1 200 OK"
@@ -1143,6 +1134,26 @@ namespace ₿ {
                  + content;
           };
         private:
+          const bool accept_request(const curl_socket_t &loopfd) {
+            curl_socket_t clientfd = accept4(sockfd, nullptr, nullptr, SOCK_CLOEXEC | SOCK_NONBLOCK);
+#ifdef __APPLE__
+            if (clientfd != -1) {
+              const int noSigpipe = 1;
+              setsockopt(clientfd, SOL_SOCKET, SO_NOSIGPIPE, &noSigpipe, sizeof(int));
+            }
+#endif
+            if (clientfd != -1) {
+              SSL *ssl = nullptr;
+              if (ctx) {
+                ssl = SSL_new(ctx);
+                SSL_set_accept_state(ssl);
+                SSL_set_fd(ssl, clientfd);
+                SSL_set_mode(ssl, SSL_MODE_RELEASE_BUFFERS);
+              }
+              requests.push_back(new Frontend(clientfd, loopfd, ssl, session, upgrade));
+            }
+            return clientfd > 0;
+          };
           function<void(Frontend*)> upgrade = [&](Frontend *const client) {
             for (auto it = requests.begin(); it != requests.end();)
               if (*it == client) {

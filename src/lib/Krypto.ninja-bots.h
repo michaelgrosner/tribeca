@@ -982,12 +982,13 @@ namespace ₿ {
           };
       };
     public:
-      string protocol  = "HTTP";
+      string protocol;
       string wtfismyip = "localhost";
     protected:
       unordered_map<string, pair<const char*, const int>> documents;
     private:
       WebServer::Backend server;
+      const Option *option = nullptr;
       mutable unsigned int delay = 0;
       mutable vector<Readable*> readable;
       mutable vector<Clickable*> clickable;
@@ -996,34 +997,29 @@ namespace ₿ {
       unordered_map<char, function<const json()>> hello;
       unordered_map<char, function<void(const json&)>> kisses;
       unordered_map<char, string> queue;
-    private_ref:
-      const Option &option;
     public:
-      Client(const Option &o)
-        : option(o)
-      {};
-      void listen(const curl_socket_t &loopfd) {
+      void listen(const Option *const o, const curl_socket_t &loopfd) {
+        option = o;
         if (!server.listen(
           loopfd,
-          option.arg<string>("interface"),
-          option.arg<int>("port"),
-          option.arg<int>("ipv6"),
+          option->arg<string>("interface"),
+          option->arg<int>("port"),
+          option->arg<int>("ipv6"),
           {
-            option.arg<string>("B64auth"),
+            option->arg<string>("B64auth"),
             httpUpgrade,
             httpResponse,
             httpMessage
           }
-        )) error("UI", "Unable to listen at port number " + to_string(option.arg<int>("port"))
+        )) error("UI", "Unable to listen at port number " + to_string(option->arg<int>("port"))
              + " (may be already in use by another program)");
-        if (!option.arg<int>("without-ssl")) {
+        if (!option->arg<int>("without-ssl"))
           for (const auto &it : server.ssl_context(
-            option.arg<string>("ssl-crt"),
-            option.arg<string>("ssl-key")
+            option->arg<string>("ssl-crt"),
+            option->arg<string>("ssl-key")
           )) Print::logWar("UI", it);
-          protocol = server.protocol();
-        }
-        Print::log("UI", "ready at", Text::strL(protocol) + "://" + wtfismyip + ":" + to_string(option.arg<int>("port")));
+        protocol  = server.protocol();
+        Print::log("UI", "ready at", Text::strL(protocol) + "://" + wtfismyip + ":" + to_string(option->arg<int>("port")));
       };
       void clicked(const Clickable *data, const json &j = nullptr) const {
         if (clickFn.find(data) != clickFn.end())
@@ -1076,8 +1072,8 @@ namespace ₿ {
       };
       const bool alien(const string &addr) {
         if (addr != "unknown"
-          and !option.arg<string>("whitelist").empty()
-          and option.arg<string>("whitelist").find(addr) == string::npos
+          and !option->arg<string>("whitelist").empty()
+          and option->arg<string>("whitelist").find(addr) == string::npos
         ) {
           Print::log("UI", "dropping gzip bomb on", addr);
           return true;
@@ -1088,8 +1084,8 @@ namespace ₿ {
         const int tentative = server.clients() + sum;
         Print::log("UI", to_string(tentative) + " client" + string(tentative == 1 ? 0 : 1, 's')
           + (sum > 0 ? "" : " remain") + " connected, last connection was from", addr);
-        if (tentative > option.arg<int>("client-limit")) {
-          Print::log("UI", "--client-limit=" + to_string(option.arg<int>("client-limit")) + " reached by", addr);
+        if (tentative > option->arg<int>("client-limit")) {
+          Print::log("UI", "--client-limit=" + to_string(option->arg<int>("client-limit")) + " reached by", addr);
           return 0;
         }
         return sum;
@@ -1097,9 +1093,7 @@ namespace ₿ {
       function<const string(string, const string&, const string&)> httpResponse = [&](string path, const string &auth, const string &addr) {
         if (alien(addr))
           path.clear();
-        const bool papersplease = !(
-          path.empty() or option.arg<string>("B64auth").empty()
-        );
+        const bool papersplease = !(path.empty() or option->arg<string>("B64auth").empty());
         string content,
                type = "text/html; charset=UTF-8";
         unsigned int code = 200;
@@ -1107,10 +1101,10 @@ namespace ₿ {
         if (papersplease and auth.empty()) {
           Print::log("UI", "authorization attempt from", addr);
           code = 401;
-        } else if (papersplease and auth != option.arg<string>("B64auth")) {
+        } else if (papersplease and auth != option->arg<string>("B64auth")) {
           Print::log("UI", "authorization failed from", addr);
           code = 403;
-        } else if (leaf != "/" or server.clients() < option.arg<int>("client-limit")) {
+        } else if (leaf != "/" or server.clients() < option->arg<int>("client-limit")) {
           if (documents.find(path) == documents.end())
             path = path.substr(path.find_last_of("/", path.find_last_of("/") - 1));
           if (documents.find(path) == documents.end())
@@ -1130,7 +1124,7 @@ namespace ₿ {
               code = 418, content = "Today, is your lucky day!";
           }
         } else {
-          Print::log("UI", "--client-limit=" + to_string(option.arg<int>("client-limit")) + " reached by", addr);
+          Print::log("UI", "--client-limit=" + to_string(option->arg<int>("client-limit")) + " reached by", addr);
           content = "Thank you! but our princess is already in this castle!"
                     "<br/>" "Refresh the page anytime to retry.";
         }
@@ -1185,9 +1179,6 @@ namespace ₿ {
     public:
       Gw *gateway = nullptr;
     public:
-      KryptoNinja()
-        : Client((Option&)*this)
-      {};
       KryptoNinja *const main(int argc, char** argv) {
         {
           curl_global_init(CURL_GLOBAL_ALL);
@@ -1242,7 +1233,7 @@ namespace ₿ {
         } {
           if (arg<int>("headless")) headless();
           else {
-            listen(poll());
+            listen((Option*)this, poll());
             timer_1s([&](const unsigned int &tick) {
               broadcast(tick);
             });
