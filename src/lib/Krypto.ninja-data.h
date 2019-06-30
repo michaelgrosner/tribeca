@@ -959,7 +959,7 @@ namespace ₿ {
             return "HTTP" + string(ctx ? 1 : 0, 'S');
           };
           void purge() {
-            if (!sockets.empty()) {
+            if (!idle()) {
               sockets.back()->shutdown();
               delete sockets.back();
               sockets.pop_back();
@@ -974,7 +974,7 @@ namespace ₿ {
             shutdown();
           };
           void broadcast(const char &portal, const unordered_map<char, string> &queue) {
-            if (sockets.empty()) return;
+            if (idle()) return;
             string msgs;
             for (const auto &it : queue)
               msgs += sockets.front()->frame(portal + (it.first + it.second), 0x01, false);
