@@ -1021,7 +1021,7 @@ namespace ₿ {
             option.arg<string>("ssl-crt"),
             option.arg<string>("ssl-key")
           )) Print::logWar("UI", it);
-          protocol += string(server.ctx ? 1 : 0, 'S');
+          protocol = server.protocol();
         }
         Print::log("UI", "ready at", Text::strL(protocol) + "://" + wtfismyip + ":" + to_string(option.arg<int>("port")));
       };
@@ -1040,10 +1040,9 @@ namespace ₿ {
       void welcome() {
         for (auto &it : readable) {
           it->read = [&]() {
-            if (!server.sockets.empty()) {
-              queue[(char)it->about()] = it->blob().dump();
-              if (it->realtime() or !delay) broadcast();
-            }
+            if (server.idle()) return;
+            queue[(char)it->about()] = it->blob().dump();
+            if (it->realtime() or !delay) broadcast();
           };
           hello[(char)it->about()] = [&]() {
             return it->hello();
@@ -1071,15 +1070,8 @@ namespace ₿ {
         clickFn[data].push_back(fn);
       };
       void broadcast() {
-        if (!(server.sockets.empty() or queue.empty())) {
-          string msgs;
-          for (const auto &it : queue)
-            msgs += server.sockets.front()->frame(portal.second + (it.first + it.second), 0x01, false);
-          for (auto &it : server.sockets) {
-            it->out += msgs;
-            it->change(EPOLLIN | EPOLLOUT);
-          }
-        }
+        if (queue.empty()) return;
+        server.broadcast(portal.second, queue);
         queue.clear();
       };
       const bool alien(const string &addr) {
@@ -1093,7 +1085,7 @@ namespace ₿ {
         return false;
       };
       function<const int(const int&, const string&)> httpUpgrade = [&](const int &sum, const string &addr) {
-        const int tentative = server.sockets.size() + sum;
+        const int tentative = server.clients() + sum;
         Print::log("UI", to_string(tentative) + " client" + string(tentative == 1 ? 0 : 1, 's')
           + (sum > 0 ? "" : " remain") + " connected, last connection was from", addr);
         if (tentative > option.arg<int>("client-limit")) {
@@ -1118,7 +1110,7 @@ namespace ₿ {
         } else if (papersplease and auth != option.arg<string>("B64auth")) {
           Print::log("UI", "authorization failed from", addr);
           code = 403;
-        } else if (leaf != "/" or server.sockets.size() < option.arg<int>("client-limit")) {
+        } else if (leaf != "/" or server.clients() < option.arg<int>("client-limit")) {
           if (documents.find(path) == documents.end())
             path = path.substr(path.find_last_of("/", path.find_last_of("/") - 1));
           if (documents.find(path) == documents.end())

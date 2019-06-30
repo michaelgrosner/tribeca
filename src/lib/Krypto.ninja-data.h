@@ -940,23 +940,23 @@ namespace ₿ {
       };
     public_friend:
       class Backend: public Socket {
-        public:
-                   SSL_CTX *ctx = nullptr;
-          vector<Frontend*> sockets;
         private:
-          vector<Frontend*> requests;
-          Session session;
+                    SSL_CTX *ctx = nullptr;
+                    Session  session;
+          vector<Frontend*>  requests,
+                             sockets;
         public:
           Backend()
             : Socket(0)
           {};
-          function<void(Frontend*)> upgrade = [&](Frontend *const client) {
-            for (auto it = requests.begin(); it != requests.end();)
-              if (*it == client) {
-                requests.erase(it);
-                break;
-              } else ++it;
-            sockets.push_back(client);
+          const bool idle() const {
+            return sockets.empty();
+          };
+          const size_t clients() const {
+            return sockets.size();
+          };
+          const string protocol() const {
+            return "HTTP" + string(ctx ? 1 : 0, 'S');
           };
           void purge() {
             if (!sockets.empty()) {
@@ -972,6 +972,16 @@ namespace ₿ {
             }
             requests.clear();
             shutdown();
+          };
+          void broadcast(const char &portal, const unordered_map<char, string> &queue) {
+            if (sockets.empty()) return;
+            string msgs;
+            for (const auto &it : queue)
+              msgs += sockets.front()->frame(portal + (it.first + it.second), 0x01, false);
+            for (auto &it : sockets) {
+              it->out += msgs;
+              it->change(EPOLLIN | EPOLLOUT);
+            }
           };
           void timeouts() {
             for (auto it = requests.begin(); it != requests.end();) {
@@ -1133,6 +1143,14 @@ namespace ₿ {
                  + content;
           };
         private:
+          function<void(Frontend*)> upgrade = [&](Frontend *const client) {
+            for (auto it = requests.begin(); it != requests.end();)
+              if (*it == client) {
+                requests.erase(it);
+                break;
+              } else ++it;
+            sockets.push_back(client);
+          };
           void socket(const int &domain, const int &type, const int &protocol) {
             sockfd = ::socket(domain, type | SOCK_CLOEXEC | SOCK_NONBLOCK, protocol);
 #ifdef __APPLE__
