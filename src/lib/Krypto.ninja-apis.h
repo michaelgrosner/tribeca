@@ -231,16 +231,6 @@ namespace ₿ {
         if (write_Connectivity)
           write_Connectivity(connectivity);
       };
-      Loop::Async* eventWallets   = nullptr;
-      Loop::Async* eventLevels    = nullptr;
-      Loop::Async* eventTrades    = nullptr;
-      Loop::Async* eventOrders    = nullptr;
-      Loop::Async* eventCancelAll = nullptr;
-      future<vector<mWallets>> replyWallets;
-      future<vector<mLevels>> replyLevels;
-      future<vector<mTrade>> replyTrades;
-      future<vector<mOrder>> replyOrders;
-      future<vector<mOrder>> replyCancelAll;
       void askForNeverAsyncData(const unsigned int &tick) {
         if (((askForFees and !(askForFees = false))
           or !(tick % 15))
@@ -263,8 +253,18 @@ namespace ₿ {
         waitForNeverAsyncData(loop);
         eventLevels    = loop->async([&]() { waitFor(replyLevels,    write_mLevels); });
         eventTrades    = loop->async([&]() { waitFor(replyTrades,    write_mTrade); });
-
       };
+    private:
+      Loop::Async* eventWallets   = nullptr;
+      Loop::Async* eventLevels    = nullptr;
+      Loop::Async* eventTrades    = nullptr;
+      Loop::Async* eventOrders    = nullptr;
+      Loop::Async* eventCancelAll = nullptr;
+      future<vector<mWallets>> replyWallets;
+      future<vector<mLevels>>  replyLevels;
+      future<vector<mTrade>>   replyTrades;
+      future<vector<mOrder>>   replyOrders,
+                               replyCancelAll;
       template<typename T1, typename T2> void askFor(
               future<vector<T1>> &reply,
                      Loop::Async *event,
@@ -272,9 +272,9 @@ namespace ₿ {
       ) {
         if (!reply.valid())
           reply = ::async(launch::async, [this, event, read]() {
-            vector<T1> reply = read();
+            vector<T1> data = read();
             event->wakeup();
-            return reply;
+            return data;
           });
       };
       template<typename T> void waitFor(
@@ -292,7 +292,8 @@ namespace ₿ {
       string exchange, apikey,
              secret,   pass,
              http,     ws,
-             fix,      unlock;
+             fix,      unlock,
+             symbol;
       CoinId base,     quote;
          int version   = 0,
              maxLevel  = 0,
@@ -323,12 +324,18 @@ namespace ₿ {
           reply = json::parse(file);
         } else
           reply = handshake();
+        base = reply.value("base", base);
+        quote = reply.value("quote", quote);
+        symbol = reply.value("symbol", symbol);
         tickPrice = reply.value("tickPrice", 0.0);
-        tickSize  = reply.value("tickSize", 0.0);
+        tickSize = reply.value("tickSize", 0.0);
         if (!minSize) minSize = reply.value("minSize", 0.0);
         if (!makeFee) makeFee = reply.value("makeFee", 0.0);
         if (!takeFee) takeFee = reply.value("takeFee", 0.0);
-        if (!file.is_open() and tickPrice and tickSize and minSize) {
+        if (!file.is_open()
+          and tickPrice and tickSize and minSize
+          and !base.empty() and !quote.empty()
+        ) {
           file.open(cache, fstream::out | fstream::trunc);
           file << reply.dump();
         }
@@ -542,6 +549,8 @@ namespace ₿ {
     public:
       const json handshake() override {
         return {
+          {     "base", base   },
+          {    "quote", quote  },
           {"tickPrice", 1e-2   },
           { "tickSize", 1e-2   },
           {  "minSize", 1e-2   },
@@ -558,8 +567,12 @@ namespace ₿ {
         randId = Random::uuid32Id;
       };
       const json handshake() override {
-        const json reply = Curl::Web::xfer(http + "/public/symbol/" + base + quote);
+        symbol = base + quote;
+        const json reply = Curl::Web::xfer(http + "/public/symbol/" + symbol);
         return {
+          {     "base", base == "USDT" ? "USD" : base                 },
+          {    "quote", quote == "USDT" ? "USD" : quote               },
+          {   "symbol", symbol                                        },
           {"tickPrice", stod(reply.value("tickSize", "0"))            },
           { "tickSize", stod(reply.value("quantityIncrement", "0"))   },
           {  "minSize", stod(reply.value("quantityIncrement", "0"))   },
@@ -596,8 +609,12 @@ namespace ₿ {
         randId = Random::uuid36Id;
       };
       const json handshake() override {
-        const json reply = Curl::Web::xfer(http + "/products/" + base + "-" + quote);
+        symbol = base + "-" + quote;
+        const json reply = Curl::Web::xfer(http + "/products/" + symbol);
         return {
+          {     "base", base                                     },
+          {    "quote", quote                                    },
+          {   "symbol", symbol                                   },
           {"tickPrice", stod(reply.value("quote_increment", "0"))},
           { "tickSize", stod(reply.value("base_increment", "0")) },
           {  "minSize", stod(reply.value("base_min_size", "0"))  },
@@ -627,7 +644,8 @@ namespace ₿ {
         askForReplace = true;
       };
       const json handshake() override {
-        const json reply1 = Curl::Web::xfer(http + "/pubticker/" + base + quote);
+        symbol = base + quote;
+        const json reply1 = Curl::Web::xfer(http + "/pubticker/" + symbol);
         Price tickPrice = 0,
               minSize   = 0;
         if (reply1.find("last_price") != reply1.end()) {
@@ -643,11 +661,14 @@ namespace ₿ {
         const json reply2 = Curl::Web::xfer(http + "/symbols_details");
         if (reply2.is_array())
           for (const json &it : reply2)
-            if (it.find("pair") != it.end() and it.value("pair", "") == Text::strL(base + quote)) {
+            if (it.find("pair") != it.end() and it.value("pair", "") == Text::strL(symbol)) {
               minSize = stod(it.value("minimum_order_size", "0"));
               break;
             }
         return {
+          {     "base", base            },
+          {    "quote", quote           },
+          {   "symbol", symbol          },
           {"tickPrice", tickPrice       },
           { "tickSize", tickPrice < 1e-8
                          ? 10
@@ -685,12 +706,13 @@ namespace ₿ {
         randId = Random::char16Id;
       };
       const json handshake() override {
+        symbol = base + quote;
         const json reply = Curl::Web::xfer(http + "public/symbols");
         Price  tickPrice = 0;
         Amount tickSize  = 0;
         if (reply.find("data") != reply.end() and reply.at("data").is_array())
           for (const json &it : reply.at("data"))
-            if (it.find("name") != it.end() and it.value("name", "") == Text::strL(base + quote)) {
+            if (it.find("name") != it.end() and it.value("name", "") == Text::strL(symbol)) {
               istringstream iss(
                 "1e-" + to_string(it.value("price_decimal", 0))
                 + " 1e-" + to_string(it.value("amount_decimal", 0))
@@ -699,6 +721,9 @@ namespace ₿ {
               break;
             }
         return {
+          {     "base", base     },
+          {    "quote", quote    },
+          {   "symbol", symbol   },
           {"tickPrice", tickPrice},
           { "tickSize", tickSize },
           {  "minSize", tickSize },
@@ -739,13 +764,19 @@ namespace ₿ {
                 + " 1e-" + to_string(it.value().value("lot_decimals", 0))
               );
               iss >> tickPrice >> minSize;
+              base   = it.value().value("base", base);
+              quote  = it.value().value("quote", quote);
+              symbol = base + quote;
               break;
             }
         return {
+          {     "base", base            },
+          {    "quote", quote           },
+          {   "symbol", symbol          },
           {"tickPrice", tickPrice       },
           { "tickSize", tickPrice < 1e-8
-                         ? 10
-                         : 8            },
+                         ? 1e-10
+                         : 1e-8         },
           {  "minSize", minSize         },
           {    "reply", reply           }
         };
@@ -769,16 +800,20 @@ namespace ₿ {
         randId = Random::int45Id;
       };
       const json handshake() override {
+        symbol = quote + "_" + base;
         const json reply = Curl::Web::xfer(http + "/public?command=returnTicker")
-                             .value(quote + "_" + base, json::object());
+                             .value(symbol, json::object());
         const Price tickPrice = reply.empty()
                                   ? 0
                                   : 1e-8;
         return {
+          {     "base", base            },
+          {    "quote", quote           },
+          {   "symbol", symbol          },
           {"tickPrice", tickPrice       },
           { "tickSize", tickPrice < 1e-8
-                          ? 10
-                          : 8           },
+                          ? 1e-10
+                          : 1e-8        },
           {  "minSize", 1e-3            },
           {    "reply", reply           }
         };

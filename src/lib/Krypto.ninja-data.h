@@ -804,9 +804,10 @@ namespace ₿ {
             out += data;
             change(EPOLLIN | EPOLLOUT);
           };
-          const bool stale() const {
-            return sockfd
-               and Tstamp > time + 21e+3;
+          const bool stale() {
+            if (time and sockfd and Tstamp > time + 21e+3)
+              shutdown();
+            return !sockfd;
           };
         protected:
           const string unframe() {
@@ -995,16 +996,13 @@ namespace ₿ {
               it->send(msgs);
           };
           void timeouts() {
-            for (auto it = requests.begin(); it != requests.end();) {
-              if ((*it)->stale())
-                (*it)->shutdown();
-              if (!(*it)->sockfd) {
+            for (auto it = requests.begin(); it != requests.end();)
+              if ((*it)->stale()) {
                 delete *it;
                 it = requests.erase(it);
               } else ++it;
-            }
             for (auto it = sockets.begin(); it != sockets.end();)
-              if (!(*it)->sockfd) {
+              if ((*it)->stale()) {
                 delete *it;
                 it = sockets.erase(it);
               } else ++it;
