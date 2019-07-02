@@ -131,7 +131,7 @@ namespace ₿ {
           };
           void timer_1s() {
             for (const auto &it : callbacks) it(tick);
-            if (++tick >= ticks) tick = 0;
+            tick = ++tick % ticks;
           };
           void push_back(const function<void(const unsigned int&)> &data) {
             callbacks.push_back(data);
@@ -264,10 +264,6 @@ namespace ₿ {
 #else
   class Epoll: public Loop {
     public_friend:
-      class Timer: public Loop::Timer {
-        public:
-          chrono::system_clock::time_point next = chrono::system_clock::now();
-      };
       class Poll: public Loop::Poll {
         private:
           curl_socket_t loopfd = 0;
@@ -297,6 +293,24 @@ namespace ₿ {
             epoll_ctl(loopfd, opcode, sockfd, &event);
           };
       };
+      class Timer: public Poll,
+                   public Loop::Timer {
+        private:
+          struct itimerspec ts = {
+            {1, 0}, {0, 1}
+          };
+        public:
+          Timer(const curl_socket_t &loopfd)
+            : Poll(timerfd_create(CLOCK_MONOTONIC, 0))
+          {
+            if (timerfd_settime(sockfd, 0, &ts, nullptr) != -1)
+              start(loopfd, EPOLLIN, [&]() {
+                uint64_t again = 0;
+                if (::read(sockfd, &again, 8) == 8)
+                  timer_1s();
+              });
+          };
+      };
       class Async: public Poll {
         private:
           const uint64_t again = 1;
@@ -316,16 +330,15 @@ namespace ₿ {
           };
       };
     private:
+       curl_socket_t sockfd;
                Timer timer;
       vector<Async*> events;
-       curl_socket_t sockfd = 0;
-         epoll_event ready[64] = {};
+         epoll_event ready[32] = {};
     public:
       Epoll()
-      {
-        if ((sockfd = epoll_create1(EPOLL_CLOEXEC)) == -1)
-          sockfd = 0;
-      };
+        : sockfd(epoll_create1(EPOLL_CLOEXEC))
+        , timer(sockfd)
+      {};
       void timer_ticks_factor(const unsigned int &factor) const override {
         timer.ticks_factor(factor);
       };
@@ -340,20 +353,17 @@ namespace ₿ {
         return sockfd;
       };
       void walk() override {
-        while (sockfd) {
+        while (sockfd)
           for (
-            int i = epoll_wait(sockfd, ready, 64, next());
+            int i = epoll_wait(sockfd, ready, 32, -1);
             i --> 0;
             ((Poll*)ready[i].data.ptr)->ready()
           );
-          if (timer.next < chrono::system_clock::now()) {
-            timer.timer_1s();
-            timer.next = chrono::system_clock::now()
-                       + chrono::seconds(1);
-          }
-        }
       };
       void end() override {
+        timer.stop();
+        ::close(timer.sockfd);
+        timer.sockfd = 0;
         for (auto &it : events) {
           it->stop();
           ::close(it->sockfd);
@@ -361,12 +371,6 @@ namespace ₿ {
         }
         ::close(sockfd);
         sockfd = 0;
-      };
-    private:
-      const int next() const {
-        return max<int>(0, chrono::duration_cast<chrono::milliseconds>(
-          timer.next - chrono::system_clock::now()
-        ).count());
       };
   };
 #endif

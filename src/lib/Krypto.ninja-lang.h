@@ -47,6 +47,7 @@
 #else
 #include <fcntl.h>
 #include <sys/epoll.h>
+#include <sys/timerfd.h>
 #include <sys/eventfd.h>
 #endif
 
