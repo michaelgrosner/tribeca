@@ -215,17 +215,18 @@ namespace ₿ {
         );
       };
 //BO non-free Gw library functions from build-*/local/lib/K-*.a (it just redefines all virtual gateway class members below).
-/**/  virtual bool ready() = 0;                                              // wait for exchange and register data handlers
+/**/  virtual bool   ready() = 0;                                            // wait for exchange and register data handlers
 /**/  virtual void replace(RandId, string) {};                               // call         async orders data from exchange
-/**/  virtual void place(RandId, Side, string, string, OrderType, TimeInForce, bool) = 0; // async orders like above / below
-/**/  virtual void cancel(RandId, RandId) = 0;                               // call         async orders data from exchange
+/**/  virtual void   place(RandId, Side, string, string, OrderType, TimeInForce, bool) = 0; // async orders like above/below
+/**/  virtual void  cancel(RandId, RandId) = 0;                              // call         async orders data from exchange
 /**/protected:
-/**/  virtual bool            async_wallet() { return false; };              // call         async wallet data from exchange
-/**/  virtual vector<mWallets> sync_wallet() { return {}; };                 // call and read sync wallet data from exchange
-/**/  virtual vector<mLevels>  sync_levels() { return {}; };                 // call and read sync levels data from exchange
-/**/  virtual vector<mTrade>   sync_trades() { return {}; };                 // call and read sync trades data from exchange
-/**/  virtual vector<mOrder>   sync_orders() { return {}; };                 // call and read sync orders data from exchange
-/**/  virtual vector<mOrder>   sync_cancelAll() = 0;                         // call and read sync orders data from exchange
+/**/  virtual             bool async_wallet()    { return false; };          // call         async wallet data from exchange
+/**/  virtual             bool async_cancelAll() { return false; };          // call         async orders data from exchange
+/**/  virtual vector<mWallets>  sync_wallet()    { return {}; };             // call and read sync wallet data from exchange
+/**/  virtual  vector<mLevels>  sync_levels()    { return {}; };             // call and read sync levels data from exchange
+/**/  virtual   vector<mTrade>  sync_trades()    { return {}; };             // call and read sync trades data from exchange
+/**/  virtual   vector<mOrder>  sync_orders()    { return {}; };             // call and read sync orders data from exchange
+/**/  virtual   vector<mOrder>  sync_cancelAll() { return {}; };             // call and read sync orders data from exchange
 //EO non-free Gw library functions from build-*/local/lib/K-*.a (it just redefines all virtual gateway class members above).
       void online(const Connectivity &connectivity = Connectivity::Connected) {
         if (write_Connectivity)
@@ -234,15 +235,16 @@ namespace ₿ {
       void askForNeverAsyncData(const unsigned int &tick) {
         if (((askForFees and !(askForFees = false))
           or !(tick % 15))
-          and !async_wallet()) askFor(replyWallets,   eventWallets,   [&]() { return sync_wallet(); });
-        if (askForCancelAll
-          and !(tick % 300))   askFor(replyCancelAll, eventCancelAll, [&]() { return sync_cancelAll(); });
+          and !async_wallet())    askFor(replyWallets,   eventWallets,   [&]() { return sync_wallet(); });
+        if ((askForCancelAll
+          and !(tick % 300))
+          and !async_cancelAll()) askFor(replyCancelAll, eventCancelAll, [&]() { return sync_cancelAll(); });
       };
       void askForSyncData(const unsigned int &tick) {
-        if (!(tick % 2))       askFor(replyOrders,    eventOrders,    [&]() { return sync_orders(); });
-                               askForNeverAsyncData(tick);
-        if (!(tick % 3))       askFor(replyLevels,    eventLevels,    [&]() { return sync_levels(); });
-        if (!(tick % 60))      askFor(replyTrades,    eventTrades,    [&]() { return sync_trades(); });
+        if (!(tick % 2))          askFor(replyOrders,    eventOrders,    [&]() { return sync_orders(); });
+                                  askForNeverAsyncData(tick);
+        if (!(tick % 3))          askFor(replyLevels,    eventLevels,    [&]() { return sync_levels(); });
+        if (!(tick % 60))         askFor(replyTrades,    eventTrades,    [&]() { return sync_trades(); });
       };
       void waitForNeverAsyncData(Loop *const loop) {
         eventWallets   = loop->async([&]() { waitFor(replyWallets,   write_mWallets); });
@@ -622,7 +624,7 @@ namespace ₿ {
         };
       };
     protected:
-      static const json xfer(const string &url, const string &h1, const string &h2, const string &h3, const string &h4, const bool &rm) {
+      static const json xfer(const string &url, const string &h1, const string &h2, const string &h3, const string &h4) {
         return Curl::Web::request(url, [&](CURL *curl) {
           struct curl_slist *h_ = nullptr;
           h_ = curl_slist_append(h_, ("CB-ACCESS-KEY: " + h1).data());
@@ -630,7 +632,6 @@ namespace ₿ {
           h_ = curl_slist_append(h_, ("CB-ACCESS-TIMESTAMP: " + h3).data());
           h_ = curl_slist_append(h_, ("CB-ACCESS-PASSPHRASE: " + h4).data());
           curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
-          if (rm) curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
         });
       };
   };
