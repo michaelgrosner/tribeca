@@ -5,7 +5,7 @@
 
 namespace ₿ {
   class WebSocketFrames {
-    public:
+    protected:
       const string frame(string data, const int &opcode, const bool &mask) const {
         const int key = mask ? rand() : 0;
         const int bit = mask ? 0x80   : 0;
@@ -31,7 +31,6 @@ namespace ₿ {
         }
         return data;
       };
-    protected:
       const string unframe(string &data, string &pong, bool &drop) const {
         string msg;
         const size_t max = data.length();
@@ -131,7 +130,7 @@ namespace ₿ {
           };
           void timer_1s() {
             for (const auto &it : callbacks) it(tick);
-            tick = ++tick % ticks;
+            tick = (tick + 1) % ticks;
           };
           void push_back(const function<void(const unsigned int&)> &data) {
             callbacks.push_back(data);
@@ -153,14 +152,14 @@ namespace ₿ {
           };
       };
       class Poll: public Async {
-        public:
+        protected:
           curl_socket_t sockfd = 0;
         public:
           Poll(const curl_socket_t &s)
             : Async(nullptr)
             , sockfd(s)
           {};
-          virtual void start(const curl_socket_t&, const int&, const function<void()>&) = 0;
+          virtual void start(const curl_socket_t&, const function<void()>&) = 0;
           virtual void stop() = 0;
         protected:
           virtual void change(const int&, const function<void()>& = nullptr) = 0;
@@ -211,19 +210,24 @@ namespace ₿ {
         public:
           uv_poll_t event;
         public:
-          Poll(const curl_socket_t &s)
+          Poll(const curl_socket_t &s = 0)
             : Loop::Poll(s)
             , event()
-          {
+          {};
+          void start(const curl_socket_t&, const function<void()> &data) override {
             event.data = this;
-          };
-          void start(const curl_socket_t&, const int &events, const function<void()> &data) override {
             uv_poll_init_socket(uv_default_loop(), &event, sockfd);
-            change(events, data);
+            change(EPOLLIN, data);
           };
           void stop() override {
-            uv_poll_stop(&event);
-            uv_close((uv_handle_t*)&event, [](uv_handle_t*) { });
+            if (event.data) {
+              uv_poll_stop(&event);
+              uv_close((uv_handle_t*)&event, [](uv_handle_t*) { });
+              if (sockfd) {
+                BIO_closesocket(sockfd);
+                sockfd = 0;
+              }
+            }
           };
         protected:
           void change(const int &events, const function<void()> &data = nullptr) override {
@@ -235,8 +239,8 @@ namespace ₿ {
           };
       };
     private:
-               Timer timer;
-      vector<Async*> events;
+            Timer timer;
+      list<Async> events;
     public:
       void timer_ticks_factor(const unsigned int &factor) const override {
         timer.ticks_factor(factor);
@@ -245,8 +249,8 @@ namespace ₿ {
         timer.push_back(data);
       };
       Loop::Async *async(const function<void()> &data) override {
-        events.push_back(new Async(data));
-        return events.back();
+        events.emplace_back(data);
+        return &events.back();
       };
       const curl_socket_t poll() override {
         return 0;
@@ -258,7 +262,7 @@ namespace ₿ {
         uv_timer_stop(&timer.event);
         uv_close((uv_handle_t*)&timer.event, [](uv_handle_t*){ });
         for (auto &it : events)
-          uv_close((uv_handle_t*)&it->event, [](uv_handle_t*){ });
+          uv_close((uv_handle_t*)&it.event, [](uv_handle_t*){ });
       };
   };
 #else
@@ -268,17 +272,21 @@ namespace ₿ {
         private:
           curl_socket_t loopfd = 0;
         public:
-          Poll(const curl_socket_t &s)
+          Poll(const curl_socket_t &s = 0)
             : Loop::Poll(s)
           {};
-          void start(const curl_socket_t &l, const int &events, const function<void()> &data) override {
+          void start(const curl_socket_t &l, const function<void()> &data) override {
             loopfd = l;
             link(data);
             fcntl(sockfd, F_SETFL, fcntl(sockfd, F_GETFL, 0) | O_NONBLOCK);
-            ctl(events, EPOLL_CTL_ADD);
+            ctl(EPOLLIN, EPOLL_CTL_ADD);
           };
           void stop() override {
-            ctl(0, EPOLL_CTL_DEL);
+            if (loopfd and sockfd) {
+              ctl(0, EPOLL_CTL_DEL);
+              ::close(sockfd);
+              sockfd = 0;
+            }
           };
         protected:
           void change(const int &events, const function<void()> &data = nullptr) override {
@@ -304,7 +312,7 @@ namespace ₿ {
             : Poll(timerfd_create(CLOCK_MONOTONIC, 0))
           {
             if (timerfd_settime(sockfd, 0, &ts, nullptr) != -1)
-              start(loopfd, EPOLLIN, [&]() {
+              start(loopfd, [&]() {
                 uint64_t again = 0;
                 if (::read(sockfd, &again, 8) == 8)
                   timer_1s();
@@ -318,7 +326,7 @@ namespace ₿ {
           Async(const curl_socket_t &loopfd, const function<void()> &data)
             : Poll(::eventfd(0, EFD_CLOEXEC))
           {
-            start(loopfd, EPOLLIN, [this, data]() {
+            start(loopfd, [this, data]() {
               uint64_t again = 0;
               if (::read(sockfd, &again, 8) == 8)
                 data();
@@ -330,9 +338,9 @@ namespace ₿ {
           };
       };
     private:
-       curl_socket_t sockfd;
+       curl_socket_t sockfd = 0;
                Timer timer;
-      vector<Async*> events;
+         list<Async> events;
          epoll_event ready[32] = {};
     public:
       Epoll()
@@ -346,8 +354,8 @@ namespace ₿ {
         timer.push_back(data);
       };
       Loop::Async *async(const function<void()> &data) override {
-        events.push_back(new Async(sockfd, data));
-        return events.back();
+        events.emplace_back(sockfd, data);
+        return &events.back();
       };
       const curl_socket_t poll() override {
         return sockfd;
@@ -362,13 +370,9 @@ namespace ₿ {
       };
       void end() override {
         timer.stop();
-        ::close(timer.sockfd);
-        timer.sockfd = 0;
-        for (auto &it : events) {
-          it->stop();
-          ::close(it->sockfd);
-          it->sockfd = 0;
-        }
+        for (auto &it : events)
+          it.stop();
+        events.clear();
         ::close(sockfd);
         sockfd = 0;
       };
@@ -378,7 +382,7 @@ namespace ₿ {
   class Curl {
     public:
       static function<void(CURL*)> global_setopt;
-    private:
+    private_friend:
       class Easy: public Epoll::Poll {
         private:
           CURL *curl = nullptr;
@@ -387,18 +391,16 @@ namespace ₿ {
           string &in;
         public:
           Easy(string &i)
-            : Poll(0)
-            , in(i)
+            : in(i)
           {};
         protected:
           void cleanup() {
             if (curl) {
               if (!out.empty()) send();
               curl_easy_cleanup(curl);
+              curl = nullptr;
               stop();
             }
-            curl   = nullptr;
-            sockfd = 0;
           };
           const bool connected() const {
             return sockfd;
@@ -662,10 +664,12 @@ namespace ₿ {
         b64 = BIO_new(BIO_f_base64());
         bio = BIO_new(BIO_s_mem());
         bio = BIO_push(b64, bio);
-        BIO_set_close(bio, BIO_CLOSE);
+        if (BIO_set_close(bio, BIO_CLOSE))
+          ;
         BIO_set_flags(bio, BIO_FLAGS_BASE64_NO_NL);
         BIO_write(bio, input.data(), input.length());
-        BIO_flush(bio);
+        if (BIO_flush(bio))
+          ;
         BIO_get_mem_ptr(bio, &bufferPtr);
         const string output(bufferPtr->data, bufferPtr->length);
         BIO_free_all(bio);
@@ -677,7 +681,8 @@ namespace ₿ {
         b64 = BIO_new(BIO_f_base64());
         bio = BIO_new_mem_buf(input.data(), input.length());
         bio = BIO_push(b64, bio);
-        BIO_set_close(bio, BIO_CLOSE);
+        if (BIO_set_close(bio, BIO_CLOSE))
+          ;
         BIO_set_flags(bio, BIO_FLAGS_BASE64_NO_NL);
         int len = BIO_read(bio, output, input.length());
         BIO_free_all(bio);
@@ -714,7 +719,7 @@ namespace ₿ {
         unsigned char digest[digest_len];
         md((unsigned char*)input.data(), input.length(), (unsigned char*)&digest);
         char output[digest_len * 2 + 1];
-        for (unsigned int i = 0; i < digest_len; i++)
+        for (int i = 0; i < digest_len; i++)
           sprintf(&output[i * 2], "%02x", (unsigned int)digest[i]);
         return hex ? HEX(output) : output;
       };
@@ -733,7 +738,7 @@ namespace ₿ {
           nullptr, nullptr
         );
         char output[digest_len * 2 + 1];
-        for (unsigned int i = 0; i < digest_len; i++)
+        for (int i = 0; i < digest_len; i++)
           sprintf(&output[i * 2], "%02x", (unsigned int)digest[i]);
         return hex ? HEX(output) : output;
       };
@@ -749,22 +754,24 @@ namespace ₿ {
   };
 
   class WebServer {
-    private:
+    public_friend:
+      using Response = function<const string(string, const string&, const string&)>;
+      using Upgrade = function<const int(const int&, const string&)>;
+      using Message = function<const string(string, const string&)>;
+    private_friend:
       struct Session {
-        string httpB64auth;
-        function<const int(const int&, const string&)> httpUpgrade = nullptr;
-        function<const string(string, const string&, const string&)> httpResponse = nullptr;
-        function<const string(string, const string&)> httpMessage = nullptr;
+          string auth;
+        Response response = nullptr;
+         Upgrade upgrade  = nullptr;
+         Message message  = nullptr;
       };
       class Socket: public Epoll::Poll {
         public:
-          Socket(const curl_socket_t &s)
+          Socket(const curl_socket_t &s = 0)
             : Poll(s)
           {};
           void shutdown() {
             stop();
-            ::closesocket(sockfd);
-            sockfd = 0;
           };
           void cork(const int &enable) const {
 #ifndef _WIN32
@@ -778,23 +785,20 @@ namespace ₿ {
       class Frontend: public Socket,
                       public WebSocketFrames {
         private:
-             SSL *ssl  = nullptr;
-           Clock  time = 0;
-          string  addr,
-                  out,
-                  in;
-        private_ref:
-          const Session &session;
-          const function<void(Frontend*)> &upgrade;
+              SSL *ssl     = nullptr;
+          Session *session = nullptr;
+            Clock  time    = 0;
+           string  addr,
+                   out,
+                   in;
         public:
-          Frontend(const curl_socket_t &s, const curl_socket_t &loopfd, SSL *S, const Session &d, const function<void(Frontend*)> &u)
+          Frontend(const curl_socket_t &s, const curl_socket_t &loopfd, SSL *S, Session *e)
             : Socket(s)
             , ssl(S)
+            , session(e)
             , time(Tstamp)
-            , session(d)
-            , upgrade(u)
           {
-            start(loopfd, EPOLLIN, ioHttp);
+            start(loopfd, ioHttp);
           };
           void shutdown() {
             if (ssl) {
@@ -802,7 +806,10 @@ namespace ₿ {
               SSL_free(ssl);
             }
             Socket::shutdown();
-            if (!time) session.httpUpgrade(-1, addr);
+            if (!time) session->upgrade(-1, addr);
+          };
+          const Clock upgraded() const {
+            return !time;
           };
           void send(const string &data) {
             out += data;
@@ -823,16 +830,13 @@ namespace ₿ {
         private:
           function<void()> ioWs = [&]() {
             io();
-            if (sockfd and !in.empty()) {
-              const string msg = unframe();
-              if (!msg.empty()) {
-                string reply = session.httpMessage(msg, addr);
-                if (!reply.empty()) {
-                  out += frame(reply, reply.substr(0, 2) == "PK" ? 0x02 : 0x01, false);
-                  change(EPOLLIN | EPOLLOUT);
-                }
-              }
-            }
+            if (!sockfd or in.empty()) return;
+            const string msg = unframe();
+            if (msg.empty()) return;
+            string reply = session->message(msg, addr);
+            if (reply.empty()) return;
+            out += frame(reply, reply.substr(0, 2) == "PK" ? 0x02 : 0x01, false);
+            change(EPOLLIN | EPOLLOUT);
           };
           function<void()> ioHttp = [&]() {
             io();
@@ -854,15 +858,15 @@ namespace ₿ {
               const size_t key = in.find("Sec-WebSocket-Key: ");
               int allowed = 1;
               if (key == string::npos) {
-                out = session.httpResponse(path, auth, addr);
+                out = session->response(path, auth, addr);
                 if (out.empty())
                   shutdown();
                 else change(EPOLLIN | EPOLLOUT);
-              } else if ((session.httpB64auth.empty() or auth == session.httpB64auth)
+              } else if ((session->auth.empty() or auth == session->auth)
                 and in.find("Upgrade: websocket" "\r\n") != string::npos
                 and in.find("Connection: Upgrade" "\r\n") != string::npos
                 and in.find("Sec-WebSocket-Version: 13" "\r\n") != string::npos
-                and (allowed = session.httpUpgrade(allowed, addr))
+                and (allowed = session->upgrade(allowed, addr))
               ) {
                 time = 0;
                 out = "HTTP/1.1 101 Switching Protocols"
@@ -878,10 +882,9 @@ namespace ₿ {
                       "\r\n"
                       "\r\n";
                 in.clear();
-                upgrade(this);
                 change(EPOLLIN | EPOLLOUT, ioWs);
               } else {
-                if (!allowed) session.httpUpgrade(allowed, addr);
+                if (!allowed) session->upgrade(allowed, addr);
                 shutdown();
               }
             }
@@ -957,59 +960,48 @@ namespace ₿ {
           };
       };
     public_friend:
-      class Backend: public Socket {
+      class Backend: public Socket,
+                     public WebSocketFrames {
         private:
-                    SSL_CTX *ctx = nullptr;
-                    Session  session;
-          vector<Frontend*>  requests,
-                             sockets;
+                 SSL_CTX *ctx = nullptr;
+                 Session  session;
+          list<Frontend>  requests;
         public:
-          Backend()
-            : Socket(0)
-          {};
           const bool idle() const {
-            return sockets.empty();
+            return !any_of(requests.begin(), requests.end(), [](auto &it) {
+              return it.upgraded();
+            });
           };
-          const size_t clients() const {
-            return sockets.size();
+          const int clients() const {
+            return count_if(requests.begin(), requests.end(), [](auto &it) {
+              return it.upgraded();
+            });
           };
           const string protocol() const {
             return "HTTP" + string(ctx ? 1 : 0, 'S');
           };
+          void broadcast(const char &portal, const unordered_map<char, string> &queue) {
+            string msgs;
+            for (const auto &it : queue)
+              msgs += frame(portal + (it.first + it.second), 0x01, false);
+            for (auto &it : requests)
+              if (it.upgraded())
+                it.send(msgs);
+          };
           void purge() {
-            if (!idle()) {
-              sockets.back()->shutdown();
-              delete sockets.back();
-              sockets.pop_back();
+            if (!requests.empty()) {
+              requests.back().shutdown();
+              requests.pop_back();
               purge();
               return;
             }
-            for (auto &it : requests) {
-              it->shutdown();
-              delete it;
-            }
-            requests.clear();
             shutdown();
-          };
-          void broadcast(const char &portal, const unordered_map<char, string> &queue) {
-            if (idle()) return;
-            string msgs;
-            for (const auto &it : queue)
-              msgs += sockets.front()->frame(portal + (it.first + it.second), 0x01, false);
-            for (auto &it : sockets)
-              it->send(msgs);
           };
           void timeouts() {
             for (auto it = requests.begin(); it != requests.end();)
-              if ((*it)->stale()) {
-                delete *it;
+              if (it->stale())
                 it = requests.erase(it);
-              } else ++it;
-            for (auto it = sockets.begin(); it != sockets.end();)
-              if ((*it)->stale()) {
-                delete *it;
-                it = sockets.erase(it);
-              } else ++it;
+              else ++it;
           };
           const bool listen(const curl_socket_t &loopfd, const string &inet, const int &port, const bool &ipv6, const Session &data) {
             if (sockfd) return false;
@@ -1036,7 +1028,7 @@ namespace ₿ {
                   shutdown();
                 else {
                   session = data;
-                  start(loopfd, EPOLLIN, [this, loopfd]() {
+                  start(loopfd, [this, loopfd]() {
                     accept_request(loopfd);
                   });
                 }
@@ -1152,17 +1144,9 @@ namespace ₿ {
                 SSL_set_fd(ssl, clientfd);
                 SSL_set_mode(ssl, SSL_MODE_RELEASE_BUFFERS);
               }
-              requests.push_back(new Frontend(clientfd, loopfd, ssl, session, upgrade));
+              requests.emplace_back(clientfd, loopfd, ssl, &session);
             }
             return clientfd > 0;
-          };
-          function<void(Frontend*)> upgrade = [&](Frontend *const client) {
-            for (auto it = requests.begin(); it != requests.end();)
-              if (*it == client) {
-                requests.erase(it);
-                break;
-              } else ++it;
-            sockets.push_back(client);
           };
           void socket(const int &domain, const int &type, const int &protocol) {
             sockfd = ::socket(domain, type | SOCK_CLOEXEC | SOCK_NONBLOCK, protocol);
@@ -1210,10 +1194,10 @@ namespace ₿ {
         unsigned long long rnd = int64();
         for (auto &it : uuid)
           if (it == ' ') {
-            if (rnd <= 0x02) rnd = 0x2000000 + (int64() * 0x1000000) | 0;
+            if (rnd <= 0x02) rnd = 0x2000000 + (int64() * 0x1000000);
             rnd >>= 4;
             const int offset = (uuid[17] != ' ' and uuid[19] == ' ')
-              ? ((rnd & 0xf) & 0x3) | 0x8
+              ? ((rnd & 0xF) & 0x3) | 0x8
               : rnd & 0xf;
             if (offset < 10) it = '0' + offset;
             else             it = 'a' + offset - 10;

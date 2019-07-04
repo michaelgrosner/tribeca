@@ -12,6 +12,7 @@
 #include <vector>
 #include <unordered_map>
 #include <map>
+#include <list>
 #include <ctime>
 #include <cmath>
 #include <mutex>
@@ -98,7 +99,6 @@ using Clock  = long long int;
 #define SOCK_OPTVAL char
 #else
 #define SOCK_OPTVAL int
-#define closesocket close
 #endif
 
 //! \def
@@ -116,7 +116,11 @@ using Clock  = long long int;
 #define private_ref private
 
 //! \def
-//! \brief Redundant placeholder to enforce public nested classes.
+//! \brief Redundant placeholder to enforce private nested declarations.
+#define private_friend private
+
+//! \def
+//! \brief Redundant placeholder to enforce public nested declarations.
 #define public_friend public
 
 //! \def

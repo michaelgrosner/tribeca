@@ -91,7 +91,7 @@ namespace ₿ {
       if (!order) return;
       if (Status::Working == (     order->status     = raw.status
       ) and !order->latency)       order->latency    = raw.time - order->time;
-                                   order->time       = raw.time;
+      order->time = raw.time;
       if (!raw.exchangeId.empty()) order->exchangeId = raw.exchangeId;
       if (raw.price)               order->price      = raw.price;
       if (raw.quantity)            order->quantity   = raw.quantity;
@@ -242,7 +242,7 @@ namespace ₿ {
       };
       void askForSyncData(const unsigned int &tick) {
         if (!(tick % 2))          askFor(replyOrders,    eventOrders,    [&]() { return sync_orders(); });
-                                  askForNeverAsyncData(tick);
+        askForNeverAsyncData(tick);
         if (!(tick % 3))          askFor(replyLevels,    eventLevels,    [&]() { return sync_levels(); });
         if (!(tick % 60))         askFor(replyTrades,    eventTrades,    [&]() { return sync_trades(); });
       };
@@ -447,7 +447,7 @@ namespace ₿ {
       virtual void connect() {
         CURLcode rc;
         if (CURLE_OK == (rc = WebSocket::connect(ws)))
-          WebSocket::start(GwExchangeData::loopfd, EPOLLIN, [&]() {
+          WebSocket::start(GwExchangeData::loopfd, [&]() {
             waitForAsyncData();
           });
         else reconnect(string("CURL connect Error: ") + curl_easy_strerror(rc));
@@ -515,7 +515,7 @@ namespace ₿ {
         if (WebSocket::connected()) {
           CURLcode rc;
           if (CURLE_OK == (rc = FixSocket::connect(fix, logon()))) {
-            FixSocket::start(GwExchangeData::loopfd, EPOLLIN, [&]() {
+            FixSocket::start(GwExchangeData::loopfd, [&]() {
               waitForAsyncData();
             });
             print("FIX success Logon, streaming orders");

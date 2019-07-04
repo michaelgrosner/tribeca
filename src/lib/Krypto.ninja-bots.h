@@ -153,7 +153,7 @@ namespace ₿ {
         return "";
       };
       static void log(const string &prefix, const string &reason, const string &highlight = "") {
-        unsigned int color = 0;
+        int color = 0;
         if (reason.find("NG TRADE") != string::npos) {
           if (reason.find("BUY") != string::npos)       color = 1;
           else if (reason.find("SELL") != string::npos) color = -1;
@@ -370,14 +370,14 @@ namespace ₿ {
          << string(epilogue.empty() ? 0 : 1, '\n');
   } };
 
-  struct Argument {
-   const string  name;
-   const string  defined_value;
-   const char   *default_value;
-   const string  help;
-  };
-
   class Option {
+    private_friend:
+      struct Argument {
+       const string  name;
+       const string  defined_value;
+       const char   *default_value;
+       const string  help;
+      };
     protected:
       bool autobot = false;
       pair<vector<Argument>, function<void(
@@ -1007,9 +1007,9 @@ namespace ₿ {
           option->arg<int>("ipv6"),
           {
             option->arg<string>("B64auth"),
-            httpUpgrade,
-            httpResponse,
-            httpMessage
+            response,
+            upgrade,
+            message
           }
         )) error("UI", "Unable to listen at port number " + to_string(option->arg<int>("port"))
              + " (may be already in use by another program)");
@@ -1067,7 +1067,8 @@ namespace ₿ {
       };
       void broadcast() {
         if (queue.empty()) return;
-        server.broadcast(portal.second, queue);
+        if (!server.idle())
+          server.broadcast(portal.second, queue);
         queue.clear();
       };
       const bool alien(const string &addr) {
@@ -1080,17 +1081,7 @@ namespace ₿ {
         }
         return false;
       };
-      function<const int(const int&, const string&)> httpUpgrade = [&](const int &sum, const string &addr) {
-        const int tentative = server.clients() + sum;
-        Print::log("UI", to_string(tentative) + " client" + string(tentative == 1 ? 0 : 1, 's')
-          + (sum > 0 ? "" : " remain") + " connected, last connection was from", addr);
-        if (tentative > option->arg<int>("client-limit")) {
-          Print::log("UI", "--client-limit=" + to_string(option->arg<int>("client-limit")) + " reached by", addr);
-          return 0;
-        }
-        return sum;
-      };
-      function<const string(string, const string&, const string&)> httpResponse = [&](string path, const string &auth, const string &addr) {
+      WebServer::Response response = [&](string path, const string &auth, const string &addr) {
         if (alien(addr))
           path.clear();
         const bool papersplease = !(path.empty() or option->arg<string>("B64auth").empty());
@@ -1124,26 +1115,38 @@ namespace ₿ {
               code = 418, content = "Today, is your lucky day!";
           }
         } else {
-          Print::log("UI", "--client-limit=" + to_string(option->arg<int>("client-limit")) + " reached by", addr);
+          Print::log("UI", "--client-limit=" + to_string(option->arg<int>("client-limit"))
+            + " reached by", addr);
           content = "Thank you! but our princess is already in this castle!"
                     "<br/>" "Refresh the page anytime to retry.";
         }
         return server.document(content, code, type);
       };
-      function<const string(string, const string&)> httpMessage = [&](string message, const string &addr) {
+      WebServer::Upgrade upgrade = [&](const int &sum, const string &addr) {
+        const int tentative = server.clients() + sum;
+        Print::log("UI", to_string(tentative) + " client" + string(tentative == 1 ? 0 : 1, 's')
+          + (sum > 0 ? "" : " remain") + " connected, last connection was from", addr);
+        if (tentative > option->arg<int>("client-limit")) {
+          Print::log("UI", "--client-limit=" + to_string(option->arg<int>("client-limit"))
+            + " reached by", addr);
+          return 0;
+        }
+        return sum;
+      };
+      WebServer::Message message = [&](string msg, const string &addr) {
         if (alien(addr))
           return string(documents.at("").first, documents.at("").second);
-        const char matter = message.at(1);
-        if (portal.first == message.at(0)) {
+        const char matter = msg.at(1);
+        if (portal.first == msg.at(0)) {
           if (hello.find(matter) != hello.end()) {
             const json reply = hello.at(matter)();
             if (!reply.is_null())
               return portal.first + (matter + reply.dump());
           }
-        } else if (portal.second == message.at(0) and kisses.find(matter) != kisses.end()) {
-          message = message.substr(2);
-          json butterfly = json::accept(message)
-            ? json::parse(message)
+        } else if (portal.second == msg.at(0) and kisses.find(matter) != kisses.end()) {
+          msg = msg.substr(2);
+          json butterfly = json::accept(msg)
+            ? json::parse(msg)
             : json::object();
           for (auto it = butterfly.begin(); it != butterfly.end();)
             if (it.value().is_null()) it = butterfly.erase(it); else ++it;

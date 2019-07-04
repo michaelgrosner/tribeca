@@ -491,9 +491,6 @@ namespace ₿ {
         return trades;
       };
   };
-  static void to_json(json &j, const mMarketTakers &k) {
-    j = k.trades;
-  };
 
   struct mFairLevelsPrice: public Client::Broadcast<mFairLevelsPrice> {
     private_ref:
