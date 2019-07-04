@@ -756,8 +756,8 @@ namespace ₿ {
   class WebServer {
     public_friend:
       using Response = function<const string(string, const string&, const string&)>;
-      using Upgrade = function<const int(const int&, const string&)>;
-      using Message = function<const string(string, const string&)>;
+      using Upgrade  = function<const int(const int&, const string&)>;
+      using Message  = function<const string(string, const string&)>;
     private_friend:
       struct Session {
           string auth;

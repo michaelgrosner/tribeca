@@ -672,8 +672,8 @@ namespace ₿ {
           {   "symbol", symbol          },
           {"tickPrice", tickPrice       },
           { "tickSize", tickPrice < 1e-8
-                         ? 10
-                         : 8            },
+                         ? 1e-10
+                         : 1e-8         },
           {  "minSize", minSize         },
           {    "reply", {reply1, reply2}}
         };
