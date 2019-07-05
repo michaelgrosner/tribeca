@@ -96,7 +96,7 @@ namespace ₿ {
       if (raw.price)               order->price      = raw.price;
       if (raw.quantity)            order->quantity   = raw.quantity;
     };
-    static const bool replace(const Price &price, const bool &isPong, mOrder *const order) {
+    static bool replace(const Price &price, const bool &isPong, mOrder *const order) {
       if (!order
         or order->exchangeId.empty()
       ) return false;
@@ -105,7 +105,7 @@ namespace ₿ {
       order->time   = Tstamp;
       return true;
     };
-    static const bool cancel(mOrder *const order) {
+    static bool cancel(mOrder *const order) {
       if (!order
         or order->exchangeId.empty()
         or order->status == Status::Waiting
@@ -159,15 +159,15 @@ namespace ₿ {
           {
             stream << fixed;
           };
-          const double round(const double &input) const {
+          double round(const double &input) const {
             const double points = pow(10, -1 * stream.precision());
             return ::round(input / points) * points;
           };
-          const double floor(const double &input) const {
+          double floor(const double &input) const {
             const double points = pow(10, -1 * stream.precision());
             return ::floor(input / points) * points;
           };
-          const string str(const double &input) {
+          string str(const double &input) {
             stream.str("");
             stream << round(input);
             return stream.str();
@@ -188,7 +188,7 @@ namespace ₿ {
       bool askForFees      = false,
            askForReplace   = false,
            askForCancelAll = false;
-      const RandId (*randId)() = nullptr;
+      RandId (*randId)() = nullptr;
       virtual void askForData(const unsigned int &tick) = 0;
       virtual void waitForData(Loop *const loop) = 0;
       void place(const mOrder *const order) {
@@ -306,9 +306,9 @@ namespace ₿ {
              makeFee   = 0,
              takeFee   = 0;
       virtual void disconnect() {};
-      virtual const bool connected() const { return true; };
-      virtual const json handshake() = 0;
-      const json handshake(const bool &nocache) {
+      virtual bool connected() const { return true; };
+      virtual json handshake() = 0;
+      json handshake(const bool &nocache) {
         json reply;
         const string cache = "/var/lib/K/cache/handshake"
               + ('.' + exchange)
@@ -427,7 +427,7 @@ namespace ₿ {
        unsigned int countdown    = 1;
                bool subscription = false;
     public:
-      const bool connected() const override {
+      bool connected() const override {
         return WebSocket::connected();
       };
       void askForData(const unsigned int &tick) override {
@@ -466,7 +466,7 @@ namespace ₿ {
         countdown = 7;
         print("WS " + reason + ", reconnecting in " + to_string(countdown) + "s.");
       };
-      const bool accept_msg(const string &msg) {
+      bool accept_msg(const string &msg) {
         const bool next = !msg.empty();
         if (next) {
           if (json::accept(msg))
@@ -475,7 +475,7 @@ namespace ₿ {
         }
         return next;
       };
-      const bool subscribed() {
+      bool subscribed() {
         if (subscription != connected()) {
           subscription = !subscription;
           if (subscription) subscribe();
@@ -502,13 +502,13 @@ namespace ₿ {
       GwApiFix()
         : FixSocket(apikey, target)
       {};
-      const bool connected() const override {
+      bool connected() const override {
         return WebSocket::connected()
            and FixSocket::connected();
       };
     protected:
 //BO non-free Gw library functions from build-*/local/lib/K-*.a (it just redefines all virtual gateway class members below).
-/**/  virtual const string logon() = 0;                                                             // return logon message.
+/**/  virtual string logon() = 0;                                                                   // return logon message.
 //EO non-free Gw library functions from build-*/local/lib/K-*.a (it just redefines all virtual gateway class members above).
       void connect() override {
         GwApiWs::connect();
@@ -549,7 +549,7 @@ namespace ₿ {
         randId = Random::uuid36Id;
       };
     public:
-      const json handshake() override {
+      json handshake() override {
         return {
           {     "base", base   },
           {    "quote", quote  },
@@ -568,7 +568,7 @@ namespace ₿ {
         ws     = "wss://api.hitbtc.com/api/2/ws";
         randId = Random::uuid32Id;
       };
-      const json handshake() override {
+      json handshake() override {
         symbol = base + quote;
         const json reply = Curl::Web::xfer(http + "/public/symbol/" + symbol);
         return {
@@ -584,7 +584,7 @@ namespace ₿ {
         };
       };
     protected:
-      static const json xfer(const string &url, const string &auth, const string &post) {
+      static json xfer(const string &url, const string &auth, const string &post) {
         return Curl::Web::request(url, [&](CURL *curl) {
           curl_easy_setopt(curl, CURLOPT_USERPWD, auth.data());
           curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
@@ -610,7 +610,7 @@ namespace ₿ {
         target = "Coinbase";
         randId = Random::uuid36Id;
       };
-      const json handshake() override {
+      json handshake() override {
         symbol = base + "-" + quote;
         const json reply = Curl::Web::xfer(http + "/products/" + symbol);
         return {
@@ -624,7 +624,7 @@ namespace ₿ {
         };
       };
     protected:
-      static const json xfer(const string &url, const string &h1, const string &h2, const string &h3, const string &h4) {
+      static json xfer(const string &url, const string &h1, const string &h2, const string &h3, const string &h4) {
         return Curl::Web::request(url, [&](CURL *curl) {
           struct curl_slist *h_ = nullptr;
           h_ = curl_slist_append(h_, ("CB-ACCESS-KEY: " + h1).data());
@@ -644,7 +644,7 @@ namespace ₿ {
         randId = Random::int45Id;
         askForReplace = true;
       };
-      const json handshake() override {
+      json handshake() override {
         symbol = base + quote;
         const json reply1 = Curl::Web::xfer(http + "/pubticker/" + symbol);
         Price tickPrice = 0,
@@ -679,7 +679,7 @@ namespace ₿ {
         };
       };
     protected:
-      static const json xfer(const string &url, const string &post, const string &h1, const string &h2) {
+      static json xfer(const string &url, const string &post, const string &h1, const string &h2) {
         return Curl::Web::request(url, [&](CURL *curl) {
           struct curl_slist *h_ = nullptr;
           h_ = curl_slist_append(h_, ("X-BFX-APIKEY: " + h1).data());
@@ -706,7 +706,7 @@ namespace ₿ {
         ws     = "wss://api.fcoin.com/v2/ws";
         randId = Random::char16Id;
       };
-      const json handshake() override {
+      json handshake() override {
         symbol = base + quote;
         const json reply = Curl::Web::xfer(http + "public/symbols");
         Price  tickPrice = 0;
@@ -732,7 +732,7 @@ namespace ₿ {
         };
       };
     protected:
-      static const json xfer(const string &url, const string &h1, const string &h2, const string &h3, const string &post = "") {
+      static json xfer(const string &url, const string &h1, const string &h2, const string &h3, const string &post = "") {
         return Curl::Web::request(url, [&](CURL *curl) {
           struct curl_slist *h_ = nullptr;
           if (!post.empty()) {
@@ -753,7 +753,7 @@ namespace ₿ {
         http   = "https://api.kraken.com";
         randId = Random::int32Id;
       };
-      const json handshake() override {
+      json handshake() override {
         const json reply = Curl::Web::xfer(http + "/0/public/AssetPairs?pair=" + base + quote);
         Price tickPrice = 0,
               minSize   = 0;
@@ -783,7 +783,7 @@ namespace ₿ {
         };
       };
     protected:
-      static const json xfer(const string &url, const string &h1, const string &h2, const string &post) {
+      static json xfer(const string &url, const string &h1, const string &h2, const string &post) {
         return Curl::Web::request(url, [&](CURL *curl) {
           struct curl_slist *h_ = nullptr;
           h_ = curl_slist_append(h_, ("API-Key: " + h1).data());
@@ -800,7 +800,7 @@ namespace ₿ {
         http   = "https://poloniex.com";
         randId = Random::int45Id;
       };
-      const json handshake() override {
+      json handshake() override {
         symbol = quote + "_" + base;
         const json reply = Curl::Web::xfer(http + "/public?command=returnTicker")
                              .value(symbol, json::object());
@@ -820,7 +820,7 @@ namespace ₿ {
         };
       };
     protected:
-      static const json xfer(const string &url, const string &post, const string &h1, const string &h2) {
+      static json xfer(const string &url, const string &post, const string &h1, const string &h2) {
         return Curl::Web::request(url, [&](CURL *curl) {
           struct curl_slist *h_ = nullptr;
           h_ = curl_slist_append(h_, "Content-Type: application/x-www-form-urlencoded");

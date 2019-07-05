@@ -21,13 +21,13 @@ namespace ₿ {
   class Ansi {
     public:
       static int colorful;
-      static const string reset() {
+      static string reset() {
           return paint(0, -1);
       };
-      static const string r(const int &color) {
+      static string r(const int &color) {
           return paint(0, color);
       };
-      static const string b(const int &color) {
+      static string b(const int &color) {
           return paint(1, color);
       };
       static void default_colors() {
@@ -51,7 +51,7 @@ namespace ₿ {
         );
       };
     private:
-      static const string paint(const int &style, const int &color) {
+      static string paint(const int &style, const int &color) {
         return colorful
           ? "\033["
             + to_string(style)
@@ -86,7 +86,7 @@ namespace ₿ {
       static WINDOW *stdlog;
       static Margin margin;
       static void (*display)();
-      static const bool windowed() {
+      static bool windowed() {
         if (!display) return false;
         if (stdlog)
           error("SH", "Unable to print another window");
@@ -107,7 +107,7 @@ namespace ₿ {
           scrollok(stdlog, true);
           idlok(stdlog, true);
         }
-        signal(SIGWINCH, [](const int sig) {
+        signal(SIGWINCH, [](const int) {
           endwin();
           refresh();
           clear();
@@ -124,7 +124,7 @@ namespace ₿ {
           wrefresh(stdlog);
         }
       };
-      static const string stamp() {
+      static string stamp() {
         chrono::system_clock::time_point clock = chrono::system_clock::now();
         chrono::system_clock::duration t = clock.time_since_epoch();
         t -= chrono::duration_cast<chrono::seconds>(t);
@@ -253,7 +253,7 @@ namespace ₿ {
 #endif
             << ".\n" << Ansi::r(COLOR_YELLOW) << mods << Ansi::reset();
       };
-      static const string changelog() {
+      static string changelog() {
         string mods;
         const json diff =
 #ifdef NDEBUG
@@ -282,7 +282,7 @@ namespace ₿ {
       static vector<function<void()>> endingFn;
     public:
       Ending() {
-        signal(SIGINT, [](const int sig) {
+        signal(SIGINT, [](const int) {
           clog << '\n';
           raise(SIGQUIT);
         });
@@ -309,7 +309,7 @@ namespace ₿ {
              << Ansi::reset() << '\n';
         EXIT(code);
       };
-      static void die(const int sig) {
+      static void die(const int) {
         if (epilogue.empty())
           epilogue = "Excellent decision! "
                    + Curl::Web::xfer("https://api.icndb.com/jokes/random?escape=javascript&limitTo=[nerdy]", 4L)
@@ -320,7 +320,7 @@ namespace ₿ {
             : EXIT_FAILURE
         );
       };
-      static void err(const int sig) {
+      static void err(const int) {
         if (epilogue.empty()) epilogue = "Unknown error, no joke.";
         halt(EXIT_FAILURE);
       };
@@ -490,7 +490,7 @@ namespace ₿ {
           switch (k = getopt_long(argc, argv, "hv", (option*)&opt_long[0], &index)) {
             case -1 :
             case  0 : break;
-            case 'h': help(long_options);
+            case 'h': help(long_options); [[fallthrough]];
             case '?':
             case 'v': EXIT(EXIT_SUCCESS);
             default : {
@@ -680,15 +680,15 @@ namespace ₿ {
                                     MarketDataLongTerm   = 'H'
       };
     public:
-      virtual const mMatter about() const = 0;
-      const bool persist() const {
+      virtual mMatter about() const = 0;
+      bool persist() const {
         return about() == mMatter::QuotingParameters;
       };
   };
 
   class Blob: virtual public About {
     public:
-      virtual const json blob() const = 0;
+      virtual json blob() const = 0;
   };
 
   class Sqlite {
@@ -709,12 +709,12 @@ namespace ₿ {
           void backup() const {
             if (push) push();
           };
-          virtual const Report pull(const json &j) = 0;
-          virtual const string increment() const { return "NULL"; };
-          virtual const double limit()     const { return 0; };
-          virtual const Clock  lifetime()  const { return 0; };
+          virtual Report pull(const json &j) = 0;
+          virtual string increment() const { return "NULL"; };
+          virtual double limit()     const { return 0; };
+          virtual Clock  lifetime()  const { return 0; };
         protected:
-          const Report report(const bool &empty) const {
+          Report report(const bool &empty) const {
             string msg = empty
               ? explainKO()
               : explainOK();
@@ -724,19 +724,19 @@ namespace ₿ {
             return {empty, msg};
           };
         private:
-          virtual const string explain()   const = 0;
-          virtual       string explainOK() const = 0;
-          virtual       string explainKO() const { return ""; };
+          virtual string explain()   const = 0;
+          virtual string explainOK() const = 0;
+          virtual string explainKO() const { return ""; };
       };
       template <typename T> class StructBackup: public Backup {
         public:
           StructBackup(const Sqlite &sqlite)
             : Backup(sqlite)
           {};
-          const json blob() const override {
+          json blob() const override {
             return *(T*)this;
           };
-          const Report pull(const json &j) override {
+          Report pull(const json &j) override {
             from_json(j.empty() ? blob() : j.at(0), *(T*)this);
             return report(j.empty());
           };
@@ -782,16 +782,16 @@ namespace ₿ {
             backup();
             erase();
           };
-          const Report pull(const json &j) override {
+          Report pull(const json &j) override {
             for (const json &it : j)
               rows.push_back(it);
             return report(empty());
           };
-          const json blob() const override {
+          json blob() const override {
             return back();
           };
         private:
-          const string explain() const override {
+          string explain() const override {
             return to_string(size());
           };
       };
@@ -832,7 +832,7 @@ namespace ₿ {
           Print::logWar("DB", note.second);
         else Print::log("DB", note.second);
       };
-      const json select(Backup *const data) {
+      json select(Backup *const data) {
         const string table = schema(data);
         json result = json::array();
         exec(
@@ -864,20 +864,20 @@ namespace ₿ {
         );
         exec(sql);
       };
-      const string schema(Backup *const data) const {
+      string schema(Backup *const data) const {
         return (
           data->persist()
             ? disk
             : "main"
         ) + "." + (char)data->about();
       };
-      const string create(const string &table) const {
+      string create(const string &table) const {
         return "CREATE TABLE IF NOT EXISTS " + table + "("
           + "id    INTEGER   PRIMARY KEY AUTOINCREMENT                                           NOT NULL,"
           + "json  BLOB                                                                          NOT NULL,"
           + "time  TIMESTAMP DEFAULT (CAST((julianday('now') - 2440587.5)*86400000 AS INTEGER))  NOT NULL);";
       };
-      const string truncate(const string &table, const Clock &lifetime) const {
+      string truncate(const string &table, const Clock &lifetime) const {
         return lifetime
           ? "DELETE FROM " + table + " WHERE time < " + to_string(Tstamp - lifetime) + ";"
           : "";
@@ -888,7 +888,7 @@ namespace ₿ {
         if (zErrMsg) Print::logWar("DB", "SQLite error: " + (zErrMsg + (" at " + sql)));
         sqlite3_free(zErrMsg);
       };
-      static int write(void *result, int argc, char **argv, char **azColName) {
+      static int write(void *result, int argc, char **argv, char**) {
         for (int i = 0; i < argc; ++i)
           ((json*)result)->push_back(json::parse(argv[i]));
         return 0;
@@ -909,10 +909,10 @@ namespace ₿ {
           {
             client.readable.push_back(this);
           };
-          virtual const json hello() {
+          virtual json hello() {
             return { blob() };
           };
-          virtual const bool realtime() const {
+          virtual bool realtime() const {
             return true;
           };
       };
@@ -921,7 +921,7 @@ namespace ₿ {
           Broadcast(const Client &client)
             : Readable(client)
           {};
-          const bool broadcast() {
+          bool broadcast() {
             if ((read_asap() or read_soon())
               and (read_same_blob() or diff_blob())
             ) {
@@ -930,23 +930,23 @@ namespace ₿ {
             }
             return false;
           };
-          const json blob() const override {
+          json blob() const override {
             return *(T*)this;
           };
         protected:
           Clock last_Tstamp = 0;
           string last_blob;
-          virtual const bool read_same_blob() const {
+          virtual bool read_same_blob() const {
             return true;
           };
-          const bool diff_blob() {
+          bool diff_blob() {
             const string last = last_blob;
             return (last_blob = blob().dump()) != last;
           };
-          virtual const bool read_asap() const {
+          virtual bool read_asap() const {
             return true;
           };
-          const bool read_soon(const int &delay = 0) {
+          bool read_soon(const int &delay = 0) {
             const Clock now = Tstamp;
             if (last_Tstamp + max(369, delay) > now)
               return false;
@@ -975,7 +975,7 @@ namespace ₿ {
                   client.clicked(
                     it.first,
                     holds_alternative<const function<void()>>(it.second)
-                      ? [it](const json &j) { get<const function<void()>>(it.second)(); }
+                      ? [it](const json&) { get<const function<void()>>(it.second)(); }
                       : get<const function<void(const json&)>>(it.second)
                   );
               };
@@ -994,7 +994,7 @@ namespace ₿ {
       mutable vector<Clickable*> clickable;
       mutable unordered_map<const Clickable*, vector<function<void(const json&)>>> clickFn;
       const pair<char, char> portal = {'=', '-'};
-      unordered_map<char, function<const json()>> hello;
+      unordered_map<char, function<json()>> hello;
       unordered_map<char, function<void(const json&)>> kisses;
       unordered_map<char, string> queue;
     public:
@@ -1071,7 +1071,7 @@ namespace ₿ {
           server.broadcast(portal.second, queue);
         queue.clear();
       };
-      const bool alien(const string &addr) {
+      bool alien(const string &addr) {
         if (addr != "unknown"
           and !option->arg<string>("whitelist").empty()
           and option->arg<string>("whitelist").find(addr) == string::npos
@@ -1182,7 +1182,7 @@ namespace ₿ {
     public:
       Gw *gateway = nullptr;
     public:
-      KryptoNinja *const main(int argc, char** argv) {
+      KryptoNinja *main(int argc, char** argv) {
         {
           curl_global_init(CURL_GLOBAL_ALL);
           rollout();
@@ -1262,7 +1262,7 @@ namespace ₿ {
             + ", possible error message: " + reply.dump());
         gateway->report(notes, arg<int>("nocache"));
       };
-      const unsigned int memSize() const {
+      unsigned int memSize() const {
 #ifdef _WIN32
         return 0;
 #else
@@ -1270,7 +1270,7 @@ namespace ₿ {
         return getrusage(RUSAGE_SELF, &ru) ? 0 : ru.ru_maxrss * 1e+3;
 #endif
       };
-      const unsigned int dbSize() const {
+      unsigned int dbSize() const {
         if (!databases or arg<string>("database") == ":memory:") return 0;
         struct stat st;
         return stat(arg<string>("database").data(), &st) ? 0 : st.st_size;

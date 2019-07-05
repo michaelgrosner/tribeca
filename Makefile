@@ -2,7 +2,7 @@ K       ?= K.sh
 MAJOR    = 0
 MINOR    = 5
 PATCH    = 3
-BUILD    = 31
+BUILD    = 32
 SOURCE  := $(notdir $(wildcard src/bin/*))
 CARCH    = x86_64-linux-gnu      \
            arm-linux-gnueabihf   \
@@ -42,7 +42,7 @@ KARGS   := -std=c++17 -O3 -pthread -DK_0_GIT='"$(shell   \
     $(KLOCAL)/lib/K-$(KSRC)-assets.o                     \
     $(KLOCAL)/lib/libuv.dll.a                            \
     $(KLOCAL)/lib/libuv.a                                \
-  ) -Wall
+  ) -Wall -Wextra
 
 all K: $(SOURCE)
 

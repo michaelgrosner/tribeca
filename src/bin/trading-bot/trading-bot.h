@@ -140,7 +140,14 @@ class Engine: public Klass {
         quote.size,
         Tstamp,
         quote.isPong,
-        K.gateway->randId()
+        K.gateway->randId(),
+        "",
+        Status::Waiting,
+        0,
+        OrderType::Limit,
+        TimeInForce::GTC,
+        false,
+        0
       });
       memory.orders_60s++;
     };
