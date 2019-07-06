@@ -859,8 +859,9 @@ namespace ₿ {
                   shutdown();
                 else change(EPOLLIN | EPOLLOUT);
               } else if ((session->auth.empty() or auth == session->auth)
-                and in.find("Upgrade: websocket" "\r\n") != string::npos
-                and in.find("Connection: Upgrade" "\r\n") != string::npos
+                and in.find("\r\n" "Upgrade: websocket" "\r\n") != string::npos
+                and in.find("\r\n" "Connection: ")              != string::npos
+                and in.find(" Upgrade")                         != string::npos
                 and in.find("Sec-WebSocket-Version: 13" "\r\n") != string::npos
                 and (allowed = session->upgrade(allowed, addr))
               ) {
@@ -914,13 +915,13 @@ namespace ₿ {
                 switch (SSL_get_error(ssl, n)) {
                   case SSL_ERROR_WANT_READ:
                   case SSL_ERROR_WANT_WRITE:  break;
-                  case SSL_ERROR_NONE:        out = out.substr(n); [[fallthrough]];
-                  case SSL_ERROR_ZERO_RETURN: if (!time) break;    [[fallthrough]];
+                  case SSL_ERROR_NONE:        out.clear();
+                                              change(EPOLLIN);  [[fallthrough]];
+                  case SSL_ERROR_ZERO_RETURN: if (!time) break; [[fallthrough]];
                   default:                    shutdown();
                                               return;
                 }
                 cork(0);
-                if (out.empty()) change(EPOLLIN);
               }
               do {
                 char data[1024];
@@ -940,14 +941,18 @@ namespace ₿ {
                 cork(1);
                 ssize_t n = ::send(sockfd, out.data(), out.length(), MSG_NOSIGNAL);
                 if (n > 0) out = out.substr(n);
-                if ((!time and n < 0)
-                  or (time and out.empty())
-                ) {
+                else if (n < 0) {
                   shutdown();
                   return;
                 }
                 cork(0);
-                if (out.empty()) change(EPOLLIN);
+                if (out.empty()) {
+                  if (time) {
+                    shutdown();
+                    return;
+                  }
+                  change(EPOLLIN);
+                }
               }
               char data[1024];
               ssize_t n = ::recv(sockfd, data, sizeof(data), 0);
