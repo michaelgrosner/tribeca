@@ -46,7 +46,6 @@
 #define EPOLLOUT UV_WRITABLE
 #include <uv.h>
 #else
-#include <fcntl.h>
 #include <sys/epoll.h>
 #include <sys/timerfd.h>
 #include <sys/eventfd.h>

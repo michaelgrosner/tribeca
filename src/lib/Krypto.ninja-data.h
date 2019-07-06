@@ -278,7 +278,6 @@ namespace ₿ {
           void start(const curl_socket_t &l, const function<void()> &data) override {
             loopfd = l;
             link(data);
-            fcntl(sockfd, F_SETFL, fcntl(sockfd, F_GETFL, 0) | O_NONBLOCK);
             ctl(EPOLLIN, EPOLL_CTL_ADD);
           };
           void stop() override {
@@ -309,7 +308,7 @@ namespace ₿ {
           };
         public:
           Timer(const curl_socket_t &loopfd)
-            : Poll(timerfd_create(CLOCK_MONOTONIC, 0))
+            : Poll(timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK | TFD_CLOEXEC))
           {
             if (timerfd_settime(sockfd, 0, &ts, nullptr) != -1)
               start(loopfd, [&]() {
@@ -324,7 +323,7 @@ namespace ₿ {
           const uint64_t again = 1;
         public:
           Async(const curl_socket_t &loopfd, const function<void()> &data)
-            : Poll(::eventfd(0, EFD_CLOEXEC))
+            : Poll(::eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC))
           {
             start(loopfd, [this, data]() {
               uint64_t again = 0;
@@ -829,7 +828,7 @@ namespace ₿ {
             if (!sockfd or in.empty()) return;
             const string msg = unframe();
             if (msg.empty()) return;
-            string reply = session->message(msg, addr);
+            const string reply = session->message(msg, addr);
             if (reply.empty()) return;
             out += frame(reply, reply.substr(0, 2) == "PK" ? 0x02 : 0x01, false);
             change(EPOLLIN | EPOLLOUT);
@@ -940,7 +939,7 @@ namespace ₿ {
               if (!out.empty()) {
                 cork(1);
                 ssize_t n = ::send(sockfd, out.data(), out.length(), MSG_NOSIGNAL);
-                if (n > 0) out = out.substr(n);
+                if      (n > 0) out = out.substr(n);
                 else if (n < 0) {
                   shutdown();
                   return;
