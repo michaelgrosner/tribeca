@@ -303,7 +303,7 @@ namespace ₿ {
       class Timer: public Poll,
                    public Loop::Timer {
         private:
-          struct itimerspec ts = {
+          itimerspec ts = {
             {1, 0}, {0, 1}
           };
         public:
@@ -493,7 +493,7 @@ namespace ₿ {
             return rc;
           };
           int wait(const bool &io, const int &timeout) const {
-            struct timeval tv = {timeout, 0};
+            timeval tv = {timeout, 0};
             fd_set infd,
                    outfd;
             FD_ZERO(&infd);
@@ -1005,13 +1005,9 @@ namespace ₿ {
           };
           bool listen(const curl_socket_t &loopfd, const string &inet, const int &port, const bool &ipv6, const Session &data) {
             if (sockfd) return false;
-            struct addrinfo  hints,
-                            *result,
-                            *rp;
-            memset(&hints, 0, sizeof(addrinfo));
-            hints.ai_flags    = AI_PASSIVE;
-            hints.ai_family   = AF_UNSPEC;
-            hints.ai_socktype = SOCK_STREAM;
+            addrinfo  hints = {AI_PASSIVE, AF_UNSPEC, SOCK_STREAM, 0, 0, nullptr, nullptr, nullptr},
+                     *result,
+                     *rp;
             if (!getaddrinfo(inet.empty() ? nullptr : inet.data(), to_string(port).data(), &hints, &result)) {
               if (ipv6)
                 for (rp = result; rp and !sockfd; rp = sockfd ? rp : rp->ai_next)
@@ -1168,13 +1164,13 @@ namespace ₿ {
         static mt19937_64 gen(rd());
         return uniform_int_distribution<unsigned long long>()(gen);
       };
-      static RandId int45Id() {
+      static string int45Id() {
         return to_string(int64()).substr(0, 10);
       };
-      static RandId int32Id() {
+      static string int32Id() {
         return to_string(int64()).substr(0,  8);
       };
-      static RandId char16Id() {
+      static string char16Id() {
         string id = string(16, ' ');
         for (auto &it : id) {
          const int offset = int64() % (26 + 26 + 10);
@@ -1184,7 +1180,7 @@ namespace ₿ {
         }
         return id;
       };
-      static RandId uuid36Id() {
+      static string uuid36Id() {
         string uuid = string(36, ' ');
         uuid[8]  =
         uuid[13] =
@@ -1204,8 +1200,8 @@ namespace ₿ {
           }
         return uuid;
       };
-      static RandId uuid32Id() {
-        RandId uuid = uuid36Id();
+      static string uuid32Id() {
+        string uuid = uuid36Id();
         uuid.erase(remove(uuid.begin(), uuid.end(), '-'), uuid.end());
         return uuid;
       }

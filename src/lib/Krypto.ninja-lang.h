@@ -72,10 +72,6 @@ using Price  = double;
 
 using Amount = double;
 
-using RandId = string;
-
-using CoinId = string;
-
 using Clock  = long long int;
 
 //! \def

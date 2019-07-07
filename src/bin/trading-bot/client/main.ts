@@ -578,7 +578,7 @@ class DisplayOrder {
                             </button>
                             <wallet-position [baseCurrency]="baseCurrency" [quoteCurrency]="quoteCurrency" [product]="product" [setPosition]="Position"></wallet-position>
                             <div>
-                              <a [hidden]="!exchange_market" href="{{ exchange_market }}" target="_blank">Market</a>, <a [hidden]="!exchange_orders" href="{{ exchange_orders }}" target="_blank">Orders</a>
+                              <a [hidden]="!exchange_market" href="{{ exchange_market }}" target="_blank">Market</a><span [hidden]="!(exchange_market && exchange_orders)">, </span><a [hidden]="!exchange_orders" href="{{ exchange_orders }}" target="_blank">Orders</a>
                               <br/><br/><div>
                                   <button type="button"
                                           class="btn btn-xs btn-primary navbar-btn"
@@ -980,13 +980,17 @@ class ClientComponent implements OnInit {
   }
 
   public changeTheme = () => {
-    this.user_theme = this.user_theme!==null?(this.user_theme==''?'-dark':''):(this.system_theme==''?'-dark':'');
+    this.user_theme = this.user_theme!==null
+                  ? (this.user_theme  ==''?'-dark':'')
+                  : (this.system_theme==''?'-dark':'');
     this.system_theme = this.user_theme;
     this.setTheme();
   }
 
   private getTheme = (hour: number) => {
-    return this.user_theme!==null?this.user_theme:((hour<9 || hour>=21)?'-dark':'');
+    return this.user_theme!==null
+         ? this.user_theme
+         : ((hour<9 || hour>=21)?'-dark':'');
   }
 
   private buildDialogs = (a : any, b : any) => {
@@ -1064,13 +1068,16 @@ class ClientComponent implements OnInit {
           ? 'https://www.ethfinex.com/trading/'+this.baseCurrency+this.quoteCurrency
           : (this.exchange_name=='HITBTC'
             ? 'https://hitbtc.com/exchange/'+this.baseCurrency+'-to-'+this.quoteCurrency
-            : (this.exchange_name=='KRAKEN'
-              ? 'https://www.kraken.com/charts'
-              : (this.exchange_name=='POLONIEX'
-                ? 'https://poloniex.com/exchange'
-                : (this.exchange_name=='FCOIN'
-                  ? 'https://exchange.fcoin.com/ex/main/'+this.baseCurrency + '-' + this.quoteCurrency
-                  : null
+            : (this.exchange_name=='BEQUANT'
+              ? 'https://bequant.com/exchange/'+this.baseCurrency+'-to-'+this.quoteCurrency
+              : (this.exchange_name=='KRAKEN'
+                ? 'https://www.kraken.com/charts'
+                : (this.exchange_name=='POLONIEX'
+                  ? 'https://poloniex.com/exchange'
+                  : (this.exchange_name=='FCOIN'
+                    ? 'https://exchange.fcoin.com/ex/main/'+this.baseCurrency + '-' + this.quoteCurrency
+                    : null
+                  )
                 )
               )
             )
@@ -1085,13 +1092,16 @@ class ClientComponent implements OnInit {
           ? 'https://www.ethfinex.com/reports/orders'
           : (this.exchange_name=='HITBTC'
             ? 'https://hitbtc.com/reports/orders'
-            : (this.exchange_name=='KRAKEN'
-              ? 'https://www.kraken.com/u/trade'
-              : (this.exchange_name=='POLONIEX'
-                ? 'https://poloniex.com/tradeHistory'
-                : (this.exchange_name=='FCOIN'
+            : (this.exchange_name=='BEQUANT'
+              ? 'https://bequant.com/reports/orders'
+              : (this.exchange_name=='KRAKEN'
+                ? 'https://www.kraken.com/u/trade'
+                : (this.exchange_name=='POLONIEX'
+                  ? 'https://poloniex.com/tradeHistory'
+                  : (this.exchange_name=='FCOIN'
                     ? 'https://exchange.fcoin.com/orders'
                     : null
+                  )
                 )
               )
             )

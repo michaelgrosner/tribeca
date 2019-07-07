@@ -8,7 +8,7 @@ import * as Models from './models';
       Market Width: <span class="{{ marketWidth ? \'text-danger\' : \'text-muted\' }}">{{ marketWidth | number:'1.'+product.fixedPrice+'-'+product.fixedPrice }}</span>,
       Quote Width: <span class="{{ ordersWidth ? \'text-danger\' : \'text-muted\' }}">{{ ordersWidth | number:'1.'+product.fixedPrice+'-'+product.fixedPrice }}</span>, Quotes: <span title="Quotes in memory Waiting status update" class="{{ quotesInMemoryWaiting ? \'text-danger\' : \'text-muted\' }}">{{ quotesInMemoryWaiting }}</span>/<span title="Quotes in memory Working" class="{{ quotesInMemoryWorking ? \'text-danger\' : \'text-muted\' }}">{{ quotesInMemoryWorking }}</span>/<span title="Quotes in memory Zombie" class="{{ quotesInMemoryZombies ? \'text-danger\' : \'text-muted\' }}">{{ quotesInMemoryZombies }}</span>
       <div style="padding-left:0px;">Wallet TBP: <span class="text-danger">{{ targetBasePosition | number:'1.'+product.fixedSize+'-'+product.fixedSize }}</span>, pDiv: <span class="text-danger">{{ positionDivergence | number:'1.'+product.fixedSize+'-'+product.fixedSize }}</span>, APR: <span class="{{ sideAPRSafety!=\'Off\' ? \'text-danger\' : \'text-muted\' }}">{{ sideAPRSafety }}</span></div>
-      </div></div><div style="padding-right:4px;padding-left:4px;padding-top:4px;">
+      </div></div><div style="padding-right:4px;padding-left:4px;padding-top:4px;line-height:1.3;">
       <table class="marketQuoting table table-hover table-responsive text-center">
         <tr class="info">
           <td>bidSize&nbsp;</td>
@@ -27,9 +27,6 @@ import * as Models from './models';
       </table>
     <div *ngIf="levels != null" [ngClass]="(addr?'addr ':'')+'levels'">
       <table class="marketQuoting table table-hover table-responsive text-center" style="width:50%;float:left;">
-        <tr *ngIf="addr" class="skip">
-          <td><div class="text-danger text-center"><br /><br />To <a href="https://github.com/ctubio/Krypto-trading-bot/blob/master/README.md#unlock" target="_blank">unlock</a> all market levels<br />and to collaborate with the development..<br /><br />make an acceptable Pull Request on github,<br/>or send 0.01210000 BTC or more to:<br /><a href="https://live.blockcypher.com/btc/address/{{ addr }}" target="_blank">{{ addr }}</a><br /><br />Wait 0 confirmations and restart this bot.<br /><br /><!-- you can remove this message, but obviously the missing market levels will not be displayed magically. the market levels will be only displayed if the also displayed address is credited with 0.01210000 BTC. Note that if you make a Pull Request i will credit the payment for you easy, just let me know in the description of the PR what is the BTC Address displayed in your bot.--></div></td>
-        </tr>
         <tr [ngClass]="orderPriceBids.indexOf(lvl.price.toFixed(product.fixedPrice))==-1?'active':'success buy'" *ngFor="let lvl of levels.bids; let i = index">
           <td>
             <div style="position:relative;" [ngClass]="'bids'+lvl.cssMod">
@@ -45,7 +42,6 @@ import * as Models from './models';
         </tr>
       </table>
       <table class="marketQuoting table table-hover table-responsive text-center" style="width:50%;">
-        <tr *ngIf="addr" style="height:0px;" class="skip"><td></td></tr>
         <tr [ngClass]="orderPriceAsks.indexOf(lvl.price.toFixed(product.fixedPrice))==-1?'active':'success sell'" *ngFor="let lvl of levels.asks; let i = index">
           <td>
             <div [ngClass]="'asks'+(lvl.cssMod==2?2:0)">
@@ -61,6 +57,7 @@ import * as Models from './models';
         </tr>
       </table>
     </div>
+    <table *ngIf="addr" class="table-responsive text-center" style="width:100%;"><tr><td><div class="text-danger text-center"><br /><br />To <a href="https://github.com/ctubio/Krypto-trading-bot/blob/master/README.md#unlock" target="_blank">unlock</a> realtime market levels,<br />and to collaborate with the development..<br /><br />make an acceptable <code>Pull Request</code> on github,<br/><br/>or send <code>0.01210000 BTC</code> or more to:<br /><a href="https://live.blockcypher.com/btc/address/{{ addr }}" target="_blank">{{ addr }}</a><br /><br />Wait 0 confirmations and restart this bot.</div></td></tr></table>
     </div>`
 })
 export class MarketQuotingComponent {

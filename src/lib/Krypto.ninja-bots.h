@@ -228,16 +228,13 @@ namespace ₿ {
 
   class Rollout {
     public:
-      void rollout(/* KMxTWEpb9ig */) {
-#ifdef NDEBUG
-        version();
-#else
-        static once_flag test_instance;
-        call_once(test_instance, version);
-#endif
+      Rollout(/* KMxTWEpb9ig */) {
+        static once_flag rollout;
+        call_once(rollout, version);
       };
     protected:
       static void version() {
+        curl_global_init(CURL_GLOBAL_ALL);
         clog << Ansi::b(COLOR_GREEN) << K_SOURCE
              << Ansi::r(COLOR_GREEN) << ' ' << K_BUILD << ' ' << K_STAMP << ".\n";
         const string mods = changelog();
@@ -460,7 +457,7 @@ namespace ₿ {
           {"debug",        "1",      nullptr,  "print detailed output about all the (previous) things!"},
           {"colors",       "1",      nullptr,  "print highlighted output"},
           {"title",        "WORD",   K_SOURCE, "set WORD to allow admins to identify different bots"},
-          {"free-version", "1",      nullptr,  "work with all market levels but slowdown 7 seconds"}
+          {"free-version", "1",      nullptr,  "slowdown market levels 7 seconds"}
         }) long_options.push_back(it);
         int index = ANY_NUM;
         vector<option> opt_long = { {nullptr, 0, nullptr, 0} };
@@ -1184,8 +1181,6 @@ namespace ₿ {
     public:
       KryptoNinja *main(int argc, char** argv) {
         {
-          curl_global_init(CURL_GLOBAL_ALL);
-          rollout();
           Option::main(argc, argv, databases, documents.empty());
           setup();
         } {
@@ -1302,7 +1297,6 @@ namespace ₿ {
         gateway->pass      = arg<string>("passphrase");
         gateway->maxLevel  = arg<int>("market-limit");
         gateway->debug     = arg<int>("debug-secret");
-        gateway->version   = arg<int>("free-version");
         gateway->loopfd    = poll();
         gateway->printer   = [&](const string &prefix, const string &reason, const string &highlight) {
           if (reason.find("Error") != string::npos)

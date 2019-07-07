@@ -61,7 +61,6 @@ All currency pairs are supported.
   - [Changelogs](#unreleased-changelog)
 - Humans and Milk Mammals
   - [Unlock](#unlock)
-  - [Trading for Fun](#trading-for-fun)
   - [Donations](#donations)
   - [Very Special Thanks](#very-special-thanks-to)
   - [General Discussion](#general-discussion)
@@ -348,17 +347,11 @@ see the upstream project [michaelgrosner/tribeca](https://github.com/michaelgros
 
 The bot is unlocked for collaborators and contributors (feel free to make acceptable Pull Requests for already opened issues or for anything you consider useful, and let me know the BTC Payment Address for the bot that you wish to unlock in the description of the PR, and I will credit it for you).
 
-While locked, you are limited to using the first 3 market levels; once unlocked the bot reads the full list (up to thousands) of market levels from the exchange.
+While locked, the orderbook will be not in realtime, instead market price levels will be updated only once every 7 seconds.
 
-Anonymous users can also unlock any API Key by paying 0.01210000 BTC to the address displayed in the UI of the bot. Once unlocked you may use different currency pairs or reinstall on a different machine with the same unlocked API Key. However, if you want to use more than one exchange, you will need to pay again to unlock the API Key for each exchange.
+Anonymous users can also unlock any API Key by paying 0.01210000 BTC to the address displayed. Once unlocked you may use different currency pairs or reinstall on a different machine with the same unlocked API Key. However, if you want to use more than one exchange, you will need to pay again to unlock the API Key for each exchange.
 
 Otherwise if you choose to not support further development by ctubio, just keep running some old commit and do not upgrade (any commit prior to v0.3.0 was completely unlocked).
-
-### Trading for Fun
-
-Use `--free-version` argument to anonymously unlock any API Key and avoid the payment.
-
-All market levels will be visible and usable but not in realtime, instead will be slowdown around 7 seconds doing nothing.
 
 Please don't open issues asking how much % less the bot generates with `--free-version`; it is relative to your trading strategy, the market conditions, and the bot's performance.
 

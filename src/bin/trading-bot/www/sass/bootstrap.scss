@@ -113,6 +113,14 @@ code, kbd, pre, samp {
   font-size: 1em;
 }
 
+code {
+  padding: 2px 4px;
+  font-size: 90%;
+  color: #000000;
+  background-color: #cbcbcb;
+  border-radius: 4px;
+}
+
 button, input, optgroup, select, textarea {
   color: inherit;
   font: inherit;
@@ -5725,23 +5733,14 @@ div.levels {
   overflow-y: auto;
   height: 430px;
 }
+
+div.levels.addr {
+  height: 230px;
+}
+
 table.marketQuoting {
   margin-bottom: 0px;
   font-size: 12px;
-  tr.skip {
-    height: 0px;
-    position: relative;
-    td {
-      position: absolute;
-      width: 200%;
-      width: -webkit-fill-available;
-      z-index: 1;
-      background-color: transparent!important;
-      div {
-        height:180px;
-      }
-    }
-  }
   tr.active {
     td {
       width: 50%;
@@ -5812,27 +5811,6 @@ table.marketQuoting {
   }
 }
 
-div.levels.addr {
-  table {
-    tr.active:nth-child(2) {
-      height: 200px;
-    }
-  }
-}
-
-tr.chatbro_message td:nth-child(2), .chatbro_message_user_type {
-  display: none !important;
-}
-
-tr.chatbro_message {
-  td:nth-child(3) {
-    padding-top: 0px !important;
-    padding-bottom: 0px !important;
-  }
-  &:last-child td:nth-child(3) {
-    padding-bottom: 7px !important;
-  }
-}
 span.truncated {
     opacity: 0.25;
 }

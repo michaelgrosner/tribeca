@@ -32,7 +32,7 @@ namespace ₿ {
   };
 
   struct mWallet {
-    CoinId currency;
+    string currency;
     Amount amount,
            held,
            total,
@@ -79,7 +79,7 @@ namespace ₿ {
 
   struct mOrder: public mTrade {
            bool isPong;
-         RandId orderId,
+         string orderId,
                 exchangeId;
          Status status;
          Amount tradeQuantity;
@@ -188,7 +188,7 @@ namespace ₿ {
       bool askForFees      = false,
            askForReplace   = false,
            askForCancelAll = false;
-      RandId (*randId)() = nullptr;
+      string (*randId)() = nullptr;
       virtual void askForData(const unsigned int &tick) = 0;
       virtual void waitForData(Loop *const loop) = 0;
       void place(const mOrder *const order) {
@@ -216,9 +216,9 @@ namespace ₿ {
       };
 //BO non-free Gw library functions from build-*/local/lib/K-*.a (it just redefines all virtual gateway class members below).
 /**/  virtual bool   ready() = 0;                                            // wait for exchange and register data handlers
-/**/  virtual void replace(RandId, string) {};                               // call         async orders data from exchange
-/**/  virtual void   place(RandId, Side, string, string, OrderType, TimeInForce, bool) = 0; // async orders like above/below
-/**/  virtual void  cancel(RandId, RandId) = 0;                              // call         async orders data from exchange
+/**/  virtual void replace(string, string) {};                               // call         async orders data from exchange
+/**/  virtual void   place(string, Side, string, string, OrderType, TimeInForce, bool) = 0; // async orders like above/below
+/**/  virtual void  cancel(string, string) = 0;                              // call         async orders data from exchange
 /**/protected:
 /**/  virtual             bool async_wallet()    { return false; };          // call         async wallet data from exchange
 /**/  virtual             bool async_cancelAll() { return false; };          // call         async orders data from exchange
@@ -291,20 +291,17 @@ namespace ₿ {
   class GwExchange: public GwExchangeData {
     public:
       using Report = vector<pair<string, string>>;
-      string exchange, apikey,
-             secret,   pass,
-             http,     ws,
-             fix,      unlock,
-             symbol;
-      CoinId base,     quote;
-         int version   = 0,
-             maxLevel  = 0,
-             debug     = 0;
+      string exchange, apikey, secret, pass,
+             base,     quote,  symbol,
+             http,     ws,     fix,
+             unlock;
        Price tickPrice = 0;
       Amount tickSize  = 0,
              minSize   = 0,
              makeFee   = 0,
              takeFee   = 0;
+      size_t maxLevel  = 0;
+         int debug     = 0;
       virtual void disconnect() {};
       virtual bool connected() const { return true; };
       virtual json handshake() = 0;
@@ -354,6 +351,21 @@ namespace ₿ {
         }
         online(Connectivity::Disconnected);
         disconnect();
+        if (!unlock.empty())
+          print("Excuse me! --free-version argument was implicitly set:"
+            "\n" "\n" "Your apikey: " + apikey +
+            "\n" "\n" "To unlock it anonymously and to collaborate with"
+            "\n"      "the development, make an acceptable Pull Request"
+            "\n"      "on github; or send me 0.01210000 BTC or more to:"
+            "\n"      + unlock +
+            "\n" "\n" "and wait 0 confirmations at:"
+            "\n"      "https://live.blockcypher.com/btc/address/" + unlock +
+            "\n" "\n" "DISCLAIMER: This is strict non-violent software:"
+            "\n"      "if you hurt other living creatures, please stop;"
+            "\n"      "oherwise, remove all copies of the software now."
+            "\n" "\n" "Signed-off-by: Carles Tubio <ctubio@users.noreply.github.com>"
+            "\n"      "(more info at https://git.io/fjinE#unlock or just ignore this message)"
+          );
       };
       void report(Report notes, const bool &nocache) {
         decimal.price.stream.precision(abs(log10(tickPrice)));
@@ -402,6 +414,12 @@ namespace ₿ {
           reason,
           highlight
         );
+      };
+      void reduce(mLevels &levels) {
+        if (maxLevel and levels.bids.size() > maxLevel)
+          levels.bids.erase(levels.bids.begin() + maxLevel, levels.bids.end());
+        if (maxLevel and levels.asks.size() > maxLevel)
+          levels.asks.erase(levels.asks.begin() + maxLevel, levels.asks.end());
       };
   };
 

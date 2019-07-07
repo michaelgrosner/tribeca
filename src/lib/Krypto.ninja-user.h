@@ -309,7 +309,7 @@ namespace ₿ {
   struct mOrders: public Client::Broadcast<mOrders> {
     mLastOrder updated;
     private:
-      unordered_map<RandId, mOrder> orders;
+      unordered_map<string, mOrder> orders;
     private_ref:
       const KryptoNinja &K;
     public:
@@ -318,7 +318,7 @@ namespace ₿ {
         , updated()
         , K(bot)
       {};
-      mOrder *find(const RandId &orderId) {
+      mOrder *find(const string &orderId) {
         return (orderId.empty()
           or orders.find(orderId) == orders.end()
         ) ? nullptr
@@ -330,7 +330,7 @@ namespace ₿ {
         if (raw.orderId.empty() and !raw.exchangeId.empty()) {
           auto it = find_if(
             orders.begin(), orders.end(),
-            [&](const pair<RandId, mOrder> &it_) {
+            [&](const pair<string, mOrder> &it_) {
               return raw.exchangeId == it_.second.exchangeId;
             }
           );
@@ -1140,7 +1140,7 @@ namespace ₿ {
       {};
       void click(const json &j) override {
         if ((j.is_object() and !j.value("orderId", "").empty()))
-          K.clicked(this, j.at("orderId").get<RandId>());
+          K.clicked(this, j.at("orderId").get<string>());
       };
       mMatter about() const override {
         return mMatter::CancelOrder;
@@ -1460,8 +1460,8 @@ namespace ₿ {
       ));
     };
     void expire() {
-      if (buys.size()) expire(&buys);
-      if (sells.size()) expire(&sells);
+      if (!buys.empty()) expire(&buys);
+      if (!sells.empty()) expire(&sells);
       skip();
       sumBuys = sum(&buys);
       sumSells = sum(&sells);
@@ -1480,7 +1480,7 @@ namespace ₿ {
           else it = k->erase(it);
       };
       void skip() {
-        while (buys.size() and sells.size()) {
+        while (!(buys.empty() or sells.empty())) {
           mRecentTrade &buy = buys.rbegin()->second;
           mRecentTrade &sell = sells.begin()->second;
           if (sell.price < buy.price) break;

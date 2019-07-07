@@ -174,7 +174,7 @@ namespace ₿ {
           REQUIRE(levels.stats.fairPrice.blob().dump() == "{\"price\":1234.55}");
         });
         REQUIRE_NOTHROW(qp.fvModel = mFairValueModel::BBO);
-        vector<RandId> randIds;
+        vector<string> randIds;
         REQUIRE_NOTHROW(randIds.push_back(Random::uuid36Id()));
         REQUIRE_NOTHROW(orders.upsert({Side::Bid, 1234.52, 0.34567890, Tstamp, false, randIds.back()}));
         REQUIRE_NOTHROW(orders.upsert({(Side)0, 0, 0, Tstamp, false, randIds.back(), "", Status::Working, 0}));
@@ -414,7 +414,7 @@ namespace ₿ {
       WHEN("assigned") {
         for (mOrder *const it : orders.working())
           orders.purge(it);
-        vector<RandId> randIds;
+        vector<string> randIds;
         const Clock time = Tstamp;
         REQUIRE_NOTHROW(randIds.push_back(Random::uuid36Id()));
         REQUIRE_NOTHROW(orders.upsert({Side::Bid, 1234.50, 0.12345678, time-69, false, randIds.back()}));
