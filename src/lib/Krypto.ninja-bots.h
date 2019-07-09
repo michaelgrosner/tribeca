@@ -489,7 +489,7 @@ namespace ₿ {
             case  0 : break;
             case 'h': help(long_options); [[fallthrough]];
             case '?':
-            case 'v': EXIT(EXIT_SUCCESS);
+            case 'v': EXIT(EXIT_SUCCESS);                                       //-V796
             default : {
               const string name(opt_long.at(index).name);
               if      (holds_alternative<int>(args[name]))    args[name] =   stoi(optarg);
@@ -1211,7 +1211,6 @@ namespace ₿ {
           ending([&]() {
             gateway->end(arg<int>("dustybot"));
             end();
-            curl_global_cleanup();
           });
           handshake({
             {"gateway", gateway->http      },
@@ -1240,6 +1239,12 @@ namespace ₿ {
             });
             welcome();
           }
+        } {
+          ending([&]() {
+            curl_global_cleanup();
+            if (!arg<int>("free-version"))
+              gateway->disclaimer();
+          });
         }
         return this;
       };

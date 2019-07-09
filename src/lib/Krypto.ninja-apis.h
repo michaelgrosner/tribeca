@@ -11,8 +11,8 @@ namespace ₿ {
   enum class    OrderType: unsigned int { Limit, Market };
 
   struct mLevel {
-     Price price;
-    Amount size;
+     Price price = 0;
+    Amount size  = 0;
   };
   static void to_json(json &j, const mLevel &k) {
     j = {
@@ -32,12 +32,12 @@ namespace ₿ {
   };
 
   struct mWallet {
-    string currency;
-    Amount amount,
-           held,
-           total,
-           value;
-    double profit;
+    string currency = "";
+    Amount amount   = 0,
+           held     = 0,
+           total    = 0,
+           value    = 0;
+    double profit   = 0;
     static void reset(const Amount &a, const Amount &h, mWallet *const wallet) {
       wallet->total = (wallet->amount = a)
                     + (wallet->held   = h);
@@ -63,10 +63,10 @@ namespace ₿ {
   };
 
   struct mTrade {
-      Side side;
-     Price price;
-    Amount quantity;
-     Clock time;
+      Side side     = (Side)0;
+     Price price    = 0;
+    Amount quantity = 0;
+     Clock time     = 0;
   };
   static void to_json(json &j, const mTrade &k) {
     j = {
@@ -78,15 +78,15 @@ namespace ₿ {
   };
 
   struct mOrder: public mTrade {
-           bool isPong;
-         string orderId,
-                exchangeId;
-         Status status;
-         Amount tradeQuantity;
-      OrderType type;
-    TimeInForce timeInForce;
-           bool disablePostOnly;
-          Clock latency;
+           bool isPong          = false;
+         string orderId         = "",
+                exchangeId      = "";
+         Status status          = (Status)0;
+         Amount tradeQuantity   = 0;
+      OrderType type            = (OrderType)0;
+    TimeInForce timeInForce     = (TimeInForce)0;
+           bool disablePostOnly = false;
+          Clock latency         = 0;
     static void update(const mOrder &raw, mOrder *const order) {
       if (!order) return;
       if (Status::Working == (     order->status     = raw.status
@@ -351,21 +351,6 @@ namespace ₿ {
         }
         online(Connectivity::Disconnected);
         disconnect();
-        if (!unlock.empty())
-          print("Excuse me! --free-version argument was implicitly set:"
-            "\n" "\n" "Your apikey: " + apikey +
-            "\n" "\n" "To unlock it anonymously and to collaborate with"
-            "\n"      "the development, make an acceptable Pull Request"
-            "\n"      "on github; or send me 0.01210000 BTC or more to:"
-            "\n"      + unlock +
-            "\n" "\n" "and wait 0 confirmations at:"
-            "\n"      "https://live.blockcypher.com/btc/address/" + unlock +
-            "\n" "\n" "DISCLAIMER: This is strict non-violent software:"
-            "\n"      "if you hurt other living creatures, please stop;"
-            "\n"      "oherwise, remove all copies of the software now."
-            "\n" "\n" "Signed-off-by: Carles Tubio <ctubio@users.noreply.github.com>"
-            "\n"      "(more info at https://git.io/fjinE#unlock or just ignore this message)"
-          );
       };
       void report(Report notes, const bool &nocache) {
         decimal.price.stream.precision(abs(log10(tickPrice)));
@@ -402,6 +387,24 @@ namespace ₿ {
         else if (Tdiff < 1e+3) result += "bad; consider moving to another server/network";
         else                   result += "very bad; move to another server/network";
         print(result);
+      };
+      void disclaimer() {
+        if (!unlock.empty())
+          print("was slowdown 7 seconds (--free-version argument was implicitly set):"
+            "\n" "\n" "Your apikey: " + apikey +
+            "\n" "\n" "To unlock it anonymously and to collaborate with"
+            "\n"      "the development, make an acceptable Pull Request"
+            "\n"      "on github.. or send 0.01210000 BTC (or more) to:"
+            "\n" "\n" "  " + unlock +
+            "\n" "\n" "Before restart just wait for 0 confirmations at:"
+            "\n"      "https://live.blockcypher.com/btc/address/" + unlock +
+            "\n" "\n" "DISCLAIMER: This is strict non-violent software:"
+            "\n"      "if you hurt other living creatures, please stop;"
+            "\n"      "oherwise, remove all copies of the software now."
+            "\n" "\n" "                     Signed-off-by: Carles Tubio"
+            "\n"      "see: github.com/ctubio/Krypto-trading-bot#unlock"
+            "\n"      "or just use --free-version to hide this message"
+          );
       };
       function<void(const string&, const string&, const string&)> printer;
     protected:
