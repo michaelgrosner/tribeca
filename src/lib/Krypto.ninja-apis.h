@@ -388,7 +388,7 @@ namespace ₿ {
         else                   result += "very bad; move to another server/network";
         print(result);
       };
-      void disclaimer() {
+      void disclaimer() const {
         if (!unlock.empty())
           print("was slowdown 7 seconds (--free-version argument was implicitly set):"
             "\n" "\n" "Your apikey: " + apikey +
@@ -400,7 +400,7 @@ namespace ₿ {
             "\n"      "https://live.blockcypher.com/btc/address/" + unlock +
             "\n" "\n" "DISCLAIMER: This is strict non-violent software:"
             "\n"      "if you hurt other living creatures, please stop;"
-            "\n"      "oherwise, remove all copies of the software now."
+            "\n"      "otherwise remove all copies of the software now."
             "\n" "\n" "                     Signed-off-by: Carles Tubio"
             "\n"      "see: github.com/ctubio/Krypto-trading-bot#unlock"
             "\n"      "or just use --free-version to hide this message"
@@ -408,7 +408,7 @@ namespace ₿ {
       };
       function<void(const string&, const string&, const string&)> printer;
     protected:
-      void print(const string &reason, const string &highlight = "") {
+      void print(const string &reason, const string &highlight = "") const {
         if (printer) printer(
           string(reason.find(">>>") != reason.find("<<<")
             ? "DEBUG "

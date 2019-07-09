@@ -446,8 +446,7 @@ namespace ₿ {
           {"fix",          "URL",    "",       "set URL of alernative FIX api endpoint for trading"},
           {"dustybot",     "1",      nullptr,  "do not automatically cancel all orders on exit"},
           {"market-limit", "NUMBER", "321",    "set NUMBER of maximum price levels for the orderbook,"
-                                               "\n" "default NUMBER is '321' and the minimum is '15'."
-                                               "\n" "locked bots smells like '--market-limit=3' spirit"}
+                                               "\n" "default NUMBER is '321' and the minimum is '15'"}
         }) long_options.push_back(it);
         for (const Argument &it : arguments.first)
           long_options.push_back(it);
