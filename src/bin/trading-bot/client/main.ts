@@ -103,6 +103,8 @@ class DisplayOrder {
                                         <th title="Multiplicates trades to rise the possible Trades per Minute if sop is in Trades or tradesSize state." *ngIf="[1,3].indexOf(pair.quotingParameters.display.superTrades)>-1">sopTrades</th>
                                         <th title="Multiplicates width if sop is in Size or tradesSize state." *ngIf="[2,3].indexOf(pair.quotingParameters.display.superTrades)>-1">sopSize</th>
                                         </ng-container>
+                                        <th title="Total funds to take percentage of when calculating order size." *ngIf="pair.quotingParameters.display.percentageValues">ordPctTot</th>
+                                        <th title="Exponent for TBP size dropoff, higher=faster." *ngIf="pair.quotingParameters.display.orderPctTotal == 3">exp</th>
                                         <th title="Maximum bid size of our quote in BTC (ex. a value of 1.5 is 1.5 bitcoins). With the exception for when apr is checked and the system is aggressively rebalancing positions after they get out of whack." [attr.colspan]="pair.quotingParameters.display.aggressivePositionRebalancing ? '2' : '1'"><span *ngIf="pair.quotingParameters.display.aggressivePositionRebalancing && pair.quotingParameters.display.buySizeMax">minB</span><span *ngIf="!pair.quotingParameters.display.aggressivePositionRebalancing || !pair.quotingParameters.display.buySizeMax">b</span>idSize<span *ngIf="pair.quotingParameters.display.percentageValues">%</span><span *ngIf="pair.quotingParameters.display.aggressivePositionRebalancing" style="float:right;">maxBidSize?</span></th>
                                         <th title="Maximum ask size of our quote in BTC (ex. a value of 1.5 is 1.5 bitcoins). With the exception for when apr is checked and the system is aggressively rebalancing positions after they get out of whack." [attr.colspan]="pair.quotingParameters.display.aggressivePositionRebalancing ? '2' : '1'"><span *ngIf="pair.quotingParameters.display.aggressivePositionRebalancing && pair.quotingParameters.display.sellSizeMax">minA</span><span *ngIf="!pair.quotingParameters.display.aggressivePositionRebalancing || !pair.quotingParameters.display.sellSizeMax">a</span>skSize<span *ngIf="pair.quotingParameters.display.percentageValues">%</span><span *ngIf="pair.quotingParameters.display.aggressivePositionRebalancing" style="float:right;">maxAskSize?</span></th>
                                     </tr>
@@ -181,6 +183,18 @@ class DisplayOrder {
                                                [(ngModel)]="pair.quotingParameters.display.sopSizeMultiplier">
                                         </td>
                                         </ng-container>
+                                        <td style="border-bottom: 3px solid #D64A4A" *ngIf="pair.quotingParameters.display.percentageValues">
+                                          <select class="form-control input-sm"
+                                            [(ngModel)]="pair.quotingParameters.display.orderPctTotal">
+                                            <option *ngFor="let option of pair.quotingParameters.availableOrderPctTotals" [ngValue]="option.val">{{option.str}}</option>
+                                          </select>
+                                        </td>
+                                        <td style="border-bottom: 3px solid #D64A4A;" *ngIf="pair.quotingParameters.display.orderPctTotal == 3">
+                                            <input class="form-control input-sm" title="{{ baseCurrency }}"
+                                               type="number" step="0.001" min="1" max="16"
+                                               onClick="this.select()"
+                                               [(ngModel)]="pair.quotingParameters.display.tradeSizeTBPExp">
+                                        </td>
                                         <td style="width:169px;border-bottom: 3px solid #D64A4A;" *ngIf="!pair.quotingParameters.display.percentageValues">
                                             <input class="form-control input-sm" title="{{ baseCurrency }}"
                                                type="number" step="{{ product.advert.tickSize}}" min="{{ product.advert.minSize}}"

@@ -7,6 +7,9 @@ namespace ₿ {
   enum class mQuotingMode: unsigned int {
     Top, Mid, Join, InverseJoin, InverseTop, HamelinRat, Depth
   };
+  enum class mOrderPctTotal: unsigned int {
+    Value, Side, TBPValue, TBPSide
+  };
   enum class mQuotingSafety: unsigned int {
     Off, PingPong, PingPoing, Boomerang, AK47
   };
@@ -58,6 +61,8 @@ namespace ₿ {
     bool              widthPercentage                 = false;
     bool              bestWidth                       = true;
     Amount            bestWidthSize                   = 0;
+    mOrderPctTotal    orderPctTotal                   = mOrderPctTotal::Value;
+    double            tradeSizeTBPExp                 = 2.0;
     Amount            buySize                         = 0.02;
     double            buySizePercentage               = 7.0;
     bool              buySizeMax                      = false;
@@ -140,6 +145,8 @@ namespace ₿ {
         widthPercentage                 =                            j.value("widthPercentage", widthPercentage);
         bestWidth                       =                            j.value("bestWidth", bestWidth);
         bestWidthSize                   = fmax(0,                    j.value("bestWidthSize", bestWidthSize));
+        orderPctTotal                   =                            j.value("orderPctTotal", orderPctTotal);
+        tradeSizeTBPExp                 =                            j.value("tradeSizeTBPExp", tradeSizeTBPExp);
         buySize                         = fmax(K.gateway->minSize,   j.value("buySize", buySize));
         buySizePercentage               = fmin(1e+2, fmax(1e-3,      j.value("buySizePercentage", buySizePercentage)));
         buySizeMax                      =                            j.value("buySizeMax", buySizeMax);
@@ -238,6 +245,8 @@ namespace ₿ {
       {                "widthPercentage", k.widthPercentage                },
       {                      "bestWidth", k.bestWidth                      },
       {                  "bestWidthSize", k.bestWidthSize                  },
+      {                  "orderPctTotal", k.orderPctTotal                  },
+      {                "tradeSizeTBPExp", k.tradeSizeTBPExp                },
       {                        "buySize", k.buySize                        },
       {              "buySizePercentage", k.buySizePercentage              },
       {                     "buySizeMax", k.buySizeMax                     },
@@ -1507,20 +1516,20 @@ namespace ₿ {
        mRecentTrades recentTrades;
     private_ref:
       const mQuotingParams &qp;
+      const mWallets       &wallets;
       const Price          &fairValue;
-      const Amount         &baseValue,
-                           &baseTotal,
-                           &targetBasePosition;
+      const Amount         &targetBasePosition;
+      const Amount         &positionDivergence;
     public:
-      mSafety(const KryptoNinja &bot, const mQuotingParams &q, const mButtons &b, const Price &f, const Amount &v, const Amount &t, const Amount &p)
+      mSafety(const KryptoNinja &bot, const mQuotingParams &q, const mWallets &w, const mButtons &b, const Price &f, const Amount &t, const Amount &p)
         : Broadcast(bot)
         , trades(bot, q, b)
         , recentTrades(q)
         , qp(q)
+        , wallets(w)
         , fairValue(f)
-        , baseValue(v)
-        , baseTotal(t)
-        , targetBasePosition(p)
+        , targetBasePosition(t)
+        , positionDivergence(p)
       {};
       void timer_1s() {
         calc();
@@ -1531,7 +1540,7 @@ namespace ₿ {
         calc();
       };
       void calc() {
-        if (!baseValue or !fairValue) return;
+        if (!wallets.base.value or !fairValue) return;
         calcSizes();
         calcPrices();
         recentTrades.expire();
@@ -1542,7 +1551,7 @@ namespace ₿ {
         broadcast();
       };
       bool empty() const {
-        return !baseValue or !buySize or !sellSize;
+        return !wallets.base.value or !buySize or !sellSize;
       };
       mMatter about() const override {
         return mMatter::TradeSafetyValue;
@@ -1552,17 +1561,54 @@ namespace ₿ {
       };
     private:
       void calcSizes() {
-        sellSize = qp.percentageValues
-            ? qp.sellSizePercentage * baseValue / 1e+2
-            : qp.sellSize;
-        buySize = qp.percentageValues
-          ? qp.buySizePercentage * baseValue / 1e+2
-          : qp.buySize;
+        if (qp.percentageValues) { 
+          sellSize = qp.sellSizePercentage / 1e+2;
+          buySize = qp.buySizePercentage / 1e+2;
+
+          Amount pdivMin = fmax(0, targetBasePosition - positionDivergence);
+          Amount pdivMax = fmin(wallets.base.value, targetBasePosition + positionDivergence);
+          
+          switch (qp.orderPctTotal) {
+          case mOrderPctTotal::Side:
+            sellSize *= wallets.base.total;
+            buySize *= wallets.base.value - wallets.base.total;
+            break;
+          case mOrderPctTotal::TBPSide:
+            sellSize *= pow((wallets.base.total - pdivMin) / (wallets.base.value - pdivMin), qp.tradeSizeTBPExp);
+            buySize *= pow((pdivMax - wallets.base.total) / pdivMax, qp.tradeSizeTBPExp);
+          case mOrderPctTotal::Value: default:
+          case mOrderPctTotal::TBPValue:
+            sellSize *= wallets.base.value;
+            buySize *= wallets.base.value;
+            break;
+          }
+
+          // shrink one side so that sizes are equal at the tbp
+          double expamt = qp.tradeSizeTBPExp;
+          switch (qp.orderPctTotal) {
+            // TBPSide here assumes that when tbp == 50%, pdivMax and pdivMin are equidistant from tbp.
+            //  so, this will need to be adjusted if ever a separate pdivMin and pdivMax are implemented
+          case mOrderPctTotal::TBPValue:
+            expamt = 1;
+          case mOrderPctTotal::TBPSide:
+            if (targetBasePosition * 2 < wallets.base.value) {
+              buySize *= pow((targetBasePosition - pdivMin) * pdivMax / ((wallets.base.value - pdivMin) * (pdivMax - targetBasePosition)), expamt);
+            } else {
+              sellSize *= pow((wallets.base.value - pdivMin) * (pdivMax - targetBasePosition) / ((targetBasePosition - pdivMin) * pdivMax), expamt);
+            }
+            break;
+          }
+          sellSize = fmax(0.0, sellSize);
+          buySize = fmax(0.0, buySize);
+        } else {
+          sellSize = qp.sellSize;
+          buySize = qp.buySize;
+        }
         if (qp.aggressivePositionRebalancing == mAPR::Off) return;
         if (qp.buySizeMax)
-          buySize = fmax(buySize, targetBasePosition - baseTotal);
+          buySize = fmax(buySize, targetBasePosition - wallets.base.total);
         if (qp.sellSizeMax)
-          sellSize = fmax(sellSize, baseTotal - targetBasePosition);
+          sellSize = fmax(sellSize, wallets.base.total - targetBasePosition);
       };
       void calcPrices() {
         if (qp.safety == mQuotingSafety::PingPong) {
@@ -1773,7 +1819,7 @@ namespace ₿ {
       mWalletPosition(const KryptoNinja &bot, const mQuotingParams &q, const mOrders &o, const mButtons &b, const mMarketLevels &l)
         : Broadcast(bot)
         , target(bot, q, l.stats.ewma.targetPositionAutoPercentage, base.value)
-        , safety(bot, q, b, l.fairValue, base.value, base.total, target.targetBasePosition)
+        , safety(bot, q, *this, b, l.fairValue, target.targetBasePosition, target.positionDivergence)
         , profits(bot, q)
         , K(bot)
         , orders(o)

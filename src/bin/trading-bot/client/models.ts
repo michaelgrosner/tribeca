@@ -171,6 +171,7 @@ export class TwoSidedQuoteStatus {
 }
 
 export enum QuotingMode { Top, Mid, Join, InverseJoin, InverseTop, HamelinRat, Depth }
+export enum OrderPctTotal { Value, Side, TBPValue, TBPSide }
 export enum QuotingSafety { Off, PingPong, PingPoing, Boomerang, AK47 }
 export enum FairValueModel { BBO, wBBO, rwBBO }
 export enum AutoPositionMode { Manual, EWMA_LS, EWMA_LMS, EWMA_4 }
@@ -188,6 +189,7 @@ export interface QuotingParameters {
     widthPongPercentage?: number;
     widthPercentage?: boolean;
     bestWidth?: boolean;
+    orderPctTotal?: OrderPctTotal;
     buySize?: any;
     buySizePercentage?: number;
     buySizeMax?: boolean;
