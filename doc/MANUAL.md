@@ -20,7 +20,7 @@ From our fair value, we then need to make a market around that price. Back to ou
 
 When **Krypto-trading-bot** figures out a suitable market, **Krypto-trading-bot** will then send in the buy and sell orders. Hopefully it's able to buy for less then sell for more, and repeat many times per day. Sometimes that's not always the case - sometimes there are genuinely more buyers than sellers for the prices you are setting. Often this comes when the market is moving very fast in one direction. Luckily, **Krypto-trading-bot** will prevent you from selling too fast without finding corresponding buyers and will stop sending orders in the imbalanced side.
 
-## Where does all this happen in the code?
+## Where does all this happen in the code? (DEPRECATED)
 
 The code is organized into 3 layers.
 

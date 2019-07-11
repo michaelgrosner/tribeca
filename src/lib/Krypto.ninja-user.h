@@ -1516,17 +1516,17 @@ namespace ₿ {
        mRecentTrades recentTrades;
     private_ref:
       const mQuotingParams &qp;
-      const mWallets       &wallets;
+      const mWallet        &base;
       const Price          &fairValue;
       const Amount         &targetBasePosition;
       const Amount         &positionDivergence;
     public:
-      mSafety(const KryptoNinja &bot, const mQuotingParams &q, const mWallets &w, const mButtons &b, const Price &f, const Amount &t, const Amount &p)
+      mSafety(const KryptoNinja &bot, const mQuotingParams &q, const mWallet &w, const mButtons &b, const Price &f, const Amount &t, const Amount &p)
         : Broadcast(bot)
         , trades(bot, q, b)
         , recentTrades(q)
         , qp(q)
-        , wallets(w)
+        , base(w)
         , fairValue(f)
         , targetBasePosition(t)
         , positionDivergence(p)
@@ -1540,7 +1540,7 @@ namespace ₿ {
         calc();
       };
       void calc() {
-        if (!wallets.base.value or !fairValue) return;
+        if (!base.value or !fairValue) return;
         calcSizes();
         calcPrices();
         recentTrades.expire();
@@ -1551,7 +1551,7 @@ namespace ₿ {
         broadcast();
       };
       bool empty() const {
-        return !wallets.base.value or !buySize or !sellSize;
+        return !base.value or !buySize or !sellSize;
       };
       mMatter about() const override {
         return mMatter::TradeSafetyValue;
@@ -1561,54 +1561,50 @@ namespace ₿ {
       };
     private:
       void calcSizes() {
-        if (qp.percentageValues) { 
+        if (qp.percentageValues) {
           sellSize = qp.sellSizePercentage / 1e+2;
-          buySize = qp.buySizePercentage / 1e+2;
-
-          Amount pdivMin = fmax(0, targetBasePosition - positionDivergence);
-          Amount pdivMax = fmin(wallets.base.value, targetBasePosition + positionDivergence);
-          
-          switch (qp.orderPctTotal) {
-          case mOrderPctTotal::Side:
-            sellSize *= wallets.base.total;
-            buySize *= wallets.base.value - wallets.base.total;
-            break;
-          case mOrderPctTotal::TBPSide:
-            sellSize *= pow((wallets.base.total - pdivMin) / (wallets.base.value - pdivMin), qp.tradeSizeTBPExp);
-            buySize *= pow((pdivMax - wallets.base.total) / pdivMax, qp.tradeSizeTBPExp);
-          case mOrderPctTotal::Value: default:
-          case mOrderPctTotal::TBPValue:
-            sellSize *= wallets.base.value;
-            buySize *= wallets.base.value;
-            break;
-          }
-
-          // shrink one side so that sizes are equal at the tbp
-          double expamt = qp.tradeSizeTBPExp;
-          switch (qp.orderPctTotal) {
-            // TBPSide here assumes that when tbp == 50%, pdivMax and pdivMin are equidistant from tbp.
-            //  so, this will need to be adjusted if ever a separate pdivMin and pdivMax are implemented
-          case mOrderPctTotal::TBPValue:
-            expamt = 1;
-          case mOrderPctTotal::TBPSide:
-            if (targetBasePosition * 2 < wallets.base.value) {
-              buySize *= pow((targetBasePosition - pdivMin) * pdivMax / ((wallets.base.value - pdivMin) * (pdivMax - targetBasePosition)), expamt);
-            } else {
-              sellSize *= pow((wallets.base.value - pdivMin) * (pdivMax - targetBasePosition) / ((targetBasePosition - pdivMin) * pdivMax), expamt);
+          buySize  = qp.buySizePercentage / 1e+2;
+          const Amount pdivMin = fmax(0, targetBasePosition - positionDivergence),
+                       pdivMax = fmin(base.value, targetBasePosition + positionDivergence);
+          if (qp.orderPctTotal == mOrderPctTotal::Side) {
+            sellSize *= base.total;
+            buySize  *= base.value - base.total;
+          } else {
+            if (qp.orderPctTotal == mOrderPctTotal::TBPSide) {
+              sellSize *= pow((base.total - pdivMin) / (base.value - pdivMin), qp.tradeSizeTBPExp);
+              buySize  *= pow((pdivMax - base.total) / pdivMax, qp.tradeSizeTBPExp);
             }
-            break;
+            sellSize *= base.value;
+            buySize  *= base.value;
+            if (qp.orderPctTotal == mOrderPctTotal::TBPSide
+              or qp.orderPctTotal == mOrderPctTotal::TBPValue
+            ) {
+              const double exp = qp.orderPctTotal == mOrderPctTotal::TBPValue
+                               ? 1.0
+                               : qp.tradeSizeTBPExp;
+              if (targetBasePosition * 2 < base.value)
+                buySize *= pow(
+                  (targetBasePosition - pdivMin) * pdivMax / ((base.value - pdivMin) * (pdivMax - targetBasePosition)),
+                  exp
+                );
+              else
+                sellSize *= pow(
+                  (base.value - pdivMin) * (pdivMax - targetBasePosition) / ((targetBasePosition - pdivMin) * pdivMax),
+                  exp
+                );
+            }
           }
           sellSize = fmax(0.0, sellSize);
-          buySize = fmax(0.0, buySize);
+          buySize  = fmax(0.0, buySize);
         } else {
           sellSize = qp.sellSize;
-          buySize = qp.buySize;
+          buySize  = qp.buySize;
         }
         if (qp.aggressivePositionRebalancing == mAPR::Off) return;
         if (qp.buySizeMax)
-          buySize = fmax(buySize, targetBasePosition - wallets.base.total);
+          buySize = fmax(buySize, targetBasePosition - base.total);
         if (qp.sellSizeMax)
-          sellSize = fmax(sellSize, wallets.base.total - targetBasePosition);
+          sellSize = fmax(sellSize, base.total - targetBasePosition);
       };
       void calcPrices() {
         if (qp.safety == mQuotingSafety::PingPong) {
@@ -1819,7 +1815,7 @@ namespace ₿ {
       mWalletPosition(const KryptoNinja &bot, const mQuotingParams &q, const mOrders &o, const mButtons &b, const mMarketLevels &l)
         : Broadcast(bot)
         , target(bot, q, l.stats.ewma.targetPositionAutoPercentage, base.value)
-        , safety(bot, q, *this, b, l.fairValue, target.targetBasePosition, target.positionDivergence)
+        , safety(bot, q, base, b, l.fairValue, target.targetBasePosition, target.positionDivergence)
         , profits(bot, q)
         , K(bot)
         , orders(o)
