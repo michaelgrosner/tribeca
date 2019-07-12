@@ -595,14 +595,14 @@ class DisplayOrder {
                               <a [hidden]="!exchange_market" href="{{ exchange_market }}" target="_blank">Market</a><span [hidden]="!(exchange_market && exchange_orders)">, </span><a [hidden]="!exchange_orders" href="{{ exchange_orders }}" target="_blank">Orders</a>
                               <br/><br/><div>
                                   <button type="button"
-                                          class="btn btn-xs btn-primary navbar-btn"
+                                          class="btn btn-primary navbar-btn"
                                           id="order_form"
                                           [popover]="myPopover">Submit Order
                                   </button>
                               </div>
                               <div style="padding-top: 2px;padding-bottom: 2px;">
                                   <button type="button"
-                                          class="btn btn-xs btn-danger navbar-btn"
+                                          class="btn btn-danger navbar-btn"
                                           (click)="cancelAllOrders()"
                                           data-placement="bottom">Cancel Orders
                                   </button>
@@ -617,7 +617,7 @@ class DisplayOrder {
                               </div>
                               <div>
                                   <button type="button"
-                                          class="btn btn-xs btn-danger navbar-btn"
+                                          class="btn btn-danger navbar-btn"
                                           (click)="cleanAllOrders()"
                                           data-placement="bottom">{{ pair.quotingParameters.display.safety ? 'Clean Pings' : 'Clean Trades' }}
                                   </button>
