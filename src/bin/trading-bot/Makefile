@@ -47,7 +47,6 @@ export define PACKAGE_JSON
     "@angular/compiler": "^8.1.1",
     "@angular/core": "^8.1.1",
     "@angular/forms": "^8.1.1",
-    "@angular/http": "^7.2.15",
     "@angular/platform-browser": "^8.1.1",
     "@angular/platform-browser-dynamic": "^8.1.1",
     "@angular/router": "^8.1.1",
