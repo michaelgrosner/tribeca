@@ -59,7 +59,6 @@ export define PACKAGE_JSON
     "babelify": "^10.0.0",
     "browserify": "^16.3.0",
     "highcharts": "^7.1.2",
-    "ng4-popover": "^1.0.23",
     "reflect-metadata": "^0.1.13",
     "rxjs": "6.5.2",
     "rxjs-compat": "^6.5.2",

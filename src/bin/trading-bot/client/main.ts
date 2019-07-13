@@ -7,7 +7,6 @@ import {FormsModule} from '@angular/forms';
 import {BrowserModule} from '@angular/platform-browser';
 import {AgGridModule} from 'ag-grid-angular/main';
 import {ChartModule} from 'angular2-highcharts';
-import {PopoverModule} from 'ng4-popover';
 import * as Highcharts from 'highcharts';
 import { HighchartsStatic } from 'angular2-highcharts/dist/HighchartsService';
 declare var require: (filename: string) => any;
@@ -57,10 +56,11 @@ class DisplayOrder {
   constructor(
     fireFactory: FireFactory
   ) {
-    this.availableSides = DisplayOrder.getNames(Models.Side).slice(0,-1);
+    this.availableSides = DisplayOrder.getNames(Models.Side).slice(0, 2);
     this.availableTifs = DisplayOrder.getNames(Models.TimeInForce);
     this.availableOrderTypes = DisplayOrder.getNames(Models.OrderType);
-    this.timeInForce = this.availableTifs[2];
+    this.side = this.availableSides[0];
+    this.timeInForce = this.availableTifs[0];
     this.type = this.availableOrderTypes[0];
     this._fire = fireFactory.getFire(Models.Topics.SubmitNewOrder);
   }
@@ -559,7 +559,7 @@ class DisplayOrder {
                                         </td>
                                         <td style="text-align: center;border-bottom: 3px solid #A0A0A0;">
                                             <input class="btn btn-default btn"
-                                                style="width:61px"
+                                                style="width:61px;margin-right: 6px;"
                                                 type="button"
                                                 (click)="pair.quotingParameters.backup()"
                                                 value="Backup" />
@@ -595,21 +595,22 @@ class DisplayOrder {
                               <a [hidden]="!exchange_market" href="{{ exchange_market }}" target="_blank">Market</a><span [hidden]="!(exchange_market && exchange_orders)">, </span><a [hidden]="!exchange_orders" href="{{ exchange_orders }}" target="_blank">Orders</a>
                               <br/><br/><div>
                                   <button type="button"
-                                          class="btn btn-primary navbar-btn"
+                                          class="btn btn-default"
                                           id="order_form"
-                                          [popover]="myPopover">Submit Order
+                                          (click)="showSubmitOrder = !showSubmitOrder">Submit Order
                                   </button>
                               </div>
                               <div style="padding-top: 2px;padding-bottom: 2px;">
                                   <button type="button"
-                                          class="btn btn-danger navbar-btn"
+                                          class="btn btn-danger"
+                                          style="margin:5px 0px;"
                                           (click)="cancelAllOrders()"
                                           data-placement="bottom">Cancel Orders
                                   </button>
                               </div>
                               <div style="padding-bottom: 2px;">
                                   <button type="button"
-                                          class="btn btn-info navbar-btn"
+                                          class="btn btn-info"
                                           (click)="cleanAllClosedOrders()"
                                           *ngIf="pair.quotingParameters.display.safety"
                                           data-placement="bottom">Clean Pongs
@@ -617,17 +618,53 @@ class DisplayOrder {
                               </div>
                               <div>
                                   <button type="button"
-                                          class="btn btn-danger navbar-btn"
+                                          class="btn btn-danger"
+                                          style="margin-top:5px;"
                                           (click)="cleanAllOrders()"
                                           data-placement="bottom">{{ pair.quotingParameters.display.safety ? 'Clean Pings' : 'Clean Trades' }}
                                   </button>
                               </div>
                               <br [hidden]="exchange_name=='HITBTC'" /><a [hidden]="exchange_name=='HITBTC'" href="#" (click)="toggleWatch(exchange_name.toLowerCase(), (baseCurrency+'-'+quoteCurrency).toLowerCase())">Watch</a><br [hidden]="exchange_name=='HITBTC'" />
                               <br/><a href="#" (click)="toggleTakers()">Takers</a>, <a href="#" (click)="toggleStats()">Stats</a>
-                              <br/><a href="#" (click)="toggleSettings(showSettings = !showSettings)">Settings</a>
+                              <br/><button type="button"
+                                          class="btn btn-default"
+                                          style="margin:5px 0px;"
+                                          id="order_form"
+                                          (click)="toggleSettings(showSettings = !showSettings)">Settings
+                                   </button>
                               <br/><a href="#" (click)="changeTheme()">{{ system_theme ? 'Light' : 'Dark' }}</a>
                             </div>
                         </div>
+                    </div>
+                    <div [hidden]="!showSubmitOrder" class="col-md-5 col-xs-12">
+                      <table class="table table-responsive">
+                          <thead>
+                            <tr>
+                                <th style="width:100px;">Side:</th>
+                                <th style="width:100px;">Price:</th>
+                                <th style="width:100px;">Size:</th>
+                                <th style="width:100px;">TIF:</th>
+                                <th style="width:100px;">Type:</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr>
+                                <td><select id="selectSide" class="form-control input-sm" [(ngModel)]="order.side">
+                                  <option *ngFor="let option of order.availableSides" [ngValue]="option">{{option}}</option>
+                                </select>
+                                </td>
+                                <td><input id="orderPriceInput" class="form-control input-sm" type="number" step="{{ product.advert.tickPrice}}" min="{{ product.advert.tickPrice}}"[(ngModel)]="order.price" /></td>
+                                <td><input id="orderSizeInput" class="form-control input-sm" type="number" step="{{ product.advert.tickSize}}" min="{{ product.advert.minSize}}" [(ngModel)]="order.quantity" /></td>
+                                <td><select class="form-control input-sm" [(ngModel)]="order.timeInForce">
+                                  <option *ngFor="let option of order.availableTifs" [ngValue]="option">{{option}}</option>
+                                </select></td>
+                                <td><select class="form-control input-sm" [(ngModel)]="order.type">
+                                  <option *ngFor="let option of order.availableOrderTypes" [ngValue]="option">{{option}}</option>
+                                </select></td>
+                                <td style="width:70px;" rowspan="2" class="text-center"><button type="button" class="btn btn-default" (click)="order.submit()">Submit</button></td>
+                            </tr>
+                          </tbody>
+                        </table>
                     </div>
 
                     <div [hidden]="!showStats" [ngClass]="showStats == 2 ? 'col-md-11 col-xs-12 absolute-charts' : 'col-md-11 col-xs-12 relative-charts'">
@@ -660,41 +697,6 @@ class DisplayOrder {
                       <market-trades [product]="product"></market-trades>
                     </div>
                 </div>
-                <popover-content #myPopover
-                    placement="right"
-                    [animation]="true"
-                    [closeOnClickOutside]="true">
-                        <table border="0" style="width:139px;z-index:3;">
-                          <tr>
-                              <td><label (click)="rotateSide()" style="text-decoration:underline;cursor:pointer">Side:</label></td>
-                              <td style="padding-bottom:5px;"><select id="selectSide" class="form-control input-sm" [(ngModel)]="order.side">
-                                <option *ngFor="let option of order.availableSides" [ngValue]="option">{{option}}</option>
-                              </select>
-                              </td>
-                          </tr>
-                          <tr>
-                              <td><label (click)="insertBidAskPrice()" style="text-decoration:underline;cursor:pointer;padding-right:5px">Price:</label></td>
-                              <td style="padding-bottom:5px;"><input id="orderPriceInput" class="form-control input-sm" type="number" step="{{ product.advert.tickPrice}}" [(ngModel)]="order.price" /></td>
-                          </tr>
-                          <tr>
-                              <td><label (click)="insertBidAskSize()" style="text-decoration:underline;cursor:pointer">Size:</label></td>
-                              <td style="padding-bottom:5px;"><input id="orderSizeInput" class="form-control input-sm" type="number" step="0.01" [(ngModel)]="order.quantity" /></td>
-                          </tr>
-                          <tr>
-                              <td><label>TIF:</label></td>
-                              <td style="padding-bottom:5px;"><select class="form-control input-sm" [(ngModel)]="order.timeInForce">
-                                <option *ngFor="let option of order.availableTifs" [ngValue]="option">{{option}}</option>
-                              </select></td>
-                          </tr>
-                          <tr>
-                              <td><label>Type:</label></td>
-                              <td style="padding-bottom:5px;"><select class="form-control input-sm" [(ngModel)]="order.type">
-                                <option *ngFor="let option of order.availableOrderTypes" [ngValue]="option">{{option}}</option>
-                              </select></td>
-                          </tr>
-                          <tr><td colspan="2" class="text-center"><button type="button" class="btn btn-success" (click)="myPopover.hide()" (click)="order.submit()">Submit</button></td></tr>
-                        </table>
-                </popover-content>
             </div>
         </div>
     </div>
@@ -720,6 +722,7 @@ class ClientComponent implements OnInit {
   public showSettings: boolean = true;
   public showTakers: boolean = false;
   public showStats: number = 0;
+  public showSubmitOrder: boolean = false;
   public order: DisplayOrder;
   public pair: Pair.DisplayPair;
   public exchange_name: string = "";
@@ -773,41 +776,6 @@ class ClientComponent implements OnInit {
       (<any>window).setDialog('cryptoWatch'+watchExchange+watchPair, 'open', {title: watchExchange.toUpperCase()+' '+watchPair.toUpperCase().replace('-','/'),width: 800,height: 400,content: `<div id="container`+watchExchange+watchPair+`" style="width:100%;height:100%;"></div>`});
       (new (<any>window).cryptowatch.Embed(watchExchange, watchPair.replace('-',''), {timePeriod: '1d',customColorScheme: {bg:"000000",text:"b2b2b2",textStrong:"e5e5e5",textWeak:"7f7f7f",short:"FD4600",shortFill:"FF672C",long:"6290FF",longFill:"002782",cta:"363D52",ctaHighlight:"414A67",alert:"FFD506"}})).mount('#container'+watchExchange+watchPair);
     } else (<any>window).setDialog('cryptoWatch'+watchExchange+watchPair, 'close', {content:''});
-  };
-
-  public rotateSide = () => {
-    var sideOption = (document.getElementById("selectSide")) as HTMLSelectElement;
-    if (sideOption.selectedIndex < sideOption.options.length - 1) sideOption.selectedIndex++; else sideOption.selectedIndex = 0;
-  };
-
-  public insertBidAskPrice = () => {
-    var sideOption = (document.getElementById("selectSide")) as HTMLSelectElement;
-    var sideOptionText = ((sideOption.options[sideOption.selectedIndex]) as HTMLOptionElement).innerText;
-    var orderPriceInput = (document.getElementById('orderPriceInput') as HTMLSelectElement);
-    var price = '0';
-    if (sideOptionText.toLowerCase().indexOf('bid'.toLowerCase()) > -1) {
-      price = (document.getElementsByClassName('bidsz0')[1] as HTMLScriptElement).innerText;
-      console.log( 'bid' );
-    }
-    if (sideOptionText.toLowerCase().indexOf('ask'.toLowerCase()) > -1) {
-      price = (document.getElementsByClassName('asksz0')[0] as HTMLScriptElement).innerText;
-      console.log( 'ask' );
-    }
-    orderPriceInput.value = price.replace(',', '');
-  };
-
-  public insertBidAskSize = () => {
-    var sideOption = (document.getElementById("selectSide") as HTMLSelectElement);
-    var sideOptionText = (sideOption.options[sideOption.selectedIndex] as HTMLOptionElement).innerText;
-    var orderSizeInput = (document.getElementById('orderSizeInput') as HTMLSelectElement);
-    var size = '0';
-    if (sideOptionText.toLowerCase().indexOf('bid'.toLowerCase()) > -1) {
-      size = (document.getElementsByClassName('bidsz0')[0] as HTMLScriptElement).innerText;
-    }
-    if (sideOptionText.toLowerCase().indexOf('ask'.toLowerCase()) > -1) {
-      size = (document.getElementsByClassName('asksz0')[1] as HTMLScriptElement).innerText;
-    }
-    orderSizeInput.value = size.replace(',', '');
   };
 
   public openMatryoshka = () => {
@@ -1135,7 +1103,6 @@ class ClientComponent implements OnInit {
     SharedModule,
     BrowserModule,
     FormsModule,
-    PopoverModule,
     AgGridModule.withComponents([
       BaseCurrencyCellComponent,
       QuoteCurrencyCellComponent

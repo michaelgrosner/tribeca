@@ -43,39 +43,6 @@ h1 small, h2 small, h3 small, h4 small, h5 small, h6 small, .h1 small, .h2 small
   }
 }
 
-.popover {
-  background-color: #303030;
-}
-
-.popover {
-  &.top > .arrow {
-    border-top-color: #666666;
-    bottom: -11px;
-    &:after {
-      border-top-color: #303030;
-    }
-  }
-  &.right > .arrow {
-    border-right-color: #666666;
-    &:after {
-      border-right-color: #303030;
-    }
-  }
-  &.bottom > .arrow {
-    border-bottom-color: #666666;
-    top: -11px;
-    &:after {
-      border-bottom-color: #303030;
-    }
-  }
-  &.left > .arrow {
-    border-left-color: #666666;
-    &:after {
-      border-left-color: #303030;
-    }
-  }
-}
-
 .text-success {
   color: #0d0;
 }
@@ -580,10 +547,6 @@ h1 small, h2 small, h3 small, h4 small, h5 small, h6 small, .h1 small, .h2 small
     background-color: #302e2e;
     color: #ccc;
   }
-}
-
-.navbar-text b {
-  color: yellow;
 }
 
 .fs11px {
