@@ -61,7 +61,6 @@ export define PACKAGE_JSON
     "highcharts": "^7.1.2",
     "reflect-metadata": "^0.1.13",
     "rxjs": "6.5.2",
-    "rxjs-compat": "^6.5.2",
     "sass": "1.21.0",
     "typescript": "^3.5.3",
     "uglify-es": "^3.3.9",
