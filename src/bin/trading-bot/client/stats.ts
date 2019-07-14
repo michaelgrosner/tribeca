@@ -466,9 +466,7 @@ export class StatsComponent implements OnInit {
     }]
   };
 
-  @Input() product: Models.ProductState;
-  @Input() baseCurrency: string;
-  @Input() quoteCurrency: string;
+  @Input() product: Models.ProductAdvertisement;
 
   @Input() set setQuotingParameters(o: Models.QuotingParameters) {
     (<any>Highcharts).quotingParameters = o;
@@ -492,8 +490,8 @@ export class StatsComponent implements OnInit {
   @Input() set setPosition(o: Models.PositionReport) {
     if (o === null) return;
     let time = new Date().getTime();
-    if (!(<any>Highcharts).customBaseCurrency) (<any>Highcharts).customBaseCurrency = this.baseCurrency;
-    if (!(<any>Highcharts).customQuoteCurrency) (<any>Highcharts).customQuoteCurrency = this.quoteCurrency;
+    if (!(<any>Highcharts).customBaseCurrency) (<any>Highcharts).customBaseCurrency = this.product.base;
+    if (!(<any>Highcharts).customQuoteCurrency) (<any>Highcharts).customQuoteCurrency = this.product.quote;
     this.positionData = o;
   }
 
@@ -558,7 +556,7 @@ export class StatsComponent implements OnInit {
   ngOnInit() {
     (<any>Highcharts).customBaseCurrency = '';
     (<any>Highcharts).customQuoteCurrency = '';
-    (<any>Highcharts).customProductFixed = this.product.advert.tickPrice;
+    (<any>Highcharts).customProductFixed = this.product.tickPrice;
     (<any>Highcharts).customSymbols = {'circle': '●','diamond': '♦','square': '■','triangle': '▲','triangle-down': '▼'};
     Highcharts.setOptions({global: {getTimezoneOffset: function () {return new Date().getTimezoneOffset(); }}});
     /*this.forEach(document.getElementsByTagName('chart'), function (el) {

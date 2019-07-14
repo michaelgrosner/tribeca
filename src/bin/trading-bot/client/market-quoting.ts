@@ -5,9 +5,9 @@ import * as Models from './models';
 @Component({
   selector: 'market-quoting',
   template: `<div class="tradeSafety2" style="margin-top:-4px;padding-top:0px;padding-right:0px;"><div style="padding-top:0px;padding-right:0px;">
-      Market Width: <span class="{{ marketWidth ? \'text-danger\' : \'text-muted\' }}">{{ marketWidth.toFixed(product.advert.tickPrice) }}</span>,
-      Quote Width: <span class="{{ ordersWidth ? \'text-danger\' : \'text-muted\' }}">{{ ordersWidth.toFixed(product.advert.tickPrice) }}</span>, Quotes: <span title="Quotes in memory Waiting status update" class="{{ quotesInMemoryWaiting ? \'text-danger\' : \'text-muted\' }}">{{ quotesInMemoryWaiting }}</span>/<span title="Quotes in memory Working" class="{{ quotesInMemoryWorking ? \'text-danger\' : \'text-muted\' }}">{{ quotesInMemoryWorking }}</span>/<span title="Quotes in memory Zombie" class="{{ quotesInMemoryZombies ? \'text-danger\' : \'text-muted\' }}">{{ quotesInMemoryZombies }}</span>
-      <div style="padding-left:0px;">Wallet TBP: <span class="text-danger">{{ targetBasePosition.toFixed(product.advert.tickSize) }}</span>, pDiv: <span class="text-danger">{{ positionDivergence.toFixed(product.advert.tickSize) }}</span>, APR: <span class="{{ sideAPRSafety!=\'Off\' ? \'text-danger\' : \'text-muted\' }}">{{ sideAPRSafety }}</span></div>
+      Market Width: <span class="{{ marketWidth ? \'text-danger\' : \'text-muted\' }}">{{ marketWidth.toFixed(product.tickPrice) }}</span>,
+      Quote Width: <span class="{{ ordersWidth ? \'text-danger\' : \'text-muted\' }}">{{ ordersWidth.toFixed(product.tickPrice) }}</span>, Quotes: <span title="Quotes in memory Waiting status update" class="{{ quotesInMemoryWaiting ? \'text-danger\' : \'text-muted\' }}">{{ quotesInMemoryWaiting }}</span>/<span title="Quotes in memory Working" class="{{ quotesInMemoryWorking ? \'text-danger\' : \'text-muted\' }}">{{ quotesInMemoryWorking }}</span>/<span title="Quotes in memory Zombie" class="{{ quotesInMemoryZombies ? \'text-danger\' : \'text-muted\' }}">{{ quotesInMemoryZombies }}</span>
+      <div style="padding-left:0px;">Wallet TBP: <span class="text-danger">{{ targetBasePosition.toFixed(product.tickSize) }}</span>, pDiv: <span class="text-danger">{{ positionDivergence.toFixed(product.tickSize) }}</span>, APR: <span class="{{ sideAPRSafety!=\'Off\' ? \'text-danger\' : \'text-muted\' }}">{{ sideAPRSafety }}</span></div>
       </div></div><div style="padding-right:4px;padding-left:4px;padding-top:4px;line-height:1.3;">
       <table class="marketQuoting table table-hover table-responsive text-center">
         <tr class="info">
@@ -17,41 +17,41 @@ import * as Models from './models';
           <td>askSize&nbsp;</td>
         </tr>
         <tr class="info">
-          <th *ngIf="bidStatus == 'Live'" class="text-danger">{{ qBidSz.toFixed(product.advert.tickSize) }}<span *ngIf="!qBidSz">&nbsp;</span></th>
-          <th *ngIf="bidStatus == 'Live'" class="text-danger">{{ qBidPx.toFixed(product.advert.tickPrice) }}</th>
+          <th *ngIf="bidStatus == 'Live'" class="text-danger">{{ qBidSz.toFixed(product.tickSize) }}<span *ngIf="!qBidSz">&nbsp;</span></th>
+          <th *ngIf="bidStatus == 'Live'" class="text-danger">{{ qBidPx.toFixed(product.tickPrice) }}</th>
           <th *ngIf="bidStatus != 'Live'" colspan="2" class="text-danger" title="Bids Quote Status">{{ bidStatus }}</th>
-          <th *ngIf="askStatus == 'Live'" class="text-danger">{{ qAskPx.toFixed(product.advert.tickPrice) }}</th>
-          <th *ngIf="askStatus == 'Live'" class="text-danger">{{ qAskSz.toFixed(product.advert.tickSize) }}<span *ngIf="!qAskSz">&nbsp;</span></th>
+          <th *ngIf="askStatus == 'Live'" class="text-danger">{{ qAskPx.toFixed(product.tickPrice) }}</th>
+          <th *ngIf="askStatus == 'Live'" class="text-danger">{{ qAskSz.toFixed(product.tickSize) }}<span *ngIf="!qAskSz">&nbsp;</span></th>
           <th *ngIf="askStatus != 'Live'" colspan="2" class="text-danger" title="Ask Quote Status">{{ askStatus }}</th>
         </tr>
       </table>
     <div *ngIf="levels != null" [ngClass]="(addr?'addr ':'')+'levels'">
       <table class="marketQuoting table table-hover table-responsive text-center" style="width:50%;float:left;">
-        <tr [ngClass]="orderPriceBids.indexOf(lvl.price.toFixed(product.advert.tickPrice))==-1?'active':'success buy'" *ngFor="let lvl of levels.bids; let i = index">
+        <tr [ngClass]="orderPriceBids.indexOf(lvl.price.toFixed(product.tickPrice))==-1?'active':'success buy'" *ngFor="let lvl of levels.bids; let i = index">
           <td>
             <div style="position:relative;" [ngClass]="'bids'+lvl.cssMod">
               <div class="bgSize" [ngStyle]="{'background': getBgSize(lvl, 'bids')}"></div>
-              {{ getSizeLevel(lvl.size.toFixed(product.advert.tickSize), true) }}<span class="truncated">{{ getSizeLevel(lvl.size.toFixed(product.advert.tickSize), false) }}</span>
+              {{ getSizeLevel(lvl.size.toFixed(product.tickSize), true) }}<span class="truncated">{{ getSizeLevel(lvl.size.toFixed(product.tickSize), false) }}</span>
             </div>
           </td>
           <td>
             <div [ngClass]="'bids'+(lvl.cssMod==2?2:0)">
-              {{ lvl.price.toFixed(product.advert.tickPrice) }}
+              {{ lvl.price.toFixed(product.tickPrice) }}
             </div>
           </td>
         </tr>
       </table>
       <table class="marketQuoting table table-hover table-responsive text-center" style="width:50%;">
-        <tr [ngClass]="orderPriceAsks.indexOf(lvl.price.toFixed(product.advert.tickPrice))==-1?'active':'success sell'" *ngFor="let lvl of levels.asks; let i = index">
+        <tr [ngClass]="orderPriceAsks.indexOf(lvl.price.toFixed(product.tickPrice))==-1?'active':'success sell'" *ngFor="let lvl of levels.asks; let i = index">
           <td>
             <div [ngClass]="'asks'+(lvl.cssMod==2?2:0)">
-              {{ lvl.price.toFixed(product.advert.tickPrice) }}
+              {{ lvl.price.toFixed(product.tickPrice) }}
             </div>
           </td>
           <td>
             <div style="position:relative;" [ngClass]="'asks'+lvl.cssMod">
               <div class="bgSize" [ngStyle]="{'background': getBgSize(lvl, 'asks')}"></div>
-              {{ getSizeLevel(lvl.size.toFixed(product.advert.tickSize), true) }}<span class="truncated">{{ getSizeLevel(lvl.size.toFixed(product.advert.tickSize), false) }}</span>
+              {{ getSizeLevel(lvl.size.toFixed(product.tickSize), true) }}<span class="truncated">{{ getSizeLevel(lvl.size.toFixed(product.tickSize), false) }}</span>
             </div>
           </td>
         </tr>
@@ -88,7 +88,7 @@ export class MarketQuotingComponent {
   private positionDivergence: number = 0;
   private sideAPRSafety: string;
 
-  @Input() product: Models.ProductState;
+  @Input() product: Models.ProductAdvertisement;
 
   @Input() addr: string;
 
@@ -279,7 +279,7 @@ export class MarketQuotingComponent {
         price: o.price,
         quantity: o.quantity,
       });
-    this[orderPrice] = this[orderSide].map((a)=>a.price.toFixed(this.product.advert.tickPrice));
+    this[orderPrice] = this[orderSide].map((a)=>a.price.toFixed(this.product.tickPrice));
 
     if (this.orderBids.length) {
       var bid = this.orderBids.reduce((a,b)=>a.price>b.price?a:b);

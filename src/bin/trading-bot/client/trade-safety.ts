@@ -5,9 +5,9 @@ import * as Models from './models';
 @Component({
   selector: 'trade-safety',
   template: `<div div class="tradeSafety img-rounded"><div>
-      Fair Value: <span class="{{ fairValue ? \'text-danger fairvalue\' : \'text-muted\' }}" style="font-size:121%;">{{ fairValue.toFixed(product.advert.tickPrice) }}</span>,
-      BuyPing: <span class="{{ buySizeSafety ? \'text-danger\' : \'text-muted\' }}">{{ buySizeSafety.toFixed(product.advert.tickPrice) }}</span>,
-      SellPing: <span class="{{ sellSizeSafety ? \'text-danger\' : \'text-muted\' }}">{{ sellSizeSafety.toFixed(product.advert.tickPrice) }}</span>,
+      Fair Value: <span class="{{ fairValue ? \'text-danger fairvalue\' : \'text-muted\' }}" style="font-size:121%;">{{ fairValue.toFixed(product.tickPrice) }}</span>,
+      BuyPing: <span class="{{ buySizeSafety ? \'text-danger\' : \'text-muted\' }}">{{ buySizeSafety.toFixed(product.tickPrice) }}</span>,
+      SellPing: <span class="{{ sellSizeSafety ? \'text-danger\' : \'text-muted\' }}">{{ sellSizeSafety.toFixed(product.tickPrice) }}</span>,
       BuyTS: <span class="{{ buySafety ? \'text-danger\' : \'text-muted\' }}">{{ buySafety.toFixed(2) }}</span>,
       SellTS: <span class="{{ sellSafety ? \'text-danger\' : \'text-muted\' }}">{{ sellSafety.toFixed(2) }}</span>,
       TotalTS: <span class="{{ tradeSafetyValue ? \'text-danger\' : \'text-muted\' }}">{{ tradeSafetyValue.toFixed(2) }}</span>,
@@ -26,7 +26,7 @@ export class TradeSafetyComponent {
 
   @Input() tradeFreq: number;
 
-  @Input() product: Models.ProductState;
+  @Input() product: Models.ProductAdvertisement;
 
   @Input() set setFairValue(o: Models.FairValue) {
     if (o === null)

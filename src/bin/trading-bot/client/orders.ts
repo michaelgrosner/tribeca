@@ -15,7 +15,7 @@ export class OrdersComponent implements OnInit {
 
   private fireCxl: Subscribe.IFire<any>;
 
-  @Input() product: Models.ProductState;
+  @Input() product: Models.ProductAdvertisement;
 
   @Input() set agree(agree: boolean) {
     if (agree) return;
@@ -88,7 +88,7 @@ export class OrdersComponent implements OnInit {
   }
 
   private addRowData = (o) => {
-    if (!this.gridOptions.api || this.product.advert.base == null) return;
+    if (!this.gridOptions.api || this.product.base == null) return;
     if (!o || (typeof o.length == 'number' && !o.length)) {
       this.gridOptions.api.setRowData([]);
       return;
@@ -130,9 +130,9 @@ export class OrdersComponent implements OnInit {
         qty: o.quantity,
         pong: o.isPong,
         time: o.time,
-        quoteSymbol: this.product.advert.quote,
-        productFixedPrice: this.product.advert.tickPrice,
-        productFixedSize: this.product.advert.tickSize
+        quoteSymbol: this.product.quote,
+        productFixedPrice: this.product.tickPrice,
+        productFixedSize: this.product.tickSize
       }]});
 
     this.gridOptions.api.sizeColumnsToFit();

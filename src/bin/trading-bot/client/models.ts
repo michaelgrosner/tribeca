@@ -63,10 +63,6 @@ export enum TimeInForce { GTC, IOC, FOK }
 export enum OrderStatus { Waiting, Working, Terminated }
 export enum Liquidity { Make, Take }
 
-export interface ProductState {
-    advert: ProductAdvertisement;
-}
-
 export interface IStdev {
     fv: number;
     fvMean: number;
