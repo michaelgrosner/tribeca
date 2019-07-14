@@ -333,13 +333,13 @@ namespace ₿ {
           reply = json::parse(file);
         } else
           reply = handshake();
-        base = reply.value("base", base);
-        quote = reply.value("quote", quote);
-        symbol = reply.value("symbol", symbol);
+        base      = reply.value("base",      base);
+        quote     = reply.value("quote",     quote);
+        symbol    = reply.value("symbol",    symbol);
         webMarket = reply.value("webMarket", webMarket);
         webOrders = reply.value("webOrders", webOrders);
         tickPrice = reply.value("tickPrice", 0.0);
-        tickSize = reply.value("tickSize", 0.0);
+        tickSize  = reply.value("tickSize",  0.0);
         if (!minSize) minSize = reply.value("minSize", 0.0);
         if (!makeFee) makeFee = reply.value("makeFee", 0.0);
         if (!takeFee) takeFee = reply.value("takeFee", 0.0);

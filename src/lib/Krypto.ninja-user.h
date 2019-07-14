@@ -1837,11 +1837,13 @@ namespace ₿ {
       };
       void calcFundsAfterOrder(const mLastOrder &order, bool *const askForFees) {
         if (!order.price) return;
-        calcHeldAmount(order.side);
-        calcFundsSilently();
+        if (!K.gateway->margin) {
+          calcHeldAmount(order.side);
+          calcFundsSilently();
+        }
         if (order.tradeQuantity) {
           safety.insertTrade(order);
-          *askForFees = true;
+          *askForFees = !K.gateway->margin;
         }
       };
       mMatter about() const override {

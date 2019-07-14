@@ -196,13 +196,13 @@ class DisplayOrder {
                                                [(ngModel)]="pair.quotingParameters.display.tradeSizeTBPExp">
                                         </td>
                                         <td style="width:169px;border-bottom: 3px solid #D64A4A;" *ngIf="!pair.quotingParameters.display.percentageValues">
-                                            <input class="form-control input-sm" title="{{ product.margin ? "Contracts" : product.base }}"
+                                            <input class="form-control input-sm" title="{{ product.margin ? 'Contracts' : product.base }}"
                                                type="number" step="{{ product.stepSize }}" min="{{ product.minSize}}"
                                                onClick="this.select()"
                                                [(ngModel)]="pair.quotingParameters.display.buySize">
                                         </td>
                                         <td style="width:169px;border-bottom: 3px solid #D64A4A;" *ngIf="pair.quotingParameters.display.percentageValues">
-                                            <input class="form-control input-sm" title="{{ product.margin ? "Contracts" : product.base }}"
+                                            <input class="form-control input-sm" title="{{ product.margin ? 'Contracts' : product.base }}"
                                                type="number" step="0.001" min="0.001" max="100"
                                                onClick="this.select()"
                                                [(ngModel)]="pair.quotingParameters.display.buySizePercentage">
@@ -212,13 +212,13 @@ class DisplayOrder {
                                                [(ngModel)]="pair.quotingParameters.display.buySizeMax">
                                         </td>
                                         <td style="width:169px;border-bottom: 3px solid #D64A4A;" *ngIf="!pair.quotingParameters.display.percentageValues">
-                                            <input class="form-control input-sm" title="{{ product.margin ? "Contracts" : product.base }}"
-                                               type="number" step="{{ product.stepSize }}" min="{{ product.minSize}}"
+                                            <input class="form-control input-sm" title="{{ product.margin ? 'Contracts' : product.base }}"
+                                               type="number" step="{{ product.stepSize }}" min="{{ product.minSize }}"
                                                onClick="this.select()"
                                                [(ngModel)]="pair.quotingParameters.display.sellSize">
                                         </td>
                                         <td style="width:169px;border-bottom: 3px solid #D64A4A;" *ngIf="pair.quotingParameters.display.percentageValues">
-                                            <input class="form-control input-sm" title="{{ product.margin ? "Contracts" : product.base }}"
+                                            <input class="form-control input-sm" title="{{ product.margin ? 'Contracts' : product.base }}"
                                                type="number" step="0.001" min="0.001" max="100"
                                                onClick="this.select()"
                                                [(ngModel)]="pair.quotingParameters.display.sellSizePercentage">
