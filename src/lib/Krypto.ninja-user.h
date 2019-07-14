@@ -2276,12 +2276,14 @@ namespace ₿ {
         if (!qp.buySizeMax and !quotes.bid.empty())
           quotes.bid.size = fmin(
             qp.sopSizeMultiplier * quotes.bid.size,
-            (wallet.quote.amount / quotes.bid.price) / 2
+              K.gateway->margin
+                ? (wallet.base.amount * quotes.bid.price) / 2
+                : (wallet.quote.amount / quotes.bid.price) / 2
           );
         if (!qp.sellSizeMax and !quotes.ask.empty())
           quotes.ask.size = fmin(
             qp.sopSizeMultiplier * quotes.ask.size,
-            wallet.base.amount / 2
+            (wallet.base.amount / 2) * (K.gateway->margin ? quotes.ask.price : 1)
           );
       };
       void applyEwmaProtection() {
@@ -2299,7 +2301,7 @@ namespace ₿ {
             if (!qp.buySizeMax)
               quotes.bid.size = fmin(
                 qp.aprMultiplier * quotes.bid.size,
-                wallet.target.targetBasePosition - wallet.base.total
+                (wallet.target.targetBasePosition - wallet.base.total) * (K.gateway->margin ? quotes.bid.price : 1)
               );
           }
         }
@@ -2310,7 +2312,7 @@ namespace ₿ {
             if (!qp.sellSizeMax)
               quotes.ask.size = fmin(
                 qp.aprMultiplier * quotes.ask.size,
-                wallet.base.total - wallet.target.targetBasePosition
+                (wallet.base.total - wallet.target.targetBasePosition) * (K.gateway->margin ? quotes.ask.price : 1)
               );
           }
         }
@@ -2375,7 +2377,7 @@ namespace ₿ {
                 or qp.pongAt == mPongAt::AveragePingAggressive
                 or qp.pongAt == mPongAt::LongPingAggressive
             )
-          ) quotes.ask.price = max(levels.bids.at(0).price + K.gateway->tickPrice, sellPong);
+          ) quotes.ask.price = fmax(levels.bids.at(0).price + K.gateway->tickPrice, sellPong);
           quotes.ask.isPong = quotes.ask.price >= sellPong;
         }
         if (!quotes.bid.empty() and wallet.safety.sellPing) {
@@ -2387,7 +2389,7 @@ namespace ₿ {
                 or qp.pongAt == mPongAt::AveragePingAggressive
                 or qp.pongAt == mPongAt::LongPingAggressive
             )
-          ) quotes.bid.price = min(levels.asks.at(0).price - K.gateway->tickPrice, buyPong);
+          ) quotes.bid.price = fmin(levels.asks.at(0).price - K.gateway->tickPrice, buyPong);
           quotes.bid.isPong = quotes.bid.price <= buyPong;
         }
       };
@@ -2456,7 +2458,9 @@ namespace ₿ {
             fmax(K.gateway->minSize, fmin(
               quotes.bid.size,
               K.gateway->decimal.amount.floor(
-                wallet.quote.total / (quotes.bid.price * (1.0 + K.gateway->makeFee))
+                K.gateway->margin
+                  ? wallet.base.total * quotes.bid.price
+                  : wallet.quote.total / (quotes.bid.price * (1.0 + K.gateway->makeFee))
               )
             ))
           );
@@ -2465,17 +2469,20 @@ namespace ₿ {
             fmax(K.gateway->minSize, fmin(
               quotes.ask.size,
               K.gateway->decimal.amount.floor(
-                wallet.base.total
+                wallet.base.total * (K.gateway->margin ? quotes.ask.price : 1)
               )
             ))
           );
       };
       void applyDepleted() {
         if (!quotes.bid.empty()
-          and wallet.quote.total / quotes.bid.price < K.gateway->minSize * (1.0 + K.gateway->makeFee)
+          and (K.gateway->margin
+            ? wallet.base.total * quotes.bid.price
+            : wallet.quote.total / quotes.bid.price
+          ) < K.gateway->minSize * (1.0 + K.gateway->makeFee)
         ) quotes.bid.clear(mQuoteState::DepletedFunds);
         if (!quotes.ask.empty()
-          and wallet.base.total < K.gateway->minSize * (1.0 + K.gateway->makeFee)
+          and (wallet.base.total * (K.gateway->margin ? quotes.ask.price : 1)) < K.gateway->minSize * (1.0 + K.gateway->makeFee)
         ) quotes.ask.clear(mQuoteState::DepletedFunds);
       };
       void applyWaitingPing() {
@@ -2655,15 +2662,20 @@ namespace ₿ {
       {};
       json to_json() const {
         return {
-          {   "exchange", K.gateway->exchange        },
-          {       "base", K.gateway->base            },
-          {      "quote", K.gateway->quote           },
-          {  "tickPrice", K.gateway->tickPrice       },
-          {   "tickSize", K.gateway->tickSize        },
-          {    "minSize", K.gateway->minSize         },
-          {       "inet", K.arg<string>("interface") },
-          {"environment", K.arg<string>("title")     },
-          { "matryoshka", K.arg<string>("matryoshka")}
+          {   "exchange", K.gateway->exchange                         },
+          {       "base", K.gateway->base                             },
+          {      "quote", K.gateway->quote                            },
+          {     "margin", K.gateway->margin                           },
+          {  "webMarket", K.gateway->webMarket                        },
+          {  "webOrders", K.gateway->webOrders                        },
+          {  "tickPrice", K.gateway->decimal.price.stream.precision() },
+          {   "tickSize", K.gateway->decimal.amount.stream.precision()},
+          {  "stepPrice", K.gateway->decimal.price.step               },
+          {   "stepSize", K.gateway->decimal.amount.step              },
+          {    "minSize", K.gateway->minSize                          },
+          {       "inet", K.arg<string>("interface")                  },
+          {"environment", K.arg<string>("title")                      },
+          { "matryoshka", K.arg<string>("matryoshka")                 }
         };
       };
       mMatter about() const override {

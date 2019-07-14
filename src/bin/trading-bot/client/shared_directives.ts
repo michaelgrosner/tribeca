@@ -46,7 +46,7 @@ class EvalAsyncSubscriber<T> implements Subscribe.ISubscribe<T> {
 
 @Component({
     selector: 'base-currency-cell',
-    template: `{{ params.value | number:'1.'+productFixedSize+'-'+productFixedSize }}`
+    template: `{{ (params.value||0).toFixed(productFixedSize) }}`
 })
 export class BaseCurrencyCellComponent implements AgRendererComponent {
   private params:any;
@@ -65,7 +65,7 @@ export class BaseCurrencyCellComponent implements AgRendererComponent {
 
 @Component({
     selector: 'quote-currency-cell',
-    template: `{{ params.value | currency:quoteSymbol:'symbol':'1.'+productFixedPrice+'-'+productFixedPrice }}`
+    template: `{{ (params.value||0).toFixed(productFixedPrice) }} {{ quoteSymbol }}`
 })
 export class QuoteCurrencyCellComponent implements AgRendererComponent {
   private params:any;

@@ -131,8 +131,8 @@ export class OrdersComponent implements OnInit {
         pong: o.isPong,
         time: o.time,
         quoteSymbol: this.product.advert.quote,
-        productFixedPrice: this.product.fixedPrice,
-        productFixedSize: this.product.fixedSize
+        productFixedPrice: this.product.advert.tickPrice,
+        productFixedSize: this.product.advert.tickSize
       }]});
 
     this.gridOptions.api.sizeColumnsToFit();

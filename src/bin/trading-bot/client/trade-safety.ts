@@ -5,24 +5,24 @@ import * as Models from './models';
 @Component({
   selector: 'trade-safety',
   template: `<div div class="tradeSafety img-rounded"><div>
-      Fair Value: <span class="{{ fairValue ? \'text-danger fairvalue\' : \'text-muted\' }}" style="font-size:121%;">{{ fairValue | number:'1.'+product.fixedPrice+'-'+product.fixedPrice }}</span>,
-      BuyPing: <span class="{{ buySizeSafety ? \'text-danger\' : \'text-muted\' }}">{{ buySizeSafety | number:'1.'+product.fixedPrice+'-'+product.fixedPrice }}</span>,
-      SellPing: <span class="{{ sellSizeSafety ? \'text-danger\' : \'text-muted\' }}">{{ sellSizeSafety | number:'1.'+product.fixedPrice+'-'+product.fixedPrice }}</span>,
-      BuyTS: <span class="{{ buySafety ? \'text-danger\' : \'text-muted\' }}">{{ buySafety | number:'1.2-2' }}</span>,
-      SellTS: <span class="{{ sellSafety ? \'text-danger\' : \'text-muted\' }}">{{ sellSafety | number:'1.2-2' }}</span>,
-      TotalTS: <span class="{{ tradeSafetyValue ? \'text-danger\' : \'text-muted\' }}">{{ tradeSafetyValue | number:'1.2-2' }}</span>,
-      openOrders/60sec: <span class="{{ tradeFreq ? \'text-danger\' : \'text-muted\' }}">{{ tradeFreq | number:'1.0-0' }}</span>
+      Fair Value: <span class="{{ fairValue ? \'text-danger fairvalue\' : \'text-muted\' }}" style="font-size:121%;">{{ fairValue.toFixed(product.advert.tickPrice) }}</span>,
+      BuyPing: <span class="{{ buySizeSafety ? \'text-danger\' : \'text-muted\' }}">{{ buySizeSafety.toFixed(product.advert.tickPrice) }}</span>,
+      SellPing: <span class="{{ sellSizeSafety ? \'text-danger\' : \'text-muted\' }}">{{ sellSizeSafety.toFixed(product.advert.tickPrice) }}</span>,
+      BuyTS: <span class="{{ buySafety ? \'text-danger\' : \'text-muted\' }}">{{ buySafety.toFixed(2) }}</span>,
+      SellTS: <span class="{{ sellSafety ? \'text-danger\' : \'text-muted\' }}">{{ sellSafety.toFixed(2) }}</span>,
+      TotalTS: <span class="{{ tradeSafetyValue ? \'text-danger\' : \'text-muted\' }}">{{ tradeSafetyValue.toFixed(2) }}</span>,
+      openOrders/60sec: <span class="{{ tradeFreq ? \'text-danger\' : \'text-muted\' }}">{{ tradeFreq }}</span>
     </div>
   </div>`
 })
 export class TradeSafetyComponent {
 
-  public fairValue: number;
-  private buySafety: number;
-  private sellSafety: number;
-  private buySizeSafety: number;
-  private sellSizeSafety: number;
-  private tradeSafetyValue: number;
+  public fairValue: number = 0;
+  private buySafety: number = 0;
+  private sellSafety: number = 0;
+  private buySizeSafety: number = 0;
+  private sellSizeSafety: number = 0;
+  private tradeSafetyValue: number = 0;
 
   @Input() tradeFreq: number;
 
@@ -30,18 +30,18 @@ export class TradeSafetyComponent {
 
   @Input() set setFairValue(o: Models.FairValue) {
     if (o === null)
-      this.fairValue = null;
+      this.fairValue = 0;
     else
       this.fairValue = o.price;
   }
 
   @Input() set setTradeSafety(o: Models.TradeSafety) {
     if (o === null) {
-      this.tradeSafetyValue = null;
-      this.buySafety = null;
-      this.sellSafety = null;
-      this.buySizeSafety = null;
-      this.sellSizeSafety = null;
+      this.tradeSafetyValue = 0;
+      this.buySafety = 0;
+      this.sellSafety = 0;
+      this.buySizeSafety = 0;
+      this.sellSizeSafety = 0;
     } else {
       this.tradeSafetyValue = o.combined;
       this.buySafety = o.buy;
