@@ -441,6 +441,8 @@ namespace ₿ {
           {"maker-fee",    "AMOUNT", "0",      "set custom percentage of maker fee, like '0.1'"},
           {"taker-fee",    "AMOUNT", "0",      "set custom percentage of taker fee, like '0.1'"},
           {"min-size",     "AMOUNT", "0",      "set custom minimum order size, like '0.01'"},
+          {"leverage",     "AMOUNT", "1",      "set between '0.01' and '100' to enable isolated margin,"
+                                               "\n" "or use '0' for cross margin; default AMOUNT is '1'"},
           {"http",         "URL",    "",       "set URL of alernative HTTPS api endpoint for trading"},
           {"wss",          "URL",    "",       "set URL of alernative WSS api endpoint for trading"},
           {"fix",          "URL",    "",       "set URL of alernative FIX api endpoint for trading"},
@@ -537,6 +539,7 @@ namespace ₿ {
         args["base"]  = Text::strU(arg<string>("currency").substr(0, arg<string>("currency").find("/")));
         args["quote"] = Text::strU(arg<string>("currency").substr(1+ arg<string>("currency").find("/")));
         args["market-limit"] = max(15, arg<int>("market-limit"));
+        args["leverage"] = fmax(0, fmin(100, arg<double>("leverage")));
         if (arg<int>("debug"))
           args["debug-secret"] = 1;
         if (arg<int>("latency"))
@@ -1296,6 +1299,7 @@ namespace ₿ {
           gateway->makeFee = arg<double>("maker-fee") / 1e+2;
         if (arg<double>("min-size"))
           gateway->minSize = arg<double>("min-size");
+        gateway->leverage  = arg<double>("leverage");
         gateway->apikey    = arg<string>("apikey");
         gateway->secret    = arg<string>("secret");
         gateway->pass      = arg<string>("passphrase");

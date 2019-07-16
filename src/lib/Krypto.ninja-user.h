@@ -410,12 +410,12 @@ namespace ₿ {
       };
       bool replace(const Price &price, const bool &isPong, mOrder *const order) {
         const bool allowed = mOrder::replace(price, isPong, order);
-        if (K.arg<int>("debug-orders")) report(order, "replace");
+        if (allowed and K.arg<int>("debug-orders")) report(order, "replace");
         return allowed;
       };
       bool cancel(mOrder *const order) {
         const bool allowed = mOrder::cancel(order);
-        if (K.arg<int>("debug-orders")) report(order, "cancel ");
+        if (allowed and K.arg<int>("debug-orders")) report(order, "cancel ");
         return allowed;
       };
       void purge(const mOrder *const order) {

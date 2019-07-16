@@ -310,6 +310,7 @@ namespace ₿ {
              makeFee   = 0,
              takeFee   = 0;
       size_t maxLevel  = 0;
+      double leverage  = 1;
         bool margin    = false;
          int debug     = 0;
       virtual void disconnect() {};
@@ -598,6 +599,54 @@ namespace ₿ {
         };
       };
   };
+  class GwBitmex: public GwApiWs {
+    public:
+      GwBitmex()
+      {
+        http   = "https://www.bitmex.com/api/v1";
+        ws     = "wss://www.bitmex.com/realtime";
+        randId = Random::uuid36Id;
+        askForReplace = true;
+        webMarket = "https://www.bitmex.com/app/trade/";
+        webOrders = "https://www.bitmex.com/app/orderHistory";
+        margin = true;
+      };
+      json handshake() override {
+        symbol = base + quote;
+        webMarket += base + quote;
+        json reply = Curl::Web::xfer(http + "/instrument?symbol=" + symbol);
+        if (reply.is_array())
+          for (const json &it : reply) {
+            reply = it;
+            break;
+          }
+        return {
+          {     "base", base                        },
+          {    "quote", quote                       },
+          {   "symbol", symbol                      },
+          {"webMarket", webMarket                   },
+          {"webOrders", webOrders                   },
+          {"tickPrice", reply.value("tickSize", 0.0)},
+          { "tickSize", reply.value("lotSize", 0.0) },
+          {  "minSize", reply.value("lotSize", 0.0) },
+          {  "makeFee", reply.value("makerFee", 0.0)},
+          {  "takeFee", reply.value("takerFee", 0.0)},
+          {    "reply", reply                       }
+        };
+      };
+    protected:
+      static json xfer(const string &url, const string &h1, const string &h2, const string &h3, const string &post, const string &crud) {
+        return Curl::Web::request(url, [&](CURL *curl) {
+          struct curl_slist *h_ = nullptr;
+          h_ = curl_slist_append(h_, ("api-expires: "   + h1).data());
+          h_ = curl_slist_append(h_, ("api-key: "       + h2).data());
+          h_ = curl_slist_append(h_, ("api-signature: " + h3).data());
+          curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
+          curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, crud.data());
+          curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post.data());
+        });
+      };
+  };
   class GwHitBtc: public GwApiWs {
     public:
       GwHitBtc()
@@ -631,54 +680,6 @@ namespace ₿ {
         return Curl::Web::request(url, [&](CURL *curl) {
           curl_easy_setopt(curl, CURLOPT_USERPWD, auth.data());
           curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
-          curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post.data());
-        });
-      };
-  };
-  class GwBitmex: public GwApiWs {
-    public:
-      GwBitmex()
-      {
-        http   = "https://www.bitmex.com/api/v1";
-        ws     = "wss://www.bitmex.com/realtime";
-        randId = Random::uuid36Id;
-        webMarket = "https://www.bitmex.com/app/trade/";
-        webOrders = "https://www.bitmex.com/app/orderHistory";
-        margin = true;
-      };
-      json handshake() override {
-        symbol = base + quote;
-        webMarket += base + quote;
-        json reply = Curl::Web::xfer(http + "/instrument?symbol=" + symbol);
-        if (reply.is_array())
-          for (const json &it : reply) {
-            reply = it;
-            break;
-          }
-        return {
-          {     "base", base                        },
-          {    "quote", quote                       },
-          {   "symbol", symbol                      },
-          {"webMarket", webMarket                   },
-          {"webOrders", webOrders                   },
-          {"tickPrice", reply.value("tickSize", 0.0)},
-          { "tickSize", reply.value("lotSize", 0.0) },
-          {  "minSize", reply.value("lotSize", 0.0) },
-          {  "makeFee", reply.value("makerFee", 0.0)},
-          {  "takeFee", reply.value("takerFee", 0.0)},
-          {    "reply", reply                       }
-        };
-      };
-    protected:
-      static json xfer(const string &url, const string &h1, const string &h2, const string &h3, const string &post, const bool &rm = false) {
-        return Curl::Web::request(url, [&](CURL *curl) {
-          struct curl_slist *h_ = nullptr;
-          h_ = curl_slist_append(h_, "Content-Type: application/x-www-form-urlencoded");
-          h_ = curl_slist_append(h_, ("api-expires: " + h1).data());
-          h_ = curl_slist_append(h_, ("api-key: " + h2).data());
-          h_ = curl_slist_append(h_, ("api-signature: " + h3).data());
-          curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
-          if (rm) curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
           curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post.data());
         });
       };
@@ -726,9 +727,9 @@ namespace ₿ {
       static json xfer(const string &url, const string &h1, const string &h2, const string &h3, const string &h4) {
         return Curl::Web::request(url, [&](CURL *curl) {
           struct curl_slist *h_ = nullptr;
-          h_ = curl_slist_append(h_, ("CB-ACCESS-KEY: " + h1).data());
-          h_ = curl_slist_append(h_, ("CB-ACCESS-SIGN: " + h2).data());
-          h_ = curl_slist_append(h_, ("CB-ACCESS-TIMESTAMP: " + h3).data());
+          h_ = curl_slist_append(h_, ("CB-ACCESS-KEY: "        + h1).data());
+          h_ = curl_slist_append(h_, ("CB-ACCESS-SIGN: "       + h2).data());
+          h_ = curl_slist_append(h_, ("CB-ACCESS-TIMESTAMP: "  + h3).data());
           h_ = curl_slist_append(h_, ("CB-ACCESS-PASSPHRASE: " + h4).data());
           curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
         });
@@ -786,8 +787,8 @@ namespace ₿ {
       static json xfer(const string &url, const string &post, const string &h1, const string &h2) {
         return Curl::Web::request(url, [&](CURL *curl) {
           struct curl_slist *h_ = nullptr;
-          h_ = curl_slist_append(h_, ("X-BFX-APIKEY: " + h1).data());
-          h_ = curl_slist_append(h_, ("X-BFX-PAYLOAD: " + post).data());
+          h_ = curl_slist_append(h_, ("X-BFX-APIKEY: "    + h1).data());
+          h_ = curl_slist_append(h_, ("X-BFX-PAYLOAD: "   + post).data());
           h_ = curl_slist_append(h_, ("X-BFX-SIGNATURE: " + h2).data());
           curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
           curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post.data());
@@ -850,7 +851,7 @@ namespace ₿ {
             curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post.data());
             h_ = curl_slist_append(h_, "Content-Type: application/json;charset=UTF-8");
           }
-          h_ = curl_slist_append(h_, ("FC-ACCESS-KEY: " + h1).data());
+          h_ = curl_slist_append(h_, ("FC-ACCESS-KEY: "       + h1).data());
           h_ = curl_slist_append(h_, ("FC-ACCESS-SIGNATURE: " + h2).data());
           h_ = curl_slist_append(h_, ("FC-ACCESS-TIMESTAMP: " + h3).data());
           curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
@@ -901,7 +902,7 @@ namespace ₿ {
       static json xfer(const string &url, const string &h1, const string &h2, const string &post) {
         return Curl::Web::request(url, [&](CURL *curl) {
           struct curl_slist *h_ = nullptr;
-          h_ = curl_slist_append(h_, ("API-Key: " + h1).data());
+          h_ = curl_slist_append(h_, ("API-Key: "  + h1).data());
           h_ = curl_slist_append(h_, ("API-Sign: " + h2).data());
           curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
           curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post.data());
@@ -943,7 +944,7 @@ namespace ₿ {
         return Curl::Web::request(url, [&](CURL *curl) {
           struct curl_slist *h_ = nullptr;
           h_ = curl_slist_append(h_, "Content-Type: application/x-www-form-urlencoded");
-          h_ = curl_slist_append(h_, ("Key: " + h1).data());
+          h_ = curl_slist_append(h_, ("Key: "  + h1).data());
           h_ = curl_slist_append(h_, ("Sign: " + h2).data());
           curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
           curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post.data());
