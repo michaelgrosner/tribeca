@@ -20,23 +20,6 @@ From our fair value, we then need to make a market around that price. Back to ou
 
 When **Krypto-trading-bot** figures out a suitable market, **Krypto-trading-bot** will then send in the buy and sell orders. Hopefully it's able to buy for less then sell for more, and repeat many times per day. Sometimes that's not always the case - sometimes there are genuinely more buyers than sellers for the prices you are setting. Often this comes when the market is moving very fast in one direction. Luckily, **Krypto-trading-bot** will prevent you from selling too fast without finding corresponding buyers and will stop sending orders in the imbalanced side.
 
-## Where does all this happen in the code? (DEPRECATED)
-
-The code is organized into 3 layers.
-
-1) Engine layer - The brains of the application. Portion of the code responsible for synthesizing market data, open order status, position, fees, trades, safety information and converting that into a quote to send to the exchange. This is the portion of the code which calculates a fair value (`FairValueEngine`) and generates quotes (`QuotingEngine`)
-
-2) Adapter layer - The engine layer should have no idea about the individual quirks of the exchanges. The engine layer uses the adapter layer to carry out its bidding. The adapter layer also has no idea that it is being used in a manner to make markets. In theory, the adapter layer code and the gateway layer code could be divorced from the Engine layer and we could build a technical analysis or latency arbitrage bot, instead. The adapter layer also contains all the state reported by the gateways.
-
-3) Gateway layer - Each exchange has their own API for interacting with the exchange. All of that business is hidden behind 4 different interfaces:
-
-  * `IMarketDataGateway`: Handles order book updates and market trade updates.
-  * `IOrderEntryGateway`: Send and cancel orders and handle updates to the orders.
-  * `IPositionGateway`: Pulls in the latest position (how much BTC and USD do I have?) information
-  * `IExchangeDetailsGateway`: Read-only information describing naming and exchange fee structure.
-
-Gateways are ideally stateless (some state may be needed in order to perform exchange-specific functionality) and are mostly translation layers between exchange APIs and the **Krypto-trading-bot** API.
-
 # How do I see what's going on?
 
 Navigate to the Web UI as described in the install process. You should see a screen like:
