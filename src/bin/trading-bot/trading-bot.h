@@ -209,7 +209,7 @@ void TradingBot::terminal() {
   mvwhline(stdscr, 1, 8, ACS_HLINE, 4);
   mvwaddch(stdscr, 1, 12, ACS_RTEE);
   wattron(stdscr, COLOR_PAIR(COLOR_MAGENTA));
-  const string baseValue  = K.gateway->decimal.amount.str(engine.wallet.base.value),
+  const string baseValue  = K.gateway->decimal.funds.str(engine.wallet.base.value),
                quoteValue = K.gateway->decimal.price.str(engine.wallet.quote.value);
   wattron(stdscr, A_BOLD);
   waddstr(stdscr, (" " + baseValue + ' ').data());

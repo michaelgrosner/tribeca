@@ -455,7 +455,7 @@ namespace ₿ {
         Print::log("DEBUG OG", " " + reason + " " + (
           order
             ? order->orderId + "::" + order->exchangeId
-              + " [" + to_string((int)order->status) + "]: "
+              + " [" + to_string((int)order->status) + "/" + (order->side == Side::Bid ? "B" : "S") + "]: "
               + K.gateway->decimal.amount.str(order->quantity) + " " + K.gateway->base + " at price "
               + K.gateway->decimal.price.str(order->price) + " " + K.gateway->quote
             : "not found"
@@ -1712,7 +1712,7 @@ namespace ₿ {
       {};
       void calcTargetBasePos() {
         if (warn_empty()) return;
-        targetBasePosition = K.gateway->decimal.amount.round(
+        targetBasePosition = K.gateway->decimal.funds.round(
           qp.autoPositionMode == mAutoPositionMode::Manual
             ? (qp.percentageValues
               ? qp.targetBasePositionPercentage * baseValue / 1e+2
@@ -1775,13 +1775,13 @@ namespace ₿ {
           else if (mPDivMode::SQRT == qp.positionDivergenceMode)   positionDivergence = pDivMin + (sqrt(divCenter) * (pDiv - pDivMin));
           else if (mPDivMode::Switch == qp.positionDivergenceMode) positionDivergence = divCenter < 1e-1 ? pDivMin : pDiv;
         }
-        positionDivergence = K.gateway->decimal.amount.round(positionDivergence);
+        positionDivergence = K.gateway->decimal.funds.round(positionDivergence);
       };
       void report() const {
         Print::log("PG", "TBP: "
-          + to_string((int)(targetBasePosition / baseValue * 1e+2)) + "% = " + K.gateway->decimal.amount.str(targetBasePosition)
+          + to_string((int)(targetBasePosition / baseValue * 1e+2)) + "% = " + K.gateway->decimal.funds.str(targetBasePosition)
           + " " + K.gateway->base + ", pDiv: "
-          + to_string((int)(positionDivergence / baseValue * 1e+2)) + "% = " + K.gateway->decimal.amount.str(positionDivergence)
+          + to_string((int)(positionDivergence / baseValue * 1e+2)) + "% = " + K.gateway->decimal.funds.str(positionDivergence)
           + " " + K.gateway->base);
       };
       string explain() const override {
@@ -2670,6 +2670,7 @@ namespace ₿ {
           {     "margin", K.gateway->margin                           },
           {  "webMarket", K.gateway->webMarket                        },
           {  "webOrders", K.gateway->webOrders                        },
+          {  "tickFunds", K.gateway->decimal.funds.stream.precision() },
           {  "tickPrice", K.gateway->decimal.price.stream.precision() },
           {   "tickSize", K.gateway->decimal.amount.stream.precision()},
           {  "stepPrice", K.gateway->decimal.price.step               },

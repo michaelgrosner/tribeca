@@ -1285,7 +1285,7 @@ namespace ₿ {
               + arg<string>("exchange") + " argument"
           );
         epitaph = "- exchange: " + (gateway->exchange = arg<string>("exchange")) + '\n'
-                + "- currency: " + (gateway->base     = arg<string>("base"))     + " .. "
+                + "- currency: " + (gateway->base     = arg<string>("base"))     + "/"
                                  + (gateway->quote    = arg<string>("quote"))    + '\n';
         if (!gateway->http.empty() and !arg<string>("http").empty())
           gateway->http    = arg<string>("http");
