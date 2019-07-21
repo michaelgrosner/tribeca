@@ -306,8 +306,7 @@ namespace ₿ {
              http,       ws,        fix,
              webMarket,  webOrders, unlock;
        Price tickPrice = 0;
-      Amount tickFunds = 0,
-             tickSize  = 0,
+      Amount tickSize  = 0,
              minSize   = 0,
              makeFee   = 0,
              takeFee   = 0;
@@ -341,14 +340,13 @@ namespace ₿ {
         symbol    = reply.value("symbol",    symbol);
         webMarket = reply.value("webMarket", webMarket);
         webOrders = reply.value("webOrders", webOrders);
-        tickFunds = reply.value("tickFunds", 0.0);
         tickPrice = reply.value("tickPrice", 0.0);
         tickSize  = reply.value("tickSize",  0.0);
         if (!minSize) minSize = reply.value("minSize", 0.0);
         if (!makeFee) makeFee = reply.value("makeFee", 0.0);
         if (!takeFee) takeFee = reply.value("takeFee", 0.0);
         if (!file.is_open()
-          and tickFunds and tickPrice and tickSize and minSize
+          and tickPrice and tickSize and minSize
           and !base.empty() and !quote.empty()
         ) {
           file.open(cache, fstream::out | fstream::trunc);
@@ -369,13 +367,15 @@ namespace ₿ {
         disconnect();
       };
       void report(Report notes, const bool &nocache) {
-        decimal.funds.precision(tickFunds);
+        decimal.funds.precision(1e-8);
         decimal.price.precision(tickPrice);
         decimal.amount.precision(tickSize);
         decimal.percent.precision(1e-2);
         for (auto it : (Report){
           {"symbols", base + "/" + quote + " ("
-                        + decimal.funds.str(tickFunds) + "/"
+                        + (margin
+                          ? decimal.funds.str(decimal.funds.step)
+                          : decimal.amount.str(tickSize)) + "/"
                         + decimal.price.str(tickPrice) + ")"                              },
           {"minSize", decimal.amount.str(minSize) + " "
                         + (margin ? "Contract" + string(minSize == 1 ? 0 : 1, 's') : base)},
@@ -596,7 +596,6 @@ namespace ₿ {
           {    "quote", quote    },
           {"webMarket", webMarket},
           {"webOrders", webOrders},
-          {"tickFunds", 1e-2     },
           {"tickPrice", 1e-2     },
           { "tickSize", 1e-2     },
           {  "minSize", 1e-2     },
@@ -620,18 +619,21 @@ namespace ₿ {
         symbol = base + quote;
         webMarket += base + quote;
         json reply = Curl::Web::xfer(http + "/instrument?symbol=" + symbol);
-        if (reply.is_array())
-          for (const json &it : reply) {
-            reply = it;
-            break;
-          }
+        if (reply.is_array()) {
+          if (reply.empty())
+            reply = {};
+          else
+            for (const json &it : reply) {
+              reply = it;
+              break;
+            }
+        }
         return {
           {     "base", base                           },
           {    "quote", quote                          },
           {   "symbol", symbol                         },
           {"webMarket", webMarket                      },
           {"webOrders", webOrders                      },
-          {"tickFunds", reply.value("fundingRate", 0.0)},
           {"tickPrice", reply.value("tickSize", 0.0)   },
           { "tickSize", reply.value("lotSize", 0.0)    },
           {  "minSize", reply.value("lotSize", 0.0)    },
@@ -673,7 +675,6 @@ namespace ₿ {
           {   "symbol", symbol                                        },
           {"webMarket", webMarket                                     },
           {"webOrders", webOrders                                     },
-          {"tickFunds", stod(reply.value("quantityIncrement", "0"))   },
           {"tickPrice", stod(reply.value("tickSize", "0"))            },
           { "tickSize", stod(reply.value("quantityIncrement", "0"))   },
           {  "minSize", stod(reply.value("quantityIncrement", "0"))   },
@@ -724,7 +725,6 @@ namespace ₿ {
           {   "symbol", symbol                                   },
           {"webMarket", webMarket                                },
           {"webOrders", webOrders                                },
-          {"tickFunds", stod(reply.value("base_increment", "0")) },
           {"tickPrice", stod(reply.value("quote_increment", "0"))},
           { "tickSize", stod(reply.value("base_increment", "0")) },
           {  "minSize", stod(reply.value("base_min_size", "0"))  },
@@ -783,9 +783,6 @@ namespace ₿ {
           {   "symbol", symbol          },
           {"webMarket", webMarket       },
           {"webOrders", webOrders       },
-          {"tickFunds", tickPrice < 1e-8
-                         ? 1e-10
-                         : 1e-8         },
           {"tickPrice", tickPrice       },
           { "tickSize", tickPrice < 1e-8
                          ? 1e-10
@@ -848,7 +845,6 @@ namespace ₿ {
           {   "symbol", symbol   },
           {"webMarket", webMarket},
           {"webOrders", webOrders},
-          {"tickFunds", tickSize },
           {"tickPrice", tickPrice},
           { "tickSize", tickSize },
           {  "minSize", tickSize },
@@ -902,9 +898,6 @@ namespace ₿ {
           {   "symbol", symbol          },
           {"webMarket", webMarket       },
           {"webOrders", webOrders       },
-          {"tickFunds", tickPrice < 1e-8
-                         ? 1e-10
-                         : 1e-8         },
           {"tickPrice", tickPrice       },
           { "tickSize", tickPrice < 1e-8
                          ? 1e-10
@@ -946,9 +939,6 @@ namespace ₿ {
           {   "symbol", symbol          },
           {"webMarket", webMarket       },
           {"webOrders", webOrders       },
-          {"tickFunds", tickPrice < 1e-8
-                          ? 1e-10
-                          : 1e-8        },
           {"tickPrice", tickPrice       },
           { "tickSize", tickPrice < 1e-8
                           ? 1e-10

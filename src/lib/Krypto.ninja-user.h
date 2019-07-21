@@ -455,7 +455,7 @@ namespace ₿ {
         Print::log("DEBUG OG", " " + reason + " " + (
           order
             ? order->orderId + "::" + order->exchangeId
-              + " [" + to_string((int)order->status) + "/" + (order->side == Side::Bid ? "B" : "S") + "]: "
+              + " [" + to_string((int)order->status) + "]: "
               + K.gateway->decimal.amount.str(order->quantity) + " " + K.gateway->base + " at price "
               + K.gateway->decimal.price.str(order->price) + " " + K.gateway->quote
             : "not found"
@@ -2670,7 +2670,6 @@ namespace ₿ {
           {     "margin", K.gateway->margin                           },
           {  "webMarket", K.gateway->webMarket                        },
           {  "webOrders", K.gateway->webOrders                        },
-          {  "tickFunds", K.gateway->decimal.funds.stream.precision() },
           {  "tickPrice", K.gateway->decimal.price.stream.precision() },
           {   "tickSize", K.gateway->decimal.amount.stream.precision()},
           {  "stepPrice", K.gateway->decimal.price.step               },

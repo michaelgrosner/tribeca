@@ -783,7 +783,7 @@ class ClientComponent implements OnInit {
     window.parent.postMessage('height='+document.getElementsByTagName('body')[0].getBoundingClientRect().height+'px', '*');
   };
   public product: Models.ProductAdvertisement = new Models.ProductAdvertisement(
-    "", "", "", "", false, "", "", "", "", 8, 8, 8, 1e-8, 1e-8, 1e-8
+    "", "", "", "", false, "", "", "", "", 8, 8, 1e-8, 1e-8, 1e-8
   );
 
   private user_theme: string = null;
