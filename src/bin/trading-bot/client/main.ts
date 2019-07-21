@@ -424,8 +424,8 @@ class DisplayOrder {
                                 <thead>
                                     <tr class="active">
                                         <th title="Sets the fair value calculation mode">fv</th>
-                                        <th title="If you successfully complete more orders than trades in /sec seconds, Krypto-trading-bot will stop sending more buy orders until either /sec seconds has passed, or you have sold enough at a higher cost to make all those buy orders profitable." style="text-align:right;">trades</th>
-                                        <th title="If you successfully complete more orders than trades in /sec seconds, Krypto-trading-bot will stop sending more buy orders until either /sec seconds has passed, or you have sold enough at a higher cost to make all those buy orders profitable.">/sec</th>
+                                        <th title="If you successfully complete more orders than trades in /sec seconds, the bot will stop sending more new orders until either /sec seconds has passed, or you have sold enough at a higher cost to make all those buy orders profitable." style="text-align:right;">trades</th>
+                                        <th title="If you successfully complete more orders than trades in /sec seconds, the bot will stop sending more new orders until either /sec seconds has passed, or you have sold enough at a higher cost to make all those buy orders profitable.">/sec</th>
                                         <th title="Use a quote protection of periods smoothed line of the fair value to limit the price while sending new orders.">ewmaPrice?</th>
                                         <th title="Maximum amount of values collected in the sequences used to calculate the ewmaPrice? and ewmaWidth? quote protection." *ngIf="pair.quotingParameters.display.protectionEwmaQuotePrice || pair.quotingParameters.display.protectionEwmaWidthPing">periodsᵉʷᵐᵃ</th>
                                         <th title="Use a quote protection of periods smoothed line of the width (between the top bid and the top ask) to limit the widthPing while sending new orders.">ewmaWidth?</th>
@@ -462,8 +462,7 @@ class DisplayOrder {
                                         </td>
                                         <td style="width:88px;border-bottom: 3px solid #DDE28B;">
                                             <input class="form-control input-sm"
-                                               type="number" step="0.1" min="0"
-                                               style="text-align:right;"
+                                               type="number" step="1" min="0"
                                                onClick="this.select()"
                                                [(ngModel)]="pair.quotingParameters.display.tradesPerMinute">
                                         </td>

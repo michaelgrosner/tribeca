@@ -92,7 +92,7 @@ namespace ₿ {
     mAutoPositionMode autoPositionMode                = mAutoPositionMode::EWMA_LS;
     mAPR              aggressivePositionRebalancing   = mAPR::Off;
     mSOP              superTrades                     = mSOP::Off;
-    double            tradesPerMinute                 = 0.9;
+    unsigned int      tradesPerMinute                 = 1;
     unsigned int      tradeRateSeconds                = 3;
     bool              protectionEwmaWidthPing         = false;
     bool              protectionEwmaQuotePrice        = true;
@@ -176,7 +176,7 @@ namespace ₿ {
         autoPositionMode                =                            j.value("autoPositionMode", autoPositionMode);
         aggressivePositionRebalancing   =                            j.value("aggressivePositionRebalancing", aggressivePositionRebalancing);
         superTrades                     =                            j.value("superTrades", superTrades);
-        tradesPerMinute                 =                            j.value("tradesPerMinute", tradesPerMinute);
+        tradesPerMinute                 = fmax(0,                    j.value("tradesPerMinute", tradesPerMinute));
         tradeRateSeconds                = fmax(0,                    j.value("tradeRateSeconds", tradeRateSeconds));
         protectionEwmaWidthPing         =                            j.value("protectionEwmaWidthPing", protectionEwmaWidthPing);
         protectionEwmaQuotePrice        =                            j.value("protectionEwmaQuotePrice", protectionEwmaQuotePrice);
@@ -1535,7 +1535,8 @@ namespace ₿ {
         calc();
       };
       void insertTrade(const mLastOrder &order) {
-        recentTrades.insert(order);
+        if (!order.isPong)
+          recentTrades.insert(order);
         trades.insert(order);
         calc();
       };
@@ -2437,9 +2438,9 @@ namespace ₿ {
           qp.superTrades == mSOP::Trades or qp.superTrades == mSOP::TradesSize
         )) ? qp.sopWidthMultiplier
            : 1;
-        if (wallet.safety.sell >= qp.tradesPerMinute * factor)
+        if (!quotes.ask.isPong and wallet.safety.sell >= qp.tradesPerMinute * factor)
           quotes.ask.clear(mQuoteState::MaxTradesSeconds);
-        if (wallet.safety.buy >= qp.tradesPerMinute * factor)
+        if (!quotes.bid.isPong and wallet.safety.buy >= qp.tradesPerMinute * factor)
           quotes.bid.clear(mQuoteState::MaxTradesSeconds);
       };
       void applyRoundPrice() {

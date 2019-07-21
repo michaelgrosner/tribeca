@@ -621,7 +621,9 @@ namespace ₿ {
         json reply = Curl::Web::xfer(http + "/instrument?symbol=" + symbol);
         if (reply.is_array()) {
           if (reply.empty())
-            reply = {};
+            reply = {
+              {"error", symbol + " is not a valid symbol"}
+            };
           else
             for (const json &it : reply) {
               reply = it;

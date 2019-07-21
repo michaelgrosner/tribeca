@@ -197,7 +197,7 @@ In the web UI, there are three rows of panels with cryptic looking names and edi
 
 * `sopSize` - Multiplicates `width` if `sop` is in `Size` or `tradesSize` state.
 
-* `trades` - Often, only buying or selling many times in a short timeframe indicates that there is going to be a price swing. `trades` and `/sec` are highly related: If you successfully complete more orders than `trades` in `/sec` seconds, **Krypto-trading-bot** will stop sending more buy orders until either `/sec` seconds has passed, or you have sold enough at a higher cost to make all those buy orders profitable. The number of trades is reported by side in the UI; "BuyTS", "SellTS", and "TotTS". If "BuyTS" goes above `trades`, **Krypto-trading-bot** will stop sending buy orders, and the same for sells. For example, if `trades` is 2 and `/sec` is 1800 (half an hour):
+* `trades` - Often, only buying or selling many times in a short timeframe indicates that there is going to be a price swing. `trades` and `/sec` are used to limitate ping trades: If you successfully complete more orders than `trades` in `/sec` seconds, the bot will stop sending more buy orders until either `/sec` seconds has passed, or you have sold enough at a higher cost to make all those buy orders profitable. The number of trades is reported by side in the UI; "BuyTS", "SellTS", and "TotTS". If "BuyTS" goes above `trades`, the bot will stop sending buy orders, and the same for sells. For example, if `trades` is 2 and `/sec` is 1800 (half an hour):
 
 Time     | Side | Price | Size | BuyTS | SellTS | Notes
 -------- |------|------:|-----:|------:|-------:|------------------------------------------------:
