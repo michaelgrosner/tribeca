@@ -829,10 +829,14 @@ namespace ₿ {
           : bids.empty() or asks.empty();
       };
       void send_patch() {
-        if (ratelimit()) return;
-        diff();
+        const bool full = empty();
+        if (full) unfilter();
+        else {
+          if (ratelimit()) return;
+          diff();
+        }
         if (!empty() and read) read();
-        unfilter();
+        if (!full) unfilter();
       };
       mMatter about() const override {
         return mMatter::MarketData;
