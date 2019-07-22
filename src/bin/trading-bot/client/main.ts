@@ -587,7 +587,7 @@ class DisplayOrder {
                         <div class="row img-rounded exchange">
                             <div *ngIf="pair.connectionMessage">{{ pair.connectionMessage }}</div>
                             <button style="font-size:16px;" class="col-md-12 col-xs-3" [ngClass]="pair.active.getClass()" (click)="pair.active.submit()">
-                                {{ product.exchange.replace('_MARGIN', ' [M]') }}<br/>{{ product.symbol }}
+                                {{ product.exchange.replace('_MARGIN', ' [M]') }}<br/>{{ product.margin ? product.symbol : product.base + '/' + product.quote }}
                             </button>
                             <wallet-position [product]="product" [setPosition]="Position"></wallet-position>
                             <div>
