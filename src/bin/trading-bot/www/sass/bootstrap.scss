@@ -5046,16 +5046,13 @@ table.marketQuoting {
       width: 50%;
     }
   }
-  tr:nth-child(odd)>td {
-    background-color: rgba(195, 195, 195, 0.04);
-  }
   td {
     padding: 0px;
     position: relative;
     div {
       z-index: 1;
       text-align: right;
-      padding-right: 33%;
+      padding-right: 23%;
       font-size: 14px;
     }
     div.bgSize {
