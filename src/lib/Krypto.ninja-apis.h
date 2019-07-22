@@ -618,6 +618,7 @@ namespace ₿ {
       json handshake() override {
         symbol = base + quote;
         webMarket += base + quote;
+        base = "XBT";
         json reply = Curl::Web::xfer(http + "/instrument?symbol=" + symbol);
         if (reply.is_array()) {
           if (reply.empty())

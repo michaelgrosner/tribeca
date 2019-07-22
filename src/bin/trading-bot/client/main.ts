@@ -587,7 +587,7 @@ class DisplayOrder {
                         <div class="row img-rounded exchange">
                             <div *ngIf="pair.connectionMessage">{{ pair.connectionMessage }}</div>
                             <button style="font-size:16px;" class="col-md-12 col-xs-3" [ngClass]="pair.active.getClass()" (click)="pair.active.submit()">
-                                {{ product.exchange.replace('_MARGIN', ' [M]') }}<br/>{{ product.base+'/'+product.quote }}
+                                {{ product.exchange.replace('_MARGIN', ' [M]') }}<br/>{{ product.symbol }}
                             </button>
                             <wallet-position [product]="product" [setPosition]="Position"></wallet-position>
                             <div>
@@ -782,7 +782,7 @@ class ClientComponent implements OnInit {
     window.parent.postMessage('height='+document.getElementsByTagName('body')[0].getBoundingClientRect().height+'px', '*');
   };
   public product: Models.ProductAdvertisement = new Models.ProductAdvertisement(
-    "", "", "", "", false, "", "", "", "", 8, 8, 1e-8, 1e-8, 1e-8
+    "", "", "", "", "", false, "", "", "", "", 8, 8, 1e-8, 1e-8, 1e-8
   );
 
   private user_theme: string = null;

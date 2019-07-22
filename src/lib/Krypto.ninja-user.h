@@ -2672,6 +2672,7 @@ namespace ₿ {
           {   "exchange", K.gateway->exchange                         },
           {       "base", K.gateway->base                             },
           {      "quote", K.gateway->quote                            },
+          {     "symbol", K.gateway->symbol                           },
           {     "margin", K.gateway->margin                           },
           {  "webMarket", K.gateway->webMarket                        },
           {  "webOrders", K.gateway->webOrders                        },
