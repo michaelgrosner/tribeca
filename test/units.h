@@ -168,7 +168,10 @@ namespace ₿ {
         for (mOrder *const it : orders.working())
           orders.purge(it);
         REQUIRE_NOTHROW(levels.diff.read = [&]() {
-          FAIL("diff.broadcast() before diff.hello()");
+          REQUIRE(levels.diff.blob().dump() == "{"
+            "\"asks\":[{\"price\":1234.6,\"size\":1.23456789},{\"price\":1234.69,\"size\":0.11234569}],"
+            "\"bids\":[{\"price\":1234.5,\"size\":0.12345678},{\"price\":1234.55,\"size\":0.01234567}]"
+          "}");
         });
         REQUIRE_NOTHROW(levels.stats.fairPrice.read = [&]() {
           REQUIRE(levels.stats.fairPrice.blob().dump() == "{\"price\":1234.55}");
@@ -235,7 +238,6 @@ namespace ₿ {
           REQUIRE(levels.fairValue == 1234.51);
         }
         WHEN("diff") {
-          REQUIRE(levels.diff.empty());
           REQUIRE(levels.diff.hello().dump() == "[{"
             "\"asks\":[{\"price\":1234.6,\"size\":1.23456789},{\"price\":1234.69,\"size\":0.11234569}],"
             "\"bids\":[{\"price\":1234.5,\"size\":0.12345678},{\"price\":1234.55,\"size\":0.01234567}]"

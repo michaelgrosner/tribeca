@@ -20,7 +20,7 @@
 #else
 #  include <catch.h>
 #  define EXIT catch_exit
-   void catch_exit(const int);
+   [[noreturn]] void catch_exit(const int);
 #endif
 
 //! \namespace ₿

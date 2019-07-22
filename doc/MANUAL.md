@@ -255,9 +255,3 @@ Time     | Side | Price | Size | BuyTS | SellTS | Notes
 * `delayUI` - Relax the display of UI data by `delayUI` seconds. Set a value of 0 (zero) to display UI data in realtime, but this may penalize the communication with the exchange if you end up sending too much frequent UI data (like in low latency environments with super fast market data updates; at home is OK in realtime because the latency of **Krypto-trading-bot** with the exchange tends to be higher than the latency of **Krypto-trading-bot** with your browser).
 
 * `audio?` - plays a sound for each new trade (ping-pong modes have 2 sounds for each type of trade).
-
-
-# How can I make up my own trading strategies?
-
-You can always open a [new issue](https://github.com/ctubio/Krypto-trading-bot/issues/new?title=Missing%20trading%20strategy) to request a new feature.
-

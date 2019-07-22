@@ -13,7 +13,7 @@
 //!            visualize and understand the execution order of test units.
 //! \note      While using --durations, the output should be read from top to bottom,
 //!            but the output inside each scenario should be read from bottom to top.
-void catch_exit(const int code) {
+[[noreturn]] void catch_exit(const int code) {
   // const char *argv[] = {"K", "--durations yes", nullptr};
   // const int argc = sizeof(argv) / sizeof(char*) - 1;
   exit(code ?: Catch::Session().run(
