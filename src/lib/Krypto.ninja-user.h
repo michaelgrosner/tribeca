@@ -1054,9 +1054,7 @@ namespace ₿ {
         );
       };
       double calcDiffPercent(Amount older, Amount newer) const {
-        return newer
-             ? K.gateway->decimal.percent.round(((newer - older) / newer) * 1e+2)
-             : 0;
+        return K.gateway->decimal.percent.round(((newer - older) / (older?:1)) * 1e+2);
       };
       mMatter about() const override {
         return mMatter::Profit;
