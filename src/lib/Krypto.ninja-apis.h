@@ -372,10 +372,10 @@ namespace ₿ {
         decimal.amount.precision(tickSize);
         decimal.percent.precision(1e-2);
         for (auto it : (Report){
-          {"symbols", base + "/" + quote + " ("
-                        + (margin
-                          ? decimal.funds.str(decimal.funds.step)
-                          : decimal.amount.str(tickSize)) + "/"
+          {"symbols", (margin
+                        ? symbol             + " (" + decimal.funds.str(decimal.funds.step)
+                        : base + "/" + quote + " (" + decimal.amount.str(tickSize)
+                      ) + "/"
                         + decimal.price.str(tickPrice) + ")"                              },
           {"minSize", decimal.amount.str(minSize) + " "
                         + (margin ? "Contract" + string(minSize == 1 ? 0 : 1, 's') : base)},
