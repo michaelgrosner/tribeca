@@ -68,7 +68,7 @@ export class OrdersComponent implements OnInit {
       }, cellRendererFramework: BaseCurrencyCellComponent},
       { width: 74, field: 'value', headerName: 'value', cellClass: (params) => {
         return (params.data.side === 'Ask') ? "sell" : "buy";
-      }, cellRendererFramework: QuoteCurrencyCellComponent},
+      }},
       { width: 45, suppressSizeToFit: true, field: 'type', headerName: 'type' },
       { width: 40, field: 'tif', headerName: 'tif' },
       { width: 45, field: 'lat', headerName: 'lat'},
@@ -107,7 +107,9 @@ export class OrdersComponent implements OnInit {
           node.setData(Object.assign(node.data, {
             time: o.time,
             price: o.price,
-            value: Math.round(o.price * o.quantity * 100) / 100,
+            value: this.product.margin
+                     ? (Math.round((o.quantity / o.price) * 1e+8) / 1e+8) + " " + this.product.base
+                     : (Math.round(o.price * o.quantity * 100) / 100) + " " + this.product.quote,
             tif: Models.TimeInForce[o.timeInForce],
             lat: o.latency+'ms',
             qty: o.quantity
@@ -122,7 +124,9 @@ export class OrdersComponent implements OnInit {
         exchangeId: o.exchangeId,
         side: Models.Side[o.side],
         price: o.price,
-        value: Math.round(o.price * o.quantity * 100) / 100,
+        value: this.product.margin
+                 ? (Math.round((o.quantity / o.price) * 1e+8) / 1e+8) + " " + this.product.base
+                 : (Math.round(o.price * o.quantity * 100) / 100) + " " + this.product.quote,
         exchange: o.exchange,
         type: Models.OrderType[o.type],
         tif: Models.TimeInForce[o.timeInForce],

@@ -1110,7 +1110,7 @@ namespace ₿ {
           } else {
             if (Random::int64() % 21)
               code = 404, content = "Today, is a beautiful day.";
-            else // Humans! go to any random path to check your luck
+            else // Humans! go to any random path to check your luck.
               code = 418, content = "Today, is your lucky day!";
           }
         } else {
