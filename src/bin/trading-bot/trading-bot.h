@@ -15,7 +15,7 @@ class TradingBot: public KryptoNinja {
     TradingBot()
     {
       display   = terminal;
-      margin    = {3, 6, 1, 2};
+      border    = {3, 6, 1, 2};
       databases = true;
       documents = {
         {"",                                  {&_www_gzip_bomb,   _www_gzip_bomb_len  }},
@@ -149,19 +149,19 @@ class Engine: public Klass {
 void TradingBot::terminal() {
   if (!(stdscr and stdlog)) return;
   const vector<mOrder> openOrders = engine.orders.working(true);
-  const unsigned int previous = margin.bottom;
-  margin.bottom = max((int)openOrders.size(), engine.broker.semaphore.paused() ? 0 : 2) + 1;
+  const unsigned int previous = border.bottom;
+  border.bottom = max((int)openOrders.size(), engine.broker.semaphore.paused() ? 0 : 2) + 1;
   const int y = getmaxy(stdscr),
             x = getmaxx(stdscr),
-            yMaxLog = y - margin.bottom;
-  if (margin.bottom != previous) {
-    if (previous < margin.bottom) wscrl(stdlog, margin.bottom - previous);
+            yMaxLog = y - border.bottom;
+  if (border.bottom != previous) {
+    if (previous < border.bottom) wscrl(stdlog, border.bottom - previous);
     wresize(
       stdlog,
-      y - margin.top - margin.bottom,
-      x - margin.left - margin.right
+      y - border.top - border.bottom,
+      x - border.left - border.right
     );
-    if (previous > margin.bottom) wscrl(stdlog, margin.bottom - previous);
+    if (previous > border.bottom) wscrl(stdlog, border.bottom - previous);
   }
   mvwvline(stdscr, 1, 1, ' ', y-1);
   mvwvline(stdscr, yMaxLog-1, 1, ' ', y-1);

@@ -74,7 +74,7 @@ namespace ₿ {
     exit(prefix + Ansi::r(COLOR_RED) + " Errrror: " + Ansi::b(COLOR_RED) + reason, reboot);
   };
 
-  struct Margin {
+  struct Border {
     unsigned int top;
     unsigned int right;
     unsigned int bottom;
@@ -84,7 +84,7 @@ namespace ₿ {
   class Print {
     public:
       static WINDOW *stdlog;
-      static Margin margin;
+      static Border border;
       static void (*display)();
       static bool windowed() {
         if (!display) return false;
@@ -96,13 +96,13 @@ namespace ₿ {
               "\"export TERM=xterm\", or use --naked argument"
           );
         Ansi::default_colors();
-        if (margin.top != ANY_NUM) {
+        if (border.top != ANY_NUM) {
           stdlog = subwin(
             stdscr,
-            getmaxy(stdscr) - margin.bottom - margin.top,
-            getmaxx(stdscr) - margin.left - margin.right,
-            margin.top,
-            margin.left
+            getmaxy(stdscr) - border.bottom - border.top,
+            getmaxx(stdscr) - border.left - border.right,
+            border.top,
+            border.left
           );
           scrollok(stdlog, true);
           idlok(stdlog, true);
@@ -222,7 +222,7 @@ namespace ₿ {
 
   WINDOW *Print::stdlog = nullptr;
 
-  Margin Print::margin = {ANY_NUM, 0, 0, 0};
+  Border Print::border = {ANY_NUM, 0, 0, 0};
 
   void (*Print::display)() = nullptr;
 

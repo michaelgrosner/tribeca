@@ -1842,13 +1842,13 @@ namespace ₿ {
       };
       void calcFundsAfterOrder(const mLastOrder &order, bool *const askForFees) {
         if (!order.price) return;
-        if (!K.gateway->margin) {
+        if (K.gateway->margin == Future::Spot) {
           calcHeldAmount(order.side);
           calcFundsSilently();
         }
         if (order.tradeQuantity) {
           safety.insertTrade(order);
-          *askForFees = !K.gateway->margin;
+          *askForFees = true;
         }
       };
       mMatter about() const override {
@@ -1878,8 +1878,15 @@ namespace ₿ {
           mWallet::reset(quote.total - heldSide, heldSide, &quote);
       };
       void calcValues() {
-        base.value  = (quote.total / fairValue) + base.total;
-        quote.value = (base.total * fairValue) + quote.total;
+        base.value  = K.gateway->margin == Future::Spot
+                        ? base.total + (quote.total / fairValue)
+                        : base.total;
+        quote.value = K.gateway->margin == Future::Spot
+                        ? (base.total * fairValue) + quote.total
+                        : (K.gateway->margin == Future::Inverse
+                            ? base.total * fairValue
+                            : base.total / fairValue
+                        );
       };
       void calcProfits() {
         if (!profits.ratelimit())
@@ -2283,14 +2290,22 @@ namespace ₿ {
         if (!qp.buySizeMax and !quotes.bid.empty())
           quotes.bid.size = fmin(
             qp.sopSizeMultiplier * quotes.bid.size,
-              K.gateway->margin
-                ? (wallet.base.amount * quotes.bid.price) / 2
-                : (wallet.quote.amount / quotes.bid.price) / 2
+            K.gateway->margin == Future::Spot
+              ? (wallet.quote.amount / quotes.bid.price) / 2
+              : (K.gateway->margin == Future::Inverse
+                  ? (wallet.base.amount / 2) * quotes.bid.price
+                  : (wallet.base.amount / 2) / quotes.bid.price
+              )
           );
         if (!qp.sellSizeMax and !quotes.ask.empty())
           quotes.ask.size = fmin(
             qp.sopSizeMultiplier * quotes.ask.size,
-            (wallet.base.amount / 2) * (K.gateway->margin ? quotes.ask.price : 1)
+            K.gateway->margin == Future::Spot
+              ? wallet.base.amount / 2
+              : (K.gateway->margin == Future::Inverse
+                  ? (wallet.base.amount / 2) * quotes.ask.price
+                  : (wallet.base.amount / 2) / quotes.ask.price
+              )
           );
       };
       void applyEwmaProtection() {
@@ -2308,7 +2323,12 @@ namespace ₿ {
             if (!qp.buySizeMax)
               quotes.bid.size = fmin(
                 qp.aprMultiplier * quotes.bid.size,
-                (wallet.target.targetBasePosition - wallet.base.total) * (K.gateway->margin ? quotes.bid.price : 1)
+                K.gateway->margin == Future::Spot
+                  ? wallet.target.targetBasePosition - wallet.base.total
+                  : (K.gateway->margin == Future::Inverse
+                      ? (wallet.target.targetBasePosition - wallet.base.total) * quotes.bid.price
+                      : (wallet.target.targetBasePosition - wallet.base.total) / quotes.bid.price
+                  )
               );
           }
         }
@@ -2319,7 +2339,12 @@ namespace ₿ {
             if (!qp.sellSizeMax)
               quotes.ask.size = fmin(
                 qp.aprMultiplier * quotes.ask.size,
-                (wallet.base.total - wallet.target.targetBasePosition) * (K.gateway->margin ? quotes.ask.price : 1)
+                K.gateway->margin == Future::Spot
+                  ? wallet.base.total - wallet.target.targetBasePosition
+                  : (K.gateway->margin == Future::Inverse
+                      ? (wallet.base.total - wallet.target.targetBasePosition) * quotes.ask.price
+                      : (wallet.base.total - wallet.target.targetBasePosition) / quotes.ask.price
+                  )
               );
           }
         }
@@ -2465,9 +2490,12 @@ namespace ₿ {
             fmax(K.gateway->minSize, fmin(
               quotes.bid.size,
               K.gateway->decimal.amount.floor(
-                K.gateway->margin
-                  ? wallet.base.total * quotes.bid.price
-                  : wallet.quote.total / (quotes.bid.price * (1.0 + K.gateway->makeFee))
+                K.gateway->margin == Future::Spot
+                  ? wallet.quote.total / (quotes.bid.price * (1.0 + K.gateway->makeFee))
+                  : (K.gateway->margin == Future::Inverse
+                      ? wallet.base.total * quotes.bid.price
+                      : wallet.base.total / quotes.bid.price
+                  )
               )
             ))
           );
@@ -2476,20 +2504,34 @@ namespace ₿ {
             fmax(K.gateway->minSize, fmin(
               quotes.ask.size,
               K.gateway->decimal.amount.floor(
-                wallet.base.total * (K.gateway->margin ? quotes.ask.price : 1)
+                K.gateway->margin == Future::Spot
+                  ? wallet.base.total
+                  : (K.gateway->margin == Future::Inverse
+                      ? wallet.base.total * quotes.ask.price
+                      : wallet.base.total / quotes.ask.price
+                  )
               )
             ))
           );
       };
       void applyDepleted() {
         if (!quotes.bid.empty()
-          and (K.gateway->margin
-            ? wallet.base.total * quotes.bid.price
-            : wallet.quote.total / quotes.bid.price
+          and (K.gateway->margin == Future::Spot
+                ? wallet.quote.total / quotes.bid.price
+                : (K.gateway->margin == Future::Inverse
+                    ? wallet.base.total * quotes.bid.price
+                    : wallet.base.total / quotes.bid.price
+                )
           ) < K.gateway->minSize * (1.0 + K.gateway->makeFee)
         ) quotes.bid.clear(mQuoteState::DepletedFunds);
         if (!quotes.ask.empty()
-          and (wallet.base.total * (K.gateway->margin ? quotes.ask.price : 1)) < K.gateway->minSize * (1.0 + K.gateway->makeFee)
+          and (K.gateway->margin == Future::Spot
+                ? wallet.base.total
+                : (K.gateway->margin == Future::Inverse
+                    ? wallet.base.total * quotes.ask.price
+                    : wallet.base.total / quotes.ask.price
+                )
+          ) < K.gateway->minSize * (1.0 + K.gateway->makeFee)
         ) quotes.ask.clear(mQuoteState::DepletedFunds);
       };
       void applyWaitingPing() {

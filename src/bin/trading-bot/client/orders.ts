@@ -107,9 +107,12 @@ export class OrdersComponent implements OnInit {
           node.setData(Object.assign(node.data, {
             time: o.time,
             price: o.price,
-            value: this.product.margin
-                     ? (Math.round((o.quantity / o.price) * 1e+8) / 1e+8) + " " + this.product.base
-                     : (Math.round(o.price * o.quantity * 100) / 100) + " " + this.product.quote,
+            value: this.product.margin == 0
+                     ? (Math.round(o.quantity * o.price * 100) / 100) + " " + this.product.quote
+                     : (this.product.margin == 1
+                         ? (Math.round((o.quantity / o.price) * 1e+8) / 1e+8) + " " + this.product.base
+                         : (Math.round((o.quantity * o.price) * 1e+8) / 1e+8) + " " + this.product.base
+                     ),
             tif: Models.TimeInForce[o.timeInForce],
             lat: o.latency+'ms',
             qty: o.quantity
@@ -124,9 +127,12 @@ export class OrdersComponent implements OnInit {
         exchangeId: o.exchangeId,
         side: Models.Side[o.side],
         price: o.price,
-        value: this.product.margin
-                 ? (Math.round((o.quantity / o.price) * 1e+8) / 1e+8) + " " + this.product.base
-                 : (Math.round(o.price * o.quantity * 100) / 100) + " " + this.product.quote,
+        value: this.product.margin == 0
+                 ? (Math.round(o.quantity * o.price * 100) / 100) + " " + this.product.quote
+                 : (this.product.margin == 1
+                     ? (Math.round((o.quantity / o.price) * 1e+8) / 1e+8) + " " + this.product.base
+                     : (Math.round((o.quantity * o.price) * 1e+8) / 1e+8) + " " + this.product.base
+                 ),
         exchange: o.exchange,
         type: Models.OrderType[o.type],
         tif: Models.TimeInForce[o.timeInForce],

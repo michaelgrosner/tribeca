@@ -9,6 +9,7 @@ namespace ₿ {
   enum class         Side: unsigned int { Bid, Ask };
   enum class  TimeInForce: unsigned int { GTC, IOC, FOK };
   enum class    OrderType: unsigned int { Limit, Market };
+  enum class       Future: unsigned int { Spot, Inverse, Linear };
 
   struct mLevel {
      Price price = 0;
@@ -312,7 +313,7 @@ namespace ₿ {
              takeFee   = 0;
       size_t maxLevel  = 0;
       double leverage  = 0;
-        bool margin    = false;
+      Future margin    = (Future)0;
          int debug     = 0;
       virtual void disconnect() {};
       virtual bool connected() const { return true; };
@@ -338,6 +339,7 @@ namespace ₿ {
         base      = reply.value("base",      base);
         quote     = reply.value("quote",     quote);
         symbol    = reply.value("symbol",    symbol);
+        margin    = reply.value("margin",    margin);
         webMarket = reply.value("webMarket", webMarket);
         webOrders = reply.value("webOrders", webOrders);
         tickPrice = reply.value("tickPrice", 0.0);
@@ -372,13 +374,16 @@ namespace ₿ {
         decimal.amount.precision(tickSize);
         decimal.percent.precision(1e-2);
         for (auto it : (Report){
-          {"symbols", (margin
+          {"symbols", (margin == Future::Linear
                         ? symbol             + " (" + decimal.funds.str(decimal.funds.step)
                         : base + "/" + quote + " (" + decimal.amount.str(tickSize)
                       ) + "/"
                         + decimal.price.str(tickPrice) + ")"                              },
-          {"minSize", decimal.amount.str(minSize) + " "
-                        + (margin ? "Contract" + string(minSize == 1 ? 0 : 1, 's') : base)},
+          {"minSize", decimal.amount.str(minSize) + " " + (
+                        margin == Future::Spot
+                          ? base
+                          : "Contract" + string(minSize == 1 ? 0 : 1, 's')
+                      )                                                                   },
           {"makeFee", decimal.percent.str(makeFee * 1e+2) + "%"
                         + (makeFee ? "" : " (please use --maker-fee argument!)")          },
           {"takeFee", decimal.percent.str(takeFee * 1e+2) + "%"
@@ -594,6 +599,7 @@ namespace ₿ {
         return {
           {     "base", base     },
           {    "quote", quote    },
+          {   "margin", margin   },
           {"webMarket", webMarket},
           {"webOrders", webOrders},
           {"tickPrice", 1e-2     },
@@ -613,7 +619,6 @@ namespace ₿ {
         askForReplace = true;
         webMarket = "https://www.bitmex.com/app/trade/";
         webOrders = "https://www.bitmex.com/app/orderHistory";
-        margin = true;
       };
       json handshake() override {
         symbol = base + quote;
@@ -634,6 +639,9 @@ namespace ₿ {
           {     "base", "XBT"                          },
           {    "quote", quote                          },
           {   "symbol", symbol                         },
+          {   "margin", reply.value("isInverse", false)
+                          ? Future::Inverse
+                          : Future::Linear             },
           {"webMarket", webMarket                      },
           {"webOrders", webOrders                      },
           {"tickPrice", reply.value("tickSize", 0.0)   },
@@ -677,6 +685,7 @@ namespace ₿ {
           {   "symbol", symbol                                        },
           {"webMarket", webMarket                                     },
           {"webOrders", webOrders                                     },
+          {   "margin", margin                                        },
           {"tickPrice", stod(reply.value("tickSize", "0"))            },
           { "tickSize", stod(reply.value("quantityIncrement", "0"))   },
           {  "minSize", stod(reply.value("quantityIncrement", "0"))   },
@@ -725,6 +734,7 @@ namespace ₿ {
           {     "base", base                                     },
           {    "quote", quote                                    },
           {   "symbol", symbol                                   },
+          {   "margin", margin                                   },
           {"webMarket", webMarket                                },
           {"webOrders", webOrders                                },
           {"tickPrice", stod(reply.value("quote_increment", "0"))},
@@ -783,6 +793,7 @@ namespace ₿ {
           {     "base", base            },
           {    "quote", quote           },
           {   "symbol", symbol          },
+          {   "margin", margin          },
           {"webMarket", webMarket       },
           {"webOrders", webOrders       },
           {"tickPrice", tickPrice       },
@@ -845,6 +856,7 @@ namespace ₿ {
           {     "base", base     },
           {    "quote", quote    },
           {   "symbol", symbol   },
+          {   "margin", margin   },
           {"webMarket", webMarket},
           {"webOrders", webOrders},
           {"tickPrice", tickPrice},
@@ -898,6 +910,7 @@ namespace ₿ {
           {     "base", base            },
           {    "quote", quote           },
           {   "symbol", symbol          },
+          {   "margin", margin          },
           {"webMarket", webMarket       },
           {"webOrders", webOrders       },
           {"tickPrice", tickPrice       },
@@ -939,6 +952,7 @@ namespace ₿ {
           {     "base", base            },
           {    "quote", quote           },
           {   "symbol", symbol          },
+          {   "margin", margin          },
           {"webMarket", webMarket       },
           {"webOrders", webOrders       },
           {"tickPrice", tickPrice       },
