@@ -74,47 +74,17 @@ namespace ₿ {
     exit(prefix + Ansi::r(COLOR_RED) + " Errrror: " + Ansi::b(COLOR_RED) + reason, reboot);
   };
 
-  struct Border {
-    unsigned int top;
-    unsigned int right;
-    unsigned int bottom;
-    unsigned int left;
-  };
-
   class Print {
     public:
-      static WINDOW *stdlog;
-      static Border border;
       static void (*display)();
-      static bool windowed() {
-        if (!display) return false;
-        if (stdlog)
-          error("SH", "Unable to print another window");
-        if (!initscr())
-          error("SH",
-            "Unable to initialize ncurses, try to run in your terminal"
-              "\"export TERM=xterm\", or use --naked argument"
-          );
-        Ansi::default_colors();
-        if (border.top != ANY_NUM) {
-          stdlog = subwin(
-            stdscr,
-            getmaxy(stdscr) - border.bottom - border.top,
-            getmaxx(stdscr) - border.left - border.right,
-            border.top,
-            border.left
-          );
-          scrollok(stdlog, true);
-          idlok(stdlog, true);
-        }
-        signal(SIGWINCH, [](const int) {
-          endwin();
-          refresh();
-          clear();
-        });
-        repaint();
-        return true;
-      };
+      static WINDOW *stdlog;
+      static struct Padding {
+        unsigned int top;
+        unsigned int right;
+        unsigned int bottom;
+        unsigned int left;
+      } border;
+    public:
       static void repaint() {
         if (!display) return;
         display();
@@ -218,13 +188,43 @@ namespace ₿ {
         wattroff(stdlog, COLOR_PAIR(COLOR_WHITE));
         wrefresh(stdlog);
       };
+    protected:
+      static bool windowed() {
+        if (!display) return false;
+        if (stdlog)
+          error("SH", "Unable to print another window");
+        if (!initscr())
+          error("SH",
+            "Unable to initialize ncurses, try to run in your terminal"
+              "\"export TERM=xterm\", or use --naked argument"
+          );
+        Ansi::default_colors();
+        if (border.top != ANY_NUM) {
+          stdlog = subwin(
+            stdscr,
+            getmaxy(stdscr) - border.bottom - border.top,
+            getmaxx(stdscr) - border.left - border.right,
+            border.top,
+            border.left
+          );
+          scrollok(stdlog, true);
+          idlok(stdlog, true);
+        }
+        signal(SIGWINCH, [](const int) {
+          endwin();
+          refresh();
+          clear();
+        });
+        repaint();
+        return true;
+      };
   };
+
+  void (*Print::display)() = nullptr;
 
   WINDOW *Print::stdlog = nullptr;
 
-  Border Print::border = {ANY_NUM, 0, 0, 0};
-
-  void (*Print::display)() = nullptr;
+  Print::Padding Print::border = {ANY_NUM, 0, 0, 0};
 
   class Rollout {
     public:
