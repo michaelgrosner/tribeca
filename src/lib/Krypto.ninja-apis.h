@@ -226,7 +226,6 @@ namespace ₿ {
         );
       };
 //BO non-free Gw library functions from build-*/local/lib/K-*.a (it just redefines all virtual gateway class members below).
-/**/  virtual bool   ready() = 0;                                            // wait for exchange and register data handlers
 /**/  virtual void replace(string, string) {};                               // call         async orders data from exchange
 /**/  virtual void   place(string, Side, string, string, OrderType, TimeInForce, bool) = 0; // async orders like above/below
 /**/  virtual void  cancel(string, string) = 0;                              // call         async orders data from exchange
@@ -369,6 +368,7 @@ namespace ₿ {
         disconnect();
       };
       void report(Report notes, const bool &nocache) {
+        if (exchange == "NULL") print("all data is random");
         decimal.funds.precision(1e-8);
         decimal.price.precision(tickPrice);
         decimal.amount.precision(tickSize);
@@ -464,6 +464,7 @@ namespace ₿ {
         askForSyncData(tick);
       };
       void waitForData(Loop *const loop) override {
+        online();
         waitForSyncData(loop);
       };
   };

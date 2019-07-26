@@ -1252,9 +1252,8 @@ namespace ₿ {
       };
       void wait(Klass *const k = nullptr) {
         if (k) k->wait();
-        else Klass::wait();
-        if (gateway->ready())
-          walk();
+        else   Klass::wait();
+        walk();
       };
       void handshake(const GwExchange::Report &notes = {}) {
         const json reply = gateway->handshake(arg<int>("nocache"));
