@@ -163,6 +163,37 @@ namespace ₿ {
             event->wakeup();
           };
       };
+      template<typename T> class Proxy {
+        public:
+          function<void(const T&)> write = nullptr;
+        private:
+                          Async *event = nullptr;
+          function<vector<T>()>  read  = nullptr;
+              future<vector<T>>  data;
+        public:
+          void try_write(const T &rawdata) const {
+            if (write) write(rawdata);
+          };
+          void wait_for(
+            Loop *const loop,
+            const function<vector<T>()>    r,
+            const function<void(const T&)> w = nullptr
+          ) {
+            read  = r;
+            write = w;
+            event = loop->async([&]() {
+              if (data.valid())
+                for (const T &it : data.get()) try_write(it);
+            });
+          };
+          void ask_for() {
+            if (!data.valid())
+              data = ::async(launch::async, [&]() {
+                Loop::Wakeup again(event);
+                return read();
+              });
+          };
+      };
       class Poll: public Async {
         protected:
           curl_socket_t sockfd = 0;
@@ -1217,6 +1248,38 @@ namespace ₿ {
         uuid.erase(remove(uuid.begin(), uuid.end(), '-'), uuid.end());
         return uuid;
       }
+  };
+
+  class Decimal {
+    public:
+      stringstream stream;
+      double step = 0;
+    private:
+      double tick = 0;
+    public:
+      Decimal()
+      {
+        stream << fixed;
+      };
+      void precision(const double &t) {
+        stream.precision(ceil(abs(log10(tick = t))));
+        step = pow(10, -1 * stream.precision());
+      };
+      double round(const double &input) const {
+        return ::round((::round(
+          input / step) * step)
+                / tick) * tick;
+      };
+      double floor(const double &input) const {
+        return ::floor((::floor(
+          input / step) * step)
+                / tick) * tick;
+      };
+      string str(const double &input) {
+        stream.str("");
+        stream << round(input);
+        return stream.str();
+      };
   };
 }
 

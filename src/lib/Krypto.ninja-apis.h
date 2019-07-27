@@ -151,65 +151,6 @@ namespace ₿ {
   };
 
   class GwExchangeData {
-    private_friend:
-      template<typename T> class Proxy {
-        public:
-          Loop::Async              *event = nullptr;
-          function<vector<T>()>     read  = nullptr;
-          function<void(const T&)>  write = nullptr;
-        private:
-          future<vector<T>> reply;
-        public:
-          void try_write(const T &data) const {
-            if (write) write(data);
-          };
-          void wait_for(Loop *const loop, const function<vector<T>()> r, const function<void(const T&)> w = nullptr) {
-            read  = r;
-            write = w;
-            event = loop->async([&]() {
-              if (reply.valid())
-                for (const T &it : reply.get()) try_write(it);
-            });
-          };
-          void ask_for() {
-            if (!reply.valid())
-              reply = ::async(launch::async, [&]() {
-                Loop::Wakeup again(event);
-                return read();
-              });
-          };
-      };
-      class Decimal {
-        public:
-          stringstream stream;
-          double step = 0;
-        private:
-          double tick = 0;
-        public:
-          Decimal()
-          {
-            stream << fixed;
-          };
-          void precision(const double &t) {
-            stream.precision(ceil(abs(log10(tick = t))));
-            step = pow(10, -1 * stream.precision());
-          };
-          double round(const double &input) const {
-            return ::round((::round(
-              input / step) * step)
-                    / tick) * tick;
-          };
-          double floor(const double &input) const {
-            return ::floor((::floor(
-              input / step) * step)
-                    / tick) * tick;
-          };
-          string str(const double &input) {
-            stream.str("");
-            stream << round(input);
-            return stream.str();
-          };
-      };
     public:
       curl_socket_t loopfd = 0;
       struct {
@@ -219,12 +160,12 @@ namespace ₿ {
                 percent;
       } decimal;
       struct {
-        Proxy<Wallets>      wallets;
-        Proxy<Levels>       levels;
-        Proxy<Trade>        trades;
-        Proxy<Order>        orders,
-                            cancelAll;
-        Proxy<Connectivity> connectivity;
+        Loop::Proxy<Wallets>      wallets;
+        Loop::Proxy<Levels>       levels;
+        Loop::Proxy<Trade>        trades;
+        Loop::Proxy<Order>        orders,
+                                  cancelAll;
+        Loop::Proxy<Connectivity> connectivity;
       } proxy;
       bool askForFees      = false,
            askForReplace   = false,
@@ -361,7 +302,7 @@ namespace ₿ {
       void end(const bool &dustybot = false) {
         if (dustybot)
           print("--dustybot is enabled, remember to cancel manually any open order.");
-        else if (proxy.orders.write) {
+        else {
           print("Attempting to cancel all open orders, please wait.");
           if (!async_cancelAll()) sync_cancelAll();
           print("cancel all open orders OK");
