@@ -137,6 +137,50 @@ namespace ₿ {
           };
       };
       class Async {
+        public_friend:
+          class Wakeup {
+            private:
+              Async *const event = nullptr;
+            public:
+              Wakeup(Async *const e)
+                : event(e)
+              {};
+              ~Wakeup()
+              {
+                event->wakeup();
+              };
+          };
+          template<typename T> class Proxy {
+            public:
+              function<void(const T&)> write = nullptr;
+            private:
+                              Async *event = nullptr;
+              function<vector<T>()>  read  = nullptr;
+                  future<vector<T>>  data;
+            public:
+              void try_write(const T &rawdata) const {
+                if (write) write(rawdata);
+              };
+              void wait_for(
+                Loop *const loop,
+                const function<vector<T>()>    r,
+                const function<void(const T&)> w = nullptr
+              ) {
+                read  = r;
+                write = w;
+                event = loop->async([&]() {
+                  if (data.valid())
+                    for (const T &it : data.get()) try_write(it);
+                });
+              };
+              void ask_for() {
+                if (!data.valid())
+                  data = ::async(launch::async, [&]() {
+                    Wakeup again(event);
+                    return read();
+                  });
+              };
+          };
         private:
           function<void()> job = nullptr;
         public:
@@ -149,49 +193,6 @@ namespace ₿ {
           };
           void link(const function<void()> &data) {
             job = data;
-          };
-      };
-      class Wakeup {
-        private:
-          Async *const event = nullptr;
-        public:
-          Wakeup(Async *const e)
-            : event(e)
-          {};
-          ~Wakeup()
-          {
-            event->wakeup();
-          };
-      };
-      template<typename T> class Proxy {
-        public:
-          function<void(const T&)> write = nullptr;
-        private:
-                          Async *event = nullptr;
-          function<vector<T>()>  read  = nullptr;
-              future<vector<T>>  data;
-        public:
-          void try_write(const T &rawdata) const {
-            if (write) write(rawdata);
-          };
-          void wait_for(
-            Loop *const loop,
-            const function<vector<T>()>    r,
-            const function<void(const T&)> w = nullptr
-          ) {
-            read  = r;
-            write = w;
-            event = loop->async([&]() {
-              if (data.valid())
-                for (const T &it : data.get()) try_write(it);
-            });
-          };
-          void ask_for() {
-            if (!data.valid())
-              data = ::async(launch::async, [&]() {
-                Loop::Wakeup again(event);
-                return read();
-              });
           };
       };
       class Poll: public Async {

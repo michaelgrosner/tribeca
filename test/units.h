@@ -613,6 +613,7 @@ namespace ₿ {
         REQUIRE(broker.calculon.quotes.bid.state == mQuoteState::Disconnected);
         REQUIRE(broker.calculon.quotes.ask.state == mQuoteState::Disconnected);
         REQUIRE_NOTHROW(broker.clear());
+        REQUIRE_NOTHROW(K.gateway->proxy.connectivity.try_write(Connectivity::Connected));
         REQUIRE(broker.ready());
         REQUIRE_FALSE(levels.ready());
         REQUIRE_NOTHROW(levels.read_from_gw({ {

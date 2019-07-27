@@ -160,12 +160,12 @@ namespace ₿ {
                 percent;
       } decimal;
       struct {
-        Loop::Proxy<Wallets>      wallets;
-        Loop::Proxy<Levels>       levels;
-        Loop::Proxy<Trade>        trades;
-        Loop::Proxy<Order>        orders,
-                                  cancelAll;
-        Loop::Proxy<Connectivity> connectivity;
+        Loop::Async::Proxy<Wallets>      wallets;
+        Loop::Async::Proxy<Levels>       levels;
+        Loop::Async::Proxy<Trade>        trades;
+        Loop::Async::Proxy<Order>        orders,
+                                         cancelAll;
+        Loop::Async::Proxy<Connectivity> connectivity;
       } proxy;
       bool askForFees      = false,
            askForReplace   = false,

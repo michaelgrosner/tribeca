@@ -654,7 +654,7 @@ namespace ₿ {
       };
       void launch_keylogger() {
         keylogger = ::async(launch::async, [&]() {
-          Loop::Wakeup again(event);
+          Loop::Async::Wakeup again(event);
           int ch = ERR;
           while (ch == ERR and Print::display)
             ch = getch();
