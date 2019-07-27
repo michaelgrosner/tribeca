@@ -83,7 +83,7 @@ namespace ₿ {
         unsigned int right;
         unsigned int bottom;
         unsigned int left;
-      } border;
+      } padding;
     public:
       static void repaint() {
         if (!display) return;
@@ -199,13 +199,13 @@ namespace ₿ {
               "\"export TERM=xterm\", or use --naked argument"
           );
         Ansi::default_colors();
-        if (border.top != ANY_NUM) {
+        if (padding.top != ANY_NUM) {
           stdlog = subwin(
             stdscr,
-            getmaxy(stdscr) - border.bottom - border.top,
-            getmaxx(stdscr) - border.left - border.right,
-            border.top,
-            border.left
+            getmaxy(stdscr) - padding.bottom - padding.top,
+            getmaxx(stdscr) - padding.left - padding.right,
+            padding.top,
+            padding.left
           );
           scrollok(stdlog, true);
           idlok(stdlog, true);
@@ -224,7 +224,7 @@ namespace ₿ {
 
   WINDOW *Print::stdlog = nullptr;
 
-  Print::Padding Print::border = {ANY_NUM, 0, 0, 0};
+  Print::Padding Print::padding = {ANY_NUM, 0, 0, 0};
 
   class Rollout {
     public:
@@ -654,10 +654,10 @@ namespace ₿ {
       };
       void launch_keylogger() {
         keylogger = ::async(launch::async, [&]() {
+          Loop::Wakeup again(event);
           int ch = ERR;
           while (ch == ERR and Print::display)
             ch = getch();
-          event->wakeup();
           return ch == ERR
                ? '\r'
                : (char)ch;
@@ -1057,7 +1057,7 @@ namespace ₿ {
         clickable.clear();
         documents.clear();
       };
-      void withoutGoodbye() {
+      void without_goodbye() {
         server.purge();
       };
     private:
@@ -1155,17 +1155,12 @@ namespace ₿ {
       };
   };
 
-  //! \brief Placeholder to avoid spaghetti codes.
-  //! - Walks through minimal runtime steps when wait() is called.
+  //! \brief Placeholder for data/time callback user definitions.
   class Klass {
     protected:
-      virtual void waitData () {};
-      virtual void waitAdmin(){};
-      virtual void run      () {};
+      virtual void run() {};
     public:
       void wait() {
-        waitData();
-        waitAdmin();
         run();
       };
   };
@@ -1206,9 +1201,9 @@ namespace ₿ {
               + " (consider to repeat a few times this check)");
           }
         } {
-          gateway->waitForData((Loop*)this);
+          gateway->wait_for_data((Loop*)this);
           timer_1s([&](const unsigned int &tick) {
-            gateway->askForData(tick);
+            gateway->ask_for_data(tick);
           });
           ending([&]() {
             gateway->end(arg<int>("dustybot"));
@@ -1237,7 +1232,7 @@ namespace ₿ {
               broadcast(tick);
             });
             ending([&]() {
-              withoutGoodbye();
+              without_goodbye();
             });
             welcome();
           }
@@ -1251,8 +1246,7 @@ namespace ₿ {
         return this;
       };
       void wait(Klass *const k = nullptr) {
-        if (k) k->wait();
-        else   Klass::wait();
+        (k ?: this)->wait();
         walk();
       };
       void handshake(const GwExchange::Report &notes = {}) {
@@ -1310,6 +1304,7 @@ namespace ₿ {
             Print::logWar(prefix, reason);
           else Print::log(prefix, reason, highlight);
         };
+        gateway->adminAgreement = (Connectivity)arg<int>("autobot");
       };
   };
 }

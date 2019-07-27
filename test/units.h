@@ -24,8 +24,8 @@ namespace ₿ {
         }
       }
     }
-    GIVEN("mLevel") {
-      mLevel level;
+    GIVEN("Level") {
+      Level level;
       WHEN("defaults") {
         REQUIRE_NOTHROW(level = {});
         THEN("empty") {
@@ -65,10 +65,10 @@ namespace ₿ {
         }
       }
     }
-    GIVEN("mLevels") {
-      mLevels levels;
+    GIVEN("Levels") {
+      Levels levels;
       WHEN("defaults") {
-        REQUIRE_NOTHROW(levels = mLevels());
+        REQUIRE_NOTHROW(levels = Levels());
         THEN("empty") {
           REQUIRE((levels.bids.empty() or levels.asks.empty()));
         }
@@ -130,7 +130,7 @@ namespace ₿ {
         K.gateway->tickSize  = 0.001;
         K.gateway->minSize   = 0.001;
         K.gateway->report({}, false);
-        K.gateway->write_Connectivity = [&](const Connectivity &rawdata) {
+        K.gateway->proxy.connectivity.write = [&](const Connectivity &rawdata) {
           broker.semaphore.read_from_gw(rawdata);
         };
       };
@@ -165,7 +165,7 @@ namespace ₿ {
         }
       }
       WHEN("assigned") {
-        for (mOrder *const it : orders.working())
+        for (Order *const it : orders.working())
           orders.purge(it);
         REQUIRE_NOTHROW(levels.diff.read = [&]() {
           REQUIRE(levels.diff.blob().dump() == "{"
@@ -289,21 +289,21 @@ namespace ₿ {
       WHEN("assigned") {
         mLastOrder order = {};
         REQUIRE_NOTHROW(order.price = 1234.57);
-        REQUIRE_NOTHROW(order.tradeQuantity = 0.01234566);
+        REQUIRE_NOTHROW(order.filled = 0.01234566);
         REQUIRE_NOTHROW(order.side = Side::Ask);
         REQUIRE_NOTHROW(wallet.safety.recentTrades.insert(order));
         REQUIRE_NOTHROW(order.price = 1234.58);
-        REQUIRE_NOTHROW(order.tradeQuantity = 0.01234567);
+        REQUIRE_NOTHROW(order.filled = 0.01234567);
         REQUIRE_NOTHROW(wallet.safety.recentTrades.insert(order));
         REQUIRE_NOTHROW(order.price = 1234.56);
-        REQUIRE_NOTHROW(order.tradeQuantity = 0.12345678);
+        REQUIRE_NOTHROW(order.filled = 0.12345678);
         REQUIRE_NOTHROW(order.side = Side::Bid);
         REQUIRE_NOTHROW(wallet.safety.recentTrades.insert(order));
         REQUIRE_NOTHROW(order.price = 1234.50);
-        REQUIRE_NOTHROW(order.tradeQuantity = 0.12345679);
+        REQUIRE_NOTHROW(order.filled = 0.12345679);
         REQUIRE_NOTHROW(wallet.safety.recentTrades.insert(order));
         REQUIRE_NOTHROW(order.price = 1234.60);
-        REQUIRE_NOTHROW(order.tradeQuantity = 0.12345678);
+        REQUIRE_NOTHROW(order.filled = 0.12345678);
         REQUIRE_NOTHROW(order.side = Side::Ask);
         REQUIRE_NOTHROW(wallet.safety.recentTrades.insert(order));
         THEN("values") {
@@ -345,8 +345,8 @@ namespace ₿ {
       });
 
       WHEN("calcSizes") {
-        REQUIRE_NOTHROW(mWallet::reset(1.0, 0, &wallet.base));
-        REQUIRE_NOTHROW(mWallet::reset(1000.0, 0, &wallet.quote));
+        REQUIRE_NOTHROW(Wallet::reset(1.0, 0, &wallet.base));
+        REQUIRE_NOTHROW(Wallet::reset(1000.0, 0, &wallet.quote));
         REQUIRE_NOTHROW(levels.fairValue = 500.0);
         REQUIRE_NOTHROW(wallet.base.value = 3.0);
         REQUIRE_NOTHROW(qp.percentageValues = true);
@@ -554,7 +554,7 @@ namespace ₿ {
         {"EUR", 1000, 0}
       }));
       WHEN("assigned") {
-        for (mOrder *const it : orders.working())
+        for (Order *const it : orders.working())
           orders.purge(it);
         vector<string> randIds;
         const Clock time = Tstamp;
@@ -613,7 +613,6 @@ namespace ₿ {
         REQUIRE(broker.calculon.quotes.bid.state == mQuoteState::Disconnected);
         REQUIRE(broker.calculon.quotes.ask.state == mQuoteState::Disconnected);
         REQUIRE_NOTHROW(broker.clear());
-        REQUIRE_NOTHROW(K.gateway->ready());
         REQUIRE(broker.ready());
         REQUIRE_FALSE(levels.ready());
         REQUIRE_NOTHROW(levels.read_from_gw({ {
@@ -742,7 +741,7 @@ namespace ₿ {
         stringstream ss(line);
         string _, pingpong, side;
         mLastOrder order;
-        ss >> _ >> _ >> _ >> _ >> pingpong >> _ >> side >> order.tradeQuantity >> _ >> _ >> _ >> order.price;
+        ss >> _ >> _ >> _ >> _ >> pingpong >> _ >> side >> order.filled >> _ >> _ >> _ >> order.price;
         order.side = (side == "BUY" ? Side::Bid : Side::Ask);
         order.isPong = (pingpong == "PONG");
         return order;
@@ -766,8 +765,8 @@ namespace ₿ {
       WHEN("cumulated cross pongs") {
         for (mLastOrder const &order : loglines) {
           baseSign = (order.side == Side::Bid) ? 1 : -1;
-          expectedBaseDelta += baseSign * order.tradeQuantity;
-          expectedQuoteDelta -= baseSign * order.tradeQuantity * order.price;
+          expectedBaseDelta += baseSign * order.filled;
+          expectedQuoteDelta -= baseSign * order.filled * order.price;
           this_thread::sleep_for(chrono::milliseconds(2));
           wallet.safety.trades.insert(order);
           Amount actualBaseDelta = 0;

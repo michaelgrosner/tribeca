@@ -123,32 +123,44 @@ namespace ₿ {
         private:
                   unsigned int tick  = 0;
           mutable unsigned int ticks = 300;
-          vector<function<void(const unsigned int&)>> callbacks;
+          vector<function<void(const unsigned int&)>> jobs;
         public:
           void ticks_factor(const unsigned int &factor) const {
             ticks = 300 * (factor ?: 1);
           };
           void timer_1s() {
-            for (const auto &it : callbacks) it(tick);
+            for (const auto &it : jobs) it(tick);
             tick = (tick + 1) % ticks;
           };
           void push_back(const function<void(const unsigned int&)> &data) {
-            callbacks.push_back(data);
+            jobs.push_back(data);
           };
       };
       class Async {
         private:
-          function<void()> callback = nullptr;
+          function<void()> job = nullptr;
         public:
           Async(const function<void()> data)
-            : callback(data)
+            : job(data)
           {};
           virtual void wakeup() {};
           void ready() {
-            callback();
+            job();
           };
           void link(const function<void()> &data) {
-            callback = data;
+            job = data;
+          };
+      };
+      class Wakeup {
+        private:
+          Async *const event = nullptr;
+        public:
+          Wakeup(Async *const e)
+            : event(e)
+          {};
+          ~Wakeup()
+          {
+            event->wakeup();
           };
       };
       class Poll: public Async {
@@ -207,7 +219,7 @@ namespace ₿ {
           };
       };
       class Poll: public Loop::Poll {
-        public:
+        private:
           uv_poll_t event;
         public:
           Poll(const curl_socket_t &s = 0)

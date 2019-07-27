@@ -15,7 +15,7 @@ class TradingBot: public KryptoNinja {
     TradingBot()
     {
       display   = terminal;
-      border    = {3, 6, 1, 2};
+      padding   = {3, 6, 1, 2};
       databases = true;
       documents = {
         {"",                                  {&_www_gzip_bomb,   _www_gzip_bomb_len  }},
@@ -72,32 +72,25 @@ class Engine: public Klass {
       , memory(K)
     {};
   protected:
-    void waitData() override {
-      K.gateway->write_Connectivity = [&](const Connectivity &rawdata) {
+    void run() override {
+      K.gateway->proxy.connectivity.write = [&](const Connectivity &rawdata) {
         broker.semaphore.read_from_gw(rawdata);
-        if (broker.semaphore.offline())
-          levels.clear();
       };
-      K.gateway->write_mWallets = [&](const mWallets &rawdata) {
+      K.gateway->proxy.wallets.write = [&](const Wallets &rawdata) {
         wallet.read_from_gw(rawdata);
       };
-      K.gateway->write_mLevels = [&](const mLevels &rawdata) {
+      K.gateway->proxy.levels.write = [&](const Levels &rawdata) {
         levels.read_from_gw(rawdata);
         wallet.calcFunds();
         calcQuotes();
       };
-      K.gateway->write_mOrder = [&](const mOrder &rawdata) {
+      K.gateway->proxy.orders.write = [&](const Order &rawdata) {
         orders.read_from_gw(rawdata);
         wallet.calcFundsAfterOrder(orders.updated, &K.gateway->askForFees);
       };
-      K.gateway->write_mTrade = [&](const mTrade &rawdata) {
+      K.gateway->proxy.trades.write = [&](const Trade &rawdata) {
         levels.stats.takerTrades.read_from_gw(rawdata);
       };
-    };
-    void waitAdmin() override {
-      broker.semaphore.agree(K.arg<int>("autobot"));
-    };
-    void run() override {
       K.timer_1s([&](const unsigned int &tick) {
         if (K.gateway->connected() and !levels.warn_empty()) {
           levels.timer_1s();
@@ -121,13 +114,13 @@ class Engine: public Klass {
       broker.clear();
     };
     void quote2orders(mQuote &quote) {
-      const vector<mOrder*> abandoned = broker.abandon(quote);
+      const vector<Order*> abandoned = broker.abandon(quote);
       const unsigned int replace = K.gateway->askForReplace and !(
         quote.empty() or abandoned.empty()
       );
       for_each(
         abandoned.begin(), abandoned.end() - replace,
-        [&](mOrder *const it) {
+        [&](Order *const it) {
           broker.cancelOrder(it);
         }
       );
@@ -148,20 +141,20 @@ class Engine: public Klass {
 
 void TradingBot::terminal() {
   if (!(stdscr and stdlog)) return;
-  const vector<mOrder> openOrders = engine.orders.working(true);
-  const unsigned int previous = border.bottom;
-  border.bottom = max((int)openOrders.size(), engine.broker.semaphore.paused() ? 0 : 2) + 1;
+  const vector<Order> openOrders = engine.orders.working(true);
+  const unsigned int previous = padding.bottom;
+  padding.bottom = max((int)openOrders.size(), engine.broker.semaphore.paused() ? 0 : 2) + 1;
   const int y = getmaxy(stdscr),
             x = getmaxx(stdscr),
-            yMaxLog = y - border.bottom;
-  if (border.bottom != previous) {
-    if (previous < border.bottom) wscrl(stdlog, border.bottom - previous);
+            yMaxLog = y - padding.bottom;
+  if (padding.bottom != previous) {
+    if (previous < padding.bottom) wscrl(stdlog, padding.bottom - previous);
     wresize(
       stdlog,
-      y - border.top - border.bottom,
-      x - border.left - border.right
+      y - padding.top - padding.bottom,
+      x - padding.left - padding.right
     );
-    if (previous > border.bottom) wscrl(stdlog, border.bottom - previous);
+    if (previous > padding.bottom) wscrl(stdlog, padding.bottom - previous);
   }
   mvwvline(stdscr, 1, 1, ' ', y-1);
   mvwvline(stdscr, yMaxLog-1, 1, ' ', y-1);

@@ -311,14 +311,14 @@ namespace ₿ {
 
   struct mLastOrder {
     Price  price;
-    Amount tradeQuantity;
+    Amount filled;
     Side   side;
     bool   isPong;
   };
   struct mOrders: public Client::Broadcast<mOrders> {
     mLastOrder updated;
     private:
-      unordered_map<string, mOrder> orders;
+      unordered_map<string, Order> orders;
     private_ref:
       const KryptoNinja &K;
     public:
@@ -327,19 +327,19 @@ namespace ₿ {
         , updated()
         , K(bot)
       {};
-      mOrder *find(const string &orderId) {
+      Order *find(const string &orderId) {
         return (orderId.empty()
           or orders.find(orderId) == orders.end()
         ) ? nullptr
           : &orders.at(orderId);
       };
-      mOrder *findsert(const mOrder &raw) {
+      Order *findsert(const Order &raw) {
         if (raw.status == Status::Waiting and !raw.orderId.empty())
           return &(orders[raw.orderId] = raw);
         if (raw.orderId.empty() and !raw.exchangeId.empty()) {
           auto it = find_if(
             orders.begin(), orders.end(),
-            [&](const pair<string, mOrder> &it_) {
+            [&](const pair<string, Order> &it_) {
               return raw.exchangeId == it_.second.exchangeId;
             }
           );
@@ -371,68 +371,68 @@ namespace ₿ {
             : *filterAskOrders
           )[it.second.price] += it.second.quantity;
       };
-      vector<mOrder*> at(const Side &side) {
-        vector<mOrder*> sideOrders;
+      vector<Order*> at(const Side &side) {
+        vector<Order*> sideOrders;
         for (auto &it : orders)
           if (side == it.second.side)
              sideOrders.push_back(&it.second);
         return sideOrders;
       };
-      vector<mOrder*> working() {
-        vector<mOrder*> workingOrders;
+      vector<Order*> working() {
+        vector<Order*> workingOrders;
         for (auto &it : orders)
           if (Status::Working == it.second.status
             and !it.second.disablePostOnly
           ) workingOrders.push_back(&it.second);
         return workingOrders;
       };
-      vector<mOrder> working(const bool &sorted = false) const {
-        vector<mOrder> workingOrders;
+      vector<Order> working(const bool &sorted = false) const {
+        vector<Order> workingOrders;
         for (const auto &it : orders)
           if (Status::Working == it.second.status)
             workingOrders.push_back(it.second);
         if (sorted)
           sort(workingOrders.begin(), workingOrders.end(),
-            [](const mOrder &a, const mOrder &b) {
+            [](const Order &a, const Order &b) {
               return a.price > b.price;
             }
           );
         return workingOrders;
       };
-      mOrder *upsert(const mOrder &raw) {
-        mOrder *const order = findsert(raw);
-        mOrder::update(raw, order);
+      Order *upsert(const Order &raw) {
+        Order *const order = findsert(raw);
+        Order::update(raw, order);
         if (K.arg<int>("debug-orders")) {
           report(order, " saved ");
           report_size();
         }
         return order;
       };
-      bool replace(const Price &price, const bool &isPong, mOrder *const order) {
-        const bool allowed = mOrder::replace(price, isPong, order);
+      bool replace(const Price &price, const bool &isPong, Order *const order) {
+        const bool allowed = Order::replace(price, isPong, order);
         if (allowed and K.arg<int>("debug-orders")) report(order, "replace");
         return allowed;
       };
-      bool cancel(mOrder *const order) {
-        const bool allowed = mOrder::cancel(order);
+      bool cancel(Order *const order) {
+        const bool allowed = Order::cancel(order);
         if (allowed and K.arg<int>("debug-orders")) report(order, "cancel ");
         return allowed;
       };
-      void purge(const mOrder *const order) {
+      void purge(const Order *const order) {
         if (K.arg<int>("debug-orders")) report(order, " purge ");
         orders.erase(order->orderId);
         if (K.arg<int>("debug-orders")) report_size();
       };
-      void read_from_gw(const mOrder &raw) {
+      void read_from_gw(const Order &raw) {
         if (K.arg<int>("debug-orders")) report(&raw, " reply ");
-        mOrder *const order = upsert(raw);
+        Order *const order = upsert(raw);
         if (!order) {
           updated = {};
           return;
         }
         updated = {
           order->price,
-          raw.tradeQuantity,
+          raw.filled,
           order->side,
           order->isPong
         };
@@ -451,7 +451,7 @@ namespace ₿ {
         return working();
       };
     private:
-      void report(const mOrder *const order, const string &reason) const {
+      void report(const Order *const order, const string &reason) const {
         Print::log("DEBUG OG", " " + reason + " " + (
           order
             ? order->orderId + "::" + order->exchangeId
@@ -469,9 +469,9 @@ namespace ₿ {
     j = k.blob();
   };
 
-  struct mMarketTakers: public Client::Broadcast<mTrade> {
+  struct mMarketTakers: public Client::Broadcast<Trade> {
     public:
-      vector<mTrade> trades;
+      vector<Trade>  trades;
               Amount takersBuySize60s  = 0,
                      takersSellSize60s = 0;
       mMarketTakers(const KryptoNinja &bot)
@@ -486,7 +486,7 @@ namespace ₿ {
           ) += it.quantity;
         trades.clear();
       };
-      void read_from_gw(const mTrade &raw) {
+      void read_from_gw(const Trade &raw) {
         trades.push_back(raw);
         broadcast();
       };
@@ -811,14 +811,14 @@ namespace ₿ {
     };
   };
 
-  struct mLevelsDiff: public mLevels,
-                      public Client::Broadcast<mLevelsDiff> {
+  struct LevelsDiff: public Levels,
+                     public Client::Broadcast<LevelsDiff> {
       bool patched = false;
     private_ref:
-      const mLevels        &unfiltered;
+      const Levels         &unfiltered;
       const mQuotingParams &qp;
     public:
-      mLevelsDiff(const KryptoNinja &bot, const mLevels &u, const mQuotingParams &q)
+      LevelsDiff(const KryptoNinja &bot, const Levels &u, const mQuotingParams &q)
         : Broadcast(bot)
         , unfiltered(u)
         , qp(q)
@@ -860,12 +860,12 @@ namespace ₿ {
         asks = diff(asks, unfiltered.asks);
         patched = true;
       };
-      vector<mLevel> diff(const vector<mLevel> &from, vector<mLevel> to) const {
-        vector<mLevel> patch;
-        for (const mLevel &it : from) {
+      vector<Level> diff(const vector<Level> &from, vector<Level> to) const {
+        vector<Level> patch;
+        for (const Level &it : from) {
           auto it_ = find_if(
             to.begin(), to.end(),
-            [&](const mLevel &_it) {
+            [&](const Level &_it) {
               return it.price == _it.price;
             }
           );
@@ -882,17 +882,17 @@ namespace ₿ {
         return patch;
       };
   };
-  static void to_json(json &j, const mLevelsDiff &k) {
-    to_json(j, (mLevels)k);
+  static void to_json(json &j, const LevelsDiff &k) {
+    to_json(j, (Levels)k);
     if (k.patched)
       j["diff"] = true;
   };
-  struct mMarketLevels: public mLevels {
+  struct mMarketLevels: public Levels {
     unsigned int averageCount = 0;
            Price averageWidth = 0,
                  fairValue    = 0;
-         mLevels unfiltered;
-     mLevelsDiff diff;
+         Levels  unfiltered;
+     LevelsDiff  diff;
     mMarketStats stats;
     private:
       unordered_map<Price, Amount> filterBidOrders,
@@ -943,7 +943,7 @@ namespace ₿ {
         filter();
         return !(bids.empty() or asks.empty());
       };
-      void read_from_gw(const mLevels &raw) {
+      void read_from_gw(const Levels &raw) {
         unfiltered.bids = raw.bids;
         unfiltered.asks = raw.asks;
         filter();
@@ -994,7 +994,7 @@ namespace ₿ {
         if (fairValue)
           fairValue = K.gateway->decimal.price.round(fairValue);
       };
-      vector<mLevel> filter(vector<mLevel> levels, unordered_map<Price, Amount> *const filterOrders) {
+      vector<Level> filter(vector<Level> levels, unordered_map<Price, Amount> *const filterOrders) {
         if (!filterOrders->empty())
           for (auto it = levels.begin(); it != levels.end();) {
             for (auto it_ = filterOrders->begin(); it_ != filterOrders->end();)
@@ -1077,7 +1077,7 @@ namespace ₿ {
       };
   };
 
-  struct mOrderFilled: public mTrade {
+  struct mOrderFilled: public Trade {
      string tradeId;
      Amount value,
             feeCharged,
@@ -1284,10 +1284,10 @@ namespace ₿ {
         mOrderFilled filled = {
           order.side,
           order.price,
-          order.tradeQuantity,
+          order.filled,
           time,
           to_string(time),
-          abs(order.price * order.tradeQuantity),
+          abs(order.price * order.filled),
           fee,
           0, 0, 0, 0, 0,
           order.isPong,
@@ -1469,7 +1469,7 @@ namespace ₿ {
         : sells
       ).insert(pair<Price, mRecentTrade>(
         order.price,
-        mRecentTrade(order.price, order.tradeQuantity)
+        mRecentTrade(order.price, order.filled)
       ));
     };
     void expire() {
@@ -1520,12 +1520,12 @@ namespace ₿ {
        mRecentTrades recentTrades;
     private_ref:
       const mQuotingParams &qp;
-      const mWallet        &base;
+      const Wallet         &base;
       const Price          &fairValue;
       const Amount         &targetBasePosition;
       const Amount         &positionDivergence;
     public:
-      mSafety(const KryptoNinja &bot, const mQuotingParams &q, const mWallet &w, const mButtons &b, const Price &f, const Amount &t, const Amount &p)
+      mSafety(const KryptoNinja &bot, const mQuotingParams &q, const Wallet &w, const mButtons &b, const Price &f, const Amount &t, const Amount &p)
         : Broadcast(bot)
         , trades(bot, q, b)
         , recentTrades(q)
@@ -1807,7 +1807,7 @@ namespace ₿ {
     k.positionDivergence = j.value("pDiv", 0.0);
   };
 
-  struct mWalletPosition: public mWallets,
+  struct mWalletPosition: public Wallets,
                           public Client::Broadcast<mWalletPosition> {
      mTarget target;
      mSafety safety;
@@ -1829,7 +1829,7 @@ namespace ₿ {
       bool ready() const {
         return !safety.empty();
       };
-      void read_from_gw(const mWallets &raw) {
+      void read_from_gw(const Wallets &raw) {
         if (raw.base.currency.empty() or raw.quote.currency.empty() or !fairValue) return;
         base.currency = raw.base.currency;
         quote.currency = raw.quote.currency;
@@ -1846,7 +1846,7 @@ namespace ₿ {
           calcHeldAmount(order.side);
           calcFundsSilently();
         }
-        if (order.tradeQuantity) {
+        if (order.filled) {
           safety.insertTrade(order);
           *askForFees = true;
         }
@@ -1873,9 +1873,9 @@ namespace ₿ {
       void calcHeldAmount(const Side &side) {
         const Amount heldSide = orders.heldAmount(side);
         if (side == Side::Ask and !base.currency.empty())
-          mWallet::reset(base.total - heldSide, heldSide, &base);
+          Wallet::reset(base.total - heldSide, heldSide, &base);
         else if (side == Side::Bid and !quote.currency.empty())
-          mWallet::reset(quote.total - heldSide, heldSide, &quote);
+          Wallet::reset(quote.total - heldSide, heldSide, &quote);
       };
       void calcValues() {
         base.value  = K.gateway->margin == Future::Spot
@@ -1894,7 +1894,7 @@ namespace ₿ {
         base.profit  = profits.calcBaseDiff();
         quote.profit = profits.calcQuoteDiff();
       };
-      void calcMaxFunds(mWallets raw, Amount limit) {
+      void calcMaxFunds(Wallets raw, Amount limit) {
         if (limit) {
           limit -= raw.quote.held / fairValue;
           if (limit > 0 and raw.quote.amount / fairValue > limit) {
@@ -1905,12 +1905,12 @@ namespace ₿ {
           if (limit > 0 and raw.base.amount > limit)
             raw.base.amount = limit;
         }
-        mWallet::reset(raw.base.amount, raw.base.held, &base);
-        mWallet::reset(raw.quote.amount, raw.quote.held, &quote);
+        Wallet::reset(raw.base.amount, raw.base.held, &base);
+        Wallet::reset(raw.quote.amount, raw.quote.held, &quote);
       };
   };
 
-  struct mQuote: public mLevel {
+  struct mQuote: public Level {
     const Side        side   = (Side)0;
           mQuoteState state  = mQuoteState::MissingData;
           bool        isPong = false;
@@ -2033,10 +2033,10 @@ namespace ₿ {
         else error("QE", "Invalid quoting mode saved, consider to remove the database file");
       };
       static void quoteAtTopOfMarket(const mMarketLevels &levels, const Price &tickPrice, mQuotes &quotes) {
-        const mLevel &topBid = levels.bids.begin()->size > tickPrice
+        const Level &topBid = levels.bids.begin()->size > tickPrice
           ? levels.bids.at(0)
           : levels.bids.at(levels.bids.size() > 1 ? 1 : 0);
-        const mLevel &topAsk = levels.asks.begin()->size > tickPrice
+        const Level &topAsk = levels.asks.begin()->size > tickPrice
           ? levels.asks.at(0)
           : levels.asks.at(levels.asks.size() > 1 ? 1 : 0);
         quotes.bid.price = topBid.price;
@@ -2138,12 +2138,12 @@ namespace ₿ {
         quoteAtTopOfMarket(levels, tickPrice, quotes);
         quotes.bid.size = 0;
         quotes.ask.size = 0;
-        for (const mLevel &it : levels.bids)
+        for (const Level &it : levels.bids)
           if (quotes.bid.size < it.size and it.price <= quotes.bid.price) {
             quotes.bid.size = it.size;
             quotes.bid.price = it.price;
           }
-        for (const mLevel &it : levels.asks)
+        for (const Level &it : levels.asks)
           if (quotes.ask.size < it.size and it.price >= quotes.ask.price) {
             quotes.ask.size = it.size;
             quotes.ask.price = it.price;
@@ -2163,14 +2163,14 @@ namespace ₿ {
       ) {
         Price bidPx = levels.bids.cbegin()->price;
         Amount bidDepth = 0;
-        for (const mLevel &it : levels.bids) {
+        for (const Level &it : levels.bids) {
           bidDepth += it.size;
           if (bidDepth >= depth) break;
           else bidPx = it.price;
         }
         Price askPx = levels.asks.cbegin()->price;
         Amount askDepth = 0;
-        for (const mLevel &it : levels.asks) {
+        for (const Level &it : levels.asks) {
           askDepth += it.size;
           if (askDepth >= depth) break;
           else askPx = it.price;
@@ -2185,7 +2185,7 @@ namespace ₿ {
   struct mAntonioCalculon: public Client::Broadcast<mAntonioCalculon> {
                   mQuotes quotes;
         mDummyMarketMaker dummyMM;
-    vector<const mOrder*> zombies;
+    vector<const Order*> zombies;
              unsigned int countWaiting = 0,
                           countWorking = 0,
                           AK47inc      = 0;
@@ -2205,11 +2205,11 @@ namespace ₿ {
         , levels(l)
         , wallet(w)
       {};
-      vector<const mOrder*> clear() {
+      vector<const Order*> clear() {
         broadcast();
         countWaiting =
         countWorking = 0;
-        vector<const mOrder*> zombies_;
+        vector<const Order*> zombies_;
         zombies.swap(zombies_);
         return zombies_;
       };
@@ -2224,7 +2224,7 @@ namespace ₿ {
         dummyMM.calcRawQuotes();
         applyQuotingParameters();
       };
-      bool abandon(const mOrder &order, mQuote &quote, unsigned int &bullets) {
+      bool abandon(const Order &order, mQuote &quote, unsigned int &bullets) {
         if (stillAlive(order)) {
           if (abs(order.price - quote.price) < K.gateway->tickPrice)
             quote.skip();
@@ -2256,7 +2256,7 @@ namespace ₿ {
         quotes.bid.state =
         quotes.ask.state = state;
       };
-      bool stillAlive(const mOrder &order) {
+      bool stillAlive(const Order &order) {
         if (order.status == Status::Waiting) {
           if (Tstamp - 10e+3 > order.time) {
             zombies.push_back(&order);
@@ -2441,7 +2441,7 @@ namespace ₿ {
         const Amount bestWidthSize = (sideAPR == mSideAPR::Off ? qp.bestWidthSize : 0);
         Amount depth = 0;
         if (!quotes.ask.empty())
-          for (const mLevel &it : levels.asks)
+          for (const Level &it : levels.asks)
             if (it.price > quotes.ask.price) {
               depth += it.size;
               if (depth <= bestWidthSize) continue;
@@ -2452,7 +2452,7 @@ namespace ₿ {
             }
         depth = 0;
         if (!quotes.bid.empty())
-          for (const mLevel &it : levels.bids)
+          for (const Level &it : levels.bids)
             if (it.price < quotes.bid.price) {
               depth += it.size;
               if (depth <= bestWidthSize) continue;
@@ -2573,8 +2573,6 @@ namespace ₿ {
                      public Hotkey::Catch {
     Connectivity greenButton  = Connectivity::Disconnected,
                  greenGateway = Connectivity::Disconnected;
-    private:
-      Connectivity adminAgreement = Connectivity::Disconnected;
     private_ref:
       const KryptoNinja &K;
     public:
@@ -2591,7 +2589,7 @@ namespace ₿ {
       void click(const json &j) override {
         if (j.is_object()
           and j.at("agree").is_number()
-          and j.at("agree").get<Connectivity>() != adminAgreement
+          and j.at("agree").get<Connectivity>() != K.gateway->adminAgreement
         ) toggle();
       };
       bool paused() const {
@@ -2599,9 +2597,6 @@ namespace ₿ {
       };
       bool offline() const {
         return !(bool)greenGateway;
-      };
-      void agree(const bool &agreement) {
-        adminAgreement = (Connectivity)agreement;
       };
       void read_from_gw(const Connectivity &raw) {
         if (greenGateway != raw) {
@@ -2614,13 +2609,13 @@ namespace ₿ {
       };
     private:
       void toggle() {
-        agree(!(bool)adminAgreement);
+        K.gateway->adminAgreement = (Connectivity)!(bool)K.gateway->adminAgreement;
         switchFlag();
       };
       void switchFlag() {
         const Connectivity previous = greenButton;
         greenButton = (Connectivity)(
-          (bool)greenGateway and (bool)adminAgreement
+          (bool)greenGateway and (bool)K.gateway->adminAgreement
         );
         if (greenButton != previous)
           Print::log("GW " + K.gateway->exchange, "Quoting state changed to",
@@ -2671,32 +2666,32 @@ namespace ₿ {
         calculon.calcQuotes();
         return true;
       };
-      vector<mOrder*> abandon(mQuote &quote) {
-        vector<mOrder*> abandoned;
+      vector<Order*> abandon(mQuote &quote) {
+        vector<Order*> abandoned;
         unsigned int bullets = qp.bullets;
         const bool all = quote.state != mQuoteState::Live;
-        for (mOrder *const it : orders.at(quote.side))
+        for (Order *const it : orders.at(quote.side))
           if (all or calculon.abandon(*it, quote, bullets))
             abandoned.push_back(it);
         return abandoned;
       };
       void clear() {
-        for (const mOrder *const it : calculon.clear())
+        for (const Order *const it : calculon.clear())
           orders.purge(it);
       };
-      void placeOrder(const mOrder &raw) {
+      void placeOrder(const Order &raw) {
         K.gateway->place(orders.upsert(raw));
       };
-      void replaceOrder(const Price &price, const bool &isPong, mOrder *const order) {
+      void replaceOrder(const Price &price, const bool &isPong, Order *const order) {
         if (orders.replace(price, isPong, order))
           K.gateway->replace(order);
       };
-      void cancelOrder(mOrder *const order) {
+      void cancelOrder(Order *const order) {
         if (orders.cancel(order))
           K.gateway->cancel(order);
       };
       void cancelOrders() {
-        for (mOrder *const it : orders.working())
+        for (Order *const it : orders.working())
           cancelOrder(it);
       };
   };

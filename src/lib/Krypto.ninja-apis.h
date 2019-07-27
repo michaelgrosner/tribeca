@@ -11,40 +11,40 @@ namespace ₿ {
   enum class    OrderType: unsigned int { Limit, Market };
   enum class       Future: unsigned int { Spot, Inverse, Linear };
 
-  struct mLevel {
+  struct Level {
      Price price = 0;
     Amount size  = 0;
   };
-  static void to_json(json &j, const mLevel &k) {
+  static void to_json(json &j, const Level &k) {
     j = {
       {"price", k.price}
     };
     if (k.size) j["size"] = k.size;
   };
-  struct mLevels {
-    vector<mLevel> bids,
-                   asks;
+  struct Levels {
+    vector<Level> bids,
+                  asks;
   };
-  static void to_json(json &j, const mLevels &k) {
+  static void to_json(json &j, const Levels &k) {
     j = {
       {"bids", k.bids},
       {"asks", k.asks}
     };
   };
 
-  struct mWallet {
+  struct Wallet {
     string currency = "";
     Amount amount   = 0,
            held     = 0,
            total    = 0,
            value    = 0;
     double profit   = 0;
-    static void reset(const Amount &a, const Amount &h, mWallet *const wallet) {
+    static void reset(const Amount &a, const Amount &h, Wallet *const wallet) {
       wallet->total = (wallet->amount = a)
                     + (wallet->held   = h);
     };
   };
-  static void to_json(json &j, const mWallet &k) {
+  static void to_json(json &j, const Wallet &k) {
     j = {
       {"amount", k.amount},
       {  "held", k.held  },
@@ -52,24 +52,24 @@ namespace ₿ {
       {"profit", k.profit}
     };
   };
-  struct mWallets {
-    mWallet base,
-            quote;
+  struct Wallets {
+    Wallet base,
+           quote;
   };
-  static void to_json(json &j, const mWallets &k) {
+  static void to_json(json &j, const Wallets &k) {
     j = {
       { "base", k.base },
       {"quote", k.quote}
     };
   };
 
-  struct mTrade {
+  struct Trade {
       Side side     = (Side)0;
      Price price    = 0;
     Amount quantity = 0;
      Clock time     = 0;
   };
-  static void to_json(json &j, const mTrade &k) {
+  static void to_json(json &j, const Trade &k) {
     j = {
       {    "side", k.side    },
       {   "price", k.price   },
@@ -78,17 +78,17 @@ namespace ₿ {
     };
   };
 
-  struct mOrder: public mTrade {
+  struct Order: public Trade {
            bool isPong          = false;
          string orderId         = "",
                 exchangeId      = "";
          Status status          = (Status)0;
-         Amount tradeQuantity   = 0;
+         Amount filled          = 0;
       OrderType type            = (OrderType)0;
     TimeInForce timeInForce     = (TimeInForce)0;
            bool disablePostOnly = false;
           Clock latency         = 0;
-    static void update(const mOrder &raw, mOrder *const order) {
+    static void update(const Order &raw, Order *const order) {
       if (!order) return;
       if (Status::Working == (     order->status     = raw.status
       ) and !order->latency)       order->latency    = raw.time - order->time;
@@ -97,7 +97,7 @@ namespace ₿ {
       if (raw.price)               order->price      = raw.price;
       if (raw.quantity)            order->quantity   = raw.quantity;
     };
-    static bool replace(const Price &price, const bool &isPong, mOrder *const order) {
+    static bool replace(const Price &price, const bool &isPong, Order *const order) {
       if (!order
         or order->exchangeId.empty()
       ) return false;
@@ -106,7 +106,7 @@ namespace ₿ {
       order->time   = Tstamp;
       return true;
     };
-    static bool cancel(mOrder *const order) {
+    static bool cancel(Order *const order) {
       if (!order
         or order->exchangeId.empty()
         or order->status == Status::Waiting
@@ -116,7 +116,7 @@ namespace ₿ {
       return true;
     };
   };
-  static void to_json(json &j, const mOrder &k) {
+  static void to_json(json &j, const Order &k) {
     j = {
       {        "orderId", k.orderId        },
       {     "exchangeId", k.exchangeId     },
@@ -132,7 +132,7 @@ namespace ₿ {
       {        "latency", k.latency        }
     };
   };
-  static void from_json(const json &j, mOrder &k) {
+  static void from_json(const json &j, Order &k) {
     k.price           = j.value("price", 0.0);
     k.quantity        = j.value("quantity", 0.0);
     k.side            = j.value("side", "") == "Bid"
@@ -151,7 +151,34 @@ namespace ₿ {
   };
 
   class GwExchangeData {
-    public_friend:
+    private_friend:
+      template<typename T> class Proxy {
+        public:
+          Loop::Async              *event = nullptr;
+          function<vector<T>()>     read  = nullptr;
+          function<void(const T&)>  write = nullptr;
+        private:
+          future<vector<T>> reply;
+        public:
+          void try_write(const T &data) const {
+            if (write) write(data);
+          };
+          void wait_for(Loop *const loop, const function<vector<T>()> r, const function<void(const T&)> w = nullptr) {
+            read  = r;
+            write = w;
+            event = loop->async([&]() {
+              if (reply.valid())
+                for (const T &it : reply.get()) try_write(it);
+            });
+          };
+          void ask_for() {
+            if (!reply.valid())
+              reply = ::async(launch::async, [&]() {
+                Loop::Wakeup again(event);
+                return read();
+              });
+          };
+      };
       class Decimal {
         public:
           stringstream stream;
@@ -184,25 +211,28 @@ namespace ₿ {
           };
       };
     public:
+      curl_socket_t loopfd = 0;
       struct {
         Decimal funds,
                 price,
                 amount,
                 percent;
       } decimal;
-      curl_socket_t loopfd = 0;
-      function<void(const mOrder&)>       write_mOrder;
-      function<void(const mTrade&)>       write_mTrade;
-      function<void(const mLevels&)>      write_mLevels;
-      function<void(const mWallets&)>     write_mWallets;
-      function<void(const Connectivity&)> write_Connectivity;
+      struct {
+        Proxy<Wallets>      wallets;
+        Proxy<Levels>       levels;
+        Proxy<Trade>        trades;
+        Proxy<Order>        orders,
+                            cancelAll;
+        Proxy<Connectivity> connectivity;
+      } proxy;
       bool askForFees      = false,
            askForReplace   = false,
            askForCancelAll = false;
       string (*randId)() = nullptr;
-      virtual void askForData(const unsigned int &tick) = 0;
-      virtual void waitForData(Loop *const loop) = 0;
-      void place(const mOrder *const order) {
+      virtual void ask_for_data(const unsigned int &tick) = 0;
+      virtual void wait_for_data(Loop *const loop) = 0;
+      void place(const Order *const order) {
         place(
           order->orderId,
           order->side,
@@ -213,13 +243,13 @@ namespace ₿ {
           order->disablePostOnly
         );
       };
-      void replace(const mOrder *const order) {
+      void replace(const Order *const order) {
         replace(
           order->exchangeId,
           decimal.price.str(order->price)
         );
       };
-      void cancel(const mOrder *const order) {
+      void cancel(const Order *const order) {
         cancel(
           order->orderId,
           order->exchangeId
@@ -232,69 +262,40 @@ namespace ₿ {
 /**/protected:
 /**/  virtual             bool async_wallet()    { return false; };          // call         async wallet data from exchange
 /**/  virtual             bool async_cancelAll() { return false; };          // call         async orders data from exchange
-/**/  virtual vector<mWallets>  sync_wallet()    { return {}; };             // call and read sync wallet data from exchange
-/**/  virtual  vector<mLevels>  sync_levels()    { return {}; };             // call and read sync levels data from exchange
-/**/  virtual   vector<mTrade>  sync_trades()    { return {}; };             // call and read sync trades data from exchange
-/**/  virtual   vector<mOrder>  sync_orders()    { return {}; };             // call and read sync orders data from exchange
-/**/  virtual   vector<mOrder>  sync_cancelAll() { return {}; };             // call and read sync orders data from exchange
+/**/  virtual vector<Wallets>   sync_wallet()    { return {}; };             // call and read sync wallet data from exchange
+/**/  virtual  vector<Levels>   sync_levels()    { return {}; };             // call and read sync levels data from exchange
+/**/  virtual   vector<Trade>   sync_trades()    { return {}; };             // call and read sync trades data from exchange
+/**/  virtual   vector<Order>   sync_orders()    { return {}; };             // call and read sync orders data from exchange
+/**/  virtual   vector<Order>   sync_cancelAll() { return {}; };             // call and read sync orders data from exchange
 //EO non-free Gw library functions from build-*/local/lib/K-*.a (it just redefines all virtual gateway class members above).
       void online(const Connectivity &connectivity = Connectivity::Connected) {
-        if (write_Connectivity)
-          write_Connectivity(connectivity);
+        proxy.connectivity.try_write(connectivity);
+        if (!(bool)connectivity)
+          proxy.levels.try_write({});
       };
-      void askForNeverAsyncData(const unsigned int &tick) {
+      void wait_for_never_async_data(Loop *const loop) {
+        proxy.wallets.wait_for(loop,   [&]() { return sync_wallet(); });
+        proxy.cancelAll.wait_for(loop, [&]() { return sync_cancelAll(); }, *&proxy.orders.write);
+      };
+      void wait_for_sync_data(Loop *const loop) {
+        proxy.orders.wait_for(loop,    [&]() { return sync_orders(); });
+        wait_for_never_async_data(loop);
+        proxy.levels.wait_for(loop,    [&]() { return sync_levels(); });
+        proxy.trades.wait_for(loop,    [&]() { return sync_trades(); });
+      };
+      void ask_for_never_async_data(const unsigned int &tick) {
         if (((askForFees and !(askForFees = false))
           or !(tick % 15))
-          and !async_wallet())    askFor(replyWallets,   eventWallets,   [&]() { return sync_wallet(); });
+          and !async_wallet())    proxy.wallets.ask_for();
         if ((askForCancelAll
           and !(tick % 300))
-          and !async_cancelAll()) askFor(replyCancelAll, eventCancelAll, [&]() { return sync_cancelAll(); });
+          and !async_cancelAll()) proxy.cancelAll.ask_for();
       };
-      void askForSyncData(const unsigned int &tick) {
-        if (!(tick % 2))          askFor(replyOrders,    eventOrders,    [&]() { return sync_orders(); });
-        askForNeverAsyncData(tick);
-        if (!(tick % 3))          askFor(replyLevels,    eventLevels,    [&]() { return sync_levels(); });
-        if (!(tick % 60))         askFor(replyTrades,    eventTrades,    [&]() { return sync_trades(); });
-      };
-      void waitForNeverAsyncData(Loop *const loop) {
-        eventWallets   = loop->async([&]() { waitFor(replyWallets,   write_mWallets); });
-        eventCancelAll = loop->async([&]() { waitFor(replyCancelAll, write_mOrder); });
-      };
-      void waitForSyncData(Loop *const loop) {
-        eventOrders    = loop->async([&]() { waitFor(replyOrders,    write_mOrder); });
-        waitForNeverAsyncData(loop);
-        eventLevels    = loop->async([&]() { waitFor(replyLevels,    write_mLevels); });
-        eventTrades    = loop->async([&]() { waitFor(replyTrades,    write_mTrade); });
-      };
-    private:
-      Loop::Async* eventWallets   = nullptr;
-      Loop::Async* eventLevels    = nullptr;
-      Loop::Async* eventTrades    = nullptr;
-      Loop::Async* eventOrders    = nullptr;
-      Loop::Async* eventCancelAll = nullptr;
-      future<vector<mWallets>> replyWallets;
-      future<vector<mLevels>>  replyLevels;
-      future<vector<mTrade>>   replyTrades;
-      future<vector<mOrder>>   replyOrders,
-                               replyCancelAll;
-      template<typename T1, typename T2> void askFor(
-              future<vector<T1>> &reply,
-                     Loop::Async *event,
-        const                 T2 &read
-      ) {
-        if (!reply.valid())
-          reply = ::async(launch::async, [this, event, read]() {
-            vector<T1> data = read();
-            event->wakeup();
-            return data;
-          });
-      };
-      template<typename T> void waitFor(
-                     future<vector<T>> &reply,
-        const function<void(const T&)> &write
-      ) {
-        if (reply.valid())
-          for (T &it : reply.get()) write(it);
+      void ask_for_sync_data(const unsigned int &tick) {
+        if (!(tick % 2))          proxy.orders.ask_for();
+        ask_for_never_async_data(tick);
+        if (!(tick % 3))          proxy.levels.ask_for();
+        if (!(tick % 60))         proxy.trades.ask_for();
       };
   };
 
@@ -314,6 +315,7 @@ namespace ₿ {
       double leverage  = 0;
       Future margin    = (Future)0;
          int debug     = 0;
+      Connectivity adminAgreement = Connectivity::Disconnected;
       virtual void disconnect() {};
       virtual bool connected() const { return true; };
       virtual json handshake() = 0;
@@ -359,9 +361,9 @@ namespace ₿ {
       void end(const bool &dustybot = false) {
         if (dustybot)
           print("--dustybot is enabled, remember to cancel manually any open order.");
-        else if (write_mOrder) {
+        else if (proxy.orders.write) {
           print("Attempting to cancel all open orders, please wait.");
-          for (mOrder &it : sync_cancelAll()) write_mOrder(it);
+          if (!async_cancelAll()) sync_cancelAll();
           print("cancel all open orders OK");
         }
         online(Connectivity::Disconnected);
@@ -441,7 +443,7 @@ namespace ₿ {
           highlight
         );
       };
-      void reduce(mLevels &levels) {
+      void reduce(Levels &levels) {
         if (maxLevel) {
           if (levels.bids.size() > maxLevel)
             levels.bids.erase(levels.bids.begin() + maxLevel, levels.bids.end());
@@ -460,12 +462,12 @@ namespace ₿ {
 
   class GwApiREST: public Gw {
     public:
-      void askForData(const unsigned int &tick) override {
-        askForSyncData(tick);
+      void ask_for_data(const unsigned int &tick) override {
+        ask_for_sync_data(tick);
       };
-      void waitForData(Loop *const loop) override {
+      void wait_for_data(Loop *const loop) override {
         online();
-        waitForSyncData(loop);
+        wait_for_sync_data(loop);
       };
   };
   class GwApiWs: public Gw,
@@ -477,14 +479,14 @@ namespace ₿ {
       bool connected() const override {
         return WebSocket::connected();
       };
-      void askForData(const unsigned int &tick) override {
+      void ask_for_data(const unsigned int &tick) override {
         if (countdown and !--countdown)
           connect();
         if (subscribed())
-          askForNeverAsyncData(tick);
+          ask_for_never_async_data(tick);
       };
-      void waitForData(Loop *const loop) override {
-        waitForNeverAsyncData(loop);
+      void wait_for_data(Loop *const loop) override {
+        wait_for_never_async_data(loop);
       };
     protected:
 //BO non-free Gw library functions from build-*/local/lib/K-*.a (it just redefines all virtual gateway class members below).
@@ -495,7 +497,7 @@ namespace ₿ {
         CURLcode rc;
         if (CURLE_OK == (rc = WebSocket::connect(ws)))
           WebSocket::start(GwExchangeData::loopfd, [&]() {
-            waitForAsyncData();
+            wait_for_async_data();
           });
         else reconnect(string("CURL connect Error: ") + curl_easy_strerror(rc));
       };
@@ -534,7 +536,7 @@ namespace ₿ {
         return subscription;
       };
     private:
-      void waitForAsyncData() {
+      void wait_for_async_data() {
         CURLcode rc;
         if (CURLE_OK != (rc = WebSocket::send_recv()))
           print(string("CURL recv Error: ") + curl_easy_strerror(rc));
@@ -563,7 +565,7 @@ namespace ₿ {
           CURLcode rc;
           if (CURLE_OK == (rc = FixSocket::connect(fix, logon()))) {
             FixSocket::start(GwExchangeData::loopfd, [&]() {
-              waitForAsyncData();
+              wait_for_async_data();
             });
             print("FIX success Logon, streaming orders");
           } else reconnect(string("CURL connect FIX Error: ") + curl_easy_strerror(rc));
@@ -581,7 +583,7 @@ namespace ₿ {
           print(string("CURL send FIX Error: ") + curl_easy_strerror(rc));
       };
     private:
-      void waitForAsyncData() {
+      void wait_for_async_data() {
         CURLcode rc;
         if (CURLE_OK != (rc = FixSocket::send_recv()))
           print(string("CURL recv FIX Error: ") + curl_easy_strerror(rc));
