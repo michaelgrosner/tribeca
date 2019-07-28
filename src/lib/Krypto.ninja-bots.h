@@ -624,44 +624,42 @@ namespace ₿ {
           };
       };
     private:
-      Loop::Async* event = nullptr;
-      future<char> keylogger;
-      mutable unordered_map<char, function<void()>> hotFn;
+      Loop::Async::Proxy<char> keylogger;
+      mutable unordered_map<char, function<void()>> maps;
     protected:
-      void legit_keylogger(Loop::Async *e) {
-        event = e;
-        if (hotFn.empty()) return;
-        if (keylogger.valid())
+      void legit_keylogger(Loop *const loop) {
+        if (maps.empty()) return;
+        if (keylogger.write)
           error("SH", string("Unable to launch another \"keylogger\" thread"));
         noecho();
         halfdelay(5);
         keypad(stdscr, true);
-        launch_keylogger();
-      };
-      void keylog() {
-        if (keylogger.valid()) {
-          const char ch = keylogger.get();
-          if (hotFn.find(ch) != hotFn.end())
-            hotFn.at(ch)();
-          launch_keylogger();
-        }
+        keylogger.wait_for(loop,
+          [&]() { return sync_keylogger(); },
+          [&](const char &ch) { keylog(ch); }
+        );
+        keylogger.ask_for();
       };
     private:
       void keymap(const char &ch, function<void()> fn) const {
-        if (hotFn.find(ch) != hotFn.end())
+        if (maps.find(ch) != maps.end())
           error("SH", string("Too many handlers for \"") + ch + "\" hotkey event");
-        hotFn[ch] = fn;
+        maps[ch] = fn;
       };
-      void launch_keylogger() {
-        keylogger = ::async(launch::async, [&]() {
-          Loop::Async::Wakeup again(event);
-          int ch = ERR;
-          while (ch == ERR and Print::display)
-            ch = getch();
-          return ch == ERR
-               ? '\r'
-               : (char)ch;
-        });
+      void keylog(const char &ch) {
+        if (maps.find(ch) != maps.end())
+          maps.at(ch)();
+        keylogger.ask_for();
+      };
+      vector<char> sync_keylogger() {
+        int ch = ERR;
+        while (ch == ERR and Print::display)
+          ch = getch();
+        return {
+          ch == ERR
+           ? '\r'
+           : (char)ch
+        };
       };
   };
 
@@ -1182,9 +1180,7 @@ namespace ₿ {
           setup();
         } {
           if (windowed())
-            legit_keylogger(async([&]() {
-              keylog();
-            }));
+            legit_keylogger((Loop*)this);
         } {
           log("CF", "Outbound IP address is",
             wtfismyip = Curl::Web::xfer("https://wtfismyip.com/json", 4L)
