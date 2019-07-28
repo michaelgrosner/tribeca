@@ -138,19 +138,20 @@ namespace ₿ {
       };
       class Async {
         public_friend:
-          class Wakeup {
-            private:
-              Async *const event = nullptr;
-            public:
-              Wakeup(Async *const e)
-                : event(e)
-              {};
-              ~Wakeup()
-              {
-                event->wakeup();
-              };
-          };
           template<typename T> class Proxy {
+            private_friend:
+              class Wakeup {
+                private:
+                  Async *const event = nullptr;
+                public:
+                  Wakeup(Async *const e)
+                    : event(e)
+                  {};
+                  ~Wakeup()
+                  {
+                    event->wakeup();
+                  };
+              };
             public:
               function<void(const T&)> write = nullptr;
             private:

@@ -448,7 +448,7 @@ namespace ₿ {
           {"fix",          "URL",    "",       "set URL of alernative FIX api endpoint for trading"},
           {"dustybot",     "1",      nullptr,  "do not automatically cancel all orders on exit"},
           {"market-limit", "NUMBER", "321",    "set NUMBER of maximum price levels for the orderbook,"
-                                               "\n" "default NUMBER is '321' and the minimum is '15'"}
+                                               "\n" "default NUMBER is '321' and the minimum is '10'"}
         }) long_options.push_back(it);
         for (const Argument &it : arguments.first)
           long_options.push_back(it);
@@ -538,7 +538,7 @@ namespace ₿ {
         args["currency"] = Text::strU(arg<string>("currency"));
         args["base"]  = Text::strU(arg<string>("currency").substr(0, arg<string>("currency").find("/")));
         args["quote"] = Text::strU(arg<string>("currency").substr(1+ arg<string>("currency").find("/")));
-        args["market-limit"] = max(15, arg<int>("market-limit"));
+        args["market-limit"] = max(10, arg<int>("market-limit"));
         args["leverage"] = fmax(0, fmin(100, arg<double>("leverage")));
         if (arg<int>("debug"))
           args["debug-secret"] = 1;
