@@ -848,7 +848,7 @@ namespace ₿ {
             Socket::shutdown();
             if (!time) session->upgrade(-1, addr);
           };
-          Clock upgraded() const {
+          bool upgraded() const {
             return !time;
           };
           void send(const string &data) {

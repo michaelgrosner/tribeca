@@ -627,7 +627,7 @@ namespace ₿ {
       Loop::Async::Proxy<char> keylogger;
       mutable unordered_map<char, function<void()>> maps;
     protected:
-      void legit_keylogger(Loop *const loop) {
+      void wait_for_keylog(Loop *const loop) {
         if (maps.empty()) return;
         if (keylogger.write)
           error("SH", string("Unable to launch another \"keylogger\" thread"));
@@ -1180,7 +1180,7 @@ namespace ₿ {
           setup();
         } {
           if (windowed())
-            legit_keylogger((Loop*)this);
+            wait_for_keylog((Loop*)this);
         } {
           log("CF", "Outbound IP address is",
             wtfismyip = Curl::Web::xfer("https://wtfismyip.com/json", 4L)
