@@ -6,6 +6,12 @@
 //! \file
 //! \brief namespace \ref ₿.
 
+#define OBLIGATORY_analpaper_SOFTWARE_LICENSE             \
+                                                          \
+"\n"   "DISCLAIMER: This is strict non-violent software:" \
+"\n"   "if you hurt other living creatures, please stop;" \
+"\n"   "otherwise remove all copies of the software now."
+
 #define PERMISSIVE_analpaper_SOFTWARE_LICENSE                              \
                                                                            \
        "This is free software: the UI and quoting engine are open source," \
