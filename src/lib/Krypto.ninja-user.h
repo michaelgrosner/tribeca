@@ -382,7 +382,7 @@ namespace ₿ {
         vector<Order*> workingOrders;
         for (auto &it : orders)
           if (Status::Working == it.second.status
-            and !it.second.disablePostOnly
+            and it.second.postOnly
           ) workingOrders.push_back(&it.second);
         return workingOrders;
       };
@@ -2264,7 +2264,7 @@ namespace ₿ {
           }
           ++countWaiting;
         } else ++countWorking;
-        return !order.disablePostOnly;
+        return order.postOnly;
       };
       void applyQuotingParameters() {
         quotes.debug("?"); applySuperTrades();

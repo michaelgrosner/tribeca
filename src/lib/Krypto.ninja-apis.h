@@ -79,15 +79,15 @@ namespace ₿ {
   };
 
   struct Order: public Trade {
-           bool isPong          = false;
-         string orderId         = "",
-                exchangeId      = "";
-         Status status          = (Status)0;
-         Amount filled          = 0;
-      OrderType type            = (OrderType)0;
-    TimeInForce timeInForce     = (TimeInForce)0;
-           bool disablePostOnly = false;
-          Clock latency         = 0;
+           bool isPong      = false;
+         string orderId     = "",
+                exchangeId  = "";
+         Status status      = (Status)0;
+         Amount filled      = 0;
+      OrderType type        = (OrderType)0;
+    TimeInForce timeInForce = (TimeInForce)0;
+           bool postOnly    = true;
+          Clock latency     = 0;
     static void update(const Order &raw, Order *const order) {
       if (!order) return;
       if (Status::Working == (     order->status     = raw.status
@@ -118,18 +118,18 @@ namespace ₿ {
   };
   static void to_json(json &j, const Order &k) {
     j = {
-      {        "orderId", k.orderId        },
-      {     "exchangeId", k.exchangeId     },
-      {           "side", k.side           },
-      {       "quantity", k.quantity       },
-      {           "type", k.type           },
-      {         "isPong", k.isPong         },
-      {          "price", k.price          },
-      {    "timeInForce", k.timeInForce    },
-      {         "status", k.status         },
-      {"disablePostOnly", k.disablePostOnly},
-      {           "time", k.time           },
-      {        "latency", k.latency        }
+      {    "orderId", k.orderId    },
+      { "exchangeId", k.exchangeId },
+      {       "side", k.side       },
+      {   "quantity", k.quantity   },
+      {       "type", k.type       },
+      {     "isPong", k.isPong     },
+      {      "price", k.price      },
+      {"timeInForce", k.timeInForce},
+      {     "status", k.status     },
+      {   "postOnly", k.postOnly   },
+      {       "time", k.time       },
+      {    "latency", k.latency    }
     };
   };
   static void from_json(const json &j, Order &k) {
@@ -147,7 +147,7 @@ namespace ₿ {
                             ? TimeInForce::FOK
                             : TimeInForce::IOC);
     k.isPong          = false;
-    k.disablePostOnly = true;
+    k.postOnly        = false;
   };
 
   class GwExchangeData {
@@ -181,7 +181,7 @@ namespace ₿ {
           decimal.amount.str(order->quantity),
           order->type,
           order->timeInForce,
-          order->disablePostOnly
+          order->postOnly
         );
       };
       void replace(const Order *const order) {
