@@ -1733,9 +1733,9 @@ namespace ₿ {
               : fmin(
                   fmax(
                     targetPositionAutoPercentage * baseValue / 1e+2,
-                    qp.targetBasePositionPercentageMin
+                    qp.targetBasePositionMin
                   ),
-                  qp.targetBasePositionPercentageMax
+                  qp.targetBasePositionMax
                 )
             )
         );
