@@ -116,7 +116,6 @@ namespace ₿ {
       static   mMarketLevels levels;
       static mWalletPosition wallet;
       static         mBroker broker;
-      static         mMemory memory;
     public:
       BTCEUR()
       {
@@ -150,7 +149,6 @@ namespace ₿ {
     mMarketLevels BTCEUR::levels(BTCEUR::K, BTCEUR::qp, BTCEUR::orders);
   mWalletPosition BTCEUR::wallet(BTCEUR::K, BTCEUR::qp, BTCEUR::orders, BTCEUR::button, BTCEUR::levels);
           mBroker BTCEUR::broker(BTCEUR::K, BTCEUR::qp, BTCEUR::orders, BTCEUR::button, BTCEUR::levels, BTCEUR::wallet);
-          mMemory BTCEUR::memory(BTCEUR::K);
 
   SCENARIO_METHOD(BTCEUR, "expected") {
     GIVEN("mMarketLevels") {
@@ -612,7 +610,7 @@ namespace ₿ {
         REQUIRE_FALSE(broker.ready());
         REQUIRE(broker.calculon.quotes.bid.state == mQuoteState::Disconnected);
         REQUIRE(broker.calculon.quotes.ask.state == mQuoteState::Disconnected);
-        REQUIRE_NOTHROW(broker.clear());
+        REQUIRE_NOTHROW(broker.purge());
         REQUIRE_NOTHROW(K.gateway->proxy.connectivity.try_write(Connectivity::Connected));
         REQUIRE(broker.ready());
         REQUIRE_FALSE(levels.ready());
@@ -638,14 +636,17 @@ namespace ₿ {
         }));
         REQUIRE_NOTHROW(wallet.safety.timer_1s());
         REQUIRE(wallet.ready());
-        REQUIRE_FALSE(broker.calcQuotes());
+        REQUIRE_NOTHROW(broker.calcQuotes());
+        REQUIRE(broker.calculon.quotes.ask.empty());
+        REQUIRE(broker.calculon.quotes.bid.empty());
         THEN("agree") {
+          REQUIRE(broker.ready());
           REQUIRE_NOTHROW(qp.click(qp));
           REQUIRE_NOTHROW(broker.semaphore.click({
             {"agree", 1}
           }));
           WHEN("quoting") {
-            REQUIRE(broker.calcQuotes());
+            REQUIRE_NOTHROW(broker.calculon.calcQuotes());
             REQUIRE_FALSE(broker.calculon.quotes.bid.empty());
             REQUIRE_FALSE(broker.calculon.quotes.ask.empty());
             THEN("to json") {
@@ -660,7 +661,7 @@ namespace ₿ {
             }
             WHEN("widthPing=2") {
               REQUIRE_NOTHROW(qp.widthPing = 2);
-              REQUIRE(broker.calcQuotes());
+              REQUIRE_NOTHROW(broker.calculon.calcQuotes());
               REQUIRE_FALSE(broker.calculon.quotes.bid.empty());
               REQUIRE_FALSE(broker.calculon.quotes.ask.empty());
               THEN("to json") {
@@ -677,7 +678,7 @@ namespace ₿ {
             WHEN("widthPing=3,bestWidth=false") {
               REQUIRE_NOTHROW(qp.bestWidth = false);
               REQUIRE_NOTHROW(qp.widthPing = 3);
-              REQUIRE(broker.calcQuotes());
+              REQUIRE_NOTHROW(broker.calculon.calcQuotes());
               REQUIRE_FALSE(broker.calculon.quotes.bid.empty());
               REQUIRE_FALSE(broker.calculon.quotes.ask.empty());
               THEN("to json") {
@@ -693,7 +694,7 @@ namespace ₿ {
             }
             WHEN("widthPing=3") {
               REQUIRE_NOTHROW(qp.widthPing = 3);
-              REQUIRE(broker.calcQuotes());
+              REQUIRE_NOTHROW(broker.calculon.calcQuotes());
               REQUIRE_FALSE(broker.calculon.quotes.bid.empty());
               REQUIRE_FALSE(broker.calculon.quotes.ask.empty());
               THEN("to json") {
@@ -709,7 +710,7 @@ namespace ₿ {
             }
             WHEN("widthPing=4") {
               REQUIRE_NOTHROW(qp.widthPing = 4);
-              REQUIRE(broker.calcQuotes());
+              REQUIRE_NOTHROW(broker.calculon.calcQuotes());
               REQUIRE_FALSE(broker.calculon.quotes.bid.empty());
               REQUIRE_FALSE(broker.calculon.quotes.ask.empty());
               THEN("to json") {

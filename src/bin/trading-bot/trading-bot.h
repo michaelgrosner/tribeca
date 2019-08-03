@@ -60,7 +60,6 @@ class Engine: public Klass {
       mMarketLevels levels;
     mWalletPosition wallet;
             mBroker broker;
-            mMemory memory;
   public:
     Engine()
       : qp(K)
@@ -69,7 +68,6 @@ class Engine: public Klass {
       , levels(K, qp, orders)
       , wallet(K, qp, orders, button, levels)
       , broker(K, qp, orders, button, levels, wallet)
-      , memory(K)
     {};
   protected:
     void run() override {
@@ -96,7 +94,7 @@ class Engine: public Klass {
           levels.timer_1s();
           if (!(tick % 60)) {
             levels.timer_60s();
-            memory.timer_60s();
+            broker.memory.timer_60s();
           }
           wallet.safety.timer_1s();
           calcQuotes();
@@ -105,37 +103,9 @@ class Engine: public Klass {
     };
   private:
     void calcQuotes() {
-      if (broker.ready() and levels.ready() and wallet.ready()) {
-        if (broker.calcQuotes()) {
-          quote2orders(broker.calculon.quotes.ask);
-          quote2orders(broker.calculon.quotes.bid);
-        } else broker.cancelOrders();
-      }
-      broker.clear();
-    };
-    void quote2orders(mQuote &quote) {
-      const vector<Order*> abandoned = broker.abandon(quote);
-      const unsigned int replace = K.gateway->askForReplace and !(
-        quote.empty() or abandoned.empty()
-      );
-      for_each(
-        abandoned.begin(), abandoned.end() - replace,
-        [&](Order *const it) {
-          broker.cancelOrder(it);
-        }
-      );
-      if (quote.empty()) return;
-      if (replace)
-        broker.replaceOrder(quote.price, quote.isPong, abandoned.back());
-      else broker.placeOrder({
-        quote.side,
-        quote.price,
-        quote.size,
-        Tstamp,
-        quote.isPong,
-        K.gateway->randId()
-      });
-      memory.orders_60s++;
+      if (broker.ready() and levels.ready() and wallet.ready())
+        broker.calcQuotes();
+      broker.purge();
     };
 } engine;
 
@@ -285,7 +255,7 @@ void TradingBot::terminal() {
     waddch(stdscr, engine.broker.semaphore.paused() ? ' ' : ':');
   }
   mvwaddch(stdscr, y-1, 0, ACS_LLCORNER);
-  mvwaddstr(stdscr, 1, 2, string("|/-\\").substr(engine.memory.orders_60s % 4, 1).data());
+  mvwaddstr(stdscr, 1, 2, string("|/-\\").substr(engine.broker.memory.orders_60s % 4, 1).data());
 };
 
 #endif

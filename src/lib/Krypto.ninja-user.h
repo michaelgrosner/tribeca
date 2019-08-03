@@ -2205,7 +2205,7 @@ namespace ₿ {
         , levels(l)
         , wallet(w)
       {};
-      vector<const Order*> clear() {
+      vector<const Order*> purge() {
         broadcast();
         countWaiting =
         countWorking = 0;
@@ -2631,71 +2631,6 @@ namespace ₿ {
     };
   };
 
-  struct mBroker: public Client::Clicked::Catch {
-          mSemaphore semaphore;
-    mAntonioCalculon calculon;
-    private_ref:
-      const KryptoNinja    &K;
-      const mQuotingParams &qp;
-            mOrders        &orders;
-    public:
-      mBroker(const KryptoNinja &bot, const mQuotingParams &q, mOrders &o, const mButtons &b, const mMarketLevels &l, const mWalletPosition &w)
-        : Catch(bot, {
-            {&b.submit, [&](const json &j) { placeOrder(j); }},
-            {&b.cancel, [&](const json &j) { cancelOrder(orders.find(j)); }},
-            {&b.cancelAll, [&]() { cancelOrders(); }}
-          })
-        , semaphore(bot)
-        , calculon(bot, q, l, w)
-        , K(bot)
-        , qp(q)
-        , orders(o)
-      {};
-      bool ready() {
-        if (semaphore.offline()) {
-          calculon.offline();
-          return false;
-        }
-        return true;
-      };
-      bool calcQuotes() {
-        if (semaphore.paused()) {
-          calculon.paused();
-          return false;
-        }
-        calculon.calcQuotes();
-        return true;
-      };
-      vector<Order*> abandon(mQuote &quote) {
-        vector<Order*> abandoned;
-        unsigned int bullets = qp.bullets;
-        const bool all = quote.state != mQuoteState::Live;
-        for (Order *const it : orders.at(quote.side))
-          if (all or calculon.abandon(*it, quote, bullets))
-            abandoned.push_back(it);
-        return abandoned;
-      };
-      void clear() {
-        for (const Order *const it : calculon.clear())
-          orders.purge(it);
-      };
-      void placeOrder(const Order &raw) {
-        K.gateway->place(orders.upsert(raw));
-      };
-      void replaceOrder(const Price &price, const bool &isPong, Order *const order) {
-        if (orders.replace(price, isPong, order))
-          K.gateway->replace(order);
-      };
-      void cancelOrder(Order *const order) {
-        if (orders.cancel(order))
-          K.gateway->cancel(order);
-      };
-      void cancelOrders() {
-        for (Order *const it : orders.working())
-          cancelOrder(it);
-      };
-  };
-
   class mProduct: public Client::Broadcast<mProduct> {
     private_ref:
       const KryptoNinja &K;
@@ -2764,6 +2699,100 @@ namespace ₿ {
   };
   static void to_json(json &j, const mMemory &k) {
     j = k.to_json();
+  };
+
+  struct mBroker: public Client::Clicked::Catch {
+             mMemory memory;
+          mSemaphore semaphore;
+    mAntonioCalculon calculon;
+    private_ref:
+      const KryptoNinja    &K;
+      const mQuotingParams &qp;
+            mOrders        &orders;
+    public:
+      mBroker(const KryptoNinja &bot, const mQuotingParams &q, mOrders &o, const mButtons &b, const mMarketLevels &l, const mWalletPosition &w)
+        : Catch(bot, {
+            {&b.submit, [&](const json &j) { placeOrder(j); }},
+            {&b.cancel, [&](const json &j) { cancelOrder(orders.find(j)); }},
+            {&b.cancelAll, [&]() { cancelOrders(); }}
+          })
+        , memory(bot)
+        , semaphore(bot)
+        , calculon(bot, q, l, w)
+        , K(bot)
+        , qp(q)
+        , orders(o)
+      {};
+      bool ready() {
+        if (semaphore.offline()) {
+          calculon.offline();
+          return false;
+        }
+        return true;
+      };
+      void calcQuotes() {
+        if (semaphore.paused()) {
+          calculon.paused();
+          cancelOrders();
+        } else {
+          calculon.calcQuotes();
+          quote2orders(calculon.quotes.ask);
+          quote2orders(calculon.quotes.bid);
+        }
+      };
+      void quote2orders(mQuote &quote) {
+        const vector<Order*> abandoned = abandon(quote);
+        const unsigned int replace = K.gateway->askForReplace and !(
+          quote.empty() or abandoned.empty()
+        );
+        for_each(
+          abandoned.begin(), abandoned.end() - replace,
+          [&](Order *const it) {
+            cancelOrder(it);
+          }
+        );
+        if (quote.empty()) return;
+        if (replace)
+          replaceOrder(quote.price, quote.isPong, abandoned.back());
+        else placeOrder({
+          quote.side,
+          quote.price,
+          quote.size,
+          Tstamp,
+          quote.isPong,
+          K.gateway->randId()
+        });
+        memory.orders_60s++;
+      };
+      void purge() {
+        for (const Order *const it : calculon.purge())
+          orders.purge(it);
+      };
+    private:
+      vector<Order*> abandon(mQuote &quote) {
+        vector<Order*> abandoned;
+        unsigned int bullets = qp.bullets;
+        const bool all = quote.state != mQuoteState::Live;
+        for (Order *const it : orders.at(quote.side))
+          if (all or calculon.abandon(*it, quote, bullets))
+            abandoned.push_back(it);
+        return abandoned;
+      };
+      void placeOrder(const Order &raw) {
+        K.gateway->place(orders.upsert(raw));
+      };
+      void replaceOrder(const Price &price, const bool &isPong, Order *const order) {
+        if (orders.replace(price, isPong, order))
+          K.gateway->replace(order);
+      };
+      void cancelOrder(Order *const order) {
+        if (orders.cancel(order))
+          K.gateway->cancel(order);
+      };
+      void cancelOrders() {
+        for (Order *const it : orders.working())
+          cancelOrder(it);
+      };
   };
 }
 

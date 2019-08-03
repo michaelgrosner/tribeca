@@ -630,14 +630,14 @@ namespace ₿ {
               }
             }
             curl_url_cleanup(url);
-            return rc != CURLE_OK
-                 ? rc
-                 : Easy::connect(
-                     "http" + uri.substr(2),
-                     header,
-                     "HTTP/1.1 101 Switching Protocols",
-                     "HSmrc0sMlYUkAGmm5OPpG2HaGWk="
-                   );
+            return rc == CURLE_OK
+              ? Easy::connect(
+                  "http" + uri.substr(2),
+                  header,
+                  "HTTP/1.1 101 Switching Protocols",
+                  "HSmrc0sMlYUkAGmm5OPpG2HaGWk="
+                )
+              : rc;
           };
           CURLcode emit(const string &data, const int &opcode) {
             return Easy::emit(frame(data, opcode, true));
