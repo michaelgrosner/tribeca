@@ -1153,18 +1153,7 @@ namespace ₿ {
       };
   };
 
-  //! \brief Placeholder for data/time callback user definitions.
-  class Klass {
-    protected:
-      virtual void run() {};
-    public:
-      void wait() {
-        run();
-      };
-  };
-
-  class KryptoNinja: public Klass,
-                     public Print,
+  class KryptoNinja: public Print,
                      public Epoll,
                      public Ending,
                      public Option,
@@ -1173,6 +1162,8 @@ namespace ₿ {
                      public Client {
     public:
       Gw *gateway = nullptr;
+    protected:
+      virtual void run() = 0;
     public:
       KryptoNinja *main(int argc, char** argv) {
         {
@@ -1241,17 +1232,9 @@ namespace ₿ {
         }
         return this;
       };
-      void wait(Klass *const k = nullptr) {
-        (k ?: this)->wait();
+      void wait() {
+        run();
         walk();
-      };
-      void handshake(const GwExchange::Report &notes = {}) {
-        const json reply = gateway->handshake(arg<int>("nocache"));
-        if (!gateway->tickPrice or !gateway->tickSize or !gateway->minSize)
-          error("GW", "Unable to fetch data from " + gateway->exchange
-            + " for symbols " + gateway->base + "/" + gateway->quote
-            + ", possible error message: " + reply.dump());
-        gateway->report(notes, arg<int>("nocache"));
       };
       unsigned int memSize() const {
 #ifdef _WIN32
@@ -1267,6 +1250,14 @@ namespace ₿ {
         return stat(arg<string>("database").data(), &st) ? 0 : st.st_size;
       };
     private:
+      void handshake(const GwExchange::Report &notes = {}) {
+        const json reply = gateway->handshake(arg<int>("nocache"));
+        if (!gateway->tickPrice or !gateway->tickSize or !gateway->minSize)
+          error("GW", "Unable to fetch data from " + gateway->exchange
+            + " for symbols " + gateway->base + "/" + gateway->quote
+            + ", possible error message: " + reply.dump());
+        gateway->report(notes, arg<int>("nocache"));
+      };
       void setup() {
         if (!(gateway = Gw::new_Gw(arg<string>("exchange"))))
           error("CF",
