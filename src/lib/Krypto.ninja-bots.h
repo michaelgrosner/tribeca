@@ -74,18 +74,18 @@ namespace ₿ {
     exit(prefix + Ansi::r(COLOR_RED) + " Errrror: " + Ansi::b(COLOR_RED) + reason, reboot);
   };
 
-  class Print {
+  class Terminal {
     public:
-      static void (*display)();
-      static WINDOW *stdlog;
-      static struct Padding {
+      void (*display)() = nullptr;
+      WINDOW *stdlog = nullptr;
+      struct {
         unsigned int top;
         unsigned int right;
         unsigned int bottom;
         unsigned int left;
-      } padding;
+      } padding = {ANY_NUM, 0, 0, 0};
     public:
-      static void repaint() {
+      void repaint() const {
         if (!display) return;
         display();
         wrefresh(stdscr);
@@ -94,7 +94,7 @@ namespace ₿ {
           wrefresh(stdlog);
         }
       };
-      static string stamp() {
+      string stamp() const {
         chrono::system_clock::time_point clock = chrono::system_clock::now();
         chrono::system_clock::duration t = clock.time_since_epoch();
         t -= chrono::duration_cast<chrono::seconds>(t);
@@ -122,7 +122,7 @@ namespace ₿ {
         }
         return "";
       };
-      static void log(const string &prefix, const string &reason, const string &highlight = "") {
+      void log(const string &prefix, const string &reason, const string &highlight = "") const {
         int color = 0;
         if (reason.find("NG TRADE") != string::npos) {
           if (reason.find("BUY") != string::npos)       color = 1;
@@ -162,7 +162,7 @@ namespace ₿ {
         wattroff(stdlog, COLOR_PAIR(COLOR_WHITE));
         wrefresh(stdlog);
       };
-      static void logWar(const string &prefix, const string &reason) {
+      void logWar(const string &prefix, const string &reason) const {
         if (!display) {
           clog << stamp()
                << prefix          << Ansi::r(COLOR_RED)
@@ -189,7 +189,7 @@ namespace ₿ {
         wrefresh(stdlog);
       };
     protected:
-      static bool windowed() {
+      bool windowed() {
         if (!display) return false;
         if (stdlog)
           error("SH", "Unable to print another window");
@@ -219,12 +219,6 @@ namespace ₿ {
         return true;
       };
   };
-
-  void (*Print::display)() = nullptr;
-
-  WINDOW *Print::stdlog = nullptr;
-
-  Print::Padding Print::padding = {ANY_NUM, 0, 0, 0};
 
   class Rollout {
     public:
@@ -356,18 +350,9 @@ namespace ₿ {
       };
   };
 
-  vector<function<void()>> Ending::endingFn = { []() {
-    if (Print::display) {
-      Print::display = nullptr;
-      beep();
-      endwin();
-    }
-    clog << Print::stamp()
-         << epilogue
-         << string(epilogue.empty() ? 0 : 1, '\n');
-  } };
+  vector<function<void()>> Ending::endingFn;
 
-  class Option {
+  class Option: public Terminal {
     private_friend:
       struct Argument {
        const string  name;
@@ -390,10 +375,20 @@ namespace ₿ {
         return get<T>(args.at(name));
       };
     protected:
-      void main(int argc, char** argv, const bool &databases, const bool &headless) {
+      void main(Ending *const K, int argc, char** argv, const bool &databases, const bool &headless) {
+        K->ending([&]() {
+          if (display) {
+            display = nullptr;
+            beep();
+            endwin();
+          }
+          clog << stamp()
+               << epilogue
+               << string(epilogue.empty() ? 0 : 1, '\n');
+        });
         args["autobot"]  = autobot;
         args["headless"] = headless;
-        args["naked"]    = !Print::display;
+        args["naked"]    = !display;
         vector<Argument> long_options = {
           {"help",         "h",      nullptr,  "show this help and quit"},
           {"version",      "v",      nullptr,  "show current build version and quit"},
@@ -510,7 +505,7 @@ namespace ₿ {
           arguments.second = nullptr;
         }
         if (arg<int>("naked"))
-          Print::display = nullptr;
+          display = nullptr;
         if (!arg<string>("interface").empty() and !arg<int>("ipv6"))
           Curl::global_setopt = [&](CURL *curl) {
             curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
@@ -623,7 +618,13 @@ namespace ₿ {
               hotkey.keymap(it.first, it.second);
           };
       };
+    public:
+      ~Hotkey()
+      {
+        stop = true;
+      };
     private:
+      bool stop = false;
       Loop::Async::Proxy<char> keylogger;
       mutable unordered_map<char, function<void()>> maps;
     protected:
@@ -653,7 +654,7 @@ namespace ₿ {
       };
       vector<char> sync_keylogger() {
         int ch = ERR;
-        while (ch == ERR and Print::display)
+        while (ch == ERR and !stop)
           ch = getch();
         return {
           ch == ERR
@@ -799,18 +800,23 @@ namespace ₿ {
       string disk = "main";
       mutable vector<Backup*> tables;
     protected:
-      void backups(const string &database, const string &diskdata) {
-        if (sqlite3_open(database.data(), &db))
+      void backups(const Option *const K) {
+        if (sqlite3_open(K->arg<string>("database").data(), &db))
           error("DB", sqlite3_errmsg(db));
-        Print::log("DB", "loaded OK from", database);
-        if (!diskdata.empty()) {
-          exec("ATTACH '" + diskdata + "' AS " + (disk = "disk") + ";");
-          Print::log("DB", "loaded OK from", diskdata);
+        K->log("DB", "loaded OK from", K->arg<string>("database"));
+        if (!K->arg<string>("diskdata").empty()) {
+          exec("ATTACH '" + K->arg<string>("diskdata") + "' AS " + (disk = "disk") + ";");
+            K->log("DB", "loaded OK from", K->arg<string>("diskdata"));
         }
         exec("PRAGMA " + disk + ".journal_mode = WAL;"
              "PRAGMA " + disk + ".synchronous = NORMAL;");
         for (auto &it : tables) {
-          report(it->pull(select(it)));
+          const Backup::Report note = it->pull(select(it));
+          if (!note.second.empty()) {
+            if (note.first)
+              K->logWar("DB", note.second);
+            else K->log("DB", note.second);
+          }
           it->push = [this, it]() {
             insert(it);
           };
@@ -823,12 +829,6 @@ namespace ₿ {
         tables.clear();
       };
     private:
-      void report(const Backup::Report note) const {
-        if (note.second.empty()) return;
-        if (note.first)
-          Print::logWar("DB", note.second);
-        else Print::log("DB", note.second);
-      };
       json select(Backup *const data) {
         const string table = schema(data);
         json result = json::array();
@@ -879,10 +879,10 @@ namespace ₿ {
           ? "DELETE FROM " + table + " WHERE time < " + to_string(Tstamp - lifetime) + ";"
           : "";
       };
-      void exec(const string &sql, json *const result = nullptr) {              // Print::log("DB DEBUG", sql);
+      void exec(const string &sql, json *const result = nullptr) {
         char* zErrMsg = nullptr;
         sqlite3_exec(db, sql.data(), result ? write : nullptr, (void*)result, &zErrMsg);
-        if (zErrMsg) Print::logWar("DB", "SQLite error: " + (zErrMsg + (" at " + sql)));
+        if (zErrMsg) error("DB", "SQLite error: " + (zErrMsg + (" at " + sql)));
         sqlite3_free(zErrMsg);
       };
       static int write(void *result, int argc, char **argv, char**) {
@@ -978,12 +978,11 @@ namespace ₿ {
               };
           };
       };
-    public:
-      string protocol;
-      string wtfismyip = "localhost";
     protected:
+      string wtfismyip = "localhost";
       unordered_map<string, pair<const char*, const int>> documents;
     private:
+      string protocol = "HTTP";
       WebServer::Backend server;
       const Option *option = nullptr;
       mutable unsigned int delay = 0;
@@ -995,28 +994,33 @@ namespace ₿ {
       unordered_map<char, function<void(const json&)>> kisses;
       unordered_map<char, string> queue;
     public:
-      void listen(const Option *const o, const curl_socket_t &loopfd) {
-        option = o;
+      void listen(const Option *const K, const curl_socket_t &loopfd) {
+        option = K;
         if (!server.listen(
           loopfd,
-          option->arg<string>("interface"),
-          option->arg<int>("port"),
-          option->arg<int>("ipv6"),
+          K->arg<string>("interface"),
+          K->arg<int>("port"),
+          K->arg<int>("ipv6"),
           {
-            option->arg<string>("B64auth"),
+            K->arg<string>("B64auth"),
             response,
             upgrade,
             message
           }
-        )) error("UI", "Unable to listen at port number " + to_string(option->arg<int>("port"))
+        )) error("UI", "Unable to listen at port number " + to_string(K->arg<int>("port"))
              + " (may be already in use by another program)");
-        if (!option->arg<int>("without-ssl"))
+        if (!K->arg<int>("without-ssl"))
           for (const auto &it : server.ssl_context(
-            option->arg<string>("ssl-crt"),
-            option->arg<string>("ssl-key")
-          )) Print::logWar("UI", it);
+            K->arg<string>("ssl-crt"),
+            K->arg<string>("ssl-key")
+          )) K->logWar("UI", it);
         protocol  = server.protocol();
-        Print::log("UI", "ready at", Text::strL(protocol) + "://" + wtfismyip + ":" + to_string(option->arg<int>("port")));
+        K->log("UI", "ready at", location());
+      };
+      string location() {
+        return option
+          ? Text::strL(protocol) + "://" + wtfismyip + ":" + to_string(option->arg<int>("port"))
+          : "loading..";
       };
       void clicked(const Clickable *data, const json &j = nullptr) const {
         if (clickFn.find(data) != clickFn.end())
@@ -1073,7 +1077,7 @@ namespace ₿ {
           and !option->arg<string>("whitelist").empty()
           and option->arg<string>("whitelist").find(addr) == string::npos
         ) {
-          Print::log("UI", "dropping gzip bomb on", addr);
+          option->log("UI", "dropping gzip bomb on", addr);
           return true;
         }
         return false;
@@ -1087,10 +1091,10 @@ namespace ₿ {
         unsigned int code = 200;
         const string leaf = path.substr(path.find_last_of('.') + 1);
         if (papersplease and auth.empty()) {
-          Print::log("UI", "authorization attempt from", addr);
+          option->log("UI", "authorization attempt from", addr);
           code = 401;
         } else if (papersplease and auth != option->arg<string>("B64auth")) {
-          Print::log("UI", "authorization failed from", addr);
+          option->log("UI", "authorization failed from", addr);
           code = 403;
         } else if (leaf != "/" or server.clients() < option->arg<int>("client-limit")) {
           if (documents.find(path) == documents.end())
@@ -1100,7 +1104,7 @@ namespace ₿ {
           if (documents.find(path) != documents.end()) {
             content = string(documents.at(path).first,
                              documents.at(path).second);
-            if (leaf == "/") Print::log("UI", "authorization success from", addr);
+            if (leaf == "/") option->log("UI", "authorization success from", addr);
             else if (leaf == "js")  type = "application/javascript; charset=UTF-8";
             else if (leaf == "css") type = "text/css; charset=UTF-8";
             else if (leaf == "ico") type = "image/x-icon";
@@ -1112,7 +1116,7 @@ namespace ₿ {
               code = 418, content = "Today, is your lucky day!";
           }
         } else {
-          Print::log("UI", "--client-limit=" + to_string(option->arg<int>("client-limit"))
+          option->log("UI", "--client-limit=" + to_string(option->arg<int>("client-limit"))
             + " reached by", addr);
           content = "Thank you! but our princess is already in this castle!"
                     "<br/>" "Refresh the page anytime to retry.";
@@ -1121,10 +1125,10 @@ namespace ₿ {
       };
       WebServer::Upgrade upgrade = [&](const int &sum, const string &addr) {
         const int tentative = server.clients() + sum;
-        Print::log("UI", to_string(tentative) + " client" + string(tentative == 1 ? 0 : 1, 's')
+        option->log("UI", to_string(tentative) + " client" + string(tentative == 1 ? 0 : 1, 's')
           + (sum > 0 ? "" : " remain") + " connected, last connection was from", addr);
         if (tentative > option->arg<int>("client-limit")) {
-          Print::log("UI", "--client-limit=" + to_string(option->arg<int>("client-limit"))
+          option->log("UI", "--client-limit=" + to_string(option->arg<int>("client-limit"))
             + " reached by", addr);
           return 0;
         }
@@ -1153,8 +1157,7 @@ namespace ₿ {
       };
   };
 
-  class KryptoNinja: public Print,
-                     public Epoll,
+  class KryptoNinja: public Epoll,
                      public Ending,
                      public Option,
                      public Hotkey,
@@ -1167,11 +1170,11 @@ namespace ₿ {
     public:
       KryptoNinja *main(int argc, char** argv) {
         {
-          Option::main(argc, argv, databases, documents.empty());
+          Option::main(this, argc, argv, databases, documents.empty());
           setup();
         } {
           if (windowed())
-            wait_for_keylog((Loop*)this);
+            wait_for_keylog(this);
         } {
           log("CF", "Outbound IP address is",
             wtfismyip = Curl::Web::xfer("https://wtfismyip.com/json", 4L)
@@ -1188,7 +1191,7 @@ namespace ₿ {
               + " (consider to repeat a few times this check)");
           }
         } {
-          gateway->wait_for_data((Loop*)this);
+          gateway->wait_for_data(this);
           timer_1s([&](const unsigned int &tick) {
             gateway->ask_for_data(tick);
           });
@@ -1206,15 +1209,12 @@ namespace ₿ {
           });
         } {
           if (databases)
-            backups(
-              arg<string>("database"),
-              arg<string>("diskdata")
-            );
+            backups(this);
           else blackhole();
         } {
           if (arg<int>("headless")) headless();
           else {
-            listen((Option*)this, poll());
+            listen(this, poll());
             timer_1s([&](const unsigned int &tick) {
               broadcast(tick);
             });
@@ -1288,8 +1288,8 @@ namespace ₿ {
         gateway->loopfd    = poll();
         gateway->printer   = [&](const string &prefix, const string &reason, const string &highlight) {
           if (reason.find("Error") != string::npos)
-            Print::logWar(prefix, reason);
-          else Print::log(prefix, reason, highlight);
+            logWar(prefix, reason);
+          else log(prefix, reason, highlight);
         };
         gateway->adminAgreement = (Connectivity)arg<int>("autobot");
       };

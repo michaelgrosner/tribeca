@@ -439,7 +439,7 @@ namespace ₿ {
         if (order->status == Status::Terminated)
           purge(order);
         broadcast();
-        Print::repaint();
+        K.repaint();
       };
       mMatter about() const override {
         return mMatter::OrderStatusReports;
@@ -452,7 +452,7 @@ namespace ₿ {
       };
     private:
       void report(const Order *const order, const string &reason) const {
-        Print::log("DEBUG OG", " " + reason + " " + (
+        K.log("DEBUG OG", " " + reason + " " + (
           order
             ? order->orderId + "::" + order->exchangeId
               + " [" + to_string((int)order->status) + "]: "
@@ -462,7 +462,7 @@ namespace ₿ {
         ));
       };
       void report_size() const {
-        Print::log("DEBUG OG", "memory " + to_string(orders.size()));
+        K.log("DEBUG OG", "memory " + to_string(orders.size()));
       };
   };
   static void to_json(json &j, const mOrders &k) {
@@ -664,6 +664,7 @@ namespace ₿ {
           double mgEwmaTrendDiff              = 0,
                  targetPositionAutoPercentage = 0;
     private_ref:
+      const KryptoNinja    &K;
       const Price          &fairValue;
       const mQuotingParams &qp;
     public:
@@ -673,6 +674,7 @@ namespace ₿ {
             {&q, [&]() { calcFromHistory(); }}
           })
         , fairValue96h(bot)
+        , K(bot)
         , fairValue(f)
         , qp(q)
       {};
@@ -719,7 +721,7 @@ namespace ₿ {
         unsigned int x = 0;
         *mean = fairValue96h.front();
         while (n--) calc(mean, periods, fairValue96h.at(++x));
-        Print::log("MG", "reloaded " + to_string(*mean) + " EWMA " + name);
+        K.log("MG", "reloaded " + to_string(*mean) + " EWMA " + name);
       };
       void calcPositions() {
         calc(&mgEwmaVL, qp.veryLongEwmaPeriods,   fairValue);
@@ -912,7 +914,7 @@ namespace ₿ {
       bool warn_empty() const {
         const bool err = bids.empty() or asks.empty();
         if (err and (float)clock()/CLOCKS_PER_SEC > 3.0)
-          Print::logWar("QE", "Unable to calculate quote, missing market data");
+          K.logWar("QE", "Unable to calculate quote, missing market data");
         return err;
       };
       void timer_1s() {
@@ -947,7 +949,7 @@ namespace ₿ {
         unfiltered.bids = raw.bids;
         unfiltered.asks = raw.asks;
         filter();
-        if (stats.fairPrice.broadcast()) Print::repaint();
+        if (stats.fairPrice.broadcast()) K.repaint();
         diff.send_patch();
       };
     private:
@@ -1293,7 +1295,7 @@ namespace ₿ {
           order.isPong,
           false
         };
-        Print::log("GW " + K.gateway->exchange, string(filled.isPong?"PONG":"PING") + " TRADE "
+        K.log("GW " + K.gateway->exchange, string(filled.isPong?"PONG":"PING") + " TRADE "
           + (filled.side == Side::Bid ? "BUY  " : "SELL ")
           + K.gateway->decimal.amount.str(filled.quantity) + ' ' + K.gateway->base + " at price "
           + K.gateway->decimal.price.str(filled.price) + ' ' + K.gateway->quote + " (value "
@@ -1748,7 +1750,7 @@ namespace ₿ {
       bool warn_empty() const {
         const bool err = empty();
         if (err and (float)clock()/CLOCKS_PER_SEC > 3.0)
-          Print::logWar("PG", "Unable to calculate TBP, missing wallet data");
+          K.logWar("PG", "Unable to calculate TBP, missing wallet data");
         return err;
       };
       bool empty() const {
@@ -1783,7 +1785,7 @@ namespace ₿ {
         positionDivergence = K.gateway->decimal.funds.round(positionDivergence);
       };
       void report() const {
-        Print::log("PG", "TBP: "
+        K.log("PG", "TBP: "
           + to_string((int)(targetBasePosition / baseValue * 1e+2)) + "% = " + K.gateway->decimal.funds.str(targetBasePosition)
           + " " + K.gateway->base + ", pDiv: "
           + to_string((int)(positionDivergence / baseValue * 1e+2)) + "% = " + K.gateway->decimal.funds.str(positionDivergence)
@@ -1967,11 +1969,11 @@ namespace ₿ {
       void checkCrossedQuotes() {
         if ((unsigned int)bid.checkCrossed(ask)
           | (unsigned int)ask.checkCrossed(bid)
-        ) Print::logWar("QE", "Crossed bid/ask quotes detected, that is.. unexpected");
+        ) K.logWar("QE", "Crossed bid/ask quotes detected, that is.. unexpected");
       };
       void debug(const string &step) {
         if (K.arg<int>("debug-quotes"))
-          Print::log("DEBUG QE", "[" + step + "] "
+          K.log("DEBUG QE", "[" + step + "] "
             + to_string((int)bid.state) + ":"
             + to_string((int)ask.state) + " "
             + ((json){{"bid", bid}, {"ask", ask}}).dump()
@@ -2018,7 +2020,7 @@ namespace ₿ {
         if (quotes.bid.price <= 0 or quotes.ask.price <= 0) {
           quotes.bid.clear(mQuoteState::WidthMustBeSmaller);
           quotes.ask.clear(mQuoteState::WidthMustBeSmaller);
-          Print::logWar("QP", "Negative price detected, widthPing must be smaller");
+          K.logWar("QP", "Negative price detected, widthPing must be smaller");
         }
       };
     private:
@@ -2618,10 +2620,10 @@ namespace ₿ {
           (bool)greenGateway and (bool)K.gateway->adminAgreement
         );
         if (greenButton != previous)
-          Print::log("GW " + K.gateway->exchange, "Quoting state changed to",
+          K.log("GW " + K.gateway->exchange, "Quoting state changed to",
             string(paused() ? "DIS" : "") + "CONNECTED");
         broadcast();
-        Print::repaint();
+        K.repaint();
       };
   };
   static void to_json(json &j, const mSemaphore &k) {

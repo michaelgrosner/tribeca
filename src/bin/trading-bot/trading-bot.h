@@ -104,21 +104,21 @@ class TradingBot: public KryptoNinja {
 } K;
 
 void TradingBot::terminal() {
-  if (!(stdscr and stdlog)) return;
+  if (!(stdscr and K.stdlog)) return;
   const vector<Order> openOrders = K.orders.working(true);
-  const unsigned int previous = padding.bottom;
-  padding.bottom = max((int)openOrders.size(), K.broker.semaphore.paused() ? 0 : 2) + 1;
+  const unsigned int previous = K.padding.bottom;
+  K.padding.bottom = max((int)openOrders.size(), K.broker.semaphore.paused() ? 0 : 2) + 1;
   const int y = getmaxy(stdscr),
             x = getmaxx(stdscr),
-            yMaxLog = y - padding.bottom;
-  if (padding.bottom != previous) {
-    if (previous < padding.bottom) wscrl(stdlog, padding.bottom - previous);
+            yMaxLog = y - K.padding.bottom;
+  if (K.padding.bottom != previous) {
+    if (previous < K.padding.bottom) wscrl(K.stdlog, K.padding.bottom - previous);
     wresize(
-      stdlog,
-      y - padding.top - padding.bottom,
-      x - padding.left - padding.right
+      K.stdlog,
+      y - K.padding.top - K.padding.bottom,
+      x - K.padding.left - K.padding.right
     );
-    if (previous > padding.bottom) wscrl(stdlog, padding.bottom - previous);
+    if (previous > K.padding.bottom) wscrl(K.stdlog, K.padding.bottom - previous);
   }
   mvwvline(stdscr, 1, 1, ' ', y-1);
   mvwvline(stdscr, yMaxLog-1, 1, ' ', y-1);
@@ -144,10 +144,7 @@ void TradingBot::terminal() {
   mvwaddch(stdscr, 0, 12, ACS_RTEE);
   wattron(stdscr, COLOR_PAIR(COLOR_GREEN));
   const string title1 = "   " + K.arg<string>("exchange");
-  const string title2 = " " + (K.arg<int>("headless")
-    ? "headless"
-    : "UI at " + Text::strL(K.protocol) + "://" + K.wtfismyip + ":" + to_string(K.arg<int>("port"))
-  )  + ' ';
+  const string title2 = " " + (K.arg<int>("headless") ? "headless" : "UI at " + K.location()) + ' ';
   wattron(stdscr, A_BOLD);
   mvwaddstr(stdscr, 0, 13, title1.data());
   wattroff(stdscr, A_BOLD);

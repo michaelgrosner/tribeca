@@ -109,7 +109,10 @@ namespace ₿ {
 
   class BTCEUR {
     protected:
-      static     KryptoNinja K;
+      static class Bot: public KryptoNinja {
+        protected:
+          void run() override {};
+      } K;
       static  mQuotingParams qp;
       static         mOrders orders;
       static        mButtons button;
@@ -142,7 +145,7 @@ namespace ₿ {
       };
   };
 
-      KryptoNinja BTCEUR::K;
+      BTCEUR::Bot BTCEUR::K;
    mQuotingParams BTCEUR::qp(BTCEUR::K);
           mOrders BTCEUR::orders(BTCEUR::K);
          mButtons BTCEUR::button(BTCEUR::K);
