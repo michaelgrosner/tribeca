@@ -104,22 +104,13 @@ class TradingBot: public KryptoNinja {
 } K;
 
 void TradingBot::terminal() {
-  if (!(stdscr and K.stdlog)) return;
   const vector<Order> openOrders = K.orders.working(true);
-  const unsigned int previous = K.padding.bottom;
-  K.padding.bottom = max((int)openOrders.size(), K.broker.semaphore.paused() ? 0 : 2) + 1;
-  const int y = getmaxy(stdscr),
-            x = getmaxx(stdscr),
-            yMaxLog = y - K.padding.bottom;
-  if (K.padding.bottom != previous) {
-    if (previous < K.padding.bottom) wscrl(K.stdlog, K.padding.bottom - previous);
-    wresize(
-      K.stdlog,
-      y - K.padding.top - K.padding.bottom,
-      x - K.padding.left - K.padding.right
-    );
-    if (previous > K.padding.bottom) wscrl(K.stdlog, K.padding.bottom - previous);
-  }
+  const int x = getmaxx(stdscr),
+            y = getmaxy(stdscr),
+            yMaxLog = y - K.padding_bottom(1 + max(
+                            (int)openOrders.size(),
+                            K.broker.semaphore.paused() ? 0 : 2
+                          ));
   mvwvline(stdscr, 1, 1, ' ', y-1);
   mvwvline(stdscr, yMaxLog-1, 1, ' ', y-1);
   mvwhline(stdscr, yMaxLog,   1, ' ', x-1);

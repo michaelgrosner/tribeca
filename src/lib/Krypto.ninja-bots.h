@@ -74,6 +74,138 @@ namespace ₿ {
     exit(prefix + Ansi::r(COLOR_RED) + " Errrror: " + Ansi::b(COLOR_RED) + reason, reboot);
   };
 
+  class Rollout {
+    public:
+      Rollout(/* KMxTWEpb9ig */) {
+        static once_flag rollout;
+        call_once(rollout, version);
+      };
+    protected:
+      static void version() {
+        curl_global_init(CURL_GLOBAL_ALL);
+        clog << Ansi::b(COLOR_GREEN) << K_SOURCE
+             << Ansi::r(COLOR_GREEN) << ' ' << K_BUILD << ' ' << K_STAMP << ".\n";
+        const string mods = changelog();
+        const int commits = count(mods.begin(), mods.end(), '\n');
+        clog << Ansi::b(COLOR_GREEN) << K_0_DAY << Ansi::r(COLOR_GREEN) << ' '
+             << (commits
+                 ? '-' + to_string(commits) + "commit"
+                   + string(commits == 1 ? 0 : 1, 's') + '.'
+                 : "(0day)"
+                )
+#ifndef NDEBUG
+            << " with DEBUG MODE enabled"
+#endif
+            << ".\n" << Ansi::r(COLOR_YELLOW) << mods << Ansi::reset();
+      };
+      static string changelog() {
+        string mods;
+        const json diff =
+#ifdef NDEBUG
+          Curl::Web::xfer("https://api.github.com/repos/ctubio/Krypto-trading-bot"
+            "/compare/" + string(K_0_GIT) + "...HEAD", 4L)
+#else
+          json::object()
+#endif
+        ;
+        if (diff.value("ahead_by", 0)
+          and diff.find("commits") != diff.end()
+          and diff.at("commits").is_array()
+        ) for (const json &it : diff.at("commits"))
+          mods += it.value("/commit/author/date"_json_pointer, "").substr(0, 10) + " "
+                + it.value("/commit/author/date"_json_pointer, "").substr(11, 8)
+                + " (" + it.value("sha", "").substr(0, 7) + ") "
+                + it.value("/commit/message"_json_pointer, "").substr(0,
+                  it.value("/commit/message"_json_pointer, "").find("\n\n") + 1
+                );
+        return mods;
+      };
+  };
+
+  class Ending: public Rollout {
+    private:
+      static vector<function<void()>> endingFn;
+    public:
+      Ending() {
+        signal(SIGINT, [](const int) {
+          clog << '\n';
+          raise(SIGQUIT);
+        });
+        signal(SIGQUIT, die);
+        signal(SIGTERM, err);
+        signal(SIGABRT, wtf);
+        signal(SIGSEGV, wtf);
+        signal(SIGUSR1, wtf);
+        signal(SIGPIPE, SIG_IGN);
+      };
+      void ending(const function<void()> &fn) {
+        endingFn.push_back(fn);
+      };
+    private:
+      static void halt(const int code) {
+        vector<function<void()>> happyEndingFn;
+        endingFn.swap(happyEndingFn);
+        for (const auto &it : happyEndingFn) it();
+        Ansi::colorful = 1;
+        clog << Ansi::b(COLOR_GREEN) << 'K'
+             << Ansi::r(COLOR_GREEN) << " exit code "
+             << Ansi::b(COLOR_GREEN) << code
+             << Ansi::r(COLOR_GREEN) << '.'
+             << Ansi::reset() << '\n';
+        EXIT(code);
+      };
+      static void die(const int) {
+        if (epilogue.empty())
+          epilogue = "Excellent decision! "
+                   + Curl::Web::xfer("https://api.icndb.com/jokes/random?escape=javascript&limitTo=[nerdy]", 4L)
+                       .value("/value/joke"_json_pointer, "let's plant a tree instead..");
+        halt(
+          epilogue.find("Errrror") == string::npos
+            ? EXIT_SUCCESS
+            : EXIT_FAILURE
+        );
+      };
+      static void err(const int) {
+        if (epilogue.empty()) epilogue = "Unknown error, no joke.";
+        halt(EXIT_FAILURE);
+      };
+      static void wtf(const int sig) {
+        epilogue = Ansi::r(COLOR_CYAN) + "Errrror: " + strsignal(sig) + ' ';
+        const string mods = changelog();
+        if (mods.empty()) {
+          epilogue += "(Three-Headed Monkey found):\n"                  + epitaph
+            + "- binbuild: " + string(K_SOURCE)                         + ' '
+                             + string(K_BUILD)                          + '\n'
+            + "- lastbeat: " + to_string((float)clock()/CLOCKS_PER_SEC) + '\n'
+#ifndef _WIN32
+            + "- tracelog: " + '\n';
+          void *k[69];
+          size_t jumps = backtrace(k, 69);
+          char **trace = backtrace_symbols(k, jumps);
+          for (;
+            jumps --> 0;
+            epilogue += "  " + to_string(jumps) + ": " + string(trace[jumps]) + '\n'
+          );
+          free(trace)
+#endif
+          ;
+          epilogue += '\n' + Ansi::b(COLOR_RED) + "Yikes!" + Ansi::r(COLOR_RED)
+            + '\n' + "please copy and paste the error above into a new github issue (noworry for duplicates)."
+            + '\n' + "If you agree, go to https://github.com/ctubio/Krypto-trading-bot/issues/new"
+            + '\n' + '\n';
+        } else
+          epilogue += string("(deprecated K version found).") + '\n'
+            + '\n' + Ansi::b(COLOR_YELLOW) + "Hint!" + Ansi::r(COLOR_YELLOW)
+            + '\n' + "please upgrade to the latest commit; the encountered error may be already fixed at:"
+            + '\n' + mods
+            + '\n' + "If you agree, consider to run \"make latest\" prior further executions."
+            + '\n' + '\n';
+        halt(EXIT_FAILURE);
+      };
+  };
+
+  vector<function<void()>> Ending::endingFn;
+
   class Terminal {
     public:
       void (*display)() = nullptr;
@@ -85,6 +217,20 @@ namespace ₿ {
         unsigned int left;
       } padding = {ANY_NUM, 0, 0, 0};
     public:
+      unsigned int padding_bottom(const unsigned int &bottom) {
+        if (bottom != padding.bottom) {
+          const int diff = bottom - padding.bottom;
+          padding.bottom = bottom;
+          if (diff > 0) wscrl(stdlog, diff);
+          wresize(
+            stdlog,
+            getmaxy(stdscr) - padding.top - padding.bottom,
+            getmaxx(stdscr) - padding.left - padding.right
+          );
+          if (diff < 0) wscrl(stdlog, diff);
+        }
+        return padding.bottom;
+      };
       void repaint() const {
         if (!display) return;
         display();
@@ -219,138 +365,6 @@ namespace ₿ {
         return true;
       };
   };
-
-  class Rollout {
-    public:
-      Rollout(/* KMxTWEpb9ig */) {
-        static once_flag rollout;
-        call_once(rollout, version);
-      };
-    protected:
-      static void version() {
-        curl_global_init(CURL_GLOBAL_ALL);
-        clog << Ansi::b(COLOR_GREEN) << K_SOURCE
-             << Ansi::r(COLOR_GREEN) << ' ' << K_BUILD << ' ' << K_STAMP << ".\n";
-        const string mods = changelog();
-        const int commits = count(mods.begin(), mods.end(), '\n');
-        clog << Ansi::b(COLOR_GREEN) << K_0_DAY << Ansi::r(COLOR_GREEN) << ' '
-             << (commits
-                 ? '-' + to_string(commits) + "commit"
-                   + string(commits == 1 ? 0 : 1, 's') + '.'
-                 : "(0day)"
-                )
-#ifndef NDEBUG
-            << " with DEBUG MODE enabled"
-#endif
-            << ".\n" << Ansi::r(COLOR_YELLOW) << mods << Ansi::reset();
-      };
-      static string changelog() {
-        string mods;
-        const json diff =
-#ifdef NDEBUG
-          Curl::Web::xfer("https://api.github.com/repos/ctubio/Krypto-trading-bot"
-            "/compare/" + string(K_0_GIT) + "...HEAD", 4L)
-#else
-          json::object()
-#endif
-        ;
-        if (diff.value("ahead_by", 0)
-          and diff.find("commits") != diff.end()
-          and diff.at("commits").is_array()
-        ) for (const json &it : diff.at("commits"))
-          mods += it.value("/commit/author/date"_json_pointer, "").substr(0, 10) + " "
-                + it.value("/commit/author/date"_json_pointer, "").substr(11, 8)
-                + " (" + it.value("sha", "").substr(0, 7) + ") "
-                + it.value("/commit/message"_json_pointer, "").substr(0,
-                  it.value("/commit/message"_json_pointer, "").find("\n\n") + 1
-                );
-        return mods;
-      };
-  };
-
-  class Ending: public Rollout {
-    private:
-      static vector<function<void()>> endingFn;
-    public:
-      Ending() {
-        signal(SIGINT, [](const int) {
-          clog << '\n';
-          raise(SIGQUIT);
-        });
-        signal(SIGQUIT, die);
-        signal(SIGTERM, err);
-        signal(SIGABRT, wtf);
-        signal(SIGSEGV, wtf);
-        signal(SIGUSR1, wtf);
-        signal(SIGPIPE, SIG_IGN);
-      };
-      void ending(const function<void()> &fn) {
-        endingFn.push_back(fn);
-      };
-    private:
-      static void halt(const int code) {
-        vector<function<void()>> happyEndingFn;
-        endingFn.swap(happyEndingFn);
-        for (const auto &it : happyEndingFn) it();
-        Ansi::colorful = 1;
-        clog << Ansi::b(COLOR_GREEN) << 'K'
-             << Ansi::r(COLOR_GREEN) << " exit code "
-             << Ansi::b(COLOR_GREEN) << code
-             << Ansi::r(COLOR_GREEN) << '.'
-             << Ansi::reset() << '\n';
-        EXIT(code);
-      };
-      static void die(const int) {
-        if (epilogue.empty())
-          epilogue = "Excellent decision! "
-                   + Curl::Web::xfer("https://api.icndb.com/jokes/random?escape=javascript&limitTo=[nerdy]", 4L)
-                       .value("/value/joke"_json_pointer, "let's plant a tree instead..");
-        halt(
-          epilogue.find("Errrror") == string::npos
-            ? EXIT_SUCCESS
-            : EXIT_FAILURE
-        );
-      };
-      static void err(const int) {
-        if (epilogue.empty()) epilogue = "Unknown error, no joke.";
-        halt(EXIT_FAILURE);
-      };
-      static void wtf(const int sig) {
-        epilogue = Ansi::r(COLOR_CYAN) + "Errrror: " + strsignal(sig) + ' ';
-        const string mods = changelog();
-        if (mods.empty()) {
-          epilogue += "(Three-Headed Monkey found):\n"                  + epitaph
-            + "- binbuild: " + string(K_SOURCE)                         + ' '
-                             + string(K_BUILD)                          + '\n'
-            + "- lastbeat: " + to_string((float)clock()/CLOCKS_PER_SEC) + '\n'
-#ifndef _WIN32
-            + "- tracelog: " + '\n';
-          void *k[69];
-          size_t jumps = backtrace(k, 69);
-          char **trace = backtrace_symbols(k, jumps);
-          for (;
-            jumps --> 0;
-            epilogue += "  " + to_string(jumps) + ": " + string(trace[jumps]) + '\n'
-          );
-          free(trace)
-#endif
-          ;
-          epilogue += '\n' + Ansi::b(COLOR_RED) + "Yikes!" + Ansi::r(COLOR_RED)
-            + '\n' + "please copy and paste the error above into a new github issue (noworry for duplicates)."
-            + '\n' + "If you agree, go to https://github.com/ctubio/Krypto-trading-bot/issues/new"
-            + '\n' + '\n';
-        } else
-          epilogue += string("(deprecated K version found).") + '\n'
-            + '\n' + Ansi::b(COLOR_YELLOW) + "Hint!" + Ansi::r(COLOR_YELLOW)
-            + '\n' + "please upgrade to the latest commit; the encountered error may be already fixed at:"
-            + '\n' + mods
-            + '\n' + "If you agree, consider to run \"make latest\" prior further executions."
-            + '\n' + '\n';
-        halt(EXIT_FAILURE);
-      };
-  };
-
-  vector<function<void()>> Ending::endingFn;
 
   class Option: public Terminal {
     private_friend:
