@@ -160,13 +160,13 @@ namespace ₿ {
                 percent;
       } decimal;
       struct {
-        Loop::Async::Proxy<Wallets>      wallets;
-        Loop::Async::Proxy<Levels>       levels;
-        Loop::Async::Proxy<Trade>        trades;
-        Loop::Async::Proxy<Order>        orders,
+        Loop::Async::Write<Wallets>      wallets;
+        Loop::Async::Write<Levels>       levels;
+        Loop::Async::Write<Trade>        trades;
+        Loop::Async::Write<Order>        orders,
                                          cancelAll;
-        Loop::Async::Proxy<Connectivity> connectivity;
-      } proxy;
+        Loop::Async::Write<Connectivity> connectivity;
+      } async;
       bool askForFees      = false,
            askForReplace   = false,
            askForCancelAll = false;
@@ -210,33 +210,33 @@ namespace ₿ {
 /**/  virtual   vector<Order>   sync_cancelAll() { return {}; };             // call and read sync orders data from exchange
 //EO non-free Gw library functions from build-*/local/lib/K-*.a (it just redefines all virtual gateway class members above).
       void online(const Connectivity &connectivity = Connectivity::Connected) {
-        proxy.connectivity.try_write(connectivity);
+        async.connectivity.try_write(connectivity);
         if (!(bool)connectivity)
-          proxy.levels.try_write({});
+          async.levels.try_write({});
       };
       void wait_for_never_async_data(Loop *const loop) {
-        proxy.wallets.wait_for(loop,   [&]() { return sync_wallet(); });
-        proxy.cancelAll.wait_for(loop, [&]() { return sync_cancelAll(); }, *&proxy.orders.write);
+        async.wallets.wait_for(loop,   [&]() { return sync_wallet(); });
+        async.cancelAll.wait_for(loop, [&]() { return sync_cancelAll(); }, *&async.orders.write);
       };
       void wait_for_sync_data(Loop *const loop) {
-        proxy.orders.wait_for(loop,    [&]() { return sync_orders(); });
+        async.orders.wait_for(loop,    [&]() { return sync_orders(); });
         wait_for_never_async_data(loop);
-        proxy.levels.wait_for(loop,    [&]() { return sync_levels(); });
-        proxy.trades.wait_for(loop,    [&]() { return sync_trades(); });
+        async.levels.wait_for(loop,    [&]() { return sync_levels(); });
+        async.trades.wait_for(loop,    [&]() { return sync_trades(); });
       };
       void ask_for_never_async_data(const unsigned int &tick) {
         if (((askForFees and !(askForFees = false))
           or !(tick % 15))
-          and !async_wallet())    proxy.wallets.ask_for();
+          and !async_wallet())    async.wallets.ask_for();
         if ((askForCancelAll
           and !(tick % 300))
-          and !async_cancelAll()) proxy.cancelAll.ask_for();
+          and !async_cancelAll()) async.cancelAll.ask_for();
       };
       void ask_for_sync_data(const unsigned int &tick) {
-        if (!(tick % 2))          proxy.orders.ask_for();
+        if (!(tick % 2))          async.orders.ask_for();
         ask_for_never_async_data(tick);
-        if (!(tick % 3))          proxy.levels.ask_for();
-        if (!(tick % 60))         proxy.trades.ask_for();
+        if (!(tick % 3))          async.levels.ask_for();
+        if (!(tick % 60))         async.trades.ask_for();
       };
   };
 

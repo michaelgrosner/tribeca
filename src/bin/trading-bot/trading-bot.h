@@ -64,22 +64,22 @@ class TradingBot: public KryptoNinja {
     };
   protected:
     void run() override {
-      gateway->proxy.connectivity.write = [&](const Connectivity &rawdata) {
+      gateway->async.connectivity.write = [&](const Connectivity &rawdata) {
         broker.semaphore.read_from_gw(rawdata);
       };
-      gateway->proxy.wallets.write = [&](const Wallets &rawdata) {
+      gateway->async.wallets.write = [&](const Wallets &rawdata) {
         wallet.read_from_gw(rawdata);
       };
-      gateway->proxy.levels.write = [&](const Levels &rawdata) {
+      gateway->async.levels.write = [&](const Levels &rawdata) {
         levels.read_from_gw(rawdata);
         wallet.calcFunds();
         calcQuotes();
       };
-      gateway->proxy.orders.write = [&](const Order &rawdata) {
+      gateway->async.orders.write = [&](const Order &rawdata) {
         orders.read_from_gw(rawdata);
         wallet.calcFundsAfterOrder(orders.updated, &gateway->askForFees);
       };
-      gateway->proxy.trades.write = [&](const Trade &rawdata) {
+      gateway->async.trades.write = [&](const Trade &rawdata) {
         levels.stats.takerTrades.read_from_gw(rawdata);
       };
       timer_1s([&](const unsigned int &tick) {

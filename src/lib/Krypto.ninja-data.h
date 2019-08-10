@@ -39,7 +39,7 @@ namespace ₿ {
                      text = (data[0] & 0x80) == 0x80,
                      mask = (data[1] & 0x80) == 0x80;
           const size_t key = mask ? 4 : 0;
-          size_t                            len =    data[1] & 0x7F,          pos = key;
+          size_t                            len =    data[1] & 0x7F         , pos = key;
           if      (            len <= 0x7D)                                   pos += 2;
           else if (max > 2 and len == 0x7E) len = (((data[2] & 0xFF) <<  8)
                                                 |   (data[3] & 0xFF)       ), pos += 4;
@@ -133,7 +133,7 @@ namespace ₿ {
       };
       class Async {
         public_friend:
-          template<typename T> class Proxy {
+          template<typename T> class Write {
             private_friend:
               class Wakeup {
                 private:
@@ -151,7 +151,7 @@ namespace ₿ {
               function<void(const T&)> write = nullptr;
             private:
                               Async *event = nullptr;
-              function<vector<T>()>  read  = nullptr;
+              function<vector<T>()>  job   = nullptr;
                   future<vector<T>>  data;
             public:
               void try_write(const T &rawdata) const {
@@ -159,10 +159,10 @@ namespace ₿ {
               };
               void wait_for(
                 Loop *const loop,
-                const function<vector<T>()>    r,
+                const function<vector<T>()>    j,
                 const function<void(const T&)> w = nullptr
               ) {
-                read  = r;
+                job   = j;
                 write = w;
                 event = loop->async([&]() {
                   if (data.valid())
@@ -173,7 +173,7 @@ namespace ₿ {
                 if (!data.valid())
                   data = ::async(launch::async, [&]() {
                     Wakeup again(event);
-                    return read();
+                    return job();
                   });
               };
           };
@@ -1188,13 +1188,13 @@ namespace ₿ {
           };
           void socket(const int &domain, const int &type, const int &protocol) {
             sockfd = ::socket(domain, type | SOCK_CLOEXEC | SOCK_NONBLOCK, protocol);
+            if (sockfd == -1) sockfd = 0;
 #ifdef __APPLE__
-            if (sockfd != -1) {
+            else {
               const int noSigpipe = 1;
               setsockopt(sockfd, SOL_SOCKET, SO_NOSIGPIPE, &noSigpipe, sizeof(int));
             }
 #endif
-            if (sockfd == -1) sockfd = 0;
           };
       };
   };

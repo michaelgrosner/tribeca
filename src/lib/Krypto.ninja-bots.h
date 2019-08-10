@@ -639,7 +639,7 @@ namespace ₿ {
       };
     private:
       bool stop = false;
-      Loop::Async::Proxy<char> keylogger;
+      Loop::Async::Write<char> keylogger;
       mutable unordered_map<char, function<void()>> maps;
     protected:
       void wait_for_keylog(Loop *const loop) {
