@@ -36,6 +36,7 @@ namespace ₿ {
         const size_t max = data.length();
         if (max > 1) {
           const bool flat = (data[0] & 0x40) != 0x40,
+                     text = (data[0] & 0x80) == 0x80,
                      mask = (data[1] & 0x80) == 0x80;
           const size_t key = mask ? 4 : 0;
           size_t                            len =    data[1] & 0x7F,          pos = key;
@@ -46,25 +47,21 @@ namespace ₿ {
                                                 |  ((data[7] & 0xFF) << 16)
                                                 |  ((data[8] & 0xFF) <<  8)
                                                 |   (data[9] & 0xFF)       ), pos += 10;
-          if (!flat or pos == key)
-            drop = true;
-          else if (max >= pos + len) {
-            if (mask)
-              for (size_t i = 0; i < len; i++)
-                data.at(pos + i) ^= data.at(pos - key + (i % key));
-            const unsigned char opcode = data[0] & 0x0F;
-            if (opcode == 0x09)
-              pong += frame(data.substr(pos, len), 0x0A, !mask);
-            else if (opcode == 0x02
-                  or opcode == 0x08
-                  or opcode == 0x0A
-                  or ((data[0] & 0x80) != 0x80 and (opcode == 0x00
-                                                 or opcode == 0x01))
-            ) drop = opcode == 0x08;
-            else
-              msg = data.substr(pos, len);
-            data = data.substr(pos + len);
-          }
+          if (flat and text and pos > key) {
+            if (max >= pos + len) {
+              if (mask)
+                for (size_t i = 0; i < len; i++)
+                  data.at(pos + i) ^= data.at(pos - key + (i % key));
+              const unsigned char opcode = data[0] & 0x0F;
+              if      (opcode == 0x01)
+                msg = data.substr(pos, len);
+              else if (opcode == 0x09)
+                pong += frame(data.substr(pos, len), 0x0A, !mask);
+              else if (opcode != 0x0A)
+                drop = true;
+              data = data.substr(pos + len);
+            }
+          } else drop = true;
         }
         return msg;
       };
@@ -92,22 +89,20 @@ namespace ₿ {
       };
       string unframe(string &data, string &pong, bool &drop) const {
         string msg;
-        const size_t end = data.find("\u0001" "10=");
+        size_t end = data.find("\u0001" "10=");
         if (end != string::npos and data.length() > end + 7) {
           string raw = data.substr(0, end + 8);
           data = data.substr(raw.length());
-          if (raw.find("\u0001" "35=0" "\u0001") != string::npos
-            or raw.find("\u0001" "35=1" "\u0001") != string::npos
+          if      (raw.find("\u0001" "35=0" "\u0001") != string::npos
+            or     raw.find("\u0001" "35=1" "\u0001") != string::npos
           ) pong = "0";
-          else if (raw.find("\u0001" "35=5" "\u0001") != string::npos) {
-            pong = "5";
-            drop = true;
-          } else {
-            size_t tok;
-            while ((tok = raw.find("\u0001")) != string::npos) {
+          else if (raw.find("\u0001" "35=5" "\u0001") != string::npos)
+            pong = "5", drop = true;
+          else {
+            while ((end = raw.find("\u0001")) != string::npos) {
               raw.replace(raw.find("="), 1, "\":\"");
-              msg += "\"" + raw.substr(0, tok + 2) + "\",";
-              raw = raw.substr(tok + 3);
+              msg += "\"" + raw.substr(0, end + 2) + "\",";
+              raw = raw.substr(end + 3);
             }
             msg.pop_back();
             msg = "{" + msg + "}";
