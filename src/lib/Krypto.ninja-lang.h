@@ -41,9 +41,6 @@
 #endif
 
 #if defined _WIN32 or defined __APPLE__
-#define Epoll    Libuv
-#define EPOLLIN  UV_READABLE
-#define EPOLLOUT UV_WRITABLE
 #include <uv.h>
 #else
 #include <sys/epoll.h>
@@ -87,23 +84,15 @@ using Clock  = long long int;
 #endif
 
 //! \def
-//! \brief Do like if we care about winy.
-#ifndef SIGUSR1
-#define SIGUSR1     SIGABRT
-#define strsignal   to_string
-#define SOCK_OPTVAL char
-#else
-#define SOCK_OPTVAL int
-#endif
-
-//! \def
 //! \brief Do like if we care about macos or winy.
 #ifndef TCP_CORK
 #define TCP_CORK            TCP_NOPUSH
-#define MSG_NOSIGNAL        0
 #define SOCK_CLOEXEC        0
 #define SOCK_NONBLOCK       0
+#define MSG_NOSIGNAL        0
 #define accept4(a, b, c, d) accept(a, b, c)
+#define strsignal           to_string
+#define SIGUSR1             SIGABRT
 #endif
 
 //! \def

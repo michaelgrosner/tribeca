@@ -218,7 +218,7 @@ namespace ₿ {
       virtual          void  end()                                                = 0;
   };
 #if defined _WIN32 or defined __APPLE__
-  class Libuv: public Loop {
+  class Events: public Loop {
     public_friend:
       class Timer: public Loop::Timer {
         public:
@@ -252,6 +252,10 @@ namespace ₿ {
           };
       };
       class Poll: public Loop::Poll {
+        protected:
+          using SOCK_OPTVAL  = char;
+          const int EPOLLIN  = UV_READABLE;
+          const int EPOLLOUT = UV_WRITABLE;
         private:
           uv_poll_t event;
         public:
@@ -311,9 +315,11 @@ namespace ₿ {
       };
   };
 #else
-  class Epoll: public Loop {
+  class Events: public Loop {
     public_friend:
       class Poll: public Loop::Poll {
+        protected:
+          using SOCK_OPTVAL = int;
         private:
           curl_socket_t loopfd = 0;
         public:
@@ -386,7 +392,7 @@ namespace ₿ {
          list<Async> events;
          epoll_event ready[32] = {};
     public:
-      Epoll()
+      Events()
         : sockfd(epoll_create1(EPOLL_CLOEXEC))
         , timer(sockfd)
       {};
@@ -426,7 +432,7 @@ namespace ₿ {
     public:
       static function<void(CURL*)> global_setopt;
     private_friend:
-      class Easy: public Epoll::Poll {
+      class Easy: public Events::Poll {
         private:
           CURL *curl = nullptr;
           string out;
@@ -805,7 +811,7 @@ namespace ₿ {
          Upgrade upgrade  = nullptr;
          Message message  = nullptr;
       };
-      class Socket: public Epoll::Poll {
+      class Socket: public Events::Poll {
         public:
           Socket(const curl_socket_t &s = 0)
             : Poll(s)
@@ -1169,25 +1175,21 @@ namespace ₿ {
                  + content;
           };
         private:
-          bool accept_request(const curl_socket_t &loopfd) {
+          void accept_request(const curl_socket_t &loopfd) {
             curl_socket_t clientfd = accept4(sockfd, nullptr, nullptr, SOCK_CLOEXEC | SOCK_NONBLOCK);
+            if (clientfd == -1) return;
 #ifdef __APPLE__
-            if (clientfd != -1) {
-              const int noSigpipe = 1;
-              setsockopt(clientfd, SOL_SOCKET, SO_NOSIGPIPE, &noSigpipe, sizeof(int));
-            }
+            const int noSigpipe = 1;
+            setsockopt(clientfd, SOL_SOCKET, SO_NOSIGPIPE, &noSigpipe, sizeof(int));
 #endif
-            if (clientfd != -1) {
-              SSL *ssl = nullptr;
-              if (ctx) {
-                ssl = SSL_new(ctx);
-                SSL_set_accept_state(ssl);
-                SSL_set_fd(ssl, clientfd);
-                SSL_set_mode(ssl, SSL_MODE_RELEASE_BUFFERS);
-              }
-              requests.emplace_back(clientfd, loopfd, ssl, &session);
+            SSL *ssl = nullptr;
+            if (ctx) {
+              ssl = SSL_new(ctx);
+              SSL_set_accept_state(ssl);
+              SSL_set_fd(ssl, clientfd);
+              SSL_set_mode(ssl, SSL_MODE_RELEASE_BUFFERS);
             }
-            return clientfd > 0;
+            requests.emplace_back(clientfd, loopfd, ssl, &session);
           };
           void socket(const int &domain, const int &type, const int &protocol) {
             sockfd = ::socket(domain, type | SOCK_CLOEXEC | SOCK_NONBLOCK, protocol);

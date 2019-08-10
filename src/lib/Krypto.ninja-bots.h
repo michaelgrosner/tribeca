@@ -1171,7 +1171,7 @@ namespace ₿ {
       };
   };
 
-  class KryptoNinja: public Epoll,
+  class KryptoNinja: public Events,
                      public Ending,
                      public Option,
                      public Hotkey,
@@ -1250,6 +1250,11 @@ namespace ₿ {
         run();
         walk();
       };
+      unsigned int dbSize() const {
+        if (!databases or arg<string>("database") == ":memory:") return 0;
+        struct stat st;
+        return stat(arg<string>("database").data(), &st) ? 0 : st.st_size;
+      };
       unsigned int memSize() const {
 #ifdef _WIN32
         return 0;
@@ -1257,11 +1262,6 @@ namespace ₿ {
         struct rusage ru;
         return getrusage(RUSAGE_SELF, &ru) ? 0 : ru.ru_maxrss * 1e+3;
 #endif
-      };
-      unsigned int dbSize() const {
-        if (!databases or arg<string>("database") == ":memory:") return 0;
-        struct stat st;
-        return stat(arg<string>("database").data(), &st) ? 0 : st.st_size;
       };
     private:
       void handshake(const GwExchange::Report &notes = {}) {
