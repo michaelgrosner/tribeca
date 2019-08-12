@@ -132,7 +132,7 @@ namespace ₿ {
         K.gateway->tickSize  = 0.001;
         K.gateway->minSize   = 0.001;
         K.gateway->report({}, false);
-        K.gateway->proxy.connectivity.write = [&](const Connectivity &rawdata) {
+        K.gateway->async.connectivity.write = [&](const Connectivity &rawdata) {
           broker.semaphore.read_from_gw(rawdata);
         };
       };
@@ -614,7 +614,7 @@ namespace ₿ {
         REQUIRE(broker.calculon.quotes.bid.state == mQuoteState::Disconnected);
         REQUIRE(broker.calculon.quotes.ask.state == mQuoteState::Disconnected);
         REQUIRE_NOTHROW(broker.purge());
-        REQUIRE_NOTHROW(K.gateway->proxy.connectivity.try_write(Connectivity::Connected));
+        REQUIRE_NOTHROW(K.gateway->async.connectivity.try_write(Connectivity::Connected));
         REQUIRE(broker.ready());
         REQUIRE_FALSE(levels.ready());
         REQUIRE_NOTHROW(levels.read_from_gw({ {

@@ -1,4 +1,4 @@
-#include "Krypto.ninja.h"
+#include <Krypto.ninja.h>
 
           ;;;;;;;;;;;;;;;;;;;;;;
           ;;;;;    ;;;;    ;;;;;
