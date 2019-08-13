@@ -1,4 +1,3 @@
-#include <Krypto.ninja.h>
                                  /*                                 */ // youtu.be/dVlGmdl-g9Q
           ;;;;;;;;;;;;;;;;;;;;;;   /*         Wherever you go..     */
           ;;;;;    ;;;;    ;;;;;     /*       Whatever you do..     */ // youtu.be/DKSO5YlYbOg

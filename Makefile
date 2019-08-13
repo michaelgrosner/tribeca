@@ -29,10 +29,10 @@ HINT    := consider a symlink at /usr/bin/$(CHOST)-g++ pointing to your g++-7 or
 STEP     = $(shell tput setaf 2;tput setab 0)Building $(1)..$(shell tput sgr0)
 KARGS   := -std=c++17 -O3 -pthread -DK_0_GIT='"$(shell   \
   cat .git/refs/heads/master 2>/dev/null || echo HEAD)"' \
+  -DK_BUILD='"$(KHOST)"'      -DK_SOURCE='"K-$(KSRC)"'   \
   -DK_STAMP='"$(shell date "+%Y-%m-%d %H:%M:%S")"'       \
   -DK_0_DAY='"v$(MAJOR).$(MINOR).$(PATCH)+$(BUILD)"'     \
-  -DK_BUILD='"$(KHOST)"'      -I$(KLOCAL)/include        \
-  -DK_SOURCE='"K-$(KSRC)"'    -I$(realpath src/lib)      \
+  -I$(KLOCAL)/include                                    \
   $(KLOCAL)/lib/K-$(KHOST).$(ABI).a                      \
   $(KLOCAL)/lib/libncurses.a  $(KLOCAL)/lib/libsqlite3.a \
   $(KLOCAL)/lib/libcurl.a     $(KLOCAL)/lib/libcares.a   \
@@ -42,7 +42,10 @@ KARGS   := -std=c++17 -O3 -pthread -DK_0_GIT='"$(shell   \
     $(KLOCAL)/lib/K-$(KSRC)-assets.o                     \
     $(KLOCAL)/lib/libuv.dll.a                            \
     $(KLOCAL)/lib/libuv.a                                \
-  )
+  )                                                      \
+  $(addprefix -include ,$(wildcard                       \
+    src/lib/Krypto.ninja.h    src/usr/Krypto.ninja-*.h   \
+  ))
 
 all K: $(SOURCE)
 

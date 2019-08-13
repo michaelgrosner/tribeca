@@ -11,12 +11,12 @@ extern const  int _www_html_index_len, _www_ico_favicon_len, _www_css_base_len,
 
 class TradingBot: public KryptoNinja {
   public:
-     mQuotingParams qp;
-            mOrders orders;
-           mButtons button;
-      mMarketLevels levels;
-    mWalletPosition wallet;
-            mBroker broker;
+    tribeca:: mQuotingParams qp;
+    tribeca::        mOrders orders;
+    tribeca::       mButtons button;
+    tribeca::  mMarketLevels levels;
+    tribeca::mWalletPosition wallet;
+    tribeca::        mBroker broker;
   public:
     TradingBot()
       : qp(*this)
@@ -239,5 +239,9 @@ void TradingBot::terminal() {
   mvwaddch(stdscr, y-1, 0, ACS_LLCORNER);
   mvwaddstr(stdscr, 1, 2, string("|/-\\").substr(K.broker.memory.orders_60s % 4, 1).data());
 };
+
+#ifndef NDEBUG
+#include "../../../test/units.h"
+#endif
 
 #endif

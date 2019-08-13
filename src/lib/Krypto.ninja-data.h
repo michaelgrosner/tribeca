@@ -423,9 +423,12 @@ namespace ₿ {
   };
 #endif
 
+  static function<void(CURL*)> curl_global_setopt = [](CURL *curl) {
+    curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
+  };
+
   class Curl {
     public:
-      static function<void(CURL*)> global_setopt;
     private_friend:
       class Easy: public Events::Poll {
         private:
@@ -454,7 +457,7 @@ namespace ₿ {
             in.clear();
             CURLcode rc;
             if (CURLE_OK == (rc = init())) {
-              global_setopt(curl);
+              curl_global_setopt(curl);
               curl_easy_setopt(curl, CURLOPT_URL, url.data());
               curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1L);
               curl_easy_setopt(curl, CURLOPT_CONNECT_ONLY, 1L);
@@ -572,7 +575,7 @@ namespace ₿ {
             CURL *curl = curl_easy_init();
             if (curl) {
               custom_setopt(curl);
-              global_setopt(curl);
+              curl_global_setopt(curl);
               curl_easy_setopt(curl, CURLOPT_URL, url.data());
               curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &write);
               curl_easy_setopt(curl, CURLOPT_WRITEDATA, &reply);

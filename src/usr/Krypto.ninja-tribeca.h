@@ -1,9 +1,9 @@
-#ifndef K_USER_H_
-#define K_USER_H_
+#ifndef K_TRIBECA_H_
+#define K_TRIBECA_H_
 //! \file
-//! \brief Trading logistics (welcome user!).
+//! \brief Trading logistics (welcome user! forked from https://github.com/michaelgrosner/tribeca).
 
-namespace ₿ {
+namespace ₿::tribeca {
   enum class mQuotingMode: unsigned int {
     Top, Mid, Join, InverseJoin, InverseTop, HamelinRat, Depth
   };

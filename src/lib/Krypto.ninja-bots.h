@@ -4,23 +4,20 @@
 //! \brief Minimal user application framework.
 
 namespace ₿ {
-  string epilogue, epitaph;
+  static string epilogue, epitaph;
 
   //! \brief     Call all endingFn once and print a last log msg.
   //! \param[in] reason Allows any (colorful?) string.
   //! \param[in] reboot Allows a reboot only because https://tldp.org/LDP/Bash-Beginners-Guide/html/sect_09_03.html.
-  void exit(const string &reason = "", const bool &reboot = false) {
+  static void exit(const string &reason = "", const bool &reboot = false) {
     epilogue = reason + string((reason.empty() or reason.back() == '.') ? 0 : 1, '.');
     raise(reboot ? SIGTERM : SIGQUIT);
   };
 
-  function<void(CURL*)> Curl::global_setopt = [](CURL *curl) {
-    curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
-  };
+  static int colorful = 1;
 
   class Ansi {
     public:
-      static int colorful;
       static string reset() {
           return paint(0, -1);
       };
@@ -63,13 +60,11 @@ namespace ₿ {
       };
   };
 
-  int Ansi::colorful = 1;
-
   //! \brief     Call all endingFn once and print a last error log msg.
   //! \param[in] prefix Allows any string, if possible with a length of 2.
   //! \param[in] reason Allows any (colorful?) string.
   //! \param[in] reboot Allows a reboot only because https://tldp.org/LDP/Bash-Beginners-Guide/html/sect_09_03.html.
-  void error(const string &prefix, const string &reason, const bool &reboot = false) {
+  static void error(const string &prefix, const string &reason, const bool &reboot = false) {
     if (reboot) this_thread::sleep_for(chrono::seconds(3));
     exit(prefix + Ansi::r(COLOR_RED) + " Errrror: " + Ansi::b(COLOR_RED) + reason, reboot);
   };
@@ -122,9 +117,10 @@ namespace ₿ {
       };
   };
 
+  static vector<function<void()>> endingFn;
+
   class Ending: public Rollout {
     private:
-      static vector<function<void()>> endingFn;
     public:
       Ending() {
         signal(SIGINT, [](const int) {
@@ -146,7 +142,7 @@ namespace ₿ {
         vector<function<void()>> happyEndingFn;
         endingFn.swap(happyEndingFn);
         for (const auto &it : happyEndingFn) it();
-        Ansi::colorful = 1;
+        colorful = 1;
         clog << Ansi::b(COLOR_GREEN) << 'K'
              << Ansi::r(COLOR_GREEN) << " exit code "
              << Ansi::b(COLOR_GREEN) << code
@@ -203,8 +199,6 @@ namespace ₿ {
         halt(EXIT_FAILURE);
       };
   };
-
-  vector<function<void()>> Ending::endingFn;
 
   class Terminal {
     public:
@@ -513,7 +507,7 @@ namespace ₿ {
           error("CF", argerr);
         }
         tidy();
-        Ansi::colorful = arg<int>("colors");
+        colorful = arg<int>("colors");
         if (arguments.second) {
           arguments.second(args);
           arguments.second = nullptr;
@@ -521,18 +515,18 @@ namespace ₿ {
         if (arg<int>("naked"))
           display = nullptr;
         if (!arg<string>("interface").empty() and !arg<int>("ipv6"))
-          Curl::global_setopt = [&](CURL *curl) {
+          curl_global_setopt = [&](CURL *curl) {
             curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
             curl_easy_setopt(curl, CURLOPT_INTERFACE, arg<string>("interface").data());
             curl_easy_setopt(curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
           };
         else if (!arg<string>("interface").empty())
-          Curl::global_setopt = [&](CURL *curl) {
+          curl_global_setopt = [&](CURL *curl) {
             curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
             curl_easy_setopt(curl, CURLOPT_INTERFACE, arg<string>("interface").data());
           };
         else if (!arg<int>("ipv6"))
-          Curl::global_setopt = [&](CURL *curl) {
+          curl_global_setopt = [&](CURL *curl) {
             curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
             curl_easy_setopt(curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
           };
@@ -708,11 +702,7 @@ namespace ₿ {
       class Backup: public Blob {
         public:
           using Report = pair<bool, string>;
-          function<void()> push
-#ifndef NDEBUG
-            = [this]() { WARN("Y U NO catch " << (char)about() << " sqlite push?"); }
-#endif
-          ;
+          function<void()> push;
         public:
           Backup(const Sqlite &sqlite)
           {
@@ -910,11 +900,7 @@ namespace ₿ {
     public_friend:
       class Readable: public Blob {
         public:
-          function<void()> read
-#ifndef NDEBUG
-          = [this]() { WARN("Y U NO catch " << (char)about() << " read?"); }
-#endif
-          ;
+          function<void()> read;
         public:
           Readable(const Client &client)
           {

@@ -21,25 +21,12 @@
 "\n"   "are licensed by/under the law of my grandma (since last century)," \
 "\n"   "feel free to crack all as you need."
 
-#ifdef NDEBUG
-#  define EXIT ::exit
-#else
-#  include <catch.h>
-#  define EXIT catch_exit
-   [[noreturn]] void catch_exit(const int);
-#endif
-
 //! \namespace ₿
-//! \brief     class \ref ₿::Klass, fn \ref ₿::exit, fn \ref ₿::error.
+//! \brief     class \ref ₿::KryptoNinja, fn \ref ₿::exit, fn \ref ₿::error.
 
-#include <Krypto.ninja-lang.h>
-#include <Krypto.ninja-data.h>
-#include <Krypto.ninja-apis.h>
-#include <Krypto.ninja-bots.h>
-#include <Krypto.ninja-user.h>
-
-#ifndef NDEBUG
-#  include <../../test/units.h>
-#endif
+#include "Krypto.ninja-lang.h"
+#include "Krypto.ninja-data.h"
+#include "Krypto.ninja-apis.h"
+#include "Krypto.ninja-bots.h"
 
 #endif

@@ -72,6 +72,16 @@ using Amount = double;
 using Clock  = long long int;
 
 //! \def
+//! \brief Run test units on exit unless NDEBUG.
+//! \note  See test/unit_testing_framework.cxx
+#ifdef NDEBUG
+#  define EXIT ::exit
+#else
+#  define EXIT catch_exit
+   [[noreturn]] void catch_exit(const int);
+#endif
+
+//! \def
 //! \brief Number of ticks in milliseconds, since Thu Jan  1 00:00:00 1970.
 #define Tstamp chrono::duration_cast<chrono::milliseconds>(     \
                  chrono::system_clock::now().time_since_epoch() \
