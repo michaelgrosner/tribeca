@@ -27,24 +27,24 @@ ERR      = *** K require g++ v7 or greater, but it was not found.
 HINT    := consider a symlink at /usr/bin/$(CHOST)-g++ pointing to your g++-7 or g++-8 executable
 
 STEP     = $(shell tput setaf 2;tput setab 0)Building $(1)..$(shell tput sgr0)
-KARGS   := -std=c++17 -s -O3 -pthread -DK_0_GIT='"$(shell \
-  cat .git/refs/heads/master 2>/dev/null || echo HEAD)"'  \
-  -DK_BUILD='"$(KHOST)"'      -DK_SOURCE='"K-$(KSRC)"'    \
-  -DK_STAMP='"$(shell date "+%Y-%m-%d %H:%M:%S")"'        \
-  -DK_0_DAY='"v$(MAJOR).$(MINOR).$(PATCH)+$(BUILD)"'      \
-  -I$(KLOCAL)/include                                     \
-  $(KLOCAL)/lib/K-$(KHOST).$(ABI).a                       \
-  $(KLOCAL)/lib/libncurses.a  $(KLOCAL)/lib/libsqlite3.a  \
-  $(KLOCAL)/lib/libcurl.a     $(KLOCAL)/lib/libcares.a    \
-  $(KLOCAL)/lib/libssl.a      $(KLOCAL)/lib/libcrypto.a   \
-  $(KLOCAL)/lib/libz.a                                    \
-  $(wildcard                                              \
-    $(KLOCAL)/lib/K-$(KSRC)-assets.o                      \
-    $(KLOCAL)/lib/libuv.dll.a                             \
-    $(KLOCAL)/lib/libuv.a                                 \
-  )                                                       \
-  $(addprefix -include ,$(wildcard                        \
-    src/lib/Krypto.ninja.h    src/usr/Krypto.ninja-*.h    \
+KARGS   := -std=c++17 -O3 -pthread -DK_0_GIT='"$(shell   \
+  cat .git/refs/heads/master 2>/dev/null || echo HEAD)"' \
+  -DK_BUILD='"$(KHOST)"'      -DK_SOURCE='"K-$(KSRC)"'   \
+  -DK_STAMP='"$(shell date "+%Y-%m-%d %H:%M:%S")"'       \
+  -DK_0_DAY='"v$(MAJOR).$(MINOR).$(PATCH)+$(BUILD)"'     \
+  -I$(KLOCAL)/include                                    \
+  $(KLOCAL)/lib/K-$(KHOST).$(ABI).a                      \
+  $(KLOCAL)/lib/libncurses.a  $(KLOCAL)/lib/libsqlite3.a \
+  $(KLOCAL)/lib/libcurl.a     $(KLOCAL)/lib/libcares.a   \
+  $(KLOCAL)/lib/libssl.a      $(KLOCAL)/lib/libcrypto.a  \
+  $(KLOCAL)/lib/libz.a                                   \
+  $(wildcard                                             \
+    $(KLOCAL)/lib/K-$(KSRC)-assets.o                     \
+    $(KLOCAL)/lib/libuv.dll.a                            \
+    $(KLOCAL)/lib/libuv.a                                \
+  )                                                      \
+  $(addprefix -include ,$(wildcard                       \
+    src/lib/Krypto.ninja.h    src/usr/Krypto.ninja-*.h   \
   ))
 
 all K: $(SOURCE)
@@ -142,22 +142,22 @@ else ifdef KUNITS
 else ifndef KTEST
 	@$(MAKE) KTEST="-DNDEBUG" $@
 else
-	$(CHOST)-g++ $(KTEST) -o $(KLOCAL)/bin/K-$(KSRC) \
-	  -static-libstdc++ -static-libgcc -rdynamic     \
+	$(CHOST)-g++ -s $(KTEST) -o $(KLOCAL)/bin/K-$(KSRC) \
+	  -static-libstdc++ -static-libgcc -rdynamic        \
 	  $^ $(KARGS) -ldl -Wall -Wextra
 endif
 
 Darwin: src/bin/$(KSRC)/$(KSRC).cxx
 	-@egrep \\u20BF src -lR | xargs sed -i 's/\\\(u20BF\)/\1/g'
-	$(CHOST)-g++ -DNDEBUG -o $(KLOCAL)/bin/K-$(KSRC)                             \
+	$(CHOST)-g++ -s -DNDEBUG -o $(KLOCAL)/bin/K-$(KSRC)                          \
 	  -msse4.1 -maes -mpclmul -mmacosx-version-min=10.13 -nostartfiles -rdynamic \
 	  $^ $(KARGS) -ldl
 	-@egrep u20BF src -lR | xargs sed -i 's/\(u20BF\)/\\\1/g'
 
 Win32: src/bin/$(KSRC)/$(KSRC).cxx
-	$(CHOST)-g++-posix -DNDEBUG -o $(KLOCAL)/bin/K-$(KSRC).exe \
-	  -D_POSIX -DCURL_STATICLIB                                \
-	  $^ $(KARGS)                                              \
+	$(CHOST)-g++-posix -s -DNDEBUG -o $(KLOCAL)/bin/K-$(KSRC).exe \
+	  -D_POSIX -DCURL_STATICLIB                                   \
+	  $^ $(KARGS)                                                 \
 	  -static -lstdc++ -lgcc -lwldap32 -lws2_32
 
 download:
