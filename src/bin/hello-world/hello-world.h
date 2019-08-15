@@ -3,9 +3,16 @@
 
 class HelloWorld: public KryptoNinja {
   public:
+    example::Engine engine;
+  public:
     HelloWorld()
+      : engine(*this)
     {
       autobot   = true;
+      dustybot  = true;
+      events    = {
+        [&](const Levels &rawdata) { engine.read(rawdata); }
+      };
       arguments = { {
         {"subject", "NAME", "World", "say hello to NAME (default: 'World')"}
       }, [&](unordered_map<string, variant<string, int, double>> &args) {
@@ -14,21 +21,6 @@ class HelloWorld: public KryptoNinja {
         else args["subject"] = Text::strU(arg<string>("subject")) + "!";
         log("CF", "arguments validated", "OK");
       } };
-    };
-  protected:
-    void run() override {
-      const string result = greeting();
-      const string prefix = "Executed " + (
-        arg<int>("debug")
-          ? string(__PRETTY_FUNCTION__)
-          : arg<string>("title")
-      );
-      exit(prefix + ' ' + result);
-    };
-  private:
-    const string greeting() {
-      cout << "Hello, " << arg<string>("subject") << endl;
-      return "OK";
     };
 } K;
 
