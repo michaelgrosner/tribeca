@@ -20,7 +20,7 @@ namespace ₿::example {
         exit(greeting());
       };
     private:
-      const string greeting() {
+      string greeting() {
         const Price spread = levels.asks.cbegin()->price
                            - levels.bids.cbegin()->price;
         cout << "Hello, " << K.arg<string>("subject")

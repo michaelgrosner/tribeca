@@ -202,32 +202,34 @@ namespace ₿ {
 
   class Terminal {
     public:
-      void (*display)() = nullptr;
-      WINDOW *stdlog = nullptr;
       struct {
-        unsigned int top;
-        unsigned int right;
-        unsigned int bottom;
-        unsigned int left;
-      } padding = {ANY_NUM, 0, 0, 0};
+        void (*terminal)() = nullptr;
+        mutable struct {
+          unsigned int top;
+          unsigned int right;
+          unsigned int bottom;
+          unsigned int left;
+        } padding = {ANY_NUM, 0, 0, 0};
+      } display;
+      WINDOW *stdlog = nullptr;
     public:
-      unsigned int padding_bottom(const unsigned int &bottom) {
-        if (bottom != padding.bottom) {
-          const int diff = bottom - padding.bottom;
-          padding.bottom = bottom;
+      unsigned int padding_bottom(const unsigned int &bottom) const {
+        if (bottom != display.padding.bottom) {
+          const int diff = bottom - display.padding.bottom;
+          display.padding.bottom = bottom;
           if (diff > 0) wscrl(stdlog, diff);
           wresize(
             stdlog,
-            getmaxy(stdscr) - padding.top - padding.bottom,
-            getmaxx(stdscr) - padding.left - padding.right
+            getmaxy(stdscr) - display.padding.top - display.padding.bottom,
+            getmaxx(stdscr) - display.padding.left - display.padding.right
           );
           if (diff < 0) wscrl(stdlog, diff);
         }
-        return padding.bottom;
+        return display.padding.bottom;
       };
       void repaint() const {
-        if (!display) return;
-        display();
+        if (!display.terminal) return;
+        display.terminal();
         wrefresh(stdscr);
         if (stdlog) {
           wmove(stdlog, getmaxy(stdlog) - 1, 0);
@@ -248,9 +250,10 @@ namespace ₿ {
         time_t tt = chrono::system_clock::to_time_t(clock);
         char datetime[15];
         strftime(datetime, 15, "%m/%d %T", localtime(&tt));
-        if (!display) return Ansi::b(COLOR_GREEN) + datetime
-                           + Ansi::r(COLOR_GREEN) + microtime.str()
-                           + Ansi::b(COLOR_WHITE) + ' ';
+        if (!display.terminal)
+          return Ansi::b(COLOR_GREEN) + datetime
+               + Ansi::r(COLOR_GREEN) + microtime.str()
+               + Ansi::b(COLOR_WHITE) + ' ';
         if (stdlog) {
           wattron(stdlog, COLOR_PAIR(COLOR_GREEN));
           wattron(stdlog, A_BOLD);
@@ -268,7 +271,7 @@ namespace ₿ {
           if (reason.find("BUY") != string::npos)       color = 1;
           else if (reason.find("SELL") != string::npos) color = -1;
         }
-        if (!display) {
+        if (!display.terminal) {
           clog << stamp() << prefix;
           if (color == 1)       clog << Ansi::r(COLOR_CYAN);
           else if (color == -1) clog << Ansi::r(COLOR_MAGENTA);
@@ -303,7 +306,7 @@ namespace ₿ {
         wrefresh(stdlog);
       };
       void logWar(const string &prefix, const string &reason) const {
-        if (!display) {
+        if (!display.terminal) {
           clog << stamp()
                << prefix          << Ansi::r(COLOR_RED)
                << " Warrrrning: " << Ansi::b(COLOR_RED)
@@ -330,7 +333,7 @@ namespace ₿ {
       };
     protected:
       bool windowed() {
-        if (!display) return false;
+        if (!display.terminal) return false;
         if (stdlog)
           error("SH", "Unable to print another window");
         if (!initscr())
@@ -339,13 +342,13 @@ namespace ₿ {
               "\"export TERM=xterm\", or use --naked argument"
           );
         Ansi::default_colors();
-        if (padding.top != ANY_NUM) {
+        if (display.padding.top != ANY_NUM) {
           stdlog = subwin(
             stdscr,
-            getmaxy(stdscr) - padding.bottom - padding.top,
-            getmaxx(stdscr) - padding.left - padding.right,
-            padding.top,
-            padding.left
+            getmaxy(stdscr) - display.padding.bottom - display.padding.top,
+            getmaxx(stdscr) - display.padding.left - display.padding.right,
+            display.padding.top,
+            display.padding.left
           );
           scrollok(stdlog, true);
           idlok(stdlog, true);
@@ -369,7 +372,8 @@ namespace ₿ {
        const string  help;
       };
     protected:
-      bool autobot = false;
+      bool autobot  = false;
+      bool dustybot = false;
       pair<vector<Argument>, function<void(
         unordered_map<string, variant<string, int, double>>&
       )>> arguments;
@@ -385,8 +389,8 @@ namespace ₿ {
     protected:
       void main(Ending *const K, int argc, char** argv, const bool &databases, const bool &headless) {
         K->ending([&]() {
-          if (display) {
-            display = nullptr;
+          if (display.terminal) {
+            display = {};
             beep();
             endwin();
           }
@@ -395,8 +399,9 @@ namespace ₿ {
                << string(epilogue.empty() ? 0 : 1, '\n');
         });
         args["autobot"]  = autobot;
+        args["dustybot"] = dustybot;
         args["headless"] = headless;
-        args["naked"]    = !display;
+        args["naked"]    = !display.terminal;
         vector<Argument> long_options = {
           {"help",         "h",      nullptr,  "show this help and quit"},
           {"version",      "v",      nullptr,  "show current build version and quit"},
@@ -405,6 +410,9 @@ namespace ₿ {
         };
         if (!arg<int>("autobot")) long_options.push_back(
           {"autobot",      "1",      nullptr,  "automatically start trading on boot"}
+        );
+        if (!arg<int>("dustybot")) long_options.push_back(
+          {"dustybot",     "1",      nullptr,  "do not automatically cancel all orders on exit"}
         );
         if (!arg<int>("naked")) long_options.push_back(
           {"naked",        "1",      nullptr,  "do not display CLI, print output to stdout instead"}
@@ -449,7 +457,6 @@ namespace ₿ {
           {"http",         "URL",    "",       "set URL of alernative HTTPS api endpoint for trading"},
           {"wss",          "URL",    "",       "set URL of alernative WSS api endpoint for trading"},
           {"fix",          "URL",    "",       "set URL of alernative FIX api endpoint for trading"},
-          {"dustybot",     "1",      nullptr,  "do not automatically cancel all orders on exit"},
           {"market-limit", "NUMBER", "321",    "set NUMBER of maximum price levels for the orderbook,"
                                                "\n" "default NUMBER is '321' and the minimum is '10'"}
         }) long_options.push_back(it);
@@ -513,7 +520,7 @@ namespace ₿ {
           arguments.second = nullptr;
         }
         if (arg<int>("naked"))
-          display = nullptr;
+          display = {};
         if (!arg<string>("interface").empty() and !arg<int>("ipv6"))
           curl_global_setopt = [&](CURL *curl) {
             curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
@@ -633,7 +640,7 @@ namespace ₿ {
       };
     private:
       bool stop = false;
-      Loop::Async::Write<char> keylogger;
+      Loop::Async::Event<char> keylogger;
       mutable unordered_map<char, function<void()>> maps;
     protected:
       void wait_for_keylog(Loop *const loop) {
@@ -643,10 +650,8 @@ namespace ₿ {
         noecho();
         halfdelay(5);
         keypad(stdscr, true);
-        keylogger.wait_for(loop,
-          [&]() { return sync_keylogger(); },
-          [&](const char &ch) { keylog(ch); }
-        );
+        keylogger.write = [&](const char &ch) { keylog(ch); };
+        keylogger.wait_for(loop, [&]() { return sync_keylogger(); });
         keylogger.ask_for();
       };
     private:
@@ -1017,7 +1022,7 @@ namespace ₿ {
         protocol  = server.protocol();
         K->log("UI", "ready at", location());
       };
-      string location() {
+      string location() const {
         return option
           ? Text::strL(protocol) + "://" + wtfismyip + ":" + to_string(option->arg<int>("port"))
           : "loading..";
@@ -1166,7 +1171,7 @@ namespace ₿ {
     public:
       Gw *gateway = nullptr;
     protected:
-      virtual void run() = 0;
+      vector<variant<TimeEvent, Gw::DataEvent>> events;
     public:
       KryptoNinja *main(int argc, char** argv) {
         {
@@ -1191,12 +1196,18 @@ namespace ₿ {
               + " (consider to repeat a few times this check)");
           }
         } {
+          for (const auto &it : events)
+            if (holds_alternative<Gw::DataEvent>(it))
+              gateway->data(get<Gw::DataEvent>(it));
+        } {
           gateway->wait_for_data(this);
           timer_1s([&](const unsigned int &tick) {
             gateway->ask_for_data(tick);
           });
           ending([&]() {
-            gateway->end(arg<int>("dustybot"));
+            if (!dustybot)
+              gateway->purge(arg<int>("dustybot"));
+            gateway->end();
             end();
           });
           handshake({
@@ -1207,6 +1218,11 @@ namespace ₿ {
                           ? "yes"
                           : "no"           }
           });
+        } {
+          for (const auto &it : events)
+            if (holds_alternative<TimeEvent>(it))
+              timer_1s(get<TimeEvent>(it));
+          events.clear();
         } {
           if (databases)
             backups(this);
@@ -1233,7 +1249,6 @@ namespace ₿ {
         return this;
       };
       void wait() {
-        run();
         walk();
       };
       unsigned int dbSize() const {

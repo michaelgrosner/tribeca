@@ -114,11 +114,12 @@ namespace ₿ {
 
   class Loop {
     public_friend:
+      using TimeEvent = function<void(const unsigned int&)>;
       class Timer {
         private:
                   unsigned int tick  = 0;
           mutable unsigned int ticks = 300;
-          vector<function<void(const unsigned int&)>> jobs;
+             vector<TimeEvent> jobs;
         public:
           void ticks_factor(const unsigned int &factor) const {
             ticks = 300 * (factor ?: 1);
@@ -127,13 +128,13 @@ namespace ₿ {
             for (const auto &it : jobs) it(tick);
             tick = (tick + 1) % ticks;
           };
-          void push_back(const function<void(const unsigned int&)> &data) {
+          void push_back(const TimeEvent &data) {
             jobs.push_back(data);
           };
       };
       class Async {
         public_friend:
-          template<typename T> class Write {
+          template<typename T> class Event {
             private_friend:
               class Wakeup {
                 private:
@@ -157,13 +158,8 @@ namespace ₿ {
               void try_write(const T &rawdata) const {
                 if (write) write(rawdata);
               };
-              void wait_for(
-                Loop *const loop,
-                const function<vector<T>()>    j,
-                const function<void(const T&)> w = nullptr
-              ) {
-                job   = j;
-                write = w;
+              void wait_for(Loop *const loop, const function<vector<T>()> j) {
+                job = j;
                 event = loop->async([&]() {
                   if (data.valid())
                     for (const T &it : data.get()) try_write(it);
@@ -206,7 +202,7 @@ namespace ₿ {
       };
     public:
       virtual          void  timer_ticks_factor(const unsigned int&) const        = 0;
-      virtual          void  timer_1s(const function<void(const unsigned int&)>&) = 0;
+      virtual          void  timer_1s(const TimeEvent&)                           = 0;
       virtual         Async *async(const function<void()>&)                       = 0;
       virtual curl_socket_t  poll()                                               = 0;
       virtual          void  walk()                                               = 0;
@@ -289,7 +285,7 @@ namespace ₿ {
       void timer_ticks_factor(const unsigned int &factor) const override {
         timer.ticks_factor(factor);
       };
-      void timer_1s(const function<void(const unsigned int&)> &data) override {
+      void timer_1s(const TimeEvent &data) override {
         timer.push_back(data);
       };
       Loop::Async *async(const function<void()> &data) override {
@@ -394,7 +390,7 @@ namespace ₿ {
       void timer_ticks_factor(const unsigned int &factor) const override {
         timer.ticks_factor(factor);
       };
-      void timer_1s(const function<void(const unsigned int&)> &data) override {
+      void timer_1s(const TimeEvent &data) override {
         timer.push_back(data);
       };
       Loop::Async *async(const function<void()> &data) override {

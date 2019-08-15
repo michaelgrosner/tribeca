@@ -113,10 +113,7 @@ SCENARIO("general") {
 
 class BTCEUR {
   protected:
-    static class Bot: public KryptoNinja {
-      protected:
-        void run() override {};
-    } K;
+    static     KryptoNinja K;
     static  mQuotingParams qp;
     static         mOrders orders;
     static        mButtons button;
@@ -136,20 +133,17 @@ class BTCEUR {
       K.gateway->tickSize  = 0.001;
       K.gateway->minSize   = 0.001;
       K.gateway->report({}, false);
-      K.gateway->async.connectivity.write = [&](const Connectivity &rawdata) {
-        broker.semaphore.read_from_gw(rawdata);
-      };
     };
   protected:
     void verbose() {
-      K.display = nullptr;
+      K.display = {};
     };
     void silent() {
-      K.display = []() {};
+      K.display = {[]() {}};
     };
 };
 
-    BTCEUR::Bot BTCEUR::K;
+    KryptoNinja BTCEUR::K;
  mQuotingParams BTCEUR::qp(BTCEUR::K);
         mOrders BTCEUR::orders(BTCEUR::K);
        mButtons BTCEUR::button(BTCEUR::K);
@@ -618,7 +612,9 @@ SCENARIO_METHOD(BTCEUR, "expected") {
       REQUIRE(broker.calculon.quotes.bid.state == mQuoteState::Disconnected);
       REQUIRE(broker.calculon.quotes.ask.state == mQuoteState::Disconnected);
       REQUIRE_NOTHROW(broker.purge());
-      REQUIRE_NOTHROW(K.gateway->async.connectivity.try_write(Connectivity::Connected));
+      REQUIRE_NOTHROW(broker.semaphore.read_from_gw(
+        Connectivity::Connected
+      ));
       REQUIRE(broker.ready());
       REQUIRE_FALSE(levels.ready());
       REQUIRE_NOTHROW(levels.read_from_gw({ {

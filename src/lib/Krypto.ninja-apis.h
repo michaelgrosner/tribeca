@@ -78,7 +78,11 @@ namespace ₿ {
     };
   };
 
-  struct Order: public Trade {
+  struct Order {
+           Side side        = (Side)0;
+          Price price       = 0;
+         Amount quantity    = 0;
+          Clock time        = 0;
            bool isPong      = false;
          string orderId     = "",
                 exchangeId  = "";
@@ -151,6 +155,14 @@ namespace ₿ {
   };
 
   class GwExchangeData {
+    public_friend:
+      using DataEvent = variant<
+        function<void(const Connectivity&)>,
+        function<void(const Wallets&)>,
+        function<void(const Levels&)>,
+        function<void(const Order&)>,
+        function<void(const Trade&)>
+      >;
     public:
       curl_socket_t loopfd = 0;
       struct {
@@ -159,20 +171,25 @@ namespace ₿ {
                 amount,
                 percent;
       } decimal;
-      struct {
-        Loop::Async::Write<Wallets>      wallets;
-        Loop::Async::Write<Levels>       levels;
-        Loop::Async::Write<Trade>        trades;
-        Loop::Async::Write<Order>        orders,
-                                         cancelAll;
-        Loop::Async::Write<Connectivity> connectivity;
-      } async;
       bool askForFees      = false,
            askForReplace   = false,
            askForCancelAll = false;
       string (*randId)() = nullptr;
       virtual void ask_for_data(const unsigned int &tick) = 0;
       virtual void wait_for_data(Loop *const loop) = 0;
+      void data(const DataEvent &ev) {
+        if (holds_alternative<function<void(const Connectivity&)>>(ev))
+          async.connectivity.write = get<function<void(const Connectivity&)>>(ev);
+        else if (holds_alternative<function<void(const Wallets&)>>(ev))
+          async.wallets.write      = get<function<void(const Wallets&)>>(ev);
+        else if (holds_alternative<function<void(const Levels&)>>(ev))
+          async.levels.write       = get<function<void(const Levels&)>>(ev);
+        else if (holds_alternative<function<void(const Order&)>>(ev))
+          async.orders.write       =
+          async.cancelAll.write    = get<function<void(const Order&)>>(ev);
+        else if (holds_alternative<function<void(const Trade&)>>(ev))
+          async.trades.write       = get<function<void(const Trade&)>>(ev);
+      };
       void place(const Order *const order) {
         place(
           order->orderId,
@@ -209,6 +226,14 @@ namespace ₿ {
 /**/  virtual   vector<Order>   sync_orders()    { return {}; };             // call and read sync orders data from exchange
 /**/  virtual   vector<Order>   sync_cancelAll() { return {}; };             // call and read sync orders data from exchange
 //EO non-free Gw library functions from build-*/local/lib/K-*.a (it just redefines all virtual gateway class members above).
+      struct {
+        Loop::Async::Event<Wallets>      wallets;
+        Loop::Async::Event<Levels>       levels;
+        Loop::Async::Event<Trade>        trades;
+        Loop::Async::Event<Order>        orders,
+                                         cancelAll;
+        Loop::Async::Event<Connectivity> connectivity;
+      } async;
       void online(const Connectivity &connectivity = Connectivity::Connected) {
         async.connectivity.try_write(connectivity);
         if (!(bool)connectivity)
@@ -216,7 +241,7 @@ namespace ₿ {
       };
       void wait_for_never_async_data(Loop *const loop) {
         async.wallets.wait_for(loop,   [&]() { return sync_wallet(); });
-        async.cancelAll.wait_for(loop, [&]() { return sync_cancelAll(); }, *&async.orders.write);
+        async.cancelAll.wait_for(loop, [&]() { return sync_cancelAll(); });
       };
       void wait_for_sync_data(Loop *const loop) {
         async.orders.wait_for(loop,    [&]() { return sync_orders(); });
@@ -299,7 +324,7 @@ namespace ₿ {
         if (file.is_open()) file.close();
         return reply.value("reply", json::object());
       };
-      void end(const bool &dustybot = false) {
+      void purge(const bool &dustybot) {
         if (dustybot)
           print("--dustybot is enabled, remember to cancel manually any open order.");
         else {
@@ -307,6 +332,8 @@ namespace ₿ {
           if (!async_cancelAll()) sync_cancelAll();
           print("cancel all open orders OK");
         }
+      };
+      void end() {
         online(Connectivity::Disconnected);
         disconnect();
       };

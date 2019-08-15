@@ -2796,6 +2796,64 @@ namespace ₿::tribeca {
           cancelOrder(it);
       };
   };
+
+  class Engine {
+    public:
+       mQuotingParams qp;
+              mOrders orders;
+             mButtons button;
+        mMarketLevels levels;
+      mWalletPosition wallet;
+              mBroker broker;
+    private_ref:
+      const KryptoNinja &K;
+    public:
+      Engine(const KryptoNinja &bot)
+        : qp(bot)
+        , orders(bot)
+        , button(bot)
+        , levels(bot, qp, orders)
+        , wallet(bot, qp, orders, button, levels)
+        , broker(bot, qp, orders, button, levels, wallet)
+        , K(bot)
+      {};
+    public:
+      void read(const Connectivity &rawdata) {
+        broker.semaphore.read_from_gw(rawdata);
+      };
+      void read(const Wallets &rawdata) {
+        wallet.read_from_gw(rawdata);
+      };
+      void read(const Levels &rawdata) {
+        levels.read_from_gw(rawdata);
+        wallet.calcFunds();
+        calcQuotes();
+      };
+      void read(const Order &rawdata) {
+        orders.read_from_gw(rawdata);
+        wallet.calcFundsAfterOrder(orders.updated, &K.gateway->askForFees);
+      };
+      void read(const Trade &rawdata) {
+        levels.stats.takerTrades.read_from_gw(rawdata);
+      };
+      void timer_1s(const unsigned int &tick) {
+        if (K.gateway->connected() and !levels.warn_empty()) {
+          levels.timer_1s();
+          if (!(tick % 60)) {
+            levels.timer_60s();
+            broker.memory.timer_60s();
+          }
+          wallet.safety.timer_1s();
+          calcQuotes();
+        }
+      };
+    private:
+      void calcQuotes() {
+        if (broker.ready() and levels.ready() and wallet.ready())
+          broker.calcQuotes();
+        broker.purge();
+      };
+  };
 }
 
 #endif
