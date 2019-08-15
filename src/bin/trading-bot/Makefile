@@ -57,7 +57,7 @@ export define PACKAGE_JSON
     "angular2-highcharts": "^0.5.5",
     "babelify": "^10.0.0",
     "browserify": "^16.5.0",
-    "highcharts": "^7.1.2",
+    "highcharts": "^7.1.3",
     "reflect-metadata": "^0.1.13",
     "rxjs": "6.5.2",
     "sass": "1.21.0",
