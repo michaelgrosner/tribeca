@@ -391,7 +391,7 @@ namespace ₿ {
           "\n" "\n" "  " + unlock +
           "\n" "\n" "Before restart just wait for 0 confirmations at:"
           "\n"      "https://live.blockcypher.com/btc/address/" + unlock +
-          "\n"      OBLIGATORY_analpaper_SOFTWARE_LICENSE
+          "\n" "\n" OBLIGATORY_analpaper_SOFTWARE_LICENSE
           "\n" "\n" "                     Signed-off-by: Carles Tubio"
           "\n"      "see: github.com/ctubio/Krypto-trading-bot#unlock"
           "\n"      "or just use --free-version to hide this message"

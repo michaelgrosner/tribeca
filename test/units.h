@@ -7,7 +7,6 @@
 
 #include <catch.h>
 
-using namespace ₿;
 using namespace tribeca;
 
 SCENARIO("general") {

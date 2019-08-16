@@ -1,51 +1,72 @@
-K       ?= K.sh
-MAJOR    = 0
-MINOR    = 5
-PATCH    = 4
-BUILD    = 1
-SOURCE  := $(notdir $(wildcard src/bin/*))
-CARCH    = x86_64-linux-gnu      \
-           arm-linux-gnueabihf   \
-           aarch64-linux-gnu     \
-           x86_64-apple-darwin17 \
-           x86_64-w64-mingw32
+K         ?= K.sh
+MAJOR      = 0
+MINOR      = 5
+PATCH      = 4
+BUILD      = 2
 
-CHOST   ?= $(shell test -n "`command -v g++`" && g++ -dumpmachine \
-             || echo $(subst build-,,$(firstword $(wildcard build-*))))
-ABI     ?= $(shell echo '\#include <string>'   \
-             | $(CHOST)-g++ -x c++ -dM -E -    \
-             | grep '_GLIBCXX_USE_CXX11_ABI 1' \
-             | wc -l                           )
+OBLIGATORY = DISCLAIMER: This is strict non-violent software: \
+           \nif you hurt other living creatures, please stop; \
+           \notherwise remove all copies of the software now.
 
-KHOST   := $(shell echo $(CHOST)                               \
-             | sed 's/-\([a-z_0-9]*\)-\(linux\)$$/-\2-\1/'     \
-             | sed 's/\([a-z_0-9]*\)-\([a-z_0-9]*\)-.*/\2-\1/' \
-             | sed 's/^w64/win64/'                             )
-KLOCAL  := build-$(KHOST)/local
+PERMISSIVE = This is free software: the UI and quoting engine are open source, \
+           \nfeel free to hack both as you need.                               \
+                                                                               \
+           \nThis is non-free software: built-in gateway exchange integrations \
+           \nare licensed by/under the law of my grandma (since last century), \
+           \nfeel free to crack all as you need.
 
-ERR      = *** K require g++ v7 or greater, but it was not found.
-HINT    := consider a symlink at /usr/bin/$(CHOST)-g++ pointing to your g++-7 or g++-8 executable
+SOURCE    := $(notdir $(wildcard src/bin/*))
+CARCH      = x86_64-linux-gnu      \
+             arm-linux-gnueabihf   \
+             aarch64-linux-gnu     \
+             x86_64-apple-darwin17 \
+             x86_64-w64-mingw32
 
-STEP     = $(shell tput setaf 2;tput setab 0)Building $(1)..$(shell tput sgr0)
-KARGS   := -std=c++17 -O3 -pthread -DK_0_GIT='"$(shell   \
-  cat .git/refs/heads/master 2>/dev/null || echo HEAD)"' \
-  -DK_BUILD='"$(KHOST)"'      -DK_SOURCE='"K-$(KSRC)"'   \
+CHOST     ?= $(shell test -n "`command -v g++`" && g++ -dumpmachine \
+               || echo $(subst build-,,$(firstword $(wildcard build-*))))
+ABI       ?= $(shell echo '\#include <string>'   \
+               | $(CHOST)-g++ -x c++ -dM -E -    \
+               | grep '_GLIBCXX_USE_CXX11_ABI 1' \
+               | wc -l                           )
+
+KHOST     := $(shell echo $(CHOST)                               \
+               | sed 's/-\([a-z_0-9]*\)-\(linux\)$$/-\2-\1/'     \
+               | sed 's/\([a-z_0-9]*\)-\([a-z_0-9]*\)-.*/\2-\1/' \
+               | sed 's/^w64/win64/'                             )
+KLOCAL    := build-$(KHOST)/local
+
+ERR        = *** K require g++ v7 or greater, but it was not found.
+HINT      := consider a symlink at /usr/bin/$(CHOST)-g++ pointing to your g++-7 or g++-8 executable
+STEP       = $(shell tput setaf 2;tput setab 0)Building $(1)..$(shell tput sgr0)
+
+KARGS     := -std=c++17 -O3 -pthread -DK_HEAD='"$(shell  \
+    git rev-parse HEAD 2>/dev/null || echo HEAD          \
+  )"' -DK_BUILD='"$(KHOST)"' -DK_SOURCE='"K-$(KSRC)"'    \
   -DK_STAMP='"$(shell date "+%Y-%m-%d %H:%M:%S")"'       \
   -DK_0_DAY='"v$(MAJOR).$(MINOR).$(PATCH)+$(BUILD)"'     \
-  -I$(KLOCAL)/include                                    \
-  $(KLOCAL)/lib/K-$(KHOST).$(ABI).a                      \
-  $(KLOCAL)/lib/libncurses.a  $(KLOCAL)/lib/libsqlite3.a \
-  $(KLOCAL)/lib/libcurl.a     $(KLOCAL)/lib/libcares.a   \
-  $(KLOCAL)/lib/libssl.a      $(KLOCAL)/lib/libcrypto.a  \
-  $(KLOCAL)/lib/libz.a                                   \
-  $(wildcard                                             \
-    $(KLOCAL)/lib/K-$(KSRC)-assets.o                     \
-    $(KLOCAL)/lib/libuv.dll.a                            \
-    $(KLOCAL)/lib/libuv.a                                \
-  )                                                      \
-  $(addprefix -include ,$(wildcard                       \
-    src/lib/Krypto.ninja.h    src/usr/Krypto.ninja-*.h   \
-  ))
+  -DK_0_DAY='"v$(MAJOR).$(MINOR).$(PATCH)+$(BUILD)"'     \
+  -I$(KLOCAL)/include $(addprefix $(KLOCAL)/lib/,        \
+    K-$(KHOST).$(ABI).a                                  \
+    libncurses.a                                         \
+    libsqlite3.a                                         \
+    libcurl.a libcares.a                                 \
+    libssl.a  libcrypto.a                                \
+    libz.a                                               \
+  ) $(wildcard $(addprefix $(KLOCAL)/lib/,               \
+    K-$(KSRC)-assets.o                                   \
+    libuv.dll.a libuv.a                                  \
+  )) $(addprefix -include src/lib/Krypto.ninja-,         \
+       $(addsuffix .h,                                   \
+         lang                                            \
+         data                                            \
+         apis                                            \
+         bots                                            \
+       )                                                 \
+  ) $(addprefix -include ,$(wildcard                     \
+    src/usr/Krypto.ninja-*.h                             \
+  ))                                                     \
+-DPERMISSIVE_analpaper_SOFTWARE_LICENSE='"$(PERMISSIVE)"'\
+-DOBLIGATORY_analpaper_SOFTWARE_LICENSE='"$(OBLIGATORY)"'
 
 all K: $(SOURCE)
 
@@ -127,9 +148,9 @@ else
 	$(if $(subst 8,,$(subst 7,,$(shell $(CHOST)-g++ -dumpversion | cut -d. -f1))),$(warning $(ERR));$(error $(HINT)))
 	@$(CHOST)-g++ --version
 	@mkdir -p $(KLOCAL)/bin
-	-@egrep ₿ src test -lR | xargs sed -i 's/₿/\\u20BF/g'
+	-@egrep ₿ src test -lR | xargs -r sed -i 's/₿/\\u20BF/g'
 	$(MAKE) $(shell test -n "`echo $(CHOST) | grep darwin`" && echo Darwin || (test -n "`echo $(CHOST) | grep mingw32`" && echo Win32 || uname -s)) CHOST=$(CHOST)
-	-@egrep \\u20BF src test -lR | xargs sed -i 's/\\u20BF/₿/g'
+	-@egrep \\u20BF src test -lR | xargs -r sed -i 's/\\u20BF/₿/g'
 	@chmod +x $(KLOCAL)/bin/K-$(KSRC)*
 	@$(MAKE) system_install -s
 endif
@@ -148,11 +169,11 @@ else
 endif
 
 Darwin: src/bin/$(KSRC)/$(KSRC).cxx
-	-@egrep \\u20BF src -lR | xargs sed -i 's/\\\(u20BF\)/\1/g'
+	-@egrep \\u20BF src -lR | xargs -r sed -i 's/\\\(u20BF\)/\1/g'
 	$(CHOST)-g++ -s -DNDEBUG -o $(KLOCAL)/bin/K-$(KSRC)                          \
 	  -msse4.1 -maes -mpclmul -mmacosx-version-min=10.13 -nostartfiles -rdynamic \
 	  $^ $(KARGS) -ldl
-	-@egrep u20BF src -lR | xargs sed -i 's/\(u20BF\)/\\\1/g'
+	-@egrep u20BF src -lR | xargs -r sed -i 's/\(u20BF\)/\\\1/g'
 
 Win32: src/bin/$(KSRC)/$(KSRC).cxx
 	$(CHOST)-g++-posix -s -DNDEBUG -o $(KLOCAL)/bin/K-$(KSRC).exe \
@@ -286,25 +307,25 @@ checkOK:
 	&& echo $${date} && date
 
 MAJOR:
-	@sed -i "s/^\(MAJOR    =\).*$$/\1 $(shell expr $(MAJOR) + 1)/" Makefile
-	@sed -i "s/^\(MINOR    =\).*$$/\1 0/" Makefile
-	@sed -i "s/^\(PATCH    =\).*$$/\1 0/" Makefile
-	@sed -i "s/^\(BUILD    =\).*$$/\1 0/" Makefile
+	@sed -i "s/^\(MAJOR *=\).*$$/\1 $(shell expr $(MAJOR) + 1)/" Makefile
+	@sed -i "s/^\(MINOR *=\).*$$/\1 0/"                          Makefile
+	@sed -i "s/^\(PATCH *=\).*$$/\1 0/"                          Makefile
+	@sed -i "s/^\(BUILD *=\).*$$/\1 0/"                          Makefile
 	@$(MAKE) checkOK
 
 MINOR:
-	@sed -i "s/^\(MINOR    =\).*$$/\1 $(shell expr $(MINOR) + 1)/" Makefile
-	@sed -i "s/^\(PATCH    =\).*$$/\1 0/" Makefile
-	@sed -i "s/^\(BUILD    =\).*$$/\1 0/" Makefile
+	@sed -i "s/^\(MINOR *=\).*$$/\1 $(shell expr $(MINOR) + 1)/" Makefile
+	@sed -i "s/^\(PATCH *=\).*$$/\1 0/"                          Makefile
+	@sed -i "s/^\(BUILD *=\).*$$/\1 0/"                          Makefile
 	@$(MAKE) checkOK
 
 PATCH:
-	@sed -i "s/^\(PATCH    =\).*$$/\1 $(shell expr $(PATCH) + 1)/" Makefile
-	@sed -i "s/^\(BUILD    =\).*$$/\1 0/" Makefile
+	@sed -i "s/^\(PATCH *=\).*$$/\1 $(shell expr $(PATCH) + 1)/" Makefile
+	@sed -i "s/^\(BUILD *=\).*$$/\1 0/"                          Makefile
 	@$(MAKE) checkOK
 
 BUILD:
-	@sed -i "s/^\(BUILD    =\).*$$/\1 $(shell expr $(BUILD) + 1)/" Makefile
+	@sed -i "s/^\(BUILD *=\).*$$/\1 $(shell expr $(BUILD) + 1)/" Makefile
 	@$(MAKE) checkOK
 
 release:

@@ -5,7 +5,7 @@
 
 namespace ₿::example {
   class Engine {
-    public:
+    private:
       Levels levels;
     private_ref:
       const KryptoNinja &K;
