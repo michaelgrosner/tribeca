@@ -6,7 +6,7 @@
 
 <h2 align="center">They have being discriminated and imprisoned because of their advocacy<br />for the rights of the Catalan people to self-determination.</h2>
 
-<h2 align="center">Excuse me to take your time, but let me say one thing:<br /><br />I am Catalan.<br /><br />Today a province of Spain, but what is Catalonia? Catalonia is one of the greatest nations in the world. I will tell you why. Since the 11th century, Authorities of Catalonia speak about peace. Peace in the world and against, against, against war, the inhumanity of war.<br /><br />This is Catalonia.<br /><br />Catalonia IS NOT Spain.</h2><br /><br /><br /><br /><br />
+<h2 align="center">Excuse me to take your time, but let me say one thing:<br /><br />I am Catalan.<br /><br />Today a province of Spain, but what is Catalonia?<br />Catalonia is one of the greatest nations in the world. I will tell you why:<br />Since the 11th century, Authorities of Catalonia speak about peace.<br />Peace in the world and against, against, against war, the inhumanity of war.<br /><br />This is Catalonia.<br /><br />Catalonia IS NOT Spain.</h2><br /><br /><br /><br /><br />
 
 <br /><br /><br /><br /><br /><br /><br /><br />
 
