@@ -21,12 +21,12 @@ namespace ₿::example {
       };
     private:
       string greeting() {
-        const Price spread = levels.asks.cbegin()->price
-                           - levels.bids.cbegin()->price;
-        cout << "Hello, " << K.arg<string>("subject")
-             << " (pssst.. current spread is: "
-             << K.gateway->decimal.price.str(spread) << " " << K.gateway->quote
-             << ")." << endl;
+        const Price fair = (levels.bids.cbegin()->price
+                          + levels.asks.cbegin()->price) / 2;
+        cout << "Hello, " << K.arg<string>("subject") << endl
+             << " pssst.. 1 " << K.gateway->base << " = "
+             << K.gateway->decimal.price.str(fair) << " " << K.gateway->quote
+             << "." << endl;
         return "Executed " + (
           K.arg<int>("debug")
             ? string(__PRETTY_FUNCTION__)

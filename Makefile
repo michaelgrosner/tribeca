@@ -44,7 +44,6 @@ KARGS     := -std=c++17 -O3 -pthread -DK_HEAD='"$(shell  \
   )"' -DK_BUILD='"$(KHOST)"' -DK_SOURCE='"K-$(KSRC)"'    \
   -DK_STAMP='"$(shell date "+%Y-%m-%d %H:%M:%S")"'       \
   -DK_0_DAY='"v$(MAJOR).$(MINOR).$(PATCH)+$(BUILD)"'     \
-  -DK_0_DAY='"v$(MAJOR).$(MINOR).$(PATCH)+$(BUILD)"'     \
   -I$(KLOCAL)/include $(addprefix $(KLOCAL)/lib/,        \
     K-$(KHOST).$(ABI).a                                  \
     libncurses.a                                         \
@@ -65,8 +64,8 @@ KARGS     := -std=c++17 -O3 -pthread -DK_HEAD='"$(shell  \
   ) $(addprefix -include ,$(wildcard                     \
     src/usr/Krypto.ninja-*.h                             \
   ))                                                     \
--DPERMISSIVE_analpaper_SOFTWARE_LICENSE='"$(PERMISSIVE)"'\
--DOBLIGATORY_analpaper_SOFTWARE_LICENSE='"$(OBLIGATORY)"'
+-DOBLIGATORY_analpaper_SOFTWARE_LICENSE='"$(OBLIGATORY)"'\
+-DPERMISSIVE_analpaper_SOFTWARE_LICENSE='"$(PERMISSIVE)"'
 
 all K: $(SOURCE)
 
