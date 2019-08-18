@@ -15,7 +15,7 @@ class HelloWorld: public KryptoNinja {
       };
       arguments = { {
         {"subject", "NAME", "World", "say hello to NAME (default: 'World')"}
-      }, [&](unordered_map<string, variant<string, int, double>> &args) {
+      }, [&](MutableUserArguments &args) {
         if (arg<string>("subject").empty())
           error("CF", "Invalid empty --subject value");
         else args["subject"] = Text::strU(arg<string>("subject")) + "!";

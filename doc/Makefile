@@ -4,7 +4,7 @@ all doc: clean
 	@mkdir -p $(KDOC)
 	doxygen
 	@test -d $(KDOC)/html.css || git clone git://github.com/mosra/m.css $(KDOC)/html.css
-	python3.6 $(KDOC)/html.css/doxygen/dox2html5.py Dopyfile
+	python3.6 $(KDOC)/html.css/documentation/doxygen.py Dopyfile
 	@rm -rf $(KDOC)/xml
 
 clean:

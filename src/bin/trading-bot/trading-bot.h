@@ -48,7 +48,7 @@ class TradingBot: public KryptoNinja {
         {"debug-orders", "1",      nullptr,                "print detailed output about exchange messages"},
         {"debug-quotes", "1",      nullptr,                "print detailed output about quoting engine"},
         {"debug-wallet", "1",      nullptr,                "print detailed output about target base position"}
-      }, [&](unordered_map<string, variant<string, int, double>> &args) {
+      }, [&](MutableUserArguments &args) {
         if (arg<int>("debug"))
           args["debug-orders"] =
           args["debug-quotes"] =

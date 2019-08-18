@@ -1,15 +1,3 @@
-<h2 align="center">Spanish government still holds 9 Catalan political prisoners,<br />violating their right to freedom of association and expression,<br />political opinion and participation in public life, and fair trial rights.</h2>
-
-|<img src="https://user-images.githubusercontent.com/1634027/63216518-c5a79600-c136-11e9-9db8-1bb49b2a8c46.jpg" />|<img src="https://user-images.githubusercontent.com/1634027/63216519-c5a79600-c136-11e9-8197-57d2c866f096.jpg" />|<img src="https://user-images.githubusercontent.com/1634027/63216520-c5a79600-c136-11e9-8b22-9e373c9ac0cd.jpg" />|<img src="https://user-images.githubusercontent.com/1634027/63216529-cb9d7700-c136-11e9-8ee3-8a66e5a8e78c.jpg" />|<img src="https://user-images.githubusercontent.com/1634027/63216530-cc360d80-c136-11e9-86f5-75b1e4388b2c.jpg" />|
-|---|---|---|---|---|
-|<img src="https://user-images.githubusercontent.com/1634027/63216531-cc360d80-c136-11e9-8b4c-2267c4c1162c.jpg" />|<img src="https://user-images.githubusercontent.com/1634027/63216532-cc360d80-c136-11e9-8656-346735d0a741.jpg" />|<img src="https://user-images.githubusercontent.com/1634027/63216533-cccea400-c136-11e9-9e45-0f677f3e8460.jpg" />|<img src="https://user-images.githubusercontent.com/1634027/63216516-c4766900-c136-11e9-90c4-c6527578d9a5.jpg" />|<img src="https://user-images.githubusercontent.com/1634027/63216517-c4766900-c136-11e9-831d-721f642c8540.jpg" />|
-
-<h2 align="center">They have being discriminated and imprisoned because of their advocacy<br />for the rights of the Catalan people to self-determination.</h2>
-
-<h2 align="center">Excuse me to take your time, but let me say one thing:<br /><br />I am Catalan.<br /><br />Today a province of Spain, but what is Catalonia?<br />Catalonia is one of the greatest nations in the world. I will tell you why:<br />Since the 11th century, Authorities of Catalonia speak about peace.<br />Peace in the world and against, against, against war, the inhumanity of war.<br /><br />This is Catalonia.<br /><br />Catalonia IS NOT Spain.</h2><br /><br /><br /><br /><br />
-
-<br /><br /><br /><br /><br /><br /><br /><br />
-
 <img align="left" src="https://user-images.githubusercontent.com/1634027/36237231-e611590e-11fa-11e8-8486-6675078501dc.jpg" /><p align="right">self reminder:<br><b>patience is the mother of science</b></p><br><a href="http://ciutatrefugi.barcelona/en/welcome-barcelona">\*\*\* REFUGEES WELCOME! \*\*\*</a><br/>&thinsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="http://missingmigrants.iom.int/">\*\*\* FATAL ROUTES? \*\*\*</a>
 <br clear="left">
 

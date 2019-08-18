@@ -112,13 +112,13 @@ SCENARIO("general") {
 
 class BTCEUR {
   protected:
-    static     KryptoNinja K;
-    static  mQuotingParams qp;
-    static         mOrders orders;
-    static        mButtons button;
-    static   mMarketLevels levels;
-    static mWalletPosition wallet;
-    static         mBroker broker;
+    static    KryptoNinja K;
+    static  QuotingParams qp;
+    static         Orders orders;
+    static        Buttons button;
+    static   MarketLevels levels;
+    static WalletPosition wallet;
+    static         Broker broker;
   public:
     BTCEUR()
     {
@@ -142,16 +142,16 @@ class BTCEUR {
     };
 };
 
-    KryptoNinja BTCEUR::K;
- mQuotingParams BTCEUR::qp(BTCEUR::K);
-        mOrders BTCEUR::orders(BTCEUR::K);
-       mButtons BTCEUR::button(BTCEUR::K);
-  mMarketLevels BTCEUR::levels(BTCEUR::K, BTCEUR::qp, BTCEUR::orders);
-mWalletPosition BTCEUR::wallet(BTCEUR::K, BTCEUR::qp, BTCEUR::orders, BTCEUR::button, BTCEUR::levels);
-        mBroker BTCEUR::broker(BTCEUR::K, BTCEUR::qp, BTCEUR::orders, BTCEUR::button, BTCEUR::levels, BTCEUR::wallet);
+   KryptoNinja BTCEUR::K;
+ QuotingParams BTCEUR::qp(BTCEUR::K);
+        Orders BTCEUR::orders(BTCEUR::K);
+       Buttons BTCEUR::button(BTCEUR::K);
+  MarketLevels BTCEUR::levels(BTCEUR::K, BTCEUR::qp, BTCEUR::orders);
+WalletPosition BTCEUR::wallet(BTCEUR::K, BTCEUR::qp, BTCEUR::orders, BTCEUR::button, BTCEUR::levels);
+        Broker BTCEUR::broker(BTCEUR::K, BTCEUR::qp, BTCEUR::orders, BTCEUR::button, BTCEUR::levels, BTCEUR::wallet);
 
 SCENARIO_METHOD(BTCEUR, "expected") {
-  GIVEN("mMarketLevels") {
+  GIVEN("MarketLevels") {
     WHEN("defaults") {
       THEN("fair value") {
         REQUIRE_FALSE(levels.fairValue);
@@ -174,7 +174,7 @@ SCENARIO_METHOD(BTCEUR, "expected") {
       REQUIRE_NOTHROW(levels.stats.fairPrice.read = [&]() {
         REQUIRE(levels.stats.fairPrice.blob().dump() == "{\"price\":1234.55}");
       });
-      REQUIRE_NOTHROW(qp.fvModel = mFairValueModel::BBO);
+      REQUIRE_NOTHROW(qp.fvModel = FairValueModel::BBO);
       vector<string> randIds;
       REQUIRE_NOTHROW(randIds.push_back(Random::uuid36Id()));
       REQUIRE_NOTHROW(orders.upsert({Side::Bid, 1234.52, 0.34567890, Tstamp, false, randIds.back()}));
@@ -220,7 +220,7 @@ SCENARIO_METHOD(BTCEUR, "expected") {
         REQUIRE(levels.fairValue == 1234.55);
       }
       THEN("fair value weight") {
-        REQUIRE_NOTHROW(qp.fvModel = mFairValueModel::wBBO);
+        REQUIRE_NOTHROW(qp.fvModel = FairValueModel::wBBO);
         REQUIRE_NOTHROW(levels.stats.fairPrice.read = [&]() {
           FAIL("broadcast() while filtering");
         });
@@ -228,7 +228,7 @@ SCENARIO_METHOD(BTCEUR, "expected") {
         REQUIRE(levels.fairValue == 1234.59);
       }
       THEN("fair value reversed weight") {
-        REQUIRE_NOTHROW(qp.fvModel = mFairValueModel::rwBBO);
+        REQUIRE_NOTHROW(qp.fvModel = FairValueModel::rwBBO);
         REQUIRE_NOTHROW(levels.stats.fairPrice.read = [&]() {
           FAIL("broadcast() while filtering");
         });
@@ -267,7 +267,7 @@ SCENARIO_METHOD(BTCEUR, "expected") {
     }
   }
 
-  GIVEN("mRecentTrades") {
+  GIVEN("RecentTrades") {
     REQUIRE_NOTHROW(wallet.safety.recentTrades.lastBuyPrice = 0);
     REQUIRE_NOTHROW(wallet.safety.recentTrades.lastSellPrice = 0);
     REQUIRE_NOTHROW(wallet.safety.recentTrades.buys = {});
@@ -285,7 +285,7 @@ SCENARIO_METHOD(BTCEUR, "expected") {
       }
     }
     WHEN("assigned") {
-      mLastOrder order = {};
+      LastOrder order = {};
       REQUIRE_NOTHROW(order.price = 1234.57);
       REQUIRE_NOTHROW(order.filled = 0.01234566);
       REQUIRE_NOTHROW(order.side = Side::Ask);
@@ -337,7 +337,7 @@ SCENARIO_METHOD(BTCEUR, "expected") {
     }
   }
 
-  GIVEN("mSafety") {
+  GIVEN("Safety") {
     REQUIRE_NOTHROW(wallet.safety.read = [&]() {
       INFO("read()");
     });
@@ -360,14 +360,14 @@ SCENARIO_METHOD(BTCEUR, "expected") {
       }
 
       THEN("pct total value") {
-        REQUIRE_NOTHROW(qp.orderPctTotal = mOrderPctTotal::Value);
+        REQUIRE_NOTHROW(qp.orderPctTotal = OrderPctTotal::Value);
         REQUIRE_NOTHROW(wallet.safety.calc());
         REQUIRE(Approx(0.3) == wallet.safety.sellSize);
         REQUIRE(Approx(0.6) == wallet.safety.buySize);
       }
 
       THEN("pct side balance") {
-        REQUIRE_NOTHROW(qp.orderPctTotal = mOrderPctTotal::Side);
+        REQUIRE_NOTHROW(qp.orderPctTotal = OrderPctTotal::Side);
         REQUIRE_NOTHROW(wallet.safety.calc());
         REQUIRE(Approx(0.1) == wallet.safety.sellSize);
         REQUIRE(Approx(0.4) == wallet.safety.buySize);
@@ -375,11 +375,11 @@ SCENARIO_METHOD(BTCEUR, "expected") {
 
       THEN("with 0\% tbp") {
         REQUIRE_NOTHROW(wallet.target.targetBasePosition = 0.0);
-        REQUIRE_NOTHROW(qp.orderPctTotal = mOrderPctTotal::TBPValue);
+        REQUIRE_NOTHROW(qp.orderPctTotal = OrderPctTotal::TBPValue);
         REQUIRE_NOTHROW(wallet.safety.calc());
         REQUIRE(Approx(0.3) == wallet.safety.sellSize);
         REQUIRE(Approx(0.0) == wallet.safety.buySize);
-        REQUIRE_NOTHROW(qp.orderPctTotal = mOrderPctTotal::TBPSide);
+        REQUIRE_NOTHROW(qp.orderPctTotal = OrderPctTotal::TBPSide);
         REQUIRE_NOTHROW(qp.tradeSizeTBPExp = 1.0);
         REQUIRE_NOTHROW(wallet.safety.calc());
         REQUIRE(Approx(0.1) == wallet.safety.sellSize);
@@ -392,11 +392,11 @@ SCENARIO_METHOD(BTCEUR, "expected") {
 
       THEN("with low tbp") {
         REQUIRE_NOTHROW(wallet.target.targetBasePosition = 0.5);
-        REQUIRE_NOTHROW(qp.orderPctTotal = mOrderPctTotal::TBPValue);
+        REQUIRE_NOTHROW(qp.orderPctTotal = OrderPctTotal::TBPValue);
         REQUIRE_NOTHROW(wallet.safety.calc());
         REQUIRE(Approx(0.3) == wallet.safety.sellSize);
         REQUIRE(Approx(0.15) == wallet.safety.buySize);
-        REQUIRE_NOTHROW(qp.orderPctTotal = mOrderPctTotal::TBPSide);
+        REQUIRE_NOTHROW(qp.orderPctTotal = OrderPctTotal::TBPSide);
         REQUIRE_NOTHROW(qp.tradeSizeTBPExp = 1.0);
         REQUIRE_NOTHROW(wallet.safety.calc());
         REQUIRE(Approx(0.1) == wallet.safety.sellSize);
@@ -409,11 +409,11 @@ SCENARIO_METHOD(BTCEUR, "expected") {
 
       THEN("with matched tbp") {
         REQUIRE_NOTHROW(wallet.target.targetBasePosition = 1.0);
-        REQUIRE_NOTHROW(qp.orderPctTotal = mOrderPctTotal::TBPValue);
+        REQUIRE_NOTHROW(qp.orderPctTotal = OrderPctTotal::TBPValue);
         REQUIRE_NOTHROW(wallet.safety.calc());
         REQUIRE(Approx(0.3) == wallet.safety.sellSize);
         REQUIRE(Approx(0.4) == wallet.safety.buySize);
-        REQUIRE_NOTHROW(qp.orderPctTotal = mOrderPctTotal::TBPSide);
+        REQUIRE_NOTHROW(qp.orderPctTotal = OrderPctTotal::TBPSide);
         REQUIRE_NOTHROW(qp.tradeSizeTBPExp = 1.0);
         REQUIRE_NOTHROW(wallet.safety.calc());
         REQUIRE(Approx(0.1) == wallet.safety.sellSize);
@@ -426,11 +426,11 @@ SCENARIO_METHOD(BTCEUR, "expected") {
 
       THEN("with 50\% tbp") {
         REQUIRE_NOTHROW(wallet.target.targetBasePosition = 1.5);
-        REQUIRE_NOTHROW(qp.orderPctTotal = mOrderPctTotal::TBPValue);
+        REQUIRE_NOTHROW(qp.orderPctTotal = OrderPctTotal::TBPValue);
         REQUIRE_NOTHROW(wallet.safety.calc());
         REQUIRE(Approx(0.3) == wallet.safety.sellSize);
         REQUIRE(Approx(0.6) == wallet.safety.buySize);
-        REQUIRE_NOTHROW(qp.orderPctTotal = mOrderPctTotal::TBPSide);
+        REQUIRE_NOTHROW(qp.orderPctTotal = OrderPctTotal::TBPSide);
         REQUIRE_NOTHROW(qp.tradeSizeTBPExp = 1.0);
         REQUIRE_NOTHROW(wallet.safety.calc());
         REQUIRE(Approx(0.06) == wallet.safety.sellSize);
@@ -443,11 +443,11 @@ SCENARIO_METHOD(BTCEUR, "expected") {
 
       THEN("with high tbp") {
         REQUIRE_NOTHROW(wallet.target.targetBasePosition = 2.0);
-        REQUIRE_NOTHROW(qp.orderPctTotal = mOrderPctTotal::TBPValue);
+        REQUIRE_NOTHROW(qp.orderPctTotal = OrderPctTotal::TBPValue);
         REQUIRE_NOTHROW(wallet.safety.calc());
         REQUIRE(Approx(0.2) == wallet.safety.sellSize);
         REQUIRE(Approx(0.6) == wallet.safety.buySize);
-        REQUIRE_NOTHROW(qp.orderPctTotal = mOrderPctTotal::TBPSide);
+        REQUIRE_NOTHROW(qp.orderPctTotal = OrderPctTotal::TBPSide);
         REQUIRE_NOTHROW(qp.tradeSizeTBPExp = 1.0);
         REQUIRE_NOTHROW(wallet.safety.calc());
         REQUIRE(Approx(0.0) == wallet.safety.sellSize);
@@ -460,11 +460,11 @@ SCENARIO_METHOD(BTCEUR, "expected") {
 
       THEN("with 100\% tbp") {
         REQUIRE_NOTHROW(wallet.target.targetBasePosition = 3.0);
-        REQUIRE_NOTHROW(qp.orderPctTotal = mOrderPctTotal::TBPValue);
+        REQUIRE_NOTHROW(qp.orderPctTotal = OrderPctTotal::TBPValue);
         REQUIRE_NOTHROW(wallet.safety.calc());
         REQUIRE(Approx(0.0) == wallet.safety.sellSize);
         REQUIRE(Approx(0.6) == wallet.safety.buySize);
-        REQUIRE_NOTHROW(qp.orderPctTotal = mOrderPctTotal::TBPSide);
+        REQUIRE_NOTHROW(qp.orderPctTotal = OrderPctTotal::TBPSide);
         REQUIRE_NOTHROW(qp.tradeSizeTBPExp = 1.0);
         REQUIRE_NOTHROW(wallet.safety.calc());
         REQUIRE(Approx(0.0) == wallet.safety.sellSize);
@@ -477,7 +477,7 @@ SCENARIO_METHOD(BTCEUR, "expected") {
     }
   }
 
-  GIVEN("mEwma") {
+  GIVEN("Ewma") {
     levels.fairValue = 0;
     WHEN("defaults") {
       REQUIRE_FALSE(levels.stats.ewma.mgEwmaM);
@@ -525,11 +525,11 @@ SCENARIO_METHOD(BTCEUR, "expected") {
     }
   }
 
-  GIVEN("mBroker") {
-    REQUIRE_NOTHROW(qp.mode = mQuotingMode::Top);
-    REQUIRE_NOTHROW(qp.autoPositionMode = mAutoPositionMode::Manual);
-    REQUIRE_NOTHROW(qp.aggressivePositionRebalancing = mAPR::Off);
-    REQUIRE_NOTHROW(qp.safety = mQuotingSafety::Off);
+  GIVEN("Broker") {
+    REQUIRE_NOTHROW(qp.mode = QuotingMode::Top);
+    REQUIRE_NOTHROW(qp.autoPositionMode = AutoPositionMode::Manual);
+    REQUIRE_NOTHROW(qp.aggressivePositionRebalancing = APR::Off);
+    REQUIRE_NOTHROW(qp.safety = QuotingSafety::Off);
     REQUIRE_NOTHROW(qp.protectionEwmaQuotePrice = false);
     REQUIRE_NOTHROW(qp.widthPercentage = false);
     REQUIRE_NOTHROW(qp.percentageValues = false);
@@ -576,7 +576,7 @@ SCENARIO_METHOD(BTCEUR, "expected") {
       THEN("held amount") {
         levels.fairValue = 500;
         bool askForFees = false;
-        mLastOrder order = {};
+        LastOrder order = {};
         REQUIRE_NOTHROW(order.price = 1);
         REQUIRE_NOTHROW(order.side = Side::Ask);
         REQUIRE_NOTHROW(wallet.calcFundsAfterOrder(order, &askForFees));
@@ -603,13 +603,13 @@ SCENARIO_METHOD(BTCEUR, "expected") {
       REQUIRE_NOTHROW(broker.semaphore.click({
         {"agree", 0}
       }));
-      REQUIRE_NOTHROW(broker.calculon.quotes.bid.clear(mQuoteState::MissingData));
-      REQUIRE_NOTHROW(broker.calculon.quotes.ask.clear(mQuoteState::MissingData));
+      REQUIRE_NOTHROW(broker.calculon.quotes.bid.clear(QuoteState::MissingData));
+      REQUIRE_NOTHROW(broker.calculon.quotes.ask.clear(QuoteState::MissingData));
       REQUIRE(broker.calculon.quotes.bid.empty());
       REQUIRE(broker.calculon.quotes.ask.empty());
       REQUIRE_FALSE(broker.ready());
-      REQUIRE(broker.calculon.quotes.bid.state == mQuoteState::Disconnected);
-      REQUIRE(broker.calculon.quotes.ask.state == mQuoteState::Disconnected);
+      REQUIRE(broker.calculon.quotes.bid.state == QuoteState::Disconnected);
+      REQUIRE(broker.calculon.quotes.ask.state == QuoteState::Disconnected);
       REQUIRE_NOTHROW(broker.purge());
       REQUIRE_NOTHROW(broker.semaphore.read_from_gw(
         Connectivity::Connected
@@ -741,16 +741,16 @@ SCENARIO_METHOD(BTCEUR, "bugs") {
     REQUIRE_NOTHROW(wallet.safety.trades.read = [&]() {
       INFO("read()");
     });
-    auto parseTrade = [](string line)->mLastOrder {
+    auto parseTrade = [](string line)->LastOrder {
       stringstream ss(line);
       string _, pingpong, side;
-      mLastOrder order;
+      LastOrder order;
       ss >> _ >> _ >> _ >> _ >> pingpong >> _ >> side >> order.filled >> _ >> _ >> _ >> order.price;
       order.side = (side == "BUY" ? Side::Bid : Side::Ask);
       order.isPong = (pingpong == "PONG");
       return order;
     };
-    vector<mLastOrder> loglines({
+    vector<LastOrder> loglines({
         parseTrade("03/30 07:10:34.800532 GW COINBASE PING TRADE BUY  0.03538069 BTC at price 141.31 EUR (value 4.99 EUR)."),
         parseTrade("03/30 07:12:10.769009 GW COINBASE PONG TRADE SELL 0.03241380 BTC at price 141.40 EUR (value 4.58 EUR)."),
         parseTrade("03/30 07:12:10.786990 GW COINBASE PONG TRADE SELL 0.00295204 BTC at price 141.40 EUR (value 0.41 EUR)."),
@@ -767,7 +767,7 @@ SCENARIO_METHOD(BTCEUR, "bugs") {
     Amount expectedQuoteDelta = 0;
     Amount baseSign;
     WHEN("cumulated cross pongs") {
-      for (mLastOrder const &order : loglines) {
+      for (LastOrder const &order : loglines) {
         baseSign = (order.side == Side::Bid) ? 1 : -1;
         expectedBaseDelta += baseSign * order.filled;
         expectedQuoteDelta -= baseSign * order.filled * order.price;
@@ -777,7 +777,7 @@ SCENARIO_METHOD(BTCEUR, "bugs") {
         Amount actualQuoteDelta = 0;
         Amount expectedDiff = 0;
         Amount actualDiff = 0;
-        for (mOrderFilled const & trade : wallet.safety.trades) {
+        for (OrderFilled const & trade : wallet.safety.trades) {
           baseSign = (trade.side == Side::Bid) ? 1 : -1;
           actualBaseDelta += baseSign * (trade.quantity - trade.Kqty);
           Amount diff = baseSign * (trade.Kvalue - trade.value);

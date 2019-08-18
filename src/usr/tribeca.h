@@ -4,126 +4,126 @@
 //! \brief Trading logistics (welcome user! forked from https://github.com/michaelgrosner/tribeca).
 
 namespace ₿::tribeca {
-  enum class mQuotingMode: unsigned int {
+  enum class QuotingMode: unsigned int {
     Top, Mid, Join, InverseJoin, InverseTop, HamelinRat, Depth
   };
-  enum class mOrderPctTotal: unsigned int {
+  enum class OrderPctTotal: unsigned int {
     Value, Side, TBPValue, TBPSide
   };
-  enum class mQuotingSafety: unsigned int {
+  enum class QuotingSafety: unsigned int {
     Off, PingPong, PingPoing, Boomerang, AK47
   };
-  enum class mQuoteState: unsigned int {
+  enum class QuoteState: unsigned int {
     Disconnected,  Live,             DisabledQuotes,
     MissingData,   UnknownHeld,      WidthMustBeSmaller,
     TBPHeld,       MaxTradesSeconds, WaitingPing,
     DepletedFunds, Crossed,
     UpTrendHeld,   DownTrendHeld
   };
-  enum class mFairValueModel: unsigned int {
+  enum class FairValueModel: unsigned int {
     BBO, wBBO, rwBBO
   };
-  enum class mAutoPositionMode: unsigned int {
+  enum class AutoPositionMode: unsigned int {
     Manual, EWMA_LS, EWMA_LMS, EWMA_4
   };
-  enum class mPDivMode: unsigned int {
+  enum class PDivMode: unsigned int {
     Manual, Linear, Sine, SQRT, Switch
   };
-  enum class mAPR: unsigned int {
+  enum class APR: unsigned int {
     Off, Size, SizeWidth
   };
-  enum class mSideAPR: unsigned int {
+  enum class SideAPR: unsigned int {
     Off, Buy, Sell
   };
-  enum class mSOP: unsigned int {
+  enum class SOP: unsigned int {
     Off, Trades, Size, TradesSize
   };
-  enum class mSTDEV: unsigned int {
+  enum class STDEV: unsigned int {
     Off, OnFV, OnFVAPROff, OnTops, OnTopsAPROff, OnTop, OnTopAPROff
   };
-  enum class mPingAt: unsigned int {
+  enum class PingAt: unsigned int {
     BothSides,    BidSide,         AskSide,
     DepletedSide, DepletedBidSide, DepletedAskSide,
     StopPings
   };
-  enum class mPongAt: unsigned int {
+  enum class PongAt: unsigned int {
     ShortPingFair,       AveragePingFair,       LongPingFair,
     ShortPingAggressive, AveragePingAggressive, LongPingAggressive
   };
 
-  struct mQuotingParams: public Sqlite::StructBackup<mQuotingParams>,
-                         public Client::Broadcast<mQuotingParams>,
-                         public Client::Clickable {
-    Price             widthPing                       = 300.0;
-    double            widthPingPercentage             = 0.25;
-    Price             widthPong                       = 300.0;
-    double            widthPongPercentage             = 0.25;
-    bool              widthPercentage                 = false;
-    bool              bestWidth                       = true;
-    Amount            bestWidthSize                   = 0;
-    mOrderPctTotal    orderPctTotal                   = mOrderPctTotal::Value;
-    double            tradeSizeTBPExp                 = 2.0;
-    Amount            buySize                         = 0.02;
-    double            buySizePercentage               = 7.0;
-    bool              buySizeMax                      = false;
-    Amount            sellSize                        = 0.01;
-    double            sellSizePercentage              = 7.0;
-    bool              sellSizeMax                     = false;
-    mPingAt           pingAt                          = mPingAt::BothSides;
-    mPongAt           pongAt                          = mPongAt::ShortPingFair;
-    mQuotingMode      mode                            = mQuotingMode::Top;
-    mQuotingSafety    safety                          = mQuotingSafety::PingPong;
-    unsigned int      bullets                         = 2;
-    Price             range                           = 0.5;
-    double            rangePercentage                 = 5.0;
-    mFairValueModel   fvModel                         = mFairValueModel::BBO;
-    Amount            targetBasePosition              = 1.0;
-    double            targetBasePositionPercentage    = 50.0;
-    Amount            targetBasePositionMin           = 0.1;
-    double            targetBasePositionPercentageMin = 10.0;
-    Amount            targetBasePositionMax           = 1;
-    double            targetBasePositionPercentageMax = 90.0;
-    Amount            positionDivergence              = 0.9;
-    Amount            positionDivergenceMin           = 0.4;
-    double            positionDivergencePercentage    = 21.0;
-    double            positionDivergencePercentageMin = 10.0;
-    mPDivMode         positionDivergenceMode          = mPDivMode::Manual;
-    bool              percentageValues                = false;
-    mAutoPositionMode autoPositionMode                = mAutoPositionMode::EWMA_LS;
-    mAPR              aggressivePositionRebalancing   = mAPR::Off;
-    mSOP              superTrades                     = mSOP::Off;
-    unsigned int      tradesPerMinute                 = 1;
-    unsigned int      tradeRateSeconds                = 3;
-    bool              protectionEwmaWidthPing         = false;
-    bool              protectionEwmaQuotePrice        = true;
-    unsigned int      protectionEwmaPeriods           = 200;
-    mSTDEV            quotingStdevProtection          = mSTDEV::Off;
-    bool              quotingStdevBollingerBands      = false;
-    double            quotingStdevProtectionFactor    = 1.0;
-    unsigned int      quotingStdevProtectionPeriods   = 1200;
-    double            ewmaSensiblityPercentage        = 0.5;
-    bool              quotingEwmaTrendProtection      = false;
-    double            quotingEwmaTrendThreshold       = 2.0;
-    unsigned int      veryLongEwmaPeriods             = 400;
-    unsigned int      longEwmaPeriods                 = 200;
-    unsigned int      mediumEwmaPeriods               = 100;
-    unsigned int      shortEwmaPeriods                = 50;
-    unsigned int      extraShortEwmaPeriods           = 12;
-    unsigned int      ultraShortEwmaPeriods           = 3;
-    double            aprMultiplier                   = 2;
-    double            sopWidthMultiplier              = 2;
-    double            sopSizeMultiplier               = 2;
-    double            sopTradesMultiplier             = 2;
-    bool              cancelOrdersAuto                = false;
-    double            cleanPongsAuto                  = 0.0;
-    double            profitHourInterval              = 0.5;
-    bool              audio                           = false;
-    unsigned int      delayUI                         = 3;
-    int               _diffEwma                       = -1;
+  struct QuotingParams: public Sqlite::StructBackup<QuotingParams>,
+                        public Client::Broadcast<QuotingParams>,
+                        public Client::Clickable {
+    Price            widthPing                       = 300.0;
+    double           widthPingPercentage             = 0.25;
+    Price            widthPong                       = 300.0;
+    double           widthPongPercentage             = 0.25;
+    bool             widthPercentage                 = false;
+    bool             bestWidth                       = true;
+    Amount           bestWidthSize                   = 0;
+    OrderPctTotal    orderPctTotal                   = OrderPctTotal::Value;
+    double           tradeSizeTBPExp                 = 2.0;
+    Amount           buySize                         = 0.02;
+    double           buySizePercentage               = 7.0;
+    bool             buySizeMax                      = false;
+    Amount           sellSize                        = 0.01;
+    double           sellSizePercentage              = 7.0;
+    bool             sellSizeMax                     = false;
+    PingAt           pingAt                          = PingAt::BothSides;
+    PongAt           pongAt                          = PongAt::ShortPingFair;
+    QuotingMode      mode                            = QuotingMode::Top;
+    QuotingSafety    safety                          = QuotingSafety::PingPong;
+    unsigned int     bullets                         = 2;
+    Price            range                           = 0.5;
+    double           rangePercentage                 = 5.0;
+    FairValueModel   fvModel                         = FairValueModel::BBO;
+    Amount           targetBasePosition              = 1.0;
+    double           targetBasePositionPercentage    = 50.0;
+    Amount           targetBasePositionMin           = 0.1;
+    double           targetBasePositionPercentageMin = 10.0;
+    Amount           targetBasePositionMax           = 1;
+    double           targetBasePositionPercentageMax = 90.0;
+    Amount           positionDivergence              = 0.9;
+    Amount           positionDivergenceMin           = 0.4;
+    double           positionDivergencePercentage    = 21.0;
+    double           positionDivergencePercentageMin = 10.0;
+    PDivMode         positionDivergenceMode          = PDivMode::Manual;
+    bool             percentageValues                = false;
+    AutoPositionMode autoPositionMode                = AutoPositionMode::EWMA_LS;
+    APR              aggressivePositionRebalancing   = APR::Off;
+    SOP              superTrades                     = SOP::Off;
+    unsigned int     tradesPerMinute                 = 1;
+    unsigned int     tradeRateSeconds                = 3;
+    bool             protectionEwmaWidthPing         = false;
+    bool             protectionEwmaQuotePrice        = true;
+    unsigned int     protectionEwmaPeriods           = 200;
+    STDEV            quotingStdevProtection          = STDEV::Off;
+    bool             quotingStdevBollingerBands      = false;
+    double           quotingStdevProtectionFactor    = 1.0;
+    unsigned int     quotingStdevProtectionPeriods   = 1200;
+    double           ewmaSensiblityPercentage        = 0.5;
+    bool             quotingEwmaTrendProtection      = false;
+    double           quotingEwmaTrendThreshold       = 2.0;
+    unsigned int     veryLongEwmaPeriods             = 400;
+    unsigned int     longEwmaPeriods                 = 200;
+    unsigned int     mediumEwmaPeriods               = 100;
+    unsigned int     shortEwmaPeriods                = 50;
+    unsigned int     extraShortEwmaPeriods           = 12;
+    unsigned int     ultraShortEwmaPeriods           = 3;
+    double           aprMultiplier                   = 2;
+    double           sopWidthMultiplier              = 2;
+    double           sopSizeMultiplier               = 2;
+    double           sopTradesMultiplier             = 2;
+    bool             cancelOrdersAuto                = false;
+    double           cleanPongsAuto                  = 0.0;
+    double           profitHourInterval              = 0.5;
+    bool             audio                           = false;
+    unsigned int     delayUI                         = 3;
+    int              _diffEwma                       = -1;
     private_ref:
       const KryptoNinja &K;
     public:
-      mQuotingParams(const KryptoNinja &bot)
+      QuotingParams(const KryptoNinja &bot)
         : StructBackup(bot)
         , Broadcast(bot)
         , Clickable(bot)
@@ -203,7 +203,7 @@ namespace ₿::tribeca {
         profitHourInterval              =                            j.value("profitHourInterval", profitHourInterval);
         audio                           =                            j.value("audio", audio);
         delayUI                         = fmax(0,                    j.value("delayUI", delayUI));
-        if (mode == mQuotingMode::Depth)
+        if (mode == QuotingMode::Depth)
           widthPercentage = false;
         K.gateway->askForCancelAll = cancelOrdersAuto;
         K.timer_ticks_factor(delayUI);
@@ -236,7 +236,7 @@ namespace ₿::tribeca {
         return "using default values for %";
       };
   };
-  static void to_json(json &j, const mQuotingParams &k) {
+  static void to_json(json &j, const QuotingParams &k) {
     j = {
       {                      "widthPing", k.widthPing                      },
       {            "widthPingPercentage", k.widthPingPercentage            },
@@ -305,24 +305,24 @@ namespace ₿::tribeca {
       {                        "delayUI", k.delayUI                        }
     };
   };
-  static void from_json(const json &j, mQuotingParams &k) {
+  static void from_json(const json &j, QuotingParams &k) {
     k.from_json(j);
   };
 
-  struct mLastOrder {
+  struct LastOrder {
     Price  price;
     Amount filled;
     Side   side;
     bool   isPong;
   };
-  struct mOrders: public Client::Broadcast<mOrders> {
-    mLastOrder updated;
+  struct Orders: public Client::Broadcast<Orders> {
+    LastOrder updated;
     private:
       unordered_map<string, Order> orders;
     private_ref:
       const KryptoNinja &K;
     public:
-      mOrders(const KryptoNinja &bot)
+      Orders(const KryptoNinja &bot)
         : Broadcast(bot)
         , updated()
         , K(bot)
@@ -465,16 +465,16 @@ namespace ₿::tribeca {
         K.log("DEBUG OG", "memory " + to_string(orders.size()));
       };
   };
-  static void to_json(json &j, const mOrders &k) {
+  static void to_json(json &j, const Orders &k) {
     j = k.blob();
   };
 
-  struct mMarketTakers: public Client::Broadcast<Trade> {
+  struct MarketTakers: public Client::Broadcast<Trade> {
     public:
       vector<Trade>  trades;
               Amount takersBuySize60s  = 0,
                      takersSellSize60s = 0;
-      mMarketTakers(const KryptoNinja &bot)
+      MarketTakers(const KryptoNinja &bot)
         : Broadcast(bot)
       {};
       void timer_60s() {
@@ -501,11 +501,11 @@ namespace ₿::tribeca {
       };
   };
 
-  struct mFairLevelsPrice: public Client::Broadcast<mFairLevelsPrice> {
+  struct FairLevelsPrice: public Client::Broadcast<FairLevelsPrice> {
     private_ref:
       const Price &fairValue;
     public:
-      mFairLevelsPrice(const KryptoNinja &bot, const Price &f)
+      FairLevelsPrice(const KryptoNinja &bot, const Price &f)
         : Broadcast(bot)
         , fairValue(f)
       {};
@@ -525,40 +525,40 @@ namespace ₿::tribeca {
         return false;
       };
   };
-  static void to_json(json &j, const mFairLevelsPrice &k) {
+  static void to_json(json &j, const FairLevelsPrice &k) {
     j = {
       {"price", k.currentPrice()}
     };
   };
 
-  struct mStdev {
+  struct Stdev {
     Price fv,
           topBid,
           topAsk;
   };
-  static void to_json(json &j, const mStdev &k) {
+  static void to_json(json &j, const Stdev &k) {
     j = {
       { "fv", k.fv    },
       {"bid", k.topBid},
       {"ask", k.topAsk}
     };
   };
-  static void from_json(const json &j, mStdev &k) {
+  static void from_json(const json &j, Stdev &k) {
     k.fv     = j.value("fv",  0.0);
     k.topBid = j.value("bid", 0.0);
     k.topAsk = j.value("ask", 0.0);
   };
 
-  struct mStdevs: public Sqlite::VectorBackup<mStdev> {
+  struct Stdevs: public Sqlite::VectorBackup<Stdev> {
     double top  = 0,  topMean = 0,
            fair = 0, fairMean = 0,
            bid  = 0,  bidMean = 0,
            ask  = 0,  askMean = 0;
     private_ref:
-      const Price          &fairValue;
-      const mQuotingParams &qp;
+      const Price         &fairValue;
+      const QuotingParams &qp;
     public:
-      mStdevs(const KryptoNinja &bot, const Price &f, const mQuotingParams &q)
+      Stdevs(const KryptoNinja &bot, const Price &f, const QuotingParams &q)
         : VectorBackup(bot)
         , fairValue(f)
         , qp(q)
@@ -586,7 +586,7 @@ namespace ₿::tribeca {
     private:
       double calc(Price *const mean, const string &type) const {
         vector<Price> values;
-        for (const mStdev &it : rows)
+        for (const Stdev &it : rows)
           if (type == "fv")
             values.push_back(it.fv);
           else if (type == "bid")
@@ -617,7 +617,7 @@ namespace ₿::tribeca {
         return "loaded % STDEV Periods";
       };
   };
-  static void to_json(json &j, const mStdevs &k) {
+  static void to_json(json &j, const Stdevs &k) {
     j = {
       {      "fv", k.fair    },
       {  "fvMean", k.fairMean},
@@ -650,7 +650,7 @@ namespace ₿::tribeca {
       };
   };
 
-  struct mEwma: public Sqlite::StructBackup<mEwma>,
+  struct Ewma: public Sqlite::StructBackup<Ewma>,
                 public Client::Clicked::Catch {
     mFairHistory fairValue96h;
            Price mgEwmaVL = 0,
@@ -664,11 +664,11 @@ namespace ₿::tribeca {
           double mgEwmaTrendDiff              = 0,
                  targetPositionAutoPercentage = 0;
     private_ref:
-      const KryptoNinja    &K;
-      const Price          &fairValue;
-      const mQuotingParams &qp;
+      const KryptoNinja   &K;
+      const Price         &fairValue;
+      const QuotingParams &qp;
     public:
-      mEwma(const KryptoNinja &bot, const Price &f, const mQuotingParams &q)
+      Ewma(const KryptoNinja &bot, const Price &f, const QuotingParams &q)
         : StructBackup(bot)
         , Catch(bot, {
             {&q, [&]() { calcFromHistory(); }}
@@ -743,13 +743,13 @@ namespace ₿::tribeca {
           [](Price sma3, const Price &it) { return sma3 + it; }
         ) / max3size;
         double targetPosition = 0;
-        if (qp.autoPositionMode == mAutoPositionMode::EWMA_LMS) {
+        if (qp.autoPositionMode == AutoPositionMode::EWMA_LMS) {
           double newTrend = ((SMA3 * 1e+2 / mgEwmaL) - 1e+2);
           double newEwmacrossing = ((mgEwmaS * 1e+2 / mgEwmaM) - 1e+2);
           targetPosition = ((newTrend + newEwmacrossing) / 2) * (1 / qp.ewmaSensiblityPercentage);
-        } else if (qp.autoPositionMode == mAutoPositionMode::EWMA_LS)
+        } else if (qp.autoPositionMode == AutoPositionMode::EWMA_LS)
           targetPosition = ((mgEwmaS * 1e+2 / mgEwmaL) - 1e+2) * (1 / qp.ewmaSensiblityPercentage);
-        else if (qp.autoPositionMode == mAutoPositionMode::EWMA_4) {
+        else if (qp.autoPositionMode == AutoPositionMode::EWMA_4) {
           if (mgEwmaL < mgEwmaVL) targetPosition = -1;
           else targetPosition = ((mgEwmaS * 1e+2 / mgEwmaM) - 1e+2) * (1 / qp.ewmaSensiblityPercentage);
         }
@@ -762,7 +762,7 @@ namespace ₿::tribeca {
         return "consider to warm up some %";
       };
   };
-  static void to_json(json &j, const mEwma &k) {
+  static void to_json(json &j, const Ewma &k) {
     j = {
       {  "ewmaVeryLong", k.mgEwmaVL       },
       {      "ewmaLong", k.mgEwmaL        },
@@ -775,7 +775,7 @@ namespace ₿::tribeca {
       { "ewmaTrendDiff", k.mgEwmaTrendDiff}
     };
   };
-  static void from_json(const json &j, mEwma &k) {
+  static void from_json(const json &j, Ewma &k) {
     k.mgEwmaVL = j.value("ewmaVeryLong",   0.0);
     k.mgEwmaL  = j.value("ewmaLong",       0.0);
     k.mgEwmaM  = j.value("ewmaMedium",     0.0);
@@ -784,12 +784,12 @@ namespace ₿::tribeca {
     k.mgEwmaU  = j.value("ewmaUltraShort", 0.0);
   };
 
-  struct mMarketStats: public Client::Broadcast<mMarketStats> {
-               mEwma ewma;
-             mStdevs stdev;
-    mFairLevelsPrice fairPrice;
-       mMarketTakers takerTrades;
-    mMarketStats(const KryptoNinja &bot, const Price &f, const mQuotingParams &q)
+  struct MarketStats: public Client::Broadcast<MarketStats> {
+               Ewma ewma;
+             Stdevs stdev;
+    FairLevelsPrice fairPrice;
+       MarketTakers takerTrades;
+    MarketStats(const KryptoNinja &bot, const Price &f, const QuotingParams &q)
       : Broadcast(bot)
       , ewma(bot, f, q)
       , stdev(bot, f, q)
@@ -803,7 +803,7 @@ namespace ₿::tribeca {
       return false;
     };
   };
-  static void to_json(json &j, const mMarketStats &k) {
+  static void to_json(json &j, const MarketStats &k) {
     j = {
       {          "ewma", k.ewma                         },
       {    "stdevWidth", k.stdev                        },
@@ -817,10 +817,10 @@ namespace ₿::tribeca {
                      public Client::Broadcast<LevelsDiff> {
       bool patched = false;
     private_ref:
-      const Levels         &unfiltered;
-      const mQuotingParams &qp;
+      const Levels        &unfiltered;
+      const QuotingParams &qp;
     public:
-      LevelsDiff(const KryptoNinja &bot, const Levels &u, const mQuotingParams &q)
+      LevelsDiff(const KryptoNinja &bot, const Levels &u, const QuotingParams &q)
         : Broadcast(bot)
         , unfiltered(u)
         , qp(q)
@@ -889,22 +889,22 @@ namespace ₿::tribeca {
     if (k.patched)
       j["diff"] = true;
   };
-  struct mMarketLevels: public Levels {
+  struct MarketLevels: public Levels {
     unsigned int averageCount = 0;
            Price averageWidth = 0,
                  fairValue    = 0;
-         Levels  unfiltered;
-     LevelsDiff  diff;
-    mMarketStats stats;
+          Levels unfiltered;
+      LevelsDiff diff;
+     MarketStats stats;
     private:
       unordered_map<Price, Amount> filterBidOrders,
                                    filterAskOrders;
     private_ref:
-      const KryptoNinja    &K;
-      const mQuotingParams &qp;
-      const mOrders        &orders;
+      const KryptoNinja   &K;
+      const QuotingParams &qp;
+      const Orders        &orders;
     public:
-      mMarketLevels(const KryptoNinja &bot, const mQuotingParams &q, const mOrders &o)
+      MarketLevels(const KryptoNinja &bot, const QuotingParams &q, const Orders &o)
         : diff(bot, unfiltered, q)
         , stats(bot, fairValue, q)
         , K(bot)
@@ -976,10 +976,10 @@ namespace ₿::tribeca {
       void calcFairValue() {
         if (bids.empty() or asks.empty())
           fairValue = 0;
-        else if (qp.fvModel == mFairValueModel::BBO)
+        else if (qp.fvModel == FairValueModel::BBO)
           fairValue = (asks.cbegin()->price
                      + bids.cbegin()->price) / 2;
-        else if (qp.fvModel == mFairValueModel::wBBO)
+        else if (qp.fvModel == FairValueModel::wBBO)
           fairValue = (
             bids.cbegin()->price * bids.cbegin()->size
           + asks.cbegin()->price * asks.cbegin()->size
@@ -1013,29 +1013,29 @@ namespace ₿::tribeca {
       };
   };
 
-  struct mProfit {
+  struct Profit {
     Amount baseValue,
            quoteValue;
      Clock time;
   };
-  static void to_json(json &j, const mProfit &k) {
+  static void to_json(json &j, const Profit &k) {
     j = {
       { "baseValue", k.baseValue },
       {"quoteValue", k.quoteValue},
       {      "time", k.time      }
      };
   };
-  static void from_json(const json &j, mProfit &k) {
+  static void from_json(const json &j, Profit &k) {
     k.baseValue  = j.value("baseValue",  0.0);
     k.quoteValue = j.value("quoteValue", 0.0);
     k.time       = j.value("time",  (Clock)0);
   };
-  struct mProfits: public Sqlite::VectorBackup<mProfit> {
+  struct Profits: public Sqlite::VectorBackup<Profit> {
     private_ref:
-      const KryptoNinja    &K;
-      const mQuotingParams &qp;
+      const KryptoNinja   &K;
+      const QuotingParams &qp;
     public:
-      mProfits(const KryptoNinja &bot, const mQuotingParams &q)
+      Profits(const KryptoNinja &bot, const QuotingParams &q)
         : VectorBackup(bot)
         , K(bot)
         , qp(q)
@@ -1079,7 +1079,7 @@ namespace ₿::tribeca {
       };
   };
 
-  struct mOrderFilled: public Trade {
+  struct OrderFilled: public Trade {
      string tradeId;
      Amount value,
             feeCharged,
@@ -1091,7 +1091,7 @@ namespace ₿::tribeca {
        bool isPong,
             loadedFromDB;
   };
-  static void to_json(json &j, const mOrderFilled &k) {
+  static void to_json(json &j, const OrderFilled &k) {
     j = {
       {     "tradeId", k.tradeId     },
       {        "time", k.time        },
@@ -1109,7 +1109,7 @@ namespace ₿::tribeca {
       {"loadedFromDB", k.loadedFromDB}
     };
   };
-  static void from_json(const json &j, mOrderFilled &k) {
+  static void from_json(const json &j, OrderFilled &k) {
     k.tradeId      = j.value("tradeId",     "");
     k.price        = j.value("price",      0.0);
     k.quantity     = j.value("quantity",   0.0);
@@ -1126,11 +1126,11 @@ namespace ₿::tribeca {
     k.loadedFromDB = true;
   };
 
-  struct mButtonSubmitNewOrder: public Client::Clickable {
+  struct ButtonSubmitNewOrder: public Client::Clickable {
     private_ref:
       const KryptoNinja &K;
     public:
-      mButtonSubmitNewOrder(const KryptoNinja &bot)
+      ButtonSubmitNewOrder(const KryptoNinja &bot)
         : Clickable(bot)
         , K(bot)
       {};
@@ -1145,11 +1145,11 @@ namespace ₿::tribeca {
         return mMatter::SubmitNewOrder;
       };
   };
-  struct mButtonCancelOrder: public Client::Clickable {
+  struct ButtonCancelOrder: public Client::Clickable {
     private_ref:
       const KryptoNinja &K;
     public:
-      mButtonCancelOrder(const KryptoNinja &bot)
+      ButtonCancelOrder(const KryptoNinja &bot)
         : Clickable(bot)
         , K(bot)
       {};
@@ -1161,11 +1161,11 @@ namespace ₿::tribeca {
         return mMatter::CancelOrder;
       };
   };
-  struct mButtonCancelAllOrders: public Client::Clickable {
+  struct ButtonCancelAllOrders: public Client::Clickable {
     private_ref:
       const KryptoNinja &K;
     public:
-      mButtonCancelAllOrders(const KryptoNinja &bot)
+      ButtonCancelAllOrders(const KryptoNinja &bot)
         : Clickable(bot)
         , K(bot)
       {};
@@ -1176,11 +1176,11 @@ namespace ₿::tribeca {
         return mMatter::CancelAllOrders;
       };
   };
-  struct mButtonCleanAllClosedTrades: public Client::Clickable {
+  struct ButtonCleanAllClosedTrades: public Client::Clickable {
     private_ref:
       const KryptoNinja &K;
     public:
-      mButtonCleanAllClosedTrades(const KryptoNinja &bot)
+      ButtonCleanAllClosedTrades(const KryptoNinja &bot)
         : Clickable(bot)
         , K(bot)
       {};
@@ -1191,11 +1191,11 @@ namespace ₿::tribeca {
         return mMatter::CleanAllClosedTrades;
       };
   };
-  struct mButtonCleanAllTrades: public Client::Clickable {
+  struct ButtonCleanAllTrades: public Client::Clickable {
     private_ref:
       const KryptoNinja &K;
     public:
-      mButtonCleanAllTrades(const KryptoNinja &bot)
+      ButtonCleanAllTrades(const KryptoNinja &bot)
         : Clickable(bot)
         , K(bot)
       {};
@@ -1206,11 +1206,11 @@ namespace ₿::tribeca {
         return mMatter::CleanAllTrades;
       };
   };
-  struct mButtonCleanTrade: public Client::Clickable {
+  struct ButtonCleanTrade: public Client::Clickable {
     private_ref:
       const KryptoNinja &K;
     public:
-      mButtonCleanTrade(const KryptoNinja &bot)
+      ButtonCleanTrade(const KryptoNinja &bot)
         : Clickable(bot)
         , K(bot)
       {};
@@ -1222,12 +1222,12 @@ namespace ₿::tribeca {
         return mMatter::CleanTrade;
       };
   };
-  struct mNotepad: public Client::Broadcast<mNotepad>,
+  struct Notepad: public Client::Broadcast<Notepad>,
                    public Client::Clickable {
     public:
       string content;
     public:
-      mNotepad(const KryptoNinja &bot)
+      Notepad(const KryptoNinja &bot)
         : Broadcast(bot)
         , Clickable(bot)
       {};
@@ -1239,19 +1239,19 @@ namespace ₿::tribeca {
         return mMatter::Notepad;
       };
   };
-  static void to_json(json &j, const mNotepad &k) {
+  static void to_json(json &j, const Notepad &k) {
     j = k.content;
   };
 
-  struct mButtons {
-    mNotepad                    notepad;
-    mButtonSubmitNewOrder       submit;
-    mButtonCancelOrder          cancel;
-    mButtonCancelAllOrders      cancelAll;
-    mButtonCleanAllClosedTrades cleanTradesClosed;
-    mButtonCleanAllTrades       cleanTrades;
-    mButtonCleanTrade           cleanTrade;
-    mButtons(const KryptoNinja &bot)
+  struct Buttons {
+    Notepad                    notepad;
+    ButtonSubmitNewOrder       submit;
+    ButtonCancelOrder          cancel;
+    ButtonCancelAllOrders      cancelAll;
+    ButtonCleanAllClosedTrades cleanTradesClosed;
+    ButtonCleanAllTrades       cleanTrades;
+    ButtonCleanTrade           cleanTrade;
+    Buttons(const KryptoNinja &bot)
       : notepad(bot)
       , submit(bot)
       , cancel(bot)
@@ -1262,14 +1262,14 @@ namespace ₿::tribeca {
     {};
   };
 
-  struct mTradesHistory: public Sqlite::VectorBackup<mOrderFilled>,
-                         public Client::Broadcast<mOrderFilled>,
-                         public Client::Clicked::Catch {
+  struct TradesHistory: public Sqlite::VectorBackup<OrderFilled>,
+                        public Client::Broadcast<OrderFilled>,
+                        public Client::Clicked::Catch {
     private_ref:
-      const KryptoNinja    &K;
-      const mQuotingParams &qp;
+      const KryptoNinja   &K;
+      const QuotingParams &qp;
     public:
-      mTradesHistory(const KryptoNinja &bot, const mQuotingParams &q, const mButtons &b)
+      TradesHistory(const KryptoNinja &bot, const QuotingParams &q, const Buttons &b)
         : VectorBackup(bot)
         , Broadcast(bot)
         , Catch(bot, {
@@ -1280,10 +1280,10 @@ namespace ₿::tribeca {
         , K(bot)
         , qp(q)
       {};
-      void insert(const mLastOrder &order) {
+      void insert(const LastOrder &order) {
         const Amount fee = 0;
         const Clock time = Tstamp;
-        mOrderFilled filled = {
+        OrderFilled filled = {
           order.side,
           order.price,
           order.filled,
@@ -1301,14 +1301,16 @@ namespace ₿::tribeca {
           + K.gateway->decimal.price.str(filled.price) + ' ' + K.gateway->quote + " (value "
           + K.gateway->decimal.price.str(filled.value) + ' ' + K.gateway->quote + ")"
         );
-        if (qp.safety == mQuotingSafety::Off or qp.safety == mQuotingSafety::PingPong or qp.safety == mQuotingSafety::PingPoing)
-          broadcast_push_back(filled);
+        if (qp.safety == QuotingSafety::Off
+          or qp.safety == QuotingSafety::PingPong
+          or qp.safety == QuotingSafety::PingPoing
+        ) broadcast_push_back(filled);
         else {
           Price widthPong = qp.widthPercentage
             ? qp.widthPongPercentage * filled.price / 100
             : qp.widthPong;
           map<Price, string> matches;
-          for (mOrderFilled &it : rows)
+          for (OrderFilled &it : rows)
             if (it.quantity - it.Kqty > 0 and it.side != filled.side) {
               const Price combinedFee = K.gateway->makeFee * (it.price + filled.price);
               if (filled.side == Side::Bid
@@ -1319,7 +1321,7 @@ namespace ₿::tribeca {
           matchPong(
             matches,
             filled,
-            (qp.pongAt == mPongAt::LongPingFair or qp.pongAt == mPongAt::LongPingAggressive)
+            (qp.pongAt == PongAt::LongPingFair or qp.pongAt == PongAt::LongPingAggressive)
               ? filled.side == Side::Ask
               : filled.side == Side::Bid
           );
@@ -1341,7 +1343,7 @@ namespace ₿::tribeca {
         return crbegin()->tradeId;
       };
       json hello() override {
-        for (mOrderFilled &it : rows)
+        for (OrderFilled &it : rows)
           it.loadedFromDB = true;
         return rows;
       };
@@ -1379,7 +1381,7 @@ namespace ₿::tribeca {
             if (onlyOne) break;
           } else ++it;
       };
-      void matchPong(const map<Price, string> &matches, mOrderFilled pong, const bool &reverse) {
+      void matchPong(const map<Price, string> &matches, OrderFilled pong, const bool &reverse) {
         if (reverse) for (auto it = matches.crbegin(); it != matches.crend(); ++it) {
           if (!matchPong(it->second, &pong)) break;
         } else for (const auto &it : matches)
@@ -1400,7 +1402,7 @@ namespace ₿::tribeca {
           if (!eq) broadcast_push_back(pong);
         }
       };
-      bool matchPong(const string &match, mOrderFilled *const pong) {
+      bool matchPong(const string &match, OrderFilled *const pong) {
         for (auto it = begin(); it != end(); ++it) {
           if (it->tradeId != match) continue;
           Amount Kqty = fmin(pong->quantity, it->quantity - it->Kqty);
@@ -1420,14 +1422,14 @@ namespace ₿::tribeca {
         }
         return pong->quantity > 0;
       };
-      void broadcast_push_back(const mOrderFilled &row) {
+      void broadcast_push_back(const OrderFilled &row) {
         rows.push_back(row);
         backup();
         if (crbegin()->Kqty < 0) rbegin()->Kqty = -2;
         broadcast();
       };
       iterator send_push_erase(iterator it) {
-        mOrderFilled row = *it;
+        OrderFilled row = *it;
         it = rows.erase(it);
         broadcast_push_back(row);
         erase();
@@ -1438,30 +1440,30 @@ namespace ₿::tribeca {
       };
   };
 
-  struct mRecentTrade {
+  struct RecentTrade {
      Price price    = 0;
     Amount quantity = 0;
      Clock time     = 0;
-    mRecentTrade(const Price &p, const Amount &q)
+    RecentTrade(const Price &p, const Amount &q)
       : price(p)
       , quantity(q)
       , time(Tstamp)
     {};
   };
-  struct mRecentTrades {
+  struct RecentTrades {
     private_ref:
-      const mQuotingParams &qp;
+      const QuotingParams &qp;
     public:
-      mRecentTrades(const mQuotingParams &q)
+      RecentTrades(const QuotingParams &q)
         : qp(q)
       {};
-    multimap<Price, mRecentTrade> buys,
-                                  sells;
-                           Amount sumBuys       = 0,
-                                  sumSells      = 0;
-                            Price lastBuyPrice  = 0,
-                                  lastSellPrice = 0;
-    void insert(const mLastOrder &order) {
+    multimap<Price, RecentTrade> buys,
+                                 sells;
+                          Amount sumBuys       = 0,
+                                 sumSells      = 0;
+                           Price lastBuyPrice  = 0,
+                                 lastSellPrice = 0;
+    void insert(const LastOrder &order) {
       (order.side == Side::Bid
         ? lastBuyPrice
         : lastSellPrice
@@ -1469,9 +1471,9 @@ namespace ₿::tribeca {
       (order.side == Side::Bid
         ? buys
         : sells
-      ).insert(pair<Price, mRecentTrade>(
+      ).insert(pair<Price, RecentTrade>(
         order.price,
-        mRecentTrade(order.price, order.filled)
+        RecentTrade(order.price, order.filled)
       ));
     };
     void expire() {
@@ -1482,13 +1484,13 @@ namespace ₿::tribeca {
       sumSells = sum(&sells);
     };
     private:
-      Amount sum(multimap<Price, mRecentTrade> *const k) const {
+      Amount sum(multimap<Price, RecentTrade> *const k) const {
         Amount sum = 0;
         for (const auto &it : *k)
           sum += it.second.quantity;
         return sum;
       };
-      void expire(multimap<Price, mRecentTrade> *const k) {
+      void expire(multimap<Price, RecentTrade> *const k) {
         Clock now = Tstamp;
         for (auto it = k->begin(); it != k->end();)
           if (it->second.time + qp.tradeRateSeconds * 1e+3 > now) ++it;
@@ -1496,8 +1498,8 @@ namespace ₿::tribeca {
       };
       void skip() {
         while (!(buys.empty() or sells.empty())) {
-          mRecentTrade &buy = buys.rbegin()->second;
-          mRecentTrade &sell = sells.begin()->second;
+          RecentTrade &buy = buys.rbegin()->second;
+          RecentTrade &sell = sells.begin()->second;
           if (sell.price < buy.price) break;
           const Amount buyQty = buy.quantity;
           buy.quantity -= sell.quantity;
@@ -1510,24 +1512,24 @@ namespace ₿::tribeca {
       };
   };
 
-  struct mSafety: public Client::Broadcast<mSafety> {
-              double buy      = 0,
-                     sell     = 0,
-                     combined = 0;
-               Price buyPing  = 0,
-                     sellPing = 0;
-              Amount buySize  = 0,
-                     sellSize = 0;
-      mTradesHistory trades;
-       mRecentTrades recentTrades;
+  struct Safety: public Client::Broadcast<Safety> {
+             double buy      = 0,
+                    sell     = 0,
+                    combined = 0;
+              Price buyPing  = 0,
+                    sellPing = 0;
+             Amount buySize  = 0,
+                    sellSize = 0;
+      TradesHistory trades;
+       RecentTrades recentTrades;
     private_ref:
-      const mQuotingParams &qp;
-      const Wallet         &base;
-      const Price          &fairValue;
-      const Amount         &targetBasePosition;
-      const Amount         &positionDivergence;
+      const QuotingParams &qp;
+      const Wallet        &base;
+      const Price         &fairValue;
+      const Amount        &targetBasePosition;
+      const Amount        &positionDivergence;
     public:
-      mSafety(const KryptoNinja &bot, const mQuotingParams &q, const Wallet &w, const mButtons &b, const Price &f, const Amount &t, const Amount &p)
+      Safety(const KryptoNinja &bot, const QuotingParams &q, const Wallet &w, const Buttons &b, const Price &f, const Amount &t, const Amount &p)
         : Broadcast(bot)
         , trades(bot, q, b)
         , recentTrades(q)
@@ -1540,7 +1542,7 @@ namespace ₿::tribeca {
       void timer_1s() {
         calc();
       };
-      void insertTrade(const mLastOrder &order) {
+      void insertTrade(const LastOrder &order) {
         if (!order.isPong)
           recentTrades.insert(order);
         trades.insert(order);
@@ -1573,20 +1575,20 @@ namespace ₿::tribeca {
           buySize  = qp.buySizePercentage / 1e+2;
           const Amount pdivMin = fmax(0, targetBasePosition - positionDivergence),
                        pdivMax = fmin(base.value, targetBasePosition + positionDivergence);
-          if (qp.orderPctTotal == mOrderPctTotal::Side) {
+          if (qp.orderPctTotal == OrderPctTotal::Side) {
             sellSize *= base.total;
             buySize  *= base.value - base.total;
           } else {
-            if (qp.orderPctTotal == mOrderPctTotal::TBPSide) {
+            if (qp.orderPctTotal == OrderPctTotal::TBPSide) {
               sellSize *= pow((base.total - pdivMin) / (base.value - pdivMin), qp.tradeSizeTBPExp);
               buySize  *= pow((pdivMax - base.total) / pdivMax, qp.tradeSizeTBPExp);
             }
             sellSize *= base.value;
             buySize  *= base.value;
-            if (qp.orderPctTotal == mOrderPctTotal::TBPSide
-              or qp.orderPctTotal == mOrderPctTotal::TBPValue
+            if (qp.orderPctTotal == OrderPctTotal::TBPSide
+              or qp.orderPctTotal == OrderPctTotal::TBPValue
             ) {
-              const double exp = qp.orderPctTotal == mOrderPctTotal::TBPValue
+              const double exp = qp.orderPctTotal == OrderPctTotal::TBPValue
                                ? 1.0
                                : qp.tradeSizeTBPExp;
               if (targetBasePosition * 2 < base.value)
@@ -1607,43 +1609,43 @@ namespace ₿::tribeca {
           sellSize = qp.sellSize;
           buySize  = qp.buySize;
         }
-        if (qp.aggressivePositionRebalancing == mAPR::Off) return;
+        if (qp.aggressivePositionRebalancing == APR::Off) return;
         if (qp.buySizeMax)
           buySize = fmax(buySize, targetBasePosition - base.total);
         if (qp.sellSizeMax)
           sellSize = fmax(sellSize, base.total - targetBasePosition);
       };
       void calcPrices() {
-        if (qp.safety == mQuotingSafety::PingPong) {
+        if (qp.safety == QuotingSafety::PingPong) {
           buyPing = recentTrades.lastBuyPrice;
           sellPing = recentTrades.lastSellPrice;
         } else {
           buyPing = sellPing = 0;
-          if (qp.safety == mQuotingSafety::Off) return;
+          if (qp.safety == QuotingSafety::Off) return;
           Price widthPong = qp.widthPercentage
             ? qp.widthPongPercentage * fairValue / 100
             : qp.widthPong;
-          if (qp.safety == mQuotingSafety::PingPoing) {
+          if (qp.safety == QuotingSafety::PingPoing) {
             if (recentTrades.lastBuyPrice and fairValue > recentTrades.lastBuyPrice - widthPong)
               buyPing = recentTrades.lastBuyPrice;
             if (recentTrades.lastSellPrice and fairValue < recentTrades.lastSellPrice + widthPong)
               sellPing = recentTrades.lastSellPrice;
           } else {
-            map<Price, mOrderFilled> tradesBuy;
-            map<Price, mOrderFilled> tradesSell;
-            for (const mOrderFilled &it: trades)
+            map<Price, OrderFilled> tradesBuy;
+            map<Price, OrderFilled> tradesSell;
+            for (const OrderFilled &it: trades)
               (it.side == Side::Bid ? tradesBuy : tradesSell)[it.price] = it;
             Amount buyQty = 0,
                    sellQty = 0;
-            if (qp.pongAt == mPongAt::ShortPingFair or qp.pongAt == mPongAt::ShortPingAggressive) {
+            if (qp.pongAt == PongAt::ShortPingFair or qp.pongAt == PongAt::ShortPingAggressive) {
               matchBestPing(&tradesBuy, &buyPing, &buyQty, sellSize, widthPong, true);
               matchBestPing(&tradesSell, &sellPing, &sellQty, buySize, widthPong);
               if (!buyQty) matchFirstPing(&tradesBuy, &buyPing, &buyQty, sellSize, widthPong*-1, true);
               if (!sellQty) matchFirstPing(&tradesSell, &sellPing, &sellQty, buySize, widthPong*-1);
-            } else if (qp.pongAt == mPongAt::LongPingFair or qp.pongAt == mPongAt::LongPingAggressive) {
+            } else if (qp.pongAt == PongAt::LongPingFair or qp.pongAt == PongAt::LongPingAggressive) {
               matchLastPing(&tradesBuy, &buyPing, &buyQty, sellSize, widthPong);
               matchLastPing(&tradesSell, &sellPing, &sellQty, buySize, widthPong, true);
-            } else if (qp.pongAt == mPongAt::AveragePingFair or qp.pongAt == mPongAt::AveragePingAggressive) {
+            } else if (qp.pongAt == PongAt::AveragePingFair or qp.pongAt == PongAt::AveragePingAggressive) {
               matchAllPing(&tradesBuy, &buyPing, &buyQty, sellSize, widthPong);
               matchAllPing(&tradesSell, &sellPing, &sellQty, buySize, widthPong);
             }
@@ -1652,19 +1654,19 @@ namespace ₿::tribeca {
           }
         }
       };
-      void matchFirstPing(map<Price, mOrderFilled> *tradesSide, Price *ping, Amount *qty, Amount qtyMax, Price width, bool reverse = false) {
+      void matchFirstPing(map<Price, OrderFilled> *tradesSide, Price *ping, Amount *qty, Amount qtyMax, Price width, bool reverse = false) {
         matchPing(true, true, tradesSide, ping, qty, qtyMax, width, reverse);
       };
-      void matchBestPing(map<Price, mOrderFilled> *tradesSide, Price *ping, Amount *qty, Amount qtyMax, Price width, bool reverse = false) {
+      void matchBestPing(map<Price, OrderFilled> *tradesSide, Price *ping, Amount *qty, Amount qtyMax, Price width, bool reverse = false) {
         matchPing(true, false, tradesSide, ping, qty, qtyMax, width, reverse);
       };
-      void matchLastPing(map<Price, mOrderFilled> *tradesSide, Price *ping, Amount *qty, Amount qtyMax, Price width, bool reverse = false) {
+      void matchLastPing(map<Price, OrderFilled> *tradesSide, Price *ping, Amount *qty, Amount qtyMax, Price width, bool reverse = false) {
         matchPing(false, true, tradesSide, ping, qty, qtyMax, width, reverse);
       };
-      void matchAllPing(map<Price, mOrderFilled> *tradesSide, Price *ping, Amount *qty, Amount qtyMax, Price width) {
+      void matchAllPing(map<Price, OrderFilled> *tradesSide, Price *ping, Amount *qty, Amount qtyMax, Price width) {
         matchPing(false, false, tradesSide, ping, qty, qtyMax, width);
       };
-      void matchPing(bool _near, bool _far, map<Price, mOrderFilled> *tradesSide, Price *ping, Amount *qty, Amount qtyMax, Price width, bool reverse = false) {
+      void matchPing(bool _near, bool _far, map<Price, OrderFilled> *tradesSide, Price *ping, Amount *qty, Amount qtyMax, Price width, bool reverse = false) {
         int dir = width > 0 ? 1 : -1;
         if (reverse) for (auto it = tradesSide->crbegin(); it != tradesSide->crend(); ++it) {
           if (matchPing(_near, _far, ping, qty, qtyMax, width, dir * fairValue, dir * it->second.price, it->second.quantity, it->second.price, it->second.Kqty, reverse))
@@ -1689,7 +1691,7 @@ namespace ₿::tribeca {
         return *qty >= qtyMax and (_near or _far);
       };
   };
-  static void to_json(json &j, const mSafety &k) {
+  static void to_json(json &j, const Safety &k) {
     j = {
       {     "buy", k.buy     },
       {    "sell", k.sell    },
@@ -1699,17 +1701,17 @@ namespace ₿::tribeca {
     };
   };
 
-  struct mTarget: public Sqlite::StructBackup<mTarget>,
-                  public Client::Broadcast<mTarget> {
+  struct Target: public Sqlite::StructBackup<Target>,
+                 public Client::Broadcast<Target> {
     Amount targetBasePosition = 0,
            positionDivergence = 0;
     private_ref:
-      const KryptoNinja    &K;
-      const mQuotingParams &qp;
-      const double         &targetPositionAutoPercentage;
-      const Amount         &baseValue;
+      const KryptoNinja   &K;
+      const QuotingParams &qp;
+      const double        &targetPositionAutoPercentage;
+      const Amount        &baseValue;
     public:
-      mTarget(const KryptoNinja &bot, const mQuotingParams &q, const double &t, const Amount &v)
+      Target(const KryptoNinja &bot, const QuotingParams &q, const double &t, const Amount &v)
         : StructBackup(bot)
         , Broadcast(bot)
         , K(bot)
@@ -1720,7 +1722,7 @@ namespace ₿::tribeca {
       void calcTargetBasePos() {
         if (warn_empty()) return;
         targetBasePosition = K.gateway->decimal.funds.round(
-          qp.autoPositionMode == mAutoPositionMode::Manual
+          qp.autoPositionMode == AutoPositionMode::Manual
             ? (qp.percentageValues
               ? qp.targetBasePositionPercentage * baseValue / 1e+2
               : qp.targetBasePosition)
@@ -1770,17 +1772,17 @@ namespace ₿::tribeca {
         Amount pDiv = qp.percentageValues
           ? qp.positionDivergencePercentage * baseValue / 1e+2
           : qp.positionDivergence;
-        if (qp.autoPositionMode == mAutoPositionMode::Manual or mPDivMode::Manual == qp.positionDivergenceMode)
+        if (qp.autoPositionMode == AutoPositionMode::Manual or PDivMode::Manual == qp.positionDivergenceMode)
           positionDivergence = pDiv;
         else {
           Amount pDivMin = qp.percentageValues
             ? qp.positionDivergencePercentageMin * baseValue / 1e+2
             : qp.positionDivergenceMin;
           double divCenter = 1 - abs((targetBasePosition / baseValue * 2) - 1);
-          if (mPDivMode::Linear == qp.positionDivergenceMode)      positionDivergence = pDivMin + (divCenter * (pDiv - pDivMin));
-          else if (mPDivMode::Sine == qp.positionDivergenceMode)   positionDivergence = pDivMin + (sin(divCenter*M_PI_2) * (pDiv - pDivMin));
-          else if (mPDivMode::SQRT == qp.positionDivergenceMode)   positionDivergence = pDivMin + (sqrt(divCenter) * (pDiv - pDivMin));
-          else if (mPDivMode::Switch == qp.positionDivergenceMode) positionDivergence = divCenter < 1e-1 ? pDivMin : pDiv;
+          if (PDivMode::Linear == qp.positionDivergenceMode)      positionDivergence = pDivMin + (divCenter * (pDiv - pDivMin));
+          else if (PDivMode::Sine == qp.positionDivergenceMode)   positionDivergence = pDivMin + (sin(divCenter*M_PI_2) * (pDiv - pDivMin));
+          else if (PDivMode::SQRT == qp.positionDivergenceMode)   positionDivergence = pDivMin + (sqrt(divCenter) * (pDiv - pDivMin));
+          else if (PDivMode::Switch == qp.positionDivergenceMode) positionDivergence = divCenter < 1e-1 ? pDivMin : pDiv;
         }
         positionDivergence = K.gateway->decimal.funds.round(positionDivergence);
       };
@@ -1798,28 +1800,28 @@ namespace ₿::tribeca {
         return "loaded TBP = % " + K.gateway->base;
       };
   };
-  static void to_json(json &j, const mTarget &k) {
+  static void to_json(json &j, const Target &k) {
     j = {
       { "tbp", k.targetBasePosition},
       {"pDiv", k.positionDivergence}
     };
   };
-  static void from_json(const json &j, mTarget &k) {
+  static void from_json(const json &j, Target &k) {
     k.targetBasePosition = j.value("tbp",  0.0);
     k.positionDivergence = j.value("pDiv", 0.0);
   };
 
-  struct mWalletPosition: public Wallets,
-                          public Client::Broadcast<mWalletPosition> {
-     mTarget target;
-     mSafety safety;
-    mProfits profits;
+  struct WalletPosition: public Wallets,
+                         public Client::Broadcast<WalletPosition> {
+     Target target;
+     Safety safety;
+    Profits profits;
     private_ref:
       const KryptoNinja &K;
-      const mOrders     &orders;
+      const Orders      &orders;
       const Price       &fairValue;
     public:
-      mWalletPosition(const KryptoNinja &bot, const mQuotingParams &q, const mOrders &o, const mButtons &b, const mMarketLevels &l)
+      WalletPosition(const KryptoNinja &bot, const QuotingParams &q, const Orders &o, const Buttons &b, const MarketLevels &l)
         : Broadcast(bot)
         , target(bot, q, l.stats.ewma.targetPositionAutoPercentage, base.value)
         , safety(bot, q, base, b, l.fairValue, target.targetBasePosition, target.positionDivergence)
@@ -1842,7 +1844,7 @@ namespace ₿::tribeca {
         calcFundsSilently();
         broadcast();
       };
-      void calcFundsAfterOrder(const mLastOrder &order, bool *const askForFees) {
+      void calcFundsAfterOrder(const LastOrder &order, bool *const askForFees) {
         if (!order.price) return;
         if (K.gateway->margin == Future::Spot) {
           calcHeldAmount(order.side);
@@ -1912,11 +1914,11 @@ namespace ₿::tribeca {
       };
   };
 
-  struct mQuote: public Level {
-    const Side        side   = (Side)0;
-          mQuoteState state  = mQuoteState::MissingData;
-          bool        isPong = false;
-    mQuote(const Side &s)
+  struct Quote: public Level {
+    const Side       side   = (Side)0;
+          QuoteState state  = QuoteState::MissingData;
+          bool       isPong = false;
+    Quote(const Side &s)
       : side(s)
     {};
     bool empty() const {
@@ -1925,45 +1927,45 @@ namespace ₿::tribeca {
     void skip() {
       size = 0;
     };
-    void clear(const mQuoteState &reason) {
+    void clear(const QuoteState &reason) {
       price = size = 0;
       state = reason;
     };
     virtual bool deprecates(const Price&) const = 0;
-    bool checkCrossed(const mQuote &opposite) {
+    bool checkCrossed(const Quote &opposite) {
       if (empty()) return false;
       if (opposite.empty() or deprecates(opposite.price)) {
-        state = mQuoteState::Live;
+        state = QuoteState::Live;
         return false;
       }
-      state = mQuoteState::Crossed;
+      state = QuoteState::Crossed;
       return true;
     };
   };
-  struct mQuoteBid: public mQuote {
-    mQuoteBid()
-      : mQuote(Side::Bid)
+  struct QuoteBid: public Quote {
+    QuoteBid()
+      : Quote(Side::Bid)
     {};
     bool deprecates(const Price &higher) const override {
       return price < higher;
     };
   };
-  struct mQuoteAsk: public mQuote {
-    mQuoteAsk()
-      : mQuote(Side::Ask)
+  struct QuoteAsk: public Quote {
+    QuoteAsk()
+      : Quote(Side::Ask)
     {};
     bool deprecates(const Price &lower) const override {
       return price > lower;
     };
   };
-  struct mQuotes {
-    mQuoteBid bid;
-    mQuoteAsk ask;
-         bool superSpread = false;
+  struct Quotes {
+    QuoteBid bid;
+    QuoteAsk ask;
+        bool superSpread = false;
     private_ref:
       const KryptoNinja &K;
     public:
-      mQuotes(const KryptoNinja &bot)
+      Quotes(const KryptoNinja &bot)
         : K(bot)
       {};
       void checkCrossedQuotes() {
@@ -1981,24 +1983,24 @@ namespace ₿::tribeca {
       };
   };
 
-  struct mDummyMarketMaker: public Client::Clicked::Catch {
+  struct DummyMarketMaker: public Client::Clicked::Catch {
     private:
       void (*calcRawQuotesFromMarket)(
-        const mMarketLevels&,
+        const MarketLevels&,
         const Price&,
         const Price&,
         const Amount&,
         const Amount&,
-              mQuotes&
+              Quotes&
       ) = nullptr;
     private_ref:
-      const KryptoNinja     &K;
-      const mQuotingParams  &qp;
-      const mMarketLevels   &levels;
-      const mWalletPosition &wallet;
-            mQuotes         &quotes;
+      const KryptoNinja    &K;
+      const QuotingParams  &qp;
+      const MarketLevels   &levels;
+      const WalletPosition &wallet;
+            Quotes         &quotes;
     public:
-      mDummyMarketMaker(const KryptoNinja &bot, const mQuotingParams &q, const mMarketLevels &l, const mWalletPosition &w, mQuotes &Q)
+      DummyMarketMaker(const KryptoNinja &bot, const QuotingParams &q, const MarketLevels &l, const WalletPosition &w, Quotes &Q)
         : Catch(bot, {
             {&q, [&]() { mode(); }}
           })
@@ -2018,23 +2020,23 @@ namespace ₿::tribeca {
           quotes
         );
         if (quotes.bid.price <= 0 or quotes.ask.price <= 0) {
-          quotes.bid.clear(mQuoteState::WidthMustBeSmaller);
-          quotes.ask.clear(mQuoteState::WidthMustBeSmaller);
+          quotes.bid.clear(QuoteState::WidthMustBeSmaller);
+          quotes.ask.clear(QuoteState::WidthMustBeSmaller);
           K.logWar("QP", "Negative price detected, widthPing must be smaller");
         }
       };
     private:
       void mode() {
-        if (qp.mode == mQuotingMode::Top)              calcRawQuotesFromMarket = calcTopOfMarket;
-        else if (qp.mode == mQuotingMode::Mid)         calcRawQuotesFromMarket = calcMidOfMarket;
-        else if (qp.mode == mQuotingMode::Join)        calcRawQuotesFromMarket = calcJoinMarket;
-        else if (qp.mode == mQuotingMode::InverseJoin) calcRawQuotesFromMarket = calcInverseJoinMarket;
-        else if (qp.mode == mQuotingMode::InverseTop)  calcRawQuotesFromMarket = calcInverseTopOfMarket;
-        else if (qp.mode == mQuotingMode::HamelinRat)  calcRawQuotesFromMarket = calcColossusOfMarket;
-        else if (qp.mode == mQuotingMode::Depth)       calcRawQuotesFromMarket = calcDepthOfMarket;
+        if (qp.mode == QuotingMode::Top)              calcRawQuotesFromMarket = calcTopOfMarket;
+        else if (qp.mode == QuotingMode::Mid)         calcRawQuotesFromMarket = calcMidOfMarket;
+        else if (qp.mode == QuotingMode::Join)        calcRawQuotesFromMarket = calcJoinMarket;
+        else if (qp.mode == QuotingMode::InverseJoin) calcRawQuotesFromMarket = calcInverseJoinMarket;
+        else if (qp.mode == QuotingMode::InverseTop)  calcRawQuotesFromMarket = calcInverseTopOfMarket;
+        else if (qp.mode == QuotingMode::HamelinRat)  calcRawQuotesFromMarket = calcColossusOfMarket;
+        else if (qp.mode == QuotingMode::Depth)       calcRawQuotesFromMarket = calcDepthOfMarket;
         else error("QE", "Invalid quoting mode saved, consider to remove the database file");
       };
-      static void quoteAtTopOfMarket(const mMarketLevels &levels, const Price &tickPrice, mQuotes &quotes) {
+      static void quoteAtTopOfMarket(const MarketLevels &levels, const Price &tickPrice, Quotes &quotes) {
         const Level &topBid = levels.bids.begin()->size > tickPrice
           ? levels.bids.at(0)
           : levels.bids.at(levels.bids.size() > 1 ? 1 : 0);
@@ -2045,12 +2047,12 @@ namespace ₿::tribeca {
         quotes.ask.price = topAsk.price;
       };
       static void calcTopOfMarket(
-        const mMarketLevels &levels,
-        const Price         &tickPrice,
-        const Price         &widthPing,
-        const Amount        &bidSize,
-        const Amount        &askSize,
-              mQuotes       &quotes
+        const MarketLevels &levels,
+        const Price        &tickPrice,
+        const Price        &widthPing,
+        const Amount       &bidSize,
+        const Amount       &askSize,
+              Quotes       &quotes
       ) {
         quoteAtTopOfMarket(levels, tickPrice, quotes);
         quotes.bid.price = fmin(levels.fairValue - widthPing / 2.0, quotes.bid.price + tickPrice);
@@ -2059,12 +2061,12 @@ namespace ₿::tribeca {
         quotes.ask.size = askSize;
       };
       static void calcMidOfMarket(
-        const mMarketLevels &levels,
-        const Price         &,
-        const Price         &widthPing,
-        const Amount        &bidSize,
-        const Amount        &askSize,
-              mQuotes       &quotes
+        const MarketLevels &levels,
+        const Price        &,
+        const Price        &widthPing,
+        const Amount       &bidSize,
+        const Amount       &askSize,
+              Quotes       &quotes
       ) {
         quotes.bid.price = fmax(levels.fairValue - widthPing, 0);
         quotes.ask.price = levels.fairValue + widthPing;
@@ -2072,12 +2074,12 @@ namespace ₿::tribeca {
         quotes.ask.size = askSize;
       };
       static void calcJoinMarket(
-        const mMarketLevels &levels,
-        const Price         &tickPrice,
-        const Price         &widthPing,
-        const Amount        &bidSize,
-        const Amount        &askSize,
-              mQuotes       &quotes
+        const MarketLevels &levels,
+        const Price        &tickPrice,
+        const Price        &widthPing,
+        const Amount       &bidSize,
+        const Amount       &askSize,
+              Quotes       &quotes
       ) {
         quoteAtTopOfMarket(levels, tickPrice, quotes);
         quotes.bid.price = fmin(levels.fairValue - widthPing / 2.0, quotes.bid.price);
@@ -2086,12 +2088,12 @@ namespace ₿::tribeca {
         quotes.ask.size = askSize;
       };
       static void calcInverseJoinMarket(
-        const mMarketLevels &levels,
-        const Price         &tickPrice,
-        const Price         &widthPing,
-        const Amount        &bidSize,
-        const Amount        &askSize,
-              mQuotes       &quotes
+        const MarketLevels &levels,
+        const Price        &tickPrice,
+        const Price        &widthPing,
+        const Amount       &bidSize,
+        const Amount       &askSize,
+              Quotes       &quotes
       ) {
         quoteAtTopOfMarket(levels, tickPrice, quotes);
         Price mktWidth = abs(quotes.ask.price - quotes.bid.price);
@@ -2107,12 +2109,12 @@ namespace ₿::tribeca {
         quotes.ask.size = askSize;
       };
       static void calcInverseTopOfMarket(
-        const mMarketLevels &levels,
-        const Price         &tickPrice,
-        const Price         &widthPing,
-        const Amount        &bidSize,
-        const Amount        &askSize,
-              mQuotes       &quotes
+        const MarketLevels &levels,
+        const Price        &tickPrice,
+        const Price        &widthPing,
+        const Amount       &bidSize,
+        const Amount       &askSize,
+              Quotes       &quotes
       ) {
         quoteAtTopOfMarket(levels, tickPrice, quotes);
         Price mktWidth = abs(quotes.ask.price - quotes.bid.price);
@@ -2130,12 +2132,12 @@ namespace ₿::tribeca {
         quotes.ask.size = askSize;
       };
       static void calcColossusOfMarket(
-        const mMarketLevels &levels,
-        const Price         &tickPrice,
-        const Price         &,
-        const Amount        &bidSize,
-        const Amount        &askSize,
-              mQuotes       &quotes
+        const MarketLevels &levels,
+        const Price        &tickPrice,
+        const Price        &,
+        const Amount       &bidSize,
+        const Amount       &askSize,
+              Quotes       &quotes
       ) {
         quoteAtTopOfMarket(levels, tickPrice, quotes);
         quotes.bid.size = 0;
@@ -2156,12 +2158,12 @@ namespace ₿::tribeca {
         quotes.ask.size = askSize;
       };
       static void calcDepthOfMarket(
-        const mMarketLevels &levels,
-        const Price         &,
-        const Price         &depth,
-        const Amount        &bidSize,
-        const Amount        &askSize,
-              mQuotes       &quotes
+        const MarketLevels &levels,
+        const Price        &,
+        const Price        &depth,
+        const Amount       &bidSize,
+        const Amount       &askSize,
+              Quotes       &quotes
       ) {
         Price bidPx = levels.bids.cbegin()->price;
         Amount bidDepth = 0;
@@ -2184,21 +2186,21 @@ namespace ₿::tribeca {
       };
   };
 
-  struct mAntonioCalculon: public Client::Broadcast<mAntonioCalculon> {
-                  mQuotes quotes;
-        mDummyMarketMaker dummyMM;
-    vector<const Order*> zombies;
+  struct AntonioCalculon: public Client::Broadcast<AntonioCalculon> {
+                   Quotes quotes;
+         DummyMarketMaker dummyMM;
+     vector<const Order*> zombies;
              unsigned int countWaiting = 0,
                           countWorking = 0,
                           AK47inc      = 0;
-                 mSideAPR sideAPR      = mSideAPR::Off;
+                 SideAPR  sideAPR      = SideAPR::Off;
     private_ref:
-      const KryptoNinja     &K;
-      const mQuotingParams  &qp;
-      const mMarketLevels   &levels;
-      const mWalletPosition &wallet;
+      const KryptoNinja    &K;
+      const QuotingParams  &qp;
+      const MarketLevels   &levels;
+      const WalletPosition &wallet;
     public:
-      mAntonioCalculon(const KryptoNinja &bot, const mQuotingParams &q, const mMarketLevels &l, const mWalletPosition &w)
+      AntonioCalculon(const KryptoNinja &bot, const QuotingParams &q, const MarketLevels &l, const WalletPosition &w)
         : Broadcast(bot)
         , quotes(bot)
         , dummyMM(bot, q, l, w, quotes)
@@ -2216,25 +2218,25 @@ namespace ₿::tribeca {
         return zombies_;
       };
       void offline() {
-        states(mQuoteState::Disconnected);
+        states(QuoteState::Disconnected);
       };
       void paused() {
-        states(mQuoteState::DisabledQuotes);
+        states(QuoteState::DisabledQuotes);
       };
       void calcQuotes() {
-        states(mQuoteState::UnknownHeld);
+        states(QuoteState::UnknownHeld);
         dummyMM.calcRawQuotes();
         applyQuotingParameters();
       };
-      bool abandon(const Order &order, mQuote &quote, unsigned int &bullets) {
+      bool abandon(const Order &order, Quote &quote, unsigned int &bullets) {
         if (stillAlive(order)) {
           if (abs(order.price - quote.price) < K.gateway->tickPrice)
             quote.skip();
           else if (order.status == Status::Waiting) {
-            if (qp.safety != mQuotingSafety::AK47
+            if (qp.safety != QuotingSafety::AK47
               or !--bullets
             ) quote.skip();
-          } else if (qp.safety != mQuotingSafety::AK47
+          } else if (qp.safety != QuotingSafety::AK47
             or quote.deprecates(order.price)
           ) {
             if (K.arg<int>("lifetime") and order.time + K.arg<int>("lifetime") > Tstamp)
@@ -2254,7 +2256,7 @@ namespace ₿::tribeca {
         return false;
       };
     private:
-      void states(const mQuoteState &state) {
+      void states(const QuoteState &state) {
         quotes.bid.state =
         quotes.ask.state = state;
       };
@@ -2287,7 +2289,7 @@ namespace ₿::tribeca {
       };
       void applySuperTrades() {
         if (!quotes.superSpread
-          or (qp.superTrades != mSOP::Size and qp.superTrades != mSOP::TradesSize)
+          or (qp.superTrades != SOP::Size and qp.superTrades != SOP::TradesSize)
         ) return;
         if (!qp.buySizeMax and !quotes.bid.empty())
           quotes.bid.size = fmin(
@@ -2319,9 +2321,9 @@ namespace ₿::tribeca {
       };
       void applyTotalBasePosition() {
         if (wallet.base.total < wallet.target.targetBasePosition - wallet.target.positionDivergence) {
-          quotes.ask.clear(mQuoteState::TBPHeld);
-          if (!quotes.bid.empty() and qp.aggressivePositionRebalancing != mAPR::Off) {
-            sideAPR = mSideAPR::Buy;
+          quotes.ask.clear(QuoteState::TBPHeld);
+          if (!quotes.bid.empty() and qp.aggressivePositionRebalancing != APR::Off) {
+            sideAPR = SideAPR::Buy;
             if (!qp.buySizeMax)
               quotes.bid.size = fmin(
                 qp.aprMultiplier * quotes.bid.size,
@@ -2335,9 +2337,9 @@ namespace ₿::tribeca {
           }
         }
         else if (wallet.base.total >= wallet.target.targetBasePosition + wallet.target.positionDivergence) {
-          quotes.bid.clear(mQuoteState::TBPHeld);
-          if (!quotes.ask.empty() and qp.aggressivePositionRebalancing != mAPR::Off) {
-            sideAPR = mSideAPR::Sell;
+          quotes.bid.clear(QuoteState::TBPHeld);
+          if (!quotes.ask.empty() and qp.aggressivePositionRebalancing != APR::Off) {
+            sideAPR = SideAPR::Sell;
             if (!qp.sellSizeMax)
               quotes.ask.size = fmin(
                 qp.aprMultiplier * quotes.ask.size,
@@ -2350,85 +2352,85 @@ namespace ₿::tribeca {
               );
           }
         }
-        else sideAPR = mSideAPR::Off;
+        else sideAPR = SideAPR::Off;
       };
       void applyStdevProtection() {
-        if (qp.quotingStdevProtection == mSTDEV::Off or !levels.stats.stdev.fair) return;
+        if (qp.quotingStdevProtection == STDEV::Off or !levels.stats.stdev.fair) return;
         if (!quotes.ask.empty() and (
-          qp.quotingStdevProtection == mSTDEV::OnFV
-          or qp.quotingStdevProtection == mSTDEV::OnTops
-          or qp.quotingStdevProtection == mSTDEV::OnTop
-          or sideAPR != mSideAPR::Sell
+          qp.quotingStdevProtection == STDEV::OnFV
+          or qp.quotingStdevProtection == STDEV::OnTops
+          or qp.quotingStdevProtection == STDEV::OnTop
+          or sideAPR != SideAPR::Sell
         ))
           quotes.ask.price = fmax(
             (qp.quotingStdevBollingerBands
-              ? (qp.quotingStdevProtection == mSTDEV::OnFV or qp.quotingStdevProtection == mSTDEV::OnFVAPROff)
+              ? (qp.quotingStdevProtection == STDEV::OnFV or qp.quotingStdevProtection == STDEV::OnFVAPROff)
                 ? levels.stats.stdev.fairMean
-                : ((qp.quotingStdevProtection == mSTDEV::OnTops or qp.quotingStdevProtection == mSTDEV::OnTopsAPROff)
+                : ((qp.quotingStdevProtection == STDEV::OnTops or qp.quotingStdevProtection == STDEV::OnTopsAPROff)
                   ? levels.stats.stdev.topMean
                   : levels.stats.stdev.askMean)
               : levels.fairValue
-            ) + ((qp.quotingStdevProtection == mSTDEV::OnFV or qp.quotingStdevProtection == mSTDEV::OnFVAPROff)
+            ) + ((qp.quotingStdevProtection == STDEV::OnFV or qp.quotingStdevProtection == STDEV::OnFVAPROff)
               ? levels.stats.stdev.fair
-              : ((qp.quotingStdevProtection == mSTDEV::OnTops or qp.quotingStdevProtection == mSTDEV::OnTopsAPROff)
+              : ((qp.quotingStdevProtection == STDEV::OnTops or qp.quotingStdevProtection == STDEV::OnTopsAPROff)
                 ? levels.stats.stdev.top
                 : levels.stats.stdev.ask)),
             quotes.ask.price
           );
         if (!quotes.bid.empty() and (
-          qp.quotingStdevProtection == mSTDEV::OnFV
-          or qp.quotingStdevProtection == mSTDEV::OnTops
-          or qp.quotingStdevProtection == mSTDEV::OnTop
-          or sideAPR != mSideAPR::Buy
+          qp.quotingStdevProtection == STDEV::OnFV
+          or qp.quotingStdevProtection == STDEV::OnTops
+          or qp.quotingStdevProtection == STDEV::OnTop
+          or sideAPR != SideAPR::Buy
         ))
           quotes.bid.price = fmin(
             (qp.quotingStdevBollingerBands
-              ? (qp.quotingStdevProtection == mSTDEV::OnFV or qp.quotingStdevProtection == mSTDEV::OnFVAPROff)
+              ? (qp.quotingStdevProtection == STDEV::OnFV or qp.quotingStdevProtection == STDEV::OnFVAPROff)
                 ? levels.stats.stdev.fairMean
-                : ((qp.quotingStdevProtection == mSTDEV::OnTops or qp.quotingStdevProtection == mSTDEV::OnTopsAPROff)
+                : ((qp.quotingStdevProtection == STDEV::OnTops or qp.quotingStdevProtection == STDEV::OnTopsAPROff)
                   ? levels.stats.stdev.topMean
                   : levels.stats.stdev.bidMean)
               : levels.fairValue
-            ) - ((qp.quotingStdevProtection == mSTDEV::OnFV or qp.quotingStdevProtection == mSTDEV::OnFVAPROff)
+            ) - ((qp.quotingStdevProtection == STDEV::OnFV or qp.quotingStdevProtection == STDEV::OnFVAPROff)
               ? levels.stats.stdev.fair
-              : ((qp.quotingStdevProtection == mSTDEV::OnTops or qp.quotingStdevProtection == mSTDEV::OnTopsAPROff)
+              : ((qp.quotingStdevProtection == STDEV::OnTops or qp.quotingStdevProtection == STDEV::OnTopsAPROff)
                 ? levels.stats.stdev.top
                 : levels.stats.stdev.bid)),
             quotes.bid.price
           );
       };
       void applyAggressivePositionRebalancing() {
-        if (qp.safety == mQuotingSafety::Off) return;
+        if (qp.safety == QuotingSafety::Off) return;
         const Price widthPong = qp.widthPercentage
           ? qp.widthPongPercentage * levels.fairValue / 100
           : qp.widthPong;
         if (!quotes.ask.empty() and wallet.safety.buyPing) {
           const Price sellPong = (wallet.safety.buyPing * (1 + K.gateway->makeFee) + widthPong) / (1 - K.gateway->makeFee);
-          if ((qp.aggressivePositionRebalancing == mAPR::SizeWidth and sideAPR == mSideAPR::Sell)
-            or ((qp.safety == mQuotingSafety::PingPong or qp.safety == mQuotingSafety::PingPoing)
+          if ((qp.aggressivePositionRebalancing == APR::SizeWidth and sideAPR == SideAPR::Sell)
+            or ((qp.safety == QuotingSafety::PingPong or qp.safety == QuotingSafety::PingPoing)
               ? quotes.ask.price < sellPong
-              : qp.pongAt == mPongAt::ShortPingAggressive
-                or qp.pongAt == mPongAt::AveragePingAggressive
-                or qp.pongAt == mPongAt::LongPingAggressive
+              : qp.pongAt == PongAt::ShortPingAggressive
+                or qp.pongAt == PongAt::AveragePingAggressive
+                or qp.pongAt == PongAt::LongPingAggressive
             )
           ) quotes.ask.price = fmax(levels.bids.at(0).price + K.gateway->tickPrice, sellPong);
           quotes.ask.isPong = quotes.ask.price >= sellPong;
         }
         if (!quotes.bid.empty() and wallet.safety.sellPing) {
           const Price buyPong = (wallet.safety.sellPing * (1 - K.gateway->makeFee) - widthPong) / (1 + K.gateway->makeFee);
-          if ((qp.aggressivePositionRebalancing == mAPR::SizeWidth and sideAPR == mSideAPR::Buy)
-            or ((qp.safety == mQuotingSafety::PingPong or qp.safety == mQuotingSafety::PingPoing)
+          if ((qp.aggressivePositionRebalancing == APR::SizeWidth and sideAPR == SideAPR::Buy)
+            or ((qp.safety == QuotingSafety::PingPong or qp.safety == QuotingSafety::PingPoing)
               ? quotes.bid.price > buyPong
-              : qp.pongAt == mPongAt::ShortPingAggressive
-                or qp.pongAt == mPongAt::AveragePingAggressive
-                or qp.pongAt == mPongAt::LongPingAggressive
+              : qp.pongAt == PongAt::ShortPingAggressive
+                or qp.pongAt == PongAt::AveragePingAggressive
+                or qp.pongAt == PongAt::LongPingAggressive
             )
           ) quotes.bid.price = fmin(levels.asks.at(0).price - K.gateway->tickPrice, buyPong);
           quotes.bid.isPong = quotes.bid.price <= buyPong;
         }
       };
       void applyAK47Increment() {
-        if (qp.safety != mQuotingSafety::AK47) return;
+        if (qp.safety != QuotingSafety::AK47) return;
         const Price range = qp.percentageValues
           ? qp.rangePercentage * levels.fairValue / 100
           : qp.range;
@@ -2440,7 +2442,7 @@ namespace ₿::tribeca {
       };
       void applyBestWidth() {
         if (!qp.bestWidth) return;
-        const Amount bestWidthSize = (sideAPR == mSideAPR::Off ? qp.bestWidthSize : 0);
+        const Amount bestWidthSize = (sideAPR == SideAPR::Off ? qp.bestWidthSize : 0);
         Amount depth = 0;
         if (!quotes.ask.empty())
           for (const Level &it : levels.asks)
@@ -2466,13 +2468,13 @@ namespace ₿::tribeca {
       };
       void applyTradesPerMinute() {
         const double factor = (quotes.superSpread and (
-          qp.superTrades == mSOP::Trades or qp.superTrades == mSOP::TradesSize
+          qp.superTrades == SOP::Trades or qp.superTrades == SOP::TradesSize
         )) ? qp.sopWidthMultiplier
            : 1;
         if (!quotes.ask.isPong and wallet.safety.sell >= qp.tradesPerMinute * factor)
-          quotes.ask.clear(mQuoteState::MaxTradesSeconds);
+          quotes.ask.clear(QuoteState::MaxTradesSeconds);
         if (!quotes.bid.isPong and wallet.safety.buy >= qp.tradesPerMinute * factor)
-          quotes.bid.clear(mQuoteState::MaxTradesSeconds);
+          quotes.bid.clear(QuoteState::MaxTradesSeconds);
       };
       void applyRoundPrice() {
         if (!quotes.bid.empty())
@@ -2525,7 +2527,7 @@ namespace ₿::tribeca {
                     : wallet.base.total / quotes.bid.price
                 )
           ) < K.gateway->minSize * (1.0 + K.gateway->makeFee)
-        ) quotes.bid.clear(mQuoteState::DepletedFunds);
+        ) quotes.bid.clear(QuoteState::DepletedFunds);
         if (!quotes.ask.empty()
           and (K.gateway->margin == Future::Spot
                 ? wallet.base.total
@@ -2534,32 +2536,32 @@ namespace ₿::tribeca {
                     : wallet.base.total / quotes.ask.price
                 )
           ) < K.gateway->minSize * (1.0 + K.gateway->makeFee)
-        ) quotes.ask.clear(mQuoteState::DepletedFunds);
+        ) quotes.ask.clear(QuoteState::DepletedFunds);
       };
       void applyWaitingPing() {
-        if (qp.safety == mQuotingSafety::Off) return;
+        if (qp.safety == QuotingSafety::Off) return;
         if (!quotes.ask.isPong and (
-          (quotes.bid.state != mQuoteState::DepletedFunds and (qp.pingAt == mPingAt::DepletedSide or qp.pingAt == mPingAt::DepletedBidSide))
-          or qp.pingAt == mPingAt::StopPings
-          or qp.pingAt == mPingAt::BidSide
-          or qp.pingAt == mPingAt::DepletedAskSide
-        )) quotes.ask.clear(mQuoteState::WaitingPing);
+          (quotes.bid.state != QuoteState::DepletedFunds and (qp.pingAt == PingAt::DepletedSide or qp.pingAt == PingAt::DepletedBidSide))
+          or qp.pingAt == PingAt::StopPings
+          or qp.pingAt == PingAt::BidSide
+          or qp.pingAt == PingAt::DepletedAskSide
+        )) quotes.ask.clear(QuoteState::WaitingPing);
         if (!quotes.bid.isPong and (
-          (quotes.ask.state != mQuoteState::DepletedFunds and (qp.pingAt == mPingAt::DepletedSide or qp.pingAt == mPingAt::DepletedAskSide))
-          or qp.pingAt == mPingAt::StopPings
-          or qp.pingAt == mPingAt::AskSide
-          or qp.pingAt == mPingAt::DepletedBidSide
-        )) quotes.bid.clear(mQuoteState::WaitingPing);
+          (quotes.ask.state != QuoteState::DepletedFunds and (qp.pingAt == PingAt::DepletedSide or qp.pingAt == PingAt::DepletedAskSide))
+          or qp.pingAt == PingAt::StopPings
+          or qp.pingAt == PingAt::AskSide
+          or qp.pingAt == PingAt::DepletedBidSide
+        )) quotes.bid.clear(QuoteState::WaitingPing);
       };
       void applyEwmaTrendProtection() {
         if (!qp.quotingEwmaTrendProtection or !levels.stats.ewma.mgEwmaTrendDiff) return;
         if (levels.stats.ewma.mgEwmaTrendDiff > qp.quotingEwmaTrendThreshold)
-          quotes.ask.clear(mQuoteState::UpTrendHeld);
+          quotes.ask.clear(QuoteState::UpTrendHeld);
         else if (levels.stats.ewma.mgEwmaTrendDiff < -qp.quotingEwmaTrendThreshold)
-          quotes.bid.clear(mQuoteState::DownTrendHeld);
+          quotes.bid.clear(QuoteState::DownTrendHeld);
       };
   };
-  static void to_json(json &j, const mAntonioCalculon &k) {
+  static void to_json(json &j, const AntonioCalculon &k) {
     j = {
       {            "bidStatus", k.quotes.bid.state},
       {            "askStatus", k.quotes.ask.state},
@@ -2570,15 +2572,15 @@ namespace ₿::tribeca {
     };
   };
 
-  struct mSemaphore: public Client::Broadcast<mSemaphore>,
-                     public Client::Clickable,
-                     public Hotkey::Catch {
+  struct Semaphore: public Client::Broadcast<Semaphore>,
+                    public Client::Clickable,
+                    public Hotkey::Catch {
     Connectivity greenButton  = Connectivity::Disconnected,
                  greenGateway = Connectivity::Disconnected;
     private_ref:
       const KryptoNinja &K;
     public:
-      mSemaphore(const KryptoNinja &bot)
+      Semaphore(const KryptoNinja &bot)
         : Broadcast(bot)
         , Clickable(bot)
         , Catch(bot, {
@@ -2626,18 +2628,18 @@ namespace ₿::tribeca {
         K.repaint();
       };
   };
-  static void to_json(json &j, const mSemaphore &k) {
+  static void to_json(json &j, const Semaphore &k) {
     j = {
       { "agree", k.greenButton },
       {"online", k.greenGateway}
     };
   };
 
-  class mProduct: public Client::Broadcast<mProduct> {
+  class Product: public Client::Broadcast<Product> {
     private_ref:
       const KryptoNinja &K;
     public:
-      mProduct(const KryptoNinja &bot)
+      Product(const KryptoNinja &bot)
         : Broadcast(bot)
         , K(bot)
       {};
@@ -2664,19 +2666,19 @@ namespace ₿::tribeca {
         return mMatter::ProductAdvertisement;
       };
   };
-  static void to_json(json &j, const mProduct &k) {
+  static void to_json(json &j, const Product &k) {
     j = k.to_json();
   };
 
-  class mMemory: public Client::Broadcast<mMemory> {
+  class Memory: public Client::Broadcast<Memory> {
     public:
       unsigned int orders_60s = 0;
     private:
-      mProduct product;
+      Product product;
     private_ref:
       const KryptoNinja &K;
     public:
-      mMemory(const KryptoNinja &bot)
+      Memory(const KryptoNinja &bot)
         : Broadcast(bot)
         , product(bot)
         , K(bot)
@@ -2699,20 +2701,20 @@ namespace ₿::tribeca {
         return mMatter::ApplicationState;
       };
   };
-  static void to_json(json &j, const mMemory &k) {
+  static void to_json(json &j, const Memory &k) {
     j = k.to_json();
   };
 
-  struct mBroker: public Client::Clicked::Catch {
-             mMemory memory;
-          mSemaphore semaphore;
-    mAntonioCalculon calculon;
+  struct Broker: public Client::Clicked::Catch {
+             Memory memory;
+          Semaphore semaphore;
+    AntonioCalculon calculon;
     private_ref:
-      const KryptoNinja    &K;
-      const mQuotingParams &qp;
-            mOrders        &orders;
+      const KryptoNinja   &K;
+      const QuotingParams &qp;
+            Orders        &orders;
     public:
-      mBroker(const KryptoNinja &bot, const mQuotingParams &q, mOrders &o, const mButtons &b, const mMarketLevels &l, const mWalletPosition &w)
+      Broker(const KryptoNinja &bot, const QuotingParams &q, Orders &o, const Buttons &b, const MarketLevels &l, const WalletPosition &w)
         : Catch(bot, {
             {&b.submit, [&](const json &j) { placeOrder(j); }},
             {&b.cancel, [&](const json &j) { cancelOrder(orders.find(j)); }},
@@ -2742,7 +2744,7 @@ namespace ₿::tribeca {
           quote2orders(calculon.quotes.bid);
         }
       };
-      void quote2orders(mQuote &quote) {
+      void quote2orders(Quote &quote) {
         const vector<Order*> abandoned = abandon(quote);
         const unsigned int replace = K.gateway->askForReplace and !(
           quote.empty() or abandoned.empty()
@@ -2771,10 +2773,10 @@ namespace ₿::tribeca {
           orders.purge(it);
       };
     private:
-      vector<Order*> abandon(mQuote &quote) {
+      vector<Order*> abandon(Quote &quote) {
         vector<Order*> abandoned;
         unsigned int bullets = qp.bullets;
-        const bool all = quote.state != mQuoteState::Live;
+        const bool all = quote.state != QuoteState::Live;
         for (Order *const it : orders.at(quote.side))
           if (all or calculon.abandon(*it, quote, bullets))
             abandoned.push_back(it);
@@ -2799,12 +2801,12 @@ namespace ₿::tribeca {
 
   class Engine {
     public:
-       mQuotingParams qp;
-              mOrders orders;
-             mButtons button;
-        mMarketLevels levels;
-      mWalletPosition wallet;
-              mBroker broker;
+       QuotingParams qp;
+              Orders orders;
+             Buttons button;
+        MarketLevels levels;
+      WalletPosition wallet;
+              Broker broker;
     private_ref:
       const KryptoNinja &K;
     public:

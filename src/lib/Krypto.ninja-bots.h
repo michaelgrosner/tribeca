@@ -116,7 +116,6 @@ namespace ₿ {
   static vector<function<void()>> endingFn;
 
   class Ending: public Rollout {
-    private:
     public:
       Ending() {
         signal(SIGINT, [](const int) {
@@ -360,6 +359,7 @@ namespace ₿ {
   };
 
   class Option: public Terminal {
+    protected:
     private_friend:
       struct Argument {
        const string  name;
@@ -370,11 +370,10 @@ namespace ₿ {
     protected:
       bool autobot  = false;
       bool dustybot = false;
-      pair<vector<Argument>, function<void(
-        unordered_map<string, variant<string, int, double>>&
-      )>> arguments;
+      using MutableUserArguments = unordered_map<string, variant<string, int, double>>;
+      pair<vector<Argument>, function<void(MutableUserArguments&)>> arguments;
     private:
-      unordered_map<string, variant<string, int, double>> args;
+      MutableUserArguments args;
     public:
       template <typename T> const T arg(const string &name) const {
 #ifndef NDEBUG
