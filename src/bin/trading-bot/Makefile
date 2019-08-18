@@ -52,6 +52,7 @@ export define PACKAGE_JSON
     "@angular/router": "^8.2.2",
     "@babel/core": "^7.5.5",
     "@babel/preset-env": "^7.5.5",
+    "@types/node": "^12.7.2",
     "ag-grid-angular": "^21.1.0",
     "ag-grid-community": "^21.1.1",
     "angular2-highcharts": "^0.5.5",
@@ -63,7 +64,7 @@ export define PACKAGE_JSON
     "sass": "1.21.0",
     "typescript": "^3.5.3",
     "uglify-es": "^3.3.9",
-    "zone.js": "^0.9.1"
+    "zone.js": "^0.10.2"
   },
   "description": "K",
   "homepage": "https://github.com/ctubio/Krypto-trading-bot",
