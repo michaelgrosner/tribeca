@@ -18,7 +18,7 @@ int main(int argc, char** argv) {
 };
 
 #ifndef NDEBUG
-#include "../../../test/units.h"
+#include "trading-bot.test.h"
 #endif
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

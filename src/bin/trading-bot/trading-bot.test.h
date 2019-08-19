@@ -1,5 +1,5 @@
-#ifndef K_UNITS_H_
-#define K_UNITS_H_
+#ifndef K_TRADING_BOT_TEST_H_
+#define K_TRADING_BOT_TEST_H_
 //! \file
 //! \brief Collection of test units.
 //! \note  Test units about benchmarks are removed after a while,
