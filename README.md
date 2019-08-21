@@ -392,7 +392,7 @@ To report errors open a [new issue](https://github.com/ctubio/Krypto-trading-bot
 
 For fun (not required), everybody can create or claim bounties related to any issue at [bountysource.com](https://www.bountysource.com/teams/krypto-trading-bot/issues).
 
-Consequently, Pull Requests are welcome, but adhere to the Contributor License Agreement:
+Pull Requests are welcome, but adhere to the Contributor License Agreement:
 - Your biological and technological distinctiveness will be added to our own. Resistance is futile.
 
 ### like yesterday, since 0day and ∞

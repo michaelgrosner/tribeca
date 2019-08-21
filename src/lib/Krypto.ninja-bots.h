@@ -620,9 +620,9 @@ namespace ₿ {
 
   class Hotkey {
     public_friend:
-      class Catch {
+      class Keymap {
         public:
-          Catch(const Hotkey &hotkey, const vector<pair<const char, const function<void()>>> &hotkeys)
+          Keymap(const Hotkey &hotkey, const vector<pair<const char, const function<void()>>> &hotkeys)
           {
             for (const auto &it : hotkeys)
               hotkey.keymap(it.first, it.second);
@@ -960,22 +960,19 @@ namespace ₿ {
           virtual void click(const json&) = 0;
       };
       class Clicked {
-        public_friend:
-          class Catch {
-            public:
-              Catch(const Client &client, const vector<pair<const Clickable*, variant<
-                const function<void()>,
-                const function<void(const json&)>
-              >>> &clicked)
-              {
-                for (const auto &it : clicked)
-                  client.clicked(
-                    it.first,
-                    holds_alternative<const function<void()>>(it.second)
-                      ? [it](const json&) { get<const function<void()>>(it.second)(); }
-                      : get<const function<void(const json&)>>(it.second)
-                  );
-              };
+        public:
+          Clicked(const Client &client, const vector<pair<const Clickable*, variant<
+            const function<void()>,
+            const function<void(const json&)>
+          >>> &clicked)
+          {
+            for (const auto &it : clicked)
+              client.clicked(
+                it.first,
+                holds_alternative<const function<void()>>(it.second)
+                  ? [it](const json&) { get<const function<void()>>(it.second)(); }
+                  : get<const function<void(const json&)>>(it.second)
+              );
           };
       };
     protected:

@@ -651,7 +651,7 @@ namespace ₿::tribeca {
   };
 
   struct Ewma: public Sqlite::StructBackup<Ewma>,
-                public Client::Clicked::Catch {
+                public Client::Clicked {
     mFairHistory fairValue96h;
            Price mgEwmaVL = 0,
                  mgEwmaL  = 0,
@@ -670,7 +670,7 @@ namespace ₿::tribeca {
     public:
       Ewma(const KryptoNinja &bot, const Price &f, const QuotingParams &q)
         : StructBackup(bot)
-        , Catch(bot, {
+        , Clicked(bot, {
             {&q, [&]() { calcFromHistory(); }}
           })
         , fairValue96h(bot)
@@ -1264,7 +1264,7 @@ namespace ₿::tribeca {
 
   struct TradesHistory: public Sqlite::VectorBackup<OrderFilled>,
                         public Client::Broadcast<OrderFilled>,
-                        public Client::Clicked::Catch {
+                        public Client::Clicked {
     private_ref:
       const KryptoNinja   &K;
       const QuotingParams &qp;
@@ -1272,7 +1272,7 @@ namespace ₿::tribeca {
       TradesHistory(const KryptoNinja &bot, const QuotingParams &q, const Buttons &b)
         : VectorBackup(bot)
         , Broadcast(bot)
-        , Catch(bot, {
+        , Clicked(bot, {
             {&b.cleanTrade, [&](const json &j) { clearOne(j); }},
             {&b.cleanTrades, [&]() { clearAll(); }},
             {&b.cleanTradesClosed, [&]() { clearClosed(); }}
@@ -1983,7 +1983,7 @@ namespace ₿::tribeca {
       };
   };
 
-  struct DummyMarketMaker: public Client::Clicked::Catch {
+  struct DummyMarketMaker: public Client::Clicked {
     private:
       void (*calcRawQuotesFromMarket)(
         const MarketLevels&,
@@ -2001,7 +2001,7 @@ namespace ₿::tribeca {
             Quotes         &quotes;
     public:
       DummyMarketMaker(const KryptoNinja &bot, const QuotingParams &q, const MarketLevels &l, const WalletPosition &w, Quotes &Q)
-        : Catch(bot, {
+        : Clicked(bot, {
             {&q, [&]() { mode(); }}
           })
         , K(bot)
@@ -2574,7 +2574,7 @@ namespace ₿::tribeca {
 
   struct Semaphore: public Client::Broadcast<Semaphore>,
                     public Client::Clickable,
-                    public Hotkey::Catch {
+                    public Hotkey::Keymap {
     Connectivity greenButton  = Connectivity::Disconnected,
                  greenGateway = Connectivity::Disconnected;
     private_ref:
@@ -2583,7 +2583,7 @@ namespace ₿::tribeca {
       Semaphore(const KryptoNinja &bot)
         : Broadcast(bot)
         , Clickable(bot)
-        , Catch(bot, {
+        , Keymap(bot, {
             {'Q', [&]() { exit(); }},
             {'q', [&]() { exit(); }},
             {'\e', [&]() { toggle(); }}
@@ -2705,7 +2705,7 @@ namespace ₿::tribeca {
     j = k.to_json();
   };
 
-  struct Broker: public Client::Clicked::Catch {
+  struct Broker: public Client::Clicked {
              Memory memory;
           Semaphore semaphore;
     AntonioCalculon calculon;
@@ -2715,7 +2715,7 @@ namespace ₿::tribeca {
             Orders        &orders;
     public:
       Broker(const KryptoNinja &bot, const QuotingParams &q, Orders &o, const Buttons &b, const MarketLevels &l, const WalletPosition &w)
-        : Catch(bot, {
+        : Clicked(bot, {
             {&b.submit, [&](const json &j) { placeOrder(j); }},
             {&b.cancel, [&](const json &j) { cancelOrder(orders.find(j)); }},
             {&b.cancelAll, [&]() { cancelOrders(); }}
