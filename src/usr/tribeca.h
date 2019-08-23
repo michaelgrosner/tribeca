@@ -1289,7 +1289,9 @@ namespace ₿::tribeca {
           order.filled,
           time,
           to_string(time),
-          abs(order.price * order.filled),
+          K.gateway->margin == Future::Spot
+            ? abs(order.price * order.filled)
+            : order.filled,
           fee,
           0, 0, 0, 0, 0,
           order.isPong,
@@ -1297,7 +1299,8 @@ namespace ₿::tribeca {
         };
         K.log("GW " + K.gateway->exchange, string(filled.isPong?"PONG":"PING") + " TRADE "
           + (filled.side == Side::Bid ? "BUY  " : "SELL ")
-          + K.gateway->decimal.amount.str(filled.quantity) + ' ' + K.gateway->base + " at price "
+          + K.gateway->decimal.amount.str(filled.quantity) + ' '
+          + (K.gateway->margin == Future::Spot ? K.gateway->base : "Contracts") + " at price "
           + K.gateway->decimal.price.str(filled.price) + ' ' + K.gateway->quote + " (value "
           + K.gateway->decimal.price.str(filled.value) + ' ' + K.gateway->quote + ")"
         );

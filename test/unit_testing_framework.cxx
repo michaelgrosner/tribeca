@@ -6,8 +6,7 @@
 #define CATCH_CONFIG_RUNNER
 #include <catch.h>
 
-//! \brief     Enhanced std::exit() when DEBUG mode is enabled.
-//!            Test units are executed only when exit code is EXIT_SUCCESS.
+//! \brief     Run test units on EXIT_SUCCESS code, otherwise just exit.
 //! \param[in] code Allows any exit code.
 //! \note      Uncomment all 3 lines about --durations argument to
 //!            visualize and understand the execution order of test units.
