@@ -1,5 +1,4 @@
-#ifndef K_DATA_H_
-#define K_DATA_H_
+#pragma once
 //! \file
 //! \brief Data transport/transform helpers.
 
@@ -1280,5 +1279,3 @@ namespace ₿ {
       };
   };
 }
-
-#endif

@@ -1,5 +1,4 @@
-#ifndef K_TRADING_BOT_H_
-#define K_TRADING_BOT_H_
+#pragma once
 
 extern const char _www_html_index,     _www_ico_favicon,     _www_css_base,
                   _www_gzip_bomb,      _www_mp3_audio_0,     _www_css_light,
@@ -199,5 +198,3 @@ void TradingBot::terminal() {
   mvwaddch(stdscr, y-1, 0, ACS_LLCORNER);
   mvwaddstr(stdscr, 1, 2, string("|/-\\").substr(K.engine.broker.memory.orders_60s % 4, 1).data());
 };
-
-#endif

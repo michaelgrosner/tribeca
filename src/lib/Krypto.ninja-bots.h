@@ -1,5 +1,4 @@
-#ifndef K_BOTS_H_
-#define K_BOTS_H_
+#pragma once
 //! \file
 //! \brief Minimal user application framework.
 
@@ -222,7 +221,7 @@ namespace ₿ {
         return display.padding.bottom;
       };
       void repaint() const {
-        if (!display.terminal) return;
+        if (!(stdscr and display.terminal)) return;
         display.terminal();
         wrefresh(stdscr);
         if (stdlog) {
@@ -589,7 +588,7 @@ namespace ₿ {
           << Ansi::r(COLOR_GREEN) << "  questions: " << Ansi::r(COLOR_YELLOW) << "https://earn.com/analpaper/" << '\n'
           << Ansi::b(COLOR_GREEN) << "K" << Ansi::r(COLOR_GREEN) << " bugkiller: " << Ansi::r(COLOR_YELLOW) << "https://github.com/ctubio/Krypto-trading-bot/issues/new" << '\n'
           << Ansi::r(COLOR_GREEN) << "  downloads: " << Ansi::r(COLOR_YELLOW) << "ssh://git@github.com/ctubio/Krypto-trading-bot" << '\n'
-          << Ansi::b(COLOR_WHITE) << stamp.at(((++y%4)*3)+x) << "Usage:" << Ansi::b(COLOR_YELLOW) << K_SOURCE " [arguments]" << '\n';
+          << Ansi::b(COLOR_WHITE) << stamp.at(((++y%4)*3)+x) << "Usage:" << Ansi::b(COLOR_YELLOW) << " " << K_SOURCE " [arguments]" << '\n';
         clog
           << Ansi::b(COLOR_WHITE) << stamp.at(((++y%4)*3)+x) << "[arguments]:";
         for (const Argument &it : long_options) {
@@ -1301,5 +1300,3 @@ namespace ₿ {
       };
   };
 }
-
-#endif

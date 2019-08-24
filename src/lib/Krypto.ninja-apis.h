@@ -1,5 +1,4 @@
-#ifndef K_APIS_H_
-#define K_APIS_H_
+#pragma once
 //! \file
 //! \brief Exchange API integrations.
 
@@ -945,5 +944,3 @@ namespace ₿ {
       };
   };
 }
-
-#endif

@@ -1,5 +1,4 @@
-#ifndef K_EXAMPLE_H_
-#define K_EXAMPLE_H_
+#pragma once
 //! \file
 //! \brief Welcome user! (just a working example to begin with).
 
@@ -35,5 +34,3 @@ namespace ₿::example {
       };
   };
 }
-
-#endif

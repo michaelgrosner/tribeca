@@ -1,5 +1,4 @@
-#ifndef K_HELLO_WORLD_H_
-#define K_HELLO_WORLD_H_
+#pragma once
 
 class HelloWorld: public KryptoNinja {
   public:
@@ -23,5 +22,3 @@ class HelloWorld: public KryptoNinja {
       } };
     };
 } K;
-
-#endif

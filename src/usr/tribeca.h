@@ -1,5 +1,4 @@
-#ifndef K_TRIBECA_H_
-#define K_TRIBECA_H_
+#pragma once
 //! \file
 //! \brief Trading logistics (welcome user! forked from https://github.com/michaelgrosner/tribeca).
 
@@ -2860,5 +2859,3 @@ namespace ₿::tribeca {
       };
   };
 }
-
-#endif
