@@ -1847,15 +1847,15 @@ namespace ₿::tribeca {
         calcFundsSilently();
         broadcast();
       };
-      void calcFundsAfterOrder(const LastOrder &order, bool *const askForFees) {
-        if (!order.price) return;
+      void calcFundsAfterOrder() {
+        if (!orders.updated.price) return;
         if (K.gateway->margin == Future::Spot) {
-          calcHeldAmount(order.side);
+          calcHeldAmount(orders.updated.side);
           calcFundsSilently();
         }
-        if (order.filled) {
-          safety.insertTrade(order);
-          *askForFees = true;
+        if (orders.updated.filled) {
+          safety.insertTrade(orders.updated);
+          K.gateway->askForFees = true;
         }
       };
       mMatter about() const override {
@@ -2836,7 +2836,7 @@ namespace ₿::tribeca {
       };
       void read(const Order &rawdata) {
         orders.read_from_gw(rawdata);
-        wallet.calcFundsAfterOrder(orders.updated, &K.gateway->askForFees);
+        wallet.calcFundsAfterOrder();
       };
       void read(const Trade &rawdata) {
         levels.stats.takerTrades.read_from_gw(rawdata);

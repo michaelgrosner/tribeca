@@ -314,6 +314,10 @@ namespace ₿ {
         if (!minSize) minSize = reply.value("minSize", 0.0);
         if (!makeFee) makeFee = reply.value("makeFee", 0.0);
         if (!takeFee) takeFee = reply.value("takeFee", 0.0);
+        decimal.funds.precision(1e-8);
+        decimal.price.precision(tickPrice);
+        decimal.amount.precision(tickSize);
+        decimal.percent.precision(1e-2);
         if (!file.is_open()
           and tickPrice and tickSize and minSize
           and !base.empty() and !quote.empty()
@@ -339,10 +343,6 @@ namespace ₿ {
       };
       void report(Report notes, const bool &nocache) {
         if (exchange == "NULL") print("all data is random");
-        decimal.funds.precision(1e-8);
-        decimal.price.precision(tickPrice);
-        decimal.amount.precision(tickSize);
-        decimal.percent.precision(1e-2);
         for (auto it : (Report){
           {"symbols", (margin == Future::Linear
                         ? symbol             + " (" + decimal.funds.str(decimal.funds.step)

@@ -79,7 +79,7 @@ namespace ₿ {
       static void version() {
         curl_global_init(CURL_GLOBAL_ALL);
         clog << Ansi::b(COLOR_GREEN) << K_SOURCE
-             << Ansi::r(COLOR_GREEN) << ' ' << K_BUILD << ' ' << K_STAMP << ".\n";
+             << Ansi::r(COLOR_GREEN) << " " K_BUILD " " K_STAMP ".\n";
         const string mods = changelog();
         const int commits = count(mods.begin(), mods.end(), '\n');
         clog << Ansi::b(COLOR_GREEN) << K_0_DAY << Ansi::r(COLOR_GREEN) << ' '
@@ -164,10 +164,9 @@ namespace ₿ {
         epilogue = Ansi::r(COLOR_CYAN) + "Errrror: " + strsignal(sig) + ' ';
         const string mods = changelog();
         if (mods.empty()) {
-          epilogue += "(Three-Headed Monkey found):\n"                  + epitaph
-            + "- binbuild: " + string(K_SOURCE)                         + ' '
-                             + string(K_BUILD)                          + '\n'
-            + "- lastbeat: " + to_string((float)clock()/CLOCKS_PER_SEC) + '\n'
+          epilogue += "(Three-Headed Monkey found):\n" + epitaph
+             + "- binbuild: " K_SOURCE " " K_BUILD "\n"
+               "- lastbeat: " + to_string((float)clock()/CLOCKS_PER_SEC) + '\n'
 #ifndef _WIN32
             + "- tracelog: " + '\n';
           void *k[69];
@@ -590,7 +589,7 @@ namespace ₿ {
           << Ansi::r(COLOR_GREEN) << "  questions: " << Ansi::r(COLOR_YELLOW) << "https://earn.com/analpaper/" << '\n'
           << Ansi::b(COLOR_GREEN) << "K" << Ansi::r(COLOR_GREEN) << " bugkiller: " << Ansi::r(COLOR_YELLOW) << "https://github.com/ctubio/Krypto-trading-bot/issues/new" << '\n'
           << Ansi::r(COLOR_GREEN) << "  downloads: " << Ansi::r(COLOR_YELLOW) << "ssh://git@github.com/ctubio/Krypto-trading-bot" << '\n'
-          << Ansi::b(COLOR_WHITE) << stamp.at(((++y%4)*3)+x) << "Usage:" << Ansi::b(COLOR_YELLOW) << " " << K_SOURCE << " [arguments]" << '\n';
+          << Ansi::b(COLOR_WHITE) << stamp.at(((++y%4)*3)+x) << "Usage:" << Ansi::b(COLOR_YELLOW) << K_SOURCE " [arguments]" << '\n';
         clog
           << Ansi::b(COLOR_WHITE) << stamp.at(((++y%4)*3)+x) << "[arguments]:";
         for (const Argument &it : long_options) {
