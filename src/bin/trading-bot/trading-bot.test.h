@@ -1,7 +1,5 @@
 #pragma once
 
-#include TRUTH_IS_WHAT_STANDS_THE_TEST_OF_EXPERIENCE
-
 SCENARIO_METHOD(TradingBot, "NULL BTC/EUR") {
   gateway = Gw::new_Gw("NULL");
   gateway->exchange = "NULL";

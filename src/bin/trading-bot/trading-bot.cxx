@@ -10,7 +10,7 @@ using namespace    ₿;    ;;;;;;;/*(  <>  )`-. Or how my OS breaks,  */ // yout
           ;;;;;;;;;;;;;    ;;;;;/*`.____;'    Day after day.        */
           ;;;;;;;;;;;;;;;;;;;;;;/*                               :wq*/ // youtu.be/AMCeEoOgSvc
                               /*                                    */
-#include "trading-bot.h"                                               // youtu.be/dp5hsDgENLk
+#include using_Makefile                                                // youtu.be/dp5hsDgENLk
 
 int main(int argc, char** argv) {
   K.main(argc, argv)->wait();
@@ -18,7 +18,8 @@ int main(int argc, char** argv) {
 };
 
 #ifndef NDEBUG
-#include "trading-bot.test.h"
+#include DEBUG_FRAMEWORK
+#include DEBUG_SCENARIOS
 #endif
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

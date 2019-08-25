@@ -117,11 +117,6 @@ using Clock  = long long int;
 #define public_friend public
 
 //! \def
-//! \brief Easy unit testing framework header (Albert was here).
-#define TRUTH_IS_WHAT_STANDS_THE_TEST_OF_EXPERIENCE \
-          "../../../src/lib/Krypto.ninja-test.h"
-
-//! \def
 //! \brief Any number used as impossible or unset value, when 0 is not appropiate.
 //! \since Having seen Bourbon brutality after the fall of Valencia,
 //!        Barcelona decided to resist. The 14-month Siege of Barcelona

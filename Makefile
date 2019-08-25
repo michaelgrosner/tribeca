@@ -2,7 +2,7 @@ K         ?= K.sh
 MAJOR      = 0
 MINOR      = 5
 PATCH      = 4
-BUILD      = 9
+BUILD      = 10
 
 OBLIGATORY = DISCLAIMER: This is strict non-violent software: \
            \nif you hurt other living creatures, please stop; \
@@ -61,9 +61,13 @@ KARGS     := -std=c++17 -O3 -pthread -DK_HEAD='"$(shell  \
          apis                                            \
          bots                                            \
        )                                                 \
-  ) $(addprefix -include ,$(wildcard src/usr/*.h))       \
+  ) $(addprefix -include ,$(wildcard                     \
+    src/usr/*.h                                          \
+  )) -DDEBUG_FRAMEWORK='"../../lib/Krypto.ninja-test.h"' \
+     -DDEBUG_SCENARIOS='"$(KSRC).test.h"'                \
+     -Dusing_Makefile='"$(KSRC).h"'                      \
 -DOBLIGATORY_analpaper_SOFTWARE_LICENSE='"$(OBLIGATORY)"'\
--DPERMISSIVE_analpaper_SOFTWARE_LICENSE='"$(PERMISSIVE)"'
+-DPERMISSIVE_analpaper_SOFTWARE_LICENSE='"$(PERMISSIVE)"'\
 
 all K: $(SOURCE)
 

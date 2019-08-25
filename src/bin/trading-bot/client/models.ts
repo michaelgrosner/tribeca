@@ -1,7 +1,7 @@
 export var Prefixes = {
   SNAPSHOT: '=',
   MESSAGE: '-'
-}
+};
 
 export var Topics = {
   FairValue: 'a',
@@ -29,7 +29,7 @@ export var Topics = {
   MarketChart: 'D',
   Notepad: 'E',
   MarketDataLongTerm: 'H'
-}
+};
 
 export class MarketSide {
     constructor(public price: number,
