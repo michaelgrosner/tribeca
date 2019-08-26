@@ -24,10 +24,10 @@ CARCH      = x86_64-linux-gnu      \
 
 CHOST     ?= $(shell test -n "`command -v g++`" && g++ -dumpmachine \
                || echo $(subst build-,,$(firstword $(wildcard build-*))))
-ABI       ?= $(shell echo '\#include <string>'   \
-               | $(CHOST)-g++ -x c++ -dM -E -    \
-               | grep '_GLIBCXX_USE_CXX11_ABI 1' \
-               | wc -l                           )
+ABI       ?= $(shell echo '\#include <string>'             \
+               | $(CHOST)-g++ -x c++ -dM -E - 2> /dev/null \
+               | grep '_GLIBCXX_USE_CXX11_ABI 1'           \
+               | wc -l                                     )
 
 KHOST     := $(shell echo $(CHOST)                               \
                | sed 's/-\([a-z_0-9]*\)-\(linux\)$$/-\2-\1/'     \
