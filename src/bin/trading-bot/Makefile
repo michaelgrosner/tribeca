@@ -43,13 +43,13 @@ css: www/sass/*.scss
 export define PACKAGE_JSON
 {
   "dependencies": {
-    "@angular/common": "^8.2.2",
-    "@angular/compiler": "^8.2.2",
-    "@angular/core": "^8.2.2",
-    "@angular/forms": "^8.2.2",
-    "@angular/platform-browser": "^8.2.2",
-    "@angular/platform-browser-dynamic": "^8.2.2",
-    "@angular/router": "^8.2.2",
+    "@angular/common": "^8.2.3",
+    "@angular/compiler": "^8.2.3",
+    "@angular/core": "^8.2.3",
+    "@angular/forms": "^8.2.3",
+    "@angular/platform-browser": "^8.2.3",
+    "@angular/platform-browser-dynamic": "^8.2.3",
+    "@angular/router": "^8.2.3",
     "@babel/core": "^7.5.5",
     "@babel/preset-env": "^7.5.5",
     "@types/node": "^12.7.2",
