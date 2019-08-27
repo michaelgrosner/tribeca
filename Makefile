@@ -288,7 +288,7 @@ ifndef KSRC
 else
 	@cp test/static_code_analysis.cxx test/static_code_analysis-$(KSRC).cxx
 	@sed -i "s/%/$(KSRC)/g" test/static_code_analysis-$(KSRC).cxx
-	@pvs-studio-analyzer analyze -e src/bin/$(KSRC)/$(KSRC).test.h -e $(KLOCAL)/include --source-file test/static_code_analysis-$(KSRC).cxx --cl-params -I. -Isrc/lib -I$(KLOCAL)/include test/static_code_analysis-$(KSRC).cxx && \
+	@pvs-studio-analyzer analyze -e src/bin/$(KSRC)/$(KSRC).test.h -e src/lib/Krypto.ninja-test.h -e $(KLOCAL)/include --source-file test/static_code_analysis-$(KSRC).cxx --cl-params $(KARGS) test/static_code_analysis-$(KSRC).cxx && \
 	  (echo $(KSRC) `plog-converter -a GA:1,2 -t tasklist -o report.tasks PVS-Studio.log | tail -n+8 | sed '/Total messages/d'` && cat report.tasks | sed '/Help: The documentation/d' && rm report.tasks) || :
 	@clang-tidy -header-filter=$(realpath src) -checks='modernize-*' test/static_code_analysis-$(KSRC).cxx -- $(KARGS) 2> /dev/null
 	@rm -f PVS-Studio.log test/static_code_analysis-$(KSRC).cxx > /dev/null 2>&1

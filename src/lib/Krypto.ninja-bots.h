@@ -94,9 +94,12 @@ namespace ₿ {
       };
       static string changelog() {
         string mods;
+        const json diff
 #ifdef NDEBUG
-        const json diff = Curl::Web::xfer("https://api.github.com/repos/ctubio/"
-                            "Krypto-trading-bot/compare/" K_HEAD "...HEAD", 4L);
+        = Curl::Web::xfer("https://api.github.com/repos/ctubio/"
+            "Krypto-trading-bot/compare/" K_HEAD "...HEAD", 4L)
+#endif
+        ;
         if (diff.value("ahead_by", 0)
           and diff.find("commits") != diff.end()
           and diff.at("commits").is_array()
@@ -107,7 +110,6 @@ namespace ₿ {
                 + it.value("/commit/message"_json_pointer, "").substr(0,
                   it.value("/commit/message"_json_pointer, "").find("\n\n") + 1
                 );
-#endif
         return mods;
       };
   };
