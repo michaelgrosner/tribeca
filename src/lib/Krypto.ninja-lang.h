@@ -1,4 +1,3 @@
-#pragma once
 //! \file
 //! \brief Available language interface.
 

@@ -1,4 +1,3 @@
-#pragma once
 //! \file
 //! \brief Welcome user! (just a working example to begin with).
 

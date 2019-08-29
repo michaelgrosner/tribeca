@@ -1,4 +1,3 @@
-#pragma once
 //! \file
 //! \brief Trading logistics (welcome user! forked from https://github.com/michaelgrosner/tribeca).
 

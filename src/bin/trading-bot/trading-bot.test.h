@@ -1,5 +1,3 @@
-#pragma once
-
 SCENARIO_METHOD(TradingBot, "NULL BTC/EUR") {
   gateway = Gw::new_Gw("NULL");
   gateway->exchange = "NULL";

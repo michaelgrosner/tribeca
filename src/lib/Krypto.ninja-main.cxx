@@ -13,8 +13,8 @@ using namespace    ₿;    ;;;;;;;/*(  <>  )`-. Or how my OS breaks,  */ // yout
 #include using_Makefile                                                // youtu.be/dp5hsDgENLk
 
 int main(int argc, char** argv) {
-  K.main(argc, argv)->wait();
-  return EXIT_FAILURE;
+  K.main                                      (argc, argv)->wait();
+  return                                      ((((EXIT_FAILURE))));
 };
 
 #ifndef NDEBUG

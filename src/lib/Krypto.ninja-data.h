@@ -1,4 +1,3 @@
-#pragma once
 //! \file
 //! \brief Data transport/transform helpers.
 

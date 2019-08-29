@@ -1,4 +1,3 @@
-#pragma once
 //! \file
 //! \brief Unit testing framework and general test untis.
 //! \note  Test units about benchmarks are removed after a while,

@@ -1,5 +1,3 @@
-#pragma once
-
 extern const char _www_html_index,     _www_ico_favicon,     _www_css_base,
                   _www_gzip_bomb,      _www_mp3_audio_0,     _www_css_light,
                   _www_js_client,      _www_mp3_audio_1,     _www_css_dark;
@@ -36,27 +34,30 @@ class TradingBot: public KryptoNinja {
         {"/audio/0.mp3",                      {&_www_mp3_audio_0, _www_mp3_audio_0_len}},
         {"/audio/1.mp3",                      {&_www_mp3_audio_1, _www_mp3_audio_1_len}}
       };
-      arguments = { {
-        {"wallet-limit", "AMOUNT", "0",                    "set AMOUNT in base currency to limit the balance,"
-                                                           "\n" "otherwise the full available balance can be used"},
-        {"lifetime",     "NUMBER", "0",                    "set NUMBER of minimum milliseconds to keep orders open,"
-                                                           "\n" "otherwise open orders can be replaced anytime required"},
-        {"matryoshka",   "URL",    "https://example.com/", "set Matryoshka link URL of the next UI"},
-        {"ignore-sun",   "2",      nullptr,                "do not switch UI to light theme on daylight"},
-        {"ignore-moon",  "1",      nullptr,                "do not switch UI to dark theme on moonlight"},
-        {"debug-orders", "1",      nullptr,                "print detailed output about exchange messages"},
-        {"debug-quotes", "1",      nullptr,                "print detailed output about quoting engine"},
-        {"debug-wallet", "1",      nullptr,                "print detailed output about target base position"}
-      }, [&](MutableUserArguments &args) {
-        if (arg<int>("debug"))
-          args["debug-orders"] =
-          args["debug-quotes"] =
-          args["debug-wallet"] = 1;
-        if (arg<int>("ignore-moon") and arg<int>("ignore-sun"))
-          args["ignore-moon"] = 0;
-        if (arg<int>("debug-orders") or arg<int>("debug-quotes"))
-          args["naked"] = 1;
-      } };
+      arguments = {
+        {
+          {"wallet-limit", "AMOUNT", "0",                    "set AMOUNT in base currency to limit the balance,"
+                                                             "\n" "otherwise the full available balance can be used"},
+          {"lifetime",     "NUMBER", "0",                    "set NUMBER of minimum milliseconds to keep orders open,"
+                                                             "\n" "otherwise open orders can be replaced anytime required"},
+          {"matryoshka",   "URL",    "https://example.com/", "set Matryoshka link URL of the next UI"},
+          {"ignore-sun",   "2",      nullptr,                "do not switch UI to light theme on daylight"},
+          {"ignore-moon",  "1",      nullptr,                "do not switch UI to dark theme on moonlight"},
+          {"debug-orders", "1",      nullptr,                "print detailed output about exchange messages"},
+          {"debug-quotes", "1",      nullptr,                "print detailed output about quoting engine"},
+          {"debug-wallet", "1",      nullptr,                "print detailed output about target base position"}
+        },
+        [&](MutableUserArguments &args) {
+          if (arg<int>("debug"))
+            args["debug-orders"] =
+            args["debug-quotes"] =
+            args["debug-wallet"] = 1;
+          if (arg<int>("ignore-moon") and arg<int>("ignore-sun"))
+            args["ignore-moon"] = 0;
+          if (arg<int>("debug-orders") or arg<int>("debug-quotes"))
+            args["naked"] = 1;
+        }
+      };
     };
   private:
     static void terminal();

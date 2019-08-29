@@ -2,7 +2,7 @@ K         ?= K.sh
 MAJOR      = 0
 MINOR      = 5
 PATCH      = 4
-BUILD      = 11
+BUILD      = 12
 
 OBLIGATORY = DISCLAIMER: This is strict non-violent software: \
            \nif you hurt other living creatures, please stop; \
@@ -63,9 +63,14 @@ KARGS     := -std=c++17 -O3 -pthread -DK_HEAD='"$(shell  \
        )                                                 \
   ) $(addprefix -include ,$(wildcard                     \
     src/usr/*.h                                          \
-  )) -DDEBUG_FRAMEWORK='"../../lib/Krypto.ninja-test.h"' \
-     -DDEBUG_SCENARIOS='"$(KSRC).test.h"'                \
-     -Dusing_Makefile='"$(KSRC).h"'                      \
+  )) -DDEBUG_FRAMEWORK='"Krypto.ninja-test.h"'           \
+     -DDEBUG_SCENARIOS='"$(or                            \
+       $(realpath src/bin/$(KSRC)/$(KSRC).test.h),       \
+       /dev/null                                         \
+     )"'                                                 \
+     -Dusing_Makefile='"$(abspath                        \
+       src/bin/$(KSRC)/$(KSRC).h                         \
+     )"'                                                 \
 -DOBLIGATORY_analpaper_SOFTWARE_LICENSE='"$(OBLIGATORY)"'\
 -DPERMISSIVE_analpaper_SOFTWARE_LICENSE='"$(PERMISSIVE)"'\
 
@@ -141,7 +146,7 @@ assets.o: src/bin/$(KSRC)/$(KSRC).S
 	$(chost)g++ -Wa,-I,$(KLOCAL)/assets,-I,src/bin/$(KSRC) -c $^ \
 	  -o $(KLOCAL)/lib/K-$(notdir $(basename $^))-$@
 
-src: src/bin/$(KSRC)/$(KSRC).cxx
+src: src/lib/Krypto.ninja-main.cxx src/bin/$(KSRC)/$(KSRC).h
 ifdef KALL
 	unset KALL $(foreach chost,$(CARCH),&& $(MAKE) $@ CHOST=$(chost))
 else
@@ -156,7 +161,7 @@ else
 	@$(MAKE) system_install -s
 endif
 
-Linux: src/bin/$(KSRC)/$(KSRC).cxx
+Linux: src/lib/Krypto.ninja-main.cxx src/bin/$(KSRC)/$(KSRC).h
 ifdef TRAVIS_OS_NAME
 	@unset TRAVIS_OS_NAME && $(MAKE) KCOV="--coverage" $@
 else ifdef KUNITS
@@ -166,20 +171,20 @@ else ifndef KTEST
 else
 	$(CHOST)-g++ -s $(KTEST) -o $(KLOCAL)/bin/K-$(KSRC) \
 	  -static-libstdc++ -static-libgcc -rdynamic        \
-	  $^ $(KARGS) -ldl -Wall -Wextra
+	  $< $(KARGS) -ldl -Wall -Wextra
 endif
 
-Darwin: src/bin/$(KSRC)/$(KSRC).cxx
+Darwin: src/lib/Krypto.ninja-main.cxx src/bin/$(KSRC)/$(KSRC).h
 	-@egrep \\u20BF src -lR | xargs -r sed -i 's/\\\(u20BF\)/\1/g'
 	$(CHOST)-g++ -s -DNDEBUG -o $(KLOCAL)/bin/K-$(KSRC)                          \
 	  -msse4.1 -maes -mpclmul -mmacosx-version-min=10.13 -nostartfiles -rdynamic \
-	  $^ $(KARGS) -ldl
+	  $< $(KARGS) -ldl
 	-@egrep u20BF src -lR | xargs -r sed -i 's/\(u20BF\)/\\\1/g'
 
-Win32: src/bin/$(KSRC)/$(KSRC).cxx
+Win32: src/lib/Krypto.ninja-main.cxx src/bin/$(KSRC)/$(KSRC).h
 	$(CHOST)-g++-posix -s -DNDEBUG -o $(KLOCAL)/bin/K-$(KSRC).exe \
 	  -D_POSIX -DCURL_STATICLIB                                   \
-	  $^ $(KARGS)                                                 \
+	  $< $(KARGS)                                                 \
 	  -static -lstdc++ -lgcc -lwldap32 -lws2_32
 
 download:
@@ -286,12 +291,10 @@ test-c:
 ifndef KSRC
 	@$(foreach src,$(SOURCE),$(MAKE) -s $@ KSRC=$(src);)
 else
-	@cp test/static_code_analysis.cxx test/static_code_analysis-$(KSRC).cxx
-	@sed -i "s/%/$(KSRC)/g" test/static_code_analysis-$(KSRC).cxx
-	@pvs-studio-analyzer analyze -e src/bin/$(KSRC)/$(KSRC).test.h -e src/lib/Krypto.ninja-test.h -e $(KLOCAL)/include --source-file test/static_code_analysis-$(KSRC).cxx --cl-params $(KARGS) test/static_code_analysis-$(KSRC).cxx && \
+	@pvs-studio-analyzer analyze -e src/bin/$(KSRC)/$(KSRC).test.h -e src/lib/Krypto.ninja-test.h -e $(KLOCAL)/include --source-file test/static_code_analysis.cxx --cl-params $(KARGS) test/static_code_analysis.cxx && \
 	  (echo $(KSRC) `plog-converter -a GA:1,2 -t tasklist -o report.tasks PVS-Studio.log | tail -n+8 | sed '/Total messages/d'` && cat report.tasks | sed '/Help: The documentation/d' && rm report.tasks) || :
-	@clang-tidy -header-filter=$(realpath src) -checks='modernize-*' test/static_code_analysis-$(KSRC).cxx -- $(KARGS) 2> /dev/null
-	@rm -f PVS-Studio.log test/static_code_analysis-$(KSRC).cxx > /dev/null 2>&1
+	@clang-tidy -header-filter=$(realpath src) -checks='modernize-*' test/static_code_analysis.cxx -- $(KARGS) 2> /dev/null
+	@rm -f PVS-Studio.log > /dev/null 2>&1
 endif
 
 #png: etc/${PNG}.png etc/${PNG}.json

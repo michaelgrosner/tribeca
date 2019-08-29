@@ -1,4 +1,3 @@
-#pragma once
 //! \file
 //! \brief Minimal user application framework.
 
@@ -94,12 +93,13 @@ namespace ₿ {
       };
       static string changelog() {
         string mods;
-        const json diff
-#ifdef NDEBUG
-        = Curl::Web::xfer("https://api.github.com/repos/ctubio/"
-            "Krypto-trading-bot/compare/" K_HEAD "...HEAD", 4L)
+        const json diff =
+#ifndef NDEBUG
+          json::object();
+#else
+          Curl::Web::xfer("https://api.github.com/repos/ctubio/"
+            "Krypto-trading-bot/compare/" K_HEAD "...HEAD", 4L);
 #endif
-        ;
         if (diff.value("ahead_by", 0)
           and diff.find("commits") != diff.end()
           and diff.at("commits").is_array()
