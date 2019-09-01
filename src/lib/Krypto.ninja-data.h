@@ -779,11 +779,11 @@ namespace ₿ {
              :    HEX((char*)digest, digest_len);
       };
       static string HEX(const char *digest, const int &digest_len) {
-        stringstream stream;
-        stream << hex << setfill('0');
+        stringstream output;
+        output << hex << setfill('0');
         for (int i = 0; i < digest_len; i++)
-          stream << setw(2) << (digest[i] & 0xFF);
-        return stream.str();
+          output << setw(2) << (digest[i] & 0xFF);
+        return output.str();
       };
   };
 
