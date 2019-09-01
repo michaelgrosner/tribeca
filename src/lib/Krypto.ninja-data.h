@@ -756,8 +756,9 @@ namespace ₿ {
       ) {
         unsigned char digest[digest_len];
         md((unsigned char*)input.data(), input.length(), digest);
-        const string output((char*)digest, digest_len);
-        return rawbin ? output : HEX(output);
+        return rawbin
+             ? string((char*)digest, digest_len)
+             :    HEX((char*)digest, digest_len);
       };
       static string HMAC(
         const string &key,
@@ -773,18 +774,16 @@ namespace ₿ {
           (unsigned char*)key.data(), key.length(),
           nullptr, nullptr
         );
-        const string output((char*)digest, digest_len);
-        return rawbin ? output : HEX(output);
+        return rawbin
+             ? string((char*)digest, digest_len)
+             :    HEX((char*)digest, digest_len);
       };
-      static string HEX(const string &input) {
-        string output;
-        for (size_t i = 0; i < input.length(); i++) {
-          stringstream stream;
-          stream << setfill('0') << setw(2) << hex;
-          stream << (long)(input.at(i) & 0xFF);
-          output += stream.str();
-        }
-        return output;
+      static string HEX(const char *digest, const int &digest_len) {
+        stringstream stream;
+        stream << hex << setfill('0');
+        for (int i = 0; i < digest_len; i++)
+          stream << setw(2) << (digest[i] & 0xFF);
+        return stream.str();
       };
   };
 
