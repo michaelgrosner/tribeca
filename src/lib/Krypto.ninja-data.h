@@ -726,45 +726,43 @@ namespace ₿ {
         BIO_free_all(bio);
         return string(output, len);
       };
-      static string SHA1(const string &input, const bool &hex = false) {
-        return SHA(input, hex, ::SHA1, SHA_DIGEST_LENGTH);
+      static string SHA1  (const string &input, const bool &rawbin = false) {
+        return SHA(input, rawbin, ::SHA1,   SHA_DIGEST_LENGTH);
       };
-      static string SHA256(const string &input, const bool &hex = false) {
-        return SHA(input, hex, ::SHA256, SHA256_DIGEST_LENGTH);
+      static string SHA256(const string &input, const bool &rawbin = false) {
+        return SHA(input, rawbin, ::SHA256, SHA256_DIGEST_LENGTH);
       };
-      static string SHA512(const string &input) {
-        return SHA(input, false, ::SHA512, SHA512_DIGEST_LENGTH);
+      static string SHA512(const string &input, const bool &rawbin = false) {
+        return SHA(input, rawbin, ::SHA512, SHA512_DIGEST_LENGTH);
       };
-      static string HMAC1(const string &key, const string &input, const bool &hex = false) {
-        return HMAC(key, input, hex, EVP_sha1, SHA_DIGEST_LENGTH);
+      static string HMAC1  (const string &key, const string &input, const bool &rawbin = false) {
+        return HMAC(key, input, rawbin, EVP_sha1,   SHA_DIGEST_LENGTH);
       };
-      static string HMAC256(const string &key, const string &input, const bool &hex = false) {
-        return HMAC(key, input, hex, EVP_sha256, SHA256_DIGEST_LENGTH);
+      static string HMAC256(const string &key, const string &input, const bool &rawbin = false) {
+        return HMAC(key, input, rawbin, EVP_sha256, SHA256_DIGEST_LENGTH);
       };
-      static string HMAC512(const string &key, const string &input, const bool &hex = false) {
-        return HMAC(key, input, hex, EVP_sha512, SHA512_DIGEST_LENGTH);
+      static string HMAC512(const string &key, const string &input, const bool &rawbin = false) {
+        return HMAC(key, input, rawbin, EVP_sha512, SHA512_DIGEST_LENGTH);
       };
-      static string HMAC384(const string &key, const string &input, const bool &hex = false) {
-        return HMAC(key, input, hex, EVP_sha384, SHA384_DIGEST_LENGTH);
+      static string HMAC384(const string &key, const string &input, const bool &rawbin = false) {
+        return HMAC(key, input, rawbin, EVP_sha384, SHA384_DIGEST_LENGTH);
       };
     private:
       static string SHA(
         const string  &input,
-        const bool    &hex,
+        const bool    &rawbin,
         unsigned char *(*md)(const unsigned char*, size_t, unsigned char*),
         const int     &digest_len
       ) {
         unsigned char digest[digest_len];
-        md((unsigned char*)input.data(), input.length(), (unsigned char*)&digest);
-        char output[digest_len * 2 + 1];
-        for (int i = 0; i < digest_len; i++)
-          sprintf(&output[i * 2], "%02x", (unsigned int)digest[i]);
-        return hex ? HEX(output) : output;
+        md((unsigned char*)input.data(), input.length(), digest);
+        const string output((char*)digest, digest_len);
+        return rawbin ? output : HEX(output);
       };
       static string HMAC(
         const string &key,
         const string &input,
-        const bool   &hex,
+        const bool   &rawbin,
         const EVP_MD *(evp_md)(),
         const int    &digest_len
       ) {
@@ -775,18 +773,17 @@ namespace ₿ {
           (unsigned char*)key.data(), key.length(),
           nullptr, nullptr
         );
-        char output[digest_len * 2 + 1];
-        for (int i = 0; i < digest_len; i++)
-          sprintf(&output[i * 2], "%02x", (unsigned int)digest[i]);
-        return hex ? HEX(output) : output;
+        const string output((char*)digest, digest_len);
+        return rawbin ? output : HEX(output);
       };
       static string HEX(const string &input) {
-        const unsigned int len = input.length();
         string output;
-        for (unsigned int i = 0; i < len; i += 2)
-          output.push_back(
-            (char)(int)strtol(input.substr(i, 2).data(), nullptr, 16)
-          );
+        for (size_t i = 0; i < input.length(); i++) {
+          stringstream stream;
+          stream << setfill('0') << setw(2) << hex;
+          stream << (long)(input.at(i) & 0xFF);
+          output += stream.str();
+        }
         return output;
       };
   };
