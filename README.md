@@ -185,7 +185,7 @@ After multiple config files are setup, to control them all together instead of o
 
 Once `K` is up and running, visit HTTPS port `3000` (or your configured port number) to access the UI (i.e. [https://localhost:3000](https://localhost:3000)). There are inputs for quoting parameters, grids to display market orders, market trades, your trades, your order history, your positions, and a big button with the currency pair you are trading. When you're ready, click that button green to begin sending out quotes. The UI uses angularjs hydrated with websockets observed with reactivexjs.
 
-If you want to generate your own certificate see [SSL for internal usage](http://www.akadia.com/services/ssh_test_certificate.html).
+If you want to generate your own certificate see [SSL for internal usage](https://www.akadia.com/services/ssh_test_certificate.html).
 
 In case you really want to use plain HTTP, use `--without-ssl` argument.
 
