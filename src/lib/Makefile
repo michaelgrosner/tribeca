@@ -21,6 +21,9 @@ ifdef TRAVIS_OS_NAME
 	$(MAKE) lcov pvs
 endif
 
+clean:
+	@rm -vrf $(KBUILD)
+
 check:
 	#z       $(V_ZLIB)
 	#z       $(shell curl -s https://www.zlib.net/ChangeLog.txt | grep "Changes in " | head -n1 | cut -d' ' -f3)
@@ -40,9 +43,6 @@ check:
 	#catch2  $(shell curl -s https://api.github.com/repos/catchorg/Catch2/tags | grep "name" | head -n1 | cut -d'v' -f2 | cut -d'"' -f1)
 	#uv      $(V_UV)
 	#uv      $(shell curl -s https://api.github.com/repos/libuv/libuv/tags     | grep "name" | head -n1 | cut -d'v' -f2 | cut -d'"' -f1)
-
-clean:
-	@rm -vrf $(KBUILD)
 
 zlib:
 	test -d $(KBUILD)/zlib-$(V_ZLIB) || (                                             \
