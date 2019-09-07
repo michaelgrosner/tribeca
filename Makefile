@@ -2,7 +2,7 @@ K         ?= K.sh
 MAJOR      = 0
 MINOR      = 5
 PATCH      = 4
-BUILD      = 14
+BUILD      = 15
 
 OBLIGATORY = DISCLAIMER: This is strict non-violent software: \
            \nif you hurt other living creatures, please stop; \
@@ -118,7 +118,7 @@ hlep hepl help:
 doc test:
 	@$(MAKE) -sC $@
 
-clean dist:
+clean check dist:
 ifdef KALL
 	unset KALL $(foreach chost,$(CARCH),&& $(MAKE) $@ CHOST=$(chost))
 else
@@ -304,7 +304,7 @@ endif
 #png-check: etc/${PNG}.png
 #	@test -n "`identify -verbose etc/${PNG}.png | grep 'K\.conf'`" && echo Configuration injected into etc/${PNG}.png OK, feel free to remove etc/${PNG}.json anytime. || echo nope, injection failed.
 
-checkOK:
+push:
 	@date=`date` && (git diff || :) && git status && read -p "KMOD: " KMOD \
 	&& git add . && git commit -S -m "$${KMOD}"                            \
 	&& ((KALL=1 $(MAKE) K doc release && git push) || git reset HEAD^1)    \
@@ -315,22 +315,22 @@ MAJOR:
 	@sed -i "s/^\(MINOR *=\).*$$/\1 0/"                          Makefile
 	@sed -i "s/^\(PATCH *=\).*$$/\1 0/"                          Makefile
 	@sed -i "s/^\(BUILD *=\).*$$/\1 0/"                          Makefile
-	@$(MAKE) checkOK
+	@$(MAKE) push
 
 MINOR:
 	@sed -i "s/^\(MINOR *=\).*$$/\1 $(shell expr $(MINOR) + 1)/" Makefile
 	@sed -i "s/^\(PATCH *=\).*$$/\1 0/"                          Makefile
 	@sed -i "s/^\(BUILD *=\).*$$/\1 0/"                          Makefile
-	@$(MAKE) checkOK
+	@$(MAKE) push
 
 PATCH:
 	@sed -i "s/^\(PATCH *=\).*$$/\1 $(shell expr $(PATCH) + 1)/" Makefile
 	@sed -i "s/^\(BUILD *=\).*$$/\1 0/"                          Makefile
-	@$(MAKE) checkOK
+	@$(MAKE) push
 
 BUILD:
 	@sed -i "s/^\(BUILD *=\).*$$/\1 $(shell expr $(BUILD) + 1)/" Makefile
-	@$(MAKE) checkOK
+	@$(MAKE) push
 
 release:
 ifdef KALL
@@ -352,4 +352,4 @@ md5: src
 asandwich:
 	@test `whoami` = 'root' && echo OK || echo make it yourself!
 
-.PHONY: all K $(SOURCE) hlep hepl help doc test src assets assets.o dist download clean cleandb list screen start stop restart startall stopall restartall packages system_install uninstall install docker reinstall diff latest changelog test-c release md5 asandwich
+.PHONY: all K $(SOURCE) hlep hepl help doc test src assets assets.o clean check dist download cleandb list screen start stop restart startall stopall restartall packages system_install uninstall install docker reinstall diff latest changelog test-c push MAJOR MINOR PATCH BUILD release md5 asandwich

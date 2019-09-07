@@ -21,6 +21,26 @@ ifdef TRAVIS_OS_NAME
 	$(MAKE) lcov pvs
 endif
 
+check:
+	#z       $(V_ZLIB)
+	#z       $(shell curl -s https://www.zlib.net/ChangeLog.txt | grep "Changes in " | head -n1 | cut -d' ' -f3)
+	#openssl $(V_SSL)
+	#openssl $(shell curl -s https://www.openssl.org/news/cl$(shell curl -s https://www.openssl.org/source/ | grep "The latest stable version is " | cut -d' ' -f12  | tr -d '.').txt | grep "Changes between " | head -n1 | cut -d' ' -f4)
+	#cares   $(V_ARES)
+	#cares   $(shell curl -s https://c-ares.haxx.se/changelog.html | grep "c-ares version " | head -n1 | cut -d' ' -f6)
+	#curl    $(V_CURL)
+	#curl    $(shell curl -s https://curl.haxx.se/changes.html | grep "Fixed in " | head -n1 | cut -d' ' -f4)
+	#sqlite  $(V_SQL)
+	#sqlite  $(shell curl -s https://www.sqlite.org/download.html | grep "sqlite-amalgamation-" | head -n1 | cut -d'-' -f3 | cut -d'.' -f1)
+	#ncurses $(V_NCUR)
+	#ncurses $(shell curl -s https://www.gnu.org/software/ncurses/ | grep "Announcing " | head -n1 | cut -d' ' -f5 | cut -d'<' -f1)
+	#json    $(V_JSON)
+	#json    $(shell curl -s https://api.github.com/repos/nlohmann/json/tags   | grep "name" | head -n1 | cut -d'v' -f2 | cut -d'"' -f1)
+	#catch2  $(V_CATCH)
+	#catch2  $(shell curl -s https://api.github.com/repos/catchorg/Catch2/tags | grep "name" | head -n1 | cut -d'v' -f2 | cut -d'"' -f1)
+	#uv      $(V_UV)
+	#uv      $(shell curl -s https://api.github.com/repos/libuv/libuv/tags     | grep "name" | head -n1 | cut -d'v' -f2 | cut -d'"' -f1)
+
 clean:
 	@rm -vrf $(KBUILD)
 
