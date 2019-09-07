@@ -2,7 +2,7 @@ K         ?= K.sh
 MAJOR      = 0
 MINOR      = 5
 PATCH      = 4
-BUILD      = 16
+BUILD      = 17
 
 OBLIGATORY = DISCLAIMER: This is strict non-violent software: \
            \nif you hurt other living creatures, please stop; \
