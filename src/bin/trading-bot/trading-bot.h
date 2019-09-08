@@ -67,8 +67,8 @@ void TradingBot::terminal() {
   const vector<Order> openOrders = K.engine.orders.working(true);
   const int x = getmaxx(stdscr),
             y = getmaxy(stdscr),
-            yMaxLog = y - K.padding_bottom(1 + max(
-                            (int)openOrders.size(),
+            yMaxLog = y - K.padding_bottom(1 + fmax(
+                            openOrders.size(),
                             K.engine.broker.semaphore.paused() ? 0 : 2
                           ));
   mvwvline(stdscr, 1, 1, ' ', y-1);

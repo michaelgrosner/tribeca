@@ -100,7 +100,6 @@ using Clock  = long long int;
 #define MSG_NOSIGNAL        0
 #define accept4(a, b, c, d) accept(a, b, c)
 #define strsignal           to_string
-#define SIGUSR1             SIGABRT
 #endif
 
 //! \def

@@ -736,7 +736,7 @@ namespace ₿::tribeca {
         calc(&mgEwmaW, qp.protectionEwmaPeriods, averageWidth);
       };
       void calcTargetPositionAutoPercentage() {
-        unsigned int max3size = min((size_t)3, fairValue96h.size());
+        unsigned int max3size = fmin(3, fairValue96h.size());
         Price SMA3 = accumulate(fairValue96h.end() - max3size, fairValue96h.end(), Price(),
           [](Price sma3, const Price &it) { return sma3 + it; }
         ) / max3size;
@@ -1970,8 +1970,8 @@ namespace ₿::tribeca {
         : K(bot)
       {};
       void checkCrossedQuotes() {
-        if ((unsigned int)bid.checkCrossed(ask)
-          | (unsigned int)ask.checkCrossed(bid)
+        if (bid.checkCrossed(ask)
+          | ask.checkCrossed(bid)
         ) K.logWar("QE", "Crossed bid/ask quotes detected, that is.. unexpected");
       };
       void debug(const string &step) {

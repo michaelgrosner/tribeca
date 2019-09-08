@@ -242,7 +242,6 @@ namespace ₿ {
       };
       class Poll: public Loop::Poll {
         protected:
-          using SOCK_OPTVAL  = char;
           const int EPOLLIN  = UV_READABLE;
           const int EPOLLOUT = UV_WRITABLE;
         private:
@@ -307,8 +306,6 @@ namespace ₿ {
   class Events: public Loop {
     public_friend:
       class Poll: public Loop::Poll {
-        protected:
-          using SOCK_OPTVAL = int;
         private:
           curl_socket_t loopfd = 0;
         public:
@@ -809,7 +806,7 @@ namespace ₿ {
           };
           void cork(const int &enable) const {
 #ifndef _WIN32
-            setsockopt(sockfd, IPPROTO_TCP, TCP_CORK, &enable, sizeof(int));
+            setsockopt(sockfd, IPPROTO_TCP, TCP_CORK, &enable, sizeof(enable));
 #endif
 #ifdef __APPLE__
             if (!enable) ::send(sockfd, "", 0, MSG_NOSIGNAL);
@@ -949,7 +946,7 @@ namespace ₿ {
             if (ssl) {
               if (!out.empty()) {
                 cork(1);
-                int n = SSL_write(ssl, out.data(), (int)out.length());
+                int n = SSL_write(ssl, out.data(), out.length());
                 switch (SSL_get_error(ssl, n)) {
                   case SSL_ERROR_WANT_READ:
                   case SSL_ERROR_WANT_WRITE:  break;
@@ -1057,8 +1054,14 @@ namespace ₿ {
                   if (rp->ai_family == AF_INET)
                     socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
               if (sockfd) {
-                const int enabled = 1;
-                setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, (SOCK_OPTVAL*)&enabled, sizeof(int));
+                const
+#ifdef _WIN32
+                char
+#else
+                int
+#endif
+                enabled = 1;
+                setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &enabled, sizeof(enabled));
                 if (::bind(sockfd, rp->ai_addr, rp->ai_addrlen) or ::listen(sockfd, 512))
                   shutdown();
                 else {
@@ -1168,7 +1171,7 @@ namespace ₿ {
             if (clientfd == -1) return;
 #ifdef __APPLE__
             const int noSigpipe = 1;
-            setsockopt(clientfd, SOL_SOCKET, SO_NOSIGPIPE, &noSigpipe, sizeof(int));
+            setsockopt(clientfd, SOL_SOCKET, SO_NOSIGPIPE, &noSigpipe, sizeof(noSigpipe));
 #endif
             SSL *ssl = nullptr;
             if (ctx) {
@@ -1185,7 +1188,7 @@ namespace ₿ {
 #ifdef __APPLE__
             else {
               const int noSigpipe = 1;
-              setsockopt(sockfd, SOL_SOCKET, SO_NOSIGPIPE, &noSigpipe, sizeof(int));
+              setsockopt(sockfd, SOL_SOCKET, SO_NOSIGPIPE, &noSigpipe, sizeof(noSigpipe));
             }
 #endif
           };

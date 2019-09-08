@@ -2,7 +2,7 @@ K         ?= K.sh
 MAJOR      = 0
 MINOR      = 5
 PATCH      = 4
-BUILD      = 18
+BUILD      = 19
 
 OBLIGATORY = DISCLAIMER: This is strict non-violent software: \
            \nif you hurt other living creatures, please stop; \
@@ -183,7 +183,7 @@ Darwin: src/lib/Krypto.ninja-main.cxx src/bin/$(KSRC)/$(KSRC).h
 
 Win32: src/lib/Krypto.ninja-main.cxx src/bin/$(KSRC)/$(KSRC).h
 	$(CHOST)-g++-posix -s -DNDEBUG -o $(KLOCAL)/bin/K-$(KSRC).exe \
-	  -D_POSIX -DCURL_STATICLIB                                   \
+	  -D_POSIX -DCURL_STATICLIB -DSIGUSR1=SIGABRT                 \
 	  $< $(KARGS)                                                 \
 	  -static -lstdc++ -lgcc -lwldap32 -lws2_32
 
