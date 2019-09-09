@@ -1970,9 +1970,8 @@ namespace ₿::tribeca {
         : K(bot)
       {};
       void checkCrossedQuotes() {
-        if (bid.checkCrossed(ask)
-          | ask.checkCrossed(bid)
-        ) K.logWar("QE", "Crossed bid/ask quotes detected, that is.. unexpected");
+        if (bid.checkCrossed(ask) or ask.checkCrossed(bid))
+          K.logWar("QE", "Crossed bid/ask quotes detected, that is.. unexpected");
       };
       void debug(const string &step) {
         if (K.arg<int>("debug-quotes"))
