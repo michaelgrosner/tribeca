@@ -68,7 +68,7 @@ KARGS     := -std=c++17 -O3 -pthread -DK_HEAD='"$(shell  \
     )"'                                                  \
     -Dusing_Makefile='<$(abspath src/bin/$(KSRC))/'      \
     -Dsrc_data_h='$(KSRC).data.h>'                       \
-    -Dsrc_main_h='$(KSRC).h>'                            \
+    -Dsrc_main_h='$(KSRC).main.h>'                       \
 -DOBLIGATORY_analpaper_SOFTWARE_LICENSE='"$(OBLIGATORY)"'\
 -DPERMISSIVE_analpaper_SOFTWARE_LICENSE='"$(PERMISSIVE)"'\
 
@@ -144,7 +144,7 @@ assets.o: src/bin/$(KSRC)/$(KSRC).S
 	$(chost)g++ -Wa,-I,$(KLOCAL)/assets,-I,src/bin/$(KSRC) -c $^ \
 	  -o $(KLOCAL)/lib/K-$(notdir $(basename $^))-$@
 
-src: src/lib/Krypto.ninja-main.cxx src/bin/$(KSRC)/$(KSRC).h
+src: src/lib/Krypto.ninja-main.cxx src/bin/$(KSRC)/$(KSRC).main.h
 ifdef KALL
 	unset KALL $(foreach chost,$(CARCH),&& $(MAKE) $@ CHOST=$(chost))
 else
@@ -159,7 +159,7 @@ else
 	@$(MAKE) system_install -s
 endif
 
-Linux: src/lib/Krypto.ninja-main.cxx src/bin/$(KSRC)/$(KSRC).h
+Linux: src/lib/Krypto.ninja-main.cxx src/bin/$(KSRC)/$(KSRC).main.h
 ifdef TRAVIS_OS_NAME
 	@unset TRAVIS_OS_NAME && $(MAKE) KCOV="--coverage" $@
 else ifdef KUNITS
@@ -172,14 +172,14 @@ else
 	  $< $(KARGS) -ldl -Wall -Wextra
 endif
 
-Darwin: src/lib/Krypto.ninja-main.cxx src/bin/$(KSRC)/$(KSRC).h
+Darwin: src/lib/Krypto.ninja-main.cxx src/bin/$(KSRC)/$(KSRC).main.h
 	-@egrep \\u20BF src -lR | xargs -r sed -i 's/\\\(u20BF\)/\1/g'
 	$(CHOST)-g++ -s -DNDEBUG -o $(KLOCAL)/bin/K-$(KSRC)                          \
 	  -msse4.1 -maes -mpclmul -mmacosx-version-min=10.13 -nostartfiles -rdynamic \
 	  $< $(KARGS) -ldl
 	-@egrep u20BF src -lR | xargs -r sed -i 's/\(u20BF\)/\\\1/g'
 
-Win32: src/lib/Krypto.ninja-main.cxx src/bin/$(KSRC)/$(KSRC).h
+Win32: src/lib/Krypto.ninja-main.cxx src/bin/$(KSRC)/$(KSRC).main.h
 	$(CHOST)-g++-posix -s -DNDEBUG -o $(KLOCAL)/bin/K-$(KSRC).exe \
 	  -D_POSIX -DCURL_STATICLIB -DSIGUSR1=SIGABRT                 \
 	  $< $(KARGS)                                                 \
