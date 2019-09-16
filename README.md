@@ -442,4 +442,4 @@ We have already enough policemen,<br />if you like adventures choose to be a <a 
 <br /><br /><br /><br />Violence <a href="https://www.cnvc.org/learn-nvc/what-is-nvc">should not</a> be the answer to those who<br />are <a href="https://novact.org/about-us/activities/?lang=en">asking for</a> freedom.<br /><br /><br /><br /><br />
 <img src="https://user-images.githubusercontent.com/1634027/29746351-7478d556-8ad7-11e7-8b27-445eefa8f960.jpg" />
 <br /><br /><br /><br /><br /><br /><br /><br /><br />
-<img width="300" src="http://hits.dwyl.io/ctubio/Krypto-trading-bot.svg" /></p>
+<img width="300" src="http://hits.dwyl.io/ctubio/Krypto-trading-bot.svg" /> + 99999</p>
