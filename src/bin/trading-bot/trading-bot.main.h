@@ -1,10 +1,10 @@
-extern const char _www_html_index,     _www_ico_favicon,     _www_css_base,
-                  _www_gzip_bomb,      _www_mp3_audio_0,     _www_css_light,
-                  _www_js_client,      _www_mp3_audio_1,     _www_css_dark;
+extern const char _file_html_index,     _file_ico_favicon,     _file_css_base,
+                  _file_gzip_bomb,      _file_mp3_audio_0,     _file_css_light,
+                  _file_js_client,      _file_mp3_audio_1,     _file_css_dark;
 
-extern const  int _www_html_index_len, _www_ico_favicon_len, _www_css_base_len,
-                  _www_gzip_bomb_len,  _www_mp3_audio_0_len, _www_css_light_len,
-                  _www_js_client_len,  _www_mp3_audio_1_len, _www_css_dark_len;
+extern const  int _file_html_index_len, _file_ico_favicon_len, _file_css_base_len,
+                  _file_gzip_bomb_len,  _file_mp3_audio_0_len, _file_css_light_len,
+                  _file_js_client_len,  _file_mp3_audio_1_len, _file_css_dark_len;
 
 class TradingBot: public KryptoNinja {
   public:
@@ -24,15 +24,15 @@ class TradingBot: public KryptoNinja {
         [&](const unsigned int &tick)    { engine.timer_1s(tick); }
       };
       documents = {
-        {"",                                  {&_www_gzip_bomb,   _www_gzip_bomb_len  }},
-        {"/",                                 {&_www_html_index,  _www_html_index_len }},
-        {"/js/client.min.js",                 {&_www_js_client,   _www_js_client_len  }},
-        {"/css/bootstrap.min.css",            {&_www_css_base,    _www_css_base_len   }},
-        {"/css/bootstrap-theme-dark.min.css", {&_www_css_dark,    _www_css_dark_len   }},
-        {"/css/bootstrap-theme.min.css",      {&_www_css_light,   _www_css_light_len  }},
-        {"/favicon.ico",                      {&_www_ico_favicon, _www_ico_favicon_len}},
-        {"/audio/0.mp3",                      {&_www_mp3_audio_0, _www_mp3_audio_0_len}},
-        {"/audio/1.mp3",                      {&_www_mp3_audio_1, _www_mp3_audio_1_len}}
+        {"",                                  {&_file_gzip_bomb,   _file_gzip_bomb_len  }},
+        {"/",                                 {&_file_html_index,  _file_html_index_len }},
+        {"/js/client.min.js",                 {&_file_js_client,   _file_js_client_len  }},
+        {"/css/bootstrap.min.css",            {&_file_css_base,    _file_css_base_len   }},
+        {"/css/bootstrap-theme-dark.min.css", {&_file_css_dark,    _file_css_dark_len   }},
+        {"/css/bootstrap-theme.min.css",      {&_file_css_light,   _file_css_light_len  }},
+        {"/favicon.ico",                      {&_file_ico_favicon, _file_ico_favicon_len}},
+        {"/audio/0.mp3",                      {&_file_mp3_audio_0, _file_mp3_audio_0_len}},
+        {"/audio/1.mp3",                      {&_file_mp3_audio_1, _file_mp3_audio_1_len}}
       };
       arguments = {
         {

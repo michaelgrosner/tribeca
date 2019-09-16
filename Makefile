@@ -2,7 +2,7 @@ K         ?= K.sh
 MAJOR      = 0
 MINOR      = 5
 PATCH      = 4
-BUILD      = 22
+BUILD      = 23
 
 OBLIGATORY = DISCLAIMER: This is strict non-violent software: \
            \nif you hurt other living creatures, please stop; \
@@ -140,9 +140,9 @@ assets: src/bin/$(KSRC)/Makefile
 	;)
 	rm -rf /var/lib/K/assets
 
-assets.o: src/bin/$(KSRC)/$(KSRC).S
+assets.o: src/bin/$(KSRC)/$(KSRC).file.S
 	$(chost)g++ -Wa,-I,$(KLOCAL)/assets,-I,src/bin/$(KSRC) -c $^ \
-	  -o $(KLOCAL)/lib/K-$(notdir $(basename $^))-$@
+	  -o $(KLOCAL)/lib/K-$(notdir $(basename $(basename $^)))-$@
 
 src: src/lib/Krypto.ninja-main.cxx src/bin/$(KSRC)/$(KSRC).main.h
 ifdef KALL
