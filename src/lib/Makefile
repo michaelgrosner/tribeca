@@ -3,9 +3,9 @@ HINT     = This Makefile can't be used directly, consider cd ../.. before try ag
 $(if $(subst 0,,${MAKELEVEL}),,$(warning $(ERR));$(error $(HINT)))
 
 V_ZLIB  = 1.2.11
-V_SSL   = 1.1.1c
+V_SSL   = 1.1.1d
 V_ARES  = 1.15.0
-V_CURL  = 7.65.3
+V_CURL  = 7.66.0
 V_SQL   = 3290000
 V_NCUR  = 6.1
 V_JSON  = 3.7.0
@@ -55,8 +55,8 @@ zlib:
 openssl:
 	test -d $(KBUILD)/openssl-$(V_SSL) || (                                                   \
 	curl -L https://www.openssl.org/source/openssl-$(V_SSL).tar.gz | tar xz -C $(KBUILD)      \
-	&& cd $(KBUILD)/openssl-$(V_SSL) && CC=gcc                                                \
-	./Configure $(shell test -n "`echo $(CHOST) | grep mingw32`" && echo mingw64 || echo gcc) \
+	&& cd $(KBUILD)/openssl-$(V_SSL) && CC=gcc ./Configure no-asm                             \
+	$(shell test -n "`echo $(CHOST) | grep mingw32`" && echo mingw64 || echo gcc)             \
 	--cross-compile-prefix=$(CHOST)- --prefix=$(KBUILD)/local --openssldir=$(KBUILD)/local    \
 	&& sed -i "/extern int getentrop/,+4d" crypto/rand/rand_unix.c                            \
 	&& sed -i "s/^\(\#.*if\).*__ELF__.*$$/\1 1/" crypto/rand/rand_unix.c                      \
@@ -138,4 +138,4 @@ else
 	| tar xz -C $(KBUILD) && cd $(KBUILD)/lcov-$(V_LCOV) && sudo make install                             )
 endif
 
-.PHONY: all dist clean zlib openssl curl sqlite ncurses json catch libuv lcov pvs
+.PHONY: all dist clean check zlib openssl curl sqlite ncurses json catch libuv lcov pvs
