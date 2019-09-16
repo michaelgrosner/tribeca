@@ -1,7 +1,7 @@
 //! \file
 //! \brief Trading logistics (welcome user! forked from https://github.com/michaelgrosner/tribeca).
 
-namespace ₿::tribeca {
+namespace tribeca {
   enum class QuotingMode: unsigned int {
     Top, Mid, Join, InverseJoin, InverseTop, HamelinRat, Depth
   };

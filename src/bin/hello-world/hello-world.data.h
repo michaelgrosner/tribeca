@@ -1,7 +1,7 @@
 //! \file
 //! \brief Welcome user! (just a working example to begin with).
 
-namespace ₿::example {
+namespace example {
   class Engine {
     private:
       Levels levels;

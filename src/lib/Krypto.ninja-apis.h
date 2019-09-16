@@ -23,7 +23,7 @@ namespace ₿ {
     vector<Level> bids,
                   asks;
   };
-  static void to_json(json &j, const Levels &k) {
+  static void __attribute__ ((unused)) to_json(json &j, const Levels &k) {
     j = {
       {"bids", k.bids},
       {"asks", k.asks}
@@ -54,7 +54,7 @@ namespace ₿ {
     Wallet base,
            quote;
   };
-  static void to_json(json &j, const Wallets &k) {
+  static void __attribute__ ((unused)) to_json(json &j, const Wallets &k) {
     j = {
       { "base", k.base },
       {"quote", k.quote}
@@ -67,7 +67,7 @@ namespace ₿ {
     Amount quantity = 0;
      Clock time     = 0;
   };
-  static void to_json(json &j, const Trade &k) {
+  static void __attribute__ ((unused)) to_json(json &j, const Trade &k) {
     j = {
       {    "side", k.side    },
       {   "price", k.price   },
@@ -118,7 +118,7 @@ namespace ₿ {
       return true;
     };
   };
-  static void to_json(json &j, const Order &k) {
+  static void __attribute__ ((unused)) to_json(json &j, const Order &k) {
     j = {
       {    "orderId", k.orderId    },
       { "exchangeId", k.exchangeId },
@@ -134,7 +134,7 @@ namespace ₿ {
       {    "latency", k.latency    }
     };
   };
-  static void from_json(const json &j, Order &k) {
+  static void __attribute__ ((unused)) from_json(const json &j, Order &k) {
     k.price           = j.value("price", 0.0);
     k.quantity        = j.value("quantity", 0.0);
     k.side            = j.value("side", "") == "Bid"
