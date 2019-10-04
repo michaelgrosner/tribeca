@@ -1,3 +1,4 @@
+<p align="center"><a href="https://www.timeanddate.com/countdown/to?iso=20171016T00&p0=31&msg=%23IN%20PRISON%20SINCE&ud=1&font=slab">time in prison counter</a></p>
 <h2 align="center">Spanish government still holds 9 Catalan political prisoners,<br />violating their right to freedom of association and expression,<br />political opinion and participation in public life, and fair trial rights.</h2>
 
 |<img src="https://user-images.githubusercontent.com/1634027/63216518-c5a79600-c136-11e9-9db8-1bb49b2a8c46.jpg" />|<img src="https://user-images.githubusercontent.com/1634027/63216519-c5a79600-c136-11e9-8197-57d2c866f096.jpg" />|<img src="https://user-images.githubusercontent.com/1634027/63216520-c5a79600-c136-11e9-8b22-9e373c9ac0cd.jpg" />|<img src="https://user-images.githubusercontent.com/1634027/63216529-cb9d7700-c136-11e9-8ee3-8a66e5a8e78c.jpg" />|<img src="https://user-images.githubusercontent.com/1634027/63216530-cc360d80-c136-11e9-86f5-75b1e4388b2c.jpg" />|
@@ -371,7 +372,7 @@ nope, this project doesn't have maintenance costs. but you can donate to your fa
 
 or see the upstream project [michaelgrosner/tribeca](https://github.com/michaelgrosner/tribeca).
 
-or donate your time with programming or financial suggestions in the IRC channel [#tradingBot](https://kiwiirc.com/client/irc.freenode.net:6697/?theme=cli#tradingBot) at irc.freenode.net on port 6697 (SSL), or 6667 (plain) or feel free to make any question, but questions technically are not donations.
+or donate your time with programming or financial suggestions in the IRC channel [#tradingBot](https://kiwiirc.com/client/irc.freenode.net:6697/?theme=cli#tradingBot) at irc.freenode.net on port 6697 (SSL), or 6667 (plain); or feel free to make any question, but questions technically are not donations.
 
 ### Very Special Thanks to:
 
