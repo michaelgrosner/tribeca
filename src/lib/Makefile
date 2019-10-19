@@ -6,11 +6,11 @@ V_ZLIB  = 1.2.11
 V_SSL   = 1.1.1d
 V_ARES  = 1.15.0
 V_CURL  = 7.66.0
-V_SQL   = 3300000
+V_SQL   = 3300100
 V_NCUR  = 6.1
 V_JSON  = 3.7.0
-V_CATCH = 2.9.2
-V_UV    = 1.31.0
+V_CATCH = 2.10.0
+V_UV    = 1.33.0
 
 KBUILD := $(abspath ../../build-$(KHOST))
 

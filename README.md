@@ -20,7 +20,6 @@
 [![Code Size](https://img.shields.io/github/languages/code-size/ctubio/Krypto-trading-bot.svg)](https://github.com/ctubio/Krypto-trading-bot)
 [![Software License](https://img.shields.io/badge/license-ISC-551a8b.svg)](https://raw.githubusercontent.com/ctubio/Krypto-trading-bot/master/LICENSE)
 [![Software License](https://img.shields.io/badge/license-MIT-551a8b.svg)](https://raw.githubusercontent.com/ctubio/Krypto-trading-bot/master/COPYING)
-[![Bounties](https://img.shields.io/bountysource/team/Krypto-trading-bot/activity.svg)](https://www.bountysource.com/teams/krypto-trading-bot/issues)
 
 [`K`](https://github.com/ctubio/Krypto-trading-bot) is a very low latency [market making](https://github.com/ctubio/Krypto-trading-bot/blob/master/doc/MANUAL.md#what-is-market-making) trading bot with a fully featured [web interface](https://github.com/ctubio/Krypto-trading-bot#web-ui). The bot can place and cancel orders on one of [several supported cryptocoin exchanges](https://github.com/ctubio/Krypto-trading-bot#compatible-exchanges) in less than a few miliseconds per order on a decent machine.
 
@@ -402,8 +401,6 @@ If you need installation or usage support contact me at [earn.com/analpaper](htt
 To request new features open a [new issue](https://github.com/ctubio/Krypto-trading-bot/issues/new?title=Feature%20request) and explain your improvement as you consider.
 
 To report errors open a [new issue](https://github.com/ctubio/Krypto-trading-bot/issues/new?title=Error%20report) only after collecting all possible relevant log messages.
-
-For fun (not required), everybody can create or claim bounties related to any issue at [bountysource.com](https://www.bountysource.com/teams/krypto-trading-bot/issues).
 
 Pull Requests are welcome, but adhere to the Contributor License Agreement:
 - Your biological and technological distinctiveness will be added to our own. Resistance is futile.
