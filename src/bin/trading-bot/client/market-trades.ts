@@ -1,14 +1,16 @@
 import {NgZone, Component, Inject, Input, OnInit} from '@angular/core';
-import {GridOptions, ColDef, RowNode} from 'ag-grid-community/main';
+import {Module, ClientSideRowModelModule, GridOptions, ColDef, RowNode} from '@ag-grid-community/all-modules';
 
 import * as Models from './models';
 import {SubscriberFactory, BaseCurrencyCellComponent, QuoteCurrencyCellComponent} from './shared_directives';
 
 @Component({
   selector: 'market-trades',
-  template: `<ag-grid-angular #marketList (click)="this.loadSubscriber()" class="ag-theme-fresh ag-theme-dark {{ subscribed ? \'ag-subscribed\' : \'ag-not-subscribed\' }} marketTrades" style="height: 530px;width: 100%;" rowHeight="21" [gridOptions]="gridOptions"></ag-grid-angular>`
+  template: `<ag-grid-angular #marketList (click)="this.loadSubscriber()" class="ag-theme-fresh ag-theme-dark {{ subscribed ? \'ag-subscribed\' : \'ag-not-subscribed\' }} marketTrades" style="height: 530px;width: 100%;" rowHeight="21" [gridOptions]="gridOptions" [modules]="modules"></ag-grid-angular>`
 })
 export class MarketTradesComponent implements OnInit {
+
+  private modules: Module[] = [ClientSideRowModelModule];
 
   private gridOptions: GridOptions = <GridOptions>{};
 

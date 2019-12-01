@@ -5,7 +5,7 @@ import {NgModule, NgZone, Component, Inject, OnInit, enableProdMode} from '@angu
 import {platformBrowserDynamic} from '@angular/platform-browser-dynamic';
 import {FormsModule} from '@angular/forms';
 import {BrowserModule} from '@angular/platform-browser';
-import {AgGridModule} from 'ag-grid-angular/main';
+import {AgGridModule} from '@ag-grid-community/angular';
 import {ChartModule} from 'angular2-highcharts';
 import * as Highcharts from 'highcharts';
 import { HighchartsStatic } from 'angular2-highcharts/dist/HighchartsService';

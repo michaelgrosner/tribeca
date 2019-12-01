@@ -27,7 +27,8 @@ endif
 
 client: npm client/main.ts
 	$(info $(STEP_2))
-	NODE_PATH=$(NODE_PATH) tsc --baseUrl $(NODE_PATH) --alwaysStrict --experimentalDecorators -t ES2017 -m commonjs --outDir $(KASSETS)/www/js client/*.ts
+	NODE_PATH=$(NODE_PATH) tsc --baseUrl $(NODE_PATH) --alwaysStrict \
+	  --experimentalDecorators -t ES2017 -m commonjs --outDir $(KASSETS)/www/js client/*.ts
 
 js: client $(NODE_PATH)/.bin
 	$(info $(STEP_3))
@@ -38,31 +39,32 @@ css: www/sass/*.scss
 	$(info $(STEP_4))
 	$(foreach scss,$(wildcard www/sass/*.scss), \
 	  sass $(scss) $(KASSETS)/www/css/$(basename $(notdir $(scss))).min.css ;)
-	cat $(NODE_PATH)/ag-grid-community/dist/styles/ag-grid.css >> $(KASSETS)/www/css/bootstrap.min.css
+	cat $(NODE_PATH)/@ag-grid-community/all-modules/dist/styles/ag-grid.css \
+	  >> $(KASSETS)/www/css/bootstrap.min.css
 
 export define PACKAGE_JSON
 {
   "dependencies": {
-    "@angular/common": "^8.2.5",
-    "@angular/compiler": "^8.2.5",
-    "@angular/core": "^8.2.5",
-    "@angular/forms": "^8.2.5",
-    "@angular/platform-browser": "^8.2.5",
-    "@angular/platform-browser-dynamic": "^8.2.5",
-    "@angular/router": "^8.2.5",
-    "@babel/core": "^7.6.0",
-    "@babel/preset-env": "^7.6.0",
-    "@types/node": "^12.7.4",
-    "ag-grid-angular": "^21.2.1",
-    "ag-grid-community": "^21.2.1",
+    "@ag-grid-community/all-modules": "^22.0.0",
+    "@ag-grid-community/angular":     "^22.0.0",
+    "@angular/common":                   "^8.2.14",
+    "@angular/compiler":                 "^8.2.14",
+    "@angular/core":                     "^8.2.14",
+    "@angular/forms":                    "^8.2.14",
+    "@angular/platform-browser":         "^8.2.14",
+    "@angular/platform-browser-dynamic": "^8.2.14",
+    "@angular/router":                   "^8.2.14",
+    "@babel/core":       "^7.7.4",
+    "@babel/preset-env": "^7.7.4",
+    "@types/node": "^12.12.14",
     "angular2-highcharts": "^0.5.5",
     "babelify": "^10.0.0",
     "browserify": "^16.5.0",
-    "highcharts": "^7.2.0",
+    "highcharts": "^7.2.1",
     "reflect-metadata": "^0.1.13",
     "rxjs": "6.5.3",
     "sass": "1.21.0",
-    "typescript": "^3.6.2",
+    "typescript": "^3.7.2",
     "uglify-es": "^3.3.9",
     "zone.js": "^0.10.2"
   },

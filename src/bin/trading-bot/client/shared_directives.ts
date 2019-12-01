@@ -1,5 +1,5 @@
 import {NgModule, Component, Injectable} from '@angular/core';
-import {AgRendererComponent} from 'ag-grid-angular/main';
+import {AgRendererComponent} from '@ag-grid-community/angular';
 
 import * as Subscribe from './subscribe';
 import * as Models from './models';

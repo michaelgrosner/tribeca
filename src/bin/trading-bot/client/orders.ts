@@ -1,5 +1,5 @@
 import {Component, Inject, Input, OnInit} from '@angular/core';
-import {GridOptions, ColDef, RowNode} from 'ag-grid-community/main';
+import {Module, ClientSideRowModelModule, GridOptions, ColDef, RowNode} from '@ag-grid-community/all-modules';
 
 import * as Models from './models';
 import * as Subscribe from './subscribe';
@@ -7,9 +7,11 @@ import {FireFactory, BaseCurrencyCellComponent, QuoteCurrencyCellComponent} from
 
 @Component({
   selector: 'order-list',
-  template: `<ag-grid-angular #orderList class="ag-theme-fresh ag-theme-dark" style="height: 135px;width: 99.80%;" rowHeight="21" [gridOptions]="gridOptions" (cellClicked)="onCellClicked($event)"></ag-grid-angular>`
+  template: `<ag-grid-angular #orderList class="ag-theme-fresh ag-theme-dark" style="height: 135px;width: 99.80%;" rowHeight="21" [gridOptions]="gridOptions" [modules]="modules" (cellClicked)="onCellClicked($event)"></ag-grid-angular>`
 })
 export class OrdersComponent implements OnInit {
+
+  private modules: Module[] = [ClientSideRowModelModule];
 
   private gridOptions: GridOptions = <GridOptions>{};
 
