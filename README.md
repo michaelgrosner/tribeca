@@ -72,8 +72,8 @@ All currency pairs are supported.
 - Humans and Milk Mammals
   - [Unlock](#unlock)
   - [Donations](#donations)
-  - [Very Special Thanks](#very-special-thanks-to)
   - [General Discussion](#general-discussion)
+  - [Very Special Thanks](#very-special-thanks-to)
   - [Help](#help)
   - [Issues](#issues)
 
@@ -373,6 +373,10 @@ or see the upstream project [michaelgrosner/tribeca](https://github.com/michaelg
 
 or donate your time with programming or financial suggestions in the IRC channel [#tradingBot](https://kiwiirc.com/client/irc.freenode.net:6697/?theme=cli#tradingBot) at irc.freenode.net on port 6697 (SSL), or 6667 (plain); or feel free to make any question, but questions technically are not donations.
 
+### General Discussion
+
+[IRC](https://kiwiirc.com/client/irc.freenode.net:6697/?theme=cli#tradingBot) is awesome!
+
 ### Very Special Thanks to:
 
 - https://github.com/michaelgrosner/tribeca (https://github.com/michaelgrosner)
@@ -387,10 +391,6 @@ or donate your time with programming or financial suggestions in the IRC channel
 - https://www.sqlite.org
 - https://github.com/michaelgrosner/tribeca (https://github.com/michaelgrosner)
 - but Most Special Thanks goes to [your mother](https://youtu.be/YDafHsyyTNk).
-
-### General Discussion
-
-[IRC](https://kiwiirc.com/client/irc.freenode.net:6697/?theme=cli#tradingBot) is awesome!<br/>but if you dislike it, there is an unofficial Discord channel at https://discord.gg/vdZHyJH (with nice users but without me).
 
 ### Help
 

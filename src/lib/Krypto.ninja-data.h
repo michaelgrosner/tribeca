@@ -419,7 +419,6 @@ namespace ₿ {
   };
 
   class Curl {
-    public:
     private_friend:
       class Easy: public Events::Poll {
         private:
