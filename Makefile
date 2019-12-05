@@ -2,7 +2,7 @@ K         ?= K.sh
 MAJOR      = 0
 MINOR      = 5
 PATCH      = 4
-BUILD      = 29
+BUILD      = 30
 
 OBLIGATORY = DISCLAIMER: This is strict non-violent software: \
            \nif you hurt other living creatures, please stop; \
@@ -39,11 +39,11 @@ ERR        = *** K require g++ v7 or greater, but it was not found.
 HINT      := consider a symlink at /usr/bin/$(CHOST)-g++ pointing to your g++-7 or g++-8 executable
 STEP       = $(shell tput setaf 2;tput setab 0)Building $(1)..$(shell tput sgr0)
 
-KARGS     := -std=c++17 -O3 -pthread -DK_HEAD='"$(shell  \
+KARGS     := -std=c++17 -O3 -pthread -D'K_HEAD="$(shell  \
     git rev-parse HEAD 2>/dev/null || echo HEAD          \
-  )"' -DK_BUILD='"$(KHOST)"' -DK_SOURCE='"K-$(KSRC)"'    \
-  -DK_STAMP='"$(shell date "+%Y-%m-%d %H:%M:%S")"'       \
-  -DK_0_DAY='"v$(MAJOR).$(MINOR).$(PATCH)+$(BUILD)"'     \
+  )"' -D'K_BUILD="$(KHOST)"' -D'K_SOURCE="K-$(KSRC)"'    \
+  -D'K_STAMP="$(shell date "+%Y-%m-%d %H:%M:%S")"'       \
+  -D'K_0_DAY="v$(MAJOR).$(MINOR).$(PATCH)+$(BUILD)"'     \
   -I$(KLOCAL)/include $(addprefix $(KLOCAL)/lib/,        \
     K-$(KHOST).$(ABI).a                                  \
     libncurses.a                                         \
@@ -61,16 +61,18 @@ KARGS     := -std=c++17 -O3 -pthread -DK_HEAD='"$(shell  \
          apis                                            \
          bots                                            \
        )                                                 \
-  ) -DDEBUG_FRAMEWORK='"Krypto.ninja-test.h"'            \
-    -DDEBUG_SCENARIOS='"$(or                             \
+  ) -D'DEBUG_FRAMEWORK="Krypto.ninja-test.h"'            \
+    -D'DEBUG_SCENARIOS=<$(or                             \
       $(realpath src/bin/$(KSRC)/$(KSRC).test.h),        \
       /dev/null                                          \
-    )"'                                                  \
-    -Dusing_Makefile='<$(abspath src/bin/$(KSRC))/'      \
-    -Dsrc_data_h='$(KSRC).data.h>'                       \
-    -Dsrc_main_h='$(KSRC).main.h>'                       \
--DOBLIGATORY_analpaper_SOFTWARE_LICENSE='"$(OBLIGATORY)"'\
--DPERMISSIVE_analpaper_SOFTWARE_LICENSE='"$(PERMISSIVE)"'\
+    )>'                                                  \
+    -D'using_Makefile(x)=<$(abspath                      \
+      src/bin/$(KSRC)                                    \
+    )/using_\#\#x>'                                      \
+    -D'using_data=$(KSRC).data.h'                        \
+    -D'using_main=$(KSRC).main.h'                        \
+-D'OBLIGATORY_analpaper_SOFTWARE_LICENSE="$(OBLIGATORY)"'\
+-D'PERMISSIVE_analpaper_SOFTWARE_LICENSE="$(PERMISSIVE)"'
 
 all K: $(SOURCE)
 
