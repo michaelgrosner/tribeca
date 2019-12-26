@@ -1729,7 +1729,7 @@ namespace tribeca {
               : qp.targetBasePosition)
             : (qp.percentageValues
               ? ( qp.targetBasePositionPercentageMin + ( qp.targetBasePositionPercentageMax - qp.targetBasePositionPercentageMin ) * targetPositionAutoPercentage / 1e+2 ) / 1e+2 * baseValue
-              : ( qp.targetBasePositionMin + ( qp.targetBasePositionMax - qp.targetBasePositionMin ) * targetPositionAutoPercentage / 1e+2 ) / 1e+2 * baseValue)
+              : ( qp.targetBasePositionMin + ( qp.targetBasePositionMax - qp.targetBasePositionMin ) * targetPositionAutoPercentage / 1e+2 ))
         );
         calcPDiv();
         if (broadcast()) {
