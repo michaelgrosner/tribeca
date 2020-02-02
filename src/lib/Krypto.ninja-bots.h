@@ -517,18 +517,18 @@ namespace ₿ {
         if (arg<int>("naked"))
           display = {};
         if (!arg<string>("interface").empty() and !arg<int>("ipv6"))
-          curl_global_setopt = [&](CURL *curl) {
+          curl_global_setopt = [this](CURL *curl) {
             curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
             curl_easy_setopt(curl, CURLOPT_INTERFACE, arg<string>("interface").data());
             curl_easy_setopt(curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
           };
         else if (!arg<string>("interface").empty())
-          curl_global_setopt = [&](CURL *curl) {
+          curl_global_setopt = [this](CURL *curl) {
             curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
             curl_easy_setopt(curl, CURLOPT_INTERFACE, arg<string>("interface").data());
           };
         else if (!arg<int>("ipv6"))
-          curl_global_setopt = [&](CURL *curl) {
+          curl_global_setopt = [](CURL *curl) {
             curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
             curl_easy_setopt(curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
           };
@@ -645,8 +645,8 @@ namespace ₿ {
         noecho();
         halfdelay(5);
         keypad(stdscr, true);
-        keylogger.write = [&](const char &ch) { keylog(ch); };
-        keylogger.wait_for(loop, [&]() { return sync_keylogger(); });
+        keylogger.write = [this](const char &ch) { keylog(ch); };
+        keylogger.wait_for(loop, [this]() { return sync_keylogger(); });
         keylogger.ask_for();
       };
     private:
@@ -1033,18 +1033,18 @@ namespace ₿ {
       };
       void welcome() {
         for (auto &it : readable) {
-          it->read = [&]() {
+          it->read = [this, it]() {
             if (server.idle()) return;
             queue[(char)it->about()] = it->blob().dump();
             if (it->realtime() or !delay) broadcast();
           };
-          hello[(char)it->about()] = [&]() {
+          hello[(char)it->about()] = [it]() {
             return it->hello();
           };
         }
         readable.clear();
         for (auto &it : clickable)
-          kisses[(char)it->about()] = [&](const json &butterfly) {
+          kisses[(char)it->about()] = [it](const json &butterfly) {
             it->click(butterfly);
           };
         clickable.clear();
