@@ -63,7 +63,7 @@ export define PACKAGE_JSON
     "highcharts": "^8.0.0",
     "reflect-metadata": "^0.1.13",
     "rxjs": "6.5.4",
-    "sass": "1.21.0",
+    "sass": "1.25.0",
     "typescript": "^3.7.5",
     "uglify-es": "^3.3.9",
     "zone.js": "^0.10.2"
