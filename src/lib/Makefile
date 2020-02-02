@@ -6,11 +6,11 @@ V_ZLIB  = 1.2.11
 V_SSL   = 1.1.1d
 V_CARES = 1.15.0
 V_CURL  = 7.68.0
-V_SQL   = 3300100
+V_SQL   = 3310100
 V_NCUR  = 6.1
 V_JSON  = 3.7.3
 V_CATCH = 2.11.1
-V_UV    = 1.34.1
+V_UV    = 1.34.2
 
 KBUILD := $(abspath ../../build-$(KHOST))
 
@@ -83,7 +83,7 @@ curl:
 
 sqlite:
 	test -d $(KBUILD)/sqlite-autoconf-$(V_SQL) || (                                       \
-	curl -L https://sqlite.org/2019/sqlite-autoconf-$(V_SQL).tar.gz | tar xz -C $(KBUILD) \
+	curl -L https://sqlite.org/2020/sqlite-autoconf-$(V_SQL).tar.gz | tar xz -C $(KBUILD) \
 	&& cd $(KBUILD)/sqlite-autoconf-$(V_SQL) && ./configure --prefix=$(KBUILD)/local      \
 	--host=$(CHOST) --enable-static --disable-dynamic-extensions --disable-shared         \
 	--enable-threadsafe && make all install                                               )
