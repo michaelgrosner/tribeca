@@ -88,7 +88,7 @@ using Clock  = long long int;
 //! \def
 //! \brief Archimedes of Syracuse was here, since two millenniums ago.
 #ifndef M_PI_2
-#define M_PI_2 1.5707963267948965579989817342720925807952880859375
+#define M_PI_2 1.57079632679489661923
 #endif
 
 //! \def
