@@ -27,8 +27,8 @@ endif
 
 client: npm client/main.ts
 	$(info $(STEP_2))
-	NODE_PATH=$(NODE_PATH) tsc --baseUrl $(NODE_PATH) --alwaysStrict \
-	  --experimentalDecorators -t ES2017 -m commonjs --outDir $(KASSETS)/www/js client/*.ts
+	NODE_PATH=$(NODE_PATH) tsc --baseUrl $(NODE_PATH) --typeRoots $(NODE_PATH)/@types --alwaysStrict \
+	  --experimentalDecorators -t ES2018 -m commonjs --outDir $(KASSETS)/www/js client/*.ts
 
 js: client $(NODE_PATH)/.bin
 	$(info $(STEP_3))
@@ -45,28 +45,28 @@ css: www/sass/*.scss
 export define PACKAGE_JSON
 {
   "dependencies": {
-    "@ag-grid-community/all-modules": "^22.1.1",
-    "@ag-grid-community/angular":     "^22.1.2",
-    "@angular/common":                   "^8.2.14",
-    "@angular/compiler":                 "^8.2.14",
-    "@angular/core":                     "^8.2.14",
-    "@angular/forms":                    "^8.2.14",
-    "@angular/platform-browser":         "^8.2.14",
-    "@angular/platform-browser-dynamic": "^8.2.14",
-    "@angular/router":                   "^8.2.14",
-    "@babel/core":       "^7.8.4",
-    "@babel/preset-env": "^7.8.4",
-    "@types/node": "^13.7.0",
+    "@ag-grid-community/all-modules": "^23.0.2",
+    "@ag-grid-community/angular":     "^23.0.3",
+    "@angular/common":                   "^9.1.3",
+    "@angular/compiler":                 "^9.1.3",
+    "@angular/core":                     "^9.1.3",
+    "@angular/forms":                    "^9.1.3",
+    "@angular/platform-browser":         "^9.1.3",
+    "@angular/platform-browser-dynamic": "^9.1.3",
+    "@angular/router":                   "^9.1.3",
+    "@babel/core":       "^7.9.0",
+    "@babel/preset-env": "^7.9.5",
+    "@types/node": "^13.13.4",
     "angular2-highcharts": "^0.5.5",
     "babelify": "^10.0.0",
-    "browserify": "^16.5.0",
-    "highcharts": "^8.0.0",
+    "browserify": "^16.5.1",
+    "highcharts": "^8.0.4",
     "reflect-metadata": "^0.1.13",
-    "rxjs": "6.5.4",
-    "sass": "1.25.0",
-    "typescript": "^3.7.5",
+    "rxjs": "6.5.5",
+    "sass": "1.26.5",
+    "typescript": "^3.8.3",
     "uglify-es": "^3.3.9",
-    "zone.js": "^0.10.2"
+    "zone.js": "^0.10.3"
   },
   "description": "K",
   "homepage": "https://github.com/ctubio/Krypto-trading-bot",
