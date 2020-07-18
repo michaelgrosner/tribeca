@@ -359,7 +359,6 @@ namespace ₿ {
   };
 
   class Option: public Terminal {
-    protected:
     private_friend:
       struct Argument {
        const string  name;

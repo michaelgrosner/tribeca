@@ -793,60 +793,6 @@ namespace ₿ {
         webOrders = "https://www.ethfinex.com/reports/orders";
       };
   };
-  class GwFCoin: public GwApiWs {
-    public:
-      GwFCoin()
-      {
-        http   = "https://api.fcoin.com/v2/";
-        ws     = "wss://api.fcoin.com/v2/ws";
-        randId = Random::char16Id;
-        webMarket = "https://exchange.fcoin.com/ex/main/";
-        webOrders = "https://exchange.fcoin.com/orders";
-      };
-      json handshake() override {
-        symbol = base + quote;
-        webMarket += base + "-" + quote;
-        const json reply = Curl::Web::xfer(http + "public/symbols");
-        Price  tickPrice = 0;
-        Amount tickSize  = 0;
-        if (reply.find("data") != reply.end() and reply.at("data").is_array())
-          for (const json &it : reply.at("data"))
-            if (it.find("name") != it.end() and it.value("name", "") == Text::strL(symbol)) {
-              istringstream iss(
-                "1e-" + to_string(it.value("price_decimal", 0))
-                + " 1e-" + to_string(it.value("amount_decimal", 0))
-              );
-              iss >> tickPrice >> tickSize;
-              break;
-            }
-        return {
-          {     "base", base     },
-          {    "quote", quote    },
-          {   "symbol", symbol   },
-          {   "margin", margin   },
-          {"webMarket", webMarket},
-          {"webOrders", webOrders},
-          {"tickPrice", tickPrice},
-          { "tickSize", tickSize },
-          {  "minSize", tickSize },
-          {    "reply", reply    }
-        };
-      };
-    protected:
-      static json xfer(const string &url, const string &h1, const string &h2, const string &h3, const string &post = "") {
-        return Curl::Web::request(url, [&](CURL *curl) {
-          struct curl_slist *h_ = nullptr;
-          if (!post.empty()) {
-            curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post.data());
-            h_ = curl_slist_append(h_, "Content-Type: application/json;charset=UTF-8");
-          }
-          h_ = curl_slist_append(h_, ("FC-ACCESS-KEY: "       + h1).data());
-          h_ = curl_slist_append(h_, ("FC-ACCESS-SIGNATURE: " + h2).data());
-          h_ = curl_slist_append(h_, ("FC-ACCESS-TIMESTAMP: " + h3).data());
-          curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
-        });
-      };
-  };
   class GwKraken: public GwApiREST {
     public:
       GwKraken()
