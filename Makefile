@@ -2,7 +2,7 @@ K         ?= K.sh
 MAJOR      = 0
 MINOR      = 5
 PATCH      = 4
-BUILD      = 36
+BUILD      = 37
 
 OBLIGATORY = DISCLAIMER: This is strict non-violent software: \
            \nif you hurt other living creatures, please stop; \
@@ -48,7 +48,7 @@ KARGS     := -std=c++17 -O3 -pthread -D'K_HEAD="$(shell  \
     K-$(KHOST).$(ABI).a                                  \
     libncurses.a                                         \
     libsqlite3.a                                         \
-    libcurl.a libcares.a                                 \
+    libcurl.a                                            \
     libssl.a  libcrypto.a                                \
     libz.a                                               \
   ) $(wildcard $(addprefix $(KLOCAL)/lib/,               \
@@ -233,7 +233,7 @@ install: packages
 	@read -p "[$(shell seq -s / `echo $(CARCH) | tr ' ' "\n" | wc -l`)]: " chost && $(MAKE) download CHOST=`echo $(CARCH) | cut -d ' ' -f$${chost}`
 
 docker: packages download
-	@sed -i "/Usage/,+87d" K.sh
+	@sed -i "/Usage/,+86d" K.sh
 
 reinstall:
 	test -d .git && ((test -n "`git diff`" && (echo && echo !!Local changes will be lost!! press CTRL-C to abort. && echo && sleep 5) || :) \

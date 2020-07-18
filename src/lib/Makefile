@@ -4,19 +4,18 @@ $(if $(subst 0,,${MAKELEVEL}),,$(warning $(ERR));$(error $(HINT)))
 
 V_ZLIB  = 1.2.11
 V_SSL   = 1.1.1g
-V_CARES = 1.16.0
-V_CURL  = 7.70.0
-V_SQL   = 3310100
+V_CURL  = 7.71.1
+V_SQL   = 3320300
 V_NCUR  = 6.1
 V_JSON  = 3.7.3
 V_CATCH = 2.11.1
-V_UV    = 1.37.0
+V_UV    = 1.38.1
 
 KBUILD := $(abspath ../../build-$(KHOST))
 
 all dist:
 	@mkdir -vp $(KBUILD)
-	$(MAKE) zlib openssl cares curl sqlite ncurses json catch uv
+	$(MAKE) zlib openssl curl sqlite ncurses json catch uv
 ifdef TRAVIS_OS_NAME
 	$(MAKE) lcov pvs
 endif
@@ -29,8 +28,6 @@ check:
 	#zlib    $(shell curl -s https://www.zlib.net/ChangeLog.txt | grep "Changes in " | head -n1 | cut -d' ' -f3)
 	#openssl $(V_SSL)
 	#openssl $(shell curl -s https://www.openssl.org/news/cl$(shell curl -s https://www.openssl.org/source/ | grep "The latest stable version is " | cut -d' ' -f12  | tr -d '.').txt | grep "Changes between " | head -n1 | cut -d' ' -f4)
-	#cares   $(V_CARES)
-	#cares   $(shell curl -s https://c-ares.haxx.se/changelog.html | grep "c-ares version " | head -n1 | cut -d' ' -f6)
 	#curl    $(V_CURL)
 	#curl    $(shell curl -s https://curl.haxx.se/changes.html | grep "Fixed in " | head -n1 | cut -d' ' -f4)
 	#sqlite  $(V_SQL)
@@ -62,19 +59,14 @@ openssl:
 	&& sed -i "s/^\(\#.*if\).*__ELF__.*$$/\1 1/" crypto/rand/rand_unix.c                      \
 	&& make all install_sw install_ssldirs                                                    )
 
-cares:
-	test -d $(KBUILD)/c-ares-$(V_CARES) || (                                                  \
-	curl -L https://c-ares.haxx.se/download/c-ares-$(V_CARES).tar.gz | tar xz -C $(KBUILD)    \
-	&& cd $(KBUILD)/c-ares-$(V_CARES) && ./configure --host=$(CHOST) --prefix=$(KBUILD)/local \
-	--disable-shared --enable-static && make all install                                      )
-
 curl:
 	test -d $(KBUILD)/curl-$(V_CURL) || (                                                   \
 	curl -L https://curl.haxx.se/download/curl-$(V_CURL).tar.gz | tar xz -C $(KBUILD)       \
 	&& cd $(KBUILD)/curl-$(V_CURL)                                                          \
-	&& CPPFLAGS=-DCARES_STATICLIB ./configure --host=$(CHOST) --prefix=$(KBUILD)/local      \
+	&& PKG_CONFIG="pkg-config --static" PKG_CONFIG_PATH=$(KBUILD)/local/lib/pkgconfig       \
+	./configure --host=$(CHOST) --prefix=$(KBUILD)/local                                    \
 	--with-ca-bundle=/etc/ssl/certs/ca-certificates.crt                                     \
-	--with-zlib=$(KBUILD)/local --with-ssl=$(KBUILD)/local --enable-ares=$(KBUILD)/local    \
+	--with-zlib=$(KBUILD)/local --with-ssl=$(KBUILD)/local --disable-ares                   \
 	--disable-manual --disable-imap --disable-file --disable-tftp --disable-smtp            \
 	--disable-pop3 --disable-smb --disable-ftp --disable-sspi --disable-ldap --disable-dict \
 	--without-libpsl --without-nghttp2 --without-libssh2 --disable-telnet --disable-rtsp    \
@@ -138,4 +130,4 @@ else
 	| tar xz -C $(KBUILD) && cd $(KBUILD)/lcov-$(V_LCOV) && sudo make install                             )
 endif
 
-.PHONY: all dist clean check zlib openssl cares curl sqlite ncurses json catch uv lcov pvs
+.PHONY: all dist clean check zlib openssl curl sqlite ncurses json catch uv lcov pvs
