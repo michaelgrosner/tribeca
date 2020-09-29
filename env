@@ -48,3 +48,11 @@ BitfinexOrderDestination=Bitfinex
 ## Coinbase
 #CoinbaseRestUrl=https://api.gdax.com
 #CoinbaseWebsocketUrl=wss://ws-feed.gdax.com
+
+## Bitstamp
+#BitstampWsUrl=wss://ws.bitstamp.net
+#BitstampRestUrl=https://www.bitstamp.net/api/
+#BitstampClientId=NULL
+#BitstampApiKey=NULL
+#BitstampSecretKey=NULL
+#BitstampOrderDestination=Bitstamp

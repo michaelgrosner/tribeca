@@ -12,6 +12,7 @@ import mongo = require("mongodb");
 import Persister = require("./persister");
 import Q = require("q");
 import stream = require("stream");
+import { AddressInfo } from 'net'
 
 var shortId = require("shortid");
 var Deque = require("collections/deque");
@@ -357,10 +358,8 @@ var backtestServer = () => {
     app.use(require("compression")());
     
     var server = app.listen(5001, () => {
-        var host = server.address().address;
-        var port = server.address().port;
-        
-        console.log('Backtest server listening at http://%s:%s', host, port);
+        const { port, address } = server.address() as AddressInfo        
+        console.log('Backtest server listening at http://%s:%s', address, port);
     });
     
     app.get("/inputData", (req, res) => {
@@ -380,7 +379,7 @@ var backtestServer = () => {
             
             console.log("Serving parameters id =", served.id, " to", req.ip);
             res.json(served);
-            fs.writeFileSync(savedProgressFile, parameters.length, {encoding: 'utf8'});
+            fs.writeFileSync(savedProgressFile, parameters.length.toString(), {encoding: 'utf8'});
             
             if (!_.some(parameters)) {
                 console.log("Done serving parameters");

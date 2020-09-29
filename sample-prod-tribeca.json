@@ -7,6 +7,7 @@
     "WebClientPassword": "NULL",
     "WebClientListenPort": "3000",
     "ShowAllOrders": "false",
+    "NullGatewayTick": 100,
         
     "HitBtcPullUrl": "http://api.hitbtc.com",
     "HitBtcOrderEntryUrl": "wss://api.hitbtc.com:8080",
@@ -32,5 +33,12 @@
     "BitfinexHttpUrl": "https://api.bitfinex.com/v1",
     "BitfinexKey": "NULL",
     "BitfinexSecret": "NULL",
-    "BitfinexOrderDestination": "Bitfinex"
+    "BitfinexOrderDestination": "Bitfinex",
+
+    "BitstampWsUrl": "wss://ws.bitstamp.net",
+    "BitstampRestUrl": "https://www.bitstamp.net/api/",
+    "BitstampClientId": "NULL",
+    "BitstampApiKey": "NULL",
+    "BitstampSecretKey": "NULL",
+    "BitstampOrderDestination": "Bitstamp"
 }

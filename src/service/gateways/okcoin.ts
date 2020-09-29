@@ -370,10 +370,11 @@ class OkCoinMessageSigner {
 class OkCoinHttp {
     post = <T>(actionUrl: string, msg : SignedMessage) : Q.Promise<Models.Timestamped<T>> => {
         var d = Q.defer<Models.Timestamped<T>>();
+        let signedMessage : any = this._signer.signMessage(msg);
 
         request({
             url: url.resolve(this._baseUrl, actionUrl),
-            body: querystring.stringify(this._signer.signMessage(msg)),
+            body: querystring.stringify(signedMessage),
             headers: {"Content-Type": "application/x-www-form-urlencoded"},
             method: "POST"
         }, (err, resp, body) => {

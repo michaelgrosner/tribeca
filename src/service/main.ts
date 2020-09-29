@@ -35,6 +35,7 @@ import Coinbase = require("./gateways/coinbase");
 import NullGw = require("./gateways/nullgw");
 import OkCoin = require("./gateways/okcoin");
 import Bitfinex = require("./gateways/bitfinex");
+import Bitstamp = require("./gateways/bitstamp");
 
 import Utils = require("./utils");
 import Config = require("./config");
@@ -179,6 +180,7 @@ const liveTradingSetup = () : SimulationClasses => {
             case "okcoin": return Models.Exchange.OkCoin;
             case "null": return Models.Exchange.Null;
             case "bitfinex": return Models.Exchange.Bitfinex;
+            case "bitstamp": return Models.Exchange.Bitstamp;
             default: throw new Error("unknown configuration env variable EXCHANGE " + ex);
         }
     };
@@ -192,6 +194,7 @@ const liveTradingSetup = () : SimulationClasses => {
             case Models.Exchange.OkCoin: return OkCoin.createOkCoin(config, pair);
             case Models.Exchange.Null: return NullGw.createNullGateway(config, pair);
             case Models.Exchange.Bitfinex: return Bitfinex.createBitfinex(timeProvider, config, pair);
+            case Models.Exchange.Bitstamp: return Bitstamp.createBitstamp(timeProvider, config, pair);
             default: throw new Error("no gateway provided for exchange " + exchange);
         }
     };
