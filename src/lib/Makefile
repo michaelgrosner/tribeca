@@ -3,13 +3,13 @@ HINT     = This Makefile can't be used directly, consider cd ../.. before try ag
 $(if $(subst 0,,${MAKELEVEL}),,$(warning $(ERR));$(error $(HINT)))
 
 V_ZLIB  = 1.2.11
-V_SSL   = 1.1.1g
-V_CURL  = 7.71.1
-V_SQL   = 3320300
+V_SSL   = 1.1.1i
+V_CURL  = 7.74.0
+V_SQL   = 3340000
 V_NCUR  = 6.1
-V_JSON  = 3.7.3
+V_JSON  = 3.9.1
 V_CATCH = 2.11.1
-V_UV    = 1.38.1
+V_UV    = 1.40.0
 
 KBUILD := $(abspath ../../build-$(KHOST))
 
@@ -24,22 +24,14 @@ clean:
 	@rm -vrf $(KBUILD)
 
 check:
-	#zlib    $(V_ZLIB)
-	#zlib    $(shell curl -s https://www.zlib.net/ChangeLog.txt | grep "Changes in " | head -n1 | cut -d' ' -f3)
-	#openssl $(V_SSL)
-	#openssl $(shell curl -s https://www.openssl.org/news/cl$(shell curl -s https://www.openssl.org/source/ | grep "The latest stable version is " | cut -d' ' -f12  | tr -d '.').txt | grep "Changes between " | head -n1 | cut -d' ' -f4)
-	#curl    $(V_CURL)
-	#curl    $(shell curl -s https://curl.haxx.se/changes.html | grep "Fixed in " | head -n1 | cut -d' ' -f4)
-	#sqlite  $(V_SQL)
-	#sqlite  $(shell curl -s https://www.sqlite.org/download.html | grep "sqlite-amalgamation-" | head -n1 | cut -d'-' -f3 | cut -d'.' -f1)
-	#ncurses $(V_NCUR)
-	#ncurses $(shell curl -s https://www.gnu.org/software/ncurses/ | grep "Announcing " | head -n1 | cut -d' ' -f5 | cut -d'<' -f1)
-	#json    $(V_JSON)
-	#json    $(shell curl -s https://api.github.com/repos/nlohmann/json/tags   | grep "name" | head -n1 | cut -d'v' -f2 | cut -d'"' -f1)
-	#catch   $(V_CATCH)
-	#catch   $(shell curl -s https://api.github.com/repos/catchorg/Catch2/tags | grep "name" | head -n1 | cut -d'v' -f2 | cut -d'"' -f1)
-	#uv      $(V_UV)
-	#uv      $(shell curl -s https://api.github.com/repos/libuv/libuv/tags     | grep "name" | head -n1 | cut -d'v' -f2 | cut -d'"' -f1)
+	# zlib    | $(V_ZLIB)  | $(shell curl -s https://www.zlib.net/ChangeLog.txt | grep "Changes in " | head -n1 | cut -d' ' -f3)
+	# openssl | $(V_SSL)  | $(shell curl -s https://www.openssl.org/news/cl$(shell curl -s https://www.openssl.org/source/ | grep "The latest stable version is " | cut -d' ' -f12  | tr -d '.').txt | grep "Changes between " | head -n1 | cut -d' ' -f4)
+	# curl    | $(V_CURL)  | $(shell curl -s https://curl.se/changes.html | grep "Fixed in " | head -n1 | cut -d' ' -f4)
+	# sqlite  | $(V_SQL) | $(shell curl -s https://www.sqlite.org/download.html | grep "sqlite-amalgamation-" | head -n1 | cut -d'-' -f3 | cut -d'.' -f1)
+	# ncurses | $(V_NCUR)     | $(shell curl -s https://www.gnu.org/software/ncurses/ | grep "Announcing " | head -n1 | cut -d' ' -f5 | cut -d'<' -f1)
+	# json    | $(V_JSON)   | $(shell curl -s https://api.github.com/repos/nlohmann/json/tags   | grep "name" | head -n1 | cut -d'v' -f2 | cut -d'"' -f1)
+	# catch   | $(V_CATCH)  | $(shell curl -s https://api.github.com/repos/catchorg/Catch2/tags | grep "name" | head -n1 | cut -d'v' -f2 | cut -d'"' -f1)
+	# uv      | $(V_UV)  | $(shell curl -s https://api.github.com/repos/libuv/libuv/tags     | grep "name" | head -n1 | cut -d'v' -f2 | cut -d'"' -f1)
 
 zlib:
 	test -d $(KBUILD)/zlib-$(V_ZLIB) || (                                             \
@@ -55,8 +47,6 @@ openssl:
 	&& cd $(KBUILD)/openssl-$(V_SSL) && CC=gcc ./Configure no-asm                             \
 	$(shell test -n "`echo $(CHOST) | grep mingw32`" && echo mingw64 || echo gcc)             \
 	--cross-compile-prefix=$(CHOST)- --prefix=$(KBUILD)/local --openssldir=$(KBUILD)/local    \
-	&& sed -i "/extern int getentrop/,+4d" crypto/rand/rand_unix.c                            \
-	&& sed -i "s/^\(\#.*if\).*__ELF__.*$$/\1 1/" crypto/rand/rand_unix.c                      \
 	&& make all install_sw install_ssldirs                                                    )
 
 curl:
