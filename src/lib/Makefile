@@ -31,7 +31,7 @@ check:
 	# ncurses | $(V_NCUR)     | $(shell curl -s https://www.gnu.org/software/ncurses/ | grep "Announcing " | head -n1 | cut -d' ' -f5 | cut -d'<' -f1)
 	# json    | $(V_JSON)   | $(shell curl -s https://api.github.com/repos/nlohmann/json/tags   | grep "name" | head -n1 | cut -d'v' -f2 | cut -d'"' -f1)
 	# catch   | $(V_CATCH)  | $(shell curl -s https://api.github.com/repos/catchorg/Catch2/tags | grep "name" | head -n1 | cut -d'v' -f2 | cut -d'"' -f1)
-	# uv      | $(V_UV)  | $(shell curl -s https://api.github.com/repos/libuv/libuv/tags     | grep "name" | head -n1 | cut -d'v' -f2 | cut -d'"' -f1)
+	# uv      | $(V_UV)  | $(shell curl -s https://api.github.com/repos/libuv/libuv/tags        | grep "name" | head -n1 | cut -d'v' -f2 | cut -d'"' -f1)
 
 zlib:
 	test -d $(KBUILD)/zlib-$(V_ZLIB) || (                                             \
