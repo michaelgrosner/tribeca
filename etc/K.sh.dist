@@ -9,42 +9,32 @@
 #  █▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▀▄▄██▄▌ ▌▐ ▐▄██▄▄▀▄▄▄▄▄▄▄▄▄▄▄▄▄▄█
 #  █▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▄▀▀▀▀▀▌▄  ▄▐▀▀▀▀▀▄▀▀▀▀▀▀▀▀▀▀▀▀▀▀█
 #  █▌ Today, is a beautiful day.▐▌.btw, on THIS file.. ▐█
-#  ██   I. Define hardcoded optional K argumentss. F F ██
-#  ██  II. Define initial mandatory UI argumentss. E R ██
-#  ██ III. Define initial mandatory API arguments. E E ██
+#  ██   I. Define another file to wrap and run.... F F ██
+#  ██  II. Define hardcoded optional arguments.... E R ██
+#  ██ III. Define super secret API credentials.... E E ██
 #  ██  IV. Execute K loop until CTRL+C or kill -9. L E ██
 #  ██▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄.▄!▄!▄██
 #  ▌___                                                 .
 #  ▌ I ▐________________________________________________.
 #  ▌¯¯¯                                                 .
-#  █ OPTIONAL_ARGUMENTS                                 .
-#  ██ - Allows a list of arguments, to avoid write it always in the command-line.
-#OPTIONAL_ARGUMENTS="--colors --autobot"
-OPTIONAL_ARGUMENTS="--colors --naked --debug-wallet"
+#  █ K_BINARY_FILE                                      .
+#  ██ - Allows one executable file from PATH.           .
+#K_BINARY_FILE=K-hello-world
+K_BINARY_FILE=K-trading-bot
 #  ██▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
 #  ▌____                                                .
 #  ▌ II ▐_______________________________________________.
 #  ▌¯¯¯¯                                                .
-#  █ UI_USERNAME                                        .
-#  ██ - Allows any username, to authenticate UI connections.
-#UI_USERNAME=1234abcd
-UI_USERNAME=NULL
-#  ▌____________________________________________________.
-#  █ UI_PASSWORD                                        .
-#  ██ - Allows any password, to authenticate UI connections.
-#UI_PASSWORD=efgh5678
-UI_PASSWORD=NULL
-#  ▌____________________________________________________.
-#  █ UI_OPENPORT                                        .
-#  ██ - Allows any port number, to listen to UI connections.
-#UI_OPENPORT=6969
-UI_OPENPORT=3000
+#  █ OPTIONAL_ARGUMENTS                                 .
+#  ██ - Allows a list of arguments (to avoid to write it always in the command-line).
+#OPTIONAL_ARGUMENTS="--colors --autobot --port 3000"
+OPTIONAL_ARGUMENTS="--colors --naked --debug-wallet"
 #  ██▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
 #  ▌_____                                               .
 #  ▌ III ▐______________________________________________.
 #  ▌¯¯¯¯¯                                               .
 #  █ API_EXCHANGE                                       .
-#  ██ - Allows one of the following exchange names (or leave NULL for test mode):
+#  ██ - Allows one of the following exchange names (or leave NULL for test mode).
 #API_EXCHANGE=COINBASE
 #API_EXCHANGE=BITFINEX
 #API_EXCHANGE=BITFINEX_MARGIN
@@ -58,7 +48,7 @@ UI_OPENPORT=3000
 API_EXCHANGE=NULL
 #  ▌____________________________________________________.
 #  █ API_CURRENCY                                       .
-#  ██ - Allows any existent currency pair (see the website of the exchange), the format must be "AAA/ZZZ".
+#  ██ - Allows any existent currency pair with format "AAA/ZZZ" (see the website of the exchange).
 #API_CURRENCY=BTC/EUR
 API_CURRENCY=BTC/USD
 #  ▌____________________________________________________.
@@ -83,18 +73,8 @@ API_PASSPHRASE=NULL
 #  ▌____                                                .
 #  ▌ IV ▐______________________________________________ .
 #  ▌¯¯¯¯                                                .
-#  █ K_BINARY_FILE                                      .
-#  ██ - Allows one executable file from PATH.
-#K_BINARY_FILE=K-hello-world
-K_BINARY_FILE=K-trading-bot
-#  ██ - That's all. You can create multiple *.sh files ready to be executed anytime.
-#  █  ¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯.
-#  ▌                                                    .
 until `#valgrind` `#gdb --args` $K_BINARY_FILE          \
     --title      ${0##*/}                               \
-    --port       $UI_OPENPORT                           \
-    --user       $UI_USERNAME                           \
-    --pass       $UI_PASSWORD                           \
     --exchange   $API_EXCHANGE                          \
     --currency   $API_CURRENCY                          \
     --apikey     $API_KEY                               \
@@ -105,4 +85,8 @@ until `#valgrind` `#gdb --args` $K_BINARY_FILE          \
     echo K crashed with exit code $?.. Respawning.. ;   #
     sleep 3                                         ;   #
 done                                                ;   #
-#  ██▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄;▄:wq
+#  ▌                                                    .
+#  █  ¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯.
+#  ██ - That's all. To create multiple *.sh files:      .
+#  ██    $ cp etc/K.sh.dist X.sh && chmod +x X.sh       .
+#  ██▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄:wq

@@ -423,11 +423,10 @@ namespace ₿ {
           {"whitelist",    "IP",     "",       "set IP or csv of IPs to allow UI connections,"
                                                "\n" "alien IPs will get a zip-bomb instead"},
           {"client-limit", "NUMBER", "7",      "set NUMBER of maximum concurrent UI connections"},
-          {"port",         "NUMBER", "3000",   "set NUMBER of an open port to listen for UI connections"},
-          {"user",         "WORD",   "NULL",   "set allowed WORD as username for UI connections,"
-                                               "\n" "mandatory but may be 'NULL'"},
-          {"pass",         "WORD",   "NULL",   "set allowed WORD as password for UI connections,"
-                                               "\n" "mandatory but may be 'NULL'"},
+          {"port",         "NUMBER", "3000",   "set NUMBER of an open port to listen for UI connections"
+                                               "\n" "default NUMBER is '3000'"},
+          {"user",         "WORD",   "NULL",   "set allowed WORD as username for UI connections"},
+          {"pass",         "WORD",   "NULL",   "set allowed WORD as password for UI connections"},
           {"ssl-crt",      "FILE",   "",       "set FILE to custom SSL .crt file for HTTPS UI connections"
                                                "\n" "(see www.akadia.com/services/ssh_test_certificate.html)"},
           {"ssl-key",      "FILE",   "",       "set FILE to custom SSL .key file for HTTPS UI connections"
@@ -568,8 +567,7 @@ namespace ₿ {
           if (arg<int>("latency") or !arg<int>("port") or !arg<int>("client-limit"))
             args["headless"] = 1;
           args["B64auth"] = (!arg<int>("headless")
-            and arg<string>("user") != "NULL" and !arg<string>("user").empty()
-            and arg<string>("pass") != "NULL" and !arg<string>("pass").empty()
+            and !arg<string>("user").empty() and !arg<string>("pass").empty()
           ) ? Text::B64(arg<string>("user") + ':' + arg<string>("pass"))
             : "";
         }
