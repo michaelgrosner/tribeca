@@ -425,8 +425,8 @@ namespace ₿ {
           {"client-limit", "NUMBER", "7",      "set NUMBER of maximum concurrent UI connections"},
           {"port",         "NUMBER", "3000",   "set NUMBER of an open port to listen for UI connections"
                                                "\n" "default NUMBER is '3000'"},
-          {"user",         "WORD",   "NULL",   "set allowed WORD as username for UI connections"},
-          {"pass",         "WORD",   "NULL",   "set allowed WORD as password for UI connections"},
+          {"user",         "WORD",   "",       "set allowed WORD as username for UI connections"},
+          {"pass",         "WORD",   "",       "set allowed WORD as password for UI connections"},
           {"ssl-crt",      "FILE",   "",       "set FILE to custom SSL .crt file for HTTPS UI connections"
                                                "\n" "(see www.akadia.com/services/ssh_test_certificate.html)"},
           {"ssl-key",      "FILE",   "",       "set FILE to custom SSL .key file for HTTPS UI connections"
