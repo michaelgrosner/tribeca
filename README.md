@@ -248,7 +248,13 @@ js sandbox: [jsfiddle.net](https://jsfiddle.net)
 
 ws sandbox: [websocket.org](https://www.websocket.org/echo.html)
 
-<details><summary><a id="unreleased-changelog"><b>Release v0.5.x Changelog</b></a></summary>
+<details><summary><a id="unreleased-changelog"><b>Release v0.6.x Changelog</b></a></summary>
+
+Added Hello World bot.
+
+</details>
+
+<details><summary><b>Release v0.5.x Changelog</b></summary>
 
 Updated exchange integrations as simple libcurl wrappers.
 
