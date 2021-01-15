@@ -596,11 +596,7 @@ namespace ₿ {
             reply = {
               {"error", symbol + " is not a valid symbol"}
             };
-          else
-            for (const json &it : reply) {
-              reply = it;
-              break;
-            }
+          else reply = reply.front();
         }
         return {
           {     "base", "XBT"                          },
