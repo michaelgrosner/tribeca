@@ -4,21 +4,9 @@ SOB=$(git var GIT_AUTHOR_IDENT | sed -n 's/^\(.*>\).*$/Signed-off-by: \1/p')
 
 printf "$(cat <<\CARLESGITTIP
 
-Free Software Free Society
-
-To increase the frequency of commits by ctubio,
-you can buy-me-a-drink with a small git-tip at:
-  1GitTipB6sY2YSbkH3BJHepUB7Cjymi9R1 (BTC addr)
-
-To force me to write more source documentation,
-you can buy-me-a-drink with a small doc-tip at:
-  1KDocsmbhUEh7JgmYjuMH3nDivzSM6dphP (BTC addr)
-
-I promise to drink chocolate milk after commit.
-
 To request new features or in case this commit breaks something for you,
 please, create a new github issue with all possible information for me,
-but never share your API Keys!
+but never share your API credentials!
 
 %s
 CARLESGITTIP
