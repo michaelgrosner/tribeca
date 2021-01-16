@@ -37,11 +37,13 @@ jobs:
           lcov -l lcov.info                                          | cowsay -nW80 -fdefault
 
       - uses: coverallsapp/github-action@master
+        continue-on-error: true
         with:
           path-to-lcov: lcov.info
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: codacy/codacy-coverage-reporter-action@master
+        continue-on-error: true
         with:
           coverage-reports: lcov.info
           project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
