@@ -21,7 +21,7 @@ all $(KSRC): js css
 npm: package.json
 	$(info $(STEP_1))
 	@cd $(abspath $(NODE_PATH)/..) && $@ install
-ifndef TRAVIS_OS_NAME
+ifndef GITHUB_ACTIONS
 	@rm $(abspath $(NODE_PATH)/..)/$(basename $^)*
 endif
 

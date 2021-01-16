@@ -4,7 +4,7 @@ units:
 	cd .. && ./K.sh --version
 
 clean:
-ifndef TRAVIS_OS_NAME
+ifndef GITHUB_ACTIONS
 	@cd .. && rm -f *.gcda *.gcno
 endif
 

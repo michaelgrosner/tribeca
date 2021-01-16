@@ -3,8 +3,8 @@
 !/etc
 !/src
 !/test
+!/.github
 !/.gitignore
-!/.travis.yml
 !/COPYING
 !/LICENSE
 !/Makefile

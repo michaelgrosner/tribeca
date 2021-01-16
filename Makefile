@@ -2,7 +2,7 @@ K         ?= K.sh
 MAJOR      = 0
 MINOR      = 6
 PATCH      = 0
-BUILD      = 2
+BUILD      = 3
 
 OBLIGATORY = DISCLAIMER: This is strict non-violent software: \
            \nif you hurt other living creatures, please stop; \
@@ -162,8 +162,8 @@ else
 endif
 
 Linux: src/lib/Krypto.ninja-main.cxx src/bin/$(KSRC)/$(KSRC).main.h
-ifdef TRAVIS_OS_NAME
-	@unset TRAVIS_OS_NAME && $(MAKE) KCOV="--coverage" $@
+ifdef GITHUB_ACTIONS
+	@unset GITHUB_ACTIONS && $(MAKE) KCOV="--coverage" $@
 else ifdef KUNITS
 	@unset KUNITS && $(MAKE) KTEST="$(KCOV) -DCATCH_CONFIG_FAST_COMPILE test/unit_testing_framework.cxx" $@
 else ifndef KTEST
@@ -204,10 +204,10 @@ cleandb: /var/lib/K/db/K*
 	rm -rf /var/lib/K/db/K*.db
 
 packages:
-	test -n "`command -v apt-get`" && sudo apt-get -y install g++ build-essential automake autoconf libtool libxml2 libxml2-dev zlib1g-dev python curl gzip screen doxygen graphviz \
-	|| (test -n "`command -v yum`" && sudo yum -y install gcc-c++ automake autoconf libtool libxml2 libxml2-devel python curl gzip screen) \
-	|| (test -n "`command -v brew`" && (xcode-select --install || :) && (brew install automake autoconf libxml2 zlib python curl gzip screen proctools doxygen graphviz || brew upgrade || :)) \
-	|| (test -n "`command -v pacman`" && sudo pacman --noconfirm -S --needed base-devel libxml2 zlib curl python gzip screen)
+	test -n "`command -v apt-get`" && sudo apt-get -y install g++ build-essential automake autoconf libtool libxml2 libxml2-dev zlib1g-dev python curl gzip screen cowsay doxygen graphviz \
+	|| (test -n "`command -v yum`" && sudo yum -y install gcc-c++ automake autoconf libtool libxml2 libxml2-devel python curl gzip screen cowsay) \
+	|| (test -n "`command -v brew`" && (xcode-select --install || :) && (brew install automake autoconf libxml2 zlib python curl gzip screen cowsay proctools doxygen graphviz || brew upgrade || :)) \
+	|| (test -n "`command -v pacman`" && sudo pacman --noconfirm -S --needed base-devel libxml2 zlib curl python gzip screen cowsay)
 
 uninstall:
 	rm -vrf /var/lib/K/cache /var/lib/K/node_modules

@@ -1,0 +1,35 @@
+name: test
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+
+      - name: configure
+        run: |
+          sudo gem install coveralls-lcov
+          sudo npm install -g codacy-coverage npm-check-updates
+
+      - name: install
+        run: yes 1 | KUNITS=1 make install dist K
+
+      - name: check
+        run: |
+          make check                                   | tr -d "#" | /usr/games/cowsay -nW80 -fduck
+          (cd /var/lib/K && ncu)                  | sed '/^\s*$/d' | /usr/games/cowsay -nW80 -fduck
+          make test-c                                              | /usr/games/cowsay -nW160 -felephant || :
+          make test               | sed '/^\s*$/d' | sed '/====/d' | /usr/games/cowsay -nW160 -fbud-frogs && test ${PIPESTATUS[0]} -eq 0
+
+      - name: report
+        run: |
+          lcov -o cov.info -c -d . --gcov-tool /usr/bin/gcov-8     > /dev/null 2>&1
+          lcov -o cov.info -r cov.info '/usr/*' '*local/include/*' > /dev/null 2>&1
+          lcov -l cov.info                                         | /usr/games/cowsay -nW80 -fdefault
+          coveralls-lcov cov.info                                  > /dev/null 2>&1
+          cat cov.info | codacy-coverage --language cpp            > /dev/null 2>&1
+
