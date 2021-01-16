@@ -1,7 +1,10 @@
-/*.sh
-/doc/html*
-/build*
-/Vagrantfile
-/*.gcno
-/*.gcda
-.DS_Store
+/*
+!/doc
+!/etc
+!/src
+!/test
+!/COPYING
+!/LICENSE
+!/Makefile
+!/README.md
+!/.git*
