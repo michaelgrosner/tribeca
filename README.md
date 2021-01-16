@@ -370,6 +370,8 @@ or donate your time with programming or financial suggestions in the IRC channel
 
 [IRC](https://kiwiirc.com/client/irc.freenode.net:6697/?theme=cli#tradingBot) is awesome!
 
+but if you dislike it, consider to create a [new discussion](https://github.com/ctubio/Krypto-trading-bot/discussions) permanently readable by everybody.
+
 ### Very Special Thanks to:
 
 - https://github.com/michaelgrosner/tribeca (https://github.com/michaelgrosner)
