@@ -12,24 +12,26 @@ jobs:
 
       - name: configure
         run: |
-          sudo gem install coveralls-lcov
-          sudo npm install -g codacy-coverage npm-check-updates
+          sudo apt-get install g++-8 clang-tidy-6.0 cowsay
+          sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-8 50
+          sudo update-alternatives --install /usr/bin/x86_64-linux-gnu-g++ x86_64-linux-gnu-g++ /usr/bin/x86_64-linux-gnu-g++-8 50
+          sudo npm install -g npm-check-updates
 
       - name: install
         run: yes 1 | KUNITS=1 make install dist K
 
       - name: check
         run: |
-          make check                                   | tr -d "#" | /usr/games/cowsay -nW80 -fduck
-          (cd /var/lib/K && ncu)                  | sed '/^\s*$/d' | /usr/games/cowsay -nW80 -fduck
-          make test-c                                              | /usr/games/cowsay -nW160 -felephant || :
-          make test               | sed '/^\s*$/d' | sed '/====/d' | /usr/games/cowsay -nW160 -fbud-frogs && test ${PIPESTATUS[0]} -eq 0
+          make check                                     | tr -d "#" | cowsay -nW80 -fduck
+          (cd /var/lib/K && ncu)                    | sed '/^\s*$/d' | cowsay -nW80 -fduck
+          make test-c                                                | cowsay -nW160 -felephant || :
+          make test                 | sed '/^\s*$/d' | sed '/====/d' | cowsay -nW160 -fbud-frogs && test ${PIPESTATUS[0]} -eq 0
+          lcov -o lcov.info -c -d . --gcov-tool /usr/bin/gcov-8      > /dev/null 2>&1
+          lcov -o lcov.info -r lcov.info '/usr/*' '*local/include/*' > /dev/null 2>&1
+          lcov -l lcov.info                                          | cowsay -nW80 -fdefault
 
       - name: report
-        run: |
-          lcov -o cov.info -c -d . --gcov-tool /usr/bin/gcov-8     > /dev/null 2>&1
-          lcov -o cov.info -r cov.info '/usr/*' '*local/include/*' > /dev/null 2>&1
-          lcov -l cov.info                                         | /usr/games/cowsay -nW80 -fdefault
-          coveralls-lcov cov.info                                  > /dev/null 2>&1
-          cat cov.info | codacy-coverage --language cpp            > /dev/null 2>&1
-
+        uses: coverallsapp/github-action@master
+        with:
+          path-to-lcov: lcov.info
+          github-token: ${{ secrets.GITHUB_TOKEN }}
