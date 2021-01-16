@@ -24,14 +24,24 @@ jobs:
         run: |
           make check                                     | tr -d "#" | cowsay -nW80 -fduck
           (cd /var/lib/K && ncu)                    | sed '/^\s*$/d' | cowsay -nW80 -fduck
+
+      - name: test
+        run: |
           make test-c                                                | cowsay -nW160 -felephant || :
           make test                 | sed '/^\s*$/d' | sed '/====/d' | cowsay -nW160 -fbud-frogs && test ${PIPESTATUS[0]} -eq 0
+
+      - name: coverage
+        run: |
           lcov -o lcov.info -c -d . --gcov-tool /usr/bin/gcov-8      > /dev/null 2>&1
           lcov -o lcov.info -r lcov.info '/usr/*' '*local/include/*' > /dev/null 2>&1
           lcov -l lcov.info                                          | cowsay -nW80 -fdefault
 
-      - name: report
-        uses: coverallsapp/github-action@master
+      - uses: coverallsapp/github-action@master
         with:
           path-to-lcov: lcov.info
           github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: codacy/codacy-coverage-reporter-action@master
+        with:
+          coverage-reports: lcov.info
+          project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
