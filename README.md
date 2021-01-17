@@ -42,12 +42,11 @@ All currency pairs are supported.
   - [Docker Installation](#docker-installation)
   - [Manual GIT Installation](#manual-git-installation)
   - [Manual ZIP Installation](#manual-zip-installation)
-  - [After Manual Installation](#after-manual-installation)
+  - [Configuration After Manual Installation](#configuration-after-manual-installation)
   - [Upgrade to the latest commit](#upgrade-to-the-latest-commit)
   - [Multiple instances party time](#multiple-instances-party-time)
 - Information
   - [Compatible Exchanges](#compatible-exchanges)
-  - [Configuration](#configuration)
   - [Application Usage](#application-usage)
   - [Web UI](#web-ui)
   - [Databases](#databases)
@@ -109,11 +108,13 @@ To upgrade anytime see [Upgrade to the latest commit](#upgrade-to-the-latest-com
 
 To upgrade anytime just run `make reinstall`.
 
-### After Manual Installation
+### Configuration After Manual Installation
 
-See [configuration](#configuration) section while setting up the configuration options in your new config file `K.sh`.
+See [etc/K.sh.dist](https://github.com/ctubio/Krypto-trading-bot/blob/master/etc/K.sh.dist) file or better your own copy located at `./K.sh`.
 
-Once the config file is ready, you can start the bot:
+It just contains a few variables with examples. The very end of the file contains the code that starts the bot.
+
+Once your config file is ready, you can start the bot:
 ```
  $ ./K.sh
 ```
@@ -132,29 +133,27 @@ Troubleshooting:
 
  * Use your own SSL certificate with `--ssl-crt` and `--ssl-key`, see [web ui](https://github.com/ctubio/Krypto-trading-bot#web-ui) section. Otherwise, the unsecure built-in certificate is a fully featured default openssl, that you may just need to authorise in your browser.
 
-### Configuration
-
-See [etc/K.sh.dist](https://github.com/ctubio/Krypto-trading-bot/blob/master/etc/K.sh.dist) file or your own `./K.sh` file.
-
-It just contains a few variables with examples ready to be reused. The very end of the file contains the code that starts the bot.
-
 ### Upgrade to the latest commit
 
-After reinstalling, you will need to manually restart any running instances using `make restart` or `make restartall`.
+If you upgrade while having any instance running in the background, you will need to manually restart it using `make restart` or `make restartall` to start using the latest version.
 
-To upgrade under Manual ZIP Installation, please run `make reinstall`.
+#### Upgrade under Manual ZIP Installation:
 
-To upgrade under Manual GIT Installation:
+Please run `make reinstall` to download the upgraded source and executable files.
 
-Feel free anytime to check if there are new modifications with `make diff`.
+#### Upgrade under Manual GIT Installation:
 
-Once you decide that is time to upgrade, execute `make latest` to download and install the latest modifications in your remote branch (or directly `make reinstall` to skip the validation of the new commit messages).
+Feel free anytime to check if there are new upgrades with `make diff`.
 
-If you only use `git` to pull the latest commits, you will still need to recompile using `make reinstall` (or using `make dist K` or just `make` if you have modified source files) and then `make restart` to start using the latest version.
+Once you decide that is time to upgrade, execute `make upgrade` (or directly `make reinstall` to skip the validation of the new commits).
+
+If you only use `git` to pull the latest source files from the remote branch, you will still need to upgrade or recompile your executable files.
+
+To not upgrade but instead recompile your own modified source files, use `make dist K` or just `make` (see [Build notes](#build-notes)).
 
 ### Multiple instances party time
 
-Please note, an "instance" is in fact a `*.sh` config file located in the top level path; using a single machine and the same source folder, you can run as many instances as `*.sh` files you have in the top level path (limited by the available free RAM).
+Please note, an "instance" is in fact a `*.sh` config file; using a single machine with a single installation, you can run as many instances as `*.sh` files you have (limited by the available free RAM).
 
 You can list the current running instances with `make list`.
 

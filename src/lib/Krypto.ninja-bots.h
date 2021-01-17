@@ -189,7 +189,7 @@ namespace ₿ {
             + '\n' + Ansi::b(COLOR_YELLOW) + "Hint!" + Ansi::r(COLOR_YELLOW)
             + '\n' + "please upgrade to the latest commit; the encountered error may be already fixed at:"
             + '\n' + mods
-            + '\n' + "If you agree, consider to run \"make latest\" prior further executions."
+            + '\n' + "If you agree, consider to run \"make upgrade\" prior further executions."
             + '\n' + '\n';
         halt(EXIT_FAILURE);
       };

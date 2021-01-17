@@ -106,7 +106,7 @@ hlep hepl help:
 	#                                                  #
 	#  make diff         - show commits and versions   #
 	#  make changelog    - show commits                #
-	#  make latest       - show commits and reinstall  #
+	#  make upgrade      - show commits and reinstall  #
 	#                                                  #
 	#  make download     - download K src precompiled  #
 	#  make clean        - remove external src files   #
@@ -281,7 +281,7 @@ diff: .git
 	@_() { echo $$2 $$3 version: `git rev-parse $$1`; }; git remote update && _ @ Local running && _ @{u} Latest remote
 	@$(MAKE) changelog -s
 
-latest: .git diff
+upgrade: .git diff
 	@_() { git rev-parse $$1; }; test `_ @` != `_ @{u}` && $(MAKE) reinstall || :
 
 changelog: .git
@@ -353,4 +353,4 @@ md5: src
 asandwich:
 	@test `whoami` = 'root' && echo OK || echo make it yourself!
 
-.PHONY: all K $(SOURCE) hlep hepl help doc test src assets assets.o clean check dist download cleandb list screen start stop restart startall stopall restartall packages system_install uninstall install docker reinstall diff latest changelog test-c push MAJOR MINOR PATCH BUILD release md5 asandwich
+.PHONY: all K $(SOURCE) hlep hepl help doc test src assets assets.o clean check dist download cleandb list screen start stop restart startall stopall restartall packages system_install uninstall install docker reinstall diff upgrade changelog test-c push MAJOR MINOR PATCH BUILD release md5 asandwich

@@ -62,7 +62,7 @@
 :      $ make reinstall                                                       :
 :       TODO                                                                  :
 :                                                                             :
-:      $ make latest                                                          :
+:      $ make upgrade                                                         :
 :       TODO                                                                  :
 :                                                                             :
 :     Private targets: (!no trespassing! move along, nothing to execute here) :
