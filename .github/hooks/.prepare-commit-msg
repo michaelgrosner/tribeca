@@ -1,0 +1,14 @@
+#!/bin/sh
+
+SOB=$(git var GIT_AUTHOR_IDENT | sed -n 's/^\(.*>\).*$/Signed-off-by: \1/p')
+
+printf "$(cat <<\CARLESGITTIP
+
+████ ███  To request new features or in case this commit breaks something for you,
+████ ███  please, create a new github issue with all possible information for me,
+▓███▀█▄   but never share your API Keys!
+▒▓██ ███
+░▒▓█ ███  %s
+
+CARLESGITTIP
+)" "$SOB" >> "$1";

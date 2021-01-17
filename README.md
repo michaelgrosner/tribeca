@@ -114,7 +114,7 @@ See [etc/K.sh.dist](https://github.com/ctubio/Krypto-trading-bot/blob/master/etc
 
 It just contains a few variables with examples. The very end of the file contains the code that starts the bot.
 
-Once your config file is ready, you can start the bot:
+Once your config file is ready, you can execute it to start the bot:
 ```
  $ ./K.sh
 ```
