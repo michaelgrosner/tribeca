@@ -388,7 +388,7 @@ but if you dislike it, consider to create a [new discussion](https://github.com/
 
 ### Help
 
-If you need installation or usage support contact me at [earn.com/analpaper](https://earn.com/analpaper/) (non-free high-priority service).
+If you need installation or usage support, please create a [new discussion](https://github.com/ctubio/Krypto-trading-bot/discussions).
 
 ### Issues
 
