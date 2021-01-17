@@ -2,7 +2,7 @@ K         ?= K.sh
 MAJOR      = 0
 MINOR      = 6
 PATCH      = 0
-BUILD      = 6
+BUILD      = 7
 
 OBLIGATORY = DISCLAIMER: This is strict non-violent software: \
            \nif you hurt other living creatures, please stop; \
@@ -41,9 +41,9 @@ STEP       = $(shell tput setaf 2;tput setab 0)Building $(1)..$(shell tput sgr0)
 
 KARGS     := -std=c++17 -O3 -pthread -D'K_HEAD="$(shell  \
     git rev-parse HEAD 2>/dev/null || echo HEAD          \
-  )"' -D'K_BUILD="$(KHOST)"' -D'K_SOURCE="K-$(KSRC)"'    \
+  )"' -D'K_CHOST="$(KHOST)"' -D'K_SOURCE="K-$(KSRC)"'    \
   -D'K_STAMP="$(shell date "+%Y-%m-%d %H:%M:%S")"'       \
-  -D'K_0_DAY="v$(MAJOR).$(MINOR).$(PATCH)+$(BUILD)"'     \
+  -D'K_BUILD="v$(MAJOR).$(MINOR).$(PATCH)+$(BUILD)"'     \
   -I$(KLOCAL)/include $(addprefix $(KLOCAL)/lib/,        \
     K-$(KHOST).$(ABI).a                                  \
     libncurses.a                                         \

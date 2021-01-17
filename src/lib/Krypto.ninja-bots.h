@@ -76,20 +76,13 @@ namespace ₿ {
     protected:
       static void version() {
         curl_global_init(CURL_GLOBAL_ALL);
-        clog << Ansi::b(COLOR_GREEN) << K_SOURCE
-             << Ansi::r(COLOR_GREEN) << " " K_BUILD " " K_STAMP ".\n";
-        const string mods = changelog();
-        const int commits = count(mods.begin(), mods.end(), '\n');
-        clog << Ansi::b(COLOR_GREEN) << K_0_DAY << Ansi::r(COLOR_GREEN) << ' '
-             << (commits
-                 ? '-' + to_string(commits) + "commit"
-                   + string(commits == 1 ? 0 : 1, 's') + '.'
-                 : "(0day)"
-                )
+        clog << Ansi::b(COLOR_GREEN) << K_SOURCE " " K_BUILD
+             << Ansi::r(COLOR_GREEN) << " (build on " K_CHOST " at " K_STAMP ")"
 #ifndef NDEBUG
-            << " with DEBUG MODE enabled"
+             << Ansi::b(COLOR_GREEN) << " with DEBUG MODE enabled"
+             << Ansi::r(COLOR_GREEN)
 #endif
-            << ".\n" << Ansi::r(COLOR_YELLOW) << mods << Ansi::reset();
+             << '.' << Ansi::reset() << '\n';
       };
       static string changelog() {
         string mods;
@@ -166,8 +159,8 @@ namespace ₿ {
         const string mods = changelog();
         if (mods.empty()) {
           epilogue += "(Three-Headed Monkey found):\n" + epitaph
-             + "- binbuild: " K_SOURCE " " K_BUILD "\n"
-               "- lastbeat: " + to_string((float)clock()/CLOCKS_PER_SEC) + '\n'
+            + "- binbuild: " K_SOURCE " " K_CHOST "\n"
+              "- lastbeat: " + to_string((float)clock()/CLOCKS_PER_SEC) + '\n'
 #ifndef _WIN32
             + "- tracelog: " + '\n';
           void *k[69];
