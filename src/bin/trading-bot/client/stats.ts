@@ -632,7 +632,7 @@ export class StatsComponent implements OnInit {
         if (this.ewma.ewmaTrendDiff) Highcharts.charts[this.fvChart].series[20].addPoint([time, this.ewma.ewmaTrendDiff], false);
       }
       Highcharts.charts[this.fvChart].series[0].addPoint([time, this.fairValue], this.showStats);
-      if ((<any>Highcharts).quotingParameters.protectionEwmaWidthPing && this.ewma.ewmaWidth) Highcharts.charts[this.fvChart].series[1].addPoint([time, this.fairValue-this.ewma.ewmaWidth, this.fairValue+this.ewma.ewmaWidth], this.showStats, false, false);
+      if ((<any>Highcharts).quotingParameters.protectionEwmaWidthPing && (this.ewma && this.ewma.ewmaWidth)) Highcharts.charts[this.fvChart].series[1].addPoint([time, this.fairValue-this.ewma.ewmaWidth, this.fairValue+this.ewma.ewmaWidth], this.showStats, false, false);
       else if (this.width) Highcharts.charts[this.fvChart].series[1].addPoint([time, this.fairValue-this.width, this.fairValue+this.width], this.showStats, false, false);
     }
     if (this.positionData) {
