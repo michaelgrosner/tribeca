@@ -110,7 +110,7 @@ To upgrade anytime just run `make reinstall`.
 
 ### Configuration After Manual Installation
 
-See [etc/K.sh.dist](https://github.com/ctubio/Krypto-trading-bot/blob/master/etc/K.sh.dist) file or better your own copy located at `./K.sh`.
+See [etc/K.sh.dist](https://github.com/ctubio/Krypto-trading-bot/blob/master/etc/K.sh.dist) file or better your own copy of `K.sh` file located in the top level path.
 
 It just contains a few variables with examples. The very end of the file contains the code that starts the bot.
 
