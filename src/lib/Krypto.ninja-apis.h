@@ -135,6 +135,7 @@ namespace ₿ {
     };
   };
   static void __attribute__ ((unused)) from_json(const json &j, Order &k) {
+    k.orderId         = j.value("orderId", "");
     k.price           = j.value("price", 0.0);
     k.quantity        = j.value("quantity", 0.0);
     k.side            = j.value("side", "") == "Bid"

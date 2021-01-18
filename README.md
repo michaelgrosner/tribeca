@@ -388,7 +388,7 @@ but if you dislike it, consider to create a [new discussion](https://github.com/
 
 ### Help
 
-If you need installation or usage support, please create a [new discussion](https://github.com/ctubio/Krypto-trading-bot/discussions).
+If you need installation or usage support, please create a [new discussion](https://github.com/ctubio/Krypto-trading-bot/discussions/new).
 
 ### Issues
 
