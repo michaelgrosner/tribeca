@@ -149,8 +149,7 @@ namespace ₿ {
                           : (j.value("timeInForce", "") == "FOK"
                             ? TimeInForce::FOK
                             : TimeInForce::IOC);
-    k.isPong          = false;
-    k.postOnly        = false;
+    k.postOnly        = j.value("postOnly", false);
   };
 
   class GwExchangeData {
