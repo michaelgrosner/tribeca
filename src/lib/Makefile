@@ -65,7 +65,7 @@ curl:
 
 sqlite:
 	test -d $(KBUILD)/sqlite-autoconf-$(V_SQL) || (                                       \
-	curl -L https://sqlite.org/2020/sqlite-autoconf-$(V_SQL).tar.gz | tar xz -C $(KBUILD) \
+	curl -L https://sqlite.org/2021/sqlite-autoconf-$(V_SQL).tar.gz | tar xz -C $(KBUILD) \
 	&& cd $(KBUILD)/sqlite-autoconf-$(V_SQL) && ./configure --prefix=$(KBUILD)/local      \
 	--host=$(CHOST) --enable-static --disable-dynamic-extensions --disable-shared         \
 	--enable-threadsafe && make all install                                               )
