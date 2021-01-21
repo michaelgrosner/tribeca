@@ -2,7 +2,7 @@ K         ?= K.sh
 MAJOR      = 0
 MINOR      = 6
 PATCH      = 0
-BUILD      = 12
+BUILD      = 13
 
 OBLIGATORY = DISCLAIMER: This is strict non-violent software: \
            \nif you hurt other living creatures, please stop; \
@@ -217,15 +217,17 @@ system_install:
 	$(info Checking if sudo           is allowed  at /usr/local/bin.. $(shell sudo ls -ld /usr/local/bin > /dev/null 2>&1 && echo OK || echo ERROR))
 	$(info Checking if /usr/local/bin is already  in your PATH..      $(if $(shell echo $$PATH | grep /usr/local/bin),OK))
 	$(if $(shell echo $$PATH | grep /usr/local/bin),,$(info $(subst ..,,$(subst Building ,,$(call STEP,Warning! you MUST add /usr/local/bin to your PATH!)))))
-	$(info Checking if /etc/ssl/certs is readable by curl..           $(shell (test -d /etc/ssl/certs && echo OK) || (sudo mkdir -p /etc/ssl/certs && echo OK)))
-	$(info Checking if /var/lib/K/db  is writable by sqlite..         $(shell (test -d /var/lib/K/db && echo OK) || (sudo mkdir -p /var/lib/K/db && sudo chown -R $(shell id -u) /var/lib/K && echo OK)))
 	$(info )
 	$(info List of installed K binaries:)
 	@sudo cp -f $(wildcard $(KLOCAL)/bin/K-$(KSRC)*) /usr/local/bin
 	@LS_COLORS="ex=40;92" CLICOLOR="Yes" ls $(shell ls --color > /dev/null 2>&1 && echo --color) -lah $(addprefix /usr/local/bin/,$(notdir $(wildcard $(KLOCAL)/bin/K-$(KSRC)*)))
 	@echo
-	@sudo curl -s --time-cond /etc/ssl/certs/ca-certificates.crt https://curl.haxx.se/ca/cacert.pem -o /etc/ssl/certs/ca-certificates.crt
+	@sudo mkdir -p /var/lib/K
+	@sudo chown $(shell id -u) /var/lib/K
 	@mkdir -p /var/lib/K/cache
+	@mkdir -p /var/lib/K/db
+	@mkdir -p /var/lib/K/ssl
+	@curl -s --time-cond /var/lib/K/ssl/cacert.pem https://curl.haxx.se/ca/cacert.pem -o /var/lib/K/ssl/cacert.pem
 
 install: packages
 	@yes = | head -n`expr $(shell tput cols) / 2` | xargs echo && echo " _  __\n| |/ /  v$(MAJOR).$(MINOR).$(PATCH)+$(BUILD)\n| ' /\n| . \\   Select your (beloved) architecture\n|_|\\_\\  to download pre-compiled binaries:\n"
