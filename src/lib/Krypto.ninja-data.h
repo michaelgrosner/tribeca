@@ -348,7 +348,7 @@ namespace ₿ {
             : Poll(timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK | TFD_CLOEXEC))
           {
             if (timerfd_settime(sockfd, 0, &ts, nullptr) != -1)
-              start(loopfd, [&]() {
+              Poll::start(loopfd, [&]() {
                 uint64_t again = 0;
                 if (::read(sockfd, &again, 8) == 8)
                   timer_1s();
@@ -362,7 +362,7 @@ namespace ₿ {
           Async(const curl_socket_t &loopfd, const function<void()> &data)
             : Poll(::eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC))
           {
-            start(loopfd, [this, data]() {
+            Poll::start(loopfd, [this, data]() {
               uint64_t again = 0;
               if (::read(sockfd, &again, 8) == 8)
                 data();
@@ -557,14 +557,14 @@ namespace ₿ {
               curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post.data());
             });
           };
-          static const json request(const string &url, const function<void(CURL*)> custom_setopt) {
+          static const json request(const string &url, const function<void(CURL*)> curl_custom_setopt) {
             static mutex waiting_reply;
             lock_guard<mutex> lock(waiting_reply);
             string reply;
             CURLcode rc = CURLE_FAILED_INIT;
             CURL *curl = curl_easy_init();
             if (curl) {
-              custom_setopt(curl);
+              curl_custom_setopt(curl);
               curl_global_setopt(curl);
               curl_easy_setopt(curl, CURLOPT_URL, url.data());
               curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &write);
@@ -828,7 +828,7 @@ namespace ₿ {
             , session(e)
             , time(Tstamp)
           {
-            start(loopfd, ioHttp);
+            Socket::start(loopfd, ioHttp);
           };
           void shutdown() {
             if (ssl) {
