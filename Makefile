@@ -2,7 +2,7 @@ K         ?= K.sh
 MAJOR      = 0
 MINOR      = 6
 PATCH      = 0
-BUILD      = 16
+BUILD      = 17
 
 OBLIGATORY = DISCLAIMER: This is strict non-violent software: \
            \nif you hurt other living creatures, please stop; \
@@ -34,6 +34,7 @@ KHOST     := $(shell echo $(CHOST)                               \
                | sed 's/\([a-z_0-9]*\)-\([a-z_0-9]*\)-.*/\2-\1/' \
                | sed 's/^w64/win64/'                             )
 KLOCAL    := build-$(KHOST)/local
+KHOME      = /var/lib/K
 
 ERR        = *** K require g++ v7 or greater, but it was not found.
 HINT      := consider a symlink at /usr/bin/$(CHOST)-g++ pointing to your g++-7 or g++-8 executable
@@ -44,6 +45,7 @@ KARGS     := -std=c++17 -O3 -pthread -D'K_HEAD="$(shell  \
   )"' -D'K_CHOST="$(KHOST)"' -D'K_SOURCE="K-$(KSRC)"'    \
   -D'K_STAMP="$(shell date "+%Y-%m-%d %H:%M:%S")"'       \
   -D'K_BUILD="v$(MAJOR).$(MINOR).$(PATCH)+$(BUILD)"'     \
+  -D'K_HOME="$(KHOME)"'                                  \
   -I$(KLOCAL)/include $(addprefix $(KLOCAL)/lib/,        \
     K-$(KHOST).$(ABI).a                                  \
     libncurses.a                                         \
@@ -116,14 +118,14 @@ hlep hepl help:
 	#                                                  #
 
 doc test:
-	@$(MAKE) -sC $@
+	@$(MAKE) -sC $@ KHOME=$(KHOME)
 
 clean check dist:
 ifdef KALL
 	unset KALL $(foreach chost,$(CARCH),&& $(MAKE) $@ CHOST=$(chost))
 else
 	$(if $(subst 8,,$(subst 7,,$(shell $(CHOST)-g++ -dumpversion | cut -d. -f1))),$(warning $(ERR));$(error $(HINT)))
-	@$(MAKE) -C src/lib $@ CHOST=$(CHOST) KHOST=$(KHOST)
+	@$(MAKE) -C src/lib $@ CHOST=$(CHOST) KHOST=$(KHOST) KHOME=$(KHOME)
 endif
 
 $(SOURCE):
@@ -132,15 +134,15 @@ $(SOURCE):
 
 assets: src/bin/$(KSRC)/Makefile
 	$(info $(call STEP,$(KSRC) $@))
-	$(MAKE) -C src/bin/$(KSRC)
+	$(MAKE) -C src/bin/$(KSRC) KHOME=$(KHOME)
 	$(foreach chost,$(CARCH), \
 	  build=build-$(shell echo $(chost) | sed 's/-\([a-z_0-9]*\)-\(linux\)$$/-\2-\1/' | sed 's/\([a-z_0-9]*\)-\([a-z_0-9]*\)-.*/\2-\1/' | sed 's/^w64/win64/') \
 	  && ! test -d $${build} || ((test -d $${build}/local/assets \
-	  || cp -R /var/lib/K/assets $${build}/local/assets)         \
+	  || cp -R $(KHOME)/assets $${build}/local/assets)           \
 	  && $(MAKE) assets.o CHOST=$(chost) chost=$(shell test -n "`command -v $(chost)-g++`" && echo $(chost)- || :) \
 	  && rm -rf $${build}/local/assets) \
 	;)
-	rm -rf /var/lib/K/assets
+	rm -rf $(KHOME)/assets
 
 assets.o: src/bin/$(KSRC)/$(KSRC).disk.S
 	$(chost)g++ -Wa,-I,$(KLOCAL)/assets,-I,src/bin/$(KSRC) -c $^ \
@@ -194,14 +196,14 @@ download:
 	@$(MAKE) upgrade_old_installations -s
 
 upgrade_old_installations:
-	-@$(foreach json,$(wildcard /var/lib/K/cache/handshake.*), rm $(json) || :;)
+	-@$(foreach json,$(wildcard $(KHOME)/cache/handshake.*), rm $(json) || :;)
 	-@test "1" = "$(ABI)" || (echo                                                            \
 	&& echo This app will crash because was compiled with CXX11 ABI, missing in your system.. \
 	&& echo A temporary solution is to recompile the app in your own system with: make dist K \
 	&& echo A permanent solution is to upgrade your OS to a newer version.                    )
 
-cleandb: /var/lib/K/db/K*
-	rm -rf /var/lib/K/db/K*.db
+cleandb: $(KHOME)/db/K*
+	rm -rf $(KHOME)/db/K*
 
 packages:
 	test -n "`command -v apt-get`" && sudo apt-get -y install g++ build-essential automake autoconf libtool libxml2 libxml2-dev zlib1g-dev python curl gzip screen doxygen graphviz \
@@ -210,7 +212,7 @@ packages:
 	|| (test -n "`command -v pacman`" && sudo pacman --noconfirm -S --needed base-devel libxml2 zlib curl python gzip screen)
 
 uninstall:
-	rm -vrf /var/lib/K/cache /var/lib/K/node_modules
+	rm -vrf $(KHOME)/cache $(KHOME)/node_modules
 	@$(foreach bin,$(addprefix /usr/local/bin/,$(notdir $(wildcard $(KLOCAL)/bin/K-*))), sudo rm -v $(bin);)
 
 system_install:
@@ -222,12 +224,12 @@ system_install:
 	@sudo cp -f $(wildcard $(KLOCAL)/bin/K-$(KSRC)*) /usr/local/bin
 	@LS_COLORS="ex=40;92" CLICOLOR="Yes" ls $(shell ls --color > /dev/null 2>&1 && echo --color) -lah $(addprefix /usr/local/bin/,$(notdir $(wildcard $(KLOCAL)/bin/K-$(KSRC)*)))
 	@echo
-	@sudo mkdir -p /var/lib/K
-	@sudo chown $(shell id -u) /var/lib/K
-	@mkdir -p /var/lib/K/cache
-	@mkdir -p /var/lib/K/db
-	@mkdir -p /var/lib/K/ssl
-	@curl -s --time-cond /var/lib/K/ssl/cacert.pem https://curl.haxx.se/ca/cacert.pem -o /var/lib/K/ssl/cacert.pem
+	@sudo mkdir -p $(KHOME)
+	@sudo chown $(shell id -u) $(KHOME)
+	@mkdir -p $(KHOME)/cache
+	@mkdir -p $(KHOME)/db
+	@mkdir -p $(KHOME)/ssl
+	@curl -s --time-cond $(KHOME)/ssl/cacert.pem https://curl.haxx.se/ca/cacert.pem -o $(KHOME)/ssl/cacert.pem
 
 install: packages
 	@yes = | head -n`expr $(shell tput cols) / 2` | xargs echo && echo " _  __\n| |/ /  v$(MAJOR).$(MINOR).$(PATCH)+$(BUILD)\n| ' /\n| . \\   Select your (beloved) architecture\n|_|\\_\\  to download pre-compiled binaries:\n"

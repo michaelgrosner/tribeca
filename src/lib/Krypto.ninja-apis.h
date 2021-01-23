@@ -285,13 +285,11 @@ namespace ₿ {
       virtual json handshake() = 0;
       json handshake(const bool &nocache) {
         json reply;
-        char path[16];
-        getcwd(path, sizeof(path));
-        const string cache = string(path) + "/cache/handshake"
-          + '.' + exchange
-          + '.' + base
-          + '.' + quote
-          + '.' + "json";
+        const string cache = (K_HOME "/cache/handshake")
+          + ('.' + exchange)
+          +  '.' + base
+          +  '.' + quote
+          +  '.' + "json";
         fstream file;
         struct stat st;
         if (!nocache

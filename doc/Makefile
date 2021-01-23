@@ -1,4 +1,4 @@
-KDOC = /var/lib/K/doc
+KDOC = $(KHOME)/doc
 
 all doc: clean
 	@mkdir -p $(KDOC)

@@ -55,7 +55,7 @@ curl:
 	&& cd $(KBUILD)/curl-$(V_CURL)                                                          \
 	&& PKG_CONFIG="pkg-config --static" PKG_CONFIG_PATH=$(KBUILD)/local/lib/pkgconfig       \
 	./configure --host=$(CHOST) --prefix=$(KBUILD)/local                                    \
-	--with-ca-bundle=/var/lib/K/ssl/cacert.pem                                              \
+	--with-ca-bundle=$(KHOME)/ssl/cacert.pem                                                \
 	--with-zlib=$(KBUILD)/local --with-ssl=$(KBUILD)/local --disable-ares                   \
 	--disable-manual --disable-imap --disable-file --disable-tftp --disable-smtp            \
 	--disable-pop3 --disable-smb --disable-ftp --disable-sspi --disable-ldap --disable-dict \

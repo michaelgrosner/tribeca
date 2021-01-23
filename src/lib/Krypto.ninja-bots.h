@@ -72,7 +72,6 @@ namespace ₿ {
       Rollout(/* KMxTWEpb9ig */) {
         static once_flag rollout;
         call_once(rollout, version);
-        chdir("/var/lib/K");
         curl_global_init(CURL_GLOBAL_ALL);
       };
     protected:
@@ -390,13 +389,11 @@ namespace ₿ {
         args["dustybot"] = dustybot;
         args["headless"] = headless;
         args["naked"]    = !display.terminal;
-        char path[16];
-        getcwd(path, sizeof(path));
         vector<Argument> long_options = {
           {"help",         "h",      nullptr,  "show this help and quit"},
           {"version",      "v",      nullptr,  "show current build version and quit"},
           {"latency",      "1",      nullptr,  "check current HTTP latency (not from WS) and quit"},
-          {"nocache",      "1",      nullptr,  "do not cache handshakes 7 hours at " + string(path) + "/cache"}
+          {"nocache",      "1",      nullptr,  "do not cache handshakes 7 hours at " K_HOME "/cache"}
         };
         if (!arg<int>("autobot")) long_options.push_back(
           {"autobot",      "1",      nullptr,  "automatically start trading on boot"}
@@ -409,7 +406,7 @@ namespace ₿ {
         );
         if (databases) long_options.push_back(
           {"database",     "FILE",   "",       "set alternative PATH to database filename,"
-                                               "\n" "default PATH is '" + string(path) + "/db/K-*.db',"
+                                               "\n" "default PATH is '" K_HOME "/db/K-*.db',"
                                                "\n" "or use ':memory:' (see sqlite.org/inmemorydb.html)"}
         );
         if (!arg<int>("headless")) for (const Argument &it : (vector<Argument>){
@@ -502,7 +499,7 @@ namespace ₿ {
           while(optind < argc) argerr += string(" ") + argv[optind++];
           error("CF", argerr);
         }
-        tidy(path);
+        tidy();
         colorful = arg<int>("colors");
         if (arguments.second) {
           arguments.second(args);
@@ -528,7 +525,7 @@ namespace ₿ {
           };
       };
     private:
-      void tidy(const string &path) {
+      void tidy() {
         if (arg<string>("currency").find("/") == string::npos or arg<string>("currency").length() < 3)
           error("CF", "Invalid --currency value; must be in the format of BASE/QUOTE, like BTC/EUR");
         if (arg<string>("exchange").empty())
@@ -553,11 +550,11 @@ namespace ₿ {
             (arg<string>("database") == ":memory:"
               ? args["diskdata"]
               : args["database"]
-            ) = path + ("/db/" K_SOURCE)
-              + '.' + arg<string>("exchange")
-              + '.' + arg<string>("base")
-              + '.' + arg<string>("quote")
-              + '.' + "db";
+            ) = (K_HOME "/db/" K_SOURCE)
+              + ('.' + arg<string>("exchange"))
+              +  '.' + arg<string>("base")
+              +  '.' + arg<string>("quote")
+              +  '.' + "db";
         }
         if (!arg<int>("headless")) {
           if (arg<int>("latency") or !arg<int>("port") or !arg<int>("client-limit"))
