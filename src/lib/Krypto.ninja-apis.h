@@ -511,11 +511,9 @@ namespace ₿ {
   };
   class GwApiFix: public GwApiWs,
                   public Curl::FixSocket {
-    protected:
-      string target;
     public:
-      GwApiFix()
-        : FixSocket(apikey, target)
+      GwApiFix(const string &t)
+        : FixSocket(t, apikey)
       {};
       bool connected() const override {
         return WebSocket::connected()
@@ -681,11 +679,11 @@ namespace ₿ {
   class GwCoinbase: public GwApiFix {
     public:
       GwCoinbase()
+        : GwApiFix("Coinbase")
       {
         http   = "https://api.pro.coinbase.com";
         ws     = "wss://ws-feed.pro.coinbase.com";
         fix    = "fix.pro.coinbase.com:4198";
-        target = "Coinbase";
         randId = Random::uuid36Id;
         webMarket = "https://pro.coinbase.com/trade/";
         webOrders = "https://pro.coinbase.com/orders/";

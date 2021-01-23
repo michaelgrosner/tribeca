@@ -67,7 +67,16 @@ namespace ₿ {
 
   class FixFrames {
     protected:
-      string frame(string data, const string &type, const unsigned long &sequence, const string &sender, const string &target) const {
+      const string  target;
+    private_ref:
+      const string &sender;
+    public:
+      FixFrames(const string &t, const string &s)
+        : target(t)
+        , sender(s)
+      {};
+    protected:
+      string frame(string data, const string &type, const unsigned long &sequence) const {
         data = "35=" + type                     + "\u0001"
                "34=" + to_string(sequence)      + "\u0001"
                "49=" + sender                   + "\u0001"
@@ -421,15 +430,11 @@ namespace ₿ {
   class Curl {
     private_friend:
       class Easy: public Events::Poll {
+        protected:
+          string in;
         private:
           CURL *curl = nullptr;
           string out;
-        private_ref:
-          string &in;
-        public:
-          Easy(string &i)
-            : in(i)
-          {};
         protected:
           void cleanup() {
             if (curl) {
@@ -459,7 +464,9 @@ namespace ₿ {
                 or string::npos == in.find(res2)
               ) {
                 if (rc == CURLE_OK)
-                  rc = CURLE_WEIRD_SERVER_REPLY;
+                  rc = string::npos == in.find("invalid API key")
+                     ? CURLE_WEIRD_SERVER_REPLY
+                     : CURLE_LOGIN_DENIED;
                 cleanup();
               }
               in.clear();
@@ -588,11 +595,7 @@ namespace ₿ {
       class WebSocket: public Easy,
                        public WebSocketFrames {
         private:
-          string in;
-        public:
-          WebSocket()
-            : Easy(in)
-          {};
+          using Easy::in;
         protected:
           CURLcode connect(const string &uri) {
             CURLcode rc = CURLE_URL_MALFORMAT;
@@ -648,28 +651,23 @@ namespace ₿ {
       class FixSocket: public Easy,
                        public FixFrames {
         private:
-          string in;
+          using Easy::in;
           unsigned long sequence = 0;
-        private_ref:
-          const string &sender,
-                       &target;
         public:
-          FixSocket(const string &s, const string &t)
-            : Easy(in)
-            , sender(s)
-            , target(t)
+          FixSocket(const string &t, const string &s)
+            : FixFrames(t, s)
           {};
         protected:
           CURLcode connect(const string &uri, const string &logon) {
             return Easy::connect(
               "https://" + uri,
-              frame(logon, "A", sequence = 1, sender, target),
+              frame(logon, "A", sequence = 1),
               "8=FIX.4.2" "\u0001",
               "\u0001" "35=A" "\u0001"
             );
           };
           CURLcode emit(const string &data, const string &type) {
-            return Easy::emit(frame(data, type, ++sequence, sender, target));
+            return Easy::emit(frame(data, type, ++sequence));
           };
           string unframe() {
             string pong;

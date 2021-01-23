@@ -1255,7 +1255,7 @@ namespace ₿ {
         if (!gateway->tickPrice or !gateway->tickSize or !gateway->minSize)
           error("GW", "Unable to fetch data from " + gateway->exchange
             + " for symbols " + gateway->base + "/" + gateway->quote
-            + ", possible error message: " + reply.dump());
+            + ", response was: " + reply.dump());
         gateway->report(notes, arg<int>("nocache"));
       };
       void setup() {
