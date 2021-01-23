@@ -2,7 +2,7 @@ K         ?= K.sh
 MAJOR      = 0
 MINOR      = 6
 PATCH      = 0
-BUILD      = 15
+BUILD      = 16
 
 OBLIGATORY = DISCLAIMER: This is strict non-violent software: \
            \nif you hurt other living creatures, please stop; \
@@ -222,12 +222,12 @@ system_install:
 	@sudo cp -f $(wildcard $(KLOCAL)/bin/K-$(KSRC)*) /usr/local/bin
 	@LS_COLORS="ex=40;92" CLICOLOR="Yes" ls $(shell ls --color > /dev/null 2>&1 && echo --color) -lah $(addprefix /usr/local/bin/,$(notdir $(wildcard $(KLOCAL)/bin/K-$(KSRC)*)))
 	@echo
-	sudo mkdir -p /var/lib/K
-	sudo chown $(shell id -u) /var/lib/K
-	mkdir -p /var/lib/K/cache
-	mkdir -p /var/lib/K/db
-	mkdir -p /var/lib/K/ssl
-	curl -s --time-cond /var/lib/K/ssl/cacert.pem https://curl.haxx.se/ca/cacert.pem -o /var/lib/K/ssl/cacert.pem
+	@sudo mkdir -p /var/lib/K
+	@sudo chown $(shell id -u) /var/lib/K
+	@mkdir -p /var/lib/K/cache
+	@mkdir -p /var/lib/K/db
+	@mkdir -p /var/lib/K/ssl
+	@curl -s --time-cond /var/lib/K/ssl/cacert.pem https://curl.haxx.se/ca/cacert.pem -o /var/lib/K/ssl/cacert.pem
 
 install: packages
 	@yes = | head -n`expr $(shell tput cols) / 2` | xargs echo && echo " _  __\n| |/ /  v$(MAJOR).$(MINOR).$(PATCH)+$(BUILD)\n| ' /\n| . \\   Select your (beloved) architecture\n|_|\\_\\  to download pre-compiled binaries:\n"

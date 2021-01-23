@@ -921,17 +921,19 @@ namespace ₿ {
           string address() const {
             string addr;
 #ifndef _WIN32
-            sockaddr_storage ss;
-            socklen_t len = sizeof(ss);
-            if (getpeername(sockfd, (sockaddr*)&ss, &len) != -1) {
+            union {
+              sockaddr         sa;
+              sockaddr_in      s4;
+              sockaddr_in6     s6;
+              sockaddr_storage ss;
+            } u;
+            socklen_t len = sizeof(u);
+            if (getpeername(sockfd, &u.sa, &len) != -1) {
               char buf[INET6_ADDRSTRLEN];
-              if (ss.ss_family == AF_INET) {
-                auto *ipv4 = (sockaddr_in*)&ss;
-                inet_ntop(AF_INET, &ipv4->sin_addr, buf, sizeof(buf));
-              } else {
-                auto *ipv6 = (sockaddr_in6*)&ss;                                //-V641
-                inet_ntop(AF_INET6, &ipv6->sin6_addr, buf, sizeof(buf));
-              }
+              if (u.ss.ss_family == AF_INET)
+                inet_ntop(AF_INET,  &u.s4.sin_addr,  buf, sizeof(buf));
+              else
+                inet_ntop(AF_INET6, &u.s6.sin6_addr, buf, sizeof(buf));
               addr = string(buf);
               if (addr.length() > 7 and addr.substr(0, 7) == "::ffff:") addr = addr.substr(7);
               if (addr.length() < 7) addr.clear();

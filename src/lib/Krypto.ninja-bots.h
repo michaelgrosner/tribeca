@@ -487,9 +487,9 @@ namespace ₿ {
           switch (k = getopt_long(argc, argv, "hv", (option*)&opt_long[0], &index)) {
             case -1 :
             case  0 : break;
-            case 'h': help(long_options); [[fallthrough]];
+            case 'h': help(long_options);                                 [[fallthrough]];
             case '?':
-            case 'v': EXIT(EXIT_SUCCESS);                                       //-V796
+            case 'v': EXIT(EXIT_SUCCESS);                                 [[fallthrough]];
             default : {
               const string name(opt_long.at(index).name);
               if      (holds_alternative<int>(args[name]))    args[name] =   stoi(optarg);
