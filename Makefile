@@ -357,6 +357,6 @@ md5: src
 	find src/lib -type f -exec md5sum "{}" + > src/lib.md5
 
 asandwich:
-	@test `whoami` = 'root' && echo OK || echo make it yourself!
+	@test "`whoami`" = "root" && echo OK || echo make it yourself!
 
 .PHONY: all K $(SOURCE) hlep hepl help doc test src assets assets.o clean check dist download cleandb list screen start stop restart startall stopall restartall packages system_install uninstall install docker reinstall diff upgrade changelog test-c push MAJOR MINOR PATCH BUILD release md5 asandwich
