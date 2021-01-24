@@ -70,15 +70,15 @@ See [etc/Dockerfile](https://github.com/ctubio/Krypto-trading-bot/tree/master/et
 
 ### ~~Windows Installation~~
 
-~~Before proceed with a manual installation, ensure your target machine has [Cygwin](https://cygwin.com/install.html) installed.~~
+~~Before proceed with a manual installation, ensure your target machine has [MSYS2](https://www.msys2.org/) installed.~~
 
-~~Use Cygwin Installer to install `make`, and use Cygwin Terminal to install and run the bot.~~
+~~Use MSYS2 Terminal to install and run the bot (install `make` with `pacman -S make`).~~
 
 ### Manual GIT Installation
 
 0. Ensure you agree to install collaborative non-free software (see [Unlock](#unlock) section).
 
-1. Ensure your target machine has `git`, `make` and `vim` installed.
+1. Ensure your target machine has `git` and `make` installed.
 
 2. Download it wherever you want (feel free to customize the suggested folder name K) and execute the installer:
 ```
@@ -98,7 +98,7 @@ To upgrade anytime see [Upgrade to the latest commit](#upgrade-to-the-latest-com
 
 0. Ensure you agree to install collaborative non-free software (see [Unlock](#unlock) section).
 
-1. Ensure your target machine has `curl`, `make` and `vim` installed.
+1. Ensure your target machine has `curl` and `make` installed.
 
 2. Download it wherever you want (feel free to customize the suggested folder name K) and execute the installer:
 ```
