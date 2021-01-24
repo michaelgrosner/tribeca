@@ -40,6 +40,7 @@ All currency pairs are supported.
   - [MANUAL](https://github.com/ctubio/Krypto-trading-bot/blob/master/doc/MANUAL.md)
 - Installation
   - [Docker Installation](#docker-installation)
+  - [Winy Installation](#winy-installation)
   - [Manual GIT Installation](#manual-git-installation)
   - [Manual ZIP Installation](#manual-zip-installation)
   - [Configuration After Manual Installation](#configuration-after-manual-installation)
@@ -65,7 +66,13 @@ All currency pairs are supported.
 
 ### Docker Installation
 
-See [etc/Dockerfile](https://github.com/ctubio/Krypto-trading-bot/tree/master/etc#dockerfile) section if you use winy (because the Manual Installation only works on unix-like platforms).
+See [etc/Dockerfile](https://github.com/ctubio/Krypto-trading-bot/tree/master/etc#dockerfile) file.
+
+### Winy Installation
+
+Before proceed with a manual installation, ensure your target machine has [Cygwin](https://cygwin.com/install.html) installed.
+
+Use Cygwin Installer to install `make`, and use Cygwin Terminal to install and run the bot.
 
 ### Manual GIT Installation
 
@@ -80,7 +87,7 @@ See [etc/Dockerfile](https://github.com/ctubio/Krypto-trading-bot/tree/master/et
  $ make install
 ```
 
-3. Open the config file in your favorite text editor:
+3. Open and edit the config file `K.sh` in your favorite text editor:
 ```
  $ vim K.sh
 ```
@@ -101,7 +108,7 @@ To upgrade anytime see [Upgrade to the latest commit](#upgrade-to-the-latest-com
  $ make install
 ```
 
-3. Open the config file in your favorite text editor:
+3. Open and edit the config file `K.sh` in your favorite text editor:
 ```
  $ vim K.sh
 ```
