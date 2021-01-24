@@ -27,7 +27,7 @@ CHOST     ?= $(shell test -n "`command -v g++`" && g++ -dumpmachine \
 ABI       ?= $(shell echo '\#include <string>'             \
                | $(CHOST)-g++ -x c++ -dM -E - 2> /dev/null \
                | grep '_GLIBCXX_USE_CXX11_ABI 1'           \
-               | wc -l                                     )
+               | wc -l | tr -d ' '                         )
 
 KHOST     := $(shell echo $(CHOST)                               \
                | sed 's/-\([a-z_0-9]*\)-\(linux\)$$/-\2-\1/'     \
@@ -39,6 +39,7 @@ KHOME      = /var/lib/K
 ERR        = *** K require g++ v7 or greater, but it was not found.
 HINT      := consider a symlink at /usr/bin/$(CHOST)-g++ pointing to your g++-7 or g++-8 executable
 STEP       = $(shell tput setaf 2;tput setab 0)Building $(1)..$(shell tput sgr0)
+SUDO       = $(shell sudo echo sudo 2>/dev/null)
 
 KARGS     := -std=c++17 -O3 -pthread -D'K_HEAD="$(shell  \
     git rev-parse HEAD 2>/dev/null || echo HEAD          \
@@ -206,35 +207,36 @@ cleandb: $(KHOME)/db/K*
 	rm -rf $(KHOME)/db/K*
 
 packages:
-	test -n "`command -v apt-get`" && sudo apt-get -y install g++ build-essential automake autoconf libtool libxml2 libxml2-dev zlib1g-dev python curl gzip screen doxygen graphviz \
+	@test -n "`command -v apt-get`" && sudo apt-get -y install g++ build-essential automake autoconf libtool libxml2 libxml2-dev zlib1g-dev python curl gzip screen doxygen graphviz \
 	|| (test -n "`command -v yum`" && sudo yum -y install gcc-c++ automake autoconf libtool libxml2 libxml2-devel python curl gzip screen) \
 	|| (test -n "`command -v brew`" && (xcode-select --install || :) && (brew install automake autoconf libxml2 zlib python curl gzip screen proctools doxygen graphviz || brew upgrade || :)) \
-	|| (test -n "`command -v pacman`" && sudo pacman --noconfirm -S --needed base-devel libxml2 zlib curl python gzip screen)
+	|| (test -n "`command -v pacman`" && sudo pacman --noconfirm -S --needed base-devel libxml2 zlib curl python gzip screen) \
+	|| echo smells like winy.. 0 packages installed.
 
 uninstall:
 	rm -vrf $(KHOME)/cache $(KHOME)/node_modules
-	@$(foreach bin,$(addprefix /usr/local/bin/,$(notdir $(wildcard $(KLOCAL)/bin/K-*))), sudo rm -v $(bin);)
+	@$(foreach bin,$(addprefix /usr/local/bin/,$(notdir $(wildcard $(KLOCAL)/bin/K-*))), $(SUDO) rm -v $(bin);)
 
 system_install:
-	$(info Checking if sudo           is allowed  at /usr/local/bin.. $(shell sudo ls -ld /usr/local/bin > /dev/null 2>&1 && echo OK || echo ERROR))
+	$(info Checking if sudo           is allowed  at /usr/local/bin.. $(shell $(SUDO) ls -ld /usr/local/bin > /dev/null 2>&1 && echo OK || echo ERROR))
 	$(info Checking if /usr/local/bin is already  in your PATH..      $(if $(shell echo $$PATH | grep /usr/local/bin),OK))
 	$(if $(shell echo $$PATH | grep /usr/local/bin),,$(info $(subst ..,,$(subst Building ,,$(call STEP,Warning! you MUST add /usr/local/bin to your PATH!)))))
 	$(info )
 	$(info List of installed K binaries:)
-	@sudo cp -f $(wildcard $(KLOCAL)/bin/K-$(KSRC)*) /usr/local/bin
+	@$(SUDO) cp -f $(wildcard $(KLOCAL)/bin/K-$(KSRC)*) $(wildcard $(KLOCAL)/bin/*.dll) /usr/local/bin
 	@LS_COLORS="ex=40;92" CLICOLOR="Yes" ls $(shell ls --color > /dev/null 2>&1 && echo --color) -lah $(addprefix /usr/local/bin/,$(notdir $(wildcard $(KLOCAL)/bin/K-$(KSRC)*)))
 	@echo
-	@sudo mkdir -p $(KHOME)
-	@sudo chown $(shell id -u) $(KHOME)
+	@$(SUDO) mkdir -p $(KHOME)
+	@$(SUDO) chown $(shell id -u) $(KHOME)
 	@mkdir -p $(KHOME)/cache
 	@mkdir -p $(KHOME)/db
 	@mkdir -p $(KHOME)/ssl
 	@curl -s --time-cond $(KHOME)/ssl/cacert.pem https://curl.haxx.se/ca/cacert.pem -o $(KHOME)/ssl/cacert.pem
 
 install: packages
-	@yes = | head -n`expr $(shell tput cols) / 2` | xargs echo && echo " _  __\n| |/ /  v$(MAJOR).$(MINOR).$(PATCH)+$(BUILD)\n| ' /\n| . \\   Select your (beloved) architecture\n|_|\\_\\  to download pre-compiled binaries:\n"
-	@echo $(CARCH) | tr ' ' "\n" | cat -n && echo "\n(Hint! uname says \"`uname -sm`\", and win32 auto-install does not work yet)\n"
-	@read -p "[$(shell seq -s / `echo $(CARCH) | tr ' ' "\n" | wc -l`)]: " chost && $(MAKE) download CHOST=`echo $(CARCH) | cut -d ' ' -f$${chost}`
+	@yes = | head -n`expr $(shell tput cols) / 2` | xargs echo && echo " _  __" && echo "| |/ /  v$(MAJOR).$(MINOR).$(PATCH)+$(BUILD)" && echo "| ' /" && echo "| . \\   Select your (beloved) architecture" && echo "|_|\\_\\  to download pre-compiled binaries:" && echo
+	@echo $(CARCH) | tr ' ' "\n" | cat -n && echo && echo "(Hint! uname says \"`uname -sm`\")" && echo
+	@read -p "[$(shell seq -s \\ `echo $(CARCH) | tr ' ' "\n" | wc -l`)]: " chost && $(MAKE) download CHOST=`echo $(CARCH) | cut -d ' ' -f$${chost}`
 
 docker: packages download
 	@sed -i "/Usage/,+72d" K.sh
