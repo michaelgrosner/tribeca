@@ -40,7 +40,7 @@ All currency pairs are supported.
   - [MANUAL](https://github.com/ctubio/Krypto-trading-bot/blob/master/doc/MANUAL.md)
 - Installation
   - [Docker Installation](#docker-installation)
-  - [Winy Installation](#winy-installation)
+  - [Windows Installation](#windows-installation)
   - [Manual GIT Installation](#manual-git-installation)
   - [Manual ZIP Installation](#manual-zip-installation)
   - [Configuration After Manual Installation](#configuration-after-manual-installation)
@@ -68,7 +68,7 @@ All currency pairs are supported.
 
 See [etc/Dockerfile](https://github.com/ctubio/Krypto-trading-bot/tree/master/etc#dockerfile) file.
 
-### Winy Installation
+### Windows Installation
 
 Before proceed with a manual installation, ensure your target machine has [Cygwin](https://cygwin.com/install.html) installed.
 
