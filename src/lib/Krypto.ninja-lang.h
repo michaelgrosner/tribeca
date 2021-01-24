@@ -28,7 +28,10 @@
 #include <getopt.h>
 #include <unistd.h>
 
-#ifndef _WIN32
+#ifdef  _WIN32
+#undef  _WIN32_WINNT
+#define _WIN32_WINNT 0x0601
+#else
 #include <execinfo.h>
 #include <sys/socket.h>
 #include <sys/resource.h>

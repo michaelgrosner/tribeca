@@ -920,7 +920,6 @@ namespace ₿ {
           };
           string address() const {
             string addr;
-#ifndef _WIN32
             union {
               sockaddr         sa;
               sockaddr_in      s4;
@@ -938,7 +937,6 @@ namespace ₿ {
               if (addr.length() > 7 and addr.substr(0, 7) == "::ffff:") addr = addr.substr(7);
               if (addr.length() < 7) addr.clear();
             }
-#endif
             return addr.empty() ? "unknown" : addr;
           };
           void io() {
