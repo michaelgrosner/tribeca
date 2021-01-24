@@ -2,7 +2,7 @@ K         ?= K.sh
 MAJOR      = 0
 MINOR      = 6
 PATCH      = 0
-BUILD      = 19
+BUILD      = 20
 
 OBLIGATORY = DISCLAIMER: This is strict non-violent software: \
            \nif you hurt other living creatures, please stop; \
@@ -217,7 +217,7 @@ uninstall:
 	@$(foreach bin,$(addprefix /usr/local/bin/,$(notdir $(wildcard $(KLOCAL)/bin/K-*))), $(SUDO) rm -v $(bin);)
 
 system_install:
-	$(info Checking if sudo           is allowed  at /usr/local/bin.. $(shell $(SUDO) ls -ld /usr/local/bin > /dev/null 2>&1 && echo OK || echo ERROR))
+	$(info Checking if sudo           is allowed  at /usr/local/bin.. $(shell $(SUDO) mkdir -p /usr/local/bin && $(SUDO) ls -ld /usr/local/bin > /dev/null 2>&1 && echo OK || echo ERROR))
 	$(info Checking if /usr/local/bin is already  in your PATH..      $(if $(shell echo $$PATH | grep /usr/local/bin),OK))
 	$(if $(shell echo $$PATH | grep /usr/local/bin),,$(info $(subst ..,,$(subst Building ,,$(call STEP,Warning! you MUST add /usr/local/bin to your PATH!)))))
 	$(info )
