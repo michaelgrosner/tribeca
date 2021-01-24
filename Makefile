@@ -39,7 +39,7 @@ KHOME      = /var/lib/K
 ERR        = *** K require g++ v7 or greater, but it was not found.
 HINT      := consider a symlink at /usr/bin/$(CHOST)-g++ pointing to your g++-7 or g++-8 executable
 STEP       = $(shell tput setaf 2;tput setab 0)Building $(1)..$(shell tput sgr0)
-SUDO       = $(shell sudo echo sudo 2>/dev/null)
+SUDO       = $(shell test -n "`command -v sudo`" && echo sudo)
 
 KARGS     := -std=c++17 -O3 -pthread -D'K_HEAD="$(shell  \
     git rev-parse HEAD 2>/dev/null || echo HEAD          \
@@ -210,8 +210,7 @@ packages:
 	@test -n "`command -v apt-get`" && sudo apt-get -y install g++ build-essential automake autoconf libtool libxml2 libxml2-dev zlib1g-dev python curl gzip screen doxygen graphviz \
 	|| (test -n "`command -v yum`" && sudo yum -y install gcc-c++ automake autoconf libtool libxml2 libxml2-devel python curl gzip screen) \
 	|| (test -n "`command -v brew`" && (xcode-select --install || :) && (brew install automake autoconf libxml2 zlib python curl gzip screen proctools doxygen graphviz || brew upgrade || :)) \
-	|| (test -n "`command -v pacman`" && sudo pacman --noconfirm -S --needed base-devel libxml2 zlib curl python gzip screen) \
-	|| echo smells like winy.. 0 packages installed.
+	|| (test -n "`command -v pacman`" && $(SUDO) pacman --noconfirm -S --needed base-devel libxml2 zlib curl python gzip)
 
 uninstall:
 	rm -vrf $(KHOME)/cache $(KHOME)/node_modules
