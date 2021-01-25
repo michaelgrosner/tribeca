@@ -36,16 +36,16 @@ check:
 zlib:
 	test -d $(KBUILD)/zlib-$(V_ZLIB) || (                                             \
 	curl -L https://zlib.net/zlib-$(V_ZLIB).tar.gz | tar xz -C $(KBUILD)              \
-	&& cd $(KBUILD)/zlib-$(V_ZLIB) && (test -n "`echo $(CHOST) | grep mingw32`"       \
-	&& DESTDIR=$(KBUILD)/local/ BINARY_PATH=bin INCLUDE_PATH=include LIBRARY_PATH=lib \
-	make all install -fwin32/Makefile.gcc PREFIX=$(CHOST)-                            \
-	|| (./configure --static --prefix=$(KBUILD)/local && make all install))           )
+	&& cd $(KBUILD)/zlib-$(V_ZLIB) && $(if $(findstring mingw32,$(CHOST)),            \
+	DESTDIR=$(KBUILD)/local/ BINARY_PATH=bin INCLUDE_PATH=include LIBRARY_PATH=lib    \
+	make all install -fwin32/Makefile.gcc PREFIX=$(CHOST)-,                           \
+	./configure --static --prefix=$(KBUILD)/local && make all install)                )
 
 openssl:
 	test -d $(KBUILD)/openssl-$(V_SSL) || (                                                   \
 	curl -L https://www.openssl.org/source/openssl-$(V_SSL).tar.gz | tar xz -C $(KBUILD)      \
 	&& cd $(KBUILD)/openssl-$(V_SSL) && CC=gcc ./Configure no-asm                             \
-	$(shell test -n "`echo $(CHOST) | grep mingw32`" && echo mingw64 || echo gcc)             \
+	$(if $(findstring mingw32,$(CHOST)),mingw64,gcc)                                          \
 	--cross-compile-prefix=$(CHOST)- --prefix=$(KBUILD)/local --openssldir=$(KBUILD)/local    \
 	&& make all install_sw install_ssldirs                                                    )
 
@@ -55,7 +55,7 @@ curl:
 	&& cd $(KBUILD)/curl-$(V_CURL)                                                          \
 	&& PKG_CONFIG="pkg-config --static" PKG_CONFIG_PATH=$(KBUILD)/local/lib/pkgconfig       \
 	./configure --host=$(CHOST) --prefix=$(KBUILD)/local                                    \
-	--with-ca-bundle=$(KHOME)/ssl/cacert.pem                                                \
+	$(if $(findstring /var/lib,$(KHOME)), --with-ca-bundle=$(KHOME)/ssl/cacert.pem)         \
 	--with-zlib=$(KBUILD)/local --with-ssl=$(KBUILD)/local --disable-ares                   \
 	--disable-manual --disable-imap --disable-file --disable-tftp --disable-smtp            \
 	--disable-pop3 --disable-smb --disable-ftp --disable-sspi --disable-ldap --disable-dict \
@@ -74,21 +74,21 @@ ncurses:
 	test -d $(KBUILD)/ncurses-$(V_NCUR) || (                                                          \
 	curl -L http://ftp.gnu.org/pub/gnu/ncurses/ncurses-$(V_NCUR).tar.gz | tar xz -C $(KBUILD)         \
 	&& cd $(KBUILD)/ncurses-$(V_NCUR) && CPPFLAGS=-P ./configure                                      \
-	--host=$(CHOST) --prefix=$(KBUILD)/local $(shell test -n "`echo $(CHOST) | grep mingw32`" && echo \
+	--host=$(CHOST) --prefix=$(KBUILD)/local $(if $(findstring mingw32,$(CHOST)),                     \
 	--without-cxx-binding --without-ada --enable-reentrant --with-normal                              \
-	--disable-home-terminfo --enable-sp-funcs --enable-term-driver --enable-interop || :)             \
+	--disable-home-terminfo --enable-sp-funcs --enable-term-driver --enable-interop)                  \
 	--disable-lib-suffixes --without-debug --without-progs --without-tests                            \
 	--with-fallbacks=linux,screen,vt100,xterm,xterm-256color,putty-256color && make all install       \
-	&& (test -n "`echo $(CHOST) | grep mingw32`"                                                      \
-	&& sed -i '1 i\#undef KEY_EVENT' $(KBUILD)/local/include/ncurses/curses.h || :)                   )
+	$(if $(findstring mingw32,$(CHOST)),                                                              \
+	&& sed -i '1 i\#undef KEY_EVENT' $(KBUILD)/local/include/ncurses/curses.h)                        )
 
 json:
 	test -f $(KBUILD)/local/include/json.h || (mkdir -p $(KBUILD)/local/include       \
 	&& curl -L https://github.com/nlohmann/json/releases/download/v$(V_JSON)/json.hpp \
 	-o $(KBUILD)/local/include/json.h &&                                              \
-	sed -i '$$iusing namespace nlohmann;' $(KBUILD)/local/include/json.h &&           \
-	(test -n "`echo $(CHOST) | grep mingw32`" &&                                      \
-	sed -i "s/\(#include <cstddef>\)/\/\/\1/" $(KBUILD)/local/include/json.h ||     :))
+	sed -i '$$iusing namespace nlohmann;' $(KBUILD)/local/include/json.h              \
+	$(if $(findstring mingw32,$(CHOST)),                                              \
+	&& sed -i "s/\(#include <cstddef>\)/\/\/\1/" $(KBUILD)/local/include/json.h)      )
 
 catch:
 	test -f $(KBUILD)/local/include/catch.h || (mkdir -p $(KBUILD)/local/include          \
@@ -96,10 +96,11 @@ catch:
 	-o $(KBUILD)/local/include/catch.h                                                    )
 
 uv:
-	test -z "`echo $(CHOST) | grep darwin;echo $(CHOST) | grep mingw32`" || test -d $(KBUILD)/libuv-$(V_UV) || ( \
+	$(if $(findstring mingw32,$(CHOST))$(findstring darwin,$(CHOST)),                                            \
+	test -d $(KBUILD)/libuv-$(V_UV) || (                                                                         \
 	curl -L https://github.com/libuv/libuv/archive/v$(V_UV).tar.gz | tar xz -C $(KBUILD)                         \
 	&& cd $(KBUILD)/libuv-$(V_UV) && sh autogen.sh && CC=$(CHOST)-clang ./configure --host=$(CHOST)              \
-	--prefix=$(KBUILD)/local && make all install                                                                 )
+	--prefix=$(KBUILD)/local && make all install)                                                                )
 
 pvs:
 ifndef V_PVS

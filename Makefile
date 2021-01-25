@@ -1,47 +1,48 @@
-K         ?= K.sh
-MAJOR      = 0
-MINOR      = 6
-PATCH      = 0
-BUILD      = 20
+K          ?= K.sh
+MAJOR       = 0
+MINOR       = 6
+PATCH       = 0
+BUILD       = 20
 
-OBLIGATORY = DISCLAIMER: This is strict non-violent software: \
-           \nif you hurt other living creatures, please stop; \
-           \notherwise remove all copies of the software now.
+OBLIGATORY  = DISCLAIMER: This is strict non-violent software: \
+            \nif you hurt other living creatures, please stop; \
+            \notherwise remove all copies of the software now.
 
-PERMISSIVE = This is free software: the UI and quoting engine are open source, \
-           \nfeel free to hack both as you need.                               \
-                                                                               \
-           \nThis is non-free software: built-in gateway exchange integrations \
-           \nare licensed by/under the law of my grandma (since last century), \
-           \nfeel free to crack all as you need.
+PERMISSIVE  = This is free software: the UI and quoting engine are open source, \
+            \nfeel free to hack both as you need.                               \
+                                                                                \
+            \nThis is non-free software: built-in gateway exchange integrations \
+            \nare licensed by/under the law of my grandma (since last century), \
+            \nfeel free to crack all as you need.
 
-SOURCE    := $(notdir $(wildcard src/bin/*))
-CARCH      = x86_64-linux-gnu      \
-             arm-linux-gnueabihf   \
-             aarch64-linux-gnu     \
-             x86_64-apple-darwin17 \
-             x86_64-w64-mingw32
+SOURCE     := $(notdir $(wildcard src/bin/*))
+CARCH       = x86_64-linux-gnu      \
+              arm-linux-gnueabihf   \
+              aarch64-linux-gnu     \
+              x86_64-apple-darwin17 \
+              x86_64-w64-mingw32
 
-CHOST     ?= $(shell test -n "`command -v g++`" && g++ -dumpmachine \
-               || echo $(subst build-,,$(firstword $(wildcard build-*))))
-ABI       ?= $(shell echo '\#include <string>'             \
-               | $(CHOST)-g++ -x c++ -dM -E - 2> /dev/null \
-               | grep '_GLIBCXX_USE_CXX11_ABI 1'           \
-               | wc -l | tr -d ' '                         )
+CHOST      ?= $(or $(findstring $(shell test -n "`command -v g++`" && g++ -dumpmachine), \
+                $(CARCH)),$(subst build-,,$(firstword $(wildcard build-*))))
+ABI        ?= $(shell echo '\#include <string>'             \
+                | $(CHOST)-g++ -x c++ -dM -E - 2> /dev/null \
+                | grep '_GLIBCXX_USE_CXX11_ABI 1'           \
+                | wc -l | tr -d ' '                         )
 
-KHOST     := $(shell echo $(CHOST)                               \
-               | sed 's/-\([a-z_0-9]*\)-\(linux\)$$/-\2-\1/'     \
-               | sed 's/\([a-z_0-9]*\)-\([a-z_0-9]*\)-.*/\2-\1/' \
-               | sed 's/^w64/win64/'                             )
-KLOCAL    := build-$(KHOST)/local
-KHOME      = /var/lib/K
+KHOST      := $(shell echo $(CHOST)                               \
+                | sed 's/-\([a-z_0-9]*\)-\(linux\)$$/-\2-\1/'     \
+                | sed 's/\([a-z_0-9]*\)-\([a-z_0-9]*\)-.*/\2-\1/' \
+                | sed 's/^w64/win64/'                             )
+KLOCAL     := build-$(KHOST)/local
+KHOME      := $(if ${SYSTEMROOT},$(word 1,$(subst :, ,${SYSTEMROOT})):/,$(if \
+                $(findstring $(CHOST),$(lastword $(CARCH))),C:/,/var/lib/))K
 
-ERR        = *** K require g++ v7 or greater, but it was not found.
-HINT      := consider a symlink at /usr/bin/$(CHOST)-g++ pointing to your g++-7 or g++-8 executable
-STEP       = $(shell tput setaf 2;tput setab 0)Building $(1)..$(shell tput sgr0)
-SUDO       = $(shell test -n "`command -v sudo`" && echo sudo)
+ERR         = *** K require g++ v7 or greater, but it was not found.
+HINT       := consider a symlink at /usr/bin/$(CHOST)-g++ pointing to your g++ executable
+STEP        = $(shell tput setaf 2;tput setab 0)Building $(1)..$(shell tput sgr0)
+SUDO        = $(shell test -n "`command -v sudo`" && echo sudo)
 
-KARGS     := -std=c++17 -O3 -pthread -D'K_HEAD="$(shell  \
+KARGS      := -std=c++17 -O3 -pthread -D'K_HEAD="$(shell \
     git rev-parse HEAD 2>/dev/null || echo HEAD          \
   )"' -D'K_CHOST="$(KHOST)"' -D'K_SOURCE="K-$(KSRC)"'    \
   -D'K_STAMP="$(shell date "+%Y-%m-%d %H:%M:%S")"'       \
@@ -125,7 +126,7 @@ clean check dist:
 ifdef KALL
 	unset KALL $(foreach chost,$(CARCH),&& $(MAKE) $@ CHOST=$(chost))
 else
-	$(if $(subst 8,,$(subst 7,,$(shell $(CHOST)-g++ -dumpversion | cut -d. -f1))),$(warning $(ERR));$(error $(HINT)))
+	$(if $(shell ver="`$(CHOST)-g++ -dumpversion`" && test $${ver%%.*} -lt 7 && echo 1),$(warning $(ERR));$(error $(HINT)))
 	@$(MAKE) -C src/lib $@ CHOST=$(CHOST) KHOST=$(KHOST) KHOME=$(KHOME)
 endif
 
@@ -154,11 +155,11 @@ ifdef KALL
 	unset KALL $(foreach chost,$(CARCH),&& $(MAKE) $@ CHOST=$(chost))
 else
 	$(info $(call STEP,$(KSRC) $@ $(CHOST)))
-	$(if $(subst 8,,$(subst 7,,$(shell $(CHOST)-g++ -dumpversion | cut -d. -f1))),$(warning $(ERR));$(error $(HINT)))
+	$(if $(shell ver="`$(CHOST)-g++ -dumpversion`" && test $${ver%%.*} -lt 7 && echo 1),$(warning $(ERR));$(error $(HINT)))
 	@$(CHOST)-g++ --version
 	@mkdir -p $(KLOCAL)/bin
 	-@egrep ₿ src test -lR | xargs -r sed -i 's/₿/\\u20BF/g'
-	$(MAKE) $(shell test -n "`echo $(CHOST) | grep darwin`" && echo Darwin || (test -n "`echo $(CHOST) | grep mingw32`" && echo Win32 || uname -s)) CHOST=$(CHOST)
+	$(MAKE) $(if $(findstring darwin,$(CHOST)),Darwin,$(if $(findstring mingw32,$(CHOST)),Win32,$(shell uname -s))) CHOST=$(CHOST)
 	-@egrep \\u20BF src test -lR | xargs -r sed -i 's/\\u20BF/₿/g'
 	@chmod +x $(KLOCAL)/bin/K-$(KSRC)*
 	@$(MAKE) system_install -s
@@ -198,13 +199,9 @@ download:
 
 upgrade_old_installations:
 	-@$(foreach json,$(wildcard $(KHOME)/cache/handshake.*), rm $(json) || :;)
-	-@test "1" = "$(ABI)" || (echo                                                            \
-	&& echo This app will crash because was compiled with CXX11 ABI, missing in your system.. \
-	&& echo A temporary solution is to recompile the app in your own system with: make dist K \
-	&& echo A permanent solution is to upgrade your OS to a newer version.                    )
 
-cleandb: $(KHOME)/db/K*
-	rm -rf $(KHOME)/db/K*
+cleandb:
+	rm -vrf $(KHOME)/db/K*
 
 packages:
 	@test -n "`command -v apt-get`" && sudo apt-get -y install g++ build-essential automake autoconf libtool libxml2 libxml2-dev zlib1g-dev python curl gzip screen doxygen graphviz \
@@ -345,7 +342,7 @@ else ifndef KTARGZ
 	@$(MAKE) KTARGZ="K-$(MAJOR).$(MINOR).$(PATCH).$(BUILD)-$(KHOST).tar.gz" $@
 else
 	@tar -cvzf $(KTARGZ) $(KLOCAL)/bin/K-* $(KLOCAL)/lib/K-* LICENSE COPYING README.md Makefile doc etc test                      \
-	$(shell test -n "`echo $(CHOST) | grep mingw32`" && echo $(KLOCAL)/bin/*dll || :) src                                         \
+	$(if $(findstring mingw32,$(CHOST)),$(KLOCAL)/bin/*dll) src                                                                   \
 	&& curl -s -n -H "Content-Type:application/octet-stream" -H "Authorization: token ${KRELEASE}"                                \
 	--data-binary "@$(PWD)/$(KTARGZ)" "https://uploads.github.com/repos/ctubio/Krypto-trading-bot/releases/$(shell curl -s        \
 	https://api.github.com/repos/ctubio/Krypto-trading-bot/releases/latest | grep id | head -n1 | cut -d ' ' -f4 | cut -d ',' -f1 \
