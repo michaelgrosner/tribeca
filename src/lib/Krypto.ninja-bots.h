@@ -237,7 +237,7 @@ namespace ₿ {
           << setw(3) << microseconds.count();
         time_t tt = chrono::system_clock::to_time_t(clock);
         char datetime[15];
-        strftime(datetime, 15, "%m/%d %T", localtime(&tt));
+        strftime(datetime, 15, "%m/%d %H:%M:%S", localtime(&tt));
         if (!display.terminal)
           return Ansi::b(COLOR_GREEN) + datetime
                + Ansi::r(COLOR_GREEN) + microtime.str()
@@ -508,16 +508,16 @@ namespace ₿ {
         if (arg<int>("naked"))
           display = {};
         if (!arg<string>("interface").empty() and !arg<int>("ipv6"))
-          curl_option_setopt = [this](CURL *curl) {
+          curl_global_setopt = [this](CURL *curl) {
             curl_easy_setopt(curl, CURLOPT_INTERFACE, arg<string>("interface").data());
             curl_easy_setopt(curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
           };
         else if (!arg<string>("interface").empty())
-          curl_option_setopt = [this](CURL *curl) {
+          curl_global_setopt = [this](CURL *curl) {
             curl_easy_setopt(curl, CURLOPT_INTERFACE, arg<string>("interface").data());
           };
         else if (!arg<int>("ipv6"))
-          curl_option_setopt = [](CURL *curl) {
+          curl_global_setopt = [](CURL *curl) {
             curl_easy_setopt(curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
           };
       };
