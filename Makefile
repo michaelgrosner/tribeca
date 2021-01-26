@@ -2,7 +2,7 @@ K          ?= K.sh
 MAJOR       = 0
 MINOR       = 6
 PATCH       = 0
-BUILD       = 21
+BUILD       = 22
 
 OBLIGATORY  = DISCLAIMER: This is strict non-violent software: \
             \nif you hurt other living creatures, please stop; \
@@ -162,7 +162,7 @@ else
 	$(MAKE) $(if $(findstring darwin,$(CHOST)),Darwin,$(if $(findstring mingw32,$(CHOST)),Win32,$(shell uname -s))) CHOST=$(CHOST)
 	-@egrep \\u20BF src test -lR | xargs -r sed -i 's/\\u20BF/₿/g'
 	@chmod +x $(KLOCAL)/bin/K-$(KSRC)*
-	@$(MAKE) system_install -s
+	@$(if $(findstring $(CHOST),$(firstword $(CARCH))),$(MAKE) system_install -s)
 endif
 
 Linux: src/lib/Krypto.ninja-main.cxx src/bin/$(KSRC)/$(KSRC).main.h
@@ -195,10 +195,6 @@ download:
 	curl -L https://github.com/ctubio/Krypto-trading-bot/releases/download/$(MAJOR).$(MINOR).x/K-$(MAJOR).$(MINOR).$(PATCH).$(BUILD)-$(KHOST).tar.gz | tar xz
 	@$(MAKE) system_install -s
 	@test -n "`ls *.sh 2>/dev/null`" || (cp etc/K.sh.dist K.sh && chmod +x K.sh)
-	@$(MAKE) upgrade_old_installations -s
-
-upgrade_old_installations:
-	-@$(foreach json,$(wildcard $(KHOME)/cache/handshake.*), rm $(json) || :;)
 
 cleandb:
 	rm -vrf $(KHOME)/db/K*

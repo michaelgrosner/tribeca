@@ -425,11 +425,6 @@ namespace ₿ {
 
   static function<void(CURL*)> curl_global_setopt = [](CURL *curl) {
     curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
-#ifdef  _WIN32
-    curl_easy_setopt(curl, CURLOPT_SSL_OPTIONS, CURLSSLOPT_NATIVE_CA);
-#endif
-  };
-  static function<void(CURL*)> curl_option_setopt = [](CURL *) {
   };
 
   class Curl {
@@ -458,7 +453,6 @@ namespace ₿ {
             CURLcode rc;
             if (CURLE_OK == (rc = init())) {
               curl_global_setopt(curl);
-              curl_option_setopt(curl);
               curl_easy_setopt(curl, CURLOPT_URL, url.data());
               curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1L);
               curl_easy_setopt(curl, CURLOPT_CONNECT_ONLY, 1L);
@@ -578,7 +572,6 @@ namespace ₿ {
             CURL *curl = curl_easy_init();
             if (curl) {
               curl_global_setopt(curl);
-              curl_option_setopt(curl);
               curl_custom_setopt(curl);
               curl_easy_setopt(curl, CURLOPT_URL, url.data());
               curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &write);
