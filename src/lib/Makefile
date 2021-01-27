@@ -62,7 +62,7 @@ curl:
 	--disable-pop3 --disable-smb --disable-ftp --disable-sspi --disable-ldap --disable-dict \
 	--without-libpsl --without-nghttp2 --without-libssh2 --disable-telnet --disable-rtsp    \
 	--disable-gopher --without-libidn2 --without-librtmp --disable-shared --enable-static   \
-	&& sed -i "/HAVE_GETEUID/d" lib/curl_config.h && make all install                       )
+	&& make && (cd lib && make install) && (cd include && make install)                     )
 
 sqlite:
 	test -d $(KBUILD)/sqlite-autoconf-$(V_SQL) || (                                       \
