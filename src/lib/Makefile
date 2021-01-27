@@ -71,16 +71,16 @@ sqlite:
 	--enable-threadsafe && make install-libLTLIBRARIES install-includeHEADERS             )
 
 ncurses:
-	test -d $(KBUILD)/ncurses-$(V_NCUR) || (                                                    \
-	curl -L http://ftp.gnu.org/pub/gnu/ncurses/ncurses-$(V_NCUR).tar.gz | tar xz -C $(KBUILD)   \
-	&& cd $(KBUILD)/ncurses-$(V_NCUR) && CPPFLAGS=-P ./configure                                \
-	--host=$(CHOST) --prefix=$(KBUILD)/local $(if $(findstring mingw32,$(CHOST)),               \
-	--without-cxx-binding --without-ada --enable-reentrant --with-normal                        \
-	--disable-home-terminfo --enable-sp-funcs --enable-term-driver --enable-interop)            \
-	--disable-lib-suffixes --without-debug --without-progs --without-tests                      \
-	--with-fallbacks=linux,screen,vt100,xterm,xterm-256color,putty-256color && make all install \
-	$(if $(findstring mingw32,$(CHOST)),                                                        \
-	&& sed -i '1 i\#undef KEY_EVENT' $(KBUILD)/local/include/ncurses/curses.h)                  )
+	test -d $(KBUILD)/ncurses-$(V_NCUR) || (                                                  \
+	curl -L http://ftp.gnu.org/pub/gnu/ncurses/ncurses-$(V_NCUR).tar.gz | tar xz -C $(KBUILD) \
+	&& cd $(KBUILD)/ncurses-$(V_NCUR) && CPPFLAGS=-P ./configure                              \
+	--host=$(CHOST) --prefix=$(KBUILD)/local $(if $(findstring mingw32,$(CHOST)),             \
+	--without-cxx-binding --without-ada --enable-reentrant --with-normal                      \
+	--disable-home-terminfo --enable-sp-funcs --enable-term-driver --enable-interop)          \
+	--disable-lib-suffixes --without-debug --without-progs --without-tests                    \
+	--with-fallbacks=linux,screen,vt100,xterm,xterm-256color,putty-256color                   \
+	&& make install.libs $(if $(findstring mingw32,$(CHOST)),                                 \
+	&& sed -i '1 i\#undef KEY_EVENT' $(KBUILD)/local/include/ncurses/curses.h)                )
 
 json:
 	test -f $(KBUILD)/local/include/json.h || (mkdir -p $(KBUILD)/local/include       \
