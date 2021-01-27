@@ -57,7 +57,7 @@ KARGS      := -std=c++17 -O3 -pthread -D'K_HEAD="$(shell \
     libz.a                                               \
   ) $(wildcard $(addprefix $(KLOCAL)/lib/,               \
     K-$(KSRC)-assets.o                                   \
-    libuv.dll.a libuv.a                                  \
+    libuv.a                                              \
   )) $(addprefix -include src/lib/Krypto.ninja-,         \
        $(addsuffix .h,                                   \
          lang                                            \
@@ -188,8 +188,8 @@ Darwin: src/lib/Krypto.ninja-main.cxx src/bin/$(KSRC)/$(KSRC).main.h
 Win32: src/lib/Krypto.ninja-main.cxx src/bin/$(KSRC)/$(KSRC).main.h
 	$(CHOST)-g++-posix -s -DNDEBUG -o $(KLOCAL)/bin/K-$(KSRC).exe \
 	  -D_POSIX -DCURL_STATICLIB -DSIGUSR1=SIGABRT                 \
-	  $< $(KARGS)                                                 \
-	  -static -lstdc++ -lgcc -lwldap32 -lws2_32
+	  $< $(KARGS) -static -lstdc++ -lgcc                          \
+	  -lpsapi -luserenv -liphlpapi -lwldap32 -lws2_32
 
 download:
 	curl -L https://github.com/ctubio/Krypto-trading-bot/releases/download/$(MAJOR).$(MINOR).x/K-$(MAJOR).$(MINOR).$(PATCH).$(BUILD)-$(KHOST).tar.gz | tar xz

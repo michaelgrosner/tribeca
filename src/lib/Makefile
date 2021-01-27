@@ -34,20 +34,20 @@ check:
 	# uv      | $(V_UV)  | $(shell curl -s https://api.github.com/repos/libuv/libuv/tags        | grep "name" | head -n1 | cut -d'v' -f2 | cut -d'"' -f1)
 
 zlib:
-	test -d $(KBUILD)/zlib-$(V_ZLIB) || (                                             \
-	curl -L https://zlib.net/zlib-$(V_ZLIB).tar.gz | tar xz -C $(KBUILD)              \
-	&& cd $(KBUILD)/zlib-$(V_ZLIB) && $(if $(findstring mingw32,$(CHOST)),            \
-	DESTDIR=$(KBUILD)/local/ BINARY_PATH=bin INCLUDE_PATH=include LIBRARY_PATH=lib    \
-	make all install -fwin32/Makefile.gcc PREFIX=$(CHOST)-,                           \
-	./configure --static --prefix=$(KBUILD)/local && make all install)                )
+	test -d $(KBUILD)/zlib-$(V_ZLIB) || (                                          \
+	curl -L https://zlib.net/zlib-$(V_ZLIB).tar.gz | tar xz -C $(KBUILD)           \
+	&& cd $(KBUILD)/zlib-$(V_ZLIB) && $(if $(findstring mingw32,$(CHOST)),         \
+	DESTDIR=$(KBUILD)/local/ BINARY_PATH=bin INCLUDE_PATH=include LIBRARY_PATH=lib \
+	make all install -fwin32/Makefile.gcc PREFIX=$(CHOST)-,                        \
+	./configure --static --prefix=$(KBUILD)/local && make all install)             )
 
 openssl:
-	test -d $(KBUILD)/openssl-$(V_SSL) || (                                                   \
-	curl -L https://www.openssl.org/source/openssl-$(V_SSL).tar.gz | tar xz -C $(KBUILD)      \
-	&& cd $(KBUILD)/openssl-$(V_SSL) && CC=gcc ./Configure no-asm                             \
-	$(if $(findstring mingw32,$(CHOST)),mingw64,gcc)                                          \
-	--cross-compile-prefix=$(CHOST)- --prefix=$(KBUILD)/local --openssldir=$(KBUILD)/local    \
-	&& make all install_sw install_ssldirs                                                    )
+	test -d $(KBUILD)/openssl-$(V_SSL) || (                                                \
+	curl -L https://www.openssl.org/source/openssl-$(V_SSL).tar.gz | tar xz -C $(KBUILD)   \
+	&& cd $(KBUILD)/openssl-$(V_SSL) && CC=gcc ./Configure no-asm                          \
+	$(if $(findstring mingw32,$(CHOST)),mingw64,gcc)                                       \
+	--cross-compile-prefix=$(CHOST)- --prefix=$(KBUILD)/local --openssldir=$(KBUILD)/local \
+	&& make all install_sw install_ssldirs                                                 )
 
 curl:
 	test -d $(KBUILD)/curl-$(V_CURL) || (                                                   \
@@ -72,16 +72,16 @@ sqlite:
 	--enable-threadsafe && make all install                                               )
 
 ncurses:
-	test -d $(KBUILD)/ncurses-$(V_NCUR) || (                                                          \
-	curl -L http://ftp.gnu.org/pub/gnu/ncurses/ncurses-$(V_NCUR).tar.gz | tar xz -C $(KBUILD)         \
-	&& cd $(KBUILD)/ncurses-$(V_NCUR) && CPPFLAGS=-P ./configure                                      \
-	--host=$(CHOST) --prefix=$(KBUILD)/local $(if $(findstring mingw32,$(CHOST)),                     \
-	--without-cxx-binding --without-ada --enable-reentrant --with-normal                              \
-	--disable-home-terminfo --enable-sp-funcs --enable-term-driver --enable-interop)                  \
-	--disable-lib-suffixes --without-debug --without-progs --without-tests                            \
-	--with-fallbacks=linux,screen,vt100,xterm,xterm-256color,putty-256color && make all install       \
-	$(if $(findstring mingw32,$(CHOST)),                                                              \
-	&& sed -i '1 i\#undef KEY_EVENT' $(KBUILD)/local/include/ncurses/curses.h)                        )
+	test -d $(KBUILD)/ncurses-$(V_NCUR) || (                                                    \
+	curl -L http://ftp.gnu.org/pub/gnu/ncurses/ncurses-$(V_NCUR).tar.gz | tar xz -C $(KBUILD)   \
+	&& cd $(KBUILD)/ncurses-$(V_NCUR) && CPPFLAGS=-P ./configure                                \
+	--host=$(CHOST) --prefix=$(KBUILD)/local $(if $(findstring mingw32,$(CHOST)),               \
+	--without-cxx-binding --without-ada --enable-reentrant --with-normal                        \
+	--disable-home-terminfo --enable-sp-funcs --enable-term-driver --enable-interop)            \
+	--disable-lib-suffixes --without-debug --without-progs --without-tests                      \
+	--with-fallbacks=linux,screen,vt100,xterm,xterm-256color,putty-256color && make all install \
+	$(if $(findstring mingw32,$(CHOST)),                                                        \
+	&& sed -i '1 i\#undef KEY_EVENT' $(KBUILD)/local/include/ncurses/curses.h)                  )
 
 json:
 	test -f $(KBUILD)/local/include/json.h || (mkdir -p $(KBUILD)/local/include       \
@@ -97,11 +97,11 @@ catch:
 	-o $(KBUILD)/local/include/catch.h                                                    )
 
 uv:
-	$(if $(findstring mingw32,$(CHOST))$(findstring darwin,$(CHOST)),                                            \
-	test -d $(KBUILD)/libuv-$(V_UV) || (                                                                         \
-	curl -L https://github.com/libuv/libuv/archive/v$(V_UV).tar.gz | tar xz -C $(KBUILD)                         \
-	&& cd $(KBUILD)/libuv-$(V_UV) && sh autogen.sh && CC=$(CHOST)-gcc ./configure --host=$(CHOST)                \
-	--prefix=$(KBUILD)/local && make all install)                                                                )
+	$(if $(findstring mingw32,$(CHOST))$(findstring darwin,$(CHOST)),                             \
+	test -d $(KBUILD)/libuv-$(V_UV) || (                                                          \
+	curl -L https://github.com/libuv/libuv/archive/v$(V_UV).tar.gz | tar xz -C $(KBUILD)          \
+	&& cd $(KBUILD)/libuv-$(V_UV) && sh autogen.sh && CC=$(CHOST)-gcc ./configure --host=$(CHOST) \
+	--prefix=$(KBUILD)/local --disable-shared --enable-static && make all install)                )
 
 pvs:
 ifndef V_PVS
