@@ -69,7 +69,7 @@ sqlite:
 	curl -L https://sqlite.org/2021/sqlite-autoconf-$(V_SQL).tar.gz | tar xz -C $(KBUILD) \
 	&& cd $(KBUILD)/sqlite-autoconf-$(V_SQL) && ./configure --prefix=$(KBUILD)/local      \
 	--host=$(CHOST) --enable-static --disable-dynamic-extensions --disable-shared         \
-	--enable-threadsafe && make all install                                               )
+	--enable-threadsafe && make install-libLTLIBRARIES install-includeHEADERS             )
 
 ncurses:
 	test -d $(KBUILD)/ncurses-$(V_NCUR) || (                                                    \
