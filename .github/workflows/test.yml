@@ -33,7 +33,7 @@ jobs:
       - name: coverage
         run: |
           lcov -o lcov.info -c -d . --gcov-tool /usr/bin/gcov-8      > /dev/null 2>&1
-          lcov -o lcov.info -r lcov.info '/usr/*' '*local/include/*' > /dev/null 2>&1
+          lcov -o lcov.info -r lcov.info '/usr/*' '*/include/*'      > /dev/null 2>&1
           lcov -l lcov.info                                          | cowsay -nW80 -fdefault
 
       - uses: coverallsapp/github-action@master

@@ -211,7 +211,7 @@ namespace ₿ {
           order->exchangeId
         );
       };
-//BO non-free Gw library functions from build-*/local/lib/K-*.a (it just redefines all virtual gateway class members below).
+//BO non-free Gw library functions from build-*/lib/K-*.a (it just redefines all virtual gateway class members below).......
 /**/  virtual void replace(string, string) {};                               // call         async orders data from exchange
 /**/  virtual void   place(string, Side, string, string, OrderType, TimeInForce, bool) = 0; // async orders like above/below
 /**/  virtual void  cancel(string, string) = 0;                              // call         async orders data from exchange
@@ -223,7 +223,7 @@ namespace ₿ {
 /**/  virtual   vector<Trade>   sync_trades()    { return {}; };             // call and read sync trades data from exchange
 /**/  virtual   vector<Order>   sync_orders()    { return {}; };             // call and read sync orders data from exchange
 /**/  virtual   vector<Order>   sync_cancelAll() { return {}; };             // call and read sync orders data from exchange
-//EO non-free Gw library functions from build-*/local/lib/K-*.a (it just redefines all virtual gateway class members above).
+//EO non-free Gw library functions from build-*/lib/K-*.a (it just redefines all virtual gateway class members above).......
       struct {
         Loop::Async::Event<Wallets>      wallets;
         Loop::Async::Event<Levels>       levels;
@@ -419,9 +419,9 @@ namespace ₿ {
 
   class Gw: public GwExchange {
     public:
-//BO non-free Gw library functions from build-*/local/lib/K-*.a (it just returns a derived gateway class based on argument).
+//BO non-free Gw library functions from build-*/lib/K-*.a (it just returns a derived gateway class based on argument).......
 /**/  static Gw* new_Gw(const string&); // may return too a nullptr instead of a child gateway class, if string is unknown..
-//EO non-free Gw library functions from build-*/local/lib/K-*.a (it just returns a derived gateway class based on argument).
+//EO non-free Gw library functions from build-*/lib/K-*.a (it just returns a derived gateway class based on argument).......
   };
 
   class GwApiREST: public Gw {
@@ -453,10 +453,10 @@ namespace ₿ {
         wait_for_never_async_data(loop);
       };
     protected:
-//BO non-free Gw library functions from build-*/local/lib/K-*.a (it just redefines all virtual gateway class members below).
-/**/  virtual void subscribe()   = 0;                                         // send subcription messages to remote server.
-/**/  virtual void consume(json) = 0;                                         // read message one by one from remote server.
-//EO non-free Gw library functions from build-*/local/lib/K-*.a (it just redefines all virtual gateway class members above).
+//BO non-free Gw library functions from build-*/lib/K-*.a (it just redefines all virtual gateway class members below).
+/**/  virtual void subscribe()   = 0;                                   // send subcription messages to remote server.
+/**/  virtual void consume(json) = 0;                                   // read message one by one from remote server.
+//EO non-free Gw library functions from build-*/lib/K-*.a (it just redefines all virtual gateway class members above).
       virtual void connect() {
         CURLcode rc;
         if (CURLE_OK == (rc = WebSocket::connect(ws)))
@@ -518,9 +518,9 @@ namespace ₿ {
            and FixSocket::connected();
       };
     protected:
-//BO non-free Gw library functions from build-*/local/lib/K-*.a (it just redefines all virtual gateway class members below).
-/**/  virtual string logon() = 0;                                                                   // return logon message.
-//EO non-free Gw library functions from build-*/local/lib/K-*.a (it just redefines all virtual gateway class members above).
+//BO non-free Gw library functions from build-*/lib/K-*.a (it just redefines all virtual gateway class members below).
+/**/  virtual string logon() = 0;                                                             // return logon message.
+//EO non-free Gw library functions from build-*/lib/K-*.a (it just redefines all virtual gateway class members above).
       void connect() override {
         GwApiWs::connect();
         if (WebSocket::connected()) {

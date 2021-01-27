@@ -70,7 +70,7 @@ See [etc/Dockerfile](https://github.com/ctubio/Krypto-trading-bot/tree/master/et
 
 ### Windows Installation
 
-Before proceed with a manual installation, ensure your target machine has [MSYS2](https://www.msys2.org/) installed.
+Before proceed with a manual installation, ensure your target machine has Windows 7 or greater and [MSYS2](https://www.msys2.org/) installed.
 
 Use MSYS2 Terminal to install `make` (with command `pacman -S make`), and then proceed as usual with the installation.
 
