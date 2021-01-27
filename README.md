@@ -40,7 +40,7 @@ All currency pairs are supported.
   - [MANUAL](https://github.com/ctubio/Krypto-trading-bot/blob/master/doc/MANUAL.md)
 - Installation
   - [Docker Installation](#docker-installation)
-  - ~~[Windows Installation](#windows-installation)~~
+  - [Windows Installation](#windows-installation)
   - [Manual GIT Installation](#manual-git-installation)
   - [Manual ZIP Installation](#manual-zip-installation)
   - [Configuration After Manual Installation](#configuration-after-manual-installation)
@@ -68,11 +68,11 @@ All currency pairs are supported.
 
 See [etc/Dockerfile](https://github.com/ctubio/Krypto-trading-bot/tree/master/etc#dockerfile) file.
 
-### ~~Windows Installation~~
+### Windows Installation
 
-~~Before proceed with a manual installation, ensure your target machine has [MSYS2](https://www.msys2.org/) installed.~~
+Before proceed with a manual installation, ensure your target machine has [MSYS2](https://www.msys2.org/) installed.
 
-~~Use MSYS2 Terminal to install and run the bot (install `make` with `pacman -S make`).~~
+Use MSYS2 Terminal to install `make` (with command `pacman -S make`), and then proceed as usual with the installation.
 
 ### Manual GIT Installation
 
@@ -113,7 +113,7 @@ To upgrade anytime see [Upgrade to the latest commit](#upgrade-to-the-latest-com
  $ vim K.sh
 ```
 
-To upgrade anytime just run `make reinstall`.
+To upgrade anytime to the latest release just run `make reinstall`.
 
 ### Configuration After Manual Installation
 

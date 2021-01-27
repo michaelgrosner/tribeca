@@ -277,11 +277,13 @@ namespace ₿ {
           };
         protected:
           void change(const int &events, const function<void()> &data = nullptr) override {
-            if (data) link(data);
-            if (!uv_is_closing((uv_handle_t*)&event))
-              uv_poll_start(&event, events, [](uv_poll_t *event, int, int) {
-                ((Poll*)event->data)->ready();
-              });
+            if (event.data) {
+              if (data) link(data);
+              if (!uv_is_closing((uv_handle_t*)&event))
+                uv_poll_start(&event, events, [](uv_poll_t *event, int, int) {
+                  ((Poll*)event->data)->ready();
+                });
+            }
           };
       };
     private:
@@ -335,8 +337,10 @@ namespace ₿ {
           };
         protected:
           void change(const int &events, const function<void()> &data = nullptr) override {
-            if (data) link(data);
-            ctl(events, EPOLL_CTL_MOD);
+            if (loopfd) {
+              if (data) link(data);
+              ctl(events, EPOLL_CTL_MOD);
+            }
           };
         private:
           void ctl(const int &events, const int &opcode) {

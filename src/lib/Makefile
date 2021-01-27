@@ -100,7 +100,7 @@ uv:
 	$(if $(findstring mingw32,$(CHOST))$(findstring darwin,$(CHOST)),                                            \
 	test -d $(KBUILD)/libuv-$(V_UV) || (                                                                         \
 	curl -L https://github.com/libuv/libuv/archive/v$(V_UV).tar.gz | tar xz -C $(KBUILD)                         \
-	&& cd $(KBUILD)/libuv-$(V_UV) && sh autogen.sh && CC=$(CHOST)-clang ./configure --host=$(CHOST)              \
+	&& cd $(KBUILD)/libuv-$(V_UV) && sh autogen.sh && CC=$(CHOST)-gcc ./configure --host=$(CHOST)                \
 	--prefix=$(KBUILD)/local && make all install)                                                                )
 
 pvs:
