@@ -45,9 +45,8 @@ openssl:
 	test -d $(KBUILD)/openssl-$(V_SSL) || (                                                \
 	curl -L https://www.openssl.org/source/openssl-$(V_SSL).tar.gz | tar xz -C $(KBUILD)   \
 	&& cd $(KBUILD)/openssl-$(V_SSL) && CC=gcc ./Configure no-asm                          \
-	$(if $(findstring mingw32,$(CHOST)),mingw64,gcc)                                       \
-	--cross-compile-prefix=$(CHOST)- --prefix=$(KBUILD)/local --openssldir=$(KBUILD)/local \
-	&& make all install_sw install_ssldirs                                                 )
+	$(if $(findstring mingw32,$(CHOST)),mingw64,gcc) --cross-compile-prefix=$(CHOST)-      \
+	--prefix=$(KBUILD)/local --openssldir=$(KBUILD)/local && make install_dev              )
 
 curl:
 	test -d $(KBUILD)/curl-$(V_CURL) || (                                                   \
