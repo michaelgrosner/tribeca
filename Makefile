@@ -2,7 +2,7 @@ K         ?= K.sh
 MAJOR      = 0
 MINOR      = 6
 PATCH      = 0
-BUILD      = 25
+BUILD      = 26
 
 OBLIGATORY = DISCLAIMER: This is strict non-violent software: \
            \nif you hurt other living creatures, please stop; \
@@ -189,7 +189,7 @@ Win32: src/lib/Krypto.ninja-main.cxx src/bin/$(KSRC)/$(KSRC).main.h
 	$(CHOST)-g++-posix -s -DNDEBUG -o $(KBUILD)/bin/K-$(KSRC).exe \
 	  -D_POSIX -DCURL_STATICLIB -DSIGUSR1=SIGABRT                 \
 	  $< $(KARGS) -static -lstdc++ -lgcc                          \
-	  -lpsapi -luserenv -liphlpapi -lwldap32 -lws2_32
+	  -lcrypt32 -lpsapi -luserenv -liphlpapi -lwldap32 -lws2_32
 
 download:
 	curl -L https://github.com/ctubio/Krypto-trading-bot/releases/download/$(MAJOR).$(MINOR).x/K-$(MAJOR).$(MINOR).$(PATCH).$(BUILD)-$(KHOST).tar.gz | tar xz
@@ -215,7 +215,7 @@ system_install:
 	$(if $(shell echo $$PATH | grep /usr/local/bin),,$(info $(subst ..,,$(subst Building ,,$(call STEP,Warning! you MUST add /usr/local/bin to your PATH!)))))
 	$(info )
 	$(info List of installed K binaries:)
-	@$(SUDO) cp -f $(wildcard $(KBUILD)/bin/K-$(KSRC)*) $(wildcard $(KBUILD)/bin/*.dll) /usr/local/bin
+	@$(SUDO) cp -f $(wildcard $(KBUILD)/bin/K-$(KSRC)*) /usr/local/bin
 	@LS_COLORS="ex=40;92" CLICOLOR="Yes" ls $(shell ls --color > /dev/null 2>&1 && echo --color) -lah $(addprefix /usr/local/bin/,$(notdir $(wildcard $(KBUILD)/bin/K-$(KSRC)*)))
 	@echo
 	@$(SUDO) mkdir -p $(KHOME)
@@ -336,8 +336,7 @@ ifdef KALL
 else ifndef KTARGZ
 	@$(MAKE) KTARGZ="K-$(MAJOR).$(MINOR).$(PATCH).$(BUILD)-$(KHOST).tar.gz" $@
 else
-	@tar -cvzf $(KTARGZ) $(KBUILD)/bin/K-* $(KBUILD)/lib/K-* LICENSE COPYING README.md Makefile doc etc test                      \
-	$(if $(findstring mingw32,$(CHOST)),$(KBUILD)/bin/*dll) src                                                                   \
+	@tar -cvzf $(KTARGZ) $(KBUILD)/bin/K-* $(KBUILD)/lib/K-* LICENSE COPYING README.md Makefile doc etc test src                  \
 	&& curl -s -n -H "Content-Type:application/octet-stream" -H "Authorization: token ${KRELEASE}"                                \
 	--data-binary "@$(PWD)/$(KTARGZ)" "https://uploads.github.com/repos/ctubio/Krypto-trading-bot/releases/$(shell curl -s        \
 	https://api.github.com/repos/ctubio/Krypto-trading-bot/releases/latest | grep id | head -n1 | cut -d ' ' -f4 | cut -d ',' -f1 \
