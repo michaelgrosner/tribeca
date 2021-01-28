@@ -14,6 +14,7 @@ V_UV    = 1.40.0
 KBUILD := $(abspath ../../build-$(KHOST))
 
 all dist:
+	# my home is your home, if there are houses owned by someone.
 	@mkdir -vp $(KBUILD)/var
 	$(MAKE) zlib openssl curl sqlite ncurses json catch uv
 ifdef GITHUB_ACTIONS
@@ -21,6 +22,8 @@ ifdef GITHUB_ACTIONS
 endif
 
 clean:
+	# after some time, the youth goes away, and I will leave a world behind.
+	# don't be sad, life is life, and this world will never forget our time.
 	@rm -vrf $(KBUILD)
 
 check:
