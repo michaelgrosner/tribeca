@@ -2484,8 +2484,8 @@ namespace tribeca {
                 K.gateway->margin == Future::Spot
                   ? wallet.quote.total / (quotes.bid.price * (1.0 + K.gateway->makeFee))
                   : (K.gateway->margin == Future::Inverse
-                      ? wallet.base.total * quotes.bid.price
-                      : wallet.base.total / quotes.bid.price
+                      ? wallet.base.amount * (quotes.bid.price / (1.0 + K.gateway->takeFee))
+                      : wallet.base.amount / quotes.bid.price
                   )
               )
             ))
@@ -2498,8 +2498,11 @@ namespace tribeca {
                 K.gateway->margin == Future::Spot
                   ? wallet.base.total
                   : (K.gateway->margin == Future::Inverse
-                      ? wallet.base.total * quotes.ask.price
-                      : wallet.base.total / quotes.ask.price
+                      ? (quotes.bid.empty()
+                        ? wallet.base.amount * (quotes.ask.price / (1.0 + K.gateway->takeFee))
+                        : quotes.bid.size
+                      )
+                      : wallet.base.amount / quotes.ask.price
                   )
               )
             ))
@@ -2510,8 +2513,8 @@ namespace tribeca {
           and (K.gateway->margin == Future::Spot
                 ? wallet.quote.total / quotes.bid.price
                 : (K.gateway->margin == Future::Inverse
-                    ? wallet.base.total * quotes.bid.price
-                    : wallet.base.total / quotes.bid.price
+                    ? wallet.base.amount * (quotes.bid.price / (1.0 + K.gateway->takeFee))
+                    : wallet.base.amount / quotes.bid.price
                 )
           ) < K.gateway->minSize * (1.0 + K.gateway->makeFee)
         ) quotes.bid.clear(QuoteState::DepletedFunds);
@@ -2519,8 +2522,8 @@ namespace tribeca {
           and (K.gateway->margin == Future::Spot
                 ? wallet.base.total
                 : (K.gateway->margin == Future::Inverse
-                    ? wallet.base.total * quotes.ask.price
-                    : wallet.base.total / quotes.ask.price
+                    ? wallet.base.amount * (quotes.ask.price / (1.0 + K.gateway->takeFee))
+                    : wallet.base.amount / quotes.ask.price
                 )
           ) < K.gateway->minSize * (1.0 + K.gateway->makeFee)
         ) quotes.ask.clear(QuoteState::DepletedFunds);
