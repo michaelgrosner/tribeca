@@ -587,9 +587,9 @@ namespace ₿ {
       json handshake() override {
         symbol = base + quote;
         webMarket += base + "_" + quote + "?layout=pro";
-        json reply = Curl::Web::xfer(http + "/api/v3/exchangeInfo");
-        if (reply.find("symbols") != reply.end() and reply.at("symbols").is_array())
-          for (const json &it : reply.at("symbols"))
+        json reply1 = Curl::Web::xfer(http + "/api/v3/exchangeInfo");
+        if (reply1.find("symbols") != reply1.end() and reply1.at("symbols").is_array())
+          for (const json &it : reply1.at("symbols"))
             if (it.value("symbol", "") == symbol) {
               if (it.find("filters") != it.end() and it.at("filters").is_array())
                 for (const json &it_ : it.at("filters")) {
@@ -602,22 +602,30 @@ namespace ₿ {
                 }
               break;
             }
-        if (reply.find("result") == reply.end())
-          reply = {
-            {"error", symbol + " is not a valid symbol"}
-          };
+        json reply2 = fees();
         return {
-          {     "base", base      },
-          {    "quote", quote     },
-          {   "symbol", symbol    },
-          {   "margin", margin    },
-          {"webMarket", webMarket },
-          {"webOrders", webOrders },
-          {"tickPrice", tickPrice },
-          { "tickSize", tickSize  },
-          {  "minSize", minSize   },
-          {    "reply", reply     }
+          {     "base", base                      },
+          {    "quote", quote                     },
+          {   "symbol", symbol                    },
+          {   "margin", margin                    },
+          {"webMarket", webMarket                 },
+          {"webOrders", webOrders                 },
+          {"tickPrice", tickPrice                 },
+          { "tickSize", tickSize                  },
+          {  "minSize", minSize                   },
+          {  "makeFee", reply2.value("maker", 0.0)},
+          {  "takeFee", reply2.value("taker", 0.0)},
+          {    "reply", {reply1, reply2}          }
         };
+      };
+    protected:
+      virtual json fees() = 0;
+      static json xfer(const string &url, const string &h1) {
+        return Curl::Web::request(url, [&](CURL *curl) {
+          struct curl_slist *h_ = nullptr;
+          h_ = curl_slist_append(h_, ("X-MBX-APIKEY: " + h1).data());
+          curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
+        });
       };
   };
   class GwBitmex: public GwApiWs {
@@ -632,7 +640,7 @@ namespace ₿ {
         webOrders = "https://www.bitmex.com/app/orderHistory";
       };
       json handshake() override {
-        webMarket += (symbol = base + quote);
+        webMarket += symbol = base + quote;
         json reply = Curl::Web::xfer(http + "/instrument?symbol=" + symbol);
         if (reply.is_array()) {
           if (reply.empty())
