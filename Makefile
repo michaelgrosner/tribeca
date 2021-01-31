@@ -2,7 +2,7 @@ K         ?= K.sh
 MAJOR      = 0
 MINOR      = 6
 PATCH      = 0
-BUILD      = 28
+BUILD      = 29
 
 OBLIGATORY = DISCLAIMER: This is strict non-violent software: \
            \nif you hurt other living creatures, please stop; \
@@ -231,7 +231,7 @@ install: packages
 	@read -p "[$(shell seq -s \\ `echo $(CARCH) | tr ' ' "\n" | wc -l`)]: " chost && $(MAKE) download CHOST=`echo $(CARCH) | cut -d ' ' -f$${chost}`
 
 docker: packages download
-	@sed -i "/Usage/,+72d" K.sh
+	@sed -i "/Usage/,+73d" K.sh
 
 reinstall:
 	test -d .git && ((test -n "`git diff`" && (echo && echo !!Local changes will be lost!! press CTRL-C to abort. && echo && sleep 5) || :) \

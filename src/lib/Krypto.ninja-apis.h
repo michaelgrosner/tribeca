@@ -574,6 +574,52 @@ namespace ₿ {
         };
       };
   };
+  class GwBinance: public GwApiWs {
+    public:
+      GwBinance()
+      {
+        http   = "https://api.binance.com";
+        ws     = "wss://stream.binance.com:9443/ws";
+        randId = Random::uuid36Id;
+        webMarket = "https://www.binance.com/en/trade/";
+        webOrders = "https://www.binance.com/en/my/orders/exchange/tradeorder";
+      };
+      json handshake() override {
+        symbol = base + quote;
+        webMarket += base + "_" + quote + "?layout=pro";
+        json reply = Curl::Web::xfer(http + "/api/v3/exchangeInfo");
+        if (reply.find("symbols") != reply.end() and reply.at("symbols").is_array())
+          for (const json &it : reply.at("symbols"))
+            if (it.value("symbol", "") == symbol) {
+              if (it.find("filters") != it.end() and it.at("filters").is_array())
+                for (const json &it_ : it.at("filters")) {
+                  if (it_.value("filterType", "") == "PRICE_FILTER")
+                    tickPrice = stod(it_.value("tickSize", "0"));
+                  else if (it_.value("filterType", "") == "LOT_SIZE") {
+                    tickSize = stod(it_.value("stepSize", "0"));
+                    minSize = stod(it_.value("minQty", "0"));
+                  }
+                }
+              break;
+            }
+        if (reply.find("result") == reply.end())
+          reply = {
+            {"error", symbol + " is not a valid symbol"}
+          };
+        return {
+          {     "base", base      },
+          {    "quote", quote     },
+          {   "symbol", symbol    },
+          {   "margin", margin    },
+          {"webMarket", webMarket },
+          {"webOrders", webOrders },
+          {"tickPrice", tickPrice },
+          { "tickSize", tickSize  },
+          {  "minSize", minSize   },
+          {    "reply", reply     }
+        };
+      };
+  };
   class GwBitmex: public GwApiWs {
     public:
       GwBitmex()
@@ -586,8 +632,7 @@ namespace ₿ {
         webOrders = "https://www.bitmex.com/app/orderHistory";
       };
       json handshake() override {
-        symbol = base + quote;
-        webMarket += base + quote;
+        webMarket += (symbol = base + quote);
         json reply = Curl::Web::xfer(http + "/instrument?symbol=" + symbol);
         if (reply.is_array()) {
           if (reply.empty())
