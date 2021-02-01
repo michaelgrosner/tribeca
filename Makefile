@@ -223,7 +223,7 @@ system_install:
 	@mkdir -p $(KHOME)/cache
 	@mkdir -p $(KHOME)/db
 	@mkdir -p $(KHOME)/ssl
-	@curl -s --time-cond $(KHOME)/ssl/cacert.pem https://curl.haxx.se/ca/cacert.pem -o $(KHOME)/ssl/cacert.pem
+	@curl -s --time-cond $(KHOME)/ssl/cacert.pem https://curl.se/ca/cacert.pem -o $(KHOME)/ssl/cacert.pem
 
 install: packages
 	@yes = | head -n`expr $(shell tput cols) / 2` | xargs echo && echo " _  __" && echo "| |/ /  v$(MAJOR).$(MINOR).$(PATCH)+$(BUILD)" && echo "| ' /" && echo "| . \\   Select your (beloved) architecture" && echo "|_|\\_\\  to download pre-compiled binaries:" && echo
