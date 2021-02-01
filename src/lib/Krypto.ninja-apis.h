@@ -587,7 +587,7 @@ namespace ₿ {
       json handshake() override {
         symbol = base + quote;
         webMarket += base + "_" + quote + "?layout=pro";
-        json reply1 = Curl::Web::xfer(http + "/api/v3/exchangeInfo");
+        const json reply1 = Curl::Web::xfer(http + "/api/v3/exchangeInfo");
         if (reply1.find("symbols") != reply1.end() and reply1.at("symbols").is_array())
           for (const json &it : reply1.at("symbols"))
             if (it.value("symbol", "") == symbol) {
@@ -602,7 +602,7 @@ namespace ₿ {
                 }
               break;
             }
-        json reply2 = fees();
+        const json reply2 = fees();
         return {
           {     "base", base                      },
           {    "quote", quote                     },
@@ -620,10 +620,11 @@ namespace ₿ {
       };
     protected:
       virtual json fees() = 0;
-      static json xfer(const string &url, const string &h1) {
+      static json xfer(const string &url, const string &h1, const string &crud) {
         return Curl::Web::request(url, [&](CURL *curl) {
           struct curl_slist *h_ = nullptr;
           h_ = curl_slist_append(h_, ("X-MBX-APIKEY: " + h1).data());
+          curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, crud.data());
           curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
         });
       };

@@ -54,16 +54,15 @@ openssl:
 curl:
 	test -d $(KBUILD)/var/curl-$(V_CURL) || (                                               \
 	curl -L https://curl.haxx.se/download/curl-$(V_CURL).tar.gz | tar xz -C $(KBUILD)/var   \
-	&& cd $(KBUILD)/var/curl-$(V_CURL)                                                      \
-	&& PKG_CONFIG="pkg-config --static" PKG_CONFIG_PATH=$(KBUILD)/lib/pkgconfig             \
-	./configure --host=$(CHOST) --prefix=$(KBUILD)                                          \
-	$(if $(findstring /var/lib,$(KHOME)), --with-ca-bundle=$(KHOME)/ssl/cacert.pem,         \
-	--with-ca-bundle=$(subst /,\\\\,$(KHOME))\\\\ssl\\\\cacert.pem)                         \
-	--with-zlib=$(KBUILD) --with-ssl=$(KBUILD) --disable-ares                               \
-	--disable-manual --disable-imap --disable-file --disable-tftp --disable-smtp            \
-	--disable-pop3 --disable-smb --disable-ftp --disable-sspi --disable-ldap --disable-dict \
-	--without-libpsl --without-nghttp2 --without-libssh2 --disable-telnet --disable-rtsp    \
-	--disable-gopher --without-libidn2 --without-librtmp --disable-shared --enable-static   \
+	&& cd $(KBUILD)/var/curl-$(V_CURL) && PKG_CONFIG="pkg-config --static"                  \
+	PKG_CONFIG_PATH=$(KBUILD)/lib/pkgconfig ./configure --host=$(CHOST) --prefix=$(KBUILD)  \
+	--with-ca-bundle=$(if $(findstring /var/lib,$(KHOME)                                    \
+	),$(KHOME)/ssl/,$(subst /,\\\\,$(KHOME))\\\\ssl\\\\)cacert.pem --with-zlib=$(KBUILD)    \
+	--with-ssl=$(KBUILD) --disable-ares --disable-manual --disable-imap --disable-file      \
+	--disable-tftp --disable-smtp --disable-pop3 --disable-smb --disable-ftp --disable-sspi \
+	--disable-ldap --disable-dict --without-libpsl --without-nghttp2 --without-libssh2      \
+	--disable-telnet --disable-rtsp --disable-gopher --without-libidn2 --without-librtmp    \
+	--disable-shared --enable-static                                                        \
 	&& make && (cd lib && make install) && (cd include && make install)                     )
 
 sqlite:
