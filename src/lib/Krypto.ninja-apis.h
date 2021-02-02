@@ -273,6 +273,7 @@ namespace ₿ {
        Price tickPrice = 0;
       Amount tickSize  = 0,
              minSize   = 0,
+             minValue  = 0,
              makeFee   = 0,
              takeFee   = 0;
       size_t maxLevel  = 0;
@@ -309,6 +310,7 @@ namespace ₿ {
         webOrders = reply.value("webOrders", webOrders);
         tickPrice = reply.value("tickPrice", 0.0);
         tickSize  = reply.value("tickSize",  0.0);
+        minValue  = reply.value("minValue",  0.0);
         if (!minSize) minSize = reply.value("minSize", 0.0);
         if (!makeFee) makeFee = reply.value("makeFee", 0.0);
         if (!takeFee) takeFee = reply.value("takeFee", 0.0);
@@ -346,16 +348,16 @@ namespace ₿ {
                         ? symbol             + " (" + decimal.funds.str(decimal.funds.step)
                         : base + "/" + quote + " (" + decimal.amount.str(tickSize)
                       ) + "/"
-                        + decimal.price.str(tickPrice) + ")"                              },
+                        + decimal.price.str(tickPrice) + ")"                                  },
           {"minSize", decimal.amount.str(minSize) + " " + (
                         margin == Future::Spot
                           ? base
                           : "Contract" + string(minSize == 1 ? 0 : 1, 's')
-                      )                                                                   },
+                      ) + (minValue ? " or " + decimal.price.str(minValue) + " " + quote : "")},
           {"makeFee", decimal.percent.str(makeFee * 1e+2) + "%"
-                        + (makeFee ? "" : " (please use --maker-fee argument!)")          },
+                        + (makeFee ? "" : " (please use --maker-fee argument!)")              },
           {"takeFee", decimal.percent.str(takeFee * 1e+2) + "%"
-                        + (takeFee ? "" : " (please use --taker-fee argument!)")          }
+                        + (takeFee ? "" : " (please use --taker-fee argument!)")              }
         }) notes.push_back(it);
         string note = "handshake:";
         for (auto &it : notes)
@@ -595,6 +597,8 @@ namespace ₿ {
                 for (const json &it_ : it.at("filters")) {
                   if (it_.value("filterType", "") == "PRICE_FILTER")
                     tickPrice = stod(it_.value("tickSize", "0"));
+                  else if (it_.value("filterType", "") == "MIN_NOTIONAL")
+                    minValue = stod(it_.value("minNotional", "0"));
                   else if (it_.value("filterType", "") == "LOT_SIZE") {
                     tickSize = stod(it_.value("stepSize", "0"));
                     minSize = stod(it_.value("minQty", "0"));
@@ -613,6 +617,7 @@ namespace ₿ {
           {"tickPrice", tickPrice                 },
           { "tickSize", tickSize                  },
           {  "minSize", minSize                   },
+          { "minValue", minValue                  },
           {  "makeFee", reply2.value("maker", 0.0)},
           {  "takeFee", reply2.value("taker", 0.0)},
           {    "reply", {reply1, reply2}          }

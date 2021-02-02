@@ -2476,57 +2476,68 @@ namespace tribeca {
           );
       };
       void applyRoundSize() {
-        if (!quotes.bid.empty())
+        if (!quotes.bid.empty()) {
+          const Amount minBid = K.gateway->minValue
+            ? fmax(K.gateway->minSize, K.gateway->minValue / quotes.bid.price)
+            : K.gateway->minSize;
+          const Amount maxBid = K.gateway->margin == Future::Spot
+            ? wallet.quote.total / (quotes.bid.price * (1.0 + K.gateway->makeFee))
+            : (K.gateway->margin == Future::Inverse
+                ? wallet.base.amount * (quotes.bid.price / (1.0 + K.gateway->takeFee))
+                : wallet.base.amount / quotes.bid.price
+            );
           quotes.bid.size = K.gateway->decimal.amount.round(
-            fmax(K.gateway->minSize, fmin(
+            fmax(minBid, fmin(
               quotes.bid.size,
-              K.gateway->decimal.amount.floor(
-                K.gateway->margin == Future::Spot
-                  ? wallet.quote.total / (quotes.bid.price * (1.0 + K.gateway->makeFee))
-                  : (K.gateway->margin == Future::Inverse
-                      ? wallet.base.amount * (quotes.bid.price / (1.0 + K.gateway->takeFee))
-                      : wallet.base.amount / quotes.bid.price
-                  )
-              )
+              K.gateway->decimal.amount.floor(maxBid)
             ))
           );
-        if (!quotes.ask.empty())
+        }
+        if (!quotes.ask.empty()) {
+          const Amount minAsk = K.gateway->minValue
+            ? fmax(K.gateway->minSize, K.gateway->minValue / quotes.ask.price)
+            : K.gateway->minSize;
+          const Amount maxAsk = K.gateway->margin == Future::Spot
+            ? wallet.base.total
+            : (K.gateway->margin == Future::Inverse
+                ? (quotes.bid.empty()
+                  ? wallet.base.amount * (quotes.ask.price / (1.0 + K.gateway->takeFee))
+                  : quotes.bid.size)
+                : wallet.base.amount / quotes.ask.price
+            );
           quotes.ask.size = K.gateway->decimal.amount.round(
-            fmax(K.gateway->minSize, fmin(
+            fmax(minAsk, fmin(
               quotes.ask.size,
-              K.gateway->decimal.amount.floor(
-                K.gateway->margin == Future::Spot
-                  ? wallet.base.total
-                  : (K.gateway->margin == Future::Inverse
-                      ? (quotes.bid.empty()
-                        ? wallet.base.amount * (quotes.ask.price / (1.0 + K.gateway->takeFee))
-                        : quotes.bid.size
-                      )
-                      : wallet.base.amount / quotes.ask.price
-                  )
-              )
+              K.gateway->decimal.amount.floor(maxAsk)
             ))
           );
+        }
       };
       void applyDepleted() {
-        if (!quotes.bid.empty()
-          and (K.gateway->margin == Future::Spot
-                ? wallet.quote.total / quotes.bid.price
-                : (K.gateway->margin == Future::Inverse
-                    ? wallet.base.amount * (quotes.bid.price / (1.0 + K.gateway->takeFee))
-                    : wallet.base.amount / quotes.bid.price
-                )
-          ) < K.gateway->minSize * (1.0 + K.gateway->makeFee)
-        ) quotes.bid.clear(QuoteState::DepletedFunds);
-        if (!quotes.ask.empty()
-          and (K.gateway->margin == Future::Spot
-                ? wallet.base.total
-                : (K.gateway->margin == Future::Inverse
-                    ? wallet.base.amount * (quotes.ask.price / (1.0 + K.gateway->takeFee))
-                    : wallet.base.amount / quotes.ask.price
-                )
-          ) < K.gateway->minSize * (1.0 + K.gateway->makeFee)
-        ) quotes.ask.clear(QuoteState::DepletedFunds);
+        if (!quotes.bid.empty()) {
+          const Amount minBid = K.gateway->minValue
+            ? fmax(K.gateway->minSize, K.gateway->minValue / quotes.bid.price)
+            : K.gateway->minSize;
+          if ((K.gateway->margin == Future::Spot
+              ? wallet.quote.total / quotes.bid.price
+              : (K.gateway->margin == Future::Inverse
+                  ? wallet.base.amount * (quotes.bid.price / (1.0 + K.gateway->takeFee))
+                  : wallet.base.amount / quotes.bid.price)
+              ) < minBid * (1.0 + K.gateway->makeFee)
+          ) quotes.bid.clear(QuoteState::DepletedFunds);
+        }
+        if (!quotes.ask.empty()) {
+          const Amount minAsk = K.gateway->minValue
+            ? fmax(K.gateway->minSize, K.gateway->minValue / quotes.ask.price)
+            : K.gateway->minSize;
+          if ((K.gateway->margin == Future::Spot
+              ? wallet.base.total
+              : (K.gateway->margin == Future::Inverse
+                  ? wallet.base.amount * (quotes.ask.price / (1.0 + K.gateway->takeFee))
+                  : wallet.base.amount / quotes.ask.price)
+              ) < minAsk * (1.0 + K.gateway->makeFee)
+          ) quotes.ask.clear(QuoteState::DepletedFunds);
+        }
       };
       void applyWaitingPing() {
         if (qp.safety == QuotingSafety::Off) return;
