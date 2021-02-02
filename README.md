@@ -126,7 +126,7 @@ Once your config file is ready, you can execute it to start the bot:
  $ ./K.sh
 ```
 
-Alternatively use `make start` to run `K.sh` in the background using [screen](https://www.decf.berkeley.edu/help/unix/screen.html) (to see the output, attach the screen with `make screen` [or run all at once with `make start screen`]).
+Alternatively use `make start` to run `K.sh` in the background using [screen](https://kb.iu.edu/d/acuy) (to see the output, attach the screen with `make screen` [or run all at once with `make start screen`]).
 
 Feel free to run `make stop` or `make restart` anytime, and don't forget to [read the fucking manual](https://github.com/ctubio/Krypto-trading-bot/blob/master/doc/MANUAL.md).
 
