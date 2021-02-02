@@ -2,6 +2,8 @@
 
 SOB=$(git var GIT_AUTHOR_IDENT | sed -n 's/^\(.*>\).*$/Signed-off-by: \1/p')
 
+BTC=$(./hello.sh 2> /dev/null | cowsay)
+
 printf "$(cat <<\CARLESGITTIP
 
 ████ ███  To request new features or in case this commit breaks something for you,
@@ -9,6 +11,7 @@ printf "$(cat <<\CARLESGITTIP
 ▓███▀█▄   but never share your API Keys!
 ▒▓██ ███
 ░▒▓█ ███  %s
-
 CARLESGITTIP
-)" "$SOB" >> "$1";
+)" "$SOB
+
+$BTC" >> "$1";
