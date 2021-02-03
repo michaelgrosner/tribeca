@@ -112,6 +112,7 @@ namespace ₿ {
   class Ending: public Rollout {
     public:
       Ending() {
+        signal(SIGPIPE, SIG_IGN);
         signal(SIGINT, [](const int) {
           clog << '\n';
           raise(SIGQUIT);
@@ -121,7 +122,6 @@ namespace ₿ {
         signal(SIGABRT, wtf);
         signal(SIGSEGV, wtf);
         signal(SIGUSR1, wtf);
-        signal(SIGPIPE, SIG_IGN);
       };
       void ending(const function<void()> &fn) {
         endingFn.push_back(fn);
@@ -267,7 +267,7 @@ namespace ₿ {
           clog << ' ' << reason;
           if (!highlight.empty())
             clog << ' ' << Ansi::b(COLOR_YELLOW) << highlight;
-          clog << Ansi::r(COLOR_WHITE) << ".\n";
+          clog << Ansi::r(COLOR_WHITE) << '.' << endl;
           return;
         }
         if (!stdlog) return;
