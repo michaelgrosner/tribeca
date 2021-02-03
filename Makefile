@@ -2,7 +2,7 @@ K         ?= K.sh
 MAJOR      = 0
 MINOR      = 6
 PATCH      = 0
-BUILD      = 35
+BUILD      = 36
 
 OBLIGATORY = DISCLAIMER: This is strict non-violent software: \
            \nif you hurt other living creatures, please stop; \
@@ -187,8 +187,8 @@ Darwin: src/lib/Krypto.ninja-main.cxx src/bin/$(KSRC)/$(KSRC).main.h
 
 Win32: src/lib/Krypto.ninja-main.cxx src/bin/$(KSRC)/$(KSRC).main.h
 	$(CHOST)-g++-posix -s -DNDEBUG -o $(KBUILD)/bin/K-$(KSRC).exe \
-	  $(addsuffix =SIGABRT,-DSIGUSR1 -DSIGPIPE)                   \
-	  $(addsuffix =SIGBREAK,-DSIGINT -DSIGQUIT) -DCURL_STATICLIB  \
+	  -DCURL_STATICLIB                                            \
+	  -DSIGUSR1=SIGABRT -DSIGPIPE=SIGABRT -DSIGQUIT=SIGBREAK      \
 	  $< $(KARGS) -static -lstdc++ -lgcc                          \
 	  -lcrypt32 -lpsapi -luserenv -liphlpapi -lwldap32 -lws2_32
 
@@ -226,12 +226,12 @@ system_install:
 	@mkdir -p $(KHOME)/ssl
 	@curl -s --time-cond $(KHOME)/ssl/cacert.pem https://curl.se/ca/cacert.pem -o $(KHOME)/ssl/cacert.pem
 
-install: packages
+install:
 	@yes = | head -n`expr $(shell tput cols) / 2` | xargs echo && echo " _  __" && echo "| |/ /  v$(MAJOR).$(MINOR).$(PATCH)+$(BUILD)" && echo "| ' /" && echo "| . \\   Select your (beloved) architecture" && echo "|_|\\_\\  to download pre-compiled binaries:" && echo
 	@echo $(CARCH) | tr ' ' "\n" | cat -n && echo && echo "(Hint! uname says \"`uname -sm`\")" && echo
-	@read -p "[$(shell seq -s \\ `echo $(CARCH) | tr ' ' "\n" | wc -l`)]: " chost && $(MAKE) download CHOST=`echo $(CARCH) | cut -d ' ' -f$${chost}`
+	@read -p "[$(shell seq -s \\ `echo $(CARCH) | wc -w`)]: " chost && $(MAKE) download CHOST=`echo $(CARCH) | cut -d ' ' -f$${chost}`
 
-docker: packages download
+docker: download
 	@sed -i "/Usage/,+73d" K.sh
 
 reinstall:
@@ -240,7 +240,10 @@ reinstall:
 	@$(MAKE) install
 	@echo && echo ..done! Please restart any running instance and also refresh the UI if is currently opened in your browser.
 
-list:
+screen-help:
+	$(if $(shell test -z "`command -v screen`" && echo 1),$(warning Please install screen using the package manager of your system.);$(error screen command not found))
+
+list:  screen-help
 	@screen -list || :
 
 restartall:
@@ -262,15 +265,15 @@ restart:
 	@$(MAKE) start -s
 	@$(MAKE) list -s
 
-stop:
+stop: screen-help
 	@screen -XS $(K) quit && echo STOP $(K) DONE || :
 
-start:
+start: screen-help
 	@test -n "`screen -list | grep "\.$(K)	("`"         \
 	&& (echo $(K) is already running.. && screen -list)  \
 	|| (screen -dmS $(K) ./$(K) && echo START $(K) DONE)
 
-screen:
+screen: screen-help
 	@test -n "`screen -list | grep "\.$(K)	("`" && (    \
 	echo Detach screen hotkey: holding CTRL hit A then D \
 	&& sleep 2 && screen -r $(K)) || screen -list || :
