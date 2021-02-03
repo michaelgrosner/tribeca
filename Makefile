@@ -187,7 +187,8 @@ Darwin: src/lib/Krypto.ninja-main.cxx src/bin/$(KSRC)/$(KSRC).main.h
 
 Win32: src/lib/Krypto.ninja-main.cxx src/bin/$(KSRC)/$(KSRC).main.h
 	$(CHOST)-g++-posix -s -DNDEBUG -o $(KBUILD)/bin/K-$(KSRC).exe \
-	  -D_POSIX -DCURL_STATICLIB -DSIGUSR1=SIGABRT                 \
+	  $(addsuffix =SIGABRT,-DSIGUSR1 -DSIGPIPE)                   \
+	  $(addsuffix =SIGBREAK,-DSIGINT -DSIGQUIT) -DCURL_STATICLIB  \
 	  $< $(KARGS) -static -lstdc++ -lgcc                          \
 	  -lcrypt32 -lpsapi -luserenv -liphlpapi -lwldap32 -lws2_32
 
