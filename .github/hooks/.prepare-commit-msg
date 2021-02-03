@@ -13,5 +13,4 @@ printf "$(cat <<\CARLESGITTIP
 ░▒▓█ ███  %s
 CARLESGITTIP
 )" "$SOB
-
 $BTC" >> "$1";
