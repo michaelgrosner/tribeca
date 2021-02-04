@@ -86,7 +86,7 @@ export class OrdersComponent implements OnInit {
       orderId: $event.data.orderId,
       exchange: $event.data.exchange
     });
-    this.gridOptions.api.updateRowData({remove:[$event.data]});
+    this.gridOptions.api.applyTransaction({remove:[$event.data]});
   }
 
   private addRowData = (o) => {
@@ -104,7 +104,7 @@ export class OrdersComponent implements OnInit {
     this.gridOptions.api.forEachNode((node: RowNode) => {
       if (!exists && node.data.orderId==o.orderId) {
         exists = true;
-        if (isClosed) this.gridOptions.api.updateRowData({remove:[node.data]});
+        if (isClosed) this.gridOptions.api.applyTransaction({remove:[node.data]});
         else {
           node.setData(Object.assign(node.data, {
             time: o.time,
@@ -124,7 +124,7 @@ export class OrdersComponent implements OnInit {
     });
     setTimeout(()=>{try{this.gridOptions.api.redrawRows();}catch(e){}},0);
     if (!exists && !isClosed)
-      this.gridOptions.api.updateRowData({add:[{
+      this.gridOptions.api.applyTransaction({add:[{
         orderId: o.orderId,
         exchangeId: o.exchangeId,
         side: Models.Side[o.side],

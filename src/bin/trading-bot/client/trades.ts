@@ -129,7 +129,7 @@ export class TradesComponent implements OnInit {
     if (t.Kqty<0) {
       this.gridOptions.api.forEachNode((node: RowNode) => {
         if (node.data.tradeId==t.tradeId)
-          this.gridOptions.api.updateRowData({remove:[node.data]});
+          this.gridOptions.api.applyTransaction({remove:[node.data]});
       });
     } else {
       let exists: boolean = false;
@@ -161,7 +161,7 @@ export class TradesComponent implements OnInit {
       });
       if (!exists) {
         if (t.Ktime && <any>t.Ktime=='Invalid date') t.Ktime = null;
-        this.gridOptions.api.updateRowData({add:[{
+        this.gridOptions.api.applyTransaction({add:[{
           tradeId: t.tradeId,
           time: t.time,
           price: t.price,

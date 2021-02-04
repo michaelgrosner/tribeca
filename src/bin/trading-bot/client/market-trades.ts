@@ -64,7 +64,7 @@ export class MarketTradesComponent implements OnInit {
   private addRowData = (trade: Models.MarketTrade) => {
     if (!this.gridOptions.api || this.product.base == null) return;
     if (trade != null)
-      this.gridOptions.api.updateRowData({add:[{
+      this.gridOptions.api.applyTransaction({add:[{
         price: trade.price,
         quantity: trade.quantity,
         time: trade.time,
@@ -77,7 +77,7 @@ export class MarketTradesComponent implements OnInit {
 
     this.gridOptions.api.forEachNode((node: RowNode) => {
       if (Math.abs(trade.time - node.data.time) > 3600000)
-        this.gridOptions.api.updateRowData({remove:[node.data]});
+        this.gridOptions.api.applyTransaction({remove:[node.data]});
       else if (Math.abs(trade.time - node.data.time) > 7000)
         node.setData(Object.assign(node.data, {recent: false}));
     });

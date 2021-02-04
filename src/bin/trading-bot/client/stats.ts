@@ -1,21 +1,21 @@
 import {Component, Input, OnInit} from '@angular/core';
-import * as Highcharts from "highcharts";
+import * as Highcharts from 'highcharts';
+require('highcharts/highcharts-more')(Highcharts);
 import * as Subscribe from './subscribe';
-
 import * as Models from './models';
 
 @Component({
   selector: 'market-stats',
   template: `<div class="col-md-12 col-xs-12" style="height:520px;">
     <div class="col-md-6 col-xs-6">
-        <chart style="display: block;" [options]="fvChartOptions" (load)="saveInstance($event.context, 'fv')"></chart>
+        <highcharts-chart [Highcharts]="Highcharts" style="display: block;" [options]="fvChartOptions"></highcharts-chart>
     </div>
     <div class="col-md-6 col-xs-6">
       <div style="height:260px;">
-        <chart style="display: block;" [options]="baseChartOptions" (load)="saveInstance($event.context, 'base')"></chart>
+        <highcharts-chart [Highcharts]="Highcharts" style="display: block;" [options]="baseChartOptions"></highcharts-chart>
       </div>
       <div style="height:260px;">
-        <chart style="display: block;" [options]="quoteChartOptions" (load)="saveInstance($event.context, 'quote')"></chart>
+        <highcharts-chart [Highcharts]="Highcharts" style="display: block;" [options]="quoteChartOptions"></highcharts-chart>
       </div>
     </div>
   </div>`
@@ -31,13 +31,11 @@ export class StatsComponent implements OnInit {
   public stdevWidth: Models.IStdev;
   public tradesBuySize: number;
   public tradesSellSize: number;
-  public fvChart: any;
-  public quoteChart: any;
-  public baseChart: any;
-  private saveInstance = (chartInstance, chartId) => {
-    this[chartId+'Chart'] = Highcharts.charts.length;
-    Highcharts.charts.push(chartInstance);
-  }
+  public fvChart: any = 0;
+  public baseChart: any = 1;
+  public quoteChart: any = 2;
+  public Highcharts: typeof Highcharts = Highcharts;
+
   private pointFormatterBase = function () {
     return this.series.type=='arearange'
       ? '<tr><td><span style="color:'+this.series.color+'">●</span>'+this.series.name+(this.series.name=="Width" && (<any>Highcharts).quotingParameters.protectionEwmaWidthPing?" EWMA":"")+' High:</td><td style="text-align:right;"> <b>'+this.high.toFixed((<any>Highcharts).customProductFixed)+' ' + ((<any>Highcharts).customQuoteCurrency) + '</b></td></tr>'
@@ -72,7 +70,7 @@ export class StatsComponent implements OnInit {
         height: 520,
         type: 'bubble',
         zoomType: false,
-        backgroundColor:'rgba(255, 255, 255, 0)',
+        backgroundColor:'rgba(255, 255, 255, 0)'
     },
     plotOptions: {series: {marker: {enabled: false}}},
     navigator: {enabled: false},

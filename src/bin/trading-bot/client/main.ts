@@ -6,16 +6,7 @@ import {platformBrowserDynamic} from '@angular/platform-browser-dynamic';
 import {FormsModule} from '@angular/forms';
 import {BrowserModule} from '@angular/platform-browser';
 import {AgGridModule} from '@ag-grid-community/angular';
-import {ChartModule} from 'angular2-highcharts';
-import * as Highcharts from 'highcharts';
-import { HighchartsStatic } from 'angular2-highcharts/dist/HighchartsService';
-declare var require: (filename: string) => any;
-export function HighchartsFactory() {
-  const hc = require('highcharts');
-  const hm = require('highcharts/highcharts-more');
-  hm(hc);
-  return hc;
-}
+import {HighchartsChartModule} from 'highcharts-angular';
 
 import * as Models from './models';
 import * as Subscribe from './subscribe';
@@ -1033,12 +1024,8 @@ class ClientComponent implements OnInit {
       BaseCurrencyCellComponent,
       QuoteCurrencyCellComponent
     ]),
-    ChartModule
+    HighchartsChartModule
   ],
-  providers: [{
-    provide: HighchartsStatic,
-    useFactory: HighchartsFactory
-  }],
   declarations: [
     ClientComponent,
     OrdersComponent,
