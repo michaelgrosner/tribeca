@@ -258,6 +258,8 @@ ws sandbox: [websocket.org](https://www.websocket.org/echo.html)
 
 Added Hello World bot.
 
+Added Binance and BitMEX API.
+
 </details>
 
 <details><summary><b>Release v0.5.x Changelog</b></summary>
