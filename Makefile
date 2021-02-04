@@ -2,7 +2,7 @@ K         ?= K.sh
 MAJOR      = 0
 MINOR      = 6
 PATCH      = 0
-BUILD      = 36
+BUILD      = 37
 
 OBLIGATORY = DISCLAIMER: This is strict non-violent software: \
            \nif you hurt other living creatures, please stop; \
@@ -353,4 +353,4 @@ md5: src
 asandwich:
 	@test "`whoami`" = "root" && echo OK || echo make it yourself!
 
-.PHONY: all K $(SOURCE) hlep hepl help doc test src assets assets.o clean check dist download cleandb list screen start stop restart startall stopall restartall packages system_install uninstall install docker reinstall diff upgrade changelog test-c push MAJOR MINOR PATCH BUILD release md5 asandwich
+.PHONY: all K $(SOURCE) hlep hepl help doc test src assets assets.o clean check dist download cleandb screen-help list screen start stop restart startall stopall restartall packages system_install uninstall install docker reinstall diff upgrade changelog test-c push MAJOR MINOR PATCH BUILD release md5 asandwich

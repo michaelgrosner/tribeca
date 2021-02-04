@@ -590,6 +590,10 @@ namespace ₿ {
         symbol = base + quote;
         webMarket += base + "_" + quote + "?layout=pro";
         const json reply1 = Curl::Web::xfer(http + "/api/v3/exchangeInfo");
+        Price tickPrice = 0;
+        Amount minSize  = 0,
+              tickSize  = 0,
+              minValue  = 0;
         if (reply1.find("symbols") != reply1.end() and reply1.at("symbols").is_array())
           for (const json &it : reply1.at("symbols"))
             if (it.value("symbol", "") == symbol) {
@@ -779,7 +783,7 @@ namespace ₿ {
     public:
       GwBitfinex()
       {
-        http   = "https://api.bitfinex.com/v1";
+        http   = "https://api.bitfinex.com/v2";
         ws     = "wss://api.bitfinex.com/ws/2";
         randId = Random::int45Id;
         askForReplace = true;
@@ -789,12 +793,12 @@ namespace ₿ {
       json handshake() override {
         symbol = base + quote;
         webMarket += symbol;
-        const json reply1 = Curl::Web::xfer(http + "/pubticker/" + symbol);
-        Price tickPrice = 0,
-              minSize   = 0;
-        if (reply1.find("last_price") != reply1.end()) {
+        const json reply1 = Curl::Web::xfer(http + "/ticker/t" + symbol);
+        Price tickPrice = 0;
+        Amount minSize  = 0;
+        if (reply1.is_array() and reply1["/6"_json_pointer].is_number()) {
           ostringstream price_;
-          price_ << scientific << stod(reply1.value("last_price", "0"));
+          price_ << scientific << reply1["/6"_json_pointer].get<double>();
           string price = price_.str();
           for (string::iterator it=price.begin(); it!=price.end();)
             if (*it == '+' or *it == '-') break;
@@ -802,13 +806,17 @@ namespace ₿ {
           istringstream iss("1e" + to_string(fmax(stod(price),-4)-4));
           iss >> tickPrice;
         }
-        const json reply2 = Curl::Web::xfer(http + "/symbols_details");
+        const json reply2 = Curl::Web::xfer(http + "/conf/pub:info:pair");
         if (reply2.is_array())
-          for (const json &it : reply2)
-            if (it.find("pair") != it.end() and it.value("pair", "") == Text::strL(symbol)) {
-              minSize = stod(it.value("minimum_order_size", "0"));
+          for (const json &it : reply2.front()) {
+            if (it["/0"_json_pointer].is_string()
+              and it["/0"_json_pointer].get<string>() == symbol
+              and it["/1/3"_json_pointer].is_string()
+            ) {
+              minSize = stod(it["/1/3"_json_pointer].get<string>());
               break;
             }
+          }
         return {
           {     "base", base            },
           {    "quote", quote           },
@@ -825,12 +833,13 @@ namespace ₿ {
         };
       };
     protected:
-      static json xfer(const string &url, const string &post, const string &h1, const string &h2) {
+      static json xfer(const string &url, const string &post, const string &h1, const string &h2, const string &h3) {
         return Curl::Web::request(url, [&](CURL *curl) {
           struct curl_slist *h_ = nullptr;
-          h_ = curl_slist_append(h_, ("X-BFX-APIKEY: "    + h1).data());
-          h_ = curl_slist_append(h_, ("X-BFX-PAYLOAD: "   + post).data());
-          h_ = curl_slist_append(h_, ("X-BFX-SIGNATURE: " + h2).data());
+          h_ = curl_slist_append(h_, "Content-Type: application/json");
+          h_ = curl_slist_append(h_, ("bfx-apikey: "    + h1).data());
+          h_ = curl_slist_append(h_, ("bfx-nonce: "     + h2).data());
+          h_ = curl_slist_append(h_, ("bfx-signature: " + h3).data());
           curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
           curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post.data());
         });
@@ -857,8 +866,8 @@ namespace ₿ {
       };
       json handshake() override {
         const json reply = Curl::Web::xfer(http + "/0/public/AssetPairs?pair=" + base + quote);
-        Price tickPrice = 0,
-              minSize   = 0;
+        Price tickPrice = 0;
+        Amount minSize  = 0;
         if (reply.find("result") != reply.end())
           for (json::const_iterator it = reply.at("result").cbegin(); it != reply.at("result").cend(); ++it)
             if (it.value().find("pair_decimals") != it.value().end()) {
