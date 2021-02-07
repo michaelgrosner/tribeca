@@ -552,10 +552,10 @@ namespace ₿ {
         while (accept_msg(WebSocket2::unframe()));
       };
   };
-  class GwApiFix: public GwApiWs,
-                  public Curl::FixSocket {
+  class GwApiWsFix: public GwApiWs,
+                    public Curl::FixSocket {
     public:
-      GwApiFix(const string &t)
+      GwApiWsFix(const string &t)
         : FixSocket(t, apikey)
       {};
       bool connected() const override {
@@ -780,10 +780,10 @@ namespace ₿ {
         webOrders = "https://bequant.io/reports/orders";
       };
   };
-  class GwCoinbase: public GwApiFix {
+  class GwCoinbase: public GwApiWsFix {
     public:
       GwCoinbase()
-        : GwApiFix("Coinbase")
+        : GwApiWsFix("Coinbase")
       {
         http   = "https://api.pro.coinbase.com";
         ws     = "wss://ws-feed.pro.coinbase.com";
