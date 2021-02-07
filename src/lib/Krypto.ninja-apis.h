@@ -509,6 +509,49 @@ namespace ₿ {
         while (accept_msg(WebSocket::unframe()));
       };
   };
+  class GwApiWsWs: public GwApiWs,
+                   public Curl::WebSocket2 {
+    public:
+      bool connected() const override {
+        return GwApiWs::connected()
+           and WebSocket2::connected();
+      };
+    protected:
+      void connect() override {
+        GwApiWs::connect();
+        if (GwApiWs::connected()) {
+          string ws2 = ws;
+          ws2.replace(ws2.find("ws.")+2, 0, "-auth");
+          CURLcode rc;
+          if (CURLE_OK == (rc = WebSocket2::connect(ws2))) {
+            WebSocket2::start(GwExchangeData::loopfd, [&]() {
+              wait_for_async_data();
+            });
+            print("WS Streaming orders");
+          } else reconnect(string("CURL connect Error: ") + curl_easy_strerror(rc));
+        }
+      };
+      void disconnect() override {
+        WebSocket2::emit("", 0x08);
+        WebSocket2::cleanup();
+        GwApiWs::disconnect();
+      };
+      void emit(const string &msg) {
+        GwApiWs::emit(msg);
+      };
+      void beam(const string &msg) {
+        CURLcode rc;
+        if (CURLE_OK != (rc = WebSocket2::emit(msg, 0x01)))
+          print(string("CURL send Error: ") + curl_easy_strerror(rc));
+      };
+    private:
+      void wait_for_async_data() {
+        CURLcode rc;
+        if (CURLE_OK != (rc = WebSocket2::send_recv()))
+          print(string("CURL recv Error: ") + curl_easy_strerror(rc));
+        while (accept_msg(WebSocket2::unframe()));
+      };
+  };
   class GwApiFix: public GwApiWs,
                   public Curl::FixSocket {
     public:
@@ -855,11 +898,12 @@ namespace ₿ {
         webOrders = "https://www.ethfinex.com/reports/orders";
       };
   };
-  class GwKraken: public GwApiREST {
+  class GwKraken: public GwApiWsWs {
     public:
       GwKraken()
       {
         http   = "https://api.kraken.com";
+        ws     = "wss://ws.kraken.com";
         randId = Random::int32Id;
         webMarket = "https://www.kraken.com/charts";
         webOrders = "https://www.kraken.com/u/trade";
@@ -878,7 +922,7 @@ namespace ₿ {
               iss >> tickPrice >> minSize;
               base   = it.value().value("base", base);
               quote  = it.value().value("quote", quote);
-              symbol = base + quote;
+              symbol = it.value().value("wsname", base + quote);
               break;
             }
         return {

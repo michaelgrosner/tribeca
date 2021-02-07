@@ -652,6 +652,8 @@ namespace ₿ {
             return msg;
           };
       };
+      class WebSocket2: public WebSocket {
+      };
       class FixSocket: public Easy,
                        public FixFrames {
         private:
