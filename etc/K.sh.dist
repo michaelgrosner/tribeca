@@ -36,15 +36,16 @@ OPTIONAL_ARGUMENTS="--colors --naked --debug-wallet"
 #  █ API_EXCHANGE                                       .
 #  ██ - Allows one of the following exchange names (or leave NULL for test mode).
 #API_EXCHANGE=COINBASE
+#API_EXCHANGE=BINANCE
+#API_EXCHANGE=KRAKEN
+#API_EXCHANGE=BITMEX
+#API_EXCHANGE=KUCOIN under development
 #API_EXCHANGE=BITFINEX
 #API_EXCHANGE=BITFINEX_MARGIN
 #API_EXCHANGE=ETHFINEX
 #API_EXCHANGE=ETHFINEX_MARGIN
 #API_EXCHANGE=HITBTC
 #API_EXCHANGE=BEQUANT
-#API_EXCHANGE=BITMEX
-#API_EXCHANGE=BINANCE
-#API_EXCHANGE=KRAKEN
 #API_EXCHANGE=POLONIEX
 API_EXCHANGE=NULL
 #  ▌____________________________________________________.
@@ -67,7 +68,7 @@ API_SECRET=NULL
 #  ▌____________________________________________________.
 #  █ API_PASSPHRASE                                     .
 #  ██ - Allows any valid API PASSPHRASE (see the website of the exchange).
-#  ██ - Only COINBASE exchange must have API PASSPHRASE, other exchanges can be NULL.
+#  ██ - Only COINBASE and KUCOIN must have API PASSPHRASE, other exchanges can be NULL.
 #API_PASSPHRASE=exampleapipassphrase
 API_PASSPHRASE=NULL
 #  ██▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄

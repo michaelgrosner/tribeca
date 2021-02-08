@@ -676,8 +676,8 @@ namespace ₿ {
         return Curl::Web::request(url, [&](CURL *curl) {
           struct curl_slist *h_ = nullptr;
           h_ = curl_slist_append(h_, ("X-MBX-APIKEY: " + h1).data());
-          curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, crud.data());
           curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
+          curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, crud.data());
         });
       };
   };
@@ -727,8 +727,8 @@ namespace ₿ {
           h_ = curl_slist_append(h_, ("api-key: "       + h2).data());
           h_ = curl_slist_append(h_, ("api-signature: " + h3).data());
           curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
-          curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, crud.data());
           curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post.data());
+          curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, crud.data());
         });
       };
   };
@@ -765,8 +765,8 @@ namespace ₿ {
       static json xfer(const string &url, const string &auth, const string &post) {
         return Curl::Web::request(url, [&](CURL *curl) {
           curl_easy_setopt(curl, CURLOPT_USERPWD, auth.data());
-          curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
           curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post.data());
+          curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
         });
       };
   };
@@ -896,6 +896,59 @@ namespace ₿ {
         ws   = "wss://api.ethfinex.com/ws/2";
         webMarket = "https://www.ethfinex.com/trading/";
         webOrders = "https://www.ethfinex.com/reports/orders";
+      };
+  };
+  class GwKucoin: public GwApiWs {
+    public:
+      GwKucoin()
+      {
+        http   = "https://api.kucoin.com";
+        ws     = "wss://push-private.kucoin.com/endpoint";
+        randId = Random::int32Id;
+        webMarket = "https://trade.kucoin.com/";
+        webOrders = "https://www.kucoin.com/order/trade";
+      };
+      json handshake() override {
+        symbol = base + "-" + quote;
+        webMarket += symbol;
+        const json reply1 = Curl::Web::xfer(http + "/api/v1/symbols");
+        if (reply1.find("data") != reply1.end() and reply1.at("data").is_array())
+          for (const json &it : reply1.at("data"))
+            if (it.value("symbol", "") == symbol) {
+              tickPrice = stod(it.value("priceIncrement", "0"));
+              tickSize = stod(it.value("quoteIncrement", "0"));
+              minSize = stod(it.value("baseMinSize", "0"));
+            }
+        const json reply2 = fees();
+        return {
+          {     "base", base                                   },
+          {    "quote", quote                                  },
+          {   "symbol", symbol                                 },
+          {   "margin", margin                                 },
+          {"webMarket", webMarket                              },
+          {"webOrders", webOrders                              },
+          {"tickPrice", tickPrice                              },
+          { "tickSize", tickSize                               },
+          {  "minSize", minSize                                },
+          {  "makeFee", stod(reply2.value("makerFeeRate", "0"))},
+          {  "takeFee", stod(reply2.value("takerFeeRate", "0"))},
+          {    "reply", {reply1, reply2}                       }
+        };
+      };
+    protected:
+      virtual json fees() = 0;
+      static json xfer(const string &url, const string &h1, const string &h2, const string &h3, const string &h4, const string &post, const string &crud) {
+        return Curl::Web::request(url, [&](CURL *curl) {
+          struct curl_slist *h_ = nullptr;
+          h_ = curl_slist_append(h_, ("KC-API-KEY: "  + h1).data());
+          h_ = curl_slist_append(h_, ("KC-API-SIGN: " + h2).data());
+          h_ = curl_slist_append(h_, ("KC-API-TIMESTAMP: " + h3).data());
+          h_ = curl_slist_append(h_, ("KC-API-PASSPHRASE: " + h4).data());
+          h_ = curl_slist_append(h_,  "KC-API-KEY-VERSION: 2");
+          curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
+          curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post.data());
+          curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, crud.data());
+        });
       };
   };
   class GwKraken: public GwApiWsWs {
