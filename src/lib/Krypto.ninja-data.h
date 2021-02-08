@@ -604,19 +604,23 @@ namespace ₿ {
           CURLcode connect(const string &uri) {
             CURLcode rc = CURLE_URL_MALFORMAT;
             CURLU *url = curl_url();
-            char *host_,
-                 *port_,
-                 *path_;
+            char *host,
+                 *port,
+                 *path,
+                 *query;
             string header;
             if (!curl_url_set(url, CURLUPART_URL, ("http" + uri.substr(2)).data(), 0)) {
-              if (!curl_url_get(url, CURLUPART_HOST, &host_, 0)) {
-                header = string(host_);
-                curl_free(host_);
-                if (!curl_url_get(url, CURLUPART_PORT, &port_, CURLU_DEFAULT_PORT)) {
-                  header += ":" + string(port_);
-                  curl_free(port_);
-                  if (!curl_url_get(url, CURLUPART_PATH, &path_, 0)) {
-                    header = "GET " + string(path_) + " HTTP/1.1"
+              if (!curl_url_get(url, CURLUPART_HOST, &host, 0)) {
+                header = string(host);
+                curl_free(host);
+                if (!curl_url_get(url, CURLUPART_PORT, &port, CURLU_DEFAULT_PORT)) {
+                  header += ":" + string(port);
+                  curl_free(port);
+                  if (!curl_url_get(url, CURLUPART_PATH, &path, 0)) {
+                    header = "GET " + string(path) + (
+                                curl_url_get(url, CURLUPART_QUERY, &query, 0)
+                                  ? "" : "?" + string(query)
+                             ) + " HTTP/1.1"
                              "\r\n" "Host: " + header +
                              "\r\n" "Upgrade: websocket"
                              "\r\n" "Connection: Upgrade"
@@ -624,7 +628,8 @@ namespace ₿ {
                              "\r\n" "Sec-WebSocket-Version: 13"
                              "\r\n"
                              "\r\n";
-                    curl_free(path_);
+                    curl_free(path);
+                    curl_free(query);
                     rc = CURLE_OK;
                   }
                 }
