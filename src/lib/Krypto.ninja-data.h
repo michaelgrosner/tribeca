@@ -704,8 +704,8 @@ namespace ₿ {
         transform(input.begin(), input.end(), input.begin(), ::toupper);
         return input;
       };
-      static unsigned long CRC32(const string &input) {
-        return crc32(0, (const Bytef*)input.data(), input.length());
+      static string CRC32(const string &input) {
+        return to_string(crc32(0, (const Bytef*)input.data(), input.length()));
       };
       static string B64(const string &input) {
         BIO *bio, *b64;
