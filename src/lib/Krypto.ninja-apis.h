@@ -904,7 +904,7 @@ namespace ₿ {
       {
         http   = "https://api.kucoin.com";
         ws     = "wss://push-private.kucoin.com/endpoint";
-        randId = Random::int32Id;
+        randId = Random::uuid36Id;
         webMarket = "https://trade.kucoin.com/";
         webOrders = "https://www.kucoin.com/order/trade";
       };
@@ -940,6 +940,7 @@ namespace ₿ {
       static json xfer(const string &url, const string &h1, const string &h2, const string &h3, const string &h4, const string &post, const string &crud) {
         return Curl::Web::request(url, [&](CURL *curl) {
           struct curl_slist *h_ = nullptr;
+          h_ = curl_slist_append(h_, "Content-Type: application/json");
           h_ = curl_slist_append(h_, ("KC-API-KEY: "  + h1).data());
           h_ = curl_slist_append(h_, ("KC-API-SIGN: " + h2).data());
           h_ = curl_slist_append(h_, ("KC-API-TIMESTAMP: " + h3).data());
