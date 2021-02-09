@@ -2,7 +2,7 @@ K         ?= K.sh
 MAJOR      = 0
 MINOR      = 6
 PATCH      = 0
-BUILD      = 49
+BUILD      = 50
 
 OBLIGATORY = DISCLAIMER: This is strict non-violent software: \
            \nif you hurt other living creatures, please stop; \
@@ -195,7 +195,7 @@ Win32: src/lib/Krypto.ninja-main.cxx src/bin/$(KSRC)/$(KSRC).main.h
 download:
 	curl -L https://github.com/ctubio/Krypto-trading-bot/releases/download/$(MAJOR).$(MINOR).x/K-$(MAJOR).$(MINOR).$(PATCH).$(BUILD)-$(KHOST).tar.gz | tar xz
 	@$(MAKE) system_install -s
-	@test -n "`ls *.sh 2>/dev/null`" || (cp etc/K.sh.dist K.sh && chmod +x K.sh)
+	@test -n "`ls *.sh 2>/dev/null`" || (cp etc/K.sh.dist K.sh && chmod +x K.sh && echo && echo NEW CONFIG FILE created at: && LS_COLORS="ex=40;92" CLICOLOR="Yes" ls $(shell ls --color > /dev/null 2>&1 && echo --color) -lah K.sh && echo)
 
 cleandb:
 	rm -vrf $(KHOME)/db/K*
@@ -238,12 +238,12 @@ reinstall:
 	test -d .git && ((test -n "`git diff`" && (echo && echo !!Local changes will be lost!! press CTRL-C to abort. && echo && sleep 5) || :) \
 	&& git fetch && git merge FETCH_HEAD || (git reset FETCH_HEAD && git checkout .)) || curl https://raw.githubusercontent.com/ctubio/Krypto-trading-bot/master/Makefile > Makefile
 	@$(MAKE) install
-	@echo && echo ..done! Please restart any running instance and also refresh the UI if is currently opened in your browser.
+	@echo && echo ..done! Please restart any running instance.
 
 screen-help:
 	$(if $(shell test -z "`command -v screen`" && echo 1),$(warning Please install screen using the package manager of your system.);$(error screen command not found))
 
-list:  screen-help
+list: screen-help
 	@screen -list || :
 
 restartall:
