@@ -898,9 +898,9 @@ namespace ₿ {
         webOrders = "https://www.ethfinex.com/reports/orders";
       };
   };
-  class GwKucoin: public GwApiWs {
+  class GwKuCoin: public GwApiWs {
     public:
-      GwKucoin()
+      GwKuCoin()
       {
         http   = "https://api.kucoin.com";
         ws     = "wss://push-private.kucoin.com/endpoint";
