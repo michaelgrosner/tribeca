@@ -555,20 +555,12 @@ namespace ₿ {
     public_friend:
       class Web {
         public:
-          static const json xfer(const string &url, const long &timeout = 13) {
+          static json xfer(const string &url, const long &timeout = 13) {
             return request(url, [&](CURL *curl) {
               curl_easy_setopt(curl, CURLOPT_TIMEOUT, timeout);
             });
           };
-          static const json xfer(const string &url, const string &post) {
-            return request(url, [&](CURL *curl) {
-              struct curl_slist *h_ = nullptr;
-              h_ = curl_slist_append(h_, "Content-Type: application/x-www-form-urlencoded");
-              curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
-              curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post.data());
-            });
-          };
-          static const json request(const string &url, const function<void(CURL*)> curl_custom_setopt) {
+          static json request(const string &url, const function<void(CURL*)> curl_custom_setopt) {
             static mutex waiting_reply;
             lock_guard<mutex> lock(waiting_reply);
             string reply;
