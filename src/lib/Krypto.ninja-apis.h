@@ -671,7 +671,6 @@ namespace ₿ {
         };
       };
     protected:
-      virtual json fees() = 0;
       static json xfer(const string &url, const string &h1, const string &crud) {
         return Curl::Web::request(url, [&](CURL *curl) {
           struct curl_slist *h_ = nullptr;
@@ -679,6 +678,26 @@ namespace ₿ {
           curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
           curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, crud.data());
         });
+      };
+    private:
+      json fees() {
+        const string crud = "GET",
+                     path = "/wapi/v3/tradeFee.html?",
+                     time = to_string(Tstamp),
+                     post = "symbol=" + symbol
+                          + "&timestamp=" + time,
+                     sign = "&signature=" + Text::HMAC256(post, secret);
+        const json reply = xfer(http + path + post + sign, apikey, crud);
+        if (reply.find("success") == reply.end()
+          or !reply.value("success", false)
+          or reply.find("tradeFee") == reply.end()
+          or !reply.at("tradeFee").is_array()
+          or !reply.at("tradeFee").size()
+        ) {
+          print("Error while reading fees: " + reply.dump());
+          return reply;
+        }
+        return reply.at("tradeFee")["/0"_json_pointer];
       };
   };
   class GwBitmex: public GwApiWs {
@@ -936,20 +955,38 @@ namespace ₿ {
         };
       };
     protected:
-      virtual json fees() = 0;
-      static json xfer(const string &url, const string &h1, const string &h2, const string &h3, const string &h4, const string &post, const string &crud) {
+      static json xfer(const string &url, const string &h1, const string &h2, const string &h3, const string &h4, const string &crud, const string &post = "") {
         return Curl::Web::request(url, [&](CURL *curl) {
           struct curl_slist *h_ = nullptr;
           h_ = curl_slist_append(h_, "Content-Type: application/json");
-          h_ = curl_slist_append(h_, ("KC-API-KEY: "  + h1).data());
-          h_ = curl_slist_append(h_, ("KC-API-SIGN: " + h2).data());
-          h_ = curl_slist_append(h_, ("KC-API-TIMESTAMP: " + h3).data());
-          h_ = curl_slist_append(h_, ("KC-API-PASSPHRASE: " + h4).data());
+          h_ = curl_slist_append(h_, ("KC-API-KEY: "        + h1).data());
+          h_ = curl_slist_append(h_, ("KC-API-SIGN: "       + h2).data());
+          h_ = curl_slist_append(h_, ("KC-API-PASSPHRASE: " + h3).data());
+          h_ = curl_slist_append(h_, ("KC-API-TIMESTAMP: "  + h4).data());
           h_ = curl_slist_append(h_,  "KC-API-KEY-VERSION: 2");
           curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
           curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post.data());
           curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, crud.data());
         });
+      };
+    private:
+      json fees() {
+        const string crud = "GET",
+                     path = "/api/v1/base-fee",
+                     time = to_string(Tstamp),
+                     hash = time + crud + path,
+                     sign = Text::B64(Text::HMAC256(hash, secret, true)),
+                     code = Text::B64(Text::HMAC256(pass, secret, true));
+        const json reply = xfer(http + path, apikey, sign, code, time, crud);
+        if (reply.find("code") == reply.end()
+          or reply.find("data") == reply.end()
+          or reply.value("code", "") != "200000"
+          or !reply.at("data").is_object()
+        ) {
+          print("Error while reading fees: " + reply.dump());
+          return reply;
+        }
+        return reply.at("data");
       };
   };
   class GwKraken: public GwApiWsWs {

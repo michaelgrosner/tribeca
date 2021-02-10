@@ -429,8 +429,8 @@ namespace ₿ {
           {"interface",    "IP",     "",       "set IP to bind as outgoing network interface"},
           {"ipv6",         "1",      nullptr,  "use IPv6 when possible"},
           {"exchange",     "NAME",   "NULL",   "set exchange NAME for trading, mandatory"},
-          {"currency",     "PAIR",   "NULL",   "set currency PAIR for trading, use format"
-                                               "\n" "with '/' separator, like 'BTC/EUR'"},
+          {"currency",     "PAIR",   "NULL",   "set currency PAIR for trading, use format ISO 4217-A3"
+                                               "\n" "with '/' separator, like 'BTC/EUR', mandatory"},
           {"apikey",       "WORD",   "NULL",   "set (never share!) WORD as api key for trading, mandatory"},
           {"secret",       "WORD",   "NULL",   "set (never share!) WORD as api secret for trading, mandatory"},
           {"passphrase",   "WORD",   "NULL",   "set (never share!) WORD as api passphrase for trading,"
