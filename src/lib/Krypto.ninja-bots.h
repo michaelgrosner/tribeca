@@ -91,7 +91,7 @@ namespace ₿ {
           json::object();
 #else
           Curl::Web::xfer("https://api.github.com/repos/ctubio/"
-            "Krypto-trading-bot/compare/" K_HEAD "...HEAD", 4L);
+            "Krypto-trading-bot/compare/" K_HEAD "...HEAD");
 #endif
         if (diff.value("ahead_by", 0)
           and diff.find("commits") != diff.end()
@@ -142,7 +142,7 @@ namespace ₿ {
       static void die(const int) {
         if (epilogue.empty())
           epilogue = "Excellent decision! "
-                   + Curl::Web::xfer("https://api.icndb.com/jokes/random?escape=javascript&limitTo=[nerdy]", 4L)
+                   + Curl::Web::xfer("https://api.icndb.com/jokes/random?escape=javascript&limitTo=[nerdy]")
                        .value("/value/joke"_json_pointer, "let's plant a tree instead..");
         halt(
           epilogue.find("Errrror") == string::npos
@@ -508,18 +508,18 @@ namespace ₿ {
         if (arg<int>("naked"))
           display = {};
         if (!arg<string>("interface").empty() and !arg<int>("ipv6"))
-          curl_global_setopt = [this](CURL *curl) {
+          args_easy_setopt = [this](CURL *curl) {
             curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
             curl_easy_setopt(curl, CURLOPT_INTERFACE, arg<string>("interface").data());
             curl_easy_setopt(curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
           };
         else if (!arg<string>("interface").empty())
-          curl_global_setopt = [this](CURL *curl) {
+          args_easy_setopt = [this](CURL *curl) {
             curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
             curl_easy_setopt(curl, CURLOPT_INTERFACE, arg<string>("interface").data());
           };
         else if (!arg<int>("ipv6"))
-          curl_global_setopt = [](CURL *curl) {
+          args_easy_setopt = [](CURL *curl) {
             curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
             curl_easy_setopt(curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
           };
@@ -1164,7 +1164,7 @@ namespace ₿ {
             wait_for_keylog(this);
         } {
           log("CF", "Outbound IP address is",
-            wtfismyip = Curl::Web::xfer("https://wtfismyip.com/json", 4L)
+            wtfismyip = Curl::Web::xfer("https://wtfismyip.com/json")
                           .value("YourFuckingIPAddress", wtfismyip)
           );
         } {

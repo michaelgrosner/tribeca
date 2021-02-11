@@ -2636,7 +2636,7 @@ namespace tribeca {
     };
   };
 
-  class Product: public Client::Broadcast<Product> {
+  struct Product: public Client::Broadcast<Product> {
     private_ref:
       const KryptoNinja &K;
     public:
@@ -2671,7 +2671,7 @@ namespace tribeca {
     j = k.to_json();
   };
 
-  class Memory: public Client::Broadcast<Memory> {
+  struct Memory: public Client::Broadcast<Memory> {
     public:
       unsigned int orders_60s = 0;
     private:

@@ -427,7 +427,7 @@ namespace ₿ {
   };
 #endif
 
-  static function<void(CURL*)> curl_global_setopt = [](CURL *curl) {
+  static function<void(CURL*)> args_easy_setopt = [](CURL *curl) {
     curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
   };
 
@@ -456,7 +456,7 @@ namespace ₿ {
             in.clear();
             CURLcode rc;
             if (CURLE_OK == (rc = init())) {
-              curl_global_setopt(curl);
+              args_easy_setopt(curl);
               curl_easy_setopt(curl, CURLOPT_URL, url.data());
               curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1L);
               curl_easy_setopt(curl, CURLOPT_CONNECT_ONLY, 1L);
@@ -555,20 +555,16 @@ namespace ₿ {
     public_friend:
       class Web {
         public:
-          static json xfer(const string &url, const long &timeout = 13) {
-            return request(url, [&](CURL *curl) {
-              curl_easy_setopt(curl, CURLOPT_TIMEOUT, timeout);
-            });
-          };
-          static json request(const string &url, const function<void(CURL*)> curl_custom_setopt) {
+          static json xfer(const string &url, const function<void(CURL*)> _easy_setopt = nullptr) {
             static mutex waiting_reply;
             lock_guard<mutex> lock(waiting_reply);
             string reply;
             CURLcode rc = CURLE_FAILED_INIT;
             CURL *curl = curl_easy_init();
             if (curl) {
-              curl_global_setopt(curl);
-              curl_custom_setopt(curl);
+              args_easy_setopt(curl);
+              if (_easy_setopt) _easy_setopt(curl);
+              curl_easy_setopt(curl, CURLOPT_TIMEOUT, 13L);
               curl_easy_setopt(curl, CURLOPT_URL, url.data());
               curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &write);
               curl_easy_setopt(curl, CURLOPT_WRITEDATA, &reply);
@@ -649,8 +645,7 @@ namespace ₿ {
             return msg;
           };
       };
-      class WebSocket2: public WebSocket {
-      };
+      class WebSocketTwin: public WebSocket {};
       class FixSocket: public Easy,
                        public FixFrames {
         private:

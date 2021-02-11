@@ -258,7 +258,7 @@ ws sandbox: [websocket.org](https://www.websocket.org/echo.html)
 
 Added Hello World bot.
 
-Added Binance, Kraken and BitMEX API.
+Added Binance, Kraken, KuCoin and BitMEX API.
 
 </details>
 

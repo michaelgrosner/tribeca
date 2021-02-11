@@ -510,11 +510,11 @@ namespace ₿ {
       };
   };
   class GwApiWsWs: public GwApiWs,
-                   public Curl::WebSocket2 {
+                   public Curl::WebSocketTwin {
     public:
       bool connected() const override {
         return GwApiWs::connected()
-           and WebSocket2::connected();
+           and WebSocketTwin::connected();
       };
     protected:
       void connect() override {
@@ -523,8 +523,8 @@ namespace ₿ {
           string ws2 = ws;
           ws2.replace(ws2.find("ws.")+2, 0, "-auth");
           CURLcode rc;
-          if (CURLE_OK == (rc = WebSocket2::connect(ws2))) {
-            WebSocket2::start(GwExchangeData::loopfd, [&]() {
+          if (CURLE_OK == (rc = WebSocketTwin::connect(ws2))) {
+            WebSocketTwin::start(GwExchangeData::loopfd, [&]() {
               wait_for_async_data();
             });
             print("WS Streaming orders");
@@ -532,8 +532,8 @@ namespace ₿ {
         }
       };
       void disconnect() override {
-        WebSocket2::emit("", 0x08);
-        WebSocket2::cleanup();
+        WebSocketTwin::emit("", 0x08);
+        WebSocketTwin::cleanup();
         GwApiWs::disconnect();
       };
       void emit(const string &msg) {
@@ -541,15 +541,15 @@ namespace ₿ {
       };
       void beam(const string &msg) {
         CURLcode rc;
-        if (CURLE_OK != (rc = WebSocket2::emit(msg, 0x01)))
+        if (CURLE_OK != (rc = WebSocketTwin::emit(msg, 0x01)))
           print(string("CURL send Error: ") + curl_easy_strerror(rc));
       };
     private:
       void wait_for_async_data() {
         CURLcode rc;
-        if (CURLE_OK != (rc = WebSocket2::send_recv()))
+        if (CURLE_OK != (rc = WebSocketTwin::send_recv()))
           print(string("CURL recv Error: ") + curl_easy_strerror(rc));
-        while (accept_msg(WebSocket2::unframe()));
+        while (accept_msg(WebSocketTwin::unframe()));
       };
   };
   class GwApiWsFix: public GwApiWs,
@@ -559,7 +559,7 @@ namespace ₿ {
         : FixSocket(t, apikey)
       {};
       bool connected() const override {
-        return WebSocket::connected()
+        return GwApiWs::connected()
            and FixSocket::connected();
       };
     protected:
@@ -568,7 +568,7 @@ namespace ₿ {
 //EO non-free Gw library functions from build-*/lib/K-*.a (it just redefines all virtual gateway class members above).
       void connect() override {
         GwApiWs::connect();
-        if (WebSocket::connected()) {
+        if (GwApiWs::connected()) {
           CURLcode rc;
           if (CURLE_OK == (rc = FixSocket::connect(fix, logon()))) {
             FixSocket::start(GwExchangeData::loopfd, [&]() {
@@ -672,7 +672,7 @@ namespace ₿ {
       };
     protected:
       static json xfer(const string &url, const string &h1, const string &crud) {
-        return Curl::Web::request(url, [&](CURL *curl) {
+        return Curl::Web::xfer(url, [&](CURL *curl) {
           struct curl_slist *h_ = nullptr;
           h_ = curl_slist_append(h_, ("X-MBX-APIKEY: " + h1).data());
           curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
@@ -683,12 +683,12 @@ namespace ₿ {
       json fees() {
         const string crud = "GET",
                      path = "/wapi/v3/tradeFee.html?",
-                     time = to_string(Tstamp),
-                     post = "symbol=" + symbol
-                          + "&timestamp=" + time,
+                     post = "symbol="     + symbol
+                          + "&timestamp=" + to_string(Tstamp),
                      sign = "&signature=" + Text::HMAC256(post, secret);
         const json reply = xfer(http + path + post + sign, apikey, crud);
         if (reply.find("success") == reply.end()
+          or !reply.at("success").is_boolean()
           or !reply.value("success", false)
           or reply.find("tradeFee") == reply.end()
           or !reply.at("tradeFee").is_array()
@@ -697,7 +697,7 @@ namespace ₿ {
           print("Error while reading fees: " + reply.dump());
           return reply;
         }
-        return reply.at("tradeFee")["/0"_json_pointer];
+        return reply.at("tradeFee").front();
       };
   };
   class GwBitmex: public GwApiWs {
@@ -740,7 +740,7 @@ namespace ₿ {
       };
     protected:
       static json xfer(const string &url, const string &h1, const string &h2, const string &h3, const string &post, const string &crud) {
-        return Curl::Web::request(url, [&](CURL *curl) {
+        return Curl::Web::xfer(url, [&](CURL *curl) {
           struct curl_slist *h_ = nullptr;
           h_ = curl_slist_append(h_, ("api-expires: "   + h1).data());
           h_ = curl_slist_append(h_, ("api-key: "       + h2).data());
@@ -782,7 +782,7 @@ namespace ₿ {
       };
     protected:
       static json xfer(const string &url, const string &auth, const string &post) {
-        return Curl::Web::request(url, [&](CURL *curl) {
+        return Curl::Web::xfer(url, [&](CURL *curl) {
           curl_easy_setopt(curl, CURLOPT_USERPWD, auth.data());
           curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post.data());
           curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
@@ -831,7 +831,7 @@ namespace ₿ {
       };
     protected:
       static json xfer(const string &url, const string &h1, const string &h2, const string &h3, const string &h4) {
-        return Curl::Web::request(url, [&](CURL *curl) {
+        return Curl::Web::xfer(url, [&](CURL *curl) {
           struct curl_slist *h_ = nullptr;
           h_ = curl_slist_append(h_, ("CB-ACCESS-KEY: "        + h1).data());
           h_ = curl_slist_append(h_, ("CB-ACCESS-SIGN: "       + h2).data());
@@ -896,7 +896,7 @@ namespace ₿ {
       };
     protected:
       static json xfer(const string &url, const string &post, const string &h1, const string &h2, const string &h3) {
-        return Curl::Web::request(url, [&](CURL *curl) {
+        return Curl::Web::xfer(url, [&](CURL *curl) {
           struct curl_slist *h_ = nullptr;
           h_ = curl_slist_append(h_, "Content-Type: application/json");
           h_ = curl_slist_append(h_, ("bfx-apikey: "    + h1).data());
@@ -956,7 +956,7 @@ namespace ₿ {
       };
     protected:
       static json xfer(const string &url, const string &h1, const string &h2, const string &h3, const string &h4, const string &crud, const string &post = "") {
-        return Curl::Web::request(url, [&](CURL *curl) {
+        return Curl::Web::xfer(url, [&](CURL *curl) {
           struct curl_slist *h_ = nullptr;
           h_ = curl_slist_append(h_, "Content-Type: application/json");
           h_ = curl_slist_append(h_, ("KC-API-KEY: "        + h1).data());
@@ -979,8 +979,9 @@ namespace ₿ {
                      code = Text::B64(Text::HMAC256(pass, secret, true));
         const json reply = xfer(http + path, apikey, sign, code, time, crud);
         if (reply.find("code") == reply.end()
-          or reply.find("data") == reply.end()
+          or !reply.at("code").is_string()
           or reply.value("code", "") != "200000"
+          or reply.find("data") == reply.end()
           or !reply.at("data").is_object()
         ) {
           print("Error while reading fees: " + reply.dump());
@@ -1033,7 +1034,7 @@ namespace ₿ {
       };
     protected:
       static json xfer(const string &url, const string &h1, const string &h2, const string &post) {
-        return Curl::Web::request(url, [&](CURL *curl) {
+        return Curl::Web::xfer(url, [&](CURL *curl) {
           struct curl_slist *h_ = nullptr;
           h_ = curl_slist_append(h_, ("API-Key: "  + h1).data());
           h_ = curl_slist_append(h_, ("API-Sign: " + h2).data());
@@ -1075,7 +1076,7 @@ namespace ₿ {
       };
     protected:
       static json xfer(const string &url, const string &post, const string &h1, const string &h2) {
-        return Curl::Web::request(url, [&](CURL *curl) {
+        return Curl::Web::xfer(url, [&](CURL *curl) {
           struct curl_slist *h_ = nullptr;
           h_ = curl_slist_append(h_, "Content-Type: application/x-www-form-urlencoded");
           h_ = curl_slist_append(h_, ("Key: "  + h1).data());
