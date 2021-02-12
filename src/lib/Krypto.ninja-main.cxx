@@ -4,7 +4,7 @@
           ;;;;;    ;;    ;;;;;;;       /*     I will be right here  */
           ;;;;;        ;;;;;;;;;         /*    waiting for coins.   */ // youtu.be/FornpYhezt4
           ;;;;;        ;;;;;;;;;/* .-""-._    Whatever it takes..   */
-using namespace    \u20BF;    ;;;;;;;/*(  <>  )`-. Or how my OS breaks,  */ // youtu.be/Wd2fSSt4MDg
+using namespace    ₿;    ;;;;;;;/*(  <>  )`-. Or how my OS breaks,  */ // youtu.be/Wd2fSSt4MDg
           ;;;;;    ;;;;    ;;;;;/*|`-..-'|  | I will be right here  */
           ;;;;;    ;;;;    ;;;;;/*|     :|._/  waiting for coins.   */ // youtu.be/02OHHWG1EQY
           ;;;;;;;;;;;;;    ;;;;;/*`.____;'    Day after day.        */

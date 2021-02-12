@@ -1,7 +1,7 @@
 //! \file
 //! \brief Exchange API integrations.
 
-namespace \u20BF {
+namespace ₿ {
   enum class Connectivity: unsigned int { Disconnected, Connected };
   enum class       Status: unsigned int { Waiting, Working, Terminated };
   enum class         Side: unsigned int { Bid, Ask };
@@ -516,13 +516,12 @@ namespace \u20BF {
            and WebSocketTwin::connected();
       };
     protected:
+      virtual string endpoint() = 0;
       void connect() override {
         GwApiWs::connect();
         if (GwApiWs::connected()) {
-          string ws2 = ws;
-          ws2.replace(ws2.find("ws.")+2, 0, "-auth");
           CURLcode rc;
-          if (CURLE_OK == (rc = WebSocketTwin::connect(ws2))) {
+          if (CURLE_OK == (rc = WebSocketTwin::connect(endpoint()))) {
             WebSocketTwin::start(GwExchangeData::loopfd, [&]() {
               wait_for_async_data();
             });
@@ -573,7 +572,7 @@ namespace \u20BF {
             FixSocket::start(GwExchangeData::loopfd, [&]() {
               wait_for_async_data();
             });
-            print("FIX success Logon, streaming orders");
+            print("FIX Logon, streaming orders");
           } else reconnect(string("CURL connect FIX Error: ") + curl_easy_strerror(rc));
         }
       };
@@ -1032,6 +1031,9 @@ namespace \u20BF {
         };
       };
     protected:
+      string endpoint() override {
+        return string(ws).insert(ws.find("ws.") + 2, "-auth");
+      };
       static json xfer(const string &url, const string &h1, const string &h2, const string &post) {
         return Curl::Web::xfer(url, [&](CURL *curl) {
           struct curl_slist *h_ = nullptr;

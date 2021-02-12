@@ -1,7 +1,7 @@
 //! \file
 //! \brief Minimal user application framework.
 
-namespace \u20BF {
+namespace ₿ {
   static string epilogue, epitaph;
 
   //! \brief     Call all endingFn once and print a last log msg.
