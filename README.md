@@ -104,7 +104,7 @@ To upgrade anytime see [Upgrade to the latest commit](#upgrade-to-the-latest-com
 ```
  $ mkdir K
  $ cd K
- $ curl https://raw.githubusercontent.com/ctubio/Krypto-trading-bot/master/Makefile > Makefile
+ $ curl -O krypto.ninja/Makefile
  $ make install
 ```
 
