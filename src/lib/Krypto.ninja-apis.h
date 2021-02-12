@@ -1,7 +1,7 @@
 //! \file
 //! \brief Exchange API integrations.
 
-namespace ₿ {
+namespace \u20BF {
   enum class Connectivity: unsigned int { Disconnected, Connected };
   enum class       Status: unsigned int { Waiting, Working, Terminated };
   enum class         Side: unsigned int { Bid, Ask };

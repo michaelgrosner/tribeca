@@ -1,7 +1,7 @@
 //! \file
 //! \brief Data transport/transform helpers.
 
-namespace ₿ {
+namespace \u20BF {
   class WebSocketFrames {
     protected:
       string frame(string data, const int &opcode, const bool &mask) const {

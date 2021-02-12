@@ -2217,7 +2217,7 @@ namespace tribeca {
         applyQuotingParameters();
       };
       bool abandon(const Order &order, Quote &quote, unsigned int &bullets) {
-        if (!order.manual and stillAlive(order)) {
+        if (stillAlive(order)) {
           if (abs(order.price - quote.price) < K.gateway->tickPrice)
             quote.skip();
           else if (order.status == Status::Waiting) {
@@ -2256,7 +2256,7 @@ namespace tribeca {
           }
           ++countWaiting;
         } else ++countWorking;
-        return true;
+        return !order.manual;
       };
       void applyQuotingParameters() {
         quotes.debug("?"); applySuperTrades();
