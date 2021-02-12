@@ -138,6 +138,7 @@ namespace ₿ {
     k.orderId         = j.value("orderId", "");
     k.price           = j.value("price", 0.0);
     k.quantity        = j.value("quantity", 0.0);
+    k.time            = j.value("time", Tstamp);
     k.side            = j.value("side", "") == "Bid"
                           ? Side::Bid
                           : Side::Ask;
