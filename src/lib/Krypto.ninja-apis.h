@@ -88,7 +88,7 @@ namespace ₿ {
          Amount filled      = 0;
       OrderType type        = (OrderType)0;
     TimeInForce timeInForce = (TimeInForce)0;
-           bool postOnly    = true;
+           bool manual      = false;
           Clock latency     = 0;
     static void update(const Order &raw, Order *const order) {
       if (!order) return;
@@ -129,28 +129,27 @@ namespace ₿ {
       {      "price", k.price      },
       {"timeInForce", k.timeInForce},
       {     "status", k.status     },
-      {   "postOnly", k.postOnly   },
       {       "time", k.time       },
       {    "latency", k.latency    }
     };
   };
   static void __attribute__ ((unused)) from_json(const json &j, Order &k) {
-    k.orderId         = j.value("orderId", "");
-    k.price           = j.value("price", 0.0);
-    k.quantity        = j.value("quantity", 0.0);
-    k.time            = j.value("time", Tstamp);
-    k.side            = j.value("side", "") == "Bid"
-                          ? Side::Bid
-                          : Side::Ask;
-    k.type            = j.value("type", "") == "Limit"
-                          ? OrderType::Limit
-                          : OrderType::Market;
-    k.timeInForce     = j.value("timeInForce", "") == "GTC"
-                          ? TimeInForce::GTC
-                          : (j.value("timeInForce", "") == "FOK"
-                            ? TimeInForce::FOK
-                            : TimeInForce::IOC);
-    k.postOnly        = j.value("postOnly", false);
+    k.orderId     = j.value("orderId", "");
+    k.price       = j.value("price", 0.0);
+    k.quantity    = j.value("quantity", 0.0);
+    k.time        = j.value("time", Tstamp);
+    k.side        = j.value("side", "") == "Bid"
+                      ? Side::Bid
+                      : Side::Ask;
+    k.type        = j.value("type", "") == "Limit"
+                      ? OrderType::Limit
+                      : OrderType::Market;
+    k.timeInForce = j.value("timeInForce", "") == "GTC"
+                      ? TimeInForce::GTC
+                      : (j.value("timeInForce", "") == "FOK"
+                        ? TimeInForce::FOK
+                        : TimeInForce::IOC);
+    k.manual      = j.value("manual", false);
   };
 
   class GwExchangeData {
@@ -196,8 +195,7 @@ namespace ₿ {
           decimal.price.str(order->price),
           decimal.amount.str(order->quantity),
           order->type,
-          order->timeInForce,
-          order->postOnly
+          order->timeInForce
         );
       };
       void replace(const Order *const order) {
@@ -214,7 +212,7 @@ namespace ₿ {
       };
 //BO non-free Gw library functions from build-*/lib/K-*.a (it just redefines all virtual gateway class members below).......
 /**/  virtual void replace(string, string) {};                               // call         async orders data from exchange
-/**/  virtual void   place(string, Side, string, string, OrderType, TimeInForce, bool) = 0; // async orders like above/below
+/**/  virtual void   place(string, Side, string, string, OrderType, TimeInForce) = 0;     // async orders like above/below..
 /**/  virtual void  cancel(string, string) = 0;                              // call         async orders data from exchange
 /**/protected:
 /**/  virtual             bool async_wallet()    { return false; };          // call         async wallet data from exchange

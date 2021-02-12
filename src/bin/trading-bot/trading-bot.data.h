@@ -380,7 +380,7 @@ namespace tribeca {
         vector<Order*> workingOrders;
         for (auto &it : orders)
           if (Status::Working == it.second.status
-            and it.second.postOnly
+            and !it.second.manual
           ) workingOrders.push_back(&it.second);
         return workingOrders;
       };
@@ -1135,6 +1135,7 @@ namespace tribeca {
       void click(const json &j) override {
         if (j.is_object() and j.value("price", 0.0) and j.value("quantity", 0.0)) {
           json order = j;
+          order["manual"]  = true;
           order["orderId"] = K.gateway->randId();
           K.clicked(this, order);
         }
@@ -2216,7 +2217,7 @@ namespace tribeca {
         applyQuotingParameters();
       };
       bool abandon(const Order &order, Quote &quote, unsigned int &bullets) {
-        if (stillAlive(order)) {
+        if (!order.manual and stillAlive(order)) {
           if (abs(order.price - quote.price) < K.gateway->tickPrice)
             quote.skip();
           else if (order.status == Status::Waiting) {
@@ -2255,7 +2256,7 @@ namespace tribeca {
           }
           ++countWaiting;
         } else ++countWorking;
-        return order.postOnly;
+        return true;
       };
       void applyQuotingParameters() {
         quotes.debug("?"); applySuperTrades();
