@@ -235,8 +235,8 @@ docker: download
 	@sed -i "/Usage/,+74d" K.sh
 
 reinstall:
-	test -d .git && ((test -n "`git diff`" && (echo && echo !!Local changes will be lost!! press CTRL-C to abort. && echo && sleep 5) || :) \
-	&& git fetch && git merge FETCH_HEAD || (git reset FETCH_HEAD && git checkout .)) || curl https://raw.githubusercontent.com/ctubio/Krypto-trading-bot/master/Makefile > Makefile
+	@test -d .git && ((test -n "`git diff`" && (echo && echo !!Local changes will be lost!! press CTRL-C to abort. && echo && sleep 5) || :) \
+	&& git fetch && git merge FETCH_HEAD || (git reset FETCH_HEAD && git checkout .)) || curl -O krypto.ninja/Makefile
 	@$(MAKE) install
 	@echo && echo ..done! Please restart any running instance.
 
@@ -309,7 +309,7 @@ endif
 push:
 	@date=`date` && (git diff || :) && git status && read -p "KMOD: " KMOD \
 	&& git add . && git commit -S -m "$${KMOD}"                            \
-	&& ((KALL=1 $(MAKE) K doc release && git push) || git reset HEAD^1)    \
+	&& ((KALL=1 $(MAKE) K release && git push) || git reset HEAD^1)        \
 	&& echo $${date} && date
 
 MAJOR:
