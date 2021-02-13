@@ -912,7 +912,7 @@ namespace tribeca {
       bool warn_empty() const {
         const bool err = bids.empty() or asks.empty();
         if (err and (float)clock()/CLOCKS_PER_SEC > 3.0)
-          K.logWar("QE", "Unable to calculate quote, missing market data");
+          K.logWar("QE", "Unable to calculate quote, missing market data", 3e+3);
         return err;
       };
       void timer_1s() {
@@ -1741,7 +1741,7 @@ namespace tribeca {
       bool warn_empty() const {
         const bool err = empty();
         if (err and (float)clock()/CLOCKS_PER_SEC > 3.0)
-          K.logWar("PG", "Unable to calculate TBP, missing wallet data");
+          K.logWar("PG", "Unable to calculate TBP, missing wallet data", 3e+3);
         return err;
       };
       bool empty() const {
@@ -1959,7 +1959,7 @@ namespace tribeca {
       {};
       void checkCrossedQuotes() {
         if (bid.checkCrossed(ask) or ask.checkCrossed(bid))
-          K.logWar("QE", "Crossed bid/ask quotes detected, that is.. unexpected");
+          K.logWar("QE", "Crossed bid/ask quotes detected, that is.. unexpected", 3e+3);
       };
       void debug(const string &step) {
         if (K.arg<int>("debug-quotes"))
@@ -2010,7 +2010,7 @@ namespace tribeca {
         if (quotes.bid.price <= 0 or quotes.ask.price <= 0) {
           quotes.bid.clear(QuoteState::WidthMustBeSmaller);
           quotes.ask.clear(QuoteState::WidthMustBeSmaller);
-          K.logWar("QP", "Negative price detected, widthPing must be smaller");
+          K.logWar("QP", "Negative price detected, widthPing must be smaller", 3e+3);
         }
       };
     private:

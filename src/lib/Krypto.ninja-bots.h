@@ -200,6 +200,8 @@ namespace ₿ {
         } padding = {ANY_NUM, 0, 0, 0};
       } display;
       WINDOW *stdlog = nullptr;
+    private:
+      mutable map<string, Clock> limits;
     public:
       unsigned int padding_bottom(const unsigned int &bottom) const {
         if (bottom != display.padding.bottom) {
@@ -293,7 +295,13 @@ namespace ₿ {
         wattroff(stdlog, COLOR_PAIR(COLOR_WHITE));
         wrefresh(stdlog);
       };
-      void logWar(const string &prefix, const string &reason) const {
+      void logWar(const string &prefix, const string &reason, const Clock &ratelimit = 0) const {
+        if (ratelimit) {
+          Clock now = Tstamp;
+          if (limits.find(reason) != limits.end() and limits[reason] + ratelimit > now)
+            return;
+          limits[reason] = now;
+        }
         if (!display.terminal) {
           clog << stamp()
                << prefix          << Ansi::r(COLOR_RED)
