@@ -516,12 +516,11 @@ namespace ₿ {
            and WebSocketTwin::connected();
       };
     protected:
-      virtual string endpoint() const = 0;
       void connect() override {
         GwApiWs::connect();
         if (GwApiWs::connected()) {
           CURLcode rc;
-          if (CURLE_OK == (rc = WebSocketTwin::connect(endpoint()))) {
+          if (CURLE_OK == (rc = WebSocketTwin::connect(twin(ws)))) {
             WebSocketTwin::start(GwExchangeData::loopfd, [&]() {
               wait_for_async_data();
             });
@@ -607,7 +606,6 @@ namespace ₿ {
         return {
           {     "base", base     },
           {    "quote", quote    },
-          {   "margin", margin   },
           {"webMarket", webMarket},
           {"webOrders", webOrders},
           {"tickPrice", 1e-2     },
@@ -651,7 +649,6 @@ namespace ₿ {
           {     "base", base                          },
           {    "quote", quote                         },
           {   "symbol", base + quote                  },
-          {   "margin", margin                        },
           {"webMarket", webMarket
                           + base + "_" + quote
                           + "?layout=pro"             },
@@ -760,7 +757,6 @@ namespace ₿ {
           {   "symbol", base + quote                                  },
           {"webMarket", webMarket + base + "-to-" + quote             },
           {"webOrders", webOrders                                     },
-          {   "margin", margin                                        },
           {"tickPrice", stod(reply.value("tickSize", "0"))            },
           { "tickSize", stod(reply.value("quantityIncrement", "0"))   },
           {  "minSize", stod(reply.value("quantityIncrement", "0"))   },
@@ -806,7 +802,6 @@ namespace ₿ {
           {     "base", base                                     },
           {    "quote", quote                                    },
           {   "symbol", base + "-" + quote                       },
-          {   "margin", margin                                   },
           {"webMarket", webMarket + base + quote                 },
           {"webOrders", webOrders + base + quote                 },
           {"tickPrice", stod(reply.value("quote_increment", "0"))},
@@ -870,7 +865,6 @@ namespace ₿ {
           {     "base", base                          },
           {    "quote", quote                         },
           {   "symbol", base + quote                  },
-          {   "margin", margin                        },
           {"webMarket", webMarket
                           + base + quote              },
           {"webOrders", webOrders                     },
@@ -926,7 +920,6 @@ namespace ₿ {
           {     "base", base                                     },
           {    "quote", quote                                    },
           {   "symbol", base + "-" + quote                       },
-          {   "margin", margin                                   },
           {"webMarket", webMarket + base + "-" + quote           },
           {"webOrders", webOrders                                },
           {"tickPrice", stod(reply1.value("priceIncrement", "0"))},
@@ -995,7 +988,6 @@ namespace ₿ {
           {     "base", reply.value("base", "")                  },
           {    "quote", reply.value("quote", "")                 },
           {   "symbol", reply.value("wsname", "")                },
-          {   "margin", margin                                   },
           {"webMarket", webMarket                                },
           {"webOrders", webOrders                                },
           {"tickPrice", pow(10, -reply.value("pair_decimals", 0))},
@@ -1005,7 +997,7 @@ namespace ₿ {
         };
       };
     protected:
-      string endpoint() const override {
+      string twin(const string &ws) const override {
         return string(ws).insert(ws.find("ws.") + 2, "-auth");
       };
       json xfer(const string &url, const string &h1, const string &h2, const string &post) const {
@@ -1023,6 +1015,7 @@ namespace ₿ {
       GwPoloniex()
       {
         http   = "https://poloniex.com";
+        // ws     = "wss://api2.poloniex.com"; // https://docs.poloniex.com/#price-aggregated-book
         randId = Random::int45Id;
         webMarket = "https://poloniex.com/exchange";
         webOrders = "https://poloniex.com/tradeHistory";
@@ -1034,7 +1027,6 @@ namespace ₿ {
           {     "base", base              },
           {    "quote", quote             },
           {   "symbol", quote + "_" + base},
-          {   "margin", margin            },
           {"webMarket", webMarket         },
           {"webOrders", webOrders         },
           {"tickPrice", reply.empty()

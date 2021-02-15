@@ -152,7 +152,7 @@ Please run `make reinstall` to download the upgraded source and executable files
 
 Feel free anytime to check if there are new upgrades with `make diff`.
 
-Once you decide that is time to upgrade, execute `make upgrade` (or directly `make reinstall` to skip the validation of the new commits).
+Once you decide that is time to upgrade, execute `make upgrade` (or directly `make reinstall` to skip the validation of new commits).
 
 If you only use `git` to pull the latest source files from the remote branch, you will still need to upgrade or recompile your executable files.
 

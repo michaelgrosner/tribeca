@@ -202,18 +202,18 @@ namespace ₿ {
             : Async(nullptr)
             , sockfd(s)
           {};
-          virtual void start(const curl_socket_t&, const function<void()>&) = 0;
-          virtual void stop() = 0;
+          virtual void start(const curl_socket_t&, const function<void()>&)  = 0;
+          virtual void stop()                                                = 0;
         protected:
           virtual void change(const int&, const function<void()>& = nullptr) = 0;
       };
     public:
-      virtual          void  timer_ticks_factor(const unsigned int&) const        = 0;
-      virtual          void  timer_1s(const TimeEvent&)                           = 0;
-      virtual         Async *async(const function<void()>&)                       = 0;
-      virtual curl_socket_t  poll()                                               = 0;
-      virtual          void  walk()                                               = 0;
-      virtual          void  end()                                                = 0;
+      virtual          void  timer_ticks_factor(const unsigned int&) const = 0;
+      virtual          void  timer_1s(const TimeEvent&)                    = 0;
+      virtual         Async *async(const function<void()>&)                = 0;
+      virtual curl_socket_t  poll()                                        = 0;
+      virtual          void  walk()                                        = 0;
+      virtual          void  end()                                         = 0;
   };
 #if defined _WIN32 or defined __APPLE__
   class Events: public Loop {
@@ -564,7 +564,7 @@ namespace ₿ {
             if (curl) {
               args_easy_setopt(curl);
               if (_easy_setopt) _easy_setopt(curl);
-              curl_easy_setopt(curl, CURLOPT_TIMEOUT, 13L);
+              curl_easy_setopt(curl, CURLOPT_TIMEOUT, 21L);
               curl_easy_setopt(curl, CURLOPT_URL, url.data());
               curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &write);
               curl_easy_setopt(curl, CURLOPT_WRITEDATA, &reply);
@@ -645,7 +645,10 @@ namespace ₿ {
             return msg;
           };
       };
-      class WebSocketTwin: public WebSocket {};
+      class WebSocketTwin: public WebSocket {
+        protected:
+          virtual string twin(const string&) const = 0;
+      };
       class FixSocket: public Easy,
                        public FixFrames {
         private:
