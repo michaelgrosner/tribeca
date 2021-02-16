@@ -2,7 +2,7 @@ K         ?= K.sh
 MAJOR      = 0
 MINOR      = 6
 PATCH      = 0
-BUILD      = 58
+BUILD      = 59
 
 OBLIGATORY = DISCLAIMER: This is strict non-violent software: \
            \nif you hurt other living creatures, please stop; \
@@ -298,13 +298,6 @@ else
 	@clang-tidy -header-filter=$(realpath src) -checks='modernize-*' test/static_code_analysis.cxx -- $(KARGS) 2> /dev/null
 	@rm -f PVS-Studio.log > /dev/null 2>&1
 endif
-
-#png: etc/${PNG}.png etc/${PNG}.json
-#	convert etc/${PNG}.png -set "K.conf" "`cat etc/${PNG}.json`" K: etc/${PNG}.png 2>/dev/null || :
-#	@$(MAKE) png-check -s
-
-#png-check: etc/${PNG}.png
-#	@test -n "`identify -verbose etc/${PNG}.png | grep 'K\.conf'`" && echo Configuration injected into etc/${PNG}.png OK, feel free to remove etc/${PNG}.json anytime. || echo nope, injection failed.
 
 push:
 	@date=`date` && (git diff || :) && git status && read -p "KMOD: " KMOD \
