@@ -2,7 +2,7 @@ K         ?= K.sh
 MAJOR      = 0
 MINOR      = 6
 PATCH      = 0
-BUILD      = 60
+BUILD      = 61
 
 OBLIGATORY = DISCLAIMER: This is strict non-violent software: \
            \nif you hurt other living creatures, please stop; \
@@ -232,7 +232,7 @@ install:
 	@read -p "[$(shell seq -s \\ `echo $(CARCH) | wc -w`)]: " chost && $(MAKE) download CHOST=`echo $(CARCH) | cut -d ' ' -f$${chost}`
 
 docker: download
-	@sed -i "/Usage/,+$(shell expr `cat K.sh | wc -l` - 16)" K.sh
+	@sed -i "/Usage/,+$(shell expr `cat K.sh | wc -l` - 16)d" K.sh
 
 reinstall:
 	@test -d .git && ((test -n "`git diff`" && (echo && echo !!Local changes will be lost!! press CTRL-C to abort. && echo && sleep 5) || :) \
