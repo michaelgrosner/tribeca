@@ -923,7 +923,7 @@ namespace ₿ {
           {"webMarket", webMarket + base + "-" + quote           },
           {"webOrders", webOrders                                },
           {"tickPrice", stod(reply1.value("priceIncrement", "0"))},
-          { "tickSize", stod(reply1.value("quoteIncrement", "0"))},
+          { "tickSize", stod(reply1.value("baseIncrement", "0")) },
           {  "minSize", stod(reply1.value("baseMinSize", "0"))   },
           {  "makeFee", stod(reply2.value("makerFeeRate", "0"))  },
           {  "takeFee", stod(reply2.value("takerFeeRate", "0"))  },
