@@ -485,7 +485,7 @@ namespace ₿ {
         if (next) {
           if (json::accept(msg))
             consume(json::parse(msg));
-          else print("CURL Error: Unsupported data format");
+          else print("WS Error: Unsupported data format");
         }
         return next;
       };
@@ -1010,12 +1010,12 @@ namespace ₿ {
         });
       };
   };
-  class GwPoloniex: public GwApiREST {
+  class GwPoloniex: public GwApiWs {
     public:
       GwPoloniex()
       {
         http   = "https://poloniex.com";
-        // ws     = "wss://api2.poloniex.com"; // https://docs.poloniex.com/#price-aggregated-book
+        ws     = "wss://api2.poloniex.com";
         randId = Random::int45Id;
         webMarket = "https://poloniex.com/exchange";
         webOrders = "https://poloniex.com/tradeHistory";
