@@ -358,7 +358,7 @@ see the upstream project [michaelgrosner/tribeca](https://github.com/michaelgros
 
 The bot is unlocked for collaborators and contributors (feel free to make acceptable Pull Requests for already opened issues or for anything you consider useful, and let me know the BTC Payment Address for the bot that you wish to unlock in the description of the PR, and I will credit it for you).
 
-While locked, the orderbook will be not in realtime, instead market price levels will be updated only once every 7 seconds.
+While locked, the orderbook will be not in realtime, instead market price levels will be updated only once every 121 seconds.
 
 Anonymous users can also unlock any API Key by paying 0.01210000 BTC to the address displayed. Once unlocked you may use different currency pairs or reinstall on a different machine with the same unlocked API Key. However, if you want to use more than one exchange, you will need to pay again to unlock the API Key for each exchange.
 

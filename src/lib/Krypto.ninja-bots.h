@@ -436,13 +436,12 @@ namespace ₿ {
         for (const Argument &it : (vector<Argument>){
           {"interface",    "IP",     "",       "set IP to bind as outgoing network interface"},
           {"ipv6",         "1",      nullptr,  "use IPv6 when possible"},
-          {"exchange",     "NAME",   "NULL",   "set exchange NAME for trading, mandatory"},
-          {"currency",     "PAIR",   "NULL",   "set currency PAIR for trading, use format ISO 4217-A3"
+          {"exchange",     "NAME",   "",       "set exchange NAME for trading, mandatory"},
+          {"currency",     "PAIR",   "",       "set currency PAIR for trading, use format ISO 4217-A3"
                                                "\n" "with '/' separator, like 'BTC/EUR', mandatory"},
-          {"apikey",       "WORD",   "NULL",   "set (never share!) WORD as api key for trading, mandatory"},
-          {"secret",       "WORD",   "NULL",   "set (never share!) WORD as api secret for trading, mandatory"},
-          {"passphrase",   "WORD",   "NULL",   "set (never share!) WORD as api passphrase for trading,"
-                                               "\n" "mandatory but may be 'NULL'"},
+          {"apikey",       "WORD",   "",       "set (never share!) WORD as api key for trading, mandatory"},
+          {"secret",       "WORD",   "",       "set (never share!) WORD as api secret for trading, mandatory"},
+          {"passphrase",   "WORD",   "",       "set (never share!) WORD as api passphrase for trading"},
           {"maker-fee",    "AMOUNT", "0",      "set custom percentage of maker fee, like '0.1'"},
           {"taker-fee",    "AMOUNT", "0",      "set custom percentage of taker fee, like '0.1'"},
           {"min-size",     "AMOUNT", "0",      "set custom minimum order size, like '0.01'"},
@@ -462,7 +461,7 @@ namespace ₿ {
           {"debug",        "1",      nullptr,  "print detailed output about all the (previous) things!"},
           {"colors",       "1",      nullptr,  "print highlighted output"},
           {"title",        "WORD",   K_SOURCE, "set WORD to allow admins to identify different bots"},
-          {"free-version", "1",      nullptr,  "slowdown market levels 7 seconds"}
+          {"free-version", "1",      nullptr,  "slowdown market levels 121 seconds"}
         }) long_options.push_back(it);
         int index = ANY_NUM;
         vector<option> opt_long = { {nullptr, 0, nullptr, 0} };

@@ -18,25 +18,29 @@
 #  ▌ I ▐________________________________________________.
 #  ▌¯¯¯                                                 .
 #  █ K_BINARY_FILE                                      .
-#  ██ - Allows one executable file from PATH            .
+#  ██ - Allows one executable file available on any PATH.
+#  ██                                                   .
 #K_BINARY_FILE=K-hello-world
 K_BINARY_FILE=K-trading-bot
+#  ██                                                   .
 #  ██▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
 #  ▌____                                                .
 #  ▌ II ▐_______________________________________________.
 #  ▌¯¯¯¯                                                .
 #  █ OPTIONAL_ARGUMENTS                                 .
-#  ██ - Allows a list of arguments                      .
+#  ██ - Allows a list of arguments (see usage at --help).
 #  ██  (to avoid to write it always in the command-line).
+#  ██                                                   .
 #OPTIONAL_ARGUMENTS="--colors --autobot --port 3000"
 OPTIONAL_ARGUMENTS="--colors --naked --debug-wallet"
+#  ██                                                   .
 #  ██▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
 #  ▌_____                                               .
 #  ▌ III ▐______________________________________________.
 #  ▌¯¯¯¯¯                                               .
 #  █ API_EXCHANGE                                       .
-#  ██ - Allows one of the following exchange names      .
-#  ██  (or leave NULL for test mode)                    .
+#  ██ - Allows only one of the following exchanges below.
+#  ██                                                   .
 #API_EXCHANGE=COINBASE
 #API_EXCHANGE=BINANCE
 #API_EXCHANGE=KRAKEN
@@ -47,45 +51,45 @@ OPTIONAL_ARGUMENTS="--colors --naked --debug-wallet"
 #API_EXCHANGE=HITBTC
 #API_EXCHANGE=BEQUANT
 #API_EXCHANGE=POLONIEX
-API_EXCHANGE=NULL
 #  ▌____________________________________________________.
 #  █ API_CURRENCY                                       .
 #  ██ - Allows any currency pair (with format "AAA/ZZZ").
 #  ██  (see the website of the exchange for all symbols).
+#  ██                                                   .
 #API_CURRENCY=BTC/EUR
-API_CURRENCY=BTC/USD
 #  ▌____________________________________________________.
 #  █ API_KEY                                            .
 #  ██ - Allows any valid API KEY (never share!)         .
 #  ██  (see the website of the exchange please)         .
+#  ██                                                   .
 #API_KEY=exampleapikey
-API_KEY=NULL
 #  ▌____________________________________________________.
 #  █ API_SECRET                                         .
 #  ██ - Allows any valid API SECRET (never share!)      .
 #  ██  (see the website of the exchange thank you)      .
+#  ██                                                   .
 #API_SECRET=exampleapisecret
-API_SECRET=NULL
 #  ▌____________________________________________________.
 #  █ API_PASSPHRASE                                     .
 #  ██ - Allows any valid API PASSPHRASE (never share!)  .
 #  ██  (only COINBASE/KUCOIN must have API PASSPHRASE)  .
-#  ██  (can be NULL for all other exchanges supported)  .
+#  ██  (can be safely ignored for all other exchanges)  .
 #  ██  (see the website of COINBASE/KUCOIN for + info)  .
+#  ██                                                   .
 #API_PASSPHRASE=exampleapipassphrase
-API_PASSPHRASE=NULL
+#  ██                                                   .
 #  ██▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
 #  ▌____                                                .
 #  ▌ IV ▐______________________________________________ .
 #  ▌¯¯¯¯                                                .
-$K_BINARY_FILE                                          \
-  --title      ${0##*/}                                 \
-  --exchange   $API_EXCHANGE                            \
-  --currency   $API_CURRENCY                            \
-  --apikey     $API_KEY                                 \
-  --secret     $API_SECRET                              \
-  --passphrase $API_PASSPHRASE                          \
-               $OPTIONAL_ARGUMENTS "$@"                 ;
+      $K_BINARY_FILE                                    \
+        --title      ${0##*/}                           \
+        --exchange   ${API_EXCHANGE:-""}                \
+        --currency   ${API_CURRENCY:-""}                \
+        --apikey     ${API_KEY:-""}                     \
+        --secret     ${API_SECRET:-""}                  \
+        --passphrase ${API_PASSPHRASE:-""}              \
+                     $OPTIONAL_ARGUMENTS "$@"           ;
 #  ▌ ___________________________________________________.
 #  █ ¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯.
 #  ██ - That's all. To create multiple *.sh files:      .

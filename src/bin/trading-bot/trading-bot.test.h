@@ -1,9 +1,13 @@
-SCENARIO_METHOD(TradingBot, "NULL BTC/EUR") {
-  gateway = Gw::new_Gw("NULL");
-  gateway->exchange = "NULL";
-  gateway->base     = "BTC";
-  gateway->quote    = "EUR";
-  gateway->handshake(true);
+SCENARIO_METHOD(TradingBot, "ANY BTC/EUR") {
+  gateway = Gw::new_Gw("ANY");
+  gateway->exchange  = "ANY";
+  gateway->base      = "BTC";
+  gateway->quote     = "EUR";
+  gateway->tickPrice =
+  gateway->tickSize  =
+  gateway->minSize   = 1e-2;
+  gateway->decimal.price.precision(gateway->tickPrice);
+  gateway->decimal.amount.precision(gateway->tickSize);
   GIVEN("MarketLevels") {
     WHEN("defaults") {
       THEN("fair value") {
