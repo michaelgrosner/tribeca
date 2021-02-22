@@ -25,10 +25,10 @@ namespace example {
              << " pssst.. 1 " << K.gateway->base << " = "
              << K.gateway->decimal.price.str(fair) << " " << K.gateway->quote
              << "." << endl;
-        return "Executed " + (
+        return "Executed " + string(
           K.arg<int>("debug")
-            ? string(__PRETTY_FUNCTION__)
-            : K.arg<string>("title")
+            ? __PRETTY_FUNCTION__
+            : K_SOURCE
         ) + " OK";
       };
   };

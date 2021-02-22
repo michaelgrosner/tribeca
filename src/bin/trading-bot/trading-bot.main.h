@@ -36,10 +36,13 @@ class TradingBot: public KryptoNinja {
       };
       arguments = {
         {
+          {"maker-fee",    "AMOUNT", "0",                    "set custom percentage of maker fee, like '0.1'"},
+          {"taker-fee",    "AMOUNT", "0",                    "set custom percentage of taker fee, like '0.1'"},
+          {"min-size",     "AMOUNT", "0",                    "set custom minimum order size, like '0.01'"},
+          {"leverage",     "AMOUNT", "1",                    "set between '0.01' and '100' to enable isolated margin,"
+                                                             "\n" "or use '0' for cross margin; default AMOUNT is '1'"},
           {"wallet-limit", "AMOUNT", "0",                    "set AMOUNT in base currency to limit the balance,"
                                                              "\n" "otherwise the full available balance can be used"},
-          {"lifetime",     "NUMBER", "0",                    "set NUMBER of minimum milliseconds to keep orders open,"
-                                                             "\n" "otherwise open orders can be replaced anytime required"},
           {"matryoshka",   "URL",    "https://example.com/", "set Matryoshka link URL of the next UI"},
           {"ignore-sun",   "2",      nullptr,                "do not switch UI to light theme on daylight"},
           {"ignore-moon",  "1",      nullptr,                "do not switch UI to dark theme on moonlight"},

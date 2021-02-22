@@ -21,6 +21,7 @@
 #  ██ - Allows one executable file available on any PATH.
 #  ██                                                   .
 #K_BINARY_FILE=K-hello-world
+#K_BINARY_FILE=K-scaling-bot
 K_BINARY_FILE=K-trading-bot
 #  ██                                                   .
 #  ██▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄

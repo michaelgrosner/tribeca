@@ -5,7 +5,6 @@ class HelloWorld: public KryptoNinja {
     HelloWorld()
       : engine(*this)
     {
-      autobot   = true;
       dustybot  = true;
       events    = {
         [&](const Levels &rawdata) { engine.read(rawdata); }

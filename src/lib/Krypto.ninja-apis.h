@@ -337,10 +337,8 @@ namespace ₿ {
                           ? base
                           : "Contract" + string(minSize == 1 ? 0 : 1, 's')
                       ) + (minValue ? " or " + decimal.price.str(minValue) + " " + quote : "")},
-          {"makeFee", decimal.percent.str(makeFee * 1e+2) + "%"
-                        + (makeFee ? "" : " (please use --maker-fee argument!)")              },
-          {"takeFee", decimal.percent.str(takeFee * 1e+2) + "%"
-                        + (takeFee ? "" : " (please use --taker-fee argument!)")              }
+          {"makeFee", decimal.percent.str(makeFee * 1e+2) + "%"                               },
+          {"takeFee", decimal.percent.str(takeFee * 1e+2) + "%"                               }
         }) notes.push_back(it);
         string note = "handshake:";
         for (auto &it : notes)
