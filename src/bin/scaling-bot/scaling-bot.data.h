@@ -13,7 +13,6 @@ namespace analpaper {
       WalletPosition(const KryptoNinja &bot)
         : K(bot)
       {};
-    public:
       void read_from_gw(const Wallets &raw) {
         base  = raw.base;
         quote = raw.quote;
@@ -27,22 +26,21 @@ namespace analpaper {
   };
 
   struct LastOrder {
-    Price  price;
+     Price price;
     Amount filled;
-    Side   side;
+      Side side;
   };
   struct Orders {
-    public:
-      LastOrder last;
+    LastOrder last;
     private:
       unordered_map<string, Order> orders;
     private_ref:
       const KryptoNinja  &K;
     public:
       Orders(const KryptoNinja &bot)
-        : K(bot)
+        : last()
+        , K(bot)
       {};
-    public:
       void read_from_gw(const Order &raw) {
         if (K.arg<int>("debug-orders"))
           K.log("GW " + K.gateway->exchange, "  reply: " + ((json)raw).dump());
@@ -131,8 +129,7 @@ namespace analpaper {
   };
 
   struct MarketLevels: public Levels {
-    public:
-      Price fairValue = 0;
+    Price fairValue = 0;
     private:
       Levels unfiltered;
       unordered_map<Price, Amount> filterBidOrders,
@@ -145,7 +142,6 @@ namespace analpaper {
         : K(bot)
         , orders(o)
       {};
-    public:
       void read_from_gw(const Levels &raw) {
         unfiltered.bids = raw.bids;
         unfiltered.asks = raw.asks;
@@ -253,8 +249,9 @@ namespace analpaper {
   };
 
   struct AntonioCalculon {
-                   Quotes quotes;
-     vector<const Order*> zombies;
+    Quotes quotes;
+    private:
+      vector<const Order*> zombies;
     private_ref:
       const KryptoNinja    &K;
       const MarketLevels   &levels;
@@ -423,7 +420,9 @@ namespace analpaper {
   };
 
   struct Broker {
-    AntonioCalculon calculon;
+    Connectivity greenGateway = Connectivity::Disconnected;
+    private:
+      AntonioCalculon calculon;
     private_ref:
       const KryptoNinja  &K;
             Orders       &orders;
@@ -435,9 +434,6 @@ namespace analpaper {
         , orders(o)
         , levels(l)
       {};
-    public:
-      Connectivity greenGateway = Connectivity::Disconnected;
-    public:
       void read_from_gw(const Connectivity &raw) {
         const Connectivity previous = greenGateway;
         greenGateway = raw;
@@ -528,17 +524,13 @@ namespace analpaper {
         MarketLevels levels;
       WalletPosition wallet;
               Broker broker;
-    private_ref:
-      const KryptoNinja &K;
     public:
       Engine(const KryptoNinja &bot)
         : orders(bot)
         , levels(bot, orders)
         , wallet(bot)
         , broker(bot, orders, levels, wallet)
-        , K(bot)
       {};
-    public:
       void read(const Connectivity &rawdata) {
         broker.read_from_gw(rawdata);
       };

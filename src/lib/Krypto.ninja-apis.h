@@ -266,7 +266,7 @@ namespace ₿ {
          int debug     = 0;
       Connectivity adminAgreement = Connectivity::Disconnected;
       virtual void disconnect() {};
-      virtual bool connected() const { return true; };
+      virtual bool connected() const = 0;
       virtual json handshake() const = 0;
       json handshake(const bool &nocache) {
         json reply;

@@ -86,7 +86,6 @@ using Clock  = long long int;
 
 //! \def
 //! \brief Number of ticks in milliseconds..
-#ifndef Tstamp
 //! \note  ..since Thu Jan  1 00:00:00 1970.
 #define Tstamp chrono::duration_cast<chrono::milliseconds>(     \
                  chrono::system_clock::now().time_since_epoch() \
@@ -95,7 +94,6 @@ using Clock  = long long int;
 static auto
         Tbegin = Tstamp;
 #define Tspent   Tstamp - Tbegin
-#endif
 
 //! \def
 //! \brief Archimedes of Syracuse was here, since two millenniums ago.

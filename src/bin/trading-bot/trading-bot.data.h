@@ -468,10 +468,10 @@ namespace tribeca {
   };
 
   struct MarketTakers: public Client::Broadcast<Trade> {
+    vector<Trade>  trades;
+            Amount takersBuySize60s  = 0,
+                   takersSellSize60s = 0;
     public:
-      vector<Trade>  trades;
-              Amount takersBuySize60s  = 0,
-                     takersSellSize60s = 0;
       MarketTakers(const KryptoNinja &bot)
         : Broadcast(bot)
       {};
