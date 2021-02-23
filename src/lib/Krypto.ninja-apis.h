@@ -265,9 +265,9 @@ namespace ₿ {
       Future margin    = (Future)0;
          int debug     = 0;
       Connectivity adminAgreement = Connectivity::Disconnected;
-      virtual void disconnect() {};
-      virtual bool connected() const = 0;
-      virtual json handshake() const = 0;
+      virtual void disconnect()       = 0;
+      virtual bool connected()  const = 0;
+      virtual json handshake()  const = 0;
       json handshake(const bool &nocache) {
         json reply;
         const string cache = (K_HOME "/cache/handshake")

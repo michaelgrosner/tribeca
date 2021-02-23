@@ -19,7 +19,7 @@ namespace analpaper {
       };
       bool ready() const {
         const bool err = base.currency.empty() or quote.currency.empty();
-        if (err and Tspent > 7e+3)
+        if (err and Tspent > 21e+3)
           K.logWar("QE", "Unable to calculate quote, missing wallet data", 3e+3);
         return !err;
       };
@@ -47,14 +47,13 @@ namespace analpaper {
         Order *const order = upsert(raw);
         if (!order) return;
         if (raw.filled >= K.gateway->minSize) {
-          if (!order->isPong) {
+          if (!order->isPong)
             last = {order->price, raw.filled, order->side};
-            K.gateway->askForFees = true;
-            K.log("GW " + K.gateway->exchange, "SCALING IN  " + to_string(raw.filled) + " " + K.gateway->base + " at " + to_string(order->price) + " " + K.gateway->quote);
-          } else {
-            last.filled = 0;
-            K.log("GW " + K.gateway->exchange, "SCALING OUT " + to_string(raw.filled) + " " + K.gateway->base + " at " + to_string(order->price) + " " + K.gateway->quote);
-          }
+          K.gateway->askForFees = true;
+          K.log("GW " + K.gateway->exchange, string(order->isPong?"PONG":"PING") + " TRADE "
+            + (order->side == Side::Bid ? "BUY  " : "SELL ")
+            + K.gateway->decimal.amount.str(raw.filled) + " " + K.gateway->base + " at "
+            + K.gateway->decimal.price.str(order->price) + " " + K.gateway->quote);
         }
         if (order->isPong or order->status == Status::Terminated)
           purge(order);
@@ -149,7 +148,7 @@ namespace analpaper {
       };
       bool ready() const {
         const bool err = bids.empty() or asks.empty();
-        if (err and Tspent > 7e+3)
+        if (err and Tspent > 21e+3)
           K.logWar("QE", "Unable to calculate quote, missing market data", 3e+3);
         return !err;
       };
@@ -444,10 +443,7 @@ namespace analpaper {
           calculon.states(QuoteState::Disconnected);
       };
       bool ready() const {
-        const bool err = !(bool)greenGateway;
-        if (err and Tspent > 7e+3)
-          K.logWar("QE", "Unable to calculate quote, missing connection", 3e+3);
-        return !err;
+        return (bool)greenGateway;
       };
       void purge() {
         for (const Order *const it : calculon.purge())
@@ -459,7 +455,7 @@ namespace analpaper {
         quote2orders(calculon.quotes.bid);
       };
       void scale(const LastOrder &last) {
-        K.gateway->place(orders.upsert({
+        placeOrder({
           last.side == Side::Bid
             ? Side::Ask
             : Side::Bid,
@@ -472,7 +468,7 @@ namespace analpaper {
           Tstamp,
           true,
           K.gateway->randId()
-        }));
+        });
       };
     private:
       vector<Order*> abandon(Quote &quote) {
@@ -488,12 +484,8 @@ namespace analpaper {
         const unsigned int replace = K.gateway->askForReplace and !(
           quote.empty() or abandoned.empty()
         );
-        for_each(
-          abandoned.begin(), abandoned.end() - replace,
-          [&](Order *const it) {
-            cancelOrder(it);
-          }
-        );
+        for (auto it = abandoned.begin(); it != abandoned.end() - replace;)
+          cancelOrder(*it++);
         if (quote.empty()) return;
         if (replace) replaceOrder(quote.price, quote.isPong, abandoned.back());
         else placeOrder({

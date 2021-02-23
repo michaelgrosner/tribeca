@@ -268,7 +268,7 @@ namespace ₿ {
           else                  clog << Ansi::r(COLOR_WHITE);
           clog << ' ' << reason;
           if (!highlight.empty())
-            clog << ' ' << Ansi::b(COLOR_YELLOW) << highlight;
+            clog << string(reason.back() != '=', ' ') << Ansi::b(COLOR_YELLOW) << highlight;
           clog << Ansi::r(COLOR_WHITE) << '.' << endl;
           return;
         }
@@ -284,7 +284,8 @@ namespace ₿ {
         if (color == 1)       wattroff(stdlog, COLOR_PAIR(COLOR_CYAN));
         else if (color == -1) wattroff(stdlog, COLOR_PAIR(COLOR_MAGENTA));
         if (!highlight.empty()) {
-          wprintw(stdlog, " ");
+          if (reason.back() != '=')
+            wprintw(stdlog, " ");
           wattroff(stdlog, COLOR_PAIR(COLOR_WHITE));
           wattron(stdlog, COLOR_PAIR(COLOR_YELLOW));
           wprintw(stdlog, highlight.data());
@@ -392,7 +393,7 @@ namespace ₿ {
                << epilogue
                << string(epilogue.empty() ? 0 : 1, '\n');
         });
-        args["autobot"]  = headless;
+        args["autobot"]  =
         args["headless"] = headless;
         args["dustybot"] = dustybot;
         args["naked"]    = !display.terminal;
@@ -448,7 +449,7 @@ namespace ₿ {
                                                "\n" "default NUMBER is '321' and the minimum is '10'"}
         }) long_options.push_back(it);
         if (ev_order) long_options.push_back(
-          {"lifetime",     "NUMBER",     "0",  "set NUMBER of minimum milliseconds to keep orders open,"
+          {"lifetime",     "NUMBER", "0",      "set NUMBER of minimum milliseconds to keep orders open,"
                                                "\n" "otherwise open orders can be replaced anytime required"}
         );
         for (const Argument &it : arguments.first)

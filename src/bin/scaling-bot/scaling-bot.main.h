@@ -23,12 +23,9 @@ class ScalingBot: public KryptoNinja {
           {"debug-quotes", "1",      nullptr,  "print detailed output about quoting engine"},
         },
         [&](MutableUserArguments &args) {
-          if (!arg<double>("order-size"))
-            error("CF", "Invalid empty --order-size value");
-          if (!arg<double>("ping-width"))
-            error("CF", "Invalid empty --ping-width value");
-          if (!arg<double>("pong-width"))
-            error("CF", "Invalid empty --pong-width value");
+          if (arg<int>("debug"))
+            args["debug-orders"] =
+            args["debug-quotes"] = 1;
           if (!arg<int>("scale-asks") and !arg<int>("scale-bids"))
             log("CF", "pings enabled on", "both sides");
           else if (arg<int>("scale-asks") and arg<int>("scale-bids"))
@@ -37,9 +34,17 @@ class ScalingBot: public KryptoNinja {
             log("CF", "pings enabled on", "ask side");
           else if (arg<int>("scale-bids"))
             log("CF", "pings enabled on", "bid side");
-          if (arg<int>("debug"))
-            args["debug-orders"] =
-            args["debug-quotes"] = 1;
+          Decimal opt;
+          opt.precision(1e-8);
+          if (!arg<double>("order-size"))
+            error("CF", "Invalid empty --order-size value");
+          else log("CF", "--order-size=", opt.str(arg<double>("order-size")));
+          if (!arg<double>("ping-width"))
+            error("CF", "Invalid empty --ping-width value");
+          else log("CF", "--ping-width=", opt.str(arg<double>("ping-width")));
+          if (!arg<double>("pong-width"))
+            error("CF", "Invalid empty --pong-width value");
+          else log("CF", "--pong-width=", opt.str(arg<double>("pong-width")));
         }
       };
     };
