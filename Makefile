@@ -2,7 +2,7 @@ K         ?= K.sh
 MAJOR      = 0
 MINOR      = 6
 PATCH      = 1
-BUILD      = 2
+BUILD      = 3
 
 OBLIGATORY = DISCLAIMER: This is strict non-violent software: \
            \nif you hurt other living creatures, please stop; \
@@ -42,7 +42,7 @@ HINT      := consider a symlink at /usr/bin/$(CHOST)-g++ pointing to your g++ ex
 STEP       = $(shell tput setaf 2;tput setab 0)Building $(1)..$(shell tput sgr0)
 SUDO       = $(shell test -n "`command -v sudo`" && echo sudo)
 
-KARGS     := -std=c++17 -O3 -pthread -D'K_HEAD="$(shell \
+KARGS     := -std=c++17 -O3 -pthread -D'K_HEAD="$(shell  \
     git rev-parse HEAD 2>/dev/null || echo HEAD          \
   )"' -D'K_CHOST="$(KHOST)"' -D'K_SOURCE="K-$(KSRC)"'    \
   -D'K_STAMP="$(shell date "+%Y-%m-%d %H:%M:%S")"'       \
@@ -211,8 +211,8 @@ uninstall:
 	@$(foreach bin,$(addprefix /usr/local/bin/,$(notdir $(wildcard $(KBUILD)/bin/K-*))), $(SUDO) rm -v $(bin);)
 
 system_install:
-	$(info Checking if sudo           is allowed  at /usr/local/bin.. $(shell $(SUDO) mkdir -p /usr/local/bin && $(SUDO) ls -ld /usr/local/bin > /dev/null 2>&1 && echo OK || echo ERROR))
-	$(info Checking if /usr/local/bin is already  in your PATH..      $(if $(shell echo $$PATH | grep /usr/local/bin),OK))
+	$(info Checking if sudo           is allowed at /usr/local/bin.. $(shell $(SUDO) mkdir -p /usr/local/bin && $(SUDO) ls -ld /usr/local/bin > /dev/null 2>&1 && echo OK || echo ERROR))
+	$(info Checking if /usr/local/bin is already in your PATH..      $(if $(shell echo $$PATH | grep /usr/local/bin),OK))
 	$(if $(shell echo $$PATH | grep /usr/local/bin),,$(info $(subst ..,,$(subst Building ,,$(call STEP,Warning! you MUST add /usr/local/bin to your PATH!)))))
 	$(info )
 	$(info List of installed K binaries:)

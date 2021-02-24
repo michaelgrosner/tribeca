@@ -34,6 +34,7 @@ namespace analpaper {
     LastOrder last;
     private:
       unordered_map<string, Order> orders;
+      int limit;
     private_ref:
       const KryptoNinja  &K;
     public:
@@ -50,11 +51,17 @@ namespace analpaper {
           if (!order->isPong)
             last = {order->price, raw.filled, order->side};
           K.gateway->askForFees = true;
+        }
+        if (order->isPong or last.filled)
           K.log("GW " + K.gateway->exchange, string(order->isPong?"PONG":"PING") + " TRADE "
             + (order->side == Side::Bid ? "BUY  " : "SELL ")
-            + K.gateway->decimal.amount.str(raw.filled) + " " + K.gateway->base + " at "
-            + K.gateway->decimal.price.str(order->price) + " " + K.gateway->quote);
-        }
+            + K.gateway->decimal.amount.str(order->isPong ? order->quantity : last.filled)
+            + " " + K.gateway->base + " at "
+            + K.gateway->decimal.price.str(order->price)
+            + " " + K.gateway->quote
+            + " " + (order->isPong ? "(left opened)" : "(just filled)"));
+        if (order->isPong and K.arg<int>("quit-after") and ++limit == K.arg<int>("quit-after"))
+            exit("Limit of --quit-after=" + to_string(K.arg<int>("quit-after")) + " reached.");
         if (order->isPong or order->status == Status::Terminated)
           purge(order);
         if (K.arg<int>("debug-orders"))

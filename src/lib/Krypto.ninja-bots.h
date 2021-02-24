@@ -398,9 +398,9 @@ namespace ₿ {
         args["dustybot"] = dustybot;
         args["naked"]    = !display.terminal;
         vector<Argument> long_options = {
-          {"help",         "h",      nullptr,  "show this help and quit"},
-          {"version",      "v",      nullptr,  "show current build version and quit"},
-          {"latency",      "1",      nullptr,  "check current HTTP latency (not from WS) and quit"},
+          {"help",         "h",      nullptr,  "print this help and quit"},
+          {"version",      "v",      nullptr,  "print current build version and quit"},
+          {"latency",      "1",      nullptr,  "print current HTTP latency (not from WS) and quit"},
           {"nocache",      "1",      nullptr,  "do not cache handshakes 7 hours at " K_HOME "/cache"}
         };
         if (!arg<int>("autobot")) long_options.push_back(

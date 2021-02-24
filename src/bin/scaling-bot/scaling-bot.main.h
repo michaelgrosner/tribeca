@@ -14,9 +14,10 @@ class ScalingBot: public KryptoNinja {
       };
       arguments = {
         {
+          {"quit-after",   "NUMBER", "0",      "set NUMBER of filled orders before quit"},
           {"order-size",   "AMOUNT", "0",      "set size AMOUNT in base currency to place orders"},
           {"ping-width",   "AMOUNT", "0",      "set price width AMOUNT to place pings away from fair value"},
-          {"pong-width",   "AMOUNT", "0",      "set price width AMOUNT to palce pongs away from pings"},
+          {"pong-width",   "AMOUNT", "0",      "set price width AMOUNT to place pongs away from pings"},
           {"scale-asks",   "1",      nullptr,  "do not place pings on bid side (ping only at ask side)"},
           {"scale-bids",   "1",      nullptr,  "do not place pings on ask side (ping only at bid side)"},
           {"debug-orders", "1",      nullptr,  "print detailed output about exchange messages"},
@@ -26,14 +27,19 @@ class ScalingBot: public KryptoNinja {
           if (arg<int>("debug"))
             args["debug-orders"] =
             args["debug-quotes"] = 1;
-          if (!arg<int>("scale-asks") and !arg<int>("scale-bids"))
-            log("CF", "pings enabled on", "both sides");
-          else if (arg<int>("scale-asks") and arg<int>("scale-bids"))
+          const string enabled = Ansi::b(COLOR_YELLOW) +
+            (arg<int>("quit-after")
+              ? to_string(arg<int>("quit-after"))
+              : "unlimited"
+            ) + Ansi::r(COLOR_WHITE) + " pings enabled on";
+          if (arg<int>("scale-asks") and arg<int>("scale-bids"))
             error("CF", "Invalid use of --scale-asks and --scale-bids together");
+          else if (!arg<int>("scale-asks") and !arg<int>("scale-bids"))
+            log("CF", enabled, "both sides");
           else if (arg<int>("scale-asks"))
-            log("CF", "pings enabled on", "ask side");
+            log("CF", enabled, "ask side");
           else if (arg<int>("scale-bids"))
-            log("CF", "pings enabled on", "bid side");
+            log("CF", enabled, "bid side");
           Decimal opt;
           opt.precision(1e-8);
           if (!arg<double>("order-size"))
