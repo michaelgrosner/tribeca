@@ -33,8 +33,8 @@ namespace analpaper {
   struct Orders {
     LastOrder last;
     private:
+      int limit = 0;
       unordered_map<string, Order> orders;
-      int limit;
     private_ref:
       const KryptoNinja  &K;
     public:
@@ -61,7 +61,7 @@ namespace analpaper {
             + " " + K.gateway->quote
             + " " + (order->isPong ? "(left opened)" : "(just filled)"));
         if (order->isPong and K.arg<int>("quit-after") and ++limit == K.arg<int>("quit-after"))
-            exit("Limit of --quit-after=" + to_string(K.arg<int>("quit-after")) + " reached.");
+            exit("Limit of --quit-after=" + to_string(K.arg<int>("quit-after")) + " reached");
         if (order->isPong or order->status == Status::Terminated)
           purge(order);
         if (K.arg<int>("debug-orders"))
@@ -491,8 +491,11 @@ namespace analpaper {
         const unsigned int replace = K.gateway->askForReplace and !(
           quote.empty() or abandoned.empty()
         );
-        for (auto it = abandoned.begin(); it != abandoned.end() - replace;)
-          cancelOrder(*it++);
+        for (
+          auto it  =  abandoned.end() - replace;
+               it --> abandoned.begin();
+          cancelOrder(*it)
+        );
         if (quote.empty()) return;
         if (replace) replaceOrder(quote.price, quote.isPong, abandoned.back());
         else placeOrder({

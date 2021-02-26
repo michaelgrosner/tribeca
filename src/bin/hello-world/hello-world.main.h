@@ -1,5 +1,5 @@
 class HelloWorld: public KryptoNinja {
-  public:
+  private:
     example::Engine engine;
   public:
     HelloWorld()

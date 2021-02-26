@@ -11,7 +11,6 @@ namespace example {
       Engine(const KryptoNinja &bot)
         : K(bot)
       {};
-    public:
       void read(const Levels &rawdata) {
         levels = rawdata;
         if (levels.bids.empty() or levels.asks.empty()) return;

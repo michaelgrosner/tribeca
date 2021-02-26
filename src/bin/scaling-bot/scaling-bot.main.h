@@ -1,5 +1,5 @@
 class ScalingBot: public KryptoNinja {
-  public:
+  private:
     analpaper::Engine engine;
   public:
     ScalingBot()

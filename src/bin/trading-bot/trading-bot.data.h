@@ -1296,8 +1296,9 @@ namespace tribeca {
           order.isPong,
           false
         };
-        K.log("GW " + K.gateway->exchange, string(filled.isPong?"PONG":"PING") + " TRADE "
-          + (filled.side == Side::Bid ? "BUY  " : "SELL ")
+        const bool is_bid = order.side == Side::Bid;
+        K.log("GW " + K.gateway->exchange, string(order.isPong?"PONG":"PING") + " TRADE "
+          + (is_bid ? "BUY  " : "SELL ")
           + K.gateway->decimal.amount.str(filled.quantity) + ' '
           + (K.gateway->margin == Future::Spot ? K.gateway->base : "Contracts") + " at price "
           + K.gateway->decimal.price.str(filled.price) + ' ' + K.gateway->quote + " (value "
@@ -1315,7 +1316,7 @@ namespace tribeca {
           for (OrderFilled &it : rows)
             if (it.quantity - it.Kqty > 0 and it.side != filled.side) {
               const Price combinedFee = K.gateway->makeFee * (it.price + filled.price);
-              if (filled.side == Side::Bid
+              if (is_bid
                   ? (it.price > filled.price + widthPong + combinedFee)
                   : (it.price < filled.price - widthPong - combinedFee)
               ) matches[it.price] = it.tradeId;
@@ -1324,8 +1325,8 @@ namespace tribeca {
             matches,
             filled,
             (qp.pongAt == PongAt::LongPingFair or qp.pongAt == PongAt::LongPingAggressive)
-              ? filled.side == Side::Ask
-              : filled.side == Side::Bid
+              ? !is_bid
+              : is_bid
           );
         }
         if (qp.cleanPongsAuto)
@@ -2751,8 +2752,11 @@ namespace tribeca {
         const unsigned int replace = K.gateway->askForReplace and !(
           quote.empty() or abandoned.empty()
         );
-        for (auto it = abandoned.begin(); it != abandoned.end() - replace;)
-          cancelOrder(*it++);
+        for (
+          auto it  =  abandoned.end() - replace;
+               it --> abandoned.begin();
+          cancelOrder(*it)
+        );
         if (quote.empty()) return;
         if (replace)
           replaceOrder(quote.price, quote.isPong, abandoned.back());
