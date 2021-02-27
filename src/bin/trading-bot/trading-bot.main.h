@@ -21,7 +21,8 @@ class TradingBot: public KryptoNinja {
         [&](const Levels       &rawdata) { engine.read(rawdata);  },
         [&](const Order        &rawdata) { engine.read(rawdata);  },
         [&](const Trade        &rawdata) { engine.read(rawdata);  },
-        [&](const unsigned int &tick)    { engine.timer_1s(tick); }
+        [&](const unsigned int &tick)    { engine.timer_1s(tick); },
+        [&]()                            { engine.quit();         }
       };
       documents = {
         {"",                                  {&_file_gzip_bomb,   _file_gzip_bomb_len  }},

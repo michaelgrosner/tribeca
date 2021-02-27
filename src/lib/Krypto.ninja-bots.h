@@ -110,6 +110,8 @@ namespace ₿ {
   static vector<function<void()>> endingFn;
 
   class Ending: public Rollout {
+    public_friend:
+      using QuitEvent = function<void()>;
     public:
       Ending() {
         signal(SIGPIPE, SIG_IGN);
@@ -369,7 +371,6 @@ namespace ₿ {
        const string  help;
       };
     protected:
-      bool dustybot = false;
       using MutableUserArguments = unordered_map<string, variant<string, int, double>>;
       pair<vector<Argument>, function<void(MutableUserArguments&)>> arguments;
     private:
@@ -395,7 +396,6 @@ namespace ₿ {
         });
         args["autobot"]  =
         args["headless"] = headless;
-        args["dustybot"] = dustybot;
         args["naked"]    = !display.terminal;
         vector<Argument> long_options = {
           {"help",         "h",      nullptr,  "print this help and quit"},
@@ -405,9 +405,6 @@ namespace ₿ {
         };
         if (!arg<int>("autobot")) long_options.push_back(
           {"autobot",      "1",      nullptr,  "automatically start trading on boot"}
-        );
-        if (!arg<int>("dustybot")) long_options.push_back(
-          {"dustybot",     "1",      nullptr,  "do not automatically cancel all orders on exit"}
         );
         if (!arg<int>("naked")) long_options.push_back(
           {"naked",        "1",      nullptr,  "do not display CLI, print output to stdout instead"}
@@ -1164,7 +1161,11 @@ namespace ₿ {
     public:
       Gw *gateway = nullptr;
     protected:
-      vector<variant<TimeEvent, Gw::DataEvent>> events;
+      vector<variant<
+            TimeEvent,
+            QuitEvent,
+        Gw::DataEvent
+      >> events;
     public:
       KryptoNinja *main(int argc, char** argv) {
         {
@@ -1195,6 +1196,10 @@ namespace ₿ {
           }
         } {
           for (const auto &it : events)
+            if (holds_alternative<QuitEvent>(it))
+              ending(get<QuitEvent>(it));
+        } {
+          for (const auto &it : events)
             if (holds_alternative<Gw::DataEvent>(it))
               gateway->data(get<Gw::DataEvent>(it));
         } {
@@ -1203,8 +1208,6 @@ namespace ₿ {
             gateway->ask_for_data(tick);
           });
           ending([&]() {
-            if (!dustybot)
-              gateway->purge(arg<int>("dustybot"));
             gateway->end();
             end();
           });

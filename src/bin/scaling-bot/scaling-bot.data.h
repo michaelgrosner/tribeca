@@ -29,11 +29,11 @@ namespace analpaper {
      Price price;
     Amount filled;
       Side side;
+      bool isPong;
   };
   struct Orders {
     LastOrder last;
     private:
-      int limit = 0;
       unordered_map<string, Order> orders;
     private_ref:
       const KryptoNinja  &K;
@@ -45,13 +45,17 @@ namespace analpaper {
       void read_from_gw(const Order &raw) {
         if (K.arg<int>("debug-orders"))
           K.log("GW " + K.gateway->exchange, "  reply: " + ((json)raw).dump());
+        last = {0, 0, (Side)0, false};
         Order *const order = upsert(raw);
         if (!order) return;
-        if (raw.filled >= K.gateway->minSize) {
-          if (!order->isPong)
-            last = {order->price, raw.filled, order->side};
-          K.gateway->askForFees = true;
-        }
+        last = {
+          order->price,
+          raw.filled >= K.gateway->minSize and !order->isPong
+            ? raw.filled : 0,
+          order->side,
+          order->isPong
+        };
+        if (last.filled) K.gateway->askForFees = true;
         if (order->isPong or last.filled)
           K.log("GW " + K.gateway->exchange, string(order->isPong?"PONG":"PING") + " TRADE "
             + (order->side == Side::Bid ? "BUY  " : "SELL ")
@@ -60,8 +64,6 @@ namespace analpaper {
             + K.gateway->decimal.price.str(order->price)
             + " " + K.gateway->quote
             + " " + (order->isPong ? "(left opened)" : "(just filled)"));
-        if (order->isPong and K.arg<int>("quit-after") and ++limit == K.arg<int>("quit-after"))
-            exit("Limit of --quit-after=" + to_string(K.arg<int>("quit-after")) + " reached");
         if (order->isPong or order->status == Status::Terminated)
           purge(order);
         if (K.arg<int>("debug-orders"))
@@ -81,6 +83,13 @@ namespace analpaper {
           if (side == it.second.side)
              sideOrders.push_back(&it.second);
         return sideOrders;
+      };
+      vector<Order*> open() {
+        vector<Order*> autoOrders;
+        for (auto &it : orders)
+          if (!it.second.manual)
+            autoOrders.push_back(&it.second);
+        return autoOrders;
       };
       bool replace(const Price &price, const bool &isPong, Order *const order) {
         const bool allowed = Order::replace(price, isPong, order);
@@ -429,6 +438,7 @@ namespace analpaper {
     Connectivity greenGateway = Connectivity::Disconnected;
     private:
       AntonioCalculon calculon;
+                  int limit = 0;
     private_ref:
       const KryptoNinja  &K;
             Orders       &orders;
@@ -461,21 +471,42 @@ namespace analpaper {
         quote2orders(calculon.quotes.ask);
         quote2orders(calculon.quotes.bid);
       };
-      void scale(const LastOrder &last) {
-        placeOrder({
-          last.side == Side::Bid
-            ? Side::Ask
-            : Side::Bid,
-          last.side == Side::Bid
-            ? fmax(last.price + K.arg<double>("pong-width"),
-                   levels.fairValue + K.gateway->tickPrice)
-            : fmin(last.price - K.arg<double>("pong-width"),
-                   levels.fairValue - K.gateway->tickPrice),
-          last.filled,
-          Tstamp,
-          true,
-          K.gateway->randId()
-        });
+      void scale() {
+        if (orders.last.filled)
+          placeOrder({
+            orders.last.side == Side::Bid
+              ? Side::Ask
+              : Side::Bid,
+            orders.last.side == Side::Bid
+              ? fmax(orders.last.price + K.arg<double>("pong-width"),
+                     levels.fairValue + K.gateway->tickPrice)
+              : fmin(orders.last.price - K.arg<double>("pong-width"),
+                     levels.fairValue - K.gateway->tickPrice),
+            orders.last.filled,
+            Tstamp,
+            true,
+            K.gateway->randId()
+          });
+      };
+      void quit_after() {
+        if (orders.last.isPong
+          and K.arg<int>("quit-after")
+          and K.arg<int>("quit-after") == ++limit
+        ) exit("CF " + Ansi::r(COLOR_WHITE)
+            + "--quit-after="
+            + Ansi::b(COLOR_YELLOW) + to_string(K.arg<int>("quit-after")) + Ansi::r(COLOR_WHITE)
+            + " limit reached"
+          );
+      };
+      void quit() {
+        unsigned int n = 0;
+        for (Order *const it : orders.open()) {
+          K.gateway->cancel(it);
+          n++;
+        }
+        if (n) K.log("GW " + K.gateway->exchange, "Canceled "
+                + to_string(n) + " open order" + string(n == 1 ? 0 : 1, 's')
+                + " before quit");
       };
     private:
       vector<Order*> abandon(Quote &quote) {
@@ -545,10 +576,11 @@ namespace analpaper {
       };
       void read(const Order &rawdata) {
         orders.read_from_gw(rawdata);
-        if (orders.last.filled) {
-          broker.scale(orders.last);
-          orders.last.filled = 0;
-        }
+        broker.scale();
+        broker.quit_after();
+      };
+      void quit() {
+        broker.quit();
       };
     private:
       void calcQuotes() {

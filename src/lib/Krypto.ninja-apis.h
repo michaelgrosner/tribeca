@@ -312,15 +312,6 @@ namespace ₿ {
         if (file.is_open()) file.close();
         return reply.value("reply", json::object());
       };
-      void purge(const bool &dustybot) {
-        if (dustybot)
-          print("--dustybot is enabled, remember to cancel manually any open order.");
-        else {
-          print("Attempting to cancel all open orders, please wait.");
-          if (!async_cancelAll()) sync_cancelAll();
-          print("cancel all open orders OK");
-        }
-      };
       void end() {
         online(Connectivity::Disconnected);
         disconnect();

@@ -5,12 +5,12 @@ class ScalingBot: public KryptoNinja {
     ScalingBot()
       : engine(*this)
     {
-      dustybot  = true; // deleteme after https://github.com/ctubio/Krypto-trading-bot/issues/1057
       events    = {
         [&](const Connectivity &rawdata) { engine.read(rawdata); },
         [&](const Wallets      &rawdata) { engine.read(rawdata); },
         [&](const Levels       &rawdata) { engine.read(rawdata); },
-        [&](const Order        &rawdata) { engine.read(rawdata); }
+        [&](const Order        &rawdata) { engine.read(rawdata); },
+        [&]()                            { engine.quit();        }
       };
       arguments = {
         {

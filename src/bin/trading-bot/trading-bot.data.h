@@ -308,10 +308,10 @@ namespace tribeca {
   };
 
   struct LastOrder {
-    Price  price;
+     Price price;
     Amount filled;
-    Side   side;
-    bool   isPong;
+      Side side;
+      bool isPong;
   };
   struct Orders: public Client::Broadcast<Orders> {
     LastOrder updated;
@@ -375,6 +375,13 @@ namespace tribeca {
           if (side == it.second.side)
              sideOrders.push_back(&it.second);
         return sideOrders;
+      };
+      vector<Order*> open() {
+        vector<Order*> autoOrders;
+        for (auto &it : orders)
+          if (!it.second.manual)
+            autoOrders.push_back(&it.second);
+        return autoOrders;
       };
       vector<Order*> working() {
         vector<Order*> workingOrders;
@@ -2774,6 +2781,16 @@ namespace tribeca {
         for (const Order *const it : calculon.purge())
           orders.purge(it);
       };
+      void quit() {
+        unsigned int n = 0;
+        for (Order *const it : orders.open()) {
+          K.gateway->cancel(it);
+          n++;
+        }
+        if (n) K.log("GW " + K.gateway->exchange, "Canceled "
+                + to_string(n) + " open order" + string(n == 1 ? 0 : 1, 's')
+                + " before quit");
+      };
     private:
       vector<Order*> abandon(Quote &quote) {
         vector<Order*> abandoned;
@@ -2850,6 +2867,9 @@ namespace tribeca {
           wallet.safety.timer_1s();
           calcQuotes();
         }
+      };
+      void quit() {
+        broker.quit();
       };
     private:
       void calcQuotes() {

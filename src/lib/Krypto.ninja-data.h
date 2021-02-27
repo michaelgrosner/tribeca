@@ -86,7 +86,11 @@ namespace ₿ {
                "9="  + to_string(data.length()) + "\u0001"
              + data;
         char ch = 0;
-        for (size_t i = data.length(); i --> 0; ch += data.at(i));
+        for (
+          size_t i  =  data.length();
+                 i --> 0;
+          ch += data.at(i)
+        );
         stringstream sum;
         sum << setfill('0')
             << setw(3)
@@ -411,8 +415,8 @@ namespace ₿ {
       void walk() override {
         while (sockfd)
           for (
-            int i = epoll_wait(sockfd, ready, 32, -1);
-            i --> 0;
+            int i  =  epoll_wait(sockfd, ready, 32, -1);
+                i --> 0;
             ((Poll*)ready[i].data.ptr)->ready()
           );
       };
@@ -493,6 +497,7 @@ namespace ₿ {
             if (curl and sockfd) {
               out += data;
               change(EPOLLIN | EPOLLOUT);
+              send();
             } else {
               rc = CURLE_COULDNT_CONNECT;
               cleanup();
