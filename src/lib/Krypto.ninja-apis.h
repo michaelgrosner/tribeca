@@ -318,7 +318,7 @@ namespace ₿ {
           {"minSize", decimal.amount.str(minSize) + " " + (
                         margin == Future::Spot
                           ? base
-                          : "Contract" + string(minSize == 1 ? 0 : 1, 's')
+                          : "Contract" + string(minSize != 1, 's')
                       ) + (minValue ? " or " + decimal.price.str(minValue) + " " + quote : "")},
           {"makeFee", decimal.percent.str(makeFee * 1e+2) + "%"                               },
           {"takeFee", decimal.percent.str(takeFee * 1e+2) + "%"                               }

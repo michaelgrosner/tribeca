@@ -320,11 +320,11 @@ namespace analpaper {
       };
       void applyQuotingParameters() {
         quotes.debug("?"); applyScaleSide();
-        quotes.debug("?"); applyWidth();
-        quotes.debug("A"); applyBestWidth();
-        quotes.debug("B"); applyRoundPrice();
-        quotes.debug("C"); applyRoundSize();
-        quotes.debug("D"); applyDepleted();
+        quotes.debug("A"); applyWidth();
+        quotes.debug("B"); applyBestWidth();
+        quotes.debug("C"); applyRoundPrice();
+        quotes.debug("D"); applyRoundSize();
+        quotes.debug("E"); applyDepleted();
         quotes.debug("!");
         quotes.checkCrossedQuotes();
       };
@@ -505,7 +505,7 @@ namespace analpaper {
           n++;
         }
         if (n) K.log("GW " + K.gateway->exchange, "Canceled "
-                + to_string(n) + " open order" + string(n == 1 ? 0 : 1, 's')
+                + to_string(n) + " open order" + string(n != 1, 's')
                 + " before quit");
       };
     private:

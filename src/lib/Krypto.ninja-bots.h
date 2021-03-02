@@ -6,10 +6,9 @@ namespace ₿ {
 
   //! \brief     Call all endingFn once and print a last log msg.
   //! \param[in] reason Allows any (colorful?) string.
-  //! \param[in] reboot Allows a reboot only because https://tldp.org/LDP/Bash-Beginners-Guide/html/sect_09_03.html.
-  static void exit(const string &reason = "", const bool &reboot = false) {
-    epilogue = reason + string((reason.empty() or reason.back() == '.') ? 0 : 1, '.');
-    raise(reboot ? SIGTERM : SIGQUIT);
+  static void exit(const string &reason = "") {
+    epilogue = reason + string(!(reason.empty() or reason.back() == '.'), '.');
+    raise(SIGQUIT);
   };
 
   static int colorful = 1;
@@ -61,10 +60,8 @@ namespace ₿ {
   //! \brief     Call all endingFn once and print a last error log msg.
   //! \param[in] prefix Allows any string, if possible with a length of 2.
   //! \param[in] reason Allows any (colorful?) string.
-  //! \param[in] reboot Allows a reboot only because https://tldp.org/LDP/Bash-Beginners-Guide/html/sect_09_03.html.
-  static void error(const string &prefix, const string &reason, const bool &reboot = false) {
-    if (reboot) this_thread::sleep_for(chrono::seconds(3));
-    exit(prefix + Ansi::r(COLOR_RED) + " Errrror: " + Ansi::b(COLOR_RED) + reason, reboot);
+  static void error(const string &prefix, const string &reason) {
+    exit(prefix + Ansi::r(COLOR_RED) + " Errrror: " + Ansi::b(COLOR_RED) + reason);
   };
 
   class Rollout {
@@ -153,7 +150,7 @@ namespace ₿ {
         );
       };
       static void err(const int) {
-        if (epilogue.empty()) epilogue = "Unknown error, no joke.";
+        if (epilogue.empty()) epilogue = "Unknown exit reason, no joke.";
         halt(EXIT_FAILURE);
       };
       static void wtf(const int sig) {
@@ -392,7 +389,7 @@ namespace ₿ {
           }
           clog << stamp()
                << epilogue
-               << string(epilogue.empty() ? 0 : 1, '\n');
+               << string(!epilogue.empty(), '\n');
         });
         args["autobot"]  =
         args["headless"] = headless;
@@ -1120,7 +1117,7 @@ namespace ₿ {
       };
       WebServer::Upgrade upgrade = [&](const int &sum, const string &addr) {
         const int tentative = server.clients() + sum;
-        option->log("UI", to_string(tentative) + " client" + string(tentative == 1 ? 0 : 1, 's')
+        option->log("UI", to_string(tentative) + " client" + string(tentative != 1, 's')
           + (sum > 0 ? "" : " remain") + " connected, last connection was from", addr);
         if (tentative > option->arg<int>("client-limit")) {
           option->log("UI", "--client-limit=" + to_string(option->arg<int>("client-limit"))

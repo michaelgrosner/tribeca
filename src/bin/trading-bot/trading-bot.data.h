@@ -2031,10 +2031,10 @@ namespace tribeca {
       static void quoteAtTopOfMarket(const MarketLevels &levels, const Price &tickPrice, Quotes &quotes) {
         const Level &topBid = levels.bids.begin()->size > tickPrice
           ? levels.bids.at(0)
-          : levels.bids.at(levels.bids.size() > 1 ? 1 : 0);
+          : levels.bids.at(levels.bids.size() > 1);
         const Level &topAsk = levels.asks.begin()->size > tickPrice
           ? levels.asks.at(0)
-          : levels.asks.at(levels.asks.size() > 1 ? 1 : 0);
+          : levels.asks.at(levels.asks.size() > 1);
         quotes.bid.price = topBid.price;
         quotes.ask.price = topAsk.price;
       };
@@ -2784,7 +2784,7 @@ namespace tribeca {
           n++;
         }
         if (n) K.log("GW " + K.gateway->exchange, "Canceled "
-                + to_string(n) + " open order" + string(n == 1 ? 0 : 1, 's')
+                + to_string(n) + " open order" + string(n != 1, 's')
                 + " before quit");
       };
     private:

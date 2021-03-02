@@ -1020,7 +1020,7 @@ namespace ₿ {
             });
           };
           string protocol() const {
-            return "HTTP" + string(ctx ? 1 : 0, 'S');
+            return "HTTP" + string(!!ctx, 'S');
           };
           void broadcast(const char &portal, const unordered_map<char, string> &queue) {
             string msgs;
