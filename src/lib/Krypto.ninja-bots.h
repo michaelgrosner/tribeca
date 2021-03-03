@@ -734,12 +734,17 @@ namespace ₿ {
             return *(T*)this;
           };
           Report pull(const json &j) override {
-            from_json(j.empty() ? blob() : j.at(0), *(T*)this);
+            from_json(j.empty() ? blob() : not_null(j.at(0)), *(T*)this);
             return report(j.empty());
           };
         private:
           string explainOK() const override {
             return "loaded last % OK";
+          };
+          static json not_null(json j) {
+            for (auto it = j.begin(); it != j.end();)
+              if (it.value().is_null()) it = j.erase(it); else ++it;
+            return j;
           };
       };
       template <typename T> class VectorBackup: public Backup {
@@ -828,7 +833,7 @@ namespace ₿ {
         tables.clear();
       };
     private:
-      json select(Backup *const data) {
+      json select(const Backup *const data) {
         const string table = schema(data);
         json result = json::array();
         exec(
@@ -839,7 +844,7 @@ namespace ₿ {
         );
         return result;
       };
-      void insert(Backup *const data) {
+      void insert(const Backup *const data) {
         const string table    = schema(data);
         const json   blob     = data->blob();
         const double limit    = data->limit();
@@ -860,7 +865,7 @@ namespace ₿ {
         );
         exec(sql);
       };
-      string schema(Backup *const data) const {
+      string schema(const Backup *const data) const {
         return (
           data->persist()
             ? disk
