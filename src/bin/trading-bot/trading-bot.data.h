@@ -112,6 +112,7 @@ namespace tribeca {
     double           sopWidthMultiplier              = 2;
     double           sopSizeMultiplier               = 2;
     double           sopTradesMultiplier             = 2;
+    bool             cancelOrdersAuto                = false;
     double           cleanPongsAuto                  = 0.0;
     double           profitHourInterval              = 0.5;
     bool             audio                           = false;
@@ -195,12 +196,14 @@ namespace tribeca {
         sopWidthMultiplier              =                            j.value("sopWidthMultiplier", sopWidthMultiplier);
         sopSizeMultiplier               =                            j.value("sopSizeMultiplier", sopSizeMultiplier);
         sopTradesMultiplier             =                            j.value("sopTradesMultiplier", sopTradesMultiplier);
+        cancelOrdersAuto                =                            j.value("cancelOrdersAuto", cancelOrdersAuto);
         cleanPongsAuto                  =                            j.value("cleanPongsAuto", cleanPongsAuto);
         profitHourInterval              =                            j.value("profitHourInterval", profitHourInterval);
         audio                           =                            j.value("audio", audio);
         delayUI                         = fmax(0,                    j.value("delayUI", delayUI));
         if (mode == QuotingMode::Depth)
           widthPercentage = false;
+        K.gateway->askForCancelAll = cancelOrdersAuto;
         K.timer_ticks_factor(delayUI);
         K.client_queue_delay(delayUI);
         if (_diffEwma == -1) _diffEwma++;
@@ -293,6 +296,7 @@ namespace tribeca {
       {             "sopWidthMultiplier", k.sopWidthMultiplier             },
       {              "sopSizeMultiplier", k.sopSizeMultiplier              },
       {            "sopTradesMultiplier", k.sopTradesMultiplier            },
+      {               "cancelOrdersAuto", k.cancelOrdersAuto               },
       {                 "cleanPongsAuto", k.cleanPongsAuto                 },
       {             "profitHourInterval", k.profitHourInterval             },
       {                          "audio", k.audio                          },
