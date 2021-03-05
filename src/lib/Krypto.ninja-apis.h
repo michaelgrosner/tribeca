@@ -683,12 +683,12 @@ namespace ₿ {
         });
       };
   };
-  class GwHitBtc: public GwApiWs { // new urls: https://api.hitbtc.com/#api-urls
+  class GwHitBtc: public GwApiWsWs {
     public:
       GwHitBtc()
       {
         http   = "https://api.hitbtc.com/api/2";
-        ws     = "wss://api.hitbtc.com/api/2/ws";
+        ws     = "wss://api.hitbtc.com/api/2/ws/public";
         randId = Random::uuid32Id;
         webMarket = "https://hitbtc.com/exchange/";
         webOrders = "https://hitbtc.com/reports/orders";
@@ -710,6 +710,9 @@ namespace ₿ {
         };
       };
     protected:
+      string twin(const string &ws) const override {
+        return ws.substr(0, ws.length() - 6) + "trading";
+      };
       json xfer(const string &url, const string &auth, const string &post) const {
         return Curl::Web::xfer(url, [&](CURL *curl) {
           curl_easy_setopt(curl, CURLOPT_USERPWD, auth.data());
