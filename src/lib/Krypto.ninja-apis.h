@@ -261,6 +261,7 @@ namespace ₿ {
       virtual void disconnect()       = 0;
       virtual bool connected()  const = 0;
       virtual json handshake()  const = 0;
+      virtual void pairs()      const = 0;
       json handshake(const bool &nocache) {
         json reply;
         const string cache = (K_HOME "/cache/handshake")
@@ -563,6 +564,20 @@ namespace ₿ {
         webMarket = "https://www.binance.com/en/trade/";
         webOrders = "https://www.binance.com/en/my/orders/exchange/tradeorder";
       };
+      void pairs() const override {
+        const json reply = Curl::Web::xfer(http + "/api/v3/exchangeInfo");
+        if (!reply.is_object()
+          or reply.find("symbols") == reply.end()
+          or !reply.at("symbols").is_array()
+          or reply.at("symbols").empty()
+          or !reply.at("symbols").at(0).is_object()
+          or reply.at("symbols").at(0).find("isSpotTradingAllowed") == reply.at("symbols").at(0).end()
+        ) print("Error while reading pairs: " + reply.dump());
+        else for (const json &it : reply.at("symbols"))
+          if (it.value("isSpotTradingAllowed", false)
+            and it.value("status", "") == "TRADING"
+          ) print(it.value("baseAsset", "") + "/" + it.value("quoteAsset", ""));
+      };
       json handshake() const override {
         json reply1 = Curl::Web::xfer(http + "/api/v3/exchangeInfo");
         if (reply1.find("symbols") != reply1.end() and reply1.at("symbols").is_array())
@@ -641,6 +656,16 @@ namespace ₿ {
         webMarket = "https://www.bitmex.com/app/trade/";
         webOrders = "https://www.bitmex.com/app/orderHistory";
       };
+      void pairs() const override {
+        const json reply = Curl::Web::xfer(http + "/instrument/active");
+        if (!reply.is_array()
+          or reply.empty()
+          or !reply.at(0).is_object()
+          or reply.at(0).find("symbol") == reply.at(0).end()
+        ) print("Error while reading pairs: " + reply.dump());
+        else for (const json &it : reply)
+          print(it.value("symbol", ""));
+      };
       json handshake() const override {
         json reply = {
           {"object", Curl::Web::xfer(http + "/instrument?symbol=" + base + quote)}
@@ -648,7 +673,7 @@ namespace ₿ {
         if (reply.at("object").is_array() and !reply.at("object").empty())
           reply = reply.at("object").front();
         return {
-          {     "base", "XBT"                          },
+          {     "base", base                           },
           {    "quote", quote                          },
           {   "symbol", base + quote                   },
           {   "margin", reply.value("isInverse", false)
@@ -686,6 +711,17 @@ namespace ₿ {
         randId = Random::uuid32Id;
         webMarket = "https://hitbtc.com/exchange/";
         webOrders = "https://hitbtc.com/reports/orders";
+      };
+      void pairs() const override {
+        const json reply = Curl::Web::xfer(http + "/public/symbol");
+        if (!reply.is_array()
+          or reply.empty()
+          or !reply.at(0).is_object()
+          or reply.at(0).find("baseCurrency")  == reply.at(0).end()
+          or reply.at(0).find("quoteCurrency") == reply.at(0).end()
+        ) print("Error while reading pairs: " + reply.dump());
+        else for (const json &it : reply)
+          print(it.value("baseCurrency", "") + "/" + it.value("quoteCurrency", ""));
       };
       json handshake() const override {
         const json reply = Curl::Web::xfer(http + "/public/symbol/" + base + quote);
@@ -737,6 +773,17 @@ namespace ₿ {
         webMarket = "https://pro.coinbase.com/trade/";
         webOrders = "https://pro.coinbase.com/orders/";
       };
+      void pairs() const override {
+        const json reply = Curl::Web::xfer(http + "/products");
+        if (!reply.is_array()
+          or reply.empty()
+          or !reply.at(0).is_object()
+          or reply.at(0).find("base_currency")  == reply.at(0).end()
+          or reply.at(0).find("quote_currency") == reply.at(0).end()
+        ) print("Error while reading pairs: " + reply.dump());
+        else for (const json &it : reply)
+          print(it.value("base_currency", "") + "/" + it.value("quote_currency", ""));
+      };
       json handshake() const override {
         const json reply = Curl::Web::xfer(http + "/products/" + base + "-" + quote);
         return {
@@ -774,6 +821,17 @@ namespace ₿ {
         askForReplace = true;
         webMarket = "https://www.bitfinex.com/trading/";
         webOrders = "https://www.bitfinex.com/reports/orders";
+      };
+      void pairs() const override {
+        const json reply = Curl::Web::xfer(http + "/conf/pub:list:pair:exchange");
+        if (!reply.is_array()
+          or reply.empty()
+          or !reply.at(0).is_array()
+          or reply.at(0).empty()
+          or !reply.at(0).at(0).is_string()
+        ) print("Error while reading pairs: " + reply.dump());
+        else for (const json &it : reply.at(0))
+          print(it);
       };
       json handshake() const override {
         json reply1 = {
@@ -849,6 +907,19 @@ namespace ₿ {
         webMarket = "https://trade.kucoin.com/";
         webOrders = "https://www.kucoin.com/order/trade";
       };
+      void pairs() const override {
+        const json reply = Curl::Web::xfer(http + "/api/v1/symbols");
+        if (!reply.is_object()
+          or reply.find("data") == reply.end()
+          or !reply.at("data").is_array()
+          or reply.at("data").empty()
+          or !reply.at("data").at(0).is_object()
+          or reply.at("data").at(0).find("enableTrading") == reply.at("data").at(0).end()
+        ) print("Error while reading pairs: " + reply.dump());
+        else for (const json &it : reply.at("data"))
+          if (it.value("enableTrading", false))
+            print(it.value("baseCurrency", "") + "/" + it.value("quoteCurrency", ""));
+      };
       json handshake() const override {
         json reply1 = Curl::Web::xfer(http + "/api/v1/symbols");
         if (reply1.find("data") != reply1.end() and reply1.at("data").is_array())
@@ -918,6 +989,16 @@ namespace ₿ {
         webMarket = "https://www.kraken.com/charts";
         webOrders = "https://www.kraken.com/u/trade";
       };
+      void pairs() const override {
+        const json reply = Curl::Web::xfer(http + "/0/public/AssetPairs");
+        if (!reply.is_object()
+          or reply.find("result") == reply.end()
+          or !reply.at("result").is_object()
+        )  print("Error while reading pairs: " + reply.dump());
+        else for (const json &it : reply.at("result"))
+          if (it.find("wsname") != it.end())
+            print(it.value("wsname", ""));
+      };
       json handshake() const override {
         json reply = Curl::Web::xfer(http + "/0/public/AssetPairs?pair=" + base + quote);
         if (reply.find("result") != reply.end())
@@ -961,6 +1042,13 @@ namespace ₿ {
         randId = Random::int45Id;
         webMarket = "https://poloniex.com/exchange";
         webOrders = "https://poloniex.com/tradeHistory";
+      };
+      void pairs() const override {
+        const json reply = Curl::Web::xfer(http + "/public?command=returnTicker");
+        if (!reply.is_object())
+          print("Error while reading pairs: " + reply.dump());
+        else for (auto it = reply.begin(); it != reply.end(); ++it)
+          print(it.key());
       };
       json handshake() const override {
         const json reply = Curl::Web::xfer(http + "/public?command=returnTicker")

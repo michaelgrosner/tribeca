@@ -398,6 +398,7 @@ namespace ₿ {
           {"help",         "h",      nullptr,  "print this help and quit"},
           {"version",      "v",      nullptr,  "print current build version and quit"},
           {"latency",      "1",      nullptr,  "print current HTTP latency (not from WS) and quit"},
+          {"list",         "1",      nullptr,  "print current available currency pairs and quit"},
           {"nocache",      "1",      nullptr,  "do not cache handshakes 7 hours at " K_HOME "/cache"}
         };
         if (!arg<int>("autobot")) long_options.push_back(
@@ -545,7 +546,7 @@ namespace ₿ {
         if (arg<int>("latency"))
           args["nocache"] = 1;
 #if !defined _WIN32 and defined NDEBUG
-        if (arg<int>("latency") or arg<int>("debug-secret"))
+        if (arg<int>("latency") or arg<int>("list") or arg<int>("debug-secret"))
 #endif
           args["naked"] = 1;
         if (args.find("database") != args.end()) {
@@ -1187,6 +1188,11 @@ namespace ₿ {
                           .value("YourFuckingIPAddress", wtfismyip)
           );
         } {
+          if (arg<int>("list")) {
+            gateway->pairs();
+            exit("CF " + Ansi::r(COLOR_WHITE) + "--list done"
+              " (to find a symbol use: ./K.sh --list 2>&1 | grep SYM)");
+          }
           if (arg<int>("latency")) {
             gateway->latency("HTTP read/write handshake", [&]() {
               handshake({
