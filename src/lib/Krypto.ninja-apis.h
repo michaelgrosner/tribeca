@@ -183,8 +183,7 @@ namespace ₿ {
         else if (holds_alternative<function<void(const Levels&)>>(ev))
           async.levels.write       = get<function<void(const Levels&)>>(ev);
         else if (holds_alternative<function<void(const Order&)>>(ev))
-          async.orders.write       =
-          async.cancelAll.write    = get<function<void(const Order&)>>(ev);
+          async.orders.write       = get<function<void(const Order&)>>(ev);
         else if (holds_alternative<function<void(const Trade&)>>(ev))
           async.trades.write       = get<function<void(const Trade&)>>(ev);
       };
@@ -214,18 +213,16 @@ namespace ₿ {
 /**/  virtual void replace(string, string) {};                               // call         async orders data from exchange
 /**/  virtual void   place(string, Side, string, string, OrderType, TimeInForce) = 0;     // async orders like above/below..
 /**/  virtual void  cancel(string, string) = 0;                              // call         async orders data from exchange
+/**/  virtual void cancelAll() = 0;                                          // call         async orders data from exchange
 /**/protected:
-/**/  virtual            bool async_wallet()    { return false; };           // call         async wallet data from exchange
-/**/  virtual            bool async_cancelAll() { return false; };           // call         async orders data from exchange
-/**/  virtual vector<Wallets>  sync_wallet()    { return {}; };              // call and read sync wallet data from exchange
-/**/  virtual   vector<Order>  sync_cancelAll() { return {}; };              // call and read sync orders data from exchange
+/**/  virtual            bool async_wallet() { return false; };              // call         async wallet data from exchange
+/**/  virtual vector<Wallets>  sync_wallet() { return {}; };                 // call and read sync wallet data from exchange
 //EO non-free Gw library functions from build-*/lib/K-*.a (it just redefines all virtual gateway class members above).......
       struct {
         Loop::Async::Event<Wallets>      wallets;
         Loop::Async::Event<Levels>       levels;
         Loop::Async::Event<Trade>        trades;
-        Loop::Async::Event<Order>        orders,
-                                         cancelAll;
+        Loop::Async::Event<Order>        orders;
         Loop::Async::Event<Connectivity> connectivity;
       } async;
       void online(const Connectivity &connectivity = Connectivity::Connected) {
@@ -234,16 +231,16 @@ namespace ₿ {
           async.levels.try_write({});
       };
       void wait_for_never_async_data(Loop *const loop) {
-        async.wallets.wait_for(loop,   [&]() { return sync_wallet(); });
-        async.cancelAll.wait_for(loop, [&]() { return sync_cancelAll(); });
+        async.wallets.wait_for(loop, [&]() { return sync_wallet(); });
       };
       void ask_for_never_async_data(const unsigned int &tick) {
         if (((askForFees and !(askForFees = false))
           or !(tick % 15))
-          and !async_wallet())    async.wallets.ask_for();
-        if ((askForCancelAll
-          and !(tick % 300))
-          and !async_cancelAll()) async.cancelAll.ask_for();
+          and !async_wallet()
+        ) async.wallets.ask_for();
+        if (askForCancelAll
+          and !(tick % 300)
+        ) cancelAll();
       };
   };
 
@@ -979,7 +976,7 @@ namespace ₿ {
           {"tickPrice", reply.empty()
                           ? 0 : 1e-8      },
           { "tickSize", 1e-8              },
-          {  "minSize", 1e-3              },
+          {  "minSize", 1e-4              },
           {    "reply", reply             }
         };
       };
