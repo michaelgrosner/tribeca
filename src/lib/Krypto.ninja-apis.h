@@ -209,6 +209,10 @@ namespace ₿ {
           order->exchangeId
         );
       };
+      void balance() {
+        if (!async_wallet())
+          async.wallets.ask_for();
+      };
 //BO non-free Gw library functions from build-*/lib/K-*.a (it just redefines all virtual gateway class members below).......
 /**/  virtual void replace(string, string) {};                               // call         async orders data from exchange
 /**/  virtual void   place(string, Side, string, string, OrderType, TimeInForce) = 0;     // async orders like above/below..
@@ -234,10 +238,9 @@ namespace ₿ {
         async.wallets.wait_for(loop, [&]() { return sync_wallet(); });
       };
       void ask_for_never_async_data(const unsigned int &tick) {
-        if (((askForFees and !(askForFees = false))
-          or !(tick % 15))
-          and !async_wallet()
-        ) async.wallets.ask_for();
+        if ((askForFees and !(askForFees = false))
+          or !(tick % 15)
+        ) balance();
         if (askForCancelAll
           and !(tick % 300)
         ) cancelAll();
