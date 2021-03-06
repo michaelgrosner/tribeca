@@ -504,9 +504,8 @@ namespace analpaper {
           K.gateway->cancel(it);
           n++;
         }
-        if (n) K.log("GW " + K.gateway->exchange, "Canceled "
-                + to_string(n) + " open order" + string(n != 1, 's')
-                + " before quit");
+        if (n)
+          K.log("QE", "Canceled " + to_string(n) + " open order" + string(n != 1, 's') + " before quit");
       };
     private:
       vector<Order*> abandon(Quote &quote) {
