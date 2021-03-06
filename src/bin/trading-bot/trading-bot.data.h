@@ -203,7 +203,6 @@ namespace tribeca {
         delayUI                         = fmax(0,                    j.value("delayUI", delayUI));
         if (mode == QuotingMode::Depth)
           widthPercentage = false;
-        K.gateway->askForCancelAll = cancelOrdersAuto;
         K.timer_ticks_factor(delayUI);
         K.client_queue_delay(delayUI);
         if (_diffEwma == -1) _diffEwma++;
@@ -1849,7 +1848,7 @@ namespace tribeca {
         }
         if (orders.updated.filled) {
           safety.insertTrade(orders.updated);
-          K.gateway->askForFees = true;
+          K.gateway->balance();
         }
       };
       mMatter about() const override {
@@ -2859,6 +2858,9 @@ namespace tribeca {
       };
       void timer_1s(const unsigned int &tick) {
         if (K.gateway->connected() and !levels.warn_empty()) {
+          if (qp.cancelOrdersAuto
+            and !(tick % 300)
+          ) K.gateway->cancelAll();
           levels.timer_1s();
           if (!(tick % 60)) {
             levels.timer_60s();

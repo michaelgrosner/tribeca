@@ -169,9 +169,7 @@ namespace ₿ {
                 amount,
                 percent;
       } decimal;
-      bool askForFees      = false,
-           askForReplace   = false,
-           askForCancelAll = false;
+      bool askForReplace = false;
       string (*randId)() = nullptr;
       virtual void ask_for_data(const unsigned int &tick) = 0;
       virtual void wait_for_data(Loop *const loop) = 0;
@@ -238,12 +236,7 @@ namespace ₿ {
         async.wallets.wait_for(loop, [&]() { return sync_wallet(); });
       };
       void ask_for_never_async_data(const unsigned int &tick) {
-        if ((askForFees and !(askForFees = false))
-          or !(tick % 15)
-        ) balance();
-        if (askForCancelAll
-          and !(tick % 300)
-        ) cancelAll();
+        if (!(tick % 15)) balance();
       };
   };
 
