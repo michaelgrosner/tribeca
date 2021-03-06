@@ -2780,6 +2780,10 @@ namespace tribeca {
         for (const Order *const it : calculon.purge())
           orders.purge(it);
       };
+      void nuke() {
+        cancelOrders();
+        K.gateway->cancel();
+      };
       void quit() {
         unsigned int n = 0;
         for (Order *const it : orders.open()) {
@@ -2860,7 +2864,7 @@ namespace tribeca {
         if (K.gateway->connected() and !levels.warn_empty()) {
           if (qp.cancelOrdersAuto
             and !(tick % 300)
-          ) K.gateway->cancelAll();
+          ) broker.nuke();
           levels.timer_1s();
           if (!(tick % 60)) {
             levels.timer_60s();
