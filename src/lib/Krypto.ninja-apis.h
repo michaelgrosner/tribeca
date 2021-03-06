@@ -211,15 +211,15 @@ namespace ₿ {
         if (!async_wallet())
           async.wallets.ask_for();
       };
-//BO non-free Gw library functions from build-*/lib/K-*.a (it just redefines all virtual gateway class members below).......
-/**/  virtual void replace(string, string) {};                               // call         async orders data from exchange
-/**/  virtual void   place(string, Side, string, string, OrderType, TimeInForce) = 0;     // async orders like above/below..
-/**/  virtual void  cancel(string, string) = 0;                              // call         async orders data from exchange
-/**/  virtual void cancelAll() = 0;                                          // call         async orders data from exchange
+//BO non-free Gw class member functions from lib build-*/lib/K-*.a (it just redefines all virtual gateway functions below)...
+/**/  virtual void   place(string, Side, string, string, OrderType, TimeInForce) = 0;// call async order  data from exchange.
+/**/  virtual void replace(string, string) {};                                 // call price async order  data from exchange.
+/**/  virtual void  cancel(string, string) = 0;                              // call by uuid async order  data from exchange.
+/**/  virtual void  cancel() = 0;                                          // call by symbol async orders data from exchange.
 /**/protected:
-/**/  virtual            bool async_wallet() { return false; };              // call         async wallet data from exchange
-/**/  virtual vector<Wallets>  sync_wallet() { return {}; };                 // call and read sync wallet data from exchange
-//EO non-free Gw library functions from build-*/lib/K-*.a (it just redefines all virtual gateway class members above).......
+/**/  virtual            bool async_wallet() { return false; };        // call               async wallet data from exchange.
+/**/  virtual vector<Wallets>  sync_wallet() { return {}; };         // call                  sync wallet data from exchange.
+//EO non-free Gw class member functions from lib build-*/lib/K-*.a (it just redefines all virtual gateway functions above)...
       struct {
         Loop::Async::Event<Wallets>      wallets;
         Loop::Async::Event<Levels>       levels;
@@ -387,9 +387,10 @@ namespace ₿ {
 
   class Gw: public GwExchange {
     public:
-//BO non-free Gw library functions from build-*/lib/K-*.a (it just returns a derived gateway class based on argument).......
-/**/  static Gw* new_Gw(const string&); // may return too a nullptr instead of a child gateway class, if string is unknown..
-//EO non-free Gw library functions from build-*/lib/K-*.a (it just returns a derived gateway class based on argument).......
+
+//BO non-free Gw class member functions from lib build-*/lib/K-*.a (it just redefines all virtual gateway functions below).
+/**/  static Gw* new_Gw(const string&); // may return too a nullptr instead of a child gateway class, if string is unknown.
+//EO non-free Gw class member functions from lib build-*/lib/K-*.a (it just redefines all virtual gateway functions above).
   };
 
   class GwApiWs: public Gw,
@@ -411,10 +412,10 @@ namespace ₿ {
         wait_for_never_async_data(loop);
       };
     protected:
-//BO non-free Gw library functions from build-*/lib/K-*.a (it just redefines all virtual gateway class members below).
-/**/  virtual void subscribe()   = 0;                                   // send subcription messages to remote server.
-/**/  virtual void consume(json) = 0;                                   // read message one by one from remote server.
-//EO non-free Gw library functions from build-*/lib/K-*.a (it just redefines all virtual gateway class members above).
+//BO non-free Gw class member functions from lib build-*/lib/K-*.a (it just redefines all virtual gateway functions below).
+/**/  virtual void subscribe()   = 0;                                        // send subcription messages to remote server.
+/**/  virtual void consume(json) = 0;                                        // read message one by one from remote server.
+//EO non-free Gw class member functions from lib build-*/lib/K-*.a (it just redefines all virtual gateway functions above).
       virtual void connect() {
         CURLcode rc;
         if (CURLE_OK == (rc = WebSocket::connect(ws)))
@@ -517,9 +518,9 @@ namespace ₿ {
            and FixSocket::connected();
       };
     protected:
-//BO non-free Gw library functions from build-*/lib/K-*.a (it just redefines all virtual gateway class members below).
-/**/  virtual string logon() = 0;                                                             // return logon message.
-//EO non-free Gw library functions from build-*/lib/K-*.a (it just redefines all virtual gateway class members above).
+//BO non-free Gw class member functions from lib build-*/lib/K-*.a (it just redefines all virtual gateway functions below).
+/**/  virtual string logon() = 0;                                                                  // return logon message.
+//EO non-free Gw class member functions from lib build-*/lib/K-*.a (it just redefines all virtual gateway functions above).
       void connect() override {
         GwApiWs::connect();
         if (GwApiWs::connected()) {
@@ -751,7 +752,7 @@ namespace ₿ {
         };
       };
     protected:
-      json xfer(const string &url, const string &h1, const string &h2, const string &h3, const string &h4) const {
+      json xfer(const string &url, const string &h1, const string &h2, const string &h3, const string &h4, const string &crud) const {
         return Curl::Web::xfer(url, [&](CURL *curl) {
           struct curl_slist *h_ = nullptr;
           h_ = curl_slist_append(h_, ("CB-ACCESS-KEY: "        + h1).data());
@@ -759,6 +760,7 @@ namespace ₿ {
           h_ = curl_slist_append(h_, ("CB-ACCESS-TIMESTAMP: "  + h3).data());
           h_ = curl_slist_append(h_, ("CB-ACCESS-PASSPHRASE: " + h4).data());
           curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
+          curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, crud.data());
         });
       };
   };
