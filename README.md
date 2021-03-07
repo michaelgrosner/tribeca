@@ -136,7 +136,7 @@ Troubleshooting:
 
  Optional:
 
- * See `./K.sh --help` and `make help`.
+ * See `./K.sh --help` to trade or `make help` to develop.
 
  * Use your own SSL certificate with `--ssl-crt` and `--ssl-key`, see [web ui](https://github.com/ctubio/Krypto-trading-bot#web-ui) section. Otherwise, the unsecure built-in certificate is a fully featured default openssl, that you may just need to authorise in your browser.
 

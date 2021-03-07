@@ -380,7 +380,7 @@ namespace ₿ {
         return get<T>(args.at(name));
       };
     protected:
-      void main(Ending *const K, int argc, char** argv, const bool &ev_order, const bool &databases, const bool &headless) {
+      void main(Ending *const K, int argc, char** argv, const vector<variant<Loop::TimeEvent, Ending::QuitEvent, Gw::DataEvent>> &events, const bool &databases, const bool &headless) {
         K->ending([&]() {
           if (display.terminal) {
             display = {};
@@ -443,10 +443,13 @@ namespace ₿ {
           {"market-limit", "NUMBER", "321",    "set NUMBER of maximum price levels for the orderbook,"
                                                "\n" "default NUMBER is '321' and the minimum is '10'"}
         }) long_options.push_back(it);
-        if (ev_order) long_options.push_back(
-          {"lifetime",     "NUMBER", "0",      "set NUMBER of minimum milliseconds to keep orders open,"
+        for (const auto &it : events)
+          if (holds_alternative<Gw::DataEvent>(it)
+            and holds_alternative<function<void(const Order&)>>(get<Gw::DataEvent>(it))
+          ) long_options.push_back(
+              {"lifetime", "NUMBER", "0",      "set NUMBER of minimum milliseconds to keep orders open,"
                                                "\n" "otherwise open orders can be replaced anytime required"}
-        );
+            );
         for (const Argument &it : arguments.first)
           long_options.push_back(it);
         arguments.first.clear();
@@ -1172,12 +1175,7 @@ namespace ₿ {
     public:
       KryptoNinja *main(int argc, char** argv) {
         {
-          bool ev_order = false;
-          for (const auto &it : events)
-            if (holds_alternative<Gw::DataEvent>(it)
-              and holds_alternative<function<void(const Order&)>>(get<Gw::DataEvent>(it))
-            ) ev_order = true;
-          Option::main(this, argc, argv, ev_order, databases, documents.empty());
+          Option::main(this, argc, argv, events, databases, documents.empty());
           setup();
         } {
           if (windowed())
@@ -1188,20 +1186,14 @@ namespace ₿ {
                           .value("YourFuckingIPAddress", wtfismyip)
           );
         } {
-          if (arg<int>("list")) {
-            gateway->pairs();
-            exit("CF " + Ansi::r(COLOR_WHITE) + "--list done"
-              " (to find a symbol use: ./K.sh --list 2>&1 | grep SYM)");
-          }
-          if (arg<int>("latency")) {
-            gateway->latency("HTTP read/write handshake", [&]() {
+          if (arg<int>("list"))
+            exit("CF " + Ansi::r(COLOR_WHITE) + gateway->pairs());
+          if (arg<int>("latency"))
+            exit("CF " + Ansi::r(COLOR_WHITE) + gateway->latency([&]() {
               handshake({
                 {"gateway", gateway->http}
               });
-            });
-            exit("1 HTTP connection done" + Ansi::r(COLOR_WHITE)
-              + " (consider to repeat a few times this check)");
-          }
+            }));
         } {
           for (const auto &it : events)
             if (holds_alternative<QuitEvent>(it))
