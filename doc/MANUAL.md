@@ -248,6 +248,8 @@ Time     | Side | Price | Size | BuyTS | SellTS | Notes
 
 * `cxl?` - Enable a timeout of 5 minutes to cancel all orders that exist as open in the exchange (in case you found yourself with zombie orders in the exchange, because the API integration have bugs or because the connection is interrupted).
 
+* `lifetime` - Enable a timeout of `lifetime` milliseconds to keep orders open (otherwise open orders can be replaced anytime required).
+
 * `profit` - Timeframe in hours to calculate the display of Profit (under wallet values) and also interval in hour to remove data points from the Stats, for example a `profit` of 0.5 will compare the current wallet values and the values from half hour ago to display the +/- % of increment between both and will remove data from the Stats older than half an hour.
 
 * `Kmemory` - Timeout in days for Pings (yet unmatched trades) and/or Pongs (K trades) to remain in memory, a value of `0` keeps the history in memory forever; a positive value remove only Pongs after `Kmemory` days; but a negative value remove both Pings and Pongs after `Kmemory` days (for example a value of `-2` will keep a history of trades no longer than 2 days without matter if Pings are not matched by Pongs; or a value of `-0.25` will do so but limited to 6h).

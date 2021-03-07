@@ -113,6 +113,7 @@ namespace tribeca {
     double           sopSizeMultiplier               = 2;
     double           sopTradesMultiplier             = 2;
     bool             cancelOrdersAuto                = false;
+    unsigned int     lifetime                        = 0;
     double           cleanPongsAuto                  = 0.0;
     double           profitHourInterval              = 0.5;
     bool             audio                           = false;
@@ -136,71 +137,72 @@ namespace tribeca {
           extraShortEwmaPeriods,
           ultraShortEwmaPeriods
         };
-        widthPing                       = fmax(K.gateway->tickPrice, j.value("widthPing", widthPing));
-        widthPingPercentage             = fmin(1e+2, fmax(1e-3,      j.value("widthPingPercentage", widthPingPercentage)));
-        widthPong                       = fmax(K.gateway->tickPrice, j.value("widthPong", widthPong));
-        widthPongPercentage             = fmin(1e+2, fmax(1e-3,      j.value("widthPongPercentage", widthPongPercentage)));
-        widthPercentage                 =                            j.value("widthPercentage", widthPercentage);
-        bestWidth                       =                            j.value("bestWidth", bestWidth);
-        bestWidthSize                   = fmax(0,                    j.value("bestWidthSize", bestWidthSize));
-        orderPctTotal                   =                            j.value("orderPctTotal", orderPctTotal);
-        tradeSizeTBPExp                 =                            j.value("tradeSizeTBPExp", tradeSizeTBPExp);
-        buySize                         = fmax(K.gateway->minSize,   j.value("buySize", buySize));
-        buySizePercentage               = fmin(1e+2, fmax(1e-3,      j.value("buySizePercentage", buySizePercentage)));
-        buySizeMax                      =                            j.value("buySizeMax", buySizeMax);
-        sellSize                        = fmax(K.gateway->minSize,   j.value("sellSize", sellSize));
-        sellSizePercentage              = fmin(1e+2, fmax(1e-3,      j.value("sellSizePercentage", sellSizePercentage)));
-        sellSizeMax                     =                            j.value("sellSizeMax", sellSizeMax);
-        pingAt                          =                            j.value("pingAt", pingAt);
-        pongAt                          =                            j.value("pongAt", pongAt);
-        mode                            =                            j.value("mode", mode);
-        safety                          =                            j.value("safety", safety);
-        bullets                         = fmin(10, fmax(1,           j.value("bullets", bullets)));
-        range                           =                            j.value("range", range);
-        rangePercentage                 = fmin(1e+2, fmax(1e-3,      j.value("rangePercentage", rangePercentage)));
-        fvModel                         =                            j.value("fvModel", fvModel);
-        targetBasePosition              =                            j.value("targetBasePosition", targetBasePosition);
-        targetBasePositionPercentage    = fmin(1e+2, fmax(0,         j.value("targetBasePositionPercentage", targetBasePositionPercentage)));
-        targetBasePositionMin           =                            j.value("targetBasePositionMin", targetBasePositionMin);
-        targetBasePositionPercentageMin = fmin(1e+2, fmax(0,         j.value("targetBasePositionPercentageMin", targetBasePositionPercentageMin)));
-        targetBasePositionMax           =                            j.value("targetBasePositionMax", targetBasePositionMax);
-        targetBasePositionPercentageMax = fmin(1e+2, fmax(0,         j.value("targetBasePositionPercentageMax", targetBasePositionPercentageMax)));
-        positionDivergenceMin           =                            j.value("positionDivergenceMin", positionDivergenceMin);
-        positionDivergenceMode          =                            j.value("positionDivergenceMode", positionDivergenceMode);
-        positionDivergence              =                            j.value("positionDivergence", positionDivergence);
-        positionDivergencePercentage    = fmin(1e+2, fmax(0,         j.value("positionDivergencePercentage", positionDivergencePercentage)));
-        positionDivergencePercentageMin = fmin(1e+2, fmax(0,         j.value("positionDivergencePercentageMin", positionDivergencePercentageMin)));
-        percentageValues                =                            j.value("percentageValues", percentageValues);
-        autoPositionMode                =                            j.value("autoPositionMode", autoPositionMode);
-        aggressivePositionRebalancing   =                            j.value("aggressivePositionRebalancing", aggressivePositionRebalancing);
-        superTrades                     =                            j.value("superTrades", superTrades);
-        tradesPerMinute                 = fmax(0,                    j.value("tradesPerMinute", tradesPerMinute));
-        tradeRateSeconds                = fmax(0,                    j.value("tradeRateSeconds", tradeRateSeconds));
-        protectionEwmaWidthPing         =                            j.value("protectionEwmaWidthPing", protectionEwmaWidthPing);
-        protectionEwmaQuotePrice        =                            j.value("protectionEwmaQuotePrice", protectionEwmaQuotePrice);
-        protectionEwmaPeriods           = fmax(1,                    j.value("protectionEwmaPeriods", protectionEwmaPeriods));
-        quotingStdevProtection          =                            j.value("quotingStdevProtection", quotingStdevProtection);
-        quotingStdevBollingerBands      =                            j.value("quotingStdevBollingerBands", quotingStdevBollingerBands);
-        quotingStdevProtectionFactor    =                            j.value("quotingStdevProtectionFactor", quotingStdevProtectionFactor);
-        quotingStdevProtectionPeriods   = fmax(1,                    j.value("quotingStdevProtectionPeriods", quotingStdevProtectionPeriods));
-        ewmaSensiblityPercentage        =                            j.value("ewmaSensiblityPercentage", ewmaSensiblityPercentage);
-        quotingEwmaTrendProtection      =                            j.value("quotingEwmaTrendProtection", quotingEwmaTrendProtection);
-        quotingEwmaTrendThreshold       =                            j.value("quotingEwmaTrendThreshold", quotingEwmaTrendThreshold);
-        veryLongEwmaPeriods             = fmax(1,                    j.value("veryLongEwmaPeriods", veryLongEwmaPeriods));
-        longEwmaPeriods                 = fmax(1,                    j.value("longEwmaPeriods", longEwmaPeriods));
-        mediumEwmaPeriods               = fmax(1,                    j.value("mediumEwmaPeriods", mediumEwmaPeriods));
-        shortEwmaPeriods                = fmax(1,                    j.value("shortEwmaPeriods", shortEwmaPeriods));
-        extraShortEwmaPeriods           = fmax(1,                    j.value("extraShortEwmaPeriods", extraShortEwmaPeriods));
-        ultraShortEwmaPeriods           = fmax(1,                    j.value("ultraShortEwmaPeriods", ultraShortEwmaPeriods));
-        aprMultiplier                   =                            j.value("aprMultiplier", aprMultiplier);
-        sopWidthMultiplier              =                            j.value("sopWidthMultiplier", sopWidthMultiplier);
-        sopSizeMultiplier               =                            j.value("sopSizeMultiplier", sopSizeMultiplier);
-        sopTradesMultiplier             =                            j.value("sopTradesMultiplier", sopTradesMultiplier);
-        cancelOrdersAuto                =                            j.value("cancelOrdersAuto", cancelOrdersAuto);
-        cleanPongsAuto                  =                            j.value("cleanPongsAuto", cleanPongsAuto);
-        profitHourInterval              =                            j.value("profitHourInterval", profitHourInterval);
-        audio                           =                            j.value("audio", audio);
-        delayUI                         = fmax(0,                    j.value("delayUI", delayUI));
+        widthPing                       = fmax(K.gateway->tickPrice,   j.value("widthPing", widthPing));
+        widthPingPercentage             = fmin(1e+2, fmax(1e-3,        j.value("widthPingPercentage", widthPingPercentage)));
+        widthPong                       = fmax(K.gateway->tickPrice,   j.value("widthPong", widthPong));
+        widthPongPercentage             = fmin(1e+2, fmax(1e-3,        j.value("widthPongPercentage", widthPongPercentage)));
+        widthPercentage                 =                              j.value("widthPercentage", widthPercentage);
+        bestWidth                       =                              j.value("bestWidth", bestWidth);
+        bestWidthSize                   = fmax(0,                      j.value("bestWidthSize", bestWidthSize));
+        orderPctTotal                   =                              j.value("orderPctTotal", orderPctTotal);
+        tradeSizeTBPExp                 =                              j.value("tradeSizeTBPExp", tradeSizeTBPExp);
+        buySize                         = fmax(K.gateway->minSize,     j.value("buySize", buySize));
+        buySizePercentage               = fmin(1e+2, fmax(1e-3,        j.value("buySizePercentage", buySizePercentage)));
+        buySizeMax                      =                              j.value("buySizeMax", buySizeMax);
+        sellSize                        = fmax(K.gateway->minSize,     j.value("sellSize", sellSize));
+        sellSizePercentage              = fmin(1e+2, fmax(1e-3,        j.value("sellSizePercentage", sellSizePercentage)));
+        sellSizeMax                     =                              j.value("sellSizeMax", sellSizeMax);
+        pingAt                          =                              j.value("pingAt", pingAt);
+        pongAt                          =                              j.value("pongAt", pongAt);
+        mode                            =                              j.value("mode", mode);
+        safety                          =                              j.value("safety", safety);
+        bullets                         = fmin(10, fmax(1,             j.value("bullets", bullets)));
+        range                           =                              j.value("range", range);
+        rangePercentage                 = fmin(1e+2, fmax(1e-3,        j.value("rangePercentage", rangePercentage)));
+        fvModel                         =                              j.value("fvModel", fvModel);
+        targetBasePosition              =                              j.value("targetBasePosition", targetBasePosition);
+        targetBasePositionPercentage    = fmin(1e+2, fmax(0,           j.value("targetBasePositionPercentage", targetBasePositionPercentage)));
+        targetBasePositionMin           =                              j.value("targetBasePositionMin", targetBasePositionMin);
+        targetBasePositionPercentageMin = fmin(1e+2, fmax(0,           j.value("targetBasePositionPercentageMin", targetBasePositionPercentageMin)));
+        targetBasePositionMax           =                              j.value("targetBasePositionMax", targetBasePositionMax);
+        targetBasePositionPercentageMax = fmin(1e+2, fmax(0,           j.value("targetBasePositionPercentageMax", targetBasePositionPercentageMax)));
+        positionDivergenceMin           =                              j.value("positionDivergenceMin", positionDivergenceMin);
+        positionDivergenceMode          =                              j.value("positionDivergenceMode", positionDivergenceMode);
+        positionDivergence              =                              j.value("positionDivergence", positionDivergence);
+        positionDivergencePercentage    = fmin(1e+2, fmax(0,           j.value("positionDivergencePercentage", positionDivergencePercentage)));
+        positionDivergencePercentageMin = fmin(1e+2, fmax(0,           j.value("positionDivergencePercentageMin", positionDivergencePercentageMin)));
+        percentageValues                =                              j.value("percentageValues", percentageValues);
+        autoPositionMode                =                              j.value("autoPositionMode", autoPositionMode);
+        aggressivePositionRebalancing   =                              j.value("aggressivePositionRebalancing", aggressivePositionRebalancing);
+        superTrades                     =                              j.value("superTrades", superTrades);
+        tradesPerMinute                 = fmax(0,                      j.value("tradesPerMinute", tradesPerMinute));
+        tradeRateSeconds                = fmax(0,                      j.value("tradeRateSeconds", tradeRateSeconds));
+        protectionEwmaWidthPing         =                              j.value("protectionEwmaWidthPing", protectionEwmaWidthPing);
+        protectionEwmaQuotePrice        =                              j.value("protectionEwmaQuotePrice", protectionEwmaQuotePrice);
+        protectionEwmaPeriods           = fmax(1,                      j.value("protectionEwmaPeriods", protectionEwmaPeriods));
+        quotingStdevProtection          =                              j.value("quotingStdevProtection", quotingStdevProtection);
+        quotingStdevBollingerBands      =                              j.value("quotingStdevBollingerBands", quotingStdevBollingerBands);
+        quotingStdevProtectionFactor    =                              j.value("quotingStdevProtectionFactor", quotingStdevProtectionFactor);
+        quotingStdevProtectionPeriods   = fmax(1,                      j.value("quotingStdevProtectionPeriods", quotingStdevProtectionPeriods));
+        ewmaSensiblityPercentage        =                              j.value("ewmaSensiblityPercentage", ewmaSensiblityPercentage);
+        quotingEwmaTrendProtection      =                              j.value("quotingEwmaTrendProtection", quotingEwmaTrendProtection);
+        quotingEwmaTrendThreshold       =                              j.value("quotingEwmaTrendThreshold", quotingEwmaTrendThreshold);
+        veryLongEwmaPeriods             = fmax(1,                      j.value("veryLongEwmaPeriods", veryLongEwmaPeriods));
+        longEwmaPeriods                 = fmax(1,                      j.value("longEwmaPeriods", longEwmaPeriods));
+        mediumEwmaPeriods               = fmax(1,                      j.value("mediumEwmaPeriods", mediumEwmaPeriods));
+        shortEwmaPeriods                = fmax(1,                      j.value("shortEwmaPeriods", shortEwmaPeriods));
+        extraShortEwmaPeriods           = fmax(1,                      j.value("extraShortEwmaPeriods", extraShortEwmaPeriods));
+        ultraShortEwmaPeriods           = fmax(1,                      j.value("ultraShortEwmaPeriods", ultraShortEwmaPeriods));
+        aprMultiplier                   =                              j.value("aprMultiplier", aprMultiplier);
+        sopWidthMultiplier              =                              j.value("sopWidthMultiplier", sopWidthMultiplier);
+        sopSizeMultiplier               =                              j.value("sopSizeMultiplier", sopSizeMultiplier);
+        sopTradesMultiplier             =                              j.value("sopTradesMultiplier", sopTradesMultiplier);
+        cancelOrdersAuto                =                              j.value("cancelOrdersAuto", cancelOrdersAuto);
+        lifetime                        = fmax(K.arg<int>("lifetime"), j.value("lifetime", lifetime));
+        cleanPongsAuto                  =                              j.value("cleanPongsAuto", cleanPongsAuto);
+        profitHourInterval              =                              j.value("profitHourInterval", profitHourInterval);
+        audio                           =                              j.value("audio", audio);
+        delayUI                         = fmax(0,                      j.value("delayUI", delayUI));
         if (mode == QuotingMode::Depth)
           widthPercentage = false;
         K.timer_ticks_factor(delayUI);
@@ -296,6 +298,7 @@ namespace tribeca {
       {              "sopSizeMultiplier", k.sopSizeMultiplier              },
       {            "sopTradesMultiplier", k.sopTradesMultiplier            },
       {               "cancelOrdersAuto", k.cancelOrdersAuto               },
+      {                       "lifetime", k.lifetime                       },
       {                 "cleanPongsAuto", k.cleanPongsAuto                 },
       {             "profitHourInterval", k.profitHourInterval             },
       {                          "audio", k.audio                          },
@@ -2234,7 +2237,7 @@ namespace tribeca {
           } else if (qp.safety != QuotingSafety::AK47
             or quote.deprecates(order.price)
           ) {
-            if (K.arg<int>("lifetime") and order.time + K.arg<int>("lifetime") > Tstamp)
+            if (qp.lifetime and order.time + qp.lifetime > Tstamp)
               quote.skip();
             else return true;
           }

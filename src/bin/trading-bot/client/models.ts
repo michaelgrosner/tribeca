@@ -233,6 +233,7 @@ export interface QuotingParameters {
     sopSizeMultiplier?: number;
     sopTradesMultiplier?: number;
     cancelOrdersAuto?: boolean;
+    lifetime?: number;
     cleanPongsAuto?: number;
     stepOverSize?: number;
     profitHourInterval?: number;
