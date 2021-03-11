@@ -374,13 +374,13 @@ namespace analpaper {
             ? fmax(K.gateway->minSize, K.gateway->minValue / quotes.bid.price)
             : K.gateway->minSize;
           const Amount maxBid = K.gateway->margin == Future::Spot
-            ? (wallet.quote.amount + wallet.quote.held) / (quotes.bid.price * (1.0 + K.gateway->makeFee))
+            ? (wallet.quote.amount + wallet.quote.held) / quotes.bid.price
             : (K.gateway->margin == Future::Inverse
-                ? wallet.base.amount * (quotes.bid.price / (1.0 + K.gateway->takeFee))
+                ? wallet.base.amount * quotes.bid.price
                 : wallet.base.amount / quotes.bid.price
             );
           quotes.bid.size = K.gateway->decimal.amount.round(
-            fmax(minBid, fmin(
+            fmax(minBid * (1.0 + K.gateway->takeFee * 1e+2), fmin(
               quotes.bid.size,
               K.gateway->decimal.amount.floor(maxBid)
             ))
@@ -394,12 +394,12 @@ namespace analpaper {
             ? (wallet.base.amount + wallet.base.held)
             : (K.gateway->margin == Future::Inverse
                 ? (quotes.bid.empty()
-                  ? wallet.base.amount * (quotes.ask.price / (1.0 + K.gateway->takeFee))
+                  ? wallet.base.amount * quotes.ask.price
                   : quotes.bid.size)
                 : wallet.base.amount / quotes.ask.price
             );
           quotes.ask.size = K.gateway->decimal.amount.round(
-            fmax(minAsk, fmin(
+            fmax(minAsk * (1.0 + K.gateway->takeFee * 1e+2), fmin(
               quotes.ask.size,
               K.gateway->decimal.amount.floor(maxAsk)
             ))
@@ -414,9 +414,9 @@ namespace analpaper {
           if ((K.gateway->margin == Future::Spot
               ? (wallet.quote.amount + wallet.quote.held) / quotes.bid.price
               : (K.gateway->margin == Future::Inverse
-                  ? wallet.base.amount * (quotes.bid.price / (1.0 + K.gateway->takeFee))
+                  ? wallet.base.amount * quotes.bid.price
                   : wallet.base.amount / quotes.bid.price)
-              ) < minBid * (1.0 + K.gateway->makeFee)
+              ) < minBid
           ) quotes.bid.clear(QuoteState::DepletedFunds);
         }
         if (!quotes.ask.empty()) {
@@ -426,9 +426,9 @@ namespace analpaper {
           if ((K.gateway->margin == Future::Spot
               ? (wallet.base.amount + wallet.base.held)
               : (K.gateway->margin == Future::Inverse
-                  ? wallet.base.amount * (quotes.ask.price / (1.0 + K.gateway->takeFee))
+                  ? wallet.base.amount * quotes.ask.price
                   : wallet.base.amount / quotes.ask.price)
-              ) < minAsk * (1.0 + K.gateway->makeFee)
+              ) < minAsk
           ) quotes.ask.clear(QuoteState::DepletedFunds);
         }
       };
