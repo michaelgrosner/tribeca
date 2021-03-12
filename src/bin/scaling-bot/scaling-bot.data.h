@@ -3,7 +3,9 @@
 
 namespace analpaper {
   enum class QuoteState: unsigned int {
-    Disconnected, Live, DisabledQuotes, MissingData, UnknownHeld, DepletedFunds, Crossed
+    Disconnected,  Live,        DisabledQuotes,
+    MissingData,   UnknownHeld, WidthTooHigh,
+    DepletedFunds, Crossed
   };
 
   struct WalletPosition: public Wallets {
@@ -313,18 +315,28 @@ namespace analpaper {
         return true;
       };
       void calcRawQuotes() {
-        quotes.bid.price = levels.fairValue - K.gateway->tickPrice;
-        quotes.ask.price = levels.fairValue + K.gateway->tickPrice;
-        quotes.bid.size = K.arg<double>("order-size");
+        quotes.bid.size =
         quotes.ask.size = K.arg<double>("order-size");
+        quotes.bid.price = fmin(
+          levels.fairValue - K.gateway->tickPrice,
+          levels.fairValue - K.arg<double>("ping-width")
+        );
+        quotes.ask.price = fmax(
+          levels.fairValue + K.gateway->tickPrice,
+          levels.fairValue + K.arg<double>("ping-width")
+        );
+        if (quotes.bid.price <= 0 or quotes.ask.price <= 0) {
+          quotes.bid.clear(QuoteState::WidthTooHigh);
+          quotes.ask.clear(QuoteState::WidthTooHigh);
+          K.logWar("QP", "Negative price detected, widthPing must be lower", 3e+3);
+        }
       };
       void applyQuotingParameters() {
         quotes.debug("?"); applyScaleSide();
-        quotes.debug("A"); applyWidth();
-        quotes.debug("B"); applyBestWidth();
-        quotes.debug("C"); applyRoundPrice();
-        quotes.debug("D"); applyRoundSize();
-        quotes.debug("E"); applyDepleted();
+        quotes.debug("A"); applyBestWidth();
+        quotes.debug("B"); applyRoundPrice();
+        quotes.debug("C"); applyRoundSize();
+        quotes.debug("D"); applyDepleted();
         quotes.debug("!");
         quotes.checkCrossedQuotes();
       };
@@ -333,10 +345,6 @@ namespace analpaper {
           quotes.bid.clear(QuoteState::DisabledQuotes);
         if (K.arg<int>("scale-bids"))
           quotes.ask.clear(QuoteState::DisabledQuotes);
-      };
-      void applyWidth() {
-        quotes.bid.price = fmin(quotes.bid.price, levels.fairValue - K.arg<double>("ping-width"));
-        quotes.ask.price = fmax(quotes.ask.price, levels.fairValue + K.arg<double>("ping-width"));
       };
       void applyBestWidth() {
         if (!quotes.ask.empty())
@@ -374,7 +382,7 @@ namespace analpaper {
             ? fmax(K.gateway->minSize, K.gateway->minValue / quotes.bid.price)
             : K.gateway->minSize;
           const Amount maxBid = K.gateway->margin == Future::Spot
-            ? (wallet.quote.amount + wallet.quote.held) / quotes.bid.price
+            ? wallet.quote.total / quotes.bid.price
             : (K.gateway->margin == Future::Inverse
                 ? wallet.base.amount * quotes.bid.price
                 : wallet.base.amount / quotes.bid.price
@@ -391,7 +399,7 @@ namespace analpaper {
             ? fmax(K.gateway->minSize, K.gateway->minValue / quotes.ask.price)
             : K.gateway->minSize;
           const Amount maxAsk = K.gateway->margin == Future::Spot
-            ? (wallet.base.amount + wallet.base.held)
+            ? wallet.base.total
             : (K.gateway->margin == Future::Inverse
                 ? (quotes.bid.empty()
                   ? wallet.base.amount * quotes.ask.price
@@ -412,7 +420,7 @@ namespace analpaper {
             ? fmax(K.gateway->minSize, K.gateway->minValue / quotes.bid.price)
             : K.gateway->minSize;
           if ((K.gateway->margin == Future::Spot
-              ? (wallet.quote.amount + wallet.quote.held) / quotes.bid.price
+              ? wallet.quote.total / quotes.bid.price
               : (K.gateway->margin == Future::Inverse
                   ? wallet.base.amount * quotes.bid.price
                   : wallet.base.amount / quotes.bid.price)
@@ -424,7 +432,7 @@ namespace analpaper {
             ? fmax(K.gateway->minSize, K.gateway->minValue / quotes.ask.price)
             : K.gateway->minSize;
           if ((K.gateway->margin == Future::Spot
-              ? (wallet.base.amount + wallet.base.held)
+              ? wallet.base.total
               : (K.gateway->margin == Future::Inverse
                   ? wallet.base.amount * quotes.ask.price
                   : wallet.base.amount / quotes.ask.price)

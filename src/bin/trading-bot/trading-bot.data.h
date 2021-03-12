@@ -1834,8 +1834,6 @@ namespace tribeca {
       };
       void read_from_gw(const Wallets &raw) {
         if (raw.base.currency.empty() or raw.quote.currency.empty() or !fairValue) return;
-        base.currency = raw.base.currency;
-        quote.currency = raw.quote.currency;
         calcMaxFunds(raw, K.arg<double>("wallet-limit"));
         calcFunds();
       };
@@ -1876,9 +1874,9 @@ namespace tribeca {
       void calcHeldAmount(const Side &side) {
         const Amount heldSide = orders.heldAmount(side);
         if (side == Side::Ask and !base.currency.empty())
-          Wallet::reset(base.total - heldSide, heldSide, &base);
+          base = {base.total - heldSide, heldSide};
         else if (side == Side::Bid and !quote.currency.empty())
-          Wallet::reset(quote.total - heldSide, heldSide, &quote);
+          quote = {quote.total - heldSide, heldSide};
       };
       void calcValues() {
         base.value  = K.gateway->margin == Future::Spot
@@ -1908,8 +1906,8 @@ namespace tribeca {
           if (limit > 0 and raw.base.amount > limit)
             raw.base.amount = limit;
         }
-        Wallet::reset(raw.base.amount, raw.base.held, &base);
-        Wallet::reset(raw.quote.amount, raw.quote.held, &quote);
+        base = raw.base;
+        quote = raw.quote;
       };
   };
 

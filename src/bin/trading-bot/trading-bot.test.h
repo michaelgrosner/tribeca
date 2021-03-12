@@ -200,8 +200,8 @@ SCENARIO_METHOD(TradingBot, "ANY BTC/EUR") {
     });
 
     WHEN("calcSizes") {
-      REQUIRE_NOTHROW(Wallet::reset(1.0, 0, &engine.wallet.base));
-      REQUIRE_NOTHROW(Wallet::reset(1000.0, 0, &engine.wallet.quote));
+      REQUIRE_NOTHROW(engine.wallet.base = {1.0, 0});
+      REQUIRE_NOTHROW(engine.wallet.quote = {1000.0, 0});
       REQUIRE_NOTHROW(engine.levels.fairValue = 500.0);
       REQUIRE_NOTHROW(engine.wallet.base.value = 3.0);
       REQUIRE_NOTHROW(engine.qp.percentageValues = true);

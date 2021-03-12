@@ -31,15 +31,18 @@ namespace ₿ {
   };
 
   struct Wallet {
-    string currency = "";
     Amount amount   = 0,
-           held     = 0,
-           total    = 0,
+           held     = 0;
+    string currency = "";
+    Amount total    = 0,
            value    = 0;
     double profit   = 0;
-    static void reset(const Amount &a, const Amount &h, Wallet *const wallet) {
-      wallet->total = (wallet->amount = a)
-                    + (wallet->held   = h);
+    Wallet &operator=(const Wallet &raw) {
+      total = (amount = raw.amount)
+            + (held   = raw.held);
+      if (!raw.currency.empty())
+        currency = raw.currency;
+      return *this;
     };
   };
   static void to_json(json &j, const Wallet &k) {
