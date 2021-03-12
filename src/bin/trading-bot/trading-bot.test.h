@@ -406,8 +406,8 @@ SCENARIO_METHOD(TradingBot, "ANY BTC/EUR") {
     ));
     REQUIRE_NOTHROW(engine.levels.fairValue = 500);
     REQUIRE_NOTHROW(engine.wallet.read_from_gw({
-      {"BTC", 1,    0},
-      {"EUR", 1000, 0}
+      {1,    0, "BTC"},
+      {1000, 0, "EUR"}
     }));
     WHEN("assigned") {
       for (Order *const it : engine.orders.working())
@@ -483,13 +483,13 @@ SCENARIO_METHOD(TradingBot, "ANY BTC/EUR") {
       REQUIRE(engine.levels.fairValue == 700);
       REQUIRE(engine.levels.ready());
       REQUIRE_NOTHROW(engine.wallet.read_from_gw({
-        {"BTC", 0, 0},
-        {"EUR", 0, 0}
+        {0, 0, "BTC"},
+        {0, 0, "EUR"}
       }));
       REQUIRE_FALSE(engine.wallet.ready());
       REQUIRE_NOTHROW(engine.wallet.read_from_gw({
-        {"BTC", 1,    0},
-        {"EUR", 1000, 0}
+        {1,    0, "BTC"},
+        {1000, 0, "EUR"}
       }));
       REQUIRE_NOTHROW(engine.wallet.safety.timer_1s());
       REQUIRE(engine.wallet.ready());
