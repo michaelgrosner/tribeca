@@ -443,17 +443,22 @@ namespace ₿ {
           {"market-limit", "NUMBER", "321",    "set NUMBER of maximum price levels for the orderbook,"
                                                "\n" "default NUMBER is '321' and the minimum is '10'"}
         }) long_options.push_back(it);
+        bool order_ev = false;
         for (const auto &it : events)
           if (holds_alternative<Gw::DataEvent>(it)
             and holds_alternative<function<void(const Order&)>>(get<Gw::DataEvent>(it))
-          ) long_options.push_back(
-              {"lifetime", "NUMBER", "0",      "set NUMBER of minimum milliseconds to keep orders open,"
+          ) order_ev = true;
+        if (order_ev)
+          long_options.push_back(
+            {"lifetime",     "NUMBER", "0",    "set NUMBER of minimum milliseconds to keep orders open,"
                                                "\n" "otherwise open orders can be replaced anytime required"}
-            );
+          );
         for (const Argument &it : arguments.first)
           long_options.push_back(it);
         arguments.first.clear();
         for (const Argument &it : (vector<Argument>){
+          {"debug-orders", "1",      nullptr,  "print detailed output about exchange messages"},
+          {"debug-quotes", "1",      nullptr,  "print detailed output about quoting engine"},
           {"debug-secret", "1",      nullptr,  "print (never share!) secret inputs and outputs"},
           {"debug",        "1",      nullptr,  "print detailed output about all the (previous) things!"},
           {"colors",       "1",      nullptr,  "print highlighted output"},
@@ -488,7 +493,7 @@ namespace ₿ {
           switch (k = getopt_long(argc, argv, "hv", (option*)&opt_long[0], &index)) {
             case -1 :
             case  0 : break;
-            case 'h': help(long_options, headless);                       [[fallthrough]];
+            case 'h': help(long_options, order_ev, headless);             [[fallthrough]];
             case '?':
             case 'v': EXIT(EXIT_SUCCESS);                                 [[fallthrough]];
             default : {
@@ -545,11 +550,18 @@ namespace ₿ {
         args["market-limit"] = max(10, arg<int>("market-limit"));
         args["leverage"] = fmax(0, fmin(100, arg<double>("leverage")));
         if (arg<int>("debug"))
+          args["debug-orders"] =
+          args["debug-quotes"] =
           args["debug-secret"] = 1;
         if (arg<int>("latency"))
           args["nocache"] = 1;
 #if !defined _WIN32 and defined NDEBUG
-        if (arg<int>("latency") or arg<int>("list") or arg<int>("debug-secret"))
+        if (arg<int>("latency")
+          or arg<int>("list")
+          or arg<int>("debug-orders")
+          or arg<int>("debug-quotes")
+          or arg<int>("debug-secret")
+        )
 #endif
           args["naked"] = 1;
         if (args.find("database") != args.end()) {
@@ -573,7 +585,7 @@ namespace ₿ {
             : "";
         }
       };
-      void help(const vector<Argument> &long_options, const bool &headless) {
+      void help(const vector<Argument> &long_options, const bool &order_ev, const bool &headless) {
         const vector<string> stamp = {
           " \\__/  \\__/ ", " | (   .    ", "  __   \\__/ ",
           " /  \\__/  \\ ", " |  `.  `.  ", " /  \\       ",
@@ -592,7 +604,10 @@ namespace ₿ {
         clog
           << Ansi::b(COLOR_WHITE) << stamp.at(((++y%4)*3)+x) << "[arguments]:";
         for (const Argument &it : long_options) {
-          if (headless and it.name == "title") continue;
+          if ((headless and it.name == "title")
+            or (!order_ev and (it.name == "debug-orders"
+                            or it.name == "debug-quotes"))
+          ) continue;
           string usage = it.help;
           string::size_type n = 0;
           while ((n = usage.find('\n', n + 1)) != string::npos)

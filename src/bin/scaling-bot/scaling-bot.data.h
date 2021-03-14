@@ -145,8 +145,52 @@ namespace analpaper {
       };
   };
 
+  struct Deviation {
+    vector<Price> fairValues;
+    bool bid,
+         ask;
+    private_ref:
+      const KryptoNinja &K;
+    public:
+      Deviation(const KryptoNinja &bot)
+        : K(bot)
+      {};
+      void timer_1s(const Price &fv) {
+        fairValues.push_back(fv);
+        if (fairValues.size() > limit())
+          fairValues.erase(fairValues.begin(), fairValues.end() - limit());
+        calc(fv);
+      };
+      vector<Price>::size_type limit() const {
+        return K.arg<int>("time-price");
+      };
+    private:
+      void calc(const Price &current) {
+        if (!K.arg<int>("scale-asks")) {
+          const Price high = *max_element(fairValues.begin(), fairValues.end());
+          reset("DOWN", high, current, high - current > K.arg<double>("wait-price"), &bid);
+        }
+        if (!K.arg<int>("scale-bids")) {
+          const Price low  = *min_element(fairValues.begin(), fairValues.end());
+          reset(" UP ",  low, current, current - low  > K.arg<double>("wait-price"), &ask);
+        }
+      };
+      void reset(const string &side, const Price &from, const Price &to, const Price &next, bool *const state) {
+        if (*state != next) {
+          K.log("QE", "Fair value deviation " + side + (next ? " by" : " is"),
+            next
+              ? K.gateway->decimal.price.str(K.arg<double>("wait-price"))
+                  + " " + K.gateway->base + Ansi::r(COLOR_WHITE) + " (from "
+                  + K.gateway->decimal.price.str(from) + " to "
+                  + K.gateway->decimal.price.str(to) + ")"
+              : "OFF");
+          *state = next;
+        }
+      };
+  };
   struct MarketLevels: public Levels {
     Price fairValue = 0;
+    Deviation deviated;
     private:
       Levels unfiltered;
       unordered_map<Price, Amount> filterBidOrders,
@@ -156,7 +200,8 @@ namespace analpaper {
       const Orders      &orders;
     public:
       MarketLevels(const KryptoNinja &bot, const Orders &o)
-        : K(bot)
+        : deviated(bot)
+        , K(bot)
         , orders(o)
       {};
       void read_from_gw(const Levels &raw) {
@@ -164,11 +209,15 @@ namespace analpaper {
         unfiltered.asks = raw.asks;
         filter();
       };
-      bool ready() const {
-        const bool err = bids.empty() or asks.empty();
-        if (err and Tspent > 21e+3)
+      bool ready() {
+        filter();
+        if (!fairValue and Tspent > 21e+3)
           K.logWar("QE", "Unable to calculate quote, missing market data", 3e+3);
-        return !err;
+        return fairValue;
+      };
+      void timer_1s() {
+        if (ready())
+          deviated.timer_1s(fairValue);
       };
     private:
       void filter() {
@@ -333,10 +382,11 @@ namespace analpaper {
       };
       void applyQuotingParameters() {
         quotes.debug("?"); applyScaleSide();
-        quotes.debug("A"); applyBestWidth();
-        quotes.debug("B"); applyRoundPrice();
-        quotes.debug("C"); applyRoundSize();
-        quotes.debug("D"); applyDepleted();
+        quotes.debug("A"); applyFairValueDeviation();
+        quotes.debug("B"); applyBestWidth();
+        quotes.debug("C"); applyRoundPrice();
+        quotes.debug("D"); applyRoundSize();
+        quotes.debug("E"); applyDepleted();
         quotes.debug("!");
         quotes.checkCrossedQuotes();
       };
@@ -345,6 +395,14 @@ namespace analpaper {
           quotes.bid.clear(QuoteState::DisabledQuotes);
         if (K.arg<int>("scale-bids"))
           quotes.ask.clear(QuoteState::DisabledQuotes);
+      };
+      void applyFairValueDeviation() {
+        if (levels.deviated.limit()) {
+          if (!levels.deviated.bid)
+            quotes.bid.clear(QuoteState::DisabledQuotes);
+          if (!levels.deviated.ask)
+            quotes.ask.clear(QuoteState::DisabledQuotes);
+        }
       };
       void applyBestWidth() {
         if (!quotes.ask.empty())
@@ -585,6 +643,10 @@ namespace analpaper {
         orders.read_from_gw(rawdata);
         broker.scale();
         broker.quit_after();
+      };
+      void timer_1s(const unsigned int&) {
+        if (levels.deviated.limit())
+          levels.timer_1s();
       };
       void quit() {
         broker.quit();

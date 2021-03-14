@@ -47,19 +47,13 @@ class TradingBot: public KryptoNinja {
           {"matryoshka",   "URL",    "https://example.com/", "set Matryoshka link URL of the next UI"},
           {"ignore-sun",   "2",      nullptr,                "do not switch UI to light theme on daylight"},
           {"ignore-moon",  "1",      nullptr,                "do not switch UI to dark theme on moonlight"},
-          {"debug-orders", "1",      nullptr,                "print detailed output about exchange messages"},
-          {"debug-quotes", "1",      nullptr,                "print detailed output about quoting engine"},
           {"debug-wallet", "1",      nullptr,                "print detailed output about target base position"}
         },
         [&](MutableUserArguments &args) {
           if (arg<int>("debug"))
-            args["debug-orders"] =
-            args["debug-quotes"] =
             args["debug-wallet"] = 1;
           if (arg<int>("ignore-moon") and arg<int>("ignore-sun"))
-            args["ignore-moon"] = 0;
-          if (arg<int>("debug-orders") or arg<int>("debug-quotes"))
-            args["naked"] = 1;
+            error("CF", "Invalid use of --ignore-moon and --ignore-sun together");
         }
       };
     };

@@ -918,12 +918,6 @@ namespace tribeca {
         , qp(q)
         , orders(o)
       {};
-      bool warn_empty() const {
-        const bool err = bids.empty() or asks.empty();
-        if (err and Tspent > 21e+3)
-          K.logWar("QE", "Unable to calculate quote, missing market data", 3e+3);
-        return err;
-      };
       void timer_1s() {
         stats.stdev.timer_1s(bids.cbegin()->price, asks.cbegin()->price);
       };
@@ -950,7 +944,9 @@ namespace tribeca {
       };
       bool ready() {
         filter();
-        return !(bids.empty() or asks.empty());
+        if (!fairValue and Tspent > 21e+3)
+          K.logWar("QE", "Unable to calculate quote, missing market data", 3e+3);
+        return fairValue;
       };
       void read_from_gw(const Levels &raw) {
         unfiltered.bids = raw.bids;
@@ -1732,7 +1728,11 @@ namespace tribeca {
         , baseValue(v)
       {};
       void calcTargetBasePos() {
-        if (warn_empty()) return;
+        if (!baseValue) {
+          if (Tspent > 21e+3)
+            K.logWar("QE", "Unable to calculate TBP, missing wallet data", 3e+3);
+          return;
+        }
         targetBasePosition = K.gateway->decimal.funds.round(
           qp.autoPositionMode == AutoPositionMode::Manual
             ? (qp.percentageValues
@@ -1747,15 +1747,6 @@ namespace tribeca {
           backup();
           if (K.arg<int>("debug-wallet")) report();
         }
-      };
-      bool warn_empty() const {
-        const bool err = empty();
-        if (err and Tspent > 21e+3)
-          K.logWar("PG", "Unable to calculate TBP, missing wallet data", 3e+3);
-        return err;
-      };
-      bool empty() const {
-        return !baseValue;
       };
       bool realtime() const override {
         return false;
@@ -1786,7 +1777,7 @@ namespace tribeca {
         positionDivergence = K.gateway->decimal.funds.round(positionDivergence);
       };
       void report() const {
-        K.log("PG", "TBP: "
+        K.log("QE", "TBP: "
           + to_string((int)(targetBasePosition / baseValue * 1e+2)) + "% = " + K.gateway->decimal.funds.str(targetBasePosition)
           + " " + K.gateway->base + ", pDiv: "
           + to_string((int)(positionDivergence / baseValue * 1e+2)) + "% = " + K.gateway->decimal.funds.str(positionDivergence)
@@ -2861,7 +2852,7 @@ namespace tribeca {
         levels.stats.takerTrades.read_from_gw(rawdata);
       };
       void timer_1s(const unsigned int &tick) {
-        if (K.gateway->connected() and !levels.warn_empty()) {
+        if (K.gateway->connected() and levels.ready()) {
           if (qp.cancelOrdersAuto
             and !(tick % 300)
           ) broker.nuke();
