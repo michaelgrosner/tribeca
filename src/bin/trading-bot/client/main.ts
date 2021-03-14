@@ -70,14 +70,15 @@ class DisplayOrder {
     </div>
     <div [hidden]="!ready">
         <div class="container-fluid">
-            <div id="hud" [ngClass]="pair.connected ? 'bg-success img-rounded' : 'bg-danger img-rounded'">
+            <div id="hud" [ngClass]="pair.connected ? 'bg-success' : 'bg-danger'">
                 <div *ngIf="ready" class="row" [hidden]="!showSettings">
-                    <div class="col-md-12 col-xs-12">
+                    <div class="col-md-12 col-xs-12 parameters-inputs">
                         <div class="row">
-                          <table border="0" width="100%"><tr><td style="width:69px;text-align:center;border-bottom: 1px gray solid;">
-                            <small>MARKET<br/>MAKING</small>
-                          </td><td>
-                            <table class="table table-responsive" style="margin-bottom:0px;">
+                          <table border="0" width="100%" class="params-market-making"><tr>
+                          <td class="params-title params-1">
+                            MARKET MAKING
+                          </td><td class="params-settings">
+                            <table class="table table-responsive" style="margin-bottom:10px;">
                                 <thead>
                                     <tr class="active">
                                         <th title="If enabled, the values of bidSize, askSize, tbp, pDiv and range will be a percentage related to the total funds.">%</th>
@@ -222,10 +223,11 @@ class DisplayOrder {
                                 </tbody>
                             </table>
                           </td></tr></table>
-                          <table border="0" width="100%"><tr><td style="width:69px;text-align:center;border-bottom: 1px gray solid;">
-                            <small>TECHNICAL<br/>ANALYSIS</small>
-                          </td><td>
-                            <table class="table table-responsive" style="margin-bottom:0px;">
+                          <table border="0" width="100%" class="params-tech-analysis"><tr>
+                          <td class="params-title params-1">
+                            TECHNICAL ANALYSIS
+                          </td><td class="params-settings">
+                            <table class="table table-responsive" style="margin-bottom:10px;">
                                 <thead>
                                     <tr class="active">
                                         <th title="Automatic position management">apMode</th>
@@ -408,24 +410,25 @@ class DisplayOrder {
                                 </tbody>
                             </table>
                           </td></tr></table>
-                          <table border="0" width="100%"><tr><td style="width:69px;text-align:center;">
-                            <small>PROTECTION</small>
-                          </td><td>
-                            <table class="table table-responsive">
+                          <table border="0" width="100%" class="params-protection"><tr>
+                          <td class="params-title params-1">
+                            PROTECTION
+                          </td><td class="params-settings">
+                            <table class="table table-responsive" style="margin-bottom:10px;">
                                 <thead>
                                     <tr class="active">
                                         <th title="Sets the fair value calculation mode">fv</th>
                                         <th title="If you successfully complete more orders than trades in /sec seconds, the bot will stop sending more new orders until either /sec seconds has passed, or you have sold enough at a higher cost to make all those buy orders profitable." style="text-align:right;">trades</th>
                                         <th title="If you successfully complete more orders than trades in /sec seconds, the bot will stop sending more new orders until either /sec seconds has passed, or you have sold enough at a higher cost to make all those buy orders profitable.">/sec</th>
                                         <th title="Use a quote protection of periods smoothed line of the fair value to limit the price while sending new orders.">ewmaPrice?</th>
-                                        <th title="Maximum amount of values collected in the sequences used to calculate the ewmaPrice? and ewmaWidth? quote protection." *ngIf="pair.quotingParameters.display.protectionEwmaQuotePrice || pair.quotingParameters.display.protectionEwmaWidthPing">periodsᵉʷᵐᵃ</th>
+                                        <th title="Maximum amount of values collected in the sequences used to calculate the ewmaPrice? and ewmaWidth? quote protection." *ngIf="pair.quotingParameters.display.protectionEwmaQuotePrice || pair.quotingParameters.display.protectionEwmaWidthPing">periods<sup>ewma</sup></th>
                                         <th title="Use a quote protection of periods smoothed line of the width (between the top bid and the top ask) to limit the widthPing while sending new orders.">ewmaWidth?</th>
                                         <th title="Use a trend protection of double periods (Ultra+Micro) smoothed lines of the price to limit uptrend sells and downtrend buys.">ewmaTrend?</th>
                                         <th title="When trend stregth is above positive threshold value bot stops selling, when strength below negative threshold value bot stops buying" *ngIf="pair.quotingParameters.display.quotingEwmaTrendProtection">threshold</th>
                                         <th title="Time in minutes to define Micro EMA" *ngIf="pair.quotingParameters.display.quotingEwmaTrendProtection">micro</th>
                                         <th title="Time in minutes to define Ultra EMA" *ngIf="pair.quotingParameters.display.quotingEwmaTrendProtection">ultra</th>
                                         <th title="Limit the price of new orders.">stdev</th>
-                                        <th title="Maximum amount of values collected in the sequences used to calculate the STDEV, each side may have its own STDEV calculation with the same amount of periods." *ngIf="pair.quotingParameters.display.quotingStdevProtection">periodsˢᵗᵈᶜᵛ</th>
+                                        <th title="Maximum amount of values collected in the sequences used to calculate the STDEV, each side may have its own STDEV calculation with the same amount of periods." *ngIf="pair.quotingParameters.display.quotingStdevProtection">periods<sup>stddev</sup></th>
                                         <th title="Multiplier used to increase or decrease the value of the selected stdev calculation, a factor of 1 does effectively nothing." *ngIf="pair.quotingParameters.display.quotingStdevProtection">factor</th>
                                         <th title="Enable Bollinger Bands with upper and lower bands calculated from the result of the selected stdev above or below its own moving average of periods." *ngIf="pair.quotingParameters.display.quotingStdevProtection">BB?</th>
                                         <th title="Enable a timeout of 5 minutes to cancel all orders that exist as open in the exchange (in case you found yourself with zombie orders in the exchange, because the API integration have bugs or because the connection is interrupted).">cxl?</th>
@@ -561,12 +564,10 @@ class DisplayOrder {
                                                 (click)="pair.quotingParameters.backup()"
                                                 value="Backup" />
                                             <input class="btn btn-default btn"
-                                                style="width:55px"
+                                                style="width:55px;margin-right: 20px;"
                                                 type="button"
                                                 (click)="pair.quotingParameters.reset()"
                                                 value="Reset" />
-                                        </td>
-                                        <td style="text-align: center;border-bottom: 3px solid #A0A0A0;">
                                             <input class="btn btn-default btn"
                                                 style="width:50px"
                                                 type="submit"
@@ -582,7 +583,7 @@ class DisplayOrder {
                 </div>
                 <div class="row">
                     <div class="col-md-1 col-xs-12 text-center" style="padding-right:0px;">
-                        <div class="row img-rounded exchange">
+                        <div class="row exchange">
                             <div *ngIf="pair.connectionMessage">{{ pair.connectionMessage }}</div>
                             <button style="font-size:16px;" class="col-md-12 col-xs-3" [ngClass]="pair.active.getClass()" (click)="pair.active.submit()">
                                 {{ product.exchange.replace('_MARGIN', ' [M]') }}<br/>{{ product.margin == 2 ? product.symbol : product.base + '/' + product.quote }}
@@ -668,16 +669,18 @@ class DisplayOrder {
                       <market-stats ondblclick="this.style.opacity=this.style.opacity<1?1:0.4" [setMarketWidth]="marketWidth" [setShowStats]="!!showStats" [product]="product" [setQuotingParameters]="pair.quotingParameters.display" [setTargetBasePosition]="TargetBasePosition" [setMarketChartData]="MarketChartData" [setTradesChartData]="TradesChartData" [setPosition]="Position" [setFairValue]="FairValue"></market-stats>
                     </div>
                     <div [hidden]="showStats === 1" class="col-md-{{ showTakers ? '9' : '11' }} col-xs-12" style="padding-left:0px;padding-bottom:0px;">
-                      <div class="row">
-                        <trade-safety [tradeFreq]="tradeFreq" [product]="product" [setFairValue]="FairValue" [setTradeSafety]="TradeSafety"></trade-safety>
-                      </div>
                       <div class="row" style="padding-top:0px;">
-                        <div class="col-md-4 col-xs-12" style="padding-left:0px;padding-top:0px;padding-right:0px;">
-                            <market-quoting (onBidsLength)="onBidsLength($event)" (onAsksLength)="onAsksLength($event)" (onMarketWidth)="onMarketWidth($event)" [agree]="!!pair.active.display.agree" [product]="product" [addr]="addr" [setQuoteStatus]="QuoteStatus" [setMarketData]="MarketData" [setOrderList]="orderList" [setTargetBasePosition]="TargetBasePosition"></market-quoting>
+                        <div class="markets-params-left col-md-4 col-xs-12" style="padding-left:0px;padding-top:0px;padding-right:0px;">
+                            <div class="row">
+                              <div class="col-md-6">
+                                <trade-safety [tradeFreq]="tradeFreq" [product]="product" [setFairValue]="FairValue" [setTradeSafety]="TradeSafety"></trade-safety>
+                              </div>
+                              <market-quoting (onBidsLength)="onBidsLength($event)" (onAsksLength)="onAsksLength($event)" (onMarketWidth)="onMarketWidth($event)" [agree]="!!pair.active.display.agree" [product]="product" [addr]="addr" [setQuoteStatus]="QuoteStatus" [setMarketData]="MarketData" [setOrderList]="orderList" [setTargetBasePosition]="TargetBasePosition"></market-quoting>
+                            </div>
                         </div>
-                        <div class="col-md-8 col-xs-12" style="padding-left:0px;padding-right:0px;padding-top:0px;">
+                        <div class="orders-table-right col-md-8 col-xs-12" style="padding-left:0px;padding-right:0px;padding-top:0px;">
                           <div class="row">
-                            <div class="exchangeActions col-md-2 col-xs-12 text-center img-rounded">
+                            <div class="exchangeActions col-md-2 col-xs-12 text-center">
                               <textarea [(ngModel)]="notepad" (ngModelChange)="changeNotepad(notepad)" placeholder="ephemeral notepad" class="ephemeralnotepad" style="height:131px;width: 100%;max-width: 100%;"></textarea>
                             </div>
                             <div class="col-md-10 col-xs-12" style="padding-right:0px;padding-top:4px;">

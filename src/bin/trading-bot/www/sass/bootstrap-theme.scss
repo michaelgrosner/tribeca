@@ -17,6 +17,9 @@
   &:active, &.active {
     background-image: none;
   }
+  &:focus {
+    outline:none !important;  
+  }
 }
 
 .btn-default {
@@ -51,8 +54,8 @@
 
 .ag-theme-fresh {
   line-height: 1.4;
-  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-  font-size: 14px;
+  font-family: monospace;
+  font-size: 13px;
   color: #222;
   /* this is for the rowGroupPanel, that appears along the top of the grid */
   /* this is for the column drops that appear in the toolPanel */
@@ -61,7 +64,7 @@
     border: 0;
   }
   .ag-root {
-    border: 1px solid #808080;
+    border: 1px solid #CCC;
   }
   .ag-cell-not-inline-editing {
     padding: 2px;
@@ -89,6 +92,7 @@
   }
   .ag-cell-focus {
     border: 1px solid #a9a9a9;
+    outline:none;  
   }
   .ag-cell-no-focus {
     border-top: 1px solid transparent;
@@ -172,14 +176,8 @@
     border: 1px solid #808080;
   }
   .ag-header {
-    color: #000;
-    background: -webkit-linear-gradient(#fff, #d3d3d3);
-    background: -moz-linear-gradient(#fff, #d3d3d3);
-    background: -o-linear-gradient(#fff, #d3d3d3);
-    background: -ms-linear-gradient(#fff, #d3d3d3);
-    background: linear-gradient(#fff, #d3d3d3);
-    border-bottom: 1px solid #808080;
-    font-weight: normal;
+    color: #333;
+    background: #EEE;
   }
   .ag-header-icon {
     color: #000;
@@ -195,10 +193,10 @@
     border-bottom: 1px solid #808080;
   }
   .ag-ltr .ag-header-cell {
-    border-right: 1px solid #808080;
+    border-right: 1px solid #CCC;
   }
   .ag-rtl .ag-header-cell {
-    border-left: 1px solid #808080;
+    border-left: 1px solid #CCC;
   }
   .ag-header-cell-moving {
     .ag-header-cell-label {
@@ -209,13 +207,13 @@
     background-color: #bebebe;
   }
   .ag-ltr .ag-header-group-cell {
-    border-right: 1px solid #808080;
+    border-right: 1px solid #CCC;
   }
   .ag-rtl .ag-header-group-cell {
-    border-left: 1px solid #808080;
+    border-left: 1px solid #CCC;
   }
   .ag-header-group-cell-with-group {
-    border-bottom: 1px solid #808080;
+    border-bottom: 1px solid #CCC;
   }
   .ag-header-cell-label {
     padding: 4px 2px 4px 2px;
@@ -260,6 +258,9 @@
   }
   .ag-header-cell-menu-button:hover {
     border: 1px solid #808080;
+  }
+  .ag-header-viewport {
+    border-bottom: 1px #CCC solid;
   }
   .ag-body-viewport, .ag-row-odd {
     background-color: #f6f6f6;
@@ -532,26 +533,22 @@
   font-size: 13px;
   background: white;
   padding: 3px 5px;
-  border-top-left-radius: 0px;
-  border-bottom-left-radius: 0px;
 }
 
 .tradeSafety div, .tradeSafety2 div {
   padding: 2px;
 }
-
+.fairvalue, input.width-option {
+  font-weight: bold;
+}
 .exchange {
   background: white;
   padding-bottom: 7px;
-  border-top-left-radius: 0px;
-  border-top-right-radius: 0px;
 }
 
 .exchangeActions {
   background: white;
   padding-bottom: 7px;
-  border-top-left-radius: 0px;
-  border-top-right-radius: 0px;
 }
 
 .table.marketQuoting > {
@@ -569,4 +566,114 @@
     color: blue;
     background-color: #cfcfcf!important;
   }
+}
+
+
+td.params-title.params-1 {
+	width: 90px;
+	background: #ffffff;
+	text-align: center;
+	font-weight: bold;
+	border: 1px #cccccc solid;
+}
+td.params-title.params-2 {
+	width: 90px;
+	background: #ffffff;
+	text-align: center;
+	font-weight: bold;
+	border: 1px #cccccc solid;
+}
+td.params-title.params-3 {
+	width: 90px;
+	background: #ffffff;
+	text-align: center;
+	font-weight: bold;
+	border: 1px #cccccc solid;
+}
+table.params-market-making {
+	margin-bottom: 10px;
+}
+table.params-tech-analysis {
+	margin-bottom: 10px;
+}
+table.parameters-inputs {
+	background: #fff;
+	padding: 10px;
+}
+.params-settings {
+	margin-bottom: 0px;
+	background: #EEE;
+	padding: 5px;
+	border: 1px #CCC solid;
+	padding-bottom: 0;
+	td {
+		border-left: 5px #EEE solid;
+		border-right: 5px #EEE solid;
+		padding: 0 !important;
+		text-align: center;
+		vertical-align: middle !important;
+	}
+	th {
+		border-left: 5px #EEE solid;
+		border-right: 5px #EEE solid;
+		padding: 0 !important;
+		text-align: center;
+		vertical-align: middle !important;
+	}
+}
+.form-control {
+	padding: 2px 5px;
+	box-shadow: none;
+	border-radius: 0;
+	&:focus {
+		box-shadow: none;
+	}
+}
+.parameters-inputs {
+	padding: 5px;
+}
+table.params-protection {
+	margin-bottom: 10px;
+}
+.tradeSafety {
+	span.param-label {
+		width: 125px;
+		text-align: right;
+		padding-right: 8px;
+	}
+	span.param-value {
+		padding-left: 8px;
+	}
+	.param-info {
+		display: flex;
+		padding: 2px 0;
+	}
+}
+.tradeSafety2 {
+	span.param-label {
+		width: 125px;
+		text-align: right;
+		padding-right: 8px;
+	}
+	span.param-value {
+		padding-left: 8px;
+	}
+	.param-info {
+		display: flex;
+		padding: 2px 0;
+	}
+}
+.levels {
+	border: 1px #CCC solid;
+	td {
+		border: none;
+	}
+}
+table.marketQuoting {
+	tr.info {
+		border: 1px #CCC solid;
+		border-bottom: none;
+		height: 25px;
+		background: #EEE;
+	}
 }
