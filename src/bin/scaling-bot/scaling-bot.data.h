@@ -147,8 +147,8 @@ namespace analpaper {
 
   struct Deviation {
     vector<Price> fairValues;
-    bool bid,
-         ask;
+    bool bid = false,
+         ask = false;
     private_ref:
       const KryptoNinja &K;
     public:
@@ -175,7 +175,7 @@ namespace analpaper {
           reset(" UP ",  low, current, current - low  > K.arg<double>("wait-price"), &ask);
         }
       };
-      void reset(const string &side, const Price &from, const Price &to, const Price &next, bool *const state) {
+      void reset(const string &side, const Price &from, const Price &to, const bool &next, bool *const state) {
         if (*state != next) {
           K.log("QE", "Fair value deviation " + side + (next ? " by" : " is"),
             next
