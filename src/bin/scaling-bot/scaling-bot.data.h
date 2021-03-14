@@ -212,7 +212,7 @@ namespace analpaper {
       bool ready() {
         filter();
         if (!fairValue and Tspent > 21e+3)
-          K.logWar("QE", "Unable to calculate quote, missing market data", 3e+3);
+          K.logWar("QE", "Unable to calculate quote, missing market data", 10e+3);
         return fairValue;
       };
       void timer_1s() {

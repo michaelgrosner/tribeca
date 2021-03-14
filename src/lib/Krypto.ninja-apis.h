@@ -261,10 +261,6 @@ namespace ₿ {
       Future margin    = (Future)0;
          int debug     = 0;
       Connectivity adminAgreement = Connectivity::Disconnected;
-      virtual void disconnect()         = 0;
-      virtual bool connected()    const = 0;
-      virtual json handshake()    const = 0;
-      virtual void pairs(string&) const = 0;
       json handshake(const bool &nocache) {
         json reply;
         const string cache = (K_HOME "/cache/handshake")
@@ -377,6 +373,10 @@ namespace ₿ {
       };
       function<void(const string&, const string&, const string&)> printer;
     protected:
+      virtual void disconnect()         = 0;
+      virtual bool connected()    const = 0;
+      virtual json handshake()    const = 0;
+      virtual void pairs(string&) const = 0;
       void print(const string &reason, const string &highlight = "") const {
         if (printer) printer(
           string(reason.find(">>>") != reason.find("<<<")
@@ -411,9 +411,6 @@ namespace ₿ {
        unsigned int countdown    = 1;
                bool subscription = false;
     public:
-      bool connected() const override {
-        return WebSocket::connected();
-      };
       void ask_for_data(const unsigned int &tick) override {
         if (countdown and !--countdown)
           connect();
@@ -428,6 +425,9 @@ namespace ₿ {
 /**/  virtual void subscribe()   = 0;                                        // send subcription messages to remote server.
 /**/  virtual void consume(json) = 0;                                        // read message one by one from remote server.
 //EO non-free Gw class member functions from lib build-*/lib/K-*.a (it just redefines all virtual gateway functions above).
+      bool connected() const override {
+        return WebSocket::connected();
+      };
       virtual void connect() {
         CURLcode rc;
         if (CURLE_OK == (rc = WebSocket::connect(ws)))
@@ -450,15 +450,6 @@ namespace ₿ {
         countdown = 7;
         print("WS " + reason + ", reconnecting in " + to_string(countdown) + "s.");
       };
-      bool accept_msg(const string &msg) {
-        const bool next = !msg.empty();
-        if (next) {
-          if (json::accept(msg))
-            consume(json::parse(msg));
-          else print("WS Error: Unsupported data format");
-        }
-        return next;
-      };
       bool subscribed() {
         if (subscription != connected()) {
           subscription = !subscription;
@@ -469,6 +460,15 @@ namespace ₿ {
           };
         }
         return subscription;
+      };
+      bool accept_msg(const string &msg) {
+        const bool next = !msg.empty();
+        if (next) {
+          if (json::accept(msg))
+            consume(json::parse(msg));
+          else print("WS Error: Unsupported data format");
+        }
+        return next;
       };
     private:
       void wait_for_async_data() {
@@ -481,11 +481,11 @@ namespace ₿ {
   class GwApiWsWs: public GwApiWs,
                    public Curl::WebSocketTwin {
     public:
+    protected:
       bool connected() const override {
         return GwApiWs::connected()
            and WebSocketTwin::connected();
       };
-    protected:
       void connect() override {
         GwApiWs::connect();
         if (GwApiWs::connected()) {
@@ -525,11 +525,11 @@ namespace ₿ {
       GwApiWsFix(const string &t)
         : FixSocket(t, apikey)
       {};
+    protected:
       bool connected() const override {
         return GwApiWs::connected()
            and FixSocket::connected();
       };
-    protected:
 //BO non-free Gw class member functions from lib build-*/lib/K-*.a (it just redefines all virtual gateway functions below).
 /**/  virtual string logon() = 0;                                                                  // return logon message.
 //EO non-free Gw class member functions from lib build-*/lib/K-*.a (it just redefines all virtual gateway functions above).
@@ -575,6 +575,7 @@ namespace ₿ {
         webMarket = "https://www.binance.com/en/trade/";
         webOrders = "https://www.binance.com/en/my/orders/exchange/tradeorder";
       };
+    protected:
       void pairs(string &report) const override {
         const json reply = Curl::Web::xfer(http + "/api/v3/exchangeInfo");
         if (!reply.is_object()
@@ -626,7 +627,6 @@ namespace ₿ {
           {    "reply", {reply1, reply2}              }
         };
       };
-    protected:
       json xfer(const string &url, const string &h1, const string &crud) const {
         return Curl::Web::xfer(url, [&](CURL *curl) {
           struct curl_slist *h_ = nullptr;
@@ -667,6 +667,7 @@ namespace ₿ {
         webMarket = "https://www.bitmex.com/app/trade/";
         webOrders = "https://www.bitmex.com/app/orderHistory";
       };
+    protected:
       void pairs(string &report) const override {
         const json reply = Curl::Web::xfer(http + "/instrument/active");
         if (!reply.is_array()
@@ -700,7 +701,6 @@ namespace ₿ {
           {    "reply", reply                          }
         };
       };
-    protected:
       json xfer(const string &url, const string &h1, const string &h2, const string &h3, const string &post, const string &crud) const {
         return Curl::Web::xfer(url, [&](CURL *curl) {
           struct curl_slist *h_ = nullptr;
@@ -723,6 +723,7 @@ namespace ₿ {
         webMarket = "https://hitbtc.com/exchange/";
         webOrders = "https://hitbtc.com/reports/orders";
       };
+    protected:
       void pairs(string &report) const override {
         const json reply = Curl::Web::xfer(http + "/public/symbol");
         if (!reply.is_array()
@@ -750,7 +751,6 @@ namespace ₿ {
           {    "reply", reply                                         }
         };
       };
-    protected:
       string twin(const string &ws) const override {
         return ws.substr(0, ws.length() - 6) + "trading";
       };
@@ -784,6 +784,7 @@ namespace ₿ {
         webMarket = "https://pro.coinbase.com/trade/";
         webOrders = "https://pro.coinbase.com/orders/";
       };
+    protected:
       void pairs(string &report) const override {
         const json reply = Curl::Web::xfer(http + "/products");
         if (!reply.is_array()
@@ -809,7 +810,6 @@ namespace ₿ {
           {    "reply", reply                                    }
         };
       };
-    protected:
       json xfer(const string &url, const string &h1, const string &h2, const string &h3, const string &h4, const string &crud) const {
         return Curl::Web::xfer(url, [&](CURL *curl) {
           struct curl_slist *h_ = nullptr;
@@ -833,6 +833,7 @@ namespace ₿ {
         webMarket = "https://www.bitfinex.com/trading/";
         webOrders = "https://www.bitfinex.com/reports/orders";
       };
+    protected:
       void pairs(string &report) const override {
         const json reply = Curl::Web::xfer(http + "/conf/pub:list:pair:exchange");
         if (!reply.is_array()
@@ -885,7 +886,6 @@ namespace ₿ {
           {    "reply", {reply1, reply2}              }
         };
       };
-    protected:
       json xfer(const string &url, const string &post, const string &h1, const string &h2, const string &h3) const {
         return Curl::Web::xfer(url, [&](CURL *curl) {
           struct curl_slist *h_ = nullptr;
@@ -918,6 +918,7 @@ namespace ₿ {
         webMarket = "https://trade.kucoin.com/";
         webOrders = "https://www.kucoin.com/order/trade";
       };
+    protected:
       void pairs(string &report) const override {
         const json reply = Curl::Web::xfer(http + "/api/v1/symbols");
         if (!reply.is_object()
@@ -954,7 +955,6 @@ namespace ₿ {
           {    "reply", {reply1, reply2}                         }
         };
       };
-    protected:
       json xfer(const string &url, const string &h1, const string &h2, const string &h3, const string &h4, const string &crud, const string &post = "") const {
         return Curl::Web::xfer(url, [&](CURL *curl) {
           struct curl_slist *h_ = nullptr;
@@ -1000,6 +1000,7 @@ namespace ₿ {
         webMarket = "https://www.kraken.com/charts";
         webOrders = "https://www.kraken.com/u/trade";
       };
+    protected:
       void pairs(string &report) const override {
         const json reply = Curl::Web::xfer(http + "/0/public/AssetPairs");
         if (!reply.is_object()
@@ -1030,7 +1031,6 @@ namespace ₿ {
           {    "reply", reply                                    }
         };
       };
-    protected:
       string twin(const string &ws) const override {
         return string(ws).insert(ws.find("ws.") + 2, "-auth");
       };
@@ -1054,6 +1054,7 @@ namespace ₿ {
         webMarket = "https://poloniex.com/exchange";
         webOrders = "https://poloniex.com/tradeHistory";
       };
+    protected:
       void pairs(string &report) const override {
         const json reply = Curl::Web::xfer(http + "/public?command=returnTicker");
         if (!reply.is_object())
@@ -1077,7 +1078,6 @@ namespace ₿ {
           {    "reply", reply             }
         };
       };
-    protected:
       json xfer(const string &url, const string &post, const string &h1, const string &h2) const {
         return Curl::Web::xfer(url, [&](CURL *curl) {
           struct curl_slist *h_ = nullptr;

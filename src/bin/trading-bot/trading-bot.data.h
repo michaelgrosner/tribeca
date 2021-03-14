@@ -945,7 +945,7 @@ namespace tribeca {
       bool ready() {
         filter();
         if (!fairValue and Tspent > 21e+3)
-          K.logWar("QE", "Unable to calculate quote, missing market data", 3e+3);
+          K.logWar("QE", "Unable to calculate quote, missing market data", 10e+3);
         return fairValue;
       };
       void read_from_gw(const Levels &raw) {
@@ -2852,7 +2852,7 @@ namespace tribeca {
         levels.stats.takerTrades.read_from_gw(rawdata);
       };
       void timer_1s(const unsigned int &tick) {
-        if (K.gateway->connected() and levels.ready()) {
+        if (levels.ready()) {
           if (qp.cancelOrdersAuto
             and !(tick % 300)
           ) broker.nuke();
