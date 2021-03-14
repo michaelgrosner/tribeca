@@ -146,9 +146,10 @@ namespace analpaper {
   };
 
   struct Deviation {
-    vector<Price> fairValues;
     bool bid = false,
          ask = false;
+    private:
+      vector<Price> fairValues;
     private_ref:
       const KryptoNinja &K;
     public:

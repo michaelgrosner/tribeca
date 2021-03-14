@@ -480,7 +480,6 @@ namespace ₿ {
   };
   class GwApiWsWs: public GwApiWs,
                    public Curl::WebSocketTwin {
-    public:
     protected:
       bool connected() const override {
         return GwApiWs::connected()

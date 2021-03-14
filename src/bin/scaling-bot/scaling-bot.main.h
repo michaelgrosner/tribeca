@@ -40,14 +40,14 @@ class ScalingBot: public KryptoNinja {
             error("CF", "Invalid use of --scale-asks and --scale-bids together");
           else if (!arg<int>("scale-asks")
                and !arg<int>("scale-bids")) log("CF", enabled, "both sides");
-          else if ( arg<int>("scale-asks")) log("CF", enabled, "ask side");
-          else if ( arg<int>("scale-bids")) log("CF", enabled, "bid side");
+          else if ( arg<int>("scale-asks")) log("CF", enabled, "asks side");
+          else if ( arg<int>("scale-bids")) log("CF", enabled, "bids side");
           Decimal opt;
           opt.precision(1e-8);
           if (arg<double>("wait-price") and !arg<int>("time-price"))
             error("CF", "Invalid use of --wait-price without --time-price");
           else log("CF", "Waiting for price deviation (" + Ansi::b(COLOR_YELLOW)
-                         + opt.str(arg<double>("wait-price")) + " " + arg<string>("base")
+                         + opt.str(arg<double>("wait-price")) + " " + arg<string>("quote")
                          + Ansi::r(COLOR_WHITE) + " in " + Ansi::b(COLOR_YELLOW)
                          + to_string(arg<int>("time-price")) + " seconds" + Ansi::r(COLOR_WHITE) + ")");
           if (!arg<double>("order-size"))
