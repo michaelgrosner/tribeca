@@ -4,11 +4,19 @@ import * as Models from './models';
 
 @Component({
   selector: 'market-quoting',
-  template: `<div class="tradeSafety2" style="margin-top:-4px;padding-top:0px;padding-right:0px;"><div style="padding-top:0px;padding-right:0px;">
-      Market Width: <span class="{{ marketWidth ? \'text-danger\' : \'text-muted\' }}">{{ marketWidth.toFixed(product.tickPrice) }}</span>,
-      Quote Width: <span class="{{ ordersWidth ? \'text-danger\' : \'text-muted\' }}">{{ ordersWidth.toFixed(product.tickPrice) }}</span>, Quotes: <span title="Quotes in memory Waiting status update" class="{{ quotesInMemoryWaiting ? \'text-danger\' : \'text-muted\' }}">{{ quotesInMemoryWaiting }}</span>/<span title="Quotes in memory Working" class="{{ quotesInMemoryWorking ? \'text-danger\' : \'text-muted\' }}">{{ quotesInMemoryWorking }}</span>/<span title="Quotes in memory Zombie" class="{{ quotesInMemoryZombies ? \'text-danger\' : \'text-muted\' }}">{{ quotesInMemoryZombies }}</span>
-      <div style="padding-left:0px;">Wallet TBP: <span class="text-danger">{{ targetBasePosition.toFixed(8) }}</span>, pDiv: <span class="text-danger">{{ positionDivergence.toFixed(8) }}</span>, APR: <span class="{{ sideAPRSafety!=\'Off\' ? \'text-danger\' : \'text-muted\' }}">{{ sideAPRSafety }}</span></div>
-      </div></div><div style="padding-right:4px;padding-left:4px;padding-top:4px;line-height:1.3;">
+  template: `<div class="col-md-6">
+        <div class="tradeSafety2">
+          <div> 
+            <div class="param-info"><span class="param-label">Market Width</span>:<span class="param-value {{ marketWidth ? \'text-danger\' : \'text-muted\' }}">{{ marketWidth.toFixed(product.tickPrice) }}</span></div>
+            <div class="param-info"><span class="param-label">Quote Width</span>:<span class="param-value {{ ordersWidth ? \'text-danger\' : \'text-muted\' }}">{{ ordersWidth.toFixed(product.tickPrice) }}</span></div>
+            <div class="param-info"><span class="param-label">Quotes</span>:<span class="param-value"><span title="Quotes in memory Waiting status update" class="{{ quotesInMemoryWaiting ? \'text-danger\' : \'text-muted\' }}">{{ quotesInMemoryWaiting }}</span>/<span title="Quotes in memory Working" class="{{ quotesInMemoryWorking ? \'text-danger\' : \'text-muted\' }}">{{ quotesInMemoryWorking }}</span>/<span title="Quotes in memory Zombie" class="{{ quotesInMemoryZombies ? \'text-danger\' : \'text-muted\' }}">{{ quotesInMemoryZombies }}</span></span></div>
+            <div class="param-info"><span class="param-label">Wallet TBP</span>:<span class="param-value text-danger">{{ targetBasePosition.toFixed(8) }}</span></div>
+            <div class="param-info"><span class="param-label">pDiv</span>:<span class="param-value text-danger">{{ positionDivergence.toFixed(8) }}</span></div>
+            <div class="param-info"><span class="param-label">APR</span>:<span class="param-value {{ sideAPRSafety!=\'Off\' ? \'text-danger\' : \'text-muted\' }}">{{ sideAPRSafety }}</span></div>
+          </div>
+        </div>
+      </div>
+      <div style="padding-right:4px;padding-left:4px;padding-top:4px;line-height:1.3;">
       <table class="marketQuoting table table-hover table-responsive text-center">
         <tr class="info">
           <td>bidSize&nbsp;</td>

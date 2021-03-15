@@ -4,7 +4,7 @@
  * Licensed under MIT (https://github.com/twbs/bootstrap/blob/master/LICENSE)
  */
 
-html {
+ html {
   font-family: sans-serif;
   -ms-text-size-adjust: 100%;
   -webkit-text-size-adjust: 100%;
@@ -5113,15 +5113,10 @@ span.truncated {
     opacity: 0.25;
 }
 div#hud {
-  background-color: rgba(255, 255, 255, 0.75);
-  border-color: transparent;
-  border-width: 1px;
-  border-style: solid;
-  margin-top: 7px;
-  margin-bottom: 5px;
-  transition:ease 0.5s;
+  background-color: #FFF;
+  transition: ease 0.5s;
   z-index: 1;
-  margin-left: 7.5px;
+  padding: 5px;
 }
 
 div#hud.bg-danger {

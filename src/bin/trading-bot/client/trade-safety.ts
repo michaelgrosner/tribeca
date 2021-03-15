@@ -4,14 +4,15 @@ import * as Models from './models';
 
 @Component({
   selector: 'trade-safety',
-  template: `<div div class="tradeSafety img-rounded"><div>
-      Fair Value: <span class="{{ fairValue ? \'text-danger fairvalue\' : \'text-muted\' }}" style="font-size:121%;">{{ fairValue.toFixed(product.tickPrice) }}</span>,
-      BuyPing: <span class="{{ buySizeSafety ? \'text-danger\' : \'text-muted\' }}">{{ buySizeSafety.toFixed(product.tickPrice) }}</span>,
-      SellPing: <span class="{{ sellSizeSafety ? \'text-danger\' : \'text-muted\' }}">{{ sellSizeSafety.toFixed(product.tickPrice) }}</span>,
-      BuyTS: <span class="{{ buySafety ? \'text-danger\' : \'text-muted\' }}">{{ buySafety.toFixed(2) }}</span>,
-      SellTS: <span class="{{ sellSafety ? \'text-danger\' : \'text-muted\' }}">{{ sellSafety.toFixed(2) }}</span>,
-      TotalTS: <span class="{{ tradeSafetyValue ? \'text-danger\' : \'text-muted\' }}">{{ tradeSafetyValue.toFixed(2) }}</span>,
-      openOrders/60sec: <span class="{{ tradeFreq ? \'text-danger\' : \'text-muted\' }}">{{ tradeFreq }}</span>
+  template: `<div div class="tradeSafety">
+    <div>
+      <div class="param-info"><span class="param-label">Fair Value</span>:<span class="param-value {{ fairValue ? \'text-danger fairvalue\' : \'text-muted\' }}">{{ fairValue.toFixed(product.tickPrice) }}</span></div>
+      <div class="param-info"><span class="param-label">BuyPing</span>:<span class="param-value {{ buySizeSafety ? \'text-danger\' : \'text-muted\' }}">{{ buySizeSafety.toFixed(product.tickPrice) }}</span></div>
+      <div class="param-info"><span class="param-label">SellPing</span>:<span class="param-value {{ sellSizeSafety ? \'text-danger\' : \'text-muted\' }}">{{ sellSizeSafety.toFixed(product.tickPrice) }}</span></div>
+      <div class="param-info"><span class="param-label">BuyTS</span>:<span class="param-value {{ buySafety ? \'text-danger\' : \'text-muted\' }}">{{ buySafety.toFixed(2) }}</span></div>
+      <div class="param-info"><span class="param-label">SellTS</span>:<span class="param-value {{ sellSafety ? \'text-danger\' : \'text-muted\' }}">{{ sellSafety.toFixed(2) }}</span></div>
+      <div class="param-info"><span class="param-label">TotalTS</span>:<span class="param-value {{ tradeSafetyValue ? \'text-danger\' : \'text-muted\' }}">{{ tradeSafetyValue.toFixed(2) }}</span></div>
+      <div class="param-info"><span class="param-label">openOrders/60sec</span>:<span class="param-value {{ tradeFreq ? \'text-danger\' : \'text-muted\' }}">{{ tradeFreq }}</span></div>
     </div>
   </div>`
 })
