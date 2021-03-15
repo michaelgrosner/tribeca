@@ -37,7 +37,7 @@ h1 small, h2 small, h3 small, h4 small, h5 small, h6 small, .h1 small, .h2 small
     background-image: none;
   }
   &:focus {
-    outline:none !important;  
+    outline:none !important;
   }
 }
 .btn-default {
@@ -278,7 +278,7 @@ h1 small, h2 small, h3 small, h4 small, h5 small, h6 small, .h1 small, .h2 small
     background-color: #111111;
   }
   .ag-row-even {
-    background-color: #403e3e;
+    background-color: #1b1b1b;
   }
   .ag-row-selected {
     background-color: #4a708b;
@@ -550,10 +550,6 @@ h1 small, h2 small, h3 small, h4 small, h5 small, h6 small, .h1 small, .h2 small
     background-color: #302e2e;
     color: #ccc;
   }
-}
-
-.fs11px {
-  font-size: 11px;
 }
 
 .marketQuoting .sell, .positions .sell, .ag-cell.sell {
