@@ -18,7 +18,7 @@
     background-image: none;
   }
   &:focus {
-    outline:none !important;  
+    outline:none !important;
   }
 }
 
@@ -92,7 +92,7 @@
   }
   .ag-cell-focus {
     border: 1px solid #a9a9a9;
-    outline:none;  
+    outline:none;
   }
   .ag-cell-no-focus {
     border-top: 1px solid transparent;
@@ -523,10 +523,6 @@
       background-color: #bde2e5;
     }
   }
-}
-
-.fs11px {
-  font-size: 11px;
 }
 
 .tradeSafety, .tradeSafety2 {
