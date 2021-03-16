@@ -6,7 +6,7 @@ import * as Models from './models';
   selector: 'market-quoting',
   template: `<div class="col-md-6">
         <div class="tradeSafety2">
-          <div> 
+          <div>
             <div class="param-info"><span class="param-label">Market Width</span>:<span class="param-value {{ marketWidth ? \'text-danger\' : \'text-muted\' }}">{{ marketWidth.toFixed(product.tickPrice) }}</span></div>
             <div class="param-info"><span class="param-label">Quote Width</span>:<span class="param-value {{ ordersWidth ? \'text-danger\' : \'text-muted\' }}">{{ ordersWidth.toFixed(product.tickPrice) }}</span></div>
             <div class="param-info"><span class="param-label">Quotes</span>:<span class="param-value"><span title="Quotes in memory Waiting status update" class="{{ quotesInMemoryWaiting ? \'text-danger\' : \'text-muted\' }}">{{ quotesInMemoryWaiting }}</span>/<span title="Quotes in memory Working" class="{{ quotesInMemoryWorking ? \'text-danger\' : \'text-muted\' }}">{{ quotesInMemoryWorking }}</span>/<span title="Quotes in memory Zombie" class="{{ quotesInMemoryZombies ? \'text-danger\' : \'text-muted\' }}">{{ quotesInMemoryZombies }}</span></span></div>
@@ -139,6 +139,8 @@ export class MarketQuotingComponent {
       this.quotesInMemoryWorking = o.quotesInMemoryWorking;
       this.quotesInMemoryZombies = o.quotesInMemoryZombies;
     }
+    this.bidStatus = this.bidStatus.replace(/([A-Z])/g, ' $1').trim();
+    this.askStatus = this.askStatus.replace(/([A-Z])/g, ' $1').trim();
   }
 
   private clearQuote = () => {
