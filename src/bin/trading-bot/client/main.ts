@@ -65,7 +65,7 @@ class DisplayOrder {
 @Component({
   selector: 'ui',
   template: `<div>
-    <div [hidden]="ready" style="padding: 42px;transform: rotate(-6deg);">
+    <div [hidden]="ready" style="padding:42px;transform:rotate(-6deg);">
         <h4 class="text-danger text-center">{{ product.environment ? product.environment+' is d' : 'D' }}isconnected.</h4>
     </div>
     <div [hidden]="!ready">
@@ -584,10 +584,7 @@ class DisplayOrder {
                 <div class="row">
                     <div class="col-md-1 col-xs-12 text-center" style="padding-right:0px;">
                         <div class="row exchange">
-                            <div *ngIf="pair.connectionMessage">{{ pair.connectionMessage }}</div>
-                            <button style="font-size:16px;" class="col-md-12 col-xs-3" [ngClass]="pair.active.getClass()" (click)="pair.active.submit()">
-                                {{ product.exchange.replace('_MARGIN', ' [M]') }}<br/>{{ product.margin == 2 ? product.symbol : product.base + '/' + product.quote }}
-                            </button>
+                            <button style="font-size:16px;white-space:break-spaces;" class="col-md-12 col-xs-3" [ngClass]="pair.active.getClass()" (click)="pair.active.submit()">{{ pair.connectionMessage ? pair.connectionMessage : product.exchange }}<br [hidden]="pair.connectionMessage" />{{ pair.connectionMessage ? "" : (product.margin == 2 ? product.symbol : product.base + '/' + product.quote) }}</button>
                             <wallet-position [product]="product" [setPosition]="Position"></wallet-position>
                             <div>
                               <a [hidden]="!product.webMarket" rel="noreferrer" href="{{ product.webMarket }}" target="_blank">Market</a><span [hidden]="!(product.webMarket && product.webOrders)">, </span><a [hidden]="!product.webOrders" rel="noreferrer" href="{{ product.webOrders }}" target="_blank">Orders</a>
