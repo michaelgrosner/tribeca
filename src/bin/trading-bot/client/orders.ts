@@ -56,12 +56,12 @@ export class OrdersComponent implements OnInit {
         cellClass: 'fs11px'
       },
       { width: 40, suppressSizeToFit: true, field: 'side', headerName: 'side', cellRenderer:(params) => {
-        return (params.data.pong ? '¯' : '_') + params.value;
+        return (params.data.pong ? '&lrhar;' : '&rhard;') + params.value;
       }, cellClass: (params) => {
         if (params.value === 'Bid') return 'buy';
         else if (params.value === 'Ask') return "sell";
       }},
-      { width: 74, field: 'price', headerName: 'px',
+      { width: 74, field: 'price', headerName: 'price',
         sort: 'desc',  cellClass: (params) => {
         return (params.data.side === 'Ask') ? "sell" : "buy";
       }, cellRendererFramework: QuoteCurrencyCellComponent},

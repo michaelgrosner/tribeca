@@ -31,7 +31,7 @@ export class TradesComponent implements OnInit {
     this.audio = o.audio;
     if (!this.gridOptions.api) return;
     this.hasPongs = (o.safety === Models.QuotingSafety.Boomerang || o.safety === Models.QuotingSafety.AK47);
-    this.headerNameMod = this.hasPongs ? "Ping" : "";
+    this.headerNameMod = this.hasPongs ? "⇁" : "";
     this.gridOptions.columnDefs.map((r: ColDef) => {
       if (['Ktime','Kqty','Kprice','Kvalue','delta'].indexOf(r.field) > -1)
         this.gridOptions.columnApi.setColumnVisible(r.field, this.hasPongs);
@@ -74,43 +74,45 @@ export class TradesComponent implements OnInit {
       {width: 30, suppressSizeToFit: true, field: "cancel", headerName: 'cxl', cellRenderer: (params) => {
         return '<button type="button" class="btn btn-danger btn-xs"><span data-action-type="remove" style="font-size: 16px;font-weight: bold;padding: 0px;line-height: 12px;">&times;</span></button>';
       } },
-      {width: 95, suppressSizeToFit: true, field:'time', headerValueGetter:(params) => { return 'time' + this.headerNameMod; }, cellRenderer:(params) => {
+      {width: 95, suppressSizeToFit: true, field:'time', headerValueGetter:(params) => { return this.headerNameMod + 'time'; }, cellRenderer:(params) => {
         var d = new Date(params.value||0);
         return (d.getDate()+'').padStart(2, "0")+'/'+((d.getMonth()+1)+'').padStart(2, "0")+' '+(d.getHours()+'').padStart(2, "0")+':'+(d.getMinutes()+'').padStart(2, "0")+':'+(d.getSeconds()+'').padStart(2, "0");
       }, cellClass: 'fs11px', sort: 'desc', comparator: (valueA: any, valueB: any, nodeA: RowNode, nodeB: RowNode, isInverted: boolean) => {
           return (nodeA.data.Ktime||nodeA.data.time) - (nodeB.data.Ktime||nodeB.data.time);
       }},
-      {width: 95, suppressSizeToFit: true, field:'Ktime', hide:true, headerName:'timePong', cellRenderer:(params) => {
+      {width: 95, suppressSizeToFit: true, field:'Ktime', hide:true, headerName:'⇋time', cellRenderer:(params) => {
         if (params.value==0) return '';
         var d = new Date(params.value);
         return (d.getDate()+'').padStart(2, "0")+'/'+((d.getMonth()+1)+'').padStart(2, "0")+' '+(d.getHours()+'').padStart(2, "0")+':'+(d.getMinutes()+'').padStart(2, "0")+':'+(d.getSeconds()+'').padStart(2, "0");
       }, cellClass: 'fs11px' },
-      {width: 40, suppressSizeToFit: true, field:'side', headerName:'side', cellClass: (params) => {
+      {width: 40, suppressSizeToFit: true, field:'side', headerName:'side', cellRenderer:(params) => {
+        return params.value === '&lrhar;' ? '<span style="font-size:15px;padding-left:3px;">' + params.value + '</span>' : params.value;
+      },cellClass: (params) => {
         if (params.value === 'Bid') return 'buy';
         else if (params.value === 'Ask') return "sell";
-        else if (params.value === 'K') return "kira";
+        else if (params.value === '&lrhar;') return "kira";
         else return "unknown";
       }},
-      {width: 80, field:'price', headerValueGetter:(params) => { return 'px' + this.headerNameMod; }, cellClass: (params) => {
+      {width: 80, field:'price', headerValueGetter:(params) => { return this.headerNameMod + 'price'; }, cellClass: (params) => {
         return params.data.pingSide;
       }, cellRendererFramework: QuoteCurrencyCellComponent},
-      {width: 85, suppressSizeToFit: true, field:'quantity', headerValueGetter:(params) => { return 'qty' + this.headerNameMod; }, cellClass: (params) => {
+      {width: 85, suppressSizeToFit: true, field:'quantity', headerValueGetter:(params) => { return this.headerNameMod + 'qty'; }, cellClass: (params) => {
         return params.data.pingSide;
       }, cellRendererFramework: BaseCurrencyCellComponent},
-      {width: 69, field:'value', headerValueGetter:(params) => { return 'val' + this.headerNameMod; }, cellClass: (params) => {
+      {width: 69, field:'value', headerValueGetter:(params) => { return this.headerNameMod + 'value'; }, cellClass: (params) => {
         return params.data.pingSide;
       }, cellRendererFramework: QuoteCurrencyCellComponent},
-      {width: 75, field:'Kvalue', headerName:'valPong', hide:true, cellClass: (params) => {
+      {width: 75, field:'Kvalue', headerName:'⇋value', hide:true, cellClass: (params) => {
         return params.data.pongSide;
       }, cellRendererFramework: QuoteCurrencyCellComponent},
-      {width: 85, suppressSizeToFit: true, field:'Kqty', headerName:'qtyPong', hide:true, cellClass: (params) => {
+      {width: 85, suppressSizeToFit: true, field:'Kqty', headerName:'⇋qty', hide:true, cellClass: (params) => {
         return params.data.pongSide;
       }, cellRendererFramework: BaseCurrencyCellComponent},
-      {width: 80, field:'Kprice', headerName:'pxPong', hide:true, cellClass: (params) => {
+      {width: 80, field:'Kprice', headerName:'⇋price', hide:true, cellClass: (params) => {
         return params.data.pongSide;
       }, cellRendererFramework: QuoteCurrencyCellComponent},
-      {width: 65, field:'delta', headerName:'Delta', hide:true, cellClass: (params) => {
-        if (params.data.side === 'K') return "kira"; else return "";
+      {width: 65, field:'delta', headerName:'delta', hide:true, cellClass: (params) => {
+        if (params.data.side === '&lrhar;') return "kira"; else return "";
       }, cellRenderer: (params) => {
         return (!params.value) ? "" : params.data.quoteSymbol + parseFloat(params.value.toFixed(8));
       }}
@@ -146,7 +148,7 @@ export class TradesComponent implements OnInit {
             Kprice: t.Kprice ? t.Kprice : null,
             Kvalue: t.Kvalue ? t.Kvalue : null,
             delta: t.delta?t.delta:null,
-            side: t.Kqty >= t.quantity ? 'K' : (t.side === Models.Side.Ask ? "Ask" : "Bid"),
+            side: t.Kqty >= t.quantity ? '&lrhar;' : (t.side === Models.Side.Ask ? "Ask" : "Bid"),
             pingSide: t.side == Models.Side.Ask ? "sell" : "buy",
             pongSide: t.side == Models.Side.Ask ? "buy" : "sell"
           }));
@@ -166,7 +168,7 @@ export class TradesComponent implements OnInit {
           time: t.time,
           price: t.price,
           quantity: t.quantity,
-          side: t.Kqty >= t.quantity ? 'K' : (t.side === Models.Side.Ask ? "Ask" : "Bid"),
+          side: t.Kqty >= t.quantity ? '&lrhar;' : (t.side === Models.Side.Ask ? "Ask" : "Bid"),
           pingSide: t.side == Models.Side.Ask ? "sell" : "buy",
           pongSide: t.side == Models.Side.Ask ? "buy" : "sell",
           value: t.value,
