@@ -65,7 +65,7 @@ class DisplayOrder {
 @Component({
   selector: 'ui',
   template: `<div>
-    <div [hidden]="ready" style="padding:42px;">
+    <div [hidden]="ready" style="padding: 42px;transform: rotate(-6deg);">
         <h4 class="text-danger text-center">{{ product.environment ? product.environment+' is d' : 'D' }}isconnected.</h4>
     </div>
     <div [hidden]="!ready">

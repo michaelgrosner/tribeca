@@ -4878,10 +4878,14 @@ button.close {
 
 .positions {
   margin-top: 45px;
-  height: 314px;
+  height: 302px;
   h4:last-child {
     margin-bottom: 8px !important;
   }
+}
+
+.exchange {
+  padding:5px;
 }
 
 table.params-protection, table.params-market-making, table.params-tech-analysis {

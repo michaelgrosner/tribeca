@@ -594,7 +594,6 @@ textarea::placeholder {
 .exchange {
   background: #232323;
   border: 1px #313131 solid;
-  padding: 5px;
 }
 
 
@@ -629,15 +628,6 @@ h4 {
 .table.marketQuoting > {
   thead > tr > td, tbody > tr, tbody > tr > td, tfoot > tr > td {
     background-color: #161617;
-  }
-}
-
-.exchange {
-  a {
-    font-size: 11px !important;
-  }
-  div {
-    line-height: 11px;
   }
 }
 
