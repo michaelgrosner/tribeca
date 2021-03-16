@@ -20,10 +20,10 @@ import * as Models from './models';
       <div style="padding-right:4px;padding-left:4px;padding-top:4px;line-height:1.3;">
       <table class="marketQuoting table table-hover table-responsive text-center">
         <tr class="info">
-          <td>bidSize&nbsp;</td>
-          <td>bidPrice</td>
-          <td>askPrice</td>
-          <td>askSize&nbsp;</td>
+          <td>BID Size</td>
+          <td>BID Price</td>
+          <td>ASK Price</td>
+          <td>ASK Size</td>
         </tr>
         <tr class="info">
           <th *ngIf="bidStatus == 'Live'" class="text-danger">{{ qBidSz.toFixed(product.tickSize) }}<span *ngIf="!qBidSz">&nbsp;</span></th>
