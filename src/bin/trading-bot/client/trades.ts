@@ -7,7 +7,7 @@ import {FireFactory, BaseCurrencyCellComponent, QuoteCurrencyCellComponent} from
 
 @Component({
   selector: 'trade-list',
-  template: `<ag-grid-angular #tradeList class="ag-theme-fresh ag-theme-dark" style="height: 480px;width: 99.80%;" rowHeight="21" [gridOptions]="gridOptions" [modules]="modules" (cellClicked)="onCellClicked($event)"></ag-grid-angular>`
+  template: `<ag-grid-angular #tradeList class="ag-theme-fresh ag-theme-dark" style="height: 476px;width: 99.80%;" rowHeight="21" [gridOptions]="gridOptions" [modules]="modules" (cellClicked)="onCellClicked($event)"></ag-grid-angular>`
 })
 export class TradesComponent implements OnInit {
 

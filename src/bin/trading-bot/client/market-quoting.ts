@@ -10,6 +10,7 @@ import * as Models from './models';
             <div class="param-info"><span class="param-label">Market Width</span>:<span class="param-value {{ marketWidth ? \'text-danger\' : \'text-muted\' }}">{{ marketWidth.toFixed(product.tickPrice) }}</span></div>
             <div class="param-info"><span class="param-label">Quote Width</span>:<span class="param-value {{ ordersWidth ? \'text-danger\' : \'text-muted\' }}">{{ ordersWidth.toFixed(product.tickPrice) }}</span></div>
             <div class="param-info"><span class="param-label">Quotes</span>:<span class="param-value"><span title="Quotes in memory Waiting status update" class="{{ quotesInMemoryWaiting ? \'text-danger\' : \'text-muted\' }}">{{ quotesInMemoryWaiting }}</span>/<span title="Quotes in memory Working" class="{{ quotesInMemoryWorking ? \'text-danger\' : \'text-muted\' }}">{{ quotesInMemoryWorking }}</span>/<span title="Quotes in memory Zombie" class="{{ quotesInMemoryZombies ? \'text-danger\' : \'text-muted\' }}">{{ quotesInMemoryZombies }}</span></span></div>
+            <div class="param-info"><span class="param-label">openOrders/60sec</span>:<span class="param-value {{ tradeFreq ? \'text-danger\' : \'text-muted\' }}">{{ tradeFreq }}</span></div>
             <div class="param-info"><span class="param-label">Wallet TBP</span>:<span class="param-value text-danger">{{ targetBasePosition.toFixed(8) }}</span></div>
             <div class="param-info"><span class="param-label">pDiv</span>:<span class="param-value text-danger">{{ positionDivergence.toFixed(8) }}</span></div>
             <div class="param-info"><span class="param-label">APR</span>:<span class="param-value {{ sideAPRSafety!=\'Off\' ? \'text-danger\' : \'text-muted\' }}">{{ sideAPRSafety }}</span></div>
@@ -97,6 +98,8 @@ export class MarketQuotingComponent {
   private sideAPRSafety: string;
 
   @Input() product: Models.ProductAdvertisement;
+
+  @Input() tradeFreq: number;
 
   @Input() addr: string;
 

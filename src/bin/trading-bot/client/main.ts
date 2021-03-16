@@ -673,17 +673,17 @@ class DisplayOrder {
                         <div class="markets-params-left col-md-4 col-xs-12" style="padding-left:0px;padding-top:0px;padding-right:0px;">
                             <div class="row">
                               <div class="col-md-6">
-                                <trade-safety [tradeFreq]="tradeFreq" [product]="product" [setFairValue]="FairValue" [setTradeSafety]="TradeSafety"></trade-safety>
+                                <trade-safety [product]="product" [setFairValue]="FairValue" [setTradeSafety]="TradeSafety"></trade-safety>
                               </div>
-                              <market-quoting (onBidsLength)="onBidsLength($event)" (onAsksLength)="onAsksLength($event)" (onMarketWidth)="onMarketWidth($event)" [agree]="!!pair.active.display.agree" [product]="product" [addr]="addr" [setQuoteStatus]="QuoteStatus" [setMarketData]="MarketData" [setOrderList]="orderList" [setTargetBasePosition]="TargetBasePosition"></market-quoting>
+                              <market-quoting [tradeFreq]="tradeFreq" (onBidsLength)="onBidsLength($event)" (onAsksLength)="onAsksLength($event)" (onMarketWidth)="onMarketWidth($event)" [agree]="!!pair.active.display.agree" [product]="product" [addr]="addr" [setQuoteStatus]="QuoteStatus" [setMarketData]="MarketData" [setOrderList]="orderList" [setTargetBasePosition]="TargetBasePosition"></market-quoting>
                             </div>
                         </div>
                         <div class="orders-table-right col-md-8 col-xs-12" style="padding-left:0px;padding-right:0px;padding-top:0px;">
                           <div class="row">
-                            <div class="exchangeActions col-md-2 col-xs-12 text-center">
+                            <div class="notepad col-md-2 col-xs-12 text-center">
                               <textarea [(ngModel)]="notepad" (ngModelChange)="changeNotepad(notepad)" placeholder="ephemeral notepad" class="ephemeralnotepad" style="height:131px;width: 100%;max-width: 100%;"></textarea>
                             </div>
-                            <div class="col-md-10 col-xs-12" style="padding-right:0px;padding-top:4px;">
+                            <div class="col-md-10 col-xs-12" style="padding-right:0px;padding-top:0px;">
                               <order-list [agree]="!!pair.active.display.agree" [product]="product" [setOrderList]="orderList"></order-list>
                             </div>
                           </div>

@@ -4872,18 +4872,34 @@ button.close {
   }
 }
 
+.notepad {
+  padding-top: 0px;
+}
+
 .positions {
   margin-top: 45px;
-  height: 325px;
+  height: 314px;
   h4:last-child {
     margin-bottom: 8px !important;
   }
 }
 
-table.params-protection,
-table.params-market-making,
-table.params-tech-analysis {
+table.params-protection, table.params-market-making, table.params-tech-analysis {
 	margin-bottom: 5px;
+}
+
+.tradeSafety, .tradeSafety2 {
+  font-size: 13px;
+  padding: 0px 5px;
+}
+
+.tradeSafety div, .tradeSafety2 div {
+  padding: 2px;
+}
+
+.fairvalue, input.width-option {
+  font-weight: bold;
+  font-size: 15px;
 }
 
 tr.info td {

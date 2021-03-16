@@ -12,7 +12,6 @@ import * as Models from './models';
       <div class="param-info"><span class="param-label">BuyTS</span>:<span class="param-value {{ buySafety ? \'text-danger\' : \'text-muted\' }}">{{ buySafety.toFixed(2) }}</span></div>
       <div class="param-info"><span class="param-label">SellTS</span>:<span class="param-value {{ sellSafety ? \'text-danger\' : \'text-muted\' }}">{{ sellSafety.toFixed(2) }}</span></div>
       <div class="param-info"><span class="param-label">TotalTS</span>:<span class="param-value {{ tradeSafetyValue ? \'text-danger\' : \'text-muted\' }}">{{ tradeSafetyValue.toFixed(2) }}</span></div>
-      <div class="param-info"><span class="param-label">openOrders/60sec</span>:<span class="param-value {{ tradeFreq ? \'text-danger\' : \'text-muted\' }}">{{ tradeFreq }}</span></div>
     </div>
   </div>`
 })
@@ -24,8 +23,6 @@ export class TradeSafetyComponent {
   private buySizeSafety: number = 0;
   private sellSizeSafety: number = 0;
   private tradeSafetyValue: number = 0;
-
-  @Input() tradeFreq: number;
 
   @Input() product: Models.ProductAdvertisement;
 
