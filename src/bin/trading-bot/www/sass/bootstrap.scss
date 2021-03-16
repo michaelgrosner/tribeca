@@ -4873,10 +4873,17 @@ button.close {
 }
 
 .positions {
-  margin-top: 50px;
+  margin-top: 45px;
+  height: 325px;
   h4:last-child {
     margin-bottom: 8px !important;
   }
+}
+
+table.params-protection,
+table.params-market-making,
+table.params-tech-analysis {
+	margin-bottom: 5px;
 }
 
 tr.info td {

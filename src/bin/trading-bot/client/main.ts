@@ -65,7 +65,7 @@ class DisplayOrder {
 @Component({
   selector: 'ui',
   template: `<div>
-    <div [hidden]="ready">
+    <div [hidden]="ready" style="padding:42px;">
         <h4 class="text-danger text-center">{{ product.environment ? product.environment+' is d' : 'D' }}isconnected.</h4>
     </div>
     <div [hidden]="!ready">
@@ -624,9 +624,9 @@ class DisplayOrder {
                               </div>
                               <br [hidden]="product.exchange=='HITBTC'" /><a [hidden]="product.exchange=='HITBTC'" href="#" (click)="toggleWatch(product.exchange.toLowerCase(), (product.base+'-'+product.quote).toLowerCase())">Watch</a><br [hidden]="product.exchange=='HITBTC'" />
                               <br/><a href="#" (click)="toggleTakers()">Takers</a>, <a href="#" (click)="toggleStats()">Stats</a>
-                              <br/><button type="button"
+                              <br><button type="button"
                                           class="btn btn-default"
-                                          style="margin:5px 0px;"
+                                          style="margin:14px 0px;"
                                           id="order_form"
                                           (click)="toggleSettings(showSettings = !showSettings)">Settings
                                    </button>

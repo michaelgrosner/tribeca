@@ -586,12 +586,6 @@ td.params-title.params-3 {
 	font-weight: bold;
 	border: 1px #cccccc solid;
 }
-table.params-market-making {
-	margin-bottom: 10px;
-}
-table.params-tech-analysis {
-	margin-bottom: 10px;
-}
 table.parameters-inputs {
 	background: #fff;
 	padding: 10px;
@@ -624,12 +618,6 @@ table.parameters-inputs {
 	&:focus {
 		box-shadow: none;
 	}
-}
-.parameters-inputs {
-	padding: 5px;
-}
-table.params-protection {
-	margin-bottom: 10px;
 }
 .tradeSafety {
 	span.param-label {

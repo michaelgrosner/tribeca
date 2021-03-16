@@ -6,15 +6,15 @@ import * as Models from './models';
 
 @Component({
   selector: 'market-stats',
-  template: `<div class="col-md-12 col-xs-12" style="height:520px;">
+  template: `<div class="col-md-12 col-xs-12" style="height:622px;">
     <div class="col-md-6 col-xs-6">
         <highcharts-chart [Highcharts]="Highcharts" style="display: block;" [options]="fvChartOptions"></highcharts-chart>
     </div>
     <div class="col-md-6 col-xs-6">
-      <div style="height:260px;">
+      <div style="height:306px;">
         <highcharts-chart [Highcharts]="Highcharts" style="display: block;" [options]="baseChartOptions"></highcharts-chart>
       </div>
-      <div style="height:260px;">
+      <div style="height:306px;">
         <highcharts-chart [Highcharts]="Highcharts" style="display: block;" [options]="quoteChartOptions"></highcharts-chart>
       </div>
     </div>
@@ -67,7 +67,7 @@ export class StatsComponent implements OnInit {
     title: 'fair value',
     chart: {
         width: null,
-        height: 520,
+        height: 615,
         type: 'bubble',
         zoomType: false,
         backgroundColor:'rgba(255, 255, 255, 0)'
@@ -309,7 +309,7 @@ export class StatsComponent implements OnInit {
     title: 'quote wallet',
     chart: {
         width: null,
-        height: 260,
+        height: 306,
         zoomType: false,
         resetZoomButton: {theme: {display: 'none'}},
         backgroundColor:'rgba(255, 255, 255, 0)'
@@ -388,7 +388,7 @@ export class StatsComponent implements OnInit {
     title: 'base wallet',
     chart: {
         width: null,
-        height: 260,
+        height: 306,
         zoomType: false,
         resetZoomButton: {theme: {display: 'none'}},
         backgroundColor:'rgba(255, 255, 255, 0)'

@@ -6,7 +6,7 @@ import {SubscriberFactory, BaseCurrencyCellComponent, QuoteCurrencyCellComponent
 
 @Component({
   selector: 'market-trades',
-  template: `<ag-grid-angular #marketList (click)="this.loadSubscriber()" class="ag-theme-fresh ag-theme-dark {{ subscribed ? \'ag-subscribed\' : \'ag-not-subscribed\' }} marketTrades" style="height: 530px;width: 100%;" rowHeight="21" [gridOptions]="gridOptions" [modules]="modules"></ag-grid-angular>`
+  template: `<ag-grid-angular #marketList (click)="this.loadSubscriber()" class="ag-theme-fresh ag-theme-dark {{ subscribed ? \'ag-subscribed\' : \'ag-not-subscribed\' }} marketTrades" style="height: 622px;width: 100%;" rowHeight="21" [gridOptions]="gridOptions" [modules]="modules"></ag-grid-angular>`
 })
 export class MarketTradesComponent implements OnInit {
 
