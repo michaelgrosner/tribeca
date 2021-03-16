@@ -628,22 +628,22 @@ SCENARIO_METHOD(TradingBot, "ANY BTC/EUR") {
         engine.wallet.safety.trades.insert(order);
         Amount actualBaseDelta = 0;
         Amount actualQuoteDelta = 0;
-        Amount expectedDiff = 0;
-        Amount actualDiff = 0;
+        Amount expectedDelta = 0;
+        Amount actualDelta = 0;
         for (const auto &trade : engine.wallet.safety.trades) {
           baseSign = (trade.side == Side::Bid) ? 1 : -1;
           actualBaseDelta += baseSign * (trade.quantity - trade.Kqty);
-          Amount diff = baseSign * (trade.Kvalue - trade.value);
-          actualQuoteDelta += diff;
-          if (trade.Kdiff) {
-            actualDiff += diff;
-            expectedDiff += trade.Kdiff;
-            REQUIRE(trade.Kdiff > 0);
+          Amount delta = baseSign * (trade.Kvalue - trade.value);
+          actualQuoteDelta += delta;
+          if (trade.delta) {
+            actualDelta += delta;
+            expectedDelta += trade.delta;
+            REQUIRE(trade.delta > 0);
           }
         }
         REQUIRE(abs(actualBaseDelta - expectedBaseDelta) < 0.000000000001);
         REQUIRE(abs(actualQuoteDelta - expectedQuoteDelta) < 0.000000000001);
-        REQUIRE(abs(actualDiff - expectedDiff) < 0.000000000001);
+        REQUIRE(abs(actualDelta - expectedDelta) < 0.000000000001);
       }
     }
   }

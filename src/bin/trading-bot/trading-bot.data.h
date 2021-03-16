@@ -1088,7 +1088,7 @@ namespace tribeca {
             feeCharged,
             Kqty,
             Kvalue,
-            Kdiff;
+            delta;
       Price Kprice;
       Clock Ktime;
        bool isPong,
@@ -1106,7 +1106,7 @@ namespace tribeca {
       {        "Kqty", k.Kqty        },
       {      "Kprice", k.Kprice      },
       {      "Kvalue", k.Kvalue      },
-      {       "Kdiff", k.Kdiff       },
+      {       "delta", k.delta       },
       {  "feeCharged", k.feeCharged  },
       {      "isPong", k.isPong      },
       {"loadedFromDB", k.loadedFromDB}
@@ -1123,7 +1123,9 @@ namespace tribeca {
     k.Kqty         = j.value("Kqty",       0.0);
     k.Kprice       = j.value("Kprice",     0.0);
     k.Kvalue       = j.value("Kvalue",     0.0);
-    k.Kdiff        = j.value("Kdiff",      0.0);
+    k.delta        = j.value("delta",
+                       j.value("Kdiff",    0.0)
+                     );
     k.feeCharged   = j.value("feeCharged", 0.0);
     k.isPong       = j.value("isPong",   false);
     k.loadedFromDB = true;
@@ -1421,7 +1423,7 @@ namespace tribeca {
           pong->quantity = pong->quantity - Kqty;
           pong->value = abs(pong->price*pong->quantity);
           if (it->quantity <= it->Kqty)
-            it->Kdiff = ((it->quantity * it->price) - (it->Kqty * it->Kprice))
+            it->delta = ((it->quantity * it->price) - (it->Kqty * it->Kprice))
                       * (it->side == Side::Ask ? 1 : -1);
           it->isPong = true;
           it->loadedFromDB = false;

@@ -33,7 +33,7 @@ export class TradesComponent implements OnInit {
     this.hasPongs = (o.safety === Models.QuotingSafety.Boomerang || o.safety === Models.QuotingSafety.AK47);
     this.headerNameMod = this.hasPongs ? "Ping" : "";
     this.gridOptions.columnDefs.map((r: ColDef) => {
-      if (['Kqty','Kprice','Kvalue','Kdiff','Ktime'].indexOf(r.field) > -1)
+      if (['Ktime','Kqty','Kprice','Kvalue','delta'].indexOf(r.field) > -1)
         this.gridOptions.columnApi.setColumnVisible(r.field, this.hasPongs);
       return r;
     });
@@ -109,7 +109,7 @@ export class TradesComponent implements OnInit {
       {width: 80, field:'Kprice', headerName:'pxPong', hide:true, cellClass: (params) => {
         return params.data.pongSide;
       }, cellRendererFramework: QuoteCurrencyCellComponent},
-      {width: 65, field:'Kdiff', headerName:'Kdiff', hide:true, cellClass: (params) => {
+      {width: 65, field:'delta', headerName:'Delta', hide:true, cellClass: (params) => {
         if (params.data.side === 'K') return "kira"; else return "";
       }, cellRenderer: (params) => {
         return (!params.value) ? "" : params.data.quoteSymbol + parseFloat(params.value.toFixed(8));
@@ -145,7 +145,7 @@ export class TradesComponent implements OnInit {
             Kqty: t.Kqty ? t.Kqty : null,
             Kprice: t.Kprice ? t.Kprice : null,
             Kvalue: t.Kvalue ? t.Kvalue : null,
-            Kdiff: t.Kdiff?t.Kdiff:null,
+            delta: t.delta?t.delta:null,
             side: t.Kqty >= t.quantity ? 'K' : (t.side === Models.Side.Ask ? "Sell" : "Buy"),
             pingSide: t.side == Models.Side.Ask ? "sell" : "buy",
             pongSide: t.side == Models.Side.Ask ? "buy" : "sell"
@@ -174,7 +174,7 @@ export class TradesComponent implements OnInit {
           Kqty: t.Kqty ? t.Kqty : null,
           Kprice: t.Kprice ? t.Kprice : null,
           Kvalue: t.Kvalue ? t.Kvalue : null,
-          Kdiff: t.Kdiff && t.Kdiff!=0 ? t.Kdiff : null,
+          delta: t.delta && t.delta!=0 ? t.delta : null,
           quoteSymbol: this.product.quote.replace('EUR','€').replace('USD','$'),
           productFixedPrice: this.product.tickPrice,
           productFixedSize: this.product.tickSize

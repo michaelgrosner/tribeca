@@ -111,7 +111,7 @@ export class Trade {
                 public Kqty: number,
                 public Kprice: number,
                 public Kvalue: number,
-                public Kdiff: number,
+                public delta: number,
                 public feeCharged: number,
                 public isPong: boolean,
                 public loadedFromDB: boolean) {}
