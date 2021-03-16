@@ -86,8 +86,8 @@ export class TradesComponent implements OnInit {
         return (d.getDate()+'').padStart(2, "0")+'/'+((d.getMonth()+1)+'').padStart(2, "0")+' '+(d.getHours()+'').padStart(2, "0")+':'+(d.getMinutes()+'').padStart(2, "0")+':'+(d.getSeconds()+'').padStart(2, "0");
       }, cellClass: 'fs11px' },
       {width: 40, suppressSizeToFit: true, field:'side', headerName:'side', cellClass: (params) => {
-        if (params.value === 'Buy') return 'buy';
-        else if (params.value === 'Sell') return "sell";
+        if (params.value === 'Bid') return 'buy';
+        else if (params.value === 'Ask') return "sell";
         else if (params.value === 'K') return "kira";
         else return "unknown";
       }},
@@ -146,7 +146,7 @@ export class TradesComponent implements OnInit {
             Kprice: t.Kprice ? t.Kprice : null,
             Kvalue: t.Kvalue ? t.Kvalue : null,
             delta: t.delta?t.delta:null,
-            side: t.Kqty >= t.quantity ? 'K' : (t.side === Models.Side.Ask ? "Sell" : "Buy"),
+            side: t.Kqty >= t.quantity ? 'K' : (t.side === Models.Side.Ask ? "Ask" : "Bid"),
             pingSide: t.side == Models.Side.Ask ? "sell" : "buy",
             pongSide: t.side == Models.Side.Ask ? "buy" : "sell"
           }));
@@ -166,7 +166,7 @@ export class TradesComponent implements OnInit {
           time: t.time,
           price: t.price,
           quantity: t.quantity,
-          side: t.Kqty >= t.quantity ? 'K' : (t.side === Models.Side.Ask ? "Sell" : "Buy"),
+          side: t.Kqty >= t.quantity ? 'K' : (t.side === Models.Side.Ask ? "Ask" : "Bid"),
           pingSide: t.side == Models.Side.Ask ? "sell" : "buy",
           pongSide: t.side == Models.Side.Ask ? "buy" : "sell",
           value: t.value,
