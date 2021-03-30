@@ -4,16 +4,15 @@ MINOR      = 6
 PATCH      = 1
 BUILD      = 24
 
-OBLIGATORY = DISCLAIMER: This is strict non-violent software: \
-           \nif you hurt other living creatures, please stop; \
-           \notherwise remove all copies of the software now.
+OBLIGATORY = DISCLAIMER: This is strict non-violent software: \n$\
+             if you hurt other living creatures, please stop; \n$\
+             otherwise remove all copies of the software now.
 
-PERMISSIVE = This is free software: the UI and quoting engine are open source, \
-           \nfeel free to hack both as you need.                               \
-                                                                               \
-           \nThis is non-free software: built-in gateway exchange integrations \
-           \nare licensed by/under the law of my grandma (since last century), \
-           \nfeel free to crack all as you need.
+PERMISSIVE = This is free software: the UI and quoting engine are open source, \n$\
+             feel free to hack both as you need.                               \n$\
+             This is non-free software: built-in gateway exchange integrations \n$\
+             are licensed by/under the law of my grandma (since last century), \n$\
+             feel free to crack all as you need.
 
 SOURCE    := $(notdir $(wildcard src/bin/*))
 CARCH      = x86_64-linux-gnu      \
