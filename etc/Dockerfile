@@ -1,7 +1,8 @@
-FROM overlordq/8-buster
+FROM debian:buster-slim
+
 
 RUN apt-get update \
- && apt-get install --no-install-recommends -y git sudo
+    && apt-get install --no-install-recommends -y git sudo make ca-certificates curl g++
 
 # Feel free to choose the branch you want to build:
 RUN git clone -b master https://github.com/ctubio/Krypto-trading-bot.git /K
