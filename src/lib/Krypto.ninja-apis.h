@@ -610,20 +610,20 @@ namespace ₿ {
             }
         const json reply2 = fees();
         return {
-          {     "base", base                          },
-          {    "quote", quote                         },
-          {   "symbol", base + quote                  },
+          {     "base", base                                      },
+          {    "quote", quote                                     },
+          {   "symbol", base + quote                              },
           {"webMarket", webMarket
                           + base + "_" + quote
-                          + "?layout=pro"             },
-          {"webOrders", webOrders                     },
-          {"tickPrice", reply1.value("tickPrice", 0.0)},
-          { "tickSize", reply1.value("tickSize", 0.0) },
-          {  "minSize", reply1.value("minSize", 0.0)  },
-          { "minValue", reply1.value("minValue", 0.0) },
-          {  "makeFee", reply2.value("maker", 0.0)    },
-          {  "takeFee", reply2.value("taker", 0.0)    },
-          {    "reply", {reply1, reply2}              }
+                          + "?layout=pro"                         },
+          {"webOrders", webOrders                                 },
+          {"tickPrice", reply1.value("tickPrice", 0.0)            },
+          { "tickSize", reply1.value("tickSize", 0.0)             },
+          {  "minSize", reply1.value("minSize", 0.0)              },
+          { "minValue", reply1.value("minValue", 0.0)             },
+          {  "makeFee", stod(reply2.value("makerCommission", "0"))},
+          {  "takeFee", stod(reply2.value("takerCommission", "0"))},
+          {    "reply", {reply1, reply2}                          }
         };
       };
       json xfer(const string &url, const string &h1, const string &crud) const {
@@ -637,22 +637,18 @@ namespace ₿ {
     private:
       json fees() const {
         const string crud = "GET",
-                     path = "/wapi/v3/tradeFee.html?",
-                     post = "symbol="     + symbol
+                     path = "/sapi/v1/asset/tradeFee?",
+                     post = "symbol="     + base + quote
                           + "&timestamp=" + to_string(Tstamp),
                      sign = "&signature=" + Text::HMAC256(post, secret);
         const json reply = xfer(http + path + post + sign, apikey, crud);
-        if (reply.find("success") == reply.end()
-          or !reply.at("success").is_boolean()
-          or !reply.value("success", false)
-          or reply.find("tradeFee") == reply.end()
-          or !reply.at("tradeFee").is_array()
-          or reply.at("tradeFee").empty()
+        if (!reply.is_array()
+          or reply.empty()
         ) {
           print("Error while reading fees: " + reply.dump());
           return reply;
         }
-        return reply.at("tradeFee").front();
+        return reply.front();
       };
   };
   class GwBitmex: public GwApiWs {
