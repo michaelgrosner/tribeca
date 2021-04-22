@@ -779,19 +779,13 @@ namespace ₿ {
           using reverse_iterator       = typename vector<T>::reverse_iterator;
           using const_reverse_iterator = typename vector<T>::const_reverse_iterator;
           iterator                 begin()       noexcept { return rows.begin();   };
-          const_iterator           begin() const noexcept { return rows.begin();   };
           const_iterator          cbegin() const noexcept { return rows.cbegin();  };
           iterator                   end()       noexcept { return rows.end();     };
-          const_iterator             end() const noexcept { return rows.end();     };
+          const_iterator            cend() const noexcept { return rows.cend();    };
           reverse_iterator        rbegin()       noexcept { return rows.rbegin();  };
           const_reverse_iterator crbegin() const noexcept { return rows.crbegin(); };
-          reverse_iterator          rend()       noexcept { return rows.rend();    };
           bool                     empty() const noexcept { return rows.empty();   };
           size_t                    size() const noexcept { return rows.size();    };
-          reference                front()                { return rows.front();   };
-          const_reference          front() const          { return rows.front();   };
-          reference                 back()                { return rows.back();    };
-          const_reference           back() const          { return rows.back();    };
           reference                   at(size_t n)        { return rows.at(n);     };
           const_reference             at(size_t n) const  { return rows.at(n);     };
           virtual void erase() {
@@ -809,7 +803,7 @@ namespace ₿ {
             return report(empty());
           };
           json blob() const override {
-            return back();
+            return rows.back();
           };
         private:
           string explain() const override {

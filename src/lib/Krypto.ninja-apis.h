@@ -644,11 +644,15 @@ namespace ₿ {
         const json reply = xfer(http + path + post + sign, apikey, crud);
         if (!reply.is_array()
           or reply.empty()
+          or !reply.at(0).is_object()
+          or reply.at(0).find("symbol") == reply.at(0).end()
+          or !reply.at(0).at("symbol").is_string()
+          or reply.at(0).value("symbol", "") != base + quote
         ) {
           print("Error while reading fees: " + reply.dump());
           return reply;
         }
-        return reply.front();
+        return reply.at(0);
       };
   };
   class GwBitmex: public GwApiWs {
@@ -678,7 +682,7 @@ namespace ₿ {
           {"object", Curl::Web::xfer(http + "/instrument?symbol=" + base + quote)}
         };
         if (reply.at("object").is_array() and !reply.at("object").empty())
-          reply = reply.at("object").front();
+          reply = reply.at("object").at(0);
         return {
           {     "base", base                           },
           {    "quote", quote                          },
@@ -853,8 +857,8 @@ namespace ₿ {
         json reply2 = {
           {"object", Curl::Web::xfer(http + "/conf/pub:info:pair")}
         };
-        if (reply2.at("object").is_array())
-          for (const json &it : reply2.at("object").front()) {
+        if (reply2.at("object").is_array() and !reply2.at("object").empty())
+          for (const json &it : reply2.at("object").at(0)) {
             if (it.at(0).is_string()
               and it.at(0).get<string>() == base + quote
               and it.at(1).is_array()

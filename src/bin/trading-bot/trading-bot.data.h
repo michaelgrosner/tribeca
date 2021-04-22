@@ -726,7 +726,7 @@ namespace tribeca {
         unsigned int n = fairValue96h.size();
         if (!n--) return;
         unsigned int x = 0;
-        *mean = fairValue96h.front();
+        *mean = fairValue96h.at(x);
         while (n--) calc(mean, periods, fairValue96h.at(++x));
         K.log("MG", "reloaded " + to_string(*mean) + " EWMA " + name);
       };
