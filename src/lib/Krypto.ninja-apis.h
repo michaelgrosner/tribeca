@@ -650,7 +650,7 @@ namespace ₿ {
           or reply.at(0).value("symbol", "") != base + quote
         ) {
           print("Error while reading fees: " + reply.dump());
-          return reply;
+          return json::object();
         }
         return reply.at(0);
       };
@@ -984,7 +984,7 @@ namespace ₿ {
           or !reply.at("data").is_object()
         ) {
           print("Error while reading fees: " + reply.dump());
-          return reply;
+          return json::object();
         }
         return reply.at("data");
       };
