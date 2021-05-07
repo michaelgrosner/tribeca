@@ -106,10 +106,10 @@ uv:
 
 pvs:
 ifndef V_PVS
-	$(MAKE) $@ V_PVS=$(shell curl -s https://pvs-studio.com/en/pvs-studio-download/ | grep x86_64.tgz | sed 's/.*href=\"\(.*\)\" .*/\1/' | cut -d '-' -f3)
+	$(MAKE) $@ V_PVS=$(shell curl -s https://pvs-studio.com/en/pvs-studio/download-all/ | grep x86_64.tgz | sed 's/.*href=\"\(.*\)\" .*/\1/' | cut -d '-' -f4)
 else
 	test -d $(KBUILD)/var/pvs-studio-$(V_PVS)-x86_64 || (                    \
-	curl -L http://files.viva64.com/pvs-studio-$(V_PVS)-x86_64.tgz           \
+	curl -L https://files.pvs-studio.com/pvs-studio-$(V_PVS)-x86_64.tgz      \
 	| tar xz -C $(KBUILD)/var && cd $(KBUILD)/var/pvs-studio-$(V_PVS)-x86_64 \
 	&& chmod +x install.sh && sudo ./install.sh                              )
 endif
