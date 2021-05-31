@@ -660,7 +660,7 @@ namespace ₿ {
       GwGateio()
       {
         http   = "https://api.gateio.ws/api/v4";
-        ws     = "wss://api.gateio.ws/ws/v4";
+        ws     = "wss://api.gateio.ws/ws/v4/";
         randId = Random::int45Id;
         webMarket = "https://www.gate.io/trade/";
         webOrders = "https://www.gate.io/myaccount/myorders";
