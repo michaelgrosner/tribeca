@@ -655,6 +655,54 @@ namespace ₿ {
         return reply.at(0);
       };
   };
+  class GwGateio: public GwApiWs {
+    public:
+      GwGateio()
+      {
+        http   = "https://api.gateio.ws/api/v4";
+        ws     = "wss://api.gateio.ws/ws/v4";
+        randId = Random::int45Id;
+        webMarket = "https://www.gate.io/trade/";
+        webOrders = "https://www.gate.io/myaccount/myorders";
+      };
+    protected:
+      void pairs(string &report) const override {
+        const json reply = Curl::Web::xfer(http + "/spot/currency_pairs");
+        if (!reply.is_array()
+          or reply.empty()
+          or !reply.at(0).is_object()
+          or reply.at(0).find("trade_status") == reply.at(0).end()
+        ) print("Error while reading pairs: " + reply.dump());
+        else for (const json &it : reply)
+          if (it.value("trade_status", "") == "tradable")
+            report += it.value("base", "") + "/" + it.value("quote", "") + '\n';
+      };
+      json handshake() const override {
+        json reply = {
+          {"object", Curl::Web::xfer(http + "/spot/currency_pairs")}
+        };
+        if (reply.at("object").is_array() and !reply.at("object").empty())
+          for (const json &it : reply.at("object"))
+            if (it.value("id", "") == base + "_" + quote) {
+              reply = it;
+              break;
+            }
+        return {
+          {     "base", base                                        },
+          {    "quote", quote                                       },
+          {   "symbol", base + "_" + quote                          },
+          {"webMarket", webMarket + base + "_" + quote              },
+          {"webOrders", webOrders                                   },
+          {"tickPrice", pow(10, -reply.value("precision", 0))       },
+          { "tickSize", pow(10, -reply.value("amount_precision", 0))},
+          {  "minSize", stod(reply.value("min_base_amount", "0"))   },
+          { "minValue", stod(reply.value("min_quote_amount", "0"))  },
+          {  "makeFee", stod(reply.value("fee", "0")) / 1e+2        },
+          {  "takeFee", stod(reply.value("fee", "0")) / 1e+2        },
+          {    "reply", reply                                       }
+        };
+      };
+  };
   class GwBitmex: public GwApiWs {
     public:
       GwBitmex()
