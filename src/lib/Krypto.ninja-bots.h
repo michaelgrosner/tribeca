@@ -297,7 +297,7 @@ namespace ₿ {
       };
       void logWar(const string &prefix, const string &reason, const Clock &ratelimit = 0) const {
         if (ratelimit) {
-          Clock now = Tstamp;
+          const Clock now = Tstamp;
           if (limits.find(reason) != limits.end() and limits[reason] + ratelimit > now)
             return;
           limits[reason] = now;

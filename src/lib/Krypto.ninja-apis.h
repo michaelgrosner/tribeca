@@ -373,10 +373,11 @@ namespace ₿ {
       };
       function<void(const string&, const string&, const string&)> printer;
     protected:
-      virtual void disconnect()         = 0;
-      virtual bool connected()    const = 0;
-      virtual json handshake()    const = 0;
-      virtual void pairs(string&) const = 0;
+      virtual   void disconnect()         = 0;
+      virtual   bool connected()    const = 0;
+      virtual   json handshake()    const = 0;
+      virtual   void pairs(string&) const = 0;
+      virtual string nonce()        const = 0;
       void print(const string &reason, const string &highlight = "") const {
         if (printer) printer(
           string(reason.find(">>>") != reason.find("<<<")
@@ -575,6 +576,9 @@ namespace ₿ {
         webOrders = "https://www.binance.com/en/my/orders/exchange/tradeorder";
       };
     protected:
+      string nonce() const override {
+        return to_string(Tstamp);
+      };
       void pairs(string &report) const override {
         const json reply = Curl::Web::xfer(http + "/api/v3/exchangeInfo");
         if (!reply.is_object()
@@ -639,7 +643,7 @@ namespace ₿ {
         const string crud = "GET",
                      path = "/sapi/v1/asset/tradeFee?",
                      post = "symbol="     + base + quote
-                          + "&timestamp=" + to_string(Tstamp),
+                          + "&timestamp=" + nonce(),
                      sign = "&signature=" + Text::HMAC256(post, secret);
         const json reply = xfer(http + path + post + sign, apikey, crud);
         if (!reply.is_array()
@@ -655,54 +659,6 @@ namespace ₿ {
         return reply.at(0);
       };
   };
-  class GwGateio: public GwApiWs {
-    public:
-      GwGateio()
-      {
-        http   = "https://api.gateio.ws/api/v4";
-        ws     = "wss://api.gateio.ws/ws/v4/";
-        randId = Random::int45Id;
-        webMarket = "https://www.gate.io/trade/";
-        webOrders = "https://www.gate.io/myaccount/myorders";
-      };
-    protected:
-      void pairs(string &report) const override {
-        const json reply = Curl::Web::xfer(http + "/spot/currency_pairs");
-        if (!reply.is_array()
-          or reply.empty()
-          or !reply.at(0).is_object()
-          or reply.at(0).find("trade_status") == reply.at(0).end()
-        ) print("Error while reading pairs: " + reply.dump());
-        else for (const json &it : reply)
-          if (it.value("trade_status", "") == "tradable")
-            report += it.value("base", "") + "/" + it.value("quote", "") + '\n';
-      };
-      json handshake() const override {
-        json reply = {
-          {"object", Curl::Web::xfer(http + "/spot/currency_pairs")}
-        };
-        if (reply.at("object").is_array() and !reply.at("object").empty())
-          for (const json &it : reply.at("object"))
-            if (it.value("id", "") == base + "_" + quote) {
-              reply = it;
-              break;
-            }
-        return {
-          {     "base", base                                        },
-          {    "quote", quote                                       },
-          {   "symbol", base + "_" + quote                          },
-          {"webMarket", webMarket + base + "_" + quote              },
-          {"webOrders", webOrders                                   },
-          {"tickPrice", pow(10, -reply.value("precision", 0))       },
-          { "tickSize", pow(10, -reply.value("amount_precision", 0))},
-          {  "minSize", stod(reply.value("min_base_amount", "0"))   },
-          { "minValue", stod(reply.value("min_quote_amount", "0"))  },
-          {  "makeFee", stod(reply.value("fee", "0")) / 1e+2        },
-          {  "takeFee", stod(reply.value("fee", "0")) / 1e+2        },
-          {    "reply", reply                                       }
-        };
-      };
-  };
   class GwBitmex: public GwApiWs {
     public:
       GwBitmex()
@@ -715,6 +671,9 @@ namespace ₿ {
         webOrders = "https://www.bitmex.com/app/orderHistory";
       };
     protected:
+      string nonce() const override {
+        return to_string(Tstamp);
+      };
       void pairs(string &report) const override {
         const json reply = Curl::Web::xfer(http + "/instrument/active");
         if (!reply.is_array()
@@ -760,6 +719,57 @@ namespace ₿ {
         });
       };
   };
+  class GwGateio: public GwApiWs {
+    public:
+      GwGateio()
+      {
+        http   = "https://api.gateio.ws/api/v4";
+        ws     = "wss://api.gateio.ws/ws/v4/";
+        randId = Random::int45Id;
+        webMarket = "https://www.gate.io/trade/";
+        webOrders = "https://www.gate.io/myaccount/myorders";
+      };
+    protected:
+      string nonce() const override {
+        return to_string(Tstamp / 1e+3);
+      };
+      void pairs(string &report) const override {
+        const json reply = Curl::Web::xfer(http + "/spot/currency_pairs");
+        if (!reply.is_array()
+          or reply.empty()
+          or !reply.at(0).is_object()
+          or reply.at(0).find("trade_status") == reply.at(0).end()
+        ) print("Error while reading pairs: " + reply.dump());
+        else for (const json &it : reply)
+          if (it.value("trade_status", "") == "tradable")
+            report += it.value("base", "") + "/" + it.value("quote", "") + '\n';
+      };
+      json handshake() const override {
+        json reply = {
+          {"object", Curl::Web::xfer(http + "/spot/currency_pairs")}
+        };
+        if (reply.at("object").is_array() and !reply.at("object").empty())
+          for (const json &it : reply.at("object"))
+            if (it.value("id", "") == base + "_" + quote) {
+              reply = it;
+              break;
+            }
+        return {
+          {     "base", base                                        },
+          {    "quote", quote                                       },
+          {   "symbol", base + "_" + quote                          },
+          {"webMarket", webMarket + base + "_" + quote              },
+          {"webOrders", webOrders                                   },
+          {"tickPrice", pow(10, -reply.value("precision", 0))       },
+          { "tickSize", pow(10, -reply.value("amount_precision", 0))},
+          {  "minSize", stod(reply.value("min_base_amount", "0"))   },
+          { "minValue", stod(reply.value("min_quote_amount", "0"))  },
+          {  "makeFee", stod(reply.value("fee", "0")) / 1e+2        },
+          {  "takeFee", stod(reply.value("fee", "0")) / 1e+2        },
+          {    "reply", reply                                       }
+        };
+      };
+  };
   class GwHitBtc: public GwApiWsWs {
     public:
       GwHitBtc()
@@ -771,6 +781,9 @@ namespace ₿ {
         webOrders = "https://hitbtc.com/reports/orders";
       };
     protected:
+      string nonce() const override {
+        return randId() + randId();
+      };
       void pairs(string &report) const override {
         const json reply = Curl::Web::xfer(http + "/public/symbol");
         if (!reply.is_array()
@@ -832,6 +845,9 @@ namespace ₿ {
         webOrders = "https://pro.coinbase.com/orders/";
       };
     protected:
+      string nonce() const override {
+        return to_string(Tstamp / 1e+3);
+      };
       void pairs(string &report) const override {
         const json reply = Curl::Web::xfer(http + "/products");
         if (!reply.is_array()
@@ -881,6 +897,9 @@ namespace ₿ {
         webOrders = "https://www.bitfinex.com/reports/orders";
       };
     protected:
+      string nonce() const override {
+        return to_string(Tstamp * 1e+3);
+      };
       void pairs(string &report) const override {
         const json reply = Curl::Web::xfer(http + "/conf/pub:list:pair:exchange");
         if (!reply.is_array()
@@ -966,6 +985,9 @@ namespace ₿ {
         webOrders = "https://www.kucoin.com/order/trade";
       };
     protected:
+      string nonce() const override {
+        return to_string(Tstamp);
+      };
       void pairs(string &report) const override {
         const json reply = Curl::Web::xfer(http + "/api/v1/symbols");
         if (!reply.is_object()
@@ -1020,7 +1042,7 @@ namespace ₿ {
       json fees() const {
         const string crud = "GET",
                      path = "/api/v1/base-fee",
-                     time = to_string(Tstamp),
+                     time = nonce(),
                      hash = time + crud + path,
                      sign = Text::B64(Text::HMAC256(hash, secret, true)),
                      code = Text::B64(Text::HMAC256(pass, secret, true));
@@ -1048,6 +1070,9 @@ namespace ₿ {
         webOrders = "https://www.kraken.com/u/trade";
       };
     protected:
+      string nonce() const override {
+        return to_string(Tstamp);
+      };
       void pairs(string &report) const override {
         const json reply = Curl::Web::xfer(http + "/0/public/AssetPairs");
         if (!reply.is_object()
@@ -1102,6 +1127,9 @@ namespace ₿ {
         webOrders = "https://poloniex.com/tradeHistory";
       };
     protected:
+      string nonce() const override {
+        return to_string(Tstamp);
+      };
       void pairs(string &report) const override {
         const json reply = Curl::Web::xfer(http + "/public?command=returnTicker");
         if (!reply.is_object())
