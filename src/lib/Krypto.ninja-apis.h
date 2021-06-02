@@ -731,7 +731,7 @@ namespace ₿ {
       };
     protected:
       string nonce() const override {
-        return to_string(Tstamp / 1e+3);
+        return to_string((Clock)(Tstamp / 1e+3));
       };
       void pairs(string &report) const override {
         const json reply = Curl::Web::xfer(http + "/spot/currency_pairs");
@@ -768,6 +768,16 @@ namespace ₿ {
           {  "takeFee", stod(reply.value("fee", "0")) / 1e+2        },
           {    "reply", reply                                       }
         };
+      };
+      json xfer(const string &url, const string &h1, const string &h2, const string &h3, const string &crud) const {
+        return Curl::Web::xfer(url, [&](CURL *curl) {
+          struct curl_slist *h_ = nullptr;
+          h_ = curl_slist_append(h_, ("KEY: "       + h1).data());
+          h_ = curl_slist_append(h_, ("Timestamp: " + h2).data());
+          h_ = curl_slist_append(h_, ("SIGN: "      + h3).data());
+          curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
+          curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, crud.data());
+        });
       };
   };
   class GwHitBtc: public GwApiWsWs {
