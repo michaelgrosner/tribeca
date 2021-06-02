@@ -1501,7 +1501,7 @@ namespace tribeca {
         return sum;
       };
       void expire(multimap<Price, RecentTrade> *const k) {
-        Clock now = Tstamp;
+        const Clock now = Tstamp;
         for (auto it = k->begin(); it != k->end();)
           if (it->second.time + qp.tradeRateSeconds * 1e+3 > now) ++it;
           else it = k->erase(it);
