@@ -898,6 +898,8 @@ namespace ₿ {
       };
   };
   class GwBitfinex: public GwApiWs {
+    protected:
+      string trading = "exchange";
     public:
       GwBitfinex()
       {
@@ -913,7 +915,7 @@ namespace ₿ {
         return to_string(Tstamp * 1e+3);
       };
       void pairs(string &report) const override {
-        const json reply = Curl::Web::xfer(http + "/conf/pub:list:pair:exchange");
+        const json reply = Curl::Web::xfer(http + "/conf/pub:list:pair:" + trading);
         if (!reply.is_array()
           or reply.empty()
           or !reply.at(0).is_array()
