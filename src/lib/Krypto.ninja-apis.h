@@ -755,18 +755,20 @@ namespace ₿ {
               break;
             }
         return {
-          {     "base", base                                        },
-          {    "quote", quote                                       },
-          {   "symbol", base + "_" + quote                          },
-          {"webMarket", webMarket + base + "_" + quote              },
-          {"webOrders", webOrders                                   },
-          {"tickPrice", pow(10, -reply.value("precision", 0))       },
-          { "tickSize", pow(10, -reply.value("amount_precision", 0))},
-          {  "minSize", stod(reply.value("min_base_amount", "0"))   },
-          { "minValue", stod(reply.value("min_quote_amount", "0"))  },
-          {  "makeFee", stod(reply.value("fee", "0")) / 1e+2        },
-          {  "takeFee", stod(reply.value("fee", "0")) / 1e+2        },
-          {    "reply", reply                                       }
+          {     "base", base                                            },
+          {    "quote", quote                                           },
+          {   "symbol", base + "_" + quote                              },
+          {"webMarket", webMarket + base + "_" + quote                  },
+          {"webOrders", webOrders                                       },
+          {"tickPrice", pow(10, -reply.value("precision", 0))           },
+          { "tickSize", pow(10, -reply.value("amount_precision", 0))    },
+          {  "minSize", stod(reply.value("min_base_amount", "0"))
+                         ?: pow(10, -reply.value("amount_precision", 0))},
+          { "minValue", stod(reply.value("min_quote_amount", "0"))
+                         ?: pow(10, -reply.value("precision", 0))       },
+          {  "makeFee", stod(reply.value("fee", "0")) / 1e+2            },
+          {  "takeFee", stod(reply.value("fee", "0")) / 1e+2            },
+          {    "reply", reply                                           }
         };
       };
       json xfer(const string &url, const string &h1, const string &h2, const string &h3, const string &post, const string &crud) const {
