@@ -1,5 +1,5 @@
 //! \file
-//! \brief Welcome user! (just a scaling bot).
+//! \brief Welcome user! (just a scaling bot to open/close positions while price decrements/increments).
 
 namespace analpaper {
   enum class QuoteState: unsigned int {
