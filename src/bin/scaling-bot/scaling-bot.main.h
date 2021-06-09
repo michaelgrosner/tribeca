@@ -40,8 +40,8 @@ class ScalingBot: public KryptoNinja {
             error("CF", "Invalid use of --scale-asks and --scale-bids together");
           else if (!arg<int>("scale-asks")
                and !arg<int>("scale-bids")) log("CF", enabled, "both sides");
-          else if ( arg<int>("scale-asks")) log("CF", enabled, "asks side");
-          else if ( arg<int>("scale-bids")) log("CF", enabled, "bids side");
+          else if ( arg<int>("scale-asks")) log("CF", enabled, "ASK side only");
+          else if ( arg<int>("scale-bids")) log("CF", enabled, "BID side only");
           Decimal opt;
           opt.precision(1e-8);
           if (arg<double>("wait-price") and !arg<int>("time-price"))
