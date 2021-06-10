@@ -395,24 +395,29 @@ namespace ₿ {
         args["headless"] = headless;
         args["naked"]    = !display.terminal;
         vector<Argument> long_options = {
+          {"INFORMATION",  "",       nullptr,  ""},
           {"help",         "h",      nullptr,  "print this help and quit"},
           {"version",      "v",      nullptr,  "print current build version and quit"},
           {"latency",      "1",      nullptr,  "print current HTTP latency (not from WS) and quit"},
           {"list",         "1",      nullptr,  "print current available currency pairs and quit"},
-          {"nocache",      "1",      nullptr,  "do not cache handshakes 7 hours at " K_HOME "/cache"}
+          {"CREDENTIALS",  "",       nullptr,  ""},
+          {"exchange",     "NAME",   "",       "set exchange NAME for trading, mandatory"},
+          {"currency",     "PAIR",   "",       "set currency PAIR for trading, use format ISO 4217-A3"
+                                               "\n" "with '/' separator, like 'BTC/EUR', mandatory"},
+          {"apikey",       "WORD",   "",       "set (never share!) WORD as api key for trading, mandatory"},
+          {"secret",       "WORD",   "",       "set (never share!) WORD as api secret for trading, mandatory"},
+          {"passphrase",   "WORD",   "",       "set (never share!) WORD as api passphrase for trading"},
+          {"ENDPOINTS",    "",       nullptr,  ""},
+          {"http",         "URL",    "",       "set URL of alernative HTTPS api endpoint for trading"},
+          {"wss",          "URL",    "",       "set URL of alernative WSS api endpoint for trading"},
+          {"fix",          "URL",    "",       "set URL of alernative FIX api endpoint for trading"},
+          {"NETWORK",      "",       nullptr,  ""},
+          {"nocache",      "1",      nullptr,  "do not cache handshakes 7 hours at " K_HOME "/cache"},
+          {"interface",    "IP",     "",       "set IP to bind as outgoing network interface"},
+          {"ipv6",         "1",      nullptr,  "use IPv6 when possible"}
         };
-        if (!arg<int>("autobot")) long_options.push_back(
-          {"autobot",      "1",      nullptr,  "automatically start trading on boot"}
-        );
-        if (!arg<int>("naked")) long_options.push_back(
-          {"naked",        "1",      nullptr,  "do not display CLI, print output to stdout instead"}
-        );
-        if (databases) long_options.push_back(
-          {"database",     "FILE",   "",       "set alternative PATH to database filename,"
-                                               "\n" "default PATH is '" K_HOME "/db/K-*.db',"
-                                               "\n" "or use ':memory:' (see sqlite.org/inmemorydb.html)"}
-        );
         if (!arg<int>("headless")) for (const Argument &it : (vector<Argument>){
+          {"ADMIN",        "",       nullptr,  ""},
           {"headless",     "1",      nullptr,  "do not listen for UI connections,"
                                                "\n" "all other UI related arguments will be ignored"},
           {"without-ssl",  "1",      nullptr,  "do not use HTTPS for UI connections (use HTTP only)"},
@@ -428,21 +433,50 @@ namespace ₿ {
           {"ssl-key",      "FILE",   "",       "set FILE to custom SSL .key file for HTTPS UI connections"
                                                "\n" "(the passphrase MUST be removed from the .key file!)"}
         }) long_options.push_back(it);
+        long_options.push_back(
+          {"BOT",          "",       nullptr,  ""}
+        );
+        if (!arg<int>("autobot")) long_options.push_back(
+          {"autobot",      "1",      nullptr,  "automatically start trading on boot"}
+        );
+        long_options.push_back(
+          {"title",        "WORD",   K_SOURCE, "set WORD to allow admins to identify different bots"}
+        );
+        for (const Argument &it : arguments.first)
+          long_options.push_back(it);
+        arguments.first.clear();
         for (const Argument &it : (vector<Argument>){
-          {"interface",    "IP",     "",       "set IP to bind as outgoing network interface"},
-          {"ipv6",         "1",      nullptr,  "use IPv6 when possible"},
-          {"exchange",     "NAME",   "",       "set exchange NAME for trading, mandatory"},
-          {"currency",     "PAIR",   "",       "set currency PAIR for trading, use format ISO 4217-A3"
-                                               "\n" "with '/' separator, like 'BTC/EUR', mandatory"},
-          {"apikey",       "WORD",   "",       "set (never share!) WORD as api key for trading, mandatory"},
-          {"secret",       "WORD",   "",       "set (never share!) WORD as api secret for trading, mandatory"},
-          {"passphrase",   "WORD",   "",       "set (never share!) WORD as api passphrase for trading"},
-          {"http",         "URL",    "",       "set URL of alernative HTTPS api endpoint for trading"},
-          {"wss",          "URL",    "",       "set URL of alernative WSS api endpoint for trading"},
-          {"fix",          "URL",    "",       "set URL of alernative FIX api endpoint for trading"},
+          {"debug-orders", "1",      nullptr,  "print detailed output about exchange messages"},
+          {"debug-quotes", "1",      nullptr,  "print detailed output about quoting engine"},
+          {"debug-secret", "1",      nullptr,  "print (never share!) secret inputs and outputs"},
+          {"debug",        "1",      nullptr,  "print detailed output about all the (previous) things!"},
+          {"colors",       "1",      nullptr,  "print highlighted output"},
+        }) long_options.push_back(it);
+        if (!arg<int>("naked")) long_options.push_back(
+          {"naked",        "1",      nullptr,  "do not display CLI, print output to stdout instead"}
+        );
+        if (databases) long_options.push_back(
+          {"database",     "FILE",   "",       "set alternative PATH to database filename,"
+                                               "\n" "default PATH is '" K_HOME "/db/K-*.db',"
+                                               "\n" "or use ':memory:' (see sqlite.org/inmemorydb.html)"}
+        );
+        long_options.push_back(
+          {"free-version", "1",      nullptr,  "slowdown market levels 121 seconds"}
+        );
+        vector<Argument> io_options(find_if(
+          long_options.begin(), long_options.end(),
+          [&](const Argument &it) {
+            return "debug" == it.name.substr(0, 5);
+          }
+        ), long_options.end());
+        long_options = vector<Argument>(
+          long_options.begin(),
+          long_options.end() - io_options.size()
+        );
+        long_options.push_back(
           {"market-limit", "NUMBER", "321",    "set NUMBER of maximum price levels for the orderbook,"
                                                "\n" "default NUMBER is '321' and the minimum is '10'"}
-        }) long_options.push_back(it);
+        );
         bool order_ev = false;
         for (const auto &it : events)
           if (holds_alternative<Gw::DataEvent>(it)
@@ -453,25 +487,19 @@ namespace ₿ {
             {"lifetime",     "NUMBER", "0",    "set NUMBER of minimum milliseconds to keep orders open,"
                                                "\n" "otherwise open orders can be replaced anytime required"}
           );
-        for (const Argument &it : arguments.first)
+        long_options.push_back(
+          {"I/O",    "",       nullptr,  ""}
+        );
+        for (const Argument &it : io_options)
           long_options.push_back(it);
-        arguments.first.clear();
-        for (const Argument &it : (vector<Argument>){
-          {"debug-orders", "1",      nullptr,  "print detailed output about exchange messages"},
-          {"debug-quotes", "1",      nullptr,  "print detailed output about quoting engine"},
-          {"debug-secret", "1",      nullptr,  "print (never share!) secret inputs and outputs"},
-          {"debug",        "1",      nullptr,  "print detailed output about all the (previous) things!"},
-          {"colors",       "1",      nullptr,  "print highlighted output"},
-          {"title",        "WORD",   K_SOURCE, "set WORD to allow admins to identify different bots"},
-          {"free-version", "1",      nullptr,  "slowdown market levels 121 seconds"}
-        }) long_options.push_back(it);
         int index = ANY_NUM;
         vector<option> opt_long = { {nullptr, 0, nullptr, 0} };
         for (const Argument &it : long_options) {
-          if     (!it.default_value)             args[it.name] = 0;
-          else if (it.defined_value == "NUMBER") args[it.name] = stoi(it.default_value);
-          else if (it.defined_value == "AMOUNT") args[it.name] = stod(it.default_value);
-          else                                   args[it.name] =      it.default_value;
+          if (it.help.empty()) continue;
+          else if (!it.default_value)             args[it.name] = 0;
+          else if ( it.defined_value == "NUMBER") args[it.name] = stoi(it.default_value);
+          else if ( it.defined_value == "AMOUNT") args[it.name] = stod(it.default_value);
+          else                                    args[it.name] =      it.default_value;
           opt_long.insert(opt_long.end()-1, {
             it.name.data(),
             it.default_value
@@ -596,38 +624,46 @@ namespace ₿ {
         const unsigned int x = !(y % 2)
                              + !(y % 21);
         clog
-          << Ansi::r(COLOR_GREEN) << PERMISSIVE_analpaper_SOFTWARE_LICENSE << '\n'
-          << Ansi::r(COLOR_GREEN) << "  questions: " << Ansi::r(COLOR_YELLOW) << "https://github.com/ctubio/Krypto-trading-bot/discussions" << '\n'
-          << Ansi::b(COLOR_GREEN) << "K" << Ansi::r(COLOR_GREEN) << " bugkiller: " << Ansi::r(COLOR_YELLOW) << "https://github.com/ctubio/Krypto-trading-bot/issues" << '\n'
-          << Ansi::r(COLOR_GREEN) << "  downloads: " << Ansi::r(COLOR_YELLOW) << "ssh://git@github.com/ctubio/Krypto-trading-bot" << '\n'
-          << Ansi::b(COLOR_WHITE) << stamp.at(((++y%4)*3)+x) << "Usage:" << Ansi::b(COLOR_YELLOW) << " " << K_SOURCE " [arguments]" << '\n';
+          << Ansi::r(COLOR_GREEN)  << '\n' << PERMISSIVE_analpaper_SOFTWARE_LICENSE << '\n' << '\n'
+          << Ansi::r(COLOR_GREEN) << "   questions: " << Ansi::r(COLOR_YELLOW) << "https://github.com/ctubio/Krypto-trading-bot/discussions" << '\n'
+          << Ansi::b(COLOR_GREEN) << " K" << Ansi::r(COLOR_GREEN) << " bugkiller: " << Ansi::r(COLOR_YELLOW) << "https://github.com/ctubio/Krypto-trading-bot/issues" << '\n'
+          << Ansi::r(COLOR_GREEN) << "   downloads: " << Ansi::r(COLOR_YELLOW) << "ssh://git@github.com/ctubio/Krypto-trading-bot" << '\n'
+          << Ansi::b(COLOR_WHITE) << stamp.at(((++y%4)*3)+x) << "Usage:" << Ansi::b(COLOR_YELLOW) << " " << K_SOURCE " [arguments]";
         clog
-          << Ansi::b(COLOR_WHITE) << stamp.at(((++y%4)*3)+x) << "[arguments]:";
+          << '\n' << Ansi::b(COLOR_WHITE) << stamp.at(((++y%4)*3)+x) << "[arguments]:";
         for (const Argument &it : long_options) {
-          if ((headless and it.name == "title")
+          if ( ( headless and  it.name == "title")
             or (!order_ev and (it.name == "debug-orders"
                             or it.name == "debug-quotes"))
           ) continue;
           string usage = it.help;
-          string::size_type n = 0;
-          while ((n = usage.find('\n', n + 1)) != string::npos)
-            usage.insert(n + 1, 28, ' ');
-          const string example = "--" + it.name + (it.default_value ? "=" + it.defined_value : "");
-          usage = '\n' + (
-            (!it.default_value and it.defined_value.at(0) > '>')
-              ? "-" + it.defined_value + ", "
-              : "    "
-          ) + example + string(22 - example.length(), ' ')
-            + "- " + usage;
-          n = 0;
-          do usage.insert(n + 1, Ansi::b(COLOR_WHITE) + stamp.at(((++y%4)*3)+x) + Ansi::r(COLOR_WHITE));
-          while ((n = usage.find('\n', n + 1)) != string::npos);
-          clog << usage << '.';
+          if (usage.empty())
+            clog
+              << '\n' << Ansi::b(COLOR_WHITE) << stamp.at(((++y%4)*3)+x) << string(16, ' ')
+              << "░▒▓█ " << string((11 - it.name.length()) / 2, ' ')
+              << it.name
+              << string((11 - it.name.length()) / 2, ' ') << " █▓▒░";
+          else {
+            string::size_type n = 0;
+            while ((n = usage.find('\n', n + 1)) != string::npos)
+              usage.insert(n + 1, 28, ' ');
+            const string example = "--" + it.name + (it.default_value ? "=" + it.defined_value : "");
+            usage = '\n' + (
+              (!it.default_value and it.defined_value.at(0) > '>')
+                ? "-" + it.defined_value + ", "
+                : "    "
+            ) + example + string(22 - example.length(), ' ')
+              + "- " + usage;
+            n = 0;
+            do usage.insert(n + 1, Ansi::b(COLOR_WHITE) + stamp.at(((++y%4)*3)+x) + Ansi::r(COLOR_WHITE));
+            while ((n = usage.find('\n', n + 1)) != string::npos);
+            clog << usage << '.';
+          }
         }
         clog << '\n'
-          << Ansi::r(COLOR_GREEN) << "  more help: " << Ansi::r(COLOR_YELLOW) << "https://github.com/ctubio/Krypto-trading-bot/blob/master/doc/MANUAL.md" << '\n'
-          << Ansi::b(COLOR_GREEN) << "K" << Ansi::r(COLOR_GREEN) << " questions: " << Ansi::r(COLOR_YELLOW) << "irc://irc.freenode.net:6667/#tradingBot" << '\n'
-          << Ansi::r(COLOR_GREEN) << "  home page: " << Ansi::r(COLOR_YELLOW) << "https://ca.rles-tub.io./trades" << '\n'
+          << Ansi::r(COLOR_GREEN) << "   more help: " << Ansi::r(COLOR_YELLOW) << "https://github.com/ctubio/Krypto-trading-bot/blob/master/doc/MANUAL.md" << '\n'
+          << Ansi::b(COLOR_GREEN) << " K" << Ansi::r(COLOR_GREEN) << " questions: " << Ansi::r(COLOR_YELLOW) << "irc://irc.freenode.net:6667/#tradingBot" << '\n'
+          << Ansi::r(COLOR_GREEN) << "   home page: " << Ansi::r(COLOR_YELLOW) << "https://ca.rles-tub.io./trades" << '\n'
           << Ansi::reset();
       };
   };
