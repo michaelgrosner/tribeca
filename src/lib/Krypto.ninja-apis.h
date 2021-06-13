@@ -230,7 +230,7 @@ namespace ₿ {
         Loop::Async::Event<Order>        orders;
         Loop::Async::Event<Connectivity> connectivity;
       } async;
-      void online(const Connectivity &connectivity = Connectivity::Connected) {
+      void online(const Connectivity &connectivity) {
         async.connectivity.try_write(connectivity);
         if (!(bool)connectivity)
           async.levels.try_write({});
@@ -454,10 +454,8 @@ namespace ₿ {
         if (subscription != connected()) {
           subscription = !subscription;
           if (subscription) subscribe();
-          else {
-            online(Connectivity::Disconnected);
-            reconnect("Disconnected");
-          };
+          else reconnect("Disconnected");
+          online((Connectivity)subscription);
         }
         return subscription;
       };
