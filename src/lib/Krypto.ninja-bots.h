@@ -426,21 +426,22 @@ namespace ₿ {
           {"client-limit", "NUMBER", "7",      "set NUMBER of maximum concurrent UI connections"},
           {"port",         "NUMBER", "3000",   "set NUMBER of an open port to listen for UI connections"
                                                "\n" "default NUMBER is '3000'"},
-          {"user",         "WORD",   "",       "set allowed WORD as username for UI connections"},
-          {"pass",         "WORD",   "",       "set allowed WORD as password for UI connections"},
+          {"user",         "WORD",   "",       "set allowed WORD as username for UI basic authentication"},
+          {"pass",         "WORD",   "",       "set allowed WORD as password for UI basic authentication"},
           {"ssl-crt",      "FILE",   "",       "set FILE to custom SSL .crt file for HTTPS UI connections"
                                                "\n" "(see www.akadia.com/services/ssh_test_certificate.html)"},
           {"ssl-key",      "FILE",   "",       "set FILE to custom SSL .key file for HTTPS UI connections"
-                                               "\n" "(the passphrase MUST be removed from the .key file!)"}
+                                               "\n" "(the passphrase MUST be removed from the .key file!)"},
+          {"matryoshka",   "URL",    "https://example.com/", "set Matryoshka link URL of the next UI"},
+          {"ignore-sun",   "2",      nullptr,  "do not switch UI to light theme on daylight"},
+          {"ignore-moon",  "1",      nullptr,  "do not switch UI to dark theme on moonlight"}
         }) long_options.push_back(it);
-        long_options.push_back(
+        for (const Argument &it : (vector<Argument>){
+          {"title",        "NAME",   K_SOURCE, "set NAME to allow admins to identify different bots"},
           {"BOT",          "",       nullptr,  ""}
-        );
+        }) long_options.push_back(it);
         if (!arg<int>("autobot")) long_options.push_back(
           {"autobot",      "1",      nullptr,  "automatically start trading on boot"}
-        );
-        long_options.push_back(
-          {"title",        "WORD",   K_SOURCE, "set WORD to allow admins to identify different bots"}
         );
         for (const Argument &it : arguments.first)
           long_options.push_back(it);
@@ -488,7 +489,7 @@ namespace ₿ {
                                                "\n" "otherwise open orders can be replaced anytime required"}
           );
         long_options.push_back(
-          {"I/O",    "",       nullptr,  ""}
+          {"I/O",          "",       nullptr,  ""}
         );
         for (const Argument &it : io_options)
           long_options.push_back(it);
@@ -625,9 +626,9 @@ namespace ₿ {
                              + !(y % 21);
         clog
           << Ansi::r(COLOR_GREEN)  << '\n' << PERMISSIVE_analpaper_SOFTWARE_LICENSE << '\n' << '\n'
-          << Ansi::r(COLOR_GREEN) << "   questions: " << Ansi::r(COLOR_YELLOW) << "https://github.com/ctubio/Krypto-trading-bot/discussions" << '\n'
-          << Ansi::b(COLOR_GREEN) << " K" << Ansi::r(COLOR_GREEN) << " bugkiller: " << Ansi::r(COLOR_YELLOW) << "https://github.com/ctubio/Krypto-trading-bot/issues" << '\n'
-          << Ansi::r(COLOR_GREEN) << "   downloads: " << Ansi::r(COLOR_YELLOW) << "ssh://git@github.com/ctubio/Krypto-trading-bot" << '\n'
+          << Ansi::r(COLOR_GREEN) << "   installer: " << Ansi::r(COLOR_YELLOW) << "https://krypto.ninja/Makefile" << '\n'
+          << Ansi::b(COLOR_GREEN) << " K" << Ansi::r(COLOR_GREEN) << " questions: " << Ansi::r(COLOR_YELLOW) << "https://github.com/ctubio/Krypto-trading-bot/discussions" << '\n'
+          << Ansi::r(COLOR_GREEN)  << "   bugkiller: " << Ansi::r(COLOR_YELLOW) << "https://github.com/ctubio/Krypto-trading-bot/issues" << '\n'
           << Ansi::b(COLOR_WHITE) << stamp.at(((++y%4)*3)+x) << "Usage:" << Ansi::b(COLOR_YELLOW) << " " << K_SOURCE " [arguments]";
         clog
           << '\n' << Ansi::b(COLOR_WHITE) << stamp.at(((++y%4)*3)+x) << "[arguments]:";
@@ -1240,18 +1241,18 @@ namespace ₿ {
               });
             }));
         } {
-          for (const auto &it : events)
-            if (holds_alternative<QuitEvent>(it))
-              ending(get<QuitEvent>(it));
-        } {
-          for (const auto &it : events)
-            if (holds_alternative<Gw::DataEvent>(it))
-              gateway->data(get<Gw::DataEvent>(it));
-        } {
           gateway->wait_for_data(this);
           timer_1s([&](const unsigned int &tick) {
             gateway->ask_for_data(tick);
           });
+          for (const auto &it : events)
+            if (holds_alternative<TimeEvent>(it))
+              timer_1s(get<TimeEvent>(it));
+            else if (holds_alternative<QuitEvent>(it))
+              ending(get<QuitEvent>(it));
+            else if (holds_alternative<Gw::DataEvent>(it))
+              gateway->data(get<Gw::DataEvent>(it));
+          events.clear();
           ending([&]() {
             gateway->end();
             end();
@@ -1264,11 +1265,6 @@ namespace ₿ {
                           ? "yes"
                           : "no"           }
           });
-        } {
-          for (const auto &it : events)
-            if (holds_alternative<TimeEvent>(it))
-              timer_1s(get<TimeEvent>(it));
-          events.clear();
         } {
           if (databases)
             backups(this);

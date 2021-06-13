@@ -42,9 +42,6 @@ class TradingBot: public KryptoNinja {
           {"min-size",     "AMOUNT", "0",                    "set custom minimum order size, like '0.01'"},
           {"leverage",     "AMOUNT", "1",                    "set between '0.01' and '100' to enable isolated margin,"
                                                              "\n" "or use '0' for cross margin; default AMOUNT is '1'"},
-          {"matryoshka",   "URL",    "https://example.com/", "set Matryoshka link URL of the next UI"},
-          {"ignore-sun",   "2",      nullptr,                "do not switch UI to light theme on daylight"},
-          {"ignore-moon",  "1",      nullptr,                "do not switch UI to dark theme on moonlight"},
           {"wallet-limit", "AMOUNT", "0",                    "set AMOUNT in base currency to limit the balance,"
                                                              "\n" "otherwise the full available balance can be used"},
           {"debug-wallet", "1",      nullptr,                "print detailed output about target base position"}

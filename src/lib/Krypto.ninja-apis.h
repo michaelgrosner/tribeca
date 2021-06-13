@@ -400,7 +400,6 @@ namespace ₿ {
 
   class Gw: public GwExchange {
     public:
-
 //BO non-free Gw class member functions from lib build-*/lib/K-*.a (it just redefines all virtual gateway functions below).
 /**/  static Gw* new_Gw(const string&); // may return too a nullptr instead of a child gateway class, if string is unknown.
 //EO non-free Gw class member functions from lib build-*/lib/K-*.a (it just redefines all virtual gateway functions above).
