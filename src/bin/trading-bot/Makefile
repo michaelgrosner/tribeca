@@ -61,6 +61,7 @@ export define PACKAGE_JSON
     "browserify": "^17.0.0",
     "highcharts": "^9.1.1",
     "highcharts-angular": "^2.10.0",
+    "rxjs": "^6.6.6",
     "sass": "^1.34.1",
     "typescript": "^4.3.2",
     "uglify-js": "^3.13.9",
