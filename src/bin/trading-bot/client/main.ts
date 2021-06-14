@@ -1,5 +1,4 @@
 import 'zone.js';
-import 'reflect-metadata';
 
 import {NgModule, NgZone, Component, Inject, OnInit, enableProdMode} from '@angular/core';
 import {platformBrowserDynamic} from '@angular/platform-browser-dynamic';
