@@ -412,8 +412,8 @@ namespace ₿ {
       };
     protected:
 //BO non-free Gw class member functions from lib build-*/lib/K-*.a (it just redefines all virtual gateway functions below).
-/**/  virtual void subscribe()   = 0;                                        // send subcription messages to remote server.
-/**/  virtual void consume(json) = 0;                                        // read message one by one from remote server.
+/**/  virtual string subscribe() = 0;               // send subcription messages to remote server and return channel names.
+/**/  virtual void consume(json) = 0;               // read message one by one from remote server and call async observers.
 //EO non-free Gw class member functions from lib build-*/lib/K-*.a (it just redefines all virtual gateway functions above).
       bool connected() const override {
         return WebSocket::connected();
@@ -443,7 +443,7 @@ namespace ₿ {
       bool subscribed() {
         if (subscription != connected()) {
           subscription = !subscription;
-          if (subscription) subscribe();
+          if (subscription) print("WS streaming [" + subscribe() + "]");
           else reconnect("Disconnected");
           online((Connectivity)subscription);
         }
