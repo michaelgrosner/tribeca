@@ -7,7 +7,7 @@ class ScalingBot: public KryptoNinja {
     {
       events    = {
         [&](const Connectivity &rawdata) { engine.read(rawdata); },
-        [&](const Wallets      &rawdata) { engine.read(rawdata); },
+        [&](const Wallet       &rawdata) { engine.read(rawdata); },
         [&](const Levels       &rawdata) { engine.read(rawdata); },
         [&](const Order        &rawdata) { engine.read(rawdata); },
         [&](const unsigned int &)        { engine.timer_1s(0);   },

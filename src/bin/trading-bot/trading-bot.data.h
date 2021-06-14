@@ -1803,8 +1803,9 @@ namespace tribeca {
     k.positionDivergence = j.value("pDiv", 0.0);
   };
 
-  struct WalletPosition: public Wallets,
-                         public Client::Broadcast<WalletPosition> {
+  struct Wallets: public Client::Broadcast<Wallets> {
+     Wallet base,
+            quote;
      Target target;
      Safety safety;
     Profits profits;
@@ -1813,7 +1814,7 @@ namespace tribeca {
       const Orders      &orders;
       const Price       &fairValue;
     public:
-      WalletPosition(const KryptoNinja &bot, const QuotingParams &q, const Orders &o, const Buttons &b, const MarketLevels &l)
+      Wallets(const KryptoNinja &bot, const QuotingParams &q, const Orders &o, const Buttons &b, const MarketLevels &l)
         : Broadcast(bot)
         , target(bot, q, l.stats.ewma.targetPositionAutoPercentage, base.value)
         , safety(bot, q, base, b, l.fairValue, target.targetBasePosition, target.positionDivergence)
@@ -1825,9 +1826,11 @@ namespace tribeca {
       bool ready() const {
         return !safety.empty();
       };
-      void read_from_gw(const Wallets &raw) {
-        if (raw.base.currency.empty() or raw.quote.currency.empty() or !fairValue) return;
-        calcMaxFunds(raw, K.arg<double>("wallet-limit"));
+      void read_from_gw(const Wallet &raw) {
+        if      (raw.currency == K.gateway->base)  base  = raw;
+        else if (raw.currency == K.gateway->quote) quote = raw;
+        if (base.currency.empty() or quote.currency.empty() or !fairValue) return;
+        calcMaxFunds();
         calcFunds();
       };
       void calcFunds() {
@@ -1866,10 +1869,10 @@ namespace tribeca {
       };
       void calcHeldAmount(const Side &side) {
         const Amount heldSide = orders.heldAmount(side);
-        if (side == Side::Ask and !base.currency.empty())
-          base = {base.total - heldSide, heldSide};
-        else if (side == Side::Bid and !quote.currency.empty())
-          quote = {quote.total - heldSide, heldSide};
+        if (side == Side::Ask)
+          base = {base.total - heldSide, heldSide, base.currency};
+        else if (side == Side::Bid)
+          quote = {quote.total - heldSide, heldSide, quote.currency};
       };
       void calcValues() {
         base.value  = K.gateway->margin == Future::Spot
@@ -1888,20 +1891,25 @@ namespace tribeca {
         base.profit  = profits.calcBaseDiff();
         quote.profit = profits.calcQuoteDiff();
       };
-      void calcMaxFunds(Wallets raw, Amount limit) {
+      void calcMaxFunds() {
+        auto limit = K.arg<double>("wallet-limit");
         if (limit) {
-          limit -= raw.quote.held / fairValue;
-          if (limit > 0 and raw.quote.amount / fairValue > limit) {
-            raw.quote.amount = limit * fairValue;
-            raw.base.amount = limit = 0;
-          } else limit -= raw.quote.amount / fairValue;
-          limit -= raw.base.held;
-          if (limit > 0 and raw.base.amount > limit)
-            raw.base.amount = limit;
+          limit -= quote.held / fairValue;
+          if (limit > 0 and quote.amount / fairValue > limit) {
+            quote.amount = limit * fairValue;
+            base.amount = limit = 0;
+          } else limit -= quote.amount / fairValue;
+          limit -= base.held;
+          if (limit > 0 and base.amount > limit)
+            base.amount = limit;
         }
-        base = raw.base;
-        quote = raw.quote;
       };
+  };
+  static void to_json(json &j, const Wallets &k) {
+    j = {
+      { "base", k.base },
+      {"quote", k.quote}
+    };
   };
 
   struct Quote: public Level {
@@ -1983,13 +1991,13 @@ namespace tribeca {
               Quotes&
       ) = nullptr;
     private_ref:
-      const KryptoNinja    &K;
-      const QuotingParams  &qp;
-      const MarketLevels   &levels;
-      const WalletPosition &wallet;
-            Quotes         &quotes;
+      const KryptoNinja   &K;
+      const QuotingParams &qp;
+      const MarketLevels  &levels;
+      const Wallets       &wallet;
+            Quotes        &quotes;
     public:
-      DummyMarketMaker(const KryptoNinja &bot, const QuotingParams &q, const MarketLevels &l, const WalletPosition &w, Quotes &Q)
+      DummyMarketMaker(const KryptoNinja &bot, const QuotingParams &q, const MarketLevels &l, const Wallets &w, Quotes &Q)
         : Clicked(bot, {
             {&q, [&]() { mode(); }}
           })
@@ -2184,12 +2192,12 @@ namespace tribeca {
                           AK47inc      = 0;
                  SideAPR  sideAPR      = SideAPR::Off;
     private_ref:
-      const KryptoNinja    &K;
-      const QuotingParams  &qp;
-      const MarketLevels   &levels;
-      const WalletPosition &wallet;
+      const KryptoNinja   &K;
+      const QuotingParams &qp;
+      const MarketLevels  &levels;
+      const Wallets       &wallet;
     public:
-      AntonioCalculon(const KryptoNinja &bot, const QuotingParams &q, const MarketLevels &l, const WalletPosition &w)
+      AntonioCalculon(const KryptoNinja &bot, const QuotingParams &q, const MarketLevels &l, const Wallets &w)
         : Broadcast(bot)
         , quotes(bot)
         , dummyMM(bot, q, l, w, quotes)
@@ -2717,7 +2725,7 @@ namespace tribeca {
       const QuotingParams &qp;
             Orders        &orders;
     public:
-      Broker(const KryptoNinja &bot, const QuotingParams &q, Orders &o, const Buttons &b, const MarketLevels &l, const WalletPosition &w)
+      Broker(const KryptoNinja &bot, const QuotingParams &q, Orders &o, const Buttons &b, const MarketLevels &l, const Wallets &w)
         : Clicked(bot, {
             {&b.submit, [&](const json &j) { placeOrder(j); }},
             {&b.cancel, [&](const json &j) { cancelOrder(orders.find(j)); }},
@@ -2816,12 +2824,12 @@ namespace tribeca {
 
   class Engine {
     public:
-       QuotingParams qp;
-              Orders orders;
-             Buttons button;
-        MarketLevels levels;
-      WalletPosition wallet;
-              Broker broker;
+      QuotingParams qp;
+             Orders orders;
+            Buttons button;
+       MarketLevels levels;
+            Wallets wallet;
+             Broker broker;
     private_ref:
       const KryptoNinja &K;
     public:
@@ -2838,7 +2846,7 @@ namespace tribeca {
       void read(const Connectivity &rawdata) {
         broker.semaphore.read_from_gw(rawdata);
       };
-      void read(const Wallets &rawdata) {
+      void read(const Wallet &rawdata) {
         wallet.read_from_gw(rawdata);
       };
       void read(const Levels &rawdata) {

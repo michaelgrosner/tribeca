@@ -17,7 +17,7 @@ class TradingBot: public KryptoNinja {
       databases = true;
       events    = {
         [&](const Connectivity &rawdata) { engine.read(rawdata);  },
-        [&](const Wallets      &rawdata) { engine.read(rawdata);  },
+        [&](const Wallet       &rawdata) { engine.read(rawdata);  },
         [&](const Levels       &rawdata) { engine.read(rawdata);  },
         [&](const Order        &rawdata) { engine.read(rawdata);  },
         [&](const Trade        &rawdata) { engine.read(rawdata);  },

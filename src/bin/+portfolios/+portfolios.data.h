@@ -1,7 +1,7 @@
 //! \file
 //! \brief Welcome user! (just a manager of portfolios).
 
-namespace example {
+namespace analpaper {
   class Engine {
     private:
       Levels levels;
@@ -11,7 +11,8 @@ namespace example {
       Engine(const KryptoNinja &bot)
         : K(bot)
       {};
-      void read(const Wallets &rawdata) {
+      void read(const Wallet &rawdata) {
+        cout << ((json)rawdata).dump() << endl;
       };
   };
 }

@@ -40,27 +40,17 @@ namespace ₿ {
     Wallet &operator=(const Wallet &raw) {
       total = (amount = raw.amount)
             + (held   = raw.held);
-      if (!raw.currency.empty())
-        currency = raw.currency;
+      currency = raw.currency;
       return *this;
     };
   };
-  static void to_json(json &j, const Wallet &k) {
+  static void __attribute__ ((unused)) to_json(json &j, const Wallet &k) {
     j = {
-      {"amount", k.amount},
-      {  "held", k.held  },
-      { "value", k.value },
-      {"profit", k.profit}
-    };
-  };
-  struct Wallets {
-    Wallet base,
-           quote;
-  };
-  static void __attribute__ ((unused)) to_json(json &j, const Wallets &k) {
-    j = {
-      { "base", k.base },
-      {"quote", k.quote}
+      {  "amount", k.amount  },
+      {    "held", k.held    },
+      {"currency", k.currency},
+      {   "value", k.value   },
+      {  "profit", k.profit  }
     };
   };
 
@@ -159,7 +149,7 @@ namespace ₿ {
     public_friend:
       using DataEvent = variant<
         function<void(const Connectivity&)>,
-        function<void(const Wallets&)>,
+        function<void(const Wallet&)>,
         function<void(const Levels&)>,
         function<void(const Order&)>,
         function<void(const Trade&)>
@@ -179,8 +169,8 @@ namespace ₿ {
       void data(const DataEvent &ev) {
         if (holds_alternative<function<void(const Connectivity&)>>(ev))
           async.connectivity.write = get<function<void(const Connectivity&)>>(ev);
-        else if (holds_alternative<function<void(const Wallets&)>>(ev))
-          async.wallets.write      = get<function<void(const Wallets&)>>(ev);
+        else if (holds_alternative<function<void(const Wallet&)>>(ev))
+          async.wallet.write       = get<function<void(const Wallet&)>>(ev);
         else if (holds_alternative<function<void(const Levels&)>>(ev))
           async.levels.write       = get<function<void(const Levels&)>>(ev);
         else if (holds_alternative<function<void(const Order&)>>(ev))
@@ -212,7 +202,7 @@ namespace ₿ {
       };
       void balance() {
         if (!async_wallet())
-          async.wallets.ask_for();
+          async.wallet.ask_for();
       };
 //BO non-free Gw class member functions from lib build-*/lib/K-*.a (it just redefines all virtual gateway functions below)...
 /**/  virtual void   place(string, Side, string, string, OrderType, TimeInForce) = 0;// call async order  data from exchange.
@@ -220,15 +210,15 @@ namespace ₿ {
 /**/  virtual void  cancel(string, string) = 0;                              // call by uuid async order  data from exchange.
 /**/  virtual void  cancel() = 0;                                          // call by symbol async orders data from exchange.
 /**/protected:
-/**/  virtual            bool async_wallet() { return false; };        // call               async wallet data from exchange.
-/**/  virtual vector<Wallets>  sync_wallet() { return {}; };         // call                  sync wallet data from exchange.
+/**/  virtual           bool async_wallet() { return false; };         // call               async wallet data from exchange.
+/**/  virtual vector<Wallet>  sync_wallet() { return {}; };          // call                  sync wallet data from exchange.
 //EO non-free Gw class member functions from lib build-*/lib/K-*.a (it just redefines all virtual gateway functions above)...
       struct {
-        Loop::Async::Event<Wallets>      wallets;
-        Loop::Async::Event<Levels>       levels;
-        Loop::Async::Event<Trade>        trades;
-        Loop::Async::Event<Order>        orders;
         Loop::Async::Event<Connectivity> connectivity;
+        Loop::Async::Event<Wallet>       wallet;
+        Loop::Async::Event<Levels>       levels;
+        Loop::Async::Event<Order>        orders;
+        Loop::Async::Event<Trade>        trades;
       } async;
       void online(const Connectivity &connectivity) {
         async.connectivity.try_write(connectivity);
@@ -236,7 +226,7 @@ namespace ₿ {
           async.levels.try_write({});
       };
       void wait_for_never_async_data(Loop *const loop) {
-        async.wallets.wait_for(loop, [&]() { return sync_wallet(); });
+        async.wallet.wait_for(loop, [&]() { return sync_wallet(); });
       };
       void ask_for_never_async_data(const unsigned int &tick) {
         if (!(tick % 15)) balance();

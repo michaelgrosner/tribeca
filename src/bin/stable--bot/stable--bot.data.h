@@ -8,16 +8,18 @@ namespace analpaper {
     DepletedFunds, Crossed
   };
 
-  struct WalletPosition: public Wallets {
+  struct Wallets {
+    Wallet base,
+           quote;
     private_ref:
       const KryptoNinja &K;
     public:
-      WalletPosition(const KryptoNinja &bot)
+      Wallets(const KryptoNinja &bot)
         : K(bot)
       {};
-      void read_from_gw(const Wallets &raw) {
-        base  = raw.base;
-        quote = raw.quote;
+      void read_from_gw(const Wallet &raw) {
+        if      (raw.currency == K.gateway->base)  base  = raw;
+        else if (raw.currency == K.gateway->quote) quote = raw;
       };
       bool ready() const {
         const bool err = base.currency.empty() or quote.currency.empty();
@@ -268,11 +270,11 @@ namespace analpaper {
     private:
       vector<const Order*> zombies;
     private_ref:
-      const KryptoNinja    &K;
-      const MarketLevels   &levels;
-      const WalletPosition &wallet;
+      const KryptoNinja  &K;
+      const MarketLevels &levels;
+      const Wallets      &wallet;
     public:
-      AntonioCalculon(const KryptoNinja &bot, const MarketLevels &l, const WalletPosition &w)
+      AntonioCalculon(const KryptoNinja &bot, const MarketLevels &l, const Wallets &w)
         : quotes(bot)
         , K(bot)
         , levels(l)
@@ -450,7 +452,7 @@ namespace analpaper {
             Orders       &orders;
       const MarketLevels &levels;
     public:
-      Broker(const KryptoNinja &bot, Orders &o, const MarketLevels &l, const WalletPosition &w)
+      Broker(const KryptoNinja &bot, Orders &o, const MarketLevels &l, const Wallets &w)
         : calculon(bot, l, w)
         , K(bot)
         , orders(o)
@@ -531,10 +533,10 @@ namespace analpaper {
 
   class Engine {
     private:
-              Orders orders;
-        MarketLevels levels;
-      WalletPosition wallet;
-              Broker broker;
+            Orders orders;
+      MarketLevels levels;
+           Wallets wallet;
+            Broker broker;
     public:
       Engine(const KryptoNinja &bot)
         : orders(bot)
@@ -545,7 +547,7 @@ namespace analpaper {
       void read(const Connectivity &rawdata) {
         broker.read_from_gw(rawdata);
       };
-      void read(const Wallets &rawdata) {
+      void read(const Wallet &rawdata) {
         wallet.read_from_gw(rawdata);
       };
       void read(const Levels &rawdata) {
