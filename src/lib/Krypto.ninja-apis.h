@@ -229,7 +229,7 @@ namespace ₿ {
         async.wallet.wait_for(loop, [&]() { return sync_wallet(); });
       };
       void ask_for_never_async_data(const unsigned int &tick) {
-        if (!(tick % 15)) balance();
+        if (async.wallet.write and !(tick % 15)) balance();
       };
   };
 
@@ -477,12 +477,11 @@ namespace ₿ {
         GwApiWs::connect();
         if (GwApiWs::connected()) {
           CURLcode rc;
-          if (CURLE_OK == (rc = WebSocketTwin::connect(twin(ws)))) {
+          if (CURLE_OK == (rc = WebSocketTwin::connect(twin(ws))))
             WebSocketTwin::start(GwExchangeData::loopfd, [&]() {
               wait_for_async_data();
             });
-            print("WS Streaming orders");
-          } else reconnect(string("CURL connect Error: ") + curl_easy_strerror(rc));
+          else reconnect(string("CURL connect Error: ") + curl_easy_strerror(rc));
         }
       };
       void disconnect() override {
