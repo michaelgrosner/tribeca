@@ -300,7 +300,7 @@ namespace ₿ {
         disconnect();
       };
       void report(Report notes, const bool &nocache) {
-        for (auto it : (Report){
+        for (const auto &it : (Report){
           {"symbols", (margin == Future::Linear
                         ? symbol             + " (" + decimal.funds.str(decimal.funds.step)
                         : base + "/" + quote + " (" + decimal.amount.str(tickSize)
@@ -315,7 +315,7 @@ namespace ₿ {
           {"takeFee", decimal.percent.str(takeFee * 1e+2) + "%"                               }
         }) notes.push_back(it);
         string note = "handshake:";
-        for (auto &it : notes)
+        for (const auto &it : notes)
           if (!it.second.empty())
             note += "\n- " + it.first + ": " + it.second;
         print((nocache ? "" : "cached ") + note);
