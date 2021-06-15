@@ -28,12 +28,7 @@ namespace analpaper {
   };
   static void to_json(json &j, const Wallets &k) {
     for (const auto &it : k.assets)
-      j[it.first] = {
-        {  "amount", it.second.amount},
-        {    "held", it.second.held  },
-        {   "value", it.second.value },
-        {  "profit", it.second.profit}
-      };
+      j[it.first] = it.second;
   };
 
   struct Broker: public Client::Broadcast<Broker>,
