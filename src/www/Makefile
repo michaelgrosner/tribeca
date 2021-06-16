@@ -74,12 +74,7 @@ export define PACKAGE_JSON
     "type": "git",
     "url": "git@github.com:ctubio/Krypto-trading-bot.git"
   },
-  "author": "Michael Grosner",
-  "contributors": [
-    {
-      "name": "Carles Tubio"
-    }
-  ],
+  "author": "Carles Tubio",
   "os": [
     "darwin",
     "linux",
