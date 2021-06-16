@@ -6,7 +6,7 @@ require('highcharts/highcharts-more')(Highcharts);
 import * as Models from '../../../www/ts/models';
 
 @Component({
-  selector: 'market-stats',
+  selector: 'stats',
   template: `<div class="col-md-12 col-xs-12" style="height:622px;">
     <div class="col-md-6 col-xs-6">
         <highcharts-chart [Highcharts]="Highcharts" style="display: block;" [options]="fvChartOptions"></highcharts-chart>

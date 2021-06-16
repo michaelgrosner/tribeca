@@ -5,10 +5,10 @@ import * as Models from '../../../www/ts/models';
 import * as Shared from '../../../www/ts/shared';
 
 @Component({
-  selector: 'market-trades',
+  selector: 'takers',
   template: `<ag-grid-angular #marketList (click)="this.loadSubscriber()" class="ag-theme-fresh ag-theme-dark {{ subscribed ? \'ag-subscribed\' : \'ag-not-subscribed\' }} marketTrades" style="height: 616px;width: 100%;" rowHeight="21" [gridOptions]="gridOptions" [modules]="modules"></ag-grid-angular>`
 })
-export class MarketTradesComponent implements OnInit {
+export class TakersComponent implements OnInit {
 
   private modules: Module[] = [ClientSideRowModelModule];
 

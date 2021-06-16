@@ -3,7 +3,7 @@ import {Component, Input} from '@angular/core';
 import * as Models from '../../../www/ts/models';
 
 @Component({
-  selector: 'wallet-position',
+  selector: 'wallet',
   template: `<div class="positions">
     <h4 class="col-md-12 col-xs-2"><small>{{ product.base }}:<br><span title="{{ product.base }} Available" class="text-danger">{{ basePosition.toFixed(8) }}</span><br/><span title="{{ product.base }} Held" [ngClass]="baseHeldPosition ? 'sell' : 'text-muted'">{{ baseHeldPosition.toFixed(8) }}</span>
     <hr style="margin:0 30px;color:#fff;opacity:.7">
@@ -17,7 +17,7 @@ import * as Models from '../../../www/ts/models';
     <h4 class="col-md-12 col-xs-2" style="margin-top: 0px!important;"><small style="font-size:69%"><span title="{{ product.base }} profit %" class="{{ profitBase>0 ? \'text-danger\' : \'text-muted\' }}">{{ profitBase>=0?'+':'' }}{{ profitBase.toFixed(2) }}%</span><span *ngIf="!product.margin">, </span><span *ngIf="!product.margin" title="{{ product.quote }} profit %" class="{{ profitQuote>0 ? \'text-danger\' : \'text-muted\' }}">{{ profitQuote>=0?'+':'' }}{{ profitQuote.toFixed(2) }}%</span></small></h4>
   </div>`
 })
-export class WalletPositionComponent {
+export class WalletComponent {
 
   public basePosition: number = 0;
   public quotePosition: number = 0;

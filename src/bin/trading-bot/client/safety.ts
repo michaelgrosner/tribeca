@@ -3,7 +3,7 @@ import {Component, Input} from '@angular/core';
 import * as Models from '../../../www/ts/models';
 
 @Component({
-  selector: 'trade-safety',
+  selector: 'safety',
   template: `<div div class="tradeSafety">
     <div>
       <div class="param-info"><span class="param-label">Fair Value</span>:<span class="param-value {{ fairValue ? \'text-danger fairvalue\' : \'text-muted\' }}">{{ fairValue.toFixed(product.tickPrice) }}</span></div>
@@ -15,7 +15,7 @@ import * as Models from '../../../www/ts/models';
     </div>
   </div>`
 })
-export class TradeSafetyComponent {
+export class SafetyComponent {
 
   public fairValue: number = 0;
   private buySafety: number = 0;

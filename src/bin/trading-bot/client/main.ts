@@ -11,11 +11,11 @@ import * as Models from '../../../www/ts/models';
 import * as Socket from '../../../www/ts/socket';
 import * as Shared from '../../../www/ts/shared';
 
-import {WalletPositionComponent} from './wallet-position';
-import {MarketQuotingComponent} from './market-quoting';
-import {MarketTradesComponent} from './market-trades';
-import {TradeSafetyComponent} from './trade-safety';
 import {SettingsComponent} from './settings';
+import {MarketComponent} from './market';
+import {TakersComponent} from './takers';
+import {SafetyComponent} from './safety';
+import {WalletComponent} from './wallet';
 import {OrdersComponent} from './orders';
 import {TradesComponent} from './trades';
 import {SubmitComponent} from './submit';
@@ -42,7 +42,7 @@ import {StatsComponent} from './stats';
                     <div class="col-md-1 col-xs-12 text-center" style="padding-right:0px;">
                         <div class="row exchange">
                             <state-button [product]="product" (onConnected)="onConnected($event)" (onAgree)="onAgree($event)" [setExchangeStatus]="state" [setServerStatus]="connected"></state-button>
-                            <wallet-position [product]="product" [setPosition]="Position"></wallet-position>
+                            <wallet [product]="product" [setPosition]="Position"></wallet>
                             <div>
                               <a [hidden]="!product.webMarket" rel="noreferrer" href="{{ product.webMarket }}" target="_blank">Market</a><span [hidden]="!(product.webMarket && product.webOrders)">, </span><a [hidden]="!product.webOrders" rel="noreferrer" href="{{ product.webOrders }}" target="_blank">Orders</a>
                               <br/><br/><div>
@@ -93,16 +93,16 @@ import {StatsComponent} from './stats';
                     </div>
 
                     <div [hidden]="!showStats" [ngClass]="showStats == 2 ? 'col-md-11 col-xs-12 absolute-charts' : 'col-md-11 col-xs-12 relative-charts'">
-                      <market-stats ondblclick="this.style.opacity=this.style.opacity<1?1:0.4" [setMarketWidth]="marketWidth" [setShowStats]="!!showStats" [product]="product" [setQuotingParameters]="quotingParameters" [setTargetBasePosition]="TargetBasePosition" [setMarketChartData]="MarketChartData" [setTradesChartData]="TradesChartData" [setPosition]="Position" [setFairValue]="FairValue"></market-stats>
+                      <stats ondblclick="this.style.opacity=this.style.opacity<1?1:0.4" [setMarketWidth]="marketWidth" [setShowStats]="!!showStats" [product]="product" [setQuotingParameters]="quotingParameters" [setTargetBasePosition]="TargetBasePosition" [setMarketChartData]="MarketChartData" [setTradesChartData]="TradesChartData" [setPosition]="Position" [setFairValue]="FairValue"></stats>
                     </div>
                     <div [hidden]="showStats === 1" class="col-md-{{ showTakers ? '9' : '11' }} col-xs-12" style="padding-left:0px;padding-bottom:0px;">
                       <div class="row" style="padding-top:0px;">
                         <div class="markets-params-left col-md-4 col-xs-12" style="padding-left:0px;padding-top:0px;padding-right:0px;">
                             <div class="row">
                               <div class="col-md-6">
-                                <trade-safety [product]="product" [setFairValue]="FairValue" [setTradeSafety]="TradeSafety"></trade-safety>
+                                <safety [product]="product" [setFairValue]="FairValue" [setTradeSafety]="TradeSafety"></safety>
                               </div>
-                              <market-quoting [tradeFreq]="tradeFreq" (onBidsLength)="onBidsLength($event)" (onAsksLength)="onAsksLength($event)" (onMarketWidth)="onMarketWidth($event)" [agree]="!!state.agree" [product]="product" [addr]="addr" [setQuoteStatus]="QuoteStatus" [setMarketData]="MarketData" [setOrderList]="orderList" [setTargetBasePosition]="TargetBasePosition"></market-quoting>
+                              <market [tradeFreq]="tradeFreq" (onBidsLength)="onBidsLength($event)" (onAsksLength)="onAsksLength($event)" (onMarketWidth)="onMarketWidth($event)" [agree]="!!state.agree" [product]="product" [addr]="addr" [setQuoteStatus]="QuoteStatus" [setMarketData]="MarketData" [setOrderList]="orderList" [setTargetBasePosition]="TargetBasePosition"></market>
                             </div>
                         </div>
                         <div class="orders-table-right col-md-8 col-xs-12" style="padding-left:0px;padding-right:0px;padding-top:0px;">
@@ -121,7 +121,7 @@ import {StatsComponent} from './stats';
                       </div>
                     </div>
                     <div [hidden]="!showTakers || showStats === 1" class="col-md-2 col-xs-12" style="padding-left:0px;">
-                      <market-trades [product]="product" [setMarketTradeData]="MarketTradeData"></market-trades>
+                      <takers [product]="product" [setMarketTradeData]="MarketTradeData"></takers>
                     </div>
                 </div>
             </div>
@@ -477,13 +477,13 @@ class ClientComponent implements OnInit {
     SubmitComponent,
     OrdersComponent,
     TradesComponent,
-    SettingsComponent,
-    MarketQuotingComponent,
-    MarketTradesComponent,
-    WalletPositionComponent,
-    TradeSafetyComponent,
+    WalletComponent,
+    MarketComponent,
+    SafetyComponent,
+    TakersComponent,
     StateComponent,
     StatsComponent,
+    SettingsComponent,
     Shared.BaseCurrencyCellComponent,
     Shared.QuoteCurrencyCellComponent
   ],

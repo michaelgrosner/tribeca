@@ -3,7 +3,7 @@ import {Component, EventEmitter, Input, Output} from '@angular/core';
 import * as Models from '../../../www/ts/models';
 
 @Component({
-  selector: 'market-quoting',
+  selector: 'market',
   template: `<div class="col-md-6">
         <div class="tradeSafety2">
           <div>
@@ -69,7 +69,7 @@ import * as Models from '../../../www/ts/models';
     <table *ngIf="addr" class="table-responsive text-center" style="width:100%;"><tr><td><div class="text-danger text-center"><br /><br />To <a href="https://github.com/ctubio/Krypto-trading-bot/blob/master/README.md#unlock" target="_blank">unlock</a> realtime market data,<br />and to collaborate with the development..<br /><br />make an acceptable <code>Pull Request</code> on github,<br/><br/>or send <code>0.01210000 BTC</code> or more to:<br /><a href="https://live.blockcypher.com/btc/address/{{ addr }}" target="_blank">{{ addr }}</a><br /><br />Wait 0 confirmations and restart this bot.</div></td></tr></table>
     </div>`
 })
-export class MarketQuotingComponent {
+export class MarketComponent {
 
   public levels: Models.Market = null;
   public allBidsSize: number = 0;
