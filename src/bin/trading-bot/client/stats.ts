@@ -1,8 +1,9 @@
 import {Component, Input, OnInit} from '@angular/core';
+
 import * as Highcharts from 'highcharts';
 require('highcharts/highcharts-more')(Highcharts);
-import * as Subscribe from './subscribe';
-import * as Models from './models';
+
+import * as Models from '../../../www/ts/models';
 
 @Component({
   selector: 'market-stats',

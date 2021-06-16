@@ -1,8 +1,8 @@
 K         ?= K.sh
 MAJOR      = 0
 MINOR      = 6
-PATCH      = 2
-BUILD      = 8
+PATCH      = 3
+BUILD      = 0
 
 OBLIGATORY = DISCLAIMER: This is strict non-violent software: \n$\
              if you hurt other living creatures, please stop; \n$\
@@ -131,11 +131,11 @@ endif
 
 $(SOURCE):
 	$(info $(call STEP,$@))
-	$(MAKE) $(shell ! test -f src/bin/$@/Makefile || echo assets) src KSRC=$@
+	$(MAKE) $(shell ! test -f src/bin/$@/client/main.ts || echo assets) src KSRC=$@
 
-assets: src/bin/$(KSRC)/Makefile
+assets: src/bin/$(KSRC)/client/main.ts
 	$(info $(call STEP,$(KSRC) $@))
-	$(MAKE) -C src/bin/$(KSRC) KHOME=$(KHOME)
+	$(MAKE) -C src/www KHOME=$(KHOME)
 	$(foreach chost,$(CARCH), \
 	  build=build-$(shell echo $(chost) | sed 's/-\([a-z_0-9]*\)-\(linux\)$$/-\2-\1/' | sed 's/\([a-z_0-9]*\)-\([a-z_0-9]*\)-.*/\2-\1/' | sed 's/^w64/win64/') \
 	  && ! test -d $${build} || ((test -d $${build}/var/assets           \
@@ -146,7 +146,7 @@ assets: src/bin/$(KSRC)/Makefile
 	rm -rf $(KHOME)/assets
 
 assets.o: src/bin/$(KSRC)/$(KSRC).disk.S
-	$(chost)g++ -Wa,-I,$(KBUILD)/var/assets,-I,src/bin/$(KSRC) -c $^ \
+	$(chost)g++ -Wa,-I,$(KBUILD)/var/assets,-I,src -c $^ \
 	  -o $(KBUILD)/lib/K-$(notdir $(basename $(basename $^)))-$@
 
 src: src/lib/Krypto.ninja-main.cxx src/bin/$(KSRC)/$(KSRC).main.h

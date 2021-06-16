@@ -1,8 +1,7 @@
 import {NgZone} from '@angular/core';
 
-import * as Models from './models';
-import * as Subscribe from './subscribe';
-import {FireFactory, SubscriberFactory} from './shared_directives';
+import * as Models from '../../../www/ts/models';
+import * as Socket from '../../../www/ts/socket';
 
 class FormViewModel<T> {
   master: T;
@@ -12,8 +11,8 @@ class FormViewModel<T> {
 
   constructor(
     defaultParameter: T,
-    private _sub: Subscribe.ISubscribe<T>,
-    private _fire: Subscribe.IFire<T>,
+    private _sub: Socket.ISubscribe<T>,
+    private _fire: Socket.IFire<T>,
     private _submitConverter: (disp: T) => T = null
   ) {
     if (this._submitConverter === null)
@@ -50,8 +49,8 @@ class FormViewModel<T> {
 
 class QuotingButtonViewModel extends FormViewModel<any> {
   constructor(
-    sub: Subscribe.ISubscribe<any>,
-    fire: Subscribe.IFire<any>
+    sub: Socket.ISubscribe<any>,
+    fire: Socket.IFire<any>
   ) {
     super({agree:0}, sub, fire, d => {return {agree:Math.abs(d.agree-1)};});
   }
@@ -76,8 +75,8 @@ class DisplayQuotingParameters extends FormViewModel<Models.QuotingParameters> {
   availablePongAt = [];
   availableSTDEV = [];
 
-  constructor(sub: Subscribe.ISubscribe<Models.QuotingParameters>,
-    fire: Subscribe.IFire<Models.QuotingParameters>) {
+  constructor(sub: Socket.ISubscribe<Models.QuotingParameters>,
+    fire: Socket.IFire<Models.QuotingParameters>) {
     super(<Models.QuotingParameters>{}, sub, fire, (d: any) => {
       d.widthPing = parseFloat(d.widthPing);
       d.widthPong = parseFloat(d.widthPong);
@@ -140,8 +139,8 @@ export class DisplayPair {
 
   constructor(
     public zone: NgZone,
-    subscriberFactory: SubscriberFactory,
-    fireFactory: FireFactory
+    subscriberFactory: Socket.SubscriberFactory,
+    fireFactory: Socket.FireFactory
   ) {
     this.active = new QuotingButtonViewModel(
       null,

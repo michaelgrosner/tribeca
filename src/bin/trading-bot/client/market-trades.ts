@@ -1,8 +1,8 @@
 import {NgZone, Component, Inject, Input, OnInit} from '@angular/core';
 import {Module, ClientSideRowModelModule, GridOptions, ColDef, RowNode} from '@ag-grid-community/all-modules';
 
-import * as Models from './models';
-import {SubscriberFactory, BaseCurrencyCellComponent, QuoteCurrencyCellComponent} from './shared_directives';
+import * as Models from '../../../www/ts/models';
+import * as Shared from '../../../www/ts/shared';
 
 @Component({
   selector: 'market-trades',
@@ -16,9 +16,16 @@ export class MarketTradesComponent implements OnInit {
 
   @Input() product: Models.ProductAdvertisement;
 
+  @Input() set setMarketTradeData(o: Models.MarketTrade) {
+    if (o === null) {
+      if (this.gridOptions.rowData)
+        this.gridOptions.api.setRowData([]);
+    }
+    else this.addRowData(o);
+  }
+
   constructor(
-    @Inject(NgZone) private zone: NgZone,
-    @Inject(SubscriberFactory) private subscriberFactory: SubscriberFactory
+    @Inject(NgZone) private zone: NgZone
   ) {}
 
   ngOnInit() {
@@ -33,11 +40,6 @@ export class MarketTradesComponent implements OnInit {
     if (this.subscribed) return;
     this.subscribed = true;
     this.gridOptions.rowData = [];
-
-    this.subscriberFactory
-      .getSubscriber(this.zone, Models.Topics.MarketTrade)
-      .registerDisconnectedHandler(() => this.gridOptions.rowData.length = 0)
-      .registerSubscriber(this.addRowData);
   }
 
   private createColumnDefs = (): ColDef[] => {
@@ -50,10 +52,10 @@ export class MarketTradesComponent implements OnInit {
       } },
       { width: 75, field: 'price', headerName: 'price', cellClass: (params) => {
           return (params.data.side === 'Ask') ? "sell" : "buy";
-      }, cellRendererFramework: QuoteCurrencyCellComponent},
+      }, cellRendererFramework: Shared.QuoteCurrencyCellComponent},
       { width: 50, field: 'quantity', headerName: 'qty', cellClass: (params) => {
           return (params.data.side === 'Ask') ? "sell" : "buy";
-      }, cellRendererFramework: BaseCurrencyCellComponent},
+      }, cellRendererFramework: Shared.BaseCurrencyCellComponent},
       { width: 40, field: 'side', headerName: 'side' , cellClass: (params) => {
         if (params.value === 'Bid') return 'buy';
         else if (params.value === 'Ask') return "sell";

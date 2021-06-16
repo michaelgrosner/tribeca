@@ -1,3 +1,9 @@
+### K.sh.dist
+Used on install to initialize `./K.sh` file, feel free to add your own hardcoded arguments to your own `./K.sh` file after install.
+
+### ../src/www/.bomb.gzip
+Used by `--whitelist` argument to attempt to crash UI clients from alien IPs not whitelisted; no need to open.
+
 ### Dockerfile
 To run K.sh with Docker, please make use of the [Dockerfile](https://raw.githubusercontent.com/ctubio/Krypto-trading-bot/master/etc/Dockerfile):
 
@@ -27,9 +33,3 @@ To build your own portable development environment install [VirtualBox](https://
  $ vagrant ssh
 ```
 See more info at [PR #425](https://github.com/ctubio/Krypto-trading-bot/pull/425).
-
-### K.sh.dist
-Used on install to initialize `./K.sh` file, feel free to add your own hardcoded arguments to your own `./K.sh` file after install.
-
-### ../src/bin/trading-bot/www/.bomb.gzip
-Used by `--whitelist` argument to attempt to crash UI clients from alien IPs not whitelisted; no need to open.

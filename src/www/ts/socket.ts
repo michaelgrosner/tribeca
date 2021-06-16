@@ -1,3 +1,4 @@
+import {NgModule, Injectable} from '@angular/core';
 import { Observable } from 'rxjs';
 
 import * as Models from './models';
@@ -5,14 +6,14 @@ import * as Models from './models';
 var events = {};
 var socket;
 
-export class KSocket {
+export class Client {
   public ws;
   constructor() {
     socket = this;
     this.ws = new WebSocket(location.origin.replace('http', 'ws'));
     for (const ev in events) events[ev].forEach(cb => this.ws.addEventListener(ev, cb));
     this.ws.addEventListener('close', () => {
-      setTimeout(() => { new KSocket(); }, 5000);
+      setTimeout(() => { new Client(); }, 5000);
     });
   }
   public setEventListener = (ev, cb) => {
@@ -21,7 +22,6 @@ export class KSocket {
     this.ws.addEventListener(ev, cb);
   }
 }
-
 
 export interface ISubscribe<T> {
   registerSubscriber: (incrementalHandler: (msg: T) => void) => ISubscribe<T>;
@@ -104,3 +104,51 @@ export class Fire<T> implements IFire<T> {
         socket.ws.send(Models.Prefixes.MESSAGE + this._topic + (typeof msg == 'object' ? JSON.stringify(msg) : msg));
     };
 }
+
+@Injectable()
+export class FireFactory {
+    constructor() {}
+
+    public getFire = <T>(topic : string) : IFire<T> => {
+        return new Fire<T>(topic);
+    }
+}
+
+@Injectable()
+export class SubscriberFactory {
+    constructor() {}
+
+    public getSubscriber = <T>(scope: any, topic: string): ISubscribe<T> => {
+      return new EvalAsyncSubscriber<T>(scope, topic);
+    }
+}
+
+class EvalAsyncSubscriber<T> implements ISubscribe<T> {
+    private _wrapped: ISubscribe<T>;
+
+    constructor(private _scope: any, topic: string) {
+      this._wrapped = new Subscriber<T>(topic);
+    }
+
+    public registerSubscriber = (incrementalHandler: (msg: T) => void) => {
+      return this._wrapped.registerSubscriber(x => this._scope.run(() => incrementalHandler(x)))
+    };
+
+    public registerConnectHandler = (handler : () => void) => {
+        return this._wrapped.registerConnectHandler(() => this._scope.run(handler));
+    };
+
+    public registerDisconnectedHandler = (handler: () => void) => {
+      return this._wrapped.registerDisconnectedHandler(() => this._scope.run(handler));
+    };
+
+    public get connected() { return this._wrapped.connected; }
+}
+
+@NgModule({
+  providers: [
+    SubscriberFactory,
+    FireFactory
+  ]
+})
+export class DataModule {}

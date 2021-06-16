@@ -1,5 +1,5 @@
 ERR        = *** Unexpected MAKELEVEL = 0.
-HINT       = This Makefile can't be used directly, consider cd ../../.. before try again
+HINT       = This Makefile can't be used directly, consider cd ../.. before try again
 $(if $(subst 0,,${MAKELEVEL}),,$(warning $(ERR));$(error $(HINT)))
 ERR        = *** Unexpected MAKE_VERSION < 4.
 HINT       = This Makefile can't be used with your make v${MAKE_VERSION}, consider to upgrade before try again
@@ -25,19 +25,19 @@ ifndef GITHUB_ACTIONS
 	@rm $(abspath $(NODE_PATH)/..)/$(basename $^)*
 endif
 
-client: npm client/main.ts
+client: npm ../bin/$(KSRC)/client/main.ts
 	$(info $(STEP_2))
 	NODE_PATH=$(NODE_PATH) tsc --baseUrl $(NODE_PATH) --typeRoots $(NODE_PATH)/@types --alwaysStrict \
-	  --experimentalDecorators -t ES2018 -m commonjs --outDir $(KASSETS)/www/js client/*.ts
+	  --experimentalDecorators -t ES2018 -m commonjs --outDir $(KASSETS)/www/js ../bin/$(KSRC)/client/main.ts
 
 js: client $(NODE_PATH)/.bin
 	$(info $(STEP_3))
 	NODE_PATH=$(NODE_PATH) browserify -t [ $(NODE_PATH)/babelify --presets [ $(NODE_PATH)/@babel/preset-env ] ] \
-	  $(KASSETS)/www/js/main.js | uglifyjs | gzip > $(KASSETS)/www/js/client.min.js
+	  $(KASSETS)/www/js/bin/$(KSRC)/client/main.js | uglifyjs | gzip > $(KASSETS)/www/js/client.min.js
 
-css: www/sass/*.scss
+css: sass/*.scss
 	$(info $(STEP_4))
-	$(foreach scss,$(wildcard www/sass/*.scss), \
+	$(foreach scss,$(wildcard sass/*.scss), \
 	  sass $(scss) $(KASSETS)/www/css/$(basename $(notdir $(scss))).min.css ;)
 	cat $(NODE_PATH)/@ag-grid-community/all-modules/dist/styles/ag-grid.css \
 	  >> $(KASSETS)/www/css/bootstrap.min.css

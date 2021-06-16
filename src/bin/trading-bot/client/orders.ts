@@ -1,9 +1,9 @@
 import {Component, Inject, Input, OnInit} from '@angular/core';
 import {Module, ClientSideRowModelModule, GridOptions, ColDef, RowNode} from '@ag-grid-community/all-modules';
 
-import * as Models from './models';
-import * as Subscribe from './subscribe';
-import {FireFactory, BaseCurrencyCellComponent, QuoteCurrencyCellComponent} from './shared_directives';
+import * as Models from '../../../www/ts/models';
+import * as Socket from '../../../www/ts/socket';
+import * as Shared from '../../../www/ts/shared';
 
 @Component({
   selector: 'order-list',
@@ -15,7 +15,7 @@ export class OrdersComponent implements OnInit {
 
   private gridOptions: GridOptions = <GridOptions>{};
 
-  private fireCxl: Subscribe.IFire<any>;
+  private fireCxl: Socket.IFire<any>;
 
   @Input() product: Models.ProductAdvertisement;
 
@@ -31,7 +31,7 @@ export class OrdersComponent implements OnInit {
   }
 
   constructor(
-    @Inject(FireFactory) private fireFactory: FireFactory
+    @Inject(Socket.FireFactory) private fireFactory: Socket.FireFactory
   ) {}
 
   ngOnInit() {
@@ -64,10 +64,10 @@ export class OrdersComponent implements OnInit {
       { width: 74, field: 'price', headerName: 'price',
         sort: 'desc',  cellClass: (params) => {
         return (params.data.side === 'Ask') ? "sell" : "buy";
-      }, cellRendererFramework: QuoteCurrencyCellComponent},
+      }, cellRendererFramework: Shared.QuoteCurrencyCellComponent},
       { width: 85, suppressSizeToFit: true, field: 'qty', headerName: 'qty', cellClass: (params) => {
         return (params.data.side === 'Ask') ? "sell" : "buy";
-      }, cellRendererFramework: BaseCurrencyCellComponent},
+      }, cellRendererFramework: Shared.BaseCurrencyCellComponent},
       { width: 74, field: 'value', headerName: 'value', cellClass: (params) => {
         return (params.data.side === 'Ask') ? "sell" : "buy";
       }},

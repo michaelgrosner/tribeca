@@ -7,9 +7,10 @@ import {BrowserModule} from '@angular/platform-browser';
 import {AgGridModule} from '@ag-grid-community/angular';
 import {HighchartsChartModule} from 'highcharts-angular';
 
-import * as Models from './models';
-import * as Subscribe from './subscribe';
-import {SharedModule, FireFactory, SubscriberFactory, BaseCurrencyCellComponent, QuoteCurrencyCellComponent} from './shared_directives';
+import * as Models from '../../../www/ts/models';
+import * as Socket from '../../../www/ts/socket';
+import * as Shared from '../../../www/ts/shared';
+
 import * as Pair from './pair';
 import {WalletPositionComponent} from './wallet-position';
 import {MarketQuotingComponent} from './market-quoting';
@@ -41,10 +42,10 @@ class DisplayOrder {
     return names;
   }
 
-  private _fire: Subscribe.IFire<Models.OrderRequestFromUI>;
+  private _fire: Socket.IFire<Models.OrderRequestFromUI>;
 
   constructor(
-    fireFactory: FireFactory
+    fireFactory: Socket.FireFactory
   ) {
     this.availableSides = DisplayOrder.getNames(Models.Side).slice(0, 2);
     this.availableTifs = DisplayOrder.getNames(Models.TimeInForce);
@@ -690,7 +691,7 @@ class DisplayOrder {
                       </div>
                     </div>
                     <div [hidden]="!showTakers || showStats === 1" class="col-md-2 col-xs-12" style="padding-left:0px;">
-                      <market-trades [product]="product"></market-trades>
+                      <market-trades [product]="product" [setMarketTradeData]="MarketTradeData"></market-trades>
                     </div>
                 </div>
             </div>
@@ -726,6 +727,7 @@ class ClientComponent implements OnInit {
   public TradeSafety: Models.TradeSafety = null;
   public TargetBasePosition: Models.TargetBasePositionValue = null;
   public MarketData: Models.Market = null;
+  public MarketTradeData: Models.MarketTrade = null;
   public QuoteStatus: Models.TwoSidedQuoteStatus = null;
   public MarketChartData: Models.MarketChart = null;
   public TradesChartData: Models.TradeChart = null;
@@ -794,12 +796,12 @@ class ClientComponent implements OnInit {
 
   constructor(
     @Inject(NgZone) private zone: NgZone,
-    @Inject(SubscriberFactory) private subscriberFactory: SubscriberFactory,
-    @Inject(FireFactory) private fireFactory: FireFactory
+    @Inject(Socket.SubscriberFactory) private subscriberFactory: Socket.SubscriberFactory,
+    @Inject(Socket.FireFactory) private fireFactory: Socket.FireFactory
   ) {}
 
   ngOnInit() {
-    new Subscribe.KSocket();
+    new Socket.Client();
 
     this.buildDialogs(window, document);
 
@@ -836,6 +838,11 @@ class ClientComponent implements OnInit {
       .getSubscriber(this.zone, Models.Topics.MarketData)
       .registerSubscriber((o: Models.Market) => { this.MarketData = o; })
       .registerDisconnectedHandler(() => { this.MarketData = null; });
+
+    this.subscriberFactory
+      .getSubscriber(this.zone, Models.Topics.MarketTrade)
+      .registerSubscriber((o: Models.MarketTrade) => { this.MarketTradeData = o; })
+      .registerDisconnectedHandler(() => { this.MarketTradeData = null; });
 
     this.subscriberFactory
       .getSubscriber(this.zone, Models.Topics.QuoteStatus)
@@ -889,11 +896,7 @@ class ClientComponent implements OnInit {
 
     this.subscriberFactory
       .getSubscriber(this.zone, Models.Topics.Notepad)
-      .registerSubscriber(this.onNotepad);
-  }
-
-  private onNotepad = (notepad : string) => {
-    this.notepad = notepad;
+      .registerSubscriber((notepad : string) => { this.notepad = notepad; });
   }
 
   public onTradesChartData(tradesChart: Models.TradeChart) {
@@ -1023,12 +1026,12 @@ class ClientComponent implements OnInit {
 
 @NgModule({
   imports: [
-    SharedModule,
+    Socket.DataModule,
     BrowserModule,
     FormsModule,
     AgGridModule.withComponents([
-      BaseCurrencyCellComponent,
-      QuoteCurrencyCellComponent
+      Shared.BaseCurrencyCellComponent,
+      Shared.QuoteCurrencyCellComponent
     ]),
     HighchartsChartModule
   ],
@@ -1040,8 +1043,8 @@ class ClientComponent implements OnInit {
     MarketTradesComponent,
     WalletPositionComponent,
     TradeSafetyComponent,
-    BaseCurrencyCellComponent,
-    QuoteCurrencyCellComponent,
+    Shared.BaseCurrencyCellComponent,
+    Shared.QuoteCurrencyCellComponent,
     StatsComponent
   ],
   bootstrap: [ClientComponent]

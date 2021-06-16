@@ -1,9 +1,9 @@
 import {Component, Inject, EventEmitter, Input, Output, OnInit} from '@angular/core';
 import {Module, ClientSideRowModelModule, GridOptions, ColDef, RowNode} from '@ag-grid-community/all-modules';
 
-import * as Models from './models';
-import * as Subscribe from './subscribe';
-import {FireFactory, BaseCurrencyCellComponent, QuoteCurrencyCellComponent} from './shared_directives';
+import * as Models from '../../../www/ts/models';
+import * as Socket from '../../../www/ts/socket';
+import * as Shared from '../../../www/ts/shared';
 
 @Component({
   selector: 'trade-list',
@@ -15,7 +15,7 @@ export class TradesComponent implements OnInit {
 
   private gridOptions: GridOptions = <GridOptions>{};
 
-  private fireCxl: Subscribe.IFire<object>;
+  private fireCxl: Socket.IFire<object>;
 
   public audio: boolean;
 
@@ -56,7 +56,7 @@ export class TradesComponent implements OnInit {
   @Output() onTradesChartData = new EventEmitter<Models.TradeChart>();
 
   constructor(
-    @Inject(FireFactory) private fireFactory: FireFactory
+    @Inject(Socket.FireFactory) private fireFactory: Socket.FireFactory
   ) {}
 
   ngOnInit() {
@@ -95,22 +95,22 @@ export class TradesComponent implements OnInit {
       }},
       {width: 80, field:'price', headerValueGetter:(params) => { return this.headerNameMod + 'price'; }, cellClass: (params) => {
         return params.data.pingSide;
-      }, cellRendererFramework: QuoteCurrencyCellComponent},
+      }, cellRendererFramework: Shared.QuoteCurrencyCellComponent},
       {width: 85, suppressSizeToFit: true, field:'quantity', headerValueGetter:(params) => { return this.headerNameMod + 'qty'; }, cellClass: (params) => {
         return params.data.pingSide;
-      }, cellRendererFramework: BaseCurrencyCellComponent},
+      }, cellRendererFramework: Shared.BaseCurrencyCellComponent},
       {width: 69, field:'value', headerValueGetter:(params) => { return this.headerNameMod + 'value'; }, cellClass: (params) => {
         return params.data.pingSide;
-      }, cellRendererFramework: QuoteCurrencyCellComponent},
+      }, cellRendererFramework: Shared.QuoteCurrencyCellComponent},
       {width: 75, field:'Kvalue', headerName:'⇋value', hide:true, cellClass: (params) => {
         return params.data.pongSide;
-      }, cellRendererFramework: QuoteCurrencyCellComponent},
+      }, cellRendererFramework: Shared.QuoteCurrencyCellComponent},
       {width: 85, suppressSizeToFit: true, field:'Kqty', headerName:'⇋qty', hide:true, cellClass: (params) => {
         return params.data.pongSide;
-      }, cellRendererFramework: BaseCurrencyCellComponent},
+      }, cellRendererFramework: Shared.BaseCurrencyCellComponent},
       {width: 80, field:'Kprice', headerName:'⇋price', hide:true, cellClass: (params) => {
         return params.data.pongSide;
-      }, cellRendererFramework: QuoteCurrencyCellComponent},
+      }, cellRendererFramework: Shared.QuoteCurrencyCellComponent},
       {width: 65, field:'delta', headerName:'delta', hide:true, cellClass: (params) => {
         if (params.data.side === '&lrhar;') return "kira"; else return "";
       }, cellRenderer: (params) => {
