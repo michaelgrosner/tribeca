@@ -76,7 +76,7 @@ export class SubmitComponent implements OnInit {
     return names;
   }
 
-  public submitManualOrder = () => {
+  private submitManualOrder = () => {
     if (!this.side || !this.price || !this.quantity || !this.timeInForce || !this.type) return;
     this.fireCxl.fire(new Models.OrderRequestFromUI(this.side, this.price, this.quantity, this.timeInForce, this.type));
   };
