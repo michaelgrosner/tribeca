@@ -52,7 +52,7 @@ class QuotingButtonViewModel extends FormViewModel<any> {
     sub: Socket.ISubscribe<any>,
     fire: Socket.IFire<any>
   ) {
-    super({agree:0}, sub, fire, d => {return {agree:Math.abs(d.agree-1)};});
+    super({agree: 0}, sub, fire, d => {return {agree:Math.abs(d.agree - 1)};});
   }
 
   public getClass = () => {
@@ -121,9 +121,9 @@ class DisplayQuotingParameters extends FormViewModel<Models.QuotingParameters> {
   }
 
   public backup = () => {
-    try{
+    try {
       this.display = JSON.parse(window.prompt('Backup quoting parameters\n\nTo export the current setup, copy all from the input below and paste it somewhere else.\n\nTo import a setup replacement, replace the quoting parameters below by some new, then click [Save] to apply.\n\nCurrent/New setup of quoting parameters:', JSON.stringify(this.display))) || this.display;
-    }catch(e){}
+    } catch(e) {}
   };
 }
 

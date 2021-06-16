@@ -1,4 +1,4 @@
-import {NgZone, Component, Inject, Input, OnInit} from '@angular/core';
+import {Component, Input, OnInit} from '@angular/core';
 import {Module, ClientSideRowModelModule, GridOptions, ColDef, RowNode} from '@ag-grid-community/all-modules';
 
 import * as Models from '../../../www/ts/models';
@@ -23,10 +23,6 @@ export class MarketTradesComponent implements OnInit {
     }
     else this.addRowData(o);
   }
-
-  constructor(
-    @Inject(NgZone) private zone: NgZone
-  ) {}
 
   ngOnInit() {
     this.gridOptions.defaultColDef = { sortable: true, resizable: true };

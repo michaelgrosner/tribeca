@@ -18,49 +18,8 @@ import {MarketTradesComponent} from './market-trades';
 import {TradeSafetyComponent} from './trade-safety';
 import {OrdersComponent} from './orders';
 import {TradesComponent} from './trades';
-import {StatsComponent} from './stats';
-
-class DisplayOrder {
-  side : string;
-  price : number;
-  quantity : number;
-  timeInForce : string;
-  type : string;
-
-  availableSides : string[];
-  availableTifs : string[];
-  availableOrderTypes : string[];
-
-  private static getNames(enumObject: any) {
-    var names: string[] = [];
-    for (var mem in enumObject) {
-      if (!enumObject.hasOwnProperty(mem)) continue;
-      if (parseInt(mem, 10) >= 0) {
-        names.push(String(enumObject[mem]));
-      }
-    }
-    return names;
-  }
-
-  private _fire: Socket.IFire<Models.OrderRequestFromUI>;
-
-  constructor(
-    fireFactory: Socket.FireFactory
-  ) {
-    this.availableSides = DisplayOrder.getNames(Models.Side).slice(0, 2);
-    this.availableTifs = DisplayOrder.getNames(Models.TimeInForce);
-    this.availableOrderTypes = DisplayOrder.getNames(Models.OrderType);
-    this.side = this.availableSides[0];
-    this.timeInForce = this.availableTifs[0];
-    this.type = this.availableOrderTypes[0];
-    this._fire = fireFactory.getFire(Models.Topics.SubmitNewOrder);
-  }
-
-  public submit = () => {
-    if (!this.side || !this.price || !this.quantity || !this.timeInForce || !this.type) return;
-    this._fire.fire(new Models.OrderRequestFromUI(this.side, this.price, this.quantity, this.timeInForce, this.type));
-  };
-}
+import {SubmitComponent} from './submit';
+import {StatsComponent}  from './stats';
 
 @Component({
   selector: 'ui',
@@ -632,34 +591,7 @@ class DisplayOrder {
                         </div>
                     </div>
                     <div [hidden]="!showSubmitOrder" class="col-md-5 col-xs-12">
-                      <table class="table table-responsive">
-                          <thead>
-                            <tr>
-                                <th style="width:100px;">Side:</th>
-                                <th style="width:100px;">Price:</th>
-                                <th style="width:100px;">Size:</th>
-                                <th style="width:100px;">TIF:</th>
-                                <th style="width:100px;">Type:</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            <tr>
-                                <td><select id="selectSide" class="form-control input-sm" [(ngModel)]="order.side">
-                                  <option *ngFor="let option of order.availableSides" [ngValue]="option">{{option}}</option>
-                                </select>
-                                </td>
-                                <td><input id="orderPriceInput" class="form-control input-sm" type="number" step="{{ product.stepPrice }}" min="{{ product.stepPrice }}"[(ngModel)]="order.price" /></td>
-                                <td><input id="orderSizeInput" class="form-control input-sm" type="number" step="{{ product.stepSize }}" min="{{ product.minSize}}" [(ngModel)]="order.quantity" /></td>
-                                <td><select class="form-control input-sm" [(ngModel)]="order.timeInForce">
-                                  <option *ngFor="let option of order.availableTifs" [ngValue]="option">{{option}}</option>
-                                </select></td>
-                                <td><select class="form-control input-sm" [(ngModel)]="order.type">
-                                  <option *ngFor="let option of order.availableOrderTypes" [ngValue]="option">{{option}}</option>
-                                </select></td>
-                                <td style="width:70px;" rowspan="2" class="text-center"><button type="button" class="btn btn-default" (click)="order.submit()">Submit</button></td>
-                            </tr>
-                          </tbody>
-                        </table>
+                      <submit-order [product]="product"></submit-order>
                     </div>
 
                     <div [hidden]="!showStats" [ngClass]="showStats == 2 ? 'col-md-11 col-xs-12 absolute-charts' : 'col-md-11 col-xs-12 relative-charts'">
@@ -718,7 +650,6 @@ class ClientComponent implements OnInit {
   public showTakers: boolean = false;
   public showStats: number = 0;
   public showSubmitOrder: boolean = false;
-  public order: DisplayOrder;
   public pair: Pair.DisplayPair;
   public orderList: any[] = [];
   public FairValue: Models.FairValue = null;
@@ -888,8 +819,6 @@ class ClientComponent implements OnInit {
 
     this.ready = false;
 
-    this.order = new DisplayOrder(this.fireFactory);
-
     this.subscriberFactory
       .getSubscriber(this.zone, Models.Topics.ApplicationState)
       .registerSubscriber(this.onAppState);
@@ -1037,15 +966,16 @@ class ClientComponent implements OnInit {
   ],
   declarations: [
     ClientComponent,
+    SubmitComponent,
     OrdersComponent,
     TradesComponent,
     MarketQuotingComponent,
     MarketTradesComponent,
     WalletPositionComponent,
     TradeSafetyComponent,
+    StatsComponent,
     Shared.BaseCurrencyCellComponent,
-    Shared.QuoteCurrencyCellComponent,
-    StatsComponent
+    Shared.QuoteCurrencyCellComponent
   ],
   bootstrap: [ClientComponent]
 })
