@@ -80,7 +80,7 @@ export define PACKAGE_JSON
     "linux",
     "win32"
   ],
-  "license": "(ISC OR MIT)"
+  "license": "MIT"
 }
 endef
 
