@@ -1,4 +1,4 @@
-import {Component, Inject, EventEmitter, Input, Output, OnInit} from '@angular/core';
+import {Component, EventEmitter, Input, Output, OnInit} from '@angular/core';
 import {Module, ClientSideRowModelModule, GridOptions, ColDef, RowNode} from '@ag-grid-community/all-modules';
 
 import * as Models from '../../../www/ts/models';
@@ -55,18 +55,13 @@ export class TradesComponent implements OnInit {
 
   @Output() onTradesChartData = new EventEmitter<Models.TradeChart>();
 
-  constructor(
-    @Inject(Socket.FireFactory) private fireFactory: Socket.FireFactory
-  ) {}
-
   ngOnInit() {
     this.gridOptions.rowData = [];
     this.gridOptions.defaultColDef = { sortable: true, resizable: true };
     this.gridOptions.columnDefs = this.createColumnDefs();
     this.gridOptions.overlayNoRowsTemplate = `<span class="ag-overlay-no-rows-center">empty history of trades</span>`;
 
-    this.fireCxl = this.fireFactory
-      .getFire(Models.Topics.CleanTrade);
+    this.fireCxl = new Socket.Fire(Models.Topics.CleanTrade);
   }
 
   private createColumnDefs = (): ColDef[] => {

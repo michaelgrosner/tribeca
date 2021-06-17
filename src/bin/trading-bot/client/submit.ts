@@ -1,4 +1,4 @@
-import {Component, Inject, Input, OnInit} from '@angular/core';
+import {Component, Input, OnInit} from '@angular/core';
 
 import * as Models from '../../../www/ts/models';
 import * as Socket from '../../../www/ts/socket';
@@ -50,12 +50,8 @@ export class SubmitComponent implements OnInit {
 
   @Input() product: Models.ProductAdvertisement;
 
-  constructor(
-    @Inject(Socket.FireFactory) private fireFactory: Socket.FireFactory
-  ) {}
-
   ngOnInit() {
-    this.fireCxl = this.fireFactory.getFire(Models.Topics.SubmitNewOrder);
+    this.fireCxl = new Socket.Fire(Models.Topics.SubmitNewOrder);
 
     this.availableSides = this.getNames(Models.Side).slice(0, 2);
     this.availableTifs = this.getNames(Models.TimeInForce);

@@ -1,4 +1,4 @@
-import {Component, Inject, Input, OnInit} from '@angular/core';
+import {Component, Input, OnInit} from '@angular/core';
 
 import * as Models from '../../../www/ts/models';
 import * as Socket from '../../../www/ts/socket';
@@ -538,12 +538,8 @@ export class SettingsComponent implements OnInit {
     this.pending = false;
   };
 
-  constructor(
-    @Inject(Socket.FireFactory) private fireFactory: Socket.FireFactory
-  ) {}
-
   ngOnInit() {
-    this.fireCxl = this.fireFactory.getFire(Models.Topics.QuotingParametersChange);
+    this.fireCxl = new Socket.Fire(Models.Topics.QuotingParametersChange);
 
     this.availableQuotingModes = this.getMapping(Models.QuotingMode);
     this.availableOrderPctTotals = this.getMapping(Models.OrderPctTotal);

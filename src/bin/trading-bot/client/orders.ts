@@ -1,4 +1,4 @@
-import {Component, Inject, Input, OnInit} from '@angular/core';
+import {Component, Input, OnInit} from '@angular/core';
 import {Module, ClientSideRowModelModule, GridOptions, ColDef, RowNode} from '@ag-grid-community/all-modules';
 
 import * as Models from '../../../www/ts/models';
@@ -30,18 +30,13 @@ export class OrdersComponent implements OnInit {
     this.addRowData(o);
   }
 
-  constructor(
-    @Inject(Socket.FireFactory) private fireFactory: Socket.FireFactory
-  ) {}
-
   ngOnInit() {
     this.gridOptions.rowData = [];
     this.gridOptions.defaultColDef = { sortable: true, resizable: true };
     this.gridOptions.columnDefs = this.createColumnDefs();
     this.gridOptions.suppressNoRowsOverlay = true;
 
-    this.fireCxl = this.fireFactory
-      .getFire(Models.Topics.CancelOrder);
+    this.fireCxl = new Socket.Fire(Models.Topics.CancelOrder);
   }
 
   private createColumnDefs = (): ColDef[] => {

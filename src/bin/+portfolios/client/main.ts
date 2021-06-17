@@ -1,6 +1,6 @@
 import 'zone.js';
 
-import {NgModule, NgZone, Component, Inject, OnInit, enableProdMode} from '@angular/core';
+import {NgModule, Component, OnInit, enableProdMode} from '@angular/core';
 import {platformBrowserDynamic} from '@angular/platform-browser-dynamic';
 import {FormsModule} from '@angular/forms';
 import {BrowserModule} from '@angular/platform-browser';
@@ -10,7 +10,7 @@ import * as Models from '../../../www/ts/models';
 import * as Socket from '../../../www/ts/socket';
 import * as Shared from '../../../www/ts/shared';
 
-import {AssetsComponent} from './assets';
+import {WalletComponent} from './wallet';
 
 @Component({
   selector: 'ui',
@@ -24,7 +24,7 @@ import {AssetsComponent} from './assets';
                 <div *ngIf="ready" class="row">
                     <div class="col-md-12 col-xs-12">
                         <div class="row">
-                          <assets [setAsset]="Asset"></assets>
+                          <wallet [setAsset]="Asset"></wallet>
                         </div>
                     </div>
                 </div>
@@ -63,22 +63,14 @@ class ClientComponent implements OnInit {
 
   public Asset: any = null;
 
-  constructor(
-    @Inject(NgZone) private zone: NgZone,
-    @Inject(Socket.SubscriberFactory) private subscriberFactory: Socket.SubscriberFactory,
-    @Inject(Socket.FireFactory) private fireFactory: Socket.FireFactory
-  ) {}
-
   ngOnInit() {
     new Socket.Client();
 
-    this.subscriberFactory
-      .getSubscriber(this.zone, Models.Topics.ProductAdvertisement)
+    new Socket.Subscriber(Models.Topics.ProductAdvertisement)
       .registerSubscriber(this.onAdvert)
       .registerDisconnectedHandler(() => { this.ready = false; });
 
-    this.subscriberFactory
-      .getSubscriber(this.zone, Models.Topics.Position)
+    new Socket.Subscriber(Models.Topics.Position)
       .registerSubscriber((o: any[]) => { this.Asset = o; })
       .registerDisconnectedHandler(() => { this.Asset = null; });
 
@@ -94,8 +86,7 @@ class ClientComponent implements OnInit {
     this.ready = true;
     // this.ready = false;
 
-    this.subscriberFactory
-      .getSubscriber(this.zone, Models.Topics.ApplicationState)
+    new Socket.Subscriber(Models.Topics.ApplicationState)
       .registerSubscriber(this.onAppState);
   }
   private bytesToSize = (input:number, precision:number) => {
@@ -144,7 +135,6 @@ class ClientComponent implements OnInit {
 
 @NgModule({
   imports: [
-    Socket.DataModule,
     BrowserModule,
     FormsModule,
     AgGridModule.withComponents([
@@ -154,7 +144,7 @@ class ClientComponent implements OnInit {
   ],
   declarations: [
     ClientComponent,
-    AssetsComponent,
+    WalletComponent,
     Shared.BaseCurrencyCellComponent,
     Shared.QuoteCurrencyCellComponent
   ],

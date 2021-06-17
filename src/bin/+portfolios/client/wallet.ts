@@ -1,12 +1,12 @@
 import {Component, Input} from '@angular/core';
 
 @Component({
-  selector: 'assets',
+  selector: 'wallet',
   template: `<div *ngFor="let asset of assets; let i = index">
               <pre>{{ asset }}</pre>
             </div>`
 })
-export class AssetsComponent {
+export class WalletComponent {
 
   private assets : string[];
 

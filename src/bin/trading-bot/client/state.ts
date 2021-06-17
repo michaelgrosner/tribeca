@@ -1,4 +1,4 @@
-import {Component, Inject, Input, OnInit} from '@angular/core';
+import {Component, Input, OnInit} from '@angular/core';
 
 import * as Models from '../../../www/ts/models';
 import * as Socket from '../../../www/ts/socket';
@@ -34,12 +34,9 @@ export class StateComponent implements OnInit {
     this.connectedToServer = cs;
     this.setStatus();
   };
-  constructor(
-    @Inject(Socket.FireFactory) private fireFactory: Socket.FireFactory
-  ) {}
 
   ngOnInit() {
-    this.fireCxl = this.fireFactory.getFire(Models.Topics.Connectivity);
+    this.fireCxl = new Socket.Fire(Models.Topics.Connectivity);
 
     this.setStatus();
   }

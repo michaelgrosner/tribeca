@@ -1,6 +1,6 @@
 import 'zone.js';
 
-import {NgModule, NgZone, Component, Inject, OnInit, enableProdMode} from '@angular/core';
+import {NgModule, Component, OnInit, enableProdMode} from '@angular/core';
 import {platformBrowserDynamic} from '@angular/platform-browser-dynamic';
 import {FormsModule} from '@angular/forms';
 import {BrowserModule} from '@angular/platform-browser';
@@ -225,92 +225,71 @@ class ClientComponent implements OnInit {
   public asksLength: number = 0;
   public marketWidth: number = 0;
 
-  constructor(
-    @Inject(NgZone) private zone: NgZone,
-    @Inject(Socket.SubscriberFactory) private subscriberFactory: Socket.SubscriberFactory,
-    @Inject(Socket.FireFactory) private fireFactory: Socket.FireFactory
-  ) {}
-
   ngOnInit() {
     new Socket.Client();
 
     this.buildDialogs(window, document);
 
-    this.subscriberFactory
-      .getSubscriber(this.zone, Models.Topics.Connectivity)
+    new Socket.Subscriber(Models.Topics.Connectivity)
       .registerSubscriber((o: any) => { this.state = o; })
       .registerConnectHandler(() => { this.connected = true; })
       .registerDisconnectedHandler(() => { this.connected = false; });
 
-    this.subscriberFactory
-      .getSubscriber(this.zone, Models.Topics.QuotingParametersChange)
+    new Socket.Subscriber(Models.Topics.QuotingParametersChange)
       .registerSubscriber((o: Models.QuotingParameters) => { this.quotingParameters = o; });
 
-    this.subscriberFactory
-      .getSubscriber(this.zone, Models.Topics.ProductAdvertisement)
+    new Socket.Subscriber(Models.Topics.ProductAdvertisement)
       .registerSubscriber(this.onAdvert)
       .registerDisconnectedHandler(() => { this.ready = false; });
 
-    this.subscriberFactory
-      .getSubscriber(this.zone, Models.Topics.OrderStatusReports)
+    new Socket.Subscriber(Models.Topics.OrderStatusReports)
       .registerSubscriber((o: any[]) => { this.orderList = o; })
       .registerDisconnectedHandler(() => { this.orderList = []; });
 
-    this.subscriberFactory
-      .getSubscriber(this.zone, Models.Topics.Position)
+    new Socket.Subscriber(Models.Topics.Position)
       .registerSubscriber((o: Models.PositionReport) => { this.Position = o; });
 
-    this.subscriberFactory
-      .getSubscriber(this.zone, Models.Topics.FairValue)
+    new Socket.Subscriber(Models.Topics.FairValue)
       .registerSubscriber((o: Models.FairValue) => { this.FairValue = o; });
 
-    this.subscriberFactory
-      .getSubscriber(this.zone, Models.Topics.TradeSafetyValue)
+    new Socket.Subscriber(Models.Topics.TradeSafetyValue)
       .registerSubscriber((o: Models.TradeSafety) => { this.TradeSafety = o; });
 
-    this.subscriberFactory
-      .getSubscriber(this.zone, Models.Topics.Trades)
+    new Socket.Subscriber(Models.Topics.Trades)
       .registerSubscriber((o: Models.Trade) => { this.Trade = o; })
       .registerDisconnectedHandler(() => { this.Trade = null; });
 
-    this.subscriberFactory
-      .getSubscriber(this.zone, Models.Topics.MarketData)
+    new Socket.Subscriber(Models.Topics.MarketData)
       .registerSubscriber((o: Models.Market) => { this.MarketData = o; })
       .registerDisconnectedHandler(() => { this.MarketData = null; });
 
-    this.subscriberFactory
-      .getSubscriber(this.zone, Models.Topics.MarketTrade)
+    new Socket.Subscriber(Models.Topics.MarketTrade)
       .registerSubscriber((o: Models.MarketTrade) => { this.MarketTradeData = o; })
       .registerDisconnectedHandler(() => { this.MarketTradeData = null; });
 
-    this.subscriberFactory
-      .getSubscriber(this.zone, Models.Topics.QuoteStatus)
+    new Socket.Subscriber(Models.Topics.QuoteStatus)
       .registerSubscriber((o: Models.TwoSidedQuoteStatus) => { this.QuoteStatus = o; })
       .registerDisconnectedHandler(() => { this.QuoteStatus = null; });
 
-    this.subscriberFactory
-      .getSubscriber(this.zone, Models.Topics.TargetBasePosition)
+    new Socket.Subscriber(Models.Topics.TargetBasePosition)
       .registerSubscriber((o: Models.TargetBasePositionValue) => { this.TargetBasePosition = o; });
 
-    this.subscriberFactory
-      .getSubscriber(this.zone, Models.Topics.MarketChart)
+    new Socket.Subscriber(Models.Topics.MarketChart)
       .registerSubscriber((o: Models.MarketChart) => { this.MarketChartData = o; });
 
-    this.cancelAllOrders = () => this.fireFactory
-      .getFire(Models.Topics.CancelAllOrders)
-      .fire();
+    new Socket.Subscriber(Models.Topics.ApplicationState)
+      .registerSubscriber(this.onAppState);
 
-    this.cleanAllClosedOrders = () => this.fireFactory
-      .getFire(Models.Topics.CleanAllClosedTrades)
-      .fire();
+    new Socket.Subscriber(Models.Topics.Notepad)
+      .registerSubscriber((notepad : string) => { this.notepad = notepad; });
 
-    this.cleanAllOrders = () => this.fireFactory
-      .getFire(Models.Topics.CleanAllTrades)
-      .fire();
+    this.cancelAllOrders = () => new Socket.Fire(Models.Topics.CancelAllOrders).fire();
 
-    this.changeNotepad = (content:string) => this.fireFactory
-      .getFire(Models.Topics.Notepad)
-      .fire([content]);
+    this.cleanAllClosedOrders = () => new Socket.Fire(Models.Topics.CleanAllClosedTrades).fire();
+
+    this.cleanAllOrders = () => new Socket.Fire(Models.Topics.CleanAllTrades).fire();
+
+    this.changeNotepad = (content:string) => new Socket.Fire(Models.Topics.Notepad).fire([content]);
 
     window.addEventListener("message", e => {
       if (!e.data.indexOf) return;
@@ -326,14 +305,6 @@ class ClientComponent implements OnInit {
     }, false);
 
     this.ready = false;
-
-    this.subscriberFactory
-      .getSubscriber(this.zone, Models.Topics.ApplicationState)
-      .registerSubscriber(this.onAppState);
-
-    this.subscriberFactory
-      .getSubscriber(this.zone, Models.Topics.Notepad)
-      .registerSubscriber((notepad : string) => { this.notepad = notepad; });
   }
 
   public onTradesChartData(tradesChart: Models.TradeChart) {
@@ -463,7 +434,6 @@ class ClientComponent implements OnInit {
 
 @NgModule({
   imports: [
-    Socket.DataModule,
     BrowserModule,
     FormsModule,
     AgGridModule.withComponents([
