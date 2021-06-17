@@ -2,8 +2,8 @@ import { Observable } from 'rxjs';
 
 import * as Models from './models';
 
-var events = {};
 var socket;
+var events = {};
 
 export class Client {
   public ws;

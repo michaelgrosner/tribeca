@@ -132,7 +132,7 @@ Feel free to run `make stop` or `make restart` anytime, and don't forget to [rea
 
 Troubleshooting:
 
- * If there is no wallet data on a given exchange, do a manual buy/sell order first using the website of the exchange.
+ * If there is no wallet data on a given exchange, double-check the currency symbols with `--list` argument.
 
  Optional:
 
