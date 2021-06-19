@@ -89,8 +89,8 @@ hlep hepl help:
 	#  KALL=1 make K     - compile K sources           #
 	#  make trading-bot  - compile K sources           #
 	#                                                  #
-	#  make dist         - compile K dependencies      #
-	#  KALL=1 make dist  - compile K dependencies      #
+	#  make lib          - compile K dependencies      #
+	#  KALL=1 make lib   - compile K dependencies      #
 	#  make packages     - provide K dependencies      #
 	#  make install      - install K application       #
 	#  make docker       - install K application       #
@@ -121,7 +121,7 @@ hlep hepl help:
 doc test:
 	@$(MAKE) -sC $@ KHOME=$(KHOME)
 
-clean check dist:
+clean check lib:
 ifdef KALL
 	unset KALL $(foreach chost,$(CARCH),&& $(MAKE) $@ CHOST=$(chost))
 else
@@ -135,7 +135,7 @@ $(SOURCE):
 
 assets: src/bin/$(KSRC)/client/main.ts
 	$(info $(call STEP,$(KSRC) $@))
-	$(MAKE) -C src/www KHOME=$(KHOME)
+	$(MAKE) -C src/lib/Krypto.ninja-client KHOME=$(KHOME)
 	$(foreach chost,$(CARCH), \
 	  build=build-$(shell echo $(chost) | sed 's/-\([a-z_0-9]*\)-\(linux\)$$/-\2-\1/' | sed 's/\([a-z_0-9]*\)-\([a-z_0-9]*\)-.*/\2-\1/' | sed 's/^w64/win64/') \
 	  && ! test -d $${build} || ((test -d $${build}/var/assets           \
@@ -146,8 +146,8 @@ assets: src/bin/$(KSRC)/client/main.ts
 	rm -rf $(KHOME)/assets
 
 assets.o: src/bin/$(KSRC)/$(KSRC).disk.S
-	$(chost)g++ -Wa,-I,$(KBUILD)/var/assets,-I,src -c $^ \
-	  -o $(KBUILD)/lib/K-$(notdir $(basename $(basename $^)))-$@
+	$(chost)g++ -Wa,-I,$(KBUILD)/var/assets,-I,src/lib/Krypto.ninja-client \
+	  -c $^ -o $(KBUILD)/lib/K-$(KSRC)-$@
 
 src: src/lib/Krypto.ninja-main.cxx src/bin/$(KSRC)/$(KSRC).main.h
 ifdef KALL
@@ -345,4 +345,4 @@ md5: src
 asandwich:
 	@test "`whoami`" = "root" && echo OK || echo make it yourself!
 
-.PHONY: all K $(SOURCE) hlep hepl help doc test src assets assets.o clean check dist download cleandb screen-help list screen start stop restart startall stopall restartall packages system_install uninstall install docker reinstall diff upgrade changelog test-c push MAJOR MINOR PATCH BUILD release md5 asandwich
+.PHONY: all K $(SOURCE) hlep hepl help doc test src assets assets.o clean check lib download cleandb screen-help list screen start stop restart startall stopall restartall packages system_install uninstall install docker reinstall diff upgrade changelog test-c push MAJOR MINOR PATCH BUILD release md5 asandwich

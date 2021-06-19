@@ -18,7 +18,7 @@ jobs:
           sudo npm install -g npm-check-updates
 
       - name: install
-        run: yes 1 | KUNITS=1 make install dist K
+        run: yes 1 | KUNITS=1 make install lib K
 
       - name: check
         run: |
