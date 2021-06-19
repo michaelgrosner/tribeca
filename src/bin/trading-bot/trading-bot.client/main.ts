@@ -144,7 +144,7 @@ class ClientComponent implements OnInit {
   public db_size: string;
   public notepad: string;
   public ready: boolean;
-  public state: any = {agree: 0};
+  public state: Models.ExchangeStatus = <Models.ExchangeStatus>{};
   public connected: boolean = false;
   public showSettings: boolean = true;
   public showTakers: boolean = false;
@@ -160,7 +160,7 @@ class ClientComponent implements OnInit {
   public bidsLength: number = 0;
   public asksLength: number = 0;
   public marketWidth: number = 0;
-  public orderList: any[] = [];
+  public orderList: Models.Order[] = [];
   public FairValue: Models.FairValue = null;
   public Trade: Models.Trade = null;
   public Position: Models.PositionReport = null;
@@ -178,10 +178,8 @@ class ClientComponent implements OnInit {
   ngOnInit() {
     new Socket.Client();
 
-    this.buildDialogs(window, document);
-
     new Socket.Subscriber(Models.Topics.Connectivity)
-      .registerSubscriber((o: any) => { this.state = o; })
+      .registerSubscriber((o: Models.ExchangeStatus) => { this.state = o; })
       .registerConnectHandler(() => { this.connected = true; })
       .registerDisconnectedHandler(() => { this.connected = false; });
 
@@ -193,7 +191,7 @@ class ClientComponent implements OnInit {
       .registerDisconnectedHandler(() => { this.ready = false; });
 
     new Socket.Subscriber(Models.Topics.OrderStatusReports)
-      .registerSubscriber((o: any[]) => { this.orderList = o; })
+      .registerSubscriber((o: Models.Order[]) => { this.orderList = o; })
       .registerDisconnectedHandler(() => { this.orderList = []; });
 
     new Socket.Subscriber(Models.Topics.Position)
@@ -289,9 +287,9 @@ class ClientComponent implements OnInit {
   public _toggleWatch = (watchExchange: string, watchPair: string) => {
     if (!document.getElementById('cryptoWatch'+watchExchange+watchPair)) {
       if(watchExchange=='coinbase') watchExchange = 'coinbase-pro';
-      (<any>window).setDialog('cryptoWatch'+watchExchange+watchPair, 'open', {title: watchExchange.toUpperCase()+' '+watchPair.toUpperCase().replace('-','/'),width: 800,height: 400,content: `<div id="container`+watchExchange+watchPair+`" style="width:100%;height:100%;"></div>`});
+      this.setDialog('cryptoWatch'+watchExchange+watchPair, 'open', {title: watchExchange.toUpperCase()+' '+watchPair.toUpperCase().replace('-','/'),width: 800,height: 400,content: `<div id="container`+watchExchange+watchPair+`" style="width:100%;height:100%;"></div>`});
       (new (<any>window).cryptowatch.Embed(watchExchange, watchPair.replace('-',''), {timePeriod: '1d',customColorScheme: {bg:"000000",text:"b2b2b2",textStrong:"e5e5e5",textWeak:"7f7f7f",short:"FD4600",shortFill:"FF672C",long:"6290FF",longFill:"002782",cta:"363D52",ctaHighlight:"414A67",alert:"FFD506"}})).mount('#container'+watchExchange+watchPair);
-    } else (<any>window).setDialog('cryptoWatch'+watchExchange+watchPair, 'close', {content:''});
+    } else this.setDialog('cryptoWatch'+watchExchange+watchPair, 'close', {content:''});
   };
 
   public openMatryoshka = () => {
@@ -364,64 +362,66 @@ class ClientComponent implements OnInit {
          : ((hour<9 || hour>=21)?'-dark':'');
   }
 
-  private buildDialogs = (a : any, b : any) => {
-    a.setDialog = (uniqueId, set, config) => {
-      if (set === "open") {
-        var div = b.createElement('div');
-          div.className = 'dialog-box';
-          div.id = uniqueId;
-          div.innerHTML = '<div class="dialog-content">&nbsp;</div><h3 class="dialog-title"><a href="javascript:;" class="dialog-close" title="Close">&times;</a></h3>';
-        b.body.appendChild(div);
-      }
+  private setDialog = (uniqueId: string, set: string, config: object) => {
+    if (set === "open") {
+      var div = document.createElement('div');
+        div.className = 'dialog-box';
+        div.id = uniqueId;
+        div.innerHTML = '<div class="dialog-content">&nbsp;</div><h3 class="dialog-title"><a href="javascript:;" class="dialog-close" title="Close">&times;</a></h3>';
+      document.body.appendChild(div);
+    }
 
-      var dialog = b.getElementById(uniqueId), selected = null, defaults = {
-        title: '',
-        content: '',
-        width: 300,
-        height: 150,
-        top: false,
-        left: false
-      };
-
-      for (var i in config) { defaults[i] = (typeof config[i] !== 'undefined') ? config[i] : defaults[i]; }
-
-      function _drag_init(e, el) {
-        for (var i=0;i<b.getElementsByClassName('dialog-box').length;i++) b.getElementsByClassName('dialog-box')[i].style.zIndex = 9999;
-        el.style.zIndex = 10000;
-        var posX = e.clientX,
-            posY = e.clientY,
-            divTop = parseFloat(el.style.top.indexOf('%')>-1?el.offsetTop + el.offsetHeight/2:el.style.top),
-            divLeft = parseFloat(el.style.left.indexOf('%')>-1?el.offsetLeft + el.offsetWidth/2:el.style.left)
-        var diffX = posX - divLeft,
-            diffY = posY - divTop;
-        b.onmousemove = function(e){
-            e = e || a.event;
-            var posX = e.clientX,
-                posY = e.clientY,
-                aX = posX - diffX,
-                aY = posY - diffY;
-            el.style.left = aX + 'px';
-            el.style.top = aY + 'px';
-        }
-      }
-
-      dialog.className =  'dialog-box fixed-dialog-box';
-      dialog.style.visibility = (set === "open") ? "visible" : "hidden";
-      dialog.style.opacity = (set === "open") ? 1 : 0;
-      dialog.style.width = defaults.width + 'px';
-      dialog.style.height = defaults.height + 'px';
-      dialog.style.top = (!defaults.top) ? "50%" : '0px';
-      dialog.style.left = (!defaults.left) ? "50%" : '0px';
-      dialog.style.marginTop = (!defaults.top) ? '-' + defaults.height/2 + 'px' : defaults.top + 'px';
-      dialog.style.marginLeft = (!defaults.left) ? '-' + defaults.width/2 + 'px' : defaults.left + 'px';
-      dialog.children[1].innerHTML = defaults.title+dialog.children[1].innerHTML;
-      dialog.children[0].innerHTML = defaults.content;
-      dialog.children[1].onmousedown = function(e) { if ((e.target || e.srcElement)===this) _drag_init(e, this.parentNode); };
-      dialog.children[1].children[0].onclick = function() { a.setDialog(uniqueId, "close", {content:""}); };
-      b.onmouseup = function() { b.onmousemove = function() {}; };
-      if (set === "close") dialog.remove();
+    var dialog = document.getElementById(uniqueId), selected = null, defaults = {
+      title: '',
+      content: '',
+      width: 300,
+      height: 150,
+      top: false,
+      left: false
     };
-  }
+
+    for (var i in config) { defaults[i] = (typeof config[i] !== 'undefined') ? config[i] : defaults[i]; }
+
+    function _drag_init(e, el) {
+      for (var i=0;i<document.getElementsByClassName('dialog-box').length;i++)
+        (<HTMLElement>document.getElementsByClassName('dialog-box')[i]).style.zIndex = "9999";
+      el.style.zIndex = "10000";
+      var posX = e.clientX,
+          posY = e.clientY,
+          divTop = parseFloat(el.style.top.indexOf('%')>-1?el.offsetTop + el.offsetHeight/2:el.style.top),
+          divLeft = parseFloat(el.style.left.indexOf('%')>-1?el.offsetLeft + el.offsetWidth/2:el.style.left)
+      var diffX = posX - divLeft,
+          diffY = posY - divTop;
+      document.onmousemove = function(e){
+          var posX = e.clientX,
+              posY = e.clientY,
+              aX = posX - diffX,
+              aY = posY - diffY;
+          el.style.left = aX + 'px';
+          el.style.top = aY + 'px';
+      }
+    }
+
+    dialog.className =  'dialog-box fixed-dialog-box';
+    dialog.style.visibility = (set === "open") ? "visible" : "hidden";
+    dialog.style.opacity = (set === "open") ? "1" : "0";
+    dialog.style.width = defaults.width + 'px';
+    dialog.style.height = defaults.height + 'px';
+    dialog.style.top = (!defaults.top) ? "50%" : '0px';
+    dialog.style.left = (!defaults.left) ? "50%" : '0px';
+    dialog.style.marginTop = (!defaults.top) ? '-' + defaults.height/2 + 'px' : defaults.top + 'px';
+    dialog.style.marginLeft = (!defaults.left) ? '-' + defaults.width/2 + 'px' : defaults.left + 'px';
+    dialog.children[1].innerHTML = defaults.title + dialog.children[1].innerHTML;
+    dialog.children[0].innerHTML = defaults.content;
+    (<HTMLElement>dialog.children[1]).onmousedown = function(e) {
+      if ((e.target || e.srcElement)===<HTMLElement>this) _drag_init(e, (<HTMLElement>this).parentNode);
+    };
+    (<HTMLElement>dialog.children[1].children[0]).onclick = function() {
+      dialog.remove();
+    };
+    document.onmouseup = function() { document.onmousemove = function() {}; };
+    if (set === "close") dialog.remove();
+  };
 
   private onAdvert = (p : Models.ProductAdvertisement) => {
     this.ready = true;

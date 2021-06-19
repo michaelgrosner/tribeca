@@ -39,7 +39,8 @@ export class MarketSide {
 
 export class Market {
     constructor(public bids: MarketSide[],
-                public asks: MarketSide[]) { }
+                public asks: MarketSide[],
+                public diff?: boolean) { }
 }
 
 export class MarketStats {
@@ -61,7 +62,6 @@ export enum Side { Bid, Ask, Unknown }
 export enum OrderType { Limit, Market }
 export enum TimeInForce { GTC, IOC, FOK }
 export enum OrderStatus { Waiting, Working, Terminated }
-export enum Liquidity { Make, Take }
 
 export interface IStdev {
     fv: number;
@@ -117,6 +117,27 @@ export class Trade {
                 public loadedFromDB: boolean) {}
 }
 
+export class Order {
+    constructor(public orderId: string,
+                public exchangeId: string,
+                public side: Side,
+                public quantity: number,
+                public type: OrderType,
+                public isPong: boolean,
+                public price: number,
+                public timeInForce: TimeInForce,
+                public status: OrderStatus,
+                public time: number,
+                public latency: number) {}
+}
+
+export class OrderSide {
+    constructor(public orderId: string,
+                public side: Side,
+                public price: number,
+                public quantity: number) {}
+}
+
 export class Wallet {
     constructor(public amount: number,
                 public held: number,
@@ -137,6 +158,24 @@ export class OrderRequestFromUI {
                 public type: string) {}
 }
 
+export class CleanTradeRequestFromUI {
+    constructor(public tradeId: string) {}
+}
+
+export class ExchangeStatus {
+    constructor(public agree: number,
+                public online: number) {}
+}
+
+export class AgreeRequestFromUI {
+    constructor(public agree: number) {}
+}
+
+export class OrderCancelRequestFromUI {
+    constructor(public orderId: string,
+                public exchange: string) {}
+}
+
 export class FairValue {
     constructor(public price: number) {}
 }
@@ -148,7 +187,8 @@ export class Quote {
 }
 
 export class TwoSidedQuote {
-    constructor(public bid: Quote, public ask: Quote) {}
+    constructor(public bid: Quote,
+                public ask: Quote) {}
 }
 
 export enum QuoteStatus { Disconnected, Live, DisabledQuotes, MissingData, UnknownHeld, WidthTooHigh, TBPHeld, MaxTradesSeconds, WaitingPing, DepletedFunds, Crossed, UpTrendHeld, DownTrendHeld }
@@ -177,17 +217,17 @@ export enum SOP { Off, Trades, Size, TradesSize }
 export enum STDEV { Off, OnFV, OnFVAPROff, OnTops, OnTopsAPROff, OnTop, OnTopAPROff }
 
 export interface QuotingParameters {
-    widthPing?: any;
+    widthPing?: number;
     widthPingPercentage?: number;
-    widthPong?: any;
+    widthPong?: number;
     widthPongPercentage?: number;
     widthPercentage?: boolean;
     bestWidth?: boolean;
     orderPctTotal?: OrderPctTotal;
-    buySize?: any;
+    buySize?: number;
     buySizePercentage?: number;
     buySizeMax?: boolean;
-    sellSize?: any;
+    sellSize?: number;
     sellSizePercentage?: number;
     sellSizeMax?: boolean;
     pingAt?: PingAt;
@@ -241,11 +281,29 @@ export interface QuotingParameters {
 }
 
 export class ProductAdvertisement {
-    constructor(public exchange: string, public inet: string, public base: string, public quote: string, public symbol: string, public margin: number, public webMarket: string, public webOrders: string, public environment: string, public matryoshka: string, public tickPrice: number, public tickSize: number, public stepPrice: number, public stepSize: number, public minSize: number) { }
+    constructor(public exchange: string,
+                public inet: string,
+                public base: string,
+                public quote: string,
+                public symbol: string,
+                public margin: number,
+                public webMarket: string,
+                public webOrders: string,
+                public environment: string,
+                public matryoshka: string,
+                public tickPrice: number,
+                public tickSize: number,
+                public stepPrice: number,
+                public stepSize: number,
+                public minSize: number) { }
 }
 
 export class ApplicationState {
-    constructor(public addr: string, public freq: number, public theme: number, public memory: number, public dbsize: number) { }
+    constructor(public addr: string,
+                public freq: number,
+                public theme: number,
+                public memory: number,
+                public dbsize: number) { }
 }
 
 export class TradeSafety {
@@ -254,13 +312,11 @@ export class TradeSafety {
       public sell: number,
       public combined: number,
       public buyPing: number,
-      public sellPing: number
-    ) {}
+      public sellPing: number) {}
 }
 
 export class TargetBasePositionValue {
     constructor(
       public tbp: number,
-      public pDiv: number
-    ) {}
+      public pDiv: number) {}
 }

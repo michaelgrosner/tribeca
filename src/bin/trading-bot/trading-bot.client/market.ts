@@ -80,10 +80,10 @@ export class MarketComponent {
   public qBidPx: number = 0;
   public qAskPx: number = 0;
   public qAskSz: number = 0;
-  public orderBids: any[];
-  public orderAsks: any[];
-  public orderPriceBids: number[] = [];
-  public orderPriceAsks: number[] = [];
+  public orderBids: Models.OrderSide[];
+  public orderAsks: Models.OrderSide[];
+  public orderPriceBids: string[] = [];
+  public orderPriceAsks: string[] = [];
   public bidStatus: string;
   public askStatus: string;
   public quotesInMemoryWaiting: number;
@@ -112,7 +112,7 @@ export class MarketComponent {
   @Output() onAsksLength = new EventEmitter<number>();
   @Output() onMarketWidth = new EventEmitter<number>();
 
-  @Input() set setOrderList(o: any[]) {
+  @Input() set setOrderList(o: Models.Order[]) {
     this.updateQuote(o);
   }
 
@@ -221,7 +221,7 @@ export class MarketComponent {
   };
 
   @Input() set setMarketData(update: Models.Market) {
-    if (update == null || typeof (<any>update).diff != 'boolean') {
+    if (update == null || typeof update.diff != 'boolean') {
       this.allBidsSize = 0;
       this.allAsksSize = 0;
       if (update != null) {

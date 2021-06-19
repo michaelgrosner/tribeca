@@ -19,11 +19,11 @@ export class StateComponent implements OnInit {
   private connectedToServer = false;
   private message : string = null;
 
-  private fireCxl: Socket.IFire<any>;
+  private fireCxl: Socket.IFire<Models.AgreeRequestFromUI>;
 
   @Input() product: Models.ProductAdvertisement;
 
-  @Input() set setExchangeStatus(cs: any) {
+  @Input() set setExchangeStatus(cs: Models.ExchangeStatus) {
     this.agree = cs.agree;
     this.pending = false;
     this.connectedToExchange = cs.online == Models.Connectivity.Connected;
@@ -58,8 +58,6 @@ export class StateComponent implements OnInit {
 
   private submitState = () => {
     this.pending = true;
-    this.fireCxl.fire({
-      agree: Math.abs(this.agree - 1)
-    });
+    this.fireCxl.fire(new Models.AgreeRequestFromUI(Math.abs(this.agree - 1)));
   };
 }

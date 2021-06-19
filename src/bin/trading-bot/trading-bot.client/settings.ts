@@ -532,7 +532,7 @@ export class SettingsComponent implements OnInit {
   @Input() product: Models.ProductAdvertisement;
 
   @Input() set setSettings(p: Models.QuotingParameters) {
-    p = this.cleanDecimal(p);
+    p = this.cleanDecimals(p);
     this.master = JSON.parse(JSON.stringify(p));
     this.params = JSON.parse(JSON.stringify(p));
     this.pending = false;
@@ -554,12 +554,19 @@ export class SettingsComponent implements OnInit {
     this.availableSTDEV = this.getMapping(Models.STDEV);
   }
 
-  public cleanDecimal = (d: any) => {
-    this.params.widthPing = parseFloat(this.params.widthPing).toFixed(13).replace(/0+$/,'').replace(/\.$/,'');
-    this.params.widthPong = parseFloat(this.params.widthPong).toFixed(13).replace(/0+$/,'').replace(/\.$/,'');
-    this.params.buySize = parseFloat(this.params.buySize).toFixed(13).replace(/0+$/,'').replace(/\.$/,'');
-    this.params.sellSize = parseFloat(this.params.sellSize).toFixed(13).replace(/0+$/,'').replace(/\.$/,'');
-    return d;
+  public cleanDecimal = (o: number) => {
+    o = parseFloat(
+      parseFloat(o+"").toFixed(13).replace(/0+$/,'').replace(/\.$/,'')
+    );
+    return o ? o : 0;
+  };
+
+  public cleanDecimals = (o: Models.QuotingParameters) => {
+    o.widthPing = this.cleanDecimal(o.widthPing);
+    o.widthPong = this.cleanDecimal(o.widthPong);
+    o.buySize   = this.cleanDecimal(o.buySize);
+    o.sellSize  = this.cleanDecimal(o.sellSize);
+    return o;
   }
 
   private getMapping<T>(enumObject: T) {
@@ -588,10 +595,7 @@ export class SettingsComponent implements OnInit {
 
   public submitSettings = () => {
     this.pending = true;
-    this.params.widthPing = parseFloat(this.params.widthPing);
-    this.params.widthPong = parseFloat(this.params.widthPong);
-    this.params.buySize = parseFloat(this.params.buySize);
-    this.params.sellSize = parseFloat(this.params.sellSize);
+    this.params = this.cleanDecimals(this.params);
     this.fireCxl.fire(this.params);
   };
 

@@ -15,7 +15,7 @@ export class TradesComponent implements OnInit {
 
   private gridOptions: GridOptions = <GridOptions>{};
 
-  private fireCxl: Socket.IFire<object>;
+  private fireCxl: Socket.IFire<Models.CleanTradeRequestFromUI>;
 
   public audio: boolean;
 
@@ -72,7 +72,7 @@ export class TradesComponent implements OnInit {
       {width: 95, suppressSizeToFit: true, field:'time', headerValueGetter:(params) => { return this.headerNameMod + 'time'; }, cellRenderer:(params) => {
         var d = new Date(params.value||0);
         return (d.getDate()+'').padStart(2, "0")+'/'+((d.getMonth()+1)+'').padStart(2, "0")+' '+(d.getHours()+'').padStart(2, "0")+':'+(d.getMinutes()+'').padStart(2, "0")+':'+(d.getSeconds()+'').padStart(2, "0");
-      }, cellClass: 'fs11px', sort: 'desc', comparator: (valueA: any, valueB: any, nodeA: RowNode, nodeB: RowNode, isInverted: boolean) => {
+      }, cellClass: 'fs11px', sort: 'desc', comparator: (valueA: number, valueB: number, nodeA: RowNode, nodeB: RowNode, isInverted: boolean) => {
           return (nodeA.data.Ktime||nodeA.data.time) - (nodeB.data.Ktime||nodeB.data.time);
       }},
       {width: 95, suppressSizeToFit: true, field:'Ktime', hide:true, headerName:'⇋time', cellRenderer:(params) => {
@@ -116,9 +116,7 @@ export class TradesComponent implements OnInit {
 
   public onCellClicked = ($event) => {
     if ($event.event.target.getAttribute("data-action-type")!='remove') return;
-    this.fireCxl.fire({
-      tradeId: $event.data.tradeId
-    });
+    this.fireCxl.fire(new Models.CleanTradeRequestFromUI($event.data.tradeId));
   }
 
   private addRowData = (t: Models.Trade) => {
@@ -133,7 +131,6 @@ export class TradesComponent implements OnInit {
       this.gridOptions.api.forEachNode((node: RowNode) => {
         if (!exists && node.data.tradeId==t.tradeId) {
           exists = true;
-          if (t.Ktime && <any>t.Ktime=='Invalid date') t.Ktime = null;
           node.setData(Object.assign(node.data, {
             time: t.time,
             quantity: t.quantity,
@@ -147,17 +144,9 @@ export class TradesComponent implements OnInit {
             pingSide: t.side == Models.Side.Ask ? "sell" : "buy",
             pongSide: t.side == Models.Side.Ask ? "buy" : "sell"
           }));
-          if (t.loadedFromDB === false) {
-            if (this.sortTimeout) window.clearTimeout(this.sortTimeout);
-            this.sortTimeout = window.setTimeout(() => {
-              this.gridOptions.api.setSortModel([{colId: 'time', sort: 'desc'}]);
-              setTimeout(()=>{try{this.gridOptions.api.redrawRows();}catch(e){}},0);
-            }, 269);
-          }
         }
       });
       if (!exists) {
-        if (t.Ktime && <any>t.Ktime=='Invalid date') t.Ktime = null;
         this.gridOptions.api.applyTransaction({add:[{
           tradeId: t.tradeId,
           time: t.time,

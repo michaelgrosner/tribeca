@@ -61,7 +61,7 @@ export class SubmitComponent implements OnInit {
     this.type = this.availableOrderTypes[0];
   }
 
-  private getNames(enumObject: any) {
+  private getNames(enumObject: object) {
     var names: string[] = [];
     for (var mem in enumObject) {
       if (!enumObject.hasOwnProperty(mem)) continue;

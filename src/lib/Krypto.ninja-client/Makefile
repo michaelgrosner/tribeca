@@ -1,5 +1,5 @@
 ERR        = *** Unexpected MAKELEVEL = 0.
-HINT       = This Makefile can't be used directly, consider cd ../.. before try again
+HINT       = This Makefile can't be used directly, consider cd ../../.. before try again
 $(if $(subst 0,,${MAKELEVEL}),,$(warning $(ERR));$(error $(HINT)))
 ERR        = *** Unexpected MAKE_VERSION < 4.
 HINT       = This Makefile can't be used with your make v${MAKE_VERSION}, consider to upgrade before try again
@@ -10,8 +10,8 @@ NODE_PATH  = $(KHOME)/node_modules
 PATH      := $(NODE_PATH)/.bin:$(PATH)
 
 TSC       := tsc --baseUrl $(NODE_PATH) --typeRoots $(NODE_PATH)/@types \
-               --alwaysStrict --experimentalDecorators -t ES2018 -m commonjs
-BROWSERIFY:= browserify -t [ $(NODE_PATH)/babelify --presets [ $(NODE_PATH)/@babel/preset-env ] ]
+               --alwaysStrict --experimentalDecorators --target ES2018 --module commonjs
+BROWSERIFY:= browserify --transform [ $(NODE_PATH)/babelify --presets [ $(NODE_PATH)/@babel/preset-env ] ]
 
 STEPS     := $(shell grep "call\ STEP" Makefile | wc -l)
 STEP       = $(shell tput setaf 2;tput setab 0)[$(1)/$(STEPS)]$(shell tput setaf 3;tput setab 0) Building client $(2)..$(shell tput sgr0)
@@ -19,7 +19,6 @@ STEP_1    := $(call STEP,1,npm packages)
 STEP_2    := $(call STEP,2,ts files)
 STEP_3    := $(call STEP,3,js zip file)
 STEP_4    := $(call STEP,4,css files)
-
 
 all $(KSRC): js css
 

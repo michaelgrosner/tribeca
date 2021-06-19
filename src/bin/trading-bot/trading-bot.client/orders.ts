@@ -15,7 +15,7 @@ export class OrdersComponent implements OnInit {
 
   private gridOptions: GridOptions = <GridOptions>{};
 
-  private fireCxl: Socket.IFire<any>;
+  private fireCxl: Socket.IFire<Models.OrderCancelRequestFromUI>;
 
   @Input() product: Models.ProductAdvertisement;
 
@@ -26,7 +26,7 @@ export class OrdersComponent implements OnInit {
     setTimeout(()=>{try{this.gridOptions.api.redrawRows();}catch(e){}},0);
   }
 
-  @Input() set setOrderList(o) {
+  @Input() set setOrderList(o: Models.Order[]) {
     this.addRowData(o);
   }
 
@@ -77,10 +77,7 @@ export class OrdersComponent implements OnInit {
 
   public onCellClicked = ($event) => {
     if ($event.event.target.getAttribute("data-action-type")!='remove') return;
-    this.fireCxl.fire({
-      orderId: $event.data.orderId,
-      exchange: $event.data.exchange
-    });
+    this.fireCxl.fire(new Models.OrderCancelRequestFromUI($event.data.orderId, $event.data.exchange));
     this.gridOptions.api.applyTransaction({remove:[$event.data]});
   }
 
