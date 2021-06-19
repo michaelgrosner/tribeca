@@ -9,6 +9,10 @@ KASSETS    = $(KHOME)/assets/www
 NODE_PATH  = $(KHOME)/node_modules
 PATH      := $(NODE_PATH)/.bin:$(PATH)
 
+TSC       := tsc --baseUrl $(NODE_PATH) --typeRoots $(NODE_PATH)/@types \
+               --alwaysStrict --experimentalDecorators -t ES2018 -m commonjs
+BROWSERIFY:= browserify -t [ $(NODE_PATH)/babelify --presets [ $(NODE_PATH)/@babel/preset-env ] ]
+
 STEPS     := $(shell grep "call\ STEP" Makefile | wc -l)
 STEP       = $(shell tput setaf 2;tput setab 0)[$(1)/$(STEPS)]$(shell tput setaf 3;tput setab 0) Building client $(2)..$(shell tput sgr0)
 STEP_1    := $(call STEP,1,npm packages)
@@ -16,30 +20,30 @@ STEP_2    := $(call STEP,2,ts files)
 STEP_3    := $(call STEP,3,js zip file)
 STEP_4    := $(call STEP,4,css files)
 
+
 all $(KSRC): js css
 
 npm: package.json
-	$(info $(STEP_1))
+	@echo $(STEP_1)
 	@cd $(KHOME) && $@ install
-	@cp -R www/js $(NODE_PATH)/lib
 ifndef GITHUB_ACTIONS
 	@rm $(KHOME)/$(basename $<)*
 endif
 
-client: ../../bin/$(KSRC)/$(KSRC).client/main.ts npm
-	$(info $(STEP_2))
-	tsc --baseUrl $(NODE_PATH) --typeRoots $(NODE_PATH)/@types --alwaysStrict \
-	  --experimentalDecorators -t ES2018 -m commonjs --outDir $(KASSETS)/js $<
+lib: www/js npm
+	@echo $(STEP_2)
+	cp -R $< $(NODE_PATH)/$@
+	$(TSC) $(NODE_PATH)/$@/*.ts
 
-js: client
-	$(info $(STEP_3))
-	browserify -t [ $(NODE_PATH)/babelify --presets [ $(NODE_PATH)/@babel/preset-env ] ] \
-	  $(KASSETS)/js/main.js | uglifyjs | gzip > $(KASSETS)/js/client.min.js
+js: ../../bin/$(KSRC)/$(KSRC).client/main.ts lib
+	$(TSC) --outDir $(KASSETS)/$@ $<
+	@echo $(STEP_3)
+	$(BROWSERIFY) $(KASSETS)/$@/main.$@ | uglifyjs | gzip > $(KASSETS)/$@/client.min.$@
 
 css: www/css/*.scss
-	$(info $(STEP_4))
-	$(foreach scss,$^,sass $(scss) $(KASSETS)/css/$(basename $(notdir $(scss))).min.css ;)
-	cat $(NODE_PATH)/@ag-grid-community/all-modules/dist/styles/ag-grid.css >> $(KASSETS)/css/bootstrap.min.css
+	@echo $(STEP_4)
+	$(foreach scss,$^,sass $(scss) $(KASSETS)/$@/$(basename $(notdir $(scss))).min.$@ ;)
+	cat $(NODE_PATH)/@ag-grid-community/all-modules/dist/styles/ag-grid.$@ >> $(KASSETS)/$@/bootstrap.min.$@
 
 export define PACKAGE_JSON
 {
@@ -86,4 +90,4 @@ endef
 package.json:
 	@echo "$$PACKAGE_JSON" > $(KHOME)/$@
 
-.PHONY: all $(KSRC) client css js npm package.json
+.PHONY: all $(KSRC) lib css js npm package.json
