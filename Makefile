@@ -2,7 +2,7 @@ K         ?= K.sh
 MAJOR      = 0
 MINOR      = 6
 PATCH      = 3
-BUILD      = 5
+BUILD      = 6
 
 OBLIGATORY = DISCLAIMER: This is strict non-violent software: \n$\
              if you hurt other living creatures, please stop; \n$\
@@ -131,9 +131,9 @@ endif
 
 $(SOURCE):
 	$(info $(call STEP,$@))
-	$(MAKE) $(shell ! test -f src/bin/$@/client/main.ts || echo assets) src KSRC=$@
+	$(MAKE) $(shell ! test -f src/bin/$@/$@.client/main.ts || echo assets) src KSRC=$@
 
-assets: src/bin/$(KSRC)/client/main.ts
+assets: src/bin/$(KSRC)/$(KSRC).client/main.ts
 	$(info $(call STEP,$(KSRC) $@))
 	$(MAKE) -C src/lib/Krypto.ninja-client KHOME=$(KHOME)
 	$(foreach chost,$(CARCH), \

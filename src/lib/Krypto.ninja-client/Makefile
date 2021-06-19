@@ -5,7 +5,7 @@ ERR        = *** Unexpected MAKE_VERSION < 4.
 HINT       = This Makefile can't be used with your make v${MAKE_VERSION}, consider to upgrade before try again
 $(if $(shell ver=${MAKE_VERSION} && test $${ver%%.*} -lt 4 && echo 1),$(warning $(ERR));$(error $(HINT)))
 
-KASSETS    = $(KHOME)/assets
+KASSETS    = $(KHOME)/assets/www
 NODE_PATH  = $(KHOME)/node_modules
 PATH      := $(NODE_PATH)/.bin:$(PATH)
 
@@ -20,27 +20,26 @@ all $(KSRC): js css
 
 npm: package.json
 	$(info $(STEP_1))
-	@cd $(abspath $(NODE_PATH)/..) && $@ install
+	@cd $(KHOME) && $@ install
+	@cp -R www/js $(NODE_PATH)/lib
 ifndef GITHUB_ACTIONS
-	@rm $(abspath $(NODE_PATH)/..)/$(basename $^)*
+	@rm $(KHOME)/$(basename $<)*
 endif
 
-client: npm ../bin/$(KSRC)/client/main.ts
+client: ../../bin/$(KSRC)/$(KSRC).client/main.ts npm
 	$(info $(STEP_2))
-	NODE_PATH=$(NODE_PATH) tsc --baseUrl $(NODE_PATH) --typeRoots $(NODE_PATH)/@types --alwaysStrict \
-	  --experimentalDecorators -t ES2018 -m commonjs --outDir $(KASSETS)/www/js ../bin/$(KSRC)/client/main.ts
+	tsc --baseUrl $(NODE_PATH) --typeRoots $(NODE_PATH)/@types --alwaysStrict \
+	  --experimentalDecorators -t ES2018 -m commonjs --outDir $(KASSETS)/js $<
 
-js: client $(NODE_PATH)/.bin
+js: client
 	$(info $(STEP_3))
-	NODE_PATH=$(NODE_PATH) browserify -t [ $(NODE_PATH)/babelify --presets [ $(NODE_PATH)/@babel/preset-env ] ] \
-	  $(KASSETS)/www/js/bin/$(KSRC)/client/main.js | uglifyjs | gzip > $(KASSETS)/www/js/client.min.js
+	browserify -t [ $(NODE_PATH)/babelify --presets [ $(NODE_PATH)/@babel/preset-env ] ] \
+	  $(KASSETS)/js/main.js | uglifyjs | gzip > $(KASSETS)/js/client.min.js
 
-css: sass/*.scss
+css: www/css/*.scss
 	$(info $(STEP_4))
-	$(foreach scss,$(wildcard sass/*.scss), \
-	  sass $(scss) $(KASSETS)/www/css/$(basename $(notdir $(scss))).min.css ;)
-	cat $(NODE_PATH)/@ag-grid-community/all-modules/dist/styles/ag-grid.css \
-	  >> $(KASSETS)/www/css/bootstrap.min.css
+	$(foreach scss,$^,sass $(scss) $(KASSETS)/css/$(basename $(notdir $(scss))).min.css ;)
+	cat $(NODE_PATH)/@ag-grid-community/all-modules/dist/styles/ag-grid.css >> $(KASSETS)/css/bootstrap.min.css
 
 export define PACKAGE_JSON
 {
@@ -85,6 +84,6 @@ export define PACKAGE_JSON
 endef
 
 package.json:
-	@echo "$$PACKAGE_JSON" > $(abspath $(NODE_PATH)/../$@)
+	@echo "$$PACKAGE_JSON" > $(KHOME)/$@
 
 .PHONY: all $(KSRC) client css js npm package.json

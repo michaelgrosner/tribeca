@@ -3,7 +3,7 @@ import {Component, Input, OnInit} from '@angular/core';
 import * as Highcharts from 'highcharts';
 require('highcharts/highcharts-more')(Highcharts);
 
-import * as Models from '../../../www/ts/models';
+import * as Models from 'lib/models';
 
 @Component({
   selector: 'stats',

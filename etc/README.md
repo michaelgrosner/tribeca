@@ -1,7 +1,7 @@
 ### K.sh.dist
 Used on install to initialize `./K.sh` file, feel free to add your own hardcoded arguments to your own `./K.sh` file after install.
 
-### ../src/www/.bomb.gzip
+### ../src/lib/Krypto.ninja-client/www/.bomb.gzip
 Used by `--whitelist` argument to attempt to crash UI clients from alien IPs not whitelisted; no need to open.
 
 ### Dockerfile

@@ -7,9 +7,9 @@ import {BrowserModule} from '@angular/platform-browser';
 import {AgGridModule} from '@ag-grid-community/angular';
 import {HighchartsChartModule} from 'highcharts-angular';
 
-import * as Models from '../../../www/ts/models';
-import * as Socket from '../../../www/ts/socket';
-import * as Shared from '../../../www/ts/shared';
+import * as Models from 'lib/models';
+import * as Socket from 'lib/socket';
+import * as Shared from 'lib/shared';
 
 import {SettingsComponent} from './settings';
 import {MarketComponent} from './market';
@@ -150,6 +150,16 @@ class ClientComponent implements OnInit {
   public showTakers: boolean = false;
   public showStats: number = 0;
   public showSubmitOrder: boolean = false;
+  private user_theme: string = null;
+  private system_theme: string = null;
+  private quotingParameters: Models.QuotingParameters = <Models.QuotingParameters>{};
+  public tradeFreq: number = 0;
+  public tradesChart: Models.TradeChart = null;
+  public tradesLength: number = 0;
+  public tradesMatchedLength: number = 0;
+  public bidsLength: number = 0;
+  public asksLength: number = 0;
+  public marketWidth: number = 0;
   public orderList: any[] = [];
   public FairValue: Models.FairValue = null;
   public Trade: Models.Trade = null;
@@ -164,66 +174,6 @@ class ClientComponent implements OnInit {
   public cancelAllOrders = () => {};
   public cleanAllClosedOrders = () => {};
   public cleanAllOrders = () => {};
-  public toggleSettings = (showSettings:boolean) => {
-    setTimeout(this.resizeMatryoshka, 100);
-  };
-  public changeNotepad = (content: string) => {};
-  public toggleTakers = () => {
-    this.showTakers = !this.showTakers;
-  };
-  public toggleStats = () => {
-    if (++this.showStats>=3) this.showStats = 0;
-  };
-  public toggleWatch = (watchExchange: string, watchPair: string) => {
-    if (window.parent !== window) {
-      window.parent.postMessage('cryptoWatch='+watchExchange+','+watchPair, '*');
-      return;
-    }
-    var self = this;
-    var toggleWatch = function() {
-      self._toggleWatch(watchExchange, watchPair);
-     };
-    if (!(<any>window).cryptowatch) (function(d, script) {
-        script = d.createElement('script');
-        script.type = 'text/javascript';
-        script.async = true;
-        script.onload = toggleWatch;
-        script.src = 'https://static.cryptowat.ch/assets/scripts/embed.bundle.js';
-        d.getElementsByTagName('head')[0].appendChild(script);
-      }(document));
-    else toggleWatch();
-  };
-  public _toggleWatch = (watchExchange: string, watchPair: string) => {
-    if (!document.getElementById('cryptoWatch'+watchExchange+watchPair)) {
-      if(watchExchange=='coinbase') watchExchange = 'coinbase-pro';
-      (<any>window).setDialog('cryptoWatch'+watchExchange+watchPair, 'open', {title: watchExchange.toUpperCase()+' '+watchPair.toUpperCase().replace('-','/'),width: 800,height: 400,content: `<div id="container`+watchExchange+watchPair+`" style="width:100%;height:100%;"></div>`});
-      (new (<any>window).cryptowatch.Embed(watchExchange, watchPair.replace('-',''), {timePeriod: '1d',customColorScheme: {bg:"000000",text:"b2b2b2",textStrong:"e5e5e5",textWeak:"7f7f7f",short:"FD4600",shortFill:"FF672C",long:"6290FF",longFill:"002782",cta:"363D52",ctaHighlight:"414A67",alert:"FFD506"}})).mount('#container'+watchExchange+watchPair);
-    } else (<any>window).setDialog('cryptoWatch'+watchExchange+watchPair, 'close', {content:''});
-  };
-
-  public openMatryoshka = () => {
-    const url = window.prompt('Enter the URL of another instance:',this.product.matryoshka||'https://');
-    (<any>document.getElementById('matryoshka').attributes).src.value = url||'about:blank';
-    document.getElementById('matryoshka').style.height = (url&&url!='https://')?'589px':'0px';
-  };
-  public resizeMatryoshka = () => {
-    if (window.parent === window) return;
-    window.parent.postMessage('height='+document.getElementsByTagName('body')[0].getBoundingClientRect().height+'px', '*');
-  };
-  public product: Models.ProductAdvertisement = new Models.ProductAdvertisement(
-    "", "", "", "", "", 0, "", "", "", "", 8, 8, 1e-8, 1e-8, 1e-8
-  );
-
-  private user_theme: string = null;
-  private system_theme: string = null;
-  private quotingParameters: Models.QuotingParameters = <Models.QuotingParameters>{};
-  public tradeFreq: number = 0;
-  public tradesChart: Models.TradeChart = null;
-  public tradesLength: number = 0;
-  public tradesMatchedLength: number = 0;
-  public bidsLength: number = 0;
-  public asksLength: number = 0;
-  public marketWidth: number = 0;
 
   ngOnInit() {
     new Socket.Client();
@@ -306,6 +256,56 @@ class ClientComponent implements OnInit {
 
     this.ready = false;
   }
+
+  public toggleSettings = (showSettings:boolean) => {
+    setTimeout(this.resizeMatryoshka, 100);
+  };
+  public changeNotepad = (content: string) => {};
+  public toggleTakers = () => {
+    this.showTakers = !this.showTakers;
+  };
+  public toggleStats = () => {
+    if (++this.showStats>=3) this.showStats = 0;
+  };
+  public toggleWatch = (watchExchange: string, watchPair: string) => {
+    if (window.parent !== window) {
+      window.parent.postMessage('cryptoWatch='+watchExchange+','+watchPair, '*');
+      return;
+    }
+    var self = this;
+    var toggleWatch = function() {
+      self._toggleWatch(watchExchange, watchPair);
+     };
+    if (!(<any>window).cryptowatch) (function(d, script) {
+        script = d.createElement('script');
+        script.type = 'text/javascript';
+        script.async = true;
+        script.onload = toggleWatch;
+        script.src = 'https://static.cryptowat.ch/assets/scripts/embed.bundle.js';
+        d.getElementsByTagName('head')[0].appendChild(script);
+      }(document));
+    else toggleWatch();
+  };
+  public _toggleWatch = (watchExchange: string, watchPair: string) => {
+    if (!document.getElementById('cryptoWatch'+watchExchange+watchPair)) {
+      if(watchExchange=='coinbase') watchExchange = 'coinbase-pro';
+      (<any>window).setDialog('cryptoWatch'+watchExchange+watchPair, 'open', {title: watchExchange.toUpperCase()+' '+watchPair.toUpperCase().replace('-','/'),width: 800,height: 400,content: `<div id="container`+watchExchange+watchPair+`" style="width:100%;height:100%;"></div>`});
+      (new (<any>window).cryptowatch.Embed(watchExchange, watchPair.replace('-',''), {timePeriod: '1d',customColorScheme: {bg:"000000",text:"b2b2b2",textStrong:"e5e5e5",textWeak:"7f7f7f",short:"FD4600",shortFill:"FF672C",long:"6290FF",longFill:"002782",cta:"363D52",ctaHighlight:"414A67",alert:"FFD506"}})).mount('#container'+watchExchange+watchPair);
+    } else (<any>window).setDialog('cryptoWatch'+watchExchange+watchPair, 'close', {content:''});
+  };
+
+  public openMatryoshka = () => {
+    const url = window.prompt('Enter the URL of another instance:',this.product.matryoshka||'https://');
+    (<any>document.getElementById('matryoshka').attributes).src.value = url||'about:blank';
+    document.getElementById('matryoshka').style.height = (url&&url!='https://')?'589px':'0px';
+  };
+  public resizeMatryoshka = () => {
+    if (window.parent === window) return;
+    window.parent.postMessage('height='+document.getElementsByTagName('body')[0].getBoundingClientRect().height+'px', '*');
+  };
+  public product: Models.ProductAdvertisement = new Models.ProductAdvertisement(
+    "", "", "", "", "", 0, "", "", "", "", 8, 8, 1e-8, 1e-8, 1e-8
+  );
 
   public onTradesChartData(tradesChart: Models.TradeChart) {
     this.TradesChartData = tradesChart;

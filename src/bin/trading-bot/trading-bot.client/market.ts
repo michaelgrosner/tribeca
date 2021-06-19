@@ -1,6 +1,6 @@
 import {Component, EventEmitter, Input, Output} from '@angular/core';
 
-import * as Models from '../../../www/ts/models';
+import * as Models from 'lib/models';
 
 @Component({
   selector: 'market',

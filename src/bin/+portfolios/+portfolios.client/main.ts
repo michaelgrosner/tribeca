@@ -6,9 +6,9 @@ import {FormsModule} from '@angular/forms';
 import {BrowserModule} from '@angular/platform-browser';
 import {AgGridModule} from '@ag-grid-community/angular';
 
-import * as Models from '../../../www/ts/models';
-import * as Socket from '../../../www/ts/socket';
-import * as Shared from '../../../www/ts/shared';
+import * as Models from 'lib/models';
+import * as Socket from 'lib/socket';
+import * as Shared from 'lib/shared';
 
 import {WalletComponent} from './wallet';
 

@@ -23,7 +23,7 @@ Runs on unix-like systems. Persistence is achieved through a built-in server-les
 
 ![Web UI Preview](https://user-images.githubusercontent.com/1634027/44740469-d5c7ff00-aafa-11e8-9252-73b9c1283adb.png)
 
-The web UI is compatible with most web browsers/devices/resolutions, but Firefox or Chrome at 1600px are recommended. Doesn't require configuration of any web server (unless installed behind your own reverse proxy).
+The web UI is compatible with most web browsers/resolutions, but Firefox or Chrome at 1600px are recommended. Doesn't require configuration of any web server (unless installed behind your own reverse proxy).
 
 ### Compatible Exchanges
 
@@ -156,7 +156,7 @@ Once you decide that is time to upgrade, execute `make upgrade` (or directly `ma
 
 If you only use `git` to pull the latest source files from the remote branch, you will still need to upgrade or recompile your executable files.
 
-To not upgrade but instead recompile your own modified source files, use `make dist K` or just `make` (see [Build notes](#build-notes)).
+To not upgrade but instead recompile your own modified source files, use `make lib K` or just `make` (see [Build notes](#build-notes)).
 
 ### Multiple instances party time
 
@@ -232,7 +232,7 @@ If you ask me, [<img height="20px" src="https://user-images.githubusercontent.co
 
 ### Build notes
 
-Make sure your build machine has [node](https://nodejs.org/en/download/package-manager/) installed, and also ensure `make dist` provides all dependencies without errors.
+Make sure your build machine has [node](https://nodejs.org/en/download/package-manager/) installed, also ensure `make lib` provides all dependencies without errors.
 
 To rebuild the application with your modifications, see `make help` and choose a target (just `make` may be what you are looking for).
 

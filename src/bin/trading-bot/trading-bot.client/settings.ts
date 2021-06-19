@@ -1,7 +1,7 @@
 import {Component, Input, OnInit} from '@angular/core';
 
-import * as Models from '../../../www/ts/models';
-import * as Socket from '../../../www/ts/socket';
+import * as Models from 'lib/models';
+import * as Socket from 'lib/socket';
 
 @Component({
   selector: 'settings',

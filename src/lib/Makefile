@@ -13,7 +13,7 @@ V_UV    = 1.41.0
 
 KBUILD := $(abspath ../../build-$(KHOST))
 
-all dist:
+all lib:
 	# my home is your home, if there are houses owned by someone.
 	@mkdir -vp $(KBUILD)/var
 	$(MAKE) zlib openssl curl sqlite ncurses json catch uv
@@ -123,4 +123,4 @@ else
 	| tar xz -C $(KBUILD)/var && cd $(KBUILD)/var/lcov-$(V_LCOV) && sudo make install                     )
 endif
 
-.PHONY: all dist clean check zlib openssl curl sqlite ncurses json catch uv lcov pvs
+.PHONY: all lib clean check zlib openssl curl sqlite ncurses json catch uv lcov pvs

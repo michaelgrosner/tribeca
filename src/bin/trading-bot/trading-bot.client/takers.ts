@@ -1,8 +1,8 @@
 import {Component, Input, OnInit} from '@angular/core';
 import {Module, ClientSideRowModelModule, GridOptions, ColDef, RowNode} from '@ag-grid-community/all-modules';
 
-import * as Models from '../../../www/ts/models';
-import * as Shared from '../../../www/ts/shared';
+import * as Models from 'lib/models';
+import * as Shared from 'lib/shared';
 
 @Component({
   selector: 'takers',
