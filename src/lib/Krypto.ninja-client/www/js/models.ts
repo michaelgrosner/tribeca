@@ -162,6 +162,10 @@ export class CleanTradeRequestFromUI {
     constructor(public tradeId: string) {}
 }
 
+export class ConnectionStatus {
+    constructor(public online: number) {}
+}
+
 export class ExchangeStatus {
     constructor(public agree: number,
                 public online: number) {}

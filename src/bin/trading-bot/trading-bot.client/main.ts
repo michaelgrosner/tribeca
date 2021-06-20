@@ -30,7 +30,7 @@ import {StatsComponent} from './stats';
     </div>
     <div [hidden]="!ready">
         <div class="container-fluid">
-            <div id="hud" [ngClass]="connected ? 'bg-success' : 'bg-danger'">
+            <div id="hud" [ngClass]="state.online ? 'bg-success' : 'bg-danger'">
                 <div *ngIf="ready" class="row" [hidden]="!showSettings">
                     <div class="col-md-12 col-xs-12 parameters-inputs">
                         <div class="row">
@@ -41,7 +41,7 @@ import {StatsComponent} from './stats';
                 <div class="row">
                     <div class="col-md-1 col-xs-12 text-center" style="padding-right:0px;">
                         <div class="row exchange">
-                            <state-button [product]="product" (onConnected)="onConnected($event)" (onAgree)="onAgree($event)" [setExchangeStatus]="state" [setServerStatus]="connected"></state-button>
+                            <state-button [product]="product" (onConnected)="onConnected($event)" (onAgree)="onAgree($event)" [setExchangeStatus]="state"></state-button>
                             <wallet [product]="product" [setPosition]="Position"></wallet>
                             <div>
                               <a [hidden]="!product.webMarket" rel="noreferrer" href="{{ product.webMarket }}" target="_blank">Market</a><span [hidden]="!(product.webMarket && product.webOrders)">, </span><a [hidden]="!product.webOrders" rel="noreferrer" href="{{ product.webOrders }}" target="_blank">Orders</a>
@@ -145,7 +145,6 @@ class ClientComponent implements OnInit {
   private notepad: string;
   private ready: boolean = false;
   private state: Models.ExchangeStatus = <Models.ExchangeStatus>{};
-  private connected: boolean = false;
   private showSettings: boolean = true;
   private showTakers: boolean = false;
   private showStats: number = 0;
@@ -179,16 +178,14 @@ class ClientComponent implements OnInit {
     new Socket.Client();
 
     new Socket.Subscriber(Models.Topics.Connectivity)
-      .registerSubscriber((o: Models.ExchangeStatus) => { this.state = o; })
-      .registerConnectHandler(() => { this.connected = true; })
-      .registerDisconnectedHandler(() => { this.connected = false; });
+      .registerSubscriber((o: Models.ExchangeStatus) => { this.ready = true; this.state = o; })
+      .registerDisconnectedHandler(() => { this.ready = false; });
 
     new Socket.Subscriber(Models.Topics.QuotingParametersChange)
       .registerSubscriber((o: Models.QuotingParameters) => { this.quotingParameters = o; });
 
     new Socket.Subscriber(Models.Topics.ProductAdvertisement)
-      .registerSubscriber(this.onAdvert)
-      .registerDisconnectedHandler(() => { this.ready = false; });
+      .registerSubscriber(this.onAdvert);
 
     new Socket.Subscriber(Models.Topics.OrderStatusReports)
       .registerSubscriber((o: Models.Order[]) => { this.orderList = o; })
@@ -314,18 +311,23 @@ class ClientComponent implements OnInit {
   private onTradesChartData(tradesChart: Models.TradeChart) {
     this.TradesChartData = tradesChart;
   }
+
   private onTradesLength(tradesLength: number) {
     this.tradesLength = tradesLength;
   }
+
   private onTradesMatchedLength(tradesMatchedLength: number) {
     this.tradesMatchedLength = tradesMatchedLength;
   }
+
   private onBidsLength(bidsLength: number) {
     this.bidsLength = bidsLength;
   }
+
   private onAsksLength(asksLength: number) {
     this.asksLength = asksLength;
   }
+
   private onMarketWidth(marketWidth: number) {
     this.marketWidth = marketWidth;
   }
@@ -422,7 +424,6 @@ class ClientComponent implements OnInit {
   };
 
   private onAdvert = (p : Models.ProductAdvertisement) => {
-    this.ready = true;
     window.document.title = '[' + p.environment + ']';
     this.product = p;
     setTimeout(this.resizeMatryoshka, 5000);

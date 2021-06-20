@@ -20,7 +20,7 @@ import {WalletComponent} from './wallet';
     </div>
     <div [hidden]="!ready">
         <div class="container-fluid">
-            <div id="hud">
+            <div id="hud" [ngClass]="state.online ? 'bg-success' : 'bg-danger'">
                 <div *ngIf="ready" class="row">
                     <div class="col-md-12 col-xs-12">
                         <div class="row">
@@ -44,7 +44,7 @@ class ClientComponent implements OnInit {
   private homepage: string = 'https://github.com/ctubio/Krypto-trading-bot';
   private server_memory: string;
   private client_memory: string;
-  private ready: boolean;
+  private ready: boolean = false;
   private openMatryoshka = () => {
     const url = window.prompt('Enter the URL of another instance:',this.product.matryoshka||'https://');
     document.getElementById('matryoshka').setAttribute('src', url||'about:blank');
@@ -60,19 +60,26 @@ class ClientComponent implements OnInit {
 
   private user_theme: string = null;
   private system_theme: string = null;
+  private state: Models.ConnectionStatus = <Models.ConnectionStatus>{};
 
   private Asset: any = null;
 
   ngOnInit() {
     new Socket.Client();
 
-    new Socket.Subscriber(Models.Topics.ProductAdvertisement)
-      .registerSubscriber(this.onAdvert)
+    new Socket.Subscriber(Models.Topics.Connectivity)
+      .registerSubscriber((o: Models.ExchangeStatus) => { this.ready = true; this.state = o; })
       .registerDisconnectedHandler(() => { this.ready = false; });
+
+    new Socket.Subscriber(Models.Topics.ProductAdvertisement)
+      .registerSubscriber(this.onAdvert);
 
     new Socket.Subscriber(Models.Topics.Position)
       .registerSubscriber((o: any[]) => { this.Asset = o; })
       .registerDisconnectedHandler(() => { this.Asset = null; });
+
+    new Socket.Subscriber(Models.Topics.ApplicationState)
+      .registerSubscriber(this.onAppState);
 
     window.addEventListener("message", e => {
       if (!e.data.indexOf) return;
@@ -82,12 +89,6 @@ class ClientComponent implements OnInit {
         this.resizeMatryoshka();
       }
     }, false);
-
-    this.ready = true;
-    // this.ready = false;
-
-    new Socket.Subscriber(Models.Topics.ApplicationState)
-      .registerSubscriber(this.onAppState);
   }
 
   private onAppState = (o : Models.ApplicationState) => {
@@ -118,7 +119,6 @@ class ClientComponent implements OnInit {
   }
 
   private onAdvert = (p : Models.ProductAdvertisement) => {
-    this.ready = true;
     window.document.title = '[' + p.environment + ']';
     this.product = p;
     setTimeout(this.resizeMatryoshka, 5000);

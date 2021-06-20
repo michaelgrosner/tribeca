@@ -13,10 +13,9 @@ import * as Socket from 'lib/socket';
 })
 export class StateComponent implements OnInit {
 
+  private connected = false;
   private agree: number = 0;
   private pending: boolean = false;
-  private connectedToExchange = false;
-  private connectedToServer = false;
   private message : string = null;
 
   private fireCxl: Socket.IFire<Models.AgreeRequestFromUI>;
@@ -24,36 +23,26 @@ export class StateComponent implements OnInit {
   @Input() product: Models.ProductAdvertisement;
 
   @Input() set setExchangeStatus(cs: Models.ExchangeStatus) {
-    this.agree = cs.agree;
-    this.pending = false;
-    this.connectedToExchange = cs.online == Models.Connectivity.Connected;
-    this.setStatus();
-  };
-
-  @Input() set setServerStatus(cs: boolean) {
-    this.connectedToServer = cs;
-    this.setStatus();
+    this.pending   = false;
+    this.agree     = cs.agree;
+    this.connected = cs.online == Models.Connectivity.Connected;
+    this.setMessage();
   };
 
   ngOnInit() {
     this.fireCxl = new Socket.Fire(Models.Topics.Connectivity);
 
-    this.setStatus();
+    this.setMessage();
   }
 
   private getClass = () => {
-    if (this.pending) return "btn btn-warning";
-    if (this.agree) return "btn btn-success";
-    return "btn btn-danger";
+    if      (this.pending) return "btn btn-warning";
+    else if (this.agree)   return "btn btn-success";
+    else                   return "btn btn-danger";
   };
 
-  private setStatus = () => {
-    if (this.connectedToExchange && this.connectedToServer)
-      this.message = null;
-    if (!this.connectedToExchange)
-      this.message = 'Connecting to exchange..';
-    if (!this.connectedToServer)
-      this.message = 'Disconnected from server';
+  private setMessage = () => {
+    this.message = this.connected ? '' : 'Connecting to exchange..';
   };
 
   private submitState = () => {
