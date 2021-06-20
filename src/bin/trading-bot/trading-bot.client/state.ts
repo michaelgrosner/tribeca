@@ -13,7 +13,7 @@ import * as Socket from 'lib/socket';
 })
 export class StateComponent implements OnInit {
 
-  public agree: number = 0;
+  private agree: number = 0;
   private pending: boolean = false;
   private connectedToExchange = false;
   private connectedToServer = false;
@@ -41,7 +41,7 @@ export class StateComponent implements OnInit {
     this.setStatus();
   }
 
-  public getClass = () => {
+  private getClass = () => {
     if (this.pending) return "btn btn-warning";
     if (this.agree) return "btn btn-success";
     return "btn btn-danger";

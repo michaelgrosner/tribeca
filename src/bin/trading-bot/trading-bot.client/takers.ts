@@ -32,7 +32,7 @@ export class TakersComponent implements OnInit {
   }
 
   private subscribed: boolean = false;
-  public loadSubscriber = () => {
+  private loadSubscriber = () => {
     if (this.subscribed) return;
     this.subscribed = true;
     this.gridOptions.rowData = [];

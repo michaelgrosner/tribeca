@@ -19,12 +19,12 @@ import * as Models from 'lib/models';
 })
 export class WalletComponent {
 
-  public basePosition: number = 0;
-  public quotePosition: number = 0;
-  public baseHeldPosition: number = 0;
-  public quoteHeldPosition: number = 0;
-  public baseValue: number = 0;
-  public quoteValue: number = 0;
+  private basePosition: number = 0;
+  private quotePosition: number = 0;
+  private baseHeldPosition: number = 0;
+  private quoteHeldPosition: number = 0;
+  private baseValue: number = 0;
+  private quoteValue: number = 0;
   private profitBase: number = 0;
   private profitQuote: number = 0;
 

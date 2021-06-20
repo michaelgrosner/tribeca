@@ -2,6 +2,14 @@ import {Component} from '@angular/core';
 import {ICellRendererParams} from '@ag-grid-community/core';
 import {AgRendererComponent} from '@ag-grid-community/angular';
 
+export function bytesToSize(input:number, precision:number) {
+  if (!input) return '0B';
+  let unit = ['', 'K', 'M', 'G', 'T', 'P'];
+  let index = Math.floor(Math.log(input) / Math.log(1024));
+  if (index >= unit.length) return input + 'B';
+  return (input / Math.pow(1024, index)).toFixed(precision) + unit[index] + 'B';
+};
+
 @Component({
     selector: 'base-currency-cell',
     template: `{{ (params.value||0).toFixed(productFixedSize) }}`

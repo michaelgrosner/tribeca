@@ -17,13 +17,11 @@ export class TradesComponent implements OnInit {
 
   private fireCxl: Socket.IFire<Models.CleanTradeRequestFromUI>;
 
-  public audio: boolean;
+  private audio: boolean;
 
-  public hasPongs: boolean;
+  private hasPongs: boolean;
 
-  public headerNameMod: string = "";
-
-  private sortTimeout: number;
+  private headerNameMod: string = "";
 
   @Input() product: Models.ProductAdvertisement;
 
@@ -114,7 +112,7 @@ export class TradesComponent implements OnInit {
     ];
   }
 
-  public onCellClicked = ($event) => {
+  private onCellClicked = ($event) => {
     if ($event.event.target.getAttribute("data-action-type")!='remove') return;
     this.fireCxl.fire(new Models.CleanTradeRequestFromUI($event.data.tradeId));
   }

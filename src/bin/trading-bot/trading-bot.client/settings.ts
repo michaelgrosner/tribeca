@@ -554,14 +554,14 @@ export class SettingsComponent implements OnInit {
     this.availableSTDEV = this.getMapping(Models.STDEV);
   }
 
-  public cleanDecimal = (o: number) => {
+  private cleanDecimal = (o: number) => {
     o = parseFloat(
       parseFloat(o+"").toFixed(13).replace(/0+$/,'').replace(/\.$/,'')
     );
     return o ? o : 0;
   };
 
-  public cleanDecimals = (o: Models.QuotingParameters) => {
+  private cleanDecimals = (o: Models.QuotingParameters) => {
     o.widthPing = this.cleanDecimal(o.widthPing);
     o.widthPong = this.cleanDecimal(o.widthPong);
     o.buySize   = this.cleanDecimal(o.buySize);
@@ -589,11 +589,11 @@ export class SettingsComponent implements OnInit {
     } catch(e) {}
   };
 
-  public resetSettings = () => {
+  private resetSettings = () => {
     this.params = JSON.parse(JSON.stringify(this.master));
   };
 
-  public submitSettings = () => {
+  private submitSettings = () => {
     this.pending = true;
     this.params = this.cleanDecimals(this.params);
     this.fireCxl.fire(this.params);

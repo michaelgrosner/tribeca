@@ -17,7 +17,7 @@ import * as Models from 'lib/models';
 })
 export class SafetyComponent {
 
-  public fairValue: number = 0;
+  private fairValue: number = 0;
   private buySafety: number = 0;
   private sellSafety: number = 0;
   private buySizeSafety: number = 0;

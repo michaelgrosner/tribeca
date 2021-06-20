@@ -137,43 +137,43 @@ import {StatsComponent} from './stats';
 })
 class ClientComponent implements OnInit {
 
-  public addr: string;
-  public homepage: string = "https://github.com/ctubio/Krypto-trading-bot";
-  public server_memory: string;
-  public client_memory: string;
-  public db_size: string;
-  public notepad: string;
-  public ready: boolean;
-  public state: Models.ExchangeStatus = <Models.ExchangeStatus>{};
-  public connected: boolean = false;
-  public showSettings: boolean = true;
-  public showTakers: boolean = false;
-  public showStats: number = 0;
-  public showSubmitOrder: boolean = false;
+  private addr: string;
+  private homepage: string = 'https://github.com/ctubio/Krypto-trading-bot';
+  private server_memory: string;
+  private client_memory: string;
+  private db_size: string;
+  private notepad: string;
+  private ready: boolean = false;
+  private state: Models.ExchangeStatus = <Models.ExchangeStatus>{};
+  private connected: boolean = false;
+  private showSettings: boolean = true;
+  private showTakers: boolean = false;
+  private showStats: number = 0;
+  private showSubmitOrder: boolean = false;
   private user_theme: string = null;
   private system_theme: string = null;
   private quotingParameters: Models.QuotingParameters = <Models.QuotingParameters>{};
-  public tradeFreq: number = 0;
-  public tradesChart: Models.TradeChart = null;
-  public tradesLength: number = 0;
-  public tradesMatchedLength: number = 0;
-  public bidsLength: number = 0;
-  public asksLength: number = 0;
-  public marketWidth: number = 0;
-  public orderList: Models.Order[] = [];
-  public FairValue: Models.FairValue = null;
-  public Trade: Models.Trade = null;
-  public Position: Models.PositionReport = null;
-  public TradeSafety: Models.TradeSafety = null;
-  public TargetBasePosition: Models.TargetBasePositionValue = null;
-  public MarketData: Models.Market = null;
-  public MarketTradeData: Models.MarketTrade = null;
-  public QuoteStatus: Models.TwoSidedQuoteStatus = null;
-  public MarketChartData: Models.MarketChart = null;
-  public TradesChartData: Models.TradeChart = null;
-  public cancelAllOrders = () => {};
-  public cleanAllClosedOrders = () => {};
-  public cleanAllOrders = () => {};
+  private tradeFreq: number = 0;
+  private tradesChart: Models.TradeChart = null;
+  private tradesLength: number = 0;
+  private tradesMatchedLength: number = 0;
+  private bidsLength: number = 0;
+  private asksLength: number = 0;
+  private marketWidth: number = 0;
+  private orderList: Models.Order[] = [];
+  private FairValue: Models.FairValue = null;
+  private Trade: Models.Trade = null;
+  private Position: Models.PositionReport = null;
+  private TradeSafety: Models.TradeSafety = null;
+  private TargetBasePosition: Models.TargetBasePositionValue = null;
+  private MarketData: Models.Market = null;
+  private MarketTradeData: Models.MarketTrade = null;
+  private QuoteStatus: Models.TwoSidedQuoteStatus = null;
+  private MarketChartData: Models.MarketChart = null;
+  private TradesChartData: Models.TradeChart = null;
+  private cancelAllOrders = () => {};
+  private cleanAllClosedOrders = () => {};
+  private cleanAllOrders = () => {};
 
   ngOnInit() {
     new Socket.Client();
@@ -247,25 +247,27 @@ class ClientComponent implements OnInit {
         this.resizeMatryoshka();
       }
       else if (e.data.indexOf('cryptoWatch=')===0) {
-        var data = e.data.replace('cryptoWatch=','').split(',');
+        var data: string[] = e.data.replace('cryptoWatch=','').split(',');
         this._toggleWatch(data[0], data[1]);
       }
     }, false);
-
-    this.ready = false;
   }
 
-  public toggleSettings = (showSettings:boolean) => {
+  private toggleSettings = (showSettings:boolean) => {
     setTimeout(this.resizeMatryoshka, 100);
   };
-  public changeNotepad = (content: string) => {};
-  public toggleTakers = () => {
+
+  private changeNotepad = (content: string) => {};
+
+  private toggleTakers = () => {
     this.showTakers = !this.showTakers;
   };
-  public toggleStats = () => {
+
+  private toggleStats = () => {
     if (++this.showStats>=3) this.showStats = 0;
   };
-  public toggleWatch = (watchExchange: string, watchPair: string) => {
+
+  private toggleWatch = (watchExchange: string, watchPair: string) => {
     if (window.parent !== window) {
       window.parent.postMessage('cryptoWatch='+watchExchange+','+watchPair, '*');
       return;
@@ -273,8 +275,9 @@ class ClientComponent implements OnInit {
     var self = this;
     var toggleWatch = function() {
       self._toggleWatch(watchExchange, watchPair);
-     };
-    if (!(<any>window).cryptowatch) (function(d, script) {
+    };
+    if (!window.hasOwnProperty("cryptowatch"))
+      (function(d, script) {
         script = d.createElement('script');
         script.type = 'text/javascript';
         script.async = true;
@@ -284,7 +287,8 @@ class ClientComponent implements OnInit {
       }(document));
     else toggleWatch();
   };
-  public _toggleWatch = (watchExchange: string, watchPair: string) => {
+
+  private _toggleWatch = (watchExchange: string, watchPair: string) => {
     if (!document.getElementById('cryptoWatch'+watchExchange+watchPair)) {
       if(watchExchange=='coinbase') watchExchange = 'coinbase-pro';
       this.setDialog('cryptoWatch'+watchExchange+watchPair, 'open', {title: watchExchange.toUpperCase()+' '+watchPair.toUpperCase().replace('-','/'),width: 800,height: 400,content: `<div id="container`+watchExchange+watchPair+`" style="width:100%;height:100%;"></div>`});
@@ -292,50 +296,44 @@ class ClientComponent implements OnInit {
     } else this.setDialog('cryptoWatch'+watchExchange+watchPair, 'close', {content:''});
   };
 
-  public openMatryoshka = () => {
+  private openMatryoshka = () => {
     const url = window.prompt('Enter the URL of another instance:',this.product.matryoshka||'https://');
-    (<any>document.getElementById('matryoshka').attributes).src.value = url||'about:blank';
+    document.getElementById('matryoshka').setAttribute('src', url||'about:blank');
     document.getElementById('matryoshka').style.height = (url&&url!='https://')?'589px':'0px';
   };
-  public resizeMatryoshka = () => {
+
+  private resizeMatryoshka = () => {
     if (window.parent === window) return;
     window.parent.postMessage('height='+document.getElementsByTagName('body')[0].getBoundingClientRect().height+'px', '*');
   };
-  public product: Models.ProductAdvertisement = new Models.ProductAdvertisement(
+
+  private product: Models.ProductAdvertisement = new Models.ProductAdvertisement(
     "", "", "", "", "", 0, "", "", "", "", 8, 8, 1e-8, 1e-8, 1e-8
   );
 
-  public onTradesChartData(tradesChart: Models.TradeChart) {
+  private onTradesChartData(tradesChart: Models.TradeChart) {
     this.TradesChartData = tradesChart;
   }
-  public onTradesLength(tradesLength: number) {
+  private onTradesLength(tradesLength: number) {
     this.tradesLength = tradesLength;
   }
-  public onTradesMatchedLength(tradesMatchedLength: number) {
+  private onTradesMatchedLength(tradesMatchedLength: number) {
     this.tradesMatchedLength = tradesMatchedLength;
   }
-  public onBidsLength(bidsLength: number) {
+  private onBidsLength(bidsLength: number) {
     this.bidsLength = bidsLength;
   }
-  public onAsksLength(asksLength: number) {
+  private onAsksLength(asksLength: number) {
     this.asksLength = asksLength;
   }
-  public onMarketWidth(marketWidth: number) {
+  private onMarketWidth(marketWidth: number) {
     this.marketWidth = marketWidth;
   }
 
-  private bytesToSize = (input:number, precision:number) => {
-    if (!input) return '0B';
-    let unit = ['', 'K', 'M', 'G', 'T', 'P'];
-    let index = Math.floor(Math.log(input) / Math.log(1024));
-    if (index >= unit.length) return input + 'B';
-    return (input / Math.pow(1024, index)).toFixed(precision) + unit[index] + 'B'
-  }
-
   private onAppState = (o : Models.ApplicationState) => {
-    this.server_memory = this.bytesToSize(o.memory, 0);
-    this.client_memory = this.bytesToSize((<any>window.performance).memory ? (<any>window.performance).memory.usedJSHeapSize : 1, 0);
-    this.db_size = this.bytesToSize(o.dbsize, 0);
+    this.server_memory = Shared.bytesToSize(o.memory, 0);
+    this.client_memory = Shared.bytesToSize((<any>window.performance).memory ? (<any>window.performance).memory.usedJSHeapSize : 1, 0);
+    this.db_size = Shared.bytesToSize(o.dbsize, 0);
     this.tradeFreq = (o.freq);
     this.user_theme = this.user_theme!==null ? this.user_theme : (o.theme==1 ? '' : (o.theme==2 ? '-dark' : this.user_theme));
     this.system_theme = this.getTheme((new Date).getHours());
@@ -344,11 +342,11 @@ class ClientComponent implements OnInit {
   }
 
   private setTheme = () => {
-    if ((<any>document.getElementById('daynight').attributes).href.value!='/css/bootstrap-theme'+this.system_theme+'.min.css')
-      (<any>document.getElementById('daynight').attributes).href.value = '/css/bootstrap-theme'+this.system_theme+'.min.css';
+    if (document.getElementById('daynight').getAttribute('href') != '/css/bootstrap-theme' + this.system_theme + '.min.css')
+      document.getElementById('daynight').setAttribute('href', '/css/bootstrap-theme' + this.system_theme + '.min.css');
   }
 
-  public changeTheme = () => {
+  private changeTheme = () => {
     this.user_theme = this.user_theme!==null
                   ? (this.user_theme  ==''?'-dark':'')
                   : (this.system_theme==''?'-dark':'');
@@ -425,10 +423,14 @@ class ClientComponent implements OnInit {
 
   private onAdvert = (p : Models.ProductAdvertisement) => {
     this.ready = true;
-    window.document.title = '['+p.environment+']';
+    window.document.title = '[' + p.environment + ']';
     this.product = p;
     setTimeout(this.resizeMatryoshka, 5000);
-    console.log("%cK started "+(new Date().toISOString().slice(11, -1))+"  %c"+this.homepage, "color:green;font-size:32px;", "color:red;font-size:16px;");
+    console.log(
+      "%cK started " + (new Date().toISOString().slice(11, -1))+"  %c" + this.homepage,
+      "color:green;font-size:32px;",
+      "color:red;font-size:16px;"
+    );
   }
 }
 

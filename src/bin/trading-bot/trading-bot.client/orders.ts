@@ -75,7 +75,7 @@ export class OrdersComponent implements OnInit {
     ];
   }
 
-  public onCellClicked = ($event) => {
+  private onCellClicked = ($event) => {
     if ($event.event.target.getAttribute("data-action-type")!='remove') return;
     this.fireCxl.fire(new Models.OrderCancelRequestFromUI($event.data.orderId, $event.data.exchange));
     this.gridOptions.api.applyTransaction({remove:[$event.data]});

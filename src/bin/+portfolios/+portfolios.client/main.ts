@@ -41,27 +41,27 @@ import {WalletComponent} from './wallet';
 })
 class ClientComponent implements OnInit {
 
-  public homepage: string = "https://github.com/ctubio/Krypto-trading-bot";
-  public server_memory: string;
-  public client_memory: string;
-  public ready: boolean;
-  public openMatryoshka = () => {
+  private homepage: string = 'https://github.com/ctubio/Krypto-trading-bot';
+  private server_memory: string;
+  private client_memory: string;
+  private ready: boolean;
+  private openMatryoshka = () => {
     const url = window.prompt('Enter the URL of another instance:',this.product.matryoshka||'https://');
-    (<any>document.getElementById('matryoshka').attributes).src.value = url||'about:blank';
+    document.getElementById('matryoshka').setAttribute('src', url||'about:blank');
     document.getElementById('matryoshka').style.height = (url&&url!='https://')?'589px':'0px';
   };
-  public resizeMatryoshka = () => {
+  private resizeMatryoshka = () => {
     if (window.parent === window) return;
     window.parent.postMessage('height='+document.getElementsByTagName('body')[0].getBoundingClientRect().height+'px', '*');
   };
-  public product: Models.ProductAdvertisement = new Models.ProductAdvertisement(
+  private product: Models.ProductAdvertisement = new Models.ProductAdvertisement(
     "", "", "", "", "", 0, "", "", "", "", 8, 8, 1e-8, 1e-8, 1e-8
   );
 
   private user_theme: string = null;
   private system_theme: string = null;
 
-  public Asset: any = null;
+  private Asset: any = null;
 
   ngOnInit() {
     new Socket.Client();
@@ -89,28 +89,21 @@ class ClientComponent implements OnInit {
     new Socket.Subscriber(Models.Topics.ApplicationState)
       .registerSubscriber(this.onAppState);
   }
-  private bytesToSize = (input:number, precision:number) => {
-    if (!input) return '0B';
-    let unit = ['', 'K', 'M', 'G', 'T', 'P'];
-    let index = Math.floor(Math.log(input) / Math.log(1024));
-    if (index >= unit.length) return input + 'B';
-    return (input / Math.pow(1024, index)).toFixed(precision) + unit[index] + 'B'
-  }
 
   private onAppState = (o : Models.ApplicationState) => {
-    this.server_memory = this.bytesToSize(o.memory, 0);
-    this.client_memory = this.bytesToSize((<any>window.performance).memory ? (<any>window.performance).memory.usedJSHeapSize : 1, 0);
+    this.server_memory = Shared.bytesToSize(o.memory, 0);
+    this.client_memory = Shared.bytesToSize((<any>window.performance).memory ? (<any>window.performance).memory.usedJSHeapSize : 1, 0);
     this.user_theme = this.user_theme!==null ? this.user_theme : (o.theme==1 ? '' : (o.theme==2 ? '-dark' : this.user_theme));
     this.system_theme = this.getTheme((new Date).getHours());
     this.setTheme();
   }
 
   private setTheme = () => {
-    if ((<any>document.getElementById('daynight').attributes).href.value!='/css/bootstrap-theme'+this.system_theme+'.min.css')
-      (<any>document.getElementById('daynight').attributes).href.value = '/css/bootstrap-theme'+this.system_theme+'.min.css';
+    if (document.getElementById('daynight').getAttribute('href') != '/css/bootstrap-theme' + this.system_theme + '.min.css')
+      document.getElementById('daynight').setAttribute('href', '/css/bootstrap-theme' + this.system_theme + '.min.css');
   }
 
-  public changeTheme = () => {
+  private changeTheme = () => {
     this.user_theme = this.user_theme!==null
                   ? (this.user_theme  ==''?'-dark':'')
                   : (this.system_theme==''?'-dark':'');
@@ -126,10 +119,14 @@ class ClientComponent implements OnInit {
 
   private onAdvert = (p : Models.ProductAdvertisement) => {
     this.ready = true;
-    window.document.title = '['+p.environment+']';
+    window.document.title = '[' + p.environment + ']';
     this.product = p;
     setTimeout(this.resizeMatryoshka, 5000);
-    console.log("%cK started "+(new Date().toISOString().slice(11, -1))+"  %c"+this.homepage, "color:green;font-size:32px;", "color:red;font-size:16px;");
+    console.log(
+      "%cK started " + (new Date().toISOString().slice(11, -1))+"  %c" + this.homepage,
+      "color:green;font-size:32px;",
+      "color:red;font-size:16px;"
+    );
   }
 }
 
