@@ -53,19 +53,16 @@ import * as Socket from 'lib/socket';
                   <td style="width:78px;border-bottom: 3px solid #DDE28B;" *ngIf="params.safety==4">
                       <input class="form-control input-sm"
                          type="number" step="1" min="1"
-                         onClick="this.select()"
                          [(ngModel)]="params.bullets">
                   </td>
                   <td style="width:88px; border-bottom: 3px solid #DDE28B;" *ngIf="params.safety==4 && !params.percentageValues">
                       <input class="form-control input-sm" title="{{ product.quote }}"
                          type="number"
-                         onClick="this.select()"
                          [(ngModel)]="params.range">
                   </td>
                   <td style="width:88px; border-bottom: 3px solid #DDE28B;" *ngIf="params.safety==4 && params.percentageValues">
                       <input class="form-control input-sm" title="{{ product.quote }}"
                          type="number" step="0.001" min="0" max="100"
-                         onClick="this.select()"
                          [(ngModel)]="params.rangePercentage">
                   </td>
                   <td style="min-width:142px;border-bottom: 3px solid #8BE296;" *ngIf="params.safety">
@@ -90,19 +87,16 @@ import * as Socket from 'lib/socket';
                   <td style="width:88px; border-bottom: 3px solid #DDE28B;">
                       <input class="form-control input-sm" title="Width multiplier"
                          type="number" step="0.1" min="1"
-                         onClick="this.select()"
                          [(ngModel)]="params.sopWidthMultiplier">
                   </td>
                   <td style="width:88px; border-bottom: 3px solid #DDE28B;" *ngIf="[1,3].indexOf(params.superTrades)>-1">
                       <input class="form-control input-sm" title="Trades multiplier"
                          type="number" step="0.1" min="1"
-                         onClick="this.select()"
                          [(ngModel)]="params.sopTradesMultiplier">
                   </td>
                   <td style="width:88px; border-bottom: 3px solid #DDE28B;" *ngIf="[2,3].indexOf(params.superTrades)>-1">
                       <input class="form-control input-sm" title="Size multiplier"
                          type="number" step="0.1" min="1"
-                         onClick="this.select()"
                          [(ngModel)]="params.sopSizeMultiplier">
                   </td>
                   </ng-container>
@@ -115,19 +109,16 @@ import * as Socket from 'lib/socket';
                   <td style="border-bottom: 3px solid #D64A4A;" *ngIf="params.orderPctTotal == 3">
                       <input class="form-control input-sm" title="{{ product.base }}"
                          type="number" step="0.001" min="1" max="16"
-                         onClick="this.select()"
                          [(ngModel)]="params.tradeSizeTBPExp">
                   </td>
                   <td style="width:169px;border-bottom: 3px solid #D64A4A;" *ngIf="!params.percentageValues">
                       <input class="form-control input-sm" title="{{ product.margin ? 'Contracts' : product.base }}"
                          type="number" step="{{ product.stepSize }}" min="{{ product.minSize}}"
-                         onClick="this.select()"
                          [(ngModel)]="params.buySize">
                   </td>
                   <td style="width:169px;border-bottom: 3px solid #D64A4A;" *ngIf="params.percentageValues">
                       <input class="form-control input-sm" title="{{ product.margin ? 'Contracts' : product.base }}"
                          type="number" step="0.001" min="0.001" max="100"
-                         onClick="this.select()"
                          [(ngModel)]="params.buySizePercentage">
                   </td>
                   <td style="border-bottom: 3px solid #D64A4A;" *ngIf="params.aggressivePositionRebalancing">
@@ -137,13 +128,11 @@ import * as Socket from 'lib/socket';
                   <td style="width:169px;border-bottom: 3px solid #D64A4A;" *ngIf="!params.percentageValues">
                       <input class="form-control input-sm" title="{{ product.margin ? 'Contracts' : product.base }}"
                          type="number" step="{{ product.stepSize }}" min="{{ product.minSize }}"
-                         onClick="this.select()"
                          [(ngModel)]="params.sellSize">
                   </td>
                   <td style="width:169px;border-bottom: 3px solid #D64A4A;" *ngIf="params.percentageValues">
                       <input class="form-control input-sm" title="{{ product.margin ? 'Contracts' : product.base }}"
                          type="number" step="0.001" min="0.001" max="100"
-                         onClick="this.select()"
                          [(ngModel)]="params.sellSizePercentage">
                   </td>
                   <td style="border-bottom: 3px solid #D64A4A;" *ngIf="params.aggressivePositionRebalancing">
@@ -194,67 +183,56 @@ import * as Socket from 'lib/socket';
                   <td style="width:88px;border-bottom: 3px solid #8BE296;" *ngIf="params.autoPositionMode==3">
                       <input class="form-control input-sm"
                          type="number" step="1" min="1"
-                         onClick="this.select()"
                          [(ngModel)]="params.veryLongEwmaPeriods">
                   </td>
                   <td style="width:88px;border-bottom: 3px solid #8BE296;" *ngIf="params.autoPositionMode">
                       <input class="form-control input-sm"
                          type="number" step="1" min="1"
-                         onClick="this.select()"
                          [(ngModel)]="params.longEwmaPeriods">
                   </td>
                   <td style="width:88px;border-bottom: 3px solid #8BE296;" *ngIf="params.autoPositionMode>1">
                       <input class="form-control input-sm"
                          type="number" step="1" min="1"
-                         onClick="this.select()"
                          [(ngModel)]="params.mediumEwmaPeriods">
                   </td>
                   <td style="width:88px;border-bottom: 3px solid #8BE296;" *ngIf="params.autoPositionMode">
                       <input class="form-control input-sm"
                          type="number" step="1" min="1"
-                         onClick="this.select()"
                          [(ngModel)]="params.shortEwmaPeriods">
                   </td>
                   <td style="width:88px;border-bottom: 3px solid #8BE296;" *ngIf="params.autoPositionMode">
                       <input class="form-control input-sm"
                          type="number" step="0.01" min="0.01" max="1.00"
-                         onClick="this.select()"
                          [(ngModel)]="params.ewmaSensiblityPercentage">
                   </td>
                   <td style="width:88px;border-bottom: 3px solid #8BE296;" *ngIf="!params.percentageValues && params.autoPositionMode==0">
                       <input class="form-control input-sm" title="{{ product.base }}"
                          type="number" step="0.01" min="0"
-                         onClick="this.select()"
                          [(ngModel)]="params.targetBasePosition">
                   </td>
                   <td style="width:88px;border-bottom: 3px solid #8BE296;" *ngIf="params.percentageValues && params.autoPositionMode==0">
                       <input class="form-control input-sm" title="{{ product.base }}"
                          type="number" step="0.1" min="0" max="100"
-                         onClick="this.select()"
                          [(ngModel)]="params.targetBasePositionPercentage">
                   </td>
                   <td style="width:88px;border-bottom: 3px solid #8BE296;" *ngIf="!params.percentageValues && params.autoPositionMode">
                       <input class="form-control input-sm" title="{{ product.base }}"
                          type="number" step="0.01" min="0"
-                         onClick="this.select()"
                          [(ngModel)]="params.targetBasePositionMin">
                   </td>
                   <td style="width:88px;border-bottom: 3px solid #8BE296;" *ngIf="params.percentageValues && params.autoPositionMode">
                       <input class="form-control input-sm" title="{{ product.base }}"
                          type="number" step="0.1" min="0" max="100"
-                         onClick="this.select()"
                          [(ngModel)]="params.targetBasePositionPercentageMin">
                   </td>
                   <td style="width:88px;border-bottom: 3px solid #8BE296;" *ngIf="!params.percentageValues && params.autoPositionMode">
                       <input class="form-control input-sm" title="{{ product.base }}"
                          type="number" step="0.01" min="0"
-                         onClick="this.select()"
                          [(ngModel)]="params.targetBasePositionMax">
                   </td>
                   <td style="width:88px;border-bottom: 3px solid #8BE296;" *ngIf="params.percentageValues && params.autoPositionMode">
                       <input class="form-control input-sm" title="{{ product.base }}"
                          type="number" step="0.1" min="0" max="100"
-                         onClick="this.select()"
                          [(ngModel)]="params.targetBasePositionPercentageMax">
                   </td>
                   <td style="min-width:121px;border-bottom: 3px solid #DDE28B;" *ngIf="params.autoPositionMode">
@@ -266,25 +244,21 @@ import * as Socket from 'lib/socket';
                   <td style="width:88px;border-bottom: 3px solid #DDE28B;" *ngIf="!params.percentageValues">
                       <input class="form-control input-sm" title="{{ product.base }}"
                          type="number" step="0.01" min="0"
-                         onClick="this.select()"
                          [(ngModel)]="params.positionDivergence">
                   </td>
                   <td style="width:88px;border-bottom: 3px solid #DDE28B;" *ngIf="params.percentageValues">
                       <input class="form-control input-sm" title="{{ product.base }}"
                          type="number" step="0.1" min="0" max="100"
-                         onClick="this.select()"
                          [(ngModel)]="params.positionDivergencePercentage">
                   </td>
                   <td style="width:88px;border-bottom: 3px solid #DDE28B;" *ngIf="!params.percentageValues && params.autoPositionMode && params.positionDivergenceMode">
                       <input class="form-control input-sm" title="{{ product.base }}"
                          type="number" step="0.01" min="0"
-                         onClick="this.select()"
                          [(ngModel)]="params.positionDivergenceMin">
                   </td>
                   <td style="width:88px;border-bottom: 3px solid #DDE28B;" *ngIf="params.percentageValues && params.autoPositionMode && params.positionDivergenceMode">
                       <input class="form-control input-sm" title="{{ product.base }}"
                          type="number" step="0.1" min="0" max="100"
-                         onClick="this.select()"
                          [(ngModel)]="params.positionDivergencePercentageMin">
                   </td>
                   <td style="min-width:121px;border-bottom: 3px solid #D64A4A;">
@@ -296,7 +270,6 @@ import * as Socket from 'lib/socket';
                   <td style="width:88px;border-bottom: 3px solid #D64A4A;" *ngIf="params.aggressivePositionRebalancing">
                       <input class="form-control input-sm"
                          type="number" step="0.1" min="1" max="10.00"
-                         onClick="this.select()"
                          [(ngModel)]="params.aprMultiplier">
                   </td>
                   <td style="width:25px;border-bottom: 3px solid #8BE296;">
@@ -304,11 +277,9 @@ import * as Socket from 'lib/socket';
                          [(ngModel)]="params.bestWidth">
                   </td>
                   <td style="width:90px;border-bottom: 3px solid #8BE296;" *ngIf="params.bestWidth">
-                      <input type="number"
-                         [(ngModel)]="params.bestWidthSize"
-                         class="form-control input-sm" title="{{ product.base }}"
+                      <input class="form-control input-sm" title="{{ product.base }}"
                          type="number" step="{{ product.stepPrice }}" min="0"
-                         onClick="this.select()">
+                         [(ngModel)]="params.bestWidthSize">
                   </td>
                   <td style="width:25px;border-bottom: 3px solid #8BE296;" *ngIf="[6].indexOf(params.mode)==-1">
                       <input type="checkbox"
@@ -317,25 +288,21 @@ import * as Socket from 'lib/socket';
                   <td style="width:169px;border-bottom: 3px solid #8BE296;" *ngIf="!params.widthPercentage || [6].indexOf(params.mode)>-1">
                       <input class="width-option form-control input-sm" title="{{ product.quote }}"
                          type="number" step="{{ product.stepPrice }}" min="{{ product.stepPrice }}"
-                         onClick="this.select()"
                          [(ngModel)]="params.widthPing">
                   </td>
                   <td style="width:169px;border-bottom: 3px solid #8BE296;" *ngIf="params.widthPercentage && [6].indexOf(params.mode)==-1">
                       <input class="width-option form-control input-sm" title="{{ product.quote }}"
                          type="number" step="0.001" min="0.001" max="100"
-                         onClick="this.select()"
                          [(ngModel)]="params.widthPingPercentage">
                   </td>
                   <td style="width:169px;border-bottom: 3px solid #8BE296;" *ngIf="params.safety && !params.widthPercentage">
                       <input class="width-option form-control input-sm" title="{{ product.quote }}"
                          type="number" step="{{ product.stepPrice }}" min="{{ product.stepPrice }}"
-                         onClick="this.select()"
                          [(ngModel)]="params.widthPong">
                   </td>
                   <td style="width:169px;border-bottom: 3px solid #8BE296;" *ngIf="params.safety && params.widthPercentage">
                       <input class="width-option form-control input-sm" title="{{ product.quote }}"
                          type="number" step="0.001" min="0.001" max="100"
-                         onClick="this.select()"
                          [(ngModel)]="params.widthPongPercentage">
                   </td>
           </tbody>
@@ -389,13 +356,11 @@ import * as Socket from 'lib/socket';
                   <td style="width:88px;border-bottom: 3px solid #DDE28B;">
                       <input class="form-control input-sm"
                          type="number" step="1" min="0"
-                         onClick="this.select()"
                          [(ngModel)]="params.tradesPerMinute">
                   </td>
                   <td style="width:88px;border-bottom: 3px solid #DDE28B;">
                       <input class="form-control input-sm"
                          type="number" step="1" min="0"
-                         onClick="this.select()"
                          [(ngModel)]="params.tradeRateSeconds">
                   </td>
                   <td style="text-align: center;border-bottom: 3px solid #F0A0A0;">
@@ -405,7 +370,6 @@ import * as Socket from 'lib/socket';
                   <td style="width:88px;border-bottom: 3px solid #F0A0A0;" *ngIf="params.protectionEwmaQuotePrice || params.protectionEwmaWidthPing">
                       <input class="form-control input-sm"
                          type="number" step="1" min="1"
-                         onClick="this.select()"
                          [(ngModel)]="params.protectionEwmaPeriods">
                   </td>
                   <td style="width:30px;text-align: center;border-bottom: 3px solid #F0A0A0;">
@@ -419,19 +383,16 @@ import * as Socket from 'lib/socket';
                   <td style="width:60px;border-bottom: 3px solid #fd00ff;" *ngIf="params.quotingEwmaTrendProtection">
                   <input class="form-control input-sm"
                       type="number" step="0.1" min="0.1"
-                         onClick="this.select()"
                          [(ngModel)]="params.quotingEwmaTrendThreshold">
                   </td>
                   <td style="width:60px;border-bottom: 3px solid #fd00ff;" *ngIf="params.quotingEwmaTrendProtection">
                       <input class="form-control input-sm"
                         type="number" step="1" min="1"
-                          onClick="this.select()"
                           [(ngModel)]="params.extraShortEwmaPeriods">
                   </td>
                   <td style="width:60px;border-bottom: 3px solid #fd00ff;" *ngIf="params.quotingEwmaTrendProtection">
                       <input class="form-control input-sm"
                           type="number" step="1" min="1"
-                          onClick="this.select()"
                           [(ngModel)]="params.ultraShortEwmaPeriods">
                 </td>
                   <td style="width:121px;border-bottom: 3px solid #AF451E;">
@@ -443,13 +404,11 @@ import * as Socket from 'lib/socket';
                   <td style="width:88px;border-bottom: 3px solid #AF451E;" *ngIf="params.quotingStdevProtection">
                       <input class="form-control input-sm"
                          type="number" step="1" min="1"
-                         onClick="this.select()"
                          [(ngModel)]="params.quotingStdevProtectionPeriods">
                   </td>
                   <td style="width:88px;border-bottom: 3px solid #AF451E;" *ngIf="params.quotingStdevProtection">
                       <input class="form-control input-sm"
                          type="number" step="0.1" min="0.1"
-                         onClick="this.select()"
                          [(ngModel)]="params.quotingStdevProtectionFactor">
                   </td>
                   <td style="text-align: center;border-bottom: 3px solid #AF451E;" *ngIf="params.quotingStdevProtection">
@@ -463,25 +422,21 @@ import * as Socket from 'lib/socket';
                   <td style="width:88px;border-bottom: 3px solid #A0A0A0;">
                       <input class="form-control input-sm"
                          type="number" step="1" min="0"
-                         onClick="this.select()"
                          [(ngModel)]="params.lifetime">
                   </td>
                   <td style="width:88px;border-bottom: 3px solid #DDE28B;">
                       <input class="form-control input-sm"
                          type="number" step="0.01" min="0.01"
-                         onClick="this.select()"
                          [(ngModel)]="params.profitHourInterval">
                   </td>
                   <td style="width:88px;border-bottom: 3px solid #8BE296;">
                       <input class="form-control input-sm"
                          type="number" step="0.01"
-                         onClick="this.select()"
                          [(ngModel)]="params.cleanPongsAuto">
                   </td>
                   <td style="width:88px;border-bottom: 3px solid #A0A0A0;">
                       <input class="form-control input-sm"
                          type="number" step="1" min="0"
-                         onClick="this.select()"
                          [(ngModel)]="params.delayUI">
                   </td>
                   <td style="text-align: center;border-bottom: 3px solid #A0A0A0;">
