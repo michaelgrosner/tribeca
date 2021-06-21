@@ -20,7 +20,7 @@ export class OrdersComponent {
 
   @Input() product: Models.ProductAdvertisement;
 
-  @Input() set orderList(o: Models.Order[]) {
+  @Input() set orders(o: Models.Order[]) {
     this.addRowData(o);
   };
 
@@ -110,64 +110,58 @@ export class OrdersComponent {
     // this.grid.api.applyTransaction({remove:[$event.data]});
   };
 
-  private addRowData = (o) => {
+  private addRowData = (o: Models.Order[]) => {
     if (!this.grid.api) return;
-    if (!o || (typeof o.length == 'number' && !o.length)) {
-      this.grid.api.setRowData([]);
-      return;
-    } else if (typeof o.length == 'number' && typeof o[0] == 'object') {
-      this.grid.api.setRowData([]);
-      return o.forEach(x => setTimeout(this.addRowData(x), 0));
-    }
-
-    let exists: boolean = false;
-    let isClosed: boolean = (o.status == Models.OrderStatus.Terminated);
-    this.grid.api.forEachNode((node: RowNode) => {
-      if (!exists && node.data.orderId==o.orderId) {
-        exists = true;
-        if (isClosed) this.grid.api.applyTransaction({remove:[node.data]});
-        else {
-          node.setData(Object.assign(node.data, {
-            time: o.time,
-            price: o.price,
-            value: this.product.margin == 0
-                     ? (Math.round(o.quantity * o.price * 100) / 100) + " " + this.product.quote
-                     : (this.product.margin == 1
-                         ? (Math.round((o.quantity / o.price) * 1e+8) / 1e+8) + " " + this.product.base
-                         : (Math.round((o.quantity * o.price) * 1e+8) / 1e+8) + " " + this.product.base
-                     ),
-            tif: Models.TimeInForce[o.timeInForce],
-            lat: o.latency+'ms',
-            qty: o.quantity
-          }));
+    this.grid.api.setRowData([]);
+    o.forEach(o => {
+      let exists: boolean = false;
+      let isClosed: boolean = (o.status == Models.OrderStatus.Terminated);
+      this.grid.api.forEachNode((node: RowNode) => {
+        if (!exists && node.data.orderId==o.orderId) {
+          exists = true;
+          if (isClosed) this.grid.api.applyTransaction({remove:[node.data]});
+          else {
+            node.setData(Object.assign(node.data, {
+              time: o.time,
+              price: o.price,
+              value: this.product.margin == 0
+                       ? (Math.round(o.quantity * o.price * 100) / 100) + " " + this.product.quote
+                       : (this.product.margin == 1
+                           ? (Math.round((o.quantity / o.price) * 1e+8) / 1e+8) + " " + this.product.base
+                           : (Math.round((o.quantity * o.price) * 1e+8) / 1e+8) + " " + this.product.base
+                       ),
+              tif: Models.TimeInForce[o.timeInForce],
+              lat: o.latency+'ms',
+              qty: o.quantity
+            }));
+          }
         }
-      }
-    });
-    setTimeout(()=>{try{this.grid.api.redrawRows();}catch(e){}},0);
-    if (!exists && !isClosed)
-      this.grid.api.applyTransaction({add:[{
-        orderId: o.orderId,
-        exchangeId: o.exchangeId,
-        side: Models.Side[o.side],
-        price: o.price,
-        value: this.product.margin == 0
-                 ? (Math.round(o.quantity * o.price * 100) / 100) + " " + this.product.quote
-                 : (this.product.margin == 1
-                     ? (Math.round((o.quantity / o.price) * 1e+8) / 1e+8) + " " + this.product.base
-                     : (Math.round((o.quantity * o.price) * 1e+8) / 1e+8) + " " + this.product.base
-                 ),
-        exchange: o.exchange,
-        type: Models.OrderType[o.type],
-        tif: Models.TimeInForce[o.timeInForce],
-        lat: o.latency+'ms',
-        qty: o.quantity,
-        pong: o.isPong,
-        time: o.time,
-        quoteSymbol: this.product.quote,
-        productFixedPrice: this.product.tickPrice,
-        productFixedSize: this.product.tickSize
-      }]});
+      });
+      setTimeout(()=>{try{this.grid.api.redrawRows();}catch(e){}},0);
+      if (!exists && !isClosed)
+        this.grid.api.applyTransaction({add:[{
+          orderId: o.orderId,
+          exchangeId: o.exchangeId,
+          side: Models.Side[o.side],
+          price: o.price,
+          value: this.product.margin == 0
+                   ? (Math.round(o.quantity * o.price * 100) / 100) + " " + this.product.quote
+                   : (this.product.margin == 1
+                       ? (Math.round((o.quantity / o.price) * 1e+8) / 1e+8) + " " + this.product.base
+                       : (Math.round((o.quantity * o.price) * 1e+8) / 1e+8) + " " + this.product.base
+                   ),
+          type: Models.OrderType[o.type],
+          tif: Models.TimeInForce[o.timeInForce],
+          lat: o.latency+'ms',
+          qty: o.quantity,
+          pong: o.isPong,
+          time: o.time,
+          quoteSymbol: this.product.quote,
+          productFixedPrice: this.product.tickPrice,
+          productFixedSize: this.product.tickSize
+        }]});
 
-    this.grid.api.sizeColumnsToFit();
+      this.grid.api.sizeColumnsToFit();
+    });
   };
 };

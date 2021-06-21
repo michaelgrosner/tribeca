@@ -92,7 +92,7 @@ import {StatsComponent   } from './stats';
                       <submit-order [product]="product"></submit-order>
                     </div>
                     <div [hidden]="!showStats" [ngClass]="showStats == 2 ? 'col-md-11 col-xs-12 absolute-charts' : 'col-md-11 col-xs-12 relative-charts'">
-                      <stats ondblclick="this.style.opacity=this.style.opacity<1?1:0.4" [setMarketWidth]="marketWidth" [setShowStats]="!!showStats" [product]="product" [quotingParameters]="quotingParameters" [targetBasePosition]="targetBasePosition" [setMarketChartData]="MarketChartData" [setTradesChartData]="TradesChartData" [position]="position" [fairValue]="fairValue"></stats>
+                      <stats ondblclick="this.style.opacity=this.style.opacity<1?1:0.4" [marketWidth]="marketWidth" [showStats]="!!showStats" [product]="product" [quotingParameters]="quotingParameters" [targetBasePosition]="targetBasePosition" [marketChart]="marketChart" [tradesChart]="tradesChart" [position]="position" [fairValue]="fairValue"></stats>
                     </div>
                     <div [hidden]="showStats === 1" class="col-md-{{ showTakers ? '9' : '11' }} col-xs-12" style="padding-left:0px;padding-bottom:0px;">
                       <div class="row" style="padding-top:0px;">
@@ -101,7 +101,7 @@ import {StatsComponent   } from './stats';
                               <div class="col-md-6">
                                 <safety [product]="product" [fairValue]="fairValue" [tradeSafety]="tradeSafety"></safety>
                               </div>
-                              <market [tradeFreq]="tradeFreq" (onBidsLength)="onBidsLength($event)" (onAsksLength)="onAsksLength($event)" (onMarketWidth)="onMarketWidth($event)" [product]="product" [addr]="addr" [setQuoteStatus]="QuoteStatus" [setMarketData]="MarketData" [orderList]="orderList" [targetBasePosition]="targetBasePosition"></market>
+                              <market [tradeFreq]="tradeFreq" (onBidsLength)="onBidsLength($event)" (onAsksLength)="onAsksLength($event)" (onMarketWidth)="onMarketWidth($event)" [product]="product" [addr]="addr" [status]="status" [market]="market" [orders]="orders" [targetBasePosition]="targetBasePosition"></market>
                             </div>
                         </div>
                         <div class="orders-table-right col-md-8 col-xs-12" style="padding-left:0px;padding-right:0px;padding-top:0px;">
@@ -110,7 +110,7 @@ import {StatsComponent   } from './stats';
                               <textarea [(ngModel)]="notepad" (ngModelChange)="changeNotepad(notepad)" placeholder="ephemeral notepad" class="ephemeralnotepad" style="height:131px;width: 100%;max-width: 100%;"></textarea>
                             </div>
                             <div class="col-md-10 col-xs-12" style="padding-right:0px;padding-top:0px;">
-                              <orders [product]="product" [orderList]="orderList"></orders>
+                              <orders [product]="product" [orders]="orders"></orders>
                             </div>
                           </div>
                           <div class="row">
@@ -150,20 +150,19 @@ class ClientComponent implements OnInit {
   private system_theme: string = null;
   private quotingParameters: Models.QuotingParameters = <Models.QuotingParameters>{};
   private tradeFreq: number = 0;
-  private tradesChart: Models.TradeChart = null;
   private tradesLength: number = 0;
   private tradesMatchedLength: number = 0;
   private bidsLength: number = 0;
   private asksLength: number = 0;
   private marketWidth: number = 0;
-  private orderList: Models.Order[] = [];
-  private MarketData: Models.Market = null;
-  private QuoteStatus: Models.TwoSidedQuoteStatus = null;
-  private MarketChartData: Models.MarketChart = null;
-  private TradesChartData: Models.TradeChart = null;
+  private orders: Models.Order[] = [];
+  private market: Models.Market = null;
   private trade: Models.Trade = null;
   private taker: Models.MarketTrade = null;
-  private state: Models.ExchangeStatus = new Models.ExchangeStatus();
+  private tradesChart: Models.TradeChart = new Models.TradeChart();
+  private marketChart: Models.MarketChart = new Models.MarketChart();
+  private state: Models.ExchangeState = new Models.ExchangeState();
+  private status: Models.TwoSidedQuoteStatus = new Models.TwoSidedQuoteStatus();
   private fairValue: Models.FairValue = new Models.FairValue();
   private position: Models.PositionReport = new Models.PositionReport();
   private tradeSafety: Models.TradeSafety = new Models.TradeSafety();
@@ -182,7 +181,7 @@ class ClientComponent implements OnInit {
     new Socket.Client();
 
     new Socket.Subscriber(Models.Topics.Connectivity)
-      .registerSubscriber((o: Models.ExchangeStatus) => { this.state = o; })
+      .registerSubscriber((o: Models.ExchangeState) => { this.state = o; })
       .registerDisconnectedHandler(() => { this.state.online = null; });
 
     new Socket.Subscriber(Models.Topics.QuotingParametersChange)
@@ -192,8 +191,8 @@ class ClientComponent implements OnInit {
       .registerSubscriber(this.onAdvert);
 
     new Socket.Subscriber(Models.Topics.OrderStatusReports)
-      .registerSubscriber((o: Models.Order[]) => { this.orderList = o; })
-      .registerDisconnectedHandler(() => { this.orderList = []; });
+      .registerSubscriber((o: Models.Order[]) => { this.orders = o; })
+      .registerDisconnectedHandler(() => { this.orders = []; });
 
     new Socket.Subscriber(Models.Topics.Position)
       .registerSubscriber((o: Models.PositionReport) => { this.position = o; });
@@ -205,8 +204,8 @@ class ClientComponent implements OnInit {
       .registerSubscriber((o: Models.TradeSafety) => { this.tradeSafety = o; });
 
     new Socket.Subscriber(Models.Topics.MarketData)
-      .registerSubscriber((o: Models.Market) => { this.MarketData = o; })
-      .registerDisconnectedHandler(() => { this.MarketData = null; });
+      .registerSubscriber((o: Models.Market) => { this.market = o; })
+      .registerDisconnectedHandler(() => { this.market = null; });
 
     new Socket.Subscriber(Models.Topics.Trades)
       .registerSubscriber((o: Models.Trade) => { this.trade = o; })
@@ -217,14 +216,14 @@ class ClientComponent implements OnInit {
       .registerDisconnectedHandler(() => { this.taker = null; });
 
     new Socket.Subscriber(Models.Topics.QuoteStatus)
-      .registerSubscriber((o: Models.TwoSidedQuoteStatus) => { this.QuoteStatus = o; })
-      .registerDisconnectedHandler(() => { this.QuoteStatus = null; });
+      .registerSubscriber((o: Models.TwoSidedQuoteStatus) => { this.status = o; })
+      .registerDisconnectedHandler(() => { this.status = new Models.TwoSidedQuoteStatus(); });
 
     new Socket.Subscriber(Models.Topics.TargetBasePosition)
       .registerSubscriber((o: Models.TargetBasePositionValue) => { this.targetBasePosition = o; });
 
     new Socket.Subscriber(Models.Topics.MarketChart)
-      .registerSubscriber((o: Models.MarketChart) => { this.MarketChartData = o; });
+      .registerSubscriber((o: Models.MarketChart) => { this.marketChart = o; });
 
     new Socket.Subscriber(Models.Topics.ApplicationState)
       .registerSubscriber(this.onAppState);
@@ -298,28 +297,28 @@ class ClientComponent implements OnInit {
     window.parent.postMessage('height='+document.getElementsByTagName('body')[0].getBoundingClientRect().height+'px', '*');
   };
 
-  private onTradesChartData(tradesChart: Models.TradeChart) {
-    this.TradesChartData = tradesChart;
+  private onTradesChartData(o: Models.TradeChart) {
+    this.tradesChart = o;
   };
 
-  private onTradesLength(tradesLength: number) {
-    this.tradesLength = tradesLength;
+  private onTradesLength(o: number) {
+    this.tradesLength = o;
   };
 
-  private onTradesMatchedLength(tradesMatchedLength: number) {
-    this.tradesMatchedLength = tradesMatchedLength;
+  private onTradesMatchedLength(o: number) {
+    this.tradesMatchedLength = o;
   };
 
-  private onBidsLength(bidsLength: number) {
-    this.bidsLength = bidsLength;
+  private onBidsLength(o: number) {
+    this.bidsLength = o;
   };
 
-  private onAsksLength(asksLength: number) {
-    this.asksLength = asksLength;
+  private onAsksLength(o: number) {
+    this.asksLength = o;
   };
 
-  private onMarketWidth(marketWidth: number) {
-    this.marketWidth = marketWidth;
+  private onMarketWidth(o: number) {
+    this.marketWidth = o;
   };
 
   private onAppState = (o : Models.ApplicationState) => {
@@ -416,7 +415,7 @@ class ClientComponent implements OnInit {
   private onAdvert = (o : Models.ProductAdvertisement) => {
     window.document.title = '[' + o.environment + ']';
     this.product = o;
-    setTimeout(this.resizeMatryoshka, 5000);
+    setTimeout(this.resizeMatryoshka, 5e+3);
     console.log(
       "%cK started " + (new Date().toISOString().slice(11, -1))+"  %c" + this.homepage,
       "color:green;font-size:32px;",

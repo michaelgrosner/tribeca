@@ -22,7 +22,7 @@ export class StateComponent {
 
   @Input() product: Models.ProductAdvertisement;
 
-  @Input() state: Models.ExchangeStatus;
+  @Input() state: Models.ExchangeState;
 
   private getClass = () => {
     if (this.state.agree === null) return "btn btn-warning";

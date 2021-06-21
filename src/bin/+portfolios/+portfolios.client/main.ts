@@ -68,7 +68,7 @@ class ClientComponent implements OnInit {
     new Socket.Client();
 
     new Socket.Subscriber(Models.Topics.Connectivity)
-      .registerSubscriber((o: Models.ExchangeStatus) => { this.state = o; })
+      .registerSubscriber((o: Models.ExchangeState) => { this.state = o; })
       .registerDisconnectedHandler(() => { this.state = null; });
 
     new Socket.Subscriber(Models.Topics.ProductAdvertisement)
@@ -121,7 +121,7 @@ class ClientComponent implements OnInit {
   private onAdvert = (o : Models.ProductAdvertisement) => {
     window.document.title = '[' + o.environment + ']';
     this.product = o;
-    setTimeout(this.resizeMatryoshka, 5000);
+    setTimeout(this.resizeMatryoshka, 5e+3);
     console.log(
       "%cK started " + (new Date().toISOString().slice(11, -1))+"  %c" + this.homepage,
       "color:green;font-size:32px;",

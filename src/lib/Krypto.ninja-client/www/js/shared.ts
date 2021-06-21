@@ -43,7 +43,7 @@ export class BaseCurrencyCellComponent implements AgRendererComponent {
   refresh(): boolean {
       return false;
   }
-}
+};
 
 @Component({
     selector: 'quote-currency-cell',
@@ -65,4 +65,4 @@ export class QuoteCurrencyCellComponent implements AgRendererComponent {
   refresh(): boolean {
       return false;
   }
-}
+};

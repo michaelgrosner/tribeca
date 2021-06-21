@@ -85,18 +85,18 @@ export interface IEwma {
 }
 
 export class MarketChart {
-    constructor(public stdevWidth: IStdev,
-                public ewma: IEwma,
-                public tradesBuySize: number,
-                public tradesSellSize: number) {}
+    constructor(public stdevWidth:     IStdev = null,
+                public ewma:            IEwma = null,
+                public tradesBuySize:  number = 0,
+                public tradesSellSize: number = 0) {}
 }
 
 export class TradeChart {
-    constructor(public price: number,
-                public side: Side,
-                public quantity: number,
-                public value: number,
-                public pong: boolean) {}
+    constructor(public price:     number = 0,
+                public side:        Side = null,
+                public quantity: number  = 0,
+                public value:    number  = 0,
+                public pong:     boolean = false) {}
 }
 
 export class Trade {
@@ -165,7 +165,7 @@ export class ConnectionStatus {
     constructor(public online: Connectivity) {}
 }
 
-export class ExchangeStatus {
+export class ExchangeState {
     constructor(public agree:  Connectivity = null,
                 public online: Connectivity = null) {}
 }
@@ -199,12 +199,12 @@ export enum QuoteStatus { Disconnected, Live, DisabledQuotes, MissingData, Unkno
 export enum SideAPR { Off, Buy, Sell }
 
 export class TwoSidedQuoteStatus {
-    constructor(public bidStatus: QuoteStatus,
-                public askStatus: QuoteStatus,
-                public sideAPR: SideAPR,
-                public quotesInMemoryWaiting: number,
-                public quotesInMemoryWorking: number,
-                public quotesInMemoryZombies: number) {}
+    constructor(public bidStatus:        QuoteStatus = QuoteStatus.Disconnected,
+                public askStatus:        QuoteStatus = QuoteStatus.Disconnected,
+                public sideAPR:              SideAPR = SideAPR.Off,
+                public quotesInMemoryWaiting: number = 0,
+                public quotesInMemoryWorking: number = 0,
+                public quotesInMemoryZombies: number = 0) {}
 }
 
 export enum QuotingMode { Top, Mid, Join, InverseJoin, InverseTop, HamelinRat, Depth }
@@ -284,21 +284,21 @@ export interface QuotingParameters {
 }
 
 export class ProductAdvertisement {
-    constructor(public exchange: string = "",
-                public inet: string =  "",
-                public base: string =  "",
-                public quote: string = "",
-                public symbol: string = "",
-                public margin: number = 0,
-                public webMarket: string = "",
-                public webOrders: string = "",
+    constructor(public exchange:    string = "",
+                public inet:        string =  "",
+                public base:        string =  "",
+                public quote:       string = "",
+                public symbol:      string = "",
+                public margin:      number = 0,
+                public webMarket:   string = "",
+                public webOrders:   string = "",
                 public environment: string = "",
-                public matryoshka: string = "",
-                public tickPrice: number = 8,
-                public tickSize: number = 8,
-                public stepPrice: number = 1e-8,
-                public stepSize: number = 1e-8,
-                public minSize: number = 1e-8) { }
+                public matryoshka:  string = "",
+                public tickPrice:   number = 8,
+                public tickSize:    number = 8,
+                public stepPrice:   number = 1e-8,
+                public stepSize:    number = 1e-8,
+                public minSize:     number = 1e-8) { }
 }
 
 export class ApplicationState {
@@ -311,16 +311,16 @@ export class ApplicationState {
 
 export class TradeSafety {
     constructor(
-      public buy: number = 0,
-      public sell: number = 0,
+      public buy:      number = 0,
+      public sell:     number = 0,
       public combined: number = 0,
-      public buyPing: number = 0,
+      public buyPing:  number = 0,
       public sellPing: number = 0) {}
 }
 
 export class TargetBasePositionValue {
     constructor(
-      public tbp: number  = 0,
+      public tbp:  number = 0,
       public pDiv: number = 0) {}
 }
 

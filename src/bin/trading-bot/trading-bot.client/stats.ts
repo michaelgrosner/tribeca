@@ -6,13 +6,13 @@ require('highcharts/highcharts-more')(Highcharts);
 import * as Models from 'lib/models';
 
 interface PointOptionsObjectExtended extends Highcharts.PointOptionsObject {
-  side: string;
-  pong: string;
-  price:string;
-  qty:string;
-  val:string;
-  quote:string;
-  base:string;
+  side:  string;
+  pong:  string;
+  price: string;
+  qty:   string;
+  val:   string;
+  quote: string;
+  base:  string;
 }
 
 var self;
@@ -21,28 +21,33 @@ var self;
   selector: 'stats',
   template: `<div class="col-md-12 col-xs-12" style="height:622px;">
     <div class="col-md-6 col-xs-6">
-        <highcharts-chart [Highcharts]="Highcharts" style="display: block;" [options]="fvChartOptions"></highcharts-chart>
+        <highcharts-chart
+          [Highcharts]="Highcharts"
+          style="display: block;"
+          [options]="fvChartOptions"></highcharts-chart>
     </div>
     <div class="col-md-6 col-xs-6">
       <div style="height:306px;">
-        <highcharts-chart [Highcharts]="Highcharts" style="display: block;" [options]="baseChartOptions"></highcharts-chart>
+        <highcharts-chart
+          [Highcharts]="Highcharts"
+          style="display: block;"
+          [options]="baseChartOptions"></highcharts-chart>
       </div>
       <div style="height:306px;">
-        <highcharts-chart [Highcharts]="Highcharts" style="display: block;" [options]="quoteChartOptions"></highcharts-chart>
+        <highcharts-chart
+          [Highcharts]="Highcharts"
+          style="display: block;"
+          [options]="quoteChartOptions"></highcharts-chart>
       </div>
     </div>
   </div>`
 })
 export class StatsComponent implements OnInit {
 
-  private width: number;
-  private ewma: Models.IEwma;
-  private stdevWidth: Models.IStdev;
-  private tradesBuySize: number;
-  private tradesSellSize: number;
-  private fvChart: number = 0;
-  private baseChart: number = 1;
+  private fvChart:    number = 0;
+  private baseChart:  number = 1;
   private quoteChart: number = 2;
+
   private Highcharts: typeof Highcharts = Highcharts;
 
   @Input() product: Models.ProductAdvertisement;
@@ -53,46 +58,32 @@ export class StatsComponent implements OnInit {
 
   @Input() position: Models.PositionReport;
 
+  @Input() marketWidth: number;
+
   @Input() targetBasePosition: Models.TargetBasePositionValue;
 
-  @Input() set setMarketWidth(o: number) {
-    if (o == null) return;
-    this.width = o / 2;
-  };
+  @Input() marketChart: Models.MarketChart;
 
-  @Input() set setMarketChartData(o: Models.MarketChart) {
-    if (o === null) return;
-    if (o.ewma) this.ewma = o.ewma;
-    if (o.stdevWidth) this.stdevWidth = o.stdevWidth;
-    if (o.tradesBuySize) this.tradesBuySize = o.tradesBuySize;
-    if (o.tradesSellSize) this.tradesSellSize = o.tradesSellSize;
-  };
+  @Input() showStats: boolean;
 
-  @Input() set setTradesChartData(t: Models.TradeChart) {
-    if (t===null) return;
+  @Input() set tradesChart(o: Models.TradeChart) {
+    if (!o.price) return;
     let time = new Date().getTime();
-    Highcharts.charts[this.fvChart].series[Models.Side[t.side] == 'Bid' ? 4 : 2].addPoint([time, t.price], false);
-    Highcharts.charts[this.fvChart].series[Models.Side[t.side] == 'Bid' ? 5 : 3].addPoint(<PointOptionsObjectExtended>{
+    Highcharts.charts[this.fvChart].series[Models.Side[o.side] == 'Bid' ? 4 : 2].addPoint([time, o.price], false);
+    Highcharts.charts[this.fvChart].series[Models.Side[o.side] == 'Bid' ? 5 : 3].addPoint(<PointOptionsObjectExtended>{
       x: time,
-      y: t.price,
-      z: t.quantity,
-      title: (t.pong ? '⇋' : '⇁')+(Models.Side[t.side] == 'Bid' ? 'B' : 'S'),
-      side:(Models.Side[t.side] == 'Bid' ? 'Buy':'Sell'),
-      pong:(t.pong?'o':'i'),
-      price:t.price.toFixed(this.product.tickPrice),
-      qty:t.quantity.toFixed(8),
-      val:t.value.toFixed(this.product.tickPrice),
+      y: o.price,
+      z: o.quantity,
+      title: (o.pong ? '⇋' : '⇁')+(Models.Side[o.side] == 'Bid' ? 'B' : 'S'),
+      side:(Models.Side[o.side] == 'Bid' ? 'Buy':'Sell'),
+      pong:(o.pong?'o':'i'),
+      price:o.price.toFixed(this.product.tickPrice),
+      qty:o.quantity.toFixed(8),
+      val:o.value.toFixed(this.product.tickPrice),
       quote:this.product.quote,
       base:this.product.base
     }, true);
     this.updateCharts(time);
-  };
-
-  private showStats: boolean;
-  @Input() set setShowStats(showStats: boolean) {
-    if (!this.showStats && showStats)
-      Highcharts.charts.forEach(chart => chart.redraw(false) );
-    this.showStats = showStats;
   };
 
   private syncExtremes = function (e) {
@@ -534,37 +525,54 @@ export class StatsComponent implements OnInit {
   ngOnInit() {
     self = this;
 
-    setInterval(() => this.updateCharts(new Date().getTime()), 10000);
+    setInterval(() => this.updateCharts(new Date().getTime()), 10e+3);
   };
 
   private updateCharts = (time: number) => {
     this.removeOldPoints(time);
     if (this.fairValue.price) {
-      if (this.stdevWidth) {
-        if (this.stdevWidth.fv) Highcharts.charts[this.fvChart].series[11].addPoint([time, this.stdevWidth.fv], false);
-        if (this.stdevWidth.tops) Highcharts.charts[this.fvChart].series[12].addPoint([time, this.stdevWidth.tops], false);
-        if (this.stdevWidth.ask) Highcharts.charts[this.fvChart].series[13].addPoint([time, this.stdevWidth.ask], false);
-        if (this.stdevWidth.bid) Highcharts.charts[this.fvChart].series[14].addPoint([time, this.stdevWidth.bid], false);
-        if (this.stdevWidth.fv && this.stdevWidth.fvMean) Highcharts.charts[this.fvChart].series[15].addPoint([time, this.stdevWidth.fvMean-this.stdevWidth.fv, this.stdevWidth.fvMean+this.stdevWidth.fv], this.showStats, false, false);
-        if (this.stdevWidth.tops && this.stdevWidth.topsMean) Highcharts.charts[this.fvChart].series[16].addPoint([time, this.stdevWidth.topsMean-this.stdevWidth.tops, this.stdevWidth.topsMean+this.stdevWidth.tops], this.showStats, false, false);
-        if (this.stdevWidth.ask && this.stdevWidth.bid && this.stdevWidth.askMean && this.stdevWidth.bidMean) Highcharts.charts[this.fvChart].series[17].addPoint([time, this.stdevWidth.bidMean-this.stdevWidth.bid, this.stdevWidth.askMean+this.stdevWidth.ask], this.showStats, false, false);
+      if (this.marketChart.stdevWidth) {
+        if (this.marketChart.stdevWidth.fv)
+          Highcharts.charts[this.fvChart].series[11].addPoint([time, this.marketChart.stdevWidth.fv], false);
+        if (this.marketChart.stdevWidth.tops)
+          Highcharts.charts[this.fvChart].series[12].addPoint([time, this.marketChart.stdevWidth.tops], false);
+        if (this.marketChart.stdevWidth.ask)
+          Highcharts.charts[this.fvChart].series[13].addPoint([time, this.marketChart.stdevWidth.ask], false);
+        if (this.marketChart.stdevWidth.bid)
+          Highcharts.charts[this.fvChart].series[14].addPoint([time, this.marketChart.stdevWidth.bid], false);
+        if (this.marketChart.stdevWidth.fv && this.marketChart.stdevWidth.fvMean)
+          Highcharts.charts[this.fvChart].series[15].addPoint([time, this.marketChart.stdevWidth.fvMean-this.marketChart.stdevWidth.fv, this.marketChart.stdevWidth.fvMean+this.marketChart.stdevWidth.fv], this.showStats, false, false);
+        if (this.marketChart.stdevWidth.tops && this.marketChart.stdevWidth.topsMean)
+          Highcharts.charts[this.fvChart].series[16].addPoint([time, this.marketChart.stdevWidth.topsMean-this.marketChart.stdevWidth.tops, this.marketChart.stdevWidth.topsMean+this.marketChart.stdevWidth.tops], this.showStats, false, false);
+        if (this.marketChart.stdevWidth.ask && this.marketChart.stdevWidth.bid && this.marketChart.stdevWidth.askMean && this.marketChart.stdevWidth.bidMean)
+          Highcharts.charts[this.fvChart].series[17].addPoint([time, this.marketChart.stdevWidth.bidMean-this.marketChart.stdevWidth.bid, this.marketChart.stdevWidth.askMean+this.marketChart.stdevWidth.ask], this.showStats, false, false);
       }
-      Highcharts.charts[this.fvChart].yAxis[2].setExtremes(0, Math.max(this.tradesBuySize*4,this.tradesSellSize*4,Highcharts.charts[this.fvChart].yAxis[2].getExtremes().dataMax*4), false, true, { trigger: 'syncExtremes' });
-      if (this.tradesBuySize) Highcharts.charts[this.fvChart].series[18].addPoint([time, this.tradesBuySize], false);
-      if (this.tradesSellSize) Highcharts.charts[this.fvChart].series[19].addPoint([time, this.tradesSellSize], false);
-      this.tradesBuySize = 0;
-      this.tradesSellSize = 0;
-      if (this.ewma) {
-        if (this.ewma.ewmaQuote) Highcharts.charts[this.fvChart].series[6].addPoint([time, this.ewma.ewmaQuote], false);
-        if (this.ewma.ewmaVeryLong) Highcharts.charts[this.fvChart].series[7].addPoint([time, this.ewma.ewmaVeryLong], false);
-        if (this.ewma.ewmaLong) Highcharts.charts[this.fvChart].series[8].addPoint([time, this.ewma.ewmaLong], false);
-        if (this.ewma.ewmaMedium) Highcharts.charts[this.fvChart].series[9].addPoint([time, this.ewma.ewmaMedium], false);
-        if (this.ewma.ewmaShort) Highcharts.charts[this.fvChart].series[10].addPoint([time, this.ewma.ewmaShort], false);
-        if (this.ewma.ewmaTrendDiff) Highcharts.charts[this.fvChart].series[20].addPoint([time, this.ewma.ewmaTrendDiff], false);
+      Highcharts.charts[this.fvChart].yAxis[2].setExtremes(0, Math.max(this.marketChart.tradesBuySize*4,this.marketChart.tradesSellSize*4,Highcharts.charts[this.fvChart].yAxis[2].getExtremes().dataMax*4), false, true, { trigger: 'syncExtremes' });
+      if (this.marketChart.tradesBuySize)
+        Highcharts.charts[this.fvChart].series[18].addPoint([time, this.marketChart.tradesBuySize], false);
+      if (this.marketChart.tradesSellSize)
+        Highcharts.charts[this.fvChart].series[19].addPoint([time, this.marketChart.tradesSellSize], false);
+      this.marketChart.tradesBuySize = 0;
+      this.marketChart.tradesSellSize = 0;
+      if (this.marketChart.ewma) {
+        if (this.marketChart.ewma.ewmaQuote)
+          Highcharts.charts[this.fvChart].series[6].addPoint([time, this.marketChart.ewma.ewmaQuote], false);
+        if (this.marketChart.ewma.ewmaVeryLong)
+          Highcharts.charts[this.fvChart].series[7].addPoint([time, this.marketChart.ewma.ewmaVeryLong], false);
+        if (this.marketChart.ewma.ewmaLong)
+          Highcharts.charts[this.fvChart].series[8].addPoint([time, this.marketChart.ewma.ewmaLong], false);
+        if (this.marketChart.ewma.ewmaMedium)
+          Highcharts.charts[this.fvChart].series[9].addPoint([time, this.marketChart.ewma.ewmaMedium], false);
+        if (this.marketChart.ewma.ewmaShort)
+          Highcharts.charts[this.fvChart].series[10].addPoint([time, this.marketChart.ewma.ewmaShort], false);
+        if (this.marketChart.ewma.ewmaTrendDiff)
+          Highcharts.charts[this.fvChart].series[20].addPoint([time, this.marketChart.ewma.ewmaTrendDiff], false);
       }
       Highcharts.charts[this.fvChart].series[0].addPoint([time, this.fairValue.price], this.showStats);
-      if (this.quotingParameters.protectionEwmaWidthPing && (this.ewma && this.ewma.ewmaWidth)) Highcharts.charts[this.fvChart].series[1].addPoint([time, this.fairValue.price-this.ewma.ewmaWidth, this.fairValue.price+this.ewma.ewmaWidth], this.showStats, false, false);
-      else if (this.width) Highcharts.charts[this.fvChart].series[1].addPoint([time, this.fairValue.price-this.width, this.fairValue.price+this.width], this.showStats, false, false);
+      if (this.quotingParameters.protectionEwmaWidthPing && (this.marketChart.ewma && this.marketChart.ewma.ewmaWidth))
+        Highcharts.charts[this.fvChart].series[1].addPoint([time, this.fairValue.price-this.marketChart.ewma.ewmaWidth, this.fairValue.price+this.marketChart.ewma.ewmaWidth], this.showStats, false, false);
+      else if (this.marketWidth)
+        Highcharts.charts[this.fvChart].series[1].addPoint([time, this.fairValue.price-this.marketWidth, this.fairValue.price+this.marketWidth], this.showStats, false, false);
     }
     if (this.position.base.value || this.position.quote.value) {
       Highcharts.charts[this.quoteChart].yAxis[1].setExtremes(0, Math.max(this.position.quote.value,Highcharts.charts[this.quoteChart].yAxis[1].getExtremes().dataMax), false, true, { trigger: 'syncExtremes' });
