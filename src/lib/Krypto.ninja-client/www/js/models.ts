@@ -166,8 +166,8 @@ export class ConnectionStatus {
 }
 
 export class ExchangeStatus {
-    constructor(public agree: Connectivity,
-                public online: Connectivity) {}
+    constructor(public agree:  Connectivity = null,
+                public online: Connectivity = null) {}
 }
 
 export class AgreeRequestFromUI {

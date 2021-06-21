@@ -25,12 +25,12 @@ import {StatsComponent} from './stats';
 @Component({
   selector: 'ui',
   template: `<div>
-    <div [hidden]="state" style="padding:42px;transform:rotate(-6deg);">
+    <div [hidden]="state.online != null" style="padding:42px;transform:rotate(-6deg);">
         <h4 class="text-danger text-center">{{ product.environment ? product.environment+' is d' : 'D' }}isconnected.</h4>
     </div>
-    <div [hidden]="!state">
+    <div [hidden]="state.online == null">
         <div class="container-fluid">
-            <div id="hud" [ngClass]="state && state.online ? 'bg-success' : 'bg-danger'">
+            <div id="hud" [ngClass]="state.online ? 'bg-success' : 'bg-danger'">
                 <div class="row" [hidden]="!showSettings">
                     <div class="col-md-12 col-xs-12 parameters-inputs">
                         <div class="row">
@@ -128,7 +128,7 @@ import {StatsComponent} from './stats';
     </div>
     <address class="text-center">
       <small>
-        <a rel="noreferrer" href="{{ homepage }}/blob/master/README.md" target="_blank">README</a> - <a rel="noreferrer" href="{{ homepage }}/blob/master/doc/MANUAL.md" target="_blank">MANUAL</a> - <a rel="noreferrer" href="{{ homepage }}" target="_blank">SOURCE</a> - <span [hidden]="!state"><span [hidden]="!product.inet"><span title="non-default Network Interface for outgoing traffic">{{ product.inet }}</span> - </span><span title="Server used RAM" style="margin-top: 6px;display: inline-block;">{{ server_memory }}</span> - <span title="Client used RAM" style="margin-top: 6px;display: inline-block;">{{ client_memory }}</span> - <span title="Database Size" style="margin-top: 6px;display: inline-block;">{{ db_size }}</span> - <span style="margin-top: 6px;display: inline-block;"><span title="{{ tradesMatchedLength===-1 ? 'Trades' : 'Pings' }} in memory">{{ tradesLength }}</span><span [hidden]="tradesMatchedLength < 0">/</span><span [hidden]="tradesMatchedLength < 0" title="Pongs in memory">{{ tradesMatchedLength }}</span></span> - <span title="Market Levels in memory (bids|asks)" style="margin-top: 6px;display: inline-block;">{{ bidsLength }}|{{ asksLength }}</span> - </span><a href="#" (click)="openMatryoshka()">MATRYOSHKA</a> - <a rel="noreferrer" href="{{ homepage }}/issues/new?title=%5Btopic%5D%20short%20and%20sweet%20description&body=description%0Aplease,%20consider%20to%20add%20all%20possible%20details%20%28if%20any%29%20about%20your%20new%20feature%20request%20or%20bug%20report%0A%0A%2D%2D%2D%0A%60%60%60%0Aapp%20exchange%3A%20{{ product.exchange }}/{{ product.base+'/'+product.quote }}%0Aapp%20version%3A%20undisclosed%0AOS%20distro%3A%20undisclosed%0A%60%60%60%0A![300px-spock_vulcan-salute3](https://cloud.githubusercontent.com/assets/1634027/22077151/4110e73e-ddb3-11e6-9d84-358e9f133d34.png)" target="_blank">CREATE ISSUE</a> - <a rel="noreferrer" href="https://github.com/ctubio/Krypto-trading-bot/discussions/new" target="_blank">HELP</a> - <a title="irc://irc.freenode.net:6697/#tradingBot" href="irc://irc.freenode.net:6697/#tradingBot">IRC</a>|<a target="_blank" rel="noreferrer" href="https://kiwiirc.com/client/irc.freenode.net:6697/?theme=cli#tradingBot" rel="nofollow">www</a>
+        <a rel="noreferrer" href="{{ homepage }}/blob/master/README.md" target="_blank">README</a> - <a rel="noreferrer" href="{{ homepage }}/blob/master/doc/MANUAL.md" target="_blank">MANUAL</a> - <a rel="noreferrer" href="{{ homepage }}" target="_blank">SOURCE</a> - <span [hidden]="state.online == null"><span [hidden]="!product.inet"><span title="non-default Network Interface for outgoing traffic">{{ product.inet }}</span> - </span><span title="Server used RAM" style="margin-top: 6px;display: inline-block;">{{ server_memory }}</span> - <span title="Client used RAM" style="margin-top: 6px;display: inline-block;">{{ client_memory }}</span> - <span title="Database Size" style="margin-top: 6px;display: inline-block;">{{ db_size }}</span> - <span style="margin-top: 6px;display: inline-block;"><span title="{{ tradesMatchedLength===-1 ? 'Trades' : 'Pings' }} in memory">{{ tradesLength }}</span><span [hidden]="tradesMatchedLength < 0">/</span><span [hidden]="tradesMatchedLength < 0" title="Pongs in memory">{{ tradesMatchedLength }}</span></span> - <span title="Market Levels in memory (bids|asks)" style="margin-top: 6px;display: inline-block;">{{ bidsLength }}|{{ asksLength }}</span> - </span><a href="#" (click)="openMatryoshka()">MATRYOSHKA</a> - <a rel="noreferrer" href="{{ homepage }}/issues/new?title=%5Btopic%5D%20short%20and%20sweet%20description&body=description%0Aplease,%20consider%20to%20add%20all%20possible%20details%20%28if%20any%29%20about%20your%20new%20feature%20request%20or%20bug%20report%0A%0A%2D%2D%2D%0A%60%60%60%0Aapp%20exchange%3A%20{{ product.exchange }}/{{ product.base+'/'+product.quote }}%0Aapp%20version%3A%20undisclosed%0AOS%20distro%3A%20undisclosed%0A%60%60%60%0A![300px-spock_vulcan-salute3](https://cloud.githubusercontent.com/assets/1634027/22077151/4110e73e-ddb3-11e6-9d84-358e9f133d34.png)" target="_blank">CREATE ISSUE</a> - <a rel="noreferrer" href="https://github.com/ctubio/Krypto-trading-bot/discussions/new" target="_blank">HELP</a> - <a title="irc://irc.freenode.net:6697/#tradingBot" href="irc://irc.freenode.net:6697/#tradingBot">IRC</a>|<a target="_blank" rel="noreferrer" href="https://kiwiirc.com/client/irc.freenode.net:6697/?theme=cli#tradingBot" rel="nofollow">www</a>
       </small>
     </address>
     <iframe id="matryoshka" style="margin:0px;padding:0px;border:0px;width:100%;height:0px;" src="about:blank"></iframe>
@@ -142,7 +142,6 @@ class ClientComponent implements OnInit {
   private client_memory: string;
   private db_size: string;
   private notepad: string;
-  private state: Models.ExchangeStatus = null;
   private showSettings: boolean = true;
   private showTakers: boolean = false;
   private showStats: number = 0;
@@ -158,16 +157,17 @@ class ClientComponent implements OnInit {
   private asksLength: number = 0;
   private marketWidth: number = 0;
   private orderList: Models.Order[] = [];
-  private fairValue: Models.FairValue = new Models.FairValue();
   private Trade: Models.Trade = null;
-  private position: Models.PositionReport = new Models.PositionReport();
-  private tradeSafety: Models.TradeSafety = new Models.TradeSafety();
-  private targetBasePosition: Models.TargetBasePositionValue = new Models.TargetBasePositionValue();
   private MarketData: Models.Market = null;
   private MarketTradeData: Models.MarketTrade = null;
   private QuoteStatus: Models.TwoSidedQuoteStatus = null;
   private MarketChartData: Models.MarketChart = null;
   private TradesChartData: Models.TradeChart = null;
+  private state: Models.ExchangeStatus = new Models.ExchangeStatus();
+  private fairValue: Models.FairValue = new Models.FairValue();
+  private position: Models.PositionReport = new Models.PositionReport();
+  private tradeSafety: Models.TradeSafety = new Models.TradeSafety();
+  private targetBasePosition: Models.TargetBasePositionValue = new Models.TargetBasePositionValue();
   private product: Models.ProductAdvertisement = new Models.ProductAdvertisement();
 
   private cancelAllOrders = () => new Socket.Fire(Models.Topics.CancelAllOrders).fire();
@@ -183,7 +183,7 @@ class ClientComponent implements OnInit {
 
     new Socket.Subscriber(Models.Topics.Connectivity)
       .registerSubscriber((o: Models.ExchangeStatus) => { this.state = o; })
-      .registerDisconnectedHandler(() => { this.state = null; });
+      .registerDisconnectedHandler(() => { this.state.online = null; });
 
     new Socket.Subscriber(Models.Topics.QuotingParametersChange)
       .registerSubscriber((o: Models.QuotingParameters) => { this.quotingParameters = o; });
