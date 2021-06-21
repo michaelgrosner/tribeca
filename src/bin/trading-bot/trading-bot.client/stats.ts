@@ -5,12 +5,6 @@ require('highcharts/highcharts-more')(Highcharts);
 
 import * as Models from 'lib/models';
 
-var tickPrice: number;
-var ewmaEnabled: boolean;
-var customBaseCurrency: string;
-var customQuoteCurrency: string;
-var customSymbols: object = {'circle': '●','diamond': '♦','square': '■','triangle': '▲','triangle-down': '▼'};
-
 interface PointOptionsObjectExtended extends Highcharts.PointOptionsObject {
   side: string;
   pong: string;
@@ -20,6 +14,8 @@ interface PointOptionsObjectExtended extends Highcharts.PointOptionsObject {
   quote:string;
   base:string;
 }
+
+var self;
 
 @Component({
   selector: 'stats',
@@ -39,10 +35,6 @@ interface PointOptionsObjectExtended extends Highcharts.PointOptionsObject {
 })
 export class StatsComponent implements OnInit {
 
-  private positionData: Models.PositionReport;
-  private targetBasePosition: number;
-  private positionDivergence: number;
-  private fairValue: number;
   private width: number;
   private ewma: Models.IEwma;
   private stdevWidth: Models.IStdev;
@@ -52,27 +44,55 @@ export class StatsComponent implements OnInit {
   private baseChart: number = 1;
   private quoteChart: number = 2;
   private Highcharts: typeof Highcharts = Highcharts;
-  private quotingParameters: Models.QuotingParameters = <Models.QuotingParameters>{};
 
-  private pointFormatterBase = function () {
-    return this.series.type=='arearange'
-      ? '<tr><td><span style="color:'+this.series.color+'">●</span>'+this.series.name+(this.series.name=="Width" && ewmaEnabled ?" EWMA":"")+' High:</td><td style="text-align:right;"> <b>'+ this.high.toFixed(tickPrice) +' ' + customQuoteCurrency + '</b></td></tr>'
-        + '<tr><td><span style="color:'+this.series.color+'">●</span>'+this.series.name+(this.series.name=="Width" && ewmaEnabled?" EWMA":"")+' Low:</td><td style="text-align:right;"> <b>'+ this.low.toFixed(tickPrice) +' ' + customQuoteCurrency + '</b></td></tr>'
-      : ( this.series.type=='bubble'
-        ? '<tr><td colspan="2"><b><span style="color:'+this.series.color+';">'+(this.side == 'Buy' ? '▼':'▲')+'</span> '+this.side+'</b> (P'+this.pong+'ng)</td></tr>'
-          + '<tr><td>' + 'Price:</td><td style="text-align:right;"> <b>'+this.price+' '+this.quote+'</b></td></tr>'
-          + '<tr><td>' + 'Qty:</td><td style="text-align:right;"> <b>'+this.qty+' '+this.base+'</b></td></tr>'
-          + '<tr><td>' + 'Value:</td><td style="text-align:right;"> <b>'+this.val+' '+this.quote+'</b></td></tr>'
-        :'<tr><td><span style="color:'+this.series.color+'">' + customSymbols[this.series.symbol] + '</span> '+this.series.name+':</td><td style="text-align:right;"> <b>'+ this.y.toFixed(tickPrice) +' ' + customQuoteCurrency + '</b></td></tr>'
-      );
+  @Input() product: Models.ProductAdvertisement;
+
+  @Input() fairValue: Models.FairValue;
+
+  @Input() quotingParameters: Models.QuotingParameters;
+
+  @Input() position: Models.PositionReport;
+
+  @Input() targetBasePosition: Models.TargetBasePositionValue;
+
+  @Input() set setMarketWidth(o: number) {
+    if (o == null) return;
+    this.width = o / 2;
   }
 
-  private pointFormatterQuote = function () {
-    return '<tr><td><span style="color:'+this.series.color+'">' + customSymbols[this.series.symbol||'square'] + '</span> '+this.series.name+':</td><td style="text-align:right;"> <b>'+this.y.toFixed(8)+' ' + customBaseCurrency + '</b></td></tr>';
+  @Input() set setMarketChartData(o: Models.MarketChart) {
+    if (o === null) return;
+    if (o.ewma) this.ewma = o.ewma;
+    if (o.stdevWidth) this.stdevWidth = o.stdevWidth;
+    if (o.tradesBuySize) this.tradesBuySize = o.tradesBuySize;
+    if (o.tradesSellSize) this.tradesSellSize = o.tradesSellSize;
   }
 
-  private pointFormatterPercentage = function () {
-    return '<tr><td><span style="color:'+this.series.color+'">' + customSymbols[this.series.symbol||'square'] + '</span> '+this.series.name+':</td><td style="text-align:right;"> <b>'+this.y.toFixed(4)+' % </b></td></tr>';
+  @Input() set setTradesChartData(t: Models.TradeChart) {
+    if (t===null) return;
+    let time = new Date().getTime();
+    Highcharts.charts[this.fvChart].series[Models.Side[t.side] == 'Bid' ? 4 : 2].addPoint([time, t.price], false);
+    Highcharts.charts[this.fvChart].series[Models.Side[t.side] == 'Bid' ? 5 : 3].addPoint(<PointOptionsObjectExtended>{
+      x: time,
+      y: t.price,
+      z: t.quantity,
+      title: (t.pong ? '⇋' : '⇁')+(Models.Side[t.side] == 'Bid' ? 'B' : 'S'),
+      side:(Models.Side[t.side] == 'Bid' ? 'Buy':'Sell'),
+      pong:(t.pong?'o':'i'),
+      price:t.price.toFixed(this.product.tickPrice),
+      qty:t.quantity.toFixed(8),
+      val:t.value.toFixed(this.product.tickPrice),
+      quote:this.product.quote,
+      base:this.product.base
+    }, true);
+    this.updateCharts(time);
+  }
+
+  private showStats: boolean;
+  @Input() set setShowStats(showStats: boolean) {
+    if (!this.showStats && showStats)
+      Highcharts.charts.forEach(chart => chart.redraw(false) );
+    this.showStats = showStats;
   }
 
   private syncExtremes = function (e) {
@@ -84,6 +104,27 @@ export class StatsComponent implements OnInit {
         });
     }
   }
+
+  private pointFormatterBase = function () {
+    return this.series.type=='arearange'
+      ? '<tr><td><span style="color:'+this.series.color+'">●</span>'+this.series.name+(this.series.name=="Width" && self.quotingParameters.protectionEwmaWidthPing ?" EWMA":"")+' High:</td><td style="text-align:right;"> <b>'+ this.high.toFixed(self.product.tickPrice) +' ' + self.product.quote + '</b></td></tr>'
+        + '<tr><td><span style="color:'+this.series.color+'">●</span>'+this.series.name+(this.series.name=="Width" && self.quotingParameters.protectionEwmaWidthPing?" EWMA":"")+' Low:</td><td style="text-align:right;"> <b>'+ this.low.toFixed(self.product.tickPrice) +' ' + self.product.quote + '</b></td></tr>'
+      : ( this.series.type=='bubble'
+        ? '<tr><td colspan="2"><b><span style="color:'+this.series.color+';">'+(this.side == 'Buy' ? '▼':'▲')+'</span> '+this.side+'</b> (P'+this.pong+'ng)</td></tr>'
+          + '<tr><td>' + 'Price:</td><td style="text-align:right;"> <b>'+this.price+' '+this.quote+'</b></td></tr>'
+          + '<tr><td>' + 'Qty:</td><td style="text-align:right;"> <b>'+this.qty+' '+this.base+'</b></td></tr>'
+          + '<tr><td>' + 'Value:</td><td style="text-align:right;"> <b>'+this.val+' '+this.quote+'</b></td></tr>'
+        :'<tr><td><span style="color:'+this.series.color+'">' + self.customSymbols[this.series.symbol] + '</span> '+this.series.name+':</td><td style="text-align:right;"> <b>'+ this.y.toFixed(self.product.tickPrice) +' ' + self.product.quote + '</b></td></tr>'
+      );
+  };
+
+  private pointFormatterQuote = function () {
+    return '<tr><td><span style="color:'+this.series.color+'">' + self.customSymbols[this.series.symbol||'square'] + '</span> '+this.series.name+':</td><td style="text-align:right;"> <b>'+this.y.toFixed(8)+' ' + self.product.base + '</b></td></tr>';
+  };
+
+  private pointFormatterPercentage = function () {
+    return '<tr><td><span style="color:'+this.series.color+'">' + self.customSymbols[this.series.symbol||'square'] + '</span> '+this.series.name+':</td><td style="text-align:right;"> <b>'+this.y.toFixed(4)+' % </b></td></tr>';
+  };
 
   private fvChartOptions = {
     title: 'fair value',
@@ -327,6 +368,7 @@ export class StatsComponent implements OnInit {
       data: []
     }]
   };
+
   private quoteChartOptions = {
     title: 'quote wallet',
     chart: {
@@ -406,6 +448,7 @@ export class StatsComponent implements OnInit {
       data: []
     }]
   };
+
   private baseChartOptions = {
     title: 'base wallet',
     chart: {
@@ -486,145 +529,17 @@ export class StatsComponent implements OnInit {
     }]
   };
 
-  @Input() product: Models.ProductAdvertisement;
-
-  @Input() set setQuotingParameters(o: Models.QuotingParameters) {
-    ewmaEnabled = o.protectionEwmaWidthPing
-    this.quotingParameters = o;
-  }
-
-  @Input() set setFairValue(o: Models.FairValue) {
-    if (o == null) return;
-    this.fairValue = o.price;
-  }
-  @Input() set setMarketWidth(o: number) {
-    if (o == null) return;
-    this.width = o / 2;
-  }
-
-  @Input() set setTargetBasePosition(o: Models.TargetBasePositionValue) {
-    if (o == null) return;
-    this.targetBasePosition = o.tbp;
-    this.positionDivergence = o.pDiv;
-  }
-
-  @Input() set setPosition(o: Models.PositionReport) {
-    if (o === null) return;
-    tickPrice = this.product.tickPrice;
-    customBaseCurrency = this.product.base;
-    customQuoteCurrency = this.product.quote;
-    this.positionData = o;
-  }
-
-  @Input() set setMarketChartData(o: Models.MarketChart) {
-    if (o === null) return;
-    this.fairValue = o.fairValue;
-    if (o.ewma) this.ewma = o.ewma;
-    if (o.stdevWidth) this.stdevWidth = o.stdevWidth;
-    if (o.tradesBuySize) this.tradesBuySize = o.tradesBuySize;
-    if (o.tradesSellSize) this.tradesSellSize = o.tradesSellSize;
-  }
-
-  @Input() set setTradesChartData(t: Models.TradeChart) {
-    if (t===null) return;
-    let time = new Date().getTime();
-    Highcharts.charts[this.fvChart].series[Models.Side[t.side] == 'Bid' ? 4 : 2].addPoint([time, t.price], false);
-    Highcharts.charts[this.fvChart].series[Models.Side[t.side] == 'Bid' ? 5 : 3].addPoint(<PointOptionsObjectExtended>{
-      x: time,
-      y: t.price,
-      z: t.quantity,
-      title: (t.pong ? '⇋' : '⇁')+(Models.Side[t.side] == 'Bid' ? 'B' : 'S'),
-      side:(Models.Side[t.side] == 'Bid' ? 'Buy':'Sell'),
-      pong:(t.pong?'o':'i'),
-      price:t.price.toFixed(this.product.tickPrice),
-      qty:t.quantity.toFixed(8),
-      val:t.value.toFixed(this.product.tickPrice),
-      quote:customQuoteCurrency,
-      base:customBaseCurrency
-    }, true);
-    this.updateCharts(time);
-  }
-
-  private showStats: boolean;
-  @Input() set setShowStats(showStats: boolean) {
-    if (!this.showStats && showStats)
-      Highcharts.charts.forEach(chart => chart.redraw(false) );
-    this.showStats = showStats;
-  }
-
-  // private forEach = (array, callback) => {
-    // for (var i = 0; i < array.length; i++)
-      // callback.call(window, array[i]);
-  // }
-
-  // private extend = (out) => {
-    // out = out || {};
-
-    // for (var i = 1; i < arguments.length; i++) {
-      // if (!arguments[i])
-        // continue;
-
-      // for (var key in arguments[i]) {
-        // if (arguments[i].hasOwnProperty(key))
-          // out[key] = arguments[i][key];
-      // }
-    // }
-
-    // return out;
-  // }
+  private customSymbols: object = {'circle': '●','diamond': '♦','square': '■','triangle': '▲','triangle-down': '▼'};
 
   ngOnInit() {
-    /*this.forEach(document.getElementsByTagName('chart'), function (el) {
-      el.addEventListener('mousemove', function (e) {
-        var chart, point, i, event, containerLeft, thisLeft;
-        for (i = 0; i < Highcharts.charts.length; ++i) {
-          chart = Highcharts.charts[i];
-          containerLeft = chart.container.getBoundingClientRect().left;
-          thisLeft = el.getBoundingClientRect().left;
-          if (containerLeft == thisLeft && chart.container.getBoundingClientRect().top == el.getBoundingClientRect().top) continue;
-          chart.pointer.reset = function () { return undefined; };
-          console.log(e);
-          let ev: object = this.extend(new MouseEvent('mousemove'), {
-              which: 1,
-              chartX: e.originalEvent.chartX,
-              chartY: e.originalEvent.chartY,
-              clientX: (containerLeft != thisLeft)?containerLeft - thisLeft + e.originalEvent.clientX:e.originalEvent.clientX,
-              clientY: e.originalEvent.clientY,
-              pageX: (containerLeft != thisLeft)?containerLeft - thisLeft + e.originalEvent.pageX:e.originalEvent.pageX,
-              pageY: e.originalEvent.pageY,
-              screenX: (containerLeft != thisLeft)?containerLeft - thisLeft + e.originalEvent.screenX:e.originalEvent.screenX,
-              screenY: e.originalEvent.screenY
-          });
-          event = chart.pointer.normalize(ev);
-          point = chart.series[0].searchPoint(event, true);
-          if (point) {
-            point.onMouseOver();
-            point.series.chart.xAxis[0].drawCrosshair(event, point);
-          }
-        }
-      });
-    });
-    this.forEach(document.getElementsByTagName('chart'), function (el) {
-      el.addEventListener('mouseleave', function (e) {
-        var chart, point, i, event;
-        for (i = 0; i < Highcharts.charts.length; ++i) {
-          chart = Highcharts.charts[i];
-          event = chart.pointer.normalize(e.originalEvent);
-          point = chart.series[0].searchPoint(event, true);
-          if (point) {
-            point.onMouseOut();
-            chart.tooltip.hide(point);
-            chart.xAxis[0].hideCrosshair();
-          }
-        }
-      });
-    });*/
+    self = this;
+
     setInterval(() => this.updateCharts(new Date().getTime()), 10000);
   }
 
   private updateCharts = (time: number) => {
     this.removeOldPoints(time);
-    if (this.fairValue) {
+    if (this.fairValue.price) {
       if (this.stdevWidth) {
         if (this.stdevWidth.fv) Highcharts.charts[this.fvChart].series[11].addPoint([time, this.stdevWidth.fv], false);
         if (this.stdevWidth.tops) Highcharts.charts[this.fvChart].series[12].addPoint([time, this.stdevWidth.tops], false);
@@ -647,23 +562,23 @@ export class StatsComponent implements OnInit {
         if (this.ewma.ewmaShort) Highcharts.charts[this.fvChart].series[10].addPoint([time, this.ewma.ewmaShort], false);
         if (this.ewma.ewmaTrendDiff) Highcharts.charts[this.fvChart].series[20].addPoint([time, this.ewma.ewmaTrendDiff], false);
       }
-      Highcharts.charts[this.fvChart].series[0].addPoint([time, this.fairValue], this.showStats);
-      if (this.quotingParameters.protectionEwmaWidthPing && (this.ewma && this.ewma.ewmaWidth)) Highcharts.charts[this.fvChart].series[1].addPoint([time, this.fairValue-this.ewma.ewmaWidth, this.fairValue+this.ewma.ewmaWidth], this.showStats, false, false);
-      else if (this.width) Highcharts.charts[this.fvChart].series[1].addPoint([time, this.fairValue-this.width, this.fairValue+this.width], this.showStats, false, false);
+      Highcharts.charts[this.fvChart].series[0].addPoint([time, this.fairValue.price], this.showStats);
+      if (this.quotingParameters.protectionEwmaWidthPing && (this.ewma && this.ewma.ewmaWidth)) Highcharts.charts[this.fvChart].series[1].addPoint([time, this.fairValue.price-this.ewma.ewmaWidth, this.fairValue.price+this.ewma.ewmaWidth], this.showStats, false, false);
+      else if (this.width) Highcharts.charts[this.fvChart].series[1].addPoint([time, this.fairValue.price-this.width, this.fairValue.price+this.width], this.showStats, false, false);
     }
-    if (this.positionData) {
-      Highcharts.charts[this.quoteChart].yAxis[1].setExtremes(0, Math.max(this.positionData.quote.value,Highcharts.charts[this.quoteChart].yAxis[1].getExtremes().dataMax), false, true, { trigger: 'syncExtremes' });
-      Highcharts.charts[this.baseChart].yAxis[1].setExtremes(0, Math.max(this.positionData.base.value,Highcharts.charts[this.baseChart].yAxis[1].getExtremes().dataMax), false, true, { trigger: 'syncExtremes' });
-      Highcharts.charts[this.quoteChart].series[1].addPoint([time, (this.positionData.base.value-this.targetBasePosition)*this.positionData.quote.value/this.positionData.base.value], false);
-      Highcharts.charts[this.baseChart].series[1].addPoint([time, this.targetBasePosition], false);
-      Highcharts.charts[this.quoteChart].series[2].addPoint([time, Math.max(0, this.positionData.base.value-this.targetBasePosition-this.positionDivergence)*this.positionData.quote.value/this.positionData.base.value, Math.min(this.positionData.base.value, this.positionData.base.value-this.targetBasePosition+this.positionDivergence)*this.positionData.quote.value/this.positionData.base.value], this.showStats, false, false);
-      Highcharts.charts[this.baseChart].series[2].addPoint([time, Math.max(0,this.targetBasePosition-this.positionDivergence), Math.min(this.positionData.base.value, this.targetBasePosition+this.positionDivergence)], this.showStats, false, false);
-      Highcharts.charts[this.quoteChart].series[0].addPoint([time, this.positionData.quote.value], false);
-      Highcharts.charts[this.quoteChart].series[3].addPoint([time, this.positionData.quote.amount], false);
-      Highcharts.charts[this.quoteChart].series[4].addPoint([time, this.positionData.quote.held], this.showStats);
-      Highcharts.charts[this.baseChart].series[0].addPoint([time, this.positionData.base.value], false);
-      Highcharts.charts[this.baseChart].series[3].addPoint([time, this.positionData.base.amount], false);
-      Highcharts.charts[this.baseChart].series[4].addPoint([time, this.positionData.base.held], this.showStats);
+    if (this.position.base.value || this.position.quote.value) {
+      Highcharts.charts[this.quoteChart].yAxis[1].setExtremes(0, Math.max(this.position.quote.value,Highcharts.charts[this.quoteChart].yAxis[1].getExtremes().dataMax), false, true, { trigger: 'syncExtremes' });
+      Highcharts.charts[this.baseChart].yAxis[1].setExtremes(0, Math.max(this.position.base.value,Highcharts.charts[this.baseChart].yAxis[1].getExtremes().dataMax), false, true, { trigger: 'syncExtremes' });
+      Highcharts.charts[this.quoteChart].series[1].addPoint([time, (this.position.base.value-this.targetBasePosition.tbp)*this.position.quote.value/this.position.base.value], false);
+      Highcharts.charts[this.baseChart].series[1].addPoint([time, this.targetBasePosition.tbp], false);
+      Highcharts.charts[this.quoteChart].series[2].addPoint([time, Math.max(0, this.position.base.value-this.targetBasePosition.tbp-this.targetBasePosition.pDiv)*this.position.quote.value/this.position.base.value, Math.min(this.position.base.value, this.position.base.value-this.targetBasePosition.tbp+this.targetBasePosition.pDiv)*this.position.quote.value/this.position.base.value], this.showStats, false, false);
+      Highcharts.charts[this.baseChart].series[2].addPoint([time, Math.max(0,this.targetBasePosition.tbp-this.targetBasePosition.pDiv), Math.min(this.position.base.value, this.targetBasePosition.tbp+this.targetBasePosition.pDiv)], this.showStats, false, false);
+      Highcharts.charts[this.quoteChart].series[0].addPoint([time, this.position.quote.value], false);
+      Highcharts.charts[this.quoteChart].series[3].addPoint([time, this.position.quote.amount], false);
+      Highcharts.charts[this.quoteChart].series[4].addPoint([time, this.position.quote.held], this.showStats);
+      Highcharts.charts[this.baseChart].series[0].addPoint([time, this.position.base.value], false);
+      Highcharts.charts[this.baseChart].series[3].addPoint([time, this.position.base.amount], false);
+      Highcharts.charts[this.baseChart].series[4].addPoint([time, this.position.base.held], this.showStats);
     }
   }
 

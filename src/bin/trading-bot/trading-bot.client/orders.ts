@@ -6,7 +6,7 @@ import * as Socket from 'lib/socket';
 import * as Shared from 'lib/shared';
 
 @Component({
-  selector: 'order-list',
+  selector: 'orders',
   template: `<ag-grid-angular #orderList class="ag-theme-fresh ag-theme-dark" style="height: 131px;width: 99.80%;" rowHeight="21" [gridOptions]="gridOptions" [modules]="modules" (cellClicked)="onCellClicked($event)"></ag-grid-angular>`
 })
 export class OrdersComponent implements OnInit {
@@ -15,18 +15,11 @@ export class OrdersComponent implements OnInit {
 
   private gridOptions: GridOptions = <GridOptions>{};
 
-  private fireCxl: Socket.IFire<Models.OrderCancelRequestFromUI>;
+  private fireCxl: Socket.IFire<Models.OrderCancelRequestFromUI> = new Socket.Fire(Models.Topics.CancelOrder);
 
   @Input() product: Models.ProductAdvertisement;
 
-  @Input() set agree(agree: boolean) {
-    if (agree) return;
-    if (!this.gridOptions.api) return;
-    this.gridOptions.api.setRowData([]);
-    setTimeout(()=>{try{this.gridOptions.api.redrawRows();}catch(e){}},0);
-  }
-
-  @Input() set setOrderList(o: Models.Order[]) {
+  @Input() set orderList(o: Models.Order[]) {
     this.addRowData(o);
   }
 
@@ -35,8 +28,6 @@ export class OrdersComponent implements OnInit {
     this.gridOptions.defaultColDef = { sortable: true, resizable: true };
     this.gridOptions.columnDefs = this.createColumnDefs();
     this.gridOptions.suppressNoRowsOverlay = true;
-
-    this.fireCxl = new Socket.Fire(Models.Topics.CancelOrder);
   }
 
   private createColumnDefs = (): ColDef[] => {

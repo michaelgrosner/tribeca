@@ -45,8 +45,9 @@ export class Subscriber<T> extends Observable<T> implements ISubscribe<T> {
       socket.setEventListener('message', (msg) => {
         const topic = msg.data.substr(0,2);
         const data = JSON.parse(msg.data.substr(2));
-        if (Models.Prefixes.MESSAGE+this._topic == topic) setTimeout(() => observer.next(data), 0);
-        else if (Models.Prefixes.SNAPSHOT+this._topic == topic)
+        if (Models.Prefixes.MESSAGE + this._topic == topic)
+          setTimeout(() => observer.next(data), 0);
+        else if (Models.Prefixes.SNAPSHOT + this._topic == topic)
           data.forEach(item => setTimeout(() => observer.next(item), 0));
       });
 
@@ -59,10 +60,10 @@ export class Subscriber<T> extends Observable<T> implements ISubscribe<T> {
   }
 
   private onConnect = () => {
-      if (this._connectHandler !== null)
-          this._connectHandler();
+    if (this._connectHandler !== null)
+      this._connectHandler();
 
-      socket.ws.send(Models.Prefixes.SNAPSHOT + this._topic);
+    socket.ws.send(Models.Prefixes.SNAPSHOT + this._topic);
   };
 
   private onDisconnect = () => {
@@ -86,9 +87,9 @@ export class Subscriber<T> extends Observable<T> implements ISubscribe<T> {
   };
 
   public registerConnectHandler = (handler : () => void) => {
-      if (this._connectHandler === null) this._connectHandler = handler;
-      else throw new Error("already registered connect handler for topic " + this._topic);
-      return this;
+    if (this._connectHandler === null) this._connectHandler = handler;
+    else throw new Error("already registered connect handler for topic " + this._topic);
+    return this;
   };
 }
 
@@ -100,6 +101,8 @@ export class Fire<T> implements IFire<T> {
     constructor(private _topic: string) {}
 
     public fire = (msg?: T) : void => {
-        socket.ws.send(Models.Prefixes.MESSAGE + this._topic + (typeof msg == 'object' ? JSON.stringify(msg) : msg));
+      socket.ws.send(Models.Prefixes.MESSAGE + this._topic + (
+        msg == null ? "" : JSON.stringify(msg)
+      ));
     };
 }

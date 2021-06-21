@@ -25,24 +25,24 @@ import {StatsComponent} from './stats';
 @Component({
   selector: 'ui',
   template: `<div>
-    <div [hidden]="ready" style="padding:42px;transform:rotate(-6deg);">
+    <div [hidden]="state" style="padding:42px;transform:rotate(-6deg);">
         <h4 class="text-danger text-center">{{ product.environment ? product.environment+' is d' : 'D' }}isconnected.</h4>
     </div>
-    <div [hidden]="!ready">
+    <div [hidden]="!state">
         <div class="container-fluid">
-            <div id="hud" [ngClass]="state.online ? 'bg-success' : 'bg-danger'">
-                <div *ngIf="ready" class="row" [hidden]="!showSettings">
+            <div id="hud" [ngClass]="state && state.online ? 'bg-success' : 'bg-danger'">
+                <div class="row" [hidden]="!showSettings">
                     <div class="col-md-12 col-xs-12 parameters-inputs">
                         <div class="row">
-                          <settings [product]="product" [setSettings]="quotingParameters"></settings>
+                          <settings [product]="product" [quotingParameters]="quotingParameters"></settings>
                         </div>
                     </div>
                 </div>
                 <div class="row">
                     <div class="col-md-1 col-xs-12 text-center" style="padding-right:0px;">
                         <div class="row exchange">
-                            <state-button [product]="product" (onConnected)="onConnected($event)" (onAgree)="onAgree($event)" [setExchangeStatus]="state"></state-button>
-                            <wallet [product]="product" [setPosition]="Position"></wallet>
+                            <state-button [product]="product" [state]="state" (onConnected)="onConnected($event)" (onAgree)="onAgree($event)"></state-button>
+                            <wallet [product]="product" [position]="position"></wallet>
                             <div>
                               <a [hidden]="!product.webMarket" rel="noreferrer" href="{{ product.webMarket }}" target="_blank">Market</a><span [hidden]="!(product.webMarket && product.webOrders)">, </span><a [hidden]="!product.webOrders" rel="noreferrer" href="{{ product.webOrders }}" target="_blank">Orders</a>
                               <br/><br/><div>
@@ -91,18 +91,17 @@ import {StatsComponent} from './stats';
                     <div [hidden]="!showSubmitOrder" class="col-md-5 col-xs-12">
                       <submit-order [product]="product"></submit-order>
                     </div>
-
                     <div [hidden]="!showStats" [ngClass]="showStats == 2 ? 'col-md-11 col-xs-12 absolute-charts' : 'col-md-11 col-xs-12 relative-charts'">
-                      <stats ondblclick="this.style.opacity=this.style.opacity<1?1:0.4" [setMarketWidth]="marketWidth" [setShowStats]="!!showStats" [product]="product" [setQuotingParameters]="quotingParameters" [setTargetBasePosition]="TargetBasePosition" [setMarketChartData]="MarketChartData" [setTradesChartData]="TradesChartData" [setPosition]="Position" [setFairValue]="FairValue"></stats>
+                      <stats ondblclick="this.style.opacity=this.style.opacity<1?1:0.4" [setMarketWidth]="marketWidth" [setShowStats]="!!showStats" [product]="product" [quotingParameters]="quotingParameters" [targetBasePosition]="targetBasePosition" [setMarketChartData]="MarketChartData" [setTradesChartData]="TradesChartData" [position]="position" [fairValue]="fairValue"></stats>
                     </div>
                     <div [hidden]="showStats === 1" class="col-md-{{ showTakers ? '9' : '11' }} col-xs-12" style="padding-left:0px;padding-bottom:0px;">
                       <div class="row" style="padding-top:0px;">
                         <div class="markets-params-left col-md-4 col-xs-12" style="padding-left:0px;padding-top:0px;padding-right:0px;">
                             <div class="row">
                               <div class="col-md-6">
-                                <safety [product]="product" [setFairValue]="FairValue" [setTradeSafety]="TradeSafety"></safety>
+                                <safety [product]="product" [fairValue]="fairValue" [tradeSafety]="tradeSafety"></safety>
                               </div>
-                              <market [tradeFreq]="tradeFreq" (onBidsLength)="onBidsLength($event)" (onAsksLength)="onAsksLength($event)" (onMarketWidth)="onMarketWidth($event)" [agree]="!!state.agree" [product]="product" [addr]="addr" [setQuoteStatus]="QuoteStatus" [setMarketData]="MarketData" [setOrderList]="orderList" [setTargetBasePosition]="TargetBasePosition"></market>
+                              <market [tradeFreq]="tradeFreq" (onBidsLength)="onBidsLength($event)" (onAsksLength)="onAsksLength($event)" (onMarketWidth)="onMarketWidth($event)" [product]="product" [addr]="addr" [setQuoteStatus]="QuoteStatus" [setMarketData]="MarketData" [orderList]="orderList" [targetBasePosition]="targetBasePosition"></market>
                             </div>
                         </div>
                         <div class="orders-table-right col-md-8 col-xs-12" style="padding-left:0px;padding-right:0px;padding-top:0px;">
@@ -111,11 +110,11 @@ import {StatsComponent} from './stats';
                               <textarea [(ngModel)]="notepad" (ngModelChange)="changeNotepad(notepad)" placeholder="ephemeral notepad" class="ephemeralnotepad" style="height:131px;width: 100%;max-width: 100%;"></textarea>
                             </div>
                             <div class="col-md-10 col-xs-12" style="padding-right:0px;padding-top:0px;">
-                              <order-list [agree]="!!state.agree" [product]="product" [setOrderList]="orderList"></order-list>
+                              <orders [product]="product" [orderList]="orderList"></orders>
                             </div>
                           </div>
                           <div class="row">
-                            <trade-list (onTradesChartData)="onTradesChartData($event)" (onTradesMatchedLength)="onTradesMatchedLength($event)" (onTradesLength)="onTradesLength($event)" [product]="product" [setQuotingParameters]="quotingParameters" [setTrade]="Trade"></trade-list>
+                            <trades (onTradesChartData)="onTradesChartData($event)" (onTradesMatchedLength)="onTradesMatchedLength($event)" (onTradesLength)="onTradesLength($event)" [product]="product" [quotingParameters]="quotingParameters" [setTrade]="Trade"></trades>
                           </div>
                         </div>
                       </div>
@@ -129,7 +128,7 @@ import {StatsComponent} from './stats';
     </div>
     <address class="text-center">
       <small>
-        <a rel="noreferrer" href="{{ homepage }}/blob/master/README.md" target="_blank">README</a> - <a rel="noreferrer" href="{{ homepage }}/blob/master/doc/MANUAL.md" target="_blank">MANUAL</a> - <a rel="noreferrer" href="{{ homepage }}" target="_blank">SOURCE</a> - <span [hidden]="!ready"><span [hidden]="!product.inet"><span title="non-default Network Interface for outgoing traffic">{{ product.inet }}</span> - </span><span title="Server used RAM" style="margin-top: 6px;display: inline-block;">{{ server_memory }}</span> - <span title="Client used RAM" style="margin-top: 6px;display: inline-block;">{{ client_memory }}</span> - <span title="Database Size" style="margin-top: 6px;display: inline-block;">{{ db_size }}</span> - <span style="margin-top: 6px;display: inline-block;"><span title="{{ tradesMatchedLength===-1 ? 'Trades' : 'Pings' }} in memory">{{ tradesLength }}</span><span [hidden]="tradesMatchedLength < 0">/</span><span [hidden]="tradesMatchedLength < 0" title="Pongs in memory">{{ tradesMatchedLength }}</span></span> - <span title="Market Levels in memory (bids|asks)" style="margin-top: 6px;display: inline-block;">{{ bidsLength }}|{{ asksLength }}</span> - </span><a href="#" (click)="openMatryoshka()">MATRYOSHKA</a> - <a rel="noreferrer" href="{{ homepage }}/issues/new?title=%5Btopic%5D%20short%20and%20sweet%20description&body=description%0Aplease,%20consider%20to%20add%20all%20possible%20details%20%28if%20any%29%20about%20your%20new%20feature%20request%20or%20bug%20report%0A%0A%2D%2D%2D%0A%60%60%60%0Aapp%20exchange%3A%20{{ product.exchange }}/{{ product.base+'/'+product.quote }}%0Aapp%20version%3A%20undisclosed%0AOS%20distro%3A%20undisclosed%0A%60%60%60%0A![300px-spock_vulcan-salute3](https://cloud.githubusercontent.com/assets/1634027/22077151/4110e73e-ddb3-11e6-9d84-358e9f133d34.png)" target="_blank">CREATE ISSUE</a> - <a rel="noreferrer" href="https://github.com/ctubio/Krypto-trading-bot/discussions/new" target="_blank">HELP</a> - <a title="irc://irc.freenode.net:6697/#tradingBot" href="irc://irc.freenode.net:6697/#tradingBot">IRC</a>|<a target="_blank" rel="noreferrer" href="https://kiwiirc.com/client/irc.freenode.net:6697/?theme=cli#tradingBot" rel="nofollow">www</a>
+        <a rel="noreferrer" href="{{ homepage }}/blob/master/README.md" target="_blank">README</a> - <a rel="noreferrer" href="{{ homepage }}/blob/master/doc/MANUAL.md" target="_blank">MANUAL</a> - <a rel="noreferrer" href="{{ homepage }}" target="_blank">SOURCE</a> - <span [hidden]="!state"><span [hidden]="!product.inet"><span title="non-default Network Interface for outgoing traffic">{{ product.inet }}</span> - </span><span title="Server used RAM" style="margin-top: 6px;display: inline-block;">{{ server_memory }}</span> - <span title="Client used RAM" style="margin-top: 6px;display: inline-block;">{{ client_memory }}</span> - <span title="Database Size" style="margin-top: 6px;display: inline-block;">{{ db_size }}</span> - <span style="margin-top: 6px;display: inline-block;"><span title="{{ tradesMatchedLength===-1 ? 'Trades' : 'Pings' }} in memory">{{ tradesLength }}</span><span [hidden]="tradesMatchedLength < 0">/</span><span [hidden]="tradesMatchedLength < 0" title="Pongs in memory">{{ tradesMatchedLength }}</span></span> - <span title="Market Levels in memory (bids|asks)" style="margin-top: 6px;display: inline-block;">{{ bidsLength }}|{{ asksLength }}</span> - </span><a href="#" (click)="openMatryoshka()">MATRYOSHKA</a> - <a rel="noreferrer" href="{{ homepage }}/issues/new?title=%5Btopic%5D%20short%20and%20sweet%20description&body=description%0Aplease,%20consider%20to%20add%20all%20possible%20details%20%28if%20any%29%20about%20your%20new%20feature%20request%20or%20bug%20report%0A%0A%2D%2D%2D%0A%60%60%60%0Aapp%20exchange%3A%20{{ product.exchange }}/{{ product.base+'/'+product.quote }}%0Aapp%20version%3A%20undisclosed%0AOS%20distro%3A%20undisclosed%0A%60%60%60%0A![300px-spock_vulcan-salute3](https://cloud.githubusercontent.com/assets/1634027/22077151/4110e73e-ddb3-11e6-9d84-358e9f133d34.png)" target="_blank">CREATE ISSUE</a> - <a rel="noreferrer" href="https://github.com/ctubio/Krypto-trading-bot/discussions/new" target="_blank">HELP</a> - <a title="irc://irc.freenode.net:6697/#tradingBot" href="irc://irc.freenode.net:6697/#tradingBot">IRC</a>|<a target="_blank" rel="noreferrer" href="https://kiwiirc.com/client/irc.freenode.net:6697/?theme=cli#tradingBot" rel="nofollow">www</a>
       </small>
     </address>
     <iframe id="matryoshka" style="margin:0px;padding:0px;border:0px;width:100%;height:0px;" src="about:blank"></iframe>
@@ -143,8 +142,7 @@ class ClientComponent implements OnInit {
   private client_memory: string;
   private db_size: string;
   private notepad: string;
-  private ready: boolean = false;
-  private state: Models.ExchangeStatus = <Models.ExchangeStatus>{};
+  private state: Models.ExchangeStatus = null;
   private showSettings: boolean = true;
   private showTakers: boolean = false;
   private showStats: number = 0;
@@ -160,26 +158,32 @@ class ClientComponent implements OnInit {
   private asksLength: number = 0;
   private marketWidth: number = 0;
   private orderList: Models.Order[] = [];
-  private FairValue: Models.FairValue = null;
+  private fairValue: Models.FairValue = new Models.FairValue();
   private Trade: Models.Trade = null;
-  private Position: Models.PositionReport = null;
-  private TradeSafety: Models.TradeSafety = null;
-  private TargetBasePosition: Models.TargetBasePositionValue = null;
+  private position: Models.PositionReport = new Models.PositionReport();
+  private tradeSafety: Models.TradeSafety = new Models.TradeSafety();
+  private targetBasePosition: Models.TargetBasePositionValue = new Models.TargetBasePositionValue();
   private MarketData: Models.Market = null;
   private MarketTradeData: Models.MarketTrade = null;
   private QuoteStatus: Models.TwoSidedQuoteStatus = null;
   private MarketChartData: Models.MarketChart = null;
   private TradesChartData: Models.TradeChart = null;
-  private cancelAllOrders = () => {};
-  private cleanAllClosedOrders = () => {};
-  private cleanAllOrders = () => {};
+  private product: Models.ProductAdvertisement = new Models.ProductAdvertisement();
+
+  private cancelAllOrders = () => new Socket.Fire(Models.Topics.CancelAllOrders).fire();
+
+  private cleanAllClosedOrders = () => new Socket.Fire(Models.Topics.CleanAllClosedTrades).fire();
+
+  private cleanAllOrders = () => new Socket.Fire(Models.Topics.CleanAllTrades).fire();
+
+  private changeNotepad = (content:string) => new Socket.Fire(Models.Topics.Notepad).fire([content]);
 
   ngOnInit() {
     new Socket.Client();
 
     new Socket.Subscriber(Models.Topics.Connectivity)
-      .registerSubscriber((o: Models.ExchangeStatus) => { this.ready = true; this.state = o; })
-      .registerDisconnectedHandler(() => { this.ready = false; });
+      .registerSubscriber((o: Models.ExchangeStatus) => { this.state = o; })
+      .registerDisconnectedHandler(() => { this.state = null; });
 
     new Socket.Subscriber(Models.Topics.QuotingParametersChange)
       .registerSubscriber((o: Models.QuotingParameters) => { this.quotingParameters = o; });
@@ -192,13 +196,13 @@ class ClientComponent implements OnInit {
       .registerDisconnectedHandler(() => { this.orderList = []; });
 
     new Socket.Subscriber(Models.Topics.Position)
-      .registerSubscriber((o: Models.PositionReport) => { this.Position = o; });
+      .registerSubscriber((o: Models.PositionReport) => { this.position = o; });
 
     new Socket.Subscriber(Models.Topics.FairValue)
-      .registerSubscriber((o: Models.FairValue) => { this.FairValue = o; });
+      .registerSubscriber((o: Models.FairValue) => { this.fairValue = o; });
 
     new Socket.Subscriber(Models.Topics.TradeSafetyValue)
-      .registerSubscriber((o: Models.TradeSafety) => { this.TradeSafety = o; });
+      .registerSubscriber((o: Models.TradeSafety) => { this.tradeSafety = o; });
 
     new Socket.Subscriber(Models.Topics.Trades)
       .registerSubscriber((o: Models.Trade) => { this.Trade = o; })
@@ -217,7 +221,7 @@ class ClientComponent implements OnInit {
       .registerDisconnectedHandler(() => { this.QuoteStatus = null; });
 
     new Socket.Subscriber(Models.Topics.TargetBasePosition)
-      .registerSubscriber((o: Models.TargetBasePositionValue) => { this.TargetBasePosition = o; });
+      .registerSubscriber((o: Models.TargetBasePositionValue) => { this.targetBasePosition = o; });
 
     new Socket.Subscriber(Models.Topics.MarketChart)
       .registerSubscriber((o: Models.MarketChart) => { this.MarketChartData = o; });
@@ -227,14 +231,6 @@ class ClientComponent implements OnInit {
 
     new Socket.Subscriber(Models.Topics.Notepad)
       .registerSubscriber((notepad : string) => { this.notepad = notepad; });
-
-    this.cancelAllOrders = () => new Socket.Fire(Models.Topics.CancelAllOrders).fire();
-
-    this.cleanAllClosedOrders = () => new Socket.Fire(Models.Topics.CleanAllClosedTrades).fire();
-
-    this.cleanAllOrders = () => new Socket.Fire(Models.Topics.CleanAllTrades).fire();
-
-    this.changeNotepad = (content:string) => new Socket.Fire(Models.Topics.Notepad).fire([content]);
 
     window.addEventListener("message", e => {
       if (!e.data.indexOf) return;
@@ -253,8 +249,6 @@ class ClientComponent implements OnInit {
   private toggleSettings = (showSettings:boolean) => {
     setTimeout(this.resizeMatryoshka, 100);
   };
-
-  private changeNotepad = (content: string) => {};
 
   private toggleTakers = () => {
     this.showTakers = !this.showTakers;
@@ -304,9 +298,6 @@ class ClientComponent implements OnInit {
     window.parent.postMessage('height='+document.getElementsByTagName('body')[0].getBoundingClientRect().height+'px', '*');
   };
 
-  private product: Models.ProductAdvertisement = new Models.ProductAdvertisement(
-    "", "", "", "", "", 0, "", "", "", "", 8, 8, 1e-8, 1e-8, 1e-8
-  );
 
   private onTradesChartData(tradesChart: Models.TradeChart) {
     this.TradesChartData = tradesChart;
@@ -423,9 +414,9 @@ class ClientComponent implements OnInit {
     if (set === "close") dialog.remove();
   };
 
-  private onAdvert = (p : Models.ProductAdvertisement) => {
-    window.document.title = '[' + p.environment + ']';
-    this.product = p;
+  private onAdvert = (o : Models.ProductAdvertisement) => {
+    window.document.title = '[' + o.environment + ']';
+    this.product = o;
     setTimeout(this.resizeMatryoshka, 5000);
     console.log(
       "%cK started " + (new Date().toISOString().slice(11, -1))+"  %c" + this.homepage,

@@ -5,35 +5,35 @@ import * as Models from 'lib/models';
 @Component({
   selector: 'market',
   template: `<div class="col-md-6">
-        <div class="tradeSafety2">
-          <div>
-            <div class="param-info"><span class="param-label">Market Width</span>:<span class="param-value {{ marketWidth ? \'text-danger\' : \'text-muted\' }}">{{ marketWidth.toFixed(product.tickPrice) }}</span></div>
-            <div class="param-info"><span class="param-label">Quote Width</span>:<span class="param-value {{ ordersWidth ? \'text-danger\' : \'text-muted\' }}">{{ ordersWidth.toFixed(product.tickPrice) }}</span></div>
-            <div class="param-info"><span class="param-label">Quotes</span>:<span class="param-value"><span title="Quotes in memory Waiting status update" class="{{ quotesInMemoryWaiting ? \'text-danger\' : \'text-muted\' }}">{{ quotesInMemoryWaiting }}</span>/<span title="Quotes in memory Working" class="{{ quotesInMemoryWorking ? \'text-danger\' : \'text-muted\' }}">{{ quotesInMemoryWorking }}</span>/<span title="Quotes in memory Zombie" class="{{ quotesInMemoryZombies ? \'text-danger\' : \'text-muted\' }}">{{ quotesInMemoryZombies }}</span></span></div>
-            <div class="param-info"><span class="param-label">openOrders/60sec</span>:<span class="param-value {{ tradeFreq ? \'text-danger\' : \'text-muted\' }}">{{ tradeFreq }}</span></div>
-            <div class="param-info"><span class="param-label">Wallet TBP</span>:<span class="param-value text-danger">{{ targetBasePosition.toFixed(8) }}</span></div>
-            <div class="param-info"><span class="param-label">pDiv</span>:<span class="param-value text-danger">{{ positionDivergence.toFixed(8) }}</span></div>
-            <div class="param-info"><span class="param-label">APR</span>:<span class="param-value {{ sideAPRSafety!=\'Off\' ? \'text-danger\' : \'text-muted\' }}">{{ sideAPRSafety }}</span></div>
-          </div>
-        </div>
+    <div class="tradeSafety2">
+      <div>
+        <div class="param-info"><span class="param-label">Market Width</span>:<span class="param-value {{ marketWidth ? \'text-danger\' : \'text-muted\' }}">{{ marketWidth.toFixed(product.tickPrice) }}</span></div>
+        <div class="param-info"><span class="param-label">Quote Width</span>:<span class="param-value {{ ordersWidth ? \'text-danger\' : \'text-muted\' }}">{{ ordersWidth.toFixed(product.tickPrice) }}</span></div>
+        <div class="param-info"><span class="param-label">Quotes</span>:<span class="param-value"><span title="Quotes in memory Waiting status update" class="{{ quotesInMemoryWaiting ? \'text-danger\' : \'text-muted\' }}">{{ quotesInMemoryWaiting }}</span>/<span title="Quotes in memory Working" class="{{ quotesInMemoryWorking ? \'text-danger\' : \'text-muted\' }}">{{ quotesInMemoryWorking }}</span>/<span title="Quotes in memory Zombie" class="{{ quotesInMemoryZombies ? \'text-danger\' : \'text-muted\' }}">{{ quotesInMemoryZombies }}</span></span></div>
+        <div class="param-info"><span class="param-label">openOrders/60sec</span>:<span class="param-value {{ tradeFreq ? \'text-danger\' : \'text-muted\' }}">{{ tradeFreq }}</span></div>
+        <div class="param-info"><span class="param-label">Wallet TBP</span>:<span class="param-value text-danger">{{ targetBasePosition.tbp.toFixed(8) }}</span></div>
+        <div class="param-info"><span class="param-label">pDiv</span>:<span class="param-value text-danger">{{ targetBasePosition.pDiv.toFixed(8) }}</span></div>
+        <div class="param-info"><span class="param-label">APR</span>:<span class="param-value {{ sideAPRSafety!=\'Off\' ? \'text-danger\' : \'text-muted\' }}">{{ sideAPRSafety }}</span></div>
       </div>
-      <div style="padding-right:4px;padding-left:4px;padding-top:4px;line-height:1.3;">
-      <table class="marketQuoting table table-hover table-responsive text-center">
-        <tr class="info">
-          <td>BID Size</td>
-          <td>BID Price</td>
-          <td>ASK Price</td>
-          <td>ASK Size</td>
-        </tr>
-        <tr class="info">
-          <th *ngIf="bidStatus == 'Live'" class="text-danger">{{ qBidSz.toFixed(product.tickSize) }}<span *ngIf="!qBidSz">&nbsp;</span></th>
-          <th *ngIf="bidStatus == 'Live'" class="text-danger">{{ qBidPx.toFixed(product.tickPrice) }}</th>
-          <th *ngIf="bidStatus != 'Live'" colspan="2" class="text-danger" title="Bids Quote Status">{{ bidStatus }}</th>
-          <th *ngIf="askStatus == 'Live'" class="text-danger">{{ qAskPx.toFixed(product.tickPrice) }}</th>
-          <th *ngIf="askStatus == 'Live'" class="text-danger">{{ qAskSz.toFixed(product.tickSize) }}<span *ngIf="!qAskSz">&nbsp;</span></th>
-          <th *ngIf="askStatus != 'Live'" colspan="2" class="text-danger" title="Ask Quote Status">{{ askStatus }}</th>
-        </tr>
-      </table>
+    </div>
+  </div>
+  <div style="padding-right:4px;padding-left:4px;padding-top:4px;line-height:1.3;">
+    <table class="marketQuoting table table-hover table-responsive text-center">
+      <tr class="info">
+        <td>BID Size</td>
+        <td>BID Price</td>
+        <td>ASK Price</td>
+        <td>ASK Size</td>
+      </tr>
+      <tr class="info">
+        <th *ngIf="bidStatus == 'Live'" class="text-danger">{{ qBidSz.toFixed(product.tickSize) }}<span *ngIf="!qBidSz">&nbsp;</span></th>
+        <th *ngIf="bidStatus == 'Live'" class="text-danger">{{ qBidPx.toFixed(product.tickPrice) }}</th>
+        <th *ngIf="bidStatus != 'Live'" colspan="2" class="text-danger" title="Bids Quote Status">{{ bidStatus }}</th>
+        <th *ngIf="askStatus == 'Live'" class="text-danger">{{ qAskPx.toFixed(product.tickPrice) }}</th>
+        <th *ngIf="askStatus == 'Live'" class="text-danger">{{ qAskSz.toFixed(product.tickSize) }}<span *ngIf="!qAskSz">&nbsp;</span></th>
+        <th *ngIf="askStatus != 'Live'" colspan="2" class="text-danger" title="Ask Quote Status">{{ askStatus }}</th>
+      </tr>
+    </table>
     <div *ngIf="levels != null" [ngClass]="(addr?'addr ':'')+'levels'">
       <table class="marketQuoting table table-hover table-responsive text-center" style="width:50%;float:left;">
         <tr [ngClass]="orderPriceBids.indexOf(lvl.price.toFixed(product.tickPrice))==-1?'active':'success buy'" *ngFor="let lvl of levels.bids; let i = index">
@@ -93,37 +93,22 @@ export class MarketComponent {
   private ordersWidth: number = 0;
   private noBidReason: string;
   private noAskReason: string;
-  private targetBasePosition: number = 0;
-  private positionDivergence: number = 0;
   private sideAPRSafety: string;
 
   @Input() product: Models.ProductAdvertisement;
+
+  @Input() targetBasePosition: Models.TargetBasePositionValue;
 
   @Input() tradeFreq: number;
 
   @Input() addr: string;
 
-  @Input() set agree(agree: boolean) {
-    if (agree) return;
-    this.clearQuote();
-  }
-
   @Output() onBidsLength = new EventEmitter<number>();
   @Output() onAsksLength = new EventEmitter<number>();
   @Output() onMarketWidth = new EventEmitter<number>();
 
-  @Input() set setOrderList(o: Models.Order[]) {
+  @Input() set orderList(o: Models.Order[]) {
     this.updateQuote(o);
-  }
-
-  @Input() set setTargetBasePosition(o: Models.TargetBasePositionValue) {
-    if (o == null) {
-      this.targetBasePosition = 0;
-      this.positionDivergence = 0;
-    } else {
-      this.targetBasePosition = o.tbp;
-      this.positionDivergence = o.pDiv;
-    }
   }
 
   @Input() set setQuoteStatus(o: Models.TwoSidedQuoteStatus) {
@@ -149,6 +134,8 @@ export class MarketComponent {
   private clearQuote = () => {
     this.orderBids = [];
     this.orderAsks = [];
+    this.orderPriceBids = [];
+    this.orderPriceAsks = [];
   }
 
   private getSizeLevel = (size: string, ret: boolean) => {

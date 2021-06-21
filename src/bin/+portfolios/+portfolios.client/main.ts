@@ -15,16 +15,16 @@ import {WalletComponent} from './wallet';
 @Component({
   selector: 'ui',
   template: `<div>
-    <div [hidden]="ready" style="padding:42px;transform:rotate(-6deg);">
+    <div [hidden]="state" style="padding:42px;transform:rotate(-6deg);">
         <h4 class="text-danger text-center">{{ product.environment ? product.environment+' is d' : 'D' }}isconnected.</h4>
     </div>
-    <div [hidden]="!ready">
+    <div [hidden]="!state">
         <div class="container-fluid">
             <div id="hud" [ngClass]="state.online ? 'bg-success' : 'bg-danger'">
-                <div *ngIf="ready" class="row">
+                <div class="row">
                     <div class="col-md-12 col-xs-12">
                         <div class="row">
-                          <wallet [setAsset]="Asset"></wallet>
+                          <wallet [asset]="asset"></wallet>
                         </div>
                     </div>
                 </div>
@@ -44,39 +44,40 @@ class ClientComponent implements OnInit {
   private homepage: string = 'https://github.com/ctubio/Krypto-trading-bot';
   private server_memory: string;
   private client_memory: string;
-  private ready: boolean = false;
+  private user_theme: string = null;
+  private system_theme: string = null;
+  private state: Models.ConnectionStatus = <Models.ConnectionStatus>{};
+
   private openMatryoshka = () => {
     const url = window.prompt('Enter the URL of another instance:',this.product.matryoshka||'https://');
     document.getElementById('matryoshka').setAttribute('src', url||'about:blank');
     document.getElementById('matryoshka').style.height = (url&&url!='https://')?'589px':'0px';
   };
+
   private resizeMatryoshka = () => {
     if (window.parent === window) return;
     window.parent.postMessage('height='+document.getElementsByTagName('body')[0].getBoundingClientRect().height+'px', '*');
   };
+
   private product: Models.ProductAdvertisement = new Models.ProductAdvertisement(
     "", "", "", "", "", 0, "", "", "", "", 8, 8, 1e-8, 1e-8, 1e-8
   );
 
-  private user_theme: string = null;
-  private system_theme: string = null;
-  private state: Models.ConnectionStatus = <Models.ConnectionStatus>{};
-
-  private Asset: any = null;
+  private asset: any = null;
 
   ngOnInit() {
     new Socket.Client();
 
     new Socket.Subscriber(Models.Topics.Connectivity)
-      .registerSubscriber((o: Models.ExchangeStatus) => { this.ready = true; this.state = o; })
-      .registerDisconnectedHandler(() => { this.ready = false; });
+      .registerSubscriber((o: Models.ExchangeStatus) => { this.state = o; })
+      .registerDisconnectedHandler(() => { this.state = null; });
 
     new Socket.Subscriber(Models.Topics.ProductAdvertisement)
       .registerSubscriber(this.onAdvert);
 
     new Socket.Subscriber(Models.Topics.Position)
-      .registerSubscriber((o: any[]) => { this.Asset = o; })
-      .registerDisconnectedHandler(() => { this.Asset = null; });
+      .registerSubscriber((o: any[]) => { this.asset = o; })
+      .registerDisconnectedHandler(() => { this.asset = null; });
 
     new Socket.Subscriber(Models.Topics.ApplicationState)
       .registerSubscriber(this.onAppState);
@@ -118,9 +119,9 @@ class ClientComponent implements OnInit {
          : ((hour<9 || hour>=21)?'-dark':'');
   }
 
-  private onAdvert = (p : Models.ProductAdvertisement) => {
-    window.document.title = '[' + p.environment + ']';
-    this.product = p;
+  private onAdvert = (o : Models.ProductAdvertisement) => {
+    window.document.title = '[' + o.environment + ']';
+    this.product = o;
     setTimeout(this.resizeMatryoshka, 5000);
     console.log(
       "%cK started " + (new Date().toISOString().slice(11, -1))+"  %c" + this.homepage,

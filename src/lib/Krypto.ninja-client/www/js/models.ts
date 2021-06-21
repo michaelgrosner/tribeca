@@ -58,7 +58,7 @@ export class MarketTrade {
 }
 
 export enum Connectivity { Disconnected, Connected }
-export enum Side { Bid, Ask, Unknown }
+export enum Side { Bid, Ask }
 export enum OrderType { Limit, Market }
 export enum TimeInForce { GTC, IOC, FOK }
 export enum OrderStatus { Waiting, Working, Terminated }
@@ -87,7 +87,6 @@ export interface IEwma {
 export class MarketChart {
     constructor(public stdevWidth: IStdev,
                 public ewma: IEwma,
-                public fairValue: number,
                 public tradesBuySize: number,
                 public tradesSellSize: number) {}
 }
@@ -139,23 +138,23 @@ export class OrderSide {
 }
 
 export class Wallet {
-    constructor(public amount: number,
-                public held: number,
-                public value: number,
-                public profit: number) {}
+    constructor(public amount: number = 0,
+                public held:   number = 0,
+                public value:  number = 0,
+                public profit: number = 0) {}
 }
 
 export class PositionReport {
-    constructor(public base: Wallet,
-                public quote: Wallet) {}
+    constructor(public base:  Wallet = new Wallet(),
+                public quote: Wallet = new Wallet()) {}
 }
 
 export class OrderRequestFromUI {
-    constructor(public side: string,
+    constructor(public side: Side,
                 public price: number,
                 public quantity: number,
-                public timeInForce: string,
-                public type: string) {}
+                public timeInForce: TimeInForce,
+                public type: OrderType) {}
 }
 
 export class CleanTradeRequestFromUI {
@@ -163,16 +162,16 @@ export class CleanTradeRequestFromUI {
 }
 
 export class ConnectionStatus {
-    constructor(public online: number) {}
+    constructor(public online: Connectivity) {}
 }
 
 export class ExchangeStatus {
-    constructor(public agree: number,
-                public online: number) {}
+    constructor(public agree: Connectivity,
+                public online: Connectivity) {}
 }
 
 export class AgreeRequestFromUI {
-    constructor(public agree: number) {}
+    constructor(public agree: Connectivity) {}
 }
 
 export class OrderCancelRequestFromUI {
@@ -181,7 +180,7 @@ export class OrderCancelRequestFromUI {
 }
 
 export class FairValue {
-    constructor(public price: number) {}
+    constructor(public price: number = 0) {}
 }
 
 export class Quote {
@@ -285,21 +284,21 @@ export interface QuotingParameters {
 }
 
 export class ProductAdvertisement {
-    constructor(public exchange: string,
-                public inet: string,
-                public base: string,
-                public quote: string,
-                public symbol: string,
-                public margin: number,
-                public webMarket: string,
-                public webOrders: string,
-                public environment: string,
-                public matryoshka: string,
-                public tickPrice: number,
-                public tickSize: number,
-                public stepPrice: number,
-                public stepSize: number,
-                public minSize: number) { }
+    constructor(public exchange: string = "",
+                public inet: string =  "",
+                public base: string =  "",
+                public quote: string = "",
+                public symbol: string = "",
+                public margin: number = 0,
+                public webMarket: string = "",
+                public webOrders: string = "",
+                public environment: string = "",
+                public matryoshka: string = "",
+                public tickPrice: number = 8,
+                public tickSize: number = 8,
+                public stepPrice: number = 1e-8,
+                public stepSize: number = 1e-8,
+                public minSize: number = 1e-8) { }
 }
 
 export class ApplicationState {
@@ -312,15 +311,35 @@ export class ApplicationState {
 
 export class TradeSafety {
     constructor(
-      public buy: number,
-      public sell: number,
-      public combined: number,
-      public buyPing: number,
-      public sellPing: number) {}
+      public buy: number = 0,
+      public sell: number = 0,
+      public combined: number = 0,
+      public buyPing: number = 0,
+      public sellPing: number = 0) {}
 }
 
 export class TargetBasePositionValue {
     constructor(
-      public tbp: number,
-      public pDiv: number) {}
+      public tbp: number  = 0,
+      public pDiv: number = 0) {}
 }
+
+export class Map {
+    constructor(
+      public val: number,
+      public str: string) {}
+}
+
+export function getMap<T>(enumObject: T) {
+    let names: Map[] = [];
+    for (let mem in enumObject) {
+      if (!enumObject.hasOwnProperty(mem)) continue;
+      let val = parseInt(mem, 10);
+      if (val >= 0) {
+        let str = String(enumObject[mem]);
+        if (str == 'AK47') str = 'AK-47';
+        names.push({ 'str': str, 'val': val });
+      }
+    }
+    return names;
+  }

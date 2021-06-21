@@ -131,17 +131,9 @@ namespace ₿ {
     k.price       = j.value("price", 0.0);
     k.quantity    = j.value("quantity", 0.0);
     k.time        = j.value("time", Tstamp);
-    k.side        = j.value("side", "") == "Bid"
-                      ? Side::Bid
-                      : Side::Ask;
-    k.type        = j.value("type", "") == "Limit"
-                      ? OrderType::Limit
-                      : OrderType::Market;
-    k.timeInForce = j.value("timeInForce", "") == "GTC"
-                      ? TimeInForce::GTC
-                      : (j.value("timeInForce", "") == "FOK"
-                        ? TimeInForce::FOK
-                        : TimeInForce::IOC);
+    k.side        = j.value("side", k.side);
+    k.type        = j.value("type", k.type);
+    k.timeInForce = j.value("timeInForce", k.timeInForce);
     k.manual      = j.value("manual", false);
   };
 

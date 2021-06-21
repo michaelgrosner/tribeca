@@ -6,7 +6,7 @@ import * as Socket from 'lib/socket';
 import * as Shared from 'lib/shared';
 
 @Component({
-  selector: 'trade-list',
+  selector: 'trades',
   template: `<ag-grid-angular #tradeList class="ag-theme-fresh ag-theme-dark" style="height: 479px;width: 99.80%;" rowHeight="21" [gridOptions]="gridOptions" [modules]="modules" (cellClicked)="onCellClicked($event)"></ag-grid-angular>`
 })
 export class TradesComponent implements OnInit {
@@ -15,7 +15,7 @@ export class TradesComponent implements OnInit {
 
   private gridOptions: GridOptions = <GridOptions>{};
 
-  private fireCxl: Socket.IFire<Models.CleanTradeRequestFromUI>;
+  private fireCxl: Socket.IFire<Models.CleanTradeRequestFromUI> = new Socket.Fire(Models.Topics.CleanTrade);
 
   private audio: boolean;
 
@@ -25,7 +25,7 @@ export class TradesComponent implements OnInit {
 
   @Input() product: Models.ProductAdvertisement;
 
-  @Input() set setQuotingParameters(o: Models.QuotingParameters) {
+  @Input() set quotingParameters(o: Models.QuotingParameters) {
     this.audio = o.audio;
     if (!this.gridOptions.api) return;
     this.hasPongs = (o.safety === Models.QuotingSafety.Boomerang || o.safety === Models.QuotingSafety.AK47);
@@ -58,8 +58,6 @@ export class TradesComponent implements OnInit {
     this.gridOptions.defaultColDef = { sortable: true, resizable: true };
     this.gridOptions.columnDefs = this.createColumnDefs();
     this.gridOptions.overlayNoRowsTemplate = `<span class="ag-overlay-no-rows-center">empty history of trades</span>`;
-
-    this.fireCxl = new Socket.Fire(Models.Topics.CleanTrade);
   }
 
   private createColumnDefs = (): ColDef[] => {

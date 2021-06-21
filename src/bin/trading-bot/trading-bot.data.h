@@ -516,8 +516,10 @@ namespace tribeca {
         : Broadcast(bot)
         , fairValue(f)
       {};
-      Price currentPrice() const {
-        return fairValue;
+      json to_json() const {
+        return {
+          {"price", fairValue}
+        };
       };
       mMatter about() const override {
         return mMatter::FairValue;
@@ -533,9 +535,7 @@ namespace tribeca {
       };
   };
   static void to_json(json &j, const FairLevelsPrice &k) {
-    j = {
-      {"price", k.currentPrice()}
-    };
+    j = k.to_json();
   };
 
   struct Stdev {
@@ -792,29 +792,27 @@ namespace tribeca {
   };
 
   struct MarketStats: public Client::Broadcast<MarketStats> {
-               Ewma ewma;
-             Stdevs stdev;
-    FairLevelsPrice fairPrice;
-       MarketTakers takerTrades;
-    MarketStats(const KryptoNinja &bot, const Price &f, const QuotingParams &q)
-      : Broadcast(bot)
-      , ewma(bot, f, q)
-      , stdev(bot, f, q)
-      , fairPrice(bot, f)
-      , takerTrades(bot)
-    {};
-    mMatter about() const override {
-      return mMatter::MarketChart;
-    };
-    bool realtime() const override {
-      return false;
-    };
+            Ewma ewma;
+          Stdevs stdev;
+    MarketTakers takerTrades;
+    public:
+      MarketStats(const KryptoNinja &bot, const Price &f, const QuotingParams &q)
+        : Broadcast(bot)
+        , ewma(bot, f, q)
+        , stdev(bot, f, q)
+        , takerTrades(bot)
+      {};
+      mMatter about() const override {
+        return mMatter::MarketChart;
+      };
+      bool realtime() const override {
+        return false;
+      };
   };
   static void to_json(json &j, const MarketStats &k) {
     j = {
       {          "ewma", k.ewma                         },
       {    "stdevWidth", k.stdev                        },
-      {     "fairValue", k.fairPrice.currentPrice()     },
       { "tradesBuySize", k.takerTrades.takersBuySize60s },
       {"tradesSellSize", k.takerTrades.takersSellSize60s}
     };
@@ -897,12 +895,13 @@ namespace tribeca {
       j["diff"] = true;
   };
   struct MarketLevels: public Levels {
-    unsigned int averageCount = 0;
-           Price averageWidth = 0,
-                 fairValue    = 0;
-          Levels unfiltered;
-      LevelsDiff diff;
-     MarketStats stats;
+       unsigned int averageCount = 0;
+              Price averageWidth = 0,
+                    fairValue    = 0;
+             Levels unfiltered;
+         LevelsDiff diff;
+        MarketStats stats;
+    FairLevelsPrice fairPrice;
     private:
       unordered_map<Price, Amount> filterBidOrders,
                                    filterAskOrders;
@@ -914,6 +913,7 @@ namespace tribeca {
       MarketLevels(const KryptoNinja &bot, const QuotingParams &q, const Orders &o)
         : diff(bot, unfiltered, q)
         , stats(bot, fairValue, q)
+        , fairPrice(bot, fairValue)
         , K(bot)
         , qp(q)
         , orders(o)
@@ -952,7 +952,7 @@ namespace tribeca {
         unfiltered.bids = raw.bids;
         unfiltered.asks = raw.asks;
         filter();
-        if (stats.fairPrice.broadcast()) K.repaint();
+        if (fairPrice.broadcast()) K.repaint();
         diff.send_patch();
       };
     private:
