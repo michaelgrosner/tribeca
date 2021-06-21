@@ -12,8 +12,8 @@ SCENARIO_METHOD(TradingBot, "ANY BTC/EUR") {
     WHEN("defaults") {
       THEN("fair value") {
         REQUIRE_FALSE(engine.levels.fairValue);
-        REQUIRE_NOTHROW(engine.levels.stats.fairPrice.read = [&]() {
-          REQUIRE(engine.levels.stats.fairPrice.blob().dump() == "{\"price\":0.0}");
+        REQUIRE_NOTHROW(engine.levels.fairPrice.read = [&]() {
+          REQUIRE(engine.levels.fairPrice.blob().dump() == "{\"price\":0.0}");
         });
         REQUIRE_FALSE(engine.levels.ready());
         REQUIRE_FALSE(engine.levels.fairValue);
@@ -28,8 +28,8 @@ SCENARIO_METHOD(TradingBot, "ANY BTC/EUR") {
           "\"bids\":[{\"price\":1234.5,\"size\":0.12345678},{\"price\":1234.55,\"size\":0.01234567}]"
         "}");
       });
-      REQUIRE_NOTHROW(engine.levels.stats.fairPrice.read = [&]() {
-        REQUIRE(engine.levels.stats.fairPrice.blob().dump() == "{\"price\":1234.55}");
+      REQUIRE_NOTHROW(engine.levels.fairPrice.read = [&]() {
+        REQUIRE(engine.levels.fairPrice.blob().dump() == "{\"price\":1234.55}");
       });
       REQUIRE_NOTHROW(engine.qp.fvModel = tribeca::FairValueModel::BBO);
       vector<string> randIds;
@@ -70,7 +70,7 @@ SCENARIO_METHOD(TradingBot, "ANY BTC/EUR") {
         REQUIRE(engine.levels.unfiltered.asks[1].size  == 0.11234569);
       }
       THEN("fair value") {
-        REQUIRE_NOTHROW(engine.levels.stats.fairPrice.read = []() {
+        REQUIRE_NOTHROW(engine.levels.fairPrice.read = []() {
           FAIL("broadcast() while filtering");
         });
         REQUIRE(engine.levels.ready());
@@ -78,7 +78,7 @@ SCENARIO_METHOD(TradingBot, "ANY BTC/EUR") {
       }
       THEN("fair value weight") {
         REQUIRE_NOTHROW(engine.qp.fvModel = tribeca::FairValueModel::wBBO);
-        REQUIRE_NOTHROW(engine.levels.stats.fairPrice.read = [&]() {
+        REQUIRE_NOTHROW(engine.levels.fairPrice.read = [&]() {
           FAIL("broadcast() while filtering");
         });
         REQUIRE(engine.levels.ready());
@@ -86,7 +86,7 @@ SCENARIO_METHOD(TradingBot, "ANY BTC/EUR") {
       }
       THEN("fair value reversed weight") {
         REQUIRE_NOTHROW(engine.qp.fvModel = tribeca::FairValueModel::rwBBO);
-        REQUIRE_NOTHROW(engine.levels.stats.fairPrice.read = [&]() {
+        REQUIRE_NOTHROW(engine.levels.fairPrice.read = [&]() {
           FAIL("broadcast() while filtering");
         });
         REQUIRE(engine.levels.ready());
@@ -108,8 +108,8 @@ SCENARIO_METHOD(TradingBot, "ANY BTC/EUR") {
               "\"diff\":true"
             "}");
           });
-          REQUIRE_NOTHROW(engine.levels.stats.fairPrice.read = [&]() {
-            REQUIRE(engine.levels.stats.fairPrice.blob().dump() == "{\"price\":1234.5}");
+          REQUIRE_NOTHROW(engine.levels.fairPrice.read = [&]() {
+            REQUIRE(engine.levels.fairPrice.blob().dump() == "{\"price\":1234.5}");
           });
           REQUIRE_NOTHROW(engine.levels.read_from_gw({
             { {1234.40, 0.12345678}, {1234.55, 0.01234567} },
@@ -395,7 +395,7 @@ SCENARIO_METHOD(TradingBot, "ANY BTC/EUR") {
     REQUIRE_NOTHROW(engine.qp.protectionEwmaWidthPing = false);
     REQUIRE_NOTHROW(engine.qp.targetBasePosition = 1);
     REQUIRE_NOTHROW(engine.qp.positionDivergence = 1);
-    REQUIRE_NOTHROW(engine.qp.read = engine.levels.diff.read = engine.levels.stats.fairPrice.read = engine.wallet.read = engine.wallet.safety.read = engine.wallet.target.read = engine.broker.calculon.read = engine.broker.semaphore.read = [&]() {
+    REQUIRE_NOTHROW(engine.qp.read = engine.levels.diff.read = engine.levels.fairPrice.read = engine.wallet.read = engine.wallet.safety.read = engine.wallet.target.read = engine.broker.calculon.read = engine.broker.semaphore.read = [&]() {
       INFO("read()");
     });
     REQUIRE_NOTHROW(engine.qp.Backup::push = engine.wallet.target.Backup::push = engine.wallet.profits.Backup::push = [&]() {
