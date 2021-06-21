@@ -1,10 +1,10 @@
 import 'zone.js';
 
 import {NgModule, Component, OnInit, enableProdMode} from '@angular/core';
-import {platformBrowserDynamic} from '@angular/platform-browser-dynamic';
-import {FormsModule} from '@angular/forms';
-import {BrowserModule} from '@angular/platform-browser';
-import {AgGridModule} from '@ag-grid-community/angular';
+import {platformBrowserDynamic}                      from '@angular/platform-browser-dynamic';
+import {BrowserModule}                               from '@angular/platform-browser';
+import {FormsModule}                                 from '@angular/forms';
+
 import {HighchartsChartModule} from 'highcharts-angular';
 
 import * as Models from 'lib/models';
@@ -12,23 +12,23 @@ import * as Socket from 'lib/socket';
 import * as Shared from 'lib/shared';
 
 import {SettingsComponent} from './settings';
-import {MarketComponent} from './market';
-import {TakersComponent} from './takers';
-import {SafetyComponent} from './safety';
-import {WalletComponent} from './wallet';
-import {OrdersComponent} from './orders';
-import {TradesComponent} from './trades';
-import {SubmitComponent} from './submit';
-import {StateComponent} from './state';
-import {StatsComponent} from './stats';
+import {MarketComponent}   from './market';
+import {TakersComponent}   from './takers';
+import {SafetyComponent}   from './safety';
+import {WalletComponent}   from './wallet';
+import {OrdersComponent}   from './orders';
+import {TradesComponent}   from './trades';
+import {SubmitComponent}   from './submit';
+import {StateComponent}    from './state';
+import {StatsComponent   } from './stats';
 
 @Component({
   selector: 'ui',
   template: `<div>
-    <div [hidden]="state.online != null" style="padding:42px;transform:rotate(-6deg);">
+    <div [hidden]="state.online !== null" style="padding:42px;transform:rotate(-6deg);">
         <h4 class="text-danger text-center">{{ product.environment ? product.environment+' is d' : 'D' }}isconnected.</h4>
     </div>
-    <div [hidden]="state.online == null">
+    <div [hidden]="state.online === null">
         <div class="container-fluid">
             <div id="hud" [ngClass]="state.online ? 'bg-success' : 'bg-danger'">
                 <div class="row" [hidden]="!showSettings">
@@ -114,13 +114,13 @@ import {StatsComponent} from './stats';
                             </div>
                           </div>
                           <div class="row">
-                            <trades (onTradesChartData)="onTradesChartData($event)" (onTradesMatchedLength)="onTradesMatchedLength($event)" (onTradesLength)="onTradesLength($event)" [product]="product" [quotingParameters]="quotingParameters" [setTrade]="Trade"></trades>
+                            <trades (onTradesChartData)="onTradesChartData($event)" (onTradesMatchedLength)="onTradesMatchedLength($event)" (onTradesLength)="onTradesLength($event)" [product]="product" [quotingParameters]="quotingParameters" [trade]="trade"></trades>
                           </div>
                         </div>
                       </div>
                     </div>
                     <div [hidden]="!showTakers || showStats === 1" class="col-md-2 col-xs-12" style="padding-left:0px;">
-                      <takers [product]="product" [setMarketTradeData]="MarketTradeData"></takers>
+                      <takers [product]="product" [taker]="taker"></takers>
                     </div>
                 </div>
             </div>
@@ -128,7 +128,7 @@ import {StatsComponent} from './stats';
     </div>
     <address class="text-center">
       <small>
-        <a rel="noreferrer" href="{{ homepage }}/blob/master/README.md" target="_blank">README</a> - <a rel="noreferrer" href="{{ homepage }}/blob/master/doc/MANUAL.md" target="_blank">MANUAL</a> - <a rel="noreferrer" href="{{ homepage }}" target="_blank">SOURCE</a> - <span [hidden]="state.online == null"><span [hidden]="!product.inet"><span title="non-default Network Interface for outgoing traffic">{{ product.inet }}</span> - </span><span title="Server used RAM" style="margin-top: 6px;display: inline-block;">{{ server_memory }}</span> - <span title="Client used RAM" style="margin-top: 6px;display: inline-block;">{{ client_memory }}</span> - <span title="Database Size" style="margin-top: 6px;display: inline-block;">{{ db_size }}</span> - <span style="margin-top: 6px;display: inline-block;"><span title="{{ tradesMatchedLength===-1 ? 'Trades' : 'Pings' }} in memory">{{ tradesLength }}</span><span [hidden]="tradesMatchedLength < 0">/</span><span [hidden]="tradesMatchedLength < 0" title="Pongs in memory">{{ tradesMatchedLength }}</span></span> - <span title="Market Levels in memory (bids|asks)" style="margin-top: 6px;display: inline-block;">{{ bidsLength }}|{{ asksLength }}</span> - </span><a href="#" (click)="openMatryoshka()">MATRYOSHKA</a> - <a rel="noreferrer" href="{{ homepage }}/issues/new?title=%5Btopic%5D%20short%20and%20sweet%20description&body=description%0Aplease,%20consider%20to%20add%20all%20possible%20details%20%28if%20any%29%20about%20your%20new%20feature%20request%20or%20bug%20report%0A%0A%2D%2D%2D%0A%60%60%60%0Aapp%20exchange%3A%20{{ product.exchange }}/{{ product.base+'/'+product.quote }}%0Aapp%20version%3A%20undisclosed%0AOS%20distro%3A%20undisclosed%0A%60%60%60%0A![300px-spock_vulcan-salute3](https://cloud.githubusercontent.com/assets/1634027/22077151/4110e73e-ddb3-11e6-9d84-358e9f133d34.png)" target="_blank">CREATE ISSUE</a> - <a rel="noreferrer" href="https://github.com/ctubio/Krypto-trading-bot/discussions/new" target="_blank">HELP</a> - <a title="irc://irc.freenode.net:6697/#tradingBot" href="irc://irc.freenode.net:6697/#tradingBot">IRC</a>|<a target="_blank" rel="noreferrer" href="https://kiwiirc.com/client/irc.freenode.net:6697/?theme=cli#tradingBot" rel="nofollow">www</a>
+        <a rel="noreferrer" href="{{ homepage }}/blob/master/README.md" target="_blank">README</a> - <a rel="noreferrer" href="{{ homepage }}/blob/master/doc/MANUAL.md" target="_blank">MANUAL</a> - <a rel="noreferrer" href="{{ homepage }}" target="_blank">SOURCE</a> - <span [hidden]="state.online === null"><span [hidden]="!product.inet"><span title="non-default Network Interface for outgoing traffic">{{ product.inet }}</span> - </span><span title="Server used RAM" style="margin-top: 6px;display: inline-block;">{{ server_memory }}</span> - <span title="Client used RAM" style="margin-top: 6px;display: inline-block;">{{ client_memory }}</span> - <span title="Database Size" style="margin-top: 6px;display: inline-block;">{{ db_size }}</span> - <span style="margin-top: 6px;display: inline-block;"><span title="{{ tradesMatchedLength===-1 ? 'Trades' : 'Pings' }} in memory">{{ tradesLength }}</span><span [hidden]="tradesMatchedLength < 0">/</span><span [hidden]="tradesMatchedLength < 0" title="Pongs in memory">{{ tradesMatchedLength }}</span></span> - <span title="Market Levels in memory (bids|asks)" style="margin-top: 6px;display: inline-block;">{{ bidsLength }}|{{ asksLength }}</span> - </span><a href="#" (click)="openMatryoshka()">MATRYOSHKA</a> - <a rel="noreferrer" href="{{ homepage }}/issues/new?title=%5Btopic%5D%20short%20and%20sweet%20description&body=description%0Aplease,%20consider%20to%20add%20all%20possible%20details%20%28if%20any%29%20about%20your%20new%20feature%20request%20or%20bug%20report%0A%0A%2D%2D%2D%0A%60%60%60%0Aapp%20exchange%3A%20{{ product.exchange }}/{{ product.base+'/'+product.quote }}%0Aapp%20version%3A%20undisclosed%0AOS%20distro%3A%20undisclosed%0A%60%60%60%0A![300px-spock_vulcan-salute3](https://cloud.githubusercontent.com/assets/1634027/22077151/4110e73e-ddb3-11e6-9d84-358e9f133d34.png)" target="_blank">CREATE ISSUE</a> - <a rel="noreferrer" href="https://github.com/ctubio/Krypto-trading-bot/discussions/new" target="_blank">HELP</a> - <a title="irc://irc.freenode.net:6697/#tradingBot" href="irc://irc.freenode.net:6697/#tradingBot">IRC</a>|<a target="_blank" rel="noreferrer" href="https://kiwiirc.com/client/irc.freenode.net:6697/?theme=cli#tradingBot" rel="nofollow">www</a>
       </small>
     </address>
     <iframe id="matryoshka" style="margin:0px;padding:0px;border:0px;width:100%;height:0px;" src="about:blank"></iframe>
@@ -157,12 +157,12 @@ class ClientComponent implements OnInit {
   private asksLength: number = 0;
   private marketWidth: number = 0;
   private orderList: Models.Order[] = [];
-  private Trade: Models.Trade = null;
   private MarketData: Models.Market = null;
-  private MarketTradeData: Models.MarketTrade = null;
   private QuoteStatus: Models.TwoSidedQuoteStatus = null;
   private MarketChartData: Models.MarketChart = null;
   private TradesChartData: Models.TradeChart = null;
+  private trade: Models.Trade = null;
+  private taker: Models.MarketTrade = null;
   private state: Models.ExchangeStatus = new Models.ExchangeStatus();
   private fairValue: Models.FairValue = new Models.FairValue();
   private position: Models.PositionReport = new Models.PositionReport();
@@ -204,17 +204,17 @@ class ClientComponent implements OnInit {
     new Socket.Subscriber(Models.Topics.TradeSafetyValue)
       .registerSubscriber((o: Models.TradeSafety) => { this.tradeSafety = o; });
 
-    new Socket.Subscriber(Models.Topics.Trades)
-      .registerSubscriber((o: Models.Trade) => { this.Trade = o; })
-      .registerDisconnectedHandler(() => { this.Trade = null; });
-
     new Socket.Subscriber(Models.Topics.MarketData)
       .registerSubscriber((o: Models.Market) => { this.MarketData = o; })
       .registerDisconnectedHandler(() => { this.MarketData = null; });
 
+    new Socket.Subscriber(Models.Topics.Trades)
+      .registerSubscriber((o: Models.Trade) => { this.trade = o; })
+      .registerDisconnectedHandler(() => { this.trade = null; });
+
     new Socket.Subscriber(Models.Topics.MarketTrade)
-      .registerSubscriber((o: Models.MarketTrade) => { this.MarketTradeData = o; })
-      .registerDisconnectedHandler(() => { this.MarketTradeData = null; });
+      .registerSubscriber((o: Models.MarketTrade) => { this.taker = o; })
+      .registerDisconnectedHandler(() => { this.taker = null; });
 
     new Socket.Subscriber(Models.Topics.QuoteStatus)
       .registerSubscriber((o: Models.TwoSidedQuoteStatus) => { this.QuoteStatus = o; })
@@ -244,7 +244,7 @@ class ClientComponent implements OnInit {
         this._toggleWatch(data[0], data[1]);
       }
     }, false);
-  }
+  };
 
   private toggleSettings = (showSettings:boolean) => {
     setTimeout(this.resizeMatryoshka, 100);
@@ -298,30 +298,29 @@ class ClientComponent implements OnInit {
     window.parent.postMessage('height='+document.getElementsByTagName('body')[0].getBoundingClientRect().height+'px', '*');
   };
 
-
   private onTradesChartData(tradesChart: Models.TradeChart) {
     this.TradesChartData = tradesChart;
-  }
+  };
 
   private onTradesLength(tradesLength: number) {
     this.tradesLength = tradesLength;
-  }
+  };
 
   private onTradesMatchedLength(tradesMatchedLength: number) {
     this.tradesMatchedLength = tradesMatchedLength;
-  }
+  };
 
   private onBidsLength(bidsLength: number) {
     this.bidsLength = bidsLength;
-  }
+  };
 
   private onAsksLength(asksLength: number) {
     this.asksLength = asksLength;
-  }
+  };
 
   private onMarketWidth(marketWidth: number) {
     this.marketWidth = marketWidth;
-  }
+  };
 
   private onAppState = (o : Models.ApplicationState) => {
     this.server_memory = Shared.bytesToSize(o.memory, 0);
@@ -337,7 +336,7 @@ class ClientComponent implements OnInit {
   private setTheme = () => {
     if (document.getElementById('daynight').getAttribute('href') != '/css/bootstrap-theme' + this.system_theme + '.min.css')
       document.getElementById('daynight').setAttribute('href', '/css/bootstrap-theme' + this.system_theme + '.min.css');
-  }
+  };
 
   private changeTheme = () => {
     this.user_theme = this.user_theme!==null
@@ -345,13 +344,13 @@ class ClientComponent implements OnInit {
                   : (this.system_theme==''?'-dark':'');
     this.system_theme = this.user_theme;
     this.setTheme();
-  }
+  };
 
   private getTheme = (hour: number) => {
     return this.user_theme!==null
          ? this.user_theme
          : ((hour<9 || hour>=21)?'-dark':'');
-  }
+  };
 
   private setDialog = (uniqueId: string, set: string, config: object) => {
     if (set === "open") {
@@ -423,17 +422,14 @@ class ClientComponent implements OnInit {
       "color:green;font-size:32px;",
       "color:red;font-size:16px;"
     );
-  }
-}
+  };
+};
 
 @NgModule({
   imports: [
     BrowserModule,
     FormsModule,
-    AgGridModule.withComponents([
-      Shared.BaseCurrencyCellComponent,
-      Shared.QuoteCurrencyCellComponent
-    ]),
+    Shared.AgGridModuleWithComponents(),
     HighchartsChartModule
   ],
   declarations: [
@@ -453,7 +449,7 @@ class ClientComponent implements OnInit {
   ],
   bootstrap: [ClientComponent]
 })
-class ClientModule {}
+class ClientModule {};
 
 enableProdMode();
 platformBrowserDynamic().bootstrapModule(ClientModule);

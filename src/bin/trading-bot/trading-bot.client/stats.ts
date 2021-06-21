@@ -58,7 +58,7 @@ export class StatsComponent implements OnInit {
   @Input() set setMarketWidth(o: number) {
     if (o == null) return;
     this.width = o / 2;
-  }
+  };
 
   @Input() set setMarketChartData(o: Models.MarketChart) {
     if (o === null) return;
@@ -66,7 +66,7 @@ export class StatsComponent implements OnInit {
     if (o.stdevWidth) this.stdevWidth = o.stdevWidth;
     if (o.tradesBuySize) this.tradesBuySize = o.tradesBuySize;
     if (o.tradesSellSize) this.tradesSellSize = o.tradesSellSize;
-  }
+  };
 
   @Input() set setTradesChartData(t: Models.TradeChart) {
     if (t===null) return;
@@ -86,14 +86,14 @@ export class StatsComponent implements OnInit {
       base:this.product.base
     }, true);
     this.updateCharts(time);
-  }
+  };
 
   private showStats: boolean;
   @Input() set setShowStats(showStats: boolean) {
     if (!this.showStats && showStats)
       Highcharts.charts.forEach(chart => chart.redraw(false) );
     this.showStats = showStats;
-  }
+  };
 
   private syncExtremes = function (e) {
     var thisChart = this.chart;
@@ -103,7 +103,7 @@ export class StatsComponent implements OnInit {
               chart.xAxis[0].setExtremes(e.min, e.max, undefined, true, { trigger: 'syncExtremes' });
         });
     }
-  }
+  };
 
   private pointFormatterBase = function () {
     return this.series.type=='arearange'
@@ -535,7 +535,7 @@ export class StatsComponent implements OnInit {
     self = this;
 
     setInterval(() => this.updateCharts(new Date().getTime()), 10000);
-  }
+  };
 
   private updateCharts = (time: number) => {
     this.removeOldPoints(time);
@@ -580,12 +580,12 @@ export class StatsComponent implements OnInit {
       Highcharts.charts[this.baseChart].series[3].addPoint([time, this.position.base.amount], false);
       Highcharts.charts[this.baseChart].series[4].addPoint([time, this.position.base.held], this.showStats);
     }
-  }
+  };
 
   private removeOldPoints = (time: number) => {
     Highcharts.charts.forEach(chart => { chart.series.forEach(serie => {
       while(serie.data.length && Math.abs(time - serie.data[0].x) > this.quotingParameters.profitHourInterval * 36e+5)
         serie.data[0].remove(false);
     })});
-  }
-}
+  };
+};

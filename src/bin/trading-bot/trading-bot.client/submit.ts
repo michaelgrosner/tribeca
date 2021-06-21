@@ -92,4 +92,4 @@ export class SubmitComponent {
         this.side, this.price, this.quantity, this.timeInForce, this.type
       ));
   };
-}
+};

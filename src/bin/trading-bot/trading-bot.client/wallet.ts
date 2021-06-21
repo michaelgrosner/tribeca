@@ -72,4 +72,4 @@ export class WalletComponent {
   @Input() product: Models.ProductAdvertisement;
 
   @Input() position: Models.PositionReport;
-}
+};

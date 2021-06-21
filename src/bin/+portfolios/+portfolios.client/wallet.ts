@@ -14,5 +14,5 @@ export class WalletComponent {
     if (o != null) for (let x in o) { this.assets.push(x + ": " + JSON.stringify(o[x])); }
     else this.assets = [];
     console.log(o);
-  }
-}
+  };
+};

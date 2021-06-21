@@ -109,7 +109,7 @@ export class MarketComponent {
 
   @Input() set orderList(o: Models.Order[]) {
     this.updateQuote(o);
-  }
+  };
 
   @Input() set setQuoteStatus(o: Models.TwoSidedQuoteStatus) {
     if (o == null) {
@@ -129,14 +129,14 @@ export class MarketComponent {
     }
     this.bidStatus = this.bidStatus.replace(/([A-Z])/g, ' $1').trim();
     this.askStatus = this.askStatus.replace(/([A-Z])/g, ' $1').trim();
-  }
+  };
 
   private clearQuote = () => {
     this.orderBids = [];
     this.orderAsks = [];
     this.orderPriceBids = [];
     this.orderPriceAsks = [];
-  }
+  };
 
   private getSizeLevel = (size: string, ret: boolean) => {
     var decimals = (''+size).indexOf(".")+1;
@@ -153,7 +153,7 @@ export class MarketComponent {
     return ret
       ? size.substr(0, size.length-zeros)
       : size.substr(size.length-zeros);
-  }
+  };
 
   private getBgSize = (lvl: Models.MarketSide, side: string) => {
     var allSize: string = side=='bids'?'allBidsSize':'allAsksSize';
@@ -164,7 +164,7 @@ export class MarketComponent {
     return 'linear-gradient(to '+dir+', rgba('+red+', '+green+', '+blue+', 0.69) '
       + Math.ceil(lvl.size/this[allSize]*100)
       + '%, rgba('+red+', '+green+', '+blue+', 0) 0%)';
-  }
+  };
 
   private incrementMarketData = (diff: Models.MarketSide[], side: string) => {
     var allSize: string = side=='bids'?'allBidsSize':'allAsksSize';
@@ -257,7 +257,7 @@ export class MarketComponent {
       }
       this.onMarketWidth.emit(this.marketWidth);
     }
-  }
+  };
 
   private updateQuote = (o) => {
     if (!o || (typeof o.length == 'number' && !o.length)) {
@@ -299,5 +299,5 @@ export class MarketComponent {
     }
 
     this.ordersWidth = Math.max((this.qAskPx && this.qBidPx) ? this.qAskPx - this.qBidPx : 0, 0);
-  }
-}
+  };
+};

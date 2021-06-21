@@ -1,5 +1,5 @@
-import {Component, Input, OnInit} from '@angular/core';
-import {Module, ClientSideRowModelModule, GridOptions, ColDef, RowNode} from '@ag-grid-community/all-modules';
+import {Component, Input} from '@angular/core';
+import {GridOptions, RowNode} from '@ag-grid-community/all-modules';
 
 import * as Models from 'lib/models';
 import * as Socket from 'lib/socket';
@@ -7,13 +7,14 @@ import * as Shared from 'lib/shared';
 
 @Component({
   selector: 'orders',
-  template: `<ag-grid-angular #orderList class="ag-theme-fresh ag-theme-dark" style="height: 131px;width: 99.80%;" rowHeight="21" [gridOptions]="gridOptions" [modules]="modules" (cellClicked)="onCellClicked($event)"></ag-grid-angular>`
+  template: `<ag-grid-angular #orderList
+    class="ag-theme-fresh ag-theme-dark"
+    style="height: 131px;width: 99.80%;"
+    rowHeight="21"
+    (cellClicked)="onCellClicked($event)"
+    [gridOptions]="grid"></ag-grid-angular>`
 })
-export class OrdersComponent implements OnInit {
-
-  private modules: Module[] = [ClientSideRowModelModule];
-
-  private gridOptions: GridOptions = <GridOptions>{};
+export class OrdersComponent {
 
   private fireCxl: Socket.IFire<Models.OrderCancelRequestFromUI> = new Socket.Fire(Models.Topics.CancelOrder);
 
@@ -21,73 +22,110 @@ export class OrdersComponent implements OnInit {
 
   @Input() set orderList(o: Models.Order[]) {
     this.addRowData(o);
-  }
+  };
 
-  ngOnInit() {
-    this.gridOptions.rowData = [];
-    this.gridOptions.defaultColDef = { sortable: true, resizable: true };
-    this.gridOptions.columnDefs = this.createColumnDefs();
-    this.gridOptions.suppressNoRowsOverlay = true;
-  }
-
-  private createColumnDefs = (): ColDef[] => {
-    return [
-      { width: 30, suppressSizeToFit: true, field: "cancel", headerName: 'cxl', cellRenderer: (params) => {
-        return '<button type="button" class="btn btn-danger btn-xs"><span data-action-type="remove" style="font-size: 16px;font-weight: bold;padding: 0px;line-height: 12px;">&times;</span></button>';
-      } },
-      { width: 82, suppressSizeToFit: true, field: 'time', headerName: 'time', cellRenderer:(params) => {
+  private grid: GridOptions = <GridOptions>{
+    suppressNoRowsOverlay: true,
+    defaultColDef: { sortable: true, resizable: true },
+    columnDefs: [{
+      width: 30,
+      field: "cancel",
+      headerName: 'cxl',
+      suppressSizeToFit: true,
+      cellRenderer: (params) => {
+        return `<button type="button" class="btn btn-danger btn-xs">
+          <span data-action-type="remove"'
+            style="font-size: 16px;font-weight: bold;padding: 0px;line-height: 12px;"
+          >&times;</span>
+        </button>`;
+      }
+    }, {
+      width: 82,
+      field: 'time',
+      headerName: 'time',
+      suppressSizeToFit: true,
+      cellClass: 'fs11px',
+      cellRenderer:(params) => {
         var d = new Date(params.value||0);
-        return (d.getHours()+'').padStart(2, "0")+':'+(d.getMinutes()+'').padStart(2, "0")+':'+(d.getSeconds()+'').padStart(2, "0")+','+(d.getMilliseconds()+'').padStart(3, "0");
-      },
-        cellClass: 'fs11px'
-      },
-      { width: 40, suppressSizeToFit: true, field: 'side', headerName: 'side', cellRenderer:(params) => {
-        return (params.data.pong ? '&lrhar;' : '&rhard;') + params.value;
-      }, cellClass: (params) => {
+        return (d.getHours()+'')
+          .padStart(2, "0")+':'+(d.getMinutes()+'')
+          .padStart(2, "0")+':'+(d.getSeconds()+'')
+          .padStart(2, "0")+','+(d.getMilliseconds()+'')
+          .padStart(3, "0");
+      }
+    }, {
+      width: 40,
+      field: 'side',
+      headerName: 'side',
+      suppressSizeToFit: true,
+      cellClass: (params) => {
         if (params.value === 'Bid') return 'buy';
         else if (params.value === 'Ask') return "sell";
-      }},
-      { width: 74, field: 'price', headerName: 'price',
-        sort: 'desc',  cellClass: (params) => {
-        return (params.data.side === 'Ask') ? "sell" : "buy";
-      }, cellRendererFramework: Shared.QuoteCurrencyCellComponent},
-      { width: 85, suppressSizeToFit: true, field: 'qty', headerName: 'qty', cellClass: (params) => {
-        return (params.data.side === 'Ask') ? "sell" : "buy";
-      }, cellRendererFramework: Shared.BaseCurrencyCellComponent},
-      { width: 74, field: 'value', headerName: 'value', cellClass: (params) => {
-        return (params.data.side === 'Ask') ? "sell" : "buy";
-      }},
-      { width: 45, suppressSizeToFit: true, field: 'type', headerName: 'type' },
-      { width: 40, field: 'tif', headerName: 'tif' },
-      { width: 45, field: 'lat', headerName: 'lat'},
-      { width: 110, suppressSizeToFit: true, field: 'exchangeId', headerName: 'openOrderId', cellRenderer:(params) => {
-        return (params.value) ? params.value.toString().split('-')[0] : '';
-      }}
-    ];
-  }
+      },
+      cellRenderer:(params) => { return (params.data.pong ? '&lrhar;' : '&rhard;') + params.value; }
+    }, {
+      width: 74,
+      field: 'price',
+      headerName: 'price',
+      sort: 'desc',
+      cellClass: (params) => { return (params.data.side === 'Ask') ? "sell" : "buy"; },
+      cellRendererFramework: Shared.QuoteCurrencyCellComponent
+    }, {
+      width: 85,
+      field: 'qty',
+      headerName: 'qty',
+      suppressSizeToFit: true,
+      cellClass: (params) => { return (params.data.side === 'Ask') ? "sell" : "buy"; },
+      cellRendererFramework: Shared.BaseCurrencyCellComponent
+    }, {
+      width: 74,
+      field: 'value',
+      headerName: 'value',
+      cellClass: (params) => { return (params.data.side === 'Ask') ? "sell" : "buy"; }
+    }, {
+      width: 45,
+      field: 'type',
+      headerName: 'type',
+      suppressSizeToFit: true
+    }, {
+      width: 40,
+      field: 'tif',
+      headerName: 'tif'
+    }, {
+      width: 45,
+      field: 'lat',
+      headerName: 'lat'
+    }, {
+      width: 110,
+      field: 'exchangeId',
+      headerName: 'openOrderId',
+      suppressSizeToFit: true,
+      cellRenderer:(params) => { return (params.value) ? params.value.toString().split('-')[0] : ''; }
+    }]
+  };
 
   private onCellClicked = ($event) => {
-    if ($event.event.target.getAttribute("data-action-type")!='remove') return;
+    if ($event.event.target.getAttribute("data-action-type") != 'remove') return;
     this.fireCxl.fire(new Models.OrderCancelRequestFromUI($event.data.orderId, $event.data.exchange));
-    this.gridOptions.api.applyTransaction({remove:[$event.data]});
-  }
+    // this.grid.api.applyTransaction({remove:[$event.data]});
+  };
 
   private addRowData = (o) => {
-    if (!this.gridOptions.api || this.product.base == null) return;
+    if (!this.grid.api) return;
     if (!o || (typeof o.length == 'number' && !o.length)) {
-      this.gridOptions.api.setRowData([]);
+      this.grid.api.setRowData([]);
       return;
     } else if (typeof o.length == 'number' && typeof o[0] == 'object') {
-      this.gridOptions.api.setRowData([]);
+      this.grid.api.setRowData([]);
       return o.forEach(x => setTimeout(this.addRowData(x), 0));
     }
 
     let exists: boolean = false;
     let isClosed: boolean = (o.status == Models.OrderStatus.Terminated);
-    this.gridOptions.api.forEachNode((node: RowNode) => {
+    this.grid.api.forEachNode((node: RowNode) => {
       if (!exists && node.data.orderId==o.orderId) {
         exists = true;
-        if (isClosed) this.gridOptions.api.applyTransaction({remove:[node.data]});
+        if (isClosed) this.grid.api.applyTransaction({remove:[node.data]});
         else {
           node.setData(Object.assign(node.data, {
             time: o.time,
@@ -105,9 +143,9 @@ export class OrdersComponent implements OnInit {
         }
       }
     });
-    setTimeout(()=>{try{this.gridOptions.api.redrawRows();}catch(e){}},0);
+    setTimeout(()=>{try{this.grid.api.redrawRows();}catch(e){}},0);
     if (!exists && !isClosed)
-      this.gridOptions.api.applyTransaction({add:[{
+      this.grid.api.applyTransaction({add:[{
         orderId: o.orderId,
         exchangeId: o.exchangeId,
         side: Models.Side[o.side],
@@ -130,6 +168,6 @@ export class OrdersComponent implements OnInit {
         productFixedSize: this.product.tickSize
       }]});
 
-    this.gridOptions.api.sizeColumnsToFit();
-  }
-}
+    this.grid.api.sizeColumnsToFit();
+  };
+};

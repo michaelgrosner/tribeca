@@ -25,13 +25,13 @@ export class StateComponent {
   @Input() state: Models.ExchangeStatus;
 
   private getClass = () => {
-    if (this.state.agree == null) return "btn btn-warning";
-    else if (this.state.agree)    return "btn btn-success";
-    else                          return "btn btn-danger";
+    if (this.state.agree === null) return "btn btn-warning";
+    else if (this.state.agree)     return "btn btn-success";
+    else                           return "btn btn-danger";
   };
 
   private toggle = () => {
     this.fireCxl.fire(new Models.AgreeRequestFromUI(Math.abs(this.state.agree - 1)));
     this.state.agree = null;
   };
-}
+};

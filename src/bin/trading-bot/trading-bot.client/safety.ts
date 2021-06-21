@@ -54,4 +54,4 @@ export class SafetyComponent {
     if (o) return "param-value text-danger";
     else   return "param-value text-muted";
   };
-}
+};

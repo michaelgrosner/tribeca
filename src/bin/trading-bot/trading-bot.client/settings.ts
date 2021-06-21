@@ -513,5 +513,4 @@ export class SettingsComponent {
     this.pending = true;
     this.fireCxl.fire(this.params);
   };
-
-}
+};

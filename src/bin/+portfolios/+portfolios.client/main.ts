@@ -1,10 +1,9 @@
 import 'zone.js';
 
 import {NgModule, Component, OnInit, enableProdMode} from '@angular/core';
-import {platformBrowserDynamic} from '@angular/platform-browser-dynamic';
-import {FormsModule} from '@angular/forms';
-import {BrowserModule} from '@angular/platform-browser';
-import {AgGridModule} from '@ag-grid-community/angular';
+import {platformBrowserDynamic}                      from '@angular/platform-browser-dynamic';
+import {BrowserModule}                               from '@angular/platform-browser';
+import {FormsModule}                                 from '@angular/forms';
 
 import * as Models from 'lib/models';
 import * as Socket from 'lib/socket';
@@ -90,7 +89,7 @@ class ClientComponent implements OnInit {
         this.resizeMatryoshka();
       }
     }, false);
-  }
+  };
 
   private onAppState = (o : Models.ApplicationState) => {
     this.server_memory = Shared.bytesToSize(o.memory, 0);
@@ -98,12 +97,12 @@ class ClientComponent implements OnInit {
     this.user_theme = this.user_theme!==null ? this.user_theme : (o.theme==1 ? '' : (o.theme==2 ? '-dark' : this.user_theme));
     this.system_theme = this.getTheme((new Date).getHours());
     this.setTheme();
-  }
+  };
 
   private setTheme = () => {
     if (document.getElementById('daynight').getAttribute('href') != '/css/bootstrap-theme' + this.system_theme + '.min.css')
       document.getElementById('daynight').setAttribute('href', '/css/bootstrap-theme' + this.system_theme + '.min.css');
-  }
+  };
 
   private changeTheme = () => {
     this.user_theme = this.user_theme!==null
@@ -111,13 +110,13 @@ class ClientComponent implements OnInit {
                   : (this.system_theme==''?'-dark':'');
     this.system_theme = this.user_theme;
     this.setTheme();
-  }
+  };
 
   private getTheme = (hour: number) => {
     return this.user_theme!==null
          ? this.user_theme
          : ((hour<9 || hour>=21)?'-dark':'');
-  }
+  };
 
   private onAdvert = (o : Models.ProductAdvertisement) => {
     window.document.title = '[' + o.environment + ']';
@@ -128,17 +127,14 @@ class ClientComponent implements OnInit {
       "color:green;font-size:32px;",
       "color:red;font-size:16px;"
     );
-  }
-}
+  };
+};
 
 @NgModule({
   imports: [
     BrowserModule,
     FormsModule,
-    AgGridModule.withComponents([
-      Shared.BaseCurrencyCellComponent,
-      Shared.QuoteCurrencyCellComponent
-    ])
+    Shared.AgGridModuleWithComponents()
   ],
   declarations: [
     ClientComponent,
@@ -148,7 +144,7 @@ class ClientComponent implements OnInit {
   ],
   bootstrap: [ClientComponent]
 })
-class ClientModule {}
+class ClientModule {};
 
 enableProdMode();
 platformBrowserDynamic().bootstrapModule(ClientModule);
