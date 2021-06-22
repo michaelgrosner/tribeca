@@ -1,15 +1,36 @@
-import {Component} from '@angular/core';
+import {NgModule, Component, enableProdMode} from '@angular/core';
+import {platformBrowserDynamic}              from '@angular/platform-browser-dynamic';
+import {BrowserModule}                       from '@angular/platform-browser';
+import {FormsModule}                         from '@angular/forms';
+
+import {HighchartsChartModule} from 'highcharts-angular';
 
 import {ModuleRegistry, ICellRendererParams} from '@ag-grid-community/core';
 import {ClientSideRowModelModule}            from '@ag-grid-community/all-modules';
 import {AgGridModule, AgRendererComponent}   from '@ag-grid-community/angular';
 
-export function AgGridModuleWithComponents() {
+export function bootstrapModule(declarations: any[]) {
   ModuleRegistry.registerModules([ClientSideRowModelModule]);
-  return AgGridModule.withComponents([
-    BaseCurrencyCellComponent,
-    QuoteCurrencyCellComponent
-  ]);
+  declarations.push(BaseCurrencyCellComponent);
+  declarations.push(QuoteCurrencyCellComponent);
+
+  @NgModule({
+    imports: [
+      BrowserModule,
+      FormsModule,
+      HighchartsChartModule,
+      AgGridModule.withComponents([
+        BaseCurrencyCellComponent,
+        QuoteCurrencyCellComponent
+      ])
+    ],
+    declarations: declarations,
+    bootstrap: [declarations[0]]
+  })
+  class ClientModule {};
+
+  enableProdMode();
+  platformBrowserDynamic().bootstrapModule(ClientModule);
 };
 
 export function bytesToSize(input: number, precision: number) {
@@ -40,9 +61,7 @@ export class BaseCurrencyCellComponent implements AgRendererComponent {
       this.productFixedSize = params.node.data.productFixedSize;
   }
 
-  refresh(): boolean {
-      return false;
-  }
+  refresh(): boolean { return false; }
 };
 
 @Component({
@@ -62,7 +81,5 @@ export class QuoteCurrencyCellComponent implements AgRendererComponent {
       this.productFixedPrice = params.node.data.productFixedPrice;
   }
 
-  refresh(): boolean {
-      return false;
-  }
+  refresh(): boolean { return false; }
 };

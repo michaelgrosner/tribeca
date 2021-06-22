@@ -1,9 +1,6 @@
 import 'zone.js';
 
-import {NgModule, Component, OnInit, enableProdMode} from '@angular/core';
-import {platformBrowserDynamic}                      from '@angular/platform-browser-dynamic';
-import {BrowserModule}                               from '@angular/platform-browser';
-import {FormsModule}                                 from '@angular/forms';
+import {Component, OnInit} from '@angular/core';
 
 import * as Models from 'lib/models';
 import * as Socket from 'lib/socket';
@@ -130,21 +127,7 @@ class ClientComponent implements OnInit {
   };
 };
 
-@NgModule({
-  imports: [
-    BrowserModule,
-    FormsModule,
-    Shared.AgGridModuleWithComponents()
-  ],
-  declarations: [
-    ClientComponent,
-    WalletComponent,
-    Shared.BaseCurrencyCellComponent,
-    Shared.QuoteCurrencyCellComponent
-  ],
-  bootstrap: [ClientComponent]
-})
-class ClientModule {};
-
-enableProdMode();
-platformBrowserDynamic().bootstrapModule(ClientModule);
+Shared.bootstrapModule([
+  ClientComponent,
+  WalletComponent
+]);

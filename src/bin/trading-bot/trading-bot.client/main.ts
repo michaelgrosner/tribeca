@@ -1,11 +1,6 @@
 import 'zone.js';
 
-import {NgModule, Component, OnInit, enableProdMode} from '@angular/core';
-import {platformBrowserDynamic}                      from '@angular/platform-browser-dynamic';
-import {BrowserModule}                               from '@angular/platform-browser';
-import {FormsModule}                                 from '@angular/forms';
-
-import {HighchartsChartModule} from 'highcharts-angular';
+import {Component, OnInit} from '@angular/core';
 
 import * as Models from 'lib/models';
 import * as Socket from 'lib/socket';
@@ -20,7 +15,7 @@ import {OrdersComponent}   from './orders';
 import {TradesComponent}   from './trades';
 import {SubmitComponent}   from './submit';
 import {StateComponent}    from './state';
-import {StatsComponent   } from './stats';
+import {StatsComponent}    from './stats';
 
 @Component({
   selector: 'ui',
@@ -424,31 +419,16 @@ class ClientComponent implements OnInit {
   };
 };
 
-@NgModule({
-  imports: [
-    BrowserModule,
-    FormsModule,
-    Shared.AgGridModuleWithComponents(),
-    HighchartsChartModule
-  ],
-  declarations: [
-    ClientComponent,
-    SubmitComponent,
-    OrdersComponent,
-    TradesComponent,
-    WalletComponent,
-    MarketComponent,
-    SafetyComponent,
-    TakersComponent,
-    StateComponent,
-    StatsComponent,
-    SettingsComponent,
-    Shared.BaseCurrencyCellComponent,
-    Shared.QuoteCurrencyCellComponent
-  ],
-  bootstrap: [ClientComponent]
-})
-class ClientModule {};
-
-enableProdMode();
-platformBrowserDynamic().bootstrapModule(ClientModule);
+Shared.bootstrapModule([
+  ClientComponent,
+  SubmitComponent,
+  OrdersComponent,
+  TradesComponent,
+  WalletComponent,
+  MarketComponent,
+  SafetyComponent,
+  TakersComponent,
+  StateComponent,
+  StatsComponent,
+  SettingsComponent
+]);

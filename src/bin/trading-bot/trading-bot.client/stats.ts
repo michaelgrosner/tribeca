@@ -5,16 +5,6 @@ require('highcharts/highcharts-more')(Highcharts);
 
 import * as Models from 'lib/models';
 
-interface PointOptionsObjectExtended extends Highcharts.PointOptionsObject {
-  side:  string;
-  pong:  string;
-  price: string;
-  qty:   string;
-  val:   string;
-  quote: string;
-  base:  string;
-}
-
 var self;
 
 @Component({
@@ -70,7 +60,7 @@ export class StatsComponent implements OnInit {
     if (!o.price) return;
     let time = new Date().getTime();
     Highcharts.charts[this.fvChart].series[Models.Side[o.side] == 'Bid' ? 4 : 2].addPoint([time, o.price], false);
-    Highcharts.charts[this.fvChart].series[Models.Side[o.side] == 'Bid' ? 5 : 3].addPoint(<PointOptionsObjectExtended>{
+    Highcharts.charts[this.fvChart].series[Models.Side[o.side] == 'Bid' ? 5 : 3].addPoint(<any>{
       x: time,
       y: o.price,
       z: o.quantity,
