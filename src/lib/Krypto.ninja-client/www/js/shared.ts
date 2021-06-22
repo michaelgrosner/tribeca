@@ -3,6 +3,9 @@ import {platformBrowserDynamic}              from '@angular/platform-browser-dyn
 import {BrowserModule}                       from '@angular/platform-browser';
 import {FormsModule}                         from '@angular/forms';
 
+import * as Highcharts         from 'highcharts';
+require('highcharts/highcharts-more')(Highcharts);
+export {Highcharts};
 import {HighchartsChartModule} from 'highcharts-angular';
 
 import {ModuleRegistry, ICellRendererParams} from '@ag-grid-community/core';
@@ -11,8 +14,6 @@ import {AgGridModule, AgRendererComponent}   from '@ag-grid-community/angular';
 
 export function bootstrapModule(declarations: any[]) {
   ModuleRegistry.registerModules([ClientSideRowModelModule]);
-  declarations.push(BaseCurrencyCellComponent);
-  declarations.push(QuoteCurrencyCellComponent);
 
   @NgModule({
     imports: [
@@ -24,7 +25,10 @@ export function bootstrapModule(declarations: any[]) {
         QuoteCurrencyCellComponent
       ])
     ],
-    declarations: declarations,
+    declarations: declarations.concat([
+      BaseCurrencyCellComponent,
+      QuoteCurrencyCellComponent
+    ]),
     bootstrap: [declarations[0]]
   })
   class ClientModule {};

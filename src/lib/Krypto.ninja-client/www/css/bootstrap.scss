@@ -5136,6 +5136,22 @@ table.marketQuoting {
   }
 }
 
+span.point-circle::before  {
+  content: "●";
+}
+span.point-diamond::before  {
+  content: "♦";
+}
+span.point-square::before  {
+  content: "■";
+}
+span.point-triangle::before  {
+  content: "▲";
+}
+span.point-triangle-down::before  {
+  content: "▼";
+}
+
 .fs11px {
   font-size: 11px;
   margin-top: 2px;
