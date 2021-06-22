@@ -1,9 +1,13 @@
 import { Observable } from 'rxjs';
 
-import * as Models from './models';
-
 var socket;
+
 var events = {};
+
+const prefix = {
+  SNAPSHOT: '=',
+  MESSAGE:  '-'
+};
 
 export class Client {
   public ws;
@@ -20,14 +24,14 @@ export class Client {
     events[ev].push(cb);
     this.ws.addEventListener(ev, cb);
   }
-}
+};
 
 export interface ISubscribe<T> {
   registerSubscriber: (incrementalHandler: (msg: T) => void) => ISubscribe<T>;
   registerConnectHandler: (handler: () => void) => ISubscribe<T>;
   registerDisconnectedHandler: (handler: () => void) => ISubscribe<T>;
   connected: boolean;
-}
+};
 
 export class Subscriber<T> extends Observable<T> implements ISubscribe<T> {
   private _connectHandler: () => void = null;
@@ -45,25 +49,25 @@ export class Subscriber<T> extends Observable<T> implements ISubscribe<T> {
       socket.setEventListener('message', (msg) => {
         const topic = msg.data.substr(0,2);
         const data = JSON.parse(msg.data.substr(2));
-        if (Models.Prefixes.MESSAGE + this._topic == topic)
+        if (prefix.MESSAGE + this._topic == topic)
           setTimeout(() => observer.next(data), 0);
-        else if (Models.Prefixes.SNAPSHOT + this._topic == topic)
+        else if (prefix.SNAPSHOT + this._topic == topic)
           data.forEach(item => setTimeout(() => observer.next(item), 0));
       });
 
       return () => {};
     });
-  }
+  };
 
   public get connected(): boolean {
     return socket.ws.readyState == 1;
-  }
+  };
 
   private onConnect = () => {
     if (this._connectHandler !== null)
       this._connectHandler();
 
-    socket.ws.send(Models.Prefixes.SNAPSHOT + this._topic);
+    socket.ws.send(prefix.SNAPSHOT + this._topic);
   };
 
   private onDisconnect = () => {
@@ -91,18 +95,18 @@ export class Subscriber<T> extends Observable<T> implements ISubscribe<T> {
     else throw new Error("already registered connect handler for topic " + this._topic);
     return this;
   };
-}
+};
 
 export interface IFire<T> {
   fire(msg?: T): void;
-}
+};
 
 export class Fire<T> implements IFire<T> {
     constructor(private _topic: string) {}
 
     public fire = (msg?: T) : void => {
-      socket.ws.send(Models.Prefixes.MESSAGE + this._topic + (
+      socket.ws.send(prefix.MESSAGE + this._topic + (
         msg == null ? "" : JSON.stringify(msg)
       ));
     };
-}
+};

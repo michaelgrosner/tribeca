@@ -1,8 +1,3 @@
-export var Prefixes = {
-  SNAPSHOT: '=',
-  MESSAGE: '-'
-};
-
 export var Topics = {
   FairValue: 'a',
   Connectivity: 'd',
