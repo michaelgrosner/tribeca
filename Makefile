@@ -2,7 +2,7 @@ K         ?= K.sh
 MAJOR      = 0
 MINOR      = 6
 PATCH      = 3
-BUILD      = 17
+BUILD      = 18
 
 OBLIGATORY = DISCLAIMER: This is strict non-violent software: \n$\
              if you hurt other living creatures, please stop; \n$\
@@ -131,11 +131,11 @@ endif
 
 $(SOURCE):
 	$(info $(call STEP,$@))
-	$(MAKE) $(shell ! test -f src/bin/$@/$@.client/bootstrap.ts || echo assets) src KSRC=$@
+	$(MAKE) $(shell ! test -d src/bin/$@/$@.client || echo assets) src KSRC=$@
 
-assets: src/bin/$(KSRC)/$(KSRC).client/bootstrap.ts
+assets: src/bin/$(KSRC)/$(KSRC).client
 	$(info $(call STEP,$(KSRC) $@))
-	$(MAKE) -C src/lib/Krypto.ninja-client KHOME=$(KHOME)
+	$(MAKE) -C src/lib/Krypto.ninja-client KHOME=$(KHOME) KCLIENT=$(realpath $<)
 	$(foreach chost,$(CARCH), \
 	  build=build-$(shell echo $(chost) | sed 's/-\([a-z_0-9]*\)-\(linux\)$$/-\2-\1/' | sed 's/\([a-z_0-9]*\)-\([a-z_0-9]*\)-.*/\2-\1/' | sed 's/^w64/win64/') \
 	  && ! test -d $${build} || ((test -d $${build}/var/assets           \

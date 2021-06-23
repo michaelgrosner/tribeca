@@ -35,10 +35,19 @@ lib: www/js npm
 	ls -1 $< | cut -d . -f1 | xargs -I % echo "export * as % from './%';" > $(NODE_PATH)/$@/K.ts
 	$(TSC) $(NODE_PATH)/$@/*.ts
 
-js: ../../bin/$(KSRC)/$(KSRC).client/bootstrap.ts lib
+$(KCLIENT)/.main.ts: $(KCLIENT)
+	@echo "import 'zone.js';"                                                     > $@
+	@echo "import {Shared} from 'lib/K';"                                        >> $@
+	@ls -1 $< | cut -d . -f1 | xargs -I % echo "import {%Component} from './%';" >> $@
+	@echo "Shared.bootstrapModule(["                                             >> $@
+	@ls -1 $< | cut -d . -f1 | xargs -I % echo "%Component,"                     >> $@
+	@echo "]);"                                                                  >> $@
+
+js: $(KCLIENT)/.main.ts lib
 	$(TSC) --outDir $(KASSETS)/$@ $<
+	@rm -v $<
 	@echo $(STEP_3)
-	$(BROWSERIFY) $(KASSETS)/$@/bootstrap.$@ | uglifyjs | gzip > $(KASSETS)/$@/client.min.$@
+	$(BROWSERIFY) $(KASSETS)/$@/$(notdir $(basename $<)).$@ | uglifyjs | gzip > $(KASSETS)/$@/client.min.$@
 
 css: www/css/*.scss
 	@echo $(STEP_4)
@@ -90,4 +99,4 @@ endef
 package.json:
 	@echo "$$PACKAGE_JSON" > $(KHOME)/$@
 
-.PHONY: all $(KSRC) lib css js npm package.json
+.PHONY: all $(KSRC) $(KCLIENT)/.main.ts lib css js npm package.json
