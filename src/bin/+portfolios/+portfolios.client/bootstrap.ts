@@ -1,11 +1,11 @@
 import 'zone.js';
 
-import {bootstrapModule} from 'lib/shared';
+import {Shared} from 'lib/K';
 
 import {ClientComponent} from './client';
 import {WalletComponent} from './wallet';
 
-bootstrapModule([
+Shared.bootstrapModule([
   ClientComponent,
   WalletComponent
 ]);

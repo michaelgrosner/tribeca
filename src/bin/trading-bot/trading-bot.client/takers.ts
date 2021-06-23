@@ -1,8 +1,8 @@
 import {Component, Input} from '@angular/core';
+
 import {GridOptions, RowNode} from '@ag-grid-community/all-modules';
 
-import * as Shared from 'lib/shared';
-import * as Models from 'lib/models';
+import {Shared, Models} from 'lib/K';
 
 @Component({
   selector: 'takers',

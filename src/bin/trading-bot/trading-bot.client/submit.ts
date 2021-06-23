@@ -1,7 +1,6 @@
 import {Component, Input} from '@angular/core';
 
-import * as Socket from 'lib/socket';
-import * as Models from 'lib/models';
+import {Socket, Models} from 'lib/K';
 
 @Component({
   selector: 'submit-order',

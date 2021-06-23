@@ -1,9 +1,8 @@
 import {Component, Input} from '@angular/core';
+
 import {GridOptions, RowNode} from '@ag-grid-community/all-modules';
 
-import * as Socket from 'lib/socket';
-import * as Shared from 'lib/shared';
-import * as Models from 'lib/models';
+import {Socket, Shared, Models} from 'lib/K';
 
 @Component({
   selector: 'orders',

@@ -1,7 +1,6 @@
 import {Component, Input, OnInit} from '@angular/core';
 
-import * as Shared from 'lib/shared';
-import * as Models from 'lib/models';
+import {Shared, Models} from 'lib/K';
 
 @Component({
   selector: 'stats',

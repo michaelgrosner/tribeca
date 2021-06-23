@@ -1,8 +1,6 @@
 import {Component, OnInit} from '@angular/core';
 
-import * as Socket from 'lib/socket';
-import * as Shared from 'lib/shared';
-import * as Models from 'lib/models';
+import {Socket, Shared, Models} from 'lib/K';
 
 @Component({
   selector: 'ui',

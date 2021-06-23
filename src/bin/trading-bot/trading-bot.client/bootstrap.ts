@@ -1,6 +1,6 @@
 import 'zone.js';
 
-import {bootstrapModule} from 'lib/shared';
+import {Shared} from 'lib/K';
 
 import {ClientComponent} from './client';
 import {OptionComponent} from './option';
@@ -14,7 +14,7 @@ import {TakersComponent} from './takers';
 import {StateComponent}  from './state';
 import {StatsComponent}  from './stats';
 
-bootstrapModule([
+Shared.bootstrapModule([
   ClientComponent,
   OptionComponent,
   SubmitComponent,
