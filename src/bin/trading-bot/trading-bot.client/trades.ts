@@ -165,10 +165,10 @@ export class TradesComponent {
     if (!this.grid.api) return;
     this.hasPongs = (o.safety === Models.QuotingSafety.Boomerang || o.safety === Models.QuotingSafety.AK47);
     this.headerNameMod = this.hasPongs ? "⇁" : "";
-    this.grid.columnDefs.map((r: ColDef) => {
-      if (['Ktime','Kqty','Kprice','Kvalue','delta'].indexOf(r.field) > -1)
-        this.grid.columnApi.setColumnVisible(r.field, this.hasPongs);
-      return r;
+    this.grid.columnDefs.map((x: ColDef)  => {
+      if (['Ktime','Kqty','Kprice','Kvalue','delta'].indexOf(x.field) > -1)
+        this.grid.columnApi.setColumnVisible(x.field, this.hasPongs);
+      return x;
     });
     this.grid.api.refreshHeader();
     this.emitLengths();

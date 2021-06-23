@@ -32,6 +32,7 @@ endif
 lib: www/js npm
 	@echo $(STEP_2)
 	cp -R $< $(NODE_PATH)/$@
+	ls -1 $< | cut -d . -f1 | xargs -I % echo "export * as % from './%';" > $(NODE_PATH)/$@/K.ts
 	$(TSC) $(NODE_PATH)/$@/*.ts
 
 js: ../../bin/$(KSRC)/$(KSRC).client/bootstrap.ts lib
