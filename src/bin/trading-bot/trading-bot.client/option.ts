@@ -1,10 +1,10 @@
 import {Component, Input} from '@angular/core';
 
-import * as Models from 'lib/models';
 import * as Socket from 'lib/socket';
+import * as Models from 'lib/models';
 
 @Component({
-  selector: 'settings',
+  selector: 'options',
   template: `<table border="0" width="100%" class="params-market-making"><tr>
     <td class="params-title params-1">
       MARKET MAKING
@@ -465,7 +465,7 @@ import * as Socket from 'lib/socket';
       </table>
     </td></tr></table>`
 })
-export class SettingsComponent {
+export class OptionComponent {
 
   private master: Models.QuotingParameters = JSON.parse(JSON.stringify(<Models.QuotingParameters>{}));
   private params: Models.QuotingParameters = JSON.parse(JSON.stringify(<Models.QuotingParameters>{}));

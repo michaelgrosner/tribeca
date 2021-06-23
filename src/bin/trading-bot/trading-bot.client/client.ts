@@ -1,21 +1,8 @@
-import 'zone.js';
-
 import {Component, OnInit} from '@angular/core';
 
-import * as Models from 'lib/models';
 import * as Socket from 'lib/socket';
 import * as Shared from 'lib/shared';
-
-import {SettingsComponent} from './settings';
-import {MarketComponent}   from './market';
-import {TakersComponent}   from './takers';
-import {SafetyComponent}   from './safety';
-import {WalletComponent}   from './wallet';
-import {OrdersComponent}   from './orders';
-import {TradesComponent}   from './trades';
-import {SubmitComponent}   from './submit';
-import {StateComponent}    from './state';
-import {StatsComponent}    from './stats';
+import * as Models from 'lib/models';
 
 @Component({
   selector: 'ui',
@@ -29,7 +16,7 @@ import {StatsComponent}    from './stats';
                 <div class="row" [hidden]="!showSettings">
                     <div class="col-md-12 col-xs-12 parameters-inputs">
                         <div class="row">
-                          <settings [product]="product" [quotingParameters]="quotingParameters"></settings>
+                          <options [product]="product" [quotingParameters]="quotingParameters"></options>
                         </div>
                     </div>
                 </div>
@@ -129,7 +116,7 @@ import {StatsComponent}    from './stats';
     <iframe id="matryoshka" style="margin:0px;padding:0px;border:0px;width:100%;height:0px;" src="about:blank"></iframe>
   </div>`
 })
-class ClientComponent implements OnInit {
+export class ClientComponent implements OnInit {
 
   private addr: string;
   private homepage: string = 'https://github.com/ctubio/Krypto-trading-bot';
@@ -418,17 +405,3 @@ class ClientComponent implements OnInit {
     );
   };
 };
-
-Shared.bootstrapModule([
-  ClientComponent,
-  SubmitComponent,
-  OrdersComponent,
-  TradesComponent,
-  WalletComponent,
-  MarketComponent,
-  SafetyComponent,
-  TakersComponent,
-  StateComponent,
-  StatsComponent,
-  SettingsComponent
-]);

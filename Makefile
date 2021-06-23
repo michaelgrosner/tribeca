@@ -131,9 +131,9 @@ endif
 
 $(SOURCE):
 	$(info $(call STEP,$@))
-	$(MAKE) $(shell ! test -f src/bin/$@/$@.client/main.ts || echo assets) src KSRC=$@
+	$(MAKE) $(shell ! test -f src/bin/$@/$@.client/bootstrap.ts || echo assets) src KSRC=$@
 
-assets: src/bin/$(KSRC)/$(KSRC).client/main.ts
+assets: src/bin/$(KSRC)/$(KSRC).client/bootstrap.ts
 	$(info $(call STEP,$(KSRC) $@))
 	$(MAKE) -C src/lib/Krypto.ninja-client KHOME=$(KHOME)
 	$(foreach chost,$(CARCH), \

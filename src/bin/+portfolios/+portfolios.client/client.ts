@@ -1,12 +1,8 @@
-import 'zone.js';
-
 import {Component, OnInit} from '@angular/core';
 
-import * as Models from 'lib/models';
 import * as Socket from 'lib/socket';
 import * as Shared from 'lib/shared';
-
-import {WalletComponent} from './wallet';
+import * as Models from 'lib/models';
 
 @Component({
   selector: 'ui',
@@ -35,7 +31,7 @@ import {WalletComponent} from './wallet';
     <iframe id="matryoshka" style="margin:0px;padding:0px;border:0px;width:100%;height:0px;" src="about:blank"></iframe>
   </div>`
 })
-class ClientComponent implements OnInit {
+export class ClientComponent implements OnInit {
 
   private homepage: string = 'https://github.com/ctubio/Krypto-trading-bot';
   private server_memory: string;
@@ -126,8 +122,3 @@ class ClientComponent implements OnInit {
     );
   };
 };
-
-Shared.bootstrapModule([
-  ClientComponent,
-  WalletComponent
-]);

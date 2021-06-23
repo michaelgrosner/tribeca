@@ -1,7 +1,7 @@
 import {Component, Input} from '@angular/core';
 
-import * as Models from 'lib/models';
 import * as Socket from 'lib/socket';
+import * as Models from 'lib/models';
 
 @Component({
   selector: 'state-button',

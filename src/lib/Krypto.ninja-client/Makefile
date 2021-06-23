@@ -34,10 +34,10 @@ lib: www/js npm
 	cp -R $< $(NODE_PATH)/$@
 	$(TSC) $(NODE_PATH)/$@/*.ts
 
-js: ../../bin/$(KSRC)/$(KSRC).client/main.ts lib
+js: ../../bin/$(KSRC)/$(KSRC).client/bootstrap.ts lib
 	$(TSC) --outDir $(KASSETS)/$@ $<
 	@echo $(STEP_3)
-	$(BROWSERIFY) $(KASSETS)/$@/main.$@ | uglifyjs | gzip > $(KASSETS)/$@/client.min.$@
+	$(BROWSERIFY) $(KASSETS)/$@/bootstrap.$@ | uglifyjs | gzip > $(KASSETS)/$@/client.min.$@
 
 css: www/css/*.scss
 	@echo $(STEP_4)

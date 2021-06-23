@@ -1,9 +1,9 @@
 import {Component, EventEmitter, Input, Output} from '@angular/core';
 import {GridOptions, RowNode, ColDef} from '@ag-grid-community/all-modules';
 
-import * as Models from 'lib/models';
 import * as Socket from 'lib/socket';
 import * as Shared from 'lib/shared';
+import * as Models from 'lib/models';
 
 @Component({
   selector: 'trades',
