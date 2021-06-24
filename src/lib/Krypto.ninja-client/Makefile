@@ -51,7 +51,7 @@ js: $(KCLIENT)/.main.ts lib
 
 css: www/css/*.scss
 	@echo $(STEP_4)
-	$(foreach scss,$^,sass $(scss) $(KASSETS)/$@/$(basename $(notdir $(scss))).min.$@ ;)
+	$(foreach scss,$^,sass $(scss) $(KASSETS)/$@/$(notdir $(basename $(scss))).min.$@ ;)
 	cat $(NODE_PATH)/@ag-grid-community/all-modules/dist/styles/ag-grid.$@ >> $(KASSETS)/$@/bootstrap.min.$@
 
 export define PACKAGE_JSON

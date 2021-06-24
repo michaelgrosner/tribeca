@@ -14,7 +14,7 @@ import {Socket, Shared, Models} from 'lib/K';
                 <div class="row" [hidden]="!showSettings">
                     <div class="col-md-12 col-xs-12 parameters-inputs">
                         <div class="row">
-                          <options [product]="product" [quotingParameters]="quotingParameters"></options>
+                          <settings [product]="product" [quotingParameters]="quotingParameters"></settings>
                         </div>
                     </div>
                 </div>
