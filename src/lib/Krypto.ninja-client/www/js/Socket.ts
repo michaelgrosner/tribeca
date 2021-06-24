@@ -47,12 +47,14 @@ export class Subscriber<T> extends Observable<T> implements ISubscribe<T> {
       socket.setEventListener('open', this.onConnect);
       socket.setEventListener('close', this.onDisconnect);
       socket.setEventListener('message', (msg) => {
-        const topic = msg.data.substr(0,2);
-        const data = JSON.parse(msg.data.substr(2));
-        if (prefix.MESSAGE + this._topic == topic)
+        const topic = msg.data.substr(0, 2);
+        if (prefix.MESSAGE + this._topic == topic) {
+          const data = JSON.parse(msg.data.substr(2));
           setTimeout(() => observer.next(data), 0);
-        else if (prefix.SNAPSHOT + this._topic == topic)
+        } else if (prefix.SNAPSHOT + this._topic == topic) {
+          const data = JSON.parse(msg.data.substr(2));
           data.forEach(item => setTimeout(() => observer.next(item), 0));
+        }
       });
 
       return () => {};
