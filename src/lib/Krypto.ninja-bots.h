@@ -1152,10 +1152,11 @@ namespace ₿ {
             content = string(documents.at(path).first,
                              documents.at(path).second);
             if (leaf == "/") option->log("UI", "authorization success from", addr);
-            else if (leaf == "js")  type = "application/javascript; charset=UTF-8";
-            else if (leaf == "css") type = "text/css; charset=UTF-8";
-            else if (leaf == "ico") type = "image/x-icon";
-            else if (leaf == "mp3") type = "audio/mpeg";
+            else if (leaf == "js")    type = "application/javascript; charset=UTF-8";
+            else if (leaf == "css")   type = "text/css; charset=UTF-8";
+            else if (leaf == "ico")   type = "image/x-icon";
+            else if (leaf == "mp3")   type = "audio/mpeg";
+            else if (leaf == "woff2") type = "font/woff2";
           } else {
             if (Random::int64() % 21)
               code = 404, content = "Today, is a beautiful day.";

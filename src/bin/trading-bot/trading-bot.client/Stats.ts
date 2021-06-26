@@ -33,6 +33,8 @@ export class StatsComponent implements OnInit {
   private baseChart:  number = 1;
   private quoteChart: number = 2;
 
+  private showStats: boolean;
+
   private Highcharts: typeof Shared.Highcharts = Shared.Highcharts;
 
   @Input() product: Models.ProductAdvertisement;
@@ -49,7 +51,11 @@ export class StatsComponent implements OnInit {
 
   @Input() marketChart: Models.MarketChart;
 
-  @Input() showStats: boolean;
+  @Input() set _showStats(showStats: boolean) {
+    if (!this.showStats && showStats)
+      this.Highcharts.charts.forEach(chart => chart.redraw(false));
+    this.showStats = showStats;
+  };
 
   @Input() set tradesChart(o: Models.TradeChart) {
     if (!o.price) return;

@@ -157,7 +157,7 @@ export class CleanTradeRequestFromUI {
 }
 
 export class ConnectionStatus {
-    constructor(public online: Connectivity) {}
+    constructor(public online: Connectivity = null) {}
 }
 
 export class ExchangeState {
@@ -280,8 +280,8 @@ export interface QuotingParameters {
 
 export class ProductAdvertisement {
     constructor(public exchange:    string = "",
-                public inet:        string =  "",
-                public base:        string =  "",
+                public inet:        string = "",
+                public base:        string = "",
                 public quote:       string = "",
                 public symbol:      string = "",
                 public margin:      number = 0,

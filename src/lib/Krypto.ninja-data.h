@@ -1031,11 +1031,9 @@ namespace ₿ {
                 it.send(msgs);
           };
           void purge() {
-            if (!requests.empty()) {
+            while (!requests.empty()) {
               requests.back().shutdown();
               requests.pop_back();
-              purge();
-              return;
             }
             shutdown();
           };

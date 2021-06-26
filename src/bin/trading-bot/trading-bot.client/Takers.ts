@@ -6,30 +6,37 @@ import {Shared, Models} from 'lib/K';
 
 @Component({
   selector: 'takers',
-  template: `<ag-grid-angular #marketList
+  template: `<ag-grid-angular
     class="ag-theme-fresh ag-theme-dark marketTrades"
     style="height: 616px;width: 100%;"
-    rowHeight="21"
+    (gridReady)="onGridReady()"
     [gridOptions]="grid"></ag-grid-angular>`
 })
 export class TakersComponent {
 
-  @Input() product: Models.ProductAdvertisement;
+  private product: Models.ProductAdvertisement = new Models.ProductAdvertisement();
+
+  @Input() set _product(o: Models.ProductAdvertisement) {
+    this.product = o;
+    this.onGridReady();
+  };
 
   @Input() set taker(o: Models.MarketTrade) {
     this.addRowData(o);
   };
 
   private grid: GridOptions = <GridOptions>{
-    overlayLoadingTemplate: `<span class="ag-overlay-no-rows-center">empty history</span>`,
+    overlayNoRowsTemplate: `<span class="ag-overlay-no-rows-center">empty history</span>`,
     defaultColDef: { sortable: true, resizable: true },
+    rowHeight:21,
     columnDefs: [{
       field: 'time',
       width: 82,
       headerName: 'time',
       sort: 'desc',
-      cellClass: (params) => {
-        return 'fs11px ' + (!params.data.recent ? "text-muted" : "");
+      suppressSizeToFit: true,
+      cellClassRules: {
+        'text-muted': '!data.recent'
       },
       cellRenderer:(params) => {
         var d = new Date(params.value||0);
@@ -41,54 +48,56 @@ export class TakersComponent {
       }
     }, {
       field: 'price',
-      width: 75,
+      width: 85,
       headerName: 'price',
-      cellClass: (params) => {
-        return (params.data.side === 'Ask') ? "sell" : "buy";
-      },
-      cellRendererFramework: Shared.QuoteCurrencyCellComponent
+      cellClassRules: {
+        'sell': 'data.side == "Ask"',
+        'buy': 'data.side == "Bid"'
+      }
     }, {
       field: 'quantity',
       width: 50,
       headerName: 'qty',
-      cellClass: (params) => {
-        return (params.data.side === 'Ask') ? "sell" : "buy";
-      },
-      cellRendererFramework: Shared.BaseCurrencyCellComponent
+      cellClassRules: {
+        'sell': 'data.side == "Ask"',
+        'buy': 'data.side == "Bid"'
+      }
     }, {
       field: 'side',
       width: 40,
       headerName: 'side',
-      cellClass: (params) => {
-        if (params.value === 'Bid') return 'buy';
-        else if (params.value === 'Ask') return "sell";
-      }
+      cellClassRules: {
+        'sell': 'x == "Ask"',
+        'buy': 'x == "Bid"'
+      },
     }]
+  };
+
+  private onGridReady() {
+    Shared.currencyHeaders(this.grid.api, this.product.base, this.product.quote);
   };
 
   private addRowData = (o: Models.MarketTrade) => {
     if (!this.grid.api) return;
-    if (o === null) {
-      if (this.grid.rowData)
-        this.grid.api.setRowData([]);
-    } else {
+
+    if (o === null) this.grid.api.setRowData([]);
+    else {
       this.grid.api.applyTransaction({add: [{
-        price: o.price,
-        quantity: o.quantity,
+        price: o.price.toFixed(this.product.tickPrice),
+        quantity: o.quantity.toFixed(this.product.tickSize),
         time: o.time,
         recent: true,
-        side: Models.Side[o.side],
-        quoteSymbol: this.product.quote,
-        productFixedPrice: this.product.tickPrice,
-        productFixedSize: this.product.tickSize
+        side: Models.Side[o.side]
       }]});
 
       this.grid.api.forEachNode((node: RowNode) => {
         if (Math.abs(o.time - node.data.time) > 3600000)
           this.grid.api.applyTransaction({remove: [node.data]});
-        else if (Math.abs(o.time - node.data.time) > 7000)
+        else if (node.data.recent && Math.abs(o.time - node.data.time) > 7000)
           node.setData(Object.assign(node.data, {recent: false}));
       });
+
+      this.grid.api.sizeColumnsToFit();
     }
   };
 };

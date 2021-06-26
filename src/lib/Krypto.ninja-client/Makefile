@@ -12,6 +12,7 @@ PATH      := $(NODE_PATH)/.bin:$(PATH)
 TSC       := tsc --baseUrl $(NODE_PATH) --typeRoots $(NODE_PATH)/@types \
                --alwaysStrict --experimentalDecorators --target ES2018 --module commonjs
 BROWSERIFY:= browserify --transform [ $(NODE_PATH)/babelify --presets [ $(NODE_PATH)/@babel/preset-env ] ]
+SASS      := sass --no-source-map --style compressed
 
 STEPS     := $(shell grep "call\ STEP" Makefile | wc -l)
 STEP       = $(shell tput setaf 2;tput setab 0)[$(1)/$(STEPS)]$(shell tput setaf 3;tput setab 0) Building client $(2)..$(shell tput sgr0)
@@ -49,10 +50,20 @@ js: $(KCLIENT)/.main.ts lib
 	@echo $(STEP_3)
 	$(BROWSERIFY) $(KASSETS)/$@/$(notdir $(basename $<)).$@ | uglifyjs | gzip > $(KASSETS)/$@/client.min.$@
 
-css: www/css/*.scss
+css: www/css beacons
 	@echo $(STEP_4)
-	$(foreach scss,$^,sass $(scss) $(KASSETS)/$@/$(notdir $(basename $(scss))).min.$@ ;)
-	cat $(NODE_PATH)/@ag-grid-community/all-modules/dist/styles/ag-grid.$@ >> $(KASSETS)/$@/bootstrap.min.$@
+	$(foreach x,$(wildcard $</*.scss),$(SASS) $(realpath $(x)):$(KASSETS)/$@/$(notdir $(basename $(x))).min.$@;)
+	cp -R $(NODE_PATH)/beacons $(KASSETS)/font
+	cat $(NODE_PATH)/@ag-grid-community/all-modules/dist/styles/ag-grid.$@ $(NODE_PATH)/@ag-grid-community/all-modules/dist/styles/ag-theme-bootstrap.min.$@ $(KASSETS)/font/beacons.$@ >> $(KASSETS)/$@/bootstrap.min.$@
+	cat $(NODE_PATH)/@ag-grid-community/all-modules/dist/styles/ag-theme-dark.min.$@ >> $(KASSETS)/$@/bootstrap-theme-dark.min.$@
+	cat $(NODE_PATH)/@ag-grid-community/all-modules/dist/styles/ag-theme-fresh.min.$@ >> $(KASSETS)/$@/bootstrap-theme.min.$@
+
+beacons:
+	@test -d $(NODE_PATH)/$@ || (mkdir -p $(NODE_PATH)/$@ &&                    \
+		curl -sL https://raw.githubusercontent.com/ctubio/$@/master/dist/$@.css   \
+		| tail -n +7 > $(NODE_PATH)/$@/$@.css &&                                  \
+		curl -sL https://raw.githubusercontent.com/ctubio/$@/master/dist/$@.woff2 \
+		-o $(NODE_PATH)/$@/$@.woff2)
 
 export define PACKAGE_JSON
 {
@@ -99,4 +110,4 @@ endef
 package.json:
 	@echo "$$PACKAGE_JSON" > $(KHOME)/$@
 
-.PHONY: all $(KSRC) $(KCLIENT)/.main.ts lib css js npm package.json
+.PHONY: all $(KSRC) $(KCLIENT)/.main.ts lib css js npm beacons package.json

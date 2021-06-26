@@ -6,18 +6,23 @@ import {Socket, Shared, Models} from 'lib/K';
 
 @Component({
   selector: 'orders',
-  template: `<ag-grid-angular #orderList
+  template: `<ag-grid-angular
     class="ag-theme-fresh ag-theme-dark"
     style="height: 131px;width: 99.80%;"
-    rowHeight="21"
+    (gridReady)="onGridReady()"
     (cellClicked)="onCellClicked($event)"
     [gridOptions]="grid"></ag-grid-angular>`
 })
 export class OrdersComponent {
 
+  private product: Models.ProductAdvertisement = new Models.ProductAdvertisement();
+
   private fireCxl: Socket.IFire<Models.OrderCancelRequestFromUI> = new Socket.Fire(Models.Topics.CancelOrder);
 
-  @Input() product: Models.ProductAdvertisement;
+  @Input() set _product(o: Models.ProductAdvertisement) {
+    this.product = o;
+    this.onGridReady();
+  };
 
   @Input() set orders(o: Models.Order[]) {
     this.addRowData(o);
@@ -26,6 +31,7 @@ export class OrdersComponent {
   private grid: GridOptions = <GridOptions>{
     suppressNoRowsOverlay: true,
     defaultColDef: { sortable: true, resizable: true },
+    rowHeight:21,
     columnDefs: [{
       width: 30,
       field: "cancel",
@@ -33,9 +39,7 @@ export class OrdersComponent {
       suppressSizeToFit: true,
       cellRenderer: (params) => {
         return `<button type="button" class="btn btn-danger btn-xs">
-          <span data-action-type="remove"'
-            style="font-size: 16px;font-weight: bold;padding: 0px;line-height: 12px;"
-          >&times;</span>
+          <span data-action-type="remove"'>&times;</span>
         </button>`;
       }
     }, {
@@ -43,7 +47,6 @@ export class OrdersComponent {
       field: 'time',
       headerName: 'time',
       suppressSizeToFit: true,
-      cellClass: 'fs11px',
       cellRenderer:(params) => {
         var d = new Date(params.value||0);
         return (d.getHours()+'')
@@ -57,32 +60,44 @@ export class OrdersComponent {
       field: 'side',
       headerName: 'side',
       suppressSizeToFit: true,
-      cellClass: (params) => {
-        if (params.value === 'Bid') return 'buy';
-        else if (params.value === 'Ask') return "sell";
+      cellClassRules: {
+        'sell': 'data.side == "Ask"',
+        'buy': 'data.side == "Bid"'
       },
-      cellRenderer:(params) => { return (params.data.pong ? '&lrhar;' : '&rhard;') + params.value; }
+      cellRenderer:(params) => {
+        return (params.data.pong
+          ? '&lrhar;'
+          : '&rhard;'
+        ) + params.value;
+      }
     }, {
       width: 74,
       field: 'price',
       headerName: 'price',
       sort: 'desc',
-      cellClass: (params) => { return (params.data.side === 'Ask') ? "sell" : "buy"; },
-      cellRendererFramework: Shared.QuoteCurrencyCellComponent
+      cellClassRules: {
+        'sell': 'data.side == "Ask"',
+        'buy': 'data.side == "Bid"'
+      }
     }, {
-      width: 85,
-      field: 'qty',
+      width: 95,
+      field: 'quantity',
       headerName: 'qty',
       suppressSizeToFit: true,
-      cellClass: (params) => { return (params.data.side === 'Ask') ? "sell" : "buy"; },
-      cellRendererFramework: Shared.BaseCurrencyCellComponent
+      cellClassRules: {
+        'sell': 'data.side == "Ask"',
+        'buy': 'data.side == "Bid"'
+      }
     }, {
       width: 74,
       field: 'value',
       headerName: 'value',
-      cellClass: (params) => { return (params.data.side === 'Ask') ? "sell" : "buy"; }
+      cellClassRules: {
+        'sell': 'data.side == "Ask"',
+        'buy': 'data.side == "Bid"'
+      }
     }, {
-      width: 45,
+      width: 55,
       field: 'type',
       headerName: 'type',
       suppressSizeToFit: true
@@ -99,68 +114,53 @@ export class OrdersComponent {
       field: 'exchangeId',
       headerName: 'openOrderId',
       suppressSizeToFit: true,
-      cellRenderer:(params) => { return (params.value) ? params.value.toString().split('-')[0] : ''; }
+      cellRenderer:(params) => {
+        return (params.value)
+          ? params.value.toString().split('-')[0]
+          : '';
+      }
     }]
   };
 
+  private onGridReady() {
+    Shared.currencyHeaders(this.grid.api, this.product.base, this.product.quote);
+  };
+
   private onCellClicked = ($event) => {
-    if ($event.event.target.getAttribute("data-action-type") != 'remove') return;
+    if ($event.event.target.getAttribute('data-action-type') != 'remove') return;
     this.fireCxl.fire(new Models.OrderCancelRequestFromUI($event.data.orderId, $event.data.exchange));
-    // this.grid.api.applyTransaction({remove:[$event.data]});
   };
 
   private addRowData = (o: Models.Order[]) => {
     if (!this.grid.api) return;
-    this.grid.api.setRowData([]);
-    o.forEach(o => {
-      let exists: boolean = false;
-      let isClosed: boolean = (o.status == Models.OrderStatus.Terminated);
-      this.grid.api.forEachNode((node: RowNode) => {
-        if (!exists && node.data.orderId==o.orderId) {
-          exists = true;
-          if (isClosed) this.grid.api.applyTransaction({remove:[node.data]});
-          else {
-            node.setData(Object.assign(node.data, {
-              time: o.time,
-              price: o.price,
-              value: this.product.margin == 0
-                       ? (Math.round(o.quantity * o.price * 100) / 100) + " " + this.product.quote
-                       : (this.product.margin == 1
-                           ? (Math.round((o.quantity / o.price) * 1e+8) / 1e+8) + " " + this.product.base
-                           : (Math.round((o.quantity * o.price) * 1e+8) / 1e+8) + " " + this.product.base
-                       ),
-              tif: Models.TimeInForce[o.timeInForce],
-              lat: o.latency+'ms',
-              qty: o.quantity
-            }));
-          }
-        }
-      });
-      setTimeout(()=>{try{this.grid.api.redrawRows();}catch(e){}},0);
-      if (!exists && !isClosed)
-        this.grid.api.applyTransaction({add:[{
-          orderId: o.orderId,
-          exchangeId: o.exchangeId,
-          side: Models.Side[o.side],
-          price: o.price,
-          value: this.product.margin == 0
-                   ? (Math.round(o.quantity * o.price * 100) / 100) + " " + this.product.quote
-                   : (this.product.margin == 1
-                       ? (Math.round((o.quantity / o.price) * 1e+8) / 1e+8) + " " + this.product.base
-                       : (Math.round((o.quantity * o.price) * 1e+8) / 1e+8) + " " + this.product.base
-                   ),
-          type: Models.OrderType[o.type],
-          tif: Models.TimeInForce[o.timeInForce],
-          lat: o.latency+'ms',
-          qty: o.quantity,
-          pong: o.isPong,
-          time: o.time,
-          quoteSymbol: this.product.quote,
-          productFixedPrice: this.product.tickPrice,
-          productFixedSize: this.product.tickSize
-        }]});
 
-      this.grid.api.sizeColumnsToFit();
+    var add = [];
+
+    o.forEach(o => {
+      add.push({
+        orderId: o.orderId,
+        exchangeId: o.exchangeId,
+        side: Models.Side[o.side],
+        price: o.price.toFixed(this.product.tickPrice),
+        value: (this.product.margin == 0
+                 ? Math.round(o.quantity * o.price * 100) / 100
+                 : (this.product.margin == 1
+                     ? Math.round((o.quantity / o.price) * 1e+8) / 1e+8
+                     : Math.round((o.quantity * o.price) * 1e+8) / 1e+8
+                 )).toFixed(this.product.tickPrice),
+        type: Models.OrderType[o.type],
+        tif: Models.TimeInForce[o.timeInForce],
+        lat: o.latency + 'ms',
+        quantity: o.quantity.toFixed(this.product.tickSize),
+        pong: o.isPong,
+        time: o.time
+      });
     });
+
+    this.grid.api.setRowData([]);
+
+    if (add.length) this.grid.api.applyTransaction({add:add});
+
+    this.grid.api.sizeColumnsToFit();
   };
 };

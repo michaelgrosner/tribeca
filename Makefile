@@ -1,8 +1,8 @@
 K         ?= K.sh
 MAJOR      = 0
 MINOR      = 6
-PATCH      = 3
-BUILD      = 18
+PATCH      = 4
+BUILD      = 0
 
 OBLIGATORY = DISCLAIMER: This is strict non-violent software: \n$\
              if you hurt other living creatures, please stop; \n$\
@@ -138,8 +138,7 @@ assets: src/bin/$(KSRC)/$(KSRC).client
 	$(MAKE) -C src/lib/Krypto.ninja-client KHOME=$(KHOME) KCLIENT=$(realpath $<)
 	$(foreach chost,$(CARCH), \
 	  build=build-$(shell echo $(chost) | sed 's/-\([a-z_0-9]*\)-\(linux\)$$/-\2-\1/' | sed 's/\([a-z_0-9]*\)-\([a-z_0-9]*\)-.*/\2-\1/' | sed 's/^w64/win64/') \
-	  && ! test -d $${build} || ((test -d $${build}/var/assets           \
-	  || cp -R $(KHOME)/assets $${build}/var/assets)                     \
+	  && ! test -d $${build} || (rm -rf $${build}/var/assets && cp -R $(KHOME)/assets $${build}/var/assets \
 	  && $(MAKE) assets.o CHOST=$(chost) chost=$(shell test -n "`command -v $(chost)-g++`" && echo $(chost)- || :) \
 	  && rm -rf $${build}/var/assets) \
 	;)

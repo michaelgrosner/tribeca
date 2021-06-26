@@ -23,6 +23,7 @@
     .docroot   SYM(_file_css_base)    , www/css/bootstrap.min.css
     .docroot   SYM(_file_css_dark)    , www/css/bootstrap-theme-dark.min.css
     .docroot   SYM(_file_css_light)   , www/css/bootstrap-theme.min.css
+    .docroot   SYM(_file_woff2_font)  , www/font/beacons.woff2
     .docroot   SYM(_file_mp3_audio_0) , www/audio/0.mp3
     .docroot   SYM(_file_mp3_audio_1) , www/audio/1.mp3
     .docroot   SYM(_file_gzip_bomb)   , www/.bomb.gzip

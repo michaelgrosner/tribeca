@@ -6,10 +6,10 @@ import {Socket, Shared, Models} from 'lib/K';
 
 @Component({
   selector: 'trades',
-  template: `<ag-grid-angular #tradeList
+  template: `<ag-grid-angular
     class="ag-theme-fresh ag-theme-dark"
     style="height: 479px;width: 99.80%;"
-    rowHeight="21"
+    (gridReady)="onGridReady()"
     (cellClicked)="onCellClicked($event)"
     [gridOptions]="grid"></ag-grid-angular>`
 })
@@ -18,10 +18,14 @@ export class TradesComponent {
   private audio: boolean;
   private hasPongs: boolean;
   private headerNameMod: string = "";
+  private product: Models.ProductAdvertisement = new Models.ProductAdvertisement();
 
   private fireCxl: Socket.IFire<Models.CleanTradeRequestFromUI> = new Socket.Fire(Models.Topics.CleanTrade);
 
-  @Input() product: Models.ProductAdvertisement;
+  @Input() set _product(o: Models.ProductAdvertisement) {
+    this.product = o;
+    this.onGridReady();
+  };
 
   @Input() set quotingParameters(o: Models.QuotingParameters) {
     this.addRowConfig(o);
@@ -39,17 +43,19 @@ export class TradesComponent {
 
   private grid: GridOptions = <GridOptions>{
     overlayLoadingTemplate: `<span class="ag-overlay-no-rows-center">0 closed orders</span>`,
+    overlayNoRowsTemplate: `<span class="ag-overlay-no-rows-center">0 closed orders</span>`,
     defaultColDef: { sortable: true, resizable: true },
+    rowHeight:21,
+    animateRows:true,
+    getRowNodeId: function (data) { return data.tradeId; },
     columnDefs: [{
       width: 30,
-      field: "cancel",
+      field: 'cancel',
       headerName: 'cxl',
       suppressSizeToFit: true,
       cellRenderer: (params) => {
         return `<button type="button" class="btn btn-danger btn-xs">
-          <span data-action-type="remove"
-            style="font-size: 16px;font-weight: bold;padding: 0px;line-height: 12px;"
-          >&times;</span>
+          <span data-action-type="remove">&times;</span>
         </button>`;
       }
     }, {
@@ -61,7 +67,6 @@ export class TradesComponent {
       comparator: (valueA: number, valueB: number, nodeA: RowNode, nodeB: RowNode, isInverted: boolean) => {
           return (nodeA.data.Ktime||nodeA.data.time) - (nodeB.data.Ktime||nodeB.data.time);
       },
-      cellClass: 'fs11px',
       cellRenderer:(params) => {
         var d = new Date(params.value||0);
         return (d.getDate()+'')
@@ -77,7 +82,6 @@ export class TradesComponent {
       headerName:'⇋time',
       hide:true,
       suppressSizeToFit: true,
-      cellClass: 'fs11px',
       cellRenderer:(params) => {
         if (params.value==0) return '';
         var d = new Date(params.value);
@@ -93,140 +97,147 @@ export class TradesComponent {
       field:'side',
       headerName:'side',
       suppressSizeToFit: true,
-      cellClass: (params) => {
-        if (params.value === 'Bid') return 'buy';
-        else if (params.value === 'Ask') return "sell";
-        else if (params.value === '&lrhar;') return "kira";
-        else return "unknown";
+      cellClassRules: {
+        'sell': 'x == "Ask"',
+        'buy': 'x == "Bid"',
+        'kira': 'x == "&lrhar;"'
       },
       cellRenderer:(params) => {
-        return params.value === '&lrhar;' ? '<span style="font-size:15px;padding-left:3px;">' + params.value + '</span>' : params.value;
+        return params.value === '&lrhar;' ?
+          '<span style="font-size:15px;padding-left:3px;">' + params.value + '</span>'
+          : params.value;
       }
     }, {
       width: 80,
       field:'price',
       headerValueGetter:(params) => { return this.headerNameMod + 'price'; },
-      cellClass: (params) => { return params.data.pingSide; },
-      cellRendererFramework: Shared.QuoteCurrencyCellComponent
+      cellClassRules: {
+        'sell': 'data.side == "Ask"',
+        'buy': 'data.side == "Bid"'
+      }
     }, {
-      width: 85,
+      width: 95,
       field:'quantity',
       headerValueGetter:(params) => { return this.headerNameMod + 'qty'; },
       suppressSizeToFit: true,
-      cellClass: (params) => { return params.data.pingSide; },
-      cellRendererFramework: Shared.BaseCurrencyCellComponent
+      cellClassRules: {
+        'sell': 'data.side == "Ask"',
+        'buy': 'data.side == "Bid"'
+      }
     }, {
       width: 69,
       field:'value',
       headerValueGetter:(params) => { return this.headerNameMod + 'value'; },
-      cellClass: (params) => { return params.data.pingSide; },
-      cellRendererFramework: Shared.QuoteCurrencyCellComponent
+      cellClassRules: {
+        'sell': 'data.side == "Ask"',
+        'buy': 'data.side == "Bid"'
+      }
     }, {
       width: 75,
       field:'Kvalue',
       headerName:'⇋value',
-      hide:true,
-      cellClass: (params) => { return params.data.pongSide; },
-      cellRendererFramework: Shared.QuoteCurrencyCellComponent
+      cellClassRules: {
+        'buy': 'data._side == "Ask"',
+        'sell': 'data._side == "Bid"'
+      }
     }, {
       width: 85,
       field:'Kqty',
       headerName:'⇋qty',
-      hide:true,
       suppressSizeToFit: true,
-      cellClass: (params) => { return params.data.pongSide; },
-      cellRendererFramework: Shared.BaseCurrencyCellComponent
+      cellClassRules: {
+        'buy': 'data._side == "Ask"',
+        'sell': 'data._side == "Bid"'
+      }
     }, {
       width: 80,
       field:'Kprice',
       headerName:'⇋price',
-      hide:true,
-      cellClass: (params) => { return params.data.pongSide; },
-      cellRendererFramework: Shared.QuoteCurrencyCellComponent
+      cellClassRules: {
+        'buy': 'data._side == "Ask"',
+        'sell': 'data._side == "Bid"'
+      }
     }, {
       width: 65,
       field:'delta',
       headerName:'delta',
-      hide:true,
-      cellClass: (params) => { if (params.data.side === '&lrhar;') return "kira"; else return ""; },
+      cellClassRules: {
+        'kira': 'data.side == "&lrhar;"'
+      },
       cellRenderer: (params) => {
-        return (!params.value) ? "" : params.data.quoteSymbol + parseFloat(params.value.toFixed(8));
+        return params.value
+          ? params.data.quoteSymbol + parseFloat(params.value.toFixed(8))
+          : '';
       }
     }]
   };
 
+  private onGridReady() {
+    Shared.currencyHeaders(this.grid.api, this.product.base, this.product.quote);
+  };
+
   private onCellClicked = ($event) => {
-    if ($event.event.target.getAttribute("data-action-type") != 'remove') return;
+    if ($event.event.target.getAttribute('data-action-type') != 'remove') return;
     this.fireCxl.fire(new Models.CleanTradeRequestFromUI($event.data.tradeId));
   }
 
   private addRowConfig = (o: Models.QuotingParameters) => {
     this.audio = o.audio;
-    if (!this.grid.api) return;
+
     this.hasPongs = (o.safety === Models.QuotingSafety.Boomerang || o.safety === Models.QuotingSafety.AK47);
+
     this.headerNameMod = this.hasPongs ? "⇁" : "";
+
+    if (!this.grid.api) return;
+
     this.grid.columnDefs.map((x: ColDef)  => {
       if (['Ktime','Kqty','Kprice','Kvalue','delta'].indexOf(x.field) > -1)
         this.grid.columnApi.setColumnVisible(x.field, this.hasPongs);
       return x;
     });
+
     this.grid.api.refreshHeader();
+
+    this.grid.api.sizeColumnsToFit();
+
     this.emitLengths();
   };
 
   private addRowData = (o: Models.Trade) => {
     if (!this.grid.api) return;
-    if (o === null) {
-      if (this.grid.rowData)
-        this.grid.api.setRowData([]);
-    } else {
+
+    if (o === null) this.grid.api.setRowData([]);
+    else {
       if (o.Kqty < 0) {
         this.grid.api.forEachNode((node: RowNode) => {
           if (node.data.tradeId == o.tradeId)
             this.grid.api.applyTransaction({remove: [node.data]});
         });
       } else {
-        let exists: boolean = false;
-        this.grid.api.forEachNode((node: RowNode) => {
-          if (!exists && node.data.tradeId == o.tradeId) {
-            exists = true;
-            node.setData(Object.assign(node.data, {
-              time: o.time,
-              quantity: o.quantity,
-              value: o.value,
-              Ktime: o.Ktime || 0,
-              Kqty: o.Kqty ? o.Kqty : null,
-              Kprice: o.Kprice ? o.Kprice : null,
-              Kvalue: o.Kvalue ? o.Kvalue : null,
-              delta: o.delta?o.delta:null,
-              side: o.Kqty >= o.quantity ? '&lrhar;' : (o.side === Models.Side.Ask ? "Ask" : "Bid"),
-              pingSide: o.side == Models.Side.Ask ? "sell" : "buy",
-              pongSide: o.side == Models.Side.Ask ? "buy" : "sell"
-            }));
-          }
-        });
-        if (!exists) {
-          this.grid.api.applyTransaction({add: [{
-            tradeId: o.tradeId,
-            time: o.time,
-            price: o.price,
-            quantity: o.quantity,
-            side: o.Kqty >= o.quantity ? '&lrhar;' : (o.side === Models.Side.Ask ? "Ask" : "Bid"),
-            pingSide: o.side == Models.Side.Ask ? "sell" : "buy",
-            pongSide: o.side == Models.Side.Ask ? "buy" : "sell",
-            value: o.value,
-            Ktime: o.Ktime || 0,
-            Kqty: o.Kqty ? o.Kqty : null,
-            Kprice: o.Kprice ? o.Kprice : null,
-            Kvalue: o.Kvalue ? o.Kvalue : null,
-            delta: o.delta && o.delta!=0 ? o.delta : null,
-            quoteSymbol: this.product.quote.replace('EUR','€').replace('USD','$'),
-            productFixedPrice: this.product.tickPrice,
-            productFixedSize: this.product.tickSize
-          }]});
-        }
+        var node: RowNode = this.grid.api.getRowNode(o.tradeId);
+
+        var edit = {
+          time: o.time,
+          quantity: o.quantity.toFixed(this.product.tickSize),
+          value: o.value.toFixed(this.product.tickPrice),
+          Ktime: o.Ktime,
+          Kqty: o.Kqty ? o.Kqty.toFixed(this.product.tickSize) : '',
+          Kprice: o.Kprice ? o.Kprice.toFixed(this.product.tickPrice) : '',
+          Kvalue: o.Kvalue ? o.Kvalue.toFixed(this.product.tickPrice) : '',
+          delta: o.delta,
+          side: o.Kqty >= o.quantity ? '&lrhar;' : (o.side === Models.Side.Ask ? "Ask" : "Bid"),
+          _side: o.side === Models.Side.Ask ? "Ask" : "Bid",
+        };
+
+        if (node) node.setData(Object.assign(edit, node.data));
+        else this.grid.api.applyTransaction({add: [Object.assign(edit, {
+          tradeId: o.tradeId,
+          price: o.price.toFixed(this.product.tickPrice)
+        })]});
+
         if (o.loadedFromDB === false) {
           if (this.audio) Shared.playAudio(o.isPong?'1':'0');
+
           this.onTradesChartData.emit(new Models.TradeChart(
             (o.isPong && o.Kprice)?o.Kprice:o.price,
             (o.isPong && o.Kprice)?(o.side === Models.Side.Ask ? Models.Side.Bid : Models.Side.Ask):o.side,
@@ -238,8 +249,9 @@ export class TradesComponent {
       }
 
       this.grid.api.sizeColumnsToFit();
-      this.emitLengths();
     }
+
+    this.emitLengths();
   };
 
   private emitLengths = () => {

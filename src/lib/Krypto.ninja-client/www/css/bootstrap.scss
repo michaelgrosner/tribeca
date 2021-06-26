@@ -5152,11 +5152,6 @@ span.point-triangle-down::before  {
   content: "▼";
 }
 
-.fs11px {
-  font-size: 11px;
-  margin-top: 2px;
-}
-
 span.truncated {
     opacity: 0.25;
 }
@@ -5170,4 +5165,64 @@ div#hud {
 div#hud.bg-danger {
   border-color: #540000;
   background-color: rgba(241, 183, 183, 0.75);
+}
+
+.ag-cell,
+.ag-full-width-row .ag-cell-wrapper.ag-row-group {
+  line-height: 21px!important;
+  padding-left: 0px!important;
+  padding-right: 0px!important;
+}
+
+div.ag-cell[col-id="Ktime"],
+div.ag-cell[col-id="time"] {
+  span {
+    font-size: 11px;
+    margin-top: 2px;
+  }
+}
+
+.positions h4 i,
+.tradeSafety span i,
+.marketQuoting td i,
+div.ag-header-cell .ag-header-cell-label i {
+    position: relative;
+    left: 3px;
+}
+
+.marketQuoting td i,
+div.ag-header-cell .ag-header-cell-label i {
+    top: 1px;
+}
+
+.positions h4 i,
+.tradeSafety span i {
+    top: 2px;
+}
+
+.btn-xs, .btn-group-xs > .btn {
+    font-size: 18px!important;
+    line-height: 1.1!important;
+    margin-left: 2px;
+}
+
+.ag-theme-big {
+  div.ag-row {
+    font-size: 21px !important;
+  }
+  div.ag-row i {
+    font-size: 25px;
+    vertical-align: text-top;
+  }
+  .up-data.ag-cell-data-changed  {
+      background-color:#cec !important;
+  }
+  .down-data.ag-cell-data-changed {
+      background-color:#ecc !important;
+  }
+}
+
+@font-face {
+  font-family: "beacons";
+  src: url("../font/beacons.woff2") format("woff2");
 }

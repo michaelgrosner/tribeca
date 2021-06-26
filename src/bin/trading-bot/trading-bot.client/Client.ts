@@ -6,7 +6,10 @@ import {Socket, Shared, Models} from 'lib/K';
   selector: 'ui',
   template: `<div>
     <div [hidden]="state.online !== null" style="padding:42px;transform:rotate(-6deg);">
-        <h4 class="text-danger text-center">{{ product.environment ? product.environment+' is d' : 'D' }}isconnected.</h4>
+        <h4 class="text-danger text-center">
+          <i class="beacon-exc-{{ exchange_icon }}-s" style="font-size:30px;"></i>
+          <br /><br />
+          {{ product.environment ? product.environment+' is d' : 'D' }}isconnected</h4>
     </div>
     <div [hidden]="state.online === null">
         <div class="container-fluid">
@@ -72,7 +75,7 @@ import {Socket, Shared, Models} from 'lib/K';
                       <submit-order [product]="product"></submit-order>
                     </div>
                     <div [hidden]="!showStats" [ngClass]="showStats == 2 ? 'col-md-11 col-xs-12 absolute-charts' : 'col-md-11 col-xs-12 relative-charts'">
-                      <stats ondblclick="this.style.opacity=this.style.opacity<1?1:0.4" [marketWidth]="marketWidth" [showStats]="!!showStats" [product]="product" [quotingParameters]="quotingParameters" [targetBasePosition]="targetBasePosition" [marketChart]="marketChart" [tradesChart]="tradesChart" [position]="position" [fairValue]="fairValue"></stats>
+                      <stats ondblclick="this.style.opacity=this.style.opacity<1?1:0.4" [marketWidth]="marketWidth" [_showStats]="!!showStats" [product]="product" [quotingParameters]="quotingParameters" [targetBasePosition]="targetBasePosition" [marketChart]="marketChart" [tradesChart]="tradesChart" [position]="position" [fairValue]="fairValue"></stats>
                     </div>
                     <div [hidden]="showStats === 1" class="col-md-{{ showTakers ? '9' : '11' }} col-xs-12" style="padding-left:0px;padding-bottom:0px;">
                       <div class="row" style="padding-top:0px;">
@@ -90,17 +93,17 @@ import {Socket, Shared, Models} from 'lib/K';
                               <textarea [(ngModel)]="notepad" (ngModelChange)="changeNotepad(notepad)" placeholder="ephemeral notepad" class="ephemeralnotepad" style="height:131px;width: 100%;max-width: 100%;"></textarea>
                             </div>
                             <div class="col-md-10 col-xs-12" style="padding-right:0px;padding-top:0px;">
-                              <orders [product]="product" [orders]="orders"></orders>
+                              <orders [_product]="product" [orders]="orders"></orders>
                             </div>
                           </div>
                           <div class="row">
-                            <trades (onTradesChartData)="onTradesChartData($event)" (onTradesMatchedLength)="onTradesMatchedLength($event)" (onTradesLength)="onTradesLength($event)" [product]="product" [quotingParameters]="quotingParameters" [trade]="trade"></trades>
+                            <trades (onTradesChartData)="onTradesChartData($event)" (onTradesMatchedLength)="onTradesMatchedLength($event)" (onTradesLength)="onTradesLength($event)" [_product]="product" [quotingParameters]="quotingParameters" [trade]="trade"></trades>
                           </div>
                         </div>
                       </div>
                     </div>
                     <div [hidden]="!showTakers || showStats === 1" class="col-md-2 col-xs-12" style="padding-left:0px;">
-                      <takers [product]="product" [taker]="taker"></takers>
+                      <takers [_product]="product" [taker]="taker"></takers>
                     </div>
                 </div>
             </div>
@@ -120,6 +123,7 @@ export class ClientComponent implements OnInit {
   private homepage: string = 'https://github.com/ctubio/Krypto-trading-bot';
   private server_memory: string;
   private client_memory: string;
+  private exchange_icon: string;
   private db_size: string;
   private notepad: string;
   private showSettings: boolean = true;
@@ -394,6 +398,7 @@ export class ClientComponent implements OnInit {
 
   private onAdvert = (o : Models.ProductAdvertisement) => {
     window.document.title = '[' + o.environment + ']';
+    this.exchange_icon = o.exchange.toLowerCase().replace('coinbase', 'coinbase-pro');
     this.product = o;
     setTimeout(this.resizeMatryoshka, 5e+3);
     console.log(

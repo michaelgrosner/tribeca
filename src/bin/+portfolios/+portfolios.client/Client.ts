@@ -5,10 +5,10 @@ import {Socket, Shared, Models} from 'lib/K';
 @Component({
   selector: 'ui',
   template: `<div>
-    <div [hidden]="state" style="padding:42px;transform:rotate(-6deg);">
-        <h4 class="text-danger text-center">{{ product.environment ? product.environment+' is d' : 'D' }}isconnected.</h4>
+    <div [hidden]="state.online !== null" style="padding:42px;transform:rotate(-6deg);">
+        <h4 class="text-danger text-center">{{ product.environment ? product.environment+' is d' : 'D' }}isconnected</h4>
     </div>
-    <div [hidden]="!state">
+    <div [hidden]="state.online === null">
         <div class="container-fluid">
             <div id="hud" [ngClass]="state.online ? 'bg-success' : 'bg-danger'">
                 <div class="row">
@@ -36,7 +36,9 @@ export class ClientComponent implements OnInit {
   private client_memory: string;
   private user_theme: string = null;
   private system_theme: string = null;
-  private state: Models.ConnectionStatus = <Models.ConnectionStatus>{};
+  private state: Models.ConnectionStatus = new Models.ConnectionStatus();
+  private product: Models.ProductAdvertisement = new Models.ProductAdvertisement();
+  private asset: any = null;
 
   private openMatryoshka = () => {
     const url = window.prompt('Enter the URL of another instance:',this.product.matryoshka||'https://');
@@ -49,18 +51,12 @@ export class ClientComponent implements OnInit {
     window.parent.postMessage('height='+document.getElementsByTagName('body')[0].getBoundingClientRect().height+'px', '*');
   };
 
-  private product: Models.ProductAdvertisement = new Models.ProductAdvertisement(
-    "", "", "", "", "", 0, "", "", "", "", 8, 8, 1e-8, 1e-8, 1e-8
-  );
-
-  private asset: any = null;
-
   ngOnInit() {
     new Socket.Client();
 
     new Socket.Subscriber(Models.Topics.Connectivity)
-      .registerSubscriber((o: Models.ExchangeState) => { this.state = o; })
-      .registerDisconnectedHandler(() => { this.state = null; });
+      .registerSubscriber((o: Models.ConnectionStatus) => { this.state = o; })
+      .registerDisconnectedHandler(() => { this.state.online = null; });
 
     new Socket.Subscriber(Models.Topics.ProductAdvertisement)
       .registerSubscriber(this.onAdvert);

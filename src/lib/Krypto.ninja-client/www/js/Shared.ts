@@ -8,9 +8,9 @@ require('highcharts/highcharts-more')(Highcharts);
 export {Highcharts};
 import {HighchartsChartModule} from 'highcharts-angular';
 
-import {ModuleRegistry, ICellRendererParams} from '@ag-grid-community/core';
-import {ClientSideRowModelModule}            from '@ag-grid-community/all-modules';
-import {AgGridModule, AgRendererComponent}   from '@ag-grid-community/angular';
+import {ModuleRegistry, ICellRendererParams}       from '@ag-grid-community/core';
+import {ClientSideRowModelModule, GridApi, ColDef} from '@ag-grid-community/all-modules';
+import {AgGridModule, AgRendererComponent}         from '@ag-grid-community/angular';
 
 export function bootstrapModule(declarations: any[]) {
   ModuleRegistry.registerModules([ClientSideRowModelModule]);
@@ -20,15 +20,9 @@ export function bootstrapModule(declarations: any[]) {
       BrowserModule,
       FormsModule,
       HighchartsChartModule,
-      AgGridModule.withComponents([
-        BaseCurrencyCellComponent,
-        QuoteCurrencyCellComponent
-      ])
+      AgGridModule
     ],
-    declarations: declarations.concat([
-      BaseCurrencyCellComponent,
-      QuoteCurrencyCellComponent
-    ]),
+    declarations: declarations,
     bootstrap: [declarations[0]]
   })
   class ClientModule {};
@@ -51,39 +45,35 @@ export function playAudio(basename: string) {
   audio.play();
 };
 
-@Component({
-    selector: 'base-currency-cell',
-    template: `{{ (params.value||0).toFixed(productFixedSize) }}`
-})
-export class BaseCurrencyCellComponent implements AgRendererComponent {
-  private params: ICellRendererParams;
-  private productFixedSize: number = 8;
-
-  agInit(params: ICellRendererParams): void {
-    this.params = params;
-    if ('productFixedSize' in params.node.data)
-      this.productFixedSize = params.node.data.productFixedSize;
-  }
-
-  refresh(): boolean { return false; }
+function currencyHeaderTemplate(symbol: string) {
+  return {
+    template:`<div class="ag-cell-label-container" role="presentation">
+      <span ref="eMenu" class="ag-header-icon ag-header-cell-menu-button"></span>
+      <div ref="eLabel" class="ag-header-cell-label" role="presentation">
+          <span ref="eText" class="ag-header-cell-text" role="columnheader"></span>
+          <i class="beacon-sym-` + symbol.toLowerCase() + `-s"></i>
+          <span ref="eFilter" class="ag-header-icon ag-filter-icon"></span>
+          <span ref="eSortOrder" class="ag-header-icon ag-sort-order"></span>
+          <span ref="eSortAsc" class="ag-header-icon ag-sort-ascending-icon"></span>
+          <span ref="eSortDesc" class="ag-header-icon ag-sort-descending-icon"></span>
+          <span ref="eSortNone" class="ag-header-icon ag-sort-none-icon"></span>
+      </div>
+    </div>`
+  };
 };
 
-@Component({
-    selector: 'quote-currency-cell',
-    template: `{{ (params.value||0).toFixed(productFixedPrice) }} {{ quoteSymbol }}`
-})
-export class QuoteCurrencyCellComponent implements AgRendererComponent {
-  private params: ICellRendererParams;
-  private quoteSymbol: string = 'USD';
-  private productFixedPrice: number = 8;
+export function currencyHeaders(api: GridApi, base: string, quote: string) {
+    if (!api) return;
 
-  agInit(params: ICellRendererParams): void {
-    this.params = params;
-    if ('quoteSymbol' in params.node.data)
-      this.quoteSymbol = params.node.data.quoteSymbol.substr(0,3);
-    if ('productFixedPrice' in params.node.data)
-      this.productFixedPrice = params.node.data.productFixedPrice;
-  }
+    let colDef: ColDef[] = api.getColumnDefs();
 
-  refresh(): boolean { return false; }
+    colDef.map((x: ColDef)  => {
+      if (['price', 'value', 'Kprice', 'Kvalue'].indexOf(x.field) > -1)
+        x.headerComponentParams = currencyHeaderTemplate(quote);
+      if (['quantity', 'Kqty'].indexOf(x.field) > -1)
+        x.headerComponentParams = currencyHeaderTemplate(base);
+      return x;
+    });
+
+    api.setColumnDefs(colDef);
 };

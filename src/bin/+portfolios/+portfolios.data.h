@@ -2,8 +2,19 @@
 //! \brief Welcome user! (just a manager of portfolios).
 
 namespace analpaper {
-  struct Wallets: public Client::Broadcast<Wallets> {
-    map<string, Wallet> assets;
+  struct Portfolio {
+    Wallet wallet;
+  };
+  static void to_json(json &j, const Portfolio &k) {
+    j = {
+      {"wallet", k.wallet}
+    };
+  };
+
+  struct Wallets: public Client::Broadcast<Portfolio> {
+    map<string, Portfolio> assets;
+    private:
+      string last;
     private_ref:
       const KryptoNinja &K;
     public:
@@ -12,7 +23,8 @@ namespace analpaper {
         , K(bot)
       {};
       void read_from_gw(const Wallet &raw) {
-        assets[raw.currency] = raw;
+        last = raw.currency;
+        assets[last].wallet = raw;
         broadcast();
         K.repaint();
       };
@@ -25,10 +37,17 @@ namespace analpaper {
       mMatter about() const override {
         return mMatter::Position;
       };
-  };
-  static void to_json(json &j, const Wallets &k) {
-    for (const auto &it : k.assets)
-      j[it.first] = it.second;
+      json blob() const override {
+        if (assets.find(last) != assets.end())
+          return assets.at(last);
+        else return nullptr;
+      };
+      json hello() override {
+        json j = json::array();
+        for (const auto &it : assets)
+          j.push_back(it.second);
+        return j;
+      };
   };
 
   struct Broker: public Client::Broadcast<Broker>,

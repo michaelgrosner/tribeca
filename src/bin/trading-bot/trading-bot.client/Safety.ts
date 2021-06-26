@@ -10,19 +10,22 @@ import {Models} from 'lib/K';
         <span class="param-label">Fair Value</span>:
           <span
             [ngClass]="getClass(fairValue.price) + ' fairvalue'"
-          >{{ fairValue.price.toFixed(product.tickPrice) }}</span>
+          >{{ fairValue.price.toFixed(product.tickPrice) }}<i
+          class="beacon-sym-{{ product.quote.toLowerCase() }}-s"></i></span>
       </div>
       <div class="param-info">
         <span class="param-label">BuyPing</span>:
           <span
             [ngClass]="getClass(tradeSafety.buyPing)"
-          >{{ tradeSafety.buyPing.toFixed(product.tickPrice) }}</span>
+          >{{ tradeSafety.buyPing.toFixed(product.tickPrice) }}<i
+          class="beacon-sym-{{ product.quote.toLowerCase() }}-s"></i></span>
       </div>
       <div class="param-info">
         <span class="param-label">SellPing</span>:
           <span
             [ngClass]="getClass(tradeSafety.sellPing)"
-          >{{ tradeSafety.sellPing.toFixed(product.tickPrice) }}</span>
+          >{{ tradeSafety.sellPing.toFixed(product.tickPrice) }}<i
+          class="beacon-sym-{{ product.quote.toLowerCase() }}-s"></i></span>
       </div>
       <div class="param-info">
         <span class="param-label">BuyTS</span>:<span
