@@ -38,7 +38,7 @@ export class TakersComponent {
       cellClassRules: {
         'text-muted': '!data.recent'
       },
-      cellRenderer:(params) => {
+      cellRenderer: (params) => {
         var d = new Date(params.value||0);
         return (d.getHours()+'')
           .padStart(2, "0")+':'+(d.getMinutes()+'')

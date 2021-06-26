@@ -16,7 +16,7 @@ export class WalletComponent {
   };
 
   private grid: GridOptions = <GridOptions>{
-    overlayLoadingTemplate: `<span class="ag-overlay-no-rows-center">missing data</span>`,
+    overlayNoRowsTemplate: `<span class="ag-overlay-no-rows-center">missing data</span>`,
     defaultColDef: { sortable: true, resizable: true },
     rowHeight:35,
     animateRows:true,
@@ -25,7 +25,7 @@ export class WalletComponent {
       width: 130,
       field: 'currency',
       headerName: 'currency',
-      cellRenderer:(params) => {
+      cellRenderer: (params) => {
         var sym = params.value.toLowerCase();
         if (sym == 'cgld') sym = 'celo';
         return '<i class="beacon-sym-_default-s beacon-sym-' + sym + '-s" ></i> ' + params.value;
@@ -37,6 +37,7 @@ export class WalletComponent {
       width: 220,
       field: 'amount',
       headerName: 'amount',
+      type: 'rightAligned',
       cellClassRules: {
         'text-muted': 'x == "0.00000000"',
         'up-data': 'data.dir_amount == "up-data"',
@@ -46,6 +47,7 @@ export class WalletComponent {
       width: 220,
       field: 'held',
       headerName: 'held',
+      type: 'rightAligned',
       cellClassRules: {
         'text-muted': 'x == "0.00000000"',
         'up-data': 'data.dir_held == "up-data"',
@@ -56,6 +58,7 @@ export class WalletComponent {
       field: 'total',
       headerName: 'total',
       sort: 'desc',
+      type: 'rightAligned',
       cellClassRules: {
         'text-muted': 'x == "0.00000000"',
         'up-data': 'data.dir_total == "up-data"',

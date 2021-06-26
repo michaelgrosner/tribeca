@@ -59,11 +59,11 @@ css: www/css beacons
 	cat $(NODE_PATH)/@ag-grid-community/all-modules/dist/styles/ag-theme-fresh.min.$@ >> $(KASSETS)/$@/bootstrap-theme.min.$@
 
 beacons:
-	@test -d $(NODE_PATH)/$@ || (mkdir -p $(NODE_PATH)/$@ &&                    \
-		curl -sL https://raw.githubusercontent.com/ctubio/$@/master/dist/$@.css   \
-		| tail -n +7 > $(NODE_PATH)/$@/$@.css &&                                  \
-		curl -sL https://raw.githubusercontent.com/ctubio/$@/master/dist/$@.woff2 \
-		-o $(NODE_PATH)/$@/$@.woff2)
+	@test -d $(NODE_PATH)/$@ || (mkdir -p $(NODE_PATH)/$@ &&                  \
+	curl -sL https://raw.githubusercontent.com/ctubio/$@/master/dist/$@.css   \
+	| tail -n +7 > $(NODE_PATH)/$@/$@.css &&                                  \
+	curl -sL https://raw.githubusercontent.com/ctubio/$@/master/dist/$@.woff2 \
+	-o $(NODE_PATH)/$@/$@.woff2                                               )
 
 export define PACKAGE_JSON
 {

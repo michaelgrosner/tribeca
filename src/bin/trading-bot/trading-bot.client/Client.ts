@@ -1,143 +1,109 @@
-import {Component, OnInit} from '@angular/core';
+import {Component, OnInit, Input, Output, EventEmitter} from '@angular/core';
 
 import {Socket, Shared, Models} from 'lib/K';
 
 @Component({
-  selector: 'ui',
-  template: `<div>
-    <div [hidden]="state.online !== null" style="padding:42px;transform:rotate(-6deg);">
-        <h4 class="text-danger text-center">
-          <i class="beacon-exc-{{ exchange_icon }}-s" style="font-size:30px;"></i>
-          <br /><br />
-          {{ product.environment ? product.environment+' is d' : 'D' }}isconnected</h4>
-    </div>
-    <div [hidden]="state.online === null">
-        <div class="container-fluid">
-            <div id="hud" [ngClass]="state.online ? 'bg-success' : 'bg-danger'">
-                <div class="row" [hidden]="!showSettings">
-                    <div class="col-md-12 col-xs-12 parameters-inputs">
-                        <div class="row">
-                          <settings [product]="product" [quotingParameters]="quotingParameters"></settings>
-                        </div>
-                    </div>
+  selector: 'client',
+  template: `<div class="row" [hidden]="!showSettings">
+      <div class="col-md-12 col-xs-12 parameters-inputs">
+          <div class="row">
+            <settings [product]="product" [quotingParameters]="quotingParameters"></settings>
+          </div>
+      </div>
+  </div>
+  <div class="row">
+      <div class="col-md-1 col-xs-12 text-center" style="padding-right:0px;">
+          <div class="row exchange">
+              <state-button [product]="product" [state]="state" (onConnected)="onConnected($event)" (onAgree)="onAgree($event)"></state-button>
+              <wallet [product]="product" [position]="position"></wallet>
+              <div>
+                <a [hidden]="!product.webMarket" rel="noreferrer" href="{{ product.webMarket }}" target="_blank">Market</a><span [hidden]="!(product.webMarket && product.webOrders)">, </span><a [hidden]="!product.webOrders" rel="noreferrer" href="{{ product.webOrders }}" target="_blank">Orders</a>
+                <br/><br/><div>
+                    <button type="button"
+                            class="btn btn-default"
+                            id="order_form"
+                            (click)="showSubmitOrder = !showSubmitOrder">Submit Order
+                    </button>
                 </div>
-                <div class="row">
-                    <div class="col-md-1 col-xs-12 text-center" style="padding-right:0px;">
-                        <div class="row exchange">
-                            <state-button [product]="product" [state]="state" (onConnected)="onConnected($event)" (onAgree)="onAgree($event)"></state-button>
-                            <wallet [product]="product" [position]="position"></wallet>
-                            <div>
-                              <a [hidden]="!product.webMarket" rel="noreferrer" href="{{ product.webMarket }}" target="_blank">Market</a><span [hidden]="!(product.webMarket && product.webOrders)">, </span><a [hidden]="!product.webOrders" rel="noreferrer" href="{{ product.webOrders }}" target="_blank">Orders</a>
-                              <br/><br/><div>
-                                  <button type="button"
-                                          class="btn btn-default"
-                                          id="order_form"
-                                          (click)="showSubmitOrder = !showSubmitOrder">Submit Order
-                                  </button>
-                              </div>
-                              <div style="padding-top: 2px;padding-bottom: 2px;">
-                                  <button type="button"
-                                          class="btn btn-danger"
-                                          style="margin:5px 0px;"
-                                          (click)="cancelAllOrders()"
-                                          data-placement="bottom">Cancel Orders
-                                  </button>
-                              </div>
-                              <div style="padding-bottom: 2px;">
-                                  <button type="button"
-                                          class="btn btn-info"
-                                          (click)="cleanAllClosedOrders()"
-                                          *ngIf="quotingParameters.safety"
-                                          data-placement="bottom">Clean Pongs
-                                  </button>
-                              </div>
-                              <div>
-                                  <button type="button"
-                                          class="btn btn-danger"
-                                          style="margin-top:5px;"
-                                          (click)="cleanAllOrders()"
-                                          data-placement="bottom">{{ quotingParameters.safety ? 'Clean Pings' : 'Clean Trades' }}
-                                  </button>
-                              </div>
-                              <br [hidden]="product.exchange=='HITBTC'" /><a [hidden]="product.exchange=='HITBTC'" href="#" (click)="toggleWatch(product.exchange.toLowerCase(), (product.base+'-'+product.quote).toLowerCase())">Watch</a><br [hidden]="product.exchange=='HITBTC'" />
-                              <br/><a href="#" (click)="toggleTakers()">Takers</a>, <a href="#" (click)="toggleStats()">Stats</a>
-                              <br/><button type="button"
-                                          class="btn btn-default"
-                                          style="margin:14px 0px;"
-                                          id="order_form"
-                                          (click)="toggleSettings(showSettings = !showSettings)">Settings
-                                   </button>
-                              <br/><a href="#" (click)="changeTheme()">{{ system_theme ? 'Light' : 'Dark' }}</a>
-                            </div>
-                        </div>
-                    </div>
-                    <div [hidden]="!showSubmitOrder" class="col-md-5 col-xs-12">
-                      <submit-order [product]="product"></submit-order>
-                    </div>
-                    <div [hidden]="!showStats" [ngClass]="showStats == 2 ? 'col-md-11 col-xs-12 absolute-charts' : 'col-md-11 col-xs-12 relative-charts'">
-                      <stats ondblclick="this.style.opacity=this.style.opacity<1?1:0.4" [marketWidth]="marketWidth" [_showStats]="!!showStats" [product]="product" [quotingParameters]="quotingParameters" [targetBasePosition]="targetBasePosition" [marketChart]="marketChart" [tradesChart]="tradesChart" [position]="position" [fairValue]="fairValue"></stats>
-                    </div>
-                    <div [hidden]="showStats === 1" class="col-md-{{ showTakers ? '9' : '11' }} col-xs-12" style="padding-left:0px;padding-bottom:0px;">
-                      <div class="row" style="padding-top:0px;">
-                        <div class="markets-params-left col-md-4 col-xs-12" style="padding-left:0px;padding-top:0px;padding-right:0px;">
-                            <div class="row">
-                              <div class="col-md-6">
-                                <safety [product]="product" [fairValue]="fairValue" [tradeSafety]="tradeSafety"></safety>
-                              </div>
-                              <market [tradeFreq]="tradeFreq" (onBidsLength)="onBidsLength($event)" (onAsksLength)="onAsksLength($event)" (onMarketWidth)="onMarketWidth($event)" [product]="product" [addr]="addr" [status]="status" [market]="market" [orders]="orders" [targetBasePosition]="targetBasePosition"></market>
-                            </div>
-                        </div>
-                        <div class="orders-table-right col-md-8 col-xs-12" style="padding-left:0px;padding-right:0px;padding-top:0px;">
-                          <div class="row">
-                            <div class="notepad col-md-2 col-xs-12 text-center">
-                              <textarea [(ngModel)]="notepad" (ngModelChange)="changeNotepad(notepad)" placeholder="ephemeral notepad" class="ephemeralnotepad" style="height:131px;width: 100%;max-width: 100%;"></textarea>
-                            </div>
-                            <div class="col-md-10 col-xs-12" style="padding-right:0px;padding-top:0px;">
-                              <orders [_product]="product" [orders]="orders"></orders>
-                            </div>
-                          </div>
-                          <div class="row">
-                            <trades (onTradesChartData)="onTradesChartData($event)" (onTradesMatchedLength)="onTradesMatchedLength($event)" (onTradesLength)="onTradesLength($event)" [_product]="product" [quotingParameters]="quotingParameters" [trade]="trade"></trades>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div [hidden]="!showTakers || showStats === 1" class="col-md-2 col-xs-12" style="padding-left:0px;">
-                      <takers [_product]="product" [taker]="taker"></takers>
-                    </div>
+                <div style="padding-top: 2px;padding-bottom: 2px;">
+                    <button type="button"
+                            class="btn btn-danger"
+                            style="margin:5px 0px;"
+                            (click)="cancelAllOrders()"
+                            data-placement="bottom">Cancel Orders
+                    </button>
                 </div>
+                <div style="padding-bottom: 2px;">
+                    <button type="button"
+                            class="btn btn-info"
+                            (click)="cleanAllClosedOrders()"
+                            *ngIf="quotingParameters.safety"
+                            data-placement="bottom">Clean Pongs
+                    </button>
+                </div>
+                <div>
+                    <button type="button"
+                            class="btn btn-danger"
+                            style="margin-top:5px;"
+                            (click)="cleanAllOrders()"
+                            data-placement="bottom">{{ quotingParameters.safety ? 'Clean Pings' : 'Clean Trades' }}
+                    </button>
+                </div>
+                <br [hidden]="product.exchange=='HITBTC'" /><a [hidden]="product.exchange=='HITBTC'" href="#" (click)="toggleWatch(product.exchange.toLowerCase(), (product.base+'-'+product.quote).toLowerCase())">Watch</a><br [hidden]="product.exchange=='HITBTC'" />
+                <br/><a href="#" (click)="toggleTakers()">Takers</a>, <a href="#" (click)="toggleStats()">Stats</a>
+                <br/><button type="button"
+                            class="btn btn-default"
+                            style="margin:14px 0px;"
+                            id="order_form"
+                            (click)="toggleSettings()">Settings
+                     </button>
+              </div>
+          </div>
+      </div>
+      <div [hidden]="!showSubmitOrder" class="col-md-5 col-xs-12">
+        <submit-order [product]="product"></submit-order>
+      </div>
+      <div [hidden]="!showStats" [ngClass]="showStats == 2 ? 'col-md-11 col-xs-12 absolute-charts' : 'col-md-11 col-xs-12 relative-charts'">
+        <stats ondblclick="this.style.opacity=this.style.opacity<1?1:0.4" [marketWidth]="marketWidth" [_showStats]="!!showStats" [product]="product" [quotingParameters]="quotingParameters" [targetBasePosition]="targetBasePosition" [marketChart]="marketChart" [tradesChart]="tradesChart" [position]="position" [fairValue]="fairValue"></stats>
+      </div>
+      <div [hidden]="showStats === 1" class="col-md-{{ showTakers ? '9' : '11' }} col-xs-12" style="padding-left:0px;padding-bottom:0px;">
+        <div class="row" style="padding-top:0px;">
+          <div class="markets-params-left col-md-4 col-xs-12" style="padding-left:0px;padding-top:0px;padding-right:0px;">
+              <div class="row">
+                <div class="col-md-6">
+                  <safety [product]="product" [fairValue]="fairValue" [tradeSafety]="tradeSafety"></safety>
+                </div>
+                <market [tradeFreq]="tradeFreq" (onBidsLength)="_onBidsLength($event)" (onAsksLength)="_onAsksLength($event)" (onMarketWidth)="onMarketWidth($event)" [product]="product" [addr]="addr" [status]="status" [market]="market" [orders]="orders" [targetBasePosition]="targetBasePosition"></market>
+              </div>
+          </div>
+          <div class="orders-table-right col-md-8 col-xs-12" style="padding-left:0px;padding-right:0px;padding-top:0px;">
+            <div class="row">
+              <div class="notepad col-md-2 col-xs-12 text-center">
+                <textarea [(ngModel)]="notepad" (ngModelChange)="changeNotepad(notepad)" placeholder="ephemeral notepad" class="ephemeralnotepad" style="height:131px;width: 100%;max-width: 100%;"></textarea>
+              </div>
+              <div class="col-md-10 col-xs-12" style="padding-right:0px;padding-top:0px;">
+                <orders [_product]="product" [orders]="orders"></orders>
+              </div>
             </div>
+            <div class="row">
+              <trades (onTradesChartData)="onTradesChartData($event)" (onTradesMatchedLength)="_onTradesMatchedLength($event)" (onTradesLength)="_onTradesLength($event)" [_product]="product" [quotingParameters]="quotingParameters" [trade]="trade"></trades>
+            </div>
+          </div>
         </div>
-    </div>
-    <address class="text-center">
-      <small>
-        <a rel="noreferrer" href="{{ homepage }}/blob/master/README.md" target="_blank">README</a> - <a rel="noreferrer" href="{{ homepage }}/blob/master/doc/MANUAL.md" target="_blank">MANUAL</a> - <a rel="noreferrer" href="{{ homepage }}" target="_blank">SOURCE</a> - <span [hidden]="state.online === null"><span [hidden]="!product.inet"><span title="non-default Network Interface for outgoing traffic">{{ product.inet }}</span> - </span><span title="Server used RAM" style="margin-top: 6px;display: inline-block;">{{ server_memory }}</span> - <span title="Client used RAM" style="margin-top: 6px;display: inline-block;">{{ client_memory }}</span> - <span title="Database Size" style="margin-top: 6px;display: inline-block;">{{ db_size }}</span> - <span style="margin-top: 6px;display: inline-block;"><span title="{{ tradesMatchedLength===-1 ? 'Trades' : 'Pings' }} in memory">{{ tradesLength }}</span><span [hidden]="tradesMatchedLength < 0">/</span><span [hidden]="tradesMatchedLength < 0" title="Pongs in memory">{{ tradesMatchedLength }}</span></span> - <span title="Market Levels in memory (bids|asks)" style="margin-top: 6px;display: inline-block;">{{ bidsLength }}|{{ asksLength }}</span> - </span><a href="#" (click)="openMatryoshka()">MATRYOSHKA</a> - <a rel="noreferrer" href="{{ homepage }}/issues/new?title=%5Btopic%5D%20short%20and%20sweet%20description&body=description%0Aplease,%20consider%20to%20add%20all%20possible%20details%20%28if%20any%29%20about%20your%20new%20feature%20request%20or%20bug%20report%0A%0A%2D%2D%2D%0A%60%60%60%0Aapp%20exchange%3A%20{{ product.exchange }}/{{ product.base+'/'+product.quote }}%0Aapp%20version%3A%20undisclosed%0AOS%20distro%3A%20undisclosed%0A%60%60%60%0A![300px-spock_vulcan-salute3](https://cloud.githubusercontent.com/assets/1634027/22077151/4110e73e-ddb3-11e6-9d84-358e9f133d34.png)" target="_blank">CREATE ISSUE</a> - <a rel="noreferrer" href="https://github.com/ctubio/Krypto-trading-bot/discussions/new" target="_blank">HELP</a> - <a title="irc://irc.freenode.net:6697/#tradingBot" href="irc://irc.freenode.net:6697/#tradingBot">IRC</a>|<a target="_blank" rel="noreferrer" href="https://kiwiirc.com/client/irc.freenode.net:6697/?theme=cli#tradingBot" rel="nofollow">www</a>
-      </small>
-    </address>
-    <iframe id="matryoshka" style="margin:0px;padding:0px;border:0px;width:100%;height:0px;" src="about:blank"></iframe>
+      </div>
+      <div [hidden]="!showTakers || showStats === 1" class="col-md-2 col-xs-12" style="padding-left:0px;">
+        <takers [_product]="product" [taker]="taker"></takers>
+      </div>
   </div>`
 })
 export class ClientComponent implements OnInit {
 
-  private addr: string;
-  private homepage: string = 'https://github.com/ctubio/Krypto-trading-bot';
-  private server_memory: string;
-  private client_memory: string;
-  private exchange_icon: string;
-  private db_size: string;
   private notepad: string;
   private showSettings: boolean = true;
   private showTakers: boolean = false;
   private showStats: number = 0;
   private showSubmitOrder: boolean = false;
-  private user_theme: string = null;
-  private system_theme: string = null;
   private quotingParameters: Models.QuotingParameters = <Models.QuotingParameters>{};
-  private tradeFreq: number = 0;
-  private tradesLength: number = 0;
-  private tradesMatchedLength: number = 0;
-  private bidsLength: number = 0;
-  private asksLength: number = 0;
   private marketWidth: number = 0;
   private orders: Models.Order[] = [];
   private market: Models.Market = null;
@@ -145,13 +111,11 @@ export class ClientComponent implements OnInit {
   private taker: Models.MarketTrade = null;
   private tradesChart: Models.TradeChart = new Models.TradeChart();
   private marketChart: Models.MarketChart = new Models.MarketChart();
-  private state: Models.ExchangeState = new Models.ExchangeState();
   private status: Models.TwoSidedQuoteStatus = new Models.TwoSidedQuoteStatus();
   private fairValue: Models.FairValue = new Models.FairValue();
   private position: Models.PositionReport = new Models.PositionReport();
   private tradeSafety: Models.TradeSafety = new Models.TradeSafety();
   private targetBasePosition: Models.TargetBasePositionValue = new Models.TargetBasePositionValue();
-  private product: Models.ProductAdvertisement = new Models.ProductAdvertisement();
 
   private cancelAllOrders = () => new Socket.Fire(Models.Topics.CancelAllOrders).fire();
 
@@ -161,18 +125,25 @@ export class ClientComponent implements OnInit {
 
   private changeNotepad = (content:string) => new Socket.Fire(Models.Topics.Notepad).fire([content]);
 
+  @Input() addr: string;
+
+  @Input() tradeFreq: number;
+
+  @Input() state: Models.ExchangeState;
+
+  @Input() product: Models.ProductAdvertisement;
+
+  @Output() onBidsLength = new EventEmitter<number>();
+
+  @Output() onAsksLength = new EventEmitter<number>();
+
+  @Output() onTradesLength = new EventEmitter<number>();
+
+  @Output() onTradesMatchedLength = new EventEmitter<number>();
+
   ngOnInit() {
-    new Socket.Client();
-
-    new Socket.Subscriber(Models.Topics.Connectivity)
-      .registerSubscriber((o: Models.ExchangeState) => { this.state = o; })
-      .registerDisconnectedHandler(() => { this.state.online = null; });
-
     new Socket.Subscriber(Models.Topics.QuotingParametersChange)
       .registerSubscriber((o: Models.QuotingParameters) => { this.quotingParameters = o; });
-
-    new Socket.Subscriber(Models.Topics.ProductAdvertisement)
-      .registerSubscriber(this.onAdvert);
 
     new Socket.Subscriber(Models.Topics.OrderStatusReports)
       .registerSubscriber((o: Models.Order[]) => { this.orders = o; })
@@ -209,28 +180,25 @@ export class ClientComponent implements OnInit {
     new Socket.Subscriber(Models.Topics.MarketChart)
       .registerSubscriber((o: Models.MarketChart) => { this.marketChart = o; });
 
-    new Socket.Subscriber(Models.Topics.ApplicationState)
-      .registerSubscriber(this.onAppState);
-
     new Socket.Subscriber(Models.Topics.Notepad)
       .registerSubscriber((notepad : string) => { this.notepad = notepad; });
 
     window.addEventListener("message", e => {
       if (!e.data.indexOf) return;
 
-      if (e.data.indexOf('height=')===0) {
-        document.getElementById('matryoshka').style.height = e.data.replace('height=','');
-        this.resizeMatryoshka();
-      }
-      else if (e.data.indexOf('cryptoWatch=')===0) {
-        var data: string[] = e.data.replace('cryptoWatch=','').split(',');
-        this._toggleWatch(data[0], data[1]);
+      if (e.data.indexOf('cryptoWatch=') === 0) {
+        if (window.parent !== window) window.parent.postMessage(e.data, '*');
+        else {
+          var data: string[] = e.data.replace('cryptoWatch=', '').split(',');
+          this._toggleWatch(data[0], data[1]);
+        }
       }
     }, false);
   };
 
-  private toggleSettings = (showSettings:boolean) => {
-    setTimeout(this.resizeMatryoshka, 100);
+  private toggleSettings = () => {
+    this.showSettings = !this.showSettings;
+    setTimeout(Shared.resizeMatryoshka, 100);
   };
 
   private toggleTakers = () => {
@@ -270,69 +238,28 @@ export class ClientComponent implements OnInit {
     } else this.setDialog('cryptoWatch'+watchExchange+watchPair, 'close', {content:''});
   };
 
-  private openMatryoshka = () => {
-    const url = window.prompt('Enter the URL of another instance:',this.product.matryoshka||'https://');
-    document.getElementById('matryoshka').setAttribute('src', url||'about:blank');
-    document.getElementById('matryoshka').style.height = (url&&url!='https://')?'589px':'0px';
-  };
-
-  private resizeMatryoshka = () => {
-    if (window.parent === window) return;
-    window.parent.postMessage('height='+document.getElementsByTagName('body')[0].getBoundingClientRect().height+'px', '*');
-  };
-
   private onTradesChartData(o: Models.TradeChart) {
     this.tradesChart = o;
   };
 
-  private onTradesLength(o: number) {
-    this.tradesLength = o;
+  private _onTradesLength(o: number) {
+    this.onTradesLength.emit(o);
   };
 
-  private onTradesMatchedLength(o: number) {
-    this.tradesMatchedLength = o;
+  private _onTradesMatchedLength(o: number) {
+    this.onTradesMatchedLength.emit(o);
   };
 
-  private onBidsLength(o: number) {
-    this.bidsLength = o;
+  private _onBidsLength(o: number) {
+    this.onBidsLength.emit(o);
   };
 
-  private onAsksLength(o: number) {
-    this.asksLength = o;
+  private _onAsksLength(o: number) {
+    this.onAsksLength.emit(o);
   };
 
   private onMarketWidth(o: number) {
     this.marketWidth = o;
-  };
-
-  private onAppState = (o : Models.ApplicationState) => {
-    this.server_memory = Shared.bytesToSize(o.memory, 0);
-    this.client_memory = Shared.bytesToSize((<any>window.performance).memory ? (<any>window.performance).memory.usedJSHeapSize : 1, 0);
-    this.db_size = Shared.bytesToSize(o.dbsize, 0);
-    this.tradeFreq = (o.freq);
-    this.user_theme = this.user_theme!==null ? this.user_theme : (o.theme==1 ? '' : (o.theme==2 ? '-dark' : this.user_theme));
-    this.system_theme = this.getTheme((new Date).getHours());
-    this.setTheme();
-    this.addr = o.addr;
-  }
-
-  private setTheme = () => {
-    if (document.getElementById('daynight').getAttribute('href') != '/css/bootstrap-theme' + this.system_theme + '.min.css')
-      document.getElementById('daynight').setAttribute('href', '/css/bootstrap-theme' + this.system_theme + '.min.css');
-  };
-
-  private changeTheme = () => {
-    this.user_theme = this.user_theme!==null
-                  ? (this.user_theme  ==''?'-dark':'')
-                  : (this.system_theme==''?'-dark':'');
-    this.system_theme = this.user_theme;
-    this.setTheme();
-  };
-
-  private getTheme = (hour: number) => {
-    return this.user_theme!==null
-         ? this.user_theme
-         : ((hour<9 || hour>=21)?'-dark':'');
   };
 
   private setDialog = (uniqueId: string, set: string, config: object) => {
@@ -394,17 +321,5 @@ export class ClientComponent implements OnInit {
     };
     document.onmouseup = function() { document.onmousemove = function() {}; };
     if (set === "close") dialog.remove();
-  };
-
-  private onAdvert = (o : Models.ProductAdvertisement) => {
-    window.document.title = '[' + o.environment + ']';
-    this.exchange_icon = o.exchange.toLowerCase().replace('coinbase', 'coinbase-pro');
-    this.product = o;
-    setTimeout(this.resizeMatryoshka, 5e+3);
-    console.log(
-      "%cK started " + (new Date().toISOString().slice(11, -1))+"  %c" + this.homepage,
-      "color:green;font-size:32px;",
-      "color:red;font-size:16px;"
-    );
   };
 };

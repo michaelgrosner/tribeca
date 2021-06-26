@@ -5220,6 +5220,22 @@ div.ag-header-cell .ag-header-cell-label i {
   .down-data.ag-cell-data-changed {
       background-color:#ecc !important;
   }
+  .ag-cell,
+  .ag-full-width-row .ag-cell-wrapper.ag-row-group {
+    padding: 5px 5px!important;
+  }
+}
+
+iframe#matryoshka {
+  margin: 0px;
+  padding: 0px;
+  border: 0px;
+  width: 100%;
+  height: 0px;
+}
+
+address {
+  text-align: center;
 }
 
 @font-face {

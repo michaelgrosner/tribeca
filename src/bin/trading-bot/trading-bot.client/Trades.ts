@@ -1,4 +1,4 @@
-import {Component, EventEmitter, Input, Output} from '@angular/core';
+import {Component, Input, Output, EventEmitter} from '@angular/core';
 
 import {GridOptions, RowNode, ColDef} from '@ag-grid-community/all-modules';
 
@@ -67,7 +67,7 @@ export class TradesComponent {
       comparator: (valueA: number, valueB: number, nodeA: RowNode, nodeB: RowNode, isInverted: boolean) => {
           return (nodeA.data.Ktime||nodeA.data.time) - (nodeB.data.Ktime||nodeB.data.time);
       },
-      cellRenderer:(params) => {
+      cellRenderer: (params) => {
         var d = new Date(params.value||0);
         return (d.getDate()+'')
           .padStart(2, "0")+'/'+((d.getMonth()+1)+'')
@@ -82,7 +82,7 @@ export class TradesComponent {
       headerName:'⇋time',
       hide:true,
       suppressSizeToFit: true,
-      cellRenderer:(params) => {
+      cellRenderer: (params) => {
         if (params.value==0) return '';
         var d = new Date(params.value);
         return (d.getDate()+'')
@@ -102,7 +102,7 @@ export class TradesComponent {
         'buy': 'x == "Bid"',
         'kira': 'x == "&lrhar;"'
       },
-      cellRenderer:(params) => {
+      cellRenderer: (params) => {
         return params.value === '&lrhar;' ?
           '<span style="font-size:15px;padding-left:3px;">' + params.value + '</span>'
           : params.value;

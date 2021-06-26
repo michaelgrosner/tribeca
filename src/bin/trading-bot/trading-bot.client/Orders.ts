@@ -47,7 +47,7 @@ export class OrdersComponent {
       field: 'time',
       headerName: 'time',
       suppressSizeToFit: true,
-      cellRenderer:(params) => {
+      cellRenderer: (params) => {
         var d = new Date(params.value||0);
         return (d.getHours()+'')
           .padStart(2, "0")+':'+(d.getMinutes()+'')
@@ -64,7 +64,7 @@ export class OrdersComponent {
         'sell': 'data.side == "Ask"',
         'buy': 'data.side == "Bid"'
       },
-      cellRenderer:(params) => {
+      cellRenderer: (params) => {
         return (params.data.pong
           ? '&lrhar;'
           : '&rhard;'
@@ -114,7 +114,7 @@ export class OrdersComponent {
       field: 'exchangeId',
       headerName: 'openOrderId',
       suppressSizeToFit: true,
-      cellRenderer:(params) => {
+      cellRenderer: (params) => {
         return (params.value)
           ? params.value.toString().split('-')[0]
           : '';
