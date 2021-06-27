@@ -7,97 +7,163 @@ import {Socket, Shared, Models} from 'lib/K';
   template: `<div class="row" [hidden]="!showSettings">
       <div class="col-md-12 col-xs-12 parameters-inputs">
           <div class="row">
-            <settings [product]="product" [quotingParameters]="quotingParameters"></settings>
+            <settings
+              [product]="product"
+              [quotingParameters]="quotingParameters"></settings>
           </div>
       </div>
   </div>
   <div class="row">
-      <div class="col-md-1 col-xs-12 text-center" style="padding-right:0px;">
-          <div class="row exchange">
-              <state-button [product]="product" [state]="state" (onConnected)="onConnected($event)" (onAgree)="onAgree($event)"></state-button>
-              <wallet [product]="product" [position]="position"></wallet>
-              <div>
-                <a [hidden]="!product.webMarket" rel="noreferrer" href="{{ product.webMarket }}" target="_blank">Market</a><span [hidden]="!(product.webMarket && product.webOrders)">, </span><a [hidden]="!product.webOrders" rel="noreferrer" href="{{ product.webOrders }}" target="_blank">Orders</a>
-                <br/><br/><div>
-                    <button type="button"
-                            class="btn btn-default"
-                            id="order_form"
-                            (click)="showSubmitOrder = !showSubmitOrder">Submit Order
-                    </button>
-                </div>
-                <div style="padding-top: 2px;padding-bottom: 2px;">
-                    <button type="button"
-                            class="btn btn-danger"
-                            style="margin:5px 0px;"
-                            (click)="cancelAllOrders()"
-                            data-placement="bottom">Cancel Orders
-                    </button>
-                </div>
-                <div style="padding-bottom: 2px;">
-                    <button type="button"
-                            class="btn btn-info"
-                            (click)="cleanAllClosedOrders()"
-                            *ngIf="quotingParameters.safety"
-                            data-placement="bottom">Clean Pongs
-                    </button>
-                </div>
-                <div>
-                    <button type="button"
-                            class="btn btn-danger"
-                            style="margin-top:5px;"
-                            (click)="cleanAllOrders()"
-                            data-placement="bottom">{{ quotingParameters.safety ? 'Clean Pings' : 'Clean Trades' }}
-                    </button>
-                </div>
-                <br [hidden]="product.exchange=='HITBTC'" /><a [hidden]="product.exchange=='HITBTC'" href="#" (click)="toggleWatch(product.exchange.toLowerCase(), (product.base+'-'+product.quote).toLowerCase())">Watch</a><br [hidden]="product.exchange=='HITBTC'" />
-                <br/><a href="#" (click)="toggleTakers()">Takers</a>, <a href="#" (click)="toggleStats()">Stats</a>
-                <br/><button type="button"
-                            class="btn btn-default"
-                            style="margin:14px 0px;"
-                            id="order_form"
-                            (click)="toggleSettings()">Settings
-                     </button>
-              </div>
+    <div class="col-md-1 col-xs-12 text-center" style="padding-right:0px;">
+      <div class="row exchange">
+        <state-button
+          [product]="product"
+          [state]="state"
+          (onConnected)="onConnected($event)"
+          (onAgree)="onAgree($event)"></state-button>
+        <wallet
+          [product]="product"
+          [position]="position"></wallet>
+        <div>
+          <a [hidden]="!product.webMarket"
+            rel="noreferrer" target="_blank"
+            href="{{ product.webMarket }}">Market</a>
+          <span [hidden]="!(product.webMarket && product.webOrders)">, </span>
+          <a [hidden]="!product.webOrders"
+            rel="noreferrer" target="_blank"
+            href="{{ product.webOrders }}">Orders</a>
+          <br/><br/>
+          <div>
+            <button type="button"
+              class="btn btn-default"
+              id="order_form"
+              (click)="showSubmitOrder = !showSubmitOrder">Submit Order</button>
+          </div>
+          <div style="padding-top: 2px;padding-bottom: 2px;">
+            <button type="button"
+              class="btn btn-danger"
+              style="margin:5px 0px;"
+              (click)="cancelAllOrders()"
+              data-placement="bottom">Cancel Orders</button>
+          </div>
+          <div style="padding-bottom: 2px;">
+            <button type="button"
+              class="btn btn-info"
+              (click)="cleanAllClosedOrders()"
+              *ngIf="quotingParameters.safety"
+              data-placement="bottom">Clean Pongs</button>
+          </div>
+          <div>
+            <button type="button"
+              class="btn btn-danger"
+              style="margin-top:5px;"
+              (click)="cleanAllOrders()"
+              data-placement="bottom">{{ quotingParameters.safety ? 'Clean Pings' : 'Clean Trades' }}</button>
+          </div>
+          <br [hidden]="product.exchange=='HITBTC'" />
+          <a href="#"
+            [hidden]="product.exchange=='HITBTC'"
+            (click)="toggleWatch(product.exchange.toLowerCase(), (product.base+'-'+product.quote).toLowerCase())">Watch</a>
+          <br [hidden]="product.exchange=='HITBTC'" />
+          <br/>
+          <a href="#" (click)="toggleTakers()">Takers</a>, <a href="#" (click)="toggleStats()">Stats</a>
+          <br/>
+            <button type="button"
+              class="btn btn-default"
+              style="margin:14px 0px;"
+              id="order_form"
+              (click)="toggleSettings()">Settings
+            </button>
           </div>
       </div>
-      <div [hidden]="!showSubmitOrder" class="col-md-5 col-xs-12">
-        <submit-order [product]="product"></submit-order>
-      </div>
-      <div [hidden]="!showStats" [ngClass]="showStats == 2 ? 'col-md-11 col-xs-12 absolute-charts' : 'col-md-11 col-xs-12 relative-charts'">
-        <stats ondblclick="this.style.opacity=this.style.opacity<1?1:0.4" [marketWidth]="marketWidth" [_showStats]="!!showStats" [product]="product" [quotingParameters]="quotingParameters" [targetBasePosition]="targetBasePosition" [marketChart]="marketChart" [tradesChart]="tradesChart" [position]="position" [fairValue]="fairValue"></stats>
-      </div>
-      <div [hidden]="showStats === 1" class="col-md-{{ showTakers ? '9' : '11' }} col-xs-12" style="padding-left:0px;padding-bottom:0px;">
-        <div class="row" style="padding-top:0px;">
-          <div class="markets-params-left col-md-4 col-xs-12" style="padding-left:0px;padding-top:0px;padding-right:0px;">
-              <div class="row">
-                <div class="col-md-6">
-                  <safety [product]="product" [fairValue]="fairValue" [tradeSafety]="tradeSafety"></safety>
-                </div>
-                <market [tradeFreq]="tradeFreq" (onBidsLength)="_onBidsLength($event)" (onAsksLength)="_onAsksLength($event)" (onMarketWidth)="onMarketWidth($event)" [product]="product" [addr]="addr" [status]="status" [market]="market" [orders]="orders" [targetBasePosition]="targetBasePosition"></market>
-              </div>
+    </div>
+    <div [hidden]="!showSubmitOrder"
+      class="col-md-5 col-xs-12">
+      <submit-order
+        [product]="product"></submit-order>
+    </div>
+    <div [hidden]="!showStats"
+      [ngClass]="'col-md-11 col-xs-12  ' + (showStats == 2 ? 'absolute-charts' : 'relative-charts')">
+      <stats
+        ondblclick="this.style.opacity=this.style.opacity<1?1:0.4"
+        [marketWidth]="marketWidth"
+        [_showStats]="!!showStats"
+        [product]="product"
+        [quotingParameters]="quotingParameters"
+        [targetBasePosition]="targetBasePosition"
+        [marketChart]="marketChart"
+        [tradesChart]="tradesChart"
+        [position]="position"
+        [fairValue]="fairValue"></stats>
+    </div>
+    <div [hidden]="showStats === 1"
+      class="col-md-{{ showTakers ? '9' : '11' }} col-xs-12"
+      style="padding-left:0px;padding-bottom:0px;">
+      <div class="row" style="padding-top:0px;">
+        <div class="col-md-4 col-xs-12" style="padding-left:0px;padding-top:0px;padding-right:0px;">
+          <div class="row">
+            <div class="col-md-6">
+              <safety
+                [product]="product"
+                [fairValue]="fairValue"
+                [tradeSafety]="tradeSafety"></safety>
+            </div>
+            <market
+              [tradeFreq]="tradeFreq"
+              (onBidsLength)="onBidsLength($event)"
+              (onAsksLength)="onAsksLength($event)"
+              (onMarketWidth)="onMarketWidth($event)"
+              [product]="product"
+              [addr]="addr"
+              [status]="status"
+              [market]="market"
+              [orders]="orders"
+              [targetBasePosition]="targetBasePosition"></market>
           </div>
-          <div class="orders-table-right col-md-8 col-xs-12" style="padding-left:0px;padding-right:0px;padding-top:0px;">
-            <div class="row">
-              <div class="notepad col-md-2 col-xs-12 text-center">
-                <textarea [(ngModel)]="notepad" (ngModelChange)="changeNotepad(notepad)" placeholder="ephemeral notepad" class="ephemeralnotepad" style="height:131px;width: 100%;max-width: 100%;"></textarea>
-              </div>
-              <div class="col-md-10 col-xs-12" style="padding-right:0px;padding-top:0px;">
-                <orders [_product]="product" [orders]="orders"></orders>
-              </div>
+        </div>
+        <div class="col-md-8 col-xs-12" style="padding-left:0px;padding-right:0px;padding-top:0px;">
+          <div class="row">
+            <div class="notepad col-md-2 col-xs-12 text-center">
+              <textarea
+                [(ngModel)]="notepad"
+                (ngModelChange)="changeNotepad(notepad)"
+                placeholder="ephemeral notepad"
+                class="ephemeralnotepad"
+                style="height:131px;width: 100%;max-width: 100%;"></textarea>
             </div>
-            <div class="row">
-              <trades (onTradesChartData)="onTradesChartData($event)" (onTradesMatchedLength)="_onTradesMatchedLength($event)" (onTradesLength)="_onTradesLength($event)" [_product]="product" [quotingParameters]="quotingParameters" [trade]="trade"></trades>
+            <div class="col-md-10 col-xs-12" style="padding-right:0px;padding-top:0px;">
+              <orders
+                [_product]="product"
+                [orders]="orders"></orders>
             </div>
+          </div>
+          <div class="row">
+            <trades
+              (onTradesChartData)="onTradesChartData($event)"
+              (onTradesMatchedLength)="onTradesMatchedLength($event)"
+              (onTradesLength)="onTradesLength($event)"
+              [_product]="product"
+              [quotingParameters]="quotingParameters"
+              [trade]="trade"></trades>
           </div>
         </div>
       </div>
-      <div [hidden]="!showTakers || showStats === 1" class="col-md-2 col-xs-12" style="padding-left:0px;">
-        <takers [_product]="product" [taker]="taker"></takers>
-      </div>
+    </div>
+    <div *ngIf="showTakers && showStats !== 1"
+      class="col-md-2 col-xs-12" style="padding-left:0px;">
+      <takers
+        [_product]="product"
+        [taker]="taker"></takers>
+    </div>
   </div>`
 })
 export class ClientComponent implements OnInit {
 
+
+  private tradesLength: number = 0;
+  private tradesMatchedLength: number = 0;
+  private bidsLength: number = 0;
+  private asksLength: number = 0;
   private notepad: string;
   private showSettings: boolean = true;
   private showTakers: boolean = false;
@@ -133,13 +199,7 @@ export class ClientComponent implements OnInit {
 
   @Input() product: Models.ProductAdvertisement;
 
-  @Output() onBidsLength = new EventEmitter<number>();
-
-  @Output() onAsksLength = new EventEmitter<number>();
-
-  @Output() onTradesLength = new EventEmitter<number>();
-
-  @Output() onTradesMatchedLength = new EventEmitter<number>();
+  @Output() onFooter = new EventEmitter<string>();
 
   ngOnInit() {
     new Socket.Subscriber(Models.Topics.QuotingParametersChange)
@@ -203,6 +263,7 @@ export class ClientComponent implements OnInit {
 
   private toggleTakers = () => {
     this.showTakers = !this.showTakers;
+    setTimeout(() => {window.dispatchEvent(new Event('resize'))}, 0);
   };
 
   private toggleStats = () => {
@@ -242,20 +303,39 @@ export class ClientComponent implements OnInit {
     this.tradesChart = o;
   };
 
-  private _onTradesLength(o: number) {
-    this.onTradesLength.emit(o);
+  private onTradesLength(o: number) {
+    this.tradesLength = o;
+    this.setFooter();
   };
 
-  private _onTradesMatchedLength(o: number) {
-    this.onTradesMatchedLength.emit(o);
+  private onTradesMatchedLength(o: number) {
+    this.tradesMatchedLength = o;
+    this.setFooter();
   };
 
-  private _onBidsLength(o: number) {
-    this.onBidsLength.emit(o);
+  private onBidsLength(o: number) {
+    this.bidsLength = o;
+    this.setFooter();
   };
 
-  private _onAsksLength(o: number) {
-    this.onAsksLength.emit(o);
+  private onAsksLength(o: number) {
+    this.asksLength = o;
+    this.setFooter();
+  };
+
+  private setFooter() {
+    this.onFooter.emit(`<span style="margin-top: 6px;display: inline-block;">
+      <span
+        title="` + ( this.tradesMatchedLength===-1 ? 'Orders filled' : 'Pings (open positions)') + ` in memory"
+      >` + this.tradesLength + `</span>` + (
+        this.tradesMatchedLength < 0
+          ? ``
+          : `/<span title="Pongs (closed positions) in memory">` + this.tradesMatchedLength + `</span>`
+      ) + `</span> -
+    <span
+      title="Market Levels in memory (bids|asks)"
+      style="margin-top: 6px;display: inline-block;"
+    >` + this.bidsLength + `|` + this.asksLength + `</span> - `);
   };
 
   private onMarketWidth(o: number) {

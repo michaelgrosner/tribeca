@@ -36,7 +36,7 @@ export class WalletComponent {
     }, {
       width: 220,
       field: 'amount',
-      headerName: 'amount',
+      headerName: 'available',
       type: 'rightAligned',
       cellClassRules: {
         'text-muted': 'x == "0.00000000"',

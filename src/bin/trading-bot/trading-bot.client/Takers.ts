@@ -10,6 +10,7 @@ import {Shared, Models} from 'lib/K';
     class="ag-theme-fresh ag-theme-dark marketTrades"
     style="height: 616px;width: 100%;"
     (gridReady)="onGridReady()"
+    (window:resize)="onGridReady()"
     [gridOptions]="grid"></ag-grid-angular>`
 })
 export class TakersComponent {
@@ -26,6 +27,7 @@ export class TakersComponent {
   };
 
   private grid: GridOptions = <GridOptions>{
+    overlayLoadingTemplate: `<span class="ag-overlay-no-rows-center">empty history</span>`,
     overlayNoRowsTemplate: `<span class="ag-overlay-no-rows-center">empty history</span>`,
     defaultColDef: { sortable: true, resizable: true },
     rowHeight:21,
@@ -96,8 +98,6 @@ export class TakersComponent {
         else if (node.data.recent && Math.abs(o.time - node.data.time) > 7000)
           node.setData(Object.assign(node.data, {recent: false}));
       });
-
-      this.grid.api.sizeColumnsToFit();
     }
   };
 };

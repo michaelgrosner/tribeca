@@ -7,7 +7,8 @@ import {Socket, Models} from 'lib/K';
   template: `<div class="row">
       <div class="col-md-12 col-xs-12">
           <div class="row">
-            <wallet [asset]="asset"></wallet>
+            <wallet
+              [asset]="asset"></wallet>
           </div>
       </div>
   </div>`

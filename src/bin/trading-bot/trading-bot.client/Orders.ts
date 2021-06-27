@@ -10,6 +10,7 @@ import {Socket, Shared, Models} from 'lib/K';
     class="ag-theme-fresh ag-theme-dark"
     style="height: 131px;width: 99.80%;"
     (gridReady)="onGridReady()"
+    (window:resize)="onGridReady()"
     (cellClicked)="onCellClicked($event)"
     [gridOptions]="grid"></ag-grid-angular>`
 })
@@ -160,7 +161,5 @@ export class OrdersComponent {
     this.grid.api.setRowData([]);
 
     if (add.length) this.grid.api.applyTransaction({add:add});
-
-    this.grid.api.sizeColumnsToFit();
   };
 };

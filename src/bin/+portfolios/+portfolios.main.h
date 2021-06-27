@@ -15,8 +15,9 @@ class Portfolios: public KryptoNinja {
     {
       display   = {terminal, {3, 3, 23, 3}};
       events    = {
-        [&](const Connectivity &rawdata) { engine.read(rawdata); },
-        [&](const Wallet       &rawdata) { engine.read(rawdata); }
+        [&](const Connectivity &rawdata) { engine.read(rawdata);  },
+        [&](const Wallet       &rawdata) { engine.read(rawdata);  },
+        [&](const unsigned int &tick)    { engine.timer_1s(tick); }
       };
       documents = {
         {"",                                  {&_file_gzip_bomb,   _file_gzip_bomb_len  }},

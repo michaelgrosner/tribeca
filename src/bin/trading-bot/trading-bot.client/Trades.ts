@@ -10,6 +10,7 @@ import {Socket, Shared, Models} from 'lib/K';
     class="ag-theme-fresh ag-theme-dark"
     style="height: 479px;width: 99.80%;"
     (gridReady)="onGridReady()"
+    (window:resize)="onGridReady()"
     (cellClicked)="onCellClicked($event)"
     [gridOptions]="grid"></ag-grid-angular>`
 })
@@ -247,8 +248,6 @@ export class TradesComponent {
           ));
         }
       }
-
-      this.grid.api.sizeColumnsToFit();
     }
 
     this.emitLengths();

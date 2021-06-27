@@ -17,7 +17,8 @@ import {Socket, Models} from 'lib/K';
 @Component({
   selector: 'K',
   template: `<div>
-    <div [hidden]="state.online !== null" style="padding:42px;transform:rotate(-6deg);">
+    <div [hidden]="state.online !== null"
+      style="padding:42px;transform:rotate(-6deg);">
       <h4 class="text-danger text-center">
         <i class="beacon-exc-{{ exchange_icon }}-s" style="font-size:30px;"></i>
         <br /><br />
@@ -26,37 +27,55 @@ import {Socket, Models} from 'lib/K';
     </div>
     <div [hidden]="state.online === null">
       <div class="container-fluid">
-          <div id="hud" [ngClass]="state.online ? 'bg-success' : 'bg-danger'">
-            <client [state]="state" [product]="product" [addr]="addr" [tradeFreq]="tradeFreq"  (onBidsLength)="onBidsLength($event)" (onAsksLength)="onAsksLength($event)"  (onTradesMatchedLength)="onTradesMatchedLength($event)" (onTradesLength)="onTradesLength($event)"></client>
+          <div id="hud"
+            [ngClass]="state.online ? 'bg-success' : 'bg-danger'">
+            <client
+              [state]="state"
+              [product]="product"
+              [addr]="addr"
+              [tradeFreq]="tradeFreq"
+              (onFooter)="onFooter($event)"></client>
           </div>
       </div>
     </div>
     <address>
       <small>
-        <a rel="noreferrer" href="{{ homepage }}/blob/master/README.md" target="_blank">README</a> -
-        <a rel="noreferrer" href="{{ homepage }}/blob/master/doc/MANUAL.md" target="_blank">MANUAL</a> -
-        <a rel="noreferrer" href="{{ homepage }}" target="_blank">SOURCE</a> -
+        <a rel="noreferrer" target="_blank"
+          href="{{ homepage }}/blob/master/README.md">README</a> -
+        <a rel="noreferrer" target="_blank"
+          href="{{ homepage }}/blob/master/doc/MANUAL.md">MANUAL</a> -
+        <a rel="noreferrer" target="_blank"
+          href="{{ homepage }}">SOURCE</a> -
         <span [hidden]="state.online === null">
           <span [hidden]="!product.inet">
             <span title="non-default Network Interface for outgoing traffic">{{ product.inet }}</span> -
           </span>
-          <span title="Server used RAM" style="margin-top: 6px;display: inline-block;">{{ server_memory }}</span> -
-          <span title="Client used RAM" style="margin-top: 6px;display: inline-block;">{{ client_memory }}</span> -
-          <span title="Database Size" style="margin-top: 6px;display: inline-block;">{{ db_size }}</span> -
-          <span style="margin-top: 6px;display: inline-block;">
-            <span title="{{ tradesMatchedLength===-1 ? 'Trades' : 'Pings' }} in memory">{{ tradesLength }}</span>
-            <span [hidden]="tradesMatchedLength < 0">/</span>
-            <span [hidden]="tradesMatchedLength < 0" title="Pongs in memory">{{ tradesMatchedLength }}</span>
-            </span> -
-          <span title="Market Levels in memory (bids|asks)" style="margin-top: 6px;display: inline-block;">{{ bidsLength }}|{{ asksLength }}</span> -
-          <a href="#" (click)="changeTheme()">{{ system_theme ? 'LIGHT' : 'DARK' }}</a> -
+          <span title="Server used RAM"
+            style="margin-top: 6px;display: inline-block;">{{ server_memory }}</span> -
+          <span title="Client used RAM"
+            style="margin-top: 6px;display: inline-block;">{{ client_memory }}</span> -
+          <span title="Database Size"
+            style="margin-top: 6px;display: inline-block;">{{ db_size }}</span> -
+          <span [innerHTML]="footer"></span>
+          <a href="#"
+            (click)="changeTheme()">{{ system_theme ? 'LIGHT' : 'DARK' }}</a> -
         </span>
-        <a href="#" (click)="openMatryoshka()">MATRYOSHKA</a> -
-        <a rel="noreferrer" href="{{ homepage }}/issues/new?title=%5Btopic%5D%20short%20and%20sweet%20description&body=description%0Aplease,%20consider%20to%20add%20all%20possible%20details%20%28if%20any%29%20about%20your%20new%20feature%20request%20or%20bug%20report%0A%0A%2D%2D%2D%0A%60%60%60%0Aapp%20exchange%3A%20{{ product.exchange }}/{{ product.base+'/'+product.quote }}%0Aapp%20version%3A%20undisclosed%0AOS%20distro%3A%20undisclosed%0A%60%60%60%0A![300px-spock_vulcan-salute3](https://cloud.githubusercontent.com/assets/1634027/22077151/4110e73e-ddb3-11e6-9d84-358e9f133d34.png)" target="_blank">CREATE ISSUE</a> - <a rel="noreferrer" href="https://github.com/ctubio/Krypto-trading-bot/discussions/new" target="_blank">HELP</a> -
-        <a title="irc://irc.freenode.net:6697/#tradingBot" href="irc://irc.freenode.net:6697/#tradingBot">IRC</a>|<a target="_blank" rel="noreferrer" href="https://kiwiirc.com/client/irc.freenode.net:6697/?theme=cli#tradingBot" rel="nofollow">www</a>
+        <a href="#"
+          (click)="openMatryoshka()">MATRYOSHKA</a> -
+        <a rel="noreferrer" target="_blank"
+          href="{{ homepage }}/issues/new?title=%5Btopic%5D%20short%20and%20sweet%20description&body=description%0Aplease,%20consider%20to%20add%20all%20possible%20details%20%28if%20any%29%20about%20your%20new%20feature%20request%20or%20bug%20report%0A%0A%2D%2D%2D%0A%60%60%60%0Aapp%20exchange%3A%20{{ product.exchange }}/{{ product.base+'/'+product.quote }}%0Aapp%20version%3A%20undisclosed%0AOS%20distro%3A%20undisclosed%0A%60%60%60%0A![300px-spock_vulcan-salute3](https://cloud.githubusercontent.com/assets/1634027/22077151/4110e73e-ddb3-11e6-9d84-358e9f133d34.png)">CREATE ISSUE</a> -
+        <a rel="noreferrer" target="_blank"
+          href="https://github.com/ctubio/Krypto-trading-bot/discussions/new">HELP</a> -
+        <a title="irc://irc.freenode.net:6697/#tradingBot"
+          href="irc://irc.freenode.net:6697/#tradingBot"
+        >IRC</a>|<a rel="noreferrer" target="_blank"
+          href="https://kiwiirc.com/client/irc.freenode.net:6697/?theme=cli#tradingBot"
+        >www</a>
       </small>
     </address>
-    <iframe id="matryoshka" src="about:blank"></iframe>
+    <iframe
+      id="matryoshka"
+      src="about:blank"></iframe>
   </div>`
 })
 export class KComponent implements OnInit {
@@ -65,15 +84,11 @@ export class KComponent implements OnInit {
   private exchange_icon: string;
   private tradeFreq: number = 0;
   private addr: string;
+  private footer: string;
 
-  private server_memory: string;
-  private client_memory: string;
-  private db_size: string;
-
-  private tradesLength: number = 0;
-  private tradesMatchedLength: number = 0;
-  private bidsLength: number = 0;
-  private asksLength: number = 0;
+  private server_memory: string = '0KB';
+  private client_memory: string = '0KB';
+  private db_size: string = '0KB';
 
   private user_theme: string = null;
   private system_theme: string = null;
@@ -104,20 +119,8 @@ export class KComponent implements OnInit {
     }, false);
   };
 
-  private onTradesLength(o: number) {
-    this.tradesLength = o;
-  };
-
-  private onTradesMatchedLength(o: number) {
-    this.tradesMatchedLength = o;
-  };
-
-  private onBidsLength(o: number) {
-    this.bidsLength = o;
-  };
-
-  private onAsksLength(o: number) {
-    this.asksLength = o;
+  private onFooter(o: string) {
+    this.footer = o;
   };
 
   private openMatryoshka = () => {
@@ -194,11 +197,13 @@ export function bootstrapModule(declarations: any[]) {
 };
 
 export function bytesToSize(input: number, precision: number) {
-  if (!input) return '0B';
+  if (!input) return '0KB';
   let unit: string[] = ['', 'K', 'M', 'G', 'T', 'P'];
   let index: number = Math.floor(Math.log(input) / Math.log(1024));
-  if (index >= unit.length) return input + 'B';
-  return (input / Math.pow(1024, index)).toFixed(precision) + unit[index] + 'B';
+    return index >= unit.length
+      ? input + 'B'
+      : (input / Math.pow(1024, index))
+          .toFixed(precision) + unit[index] + 'B';
 };
 
 export function playAudio(basename: string) {
@@ -238,4 +243,6 @@ export function currencyHeaders(api: GridApi, base: string, quote: string) {
     });
 
     api.setColumnDefs(colDef);
+
+    api.sizeColumnsToFit();
 };
