@@ -77,6 +77,8 @@ namespace analpaper {
       {};
       void calc(const string &currency) {
         last = currency;
+        if (portfolio[last].wallet.currency.empty())
+          portfolio[last].wallet.currency = last;
         portfolio[last].wallet.value = (
           portfolio[last].price = calc()
         ) * portfolio[last].wallet.total;
@@ -86,18 +88,16 @@ namespace analpaper {
       Price calc() const {
         if (last == settings.currency)
           return 1;
-        for (const auto &it : portfolio.at(last).prices)
-          if (it.first == settings.currency)
-            return it.second;
-        if (portfolio.find(settings.currency) != portfolio.end())
-          for (const auto &it : portfolio.at(settings.currency).prices)
-            if (it.first == last)
-              return 1 / it.second;
-        for (const auto &it : portfolio.at(last).prices)
+        if (portfolio.at(last).prices.find(settings.currency) != portfolio.at(last).prices.end())
+          return portfolio.at(last).prices.at(settings.currency);
+        else for (const auto &it : portfolio.at(last).prices)
           if (portfolio.find(it.first) != portfolio.end())
-            for (const auto &_it : portfolio.at(it.first).prices)
-              if (_it.first == settings.currency)
-                return it.second * _it.second;
+            if (portfolio.at(it.first).prices.find(settings.currency) != portfolio.at(it.first).prices.end())
+              return it.second * portfolio.at(it.first).prices.at(settings.currency);
+            else for (const auto &_it : portfolio.at(it.first).prices)
+              if (portfolio.find(_it.first) != portfolio.end()
+                and portfolio.at(_it.first).prices.find(settings.currency) != portfolio.at(_it.first).prices.end()
+              ) return it.second * _it.second * portfolio.at(_it.first).prices.at(settings.currency);
         return 0;
       };
       void refresh() {
@@ -114,14 +114,16 @@ namespace analpaper {
         return mMatter::Position;
       };
       json blob() const override {
-        if (portfolio.find(last) != portfolio.end())
-          return portfolio.at(last);
+        if (portfolio.find(last) != portfolio.end()
+          // and !portfolio.at(last).prices.empty()
+        ) return portfolio.at(last);
         else return nullptr;
       };
       json hello() override {
         json j = json::array();
         for (const auto &it : portfolio)
-          j.push_back(it.second);
+          // if (!it.second.prices.empty())
+            j.push_back(it.second);
         return j;
       };
   };
@@ -136,7 +138,9 @@ namespace analpaper {
       {};
       void read_from_gw(const Ticker &raw) {
         portolios.portfolio[raw.base].prices[raw.quote] = raw.price;
+        portolios.portfolio[raw.quote].prices[raw.base] = 1 / raw.price;
         portolios.calc(raw.base);
+        portolios.calc(raw.quote);
       };
   };
 

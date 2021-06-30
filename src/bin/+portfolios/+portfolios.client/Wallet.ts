@@ -55,6 +55,7 @@ export class WalletComponent {
       width: 220,
       field: 'balance',
       headerName: 'balance',
+      sort: 'desc',
       type: 'rightAligned',
       cellClassRules: {
         'text-muted': 'x == "0.00000000"',
@@ -66,7 +67,6 @@ export class WalletComponent {
       width: 220,
       field: 'total',
       headerName: 'total',
-      sort: 'desc',
       type: 'rightAligned',
       cellClassRules: {
         'text-muted': 'x == "0.00000000"',
@@ -133,13 +133,13 @@ export class WalletComponent {
 
         this.grid.api.flashCells({ rowNodes: [node], columns: cols});
       }
-
-      var sum = 0;
-      this.grid.api.forEachNode((node: RowNode) => {
-        if (node.data.balance) sum += parseFloat(node.data.balance);
-      });
-      this.onBalance.emit(sum);
     }
+
+    var sum = 0;
+    this.grid.api.forEachNode((node: RowNode) => {
+      if (node.data.balance) sum += parseFloat(node.data.balance);
+    });
+    this.onBalance.emit(sum);
   };
 
   private resetRowData = (name: string, val: string, node: RowNode) => {
