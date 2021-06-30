@@ -214,6 +214,10 @@ export enum APR { Off, Size, SizeWidth }
 export enum SOP { Off, Trades, Size, TradesSize }
 export enum STDEV { Off, OnFV, OnFVAPROff, OnTops, OnTopsAPROff, OnTop, OnTopAPROff }
 
+export class PortfolioParameters {
+    constructor(public currency: string = "") {}
+};
+
 export interface QuotingParameters {
     widthPing?: number;
     widthPingPercentage?: number;
@@ -289,6 +293,7 @@ export class ProductAdvertisement {
                 public webOrders:   string = "",
                 public environment: string = "",
                 public matryoshka:  string = "",
+                public source:      string = "",
                 public tickPrice:   number = 8,
                 public tickSize:    number = 8,
                 public stepPrice:   number = 1e-8,

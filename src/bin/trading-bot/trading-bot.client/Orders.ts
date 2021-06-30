@@ -16,14 +16,9 @@ import {Socket, Shared, Models} from 'lib/K';
 })
 export class OrdersComponent {
 
-  private product: Models.ProductAdvertisement = new Models.ProductAdvertisement();
-
   private fireCxl: Socket.IFire<Models.OrderCancelRequestFromUI> = new Socket.Fire(Models.Topics.CancelOrder);
 
-  @Input() set _product(o: Models.ProductAdvertisement) {
-    this.product = o;
-    this.onGridReady();
-  };
+  @Input() product: Models.ProductAdvertisement;
 
   @Input() set orders(o: Models.Order[]) {
     this.addRowData(o);

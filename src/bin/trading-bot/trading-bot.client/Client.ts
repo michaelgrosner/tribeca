@@ -133,7 +133,7 @@ import {Socket, Shared, Models} from 'lib/K';
             </div>
             <div class="col-md-10 col-xs-12" style="padding-right:0px;padding-top:0px;">
               <orders
-                [_product]="product"
+                [product]="product"
                 [orders]="orders"></orders>
             </div>
           </div>
@@ -142,7 +142,7 @@ import {Socket, Shared, Models} from 'lib/K';
               (onTradesChartData)="onTradesChartData($event)"
               (onTradesMatchedLength)="onTradesMatchedLength($event)"
               (onTradesLength)="onTradesLength($event)"
-              [_product]="product"
+              [product]="product"
               [quotingParameters]="quotingParameters"
               [trade]="trade"></trades>
           </div>
@@ -152,13 +152,12 @@ import {Socket, Shared, Models} from 'lib/K';
     <div *ngIf="showTakers && showStats !== 1"
       class="col-md-2 col-xs-12" style="padding-left:0px;">
       <takers
-        [_product]="product"
+        [product]="product"
         [taker]="taker"></takers>
     </div>
   </div>`
 })
 export class ClientComponent implements OnInit {
-
 
   private tradesLength: number = 0;
   private tradesMatchedLength: number = 0;
@@ -258,7 +257,7 @@ export class ClientComponent implements OnInit {
 
   private toggleSettings = () => {
     this.showSettings = !this.showSettings;
-    setTimeout(Shared.resizeMatryoshka, 100);
+    setTimeout(() => {window.dispatchEvent(new Event('resize'))}, 0);
   };
 
   private toggleTakers = () => {

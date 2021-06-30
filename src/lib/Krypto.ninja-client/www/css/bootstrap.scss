@@ -1721,7 +1721,7 @@ input[type="search"] {
   }
   input {
     &[type="date"].input-lg, &[type="time"].input-lg, &[type="datetime-local"].input-lg, &[type="month"].input-lg {
-      line-height: 41px;
+      line-height: 38px;
     }
   }
   .input-group-lg input {
@@ -1858,9 +1858,9 @@ textarea.form-group-sm .form-control, select[multiple].form-group-sm .form-contr
 }
 
 .input-lg {
-  height: 41px;
+  height: 38px;
   padding: 10px 16px;
-  font-size: 14px;
+  font-size: 20px;
   line-height: 1.3333333;
   border-radius: 6px;
 }

@@ -16,6 +16,7 @@ class Portfolios: public KryptoNinja {
       display   = {terminal, {3, 3, 23, 3}};
       events    = {
         [&](const Connectivity &rawdata) { engine.read(rawdata);  },
+        [&](const Ticker       &rawdata) { engine.read(rawdata);  },
         [&](const Wallet       &rawdata) { engine.read(rawdata);  },
         [&](const unsigned int &tick)    { engine.timer_1s(tick); }
       };
@@ -39,8 +40,11 @@ void Portfolios::terminal() {
             y = getmaxy(stdscr);
   int yAssets = y - K.padding_bottom(fmin(23, y));
   mvwhline(stdscr, yAssets, 1, ' ', x-1);
-  mvwaddstr(stdscr, yAssets++, 1, string(K.engine.broker.ready() ? "online" : "offline").data());
-  for (const auto &it : K.engine.wallet.assets) {
+  mvwaddstr(stdscr, yAssets++, 1, (
+    string(K.engine.broker.ready() ? "online" : "offline")
+    + " (" + K.engine.portfolios.settings.currency + ")"
+  ).data());
+  for (const auto &it : K.engine.portfolios.portfolio) {
     if (yAssets >= y - 1) break;
     mvwhline(stdscr, yAssets, 1, ' ', x-1);
     wattron(stdscr, COLOR_PAIR(it.second.wallet.total ? COLOR_GREEN : COLOR_YELLOW));

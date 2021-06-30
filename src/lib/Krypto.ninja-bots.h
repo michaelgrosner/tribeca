@@ -66,7 +66,7 @@ namespace ₿ {
 
   class Rollout {
     public:
-      Rollout(/* KMxTWEpb9ig */) {
+      Rollout() {
         static once_flag rollout;
         call_once(rollout, version);
         curl_global_init(CURL_GLOBAL_ALL);
@@ -380,7 +380,7 @@ namespace ₿ {
         return get<T>(args.at(name));
       };
     protected:
-      void main(Ending *const K, int argc, char** argv, const vector<variant<Loop::TimeEvent, Ending::QuitEvent, Gw::DataEvent>> &events, const bool &databases, const bool &headless) {
+      void main(Ending *const K, int argc, char** argv, const vector<variant<Loop::TimeEvent, Ending::QuitEvent, Gw::DataEvent>> &events, const bool &blackhole, const bool &headless) {
         K->ending([&]() {
           if (display.terminal) {
             display = {};
@@ -456,7 +456,7 @@ namespace ₿ {
         if (!arg<int>("naked")) long_options.push_back(
           {"naked",        "1",      nullptr,  "do not display CLI, print output to stdout instead"}
         );
-        if (databases) long_options.push_back(
+        if (!blackhole) long_options.push_back(
           {"database",     "FILE",   "",       "set alternative PATH to database filename,"
                                                "\n" "default PATH is '" K_HOME "/db/K-*.db',"
                                                "\n" "or use ':memory:' (see sqlite.org/inmemorydb.html)"}
@@ -847,14 +847,13 @@ namespace ₿ {
             return to_string(size());
           };
       };
-    protected:
-      bool databases = false;
     private:
       sqlite3 *db = nullptr;
       string disk = "main";
       mutable vector<Backup*> tables;
     protected:
       void backups(const Option *const K) {
+        if (blackhole()) return;
         if (sqlite3_open(K->arg<string>("database").data(), &db))
           error("DB", sqlite3_errmsg(db));
         K->log("DB", "loaded OK from", K->arg<string>("database"));
@@ -877,10 +876,8 @@ namespace ₿ {
         }
         tables.clear();
       };
-      void blackhole() {
-        for (auto &it : tables)
-          it->push = nullptr;
-        tables.clear();
+      bool blackhole() const {
+        return tables.empty();
       };
     private:
       json select(const Backup *const data) {
@@ -1222,7 +1219,7 @@ namespace ₿ {
     public:
       KryptoNinja *main(int argc, char** argv) {
         {
-          Option::main(this, argc, argv, events, databases, documents.empty());
+          Option::main(this, argc, argv, events, blackhole(), documents.empty());
           setup();
         } {
           if (windowed())
@@ -1267,9 +1264,7 @@ namespace ₿ {
                           : "no"           }
           });
         } {
-          if (databases)
-            backups(this);
-          else blackhole();
+          backups(this);
         } {
           if (arg<int>("headless")) headless();
           else {
@@ -1295,7 +1290,7 @@ namespace ₿ {
         walk();
       };
       unsigned int dbSize() const {
-        if (!databases or arg<string>("database") == ":memory:") return 0;
+        if (blackhole() or arg<string>("database") == ":memory:") return 0;
         struct stat st;
         return stat(arg<string>("database").data(), &st) ? 0 : st.st_size;
       };

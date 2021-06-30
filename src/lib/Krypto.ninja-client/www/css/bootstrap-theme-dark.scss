@@ -160,6 +160,14 @@ div#hud.bg-danger {
   background-color: #540000
 }
 
+.ag-theme-big {
+  .up-data.ag-cell-data-changed  {
+      background-color:#006a00 !important;
+  }
+  .down-data.ag-cell-data-changed {
+      background-color:#570101 !important;
+  }
+}
 
 td.params-title.params-1 {
 	width: 90px;

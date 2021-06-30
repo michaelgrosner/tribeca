@@ -15,12 +15,7 @@ import {Shared, Models} from 'lib/K';
 })
 export class TakersComponent {
 
-  private product: Models.ProductAdvertisement = new Models.ProductAdvertisement();
-
-  @Input() set _product(o: Models.ProductAdvertisement) {
-    this.product = o;
-    this.onGridReady();
-  };
+  @Input() product: Models.ProductAdvertisement;
 
   @Input() set taker(o: Models.MarketTrade) {
     this.addRowData(o);

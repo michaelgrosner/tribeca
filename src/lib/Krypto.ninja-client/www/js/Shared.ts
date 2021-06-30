@@ -74,6 +74,7 @@ import {Socket, Models} from 'lib/K';
       </small>
     </address>
     <iframe
+      (window:resize)="resizeMatryoshka()"
       id="matryoshka"
       src="about:blank"></iframe>
   </div>`
@@ -114,7 +115,7 @@ export class KComponent implements OnInit {
 
       if (e.data.indexOf('height=') === 0) {
         document.getElementById('matryoshka').style.height = e.data.replace('height=', '');
-        resizeMatryoshka();
+        this.resizeMatryoshka();
       }
     }, false);
   };
@@ -127,6 +128,11 @@ export class KComponent implements OnInit {
     const url = window.prompt('Enter the URL of another instance:', this.product.matryoshka || 'https://');
     document.getElementById('matryoshka').setAttribute('src', url || 'about:blank');
     document.getElementById('matryoshka').style.height = (url && url != 'https://') ? '589px' : '0px';
+  };
+
+  private resizeMatryoshka = () => {
+    if (window.parent === window) return;
+    window.parent.postMessage('height=' + document.getElementsByTagName('body')[0].getBoundingClientRect().height + 'px', '*');
   };
 
   private setTheme = () => {
@@ -160,21 +166,18 @@ export class KComponent implements OnInit {
   }
 
   private onProduct = (o : Models.ProductAdvertisement) => {
+    if (this.product.source && this.product.source != o.source)
+      window.location.reload();
     window.document.title = '[' + o.environment + ']';
     this.exchange_icon = o.exchange.toLowerCase().replace('coinbase', 'coinbase-pro');
     this.product = o;
-    setTimeout(resizeMatryoshka, 5e+3);
+    setTimeout(() => {window.dispatchEvent(new Event('resize'))}, 0);
     console.log(
-      "%cK started " + (new Date().toISOString().slice(11, -1)) + "  %c" + this.homepage,
+      "%c" + this.product.source + " started " + (new Date().toISOString().slice(11, -1)) + "  %c" + this.homepage,
       "color:green;font-size:32px;",
       "color:red;font-size:16px;"
     );
   };
-};
-
-export function resizeMatryoshka() {
-  if (window.parent === window) return;
-  window.parent.postMessage('height=' + document.getElementsByTagName('body')[0].getBoundingClientRect().height + 'px', '*');
 };
 
 export function bootstrapModule(declarations: any[]) {
@@ -217,8 +220,10 @@ function currencyHeaderTemplate(symbol: string) {
     template:`<div class="ag-cell-label-container" role="presentation">
       <span ref="eMenu" class="ag-header-icon ag-header-cell-menu-button"></span>
       <div ref="eLabel" class="ag-header-cell-label" role="presentation">
-          <span ref="eText" class="ag-header-cell-text" role="columnheader"></span>
-          <i class="beacon-sym-` + symbol.toLowerCase() + `-s"></i>
+          <span>
+            <span ref="eText" class="ag-header-cell-text" role="columnheader"></span>
+            <i class="beacon-sym-` + symbol.toLowerCase() + `-s"></i>
+          </span>
           <span ref="eFilter" class="ag-header-icon ag-filter-icon"></span>
           <span ref="eSortOrder" class="ag-header-icon ag-sort-order"></span>
           <span ref="eSortAsc" class="ag-header-icon ag-sort-ascending-icon"></span>
@@ -235,14 +240,14 @@ export function currencyHeaders(api: GridApi, base: string, quote: string) {
     let colDef: ColDef[] = api.getColumnDefs();
 
     colDef.map((o: ColDef)  => {
-      if (['price', 'value', 'Kprice', 'Kvalue'].indexOf(o.field) > -1)
+      if (['price', 'value', 'Kprice', 'Kvalue', 'balance'].indexOf(o.field) > -1)
         o.headerComponentParams = currencyHeaderTemplate(quote);
-      if (['quantity', 'Kqty'].indexOf(o.field) > -1)
+      else if (['quantity', 'Kqty'].indexOf(o.field) > -1)
         o.headerComponentParams = currencyHeaderTemplate(base);
       return o;
     });
 
     api.setColumnDefs(colDef);
 
-    api.sizeColumnsToFit();
+    setTimeout(() => {api.sizeColumnsToFit();}, 5);
 };

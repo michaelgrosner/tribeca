@@ -256,7 +256,7 @@ ws sandbox: [websocket.org](https://www.websocket.org/echo.html)
 
 <details><summary><a id="unreleased-changelog"><b>Release v0.6.x Changelog</b></a></summary>
 
-Added Hello World bot and Scaling bot.
+Added Hello World bot, Scaling bot and Stable bot.
 
 Added Binance, Kraken, KuCoin, Gate.io and BitMEX API.
 

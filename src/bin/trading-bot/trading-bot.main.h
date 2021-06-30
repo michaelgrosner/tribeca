@@ -16,7 +16,6 @@ class TradingBot: public KryptoNinja {
       : engine(*this)
     {
       display   = {terminal, {3, 6, 1, 2}};
-      databases = true;
       events    = {
         [&](const Connectivity &rawdata) { engine.read(rawdata);  },
         [&](const Wallet       &rawdata) { engine.read(rawdata);  },

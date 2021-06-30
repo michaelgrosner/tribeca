@@ -2,34 +2,110 @@
 //! \brief Welcome user! (just a manager of portfolios).
 
 namespace analpaper {
-  struct Portfolio {
-    Wallet wallet;
-  };
-  static void to_json(json &j, const Portfolio &k) {
-    j = {
-      {"wallet", k.wallet}
-    };
-  };
-
-  struct Wallets: public Client::Broadcast<Portfolio> {
-    map<string, Portfolio> assets;
-    private:
-      string last;
+  struct Settings: public Sqlite::StructBackup<Settings>,
+                   public Client::Broadcast<Settings>,
+                   public Client::Clickable {
+    string currency = "";
     private_ref:
       const KryptoNinja &K;
     public:
-      Wallets(const KryptoNinja &bot)
-        : Broadcast(bot)
+      Settings(const KryptoNinja &bot)
+        : StructBackup(bot)
+        , Broadcast(bot)
+        , Clickable(bot)
         , K(bot)
       {};
-      void read_from_gw(const Wallet &raw) {
-        last = raw.currency;
-        assets[last].wallet = raw;
+      void from_json(const json &j) {
+        currency = j.value("currency", K.gateway->quote);
+        if (currency.empty()) currency = K.gateway->quote;
+        K.clicked(this);
+      };
+      void click(const json &j) override {
+        from_json(j);
+        backup();
+        broadcast();
+      };
+      mMatter about() const override {
+        return mMatter::QuotingParameters;
+      };
+    private:
+      string explain() const override {
+        return "Settings";
+      };
+      string explainKO() const override {
+        return "using default values for %";
+      };
+  };
+  static void to_json(json &j, const Settings &k) {
+    j = {
+      {"currency", k.currency}
+    };
+  };
+  static void from_json(const json &j, Settings &k) {
+    k.from_json(j);
+  };
+
+  struct Portfolio  {
+    Wallet wallet;
+    unordered_map<string, Price> prices;
+    Price price;
+  };
+  static void to_json(json &j, const Portfolio &k) {
+    j = {
+      {"wallet", k.wallet},
+      {"prices", k.prices},
+      { "price", k.price }
+    };
+  };
+
+  struct Portfolios: public Client::Broadcast<Portfolio>,
+                     public Client::Clicked {
+    Settings settings;
+    unordered_map<string, Portfolio> portfolio;
+    private:
+      string last = "";
+    private_ref:
+      const KryptoNinja &K;
+    public:
+      Portfolios(const KryptoNinja &bot)
+        : Broadcast(bot)
+        , Clicked(bot, {
+            {&settings, [&]() { refresh(); }}
+          })
+        , settings(bot)
+        , K(bot)
+      {};
+      void calc(const string &currency) {
+        last = currency;
+        portfolio[last].wallet.value = (
+          portfolio[last].price = calc()
+        ) * portfolio[last].wallet.total;
         broadcast();
         K.repaint();
       };
+      Price calc() const {
+        if (last == settings.currency)
+          return 1;
+        for (const auto &it : portfolio.at(last).prices)
+          if (it.first == settings.currency)
+            return it.second;
+        if (portfolio.find(settings.currency) != portfolio.end())
+          for (const auto &it : portfolio.at(settings.currency).prices)
+            if (it.first == last)
+              return 1 / it.second;
+        for (const auto &it : portfolio.at(last).prices)
+          if (portfolio.find(it.first) != portfolio.end())
+            for (const auto &_it : portfolio.at(it.first).prices)
+              if (_it.first == settings.currency)
+                return it.second * _it.second;
+        return 0;
+      };
+      void refresh() {
+        for (auto &it : portfolio)
+          calc(it.first);
+      };
       bool ready() const {
-        const bool err = assets.empty();
+        const bool err = portfolio.empty();
         if (err and Tspent > 21e+3)
           K.logWar("QE", "Unable to display portfolios, missing wallet data", 3e+3);
         return !err;
@@ -38,15 +114,42 @@ namespace analpaper {
         return mMatter::Position;
       };
       json blob() const override {
-        if (assets.find(last) != assets.end())
-          return assets.at(last);
+        if (portfolio.find(last) != portfolio.end())
+          return portfolio.at(last);
         else return nullptr;
       };
       json hello() override {
         json j = json::array();
-        for (const auto &it : assets)
+        for (const auto &it : portfolio)
           j.push_back(it.second);
         return j;
+      };
+  };
+
+  struct Tickers {
+    unordered_map<string, Ticker> ticker;
+    private_ref:
+      Portfolios &portolios;
+    public:
+      Tickers(Portfolios &p)
+        : portolios(p)
+      {};
+      void read_from_gw(const Ticker &raw) {
+        portolios.portfolio[raw.base].prices[raw.quote] = raw.price;
+        portolios.calc(raw.base);
+      };
+  };
+
+  struct Wallets {
+    private_ref:
+      Portfolios &portolios;
+    public:
+      Wallets(Portfolios &p)
+        : portolios(p)
+      {};
+      void read_from_gw(const Wallet &raw) {
+        portolios.portfolio[raw.currency].wallet = raw;
+        portolios.calc(raw.currency);
       };
   };
 
@@ -115,7 +218,8 @@ namespace analpaper {
           {    "minSize", K.gateway->minSize                          },
           {       "inet", K.arg<string>("interface")                  },
           {"environment", K.arg<string>("title")                      },
-          { "matryoshka", K.arg<string>("matryoshka")                 }
+          { "matryoshka", K.arg<string>("matryoshka")                 },
+          {     "source", K_SOURCE " " K_BUILD                        }
         };
       };
       mMatter about() const override {
@@ -165,7 +269,7 @@ namespace analpaper {
           Memory memory;
        Semaphore semaphore;
     private_ref:
-      const KryptoNinja  &K;
+      const KryptoNinja &K;
     public:
       Broker(const KryptoNinja &bot)
         : memory(bot)
@@ -179,15 +283,22 @@ namespace analpaper {
 
   class Engine {
     public:
-      Wallets wallet;
-       Broker broker;
+      Portfolios portfolios;
+         Tickers ticker;
+         Wallets wallet;
+          Broker broker;
     public:
       Engine(const KryptoNinja &bot)
-        : wallet(bot)
+        : portfolios(bot)
+        , ticker(portfolios)
+        , wallet(portfolios)
         , broker(bot)
       {};
       void read(const Connectivity &rawdata) {
         broker.semaphore.read_from_gw(rawdata);
+      };
+      void read(const Ticker &rawdata) {
+        ticker.read_from_gw(rawdata);
       };
       void read(const Wallet &rawdata) {
         wallet.read_from_gw(rawdata);

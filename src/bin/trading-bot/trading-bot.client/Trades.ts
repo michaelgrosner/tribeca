@@ -19,14 +19,10 @@ export class TradesComponent {
   private audio: boolean;
   private hasPongs: boolean;
   private headerNameMod: string = "";
-  private product: Models.ProductAdvertisement = new Models.ProductAdvertisement();
 
   private fireCxl: Socket.IFire<Models.CleanTradeRequestFromUI> = new Socket.Fire(Models.Topics.CleanTrade);
 
-  @Input() set _product(o: Models.ProductAdvertisement) {
-    this.product = o;
-    this.onGridReady();
-  };
+  @Input() product: Models.ProductAdvertisement;
 
   @Input() set quotingParameters(o: Models.QuotingParameters) {
     this.addRowConfig(o);

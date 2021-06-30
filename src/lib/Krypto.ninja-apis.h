@@ -137,10 +137,24 @@ namespace ₿ {
     k.manual      = j.value("manual", false);
   };
 
+  struct Ticker {
+     string base  = "";
+     string quote = "";
+     Price price  = 0;
+  };
+  static void __attribute__ ((unused)) to_json(json &j, const Ticker &k) {
+    j = {
+      { "base", k.base },
+      {"quote", k.quote},
+      {"price", k.price}
+    };
+  };
+
   class GwExchangeData {
     public_friend:
       using DataEvent = variant<
         function<void(const Connectivity&)>,
+        function<void(const Ticker&)>,
         function<void(const Wallet&)>,
         function<void(const Levels&)>,
         function<void(const Order&)>,
@@ -159,15 +173,17 @@ namespace ₿ {
       virtual void ask_for_data(const unsigned int &tick) = 0;
       virtual void wait_for_data(Loop *const loop) = 0;
       void data(const DataEvent &ev) {
-        if (holds_alternative<function<void(const Connectivity&)>>(ev))
+        if (holds_alternative           <function<void(const Connectivity&)>>(ev))
           async.connectivity.write = get<function<void(const Connectivity&)>>(ev);
-        else if (holds_alternative<function<void(const Wallet&)>>(ev))
+        else if (holds_alternative      <function<void(const Ticker&)>>(ev))
+          async.ticker.write       = get<function<void(const Ticker&)>>(ev);
+        else if (holds_alternative      <function<void(const Wallet&)>>(ev))
           async.wallet.write       = get<function<void(const Wallet&)>>(ev);
-        else if (holds_alternative<function<void(const Levels&)>>(ev))
+        else if (holds_alternative      <function<void(const Levels&)>>(ev))
           async.levels.write       = get<function<void(const Levels&)>>(ev);
-        else if (holds_alternative<function<void(const Order&)>>(ev))
+        else if (holds_alternative      <function<void(const Order&)>>(ev))
           async.orders.write       = get<function<void(const Order&)>>(ev);
-        else if (holds_alternative<function<void(const Trade&)>>(ev))
+        else if (holds_alternative      <function<void(const Trade&)>>(ev))
           async.trades.write       = get<function<void(const Trade&)>>(ev);
       };
       void place(const Order *const order) {
@@ -207,6 +223,7 @@ namespace ₿ {
 //EO non-free Gw class member functions from lib build-*/lib/K-*.a (it just redefines all virtual gateway functions above)...
       struct {
         Loop::Async::Event<Connectivity> connectivity;
+        Loop::Async::Event<Ticker>       ticker;
         Loop::Async::Event<Wallet>       wallet;
         Loop::Async::Event<Levels>       levels;
         Loop::Async::Event<Order>        orders;
@@ -849,6 +866,7 @@ namespace ₿ {
           or reply.at(0).find("quote_currency") == reply.at(0).end()
         ) print("Error while reading pairs: " + reply.dump());
         else for (const json &it : reply)
+          if (!it.value("trading_disabled", true) and it.value("status", "") == "online")
           report += it.value("base_currency", "") + "/" + it.value("quote_currency", "") + '\n';
       };
       json handshake() const override {

@@ -658,7 +658,7 @@ namespace tribeca {
   };
 
   struct Ewma: public Sqlite::StructBackup<Ewma>,
-                public Client::Clicked {
+               public Client::Clicked {
     mFairHistory fairValue96h;
            Price mgEwmaVL = 0,
                  mgEwmaL  = 0,
@@ -1229,7 +1229,7 @@ namespace tribeca {
       };
   };
   struct Notepad: public Client::Broadcast<Notepad>,
-                   public Client::Clickable {
+                  public Client::Clickable {
     public:
       string content;
     public:
@@ -2670,7 +2670,8 @@ namespace tribeca {
           {    "minSize", K.gateway->minSize                          },
           {       "inet", K.arg<string>("interface")                  },
           {"environment", K.arg<string>("title")                      },
-          { "matryoshka", K.arg<string>("matryoshka")                 }
+          { "matryoshka", K.arg<string>("matryoshka")                 },
+          {     "source", K_SOURCE " " K_BUILD                        }
         };
       };
       mMatter about() const override {

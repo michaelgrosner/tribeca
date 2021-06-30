@@ -2,7 +2,7 @@ K         ?= K.sh
 MAJOR      = 0
 MINOR      = 6
 PATCH      = 4
-BUILD      = 2
+BUILD      = 3
 
 OBLIGATORY = DISCLAIMER: This is strict non-violent software: \n$\
              if you hurt other living creatures, please stop; \n$\
@@ -87,6 +87,10 @@ hlep hepl help:
 	#  make              - compile K sources           #
 	#  make K            - compile K sources           #
 	#  KALL=1 make K     - compile K sources           #
+	#  make +portfolios  - compile K sources           #
+	#  make hello-world  - compile K sources           #
+	#  make scaling-bot  - compile K sources           #
+	#  make stable--bot  - compile K sources           #
 	#  make trading-bot  - compile K sources           #
 	#                                                  #
 	#  make lib          - compile K dependencies      #
