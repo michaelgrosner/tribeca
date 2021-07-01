@@ -1104,8 +1104,8 @@ namespace ₿ {
               break;
             }
         return {
-          {     "base", reply.value("base", "")                  },
-          {    "quote", reply.value("quote", "")                 },
+          {     "base", base                                     },
+          {    "quote", quote                                    },
           {   "symbol", reply.value("wsname", "")                },
           {"webMarket", webMarket                                },
           {"webOrders", webOrders                                },

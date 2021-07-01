@@ -91,13 +91,14 @@ namespace analpaper {
         if (portfolio.at(last).prices.find(settings.currency) != portfolio.at(last).prices.end())
           return portfolio.at(last).prices.at(settings.currency);
         else for (const auto &it : portfolio.at(last).prices)
-          if (portfolio.find(it.first) != portfolio.end())
+          if (portfolio.find(it.first) != portfolio.end()) {
             if (portfolio.at(it.first).prices.find(settings.currency) != portfolio.at(it.first).prices.end())
               return it.second * portfolio.at(it.first).prices.at(settings.currency);
             else for (const auto &_it : portfolio.at(it.first).prices)
               if (portfolio.find(_it.first) != portfolio.end()
                 and portfolio.at(_it.first).prices.find(settings.currency) != portfolio.at(_it.first).prices.end()
               ) return it.second * _it.second * portfolio.at(_it.first).prices.at(settings.currency);
+          }
         return 0;
       };
       void refresh() {
