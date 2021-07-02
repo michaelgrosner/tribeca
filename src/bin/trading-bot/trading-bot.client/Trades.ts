@@ -90,7 +90,7 @@ export class TradesComponent {
           .padStart(2, "0");
       }
     }, {
-      width: 40,
+      width: 50,
       field:'side',
       headerName:'side',
       suppressSizeToFit: true,
@@ -109,8 +109,8 @@ export class TradesComponent {
       field:'price',
       headerValueGetter:(params) => { return this.headerNameMod + 'price'; },
       cellClassRules: {
-        'sell': 'data.side == "Ask"',
-        'buy': 'data.side == "Bid"'
+        'sell': 'data._side == "Ask"',
+        'buy': 'data._side == "Bid"'
       }
     }, {
       width: 95,
@@ -118,16 +118,16 @@ export class TradesComponent {
       headerValueGetter:(params) => { return this.headerNameMod + 'qty'; },
       suppressSizeToFit: true,
       cellClassRules: {
-        'sell': 'data.side == "Ask"',
-        'buy': 'data.side == "Bid"'
+        'sell': 'data._side == "Ask"',
+        'buy': 'data._side == "Bid"'
       }
     }, {
       width: 69,
       field:'value',
       headerValueGetter:(params) => { return this.headerNameMod + 'value'; },
       cellClassRules: {
-        'sell': 'data.side == "Ask"',
-        'buy': 'data.side == "Bid"'
+        'sell': 'data._side == "Ask"',
+        'buy': 'data._side == "Bid"'
       }
     }, {
       width: 75,
@@ -163,7 +163,7 @@ export class TradesComponent {
       },
       cellRenderer: (params) => {
         return params.value
-          ? params.data.quoteSymbol + parseFloat(params.value.toFixed(8))
+          ? parseFloat(params.value.toFixed(8))
           : '';
       }
     }]
@@ -205,14 +205,11 @@ export class TradesComponent {
 
     if (o === null) this.grid.api.setRowData([]);
     else {
+      var node: RowNode = this.grid.api.getRowNode(o.tradeId);
       if (o.Kqty < 0) {
-        this.grid.api.forEachNode((node: RowNode) => {
-          if (node.data.tradeId == o.tradeId)
-            this.grid.api.applyTransaction({remove: [node.data]});
-        });
+        if (node)
+          this.grid.api.applyTransaction({remove: [node.data]});
       } else {
-        var node: RowNode = this.grid.api.getRowNode(o.tradeId);
-
         var edit = {
           time: o.time,
           quantity: o.quantity.toFixed(this.product.tickSize),
@@ -226,7 +223,7 @@ export class TradesComponent {
           _side: o.side === Models.Side.Ask ? "Ask" : "Bid",
         };
 
-        if (node) node.setData(Object.assign(edit, node.data));
+        if (node) node.setData(Object.assign(node.data, edit));
         else this.grid.api.applyTransaction({add: [Object.assign(edit, {
           tradeId: o.tradeId,
           price: o.price.toFixed(this.product.tickPrice)
