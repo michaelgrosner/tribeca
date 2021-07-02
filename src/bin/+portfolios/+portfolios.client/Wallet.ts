@@ -23,6 +23,7 @@ export class WalletComponent {
   @Output() onBalance = new EventEmitter<number>();
 
   private grid: GridOptions = <GridOptions>{
+    overlayLoadingTemplate: `<span class="ag-overlay-no-rows-center">missing data</span>`,
     overlayNoRowsTemplate: `<span class="ag-overlay-no-rows-center">missing data</span>`,
     defaultColDef: { sortable: true, resizable: true },
     rowHeight:35,
@@ -106,7 +107,7 @@ export class WalletComponent {
   private addRowData = (o: any) => {
     if (!this.grid.api) return;
     if (o === null) this.grid.api.setRowData([]);
-    else {
+    else o.forEach(o => {
       const amount = o.wallet.amount.toFixed(8);
       const held = o.wallet.held.toFixed(8);
       const total = (o.wallet.amount + o.wallet.held).toFixed(8);
@@ -133,7 +134,7 @@ export class WalletComponent {
 
         this.grid.api.flashCells({ rowNodes: [node], columns: cols});
       }
-    }
+    });
 
     var sum = 0;
     this.grid.api.forEachNode((node: RowNode) => {

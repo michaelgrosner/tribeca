@@ -240,7 +240,7 @@ export function currencyHeaders(api: GridApi, base: string, quote: string) {
     let colDef: ColDef[] = api.getColumnDefs();
 
     colDef.map((o: ColDef)  => {
-      if (['price', 'value', 'Kprice', 'Kvalue', 'balance'].indexOf(o.field) > -1)
+      if (['price', 'value', 'Kprice', 'Kvalue', 'delta', 'balance'].indexOf(o.field) > -1)
         o.headerComponentParams = currencyHeaderTemplate(quote);
       else if (['quantity', 'Kqty'].indexOf(o.field) > -1)
         o.headerComponentParams = currencyHeaderTemplate(base);

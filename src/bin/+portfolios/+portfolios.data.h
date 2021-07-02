@@ -53,12 +53,11 @@ namespace analpaper {
   static void to_json(json &j, const Portfolio &k) {
     j = {
       {"wallet", k.wallet},
-      {"prices", k.prices},
       { "price", k.price }
     };
   };
 
-  struct Portfolios: public Client::Broadcast<Portfolio>,
+  struct Portfolios: public Client::Broadcast<Portfolios>,
                      public Client::Clicked {
     Settings settings;
     unordered_map<string, Portfolio> portfolio;
@@ -76,16 +75,16 @@ namespace analpaper {
         , K(bot)
       {};
       void calc(const string &currency) {
-        last = currency;
-        if (portfolio[last].wallet.currency.empty())
-          portfolio[last].wallet.currency = last;
-        portfolio[last].wallet.value = (
-          portfolio[last].price = calc()
-        ) * portfolio[last].wallet.total;
+        if (portfolio[currency].wallet.currency.empty())
+          portfolio[currency].wallet.currency = currency;
+        portfolio[currency].wallet.value = (
+          portfolio[currency].price = calcPrice(currency)
+        ) * portfolio[currency].wallet.total;
+        if (ratelimit()) return;
         broadcast();
         K.repaint();
       };
-      Price calc() const {
+      Price calcPrice(const string &currency) const {
         if (last == settings.currency)
           return 1;
         if (portfolio.at(last).prices.find(settings.currency) != portfolio.at(last).prices.end())
@@ -114,20 +113,18 @@ namespace analpaper {
       mMatter about() const override {
         return mMatter::Position;
       };
-      json blob() const override {
-        if (portfolio.find(last) != portfolio.end()
-          // and !portfolio.at(last).prices.empty()
-        ) return portfolio.at(last);
-        else return nullptr;
-      };
-      json hello() override {
-        json j = json::array();
-        for (const auto &it : portfolio)
-          // if (!it.second.prices.empty())
-            j.push_back(it.second);
-        return j;
+    private:
+      bool ratelimit() {
+        return !read_soon(1e+3);
       };
   };
+  static void to_json(json &j, const Portfolios &k) {
+    j = json::array();
+    for (const auto &it : k.portfolio)
+      if (!it.second.prices.empty())
+        j.push_back(it.second);
+  };
+
 
   struct Tickers {
     unordered_map<string, Ticker> ticker;
