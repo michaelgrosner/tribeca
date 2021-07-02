@@ -61,8 +61,6 @@ namespace analpaper {
                      public Client::Clicked {
     Settings settings;
     unordered_map<string, Portfolio> portfolio;
-    private:
-      string last = "";
     private_ref:
       const KryptoNinja &K;
     public:
@@ -85,11 +83,11 @@ namespace analpaper {
         K.repaint();
       };
       Price calcPrice(const string &currency) const {
-        if (last == settings.currency)
+        if (currency == settings.currency)
           return 1;
-        if (portfolio.at(last).prices.find(settings.currency) != portfolio.at(last).prices.end())
-          return portfolio.at(last).prices.at(settings.currency);
-        else for (const auto &it : portfolio.at(last).prices)
+        if (portfolio.at(currency).prices.find(settings.currency) != portfolio.at(currency).prices.end())
+          return portfolio.at(currency).prices.at(settings.currency);
+        else for (const auto &it : portfolio.at(currency).prices)
           if (portfolio.find(it.first) != portfolio.end()) {
             if (portfolio.at(it.first).prices.find(settings.currency) != portfolio.at(it.first).prices.end())
               return it.second * portfolio.at(it.first).prices.at(settings.currency);
