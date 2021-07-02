@@ -30,6 +30,19 @@ namespace ₿ {
     };
   };
 
+  struct Ticker {
+    string base  = "";
+    string quote = "";
+     Price price = 0;
+  };
+  static void __attribute__ ((unused)) to_json(json &j, const Ticker &k) {
+    j = {
+      { "base", k.base },
+      {"quote", k.quote},
+      {"price", k.price}
+    };
+  };
+
   struct Wallet {
     Amount amount   = 0,
            held     = 0;
@@ -135,19 +148,6 @@ namespace ₿ {
     k.type        = j.value("type", k.type);
     k.timeInForce = j.value("timeInForce", k.timeInForce);
     k.manual      = j.value("manual", false);
-  };
-
-  struct Ticker {
-     string base  = "";
-     string quote = "";
-     Price price  = 0;
-  };
-  static void __attribute__ ((unused)) to_json(json &j, const Ticker &k) {
-    j = {
-      { "base", k.base },
-      {"quote", k.quote},
-      {"price", k.price}
-    };
   };
 
   class GwExchangeData {

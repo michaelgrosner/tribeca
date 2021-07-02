@@ -7,7 +7,7 @@ import {Socket, Models} from 'lib/K';
   template: `<div class="row">
       <div class="col-md-12 col-xs-12">
           <div class="row">
-            <h4>SUM: {{ balance }} <i class="beacon-sym-{{ settings.currency.toLowerCase() }}-s"></i></h4>
+            <h4>SUM: {{ balance }}<i class="beacon-sym-{{ settings.currency.toLowerCase() }}-s"></i></h4>
             <settings
               [product]="product"
               [settings]="settings"></settings>
