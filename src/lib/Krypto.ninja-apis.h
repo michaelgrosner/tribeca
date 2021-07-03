@@ -921,7 +921,12 @@ namespace ₿ {
           or !reply.at(0).at(0).is_string()
         ) print("Error while reading pairs: " + reply.dump());
         else for (const json &it : reply.at(0))
-          report += it.get<string>() + '\n';
+          if (it.get<string>().find(":") != string::npos)
+            report += it.get<string>().substr(0, it.get<string>().find(":"))  + "/"
+                    + it.get<string>().substr(it.get<string>().find(":") + 1) + '\n';
+          else
+            report += it.get<string>().substr(0, 3) + "/"
+                    + it.get<string>().substr(3)    + '\n';
       };
       json handshake() const override {
         json reply1 = {

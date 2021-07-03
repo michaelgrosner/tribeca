@@ -144,13 +144,13 @@ export class WalletComponent {
   };
 
   private resetRowData = (name: string, val: string, node: RowNode) => {
-      var dir = '';
-      if      (val > node.data[name]) dir = 'up-data';
-      else if (val < node.data[name]) dir = 'down-data';
-      if (dir != '') {
-        node.data['dir_' + name] = dir;
-        node.setDataValue(name, val);
-      }
-      return dir != '';
+    var dir = '';
+    if      (val > node.data[name]) dir = 'up-data';
+    else if (val < node.data[name]) dir = 'down-data';
+    if (dir != '') {
+      node.data['dir_' + name] = dir;
+      node.setDataValue(name, val);
+    }
+    return dir != '';
   };
 };
