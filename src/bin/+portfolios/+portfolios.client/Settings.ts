@@ -10,7 +10,12 @@ import {Socket, Models} from 'lib/K';
     (ngModelChange)="submitSettings()">
     <option [ngValue]="product.base">{{ product.base }}</option>
     <option [ngValue]="product.quote">{{ product.quote }}</option>
-  </select>`
+  </select>
+  <input type="checkbox"
+    title="show zeroed balances"
+    style="float: right;zoom:200%"
+    [(ngModel)]="params.zeroed"
+    (ngModelChange)="submitSettings()">`
 })
 export class SettingsComponent {
 

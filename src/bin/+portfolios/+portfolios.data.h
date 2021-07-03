@@ -6,6 +6,7 @@ namespace analpaper {
                    public Client::Broadcast<Settings>,
                    public Client::Clickable {
     string currency = "";
+      bool zeroed   = true;
     private_ref:
       const KryptoNinja &K;
     public:
@@ -17,6 +18,7 @@ namespace analpaper {
       {};
       void from_json(const json &j) {
         currency = j.value("currency", K.gateway->quote);
+        zeroed   = j.value("zeroed", zeroed);
         if (currency.empty()) currency = K.gateway->quote;
         K.clicked(this);
       };
@@ -38,7 +40,8 @@ namespace analpaper {
   };
   static void to_json(json &j, const Settings &k) {
     j = {
-      {"currency", k.currency}
+      {"currency", k.currency},
+      {  "zeroed", k.zeroed  }
     };
   };
   static void from_json(const json &j, Settings &k) {

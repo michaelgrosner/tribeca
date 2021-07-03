@@ -215,7 +215,8 @@ export enum SOP { Off, Trades, Size, TradesSize }
 export enum STDEV { Off, OnFV, OnFVAPROff, OnTops, OnTopsAPROff, OnTop, OnTopAPROff }
 
 export class PortfolioParameters {
-    constructor(public currency: string = "") {}
+    constructor(public currency: string  = "",
+                public zeroed:   boolean = true) {}
 };
 
 export interface QuotingParameters {

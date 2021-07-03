@@ -248,6 +248,4 @@ export function currencyHeaders(api: GridApi, base: string, quote: string) {
     });
 
     api.setColumnDefs(colDef);
-
-    setTimeout(() => { api.sizeColumnsToFit(); }, 100);
 };

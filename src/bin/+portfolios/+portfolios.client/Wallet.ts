@@ -8,8 +8,9 @@ import {Shared, Models} from 'lib/K';
   selector: 'wallet',
   template: `<ag-grid-angular
     class="ag-theme-fresh ag-theme-dark ag-theme-big"
-    style="height: 479px;width: 100%;"
+    style="width: 100%;"
     (window:resize)="onGridReady()"
+    (gridReady)="onGridReady()"
     [gridOptions]="grid"></ag-grid-angular>`
 })
 export class WalletComponent {
@@ -25,10 +26,13 @@ export class WalletComponent {
   private grid: GridOptions = <GridOptions>{
     overlayLoadingTemplate: `<span class="ag-overlay-no-rows-center">missing data</span>`,
     overlayNoRowsTemplate: `<span class="ag-overlay-no-rows-center">missing data</span>`,
-    defaultColDef: { sortable: true, resizable: true },
+    defaultColDef: { sortable: true, resizable: true, flex: 1 },
     rowHeight:35,
+    domLayout: 'autoHeight',
     animateRows:true,
-    getRowNodeId: function (data) { return data.currency; },
+    isExternalFilterPresent: () => !this.settings.zeroed,
+    doesExternalFilterPass: (node) => !!parseFloat(node.data.total),
+    getRowNodeId: (data) => data.currency,
     columnDefs: [{
       width: 130,
       field: 'currency',
