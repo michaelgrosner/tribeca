@@ -10,7 +10,6 @@ import {Socket, Shared, Models} from 'lib/K';
     class="ag-theme-fresh ag-theme-dark"
     style="height: 479px;width: 99.80%;"
     (gridReady)="onGridReady()"
-    (window:resize)="onGridReady()"
     (cellClicked)="onCellClicked($event)"
     [gridOptions]="grid"></ag-grid-angular>`
 })
@@ -41,10 +40,10 @@ export class TradesComponent {
   private grid: GridOptions = <GridOptions>{
     overlayLoadingTemplate: `<span class="ag-overlay-no-rows-center">0 closed orders</span>`,
     overlayNoRowsTemplate: `<span class="ag-overlay-no-rows-center">0 closed orders</span>`,
-    defaultColDef: { sortable: true, resizable: true },
+    defaultColDef: { sortable: true, resizable: true, flex: 1 },
     rowHeight:21,
     animateRows:true,
-    getRowNodeId: function (data) { return data.tradeId; },
+    getRowNodeId: (data) => data.tradeId,
     columnDefs: [{
       width: 30,
       field: 'cancel',
@@ -59,7 +58,7 @@ export class TradesComponent {
       width: 95,
       field:'time',
       sort: 'desc',
-      headerValueGetter:(params) => { return this.headerNameMod + 'time'; },
+      headerValueGetter:(params) => this.headerNameMod + 'time',
       suppressSizeToFit: true,
       comparator: (valueA: number, valueB: number, nodeA: RowNode, nodeB: RowNode, isInverted: boolean) => {
           return (nodeA.data.Ktime||nodeA.data.time) - (nodeB.data.Ktime||nodeB.data.time);
@@ -99,15 +98,13 @@ export class TradesComponent {
         'buy': 'x == "Bid"',
         'kira': 'x == "&lrhar;"'
       },
-      cellRenderer: (params) => {
-        return params.value === '&lrhar;' ?
-          '<span style="font-size:15px;padding-left:3px;">' + params.value + '</span>'
-          : params.value;
-      }
+      cellRenderer: (params) => params.value === '&lrhar;'
+        ? '<span style="font-size:15px;padding-left:3px;">' + params.value + '</span>'
+        : params.value
     }, {
       width: 80,
       field:'price',
-      headerValueGetter:(params) => { return this.headerNameMod + 'price'; },
+      headerValueGetter:(params) => this.headerNameMod + 'price',
       cellClassRules: {
         'sell': 'data._side == "Ask"',
         'buy': 'data._side == "Bid"'
@@ -115,7 +112,7 @@ export class TradesComponent {
     }, {
       width: 95,
       field:'quantity',
-      headerValueGetter:(params) => { return this.headerNameMod + 'qty'; },
+      headerValueGetter:(params) => this.headerNameMod + 'qty',
       suppressSizeToFit: true,
       cellClassRules: {
         'sell': 'data._side == "Ask"',
@@ -124,7 +121,7 @@ export class TradesComponent {
     }, {
       width: 69,
       field:'value',
-      headerValueGetter:(params) => { return this.headerNameMod + 'value'; },
+      headerValueGetter:(params) => this.headerNameMod + 'value',
       cellClassRules: {
         'sell': 'data._side == "Ask"',
         'buy': 'data._side == "Bid"'
@@ -161,11 +158,9 @@ export class TradesComponent {
       cellClassRules: {
         'kira': 'data.side == "&lrhar;"'
       },
-      cellRenderer: (params) => {
-        return params.value
-          ? parseFloat(params.value.toFixed(8))
-          : '';
-      }
+      cellRenderer: (params) => params.value
+        ? parseFloat(params.value.toFixed(8))
+        : ''
     }]
   };
 
@@ -194,8 +189,6 @@ export class TradesComponent {
     });
 
     this.grid.api.refreshHeader();
-
-    this.grid.api.sizeColumnsToFit();
 
     this.emitLengths();
   };

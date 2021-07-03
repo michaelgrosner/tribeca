@@ -10,7 +10,6 @@ import {Socket, Shared, Models} from 'lib/K';
     class="ag-theme-fresh ag-theme-dark"
     style="height: 131px;width: 99.80%;"
     (gridReady)="onGridReady()"
-    (window:resize)="onGridReady()"
     (cellClicked)="onCellClicked($event)"
     [gridOptions]="grid"></ag-grid-angular>`
 })
@@ -26,18 +25,16 @@ export class OrdersComponent {
 
   private grid: GridOptions = <GridOptions>{
     suppressNoRowsOverlay: true,
-    defaultColDef: { sortable: true, resizable: true },
+    defaultColDef: { sortable: true, resizable: true, flex: 1 },
     rowHeight:21,
     columnDefs: [{
       width: 30,
       field: "cancel",
       headerName: 'cxl',
       suppressSizeToFit: true,
-      cellRenderer: (params) => {
-        return `<button type="button" class="btn btn-danger btn-xs">
+      cellRenderer: (params) => `<button type="button" class="btn btn-danger btn-xs">
           <span data-action-type="remove"'>&times;</span>
-        </button>`;
-      }
+        </button>`
     }, {
       width: 82,
       field: 'time',
@@ -60,12 +57,11 @@ export class OrdersComponent {
         'sell': 'data.side == "Ask"',
         'buy': 'data.side == "Bid"'
       },
-      cellRenderer: (params) => {
-        return (params.data.pong
+      cellRenderer: (params) => (
+        params.data.pong
           ? '&lrhar;'
           : '&rhard;'
-        ) + params.value;
-      }
+        ) + params.value
     }, {
       width: 74,
       field: 'price',
@@ -110,11 +106,9 @@ export class OrdersComponent {
       field: 'exchangeId',
       headerName: 'openOrderId',
       suppressSizeToFit: true,
-      cellRenderer: (params) => {
-        return (params.value)
-          ? params.value.toString().split('-')[0]
-          : '';
-      }
+      cellRenderer: (params) => params.value
+        ? params.value.toString().split('-')[0]
+        : ''
     }]
   };
 
