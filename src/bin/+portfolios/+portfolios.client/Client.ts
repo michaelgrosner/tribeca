@@ -6,12 +6,12 @@ import {Socket, Models} from 'lib/K';
   selector: 'client',
   template: `<div class="row">
       <div class="col-md-12 col-xs-12">
-          <div class="row" style="margin-bottom: 5px;">
-            <settings
-              [product]="product"
-              [settings]="settings"></settings>
-          </div>
           <div class="row">
+            <div hidden="true">
+              <settings
+                [product]="product"
+                [settings]="settings"></settings>
+            </div>
             <wallet
               [asset]="asset"
               [settings]="settings"></wallet>

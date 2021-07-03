@@ -1865,11 +1865,6 @@ textarea.form-group-sm .form-control, select[multiple].form-group-sm .form-contr
   border-radius: 6px;
 }
 
-select.input-lg {
-  height: 41px;
-  line-height: 41px;
-}
-
 textarea.input-lg, select[multiple].input-lg {
   height: auto;
 }
@@ -5220,8 +5215,17 @@ div.ag-header-cell .ag-header-cell-label i {
   .down-data.ag-cell-data-changed {
       background-color:#ecc !important;
   }
-  .ag-row-hover {
+  .ag-body-viewport .ag-row-hover {
     background: #d4d4d4!important;
+  }
+  .ag-has-focus .ag-row-pinned .ag-cell-focus {
+    border: 0px!important;
+    border-right: dotted grey!important;
+    border-right-width: 1px!important;
+    border-left: 1px transparent solid!important;
+    border-top-width: 1px!important;
+    border-top-color: transparent!important;
+    padding-top: 6px!important;
   }
   .ag-cell,
   .ag-full-width-row .ag-cell-wrapper.ag-row-group {

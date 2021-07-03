@@ -160,14 +160,19 @@ div#hud.bg-danger {
   background-color: #540000
 }
 
+
 .ag-theme-big {
+  .kira {
+    color: #0d0!important;
+    font-weight: 600;
+  }
   .up-data.ag-cell-data-changed  {
       background-color:#006a00 !important;
   }
   .down-data.ag-cell-data-changed {
       background-color:#570101 !important;
   }
-  .ag-row-hover {
+  .ag-body-viewport .ag-row-hover {
     background: #000!important;
   }
 }

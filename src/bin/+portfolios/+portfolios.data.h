@@ -130,12 +130,12 @@ namespace analpaper {
         : portolios(p)
       {};
       void read_from_gw(const Ticker &raw) {
-        set(raw.base,  raw.quote,     raw.price);
-        set(raw.quote, raw.base,  1 / raw.price);
+        read(raw.base,  raw.quote,     raw.price);
+        read(raw.quote, raw.base,  1 / raw.price);
         portolios.calc();
       };
     private:
-      void set(const string &base, const string &quote, const Price &price) {
+      void read(const string &base, const string &quote, const Price &price) {
         portolios.portfolio[base].prices[quote] = price;
         if (portolios.portfolio.at(base).wallet.currency.empty())
           portolios.portfolio.at(base).wallet.currency = base;

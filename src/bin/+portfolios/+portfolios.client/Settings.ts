@@ -4,16 +4,17 @@ import {Socket, Models} from 'lib/K';
 
 @Component({
   selector: 'settings',
-  template: `<select class="form-control input-lg"
-    style="width: 121px;float: right;margin-left: 5px;"
+  template: `<select class="form-control input-lg" id="base_select"
+    style="width: 121px;margin-top: -1px;height: 26px;font-size: 19px;"
+    title="base currency"
     [(ngModel)]="params.currency"
     (ngModelChange)="submitSettings()">
     <option [ngValue]="product.base">{{ product.base }}</option>
     <option [ngValue]="product.quote">{{ product.quote }}</option>
   </select>
-  <input type="checkbox"
-    title="show zeroed balances"
-    style="float: right;zoom: 200%;"
+  <input type="checkbox" id="zeroed_checkbox"
+    title="show zeroed"
+    style="zoom: 200%;margin-top:0px;"
     [(ngModel)]="params.zeroed"
     (ngModelChange)="submitSettings()">`
 })

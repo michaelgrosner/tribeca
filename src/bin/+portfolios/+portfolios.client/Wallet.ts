@@ -15,10 +15,6 @@ import {Shared, Models} from 'lib/K';
 })
 export class WalletComponent {
 
-  private eventOnce: boolean = false;
-
-  private pinOnce: boolean = false;
-
   public pattern: string = "";
 
   @Input() set asset(o: any) {
@@ -34,6 +30,7 @@ export class WalletComponent {
     rowHeight:35,
     domLayout: 'autoHeight',
     animateRows:true,
+    enableCellTextSelection: true,
     isExternalFilterPresent: () => !this.settings.zeroed || !!this.pattern,
     doesExternalFilterPass: (node) => (
       this.settings.zeroed || !!parseFloat(node.data.total)
@@ -45,9 +42,9 @@ export class WalletComponent {
       width: 130,
       field: 'currency',
       headerName: 'currency',
-      pinnedRowCellRenderer: (params) => `<input type="text"
-        style="background: #0000005c; width: 50%;"
-        id="filter_pattern" />`,
+      pinnedRowCellRenderer: (params) => `<input type="text" class="form-control"
+        style="background: #0000005c;width: 100%;height: 26px;font-size: 19px;margin-top: -1px;"
+        title="filter" id="filter_pattern" />`,
       cellRenderer: (params) => {
         var sym = params.value.toLowerCase();
         if (sym == 'cgld') sym = 'celo';
@@ -61,6 +58,7 @@ export class WalletComponent {
       field: 'price',
       headerName: 'price',
       type: 'rightAligned',
+      pinnedRowCellRenderer: (params) => `<span id="price_pin"></span>`,
       cellClassRules: {
         'text-muted': 'x == "0.00000000"',
         'up-data': 'data.dir_price == "up-data"',
@@ -73,7 +71,7 @@ export class WalletComponent {
       headerName: 'balance',
       sort: 'desc',
       type: 'rightAligned',
-      pinnedRowCellRenderer: (params) => `<span id="total_balance"></span>`,
+      pinnedRowCellRenderer: (params) => `<span class="kira" id="balance_pin"></span>`,
       cellClassRules: {
         'text-muted': 'x == "0.00000000"',
         'up-data': 'data.dir_balance == "up-data"',
@@ -85,6 +83,7 @@ export class WalletComponent {
       field: 'total',
       headerName: 'total',
       type: 'rightAligned',
+      pinnedRowCellRenderer: (params) => `<span id="total_pin"></span>`,
       cellClassRules: {
         'text-muted': 'x == "0.00000000"',
         'up-data': 'data.dir_total == "up-data"',
@@ -119,9 +118,31 @@ export class WalletComponent {
   private onGridReady() {
     Shared.currencyHeaders(this.grid.api, this.settings.currency, this.settings.currency);
 
-    if (!this.pinOnce && this.grid.api) {
-      this.pinOnce = true;
+    if (this.grid.api && !this.grid.api.getPinnedTopRowCount()) {
       this.grid.api.setPinnedTopRowData([{}]);
+
+      var pin = (pin) => {
+        if (document.getElementById("filter_pattern")
+          && document.getElementById("price_pin")
+          && document.getElementById("total_pin")
+        ) {
+          document.getElementById("filter_pattern").addEventListener("keyup", event => {
+            this.pattern =
+            (<HTMLInputElement>event.target).value = (<HTMLInputElement>event.target).value.toUpperCase();
+            this.grid.api.onFilterChanged();
+          });
+
+          document.getElementById("price_pin").appendChild(
+            document.getElementById("base_select")
+          );
+
+          document.getElementById("total_pin").appendChild(
+            document.getElementById("zeroed_checkbox")
+          );
+        } else setTimeout(() => pin(pin), 69);
+      }
+
+      pin(pin);
     }
   };
 
@@ -162,17 +183,8 @@ export class WalletComponent {
       if (node.data.balance) sum += parseFloat(node.data.balance);
     });
 
-    if (document.getElementById("total_balance"))
-      document.getElementById("total_balance").innerHTML = sum.toFixed(8);
-
-    if (!this.eventOnce && document.getElementById("filter_pattern")) {
-      this.eventOnce = true;
-      document.getElementById("filter_pattern").addEventListener("keyup", event => {
-        (<HTMLInputElement>event.target).value = (<HTMLInputElement>event.target).value.toUpperCase();
-        this.pattern = (<HTMLInputElement>event.target).value;
-        this.grid.api.onFilterChanged();
-      });
-    }
+    if (document.getElementById("balance_pin"))
+      document.getElementById("balance_pin").innerHTML = sum.toFixed(8);
   };
 
   private resetRowData = (name: string, val: string, node: RowNode) => {
