@@ -70,27 +70,17 @@ namespace analpaper {
       Portfolios(const KryptoNinja &bot)
         : Broadcast(bot)
         , Clicked(bot, {
-            {&settings, [&]() { refresh(); }}
+            {&settings, [&]() { calc(); }}
           })
         , settings(bot)
         , K(bot)
       {};
-      void calc(const string &currency) {
-        if (portfolio[currency].wallet.currency.empty())
-          portfolio[currency].wallet.currency = currency;
-        portfolio[currency].wallet.value = (
-          portfolio[currency].price = calcPrice(currency)
-        ) * portfolio[currency].wallet.total;
-        if (ratelimit()) return;
-        broadcast();
-        K.repaint();
-      };
-      Price calcPrice(const string &currency) const {
-        if (currency == settings.currency)
+      Price calc(const string &base) const {
+        if (base == settings.currency)
           return 1;
-        if (portfolio.at(currency).prices.find(settings.currency) != portfolio.at(currency).prices.end())
-          return portfolio.at(currency).prices.at(settings.currency);
-        else for (const auto &it : portfolio.at(currency).prices)
+        if (portfolio.at(base).prices.find(settings.currency) != portfolio.at(base).prices.end())
+          return portfolio.at(base).prices.at(settings.currency);
+        else for (const auto &it : portfolio.at(base).prices)
           if (portfolio.find(it.first) != portfolio.end()) {
             if (portfolio.at(it.first).prices.find(settings.currency) != portfolio.at(it.first).prices.end())
               return it.second * portfolio.at(it.first).prices.at(settings.currency);
@@ -101,9 +91,14 @@ namespace analpaper {
           }
         return 0;
       };
-      void refresh() {
+      void calc() {
         for (auto &it : portfolio)
-          calc(it.first);
+          portfolio.at(it.first).wallet.value = (
+            portfolio.at(it.first).price = calc(it.first)
+          ) * portfolio.at(it.first).wallet.total;
+        if (ratelimit()) return;
+        broadcast();
+        K.repaint();
       };
       bool ready() const {
         const bool err = portfolio.empty();
@@ -116,7 +111,7 @@ namespace analpaper {
       };
     private:
       bool ratelimit() {
-        return !read_soon(1e+3);
+        return !read_soon();
       };
   };
   static void to_json(json &j, const Portfolios &k) {
@@ -128,7 +123,6 @@ namespace analpaper {
 
 
   struct Tickers {
-    unordered_map<string, Ticker> ticker;
     private_ref:
       Portfolios &portolios;
     public:
@@ -136,10 +130,15 @@ namespace analpaper {
         : portolios(p)
       {};
       void read_from_gw(const Ticker &raw) {
-        portolios.portfolio[raw.base].prices[raw.quote] = raw.price;
-        portolios.portfolio[raw.quote].prices[raw.base] = 1 / raw.price;
-        portolios.calc(raw.base);
-        portolios.calc(raw.quote);
+        set(raw.base,  raw.quote,     raw.price);
+        set(raw.quote, raw.base,  1 / raw.price);
+        portolios.calc();
+      };
+    private:
+      void set(const string &base, const string &quote, const Price &price) {
+        portolios.portfolio[base].prices[quote] = price;
+        if (portolios.portfolio.at(base).wallet.currency.empty())
+          portolios.portfolio.at(base).wallet.currency = base;
       };
   };
 
@@ -152,7 +151,7 @@ namespace analpaper {
       {};
       void read_from_gw(const Wallet &raw) {
         portolios.portfolio[raw.currency].wallet = raw;
-        portolios.calc(raw.currency);
+        portolios.calc();
       };
   };
 

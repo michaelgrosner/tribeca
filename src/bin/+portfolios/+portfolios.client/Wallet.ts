@@ -1,4 +1,4 @@
-import {Component, Input, Output, EventEmitter} from '@angular/core';
+import {Component, Input} from '@angular/core';
 
 import {GridOptions, RowNode} from '@ag-grid-community/all-modules';
 
@@ -15,13 +15,17 @@ import {Shared, Models} from 'lib/K';
 })
 export class WalletComponent {
 
+  private eventOnce: boolean = false;
+
+  private pinOnce: boolean = false;
+
+  public pattern: string = "";
+
   @Input() set asset(o: any) {
     this.addRowData(o);
   };
 
   @Input() settings: Models.PortfolioParameters;
-
-  @Output() onBalance = new EventEmitter<number>();
 
   private grid: GridOptions = <GridOptions>{
     overlayLoadingTemplate: `<span class="ag-overlay-no-rows-center">missing data</span>`,
@@ -30,13 +34,20 @@ export class WalletComponent {
     rowHeight:35,
     domLayout: 'autoHeight',
     animateRows:true,
-    isExternalFilterPresent: () => !this.settings.zeroed,
-    doesExternalFilterPass: (node) => !!parseFloat(node.data.total),
+    isExternalFilterPresent: () => !this.settings.zeroed || !!this.pattern,
+    doesExternalFilterPass: (node) => (
+      this.settings.zeroed || !!parseFloat(node.data.total)
+    ) && (
+      !this.pattern || node.data.currency.toUpperCase().indexOf(this.pattern) > -1
+    ),
     getRowNodeId: (data) => data.currency,
     columnDefs: [{
       width: 130,
       field: 'currency',
       headerName: 'currency',
+      pinnedRowCellRenderer: (params) => `<input type="text"
+        style="background: #0000005c; width: 50%;"
+        id="filter_pattern" />`,
       cellRenderer: (params) => {
         var sym = params.value.toLowerCase();
         if (sym == 'cgld') sym = 'celo';
@@ -62,6 +73,7 @@ export class WalletComponent {
       headerName: 'balance',
       sort: 'desc',
       type: 'rightAligned',
+      pinnedRowCellRenderer: (params) => `<span id="total_balance"></span>`,
       cellClassRules: {
         'text-muted': 'x == "0.00000000"',
         'up-data': 'data.dir_balance == "up-data"',
@@ -106,6 +118,11 @@ export class WalletComponent {
 
   private onGridReady() {
     Shared.currencyHeaders(this.grid.api, this.settings.currency, this.settings.currency);
+
+    if (!this.pinOnce && this.grid.api) {
+      this.pinOnce = true;
+      this.grid.api.setPinnedTopRowData([{}]);
+    }
   };
 
   private addRowData = (o: any) => {
@@ -144,7 +161,18 @@ export class WalletComponent {
     this.grid.api.forEachNode((node: RowNode) => {
       if (node.data.balance) sum += parseFloat(node.data.balance);
     });
-    this.onBalance.emit(sum);
+
+    if (document.getElementById("total_balance"))
+      document.getElementById("total_balance").innerHTML = sum.toFixed(8);
+
+    if (!this.eventOnce && document.getElementById("filter_pattern")) {
+      this.eventOnce = true;
+      document.getElementById("filter_pattern").addEventListener("keyup", event => {
+        (<HTMLInputElement>event.target).value = (<HTMLInputElement>event.target).value.toUpperCase();
+        this.pattern = (<HTMLInputElement>event.target).value;
+        this.grid.api.onFilterChanged();
+      });
+    }
   };
 
   private resetRowData = (name: string, val: string, node: RowNode) => {
