@@ -14,6 +14,7 @@ import {Socket, Models} from 'lib/K';
             </div>
             <wallet
               [asset]="asset"
+              [links]="links"
               [settings]="settings"></wallet>
           </div>
       </div>
@@ -22,6 +23,8 @@ import {Socket, Models} from 'lib/K';
 export class ClientComponent implements OnInit {
 
   private asset: any = null;
+
+  private links: any = null;
 
   private settings: Models.PortfolioParameters = new Models.PortfolioParameters();
 
@@ -36,6 +39,9 @@ export class ClientComponent implements OnInit {
   ngOnInit() {
     new Socket.Subscriber(Models.Topics.QuotingParametersChange)
       .registerSubscriber((o: Models.PortfolioParameters) => { this.settings = o; });
+
+    new Socket.Subscriber(Models.Topics.Links)
+      .registerSubscriber((o: any) => { this.links = o; });
 
     new Socket.Subscriber(Models.Topics.Position)
       .registerSubscriber((o: any[]) => { this.asset = o; })

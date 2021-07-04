@@ -1,5 +1,6 @@
 export var Topics = {
   FairValue: 'a',
+  Links: 'b',
   Connectivity: 'd',
   MarketData: 'e',
   QuotingParametersChange: 'f',

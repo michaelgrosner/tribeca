@@ -121,21 +121,48 @@ namespace analpaper {
         j.push_back(it.second);
   };
 
+  struct Links: public Client::Broadcast<Links> {
+    unordered_map<string, unordered_map<string, string>> link;
+    private_ref:
+      const KryptoNinja &K;
+    public:
+      Links(const KryptoNinja &bot)
+        : Broadcast(bot)
+        , K(bot)
+      {};
+      void add(const string &base, const string &quote) {
+        link[base][quote] =
+        link[quote][base] = K.gateway->web(base, quote);
+        broadcast();
+      };
+      bool read_same_blob() const override {
+        return false;
+      };
+      mMatter about() const override {
+        return mMatter::Links;
+      };
+  };
+  static void to_json(json &j, const Links &k) {
+    j = k.link;
+  };
 
   struct Tickers {
+    Links links;
     private_ref:
-      Portfolios &portolios;
+      Portfolios  &portolios;
     public:
-      Tickers(Portfolios &p)
-        : portolios(p)
+      Tickers(const KryptoNinja &bot, Portfolios &p)
+        : links(bot)
+        , portolios(p)
       {};
       void read_from_gw(const Ticker &raw) {
-        read(raw.base,  raw.quote,     raw.price);
-        read(raw.quote, raw.base,  1 / raw.price);
+        add(raw.base,  raw.quote,     raw.price);
+        add(raw.quote, raw.base,  1 / raw.price);
         portolios.calc();
+        links.add(raw.base, raw.quote);
       };
     private:
-      void read(const string &base, const string &quote, const Price &price) {
+      void add(const string &base, const string &quote, const Price &price) {
         portolios.portfolio[base].prices[quote] = price;
         if (portolios.portfolio.at(base).wallet.currency.empty())
           portolios.portfolio.at(base).wallet.currency = base;
@@ -211,7 +238,7 @@ namespace analpaper {
           {      "quote", K.gateway->quote                            },
           {     "symbol", K.gateway->symbol                           },
           {     "margin", K.gateway->margin                           },
-          {  "webMarket", K.gateway->webMarket                        },
+          {  "webMarket", K.gateway->web()                            },
           {  "webOrders", K.gateway->webOrders                        },
           {  "tickPrice", K.gateway->decimal.price.stream.precision() },
           {   "tickSize", K.gateway->decimal.amount.stream.precision()},
@@ -292,7 +319,7 @@ namespace analpaper {
     public:
       Engine(const KryptoNinja &bot)
         : portfolios(bot)
-        , ticker(portfolios)
+        , ticker(bot, portfolios)
         , wallet(portfolios)
         , broker(bot)
       {};

@@ -160,6 +160,9 @@ div#hud.bg-danger {
   background-color: #540000
 }
 
+div#market_links {
+  background: #000;
+}
 
 .ag-theme-big {
   .kira {
@@ -172,8 +175,13 @@ div#hud.bg-danger {
   .down-data.ag-cell-data-changed {
       background-color:#570101 !important;
   }
+  .ag-body-viewport .ag-row-selected,
   .ag-body-viewport .ag-row-hover {
     background: #000!important;
+  }
+  .ag-body-viewport .ag-row-selected .ag-cell[aria-colindex="1"] {
+    color: #ff0!important;
+    font-weight: 600!important;
   }
 }
 

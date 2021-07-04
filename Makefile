@@ -2,7 +2,7 @@ K         ?= K.sh
 MAJOR      = 0
 MINOR      = 6
 PATCH      = 4
-BUILD      = 12
+BUILD      = 13
 
 OBLIGATORY = DISCLAIMER: This is strict non-violent software: \n$\
              if you hurt other living creatures, please stop; \n$\
@@ -223,9 +223,10 @@ system_install:
 	@echo
 	@$(SUDO) mkdir -p $(KHOME)
 	@$(SUDO) chown $(shell id -u) $(KHOME)
-	@mkdir -p $(KHOME)/cache
 	@mkdir -p $(KHOME)/db
 	@mkdir -p $(KHOME)/ssl
+	@mkdir -p $(KHOME)/cache
+	@rm -f $(KHOME)/cache/handshake.*
 	@curl -s --time-cond $(KHOME)/ssl/cacert.pem https://curl.se/ca/cacert.pem -o $(KHOME)/ssl/cacert.pem
 
 install:

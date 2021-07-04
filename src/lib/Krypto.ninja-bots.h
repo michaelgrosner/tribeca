@@ -726,7 +726,7 @@ namespace ₿ {
   class About {
     public:
       enum class mMatter: char {
-        FairValue            = 'a',                                                       Connectivity       = 'd',
+        FairValue            = 'a', Links                = 'b',                           Connectivity       = 'd',
         MarketData           = 'e', QuotingParameters    = 'f',
         OrderStatusReports   = 'i', ProductAdvertisement = 'j', ApplicationState   = 'k', EWMAStats          = 'l',
         STDEVStats           = 'm', Position             = 'n', Profit             = 'o', SubmitNewOrder     = 'p',

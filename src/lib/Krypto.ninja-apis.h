@@ -248,7 +248,7 @@ namespace ₿ {
       string exchange,   apikey,    secret, pass,
              base,       quote,     symbol,
              http,       ws,        fix,
-             webMarket,  webOrders, unlock;
+             webOrders, unlock;
        Price tickPrice = 0;
       Amount tickSize  = 0,
              minSize   = 0,
@@ -353,6 +353,10 @@ namespace ₿ {
         cout << report;
         return "--list done (to find a symbol use grep)";
       };
+      virtual string web(const string&, const string&) const = 0;
+      string web() const {
+        return web(base, quote);
+      };
       void disclaimer() const {
         if (unlock.empty()) return;
         print("was slowdown 121 seconds (--free-version argument was implicitly set):"
@@ -372,7 +376,8 @@ namespace ₿ {
       };
       function<void(const string&, const string&, const string&)> printer;
     protected:
-      virtual   void disconnect()         = 0;
+      string webMarket;
+      virtual   void disconnect()   = 0;
       virtual   bool connected()    const = 0;
       virtual   json handshake()    const = 0;
       virtual   void pairs(string&) const = 0;
@@ -570,6 +575,9 @@ namespace ₿ {
         webMarket = "https://www.binance.com/en/trade/";
         webOrders = "https://www.binance.com/en/my/orders/exchange/tradeorder";
       };
+      string web(const string &base, const string &quote) const {
+        return webMarket + base + "_" + quote + "?layout=pro";
+      };
     protected:
       string nonce() const override {
         return to_string(Tstamp);
@@ -612,10 +620,6 @@ namespace ₿ {
           {     "base", base                                      },
           {    "quote", quote                                     },
           {   "symbol", base + quote                              },
-          {"webMarket", webMarket
-                          + base + "_" + quote
-                          + "?layout=pro"                         },
-          {"webOrders", webOrders                                 },
           {"tickPrice", reply1.value("tickPrice", 0.0)            },
           { "tickSize", reply1.value("tickSize", 0.0)             },
           {  "minSize", reply1.value("minSize", 0.0)              },
@@ -665,6 +669,9 @@ namespace ₿ {
         webMarket = "https://www.bitmex.com/app/trade/";
         webOrders = "https://www.bitmex.com/app/orderHistory";
       };
+      string web(const string &base, const string &quote) const {
+        return webMarket + base + quote;
+      };
     protected:
       string nonce() const override {
         return to_string(Tstamp);
@@ -692,8 +699,6 @@ namespace ₿ {
           {   "margin", reply.value("isInverse", false)
                           ? Future::Inverse
                           : Future::Linear             },
-          {"webMarket", webMarket + base + quote       },
-          {"webOrders", webOrders                      },
           {"tickPrice", reply.value("tickSize", 0.0)   },
           { "tickSize", reply.value("lotSize", 0.0)    },
           {  "minSize", reply.value("lotSize", 0.0)    },
@@ -724,6 +729,9 @@ namespace ₿ {
         webMarket = "https://www.gate.io/trade/";
         webOrders = "https://www.gate.io/myaccount/myorders";
       };
+      string web(const string &base, const string &quote) const {
+        return webMarket + base + "_" + quote;
+      };
     protected:
       string nonce() const override {
         return to_string((Clock)(Tstamp / 1e+3));
@@ -753,8 +761,6 @@ namespace ₿ {
           {     "base", base                                            },
           {    "quote", quote                                           },
           {   "symbol", base + "_" + quote                              },
-          {"webMarket", webMarket + base + "_" + quote                  },
-          {"webOrders", webOrders                                       },
           {"tickPrice", pow(10, -reply.value("precision", 0))           },
           { "tickSize", pow(10, -reply.value("amount_precision", 0))    },
           {  "minSize", stod(reply.value("min_base_amount", "0"))
@@ -789,6 +795,9 @@ namespace ₿ {
         webMarket = "https://hitbtc.com/exchange/";
         webOrders = "https://hitbtc.com/reports/orders";
       };
+      string web(const string &base, const string &quote) const {
+        return webMarket + base + "-to-" + quote;
+      };
     protected:
       string nonce() const override {
         return randId() + randId();
@@ -810,8 +819,6 @@ namespace ₿ {
           {     "base", base == "USDT" ? "USD" : base                 },
           {    "quote", quote == "USDT" ? "USD" : quote               },
           {   "symbol", base + quote                                  },
-          {"webMarket", webMarket + base + "-to-" + quote             },
-          {"webOrders", webOrders                                     },
           {"tickPrice", stod(reply.value("tickSize", "0"))            },
           { "tickSize", stod(reply.value("quantityIncrement", "0"))   },
           {  "minSize", stod(reply.value("quantityIncrement", "0"))   },
@@ -853,6 +860,9 @@ namespace ₿ {
         webMarket = "https://pro.coinbase.com/trade/";
         webOrders = "https://pro.coinbase.com/orders/";
       };
+      string web(const string &base, const string &quote) const {
+        return webMarket + base + "-" + quote;
+      };
     protected:
       string nonce() const override {
         return to_string(Tstamp / 1e+3);
@@ -875,8 +885,6 @@ namespace ₿ {
           {     "base", base                                     },
           {    "quote", quote                                    },
           {   "symbol", base + "-" + quote                       },
-          {"webMarket", webMarket + base + quote                 },
-          {"webOrders", webOrders + base + quote                 },
           {"tickPrice", stod(reply.value("quote_increment", "0"))},
           { "tickSize", stod(reply.value("base_increment", "0")) },
           {  "minSize", stod(reply.value("base_min_size", "0"))  },
@@ -907,6 +915,9 @@ namespace ₿ {
         askForReplace = true;
         webMarket = "https://www.bitfinex.com/trading/";
         webOrders = "https://www.bitfinex.com/reports/orders";
+      };
+      string web(const string &base, const string &quote) const {
+        return webMarket + base + quote;
       };
     protected:
       string nonce() const override {
@@ -960,9 +971,6 @@ namespace ₿ {
           {     "base", base                          },
           {    "quote", quote                         },
           {   "symbol", base + quote                  },
-          {"webMarket", webMarket
-                          + base + quote              },
-          {"webOrders", webOrders                     },
           {"tickPrice", reply1.value("tickPrice", 0.0)},
           { "tickSize", 1e-8                          },
           {  "minSize", reply2.value("minSize", 0.0)  },
@@ -1001,6 +1009,9 @@ namespace ₿ {
         webMarket = "https://trade.kucoin.com/";
         webOrders = "https://www.kucoin.com/order/trade";
       };
+      string web(const string &base, const string &quote) const {
+        return webMarket + base + "-" + quote;
+      };
     protected:
       string nonce() const override {
         return to_string(Tstamp);
@@ -1031,8 +1042,6 @@ namespace ₿ {
           {     "base", base                                     },
           {    "quote", quote                                    },
           {   "symbol", base + "-" + quote                       },
-          {"webMarket", webMarket + base + "-" + quote           },
-          {"webOrders", webOrders                                },
           {"tickPrice", stod(reply1.value("priceIncrement", "0"))},
           { "tickSize", stod(reply1.value("baseIncrement", "0")) },
           {  "minSize", stod(reply1.value("baseMinSize", "0"))   },
@@ -1083,8 +1092,11 @@ namespace ₿ {
         http   = "https://api.kraken.com";
         ws     = "wss://ws.kraken.com";
         randId = Random::int32Id;
-        webMarket = "https://www.kraken.com/charts";
+        webMarket = "https://trade.kraken.com/charts/KRAKEN:";
         webOrders = "https://www.kraken.com/u/trade";
+      };
+      string web(const string &base, const string &quote) const {
+        return webMarket + base + "-" + quote;
       };
     protected:
       string nonce() const override {
@@ -1112,8 +1124,6 @@ namespace ₿ {
           {     "base", base                                     },
           {    "quote", quote                                    },
           {   "symbol", reply.value("wsname", "")                },
-          {"webMarket", webMarket                                },
-          {"webOrders", webOrders                                },
           {"tickPrice", pow(10, -reply.value("pair_decimals", 0))},
           { "tickSize", pow(10, -reply.value("lot_decimals", 0)) },
           {  "minSize", pow(10, -reply.value("lot_decimals", 0)) },
@@ -1140,8 +1150,11 @@ namespace ₿ {
         http   = "https://poloniex.com";
         ws     = "wss://api2.poloniex.com";
         randId = Random::int45Id;
-        webMarket = "https://poloniex.com/exchange";
+        webMarket = "https://poloniex.com/exchange/";
         webOrders = "https://poloniex.com/tradeHistory";
+      };
+      string web(const string &base, const string &quote) const {
+        return webMarket + quote + "_" + base;
       };
     protected:
       string nonce() const override {
@@ -1161,8 +1174,6 @@ namespace ₿ {
           {     "base", base              },
           {    "quote", quote             },
           {   "symbol", quote + "_" + base},
-          {"webMarket", webMarket         },
-          {"webOrders", webOrders         },
           {"tickPrice", reply.empty()
                           ? 0 : 1e-8      },
           { "tickSize", 1e-8              },
