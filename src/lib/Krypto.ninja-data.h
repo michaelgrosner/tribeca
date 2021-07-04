@@ -885,7 +885,7 @@ namespace ₿ {
             ) {
               if (addr.empty())
                 addr = address();
-              const string path   = in.substr(4, in.find(" HTTP/1.1") - 4);
+              const string path   = in.substr(4, in.find(" HTTP/") - 4);
               const size_t papers = in.find("Authorization: Basic ");
               string auth;
               if (papers != string::npos) {
