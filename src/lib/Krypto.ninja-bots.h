@@ -877,7 +877,7 @@ namespace ₿ {
         tables.clear();
       };
       bool blackhole() const {
-        return tables.empty();
+        return tables.empty() and !db;
       };
     private:
       json select(const Backup *const data) {
