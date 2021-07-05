@@ -5230,13 +5230,19 @@ div#market_links {
   .ag-body-viewport .ag-row-selected .ag-cell[aria-colindex="1"] {
     font-weight: 600!important;
   }
-  .ag-has-focus .ag-row-pinned .ag-cell-focus {
+  .ag-floating-top {
+    overflow-y: hidden;
+  }
+  .ag-has-focus .ag-cell-focus {
     border: 0px!important;
     border-right: dotted grey!important;
     border-right-width: 1px!important;
     border-left: 1px transparent solid!important;
     border-top-width: 1px!important;
     border-top-color: transparent!important;
+    padding-top: 5px!important;
+  }
+  .ag-has-focus .ag-row-pinned .ag-cell-focus {
     padding-top: 6px!important;
   }
   .ag-cell,

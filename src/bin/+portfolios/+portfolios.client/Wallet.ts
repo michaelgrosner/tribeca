@@ -68,8 +68,11 @@ export class WalletComponent {
           o.style.zIndex = o.getAttribute('row-id') == row.currency ? '2' : '1';
         });
         document.getElementById("market_links").removeAttribute('hidden');
-      } else
+        document.querySelectorAll('.ag-root, .ag-root-wrapper, .ag-body-viewport, .ag-center-cols-clipper, .ag-center-cols-viewport').forEach((o: HTMLElement) => { o.style.overflow = "visible" });
+      } else {
         document.getElementById("market_links").setAttribute('hidden', 'true');
+        document.querySelectorAll('.ag-root, .ag-root-wrapper, .ag-body-viewport, .ag-center-cols-clipper, .ag-center-cols-viewport').forEach((o: HTMLElement) => { o.style.overflow = "" });
+      }
     },
     isExternalFilterPresent: () => !this.settings.zeroed || !!this.pattern,
     doesExternalFilterPass: (node) => (
