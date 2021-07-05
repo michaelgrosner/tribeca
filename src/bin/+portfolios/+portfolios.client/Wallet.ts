@@ -6,28 +6,19 @@ import {Shared, Models} from 'lib/K';
 
 @Component({
   selector: 'wallet',
-  template: `<div hidden="true" id="market_links">
-      <div *ngFor="let link of links_visible">
-        <a rel="noreferrer" target="_blank"
-          onclick="event.stopPropagation()"
-          href="{{ link }}">{{ link }}</a>
-      </div>
-    </div>
-    <ag-grid-angular id="portfolios"
-      class="ag-theme-fresh ag-theme-dark ag-theme-big"
-      style="width: 100%;"
-      (window:resize)="onGridReady()"
-      (gridReady)="onGridReady()"
-      (rowClicked)="onRowClicked($event)"
-      [gridOptions]="grid"></ag-grid-angular>`
+  template: `<ag-grid-angular id="portfolios"
+    class="ag-theme-fresh ag-theme-dark ag-theme-big"
+    style="width: 100%;"
+    (window:resize)="onGridReady()"
+    (gridReady)="onGridReady()"
+    (rowClicked)="onRowClicked($event)"
+    [gridOptions]="grid"></ag-grid-angular>`
 })
 export class WalletComponent {
 
   private selection: string = "";
 
   private pattern: string = "";
-
-  private links_visible: any[] = [];
 
   @Input() links: any;
 
@@ -56,23 +47,24 @@ export class WalletComponent {
     rowSelection:'single',
     enableCellTextSelection: true,
     onSelectionChanged: () => {
+      if (document.getElementById("market_links")) document.getElementById("market_links").remove();
       var row = this.grid.api.getSelectedRows().reverse().pop();
-      if (row && this.links.hasOwnProperty(row.currency)) {
-        this.links_visible = [];
-        for (let x in this.links[row.currency]) this.links_visible.push(this.links[row.currency][x]);
-
-        document.querySelector("#portfolios div[row-id='" + row.currency + "'] div[aria-colindex='1']").appendChild(
-          document.getElementById("market_links")
-        );
-        document.querySelectorAll('#portfolios div[row-id]').forEach((o: HTMLElement) => {
-          o.style.zIndex = o.getAttribute('row-id') == row.currency ? '2' : '1';
-        });
-        document.getElementById("market_links").removeAttribute('hidden');
-        document.querySelectorAll('.ag-root, .ag-root-wrapper, .ag-body-viewport, .ag-center-cols-clipper, .ag-center-cols-viewport').forEach((o: HTMLElement) => { o.style.overflow = "visible" });
-      } else {
-        document.getElementById("market_links").setAttribute('hidden', 'true');
-        document.querySelectorAll('.ag-root, .ag-root-wrapper, .ag-body-viewport, .ag-center-cols-clipper, .ag-center-cols-viewport').forEach((o: HTMLElement) => { o.style.overflow = "" });
+      if (!row || !this.links.hasOwnProperty(row.currency)) return;
+      var div = document.createElement('div');
+      div.id = 'market_links';
+      for (let x in this.links[row.currency]) {
+        var a = document.createElement('a');
+        a.rel = 'noreferrer';
+        a.target = '_blank';
+        a.onclick = (ev) => { ev.stopPropagation() };
+        a.href =
+        a.innerText = this.links[row.currency][x];
+        div.appendChild(a);
       }
+      document.querySelectorAll('#portfolios div[row-id]').forEach((o: HTMLElement) => {
+        o.style.zIndex = o.getAttribute('row-id') == row.currency ? '2' : '1';
+      });
+      document.querySelector("#portfolios div[row-id='" + row.currency + "'] div[aria-colindex='4']").appendChild(div);
     },
     isExternalFilterPresent: () => !this.settings.zeroed || !!this.pattern,
     doesExternalFilterPass: (node) => (
@@ -82,6 +74,40 @@ export class WalletComponent {
     ),
     getRowNodeId: (data) => data.currency,
     columnDefs: [{
+      width: 220,
+      field: 'held',
+      headerName: 'held',
+      type: 'rightAligned',
+      cellClassRules: {
+        'text-muted': 'x == "0.00000000"',
+        'up-data': 'data.dir_held == "up-data"',
+        'down-data': 'data.dir_held == "down-data"'
+      },
+      comparator: (valueA, valueB, nodeA, nodeB, isInverted) => valueA - valueB
+    }, {
+      width: 220,
+      field: 'amount',
+      headerName: 'available',
+      type: 'rightAligned',
+      cellClassRules: {
+        'text-muted': 'x == "0.00000000"',
+        'up-data': 'data.dir_amount == "up-data"',
+        'down-data': 'data.dir_amount == "down-data"'
+      },
+      comparator: (valueA, valueB, nodeA, nodeB, isInverted) => valueA - valueB
+    }, {
+      width: 220,
+      field: 'total',
+      headerName: 'total',
+      type: 'rightAligned',
+      pinnedRowCellRenderer: (params) => `<span id="total_pin"></span>`,
+      cellClassRules: {
+        'text-muted': 'x == "0.00000000"',
+        'up-data': 'data.dir_total == "up-data"',
+        'down-data': 'data.dir_total == "down-data"'
+      },
+      comparator: (valueA, valueB, nodeA, nodeB, isInverted) => valueA - valueB
+    }, {
       width: 130,
       field: 'currency',
       headerName: 'currency',
@@ -119,40 +145,6 @@ export class WalletComponent {
         'text-muted': 'x == "0.00000000"',
         'up-data': 'data.dir_balance == "up-data"',
         'down-data': 'data.dir_balance == "down-data"'
-      },
-      comparator: (valueA, valueB, nodeA, nodeB, isInverted) => valueA - valueB
-    }, {
-      width: 220,
-      field: 'total',
-      headerName: 'total',
-      type: 'rightAligned',
-      pinnedRowCellRenderer: (params) => `<span id="total_pin"></span>`,
-      cellClassRules: {
-        'text-muted': 'x == "0.00000000"',
-        'up-data': 'data.dir_total == "up-data"',
-        'down-data': 'data.dir_total == "down-data"'
-      },
-      comparator: (valueA, valueB, nodeA, nodeB, isInverted) => valueA - valueB
-    }, {
-      width: 220,
-      field: 'amount',
-      headerName: 'available',
-      type: 'rightAligned',
-      cellClassRules: {
-        'text-muted': 'x == "0.00000000"',
-        'up-data': 'data.dir_amount == "up-data"',
-        'down-data': 'data.dir_amount == "down-data"'
-      },
-      comparator: (valueA, valueB, nodeA, nodeB, isInverted) => valueA - valueB
-    }, {
-      width: 220,
-      field: 'held',
-      headerName: 'held',
-      type: 'rightAligned',
-      cellClassRules: {
-        'text-muted': 'x == "0.00000000"',
-        'up-data': 'data.dir_held == "up-data"',
-        'down-data': 'data.dir_held == "down-data"'
       },
       comparator: (valueA, valueB, nodeA, nodeB, isInverted) => valueA - valueB
     }]

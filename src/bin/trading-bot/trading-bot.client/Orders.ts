@@ -149,6 +149,6 @@ export class OrdersComponent {
 
     this.grid.api.setRowData([]);
 
-    if (add.length) this.grid.api.applyTransaction({add:add});
+    if (add.length) this.grid.api.applyTransaction({add: add});
   };
 };

@@ -5201,15 +5201,20 @@ div.ag-header-cell .ag-header-cell-label i {
     margin-left: 2px;
 }
 
+div#market_links a {
+  display: block;
+}
+
 div#market_links {
   background: #d4d4d4;
   position: absolute;
   padding: 5px;
   border-bottom-left-radius: 7px;
   border-bottom-right-radius: 7px;
+  line-height: initial;
 }
 
-.ag-theme-big {
+#portfolios.ag-theme-big {
   div.ag-row {
     font-size: 21px !important;
   }
@@ -5217,21 +5222,31 @@ div#market_links {
     font-size: 25px;
     vertical-align: text-top;
   }
-  .up-data.ag-cell-data-changed  {
+  .ag-cell-data-changed {
+      background-color:transparent !important;
+  }
+  .up-data.ag-cell-data-changed span {
       background-color:#cec !important;
   }
-  .down-data.ag-cell-data-changed {
+  .down-data.ag-cell-data-changed span {
       background-color:#ecc !important;
   }
   .ag-body-viewport .ag-row-selected,
   .ag-body-viewport .ag-row-hover {
     background: #d4d4d4!important;
   }
-  .ag-body-viewport .ag-row-selected .ag-cell[aria-colindex="1"] {
+  .ag-body-viewport .ag-row-selected .ag-cell[aria-colindex="4"] {
     font-weight: 600!important;
   }
+  .ag-root,
+  .ag-root-wrapper,
+  .ag-body-viewport,
+  .ag-center-cols-clipper,
+  .ag-center-cols-viewport {
+    overflow:visible;
+  }
   .ag-floating-top {
-    overflow-y: hidden;
+    overflow-y: hidden!important;
   }
   .ag-has-focus .ag-cell-focus {
     border: 0px!important;
@@ -5241,6 +5256,7 @@ div#market_links {
     border-top-width: 1px!important;
     border-top-color: transparent!important;
     padding-top: 5px!important;
+    height:34px!important;
   }
   .ag-has-focus .ag-row-pinned .ag-cell-focus {
     padding-top: 6px!important;
