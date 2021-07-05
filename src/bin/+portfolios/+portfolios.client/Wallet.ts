@@ -51,15 +51,24 @@ export class WalletComponent {
       var row = this.grid.api.getSelectedRows().reverse().pop();
       if (!row || !this.links.hasOwnProperty(row.currency)) return;
       var div = document.createElement('div');
-      div.id = 'market_links';
+      div.setAttribute('id', 'market_links');
+      var tbl = document.createElement('table');
+      div.appendChild(tbl);
+      var tr;
+      var i = 0;
       for (let x in this.links[row.currency]) {
         var a = document.createElement('a');
-        a.rel = 'noreferrer';
-        a.target = '_blank';
+        a.setAttribute('rel', 'noreferrer');
+        a.setAttribute('target', '_blank');
+        a.setAttribute('title', this.links[row.currency][x]);
+        a.setAttribute('href', this.links[row.currency][x]);
         a.onclick = (ev) => { ev.stopPropagation() };
-        a.href =
-        a.innerText = this.links[row.currency][x];
-        div.appendChild(a);
+        a.innerText = x;
+        var td = document.createElement('td');
+        td.appendChild(a);
+        if (!(i++ % 5))
+          tbl.appendChild(tr = document.createElement('tr'));
+        tr.appendChild(td);
       }
       document.querySelectorAll('#portfolios div[row-id]').forEach((o: HTMLElement) => {
         o.style.zIndex = o.getAttribute('row-id') == row.currency ? '2' : '1';

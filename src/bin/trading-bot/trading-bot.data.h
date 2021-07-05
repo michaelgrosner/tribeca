@@ -2662,7 +2662,7 @@ namespace tribeca {
           {     "symbol", K.gateway->symbol                           },
           {     "margin", K.gateway->margin                           },
           {  "webMarket", K.gateway->web()                            },
-          {  "webOrders", K.gateway->webOrders                        },
+          {  "webOrders", K.gateway->web(true)                        },
           {  "tickPrice", K.gateway->decimal.price.stream.precision() },
           {   "tickSize", K.gateway->decimal.amount.stream.precision()},
           {  "stepPrice", K.gateway->decimal.price.step               },

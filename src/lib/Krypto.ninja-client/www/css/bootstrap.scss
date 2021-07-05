@@ -5201,8 +5201,9 @@ div.ag-header-cell .ag-header-cell-label i {
     margin-left: 2px;
 }
 
-div#market_links a {
-  display: block;
+#market_links td {
+  padding:2px 7px;
+  text-align:center;
 }
 
 div#market_links {
@@ -5256,7 +5257,7 @@ div#market_links {
     border-top-width: 1px!important;
     border-top-color: transparent!important;
     padding-top: 5px!important;
-    height:34px!important;
+    height: 34px!important;
   }
   .ag-has-focus .ag-row-pinned .ag-cell-focus {
     padding-top: 6px!important;

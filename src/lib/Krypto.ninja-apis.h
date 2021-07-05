@@ -245,10 +245,10 @@ namespace ₿ {
   class GwExchange: public GwExchangeData {
     public:
       using Report = vector<pair<string, string>>;
-      string exchange,   apikey,    secret, pass,
-             base,       quote,     symbol,
-             http,       ws,        fix,
-             webOrders, unlock;
+      string exchange, apikey, secret, pass,
+             base,     quote,  symbol,
+             http,     ws,     fix,
+             unlock;
        Price tickPrice = 0;
       Amount tickSize  = 0,
              minSize   = 0,
@@ -282,8 +282,6 @@ namespace ₿ {
         quote     = reply.value("quote",     quote);
         symbol    = reply.value("symbol",    symbol);
         margin    = reply.value("margin",    margin);
-        webMarket = reply.value("webMarket", webMarket);
-        webOrders = reply.value("webOrders", webOrders);
         tickPrice = reply.value("tickPrice", 0.0);
         tickSize  = reply.value("tickSize",  0.0);
         minValue  = reply.value("minValue",  0.0);
@@ -354,8 +352,8 @@ namespace ₿ {
         return "--list done (to find a symbol use grep)";
       };
       virtual string web(const string&, const string&) const = 0;
-      string web() const {
-        return web(base, quote);
+      string web(const bool &orders = false) const {
+        return orders ? webOrders : web(base, quote);
       };
       void disclaimer() const {
         if (unlock.empty()) return;
@@ -376,7 +374,8 @@ namespace ₿ {
       };
       function<void(const string&, const string&, const string&)> printer;
     protected:
-      string webMarket;
+      string webMarket,
+             webOrders;
       virtual   void disconnect()   = 0;
       virtual   bool connected()    const = 0;
       virtual   json handshake()    const = 0;
