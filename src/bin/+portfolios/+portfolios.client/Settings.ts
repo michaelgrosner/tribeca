@@ -5,7 +5,6 @@ import {Socket, Models} from 'lib/K';
 @Component({
   selector: 'settings',
   template: `<select class="form-control input-lg" id="base_select"
-    style="width: 121px;margin-top: -1px;height: 26px;font-size: 19px;"
     title="base currency"
     [(ngModel)]="params.currency"
     (ngModelChange)="submitSettings()">
@@ -14,7 +13,6 @@ import {Socket, Models} from 'lib/K';
   </select>
   <input type="checkbox" id="zeroed_checkbox"
     title="show zeroed"
-    style="zoom: 200%;margin-top:0px;"
     [(ngModel)]="params.zeroed"
     (ngModelChange)="submitSettings()">`
 })

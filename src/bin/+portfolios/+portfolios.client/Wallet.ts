@@ -87,6 +87,8 @@ export class WalletComponent {
       field: 'held',
       headerName: 'held',
       type: 'rightAligned',
+      pinnedRowCellRenderer: (params) => ``,
+      cellRenderer: (params) => `<span class="val">` + params.value + `</span>`,
       cellClassRules: {
         'text-muted': 'x == "0.00000000"',
         'up-data': 'data.dir_held == "up-data"',
@@ -98,6 +100,8 @@ export class WalletComponent {
       field: 'amount',
       headerName: 'available',
       type: 'rightAligned',
+      pinnedRowCellRenderer: (params) => ``,
+      cellRenderer: (params) => `<span class="val">` + params.value + `</span>`,
       cellClassRules: {
         'text-muted': 'x == "0.00000000"',
         'up-data': 'data.dir_amount == "up-data"',
@@ -109,7 +113,8 @@ export class WalletComponent {
       field: 'total',
       headerName: 'total',
       type: 'rightAligned',
-      pinnedRowCellRenderer: (params) => `<span id="total_pin"></span>`,
+      pinnedRowCellRenderer: (params) => ``,
+      cellRenderer: (params) => `<span class="val">` + params.value + `</span>`,
       cellClassRules: {
         'text-muted': 'x == "0.00000000"',
         'up-data': 'data.dir_total == "up-data"',
@@ -137,6 +142,7 @@ export class WalletComponent {
       headerName: 'price',
       type: 'rightAligned',
       pinnedRowCellRenderer: (params) => `<span id="price_pin"></span>`,
+      cellRenderer: (params) => `<span class="val">` + params.value + `</span>`,
       cellClassRules: {
         'text-muted': 'x == "0.00000000"',
         'up-data': 'data.dir_price == "up-data"',
@@ -149,7 +155,9 @@ export class WalletComponent {
       headerName: 'balance',
       sort: 'desc',
       type: 'rightAligned',
-      pinnedRowCellRenderer: (params) => `<span class="kira" id="balance_pin"></span>`,
+      pinnedRowCellRenderer: (params) => `<span class="kira" id="balance_pin"></span><span id="total_pin" class="balance_percent"></span>`,
+      cellRenderer: (params) => `<span class="val">` + params.value + `</span>`
+        + `<small class="balance_percent" id="balance_percent_`+params.data.currency+`"></small>`,
       cellClassRules: {
         'text-muted': 'x == "0.00000000"',
         'up-data': 'data.dir_balance == "up-data"',
@@ -202,8 +210,17 @@ export class WalletComponent {
       if (node.data.balance) sum += parseFloat(node.data.balance);
     });
 
-    if (document.getElementById("balance_pin"))
-      document.getElementById("balance_pin").innerHTML = sum.toFixed(8);
+    if (document.getElementById('balance_pin')) {
+      document.getElementById('balance_pin').innerHTML = sum.toFixed(8);
+
+      this.grid.api.forEachNode((node: RowNode) => {
+        if (document.getElementById('balance_percent_' + node.data.currency)) {
+          var val = (parseFloat(node.data.balance) / sum * 100).toFixed(2);
+          if (val != document.getElementById('balance_percent_' + node.data.currency).innerHTML)
+            document.getElementById('balance_percent_' + node.data.currency).innerHTML = val;
+        }
+      });
+    }
   };
 
   private pin = () => {

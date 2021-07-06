@@ -172,10 +172,10 @@ div#market_links {
   .ag-cell-data-changed {
       background-color:transparent !important;
   }
-  .up-data.ag-cell-data-changed span {
+  .up-data.ag-cell-data-changed span.val {
       background-color:#006a00 !important;
   }
-  .down-data.ag-cell-data-changed span {
+  .down-data.ag-cell-data-changed span.val {
       background-color:#570101 !important;
   }
   .ag-body-viewport .ag-row-selected,

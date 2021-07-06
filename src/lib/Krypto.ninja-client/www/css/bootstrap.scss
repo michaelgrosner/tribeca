@@ -5215,6 +5215,21 @@ div#market_links {
   line-height: initial;
 }
 
+#zeroed_checkbox {
+  zoom: 200%;
+  margin-top: 0px;
+  position: absolute;
+  top: 2px;
+  right: 4px;
+}
+
+#base_select{
+  width: 121px;
+  margin-top: -1px;
+  height: 26px;
+  font-size: 19px;
+}
+
 #portfolios.ag-theme-big {
   div.ag-row {
     font-size: 21px !important;
@@ -5226,15 +5241,26 @@ div#market_links {
   .ag-cell-data-changed {
       background-color:transparent !important;
   }
-  .up-data.ag-cell-data-changed span {
+  .up-data.ag-cell-data-changed span.val {
       background-color:#cec !important;
   }
-  .down-data.ag-cell-data-changed span {
+  .down-data.ag-cell-data-changed span.val {
       background-color:#ecc !important;
   }
   .ag-body-viewport .ag-row-selected,
   .ag-body-viewport .ag-row-hover {
     background: #d4d4d4!important;
+  }
+  .balance_percent {
+    font-size: 15px;
+    width: 60px;
+    display: inline-block;
+  }
+  .ag-row-pinned .balance_percent::after {
+    content: "";
+  }
+  .balance_percent::after {
+    content: "%";
   }
   .ag-body-viewport .ag-row-selected .ag-cell[aria-colindex="4"] {
     font-weight: 600!important;
