@@ -173,56 +173,6 @@ export class WalletComponent {
     this.pin();
   };
 
-  private addRowData = (o: any) => {
-    if (!this.grid.api) return;
-    if (o === null) this.grid.api.setRowData([]);
-    else o.forEach(o => {
-      const amount = o.wallet.amount.toFixed(8);
-      const held = o.wallet.held.toFixed(8);
-      const total = (o.wallet.amount + o.wallet.held).toFixed(8);
-      const balance = o.wallet.value.toFixed(8);
-      const price = o.price.toFixed(8);
-      var node: RowNode = this.grid.api.getRowNode(o.wallet.currency);
-      if (!node) {
-        this.grid.api.applyTransaction({add: [{
-          currency: o.wallet.currency,
-          amount: amount,
-          held: held,
-          total: total,
-          balance: balance,
-          price: price
-        }]});
-      } else {
-        var cols = [];
-
-        if (this.resetRowData('balance', balance, node)) cols.push('balance');
-        if (this.resetRowData('price',   price,   node)) cols.push('price');
-        if (this.resetRowData('amount',  amount,  node)) cols.push('amount');
-        if (this.resetRowData('held',    held,    node)) cols.push('held');
-        if (this.resetRowData('total',   total,   node)) cols.push('total');
-
-        this.grid.api.flashCells({ rowNodes: [node], columns: cols});
-      }
-    });
-
-    var sum = 0;
-    this.grid.api.forEachNode((node: RowNode) => {
-      if (node.data.balance) sum += parseFloat(node.data.balance);
-    });
-
-    if (document.getElementById('balance_pin')) {
-      document.getElementById('balance_pin').innerHTML = sum.toFixed(8);
-
-      this.grid.api.forEachNode((node: RowNode) => {
-        if (document.getElementById('balance_percent_' + node.data.currency)) {
-          var val = (parseFloat(node.data.balance) / sum * 100).toFixed(2);
-          if (val != document.getElementById('balance_percent_' + node.data.currency).innerHTML)
-            document.getElementById('balance_percent_' + node.data.currency).innerHTML = val;
-        }
-      });
-    }
-  };
-
   private pin = () => {
     if (this.grid.api && !this.grid.api.getPinnedTopRowCount()) {
       this.grid.api.setPinnedTopRowData([{}]);
@@ -250,6 +200,52 @@ export class WalletComponent {
 
       pin(pin);
     }
+  };
+
+  private addRowData = (o: any) => {
+    if (!this.grid.api) return;
+    var sum = 0;
+    var pin_sum = document.getElementById('balance_pin');
+    if (o === null) this.grid.api.setRowData([]);
+    else o.forEach(o => {
+      const amount = o.wallet.amount.toFixed(8);
+      const held = o.wallet.held.toFixed(8);
+      const total = (o.wallet.amount + o.wallet.held).toFixed(8);
+      const balance = o.wallet.value.toFixed(8);
+      const price = o.price.toFixed(8);
+      sum += o.wallet.value;
+      var node: RowNode = this.grid.api.getRowNode(o.wallet.currency);
+      if (!node) {
+        this.grid.api.applyTransaction({add: [{
+          currency: o.wallet.currency,
+          amount: amount,
+          held: held,
+          total: total,
+          balance: balance,
+          price: price
+        }]});
+      } else {
+        var cols = [];
+
+        if (this.resetRowData('balance', balance, node)) cols.push('balance');
+        if (this.resetRowData('price',   price,   node)) cols.push('price');
+        if (this.resetRowData('amount',  amount,  node)) cols.push('amount');
+        if (this.resetRowData('held',    held,    node)) cols.push('held');
+        if (this.resetRowData('total',   total,   node)) cols.push('total');
+
+        this.grid.api.flashCells({ rowNodes: [node], columns: cols});
+      }
+
+      if (pin_sum) {
+        var el = document.getElementById('balance_percent_' + o.wallet.currency);
+        if (el) {
+          var val = (o.wallet.value / parseFloat(pin_sum.innerHTML) * 100).toFixed(2);
+          if (val != el.innerHTML) el.innerHTML = val;
+        }
+      }
+    });
+
+    if (pin_sum) pin_sum.innerHTML = sum.toFixed(8);
   };
 
   private resetRowData = (name: string, val: string, node: RowNode) => {

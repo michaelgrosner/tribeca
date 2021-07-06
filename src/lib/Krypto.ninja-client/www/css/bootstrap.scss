@@ -5286,7 +5286,8 @@ div#market_links {
     height: 34px!important;
   }
   .ag-has-focus .ag-row-pinned .ag-cell-focus {
-    padding-top: 6px!important;
+    padding-top:5px !important;
+    border:1px transparent solid!important;
   }
   .ag-cell,
   .ag-full-width-row .ag-cell-wrapper.ag-row-group {
