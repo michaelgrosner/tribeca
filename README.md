@@ -23,7 +23,7 @@ Runs on unix-like systems. Persistence is achieved through a built-in server-les
 
 ![Web UI Preview](https://user-images.githubusercontent.com/1634027/44740469-d5c7ff00-aafa-11e8-9252-73b9c1283adb.png)
 
-The web UI is compatible with most web browsers/resolutions, but Firefox or Chrome at 1600px are recommended. Doesn't require configuration of any web server (unless installed behind your own reverse proxy).
+The web UI is compatible with most web browsers/resolutions, but Brave or Firefox at 1600px are recommended. Doesn't require configuration of any web server (unless installed behind your own reverse proxy).
 
 ### Compatible Exchanges
 
