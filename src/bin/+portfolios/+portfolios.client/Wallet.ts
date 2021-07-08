@@ -6,7 +6,12 @@ import {Shared, Models} from 'lib/K';
 
 @Component({
   selector: 'wallet',
-  template: `<ag-grid-angular id="portfolios"
+  template: `<div hidden="true">
+    <markets *ngIf="markets_view"
+      (rendered)="onRendered($event)"
+      [markets]="markets"></markets>
+  </div>
+  <ag-grid-angular id="portfolios"
     class="ag-theme-fresh ag-theme-dark ag-theme-big"
     style="width: 100%;"
     (window:resize)="onGridReady()"
@@ -15,6 +20,11 @@ import {Shared, Models} from 'lib/K';
     [gridOptions]="grid"></ag-grid-angular>`
 })
 export class WalletComponent {
+
+  private deferredRender: any = null;
+
+  private markets_view: boolean = false;
+  private markets: any = null;
 
   private selection: string = "";
 
@@ -27,6 +37,11 @@ export class WalletComponent {
   };
 
   @Input() settings: Models.PortfolioParameters;
+
+
+  private onRendered = ($event) => {
+    if (this.deferredRender) setTimeout(this.deferredRender, 0);
+  };
 
   private onRowClicked = ($event) => {
     if (!$event.data.currency) return;
@@ -47,33 +62,31 @@ export class WalletComponent {
     rowSelection:'single',
     enableCellTextSelection: true,
     onSelectionChanged: () => {
-      if (document.getElementById("market_links")) document.getElementById("market_links").remove();
-      var row = this.grid.api.getSelectedRows().reverse().pop();
-      if (!row || !this.links.hasOwnProperty(row.currency)) return;
-      var div = document.createElement('div');
-      div.setAttribute('id', 'market_links');
-      var tbl = document.createElement('table');
-      div.appendChild(tbl);
-      var tr;
-      var i = 0;
-      for (let x in this.links[row.currency]) {
-        var a = document.createElement('a');
-        a.setAttribute('rel', 'noreferrer');
-        a.setAttribute('target', '_blank');
-        a.setAttribute('title', this.links[row.currency][x]);
-        a.setAttribute('href', this.links[row.currency][x]);
-        a.onclick = (ev) => { ev.stopPropagation() };
-        a.innerText = x;
-        var td = document.createElement('td');
-        td.appendChild(a);
-        if (!(i++ % 5))
-          tbl.appendChild(tr = document.createElement('tr'));
-        tr.appendChild(td);
-      }
-      document.querySelectorAll('#portfolios div[row-id]').forEach((o: HTMLElement) => {
-        o.style.zIndex = o.getAttribute('row-id') == row.currency ? '2' : '1';
+      this.markets_view = false;
+      this.markets = null;
+      this.grid.api.forEachNode((node: RowNode) => {
+        node.setRowHeight(this.grid.rowHeight);
       });
-      document.querySelector("#portfolios div[row-id='" + row.currency + "'] div[aria-colindex='4']").appendChild(div);
+      var node: RowNode = this.grid.api.getSelectedNodes().reverse().pop();
+      if (!node || !this.links.hasOwnProperty(node.data.currency))
+        return this.grid.api.onRowHeightChanged();
+      this.deferredRender = () => {
+        document.querySelector("#portfolios div[row-id='" + node.data.currency + "'] div[aria-colindex='4']").appendChild(document.querySelector('#markets'));
+        var style = (<HTMLElement>document.querySelector('#markets')).style;
+        node.setRowHeight(
+          this.grid.rowHeight
+          + parseInt(style.marginTop)
+          + parseInt(style.marginBottom)
+          + (<HTMLElement>document.querySelector('#markets div')).offsetHeight
+        );
+        this.grid.api.onRowHeightChanged();
+      };
+      setTimeout(() => {
+        this.markets_view = true;
+        setTimeout(() => {
+          this.markets = this.links[node.data.currency];
+        }, 0);
+      }, 0);
     },
     isExternalFilterPresent: () => !this.settings.zeroed || !!this.pattern,
     doesExternalFilterPass: (node) => (
@@ -128,11 +141,7 @@ export class WalletComponent {
       pinnedRowCellRenderer: (params) => `<input type="text" class="form-control"
         style="background: #0000005c;width: 100%;height: 26px;font-size: 19px;margin-top: -1px;"
         title="filter" id="filter_pattern" />`,
-      cellRenderer: (params) => {
-        var sym = params.value.toLowerCase();
-        if (sym == 'cgld') sym = 'celo';
-        return '<i class="beacon-sym-_default-s beacon-sym-' + sym + '-s" ></i> ' + params.value;
-      },
+      cellRenderer: (params) => '<i class="beacon-sym-_default-s beacon-sym-' + params.value.toLowerCase() + '-s" ></i> ' + params.value,
       cellClassRules: {
         'text-muted': 'data.total == "0.00000000"'
       }
@@ -182,10 +191,15 @@ export class WalletComponent {
           && document.getElementById("price_pin")
           && document.getElementById("total_pin")
         ) {
+          document.getElementById("zeroed_checkbox").addEventListener("change", event => {
+            this.cleanSelection();
+          });
+
           document.getElementById("filter_pattern").addEventListener("keyup", event => {
             this.pattern =
             (<HTMLInputElement>event.target).value = (<HTMLInputElement>event.target).value.toUpperCase();
             this.grid.api.onFilterChanged();
+            this.cleanSelection();
           });
 
           document.getElementById("price_pin").appendChild(
@@ -200,6 +214,13 @@ export class WalletComponent {
 
       pin(pin);
     }
+  };
+
+  private cleanSelection = () => {
+    if (!this.selection) return;
+    var node: RowNode = this.grid.api.getRowNode(this.selection);
+    if (node && !this.grid.doesExternalFilterPass(node))
+      this.onRowClicked({data:{currency:this.selection}});
   };
 
   private addRowData = (o: any) => {

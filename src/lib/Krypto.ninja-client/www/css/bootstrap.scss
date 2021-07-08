@@ -5201,20 +5201,6 @@ div.ag-header-cell .ag-header-cell-label i {
     margin-left: 2px;
 }
 
-#market_links td {
-  padding:2px 7px;
-  text-align:center;
-}
-
-div#market_links {
-  background: #d4d4d4;
-  position: absolute;
-  padding: 5px;
-  border-bottom-left-radius: 7px;
-  border-bottom-right-radius: 7px;
-  line-height: initial;
-}
-
 #zeroed_checkbox {
   zoom: 200%;
   margin-top: 0px;
@@ -5283,6 +5269,8 @@ div#market_links {
     border-top-width: 1px!important;
     border-top-color: transparent!important;
     padding-top: 5px!important;
+  }
+  .ag-cell {
     height: 34px!important;
   }
   .ag-has-focus .ag-row-pinned .ag-cell-focus {
