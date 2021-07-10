@@ -178,7 +178,7 @@ div#hud.bg-danger {
   .ag-body-viewport .ag-row-hover {
     background: #000!important;
   }
-  .ag-body-viewport .ag-row-selected .ag-cell[aria-colindex="4"] {
+  .ag-body-viewport .ag-row-selected .ag-cell .row_title {
     color: #ff0!important;
   }
 }

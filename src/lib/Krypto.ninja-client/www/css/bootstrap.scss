@@ -5220,7 +5220,7 @@ div.ag-header-cell .ag-header-cell-label i {
   div.ag-row {
     font-size: 21px !important;
   }
-  div.ag-row i {
+  div.ag-row .row_title i {
     font-size: 25px;
     vertical-align: text-top;
   }
@@ -5245,10 +5245,11 @@ div.ag-header-cell .ag-header-cell-label i {
   .ag-row-pinned .balance_percent::after {
     content: "";
   }
+  .open_percent::after,
   .balance_percent::after {
     content: "%";
   }
-  .ag-body-viewport .ag-row-selected .ag-cell[aria-colindex="4"] {
+  .ag-body-viewport .ag-row-selected .ag-cell .row_title {
     font-weight: 600!important;
   }
   .ag-root,
@@ -5262,11 +5263,10 @@ div.ag-header-cell .ag-header-cell-label i {
     overflow-y: hidden!important;
   }
   .ag-has-focus .ag-cell-focus {
-    border: 0px!important;
     border-right: dotted grey!important;
+    border-bottom-color: transparent!important;
     border-right-width: 1px!important;
     border-left: 1px transparent solid!important;
-    border-top-width: 1px!important;
     border-top-color: transparent!important;
     padding-top: 5px!important;
   }

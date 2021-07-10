@@ -5,11 +5,13 @@ import {GridOptions, RowNode} from '@ag-grid-community/all-modules';
 import {Shared, Models} from 'lib/K';
 
 @Component({
-  selector: 'wallet',
+  selector: 'wallets',
   template: `<div hidden="true">
     <markets *ngIf="markets_view"
       (rendered)="onRendered($event)"
-      [markets]="markets"></markets>
+      [settings]="settings"
+      [markets]="markets"
+      [market]="market"></markets>
   </div>
   <ag-grid-angular id="portfolios"
     class="ag-theme-fresh ag-theme-dark ag-theme-big"
@@ -19,25 +21,24 @@ import {Shared, Models} from 'lib/K';
     (rowClicked)="onRowClicked($event)"
     [gridOptions]="grid"></ag-grid-angular>`
 })
-export class WalletComponent {
+export class WalletsComponent {
 
   private deferredRender: any = null;
 
   private markets_view: boolean = false;
-  private markets: any = null;
+  private market: any = null;
 
   private selection: string = "";
 
   private pattern: string = "";
 
-  @Input() links: any;
+  @Input() markets: any;
 
-  @Input() set asset(o: any) {
+  @Input() set wallets(o: any) {
     this.addRowData(o);
   };
 
   @Input() settings: Models.PortfolioParameters;
-
 
   private onRendered = ($event) => {
     if (this.deferredRender) setTimeout(this.deferredRender, 0);
@@ -63,13 +64,12 @@ export class WalletComponent {
     enableCellTextSelection: true,
     onSelectionChanged: () => {
       this.markets_view = false;
-      this.markets = null;
+      this.market = null;
       this.grid.api.forEachNode((node: RowNode) => {
         node.setRowHeight(this.grid.rowHeight);
       });
       var node: RowNode = this.grid.api.getSelectedNodes().reverse().pop();
-      if (!node || !this.links.hasOwnProperty(node.data.currency))
-        return this.grid.api.onRowHeightChanged();
+      if (!node) return this.grid.api.onRowHeightChanged();
       this.deferredRender = () => {
         document.querySelector("#portfolios div[row-id='" + node.data.currency + "'] div[aria-colindex='4']").appendChild(document.querySelector('#markets'));
         var style = (<HTMLElement>document.querySelector('#markets')).style;
@@ -84,7 +84,7 @@ export class WalletComponent {
       setTimeout(() => {
         this.markets_view = true;
         setTimeout(() => {
-          this.markets = this.links[node.data.currency];
+          this.market = node.data.currency;
         }, 0);
       }, 0);
     },
@@ -103,11 +103,11 @@ export class WalletComponent {
       pinnedRowCellRenderer: (params) => ``,
       cellRenderer: (params) => `<span class="val">` + params.value + `</span>`,
       cellClassRules: {
-        'text-muted': 'x == "0.00000000"',
+        'text-muted': '!parseFloat(x)',
         'up-data': 'data.dir_held == "up-data"',
         'down-data': 'data.dir_held == "down-data"'
       },
-      comparator: (valueA, valueB, nodeA, nodeB, isInverted) => valueA - valueB
+      comparator: Shared.comparator
     }, {
       width: 220,
       field: 'amount',
@@ -116,11 +116,11 @@ export class WalletComponent {
       pinnedRowCellRenderer: (params) => ``,
       cellRenderer: (params) => `<span class="val">` + params.value + `</span>`,
       cellClassRules: {
-        'text-muted': 'x == "0.00000000"',
+        'text-muted': '!parseFloat(x)',
         'up-data': 'data.dir_amount == "up-data"',
         'down-data': 'data.dir_amount == "down-data"'
       },
-      comparator: (valueA, valueB, nodeA, nodeB, isInverted) => valueA - valueB
+      comparator: Shared.comparator
     }, {
       width: 220,
       field: 'total',
@@ -129,11 +129,11 @@ export class WalletComponent {
       pinnedRowCellRenderer: (params) => ``,
       cellRenderer: (params) => `<span class="val">` + params.value + `</span>`,
       cellClassRules: {
-        'text-muted': 'x == "0.00000000"',
+        'text-muted': '!parseFloat(x)',
         'up-data': 'data.dir_total == "up-data"',
         'down-data': 'data.dir_total == "down-data"'
       },
-      comparator: (valueA, valueB, nodeA, nodeB, isInverted) => valueA - valueB
+      comparator: Shared.comparator
     }, {
       width: 130,
       field: 'currency',
@@ -141,9 +141,9 @@ export class WalletComponent {
       pinnedRowCellRenderer: (params) => `<input type="text" class="form-control"
         style="background: #0000005c;width: 100%;height: 26px;font-size: 19px;margin-top: -1px;"
         title="filter" id="filter_pattern" />`,
-      cellRenderer: (params) => '<i class="beacon-sym-_default-s beacon-sym-' + params.value.toLowerCase() + '-s" ></i> ' + params.value,
+      cellRenderer: (params) => '<span class="row_title"><i class="beacon-sym-_default-s beacon-sym-' + params.value.toLowerCase() + '-s" ></i> ' + params.value + '</span>',
       cellClassRules: {
-        'text-muted': 'data.total == "0.00000000"'
+        'text-muted': '!parseFloat(data.total)'
       }
     }, {
       width: 220,
@@ -153,11 +153,11 @@ export class WalletComponent {
       pinnedRowCellRenderer: (params) => `<span id="price_pin"></span>`,
       cellRenderer: (params) => `<span class="val">` + params.value + `</span>`,
       cellClassRules: {
-        'text-muted': 'x == "0.00000000"',
+        'text-muted': '!parseFloat(x)',
         'up-data': 'data.dir_price == "up-data"',
         'down-data': 'data.dir_price == "down-data"'
       },
-      comparator: (valueA, valueB, nodeA, nodeB, isInverted) => valueA - valueB
+      comparator: Shared.comparator
     }, {
       width: 220,
       field: 'balance',
@@ -166,13 +166,13 @@ export class WalletComponent {
       type: 'rightAligned',
       pinnedRowCellRenderer: (params) => `<span class="kira" id="balance_pin"></span><span id="total_pin" class="balance_percent"></span>`,
       cellRenderer: (params) => `<span class="val">` + params.value + `</span>`
-        + `<small class="balance_percent" id="balance_percent_`+params.data.currency+`"></small>`,
+        + `<small class="balance_percent" id="balance_percent_` + params.data.currency + `"></small>`,
       cellClassRules: {
-        'text-muted': 'x == "0.00000000"',
+        'text-muted': '!parseFloat(x)',
         'up-data': 'data.dir_balance == "up-data"',
         'down-data': 'data.dir_balance == "down-data"'
       },
-      comparator: (valueA, valueB, nodeA, nodeB, isInverted) => valueA - valueB
+      comparator: Shared.comparator
     }]
   };
 
@@ -227,16 +227,19 @@ export class WalletComponent {
     if (!this.grid.api) return;
     var sum = 0;
     var pin_sum = document.getElementById('balance_pin');
-    if (o === null) this.grid.api.setRowData([]);
+    if (o === null) {
+      this.grid.api.setRowData([]);
+      this.selection = null;
+    }
     else o.forEach(o => {
-      const amount = o.wallet.amount.toFixed(8);
-      const held = o.wallet.held.toFixed(8);
-      const total = (o.wallet.amount + o.wallet.held).toFixed(8);
-      const balance = o.wallet.value.toFixed(8);
-      const price = o.price.toFixed(8);
+      const amount  = Shared.str(o.wallet.amount,                 8);
+      const held    = Shared.str(o.wallet.held,                   8);
+      const total   = Shared.str(o.wallet.amount + o.wallet.held, 8);
+      const balance = Shared.str(o.wallet.value,                  8);
+      const price   = Shared.str(o.price,                         8);
       sum += o.wallet.value;
       var node: RowNode = this.grid.api.getRowNode(o.wallet.currency);
-      if (!node) {
+      if (!node)
         this.grid.api.applyTransaction({add: [{
           currency: o.wallet.currency,
           amount: amount,
@@ -245,38 +248,29 @@ export class WalletComponent {
           balance: balance,
           price: price
         }]});
-      } else {
-        var cols = [];
+      else
+        this.grid.api.flashCells({
+          rowNodes: [node],
+          columns: [].concat(Shared.resetRowData('balance', balance, node))
+                     .concat(Shared.resetRowData('price',   price,   node))
+                     .concat(Shared.resetRowData('amount',  amount,  node))
+                     .concat(Shared.resetRowData('held',    held,    node))
+                     .concat(Shared.resetRowData('total',   total,   node))
+        });
 
-        if (this.resetRowData('balance', balance, node)) cols.push('balance');
-        if (this.resetRowData('price',   price,   node)) cols.push('price');
-        if (this.resetRowData('amount',  amount,  node)) cols.push('amount');
-        if (this.resetRowData('held',    held,    node)) cols.push('held');
-        if (this.resetRowData('total',   total,   node)) cols.push('total');
 
-        this.grid.api.flashCells({ rowNodes: [node], columns: cols});
-      }
+      if (!this.grid.api.getSelectedNodes().length)
+        this.grid.api.onSortChanged();
 
       if (pin_sum) {
         var el = document.getElementById('balance_percent_' + o.wallet.currency);
         if (el) {
-          var val = (o.wallet.value / parseFloat(pin_sum.innerHTML) * 100).toFixed(2);
+          var val = Shared.str(o.wallet.value / Shared.num(pin_sum.innerHTML) * 100, 2);
           if (val != el.innerHTML) el.innerHTML = val;
         }
       }
     });
 
-    if (pin_sum) pin_sum.innerHTML = sum.toFixed(8);
-  };
-
-  private resetRowData = (name: string, val: string, node: RowNode) => {
-    var dir = '';
-    if      (val > node.data[name]) dir = 'up-data';
-    else if (val < node.data[name]) dir = 'down-data';
-    if (dir != '') {
-      node.data['dir_' + name] = dir;
-      node.setDataValue(name, val);
-    }
-    return dir != '';
+    if (pin_sum) pin_sum.innerHTML = Shared.str(sum, 8);
   };
 };

@@ -48,7 +48,7 @@ namespace analpaper {
     k.from_json(j);
   };
 
-  struct Portfolio  {
+  struct Portfolio {
     Wallet wallet;
     unordered_map<string, Price> prices;
     Price price;
@@ -60,8 +60,7 @@ namespace analpaper {
     };
   };
 
-  struct Portfolios: public Client::Broadcast<Portfolios>,
-                     public Client::Clicked {
+  struct Portfolios: public Client::Broadcast<Portfolios> {
     Settings settings;
     unordered_map<string, Portfolio> portfolio;
     private_ref:
@@ -69,18 +68,15 @@ namespace analpaper {
     public:
       Portfolios(const KryptoNinja &bot)
         : Broadcast(bot)
-        , Clicked(bot, {
-            {&settings, [&]() { calc(); }}
-          })
         , settings(bot)
         , K(bot)
       {};
-      Price calc(const string &base) const {
-        if (base == settings.currency)
+      Price calc(const string &from) const {
+        if (from == settings.currency)
           return 1;
-        if (portfolio.at(base).prices.find(settings.currency) != portfolio.at(base).prices.end())
-          return portfolio.at(base).prices.at(settings.currency);
-        else for (const auto &it : portfolio.at(base).prices)
+        if (portfolio.at(from).prices.find(settings.currency) != portfolio.at(from).prices.end())
+          return portfolio.at(from).prices.at(settings.currency);
+        else for (const auto &it : portfolio.at(from).prices)
           if (portfolio.find(it.first) != portfolio.end()) {
             if (portfolio.at(it.first).prices.find(settings.currency) != portfolio.at(it.first).prices.end())
               return it.second * portfolio.at(it.first).prices.at(settings.currency);
@@ -117,68 +113,118 @@ namespace analpaper {
   static void to_json(json &j, const Portfolios &k) {
     j = json::array();
     for (const auto &it : k.portfolio)
-      if (!it.second.prices.empty())
+      if (it.second.price)
         j.push_back(it.second);
   };
 
-  struct Links: public Client::Broadcast<Links> {
-    unordered_map<string, unordered_map<string, string>> link;
+  struct Market {
+    string web;
+     Price spread,
+           raw_spread;
+    double open;
+    Amount volume,
+           raw_volume;
+  };
+  static void to_json(json &j, const Market &k) {
+    j = {
+      {   "web", k.web   },
+      {"spread", k.spread},
+      {  "open", k.open  },
+      {"volume", k.volume}
+    };
+  };
+
+  struct Markets: public Client::Broadcast<Markets> {
+    unordered_map<string, unordered_map<string, Market>> market;
     private_ref:
       const KryptoNinja &K;
     public:
-      Links(const KryptoNinja &bot)
+      Markets(const KryptoNinja &bot)
         : Broadcast(bot)
         , K(bot)
       {};
-      void add(const string &base, const string &quote) {
-        link[base][quote] =
-        link[quote][base] = K.gateway->web(base, quote);
+      void add(const Ticker &raw) {
+        market[raw.base][raw.quote] = {
+          K.gateway->web(raw.base, raw.quote),
+          0,
+          raw.spread,
+          raw.open,
+          0,
+          raw.volume
+        };
+      };
+      void calc(const string &base, const string &quote, const Price &volume, const Price &spread) {
+        market[base][quote].spread = spread;
+        market[base][quote].volume = volume;
+        if (ratelimit()) return;
         broadcast();
       };
-      bool read_same_blob() const override {
-        return false;
-      };
       mMatter about() const override {
-        return mMatter::Links;
+        return mMatter::MarketData;
+      };
+    private:
+      bool ratelimit() {
+        return !read_soon(1e+3);
       };
   };
-  static void to_json(json &j, const Links &k) {
-    j = k.link;
+  static void to_json(json &j, const Markets &k) {
+    j = k.market;
   };
 
-  struct Tickers {
-    Links links;
+  struct Tickers: public Client::Clicked {
+    Markets markets;
     private_ref:
-      Portfolios  &portolios;
+      Portfolios &portfolios;
     public:
       Tickers(const KryptoNinja &bot, Portfolios &p)
-        : links(bot)
-        , portolios(p)
+        : Clicked(bot, {
+            {&p.settings, [&]() { calc(); }}
+          })
+        , markets(bot)
+        , portfolios(p)
       {};
       void read_from_gw(const Ticker &raw) {
         add(raw.base,  raw.quote,     raw.price);
         add(raw.quote, raw.base,  1 / raw.price);
-        portolios.calc();
-        links.add(raw.base, raw.quote);
+        portfolios.calc();
+        markets.add(raw);
+        markets.calc(
+          raw.base,
+          raw.quote,
+          raw.volume * portfolios.portfolio.at(raw.base).price,
+          raw.spread * portfolios.portfolio.at(raw.quote).price
+        );
       };
     private:
+      void calc() {
+        portfolios.calc();
+        for (auto &it : markets.market)
+          for (auto &_it : it.second) {
+            markets.calc(
+              it.first,
+              _it.first,
+              _it.second.raw_volume * portfolios.portfolio.at(it.first).price,
+              _it.second.raw_spread * portfolios.portfolio.at(_it.first).price
+            );
+          }
+      };
       void add(const string &base, const string &quote, const Price &price) {
-        portolios.portfolio[base].prices[quote] = price;
-        if (portolios.portfolio.at(base).wallet.currency.empty())
-          portolios.portfolio.at(base).wallet.currency = base;
+        portfolios.portfolio[base].prices[quote] = price;
+        if (portfolios.portfolio.at(base).wallet.currency.empty())
+          portfolios.portfolio.at(base).wallet.currency = base;
       };
   };
 
   struct Wallets {
     private_ref:
-      Portfolios &portolios;
+      Portfolios &portfolios;
     public:
       Wallets(Portfolios &p)
-        : portolios(p)
+        : portfolios(p)
       {};
       void read_from_gw(const Wallet &raw) {
-        portolios.portfolio[raw.currency].wallet = raw;
-        portolios.calc();
+        portfolios.portfolio[raw.currency].wallet = raw;
+        portfolios.calc();
       };
   };
 
