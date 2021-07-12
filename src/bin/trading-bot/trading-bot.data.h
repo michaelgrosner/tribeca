@@ -1975,6 +1975,8 @@ namespace tribeca {
           K.log("DEBUG QE", "[" + step + "] "
             + to_string((int)bid.state) + ":"
             + to_string((int)ask.state) + " "
+            + to_string((int)bid.isPong) + ":"
+            + to_string((int)ask.isPong) + " "
             + ((json){{"bid", bid}, {"ask", ask}}).dump()
           );
       };
@@ -2008,6 +2010,8 @@ namespace tribeca {
         , quotes(Q)
       {};
       void calcRawQuotes() const  {
+        quotes.ask.isPong =
+        quotes.bid.isPong = false;
         calcRawQuotesFromMarket(
           levels,
           K.gateway->tickPrice,
