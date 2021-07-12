@@ -9,6 +9,7 @@ import {Socket, Shared, Models} from 'lib/K';
   template: `<ag-grid-angular
     class="ag-theme-fresh ag-theme-dark"
     style="height: 131px;width: 99.80%;"
+    (window:resize)="onGridReady()"
     (gridReady)="onGridReady()"
     (cellClicked)="onCellClicked($event)"
     [gridOptions]="grid"></ag-grid-angular>`
@@ -59,8 +60,8 @@ export class OrdersComponent {
       },
       cellRenderer: (params) => (
         params.data.pong
-          ? '&lrhar;'
-          : '&rhard;'
+          ? '&#10564;'
+          : '&#10140;'
         ) + params.value
     }, {
       width: 74,

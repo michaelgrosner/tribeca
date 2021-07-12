@@ -9,6 +9,7 @@ import {Shared, Models} from 'lib/K';
   template: `<ag-grid-angular
     class="ag-theme-fresh ag-theme-dark marketTrades"
     style="height: 616px;width: 100%;"
+    (window:resize)="onGridReady()"
     (gridReady)="onGridReady()"
     [gridOptions]="grid"></ag-grid-angular>`
 })

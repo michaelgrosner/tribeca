@@ -9,6 +9,7 @@ import {Socket, Shared, Models} from 'lib/K';
   template: `<ag-grid-angular
     class="ag-theme-fresh ag-theme-dark"
     style="height: 479px;width: 99.80%;"
+    (window:resize)="onGridReady()"
     (gridReady)="onGridReady()"
     (cellClicked)="onCellClicked($event)"
     [gridOptions]="grid"></ag-grid-angular>`
@@ -96,10 +97,10 @@ export class TradesComponent {
       cellClassRules: {
         'sell': 'x == "Ask"',
         'buy': 'x == "Bid"',
-        'kira': 'x == "&lrhar;"'
+        'kira': 'x == "&#10564;"'
       },
-      cellRenderer: (params) => params.value === '&lrhar;'
-        ? '<span style="font-size:15px;padding-left:3px;">' + params.value + '</span>'
+      cellRenderer: (params) => params.value === '&#10564;'
+        ? '<span style="font-size:21px;padding-left:3px;font-weight:600;">' + params.value + '</span>'
         : params.value
     }, {
       width: 80,
@@ -129,7 +130,7 @@ export class TradesComponent {
     }, {
       width: 75,
       field:'Kvalue',
-      headerName:'⇋value',
+      headerName:'⥄value',
       cellClassRules: {
         'buy': 'data._side == "Ask"',
         'sell': 'data._side == "Bid"'
@@ -137,7 +138,7 @@ export class TradesComponent {
     }, {
       width: 85,
       field:'Kqty',
-      headerName:'⇋qty',
+      headerName:'⥄qty',
       suppressSizeToFit: true,
       cellClassRules: {
         'buy': 'data._side == "Ask"',
@@ -146,7 +147,7 @@ export class TradesComponent {
     }, {
       width: 80,
       field:'Kprice',
-      headerName:'⇋price',
+      headerName:'⥄price',
       cellClassRules: {
         'buy': 'data._side == "Ask"',
         'sell': 'data._side == "Bid"'
@@ -156,7 +157,7 @@ export class TradesComponent {
       field:'delta',
       headerName:'delta',
       cellClassRules: {
-        'kira': 'data.side == "&lrhar;"'
+        'kira': 'data.side == "&#10564;"'
       },
       cellRenderer: (params) => params.value
         ? parseFloat(params.value.toFixed(8))
@@ -178,7 +179,7 @@ export class TradesComponent {
 
     this.hasPongs = (o.safety === Models.QuotingSafety.Boomerang || o.safety === Models.QuotingSafety.AK47);
 
-    this.headerNameMod = this.hasPongs ? "⇁" : "";
+    this.headerNameMod = this.hasPongs ? "➜" : "";
 
     if (!this.grid.api) return;
 
@@ -212,7 +213,7 @@ export class TradesComponent {
           Kprice: o.Kprice ? o.Kprice.toFixed(this.product.tickPrice) : '',
           Kvalue: o.Kvalue ? o.Kvalue.toFixed(this.product.tickPrice) : '',
           delta: o.delta,
-          side: o.Kqty >= o.quantity ? '&lrhar;' : (o.side === Models.Side.Ask ? "Ask" : "Bid"),
+          side: o.Kqty >= o.quantity ? '&#10564;' : (o.side === Models.Side.Ask ? "Ask" : "Bid"),
           _side: o.side === Models.Side.Ask ? "Ask" : "Bid",
         };
 

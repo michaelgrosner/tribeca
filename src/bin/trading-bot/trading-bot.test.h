@@ -598,17 +598,17 @@ SCENARIO_METHOD(TradingBot, "ANY BTC/EUR") {
       return order;
     };
     vector<tribeca::LastOrder> loglines({
-        parseTrade("03/30 07:10:34.800532 GW COINBASE PING TRADE BUY  0.03538069 BTC at price 141.31 EUR (value 4.99 EUR)."),
-        parseTrade("03/30 07:12:10.769009 GW COINBASE PONG TRADE SELL 0.03241380 BTC at price 141.40 EUR (value 4.58 EUR)."),
-        parseTrade("03/30 07:12:10.786990 GW COINBASE PONG TRADE SELL 0.00295204 BTC at price 141.40 EUR (value 0.41 EUR)."),
-        parseTrade("03/30 07:25:49.333540 GW COINBASE PING TRADE BUY  0.03528853 BTC at price 141.60 EUR (value 4.99 EUR)."),
-        parseTrade("03/30 07:25:50.787607 GW COINBASE PONG TRADE SELL 0.03528853 BTC at price 141.66 EUR (value 4.99 EUR)."),
-        parseTrade("03/30 07:38:07.369008 GW COINBASE PING TRADE BUY  0.03528867 BTC at price 141.66 EUR (value 4.99 EUR)."),
-        parseTrade("03/30 07:38:34.268582 GW COINBASE PONG TRADE SELL 0.03529119 BTC at price 141.68 EUR (value 5.00 EUR)."),
-        parseTrade("03/30 07:43:02.229028 GW COINBASE PING TRADE BUY  0.03528870 BTC at price 141.63 EUR (value 4.99 EUR)."),
-        parseTrade("03/30 07:45:22.735730 GW COINBASE PING TRADE SELL 0.03530102 BTC at price 141.55 EUR (value 4.99 EUR)."),
-        parseTrade("03/30 08:14:52.978466 GW COINBASE PING TRADE BUY  0.03512242 BTC at price 142.28 EUR (value 4.99 EUR)."),
-        parseTrade("03/30 08:15:13.002363 GW COINBASE PING TRADE BUY  0.03515685 BTC at price 142.22 EUR (value 5.00 EUR).")
+      parseTrade("03/30 07:10:34.800532 GW COINBASE PING TRADE BUY  0.03538069 BTC at price 141.31 EUR (value 4.99 EUR)."),
+      parseTrade("03/30 07:12:10.769009 GW COINBASE PONG TRADE SELL 0.03241380 BTC at price 141.40 EUR (value 4.58 EUR)."),
+      parseTrade("03/30 07:12:10.786990 GW COINBASE PONG TRADE SELL 0.00295204 BTC at price 141.40 EUR (value 0.41 EUR)."),
+      parseTrade("03/30 07:25:49.333540 GW COINBASE PING TRADE BUY  0.03528853 BTC at price 141.60 EUR (value 4.99 EUR)."),
+      parseTrade("03/30 07:25:50.787607 GW COINBASE PONG TRADE SELL 0.03528853 BTC at price 141.66 EUR (value 4.99 EUR)."),
+      parseTrade("03/30 07:38:07.369008 GW COINBASE PING TRADE BUY  0.03528867 BTC at price 141.66 EUR (value 4.99 EUR)."),
+      parseTrade("03/30 07:38:34.268582 GW COINBASE PONG TRADE SELL 0.03529119 BTC at price 141.68 EUR (value 5.00 EUR)."),
+      parseTrade("03/30 07:43:02.229028 GW COINBASE PING TRADE BUY  0.03528870 BTC at price 141.63 EUR (value 4.99 EUR)."),
+      parseTrade("03/30 07:45:22.735730 GW COINBASE PING TRADE SELL 0.03530102 BTC at price 141.55 EUR (value 4.99 EUR)."),
+      parseTrade("03/30 08:14:52.978466 GW COINBASE PING TRADE BUY  0.03512242 BTC at price 142.28 EUR (value 4.99 EUR)."),
+      parseTrade("03/30 08:15:13.002363 GW COINBASE PING TRADE BUY  0.03515685 BTC at price 142.22 EUR (value 5.00 EUR).")
     });
     Amount expectedBaseDelta = 0;
     Amount expectedQuoteDelta = 0;

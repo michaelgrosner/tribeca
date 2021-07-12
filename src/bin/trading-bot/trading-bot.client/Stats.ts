@@ -65,7 +65,7 @@ export class StatsComponent implements OnInit {
       x: time,
       y: o.price,
       z: o.quantity,
-      title: (o.pong ? '⇋' : '⇁')+(Models.Side[o.side] == 'Bid' ? 'B' : 'S'),
+      title: (o.pong ? '⥄' : '➜')+(Models.Side[o.side] == 'Bid' ? 'B' : 'S'),
       side: (Models.Side[o.side] == 'Bid' ? 'Buy':'Sell'),
       pong: o.pong?'o':'i',
       price: o.price.toFixed(this.product.tickPrice),
