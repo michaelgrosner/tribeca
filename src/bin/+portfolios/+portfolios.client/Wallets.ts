@@ -226,7 +226,6 @@ export class WalletsComponent {
   private addRowData = (o: any) => {
     if (!this.grid.api) return;
     var sum = 0;
-    var pin_sum = document.getElementById('balance_pin');
     if (o === null) {
       this.grid.api.setRowData([]);
       this.selection = null;
@@ -257,20 +256,24 @@ export class WalletsComponent {
                      .concat(Shared.resetRowData('held',    held,    node))
                      .concat(Shared.resetRowData('total',   total,   node))
         });
-
-
-      if (!this.grid.api.getSelectedNodes().length)
-        this.grid.api.onSortChanged();
-
-      if (pin_sum) {
-        var el = document.getElementById('balance_percent_' + o.wallet.currency);
-        if (el) {
-          var val = Shared.str(o.wallet.value / Shared.num(pin_sum.innerHTML) * 100, 2);
-          if (val != el.innerHTML) el.innerHTML = val;
-        }
-      }
     });
 
-    if (pin_sum) pin_sum.innerHTML = Shared.str(sum, 8);
+    this.grid.api.onFilterChanged();
+
+    if (!this.grid.api.getSelectedNodes().length)
+      this.grid.api.onSortChanged();
+
+    var pin_sum = document.getElementById('balance_pin');
+    if (pin_sum) {
+      pin_sum.innerHTML = Shared.str(sum, 8);
+
+      this.grid.api.forEachNode((node: RowNode) => {
+        var el = document.getElementById('balance_percent_' + node.data.currency);
+        if (el) {
+          var val = Shared.str(Shared.num(node.data.balance) / sum * 100, 2);
+          if (val != el.innerHTML) el.innerHTML = val;
+        }
+      });
+    }
   };
 };

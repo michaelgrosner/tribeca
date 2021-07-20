@@ -258,9 +258,11 @@ namespace analpaper {
       void debug(const string &step) {
         if (K.arg<int>("debug-quotes"))
           K.log("DEBUG QE", "[" + step + "] "
-            + to_string((int)bid.state) + ":"
-            + to_string((int)ask.state) + " "
-            + ((json){{"bid", bid}, {"ask", ask}}).dump()
+            + to_string((int)ask.state) + ":"
+            + to_string((int)bid.state) + " "
+            + to_string((int)ask.isPong) + ":"
+            + to_string((int)bid.isPong) + " "
+            + ((json){{"ask", ask}, {"bid", bid}}).dump()
           );
       };
   };

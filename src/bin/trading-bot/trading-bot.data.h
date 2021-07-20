@@ -1973,11 +1973,11 @@ namespace tribeca {
       void debug(const string &step) {
         if (K.arg<int>("debug-quotes"))
           K.log("DEBUG QE", "[" + step + "] "
-            + to_string((int)bid.state) + ":"
-            + to_string((int)ask.state) + " "
-            + to_string((int)bid.isPong) + ":"
-            + to_string((int)ask.isPong) + " "
-            + ((json){{"bid", bid}, {"ask", ask}}).dump()
+            + to_string((int)ask.state) + ":"
+            + to_string((int)bid.state) + " "
+            + to_string((int)ask.isPong) + ":"
+            + to_string((int)bid.isPong) + " "
+            + ((json){{"ask", ask}, {"bid", bid}}).dump()
           );
       };
   };
@@ -2528,30 +2528,22 @@ namespace tribeca {
         }
       };
       void applyDepleted() {
-        if (!quotes.bid.empty()) {
-          const Amount minBid = K.gateway->minValue
-            ? fmax(K.gateway->minSize, K.gateway->minValue / quotes.bid.price)
-            : K.gateway->minSize;
+        if (!quotes.bid.empty())
           if ((K.gateway->margin == Future::Spot
               ? wallet.quote.total / quotes.bid.price
               : (K.gateway->margin == Future::Inverse
                   ? wallet.base.amount * quotes.bid.price
                   : wallet.base.amount / quotes.bid.price)
-              ) < minBid
+              ) < quotes.bid.size
           ) quotes.bid.clear(QuoteState::DepletedFunds);
-        }
-        if (!quotes.ask.empty()) {
-          const Amount minAsk = K.gateway->minValue
-            ? fmax(K.gateway->minSize, K.gateway->minValue / quotes.ask.price)
-            : K.gateway->minSize;
+        if (!quotes.ask.empty())
           if ((K.gateway->margin == Future::Spot
               ? wallet.base.total
               : (K.gateway->margin == Future::Inverse
                   ? wallet.base.amount * quotes.ask.price
                   : wallet.base.amount / quotes.ask.price)
-              ) < minAsk
+              ) < quotes.ask.size
           ) quotes.ask.clear(QuoteState::DepletedFunds);
-        }
       };
       void applyWaitingPing() {
         if (qp.safety == QuotingSafety::Off) return;
