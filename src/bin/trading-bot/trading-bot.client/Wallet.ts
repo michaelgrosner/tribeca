@@ -6,7 +6,7 @@ import {Models} from 'lib/K';
   selector: 'wallet',
   template: `<div class="positions">
     <h4 class="col-md-12 col-xs-2">
-      <small><i class="beacon-sym-_default-s beacon-sym-{{ product.base.toLowerCase() }}-s" ></i> {{ product.base }}:
+      <small><i class="beacon sym-_default-s sym-{{ product.base.toLowerCase() }}-s" ></i> {{ product.base }}:
         <br/>
         <span
           title="{{ product.base }} Available"
@@ -26,7 +26,7 @@ import {Models} from 'lib/K';
     </h4>
     <div *ngIf="!product.margin">
       <h4 class="col-md-12 col-xs-2">
-        <small><i class="beacon-sym-_default-s beacon-sym-{{ product.quote.toLowerCase() }}-s" ></i> {{ product.quote }}:
+        <small><i class="beacon sym-_default-s sym-{{ product.quote.toLowerCase() }}-s" ></i> {{ product.quote }}:
           <br/>
           <span
             title="{{ product.quote }} Available"
@@ -49,10 +49,10 @@ import {Models} from 'lib/K';
       <small>Value:</small>
       <br/>
       <b title="{{ product.base }} Total">{{ position.base.value.toFixed(8) }}<i
-        class="beacon-sym-{{ product.base.toLowerCase() }}-s"></i></b>
+        class="beacon sym-{{ product.base.toLowerCase() }}-s"></i></b>
       <br/>
       <b title="{{ product.quote }} Total">{{ position.quote.value.toFixed(product.tickPrice) }}<i
-        class="beacon-sym-{{ product.quote.toLowerCase() }}-s"></i></b>
+        class="beacon sym-{{ product.quote.toLowerCase() }}-s"></i></b>
     </h4>
     <h4 class="col-md-12 col-xs-2" style="margin-top: 0px!important;">
       <small style="font-size:69%">

@@ -20,10 +20,10 @@ import {Models} from 'lib/K';
   <div style="padding-right:4px;padding-left:4px;padding-top:4px;line-height:1.3;">
     <table class="marketQuoting table table-hover table-responsive text-center">
       <tr class="info">
-        <td>BID Size<i class="beacon-sym-{{ product.base.toLowerCase() }}-s"></i></td>
-        <td>BID Price<i class="beacon-sym-{{ product.quote.toLowerCase() }}-s"></i></td>
-        <td>ASK Price<i class="beacon-sym-{{ product.quote.toLowerCase() }}-s"></i></td>
-        <td>ASK Size<i class="beacon-sym-{{ product.base.toLowerCase() }}-s"></i></td>
+        <td>BID Size<i class="beacon sym-{{ product.base.toLowerCase() }}-s"></i></td>
+        <td>BID Price<i class="beacon sym-{{ product.quote.toLowerCase() }}-s"></i></td>
+        <td>ASK Price<i class="beacon sym-{{ product.quote.toLowerCase() }}-s"></i></td>
+        <td>ASK Size<i class="beacon sym-{{ product.base.toLowerCase() }}-s"></i></td>
       </tr>
       <tr class="info">
         <th *ngIf="status.bidStatus == 1" class="text-danger">{{ qBidSz.toFixed(product.tickSize) }}<span *ngIf="!qBidSz">&nbsp;</span></th>

@@ -50,7 +50,7 @@ export class MarketsComponent {
       cellRenderer: (params) => `<a
         rel="noreferrer" target="_blank"
         title="` + params.data.web + `"
-        href="` + params.data.web + `"><i class="beacon-sym-_default-s beacon-sym-` + params.value.toLowerCase() + `-s" ></i> ` + params.value + `</a>`
+        href="` + params.data.web + `"><i class="beacon sym-_default-s sym-` + params.value.toLowerCase() + `-s" ></i> ` + params.value + `</a>`
     }, {
       width: 200,
       field: 'spread',

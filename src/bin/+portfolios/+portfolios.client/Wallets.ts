@@ -141,7 +141,7 @@ export class WalletsComponent {
       pinnedRowCellRenderer: (params) => `<input type="text" class="form-control"
         style="background: #0000005c;width: 100%;height: 26px;font-size: 19px;margin-top: -1px;"
         title="filter" id="filter_pattern" />`,
-      cellRenderer: (params) => '<span class="row_title"><i class="beacon-sym-_default-s beacon-sym-' + params.value.toLowerCase() + '-s" ></i> ' + params.value + '</span>',
+      cellRenderer: (params) => '<span class="row_title"><i class="beacon sym-_default-s sym-' + params.value.toLowerCase() + '-s" ></i> ' + params.value + '</span>',
       cellClassRules: {
         'text-muted': '!parseFloat(data.total)'
       }

@@ -20,7 +20,7 @@ import {Socket, Models} from 'lib/K';
     <div [hidden]="state.online !== null"
       style="padding:42px;transform:rotate(-6deg);">
       <h4 class="text-danger text-center">
-        <i class="beacon-exc-{{ exchange_icon }}-s" style="font-size:30px;"></i>
+        <i class="beacon exc-{{ exchange_icon }}-s" style="font-size:30px;"></i>
         <br /><br />
         {{ product.environment ? product.environment+' is d' : 'D' }}isconnected
       </h4>
@@ -222,7 +222,7 @@ function currencyHeaderTemplate(symbol: string) {
       <div ref="eLabel" class="ag-header-cell-label" role="presentation">
           <span>
             <span ref="eText" class="ag-header-cell-text" role="columnheader"></span>
-            <i class="beacon-sym-` + symbol.toLowerCase() + `-s"></i>
+            <i class="beacon sym-` + symbol.toLowerCase() + `-s"></i>
           </span>
           <span ref="eFilter" class="ag-header-icon ag-filter-icon"></span>
           <span ref="eSortOrder" class="ag-header-icon ag-sort-order"></span>
