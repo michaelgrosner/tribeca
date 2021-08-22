@@ -663,7 +663,7 @@ namespace ₿ {
         }
         clog << '\n'
           << Ansi::r(COLOR_GREEN) << "   more help: " << Ansi::r(COLOR_YELLOW) << "https://github.com/ctubio/Krypto-trading-bot/blob/master/doc/MANUAL.md" << '\n'
-          << Ansi::b(COLOR_GREEN) << " K" << Ansi::r(COLOR_GREEN) << " questions: " << Ansi::r(COLOR_YELLOW) << "irc://irc.freenode.net:6667/#tradingBot" << '\n'
+          << Ansi::b(COLOR_GREEN) << " K" << Ansi::r(COLOR_GREEN) << " questions: " << Ansi::r(COLOR_YELLOW) << "irc://irc.libera.chat:6697/#krypto.ninja" << '\n'
           << Ansi::r(COLOR_GREEN) << "   home page: " << Ansi::r(COLOR_YELLOW) << "https://ca.rles-tub.io./trades" << '\n'
           << Ansi::reset();
       };

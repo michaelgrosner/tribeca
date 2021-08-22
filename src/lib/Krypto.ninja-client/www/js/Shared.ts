@@ -66,10 +66,10 @@ import {Socket, Models} from 'lib/K';
           href="{{ homepage }}/issues/new?title=%5Btopic%5D%20short%20and%20sweet%20description&body=description%0Aplease,%20consider%20to%20add%20all%20possible%20details%20%28if%20any%29%20about%20your%20new%20feature%20request%20or%20bug%20report%0A%0A%2D%2D%2D%0A%60%60%60%0Aapp%20exchange%3A%20{{ product.exchange }}/{{ product.base+'/'+product.quote }}%0Aapp%20version%3A%20undisclosed%0AOS%20distro%3A%20undisclosed%0A%60%60%60%0A![300px-spock_vulcan-salute3](https://cloud.githubusercontent.com/assets/1634027/22077151/4110e73e-ddb3-11e6-9d84-358e9f133d34.png)">CREATE ISSUE</a> -
         <a rel="noreferrer" target="_blank"
           href="https://github.com/ctubio/Krypto-trading-bot/discussions/new">HELP</a> -
-        <a title="irc://irc.freenode.net:6697/#tradingBot"
-          href="irc://irc.freenode.net:6697/#tradingBot"
+        <a title="irc://irc.libera.chat:6697/#krypto.ninja"
+          href="irc://irc.libera.chat:6697/#krypto.ninja"
         >IRC</a>|<a rel="noreferrer" target="_blank"
-          href="https://kiwiirc.com/client/irc.freenode.net:6697/?theme=cli#tradingBot"
+          href="https://kiwiirc.com/client/irc.libera.chat:6697/?theme=cli#krypto.ninja"
         >www</a>
       </small>
     </address>
