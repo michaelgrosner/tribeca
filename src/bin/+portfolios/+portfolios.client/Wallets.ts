@@ -100,8 +100,9 @@ export class WalletsComponent {
       field: 'held',
       headerName: 'held',
       type: 'rightAligned',
-      pinnedRowCellRenderer: (params) => ``,
-      cellRenderer: (params) => `<span class="val">` + params.value + `</span>`,
+      cellRenderer: (params) => params.node.rowPinned == 'top'
+        ? ``
+        : `<span class="val">` + params.value + `</span>`,
       cellClassRules: {
         'text-muted': '!parseFloat(x)',
         'up-data': 'data.dir_held == "up-data"',
@@ -113,8 +114,9 @@ export class WalletsComponent {
       field: 'amount',
       headerName: 'available',
       type: 'rightAligned',
-      pinnedRowCellRenderer: (params) => ``,
-      cellRenderer: (params) => `<span class="val">` + params.value + `</span>`,
+      cellRenderer: (params) => params.node.rowPinned == 'top'
+        ? ``
+        : `<span class="val">` + params.value + `</span>`,
       cellClassRules: {
         'text-muted': '!parseFloat(x)',
         'up-data': 'data.dir_amount == "up-data"',
@@ -126,8 +128,9 @@ export class WalletsComponent {
       field: 'total',
       headerName: 'total',
       type: 'rightAligned',
-      pinnedRowCellRenderer: (params) => ``,
-      cellRenderer: (params) => `<span class="val">` + params.value + `</span>`,
+      cellRenderer: (params) => params.node.rowPinned == 'top'
+        ? ``
+        : `<span class="val">` + params.value + `</span>`,
       cellClassRules: {
         'text-muted': '!parseFloat(x)',
         'up-data': 'data.dir_total == "up-data"',
@@ -138,10 +141,11 @@ export class WalletsComponent {
       width: 130,
       field: 'currency',
       headerName: 'currency',
-      pinnedRowCellRenderer: (params) => `<input type="text" class="form-control"
+      cellRenderer: (params) => params.node.rowPinned == 'top'
+        ? `<input type="text" class="form-control"
         style="background: #0000005c;width: 100%;height: 26px;font-size: 19px;margin-top: -1px;"
-        title="filter" id="filter_pattern" />`,
-      cellRenderer: (params) => '<span class="row_title"><i class="beacon sym-_default-s sym-' + params.value.toLowerCase() + '-s" ></i> ' + params.value + '</span>',
+        title="filter" id="filter_pattern" />`
+        : '<span class="row_title"><i class="beacon sym-_default-s sym-' + params.value.toLowerCase() + '-s" ></i> ' + params.value + '</span>',
       cellClassRules: {
         'text-muted': '!parseFloat(data.total)'
       }
@@ -150,8 +154,9 @@ export class WalletsComponent {
       field: 'price',
       headerName: 'price',
       type: 'rightAligned',
-      pinnedRowCellRenderer: (params) => `<span id="price_pin"></span>`,
-      cellRenderer: (params) => `<span class="val">` + params.value + `</span>`,
+      cellRenderer: (params) => params.node.rowPinned == 'top'
+        ? `<span id="price_pin"></span>`
+        : `<span class="val">` + params.value + `</span>`,
       cellClassRules: {
         'text-muted': '!parseFloat(x)',
         'up-data': 'data.dir_price == "up-data"',
@@ -164,9 +169,10 @@ export class WalletsComponent {
       headerName: 'balance',
       sort: 'desc',
       type: 'rightAligned',
-      pinnedRowCellRenderer: (params) => `<span class="kira" id="balance_pin"></span><span id="total_pin" class="balance_percent"></span>`,
-      cellRenderer: (params) => `<span class="val">` + params.value + `</span>`
-        + `<small class="balance_percent" id="balance_percent_` + params.data.currency + `"></small>`,
+      cellRenderer: (params) => params.node.rowPinned == 'top'
+        ? `<span class="kira" id="balance_pin"></span><span id="total_pin" class="balance_percent"></span>`
+        : `<span class="val">` + params.value + `</span>`
+            + `<small class="balance_percent" id="balance_percent_` + params.data.currency + `"></small>`,
       cellClassRules: {
         'text-muted': '!parseFloat(x)',
         'up-data': 'data.dir_balance == "up-data"',

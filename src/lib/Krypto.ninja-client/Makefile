@@ -48,7 +48,7 @@ js: $(KCLIENT)/.main.ts lib
 	$(TSC) --outDir $(KASSETS)/$@ $<
 	@rm -v $<
 	@echo $(STEP_3)
-	$(BROWSERIFY) $(KASSETS)/$@/$(notdir $(basename $<)).$@ | uglifyjs | gzip > $(KASSETS)/$@/client.min.$@
+	$(BROWSERIFY) $(KASSETS)/$@/$(notdir $(basename $<)).$@  > $(KASSETS)/$@/client.min.$@
 
 css: www/css beacons
 	@echo $(STEP_4)
@@ -68,26 +68,26 @@ beacons:
 export define PACKAGE_JSON
 {
   "dependencies": {
-    "@ag-grid-community/all-modules": "^25.3.0",
-    "@ag-grid-community/angular":     "^25.3.0",
-    "@angular/common":                   "^12.1.2",
-    "@angular/compiler":                 "^12.1.2",
-    "@angular/core":                     "^12.1.2",
-    "@angular/forms":                    "^12.1.2",
-    "@angular/platform-browser":         "^12.1.2",
-    "@angular/platform-browser-dynamic": "^12.1.2",
-    "@angular/router":                   "^12.1.2",
-    "@babel/core":       "^7.14.8",
-    "@babel/preset-env": "^7.14.8",
-    "@types/node": "^16.4.0",
+    "@ag-grid-community/all-modules": "^26.0.0",
+    "@ag-grid-community/angular":     "^26.0.0",
+    "@angular/common":                   "^12.2.4",
+    "@angular/compiler":                 "^12.2.4",
+    "@angular/core":                     "^12.2.4",
+    "@angular/forms":                    "^12.2.4",
+    "@angular/platform-browser":         "^12.2.4",
+    "@angular/platform-browser-dynamic": "^12.2.4",
+    "@angular/router":                   "^12.2.4",
+    "@babel/core":       "^7.15.0",
+    "@babel/preset-env": "^7.15.0",
+    "@types/node": "^16.7.10",
     "babelify": "^10.0.0",
     "browserify": "^17.0.0",
-    "highcharts": "^9.1.2",
+    "highcharts": "^9.2.2",
     "highcharts-angular": "^2.10.0",
-    "rxjs": "^6.6.6",
-    "sass": "^1.35.2",
-    "typescript": "^4.3.5",
-    "uglify-js": "^3.13.10",
+    "rxjs": "^7.3.0",
+    "sass": "^1.39.0",
+    "typescript": "^4.4.2",
+    "uglify-js": "^3.14.1",
     "zone.js": "^0.11.4"
   },
   "description": "K",
