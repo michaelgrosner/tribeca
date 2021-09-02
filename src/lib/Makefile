@@ -3,13 +3,13 @@ HINT     = This Makefile can't be used directly, consider cd ../.. before try ag
 $(if $(subst 0,,${MAKELEVEL}),,$(warning $(ERR));$(error $(HINT)))
 
 V_ZLIB  = 1.2.11
-V_SSL   = 1.1.1k
-V_CURL  = 7.76.1
+V_SSL   = 1.1.1l
+V_CURL  = 7.78.0
 V_SQL   = 3360000
 V_NCUR  = 6.1
-V_JSON  = 3.9.1
-V_CATCH = 2.11.1
-V_UV    = 1.41.1
+V_JSON  = 3.10.2
+V_CATCH = 2.13.7
+V_UV    = 1.42.0
 
 KBUILD := $(abspath ../../build-$(KHOST))
 
@@ -29,12 +29,12 @@ clean:
 check:
 	# zlib    | $(V_ZLIB)  | $(shell curl -s https://www.zlib.net/ChangeLog.txt | grep "Changes in " | head -n1 | cut -d' ' -f3)
 	# openssl | $(V_SSL)  | $(shell curl -s https://www.openssl.org/news/cl$(shell curl -s https://www.openssl.org/source/ | grep "The latest stable version is " | cut -d' ' -f12  | tr -d '.').txt | grep "Changes between " | head -n1 | cut -d' ' -f4)
-	# curl    | $(V_CURL)  | $(shell curl -s https://curl.se/changes.html | grep "Fixed in " | head -n1 | cut -d' ' -f4)
+	# curl    | $(V_CURL)  | $(shell curl -s https://api.github.com/repos/curl/curl/releases        | grep "tag_name" | head -n1 | cut -d'-' -f2 | cut -d'"' -f1 | tr '_' '.')
 	# sqlite  | $(V_SQL) | $(shell curl -s https://www.sqlite.org/download.html | grep "sqlite-amalgamation-" | head -n1 | cut -d'-' -f3 | cut -d'.' -f1)
 	# ncurses | $(V_NCUR)     | $(shell curl -s https://www.gnu.org/software/ncurses/ | grep "Announcing " | head -n1 | cut -d' ' -f5 | cut -d'<' -f1)
-	# json    | $(V_JSON)   | $(shell curl -s https://api.github.com/repos/nlohmann/json/tags   | grep "name" | head -n1 | cut -d'v' -f2 | cut -d'"' -f1)
-	# catch   | $(V_CATCH)  | $(shell curl -s https://api.github.com/repos/catchorg/Catch2/tags | grep "name" | head -n1 | cut -d'v' -f2 | cut -d'"' -f1)
-	# uv      | $(V_UV)  | $(shell curl -s https://api.github.com/repos/libuv/libuv/tags        | grep "name" | head -n1 | cut -d'v' -f2 | cut -d'"' -f1)
+	# json    | $(V_JSON)  | $(shell curl -s https://api.github.com/repos/nlohmann/json/releases    | grep "tag_name" | head -n1 | cut -d'v' -f2 | cut -d'"' -f1)
+	# catch   | $(V_CATCH)  | $(shell curl -s https://api.github.com/repos/catchorg/Catch2/releases | grep "tag_name" | head -n1 | cut -d'v' -f2 | cut -d'"' -f1)
+	# uv      | $(V_UV)  | $(shell curl -s https://api.github.com/repos/libuv/libuv/releases        | grep "tag_name" | head -n1 | cut -d'v' -f2 | cut -d'"' -f1)
 
 zlib:
 	test -d $(KBUILD)/var/zlib-$(V_ZLIB) || (                                  \

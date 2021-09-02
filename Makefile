@@ -2,7 +2,7 @@ K         ?= K.sh
 MAJOR      = 0
 MINOR      = 6
 PATCH      = 4
-BUILD      = 23
+BUILD      = 24
 
 OBLIGATORY = DISCLAIMER: This is strict non-violent software: \n$\
              if you hurt other living creatures, please stop; \n$\
@@ -184,7 +184,7 @@ Darwin: src/lib/Krypto.ninja-main.cxx src/bin/$(KSRC)/$(KSRC).main.h
 	-@egrep \\u20BF src -lR | xargs -r sed -i 's/\\\(u20BF\)/\1/g'
 	$(CHOST)-g++ -s -DNDEBUG -o $(KBUILD)/bin/K-$(KSRC)                          \
 	  -msse4.1 -maes -mpclmul -mmacosx-version-min=10.13 -nostartfiles -rdynamic \
-	  $< $(KARGS) -ldl
+	  $< $(KARGS) -ldl -framework SystemConfiguration -framework CoreFoundation
 	-@egrep u20BF src -lR | xargs -r sed -i 's/\(u20BF\)/\\\1/g'
 
 Win32: src/lib/Krypto.ninja-main.cxx src/bin/$(KSRC)/$(KSRC).main.h
