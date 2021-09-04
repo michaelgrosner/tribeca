@@ -48,7 +48,7 @@ js: $(KCLIENT)/.main.ts lib
 	$(TSC) --outDir $(KASSETS)/$@ $<
 	@rm -v $<
 	@echo $(STEP_3)
-	$(BROWSERIFY) $(KASSETS)/$@/$(notdir $(basename $<)).$@  > $(KASSETS)/$@/client.min.$@
+	$(BROWSERIFY) $(KASSETS)/$@/$(notdir $(basename $<)).$@ | uglifyjs | gzip > $(KASSETS)/$@/client.min.$@
 
 css: www/css beacons
 	@echo $(STEP_4)

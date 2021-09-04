@@ -17,7 +17,8 @@ class ScalingBot: public KryptoNinja {
         {
           {"order-size",   "AMOUNT", "0",      "set AMOUNT of size in base currency to place orders"},
           {"ping-width",   "AMOUNT", "0",      "set AMOUNT of price width to place pings away from fair value"},
-          {"pong-width",   "AMOUNT", "0",      "set AMOUNT of price width to place pongs away from pings"},
+          {"pong-width",   "AMOUNT", "0",      "set AMOUNT of price width to place pongs away from pings,"
+                                               "\n" "or leave it empty (as '0') to not place pong orders"},
           {"scale-asks",   "1",      nullptr,  "do not place pings on bid side (ping only at ask side)"},
           {"scale-bids",   "1",      nullptr,  "do not place pings on ask side (ping only at bid side)"},
           {"quit-after",   "NUMBER", "0",      "set NUMBER of filled pings before quit"},
@@ -56,9 +57,9 @@ class ScalingBot: public KryptoNinja {
           if (!arg<double>("ping-width"))
             error("CF", "Invalid empty --ping-width value");
           else log("CF", "--ping-width=", opt.str(arg<double>("ping-width")));
-          if (!arg<double>("pong-width"))
-            error("CF", "Invalid empty --pong-width value");
-          else log("CF", "--pong-width=", opt.str(arg<double>("pong-width")));
+          log("CF", "--pong-width=", opt.str(arg<double>("pong-width"))
+            + (arg<double>("pong-width") ? "" : Ansi::r(COLOR_WHITE) + " (pongs disabled)")
+          );
         }
       };
     };

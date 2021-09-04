@@ -545,16 +545,14 @@ namespace analpaper {
         quote2orders(calculon.quotes.bid);
       };
       void scale() {
-        if (orders.last.filled)
+        if (orders.last.filled and K.arg<double>("pong-width"))
           placeOrder({
             orders.last.side == Side::Bid
               ? Side::Ask
               : Side::Bid,
             orders.last.side == Side::Bid
-              ? fmax(orders.last.price + K.arg<double>("pong-width"),
-                     levels.fairValue + K.gateway->tickPrice)
-              : fmin(orders.last.price - K.arg<double>("pong-width"),
-                     levels.fairValue - K.gateway->tickPrice),
+              ? fmax(orders.last.price + K.arg<double>("pong-width"), levels.fairValue + K.gateway->tickPrice)
+              : fmin(orders.last.price - K.arg<double>("pong-width"), levels.fairValue - K.gateway->tickPrice),
             orders.last.filled,
             Tstamp,
             true,

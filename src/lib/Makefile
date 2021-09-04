@@ -27,14 +27,14 @@ clean:
 	@rm -vrf $(KBUILD)
 
 check:
-	# zlib    | $(V_ZLIB)  | $(shell curl -s https://www.zlib.net/ChangeLog.txt | grep "Changes in " | head -n1 | cut -d' ' -f3)
-	# openssl | $(V_SSL)  | $(shell curl -s https://www.openssl.org/news/cl$(shell curl -s https://www.openssl.org/source/ | grep "The latest stable version is " | cut -d' ' -f12  | tr -d '.').txt | grep "Changes between " | head -n1 | cut -d' ' -f4)
-	# curl    | $(V_CURL)  | $(shell curl -s https://api.github.com/repos/curl/curl/releases        | grep "tag_name" | head -n1 | cut -d'-' -f2 | cut -d'"' -f1 | tr '_' '.')
-	# sqlite  | $(V_SQL) | $(shell curl -s https://www.sqlite.org/download.html | grep "sqlite-amalgamation-" | head -n1 | cut -d'-' -f3 | cut -d'.' -f1)
+	# zlib    | $(V_ZLIB)  | $(shell    curl -s https://www.zlib.net/ChangeLog.txt | grep "Changes in " | head -n1 | cut -d' ' -f3)
+	# openssl | $(V_SSL)  | $(shell     curl -s https://www.openssl.org/news/cl$(shell curl -s https://www.openssl.org/source/ | grep "The latest stable version is " | cut -d' ' -f12  | tr -d '.').txt | grep "Changes between " | head -n1 | cut -d' ' -f4)
+	# curl    | $(V_CURL)  | $(shell    curl -s https://curl.se/changes.html | grep "Fixed in " | head -n1 | cut -d' ' -f4)
+	# sqlite  | $(V_SQL) | $(shell      curl -s https://www.sqlite.org/download.html | grep "sqlite-amalgamation-" | head -n1 | cut -d'-' -f3 | cut -d'.' -f1)
 	# ncurses | $(V_NCUR)     | $(shell curl -s https://www.gnu.org/software/ncurses/ | grep "Announcing " | head -n1 | cut -d' ' -f5 | cut -d'<' -f1)
-	# json    | $(V_JSON)  | $(shell curl -s https://api.github.com/repos/nlohmann/json/releases    | grep "tag_name" | head -n1 | cut -d'v' -f2 | cut -d'"' -f1)
-	# catch   | $(V_CATCH)  | $(shell curl -s https://api.github.com/repos/catchorg/Catch2/releases | grep "tag_name" | head -n1 | cut -d'v' -f2 | cut -d'"' -f1)
-	# uv      | $(V_UV)  | $(shell curl -s https://api.github.com/repos/libuv/libuv/releases        | grep "tag_name" | head -n1 | cut -d'v' -f2 | cut -d'"' -f1)
+	# json    | $(V_JSON)  | $(shell    curl -s https://api.github.com/repos/nlohmann/json/releases   | grep "tag_name" | head -n1 | cut -d'v' -f2 | cut -d'"' -f1)
+	# catch   | $(V_CATCH)  | $(shell   curl -s https://api.github.com/repos/catchorg/Catch2/releases | grep "tag_name" | head -n1 | cut -d'v' -f2 | cut -d'"' -f1)
+	# uv      | $(V_UV)  | $(shell      curl -s https://api.github.com/repos/libuv/libuv/releases     | grep "tag_name" | head -n1 | cut -d'v' -f2 | cut -d'"' -f1)
 
 zlib:
 	test -d $(KBUILD)/var/zlib-$(V_ZLIB) || (                                  \
