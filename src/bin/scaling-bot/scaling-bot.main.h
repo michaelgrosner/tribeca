@@ -83,6 +83,13 @@ class ScalingBot: public KryptoNinja {
           log("CF", "--pong-width=", opt.str(arg<double>("pong-width"))
             + (arg<double>("pong-width") ? "" : Ansi::r(COLOR_WHITE) + " (pong orders disabled)")
           );
+          if (arg<double>("pong-width")) {
+            if (!arg<double>("wait-width"))
+              logWar("CF", "Pong orders may overlap because --wait-width is not set");
+            else if (arg<double>("wait-width") < arg<double>("pong-width") * 2)
+              logWar("CF", "Pong orders may overlap because "
+                           "--wait-width is smaller than the double of --pong-width");
+          }
         }
       };
     };
