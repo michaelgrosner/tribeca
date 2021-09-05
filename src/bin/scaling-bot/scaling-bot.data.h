@@ -454,7 +454,7 @@ namespace analpaper {
       };
       void applyQuotingParameters() {
         quotes.debug("?"); applyScaleSide();
-        quotes.debug("A"); applyPingsScalation();
+        quotes.debug("A"); applyPongsScalation();
         quotes.debug("B"); applyFairValueDeviation();
         quotes.debug("C"); applyBestWidth();
         quotes.debug("D"); applyRoundPrice();
@@ -469,7 +469,7 @@ namespace analpaper {
         if (K.arg<int>("scale-bids"))
           quotes.ask.clear(QuoteState::DisabledQuotes);
       };
-      void applyPingsScalation() {
+      void applyPongsScalation() {
         if (orderbook.limit()) {
           if (!quotes.bid.empty() and !orderbook.limit(quotes.bid))
             quotes.bid.clear(QuoteState::DisabledQuotes);

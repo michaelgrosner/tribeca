@@ -25,7 +25,7 @@ class ScalingBot: public KryptoNinja {
           {"quit-after",   "NUMBER", "0",      "set NUMBER of filled pings before quit"},
           {"wait-width",   "AMOUNT", "0",      "set AMOUNT of price width from last pong before start"},
           {"wait-price",   "AMOUNT", "0",      "set AMOUNT of fair value price deviation before start"},
-          {"time-price",   "NUMBER", "0",      "set NUMBER of seconds to measure price deviation difference"},
+          {"time-price",   "NUMBER", "0",      "set NUMBER of seconds to measure price deviation difference"}
         },
         [&](MutableUserArguments &args) {
           args["order-size"] = fmax(0, arg<double>("order-size"));
