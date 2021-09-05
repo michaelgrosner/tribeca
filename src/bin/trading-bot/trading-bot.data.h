@@ -432,7 +432,7 @@ namespace tribeca {
       };
       void read_from_gw(const Order &raw) {
         if (K.arg<int>("debug-orders")) report(&raw, " reply ");
-        Order *const order = upsert(raw);
+        const Order *const order = upsert(raw);
         if (!order) {
           updated = {};
           return;

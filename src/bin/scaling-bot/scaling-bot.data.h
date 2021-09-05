@@ -109,36 +109,34 @@ namespace analpaper {
       Orderbook(const KryptoNinja &bot)
         : K(bot)
       {};
-      void read_from_gw(const Order &raw) {
-        if (limit()) {
-          if (raw.side == Side::Bid) {
-            update(raw, &bids);
-            maxBid = bids.empty() ? 0 : max_element(bids.begin(), bids.end(), compare)->second;
-          } else {
-            update(raw, &asks);
-            minAsk = asks.empty() ? 0 : min_element(asks.begin(), asks.end(), compare)->second;
-          }
+      void maxmin(Order raw, const Order *const order) {
+        if (!limit()) return;
+        if (order) {
+          raw.side       = order->side;
+          raw.price      = order->price;
+          raw.exchangeId = order->exchangeId;
         }
+        if (raw.exchangeId.empty()) return;
+        if (raw.status == Status::Working)
+          (raw.side == Side::Bid ? bids : asks)[raw.exchangeId] = raw.price;
+        else if (bids.find(raw.exchangeId) != bids.end()) bids.erase(raw.exchangeId);
+        else if (asks.find(raw.exchangeId) != asks.end()) asks.erase(raw.exchangeId);
+        maxBid = bids.empty() ? 0 : max_element(bids.begin(), bids.end(), compare)->second;
+        minAsk = asks.empty() ? 0 : min_element(asks.begin(), asks.end(), compare)->second;
       };
       double limit() const {
         return K.arg<double>("wait-width");
       };
       bool limit(const Quote &quote) const {
-        return !find(quote.price, quote.side == Side::Bid ? &asks : &bids);
+        return find(quote.price, quote.side == Side::Bid ? &asks : &bids);
       };
     private:
       static bool compare(const pair<string, Price> &a, const pair<string, Price> &b) {
         return a.second < b.second;
       };
-      void update(const Order &raw, unordered_map<string, Price> *const book) {
-        if (raw.status == Status::Working)
-          (*book)[raw.exchangeId] = raw.price;
-        else if (book->find(raw.exchangeId) != book->end())
-          book->erase(raw.exchangeId);
-      };
       bool find(const Price &price, const unordered_map<string, Price> *const book) const {
         return any_of(book->begin(), book->end(), [&](auto &it) {
-          return abs(it.second - price) < K.arg<double>("wait-width");
+          return abs(it.second - price) < limit();
         });
       };
   };
@@ -165,8 +163,8 @@ namespace analpaper {
       void read_from_gw(const Order &raw) {
         if (K.arg<int>("debug-orders"))
           K.log("GW " + K.gateway->exchange, "  reply: " + ((json)raw).dump());
-        orderbook.read_from_gw(raw);
-        Order *const order = upsert(raw);
+        const Order *const order = upsert(raw);
+        orderbook.maxmin(raw, order);
         if (!order) {
           last = {0, 0, (Side)0, false};
           return;
@@ -431,7 +429,7 @@ namespace analpaper {
             return false;
           }
         }
-        return true;
+        return !order.manual;
       };
       void calcRawQuotes() {
         quotes.ask.isPong =
@@ -471,9 +469,9 @@ namespace analpaper {
       };
       void applyPongsScalation() {
         if (orderbook.limit()) {
-          if (!quotes.bid.empty() and !orderbook.limit(quotes.bid))
+          if (!quotes.bid.empty() and orderbook.limit(quotes.bid))
             quotes.bid.clear(QuoteState::DisabledQuotes);
-          if (!quotes.ask.empty() and !orderbook.limit(quotes.ask))
+          if (!quotes.ask.empty() and orderbook.limit(quotes.ask))
             quotes.ask.clear(QuoteState::DisabledQuotes);
         }
       };

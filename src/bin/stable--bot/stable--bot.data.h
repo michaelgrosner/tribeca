@@ -50,7 +50,7 @@ namespace analpaper {
         if (K.arg<int>("debug-orders"))
           K.log("GW " + K.gateway->exchange, "  reply: " + ((json)raw).dump());
         last = {0, 0, (Side)0, false};
-        Order *const order = upsert(raw);
+        const Order *const order = upsert(raw);
         if (!order) return;
         last = {
           order->price,
@@ -314,7 +314,7 @@ namespace analpaper {
             return false;
           }
         }
-        return true;
+        return !order.manual;
       };
       void calcRawQuotes() {
         quotes.bid.size =
