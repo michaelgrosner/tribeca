@@ -29,6 +29,120 @@ namespace analpaper {
       };
   };
 
+  struct Quote: public Level {
+    const Side       side   = (Side)0;
+          QuoteState state  = QuoteState::MissingData;
+          bool       isPong = false;
+    Quote(const Side &s)
+      : side(s)
+    {};
+    bool empty() const {
+      return !size or !price;
+    };
+    void skip() {
+      size = 0;
+    };
+    void clear(const QuoteState &reason) {
+      price = size = 0;
+      state = reason;
+    };
+    virtual bool deprecates(const Price&) const = 0;
+    bool checkCrossed(const Quote &opposite) {
+      if (empty()) return false;
+      if (opposite.empty() or deprecates(opposite.price)) {
+        state = QuoteState::Live;
+        return false;
+      }
+      state = QuoteState::Crossed;
+      return true;
+    };
+  };
+  struct QuoteBid: public Quote {
+    QuoteBid()
+      : Quote(Side::Bid)
+    {};
+    bool deprecates(const Price &higher) const override {
+      return price < higher;
+    };
+  };
+  struct QuoteAsk: public Quote {
+    QuoteAsk()
+      : Quote(Side::Ask)
+    {};
+    bool deprecates(const Price &lower) const override {
+      return price > lower;
+    };
+  };
+  struct Quotes {
+    QuoteBid bid;
+    QuoteAsk ask;
+    private_ref:
+      const KryptoNinja &K;
+    public:
+      Quotes(const KryptoNinja &bot)
+        : K(bot)
+      {};
+      void checkCrossedQuotes() {
+        if (bid.checkCrossed(ask) or ask.checkCrossed(bid))
+          K.logWar("QE", "Crossed bid/ask quotes detected, that is.. unexpected", 3e+3);
+      };
+      void debug(const string &step) {
+        if (K.arg<int>("debug-quotes"))
+          K.log("DEBUG QE", "[" + step + "] "
+            + to_string((int)ask.state) + ":"
+            + to_string((int)bid.state) + " "
+            + to_string((int)ask.isPong) + ":"
+            + to_string((int)bid.isPong) + " "
+            + ((json){{"ask", ask}, {"bid", bid}}).dump()
+          );
+      };
+  };
+
+  struct Orderbook {
+    unordered_map<string, Price> bids,
+                                 asks;
+    Price maxBid = 0,
+          minAsk = 0;
+    private_ref:
+      const KryptoNinja  &K;
+    public:
+      Orderbook(const KryptoNinja &bot)
+        : K(bot)
+      {};
+      void read_from_gw(const Order &raw) {
+        if (limit()) {
+          if (raw.side == Side::Bid) {
+            update(raw, &bids);
+            maxBid = bids.empty() ? 0 : max_element(bids.begin(), bids.end(), compare)->second;
+          } else {
+            update(raw, &asks);
+            minAsk = asks.empty() ? 0 : min_element(asks.begin(), asks.end(), compare)->second;
+          }
+        }
+      };
+      double limit() const {
+        return K.arg<double>("wait-width");
+      };
+      bool limit(const Quote &quote) const {
+        return !find(quote.price, quote.side == Side::Bid ? &asks : &bids);
+      };
+    private:
+      static bool compare(const pair<string, Price> &a, const pair<string, Price> &b) {
+        return a.second < b.second;
+      };
+      void update(const Order &raw, unordered_map<string, Price> *const book) {
+        if (raw.status == Status::Working)
+          (*book)[raw.exchangeId] = raw.price;
+        else if (book->find(raw.exchangeId) != book->end())
+          book->erase(raw.exchangeId);
+      };
+      bool find(const Price &price, const unordered_map<string, Price> *const book) const {
+        return any_of(book->begin(), book->end(), [&](auto &it) {
+          return abs(it.second - price) < K.arg<double>("wait-width");
+        });
+      };
+  };
+
   struct LastOrder {
      Price price;
     Amount filled;
@@ -36,6 +150,7 @@ namespace analpaper {
       bool isPong;
   };
   struct Orders {
+    Orderbook orderbook;
     LastOrder last;
     private:
       unordered_map<string, Order> orders;
@@ -43,15 +158,19 @@ namespace analpaper {
       const KryptoNinja  &K;
     public:
       Orders(const KryptoNinja &bot)
-        : last()
+        : orderbook(bot)
+        , last()
         , K(bot)
       {};
       void read_from_gw(const Order &raw) {
         if (K.arg<int>("debug-orders"))
           K.log("GW " + K.gateway->exchange, "  reply: " + ((json)raw).dump());
-        last = {0, 0, (Side)0, false};
+        orderbook.read_from_gw(raw);
         Order *const order = upsert(raw);
-        if (!order) return;
+        if (!order) {
+          last = {0, 0, (Side)0, false};
+          return;
+        }
         last = {
           order->price,
           raw.filled >= K.gateway->minSize and !order->isPong
@@ -72,6 +191,19 @@ namespace analpaper {
           purge(order);
         if (K.arg<int>("debug-orders"))
           K.log("GW " + K.gateway->exchange, " active: " + to_string(orders.size()));
+      };
+      Price calcPongPrice(const Price &fairValue) {
+        const Price price = last.side == Side::Bid
+          ? fmax(last.price + K.arg<double>("pong-width"), fairValue + K.gateway->tickPrice)
+          : fmin(last.price - K.arg<double>("pong-width"), fairValue - K.gateway->tickPrice);
+        if (K.arg<int>("scale-pong")) {
+          if (last.side == Side::Bid) {
+            if (orderbook.minAsk)
+              return fmax(price, orderbook.minAsk - K.arg<double>("pong-width"));
+          } else if (orderbook.maxBid)
+            return fmin(price, orderbook.maxBid + K.arg<double>("pong-width"));
+        }
+        return price;
       };
       Order *upsert(const Order &raw) {
         Order *const order = findsert(raw);
@@ -250,87 +382,20 @@ namespace analpaper {
       };
   };
 
-  struct Quote: public Level {
-    const Side       side   = (Side)0;
-          QuoteState state  = QuoteState::MissingData;
-          bool       isPong = false;
-    Quote(const Side &s)
-      : side(s)
-    {};
-    bool empty() const {
-      return !size or !price;
-    };
-    void skip() {
-      size = 0;
-    };
-    void clear(const QuoteState &reason) {
-      price = size = 0;
-      state = reason;
-    };
-    virtual bool deprecates(const Price&) const = 0;
-    bool checkCrossed(const Quote &opposite) {
-      if (empty()) return false;
-      if (opposite.empty() or deprecates(opposite.price)) {
-        state = QuoteState::Live;
-        return false;
-      }
-      state = QuoteState::Crossed;
-      return true;
-    };
-  };
-  struct QuoteBid: public Quote {
-    QuoteBid()
-      : Quote(Side::Bid)
-    {};
-    bool deprecates(const Price &higher) const override {
-      return price < higher;
-    };
-  };
-  struct QuoteAsk: public Quote {
-    QuoteAsk()
-      : Quote(Side::Ask)
-    {};
-    bool deprecates(const Price &lower) const override {
-      return price > lower;
-    };
-  };
-  struct Quotes {
-    QuoteBid bid;
-    QuoteAsk ask;
-    private_ref:
-      const KryptoNinja &K;
-    public:
-      Quotes(const KryptoNinja &bot)
-        : K(bot)
-      {};
-      void checkCrossedQuotes() {
-        if (bid.checkCrossed(ask) or ask.checkCrossed(bid))
-          K.logWar("QE", "Crossed bid/ask quotes detected, that is.. unexpected", 3e+3);
-      };
-      void debug(const string &step) {
-        if (K.arg<int>("debug-quotes"))
-          K.log("DEBUG QE", "[" + step + "] "
-            + to_string((int)ask.state) + ":"
-            + to_string((int)bid.state) + " "
-            + to_string((int)ask.isPong) + ":"
-            + to_string((int)bid.isPong) + " "
-            + ((json){{"ask", ask}, {"bid", bid}}).dump()
-          );
-      };
-  };
-
   struct AntonioCalculon {
     Quotes quotes;
     private:
       vector<const Order*> zombies;
     private_ref:
       const KryptoNinja  &K;
+      const Orderbook    &orderbook;
       const MarketLevels &levels;
       const Wallets      &wallet;
     public:
-      AntonioCalculon(const KryptoNinja &bot, const MarketLevels &l, const Wallets &w)
+      AntonioCalculon(const KryptoNinja &bot, const Orderbook &o, const MarketLevels &l, const Wallets &w)
         : quotes(bot)
         , K(bot)
+        , orderbook(o)
         , levels(l)
         , wallet(w)
       {};
@@ -389,11 +454,12 @@ namespace analpaper {
       };
       void applyQuotingParameters() {
         quotes.debug("?"); applyScaleSide();
-        quotes.debug("A"); applyFairValueDeviation();
-        quotes.debug("B"); applyBestWidth();
-        quotes.debug("C"); applyRoundPrice();
-        quotes.debug("D"); applyRoundSize();
-        quotes.debug("E"); applyDepleted();
+        quotes.debug("A"); applyPingsScalation();
+        quotes.debug("B"); applyFairValueDeviation();
+        quotes.debug("C"); applyBestWidth();
+        quotes.debug("D"); applyRoundPrice();
+        quotes.debug("E"); applyRoundSize();
+        quotes.debug("F"); applyDepleted();
         quotes.debug("!");
         quotes.checkCrossedQuotes();
       };
@@ -402,6 +468,14 @@ namespace analpaper {
           quotes.bid.clear(QuoteState::DisabledQuotes);
         if (K.arg<int>("scale-bids"))
           quotes.ask.clear(QuoteState::DisabledQuotes);
+      };
+      void applyPingsScalation() {
+        if (orderbook.limit()) {
+          if (!quotes.bid.empty() and !orderbook.limit(quotes.bid))
+            quotes.bid.clear(QuoteState::DisabledQuotes);
+          if (!quotes.ask.empty() and !orderbook.limit(quotes.ask))
+            quotes.ask.clear(QuoteState::DisabledQuotes);
+        }
       };
       void applyFairValueDeviation() {
         if (levels.deviated.limit()) {
@@ -518,7 +592,7 @@ namespace analpaper {
       const MarketLevels &levels;
     public:
       Broker(const KryptoNinja &bot, Orders &o, const MarketLevels &l, const Wallets &w)
-        : calculon(bot, l, w)
+        : calculon(bot, o.orderbook, l, w)
         , K(bot)
         , orders(o)
         , levels(l)
@@ -550,9 +624,7 @@ namespace analpaper {
             orders.last.side == Side::Bid
               ? Side::Ask
               : Side::Bid,
-            orders.last.side == Side::Bid
-              ? fmax(orders.last.price + K.arg<double>("pong-width"), levels.fairValue + K.gateway->tickPrice)
-              : fmin(orders.last.price - K.arg<double>("pong-width"), levels.fairValue - K.gateway->tickPrice),
+            orders.calcPongPrice(levels.fairValue),
             orders.last.filled,
             Tstamp,
             true,
