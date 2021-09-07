@@ -3,9 +3,9 @@
 
 namespace analpaper {
   enum class QuoteState: unsigned int {
-    Disconnected,  Live,        DisabledQuotes,
+    Disconnected,  Live,        Crossed,
     MissingData,   UnknownHeld, WidthTooHigh,
-    DepletedFunds, Crossed
+    DepletedFunds, ScaleSided, ScalationLimit, DeviationLimit
   };
 
   struct Wallets {
@@ -385,6 +385,8 @@ namespace analpaper {
 
   struct AntonioCalculon {
     Quotes quotes;
+    QuoteState prevBidState = QuoteState::MissingData,
+               prevAskState = QuoteState::MissingData;
     private:
       vector<const Order*> zombies;
     private_ref:
@@ -404,6 +406,8 @@ namespace analpaper {
         states(QuoteState::UnknownHeld);
         calcRawQuotes();
         applyQuotingParameters();
+        logState(quotes.bid, &prevBidState);
+        logState(quotes.ask, &prevAskState);
       };
       vector<const Order*> purge() {
         vector<const Order*> zombies_;
@@ -425,6 +429,33 @@ namespace analpaper {
         quotes.ask.state = state;
       };
     private:
+      string explainState(const Quote &quote) const {
+        string reason = "";
+        if (quote.state == QuoteState::Live)
+          reason = "LIVE";
+        else if (quote.state == QuoteState::DepletedFunds)
+          reason = "DISABLED " + Ansi::r(COLOR_WHITE)
+                 + "because not enough available funds";
+        else if (quote.state == QuoteState::ScaleSided)
+          reason = "DISABLED " + Ansi::r(COLOR_WHITE)
+                 + "because " + (quote.side == Side::Ask ? "--scale-bids" : "--scale-asks")
+                 + " is set";
+        else if (quote.state == QuoteState::ScalationLimit)
+          reason = "DISABLED " + Ansi::r(COLOR_WHITE)
+                 + "because the nearest pong is closer than --wait-width";
+        else if (quote.state == QuoteState::DeviationLimit)
+          reason = "DISABLED " + Ansi::r(COLOR_WHITE)
+                 + "because the price deviation is lower than --wait-price";
+        return reason;
+      };
+      void logState(const Quote &quote, QuoteState *const prevState) {
+        if (quote.state != *prevState) {
+          string reason = explainState(quote);
+          if (!reason.empty())
+            K.log("QP", string(quote.side == Side::Bid ? "BID" : "ASK") + " quoting", reason);
+          *prevState = quote.state;
+        }
+      };
       bool stillAlive(const Order &order) {
         if (order.status == Status::Waiting) {
           if (Tstamp - 10e+3 > order.time) {
@@ -466,24 +497,24 @@ namespace analpaper {
       };
       void applyScaleSide() {
         if (K.arg<int>("scale-asks"))
-          quotes.bid.clear(QuoteState::DisabledQuotes);
+          quotes.bid.clear(QuoteState::ScaleSided);
         if (K.arg<int>("scale-bids"))
-          quotes.ask.clear(QuoteState::DisabledQuotes);
+          quotes.ask.clear(QuoteState::ScaleSided);
       };
       void applyPongsScalation() {
         if (orderbook.limit()) {
           if (!quotes.bid.empty() and orderbook.limit(quotes.bid))
-            quotes.bid.clear(QuoteState::DisabledQuotes);
+            quotes.bid.clear(QuoteState::ScalationLimit);
           if (!quotes.ask.empty() and orderbook.limit(quotes.ask))
-            quotes.ask.clear(QuoteState::DisabledQuotes);
+            quotes.ask.clear(QuoteState::ScalationLimit);
         }
       };
       void applyFairValueDeviation() {
         if (levels.deviated.limit()) {
           if (!levels.deviated.bid)
-            quotes.bid.clear(QuoteState::DisabledQuotes);
+            quotes.bid.clear(QuoteState::DeviationLimit);
           if (!levels.deviated.ask)
-            quotes.ask.clear(QuoteState::DisabledQuotes);
+            quotes.ask.clear(QuoteState::DeviationLimit);
         }
       };
       void applyBestWidth() {

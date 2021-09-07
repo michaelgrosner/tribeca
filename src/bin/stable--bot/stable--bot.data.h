@@ -3,9 +3,9 @@
 
 namespace analpaper {
   enum class QuoteState: unsigned int {
-    Disconnected,  Live,        DisabledQuotes,
+    Disconnected,  Live,        Crossed,
     MissingData,   UnknownHeld, WidthTooHigh,
-    DepletedFunds, Crossed
+    DepletedFunds, DisabledQuotes
   };
 
   struct Wallets {

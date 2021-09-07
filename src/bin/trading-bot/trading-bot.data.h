@@ -12,10 +12,10 @@ namespace tribeca {
     Off, PingPong, PingPoing, Boomerang, AK47
   };
   enum class QuoteState: unsigned int {
-    Disconnected,  Live,             DisabledQuotes,
+    Disconnected,  Live,             Crossed,
     MissingData,   UnknownHeld,      WidthTooHigh,
     TBPHeld,       MaxTradesSeconds, WaitingPing,
-    DepletedFunds, Crossed,
+    DepletedFunds, DisabledQuotes,
     UpTrendHeld,   DownTrendHeld
   };
   enum class FairValueModel: unsigned int {
