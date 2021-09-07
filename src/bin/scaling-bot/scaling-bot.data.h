@@ -166,21 +166,24 @@ namespace analpaper {
         const Order *const order = upsert(raw);
         orderbook.maxmin(raw, order);
         if (!order) {
-          last = {0, 0, (Side)0, false};
+          last = {};
           return;
         }
         last = {
           order->price,
-          raw.filled >= K.gateway->minSize and !order->isPong
-            ? raw.filled : 0,
+          !order->isPong
+            and order->status == Status::Terminated
+            and order->quantity == order->totalFilled
+              ? order->quantity : 0,
           order->side,
           order->isPong
         };
         if (last.filled) K.gateway->balance();
-        if (order->isPong or last.filled)
-          K.log("GW " + K.gateway->exchange, string(order->isPong?"PONG":"PING") + " TRADE "
+        if (last.filled
+          or (order->isPong and order->status == Status::Working)
+        ) K.log("GW " + K.gateway->exchange, string(order->isPong?"PONG":"PING") + " TRADE "
             + (order->side == Side::Bid ? "BUY  " : "SELL ")
-            + K.gateway->decimal.amount.str(order->isPong ? order->quantity : last.filled)
+            + K.gateway->decimal.amount.str(order->quantity)
             + " " + K.gateway->base + " at "
             + K.gateway->decimal.price.str(order->price)
             + " " + K.gateway->quote
@@ -349,7 +352,7 @@ namespace analpaper {
         return fairValue;
       };
       void timer_1s() {
-        if (ready())
+        if (deviated.limit() and ready())
           deviated.timer_1s(fairValue);
       };
     private:
@@ -582,18 +585,21 @@ namespace analpaper {
   struct Broker {
     Connectivity greenGateway = Connectivity::Disconnected;
     private:
+      vector<Order> pending;
       AntonioCalculon calculon;
                   int limit = 0;
     private_ref:
       const KryptoNinja  &K;
             Orders       &orders;
       const MarketLevels &levels;
+      const      Wallets &wallet;
     public:
       Broker(const KryptoNinja &bot, Orders &o, const MarketLevels &l, const Wallets &w)
         : calculon(bot, o.orderbook, l, w)
         , K(bot)
         , orders(o)
         , levels(l)
+        , wallet(w)
       {};
       void read_from_gw(const Connectivity &raw) {
         const Connectivity previous = greenGateway;
@@ -612,13 +618,26 @@ namespace analpaper {
           orders.purge(it);
       };
       void calcQuotes() {
-        calculon.calcQuotes();
-        quote2orders(calculon.quotes.ask);
-        quote2orders(calculon.quotes.bid);
+        if (!pending.size()) {
+          calculon.calcQuotes();
+          quote2orders(calculon.quotes.ask);
+          quote2orders(calculon.quotes.bid);
+        }
+      };
+      void timer_1s() {
+        if (pending.size()
+          and (pending.at(0).side == Side::Bid
+            ? wallet.base
+            : wallet.quote
+          ).amount >= pending.at(0).quantity
+        ) {
+          placeOrder(pending.at(0));
+          pending.erase(pending.begin());
+        }
       };
       void scale() {
         if (orders.last.filled and K.arg<double>("pong-width"))
-          placeOrder({
+          pending.push_back({
             orders.last.side == Side::Bid
               ? Side::Ask
               : Side::Bid,
@@ -720,8 +739,9 @@ namespace analpaper {
         broker.quit_after();
       };
       void timer_1s(const unsigned int&) {
-        if (levels.deviated.limit())
-          levels.timer_1s();
+        levels.timer_1s();
+        broker.timer_1s();
+        calcQuotes();
       };
       void quit() {
         broker.quit();

@@ -54,7 +54,7 @@ namespace analpaper {
         if (!order) return;
         last = {
           order->price,
-          raw.filled,
+          raw.justFilled,
           order->side,
           order->isPong
         };

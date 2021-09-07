@@ -439,7 +439,7 @@ namespace tribeca {
         }
         updated = {
           order->price,
-          raw.filled,
+          raw.justFilled,
           order->side,
           order->isPong
         };

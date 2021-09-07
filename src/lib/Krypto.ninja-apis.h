@@ -97,7 +97,8 @@ namespace ₿ {
          string orderId     = "",
                 exchangeId  = "";
          Status status      = (Status)0;
-         Amount filled      = 0;
+         Amount justFilled  = 0;
+         Amount totalFilled = 0;
       OrderType type        = (OrderType)0;
     TimeInForce timeInForce = (TimeInForce)0;
            bool manual      = false;
@@ -107,6 +108,7 @@ namespace ₿ {
       if (Status::Working == (     order->status     = raw.status
       ) and !order->latency)       order->latency    = raw.time - order->time;
       order->time = raw.time;
+      order->totalFilled += raw.justFilled;
       if (!raw.exchangeId.empty()) order->exchangeId = raw.exchangeId;
       if (raw.price)               order->price      = raw.price;
       if (raw.quantity)            order->quantity   = raw.quantity;
