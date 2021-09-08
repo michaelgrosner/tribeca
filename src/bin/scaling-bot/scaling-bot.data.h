@@ -450,9 +450,12 @@ namespace analpaper {
       };
       void logState(const Quote &quote, QuoteState *const prevState) {
         if (quote.state != *prevState) {
-          string reason = explainState(quote);
+          const string reason = explainState(quote);
           if (!reason.empty())
-            K.log("QP", string(quote.side == Side::Bid ? "BID" : "ASK") + " quoting", reason);
+            K.log("QP", (quote.side == Side::Bid
+              ? Ansi::r(COLOR_CYAN)    + "BID"
+              : Ansi::r(COLOR_MAGENTA) + "ASK"
+            ) + Ansi::r(COLOR_WHITE) + " quoting", reason);
           *prevState = quote.state;
         }
       };
@@ -511,9 +514,9 @@ namespace analpaper {
       };
       void applyFairValueDeviation() {
         if (levels.deviated.limit()) {
-          if (!levels.deviated.bid)
+          if (!quotes.bid.empty() and !levels.deviated.bid)
             quotes.bid.clear(QuoteState::DeviationLimit);
-          if (!levels.deviated.ask)
+          if (!quotes.ask.empty() and !levels.deviated.ask)
             quotes.ask.clear(QuoteState::DeviationLimit);
         }
       };
@@ -586,30 +589,22 @@ namespace analpaper {
         }
       };
       void applyDepleted() {
-        if (!quotes.bid.empty()) {
-          const Amount minBid = K.gateway->minValue
-            ? fmax(K.gateway->minSize, K.gateway->minValue / quotes.bid.price)
-            : K.gateway->minSize;
+        if (!quotes.bid.empty())
           if ((K.gateway->margin == Future::Spot
-              ? wallet.quote.total / quotes.bid.price
+              ? wallet.quote.amount / quotes.bid.price
               : (K.gateway->margin == Future::Inverse
                   ? wallet.base.amount * quotes.bid.price
                   : wallet.base.amount / quotes.bid.price)
-              ) < minBid
+              ) < quotes.bid.size
           ) quotes.bid.clear(QuoteState::DepletedFunds);
-        }
-        if (!quotes.ask.empty()) {
-          const Amount minAsk = K.gateway->minValue
-            ? fmax(K.gateway->minSize, K.gateway->minValue / quotes.ask.price)
-            : K.gateway->minSize;
+        if (!quotes.ask.empty())
           if ((K.gateway->margin == Future::Spot
-              ? wallet.base.total
+              ? wallet.base.amount
               : (K.gateway->margin == Future::Inverse
                   ? wallet.base.amount * quotes.ask.price
                   : wallet.base.amount / quotes.ask.price)
-              ) < minAsk
+              ) < quotes.ask.size
           ) quotes.ask.clear(QuoteState::DepletedFunds);
-        }
       };
   };
 
@@ -649,19 +644,18 @@ namespace analpaper {
           orders.purge(it);
       };
       void calcQuotes() {
-        if (!pending.size()) {
+        if (pending.empty()) {
           calculon.calcQuotes();
           quote2orders(calculon.quotes.ask);
           quote2orders(calculon.quotes.bid);
-        }
+        } else cancelOrders();
       };
       void timer_1s() {
-        if (pending.size()
-          and (pending.at(0).side == Side::Bid
-            ? wallet.base
-            : wallet.quote
-          ).amount >= pending.at(0).quantity
-        ) {
+        if (!pending.empty()
+          and pending.at(0).quantity < (pending.at(0).side == Side::Bid
+            ? wallet.quote.amount / pending.at(0).price
+            : wallet.base.amount
+        )) {
           placeOrder(pending.at(0));
           pending.erase(pending.begin());
         }
@@ -738,6 +732,10 @@ namespace analpaper {
       void cancelOrder(Order *const order) {
         if (orders.cancel(order))
           K.gateway->cancel(order);
+      };
+      void cancelOrders() {
+        for (Order *const it : orders.open())
+          cancelOrder(it);
       };
   };
 
