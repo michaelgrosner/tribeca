@@ -112,6 +112,7 @@ namespace analpaper {
       void maxmin(Order raw, const Order *const order) {
         if (!limit()) return;
         if (order) {
+          if (!order->isPong) return;
           raw.side       = order->side;
           raw.price      = order->price;
           raw.exchangeId = order->exchangeId;
@@ -435,14 +436,22 @@ namespace analpaper {
           reason = "LIVE";
         else if (quote.state == QuoteState::DepletedFunds)
           reason = "DISABLED " + Ansi::r(COLOR_WHITE)
-                 + "because not enough available funds";
+                 + "because not enough available funds ("
+                 + (quote.side == Side::Bid
+                   ? K.gateway->decimal.price.str(wallet.quote.amount) + " " + K.gateway->quote
+                   : K.gateway->decimal.amount.str(wallet.base.amount) + " " + K.gateway->base
+                 ) + ")";
         else if (quote.state == QuoteState::ScaleSided)
           reason = "DISABLED " + Ansi::r(COLOR_WHITE)
-                 + "because " + (quote.side == Side::Ask ? "--scale-bids" : "--scale-asks")
+                 + "because " + (quote.side == Side::Bid ? "--scale-asks" : "--scale-bids")
                  + " is set";
         else if (quote.state == QuoteState::ScalationLimit)
           reason = "DISABLED " + Ansi::r(COLOR_WHITE)
-                 + "because the nearest pong is closer than --wait-width";
+                 + "because the nearest pong ("
+                 + K.gateway->decimal.price.str(quote.side == Side::Bid
+                   ? orderbook.minAsk
+                   : orderbook.maxBid
+                 ) + " " + K.gateway->quote + ") is closer than --wait-width";
         else if (quote.state == QuoteState::DeviationLimit)
           reason = "DISABLED " + Ansi::r(COLOR_WHITE)
                  + "because the price deviation is lower than --wait-price";
