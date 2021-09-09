@@ -433,7 +433,8 @@ namespace analpaper {
       string explainState(const Quote &quote) const {
         string reason = "";
         if (quote.state == QuoteState::Live)
-          reason = "LIVE";
+          reason = "  LIVE   " + Ansi::r(COLOR_WHITE)
+                 + "because of reasons";
         else if (quote.state == QuoteState::DepletedFunds)
           reason = "DISABLED " + Ansi::r(COLOR_WHITE)
                  + "because not enough available funds ("
