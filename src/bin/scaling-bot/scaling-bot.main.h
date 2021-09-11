@@ -81,7 +81,7 @@ class ScalingBot: public KryptoNinja {
             error("CF", "Invalid empty --ping-width value");
           else log("CF", "--ping-width=", opt.str(arg<double>("ping-width")));
           log("CF", "--pong-width=", opt.str(arg<double>("pong-width"))
-            + (arg<double>("pong-width") ? "" : Ansi::r(COLOR_WHITE) + " (pong orders disabled)")
+            + (arg<double>("pong-width") ? "" : Ansi::b(COLOR_RED) + " (pong orders disabled)")
           );
           if (arg<double>("pong-width")) {
             if (!arg<double>("wait-width"))

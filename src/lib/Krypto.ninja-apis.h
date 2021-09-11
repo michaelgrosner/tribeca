@@ -22,6 +22,32 @@ namespace ₿ {
   struct Levels {
     vector<Level> bids,
                   asks;
+    static void update(Levels *const levels, const Side &side, const Price &price, const Amount &size) {
+      vector<Level> *const level = side == Side::Bid
+                                 ? &levels->bids
+                                 : &levels->asks;
+      auto it = find_if(
+        level->begin(), level->end(),
+        [&](const Level &it) { return price == it.price; }
+      );
+      if (it == level->end()) {
+        if (size)
+          level->insert(
+            side == Side::Bid
+              ? find_if(
+                  level->begin(), level->end(),
+                  [&](const Level &it) { return price > it.price; }
+                )
+              : find_if(
+                  level->begin(), level->end(),
+                  [&](const Level &it) { return price < it.price; }
+                ),
+            {price, size}
+          );
+      } else if (size)
+        it->size = size;
+      else level->erase(it);
+    };
   };
   static void __attribute__ ((unused)) to_json(json &j, const Levels &k) {
     j = {
