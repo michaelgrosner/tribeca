@@ -198,7 +198,7 @@ namespace analpaper {
         const Price price = last.side == Side::Bid
           ? fmax(last.price + K.arg<double>("pong-width"), fairValue + K.gateway->tickPrice)
           : fmin(last.price - K.arg<double>("pong-width"), fairValue - K.gateway->tickPrice);
-        if (K.arg<int>("scale-pong")) {
+        if (K.arg<int>("pong-scale")) {
           if (last.side == Side::Bid) {
             if (orderbook.minAsk)
               return fmax(price, orderbook.minAsk - K.arg<double>("pong-width"));
@@ -303,11 +303,11 @@ namespace analpaper {
       };
     private:
       void calc(const Price &current) {
-        if (!K.arg<int>("scale-asks")) {
+        if (K.arg<int>("bids-size")) {
           const Price high = *max_element(fairValues.begin(), fairValues.end());
           reset("DOWN", high, current, high - current > K.arg<double>("wait-price"), &bid);
         }
-        if (!K.arg<int>("scale-bids")) {
+        if (K.arg<int>("asks-size")) {
           const Price low  = *min_element(fairValues.begin(), fairValues.end());
           reset(" UP ",  low, current, current - low  > K.arg<double>("wait-price"), &ask);
         }
@@ -448,8 +448,8 @@ namespace analpaper {
                  ) + ")";
         else if (quote.state == QuoteState::ScaleSided)
           reason = "DISABLED " + Ansi::r(COLOR_WHITE)
-                 + "because " + (quote.side == Side::Bid ? "--scale-asks" : "--scale-bids")
-                 + " is set";
+                 + "because " + (quote.side == Side::Bid ? "--bids-size" : "--asks-size")
+                 + " was not set";
         else if (quote.state == QuoteState::ScalationLimit)
           reason = "DISABLED " + Ansi::r(COLOR_WHITE)
                  + "because the nearest pong ("
@@ -485,8 +485,8 @@ namespace analpaper {
       void calcRawQuotes() {
         quotes.ask.isPong =
         quotes.bid.isPong = false;
-        quotes.bid.size =
-        quotes.ask.size = K.arg<double>("order-size");
+        quotes.bid.size = K.arg<double>("bids-size");
+        quotes.ask.size = K.arg<double>("asks-size");
         quotes.bid.price = fmin(
           levels.fairValue - K.gateway->tickPrice,
           levels.fairValue - K.arg<double>("ping-width")
@@ -513,9 +513,9 @@ namespace analpaper {
         quotes.checkCrossedQuotes();
       };
       void applyScaleSide() {
-        if (K.arg<int>("scale-asks"))
+        if (!K.arg<double>("bids-size"))
           quotes.bid.clear(QuoteState::ScaleSided);
-        if (K.arg<int>("scale-bids"))
+        if (!K.arg<double>("asks-size"))
           quotes.ask.clear(QuoteState::ScaleSided);
       };
       void applyPongsScalation() {
