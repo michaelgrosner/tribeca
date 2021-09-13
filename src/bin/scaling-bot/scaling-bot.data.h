@@ -434,9 +434,11 @@ namespace analpaper {
         string reason = "";
         if (quote.state == QuoteState::Live)
           reason = "  LIVE   " + Ansi::r(COLOR_WHITE)
-                 + "because of reasons (since "
+                 + "because of reasons (ping: "
                  + K.gateway->decimal.price.str(quote.price) + " " + K.gateway->quote
-                 + ")";
+                 + ", fair value: "
+                 + K.gateway->decimal.price.str(levels.fairValue) + " " + K.gateway->quote
+                 +")";
         else if (quote.state == QuoteState::DepletedFunds)
           reason = "DISABLED " + Ansi::r(COLOR_WHITE)
                  + "because not enough available funds ("

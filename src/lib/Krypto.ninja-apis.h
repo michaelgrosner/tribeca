@@ -133,7 +133,7 @@ namespace ₿ {
       if (!order) return;
       if (Status::Working == (     order->status     = raw.status
       ) and !order->latency)       order->latency    = raw.time - order->time;
-      order->time = raw.time;
+      order->time         = raw.time;
       order->totalFilled += raw.justFilled;
       if (!raw.exchangeId.empty()) order->exchangeId = raw.exchangeId;
       if (raw.price)               order->price      = raw.price;
@@ -574,7 +574,7 @@ namespace ₿ {
             FixSocket::start(GwExchangeData::loopfd, [&]() {
               wait_for_async_data();
             });
-            print("FIX Logon, streaming orders");
+            print("FIX streaming [orders]");
           } else reconnect(string("CURL connect FIX Error: ") + curl_easy_strerror(rc));
         }
       };
