@@ -45,15 +45,9 @@ class TradingBot: public KryptoNinja {
           {"leverage",     "AMOUNT", "1",     "set between '0.01' and '100' to enable isolated margin,"
                                               "\n" "or use '0' for cross margin; default AMOUNT is '1'"},
           {"wallet-limit", "AMOUNT", "0",     "set AMOUNT in base currency to limit the balance,"
-                                              "\n" "otherwise the full available balance can be used"},
-          {"debug-wallet", "1",      nullptr, "print detailed output about target base position"}
+                                              "\n" "otherwise the full available balance can be used"}
         },
-        [&](MutableUserArguments &args) {
-          if (arg<int>("debug"))
-            args["debug-wallet"] = 1;
-          if (arg<int>("ignore-moon") and arg<int>("ignore-sun"))
-            error("CF", "Invalid use of --ignore-moon and --ignore-sun together");
-        }
+        nullptr
       };
     };
   private:

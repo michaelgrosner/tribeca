@@ -164,7 +164,7 @@ namespace analpaper {
       void read_from_gw(const Order &raw) {
         if (K.arg<int>("debug-orders"))
           K.log("GW " + K.gateway->exchange, "  reply: " + ((json)raw).dump());
-        if (raw.justFilled) K.beep();
+        K.beep(raw.justFilled);
         const Order *const order = upsert(raw);
         orderbook.maxmin(raw, order);
         if (!order) {
@@ -665,6 +665,21 @@ namespace analpaper {
           quote2orders(calculon.quotes.bid);
         } else cancelOrders();
       };
+      void timer_60s() {
+        if (K.arg<int>("heartbeat") and levels.fairValue)
+          K.log("HB", ((json){
+            {"bid|fv|ask", K.gateway->decimal.price.str(levels.fairValue)
+                         + "|"
+                         + K.gateway->decimal.price.str(
+                             levels.bids.empty() ? 0 : levels.bids.begin()->price)
+                         + "|"
+                         + K.gateway->decimal.price.str(
+                             levels.asks.empty() ? 0 : levels.asks.begin()->price)},
+            {"pongs", K.gateway->decimal.price.str(orders.orderbook.maxBid)
+                    + "|"
+                    + K.gateway->decimal.price.str(orders.orderbook.minAsk)       }
+          }).dump());
+      };
       void timer_1s() {
         if (!pending.empty()
           and pending.at(0).quantity < (pending.at(0).side == Side::Bid
@@ -782,9 +797,11 @@ namespace analpaper {
         broker.scale();
         broker.quit_after();
       };
-      void timer_1s(const unsigned int&) {
+      void timer_1s(const unsigned int &tick) {
         levels.timer_1s();
         broker.timer_1s();
+        if (!(tick % 60))
+          broker.timer_60s();
         calcQuotes();
       };
       void quit() {

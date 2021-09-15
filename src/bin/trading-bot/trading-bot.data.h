@@ -432,7 +432,7 @@ namespace tribeca {
       };
       void read_from_gw(const Order &raw) {
         if (K.arg<int>("debug-orders")) report(&raw, " reply ");
-        if (raw.justFilled) K.beep();
+        K.beep(raw.justFilled);
         const Order *const order = upsert(raw);
         if (!order) {
           updated = {};
@@ -1748,7 +1748,7 @@ namespace tribeca {
         calcPDiv();
         if (broadcast()) {
           backup();
-          if (K.arg<int>("debug-wallet")) report();
+          if (K.arg<int>("heartbeat")) report();
         }
       };
       bool realtime() const override {
@@ -1780,7 +1780,7 @@ namespace tribeca {
         positionDivergence = K.gateway->decimal.funds.round(positionDivergence);
       };
       void report() const {
-        K.log("QE", "TBP: "
+        K.log("HB", "TBP: "
           + to_string((int)(targetBasePosition / baseValue * 1e+2)) + "% = " + K.gateway->decimal.funds.str(targetBasePosition)
           + " " + K.gateway->base + ", pDiv: "
           + to_string((int)(positionDivergence / baseValue * 1e+2)) + "% = " + K.gateway->decimal.funds.str(positionDivergence)

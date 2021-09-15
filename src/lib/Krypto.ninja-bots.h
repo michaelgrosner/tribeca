@@ -199,6 +199,7 @@ namespace ₿ {
         } padding = {ANY_NUM, 0, 0, 0};
       } display;
       WINDOW *stdlog = nullptr;
+      bool gobeep = false;
     private:
       mutable map<string, Clock> limits;
     public:
@@ -327,12 +328,14 @@ namespace ₿ {
         wattroff(stdlog, COLOR_PAIR(COLOR_WHITE));
         wrefresh(stdlog);
       };
-      void beep() const {
-        if (!display.terminal)
-          clog << '\007'
-               << flush;
-        else if (stdlog)
-          ::beep();
+      void beep(const bool &maybeep) const {
+        if (gobeep and maybeep) {
+          if (!display.terminal)
+            clog << '\007'
+                 << flush;
+          else if (stdlog)
+            ::beep();
+        }
       };
     protected:
       bool windowed() {
@@ -458,9 +461,10 @@ namespace ₿ {
           long_options.push_back(it);
         arguments.first.clear();
         for (const Argument &it : (vector<Argument>){
-          {"debug-orders", "1",      nullptr,  "print detailed output about exchange messages"},
+          {"heartbeat",    "1",      nullptr,  "print detailed output about most important data"},
+          {"debug-orders", "1",      nullptr,  "print detailed output about order states"},
           {"debug-quotes", "1",      nullptr,  "print detailed output about quoting engine"},
-          {"debug-secret", "1",      nullptr,  "print (never share!) secret inputs and outputs"},
+          {"debug-secret", "1",      nullptr,  "print (never share!) secret exchange messages"},
           {"debug",        "1",      nullptr,  "print detailed output about all the (previous) things!"},
           {"colors",       "1",      nullptr,  "print highlighted output"},
         }) long_options.push_back(it);
@@ -468,7 +472,7 @@ namespace ₿ {
           {"naked",        "1",      nullptr,  "do not display CLI, print output to stdout instead"}
         );
         if (order_ev) long_options.push_back(
-          {"beep",         "1",      nullptr,  "make computer go beep when an order is filled"}
+          {"beep",         "1",      nullptr,  "make computer go beep on filled orders"}
         );
         if (!blackhole) long_options.push_back(
           {"database",     "FILE",   "",       "set alternative PATH to database filename,"
@@ -481,7 +485,7 @@ namespace ₿ {
         vector<Argument> io_options(find_if(
           long_options.begin(), long_options.end(),
           [&](const Argument &it) {
-            return "debug" == it.name.substr(0, 5);
+            return "heartbeat" == it.name.substr(0, 9);
           }
         ), long_options.end());
         long_options = vector<Argument>(
@@ -546,6 +550,8 @@ namespace ₿ {
           error("CF", argerr);
         }
         tidy();
+        if (order_ev)
+          gobeep = arg<int>("beep");
         colorful = arg<int>("colors");
         if (arguments.second) {
           arguments.second(args);
@@ -587,6 +593,7 @@ namespace ₿ {
         args["market-limit"] = max(10, arg<int>("market-limit"));
         args["leverage"] = fmax(0, fmin(100, arg<double>("leverage")));
         if (arg<int>("debug"))
+          args["heartbeat"] =
           args["debug-orders"] =
           args["debug-quotes"] =
           args["debug-secret"] = 1;
@@ -614,6 +621,8 @@ namespace ₿ {
               +  '.' + "db";
         }
         if (!arg<int>("headless")) {
+          if (arg<int>("ignore-moon") and arg<int>("ignore-sun"))
+            error("CF", "Invalid use of --ignore-moon and --ignore-sun together");
           if (arg<int>("latency") or !arg<int>("port") or !arg<int>("client-limit"))
             args["headless"] = 1;
           args["B64auth"] = (!arg<int>("headless")

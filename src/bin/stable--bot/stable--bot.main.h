@@ -6,11 +6,12 @@ class StableBot: public KryptoNinja {
       : engine(*this)
     {
       events    = {
-        [&](const Connectivity &rawdata) { engine.read(rawdata); },
-        [&](const Wallet       &rawdata) { engine.read(rawdata); },
-        [&](const Levels       &rawdata) { engine.read(rawdata); },
-        [&](const Order        &rawdata) { engine.read(rawdata); },
-        [&]()                            { engine.quit();        }
+        [&](const Connectivity &rawdata) { engine.read(rawdata);  },
+        [&](const Wallet       &rawdata) { engine.read(rawdata);  },
+        [&](const Levels       &rawdata) { engine.read(rawdata);  },
+        [&](const Order        &rawdata) { engine.read(rawdata);  },
+        [&](const unsigned int &tick)    { engine.timer_1s(tick); },
+        [&]()                            { engine.quit();         }
       };
       arguments = {
         {

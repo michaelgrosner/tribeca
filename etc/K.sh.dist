@@ -35,7 +35,7 @@ K_BINARY_FILE=K-trading-bot
 #  ██  (to avoid to write it always in the command-line).
 #  ██                                                   .
 #OPTIONAL_ARGUMENTS="--colors --autobot --port 3000"
-OPTIONAL_ARGUMENTS="--colors --naked --debug-wallet"
+OPTIONAL_ARGUMENTS="--colors --naked --heartbeat"
 #  ██                                                   .
 #  ██▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
 #  ▌_____                                               .
