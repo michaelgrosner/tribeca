@@ -22,6 +22,15 @@ namespace ₿ {
   struct Levels {
     vector<Level> bids,
                   asks;
+    static Levels reduce(Levels levels, const size_t &max) {
+      if (max) {
+        if (levels.bids.size() > max)
+          levels.bids.erase(levels.bids.begin() + max, levels.bids.end());
+        if (levels.asks.size() > max)
+          levels.asks.erase(levels.asks.begin() + max, levels.asks.end());
+      }
+      return levels;
+    };
     static void update(Levels *const levels, const Side &side, const Price &price, const Amount &size) {
       vector<Level> *const level = side == Side::Bid
                                  ? &levels->bids
@@ -289,10 +298,10 @@ namespace ₿ {
              minValue  = 0,
              makeFee   = 0,
              takeFee   = 0;
-      size_t maxLevel  = 0;
+         int maxLevel  = 0,
+             debug     = 0;
       double leverage  = 0;
       Future margin    = (Future)0;
-         int debug     = 0;
       Connectivity adminAgreement = Connectivity::Disconnected;
       json handshake(const bool &nocache) {
         json reply;
@@ -424,14 +433,6 @@ namespace ₿ {
           reason,
           highlight
         );
-      };
-      void reduce(Levels &levels) {
-        if (maxLevel) {
-          if (levels.bids.size() > maxLevel)
-            levels.bids.erase(levels.bids.begin() + maxLevel, levels.bids.end());
-          if (levels.asks.size() > maxLevel)
-            levels.asks.erase(levels.asks.begin() + maxLevel, levels.asks.end());
-        }
       };
   };
 
