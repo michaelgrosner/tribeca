@@ -2,7 +2,7 @@ K         ?= K.sh
 MAJOR      = 0
 MINOR      = 6
 PATCH      = 4
-BUILD      = 38
+BUILD      = 39
 
 OBLIGATORY = DISCLAIMER: This is strict non-violent software: \n$\
              if you hurt other living creatures, please stop; \n$\
@@ -306,7 +306,7 @@ push:
 	@date=`date` && (git diff || :) && git status && read -p "KMOD: " KMOD \
 	&& git add . && git commit -S -m "$${KMOD}"                            \
 	&& ((KALL=1 $(MAKE) K release && git push) || git reset HEAD^1)        \
-	&& echo $${date} && date
+	&& echo "\007" && echo $${date} && date
 
 MAJOR:
 	@sed -i "s/^\(MAJOR *=\).*$$/\1 $(shell expr $(MAJOR) + 1)/" Makefile

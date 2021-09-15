@@ -327,6 +327,13 @@ namespace ₿ {
         wattroff(stdlog, COLOR_PAIR(COLOR_WHITE));
         wrefresh(stdlog);
       };
+      void beep() const {
+        if (!display.terminal)
+          clog << '\007'
+               << flush;
+        else if (stdlog)
+          ::beep();
+      };
     protected:
       bool windowed() {
         if (!display.terminal) return false;
@@ -384,7 +391,6 @@ namespace ₿ {
         K->ending([&]() {
           if (display.terminal) {
             display = {};
-            beep();
             endwin();
           }
           clog << stamp()
@@ -394,6 +400,11 @@ namespace ₿ {
         args["autobot"]  =
         args["headless"] = headless;
         args["naked"]    = !display.terminal;
+        bool order_ev = false;
+        for (const auto &it : events)
+          if (holds_alternative<Gw::DataEvent>(it)
+            and holds_alternative<function<void(const Order&)>>(get<Gw::DataEvent>(it))
+          ) order_ev = true;
         vector<Argument> long_options = {
           {"INFORMATION",  "",       nullptr,  ""},
           {"help",         "h",      nullptr,  "print this help and quit"},
@@ -456,6 +467,9 @@ namespace ₿ {
         if (!arg<int>("naked")) long_options.push_back(
           {"naked",        "1",      nullptr,  "do not display CLI, print output to stdout instead"}
         );
+        if (order_ev) long_options.push_back(
+          {"beep",         "1",      nullptr,  "make computer go beep when an order is filled"}
+        );
         if (!blackhole) long_options.push_back(
           {"database",     "FILE",   "",       "set alternative PATH to database filename,"
                                                "\n" "default PATH is '" K_HOME "/db/K-*.db',"
@@ -478,16 +492,10 @@ namespace ₿ {
           {"market-limit", "NUMBER", "321",    "set NUMBER of maximum price levels for the orderbook,"
                                                "\n" "default NUMBER is '321' and the minimum is '10'"}
         );
-        bool order_ev = false;
-        for (const auto &it : events)
-          if (holds_alternative<Gw::DataEvent>(it)
-            and holds_alternative<function<void(const Order&)>>(get<Gw::DataEvent>(it))
-          ) order_ev = true;
-        if (order_ev)
-          long_options.push_back(
-            {"lifetime",     "NUMBER", "0",    "set NUMBER of minimum milliseconds to keep orders open,"
+        if (order_ev) long_options.push_back(
+          {"lifetime",     "NUMBER", "0",      "set NUMBER of minimum milliseconds to keep orders open,"
                                                "\n" "otherwise open orders can be replaced anytime required"}
-          );
+        );
         long_options.push_back(
           {"I/O",          "",       nullptr,  ""}
         );

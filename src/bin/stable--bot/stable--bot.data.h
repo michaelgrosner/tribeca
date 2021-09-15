@@ -49,9 +49,12 @@ namespace analpaper {
       void read_from_gw(const Order &raw) {
         if (K.arg<int>("debug-orders"))
           K.log("GW " + K.gateway->exchange, "  reply: " + ((json)raw).dump());
-        last = {0, 0, (Side)0, false};
+        if (raw.justFilled) K.beep();
         const Order *const order = upsert(raw);
-        if (!order) return;
+        if (!order) {
+          last = {};
+          return;
+        }
         last = {
           order->price,
           raw.justFilled,

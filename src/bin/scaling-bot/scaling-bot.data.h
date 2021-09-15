@@ -164,6 +164,7 @@ namespace analpaper {
       void read_from_gw(const Order &raw) {
         if (K.arg<int>("debug-orders"))
           K.log("GW " + K.gateway->exchange, "  reply: " + ((json)raw).dump());
+        if (raw.justFilled) K.beep();
         const Order *const order = upsert(raw);
         orderbook.maxmin(raw, order);
         if (!order) {
