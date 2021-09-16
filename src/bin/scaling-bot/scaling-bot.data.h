@@ -666,7 +666,15 @@ namespace analpaper {
         } else cancelOrders();
       };
       void timer_60s() {
-        if (K.arg<int>("heartbeat") and levels.fairValue)
+        if (K.arg<int>("heartbeat") and levels.fairValue) {
+          string bids, asks;
+          for (auto &it : orders.open())
+            (it->side == Side::Bid
+              ? bids
+              : asks
+            ) += K.gateway->decimal.price.str(it->price) + ',';
+          if (!bids.empty()) bids.pop_back(); else bids = '0';
+          if (!asks.empty()) asks.pop_back(); else asks = '0';
           K.log("HB", ((json){
             {"bid|fv|ask", K.gateway->decimal.price.str(
                              levels.bids.empty()
@@ -678,14 +686,16 @@ namespace analpaper {
                          + K.gateway->decimal.price.str(
                              levels.asks.empty()
                                ? 0 : levels.asks.cbegin()->price
-                           )                                   },
+                           )                                    },
             {"pongs", K.gateway->decimal.price.str(
                         orders.orderbook.maxBid
                       ) + "|"
                     + K.gateway->decimal.price.str(
                         orders.orderbook.minAsk
-                      )                                        }
+                      )                                         },
+            {"pings", bids + "|" + asks                         }
           }).dump());
+        }
       };
       void timer_1s() {
         if (!pending.empty()
