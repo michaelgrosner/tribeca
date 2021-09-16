@@ -198,10 +198,11 @@ namespace ₿ {
           unsigned int left;
         } padding = {ANY_NUM, 0, 0, 0};
       } display;
-      WINDOW *stdlog = nullptr;
+    protected:
       bool gobeep = false;
     private:
-      mutable map<string, Clock> limits;
+      WINDOW *stdlog = nullptr;
+      mutable Clock warned = 0;
     public:
       unsigned int padding_bottom(const unsigned int &bottom) const {
         if (bottom != display.padding.bottom) {
@@ -299,9 +300,8 @@ namespace ₿ {
       void logWar(const string &prefix, const string &reason, const Clock &ratelimit = 0) const {
         if (ratelimit) {
           const Clock now = Tstamp;
-          if (limits.find(reason) != limits.end() and limits[reason] + ratelimit > now)
-            return;
-          limits[reason] = now;
+          if (warned + ratelimit > now) return;
+          warned = now;
         }
         if (!display.terminal) {
           clog << stamp()

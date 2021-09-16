@@ -668,16 +668,23 @@ namespace analpaper {
       void timer_60s() {
         if (K.arg<int>("heartbeat") and levels.fairValue)
           K.log("HB", ((json){
-            {"bid|fv|ask", K.gateway->decimal.price.str(levels.fairValue)
-                         + "|"
+            {"bid|fv|ask", K.gateway->decimal.price.str(
+                             levels.bids.empty()
+                               ? 0 : levels.bids.cbegin()->price
+                           ) + "|"
                          + K.gateway->decimal.price.str(
-                             levels.bids.empty() ? 0 : levels.bids.begin()->price)
-                         + "|"
+                             levels.fairValue
+                           ) + "|"
                          + K.gateway->decimal.price.str(
-                             levels.asks.empty() ? 0 : levels.asks.begin()->price)},
-            {"pongs", K.gateway->decimal.price.str(orders.orderbook.maxBid)
-                    + "|"
-                    + K.gateway->decimal.price.str(orders.orderbook.minAsk)       }
+                             levels.asks.empty()
+                               ? 0 : levels.asks.cbegin()->price
+                           )                                   },
+            {"pongs", K.gateway->decimal.price.str(
+                        orders.orderbook.maxBid
+                      ) + "|"
+                    + K.gateway->decimal.price.str(
+                        orders.orderbook.minAsk
+                      )                                        }
           }).dump());
       };
       void timer_1s() {
