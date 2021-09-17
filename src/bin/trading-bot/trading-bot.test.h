@@ -355,7 +355,7 @@ SCENARIO_METHOD(TradingBot, "ANY BTC/EUR") {
       REQUIRE_NOTHROW(engine.qp._diffEwma |= true << 3);
       REQUIRE_NOTHROW(engine.qp._diffEwma |= true << 4);
       REQUIRE_NOTHROW(engine.qp._diffEwma |= true << 5);
-      REQUIRE_NOTHROW(clicked(&engine.qp));
+      REQUIRE_NOTHROW(K.clicked(&engine.qp));
       THEN("values") {
         REQUIRE(engine.levels.stats.ewma.mgEwmaVL == Approx(266.1426832796));
         REQUIRE(engine.levels.stats.ewma.mgEwmaL == Approx(264.4045182289));
