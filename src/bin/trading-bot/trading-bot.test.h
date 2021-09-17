@@ -20,8 +20,8 @@ SCENARIO_METHOD(TradingBot, "ANY BTC/EUR") {
       }
     }
     WHEN("assigned") {
-      for (Order *const it : engine.orders.working())
-        engine.orders.purge(it);
+      for (Order *const it : orders.open())
+        orders.purge(it);
       REQUIRE_NOTHROW(engine.levels.diff.read = [&]() {
         REQUIRE(engine.levels.diff.blob().dump() == "{"
           "\"asks\":[{\"price\":1234.6,\"size\":1.23456789},{\"price\":1234.69,\"size\":0.11234569}],"
@@ -34,17 +34,16 @@ SCENARIO_METHOD(TradingBot, "ANY BTC/EUR") {
       REQUIRE_NOTHROW(engine.qp.fvModel = tribeca::FairValueModel::BBO);
       vector<string> randIds;
       REQUIRE_NOTHROW(randIds.push_back(Random::uuid36Id()));
-      REQUIRE_NOTHROW(engine.orders.upsert({Side::Bid, 1234.52, 0.34567890, Tstamp, false, randIds.back()}));
-      REQUIRE_NOTHROW(engine.orders.upsert({(Side)0, 0, 0, Tstamp, false, randIds.back(), "", Status::Working, 0}));
+      REQUIRE_NOTHROW(orders.update({(Side)0, 0, 0, Tstamp, false, randIds.back(), "", Status::Working, 0}));
       REQUIRE_NOTHROW(randIds.push_back(Random::uuid36Id()));
-      REQUIRE_NOTHROW(engine.orders.upsert({Side::Bid, 1234.52, 0.23456789, Tstamp, false, randIds.back()}));
-      REQUIRE_NOTHROW(engine.orders.upsert({(Side)0, 0, 0, Tstamp, false, randIds.back(), "", Status::Working, 0}));
+      REQUIRE_NOTHROW(orders.update({Side::Bid, 1234.52, 0.23456789, Tstamp, false, randIds.back()}));
+      REQUIRE_NOTHROW(orders.update({(Side)0, 0, 0, Tstamp, false, randIds.back(), "", Status::Working, 0}));
       REQUIRE_NOTHROW(randIds.push_back(Random::uuid36Id()));
-      REQUIRE_NOTHROW(engine.orders.upsert({Side::Bid, 1234.55, 0.01234567, Tstamp, false, randIds.back()}));
-      REQUIRE_NOTHROW(engine.orders.upsert({(Side)0, 0, 0, Tstamp, false, randIds.back(), "", Status::Working, 0}));
+      REQUIRE_NOTHROW(orders.update({Side::Bid, 1234.55, 0.01234567, Tstamp, false, randIds.back()}));
+      REQUIRE_NOTHROW(orders.update({(Side)0, 0, 0, Tstamp, false, randIds.back(), "", Status::Working, 0}));
       REQUIRE_NOTHROW(randIds.push_back(Random::uuid36Id()));
-      REQUIRE_NOTHROW(engine.orders.upsert({Side::Ask, 1234.69, 0.01234568, Tstamp, false, randIds.back()}));
-      REQUIRE_NOTHROW(engine.orders.upsert({(Side)0, 0, 0, Tstamp, false, randIds.back(), "", Status::Working, 0}));
+      REQUIRE_NOTHROW(orders.update({Side::Ask, 1234.69, 0.01234568, Tstamp, false, randIds.back()}));
+      REQUIRE_NOTHROW(orders.update({(Side)0, 0, 0, Tstamp, false, randIds.back(), "", Status::Working, 0}));
       REQUIRE_NOTHROW(engine.levels.read_from_gw({
         { {1234.50, 0.12345678}, {1234.55, 0.01234567} },
         { {1234.60, 1.23456789}, {1234.69, 0.11234569} }
@@ -356,7 +355,7 @@ SCENARIO_METHOD(TradingBot, "ANY BTC/EUR") {
       REQUIRE_NOTHROW(engine.qp._diffEwma |= true << 3);
       REQUIRE_NOTHROW(engine.qp._diffEwma |= true << 4);
       REQUIRE_NOTHROW(engine.qp._diffEwma |= true << 5);
-      REQUIRE_NOTHROW(K.clicked(&engine.qp));
+      REQUIRE_NOTHROW(clicked(&engine.qp));
       THEN("values") {
         REQUIRE(engine.levels.stats.ewma.mgEwmaVL == Approx(266.1426832796));
         REQUIRE(engine.levels.stats.ewma.mgEwmaL == Approx(264.4045182289));
@@ -408,27 +407,27 @@ SCENARIO_METHOD(TradingBot, "ANY BTC/EUR") {
     REQUIRE_NOTHROW(engine.wallet.read_from_gw({1,    0, "BTC"}));
     REQUIRE_NOTHROW(engine.wallet.read_from_gw({1000, 0, "EUR"}));
     WHEN("assigned") {
-      for (Order *const it : engine.orders.working())
-        engine.orders.purge(it);
+      for (Order *const it : orders.open())
+        orders.purge(it);
       vector<string> randIds;
       const Clock time = Tstamp;
       REQUIRE_NOTHROW(randIds.push_back(Random::uuid36Id()));
-      REQUIRE_NOTHROW(engine.orders.upsert({Side::Bid, 1234.50, 0.12345678, time-69, false, randIds.back()}));
-      REQUIRE_NOTHROW(engine.orders.upsert({(Side)0, 0, 0, time, false, randIds.back(), "", Status::Working, 0}));
+      REQUIRE_NOTHROW(orders.update({Side::Bid, 1234.50, 0.12345678, time-69, false, randIds.back()}));
+      REQUIRE_NOTHROW(orders.update({(Side)0, 0, 0, time, false, randIds.back(), "", Status::Working, 0}));
       REQUIRE_NOTHROW(randIds.push_back(Random::uuid36Id()));
-      REQUIRE_NOTHROW(engine.orders.upsert({Side::Bid, 1234.51, 0.12345679, time-69, false, randIds.back()}));
-      REQUIRE_NOTHROW(engine.orders.upsert({(Side)0, 0, 0, time, false, randIds.back(), "", Status::Working, 0}));
+      REQUIRE_NOTHROW(orders.update({Side::Bid, 1234.51, 0.12345679, time-69, false, randIds.back()}));
+      REQUIRE_NOTHROW(orders.update({(Side)0, 0, 0, time, false, randIds.back(), "", Status::Working, 0}));
       REQUIRE_NOTHROW(randIds.push_back(Random::uuid36Id()));
-      REQUIRE_NOTHROW(engine.orders.upsert({Side::Bid, 1234.52, 0.12345680, time-69, false, randIds.back()}));
-      REQUIRE_NOTHROW(engine.orders.upsert({(Side)0, 0, 0, time, false, randIds.back(), "", Status::Working, 0}));
+      REQUIRE_NOTHROW(orders.update({Side::Bid, 1234.52, 0.12345680, time-69, false, randIds.back()}));
+      REQUIRE_NOTHROW(orders.update({(Side)0, 0, 0, time, false, randIds.back(), "", Status::Working, 0}));
       REQUIRE_NOTHROW(randIds.push_back(Random::uuid36Id()));
-      REQUIRE_NOTHROW(engine.orders.upsert({Side::Ask, 1234.50, 0.12345678, time-69, false, randIds.back()}));
-      REQUIRE_NOTHROW(engine.orders.upsert({(Side)0, 0, 0, time, false, randIds.back(), "", Status::Working, 0}));
+      REQUIRE_NOTHROW(orders.update({Side::Ask, 1234.50, 0.12345678, time-69, false, randIds.back()}));
+      REQUIRE_NOTHROW(orders.update({(Side)0, 0, 0, time, false, randIds.back(), "", Status::Working, 0}));
       REQUIRE_NOTHROW(randIds.push_back(Random::uuid36Id()));
-      REQUIRE_NOTHROW(engine.orders.upsert({Side::Ask, 1234.51, 0.12345679, time-69, false, randIds.back()}));
-      REQUIRE_NOTHROW(engine.orders.upsert({(Side)0, 0, 0, time, false, randIds.back(), "", Status::Working, 0}));
+      REQUIRE_NOTHROW(orders.update({Side::Ask, 1234.51, 0.12345679, time-69, false, randIds.back()}));
+      REQUIRE_NOTHROW(orders.update({(Side)0, 0, 0, time, false, randIds.back(), "", Status::Working, 0}));
       REQUIRE_NOTHROW(randIds.push_back(Random::uuid36Id()));
-      REQUIRE_NOTHROW(engine.orders.upsert({Side::Ask, 1234.52, 0.12345680, time, false, randIds.back()}));
+      REQUIRE_NOTHROW(orders.update({Side::Ask, 1234.52, 0.12345680, time, false, randIds.back()}));
       THEN("held amount") {
         REQUIRE_NOTHROW(engine.orders.updated.price = 1);
         REQUIRE_NOTHROW(engine.orders.updated.side = Side::Ask);

@@ -292,7 +292,7 @@ namespace ₿ {
       };
     private:
             Timer timer;
-      list<Async> events;
+      list<Async> jobs;
     public:
       void timer_ticks_factor(const unsigned int &factor) const override {
         timer.ticks_factor(factor);
@@ -301,8 +301,8 @@ namespace ₿ {
         timer.push_back(data);
       };
       Loop::Async *async(const function<void()> &data) override {
-        events.emplace_back(data);
-        return &events.back();
+        jobs.emplace_back(data);
+        return &jobs.back();
       };
       curl_socket_t poll() override {
         return 0;
@@ -313,7 +313,7 @@ namespace ₿ {
       void end() override {
         uv_timer_stop(&timer.event);
         uv_close((uv_handle_t*)&timer.event, [](uv_handle_t*){ });
-        for (auto &it : events)
+        for (auto &it : jobs)
           uv_close((uv_handle_t*)&it.event, [](uv_handle_t*){ });
       };
   };
@@ -392,7 +392,7 @@ namespace ₿ {
     private:
        curl_socket_t sockfd = 0;
                Timer timer;
-         list<Async> events;
+         list<Async> jobs;
          epoll_event ready[32] = {};
     public:
       Events()
@@ -406,8 +406,8 @@ namespace ₿ {
         timer.push_back(data);
       };
       Loop::Async *async(const function<void()> &data) override {
-        events.emplace_back(sockfd, data);
-        return &events.back();
+        jobs.emplace_back(sockfd, data);
+        return &jobs.back();
       };
       curl_socket_t poll() override {
         return sockfd;
@@ -422,9 +422,9 @@ namespace ₿ {
       };
       void end() override {
         timer.stop();
-        for (auto &it : events)
+        for (auto &it : jobs)
           it.stop();
-        events.clear();
+        jobs.clear();
         ::close(sockfd);
         sockfd = 0;
       };

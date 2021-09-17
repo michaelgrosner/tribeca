@@ -37,8 +37,6 @@ namespace analpaper {
   };
   struct Orders {
     LastOrder last;
-    private:
-      unordered_map<string, Order> orders;
     private_ref:
       const KryptoNinja  &K;
     public:
@@ -50,7 +48,7 @@ namespace analpaper {
         if (K.arg<int>("debug-orders"))
           K.log("GW " + K.gateway->exchange, "  reply: " + ((json)raw).dump());
         K.beep(raw.justFilled);
-        const Order *const order = upsert(raw);
+        const Order *const order = K.orders.update(raw);
         if (!order) {
           last = {};
           return;
@@ -70,81 +68,9 @@ namespace analpaper {
             + K.gateway->decimal.price.str(order->price)
             + " " + K.gateway->quote);
         if (order->status == Status::Terminated)
-          purge(order);
+          K.orders.purge(order);
         if (K.arg<int>("debug-orders"))
-          K.log("GW " + K.gateway->exchange, " active: " + to_string(orders.size()));
-      };
-      Order *upsert(const Order &raw) {
-        Order *const order = findsert(raw);
-        Order::update(raw, order);
-        return order;
-      };
-      void purge(const Order *const order) {
-        orders.erase(order->orderId);
-      };
-      vector<Order*> at(const Side &side) {
-        vector<Order*> sideOrders;
-        for (auto &it : orders)
-          if (side == it.second.side)
-             sideOrders.push_back(&it.second);
-        return sideOrders;
-      };
-      vector<Order*> open() {
-        vector<Order*> autoOrders;
-        for (auto &it : orders)
-          if (!it.second.manual)
-            autoOrders.push_back(&it.second);
-        return autoOrders;
-      };
-      bool replace(const Price &price, const bool &isPong, Order *const order) {
-        const bool allowed = Order::replace(price, isPong, order);
-        if (allowed and K.arg<int>("debug-orders")) {
-          K.log("GW " + K.gateway->exchange, "replace: " + order->orderId);
-          K.log("GW " + K.gateway->exchange, " active: " + to_string(orders.size()));
-        }
-        return allowed;
-      };
-      bool cancel(Order *const order) {
-        const bool allowed = Order::cancel(order);
-        if (allowed and K.arg<int>("debug-orders")) {
-          K.log("GW " + K.gateway->exchange, " cancel: " + order->orderId);
-          K.log("GW " + K.gateway->exchange, " active: " + to_string(orders.size()));
-        }
-        return allowed;
-      };
-      void resetFilters(
-        unordered_map<Price, Amount> *const filterBidOrders,
-        unordered_map<Price, Amount> *const filterAskOrders
-      ) const {
-        filterBidOrders->clear();
-        filterAskOrders->clear();
-        for (const auto &it : orders)
-          (it.second.side == Side::Bid
-            ? *filterBidOrders
-            : *filterAskOrders
-          )[it.second.price] += it.second.quantity;
-      };
-    private:
-      Order *find(const string &orderId) {
-        return (orderId.empty()
-          or orders.find(orderId) == orders.end()
-        ) ? nullptr
-          : &orders.at(orderId);
-      };
-      Order *findsert(const Order &raw) {
-        if (raw.status == Status::Waiting and !raw.orderId.empty())
-          return &(orders[raw.orderId] = raw);
-        if (raw.orderId.empty() and !raw.exchangeId.empty()) {
-          auto it = find_if(
-            orders.begin(), orders.end(),
-            [&](const pair<string, Order> &it_) {
-              return raw.exchangeId == it_.second.exchangeId;
-            }
-          );
-          if (it != orders.end())
-            return &it->second;
-        }
-        return find(raw.orderId);
+          K.log("GW " + K.gateway->exchange, " active: " + to_string(K.orders.size()));
       };
   };
 
@@ -175,7 +101,7 @@ namespace analpaper {
       };
     private:
       void filter() {
-        orders.resetFilters(&filterBidOrders, &filterAskOrders);
+        K.orders.resetFilters(&filterBidOrders, &filterAskOrders);
         bids = filter(unfiltered.bids, &filterBidOrders);
         asks = filter(unfiltered.asks, &filterAskOrders);
         if (bids.empty() or asks.empty())
@@ -477,7 +403,7 @@ namespace analpaper {
       };
       void purge() {
         for (const Order *const it : calculon.purge())
-          orders.purge(it);
+          K.orders.purge(it);
       };
       void calcQuotes() {
         calculon.calcQuotes();
@@ -498,7 +424,7 @@ namespace analpaper {
       };
       void quit() {
         unsigned int n = 0;
-        for (Order *const it : orders.open()) {
+        for (Order *const it : K.orders.open()) {
           K.gateway->cancel(it);
           n++;
         }
@@ -509,7 +435,7 @@ namespace analpaper {
       vector<Order*> abandon(Quote &quote) {
         vector<Order*> abandoned;
         const bool all = quote.state != QuoteState::Live;
-        for (Order *const it : orders.at(quote.side))
+        for (Order *const it : K.orders.at(quote.side))
           if (all or calculon.abandon(*it, quote))
             abandoned.push_back(it);
         return abandoned;
@@ -522,11 +448,11 @@ namespace analpaper {
         for (
           auto it  =  abandoned.end() - replace;
                it --> abandoned.begin();
-          cancelOrder(*it)
+          K.cancel(*it)
         );
         if (quote.empty()) return;
-        if (replace) replaceOrder(quote.price, quote.isPong, abandoned.back());
-        else placeOrder({
+        if (replace) K.replace(quote.price, quote.isPong, abandoned.back());
+        else K.place({
           quote.side,
           quote.price,
           quote.size,
@@ -534,17 +460,6 @@ namespace analpaper {
           quote.isPong,
           K.gateway->randId()
         });
-      };
-      void placeOrder(const Order &raw) {
-        K.gateway->place(orders.upsert(raw));
-      };
-      void replaceOrder(const Price &price, const bool &isPong, Order *const order) {
-        if (orders.replace(price, isPong, order))
-          K.gateway->replace(order);
-      };
-      void cancelOrder(Order *const order) {
-        if (orders.cancel(order))
-          K.gateway->cancel(order);
       };
   };
 

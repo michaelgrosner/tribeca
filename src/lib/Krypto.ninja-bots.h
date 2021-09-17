@@ -390,7 +390,7 @@ namespace ₿ {
         return get<T>(args.at(name));
       };
     protected:
-      void main(Ending *const K, int argc, char** argv, const vector<variant<Loop::TimeEvent, Ending::QuitEvent, Gw::DataEvent>> &events, const bool &blackhole, const bool &headless) {
+      void optional_setup(Ending *const K, int argc, char** argv, const vector<variant<Loop::TimeEvent, Ending::QuitEvent, Gw::DataEvent>> &events, const bool &blackhole, const bool &headless) {
         K->ending([&]() {
           if (display.terminal) {
             display = {};
@@ -597,8 +597,6 @@ namespace ₿ {
           args["debug-orders"] =
           args["debug-quotes"] =
           args["debug-secret"] = 1;
-        if (arg<int>("latency"))
-          args["nocache"] = 1;
 #if !defined _WIN32 and defined NDEBUG
         if (arg<int>("latency")
           or arg<int>("list")
@@ -864,6 +862,8 @@ namespace ₿ {
             return to_string(size());
           };
       };
+    public:
+      function<unsigned int()> dbSize = [](){ return 0; };
     private:
       sqlite3 *db = nullptr;
       string disk = "main";
@@ -871,6 +871,11 @@ namespace ₿ {
     protected:
       void backups(const Option *const K) {
         if (blackhole()) return;
+        if (K->arg<string>("database") != ":memory:")
+          dbSize = [K](){
+            struct stat st;
+            return stat(K->arg<string>("database").data(), &st) ? 0 : st.st_size;
+          };
         if (sqlite3_open(K->arg<string>("database").data(), &db))
           error("DB", sqlite3_errmsg(db));
         K->log("DB", "loaded OK from", K->arg<string>("database"));
@@ -1219,25 +1224,204 @@ namespace ₿ {
       };
   };
 
+  class Memory {
+    public_friend:
+      class Orders {
+        private:
+          mutable unordered_map<string, Order> orders;
+        public:
+          Order *find(const string &orderId) const {
+            return (orderId.empty()
+              or orders.find(orderId) == orders.end()
+            ) ? nullptr
+              : &orders.at(orderId);
+          };
+          Order *update(const Order &raw) const {
+            return Order::update(raw, findsert(raw));
+          };
+          void purge(const Order *const order) const {
+            orders.erase(order->orderId);
+          };
+          unsigned int size() const {
+            return orders.size();
+          };
+          vector<Order*> at(const Side &side) const {
+            vector<Order*> sideOrders;
+            for (auto &it : orders)
+              if (side == it.second.side)
+                sideOrders.push_back(&it.second);
+            return sideOrders;
+          };
+          vector<Order*> open() const {
+            vector<Order*> autoOrders;
+            for (auto &it : orders)
+              if (!it.second.manual)
+                autoOrders.push_back(&it.second);
+            return autoOrders;
+          };
+          vector<Order> working(const bool &sorted) const {
+            vector<Order> workingOrders;
+            for (const auto &it : orders)
+              if (Status::Working == it.second.status)
+                workingOrders.push_back(it.second);
+            if (sorted)
+              sort(workingOrders.begin(), workingOrders.end(),
+                [](const Order &a, const Order &b) {
+                  return a.price > b.price;
+                }
+              );
+            return workingOrders;
+          };
+          Amount held(const Side &side) const {
+            Amount held = 0;
+            for (const auto &it : orders)
+              if (it.second.side == side)
+                held += (
+                  it.second.side == Side::Ask
+                    ? it.second.quantity
+                    : it.second.quantity * it.second.price
+                );
+            return held;
+          };
+          void resetFilters(
+            unordered_map<Price, Amount> *const filterBidOrders,
+            unordered_map<Price, Amount> *const filterAskOrders
+          ) const {
+            filterBidOrders->clear();
+            filterAskOrders->clear();
+            for (const auto &it : orders)
+              (it.second.side == Side::Bid
+                ? *filterBidOrders
+                : *filterAskOrders
+              )[it.second.price] += it.second.quantity;
+          };
+        private:
+          Order *findsert(const Order &raw) const {
+            if (raw.status == Status::Waiting and !raw.orderId.empty())
+              return &(orders[raw.orderId] = raw);
+            if (raw.orderId.empty() and !raw.exchangeId.empty()) {
+              auto it = find_if(
+                orders.begin(), orders.end(),
+                [&](const pair<string, Order> &it) {
+                  return raw.exchangeId == it.second.exchangeId;
+                }
+              );
+              if (it != orders.end())
+                return &it->second;
+            }
+            return find(raw.orderId);
+          };
+      } orders;
+    public:
+      Gw *gateway = nullptr;
+    protected:
+      vector<variant<
+          Loop::TimeEvent,
+        Ending::QuitEvent,
+            Gw::DataEvent
+      >> events;
+    private:
+      bool debug = false;
+    public:
+      void place(const Order &raw) const {
+        gateway->place(orders.update(raw));
+        if (debug) {
+          gateway->print("  place: " + ((json)raw).dump());
+          gateway->print(" active: " + to_string(orders.size()));
+        }
+      };
+      void replace(const Price &price, const bool &isPong, Order *const order) const {
+        if (Order::replace(price, isPong, order)) {
+          gateway->replace(order);
+          if (debug) {
+            gateway->print("replace: " + ((json*)order)->dump());
+            gateway->print(" active: " + to_string(orders.size()));
+          }
+        }
+      };
+      void cancel() const {
+        for (Order *const it : orders.open())
+          cancel(it);
+      };
+      void cancel(const string &orderId) const {
+        cancel(orders.find(orderId));
+      };
+      void cancel(Order *const order) const {
+        if (Order::cancel(order)) {
+          gateway->cancel(order);
+          if (debug) {
+            gateway->print(" cancel: " + order->orderId);
+            gateway->print(" active: " + to_string(orders.size()));
+          }
+        }
+      };
+      unsigned int memSize() const {
+#ifdef _WIN32
+        return 0;
+#else
+        struct rusage ru;
+        return getrusage(RUSAGE_SELF, &ru) ? 0 : ru.ru_maxrss * 1e+3;
+#endif
+      };
+    protected:
+      void required_setup(const Option *const K, const curl_socket_t &loopfd) {
+        if (!(gateway = Gw::new_Gw(K->arg<string>("exchange"))))
+          error("CF",
+            "Unable to configure a valid gateway using --exchange="
+              + K->arg<string>("exchange") + " argument"
+          );
+        epitaph = "- exchange: " + (gateway->exchange = K->arg<string>("exchange")) + '\n'
+                + "- currency: " + (gateway->base     = K->arg<string>("base"))     + "/"
+                                 + (gateway->quote    = K->arg<string>("quote"))    + '\n';
+        if (!gateway->http.empty() and !K->arg<string>("http").empty())
+          gateway->http    = K->arg<string>("http");
+        if (!gateway->ws.empty() and !K->arg<string>("wss").empty())
+          gateway->ws      = K->arg<string>("wss");
+        if (!gateway->fix.empty() and !K->arg<string>("fix").empty())
+          gateway->fix     = K->arg<string>("fix");
+        if (K->arg<double>("taker-fee"))
+          gateway->takeFee = K->arg<double>("taker-fee") / 1e+2;
+        if (K->arg<double>("maker-fee"))
+          gateway->makeFee = K->arg<double>("maker-fee") / 1e+2;
+        if (K->arg<double>("min-size"))
+          gateway->minSize = K->arg<double>("min-size");
+        gateway->leverage  = K->arg<double>("leverage");
+        gateway->apikey    = K->arg<string>("apikey");
+        gateway->secret    = K->arg<string>("secret");
+        gateway->pass      = K->arg<string>("passphrase");
+        gateway->maxLevel  = K->arg<int>("market-limit");
+        gateway->debug     = K->arg<int>("debug-secret");
+        gateway->loopfd    = loopfd;
+        gateway->printer   = [K](const string &prefix, const string &reason, const string &highlight) {
+          if (reason.find("Error") != string::npos)
+            K->logWar(prefix, reason);
+          else K->log(prefix, reason, highlight);
+        };
+        gateway->adminAgreement = (Connectivity)K->arg<int>("autobot");
+        debug = K->arg<int>("debug-orders");
+      };
+      void handshake(const GwExchange::Report &notes, const bool &nocache) {
+        const json reply = gateway->handshake(nocache);
+        if (!gateway->tickPrice or !gateway->tickSize or !gateway->minSize)
+          error("GW", "Unable to fetch data from " + gateway->exchange
+            + " for symbols " + gateway->base + "/" + gateway->quote
+            + ", response was: " + reply.dump());
+        gateway->report(notes, nocache);
+      };
+  };
+
   class KryptoNinja: public Events,
                      public Ending,
                      public Option,
                      public Hotkey,
                      public Sqlite,
-                     public Client {
-    public:
-      Gw *gateway = nullptr;
-    protected:
-      vector<variant<
-            TimeEvent,
-            QuitEvent,
-        Gw::DataEvent
-      >> events;
+                     public Client,
+                     public Memory {
     public:
       KryptoNinja *main(int argc, char** argv) {
         {
-          Option::main(this, argc, argv, events, blackhole(), documents.empty());
-          setup();
+          optional_setup(this, argc, argv, events, blackhole(), documents.empty());
+          required_setup(this, poll());
         } {
           if (windowed())
             wait_for_keylog(this);
@@ -1253,7 +1437,7 @@ namespace ₿ {
             exit("CF " + Ansi::r(COLOR_WHITE) + gateway->latency([&]() {
               handshake({
                 {"gateway", gateway->http}
-              });
+              }, true);
             }));
         } {
           gateway->wait_for_data(this);
@@ -1272,6 +1456,7 @@ namespace ₿ {
             gateway->end();
             end();
           });
+        } {
           handshake({
             {"gateway", gateway->http      },
             {"gateway", gateway->ws        },
@@ -1279,7 +1464,7 @@ namespace ₿ {
             {"autoBot", arg<int>("autobot")
                           ? "yes"
                           : "no"           }
-          });
+          }, arg<int>("nocache"));
         } {
           backups(this);
         } {
@@ -1305,63 +1490,6 @@ namespace ₿ {
       };
       void wait() {
         walk();
-      };
-      unsigned int dbSize() const {
-        if (blackhole() or arg<string>("database") == ":memory:") return 0;
-        struct stat st;
-        return stat(arg<string>("database").data(), &st) ? 0 : st.st_size;
-      };
-      unsigned int memSize() const {
-#ifdef _WIN32
-        return 0;
-#else
-        struct rusage ru;
-        return getrusage(RUSAGE_SELF, &ru) ? 0 : ru.ru_maxrss * 1e+3;
-#endif
-      };
-    private:
-      void handshake(const GwExchange::Report &notes = {}) {
-        const json reply = gateway->handshake(arg<int>("nocache"));
-        if (!gateway->tickPrice or !gateway->tickSize or !gateway->minSize)
-          error("GW", "Unable to fetch data from " + gateway->exchange
-            + " for symbols " + gateway->base + "/" + gateway->quote
-            + ", response was: " + reply.dump());
-        gateway->report(notes, arg<int>("nocache"));
-      };
-      void setup() {
-        if (!(gateway = Gw::new_Gw(arg<string>("exchange"))))
-          error("CF",
-            "Unable to configure a valid gateway using --exchange="
-              + arg<string>("exchange") + " argument"
-          );
-        epitaph = "- exchange: " + (gateway->exchange = arg<string>("exchange")) + '\n'
-                + "- currency: " + (gateway->base     = arg<string>("base"))     + "/"
-                                 + (gateway->quote    = arg<string>("quote"))    + '\n';
-        if (!gateway->http.empty() and !arg<string>("http").empty())
-          gateway->http    = arg<string>("http");
-        if (!gateway->ws.empty() and !arg<string>("wss").empty())
-          gateway->ws      = arg<string>("wss");
-        if (!gateway->fix.empty() and !arg<string>("fix").empty())
-          gateway->fix     = arg<string>("fix");
-        if (arg<double>("taker-fee"))
-          gateway->takeFee = arg<double>("taker-fee") / 1e+2;
-        if (arg<double>("maker-fee"))
-          gateway->makeFee = arg<double>("maker-fee") / 1e+2;
-        if (arg<double>("min-size"))
-          gateway->minSize = arg<double>("min-size");
-        gateway->leverage  = arg<double>("leverage");
-        gateway->apikey    = arg<string>("apikey");
-        gateway->secret    = arg<string>("secret");
-        gateway->pass      = arg<string>("passphrase");
-        gateway->maxLevel  = arg<int>("market-limit");
-        gateway->debug     = arg<int>("debug-secret");
-        gateway->loopfd    = poll();
-        gateway->printer   = [&](const string &prefix, const string &reason, const string &highlight) {
-          if (reason.find("Error") != string::npos)
-            logWar(prefix, reason);
-          else log(prefix, reason, highlight);
-        };
-        gateway->adminAgreement = (Connectivity)arg<int>("autobot");
       };
   };
 }

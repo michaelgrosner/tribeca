@@ -317,8 +317,6 @@ namespace tribeca {
   };
   struct Orders: public Client::Broadcast<Orders> {
     LastOrder updated;
-    private:
-      unordered_map<string, Order> orders;
     private_ref:
       const KryptoNinja &K;
     public:
@@ -327,116 +325,16 @@ namespace tribeca {
         , updated()
         , K(bot)
       {};
-      Order *find(const string &orderId) {
-        return (orderId.empty()
-          or orders.find(orderId) == orders.end()
-        ) ? nullptr
-          : &orders.at(orderId);
-      };
-      Order *findsert(const Order &raw) {
-        if (raw.status == Status::Waiting and !raw.orderId.empty())
-          return &(orders[raw.orderId] = raw);
-        if (raw.orderId.empty() and !raw.exchangeId.empty()) {
-          auto it = find_if(
-            orders.begin(), orders.end(),
-            [&](const pair<string, Order> &it_) {
-              return raw.exchangeId == it_.second.exchangeId;
-            }
-          );
-          if (it != orders.end())
-            return &it->second;
-        }
-        return find(raw.orderId);
-      };
-      Amount heldAmount(const Side &side) const {
-        Amount held = 0;
-        for (const auto &it : orders)
-          if (it.second.side == side)
-            held += (
-              it.second.side == Side::Ask
-                ? it.second.quantity
-                : it.second.quantity * it.second.price
-            );
-        return held;
-      };
-      void resetFilters(
-        unordered_map<Price, Amount> *const filterBidOrders,
-        unordered_map<Price, Amount> *const filterAskOrders
-      ) const {
-        filterBidOrders->clear();
-        filterAskOrders->clear();
-        for (const auto &it : orders)
-          (it.second.side == Side::Bid
-            ? *filterBidOrders
-            : *filterAskOrders
-          )[it.second.price] += it.second.quantity;
-      };
-      vector<Order*> at(const Side &side) {
-        vector<Order*> sideOrders;
-        for (auto &it : orders)
-          if (side == it.second.side)
-             sideOrders.push_back(&it.second);
-        return sideOrders;
-      };
-      vector<Order*> open() {
-        vector<Order*> autoOrders;
-        for (auto &it : orders)
-          if (!it.second.manual)
-            autoOrders.push_back(&it.second);
-        return autoOrders;
-      };
-      vector<Order*> working() {
-        vector<Order*> workingOrders;
-        for (auto &it : orders)
-          if (Status::Working == it.second.status
-            and !it.second.manual
-          ) workingOrders.push_back(&it.second);
-        return workingOrders;
-      };
-      vector<Order> working(const bool &sorted = false) const {
-        vector<Order> workingOrders;
-        for (const auto &it : orders)
-          if (Status::Working == it.second.status)
-            workingOrders.push_back(it.second);
-        if (sorted)
-          sort(workingOrders.begin(), workingOrders.end(),
-            [](const Order &a, const Order &b) {
-              return a.price > b.price;
-            }
-          );
-        return workingOrders;
-      };
-      Order *upsert(const Order &raw) {
-        Order *const order = findsert(raw);
-        Order::update(raw, order);
-        if (K.arg<int>("debug-orders")) {
-          report(order, " saved ");
-          report_size();
-        }
-        return order;
-      };
-      bool replace(const Price &price, const bool &isPong, Order *const order) {
-        const bool allowed = Order::replace(price, isPong, order);
-        if (allowed and K.arg<int>("debug-orders")) report(order, "replace");
-        return allowed;
-      };
-      bool cancel(Order *const order) {
-        const bool allowed = Order::cancel(order);
-        if (allowed and K.arg<int>("debug-orders")) report(order, "cancel ");
-        return allowed;
-      };
-      void purge(const Order *const order) {
-        if (K.arg<int>("debug-orders")) report(order, " purge ");
-        orders.erase(order->orderId);
-        if (K.arg<int>("debug-orders")) report_size();
-      };
       void read_from_gw(const Order &raw) {
         if (K.arg<int>("debug-orders")) report(&raw, " reply ");
         K.beep(raw.justFilled);
-        const Order *const order = upsert(raw);
+        const Order *const order = K.orders.update(raw);
         if (!order) {
           updated = {};
           return;
+        }
+        if (K.arg<int>("debug-orders")) {
+          report(order, " saved ");
         }
         updated = {
           order->price,
@@ -445,7 +343,9 @@ namespace tribeca {
           order->isPong
         };
         if (order->status == Status::Terminated)
-          purge(order);
+          K.orders.purge(order);
+        if (K.arg<int>("debug-orders"))
+          K.log("GW " + K.gateway->exchange, " active: " + to_string(K.orders.size()));
         broadcast();
         K.repaint();
       };
@@ -456,7 +356,7 @@ namespace tribeca {
         return false;
       };
       json blob() const override {
-        return working();
+        return K.orders.working(false);
       };
     private:
       void report(const Order *const order, const string &reason) const {
@@ -468,9 +368,7 @@ namespace tribeca {
               + K.gateway->decimal.price.str(order->price) + " " + K.gateway->quote
             : "not found"
         ));
-      };
-      void report_size() const {
-        K.log("DEBUG OG", "memory " + to_string(orders.size()));
+        K.log("GW " + K.gateway->exchange, " active: " + to_string(K.orders.size()));
       };
   };
   static void to_json(json &j, const Orders &k) {
@@ -958,7 +856,7 @@ namespace tribeca {
       };
     private:
       void filter() {
-        orders.resetFilters(&filterBidOrders, &filterAskOrders);
+        K.orders.resetFilters(&filterBidOrders, &filterAskOrders);
         bids = filter(unfiltered.bids, &filterBidOrders);
         asks = filter(unfiltered.asks, &filterAskOrders);
         calcFairValue();
@@ -1869,7 +1767,7 @@ namespace tribeca {
         target.calcTargetBasePos();
       };
       void calcHeldAmount(const Side &side) {
-        const Amount heldSide = orders.heldAmount(side);
+        const Amount heldSide = K.orders.held(side);
         if (side == Side::Ask)
           base = {base.total - heldSide, heldSide, base.currency};
         else if (side == Side::Bid)
@@ -2725,9 +2623,9 @@ namespace tribeca {
     public:
       Broker(const KryptoNinja &bot, const QuotingParams &q, Orders &o, const Buttons &b, const MarketLevels &l, const Wallets &w)
         : Clicked(bot, {
-            {&b.submit, [&](const json &j) { placeOrder(j); }},
-            {&b.cancel, [&](const json &j) { cancelOrder(orders.find(j)); }},
-            {&b.cancelAll, [&]() { cancelOrders(); }}
+            {&b.submit, [&](const json &j) { K.place(j); }},
+            {&b.cancel, [&](const json &j) { K.cancel(j); }},
+            {&b.cancelAll, [&]() { K.cancel(); }}
           })
         , memory(bot)
         , semaphore(bot)
@@ -2746,7 +2644,7 @@ namespace tribeca {
       void calcQuotes() {
         if (semaphore.paused()) {
           calculon.paused();
-          cancelOrders();
+          K.cancel();
         } else {
           calculon.calcQuotes();
           quote2orders(calculon.quotes.ask);
@@ -2761,12 +2659,12 @@ namespace tribeca {
         for (
           auto it  =  abandoned.end() - replace;
                it --> abandoned.begin();
-          cancelOrder(*it)
+          K.cancel(*it)
         );
         if (quote.empty()) return;
         if (replace)
-          replaceOrder(quote.price, quote.isPong, abandoned.back());
-        else placeOrder({
+          K.replace(quote.price, quote.isPong, abandoned.back());
+        else K.place({
           quote.side,
           quote.price,
           quote.size,
@@ -2778,15 +2676,15 @@ namespace tribeca {
       };
       void purge() {
         for (const Order *const it : calculon.purge())
-          orders.purge(it);
+          K.orders.purge(it);
       };
       void nuke() {
-        cancelOrders();
+        K.cancel();
         K.gateway->cancel();
       };
       void quit() {
         unsigned int n = 0;
-        for (Order *const it : orders.open()) {
+        for (Order *const it : K.orders.open()) {
           K.gateway->cancel(it);
           n++;
         }
@@ -2798,25 +2696,10 @@ namespace tribeca {
         vector<Order*> abandoned;
         unsigned int bullets = qp.bullets;
         const bool all = quote.state != QuoteState::Live;
-        for (Order *const it : orders.at(quote.side))
+        for (Order *const it : K.orders.at(quote.side))
           if (all or calculon.abandon(*it, quote, bullets))
             abandoned.push_back(it);
         return abandoned;
-      };
-      void placeOrder(const Order &raw) {
-        K.gateway->place(orders.upsert(raw));
-      };
-      void replaceOrder(const Price &price, const bool &isPong, Order *const order) {
-        if (orders.replace(price, isPong, order))
-          K.gateway->replace(order);
-      };
-      void cancelOrder(Order *const order) {
-        if (orders.cancel(order))
-          K.gateway->cancel(order);
-      };
-      void cancelOrders() {
-        for (Order *const it : orders.working())
-          cancelOrder(it);
       };
   };
 

@@ -21,7 +21,9 @@ namespace example {
         const Price fair = (levels.bids.cbegin()->price
                           + levels.asks.cbegin()->price) / 2;
         cout << "Hello, " << K.arg<string>("subject") << endl
-             << " pssst.. 1 " << K.gateway->base << " = "
+             << " pssst.. "
+             << K.gateway->decimal.amount.str(1)   << " " << K.gateway->base
+             << " = "
              << K.gateway->decimal.price.str(fair) << " " << K.gateway->quote
              << "." << endl;
         return "Executed " + string(

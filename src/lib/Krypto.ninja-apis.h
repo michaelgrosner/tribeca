@@ -22,7 +22,7 @@ namespace ₿ {
   struct Levels {
     vector<Level> bids,
                   asks;
-    static Levels reduce(Levels levels, const size_t &max) {
+    static Levels reduce(const size_t &max, Levels levels) {
       if (max) {
         if (levels.bids.size() > max)
           levels.bids.erase(levels.bids.begin() + max, levels.bids.end());
@@ -31,7 +31,7 @@ namespace ₿ {
       }
       return levels;
     };
-    static void update(Levels *const levels, const Side &side, const Price &price, const Amount &size) {
+    static void update(const Side &side, const Price &price, const Amount &size, Levels *const levels) {
       vector<Level> *const level = side == Side::Bid
                                  ? &levels->bids
                                  : &levels->asks;
@@ -138,15 +138,17 @@ namespace ₿ {
     TimeInForce timeInForce = (TimeInForce)0;
            bool manual      = false;
           Clock latency     = 0;
-    static void update(const Order &raw, Order *const order) {
-      if (!order) return;
-      if (Status::Working == (     order->status     = raw.status
-      ) and !order->latency)       order->latency    = raw.time - order->time;
-      order->time         = raw.time;
-      order->totalFilled += raw.justFilled;
-      if (!raw.exchangeId.empty()) order->exchangeId = raw.exchangeId;
-      if (raw.price)               order->price      = raw.price;
-      if (raw.quantity)            order->quantity   = raw.quantity;
+    static Order *update(const Order &raw, Order *const order) {
+      if (order) {
+        if (Status::Working == (     order->status     = raw.status
+        ) and !order->latency)       order->latency    = raw.time - order->time;
+        order->time         = raw.time;
+        order->totalFilled += raw.justFilled;
+        if (!raw.exchangeId.empty()) order->exchangeId = raw.exchangeId;
+        if (raw.price)               order->price      = raw.price;
+        if (raw.quantity)            order->quantity   = raw.quantity;
+      }
+      return order;
     };
     static bool replace(const Price &price, const bool &isPong, Order *const order) {
       if (!order
@@ -298,10 +300,10 @@ namespace ₿ {
              minValue  = 0,
              makeFee   = 0,
              takeFee   = 0;
-         int maxLevel  = 0,
-             debug     = 0;
+         int maxLevel  = 0;
       double leverage  = 0;
       Future margin    = (Future)0;
+        bool debug     = false;
       Connectivity adminAgreement = Connectivity::Disconnected;
       json handshake(const bool &nocache) {
         json reply;
@@ -416,14 +418,6 @@ namespace ₿ {
         );
       };
       function<void(const string&, const string&, const string&)> printer;
-    protected:
-      string webMarket,
-             webOrders;
-      virtual   void disconnect()   = 0;
-      virtual   bool connected()    const = 0;
-      virtual   json handshake()    const = 0;
-      virtual   void pairs(string&) const = 0;
-      virtual string nonce()        const = 0;
       void print(const string &reason, const string &highlight = "") const {
         if (printer) printer(
           string(reason.find(">>>") != reason.find("<<<")
@@ -434,6 +428,14 @@ namespace ₿ {
           highlight
         );
       };
+    protected:
+      string webMarket,
+             webOrders;
+      virtual   void disconnect()   = 0;
+      virtual   bool connected()    const = 0;
+      virtual   json handshake()    const = 0;
+      virtual   void pairs(string&) const = 0;
+      virtual string nonce()        const = 0;
   };
 
   class Gw: public GwExchange {
