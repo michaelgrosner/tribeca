@@ -1107,8 +1107,8 @@ namespace ₿ {
                     "aaec6n+OlGhhjxn0DzYiYsVBUsokKSEJmHzoLHo3ZestTTqUwg=="             "\n"
                     "-----END CERTIFICATE-----"                                        "\n"
                   , -1), nullptr, nullptr, nullptr
-                )) or !SSL_CTX_use_RSAPrivateKey(ctx,
-                  PEM_read_bio_RSAPrivateKey(BIO_new_mem_buf((void*)
+                )) or !SSL_CTX_use_PrivateKey(ctx,
+                  PEM_read_bio_PrivateKey(BIO_new_mem_buf((void*)
                     "-----BEGIN RSA PRIVATE KEY-----"                                  "\n"
                     "MIICXAIBAAKBgQC6fLHWU2weQyYJrbg2z3GAkDBXcDr8mD9LmM8IROaM9ExeoCnz" "\n"
                     "19KFnE3Zv/YVW1Tur80S02k/ISF8CE/BiuQcK2Kn9GZn9vqpjYLHqi0Uiy7A7xpR" "\n"
@@ -1131,8 +1131,8 @@ namespace ₿ {
                   warn.emplace_back("Unable to read SSL .crt file at " + crt);
                 if (access(key.data(), R_OK) == -1)
                   warn.emplace_back("Unable to read SSL .key file at " + key);
-                if (!SSL_CTX_use_certificate_chain_file(ctx, crt.data())
-                  or !SSL_CTX_use_RSAPrivateKey_file(ctx, key.data(), SSL_FILETYPE_PEM)
+                if (!SSL_CTX_use_certificate_file(ctx, crt.data(), SSL_FILETYPE_PEM)
+                  or !SSL_CTX_use_PrivateKey_file(ctx, key.data(), SSL_FILETYPE_PEM)
                 ) {
                   ctx = nullptr;
                   warn.emplace_back("Unable to encrypt web clients, will fallback to plain text");

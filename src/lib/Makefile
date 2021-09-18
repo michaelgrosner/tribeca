@@ -3,7 +3,7 @@ HINT     = This Makefile can't be used directly, consider cd ../.. before try ag
 $(if $(subst 0,,${MAKELEVEL}),,$(warning $(ERR));$(error $(HINT)))
 
 V_ZLIB  = 1.2.11
-V_SSL   = 1.1.1l
+V_SSL   = 3.0.0
 V_CURL  = 7.79.0
 V_SQL   = 3360000
 V_NCUR  = 6.1
@@ -47,9 +47,9 @@ zlib:
 openssl:
 	test -d $(KBUILD)/var/openssl-$(V_SSL) || (                                               \
 	curl -L https://www.openssl.org/source/openssl-$(V_SSL).tar.gz | tar xz -C $(KBUILD)/var  \
-	&& cd $(KBUILD)/var/openssl-$(V_SSL) && CC=gcc ./Configure no-asm                         \
-	$(if $(findstring mingw32,$(CHOST)),mingw64 -static,gcc) --cross-compile-prefix=$(CHOST)- \
-	--prefix=$(KBUILD) --openssldir=$(KBUILD) && make install_dev                             )
+	&& cd $(KBUILD)/var/openssl-$(V_SSL) && CC=gcc ./Configure no-asm --openssldir=$(KBUILD)  \
+	$(if $(findstring mingw32,$(CHOST)),mingw64 -static --libdir=lib,gcc)                     \
+	--prefix=$(KBUILD) --cross-compile-prefix=$(CHOST)- && make install_dev                   )
 
 curl:
 	test -d $(KBUILD)/var/curl-$(V_CURL) || (                                               \
