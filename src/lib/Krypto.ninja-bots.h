@@ -1437,10 +1437,10 @@ namespace ₿ {
         for (auto &it : events)
           if (holds_alternative<Gw::DataEvent>(it)
             and holds_alternative<function<void(const Order&)>>(get<Gw::DataEvent>(it))
-          ) it = [&, fn = get<function<void(const Order&)>>(
+          ) it = [&, make_computer_go = K, fn = get<function<void(const Order&)>>(
               get<Gw::DataEvent>(it)
             )](const Order &raw) {
-              K->beep(raw.justFilled);
+              make_computer_go->beep(raw.justFilled);
               Order rawdata = raw;
               rawdata.orderId.clear();
               Order *const order = orders->update(raw, "  reply: ") ?: &rawdata;
