@@ -177,12 +177,12 @@ else ifndef KTEST
 else
 	$(CHOST)-g++ -s $(KTEST) -o $(KBUILD)/bin/K-$(KSRC) \
 	  -static-libstdc++ -static-libgcc -rdynamic        \
-	  $< $(KARGS) -ldl -Wall -Wextra
+	  $< $(KARGS) -ldl -Wall -Wextra -Wno-psabi
 endif
 
 Darwin: src/lib/Krypto.ninja-main.cxx src/bin/$(KSRC)/$(KSRC).main.h
 	-@egrep \\u20BF src -lR | xargs -r sed -i 's/\\\(u20BF\)/\1/g'
-	$(CHOST)-g++ -s -DNDEBUG -o $(KBUILD)/bin/K-$(KSRC)                          \
+	$(CHOST)-g++ -s -DNDEBUG -o $(KBUILD)/bin/K-$(KSRC) -fvisibility=hidden -fvisibility-inlines-hidden \
 	  -msse4.1 -maes -mpclmul -mmacosx-version-min=10.13 -nostartfiles -rdynamic \
 	  $< $(KARGS) -ldl -framework SystemConfiguration -framework CoreFoundation
 	-@egrep u20BF src -lR | xargs -r sed -i 's/\(u20BF\)/\\\1/g'

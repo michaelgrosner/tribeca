@@ -28,7 +28,7 @@ clean:
 
 check:
 	# zlib    | $(V_ZLIB)  | $(shell    curl -s https://www.zlib.net/ChangeLog.txt | grep "Changes in " | head -n1 | cut -d' ' -f3)
-	# openssl | $(V_SSL)  | $(shell     curl -s https://www.openssl.org/news/cl$(shell curl -s https://www.openssl.org/source/ | grep "The latest stable version is " | cut -d' ' -f12  | tr -d '.').txt | grep "Changes between " | head -n1 | cut -d' ' -f4)
+	# openssl | $(V_SSL)   | $(shell     curl -s https://www.openssl.org/news/cl$(shell curl -s https://www.openssl.org/source/ | grep "The latest stable version is " | cut -d' ' -f12  | tr -d '.').txt | grep "Changes between " | head -n1 | cut -d' ' -f4)
 	# curl    | $(V_CURL)  | $(shell    curl -s https://curl.se/changes.html | grep "Fixed in " | head -n1 | cut -d' ' -f4)
 	# sqlite  | $(V_SQL) | $(shell      curl -s https://www.sqlite.org/download.html | grep "sqlite-amalgamation-" | head -n1 | cut -d'-' -f3 | cut -d'.' -f1)
 	# ncurses | $(V_NCUR)     | $(shell curl -s https://www.gnu.org/software/ncurses/ | grep "Announcing " | head -n1 | cut -d' ' -f5 | cut -d'<' -f1)
