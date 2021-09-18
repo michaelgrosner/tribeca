@@ -2,7 +2,7 @@ K         ?= K.sh
 MAJOR      = 0
 MINOR      = 6
 PATCH      = 5
-BUILD      = 4
+BUILD      = 5
 
 OBLIGATORY = DISCLAIMER: This is strict non-violent software: \n$\
              if you hurt other living creatures, please stop; \n$\
@@ -14,7 +14,7 @@ PERMISSIVE = This is free software: the UI and quoting engine are open source, \
              are licensed by/under the law of my grandma (since last century), \n$\
              feel free to crack all as you need.
 
-SOURCE    := $(notdir $(wildcard src/bin/*))
+SOURCE    := $(filter-out trading-bot,$(notdir $(wildcard src/bin/*))) trading-bot
 CARCH      = x86_64-linux-gnu      \
              arm-linux-gnueabihf   \
              aarch64-linux-gnu     \
