@@ -1231,6 +1231,7 @@ namespace ₿ {
           function<bool(const Order&)> purgeable;
         private:
           unordered_map<string, Order> orders;
+          Order external;
         private_ref:
           const bool &debug;
           Gw *const &gateway;
@@ -1246,13 +1247,18 @@ namespace ₿ {
           {
             remote.orders = this;
           };
+          Order *alien(const Order &raw) {
+            external = raw;
+            external.orderId.clear();
+            return &external;
+          };
           Order *find(const string &orderId) {
             return (orderId.empty()
               or orders.find(orderId) == orders.end()
             ) ? nullptr
               : &orders.at(orderId);
           };
-          Order *update(const Order &raw, const string &reason) {
+          Order *update(const Order &raw, const string &reason = "  place: ") {
             Order *const order = Order::update(raw, findsert(raw));
             if (debug) {
               gateway->print(reason + ((json)raw).dump());
@@ -1350,7 +1356,7 @@ namespace ₿ {
       bool debug = false;
     public:
       void place(const Order &raw) const {
-        gateway->place(orders->update(raw, "  place: "));
+        gateway->place(orders->update(raw));
       };
       void replace(const Price &price, const bool &isPong, Order *const order) const {
         if (Order::replace(price, isPong, order)) {
@@ -1420,8 +1426,7 @@ namespace ₿ {
           else K->log(prefix, reason, highlight);
         };
         gateway->adminAgreement = (Connectivity)K->arg<int>("autobot");
-        debug = K->arg<int>("debug-orders");
-        wrap_orders(K);
+        wrap_events(K);
       };
       void handshake(const GwExchange::Report &notes, const bool &nocache) {
         const json reply = gateway->handshake(nocache);
@@ -1432,7 +1437,8 @@ namespace ₿ {
         gateway->report(notes, nocache);
       };
     private:
-      void wrap_orders(const Option *const K) {
+      void wrap_events(const Option *const K) {
+        debug = K->arg<int>("debug-orders");
         if (!orders) orders = new Orderbook(*this);
         for (auto &it : events)
           if (holds_alternative<Gw::DataEvent>(it)
@@ -1441,11 +1447,9 @@ namespace ₿ {
               get<Gw::DataEvent>(it)
             )](const Order &raw) {
               make_computer_go->beep(raw.justFilled);
-              Order rawdata = raw;
-              rawdata.orderId.clear();
-              Order *const order = orders->update(raw, "  reply: ") ?: &rawdata;
-              fn(*order);
-              if (!order->orderId.empty()) {
+              Order *const order = orders->update(raw, "  reply: ");
+              fn(*(order ?: orders->alien(raw)));
+              if (order) {
                 if (orders->purgeable(*order))
                   orders->purge(order);
                 else order->justFilled = 0;
