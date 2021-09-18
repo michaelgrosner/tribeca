@@ -160,10 +160,10 @@ namespace ₿ {
                   };
               };
             public:
-              function<void(const T&)> write = nullptr;
+              function<void(const T&)> write;
             private:
                               Async *event = nullptr;
-              function<vector<T>()>  job   = nullptr;
+              function<vector<T>()>  job;
                   future<vector<T>>  data;
             public:
               void try_write(const T &rawdata) const {
@@ -185,7 +185,7 @@ namespace ₿ {
               };
           };
         private:
-          function<void()> job = nullptr;
+          function<void()> job;
         public:
           Async(const function<void()> data)
             : job(data)

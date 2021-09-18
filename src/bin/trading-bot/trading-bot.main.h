@@ -55,7 +55,7 @@ class TradingBot: public KryptoNinja {
 } K;
 
 void TradingBot::terminal() {
-  const vector<Order> openOrders = K.orders.working(true);
+  const vector<Order> openOrders = K.engine.orders.working(true);
   const int x = getmaxx(stdscr),
             y = getmaxy(stdscr),
             yMaxLog = y - K.padding_bottom(1 + fmax(

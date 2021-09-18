@@ -315,37 +315,29 @@ namespace tribeca {
       Side side;
       bool isPong;
   };
-  struct Orders: public Client::Broadcast<Orders> {
+  struct Orders: public Remote::Orderbook,
+                 public Client::Broadcast<Orders> {
     LastOrder updated;
     private_ref:
       const KryptoNinja &K;
     public:
       Orders(const KryptoNinja &bot)
-        : Broadcast(bot)
+        : Orderbook(bot)
+        , Broadcast(bot)
         , updated()
         , K(bot)
       {};
-      void read_from_gw(const Order &raw) {
-        if (K.arg<int>("debug-orders")) report(&raw, " reply ");
-        K.beep(raw.justFilled);
-        const Order *const order = K.orders.update(raw);
-        if (!order) {
+      void read_from_gw(const Order &order) {
+        if (order.orderId.empty()) {
           updated = {};
           return;
         }
-        if (K.arg<int>("debug-orders")) {
-          report(order, " saved ");
-        }
         updated = {
-          order->price,
-          raw.justFilled,
-          order->side,
-          order->isPong
+          order.price,
+          order.justFilled,
+          order.side,
+          order.isPong
         };
-        if (order->status == Status::Terminated)
-          K.orders.purge(order);
-        if (K.arg<int>("debug-orders"))
-          K.log("GW " + K.gateway->exchange, " active: " + to_string(K.orders.size()));
         broadcast();
         K.repaint();
       };
@@ -356,19 +348,7 @@ namespace tribeca {
         return false;
       };
       json blob() const override {
-        return K.orders.working(false);
-      };
-    private:
-      void report(const Order *const order, const string &reason) const {
-        K.log("DEBUG OG", " " + reason + " " + (
-          order
-            ? order->orderId + "::" + order->exchangeId
-              + " [" + to_string((int)order->status) + "]: "
-              + K.gateway->decimal.amount.str(order->quantity) + " " + K.gateway->base + " at price "
-              + K.gateway->decimal.price.str(order->price) + " " + K.gateway->quote
-            : "not found"
-        ));
-        K.log("GW " + K.gateway->exchange, " active: " + to_string(K.orders.size()));
+        return working(false);
       };
   };
   static void to_json(json &j, const Orders &k) {
@@ -856,7 +836,7 @@ namespace tribeca {
       };
     private:
       void filter() {
-        K.orders.resetFilters(&filterBidOrders, &filterAskOrders);
+        orders.resetFilters(&filterBidOrders, &filterAskOrders);
         bids = filter(unfiltered.bids, &filterBidOrders);
         asks = filter(unfiltered.asks, &filterAskOrders);
         calcFairValue();
@@ -1767,7 +1747,7 @@ namespace tribeca {
         target.calcTargetBasePos();
       };
       void calcHeldAmount(const Side &side) {
-        const Amount heldSide = K.orders.held(side);
+        const Amount heldSide = orders.held(side);
         if (side == Side::Ask)
           base = {base.total - heldSide, heldSide, base.currency};
         else if (side == Side::Bid)
@@ -2676,7 +2656,7 @@ namespace tribeca {
       };
       void purge() {
         for (const Order *const it : calculon.purge())
-          K.orders.purge(it);
+          orders.purge(it);
       };
       void nuke() {
         K.cancel();
@@ -2684,7 +2664,7 @@ namespace tribeca {
       };
       void quit() {
         unsigned int n = 0;
-        for (Order *const it : K.orders.open()) {
+        for (Order *const it : orders.open()) {
           K.gateway->cancel(it);
           n++;
         }
@@ -2696,7 +2676,7 @@ namespace tribeca {
         vector<Order*> abandoned;
         unsigned int bullets = qp.bullets;
         const bool all = quote.state != QuoteState::Live;
-        for (Order *const it : K.orders.at(quote.side))
+        for (Order *const it : orders.at(quote.side))
           if (all or calculon.abandon(*it, quote, bullets))
             abandoned.push_back(it);
         return abandoned;

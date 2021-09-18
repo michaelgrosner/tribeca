@@ -35,42 +35,35 @@ namespace analpaper {
       Side side;
       bool isPong;
   };
-  struct Orders {
+  struct Orders: public Remote::Orderbook {
     LastOrder last;
     private_ref:
       const KryptoNinja  &K;
     public:
       Orders(const KryptoNinja &bot)
-        : last()
+        : Orderbook(bot)
+        , last()
         , K(bot)
       {};
-      void read_from_gw(const Order &raw) {
-        if (K.arg<int>("debug-orders"))
-          K.log("GW " + K.gateway->exchange, "  reply: " + ((json)raw).dump());
-        K.beep(raw.justFilled);
-        const Order *const order = K.orders.update(raw);
-        if (!order) {
+      void read_from_gw(const Order &order) {
+        if (order.orderId.empty()) {
           last = {};
           return;
         }
         last = {
-          order->price,
-          raw.justFilled,
-          order->side,
-          order->isPong
+          order.price,
+          order.justFilled,
+          order.side,
+          order.isPong
         };
         if (last.filled) K.gateway->balance();
-        if (order->isPong or last.filled)
+        if (order.isPong or last.filled)
           K.log("GW " + K.gateway->exchange, string("TRADE ")
-            + (order->side == Side::Bid ? "BUY  " : "SELL ")
+            + (order.side == Side::Bid ? "BUY  " : "SELL ")
             + K.gateway->decimal.amount.str(last.filled)
             + " " + K.gateway->base + " at "
-            + K.gateway->decimal.price.str(order->price)
+            + K.gateway->decimal.price.str(order.price)
             + " " + K.gateway->quote);
-        if (order->status == Status::Terminated)
-          K.orders.purge(order);
-        if (K.arg<int>("debug-orders"))
-          K.log("GW " + K.gateway->exchange, " active: " + to_string(K.orders.size()));
       };
   };
 
@@ -101,7 +94,7 @@ namespace analpaper {
       };
     private:
       void filter() {
-        K.orders.resetFilters(&filterBidOrders, &filterAskOrders);
+        orders.resetFilters(&filterBidOrders, &filterAskOrders);
         bids = filter(unfiltered.bids, &filterBidOrders);
         asks = filter(unfiltered.asks, &filterAskOrders);
         if (bids.empty() or asks.empty())
@@ -403,7 +396,7 @@ namespace analpaper {
       };
       void purge() {
         for (const Order *const it : calculon.purge())
-          K.orders.purge(it);
+          orders.purge(it);
       };
       void calcQuotes() {
         calculon.calcQuotes();
@@ -424,7 +417,7 @@ namespace analpaper {
       };
       void quit() {
         unsigned int n = 0;
-        for (Order *const it : K.orders.open()) {
+        for (Order *const it : orders.open()) {
           K.gateway->cancel(it);
           n++;
         }
@@ -435,7 +428,7 @@ namespace analpaper {
       vector<Order*> abandon(Quote &quote) {
         vector<Order*> abandoned;
         const bool all = quote.state != QuoteState::Live;
-        for (Order *const it : K.orders.at(quote.side))
+        for (Order *const it : orders.at(quote.side))
           if (all or calculon.abandon(*it, quote))
             abandoned.push_back(it);
         return abandoned;

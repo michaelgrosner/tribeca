@@ -109,19 +109,14 @@ namespace analpaper {
       Pongs(const KryptoNinja &bot)
         : K(bot)
       {};
-      void maxmin(Order raw, const Order *const order) {
-        if (!limit()) return;
-        if (order) {
-          if (!order->isPong) return;
-          raw.side       = order->side;
-          raw.price      = order->price;
-          raw.exchangeId = order->exchangeId;
-        }
-        if (raw.exchangeId.empty()) return;
-        if (raw.status == Status::Working)
-          (raw.side == Side::Bid ? bids : asks)[raw.exchangeId] = raw.price;
-        else if (bids.find(raw.exchangeId) != bids.end()) bids.erase(raw.exchangeId);
-        else if (asks.find(raw.exchangeId) != asks.end()) asks.erase(raw.exchangeId);
+      void maxmin(const Order &order) {
+        if (!limit() or order.exchangeId.empty() or (
+          !order.orderId.empty() and !order.isPong
+        )) return;
+        if (order.status == Status::Working)
+          (order.side == Side::Bid ? bids : asks)[order.exchangeId] = order.price;
+        else if (bids.find(order.exchangeId) != bids.end()) bids.erase(order.exchangeId);
+        else if (asks.find(order.exchangeId) != asks.end()) asks.erase(order.exchangeId);
         maxBid = bids.empty() ? 0 : max_element(bids.begin(), bids.end(), compare)->second;
         minAsk = asks.empty() ? 0 : min_element(asks.begin(), asks.end(), compare)->second;
       };
@@ -148,50 +143,46 @@ namespace analpaper {
       Side side;
       bool isPong;
   };
-  struct Orders {
+  struct Orders: public Remote::Orderbook {
     Pongs     pongs;
     LastOrder last;
     private_ref:
       const KryptoNinja  &K;
     public:
       Orders(const KryptoNinja &bot)
-        : pongs(bot)
+        : Orderbook(bot, [](const Order &order) {
+            return order.status == Status::Terminated
+                or order.isPong;
+          })
+        , pongs(bot)
         , last()
         , K(bot)
       {};
-      void read_from_gw(const Order &raw) {
-        if (K.arg<int>("debug-orders"))
-          K.log("GW " + K.gateway->exchange, "  reply: " + ((json)raw).dump());
-        K.beep(raw.justFilled);
-        const Order *const order = K.orders.update(raw);
-        pongs.maxmin(raw, order);
-        if (!order) {
+      void read_from_gw(const Order &order) {
+        pongs.maxmin(order);
+        if (order.orderId.empty()) {
           last = {};
           return;
         }
         last = {
-          order->price,
-          !order->isPong
-            and order->status == Status::Terminated
-            and order->quantity == order->totalFilled
-              ? order->quantity : 0,
-          order->side,
-          order->isPong
+          order.price,
+          !order.isPong
+            and order.status == Status::Terminated
+            and order.quantity == order.totalFilled
+              ? order.quantity : 0,
+          order.side,
+          order.isPong
         };
         if (last.filled) K.gateway->balance();
         if (last.filled
-          or (order->isPong and order->status == Status::Working)
-        ) K.log("GW " + K.gateway->exchange, string(order->isPong?"PONG":"PING") + " TRADE "
-            + (order->side == Side::Bid ? "BUY  " : "SELL ")
-            + K.gateway->decimal.amount.str(order->quantity)
+          or (order.isPong and order.status == Status::Working)
+        ) K.log("GW " + K.gateway->exchange, string(order.isPong?"PONG":"PING") + " TRADE "
+            + (order.side == Side::Bid ? "BUY  " : "SELL ")
+            + K.gateway->decimal.amount.str(order.quantity)
             + " " + K.gateway->base + " at "
-            + K.gateway->decimal.price.str(order->price)
+            + K.gateway->decimal.price.str(order.price)
             + " " + K.gateway->quote
-            + " " + (order->isPong ? "(left opened)" : "(just filled)"));
-        if (order->isPong or order->status == Status::Terminated)
-          K.orders.purge(order);
-        if (K.arg<int>("debug-orders"))
-          K.log("GW " + K.gateway->exchange, " active: " + to_string(K.orders.size()));
+            + " " + (order.isPong ? "(left opened)" : "(just filled)"));
       };
       Price calcPongPrice(const Price &fairValue) {
         const Price price = last.side == Side::Bid
@@ -285,7 +276,7 @@ namespace analpaper {
       };
     private:
       void filter() {
-        K.orders.resetFilters(&filterBidOrders, &filterAskOrders);
+        orders.resetFilters(&filterBidOrders, &filterAskOrders);
         bids = filter(unfiltered.bids, &filterBidOrders);
         asks = filter(unfiltered.asks, &filterAskOrders);
         if (bids.empty() or asks.empty())
@@ -582,7 +573,7 @@ namespace analpaper {
       };
       void purge() {
         for (const Order *const it : calculon.purge())
-          K.orders.purge(it);
+          orders.purge(it);
       };
       void calcQuotes() {
         if (pending.empty()) {
@@ -594,7 +585,7 @@ namespace analpaper {
       void timer_60s() {
         if (K.arg<int>("heartbeat") and levels.fairValue) {
           string bids, asks;
-          for (auto &it : K.orders.open())
+          for (auto &it : orders.open())
             (it->side == Side::Bid
               ? bids
               : asks
@@ -658,7 +649,7 @@ namespace analpaper {
       };
       void quit() {
         unsigned int n = 0;
-        for (Order *const it : K.orders.open()) {
+        for (Order *const it : orders.open()) {
           K.gateway->cancel(it);
           n++;
         }
@@ -669,7 +660,7 @@ namespace analpaper {
       vector<Order*> abandon(Quote &quote) {
         vector<Order*> abandoned;
         const bool all = quote.state != QuoteState::Live;
-        for (Order *const it : K.orders.at(quote.side))
+        for (Order *const it : orders.at(quote.side))
           if (all or calculon.abandon(*it, quote))
             abandoned.push_back(it);
         return abandoned;

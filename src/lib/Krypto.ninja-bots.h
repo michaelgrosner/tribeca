@@ -493,7 +493,7 @@ namespace ₿ {
           long_options.end() - io_options.size()
         );
         long_options.push_back(
-          {"market-limit", "NUMBER", "321",    "set NUMBER of maximum price levels for the orderbook,"
+          {"market-limit", "NUMBER", "321",    "set NUMBER of maximum market levels saved in memory,"
                                                "\n" "default NUMBER is '321' and the minimum is '10'"}
         );
         if (order_ev) long_options.push_back(
@@ -1224,35 +1224,61 @@ namespace ₿ {
       };
   };
 
-  class Memory {
+  class Remote {
     public_friend:
-      class Orders {
-        private:
-          mutable unordered_map<string, Order> orders;
+      mutable class Orderbook {
         public:
-          Order *find(const string &orderId) const {
+          function<bool(const Order&)> purgeable;
+        private:
+          unordered_map<string, Order> orders;
+        private_ref:
+          const bool &debug;
+          Gw *const &gateway;
+        public:
+          Orderbook(
+            const Remote &remote,
+            const function<bool(const Order&)> &fn = [](const Order &order) {
+              return order.status == Status::Terminated;
+            }
+          ) : purgeable(fn)
+            , debug(remote.debug)
+            , gateway(remote.gateway)
+          {
+            remote.orders = this;
+          };
+          Order *find(const string &orderId) {
             return (orderId.empty()
               or orders.find(orderId) == orders.end()
             ) ? nullptr
               : &orders.at(orderId);
           };
-          Order *update(const Order &raw) const {
-            return Order::update(raw, findsert(raw));
+          Order *update(const Order &raw, const string &reason) {
+            Order *const order = Order::update(raw, findsert(raw));
+            if (debug) {
+              gateway->print(reason + ((json)raw).dump());
+              gateway->print("  saved: " + (order ? ((json)*order).dump() : "gone"));
+              gateway->print(" active: " + to_string(size()));
+            }
+            return order;
           };
-          void purge(const Order *const order) const {
+          void purge(const Order *const order) {
+            if (debug) {
+              gateway->print("  purge: " + order->orderId);
+              gateway->print(" active: " + to_string(size()));
+            }
             orders.erase(order->orderId);
           };
           unsigned int size() const {
             return orders.size();
           };
-          vector<Order*> at(const Side &side) const {
+          vector<Order*> at(const Side &side) {
             vector<Order*> sideOrders;
             for (auto &it : orders)
               if (side == it.second.side)
                 sideOrders.push_back(&it.second);
             return sideOrders;
           };
-          vector<Order*> open() const {
+          vector<Order*> open() {
             vector<Order*> autoOrders;
             for (auto &it : orders)
               if (!it.second.manual)
@@ -1296,7 +1322,7 @@ namespace ₿ {
               )[it.second.price] += it.second.quantity;
           };
         private:
-          Order *findsert(const Order &raw) const {
+          Order *findsert(const Order &raw) {
             if (raw.status == Status::Waiting and !raw.orderId.empty())
               return &(orders[raw.orderId] = raw);
             if (raw.orderId.empty() and !raw.exchangeId.empty()) {
@@ -1311,7 +1337,7 @@ namespace ₿ {
             }
             return find(raw.orderId);
           };
-      } orders;
+      } *orders = nullptr;
     public:
       Gw *gateway = nullptr;
     protected:
@@ -1324,34 +1350,30 @@ namespace ₿ {
       bool debug = false;
     public:
       void place(const Order &raw) const {
-        gateway->place(orders.update(raw));
-        if (debug) {
-          gateway->print("  place: " + ((json)raw).dump());
-          gateway->print(" active: " + to_string(orders.size()));
-        }
+        gateway->place(orders->update(raw, "  place: "));
       };
       void replace(const Price &price, const bool &isPong, Order *const order) const {
         if (Order::replace(price, isPong, order)) {
           gateway->replace(order);
           if (debug) {
-            gateway->print("replace: " + ((json*)order)->dump());
-            gateway->print(" active: " + to_string(orders.size()));
+            gateway->print("replace: " + ((json)*order).dump());
+            gateway->print(" active: " + to_string(orders->size()));
           }
         }
       };
       void cancel() const {
-        for (Order *const it : orders.open())
+        for (Order *const it : orders->open())
           cancel(it);
       };
       void cancel(const string &orderId) const {
-        cancel(orders.find(orderId));
+        cancel(orders->find(orderId));
       };
       void cancel(Order *const order) const {
         if (Order::cancel(order)) {
           gateway->cancel(order);
           if (debug) {
             gateway->print(" cancel: " + order->orderId);
-            gateway->print(" active: " + to_string(orders.size()));
+            gateway->print(" active: " + to_string(orders->size()));
           }
         }
       };
@@ -1399,6 +1421,7 @@ namespace ₿ {
         };
         gateway->adminAgreement = (Connectivity)K->arg<int>("autobot");
         debug = K->arg<int>("debug-orders");
+        wrap_orders(K);
       };
       void handshake(const GwExchange::Report &notes, const bool &nocache) {
         const json reply = gateway->handshake(nocache);
@@ -1408,6 +1431,27 @@ namespace ₿ {
             + ", response was: " + reply.dump());
         gateway->report(notes, nocache);
       };
+    private:
+      void wrap_orders(const Option *const K) {
+        if (!orders) orders = new Orderbook(*this);
+        for (auto &it : events)
+          if (holds_alternative<Gw::DataEvent>(it)
+            and holds_alternative<function<void(const Order&)>>(get<Gw::DataEvent>(it))
+          ) it = [&, fn = get<function<void(const Order&)>>(
+              get<Gw::DataEvent>(it)
+            )](const Order &raw) {
+              K->beep(raw.justFilled);
+              Order rawdata = raw;
+              rawdata.orderId.clear();
+              Order *const order = orders->update(raw, "  reply: ") ?: &rawdata;
+              fn(*order);
+              if (!order->orderId.empty()) {
+                if (orders->purgeable(*order))
+                  orders->purge(order);
+                else order->justFilled = 0;
+              }
+            };
+      };
   };
 
   class KryptoNinja: public Events,
@@ -1416,7 +1460,7 @@ namespace ₿ {
                      public Hotkey,
                      public Sqlite,
                      public Client,
-                     public Memory {
+                     public Remote {
     public:
       KryptoNinja *main(int argc, char** argv) {
         {

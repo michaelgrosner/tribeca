@@ -143,6 +143,7 @@ namespace ₿ {
         if (Status::Working == (     order->status     = raw.status
         ) and !order->latency)       order->latency    = raw.time - order->time;
         order->time         = raw.time;
+        order->justFilled   = raw.justFilled;
         order->totalFilled += raw.justFilled;
         if (!raw.exchangeId.empty()) order->exchangeId = raw.exchangeId;
         if (raw.price)               order->price      = raw.price;
