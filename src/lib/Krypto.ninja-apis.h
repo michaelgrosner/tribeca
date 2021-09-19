@@ -215,6 +215,7 @@ namespace ₿ {
                 percent;
       } decimal;
       bool askForReplace = false;
+      bool askForBalance = false;
       string (*randId)() = nullptr;
       virtual void ask_for_data(const unsigned int &tick) = 0;
       virtual void wait_for_data(Loop *const loop) = 0;
@@ -255,6 +256,7 @@ namespace ₿ {
         );
       };
       void balance() {
+        askForBalance = false;
         if (!async_wallet())
           async.wallet.ask_for();
       };
@@ -284,7 +286,9 @@ namespace ₿ {
         async.wallet.wait_for(loop, [&]() { return sync_wallet(); });
       };
       void ask_for_never_async_data(const unsigned int &tick) {
-        if (async.wallet.write and !(tick % 15)) balance();
+        if (async.wallet.write and (
+          askForBalance or !(tick % 15)
+        )) balance();
       };
   };
 

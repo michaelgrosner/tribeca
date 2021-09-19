@@ -328,8 +328,8 @@ namespace ₿ {
         wattroff(stdlog, COLOR_PAIR(COLOR_WHITE));
         wrefresh(stdlog);
       };
-      void beep(const bool &maybeep) const {
-        if (gobeep and maybeep) {
+      void beep() const {
+        if (gobeep) {
           if (!display.terminal)
             clog << '\007'
                  << flush;
@@ -1443,16 +1443,20 @@ namespace ₿ {
         for (auto &it : events)
           if (holds_alternative<Gw::DataEvent>(it)
             and holds_alternative<function<void(const Order&)>>(get<Gw::DataEvent>(it))
-          ) it = [&, make_computer_go = K, fn = get<function<void(const Order&)>>(
-              get<Gw::DataEvent>(it)
-            )](const Order &raw) {
-              make_computer_go->beep(raw.justFilled);
+          ) it = [&, gw = gateway,
+       make_computer_go = K,
+                     fn = get<function<void(const Order&)>>(get<Gw::DataEvent>(it))
+            ](const Order &raw) {
               Order *const order = orders->update(raw, "  reply: ");
               fn(*(order ?: orders->alien(raw)));
               if (order) {
                 if (orders->purgeable(*order))
                   orders->purge(order);
                 else order->justFilled = 0;
+              }
+              if (raw.justFilled) {
+                gw->askForBalance = true;
+                make_computer_go->beep();
               }
             };
       };

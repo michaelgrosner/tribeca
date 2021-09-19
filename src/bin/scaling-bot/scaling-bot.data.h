@@ -173,7 +173,6 @@ namespace analpaper {
           order.side,
           order.isPong
         };
-        if (last.filled) K.gateway->balance();
         if (last.filled
           or (order.isPong and order.status == Status::Working)
         ) K.log("GW " + K.gateway->exchange, string(order.isPong?"PONG":"PING") + " TRADE "

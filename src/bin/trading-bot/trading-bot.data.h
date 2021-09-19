@@ -1722,10 +1722,8 @@ namespace tribeca {
           calcHeldAmount(orders.updated.side);
           calcFundsSilently();
         }
-        if (orders.updated.filled) {
+        if (orders.updated.filled)
           safety.insertTrade(orders.updated);
-          K.gateway->balance();
-        }
       };
       mMatter about() const override {
         return mMatter::Position;
@@ -2691,8 +2689,6 @@ namespace tribeca {
        MarketLevels levels;
             Wallets wallet;
              Broker broker;
-    private_ref:
-      const KryptoNinja &K;
     public:
       Engine(const KryptoNinja &bot)
         : qp(bot)
@@ -2701,7 +2697,6 @@ namespace tribeca {
         , levels(bot, qp, orders)
         , wallet(bot, qp, orders, button, levels)
         , broker(bot, qp, orders, button, levels, wallet)
-        , K(bot)
       {};
     public:
       void read(const Connectivity &rawdata) {
