@@ -141,23 +141,23 @@ SCENARIO_METHOD(TradingBot, "ANY BTC/EUR") {
       }
     }
     WHEN("assigned") {
-      tribeca::LastOrder order = {};
+      Order order;
       REQUIRE_NOTHROW(order.price = 1234.57);
-      REQUIRE_NOTHROW(order.filled = 0.01234566);
+      REQUIRE_NOTHROW(order.justFilled = 0.01234566);
       REQUIRE_NOTHROW(order.side = Side::Ask);
       REQUIRE_NOTHROW(engine.wallet.safety.recentTrades.insert(order));
       REQUIRE_NOTHROW(order.price = 1234.58);
-      REQUIRE_NOTHROW(order.filled = 0.01234567);
+      REQUIRE_NOTHROW(order.justFilled = 0.01234567);
       REQUIRE_NOTHROW(engine.wallet.safety.recentTrades.insert(order));
       REQUIRE_NOTHROW(order.price = 1234.56);
-      REQUIRE_NOTHROW(order.filled = 0.12345678);
+      REQUIRE_NOTHROW(order.justFilled = 0.12345678);
       REQUIRE_NOTHROW(order.side = Side::Bid);
       REQUIRE_NOTHROW(engine.wallet.safety.recentTrades.insert(order));
       REQUIRE_NOTHROW(order.price = 1234.50);
-      REQUIRE_NOTHROW(order.filled = 0.12345679);
+      REQUIRE_NOTHROW(order.justFilled = 0.12345679);
       REQUIRE_NOTHROW(engine.wallet.safety.recentTrades.insert(order));
       REQUIRE_NOTHROW(order.price = 1234.60);
-      REQUIRE_NOTHROW(order.filled = 0.12345678);
+      REQUIRE_NOTHROW(order.justFilled = 0.12345678);
       REQUIRE_NOTHROW(order.side = Side::Ask);
       REQUIRE_NOTHROW(engine.wallet.safety.recentTrades.insert(order));
       THEN("values") {
@@ -429,10 +429,12 @@ SCENARIO_METHOD(TradingBot, "ANY BTC/EUR") {
       REQUIRE_NOTHROW(randIds.push_back(Random::uuid36Id()));
       REQUIRE_NOTHROW(engine.orders.update({Side::Ask, 1234.52, 0.12345680, time, false, randIds.back()}));
       THEN("held amount") {
-        REQUIRE_NOTHROW(engine.orders.updated.price = 1);
-        REQUIRE_NOTHROW(engine.orders.updated.side = Side::Ask);
+        Order order;
+        engine.orders.last = &order;
+        REQUIRE_NOTHROW(engine.orders.last->price = 1);
+        REQUIRE_NOTHROW(engine.orders.last->side = Side::Ask);
         REQUIRE_NOTHROW(engine.wallet.calcFundsAfterOrder());
-        REQUIRE_NOTHROW(engine.orders.updated.side = Side::Bid);
+        REQUIRE_NOTHROW(engine.orders.last->side = Side::Bid);
         REQUIRE_NOTHROW(engine.wallet.calcFundsAfterOrder());
         REQUIRE(engine.wallet.base.held == 0.37037037);
         REQUIRE(engine.wallet.quote.held == Approx(457.22592546));
@@ -587,16 +589,16 @@ SCENARIO_METHOD(TradingBot, "ANY BTC/EUR") {
     REQUIRE_NOTHROW(engine.wallet.safety.trades.read = [&]() {
       INFO("read()");
     });
-    auto parseTrade = [](string line)->tribeca::LastOrder {
+    auto parseTrade = [](string line) {
       stringstream ss(line);
       string _, pingpong, side;
-      tribeca::LastOrder order;
-      ss >> _ >> _ >> _ >> _ >> pingpong >> _ >> side >> order.filled >> _ >> _ >> _ >> order.price;
+      Order order;
+      ss >> _ >> _ >> _ >> _ >> pingpong >> _ >> side >> order.justFilled >> _ >> _ >> _ >> order.price;
       order.side = (side == "BUY" ? Side::Bid : Side::Ask);
       order.isPong = (pingpong == "PONG");
       return order;
     };
-    vector<tribeca::LastOrder> loglines({
+    vector<Order> loglines({
       parseTrade("03/30 07:10:34.800532 GW COINBASE PING TRADE BUY  0.03538069 BTC at price 141.31 EUR (value 4.99 EUR)."),
       parseTrade("03/30 07:12:10.769009 GW COINBASE PONG TRADE SELL 0.03241380 BTC at price 141.40 EUR (value 4.58 EUR)."),
       parseTrade("03/30 07:12:10.786990 GW COINBASE PONG TRADE SELL 0.00295204 BTC at price 141.40 EUR (value 0.41 EUR)."),
@@ -615,8 +617,8 @@ SCENARIO_METHOD(TradingBot, "ANY BTC/EUR") {
     WHEN("cumulated cross pongs") {
       for (const auto &order : loglines) {
         baseSign = (order.side == Side::Bid) ? 1 : -1;
-        expectedBaseDelta += baseSign * order.filled;
-        expectedQuoteDelta -= baseSign * order.filled * order.price;
+        expectedBaseDelta += baseSign * order.justFilled;
+        expectedQuoteDelta -= baseSign * order.justFilled * order.price;
         this_thread::sleep_for(chrono::milliseconds(2));
         engine.wallet.safety.trades.insert(order);
         Amount actualBaseDelta = 0;
