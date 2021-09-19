@@ -309,35 +309,18 @@ namespace tribeca {
     k.from_json(j);
   };
 
-  struct LastOrder {
-     Price price;
-    Amount filled;
-      Side side;
-      bool isPong;
-  };
   struct Orders: public Remote::Orderbook,
                  public Client::Broadcast<Orders> {
-    LastOrder updated;
     private_ref:
       const KryptoNinja &K;
     public:
       Orders(const KryptoNinja &bot)
         : Orderbook(bot)
         , Broadcast(bot)
-        , updated()
         , K(bot)
       {};
       void read_from_gw(const Order &order) {
-        if (order.orderId.empty()) {
-          updated = {};
-          return;
-        }
-        updated = {
-          order.price,
-          order.justFilled,
-          order.side,
-          order.isPong
-        };
+        if (order.orderId.empty()) return;
         broadcast();
         K.repaint();
       };
@@ -1165,25 +1148,25 @@ namespace tribeca {
         , K(bot)
         , qp(q)
       {};
-      void insert(const LastOrder &order) {
+      void insert(const Order &last) {
         const Amount fee = 0;
         const Clock time = Tstamp;
         OrderFilled filled = {
-          order.side,
-          order.price,
-          order.filled,
+          last.side,
+          last.price,
+          last.justFilled,
           time,
           to_string(time),
           K.gateway->margin == Future::Spot
-            ? abs(order.price * order.filled)
-            : order.filled,
+            ? abs(last.price * last.justFilled)
+            : last.justFilled,
           fee,
           0, 0, 0, 0, 0,
-          order.isPong,
+          last.isPong,
           false
         };
-        const bool is_bid = order.side == Side::Bid;
-        K.log("GW " + K.gateway->exchange, string(order.isPong?"PONG":"PING") + " TRADE "
+        const bool is_bid = filled.side == Side::Bid;
+        K.log("GW " + K.gateway->exchange, string(filled.isPong?"PONG":"PING") + " TRADE "
           + (is_bid ? "BUY  " : "SELL ")
           + K.gateway->decimal.amount.str(filled.quantity) + ' '
           + (K.gateway->margin == Future::Spot ? K.gateway->base : "Contracts") + " at price "
@@ -1352,17 +1335,17 @@ namespace tribeca {
                                  sumSells      = 0;
                            Price lastBuyPrice  = 0,
                                  lastSellPrice = 0;
-    void insert(const LastOrder &order) {
-      (order.side == Side::Bid
+    void insert(const Order &last) {
+      (last.side == Side::Bid
         ? lastBuyPrice
         : lastSellPrice
-      ) = order.price;
-      (order.side == Side::Bid
+      ) = last.price;
+      (last.side == Side::Bid
         ? buys
         : sells
       ).insert(pair<Price, RecentTrade>(
-        order.price,
-        RecentTrade(order.price, order.filled)
+        last.price,
+        RecentTrade(last.price, last.justFilled)
       ));
     };
     void expire() {
@@ -1431,10 +1414,10 @@ namespace tribeca {
       void timer_1s() {
         calc();
       };
-      void insertTrade(const LastOrder &order) {
-        if (!order.isPong)
-          recentTrades.insert(order);
-        trades.insert(order);
+      void insertTrade(const Order &last) {
+        if (!last.isPong)
+          recentTrades.insert(last);
+        trades.insert(last);
         calc();
       };
       void calc() {
@@ -1717,13 +1700,13 @@ namespace tribeca {
         broadcast();
       };
       void calcFundsAfterOrder() {
-        if (!orders.updated.price) return;
+        if (!orders.last) return;
         if (K.gateway->margin == Future::Spot) {
-          calcHeldAmount(orders.updated.side);
+          calcHeldAmount(orders.last->side);
           calcFundsSilently();
         }
-        if (orders.updated.filled)
-          safety.insertTrade(orders.updated);
+        if (orders.last->justFilled)
+          safety.insertTrade(*orders.last);
       };
       mMatter about() const override {
         return mMatter::Position;

@@ -29,37 +29,19 @@ namespace analpaper {
       };
   };
 
-  struct LastOrder {
-     Price price;
-    Amount filled;
-      Side side;
-      bool isPong;
-  };
   struct Orders: public Remote::Orderbook {
-    LastOrder last;
     private_ref:
       const KryptoNinja  &K;
     public:
       Orders(const KryptoNinja &bot)
         : Orderbook(bot)
-        , last()
         , K(bot)
       {};
       void read_from_gw(const Order &order) {
-        if (order.orderId.empty()) {
-          last = {};
-          return;
-        }
-        last = {
-          order.price,
-          order.justFilled,
-          order.side,
-          order.isPong
-        };
-        if (order.isPong or last.filled)
+        if (!order.orderId.empty() and order.justFilled)
           K.log("GW " + K.gateway->exchange, string("TRADE ")
             + (order.side == Side::Bid ? "BUY  " : "SELL ")
-            + K.gateway->decimal.amount.str(last.filled)
+            + K.gateway->decimal.amount.str(order.justFilled)
             + " " + K.gateway->base + " at "
             + K.gateway->decimal.price.str(order.price)
             + " " + K.gateway->quote);

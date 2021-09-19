@@ -1226,12 +1226,12 @@ namespace ₿ {
 
   class Remote {
     public_friend:
-      mutable class Orderbook {
+      class Orderbook {
         public:
           function<bool(const Order&)> purgeable;
+          Order *last = nullptr;
         private:
           unordered_map<string, Order> orders;
-          Order external;
         private_ref:
           const bool &debug;
           Gw *const &gateway;
@@ -1246,11 +1246,6 @@ namespace ₿ {
             , gateway(remote.gateway)
           {
             remote.orders = this;
-          };
-          Order *alien(const Order &raw) {
-            external = raw;
-            external.orderId.clear();
-            return &external;
           };
           Order *find(const string &orderId) {
             return (orderId.empty()
@@ -1343,7 +1338,7 @@ namespace ₿ {
             }
             return find(raw.orderId);
           };
-      } *orders = nullptr;
+      };
     public:
       Gw *gateway = nullptr;
     protected:
@@ -1353,7 +1348,9 @@ namespace ₿ {
             Gw::DataEvent
       >> events;
     private:
+      mutable Orderbook *orders = nullptr;
       bool debug = false;
+      Order external;
     public:
       void place(const Order &raw) const {
         gateway->place(orders->update(raw));
@@ -1437,6 +1434,11 @@ namespace ₿ {
         gateway->report(notes, nocache);
       };
     private:
+      Order *alien(const Order &raw) {
+        external = raw;
+        external.orderId.clear();
+        return &external;
+      };
       void wrap_events(const Option *const K) {
         debug = K->arg<int>("debug-orders");
         if (!orders) orders = new Orderbook(*this);
@@ -1447,12 +1449,12 @@ namespace ₿ {
        make_computer_go = K,
                      fn = get<function<void(const Order&)>>(get<Gw::DataEvent>(it))
             ](const Order &raw) {
-              Order *const order = orders->update(raw, "  reply: ");
-              fn(*(order ?: orders->alien(raw)));
-              if (order) {
-                if (orders->purgeable(*order))
-                  orders->purge(order);
-                else order->justFilled = 0;
+              orders->last = orders->update(raw, "  reply: ");
+              fn(*(orders->last ?: alien(raw)));
+              if (orders->last) {
+                if (orders->purgeable(*orders->last))
+                  orders->purge(orders->last);
+                else orders->last->justFilled = 0;
               }
               if (raw.justFilled) {
                 gw->askForBalance = true;

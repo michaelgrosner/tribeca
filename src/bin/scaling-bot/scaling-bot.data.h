@@ -137,15 +137,8 @@ namespace analpaper {
       };
   };
 
-  struct LastOrder {
-     Price price;
-    Amount filled;
-      Side side;
-      bool isPong;
-  };
   struct Orders: public Remote::Orderbook {
     Pongs     pongs;
-    LastOrder last;
     private_ref:
       const KryptoNinja  &K;
     public:
@@ -155,25 +148,16 @@ namespace analpaper {
                 or order.isPong;
           })
         , pongs(bot)
-        , last()
         , K(bot)
       {};
       void read_from_gw(const Order &order) {
         pongs.maxmin(order);
-        if (order.orderId.empty()) {
-          last = {};
-          return;
-        }
-        last = {
-          order.price,
-          !order.isPong
-            and order.status == Status::Terminated
-            and order.quantity == order.totalFilled
-              ? order.quantity : 0,
-          order.side,
-          order.isPong
-        };
-        if (last.filled
+        if (order.orderId.empty()) return;
+        last->justFilled = !order.isPong
+                           and order.status == Status::Terminated
+                           and order.quantity == order.totalFilled
+                             ? order.quantity : 0;
+        if (last->justFilled
           or (order.isPong and order.status == Status::Working)
         ) K.log("GW " + K.gateway->exchange, string(order.isPong?"PONG":"PING") + " TRADE "
             + (order.side == Side::Bid ? "BUY  " : "SELL ")
@@ -182,19 +166,6 @@ namespace analpaper {
             + K.gateway->decimal.price.str(order.price)
             + " " + K.gateway->quote
             + " " + (order.isPong ? "(left opened)" : "(just filled)"));
-      };
-      Price calcPongPrice(const Price &fairValue) {
-        const Price price = last.side == Side::Bid
-          ? fmax(last.price + K.arg<double>("pong-width"), fairValue + K.gateway->tickPrice)
-          : fmin(last.price - K.arg<double>("pong-width"), fairValue - K.gateway->tickPrice);
-        if (K.arg<int>("pong-scale")) {
-          if (last.side == Side::Bid) {
-            if (pongs.minAsk)
-              return fmax(price, pongs.minAsk - K.arg<double>("pong-width"));
-          } else if (pongs.maxBid)
-            return fmin(price, pongs.maxBid + K.arg<double>("pong-width"));
-        }
-        return price;
       };
   };
 
@@ -624,26 +595,29 @@ namespace analpaper {
         }
       };
       void scale() {
-        if (orders.last.filled and K.arg<double>("pong-width"))
-          pending.push_back({
-            orders.last.side == Side::Bid
+        if (orders.last
+          and orders.last->justFilled
+          and K.arg<double>("pong-width")
+        ) pending.push_back({
+            orders.last->side == Side::Bid
               ? Side::Ask
               : Side::Bid,
-            orders.calcPongPrice(levels.fairValue),
-            orders.last.filled,
+            calcPongPrice(),
+            orders.last->justFilled,
             Tstamp,
             true,
             K.gateway->randId()
           });
       };
       void quit_after() {
-        if (orders.last.isPong
+        if (orders.last
+          and orders.last->isPong
           and K.arg<int>("quit-after")
           and K.arg<int>("quit-after") == ++limit
         ) exit("CF " + Ansi::r(COLOR_WHITE)
             + "--quit-after="
-            + Ansi::b(COLOR_YELLOW) + to_string(K.arg<int>("quit-after")) + Ansi::r(COLOR_WHITE)
-            + " limit reached"
+            + Ansi::b(COLOR_YELLOW) + to_string(K.arg<int>("quit-after"))
+            + Ansi::r(COLOR_WHITE)  + " limit reached"
           );
       };
       void quit() {
@@ -656,6 +630,19 @@ namespace analpaper {
           K.log("QE", "Canceled " + to_string(n) + " open order" + string(n != 1, 's') + " before quit");
       };
     private:
+      Price calcPongPrice() const {
+        const Price price = orders.last->side == Side::Bid
+          ? fmax(orders.last->price + K.arg<double>("pong-width"), levels.fairValue + K.gateway->tickPrice)
+          : fmin(orders.last->price - K.arg<double>("pong-width"), levels.fairValue - K.gateway->tickPrice);
+        if (K.arg<int>("pong-scale")) {
+          if (orders.last->side == Side::Bid) {
+            if (orders.pongs.minAsk)
+              return fmax(price, orders.pongs.minAsk - K.arg<double>("pong-width"));
+          } else if (orders.pongs.maxBid)
+            return fmin(price, orders.pongs.maxBid + K.arg<double>("pong-width"));
+        }
+        return price;
+      };
       vector<Order*> abandon(Quote &quote) {
         vector<Order*> abandoned;
         const bool all = quote.state != QuoteState::Live;

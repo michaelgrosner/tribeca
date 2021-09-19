@@ -16,18 +16,18 @@ KBUILD := $(abspath ../../build-$(KHOST))
 all lib:
 	# my home is your home, if there are houses owned by someone.
 	@mkdir -vp $(KBUILD)/var
-	$(MAKE) -j4 job_1 job_2 job_3 job_4
+	$(MAKE) -j4 j0 j1 j2 j3
 
-job_1:
+j0:
 	$(MAKE) -j1 zlib openssl curl
 
-job_2:
-	$(MAKE) -j1 sqlite
+j1:
+	$(MAKE) -j1 sqlite json
 
-job_3:
-	$(MAKE) -j1 ncurses json catch uv
+j2:
+	$(MAKE) -j1 ncurses catch uv
 
-job_4:
+j3:
 ifdef GITHUB_ACTIONS
 	$(MAKE) -j1 lcov pvs
 endif
