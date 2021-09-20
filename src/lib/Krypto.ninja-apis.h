@@ -671,11 +671,8 @@ namespace ₿ {
         };
       };
       json xfer(const string &url, const string &h1, const string &crud) const {
-        return Curl::Web::xfer(url, [&](CURL *curl) {
-          struct curl_slist *h_ = nullptr;
-          h_ = curl_slist_append(h_, ("X-MBX-APIKEY: " + h1).data());
-          curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
-          curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, crud.data());
+        return Curl::Web::xfer(url, crud, "", {
+          "X-MBX-APIKEY: " + h1
         });
       };
     private:
@@ -749,14 +746,10 @@ namespace ₿ {
         };
       };
       json xfer(const string &url, const string &h1, const string &h2, const string &h3, const string &post, const string &crud) const {
-        return Curl::Web::xfer(url, [&](CURL *curl) {
-          struct curl_slist *h_ = nullptr;
-          h_ = curl_slist_append(h_, ("api-expires: "   + h1).data());
-          h_ = curl_slist_append(h_, ("api-key: "       + h2).data());
-          h_ = curl_slist_append(h_, ("api-signature: " + h3).data());
-          curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
-          curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post.data());
-          curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, crud.data());
+        return Curl::Web::xfer(url, crud, post, {
+          "api-expires: "   + h1,
+          "api-key: "       + h2,
+          "api-signature: " + h3
         });
       };
   };
@@ -814,15 +807,11 @@ namespace ₿ {
         };
       };
       json xfer(const string &url, const string &h1, const string &h2, const string &h3, const string &post, const string &crud) const {
-        return Curl::Web::xfer(url, [&](CURL *curl) {
-          struct curl_slist *h_ = nullptr;
-          h_ = curl_slist_append(h_, "Content-Type: application/json");
-          h_ = curl_slist_append(h_, ("KEY: "       + h1).data());
-          h_ = curl_slist_append(h_, ("Timestamp: " + h2).data());
-          h_ = curl_slist_append(h_, ("SIGN: "      + h3).data());
-          curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
-          curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post.data());
-          curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, crud.data());
+        return Curl::Web::xfer(url, crud, post, {
+          "Content-Type: application/json",
+          "KEY: "       + h1,
+          "Timestamp: " + h2,
+          "SIGN: "      + h3
         });
       };
   };
@@ -872,11 +861,7 @@ namespace ₿ {
         return ws.substr(0, ws.length() - 6) + "trading";
       };
       json xfer(const string &url, const string &auth, const string &post) const {
-        return Curl::Web::xfer(url, [&](CURL *curl) {
-          curl_easy_setopt(curl, CURLOPT_USERPWD, auth.data());
-          curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post.data());
-          curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
-        });
+        return Curl::Web::xfer(url, "DELETE", post, {}, auth);
       };
   };
   class GwBequant: virtual public GwHitBtc {
@@ -933,14 +918,11 @@ namespace ₿ {
         };
       };
       json xfer(const string &url, const string &h1, const string &h2, const string &h3, const string &h4, const string &crud) const {
-        return Curl::Web::xfer(url, [&](CURL *curl) {
-          struct curl_slist *h_ = nullptr;
-          h_ = curl_slist_append(h_, ("CB-ACCESS-KEY: "        + h1).data());
-          h_ = curl_slist_append(h_, ("CB-ACCESS-SIGN: "       + h2).data());
-          h_ = curl_slist_append(h_, ("CB-ACCESS-TIMESTAMP: "  + h3).data());
-          h_ = curl_slist_append(h_, ("CB-ACCESS-PASSPHRASE: " + h4).data());
-          curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
-          curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, crud.data());
+        return Curl::Web::xfer(url, crud, "", {
+          "CB-ACCESS-KEY: "        + h1,
+          "CB-ACCESS-SIGN: "       + h2,
+          "CB-ACCESS-TIMESTAMP: "  + h3,
+          "CB-ACCESS-PASSPHRASE: " + h4
         });
       };
   };
@@ -1019,14 +1001,11 @@ namespace ₿ {
         };
       };
       json xfer(const string &url, const string &post, const string &h1, const string &h2, const string &h3) const {
-        return Curl::Web::xfer(url, [&](CURL *curl) {
-          struct curl_slist *h_ = nullptr;
-          h_ = curl_slist_append(h_, "Content-Type: application/json");
-          h_ = curl_slist_append(h_, ("bfx-apikey: "    + h1).data());
-          h_ = curl_slist_append(h_, ("bfx-nonce: "     + h2).data());
-          h_ = curl_slist_append(h_, ("bfx-signature: " + h3).data());
-          curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
-          curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post.data());
+        return Curl::Web::xfer(url, "GET", post, {
+          "Content-Type: application/json",
+          "bfx-apikey: "    + h1,
+          "bfx-nonce: "     + h2,
+          "bfx-signature: " + h3
         });
       };
   };
@@ -1092,17 +1071,13 @@ namespace ₿ {
         };
       };
       json xfer(const string &url, const string &h1, const string &h2, const string &h3, const string &h4, const string &crud, const string &post = "") const {
-        return Curl::Web::xfer(url, [&](CURL *curl) {
-          struct curl_slist *h_ = nullptr;
-          h_ = curl_slist_append(h_, "Content-Type: application/json");
-          h_ = curl_slist_append(h_, ("KC-API-KEY: "        + h1).data());
-          h_ = curl_slist_append(h_, ("KC-API-SIGN: "       + h2).data());
-          h_ = curl_slist_append(h_, ("KC-API-PASSPHRASE: " + h3).data());
-          h_ = curl_slist_append(h_, ("KC-API-TIMESTAMP: "  + h4).data());
-          h_ = curl_slist_append(h_,  "KC-API-KEY-VERSION: 2");
-          curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
-          curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post.data());
-          curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, crud.data());
+        return Curl::Web::xfer(url, crud, post, {
+          "Content-Type: application/json",
+          "KC-API-KEY: "        + h1,
+          "KC-API-SIGN: "       + h2,
+          "KC-API-PASSPHRASE: " + h3,
+          "KC-API-TIMESTAMP: "  + h4,
+          "KC-API-KEY-VERSION: 2"
         });
       };
     private:
@@ -1175,12 +1150,9 @@ namespace ₿ {
         return string(ws).insert(ws.find("ws.") + 2, "-auth");
       };
       json xfer(const string &url, const string &h1, const string &h2, const string &post) const {
-        return Curl::Web::xfer(url, [&](CURL *curl) {
-          struct curl_slist *h_ = nullptr;
-          h_ = curl_slist_append(h_, ("API-Key: "  + h1).data());
-          h_ = curl_slist_append(h_, ("API-Sign: " + h2).data());
-          curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
-          curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post.data());
+        return Curl::Web::xfer(url, "GET", post, {
+          "API-Key: "  + h1,
+          "API-Sign: " + h2
         });
       };
   };
@@ -1223,13 +1195,10 @@ namespace ₿ {
         };
       };
       json xfer(const string &url, const string &post, const string &h1, const string &h2) const {
-        return Curl::Web::xfer(url, [&](CURL *curl) {
-          struct curl_slist *h_ = nullptr;
-          h_ = curl_slist_append(h_, "Content-Type: application/x-www-form-urlencoded");
-          h_ = curl_slist_append(h_, ("Key: "  + h1).data());
-          h_ = curl_slist_append(h_, ("Sign: " + h2).data());
-          curl_easy_setopt(curl, CURLOPT_HTTPHEADER, h_);
-          curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post.data());
+        return Curl::Web::xfer(url, "GET", post, {
+          "Content-Type: application/x-www-form-urlencoded",
+          "Key: "  + h1,
+          "Sign: " + h2
         });
       };
   };

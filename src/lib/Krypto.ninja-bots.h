@@ -560,15 +560,15 @@ namespace ₿ {
         if (arg<int>("naked"))
           display = {};
         if (!arg<string>("interface").empty() and !arg<int>("ipv6"))
-          args_easy_setopt = [this](CURL *curl) {
+          args_easy_setopt = [inet = arg<string>("interface")](CURL *curl) {
             curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
-            curl_easy_setopt(curl, CURLOPT_INTERFACE, arg<string>("interface").data());
+            curl_easy_setopt(curl, CURLOPT_INTERFACE, inet.data());
             curl_easy_setopt(curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
           };
         else if (!arg<string>("interface").empty())
-          args_easy_setopt = [this](CURL *curl) {
+          args_easy_setopt = [inet = arg<string>("interface")](CURL *curl) {
             curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
-            curl_easy_setopt(curl, CURLOPT_INTERFACE, arg<string>("interface").data());
+            curl_easy_setopt(curl, CURLOPT_INTERFACE, inet.data());
           };
         else if (!arg<int>("ipv6"))
           args_easy_setopt = [](CURL *curl) {
@@ -1445,9 +1445,8 @@ namespace ₿ {
         for (auto &it : events)
           if (holds_alternative<Gw::DataEvent>(it)
             and holds_alternative<function<void(const Order&)>>(get<Gw::DataEvent>(it))
-          ) it = [&, gw = gateway,
-       make_computer_go = K,
-                     fn = get<function<void(const Order&)>>(get<Gw::DataEvent>(it))
+          ) it = [&, fn = get<function<void(const Order&)>>(get<Gw::DataEvent>(it)),
+       make_computer_go = K
             ](const Order &raw) {
               orders->last = orders->update(raw, "  reply: ");
               fn(*(orders->last ?: alien(raw)));
@@ -1457,7 +1456,7 @@ namespace ₿ {
                 else orders->last->justFilled = 0;
               }
               if (raw.justFilled) {
-                gw->askForBalance = true;
+                gateway->askForBalance = true;
                 make_computer_go->beep();
               }
             };

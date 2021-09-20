@@ -79,7 +79,7 @@ export define PACKAGE_JSON
     "@angular/router":                   "^12.2.6",
     "@babel/core":       "^7.15.0",
     "@babel/preset-env": "^7.15.0",
-    "@types/node": "^16.9.2",
+    "@types/node": "^16.9.4",
     "babelify": "^10.0.0",
     "browserify": "^17.0.0",
     "highcharts": "^9.2.2",

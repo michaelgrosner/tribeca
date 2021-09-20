@@ -138,7 +138,7 @@ namespace analpaper {
   };
 
   struct Orders: public Remote::Orderbook {
-    Pongs     pongs;
+    Pongs pongs;
     private_ref:
       const KryptoNinja  &K;
     public:

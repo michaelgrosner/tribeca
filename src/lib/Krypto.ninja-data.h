@@ -560,7 +560,13 @@ namespace ₿ {
     public_friend:
       class Web {
         public:
-          static json xfer(const string &url, const function<void(CURL*)> _easy_setopt = nullptr) {
+          static json xfer(
+            const string &url,
+            const string &crud = "GET",
+            const string &post = "",
+            const vector<string> &headers = {{}},
+            const string &auth = ""
+          ) {
             static mutex waiting_reply;
             lock_guard<mutex> lock(waiting_reply);
             string reply;
@@ -568,13 +574,27 @@ namespace ₿ {
             CURL *curl = curl_easy_init();
             if (curl) {
               args_easy_setopt(curl);
-              if (_easy_setopt) _easy_setopt(curl);
-              curl_easy_setopt(curl, CURLOPT_TIMEOUT, 21L);
+              struct curl_slist *slist = nullptr;
+              for (const auto &it : headers) {
+                struct curl_slist *tmp = curl_slist_append(slist, it.data());
+                if (tmp) slist = tmp;
+                else if (slist) {
+                  curl_slist_free_all(slist);
+                  slist = nullptr;
+                  break;
+                }
+              }
+              if (slist) curl_easy_setopt(curl, CURLOPT_HTTPHEADER, slist);
+              if (!post.empty()) curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post.data());
+              if (!auth.empty()) curl_easy_setopt(curl, CURLOPT_USERPWD, auth.data());
+              curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, crud.data());
               curl_easy_setopt(curl, CURLOPT_URL, url.data());
               curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &write);
               curl_easy_setopt(curl, CURLOPT_WRITEDATA, &reply);
+              curl_easy_setopt(curl, CURLOPT_TIMEOUT, 21L);
               rc = curl_easy_perform(curl);
               curl_easy_cleanup(curl);
+              if (slist) curl_slist_free_all(slist);
             }
             return rc == CURLE_OK
               ? (json::accept(reply)

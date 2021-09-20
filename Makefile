@@ -2,7 +2,7 @@ K         ?= K.sh
 MAJOR      = 0
 MINOR      = 6
 PATCH      = 5
-BUILD      = 8
+BUILD      = 9
 
 OBLIGATORY = DISCLAIMER: This is strict non-violent software: \n$\
              if you hurt other living creatures, please stop; \n$\
@@ -41,7 +41,7 @@ HINT      := consider a symlink at /usr/bin/$(CHOST)-g++ pointing to your g++ ex
 STEP       = $(shell tput setaf 2;tput setab 0)Building $(1)..$(shell tput sgr0)
 SUDO       = $(shell test -n "`command -v sudo`" && echo sudo)
 
-KARGS     := -std=c++17 -s -O3 -pthread                  \
+KARGS     := -std=c++17 -O3 -pthread                     \
   -D'K_HOME="$(KHOME)"' -D'K_HEAD="$(shell               \
     git rev-parse HEAD 2>/dev/null || echo HEAD          \
   )"' -D'K_CHOST="$(KHOST)"' -D'K_SOURCE="K-$(KSRC)"'    \
@@ -175,20 +175,20 @@ else ifdef KUNITS
 else ifndef KTEST
 	@$(MAKE) KTEST="-DNDEBUG" $@
 else
-	$(CHOST)-g++ $(KTEST) -o $(KBUILD)/bin/K-$(KSRC) \
+	$(CHOST)-g++ -s $(KTEST) -o $(KBUILD)/bin/K-$(KSRC) \
 	  -static-libstdc++ -static-libgcc -rdynamic     \
 	  $< $(KARGS) -ldl -Wall -Wextra -Wno-psabi
 endif
 
 Darwin: src/lib/Krypto.ninja-main.cxx src/bin/$(KSRC)/$(KSRC).main.h
 	-@egrep \\u20BF src -lR | xargs -r sed -i 's/\\\(u20BF\)/\1/g'
-	$(CHOST)-g++ -DNDEBUG -o $(KBUILD)/bin/K-$(KSRC) -fvisibility=hidden -fvisibility-inlines-hidden \
+	$(CHOST)-g++ -s -DNDEBUG -o $(KBUILD)/bin/K-$(KSRC) -fvisibility=hidden -fvisibility-inlines-hidden \
 	  -msse4.1 -maes -mpclmul -mmacosx-version-min=10.13 -nostartfiles -rdynamic \
 	  $< $(KARGS) -ldl -framework SystemConfiguration -framework CoreFoundation
 	-@egrep u20BF src -lR | xargs -r sed -i 's/\(u20BF\)/\\\1/g'
 
 Win32: src/lib/Krypto.ninja-main.cxx src/bin/$(KSRC)/$(KSRC).main.h
-	$(CHOST)-g++-posix -DNDEBUG -o $(KBUILD)/bin/K-$(KSRC).exe \
+	$(CHOST)-g++-posix -s -DNDEBUG -o $(KBUILD)/bin/K-$(KSRC).exe \
 	  -DCURL_STATICLIB                                         \
 	  -DSIGUSR1=SIGABRT -DSIGPIPE=SIGABRT -DSIGQUIT=SIGBREAK   \
 	  $< $(KARGS) -static -lstdc++ -lgcc                       \
