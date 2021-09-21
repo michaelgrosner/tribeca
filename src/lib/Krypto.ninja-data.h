@@ -564,7 +564,7 @@ namespace ₿ {
             const string &url,
             const string &crud = "GET",
             const string &post = "",
-            const vector<string> &headers = {{}},
+            const vector<string> &headers = {},
             const string &auth = ""
           ) {
             static mutex waiting_reply;
