@@ -105,7 +105,7 @@ namespace ₿ {
       };
   };
 
-  volatile sig_atomic_t signal = 0;
+  static volatile sig_atomic_t signal = 0;
 
   class Ending: public Rollout {
     public_friend:
