@@ -159,18 +159,26 @@ namespace ₿ {
                     event->wakeup();
                   };
               };
-            public:
-              function<void(const T&)> write;
             private:
-                              Async *event = nullptr;
-              function<vector<T>()>  job;
-                  future<vector<T>>  data;
+                 volatile sig_atomic_t *abort = nullptr;
+                                 Async *event = nullptr;
+                 function<vector<T>()>  job;
+                     future<vector<T>>  data;
+              function<void(const T&)>  write;
             public:
+              bool waiting() const {
+                return !!write;
+              };
+              void callback(Loop *const loop, const function<void(const T&)> fn) {
+                write = fn;
+                abort = loop->abort;
+              };
               void try_write(const T &rawdata) const {
-                if (write) write(rawdata);
+                if (write and !*abort) write(rawdata);
               };
               void wait_for(Loop *const loop, const function<vector<T>()> j) {
                 job = j;
+                abort = loop->abort;
                 event = loop->async([&]() {
                   if (data.valid())
                     for (const T &it : data.get()) try_write(it);
@@ -211,10 +219,13 @@ namespace ₿ {
         protected:
           virtual void change(const int&, const function<void()>& = nullptr) = 0;
       };
+    protected:
+      volatile sig_atomic_t *abort = nullptr;
     public:
       virtual          void  timer_ticks_factor(const unsigned int&) const = 0;
       virtual          void  timer_1s(const TimeEvent&)                    = 0;
       virtual         Async *async(const function<void()>&)                = 0;
+    protected:
       virtual curl_socket_t  poll()                                        = 0;
       virtual          void  walk()                                        = 0;
       virtual          void  end()                                         = 0;
@@ -304,17 +315,20 @@ namespace ₿ {
         jobs.emplace_back(data);
         return &jobs.back();
       };
+    protected:
       curl_socket_t poll() override {
         return 0;
       };
       void walk() override {
-        uv_run(uv_default_loop(), UV_RUN_DEFAULT);
+        while(!*abort)
+          uv_run(uv_default_loop(), UV_RUN_ONCE);
       };
       void end() override {
         uv_timer_stop(&timer.event);
         uv_close((uv_handle_t*)&timer.event, [](uv_handle_t*){ });
-        for (auto &it : jobs)
-          uv_close((uv_handle_t*)&it.event, [](uv_handle_t*){ });
+        if (!*abort)
+          for (auto &it : jobs)
+            uv_close((uv_handle_t*)&it.event, [](uv_handle_t*){ });
       };
   };
 #else
@@ -409,11 +423,12 @@ namespace ₿ {
         jobs.emplace_back(sockfd, data);
         return &jobs.back();
       };
+    protected:
       curl_socket_t poll() override {
         return sockfd;
       };
       void walk() override {
-        while (sockfd)
+        while (sockfd and !*abort)
           for (
             int i  =  epoll_wait(sockfd, ready, 32, -1);
                 i --> 0;
@@ -421,10 +436,12 @@ namespace ₿ {
           );
       };
       void end() override {
-        timer.stop();
-        for (auto &it : jobs)
-          it.stop();
-        jobs.clear();
+        if (!*abort) {
+          timer.stop();
+          for (auto &it : jobs)
+            it.stop();
+          jobs.clear();
+        }
         ::close(sockfd);
         sockfd = 0;
       };
@@ -441,8 +458,13 @@ namespace ₿ {
         protected:
           string in;
         private:
-          CURL *curl = nullptr;
           string out;
+          CURL         *curl = nullptr;
+          mutex *const &lock = nullptr;
+        public:
+          Easy(mutex *const &l)
+            : lock(l)
+          {};
         protected:
           void cleanup() {
             if (curl) {
@@ -456,6 +478,7 @@ namespace ₿ {
             return sockfd;
           };
           CURLcode connect(const string &url, const string &header, const string &res1, const string &res2) {
+            lock_guard<mutex> guard(*lock);
             out = header;
             in.clear();
             CURLcode rc;
@@ -482,6 +505,7 @@ namespace ₿ {
             return rc;
           };
           CURLcode send_recv() {
+            lock_guard<mutex> guard(*lock);
             CURLcode rc = CURLE_COULDNT_CONNECT;
             if (curl
               and sockfd
@@ -493,6 +517,7 @@ namespace ₿ {
             return rc;
           };
           CURLcode emit(const string &data) {
+            lock_guard<mutex> guard(*lock);
             CURLcode rc = CURLE_OK;
             if (curl and sockfd) {
               out += data;
@@ -561,14 +586,14 @@ namespace ₿ {
       class Web {
         public:
           static json xfer(
-            const string &url,
-            const string &crud = "GET",
-            const string &post = "",
+                  mutex          &lock,
+            const string         &url,
+            const string         &crud = "GET",
+            const string         &post = "",
             const vector<string> &headers = {},
-            const string &auth = ""
+            const string         &auth = ""
           ) {
-            static mutex waiting_reply;
-            lock_guard<mutex> lock(waiting_reply);
+            lock_guard<mutex> guard(lock);
             string reply;
             CURLcode rc = CURLE_FAILED_INIT;
             CURL *curl = curl_easy_init();
@@ -611,6 +636,10 @@ namespace ₿ {
       };
       class WebSocket: public Easy,
                        public WebSocketFrames {
+        public:
+          WebSocket(mutex *const &l)
+            : Easy(l)
+          {};
         private:
           using Easy::in;
         protected:
@@ -671,6 +700,10 @@ namespace ₿ {
           };
       };
       class WebSocketTwin: public WebSocket {
+        public:
+          WebSocketTwin(mutex *const &l)
+            : WebSocket(l)
+          {};
         protected:
           virtual string twin(const string&) const = 0;
       };
@@ -680,8 +713,9 @@ namespace ₿ {
           using Easy::in;
           unsigned long sequence = 0;
         public:
-          FixSocket(const string &t, const string &s)
-            : FixFrames(t, s)
+          FixSocket(const string &t, const string &s, mutex *const &l)
+            : Easy(l)
+            , FixFrames(t, s)
           {};
         protected:
           CURLcode connect(const string &uri, const string &logon) {

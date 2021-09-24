@@ -207,6 +207,7 @@ namespace ₿ {
         function<void(const Trade&)>
       >;
     public:
+      mutex *guard = nullptr;
       curl_socket_t loopfd = 0;
       struct {
         Decimal funds,
@@ -217,21 +218,31 @@ namespace ₿ {
       bool askForReplace = false;
       bool askForBalance = false;
       string (*randId)() = nullptr;
+    protected:
+      struct {
+        Loop::Async::Event<Connectivity> connectivity;
+        Loop::Async::Event<Ticker>       ticker;
+        Loop::Async::Event<Wallet>       wallet;
+        Loop::Async::Event<Levels>       levels;
+        Loop::Async::Event<Order>        orders;
+        Loop::Async::Event<Trade>        trades;
+      } async;
+    public:
       virtual void ask_for_data(const unsigned int &tick) = 0;
       virtual void wait_for_data(Loop *const loop) = 0;
-      void data(const DataEvent &ev) {
-        if (holds_alternative           <function<void(const Connectivity&)>>(ev))
-          async.connectivity.write = get<function<void(const Connectivity&)>>(ev);
-        else if (holds_alternative      <function<void(const Ticker&)>>(ev))
-          async.ticker.write       = get<function<void(const Ticker&)>>(ev);
-        else if (holds_alternative      <function<void(const Wallet&)>>(ev))
-          async.wallet.write       = get<function<void(const Wallet&)>>(ev);
-        else if (holds_alternative      <function<void(const Levels&)>>(ev))
-          async.levels.write       = get<function<void(const Levels&)>>(ev);
-        else if (holds_alternative      <function<void(const Order&)>>(ev))
-          async.orders.write       = get<function<void(const Order&)>>(ev);
-        else if (holds_alternative      <function<void(const Trade&)>>(ev))
-          async.trades.write       = get<function<void(const Trade&)>>(ev);
+      void data(Loop *const loop, const DataEvent &ev) {
+        if (holds_alternative                  <function<void(const Connectivity&)>>(ev))
+          async.connectivity.callback(loop, get<function<void(const Connectivity&)>>(ev));
+        else if (holds_alternative       <function<void(const Ticker&)>>(ev))
+          async.ticker.callback(loop, get<function<void(const Ticker&)>>(ev));
+        else if (holds_alternative       <function<void(const Wallet&)>>(ev))
+          async.wallet.callback(loop, get<function<void(const Wallet&)>>(ev));
+        else if (holds_alternative       <function<void(const Levels&)>>(ev))
+          async.levels.callback(loop, get<function<void(const Levels&)>>(ev));
+        else if (holds_alternative       <function<void(const Order&)>>(ev))
+          async.orders.callback(loop, get<function<void(const Order&)>>(ev));
+        else if (holds_alternative       <function<void(const Trade&)>>(ev))
+          async.trades.callback(loop, get<function<void(const Trade&)>>(ev));
       };
       void place(const Order *const order) {
         place(
@@ -269,14 +280,6 @@ namespace ₿ {
 /**/  virtual           bool async_wallet() { return false; };         // call               async wallet data from exchange.
 /**/  virtual vector<Wallet>  sync_wallet() { return {}; };          // call                  sync wallet data from exchange.
 //EO non-free Gw class member functions from lib build-*/lib/K-*.a (it just redefines all virtual gateway functions above)...
-      struct {
-        Loop::Async::Event<Connectivity> connectivity;
-        Loop::Async::Event<Ticker>       ticker;
-        Loop::Async::Event<Wallet>       wallet;
-        Loop::Async::Event<Levels>       levels;
-        Loop::Async::Event<Order>        orders;
-        Loop::Async::Event<Trade>        trades;
-      } async;
       void online(const Connectivity &connectivity) {
         async.connectivity.try_write(connectivity);
         if (!(bool)connectivity)
@@ -286,7 +289,7 @@ namespace ₿ {
         async.wallet.wait_for(loop, [&]() { return sync_wallet(); });
       };
       void ask_for_never_async_data(const unsigned int &tick) {
-        if (async.wallet.write and (
+        if (async.wallet.waiting() and (
           askForBalance or !(tick % 15)
         )) balance();
       };
@@ -452,6 +455,10 @@ namespace ₿ {
 
   class GwApiWs: public Gw,
                  public Curl::WebSocket {
+    public:
+      GwApiWs()
+        : WebSocket(guard)
+      {};
     private:
        unsigned int countdown    = 1;
                bool subscription = false;
@@ -523,6 +530,10 @@ namespace ₿ {
   };
   class GwApiWsWs: public GwApiWs,
                    public Curl::WebSocketTwin {
+    public:
+      GwApiWsWs()
+        : WebSocketTwin(guard)
+      {};
     protected:
       bool connected() const override {
         return GwApiWs::connected()
@@ -564,7 +575,7 @@ namespace ₿ {
                     public Curl::FixSocket {
     public:
       GwApiWsFix(const string &t)
-        : FixSocket(t, apikey)
+        : FixSocket(t, apikey, guard)
       {};
     protected:
       bool connected() const override {
@@ -624,7 +635,7 @@ namespace ₿ {
         return to_string(Tstamp);
       };
       void pairs(string &report) const override {
-        const json reply = Curl::Web::xfer(http + "/api/v3/exchangeInfo");
+        const json reply = Curl::Web::xfer(*guard, http + "/api/v3/exchangeInfo");
         if (!reply.is_object()
           or reply.find("symbols") == reply.end()
           or !reply.at("symbols").is_array()
@@ -638,7 +649,7 @@ namespace ₿ {
           ) report += it.value("baseAsset", "") + "/" + it.value("quoteAsset", "") + '\n';
       };
       json handshake() const override {
-        json reply1 = Curl::Web::xfer(http + "/api/v3/exchangeInfo");
+        json reply1 = Curl::Web::xfer(*guard, http + "/api/v3/exchangeInfo");
         if (reply1.find("symbols") != reply1.end() and reply1.at("symbols").is_array())
           for (const json &it : reply1.at("symbols"))
             if (it.value("symbol", "") == base + quote) {
@@ -671,7 +682,7 @@ namespace ₿ {
         };
       };
       json xfer(const string &url, const string &h1, const string &crud) const {
-        return Curl::Web::xfer(url, crud, "", {
+        return Curl::Web::xfer(*guard, url, crud, "", {
           "X-MBX-APIKEY: " + h1
         });
       };
@@ -715,7 +726,7 @@ namespace ₿ {
         return to_string(Tstamp);
       };
       void pairs(string &report) const override {
-        const json reply = Curl::Web::xfer(http + "/instrument/active");
+        const json reply = Curl::Web::xfer(*guard, http + "/instrument/active");
         if (!reply.is_array()
           or reply.empty()
           or !reply.at(0).is_object()
@@ -726,7 +737,7 @@ namespace ₿ {
       };
       json handshake() const override {
         json reply = {
-          {"object", Curl::Web::xfer(http + "/instrument?symbol=" + base + quote)}
+          {"object", Curl::Web::xfer(*guard, http + "/instrument?symbol=" + base + quote)}
         };
         if (reply.at("object").is_array() and !reply.at("object").empty())
           reply = reply.at("object").at(0);
@@ -746,7 +757,7 @@ namespace ₿ {
         };
       };
       json xfer(const string &url, const string &h1, const string &h2, const string &h3, const string &post, const string &crud) const {
-        return Curl::Web::xfer(url, crud, post, {
+        return Curl::Web::xfer(*guard, url, crud, post, {
           "api-expires: "   + h1,
           "api-key: "       + h2,
           "api-signature: " + h3
@@ -771,7 +782,7 @@ namespace ₿ {
         return to_string((Clock)(Tstamp / 1e+3));
       };
       void pairs(string &report) const override {
-        const json reply = Curl::Web::xfer(http + "/spot/currency_pairs");
+        const json reply = Curl::Web::xfer(*guard, http + "/spot/currency_pairs");
         if (!reply.is_array()
           or reply.empty()
           or !reply.at(0).is_object()
@@ -783,7 +794,7 @@ namespace ₿ {
       };
       json handshake() const override {
         json reply = {
-          {"object", Curl::Web::xfer(http + "/spot/currency_pairs")}
+          {"object", Curl::Web::xfer(*guard, http + "/spot/currency_pairs")}
         };
         if (reply.at("object").is_array() and !reply.at("object").empty())
           for (const json &it : reply.at("object"))
@@ -807,7 +818,7 @@ namespace ₿ {
         };
       };
       json xfer(const string &url, const string &h1, const string &h2, const string &h3, const string &post, const string &crud) const {
-        return Curl::Web::xfer(url, crud, post, {
+        return Curl::Web::xfer(*guard, url, crud, post, {
           "Content-Type: application/json",
           "KEY: "       + h1,
           "Timestamp: " + h2,
@@ -833,7 +844,7 @@ namespace ₿ {
         return randId() + randId();
       };
       void pairs(string &report) const override {
-        const json reply = Curl::Web::xfer(http + "/public/symbol");
+        const json reply = Curl::Web::xfer(*guard, http + "/public/symbol");
         if (!reply.is_array()
           or reply.empty()
           or !reply.at(0).is_object()
@@ -844,7 +855,7 @@ namespace ₿ {
           report += it.value("baseCurrency", "") + "/" + it.value("quoteCurrency", "") + '\n';
       };
       json handshake() const override {
-        const json reply = Curl::Web::xfer(http + "/public/symbol/" + base + quote);
+        const json reply = Curl::Web::xfer(*guard, http + "/public/symbol/" + base + quote);
         return {
           {     "base", base == "USDT" ? "USD" : base                 },
           {    "quote", quote == "USDT" ? "USD" : quote               },
@@ -861,7 +872,7 @@ namespace ₿ {
         return ws.substr(0, ws.length() - 6) + "trading";
       };
       json xfer(const string &url, const string &auth, const string &post) const {
-        return Curl::Web::xfer(url, "DELETE", post, {}, auth);
+        return Curl::Web::xfer(*guard, url, "DELETE", post, {}, auth);
       };
   };
   class GwBequant: virtual public GwHitBtc {
@@ -894,7 +905,7 @@ namespace ₿ {
         return to_string(Tstamp / 1e+3);
       };
       void pairs(string &report) const override {
-        const json reply = Curl::Web::xfer(http + "/products");
+        const json reply = Curl::Web::xfer(*guard, http + "/products");
         if (!reply.is_array()
           or reply.empty()
           or !reply.at(0).is_object()
@@ -906,7 +917,7 @@ namespace ₿ {
           report += it.value("base_currency", "") + "/" + it.value("quote_currency", "") + '\n';
       };
       json handshake() const override {
-        const json reply = Curl::Web::xfer(http + "/products/" + base + "-" + quote);
+        const json reply = Curl::Web::xfer(*guard, http + "/products/" + base + "-" + quote);
         return {
           {     "base", base                                     },
           {    "quote", quote                                    },
@@ -918,7 +929,7 @@ namespace ₿ {
         };
       };
       json xfer(const string &url, const string &h1, const string &h2, const string &h3, const string &h4, const string &crud) const {
-        return Curl::Web::xfer(url, crud, "", {
+        return Curl::Web::xfer(*guard, url, crud, "", {
           "CB-ACCESS-KEY: "        + h1,
           "CB-ACCESS-SIGN: "       + h2,
           "CB-ACCESS-TIMESTAMP: "  + h3,
@@ -947,7 +958,7 @@ namespace ₿ {
         return to_string(Tstamp * 1e+3);
       };
       void pairs(string &report) const override {
-        const json reply = Curl::Web::xfer(http + "/conf/pub:list:pair:" + trading);
+        const json reply = Curl::Web::xfer(*guard, http + "/conf/pub:list:pair:" + trading);
         if (!reply.is_array()
           or reply.empty()
           or !reply.at(0).is_array()
@@ -964,7 +975,7 @@ namespace ₿ {
       };
       json handshake() const override {
         json reply1 = {
-          {"object", Curl::Web::xfer(http + "/ticker/t" + base + quote)}
+          {"object", Curl::Web::xfer(*guard, http + "/ticker/t" + base + quote)}
         };
         if (reply1.at("object").is_array()
           and reply1.at("object").size() > 6
@@ -973,7 +984,7 @@ namespace ₿ {
             reply1.at("object").at(6).get<double>()
           ), -4) -4);
         json reply2 = {
-          {"object", Curl::Web::xfer(http + "/conf/pub:info:pair")}
+          {"object", Curl::Web::xfer(*guard, http + "/conf/pub:info:pair")}
         };
         if (reply2.at("object").is_array() and !reply2.at("object").empty())
           for (const json &it : reply2.at("object").at(0)) {
@@ -1001,7 +1012,7 @@ namespace ₿ {
         };
       };
       json xfer(const string &url, const string &post, const string &h1, const string &h2, const string &h3) const {
-        return Curl::Web::xfer(url, "GET", post, {
+        return Curl::Web::xfer(*guard, url, "GET", post, {
           "Content-Type: application/json",
           "bfx-apikey: "    + h1,
           "bfx-nonce: "     + h2,
@@ -1037,7 +1048,7 @@ namespace ₿ {
         return to_string(Tstamp);
       };
       void pairs(string &report) const override {
-        const json reply = Curl::Web::xfer(http + "/api/v1/symbols");
+        const json reply = Curl::Web::xfer(*guard, http + "/api/v1/symbols");
         if (!reply.is_object()
           or reply.find("data") == reply.end()
           or !reply.at("data").is_array()
@@ -1050,7 +1061,7 @@ namespace ₿ {
             report += it.value("baseCurrency", "") + "/" + it.value("quoteCurrency", "") + '\n';
       };
       json handshake() const override {
-        json reply1 = Curl::Web::xfer(http + "/api/v1/symbols");
+        json reply1 = Curl::Web::xfer(*guard, http + "/api/v1/symbols");
         if (reply1.find("data") != reply1.end() and reply1.at("data").is_array())
           for (const json &it : reply1.at("data"))
             if (it.value("symbol", "") == base + "-" + quote) {
@@ -1071,7 +1082,7 @@ namespace ₿ {
         };
       };
       json xfer(const string &url, const string &h1, const string &h2, const string &h3, const string &h4, const string &crud, const string &post = "") const {
-        return Curl::Web::xfer(url, crud, post, {
+        return Curl::Web::xfer(*guard, url, crud, post, {
           "Content-Type: application/json",
           "KC-API-KEY: "        + h1,
           "KC-API-SIGN: "       + h2,
@@ -1119,7 +1130,7 @@ namespace ₿ {
         return to_string(Tstamp);
       };
       void pairs(string &report) const override {
-        const json reply = Curl::Web::xfer(http + "/0/public/AssetPairs");
+        const json reply = Curl::Web::xfer(*guard, http + "/0/public/AssetPairs");
         if (!reply.is_object()
           or reply.find("result") == reply.end()
           or !reply.at("result").is_object()
@@ -1129,7 +1140,7 @@ namespace ₿ {
             report += it.value("wsname", "") + '\n';
       };
       json handshake() const override {
-        json reply = Curl::Web::xfer(http + "/0/public/AssetPairs?pair=" + base + quote);
+        json reply = Curl::Web::xfer(*guard, http + "/0/public/AssetPairs?pair=" + base + quote);
         if (reply.find("result") != reply.end())
           for (const json &it : reply.at("result"))
             if (it.find("pair_decimals") != it.end()) {
@@ -1150,7 +1161,7 @@ namespace ₿ {
         return string(ws).insert(ws.find("ws.") + 2, "-auth");
       };
       json xfer(const string &url, const string &h1, const string &h2, const string &post) const {
-        return Curl::Web::xfer(url, "GET", post, {
+        return Curl::Web::xfer(*guard, url, "GET", post, {
           "API-Key: "  + h1,
           "API-Sign: " + h2
         });
@@ -1174,14 +1185,14 @@ namespace ₿ {
         return to_string(Tstamp);
       };
       void pairs(string &report) const override {
-        const json reply = Curl::Web::xfer(http + "/public?command=returnTicker");
+        const json reply = Curl::Web::xfer(*guard, http + "/public?command=returnTicker");
         if (!reply.is_object())
           print("Error while reading pairs: " + reply.dump());
         else for (auto it = reply.begin(); it != reply.end(); ++it)
           report += it.key() + '\n';
       };
       json handshake() const override {
-        const json reply = Curl::Web::xfer(http + "/public?command=returnTicker")
+        const json reply = Curl::Web::xfer(*guard, http + "/public?command=returnTicker")
                              .value(quote + "_" + base, json::object());
         return {
           {     "base", base              },
@@ -1195,7 +1206,7 @@ namespace ₿ {
         };
       };
       json xfer(const string &url, const string &post, const string &h1, const string &h2) const {
-        return Curl::Web::xfer(url, "GET", post, {
+        return Curl::Web::xfer(*guard, url, "GET", post, {
           "Content-Type: application/x-www-form-urlencoded",
           "Key: "  + h1,
           "Sign: " + h2

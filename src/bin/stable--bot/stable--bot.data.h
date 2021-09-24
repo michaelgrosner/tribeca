@@ -31,7 +31,7 @@ namespace analpaper {
 
   struct Orders: public Remote::Orderbook {
     private_ref:
-      const KryptoNinja  &K;
+      const KryptoNinja &K;
     public:
       Orders(const KryptoNinja &bot)
         : Orderbook(bot)

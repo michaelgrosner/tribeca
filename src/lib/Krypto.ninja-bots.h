@@ -66,10 +66,11 @@ namespace ₿ {
 
   class Rollout {
     public:
+      mutex lock;
+    public:
       Rollout() {
         static once_flag rollout;
         call_once(rollout, version);
-        curl_global_init(CURL_GLOBAL_ALL);
       };
     protected:
       static void version() {
@@ -81,13 +82,13 @@ namespace ₿ {
 #endif
              << '.' << Ansi::reset() << '\n';
       };
-      static string changelog() {
+      string changelog() {
         string mods;
         const json diff =
 #ifndef NDEBUG
           json::object();
 #else
-          Curl::Web::xfer("https://api.github.com/repos/ctubio/"
+          Curl::Web::xfer(lock, "https://api.github.com/repos/ctubio/"
             "Krypto-trading-bot/compare/" K_HEAD "...HEAD");
 #endif
         if (diff.value("ahead_by", 0)
@@ -104,29 +105,40 @@ namespace ₿ {
       };
   };
 
-  static vector<function<void()>> endingFn;
+  volatile sig_atomic_t signal = 0;
 
   class Ending: public Rollout {
     public_friend:
       using QuitEvent = function<void()>;
+    private:
+      vector<QuitEvent> endingFn;
     public:
       Ending() {
-        signal(SIGPIPE, SIG_IGN);
-        signal(SIGINT, [](const int) {
+        ::signal(SIGPIPE, SIG_IGN);
+        ::signal(SIGINT, [](const int) {
           clog << '\n';
           raise(SIGQUIT);
         });
-        signal(SIGQUIT, die);
-        signal(SIGTERM, err);
-        signal(SIGABRT, wtf);
-        signal(SIGSEGV, wtf);
-        signal(SIGUSR1, wtf);
+        ::signal(SIGQUIT, meh);
+        ::signal(SIGTERM, meh);
+        ::signal(SIGABRT, meh);
+        ::signal(SIGSEGV, meh);
+        ::signal(SIGUSR1, meh);
       };
-      void ending(const function<void()> &fn) {
+      void ending(const QuitEvent &fn) {
         endingFn.push_back(fn);
       };
+    protected:
+      void halt() {
+        if      (signal == SIGQUIT)  die();
+        else if (signal == SIGTERM)  err();
+        else                         wtf();
+      };
     private:
-      static void halt(const int code) {
+      static void meh(const int sig) {
+        signal = sig;
+      };
+      void halt(const int code) {
         vector<function<void()>> happyEndingFn;
         endingFn.swap(happyEndingFn);
         for (const auto &it : happyEndingFn) it();
@@ -138,10 +150,10 @@ namespace ₿ {
              << Ansi::reset() << '\n';
         EXIT(code);
       };
-      static void die(const int) {
+      void die() {
         if (epilogue.empty())
           epilogue = "Excellent decision! "
-                   + Curl::Web::xfer("https://api.icndb.com/jokes/random?escape=javascript&limitTo=[nerdy]")
+                   + Curl::Web::xfer(lock, "https://api.icndb.com/jokes/random?escape=javascript&limitTo=[nerdy]")
                        .value("/value/joke"_json_pointer, "let's plant a tree instead..");
         halt(
           epilogue.find("Errrror") == string::npos
@@ -149,12 +161,12 @@ namespace ₿ {
             : EXIT_FAILURE
         );
       };
-      static void err(const int) {
+      void err() {
         if (epilogue.empty()) epilogue = "Unknown exit reason, no joke.";
         halt(EXIT_FAILURE);
       };
-      static void wtf(const int sig) {
-        epilogue = Ansi::r(COLOR_CYAN) + "Errrror: " + strsignal(sig) + ' ';
+      void wtf() {
+        epilogue = Ansi::r(COLOR_CYAN) + "Errrror: " + strsignal(signal ?: SIGQUIT) + ' ';
         const string mods = changelog();
         if (mods.empty()) {
           epilogue += "(Three-Headed Monkey found):\n" + epitaph
@@ -359,7 +371,7 @@ namespace ₿ {
           scrollok(stdlog, true);
           idlok(stdlog, true);
         }
-        signal(SIGWINCH, [](const int) {
+        ::signal(SIGWINCH, [](const int) {
           endwin();
           refresh();
           clear();
@@ -694,25 +706,19 @@ namespace ₿ {
               hotkey.keymap(it.first, it.second);
           };
       };
-    public:
-      ~Hotkey()
-      {
-        stop = true;
-      };
     private:
-      bool stop = false;
       Loop::Async::Event<char> keylogger;
       mutable unordered_map<char, function<void()>> maps;
     protected:
       void wait_for_keylog(Loop *const loop) {
         if (maps.empty()) return;
-        if (keylogger.write)
+        if (keylogger.waiting())
           error("SH", string("Unable to launch another \"keylogger\" thread"));
         noecho();
         halfdelay(5);
         keypad(stdscr, true);
-        keylogger.write = [this](const char &ch) { keylog(ch); };
-        keylogger.wait_for(loop, [this]() { return sync_keylogger(); });
+        keylogger.callback(loop, [&](const char &ch) { keylog(ch); });
+        keylogger.wait_for(loop, [&]() { return sync_keylogger(); });
         keylogger.ask_for();
       };
     private:
@@ -728,7 +734,7 @@ namespace ₿ {
       };
       vector<char> sync_keylogger() {
         int ch = ERR;
-        while (ch == ERR and !stop)
+        while (ch == ERR and !signal)
           ch = getch();
         return {
           ch == ERR
@@ -1228,7 +1234,6 @@ namespace ₿ {
     public_friend:
       class Orderbook {
         public:
-          function<bool(const Order&)> purgeable;
           Order *last = nullptr;
         private:
           unordered_map<string, Order> orders;
@@ -1236,16 +1241,14 @@ namespace ₿ {
           const bool &debug;
           Gw *const &gateway;
         public:
-          Orderbook(
-            const Remote &remote,
-            const function<bool(const Order&)> &fn = [](const Order &order) {
-              return order.status == Status::Terminated;
-            }
-          ) : purgeable(fn)
-            , debug(remote.debug)
+          Orderbook(const Remote &remote)
+            : debug(remote.debug)
             , gateway(remote.gateway)
           {
             remote.orders = this;
+          };
+          virtual bool purgeable(const Order &order) const {
+            return order.status == Status::Terminated;
           };
           Order *find(const string &orderId) {
             return (orderId.empty()
@@ -1253,20 +1256,16 @@ namespace ₿ {
             ) ? nullptr
               : &orders.at(orderId);
           };
-          Order *update(const Order &raw, const string &reason = "  place: ") {
+          Order *update(const Order &raw, const string &reason = "  place") {
             Order *const order = Order::update(raw, findsert(raw));
             if (debug) {
-              gateway->print(reason + ((json)raw).dump());
-              gateway->print("  saved: " + (order ? ((json)*order).dump() : "gone"));
-              gateway->print(" active: " + to_string(size()));
+              gateway->print(reason + "(" + to_string(size()) + "): " + ((json)raw).dump());
+              gateway->print("  saved(" + to_string(size()) + "): " + (order ? ((json)*order).dump() : "not found (external)"));
             }
             return order;
           };
           void purge(const Order *const order) {
-            if (debug) {
-              gateway->print("  purge: " + order->orderId);
-              gateway->print(" active: " + to_string(size()));
-            }
+            if (debug) gateway->print("  purge(" + to_string(size()) + "): " + order->orderId);
             orders.erase(order->orderId);
           };
           unsigned int size() const {
@@ -1358,10 +1357,7 @@ namespace ₿ {
       void replace(const Price &price, const bool &isPong, Order *const order) const {
         if (Order::replace(price, isPong, order)) {
           gateway->replace(order);
-          if (debug) {
-            gateway->print("replace: " + ((json)*order).dump());
-            gateway->print(" active: " + to_string(orders->size()));
-          }
+          if (debug) gateway->print("replace(" + to_string(orders->size()) + "): " + ((json)*order).dump());
         }
       };
       void cancel() const {
@@ -1374,10 +1370,7 @@ namespace ₿ {
       void cancel(Order *const order) const {
         if (Order::cancel(order)) {
           gateway->cancel(order);
-          if (debug) {
-            gateway->print(" cancel: " + order->orderId);
-            gateway->print(" active: " + to_string(orders->size()));
-          }
+          if (debug) gateway->print(" cancel(" + to_string(orders->size()) + "): " + order->orderId);
         }
       };
       unsigned int memSize() const {
@@ -1389,7 +1382,7 @@ namespace ₿ {
 #endif
       };
     protected:
-      void required_setup(const Option *const K, const curl_socket_t &loopfd) {
+      void required_setup(const Option *const K, mutex &lock, const curl_socket_t &loopfd) {
         if (!(gateway = Gw::new_Gw(K->arg<string>("exchange"))))
           error("CF",
             "Unable to configure a valid gateway using --exchange="
@@ -1417,6 +1410,7 @@ namespace ₿ {
         gateway->maxLevel  = K->arg<int>("market-limit");
         gateway->debug     = K->arg<int>("debug-secret");
         gateway->loopfd    = loopfd;
+        gateway->guard     = &lock;
         gateway->printer   = [K](const string &prefix, const string &reason, const string &highlight) {
           if (reason.find("Error") != string::npos)
             K->logWar(prefix, reason);
@@ -1424,6 +1418,8 @@ namespace ₿ {
         };
         gateway->adminAgreement = (Connectivity)K->arg<int>("autobot");
         wrap_events(K);
+        if (CURLE_OK != curl_global_init(CURL_GLOBAL_ALL))
+          error("CF", string("CURL ") + curl_easy_strerror(CURLE_FAILED_INIT));
       };
       void handshake(const GwExchange::Report &notes, const bool &nocache) {
         const json reply = gateway->handshake(nocache);
@@ -1448,7 +1444,7 @@ namespace ₿ {
           ) it = [&, fn = get<function<void(const Order&)>>(get<Gw::DataEvent>(it)),
        make_computer_go = K
             ](const Order &raw) {
-              orders->last = orders->update(raw, "  reply: ");
+              orders->last = orders->update(raw, "  reply");
               fn(*(orders->last ?: alien(raw)));
               if (orders->last) {
                 if (orders->purgeable(*orders->last))
@@ -1473,14 +1469,15 @@ namespace ₿ {
     public:
       KryptoNinja *main(int argc, char** argv) {
         {
+          abort = &signal;
           optional_setup(this, argc, argv, events, blackhole(), documents.empty());
-          required_setup(this, poll());
+          required_setup(this, lock, poll());
         } {
           if (windowed())
             wait_for_keylog(this);
         } {
           log("CF", "Outbound IP address is",
-            wtfismyip = Curl::Web::xfer("https://wtfismyip.com/json")
+            wtfismyip = Curl::Web::xfer(lock, "https://wtfismyip.com/json")
                           .value("YourFuckingIPAddress", wtfismyip)
           );
         } {
@@ -1503,7 +1500,7 @@ namespace ₿ {
             else if (holds_alternative<QuitEvent>(it))
               ending(get<QuitEvent>(it));
             else if (holds_alternative<Gw::DataEvent>(it))
-              gateway->data(get<Gw::DataEvent>(it));
+              gateway->data(this, get<Gw::DataEvent>(it));
           events.clear();
           ending([&]() {
             gateway->end();
@@ -1543,6 +1540,7 @@ namespace ₿ {
       };
       void wait() {
         walk();
+        halt();
       };
   };
 }

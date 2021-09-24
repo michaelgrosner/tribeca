@@ -19,17 +19,17 @@ all lib:
 	$(MAKE) -j4 j0 j1 j2 j3
 
 j0:
-	$(MAKE) -j1 zlib openssl curl | sed 's/.*/[####] &/'
+	$(MAKE) -j1 zlib openssl curl
 
 j1:
-	$(MAKE) -j1 sqlite json       | sed 's/.*/[### ] &/'
+	$(MAKE) -j1 sqlite json
 
 j2:
-	$(MAKE) -j1 ncurses catch uv  | sed 's/.*/[##  ] &/'
+	$(MAKE) -j1 ncurses catch uv
 
 j3:
 ifdef GITHUB_ACTIONS
-	$(MAKE) -j1 lcov pvs          | sed 's/.*/[#   ] &/'
+	$(MAKE) -j1 lcov pvs
 endif
 
 clean:

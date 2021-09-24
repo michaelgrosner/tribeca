@@ -99,12 +99,13 @@ namespace analpaper {
   };
 
   struct Pongs {
-    unordered_map<string, Price> bids,
-                                 asks;
     Price maxBid = 0,
           minAsk = 0;
+    private:
+      unordered_map<string, Price> bids,
+                                   asks;
     private_ref:
-      const KryptoNinja  &K;
+      const KryptoNinja &K;
     public:
       Pongs(const KryptoNinja &bot)
         : K(bot)
@@ -140,16 +141,17 @@ namespace analpaper {
   struct Orders: public Remote::Orderbook {
     Pongs pongs;
     private_ref:
-      const KryptoNinja  &K;
+      const KryptoNinja &K;
     public:
       Orders(const KryptoNinja &bot)
-        : Orderbook(bot, [](const Order &order) {
-            return order.status == Status::Terminated
-                or order.isPong;
-          })
+        : Orderbook(bot)
         , pongs(bot)
         , K(bot)
       {};
+      bool purgeable(const Order &order) const override {
+        return order.status == Status::Terminated
+            or order.isPong;
+      };
       void read_from_gw(const Order &order) {
         pongs.maxmin(order);
         if (order.orderId.empty()) return;
@@ -166,6 +168,19 @@ namespace analpaper {
             + K.gateway->decimal.price.str(order.price)
             + " " + K.gateway->quote
             + " " + (order.isPong ? "(left opened)" : "(just filled)"));
+      };
+      Price calcPongPrice(const Price &fairValue) const {
+        const Price price = last->side == Side::Bid
+          ? fmax(last->price + K.arg<double>("pong-width"), fairValue + K.gateway->tickPrice)
+          : fmin(last->price - K.arg<double>("pong-width"), fairValue - K.gateway->tickPrice);
+        if (K.arg<int>("pong-scale")) {
+          if (last->side == Side::Bid) {
+            if (pongs.minAsk)
+              return fmax(price, pongs.minAsk - K.arg<double>("pong-width"));
+          } else if (pongs.maxBid)
+            return fmin(price, pongs.maxBid + K.arg<double>("pong-width"));
+        }
+        return price;
       };
   };
 
@@ -602,7 +617,7 @@ namespace analpaper {
             orders.last->side == Side::Bid
               ? Side::Ask
               : Side::Bid,
-            calcPongPrice(),
+            orders.calcPongPrice(levels.fairValue),
             orders.last->justFilled,
             Tstamp,
             true,
@@ -630,19 +645,6 @@ namespace analpaper {
           K.log("QE", "Canceled " + to_string(n) + " open order" + string(n != 1, 's') + " before quit");
       };
     private:
-      Price calcPongPrice() const {
-        const Price price = orders.last->side == Side::Bid
-          ? fmax(orders.last->price + K.arg<double>("pong-width"), levels.fairValue + K.gateway->tickPrice)
-          : fmin(orders.last->price - K.arg<double>("pong-width"), levels.fairValue - K.gateway->tickPrice);
-        if (K.arg<int>("pong-scale")) {
-          if (orders.last->side == Side::Bid) {
-            if (orders.pongs.minAsk)
-              return fmax(price, orders.pongs.minAsk - K.arg<double>("pong-width"));
-          } else if (orders.pongs.maxBid)
-            return fmin(price, orders.pongs.maxBid + K.arg<double>("pong-width"));
-        }
-        return price;
-      };
       vector<Order*> abandon(Quote &quote) {
         vector<Order*> abandoned;
         const bool all = quote.state != QuoteState::Live;

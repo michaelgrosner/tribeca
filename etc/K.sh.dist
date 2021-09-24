@@ -88,8 +88,7 @@ OPTIONAL_ARGUMENTS="--colors --naked --heartbeat"
 #  ▌____                                                .
 #  ▌ IV ▐______________________________________________ .
 #  ▌¯¯¯¯                                                .
-      `#gdb -ex run --args`                             \
-      `#valgrind --leak-check=full`                     \
+      `#gdb -ex run --args` `#valgrind`                 \
       $K_BINARY_FILE                                    \
         --title      ${0##*/}                           \
         --exchange   ${API_EXCHANGE:-""}                \
