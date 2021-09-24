@@ -4,7 +4,7 @@ $(if $(subst 0,,${MAKELEVEL}),,$(warning $(ERR));$(error $(HINT)))
 
 V_ZLIB  = 1.2.11
 V_SSL   = 3.0.0
-V_CURL  = 7.79.0
+V_CURL  = 7.79.1
 V_SQL   = 3360000
 V_NCUR  = 6.1
 V_JSON  = 3.10.2
