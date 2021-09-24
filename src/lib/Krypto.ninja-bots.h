@@ -1265,7 +1265,7 @@ namespace ₿ {
             return order;
           };
           void purge(const Order *const order) {
-            if (debug) gateway->print("  purge(" + to_string(size()) + "): " + order->orderId);
+            if (debug) gateway->print("  purge(" + to_string(size() - 1) + "): " + order->orderId);
             orders.erase(order->orderId);
           };
           unsigned int size() const {
@@ -1409,8 +1409,8 @@ namespace ₿ {
         gateway->pass      = K->arg<string>("passphrase");
         gateway->maxLevel  = K->arg<int>("market-limit");
         gateway->debug     = K->arg<int>("debug-secret");
-        gateway->loopfd    = loopfd;
         gateway->guard     = &lock;
+        gateway->loopfd    = loopfd;
         gateway->printer   = [K](const string &prefix, const string &reason, const string &highlight) {
           if (reason.find("Error") != string::npos)
             K->logWar(prefix, reason);
