@@ -2,7 +2,7 @@
 //! \brief Minimal user application framework.
 
 namespace ₿ {
-  static string epilogue, epitaph;
+  static string epilogue, epitaph, epiphany;
 
   //! \brief     Call all endingFn once and print a last log msg.
   //! \param[in] reason Allows any (colorful?) string.
@@ -137,6 +137,27 @@ namespace ₿ {
     private:
       static void meh(const int sig) {
         signal = sig;
+        if (signal == SIGABRT
+         or signal == SIGSEGV
+         or signal == SIGUSR1
+       ) {
+          epilogue = Ansi::r(COLOR_CYAN) + "Errrror: " + strsignal(signal) + ' ';
+          epiphany = "(Three-Headed Monkey found):\n" + epitaph
+            + "- binbuild: " K_SOURCE " " K_CHOST "\n"
+              "- lastbeat: " + to_string(Tspent) + '\n'
+#ifndef _WIN32
+            + "- tracelog: " + '\n';
+          void *k[69];
+          size_t jumps = backtrace(k, 69);
+          char **trace = backtrace_symbols(k, jumps);
+          for (;
+            jumps --> 0;
+            epiphany += "  " + to_string(jumps) + ": " + string(trace[jumps]) + '\n'
+          );
+          free(trace)
+#endif
+          ;
+       }
       };
       void halt(const int code) {
         vector<function<void()>> happyEndingFn;
@@ -166,35 +187,20 @@ namespace ₿ {
         halt(EXIT_FAILURE);
       };
       void wtf() {
-        epilogue = Ansi::r(COLOR_CYAN) + "Errrror: " + strsignal(signal ?: SIGQUIT) + ' ';
         const string mods = changelog();
-        if (mods.empty()) {
-          epilogue += "(Three-Headed Monkey found):\n" + epitaph
-            + "- binbuild: " K_SOURCE " " K_CHOST "\n"
-              "- lastbeat: " + to_string(Tspent) + '\n'
-#ifndef _WIN32
-            + "- tracelog: " + '\n';
-          void *k[69];
-          size_t jumps = backtrace(k, 69);
-          char **trace = backtrace_symbols(k, jumps);
-          for (;
-            jumps --> 0;
-            epilogue += "  " + to_string(jumps) + ": " + string(trace[jumps]) + '\n'
-          );
-          free(trace)
-#endif
-          ;
-          epilogue += '\n' + Ansi::b(COLOR_RED) + "Yikes!" + Ansi::r(COLOR_RED)
+        if (mods.empty())
+          epilogue += epiphany
+            + '\n' + Ansi::b(COLOR_RED) + "Yikes!" + Ansi::r(COLOR_RED)
             + '\n' + "please copy and paste the error above into a new github issue (noworry for duplicates)."
             + '\n' + "If you agree, go to https://github.com/ctubio/Krypto-trading-bot/issues/new"
-            + '\n' + '\n';
-        } else
+            + '\n';
+        else
           epilogue += string("(deprecated K version found).") + '\n'
             + '\n' + Ansi::b(COLOR_YELLOW) + "Hint!" + Ansi::r(COLOR_YELLOW)
             + '\n' + "please upgrade to the latest commit; the encountered error may be already fixed at:"
             + '\n' + mods
             + '\n' + "If you agree, consider to run \"make upgrade\" prior further executions."
-            + '\n' + '\n';
+            + '\n';
         halt(EXIT_FAILURE);
       };
   };

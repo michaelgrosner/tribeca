@@ -2,7 +2,7 @@ K         ?= K.sh
 MAJOR      = 0
 MINOR      = 6
 PATCH      = 5
-BUILD      = 13
+BUILD      = 14
 
 OBLIGATORY = DISCLAIMER: This is strict non-violent software: \n$\
              if you hurt other living creatures, please stop; \n$\
@@ -176,7 +176,7 @@ else ifndef KTEST
 	@$(MAKE) KTEST="-DNDEBUG" $@
 else
 	$(CHOST)-g++ -s $(KTEST) -o $(KBUILD)/bin/K-$(KSRC) \
-	  -static-libstdc++ -static-libgcc -rdynamic     \
+	  -static-libstdc++ -static-libgcc -rdynamic        \
 	  $< $(KARGS) -ldl -Wall -Wextra -Wno-psabi
 endif
 
@@ -189,9 +189,9 @@ Darwin: src/lib/Krypto.ninja-main.cxx src/bin/$(KSRC)/$(KSRC).main.h
 
 Win32: src/lib/Krypto.ninja-main.cxx src/bin/$(KSRC)/$(KSRC).main.h
 	$(CHOST)-g++-posix -s -DNDEBUG -o $(KBUILD)/bin/K-$(KSRC).exe \
-	  -DCURL_STATICLIB                                         \
-	  -DSIGUSR1=SIGABRT -DSIGPIPE=SIGABRT -DSIGQUIT=SIGBREAK   \
-	  $< $(KARGS) -static -lstdc++ -lgcc                       \
+	  -DCURL_STATICLIB                                            \
+	  -DSIGUSR1=SIGABRT -DSIGPIPE=SIGABRT -DSIGQUIT=SIGBREAK      \
+	  $< $(KARGS) -static -lstdc++ -lgcc                          \
 	  -lcrypt32 -lpsapi -luserenv -liphlpapi -lwldap32 -lws2_32
 
 download:
