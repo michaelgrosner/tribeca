@@ -1302,10 +1302,15 @@ namespace ₿ {
             unset();
             applyQuotingParameters();
             upset();
+            log();
           };
-          void states(const QuoteState &state) {
-            bid.state =
-            ask.state = state;
+          void paused() {
+            states(QuoteState::DisabledQuotes);
+            log();
+          };
+          void offline() {
+            states(QuoteState::Disconnected);
+            log();
           };
         protected:
           void debug(const string &step) const {
@@ -1322,10 +1327,12 @@ namespace ₿ {
               );
           };
         private:
+          virtual string explainState(const Quote&) const = 0;
           virtual void calcRawQuotes() = 0;
           virtual void applyQuotingParameters() = 0;
-          virtual string explainState(const Quote&) const {
-            return "";
+          void states(const QuoteState &state) {
+            bid.state =
+            ask.state = state;
           };
           void reset() {
             bid.isPong =
@@ -1342,6 +1349,8 @@ namespace ₿ {
           void upset() {
             if (bid.checkCrossed(ask) or ask.checkCrossed(bid))
               K.logWar("QE", "Crossed bid/ask quotes detected, that is.. unexpected", 3e+3);
+          };
+          void log() {
             logState(bid, &prevBidState);
             logState(ask, &prevAskState);
           };
@@ -1358,16 +1367,16 @@ namespace ₿ {
           };
       };
       class Orderbook {
-        private_friend:
+        public:
           class Zombies {
-            private_ref:
-              Orderbook *const &orders;
             public:
               unsigned int countZombies = 0,
                            countWaiting = 0,
                            countWorking = 0;
             private:
               vector<const Order*> zombies;
+            private_ref:
+              Orderbook *const &orders;
             public:
               Zombies(Orderbook *const &o)
                 : orders(o)
@@ -1391,9 +1400,7 @@ namespace ₿ {
                 } else ++countWorking;
                 return !order.manual;
               };
-          };
-        public:
-          Zombies zombies;
+          } zombies;
           Order *last = nullptr;
         private:
           unordered_map<string, Order> orders;

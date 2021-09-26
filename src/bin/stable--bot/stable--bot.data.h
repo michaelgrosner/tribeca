@@ -108,6 +108,31 @@ namespace analpaper {
         , wallet(w)
       {};
     private:
+      string explainState(const System::Quote &quote) const override {
+        string reason = "";
+        if (quote.state == QuoteState::Live)
+          reason = "  LIVE   " + Ansi::r(COLOR_WHITE)
+                 + "because of reasons (ping: "
+                 + K.gateway->decimal.price.str(quote.price) + " " + K.gateway->quote
+                 + ", fair value: "
+                 + K.gateway->decimal.price.str(levels.fairValue) + " " + K.gateway->quote
+                 +")";
+        else if (quote.state == QuoteState::DepletedFunds)
+          reason = " PAUSED  " + Ansi::r(COLOR_WHITE)
+                 + "because not enough available funds ("
+                 + (quote.side == Side::Bid
+                   ? K.gateway->decimal.price.str(wallet.quote.amount) + " " + K.gateway->quote
+                   : K.gateway->decimal.amount.str(wallet.base.amount) + " " + K.gateway->base
+                 ) + ")";
+        else if (quote.state == QuoteState::DisabledQuotes)
+          reason = "DISABLED " + Ansi::r(COLOR_WHITE)
+                 + "because " + (quote.side == Side::Bid ? "--bid-price" : "--ask-price")
+                 + " was not set";
+        else if (quote.state == QuoteState::Disconnected)
+          reason = " PAUSED  " + Ansi::r(COLOR_WHITE)
+                 + "because the exchange seems down";
+        return reason;
+      };
       void calcRawQuotes() override {
         bid.size =
         ask.size = K.arg<double>("order-size");
@@ -245,13 +270,9 @@ namespace analpaper {
         , levels(l)
       {};
       void read_from_gw(const Connectivity &raw) {
-        const Connectivity previous = greenGateway;
         greenGateway = raw;
-        if (greenGateway != previous)
-          K.log("GW " + K.gateway->exchange, "Quoting state changed to",
-            string(ready() ? "" : "DIS") + "CONNECTED");
         if (!(bool)greenGateway)
-          quotes.states(QuoteState::Disconnected);
+          quotes.offline();
       };
       bool ready() const {
         return (bool)greenGateway;

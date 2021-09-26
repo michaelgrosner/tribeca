@@ -227,6 +227,44 @@ namespace analpaper {
         , wallet(w)
       {};
     private:
+      string explainState(const System::Quote &quote) const override {
+        string reason = "";
+        if (quote.state == QuoteState::Live)
+          reason = "  LIVE   " + Ansi::r(COLOR_WHITE)
+                 + "because of reasons (ping: "
+                 + K.gateway->decimal.price.str(quote.price) + " " + K.gateway->quote
+                 + ", fair value: "
+                 + K.gateway->decimal.price.str(levels.fairValue) + " " + K.gateway->quote
+                 +")";
+        else if (quote.state == QuoteState::DepletedFunds)
+          reason = " PAUSED  " + Ansi::r(COLOR_WHITE)
+                 + "because not enough available funds ("
+                 + (quote.side == Side::Bid
+                   ? K.gateway->decimal.price.str(wallet.quote.amount) + " " + K.gateway->quote
+                   : K.gateway->decimal.amount.str(wallet.base.amount) + " " + K.gateway->base
+                 ) + ")";
+        else if (quote.state == QuoteState::ScaleSided)
+          reason = "DISABLED " + Ansi::r(COLOR_WHITE)
+                 + "because " + (quote.side == Side::Bid ? "--bids-size" : "--asks-size")
+                 + " was not set";
+        else if (quote.state == QuoteState::ScalationLimit)
+          reason = " PAUSED  " + Ansi::r(COLOR_WHITE)
+                 + "because the nearest pong ("
+                 + K.gateway->decimal.price.str(quote.side == Side::Bid
+                   ? pongs.minAsk
+                   : pongs.maxBid
+                 ) + " " + K.gateway->quote + ") is closer than --wait-width";
+        else if (quote.state == QuoteState::DeviationLimit)
+          reason = " PAUSED  " + Ansi::r(COLOR_WHITE)
+                 + "because the price deviation is lower than --wait-price";
+        else if (quote.state == QuoteState::DisabledQuotes)
+          reason = " PAUSED  " + Ansi::r(COLOR_WHITE)
+                 + "because a pong is pending to be placed";
+        else if (quote.state == QuoteState::Disconnected)
+          reason = " PAUSED  " + Ansi::r(COLOR_WHITE)
+                 + "because the exchange seems down";
+        return reason;
+      };
       void calcRawQuotes() override {
         bid.size = K.arg<double>("bids-size");
         ask.size = K.arg<double>("asks-size");
@@ -248,38 +286,6 @@ namespace analpaper {
         debug("E"); applyRoundSize();
         debug("F"); applyDepleted();
         debug("!");
-      };
-      string explainState(const System::Quote &quote) const override {
-        string reason = "";
-        if (quote.state == QuoteState::Live)
-          reason = "  LIVE   " + Ansi::r(COLOR_WHITE)
-                 + "because of reasons (ping: "
-                 + K.gateway->decimal.price.str(quote.price) + " " + K.gateway->quote
-                 + ", fair value: "
-                 + K.gateway->decimal.price.str(levels.fairValue) + " " + K.gateway->quote
-                 +")";
-        else if (quote.state == QuoteState::DepletedFunds)
-          reason = "DISABLED " + Ansi::r(COLOR_WHITE)
-                 + "because not enough available funds ("
-                 + (quote.side == Side::Bid
-                   ? K.gateway->decimal.price.str(wallet.quote.amount) + " " + K.gateway->quote
-                   : K.gateway->decimal.amount.str(wallet.base.amount) + " " + K.gateway->base
-                 ) + ")";
-        else if (quote.state == QuoteState::ScaleSided)
-          reason = "DISABLED " + Ansi::r(COLOR_WHITE)
-                 + "because " + (quote.side == Side::Bid ? "--bids-size" : "--asks-size")
-                 + " was not set";
-        else if (quote.state == QuoteState::ScalationLimit)
-          reason = "DISABLED " + Ansi::r(COLOR_WHITE)
-                 + "because the nearest pong ("
-                 + K.gateway->decimal.price.str(quote.side == Side::Bid
-                   ? pongs.minAsk
-                   : pongs.maxBid
-                 ) + " " + K.gateway->quote + ") is closer than --wait-width";
-        else if (quote.state == QuoteState::DeviationLimit)
-          reason = "DISABLED " + Ansi::r(COLOR_WHITE)
-                 + "because the price deviation is lower than --wait-price";
-        return reason;
       };
       void applyScaleSide() {
         if (!K.arg<double>("bids-size"))
@@ -411,13 +417,9 @@ namespace analpaper {
         , wallet(w)
       {};
       void read_from_gw(const Connectivity &raw) {
-        const Connectivity previous = greenGateway;
         greenGateway = raw;
-        if (greenGateway != previous)
-          K.log("GW " + K.gateway->exchange, "Quoting state changed to",
-            string(ready() ? "" : "DIS") + "CONNECTED");
         if (!(bool)greenGateway)
-          quotes.states(QuoteState::Disconnected);
+          quotes.offline();
       };
       bool ready() const {
         return (bool)greenGateway;
@@ -427,7 +429,10 @@ namespace analpaper {
           quotes.calcQuotes();
           quote2orders(quotes.ask);
           quote2orders(quotes.bid);
-        } else K.cancel();
+        } else {
+          quotes.paused();
+          K.cancel();
+        }
       };
       void timer_60s() {
         if (K.arg<int>("heartbeat") and levels.fairValue) {

@@ -1994,6 +1994,45 @@ namespace tribeca {
         , wallet(w)
       {};
     private:
+      string explainState(const System::Quote &quote) const override {
+        string reason = "";
+        if (quote.state == QuoteState::Live)
+          reason = "  LIVE   " + Ansi::r(COLOR_WHITE)
+                 + "because of reasons (ping: "
+                 + K.gateway->decimal.price.str(quote.price) + " " + K.gateway->quote
+                 + ", fair value: "
+                 + K.gateway->decimal.price.str(levels.fairValue) + " " + K.gateway->quote
+                 +")";
+        else if (quote.state == QuoteState::DepletedFunds)
+          reason = " PAUSED  " + Ansi::r(COLOR_WHITE)
+                 + "because not enough available funds ("
+                 + (quote.side == Side::Bid
+                   ? K.gateway->decimal.price.str(wallet.quote.amount) + " " + K.gateway->quote
+                   : K.gateway->decimal.amount.str(wallet.base.amount) + " " + K.gateway->base
+                 ) + ")";
+        else if (quote.state == QuoteState::WaitingPing)
+          reason = " PAUSED  " + Ansi::r(COLOR_WHITE)
+                 + "because waiting for a ping on "
+                 + (quote.side == Side::Bid ? "ask" : "bid")
+                 + " side";
+        else if (quote.state == QuoteState::UpTrendHeld
+              or quote.state == QuoteState::DownTrendHeld)
+          reason = " PAUSED  " + Ansi::r(COLOR_WHITE)
+                 + "because ewmaTrend limit was reached";
+        else if (quote.state == QuoteState::TBPHeld)
+          reason = " PAUSED  " + Ansi::r(COLOR_WHITE)
+                 + "because target base position limit was reached";
+        else if (quote.state == QuoteState::MaxTradesSeconds)
+          reason = " PAUSED  " + Ansi::r(COLOR_WHITE)
+                 + "because trades/sec limit was reached";
+        else if (quote.state == QuoteState::DisabledQuotes)
+          reason = "DISABLED " + Ansi::r(COLOR_WHITE)
+                 + "because an admin considered it";
+        else if (quote.state == QuoteState::Disconnected)
+          reason = " PAUSED  " + Ansi::r(COLOR_WHITE)
+                 + "because the exchange seems down";
+        return reason;
+      };
       void calcRawQuotes() override {
         dummyMM.calcRawQuotes(&superSpread);
       };
@@ -2325,10 +2364,8 @@ namespace tribeca {
         return !(bool)greenGateway;
       };
       void read_from_gw(const Connectivity &raw) {
-        if (greenGateway != raw) {
-          greenGateway = raw;
-          switchFlag();
-        }
+        greenGateway = raw;
+        switchButton();
       };
       mMatter about() const override {
         return mMatter::Connectivity;
@@ -2336,16 +2373,12 @@ namespace tribeca {
     private:
       void toggle() {
         K.gateway->adminAgreement = (Connectivity)!(bool)K.gateway->adminAgreement;
-        switchFlag();
+        switchButton();
       };
-      void switchFlag() {
-        const Connectivity previous = greenButton;
+      void switchButton() {
         greenButton = (Connectivity)(
           (bool)greenGateway and (bool)K.gateway->adminAgreement
         );
-        if (greenButton != previous)
-          K.log("GW " + K.gateway->exchange, "Quoting state changed to",
-            string(paused() ? "DIS" : "") + "CONNECTED");
         broadcast();
         K.repaint();
       };
@@ -2454,14 +2487,14 @@ namespace tribeca {
       {};
       bool ready() {
         if (semaphore.offline()) {
-          quotes.states(QuoteState::Disconnected);
+          quotes.offline();
           return false;
         }
         return true;
       };
       void calcQuotes() {
         if (semaphore.paused()) {
-          quotes.states(QuoteState::DisabledQuotes);
+          quotes.paused();
           K.cancel();
         } else {
           quotes.calcQuotes();

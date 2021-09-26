@@ -247,20 +247,14 @@ namespace analpaper {
         return (bool)greenGateway;
       };
       void read_from_gw(const Connectivity &raw) {
-        if (greenGateway != raw) {
-          greenGateway = raw;
-          switchFlag();
-        }
-      };
-      mMatter about() const override {
-        return mMatter::Connectivity;
-      };
-    private:
-      void switchFlag() {
-        K.log("GW " + K.gateway->exchange, "Quoting state changed to",
+        greenGateway = raw;
+        K.log("GW " + K.gateway->exchange, "network state changed to",
           string(online() ? "" : "DIS") + "CONNECTED");
         broadcast();
         K.repaint();
+      };
+      mMatter about() const override {
+        return mMatter::Connectivity;
       };
   };
   static void to_json(json &j, const Semaphore &k) {
