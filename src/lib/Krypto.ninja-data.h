@@ -459,8 +459,9 @@ namespace ₿ {
           string in;
         private:
           string out;
-          CURL         *curl = nullptr;
-          mutex *const &lock = nullptr;
+          CURL *curl = nullptr;
+        private_ref:
+          mutex *const &lock;
         public:
           Easy(mutex *const &l)
             : lock(l)

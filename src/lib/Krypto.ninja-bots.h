@@ -1236,10 +1236,164 @@ namespace ₿ {
       };
   };
 
-  class Remote {
+  enum class QuoteState: unsigned int {
+    Disconnected,  Live,             Crossed,
+    MissingData,   UnknownHeld,      WidthTooHigh,
+    DepletedFunds, DisabledQuotes,
+    UpTrendHeld,   DownTrendHeld,
+    TBPHeld,       MaxTradesSeconds, WaitingPing,
+    ScaleSided,    ScalationLimit,   DeviationLimit
+  };
+
+  class System {
     public_friend:
-      class Orderbook {
+      class Quote: public Level {
         public:
+          const Side       side   = (Side)0;
+                QuoteState state  = QuoteState::MissingData;
+                bool       isPong = false;
+        public:
+          Quote(const Side &s)
+            : side(s)
+          {};
+          bool empty() const {
+            return !size or !price;
+          };
+          void skip() {
+            size = 0;
+          };
+          void skip(const QuoteState &reason) {
+            price = size = 0;
+            state = reason;
+          };
+          bool deprecates(const Price &otherPrice) const {
+            return side == Side::Bid
+                     ? price < otherPrice
+                     : price > otherPrice;
+          };
+          bool checkCrossed(const Quote &otherSide) {
+            if (empty()) return false;
+            if (otherSide.empty() or deprecates(otherSide.price)) {
+              state = QuoteState::Live;
+              return false;
+            }
+            state = QuoteState::Crossed;
+            return true;
+          };
+      };
+      class Quotes {
+        public:
+          Quote bid,
+                ask;
+        private:
+          QuoteState prevBidState = QuoteState::MissingData,
+                     prevAskState = QuoteState::MissingData;
+        private_ref:
+          const Option &K;
+        public:
+          Quotes(const Option &bot)
+            : bid(Side::Bid)
+            , ask(Side::Ask)
+            , K(bot)
+          {};
+          void calcQuotes() {
+            reset();
+            calcRawQuotes();
+            unset();
+            applyQuotingParameters();
+            upset();
+          };
+          void states(const QuoteState &state) {
+            bid.state =
+            ask.state = state;
+          };
+        protected:
+          void debug(const string &step) const {
+            if (K.arg<int>("debug-quotes"))
+              K.log("DEBUG QE", "[" + step + "] "
+                + to_string((int)ask.state)  + ":"
+                + to_string((int)bid.state)  + " "
+                + to_string((int)ask.isPong) + ":"
+                + to_string((int)bid.isPong) + " "
+                + ((json){
+                    {"ask", ask},
+                    {"bid", bid}
+                  }).dump()
+              );
+          };
+        private:
+          virtual void calcRawQuotes() = 0;
+          virtual void applyQuotingParameters() = 0;
+          virtual string explainState(const Quote&) const {
+            return "";
+          };
+          void reset() {
+            bid.isPong =
+            ask.isPong = false;
+            states(QuoteState::UnknownHeld);
+          };
+          void unset() {
+            if (bid.price <= 0 or ask.price <= 0) {
+              bid.skip(QuoteState::WidthTooHigh);
+              ask.skip(QuoteState::WidthTooHigh);
+              K.logWar("QP", "Negative price detected, width must be lower", 3e+3);
+            }
+          };
+          void upset() {
+            if (bid.checkCrossed(ask) or ask.checkCrossed(bid))
+              K.logWar("QE", "Crossed bid/ask quotes detected, that is.. unexpected", 3e+3);
+            logState(bid, &prevBidState);
+            logState(ask, &prevAskState);
+          };
+          void logState(const Quote &quote, QuoteState *const prevState) {
+            if (quote.state != *prevState) {
+              *prevState = quote.state;
+              const string reason = explainState(quote);
+              if (!reason.empty())
+                K.log("QP", (quote.side == Side::Bid
+                  ? Ansi::r(COLOR_CYAN)    + "BID"
+                  : Ansi::r(COLOR_MAGENTA) + "ASK"
+                ) + Ansi::r(COLOR_WHITE) + " quoting", reason);
+            }
+          };
+      };
+      class Orderbook {
+        private_friend:
+          class Zombies {
+            private_ref:
+              Orderbook *const &orders;
+            public:
+              unsigned int countZombies = 0,
+                           countWaiting = 0,
+                           countWorking = 0;
+            private:
+              vector<const Order*> zombies;
+            public:
+              Zombies(Orderbook *const &o)
+                : orders(o)
+              {};
+              void purge() {
+                countZombies =
+                countWaiting =
+                countWorking = 0;
+                for (const Order *const it : zombies)
+                  orders->purge(it);
+                zombies.clear();
+              };
+              bool stillAlive(const Order &order) {
+                if (order.status == Status::Waiting) {
+                  if (Tstamp - 10e+3 > order.time) {
+                    zombies.push_back(&order);
+                    ++countZombies;
+                    return false;
+                  }
+                  ++countWaiting;
+                } else ++countWorking;
+                return !order.manual;
+              };
+          };
+        public:
+          Zombies zombies;
           Order *last = nullptr;
         private:
           unordered_map<string, Order> orders;
@@ -1247,11 +1401,12 @@ namespace ₿ {
           const bool &debug;
           Gw *const &gateway;
         public:
-          Orderbook(const Remote &remote)
-            : debug(remote.debug)
-            , gateway(remote.gateway)
+          Orderbook(const System &system)
+            : zombies(system.orders)
+            , debug(system.debug)
+            , gateway(system.gateway)
           {
-            remote.orders = this;
+            system.orders = this;
           };
           virtual bool purgeable(const Order &order) const {
             return order.status == Status::Terminated;
@@ -1471,7 +1626,7 @@ namespace ₿ {
                      public Hotkey,
                      public Sqlite,
                      public Client,
-                     public Remote {
+                     public System {
     public:
       KryptoNinja *main(int argc, char** argv) {
         {

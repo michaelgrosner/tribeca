@@ -394,7 +394,7 @@ SCENARIO_METHOD(TradingBot, "ANY BTC/EUR") {
     REQUIRE_NOTHROW(engine.qp.protectionEwmaWidthPing = false);
     REQUIRE_NOTHROW(engine.qp.targetBasePosition = 1);
     REQUIRE_NOTHROW(engine.qp.positionDivergence = 1);
-    REQUIRE_NOTHROW(engine.qp.read = engine.levels.diff.read = engine.levels.fairPrice.read = engine.wallet.read = engine.wallet.safety.read = engine.wallet.target.read = engine.broker.calculon.read = engine.broker.semaphore.read = [&]() {
+    REQUIRE_NOTHROW(engine.qp.read = engine.levels.diff.read = engine.levels.fairPrice.read = engine.wallet.read = engine.wallet.safety.read = engine.wallet.target.read = engine.broker.read = engine.broker.semaphore.read = [&]() {
       INFO("read()");
     });
     REQUIRE_NOTHROW(engine.qp.Backup::push = engine.wallet.target.Backup::push = engine.wallet.profits.Backup::push = [&]() {
@@ -457,14 +457,14 @@ SCENARIO_METHOD(TradingBot, "ANY BTC/EUR") {
       REQUIRE_NOTHROW(engine.broker.semaphore.click({
         {"agree", 0}
       }));
-      REQUIRE_NOTHROW(engine.broker.calculon.quotes.bid.clear(tribeca::QuoteState::MissingData));
-      REQUIRE_NOTHROW(engine.broker.calculon.quotes.ask.clear(tribeca::QuoteState::MissingData));
-      REQUIRE(engine.broker.calculon.quotes.bid.empty());
-      REQUIRE(engine.broker.calculon.quotes.ask.empty());
+      REQUIRE_NOTHROW(engine.broker.quotes.bid.skip(QuoteState::MissingData));
+      REQUIRE_NOTHROW(engine.broker.quotes.ask.skip(QuoteState::MissingData));
+      REQUIRE(engine.broker.quotes.bid.empty());
+      REQUIRE(engine.broker.quotes.ask.empty());
       REQUIRE_FALSE(engine.broker.ready());
-      REQUIRE(engine.broker.calculon.quotes.bid.state == tribeca::QuoteState::Disconnected);
-      REQUIRE(engine.broker.calculon.quotes.ask.state == tribeca::QuoteState::Disconnected);
-      REQUIRE_NOTHROW(engine.broker.purge());
+      REQUIRE(engine.broker.quotes.bid.state == QuoteState::Disconnected);
+      REQUIRE(engine.broker.quotes.ask.state == QuoteState::Disconnected);
+      REQUIRE_NOTHROW(engine.orders.zombies.purge());
       REQUIRE_NOTHROW(engine.broker.semaphore.read_from_gw(
         Connectivity::Connected
       ));
@@ -489,8 +489,8 @@ SCENARIO_METHOD(TradingBot, "ANY BTC/EUR") {
       REQUIRE_NOTHROW(engine.wallet.safety.timer_1s());
       REQUIRE(engine.wallet.ready());
       REQUIRE_NOTHROW(engine.broker.calcQuotes());
-      REQUIRE(engine.broker.calculon.quotes.ask.empty());
-      REQUIRE(engine.broker.calculon.quotes.bid.empty());
+      REQUIRE(engine.broker.quotes.ask.empty());
+      REQUIRE(engine.broker.quotes.bid.empty());
       THEN("agree") {
         REQUIRE(engine.broker.ready());
         REQUIRE_NOTHROW(engine.qp.click(engine.qp));
@@ -498,30 +498,30 @@ SCENARIO_METHOD(TradingBot, "ANY BTC/EUR") {
           {"agree", 1}
         }));
         WHEN("quoting") {
-          REQUIRE_NOTHROW(engine.broker.calculon.calcQuotes());
-          REQUIRE_FALSE(engine.broker.calculon.quotes.bid.empty());
-          REQUIRE_FALSE(engine.broker.calculon.quotes.ask.empty());
+          REQUIRE_NOTHROW(engine.broker.quotes.calcQuotes());
+          REQUIRE_FALSE(engine.broker.quotes.bid.empty());
+          REQUIRE_FALSE(engine.broker.quotes.ask.empty());
           THEN("to json") {
-            REQUIRE(((json)engine.broker.calculon.quotes.bid).dump() == "{"
+            REQUIRE(((json)engine.broker.quotes.bid).dump() == "{"
               "\"price\":699.01,"
               "\"size\":0.02"
             "}");
-            REQUIRE(((json)engine.broker.calculon.quotes.ask).dump() == "{"
+            REQUIRE(((json)engine.broker.quotes.ask).dump() == "{"
               "\"price\":700.99,"
               "\"size\":0.01"
             "}");
           }
           WHEN("widthPing=2") {
             REQUIRE_NOTHROW(engine.qp.widthPing = 2);
-            REQUIRE_NOTHROW(engine.broker.calculon.calcQuotes());
-            REQUIRE_FALSE(engine.broker.calculon.quotes.bid.empty());
-            REQUIRE_FALSE(engine.broker.calculon.quotes.ask.empty());
+            REQUIRE_NOTHROW(engine.broker.quotes.calcQuotes());
+            REQUIRE_FALSE(engine.broker.quotes.bid.empty());
+            REQUIRE_FALSE(engine.broker.quotes.ask.empty());
             THEN("to json") {
-              REQUIRE(((json)engine.broker.calculon.quotes.bid).dump() == "{"
+              REQUIRE(((json)engine.broker.quotes.bid).dump() == "{"
                 "\"price\":698.01,"
                 "\"size\":0.02"
               "}");
-              REQUIRE(((json)engine.broker.calculon.quotes.ask).dump() == "{"
+              REQUIRE(((json)engine.broker.quotes.ask).dump() == "{"
                 "\"price\":701.99,"
                 "\"size\":0.01"
               "}");
@@ -530,15 +530,15 @@ SCENARIO_METHOD(TradingBot, "ANY BTC/EUR") {
           WHEN("widthPing=3,bestWidth=false") {
             REQUIRE_NOTHROW(engine.qp.bestWidth = false);
             REQUIRE_NOTHROW(engine.qp.widthPing = 3);
-            REQUIRE_NOTHROW(engine.broker.calculon.calcQuotes());
-            REQUIRE_FALSE(engine.broker.calculon.quotes.bid.empty());
-            REQUIRE_FALSE(engine.broker.calculon.quotes.ask.empty());
+            REQUIRE_NOTHROW(engine.broker.quotes.calcQuotes());
+            REQUIRE_FALSE(engine.broker.quotes.bid.empty());
+            REQUIRE_FALSE(engine.broker.quotes.ask.empty());
             THEN("to json") {
-              REQUIRE(((json)engine.broker.calculon.quotes.bid).dump() == "{"
+              REQUIRE(((json)engine.broker.quotes.bid).dump() == "{"
                 "\"price\":698.5,"
                 "\"size\":0.02"
               "}");
-              REQUIRE(((json)engine.broker.calculon.quotes.ask).dump() == "{"
+              REQUIRE(((json)engine.broker.quotes.ask).dump() == "{"
                 "\"price\":701.5,"
                 "\"size\":0.01"
               "}");
@@ -546,15 +546,15 @@ SCENARIO_METHOD(TradingBot, "ANY BTC/EUR") {
           }
           WHEN("widthPing=3") {
             REQUIRE_NOTHROW(engine.qp.widthPing = 3);
-            REQUIRE_NOTHROW(engine.broker.calculon.calcQuotes());
-            REQUIRE_FALSE(engine.broker.calculon.quotes.bid.empty());
-            REQUIRE_FALSE(engine.broker.calculon.quotes.ask.empty());
+            REQUIRE_NOTHROW(engine.broker.quotes.calcQuotes());
+            REQUIRE_FALSE(engine.broker.quotes.bid.empty());
+            REQUIRE_FALSE(engine.broker.quotes.ask.empty());
             THEN("to json") {
-              REQUIRE(((json)engine.broker.calculon.quotes.bid).dump() == "{"
+              REQUIRE(((json)engine.broker.quotes.bid).dump() == "{"
                 "\"price\":698.01,"
                 "\"size\":0.02"
               "}");
-              REQUIRE(((json)engine.broker.calculon.quotes.ask).dump() == "{"
+              REQUIRE(((json)engine.broker.quotes.ask).dump() == "{"
                 "\"price\":701.99,"
                 "\"size\":0.01"
               "}");
@@ -562,15 +562,15 @@ SCENARIO_METHOD(TradingBot, "ANY BTC/EUR") {
           }
           WHEN("widthPing=4") {
             REQUIRE_NOTHROW(engine.qp.widthPing = 4);
-            REQUIRE_NOTHROW(engine.broker.calculon.calcQuotes());
-            REQUIRE_FALSE(engine.broker.calculon.quotes.bid.empty());
-            REQUIRE_FALSE(engine.broker.calculon.quotes.ask.empty());
+            REQUIRE_NOTHROW(engine.broker.quotes.calcQuotes());
+            REQUIRE_FALSE(engine.broker.quotes.bid.empty());
+            REQUIRE_FALSE(engine.broker.quotes.ask.empty());
             THEN("to json") {
-              REQUIRE(((json)engine.broker.calculon.quotes.bid).dump() == "{"
+              REQUIRE(((json)engine.broker.quotes.bid).dump() == "{"
                 "\"price\":696.01,"
                 "\"size\":0.02"
               "}");
-              REQUIRE(((json)engine.broker.calculon.quotes.ask).dump() == "{"
+              REQUIRE(((json)engine.broker.quotes.ask).dump() == "{"
                 "\"price\":703.99,"
                 "\"size\":0.01"
               "}");

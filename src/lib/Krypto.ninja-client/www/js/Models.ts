@@ -189,7 +189,14 @@ export class TwoSidedQuote {
                 public ask: Quote) {}
 }
 
-export enum QuoteStatus { Disconnected, Live, Crossed, MissingData, UnknownHeld, WidthTooHigh, TBPHeld, MaxTradesSeconds, WaitingPing, DepletedFunds, DisabledQuotes, UpTrendHeld, DownTrendHeld }
+export enum QuoteStatus {
+    Disconnected,  Live,             Crossed,
+    MissingData,   UnknownHeld,      WidthTooHigh,
+    DepletedFunds, DisabledQuotes,
+    UpTrendHeld,   DownTrendHeld,
+    TBPHeld,       MaxTradesSeconds, WaitingPing,
+    ScaleSided,    ScalationLimit,   DeviationLimit
+}
 
 export enum SideAPR { Off, Buy, Sell }
 

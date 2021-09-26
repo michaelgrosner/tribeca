@@ -2,12 +2,6 @@
 //! \brief Welcome user! (just a stable bot for flat markets with constant buy/sell prices).
 
 namespace analpaper {
-  enum class QuoteState: unsigned int {
-    Disconnected,  Live,        Crossed,
-    MissingData,   UnknownHeld, WidthTooHigh,
-    DepletedFunds, DisabledQuotes
-  };
-
   struct Wallets {
     Wallet base,
            quote;
@@ -29,7 +23,7 @@ namespace analpaper {
       };
   };
 
-  struct Orders: public Remote::Orderbook {
+  struct Orders: public System::Orderbook {
     private_ref:
       const KryptoNinja &K;
     public:
@@ -101,264 +95,151 @@ namespace analpaper {
       };
   };
 
-  struct Quote: public Level {
-    const Side       side   = (Side)0;
-          QuoteState state  = QuoteState::MissingData;
-          bool       isPong = false;
-    Quote(const Side &s)
-      : side(s)
-    {};
-    bool empty() const {
-      return !size or !price;
-    };
-    void skip() {
-      size = 0;
-    };
-    void clear(const QuoteState &reason) {
-      price = size = 0;
-      state = reason;
-    };
-    virtual bool deprecates(const Price&) const = 0;
-    bool checkCrossed(const Quote &opposite) {
-      if (empty()) return false;
-      if (opposite.empty() or deprecates(opposite.price)) {
-        state = QuoteState::Live;
-        return false;
-      }
-      state = QuoteState::Crossed;
-      return true;
-    };
-  };
-  struct QuoteBid: public Quote {
-    QuoteBid()
-      : Quote(Side::Bid)
-    {};
-    bool deprecates(const Price &higher) const override {
-      return price < higher;
-    };
-  };
-  struct QuoteAsk: public Quote {
-    QuoteAsk()
-      : Quote(Side::Ask)
-    {};
-    bool deprecates(const Price &lower) const override {
-      return price > lower;
-    };
-  };
-  struct Quotes {
-    QuoteBid bid;
-    QuoteAsk ask;
-    private_ref:
-      const KryptoNinja &K;
-    public:
-      Quotes(const KryptoNinja &bot)
-        : K(bot)
-      {};
-      void checkCrossedQuotes() {
-        if (bid.checkCrossed(ask) or ask.checkCrossed(bid))
-          K.logWar("QE", "Crossed bid/ask quotes detected, that is.. unexpected", 3e+3);
-      };
-      void debug(const string &step) {
-        if (K.arg<int>("debug-quotes"))
-          K.log("DEBUG QE", "[" + step + "] "
-            + to_string((int)ask.state) + ":"
-            + to_string((int)bid.state) + " "
-            + to_string((int)ask.isPong) + ":"
-            + to_string((int)bid.isPong) + " "
-            + ((json){{"ask", ask}, {"bid", bid}}).dump()
-          );
-      };
-  };
-
-  struct AntonioCalculon {
-    Quotes quotes;
-    private:
-      vector<const Order*> zombies;
+  struct AntonioCalculon: public System::Quotes {
     private_ref:
       const KryptoNinja  &K;
       const MarketLevels &levels;
       const Wallets      &wallet;
     public:
       AntonioCalculon(const KryptoNinja &bot, const MarketLevels &l, const Wallets &w)
-        : quotes(bot)
+        : Quotes(bot)
         , K(bot)
         , levels(l)
         , wallet(w)
       {};
-      void calcQuotes() {
-        states(QuoteState::UnknownHeld);
-        calcRawQuotes();
-        applyQuotingParameters();
-      };
-      vector<const Order*> purge() {
-        vector<const Order*> zombies_;
-        zombies.swap(zombies_);
-        return zombies_;
-      };
-      bool abandon(const Order &order, Quote &quote) {
-        if (stillAlive(order)) {
-          if (order.status == Status::Waiting
-            or abs(order.price - quote.price) < K.gateway->tickPrice
-            or (K.arg<int>("lifetime") and order.time + K.arg<int>("lifetime") > Tstamp)
-          ) quote.skip();
-          else return true;
-        }
-        return false;
-      };
-      void states(const QuoteState &state) {
-        quotes.bid.state =
-        quotes.ask.state = state;
-      };
     private:
-      bool stillAlive(const Order &order) {
-        if (order.status == Status::Waiting) {
-          if (Tstamp - 10e+3 > order.time) {
-            zombies.push_back(&order);
-            return false;
-          }
-        }
-        return !order.manual;
-      };
-      void calcRawQuotes() {
-        quotes.bid.size =
-        quotes.ask.size = K.arg<double>("order-size");
-        quotes.bid.price = fmin(
+      void calcRawQuotes() override {
+        bid.size =
+        ask.size = K.arg<double>("order-size");
+        bid.price = fmin(
           levels.fairValue - K.gateway->tickPrice,
           K.arg<double>("bid-price")
         );
-        quotes.ask.price = fmax(
+        ask.price = fmax(
           levels.fairValue + K.gateway->tickPrice,
           K.arg<double>("ask-price")
         );
-        if (quotes.bid.price <= 0 or quotes.ask.price <= 0) {
-          quotes.bid.clear(QuoteState::WidthTooHigh);
-          quotes.ask.clear(QuoteState::WidthTooHigh);
-          K.logWar("QP", "Negative price detected, widthPing must be lower", 3e+3);
-        }
       };
-      void applyQuotingParameters() {
-        quotes.debug("?"); applyStableSide();
-        quotes.debug("A"); applyBestWidth();
-        quotes.debug("B"); applyRoundPrice();
-        quotes.debug("C"); applyRoundSize();
-        quotes.debug("D"); applyDepleted();
-        quotes.debug("!");
-        quotes.checkCrossedQuotes();
+      void applyQuotingParameters() override {
+        debug("?"); applyStableSide();
+        debug("A"); applyBestWidth();
+        debug("B"); applyRoundPrice();
+        debug("C"); applyRoundSize();
+        debug("D"); applyDepleted();
+        debug("!");
       };
       void applyStableSide() {
         if (!K.arg<double>("bid-price"))
-          quotes.bid.clear(QuoteState::DisabledQuotes);
+          bid.skip(QuoteState::DisabledQuotes);
         if (!K.arg<double>("ask-price"))
-          quotes.ask.clear(QuoteState::DisabledQuotes);
+          ask.skip(QuoteState::DisabledQuotes);
       };
       void applyBestWidth() {
-        if (!quotes.ask.empty())
+        if (!ask.empty())
           for (const Level &it : levels.asks)
-            if (it.price > quotes.ask.price) {
+            if (it.price > ask.price) {
               const Price bestAsk = it.price - K.gateway->tickPrice;
-              if (bestAsk > quotes.ask.price)
-                quotes.ask.price = bestAsk;
+              if (bestAsk > ask.price)
+                ask.price = bestAsk;
               break;
             }
-        if (!quotes.bid.empty())
+        if (!bid.empty())
           for (const Level &it : levels.bids)
-            if (it.price < quotes.bid.price) {
+            if (it.price < bid.price) {
               const Price bestBid = it.price + K.gateway->tickPrice;
-              if (bestBid < quotes.bid.price)
-                quotes.bid.price = bestBid;
+              if (bestBid < bid.price)
+                bid.price = bestBid;
               break;
             }
       };
       void applyRoundPrice() {
-        if (!quotes.bid.empty())
-          quotes.bid.price = fmax(
+        if (!bid.empty())
+          bid.price = fmax(
             0,
-            K.gateway->decimal.price.round(quotes.bid.price)
+            K.gateway->decimal.price.round(bid.price)
           );
-        if (!quotes.ask.empty())
-          quotes.ask.price = fmax(
-            quotes.bid.price + K.gateway->tickPrice,
-            K.gateway->decimal.price.round(quotes.ask.price)
+        if (!ask.empty())
+          ask.price = fmax(
+            bid.price + K.gateway->tickPrice,
+            K.gateway->decimal.price.round(ask.price)
           );
       };
       void applyRoundSize() {
-        if (!quotes.bid.empty()) {
+        if (!bid.empty()) {
           const Amount minBid = K.gateway->minValue
-            ? fmax(K.gateway->minSize, K.gateway->minValue / quotes.bid.price)
+            ? fmax(K.gateway->minSize, K.gateway->minValue / bid.price)
             : K.gateway->minSize;
           const Amount maxBid = K.gateway->margin == Future::Spot
-            ? wallet.quote.total / quotes.bid.price
+            ? wallet.quote.total / bid.price
             : (K.gateway->margin == Future::Inverse
-                ? wallet.base.amount * quotes.bid.price
-                : wallet.base.amount / quotes.bid.price
+                ? wallet.base.amount * bid.price
+                : wallet.base.amount / bid.price
             );
-          quotes.bid.size = K.gateway->decimal.amount.round(
+          bid.size = K.gateway->decimal.amount.round(
             fmax(minBid * (1.0 + K.gateway->takeFee * 1e+2), fmin(
-              quotes.bid.size,
+              bid.size,
               K.gateway->decimal.amount.floor(maxBid)
             ))
           );
         }
-        if (!quotes.ask.empty()) {
+        if (!ask.empty()) {
           const Amount minAsk = K.gateway->minValue
-            ? fmax(K.gateway->minSize, K.gateway->minValue / quotes.ask.price)
+            ? fmax(K.gateway->minSize, K.gateway->minValue / ask.price)
             : K.gateway->minSize;
           const Amount maxAsk = K.gateway->margin == Future::Spot
             ? wallet.base.total
             : (K.gateway->margin == Future::Inverse
-                ? (quotes.bid.empty()
-                  ? wallet.base.amount * quotes.ask.price
-                  : quotes.bid.size)
-                : wallet.base.amount / quotes.ask.price
+                ? (bid.empty()
+                  ? wallet.base.amount * ask.price
+                  : bid.size)
+                : wallet.base.amount / ask.price
             );
-          quotes.ask.size = K.gateway->decimal.amount.round(
+          ask.size = K.gateway->decimal.amount.round(
             fmax(minAsk * (1.0 + K.gateway->takeFee * 1e+2), fmin(
-              quotes.ask.size,
+              ask.size,
               K.gateway->decimal.amount.floor(maxAsk)
             ))
           );
         }
       };
       void applyDepleted() {
-        if (!quotes.bid.empty()) {
+        if (!bid.empty()) {
           const Amount minBid = K.gateway->minValue
-            ? fmax(K.gateway->minSize, K.gateway->minValue / quotes.bid.price)
+            ? fmax(K.gateway->minSize, K.gateway->minValue / bid.price)
             : K.gateway->minSize;
           if ((K.gateway->margin == Future::Spot
-              ? wallet.quote.total / quotes.bid.price
+              ? wallet.quote.total / bid.price
               : (K.gateway->margin == Future::Inverse
-                  ? wallet.base.amount * quotes.bid.price
-                  : wallet.base.amount / quotes.bid.price)
+                  ? wallet.base.amount * bid.price
+                  : wallet.base.amount / bid.price)
               ) < minBid
-          ) quotes.bid.clear(QuoteState::DepletedFunds);
+          ) bid.skip(QuoteState::DepletedFunds);
         }
-        if (!quotes.ask.empty()) {
+        if (!ask.empty()) {
           const Amount minAsk = K.gateway->minValue
-            ? fmax(K.gateway->minSize, K.gateway->minValue / quotes.ask.price)
+            ? fmax(K.gateway->minSize, K.gateway->minValue / ask.price)
             : K.gateway->minSize;
           if ((K.gateway->margin == Future::Spot
               ? wallet.base.total
               : (K.gateway->margin == Future::Inverse
-                  ? wallet.base.amount * quotes.ask.price
-                  : wallet.base.amount / quotes.ask.price)
+                  ? wallet.base.amount * ask.price
+                  : wallet.base.amount / ask.price)
               ) < minAsk
-          ) quotes.ask.clear(QuoteState::DepletedFunds);
+          ) ask.skip(QuoteState::DepletedFunds);
         }
       };
   };
 
   struct Broker {
-    Connectivity greenGateway = Connectivity::Disconnected;
-    private:
-      AntonioCalculon calculon;
-                  int limit = 0;
+       Connectivity greenGateway = Connectivity::Disconnected;
+    AntonioCalculon quotes;
     private_ref:
       const KryptoNinja  &K;
             Orders       &orders;
       const MarketLevels &levels;
     public:
       Broker(const KryptoNinja &bot, Orders &o, const MarketLevels &l, const Wallets &w)
-        : calculon(bot, l, w)
+        : quotes(bot, l, w)
         , K(bot)
         , orders(o)
         , levels(l)
@@ -370,19 +251,15 @@ namespace analpaper {
           K.log("GW " + K.gateway->exchange, "Quoting state changed to",
             string(ready() ? "" : "DIS") + "CONNECTED");
         if (!(bool)greenGateway)
-          calculon.states(QuoteState::Disconnected);
+          quotes.states(QuoteState::Disconnected);
       };
       bool ready() const {
         return (bool)greenGateway;
       };
-      void purge() {
-        for (const Order *const it : calculon.purge())
-          orders.purge(it);
-      };
       void calcQuotes() {
-        calculon.calcQuotes();
-        quote2orders(calculon.quotes.ask);
-        quote2orders(calculon.quotes.bid);
+        quotes.calcQuotes();
+        quote2orders(quotes.ask);
+        quote2orders(quotes.bid);
       };
       void timer_60s() {
         if (K.arg<int>("heartbeat") and levels.fairValue)
@@ -406,15 +283,25 @@ namespace analpaper {
           K.log("QE", "Canceled " + to_string(n) + " open order" + string(n != 1, 's') + " before quit");
       };
     private:
-      vector<Order*> abandon(Quote &quote) {
+      bool abandon(const Order &order, System::Quote &quote) {
+        if (orders.zombies.stillAlive(order)) {
+          if (order.status == Status::Waiting
+            or abs(order.price - quote.price) < K.gateway->tickPrice
+            or (K.arg<int>("lifetime") and order.time + K.arg<int>("lifetime") > Tstamp)
+          ) quote.skip();
+          else return true;
+        }
+        return false;
+      };
+      vector<Order*> abandon(System::Quote &quote) {
         vector<Order*> abandoned;
         const bool all = quote.state != QuoteState::Live;
         for (Order *const it : orders.at(quote.side))
-          if (all or calculon.abandon(*it, quote))
+          if (all or abandon(*it, quote))
             abandoned.push_back(it);
         return abandoned;
       };
-      void quote2orders(Quote &quote) {
+      void quote2orders(System::Quote &quote) {
         const vector<Order*> abandoned = abandon(quote);
         const unsigned int replace = K.gateway->askForReplace and !(
           quote.empty() or abandoned.empty()
@@ -475,7 +362,7 @@ namespace analpaper {
       void calcQuotes() {
         if (broker.ready() and levels.ready() and wallet.ready())
           broker.calcQuotes();
-        broker.purge();
+        orders.zombies.purge();
       };
   };
 }
