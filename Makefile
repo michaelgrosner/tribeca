@@ -15,10 +15,10 @@ PERMISSIVE = This is free software: the UI and quoting engine are open source, \
              feel free to crack all as you need.
 
 SOURCE    := $(filter-out trading-bot,$(notdir $(wildcard src/bin/*))) trading-bot
-CARCH      = x86_64-linux-gnu      \
-             arm-linux-gnueabihf   \
-             aarch64-linux-gnu     \
-             x86_64-apple-darwin17 \
+CARCH      = x86_64-linux-gnu        \
+             arm-linux-gnueabihf     \
+             aarch64-linux-gnu       \
+             x86_64-apple-darwin20.4 \
              x86_64-w64-mingw32
 
 CHOST     ?= $(or $(findstring $(shell test -n "`command -v g++`" && g++ -dumpmachine), \
