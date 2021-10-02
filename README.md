@@ -8,7 +8,7 @@
 [![Software License](https://img.shields.io/badge/license-ISC-551a8b.svg)](https://raw.githubusercontent.com/ctubio/Krypto-trading-bot/master/LICENSE)
 [![Software License](https://img.shields.io/badge/license-MIT-551a8b.svg)](https://raw.githubusercontent.com/ctubio/Krypto-trading-bot/master/COPYING)
 
-[`K`](https://github.com/ctubio/Krypto-trading-bot) is a very low latency [market making](https://github.com/ctubio/Krypto-trading-bot/blob/master/doc/MANUAL.md#what-is-market-making) trading bot with a fully featured [web interface](https://github.com/ctubio/Krypto-trading-bot#web-ui). It can place and cancel orders on one of [several supported cryptocoin exchanges](https://github.com/ctubio/Krypto-trading-bot#compatible-exchanges) in less than a few miliseconds per order on a decent machine.
+[`K`](https://github.com/ctubio/Krypto-trading-bot) is a very low latency [market making](https://github.com/ctubio/Krypto-trading-bot/blob/master/doc/MANUAL.md#what-is-market-making) trading bot with a fully featured [web interface](https://github.com/ctubio/Krypto-trading-bot#web-ui). It can place and cancel orders on one of [several supported cryptocoin exchanges](https://github.com/ctubio/Krypto-trading-bot#compatible-exchanges) in less than a few milliseconds per order on a decent machine.
 
 ### <img src="https://github.githubassets.com/images/icons/emoji/unicode/1f4be.png" height="64" width="64"  align="middle" /> Latest version at https://github.com/ctubio/Krypto-trading-bot <img src="https://github.githubassets.com/images/icons/emoji/unicode/1f51e.png" height="64" width="64" align="middle" /> <img src="https://github.githubassets.com/images/icons/emoji/unicode/1f4b8.png" height="64" width="64" align="middle" />
 
@@ -70,7 +70,7 @@ See [etc/Dockerfile](https://github.com/ctubio/Krypto-trading-bot/tree/master/et
 
 ### Windows Installation
 
-Before proceed with a manual installation, ensure your target machine has Windows 7 or greater and [MSYS2](https://www.msys2.org/) installed.
+Before proceeding with a manual installation, ensure your target machine has Windows 7 or greater and [MSYS2](https://www.msys2.org/) installed.
 
 Use MSYS2 Terminal to install `make` (with command `pacman -S make`), and then proceed as usual with the installation.
 
@@ -138,7 +138,7 @@ Troubleshooting:
 
  * See `./K.sh --help` to trade or `make help` to develop.
 
- * Use your own SSL certificate with `--ssl-crt` and `--ssl-key`, see [web ui](https://github.com/ctubio/Krypto-trading-bot#web-ui) section. Otherwise, the unsecure built-in certificate is a fully featured default openssl, that you may just need to authorise in your browser.
+ * Use your own SSL certificate with `--ssl-crt` and `--ssl-key`, see [web ui](https://github.com/ctubio/Krypto-trading-bot#web-ui) section. Otherwise, the insecure built-in certificate is a fully featured default openssl, that you may just need to authorise in your browser.
 
 ### Upgrade to the latest commit
 
@@ -152,7 +152,7 @@ Please run `make reinstall` to download the upgraded source and executable files
 
 Feel free anytime to check if there are new upgrades with `make diff`.
 
-Once you decide that is time to upgrade, execute `make upgrade` (or directly `make reinstall` to skip the validation of new commits).
+Once you decide that it is time to upgrade, execute `make upgrade` (or directly `make reinstall` to skip the validation of new commits).
 
 If you only use `git` to pull the latest source files from the remote branch, you will still need to upgrade or recompile your executable files.
 
