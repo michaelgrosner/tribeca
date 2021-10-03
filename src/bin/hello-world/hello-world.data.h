@@ -20,12 +20,14 @@ namespace example {
       string greeting() {
         const Price fair = (levels.bids.cbegin()->price
                           + levels.asks.cbegin()->price) / 2;
-        cout << "Hello, " << K.arg<string>("subject") << endl
+        cout << "Hello, " << K.arg<string>("subject")
+             << ANSI_NEW_LINE
              << " pssst.. "
-             << K.gateway->decimal.amount.str(1)   << " " << K.gateway->base
+             << K.gateway->decimal.amount.str(1)   << ' ' << K.gateway->base
              << " = "
-             << K.gateway->decimal.price.str(fair) << " " << K.gateway->quote
-             << "." << endl;
+             << K.gateway->decimal.price.str(fair) << ' ' << K.gateway->quote
+             << '.'
+             << ANSI_NEW_LINE;
         return "Executed " + string(
           K.arg<int>("debug")
             ? __PRETTY_FUNCTION__

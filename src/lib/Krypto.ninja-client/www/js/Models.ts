@@ -192,7 +192,7 @@ export class TwoSidedQuote {
 export enum QuoteStatus {
     Disconnected,  Live,             Crossed,
     MissingData,   UnknownHeld,      WidthTooHigh,
-    DepletedFunds, DisabledQuotes,
+    DepletedFunds, DisabledQuotes,   WaitingFunds,
     UpTrendHeld,   DownTrendHeld,
     TBPHeld,       MaxTradesSeconds, WaitingPing,
     ScaleSided,    ScalationLimit,   DeviationLimit

@@ -6,7 +6,6 @@ V_ZLIB  = 1.2.11
 V_SSL   = 3.0.0
 V_CURL  = 7.79.1
 V_SQL   = 3360000
-V_NCUR  = 6.1
 V_JSON  = 3.10.2
 V_CATCH = 2.13.7
 V_UV    = 1.42.0
@@ -22,10 +21,10 @@ j0:
 	$(MAKE) -j1 zlib openssl curl
 
 j1:
-	$(MAKE) -j1 sqlite json
+	$(MAKE) -j1 sqlite
 
 j2:
-	$(MAKE) -j1 ncurses catch uv
+	$(MAKE) -j1 json catch uv
 
 j3:
 ifdef GITHUB_ACTIONS
@@ -42,7 +41,6 @@ check:
 	# openssl | $(V_SSL)   | $(shell     curl -s https://www.openssl.org/news/cl$(shell curl -s https://www.openssl.org/source/ | grep "The latest stable version is " | cut -d' ' -f12  | tr -d '.').txt | grep "Changes between " | head -n1 | cut -d' ' -f4)
 	# curl    | $(V_CURL)  | $(shell    curl -s https://curl.se/changes.html | grep "Fixed in " | head -n1 | cut -d' ' -f4)
 	# sqlite  | $(V_SQL) | $(shell      curl -s https://www.sqlite.org/download.html | grep "sqlite-amalgamation-" | head -n1 | cut -d'-' -f3 | cut -d'.' -f1)
-	# ncurses | $(V_NCUR)     | $(shell curl -s https://www.gnu.org/software/ncurses/ | grep "Announcing " | head -n1 | cut -d' ' -f5 | cut -d'<' -f1)
 	# json    | $(V_JSON)  | $(shell    curl -s https://api.github.com/repos/nlohmann/json/releases   | grep "tag_name" | head -n1 | cut -d'v' -f2 | cut -d'"' -f1)
 	# catch   | $(V_CATCH)  | $(shell   curl -s https://api.github.com/repos/catchorg/Catch2/releases | grep "tag_name" | head -n1 | cut -d'v' -f2 | cut -d'"' -f1)
 	# uv      | $(V_UV)  | $(shell      curl -s https://api.github.com/repos/libuv/libuv/releases     | grep "tag_name" | head -n1 | cut -d'v' -f2 | cut -d'"' -f1)
@@ -83,18 +81,6 @@ sqlite:
 	--host=$(CHOST) --enable-static --disable-dynamic-extensions --disable-shared             \
 	--enable-threadsafe && make install-libLTLIBRARIES install-includeHEADERS                 )
 
-ncurses:
-	test -d $(KBUILD)/var/ncurses-$(V_NCUR) || (                                                  \
-	curl -L http://ftp.gnu.org/pub/gnu/ncurses/ncurses-$(V_NCUR).tar.gz | tar xz -C $(KBUILD)/var \
-	&& cd $(KBUILD)/var/ncurses-$(V_NCUR) && CPPFLAGS=-P ./configure                              \
-	--host=$(CHOST) --prefix=$(KBUILD) $(if $(findstring mingw32,$(CHOST)),                       \
-	--without-cxx-binding --without-ada --enable-reentrant --with-normal                          \
-	--disable-home-terminfo --enable-sp-funcs --enable-term-driver --enable-interop)              \
-	--disable-lib-suffixes --without-debug --without-progs --without-tests                        \
-	--with-fallbacks=linux,screen,vt100,xterm,xterm-256color,putty-256color                       \
-	&& make install.libs install.data $(if $(findstring mingw32,$(CHOST)),                        \
-	&& sed -i '1 i\#undef KEY_EVENT' $(KBUILD)/include/ncurses/curses.h)                          )
-
 json:
 	test -f $(KBUILD)/include/json.h || (mkdir -p $(KBUILD)/include                   \
 	&& curl -L https://github.com/nlohmann/json/releases/download/v$(V_JSON)/json.hpp \
@@ -134,4 +120,4 @@ else
 	| tar xz -C $(KBUILD)/var && cd $(KBUILD)/var/lcov-$(V_LCOV) && sudo make install                     )
 endif
 
-.PHONY: all lib clean check zlib openssl curl sqlite ncurses json catch uv lcov pvs
+.PHONY: all lib clean check zlib openssl curl sqlite json catch uv lcov pvs

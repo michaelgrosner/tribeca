@@ -315,7 +315,7 @@ namespace tribeca {
       void read_from_gw(const Order &order) {
         if (order.orderId.empty()) return;
         broadcast();
-        K.repaint();
+        K.repaint(true);
       };
       mMatter about() const override {
         return mMatter::OrderStatusReports;
@@ -800,7 +800,7 @@ namespace tribeca {
       bool ready() {
         filter();
         if (!fairValue and Tspent > 21e+3)
-          K.logWar("QE", "Unable to calculate quote, missing market data", 10e+3);
+          K.warn("QE", "Unable to calculate quote, missing market data", 10e+3);
         return fairValue;
       };
       void read_from_gw(const Levels &raw) {
@@ -1159,8 +1159,11 @@ namespace tribeca {
           false
         };
         const bool is_bid = last.side == Side::Bid;
-        K.log("GW " + K.gateway->exchange, string(last.isPong?"PONG":"PING") + " TRADE "
-          + (is_bid ? "BUY  " : "SELL ")
+        K.log("GW " + K.gateway->exchange,
+          string(is_bid
+            ? ANSI_PUKE_CYAN    + (last.isPong?"PONG":"PING") + " TRADE BUY  "
+            : ANSI_PUKE_MAGENTA + (last.isPong?"PONG":"PING") + " TRADE SELL "
+          )
           + K.gateway->decimal.amount.str(filled.quantity) + ' '
           + (K.gateway->margin == Future::Spot ? K.gateway->base : "Contracts") + " at price "
           + K.gateway->decimal.price.str(filled.price) + ' ' + K.gateway->quote + " (value "
@@ -1587,7 +1590,7 @@ namespace tribeca {
       void calcTargetBasePos() {
         if (!baseValue) {
           if (Tspent > 21e+3)
-            K.logWar("QE", "Unable to calculate TBP, missing wallet data", 3e+3);
+            K.warn("QE", "Unable to calculate TBP, missing wallet data", 3e+3);
           return;
         }
         targetBasePosition = K.gateway->decimal.funds.round(
@@ -1997,39 +2000,39 @@ namespace tribeca {
       string explainState(const System::Quote &quote) const override {
         string reason = "";
         if (quote.state == QuoteState::Live)
-          reason = "  LIVE   " + Ansi::r(COLOR_WHITE)
+          reason = "  LIVE   " + ANSI_PUKE_WHITE
                  + "because of reasons (ping: "
                  + K.gateway->decimal.price.str(quote.price) + " " + K.gateway->quote
                  + ", fair value: "
                  + K.gateway->decimal.price.str(levels.fairValue) + " " + K.gateway->quote
                  +")";
         else if (quote.state == QuoteState::DepletedFunds)
-          reason = " PAUSED  " + Ansi::r(COLOR_WHITE)
+          reason = " PAUSED  " + ANSI_PUKE_WHITE
                  + "because not enough available funds ("
                  + (quote.side == Side::Bid
                    ? K.gateway->decimal.price.str(wallet.quote.amount) + " " + K.gateway->quote
                    : K.gateway->decimal.amount.str(wallet.base.amount) + " " + K.gateway->base
                  ) + ")";
         else if (quote.state == QuoteState::WaitingPing)
-          reason = " PAUSED  " + Ansi::r(COLOR_WHITE)
+          reason = " PAUSED  " + ANSI_PUKE_WHITE
                  + "because waiting for a ping on "
                  + (quote.side == Side::Bid ? "ask" : "bid")
                  + " side";
         else if (quote.state == QuoteState::UpTrendHeld
               or quote.state == QuoteState::DownTrendHeld)
-          reason = " PAUSED  " + Ansi::r(COLOR_WHITE)
+          reason = " PAUSED  " + ANSI_PUKE_WHITE
                  + "because ewmaTrend limit was reached";
         else if (quote.state == QuoteState::TBPHeld)
-          reason = " PAUSED  " + Ansi::r(COLOR_WHITE)
+          reason = " PAUSED  " + ANSI_PUKE_WHITE
                  + "because target base position limit was reached";
         else if (quote.state == QuoteState::MaxTradesSeconds)
-          reason = " PAUSED  " + Ansi::r(COLOR_WHITE)
+          reason = " PAUSED  " + ANSI_PUKE_WHITE
                  + "because trades/sec limit was reached";
         else if (quote.state == QuoteState::DisabledQuotes)
-          reason = "DISABLED " + Ansi::r(COLOR_WHITE)
+          reason = "DISABLED " + ANSI_PUKE_WHITE
                  + "because an admin considered it";
         else if (quote.state == QuoteState::Disconnected)
-          reason = " PAUSED  " + Ansi::r(COLOR_WHITE)
+          reason = " PAUSED  " + ANSI_PUKE_WHITE
                  + "because the exchange seems down";
         return reason;
       };

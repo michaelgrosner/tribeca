@@ -13,7 +13,7 @@ class Portfolios: public KryptoNinja {
     Portfolios()
       : engine(*this)
     {
-      display   = {terminal, {3, 3, 23, 3}};
+      display   = { terminal };
       events    = {
         [&](const Connectivity &rawdata) { engine.read(rawdata);  },
         [&](const Ticker       &rawdata) { engine.read(rawdata);  },
@@ -32,29 +32,66 @@ class Portfolios: public KryptoNinja {
       };
     };
   private:
-    static void terminal();
+    static string terminal();
 } K;
 
-void Portfolios::terminal() {
-  const int x = getmaxx(stdscr),
-            y = getmaxy(stdscr);
-  int yAssets = y - K.padding_bottom(fmin(23, y));
-  mvwhline(stdscr, yAssets, 1, ' ', x-1);
-  mvwaddstr(stdscr, yAssets++, 1, (
-    string(K.engine.broker.ready() ? "online" : "offline")
-    + " (" + K.engine.portfolios.settings.currency + ")"
-  ).data());
+string Portfolios::terminal() {
+  const string quit = "┤ [" + ANSI_HIGH_WHITE
+                    + "ESC" + ANSI_PUKE_WHITE + "]: Quit!"
+                    + ", [" + ANSI_HIGH_WHITE
+                    +  "q"  + ANSI_PUKE_WHITE + "]: Quit!";
+  const string title = K.arg<string>("exchange")
+                     + ANSI_PUKE_GREEN
+                     + ' ' + (K.arg<int>("headless")
+                       ? "headless"
+                       : "UI at " + K.location()
+                     ) + ' ';
+  const string top = "┌───────┐ K │ "
+                   + ANSI_HIGH_GREEN + title
+                   + ANSI_PUKE_WHITE + "├";
+  string top_line;
+  for (
+    unsigned int i = fmax(0,
+      K.display.width
+      - 1
+      - top.length()
+      - quit.length()
+      + ANSI_SYMBOL_SIZE(12)
+      + ANSI_COLORS_SIZE(7)
+    );
+    i --> 0;
+    top_line += "─"
+  );
+  const string online = string(K.engine.broker.ready() ? "on" : "off")
+                      + "line (" + ANSI_HIGH_YELLOW
+                      + K.engine.portfolios.settings.currency
+                      + ANSI_PUKE_WHITE + ") ├";
+  string online_line;
+  for (
+    unsigned int i = fmax(0,
+      title.length()
+      - online.length()
+      + ANSI_SYMBOL_SIZE(1)
+      + ANSI_COLORS_SIZE(1)
+    );
+    i --> 0;
+    online_line += "─"
+  );
+  unsigned int rows = 0;
+  string data;
   for (const auto &it : K.engine.portfolios.portfolio) {
-    if (yAssets >= y - 1) break;
-    mvwhline(stdscr, yAssets, 1, ' ', x-1);
-    wattron(stdscr, COLOR_PAIR(it.second.wallet.total ? COLOR_GREEN : COLOR_YELLOW));
-    mvwaddstr(stdscr, yAssets++, 1, (
-      it.second.wallet.currency
-      + " " + to_string(it.second.wallet.amount)
-      + " "  + to_string(it.second.wallet.held)
-      + " "  + to_string(it.second.wallet.value)
-      + " "  + to_string(it.second.wallet.total)
-    ).data());
-    wattroff(stdscr, COLOR_PAIR(it.second.wallet.total ? COLOR_GREEN : COLOR_YELLOW));
+    if (!it.second.wallet.total) continue;
+    data += ANSI_PUKE_WHITE + "├──"
+          + (it.second.wallet.total ? ANSI_PUKE_GREEN : ANSI_PUKE_YELLOW)
+          + ((json)it.second.wallet).dump()
+          + ANSI_END_LINE;
+    if (++rows == 7) break;
   }
+  return ANSI_PUKE_WHITE
+    + top + top_line + quit
+    + ANSI_END_LINE
+    + "│  " + K.spin() + "  └───┤ " + online + online_line + "┘"
+    + ANSI_END_LINE
+    + K.logs(rows + 3, "│ ")
+    + data;
 };

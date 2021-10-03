@@ -2,27 +2,6 @@
 //! \brief Welcome user! (just a scaling bot to open/close positions while price decrements/increments).
 
 namespace analpaper {
-  struct Wallets {
-    Wallet base,
-           quote;
-    private_ref:
-      const KryptoNinja &K;
-    public:
-      Wallets(const KryptoNinja &bot)
-        : K(bot)
-      {};
-      void read_from_gw(const Wallet &raw) {
-        if      (raw.currency == K.gateway->base)  base  = raw;
-        else if (raw.currency == K.gateway->quote) quote = raw;
-      };
-      bool ready() const {
-        const bool err = base.currency.empty() or quote.currency.empty();
-        if (err and Tspent > 21e+3)
-          K.logWar("QE", "Unable to calculate quote, missing wallet data", 3e+3);
-        return !err;
-      };
-  };
-
   struct Pongs {
     Price maxBid = 0,
           minAsk = 0;
@@ -86,13 +65,17 @@ namespace analpaper {
                              ? order.quantity : 0;
         if (last->justFilled
           or (order.isPong and order.status == Status::Working)
-        ) K.log("GW " + K.gateway->exchange, string(order.isPong?"PONG":"PING") + " TRADE "
-            + (order.side == Side::Bid ? "BUY  " : "SELL ")
+        ) K.log("GW " + K.gateway->exchange,
+            string(order.side == Side::Bid
+              ? ANSI_PUKE_CYAN    + (order.isPong?"PONG":"PING") + " TRADE BUY  "
+              : ANSI_PUKE_MAGENTA + (order.isPong?"PONG":"PING") + " TRADE SELL "
+            )
             + K.gateway->decimal.amount.str(order.quantity)
             + " " + K.gateway->base + " at "
             + K.gateway->decimal.price.str(order.price)
             + " " + K.gateway->quote
             + " " + (order.isPong ? "(left opened)" : "(just filled)"));
+        else K.repaint(true);
       };
       Price calcPongPrice(const Price &fairValue) const {
         const Price price = last->side == Side::Bid
@@ -145,7 +128,7 @@ namespace analpaper {
           K.log("QE", "Fair value deviation " + side + (next ? " by" : " is"),
             next
               ? K.gateway->decimal.price.str(K.arg<double>("wait-price"))
-                  + " " + K.gateway->base + Ansi::r(COLOR_WHITE) + " (from "
+                  + " " + K.gateway->base + ANSI_PUKE_WHITE + " (from "
                   + K.gateway->decimal.price.str(from) + " to "
                   + K.gateway->decimal.price.str(to) + ")"
               : "OFF");
@@ -173,11 +156,12 @@ namespace analpaper {
         unfiltered.bids = raw.bids;
         unfiltered.asks = raw.asks;
         filter();
+        K.repaint();
       };
       bool ready() {
         filter();
         if (!fairValue and Tspent > 21e+3)
-          K.logWar("QE", "Unable to calculate quote, missing market data", 10e+3);
+          K.warn("QE", "Unable to calculate quote, missing market data", 10e+3);
         return fairValue;
       };
       void timer_1s() {
@@ -212,6 +196,43 @@ namespace analpaper {
       };
   };
 
+  struct Wallets {
+    Wallet base,
+           quote;
+    private_ref:
+      const KryptoNinja &K;
+      const Price       &fairValue;
+    public:
+      Wallets(const KryptoNinja &bot, const MarketLevels &l)
+        : K(bot)
+        , fairValue(l.fairValue)
+      {};
+      void read_from_gw(const Wallet &raw) {
+        if      (raw.currency == K.gateway->base)  base  = raw;
+        else if (raw.currency == K.gateway->quote) quote = raw;
+        if (base.currency.empty() or quote.currency.empty() or !fairValue) return;
+        calcValues();
+      };
+      bool ready() const {
+        const bool err = base.currency.empty() or quote.currency.empty();
+        if (err and Tspent > 21e+3)
+          K.warn("QE", "Unable to calculate quote, missing wallet data", 3e+3);
+        return !err;
+      };
+    private:
+      void calcValues() {
+        base.value  = K.gateway->margin == Future::Spot
+                        ? base.total + (quote.total / fairValue)
+                        : base.total;
+        quote.value = K.gateway->margin == Future::Spot
+                        ? (base.total * fairValue) + quote.total
+                        : (K.gateway->margin == Future::Inverse
+                            ? base.total * fairValue
+                            : base.total / fairValue
+                        );
+      };
+  };
+
   struct AntonioCalculon: public System::Quotes {
     private_ref:
       const KryptoNinja  &K;
@@ -230,38 +251,41 @@ namespace analpaper {
       string explainState(const System::Quote &quote) const override {
         string reason = "";
         if (quote.state == QuoteState::Live)
-          reason = "  LIVE   " + Ansi::r(COLOR_WHITE)
+          reason = "  LIVE   " + ANSI_PUKE_WHITE
                  + "because of reasons (ping: "
                  + K.gateway->decimal.price.str(quote.price) + " " + K.gateway->quote
                  + ", fair value: "
                  + K.gateway->decimal.price.str(levels.fairValue) + " " + K.gateway->quote
                  +")";
         else if (quote.state == QuoteState::DepletedFunds)
-          reason = " PAUSED  " + Ansi::r(COLOR_WHITE)
+          reason = " PAUSED  " + ANSI_PUKE_WHITE
                  + "because not enough available funds ("
                  + (quote.side == Side::Bid
                    ? K.gateway->decimal.price.str(wallet.quote.amount) + " " + K.gateway->quote
                    : K.gateway->decimal.amount.str(wallet.base.amount) + " " + K.gateway->base
                  ) + ")";
         else if (quote.state == QuoteState::ScaleSided)
-          reason = "DISABLED " + Ansi::r(COLOR_WHITE)
+          reason = "DISABLED " + ANSI_PUKE_WHITE
                  + "because " + (quote.side == Side::Bid ? "--bids-size" : "--asks-size")
                  + " was not set";
         else if (quote.state == QuoteState::ScalationLimit)
-          reason = " PAUSED  " + Ansi::r(COLOR_WHITE)
+          reason = " PAUSED  " + ANSI_PUKE_WHITE
                  + "because the nearest pong ("
                  + K.gateway->decimal.price.str(quote.side == Side::Bid
                    ? pongs.minAsk
                    : pongs.maxBid
                  ) + " " + K.gateway->quote + ") is closer than --wait-width";
         else if (quote.state == QuoteState::DeviationLimit)
-          reason = " PAUSED  " + Ansi::r(COLOR_WHITE)
+          reason = " PAUSED  " + ANSI_PUKE_WHITE
                  + "because the price deviation is lower than --wait-price";
-        else if (quote.state == QuoteState::DisabledQuotes)
-          reason = " PAUSED  " + Ansi::r(COLOR_WHITE)
+        else if (quote.state == QuoteState::WaitingFunds)
+          reason = " PAUSED  " + ANSI_PUKE_WHITE
                  + "because a pong is pending to be placed";
+        else if (quote.state == QuoteState::DisabledQuotes)
+          reason = "DISABLED " + ANSI_PUKE_WHITE
+                 + "because an admin considered it";
         else if (quote.state == QuoteState::Disconnected)
-          reason = " PAUSED  " + Ansi::r(COLOR_WHITE)
+          reason = " PAUSED  " + ANSI_PUKE_WHITE
                  + "because the exchange seems down";
         return reason;
       };
@@ -397,8 +421,45 @@ namespace analpaper {
       };
   };
 
+  struct Semaphore: public Hotkey::Keymap {
+    Connectivity greenButton  = Connectivity::Disconnected,
+                 greenGateway = Connectivity::Disconnected;
+    private_ref:
+      const KryptoNinja &K;
+    public:
+      Semaphore(const KryptoNinja &bot)
+        : Keymap(bot, {
+            {'Q', [&]() { exit(); }},
+            {'q', [&]() { exit(); }},
+            {'\e', [&]() { toggle(); }}
+          })
+        , K(bot)
+      {};
+      bool paused() const {
+        return !(bool)greenButton;
+      };
+      bool offline() const {
+        return !(bool)greenGateway;
+      };
+      void read_from_gw(const Connectivity &raw) {
+        greenGateway = raw;
+        switchButton();
+      };
+    private:
+      void toggle() {
+        K.gateway->adminAgreement = (Connectivity)!(bool)K.gateway->adminAgreement;
+        switchButton();
+      };
+      void switchButton() {
+        greenButton = (Connectivity)(
+          (bool)greenGateway and (bool)K.gateway->adminAgreement
+        );
+        K.repaint();
+      };
+  };
+
   struct Broker {
-       Connectivity greenGateway = Connectivity::Disconnected;
+          Semaphore semaphore;
     AntonioCalculon quotes;
     private:
       vector<Order> pending;
@@ -410,27 +471,29 @@ namespace analpaper {
       const      Wallets &wallet;
     public:
       Broker(const KryptoNinja &bot, Orders &o, const MarketLevels &l, const Wallets &w)
-        : quotes(bot, o.pongs, l, w)
+        : semaphore(bot)
+        , quotes(bot, o.pongs, l, w)
         , K(bot)
         , orders(o)
         , levels(l)
         , wallet(w)
       {};
-      void read_from_gw(const Connectivity &raw) {
-        greenGateway = raw;
-        if (!(bool)greenGateway)
+      bool ready() {
+        if (semaphore.offline()) {
           quotes.offline();
-      };
-      bool ready() const {
-        return (bool)greenGateway;
+          return false;
+        }
+        return true;
       };
       void calcQuotes() {
-        if (pending.empty()) {
+        if (pending.empty() and !semaphore.paused()) {
           quotes.calcQuotes();
           quote2orders(quotes.ask);
           quote2orders(quotes.bid);
         } else {
-          quotes.paused();
+          if (semaphore.paused())
+            quotes.paused();
+          else quotes.pending();
           K.cancel();
         }
       };
@@ -496,10 +559,10 @@ namespace analpaper {
           and orders.last->isPong
           and K.arg<int>("quit-after")
           and K.arg<int>("quit-after") == ++limit
-        ) exit("CF " + Ansi::r(COLOR_WHITE)
+        ) exit("CF " + ANSI_PUKE_WHITE
             + "--quit-after="
-            + Ansi::b(COLOR_YELLOW) + to_string(K.arg<int>("quit-after"))
-            + Ansi::r(COLOR_WHITE)  + " limit reached"
+            + ANSI_HIGH_YELLOW + to_string(K.arg<int>("quit-after"))
+            + ANSI_PUKE_WHITE  + " limit reached"
           );
       };
       void quit() {
@@ -554,7 +617,7 @@ namespace analpaper {
   };
 
   class Engine {
-    private:
+    public:
             Orders orders;
       MarketLevels levels;
            Wallets wallet;
@@ -563,11 +626,11 @@ namespace analpaper {
       Engine(const KryptoNinja &bot)
         : orders(bot)
         , levels(bot, orders)
-        , wallet(bot)
+        , wallet(bot, levels)
         , broker(bot, orders, levels, wallet)
       {};
       void read(const Connectivity &rawdata) {
-        broker.read_from_gw(rawdata);
+        broker.semaphore.read_from_gw(rawdata);
       };
       void read(const Wallet &rawdata) {
         wallet.read_from_gw(rawdata);

@@ -15,7 +15,7 @@ class TradingBot: public KryptoNinja {
     TradingBot()
       : engine(*this)
     {
-      display   = {terminal, {3, 6, 1, 2}};
+      display   = { terminal };
       events    = {
         [&](const Connectivity &rawdata) { engine.read(rawdata);  },
         [&](const Wallet       &rawdata) { engine.read(rawdata);  },
@@ -43,150 +43,129 @@ class TradingBot: public KryptoNinja {
           {"taker-fee",    "AMOUNT", "0",     "set custom percentage of taker fee, like '0.1'"},
           {"min-size",     "AMOUNT", "0",     "set custom minimum order size, like '0.01'"},
           {"leverage",     "AMOUNT", "1",     "set between '0.01' and '100' to enable isolated margin,"
-                                              "\n" "or use '0' for cross margin; default AMOUNT is '1'"},
+                                              ANSI_NEW_LINE "or use '0' for cross margin; default AMOUNT is '1'"},
           {"wallet-limit", "AMOUNT", "0",     "set AMOUNT in base currency to limit the balance,"
-                                              "\n" "otherwise the full available balance can be used"}
+                                              ANSI_NEW_LINE "otherwise the full available balance can be used"}
         },
         nullptr
       };
     };
   private:
-    static void terminal();
+    static string terminal();
 } K;
 
-void TradingBot::terminal() {
-  const vector<Order> openOrders = K.engine.orders.working(true);
-  const int x = getmaxx(stdscr),
-            y = getmaxy(stdscr),
-            yMaxLog = y - K.padding_bottom(1 + fmax(
-                            openOrders.size(),
-                            K.engine.broker.semaphore.paused() ? 0 : 2
-                          ));
-  mvwvline(stdscr, 1, 1, ' ', y-1);
-  mvwvline(stdscr, yMaxLog-1, 1, ' ', y-1);
-  mvwhline(stdscr, yMaxLog,   1, ' ', x-1);
-  int yOrders = yMaxLog;
-  for (const auto &it : openOrders) {
-    mvwhline(stdscr, ++yOrders, 1, ' ', x-1);
-    wattron(stdscr, COLOR_PAIR(it.side == Side::Bid ? COLOR_CYAN : COLOR_MAGENTA));
-    mvwaddstr(stdscr, yOrders, 1, (((it.side == Side::Bid ? "BID" : "ASK") + (" > "
-      + K.gateway->decimal.amount.str(it.quantity))) + ' ' + K.gateway->base + " at price "
-      + K.gateway->decimal.price.str(it.price) + ' ' + K.gateway->quote + " (value "
-      + K.gateway->decimal.price.str(abs(it.price * it.quantity)) + ' ' + K.gateway->quote + ")"
-    ).data());
-    wattroff(stdscr, COLOR_PAIR(it.side == Side::Bid ? COLOR_CYAN : COLOR_MAGENTA));
-  }
-  while (++yOrders < y) mvwhline(stdscr, yOrders, 1, ' ', x-1);
-  mvwaddch(stdscr, 0, 0, ACS_ULCORNER);
-  mvwhline(stdscr, 0, 1, ACS_HLINE, max(80, x));
-  mvwhline(stdscr, 1, 14, ' ', max(80, x)-14);
-  mvwvline(stdscr, 1, 0, ACS_VLINE, yMaxLog);
-  mvwvline(stdscr, yMaxLog, 0, ACS_LTEE, y);
-  mvwaddch(stdscr, y, 0, ACS_BTEE);
-  mvwaddch(stdscr, 0, 12, ACS_RTEE);
-  wattron(stdscr, COLOR_PAIR(COLOR_GREEN));
-  const string title1 = "   " + K.arg<string>("exchange");
-  const string title2 = " " + (K.arg<int>("headless") ? "headless" : "UI at " + K.location()) + ' ';
-  wattron(stdscr, A_BOLD);
-  mvwaddstr(stdscr, 0, 13, title1.data());
-  wattroff(stdscr, A_BOLD);
-  mvwaddstr(stdscr, 0, 13+title1.length(), title2.data());
-  mvwaddch(stdscr, 0, 14, 'K' | A_BOLD);
-  wattroff(stdscr, COLOR_PAIR(COLOR_GREEN));
-  mvwaddch(stdscr, 0, 13+title1.length()+title2.length(), ACS_LTEE);
-  mvwaddch(stdscr, 0, x-26, ACS_RTEE);
-  mvwaddstr(stdscr, 0, x-25, (string(" [   ]: ") + (K.engine.broker.semaphore.paused() ? "Start" : "Stop?") + ", [ ]: Quit!").data());
-  mvwaddch(stdscr, 0, x-9, 'q' | A_BOLD);
-  wattron(stdscr, A_BOLD);
-  mvwaddstr(stdscr, 0, x-23, "ESC");
-  wattroff(stdscr, A_BOLD);
-  mvwaddch(stdscr, 0, 7, ACS_TTEE);
-  mvwaddch(stdscr, 1, 7, ACS_LLCORNER);
-  mvwhline(stdscr, 1, 8, ACS_HLINE, 4);
-  mvwaddch(stdscr, 1, 12, ACS_RTEE);
-  wattron(stdscr, COLOR_PAIR(COLOR_MAGENTA));
+string TradingBot::terminal() {
   const string baseValue  = K.gateway->decimal.funds.str(K.engine.wallet.base.value),
                quoteValue = K.gateway->decimal.price.str(K.engine.wallet.quote.value);
-  wattron(stdscr, A_BOLD);
-  waddstr(stdscr, (" " + baseValue + ' ').data());
-  wattroff(stdscr, A_BOLD);
-  waddstr(stdscr, K.gateway->base.data());
-  wattroff(stdscr, COLOR_PAIR(COLOR_MAGENTA));
-  wattron(stdscr, COLOR_PAIR(COLOR_GREEN));
-  waddstr(stdscr, " or ");
-  wattroff(stdscr, COLOR_PAIR(COLOR_GREEN));
-  wattron(stdscr, COLOR_PAIR(COLOR_CYAN));
-  wattron(stdscr, A_BOLD);
-  waddstr(stdscr, quoteValue.data());
-  wattroff(stdscr, A_BOLD);
-  waddstr(stdscr, (" " + K.gateway->quote + ' ').data());
-  wattroff(stdscr, COLOR_PAIR(COLOR_CYAN));
-  size_t xLenValue = 14+baseValue.length()+quoteValue.length()+K.gateway->base.length()+K.gateway->quote.length()+7,
-         xMaxValue = max(xLenValue+1, 18+title1.length()+title2.length());
-  mvwaddch(stdscr, 0, xMaxValue, ACS_TTEE);
-  mvwaddch(stdscr, 1, xMaxValue, ACS_LRCORNER);
-  mvwhline(stdscr, 1, xLenValue, ACS_HLINE, xMaxValue - xLenValue);
-  mvwaddch(stdscr, 1, xLenValue, ACS_LTEE);
-  const int yPos = max(1, (y / 2) - 6),
-            baseAmount  = round(K.engine.wallet.base.amount  * 10 / K.engine.wallet.base.value),
-            baseHeld    = round(K.engine.wallet.base.held    * 10 / K.engine.wallet.base.value),
-            quoteAmount = round(K.engine.wallet.quote.amount * 10 / K.engine.wallet.quote.value),
-            quoteHeld   = round(K.engine.wallet.quote.held   * 10 / K.engine.wallet.quote.value);
-  mvwvline(stdscr, yPos+1, x-3, ' ', 10);
-  mvwvline(stdscr, yPos+1, x-4, ' ', 10);
-  wattron(stdscr, COLOR_PAIR(COLOR_CYAN));
-  mvwvline(stdscr, yPos+11-quoteAmount-quoteHeld, x-4, ACS_VLINE, quoteHeld);
-  wattron(stdscr, A_BOLD);
-  mvwvline(stdscr, yPos+11-quoteAmount, x-4, ' ' | A_REVERSE, quoteAmount);
-  wattroff(stdscr, A_BOLD);
-  wattroff(stdscr, COLOR_PAIR(COLOR_CYAN));
-  wattron(stdscr, COLOR_PAIR(COLOR_MAGENTA));
-  mvwvline(stdscr, yPos+11-baseAmount-baseHeld, x-3, ACS_VLINE, baseHeld);
-  wattron(stdscr, A_BOLD);
-  mvwvline(stdscr, yPos+11-baseAmount, x-3, ' ' | A_REVERSE, baseAmount);
-  wattroff(stdscr, A_BOLD);
-  wattroff(stdscr, COLOR_PAIR(COLOR_MAGENTA));
-  mvwaddch(stdscr, yPos, x-2, ACS_URCORNER);
-  mvwaddch(stdscr, yPos+11, x-2, ACS_LRCORNER);
-  mvwaddch(stdscr, yPos, x-5, ACS_ULCORNER);
-  mvwaddch(stdscr, yPos+11, x-5, ACS_LLCORNER);
-  mvwhline(stdscr, yPos, x-4, ACS_HLINE, 2);
-  mvwhline(stdscr, yPos+11, x-4, ACS_HLINE, 2);
-  mvwaddch(stdscr, yMaxLog, 0, ACS_LTEE);
-  mvwhline(stdscr, yMaxLog, 1, ACS_HLINE, 3);
-  mvwaddch(stdscr, yMaxLog, 4, ACS_RTEE);
-  mvwaddstr(stdscr, yMaxLog, 5, "< (");
+  const string coins = ANSI_HIGH_MAGENTA + baseValue
+                     + ANSI_PUKE_MAGENTA + ' ' + K.gateway->base
+                     + ANSI_PUKE_GREEN   + " or "
+                     + ANSI_HIGH_CYAN    + quoteValue
+                     + ANSI_PUKE_CYAN    + ' ' + K.gateway->quote
+                     + ANSI_PUKE_WHITE   + " ├";
+  const string quit = "┤ [" + ANSI_HIGH_WHITE
+                    + "ESC" + ANSI_PUKE_WHITE + "]: "
+                    + (K.engine.broker.semaphore.paused()
+                      ? "Start"
+                      : "Stop?"
+                    ) + "!"
+                    + ", [" + ANSI_HIGH_WHITE
+                    +  "q"  + ANSI_PUKE_WHITE + "]: Quit!";
+  const string title = K.arg<string>("exchange")
+                     + ANSI_PUKE_GREEN
+                     + ' ' + (K.arg<int>("headless")
+                       ? "headless"
+                       : "UI at " + K.location()
+                     ) + ' ';
+  const string space = string(fmax(0,
+    coins.length()
+    - title.length()
+    - ANSI_SYMBOL_SIZE(1)
+    - ANSI_COLORS_SIZE(5)
+  ), ' ');
+  const string top = "┌───────┐ K │ "
+                   + ANSI_HIGH_GREEN + title + space
+                   + ANSI_PUKE_WHITE + "├";
+  string top_line;
+  for (
+    unsigned int i = fmax(0,
+      K.display.width
+      - 1
+      - top.length()
+      - quit.length()
+      + ANSI_SYMBOL_SIZE(12)
+      + ANSI_COLORS_SIZE(7)
+    );
+    i --> 0;
+    top_line += "─"
+  );
+  string coins_line;
+  for (
+    unsigned int i = fmax(0,
+      title.length()
+      + space.length()
+      - coins.length()
+      + ANSI_SYMBOL_SIZE(1)
+      + ANSI_COLORS_SIZE(5)
+    );
+    i --> 0;
+    coins_line += "─"
+  );
+  const vector<Order> openOrders = K.engine.orders.working(true);
+  unsigned int orders = openOrders.size();
+  unsigned int rows = 0;
+  string data = ANSI_PUKE_WHITE
+              + (openOrders.empty() and K.engine.broker.semaphore.paused()
+                ? "└"
+                : "├"
+              ) + "───┤< (";
   if (K.engine.broker.semaphore.offline()) {
-    wattron(stdscr, COLOR_PAIR(COLOR_RED));
-    wattron(stdscr, A_BOLD);
-    waddstr(stdscr, "DISCONNECTED");
-    wattroff(stdscr, A_BOLD);
-    wattroff(stdscr, COLOR_PAIR(COLOR_RED));
-    waddch(stdscr, ')');
+    data += ANSI_HIGH_RED    + "DISCONNECTED"
+          + ANSI_PUKE_WHITE  + ")"
+          + ANSI_END_LINE;
   } else {
-    if (K.engine.broker.semaphore.paused()) {
-      wattron(stdscr, COLOR_PAIR(COLOR_YELLOW));
-      wattron(stdscr, A_BLINK);
-      waddstr(stdscr, "press START to trade");
-      wattroff(stdscr, A_BLINK);
-      wattroff(stdscr, COLOR_PAIR(COLOR_YELLOW));
-      waddch(stdscr, ')');
-    } else {
-      wattron(stdscr, COLOR_PAIR(COLOR_YELLOW));
-      waddstr(stdscr, to_string(openOrders.size()).data());
-      wattroff(stdscr, COLOR_PAIR(COLOR_YELLOW));
-      waddstr(stdscr, ") Open Orders");
+    if (K.engine.broker.semaphore.paused())
+      data += ANSI_WAVE_YELLOW + "press START to trade"
+            + ANSI_PUKE_WHITE  + ")";
+    else
+      data += ANSI_PUKE_YELLOW + to_string(orders)
+            + ANSI_PUKE_WHITE  + ") Open Orders";
+    data += " while "
+          + ANSI_PUKE_GREEN
+          + "1 " + K.gateway->base
+          + " = "
+          + ANSI_HIGH_GREEN
+          + K.gateway->decimal.price.str(K.engine.levels.fairValue)
+          + ANSI_PUKE_GREEN
+          + " " + K.gateway->quote
+          + (K.engine.broker.semaphore.paused() ? ' ' : ':')
+          + ANSI_END_LINE;
+    for (const auto &it : openOrders) {
+      data += ANSI_PUKE_WHITE + "├"
+            + (it.side == Side::Bid ? ANSI_PUKE_CYAN + "BID" : ANSI_PUKE_MAGENTA + "ASK")
+            + " > "
+            + K.gateway->decimal.amount.str(it.quantity)
+            + ' ' + K.gateway->base + " at price "
+            + K.gateway->decimal.price.str(it.price)
+            + ' ' + K.gateway->quote + " (value "
+            + K.gateway->decimal.price.str(abs(it.price * it.quantity))
+            + ' ' + K.gateway->quote + ")"
+            + ANSI_END_LINE;
+      ++rows;
     }
-    waddstr(stdscr, " while");
-    wattron(stdscr, COLOR_PAIR(COLOR_GREEN));
-    waddstr(stdscr, (" 1 " + K.gateway->base + " = ").data());
-    wattron(stdscr, A_BOLD);
-    waddstr(stdscr, K.gateway->decimal.price.str(K.engine.levels.fairValue).data());
-    wattroff(stdscr, A_BOLD);
-    waddstr(stdscr, (" " + K.gateway->quote).data());
-    wattroff(stdscr, COLOR_PAIR(COLOR_GREEN));
-    waddch(stdscr, K.engine.broker.semaphore.paused() ? ' ' : ':');
+    if (!K.engine.broker.semaphore.paused())
+      while (orders < 2) {
+        data += ANSI_PUKE_WHITE + "├"
+             + ANSI_END_LINE;
+        ++orders;
+        ++rows;
+      }
   }
-  mvwaddch(stdscr, y-1, 0, ACS_LLCORNER);
-  mvwaddstr(stdscr, 1, 2, string("|/-\\").substr(K.engine.broker.memory.orders_60s % 4, 1).data());
+  return ANSI_PUKE_WHITE
+    + top + top_line + quit
+    + ANSI_END_LINE
+    + "│  " + K.spin() + "  └───┤ " + coins + coins_line + "┘"
+    + ANSI_END_LINE
+    + K.logs(rows + 4, "│ ")
+    + data;
 };

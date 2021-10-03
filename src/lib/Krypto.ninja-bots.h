@@ -11,57 +11,11 @@ namespace ₿ {
     raise(SIGQUIT);
   };
 
-  static int colorful = 1;
-
-  class Ansi {
-    public:
-      static string reset() {
-          return paint(0, -1);
-      };
-      static string r(const int &color) {
-          return paint(0, color);
-      };
-      static string b(const int &color) {
-          return paint(1, color);
-      };
-      static void default_colors() {
-        if (colorful) start_color();
-        use_default_colors();
-        for (const auto &color : {
-          COLOR_BLACK,
-          COLOR_RED,
-          COLOR_GREEN,
-          COLOR_YELLOW,
-          COLOR_BLUE,
-          COLOR_MAGENTA,
-          COLOR_CYAN,
-          COLOR_WHITE
-        }) init_pair(
-          color,
-          color,
-          color
-            ? COLOR_BLACK
-            : COLOR_WHITE
-        );
-      };
-    private:
-      static string paint(const int &style, const int &color) {
-        return colorful
-          ? "\033["
-            + to_string(style)
-            + (color == -1
-              ? ""
-              : ";3" + to_string(color)
-            ) + 'm'
-          : "";
-      };
-  };
-
   //! \brief     Call all endingFn once and print a last error log msg.
   //! \param[in] prefix Allows any string, if possible with a length of 2.
   //! \param[in] reason Allows any (colorful?) string.
   static void error(const string &prefix, const string &reason) {
-    exit(prefix + Ansi::r(COLOR_RED) + " Errrror: " + Ansi::b(COLOR_RED) + reason);
+    exit(prefix + ANSI_PUKE_RED + " Errrror: " + ANSI_HIGH_RED + reason);
   };
 
   class Rollout {
@@ -74,13 +28,13 @@ namespace ₿ {
       };
     protected:
       static void version() {
-        clog << Ansi::b(COLOR_GREEN) << K_SOURCE " " K_BUILD
-             << Ansi::r(COLOR_GREEN) << " (build on " K_CHOST " at " K_STAMP ")"
+        clog << ANSI_HIGH_GREEN << K_SOURCE " " K_BUILD
+             << ANSI_PUKE_GREEN << " (build on " K_CHOST " at " K_STAMP ")"
 #ifndef NDEBUG
-             << Ansi::b(COLOR_GREEN) << " with DEBUG MODE enabled"
-             << Ansi::r(COLOR_GREEN)
+             << ANSI_HIGH_GREEN << " with DEBUG MODE enabled"
+             << ANSI_PUKE_GREEN
 #endif
-             << '.' << Ansi::reset() << '\n';
+             << '.' << ANSI_RESET ANSI_NEW_LINE;
       };
       string changelog() {
         string mods;
@@ -105,7 +59,8 @@ namespace ₿ {
       };
   };
 
-  static volatile sig_atomic_t signal = 0;
+  static volatile sig_atomic_t signal = 0,
+                               sigscr = SIGWINCH;
 
   class Ending: public Rollout {
     public_friend:
@@ -114,16 +69,17 @@ namespace ₿ {
       vector<QuitEvent> endingFn;
     public:
       Ending() {
-        ::signal(SIGPIPE, SIG_IGN);
+        ::signal(SIGPIPE,  SIG_IGN);
         ::signal(SIGINT, [](const int) {
-          clog << '\n';
+          clog << ANSI_NEW_LINE;
           raise(SIGQUIT);
         });
-        ::signal(SIGQUIT, meh);
-        ::signal(SIGTERM, meh);
-        ::signal(SIGABRT, meh);
-        ::signal(SIGSEGV, meh);
-        ::signal(SIGUSR1, meh);
+        ::signal(SIGQUIT,  meh);
+        ::signal(SIGTERM,  meh);
+        ::signal(SIGABRT,  meh);
+        ::signal(SIGSEGV,  meh);
+        ::signal(SIGUSR1,  meh);
+        ::signal(SIGWINCH, meh);
       };
       void ending(const QuitEvent &fn) {
         endingFn.push_back(fn);
@@ -136,39 +92,42 @@ namespace ₿ {
       };
     private:
       static void meh(const int sig) {
-        signal = sig;
+        (sig == SIGWINCH
+          ? sigscr
+          : signal
+        ) = sig;
         if (signal == SIGABRT
          or signal == SIGSEGV
          or signal == SIGUSR1
-       ) {
-          epilogue = Ansi::r(COLOR_CYAN) + "Errrror: " + strsignal(signal) + ' ';
-          epiphany = "(Three-Headed Monkey found):\n" + epitaph
-            + "- binbuild: " K_SOURCE " " K_CHOST "\n"
-              "- lastbeat: " + to_string(Tspent) + '\n'
+        ) {
+          epilogue = ANSI_PUKE_CYAN + "Errrror: " + strsignal(signal) + ' ';
+          epiphany = "(Three-Headed Monkey found):" ANSI_NEW_LINE + epitaph
+            + "- binbuild: " K_SOURCE " " K_CHOST   ANSI_NEW_LINE
+              "- lastbeat: " + to_string(Tspent)  + ANSI_NEW_LINE
 #ifndef _WIN32
-            + "- tracelog: " + '\n';
+            + "- tracelog: " ANSI_NEW_LINE;
           void *k[69];
           size_t jumps = backtrace(k, 69);
           char **trace = backtrace_symbols(k, jumps);
           for (;
             jumps --> 0;
-            epiphany += "  " + to_string(jumps) + ": " + string(trace[jumps]) + '\n'
+            epiphany += "  " + to_string(jumps) + ": " + string(trace[jumps]) + ANSI_NEW_LINE
           );
           free(trace)
 #endif
           ;
-       }
+        }
       };
       void halt(const int code) {
         vector<function<void()>> happyEndingFn;
         endingFn.swap(happyEndingFn);
         for (const auto &it : happyEndingFn) it();
-        colorful = 1;
-        clog << Ansi::b(COLOR_GREEN) << 'K'
-             << Ansi::r(COLOR_GREEN) << " exit code "
-             << Ansi::b(COLOR_GREEN) << code
-             << Ansi::r(COLOR_GREEN) << '.'
-             << Ansi::reset() << '\n';
+        colorful = true;
+        clog << ANSI_HIGH_GREEN << 'K'
+             << ANSI_PUKE_GREEN << " exit code "
+             << ANSI_HIGH_GREEN << code
+             << ANSI_PUKE_GREEN << '.'
+             << ANSI_RESET ANSI_NEW_LINE;
         EXIT(code);
       };
       void die() {
@@ -190,17 +149,18 @@ namespace ₿ {
         const string mods = changelog();
         if (mods.empty())
           epilogue += epiphany
-            + '\n' + Ansi::b(COLOR_RED) + "Yikes!" + Ansi::r(COLOR_RED)
-            + '\n' + "please copy and paste the error above into a new github issue (noworry for duplicates)."
-            + '\n' + "If you agree, go to https://github.com/ctubio/Krypto-trading-bot/issues/new"
-            + '\n';
+            + ANSI_NEW_LINE + ANSI_HIGH_RED + "Yikes!" + ANSI_PUKE_RED
+            + ANSI_NEW_LINE   "please copy and paste the error above into a new github issue (noworry for duplicates)."
+              ANSI_NEW_LINE   "If you agree, go to https://github.com/ctubio/Krypto-trading-bot/issues/new"
+              ANSI_NEW_LINE;
         else
-          epilogue += string("(deprecated K version found).") + '\n'
-            + '\n' + Ansi::b(COLOR_YELLOW) + "Hint!" + Ansi::r(COLOR_YELLOW)
-            + '\n' + "please upgrade to the latest commit; the encountered error may be already fixed at:"
-            + '\n' + mods
-            + '\n' + "If you agree, consider to run \"make upgrade\" prior further executions."
-            + '\n';
+          epilogue += string("(deprecated K version found).")
+            + ANSI_NEW_LINE
+              ANSI_NEW_LINE + ANSI_HIGH_YELLOW + "Hint!" + ANSI_PUKE_YELLOW
+            + ANSI_NEW_LINE   "please upgrade to the latest commit; the encountered error may be already fixed at:"
+              ANSI_NEW_LINE + mods
+            + ANSI_NEW_LINE   "If you agree, consider to run \"make upgrade\" prior further executions."
+              ANSI_NEW_LINE;
         halt(EXIT_FAILURE);
       };
   };
@@ -208,42 +168,132 @@ namespace ₿ {
   class Terminal {
     public:
       struct {
-        void (*terminal)() = nullptr;
-        mutable struct {
-          unsigned int top;
-          unsigned int right;
-          unsigned int bottom;
-          unsigned int left;
-        } padding = {ANY_NUM, 0, 0, 0};
+        string (*terminal)() = nullptr;
+        mutable unsigned int width  = 80,
+                             height = 0;
       } display;
     protected:
       bool gobeep = false;
+#ifndef  _WIN32
+      struct termios original;
+#endif
     private:
-      WINDOW *stdlog = nullptr;
       mutable Clock warned = 0;
+      mutable vector<string> clogs;
+      mutable unsigned int frame = 0;
+      const vector<string> spinner = { "∙∙∙", "∙∙●", "∙●∙", "●∙∙" };
     public:
-      unsigned int padding_bottom(const unsigned int &bottom) const {
-        if (bottom != display.padding.bottom) {
-          const int diff = bottom - display.padding.bottom;
-          display.padding.bottom = bottom;
-          if (diff > 0) wscrl(stdlog, diff);
-          wresize(
-            stdlog,
-            getmaxy(stdscr) - display.padding.top - display.padding.bottom,
-            getmaxx(stdscr) - display.padding.left - display.padding.right
-          );
-          if (diff < 0) wscrl(stdlog, diff);
-        }
-        return display.padding.bottom;
+      void resize() const {
+        sigscr = 0;
+#ifndef _WIN32
+        struct winsize ws;
+        ioctl(1, TIOCGWINSZ, &ws);
+        display.width  = ws.ws_col;
+        display.height = ws.ws_row;
+#endif
       };
-      void repaint() const {
-        if (!(stdscr and display.terminal)) return;
-        display.terminal();
-        wrefresh(stdscr);
-        if (stdlog) {
-          wmove(stdlog, getmaxy(stdlog) - 1, 0);
-          wrefresh(stdlog);
+      void repaint(const bool &spin = false) const {
+        if (display.terminal and display.height) {
+          if (spin) ++frame %= 4;
+          if (sigscr) resize();
+          clog << ANSI_HIDE_CURSOR
+               << ANSI_TOP_RIGHT
+               << display.terminal()
+               << ANSI_RESET
+               << ANSI_SHOW_CURSOR;
         }
+      };
+      void log(const string &prefix, const string &reason, const string &highlight = "") const {
+        const string space = highlight.empty()
+          ? ""
+          : string(reason.back() != '=', ' ');
+        puke_rainbow(stamp() +
+          prefix + ' '       + ANSI_PUKE_WHITE  +
+          reason + space     + ANSI_HIGH_YELLOW +
+          highlight
+        );
+      };
+      void warn(const string &prefix, const string &reason, const Clock &ratelimit = 0) const {
+        if (ratelimit) {
+          const Clock now = Tstamp;
+          if (warned + ratelimit > now) return;
+          warned = now;
+        }
+        puke_rainbow(stamp() +
+          prefix             + ANSI_PUKE_RED +
+          " Warrrrning: "    + ANSI_HIGH_RED +
+          reason
+        );
+      };
+      void beep() const {
+        if (gobeep)
+          clog << ANSI_BELL;
+      };
+      string spin() {
+        return ANSI_HIGH_YELLOW
+             + spinner.at(frame)
+             + ANSI_PUKE_WHITE;
+      };
+      string logs(const unsigned int &rows, const string &prefix) {
+        string lines;
+        const unsigned int empty_rows = fmax(0, display.height - rows - 1);
+        if (clogs.size() > empty_rows)
+          clogs.erase(clogs.begin(), clogs.end() - empty_rows);
+        else while (clogs.size() < empty_rows)
+          clogs.insert(clogs.begin(), " ");
+        for (auto &it : clogs) {
+          if (it.length() < 6 or it.substr(it.length() - 6) != ANSI_END_LINE)
+            it.append(ANSI_END_LINE)
+              .insert(0, ANSI_PUKE_WHITE + prefix);
+          lines += it;
+        }
+        return lines + "│ " + ANSI_END_LINE;
+      };
+    protected:
+      bool windowed() {
+        if (display.terminal) {
+#ifndef _WIN32
+          struct termios t;
+          tcgetattr(1, &t);
+          original = t;
+          cfmakeraw(&t);
+          tcsetattr(1, TCSANOW, &t);
+#endif
+          clog << ANSI_ALTERNATIVE
+                  ANSI_CURSOR;
+          repaint();
+          return true;
+        }
+        return false;
+      };
+      void with_goodbye() {
+        if (display.terminal) {
+          display = {};
+#ifndef _WIN32
+          tcsetattr(1, TCSANOW, &original);
+#endif
+          clog << ANSI_ORIGINAL;
+        }
+        clog << stamp()
+             << epilogue
+             << (epilogue.empty() ? "" : ANSI_NEW_LINE);
+      };
+    private:
+      void puke_rainbow(const string &rain) const {
+        string puke = rain + ANSI_PUKE_WHITE
+                    + '.'  + ANSI_RESET
+                           + ANSI_NEW_LINE;
+        if (display.terminal and display.height) {
+          string::size_type n = 0;
+          while ((n = puke.find(ANSI_NEW_LINE)) != string::npos) {
+            clogs.emplace_back(puke.begin(), puke.begin() + n);
+            puke.erase(0, n + 2);
+          }
+          repaint();
+        }
+#ifdef NDEBUG
+        else clog << puke;
+#endif
       };
       string stamp() const {
         chrono::system_clock::time_point clock = chrono::system_clock::now();
@@ -259,131 +309,10 @@ namespace ₿ {
         time_t tt = chrono::system_clock::to_time_t(clock);
         char datetime[15];
         strftime(datetime, 15, "%m/%d %H:%M:%S", localtime(&tt));
-        if (!display.terminal)
-          return Ansi::b(COLOR_GREEN) + datetime
-               + Ansi::r(COLOR_GREEN) + microtime.str()
-               + Ansi::b(COLOR_WHITE) + ' ';
-        if (stdlog) {
-          wattron(stdlog, COLOR_PAIR(COLOR_GREEN));
-          wattron(stdlog, A_BOLD);
-          wprintw(stdlog, datetime);
-          wattroff(stdlog, A_BOLD);
-          wprintw(stdlog, microtime.str().data());
-          wattroff(stdlog, COLOR_PAIR(COLOR_GREEN));
-          wprintw(stdlog, " ");
-        }
-        return "";
-      };
-      void log(const string &prefix, const string &reason, const string &highlight = "") const {
-        int color = 0;
-        if (reason.find("NG TRADE") != string::npos) {
-          if (reason.find("BUY") != string::npos)       color = 1;
-          else if (reason.find("SELL") != string::npos) color = -1;
-        }
-        if (!display.terminal) {
-          clog << stamp() << prefix;
-          if (color == 1)       clog << Ansi::r(COLOR_CYAN);
-          else if (color == -1) clog << Ansi::r(COLOR_MAGENTA);
-          else                  clog << Ansi::r(COLOR_WHITE);
-          clog << ' ' << reason;
-          if (!highlight.empty())
-            clog << string(reason.back() != '=', ' ') << Ansi::b(COLOR_YELLOW) << highlight;
-          clog << Ansi::r(COLOR_WHITE) << '.' << endl;
-          return;
-        }
-        if (!stdlog) return;
-        stamp();
-        wattron(stdlog, COLOR_PAIR(COLOR_WHITE));
-        wattron(stdlog, A_BOLD);
-        wprintw(stdlog, prefix.data());
-        wattroff(stdlog, A_BOLD);
-        if (color == 1)       wattron(stdlog, COLOR_PAIR(COLOR_CYAN));
-        else if (color == -1) wattron(stdlog, COLOR_PAIR(COLOR_MAGENTA));
-        wprintw(stdlog, (" " + reason).data());
-        if (color == 1)       wattroff(stdlog, COLOR_PAIR(COLOR_CYAN));
-        else if (color == -1) wattroff(stdlog, COLOR_PAIR(COLOR_MAGENTA));
-        if (!highlight.empty()) {
-          if (reason.back() != '=')
-            wprintw(stdlog, " ");
-          wattroff(stdlog, COLOR_PAIR(COLOR_WHITE));
-          wattron(stdlog, COLOR_PAIR(COLOR_YELLOW));
-          wprintw(stdlog, highlight.data());
-          wattroff(stdlog, COLOR_PAIR(COLOR_YELLOW));
-          wattron(stdlog, COLOR_PAIR(COLOR_WHITE));
-        }
-        wprintw(stdlog, ".\n");
-        wattroff(stdlog, COLOR_PAIR(COLOR_WHITE));
-        wrefresh(stdlog);
-      };
-      void logWar(const string &prefix, const string &reason, const Clock &ratelimit = 0) const {
-        if (ratelimit) {
-          const Clock now = Tstamp;
-          if (warned + ratelimit > now) return;
-          warned = now;
-        }
-        if (!display.terminal) {
-          clog << stamp()
-               << prefix          << Ansi::r(COLOR_RED)
-               << " Warrrrning: " << Ansi::b(COLOR_RED)
-               << reason << '.'   << Ansi::r(COLOR_WHITE)
-               << endl;
-          return;
-        }
-        if (!stdlog) return;
-        stamp();
-        wattron(stdlog, COLOR_PAIR(COLOR_WHITE));
-        wattron(stdlog, A_BOLD);
-        wprintw(stdlog, prefix.data());
-        wattroff(stdlog, COLOR_PAIR(COLOR_WHITE));
-        wattron(stdlog, COLOR_PAIR(COLOR_RED));
-        wprintw(stdlog, " Warrrrning: ");
-        wattroff(stdlog, A_BOLD);
-        wprintw(stdlog, reason.data());
-        wprintw(stdlog, ".");
-        wattroff(stdlog, COLOR_PAIR(COLOR_RED));
-        wattron(stdlog, COLOR_PAIR(COLOR_WHITE));
-        wprintw(stdlog, "\n");
-        wattroff(stdlog, COLOR_PAIR(COLOR_WHITE));
-        wrefresh(stdlog);
-      };
-      void beep() const {
-        if (gobeep) {
-          if (!display.terminal)
-            clog << '\007'
-                 << flush;
-          else if (stdlog)
-            ::beep();
-        }
-      };
-    protected:
-      bool windowed() {
-        if (!display.terminal) return false;
-        if (stdlog)
-          error("SH", "Unable to print another window");
-        if (!initscr())
-          error("SH",
-            "Unable to initialize ncurses, try to run in your terminal"
-              "\"export TERM=xterm\", or use --naked argument"
-          );
-        Ansi::default_colors();
-        if (display.padding.top != ANY_NUM) {
-          stdlog = subwin(
-            stdscr,
-            getmaxy(stdscr) - display.padding.bottom - display.padding.top,
-            getmaxx(stdscr) - display.padding.left - display.padding.right,
-            display.padding.top,
-            display.padding.left
-          );
-          scrollok(stdlog, true);
-          idlok(stdlog, true);
-        }
-        ::signal(SIGWINCH, [](const int) {
-          endwin();
-          refresh();
-          clear();
-        });
-        repaint();
-        return true;
+        return                  ANSI_HIGH_GREEN +
+              datetime        + ANSI_PUKE_GREEN +
+              microtime.str() + ANSI_HIGH_WHITE +
+              ' ';
       };
   };
 
@@ -408,16 +337,7 @@ namespace ₿ {
         return get<T>(args.at(name));
       };
     protected:
-      void optional_setup(Ending *const K, int argc, char** argv, const vector<variant<Loop::TimeEvent, Ending::QuitEvent, Gw::DataEvent>> &events, const bool &blackhole, const bool &headless) {
-        K->ending([&]() {
-          if (display.terminal) {
-            display = {};
-            endwin();
-          }
-          clog << stamp()
-               << epilogue
-               << string(!epilogue.empty(), '\n');
-        });
+      void optional_setup(int argc, char** argv, const vector<variant<Loop::TimeEvent, Ending::QuitEvent, Gw::DataEvent>> &events, const bool &blackhole, const bool &headless) {
         args["autobot"]  =
         args["headless"] = headless;
         args["naked"]    = !display.terminal;
@@ -435,7 +355,7 @@ namespace ₿ {
           {"CREDENTIALS",  "",       nullptr,  ""},
           {"exchange",     "NAME",   "",       "set exchange NAME for trading, mandatory"},
           {"currency",     "PAIR",   "",       "set currency PAIR for trading, use format ISO 4217-A3"
-                                               "\n" "with '/' separator, like 'BTC/EUR', mandatory"},
+                                               ANSI_NEW_LINE "with '/' separator, like 'BTC/EUR', mandatory"},
           {"apikey",       "WORD",   "",       "set (never share!) WORD as api key for trading, mandatory"},
           {"secret",       "WORD",   "",       "set (never share!) WORD as api secret for trading, mandatory"},
           {"passphrase",   "WORD",   "",       "set (never share!) WORD as api passphrase for trading"},
@@ -451,19 +371,19 @@ namespace ₿ {
         if (!arg<int>("headless")) for (const Argument &it : (vector<Argument>){
           {"ADMIN",        "",       nullptr,  ""},
           {"headless",     "1",      nullptr,  "do not listen for UI connections,"
-                                               "\n" "all other UI related arguments will be ignored"},
+                                               ANSI_NEW_LINE "all other UI related arguments will be ignored"},
           {"without-ssl",  "1",      nullptr,  "do not use HTTPS for UI connections (use HTTP only)"},
           {"whitelist",    "IP",     "",       "set IP or csv of IPs to allow UI connections,"
-                                               "\n" "alien IPs will get a zip-bomb instead"},
+                                               ANSI_NEW_LINE "alien IPs will get a zip-bomb instead"},
           {"client-limit", "NUMBER", "7",      "set NUMBER of maximum concurrent UI connections"},
           {"port",         "NUMBER", "3000",   "set NUMBER of an open port to listen for UI connections"
-                                               "\n" "default NUMBER is '3000'"},
+                                               ANSI_NEW_LINE "default NUMBER is '3000'"},
           {"user",         "WORD",   "",       "set allowed WORD as username for UI basic authentication"},
           {"pass",         "WORD",   "",       "set allowed WORD as password for UI basic authentication"},
           {"ssl-crt",      "FILE",   "",       "set FILE to custom SSL .crt file for HTTPS UI connections"
-                                               "\n" "(see www.akadia.com/services/ssh_test_certificate.html)"},
+                                               ANSI_NEW_LINE "(see www.akadia.com/services/ssh_test_certificate.html)"},
           {"ssl-key",      "FILE",   "",       "set FILE to custom SSL .key file for HTTPS UI connections"
-                                               "\n" "(the passphrase MUST be removed from the .key file!)"},
+                                               ANSI_NEW_LINE "(the passphrase MUST be removed from the .key file!)"},
           {"matryoshka",   "URL",    "https://example.com/", "set Matryoshka link URL of the next UI"},
           {"ignore-sun",   "2",      nullptr,  "do not switch UI to light theme on daylight"},
           {"ignore-moon",  "1",      nullptr,  "do not switch UI to dark theme on moonlight"}
@@ -494,8 +414,8 @@ namespace ₿ {
         );
         if (!blackhole) long_options.push_back(
           {"database",     "FILE",   "",       "set alternative PATH to database filename,"
-                                               "\n" "default PATH is '" K_HOME "/db/K-*.db',"
-                                               "\n" "or use ':memory:' (see sqlite.org/inmemorydb.html)"}
+                                               ANSI_NEW_LINE "default PATH is '" K_HOME "/db/K-*.db',"
+                                               ANSI_NEW_LINE "or use ':memory:' (see sqlite.org/inmemorydb.html)"}
         );
         long_options.push_back(
           {"free-version", "1",      nullptr,  "slowdown market levels 121 seconds"}
@@ -512,11 +432,11 @@ namespace ₿ {
         );
         long_options.push_back(
           {"market-limit", "NUMBER", "321",    "set NUMBER of maximum market levels saved in memory,"
-                                               "\n" "default NUMBER is '321' and the minimum is '10'"}
+                                               ANSI_NEW_LINE "default NUMBER is '321' and the minimum is '10'"}
         );
         if (order_ev) long_options.push_back(
           {"lifetime",     "NUMBER", "0",      "set NUMBER of minimum milliseconds to keep orders open,"
-                                               "\n" "otherwise open orders can be replaced anytime required"}
+                                               ANSI_NEW_LINE "otherwise open orders can be replaced anytime required"}
         );
         long_options.push_back(
           {"I/O",          "",       nullptr,  ""}
@@ -552,9 +472,9 @@ namespace ₿ {
           switch (k = getopt_long(argc, argv, "hv", (option*)&opt_long[0], &index)) {
             case -1 :
             case  0 : break;
-            case 'h': help(long_options, order_ev, headless);             [[fallthrough]];
+            case 'h': help(long_options, order_ev, headless); [[fallthrough]];
             case '?':
-            case 'v': EXIT(EXIT_SUCCESS);                                 [[fallthrough]];
+            case 'v': EXIT(EXIT_SUCCESS);                     [[fallthrough]];
             default : {
               const string name(opt_long.at(index).name);
               if      (holds_alternative<int>(args[name]))    args[name] =   stoi(optarg);
@@ -577,6 +497,7 @@ namespace ₿ {
         }
         if (arg<int>("naked"))
           display = {};
+        else display.height = 32;
         if (!arg<string>("interface").empty() and !arg<int>("ipv6"))
           args_easy_setopt = [inet = arg<string>("interface")](CURL *curl) {
             curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
@@ -602,8 +523,8 @@ namespace ₿ {
           error("CF", "Invalid --exchange value; the config file may have errors (there are extra spaces or double defined variables?)");
         args["exchange"] = Text::strU(arg<string>("exchange"));
         args["currency"] = Text::strU(arg<string>("currency"));
-        args["base"]  = Text::strU(arg<string>("currency").substr(0, arg<string>("currency").find("/")));
-        args["quote"] = Text::strU(arg<string>("currency").substr(1+ arg<string>("currency").find("/")));
+        args["base"]  = arg<string>("currency").substr(0, arg<string>("currency").find("/"));
+        args["quote"] = arg<string>("currency").substr(1+ arg<string>("currency").find("/"));
         if (args.find("leverage")  == args.end()) args["leverage"]  = 1.0;
         if (args.find("min-size")  == args.end()) args["min-size"]  = 0.0;
         if (args.find("maker-fee") == args.end()) args["maker-fee"] = 0.0;
@@ -615,7 +536,7 @@ namespace ₿ {
           args["debug-orders"] =
           args["debug-quotes"] =
           args["debug-secret"] = 1;
-#if !defined _WIN32 and defined NDEBUG
+#ifdef NDEBUG
         if (arg<int>("latency")
           or arg<int>("list")
           or arg<int>("debug-orders")
@@ -658,13 +579,13 @@ namespace ₿ {
         const unsigned int x = !(y % 2)
                              + !(y % 21);
         clog
-          << Ansi::r(COLOR_GREEN)  << '\n' << PERMISSIVE_analpaper_SOFTWARE_LICENSE << '\n' << '\n'
-          << Ansi::r(COLOR_GREEN) << "   installer: " << Ansi::r(COLOR_YELLOW) << "https://krypto.ninja/Makefile" << '\n'
-          << Ansi::b(COLOR_GREEN) << " K" << Ansi::r(COLOR_GREEN) << " questions: " << Ansi::r(COLOR_YELLOW) << "https://github.com/ctubio/Krypto-trading-bot/discussions" << '\n'
-          << Ansi::r(COLOR_GREEN)  << "   bugkiller: " << Ansi::r(COLOR_YELLOW) << "https://github.com/ctubio/Krypto-trading-bot/issues" << '\n'
-          << Ansi::b(COLOR_WHITE) << stamp.at(((++y%4)*3)+x) << "Usage:" << Ansi::b(COLOR_YELLOW) << " " << K_SOURCE " [arguments]";
+          << ANSI_PUKE_GREEN << ANSI_NEW_LINE PERMISSIVE_analpaper_SOFTWARE_LICENSE ANSI_NEW_LINE ANSI_NEW_LINE
+          << ANSI_PUKE_GREEN << "   installer: " << ANSI_PUKE_YELLOW << "https://krypto.ninja/Makefile" ANSI_NEW_LINE
+          << ANSI_HIGH_GREEN << " K" << ANSI_PUKE_GREEN << " questions: " << ANSI_PUKE_YELLOW << "https://github.com/ctubio/Krypto-trading-bot/discussions" ANSI_NEW_LINE
+          << ANSI_PUKE_GREEN  << "   bugkiller: " << ANSI_PUKE_YELLOW << "https://github.com/ctubio/Krypto-trading-bot/issues" ANSI_NEW_LINE
+          << ANSI_HIGH_WHITE << stamp.at(((++y%4)*3)+x) << "Usage:" << ANSI_HIGH_YELLOW << " " << K_SOURCE " [arguments]";
         clog
-          << '\n' << Ansi::b(COLOR_WHITE) << stamp.at(((++y%4)*3)+x) << "[arguments]:";
+          << ANSI_NEW_LINE << ANSI_HIGH_WHITE << stamp.at(((++y%4)*3)+x) << "[arguments]:";
         for (const Argument &it : long_options) {
           if ( ( headless and  it.name == "title")
             or (!order_ev and (it.name == "debug-orders"
@@ -673,32 +594,32 @@ namespace ₿ {
           string usage = it.help;
           if (usage.empty())
             clog
-              << '\n' << Ansi::b(COLOR_WHITE) << stamp.at(((++y%4)*3)+x) << string(16, ' ')
+              << ANSI_NEW_LINE << ANSI_HIGH_WHITE << stamp.at(((++y%4)*3)+x) << string(16, ' ')
               << "░▒▓█ " << string((11 - it.name.length()) / 2, ' ')
               << it.name
               << string((11 - it.name.length()) / 2, ' ') << " █▓▒░";
           else {
             string::size_type n = 0;
-            while ((n = usage.find('\n', n + 1)) != string::npos)
-              usage.insert(n + 1, 28, ' ');
+            while ((n = usage.find(ANSI_NEW_LINE, n + 2)) != string::npos)
+              usage.insert(n + 2, 28, ' ');
             const string example = "--" + it.name + (it.default_value ? "=" + it.defined_value : "");
-            usage = '\n' + (
+            usage = ANSI_NEW_LINE + (
               (!it.default_value and it.defined_value.at(0) > '>')
                 ? "-" + it.defined_value + ", "
                 : "    "
             ) + example + string(22 - example.length(), ' ')
               + "- " + usage;
             n = 0;
-            do usage.insert(n + 1, Ansi::b(COLOR_WHITE) + stamp.at(((++y%4)*3)+x) + Ansi::r(COLOR_WHITE));
-            while ((n = usage.find('\n', n + 1)) != string::npos);
+            do usage.insert(n + 2, ANSI_HIGH_WHITE + stamp.at(((++y%4)*3)+x) + ANSI_PUKE_WHITE);
+            while ((n = usage.find(ANSI_NEW_LINE, n + 2)) != string::npos);
             clog << usage << '.';
           }
         }
-        clog << '\n'
-          << Ansi::r(COLOR_GREEN) << "   more help: " << Ansi::r(COLOR_YELLOW) << "https://github.com/ctubio/Krypto-trading-bot/blob/master/doc/MANUAL.md" << '\n'
-          << Ansi::b(COLOR_GREEN) << " K" << Ansi::r(COLOR_GREEN) << " questions: " << Ansi::r(COLOR_YELLOW) << "irc://irc.libera.chat:6697/#krypto.ninja" << '\n'
-          << Ansi::r(COLOR_GREEN) << "   home page: " << Ansi::r(COLOR_YELLOW) << "https://ca.rles-tub.io./trades" << '\n'
-          << Ansi::reset();
+        clog << ANSI_NEW_LINE
+          << ANSI_PUKE_GREEN << "   more help: " << ANSI_PUKE_YELLOW << "https://github.com/ctubio/Krypto-trading-bot/blob/master/doc/MANUAL.md" ANSI_NEW_LINE
+          << ANSI_HIGH_GREEN << " K" << ANSI_PUKE_GREEN << " questions: " << ANSI_PUKE_YELLOW << "irc://irc.libera.chat:6697/#krypto.ninja" ANSI_NEW_LINE
+          << ANSI_PUKE_GREEN << "   home page: " << ANSI_PUKE_YELLOW << "https://ca.rles-tub.io./trades" ANSI_NEW_LINE
+          << ANSI_RESET;
       };
   };
 
@@ -714,15 +635,13 @@ namespace ₿ {
       };
     private:
       Loop::Async::Event<char> keylogger;
-      mutable unordered_map<char, function<void()>> maps;
+      mutable unordered_map<char, function<void()>> maps = {
+        { (char)SIGQUIT, []() { raise(SIGQUIT); } }
+      };
     protected:
       void wait_for_keylog(Loop *const loop) {
-        if (maps.empty()) return;
         if (keylogger.waiting())
           error("SH", string("Unable to launch another \"keylogger\" thread"));
-        noecho();
-        halfdelay(5);
-        keypad(stdscr, true);
         keylogger.callback(loop, [&](const char &ch) { keylog(ch); });
         keylogger.wait_for(loop, [&]() { return sync_keylogger(); });
         keylogger.ask_for();
@@ -739,13 +658,15 @@ namespace ₿ {
         keylogger.ask_for();
       };
       vector<char> sync_keylogger() {
-        int ch = ERR;
-        while (ch == ERR and !signal)
-          ch = getch();
+        int ch =
+#ifdef  _WIN32
+        getch
+#else
+        getchar
+#endif
+        ();
         return {
-          ch == ERR
-           ? '\r'
-           : (char)ch
+          (char)ch
         };
       };
   };
@@ -901,7 +822,7 @@ namespace ₿ {
           const Backup::Report note = it->pull(select(it));
           if (!note.second.empty()) {
             if (note.first)
-              K->logWar("DB", note.second);
+              K->warn("DB", note.second);
             else K->log("DB", note.second);
           }
           it->push = [this, it]() {
@@ -1091,7 +1012,7 @@ namespace ₿ {
           for (const auto &it : server.ssl_context(
             K->arg<string>("ssl-crt"),
             K->arg<string>("ssl-key")
-          )) K->logWar("UI", it);
+          )) K->warn("UI", it);
         protocol  = server.protocol();
         K->log("UI", "ready at", location());
       };
@@ -1239,7 +1160,7 @@ namespace ₿ {
   enum class QuoteState: unsigned int {
     Disconnected,  Live,             Crossed,
     MissingData,   UnknownHeld,      WidthTooHigh,
-    DepletedFunds, DisabledQuotes,
+    DepletedFunds, DisabledQuotes,   WaitingFunds,
     UpTrendHeld,   DownTrendHeld,
     TBPHeld,       MaxTradesSeconds, WaitingPing,
     ScaleSided,    ScalationLimit,   DeviationLimit
@@ -1304,6 +1225,10 @@ namespace ₿ {
             upset();
             log();
           };
+          void pending() {
+            states(QuoteState::WaitingFunds);
+            log();
+          };
           void paused() {
             states(QuoteState::DisabledQuotes);
             log();
@@ -1343,12 +1268,12 @@ namespace ₿ {
             if (bid.price <= 0 or ask.price <= 0) {
               bid.skip(QuoteState::WidthTooHigh);
               ask.skip(QuoteState::WidthTooHigh);
-              K.logWar("QP", "Negative price detected, width must be lower", 3e+3);
+              K.warn("QP", "Negative price detected, width must be lower", 3e+3);
             }
           };
           void upset() {
             if (bid.checkCrossed(ask) or ask.checkCrossed(bid))
-              K.logWar("QE", "Crossed bid/ask quotes detected, that is.. unexpected", 3e+3);
+              K.warn("QE", "Crossed bid/ask quotes detected, that is.. unexpected", 3e+3);
           };
           void log() {
             logState(bid, &prevBidState);
@@ -1360,9 +1285,9 @@ namespace ₿ {
               const string reason = explainState(quote);
               if (!reason.empty())
                 K.log("QP", (quote.side == Side::Bid
-                  ? Ansi::r(COLOR_CYAN)    + "BID"
-                  : Ansi::r(COLOR_MAGENTA) + "ASK"
-                ) + Ansi::r(COLOR_WHITE) + " quoting", reason);
+                  ? ANSI_PUKE_CYAN    + "BID"
+                  : ANSI_PUKE_MAGENTA + "ASK"
+                ) + ANSI_PUKE_WHITE + " quoting", reason);
             }
           };
       };
@@ -1556,9 +1481,9 @@ namespace ₿ {
             "Unable to configure a valid gateway using --exchange="
               + K->arg<string>("exchange") + " argument"
           );
-        epitaph = "- exchange: " + (gateway->exchange = K->arg<string>("exchange")) + '\n'
+        epitaph = "- exchange: " + (gateway->exchange = K->arg<string>("exchange")) + ANSI_NEW_LINE
                 + "- currency: " + (gateway->base     = K->arg<string>("base"))     + "/"
-                                 + (gateway->quote    = K->arg<string>("quote"))    + '\n';
+                                 + (gateway->quote    = K->arg<string>("quote"))    + ANSI_NEW_LINE;
         if (!gateway->http.empty() and !K->arg<string>("http").empty())
           gateway->http    = K->arg<string>("http");
         if (!gateway->ws.empty() and !K->arg<string>("wss").empty())
@@ -1581,7 +1506,7 @@ namespace ₿ {
         gateway->loopfd    = loopfd;
         gateway->printer   = [K](const string &prefix, const string &reason, const string &highlight) {
           if (reason.find("Error") != string::npos)
-            K->logWar(prefix, reason);
+            K->warn(prefix, reason);
           else K->log(prefix, reason, highlight);
         };
         gateway->adminAgreement = (Connectivity)K->arg<int>("autobot");
@@ -1638,7 +1563,8 @@ namespace ₿ {
       KryptoNinja *main(int argc, char** argv) {
         {
           abort = &signal;
-          optional_setup(this, argc, argv, events, blackhole(), documents.empty());
+          ending([&]() { with_goodbye(); });
+          optional_setup(argc, argv, events, blackhole(), documents.empty());
           required_setup(this, lock, poll());
         } {
           if (windowed())
@@ -1650,9 +1576,9 @@ namespace ₿ {
           );
         } {
           if (arg<int>("list"))
-            exit("CF " + Ansi::r(COLOR_WHITE) + gateway->pairs());
+            exit("CF " + ANSI_PUKE_WHITE + gateway->pairs());
           if (arg<int>("latency"))
-            exit("CF " + Ansi::r(COLOR_WHITE) + gateway->latency([&]() {
+            exit("CF " + ANSI_PUKE_WHITE + gateway->latency([&]() {
               handshake({
                 {"gateway", gateway->http}
               }, true);
@@ -1692,9 +1618,7 @@ namespace ₿ {
             timer_1s([&](const unsigned int &tick) {
               broadcast(tick);
             });
-            ending([&]() {
-              without_goodbye();
-            });
+            ending([&]() { without_goodbye(); });
             welcome();
           }
         } {

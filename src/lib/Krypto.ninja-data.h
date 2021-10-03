@@ -137,7 +137,7 @@ namespace ₿ {
           };
           void timer_1s() {
             for (const auto &it : jobs) it(tick);
-            tick = (tick + 1) % ticks;
+            ++tick %= ticks;
           };
           void push_back(const TimeEvent &data) {
             jobs.push_back(data);
@@ -185,7 +185,7 @@ namespace ₿ {
                 });
               };
               void ask_for() {
-                if (!data.valid())
+                if (!data.valid() and !*abort)
                   data = ::async(launch::async, [&]() {
                     Wakeup again(event);
                     return job();
@@ -326,9 +326,8 @@ namespace ₿ {
       void end() override {
         uv_timer_stop(&timer.event);
         uv_close((uv_handle_t*)&timer.event, [](uv_handle_t*){ });
-        if (!*abort)
-          for (auto &it : jobs)
-            uv_close((uv_handle_t*)&it.event, [](uv_handle_t*){ });
+        for (auto &it : jobs)
+          uv_close((uv_handle_t*)&it.event, [](uv_handle_t*){ });
       };
   };
 #else
@@ -436,12 +435,10 @@ namespace ₿ {
           );
       };
       void end() override {
-        if (!*abort) {
-          timer.stop();
-          for (auto &it : jobs)
-            it.stop();
-          jobs.clear();
-        }
+        timer.stop();
+        for (auto &it : jobs)
+          it.stop();
+        jobs.clear();
         ::close(sockfd);
         sockfd = 0;
       };
@@ -566,7 +563,7 @@ namespace ₿ {
                 if (rc == CURLE_AGAIN and !wait(true, timeout))
                   return CURLE_OPERATION_TIMEDOUT;
               } while (rc == CURLE_AGAIN);
-              if ((timeout and in.find("\r\n\r\n") != in.find("\u0001" "10="))
+              if ((timeout and in.find(ANSI_NEW_LINE ANSI_NEW_LINE) != in.find("\u0001" "10="))
                 or rc != CURLE_OK
                 or n == 0
               ) break;
@@ -664,13 +661,13 @@ namespace ₿ {
                                 curl_url_get(url, CURLUPART_QUERY, &query, 0)
                                   ? "" : "?" + string(query)
                              ) + " HTTP/1.1"
-                             "\r\n" "Host: " + header +
-                             "\r\n" "Upgrade: websocket"
-                             "\r\n" "Connection: Upgrade"
-                             "\r\n" "Sec-WebSocket-Key: x3JJHMbDL1EzLkh9GBhXDw=="
-                             "\r\n" "Sec-WebSocket-Version: 13"
-                             "\r\n"
-                             "\r\n";
+                             ANSI_NEW_LINE "Host: " + header +
+                             ANSI_NEW_LINE "Upgrade: websocket"
+                             ANSI_NEW_LINE "Connection: Upgrade"
+                             ANSI_NEW_LINE "Sec-WebSocket-Key: x3JJHMbDL1EzLkh9GBhXDw=="
+                             ANSI_NEW_LINE "Sec-WebSocket-Version: 13"
+                             ANSI_NEW_LINE
+                             ANSI_NEW_LINE;
                     curl_free(path);
                     curl_free(query);
                     rc = CURLE_OK;
@@ -936,7 +933,7 @@ namespace ₿ {
               and out.empty()
               and in.length() > 5
               and in.substr(0, 5) == "GET /"
-              and in.find("\r\n\r\n") != string::npos
+              and in.find(ANSI_NEW_LINE ANSI_NEW_LINE) != string::npos
             ) {
               if (addr.empty())
                 addr = address();
@@ -945,7 +942,7 @@ namespace ₿ {
               string auth;
               if (papers != string::npos) {
                 auth = in.substr(papers + 21);
-                auth = auth.substr(0, auth.find("\r\n"));
+                auth = auth.substr(0, auth.find(ANSI_NEW_LINE));
               }
               const size_t key = in.find("Sec-WebSocket-Key: ");
               int allowed = 1;
@@ -955,25 +952,25 @@ namespace ₿ {
                   shutdown();
                 else change(EPOLLIN | EPOLLOUT);
               } else if ((session->auth.empty() or auth == session->auth)
-                and in.find("\r\n" "Upgrade: websocket" "\r\n") != string::npos
-                and in.find("\r\n" "Connection: ")              != string::npos
-                and in.find(" Upgrade")                         != string::npos
-                and in.find("Sec-WebSocket-Version: 13" "\r\n") != string::npos
+                and in.find(ANSI_NEW_LINE "Upgrade: websocket" ANSI_NEW_LINE) != string::npos
+                and in.find(ANSI_NEW_LINE "Connection: ")                     != string::npos
+                and in.find(" Upgrade")                                       != string::npos
+                and in.find("Sec-WebSocket-Version: 13" ANSI_NEW_LINE)        != string::npos
                 and (allowed = session->upgrade(allowed, addr))
               ) {
                 time = 0;
                 out = "HTTP/1.1 101 Switching Protocols"
-                      "\r\n" "Connection: Upgrade"
-                      "\r\n" "Upgrade: websocket"
-                      "\r\n" "Sec-WebSocket-Version: 13"
-                      "\r\n" "Sec-WebSocket-Accept: "
+                      ANSI_NEW_LINE "Connection: Upgrade"
+                      ANSI_NEW_LINE "Upgrade: websocket"
+                      ANSI_NEW_LINE "Sec-WebSocket-Version: 13"
+                      ANSI_NEW_LINE "Sec-WebSocket-Accept: "
                                + Text::B64(Text::SHA1(
-                                 in.substr(key + 19, in.substr(key + 19).find("\r\n"))
+                                 in.substr(key + 19, in.substr(key + 19).find(ANSI_NEW_LINE))
                                    + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11",
                                  true
                                )) +
-                      "\r\n"
-                      "\r\n";
+                      ANSI_NEW_LINE
+                      ANSI_NEW_LINE;
                 in.clear();
                 change(EPOLLIN | EPOLLOUT, ioWs);
               } else {
@@ -1144,41 +1141,42 @@ namespace ₿ {
                   warn.emplace_back("Ignored .crt file because .key file is missing");
                 if (!key.empty())
                   warn.emplace_back("Ignored .key file because .crt file is missing");
-                warn.emplace_back("Connected web clients will enjoy unsecure SSL encryption..\n"
+                warn.emplace_back("Connected web clients will enjoy unsecure SSL encryption.."
+                  ANSI_NEW_LINE + ANSI_HIGH_RED +
                   "(because the private key is visible in the source!). See --help argument to setup your own SSL");
                 if (!SSL_CTX_use_certificate(ctx,
                   PEM_read_bio_X509(BIO_new_mem_buf((void*)
-                    "-----BEGIN CERTIFICATE-----"                                      "\n"
-                    "MIICATCCAWoCCQCiyDyPL5ov3zANBgkqhkiG9w0BAQsFADBFMQswCQYDVQQGEwJB" "\n"
-                    "VTETMBEGA1UECAwKU29tZS1TdGF0ZTEhMB8GA1UECgwYSW50ZXJuZXQgV2lkZ2l0" "\n"
-                    "cyBQdHkgTHRkMB4XDTE2MTIyMjIxMDMyNVoXDTE3MTIyMjIxMDMyNVowRTELMAkG" "\n"
-                    "A1UEBhMCQVUxEzARBgNVBAgMClNvbWUtU3RhdGUxITAfBgNVBAoMGEludGVybmV0" "\n"
-                    "IFdpZGdpdHMgUHR5IEx0ZDCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEAunyx" "\n"
-                    "1lNsHkMmCa24Ns9xgJAwV3A6/Jg/S5jPCETmjPRMXqAp89fShZxN2b/2FVtU7q/N" "\n"
-                    "EtNpPyEhfAhPwYrkHCtip/RmZ/b6qY2Cx6otFIsuwO8aUV27CetpoM8TAQSuufcS" "\n"
-                    "jcZD9pCAa9GM/yWeqc45su9qBBmLnAKYuYUeDQUCAwEAATANBgkqhkiG9w0BAQsF" "\n"
-                    "AAOBgQAeZo4zCfnq5/6gFzoNDKg8DayoMnCtbxM6RkJ8b/MIZT5p6P7OcKNJmi1o" "\n"
-                    "XD2evdxNrY0ObQ32dpiLqSS1JWL8bPqloGJBNkSPi3I+eBoJSE7/7HOroLNbp6nS" "\n"
-                    "aaec6n+OlGhhjxn0DzYiYsVBUsokKSEJmHzoLHo3ZestTTqUwg=="             "\n"
-                    "-----END CERTIFICATE-----"                                        "\n"
+                    "-----BEGIN CERTIFICATE-----"                                      ANSI_NEW_LINE
+                    "MIICATCCAWoCCQCiyDyPL5ov3zANBgkqhkiG9w0BAQsFADBFMQswCQYDVQQGEwJB" ANSI_NEW_LINE
+                    "VTETMBEGA1UECAwKU29tZS1TdGF0ZTEhMB8GA1UECgwYSW50ZXJuZXQgV2lkZ2l0" ANSI_NEW_LINE
+                    "cyBQdHkgTHRkMB4XDTE2MTIyMjIxMDMyNVoXDTE3MTIyMjIxMDMyNVowRTELMAkG" ANSI_NEW_LINE
+                    "A1UEBhMCQVUxEzARBgNVBAgMClNvbWUtU3RhdGUxITAfBgNVBAoMGEludGVybmV0" ANSI_NEW_LINE
+                    "IFdpZGdpdHMgUHR5IEx0ZDCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEAunyx" ANSI_NEW_LINE
+                    "1lNsHkMmCa24Ns9xgJAwV3A6/Jg/S5jPCETmjPRMXqAp89fShZxN2b/2FVtU7q/N" ANSI_NEW_LINE
+                    "EtNpPyEhfAhPwYrkHCtip/RmZ/b6qY2Cx6otFIsuwO8aUV27CetpoM8TAQSuufcS" ANSI_NEW_LINE
+                    "jcZD9pCAa9GM/yWeqc45su9qBBmLnAKYuYUeDQUCAwEAATANBgkqhkiG9w0BAQsF" ANSI_NEW_LINE
+                    "AAOBgQAeZo4zCfnq5/6gFzoNDKg8DayoMnCtbxM6RkJ8b/MIZT5p6P7OcKNJmi1o" ANSI_NEW_LINE
+                    "XD2evdxNrY0ObQ32dpiLqSS1JWL8bPqloGJBNkSPi3I+eBoJSE7/7HOroLNbp6nS" ANSI_NEW_LINE
+                    "aaec6n+OlGhhjxn0DzYiYsVBUsokKSEJmHzoLHo3ZestTTqUwg=="             ANSI_NEW_LINE
+                    "-----END CERTIFICATE-----"                                        ANSI_NEW_LINE
                   , -1), nullptr, nullptr, nullptr
                 )) or !SSL_CTX_use_PrivateKey(ctx,
                   PEM_read_bio_PrivateKey(BIO_new_mem_buf((void*)
-                    "-----BEGIN RSA PRIVATE KEY-----"                                  "\n"
-                    "MIICXAIBAAKBgQC6fLHWU2weQyYJrbg2z3GAkDBXcDr8mD9LmM8IROaM9ExeoCnz" "\n"
-                    "19KFnE3Zv/YVW1Tur80S02k/ISF8CE/BiuQcK2Kn9GZn9vqpjYLHqi0Uiy7A7xpR" "\n"
-                    "XbsJ62mgzxMBBK659xKNxkP2kIBr0Yz/JZ6pzjmy72oEGYucApi5hR4NBQIDAQAB" "\n"
-                    "AoGBAJi9OrbtOreKjeQNebzCqRcAgeeLz3RFiknzjVYbgK1gBhDWo6XJVe8C9yxq" "\n"
-                    "sjYJyQV5zcAmkaQYEaHR+OjvRiZ4UmXbItukOD+dnq7xs69n3w54FfANjkurdL2M" "\n"
-                    "fPAQm/GJT4TSBDIr7eJQPOrork9uxQStwADTqvklVlKm2YldAkEA80ZYaLrGOBbz" "\n"
-                    "5871ewKxtVJNCCmXdYUwq7nI/lqsLBZnB+wiwnQ+3tgfi4YoUoTnv0hIIwkyLYl9" "\n"
-                    "Z2wqensf6wJBAMQ96gUGnIcYJzknB5CYDNQalcvvTx7tLtgRXDf47bQJ3X/Q5k/t" "\n"
-                    "yDlByUBqvYVShXWs+d4ynNKLze/w18H8Os8CQBYFDAOOxFpXWYRl6zpTKBqtdGOE" "\n"
-                    "wDzW7WzdyB+dvW/QJ0tESHEpbHdnQJO0dPnjJcbemAjz0CLnCv7Nf5rOgjkCQE3Q" "\n"
-                    "izIw+/JptmvoOQyx7ixQ2mNCYmpN/Iw63gln0MHaQ5WCPUEmdYWWu3mqmbn7Deaq" "\n"
-                    "j233Pc4TF7b0FmnaXWsCQAVvyLVU3a9Yactb5MXaN+rEYjUW37GSo+Q1lXfm0OwF" "\n"
-                    "EJB7X66Bavwg4MCfpGykS71OxhTEfDu+y1gylPMCGHY="                     "\n"
-                    "-----END RSA PRIVATE KEY-----"                                    "\n"
+                    "-----BEGIN RSA PRIVATE KEY-----"                                  ANSI_NEW_LINE
+                    "MIICXAIBAAKBgQC6fLHWU2weQyYJrbg2z3GAkDBXcDr8mD9LmM8IROaM9ExeoCnz" ANSI_NEW_LINE
+                    "19KFnE3Zv/YVW1Tur80S02k/ISF8CE/BiuQcK2Kn9GZn9vqpjYLHqi0Uiy7A7xpR" ANSI_NEW_LINE
+                    "XbsJ62mgzxMBBK659xKNxkP2kIBr0Yz/JZ6pzjmy72oEGYucApi5hR4NBQIDAQAB" ANSI_NEW_LINE
+                    "AoGBAJi9OrbtOreKjeQNebzCqRcAgeeLz3RFiknzjVYbgK1gBhDWo6XJVe8C9yxq" ANSI_NEW_LINE
+                    "sjYJyQV5zcAmkaQYEaHR+OjvRiZ4UmXbItukOD+dnq7xs69n3w54FfANjkurdL2M" ANSI_NEW_LINE
+                    "fPAQm/GJT4TSBDIr7eJQPOrork9uxQStwADTqvklVlKm2YldAkEA80ZYaLrGOBbz" ANSI_NEW_LINE
+                    "5871ewKxtVJNCCmXdYUwq7nI/lqsLBZnB+wiwnQ+3tgfi4YoUoTnv0hIIwkyLYl9" ANSI_NEW_LINE
+                    "Z2wqensf6wJBAMQ96gUGnIcYJzknB5CYDNQalcvvTx7tLtgRXDf47bQJ3X/Q5k/t" ANSI_NEW_LINE
+                    "yDlByUBqvYVShXWs+d4ynNKLze/w18H8Os8CQBYFDAOOxFpXWYRl6zpTKBqtdGOE" ANSI_NEW_LINE
+                    "wDzW7WzdyB+dvW/QJ0tESHEpbHdnQJO0dPnjJcbemAjz0CLnCv7Nf5rOgjkCQE3Q" ANSI_NEW_LINE
+                    "izIw+/JptmvoOQyx7ixQ2mNCYmpN/Iw63gln0MHaQ5WCPUEmdYWWu3mqmbn7Deaq" ANSI_NEW_LINE
+                    "j233Pc4TF7b0FmnaXWsCQAVvyLVU3a9Yactb5MXaN+rEYjUW37GSo+Q1lXfm0OwF" ANSI_NEW_LINE
+                    "EJB7X66Bavwg4MCfpGykS71OxhTEfDu+y1gylPMCGHY="                     ANSI_NEW_LINE
+                    "-----END RSA PRIVATE KEY-----"                                    ANSI_NEW_LINE
                   , -1), nullptr, nullptr, nullptr)
                 )) ctx = nullptr;
               } else {
@@ -1199,29 +1197,29 @@ namespace ₿ {
           string document(const string &content, const unsigned int &code, const string &type) const {
             string headers;
             if      (code == 200) headers = "HTTP/1.1 200 OK"
-                                            "\r\n" "Connection: keep-alive"
-                                            "\r\n" "Accept-Ranges: bytes"
-                                            "\r\n" "Vary: Accept-Encoding"
-                                            "\r\n" "Cache-Control: public, max-age=0";
+                                            ANSI_NEW_LINE "Connection: keep-alive"
+                                            ANSI_NEW_LINE "Accept-Ranges: bytes"
+                                            ANSI_NEW_LINE "Vary: Accept-Encoding"
+                                            ANSI_NEW_LINE "Cache-Control: public, max-age=0";
             else if (code == 401) headers = "HTTP/1.1 401 Unauthorized"
-                                            "\r\n" "Connection: keep-alive"
-                                            "\r\n" "Accept-Ranges: bytes"
-                                            "\r\n" "Vary: Accept-Encoding"
-                                            "\r\n" "WWW-Authenticate: Basic realm=\"Basic Authorization\"";
+                                            ANSI_NEW_LINE "Connection: keep-alive"
+                                            ANSI_NEW_LINE "Accept-Ranges: bytes"
+                                            ANSI_NEW_LINE "Vary: Accept-Encoding"
+                                            ANSI_NEW_LINE "WWW-Authenticate: Basic realm=\"Basic Authorization\"";
             else if (code == 403) headers = "HTTP/1.1 403 Forbidden"
-                                            "\r\n" "Connection: keep-alive"
-                                            "\r\n" "Accept-Ranges: bytes"
-                                            "\r\n" "Vary: Accept-Encoding";
+                                            ANSI_NEW_LINE "Connection: keep-alive"
+                                            ANSI_NEW_LINE "Accept-Ranges: bytes"
+                                            ANSI_NEW_LINE "Vary: Accept-Encoding";
             else if (code == 418) headers = "HTTP/1.1 418 I'm a teapot";
             else                  headers = "HTTP/1.1 404 Not Found";
             return headers
                  + string((content.length() > 2 and (content.substr(0, 2) == "PK" or (
                      content.at(0) == '\x1F' and content.at(1) == '\x8B'
-                 ))) ? "\r\n" "Content-Encoding: gzip" : "")
-                 + "\r\n" "Content-Type: "   + type
-                 + "\r\n" "Content-Length: " + to_string(content.length())
-                 + "\r\n"
-                   "\r\n"
+                 ))) ? ANSI_NEW_LINE "Content-Encoding: gzip" : "")
+                 + ANSI_NEW_LINE "Content-Type: "   + type
+                 + ANSI_NEW_LINE "Content-Length: " + to_string(content.length())
+                 + ANSI_NEW_LINE
+                   ANSI_NEW_LINE
                  + content;
           };
         private:

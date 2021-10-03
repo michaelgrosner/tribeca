@@ -94,12 +94,12 @@ namespace analpaper {
           ) * portfolio.at(it.first).wallet.total;
         if (ratelimit()) return;
         broadcast();
-        K.repaint();
+        K.repaint(true);
       };
       bool ready() const {
         const bool err = portfolio.empty();
         if (err and Tspent > 21e+3)
-          K.logWar("QE", "Unable to display portfolios, missing wallet data", 3e+3);
+          K.warn("QE", "Unable to display portfolios, missing wallet data", 3e+3);
         return !err;
       };
       mMatter about() const override {

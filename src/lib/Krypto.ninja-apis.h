@@ -377,7 +377,7 @@ namespace ₿ {
         string note = "handshake:";
         for (const auto &it : notes)
           if (!it.second.empty())
-            note += "\n- " + it.first + ": " + it.second;
+            note += ANSI_NEW_LINE "- " + it.first + ": " + it.second;
         print((nocache ? "" : "cached ") + note);
       };
       string latency(const function<void()> &fn) {
@@ -411,18 +411,18 @@ namespace ₿ {
       void disclaimer() const {
         if (unlock.empty()) return;
         print("was slowdown 121 seconds (--free-version argument was implicitly set):"
-          "\n" "\n" "Current apikey: " + apikey.substr(0, apikey.length() / 2)
+          ANSI_NEW_LINE ANSI_NEW_LINE "Current apikey: " + apikey.substr(0, apikey.length() / 2)
                                        + string(apikey.length() / 2, '#') +
-          "\n" "\n" "To unlock it anonymously and to collaborate with"
-          "\n"      "the development, make an acceptable Pull Request"
-          "\n"      "on github.. or send 0.01210000 BTC (or more) to:"
-          "\n" "\n" "  " + unlock +
-          "\n" "\n" "Before restart, wait for zero (0) confirmations:"
-          "\n" "\n" "https://live.blockcypher.com/btc/address/" + unlock +
-          "\n" "\n" OBLIGATORY_analpaper_SOFTWARE_LICENSE
-          "\n" "\n" "                     Signed-off-by: Carles Tubio"
-          "\n"      "see: github.com/ctubio/Krypto-trading-bot#unlock"
-          "\n"      "or just use --free-version to hide this message"
+          ANSI_NEW_LINE ANSI_NEW_LINE "To unlock it anonymously and to collaborate with"
+          ANSI_NEW_LINE                "the development, make an acceptable Pull Request"
+          ANSI_NEW_LINE                "on github.. or send 0.01210000 BTC (or more) to:"
+          ANSI_NEW_LINE ANSI_NEW_LINE "  " + unlock +
+          ANSI_NEW_LINE ANSI_NEW_LINE "Before restart, wait for zero (0) confirmations:"
+          ANSI_NEW_LINE ANSI_NEW_LINE "https://live.blockcypher.com/btc/address/" + unlock +
+          ANSI_NEW_LINE ANSI_NEW_LINE OBLIGATORY_analpaper_SOFTWARE_LICENSE
+          ANSI_NEW_LINE ANSI_NEW_LINE "                     Signed-off-by: Carles Tubio"
+          ANSI_NEW_LINE                "see: github.com/ctubio/Krypto-trading-bot#unlock"
+          ANSI_NEW_LINE                "or just use --free-version to hide this message"
         );
       };
       function<void(const string&, const string&, const string&)> printer;
@@ -646,7 +646,7 @@ namespace ₿ {
         else for (const json &it : reply.at("symbols"))
           if (it.value("isSpotTradingAllowed", false)
             and it.value("status", "") == "TRADING"
-          ) report += it.value("baseAsset", "") + "/" + it.value("quoteAsset", "") + '\n';
+          ) report += it.value("baseAsset", "") + "/" + it.value("quoteAsset", "") + ANSI_NEW_LINE;
       };
       json handshake() const override {
         json reply1 = Curl::Web::xfer(*guard, http + "/api/v3/exchangeInfo");
@@ -733,7 +733,7 @@ namespace ₿ {
           or reply.at(0).find("symbol") == reply.at(0).end()
         ) print("Error while reading pairs: " + reply.dump());
         else for (const json &it : reply)
-          report += it.value("symbol", "") + '\n';
+          report += it.value("symbol", "") + ANSI_NEW_LINE;
       };
       json handshake() const override {
         json reply = {
@@ -790,7 +790,7 @@ namespace ₿ {
         ) print("Error while reading pairs: " + reply.dump());
         else for (const json &it : reply)
           if (it.value("trade_status", "") == "tradable")
-            report += it.value("base", "") + "/" + it.value("quote", "") + '\n';
+            report += it.value("base", "") + "/" + it.value("quote", "") + ANSI_NEW_LINE;
       };
       json handshake() const override {
         json reply = {
@@ -852,7 +852,7 @@ namespace ₿ {
           or reply.at(0).find("quoteCurrency") == reply.at(0).end()
         ) print("Error while reading pairs: " + reply.dump());
         else for (const json &it : reply)
-          report += it.value("baseCurrency", "") + "/" + it.value("quoteCurrency", "") + '\n';
+          report += it.value("baseCurrency", "") + "/" + it.value("quoteCurrency", "") + ANSI_NEW_LINE;
       };
       json handshake() const override {
         const json reply = Curl::Web::xfer(*guard, http + "/public/symbol/" + base + quote);
@@ -914,7 +914,7 @@ namespace ₿ {
         ) print("Error while reading pairs: " + reply.dump());
         else for (const json &it : reply)
           if (!it.value("trading_disabled", true) and it.value("status", "") == "online")
-          report += it.value("base_currency", "") + "/" + it.value("quote_currency", "") + '\n';
+          report += it.value("base_currency", "") + "/" + it.value("quote_currency", "") + ANSI_NEW_LINE;
       };
       json handshake() const override {
         const json reply = Curl::Web::xfer(*guard, http + "/products/" + base + "-" + quote);
@@ -968,10 +968,10 @@ namespace ₿ {
         else for (const json &it : reply.at(0))
           if (it.get<string>().find(":") != string::npos)
             report += it.get<string>().substr(0, it.get<string>().find(":"))  + "/"
-                    + it.get<string>().substr(it.get<string>().find(":") + 1) + '\n';
+                    + it.get<string>().substr(it.get<string>().find(":") + 1) + ANSI_NEW_LINE;
           else
             report += it.get<string>().substr(0, 3) + "/"
-                    + it.get<string>().substr(3)    + '\n';
+                    + it.get<string>().substr(3)    + ANSI_NEW_LINE;
       };
       json handshake() const override {
         json reply1 = {
@@ -1058,7 +1058,7 @@ namespace ₿ {
         ) print("Error while reading pairs: " + reply.dump());
         else for (const json &it : reply.at("data"))
           if (it.value("enableTrading", false))
-            report += it.value("baseCurrency", "") + "/" + it.value("quoteCurrency", "") + '\n';
+            report += it.value("baseCurrency", "") + "/" + it.value("quoteCurrency", "") + ANSI_NEW_LINE;
       };
       json handshake() const override {
         json reply1 = Curl::Web::xfer(*guard, http + "/api/v1/symbols");
@@ -1137,7 +1137,7 @@ namespace ₿ {
         ) print("Error while reading pairs: " + reply.dump());
         else for (const json &it : reply.at("result"))
           if (it.find("wsname") != it.end())
-            report += it.value("wsname", "") + '\n';
+            report += it.value("wsname", "") + ANSI_NEW_LINE;
       };
       json handshake() const override {
         json reply = Curl::Web::xfer(*guard, http + "/0/public/AssetPairs?pair=" + base + quote);
@@ -1189,7 +1189,7 @@ namespace ₿ {
         if (!reply.is_object())
           print("Error while reading pairs: " + reply.dump());
         else for (auto it = reply.begin(); it != reply.end(); ++it)
-          report += it.key() + '\n';
+          report += it.key() + ANSI_NEW_LINE;
       };
       json handshake() const override {
         const json reply = Curl::Web::xfer(*guard, http + "/public?command=returnTicker")
