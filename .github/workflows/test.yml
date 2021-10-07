@@ -12,10 +12,10 @@ jobs:
 
       - name: configure
         run: |
-          sudo apt-get install g++-8 clang-tidy-7 cowsay
-          sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-8 50
-          sudo update-alternatives --install /usr/bin/x86_64-linux-gnu-g++ x86_64-linux-gnu-g++ /usr/bin/x86_64-linux-gnu-g++-8 50
-          sudo update-alternatives --install /usr/bin/clang-tidy clang-tidy /usr/bin/clang-tidy-7 100
+          sudo apt-get install g++-10 clang-tidy-11 cowsay
+          sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-10 50
+          sudo update-alternatives --install /usr/bin/x86_64-linux-gnu-g++ x86_64-linux-gnu-g++ /usr/bin/x86_64-linux-gnu-g++-10 50
+          sudo update-alternatives --install /usr/bin/clang-tidy clang-tidy /usr/bin/clang-tidy-11 100
           sudo npm install -g npm-check-updates
 
       - name: install
@@ -33,7 +33,7 @@ jobs:
 
       - name: coverage
         run: |
-          lcov -o lcov.info -c -d . --gcov-tool /usr/bin/gcov-8      > /dev/null 2>&1
+          lcov -o lcov.info -c -d . --gcov-tool /usr/bin/gcov-10     > /dev/null 2>&1
           lcov -o lcov.info -r lcov.info '/usr/*' '*/include/*'      > /dev/null 2>&1
           lcov -l lcov.info                                          | cowsay -nW80 -fdefault
 
