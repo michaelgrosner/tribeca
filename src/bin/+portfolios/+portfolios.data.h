@@ -74,15 +74,15 @@ namespace analpaper {
       Price calc(const string &from) const {
         if (from == settings.currency)
           return 1;
-        if (portfolio.at(from).prices.find(settings.currency) != portfolio.at(from).prices.end())
+        if (portfolio.at(from).prices.contains(settings.currency))
           return portfolio.at(from).prices.at(settings.currency);
         else for (const auto &it : portfolio.at(from).prices)
-          if (portfolio.find(it.first) != portfolio.end()) {
-            if (portfolio.at(it.first).prices.find(settings.currency) != portfolio.at(it.first).prices.end())
+          if (portfolio.contains(it.first)) {
+            if (portfolio.at(it.first).prices.contains(settings.currency))
               return it.second * portfolio.at(it.first).prices.at(settings.currency);
             else for (const auto &_it : portfolio.at(it.first).prices)
-              if (portfolio.find(_it.first) != portfolio.end()
-                and portfolio.at(_it.first).prices.find(settings.currency) != portfolio.at(_it.first).prices.end()
+              if (portfolio.contains(_it.first)
+                and portfolio.at(_it.first).prices.contains(settings.currency)
               ) return it.second * _it.second * portfolio.at(_it.first).prices.at(settings.currency);
           }
         return 0;

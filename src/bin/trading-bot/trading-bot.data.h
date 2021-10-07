@@ -1687,6 +1687,7 @@ namespace tribeca {
       void read_from_gw(const Wallet &raw) {
         if      (raw.currency == K.gateway->base)  base  = raw;
         else if (raw.currency == K.gateway->quote) quote = raw;
+        else return;
         if (base.currency.empty() or quote.currency.empty() or !fairValue) return;
         calcMaxFunds();
         calcFunds();

@@ -137,7 +137,7 @@ namespace ₿ {
           };
           void timer_1s() {
             for (const auto &it : jobs) it(tick);
-            ++tick %= ticks;
+            tick = (tick + 1) % ticks;
           };
           void push_back(const TimeEvent &data) {
             jobs.push_back(data);
@@ -160,7 +160,6 @@ namespace ₿ {
                   };
               };
             private:
-                 volatile sig_atomic_t *abort = nullptr;
                                  Async *event = nullptr;
                  function<vector<T>()>  job;
                      future<vector<T>>  data;
@@ -169,23 +168,21 @@ namespace ₿ {
               bool waiting() const {
                 return !!write;
               };
-              void callback(Loop *const loop, const function<void(const T&)> fn) {
+              void callback(const function<void(const T&)> fn) {
                 write = fn;
-                abort = loop->abort;
               };
               void try_write(const T &rawdata) const {
-                if (write and !*abort) write(rawdata);
+                if (write) write(rawdata);
               };
               void wait_for(Loop *const loop, const function<vector<T>()> j) {
                 job = j;
-                abort = loop->abort;
                 event = loop->async([&]() {
                   if (data.valid())
                     for (const T &it : data.get()) try_write(it);
                 });
               };
               void ask_for() {
-                if (!data.valid() and !*abort)
+                if (!data.valid())
                   data = ::async(launch::async, [&]() {
                     Wakeup again(event);
                     return job();
@@ -219,8 +216,6 @@ namespace ₿ {
         protected:
           virtual void change(const int&, const function<void()>& = nullptr) = 0;
       };
-    protected:
-      volatile sig_atomic_t *abort = nullptr;
     public:
       virtual          void  timer_ticks_factor(const unsigned int&) const = 0;
       virtual          void  timer_1s(const TimeEvent&)                    = 0;
@@ -320,8 +315,7 @@ namespace ₿ {
         return 0;
       };
       void walk() override {
-        while(!*abort)
-          uv_run(uv_default_loop(), UV_RUN_ONCE);
+        uv_run(uv_default_loop(), UV_RUN_DEFAULT);
       };
       void end() override {
         uv_timer_stop(&timer.event);
@@ -427,7 +421,7 @@ namespace ₿ {
         return sockfd;
       };
       void walk() override {
-        while (sockfd and !*abort)
+        while (sockfd)
           for (
             int i  =  epoll_wait(sockfd, ready, 32, -1);
                 i --> 0;

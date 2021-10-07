@@ -2,7 +2,7 @@
 //! \brief Minimal user application framework.
 
 namespace ₿ {
-  static string epilogue, epitaph, epiphany;
+  static string epilogue, epitaph;
 
   //! \brief     Call all endingFn once and print a last log msg.
   //! \param[in] reason Allows any (colorful?) string.
@@ -18,25 +18,16 @@ namespace ₿ {
     exit(prefix + ANSI_PUKE_RED + " Errrror: " + ANSI_HIGH_RED + reason);
   };
 
+  static mutex lock;
+
   class Rollout {
-    public:
-      mutex lock;
     public:
       Rollout() {
         static once_flag rollout;
         call_once(rollout, version);
       };
     protected:
-      static void version() {
-        clog << ANSI_HIGH_GREEN << K_SOURCE " " K_BUILD
-             << ANSI_PUKE_GREEN << " (build on " K_CHOST " at " K_STAMP ")"
-#ifndef NDEBUG
-             << ANSI_HIGH_GREEN << " with DEBUG MODE enabled"
-             << ANSI_PUKE_GREEN
-#endif
-             << '.' << ANSI_RESET ANSI_NEW_LINE;
-      };
-      string changelog() {
+      static string changelog() {
         string mods;
         const json diff =
 #ifndef NDEBUG
@@ -46,7 +37,7 @@ namespace ₿ {
             "Krypto-trading-bot/compare/" K_HEAD "...HEAD");
 #endif
         if (diff.value("ahead_by", 0)
-          and diff.find("commits") != diff.end()
+          and diff.contains("commits")
           and diff.at("commits").is_array()
         ) for (const json &it : diff.at("commits"))
           mods += it.value("/commit/author/date"_json_pointer, "").substr(0, 10) + " "
@@ -57,16 +48,25 @@ namespace ₿ {
                 );
         return mods;
       };
+    private:
+      static void version() {
+        clog << ANSI_HIGH_GREEN << K_SOURCE " " K_BUILD
+             << ANSI_PUKE_GREEN << " (build on " K_CHOST " at " K_STAMP ")"
+#ifndef NDEBUG
+             << ANSI_HIGH_GREEN << " with DEBUG MODE enabled"
+             << ANSI_PUKE_GREEN
+#endif
+             << '.' << ANSI_RESET ANSI_NEW_LINE;
+      };
   };
 
-  static volatile sig_atomic_t signal = 0,
-                               sigscr = SIGWINCH;
+  static vector<function<void()>> endingFn;
+
+  static volatile sig_atomic_t sigscr = SIGWINCH;
 
   class Ending: public Rollout {
     public_friend:
       using QuitEvent = function<void()>;
-    private:
-      vector<QuitEvent> endingFn;
     public:
       Ending() {
         ::signal(SIGPIPE,  SIG_IGN);
@@ -74,51 +74,21 @@ namespace ₿ {
           clog << ANSI_NEW_LINE;
           raise(SIGQUIT);
         });
-        ::signal(SIGQUIT,  meh);
-        ::signal(SIGTERM,  meh);
-        ::signal(SIGABRT,  meh);
-        ::signal(SIGSEGV,  meh);
-        ::signal(SIGUSR1,  meh);
+        ::signal(SIGQUIT,  die);
+        ::signal(SIGTERM,  err);
+        ::signal(SIGABRT,  wtf);
+        ::signal(SIGSEGV,  wtf);
+        ::signal(SIGUSR1,  wtf);
         ::signal(SIGWINCH, meh);
       };
       void ending(const QuitEvent &fn) {
         endingFn.push_back(fn);
       };
-    protected:
-      void halt() {
-        if      (signal == SIGQUIT)  die();
-        else if (signal == SIGTERM)  err();
-        else                         wtf();
-      };
     private:
       static void meh(const int sig) {
-        (sig == SIGWINCH
-          ? sigscr
-          : signal
-        ) = sig;
-        if (signal == SIGABRT
-         or signal == SIGSEGV
-         or signal == SIGUSR1
-        ) {
-          epilogue = ANSI_PUKE_CYAN + "Errrror: " + strsignal(signal) + ' ';
-          epiphany = "(Three-Headed Monkey found):" ANSI_NEW_LINE + epitaph
-            + "- binbuild: " K_SOURCE " " K_CHOST   ANSI_NEW_LINE
-              "- lastbeat: " + to_string(Tspent)  + ANSI_NEW_LINE
-#ifndef _WIN32
-            + "- tracelog: " ANSI_NEW_LINE;
-          void *k[69];
-          size_t jumps = backtrace(k, 69);
-          char **trace = backtrace_symbols(k, jumps);
-          for (;
-            jumps --> 0;
-            epiphany += "  " + to_string(jumps) + ": " + string(trace[jumps]) + ANSI_NEW_LINE
-          );
-          free(trace)
-#endif
-          ;
-        }
+        sigscr = sig;
       };
-      void halt(const int code) {
+      static void halt(const int code) {
         vector<function<void()>> happyEndingFn;
         endingFn.swap(happyEndingFn);
         for (const auto &it : happyEndingFn) it();
@@ -130,7 +100,7 @@ namespace ₿ {
              << ANSI_RESET ANSI_NEW_LINE;
         EXIT(code);
       };
-      void die() {
+      static void die(const int) {
         if (epilogue.empty())
           epilogue = "Excellent decision! "
                    + Curl::Web::xfer(lock, "https://api.icndb.com/jokes/random?escape=javascript&limitTo=[nerdy]")
@@ -141,25 +111,40 @@ namespace ₿ {
             : EXIT_FAILURE
         );
       };
-      void err() {
+      static void err(const int) {
         if (epilogue.empty()) epilogue = "Unknown exit reason, no joke.";
         halt(EXIT_FAILURE);
       };
-      void wtf() {
+      static void wtf(const int sig) {
+        epilogue = ANSI_PUKE_CYAN + "Errrror: " + strsignal(sig) + ' ';
         const string mods = changelog();
-        if (mods.empty())
-          epilogue += epiphany
-            + ANSI_NEW_LINE + ANSI_HIGH_RED + "Yikes!" + ANSI_PUKE_RED
+        if (mods.empty()) {
+          epilogue += "(Three-Headed Monkey found):" ANSI_NEW_LINE + epitaph
+            + "- binbuild: " K_SOURCE " " K_CHOST   ANSI_NEW_LINE
+              "- lastbeat: " + to_string(Tspent)  + ANSI_NEW_LINE
+#ifndef _WIN32
+            + "- tracelog: " ANSI_NEW_LINE;
+          void *k[69];
+          size_t jumps = backtrace(k, 69);
+          char **trace = backtrace_symbols(k, jumps);
+          for (;
+            jumps --> 0;
+            epilogue += "  " + to_string(jumps) + ": " + string(trace[jumps]) + ANSI_NEW_LINE
+          );
+          free(trace)
+#endif
+          ;
+          epilogue += ANSI_NEW_LINE
+            + ANSI_HIGH_RED + "Yikes!" + ANSI_PUKE_RED
             + ANSI_NEW_LINE   "please copy and paste the error above into a new github issue (noworry for duplicates)."
               ANSI_NEW_LINE   "If you agree, go to https://github.com/ctubio/Krypto-trading-bot/issues/new"
               ANSI_NEW_LINE;
-        else
-          epilogue += string("(deprecated K version found).")
-            + ANSI_NEW_LINE
-              ANSI_NEW_LINE + ANSI_HIGH_YELLOW + "Hint!" + ANSI_PUKE_YELLOW
-            + ANSI_NEW_LINE   "please upgrade to the latest commit; the encountered error may be already fixed at:"
-              ANSI_NEW_LINE + mods
-            + ANSI_NEW_LINE   "If you agree, consider to run \"make upgrade\" prior further executions."
+        } else
+          epilogue += string("(deprecated K version found).") + ANSI_NEW_LINE ANSI_NEW_LINE
+            + ANSI_HIGH_YELLOW + "Hint!" + ANSI_PUKE_YELLOW
+            + ANSI_NEW_LINE      "please upgrade to the latest commit; the encountered error may be already fixed at:"
+              ANSI_NEW_LINE    + mods
+            + ANSI_NEW_LINE      "If you agree, consider to run \"make upgrade\" prior further executions."
               ANSI_NEW_LINE;
         halt(EXIT_FAILURE);
       };
@@ -175,7 +160,7 @@ namespace ₿ {
     protected:
       bool gobeep = false;
 #ifndef  _WIN32
-      struct termios original;
+      struct termios original = {};
 #endif
     private:
       mutable Clock warned = 0;
@@ -185,7 +170,12 @@ namespace ₿ {
     public:
       void resize() const {
         sigscr = 0;
-#ifndef _WIN32
+#ifdef _WIN32
+        CONSOLE_SCREEN_BUFFER_INFO ws;
+        GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &ws);
+        display.width  = ws.srWindow.Right  - ws.srWindow.Left + 1;
+        display.height = ws.srWindow.Bottom - ws.srWindow.Top  + 1;
+#else
         struct winsize ws;
         ioctl(1, TIOCGWINSZ, &ws);
         display.width  = ws.ws_col;
@@ -193,8 +183,8 @@ namespace ₿ {
 #endif
       };
       void repaint(const bool &spin = false) const {
-        if (display.terminal and display.height) {
-          if (spin) ++frame %= 4;
+        if (display.height) {
+          if (spin) frame = (frame + 1) % 4;
           if (sigscr) resize();
           clog << ANSI_HIDE_CURSOR
                << ANSI_TOP_RIGHT
@@ -261,13 +251,13 @@ namespace ₿ {
 #endif
           clog << ANSI_ALTERNATIVE
                   ANSI_CURSOR;
-          repaint();
+          resize();
           return true;
         }
         return false;
       };
       void with_goodbye() {
-        if (display.terminal) {
+        if (display.height) {
           display = {};
 #ifndef _WIN32
           tcsetattr(1, TCSANOW, &original);
@@ -283,7 +273,11 @@ namespace ₿ {
         string puke = rain + ANSI_PUKE_WHITE
                     + '.'  + ANSI_RESET
                            + ANSI_NEW_LINE;
-        if (display.terminal and display.height) {
+#ifdef NDEBUG
+        if (!display.height)
+          clog << puke;
+#endif
+        if (display.terminal) {
           string::size_type n = 0;
           while ((n = puke.find(ANSI_NEW_LINE)) != string::npos) {
             clogs.emplace_back(puke.begin(), puke.begin() + n);
@@ -291,9 +285,6 @@ namespace ₿ {
           }
           repaint();
         }
-#ifdef NDEBUG
-        else clog << puke;
-#endif
       };
       string stamp() const {
         chrono::system_clock::time_point clock = chrono::system_clock::now();
@@ -332,12 +323,20 @@ namespace ₿ {
     public:
       template <typename T> const T arg(const string &name) const {
 #ifndef NDEBUG
-        if (args.find(name) == args.end()) return T();
+        if (!args.contains(name)) return T();
 #endif
         return get<T>(args.at(name));
       };
     protected:
-      void optional_setup(int argc, char** argv, const vector<variant<Loop::TimeEvent, Ending::QuitEvent, Gw::DataEvent>> &events, const bool &blackhole, const bool &headless) {
+      void optional_setup(int argc, char** argv,
+        const vector<variant<
+          Loop::TimeEvent,
+          Ending::QuitEvent,
+          Gw::DataEvent
+        >> &events,
+        const bool &blackhole,
+        const bool &headless
+      ) {
         args["autobot"]  =
         args["headless"] = headless;
         args["naked"]    = !display.terminal;
@@ -497,23 +496,7 @@ namespace ₿ {
         }
         if (arg<int>("naked"))
           display = {};
-        else display.height = 32;
-        if (!arg<string>("interface").empty() and !arg<int>("ipv6"))
-          args_easy_setopt = [inet = arg<string>("interface")](CURL *curl) {
-            curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
-            curl_easy_setopt(curl, CURLOPT_INTERFACE, inet.data());
-            curl_easy_setopt(curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
-          };
-        else if (!arg<string>("interface").empty())
-          args_easy_setopt = [inet = arg<string>("interface")](CURL *curl) {
-            curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
-            curl_easy_setopt(curl, CURLOPT_INTERFACE, inet.data());
-          };
-        else if (!arg<int>("ipv6"))
-          args_easy_setopt = [](CURL *curl) {
-            curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
-            curl_easy_setopt(curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
-          };
+
       };
     private:
       void tidy() {
@@ -525,10 +508,10 @@ namespace ₿ {
         args["currency"] = Text::strU(arg<string>("currency"));
         args["base"]  = arg<string>("currency").substr(0, arg<string>("currency").find("/"));
         args["quote"] = arg<string>("currency").substr(1+ arg<string>("currency").find("/"));
-        if (args.find("leverage")  == args.end()) args["leverage"]  = 1.0;
-        if (args.find("min-size")  == args.end()) args["min-size"]  = 0.0;
-        if (args.find("maker-fee") == args.end()) args["maker-fee"] = 0.0;
-        if (args.find("taker-fee") == args.end()) args["taker-fee"] = 0.0;
+        if (!args.contains("leverage"))  args["leverage"]  = 1.0;
+        if (!args.contains("min-size"))  args["min-size"]  = 0.0;
+        if (!args.contains("maker-fee")) args["maker-fee"] = 0.0;
+        if (!args.contains("taker-fee")) args["taker-fee"] = 0.0;
         args["market-limit"] = max(10, arg<int>("market-limit"));
         args["leverage"] = fmax(0, fmin(100, arg<double>("leverage")));
         if (arg<int>("debug"))
@@ -545,7 +528,7 @@ namespace ₿ {
         )
 #endif
           args["naked"] = 1;
-        if (args.find("database") != args.end()) {
+        if (args.contains("database")) {
           args["diskdata"] = "";
           if (arg<string>("database").empty() or arg<string>("database") == ":memory:")
             (arg<string>("database") == ":memory:"
@@ -567,6 +550,22 @@ namespace ₿ {
           ) ? Text::B64(arg<string>("user") + ':' + arg<string>("pass"))
             : "";
         }
+        if (!arg<string>("interface").empty() and !arg<int>("ipv6"))
+          args_easy_setopt = [inet = arg<string>("interface")](CURL *curl) {
+            curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
+            curl_easy_setopt(curl, CURLOPT_INTERFACE, inet.data());
+            curl_easy_setopt(curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
+          };
+        else if (!arg<string>("interface").empty())
+          args_easy_setopt = [inet = arg<string>("interface")](CURL *curl) {
+            curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
+            curl_easy_setopt(curl, CURLOPT_INTERFACE, inet.data());
+          };
+        else if (!arg<int>("ipv6"))
+          args_easy_setopt = [](CURL *curl) {
+            curl_easy_setopt(curl, CURLOPT_USERAGENT, "K");
+            curl_easy_setopt(curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
+          };
       };
       void help(const vector<Argument> &long_options, const bool &order_ev, const bool &headless) {
         const vector<string> stamp = {
@@ -642,18 +641,18 @@ namespace ₿ {
       void wait_for_keylog(Loop *const loop) {
         if (keylogger.waiting())
           error("SH", string("Unable to launch another \"keylogger\" thread"));
-        keylogger.callback(loop, [&](const char &ch) { keylog(ch); });
+        keylogger.callback([&](const char &ch) { keylog(ch); });
         keylogger.wait_for(loop, [&]() { return sync_keylogger(); });
         keylogger.ask_for();
       };
     private:
       void keymap(const char &ch, function<void()> fn) const {
-        if (maps.find(ch) != maps.end())
+        if (maps.contains(ch))
           error("SH", string("Too many handlers for \"") + ch + "\" hotkey event");
         maps[ch] = fn;
       };
       void keylog(const char &ch) {
-        if (maps.find(ch) != maps.end())
+        if (maps.contains(ch))
           maps.at(ch)();
         keylogger.ask_for();
       };
@@ -1022,7 +1021,7 @@ namespace ₿ {
           : "loading..";
       };
       void clicked(const Clickable *data, const json &j = nullptr) const {
-        if (clickFn.find(data) != clickFn.end())
+        if (clickFn.contains(data))
           for (const auto &it : clickFn.at(data)) it(j);
       };
       void client_queue_delay(const unsigned int &d) const {
@@ -1096,11 +1095,11 @@ namespace ₿ {
           option->log("UI", "authorization failed from", addr);
           code = 403;
         } else if (leaf != "/" or server.clients() < option->arg<int>("client-limit")) {
-          if (documents.find(path) == documents.end())
+          if (!documents.contains(path))
             path = path.substr(path.find_last_of("/", path.find_last_of("/") - 1));
-          if (documents.find(path) == documents.end())
+          if (!documents.contains(path))
             path = path.substr(path.find_last_of("/"));
-          if (documents.find(path) != documents.end()) {
+          if (documents.contains(path)) {
             content = string(documents.at(path).first,
                              documents.at(path).second);
             if (leaf == "/") option->log("UI", "authorization success from", addr);
@@ -1139,12 +1138,12 @@ namespace ₿ {
           return string(documents.at("").first, documents.at("").second);
         const char matter = msg.at(1);
         if (portal.first == msg.at(0)) {
-          if (hello.find(matter) != hello.end()) {
+          if (hello.contains(matter)) {
             const json reply = hello.at(matter)();
             if (!reply.is_null())
               return portal.first + (matter + reply.dump());
           }
-        } else if (portal.second == msg.at(0) and kisses.find(matter) != kisses.end()) {
+        } else if (portal.second == msg.at(0) and kisses.contains(matter)) {
           msg = msg.substr(2);
           json butterfly = json::accept(msg)
             ? json::parse(msg)
@@ -1345,7 +1344,7 @@ namespace ₿ {
           };
           Order *find(const string &orderId) {
             return (orderId.empty()
-              or orders.find(orderId) == orders.end()
+              or !orders.contains(orderId)
             ) ? nullptr
               : &orders.at(orderId);
           };
@@ -1562,7 +1561,6 @@ namespace ₿ {
     public:
       KryptoNinja *main(int argc, char** argv) {
         {
-          abort = &signal;
           ending([&]() { with_goodbye(); });
           optional_setup(argc, argv, events, blackhole(), documents.empty());
           required_setup(this, lock, poll());
@@ -1594,7 +1592,7 @@ namespace ₿ {
             else if (holds_alternative<QuitEvent>(it))
               ending(get<QuitEvent>(it));
             else if (holds_alternative<Gw::DataEvent>(it))
-              gateway->data(this, get<Gw::DataEvent>(it));
+              gateway->data(get<Gw::DataEvent>(it));
           events.clear();
           ending([&]() {
             gateway->end();
@@ -1632,7 +1630,6 @@ namespace ₿ {
       };
       void wait() {
         walk();
-        halt();
       };
   };
 }

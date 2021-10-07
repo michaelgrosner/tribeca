@@ -20,8 +20,8 @@ namespace analpaper {
         )) return;
         if (order.status == Status::Working)
           (order.side == Side::Bid ? bids : asks)[order.exchangeId] = order.price;
-        else if (bids.find(order.exchangeId) != bids.end()) bids.erase(order.exchangeId);
-        else if (asks.find(order.exchangeId) != asks.end()) asks.erase(order.exchangeId);
+        else if (bids.contains(order.exchangeId)) bids.erase(order.exchangeId);
+        else if (asks.contains(order.exchangeId)) asks.erase(order.exchangeId);
         maxBid = bids.empty() ? 0 : max_element(bids.begin(), bids.end(), compare)->second;
         minAsk = asks.empty() ? 0 : min_element(asks.begin(), asks.end(), compare)->second;
       };
@@ -210,7 +210,7 @@ namespace analpaper {
       void read_from_gw(const Wallet &raw) {
         if      (raw.currency == K.gateway->base)  base  = raw;
         else if (raw.currency == K.gateway->quote) quote = raw;
-        if (base.currency.empty() or quote.currency.empty() or !fairValue) return;
+        else return;
         calcValues();
       };
       bool ready() const {
@@ -219,8 +219,8 @@ namespace analpaper {
           K.warn("QE", "Unable to calculate quote, missing wallet data", 3e+3);
         return !err;
       };
-    private:
       void calcValues() {
+        if (base.currency.empty() or quote.currency.empty() or !fairValue) return;
         base.value  = K.gateway->margin == Future::Spot
                         ? base.total + (quote.total / fairValue)
                         : base.total;
@@ -637,6 +637,7 @@ namespace analpaper {
       };
       void read(const Levels &rawdata) {
         levels.read_from_gw(rawdata);
+        wallet.calcValues();
         calcQuotes();
       };
       void read(const Order &rawdata) {

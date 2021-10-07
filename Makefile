@@ -2,7 +2,7 @@ K         ?= K.sh
 MAJOR      = 0
 MINOR      = 6
 PATCH      = 6
-BUILD      = 0
+BUILD      = 1
 
 OBLIGATORY = DISCLAIMER: This is strict non-violent software: \n$\
              if you hurt other living creatures, please stop; \n$\
@@ -33,12 +33,12 @@ KBUILD    := build-$(KHOST)
 KHOME     := $(if ${SYSTEMROOT},$(word 1,$(subst :, ,${SYSTEMROOT})):/,$(if \
                $(findstring $(CHOST),$(lastword $(CARCH))),C:/,/var/lib/))K
 
-ERR        = *** K require g++ v7 or greater, but it was not found.
+ERR        = *** K require g++ v10 or greater, but it was not found.
 HINT      := consider a symlink at /usr/bin/$(CHOST)-g++ pointing to your g++ executable
 STEP       = $(shell tput setaf 2;tput setab 0)Building $(1)..$(shell tput sgr0)
 SUDO       = $(shell test -n "`command -v sudo`" && echo sudo)
 
-KARGS     := -std=c++17 -O3 -pthread                     \
+KARGS     := -std=c++20 -O3 -pthread                     \
   -D'K_HOME="$(KHOME)"' -D'K_HEAD="$(shell               \
     git rev-parse HEAD 2>/dev/null || echo HEAD          \
   )"' -D'K_CHOST="$(KHOST)"' -D'K_SOURCE="K-$(KSRC)"'    \
@@ -125,7 +125,7 @@ clean check lib:
 ifdef KALL
 	unset KALL $(foreach chost,$(CARCH),&& $(MAKE) $@ CHOST=$(chost))
 else
-	$(if $(shell ver="`$(CHOST)-g++ -dumpversion`" && test $${ver%%.*} -lt 7 && echo 1),$(warning $(ERR));$(error $(HINT)))
+	$(if $(shell ver="`$(CHOST)-g++ -dumpversion`" && test $${ver%%.*} -lt 10 && echo 1),$(warning $(ERR));$(error $(HINT)))
 	@$(MAKE) -C src/lib $@ CHOST=$(CHOST) KHOST=$(KHOST) KHOME=$(KHOME)
 endif
 
@@ -153,7 +153,7 @@ ifdef KALL
 	unset KALL $(foreach chost,$(CARCH),&& $(MAKE) $@ CHOST=$(chost))
 else
 	$(info $(call STEP,$(KSRC) $@ $(CHOST)))
-	$(if $(shell ver="`$(CHOST)-g++ -dumpversion`" && test $${ver%%.*} -lt 7 && echo 1),$(warning $(ERR));$(error $(HINT)))
+	$(if $(shell ver="`$(CHOST)-g++ -dumpversion`" && test $${ver%%.*} -lt 10 && echo 1),$(warning $(ERR));$(error $(HINT)))
 	@$(CHOST)-g++ --version
 	@mkdir -p $(KBUILD)/bin
 	@$(MAKE) symbol_encode_$@ -s
@@ -306,7 +306,7 @@ else
 	@pvs-studio-analyzer credentials PVS-Studio Free FREE-FREE-FREE-FREE > /dev/null 2>&1
 	@pvs-studio-analyzer analyze -e src/bin/$(KSRC)/$(KSRC).test.h -e src/lib/Krypto.ninja-test.h -e $(KBUILD)/include --source-file test/static_code_analysis.cxx --cl-params $(KARGS) test/static_code_analysis.cxx 2> /dev/null && \
 	  (echo $(KSRC) `plog-converter -a GA:1,2 -t tasklist -o report.tasks PVS-Studio.log | tail -n+8 | sed '/Total messages/d'` && cat report.tasks | sed '/Help: The documentation/d' && rm report.tasks) || :
-	@clang-tidy -header-filter=$(realpath src) -checks='modernize-*' test/static_code_analysis.cxx -- $(KARGS) 2> /dev/null
+	@clang-tidy -header-filter=$(realpath src) -checks='modernize-*, -modernize-use-trailing-return-type, -modernize-use-nodiscard' test/static_code_analysis.cxx -- $(KARGS) 2> /dev/null
 	@rm -f PVS-Studio.log > /dev/null 2>&1
 endif
 

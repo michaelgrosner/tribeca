@@ -230,19 +230,19 @@ namespace ₿ {
     public:
       virtual void ask_for_data(const unsigned int &tick) = 0;
       virtual void wait_for_data(Loop *const loop) = 0;
-      void data(Loop *const loop, const DataEvent &ev) {
-        if (holds_alternative                  <function<void(const Connectivity&)>>(ev))
-          async.connectivity.callback(loop, get<function<void(const Connectivity&)>>(ev));
-        else if (holds_alternative       <function<void(const Ticker&)>>(ev))
-          async.ticker.callback(loop, get<function<void(const Ticker&)>>(ev));
-        else if (holds_alternative       <function<void(const Wallet&)>>(ev))
-          async.wallet.callback(loop, get<function<void(const Wallet&)>>(ev));
-        else if (holds_alternative       <function<void(const Levels&)>>(ev))
-          async.levels.callback(loop, get<function<void(const Levels&)>>(ev));
-        else if (holds_alternative       <function<void(const Order&)>>(ev))
-          async.orders.callback(loop, get<function<void(const Order&)>>(ev));
-        else if (holds_alternative       <function<void(const Trade&)>>(ev))
-          async.trades.callback(loop, get<function<void(const Trade&)>>(ev));
+      void data(const DataEvent &ev) {
+        if (holds_alternative            <function<void(const Connectivity&)>>(ev))
+          async.connectivity.callback(get<function<void(const Connectivity&)>>(ev));
+        else if (holds_alternative <function<void(const Ticker&)>>(ev))
+          async.ticker.callback(get<function<void(const Ticker&)>>(ev));
+        else if (holds_alternative <function<void(const Wallet&)>>(ev))
+          async.wallet.callback(get<function<void(const Wallet&)>>(ev));
+        else if (holds_alternative <function<void(const Levels&)>>(ev))
+          async.levels.callback(get<function<void(const Levels&)>>(ev));
+        else if (holds_alternative <function<void(const Order&)>>(ev))
+          async.orders.callback(get<function<void(const Order&)>>(ev));
+        else if (holds_alternative <function<void(const Trade&)>>(ev))
+          async.trades.callback(get<function<void(const Trade&)>>(ev));
       };
       void place(const Order *const order) {
         place(
@@ -637,11 +637,11 @@ namespace ₿ {
       void pairs(string &report) const override {
         const json reply = Curl::Web::xfer(*guard, http + "/api/v3/exchangeInfo");
         if (!reply.is_object()
-          or reply.find("symbols") == reply.end()
+          or !reply.contains("symbols")
           or !reply.at("symbols").is_array()
           or reply.at("symbols").empty()
           or !reply.at("symbols").at(0).is_object()
-          or reply.at("symbols").at(0).find("isSpotTradingAllowed") == reply.at("symbols").at(0).end()
+          or !reply.at("symbols").at(0).contains("isSpotTradingAllowed")
         ) print("Error while reading pairs: " + reply.dump());
         else for (const json &it : reply.at("symbols"))
           if (it.value("isSpotTradingAllowed", false)
@@ -650,11 +650,11 @@ namespace ₿ {
       };
       json handshake() const override {
         json reply1 = Curl::Web::xfer(*guard, http + "/api/v3/exchangeInfo");
-        if (reply1.find("symbols") != reply1.end() and reply1.at("symbols").is_array())
+        if (reply1.contains("symbols") and reply1.at("symbols").is_array())
           for (const json &it : reply1.at("symbols"))
             if (it.value("symbol", "") == base + quote) {
               reply1 = it;
-              if (reply1.find("filters") != reply1.end() and reply1.at("filters").is_array())
+              if (reply1.contains("filters") and reply1.at("filters").is_array())
                 for (const json &it_ : reply1.at("filters")) {
                   if (it_.value("filterType", "") == "PRICE_FILTER")
                     reply1["tickPrice"] = stod(it_.value("tickSize", "0"));
@@ -697,7 +697,7 @@ namespace ₿ {
         if (!reply.is_array()
           or reply.empty()
           or !reply.at(0).is_object()
-          or reply.at(0).find("symbol") == reply.at(0).end()
+          or !reply.at(0).contains("symbol")
           or !reply.at(0).at("symbol").is_string()
           or reply.at(0).value("symbol", "") != base + quote
         ) {
@@ -730,7 +730,7 @@ namespace ₿ {
         if (!reply.is_array()
           or reply.empty()
           or !reply.at(0).is_object()
-          or reply.at(0).find("symbol") == reply.at(0).end()
+          or !reply.at(0).contains("symbol")
         ) print("Error while reading pairs: " + reply.dump());
         else for (const json &it : reply)
           report += it.value("symbol", "") + ANSI_NEW_LINE;
@@ -786,7 +786,7 @@ namespace ₿ {
         if (!reply.is_array()
           or reply.empty()
           or !reply.at(0).is_object()
-          or reply.at(0).find("trade_status") == reply.at(0).end()
+          or !reply.at(0).contains("trade_status")
         ) print("Error while reading pairs: " + reply.dump());
         else for (const json &it : reply)
           if (it.value("trade_status", "") == "tradable")
@@ -848,8 +848,8 @@ namespace ₿ {
         if (!reply.is_array()
           or reply.empty()
           or !reply.at(0).is_object()
-          or reply.at(0).find("baseCurrency")  == reply.at(0).end()
-          or reply.at(0).find("quoteCurrency") == reply.at(0).end()
+          or !reply.at(0).contains("baseCurrency")
+          or !reply.at(0).contains("quoteCurrency")
         ) print("Error while reading pairs: " + reply.dump());
         else for (const json &it : reply)
           report += it.value("baseCurrency", "") + "/" + it.value("quoteCurrency", "") + ANSI_NEW_LINE;
@@ -909,8 +909,8 @@ namespace ₿ {
         if (!reply.is_array()
           or reply.empty()
           or !reply.at(0).is_object()
-          or reply.at(0).find("base_currency")  == reply.at(0).end()
-          or reply.at(0).find("quote_currency") == reply.at(0).end()
+          or !reply.at(0).contains("base_currency")
+          or !reply.at(0).contains("quote_currency")
         ) print("Error while reading pairs: " + reply.dump());
         else for (const json &it : reply)
           if (!it.value("trading_disabled", true) and it.value("status", "") == "online")
@@ -1050,11 +1050,11 @@ namespace ₿ {
       void pairs(string &report) const override {
         const json reply = Curl::Web::xfer(*guard, http + "/api/v1/symbols");
         if (!reply.is_object()
-          or reply.find("data") == reply.end()
+          or !reply.contains("data")
           or !reply.at("data").is_array()
           or reply.at("data").empty()
           or !reply.at("data").at(0).is_object()
-          or reply.at("data").at(0).find("enableTrading") == reply.at("data").at(0).end()
+          or !reply.at("data").at(0).contains("enableTrading")
         ) print("Error while reading pairs: " + reply.dump());
         else for (const json &it : reply.at("data"))
           if (it.value("enableTrading", false))
@@ -1062,7 +1062,7 @@ namespace ₿ {
       };
       json handshake() const override {
         json reply1 = Curl::Web::xfer(*guard, http + "/api/v1/symbols");
-        if (reply1.find("data") != reply1.end() and reply1.at("data").is_array())
+        if (reply1.contains("data") and reply1.at("data").is_array())
           for (const json &it : reply1.at("data"))
             if (it.value("symbol", "") == base + "-" + quote) {
               reply1 = it;
@@ -1100,10 +1100,10 @@ namespace ₿ {
                      sign = Text::B64(Text::HMAC256(hash, secret, true)),
                      code = Text::B64(Text::HMAC256(pass, secret, true));
         const json reply = xfer(http + path, apikey, sign, code, time, crud);
-        if (reply.find("code") == reply.end()
+        if (!reply.contains("code")
           or !reply.at("code").is_string()
           or reply.value("code", "") != "200000"
-          or reply.find("data") == reply.end()
+          or !reply.contains("data")
           or !reply.at("data").is_object()
         ) {
           print("Error while reading fees: " + reply.dump());
@@ -1132,18 +1132,18 @@ namespace ₿ {
       void pairs(string &report) const override {
         const json reply = Curl::Web::xfer(*guard, http + "/0/public/AssetPairs");
         if (!reply.is_object()
-          or reply.find("result") == reply.end()
+          or !reply.contains("result")
           or !reply.at("result").is_object()
         ) print("Error while reading pairs: " + reply.dump());
         else for (const json &it : reply.at("result"))
-          if (it.find("wsname") != it.end())
+          if (it.contains("wsname"))
             report += it.value("wsname", "") + ANSI_NEW_LINE;
       };
       json handshake() const override {
         json reply = Curl::Web::xfer(*guard, http + "/0/public/AssetPairs?pair=" + base + quote);
-        if (reply.find("result") != reply.end())
+        if (reply.contains("result"))
           for (const json &it : reply.at("result"))
-            if (it.find("pair_decimals") != it.end()) {
+            if (it.contains("pair_decimals")) {
               reply = it;
               break;
             }
