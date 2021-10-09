@@ -2,7 +2,7 @@ K         ?= K.sh
 MAJOR      = 0
 MINOR      = 6
 PATCH      = 6
-BUILD      = 2
+BUILD      = 3
 
 OBLIGATORY = DISCLAIMER: This is strict non-violent software: \n$\
              if you hurt other living creatures, please stop; \n$\
@@ -53,13 +53,19 @@ KARGS     := -std=c++20 -O3 -pthread                     \
   ) $(wildcard $(addprefix $(KBUILD)/lib/,               \
     K-$(KSRC)-assets.o                                   \
     libuv.a                                              \
-  )) $(addprefix -include src/lib/Krypto.ninja-,         \
-       $(addsuffix .h,                                   \
-         lang                                            \
-         data                                            \
-         apis                                            \
-         bots                                            \
-       )                                                 \
+  )) $(addprefix -include,                               \
+    $(realpath src/bin/$(KSRC)/$(KSRC).disk.S)           \
+    $(addprefix src/lib/Krypto.ninja-,                   \
+      $(addsuffix .h,                                    \
+        lang                                             \
+        data                                             \
+        apis                                             \
+        bots                                             \
+      )                                                  \
+      $(addsuffix .S,                                    \
+        disk                                             \
+      )                                                  \
+    )                                                    \
   ) -D'DEBUG_FRAMEWORK="Krypto.ninja-test.h"'            \
     -D'DEBUG_SCENARIOS=<$(or                             \
       $(realpath src/bin/$(KSRC)/$(KSRC).test.h),        \
@@ -146,7 +152,7 @@ assets: src/bin/$(KSRC)/$(KSRC).client
 
 assets.o: src/bin/$(KSRC)/$(KSRC).disk.S
 	$(chost)g++ -Wa,-I,$(KBUILD)/var/assets,-I,src/lib/Krypto.ninja-client \
-	  -c $^ -o $(KBUILD)/lib/K-$(KSRC)-$@
+	  -include $^ -c src/lib/Krypto.ninja-disk.S -o $(KBUILD)/lib/K-$(KSRC)-$@
 
 src: src/lib/Krypto.ninja-main.cxx src/bin/$(KSRC)/$(KSRC).main.h
 ifdef KALL

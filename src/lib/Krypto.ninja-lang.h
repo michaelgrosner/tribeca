@@ -79,7 +79,7 @@ using Clock  = long long int;
 
 //! \def
 //! \brief Run test units on exit unless NDEBUG.
-//! \note  See test/unit_testing_framework.cxx
+//! \note  See test/unit_testing_framework.cxx.
 #ifdef NDEBUG
 #define EXIT ::exit
 #else
