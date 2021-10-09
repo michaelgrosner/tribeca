@@ -58,7 +58,7 @@ import {Socket, Models} from 'lib/K';
             style="margin-top: 6px;display: inline-block;">{{ db_size }}</span> -
           <span [innerHTML]="footer"></span>
           <a href="#"
-            (click)="changeTheme()">{{ system_theme ? 'LIGHT' : 'DARK' }}</a> -
+            (click)="changeTheme()">{{ system_theme == 'light' ? 'LIGHT' : 'DARK' }}</a> -
         </span>
         <a href="#"
           (click)="openMatryoshka()">MATRYOSHKA</a> -
@@ -136,14 +136,14 @@ export class KComponent implements OnInit {
   };
 
   private setTheme = () => {
-    if (document.getElementById('daynight').getAttribute('href') != '/css/bootstrap-theme' + this.system_theme + '.min.css')
-      document.getElementById('daynight').setAttribute('href', '/css/bootstrap-theme' + this.system_theme + '.min.css');
+    if (document.getElementById('daynight').getAttribute('href') != '/css/bootstrap-' + this.system_theme + '.min.css')
+      document.getElementById('daynight').setAttribute('href', '/css/bootstrap-' + this.system_theme + '.min.css');
   };
 
   private changeTheme = () => {
     this.user_theme = this.user_theme!==null
-                  ? (this.user_theme  == '' ? '-dark' : '')
-                  : (this.system_theme== '' ? '-dark' : '');
+                  ? (this.user_theme  == 'light' ? 'dark' : 'light')
+                  : (this.system_theme== 'light' ? 'dark' : 'light');
     this.system_theme = this.user_theme;
     this.setTheme();
   };
@@ -151,7 +151,7 @@ export class KComponent implements OnInit {
   private getTheme = (hour: number) => {
     return this.user_theme!==null
          ? this.user_theme
-         : ((hour<9 || hour>=21)?'-dark':'');
+         : ((hour<9 || hour>=21)?'dark':'light');
   };
 
   private onAppState = (o : Models.ApplicationState) => {
@@ -159,7 +159,7 @@ export class KComponent implements OnInit {
     this.client_memory = bytesToSize((<any>window.performance).memory ? (<any>window.performance).memory.usedJSHeapSize : 1, 0);
     this.db_size = bytesToSize(o.dbsize, 0);
     this.tradeFreq = (o.freq);
-    this.user_theme = this.user_theme!==null ? this.user_theme : (o.theme==1 ? '' : (o.theme==2 ? '-dark' : this.user_theme));
+    this.user_theme = this.user_theme!==null ? this.user_theme : (o.theme==1 ? 'light' : (o.theme==2 ? 'dark' : this.user_theme));
     this.system_theme = this.getTheme((new Date).getHours());
     this.setTheme();
     this.addr = o.addr;

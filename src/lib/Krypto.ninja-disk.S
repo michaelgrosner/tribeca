@@ -10,30 +10,38 @@
 #endif
 
 //! \def
-//! \brief Lazy assembler or c++ code for any disk file.
+//! \brief Lazy (assembler OR c++) code for any disk file.
 #ifdef __ASSEMBLER__
-#define CODE(a, b)   .disk_file _SYM(_disk_file_ ## a), b;
+#define FILE(a, b, c)   .disk_file _SYM(_disk_file_ ## a), b;
 #else
-#define CODE(a, b) extern const char _disk_file_ ## a; \
-                   extern const  int _disk_file_ ## a ## _len;
-#define DISK_FILE(a)             {                            \
-                                    &_disk_file_ ## a,        \
-                                     _disk_file_ ## a ## _len \
-                                 }
+#define FILE(a, b, c) extern const char _disk_file_ ## a;         \
+                      extern const  int _disk_file_ ## a ## _len;
+#define DOCS(a, b, c)         { #c, {                            \
+                                       &_disk_file_ ## a,        \
+                                        _disk_file_ ## a ## _len \
+                              }     },
 #endif
 
 //! \def
-//! \brief Use whatever code for any disk file (if any DISK exists).
+//! \brief Define empty default DISK for headless bots.
 #ifndef DISK
-#define FILE
-#else
-#define FILE \
-        DISK \
-      ( CODE )
+#define DISK(a)
 #endif
 
 //! \def
-//! \brief Let any disk file be declared (c++) or defined (assembler).
+//! \brief Use whatever code for any disk file (c++).
+#define DISK_WWW \
+        DISK     \
+      ( DOCS )
+
+//! \def
+//! \brief Use whatever code for any disk file (assembler OR c++).
+#define DATA \
+        DISK \
+      ( FILE )
+
+//! \def
+//! \brief Let any disk file be declared (c++) OR defined (assembler).
 #ifdef __ASSEMBLER__
     .data
 
@@ -50,17 +58,8 @@
   .endm
 #endif
 
-    FILE
+    DATA
 
 #ifdef __ASSEMBLER__
     .end
 #endif
-
-//! \def
-//! \brief I'm proud of you, son.
-//! \      Dad, are you space?
-//! \      Yes, now we are a family again.
-#undef  _SYM
-#undef  DISK
-#undef  FILE
-#undef  CODE

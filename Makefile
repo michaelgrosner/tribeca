@@ -2,7 +2,7 @@ K         ?= K.sh
 MAJOR      = 0
 MINOR      = 6
 PATCH      = 6
-BUILD      = 3
+BUILD      = 4
 
 OBLIGATORY = DISCLAIMER: This is strict non-violent software: \n$\
              if you hurt other living creatures, please stop; \n$\
@@ -44,16 +44,19 @@ KARGS     := -std=c++20 -O3 -pthread                     \
   )"' -D'K_CHOST="$(KHOST)"' -D'K_SOURCE="K-$(KSRC)"'    \
   -D'K_STAMP="$(shell date "+%Y-%m-%d %H:%M:%S")"'       \
   -D'K_BUILD="v$(MAJOR).$(MINOR).$(PATCH)+$(BUILD)"'     \
-  -I$(KBUILD)/include $(addprefix $(KBUILD)/lib/,        \
+  -I$(KBUILD)/include                                    \
+  $(addprefix $(KBUILD)/lib/,                            \
     K-$(KHOST).$(ABI).a                                  \
     libsqlite3.a                                         \
     libcurl.a                                            \
     libssl.a  libcrypto.a                                \
     libz.a                                               \
-  ) $(wildcard $(addprefix $(KBUILD)/lib/,               \
+  )                                                      \
+  $(wildcard $(addprefix $(KBUILD)/lib/,                 \
     K-$(KSRC)-assets.o                                   \
     libuv.a                                              \
-  )) $(addprefix -include,                               \
+  ))                                                     \
+  $(addprefix -include ,                                 \
     $(realpath src/bin/$(KSRC)/$(KSRC).disk.S)           \
     $(addprefix src/lib/Krypto.ninja-,                   \
       $(addsuffix .h,                                    \
@@ -64,18 +67,17 @@ KARGS     := -std=c++20 -O3 -pthread                     \
       )                                                  \
       $(addsuffix .S,                                    \
         disk                                             \
-      )                                                  \
-    )                                                    \
-  ) -D'DEBUG_FRAMEWORK="Krypto.ninja-test.h"'            \
-    -D'DEBUG_SCENARIOS=<$(or                             \
-      $(realpath src/bin/$(KSRC)/$(KSRC).test.h),        \
-      /dev/null                                          \
-    )>'                                                  \
-    -D'using_Makefile(x)=<$(abspath                      \
-      src/bin/$(KSRC)                                    \
-    )/using_\#\#x>'                                      \
-    -D'using_data=$(KSRC).data.h'                        \
-    -D'using_main=$(KSRC).main.h'                        \
+  )))                                                    \
+  -D'DEBUG_FRAMEWORK="Krypto.ninja-test.h"'              \
+  -D'DEBUG_SCENARIOS=<$(or                               \
+    $(realpath src/bin/$(KSRC)/$(KSRC).test.h),          \
+    /dev/null                                            \
+  )>'                                                    \
+  -D'using_Makefile(x)=<$(abspath                        \
+    src/bin/$(KSRC)                                      \
+  )/using_\#\#x>'                                        \
+  -D'using_data=$(KSRC).data.h'                          \
+  -D'using_main=$(KSRC).main.h'                          \
 -D'OBLIGATORY_analpaper_SOFTWARE_LICENSE="$(OBLIGATORY)"'\
 -D'PERMISSIVE_analpaper_SOFTWARE_LICENSE="$(PERMISSIVE)"'
 

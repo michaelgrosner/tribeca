@@ -55,8 +55,8 @@ css: www/css beacons
 	$(foreach x,$(wildcard $</*.scss),$(SASS) $(realpath $(x)):$(KASSETS)/$@/$(notdir $(basename $(x))).min.$@;)
 	cp -R $(NODE_PATH)/beacons $(KASSETS)/font
 	cat $(NODE_PATH)/@ag-grid-community/all-modules/dist/styles/ag-grid.$@ $(NODE_PATH)/@ag-grid-community/all-modules/dist/styles/ag-theme-bootstrap.min.$@ $(KASSETS)/font/beacons.$@ >> $(KASSETS)/$@/bootstrap.min.$@
-	cat $(NODE_PATH)/@ag-grid-community/all-modules/dist/styles/ag-theme-dark.min.$@ >> $(KASSETS)/$@/bootstrap-theme-dark.min.$@
-	cat $(NODE_PATH)/@ag-grid-community/all-modules/dist/styles/ag-theme-fresh.min.$@ >> $(KASSETS)/$@/bootstrap-theme.min.$@
+	cat $(NODE_PATH)/@ag-grid-community/all-modules/dist/styles/ag-theme-dark.min.$@  >> $(KASSETS)/$@/bootstrap-dark.min.$@
+	cat $(NODE_PATH)/@ag-grid-community/all-modules/dist/styles/ag-theme-fresh.min.$@ >> $(KASSETS)/$@/bootstrap-light.min.$@
 
 beacons:
 	@test -d $(NODE_PATH)/$@ || (mkdir -p $(NODE_PATH)/$@ &&                  \

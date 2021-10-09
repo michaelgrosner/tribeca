@@ -6,6 +6,7 @@ class TradingBot: public KryptoNinja {
       : engine(*this)
     {
       display   = { terminal };
+      documents = { DISK_WWW };
       events    = {
         [&](const Connectivity &rawdata) { engine.read(rawdata);  },
         [&](const Wallet       &rawdata) { engine.read(rawdata);  },
@@ -14,18 +15,6 @@ class TradingBot: public KryptoNinja {
         [&](const Trade        &rawdata) { engine.read(rawdata);  },
         [&](const unsigned int &tick)    { engine.timer_1s(tick); },
         [&]()                            { engine.quit();         }
-      };
-      documents = {
-        {"",                                  DISK_FILE(gzip_bomb)  },
-        {"/",                                 DISK_FILE(html_index) },
-        {"/js/client.min.js",                 DISK_FILE(js_client)  },
-        {"/css/bootstrap.min.css",            DISK_FILE(css_base)   },
-        {"/css/bootstrap-theme-dark.min.css", DISK_FILE(css_dark)   },
-        {"/css/bootstrap-theme.min.css",      DISK_FILE(css_light)  },
-        {"/font/beacons.woff2",               DISK_FILE(woff2_font) },
-        {"/favicon.ico",                      DISK_FILE(ico_favicon)},
-        {"/audio/0.mp3",                      DISK_FILE(mp3_audio_0)},
-        {"/audio/1.mp3",                      DISK_FILE(mp3_audio_1)}
       };
       arguments = {
         {
