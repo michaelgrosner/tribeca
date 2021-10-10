@@ -6,7 +6,6 @@ class Portfolios: public KryptoNinja {
       : engine(*this)
     {
       display   = { terminal };
-      documents = { DISK_WWW };
       events    = {
         [&](const Connectivity &rawdata) { engine.read(rawdata);  },
         [&](const Ticker       &rawdata) { engine.read(rawdata);  },

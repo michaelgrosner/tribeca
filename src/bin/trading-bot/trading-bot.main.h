@@ -6,7 +6,6 @@ class TradingBot: public KryptoNinja {
       : engine(*this)
     {
       display   = { terminal };
-      documents = { DISK_WWW };
       events    = {
         [&](const Connectivity &rawdata) { engine.read(rawdata);  },
         [&](const Wallet       &rawdata) { engine.read(rawdata);  },

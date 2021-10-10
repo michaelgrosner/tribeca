@@ -59,14 +59,14 @@ KARGS     := -std=c++20 -O3 -pthread                     \
   $(addprefix -include ,                                 \
     $(realpath src/bin/$(KSRC)/$(KSRC).disk.S)           \
     $(addprefix src/lib/Krypto.ninja-,                   \
+      $(addsuffix .S,                                    \
+        disk                                             \
+      )                                                  \
       $(addsuffix .h,                                    \
         lang                                             \
         data                                             \
         apis                                             \
         bots                                             \
-      )                                                  \
-      $(addsuffix .S,                                    \
-        disk                                             \
   )))                                                    \
   -D'DEBUG_FRAMEWORK="Krypto.ninja-test.h"'              \
   -D'DEBUG_SCENARIOS=<$(or                               \

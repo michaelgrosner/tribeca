@@ -335,10 +335,10 @@ namespace ₿ {
           Gw::DataEvent
         >> &events,
         const bool &blackhole,
-        const bool &headless
+        const bool &unmounted
       ) {
         args["autobot"]  =
-        args["headless"] = headless;
+        args["headless"] = unmounted;
         args["naked"]    = !display.terminal;
         bool order_ev = false;
         for (const auto &it : events)
@@ -471,9 +471,9 @@ namespace ₿ {
           switch (k = getopt_long(argc, argv, "hv", (option*)&opt_long[0], &index)) {
             case -1 :
             case  0 : break;
-            case 'h': help(long_options, order_ev, headless); [[fallthrough]];
+            case 'h': help(long_options, order_ev, unmounted); [[fallthrough]];
             case '?':
-            case 'v': EXIT(EXIT_SUCCESS);                     [[fallthrough]];
+            case 'v': EXIT(EXIT_SUCCESS);                      [[fallthrough]];
             default : {
               const string name(opt_long.at(index).name);
               if      (holds_alternative<int>(args[name]))    args[name] =   stoi(optarg);
@@ -567,7 +567,7 @@ namespace ₿ {
             curl_easy_setopt(curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
           };
       };
-      void help(const vector<Argument> &long_options, const bool &order_ev, const bool &headless) {
+      void help(const vector<Argument> &long_options, const bool &order_ev, const bool &unmounted) {
         const vector<string> stamp = {
           " \\__/  \\__/ ", " | (   .    ", "  __   \\__/ ",
           " /  \\__/  \\ ", " |  `.  `.  ", " /  \\       ",
@@ -586,7 +586,7 @@ namespace ₿ {
         clog
           << ANSI_NEW_LINE << ANSI_HIGH_WHITE << stamp.at(((++y%4)*3)+x) << "[arguments]:";
         for (const Argument &it : long_options) {
-          if ( ( headless and  it.name == "title")
+          if ( (unmounted and  it.name == "title")
             or (!order_ev and (it.name == "debug-orders"
                             or it.name == "debug-quotes"))
           ) continue;
@@ -978,10 +978,10 @@ namespace ₿ {
       };
     protected:
       string wtfismyip = "localhost";
-      unordered_map<string, pair<const char*, const int>> documents;
     private:
       string protocol = "HTTP";
       WebServer::Backend server;
+      unordered_map<string, pair<const char*, const int>> documents = { DISK_DOCS };
       const Option *option = nullptr;
       mutable unsigned int delay = 0;
       mutable vector<Readable*> readable;
@@ -1056,6 +1056,9 @@ namespace ₿ {
         readable.clear();
         clickable.clear();
         documents.clear();
+      };
+      bool unmounted() const {
+        return documents.empty();
       };
       void without_goodbye() {
         server.purge();
@@ -1562,7 +1565,7 @@ namespace ₿ {
       KryptoNinja *main(int argc, char** argv) {
         {
           ending([&]() { with_goodbye(); });
-          optional_setup(argc, argv, events, blackhole(), documents.empty());
+          optional_setup(argc, argv, events, blackhole(), unmounted());
           required_setup(this, lock, poll());
         } {
           if (windowed())
