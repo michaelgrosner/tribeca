@@ -2,24 +2,23 @@
 //! \brief Lazy declarations OR definitions of disk files.
 
 //! \def
-//! \brief Enforce underscore prefix for global external symbol names.
+//! \brief Define variable names for any disk file.
+#define DISK_VARNAME(a, b) a ## _disk_file_ ## b
 #ifdef __APPLE__
-#define _SYM(a) _ ## a
+#define DISK_SYMBOL(a) DISK_VARNAME(_, a)
 #else
-#define _SYM(a)      a
+#define DISK_SYMBOL(a) DISK_VARNAME( , a)
 #endif
 
 //! \def
 //! \brief Lazy (assembler OR c++) code for any disk file.
 #ifdef __ASSEMBLER__
-#define FILE(a, b, c)   .disk_file _SYM(_disk_file_ ## a), b;
+#define DISK_FILE(a, b, c) .disk_file DISK_SYMBOL(a), b;
 #else
-#define FILE(a, b, c) extern const char _disk_file_ ## a;         \
-                      extern const  int _disk_file_ ## a ## _len;
-#define DOCS(a, b, c)         { #c, {                            \
-                                       &_disk_file_ ## a,        \
-                                        _disk_file_ ## a ## _len \
-                              }     },
+#define DISK_FILE(a, b, c) extern const char DISK_VARNAME(, a);         \
+                           extern const  int DISK_VARNAME(, a ## _len);
+#define DISK_DOCS(a, b, c)         { #c, {  &DISK_VARNAME(, a),         \
+                                             DISK_VARNAME(, a ## _len)}},
 #endif
 
 //! \def
@@ -30,15 +29,15 @@
 
 //! \def
 //! \brief Use whatever code for any disk file (c++).
-#define DISK_WWW \
-        DISK     \
-      ( DOCS )
+#define DISK_WWW  \
+        DISK      \
+      ( DISK_DOCS )
 
 //! \def
 //! \brief Use whatever code for any disk file (assembler OR c++).
-#define DATA \
-        DISK \
-      ( FILE )
+#define DISK_DATA \
+        DISK      \
+      ( DISK_FILE )
 
 //! \def
 //! \brief Let any disk file be declared (c++) OR defined (assembler).
@@ -58,7 +57,7 @@
   .endm
 #endif
 
-    DATA
+    DISK_DATA
 
 #ifdef __ASSEMBLER__
     .end
