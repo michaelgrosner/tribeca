@@ -5,7 +5,7 @@ ERR        = *** Unexpected MAKE_VERSION < 4.
 HINT       = This Makefile can't be used with your make v${MAKE_VERSION}, consider to upgrade before try again
 $(if $(shell ver=${MAKE_VERSION} && test $${ver%%.*} -lt 4 && echo 1),$(warning $(ERR));$(error $(HINT)))
 
-KASSETS    = $(KHOME)/assets/www
+KASSETS    = $(KHOME)/client/www
 NODE_PATH  = $(KHOME)/node_modules
 PATH      := $(NODE_PATH)/.bin:$(PATH)
 

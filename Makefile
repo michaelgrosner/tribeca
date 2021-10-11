@@ -47,27 +47,19 @@ KARGS     := -std=c++20 -O3 -pthread                     \
   -I$(KBUILD)/include                                    \
   $(addprefix $(KBUILD)/lib/,                            \
     K-$(KHOST).$(ABI).a                                  \
-    libsqlite3.a                                         \
-    libcurl.a                                            \
-    libssl.a  libcrypto.a                                \
-    libz.a                                               \
+    libsqlite3.a libcurl.a libssl.a  libcrypto.a libz.a  \
   )                                                      \
   $(wildcard $(addprefix $(KBUILD)/lib/,                 \
-    K-$(KSRC)-assets.o                                   \
+    K-$(KSRC)-client.o                                   \
     libuv.a                                              \
   ))                                                     \
   $(addprefix -include ,                                 \
     $(realpath src/bin/$(KSRC)/$(KSRC).disk.S)           \
     $(addprefix src/lib/Krypto.ninja-,                   \
-      $(addsuffix .S,                                    \
-        disk                                             \
-      )                                                  \
-      $(addsuffix .h,                                    \
-        lang                                             \
-        data                                             \
-        apis                                             \
-        bots                                             \
-  )))                                                    \
+      $(addsuffix .S, disk)                              \
+      $(addsuffix .h, lang data apis bots)               \
+    )                                                    \
+  )                                                      \
   -D'DEBUG_FRAMEWORK="Krypto.ninja-test.h"'              \
   -D'DEBUG_SCENARIOS=<$(or                               \
     $(realpath src/bin/$(KSRC)/$(KSRC).test.h),          \
@@ -139,21 +131,21 @@ endif
 
 $(SOURCE):
 	$(info $(call STEP,$@))
-	$(MAKE) $(shell ! test -d src/bin/$@/$@.client || echo assets) src KSRC=$@
+	$(MAKE) $(shell ! test -d src/bin/$@/$@.client || echo client) src KSRC=$@
 
-assets: src/bin/$(KSRC)/$(KSRC).client
+client: src/bin/$(KSRC)/$(KSRC).client
 	$(info $(call STEP,$(KSRC) $@))
 	$(MAKE) -C src/lib/Krypto.ninja-client KHOME=$(KHOME) KCLIENT=$(realpath $<)
 	$(foreach chost,$(CARCH), \
 	  build=build-$(shell echo $(chost) | sed 's/-\([a-z_0-9]*\)-\(linux\)$$/-\2-\1/' | sed 's/\([a-z_0-9]*\)-\([a-z_0-9]*\)-.*/\2-\1/' | sed 's/^w64/win64/') \
-	  && ! test -d $${build} || (rm -rf $${build}/var/assets && cp -R $(KHOME)/assets $${build}/var/assets \
-	  && $(MAKE) assets.o CHOST=$(chost) chost=$(shell test -n "`command -v $(chost)-g++`" && echo $(chost)- || :) \
-	  && rm -rf $${build}/var/assets) \
+	  && ! test -d $${build} || (rm -rf $${build}/var/client && cp -R $(KHOME)/client $${build}/var/client \
+	  && $(MAKE) client.o CHOST=$(chost) chost=$(shell test -n "`command -v $(chost)-g++`" && echo $(chost)- || :) \
+	  && rm -rf $${build}/var/client) \
 	;)
-	rm -rf $(KHOME)/assets
+	rm -rf $(KHOME)/client
 
-assets.o: src/bin/$(KSRC)/$(KSRC).disk.S
-	$(chost)g++ -Wa,-I,$(KBUILD)/var/assets,-I,src/lib/Krypto.ninja-client \
+client.o: src/bin/$(KSRC)/$(KSRC).disk.S
+	$(chost)g++ -Wa,-I,$(KBUILD)/var/client,-I,src/lib/Krypto.ninja-client \
 	  -include $^ -c src/lib/Krypto.ninja-disk.S -o $(KBUILD)/lib/K-$(KSRC)-$@
 
 src: src/lib/Krypto.ninja-main.cxx src/bin/$(KSRC)/$(KSRC).main.h
@@ -365,4 +357,4 @@ md5: src
 asandwich:
 	@test "`whoami`" = "root" && echo OK || echo make it yourself!
 
-.PHONY: all K $(SOURCE) hlep hepl help doc test src assets assets.o clean check lib download cleandb screen-help list screen start stop restart startall stopall restartall packages system_install uninstall install docker reinstall diff upgrade changelog test-c push MAJOR MINOR PATCH BUILD release md5 symbol_encode_src symbol_decode_src symbol_encode_Darwin symbol_decode_Darwin asandwich
+.PHONY: all K $(SOURCE) hlep hepl help doc test src client client.o clean check lib download cleandb screen-help list screen start stop restart startall stopall restartall packages system_install uninstall install docker reinstall diff upgrade changelog test-c push MAJOR MINOR PATCH BUILD release md5 symbol_encode_src symbol_decode_src symbol_encode_Darwin symbol_decode_Darwin asandwich

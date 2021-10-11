@@ -4,7 +4,7 @@
 //! \note  See src/lib/Krypto.ninja-disk.S for info about DISK()
 //! \note  Webserver 404 page is loaded using an empty url path.
 //! \note  Filesystem paths at www/* are included from lib/, at:
-//!          - /var/lib/K/assets/www/*
+//!          - /var/lib/K/client/www/*
 //!          - ./src/lib/Krypto.ninja-client/www/*
 
 #define DISK(file) \
