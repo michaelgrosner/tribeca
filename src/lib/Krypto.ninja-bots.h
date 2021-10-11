@@ -328,23 +328,10 @@ namespace ₿ {
         return get<T>(args.at(name));
       };
     protected:
-      void optional_setup(int argc, char** argv,
-        const vector<variant<
-          Loop::TimeEvent,
-          Ending::QuitEvent,
-          Gw::DataEvent
-        >> &events,
-        const bool &blackhole,
-        const bool &unmounted
-      ) {
+      void optional_setup(int argc, char** argv, const bool &proactive, const bool &blackhole, const bool &unmounted) {
         args["autobot"]  =
         args["headless"] = unmounted;
         args["naked"]    = !display.terminal;
-        bool order_ev = false;
-        for (const auto &it : events)
-          if (holds_alternative<Gw::DataEvent>(it)
-            and holds_alternative<function<void(const Order&)>>(get<Gw::DataEvent>(it))
-          ) order_ev = true;
         vector<Argument> long_options = {
           {"INFORMATION",  "",       nullptr,  ""},
           {"help",         "h",      nullptr,  "print this help and quit"},
@@ -408,7 +395,7 @@ namespace ₿ {
         if (!arg<int>("naked")) long_options.push_back(
           {"naked",        "1",      nullptr,  "do not display CLI, print output to stdout instead"}
         );
-        if (order_ev) long_options.push_back(
+        if (proactive) long_options.push_back(
           {"beep",         "1",      nullptr,  "make computer go beep on filled orders"}
         );
         if (!blackhole) long_options.push_back(
@@ -433,7 +420,7 @@ namespace ₿ {
           {"market-limit", "NUMBER", "321",    "set NUMBER of maximum market levels saved in memory,"
                                                ANSI_NEW_LINE "default NUMBER is '321' and the minimum is '10'"}
         );
-        if (order_ev) long_options.push_back(
+        if (proactive) long_options.push_back(
           {"lifetime",     "NUMBER", "0",      "set NUMBER of minimum milliseconds to keep orders open,"
                                                ANSI_NEW_LINE "otherwise open orders can be replaced anytime required"}
         );
@@ -471,9 +458,9 @@ namespace ₿ {
           switch (k = getopt_long(argc, argv, "hv", (option*)&opt_long[0], &index)) {
             case -1 :
             case  0 : break;
-            case 'h': help(long_options, order_ev, unmounted); [[fallthrough]];
+            case 'h': help(long_options, proactive, unmounted); [[fallthrough]];
             case '?':
-            case 'v': EXIT(EXIT_SUCCESS);                      [[fallthrough]];
+            case 'v': EXIT(EXIT_SUCCESS);                       [[fallthrough]];
             default : {
               const string name(opt_long.at(index).name);
               if      (holds_alternative<int>(args[name]))    args[name] =   stoi(optarg);
@@ -487,7 +474,7 @@ namespace ₿ {
           error("CF", argerr);
         }
         tidy();
-        if (order_ev)
+        if (proactive)
           gobeep = arg<int>("beep");
         colorful = arg<int>("colors");
         if (arguments.second) {
@@ -567,7 +554,7 @@ namespace ₿ {
             curl_easy_setopt(curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
           };
       };
-      void help(const vector<Argument> &long_options, const bool &order_ev, const bool &unmounted) {
+      void help(const vector<Argument> &long_options, const bool &proactive, const bool &unmounted) {
         const vector<string> stamp = {
           " \\__/  \\__/ ", " | (   .    ", "  __   \\__/ ",
           " /  \\__/  \\ ", " |  `.  `.  ", " /  \\       ",
@@ -587,8 +574,8 @@ namespace ₿ {
           << ANSI_NEW_LINE << ANSI_HIGH_WHITE << stamp.at(((++y%4)*3)+x) << "[arguments]:";
         for (const Argument &it : long_options) {
           if ( (unmounted and  it.name == "title")
-            or (!order_ev and (it.name == "debug-orders"
-                            or it.name == "debug-quotes"))
+            or (!proactive and (it.name == "debug-orders"
+                             or it.name == "debug-quotes"))
           ) continue;
           string usage = it.help;
           if (usage.empty())
@@ -1516,6 +1503,13 @@ namespace ₿ {
         if (CURLE_OK != curl_global_init(CURL_GLOBAL_ALL))
           error("CF", string("CURL ") + curl_easy_strerror(CURLE_FAILED_INIT));
       };
+      bool proactive() const {
+        for (const auto &it : events)
+          if (holds_alternative<Gw::DataEvent>(it)
+            and holds_alternative<function<void(const Order&)>>(get<Gw::DataEvent>(it))
+          ) return true;
+        return false;
+      };
       void handshake(const GwExchange::Report &notes, const bool &nocache) {
         const json reply = gateway->handshake(nocache);
         if (!gateway->tickPrice or !gateway->tickSize or !gateway->minSize)
@@ -1565,7 +1559,7 @@ namespace ₿ {
       KryptoNinja *main(int argc, char** argv) {
         {
           ending([&]() { with_goodbye(); });
-          optional_setup(argc, argv, events, blackhole(), unmounted());
+          optional_setup(argc, argv, proactive(), blackhole(), unmounted());
           required_setup(this, lock, poll());
         } {
           if (windowed())
