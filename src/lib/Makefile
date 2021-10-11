@@ -6,7 +6,7 @@ V_ZLIB  = 1.2.11
 V_SSL   = 3.0.0
 V_CURL  = 7.79.1
 V_SQL   = 3360000
-V_JSON  = 3.10.2
+V_JSON  = 3.10.3
 V_CATCH = 2.13.7
 V_UV    = 1.42.0
 
