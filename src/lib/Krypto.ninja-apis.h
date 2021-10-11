@@ -415,7 +415,7 @@ namespace ₿ {
                                        + string(apikey.length() / 2, '#') +
           ANSI_NEW_LINE ANSI_NEW_LINE "To unlock it anonymously and to collaborate with"
           ANSI_NEW_LINE                "the development, make an acceptable Pull Request"
-          ANSI_NEW_LINE                "on github.. or send 0.01210000 BTC (or more) to:"
+          ANSI_NEW_LINE                "on github.. or send 0.00121000 BTC (or more) to:"
           ANSI_NEW_LINE ANSI_NEW_LINE "  " + unlock +
           ANSI_NEW_LINE ANSI_NEW_LINE "Before restart, wait for zero (0) confirmations:"
           ANSI_NEW_LINE ANSI_NEW_LINE "https://live.blockcypher.com/btc/address/" + unlock +

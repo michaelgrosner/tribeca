@@ -360,7 +360,7 @@ The bot is unlocked for collaborators and contributors (feel free to make accept
 
 While locked, the orderbook will be in realtime 121 seconds, and later it will be updated only once every 121 seconds.
 
-Anonymous users can also unlock any API Key by paying 0.01210000 BTC to the address displayed on exit.
+Anonymous users can also unlock any API Key by paying 0.00121000 BTC to the address displayed on exit.
 
 Once unlocked you may use different bots or currency pairs or reinstall on a different machine with the same unlocked API Key. However, if you want to use more than one exchange, you will need to pay again to unlock the API Key for each exchange.
 

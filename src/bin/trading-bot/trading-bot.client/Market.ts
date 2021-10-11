@@ -66,7 +66,7 @@ import {Models} from 'lib/K';
         </tr>
       </table>
     </div>
-    <table *ngIf="addr" class="table-responsive text-center" style="width:100%;"><tr><td><div class="text-danger text-center"><br /><br />To <a href="https://github.com/ctubio/Krypto-trading-bot/blob/master/README.md#unlock" target="_blank">unlock</a> realtime market data,<br />and to collaborate with the development..<br /><br />make an acceptable <code>Pull Request</code> on github,<br/><br/>or send <code>0.01210000 BTC</code> or more to:<br /><a href="https://live.blockcypher.com/btc/address/{{ addr }}" target="_blank">{{ addr }}</a><br /><br />Wait 0 confirmations and restart this bot.</div></td></tr></table>
+    <table *ngIf="addr" class="table-responsive text-center" style="width:100%;"><tr><td><div class="text-danger text-center"><br /><br />To <a href="https://github.com/ctubio/Krypto-trading-bot/blob/master/README.md#unlock" target="_blank">unlock</a> realtime market data,<br />and to collaborate with the development..<br /><br />make an acceptable <code>Pull Request</code> on github,<br/><br/>or send <code>0.00121000 BTC</code> or more to:<br /><a href="https://live.blockcypher.com/btc/address/{{ addr }}" target="_blank">{{ addr }}</a><br /><br />Wait 0 confirmations and restart this bot.</div></td></tr></table>
     </div>`
 })
 export class MarketComponent {
