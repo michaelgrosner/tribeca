@@ -280,7 +280,7 @@ namespace ₿ {
 /**/  virtual           bool async_wallet() { return false; };         // call               async wallet data from exchange.
 /**/  virtual vector<Wallet>  sync_wallet() { return {}; };          // call                  sync wallet data from exchange.
 //EO non-free Gw class member functions from lib build-*/lib/K-*.a (it just redefines all virtual gateway functions above)...
-      void online(const Connectivity &connectivity) {
+      virtual void online(const Connectivity &connectivity) {
         async.connectivity.try_write(connectivity);
         if (!(bool)connectivity)
           async.levels.try_write({});
@@ -444,6 +444,13 @@ namespace ₿ {
       virtual   json handshake()    const = 0;
       virtual   void pairs(string&) const = 0;
       virtual string nonce()        const = 0;
+      void online(const Connectivity &connectivity) override {
+        print("network state changed to", string((bool)connectivity
+          ? ""
+          : "DIS"
+        ) + "CONNECTED");
+        GwExchangeData::online(connectivity);
+      };
   };
 
   class Gw: public GwExchange {

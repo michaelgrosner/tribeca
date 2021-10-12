@@ -248,8 +248,6 @@ namespace analpaper {
       };
       void read_from_gw(const Connectivity &raw) {
         greenGateway = raw;
-        K.log("GW " + K.gateway->exchange, "network state changed to",
-          string(online() ? "" : "DIS") + "CONNECTED");
         broadcast();
         K.repaint();
       };

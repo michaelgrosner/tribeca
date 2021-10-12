@@ -10,8 +10,8 @@ class StableBot: public KryptoNinja {
         [&](const Wallet       &rawdata) { engine.read(rawdata);  },
         [&](const Levels       &rawdata) { engine.read(rawdata);  },
         [&](const Order        &rawdata) { engine.read(rawdata);  },
-        [&](const unsigned int &tick)    { engine.timer_1s(tick); },
-        [&]()                            { engine.quit();         }
+        [&](const unsigned int &tick   ) { engine.timer_1s(tick); },
+        [&](                           ) { engine.quit();         }
       };
       arguments = {
         {

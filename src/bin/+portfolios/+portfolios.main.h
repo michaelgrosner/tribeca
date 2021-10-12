@@ -10,7 +10,7 @@ class Portfolios: public KryptoNinja {
         [&](const Connectivity &rawdata) { engine.read(rawdata);  },
         [&](const Ticker       &rawdata) { engine.read(rawdata);  },
         [&](const Wallet       &rawdata) { engine.read(rawdata);  },
-        [&](const unsigned int &tick)    { engine.timer_1s(tick); }
+        [&](const unsigned int &tick   ) { engine.timer_1s(tick); }
       };
     };
   private:

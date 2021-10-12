@@ -94,7 +94,7 @@ using Clock  = long long int;
                  chrono::system_clock::now().time_since_epoch() \
                ).count()
 //! \since Beginning of execution.
-static auto
+static auto __attribute__ ((unused))
         Tbegin = Tstamp;
 #define Tspent   Tstamp - Tbegin
 
@@ -106,16 +106,33 @@ static auto
 #endif
 
 //! \def
-//! \brief I like turtles.
-static bool colorful = true;
+//! \brief ANSI escape sequences.
+static auto __attribute__ ((unused))
+        colorful = true;
+#ifndef ANSI_BLACK
 #define ANSI_BLACK          "0"
+#endif
+#ifndef ANSI_RED
 #define ANSI_RED            "1"
+#endif
+#ifndef ANSI_GREEN
 #define ANSI_GREEN          "2"
+#endif
+#ifndef ANSI_YELLOW
 #define ANSI_YELLOW         "3"
+#endif
+#ifndef ANSI_BLUE
 #define ANSI_BLUE           "4"
+#endif
+#ifndef ANSI_MAGENTA
 #define ANSI_MAGENTA        "5"
+#endif
+#ifndef ANSI_CYAN
 #define ANSI_CYAN           "6"
+#endif
+#ifndef ANSI_WHITE
 #define ANSI_WHITE          "7"
+#endif
 #define ANSI_COLOR(a)       string(colorful ? a : "")
 #define ANSI_COLORS_SIZE(a) (colorful ? a * 7 : 0 )
 #define ANSI_SYMBOL_SIZE(a) (a * 2)

@@ -12,8 +12,8 @@ class TradingBot: public KryptoNinja {
         [&](const Levels       &rawdata) { engine.read(rawdata);  },
         [&](const Order        &rawdata) { engine.read(rawdata);  },
         [&](const Trade        &rawdata) { engine.read(rawdata);  },
-        [&](const unsigned int &tick)    { engine.timer_1s(tick); },
-        [&]()                            { engine.quit();         }
+        [&](const unsigned int &tick   ) { engine.timer_1s(tick); },
+        [&](                           ) { engine.quit();         }
       };
       arguments = {
         {
@@ -24,8 +24,7 @@ class TradingBot: public KryptoNinja {
                                               ANSI_NEW_LINE "or use '0' for cross margin; default AMOUNT is '1'"},
           {"wallet-limit", "AMOUNT", "0",     "set AMOUNT in base currency to limit the balance,"
                                               ANSI_NEW_LINE "otherwise the full available balance can be used"}
-        },
-        nullptr
+        }
       };
     };
   private:
@@ -120,7 +119,7 @@ string TradingBot::terminal() {
           + ANSI_END_LINE;
     for (const auto &it : openOrders) {
       data += ANSI_PUKE_WHITE + "├"
-            + (it.side == Side::Bid ? ANSI_PUKE_CYAN + "BID" : ANSI_PUKE_MAGENTA + "ASK")
+            + (it.side == Side::Bid ? ANSI_HIGH_CYAN + "BID" : ANSI_PUKE_MAGENTA + "ASK")
             + " > "
             + K.gateway->decimal.amount.str(it.quantity)
             + ' ' + K.gateway->base + " at price "

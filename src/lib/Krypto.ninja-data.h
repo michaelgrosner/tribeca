@@ -1136,7 +1136,7 @@ namespace ₿ {
                 if (!key.empty())
                   warn.emplace_back("Ignored .key file because .crt file is missing");
                 warn.emplace_back("Connected web clients will enjoy unsecure SSL encryption.."
-                  ANSI_NEW_LINE + ANSI_HIGH_RED +
+                  ANSI_NEW_LINE
                   "(because the private key is visible in the source!). See --help argument to setup your own SSL");
                 if (!SSL_CTX_use_certificate(ctx,
                   PEM_read_bio_X509(BIO_new_mem_buf((void*)

@@ -35,7 +35,7 @@ namespace analpaper {
         if (!order.orderId.empty() and order.justFilled)
           K.log("GW " + K.gateway->exchange,
             string(order.side == Side::Bid
-              ? ANSI_PUKE_CYAN    + "TRADE BUY  "
+              ? ANSI_HIGH_CYAN    + "TRADE BUY  "
               : ANSI_PUKE_MAGENTA + "TRADE SELL "
             )
             + K.gateway->decimal.amount.str(order.justFilled)
@@ -131,9 +131,6 @@ namespace analpaper {
           reason = "DISABLED " + ANSI_PUKE_WHITE
                  + "because " + (quote.side == Side::Bid ? "--bid-price" : "--ask-price")
                  + " was not set";
-        else if (quote.state == QuoteState::Disconnected)
-          reason = " PAUSED  " + ANSI_PUKE_WHITE
-                 + "because the exchange seems down";
         return reason;
       };
       void calcRawQuotes() override {
@@ -274,7 +271,7 @@ namespace analpaper {
       {};
       void read_from_gw(const Connectivity &raw) {
         greenGateway = raw;
-        if (!(bool)greenGateway)
+        if (!ready())
           quotes.offline();
       };
       bool ready() const {

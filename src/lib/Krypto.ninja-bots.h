@@ -116,7 +116,7 @@ namespace ₿ {
         halt(EXIT_FAILURE);
       };
       static void wtf(const int sig) {
-        epilogue = ANSI_PUKE_CYAN + "Errrror: " + strsignal(sig) + ' ';
+        epilogue = ANSI_HIGH_CYAN + "Errrror: " + strsignal(sig) + ' ';
         const string mods = changelog();
         if (mods.empty()) {
           epilogue += "(Three-Headed Monkey found):" ANSI_NEW_LINE + epitaph
@@ -211,8 +211,7 @@ namespace ₿ {
         }
         puke_rainbow(stamp() +
           prefix             + ANSI_PUKE_RED +
-          " Warrrrning: "    + ANSI_HIGH_RED +
-          reason
+          " Warrrrning: "    + lines(reason)
         );
       };
       void beep() const {
@@ -269,6 +268,12 @@ namespace ₿ {
              << (epilogue.empty() ? "" : ANSI_NEW_LINE);
       };
     private:
+      string lines(string reason) const {
+        string::size_type n = 0;
+        while ((n = reason.find(ANSI_NEW_LINE, n + 2)) != string::npos)
+          reason.insert(n + 2, ANSI_HIGH_RED);
+        return ANSI_HIGH_RED + reason;
+      };
       void puke_rainbow(const string &rain) const {
         string puke = rain + ANSI_PUKE_WHITE
                     + '.'  + ANSI_RESET
@@ -317,7 +322,10 @@ namespace ₿ {
       };
     protected:
       using MutableUserArguments = unordered_map<string, variant<string, int, double>>;
-      pair<vector<Argument>, function<void(MutableUserArguments&)>> arguments;
+      struct {
+        vector<Argument> options;
+        function<void(MutableUserArguments&)> fn = nullptr;
+      } arguments;
     private:
       MutableUserArguments args;
     public:
@@ -381,9 +389,9 @@ namespace ₿ {
         if (!arg<int>("autobot")) long_options.push_back(
           {"autobot",      "1",      nullptr,  "automatically start trading on boot"}
         );
-        for (const Argument &it : arguments.first)
+        for (const Argument &it : arguments.options)
           long_options.push_back(it);
-        arguments.first.clear();
+        arguments.options.clear();
         for (const Argument &it : (vector<Argument>){
           {"heartbeat",    "1",      nullptr,  "print detailed output about most important data"},
           {"debug-orders", "1",      nullptr,  "print detailed output about order states"},
@@ -477,9 +485,9 @@ namespace ₿ {
         if (proactive)
           gobeep = arg<int>("beep");
         colorful = arg<int>("colors");
-        if (arguments.second) {
-          arguments.second(args);
-          arguments.second = nullptr;
+        if (arguments.fn) {
+          arguments.fn(args);
+          arguments.fn = nullptr;
         }
         if (arg<int>("naked"))
           display = {};
@@ -1274,7 +1282,7 @@ namespace ₿ {
               const string reason = explainState(quote);
               if (!reason.empty())
                 K.log("QP", (quote.side == Side::Bid
-                  ? ANSI_PUKE_CYAN    + "BID"
+                  ? ANSI_HIGH_CYAN    + "BID"
                   : ANSI_PUKE_MAGENTA + "ASK"
                 ) + ANSI_PUKE_WHITE + " quoting", reason);
             }

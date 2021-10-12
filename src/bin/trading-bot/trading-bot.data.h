@@ -1161,7 +1161,7 @@ namespace tribeca {
         const bool is_bid = last.side == Side::Bid;
         K.log("GW " + K.gateway->exchange,
           string(is_bid
-            ? ANSI_PUKE_CYAN    + (last.isPong?"PONG":"PING") + " TRADE BUY  "
+            ? ANSI_HIGH_CYAN    + (last.isPong?"PONG":"PING") + " TRADE BUY  "
             : ANSI_PUKE_MAGENTA + (last.isPong?"PONG":"PING") + " TRADE SELL "
           )
           + K.gateway->decimal.amount.str(filled.quantity) + ' '
@@ -2032,9 +2032,6 @@ namespace tribeca {
         else if (quote.state == QuoteState::DisabledQuotes)
           reason = "DISABLED " + ANSI_PUKE_WHITE
                  + "because an admin considered it";
-        else if (quote.state == QuoteState::Disconnected)
-          reason = " PAUSED  " + ANSI_PUKE_WHITE
-                 + "because the exchange seems down";
         return reason;
       };
       void calcRawQuotes() override {

@@ -11,8 +11,8 @@ class ScalingBot: public KryptoNinja {
         [&](const Wallet       &rawdata) { engine.read(rawdata);  },
         [&](const Levels       &rawdata) { engine.read(rawdata);  },
         [&](const Order        &rawdata) { engine.read(rawdata);  },
-        [&](const unsigned int &tick)    { engine.timer_1s(tick); },
-        [&]()                            { engine.quit();         }
+        [&](const unsigned int &tick   ) { engine.timer_1s(tick); },
+        [&](                           ) { engine.quit();         }
       };
       arguments = {
         {
@@ -189,7 +189,7 @@ string ScalingBot::terminal() {
           + ANSI_END_LINE;
     for (const auto &it : openOrders) {
       data += ANSI_PUKE_WHITE + "├"
-            + (it.side == Side::Bid ? ANSI_PUKE_CYAN + "BID" : ANSI_PUKE_MAGENTA + "ASK")
+            + (it.side == Side::Bid ? ANSI_HIGH_CYAN + "BID" : ANSI_PUKE_MAGENTA + "ASK")
             + " > "
             + K.gateway->decimal.amount.str(it.quantity)
             + ' ' + K.gateway->base + " at price "

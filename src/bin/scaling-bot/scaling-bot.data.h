@@ -67,7 +67,7 @@ namespace analpaper {
           or (order.isPong and order.status == Status::Working)
         ) K.log("GW " + K.gateway->exchange,
             string(order.side == Side::Bid
-              ? ANSI_PUKE_CYAN    + (order.isPong?"PONG":"PING") + " TRADE BUY  "
+              ? ANSI_HIGH_CYAN    + (order.isPong?"PONG":"PING") + " TRADE BUY  "
               : ANSI_PUKE_MAGENTA + (order.isPong?"PONG":"PING") + " TRADE SELL "
             )
             + K.gateway->decimal.amount.str(order.quantity)
@@ -284,9 +284,6 @@ namespace analpaper {
         else if (quote.state == QuoteState::DisabledQuotes)
           reason = "DISABLED " + ANSI_PUKE_WHITE
                  + "because an admin considered it";
-        else if (quote.state == QuoteState::Disconnected)
-          reason = " PAUSED  " + ANSI_PUKE_WHITE
-                 + "because the exchange seems down";
         return reason;
       };
       void calcRawQuotes() override {

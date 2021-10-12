@@ -2,7 +2,7 @@ K         ?= K.sh
 MAJOR      = 0
 MINOR      = 6
 PATCH      = 6
-BUILD      = 5
+BUILD      = 6
 
 OBLIGATORY = DISCLAIMER: This is strict non-violent software: \n$\
              if you hurt other living creatures, please stop; \n$\
@@ -53,13 +53,15 @@ KARGS     := -std=c++20 -O3 -pthread                     \
     K-$(KSRC)-client.o                                   \
     libuv.a                                              \
   ))                                                     \
-  $(addprefix -include ,                                 \
-    $(realpath src/bin/$(KSRC)/$(KSRC).disk.S)           \
+  $(addprefix -include , $(realpath                      \
+     $(addprefix src/bin/$(KSRC)/$(KSRC).,               \
+      $(addsuffix .S, disk)                              \
+      $(addsuffix .h, ansi)                              \
+    )                                                    \
     $(addprefix src/lib/Krypto.ninja-,                   \
       $(addsuffix .S, disk)                              \
       $(addsuffix .h, lang data apis bots)               \
-    )                                                    \
-  )                                                      \
+  )))                                                    \
   -D'DEBUG_FRAMEWORK="Krypto.ninja-test.h"'              \
   -D'DEBUG_SCENARIOS=<$(or                               \
     $(realpath src/bin/$(KSRC)/$(KSRC).test.h),          \
