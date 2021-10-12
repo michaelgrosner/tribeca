@@ -8,7 +8,7 @@
 [![Software License](https://img.shields.io/badge/license-ISC-551a8b.svg)](https://raw.githubusercontent.com/ctubio/Krypto-trading-bot/master/LICENSE)
 [![Software License](https://img.shields.io/badge/license-MIT-551a8b.svg)](https://raw.githubusercontent.com/ctubio/Krypto-trading-bot/master/COPYING)
 
-[`K`](https://github.com/ctubio/Krypto-trading-bot) is a very low latency [market making](https://github.com/ctubio/Krypto-trading-bot/blob/master/doc/MANUAL.md#what-is-market-making) trading bot with a fully featured [web interface](https://github.com/ctubio/Krypto-trading-bot#web-ui). It can place and cancel orders on one of [several supported cryptocoin exchanges](https://github.com/ctubio/Krypto-trading-bot#compatible-exchanges) in less than a few milliseconds per order on a decent machine.
+[`K`](https://github.com/ctubio/Krypto-trading-bot) is a (very customizable) very low latency [market making](https://github.com/ctubio/Krypto-trading-bot/blob/master/doc/MANUAL.md#what-is-market-making) trading bot with a fully featured [web interface](https://github.com/ctubio/Krypto-trading-bot#web-ui). It can place and cancel orders on one of the [compatible exchanges](https://github.com/ctubio/Krypto-trading-bot#compatible-exchanges) in less than a few milliseconds per order on a decent machine.
 
 ### <img src="https://github.githubassets.com/images/icons/emoji/unicode/1f4be.png" height="64" width="64"  align="middle" /> Latest version at https://github.com/ctubio/Krypto-trading-bot <img src="https://github.githubassets.com/images/icons/emoji/unicode/1f51e.png" height="64" width="64" align="middle" /> <img src="https://github.githubassets.com/images/icons/emoji/unicode/1f4b8.png" height="64" width="64" align="middle" />
 
@@ -17,9 +17,9 @@
 [![Quality Status](https://img.shields.io/badge/review-clang--tidy%20+%20pvs-4cc61e.svg)](https://www.codacy.com/gh/ctubio/Krypto-trading-bot/dashboard)
 [![Open Issues](https://img.shields.io/github/issues/ctubio/Krypto-trading-bot.svg)](https://github.com/ctubio/Krypto-trading-bot/issues)
 [![Last Commit](https://img.shields.io/github/last-commit/ctubio/Krypto-trading-bot.svg)](https://github.com/ctubio/Krypto-trading-bot)
-[![Downloads Last 21 Commits](https://img.shields.io/github/downloads/ctubio/Krypto-trading-bot/total.svg?label=downloads%20last%20releases)](https://github.com/ctubio/Krypto-trading-bot)
+[![Downloads Last Releases](https://img.shields.io/github/downloads/ctubio/Krypto-trading-bot/total.svg?label=downloads%20last%20releases)](https://github.com/ctubio/Krypto-trading-bot)
 
-Runs on unix-like systems. Persistence is achieved through a built-in server-less SQLite C++ interface.<br> Installation in a dedicated [Debian](https://cdimage.debian.org/cdimage/release/current/), [Raspberry](https://www.raspberrypi.org/software/), [Red Hat](https://developers.redhat.com/products/rhel/download), [CentOS](https://wiki.centos.org/Download) or macOS instance is recommended.
+Runs on unix-like systems. Persistence is achieved through a built-in server-less SQLite C++ interface.<br>Data transfers are directly done between your machine and the exchange using the latest CURL and OpenSSL versions.<br>Installation in a dedicated [Debian](https://cdimage.debian.org/cdimage/release/current/), [Raspberry](https://www.raspberrypi.org/software/), [Red Hat](https://developers.redhat.com/products/rhel/download), [CentOS](https://wiki.centos.org/Download) or macOS instance without Docker is recommended.
 
 ![Web UI Preview](https://user-images.githubusercontent.com/1634027/44740469-d5c7ff00-aafa-11e8-9252-73b9c1283adb.png)
 
@@ -32,7 +32,7 @@ The web UI is compatible with most web browsers/resolutions, but Brave or Firefo
 |**with Maker and Taker fees**|[Coinbase](https://pro.coinbase.com/) <sub>([fees](https://pro.coinbase.com/orders/fees))</sub><br> &#10239; _REST + WebSocket + FIX_<br><br>[Binance](https://www.binance.com/) <sub>([fees](https://www.binance.com/en/fee/schedule))</sub><br> &#10239; _REST + WebSocket_<br><br>[Kraken](https://www.kraken.com/) <sub>([fees](https://www.kraken.com/features/fee-schedule))</sub><br> &#10239; _REST + WebSocket²_<br><br>[KuCoin](https://www.kucoin.com/) <sub>([fees](https://www.kucoin.com/vip/level))</sub><br> &#10239; _REST + WebSocket_<br><br>[Bitfinex](https://www.bitfinex.com/) <sub>([fees](https://www.bitfinex.com/fees))</sub><br>[Ethfinex](https://www.ethfinex.com/) <sub>([fees](https://www.ethfinex.com/fees))</sub><br> &#10239; _REST + WebSocket_<br><br>[Gate.io](https://www.gate.io/) <sub>([fees](https://www.gate.io/fee))</sub><br> &#10239; _REST + WebSocket_<br><br>[HitBTC](https://hitbtc.com/) <sub>([fees](https://hitbtc.com/fee-tier))</sub><br>[Bequant](https://bequant.io/) <sub>([fees](https://bequant.io/fees-and-limits))</sub><br> &#10239; _REST + WebSocket²_<br><br>[Poloniex](https://www.poloniex.com/) <sub>([fees](https://poloniex.com/fees/))</sub><br> &#10239; _REST + WebSocket_|*none*|
 |**without Maker fees**|[BitMEX](https://www.bitmex.com/) <sub>([fees](https://www.bitmex.com/app/fees))</sub><br> &#10239; _REST + WebSocket_|*none*|
 
-All currency pairs are supported.
+All currency pairs are supported (use `--list` argument to see all currently tradable pairs on a given exchange).
 
 ## README
 - Documentation
@@ -70,7 +70,7 @@ See [etc/Dockerfile](https://github.com/ctubio/Krypto-trading-bot/tree/master/et
 
 ### Windows Installation
 
-Before proceeding with a manual installation, ensure your target machine has Windows 7 or greater and [MSYS2](https://www.msys2.org/) installed.
+Before starting with a manual installation, ensure your target machine has Windows 7 or greater and [MSYS2](https://www.msys2.org/) installed.
 
 Use MSYS2 Terminal to install `make` (with command `pacman -S make`), and then proceed as usual with the installation.
 
@@ -136,9 +136,11 @@ Troubleshooting:
 
  Optional:
 
- * See `./K.sh --help` to trade or `make help` to develop.
+ * See at least once `./K.sh --help` to trade or `make help` to develop.
 
- * Use your own SSL certificate with `--ssl-crt` and `--ssl-key`, see [web ui](https://github.com/ctubio/Krypto-trading-bot#web-ui) section. Otherwise, the insecure built-in certificate is a fully featured default openssl, that you may just need to authorise in your browser.
+ * Use your own HTTP Basic Authentication credentials with `--user` and `--pass` arguments.
+
+ * Use your own SSL certificate with `--ssl-crt` and `--ssl-key` arguments.<br>Otherwise, the insecure built-in certificate is fully featured, but you may need to authorise it in your browser.<br>If you want to generate your own certificate see [SSL for internal usage](https://www.akadia.com/services/ssh_test_certificate.html).<br>In case you really want to use plain HTTP, use `--without-ssl` argument.
 
 ### Upgrade to the latest commit
 
@@ -180,19 +182,15 @@ After multiple config files are setup, to control them all together instead of o
 
 ### Application Usage
 
-1. Open your web browser to connect to HTTPS port `3000` (or your configured port number) of the machine running K. If you're running K locally on Mac/Windows on Docker, replace "localhost" with the address returned by `boot2docker ip`.
+1. Open your web browser to connect to port `3000` (or your configured port number) of the machine running K. Using `localhost` or one of the public or private IPs of your machine (if you're running on Docker, use the IP address returned by `boot2docker ip`).
 
 2. Read up on how to use K and market making in the [manual](https://github.com/ctubio/Krypto-trading-bot/blob/master/doc/MANUAL.md).
 
-3. Use the web UI to change the quoting parameters. Click the "BTC/USD" button to start making markets. Click it again to stop. When the button is green, the bot is actively placing orders.
+3. Use the web UI to change the quoting parameters. Click the big "BTC/USD" button to start making markets. Click it again to stop. When the button is green, the bot is actively placing orders.
 
 ### Web UI
 
-Once `K` is up and running, visit HTTPS port `3000` (or your configured port number) to access the UI (i.e. [https://localhost:3000](https://localhost:3000)). There are inputs for quoting parameters, grids to display market orders, market trades, your trades, your order history, your positions, and a big button with the currency pair you are trading. When you're ready, click that button green to begin sending out quotes. The UI uses angularjs hydrated with websockets observed with reactivexjs.
-
-If you want to generate your own certificate see [SSL for internal usage](https://www.akadia.com/services/ssh_test_certificate.html).
-
-In case you really want to use plain HTTP, use `--without-ssl` argument.
+Once `K` is up and running, visit port `3000` (or your configured port number) to access the UI (i.e. [https://localhost:3000](https://localhost:3000)). There are inputs for quoting parameters, grids to display market orders, market trades, your trades, your order history, your positions, and a big button with the currency pair you are trading. When you're ready, click that button green to begin sending out quotes. The UI uses angularjs hydrated with websockets observed with reactivexjs.
 
 ### Databases
 
@@ -208,7 +206,7 @@ To explore each database you can use https://github.com/sqlitebrowser/sqlitebrow
 
 To set a different database filename or to set an [in-memory database](https://sqlite.org/inmemorydb.html), use `--database=FILE` argument (see `--help`).
 
-Even if using an in-memory database, the quoting parameters are always loaded from and saved into the disk file database.
+Even if using an in-memory database, the quoting parameters are always loaded from and saved into the file database.
 
 ### Charts
 
@@ -234,7 +232,7 @@ If you ask me, [<img height="20px" src="https://user-images.githubusercontent.co
 
 Make sure your build machine has [node](https://nodejs.org/en/download/package-manager/) installed, also ensure `make lib` provides all dependencies without errors.
 
-To rebuild the application with your modifications, see `make help` and choose a target (just `make` may be what you are looking for).
+To rebuild the application, see `make help` and choose a target (just `make` may be what you are looking for).
 
 Test units are executed before the application exits, only if the application was compiled with `KUNITS=1 make`.
 
@@ -242,9 +240,7 @@ Otherwise, just `make` without the environment var `KUNITS` produces an applicat
 
 A quick test runner therefore is `./K.sh --version` or the alias `make test` or all at once with `KUNITS=1 make K test`.
 
-To pipe the output to stdout, execute the application in the foreground with `./K.sh --naked`.
-
-To ignore the output, execute the application in the background with `screen -dmS K K.sh` or with the alias `make start` or simply `./K.sh`.
+To pipe the output to stdout, execute the application in the foreground with `--naked` argument.
 
 For more information consider to follow the *white rabbit*, but its dangerous to go alone, take this:
 
@@ -370,7 +366,7 @@ Please don't open issues asking how much % less the bot generates with `--free-v
 
 ### Donations
 
-nope, this project doesn't have maintenance costs. but you can donate to your favorite developer today! (or tomorrow!)
+nope, this project doesn't have maintenance costs. but you can donate to your favorite developer today!<br>(or tomorrow!)
 
 or see the upstream project [michaelgrosner/tribeca](https://github.com/michaelgrosner/tribeca).
 
