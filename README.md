@@ -248,7 +248,7 @@ c sandbox: [wandbox.org](https://wandbox.org)
 
 js sandbox: [jsfiddle.net](https://jsfiddle.net)
 
-ws sandbox: [websocket.org](https://www.websocket.org/echo.html)
+ws sandbox: [app.gosandy.io](https://app.gosandy.io/)
 
 <details><summary><a id="unreleased-changelog"><b>Release v0.6.x Changelog</b></a></summary>
 
@@ -434,6 +434,7 @@ Pull Requests are welcome, but adhere to the Contributor License Agreement:
  - https://youtu.be/1iZdJNH3Z1o
  - https://youtu.be/_e5hvHL2WTg
  - https://youtu.be/jQhtEYfax5c
+ - https://youtu.be/nmYOayNiv1A
  - add your song here (please open a [new issue](https://github.com/ctubio/Krypto-trading-bot/issues/new?title=Today,%20I%20sing) to share your link)
 <p align="center"><img src="https://user-images.githubusercontent.com/1634027/32134633-642bb47a-bbf1-11e7-809c-f2d4d57678e0.jpg" />
 <br /><br />
