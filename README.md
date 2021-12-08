@@ -8,7 +8,11 @@
 [![Software License](https://img.shields.io/badge/license-ISC-551a8b.svg)](https://raw.githubusercontent.com/ctubio/Krypto-trading-bot/master/LICENSE)
 [![Software License](https://img.shields.io/badge/license-MIT-551a8b.svg)](https://raw.githubusercontent.com/ctubio/Krypto-trading-bot/master/COPYING)
 
-[`K`](https://github.com/ctubio/Krypto-trading-bot) is a (very customizable) very low latency [market making](https://github.com/ctubio/Krypto-trading-bot/blob/master/doc/MANUAL.md#what-is-market-making) trading bot with a fully featured [web interface](https://github.com/ctubio/Krypto-trading-bot#web-ui). It can place and cancel orders on one of the [compatible exchanges](https://github.com/ctubio/Krypto-trading-bot#compatible-exchanges) in less than a few milliseconds per order on a decent machine.
+[`K`](https://github.com/ctubio/Krypto-trading-bot) is a family of (very customizable) very low latency [market making](https://github.com/ctubio/Krypto-trading-bot/blob/master/doc/MANUAL.md#what-is-market-making) trading bots with a fully featured [web interface](https://github.com/ctubio/Krypto-trading-bot#web-ui).<br />It can place and cancel orders on one of the several [compatible exchanges](https://github.com/ctubio/Krypto-trading-bot#compatible-exchanges) in less than a few milliseconds per order on a decent machine.
+
+If you don't want to configure or hardcode your own trading strategies in your own machine,<br />you can run strategies from someone else at [kryll.io](https://kryll.io/) (or at any other trading community out there).
+
+If you don't want to run a bot at all,<br />you can fund liquidity pools at [tinyman.org](https://tinyman.org/) (or at any other defi out there).
 
 ### <img src="https://github.githubassets.com/images/icons/emoji/unicode/1f4be.png" height="64" width="64"  align="middle" /> Latest version at https://github.com/ctubio/Krypto-trading-bot <img src="https://github.githubassets.com/images/icons/emoji/unicode/1f51e.png" height="64" width="64" align="middle" /> <img src="https://github.githubassets.com/images/icons/emoji/unicode/1f4b8.png" height="64" width="64" align="middle" />
 
@@ -19,7 +23,7 @@
 [![Last Commit](https://img.shields.io/github/last-commit/ctubio/Krypto-trading-bot.svg)](https://github.com/ctubio/Krypto-trading-bot)
 [![Downloads Last Releases](https://img.shields.io/github/downloads/ctubio/Krypto-trading-bot/total.svg?label=downloads%20last%20releases)](https://github.com/ctubio/Krypto-trading-bot)
 
-Runs on unix-like systems. Persistence is achieved through a built-in server-less SQLite C++ interface.<br>Data transfers are directly done between your machine and the exchange using the latest CURL and OpenSSL versions.<br>Installation in a dedicated [Debian](https://cdimage.debian.org/cdimage/release/current/), [Raspberry](https://www.raspberrypi.org/software/), [Red Hat](https://developers.redhat.com/products/rhel/download), [CentOS](https://wiki.centos.org/Download) or macOS instance without Docker is recommended.
+Our bots run on unix-like systems. Persistence is achieved through a built-in server-less SQLite C++ interface.<br>Data transfers are directly done from your machine to the exchange using the latest CURL and OpenSSL versions.<br>Installation in a dedicated [Debian](https://cdimage.debian.org/cdimage/release/current/), [Raspberry](https://www.raspberrypi.org/software/), [Red Hat](https://developers.redhat.com/products/rhel/download), [CentOS](https://wiki.centos.org/Download) or macOS instance without Docker is recommended.
 
 ![Web UI Preview](https://user-images.githubusercontent.com/1634027/44740469-d5c7ff00-aafa-11e8-9252-73b9c1283adb.png)
 
